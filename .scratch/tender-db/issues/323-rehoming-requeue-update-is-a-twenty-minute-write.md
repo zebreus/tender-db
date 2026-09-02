@@ -1,7 +1,10 @@
 # 323 — The re-homing re-queue is a 20-minute write transaction
 
-Status: FIXED and panelled 2026-08-31 (12 of 19 findings confirmed); one
-residue open — see "Still open" at the bottom
+Status: FIXED and panelled 2026-08-31 (12 of 19 findings confirmed). The one
+open residue is now SETTLED 2026-09-02 — it was a FIFTH site of the same
+mis-plan, not just a wrong sentence: `parsed_id_stripes` walked every parsed
+notice in the corpus on a scoped call, 354x slower than the seek. See the
+bottom section.
 Kind: performance / operability
 Relates to: 317 Unit A (apply-rehoming), 58 (incremental projection), 179
 
@@ -126,11 +129,66 @@ now takes the reader and the `+`.
 five-id list previously bought a full walk of 3.4M parsed notices for five
 rows. It is now five rowid seeks.
 
-## Still open
+## Was still open — SETTLED 2026-09-02, and it was a FIFTH site
 
 The panel flagged one neighbouring RECORD as wrong: the doc block above
 `Db::parsed_id_stripes` (canonical.rs, "the planner picks the rowid range
-seek, not `notices_parse_state`"). A verifier's fixture EQP disagrees with it.
+seek, not `notices_parse_state`"). A verifier's fixture EQP disagreed with it.
 Left alone on purpose — that paragraph records a measurement with timings
 beside it, and correcting a measured record deserves its own measurement, not
-a fixture plan quoted second-hand. Worth half an hour with a snapshot.
+a fixture plan quoted second-hand.
+
+The panel was right, and the record was not merely wrong on the plan name: the
+paragraph argued that forcing `notices_parse_state` "would be a pessimisation"
+while the code was paying that pessimisation. Both of `parsed_id_stripes`'
+statements carried this issue's exact poisoned shape.
+
+### Measured, same instrument as the diagnosis above
+
+`EXPLAIN QUERY PLAN` through turso 0.7.2 against the real schema:
+
+```
+COUNT as shipped  → SEARCH notices USING INDEX notices_parse_state (parse_state=?)
+WALK  as shipped  → SEARCH notices USING INDEX notices_parse_state (parse_state=?)
+COUNT with `+`    → SEARCH notices USING INTEGER PRIMARY KEY (rowid=?)
+WALK  with `+`    → SEARCH notices USING INTEGER PRIMARY KEY (rowid=?)
+```
+
+and what it costs, 200,000 notices (180,000 parsed), best of three:
+
+| | as shipped | with `+` | |
+| --- | --- | --- | --- |
+| scoped 100 ids, COUNT | 0.3898s | 0.0011s | **354x** |
+| scoped 100 ids, WALK | 0.3849s | 0.0012s | **321x** |
+| whole range, COUNT | 0.4703s | 0.4841s | a wash |
+| whole range, WALK | 0.6947s | 0.6537s | a wash |
+
+The scoped row is the live one: the pre-pass's range comes from
+`plan_notice_id_range`, so every incremental call is scoped. The whole-range row
+is what makes the `+` unconditional instead of a judgement call — it costs
+nothing on a full rebuild.
+
+### The control earned its keep
+
+The probe ran this issue's own poisoned statement as a positive control, and it
+did **not** reproduce at first: with a two-id `IN` list turso seeks by rowid even
+with the poisoned predicate. It flips to `notices_parse_state` at 100 ids and
+stays there at 500 — the width this issue measured with.
+
+So the plan turns on the list width as well as the predicate, and **a probe
+written with a short list would have appeared to acquit the shape this issue is
+about.** Anyone re-measuring any of this must use a realistic list.
+
+### Landed
+
+* `STRIPE_COUNT_SQL` / `STRIPE_WALK_SQL` — the statements extracted to constants
+  so the plan guard asserts against the string the function actually runs, the
+  same reason the re-queue builders exist.
+* The doc block rewritten to say what was measured, including that its own
+  previous argument was correct while its fact was backwards.
+* Plan assertions added to `the_requeue_statements_seek_notices_by_rowid`, in
+  both directions: the shipped statements must seek the rowid range, and the same
+  statements with the `+` removed must still mis-plan — otherwise the guard could
+  pass for a reason unrelated to the fix.
+* `crates/store/tests/stripes_probe.rs`, `#[ignore]`d like the other heavy
+  probes, carrying the timings and the control caveat.

@@ -3219,6 +3219,36 @@ const DIGIT_PEER_MIN: usize = 8;
 /// per chunk. The `+` makes the term non-indexable and the plan becomes
 /// `SEARCH notices USING INTEGER PRIMARY KEY (rowid=?)`. Same idiom, same
 /// reason, as `SIBLING_HEAD` in lib.rs; measured for issue 323.
+/// The two statements `Db::parsed_id_stripes` runs, as constants rather than
+/// literals inline in the function — a plan asserted against a copied string is a
+/// plan asserted against a copy (the lesson issue 323's panel wrote down).
+///
+/// Both carry the unary `+` on `parse_state` for the reason issue 323 measured
+/// and this doc block used to deny: without it turso prefers
+/// `notices_parse_state` and walks EVERY parsed notice in the corpus, ignoring
+/// the id range entirely. Measured on a 200k-notice fixture (180k parsed),
+/// best of three:
+///
+/// ```text
+///                     as shipped   with `+`
+/// scoped 100 ids  COUNT  0.3898s    0.0011s   (354x)
+/// scoped 100 ids  WALK   0.3849s    0.0012s   (321x)
+/// whole range     COUNT  0.4703s    0.4841s   (a wash)
+/// whole range     WALK   0.6947s    0.6537s   (a wash)
+/// ```
+///
+/// So the `+` is a large win on the scoped call — the incremental pre-pass's
+/// shape, since the range comes from `plan_notice_id_range` — and costs nothing
+/// on the full-rebuild call. Unconditional.
+pub(crate) const STRIPE_COUNT_SQL: &str = "SELECT COUNT(*) FROM notices
+      WHERE +parse_state = 'parsed' AND id > ? AND id <= ?";
+
+/// The split-point walk. `ORDER BY id` is free under the rowid plan — the scan is
+/// already in that order — which is the property the stripe partition depends on;
+/// see [`Db::parsed_id_stripes`].
+pub(crate) const STRIPE_WALK_SQL: &str = "SELECT id FROM notices
+      WHERE +parse_state = 'parsed' AND id > ? AND id <= ? ORDER BY id";
+
 pub(crate) fn requeue_update_sql(n: usize) -> String {
     format!(
         "UPDATE notices SET projected = 0 \
@@ -17056,15 +17086,25 @@ impl Db {
     /// until it has consumed every row, so a ratio of 0.00015 is proof of streaming
     /// independent of how the plan text is worded.
     ///
-    /// Note the planner picks the **rowid range seek**, not `notices_parse_state`,
-    /// and that is the better plan here: it seeks straight to `id > lo` and stops at
-    /// `id <= hi`, whereas forcing `INDEXED BY notices_parse_state` walks every
-    /// `parsed` entry and filters (measured: `SEARCH … USING INDEX
-    /// notices_parse_state (parse_state=?)`, no id range applied). Since this is
-    /// normally called over a SCOPED range, forcing the compact index would be a
-    /// pessimisation. It reads table rows rather than index entries, so the two
-    /// scans (count, then split points) are not free — but they are one bounded pass
-    /// over a range the sweep is about to read anyway, and they warm it.
+    /// **CORRECTED 2026-09-02 (issue 323's open residue).** This block used to say
+    /// "the planner picks the rowid range seek, not `notices_parse_state`", and
+    /// argued from there that forcing the compact index would be a pessimisation.
+    /// The argument was right and the fact was backwards: as written, both
+    /// statements picked `notices_parse_state` and walked every `parsed` entry in
+    /// the corpus with no id range applied — the pessimisation this paragraph
+    /// warned against, being paid. Both now carry the unary `+` (see
+    /// [`STRIPE_COUNT_SQL`]), which restores the rowid range seek and is worth
+    /// ~320-350x on a scoped range and nothing either way on a whole-corpus one.
+    ///
+    /// The correction was owed a measurement rather than a re-reading, because the
+    /// paragraph it replaces carried timings of its own. The instrument is the same
+    /// `EXPLAIN QUERY PLAN`-through-turso harness issue 323 used, run with 323's own
+    /// poison as a positive control — which reproduces only at a wide `IN` list
+    /// (100+), so a small-list probe can appear to acquit the poisoned shape.
+    ///
+    /// The rowid plan reads table rows rather than index entries, so the two scans
+    /// (count, then split points) are not free — but they are one bounded pass over
+    /// a range the sweep is about to read anyway, and they warm it.
     ///
     /// Returns `(lo, hi]`-style half-open-below stripes covering exactly `(lo, hi]`,
     /// in ascending order, with no gaps; a single stripe when the range holds fewer
@@ -17082,11 +17122,7 @@ impl Db {
         let conn = self.reader().await?;
         let total = {
             let mut r = conn
-                .query(
-                    "SELECT COUNT(*) FROM notices
-                      WHERE parse_state = 'parsed' AND id > ? AND id <= ?",
-                    (Value::Integer(lo), Value::Integer(hi)),
-                )
+                .query(STRIPE_COUNT_SQL, (Value::Integer(lo), Value::Integer(hi)))
                 .await?;
             r.next().await?.map_or(0, |row| int(&row, 0))
         };
@@ -17100,11 +17136,7 @@ impl Db {
         let mut splits: Vec<i64> = Vec::with_capacity(k - 1);
         let mut seen = 0i64;
         let mut rows = conn
-            .query(
-                "SELECT id FROM notices
-                  WHERE parse_state = 'parsed' AND id > ? AND id <= ? ORDER BY id",
-                (Value::Integer(lo), Value::Integer(hi)),
-            )
+            .query(STRIPE_WALK_SQL, (Value::Integer(lo), Value::Integer(hi)))
             .await?;
         while let Some(row) = rows.next().await? {
             seen += 1;

@@ -5287,6 +5287,39 @@ tmpfs /data/ramcache tmpfs rw 0 0
                  323 and the unary `+` in requeue_update_sql may go:\n{plan}"
             );
         }
+
+        // Issue 323's open residue, settled 2026-09-02. `parsed_id_stripes` carried
+        // the SAME poisoned shape at a fifth site, behind a doc block asserting the
+        // opposite — that the planner "picks the rowid range seek, not
+        // notices_parse_state". It did not. Measured at 200k notices, the scoped
+        // call the incremental pre-pass makes went 0.39s → 0.0011s.
+        for sql in [crate::canonical::STRIPE_COUNT_SQL, crate::canonical::STRIPE_WALK_SQL] {
+            let plan = plan_of(sql).await;
+            assert!(
+                plan.contains("SEARCH notices USING INTEGER PRIMARY KEY"),
+                "the stripe partition must seek the id RANGE; the `+` on parse_state \
+                 is what makes it:\n{plan}"
+            );
+            assert!(
+                !plan.contains("notices_parse_state"),
+                "the stripe partition reached for the parse_state index — that walks \
+                 every parsed notice in the corpus and applies no id range, which is \
+                 the whole of issue 323 at a fifth site:\n{plan}"
+            );
+        }
+        // …and the same statements WITHOUT the `+` must still mis-plan, or the
+        // guard above is passing for a reason that has nothing to do with it.
+        for sql in [
+            crate::canonical::STRIPE_COUNT_SQL.replace("+parse_state", "parse_state"),
+            crate::canonical::STRIPE_WALK_SQL.replace("+parse_state", "parse_state"),
+        ] {
+            let plan = plan_of(&sql).await;
+            assert!(
+                plan.contains("notices_parse_state"),
+                "without the `+` turso no longer prefers the parse_state index here \
+                 — re-measure before dropping it:\n{plan}"
+            );
+        }
         for suffix in ["", "-wal", "-shm"] {
             let _ = std::fs::remove_file(format!("{path}{suffix}"));
         }
