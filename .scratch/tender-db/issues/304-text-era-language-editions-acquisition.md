@@ -240,3 +240,39 @@ WAL **truncated to 0 at commit**, exactly the ADR-0014 refold's shape. So:
   stamping writes. One uncapped enqueue remains right.
 * issue 339 filed: the full-path/plan-build stage shows no phase record while
   its transaction runs.
+
+### End-to-end probe: POSITIVE — and it found the corpus run's floor gap (2026-09-02 ~15:1x UTC)
+
+After 608 folded the month, tender 6287622 (notice 19946383, the month's first):
+
+| version | caused by | languages in `tender_version_texts` |
+| --- | --- | --- |
+| seq 1 | 19946383 (2018-08, re-parsed) | **24 languages × 9 texts** — BUL … SWE, normalised |
+| seq 2 (head) | 20221184 (2019-01 award, fetch 89) | ENG × 11 |
+
+The fold carries every copy through (no fold-side language filter exists —
+checked the two `NoticeValue::Text → Fact::Text` sites). The head is English-only
+because seq 2's notice is still on its EnOnly parse and ADR-0013 supersedes text
+fields wholesale — the documented rule, not a defect. Which exposed the real
+finding: **fetch 89 is below the corpus run's floor.**
+
+`after` is a fetch-ID floor and the monthlies were fetched NEWEST-FIRST: ids
+2–93 are 2026-06 back to 2018-09, so `{after: 94}` (job 609) walks 2018-08 and
+OLDER only. The newer legacy half was going to be skipped. Measured exactly —
+one `fetch_id = ?` seek per id, printed then counted, non-answers abort:
+**70 packages with parsed ted-export notices at ids 24–93** (2024-06 → 2018-09;
+r209 stragglers reach into the eForms-era monthlies).
+
+Queue surgery, done: dropped the queued fold 610; enqueued
+`reparse {profiles, after: 0, packages: 70}` — ascending by id it walks 24→93 and
+the cap stops it exactly before 94 — with its paired fold. The queue is now
+**609 (ids 95+, running) → 611 (ids 24–93) → 612 (the one fold)**. The 3.5M
+profile-wide stamps are still paid once, by 612.
+
+Revised ETA: 609 ~21:00 UTC today (153 notices/s), 611 ~+6 h, 612's fold the
+epoch-refold order (~10 h) → landing tomorrow afternoon UTC. Tomorrow's 07:35
+daily chain queues behind it. **Deploy stays frozen until 612 lands.**
+
+Side finding filed as issue 343: the head version's three tender-level ENG
+titles are tie-broken differently by the fold's `current_title` and the
+read-time pick.
