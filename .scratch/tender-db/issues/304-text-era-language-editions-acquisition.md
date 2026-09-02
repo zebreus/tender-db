@@ -220,3 +220,23 @@ something has to give.
 Spot-check of the parsed layer (notice 19946383, the month's first): title copies
 now present per language — see the firing log; the end-to-end `?lang=` check on a
 2018-08 tender is the next firing's job once 608 has folded them.
+
+### Correction (2026-09-02 ~14:1x UTC): what job 608 actually is
+
+Read too early above: 608 is an **incremental** fold of the **43,538 touched
+Tenders** (the month's re-parsed notices and their chains), not a full-path
+rewrite of the 3,529,040 profile-stamped ones — the journal says `incremental
+fold: 2779/43538 Tenders folded`. The pre-pass over 14.3M notices and the
+26 GB WAL peak were its plan build (mention resolution, one transaction); the
+WAL **truncated to 0 at commit**, exactly the ADR-0014 refold's shape. So:
+
+* the 3.5M epoch-stale stamps stay pending and are rewritten when a fold next
+  visits them — job 610, after the corpus re-parse, which touches those
+  Tenders anyway. One rewrite, where it belongs.
+* the "staged corpus run would be a disaster" conclusion stands for a
+  different reason than stated: not because each capped run's fold rewrites
+  3.5M, but because each capped run re-stamps 3.5M and the FINAL fold pays
+  for all of them once either way — 92 stamps buy nothing and cost the
+  stamping writes. One uncapped enqueue remains right.
+* issue 339 filed: the full-path/plan-build stage shows no phase record while
+  its transaction runs.
