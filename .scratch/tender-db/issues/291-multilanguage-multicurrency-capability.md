@@ -384,3 +384,33 @@ decision, not caution. De-isolation would need a shape change (value-ordered
 list presentation, or an engine that intersects indexes); park until a
 product need argues for value-ordered listing, which the composite index
 already serves instantly.
+
+## 2026-09-02 — Lennart's "how about full multilanguage": measured answer, two units started
+
+Answered with numbers rather than the issue's state (see the firing log): the
+infrastructure is complete and live; coverage is three different problems —
+eForms serves the original only (0.18% of versions carry a second language; TED's
+bulk has no translations), r208/r209 hold ~50% more copies in stored XML
+(recoverable, decision-free), the text era is English-only and often a
+translation (acquisition campaign, Lennart's breadth call). "International"
+beyond TED + DÖE: nothing exists or was researched; the entry contract does.
+
+Started the same day:
+
+1. **304 stage 1 flipped and the corpus run queued** — see 304. One month measured
+   at +52.5% text bytes (census said +57%); jobs 608 → 609 → 610 on the box; no
+   deploy until 610 lands.
+2. **ADR-0013 D3's third leg BUILT** — the amendment that said "no data source"
+   had looked at the per-copy `LG` attribute; the notice-level statement was in
+   `notice_codes` all along for every era (`TED-LG_ORIG`, `BT-702(a)-notice`,
+   `TXT-OL`). Additive `tender_versions.original_lang`, fold-derived through
+   `normalize_lang`, ranked between ENG and "any labelled" in both the SQL and
+   Rust picks, exposed on the views and JSON, backfilled by a batched
+   `backfill-original-lang` walk (PK seeks, ~14.3M rows) instead of a refold.
+   Tests red-first on both rank implementations. Deploys after 610; the backfill
+   queues behind that deploy.
+
+What that leaves for "full": the text-era acquisition (Lennart's breadth
+decision, staged in 304), eForms translations (a product decision — TED's
+per-language renderings or our own MT; recommended: document that eForms serves
+the original), and any non-TED/DÖE source (a research unit per market).

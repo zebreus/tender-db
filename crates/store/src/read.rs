@@ -272,6 +272,8 @@ pub struct TenderRow {
     pub dispatched_at: Option<i64>,
     pub publication_id: String,
     pub notice_subtype: Option<String>,
+    /// The version's original language (ADR-0013 D3), `None` where the era never said.
+    pub original_lang: Option<String>,
     pub title: Option<String>,
     pub value_cents: Option<i64>,
     pub currency: Option<String>,
@@ -382,6 +384,9 @@ pub struct VersionRow {
     pub publication_id: String,
     pub notice_subtype: Option<String>,
     pub caused_by_notice_id: i64,
+    /// The causing notice's original language (ADR-0013 D3), or `None` where the
+    /// era did not publish one.
+    pub original_lang: Option<String>,
 }
 
 /// An Organization linked from the results layer, with the linking role.
@@ -916,11 +921,21 @@ fn participation_seed(f: &Filter) -> Option<(&'static str, &'static str, i64)> {
 /// `ingest::project::normalize_lang`); anything else falls back to the
 /// default rank rather than reaching the SQL.
 fn title_rank(lang: Option<&str>) -> String {
+    // ADR-0013 D3, all four legs: requested → ENG → the version's ORIGINAL
+    // language (`v.original_lang`, in scope because `pick` correlates on
+    // `v.seq`) → any labelled → unlabelled. A NULL `original_lang` makes the
+    // third term NULL, which sorts below both 0 and 1 under DESC — so a
+    // version whose era never said its language ranks as if the leg were
+    // absent, exactly the chain before the column existed.
     match lang {
         Some(l) if l.len() == 3 && l.bytes().all(|b| b.is_ascii_uppercase()) => {
-            format!("(s.lot_id IS NULL) DESC, (s.lang = '{l}') DESC, (s.lang = 'ENG') DESC")
+            format!(
+                "(s.lot_id IS NULL) DESC, (s.lang = '{l}') DESC, (s.lang = 'ENG') DESC, \
+                 (s.lang = v.original_lang) DESC"
+            )
         }
-        _ => "(s.lot_id IS NULL) DESC, (s.lang = 'ENG') DESC".to_owned(),
+        _ => "(s.lot_id IS NULL) DESC, (s.lang = 'ENG') DESC, (s.lang = v.original_lang) DESC"
+            .to_owned(),
     }
 }
 
@@ -1212,6 +1227,7 @@ fn tender_row(row: &turso::Row) -> TenderRow {
         lots: int(row, 14),
         cpv: split_codes(opt_text_of(row, 16)),
         country: split_codes(opt_text_of(row, 17)),
+        original_lang: opt_text_of(row, 18),
     }
 }
 
@@ -1437,7 +1453,8 @@ fn tender_select_head(from: &str, lang: Option<&str>) -> String {
                 (SELECT group_concat(DISTINCT c.code) FROM tender_version_classifications c
                   WHERE c.tender_id = t.id AND c.seq = v.seq AND c.scheme = 'cpv'),
                 (SELECT group_concat(DISTINCT c.code) FROM tender_version_classifications c
-                  WHERE c.tender_id = t.id AND c.seq = v.seq AND c.scheme = 'nuts')
+                  WHERE c.tender_id = t.id AND c.seq = v.seq AND c.scheme = 'nuts'),
+                v.original_lang
            FROM {from}
            JOIN tender_versions v ON v.tender_id = t.id AND v.seq = ",
         currency = pick("tender_version_amounts", "currency", None, "s.cents DESC", "1 = 1"),
@@ -1821,7 +1838,8 @@ pub async fn tender_detail(
 
     let mut rows = conn
         .query(
-            "SELECT seq, published_at, dispatched_at, publication_id, notice_subtype, caused_by_notice_id
+            "SELECT seq, published_at, dispatched_at, publication_id, notice_subtype, caused_by_notice_id,
+                    original_lang
                FROM tender_versions WHERE tender_id = ? ORDER BY seq",
             (Value::Integer(id),),
         )
@@ -1835,6 +1853,7 @@ pub async fn tender_detail(
             publication_id: text(&row, 3),
             notice_subtype: opt_text_of(&row, 4),
             caused_by_notice_id: int(&row, 5),
+            original_lang: opt_text_of(&row, 6),
         });
     }
 
@@ -2383,9 +2402,10 @@ fn lots_query(filter: &Filter, scope: Scope) -> Query {
 /// against the old six per lot, so it gets cheaper too.
 ///
 /// The picks are the SQL's, exactly:
-///   * title — `ORDER BY (lang = 'ENG') DESC LIMIT 1`. SQLite sorts NULL below both
-///     0 and 1 under DESC, so the preference is ENG, then any other language, then
-///     an unlabelled row; ties keep the first in scan order.
+///   * title — the `title_rank` ladder: a requested language, then ENG, then the
+///     version's original language (ADR-0013 D3), then any other language, then an
+///     unlabelled row; ties keep the first in scan order. SQLite sorts NULL below
+///     both 0 and 1 under DESC, which is what puts unlabelled last.
 ///   * value and currency — `MAX(cents)` and `ORDER BY cents DESC LIMIT 1` resolve
 ///     to the SAME row, so one max-cents row serves both.
 ///   * deadline — the three columns were three subqueries sharing
@@ -2416,6 +2436,22 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
     for (tender_id, seq) in versions {
         let key = (Value::Integer(tender_id), Value::Integer(seq));
 
+        // ADR-0013 D3's third leg: the version's original language, one PK seek,
+        // so the in-memory rank below can honour it exactly as the SQL
+        // `title_rank` does.
+        let original: Option<String> = {
+            let mut got = conn
+                .query(
+                    "SELECT original_lang FROM tender_versions WHERE tender_id = ? AND seq = ?",
+                    key.clone(),
+                )
+                .await?;
+            match got.next().await? {
+                Some(row) => opt_text_of(&row, 0),
+                None => None,
+            }
+        };
+
         let mut got = conn
             .query(
                 "SELECT s.lot_id, s.lang, s.value FROM tender_version_texts s
@@ -2426,12 +2462,15 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
             .await?;
         while let Some(row) = got.next().await? {
             let Some(&i) = opt_int_of(&row, 0).and_then(|id| at.get(&(tender_id, seq, id))) else { continue };
-            // ADR-0013 D3: a requested language outranks the ENG default; the
-            // rest of the ladder is unchanged, and strict `>` keeps first-seen
-            // winning ties — the same stability the SQL `LIMIT 1` oracle pins.
+            // ADR-0013 D3, all four legs: requested → ENG → the version's
+            // original language → any labelled → unlabelled. Strict `>` keeps
+            // first-seen winning ties — the same stability the SQL `LIMIT 1`
+            // oracle pins. A version with no recorded original never matches the
+            // third leg, so it ranks exactly as before the column existed.
             let rank = match opt_text_of(&row, 1).as_deref() {
-                l if lang.is_some() && l == lang => 3,
-                Some("ENG") => 2,
+                l if lang.is_some() && l == lang => 4,
+                Some("ENG") => 3,
+                l if l.is_some() && l == original.as_deref() => 2,
                 Some(_) => 1,
                 None => 0,
             };

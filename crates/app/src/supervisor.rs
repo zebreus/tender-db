@@ -294,6 +294,11 @@ enum Spec {
     /// the eur_cents backfill refold — it aggregates the satellite's derived
     /// column, so stamping before the refold just writes NULLs.
     BackfillValues,
+    /// ADR-0013 D3's third leg (2026-09-02): stamp `tender_versions.original_lang`
+    /// on the standing corpus from the notice-level language codes already in
+    /// `notice_codes` — a batched PK-seek walk, not a refold. New folds write the
+    /// column directly; this is for the ~14.3M rows that predate it.
+    BackfillOriginalLang,
     /// Re-derive `eur_cents` across all four money loci from the CURRENT rates
     /// table (issue 306): a rowid-windowed walk per locus recomputing each
     /// row's EUR sibling from (cents, currency, version publication date) via
@@ -987,6 +992,14 @@ impl Supervisor {
             ]),
             // ADR-0014 D5: stamp the head-value EUR column (run after the
             // eur_cents backfill refold).
+            "backfill-original-lang" => Ok(vec![
+                self.push(
+                    "backfill-original-lang",
+                    "backfill-original-lang".into(),
+                    Spec::BackfillOriginalLang,
+                )
+                .await,
+            ]),
             "backfill-values" => Ok(vec![
                 self.push("backfill-values", "backfill-values".into(), Spec::BackfillValues).await,
             ]),
@@ -2794,6 +2807,39 @@ impl Supervisor {
                 Ok(format!(
                     "current_title stamped over {stamped} tenders (head-version title, \
                      Tender's own before a lot's; NULL where none is published)"
+                ))
+            }
+            Spec::BackfillOriginalLang => {
+                // The `BackfillValues` walk exactly: bounded batch per transaction,
+                // WAL checkpoint between batches (issue 42), progress as
+                // members_done. The 639-2/T map is the fold's own, injected as a
+                // `fn` across the crate seam (`store` cannot depend on `ingest`).
+                fn normalize(code: &str) -> Option<String> {
+                    ingest::project::normalize_lang(Some(code))
+                }
+                let mut stamped = 0i64;
+                let mut watermark = 0i64;
+                loop {
+                    let (rows, next) = self
+                        .db
+                        .backfill_original_lang(BACKFILL_BATCH, watermark, normalize)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    if rows == 0 {
+                        break;
+                    }
+                    stamped += rows;
+                    watermark = next;
+                    self.update(|p| p.members_done = stamped as u64);
+                    if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                        eprintln!("supervisor: checkpoint after original_lang batch: {e}");
+                    }
+                }
+                Ok(format!(
+                    "original_lang backfill walked {stamped} tenders, every NULL version of \
+                     theirs stamped from its notice's own language code (BT-702 / LG_ORIG / \
+                     OL, in the fold's 639-2/T vocabulary — ADR-0013 D3's third leg). Left \
+                     NULL where the era never said: the 1990s text notices before the OL line."
                 ))
             }
             Spec::BackfillValues => {

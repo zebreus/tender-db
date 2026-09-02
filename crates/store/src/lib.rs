@@ -744,6 +744,10 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
     // ALSO in reset_tender_layer's hardcoded CREATE — a column added here
     // alone is missing for a whole rebuild (the current_deadline lesson).
     add_column(conn, "ALTER TABLE tenders ADD COLUMN current_value_eur_cents INTEGER").await?;
+    // ADR-0013 D3's third leg (2026-09-02): the version's original language.
+    // O(1) at boot like the eur_cents columns; the standing corpus is stamped by
+    // the `backfill-original-lang` job rather than a refold.
+    add_column(conn, "ALTER TABLE tender_versions ADD COLUMN original_lang TEXT").await?;
     // Issue 87: a failed re-parse stamps its attempt and rewrites the row's
     // reason/detail to the CURRENT failure (the first-ingest pair is preserved
     // once in first_reason/first_detail). Nullable and absent by default, so
@@ -3041,6 +3045,81 @@ impl Db {
         Ok((count, watermark))
     }
 
+    /// One batch of the `tender_versions.original_lang` backfill (ADR-0013 D3's
+    /// third leg, 2026-09-02): the next `batch` tenders past the watermark, every
+    /// version of theirs still `NULL`, each resolved to the causing notice's
+    /// PROCEDURE-level language code — `BT-702(a)-notice`, `TED-LG_ORIG` or
+    /// `TXT-OL`, whichever the era published — and stamped through `normalize`,
+    /// the fold's own 639-2/T map, injected as a `fn` because it lives in
+    /// `ingest` and `store` cannot depend on it (the same seam the census jobs
+    /// use). Every read here is a PK or unique-index seek: versions by
+    /// `tender_id`, codes by `(notice_id, section_id, field_id)`, so a batch's cost
+    /// is proportional to its rows and never to the corpus. Returns
+    /// `(versions stamped, watermark)`; `rows == 0` ends the walk. Idempotent —
+    /// stamped rows are skipped — so a crash-restart does only the remainder.
+    ///
+    /// A version whose notice carries none of the three codes stays `NULL`, which
+    /// is the honest value (the 1990s text notices predate the `OL:` line): the
+    /// read-time rank treats it as "leg absent", never as a wrong guess.
+    pub async fn backfill_original_lang(
+        &self,
+        batch: i64,
+        after: i64,
+        normalize: fn(&str) -> Option<String>,
+    ) -> turso::Result<(i64, i64)> {
+        let conn = self.conn().await;
+        let mut rows = conn
+            .query(
+                "SELECT COUNT(*), MAX(id) FROM
+                   (SELECT id FROM tenders WHERE id > ? ORDER BY id LIMIT ?)",
+                (Value::Integer(after), Value::Integer(batch)),
+            )
+            .await?;
+        let (count, watermark) = match rows.next().await? {
+            Some(row) => (int(&row, 0), opt_int_of(&row, 1).unwrap_or(after)),
+            None => (0, after),
+        };
+        drop(rows);
+        if count == 0 {
+            return Ok((0, after));
+        }
+        // The window's unstamped versions, each with its notice's code if any.
+        // The field list is an `IN` on a NON-leading column of the codes PK, so it
+        // filters inside the (notice_id, section_id) seek rather than steering the
+        // plan — the turso trap is an `IN` on the leading column.
+        let mut rows = conn
+            .query(
+                "SELECT v.tender_id, v.seq,
+                        (SELECT c.code FROM notice_codes c
+                          WHERE c.notice_id = v.caused_by_notice_id
+                            AND c.section_id = 'PROCEDURE'
+                            AND c.field_id IN ('BT-702(a)-notice', 'TED-LG_ORIG', 'TXT-OL')
+                          ORDER BY c.field_id, c.ordinal LIMIT 1)
+                   FROM tender_versions v
+                  WHERE v.tender_id > ? AND v.tender_id <= ? AND v.original_lang IS NULL",
+                (Value::Integer(after), Value::Integer(watermark)),
+            )
+            .await?;
+        let mut stamps: Vec<(i64, i64, String)> = Vec::new();
+        while let Some(row) = rows.next().await? {
+            if let Some(lang) = opt_text_of(&row, 2).as_deref().and_then(normalize) {
+                stamps.push((int(&row, 0), int(&row, 1), lang));
+            }
+        }
+        drop(rows);
+        for (tender_id, seq, lang) in stamps {
+            conn.execute(
+                "UPDATE tender_versions SET original_lang = ? WHERE tender_id = ? AND seq = ?",
+                (Value::Text(lang), Value::Integer(tender_id), Value::Integer(seq)),
+            )
+            .await?;
+        }
+        // Like `backfill_current_value_eur`: the count is the WINDOW's tenders, so
+        // a window whose versions were all stamped already (or all NULL-by-era)
+        // still advances the walk rather than ending it.
+        Ok((count, watermark))
+    }
+
     /// One batch of the org `name_norm` backfill (issue 217-B): Unicode-lowercase
     /// the next `batch` names past the watermark, in Rust — SQL `lower()` is
     /// ASCII-only and would leave every umlauted name unfindable by the
@@ -4325,6 +4404,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
             published_at,
             dispatched_at: None,
             notice_subtype: None,
+            original_lang: None,
             publication_id: format!("{notice_id}-2024"),
             facts: Default::default(),
             lots: Vec::new(),
@@ -4936,6 +5016,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
                 published_at: 100,
                 dispatched_at: None,
                 notice_subtype: None,
+                original_lang: None,
                 publication_id: "10-2024".into(),
                 facts: Default::default(),
                 lots: Vec::new(),

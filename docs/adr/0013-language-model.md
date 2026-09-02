@@ -113,3 +113,32 @@ sees the `LG` attribute but never stores it). Honoring that leg needs one
 additive column at parse/fold time plus a refold; until someone wants it, the
 chain skips from ENG to the deterministic tail, and `lang` is documented as a
 projection SELECTOR (never a predicate, never in `ignored_filters`).
+
+## Amendment 2026-09-02 — the "original" leg has a data source after all; built
+
+The first amendment was wrong about the data: it looked at the per-copy `LG`
+attribute and concluded "nothing marks which was the original". The notice-LEVEL
+statement exists in every era and was already stored as a PROCEDURE code in
+`notice_codes`:
+
+| era | field | seen on prod |
+| --- | --- | --- |
+| eForms, every SDK incl. DE | `BT-702(a)-notice` | `SPA`, `DEU` |
+| ted-export r208/r209 | `TED-LG_ORIG` (the element, not the copy attribute) | `EN` |
+| text era | `TXT-OL` (the `OL:` line; absent on early-1990s notices) | `FR` |
+
+So honouring the leg is a fold-time read, not a parser change: `original_lang`
+in `ingest::project` takes the first of those three the parse carries and passes
+it through the same `normalize_lang` every text tag goes through, so the stored
+value compares by equality with `tender_version_texts.lang`. It rides into a new
+nullable `tender_versions.original_lang` (boot-time `ALTER`, the `eur_cents`
+pattern) and is exposed on `v_tenders`, `v_tender_notices`, `/v1/sql` and the
+list/detail JSON. The chain is now the one D3 decided:
+
+**requested → ENG → original → any labelled → unlabelled**
+
+applied in the SQL `title_rank` and the Rust-side ranks alike. The standing corpus
+is stamped by the batched `backfill-original-lang` job (PK seeks into
+`notice_codes`, `original_lang IS NULL` rows only, resumable by watermark) rather
+than a corpus refold; new folds write it directly. Unchanged: `lang` is a
+selector, never a predicate; the fold-time surfaces keep the deterministic default.

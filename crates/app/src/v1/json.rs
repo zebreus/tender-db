@@ -67,6 +67,7 @@ pub fn tender(t: &TenderRow) -> Value {
         "dispatched_at": t.dispatched_at.map(instant).unwrap_or(Value::Null),
         "publication_id": t.publication_id,
         "notice_subtype": t.notice_subtype,
+        "original_lang": t.original_lang,
         "value": money(t.value_cents, t.currency.as_deref()),
         "submission_deadline": stamp(t.deadline),
         "lots": t.lots,
@@ -306,6 +307,9 @@ fn version(v: &VersionRow) -> Value {
         "dispatched_at": v.dispatched_at.map(instant).unwrap_or(Value::Null),
         "publication_id": v.publication_id,
         "notice_subtype": v.notice_subtype,
+        // ADR-0013 D3: the notice's own original language (ISO 639-2/T), the
+        // third leg of the ?lang= fallback; null where the era never said.
+        "original_lang": v.original_lang,
         // Every version names the Notice that caused it: the ADR-0001
         // traceability chain reaches the API surface.
         "caused_by_notice_id": v.caused_by_notice_id,

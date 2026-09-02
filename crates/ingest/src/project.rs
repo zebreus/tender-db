@@ -668,6 +668,14 @@ const DE1_FOLDER_FIELD: &str = "DE1-ContractFolderID";
 const PROCEDURE_KEY_FIELD: &str = "BT-04-notice";
 const LOGICAL_NOTICE_FIELD: &str = "BT-701-notice";
 const SUBTYPE_FIELD: &str = "OPP-070-notice";
+/// The notice's ORIGINAL language, as each era publishes it — ADR-0013 D3's third
+/// leg, which the ADR's first amendment thought had no data source. It has three:
+/// `BT-702(a)-notice` (every eForms SDK, DE included), `TED-LG_ORIG` (r208/r209 —
+/// the notice-level element, distinct from the per-copy `LG` attribute the
+/// amendment was looking at), and `TXT-OL` (the text era's `OL:` line, absent on
+/// the early-1990s notices that predate it). All three are PROCEDURE-level codes
+/// already in `notice_codes`, so this is a fold-time read, not a parser change.
+const ORIGINAL_LANG_FIELDS: [&str; 3] = ["BT-702(a)-notice", "TED-LG_ORIG", "TXT-OL"];
 /// eForms' explicit previous-publication reference (`ND-PreviousNoticeReference`):
 /// the publisher's own statement that an earlier TED publication continues into
 /// this notice. ADR-0011 makes it an identity edge, because EU eForms does NOT
@@ -2667,6 +2675,7 @@ struct BucketRow {
     published_at: i64,
     dispatched_at: Option<i64>,
     subtype: Option<String>,
+    original_lang: Option<String>,
     is_correction: bool,
     facts: BTreeSet<Fact>,
     lots: Vec<LotState>,
@@ -2700,6 +2709,7 @@ impl BucketRow {
             published_at: state.published_at,
             dispatched_at: state.dispatched_at,
             subtype: state.subtype,
+            original_lang: state.original_lang,
             is_correction: state.is_correction,
             facts: state.facts,
             lots: state.lots,
@@ -2727,6 +2737,7 @@ impl BucketRow {
             published_at: self.published_at,
             dispatched_at: self.dispatched_at,
             subtype: self.subtype.clone(),
+            original_lang: self.original_lang.clone(),
             group_members: self.group_members.clone(),
             logical_id: None,
             is_correction: self.is_correction,
@@ -2750,6 +2761,8 @@ struct NoticeState {
     published_at: i64,
     dispatched_at: Option<i64>,
     subtype: Option<String>,
+    /// ADR-0013 D3's third leg, from [`original_lang`]; rides into the version row.
+    original_lang: Option<String>,
     /// BT-701, the source's logical notice id — corrections republish under it.
     logical_id: Option<String>,
     /// A change notice (it carries `efac:Changes` sections): what it publishes
@@ -2998,6 +3011,7 @@ impl NoticeState {
             published_at,
             dispatched_at,
             subtype: first_code(parsed, SUBTYPE_FIELD),
+            original_lang: original_lang(parsed),
             group_members: group_members(notice.id, parsed),
             logical_id: first_id(parsed, LOGICAL_NOTICE_FIELD),
             is_correction: parsed.sections.iter().any(|s| s.kind == "Change"),
@@ -3410,6 +3424,7 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
             published_at: state.published_at,
             dispatched_at: state.dispatched_at,
             notice_subtype: state.subtype.clone(),
+            original_lang: state.original_lang.clone(),
             publication_id: state.publication_id.clone(),
             facts,
             lots,
@@ -4773,6 +4788,18 @@ fn first_code(parsed: &Parsed, field_id: &str) -> Option<String> {
     })
 }
 
+/// The notice's original language in the fold's 639-2/T vocabulary — the first
+/// of [`ORIGINAL_LANG_FIELDS`] the parse carries, through the same
+/// [`normalize_lang`] every text tag goes through, so `EN`, `DEU` and `FR` all
+/// land as the tag `tender_version_texts.lang` uses and the read-time rank can
+/// compare them by equality.
+pub fn original_lang(parsed: &Parsed) -> Option<String> {
+    ORIGINAL_LANG_FIELDS
+        .iter()
+        .find_map(|field| first_code(parsed, field))
+        .and_then(|code| normalize_lang(Some(&code)))
+}
+
 /// The publication and dispatch instants of a parsed notice, resolved per era
 /// (issue 18). `published_at` is the real publication date where the notice
 /// records one (the OJEU stamp, the legacy OJ date, or DÖE's requested/portal
@@ -4907,6 +4934,7 @@ mod tests {
             published_at: 42,
             dispatched_at: Some(41),
             subtype: Some("cn-standard".into()),
+            original_lang: Some("DEU".into()),
             is_correction: true,
             facts,
             lots: vec![LotState { key: "LOT-1".into(), kind: "Lot".into(), facts: lot_facts }],
@@ -5175,6 +5203,7 @@ mod tests {
             published_at: notice_id * 1_000,
             dispatched_at: None,
             subtype: None,
+            original_lang: None,
             logical_id: None,
             is_correction: false,
             facts: BTreeSet::new(),

@@ -184,6 +184,29 @@ async fn the_real_procedure_chain_becomes_one_tender_with_four_versions() {
         Some("29"),
         "the contract award notice closes the chain"
     );
+    // ADR-0013 D3's third leg: every version carries its notice's own language,
+    // which for eForms is BT-702 — read back from the parse layer here rather
+    // than hard-coded, so the assertion is "the fold copied what the notice
+    // said, normalised", not a guess at the fixture's language.
+    for seq in 1..=4 {
+        let published = query_text(
+            &db,
+            &format!(
+                "SELECT c.code FROM notice_codes c
+                   JOIN tender_versions v ON v.caused_by_notice_id = c.notice_id
+                  WHERE v.seq = {seq} AND c.section_id = 'PROCEDURE'
+                    AND c.field_id = 'BT-702(a)-notice'"
+            ),
+        )
+        .await;
+        assert!(published.is_some(), "the eForms fixture at seq {seq} publishes BT-702");
+        assert_eq!(
+            query_text(&db, &format!("SELECT original_lang FROM tender_versions WHERE seq = {seq}"))
+                .await,
+            published.as_deref().and_then(|c| project::normalize_lang(Some(c))),
+            "the version's original_lang is the notice's BT-702 through normalize_lang"
+        );
+    }
     assert_eq!(
         scalar(
             &db,

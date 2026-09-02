@@ -186,6 +186,12 @@ pub(crate) const SCHEMA: &str = "
         published_at        INTEGER NOT NULL, -- unix seconds: the OJ/portal publication date
         dispatched_at       INTEGER,          -- unix seconds: when the notice was sent (issue 18)
         notice_subtype      TEXT,
+        -- ADR-0013 D3's third leg: the causing notice's ORIGINAL language, in the
+        -- fold's 639-2/T vocabulary, from the code each era publishes for it
+        -- (TED-LG_ORIG, BT-702(a)-notice, TXT-OL). NULL where the era did not say
+        -- (1990s text notices without an OL line). Added 2026-09-02; existing rows
+        -- are stamped by `backfill-original-lang`, not a refold.
+        original_lang       TEXT,
         publication_id      TEXT NOT NULL,
         PRIMARY KEY (tender_id, seq),
         -- One version per Notice: re-projecting a package can never duplicate a
@@ -766,7 +772,8 @@ pub(crate) const SCHEMA: &str = "
     -- fold when it writes the head pointer.
     CREATE VIEW v_tenders AS
     SELECT t.id, t.source, t.procedure_key, t.kind,
-           v.seq, v.published_at, v.caused_by_notice_id, v.notice_subtype, v.publication_id,
+           v.seq, v.published_at, v.caused_by_notice_id, v.notice_subtype, v.original_lang,
+           v.publication_id,
            t.current_title AS title
       FROM tenders t
       JOIN tender_versions v ON v.tender_id = t.id AND v.seq = t.current_seq;
@@ -881,7 +888,7 @@ pub(crate) const SCHEMA: &str = "
     DROP VIEW IF EXISTS v_tender_notices;
     CREATE VIEW v_tender_notices AS
     SELECT v.tender_id, v.seq, v.caused_by_notice_id AS notice_id,
-           v.notice_subtype, v.published_at,
+           v.notice_subtype, v.original_lang, v.published_at,
            n.source, n.publication_id, n.profile, n.parse_state
       FROM tender_versions v
       JOIN notices n ON n.id = v.caused_by_notice_id;
@@ -1291,6 +1298,9 @@ pub struct TenderVersion {
     /// When the notice was dispatched, where the era records it (issue 18).
     pub dispatched_at: Option<i64>,
     pub notice_subtype: Option<String>,
+    /// The causing notice's ORIGINAL language (ADR-0013 D3's third leg), already
+    /// in the fold's 639-2/T vocabulary; `None` where the era did not publish it.
+    pub original_lang: Option<String>,
     pub publication_id: String,
     pub facts: BTreeSet<Fact>,
     pub lots: Vec<LotState>,
@@ -15763,6 +15773,7 @@ impl Db {
             Value::Integer(v.published_at),
             opt_int(v.dispatched_at),
             opt_text(v.notice_subtype.as_deref()),
+            opt_text(v.original_lang.as_deref()),
             t(&v.publication_id),
         ]);
         // ADR-0014: one conversion context per version — the rates snapshot plus
@@ -17371,7 +17382,7 @@ impl Pending {
     /// still finds each referenced `(tender_id, seq)` present at insert time; the
     /// projection itself runs with FK off.
     async fn flush(&mut self, conn: &Connection) -> turso::Result<()> {
-        flush_rows(conn, "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, dispatched_at, notice_subtype, publication_id) VALUES ", 7, &mut self.versions).await?;
+        flush_rows(conn, "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, dispatched_at, notice_subtype, original_lang, publication_id) VALUES ", 8, &mut self.versions).await?;
         flush_rows(conn, "INSERT INTO tender_version_lots(tender_id, seq, lot_id, kind) VALUES ", 4, &mut self.version_lots).await?;
         flush_rows(conn, "INSERT INTO tender_version_lot_group_members(tender_id, seq, group_lot_id, member_lot_id) VALUES ", 4, &mut self.lot_group_members).await?;
         flush_rows(conn, "INSERT INTO tender_version_texts(tender_id, seq, lot_id, field, lang, value) VALUES ", 6, &mut self.texts).await?;
@@ -17571,6 +17582,7 @@ mod tests {
             published_at: 0,
             dispatched_at: None,
             notice_subtype: None,
+            original_lang: None,
             publication_id: "pub-1".into(),
             facts: facts.into_iter().collect::<BTreeSet<_>>(),
             lots: vec![LotState {
