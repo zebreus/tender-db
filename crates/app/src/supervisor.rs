@@ -386,6 +386,10 @@ enum Spec {
     /// Issue 334: for the widest name keys, does the stored org name match what
     /// the notices said? Read-only probe.
     NameAttributionProbe,
+    /// Issue 169: the storage figures, recorded so report history accumulates a
+    /// TREND instead of leaving the next reader to infer one from two samples.
+    /// Read-only, and instantaneous — statvfs plus one stat, no inode walk.
+    DiskCensus,
     /// Issue 326 step 2: move the rows a decisive anchor says are mistyped.
     /// Wet writes `organizations`.
     RepairCountryTypos { dry_run: bool },
@@ -1189,6 +1193,9 @@ impl Supervisor {
                     Spec::CountryClusterCensus,
                 )
                 .await,
+            ]),
+            "disk-census" => Ok(vec![
+                self.push("disk-census", "disk-census".into(), Spec::DiskCensus).await,
             ]),
             "name-attribution-probe" => Ok(vec![
                 self.push(
@@ -5060,6 +5067,92 @@ impl Supervisor {
                     q(25), q(50), q(75), q(90),
                 ))
             }
+            Spec::DiskCensus => Box::pin(async move {
+                // NOT in STOPPABLE_KINDS on purpose: this is statvfs plus one
+                // stat, so there is no loop to read a stop flag and claiming it
+                // could be cancelled would be the lie issue 252 removed.
+                let Some(disk) = crate::v1::health::disk_usage() else {
+                    return Err("could not stat the database filesystem".to_owned());
+                };
+                let db_path = std::env::var("TENDER_DB").unwrap_or_else(|_| "tender-db.db".into());
+                let db_bytes = std::fs::metadata(&db_path).ok().map(|m| m.len());
+                let used_pct = disk.used_fraction * 100.0;
+                let now = store::now_unix();
+
+                // The previous sample, read through the history issue 335 added.
+                // This is the whole point of the job: growth is a reading rather
+                // than an inference.
+                let previous = self.db.previous_report("disk-census").await.ok().flatten();
+                let trend = previous.as_ref().and_then(|(body, at)| {
+                    let older: serde_json::Value = serde_json::from_str(body).ok()?;
+                    let free_then = older.get("free_bytes")?.as_u64()?;
+                    let secs = now.saturating_sub(*at);
+                    // A sample interval under an hour says nothing about daily
+                    // growth; two runs a minute apart would produce a wild rate.
+                    if secs < 3_600 {
+                        return None;
+                    }
+                    let days = secs as f64 / 86_400.0;
+                    let consumed = free_then as i64 - disk.free_bytes as i64;
+                    let per_day = consumed as f64 / days;
+                    // Only meaningful while it is actually shrinking; a freed
+                    // volume has no days-to-full.
+                    let to_full = (per_day > 0.0).then(|| disk.free_bytes as f64 / per_day);
+                    Some((days, per_day, to_full))
+                });
+
+                let body = serde_json::json!({
+                    "total_bytes": disk.total_bytes,
+                    "free_bytes": disk.free_bytes,
+                    "used_pct": (used_pct * 100.0).round() / 100.0,
+                    "wal_bytes": disk.wal_bytes,
+                    "db_bytes": db_bytes,
+                    "sample_interval_days": trend.map(|(d, _, _)| (d * 100.0).round() / 100.0),
+                    "bytes_per_day": trend.map(|(_, r, _)| r.round()),
+                    "days_to_full": trend.and_then(|(_, _, f)| f).map(|f| f.round()),
+                    // Said in the report, not only in the commit message: this is
+                    // a two-point rate between consecutive samples, and issue 169
+                    // exists because two points were mistaken for a trend once.
+                    "rate_caveat": "two-point rate against the previous sample — not a trend; \
+                                    read several versions before concluding",
+                })
+                .to_string();
+                self.db.put_report("disk-census", &body, now).await.map_err(|e| e.to_string())?;
+
+                let gib = |b: u64| format!("{:.1} GiB", b as f64 / 1_073_741_824.0);
+                Ok(format!(
+                    "disk-census (issue 169): {} of {} used ({:.1}%), {} free. Database file {}; \
+                     WAL {}. {} NOTHING IS WRITTEN beyond the report; report history keeps up to \
+                     {} versions, so the trend this job exists to provide arrives by accumulating \
+                     samples rather than by projecting from one.",
+                    gib(disk.total_bytes.saturating_sub(disk.free_bytes)),
+                    gib(disk.total_bytes),
+                    used_pct,
+                    gib(disk.free_bytes),
+                    db_bytes.map(gib).unwrap_or_else(|| "unreadable".into()),
+                    disk.wal_bytes.map(gib).unwrap_or_else(|| "absent".into()),
+                    match trend {
+                        Some((days, per_day, to_full)) => format!(
+                            "Against the previous sample {:.1} day(s) ago: {}/day, which at that \
+                             two-point rate is {} to full — a rate between two samples, NOT a \
+                             trend.",
+                            days,
+                            if per_day >= 0.0 {
+                                gib(per_day as u64)
+                            } else {
+                                format!("-{}", gib((-per_day) as u64))
+                            },
+                            to_full
+                                .map(|f| format!("{f:.0} day(s)"))
+                                .unwrap_or_else(|| "no horizon (the volume gained space)".into()),
+                        ),
+                        None => "No comparable earlier sample yet, so no rate — the first run \
+                                 establishes the baseline."
+                            .to_owned(),
+                    },
+                    store::REPORT_HISTORY_DEPTH,
+                ))
+            }).await,
             Spec::NameAttributionProbe => Box::pin(async move {
                 // BOXED. `run_spec` is a 62-arm async match, so every arm's
                 // locals live in ONE future — and adding this census's arm
@@ -7839,6 +7932,11 @@ impl Supervisor {
                     if self.already_pending("data-quality") {
                         eprintln!("[schedule] data-quality already queued or running, skipping this week");
                     } else {
+                        // Issue 169: cheapest possible, and FIRST — statvfs plus one stat,
+                        // so it records the week's storage stamp without waiting behind an
+                        // hour of key-building. Its value is the series, and a series with a
+                        // missed week is worth less than one without.
+                        self.push("disk-census", "disk-census (weekly)".into(), Spec::DiskCensus).await;
                         self.push(
                             "data-quality",
                             "data-quality (weekly)".into(),
@@ -9615,13 +9713,16 @@ mod tests {
     /// wall-clock Sunday, so tripwire 6's weekly clock had only ever been
     /// exercised by hand — a wiring slip would have surfaced as silence.
     #[tokio::test]
-    async fn the_weekly_report_tick_enqueues_its_five_jobs_once_each() {
+    async fn the_weekly_report_tick_enqueues_its_six_jobs_once_each() {
         let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
         sup.run_report_tick().await;
         let kinds: Vec<String> = sup.queued().into_iter().map(|j| j.kind).collect();
         assert_eq!(
             kinds,
             vec![
+                // Issue 169: first, because it is statvfs plus one stat and its
+                // whole value is an unbroken weekly series.
+                "disk-census",
                 "data-quality",
                 "rehash-probe",
                 "build-org-match-keys",
@@ -9650,7 +9751,7 @@ mod tests {
         // A second tick with last week's work still queued stacks nothing
         // (the issue-282 already_pending guard).
         sup.run_report_tick().await;
-        assert_eq!(sup.queued().len(), 5, "already_pending must stop the double enqueue");
+        assert_eq!(sup.queued().len(), 6, "already_pending must stop the double enqueue");
     }
 
     /// Issue 324: the dry arm of `drop-orphan-satellites` writes its plan as

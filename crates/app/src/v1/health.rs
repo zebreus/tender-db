@@ -142,14 +142,14 @@ struct Signals {
     layer: Option<Vec<(LayerPresence, i64)>>,
 }
 
-pub(super) struct Disk {
-    pub(super) used_fraction: f64,
-    pub(super) free_bytes: u64,
-    pub(super) total_bytes: u64,
+pub(crate) struct Disk {
+    pub(crate) used_fraction: f64,
+    pub(crate) free_bytes: u64,
+    pub(crate) total_bytes: u64,
     /// Size of the `-wal` sidecar, surfaced so the alerting routine sees a
     /// runaway WAL during bulk loads (issue 42). Informational — a large WAL is
     /// expected mid-backfill, so it does not by itself flip the disk verdict.
-    pub(super) wal_bytes: Option<u64>,
+    pub(crate) wal_bytes: Option<u64>,
 }
 
 /// Turn the raw signals into an overall verdict plus the per-check JSON. A
@@ -233,7 +233,7 @@ fn assess(s: &Signals) -> (bool, Value) {
 /// Usage of the filesystem holding the database file (`TENDER_DB`, same volume
 /// as the archive in production). `None` if the path cannot be stat'd — a
 /// portability quirk must not masquerade as a full disk.
-pub(super) fn disk_usage() -> Option<Disk> {
+pub(crate) fn disk_usage() -> Option<Disk> {
     let db = std::env::var("TENDER_DB").unwrap_or_else(|_| "tender-db.db".into());
     let path = std::path::Path::new(&db);
     // statvfs needs an existing path; fall back to the DB's directory when the
