@@ -243,6 +243,40 @@ first diagnosis nearly settled on, predicts 1. The sweep unit is installed and
 enabled (`tender-db-tmpsweep.timer`, next fire 23:41 CEST), and its dry fire at
 install reported the same 0.
 
+## Correction: TWO artefacts leak, and the size claim was too small
+
+Observed the same day the sweep shipped. `/data/tmp` held one orphan again after
+the afternoon's restarts, and it was not the artefact this issue was written
+about:
+
+```
+/data/tmp/.tmpzGLa6Y/tursodb_temp_file    21,573,552 bytes
+```
+
+`tursodb_temp_file` is a **sorter or hash-table spill** (`TempFile::new` in
+turso's `io/mod.rs`), not the per-connection temp **database**
+(`tursodb-temp.db`) that `BEGIN IMMEDIATE` creates. Different trigger — a query
+whose plan spills — but the same `tempfile::TempDir`, held by the statement's
+sorter, and the same escape: the process dies without unwinding, so the directory
+outlives it.
+
+Two things follow:
+
+* **The sweep already covers it**, by luck rather than foresight in the sizing
+  but deliberately in the code: its guard admits `tursodb-temp.db*` *and*
+  `tursodb_temp_file*`, and the start-time rule is the same either way. The dry
+  run correctly named this directory as removable and left nothing else.
+* **"4 KB per orphan" was wrong.** That is the size of an empty temp database. A
+  spill orphan is as big as the sort that made it — 21.5 MB here. The rate stays
+  ~1/day; the volume is not bounded by anything but the largest query the process
+  ran before it died. Still not urgent against a 1.7 TB volume, and still
+  unbounded, which was always the actual argument.
+
+Not established: which query produced this one. The directory is stamped 11:56:42
+and the file was still being written at 12:21, which spans a restart and several
+hand-run jobs; second-hand timestamps are not enough to name it and it is not
+worth a campaign to find out. The sweep does not care which query it was.
+
 ## What is left
 
 Nothing on the leak itself. Two optional follow-ons, neither urgent:
