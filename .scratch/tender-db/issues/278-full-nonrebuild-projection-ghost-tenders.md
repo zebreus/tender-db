@@ -444,3 +444,27 @@ Reading the change history, `WHERE entity_kind = 'tender' AND entity_id IN
 into seeks — the same thing that cost 25 minutes in issue 329 and that
 `NAME_KEY_CARRIERS_SQL` probes twice with equality to avoid. Three sightings now:
 **probe with equality, once per value, however tempting the `IN` list looks.**
+
+## The census, running on prod
+
+Two runs by hand against the deployed build (`06cb836`, then `77f853f`), both
+`ok`, jobs 603 and 605:
+
+```
+ghost-census (issue 278): 0 notice(s) claimed by 2+ Tenders across 30 slice(s)
+of 1000000 notice ids, up to 29957753. Claims total 0, so the surplus (ghost)
+Tender count is 0.
+```
+
+**3 seconds in-process** for the whole 29.96M-id space — faster than the ~9 s
+the /v1/sql slices predicted, which is the HTTP round trips coming off. Against
+40+ minutes and a blocked queue for the form it replaced.
+
+The first run also exposed two things worth having found:
+
+* The enqueue arm still paired a project behind it, left over from the sweep
+  that needed a fold to do its retiring. A census writes nothing, so the pair
+  was noise — removed.
+* That paired no-op project printed `issue-318 wall DISABLED this run (key build
+  in flight or interrupted)` over a run that opened no resolver and bound
+  nothing. Filed and fixed as **issue 338**.

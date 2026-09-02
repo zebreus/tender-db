@@ -80,3 +80,14 @@ leaves it false. The supervisor's DISABLED branch requires it, so:
 Red-first: the new test fails on the old code with the false DISABLED string, and
 the existing "a real disable is loud" case is pinned beside it so the fix cannot
 be the other error — silencing the alarm that matters.
+
+## Verified live (2026-09-02, rev `77f853f`)
+
+A no-op project enqueued by hand against the deployed fix, job 606:
+
+```
+0 notices → 0 tenders (0 islands), 0 versions; 0 tenders written, 0 verified unchanged
+```
+
+No suffix — where the identical run twenty minutes earlier (job 604, rev
+`06cb836`) had appended the DISABLED sentence with its untrue cause.
