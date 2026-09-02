@@ -92,6 +92,38 @@ safety one, and the two must not be conflated in either direction:
   low-traffic window (no snapshots exist to name any more). Someone with box access runs it; the
   requester does not need to be that person.
 
+## A loop of bounded reads has its own failure mode
+
+The hourly audit step naturally produces the shape "run one bounded probe per row and count the
+hits". That shape is fine for the *rule* above — every probe is an indexed seek — and it has a
+trap that has nothing to do with the rule.
+
+`/v1/sql` enforces **2 concurrent and 300 requests/hour per token** (`sql.rs` §6). A 70-request
+loop, on top of an hour's other probing, walks into that ceiling. When it does, the endpoint
+returns an error body — and a loop that greps a number out of the response gets an *empty* string
+for it. `[ "${a:-0}" -gt 0 ]` then reads a shed request as a genuine zero, and the count comes back
+lower than reality with nothing to say so.
+
+**Measured, 2026-09-02.** Verifying the `value_completeness` gauge for `eforms:eforms-sdk-1.5`, a
+counting loop over the era's 35 versions reported **3** carrying an amount against the stored
+report's **5** — which looked like two amounts lost from a closed era that had not moved in eight
+days. Re-measuring with a loop that PRINTED each result instead of accumulating it found all five,
+raw bodies intact. The gauge was right the whole time; the instrument was shedding.
+
+So, for any loop of probes:
+
+- **Check the shape, not just the number.** A response is only an answer if it carries `row_count`
+  and `columns`; anything else is an error and the loop must stop and say so, not continue.
+- **Never let a missing value default to 0.** `${a:-0}` is how a shed request becomes a
+  measurement.
+- **Prefer one set-based bounded query to N per-row probes** when the plan allows it — it is one
+  request against the budget instead of N, and it cannot half-succeed.
+- **Print, then count.** A loop whose intermediate values are visible is one whose failures are
+  visible. The counting version is exactly as wrong and says nothing.
+
+This is the same rule as the `GATE-EXIT` one in CLAUDE.md, one layer out: read the value the thing
+actually returned, not the summary you derived from it.
+
 Both failure directions are real. Being too loose does not announce itself — nobody tells you about the
 read that quietly hurt. Being too strict produces beliefs that survive because nobody was permitted to
 check them; that has cost us a finding left unverified while two people re-derived it. The rule exists so
