@@ -147,3 +147,18 @@ kind rather than one per version.
 
 The 102 cases that left issue 311's cohort are still unenumerable. History starts
 now. That is the ordinary cost of noticing a gap by falling into it.
+
+### Prune verified on prod, 2026-09-02
+
+The retention bound was unit-tested but not demonstrated on the live database, and
+"the table cannot grow without limit" is exactly the claim that rots quietly on a
+490 GiB DB. Driven directly: `disk-census` (instantaneous — statvfs plus one stat)
+was run 15 times in total.
+
+```
+versions_held: 10      depth: 10      stamps spanning 50 seconds
+```
+
+**Capped at exactly ten, with the five oldest pruned in the same write.** No
+sweeper, no cron, no cleanup job to forget — the bound holds by construction on
+every `put_report`.
