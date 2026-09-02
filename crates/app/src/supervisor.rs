@@ -539,13 +539,20 @@ enum Spec {
 /// few new ambiguous rows are normal traffic. `vat_refused` gets none: the
 /// parser refusing a value it used to accept means the v2 gate moved under the
 /// standing rows, and one such row is worth a look.
-/// The four counters the next run's comparison actually reads, and nothing else
+/// The counters the next run's comparison actually reads, and nothing else
 /// (issue 325's tripwire; the nesting fixed 2026-09-02).
 ///
 /// A report that quotes its predecessor whole quotes its predecessor's
 /// predecessor with it. This keeps the human-readable "what it was compared
-/// against" line without the recursion: flat, four numbers, same shape every
+/// against" line without the recursion: flat, three numbers, same shape every
 /// week however long the series runs.
+///
+/// **Three, not four.** `gln_shared_one_country` is deliberately absent:
+/// [`parser_vs_stock_alarms`] treats it as a ZERO-FLOOR check — any value above
+/// zero alarms, whatever last week said — so it keeps no baseline by design. The
+/// first cut of this helper included it anyway and produced a field that was
+/// structurally always null, which is an invitation for someone to later "fix"
+/// the wiring of a comparison that does not exist.
 fn trimmed_baseline(previous: Option<&serde_json::Value>) -> serde_json::Value {
     let Some(before) = previous.map(|v| &v["parser_vs_stock"]) else {
         return serde_json::Value::Null;
@@ -558,7 +565,6 @@ fn trimmed_baseline(previous: Option<&serde_json::Value>) -> serde_json::Value {
         "no_longer_vat": pick("no_longer_vat"),
         "vat_country_differs": pick("vat_country_differs"),
         "vat_refused": pick("vat_refused"),
-        "gln_shared_one_country": pick("gln_shared_one_country"),
     })
 }
 
@@ -8681,7 +8687,7 @@ mod tests {
     /// versions of it. Found 2026-09-02 by reading the stored report while
     /// checking that the tripwire was still being computed at all.
     #[test]
-    fn the_stored_baseline_is_four_numbers_and_never_quotes_its_own_predecessor() {
+    fn the_stored_baseline_is_three_numbers_and_never_quotes_its_own_predecessor() {
         // A previous report in the shape the bug produced: a block that already
         // carries a baseline of its own, plus the bulky scheme table.
         let previous = serde_json::json!({
@@ -8702,15 +8708,17 @@ mod tests {
         assert_eq!(trimmed["no_longer_vat"], 7);
         assert_eq!(trimmed["vat_country_differs"], 1);
         assert_eq!(trimmed["vat_refused"], 0);
-        assert_eq!(trimmed["gln_shared_one_country"], 0);
+        // NOT gln_shared_one_country: it is a zero-floor check that keeps no
+        // baseline, so storing it only ever produced a null field.
+        assert!(trimmed.get("gln_shared_one_country").is_none());
 
         // THE REGRESSION: no recursion, and no bulk.
         assert!(trimmed.get("baseline").is_none(), "a baseline must not carry a baseline");
         assert!(trimmed.get("schemes").is_none(), "nor the per-scheme table");
         assert_eq!(
             trimmed.as_object().map(|o| o.len()),
-            Some(4),
-            "four counters, so the body is the same size on week one and week fifty"
+            Some(3),
+            "three counters, so the body is the same size on week one and week fifty"
         );
 
         // A first run and a malformed predecessor both give null rather than a
