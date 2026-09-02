@@ -5083,6 +5083,12 @@ impl Supervisor {
                 // This is the whole point of the job: growth is a reading rather
                 // than an inference.
                 let previous = self.db.previous_report("disk-census").await.ok().flatten();
+                // Three outcomes, kept apart deliberately. Collapsing "no earlier
+                // sample" and "the earlier sample is too close" into one branch
+                // made the second run report "no comparable earlier sample yet"
+                // while holding two — which reads as history failing to
+                // accumulate, the opposite of the truth.
+                let interval = previous.as_ref().map(|(_, at)| now.saturating_sub(*at));
                 let trend = previous.as_ref().and_then(|(body, at)| {
                     let older: serde_json::Value = serde_json::from_str(body).ok()?;
                     let free_then = older.get("free_bytes")?.as_u64()?;
@@ -5146,9 +5152,17 @@ impl Supervisor {
                                 .map(|f| format!("{f:.0} day(s)"))
                                 .unwrap_or_else(|| "no horizon (the volume gained space)".into()),
                         ),
-                        None => "No comparable earlier sample yet, so no rate — the first run \
-                                 establishes the baseline."
-                            .to_owned(),
+                        // Says WHICH of the two no-rate cases this is, because
+                        // "no earlier sample" and "one exists but is minutes old"
+                        // call for opposite reactions from a reader.
+                        None => match interval {
+                            None => "No earlier sample yet — this run establishes the baseline."
+                                .to_owned(),
+                            Some(secs) => format!(
+                                "An earlier sample exists but is only {secs}s old, too close to \
+                                 give a daily rate; the weekly cadence is what produces one."
+                            ),
+                        },
                     },
                     store::REPORT_HISTORY_DEPTH,
                 ))
