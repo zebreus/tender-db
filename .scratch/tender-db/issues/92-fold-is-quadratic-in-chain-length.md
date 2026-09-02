@@ -174,3 +174,44 @@ extrapolation.** The build trigger is unchanged and instrumented: the weekly DQ
 `longest_chain` line flags at ≥ 4,000 (current 3,282). When it flags, option (2)
 (`Arc`/persistent `rounds`) is the first cut, behind the four byte-identity gates.
 Step 2 is closed; nothing on this issue is actionable until the tripwire fires.
+
+## Instrument re-read 2026-09-02 — the deferral holds, and now with a series
+
+This issue defers the rewrite until the `longest_chain ≥ 4,000` tripwire flags.
+Three of this session's parked issues (48, 68, 169) turned out to rest on stale
+premises, so the same check was applied here — by reading the instrument rather
+than assuming it.
+
+`data-quality-headlines` carries its own run series:
+
+```
+2026-08-22 00:24   longest_chain = (absent)
+2026-08-23 04:50   longest_chain = (absent)
+2026-08-24 02:09   longest_chain = (absent)
+2026-08-27 05:19   longest_chain = (absent)
+2026-08-27 19:57   longest_chain = 3282
+2026-08-28 08:58   longest_chain = 3282
+2026-08-30 02:30   longest_chain = 3282
+```
+
+**Flat at 3,282 across every reading it has, against a threshold of 4,000.** The
+gauge appears to have been added around 2026-08-27, which is why the four earlier
+runs are absent rather than zero — worth knowing so nobody reads those as a jump
+from nothing.
+
+### Conclusion: nothing to do, and this time that is measured
+
+Unlike issues 48, 68 and 169, **this issue's premise has not drifted.** The
+deferral was conditioned on a tripwire, the tripwire exists, it is being computed,
+and its value is stable. That is the deferral working as designed rather than
+being forgotten.
+
+Two honest limits on the above: three readings over three days is a short series,
+and `data-quality` runs weekly (last 2026-08-30 02:30, next Sunday 2026-09-06), so
+this is checked-and-stable rather than proven-flat. No action, no re-triage.
+
+The wider note this session earned: **a deferral is only as good as whether anyone
+ever re-reads its condition.** Three of four parked issues had gone stale without
+anyone noticing. This one had not — because it was deferred against a *computed
+signal* instead of against a remembered number. That is the difference worth
+copying.
