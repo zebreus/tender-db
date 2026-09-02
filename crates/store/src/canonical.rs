@@ -1135,19 +1135,35 @@ pub fn head_deadline(head: &TenderVersion) -> Option<i64> {
 /// `BTreeSet`: two ENG titles at the same scope is not a shape the corpus should
 /// publish, and picking deterministically beats picking arbitrarily.
 pub fn head_title(head: &TenderVersion) -> Option<String> {
-    let pick = |facts: &mut dyn Iterator<Item = &Fact>| -> Option<(bool, String)> {
+    // The SAME ladder the read layer's `title_rank` applies (ADR-0013 D3 without
+    // a requested language): ENG → the version's original language → any
+    // labelled → unlabelled — and, among equals, the SMALLEST value. Issue 343:
+    // this used `max_by_key(is_eng)`, which returns the LAST of equal maxima,
+    // while the read pick takes the first row in scan order, and `Fact` is a
+    // `BTreeSet` ordered by value — so a notice with three tender-level ENG
+    // titles showed the alphabetically last one on `v_tenders` and the first on
+    // the REST list. Both sides now name the tie rule instead of inheriting one.
+    let original = head.original_lang.as_deref();
+    let pick = |facts: &mut dyn Iterator<Item = &Fact>| -> Option<String> {
         facts
             .filter_map(|f| match f {
                 Fact::Text { field, lang, value } if field == "title" => {
-                    Some((lang.as_deref() == Some("ENG"), value.clone()))
+                    let rank: u8 = match lang.as_deref() {
+                        Some("ENG") => 3,
+                        l if l.is_some() && l == original => 2,
+                        Some(_) => 1,
+                        None => 0,
+                    };
+                    Some((rank, value))
                 }
                 _ => None,
             })
-            .max_by_key(|(is_eng, _)| *is_eng)
+            // Highest rank wins; among equal ranks the smallest value — the
+            // read pick's `ORDER BY …, s.value` tail, spelled the same way.
+            .min_by(|(ra, va), (rb, vb)| rb.cmp(ra).then_with(|| va.cmp(vb)))
+            .map(|(_, value)| value.clone())
     };
-    pick(&mut head.facts.iter())
-        .or_else(|| pick(&mut head.lots.iter().flat_map(|l| l.facts.iter())))
-        .map(|(_, value)| value)
+    pick(&mut head.facts.iter()).or_else(|| pick(&mut head.lots.iter().flat_map(|l| l.facts.iter())))
 }
 
 /// The head version's highest amount as derived EUR cents (ADR-0014 D5) — the
@@ -17624,6 +17640,34 @@ mod tests {
         // Other fields are not titles, and no title at all is None rather than "".
         assert_eq!(head_title(&head(vec![text("description", None, "d")], Vec::new())), None);
         assert_eq!(head_title(&head(Vec::new(), Vec::new())), None);
+
+        // Issue 343: among EQUAL ranks the smallest value wins — the read pick's
+        // `ORDER BY …, s.value` tail, spelled the same way here. The old
+        // `max_by_key` returned the last of equal maxima, so a notice with three
+        // tender-level ENG titles showed a different one on `v_tenders` than on
+        // the REST list.
+        assert_eq!(
+            head_title(&head(
+                vec![
+                    text("title", Some("ENG"), "International Export/Import Courier Services"),
+                    text("title", Some("ENG"), "Framework Contract for Courier Services"),
+                    text("title", Some("ENG"), "Domestic Courier Services on the Territory of Poland"),
+                ],
+                Vec::new(),
+            ))
+            .as_deref(),
+            Some("Domestic Courier Services on the Territory of Poland")
+        );
+        // ADR-0013 D3's third leg reaches the fold-time head column too: with no
+        // ENG title, the version's ORIGINAL language beats any other labelled one.
+        let mut original_first =
+            head(vec![text("title", Some("FRA"), "Titre"), text("title", Some("DEU"), "Titel")], Vec::new());
+        original_first.original_lang = Some("DEU".into());
+        assert_eq!(head_title(&original_first).as_deref(), Some("Titel"));
+        // …and with no recorded original the ladder is unchanged: any labelled,
+        // smallest value.
+        original_first.original_lang = None;
+        assert_eq!(head_title(&original_first).as_deref(), Some("Titel"), "DEU < FRA by value, not by leg");
     }
 
     /// A deterministic LCG so the random graphs are reproducible without

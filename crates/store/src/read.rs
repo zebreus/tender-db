@@ -927,14 +927,19 @@ fn title_rank(lang: Option<&str>) -> String {
     // third term NULL, which sorts below both 0 and 1 under DESC — so a
     // version whose era never said its language ranks as if the leg were
     // absent, exactly the chain before the column existed.
+    //
+    // The `s.value` tail is the tie rule, stated (issue 343): a notice can publish
+    // several tender-level titles in one language, and "first in scan order" was
+    // an accident of insertion — the fold's `head_title` broke the same tie the
+    // other way. Both now take the smallest value among equals.
     match lang {
         Some(l) if l.len() == 3 && l.bytes().all(|b| b.is_ascii_uppercase()) => {
             format!(
                 "(s.lot_id IS NULL) DESC, (s.lang = '{l}') DESC, (s.lang = 'ENG') DESC, \
-                 (s.lang = v.original_lang) DESC"
+                 (s.lang = v.original_lang) DESC, s.value"
             )
         }
-        _ => "(s.lot_id IS NULL) DESC, (s.lang = 'ENG') DESC, (s.lang = v.original_lang) DESC"
+        _ => "(s.lot_id IS NULL) DESC, (s.lang = 'ENG') DESC, (s.lang = v.original_lang) DESC, s.value"
             .to_owned(),
     }
 }
@@ -2474,9 +2479,17 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
                 Some(_) => 1,
                 None => 0,
             };
-            if best_title[i].is_none_or(|best| rank > best) {
+            let value = opt_text_of(&row, 2);
+            // Among equal ranks the smallest value wins — the SQL's `s.value`
+            // tail and the fold's `head_title`, spelled the same way (issue 343)
+            // — rather than whichever row the scan produced first.
+            let better = match best_title[i] {
+                None => true,
+                Some(best) => rank > best || (rank == best && value < rows[i].title),
+            };
+            if better {
                 best_title[i] = Some(rank);
-                rows[i].title = opt_text_of(&row, 2);
+                rows[i].title = value;
             }
         }
 

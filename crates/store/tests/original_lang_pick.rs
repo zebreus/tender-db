@@ -158,16 +158,59 @@ async fn the_lot_title_pick_honours_the_original_too() {
     }
 }
 
+/// Issue 343: among titles of EQUAL rank the smallest value wins, on both read
+/// paths — a stated rule, not scan order. Inserted in reverse alphabetical
+/// order so that "first row scanned" and "smallest value" disagree.
+#[tokio::test]
+async fn equal_rank_titles_break_ties_by_smallest_value_not_scan_order() {
+    let (path, conn) = fixture("tie").await;
+    tender(
+        &conn,
+        5,
+        Some("ENG"),
+        &[("ENG", "International Export/Import Courier Services"), ("ENG", "Framework Contract for Courier Services"), ("ENG", "Domestic Courier Services on the Territory of Poland")],
+    )
+    .await;
+    assert_eq!(
+        title_of(&conn, 5, None).await.as_deref(),
+        Some("Domestic Courier Services on the Territory of Poland"),
+        "three ENG tender-level titles: the smallest value, though it was inserted last"
+    );
+
+    // The lots path (in-memory rank) breaks the same tie the same way.
+    exec(&conn, "INSERT INTO lots (id, tender_id, lot_key) VALUES (50, 5, 'LOT-0001')".into()).await;
+    exec(&conn, "INSERT INTO tender_version_lots (tender_id, seq, lot_id, kind) VALUES (5, 1, 50, 'Lot')".into())
+        .await;
+    for value in ["Zeta lot", "Alpha lot"] {
+        exec(
+            &conn,
+            format!(
+                "INSERT INTO tender_version_texts (tender_id, seq, lot_id, field, lang, value)
+                 VALUES (5, 1, 50, 'title', 'ENG', '{value}')"
+            ),
+        )
+        .await;
+    }
+    assert_eq!(lot_title_of(&conn, 5, None).await.as_deref(), Some("Alpha lot"), "lots: smallest value among equals");
+    for suffix in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{suffix}"));
+    }
+}
+
 /// A version whose era never said its language (the 1990s text notices) must
-/// rank exactly as before the column existed: no leg, deterministic tail.
+/// rank exactly as before the column existed: no leg, then the deterministic
+/// tail — which since issue 343 is the smallest value among equals, stated,
+/// rather than whichever row the scan produced first.
 #[tokio::test]
 async fn a_null_original_leaves_the_old_chain_untouched() {
     let (path, conn) = fixture("null").await;
+    // FRA inserted first, DEU second; "Titel" < "Titre" by value.
     tender(&conn, 3, None, &[("FRA", "Titre"), ("DEU", "Titel")]).await;
     assert_eq!(
         title_of(&conn, 3, None).await.as_deref(),
-        Some("Titre"),
-        "with no original recorded, the first labelled variant in scan order serves — the pre-column behaviour"
+        Some("Titel"),
+        "with no original recorded the two labelled variants tie, and the tie rule is the \
+         smallest value — not insertion order, which would have served the French one"
     );
     assert_eq!(title_of(&conn, 3, Some("DEU")).await.as_deref(), Some("Titel"));
     for suffix in ["", "-wal", "-shm"] {
