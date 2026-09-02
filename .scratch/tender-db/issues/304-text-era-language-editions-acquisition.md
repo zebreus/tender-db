@@ -329,3 +329,18 @@ free before the fold; 612's canonical share (versions × up to 24 languages of
 text) bounded by the parsed share again → **~420–470 GB free at landing.** The
 150 GB stop bound is not in play. `disk-census` will record the step on Sunday;
 `diskwatch` (80%) stays far below threshold.
+
+### Run telemetry (2026-09-02 19:5x UTC): the policy applies uniformly; cost per package holds
+
+| | |
+| --- | --- |
+| 609 | 83 / 92 packages, 3,234,350 notices re-parsed, ~150/s, WAL bounded (3 MB) |
+| DB file | 604,544,212,992 B — **+78.0 GB** over the month + 83 packages ≈ **0.93 GB/package** |
+| disk | 66% used, 581 GiB free; diskwatch `ok` hourly at its 80% drop-in threshold |
+| audit | fetch 150 (2013-12, r208): 37,869 notices, 11,124,569 `notice_texts` rows — **294 rows/notice** against the 2018-08 month's post-flip 151 (pre-flip 67) |
+
+So the older r208 forms carry even more copies per notice than the 2018 sample —
+the flip is applying everywhere the re-parse reaches — while bytes per package
+stay on the estimate (older titles are shorter). Projection unchanged: ~+70 GB
+for the remaining 9 + 70 packages, then the fold's canonical share; landing
+well above the 150 GB stop bound.
