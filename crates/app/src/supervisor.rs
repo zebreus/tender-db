@@ -1663,6 +1663,52 @@ impl Supervisor {
 /// over the following six minutes. Naming the readers here is what lets `cancel` refuse
 /// instead of lie, and the next long job added is refused by default rather than
 /// silently ignored.
+/// Issue 318: what the genericness wall did this run, as the suffix that rides
+/// the DURABLE job row. Extracted so its four cases are testable — this runtime's
+/// stderr does not reach journald (issues 61/63), so the job row IS the surface,
+/// and it printed a false alarm for as long as it existed (issue 338).
+///
+/// The counts ride here rather than a log line, and the suffix reports `enabled`
+/// and `anchor_reached` alongside the asks, because otherwise a zero means two
+/// things: the first full day's fold read "asked 0" over 3,889 notices and could
+/// not say whether the anchor path never fired or the wall was switched off.
+fn wall_suffix(w: &store::WallCounts) -> String {
+    if w.errored > 0 {
+        // An errored probe is never "fine": those binds went through at the
+        // pre-318 bar.
+        format!(
+            "; issue-318 wall enabled={} reached {} asked {} refused {} \
+             — {} PROBE(S) ERRORED, those binds took the pre-318 bar",
+            w.enabled, w.anchor_reached, w.asked, w.denied, w.errored
+        )
+    } else if w.anchor_reached > 0 {
+        format!(
+            "; issue-318 wall enabled={} reached {} asked {} refused {}",
+            w.enabled, w.anchor_reached, w.asked, w.denied
+        )
+    } else if w.resolved && !w.enabled {
+        // A DISABLED wall on a quiet day would otherwise be invisible: nothing
+        // reached the gate, so nothing is reported, so a prevention that is
+        // switched off reads exactly like one with nothing to do. That is the
+        // failure this whole instrument exists to avoid.
+        //
+        // `w.resolved` guards the INVERSE failure (issue 338): a fold with
+        // nothing unprojected returns `Report::default()` without opening a
+        // resolver, and a defaulted `enabled: false` read as a switched-off
+        // wall — printing a cause ("a key build is in flight or was
+        // interrupted") that was not true and binds ("took the pre-318 bar")
+        // that never happened. An instrument that cries wolf on empty runs is
+        // one an operator learns to skip.
+        "; issue-318 wall DISABLED this run (key build in flight or \
+         interrupted) — anchor binds took the pre-318 bar"
+            .to_owned()
+    } else {
+        // Armed and nothing fired, or nothing ran at all. Genuinely nothing to
+        // say either way.
+        String::new()
+    }
+}
+
 const STOPPABLE_KINDS: &[&str] = &[
     "reparse",
     "data-quality",
@@ -2604,43 +2650,7 @@ impl Supervisor {
                 // how a stopped fold gets mistaken for a finished one (the same
                 // rule the capped reparse follows, issue 244).
                 let cancelled = if report.stopped { "CANCELLED at a checkpoint — " } else { "" };
-                // Issue 318: the wall's counts ride the DURABLE job row, not a
-                // log line — this runtime's stderr does not reach journald
-                // (issues 61/63), and the batch arm's twin count is already
-                // durable in the r3-merge-plan report. Silent when the wall
-                // was never asked, loud when a probe errored: an errored probe
-                // means binds went through at the pre-318 bar.
-                // The suffix reports `enabled` and `anchor_reached` alongside
-                // the asks, because otherwise a zero means two things: the
-                // first full day's fold read "asked 0" over 3,889 notices and
-                // could not say whether the anchor path never fired or the
-                // wall was switched off. It stays silent only when the anchor
-                // path itself never fired AND nothing errored — the one case
-                // where there is genuinely nothing to say.
-                let w = report.wall;
-                let wall = if w.errored > 0 {
-                    format!(
-                        "; issue-318 wall enabled={} reached {} asked {} refused {} \
-                         — {} PROBE(S) ERRORED, those binds took the pre-318 bar",
-                        w.enabled, w.anchor_reached, w.asked, w.denied, w.errored
-                    )
-                } else if w.anchor_reached > 0 {
-                    format!(
-                        "; issue-318 wall enabled={} reached {} asked {} refused {}",
-                        w.enabled, w.anchor_reached, w.asked, w.denied
-                    )
-                } else if !w.enabled {
-                    // A DISABLED wall on a quiet day would otherwise be
-                    // invisible: nothing reached the gate, so nothing is
-                    // reported, so a prevention that is switched off reads
-                    // exactly like one with nothing to do. That is the failure
-                    // this whole instrument exists to avoid.
-                    "; issue-318 wall DISABLED this run (key build in flight or \
-                     interrupted) — anchor binds took the pre-318 bar"
-                        .to_owned()
-                } else {
-                    String::new()
-                };
+                let wall = wall_suffix(&report.wall);
                 Ok(format!(
                     "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged{wall}",
                     report.notices,
@@ -9882,6 +9892,62 @@ mod tests {
         let (alarm, _) =
             sup.db().latest_report("org-edge-scan-alarm").await.unwrap().expect("clear written");
         assert!(alarm.contains("\"clear\":true"), "{alarm}");
+    }
+
+    /// Issue 338: the wall suffix must not read a DEFAULT as a disabled wall.
+    ///
+    /// `project_incremental` returns `Report::default()` without opening a
+    /// resolver when nothing is unprojected, and `WallCounts::enabled` is a
+    /// `bool` — so the no-op run printed "wall DISABLED this run (key build in
+    /// flight or interrupted) — anchor binds took the pre-318 bar" over a run
+    /// that opened no resolver, made no bind, and had no build in flight. Two
+    /// of its three claims were false.
+    ///
+    /// The pinned pair is the point: the alarm must stay loud when the wall is
+    /// genuinely off, because silencing it is the OTHER error and it is the
+    /// worse one.
+    #[test]
+    fn the_wall_suffix_tells_a_no_op_run_apart_from_a_disabled_wall() {
+        let disabled = "wall DISABLED this run";
+
+        // A run that never opened a resolver: every field defaulted.
+        let quiet = store::WallCounts::default();
+        assert_eq!(
+            wall_suffix(&quiet),
+            "",
+            "a fold with nothing to project must say nothing about a wall it never consulted"
+        );
+
+        // A run that DID open one and found the wall unavailable. Still loud.
+        let off = store::WallCounts { resolved: true, enabled: false, ..Default::default() };
+        assert!(
+            wall_suffix(&off).contains(disabled),
+            "a genuinely switched-off wall must stay loud: {}",
+            wall_suffix(&off)
+        );
+
+        // Armed, nothing reached the gate — silent, and NOT for the same reason
+        // as the quiet run above, which is why `resolved` has to exist.
+        let armed = store::WallCounts { resolved: true, enabled: true, ..Default::default() };
+        assert_eq!(wall_suffix(&armed), "", "armed and idle has nothing to report");
+
+        // Anything that actually reached the gate reports its counts.
+        let fired = store::WallCounts {
+            resolved: true,
+            enabled: true,
+            anchor_reached: 7,
+            asked: 3,
+            denied: 1,
+            errored: 0,
+        };
+        let s = wall_suffix(&fired);
+        assert!(s.contains("reached 7") && s.contains("asked 3") && s.contains("refused 1"), "{s}");
+        assert!(!s.contains(disabled), "{s}");
+
+        // An errored probe is never silent and never "fine" — those binds went
+        // through at the pre-318 bar.
+        let errored = store::WallCounts { resolved: true, enabled: true, errored: 2, ..Default::default() };
+        assert!(wall_suffix(&errored).contains("PROBE(S) ERRORED"), "{}", wall_suffix(&errored));
     }
 
     /// Issue 313: the weekly pre-dawn tick must actually enqueue all three

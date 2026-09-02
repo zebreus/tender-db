@@ -2152,7 +2152,14 @@ pub(crate) const STALE_KEY_COUNT_SQL: &str =
 /// `anchor_reached` are what make a zero legible.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct WallCounts {
+    /// The wall's availability was actually DECIDED this run — i.e. the mention
+    /// resolver was opened. False on a run that resolved nothing at all, which
+    /// `Default` gives and which must not be read as a disabled wall: issue 338,
+    /// where a no-op fold printed "wall DISABLED … key build in flight or
+    /// interrupted" over a run that opened no resolver and bound nothing.
+    pub resolved: bool,
     /// The wall was available this run (index present, no build in flight).
+    /// Meaningless unless `resolved`.
     pub enabled: bool,
     /// Anchor-path binds that reached the wall's gate, enabled or not.
     pub anchor_reached: u64,
@@ -7048,6 +7055,9 @@ impl Db {
     /// means the wall was unavailable and binds went through leniently.
     pub fn wall_counts(resolver: &MentionResolver) -> WallCounts {
         WallCounts {
+            // Reached only from a live resolver, so the availability question
+            // was asked and answered — whatever the answer was.
+            resolved: true,
             enabled: resolver.wall_enabled,
             anchor_reached: resolver.anchor_reached,
             asked: resolver.asked_generic,
