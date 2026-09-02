@@ -1,8 +1,9 @@
 # 337 — turso leaks a temp-database directory under `TMPDIR`, ~5/day, unbounded
 
-Status: NEEDS-TRIAGE 2026-09-02 — leak characterised and the accumulated 143
-directories swept (safely, see below). **The leak itself is NOT fixed**: it is in
-the turso library, and nothing stops it recurring.
+Status: DIAGNOSED 2026-09-02 — **trigger found: the daily tick, one directory per
+tick.** Accumulated 143 swept safely; the leak itself is NOT fixed (it is in the
+turso library) but it is now characterised, timestamped, and much smaller than the
+first estimate. See "The trigger, caught on the first clean tick".
 Kind: resource leak (third-party) / operational hygiene
 Relates to: 169 (where it surfaced, and where it was correctly ruled OUT as the
 storage cause), 166 (the turso 0.7.2 bump)
@@ -78,3 +79,49 @@ box whose database is already 490 GiB.
 Watch for the next few to appear and correlate with what the box was doing. Now
 that the directory is empty, the *next* `.tmp*` to show up is a clean signal with
 a timestamp, which the previous 143 were not.
+
+## The trigger, caught on the first clean tick
+
+The previous section predicted that with `/data/tmp` emptied, "the next `.tmp*` to
+appear is a clean timestamped signal the previous 143 were not". It was.
+
+The daily tick fires 09:35 Berlin / 07:35 UTC. After it ran:
+
+```
+2026-09-02 09:35:03  /data/tmp/.tmp7EzLBf      (tursodb-temp.db + -wal, 4 KB)
+count: 1
+```
+
+**One directory, stamped at the tick minute itself** — 09:35:03, before any of the
+jobs it enqueued had finished (probe, process, fetch-rates, project and
+reveal-recheck all completed 09:36–09:39, all `ok`).
+
+### What that changes
+
+* **The rate is ~1/day, not ~5/day.** The 4–9/day measured over 2026-08-09→09-01
+  was inflated by campaign activity — that window held the text-era work, the
+  325/326/328 repairs and dozens of manual census runs. In steady state this is
+  one directory a day: ~365/year, still unbounded, but an order of magnitude
+  slower than the first reading suggested.
+* **It is not per-job and not per-restart.** Yesterday saw roughly twenty deploys
+  and thirty manual jobs and produced four directories; today's tick produced
+  exactly one. Whatever creates it happens once per tick.
+* **The sweep design is unchanged and still correct** — anything older than the
+  service's `ActiveEnterTimestamp` is provably orphaned.
+
+### Still not known
+
+*Which* part of the tick creates it. The stamp is the tick minute rather than any
+job's completion, so the candidates are the tick's own bookkeeping or the first
+job's opening work. One more tick with per-job timing would separate them, and
+that costs nothing but a day's patience.
+
+### A measurement error worth recording
+
+The first pass at this reported a directory in one line and `count: 0` in the
+next — a flat contradiction, caused by my own broken shell quoting inside a
+command substitution (the pattern became a literal `\".tmp*\"` and matched
+nothing). Had I read only the count, this issue would now say "nothing appeared at
+the tick" and the trigger would still be unknown. **Two numbers that cannot both
+be true are a signal to re-measure, not to pick one** — the same lesson issue 332
+recorded when a ratio of 100% sat beside thousands of one-over-many keys.
