@@ -599,10 +599,15 @@ async fn a_regroup_reparse_retires_keyed_and_island_ghosts_on_the_full_path() {
     }
 }
 
-/// Issue 278 track-2 sweep: given a ghost Tender (a notice under two Tenders — the
-/// pre-fix state the full path used to leave), `regrouped_dup_notice_ids` finds the
-/// shared notice, and marking it unprojected + an incremental project retires the
-/// ghost via `retire_regrouped_tenders` while keeping the real Tender.
+/// Issue 278: given a ghost Tender (a notice under two Tenders — the pre-fix state
+/// the full path used to leave), `ghost_census` finds the shared notice, and marking
+/// it unprojected + an incremental project retires the ghost via
+/// `retire_regrouped_tenders` while keeping the real Tender.
+///
+/// This is the whole repair path, and it is the one that actually cleared prod's
+/// ~45k: no bulk sweep ever ran: the incremental fold that drained the reparse
+/// backlog on 2026-08-26 retired them exactly as this test does. The census that
+/// replaced the sweep only counts.
 #[tokio::test]
 async fn the_ghost_sweep_finds_and_retires_a_duplicated_tender() {
     let (db, fetch, path) = scratch("ghostsweep").await;
@@ -631,7 +636,10 @@ async fn the_ghost_sweep_finds_and_retires_a_duplicated_tender() {
     .await
     .unwrap();
 
-    assert_eq!(db.regrouped_dup_notice_ids().await.unwrap(), vec![nid], "the shared notice is the only dup");
+    let census = db.ghost_census(1_000_000, 100, &|| false, &|_, _| {}).await.unwrap();
+    assert_eq!(census.ghost_notices, 1, "the shared notice is the only dup");
+    assert_eq!(census.ghost_tender_refs, 2, "it is claimed by two Tenders");
+    assert_eq!(census.sample.first().map(|g| g.notice_id), Some(nid), "and the census names it");
 
     // The sweep: mark the dup unprojected, then an incremental project retires the
     // ghost of the pair (the un-produced key) and keeps the real Tender.
@@ -664,7 +672,9 @@ async fn the_ghost_sweep_finds_and_retires_a_duplicated_tender() {
         "the ghost's retirement announced itself",
     );
     // An idempotent second pass finds nothing to do.
-    assert!(db.regrouped_dup_notice_ids().await.unwrap().is_empty(), "no dups remain — a re-run is a no-op");
+    let after = db.ghost_census(1_000_000, 100, &|| false, &|_, _| {}).await.unwrap();
+    assert_eq!(after.ghost_notices, 0, "no dups remain — a re-run is a no-op");
+    assert!(after.sample.is_empty(), "and nothing is sampled");
 
     for s in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{s}"));

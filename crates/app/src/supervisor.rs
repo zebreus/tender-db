@@ -441,13 +441,15 @@ enum Spec {
     /// structural rather than statistical (`expect`-style slack is meaningless for
     /// a list you typed): the list is capped, and a list over the cap is refused.
     RefoldNotices { notices: Vec<i64> },
-    /// Issue 278 track-2 cleanup: mark every notice whose `caused_by` appears under
-    /// 2+ Tenders (the ghost signature) unprojected, so the paired incremental fold
-    /// re-derives each under its one current key and retires the stale ghost member
-    /// via `retire_regrouped_tenders`. No epoch-stale stamp — the kept Tenders must
-    /// not be rewritten, only the ghosts retired. Self-scoping (no id list): the job
-    /// computes the set. Idempotent — a second run finds no dups and re-queues zero.
-    SweepRegroupedGhosts,
+    /// Issue 278: count the notices whose `caused_by` appears under 2+ Tenders —
+    /// the ghost signature — in bounded slices of the notice-id space. READ-ONLY.
+    ///
+    /// It was the track-2 sweep, which stalled the queue for 40+ minutes on an
+    /// unbounded `GROUP BY` and then sat as a no-op. The cleanup it existed for is
+    /// done: prod measured zero ghosts across all 29.96M notice ids on 2026-09-02,
+    /// the ~45k having drained away with the reparse backlog. What was missing was
+    /// anything that would notice them coming back, which is what this now is.
+    GhostCensus,
     /// Fetch the ECB daily reference-rate history and load `currency_rates`
     /// (ADR-0014 unit 2): archive the CSV under the ordinary fetch registry
     /// (source `ecb`, kind `rates`, period = fetch date), parse, seed the
@@ -1487,8 +1489,11 @@ impl Supervisor {
             // Issue 278 track-2: retire the ~45k ghost Tenders the pre-fix full path
             // left behind. Self-scoping (computes the dup-notice set), paired with an
             // ordinary incremental project so the scoped retirement runs. No id list.
-            "sweep-regrouped-ghosts" => Ok(vec![
-                self.push("sweep-regrouped-ghosts", "sweep-regrouped-ghosts".into(), Spec::SweepRegroupedGhosts)
+            // `sweep-regrouped-ghosts` stays accepted as an alias: durable job rows
+            // carry the kind string, so a queued or recovered row from before the
+            // rename must still resolve — and it now resolves to something safe.
+            "ghost-census" | "sweep-regrouped-ghosts" => Ok(vec![
+                self.push("ghost-census", "ghost-census".into(), Spec::GhostCensus)
                     .await,
                 self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false })
                     .await,
@@ -1687,6 +1692,10 @@ const STOPPABLE_KINDS: &[&str] = &[
     "generic-wall-census",
     "generic-statistic-census",
     "name-attribution-probe",
+    // Issue 278: it reads the stop flag between slices, so this is a claim it
+    // can keep. Its predecessor's whole incident was being un-stoppable —
+    // one 40-minute statement with nothing to check a flag between.
+    "ghost-census",
     "repair-country-typos",
     "repair-label-prefixes",
     "repair-minted-countries",
@@ -6775,17 +6784,76 @@ impl Supervisor {
                     summary.join("; ")
                 ))
             }
-            Spec::SweepRegroupedGhosts => {
-                // DISABLED pending redesign (issue 278 INCIDENT, 2026-08-26). The
-                // identification `regrouped_dup_notice_ids` runs an unbounded
-                // `GROUP BY … COUNT(DISTINCT)` over ~12.4M `tender_versions`, which is
-                // pathological on turso (40+ min, single-core, uncancellable) though
-                // fine under sqlite3 — so this handler MUST NOT run it. Returning a
-                // no-op here also makes the recover() re-run of the stalled job
-                // complete instantly on the next restart. The cleanup returns as a
-                // cursor-sliced job (issue-274 D5 pattern) or an offline precompute.
-                Ok("sweep-regrouped-ghosts is DISABLED pending redesign (issue 278 turso GROUP BY incident) — no-op".into())
-            }
+            Spec::GhostCensus => Box::pin(async move {
+                // BOXED. `run_spec` is a 62-arm async match, so every arm's locals
+                // live in ONE future; a census arm added to it once overflowed the
+                // stack of an unrelated supervisor test. Boxing keeps this arm's
+                // frame on the heap.
+                //
+                // This job kind used to be the track-2 SWEEP, and it stalled prod
+                // for 40+ minutes on 2026-08-26 running an unbounded
+                // `GROUP BY … COUNT(DISTINCT)` over ~12.4M `tender_versions`. It was
+                // then a deliberate no-op for a week. What replaces it is a
+                // read-only census over the same signature, sliced on the GROUP BY
+                // key itself — 0.30 s per million notice ids on prod, ~9 s for the
+                // whole space. It is a DETECTOR, not a cleanup: the ~45k ghosts it
+                // was built to remove are gone (measured 2026-09-02, zero across all
+                // 29.96M ids), and nothing was watching for the signature returning.
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase("walking", None, None, "issue 278: ghost signature".to_owned());
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("walking", Some(done), None, detail.to_owned());
+                };
+                // A slice per million notice ids. Wide enough that the whole space
+                // is ~30 statements, narrow enough that each is far under the
+                // /v1/sql-class 10 s bound that the unbounded form blew past.
+                const GHOST_WINDOW: i64 = 1_000_000;
+                const CAP: usize = 200;
+                let r = self
+                    .db
+                    .ghost_census(GHOST_WINDOW, CAP, &stop, &progress)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("ghost-census STOPPED by cancel — no report stored".to_owned());
+                }
+                let now = store::now_unix();
+                let surplus = r.ghost_tender_refs.saturating_sub(r.ghost_notices);
+                let body = serde_json::json!({
+                    "window": r.window,
+                    "max_notice_id": r.max_notice_id,
+                    "slices": r.slices,
+                    "ghost_notices": r.ghost_notices,
+                    "ghost_tender_refs": r.ghost_tender_refs,
+                    "surplus_tenders": surplus,
+                    "sample_truncated": r.truncated,
+                    "sample": r.sample.iter().map(|g| serde_json::json!({
+                        "notice_id": g.notice_id,
+                        "tenders": g.tenders,
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db.put_report("ghost-census", &body, now).await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "ghost-census (issue 278): {} notice(s) claimed by 2+ Tenders across \
+                     {} slice(s) of {} notice ids, up to {}. Claims total {}, so the surplus \
+                     (ghost) Tender count is {}. A notice keys to exactly ONE group — \
+                     `plan_notice.notice_id` is a PK — so any non-zero here is a defect, not \
+                     a tolerance. NOTHING IS WRITTEN: this replaced the sweep that stalled \
+                     the queue for 40+ minutes, and it counts rather than retires because \
+                     there has been nothing to retire since the reparse backlog drained. If \
+                     it ever returns non-zero, the retirement path already exists on the \
+                     incremental fold (`retire_regrouped_tenders`) — re-queue the named \
+                     notices and let an ordinary project run drop the stale member.",
+                    r.ghost_notices,
+                    r.slices,
+                    r.window,
+                    r.max_notice_id,
+                    r.ghost_tender_refs,
+                    surplus,
+                ))
+            }).await,
             Spec::RefoldFields { fields, expect } => {
                 let refs: Vec<&str> = fields.iter().map(String::as_str).collect();
                 // Enumerate BEFORE writing (the sweep is the expensive step and is
@@ -7986,6 +8054,13 @@ impl Supervisor {
                         // hour of key-building. Its value is the series, and a series with a
                         // missed week is worth less than one without.
                         self.push("disk-census", "disk-census (weekly)".into(), Spec::DiskCensus).await;
+                        // Issue 278: the standing check that no notice has come to
+                        // key to two Tenders again. ~9 s read-only at prod scale, so
+                        // it rides beside the disk stamp ahead of the long jobs. The
+                        // track-1 fix closes the one KNOWN mechanism; this is what
+                        // would catch a second one, which is the part that was
+                        // missing while the ~45k sat on prod unnoticed for weeks.
+                        self.push("ghost-census", "ghost-census (weekly)".into(), Spec::GhostCensus).await;
                         self.push(
                             "data-quality",
                             "data-quality (weekly)".into(),
@@ -8645,6 +8720,11 @@ mod tests {
         // — a HALF packet is worse than none, because a reviewer cannot see
         // that the missing cases were dropped rather than clean (issue 317
         // Unit A).
+        // ghost-census reads it between notice-id slices, and a stopped run
+        // stores NO report — a partial ghost count reads as a clean corpus,
+        // which is the one wrong answer this census must never give. Its
+        // predecessor could not be stopped at all: one unbounded statement
+        // with no checkpoint between anything (issue 278 INCIDENT).
         assert_eq!(
             STOPPABLE_KINDS,
             &[
@@ -8674,6 +8754,7 @@ mod tests {
                 "generic-wall-census",
                 "generic-statistic-census",
                 "name-attribution-probe",
+                "ghost-census",
                 "repair-country-typos",
                 "repair-label-prefixes",
                 "repair-minted-countries"
@@ -9811,7 +9892,7 @@ mod tests {
     /// wall-clock Sunday, so tripwire 6's weekly clock had only ever been
     /// exercised by hand — a wiring slip would have surfaced as silence.
     #[tokio::test]
-    async fn the_weekly_report_tick_enqueues_its_six_jobs_once_each() {
+    async fn the_weekly_report_tick_enqueues_its_seven_jobs_once_each() {
         let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
         sup.run_report_tick().await;
         let kinds: Vec<String> = sup.queued().into_iter().map(|j| j.kind).collect();
@@ -9821,6 +9902,8 @@ mod tests {
                 // Issue 169: first, because it is statvfs plus one stat and its
                 // whole value is an unbroken weekly series.
                 "disk-census",
+                // Issue 278: read-only, ~9 s, rides with the cheap stamps.
+                "ghost-census",
                 "data-quality",
                 "rehash-probe",
                 "build-org-match-keys",
@@ -9849,7 +9932,7 @@ mod tests {
         // A second tick with last week's work still queued stacks nothing
         // (the issue-282 already_pending guard).
         sup.run_report_tick().await;
-        assert_eq!(sup.queued().len(), 6, "already_pending must stop the double enqueue");
+        assert_eq!(sup.queued().len(), 7, "already_pending must stop the double enqueue");
     }
 
     /// Issue 324: the dry arm of `drop-orphan-satellites` writes its plan as

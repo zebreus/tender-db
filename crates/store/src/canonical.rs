@@ -2973,6 +2973,39 @@ pub struct WallGapOwner {
 /// resolver's ingest-time anchor bind applies the same bar MINUS that wall —
 /// and the resolver is the path that runs on every notice, without leaving an
 /// audit row. This counts the standing surface where the two disagree.
+/// One notice that keys to more than one Tender — an issue-278 ghost pair.
+/// `tenders` is how many Tenders claim it; the honest population is 1.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GhostNotice {
+    pub notice_id: i64,
+    pub tenders: i64,
+}
+
+/// What [`Db::ghost_census`] found. Read-only: it counts, it never retires.
+///
+/// A clean corpus reports `ghost_notices: 0`, which is the state prod has been
+/// in since the reparse backlog drained. The point of keeping the census is that
+/// nothing else watches for the signature returning — issue 278's track-1 fix
+/// closes the one known mechanism, and a standing count is what would catch a
+/// second one.
+#[derive(Debug, Default, Clone)]
+pub struct GhostCensusReport {
+    /// The slice width actually used, and the upper bound walked.
+    pub window: i64,
+    pub max_notice_id: i64,
+    pub slices: u64,
+    /// TOTALS over the whole id space — never bounded by `cap`. `ghost_notices`
+    /// counts notices claimed by 2+ Tenders; `ghost_tender_refs` sums the claims,
+    /// so `refs - notices` is the surplus (ghost) Tender count.
+    pub ghost_notices: u64,
+    pub ghost_tender_refs: u64,
+    /// Up to `cap` examples, for the report body. `truncated` says the sample was
+    /// cut — the counts above never are.
+    pub sample: Vec<GhostNotice>,
+    pub truncated: bool,
+    pub stopped: bool,
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct AnchorWallReport {
     /// N2 key groups walked, and those over the cap — the generic names.
@@ -16403,30 +16436,110 @@ impl Db {
     }
 
     /// The notices whose `caused_by_notice_id` appears under 2+ distinct Tenders —
-    /// the issue-278 ghost signature. `plan_notice.notice_id` is a PK, so a notice
-    /// keys to exactly ONE group; a notice under two Tenders means one of them is a
-    /// stale ghost the full non-rebuild path failed to retire (the ~45k measured on
-    /// prod). The cleanup (`sweep-regrouped-ghosts`) marks these unprojected so an
-    /// ordinary incremental fold re-derives each under its single current key and
-    /// its `retire_regrouped_tenders` drops whichever member is no longer produced.
-    /// One `GROUP BY` over `tender_versions` — bounded result (~45k), ~6s at prod
-    /// scale (measured); run once per sweep, not on any hot path.
-    pub async fn regrouped_dup_notice_ids(&self) -> turso::Result<Vec<i64>> {
-        let conn = self.conn().await;
-        let mut rows = conn
-            .query(
-                "SELECT caused_by_notice_id FROM tender_versions
-                  WHERE caused_by_notice_id IS NOT NULL
-                  GROUP BY caused_by_notice_id
-                 HAVING COUNT(DISTINCT tender_id) > 1",
-                (),
-            )
-            .await?;
-        let mut ids = Vec::new();
-        while let Some(row) = rows.next().await? {
-            ids.push(int(&row, 0));
+    /// the issue-278 ghost signature — counted in BOUNDED SLICES of the notice-id
+    /// space. `plan_notice.notice_id` is a PK, so a notice keys to exactly ONE
+    /// group; a notice under two Tenders means one of them is a stale ghost that
+    /// the full non-rebuild path failed to retire.
+    ///
+    /// ## Why slices, and why they are exact rather than approximate
+    ///
+    /// The unbounded form of this query — one `GROUP BY caused_by_notice_id` over
+    /// the whole of `tender_versions` — is what stalled production for 40+ minutes
+    /// on 2026-08-26, single-core and uncancellable, blocking the job queue. It was
+    /// "validated" beforehand under `sqlite3` on a snapshot, which is fast at it and
+    /// is NOT a proxy for turso's cost.
+    ///
+    /// Slicing fixes that, and the correctness argument is structural, not
+    /// statistical: **the slice key IS the `GROUP BY` key**, so no group can
+    /// straddle a boundary and no ghost can hide in the seam. A `BETWEEN` on
+    /// `caused_by_notice_id` also lets turso stream the group through
+    /// `tender_versions_notice` instead of materialising the whole table.
+    /// Measured on prod, 2026-09-02: **0.30 s per 1,000,000-wide slice**, ~9 s for
+    /// the whole 29.96M-id space, against 40+ minutes for the unbounded form.
+    ///
+    /// ## Why `COUNT(*)` and not `COUNT(DISTINCT tender_id)`
+    ///
+    /// `tender_versions` carries `UNIQUE (tender_id, caused_by_notice_id)`, so
+    /// within one `caused_by_notice_id` group each `tender_id` appears at most
+    /// once and the two are the same number. Verified on prod rather than assumed
+    /// (max rows per notice = 1 = max distinct tenders per notice, same window),
+    /// and `COUNT(*)` measured 3.5x faster because turso keeps no per-group set.
+    ///
+    /// The upper bound comes from `MAX(notices.id)` — a PK max, 22 ms at prod
+    /// scale — rather than `MAX(caused_by_notice_id)`, which is not an index max
+    /// and took 7.2 s. `caused_by_notice_id` is a `NOT NULL` reference to
+    /// `notices(id)`, so that bound cannot be short; at worst it adds empty slices.
+    ///
+    /// `cap` bounds what is REPORTED, never what is COUNTED: `ghost_notices` and
+    /// `ghost_tender_refs` are totals over the whole space however large the
+    /// sample is allowed to grow.
+    pub async fn ghost_census(
+        &self,
+        window: i64,
+        cap: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+        progress: &(dyn Fn(u64, &str) + Sync),
+    ) -> turso::Result<GhostCensusReport> {
+        let reader = self.reader().await?;
+        let window = window.max(1);
+        let mut report = GhostCensusReport { window, ..Default::default() };
+
+        // `ORDER BY id DESC LIMIT 1` rather than `MAX(id)`: the house idiom for an
+        // O(1) primary-key read here (see `newest_notice_at`), and it cannot decay
+        // into a scan the way an aggregate can.
+        let mut rows = reader.query("SELECT id FROM notices ORDER BY id DESC LIMIT 1", ()).await?;
+        report.max_notice_id = match rows.next().await? {
+            Some(row) => match row.get_value(0)? {
+                turso::Value::Integer(v) => v,
+                _ => 0,
+            },
+            None => 0,
+        };
+        drop(rows);
+        if report.max_notice_id <= 0 {
+            return Ok(report);
         }
-        Ok(ids)
+
+        let mut lo = 1i64;
+        while lo <= report.max_notice_id {
+            if stop() {
+                report.stopped = true;
+                return Ok(report);
+            }
+            let hi = lo.saturating_add(window - 1);
+            let mut rows = reader
+                .query(
+                    "SELECT caused_by_notice_id, COUNT(*) AS refs FROM tender_versions
+                      WHERE caused_by_notice_id BETWEEN ?1 AND ?2
+                      GROUP BY caused_by_notice_id
+                     HAVING COUNT(*) > 1
+                      ORDER BY caused_by_notice_id",
+                    (lo, hi),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                let notice_id = int(&row, 0);
+                let tenders = int(&row, 1);
+                report.ghost_notices += 1;
+                report.ghost_tender_refs += tenders as u64;
+                if report.sample.len() < cap {
+                    report.sample.push(GhostNotice { notice_id, tenders });
+                } else {
+                    report.truncated = true;
+                }
+            }
+            drop(rows);
+            report.slices += 1;
+            progress(
+                report.slices,
+                &format!(
+                    "issue 278 ghost census: notice ids {lo}..{hi} of {}, {} ghost notice(s) so far",
+                    report.max_notice_id, report.ghost_notices
+                ),
+            );
+            lo = hi.saturating_add(1);
+        }
+        Ok(report)
     }
 
     /// Award-linkage per era (docs/research/ted-legacy-mapping.md §3): of the

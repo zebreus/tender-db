@@ -1,8 +1,15 @@
 # 278 — the full non-rebuild projection retires only `ojs:%` keys, so a regrouped island/keyed tender survives as a ghost (double-count, no `removed` event)
 
-Status: FIX DEPLOYED (track 1) — `5357397`, prod green. Track-2 sweep STALLED on first
+Status: **RESOLVED 2026-09-02 — both tracks.** Track 1 (prevention) shipped
+`5357397`. Track 2 turned out to need none of its three options: the ghosts are
+already gone. Measured corpus-wide today — **0 notices claimed by 2+ Tenders across
+all 29,957,753 notice ids** — and what replaces the disabled sweep is a read-only
+sliced census that watches for the signature returning. See "Track 2, settled by
+measurement" at the bottom.
+Was: FIX DEPLOYED (track 1) — `5357397`, prod green. Track-2 sweep STALLED on first
 run then DISABLED (`c20b7c6`, deployed — grind stopped, prod green); the ~45k ghosts
-remain static, cleanup deferred to a redesigned (cursor-sliced) job. INCIDENT below.
+believed to remain static, cleanup deferred to a redesigned (cursor-sliced) job.
+INCIDENT below.
 
 **Resolution (2026-08-26 ~17:0x UTC):** disabled the `SweepRegroupedGhosts` handler to
 a no-op and deployed. The deploy's restart made `recover()` re-run the stalled job
@@ -11,7 +18,8 @@ pending redesign — no-op"), stopping the 46-minute grind without the classifie
 `TENDER_DROP_JOBS` drop. The paired project (387) then ran a normal incremental fold of
 the ~20.5k unprojected backlog that had accumulated behind the blocked queue. Health
 green throughout. The sweep marked NOTHING before it stalled (it hung in identification,
-before the unmark), so no partial state to undo.
+before the unmark), so no partial state to undo. **That fold is where the cleanup
+actually started — see the bottom section; this note recorded it as a side effect.**
 
 ## INCIDENT (2026-08-26 ~18:1x UTC) — sweep's GROUP BY stalled, my benchmarking error
 
@@ -318,3 +326,121 @@ snapshot, never in a turso job — a sqlite3 timing is not a turso timing.
 double-count on `/v1/tenders`, not growing — track-1 stops new ones), so track-2
 clearance is a future focused unit, not an urgent action. Re-measure the dup
 count on a fresh snapshot before and after whenever it lands.
+
+## Track 2, settled by measurement (2026-09-02)
+
+The issue asked for a decision between three cleanup designs. The decision is
+none of them, because there is nothing left to clean.
+
+### The measurement
+
+Bounded reads through `/v1/sql`, thirty slices of 1,000,000 notice ids each,
+covering `caused_by_notice_id` 1..29,957,753:
+
+```
+TOTAL ghost notices across 1..30000000: 0
+```
+
+The instrument was validated before the zero was believed, because a zero is
+exactly the answer a broken query gives:
+
+| control, window 1..1,000,000 | result |
+| --- | --- |
+| notices with `COUNT(DISTINCT tender_id) > 0` | 539,133 |
+| notices with `COUNT(DISTINCT tender_id) = 1` | 539,133 |
+| `MAX(COUNT(DISTINCT tender_id))` per notice | 1 |
+
+Same denominator on both sides, and a maximum of one — so the plumbing works and
+the window has data. Two more checks agree:
+
+* **The two documented ghost pairs are gone.** Of 260507/473438 and
+  457837/1081988, only one member of each survives (`260507`, `457837`).
+* **No version-less orphans.** `COUNT(*) FROM tenders WHERE current_seq IS NULL`
+  is 0, so no ghost survived merely by having its versions reassigned. 7,922,926
+  Tenders, all at `projection_epoch = 3`.
+
+### When they went, and the part that does not reconcile
+
+`changes` puts a timestamp on it. Both sampled ghosts were retired at the same
+instant — `changed_at = 1787763954`, **2026-08-26 17:05:54 UTC** — which is the
+minute the sweep was no-opped and the paired incremental fold (job 387) drained
+the 20.5k-notice backlog. That fold's `retire_regrouped_tenders` did exactly what
+this issue says the incremental path does: found each notice's stale Tender and
+retired it. The resolution note above recorded that fold as an unblocking side
+effect; it was the cleanup.
+
+Counting `removed` tender events in bounded cursor ranges:
+
+| cursor range | removals | span |
+| --- | --- | --- |
+| 434,086,642 .. 434,269,205 | 13,768 (all stamped 1787763954) | the 08-26 fold |
+| ~497M | 10,989 | 2026-08-27 .. 09-01 |
+| **total from cursor 434,000,000 to head** | **24,760** | |
+
+24,760 recorded removals against 45,108 measured ghosts. **That does not close,
+and it is being written down rather than rounded off.** Candidates: retirements
+before cursor 434M (the 45,108 was read on the 08-26 snapshot, and the first
+campaigns predate it); or a full projection pass that reset the layer without
+emitting per-Tender `removed` rows — the uniform `projection_epoch = 3` across
+all 7.9M Tenders is consistent with one having run. The corpus-wide zero is the
+load-bearing number here and it is measured three ways; the accounting of how it
+got there is not, and no conclusion below depends on it.
+
+### The turso lesson needs a correction
+
+The INCIDENT above concluded that turso's `GROUP BY … COUNT(DISTINCT)` is
+"pathologically slow" and that the query must be avoided. Half right. What is
+pathological is the **unbounded** form. Sliced on the grouping column itself,
+the same query is quick:
+
+| form | cost |
+| --- | --- |
+| whole table, `COUNT(DISTINCT tender_id)` | 40+ min, uncancellable |
+| 1M-id slice, `COUNT(DISTINCT tender_id)` | 1.07 s |
+| 1M-id slice, `COUNT(*)` | **0.30 s** |
+| whole 29.96M space, 30 slices of `COUNT(*)` | ~9 s |
+
+Two things make that work. First, slicing on `caused_by_notice_id` lets turso
+stream the groups through `tender_versions_notice` instead of materialising the
+table — and it is **exact rather than approximate**, because the slice key IS the
+`GROUP BY` key, so no group can straddle a boundary. Second, `COUNT(*)` is
+identical to `COUNT(DISTINCT tender_id)` here: `tender_versions` carries
+`UNIQUE (tender_id, caused_by_notice_id)`, so a tender appears at most once per
+notice. Verified on prod (max rows per notice = max distinct tenders per notice =
+1 over the same window) rather than argued from the schema alone.
+
+So option (a) — the cursor-sliced identification — was viable all along, and is
+now what ships. Not as a cleanup, but as the thing that was actually missing.
+
+### What shipped
+
+`sweep-regrouped-ghosts` is no longer a disabled no-op. The kind is now
+**`ghost-census`** (the old name stays accepted as an alias, because durable job
+rows carry the kind string and a recovered row must still resolve):
+
+* `Db::ghost_census(window, cap, stop, progress)` — read-only, sliced, and it
+  reads the stop flag between slices, so `ghost-census` is in `STOPPABLE_KINDS`.
+  Its predecessor's defining failure was being uncancellable.
+* `cap` bounds what is REPORTED; `ghost_notices` / `ghost_tender_refs` are totals
+  over the whole space (issue 326's lesson, pinned by a test).
+* The upper bound comes from `SELECT id FROM notices ORDER BY id DESC LIMIT 1` —
+  the house O(1) idiom — not `MAX(caused_by_notice_id)`, which took 7.2 s.
+* On the **weekly tick**, beside `disk-census`, ahead of the long jobs.
+* Report `ghost-census`, so it has history (issue 335) and a `/metrics` stamp.
+* `crates/store/tests/ghost_census.rs`: 7 tests, red-first proven — truncating the
+  walk after one slice turns 3 of them red.
+
+**The retirement path deliberately did NOT ship.** There is nothing to retire, and
+an unexercised bulk-write path is worse than none: if the census ever returns
+non-zero, `retire_regrouped_tenders` on the ordinary incremental fold already does
+this correctly — re-queue the named notices and let a project run drop the stale
+member. That is the mechanism that cleared the original ~45k.
+
+### A third sighting of the `IN` trap
+
+Reading the change history, `WHERE entity_kind = 'tender' AND entity_id IN
+(473438, 1081988, 260507, 457837)` hit the 10 s cap; the same query with a single
+`entity_id =` returned in 50 ms. turso does not split an `IN` on an indexed column
+into seeks — the same thing that cost 25 minutes in issue 329 and that
+`NAME_KEY_CARRIERS_SQL` probes twice with equality to avoid. Three sightings now:
+**probe with equality, once per value, however tempting the `IN` list looks.**

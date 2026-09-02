@@ -40,6 +40,7 @@ pub use canonical::{
     LabelFix, LabelRepairReport,
     GenericKeyShape, GenericStatisticReport,
     GenericWallReport, InflatedKey,
+    GhostCensusReport, GhostNotice,
     NameAttribution, NameAttributionReport,
     NamePollutionReport, PollutedName,
     MintedCountryFix, MintedCountryReport,
