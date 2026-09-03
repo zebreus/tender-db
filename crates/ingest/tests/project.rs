@@ -165,6 +165,9 @@ async fn the_real_procedure_chain_becomes_one_tender_with_four_versions() {
     assert_eq!(report.tenders, 1);
     assert_eq!(report.islands, 0);
     assert_eq!(report.applied.versions_written, 4);
+    // Issue 96: the heartbeat's leaf-row count is the satellites' real write
+    // volume — four versions of a real procedure carry texts, dates, parties.
+    assert!(report.applied.leaf_rows > 4, "leaf rows: {}", report.applied.leaf_rows);
 
     assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 1);
     assert_eq!(
@@ -600,6 +603,7 @@ async fn the_change_log_reads_added_then_changed() {
     let before = all.len();
     let again = project::project(&db, false).await.expect("re-project");
     assert_eq!(again.applied.versions_written, 0);
+    assert_eq!(again.applied.leaf_rows, 0, "a no-op re-projection writes no satellite rows either");
     assert_eq!(again.applied.changes, 0);
     assert_eq!(changes(&db, 0, 1000).await.len(), before);
 
