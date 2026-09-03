@@ -205,3 +205,7 @@ holds the writer, times a waiter out at 50 ms, and asserts depth 0 while still
 holding. The service restart at the 09:03 deploy cleared the two ghosts; the fix
 itself deploys with the next bundle. The ≥ 10 s wait line (above) is unaffected —
 it runs only after an acquisition.
+
+Deployed 2026-09-03 10:21 UTC (`b02a222`, health ok) — the drop guard and the ≥ 10 s
+wait line are both live. The line earned its keep the same morning: six
+13–38 s waits behind the 340 backfill's batches, timestamped, no request cut.

@@ -113,3 +113,6 @@ two profiles, re-parse them (the 251 machinery; DE 1.x + sdk-0.1 are ~7% of
 versions), re-run the backfill (idempotent, now one transaction per batch).
 Until then those versions rank with the leg absent — the old chain — which is
 the correct fallback, never a wrong guess.
+
+The one-transaction-per-batch backfill (`b02a222`) is deployed as of 10:21 UTC;
+344's re-run of the walk will use it.
