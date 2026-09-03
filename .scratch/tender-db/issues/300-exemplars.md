@@ -77,6 +77,16 @@ Ids not yet pinned are Stage-0 census items, marked ⚙.
   relation, NOT exact N2/N3 equality, so R3's corroboration condition fails
   ⇒ **must-FLAG** (`r3-uncorroborated` edge). No pressure to weaken exact
   corroboration; the E4 acronym generator is the future lever.
+  **Verified against the live outcome 2026-09-03** (merge ledger read from the
+  09-03 snapshot): the family went exactly the way this sheet predicted —
+  5599259 (FR "CNFPT", SIREN), 3498493 and 4404773 (FR SIRETs) merged into
+  3134661 by **R2** on 2026-08-29 (job 444, canonical key `FR:siren 180014045`);
+  3153629 (NULL) merged into 3134661 by **R3** with a `checksum` anchor and an
+  N2-equal name (job 457). Still standing, correctly: 3153628 (GP, the
+  "CNFPF" typo — no N2 key, no merge), 3507716 (NULL "CNFPT", SIRET-02245 —
+  not N2-equal to the keep's name, so no R3), and 5599260 (NULL, the
+  expansion — this must-FLAG). The acronym↔expansion pair is now
+  5599260 ↔ 3134661; the determination stands.
 - **EBSCO** — orgs 11531400 (GB) + 23311674 (SE), national 5020490073.
   Bare 10-digit (PL NIP is also 10 digits): not scheme-anchored ⇒
   `r3-unanchored`, flag-first per the design's demotion.

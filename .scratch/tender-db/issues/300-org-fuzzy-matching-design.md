@@ -1081,3 +1081,15 @@ differ from the section's primary, both bilingual self-duplicates), so the
 satellite contamination prior is ≈ 0 — both on `300-exemplars.md`. Remaining
 before Stage 1: the top-100 multi-name classification (the report's `top` list,
 100 rows, is the input) and the CNFPT check.
+
+**Stage 0 COMPLETE 2026-09-03.** Gate constants (weekly report), the Bertin-class
+census (≈ 0), Kærunefnd (must-FLAG), the top-100 classification (91 legitimate /
+4 condemn / 2 merge candidates / 5 cautions — totals on the sheet), and the CNFPT
+check — which doubled as a live validation: the merge ledger shows the family
+handled by R2 (job 444) and R3 (job 457) on 2026-08-29 exactly as the sheet
+predicted, with the typo row and the expansion row left standing. Note for the
+status line: R2/R3 (Stages 2–3) and the Stage-4 edge store have therefore been
+running since 08-29 (issues 309/310/314); what this design still owes is Stage 1
+(placeholder gate v2 + split — now with four new gate classes from the top-100:
+`t:` phone ids, scheme-`EU` short numerics, the Greek/Latin confusable fold, the
+RO `_n` suffix) and Stage 5. Re-derive the status line from that before building.
