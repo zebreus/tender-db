@@ -194,40 +194,6 @@ class: a phone number in the identifier slot (`t:` prefix), which no register
 scheme produces and which fused two bodies. Ranks 21–100 remain (the report's
 `top` list, saved for the pass).
 
-## Satellite contamination (must surface as edge ONLY)
-
-- **org 23294544** — (SE, national, 5562964618, "Bertin Exensor AB"), ONE
-  mention (notice 25038532, ORG-0003), satellite rows ENG "Bertin Exensor
-  AB" + NLD "Het Ministerie van Defensie". **Mechanism found 2026-08-28: the
-  SOURCE notice is defective** — 25038532's XML fills ORG-0003's NLD variant
-  slot with the buyer's name, and ORG-0002's NLD slot with an English
-  string; the publisher's authoring tool crossed the multilingual slots.
-  Our capture is faithful; the source is dirty. Consequence: satellite
-  variants are source-published claims, so a variant may name a DIFFERENT
-  real org — exactly why cross-language equality corroborates but never
-  merges, why corroboration provenance is logged, and why the wrong-name
-  variant here must never corroborate anything.
-- ⚙ Stage-0 census item (sharper than the first cut): count same-notice
-  same-lang identical BT-500 values on >1 ORG section WHERE the duplicated
-  value differs from the section's own primary name. First bounded read
-  (notices 25,000,000-25,020,000): 1,833 duplicate-value groups over 17,274
-  BT-500-bearing notices ≈ 10.6% incidence UPPER bound — the wrong-name
-  subset (the Bertin class) is inside it and unmeasured; the census sizes
-  the satellite's contamination prior for corroboration weighting.
-  **Measured 2026-09-03, the sharper cut** (same window, 67,878 BT-500 rows
-  over 17,274 notices, 24 languages): of the 1,833 duplicate-value groups,
-  only **2** carry a duplicated value that differs from the section's own
-  original-language BT-500 (joined through BT-702) — and both are Belgian
-  bilingual buyers whose FR/EN translation of their OWN name sits on two of
-  their own sections (notice 25006588 "SERVICE PUBLIC FÉDÉRAL STRATÉGIE ET
-  APPUI" ↔ NL primary "FEDERALE OVERHEIDSDIENST BELEID EN ONDERSTEUNING";
-  25019799 "Ministry of Defence" ↔ "Ministerie van Defensie"). The Bertin
-  shape (a translation slot naming a DIFFERENT org) is **0 in the window**;
-  the 1,831 others are the same org in two roles with identical names. So the
-  contamination prior for cross-language satellite corroboration is ≤ 0.01%
-  of notices — corroboration may weight satellite pairs as reliable, with the
-  Bertin exemplar kept as the known rare shape rather than a prior.
-
 ### Top-100 ranks 36–50, classified 2026-09-03 (bounded mention samples)
 
 | rank | org | class | note |
@@ -268,3 +234,36 @@ scheme produces and which fused two bodies. Ranks 21–100 remain (the report's
 | 64 | 1513 Vergabekammer Rheinland (DE, `05315-03002-81`) | legitimate legal person, **caution** | "Vergabekammer Westfalen" (1,202 mentions) rides the same NRW id — the 1448 shape |
 | 65 | 633 Vergabekammer Brandenburg (DE, `t:03318661719`) | legitimate cluster, phone-number id | coherent, like 447 |
 
+## Satellite contamination (must surface as edge ONLY)
+
+- **org 23294544** — (SE, national, 5562964618, "Bertin Exensor AB"), ONE
+  mention (notice 25038532, ORG-0003), satellite rows ENG "Bertin Exensor
+  AB" + NLD "Het Ministerie van Defensie". **Mechanism found 2026-08-28: the
+  SOURCE notice is defective** — 25038532's XML fills ORG-0003's NLD variant
+  slot with the buyer's name, and ORG-0002's NLD slot with an English
+  string; the publisher's authoring tool crossed the multilingual slots.
+  Our capture is faithful; the source is dirty. Consequence: satellite
+  variants are source-published claims, so a variant may name a DIFFERENT
+  real org — exactly why cross-language equality corroborates but never
+  merges, why corroboration provenance is logged, and why the wrong-name
+  variant here must never corroborate anything.
+- ⚙ Stage-0 census item (sharper than the first cut): count same-notice
+  same-lang identical BT-500 values on >1 ORG section WHERE the duplicated
+  value differs from the section's own primary name. First bounded read
+  (notices 25,000,000-25,020,000): 1,833 duplicate-value groups over 17,274
+  BT-500-bearing notices ≈ 10.6% incidence UPPER bound — the wrong-name
+  subset (the Bertin class) is inside it and unmeasured; the census sizes
+  the satellite's contamination prior for corroboration weighting.
+  **Measured 2026-09-03, the sharper cut** (same window, 67,878 BT-500 rows
+  over 17,274 notices, 24 languages): of the 1,833 duplicate-value groups,
+  only **2** carry a duplicated value that differs from the section's own
+  original-language BT-500 (joined through BT-702) — and both are Belgian
+  bilingual buyers whose FR/EN translation of their OWN name sits on two of
+  their own sections (notice 25006588 "SERVICE PUBLIC FÉDÉRAL STRATÉGIE ET
+  APPUI" ↔ NL primary "FEDERALE OVERHEIDSDIENST BELEID EN ONDERSTEUNING";
+  25019799 "Ministry of Defence" ↔ "Ministerie van Defensie"). The Bertin
+  shape (a translation slot naming a DIFFERENT org) is **0 in the window**;
+  the 1,831 others are the same org in two roles with identical names. So the
+  contamination prior for cross-language satellite corroboration is ≤ 0.01%
+  of notices — corroboration may weight satellite pairs as reliable, with the
+  Bertin exemplar kept as the known rare shape rather than a prior.
