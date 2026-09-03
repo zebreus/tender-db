@@ -436,3 +436,19 @@ tender in this stretch), 5.31M/7.92M at 05:50 UTC → lands ≈ 07:05 UTC, and t
 
 Landing order stands: counts → daily chain drains → queue idle → one manual
 `tender-db-snapshot.service` run → deploy main tip → backfill → probes → board.
+
+### 07:49 UTC — 93% folded; nine daily jobs queued behind, unpersisted (issue 256)
+
+612: 7,397,789 / 7,922,692 tenders, 6,313,716 version rows, 350 tenders/s over
+the last 10 min → lands **≈ 08:15 UTC**. DB 647.6 GB, WAL 4 MB, spill 32 GB,
+75% used / 458 GB free, load 1.0, health 200, no reclaim lines.
+
+Queued behind it: 613 probe, 614 process, 615 probe, 616 process, 617
+fetch-rates, 618 project, 619 reveal-recheck, 620 probe, 621 probe — the 07:35
+UTC daily chain plus the morning catch-up polls (222). The supervisor logged for
+613 and 621 that persisting the queue row "gave up after 30s — a long job is
+holding the writer (issue 256). The job IS queued in memory and will run, but a
+restart before it does will lose it." So the landing order's "queue idle" is
+load-bearing twice over: a deploy before those nine have run would drop the
+day's ingest silently. Runbook step 7 is therefore: confirm **613–621** all show
+`ok` in `recent` before `./deploy.sh`.
