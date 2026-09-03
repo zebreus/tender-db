@@ -3155,12 +3155,27 @@ impl Db {
             }
         }
         drop(rows);
-        for (tender_id, seq, lang) in stamps {
-            conn.execute(
-                "UPDATE tender_versions SET original_lang = ? WHERE tender_id = ? AND seq = ?",
-                (Value::Text(lang), Value::Integer(tender_id), Value::Integer(seq)),
-            )
-            .await?;
+        // One transaction per batch. The first cut issued each UPDATE on its own —
+        // ~9,200 autocommits (a WAL append and fsync each) per 10,000-tender window —
+        // and measured 398 tenders/s on prod with the writer held 20–40 s per window
+        // (2026-09-03, job 632: 5.5 h projected for 7.9M tenders). The sibling
+        // backfills are one statement per batch for the same reason; this one cannot
+        // be (the 639-2/T map is Rust), so the rows share a commit instead.
+        if !stamps.is_empty() {
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+            for (tender_id, seq, lang) in stamps {
+                if let Err(e) = conn
+                    .execute(
+                        "UPDATE tender_versions SET original_lang = ? WHERE tender_id = ? AND seq = ?",
+                        (Value::Text(lang), Value::Integer(tender_id), Value::Integer(seq)),
+                    )
+                    .await
+                {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
+            conn.execute("COMMIT", ()).await?;
         }
         // Like `backfill_current_value_eur`: the count is the WINDOW's tenders, so
         // a window whose versions were all stamped already (or all NULL-by-era)
