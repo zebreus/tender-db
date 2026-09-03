@@ -498,6 +498,12 @@ pub struct WriterContention {
     longest_wait_nanos: AtomicU64,
 }
 
+/// A single writer wait at or above this is journaled with its length, so the
+/// never-reset `longest_wait_seconds` high-water mark has a timestamp to be
+/// read against. Ten seconds is far above any ordinary acquisition (the mean
+/// is microseconds) and below the shortest stall worth investigating.
+pub const SLOW_WRITER_WAIT: std::time::Duration = std::time::Duration::from_secs(10);
+
 /// A snapshot of [`WriterContention`], so a scrape reads one consistent set.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct WriterStats {
@@ -968,11 +974,25 @@ impl Db {
         self.writer.depth.fetch_add(1, Ordering::Relaxed);
         let started = std::time::Instant::now();
         let guard = self.conn.lock().await;
-        let waited = started.elapsed().as_nanos().min(u64::MAX as u128) as u64;
-        self.writer.depth.fetch_sub(1, Ordering::Relaxed);
+        let elapsed = started.elapsed();
+        let waited = elapsed.as_nanos().min(u64::MAX as u128) as u64;
+        let still_queued = self.writer.depth.fetch_sub(1, Ordering::Relaxed) - 1;
         self.writer.acquisitions.fetch_add(1, Ordering::Relaxed);
         self.writer.waited_nanos.fetch_add(waited, Ordering::Relaxed);
         self.writer.longest_wait_nanos.fetch_max(waited, Ordering::Relaxed);
+        if elapsed >= SLOW_WRITER_WAIT {
+            // The high-water mark above says HOW LONG the worst wait was but not
+            // WHEN — on 2026-09-03 a 752 s stall sat in `/metrics` with nothing in
+            // the journal to line it up against (one wait held 752 of the 763 s
+            // waited across 7.2M acquisitions). A timestamped line is the
+            // attribution: whichever job the journal shows around it held the
+            // writer. Rare by construction — at the 7.2M-acquisition scale, waits
+            // this long numbered one.
+            eprintln!(
+                "[store] writer acquired after a {:.1} s wait ({still_queued} caller(s) still queued)",
+                elapsed.as_secs_f64()
+            );
+        }
         guard
     }
 

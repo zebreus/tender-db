@@ -160,3 +160,31 @@ well past the deadline).
 
 **Still owed for the acceptance:** the prod probe during a real long-running job — hold the writer
 or ride a fold, confirm a stalled `/v1` request answers 503 within ~30 s and the counter moves.
+
+## 2026-09-03 — the high-water mark had no timestamp; now a wait ≥ 10 s is journaled
+
+Read during the 304 campaign (03:5x UTC, service up since 2026-09-02 13:26 UTC):
+
+| | |
+| --- | --- |
+| `writer_acquisitions_total` | 7,195,090 |
+| `writer_wait_seconds_total` | 763.2 |
+| `writer_longest_wait_seconds` | **752.7** |
+| `request_deadline_hits_total` | 0 |
+| `writer_queue_depth` | 0 |
+
+One wait held 752 of the 763 seconds ever waited — a single caller sat 12.5 minutes
+behind the writer, once, and no request was cut, so it was an internal path (the
+supervisor's own bookkeeping, most likely behind one of the two re-parses'
+`stamp_stale_for_profiles` UPDATE of 3.5M tenders). Which one, and when, the box
+cannot say: the gauge is a never-reset maximum by design, the journal has no line
+for it, and `Db::conn` has no caller label. That is exactly the "no trace" this
+issue is about, one level down from the request.
+
+Landed directly (small): `Db::conn` now journals
+`[store] writer acquired after a N s wait (K caller(s) still queued)` when a
+single wait reaches `SLOW_WRITER_WAIT` (10 s). The timestamp is the attribution —
+whichever job the journal shows holding the writer around it. The threshold is
+far above the ordinary acquisition (the mean is microseconds) and, at this scale,
+fires about once per campaign, so it is not noise. No test: a stderr line behind
+a constant; the contention path itself is pinned by the existing test.
