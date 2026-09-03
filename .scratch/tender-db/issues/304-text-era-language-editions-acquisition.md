@@ -1,6 +1,6 @@
 # 304 — acquire the text era's missing language editions (the un-downloaded TED zips)
 
-Status: STAGE-1 CODE BUILT 2026-08-28 ~03:2x (inert — TranslationPolicy::EnOnly
+Status: STAGE 1 CLOSED 2026-09-03 — policy flip deployed (`d416104` 2026-09-02) and applied corpus-wide (609/611: 7,141,552 notices, 0 failing; 612: 3,529,251 tenders written), the bundle `9f0bcea` (340/343/339/241) deployed 09:03 UTC, original_lang backfilled (632). Tender-layer breadth is bounded by the packages — see "Stage-1 acceptance at the TENDER layer". Stage 2 (text-era acquisition) and 341 (eForms translations) remain needs-decision. Was: STAGE-1 CODE BUILT 2026-08-28 ~03:2x (inert — TranslationPolicy::EnOnly
 stays the dispatch default; the campaign act is the flip + a measured one-month
 re-parse). r208 needs no twin: both ted-export profiles run the same r209
 module, so form_section is the single change site. The policy test pins both
@@ -532,3 +532,22 @@ So stage 1 closes as: **the policy flip is deployed and applied corpus-wide
 legacy language breadth at the tender layer is bounded by the packages —
 which is the stage-2/341 question, unchanged.** 343's read side and 340's
 column and backfill ride the same deploy.
+
+### Stage 1 CLOSED (2026-09-03 10:2x UTC) — the ledger
+
+| unit | result |
+| --- | --- |
+| policy flip (`TranslationPolicy::All` for `ted-export-*`) | deployed 2026-09-02, inert-default test kept |
+| one-month measurement (fetch 94, 2018-08) | parsed layer +52.5% bytes, 67 → 151 `notice_texts` rows/notice |
+| corpus re-parse (609 + 611) | 7,141,552 notices / 162 packages / 12.1 h, 0 now failing, 0 unmatched |
+| fold (612) | 14,331,573 notices → 7,922,692 tenders; 3,529,251 written, 4,393,441 verified unchanged; 5.8 h |
+| disk | DB 526.5 → 648.5 GB (+122 GB); /data 74%, 479 GB free; snapshot divergence recorded on 169, Sunday's prune returns ~400 GB |
+| tender layer | +2–3% texts per r209 window: the bulk carries no translated titles for ordinary notices (heading CPV labels only, correctly ignored); EU-institution and bilingual forms now serve every copy they hold |
+| `?lang=` | verified: 6287622 default / de / fr / en flip on both list and detail; lots too |
+| `original_lang` (340) | column live, backfill 632 walked 7,924,745 tenders in 70 min — close-out on 340 |
+
+Not done, deliberately: reclaiming the heading rows (a narrower `ML_TI_DOC`
+policy + a 12-hour re-parse — a 169 option); a refold to catch the 343 head
+titles up (rides the next epoch campaign). Open decisions for Lennart: stage 2
+breadth (per-language text-era editions, +~150 GB) and 341 (eForms translations
+via the API).

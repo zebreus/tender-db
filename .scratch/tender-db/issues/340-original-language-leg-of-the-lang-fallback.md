@@ -1,6 +1,6 @@
 # 340 — the `?lang=` fallback's "original language" leg (ADR-0013 D3, third leg)
 
-Status: BUILT 2026-09-02 (`4b91542`, gate green, red-first on both rank
+Status: CLOSED 2026-09-03 — deployed (`9f0bcea`), backfilled (job 632, 7,924,745 tenders), served; the DE 1.x / sdk-0.1 residue is issue 344. Was: BUILT 2026-09-02 (`4b91542`, gate green, red-first on both rank
 implementations). NOT YET DEPLOYED — deploy frozen until the issue-304 campaign's
 job 610 lands (a restart re-runs the running job from the top); then
 `backfill-original-lang` queues behind the deploy.
@@ -77,3 +77,39 @@ fix is one `BEGIN IMMEDIATE … COMMIT` around the batch's rows. Deploying it
 over the running job is safe: the walk is idempotent (stamped rows are skipped),
 so the re-enqueued job re-covers the first 1.1M tenders in seconds and does the
 rest at transaction speed.
+
+## CLOSED 2026-09-03 10:3x UTC — column live, backfilled, served; one era gap filed as 344
+
+```
+632 ok: original_lang backfill walked 7924745 tenders — 4,187 s (70 min)
+```
+
+The "5.5 h" projection was the LOW ids' rate (398/s: legacy tenders, many
+versions, many stamps); the mid and high ids ran at ~4,000–4,700 tenders/s, so
+the per-row autocommit cost what it cost and the walk still finished in 70 min.
+The transaction fix (`b02a222`) is for the next walk.
+
+`/v1/tenders/6287622` now carries `"original_lang": "ENG"`; `?lang=de` / `fr`
+flip as before. NULL share per era, 20k-tender PK windows:
+
+| window | era (from the notices' profiles) | NULL |
+| --- | --- | --- |
+| 0–20,000 | 1990s text notices | 15.5% (7,841 of 50,522) — the OL-less years, expected |
+| 300,000–320,000 | mixed eForms, incl. DE 1.x and sdk-0.1 | 10.1% — **all of it DE 1.x + sdk-0.1** |
+| 1,000,000–1,020,000 | mixed | 9.9% |
+| 1,500,000–1,520,000 | DÖE sdk-0.1 (98.6%) + DE 1.x | **99.9%** |
+| 3.0M / 5.0M / 6.3M / 6.5M / 7.5M / 7.8M | eForms SDK 1.x, DE 2.x, r209 | **0%** |
+
+So the leg is complete for every era whose parse records a language code, and
+the r208/r209 + EU-eForms + DE 2.x corpus is fully stamped. The residue is not
+"the era never said": the DÖE sdk-0.1 and eForms-DE 1.x XML DO carry
+`cbc:NoticeLanguageCode` (`DEU`; the fixtures show it, line 12 of the sdk-0.1
+one), but those two parsers do not record it — the sdk-0.1 notice's code rows
+are five `SDK01-*` values with no language, the DE 1.x one has only
+`UBL-DocumentLanguageID`, which is the procurement DOCUMENTS' language
+(BT-708-shaped, "document plumbing" in the parse-only list), not the notice's.
+That is a parser-inventory gap, filed as **issue 344**: record BT-702 for the
+two profiles, re-parse them (the 251 machinery; DE 1.x + sdk-0.1 are ~7% of
+versions), re-run the backfill (idempotent, now one transaction per batch).
+Until then those versions rank with the leg absent — the old chain — which is
+the correct fallback, never a wrong guess.
