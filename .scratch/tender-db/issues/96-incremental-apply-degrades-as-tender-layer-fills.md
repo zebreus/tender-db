@@ -131,3 +131,16 @@ Filed from live prod measurement during the 2026-08-02 DE-1.x re-fold, at team-l
 request. Raw data above is from journald `[project] incremental fold: N/M Tenders applied`
 heartbeats plus `free -m` sampling; the apply itself completed correctly — this issue is
 about scaling, not correctness.
+
+## 2026-09-03 — one more observation, still ambiguous (job 612, bucketed apply of 7.92M tenders)
+
+Rate over the apply, from the heartbeat lines: 575 tenders/s and 1,150 versions/s in
+the first hour (buckets over the low tender ids), 350 tenders/s and ~700 versions/s
+mid-way, 261 tenders/s and 543 versions/s in the last hour. The versions-per-tender
+ratio doubled across the run (1.0 → 2.1), so the per-TENDER slowdown is mostly
+content; but the per-VERSION rate halved too, which content alone does not explain
+unless the later versions carry more rows each (the eForms-era versions do carry
+more texts). Per-bucket row counts are not logged, so the fill-vs-content split
+stays unmeasured — exactly this issue's open question. A `[project]` heartbeat that
+also prints leaf rows written would settle it on the next big fold at zero cost;
+noted, not built.

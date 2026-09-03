@@ -1,6 +1,6 @@
 # 67 — cut the serial fold's per-statement floor (skip-stored_chain + prepare-residual + multi-row batch)
 
-Status: proposed (spec — build only if the restart's measured fold rate still shows the apply as the wall)
+Status: CLOSED 2026-09-03 — all three levers found built in `canonical.rs`; measured on job 612 at 641 tenders/s (the predicted ceiling). Was: proposed (spec — build only if the restart's measured fold rate still shows the apply as the wall)
 Kind: performance
 Blocked by: — (sits on top of dac9187: issue62 fast chain — prepared-stmt fold + parallel pre-pass)
 Design owner: proj-fix
@@ -121,3 +121,23 @@ does not touch THIS apply floor. Set expectations accordingly.
 `project_golden` (cross-commit) + `project_resume`, all green, before any deploy. The
 changes digest (ORDER BY cursor) is the sensitive one — if (c) ever touches `changes`, a
 divergence surfaces there first.
+
+## 2026-09-03 — closed by inspection and measurement: all three levers are in the code, and the apply sits at the honest ceiling
+
+Read from `crates/store/src/canonical.rs` today:
+
+* (a) `apply_tender_tx`: `let stored = if rebuild { Vec::new() } else { self.stored_chain(…) }` — the rebuild guard.
+* (b) `TenderInserts` carries `head_update`, `lot_lookup`, `lot_result_lookup`, `bid_lookup`, `contract_lookup` as prepared statements beside the hot inserts.
+* (c) `flush_rows` issues chunked multi-row `INSERT … VALUES (…),(…)` for `tender_version_lots`, `_texts`, `_amounts` and the other leaf tables; identity rows stay per-row.
+
+(The repository's history is flattened at b4a18a2, so the landing commits cannot be
+dated; the code is what counts.)
+
+Measured with them, on job 612 (the 304 campaign's fold, 2026-09-03, epoch-stamped
+so `stored_chain` was load-bearing): **apply 7,922,692 tenders / 7,292,947 versions in
+12,352 s = 641 tenders/s, 590 versions/s** — 3 h 26 min, 59% of the 5.8-hour fold.
+That is the "low-single-digit hours" this issue's honest-ceiling paragraph predicted for
+one serial writer; the rate fell 575 → 261 tenders/s across the run as versions per
+tender rose 1.0 → 2.1 (issue 96 carries the observation). Nothing left to build here;
+further apply speed means parallel writers, which ADR-0001's ordered surrogate ids
+forbid. CLOSED.
