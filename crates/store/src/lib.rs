@@ -504,6 +504,31 @@ pub struct WriterContention {
 /// is microseconds) and below the shortest stall worth investigating.
 pub const SLOW_WRITER_WAIT: std::time::Duration = std::time::Duration::from_secs(10);
 
+/// One caller's place in the writer queue (issue 241), released on drop.
+///
+/// The depth was a `fetch_add` before the lock and a `fetch_sub` after it — which
+/// is one `fetch_sub` short whenever the waiting future is DROPPED instead of
+/// resumed: a `tokio::time::timeout` around `Db::conn` (issue 256's queue-persist
+/// gives up after 30 s behind a fold) abandons the wait, and the gauge stayed one
+/// higher for the life of the process. On 2026-09-03 `/metrics` read
+/// `writer_queue_depth 2` on an idle box after two such give-ups — exactly the
+/// "sustained non-zero depth" the gauge exists to flag, with nobody waiting.
+/// A drop guard is cancellation-safe by construction.
+struct Queued<'a>(&'a AtomicU64);
+
+impl<'a> Queued<'a> {
+    fn new(depth: &'a AtomicU64) -> Self {
+        depth.fetch_add(1, Ordering::Relaxed);
+        Queued(depth)
+    }
+}
+
+impl Drop for Queued<'_> {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, Ordering::Relaxed);
+    }
+}
+
 /// A snapshot of [`WriterContention`], so a scrape reads one consistent set.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct WriterStats {
@@ -971,12 +996,15 @@ impl Db {
             self.writer.acquisitions.fetch_add(1, Ordering::Relaxed);
             return guard;
         }
-        self.writer.depth.fetch_add(1, Ordering::Relaxed);
+        // Held by a guard, not an add/sub pair, so a caller that gives up mid-wait
+        // (a `timeout` around this future) is un-counted on drop — see [`Queued`].
+        let queued = Queued::new(&self.writer.depth);
         let started = std::time::Instant::now();
         let guard = self.conn.lock().await;
+        drop(queued);
         let elapsed = started.elapsed();
         let waited = elapsed.as_nanos().min(u64::MAX as u128) as u64;
-        let still_queued = self.writer.depth.fetch_sub(1, Ordering::Relaxed) - 1;
+        let still_queued = self.writer.depth.load(Ordering::Relaxed);
         self.writer.acquisitions.fetch_add(1, Ordering::Relaxed);
         self.writer.waited_nanos.fetch_add(waited, Ordering::Relaxed);
         self.writer.longest_wait_nanos.fetch_max(waited, Ordering::Relaxed);
@@ -4230,6 +4258,38 @@ tmpfs /data/ramcache tmpfs rw 0 0
             "the high-water mark is one wait, not the sum: {after:?}"
         );
         assert!(after.acquisitions >= 5, "one uncontended + one held + three queued: {after:?}");
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 241, the gauge's one leak: a waiter that gives up (a `timeout` around
+    /// `conn`, as issue 256's queue-persist does behind a fold) must not leave a
+    /// ghost in `queue_depth`. Before the drop guard this read 1 forever — on prod,
+    /// 2 after two give-ups, on an idle box.
+    #[tokio::test]
+    async fn a_waiter_that_gives_up_leaves_no_ghost_in_the_queue_depth() {
+        let path = format!("/tmp/tender-db-writer-giveup-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Arc::new(Db::open(&path).await.unwrap());
+
+        let held = db.conn().await;
+        let waiter = {
+            let db = Arc::clone(&db);
+            tokio::spawn(async move {
+                tokio::time::timeout(std::time::Duration::from_millis(50), async {
+                    let _guard = db.conn().await;
+                })
+                .await
+            })
+        };
+        let gave_up = waiter.await.unwrap();
+        assert!(gave_up.is_err(), "the waiter timed out behind the held writer");
+        assert_eq!(
+            db.writer_stats().depth,
+            0,
+            "an abandoned wait is un-counted the moment it is dropped, while the writer is still held"
+        );
+        drop(held);
 
         let _ = std::fs::remove_file(&path);
     }
