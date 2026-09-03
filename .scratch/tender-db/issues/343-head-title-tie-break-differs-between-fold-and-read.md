@@ -1,6 +1,6 @@
 # 343 — a version with several tender-level titles: the fold's `current_title` and the read-time pick break the tie differently
 
-Status: FIXED 2026-09-02 (same day; not yet deployed — the 304 campaign freeze).
+Status: FIXED 2026-09-02, DEPLOYED 2026-09-03 (`9f0bcea`). Read side verified on prod; the materialised `current_title` of heads written by the pre-fix fold (612) keeps the old tie-break until refolded — see the probe note at the end.
 The mechanism was exact, not "scan order vs precedence": see "Why, exactly".
 Kind: consistency (read layer vs fold-time head column)
 Relates to: 115 (the set-based summary picks and their SQL oracle), 216 (the
@@ -76,3 +76,24 @@ turns the tie test red.
 
 Not changed: which rows match, filters, `?lang=` semantics. A requested language
 still outranks everything, as before.
+
+## Probe after the deploy (2026-09-03 09:1x UTC, rev `9f0bcea`) — read side fixed, the materialised column catches up per refold
+
+| surface | title for 6287622 |
+| --- | --- |
+| `/v1/tenders/6287622` (read-time `title_rank`, new rule) | Domestic Courier Services on the Territory of Poland |
+| `tenders.current_title` (fold-time `head_title`) | **International Export/Import Courier Services** — still the OLD rule |
+
+Not a failed fix: `current_title` is written by the fold, and this tender's head
+was last written by job 612, which ran on the pre-fix binary (`d416104`,
+finished 08:07 UTC; the deploy was 09:03). The fold-side rule is deployed and
+applies to every tender the fold touches from now on; the 3.5M heads 612 wrote
+keep their old tie-break until something re-folds them — the daily incremental
+fold for touched ones, an epoch refold for all. **A refold campaign just for this
+is not worth 5.8 hours**; the materialised heads catch up with the next
+epoch-stamped campaign (304 stage 2, or whichever comes first), and this issue
+stays FIXED-IN-CODE with that residue stated. Only notices with several
+tender-level titles (framework r208/r209 shapes) can differ at all.
+
+Both read paths agree with each other now (list, detail, lots all serve the
+smallest value among equals), which is the half users touch.

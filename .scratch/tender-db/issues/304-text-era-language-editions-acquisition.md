@@ -476,3 +476,53 @@ target from now), the 08-28 one pruned; free unchanged at 487 GB as predicted
 08-30 and returns the bulk.
 
 Step 2: deploy of `9f0bcea` (the 339+340+343+241 bundle) started 08:53 UTC.
+
+### Stage-1 acceptance at the TENDER layer (2026-09-03 09:1x UTC) — smaller than the parsed layer said, and why
+
+The runbook's corpus read (step 5), before/after on the same tender windows —
+"before" from the pre-campaign 08-30 snapshot (bounded PK range, read-only),
+"after" from the serving DB:
+
+| window (tender ids) | before | after |
+| --- | --- | --- |
+| 6,500,000–6,505,000 | 22 title languages, 177,185 texts | 24 / 183,433 (**+3.5%**) |
+| 6,287,000–6,292,000 (r209 heads, 2018–2019) | 22 / 218,188 | 24 / 223,304 (**+2.3%**) |
+
+Per language the counts rose by ~65 each — a couple of tenders per window
+gained a 24-language set, the rest gained nothing. Ten consecutive r209
+tenders (6287001–6287008, 21 versions, every head `ted-export-r209`): the
+NOTICE layer holds **24 title languages for each**, the VERSION layer **1**.
+
+**Why, exactly.** What the flip let in for an ordinary notice is
+`ML_TITLES/ML_TI_DOC[@LG]` × 24 — stored as `TED-TI_CY`/`TED-TI_TOWN`/
+`TED-TI_TEXT` per language — and the projection maps none of them to `title`
+(only `TED-TITLE`, the body title). Should it? Measured on 100 notices of the
+2018-08 month: `TI_TEXT` in the notice's OWN language differs from `TED-TITLE`
+in **100 of 100** — it is the OJ heading's subject label (CPV-descriptor
+style: "Services d'assurance" against a real title "Marché d'assurances
+dommages aux biens…", "Servicii de urbanism" against "Actualizare PUG"). A
+per-language `title` from it would displace real titles with category labels,
+so **the projection is right to leave it out** (issue 233's last-resort rule
+for `TI_DOC` stands as the only use).
+
+What the campaign DID deliver at the tender layer is what the bulk XML holds:
+the extra FORM_SECTION copies — the EU-institution notices published in all
+languages (6287622: 24 languages × 3 titles at the head, the probe that read
+POSITIVE on 2026-09-02 was one of these, the atypical case), the bilingual
+originals, and the EN translation copy where the package carries one (the
+stage-1 design's own 1.5× measurement). For the ordinary national notice the
+r208/r209 bulk has no translated title — the earlier correction ("the full
+per-language renderings live in TED's interface, not the bulk XML") was right,
+and this is what it looks like at the API.
+
+**Cost of the heading rows** (below): they are most of the parsed-layer growth
+and serve nothing at the tender layer. Reclaiming them means a narrower policy
+(`Langs` for `ML_TI_DOC`: original + EN only, `All` for FORM_SECTION) and
+another 12-hour re-parse; at ~4% of the volume that is a 169 option, not an
+urgency. Filed as the note below rather than queued.
+
+So stage 1 closes as: **the policy flip is deployed and applied corpus-wide
+(7.14M notices, 0 failing), the fold carries every copy the packages hold, and
+legacy language breadth at the tender layer is bounded by the packages —
+which is the stage-2/341 question, unchanged.** 343's read side and 340's
+column and backfill ride the same deploy.
