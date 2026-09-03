@@ -43,6 +43,19 @@ pub struct GateCensus {
     /// TWO real ids (B8 catalog rule 4's splitter target), recoverable, not
     /// junk.
     pub compound: bool,
+    /// A telephone number in the identifier slot — `t:04131153308`,
+    /// `T03455141536`: a `t`/`T` (optional colon) then a 0-led 9–12-digit
+    /// run. The German review chambers publish theirs consistently, so the
+    /// class is a stable per-body key most of the time — and a fusion when
+    /// two bodies share a switchboard (org 660: Vergabekammer Niedersachsen
+    /// + the Bund's chambers, 2026-09-03 top-100 read). Census-only.
+    pub phone: bool,
+    /// A bare 4–5-digit number on a DE national row (`8477`, `13754`,
+    /// `13124`): no German register issues such ids, and each of the three
+    /// live specimens fused unrelated municipalities and associations (a
+    /// platform's own record number under a raw `EU` scheme). Census-only
+    /// until the weekly report sizes the class.
+    pub short_numeric: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -75,6 +88,14 @@ pub fn census(country: Option<&str>, kind: Option<&str>, value: &str) -> GateCen
         let tail_digits = value.get(2..).map(|t| t.bytes().filter(u8::is_ascii_digit).count());
         out.short_vat = tail_digits.is_some_and(|n| n < 6);
     }
+    out.phone = phone_shaped(value);
+    out.short_numeric = !is_vat
+        && country == Some("DE")
+        && (4..=5).contains(&value.len())
+        && value.bytes().all(|b| b.is_ascii_digit())
+        // A sequence or lexicon hit ("1234") is already its own class.
+        && !out.sequence
+        && !out.lexicon;
     // Scheme resolution is census-only: vat keys resolve by their own
     // prefix, national keys by (country, shape). Never used for merging.
     let cc = if is_vat { value.get(..2) } else { country };
@@ -128,6 +149,15 @@ pub fn census(country: Option<&str>, kind: Option<&str>, value: &str) -> GateCen
         || (!is_vat && value.bytes().any(|b| b.is_ascii_alphabetic()));
     out.checksum = if letters_beyond_prefix { Checksum::Unknown } else { checksum };
     out
+}
+
+/// `t:04131153308` / `T03455141536`: a `t`/`T`, an optional colon, then a
+/// 0-led run of 9–12 digits — a German telephone number written where an
+/// identifier belongs (see [`GateCensus::phone`]).
+pub fn phone_shaped(value: &str) -> bool {
+    let Some(rest) = value.strip_prefix(['t', 'T']) else { return false };
+    let rest = rest.strip_prefix(':').unwrap_or(rest);
+    (9..=12).contains(&rest.len()) && rest.starts_with('0') && rest.bytes().all(|b| b.is_ascii_digit())
 }
 
 /// The generic-name cap: a corroboration name carried by MORE than this many
@@ -978,6 +1008,34 @@ mod tests {
         let padded = census(Some("FR"), Some("national"), "00000219740248");
         assert_eq!(padded.scheme, "FR:siren-padded");
         assert_eq!(padded.checksum, Checksum::Pass);
+    }
+
+    /// The two classes the 2026-09-03 top-100 multi-name read added, pinned
+    /// on the live specimens (issue 300 exemplar sheet). Both are census-only:
+    /// nothing here changes `condemns`.
+    #[test]
+    fn phone_ids_and_short_de_numerics_are_censused_like_the_top_100_read() {
+        // Orgs 660 (stored with its colon), 447, 633 and 122 (stored bare).
+        for v in ["t:04131153308", "T03455141536", "T03318661719", "T022894990"] {
+            assert!(census(Some("DE"), Some("national"), v).phone, "{v} is a phone number");
+        }
+        // Not phones: a real AT register id, a DE court id, a Thüringen chamber id.
+        for v in ["210220Y", "HRB12345", "16900334000129", "T1234"] {
+            assert!(!census(Some("DE"), Some("national"), v).phone, "{v} is not a phone number");
+        }
+        // Orgs 22165664, 22318692, 21985079: bare 4–5-digit DE "identifiers".
+        for v in ["8477", "13754", "13124"] {
+            let c = census(Some("DE"), Some("national"), v);
+            assert!(c.short_numeric && !c.sequence, "{v} is the short-numeric class");
+        }
+        // Not the class: a sequence (already caught), a zero-padded 8-digit
+        // Hessian id, the same digits on a non-DE row, a VAT stub.
+        assert!(!census(Some("DE"), Some("national"), "1234").short_numeric);
+        assert!(!census(Some("DE"), Some("national"), "00002636").short_numeric);
+        assert!(!census(Some("AT"), Some("national"), "8477").short_numeric);
+        assert!(!census(Some("DE"), Some("vat"), "8477").short_numeric);
+        // A phone id is never a checksum candidate.
+        assert_eq!(census(Some("DE"), Some("national"), "T03455141536").checksum, Checksum::Unknown);
     }
 }
 

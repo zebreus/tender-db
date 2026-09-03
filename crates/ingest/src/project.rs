@@ -4578,12 +4578,77 @@ pub fn canonical_country(raw: &str) -> String {
     }
 }
 
+/// Greek and Cyrillic capitals (and the Greek lowercase forms the uppercase
+/// step would reach anyway) that render like Latin capitals, folded to the
+/// Latin letter. Only letters that are visually identical are mapped — this
+/// is a lookalike fold for identifier text, not a transliteration.
+fn fold_confusable(c: char) -> char {
+    match c {
+        'Α' | 'α' => 'A',
+        'Β' | 'β' => 'B',
+        'Ε' | 'ε' => 'E',
+        'Ζ' | 'ζ' => 'Z',
+        'Η' | 'η' => 'H',
+        'Ι' | 'ι' => 'I',
+        'Κ' | 'κ' => 'K',
+        'Μ' | 'μ' => 'M',
+        'Ν' | 'ν' => 'N',
+        'Ο' | 'ο' => 'O',
+        'Ρ' | 'ρ' => 'P',
+        'Τ' | 'τ' => 'T',
+        'Υ' | 'υ' => 'Y',
+        'Χ' | 'χ' => 'X',
+        'А' | 'а' => 'A',
+        'В' | 'в' => 'B',
+        'Е' | 'е' => 'E',
+        'К' | 'к' => 'K',
+        'М' | 'м' => 'M',
+        'Н' | 'н' => 'H',
+        'О' | 'о' => 'O',
+        'Р' | 'р' => 'P',
+        'С' | 'с' => 'C',
+        'Т' | 'т' => 'T',
+        'Х' | 'х' => 'X',
+        'У' | 'у' => 'Y',
+        other => other,
+    }
+}
+
+/// `16054368_3` → `16054368`: an all-digit head, an underscore, a one- or
+/// two-digit sub-unit index. Anything else is returned unchanged.
+fn strip_ro_subunit(raw: &str) -> &str {
+    if let Some((head, tail)) = raw.rsplit_once('_')
+        && !head.is_empty()
+        && head.bytes().all(|b| b.is_ascii_digit())
+        && (1..=2).contains(&tail.len())
+        && tail.bytes().all(|b| b.is_ascii_digit())
+    {
+        return head;
+    }
+    raw
+}
+
 /// A VAT id carries its country in its own prefix and is scoped by it; a
 /// national registry number is only unique inside its country, so it is scoped
 /// by the mention's country and stays separate when that is unknown.
 pub fn normalise_identifier(raw: &str, country: Option<&str>) -> Option<Identifier> {
+    // Issue 300 (top-100 read, 2026-09-03): a Romanian CUI with a sub-unit
+    // suffix — `16054368_3` for a regional directorate of CNAIR — is the
+    // parent's identifier; folding the suffix away is the entity-level
+    // identity the model already promises. RO only: the underscore-digit
+    // shape means nothing established elsewhere.
+    let raw = match country {
+        Some("RO") | Some("ROU") => strip_ro_subunit(raw),
+        _ => raw,
+    };
+    // Same read: the Greek procurement authority sat in two rows because its
+    // id was published once with a Latin `E` and once with a Greek `Ε`
+    // (U+0395), and the ASCII filter below kept one letter and dropped the
+    // other. Homoglyph capitals fold to Latin BEFORE the filter, so a register
+    // id spelled with a lookalike letter equals its ASCII twin.
     let value: String = raw
         .chars()
+        .map(fold_confusable)
         .filter(|c| c.is_ascii_alphanumeric())
         .map(|c| c.to_ascii_uppercase())
         .collect();
@@ -5539,6 +5604,20 @@ mod tests {
         assert_eq!(normalise_identifier("000000", None), None); // all zeros
         assert_eq!(normalise_identifier("111111", None), None); // filler
         assert_eq!(normalise_identifier("12", None), None); // too short
+
+        // Issue 300 (2026-09-03 top-100 read): a Greek Ε in an identifier is
+        // the Latin E — the Greek procurement authority's two rows (311/1079)
+        // must key alike.
+        assert_eq!(
+            normalise_identifier("1000.\u{0395}00961.0001", Some("GR")),
+            normalise_identifier("1000.E00961.0001", Some("GR"))
+        );
+        assert_eq!(normalise_identifier("1000.\u{0395}00961.0001", Some("GR")).unwrap().value, "1000E009610001");
+        // A Romanian CUI with a sub-unit suffix is the parent's id; the same
+        // string elsewhere is left as written.
+        assert_eq!(normalise_identifier("16054368_3", Some("ROU")).unwrap().value, "16054368");
+        assert_eq!(normalise_identifier("16054368_3", Some("RO")), normalise_identifier("16054368", Some("RO")));
+        assert_eq!(normalise_identifier("16054368_3", Some("HU")).unwrap().value, "160543683");
     }
 
     /// Issue 300 Stage 1 — the v2 gate flip: the MEASURED false-merge classes

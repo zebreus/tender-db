@@ -1,6 +1,6 @@
 # 300 — organization matcher: the tiered evidence engine (design)
 
-Status: DESIGNED 2026-08-28 — full design below; build not started. Produced
+Status: STAGES 0–2 LIVE, 3–4 PARTLY (refreshed 2026-09-03; the line below was stale) — Stage 1 (v2 gate + placeholder dissolve) COMPLETE 2026-08-29 (7,865/7,865); Stage 2 (canonical_key, r2-census, `match-org-identifiers --r2`) live 2026-08-29; R3 runs (310 prevention deployed 08-29; the CNFPT family verified against the merge ledger 09-03); Stage 4 edge store built (314, consumer pending); Stage 0 exemplar sheet finished 2026-09-03 (top-100 classified, Bertin census ≈ 0, Kærunefnd flag-only). Open: Stage 5 (NULL-country bucket), Stage 6, and a gate v2.1 from the top-100 read — four classes to CENSUS first (phone `t:` ids, DE ≤5-digit numerics under raw scheme EU, Greek/Latin confusable fold, RO `_n` suffix). Was: DESIGNED 2026-08-28 — full design below; build not started. Produced
 at ultracode effort: three independent design drafts (identifier-maximalist /
 evidence-ladder / satellite-first) from a shared research base (repo current-
 state with file:line, fresh corpus probes, a 20-country identifier-scheme
