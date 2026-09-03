@@ -396,3 +396,19 @@ Stop bounds (free < 150 GB, WAL > 300 GB) nowhere near. Next firings: watch the
 WAL through the plan build's commit and the bucketed fold's first bucket (the
 339 CONTROL case — expect "pre-pass <count>" to sit through it), then the
 landing runbook above.
+
+### 612 plan built (2026-09-03 04:41 UTC); pre-pass running
+
+| | |
+| --- | --- |
+| plan build | 14,331,573 notices planned in 2 h 23 min (02:18 → 04:41 UTC); ~2,900/s over the legacy ids, ~1,000/s over the eForms ids |
+| WAL through the build | peaked at **0.8 GB** at the last read before commit, then truncated to 4 KB — the "tens of GB" carried in this issue's stop-bound reasoning did not materialise on this shape |
+| grouping | 7,922,692 tenders in 681,106 islands, 236.6 s; peak RSS 25 GB |
+| pre-pass | 31 count-balanced stripes of 462,308 parsed notices over ids (0, 29,957,753]; first 8 done in 158–461 s each; shard 8 (a sparse 8.26M-id stretch) at 731/s; 6.89M swept at 04:51 UTC |
+| spill | `tender-db.db.proj_buckets` 18 GB at that point |
+| disk | 71% used, 489 GiB free (DB 640.1 GB, +113.6 GB since the campaign began) |
+
+So the fold is near-total: the stale stamp plus touched-group expansion reach
+7.9M of the tender layer, which is the hours-long part. The 339 CONTROL read
+holds: the job row shows `pre-pass 6887156` with no total, as the pre-fix binary
+does. Load 26 during the pre-pass is the 8 workers, expected.
