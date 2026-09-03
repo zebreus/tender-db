@@ -305,8 +305,10 @@ In order. Nothing here before 612 shows `ok` in `/admin/jobs`.
    originals; and `tender_version_texts` growth against the +52.5% month.
 6. **Board**: close 340 with the backfill numbers; close 304 stage 1 with the
    corpus numbers and the per-package disk cost measured during the run
-   (below); 343 CLOSED on the probe; 339 CLOSED on 612's own phase record
-   having named "folding" from its first minute — or not, which is the test.
+   (below); 343 CLOSED on the probe. 339 is NOT testable on 612 — it runs the
+   binary deployed before the fix (`d416104`), so its job row is expected to
+   read "pre-pass <count>" through its whole first bucket: the CONTROL case.
+   The fix shows on the first bucketed fold after the deploy; close 339 then.
 7. **Tomorrow's daily chain** will have queued behind the campaign; confirm
    it ran (`probe`/`process`/`project` ok) and `fetch-rates` too.
 
