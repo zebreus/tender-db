@@ -364,3 +364,35 @@ dailies' own, not this run). DB +86 GB for the month plus 92 packages
 611 (ids 24–93, the newer legacy half) started at once: 10/70 after 31 min —
 faster per package, as those eForms-era monthlies carry fewer r208/r209
 notices. Then 612, the one fold.
+
+### 611 landed (2026-09-03 02:18 UTC) — the newer legacy half, clean; 612 folding
+
+```
+re-parsed 3630304 notices across 70 packages (4057639 members walked,
+0 unmatched, 0 now failing and left untouched); stamped 3529040 tender(s)
+epoch-stale; 93 package(s) held back by the cap — 21,520 s (6.0 h, ~169 notices/s)
+```
+
+Again `0 now failing`. The 93 held-back packages are the cap from the queue
+surgery doing its job (ids 94+ were 609's). The stamp count equals 609's because
+`stamp_stale_for_profiles` stamps every tender of the named profiles, not the
+run's own — by design; 612 is what settles it.
+
+Both re-parses together: **7,141,552 notices / 162 packages / 12.1 h, 0 failing.**
+
+612 (`project`, the one fold) started 02:18 UTC, straight off the queue.
+Telemetry at 02:53 UTC, 35 min in:
+
+| | |
+| --- | --- |
+| phase | planning, 6,030,000 / 14,331,573 notices planned (~2,900/s → plan build done ≈03:40 UTC, then identity → pre-pass → buckets) |
+| WAL | 379 MB, growing ~4 MB/min; every chunk logs `plan checkpoint … busy=true wal_frames=0 checkpointed=0 — WAL not fully reclaimed` — the plan build's one open transaction, expected, not a reclaim fault |
+| `writer_longest_wait_seconds` | 752 s high-water mark (a writer queued behind a campaign transaction at some point since boot; queue depth 0 now) |
+| DB file | 638,310,158,336 B (**+111.8 GB** since the campaign began); 508 GiB free at 70% |
+| rss | 14.6 GB (the 512 MiB page cache plus the plan) |
+| health | 200 on `d416104`; 0 `reclaim stamped NO ledger rows`; no failed units; load 1.0 |
+
+Stop bounds (free < 150 GB, WAL > 300 GB) nowhere near. Next firings: watch the
+WAL through the plan build's commit and the bucketed fold's first bucket (the
+339 CONTROL case — expect "pre-pass <count>" to sit through it), then the
+landing runbook above.
