@@ -1,6 +1,6 @@
 # 339 — a bucketed fold shows the last pre-pass count until its first whole bucket lands
 
-Status: DIAGNOSED 2026-09-02 (corrected the same day — the first filing blamed the
+Status: DEPLOYED 2026-09-03 (`9f0bcea`), verification pending the next bucketed fold — was: DIAGNOSED 2026-09-02 (corrected the same day — the first filing blamed the
 plan build; the journal's stage timings named the real stage). Fix in progress.
 Kind: operability / instrument honesty
 Relates to: 65 (Progress → phase record), 90 (the fold heartbeat), 262 (the same
@@ -62,3 +62,14 @@ bucket, which was the dangerous part.
 Pinned in `the_prepass_reports_its_sweep_as_progress`: the first `Applying` tick
 carries `tenders: 0`, and the pre-pass barrier guarantee (no `PrePass` tick after
 the first `Applying`) still holds with the new tick placed after the join.
+
+## 2026-09-03 — deployed (`9f0bcea`, 09:03 UTC); the control case read as predicted; close on the next bucketed fold
+
+Job 612 (the 304 campaign's fold, pre-fix binary) is the CONTROL: its job row
+read `pre-pass 6887156` with no total through the pre-pass and only switched to
+`folding N / 7922692` once the first bucket's apply came round — the gap this
+issue describes, seen live. The fix is on prod now but the daily `project`
+takes the incremental `ParsedFold` path (4,391 changed notices in 163 s today),
+which never enters `bucketed_fold`; the barrier tick shows only on the next
+big fold (an epoch refold or a campaign's paired fold). Stays DEPLOYED-UNVERIFIED
+until then; nothing to do in the meantime.
