@@ -1,6 +1,6 @@
 # 344 — the eForms-DE 1.x and DÖE sdk-0.1 parsers drop `cbc:NoticeLanguageCode`, so their versions have no `original_lang`
 
-Status: HALF FIXED 2026-09-03 (DE 1.x: leg + backfill field list extended, tests green, deploying) / NEEDS-DECISION for sdk-0.1 (the source omits the element on 93% of notices — a profile default would be an inference, Lennart's call). Was: ready-for-agent (filed 2026-09-03 from the 340 close-out read)
+Status: DE 1.x DONE 2026-09-03 (`1e895b5` deployed 11:14 UTC, backfill 633 stamped every DE 1.x version in 78 s) / NEEDS-DECISION for sdk-0.1 (93% of its notices publish no language element; a profile default is an inference — Lennart's call). Was: ready-for-agent (filed 2026-09-03 from the 340 close-out read)
 Kind: parse gap (era inventory) → data quality (ADR-0013 D3's third leg)
 Relates to: 340 (the leg and its backfill), 88 (the UBL-* graft), 251 (era-scoped re-parse machinery)
 
@@ -84,3 +84,21 @@ Method note: an earlier read in this session said "no NoticeLanguage code on
 prod for either era" — a quoting slip (a remote loop variable expanded locally
 to an empty profile string, every query matched nothing). Re-run with literal
 profile strings; the DE 1.x finding above is the corrected one.
+
+## DE 1.x half DONE (2026-09-03 11:1x UTC)
+
+`1e895b5` deployed at 11:14 UTC (health ok); `backfill-original-lang` re-run as job
+633: **walked 7,924,745 tenders in 78 s** (the one-transaction batches from
+`b02a222` — the first run took 70 min), stamping every version whose notice now
+resolves through the two added ids.
+
+| window (tender ids) | before | after |
+| --- | --- | --- |
+| 300,000–320,000 (mixed eras) | 10% NULL (DE 1.x + sdk-0.1) | **0 NULL of 43,573**; DE 1.x versions read DEU 3,477 / ENG 13 |
+| 1,500,000–1,520,000 (the sdk-0.1 era) | 19,986 NULL of 20,000 | 19,752 NULL of 20,000 — every remaining NULL is `eforms-sdk-0.1` |
+
+So the leg is complete for every era that publishes a notice language: r207–r209,
+the text era's `OL:` line, EU and DE 2.x eForms, and now DE 1.x. What is left is
+exactly the sdk-0.1 residue, which is the source's silence, not ours — the
+decision item above. Test coverage: `original_lang_eras.rs` pins the three
+national fixtures; the backfill test seeds both ids.
