@@ -227,3 +227,44 @@ scheme produces and which fused two bodies. Ranks 21–100 remain (the report's
   contamination prior for cross-language satellite corroboration is ≤ 0.01%
   of notices — corroboration may weight satellite pairs as reliable, with the
   Bertin exemplar kept as the known rare shape rather than a prior.
+
+### Top-100 ranks 36–50, classified 2026-09-03 (bounded mention samples)
+
+| rank | org | class | note |
+| --- | --- | --- | --- |
+| 36 | 1381 Vergabekammer Baden-Württemberg (DE) | legitimate | chamber + host RP Karlsruhe |
+| 37 | 1816 CCIRA (FR) | legitimate | review body |
+| 38 | 2424 CCIRA / Préfecture PACA (FR) | legitimate | review body on its host's SIRET |
+| 39 | 244 Univerzita Karlova (CZ) | legitimate | faculties |
+| 40 | 1448 Regierung von Oberbayern, Vergabekammer Südbayern (DE VAT `DE811335517`) | legitimate legal person, **caution** | "Vergabekammer Nordbayern" (853 mentions) rides the same Bavarian state VAT — one Land, two chambers; the head name is one of them. The design's "any DE pair" caution, seen from inside one org |
+| 41 | 8107 Región de Murcia consejerías (ES) | legitimate | departments |
+| 42 | 3363 Telefónica Soluciones (ES) | legitimate | spellings |
+| 43 | 2950 Vergabekammer Thüringen (DE) | legitimate | chamber + host |
+| 44 | 557 Salus International (PL) | legitimate | spellings |
+| 45 | 1647242 Gobierno de Canarias consejerías (ES) | legitimate | departments |
+| 46 | 1414739 Ministerstvo zemědělství (CZ) | legitimate | head name is a branch (Pozemkový úřad Jihlava) |
+| 47 | 1916229 SID (FR) | legitimate | defence infrastructure service, regional SIRETs |
+| 48 | 11215 Stockholms stad (SE) | legitimate | departments |
+| 49 | 11778404 Office of Government Procurement (IE) | legitimate | central purchasing body; a few client names (Irish Prison Services, University of Galway) ride its VAT — the "namens" shape |
+| 50 | **22165664 "Gemeinde Obersulm" (DE, `8477`, scheme EU)** | **must-CONDEMN** | OEW Breitband GmbH, Zweckverband Breitband Ravensburg / Schwäbisch Hall / Breisgau-Hochschwarzwald, BLS Sigmaringen — unrelated entities on one 4-digit placeholder; the head name is not even among the top mentions |
+
+### Top-100 ranks 51–65, classified 2026-09-03 (bounded mention samples)
+
+| rank | org | class | note |
+| --- | --- | --- | --- |
+| 51 | 3930 CNRS (FR) | legitimate | délégations = SIRET establishments of one SIREN |
+| 52 | 4816201 Stadt Halle (DE) | legitimate | departments under one tax number |
+| 53 | 9157 ESO EAD (BG) | legitimate | Cyrillic/Latin transliterations |
+| 54 | 1093 Ministerstvo obrany (CZ) | legitimate | |
+| 55 | 10711 Ville de Paris (FR) | legitimate | |
+| 56 | 8386925 Gras Savoye / Willis Towers Watson France (FR) | legitimate | a rename; one SIREN |
+| 57 | **22318692 "Verwaltungsgemeinschaft Nordendorf" (DE, `13754`, scheme EU)** | **must-CONDEMN** | Landratsamt Straubing-Bogen, Gemeinde Wehrheim, Stadt Schriesheim, Kreisstadt St. Wendel, VG Bad Grönenbach — unrelated municipalities on one 5-digit placeholder; the `8477` class again |
+| 58 | 8604932 id verde (FR) | legitimate | establishments |
+| 59 | 447 Vergabekammer Sachsen-Anhalt (DE, `t:03455141536`) | legitimate cluster, **phone-number id** | every name is the one chamber/host — unlike 660, no fusion; the gate should NULL the id and let the name carry the entity |
+| 60 | 2824 Landkreis Darmstadt-Dieburg (DE, `00002636`) | legitimate cluster, short zero-padded id | the Kreis's organs |
+| 61 | 2439 CNAIR / DRDP (RO, `16054368_3`) | legitimate | regional road directorates of one CUI; head name is a branch |
+| 62 | **1079 ΕΝΙΑΙΑ ΑΡΧΗ ΔΗΜΟΣΙΩΝ ΣΥΜΒΑΣΕΩΝ (GR)** | **must-MERGE with 311** | same authority split by a HOMOGLYPH: raw ids `1000.E00961.0001` (Latin E) vs `1000.Ε00961.0001` (Greek Ε, U+0395); the normaliser keeps the Latin letter (`1000E009610001`) and drops the Greek one as non-ASCII (`1000009610001`) — a confusable fold before the ASCII strip unifies them (§2.1/§2.2 exemplar) |
+| 63 | 225 Raad van State / Conseil d'État (BE) | legitimate | bilingual |
+| 64 | 1513 Vergabekammer Rheinland (DE, `05315-03002-81`) | legitimate legal person, **caution** | "Vergabekammer Westfalen" (1,202 mentions) rides the same NRW id — the 1448 shape |
+| 65 | 633 Vergabekammer Brandenburg (DE, `t:03318661719`) | legitimate cluster, phone-number id | coherent, like 447 |
+
