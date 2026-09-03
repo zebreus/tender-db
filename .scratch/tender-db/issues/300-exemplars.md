@@ -127,7 +127,9 @@ distribution is a MIX, so the allowlist is per-org classified, never
   Ministères sociaux — org 2861 (FR, SIRET 11000201100044, 660);
   Ondernemingsrechtbank Leuven — org 45 (BE, 0308357753, 347); Osakidetza —
   org 1031 (ES, S5100023J, 338); Krajowa Izba Odwoławcza — org 36 (PL, NIP
-  5262239325, 303). ⚙ classify the rest of the top-100 in Stage 0 proper.
+  5262239325, 303). ~~⚙ classify the rest of the top-100 in Stage 0 proper.~~
+  **Done 2026-09-03** — every rank classified in the batch tables below; totals
+  in "Top-100 totals".
 - **RECLASSIFIED must-CONDEMN — the NIMAT family (2026-08-28):** the 168
   study called "ELEKTRO PRIMORSKA (SI, 789)" legitimate name-variance; the
   census's first run showed its identifier is `NIMAT500` and a mention
@@ -253,6 +255,51 @@ scheme produces and which fused two bodies. Ranks 21–100 remain (the report's
 | 78 | 1545495 Ministère de l'éducation nationale (FR) | legitimate | |
 | 79 | 9562155 TZMO S.A. (PL) | legitimate | |
 | 80 | 3060278 Office national des forêts (FR) | legitimate | establishments |
+
+### Top-100 ranks 81–100, classified 2026-09-03 (bounded mention samples) — the list is complete
+
+| rank | org | class | note |
+| --- | --- | --- | --- |
+| 81 | 1689272 Porin kaupunki (FI) | legitimate | units |
+| 82 | 1209 Tribunal administratif de Rennes (FR) | legitimate | |
+| 83 | 16389182 Coronaria Fysioterapia Oy (FI) | legitimate | branch offices |
+| 84 | 11029834 "Gemeentebestuur Lochristi, bijgestaan door Belfius Bank" (BE, `0403.201.185_18602`) | **caution: agent id, client head name** | the number is Belfius Bank NV's; VZW Christine, OCMW Temse, Wingene, Destelbergen are its assisted clients — the "namens" shape with the wrong entity as head. The entity is the bank; the clients must never merge into it |
+| 85 | 5180 CCIRA de Lyon / DRFIP (FR) | legitimate | review body on its host's SIREN |
+| 86 | 1400743 Junta de Extremadura consejerías (ES) | legitimate | |
+| 87 | 346 Tribunal administratif de Paris (FR) | legitimate | |
+| 88 | 146 Ředitelství silnic a dálnic (CZ) | legitimate | rename ČR → s. p. |
+| 89 | 8545 RFI S.p.A. (IT) | legitimate | |
+| 90 | 506 Aesculap Chifa (PL) | legitimate | |
+| 91 | 265 Fraunhofer-Gesellschaft (DE VAT) | legitimate | institutes and purchasing units of one e.V. |
+| 92 | 17635423 Asklepios Schwalm-Eder-Kliniken GmbH (DE VAT `DE236792342`) | **caution: DE VAT group (Organschaft)** | Asklepios Kliniken Langen-Seligenstadt GmbH, Klinik Gauting GmbH, Klinik Pasewalk GmbH, AKG Klinik Hohwald GmbH — separate legal entities sharing the group's USt-IdNr; a DE VAT is fiscal unity, not legal identity — the concrete exemplar behind the design's "any DE pair" refusal |
+| 93 | 1379608 Junta de Castilla y León (ES) | legitimate | |
+| 94 | 2060 TAR Toscana (IT) | legitimate | |
+| 95 | 511 Asclepios S.A. (PL) | legitimate | |
+| 96 | 122 Vergabekammer des Bundes (DE, `t:022894990`) | legitimate cluster, phone-number id | coherent; 660's fusion pulled 708 of these mentions into Niedersachsen's cluster |
+| 97 | **21985079 "WITENO GmbH" (DE, `13124`, scheme EU)** | **must-CONDEMN** | Stadt Püttlingen, Landratsamt Saalfeld-Rudolstadt, Stadt Höxter, MBS-Anlage Westerwald GmbH — the third placeholder cluster (`8477`, `13754`, `13124`: short numerics under scheme `EU`, a platform's internal ids) |
+| 98 | 4731553 FINANSinnkjøp AS (NO) | legitimate agent | municipalities "co/FINANSinnkjøp" — the agent's own number, client names appended |
+| 99 | 504 Farmacol-Logistyka (PL) | legitimate | |
+| 100 | 8250852 Telefónica de España (ES) | legitimate | |
+
+### Top-100 totals (2026-09-03)
+
+* **Legitimate: 91** — departments/organs of one legal person, establishments of one
+  SIREN/CUI, renames, review bodies with their hosts, spelling and transliteration
+  variance, and five procurement agents (13253714, 2687, 11778404, 4731553 and the
+  Belfius row 11029834) whose mentions append client names.
+* **Must-CONDEMN: 4** — 660 (phone-number id fusing two review bodies), 22165664,
+  22318692, 21985079 (short numeric placeholders `8477`/`13754`/`13124` under scheme
+  `EU`, each fusing unrelated public bodies). Gate classes for Stage 1: `t:`-prefixed
+  phone numbers → NULL the id (coherent clusters 447, 633, 122 keep their entity by
+  name); scheme-`EU` numerics of ≤ 5 digits → placeholder.
+* **Must-MERGE candidates: 2** — 311 ↔ 1079 (Greek/Latin `E` homoglyph in the
+  identifier; confusable fold before the ASCII strip), 2438 ↔ 2439 (RO CUI with a
+  `_3` sub-unit suffix).
+* **Cautions, not defects: 5** — Land/state or group ids that fuse organs or
+  subsidiaries into one legal person (1448 Bavaria, 1513 NRW, 4322 IT
+  administrative justice, 17635423 Asklepios Organschaft) and the Belfius agent row;
+  head names on 1870, 1955, 2439, 4322, 5994, 1414739, 11029834 name an organ or a
+  client rather than the entity — a head-name pick question, not a merge question.
 
 ## Satellite contamination (must surface as edge ONLY)
 
