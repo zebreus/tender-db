@@ -161,3 +161,16 @@ distribution is a MIX, so the allowlist is per-org classified, never
   BT-500-bearing notices ≈ 10.6% incidence UPPER bound — the wrong-name
   subset (the Bertin class) is inside it and unmeasured; the census sizes
   the satellite's contamination prior for corroboration weighting.
+  **Measured 2026-09-03, the sharper cut** (same window, 67,878 BT-500 rows
+  over 17,274 notices, 24 languages): of the 1,833 duplicate-value groups,
+  only **2** carry a duplicated value that differs from the section's own
+  original-language BT-500 (joined through BT-702) — and both are Belgian
+  bilingual buyers whose FR/EN translation of their OWN name sits on two of
+  their own sections (notice 25006588 "SERVICE PUBLIC FÉDÉRAL STRATÉGIE ET
+  APPUI" ↔ NL primary "FEDERALE OVERHEIDSDIENST BELEID EN ONDERSTEUNING";
+  25019799 "Ministry of Defence" ↔ "Ministerie van Defensie"). The Bertin
+  shape (a translation slot naming a DIFFERENT org) is **0 in the window**;
+  the 1,831 others are the same org in two roles with identical names. So the
+  contamination prior for cross-language satellite corroboration is ≤ 0.01%
+  of notices — corroboration may weight satellite pairs as reliable, with the
+  Bertin exemplar kept as the known rare shape rather than a prior.

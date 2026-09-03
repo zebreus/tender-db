@@ -1074,3 +1074,10 @@ constant" has a standing, current source and does not need a bespoke run.
 Still open in Stage 0: the ⚙ census items on `300-exemplars.md` (ids not yet
 pinned), the top-100 multi-name allowlist freeze, and the CNFPT satellite
 check. Those are bounded `/v1/sql` reads; Stage 1's build follows them.
+
+Stage-0 progress 2026-09-03: Kærunefnd → must-FLAG (no satellite corroboration);
+Bertin-class census → 0 in the 20k-notice window (2 of 1,833 duplicate groups
+differ from the section's primary, both bilingual self-duplicates), so the
+satellite contamination prior is ≈ 0 — both on `300-exemplars.md`. Remaining
+before Stage 1: the top-100 multi-name classification (the report's `top` list,
+100 rows, is the input) and the CNFPT check.
