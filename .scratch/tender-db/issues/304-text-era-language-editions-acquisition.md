@@ -452,3 +452,27 @@ restart before it does will lose it." So the landing order's "queue idle" is
 load-bearing twice over: a deploy before those nine have run would drop the
 day's ingest silently. Runbook step 7 is therefore: confirm **613–621** all show
 `ok` in `recent` before `./deploy.sh`.
+
+### 612 LANDED (2026-09-03 08:07 UTC) — stage 1's fold, clean; landing runbook in progress
+
+```
+14331573 notices → 7922692 tenders (681106 islands), 7292947 versions;
+3529251 tenders written, 4393441 verified unchanged — 20,960.6 s (5.8 h)
+apply: 7922692 tenders in 12352.0 s; 33,090,858 change rows; peak RSS 32.2 GB
+```
+
+Runbook step 1: **3,529,251 written ≈ the 3,529,040 profile-stamped** (+211 from
+the re-parsed chains' expansion) and everything else verified unchanged — the
+epoch stamp did exactly its job. Health 200, journal clean, WAL 53 KB, spill
+released (free 458 → 487 GB). The daily chain that queued in memory behind it
+(613–631: probes, two `process` runs — 150k members, all dup — `fetch-rates`,
+`project` 618: 4,391 changed → 4,289 tenders in 163 s, `reveal-recheck`) ran
+to `ok`, so nothing was lost to issue 256's unpersisted queue.
+
+Step 1b (169): `tender-db-snapshot.service` run once at 08:52 UTC with the queue
+idle — new post-campaign snapshot `tender-db-1788425421.db` (the prod-read
+target from now), the 08-28 one pruned; free unchanged at 487 GB as predicted
+(its private extents were shared with 08-30). Sunday's scheduled run retires
+08-30 and returns the bulk.
+
+Step 2: deploy of `9f0bcea` (the 339+340+343+241 bundle) started 08:53 UTC.
