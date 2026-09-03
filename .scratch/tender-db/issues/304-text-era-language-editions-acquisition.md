@@ -422,3 +422,17 @@ returns the ~400 GB the two of them hold (issue 169, 2026-09-03). Then deploy.
 Also measured this firing: the fold runs at ~575 tenders/s (2 versions per
 tender in this stretch), 5.31M/7.92M at 05:50 UTC → lands ≈ 07:05 UTC, and the
 07:35 UTC daily chain queues behind it. Disk 73%, 493 GB free.
+
+### 612 fold telemetry (2026-09-03 06:50 UTC) — the late buckets are slower
+
+| | |
+| --- | --- |
+| folded | 6,403,911 / 7,922,692 tenders, 4,111,691 version rows written |
+| rate | **261 tenders/s, 543 versions/s** over the last 9 min (05:4x: 575 / 1,150) — the later buckets carry ~2.1 versions per tender and heavier text |
+| ETA | ~1.52M tenders left → lands **≈ 08:25 UTC**; the 07:35 UTC daily chain queues behind it |
+| DB / WAL / spill | 644.8 GB / 48 MB / 32 GB (flat since the pre-pass) |
+| disk | 74%, 478.8 GB free — −14 GB in the hour with the DB +2.6 GB and the spill flat: ~11 GB/h is snapshot divergence (169); ~455 GB free at landing before the spill is released, ~490 GB after |
+| box | load 1.0, RSS 20 GB, health 200, no reclaim lines |
+
+Landing order stands: counts → daily chain drains → queue idle → one manual
+`tender-db-snapshot.service` run → deploy main tip → backfill → probes → board.
