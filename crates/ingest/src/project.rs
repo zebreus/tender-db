@@ -675,7 +675,17 @@ const SUBTYPE_FIELD: &str = "OPP-070-notice";
 /// amendment was looking at), and `TXT-OL` (the text era's `OL:` line, absent on
 /// the early-1990s notices that predate it). All three are PROCEDURE-level codes
 /// already in `notice_codes`, so this is a fold-time read, not a parser change.
-const ORIGINAL_LANG_FIELDS: [&str; 3] = ["BT-702(a)-notice", "TED-LG_ORIG", "TXT-OL"];
+const ORIGINAL_LANG_FIELDS: [&str; 5] = [
+    "BT-702(a)-notice",
+    "TED-LG_ORIG",
+    "TXT-OL",
+    // The national eForms generations before SDK-DE publish the same root element
+    // (`/*/cbc:NoticeLanguageCode`) under their empirical inventories' ids — issue
+    // 344: every eForms-DE 1.x and DÖE sdk-0.1 version had no original language
+    // while its notice said DEU.
+    "DE1-NoticeLanguageCode",
+    "SDK01-NoticeLanguageCode",
+];
 /// eForms' explicit previous-publication reference (`ND-PreviousNoticeReference`):
 /// the publisher's own statement that an earlier TED publication continues into
 /// this notice. ADR-0011 makes it an identity edge, because EU eForms does NOT

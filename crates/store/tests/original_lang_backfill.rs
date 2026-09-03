@@ -100,8 +100,10 @@ async fn every_era_field_is_read_and_normalised_and_absence_stays_null() {
     seed(&conn, 3, Some(("TXT-OL", "EN"))).await; // text era
     seed(&conn, 4, None).await; // a 1990s notice: no OL line
     seed(&conn, 5, Some(("TED-TD_DOCUMENT_TYPE", "3"))).await; // a code, but not a language
+    seed(&conn, 6, Some(("DE1-NoticeLanguageCode", "DEU"))).await; // eForms-DE 1.x (issue 344)
+    seed(&conn, 7, Some(("SDK01-NoticeLanguageCode", "DEU"))).await; // DÖE sdk-0.1 (issue 344)
 
-    // Window of 2 tenders per batch: three windows to cover five, the walk
+    // Window of 2 tenders per batch: four windows to cover seven, the walk
     // must not stop at a window that stamps nothing (tender 4 and 5's).
     let mut after = 0;
     let mut windows = 0;
@@ -113,7 +115,7 @@ async fn every_era_field_is_read_and_normalised_and_absence_stays_null() {
         windows += 1;
         after = next;
     }
-    assert_eq!(windows, 3, "five tenders in windows of two");
+    assert_eq!(windows, 4, "seven tenders in windows of two");
     assert_eq!(
         stamped(&conn).await,
         vec![
@@ -122,6 +124,8 @@ async fn every_era_field_is_read_and_normalised_and_absence_stays_null() {
             (3, Some("ENG".into())),
             (4, None),
             (5, None),
+            (6, Some("DEU".into())),
+            (7, Some("DEU".into())),
         ],
         "each era's code lands through the normaliser; no code, or a non-language code, stays NULL"
     );

@@ -3141,7 +3141,8 @@ impl Db {
                         (SELECT c.code FROM notice_codes c
                           WHERE c.notice_id = v.caused_by_notice_id
                             AND c.section_id = 'PROCEDURE'
-                            AND c.field_id IN ('BT-702(a)-notice', 'TED-LG_ORIG', 'TXT-OL')
+                            AND c.field_id IN ('BT-702(a)-notice', 'TED-LG_ORIG', 'TXT-OL',
+                                               'DE1-NoticeLanguageCode', 'SDK01-NoticeLanguageCode')
                           ORDER BY c.field_id, c.ordinal LIMIT 1)
                    FROM tender_versions v
                   WHERE v.tender_id > ? AND v.tender_id <= ? AND v.original_lang IS NULL",
