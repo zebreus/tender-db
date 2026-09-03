@@ -1061,3 +1061,16 @@ merges, the consortium lexicon and the checksum tranche are all ruled
 out). Filed as **issue 313** with the decisive snapshot experiment rather
 than guessed at; it lowers auto-merge candidates rather than losing data,
 so the acceptances above stand.
+
+## 2026-09-03 — Stage 0's baseline exists; what is left of Stage 0 is the exemplar census
+
+The weekly `org-merge-health` run of 2026-09-02 03:24 UTC (read through
+`/admin/reports/org-merge-health`) already carries the §2.1 gate block —
+`compound 3336, hex_hash 274786, letter_run 22242, lexicon 0`, plus the
+per-scheme pass/fail table — computed AFTER the 325/326/328 predicate repairs
+of 09-01 and before the 304 campaign (which does not touch the organization
+layer). So the Stage-0 "single up-front re-derivation of every [M28] gate
+constant" has a standing, current source and does not need a bespoke run.
+Still open in Stage 0: the ⚙ census items on `300-exemplars.md` (ids not yet
+pinned), the top-100 multi-name allowlist freeze, and the CNFPT satellite
+check. Those are bounded `/v1/sql` reads; Stage 1's build follows them.

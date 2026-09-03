@@ -89,6 +89,12 @@ Ids not yet pinned are Stage-0 census items, marked ⚙.
   country, English-translated name), national 5402696459. Country fold sends
   AFG→NULL; names share no N2 key (Icelandic vs English, zero overlap) ⇒
   edge unless a satellite cross-language pair corroborates (⚙ Stage-0 check).
+  **Checked 2026-09-03 (bounded reads):** the satellites hold ONE row each —
+  6642 → `ENG "Kærunefnd útboðsmála"` (Icelandic text under an ENG tag) and
+  22671317 → `ENG "The Icelandic Public Procurement Complaint committee"`; no
+  shared language, no shared string ⇒ **no corroboration → must-FLAG (edge)**,
+  the identifier match alone must not merge it. (22671317's country is stored
+  as `AF`, the garbage value the fold sends to NULL.)
 - Any DE pair (no cross-walk; court-scoped registers), any SK DIČ↔IČO pair,
   any CZ699 group VAT, any ES UTE (letter U) across procedures.
 
