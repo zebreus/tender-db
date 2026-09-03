@@ -1,6 +1,6 @@
 # 63 — Adopt `plan_state` blob@Phase-1 for fast full rebuilds
 
-Status: scoped (proj-fix, 2026-07-29) — smaller than the design's ~1-2 day estimate; the
+Status: PARKED BY MEASUREMENT 2026-09-03 — the pre-pass is 8% of a full fold now (see the last section); was: scoped (proj-fix, 2026-07-29) — smaller than the design's ~1-2 day estimate; the
 serialization machinery already exists. Concrete implementation plan below.
 
 ## Concrete implementation plan (proj-fix — grounded in the current code)
@@ -365,3 +365,20 @@ Moving `NoticeState::read`+`bind` into Phase-1 must be output-identical:
 - Gate: `project_equivalence` + `project_resume` green + the fold-source-invariance
   test (sequential/blob fold vs parsed fold → all canonical tables equal
   ORDER BY pk on a fresh scratch DB).
+
+## 2026-09-03 — measured on the 304 campaign's fold (job 612): the pre-pass is 8% of a full fold
+
+| phase of 612 (14.33M notices → 7.92M tenders, 20,960 s) | wall | share |
+| --- | --- | --- |
+| plan build (phase 1) | 8,580 s (2 h 23 min) | 41% |
+| grouping | 237 s | 1% |
+| pre-pass (31 stripes, the 254 GB re-read this issue targets) | **1,614 s (27 min)** | **8%** |
+| apply (bucketed fold) | 12,352 s (3 h 26 min) | 59% |
+
+This issue moves the pre-pass's read into phase 1. With issue 94's stripes the
+pre-pass is 27 minutes of a 5.8-hour fold, and the blob write would make phase 1
+— already the second-largest phase — heavier. The half-to-full day plus the
+byte-identity risk does not buy a meaningful fraction of the wall any more.
+**Parked by measurement**; the wall is the apply (issue 67, whose own gate this
+run now meets) and the plan build (192). Revisit only if a pre-pass shape returns
+to the 08-01 numbers (402 min, pre-94).
