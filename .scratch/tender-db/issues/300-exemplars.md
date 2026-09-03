@@ -141,6 +141,32 @@ distribution is a MIX, so the allowlist is per-org classified, never
   names) — a 5-char VAT stub; short-VAT stubs (<6 digits after the country
   prefix) join the lexicon.
 
+### Top-100 multi-name orgs, ranks 6–20 — classified 2026-09-03 (bounded mention samples, top-6 names per org)
+
+| rank | org | country / identifier | verdict | why |
+| --- | --- | --- | --- | --- |
+| 6 | 919 | FR SIREN 552081317 | **legitimate** | EDF SA + purchasing departments; one SIREN in four spellings |
+| 7 | 9885866 | FR SIREN 329338883 (+SIRET suffixes) | **legitimate** | Colas France establishments under one SIREN |
+| 8 | 3553 | FR 17750000600024 | **legitimate** (review body) | CCIRA — one interregional amicable-settlement committee, city variants |
+| 9 | 46 | AT 210220y | **legitimate** (central purchasing) | Bundesbeschaffung GmbH; the prose "Auftraggeber sind die Republik Österreich…" names the represented buyers |
+| 10 | 1774124 | ES NIF S4611001A | **legitimate** | Generalitat Valenciana — consellerias as names, one NIF |
+| 11 | 8365812 | IT 95054920632 | **legitimate** | MIT Provveditorato interregionale, spelling variants |
+| 12 | 1870 | ES NIF S1511001H | **legitimate**, head name wrong | the NIF is the Xunta de Galicia's; consellerias and the TACGAL tribunal share it — one legal entity, but the head name should be the Xunta, not the tribunal (a head-pick note, not a merge question) |
+| 13 | 4882 | CZ IČO 01312774 | **legitimate** | Státní pozemkový úřad with regional branches |
+| 14 | 176 | IT 80195990587 | **legitimate** (review body) | TAR Lazio, six spellings |
+| 15 | 1127 | ES NIF S4833001C | **legitimate** | Gobierno Vasco departments |
+| 16 | **660** | DE **`t:04131153308`** | **must-CONDEMN** | the "identifier" is a TELEPHONE number (a `t:` value); it fuses Vergabekammer Niedersachsen (≈17k mentions) with "Die Vergabekammern des Bundes" (708) — two different review bodies under one phone number. The `t:`/phone class must fail the §2.1 plausibility gate; dissolve in Stage 1 |
+| 17 | 2687 | NL KvK 50555596 | **legitimate** (central purchasing) | RIS / UBR\|HIS; the "Ministerie … dtv UBR\|HIS" names are represented buyers |
+| 18 | 8124383 | FR SIREN 552044992 | **legitimate** | Pomona Passion Froid establishments |
+| 19 | 3094606 | FR 26060070500040 | **legitimate** | CHU de Nice, spellings |
+| 20 | 3223 | RO RO1590120 | **legitimate** | Romsilva with regional directorates |
+
+Fourteen of fifteen are one legal entity with departments, establishments or
+spellings — the shape the allowlist exists for. The one condemn is a new gate
+class: a phone number in the identifier slot (`t:` prefix), which no register
+scheme produces and which fused two bodies. Ranks 21–100 remain (the report's
+`top` list, saved for the pass).
+
 ## Satellite contamination (must surface as edge ONLY)
 
 - **org 23294544** — (SE, national, 5562964618, "Bertin Exensor AB"), ONE
