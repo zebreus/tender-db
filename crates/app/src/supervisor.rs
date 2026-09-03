@@ -2164,12 +2164,12 @@ impl Supervisor {
                     format!("plan grouped: {tenders} tenders, {islands} single-notice islands"),
                 );
             }
-            Progress::Applying { tenders, total, versions } => {
+            Progress::Applying { tenders, total, versions, leaf_rows } => {
                 self.set_phase(
                     "folding",
                     Some(tenders),
                     Some(total),
-                    format!("{versions} version rows written"),
+                    format!("{versions} version rows written, {leaf_rows} leaf rows"),
                 );
             }
         }

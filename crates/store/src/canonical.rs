@@ -3533,6 +3533,11 @@ pub struct Applied {
     pub versions_written: u64,
     pub versions_removed: u64,
     pub changes: u64,
+    /// Rows written to the version satellites (texts, amounts, dates, parties,
+    /// results, …) by the batched leaf inserts — the fold's real write volume,
+    /// which `versions_written` only proxies. Issue 96 needs it per heartbeat to
+    /// tell a table-fill slowdown from heavier versions on the next big fold.
+    pub leaf_rows: u64,
     /// Tenders whose chain CHANGED — the write path ran (issue 108). Together
     /// with `tenders_unchanged` this makes the fold's two exits countable:
     /// `projected = 1` means "considered by a fold", and these two say which
@@ -3560,6 +3565,7 @@ impl Applied {
         self.versions_written += other.versions_written;
         self.versions_removed += other.versions_removed;
         self.changes += other.changes;
+        self.leaf_rows += other.leaf_rows;
         self.tenders_written += other.tenders_written;
         self.tenders_unchanged += other.tenders_unchanged;
         self.entities_swept += other.entities_swept;
@@ -7649,7 +7655,7 @@ impl Db {
             }
             match error {
                 None => {
-                    pending.flush(&conn).await?;
+                    applied.leaf_rows += pending.flush(&conn).await?;
                     // Integrity gate (task #27), inside the transaction: a head
                     // that is not the last version never reaches disk.
                     if let Err(e) = Self::assert_heads_match(&conn, &rewrote).await {
@@ -17397,22 +17403,23 @@ impl Pending {
     /// Parents before children so a foreign-keys-ON caller (some store unit tests)
     /// still finds each referenced `(tender_id, seq)` present at insert time; the
     /// projection itself runs with FK off.
-    async fn flush(&mut self, conn: &Connection) -> turso::Result<()> {
-        flush_rows(conn, "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, dispatched_at, notice_subtype, original_lang, publication_id) VALUES ", 8, &mut self.versions).await?;
-        flush_rows(conn, "INSERT INTO tender_version_lots(tender_id, seq, lot_id, kind) VALUES ", 4, &mut self.version_lots).await?;
-        flush_rows(conn, "INSERT INTO tender_version_lot_group_members(tender_id, seq, group_lot_id, member_lot_id) VALUES ", 4, &mut self.lot_group_members).await?;
-        flush_rows(conn, "INSERT INTO tender_version_texts(tender_id, seq, lot_id, field, lang, value) VALUES ", 6, &mut self.texts).await?;
-        flush_rows(conn, "INSERT INTO tender_version_amounts(tender_id, seq, lot_id, field, cents, currency, tax_basis, eur_cents) VALUES ", 8, &mut self.amounts).await?;
-        flush_rows(conn, "INSERT INTO tender_version_classifications(tender_id, seq, lot_id, field, scheme, code) VALUES ", 6, &mut self.classifications).await?;
-        flush_rows(conn, "INSERT INTO tender_version_dates(tender_id, seq, lot_id, field, utc_seconds, offset_minutes, has_time) VALUES ", 7, &mut self.dates).await?;
-        flush_rows(conn, "INSERT INTO tender_version_parties(tender_id, seq, lot_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7, &mut self.parties).await?;
-        flush_rows(conn, "INSERT INTO tender_version_lot_results(tender_id, seq, lot_result_id, lot_id, decision, reason, awarded_cents, awarded_currency, decided_utc, decided_offset, decided_has_time, awarded_eur_cents) VALUES ", 12, &mut self.lot_results).await?;
-        flush_rows(conn, "INSERT INTO tender_version_result_winners(tender_id, seq, lot_result_id, organization_id) VALUES ", 4, &mut self.result_winners).await?;
-        flush_rows(conn, "INSERT INTO tender_version_result_stats(tender_id, seq, lot_result_id, kind, count) VALUES ", 5, &mut self.result_stats).await?;
-        flush_rows(conn, "INSERT INTO tender_version_bids(tender_id, seq, bid_id, lot_id, cents, currency, eur_cents) VALUES ", 7, &mut self.bids).await?;
-        flush_rows(conn, "INSERT INTO tender_version_bid_parties(tender_id, seq, bid_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7, &mut self.bid_parties).await?;
-        flush_rows(conn, "INSERT INTO tender_version_contracts(tender_id, seq, contract_id, buyer_contract_id, concluded_utc, concluded_offset, concluded_has_time, decided_utc, decided_offset, decided_has_time, cents, currency, eur_cents) VALUES ", 13, &mut self.contracts).await?;
-        Ok(())
+    async fn flush(&mut self, conn: &Connection) -> turso::Result<u64> {
+        let mut n = 0u64;
+        n += flush_rows(conn, "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, dispatched_at, notice_subtype, original_lang, publication_id) VALUES ", 8, &mut self.versions).await?;
+        n += flush_rows(conn, "INSERT INTO tender_version_lots(tender_id, seq, lot_id, kind) VALUES ", 4, &mut self.version_lots).await?;
+        n += flush_rows(conn, "INSERT INTO tender_version_lot_group_members(tender_id, seq, group_lot_id, member_lot_id) VALUES ", 4, &mut self.lot_group_members).await?;
+        n += flush_rows(conn, "INSERT INTO tender_version_texts(tender_id, seq, lot_id, field, lang, value) VALUES ", 6, &mut self.texts).await?;
+        n += flush_rows(conn, "INSERT INTO tender_version_amounts(tender_id, seq, lot_id, field, cents, currency, tax_basis, eur_cents) VALUES ", 8, &mut self.amounts).await?;
+        n += flush_rows(conn, "INSERT INTO tender_version_classifications(tender_id, seq, lot_id, field, scheme, code) VALUES ", 6, &mut self.classifications).await?;
+        n += flush_rows(conn, "INSERT INTO tender_version_dates(tender_id, seq, lot_id, field, utc_seconds, offset_minutes, has_time) VALUES ", 7, &mut self.dates).await?;
+        n += flush_rows(conn, "INSERT INTO tender_version_parties(tender_id, seq, lot_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7, &mut self.parties).await?;
+        n += flush_rows(conn, "INSERT INTO tender_version_lot_results(tender_id, seq, lot_result_id, lot_id, decision, reason, awarded_cents, awarded_currency, decided_utc, decided_offset, decided_has_time, awarded_eur_cents) VALUES ", 12, &mut self.lot_results).await?;
+        n += flush_rows(conn, "INSERT INTO tender_version_result_winners(tender_id, seq, lot_result_id, organization_id) VALUES ", 4, &mut self.result_winners).await?;
+        n += flush_rows(conn, "INSERT INTO tender_version_result_stats(tender_id, seq, lot_result_id, kind, count) VALUES ", 5, &mut self.result_stats).await?;
+        n += flush_rows(conn, "INSERT INTO tender_version_bids(tender_id, seq, bid_id, lot_id, cents, currency, eur_cents) VALUES ", 7, &mut self.bids).await?;
+        n += flush_rows(conn, "INSERT INTO tender_version_bid_parties(tender_id, seq, bid_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7, &mut self.bid_parties).await?;
+        n += flush_rows(conn, "INSERT INTO tender_version_contracts(tender_id, seq, contract_id, buyer_contract_id, concluded_utc, concluded_offset, concluded_has_time, decided_utc, decided_offset, decided_has_time, cents, currency, eur_cents) VALUES ", 13, &mut self.contracts).await?;
+        Ok(n)
     }
 }
 
@@ -17424,9 +17431,9 @@ const MAX_BATCH_BIND: usize = 900;
 
 /// Emit `rows` (row-major, `cols` values per row) as chunked multi-row INSERTs
 /// with `prefix` (`INSERT INTO t(cols) VALUES `), then clear the buffer.
-async fn flush_rows(conn: &Connection, prefix: &str, cols: usize, rows: &mut Vec<Value>) -> turso::Result<()> {
+async fn flush_rows(conn: &Connection, prefix: &str, cols: usize, rows: &mut Vec<Value>) -> turso::Result<u64> {
     if rows.is_empty() {
-        return Ok(());
+        return Ok(0);
     }
     let per_stmt = (MAX_BATCH_BIND / cols).max(1);
     let total = rows.len() / cols;
@@ -17453,7 +17460,7 @@ async fn flush_rows(conn: &Connection, prefix: &str, cols: usize, rows: &mut Vec
         done += n;
     }
     rows.clear();
-    Ok(())
+    Ok(total as u64)
 }
 
 type ValueBuilder = fn(&turso::Row) -> crate::NoticeValue;

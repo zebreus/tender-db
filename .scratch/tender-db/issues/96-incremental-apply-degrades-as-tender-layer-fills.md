@@ -144,3 +144,11 @@ more texts). Per-bucket row counts are not logged, so the fill-vs-content split
 stays unmeasured — exactly this issue's open question. A `[project]` heartbeat that
 also prints leaf rows written would settle it on the next big fold at zero cost;
 noted, not built.
+
+Built the same afternoon: `Applied.leaf_rows` (summed from the batched satellite
+inserts' row counts in `Pending::flush`), carried on `Progress::Applying` and
+printed in the phase-2 heartbeat (`… N versions written, M leaf rows`), the
+incremental fold's line and the job row's phase detail. The next big fold reads
+its per-heartbeat leaf-row rate directly; a falling leaf-rows/s at constant
+leaf-rows/version is fill, a constant leaf-rows/s at rising leaf-rows/version is
+content. No behaviour change; the byte-identity suites gate it like any fold edit.

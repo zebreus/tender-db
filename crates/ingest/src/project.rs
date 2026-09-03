@@ -860,7 +860,8 @@ pub enum Progress {
     /// alone. `versions` is what distinguishes them, and it is the first-heartbeat
     /// signal that a projection-logic re-fold (issue 99's epoch) is really
     /// rewriting rather than silently skipping.
-    Applying { tenders: u64, total: u64, versions: u64 },
+    /// `leaf_rows` is the satellite rows those versions carried (issue 96).
+    Applying { tenders: u64, total: u64, versions: u64, leaf_rows: u64 },
     /// Phase 2 pre-pass: `notices` read and spilled to buckets so far, summed
     /// across all shard workers (issue 65). No total: the sweep's bound is an id
     /// RANGE, not a row count, and counting the rows in it up front would cost a
@@ -929,8 +930,10 @@ pub fn stderr_progress_sink() -> impl FnMut(Progress) {
         Progress::Grouped { tenders, islands } => {
             eprintln!("[project] phase 2: folding {tenders} tenders ({islands} islands)");
         }
-        Progress::Applying { tenders, total, versions } => {
-            eprintln!("[project] phase 2: {tenders}/{total} tenders folded, {versions} versions written");
+        Progress::Applying { tenders, total, versions, leaf_rows } => {
+            eprintln!(
+                "[project] phase 2: {tenders}/{total} tenders folded, {versions} versions written, {leaf_rows} leaf rows"
+            );
         }
         // Aggregate line beside the per-shard heartbeats `write_shard` already
         // prints (issue 94) — same cadence bound, so the journal cost is one
@@ -1171,6 +1174,7 @@ pub async fn project_with_progress_phase2_stoppable(
                     tenders: tenders_done,
                     total: report.tenders,
                     versions: report.applied.versions_written,
+                    leaf_rows: report.applied.leaf_rows,
                 });
                 batches_done += 1;
                 if batches_done.is_multiple_of(CHECKPOINT_EVERY_BATCHES)
@@ -2066,6 +2070,7 @@ pub async fn project_incremental_chunked_observed(
                     tenders: tenders_done,
                     total: tenders,
                     versions: report.applied.versions_written,
+                    leaf_rows: report.applied.leaf_rows,
                 });
                 // Heartbeat per batch: without it a wedged fold is indistinguishable
                 // from a slow one (issue 90).
@@ -2085,12 +2090,12 @@ pub async fn project_incremental_chunked_observed(
                 false,
                 &mut report,
                 |p| {
-                    if let Progress::Applying { tenders, total, versions } = p {
+                    if let Progress::Applying { tenders, total, versions, leaf_rows } = p {
                         // `versions` is the load-bearing number: `tenders` climbs to
                         // completion even if every fold early-returns (issue 99).
                         eprintln!(
                             "[project] incremental fold: {tenders}/{total} Tenders folded, \
-                             {versions} versions written"
+                             {versions} versions written, {leaf_rows} leaf rows"
                         );
                     }
                     on_progress(p);
@@ -2271,7 +2276,7 @@ async fn bucketed_fold(
     // and the record names the stage the moment it begins. (A bucket is one
     // `apply_tenders` transaction by design, so this does not try to tick
     // inside it.)
-    on_progress(Progress::Applying { tenders: 0, total: report.tenders, versions: report.applied.versions_written });
+    on_progress(Progress::Applying { tenders: 0, total: report.tenders, versions: report.applied.versions_written, leaf_rows: report.applied.leaf_rows });
     let mut tenders_done = 0u64;
     let mut fold_err: Option<turso::Error> = None;
     for b in 0..n_buckets {
@@ -2304,6 +2309,7 @@ async fn bucketed_fold(
             tenders: tenders_done,
             total: report.tenders,
             versions: report.applied.versions_written,
+            leaf_rows: report.applied.leaf_rows,
         });
         if (b + 1).is_multiple_of(CHECKPOINT_EVERY_BATCHES)
             && let Err(e) = db.checkpoint(store::CheckpointMode::Truncate).await
