@@ -1,6 +1,6 @@
 # 344 — the eForms-DE 1.x and DÖE sdk-0.1 parsers drop `cbc:NoticeLanguageCode`, so their versions have no `original_lang`
 
-Status: ready-for-agent (filed 2026-09-03 from the 340 close-out read)
+Status: HALF FIXED 2026-09-03 (DE 1.x: leg + backfill field list extended, tests green, deploying) / NEEDS-DECISION for sdk-0.1 (the source omits the element on 93% of notices — a profile default would be an inference, Lennart's call). Was: ready-for-agent (filed 2026-09-03 from the 340 close-out read)
 Kind: parse gap (era inventory) → data quality (ADR-0013 D3's third leg)
 Relates to: 340 (the leg and its backfill), 88 (the UBL-* graft), 251 (era-scoped re-parse machinery)
 
@@ -46,3 +46,41 @@ is false: the era said, the parser dropped it.
 
 Not a profile-level default ("DÖE is German, stamp DEU"): the value is
 published, so read it rather than infer it.
+
+## Measured 2026-09-03 11:0x UTC — two different causes, one per era
+
+**eForms-DE 1.x (145,859 de-1.1 + 72,986 de-1.2 notices, fetches 412–434): a leg
+gap, fixed.** Prod's parsed layer already holds `PROCEDURE/DE1-NoticeLanguageCode =
+DEU` (checked on a live notice); only `original_lang()` and the backfill's field
+list never looked at that id. Both now list `DE1-NoticeLanguageCode` and
+`SDK01-NoticeLanguageCode` beside the three era fields. Red-first test
+`original_lang_eras.rs` (the two DE 1.x fixtures and the sdk-0.1 one resolve to
+`DEU`; it failed before the change with the parse carrying exactly
+`PROCEDURE/DE1-NoticeLanguageCode: Code DEU`), and the backfill test seeds both
+ids. After the deploy, one `backfill-original-lang` run stamps the DE 1.x versions
+(no re-parse needed).
+
+**DÖE sdk-0.1 (671,879 notices, fetches 4–535): a source absence, not a parser
+gap.** Sampled on prod against the archived raw members of the 2026-09-02 daily:
+
+| | |
+| --- | --- |
+| sdk-0.1 notices in today's ingest carrying `SDK01-NoticeLanguageCode` | 4 of 60 sampled (33 of 445 in the window, **7%**) |
+| old window (ids 468k–473k, fetch 444) | **0 of 5,000** |
+| raw XML of two stored-WITH members (UUID-named, `b85934e6-…-1.xml`) | `<cbc:NoticeLanguageCode>DEU</cbc:NoticeLanguageCode>` present |
+| raw XML of two stored-WITHOUT members (numeric-named, `25776650-1.xml`) | **no `NoticeLanguageCode` element at all** |
+
+So the parser stores it exactly when the publisher sent it; the numeric-id
+below-threshold shape — the bulk of the dialect — never carries a notice
+language. A deterministic `DEU` for `eforms-sdk-0.1` would be right in practice
+(the platform is German-only by construction) but it is an INFERENCE, and
+ADR-0013's leg is "the notice's original language". Whether to add a
+profile-level default (a one-line rule in `original_lang()` + a backfill re-run
+≈ 10 min) is a model decision for Lennart. Until then those versions rank as
+"leg absent" — which for a German-only source with German-only texts changes no
+pick in practice, because there is nothing else to fall through to.
+
+Method note: an earlier read in this session said "no NoticeLanguage code on
+prod for either era" — a quoting slip (a remote loop variable expanded locally
+to an empty profile string, every query matched nothing). Re-run with literal
+profile strings; the DE 1.x finding above is the corrected one.
