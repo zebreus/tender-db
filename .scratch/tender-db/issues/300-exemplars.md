@@ -234,6 +234,26 @@ scheme produces and which fused two bodies. Ranks 21–100 remain (the report's
 | 64 | 1513 Vergabekammer Rheinland (DE, `05315-03002-81`) | legitimate legal person, **caution** | "Vergabekammer Westfalen" (1,202 mentions) rides the same NRW id — the 1448 shape |
 | 65 | 633 Vergabekammer Brandenburg (DE, `t:03318661719`) | legitimate cluster, phone-number id | coherent, like 447 |
 
+### Top-100 ranks 66–80, classified 2026-09-03 (bounded mention samples)
+
+| rank | org | class | note |
+| --- | --- | --- | --- |
+| 66 | 8203 CCIRA de Bordeaux (FR) | legitimate | review body, SIRET establishments |
+| 67 | 412 Vergabekammer Westfalen (DE, `05515-03004-07`) | legitimate | coherent chamber + host; the "Westfalen" mentions inside 1513 are the publisher's misfiling, not this org's |
+| 68 | 2438 CNAIR S.A. (RO, `16054368`) | legitimate, **must-MERGE candidate with 2439** | 2439's key is the same CUI with a `_3` sub-unit suffix (`16054368_3`) and its names are CNAIR's regional directorates — one legal person; §3.1's RO canonical key should strip the suffix |
+| 69 | 4322 "Tar Milano" (IT, `80427570587`) | legitimate legal person, **caution / head name wrong** | mentions are TAR Veneto and TRGA Trento; the head name is neither — a shared administrative-justice fiscal code, the 1448/1513 shape |
+| 70 | 729 Tribunal judiciaire de Paris (FR) | legitimate | |
+| 71 | 205 TAR Brescia (IT) | legitimate | own fiscal code |
+| 72 | 5994 Provincia Autonoma di Bolzano (IT, `00390090215`) | legitimate | organs (Ripartizioni, TRGA Bolzano); head name is an organ |
+| 73 | 505 Bialmed (PL) | legitimate | |
+| 74 | 261 TAR Piemonte (IT) | legitimate | |
+| 75 | 5193692 Coronaria Contextia Oy (FI) | legitimate | rename/affiliate names under one business id |
+| 76 | 4364 ENGIE Energie Services / Cofely / ENGIE Solutions (FR) | legitimate | renames + establishments of one SIREN |
+| 77 | 7665941 Københavns Kommune (DK) | legitimate | forvaltninger |
+| 78 | 1545495 Ministère de l'éducation nationale (FR) | legitimate | |
+| 79 | 9562155 TZMO S.A. (PL) | legitimate | |
+| 80 | 3060278 Office national des forêts (FR) | legitimate | establishments |
+
 ## Satellite contamination (must surface as edge ONLY)
 
 - **org 23294544** — (SE, national, 5562964618, "Bertin Exensor AB"), ONE
