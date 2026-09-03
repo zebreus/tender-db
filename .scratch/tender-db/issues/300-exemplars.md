@@ -161,6 +161,33 @@ distribution is a MIX, so the allowlist is per-org classified, never
 | 19 | 3094606 | FR 26060070500040 | **legitimate** | CHU de Nice, spellings |
 | 20 | 3223 | RO RO1590120 | **legitimate** | Romsilva with regional directorates |
 
+### Ranks 21–35 — classified 2026-09-03, same method (top-5 mention names per org)
+
+| rank | org | country / identifier | verdict | why |
+| --- | --- | --- | --- | --- |
+| 21 | 1955 | ES NIF S0811001G | **legitimate**, head name wrong | the Generalitat de Catalunya's NIF: the Tribunal Català de Contractes AND departments (Treball, Interior) — one entity, head should be the Generalitat (same shape as 1870) |
+| 22 | 5367052 | FI 0194099-3 | **legitimate** | Fysios Oy with branch offices ("/Tornion toimipiste") |
+| 23 | 2909 | FI 0201256-6 | **legitimate** | Helsingin kaupunki divisions |
+| 24 | 503 | PL NIP 8942556799 | **legitimate** | Urtica, spellings and NIP formatting |
+| 25 | 9442 | FR SIREN 267500452 (+SIRET) | **legitimate** | AP-HP establishments under one SIREN |
+| 26 | 13253714 | NL KvK 71710949 | **legitimate** (agent) | DASmakkelijk B.V. "namens" school foundations — the names append the REPRESENTED client; one KvK, one provider. Matching must not attribute the clients to the agent (a representation relation, not a name variant) |
+| 27 | 11671698 | IT 80054330586 | **legitimate** | CNR and its institutes |
+| 28 | 391 | ES NIF S7800001E | **legitimate** | Comunidad de Madrid consejerías |
+| 29 | 12768 | FI 2296962-1 | **legitimate** | the ELY centres share the KEHA business id; regional names |
+| 30 | 976 | PL NIP 6481997718 | **legitimate** | Zarys, spellings |
+| 31 | 1242402 | ES P2807900B | **legitimate** | Ayuntamiento de Madrid áreas and distritos |
+| 32 | 3444 | FR 13002928300012 | **legitimate** (review body) | CCIRA de Nantes and its DREETS host |
+| 33 | 311 | GR 1000.E00961.0001 | **legitimate** (review body) | ΕΑΔΗΣΥ, Greek/Latin spellings |
+| 34 | 116 | IT 97024970150 | **legitimate** (review body) | TAR Lombardia / TAR Milano |
+| 35 | 4063 | FR 12000009600020 | **legitimate** (review body) | CCNRA and the ministry's Direction des affaires juridiques that hosts it |
+
+Fifteen of fifteen legitimate. Two recurring shapes worth naming for the
+allowlist rule: a regional government's NIF shared by its review tribunal and
+its departments (1870, 1955 — the head name lands on the tribunal because it
+is the most-mentioned name), and a procurement AGENT whose mention names carry
+the represented client after "namens"/"dtv" (13253714, 2687). Ranks 36–100
+remain.
+
 Fourteen of fifteen are one legal entity with departments, establishments or
 spellings — the shape the allowlist exists for. The one condemn is a new gate
 class: a phone number in the identifier slot (`t:` prefix), which no register
