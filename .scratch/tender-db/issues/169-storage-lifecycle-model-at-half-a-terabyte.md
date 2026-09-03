@@ -142,3 +142,56 @@ Concretely, the next unit: a `disk-census` job writing `df` figures plus the DB
 file size to a report on the weekly tick. Ten versions of that is ten weeks of
 trend, which turns every future question here from arithmetic-on-two-points into a
 reading.
+
+## 2026-09-03 05:5x UTC — the 304 campaign costs about twice its DB growth, and the model says why
+
+Measured mid-fold (job 612 at 5.3M of 7.9M tenders), exact `df -B1` on `/data`:
+
+| | 2026-08-30 (post-prune) | now | change |
+| --- | --- | --- | --- |
+| free | 713 GiB ≈ 765 GB | 493.0 GB (73% used) | **−272 GB** |
+| DB file (logical) | 526.2 GB | 642.2 GB | +116 GB |
+| fold spill (`tender-db.db.proj_buckets`) | 0 | 34 GB | +34 GB (released at landing) |
+| archive | ~192 GB | 179 GiB ≈ 192 GB | ~0 |
+| **unexplained by the above** | | | **≈ +120 GB** |
+
+The 120 GB is the 08-28 model event again, and this time it was predictable: two
+reflink snapshots (08-28, 08-30 — both pre-campaign) hold the old extents of every
+page the re-parse deleted and re-inserted and every tender-layer page the fold is
+rewriting, so **a whole-corpus rewrite bills its snapshots at full size**. The
+serving DB's `du` reads 803 GiB against 598 GiB logical — the COW bookends — and
+the two snapshots' 489/490 GiB `du` each are, by now, mostly private copies.
+Accounting the volume: 1,287.6 GB used = DB 642 + archive 192 + spill 34 +
+**≈ 420 GB of snapshot-held and fossil extents**.
+
+### Projection and the action
+
+The fold has ~1.3 h left at the measured 575 tenders/s; it has been consuming
+~31 GB/h (2 DB + 14 spill + ~15 divergence), so landing is ≈ 450 GB free before
+the spill goes, ≈ 485 GB after — about 73% used. The 80% line (1,424 GB used) is
+~140 GB away: **not reached by this campaign**, and `diskwatch` stays `ok`.
+
+The reclaim is not a rewrite or a VACUUM (impossible here anyway) — it is
+retiring the pre-campaign snapshots, which the weekly `tender-db-snapshot.service`
+already does on its own schedule (KEEP=2, prune newest-first, refuses while a job
+runs). Plan, added to the 304 landing runbook:
+
+1. After 612 lands, the daily chain drains and the queue is idle: **run the
+   snapshot service once by hand** (`systemctl start tender-db-snapshot.service`).
+   It reflinks the post-campaign DB — the new standing prod-read target, current
+   with all 24 languages of the text era — and prunes 08-28. That frees only
+   08-28's private delta against 08-30 (small): the two pre-campaign snapshots
+   share most of their extents with each other, not with the serving DB.
+2. **Sunday 2026-09-06 05:23 CEST** the scheduled run takes another and prunes
+   08-30 — the last pre-campaign copy — which is when the ~400 GB comes back.
+   Expected reading on that firing: free ≈ **850–900 GB (~50% used)**. If it does
+   not move by hundreds of GB, this accounting is wrong and that is the finding.
+3. Keeping 08-30 until Sunday is deliberate: it is the only pre-flip state left,
+   and it costs nothing more than it already has while the landing probes run.
+   Retiring it early is one `rm` if the volume needs it — it will not.
+
+Lifecycle rule for the model, stated once: **price a held reflink snapshot at
+FULL size across any campaign that rewrites the layer it holds, and retire
+pre-campaign snapshots as soon as the campaign is accepted.** Two campaigns
+have now demonstrated it (the 08-28 epoch refold + 306 rederive: ~230 GB; the
+304 campaign: ~120 GB and counting).

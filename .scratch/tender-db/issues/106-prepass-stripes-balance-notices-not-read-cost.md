@@ -1,6 +1,6 @@
 # 106 — count-balanced stripes cannot parallelise a CONCENTRATED cohort: 94 is necessary but insufficient for the reprocess
 
-Status: proposed
+Status: proposed — re-measured 2026-09-03 on a CORPUS-WIDE fold (the uniform case, not the concentrated one this issue is about): 31 count-balanced stripes reached 20.1× of 31 (65% of capacity), see "Re-measured 2026-09-03". Work-stealing remains the fix for a concentrated cohort; the uniform case does not need it.
 Kind: performance / **blocker for the quarantine reprocess at scale**
 Design owner: proj-fix
 Relates to: 94 (balanced stripes — necessary, and working; this is what it does *not* solve), 66 (the sharded pre-pass), 96 (apply-side variability), 76 (quarantine reprocess — the work this blocks)
@@ -224,3 +224,37 @@ magnitude larger than first assessed. The original framing ("second-order refine
 ~5-6× of 8×") was **wrong** — it was extrapolated before the slowest shard had reported.
 The corrected finding is that 94 is necessary but insufficient, and that work-stealing is
 the actual enabler for the reprocess.
+
+## Re-measured 2026-09-03 — the uniform case, 31 stripes, 32 cores
+
+Job 612 (the 304 campaign's fold: 14,331,573 planned notices, 7.9M tenders — the
+whole parsed corpus, not a cohort) ran the pre-pass on 31 count-balanced stripes of
+462,308 parsed notices each, one worker per stripe, joined at the barrier. Every
+stripe's own `DONE` line, so these are measured, not projected:
+
+| | |
+| --- | --- |
+| wall-clock | **1,613.6 s (26.9 min)**, set by shard 27 (ids 25.1M–25.7M, eForms) |
+| worker-seconds | 32,494 (541.6 worker-min) |
+| effective parallelism | **20.1× of 31 — 65% of capacity used, 35% idle at the barrier** |
+| fastest stripe | shard 0 (ids 0–0.9M, legacy): 157.6 s, 2,933 notices/s |
+| slowest stripe | shard 27: 1,613.6 s, 287 notices/s |
+| spread | **10.2×** (the 2026-08-02 cohort measured 21×) |
+
+Per-stripe wall-clock rises almost monotonically with id — 158, 205, 240, 294, 347,
+393, 431, 461 s for the eight legacy stripes, then 763 s for shard 8 (a sparse
+8.26M-id stretch: **id width is irrelevant, per-notice cost is everything**), then
+1,014–1,614 s across the eForms stripes. The gradient is the one this issue found
+in 08-02's shard 2 ("read cost rises with id"), now seen across the whole axis at
+once.
+
+What it says about the recommendation: on a UNIFORM cohort, count-balanced striping
+already gets two thirds of the box, and the loss is the smooth cost gradient, not
+concentration — exactly the shape the "byte-weighted stripes" paragraph above says
+a static weight *could* address (it is stationary enough across 31 stripes here:
+the eForms stripes sit within 1,014–1,614 s of each other). Work-stealing would
+have recovered the remaining third (26.9 → ~17.5 min on this run), which is small
+against the hours the bucketed fold takes afterwards. So for the corpus-wide fold
+this is not worth building; the case that still is — a cohort concentrated in one
+stripe, the reprocess shape — has not recurred since 08-02 and stays the reason
+this issue exists.

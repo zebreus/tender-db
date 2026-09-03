@@ -412,3 +412,13 @@ So the fold is near-total: the stale stamp plus touched-group expansion reach
 7.9M of the tender layer, which is the hours-long part. The 339 CONTROL read
 holds: the job row shows `pre-pass 6887156` with no total, as the pre-fix binary
 does. Load 26 during the pre-pass is the 8 workers, expected.
+
+### Runbook addendum (2026-09-03 05:5x UTC) — storage step between "queue idle" and "deploy"
+
+Between runbook steps 1 and 2: with the queue idle, run `tender-db-snapshot.service`
+once by hand. It takes the post-campaign reflink (the new prod-read target) and
+retires the 08-28 pre-campaign snapshot; Sunday's scheduled run retires 08-30 and
+returns the ~400 GB the two of them hold (issue 169, 2026-09-03). Then deploy.
+Also measured this firing: the fold runs at ~575 tenders/s (2 versions per
+tender in this stretch), 5.31M/7.92M at 05:50 UTC → lands ≈ 07:05 UTC, and the
+07:35 UTC daily chain queues behind it. Disk 73%, 493 GB free.
