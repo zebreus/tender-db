@@ -7,7 +7,7 @@
 > later; the tracker has no allocator, so a collision between agents working in parallel is a
 > when-not-if, and the fix is cheap only while both are fresh.
 
-Status: DESIGN — filed 2026-08-04 (proj-fix) for task #15. **Do not build the index on the stated
+Status: CLOSED BY MEASUREMENT 2026-09-03 — under turso 0.7.2 the exhausted tail page costs 0.79 s, not 18.7 s; no DDL (see the last section). Was: DESIGN — filed 2026-08-04 (proj-fix) for task #15. **Do not build the index on the stated
 premise.** Needs the dense-arm measurement below before any DDL.
 Kind: read latency / regression risk
 Blocked by: — (the measurement is local; no prod contact)
@@ -213,3 +213,30 @@ corrected today, one level up: the number agreed, and the thing behind it did no
 
 Different columns and different tables: task #16 was `tender_version_lots.kind` (`?kind=Lot`), already
 shipped and live. This is `tenders.kind`. The names collide; the reads do not.
+
+## 2026-09-03 — re-measured on prod under turso 0.7.2: the phenomenon is gone, no DDL
+
+The gate above was written against an 18.7 s first page (2026-08-04, turso 0.6.x).
+Before building the plan lab, the read itself, on the serving box today (rev
+`1e895b5`, 7.93M tenders, ordinary client shape, each page following the previous
+`next_cursor`):
+
+| `?kind=registration&limit=25` | wall | rows | last id |
+| --- | --- | --- | --- |
+| page 1 | 0.22 s | 25 | 1,180,322 |
+| pages 2–4 | 0.12 s each | 25 | 1,189,813 → 1,207,142 |
+| page 5 | 0.17 s | 25 | 1,744,266 |
+| page 6 — the exhausted tail, ids 1.74M → 7.93M for 6 rows | **0.79 s** | 6 | 7,929,522 |
+| `?kind=procedure&limit=25` (dense arm, unco-filtered) | 0.03 s | 25 | — |
+
+So the "matches-early-then-exhausted" mechanism is real (page 6 walks 6.2M rows) and
+costs **0.79 s**, not 18.7 s — the PK-order walk of `tenders` under 0.7.2 is cheap
+enough that the un-indexed shape is already inside the API's bounds. A partial
+index would save about 0.7 s on the one tail page per rare value, for a CREATE
+INDEX over 7.9M rows on the serving writer (minutes, at idle) plus a planner
+assumption to keep true. That trade is not worth taking. The dense-arm hazard this
+issue was careful about is moot for the same reason: no index, no random
+indirection.
+
+CLOSED BY MEASUREMENT. The design stays here as the shape to build if a rare
+`kind` read ever regresses past the bounds again — re-measure first, as this shows.
