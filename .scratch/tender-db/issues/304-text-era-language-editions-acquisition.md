@@ -515,11 +515,17 @@ r208/r209 bulk has no translated title — the earlier correction ("the full
 per-language renderings live in TED's interface, not the bulk XML") was right,
 and this is what it looks like at the API.
 
-**Cost of the heading rows** (below): they are most of the parsed-layer growth
-and serve nothing at the tender layer. Reclaiming them means a narrower policy
+**Cost of the heading rows, measured** (100 notices of the 2018-08 month):
+7,200 of 25,526 `notice_texts` rows (**28%**) but only 131,778 of 1,181,021
+value bytes (**11%**) — short strings, so their share of the on-disk growth
+sits between those two numbers (the PK carries most of a short row). They
+serve nothing at the tender layer; reclaiming them means a narrower policy
 (`Langs` for `ML_TI_DOC`: original + EN only, `All` for FORM_SECTION) and
-another 12-hour re-parse; at ~4% of the volume that is a 169 option, not an
-urgency. Filed as the note below rather than queued.
+another 12-hour re-parse — a 169 option, not an urgency. The bulk of the
+parsed-layer bytes is the FORM_SECTION copies, which DO reach the tender
+layer: the EU-institution notices' full translations account for most of the
+1.5× copy count (one such notice carries 24 copies), which is exactly why the
+gain concentrates in a few tenders per window.
 
 So stage 1 closes as: **the policy flip is deployed and applied corpus-wide
 (7.14M notices, 0 failing), the fold carries every copy the packages hold, and

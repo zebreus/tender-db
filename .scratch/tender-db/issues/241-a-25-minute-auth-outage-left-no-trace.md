@@ -188,3 +188,20 @@ whichever job the journal shows holding the writer around it. The threshold is
 far above the ordinary acquisition (the mean is microseconds) and, at this scale,
 fires about once per campaign, so it is not noise. No test: a stderr line behind
 a constant; the contention path itself is pinned by the existing test.
+
+## 2026-09-03 09:3x — the depth gauge itself had a leak; fixed
+
+After the 304 campaign's fold, `/metrics` read `writer_queue_depth 2` on an idle
+box with no job running. The two were issue 256's queue-persist give-ups
+("persist queued job 613 gave up after 30s — a long job is holding the writer"):
+`Db::conn` did `depth += 1` before the lock and `depth -= 1` after it, and a
+`tokio::time::timeout` that drops the waiting future skips the second half. Each
+abandoned wait left the gauge one higher for the life of the process — the
+"sustained non-zero depth" alarm this issue built, ringing for nobody.
+
+Fixed: the count is a drop guard (`Queued`), released whether the wait resumes
+or is dropped. Test `a_waiter_that_gives_up_leaves_no_ghost_in_the_queue_depth`
+holds the writer, times a waiter out at 50 ms, and asserts depth 0 while still
+holding. The service restart at the 09:03 deploy cleared the two ghosts; the fix
+itself deploys with the next bundle. The ≥ 10 s wait line (above) is unaffected —
+it runs only after an acquisition.
