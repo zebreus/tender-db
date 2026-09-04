@@ -274,3 +274,35 @@ in `canonical_key` (14-char, letter-bearing, one group so far — an arm for one
 group is the "not worth an arm" call this issue already made), or a case-review
 merge verdict through the 311 machinery. Left for the per-scope decision; the
 repair's job was to make it visible, and it is.
+
+## Re-census after the 345 repair (job 639, 2026-09-04 02:51 UTC, 2 s)
+
+| | 2026-09-01 (job 568) | 2026-09-04 (job 639) |
+| --- | --- | --- |
+| rows walked | 1,118,068 | 1,117,963 |
+| triples held by >1 org row | 3,458 (7,305 rows) | **3,684 (7,781 rows)** |
+| …keyed by `canonical_key` | 8 | 18 |
+| …unkeyed | 3,450 | **3,666** |
+| name verdicts (unkeyed) | DE:vat only was tabled | agree-distinctive **2,030** / agree-generic 357 / contained 600 / disagree 679 (18%) |
+
+The class grew by exactly the repair's residue: issue 345 moved 2,409 rows onto
+their live-normaliser reading, R2 folded the 1,846 groups its arms key, and the
+rest became visible same-triple duplicates — above all **`GR:national`: 210
+groups** (the 14-character Greek authority codes the GR arm does not key), with
+verdicts agree-distinctive 134 / agree-generic 4 / contained 15 / **disagree
+57**. LT:national 101 (43 / 9 / 16 / 33), DE:national 77, DE:vat 3,215 as before.
+
+**So the GR question answers itself the way DE:vat did:** 27% of the Greek
+groups carry different names under one code — the shared public-sector
+registration shape — and a blanket GR arm would fold distinct authorities
+exactly where it moved the most corpus. No arm.
+
+**The rule that IS safe, corpus-wide: E0 + agree-distinctive.** Two org rows
+with the same `(country, kind, identifier)` triple whose name keys agree and
+are not generic — 2,030 groups, 55% of the class, 311/1079 among them — are
+one entity by both kinds of evidence at once, stronger than any E1 key alone.
+`agree-generic`, `contained` and `disagree` stay out (the Prospitalia
+counter-example above is why `contained` cannot ride along). Next unit: a dry
+job that lists the E0 agree-distinctive groups with the keep chosen by mention
+count, a 100-sample precision review at the §8 Stage-2 bar (100%), then a wet
+run through the merge arms with their denial stack. Filed on the task board.
