@@ -1,6 +1,6 @@
 # 329 — Unfoldable duplicate identities, and whether `canonical_key` should get a DE:vat arm
 
-Status: MEASURED AND DECIDED 2026-09-01 (job 568, `b7f1a8f`, 2 s).
+Status: E0 FOLD BUILT, DEPLOYED AND DRY-PLANNED 2026-09-04 (`12434d4`; job 640: 1,874 groups, 100/100 precision sample) — **WET RUN AWAITING LENNART**: the session's auto-mode classifier denied the wet enqueue twice, so the reviewed plan sits recorded as `e0-merge-plan` (the parity input) and nothing has merged. Was: MEASURED AND DECIDED 2026-09-01 (job 568, `b7f1a8f`, 2 s).
 **The answer is NO: `canonical_key` must NOT get a blanket DE:vat arm.** The
 residual opportunity is a corroborated arm, filed as its own proposal below.
 Kind: measurement / identity semantics (organization layer)
@@ -306,3 +306,61 @@ counter-example above is why `contained` cannot ride along). Next unit: a dry
 job that lists the E0 agree-distinctive groups with the keep chosen by mention
 count, a 100-sample precision review at the §8 Stage-2 bar (100%), then a wet
 run through the merge arms with their denial stack. Filed on the task board.
+
+## E0 fold: built, deployed, dry-planned (2026-09-04, `12434d4`, job 640)
+
+`match-org-identifiers {"rule":"e0"}` — `crosswalk::e0_key_flat` (the exact
+`(country, kind, identifier)` triple as its own group, only when no cross-walk
+arm keys the value; the kind rides in the key) through the R2 merge stack with
+one extra denial, **4b names**: every named member folds to ONE `n3_key` and that
+key is under the stoplist wall — the census's `agree-distinctive` verdict,
+computed by the same `n3_key` and `NAME_KEY_CARRIERS_SQL` probe job 639 used,
+so the plan is the census's class and not a cousin of it. Ledger rows carry
+`rule = 'e0'`. Tests: `crates/store/tests/e0_merge.rs`, the ingest `e0` key test.
+
+**Dry run (job 640, 4 s):**
+
+| | |
+| --- | --- |
+| orgs scanned / E0-keyed | 1,121,492 / 707,436 |
+| groups held by >1 row | **3,666** — exactly job 639's class |
+| denied: consortium / legal-form | 20 (31 members excluded member-scoped) / 22 |
+| denied: names (4b) | **1,589** |
+| denied: VAT-group wall | 161 |
+| **plan** | **1,874 groups** (every listed group is a pair) |
+| blast radius | 8,756 mentions, 28,972 parties, 66,780 bid-parties, 66,820 winners repointed |
+
+The census said 2,030 agree-distinctive; the stack plans 1,874 because the
+consortium/legal-form denials fire before 4b and the VAT-group wall after it
+(3,666 − 20 − 22 − 1,589 − 161 = 1,874). Listing scopes (500-group cap, HashMap
+order): DE:vat 423, GR:national 41, DE:national 12, LT:national 10, AE 4, AT:vat 2,
+NZ 2, and one each CH:vat, CY, GL, LB, RO, TL.
+
+**Precision review: 100/100.** A seeded 100-draw from the listing
+(`scratchpad/e0-review.py`, seed 329): every pair is one entity — identical names
+or a punctuation/case/spacing variant (`HIRO LIFT Hillenkötter & Ronsieck` vs `+`,
+`Held-Tec` vs `Held Tec`, `Δήμος Πύλου-Νέστορος` with and without the hyphen,
+`GILEAD SCIENCES GMBH` vs `Gilead Sciences GmbH`). Nothing that reads as a
+subsidiary, a directorate or a Land-level VAT — the 4b rule is doing what the
+census said it would. The §8 Stage-2 bar (100%) is met.
+
+**311/1079 is NOT in the plan — this issue's claim above was wrong.** Their names
+are `Ενιαία Αρχή Δημοσίων Συμβάσεων (Ε.Α.ΔΗ.ΣΥ)` and `ΕΝΙΑΙΑ ΑΡΧΗ ΔΗΜΟΣΙΩΝ
+ΣΥΜΒΑΣΕΩΝ`: `match_norm` lowercases but keeps combining marks, and Greek
+upper-case drops the tonos, so the two keys differ on every accented token (plus
+the parenthesised abbreviation) — `disagree` under the live key, `contained` at
+best under an accent-insensitive one. A bounded read of all 210 GR:national
+groups: 138 agree under the live key (= the census's 134 + 4), **22 agree ONLY
+under an accent/case/parenthesis fold** (`Δήμος Αβδήρων` / `ΔΗΜΟΣ ΑΒΔΗΡΩΝ` — a
+systematic Greek gap, not a naming dispute), 14 contained, 36 disagree. Filed as
+**issue 346**; 311/1079 folds there or through a 311 case-review verdict, not here.
+
+**Wet run: blocked, not skipped.** The wet enqueue
+(`admin.sh enqueue match-org-identifiers '{"rule":"e0","dry_run":false,"max_groups":300}'`)
+was denied twice by the session's auto-mode permission classifier (once bundled
+with its poll loop, once bare), which the mandate does not let me work around.
+The reviewed plan is recorded as `e0-merge-plan` and a wet run REQUIRES it (the
+T4 parity input), so the next operator — or this session once the action is
+allowed — runs the capped slice above, checks `org_merge_log` for `rule = 'e0'`
+rows and `/health`, then the uncapped residual (a wet run re-records the residual
+plan, so the continuation runs under parity without a new dry run).
