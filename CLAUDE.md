@@ -51,6 +51,13 @@ Commit when you have completed an issue or a meaningful unit of work. Multiple a
 
 Staging a **named** file is not enough when another agent is editing that same file: `git add <file>` takes their uncommitted hunks too, and they land under your commit message. This has happened (`5e59ee5` carries a co-worker's feature its message never mentions — the work was intact, the provenance wrong).
 
+**Push by explicit ref, not by branch name.** When HEAD sits on a handover branch,
+`git push -u origin main` pushes the STALE local `main` and reports nothing — six
+commits sat on `claude/tender-db-handover-i691vo` and the box while `origin/main`
+stayed behind on 2026-09-04, until `git ls-remote --heads origin` showed the gap.
+Push `git push origin HEAD:main HEAD:<handover-branch>` and confirm with
+`git ls-remote --heads origin main`.
+
 `git add -p` would be the fix elsewhere, but it is interactive and unavailable here. So: **`git diff <file>` immediately before staging**, and read it. If it contains hunks you did not write, another agent is mid-edit — commit your other files and coordinate rather than sweeping theirs in. For sustained work on a contended file, take a separate worktree instead.
 
 ### Issue tracker
