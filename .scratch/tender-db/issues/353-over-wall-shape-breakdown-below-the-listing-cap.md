@@ -1,6 +1,6 @@
 # 353 — the over-wall backlog below the listing cap: ~55,500 names / ~2.4M rows the verdict cohorts cannot reach
 
-Status: BUILT 2026-09-04 15:5x (gate running) — the fold's dry run now tallies every raw-wall group by shape (`id0/c0` pure echo … `id>cap/c2+` shared) with rows, and carries a 100-name uniform sample of them; deploys with `b71e809` at the next idle window; the cohorts 4+5 dry run is the measurement. Was: ready-for-agent (filed 2026-09-04 from issue 351 unit 5's cohort 5)
+Status: MEASURED 2026-09-04 17:1x — deployed `7e51dcc`, measured by job 673: **90% of the standing rows (1.85M of 2.05M) sit on names with NO identified carrier at all** (`id0/c0` 32,337 names / 1,174,327 rows; `id0/c1` 19,478 / 672,599); the shared shapes (`id>cap/*`, `id1-cap/c2+`) hold 6.7%. The wall is over these names by spelling fragmentation: one N2 key unites the punctuation/case variants of one name (`COMMUNE DE SAINT-BON COURCHEVEL` + `…SAINT-BON-COURCHEVEL` + … = 44 live carriers, one commune). The 100-sample reads ~93% single, ~7% generic/non-name/multinational (`Price: Various`, `Shell`, `Centre hospitalier, service pharmacie`) — the same ratio as the hand cohorts, so a blind pure-echo rule would merge ~9% of the rows wrongly (the tendsign shape at small scale). Decision: verdicts, at scale — the census listing cap rises to 60,000 with a `shape` per listed group (this unit's second half, gate running), then the ~20k names of 21–229 rows go to agent-read batches. Re-measure after Sunday's `org_match_keys` rebuild. Was: BUILT 2026-09-04 15:5x — the fold's dry run tallies every raw-wall group by shape with rows and carries a 100-name uniform sample; deployed with `b71e809`. Was: ready-for-agent (filed 2026-09-04 from issue 351 unit 5's cohort 5)
 Kind: measurement first (organization layer, the provisional-echo fold) — small
 Relates to: 351 (the fold, its tiers and verdict cohorts), 350 (the wall conflates fragmentation with genericness), 349 (echo vs shared carriers), 234 (the exclusion guards the wall stands in for)
 
@@ -47,6 +47,65 @@ with a country in the string.
   identified) reads `id0/c0`; a new `Bank Many` (three country-less rows,
   ten identified rows in DE and AT) reads `id>cap/c2+` and stands; the
   verdict-refused `Kreis Zwei` has no shape.
+
+## Measured (job 673, 2026-09-04, 955 s; the cohorts 2–5 dry run)
+
+Raw-wall `over-wall` groups 55,855 / 2,046,351 rows (verdict-refused 157
+and verdict-single 1,680 excluded):
+
+| shape | groups | rows | rows % |
+|---|---|---|---|
+| `id0/c0` | 32,337 | 1,174,327 | 57.4 |
+| `id0/c1` | 19,478 | 672,599 | 32.9 |
+| `id1-cap/c2+` | 1,103 | 63,159 | 3.1 |
+| `id0/c2+` | 1,268 | 53,545 | 2.6 |
+| `id>cap/c1` | 838 | 43,338 | 2.1 |
+| `id>cap/c2+` | 482 | 29,692 | 1.5 |
+| `id1-cap/c1` | 338 | 9,356 | 0.5 |
+| `id1-cap/c0` | 11 | 335 | 0.0 |
+
+`id0/c1` — no identified carrier, one country among the carriers — is a
+name that also stands as a `(name_norm, country)` provisional row in one
+country: the strongest one-entity signal the data holds short of an
+identifier. `id0/c2+` (2.6%) is where two-country names like `Stadt
+Burgdorf` live.
+
+**Why 2-row groups are over the wall.** `/admin/name-key` on `COMMUNE DE
+SAINT-BON - COURCHEVEL` (2 rows): 44 live carriers, all country-less and
+identifier-less, spread over the punctuation and case variants of the same
+commune — the N2 key folds what `name_norm` keeps apart. The walk groups by
+exact `name_norm`; the wall counts by N2; a name with a dozen spellings of
+a few rows each is over the wall in every spelling, so none folds and every
+new country-less mention mints. Fragmentation across spellings, not sharing.
+
+**The 100-sample (uniform over raw-wall groups):** 71 `id0/c0`, 24 `id0/c1`;
+39 groups of ≤20 rows hold 272 of the sample's 3,225 rows, the 61 groups of
+21–229 rows hold 2,953 — the rows are in the mid-size groups. Reading it:
+~93 single entities (city halls, hospitals, ministries' directorates,
+universities, named companies with a legal form, two people), and `Price:
+Various` (95 rows), `Shell` (99, `id0/c2+`), `Centre hospitalier, service
+pharmacie` (70), `AZIENDA OSPEDALIERA OSPEDALE CIVILE`, `Texaco Ltd`,
+`Yamaha Motor Co`, `Ernst&Young`, `- Philibert -` — ~7% of names, ~9% of
+rows, the same ratio the five hand cohorts gave.
+
+**Decision.** A blind pure-echo rule is refused: it would fold `Price:
+Various` into one 95-mention junk org and `Shell` into one row for several
+national companies — the 234 exclusion's tendsign shape at small scale, and
+nothing in the carriers tells those apart from `PAPWORTH HOSPITAL NHS
+TRUST`. A row cap does not help: the rows are in the 21–229 groups, where
+the generics also are. What does tell them apart is a read of the string,
+which the cohorts did at 400 names an hour by hand. So: verdicts at scale.
+The census listing cap rises from 5,000 to 60,000 (the heap is bounded by
+the cap; ~200 bytes a listed group, so a 25,000 listing is ~5 MB) and every
+listed group carries its `shape`; the ~20k names of 21–229 rows then go to
+agent-read batches of ~1,000 with the cohorts' rubric, POSTed as cohorts,
+then dry, then wet (issue 351's rule: nothing posted between the two).
+
+**Caveat.** `org_match_keys` still carries the rows the folds deleted
+(foreign keys were off, so nothing cascaded, and no rebuild has run since);
+the wall's carrier counts and this breakdown's `carriers` include them. The
+weekly tick's rebuild on Sunday 2026-09-06 drops them; re-run the dry run
+after it — some `id0/*` names may fall under the wall on their own.
 
 ## Next
 
