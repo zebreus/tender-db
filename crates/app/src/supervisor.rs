@@ -6146,6 +6146,11 @@ impl Supervisor {
                         "rows_walked": r.rows_walked, "groups": r.groups,
                         "over_wall": r.over_wall, "plan_rows": r.plan_rows,
                         "tiers": r.tiers,
+                        "over_wall_shapes": r.over_wall_shapes,
+                        "over_wall_shape_rows": r.over_wall_shape_rows,
+                        "over_wall_sample": r.over_wall_sample.iter().map(|(norm, name, rows, shape)| serde_json::json!({
+                            "name_norm": norm, "name": name, "rows": rows, "shape": shape,
+                        })).collect::<Vec<_>>(),
                         "merged_this_run": r.merged_groups,
                         "residual_of_wet_run": !dry_run,
                         "listing_truncated": r.listing_truncated,
@@ -6168,7 +6173,7 @@ impl Supervisor {
                 }
                 Ok(format!(
                     "fold-provisional-echoes (issue 351){}: {} rows walked, {} names in more than one \
-                     row, {} left standing (tiers {:?}); plan {} groups / {} rows; folded {} groups \
+                     row, {} left standing (tiers {:?}; over-wall shapes {:?}, rows {:?}); plan {} groups / {} rows; folded {} groups \
                      ({} rows removed, {} mentions, {} parties, {} bid-parties, {} winners repointed, \
                      {} winner dups deleted, {} tenders touched)",
                     if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
@@ -6176,6 +6181,8 @@ impl Supervisor {
                     r.groups,
                     r.over_wall,
                     r.tiers,
+                    r.over_wall_shapes,
+                    r.over_wall_shape_rows,
                     r.plan_groups,
                     r.plan_rows,
                     r.merged_groups,

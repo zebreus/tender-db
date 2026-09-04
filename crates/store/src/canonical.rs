@@ -2188,10 +2188,50 @@ pub(crate) const GENERIC_KEY_BREAKDOWN_SQL: &str =
             SUM(CASE WHEN o.identifier IS NOT NULL THEN 1 ELSE 0 END), \
             SUM(CASE WHEN o.country IS NOT NULL THEN 1 ELSE 0 END), \
             COUNT(DISTINCT o.identifier), \
-            COUNT(DISTINCT CASE WHEN o.identifier IS NOT NULL THEN o.country END) \
+            COUNT(DISTINCT CASE WHEN o.identifier IS NOT NULL THEN o.country END), \
+            COUNT(DISTINCT o.country) \
        FROM (SELECT DISTINCT org_id FROM org_match_keys \
               WHERE key_kind = ? AND key = ? LIMIT 1000) k \
        JOIN organizations o ON o.id = k.org_id";
+
+/// Issue 353: the breakdown behind an over-wall reading, kept so the fold can
+/// say WHAT SHAPE of over-wall a standing name is. Every count is over the
+/// first 1,000 carriers of the key, the bound [`GENERIC_KEY_BREAKDOWN_SQL`]
+/// shares with the wall.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub(crate) struct WallBreakdown {
+    pub carriers: u64,
+    pub with_identifier: u64,
+    pub with_country: u64,
+    pub identifiers: u64,
+    /// Distinct countries among the IDENTIFIED carriers (the echo-of-one test).
+    pub identified_countries: u64,
+    /// Distinct countries among ALL carriers.
+    pub countries: u64,
+}
+
+impl WallBreakdown {
+    /// The over-wall shape label the fold report tallies by: how many
+    /// carriers hold an identifier (`id0`, `id1-cap`, `id>cap`) and how many
+    /// countries all carriers span (`c0`, `c1`, `c2+`). `id0/c0` is a pure
+    /// echo — nothing but the country-less identifier-less rows themselves
+    /// carry the name, so the wall measured fragmentation, not sharing.
+    pub fn shape(&self, cap: usize) -> String {
+        let id = if self.with_identifier == 0 {
+            "id0"
+        } else if self.with_identifier as usize <= cap {
+            "id1-cap"
+        } else {
+            "id>cap"
+        };
+        let c = match self.countries {
+            0 => "c0",
+            1 => "c1",
+            _ => "c2+",
+        };
+        format!("{id}/{c}")
+    }
+}
 
 /// Issue 351 unit 4: which tier admitted or refused a country-less name.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -2236,6 +2276,18 @@ pub(crate) async fn echo_tier_on(
     key: &str,
     cap: usize,
 ) -> turso::Result<EchoTier> {
+    Ok(echo_tier_detail(conn, name_norm, key, cap).await?.0)
+}
+
+/// [`echo_tier_on`] with the wall's breakdown attached whenever the wall was
+/// asked and found the key over the cap (issue 353: the fold tallies the
+/// standing names by shape). `None` for a verdict-decided or under-wall name.
+pub(crate) async fn echo_tier_detail(
+    conn: &Connection,
+    name_norm: &str,
+    key: &str,
+    cap: usize,
+) -> turso::Result<(EchoTier, Option<WallBreakdown>)> {
     // Tier 1: a recorded verdict.
     {
         let mut q = conn
@@ -2243,8 +2295,8 @@ pub(crate) async fn echo_tier_on(
             .await?;
         if let Some(row) = q.next().await? {
             return Ok(match text(&row, 0).as_str() {
-                "single" => EchoTier::VerdictSingle,
-                "generic" | "platform" | "non-name" => EchoTier::VerdictRefused,
+                "single" => (EchoTier::VerdictSingle, None),
+                "generic" | "platform" | "non-name" => (EchoTier::VerdictRefused, None),
                 _ => {
                     drop(q);
                     return echo_tier_by_wall(conn, key, cap).await;
@@ -2256,10 +2308,14 @@ pub(crate) async fn echo_tier_on(
 }
 
 /// Tiers 2 and 3 of [`echo_tier_on`]: the raw wall, and the echo-of-one
-/// reading of an over-cap key.
-async fn echo_tier_by_wall(conn: &Connection, key: &str, cap: usize) -> turso::Result<EchoTier> {
+/// reading of an over-cap key — with that reading's breakdown.
+async fn echo_tier_by_wall(
+    conn: &Connection,
+    key: &str,
+    cap: usize,
+) -> turso::Result<(EchoTier, Option<WallBreakdown>)> {
     if key.is_empty() {
-        return Ok(EchoTier::UnderWall);
+        return Ok((EchoTier::UnderWall, None));
     }
     let mut carriers = 0u64;
     let mut found_kind = "n2";
@@ -2277,18 +2333,26 @@ async fn echo_tier_by_wall(conn: &Connection, key: &str, cap: usize) -> turso::R
         }
     }
     if carriers as usize <= cap {
-        return Ok(EchoTier::UnderWall);
+        return Ok((EchoTier::UnderWall, None));
     }
     let mut q = conn.query(GENERIC_KEY_BREAKDOWN_SQL, (t(found_kind), t(key))).await?;
-    let (with_identifier, countries) = match q.next().await? {
-        Some(row) => (int(&row, 1).max(0) as usize, int(&row, 4).max(0)),
-        None => (0, 0),
+    let b = match q.next().await? {
+        Some(row) => WallBreakdown {
+            carriers: int(&row, 0).max(0) as u64,
+            with_identifier: int(&row, 1).max(0) as u64,
+            with_country: int(&row, 2).max(0) as u64,
+            identifiers: int(&row, 3).max(0) as u64,
+            identified_countries: int(&row, 4).max(0) as u64,
+            countries: int(&row, 5).max(0) as u64,
+        },
+        None => WallBreakdown::default(),
     };
-    Ok(if (1..=cap).contains(&with_identifier) && countries == 1 {
+    let tier = if (1..=cap as u64).contains(&b.with_identifier) && b.identified_countries == 1 {
         EchoTier::EchoOfOne
     } else {
         EchoTier::OverWall
-    })
+    };
+    Ok((tier, Some(b)))
 }
 
 /// Carriers of a NAME KEY under ONE kind, counted up to `cap + 1` (issue 328
@@ -2647,6 +2711,17 @@ pub struct ProvisionalFoldReport {
     pub over_wall: u64,
     /// Groups by the tier that decided them (`EchoTier::as_str`).
     pub tiers: std::collections::BTreeMap<String, u64>,
+    /// Issue 353: the raw-wall `over-wall` groups by [`WallBreakdown::shape`]
+    /// — `id0/c0` (a pure echo: nothing but the class's own rows carry the
+    /// name), `id>cap/c2+` (a name many identified bodies share), and the
+    /// cells between — with the rows those groups hold. Verdict-refused
+    /// groups are not here: a verdict already settled them.
+    pub over_wall_shapes: std::collections::BTreeMap<String, u64>,
+    pub over_wall_shape_rows: std::collections::BTreeMap<String, u64>,
+    /// A uniform sample (reservoir of 100, fixed seed) of the raw-wall
+    /// groups: (name_norm, name, rows, shape) — what the tail below any
+    /// listing cap looks like, for a reader deciding a rule.
+    pub over_wall_sample: Vec<(String, String, u64, String)>,
     /// Groups under the wall: the plan.
     pub plan_groups: u64,
     /// Rows the plan removes (every group's rows but one).
@@ -14417,7 +14492,7 @@ impl Db {
         let reader = self.reader().await?;
         // (name_norm, name, ids) — ids ascending by construction of the walk.
         let mut plan: Vec<(String, String, Vec<i64>)> = Vec::new();
-        let mut wall_memo: std::collections::HashMap<String, EchoTier> = Default::default();
+        let mut wall_memo: std::collections::HashMap<String, (EchoTier, Option<String>)> = Default::default();
         let mut cur: Option<(String, String, Vec<i64>)> = None;
         let (mut last_norm, mut last_id) = (String::new(), 0i64);
         loop {
@@ -14664,7 +14739,7 @@ impl Db {
         reader: &Connection,
         args: &ProvisionalFoldArgs<'_>,
         report: &mut ProvisionalFoldReport,
-        wall_memo: &mut std::collections::HashMap<String, EchoTier>,
+        wall_memo: &mut std::collections::HashMap<String, (EchoTier, Option<String>)>,
         plan: &mut Vec<(String, String, Vec<i64>)>,
         group: (String, String, Vec<i64>),
     ) -> turso::Result<()> {
@@ -14676,16 +14751,40 @@ impl Db {
         let key = (args.n2)(&name);
         // Memoized by name: the verdict table is keyed by it, and the wall's
         // key is a function of it.
-        let tier = if let Some(&tier) = wall_memo.get(&norm) {
-            tier
+        let (tier, shape) = if let Some(hit) = wall_memo.get(&norm) {
+            hit.clone()
         } else {
-            let tier = echo_tier_on(reader, &norm, &key, args.stoplist_cap).await?;
-            wall_memo.insert(norm.clone(), tier);
-            tier
+            let (tier, breakdown) = echo_tier_detail(reader, &norm, &key, args.stoplist_cap).await?;
+            let shape = breakdown.map(|b| b.shape(args.stoplist_cap));
+            wall_memo.insert(norm.clone(), (tier, shape.clone()));
+            (tier, shape)
         };
         *report.tiers.entry(tier.as_str().to_owned()).or_default() += 1;
         if !tier.admits() {
             report.over_wall += 1;
+            if tier == EchoTier::OverWall {
+                // Issue 353: what shape of over-wall — and a uniform sample
+                // of the standing names. Reservoir sampling with a fixed
+                // xorshift seed: the walk is ordered, so the same stock
+                // yields the same sample.
+                let shape = shape.unwrap_or_else(|| "?".to_owned());
+                *report.over_wall_shapes.entry(shape.clone()).or_default() += 1;
+                *report.over_wall_shape_rows.entry(shape.clone()).or_default() += ids.len() as u64;
+                let seen = report.over_wall_shapes.values().sum::<u64>();
+                let item = (norm, name, ids.len() as u64, shape);
+                if report.over_wall_sample.len() < 100 {
+                    report.over_wall_sample.push(item);
+                } else {
+                    let mut x = seen ^ 0x9E37_79B9_7F4A_7C15;
+                    x ^= x << 13;
+                    x ^= x >> 7;
+                    x ^= x << 17;
+                    let slot = (x % seen) as usize;
+                    if slot < 100 {
+                        report.over_wall_sample[slot] = item;
+                    }
+                }
+            }
             return Ok(());
         }
         report.plan_groups += 1;

@@ -121,6 +121,25 @@ async fn identical_null_country_provisionals_fold_under_the_wall_and_stand_over_
         org(&conn, 800 + i, None, "Tribunal Verdict").await;
         conn.execute("INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'tribunal verdict')", (Value::Integer(800 + i),)).await.unwrap();
     }
+    // Issue 353's shapes. "Bank Many": three country-less rows, and ten
+    // identified rows in two countries carry the key — over the wall by
+    // sharing, not by echo (`id>cap/c2+`); "Gemeinde Generic" above is the
+    // pure echo (`id0/c0`).
+    for i in 0..3 {
+        org(&conn, 900 + i, None, "Bank Many").await;
+        conn.execute("INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'bank many')", (Value::Integer(900 + i),)).await.unwrap();
+    }
+    for i in 0..10 {
+        let cc = if i % 2 == 0 { "DE" } else { "AT" };
+        conn.execute(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, ?, 'vat', ?, 'Bank Many', 'bank many', 0, 0)",
+            (Value::Integer(950 + i), Value::Text(cc.into()), Value::Text(format!("{cc}{}", 950 + i))),
+        )
+        .await
+        .unwrap();
+        conn.execute("INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'bank many')", (Value::Integer(950 + i),)).await.unwrap();
+    }
     let recorded = db
         .record_name_verdicts(
             "t",
@@ -139,23 +158,30 @@ async fn identical_null_country_provisionals_fold_under_the_wall_and_stand_over_
     let quiet = |_: u64, _: &str| {};
 
     let dry = db.fold_provisional_echoes(args(true, None, &never, &quiet)).await.unwrap();
-    assert_eq!(dry.rows_walked, 71, "5 + 2 + 3 + 30 + 30 + the singleton; the DE rows are outside the class");
-    assert_eq!(dry.groups, 5);
-    assert_eq!(dry.over_wall, 2, "Gemeinde Generic (over the wall, nothing identified) and Kreis Zwei (verdict) stand");
+    assert_eq!(dry.rows_walked, 74, "5 + 2 + 3 + 30 + 30 + 3 + the singleton; the identified rows are outside the class");
+    assert_eq!(dry.groups, 6);
+    assert_eq!(dry.over_wall, 3, "Gemeinde Generic (over the wall, nothing identified), Bank Many (shared) and Kreis Zwei (verdict) stand");
     assert_eq!(dry.tiers.get("under-wall"), Some(&1), "Stadt Echo");
     assert_eq!(dry.tiers.get("echo-of-one"), Some(&1), "Stadt Big");
     assert_eq!(dry.tiers.get("verdict-single"), Some(&1), "Tribunal Verdict");
     assert_eq!(dry.tiers.get("verdict-refused"), Some(&1), "Kreis Zwei");
-    assert_eq!(dry.tiers.get("over-wall"), Some(&1), "Gemeinde Generic");
+    assert_eq!(dry.tiers.get("over-wall"), Some(&2), "Gemeinde Generic and Bank Many");
+    assert_eq!(dry.over_wall_shapes.get("id0/c0"), Some(&1), "Gemeinde Generic: a pure echo");
+    assert_eq!(dry.over_wall_shapes.get("id>cap/c2+"), Some(&1), "Bank Many: ten identified carriers in two countries");
+    assert_eq!(dry.over_wall_shapes.len(), 2, "verdict-refused Kreis Zwei has no shape: a verdict settled it");
+    assert_eq!((dry.over_wall_shape_rows.get("id0/c0"), dry.over_wall_shape_rows.get("id>cap/c2+")), (Some(&3), Some(&3)));
+    assert_eq!(dry.over_wall_sample.len(), 2, "every raw-wall group sits in the sample while it holds fewer than 100");
+    assert!(dry.over_wall_sample.contains(&("gemeinde generic".to_owned(), "Gemeinde Generic".to_owned(), 3, "id0/c0".to_owned())));
+    assert!(dry.over_wall_sample.contains(&("bank many".to_owned(), "Bank Many".to_owned(), 3, "id>cap/c2+".to_owned())));
     assert_eq!((dry.plan_groups, dry.plan_rows), (3, 4 + 29 + 29));
     assert_eq!(dry.listing[0], ("stadt big".to_owned(), "Stadt Big".to_owned(), 30, 600));
     assert_eq!(dry.merged_groups, 0);
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 75, "a dry run writes nothing");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 88, "a dry run writes nothing");
 
     // Parity: a wet run against a plan that is not the one recorded aborts.
     let off = db.fold_provisional_echoes(args(false, Some(200), &never, &quiet)).await;
     assert!(off.is_err(), "plan 3 vs recorded 200 is outside max(2%, 50)");
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 75);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 88);
 
     assert!(db.foreign_keys_enabled().await.unwrap(), "the writer enforces foreign keys before the fold");
     let wet = db.fold_provisional_echoes(args(false, Some(3), &never, &quiet)).await.unwrap();
@@ -169,11 +195,12 @@ async fn identical_null_country_provisionals_fold_under_the_wall_and_stand_over_
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 100").await, 3);
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'kreis zwei'").await, 2, "a refusing verdict: untouched");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'gemeinde generic'").await, 3, "over the wall: untouched");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'bank many'").await, 13, "shared over the wall: untouched");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'stadt echo' AND country = 'DE'").await, 2, "outside the class: untouched");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_merge_log WHERE rule = 'p0' AND keep = 100").await, 4);
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_merge_log WHERE rule = 'p0'").await, 62);
 
     // Idempotent: the class is now one row per admitted name, nothing to plan.
     let again = db.fold_provisional_echoes(args(true, None, &never, &quiet)).await.unwrap();
-    assert_eq!((again.plan_groups, again.over_wall), (0, 2));
+    assert_eq!((again.plan_groups, again.over_wall), (0, 3));
 }
