@@ -384,7 +384,7 @@ enum Spec {
     DuplicateIdentityCensus,
     /// Issue 351: NULL-country, identifier-less provisional rows by name —
     /// the echo class. Read-only measurement.
-    ProvisionalEchoCensus,
+    ProvisionalEchoCensus { cap: usize },
     /// Issue 351 unit 3: fold identical-name NULL-country provisional rows
     /// into one per name, wall-gated. Deletes org rows: dry_run defaults
     /// TRUE and a wet run requires the stored dry plan.
@@ -1369,14 +1369,21 @@ impl Supervisor {
                 )
                 .await,
             ]),
-            "provisional-echo-census" => Ok(vec![
-                self.push(
-                    "provisional-echo-census",
-                    "provisional-echo-census".into(),
-                    Spec::ProvisionalEchoCensus,
-                )
-                .await,
-            ]),
+            // Issue 351: `max_groups` doubles as the listing cap (default
+            // 200), so a verdict cohort can be cut from the over-wall names
+            // beyond the first page without a second job kind.
+            "provisional-echo-census" => {
+                let cap = req.max_groups.unwrap_or(200).clamp(1, 5_000) as usize;
+                let params = if cap == 200 {
+                    "provisional-echo-census".to_owned()
+                } else {
+                    format!("provisional-echo-census cap={cap}")
+                };
+                Ok(vec![
+                    self.push("provisional-echo-census", params, Spec::ProvisionalEchoCensus { cap })
+                        .await,
+                ])
+            }
             "fold-provisional-echoes" => {
                 let dry_run = req.dry_run.unwrap_or(true);
                 let max_groups = req.max_groups;
@@ -6169,20 +6176,20 @@ impl Supervisor {
                     r.tender_changes
                 ))
             }).await,
-            Spec::ProvisionalEchoCensus => Box::pin(async move {
+            Spec::ProvisionalEchoCensus { cap } => Box::pin(async move {
+                let cap = *cap;
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
                 self.set_phase("walking", None, None, "issue 351: provisional rows by name".to_owned());
                 let progress = |done: u64, detail: &str| {
                     self.set_phase("walking", Some(done), None, detail.to_owned());
                 };
-                const CAP: usize = 200;
                 let r = self
                     .db
                     .provisional_echo_census(
                         ingest::project::match_norm,
                         SCAN_STOPLIST_CAP,
-                        CAP,
+                        cap,
                         &stop,
                         &progress,
                     )
