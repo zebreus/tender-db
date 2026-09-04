@@ -419,3 +419,59 @@ async fn the_name_key_probe_counts_carriers_and_lists_the_first_ones() {
     let (n, ids) = db.name_key_carriers("n3", "δημοσ χανιων", 1_000, 20).await.unwrap();
     assert_eq!((n, ids.len()), (0, 0), "a kind the build never wrote is simply absent");
 }
+
+/// Issue 349: an over-cap key is not one thing. `Stadtwerke Echo` crosses the
+/// cap of 8 only because one entity sits in ten identifier-less, country-less
+/// provisional rows plus the pair — an echo; `Gemeinde Shared` crosses it on
+/// identifier-bearing rows alone — a shared name. Both read `agree-generic`
+/// today; the census now says which is which, per group and per scope.
+#[tokio::test]
+async fn generic_keys_are_split_into_echo_and_shared() {
+    let (db, conn) = open("dupid-echo").await;
+    async fn key_row(conn: &turso::Connection, id: i64, key: &str) {
+        conn.execute(
+            "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', ?)",
+            (Value::Integer(id), Value::Text(key.into())),
+        )
+        .await
+        .unwrap();
+    }
+    // The echo: a DE:vat pair sharing one number, plus ten NULL/NULL provisional
+    // rows of the same entity, all carrying the key.
+    org(&conn, 1, "DE", "vat", "DE111111111", "Stadtwerke Echo", 3).await;
+    org(&conn, 2, "DE", "vat", "DE111111111", "Stadtwerke Echo", 1).await;
+    key_row(&conn, 1, "stadtwerke echo").await;
+    key_row(&conn, 2, "stadtwerke echo").await;
+    for i in 0..10i64 {
+        conn.execute(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, provisional, created_at)
+             VALUES (?, NULL, NULL, NULL, 'Stadtwerke Echo', 1, 0)",
+            (Value::Integer(100 + i),),
+        )
+        .await
+        .unwrap();
+        key_row(&conn, 100 + i, "stadtwerke echo").await;
+    }
+    // The shared name: a pair plus nine OTHER identifier-bearing companies.
+    org(&conn, 3, "DE", "vat", "DE222222222", "Gemeinde Shared", 2).await;
+    org(&conn, 4, "DE", "vat", "DE222222222", "Gemeinde Shared", 1).await;
+    key_row(&conn, 3, "gemeinde shared").await;
+    key_row(&conn, 4, "gemeinde shared").await;
+    for i in 0..9i64 {
+        org(&conn, 200 + i, "DE", "vat", &format!("DE3000000{i:02}"), "Gemeinde Shared", 1).await;
+        key_row(&conn, 200 + i, "gemeinde shared").await;
+    }
+    let r = run(&db, 100).await;
+    assert_eq!(r.verdicts.get("agree-generic"), Some(&2), "both cross the cap of {STOPLIST_CAP}");
+    assert_eq!((r.generic_echo_groups, r.generic_shared_groups), (1, 1));
+    assert_eq!(r.generic_echo_by_scope.get("DE:vat"), Some(&1));
+    assert_eq!(r.generic_probes.len(), 2);
+    let echo = r.generic_probes.iter().find(|g| g.key == "stadtwerke echo").unwrap();
+    assert_eq!(
+        (echo.carriers, echo.with_identifier, echo.with_country, echo.distinct_identifiers, echo.echo),
+        (12, 2, 2, 1, true)
+    );
+    let shared = r.generic_probes.iter().find(|g| g.key == "gemeinde shared").unwrap();
+    assert_eq!((shared.carriers, shared.with_identifier, shared.distinct_identifiers, shared.echo), (11, 11, 10, false));
+    assert!(!r.generic_probes_truncated);
+}

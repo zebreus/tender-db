@@ -6102,6 +6102,19 @@ impl Supervisor {
                     // unrun key-build makes every agreeing group look
                     // distinctive.
                     "name_keys_absent": r.name_keys_absent,
+                    // Issue 349: the generic verdicts, split by what the
+                    // carriers are. `echo` = the identifier-bearing carriers
+                    // alone would not cross the wall.
+                    "generic_echo_groups": r.generic_echo_groups,
+                    "generic_shared_groups": r.generic_shared_groups,
+                    "generic_echo_by_scope": r.generic_echo_by_scope,
+                    "generic_probes_truncated": r.generic_probes_truncated,
+                    "generic_probes": r.generic_probes.iter().map(|g| serde_json::json!({
+                        "key": g.key, "kind": g.kind, "scope": g.scope,
+                        "carriers": g.carriers, "with_identifier": g.with_identifier,
+                        "with_country": g.with_country,
+                        "distinct_identifiers": g.distinct_identifiers, "echo": g.echo,
+                    })).collect::<Vec<_>>(),
                     "group_sizes": {
                         "n": r.group_sizes.len(),
                         "max": r.group_sizes.last().copied().unwrap_or(0),

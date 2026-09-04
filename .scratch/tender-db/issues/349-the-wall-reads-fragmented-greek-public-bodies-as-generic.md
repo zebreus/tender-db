@@ -1,6 +1,6 @@
 # 349 — the genericness wall reads fragmented Greek public bodies as generic: 22 of 155 agreeing GR groups denied, 20 of them one entity in 20–54 rows
 
-Status: ready-for-agent (filed 2026-09-04 from issue 348's first probe)
+Status: MEASUREMENT BUILT 2026-09-04 (gate running) — the duplicate-identity census now probes every generic key it meets (`GENERIC_KEY_BREAKDOWN_SQL`: carriers, with identifier, with country, distinct identifiers, bounded at 1,000) and splits `agree-generic` groups into `echo` (identifier-bearing carriers alone under the cap) and `shared`, per scope, with up to 200 probes listed; test `generic_keys_are_split_into_echo_and_shared`. Then: deploy, run the census, read the 375-key split, choose (a) or (b). Was: ready-for-agent (filed 2026-09-04 from issue 348's first probe)
 Kind: identity semantics (organization layer) — the wall's statistic on one scope
 Relates to: 316/318 (the wall), 331 (asked exactly this, measured corpus-wide), 332 (closed negative corpus-wide — this is the exception it allowed for), 346 (how it surfaced), 329 (the E0 fold that loses these groups), 300 Stage 3/5 (NULL-country rescue — most of these carriers are that class)
 
@@ -68,3 +68,19 @@ mention — a source-side mislabel that resolved to it. One row; noted, not file
 - the chosen fix is deployed, `org_match_keys` rebuilt if the key changed, and
   the census's GR `agree-generic` count is back near 4;
 - the E0 dry plan grows by ~+20 GR groups, and a 20-sample of them reads clean.
+
+## Side finding resolved (05:5x UTC audit probe)
+
+The `ΓΕΝΙΚΟ ΝΟΣΟΚΟΜΕΙΟ ΣΕΡΡΩΝ` satellite on org 311 is one mention (notice
+24389579, section ORG-0001) that published the hospital's name with the
+authority's code `1000.E00961.0001` — a source-side slip, not a resolver error.
+Org 311 itself is sound: 11,861 mentions, 182 name spellings that are all the
+Single Public Procurement Authority (ΕΑΔΗΣΥ) or its predecessor ΑΕΠΠ, 10 raw
+identifier spellings of one code, and it sits in ORG-0002/0003 on nearly every
+Greek notice because it is the appeals body every notice must name. Two things
+this tells the GR arm question: the "14-character authority code" class is the
+**Greek public-sector e-invoicing code** (`Κωδικός Ηλεκτρονικής Τιμολόγησης`,
+shape `NNNN.ENNNNN.NNNN`, dots dropped by the normaliser), typed by hand per
+notice — hence the five variants of one authority's code — and the raw values
+carry label prefixes (`Κωδικός Ηλεκτρονικής Τιμολόγησης Ε.Α.ΔΗ.ΣΥ.: …`) of the
+issue-328 shape that the label-prefix repair's DE-centric lexicon does not strip.

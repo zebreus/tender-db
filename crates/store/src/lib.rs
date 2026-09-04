@@ -36,7 +36,7 @@ pub use canonical::{
     PlanGroup, PlanRow, R2MergeArgs,
     R2MergeReport, R3MergeArgs, R3MergeReport, Round, TenderProjection, TenderVersion,
     CountryCluster, CountryClusterReport, CountryTypoMove, CountryTypoRepairReport,
-    DuplicateIdentity, DuplicateIdentityReport,
+    DuplicateIdentity, GenericKeyProbe, DuplicateIdentityReport,
     LabelFix, LabelRepairReport, RenormaliseRepairReport,
     GenericKeyShape, GenericStatisticReport,
     GenericWallReport, InflatedKey,

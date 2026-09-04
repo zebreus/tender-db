@@ -2150,6 +2150,21 @@ pub(crate) const GENERIC_KEY_SQL: &str =
     "SELECT COUNT(*) FROM (SELECT DISTINCT org_id FROM org_match_keys \
        WHERE key_kind = ? AND key = ? LIMIT ?)";
 
+/// Issue 349: what the carriers of an over-cap key ARE. The wall counts org
+/// rows; a Greek hospital fragmented into thirty NULL-country, identifier-less
+/// provisional rows counts thirty, the same as thirty different companies
+/// named "Stadtwerke" would. This splits the count by whether the carrier
+/// holds an identifier or a country at all, plus its distinct identifiers —
+/// bounded to the first 1,000 carriers by the same index seek as the wall.
+pub(crate) const GENERIC_KEY_BREAKDOWN_SQL: &str =
+    "SELECT COUNT(*), \
+            SUM(CASE WHEN o.identifier IS NOT NULL THEN 1 ELSE 0 END), \
+            SUM(CASE WHEN o.country IS NOT NULL THEN 1 ELSE 0 END), \
+            COUNT(DISTINCT o.identifier) \
+       FROM (SELECT DISTINCT org_id FROM org_match_keys \
+              WHERE key_kind = ? AND key = ? LIMIT 1000) k \
+       JOIN organizations o ON o.id = k.org_id";
+
 /// Carriers of a NAME KEY under ONE kind, counted up to `cap + 1` (issue 328
 /// follow-on). Identical to [`GENERIC_KEY_SQL`] but returns the COUNT rather
 /// than a boolean: `name_key_is_generic` throws away the difference between one
@@ -2459,6 +2474,24 @@ pub struct CountryClusterReport {
 
 /// One standing duplicate identity: a `(country, kind, identifier)` triple held
 /// by more than one organization row (issue 328 follow-on).
+/// Issue 349: one over-cap name key, and what its carriers are.
+#[derive(Debug, Default, Clone)]
+pub struct GenericKeyProbe {
+    pub key: String,
+    pub kind: String,
+    /// The scope of the first group this key was probed for.
+    pub scope: String,
+    /// Distinct carrier org rows (bounded at 1,000).
+    pub carriers: u64,
+    pub with_identifier: u64,
+    pub with_country: u64,
+    pub distinct_identifiers: u64,
+    /// `with_identifier <= cap`: the identifier-bearing carriers alone would
+    /// NOT cross the wall — the over-cap count is one entity's echo in
+    /// provisional rows, not a shared name.
+    pub echo: bool,
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct DuplicateIdentity {
     /// `"DE:vat"` — the scope this triple belongs to, so a reader can tell the
@@ -2533,6 +2566,15 @@ pub struct DuplicateIdentityReport {
     /// a legal-form token as absent, because the build writes an `n3` row only
     /// when it differs from the `n2` one.
     pub name_keys_absent: u64,
+    /// Issue 349: groups whose agreed key is generic, split by what the
+    /// carriers are — `echo` (identifier-bearing carriers alone are under the
+    /// cap) or `shared` (they are over it on their own).
+    pub generic_echo_groups: u64,
+    pub generic_shared_groups: u64,
+    pub generic_echo_by_scope: std::collections::BTreeMap<String, u64>,
+    /// One probe per distinct generic key, listed up to 200.
+    pub generic_probes: Vec<GenericKeyProbe>,
+    pub generic_probes_truncated: bool,
     /// Sizes of ALL duplicate groups, keyed and unkeyed alike, sorted — for
     /// reading a distribution rather than a mean.
     pub group_sizes: Vec<u32>,
@@ -13523,6 +13565,8 @@ impl Db {
         // on `(key_kind, key)` so each miss is a seek, but the DE cohort alone
         // is thousands of groups and the same municipal key recurs across them.
         let mut generic_memo: std::collections::HashMap<String, (bool, bool)> = Default::default();
+        // Issue 349: per generic key, is its over-cap count an echo?
+        let mut echo_memo: std::collections::HashMap<String, bool> = Default::default();
 
         let total_groups = unkeyed.len();
         let mut judged = 0u64;
@@ -13588,6 +13632,7 @@ impl Db {
                                 // NAME_KEY_CARRIERS_SQL for why this is not one
                                 // statement with an IN.
                                 let mut carriers = 0u64;
+                                let mut found_kind = "n2";
                                 for kind in ["n3", "n2"] {
                                     let mut q = reader
                                         .query(
@@ -13604,16 +13649,58 @@ impl Db {
                                         None => 0,
                                     };
                                     if carriers > 0 {
+                                        found_kind = kind;
                                         break;
                                     }
                                 }
                                 let hit = (carriers as usize > stoplist_cap, carriers == 0);
                                 generic_memo.insert(k.clone(), hit);
+                                if hit.0 {
+                                    // Issue 349: what ARE the carriers? One
+                                    // bounded seek+join per distinct generic
+                                    // key, memoized like the verdict.
+                                    let mut q = reader
+                                        .query(GENERIC_KEY_BREAKDOWN_SQL, (t(found_kind), t(k.as_str())))
+                                        .await?;
+                                    let (n, with_id, with_cc, distinct) = match q.next().await? {
+                                        Some(row) => (
+                                            int(&row, 0).max(0) as u64,
+                                            int(&row, 1).max(0) as u64,
+                                            int(&row, 2).max(0) as u64,
+                                            int(&row, 3).max(0) as u64,
+                                        ),
+                                        None => (0, 0, 0, 0),
+                                    };
+                                    let echo = with_id as usize <= stoplist_cap;
+                                    echo_memo.insert(k.clone(), echo);
+                                    if report.generic_probes.len() < 200 {
+                                        report.generic_probes.push(GenericKeyProbe {
+                                            key: k.clone(),
+                                            kind: found_kind.to_owned(),
+                                            scope: scope.clone(),
+                                            carriers: n,
+                                            with_identifier: with_id,
+                                            with_country: with_cc,
+                                            distinct_identifiers: distinct,
+                                            echo,
+                                        });
+                                    } else {
+                                        report.generic_probes_truncated = true;
+                                    }
+                                }
                                 hit
                             }
                         };
                         if absent {
                             report.name_keys_absent += 1;
+                        }
+                        if generic {
+                            if echo_memo.get(k).copied().unwrap_or(false) {
+                                report.generic_echo_groups += 1;
+                                *report.generic_echo_by_scope.entry(scope.clone()).or_default() += 1;
+                            } else {
+                                report.generic_shared_groups += 1;
+                            }
                         }
                         if generic {
                             "agree-generic"
