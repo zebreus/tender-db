@@ -4173,6 +4173,17 @@ pub fn normalize_lang(lang: Option<&str>) -> Option<String> {
 /// nothing-measured-demands-it line the design draws for diacritics, which
 /// are intentionally preserved: "gymnázium" must not collide with
 /// "gymnazium" across languages).
+///
+/// One scripted exception to "diacritics preserved" (issue 346): Greek. Greek
+/// orthography writes the tonos/dialytika in lower and mixed case and DROPS
+/// them in ALL CAPS, so `Δήμος Αβδήρων` and `ΔΗΜΟΣ ΑΒΔΗΡΩΝ` — one municipality,
+/// two casings — lower-cased to two keys differing on every accented vowel
+/// (22 of the 210 Greek same-identifier duplicate groups on 2026-09-04, and
+/// issue 329's specimen 311/1079). Latin-script upper-casing keeps its marks,
+/// so the fold is scoped to the precomposed Greek letters and the final
+/// sigma (`Σ` lower-cases to `σ`, the mixed-case spelling ends in `ς`); a
+/// Latin `ü` still does not meet a `u`. Polytonic (U+1F00–U+1FFF) and
+/// decomposed (NFD) Greek are not folded — nothing measured carries them.
 pub fn match_norm(name: &str) -> String {
     let mut out = String::with_capacity(name.len());
     let mut gap = false;
@@ -4182,12 +4193,29 @@ pub fn match_norm(name: &str) -> String {
                 out.push(' ');
             }
             gap = false;
-            out.extend(c.to_lowercase());
+            out.extend(c.to_lowercase().map(fold_greek_tonos));
         } else {
             gap = true;
         }
     }
     out
+}
+
+/// The Greek half of [`match_norm`]'s case fold: a lower-case Greek vowel with
+/// tonos and/or dialytika to its bare letter, and the final sigma to the
+/// medial one. Everything else passes through unchanged.
+fn fold_greek_tonos(c: char) -> char {
+    match c {
+        'ά' => 'α',
+        'έ' => 'ε',
+        'ή' => 'η',
+        'ί' | 'ϊ' | 'ΐ' => 'ι',
+        'ό' => 'ο',
+        'ύ' | 'ϋ' | 'ΰ' => 'υ',
+        'ώ' => 'ω',
+        'ς' => 'σ',
+        other => other,
+    }
 }
 
 /// The canonical target of one parsed amount. Everything except r208's plain
@@ -4957,6 +4985,26 @@ mod tests {
         assert_eq!(match_norm("Gymnázium"), "gymnázium", "diacritics preserved");
         assert_ne!(match_norm("gymnázium"), match_norm("gymnazium"));
         assert_eq!(match_norm("  --  "), "", "all-punctuation collapses to empty");
+    }
+
+    /// Issue 346: Greek ALL CAPS drops the tonos, so the two casings of one
+    /// name must meet at N2 — and the fold must stop at the Greek script:
+    /// Latin diacritics still separate names (the 300 §2.3 line above).
+    #[test]
+    fn greek_casings_meet_at_n2_and_latin_diacritics_still_separate() {
+        assert_eq!(match_norm("ΔΗΜΟΣ ΑΒΔΗΡΩΝ"), match_norm("Δήμος Αβδήρων"));
+        assert_eq!(match_norm("Δήμος Αβδήρων"), "δημοσ αβδηρων");
+        assert_eq!(
+            match_norm("ΕΝΙΑΙΑ ΑΡΧΗ ΔΗΜΟΣΙΩΝ ΣΥΜΒΑΣΕΩΝ"),
+            match_norm("Ενιαία Αρχή Δημοσίων Συμβάσεων")
+        );
+        // Dialytika, with and without tonos (Ϊ/ϊ/ΐ, Ϋ/ϋ/ΰ) all reach the bare vowel.
+        assert_eq!(match_norm("ΠΡΟΪΟΝ"), match_norm("προϊόν"));
+        assert_eq!(match_norm("ΓΑΪΔΟΥΡΟΝΗΣΙ"), match_norm("Γαϊδουρονήσι"));
+        // Scope guard: the fold is Greek-only.
+        assert_ne!(match_norm("MÜLLER"), match_norm("MULLER"));
+        assert_eq!(match_norm("MÜLLER"), "müller");
+        assert_ne!(match_norm("Ćwiek"), match_norm("Cwiek"));
     }
 
     /// Issue 292: one language vocabulary across eras. The legacy two-letter tags

@@ -716,7 +716,9 @@ pub fn legal_form_family(name: &str) -> Option<&'static str> {
 /// watermark: bump it whenever `match_norm` (N2) or [`n3_key`] (N3)
 /// changes meaning, so a build resumed across the deploy restarts from
 /// zero instead of mixing semantics in one table.
-pub const NAME_KEY_EPOCH: &str = "n2v1+n3v1";
+/// `n2v2`: issue 346 — Greek tonos/dialytika and final-sigma fold in N2
+/// (2026-09-04); every key built under `n2v1` restarts from zero.
+pub const NAME_KEY_EPOCH: &str = "n2v2+n3v1";
 
 pub fn n3_key(name: &str) -> String {
     let n2 = crate::project::match_norm(name);

@@ -1,6 +1,6 @@
 # 346 — Greek names never agree under the N3 key: upper-case drops the tonos, `match_norm` keeps it
 
-Status: ready-for-agent (filed 2026-09-04 from the E0 fold's dry run, job 640, `12434d4`)
+Status: BUILT 2026-09-04 (gate green; deploying) — `match_norm` folds the precomposed Greek tonos/dialytika vowels and the final sigma after lower-casing, Greek-only (the `MÜLLER`/`MULLER` guard is pinned); `NAME_KEY_EPOCH` → `n2v2+n3v1`, so the next `build-org-match-keys` (Sunday's tick, or the one enqueued after this deploy) restarts from zero. Then: re-run the duplicate-identity census (expect GR:national agree-distinctive 134 → ~156) and the E0 dry run. Was: ready-for-agent (filed 2026-09-04 from the E0 fold's dry run, job 640, `12434d4`)
 Kind: identity semantics (organization layer) — the name key, not the identifier key
 Relates to: 329 (the E0 fold's 4b name rule is what this gap denies), 316 (the
 genericness wall this key feeds), 300 Stage 2 (R2's name-side evidence)
