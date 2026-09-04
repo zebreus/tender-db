@@ -1,6 +1,6 @@
 # 345 — standing identifiers pre-date the v2.1 normaliser folds: a re-normalise repair in the 328 shape
 
-Status: ready-for-agent (filed 2026-09-03 from the gate v2.1 deploy, `aa492dc`)
+Status: BUILT 2026-09-04 (gate 813 green; deploying) — dry run on prod next, then wet, then a capped R2 pass; was: ready-for-agent (filed 2026-09-03 from the gate v2.1 deploy, `aa492dc`)
 Kind: data quality / identity (organization layer) — the stock half of a prevention change
 Relates to: 300 (gate v2.1, top-100 read), 328 (`repair-label-prefixes`, the template), 325 (`repair-minted-countries`, the ladder), 259 (refold-invariance: prevention alone leaves the stock split)
 
@@ -63,3 +63,24 @@ re-derivation).
 * After wet + one R2 pass: the merge ledger shows 1079 → 311 and 2439 → 2438.
 * The weekly `org-merge-health` gate block is unchanged by this (the folds
   create no new class); `phone`/`short_numeric` counts appear from Sunday.
+
+## Built 2026-09-04 ~00:0x UTC
+
+* `ingest::project::normalise_identifier_before_folds` — the normaliser as it
+  stood before v2.1 (same code path, folds off), so the repair can tell a
+  row's WITNESS mention (the one whose published string the old rules turn
+  into exactly the stored triple) from mentions an R2/R3 merge brought in.
+* `Db::repair_renormalised_identifiers(before, live, dry_run, expect_rows, stop)`
+  — PK walk over identifier-bearing orgs, up to five `raw_identifier`s per org
+  through `organization_mentions_org`, plan = rows whose witness re-parses to a
+  different (kind, value) under the live rules; `unexplained` (no witness) and
+  `now_refused` (the gate rejects the witness) are counted and left standing;
+  reunions counted per target; wet arm = the 328 arm (guarded per-row UPDATE +
+  change event, parity abort at max(2%, 5)).
+* `repair-renormalised-identifiers` job (dry by default; wet reads the stored
+  `renormalise-repair` dry plan's row count), STOPPABLE, `Box::pin`ned arm.
+* Tests: `crates/store/tests/renormalise_repair.rs` — the Greek-letter row and
+  the suffixed RO row move onto their standing twins (2 reunions), the
+  merged-in-only row and the string-less row stand, the published string
+  survives in the mention, a second pass plans nothing, the parity abort
+  holds; the ingest test pins the before-folds twin against the v2.1 cases.

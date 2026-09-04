@@ -4632,13 +4632,26 @@ fn strip_ro_subunit(raw: &str) -> &str {
 /// national registry number is only unique inside its country, so it is scoped
 /// by the mention's country and stays separate when that is unknown.
 pub fn normalise_identifier(raw: &str, country: Option<&str>) -> Option<Identifier> {
+    normalise_identifier_with(raw, country, true)
+}
+
+/// The normaliser as it stood BEFORE the v2.1 lookalike/suffix folds. Not a
+/// live path: issue 345's repair re-parses each standing row's published
+/// string through both — a row moves only when this one reproduces what is
+/// stored (so the sampled mention is the one that minted the row, not one an
+/// R2/R3 merge brought in) and [`normalise_identifier`] now says otherwise.
+pub fn normalise_identifier_before_folds(raw: &str, country: Option<&str>) -> Option<Identifier> {
+    normalise_identifier_with(raw, country, false)
+}
+
+fn normalise_identifier_with(raw: &str, country: Option<&str>, folds: bool) -> Option<Identifier> {
     // Issue 300 (top-100 read, 2026-09-03): a Romanian CUI with a sub-unit
     // suffix — `16054368_3` for a regional directorate of CNAIR — is the
     // parent's identifier; folding the suffix away is the entity-level
     // identity the model already promises. RO only: the underscore-digit
     // shape means nothing established elsewhere.
     let raw = match country {
-        Some("RO") | Some("ROU") => strip_ro_subunit(raw),
+        Some("RO") | Some("ROU") if folds => strip_ro_subunit(raw),
         _ => raw,
     };
     // Same read: the Greek procurement authority sat in two rows because its
@@ -4648,7 +4661,7 @@ pub fn normalise_identifier(raw: &str, country: Option<&str>) -> Option<Identifi
     // id spelled with a lookalike letter equals its ASCII twin.
     let value: String = raw
         .chars()
-        .map(fold_confusable)
+        .map(|c| if folds { fold_confusable(c) } else { c })
         .filter(|c| c.is_ascii_alphanumeric())
         .map(|c| c.to_ascii_uppercase())
         .collect();
@@ -4705,7 +4718,7 @@ pub fn normalise_identifier(raw: &str, country: Option<&str>) -> Option<Identifi
         // unlisted label variant now leaves the row alone instead of mangling
         // it, which is the property that matters when the list is read off a
         // corpus that keeps growing.
-        if let Some(id) = normalise_identifier(rest, country) {
+        if let Some(id) = normalise_identifier_with(rest, country, folds) {
             let recognisable =
                 id.kind != "national" || rest.bytes().all(|b| b.is_ascii_digit());
             if recognisable {
@@ -5618,6 +5631,11 @@ mod tests {
         assert_eq!(normalise_identifier("16054368_3", Some("ROU")).unwrap().value, "16054368");
         assert_eq!(normalise_identifier("16054368_3", Some("RO")), normalise_identifier("16054368", Some("RO")));
         assert_eq!(normalise_identifier("16054368_3", Some("HU")).unwrap().value, "160543683");
+        // The before-folds twin reproduces the pre-v2.1 store: the Greek letter
+        // dropped, the suffix swallowed — what issue 345's repair compares against.
+        assert_eq!(normalise_identifier_before_folds("1000.\u{0395}00961.0001", Some("GR")).unwrap().value, "1000009610001");
+        assert_eq!(normalise_identifier_before_folds("16054368_3", Some("RO")).unwrap().value, "160543683");
+        assert_eq!(normalise_identifier_before_folds("NL 8045.95859B01", Some("NLD")), normalise_identifier("NL 8045.95859B01", Some("NLD")));
     }
 
     /// Issue 300 Stage 1 — the v2 gate flip: the MEASURED false-merge classes

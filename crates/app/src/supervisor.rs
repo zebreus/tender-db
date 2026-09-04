@@ -401,6 +401,10 @@ enum Spec {
     /// Issue 328: re-parse the rows whose identifier carries a publisher label.
     /// Wet writes `organizations`.
     RepairLabelPrefixes { dry_run: bool },
+    /// Issue 345: re-parse every standing row's published identifier string
+    /// through the live normaliser (v2.1 folds) and move what it now says.
+    /// Wet writes `organizations`.
+    RepairRenormalisedIdentifiers { dry_run: bool },
     /// Issue 325 step 4: re-parse the standing `kind = 'vat'` rows and write
     /// what the identifier parser now says. Wet writes `organizations`.
     RepairMintedCountries { dry_run: bool },
@@ -1218,6 +1222,24 @@ impl Supervisor {
                     .await,
                 ])
             }
+            // Issue 345, dry by default; the wet arm reads its row count out of
+            // the stored dry plan and aborts if the corpus has moved (328 shape).
+            "repair-renormalised-identifiers" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                Ok(vec![
+                    self.push(
+                        "repair-renormalised-identifiers",
+                        if dry_run {
+                            "repair-renormalised-identifiers dry-run"
+                        } else {
+                            "repair-renormalised-identifiers"
+                        }
+                        .to_owned(),
+                        Spec::RepairRenormalisedIdentifiers { dry_run },
+                    )
+                    .await,
+                ])
+            }
             "repair-country-typos" => {
                 let dry_run = req.dry_run.unwrap_or(true);
                 Ok(vec![
@@ -1755,6 +1777,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "ghost-census",
     "repair-country-typos",
     "repair-label-prefixes",
+    "repair-renormalised-identifiers",
     "repair-minted-countries",
 ];
 
@@ -4843,6 +4866,107 @@ impl Supervisor {
                     }
                 ))
             }
+            Spec::RepairRenormalisedIdentifiers { dry_run } => Box::pin(async move {
+                let dry_run = *dry_run;
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    if dry_run { "planning" } else { "repairing" },
+                    None,
+                    None,
+                    "issue 345: re-parsing published identifier strings through the live normaliser"
+                        .to_owned(),
+                );
+                let expect_rows = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("renormalise-repair")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| "no stored renormalise-repair plan — run the dry pass first")?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    if v["dry_run"] != serde_json::Value::Bool(true) {
+                        return Err("the stored renormalise-repair report is from a WET run, not a \
+                                    reviewed plan — run the dry pass again"
+                            .to_owned());
+                    }
+                    Some(v["rows"].as_u64().ok_or_else(|| "plan lacks rows")?)
+                };
+                let r = self
+                    .db
+                    .repair_renormalised_identifiers(
+                        |value, country| {
+                            ingest::project::normalise_identifier_before_folds(value, country)
+                                .map(|id| (id.kind, id.country, id.value))
+                        },
+                        |value, country| {
+                            ingest::project::normalise_identifier(value, country)
+                                .map(|id| (id.kind, id.country, id.value))
+                        },
+                        dry_run,
+                        expect_rows,
+                        &stop,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped && dry_run {
+                    return Ok("repair-renormalised-identifiers STOPPED by cancel — nothing planned"
+                        .to_owned());
+                }
+                let now = store::now_unix();
+                const PLAN_CAP: usize = 400;
+                let body = serde_json::json!({
+                    "dry_run": dry_run,
+                    "walked": r.walked,
+                    "witnessed": r.witnessed,
+                    "unexplained": r.unexplained,
+                    "now_refused": r.now_refused,
+                    "already_clean": r.already_clean,
+                    "rows": r.rows,
+                    "reunions": r.reunions,
+                    "applied": r.applied,
+                    "skipped_moved": r.skipped_moved,
+                    "stopped": r.stopped,
+                    "plan_truncated": r.plan.len() > PLAN_CAP,
+                    "plan": r.plan.iter().take(PLAN_CAP).map(|f| serde_json::json!({
+                        "org": f.org,
+                        "from": {"identifier": f.from_identifier, "kind": f.from_kind,
+                                 "country": f.from_country},
+                        "to": {"identifier": f.to_identifier, "kind": f.to_kind,
+                               "country": f.to_country},
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("renormalise-repair", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "repair-renormalised-identifiers (issue 345, {}): {} identifier-bearing row(s) \
+                     walked, {} witnessed by a published string the pre-fold rules reproduce, {} \
+                     unexplained (merged-in mentions only) and left standing. {} planned; {} \
+                     witnesses the live gate now refuses (left standing); {} already agree with \
+                     the live re-parse. {} planned row(s) land on an identity that ALREADY \
+                     stands — R2 folds those whose scheme has a cross-walk arm.{}",
+                    if dry_run { "DRY" } else { "WET" },
+                    r.walked,
+                    r.witnessed,
+                    r.unexplained,
+                    r.rows,
+                    r.now_refused,
+                    r.already_clean,
+                    r.reunions,
+                    if dry_run {
+                        String::new()
+                    } else {
+                        format!(" Applied {} ({} skipped: moved since the plan).", r.applied, r.skipped_moved)
+                    },
+                ))
+            })
+            .await,
             Spec::RepairLabelPrefixes { dry_run } => {
                 let dry_run = *dry_run;
                 let job_id = job.id;
@@ -8815,6 +8939,7 @@ mod tests {
                 "ghost-census",
                 "repair-country-typos",
                 "repair-label-prefixes",
+                "repair-renormalised-identifiers",
                 "repair-minted-countries"
             ]
         );

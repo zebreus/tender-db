@@ -2837,6 +2837,33 @@ pub struct LabelRepairReport {
     pub stopped: bool,
 }
 
+/// Issue 345: what re-parsing every standing row's published string through the
+/// live normaliser would change. Dry by default; the plan reuses [`LabelFix`].
+#[derive(Debug, Default, Clone)]
+pub struct RenormaliseRepairReport {
+    /// Identifier-bearing rows walked.
+    pub walked: u64,
+    /// …of which a sampled mention's published string reproduces the stored
+    /// triple under the pre-fold rules — the row's witness.
+    pub witnessed: u64,
+    /// …rows no sampled mention explains (merged-in mentions only, or none
+    /// with a published string): left standing, the merge ledger's domain.
+    pub unexplained: u64,
+    /// Witnesses the live gate now refuses outright — left standing here.
+    pub now_refused: u64,
+    /// The live re-parse agrees with what is stored.
+    pub already_clean: u64,
+    /// Planned moves.
+    pub rows: u64,
+    /// Planned targets on which a row ALREADY stands (created duplicates, not
+    /// promised merges — R2 folds those with a cross-walk arm).
+    pub reunions: u64,
+    pub plan: Vec<LabelFix>,
+    pub applied: u64,
+    pub skipped_moved: u64,
+    pub stopped: bool,
+}
+
 /// One row the issue-326 repair would move: an identifier standing under a code
 /// one letter from the one its checksum names.
 #[derive(Debug, Default, Clone)]
@@ -12519,6 +12546,224 @@ impl Db {
                 )
                 .await?;
                 // All three are published fields.
+                append_change(&conn, "organization", f.org, None, "changed", now).await?;
+                report.applied += 1;
+            }
+            Ok(())
+        }
+        .await;
+        match result {
+            Ok(()) => {
+                if let Err(e) = conn.execute("COMMIT", ()).await {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                return Err(e);
+            }
+        }
+        Ok(report)
+    }
+
+    /// Issue 345: re-run the LIVE identifier normaliser over each standing
+    /// organization's PUBLISHED string and move the rows it now classifies
+    /// differently.
+    ///
+    /// A sibling of [`Db::repair_label_prefixes`] with a different input: that
+    /// job re-parses the STORED value, which suffices while the stored value
+    /// still carries what the normaliser now removes (a label). The v2.1 folds
+    /// act on characters the store never kept — a Greek `Ε` the ASCII filter
+    /// dropped, an `_3` sub-unit suffix it swallowed — so the evidence survives
+    /// only in `organization_mentions.raw_identifier`. Per org, up to five
+    /// mentions are read through `organization_mentions_org` and the FIRST whose
+    /// published string the `before` normaliser turns into exactly the stored
+    /// triple is the row's witness: that mention minted the row, so it is the
+    /// one whose re-parse under `live` may move it. An org none of whose sampled
+    /// mentions explain it (every mention arrived through an R2/R3 merge, or
+    /// none carries a published string) is counted `unexplained` and left
+    /// standing — the merge ledger, not this job, owns those.
+    ///
+    /// The row's own country is handed to both normalisers, so the country
+    /// repairs of issues 325/326 never read as disagreements; only (kind, value)
+    /// can differ, and only through the folds. `now_refused` counts witnesses
+    /// the v2 gate now rejects outright (the dissolve's domain, untouched here).
+    pub async fn repair_renormalised_identifiers(
+        &self,
+        before: fn(&str, Option<&str>) -> Option<(String, Option<String>, String)>,
+        live: fn(&str, Option<&str>) -> Option<(String, Option<String>, String)>,
+        dry_run: bool,
+        expect_rows: Option<u64>,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<RenormaliseRepairReport> {
+        let mut report = RenormaliseRepairReport::default();
+        let reader = self.reader().await?;
+        let mut after = 0i64;
+        let mut plan: Vec<LabelFix> = Vec::new();
+        loop {
+            if stop() {
+                return Ok(RenormaliseRepairReport { stopped: true, ..Default::default() });
+            }
+            let mut batch: Vec<(i64, Option<String>, String, String)> = Vec::new();
+            {
+                let mut rows = reader
+                    .query(
+                        "SELECT id, country, identifier_kind, identifier FROM organizations \
+                          WHERE id > ? AND identifier IS NOT NULL AND identifier_kind IS NOT NULL \
+                          ORDER BY id LIMIT 50000",
+                        (Value::Integer(after),),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    batch.push((int(&row, 0), opt_text_of(&row, 1), text(&row, 2), text(&row, 3)));
+                }
+            }
+            if batch.is_empty() {
+                break;
+            }
+            for (org, country, kind, identifier) in batch {
+                after = org;
+                report.walked += 1;
+                let mut raws: Vec<String> = Vec::new();
+                {
+                    let mut rows = reader
+                        .query(
+                            "SELECT raw_identifier FROM organization_mentions \
+                              WHERE organization_id = ? AND raw_identifier IS NOT NULL LIMIT 5",
+                            (Value::Integer(org),),
+                        )
+                        .await?;
+                    while let Some(row) = rows.next().await? {
+                        raws.push(text(&row, 0));
+                    }
+                }
+                // The witness: the first published string the OLD rules turn
+                // into exactly what is stored.
+                let stored = (kind.clone(), country.clone(), identifier.clone());
+                let Some(raw) = raws.into_iter().find(|raw| before(raw, country.as_deref()).as_ref() == Some(&stored))
+                else {
+                    report.unexplained += 1;
+                    continue;
+                };
+                report.witnessed += 1;
+                let Some((to_kind, to_country, to_value)) = live(&raw, country.as_deref()) else {
+                    report.now_refused += 1;
+                    continue;
+                };
+                if to_value == identifier && to_kind == kind && to_country == country {
+                    report.already_clean += 1;
+                    continue;
+                }
+                plan.push(LabelFix {
+                    org,
+                    from_identifier: identifier,
+                    from_kind: kind,
+                    from_country: country,
+                    to_identifier: to_value,
+                    to_kind,
+                    to_country,
+                });
+            }
+        }
+        report.rows = plan.len() as u64;
+
+        // Moves landing on an identity that already stands: counted per target,
+        // one batched pass. Whether R2 then folds them depends on the scheme
+        // having a cross-walk arm — the 328 lesson, unchanged here.
+        {
+            let mut targets: std::collections::BTreeSet<(String, String, String)> =
+                Default::default();
+            for f in &plan {
+                targets.insert((
+                    f.to_country.clone().unwrap_or_default(),
+                    f.to_kind.clone(),
+                    f.to_identifier.clone(),
+                ));
+            }
+            for (cc, kind, ident) in targets {
+                if stop() {
+                    return Ok(RenormaliseRepairReport { stopped: true, ..Default::default() });
+                }
+                let mut rows = reader
+                    .query(
+                        "SELECT COUNT(*) FROM organizations \
+                          WHERE country = ? AND identifier_kind = ? AND identifier = ?",
+                        (t(&cc), t(&kind), t(&ident)),
+                    )
+                    .await?;
+                if let Some(row) = rows.next().await?
+                    && int(&row, 0) > 0
+                {
+                    report.reunions += 1;
+                }
+            }
+        }
+        report.plan = plan;
+        if dry_run || report.rows == 0 {
+            return Ok(report);
+        }
+
+        if let Some(expect) = expect_rows {
+            let tolerance = std::cmp::max(expect / 50, 5);
+            if report.rows.abs_diff(expect) > tolerance {
+                return Err(turso::Error::Error(format!(
+                    "re-normalise repair ABORTED: the reviewed plan moved {expect} rows, this \
+                     run computes {} — beyond the max(2%, 5) tolerance. Re-run the dry pass \
+                     and review the new plan.",
+                    report.rows
+                )));
+            }
+        }
+
+        let now = crate::now_unix();
+        let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result: turso::Result<()> = async {
+            for f in &report.plan {
+                if stop() {
+                    report.stopped = true;
+                    break;
+                }
+                // Only move a row that still says what the plan says (the
+                // reader-to-writer window, as in 328).
+                let mut current: Option<(Option<String>, String, String)> = None;
+                {
+                    let mut rows = conn
+                        .query(
+                            "SELECT country, identifier_kind, identifier FROM organizations \
+                              WHERE id = ?",
+                            (Value::Integer(f.org),),
+                        )
+                        .await?;
+                    if let Some(row) = rows.next().await? {
+                        current = Some((opt_text_of(&row, 0), text(&row, 1), text(&row, 2)));
+                    }
+                }
+                match current {
+                    Some((cc, k, i))
+                        if cc == f.from_country
+                            && k == f.from_kind
+                            && i == f.from_identifier => {}
+                    _ => {
+                        report.skipped_moved += 1;
+                        continue;
+                    }
+                }
+                conn.execute(
+                    "UPDATE organizations SET country = ?, identifier_kind = ?, identifier = ? \
+                      WHERE id = ?",
+                    (
+                        match &f.to_country {
+                            Some(cc) => t(cc),
+                            None => Value::Null,
+                        },
+                        t(&f.to_kind),
+                        t(&f.to_identifier),
+                        Value::Integer(f.org),
+                    ),
+                )
+                .await?;
                 append_change(&conn, "organization", f.org, None, "changed", now).await?;
                 report.applied += 1;
             }

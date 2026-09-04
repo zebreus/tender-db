@@ -37,7 +37,7 @@ pub use canonical::{
     R2MergeReport, R3MergeArgs, R3MergeReport, Round, TenderProjection, TenderVersion,
     CountryCluster, CountryClusterReport, CountryTypoMove, CountryTypoRepairReport,
     DuplicateIdentity, DuplicateIdentityReport,
-    LabelFix, LabelRepairReport,
+    LabelFix, LabelRepairReport, RenormaliseRepairReport,
     GenericKeyShape, GenericStatisticReport,
     GenericWallReport, InflatedKey,
     GhostCensusReport, GhostNotice,
