@@ -592,3 +592,107 @@ async fn a_wall_denial_does_not_capture_the_next_clean_mention() {
          captured by the denied mention's fresh row"
     );
 }
+
+fn mention_name_only(notice: i64, name: &str) -> Mention {
+    Mention {
+        notice_id: notice,
+        section_id: "S-1".into(),
+        name: name.into(),
+        country: None,
+        raw_identifier: None,
+        scheme: None,
+        identifier: None,
+        variants: Vec::new(),
+    }
+}
+
+/// Issue 351: a country-less, identifier-less mention reuses the standing
+/// `(name, NULL)` provisional row when its N2 key is under the wall, and
+/// mints a fresh row — the 234 behaviour — when the key is over it. Without a
+/// normaliser the resolver cannot ask the wall, so it mints as before.
+#[tokio::test]
+async fn country_less_mentions_reuse_under_the_wall_and_mint_over_it() {
+    let path = "test-351-prevention.db";
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    let db = store::Db::open(path).await.unwrap();
+    {
+        let raw = store::turso::Builder::new_local(path).build().await.unwrap();
+        let conn = raw.connect().unwrap();
+        conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+        conn.execute(
+            "INSERT INTO fetches (id, source, kind, period, url, sha256, bytes, fetched_at, path)
+             VALUES (1, 'ted', 'daily', 'p', 'u', 'aa', 1, 0, 'p')",
+            (),
+        )
+        .await
+        .unwrap();
+        for n in 1..=6i64 {
+            conn.execute(
+                "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id,
+                                      member_path, ingested_at, parse_state, projected)
+                 VALUES (?, 'ted', ?, ?, 'eforms:test', 1, 'p', 0, 'parsed', 0)",
+                (
+                    store::turso::Value::Integer(n),
+                    store::turso::Value::Text(format!("pub-{n}")),
+                    store::turso::Value::Text(format!("h{n}")),
+                ),
+            )
+            .await
+            .unwrap();
+            conn.execute(
+                "INSERT INTO notice_sections (notice_id, section_id, kind, parent_section_id)
+                 VALUES (?, 'S-1', 'Organization', NULL)",
+                (store::turso::Value::Integer(n),),
+            )
+            .await
+            .unwrap();
+        }
+        // "gemeindetaufkirchen" is carried by three org rows: over a cap of 2.
+        for id in [9001, 9002, 9003] {
+            conn.execute(
+                "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'gemeindetaufkirchen')",
+                (store::turso::Value::Integer(id),),
+            )
+            .await
+            .unwrap();
+        }
+    }
+    let mut resolver = db.mention_resolver(None, None, None, Some(norm), None, None, 2).await.unwrap();
+    let ids = db
+        .resolve_mentions(
+            &mut resolver,
+            &[
+                mention_name_only(1, "Stadt Burghausen"),
+                mention_name_only(2, "Stadt Burghausen"),
+                mention_name_only(3, "Gemeinde Taufkirchen"),
+                mention_name_only(4, "Gemeinde Taufkirchen"),
+            ],
+            0,
+        )
+        .await
+        .unwrap();
+    db.finish_mention_resolver(resolver).await.unwrap();
+    assert_eq!(ids[0], ids[1], "under the wall: one standing (name, NULL) row for both");
+    assert_ne!(ids[2], ids[3], "over the wall: the 234 behaviour, one row per mention");
+    assert_eq!(count(&db, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'stadt burghausen'").await, 1);
+    assert_eq!(count(&db, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'gemeinde taufkirchen'").await, 2);
+    assert_eq!(
+        count(&db, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'stadt burghausen' AND country IS NULL AND provisional = 1").await,
+        1,
+        "the reused row stays a NULL-country provisional"
+    );
+    // A later batch, a fresh resolver: the standing row is found in the table,
+    // not only in the batch cache.
+    let mut resolver = db.mention_resolver(None, None, None, Some(norm), None, None, 2).await.unwrap();
+    let later = db.resolve_mentions(&mut resolver, &[mention_name_only(5, "Stadt Burghausen")], 0).await.unwrap();
+    db.finish_mention_resolver(resolver).await.unwrap();
+    assert_eq!(later[0], ids[0]);
+    // Without a normaliser the wall cannot be asked: mint, as before 351.
+    let mut resolver = db.mention_resolver(None, None, None, None, None, None, 2).await.unwrap();
+    let blind = db.resolve_mentions(&mut resolver, &[mention_name_only(6, "Stadt Burghausen")], 0).await.unwrap();
+    db.finish_mention_resolver(resolver).await.unwrap();
+    assert_ne!(blind[0], ids[0]);
+    assert_eq!(count(&db, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'stadt burghausen'").await, 2);
+}

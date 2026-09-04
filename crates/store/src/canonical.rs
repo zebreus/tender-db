@@ -3809,6 +3809,12 @@ pub struct MentionResolver {
     /// wall must not be able to stop ingestion — but a silent lenient run is
     /// how a prevention stops preventing, so it is counted and shouted.
     errored_generic: u64,
+    /// Issue 351: country-less mentions that reused the standing
+    /// `(name_norm, NULL)` provisional row because their N2 key is under the
+    /// wall, and the ones that minted because it is over it (the `tendsign` /
+    /// `Gemeinde Taufkirchen` shapes the 234 exclusion was written for).
+    reused_country_less: u64,
+    minted_country_less_generic: u64,
     /// Per-run memo, `n2 key -> generic`. Generic names are BY DEFINITION the
     /// most repeated strings in the corpus, so without this the most common
     /// keys pay the most probes.
@@ -7147,6 +7153,8 @@ impl Db {
             anchor_reached: 0,
             wall_enabled: hard_scheme.is_some(),
             errored_generic: 0,
+            reused_country_less: 0,
+            minted_country_less_generic: 0,
             generic_memo: std::collections::HashMap::new(),
         })
     }
@@ -7271,6 +7279,13 @@ impl Db {
                 resolver.denied_generic,
                 resolver.stoplist_cap,
                 resolver.errored_generic
+            ));
+        }
+        if resolver.reused_country_less > 0 || resolver.minted_country_less_generic > 0 {
+            self.log_diag(&format!(
+                "[issue 351] country-less provisionals: {} mention(s) reused a standing \
+                 (name, NULL) row, {} minted because the name is over the wall",
+                resolver.reused_country_less, resolver.minted_country_less_generic
             ));
         }
         if resolver.created_any {
@@ -7668,6 +7683,98 @@ impl Db {
                                 let org_id = last_insert_rowid(conn).await?;
                                 name_of.insert(key, org_id);
                                 (org_id, true)
+                            }
+                        }
+                    }
+                } else if !name_norm.is_empty()
+                    && m.country.is_none()
+                    && let Some(norm_fn) = resolver.norm
+                {
+                    // Issue 351: the country-less half of the 234 reuse. Issue
+                    // 234 excluded it because "same-name-no-country is where
+                    // platform strings like `tendsign` concentrate" — and the
+                    // measurement on 350 showed the other side: `Stadt
+                    // Burghausen` in 92 identical NULL-country rows, 68% of
+                    // prominent entities' mentions on such rows. The wall
+                    // tells the two apart: a platform string, or a name three
+                    // municipalities share, carries its N2 key on more than
+                    // `stoplist_cap` org rows and keeps minting as before; a
+                    // name under the wall reuses its standing row. Memoized
+                    // with the corroboration path's memo (same key, same
+                    // answer). A FAILED probe mints — the status quo is the
+                    // safe failure here, the opposite of the bind path where
+                    // leniency means binding.
+                    let n2 = norm_fn(&m.name);
+                    let generic = match resolver.generic_memo.get(&n2).copied() {
+                        Some(known) => known,
+                        None => match self
+                            .name_key_is_generic_on(conn, "n2", &n2, resolver.stoplist_cap)
+                            .await
+                        {
+                            Ok(g) => {
+                                memo_put = Some((n2.clone(), g));
+                                g
+                            }
+                            Err(e) => {
+                                errored_generic += 1;
+                                self.log_diag(&format!(
+                                    "[issue 351] genericness probe failed, minting a \
+                                     country-less provisional as before: {e}"
+                                ));
+                                true
+                            }
+                        },
+                    };
+                    if generic {
+                        resolver.minted_country_less_generic += 1;
+                        conn.execute(
+                            "INSERT INTO organizations(country, identifier_kind, identifier, name,
+                                 name_norm, provisional, created_at)
+                             VALUES(NULL, NULL, NULL, ?, ?, 1, ?)",
+                            (t(&m.name), Value::Text(name_norm), Value::Integer(now)),
+                        )
+                        .await?;
+                        (last_insert_rowid(conn).await?, true)
+                    } else {
+                        // The cache key's country slot is the empty string:
+                        // a real country code is never empty, so it cannot
+                        // collide with the `(name_norm, country)` entries.
+                        let key = (name_norm.clone(), String::new());
+                        if let Some(&org_id) = name_of.get(&key) {
+                            resolver.reused_country_less += 1;
+                            (org_id, false)
+                        } else {
+                            let mut rows = conn
+                                .query(
+                                    "SELECT id FROM organizations \
+                                      WHERE name_norm = ? AND country IS NULL \
+                                        AND identifier IS NULL LIMIT 1",
+                                    (Value::Text(name_norm.clone()),),
+                                )
+                                .await?;
+                            let hit = match rows.next().await? {
+                                Some(row) => Some(int(&row, 0)),
+                                None => None,
+                            };
+                            drop(rows);
+                            match hit {
+                                Some(org_id) => {
+                                    name_of.insert(key, org_id);
+                                    resolver.reused_country_less += 1;
+                                    (org_id, false)
+                                }
+                                None => {
+                                    conn.execute(
+                                        "INSERT INTO organizations(country, identifier_kind, identifier, name,
+                                             name_norm, provisional, created_at)
+                                         VALUES(NULL, NULL, NULL, ?, ?, 1, ?)",
+                                        (t(&m.name), Value::Text(name_norm), Value::Integer(now)),
+                                    )
+                                    .await?;
+                                    let org_id = last_insert_rowid(conn).await?;
+                                    name_of.insert(key, org_id);
+                                    (org_id, true)
+                                }
                             }
                         }
                     }
