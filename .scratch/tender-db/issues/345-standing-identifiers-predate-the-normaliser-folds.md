@@ -112,3 +112,16 @@ lookalikes are its own letters. Guard added with the BG-label and IE cases
 pinned; the wet run waits for a second dry pass under the guarded fold — the
 plan should then be GR + RO (+ the two IE rows) and nothing else. This is
 exactly the review a dry-first repair exists for.
+
+## Second dry pass and the wet run (2026-09-04 00:3x UTC, rev `3915cee`)
+
+| job | result |
+| --- | --- |
+| 635 dry, guarded fold, 16 s | 1,123,342 walked, 1,123,333 witnessed, 9 unexplained, **2,409 planned**, 2,038 reunions, 0 refused |
+| plan sample (400) | RO suffix strips 269, GR lookalike letters 124, IE 2, and five singletons that are all genuine fixes — a Spanish CIF letter typed as Cyrillic А (`78107349` → `A78107349`), the Swiss `CHE` prefix and the Norwegian `MVA` suffix typed in Cyrillic, one LU and one CY row |
+| 636 WET, 16 s | **applied 2,409, 0 skipped** (the corpus had not moved) |
+
+The BG label class from the first plan is gone, as the guard intended. Next:
+the R2 pass folds the 2,038 reunions whose scheme has a cross-walk arm
+(GR AFM and RO CUI both do), then the ledger check for 1079 → 311 and
+2439 → 2438.
