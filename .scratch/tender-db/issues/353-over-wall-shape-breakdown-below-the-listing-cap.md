@@ -1,6 +1,6 @@
 # 353 — the over-wall backlog below the listing cap: ~55,500 names / ~2.4M rows the verdict cohorts cannot reach
 
-Status: COHORT 6 FOLDED 2026-09-04 22:0x UTC — **job 679 folded 21,235 verdict-single names / 1,329,491 rows** (1,329,408 mentions, 1,383,354 parties, 454,816 winners repointed, 949,163 tenders touched; 1,692 s, parity held), after a two-pass agent read of 24,675 names with an echo alignment guard (pass 1 drifted in one batch; the guard caught it, the cautious merge settled 1,021 disagreements). Under rule `p0` the class has now shed **5,477,733 rows** (stock 3,407,962 + cohorts 2–5 740,280 + cohort 6 1,329,491). Standing: 33,243 raw-wall names / 607,472 rows (`id0/c0` 293k, `id0/c1` 193k; ≤26 rows each) and 1,534 verdict-refused names. Next: wait for Sunday's `org_match_keys` rebuild (stale carriers drop; some names fall under the wall on their own), re-census with the cap at 40,000, and run one more two-pass read over what stands. Was: MEASURED 2026-09-04 17:1x — deployed `7e51dcc`, measured by job 673: **90% of the standing rows (1.85M of 2.05M) sit on names with NO identified carrier at all** (`id0/c0` 32,337 names / 1,174,327 rows; `id0/c1` 19,478 / 672,599); the shared shapes (`id>cap/*`, `id1-cap/c2+`) hold 6.7%. The wall is over these names by spelling fragmentation: one N2 key unites the punctuation/case variants of one name (`COMMUNE DE SAINT-BON COURCHEVEL` + `…SAINT-BON-COURCHEVEL` + … = 44 live carriers, one commune). The 100-sample reads ~93% single, ~7% generic/non-name/multinational (`Price: Various`, `Shell`, `Centre hospitalier, service pharmacie`) — the same ratio as the hand cohorts, so a blind pure-echo rule would merge ~9% of the rows wrongly (the tendsign shape at small scale). Decision: verdicts, at scale — the census listing cap rises to 60,000 with a `shape` per listed group (this unit's second half, gate running), then the ~20k names of 21–229 rows go to agent-read batches. Re-measure after Sunday's `org_match_keys` rebuild. Was: BUILT 2026-09-04 15:5x — the fold's dry run tallies every raw-wall group by shape with rows and carries a 100-name uniform sample; deployed with `b71e809`. Was: ready-for-agent (filed 2026-09-04 from issue 351 unit 5's cohort 5)
+Status: COHORTS 6+7 FOLDED 2026-09-05 01:0x — **two agent-read cohorts (24,675 + 19,166 names, both two-pass, echo-guarded) folded 1,598,214 rows** (job 679: 21,235 groups / 1,329,491 rows; job 682: 16,923 groups / 268,723 rows), parity held both times, verified by bounded reads. With the stock fold and cohorts 1–5 that is **5,746,456 rows folded under `p0`**; the country-less identifier-less provisional class is down from 8,032,637 rows to ~2.29M, of which 15,260 raw-wall names / 303,877 rows (mostly 2–5-row names) and 2,594 verdict-refused names stand. Next: the 2–5-row tail is a later cut (low rows per name); re-measure after Sunday's `org_match_keys` rebuild. Was: COHORT 6 FOLDED 2026-09-04 22:0x UTC — **job 679 folded 21,235 verdict-single names / 1,329,491 rows** (1,329,408 mentions, 1,383,354 parties, 454,816 winners repointed, 949,163 tenders touched; 1,692 s, parity held), after a two-pass agent read of 24,675 names with an echo alignment guard (pass 1 drifted in one batch; the guard caught it, the cautious merge settled 1,021 disagreements). Under rule `p0` the class has now shed **5,477,733 rows** (stock 3,407,962 + cohorts 2–5 740,280 + cohort 6 1,329,491). Standing: 33,243 raw-wall names / 607,472 rows (`id0/c0` 293k, `id0/c1` 193k; ≤26 rows each) and 1,534 verdict-refused names. Next: wait for Sunday's `org_match_keys` rebuild (stale carriers drop; some names fall under the wall on their own), re-census with the cap at 40,000, and run one more two-pass read over what stands. Was: MEASURED 2026-09-04 17:1x — deployed `7e51dcc`, measured by job 673: **90% of the standing rows (1.85M of 2.05M) sit on names with NO identified carrier at all** (`id0/c0` 32,337 names / 1,174,327 rows; `id0/c1` 19,478 / 672,599); the shared shapes (`id>cap/*`, `id1-cap/c2+`) hold 6.7%. The wall is over these names by spelling fragmentation: one N2 key unites the punctuation/case variants of one name (`COMMUNE DE SAINT-BON COURCHEVEL` + `…SAINT-BON-COURCHEVEL` + … = 44 live carriers, one commune). The 100-sample reads ~93% single, ~7% generic/non-name/multinational (`Price: Various`, `Shell`, `Centre hospitalier, service pharmacie`) — the same ratio as the hand cohorts, so a blind pure-echo rule would merge ~9% of the rows wrongly (the tendsign shape at small scale). Decision: verdicts, at scale — the census listing cap rises to 60,000 with a `shape` per listed group (this unit's second half, gate running), then the ~20k names of 21–229 rows go to agent-read batches. Re-measure after Sunday's `org_match_keys` rebuild. Was: BUILT 2026-09-04 15:5x — the fold's dry run tallies every raw-wall group by shape with rows and carries a 100-name uniform sample; deployed with `b71e809`. Was: ready-for-agent (filed 2026-09-04 from issue 351 unit 5's cohort 5)
 Kind: measurement first (organization layer, the provisional-echo fold) — small
 Relates to: 351 (the fold, its tiers and verdict cohorts), 350 (the wall conflates fragmentation with genericness), 349 (echo vs shared carriers), 234 (the exclusion guards the wall stands in for)
 
@@ -166,6 +166,48 @@ standing raw-wall class after the fold: 33,243 names / 607,472 rows
 (`id0/c0` 18,134 / 293,112; `id0/c1` 12,065 / 193,117; `id1-cap/c2+` 910 /
 49,027; `id0/c2+` 990 / 34,560; `id>cap/c2+` 378 / 20,718; `id>cap/c1` 526 /
 14,172; `id1-cap/c1` 235 / 2,691; `id1-cap/c0` 5 / 75), all ≤26 rows.
+
+## Cohorts 6 and 7 folded (2026-09-04 evening → 2026-09-05 01:0x)
+
+**Cohort 6** (24,675 names of 26–229 rows): pass 1 (Fable, index-only) plus
+pass 2 (Fable for 17 batches until a per-model rate limit, Opus for the
+other 33, echo-guarded, chunks of 100). Merge: 23,654 agree, 1,021
+disagree → the cautious verdict; batch 13 (pass 1 drifted) taken from pass
+2 alone. Final 21,239 `single` / 2,059 `unclear` / 828 `generic` / 515
+`non-name` / 34 `platform`; upserted whole. Dry job 678 (727 s) planned
+21,235 groups / 1,329,491 rows; wet job 679 (1,692 s) folded exactly that
+(1,329,408 mentions, 1,383,354 parties, 454,816 winners repointed, 949,163
+tenders touched). Verified: `renfrewshire council (abc)` 223 → 1 with its
+223 mentions on the keep; `hessen mobil gelnhausen` → 1; the generic
+`zaklad gospodarki mieszkaniowej` and the platform URL untouched at 72.
+
+**Cohort 7** (19,166 names of 6–26 rows, census job 680 at cap 40,000,
+2,303 earlier-verdict names excluded): both passes on Opus, both
+echo-guarded — 19,166/19,166 aligned in each, 18,780 agree, 386 disagree →
+cautious. Final 16,943 `single` (285,879 rows) / 1,163 `unclear` / 450
+`generic` / 589 `non-name` / 21 `platform`. Dry job 681 (361 s) planned
+16,923 groups / 268,723 rows; wet job 682 (550 s) folded exactly that
+(268,707 mentions, 287,211 parties, 189,855 winners repointed, 198,450
+tenders touched). Verified: `barnsley mbc` 26 → 1 with 26 mentions on the
+keep; `azienda napoletana mobilita` → 1; `hospital miguel servet` → 1.
+
+**Where the class stands (job 682's walk):** 2,555,329 rows before the
+fold, 34,777 multi-row names; after it 15,260 raw-wall names / 303,877 rows
+(`id0/c0` 111,765 · `id0/c1` 86,332 · `id1-cap/c2+` 44,806 · `id0/c2+`
+29,582 · `id>cap/*` 30,350) plus 2,594 verdict-refused names. The raw-wall
+remainder is mostly names of 2–5 rows (the cut stopped at 6) — ~37k rows
+in ~12k names — and the `unclear` names of every cohort; a later cut can
+take the 2–5-row names if the per-name value justifies ~24k reads.
+
+**Protocol as it now stands** (`scratchpad/pec-*.py`, `pec-rubric.md`,
+`pec-reader-prompt.txt`): census listing → `pec-batches.py` (exclusion by
+every earlier cohort file) → two independent echo-guarded passes of
+500-name batches (three per reader, chunks of 100, own work directory) →
+`pec-verify.py` (echo check on both passes, agreement or the cautious
+verdict; a pass-1-only index keeps its verdict only when echo-verified) →
+assemble from the census's stored names → POST in ≤5,000-name parts → dry
+→ 30-sample review → wet, with nothing posted between dry and wet.
+Concurrency ceiling: 20 subagents.
 
 ## Next
 
