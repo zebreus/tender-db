@@ -628,7 +628,7 @@ async fn country_less_mentions_reuse_under_the_wall_and_mint_over_it() {
         )
         .await
         .unwrap();
-        for n in 1..=6i64 {
+        for n in 1..=10i64 {
             conn.execute(
                 "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id,
                                       member_path, ingested_at, parse_state, projected)
@@ -649,7 +649,8 @@ async fn country_less_mentions_reuse_under_the_wall_and_mint_over_it() {
             .await
             .unwrap();
         }
-        // "gemeindetaufkirchen" is carried by three org rows: over a cap of 2.
+        // "gemeindetaufkirchen" is carried by three org rows: over a cap of 2,
+        // and none of them identified — over the wall with no other tier.
         for id in [9001, 9002, 9003] {
             conn.execute(
                 "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'gemeindetaufkirchen')",
@@ -658,7 +659,50 @@ async fn country_less_mentions_reuse_under_the_wall_and_mint_over_it() {
             .await
             .unwrap();
         }
+        // "stadtbig": over the wall by five carriers, two of them identified
+        // DE rows — an echo of one entity (unit 4's tier 2).
+        for id in [9101, 9102, 9103] {
+            conn.execute(
+                "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'stadtbig')",
+                (store::turso::Value::Integer(id),),
+            )
+            .await
+            .unwrap();
+        }
+        for (id, vat) in [(9104, "DE9104"), (9105, "DE9105")] {
+            conn.execute(
+                "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+                 VALUES (?, 'DE', 'vat', ?, 'Stadt Big', 'stadt big', 0, 0)",
+                (store::turso::Value::Integer(id), store::turso::Value::Text(vat.into())),
+            )
+            .await
+            .unwrap();
+            conn.execute(
+                "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'stadtbig')",
+                (store::turso::Value::Integer(id),),
+            )
+            .await
+            .unwrap();
+        }
     }
+    // A recorded `single` verdict admits a name the wall would refuse (tier 1).
+    for id in [9201, 9202, 9203] {
+        let raw = store::turso::Builder::new_local(path).build().await.unwrap();
+        let conn = raw.connect().unwrap();
+        conn.execute(
+            "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'tribunalverdict')",
+            (store::turso::Value::Integer(id),),
+        )
+        .await
+        .unwrap();
+    }
+    db.record_name_verdicts(
+        "t",
+        &[store::NameVerdict { name_norm: "tribunal verdict".into(), verdict: "single".into(), rationale: "one court".into() }],
+        0,
+    )
+    .await
+    .unwrap();
     let mut resolver = db.mention_resolver(None, None, None, Some(norm), None, None, 2).await.unwrap();
     let ids = db
         .resolve_mentions(
@@ -668,6 +712,10 @@ async fn country_less_mentions_reuse_under_the_wall_and_mint_over_it() {
                 mention_name_only(2, "Stadt Burghausen"),
                 mention_name_only(3, "Gemeinde Taufkirchen"),
                 mention_name_only(4, "Gemeinde Taufkirchen"),
+                mention_name_only(5, "Stadt Big"),
+                mention_name_only(6, "Stadt Big"),
+                mention_name_only(7, "Tribunal Verdict"),
+                mention_name_only(8, "Tribunal Verdict"),
             ],
             0,
         )
@@ -675,7 +723,9 @@ async fn country_less_mentions_reuse_under_the_wall_and_mint_over_it() {
         .unwrap();
     db.finish_mention_resolver(resolver).await.unwrap();
     assert_eq!(ids[0], ids[1], "under the wall: one standing (name, NULL) row for both");
-    assert_ne!(ids[2], ids[3], "over the wall: the 234 behaviour, one row per mention");
+    assert_ne!(ids[2], ids[3], "over the wall, nothing identified: the 234 behaviour, one row per mention");
+    assert_eq!(ids[4], ids[5], "echo of one identified entity: reused");
+    assert_eq!(ids[6], ids[7], "a recorded single verdict: reused");
     assert_eq!(count(&db, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'stadt burghausen'").await, 1);
     assert_eq!(count(&db, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'gemeinde taufkirchen'").await, 2);
     assert_eq!(
@@ -686,12 +736,12 @@ async fn country_less_mentions_reuse_under_the_wall_and_mint_over_it() {
     // A later batch, a fresh resolver: the standing row is found in the table,
     // not only in the batch cache.
     let mut resolver = db.mention_resolver(None, None, None, Some(norm), None, None, 2).await.unwrap();
-    let later = db.resolve_mentions(&mut resolver, &[mention_name_only(5, "Stadt Burghausen")], 0).await.unwrap();
+    let later = db.resolve_mentions(&mut resolver, &[mention_name_only(9, "Stadt Burghausen")], 0).await.unwrap();
     db.finish_mention_resolver(resolver).await.unwrap();
     assert_eq!(later[0], ids[0]);
     // Without a normaliser the wall cannot be asked: mint, as before 351.
     let mut resolver = db.mention_resolver(None, None, None, None, None, None, 2).await.unwrap();
-    let blind = db.resolve_mentions(&mut resolver, &[mention_name_only(6, "Stadt Burghausen")], 0).await.unwrap();
+    let blind = db.resolve_mentions(&mut resolver, &[mention_name_only(10, "Stadt Burghausen")], 0).await.unwrap();
     db.finish_mention_resolver(resolver).await.unwrap();
     assert_ne!(blind[0], ids[0]);
     assert_eq!(count(&db, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'stadt burghausen'").await, 2);

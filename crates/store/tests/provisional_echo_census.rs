@@ -106,6 +106,8 @@ async fn the_echo_class_is_grouped_by_name_and_the_wall_is_read_for_the_listed()
     assert_eq!((zwei.name_norm.as_str(), zwei.rows, zwei.mentions, zwei.generic), ("kreis zwei", 2, 1, false));
     assert_eq!(r.listed_mentions, 4);
     assert_eq!(r.listed_over_wall, 1);
+    assert_eq!((echo.tier.as_str(), zwei.tier.as_str()), ("over-wall", "under-wall"), "unit 4: the tier a fold would decide by");
+    assert_eq!(r.listed_tiers.get("over-wall"), Some(&1));
     assert!(!r.stopped);
 }
 

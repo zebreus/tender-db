@@ -6126,6 +6126,7 @@ impl Supervisor {
                         "plan_groups": r.plan_groups - r.merged_groups,
                         "rows_walked": r.rows_walked, "groups": r.groups,
                         "over_wall": r.over_wall, "plan_rows": r.plan_rows,
+                        "tiers": r.tiers,
                         "merged_this_run": r.merged_groups,
                         "residual_of_wet_run": !dry_run,
                         "listing_truncated": r.listing_truncated,
@@ -6148,13 +6149,14 @@ impl Supervisor {
                 }
                 Ok(format!(
                     "fold-provisional-echoes (issue 351){}: {} rows walked, {} names in more than one \
-                     row, {} over the wall (left standing); plan {} groups / {} rows; folded {} groups \
+                     row, {} left standing (tiers {:?}); plan {} groups / {} rows; folded {} groups \
                      ({} rows removed, {} mentions, {} parties, {} bid-parties, {} winners repointed, \
                      {} winner dups deleted, {} tenders touched)",
                     if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
                     r.rows_walked,
                     r.groups,
                     r.over_wall,
+                    r.tiers,
                     r.plan_groups,
                     r.plan_rows,
                     r.merged_groups,
@@ -6198,9 +6200,11 @@ impl Supervisor {
                     "size_hist": r.size_hist,
                     "listed_mentions": r.listed_mentions,
                     "listed_over_wall": r.listed_over_wall,
+                    "listed_tiers": r.listed_tiers,
                     "listed": r.listed.iter().map(|g| serde_json::json!({
                         "name_norm": g.name_norm, "name": g.name, "rows": g.rows,
                         "mentions": g.mentions, "carriers": g.carriers, "generic": g.generic,
+                        "tier": g.tier,
                     })).collect::<Vec<_>>(),
                 })
                 .to_string();

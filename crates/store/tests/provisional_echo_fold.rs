@@ -98,35 +98,80 @@ async fn identical_null_country_provisionals_fold_under_the_wall_and_stand_over_
     org(&conn, 400, Some("DE"), "Stadt Echo").await;
     org(&conn, 401, Some("DE"), "Stadt Echo").await;
     org(&conn, 500, None, "Solo").await;
+    // Unit 4's tiers. "Stadt Big": 30 rows of one city, over the wall by its
+    // own echo — but two identified DE rows carry the key: an echo of one.
+    for i in 0..30 {
+        org(&conn, 600 + i, None, "Stadt Big").await;
+        conn.execute("INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'stadt big')", (Value::Integer(600 + i),)).await.unwrap();
+    }
+    for (id, vat) in [(700, "DE700"), (701, "DE701")] {
+        conn.execute(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, 'DE', 'vat', ?, 'Stadt Big', 'stadt big', 0, 0)",
+            (Value::Integer(id), Value::Text(vat.into())),
+        )
+        .await
+        .unwrap();
+        conn.execute("INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'stadt big')", (Value::Integer(id),)).await.unwrap();
+    }
+    // "Tribunal Verdict": 30 rows, nothing identified — over the wall, but a
+    // recorded `single` verdict folds it. "Kreis Zwei" gets a `generic`
+    // verdict, which refuses its under-wall pair.
+    for i in 0..30 {
+        org(&conn, 800 + i, None, "Tribunal Verdict").await;
+        conn.execute("INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'tribunal verdict')", (Value::Integer(800 + i),)).await.unwrap();
+    }
+    let recorded = db
+        .record_name_verdicts(
+            "t",
+            &[
+                store::NameVerdict { name_norm: "tribunal verdict".into(), verdict: "single".into(), rationale: "one court".into() },
+                store::NameVerdict { name_norm: "kreis zwei".into(), verdict: "generic".into(), rationale: "a class name".into() },
+                store::NameVerdict { name_norm: "kreis zwei".into(), verdict: "generic".into(), rationale: "re-posted".into() },
+            ],
+            0,
+        )
+        .await
+        .unwrap();
+    assert_eq!(recorded, 3, "an upsert counts every row it wrote");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_name_verdicts").await, 2, "one row per name");
     let never = || false;
     let quiet = |_: u64, _: &str| {};
 
     let dry = db.fold_provisional_echoes(args(true, None, &never, &quiet)).await.unwrap();
-    assert_eq!(dry.rows_walked, 11, "5 + 2 + 3 + the singleton; the DE pair is outside the class");
-    assert_eq!(dry.groups, 3);
-    assert_eq!(dry.over_wall, 1, "Gemeinde Generic stands");
-    assert_eq!((dry.plan_groups, dry.plan_rows), (2, 5));
-    assert_eq!(dry.listing[0], ("stadt echo".to_owned(), "Stadt Echo".to_owned(), 5, 100));
+    assert_eq!(dry.rows_walked, 71, "5 + 2 + 3 + 30 + 30 + the singleton; the DE rows are outside the class");
+    assert_eq!(dry.groups, 5);
+    assert_eq!(dry.over_wall, 2, "Gemeinde Generic (over the wall, nothing identified) and Kreis Zwei (verdict) stand");
+    assert_eq!(dry.tiers.get("under-wall"), Some(&1), "Stadt Echo");
+    assert_eq!(dry.tiers.get("echo-of-one"), Some(&1), "Stadt Big");
+    assert_eq!(dry.tiers.get("verdict-single"), Some(&1), "Tribunal Verdict");
+    assert_eq!(dry.tiers.get("verdict-refused"), Some(&1), "Kreis Zwei");
+    assert_eq!(dry.tiers.get("over-wall"), Some(&1), "Gemeinde Generic");
+    assert_eq!((dry.plan_groups, dry.plan_rows), (3, 4 + 29 + 29));
+    assert_eq!(dry.listing[0], ("stadt big".to_owned(), "Stadt Big".to_owned(), 30, 600));
     assert_eq!(dry.merged_groups, 0);
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 13, "a dry run writes nothing");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 75, "a dry run writes nothing");
 
     // Parity: a wet run against a plan that is not the one recorded aborts.
     let off = db.fold_provisional_echoes(args(false, Some(200), &never, &quiet)).await;
-    assert!(off.is_err(), "plan 2 vs recorded 200 is outside max(2%, 50)");
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 13);
+    assert!(off.is_err(), "plan 3 vs recorded 200 is outside max(2%, 50)");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 75);
 
-    let wet = db.fold_provisional_echoes(args(false, Some(2), &never, &quiet)).await.unwrap();
-    assert_eq!((wet.merged_groups, wet.removed, wet.mentions), (2, 5, 2), "two mentions moved off 101 and 104");
+    let wet = db.fold_provisional_echoes(args(false, Some(3), &never, &quiet)).await.unwrap();
+    assert_eq!((wet.merged_groups, wet.removed, wet.mentions), (3, 62, 2), "two mentions moved off 101 and 104");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'stadt big' AND country IS NULL").await, 1);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'stadt big' AND country = 'DE'").await, 2, "the identified rows are not the fold's");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'tribunal verdict'").await, 1);
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'stadt echo' AND country IS NULL").await, 1);
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 100 AND provisional = 1").await, 1, "the keep stays provisional");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 100").await, 3);
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'kreis zwei'").await, 1);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'kreis zwei'").await, 2, "a refusing verdict: untouched");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'gemeinde generic'").await, 3, "over the wall: untouched");
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE country = 'DE'").await, 2, "outside the class: untouched");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'stadt echo' AND country = 'DE'").await, 2, "outside the class: untouched");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_merge_log WHERE rule = 'p0' AND keep = 100").await, 4);
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_merge_log WHERE rule = 'p0'").await, 5);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_merge_log WHERE rule = 'p0'").await, 62);
 
-    // Idempotent: the class is now one row per name, nothing to plan.
+    // Idempotent: the class is now one row per admitted name, nothing to plan.
     let again = db.fold_provisional_echoes(args(true, None, &never, &quiet)).await.unwrap();
-    assert_eq!((again.plan_groups, again.over_wall), (0, 1));
+    assert_eq!((again.plan_groups, again.over_wall), (0, 2));
 }

@@ -42,6 +42,7 @@ pub fn router(supervisor: Arc<Supervisor>) -> Router {
         .route("/admin/reports/{kind}/previous", axum::routing::get(report_previous))
         .route("/admin/name-key", axum::routing::get(name_key))
         .route("/admin/case-reviews", post(record_case_reviews))
+        .route("/admin/name-verdicts", post(record_name_verdicts))
         .route("/admin/rehoming", post(record_rehoming))
         .with_state(supervisor)
 }
@@ -143,6 +144,65 @@ async fn record_rehoming(
         })
         .collect();
     match sup.db().record_rehoming(&req.cohort, &verdicts, store::now_unix()).await {
+        Ok(n) => (StatusCode::OK, axum::Json(json!({ "recorded": n, "cohort": req.cohort })))
+            .into_response(),
+        Err(e) => error(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()),
+    }
+}
+
+/// The issue-351 name-verdict upload shape.
+#[derive(serde::Deserialize)]
+struct NameVerdictsBody {
+    cohort: String,
+    verdicts: Vec<NameVerdictIn>,
+}
+
+#[derive(serde::Deserialize)]
+struct NameVerdictIn {
+    name: String,
+    verdict: String,
+    rationale: String,
+}
+
+/// `POST /admin/name-verdicts` — record one cohort's NAME-level verdicts
+/// (issue 351 unit 4): `single` lets the provisional echo fold and the
+/// resolver's country-less reuse treat the name as one entity whatever the
+/// wall says; `generic`, `platform` and `non-name` refuse both; `unclear`
+/// is recorded and decides nothing. Keyed by the bare lower-case name.
+async fn record_name_verdicts(
+    State(sup): State<Arc<Supervisor>>,
+    headers: HeaderMap,
+    body: Result<axum::Json<NameVerdictsBody>, axum::extract::rejection::JsonRejection>,
+) -> Response {
+    if let Some(response) = deny(&headers) {
+        return response;
+    }
+    let req = match body {
+        Ok(axum::Json(b)) => b,
+        Err(e) => return error(StatusCode::BAD_REQUEST, &e.to_string()),
+    };
+    if req.cohort.is_empty() || req.verdicts.is_empty() {
+        return error(StatusCode::BAD_REQUEST, "cohort and verdicts are required");
+    }
+    if let Some(bad) = req.verdicts.iter().find(|r| {
+        !matches!(r.verdict.as_str(), "single" | "generic" | "platform" | "non-name" | "unclear")
+    }) {
+        return error(
+            StatusCode::BAD_REQUEST,
+            &format!("{:?}: verdict must be single|generic|platform|non-name|unclear", bad.name),
+        );
+    }
+    let verdicts: Vec<store::NameVerdict> = req
+        .verdicts
+        .into_iter()
+        .filter(|r| !r.name.trim().is_empty())
+        .map(|r| store::NameVerdict {
+            name_norm: r.name.trim().to_lowercase(),
+            verdict: r.verdict,
+            rationale: r.rationale,
+        })
+        .collect();
+    match sup.db().record_name_verdicts(&req.cohort, &verdicts, store::now_unix()).await {
         Ok(n) => (StatusCode::OK, axum::Json(json!({ "recorded": n, "cohort": req.cohort })))
             .into_response(),
         Err(e) => error(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()),

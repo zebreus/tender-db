@@ -435,6 +435,19 @@ pub(crate) const SCHEMA: &str = "
     -- (panel catch: a re-POST must not destroy the only record of an
     -- executed action). No FK — a reviewed org can later be merged away
     -- (org_merge_log precedent).
+    -- Issue 351 unit 4: a NAME-level verdict, recorded by a person or an
+    -- agent through POST /admin/name-verdicts and read by the provisional
+    -- echo fold, the resolver's country-less reuse and the echo census.
+    -- Keyed by the bare lower-case name (the 234 reuse key), one row per
+    -- name; a re-POST updates the verdict and keeps the row.
+    CREATE TABLE IF NOT EXISTS org_name_verdicts (
+        name_norm   TEXT    NOT NULL PRIMARY KEY,
+        cohort      TEXT    NOT NULL,
+        verdict     TEXT    NOT NULL CHECK (verdict IN ('single','generic','platform','non-name','unclear')),
+        rationale   TEXT    NOT NULL,
+        recorded_at INTEGER NOT NULL
+    ) STRICT;
+
     CREATE TABLE IF NOT EXISTS org_case_reviews (
         case_org_id    INTEGER NOT NULL,
         cohort         TEXT    NOT NULL,
@@ -1697,6 +1710,16 @@ pub struct R3MergeReport {
 
 /// One issue-311 per-case review verdict, as the admin surface hands it to
 /// the store (the app crate owns the serde shape; store stays serde-free).
+/// Issue 351 unit 4: one name-level verdict as uploaded.
+#[derive(Debug, Clone)]
+pub struct NameVerdict {
+    /// The bare lower-case name (the 234 reuse key).
+    pub name_norm: String,
+    /// `single` | `generic` | `platform` | `non-name` | `unclear`.
+    pub verdict: String,
+    pub rationale: String,
+}
+
 #[derive(Debug, Clone)]
 pub struct CaseReview {
     pub case_org_id: i64,
@@ -2164,10 +2187,109 @@ pub(crate) const GENERIC_KEY_BREAKDOWN_SQL: &str =
     "SELECT COUNT(*), \
             SUM(CASE WHEN o.identifier IS NOT NULL THEN 1 ELSE 0 END), \
             SUM(CASE WHEN o.country IS NOT NULL THEN 1 ELSE 0 END), \
-            COUNT(DISTINCT o.identifier) \
+            COUNT(DISTINCT o.identifier), \
+            COUNT(DISTINCT CASE WHEN o.identifier IS NOT NULL THEN o.country END) \
        FROM (SELECT DISTINCT org_id FROM org_match_keys \
               WHERE key_kind = ? AND key = ? LIMIT 1000) k \
        JOIN organizations o ON o.id = k.org_id";
+
+/// Issue 351 unit 4: which tier admitted or refused a country-less name.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EchoTier {
+    /// A recorded `single` verdict: fold / reuse whatever the wall says.
+    VerdictSingle,
+    /// A recorded `generic`, `platform` or `non-name` verdict: never.
+    VerdictRefused,
+    /// Over the raw wall, but the identified carriers number 1..cap and all
+    /// sit in one country — one entity's echo.
+    EchoOfOne,
+    /// Under the raw wall.
+    UnderWall,
+    /// Over the raw wall and no other tier claimed it.
+    OverWall,
+}
+
+impl EchoTier {
+    pub fn admits(self) -> bool {
+        matches!(self, EchoTier::VerdictSingle | EchoTier::EchoOfOne | EchoTier::UnderWall)
+    }
+    pub fn as_str(self) -> &'static str {
+        match self {
+            EchoTier::VerdictSingle => "verdict-single",
+            EchoTier::VerdictRefused => "verdict-refused",
+            EchoTier::EchoOfOne => "echo-of-one",
+            EchoTier::UnderWall => "under-wall",
+            EchoTier::OverWall => "over-wall",
+        }
+    }
+}
+
+/// Issue 351 unit 4: the three-tier gate on one country-less name, on a
+/// caller-supplied connection (the fold's own writer inside its
+/// transaction, or a reader). `name_norm` is the bare lower-case name the
+/// verdict table is keyed by; `key` is the N2 key the wall is keyed by.
+/// Bounded: one PK lookup, up to two index seeks, and one seek+join of at
+/// most 1,000 rows.
+pub(crate) async fn echo_tier_on(
+    conn: &Connection,
+    name_norm: &str,
+    key: &str,
+    cap: usize,
+) -> turso::Result<EchoTier> {
+    // Tier 1: a recorded verdict.
+    {
+        let mut q = conn
+            .query("SELECT verdict FROM org_name_verdicts WHERE name_norm = ?", (t(name_norm),))
+            .await?;
+        if let Some(row) = q.next().await? {
+            return Ok(match text(&row, 0).as_str() {
+                "single" => EchoTier::VerdictSingle,
+                "generic" | "platform" | "non-name" => EchoTier::VerdictRefused,
+                _ => {
+                    drop(q);
+                    return echo_tier_by_wall(conn, key, cap).await;
+                }
+            });
+        }
+    }
+    echo_tier_by_wall(conn, key, cap).await
+}
+
+/// Tiers 2 and 3 of [`echo_tier_on`]: the raw wall, and the echo-of-one
+/// reading of an over-cap key.
+async fn echo_tier_by_wall(conn: &Connection, key: &str, cap: usize) -> turso::Result<EchoTier> {
+    if key.is_empty() {
+        return Ok(EchoTier::UnderWall);
+    }
+    let mut carriers = 0u64;
+    let mut found_kind = "n2";
+    for kind in ["n3", "n2"] {
+        let mut q = conn
+            .query(NAME_KEY_CARRIERS_SQL, (t(kind), t(key), Value::Integer(cap as i64 + 1)))
+            .await?;
+        carriers = match q.next().await? {
+            Some(row) => int(&row, 0).max(0) as u64,
+            None => 0,
+        };
+        if carriers > 0 {
+            found_kind = kind;
+            break;
+        }
+    }
+    if carriers as usize <= cap {
+        return Ok(EchoTier::UnderWall);
+    }
+    let mut q = conn.query(GENERIC_KEY_BREAKDOWN_SQL, (t(found_kind), t(key))).await?;
+    let (with_identifier, countries) = match q.next().await? {
+        Some(row) => (int(&row, 1).max(0) as usize, int(&row, 4).max(0)),
+        None => (0, 0),
+    };
+    Ok(if (1..=cap).contains(&with_identifier) && countries == 1 {
+        EchoTier::EchoOfOne
+    } else {
+        EchoTier::OverWall
+    })
+}
 
 /// Carriers of a NAME KEY under ONE kind, counted up to `cap + 1` (issue 328
 /// follow-on). Identical to [`GENERIC_KEY_SQL`] but returns the COUNT rather
@@ -2519,9 +2641,12 @@ pub struct ProvisionalFoldReport {
     pub rows_walked: u64,
     /// Names held by more than one such row.
     pub groups: u64,
-    /// Groups left standing because their N2 key is over the wall — the
-    /// `tendsign` / `Gemeinde Taufkirchen` shapes the 234 exclusion guards.
+    /// Groups left standing: a refusing verdict, or over the wall with no
+    /// other tier claiming them — the `tendsign` / `Ministry of Defence`
+    /// shapes the 234 exclusion guards.
     pub over_wall: u64,
+    /// Groups by the tier that decided them (`EchoTier::as_str`).
+    pub tiers: std::collections::BTreeMap<String, u64>,
     /// Groups under the wall: the plan.
     pub plan_groups: u64,
     /// Rows the plan removes (every group's rows but one).
@@ -2554,6 +2679,8 @@ pub struct ProvisionalEchoGroup {
     /// and whether that is over the cap.
     pub carriers: u64,
     pub generic: bool,
+    /// Issue 351 unit 4: the tier that would decide a fold of this name.
+    pub tier: String,
 }
 
 /// Issue 351: the provisional-echo census. The post-234 provisional path
@@ -2582,6 +2709,8 @@ pub struct ProvisionalEchoReport {
     /// Listed groups whose key is over the wall (the Taufkirchen shape a
     /// gated reuse would leave alone).
     pub listed_over_wall: u64,
+    /// Listed groups by tier (unit 4).
+    pub listed_tiers: std::collections::BTreeMap<String, u64>,
     pub stopped: bool,
 }
 
@@ -3859,6 +3988,9 @@ pub struct MentionResolver {
     /// `Gemeinde Taufkirchen` shapes the 234 exclusion was written for).
     reused_country_less: u64,
     minted_country_less_generic: u64,
+    /// Issue 351 unit 4: the tier gate's answer per bare name, for this
+    /// resolver's life (true = mint, false = reuse).
+    country_less_memo: std::collections::HashMap<String, bool>,
     /// Per-run memo, `n2 key -> generic`. Generic names are BY DEFINITION the
     /// most repeated strings in the corpus, so without this the most common
     /// keys pay the most probes.
@@ -7199,6 +7331,7 @@ impl Db {
             errored_generic: 0,
             reused_country_less: 0,
             minted_country_less_generic: 0,
+            country_less_memo: std::collections::HashMap::new(),
             generic_memo: std::collections::HashMap::new(),
         })
     }
@@ -7749,20 +7882,21 @@ impl Db {
                     // safe failure here, the opposite of the bind path where
                     // leniency means binding.
                     let n2 = norm_fn(&m.name);
-                    let generic = match resolver.generic_memo.get(&n2).copied() {
+                    // The three-tier gate (unit 4): a recorded verdict, then
+                    // the echo-of-one reading, then the raw wall — memoized
+                    // per name for the resolver's life, like the wall memo.
+                    let generic = match resolver.country_less_memo.get(&name_norm).copied() {
                         Some(known) => known,
-                        None => match self
-                            .name_key_is_generic_on(conn, "n2", &n2, resolver.stoplist_cap)
-                            .await
-                        {
-                            Ok(g) => {
-                                memo_put = Some((n2.clone(), g));
+                        None => match echo_tier_on(conn, &name_norm, &n2, resolver.stoplist_cap).await {
+                            Ok(tier) => {
+                                let g = !tier.admits();
+                                resolver.country_less_memo.insert(name_norm.clone(), g);
                                 g
                             }
                             Err(e) => {
                                 errored_generic += 1;
                                 self.log_diag(&format!(
-                                    "[issue 351] genericness probe failed, minting a \
+                                    "[issue 351] tier probe failed, minting a \
                                      country-less provisional as before: {e}"
                                 ));
                                 true
@@ -11720,6 +11854,55 @@ impl Db {
         Ok(report)
     }
 
+    /// Issue 351 unit 4: record one cohort's name-level verdicts, one row
+    /// per bare lower-case name, upserting. One transaction; a failed upload
+    /// leaves nothing partial.
+    pub async fn record_name_verdicts(
+        &self,
+        cohort: &str,
+        verdicts: &[NameVerdict],
+        now: i64,
+    ) -> turso::Result<u64> {
+        let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result: turso::Result<u64> = async {
+            let mut n = 0u64;
+            for v in verdicts {
+                conn.execute(
+                    "INSERT INTO org_name_verdicts (name_norm, cohort, verdict, rationale, recorded_at) \
+                     VALUES (?, ?, ?, ?, ?) \
+                     ON CONFLICT(name_norm) DO UPDATE SET cohort = excluded.cohort, \
+                        verdict = excluded.verdict, rationale = excluded.rationale, \
+                        recorded_at = excluded.recorded_at",
+                    (t(&v.name_norm), t(cohort), t(&v.verdict), t(&v.rationale), Value::Integer(now)),
+                )
+                .await?;
+                n += 1;
+            }
+            Ok(n)
+        }
+        .await;
+        match result {
+            Ok(n) => {
+                if let Err(e) = conn.execute("COMMIT", ()).await {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+                Ok(n)
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                Err(e)
+            }
+        }
+    }
+
+    /// The tier gate on a pooled reader (batch callers).
+    pub async fn echo_tier(&self, name_norm: &str, key: &str, cap: usize) -> turso::Result<EchoTier> {
+        let reader = self.reader().await?;
+        echo_tier_on(&reader, name_norm, key, cap).await
+    }
+
     /// Issue 311: record one cohort's review verdicts. One standing verdict
     /// per (org, cohort). Re-recording UPDATES the verdict fields but NEVER
     /// touches the applied stamp or its pre-image (panel catch: an operator
@@ -14155,7 +14338,17 @@ impl Db {
             if generic {
                 report.listed_over_wall += 1;
             }
-            report.listed.push(ProvisionalEchoGroup { name_norm: norm, name, rows: n, mentions, carriers, generic });
+            let tier = echo_tier_on(&reader, &norm, &key, stoplist_cap).await?;
+            *report.listed_tiers.entry(tier.as_str().to_owned()).or_default() += 1;
+            report.listed.push(ProvisionalEchoGroup {
+                name_norm: norm,
+                name,
+                rows: n,
+                mentions,
+                carriers,
+                generic,
+                tier: tier.as_str().to_owned(),
+            });
         }
         Ok(report)
     }
@@ -14184,7 +14377,7 @@ impl Db {
         let reader = self.reader().await?;
         // (name_norm, name, ids) — ids ascending by construction of the walk.
         let mut plan: Vec<(String, String, Vec<i64>)> = Vec::new();
-        let mut wall_memo: std::collections::HashMap<String, bool> = Default::default();
+        let mut wall_memo: std::collections::HashMap<String, EchoTier> = Default::default();
         let mut cur: Option<(String, String, Vec<i64>)> = None;
         let (mut last_norm, mut last_id) = (String::new(), 0i64);
         loop {
@@ -14376,7 +14569,7 @@ impl Db {
         reader: &Connection,
         args: &ProvisionalFoldArgs<'_>,
         report: &mut ProvisionalFoldReport,
-        wall_memo: &mut std::collections::HashMap<String, bool>,
+        wall_memo: &mut std::collections::HashMap<String, EchoTier>,
         plan: &mut Vec<(String, String, Vec<i64>)>,
         group: (String, String, Vec<i64>),
     ) -> turso::Result<()> {
@@ -14386,32 +14579,17 @@ impl Db {
         }
         report.groups += 1;
         let key = (args.n2)(&name);
-        let generic = if key.is_empty() {
-            false
-        } else if let Some(&g) = wall_memo.get(&key) {
-            g
+        // Memoized by name: the verdict table is keyed by it, and the wall's
+        // key is a function of it.
+        let tier = if let Some(&tier) = wall_memo.get(&norm) {
+            tier
         } else {
-            let mut carriers = 0u64;
-            for kind in ["n3", "n2"] {
-                let mut q = reader
-                    .query(
-                        NAME_KEY_CARRIERS_SQL,
-                        (t(kind), t(key.as_str()), Value::Integer(args.stoplist_cap as i64 + 1)),
-                    )
-                    .await?;
-                carriers = match q.next().await? {
-                    Some(row) => int(&row, 0).max(0) as u64,
-                    None => 0,
-                };
-                if carriers > 0 {
-                    break;
-                }
-            }
-            let g = carriers as usize > args.stoplist_cap;
-            wall_memo.insert(key, g);
-            g
+            let tier = echo_tier_on(reader, &norm, &key, args.stoplist_cap).await?;
+            wall_memo.insert(norm.clone(), tier);
+            tier
         };
-        if generic {
+        *report.tiers.entry(tier.as_str().to_owned()).or_default() += 1;
+        if !tier.admits() {
             report.over_wall += 1;
             return Ok(());
         }
