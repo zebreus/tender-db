@@ -385,6 +385,10 @@ enum Spec {
     /// Issue 351: NULL-country, identifier-less provisional rows by name —
     /// the echo class. Read-only measurement.
     ProvisionalEchoCensus,
+    /// Issue 351 unit 3: fold identical-name NULL-country provisional rows
+    /// into one per name, wall-gated. Deletes org rows: dry_run defaults
+    /// TRUE and a wet run requires the stored dry plan.
+    FoldProvisionalEchoes { dry_run: bool, max_groups: Option<u64> },
     /// Issue 330: organization names carrying a line break, and whether the
     /// notice published it that way. Read-only measurement.
     NamePollutionCensus,
@@ -1373,6 +1377,23 @@ impl Supervisor {
                 )
                 .await,
             ]),
+            "fold-provisional-echoes" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let max_groups = req.max_groups;
+                let params = match (dry_run, max_groups) {
+                    (true, _) => "fold-provisional-echoes dry-run".to_owned(),
+                    (false, Some(n)) => format!("fold-provisional-echoes max_groups={n}"),
+                    (false, None) => "fold-provisional-echoes".to_owned(),
+                };
+                Ok(vec![
+                    self.push(
+                        "fold-provisional-echoes",
+                        params,
+                        Spec::FoldProvisionalEchoes { dry_run, max_groups },
+                    )
+                    .await,
+                ])
+            }
             "country-typo-census" => Ok(vec![
                 self.push(
                     "country-typo-census",
@@ -1838,6 +1859,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "country-cluster-census",
     "duplicate-identity-census",
     "provisional-echo-census",
+    "fold-provisional-echoes",
     "name-pollution-census",
     "generic-wall-census",
     "generic-statistic-census",
@@ -6045,6 +6067,106 @@ impl Supervisor {
                     r.name_lengths.last().copied().unwrap_or(0),
                 ))
             }).await,
+            Spec::FoldProvisionalEchoes { dry_run, max_groups } => Box::pin(async move {
+                let dry_run = *dry_run;
+                // A wet run REQUIRES the recorded dry plan: the T4 parity
+                // input, and the ladder's guarantee that nothing folds
+                // un-previewed.
+                let expect_groups = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("provisional-echo-plan")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "no stored provisional-echo-plan — run the dry run first".to_owned()
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    Some(
+                        v["plan_groups"]
+                            .as_u64()
+                            .ok_or_else(|| "provisional-echo-plan lacks plan_groups".to_owned())?,
+                    )
+                };
+                self.set_phase(
+                    if dry_run { "planning" } else { "folding" },
+                    None,
+                    None,
+                    "issue 351: walking the provisional echo class".to_owned(),
+                );
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase(if dry_run { "planning" } else { "folding" }, Some(done), None, detail.to_owned());
+                };
+                let r = self
+                    .db
+                    .fold_provisional_echoes(store::ProvisionalFoldArgs {
+                        n2: ingest::project::match_norm,
+                        stoplist_cap: SCAN_STOPLIST_CAP,
+                        dry_run,
+                        max_groups: *max_groups,
+                        expect_groups,
+                        job_id: Some(job_id as i64),
+                        stop: &stop,
+                        progress: &progress,
+                    })
+                    .await
+                    .map_err(|e| e.to_string())?;
+                // A dry run records its plan; a wet run re-records the
+                // residual so a capped or stopped run continues under parity
+                // (the E0 arm's rule) — except a stop during planning, which
+                // computed nothing and must not clobber a reviewed plan.
+                if !(r.stopped && r.plan_groups == 0) {
+                    let now = store::now_unix();
+                    let plan = serde_json::json!({
+                        "plan_groups": r.plan_groups - r.merged_groups,
+                        "rows_walked": r.rows_walked, "groups": r.groups,
+                        "over_wall": r.over_wall, "plan_rows": r.plan_rows,
+                        "merged_this_run": r.merged_groups,
+                        "residual_of_wet_run": !dry_run,
+                        "listing_truncated": r.listing_truncated,
+                        "listing": r.listing.iter().map(|(norm, name, rows, keep)| serde_json::json!({
+                            "name_norm": norm, "name": name, "rows": rows, "keep_id": keep,
+                        })).collect::<Vec<_>>(),
+                    })
+                    .to_string();
+                    self.db
+                        .put_report("provisional-echo-plan", &plan, now)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                }
+                if r.stopped {
+                    return Ok(format!(
+                        "fold-provisional-echoes STOPPED: {} of {} plan groups folded before the stop; \
+                         the residual plan was re-recorded",
+                        r.merged_groups, r.plan_groups
+                    ));
+                }
+                Ok(format!(
+                    "fold-provisional-echoes (issue 351){}: {} rows walked, {} names in more than one \
+                     row, {} over the wall (left standing); plan {} groups / {} rows; folded {} groups \
+                     ({} rows removed, {} mentions, {} parties, {} bid-parties, {} winners repointed, \
+                     {} winner dups deleted, {} tenders touched)",
+                    if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
+                    r.rows_walked,
+                    r.groups,
+                    r.over_wall,
+                    r.plan_groups,
+                    r.plan_rows,
+                    r.merged_groups,
+                    r.removed,
+                    r.mentions,
+                    r.parties,
+                    r.bid_parties,
+                    r.winners,
+                    r.winner_dups,
+                    r.tender_changes
+                ))
+            }).await,
             Spec::ProvisionalEchoCensus => Box::pin(async move {
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
@@ -9280,6 +9402,7 @@ mod tests {
                 "country-cluster-census",
                 "duplicate-identity-census",
                 "provisional-echo-census",
+                "fold-provisional-echoes",
                 "name-pollution-census",
                 "generic-wall-census",
                 "generic-statistic-census",

@@ -2496,6 +2496,50 @@ pub struct GenericKeyProbe {
     pub echo: bool,
 }
 
+/// Issue 351 unit 3: the provisional-echo fold's arguments.
+pub struct ProvisionalFoldArgs<'a> {
+    /// The N2 key the wall is asked about (ingest's `match_norm`).
+    pub n2: fn(&str) -> String,
+    pub stoplist_cap: usize,
+    pub dry_run: bool,
+    /// Fold at most this many groups (the capped first prod run).
+    pub max_groups: Option<u64>,
+    /// The T4 parity guard: a wet run must find the plan the dry run recorded,
+    /// within max(2%, 50) groups, or it writes nothing.
+    pub expect_groups: Option<u64>,
+    pub job_id: Option<i64>,
+    pub stop: &'a (dyn Fn() -> bool + Sync),
+    pub progress: &'a (dyn Fn(u64, &str) + Sync),
+}
+
+/// Issue 351 unit 3: what the provisional-echo fold planned and did.
+#[derive(Debug, Default, Clone)]
+pub struct ProvisionalFoldReport {
+    /// Rows of the class walked (provisional, NULL country, no identifier, named).
+    pub rows_walked: u64,
+    /// Names held by more than one such row.
+    pub groups: u64,
+    /// Groups left standing because their N2 key is over the wall — the
+    /// `tendsign` / `Gemeinde Taufkirchen` shapes the 234 exclusion guards.
+    pub over_wall: u64,
+    /// Groups under the wall: the plan.
+    pub plan_groups: u64,
+    /// Rows the plan removes (every group's rows but one).
+    pub plan_rows: u64,
+    /// The largest plan groups: (name_norm, name, rows, keep id), up to 200.
+    pub listing: Vec<(String, String, u64, i64)>,
+    pub listing_truncated: bool,
+    pub merged_groups: u64,
+    pub removed: u64,
+    pub mentions: u64,
+    pub parties: u64,
+    pub bid_parties: u64,
+    pub winners: u64,
+    pub winner_dups: u64,
+    pub tender_changes: u64,
+    pub stopped: bool,
+}
+
 /// Issue 351: one name held by several NULL-country, identifier-less
 /// provisional rows — the echo class — as the census lists it.
 #[derive(Debug, Default, Clone)]
@@ -14114,6 +14158,267 @@ impl Db {
             report.listed.push(ProvisionalEchoGroup { name_norm: norm, name, rows: n, mentions, carriers, generic });
         }
         Ok(report)
+    }
+
+    /// Issue 351 unit 3: fold the identical-name NULL-country provisional rows
+    /// into one row per name. See [`ProvisionalFoldReport`].
+    ///
+    /// Phase 1 plans: the same keyset walk as the census, one group at a
+    /// time; every group of two or more rows asks the wall for its N2 key
+    /// (memoized) and a generic key leaves the group STANDING — a platform
+    /// string or a name three municipalities share is exactly the shape the
+    /// 234 exclusion was written for, and folding it would conflate them. The
+    /// survivor is the lowest id. Phase 2 (wet only, after the parity guard)
+    /// folds the plan in transactions of [`MERGE_TXN_GROUPS`] groups: every
+    /// loser's references move to the keep through `repoint_org_references`,
+    /// the loser row goes, the ledger records rule `p0` with the name as
+    /// evidence, and change events cover the keep, the losers and every
+    /// tender touched. The keep STAYS provisional — this is a reuse policy
+    /// applied to the stock, not a promotion; a later identifier can still
+    /// canonicalise it.
+    pub async fn fold_provisional_echoes(
+        &self,
+        args: ProvisionalFoldArgs<'_>,
+    ) -> turso::Result<ProvisionalFoldReport> {
+        let mut report = ProvisionalFoldReport::default();
+        let reader = self.reader().await?;
+        // (name_norm, name, ids) — ids ascending by construction of the walk.
+        let mut plan: Vec<(String, String, Vec<i64>)> = Vec::new();
+        let mut wall_memo: std::collections::HashMap<String, bool> = Default::default();
+        let mut cur: Option<(String, String, Vec<i64>)> = None;
+        let (mut last_norm, mut last_id) = (String::new(), 0i64);
+        loop {
+            if (args.stop)() {
+                report.stopped = true;
+                return Ok(report);
+            }
+            let mut rows = reader
+                .query(
+                    "SELECT name_norm, id, name FROM organizations \
+                      WHERE provisional = 1 AND country IS NULL AND identifier IS NULL \
+                        AND name_norm IS NOT NULL AND name_norm <> '' \
+                        AND (name_norm > ? OR (name_norm = ? AND id > ?)) \
+                      ORDER BY name_norm, id LIMIT 20000",
+                    (t(&last_norm), t(&last_norm), Value::Integer(last_id)),
+                )
+                .await?;
+            let mut page: Vec<(String, i64, String)> = Vec::new();
+            while let Some(row) = rows.next().await? {
+                page.push((text(&row, 0), int(&row, 1), text(&row, 2)));
+            }
+            drop(rows);
+            if page.is_empty() {
+                break;
+            }
+            for (norm, id, name) in page {
+                report.rows_walked += 1;
+                let same = matches!(cur.as_ref(), Some((n, _, _)) if *n == norm);
+                if same {
+                    if let Some((_, _, ids)) = cur.as_mut() {
+                        ids.push(id);
+                    }
+                } else {
+                    if let Some(group) = cur.take() {
+                        self.plan_provisional_group(&reader, &args, &mut report, &mut wall_memo, &mut plan, group).await?;
+                    }
+                    cur = Some((norm.clone(), name, vec![id]));
+                }
+                last_norm = norm;
+                last_id = id;
+            }
+            (args.progress)(
+                report.rows_walked,
+                &format!("planning: {} rows walked, {} groups, {} over the wall", report.rows_walked, report.groups, report.over_wall),
+            );
+        }
+        if let Some(group) = cur.take() {
+            self.plan_provisional_group(&reader, &args, &mut report, &mut wall_memo, &mut plan, group).await?;
+        }
+        drop(reader);
+        // The listing: the largest plan groups.
+        {
+            let mut idx: Vec<usize> = (0..plan.len()).collect();
+            idx.sort_by(|&a, &b| plan[b].2.len().cmp(&plan[a].2.len()).then_with(|| plan[a].0.cmp(&plan[b].0)));
+            for &i in idx.iter().take(200) {
+                let (norm, name, ids) = &plan[i];
+                report.listing.push((norm.clone(), name.clone(), ids.len() as u64, ids[0]));
+            }
+            report.listing_truncated = plan.len() > 200;
+        }
+        if let Some(expect) = args.expect_groups {
+            let tolerance = (expect / 50).max(50);
+            if report.plan_groups.abs_diff(expect) > tolerance {
+                return Err(turso::Error::Error(format!(
+                    "p0 parity abort: plan has {} groups, dry-run recorded {expect} \
+                     (tolerance {tolerance}) — nothing was written",
+                    report.plan_groups
+                )));
+            }
+        }
+        if args.dry_run {
+            return Ok(report);
+        }
+
+        const MERGE_TXN_GROUPS: usize = 50;
+        let cap = args.max_groups.unwrap_or(u64::MAX);
+        let now = crate::now_unix();
+        let conn = self.conn().await;
+        let esc = |s: &str| -> String {
+            s.chars()
+                .filter(|c| !c.is_control())
+                .flat_map(|c| match c {
+                    '\\' => vec!['\\', '\\'],
+                    '"' => vec!['\\', '"'],
+                    c => vec![c],
+                })
+                .collect()
+        };
+        for txn in plan.chunks(MERGE_TXN_GROUPS) {
+            if (args.stop)() {
+                report.stopped = true;
+                break;
+            }
+            if report.merged_groups >= cap {
+                break;
+            }
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+            let mut txn_touched: BTreeSet<i64> = BTreeSet::new();
+            let result: turso::Result<()> = async {
+                for (norm, _, ids) in txn {
+                    if report.merged_groups >= cap {
+                        break;
+                    }
+                    let keep = ids[0];
+                    for &loser in &ids[1..] {
+                        let mut trows = conn
+                            .query(
+                                "SELECT tender_id FROM tender_version_parties WHERE organization_id = ? \
+                           UNION SELECT tender_id FROM tender_version_bid_parties WHERE organization_id = ? \
+                           UNION SELECT tender_id FROM tender_version_result_winners WHERE organization_id = ?",
+                                (Value::Integer(loser), Value::Integer(loser), Value::Integer(loser)),
+                            )
+                            .await?;
+                        while let Some(row) = trows.next().await? {
+                            txn_touched.insert(int(&row, 0));
+                        }
+                        drop(trows);
+                        let moved = repoint_org_references(&conn, keep, loser).await?;
+                        report.mentions += moved.mentions;
+                        report.parties += moved.parties;
+                        report.bid_parties += moved.bid_parties;
+                        report.winners += moved.winners;
+                        report.winner_dups += moved.winner_dups;
+                        conn.execute("DELETE FROM organizations WHERE id = ?", (Value::Integer(loser),)).await?;
+                        conn.execute(
+                            "INSERT INTO org_merge_log(keep, loser, rule, evidence, job_id, at) \
+                             VALUES(?, ?, 'p0', ?, ?, ?)",
+                            (
+                                Value::Integer(keep),
+                                Value::Integer(loser),
+                                Value::Text(format!(
+                                    "{{\"name_norm\":\"{}\",\"keep_id\":\"{keep}\",\"loser_id\":\"{loser}\"}}",
+                                    esc(norm)
+                                )),
+                                match args.job_id {
+                                    Some(j) => Value::Integer(j),
+                                    None => Value::Null,
+                                },
+                                Value::Integer(now),
+                            ),
+                        )
+                        .await?;
+                        append_change(&conn, "organization", loser, None, "removed", now).await?;
+                        report.removed += 1;
+                    }
+                    append_change(&conn, "organization", keep, None, "changed", now).await?;
+                    report.merged_groups += 1;
+                }
+                for &tid in &txn_touched {
+                    append_change(&conn, "tender", tid, None, "changed", now).await?;
+                }
+                Ok(())
+            }
+            .await;
+            match result {
+                Ok(()) => {
+                    if let Err(e) = conn.execute("COMMIT", ()).await {
+                        let _ = conn.execute("ROLLBACK", ()).await;
+                        if report.removed > 0 {
+                            let _ = self.publish_cursor(&conn).await;
+                        }
+                        return Err(e);
+                    }
+                    report.tender_changes += txn_touched.len() as u64;
+                }
+                Err(e) => {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    if report.removed > 0 {
+                        let _ = self.publish_cursor(&conn).await;
+                    }
+                    return Err(e);
+                }
+            }
+            (args.progress)(
+                report.merged_groups,
+                &format!("folding: {} of {} groups, {} rows removed", report.merged_groups, report.plan_groups, report.removed),
+            );
+        }
+        if report.removed > 0 {
+            self.publish_cursor(&conn).await?;
+        }
+        Ok(report)
+    }
+
+    /// One complete group of the provisional-echo walk: tally it, ask the
+    /// wall, and plan it or leave it standing.
+    async fn plan_provisional_group(
+        &self,
+        reader: &Connection,
+        args: &ProvisionalFoldArgs<'_>,
+        report: &mut ProvisionalFoldReport,
+        wall_memo: &mut std::collections::HashMap<String, bool>,
+        plan: &mut Vec<(String, String, Vec<i64>)>,
+        group: (String, String, Vec<i64>),
+    ) -> turso::Result<()> {
+        let (norm, name, ids) = group;
+        if ids.len() < 2 {
+            return Ok(());
+        }
+        report.groups += 1;
+        let key = (args.n2)(&name);
+        let generic = if key.is_empty() {
+            false
+        } else if let Some(&g) = wall_memo.get(&key) {
+            g
+        } else {
+            let mut carriers = 0u64;
+            for kind in ["n3", "n2"] {
+                let mut q = reader
+                    .query(
+                        NAME_KEY_CARRIERS_SQL,
+                        (t(kind), t(key.as_str()), Value::Integer(args.stoplist_cap as i64 + 1)),
+                    )
+                    .await?;
+                carriers = match q.next().await? {
+                    Some(row) => int(&row, 0).max(0) as u64,
+                    None => 0,
+                };
+                if carriers > 0 {
+                    break;
+                }
+            }
+            let g = carriers as usize > args.stoplist_cap;
+            wall_memo.insert(key, g);
+            g
+        };
+        if generic {
+            report.over_wall += 1;
+            return Ok(());
+        }
+        report.plan_groups += 1;
+        report.plan_rows += ids.len() as u64 - 1;
+        plan.push((norm, name, ids));
+        Ok(())
     }
 
     /// The issue-330 measurement: organization names carrying a line break, and
