@@ -108,6 +108,7 @@ async fn the_echo_class_is_grouped_by_name_and_the_wall_is_read_for_the_listed()
     assert_eq!(r.listed_over_wall, 1);
     assert_eq!((echo.tier.as_str(), zwei.tier.as_str()), ("over-wall", "under-wall"), "unit 4: the tier a fold would decide by");
     assert_eq!(r.listed_tiers.get("over-wall"), Some(&1));
+    assert_eq!((echo.shape.as_str(), zwei.shape.as_str()), ("id0/c0", ""), "issue 353: a pure echo's shape; none under the wall");
     assert!(!r.stopped);
 }
 

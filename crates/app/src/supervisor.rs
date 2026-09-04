@@ -1372,8 +1372,12 @@ impl Supervisor {
             // Issue 351: `max_groups` doubles as the listing cap (default
             // 200), so a verdict cohort can be cut from the over-wall names
             // beyond the first page without a second job kind.
+            // Issue 353: the cap reaches 60,000 so the ~20k mid-size
+            // over-wall names below the old 5,000 can be listed for verdict
+            // batches; the heap is bounded by the cap, the report body by
+            // ~200 bytes a group.
             "provisional-echo-census" => {
-                let cap = req.max_groups.unwrap_or(200).clamp(1, 5_000) as usize;
+                let cap = req.max_groups.unwrap_or(200).clamp(1, 60_000) as usize;
                 let params = if cap == 200 {
                     "provisional-echo-census".to_owned()
                 } else {
@@ -6230,7 +6234,7 @@ impl Supervisor {
                     "listed": r.listed.iter().map(|g| serde_json::json!({
                         "name_norm": g.name_norm, "name": g.name, "rows": g.rows,
                         "mentions": g.mentions, "carriers": g.carriers, "generic": g.generic,
-                        "tier": g.tier,
+                        "tier": g.tier, "shape": g.shape,
                     })).collect::<Vec<_>>(),
                 })
                 .to_string();

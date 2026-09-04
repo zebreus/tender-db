@@ -2756,6 +2756,10 @@ pub struct ProvisionalEchoGroup {
     pub generic: bool,
     /// Issue 351 unit 4: the tier that would decide a fold of this name.
     pub tier: String,
+    /// Issue 353: the carrier shape behind an over-wall reading
+    /// ([`WallBreakdown::shape`]); empty when the wall was not asked or the
+    /// key is under it.
+    pub shape: String,
 }
 
 /// Issue 351: the provisional-echo census. The post-234 provisional path
@@ -14453,7 +14457,7 @@ impl Db {
             if generic {
                 report.listed_over_wall += 1;
             }
-            let tier = echo_tier_on(&reader, &norm, &key, stoplist_cap).await?;
+            let (tier, breakdown) = echo_tier_detail(&reader, &norm, &key, stoplist_cap).await?;
             *report.listed_tiers.entry(tier.as_str().to_owned()).or_default() += 1;
             report.listed.push(ProvisionalEchoGroup {
                 name_norm: norm,
@@ -14463,6 +14467,7 @@ impl Db {
                 carriers,
                 generic,
                 tier: tier.as_str().to_owned(),
+                shape: breakdown.map(|b| b.shape(stoplist_cap)).unwrap_or_default(),
             });
         }
         Ok(report)
