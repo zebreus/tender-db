@@ -370,3 +370,30 @@ async fn a_stop_request_returns_stopped_and_no_half_report() {
     assert_eq!(r.unkeyed_groups, 0);
     assert!(r.verdicts.is_empty());
 }
+
+/// Issue 347: the listing must show every scope, not just the ones that sort
+/// first. Sixty German pairs would fill a cap of 20 three times over; the
+/// three Greek and three Lithuanian pairs sort after them (size ties, then
+/// `DE` < `GR` < `LT`) and used to be invisible. The tally is untouched.
+#[tokio::test]
+async fn the_listing_shows_every_scope_under_the_cap() {
+    let (db, conn) = open("dupid-scopes").await;
+    for i in 0..60i64 {
+        let ident = format!("DE1{i:08}");
+        org(&conn, 1000 + 2 * i, "DE", "vat", &ident, &format!("Firma {i} GmbH"), 2).await;
+        org(&conn, 1001 + 2 * i, "DE", "vat", &ident, &format!("Firma {i} GmbH"), 1).await;
+    }
+    for (i, cc) in [(0i64, "GR"), (1, "GR"), (2, "GR"), (3, "LT"), (4, "LT"), (5, "LT")] {
+        let ident = format!("{cc}00{i}");
+        org(&conn, 5000 + 2 * i, cc, "national", &ident, &format!("Δήμος {i}"), 2).await;
+        org(&conn, 5001 + 2 * i, cc, "national", &ident, &format!("Δήμος {i}"), 1).await;
+    }
+    let r = run(&db, 20).await;
+    assert_eq!(r.unkeyed_groups, 66, "the tally is never capped");
+    assert_eq!(r.rows.len(), 20, "the listing is");
+    assert!(r.truncated);
+    let scope_rows = |scope: &str| r.rows.iter().filter(|row| row.scope == scope).count();
+    assert_eq!(scope_rows("GR:national"), 3, "every Greek group is listed");
+    assert_eq!(scope_rows("LT:national"), 3, "every Lithuanian group is listed");
+    assert_eq!(scope_rows("DE:vat"), 14, "the German scope takes the rest of the cap");
+}

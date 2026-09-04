@@ -13489,6 +13489,20 @@ impl Db {
 
         let total_groups = unkeyed.len();
         let mut judged = 0u64;
+        // Issue 347: the listing is size-then-alphabetical under `cap`, which
+        // on the live class (a few size-3+ groups, then thousands of pairs)
+        // showed AE..DE and nothing after — GR's 210 groups were invisible in
+        // a report whose `verdicts_by_scope` counted them. So each scope gets
+        // a quota lane first (up to `quota` rows, in the same order), and the
+        // rest of the cap fills by the old rule. `reserve` is the quota lanes'
+        // total, so the general lane cannot crowd out a scope that sorts late.
+        let scopes = report.unkeyed_by_scope.len().max(1);
+        let quota = (cap / scopes).clamp(1, 25);
+        let reserve: usize =
+            report.unkeyed_by_scope.values().map(|&n| (n as usize).min(quota)).sum();
+        let general_cap = cap.saturating_sub(reserve);
+        let mut per_scope: std::collections::HashMap<String, usize> = Default::default();
+        let mut general = 0usize;
         for (triple, ids) in unkeyed.into_iter() {
             if stop() {
                 return Ok(DuplicateIdentityReport { stopped: true, ..Default::default() });
@@ -13592,7 +13606,19 @@ impl Db {
             *report.verdicts.entry(verdict.to_owned()).or_default() += 1;
             *report.verdicts_by_scope.entry(format!("{scope}/{verdict}")).or_default() += 1;
 
-            if report.rows.len() < cap {
+            let admit = report.rows.len() < cap && {
+                let taken = per_scope.entry(scope.clone()).or_default();
+                if *taken < quota {
+                    *taken += 1;
+                    true
+                } else if general < general_cap {
+                    general += 1;
+                    true
+                } else {
+                    false
+                }
+            };
+            if admit {
                 let mut shown = names.clone();
                 shown.truncate(6);
                 let mut keys_shown = name_keys.clone();
