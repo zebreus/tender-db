@@ -3947,7 +3947,11 @@ impl Supervisor {
                 // nothing, and recording plan_groups 0 would clobber a
                 // reviewed plan (the R3 verification round's catch, mirrored
                 // here).
-                if !(r.stopped && r.plan_groups == 0) {
+                // (Job 670's catch: a stop DURING planning can carry a partial
+                // plan_groups > 0 — the pages walked so far — so the guard is
+                // "nothing merged", which is true of every stop before the
+                // first committed transaction, not "nothing planned".)
+                if !(r.stopped && r.merged_groups == 0) {
                     let now = store::now_unix();
                     let plan = serde_json::json!({
                         "plan_groups": r.plan_groups - r.merged_groups,
@@ -4108,7 +4112,11 @@ impl Supervisor {
                 // nothing, and recording plan_groups 0 would clobber a
                 // reviewed plan (the R3 verification round's catch, mirrored
                 // here).
-                if !(r.stopped && r.plan_groups == 0) {
+                // (Job 670's catch: a stop DURING planning can carry a partial
+                // plan_groups > 0 — the pages walked so far — so the guard is
+                // "nothing merged", which is true of every stop before the
+                // first committed transaction, not "nothing planned".)
+                if !(r.stopped && r.merged_groups == 0) {
                     let now = store::now_unix();
                     let plan = serde_json::json!({
                         "plan_groups": r.plan_groups - r.merged_groups,
@@ -6127,7 +6135,11 @@ impl Supervisor {
                 // residual so a capped or stopped run continues under parity
                 // (the E0 arm's rule) — except a stop during planning, which
                 // computed nothing and must not clobber a reviewed plan.
-                if !(r.stopped && r.plan_groups == 0) {
+                // (Job 670's catch: a stop DURING planning can carry a partial
+                // plan_groups > 0 — the pages walked so far — so the guard is
+                // "nothing merged", which is true of every stop before the
+                // first committed transaction, not "nothing planned".)
+                if !(r.stopped && r.merged_groups == 0) {
                     let now = store::now_unix();
                     let plan = serde_json::json!({
                         "plan_groups": r.plan_groups - r.merged_groups,
