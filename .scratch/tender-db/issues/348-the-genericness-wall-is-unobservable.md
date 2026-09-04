@@ -1,6 +1,6 @@
 # 348 — the genericness wall is unobservable: no way to ask "why is this name key generic?"
 
-Status: BUILT 2026-09-04 (same firing it was filed; gate running) — `GET /admin/name-key?name=…` returns the N2/N3 keys, the cap, and per kind the distinct-carrier count (bounded at 1,000) plus the first carriers' org rows. Then: deploy, and use it to settle issue 346's open question.
+Status: DONE 2026-09-04 — deployed `aae8dd6` (with 347); first use settled issue 346 in one pass (155 keys, ~1 s each through `admin.sh raw GET "/admin/name-key?name=<urlencoded>&show=30"`) and surfaced issue 349. Was: BUILT 2026-09-04 (same firing it was filed; gate running) — `GET /admin/name-key?name=…` returns the N2/N3 keys, the cap, and per kind the distinct-carrier count (bounded at 1,000) plus the first carriers' org rows. Then: deploy, and use it to settle issue 346's open question.
 Kind: operability (organization layer) — small
 Relates to: 346 (the question that filed this), 316/318 (the wall), 331/332 (its statistic), 347 (the other blind spot found the same morning)
 
@@ -42,3 +42,13 @@ index. Read-only, bounded.
 - deployed, and `admin.sh raw GET "/admin/name-key?name=…"` answers for
   `Δήμος Αβδήρων` and `Δήμος Χανίων`;
 - issue 346's tally is explained from carrier rows, not inferred.
+
+## First use (05:3x UTC)
+
+All 155 agreeing GR:national groups probed; the tally that filed this
+(`agree-generic` 4 → 22) decomposed into 15 folded-distinctive / 2
+folded-generic / 118 uniform-distinctive / 20 uniform-generic, with carrier rows
+that show WHY each generic key is generic — recorded on 346 and 349. The
+endpoint is what made the difference between a guess and an answer; leave it.
+One rough edge: `admin.sh raw` pipes through `jq .`, so batch callers want
+`| jq -c .` to get one line per key.
