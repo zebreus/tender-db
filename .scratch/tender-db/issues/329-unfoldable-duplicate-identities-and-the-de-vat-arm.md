@@ -368,3 +368,16 @@ plan, so the continuation runs under parity without a new dry run).
 **Audit (05:0x UTC): the dry run wrote nothing.** Probed the first two listed
 pairs by primary key after job 640 — all four org rows (13996709/22922318,
 22266783/22732251) still stand, as the dry/wet split promises.
+
+## E0 name rule, echo-aware (issue 349, 2026-09-04 06:0x UTC)
+
+The census measured 315 of the 375 `agree-generic` groups as ECHO — the agreed
+key is over the wall by org rows, but the rows that hold an identifier are
+under it; the rest are the entity's own provisional rows (Stadt Burghausen in
+157 rows with 7 identifiers, Ricoh Deutschland in 115 with 18). For a group
+whose members already share an exact triple that is not a shared name, so
+denial 4b now admits an echo key and denies only a key shared by over-cap
+identified rows. `admitted_echo` is reported beside `denied_names`. The plan
+should grow from 1,873 to ~2,190; the admitted groups get a fresh precision
+sample (the §8 bar applies to them as a new class) before the wet run — which
+still awaits Lennart, see the status line.

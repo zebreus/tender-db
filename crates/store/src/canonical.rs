@@ -1572,6 +1572,10 @@ pub struct R2MergeReport {
     /// Issue 329's E0 name rule: groups whose named members do not agree on
     /// ONE non-generic N3 key (`agree-generic`, `contained`, `disagree`).
     pub denied_names: u64,
+    /// Issue 349: E0 groups whose agreed key is over the wall by carrier
+    /// count but whose identifier-bearing carriers are under it — one
+    /// entity's echo, admitted rather than denied.
+    pub admitted_echo: u64,
     /// Groups surviving every denial — the merge plan.
     pub plan_groups: u64,
     /// Groups actually merged (<= plan under a cap or a stop).
@@ -8559,6 +8563,7 @@ impl Db {
                 {
                     // 'n3' then 'n2': see NAME_KEY_CARRIERS_SQL for why not one IN.
                     let mut carriers = 0i64;
+                    let mut found_kind = "n2";
                     for kk in ["n3", "n2"] {
                         let mut q = conn
                             .query(
@@ -8571,10 +8576,35 @@ impl Db {
                             None => 0,
                         };
                         if carriers > 0 {
+                            found_kind = kk;
                             break;
                         }
                     }
                     deny = carriers as usize > args.stoplist_cap;
+                    if deny {
+                        // Issue 349: an over-cap key is not one thing. The
+                        // census measured 315 of 375 `agree-generic` groups as
+                        // ECHO — the identifier-bearing carriers alone sit
+                        // under the cap; the rest are one entity's provisional
+                        // rows (a city in 157 rows with 7 identifiers, Ricoh
+                        // Deutschland in 115 with 18). For a group whose
+                        // members ALREADY share an exact identifier, that is
+                        // not a shared name, so the echo is admitted and only
+                        // a key SHARED by over-cap identified rows denies —
+                        // the Organschaft and the Land-VAT shape both keep
+                        // their own numbers elsewhere and stay behind it.
+                        let mut q = conn
+                            .query(GENERIC_KEY_BREAKDOWN_SQL, (t(found_kind), t(k.as_str())))
+                            .await?;
+                        let with_identifier = match q.next().await? {
+                            Some(row) => int(&row, 1).max(0),
+                            None => 0,
+                        };
+                        if with_identifier as usize <= args.stoplist_cap {
+                            deny = false;
+                            report.admitted_echo += 1;
+                        }
+                    }
                 }
                 if deny {
                     report.denied_names += 1;

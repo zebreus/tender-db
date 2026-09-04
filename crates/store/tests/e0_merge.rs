@@ -148,3 +148,67 @@ async fn the_e0_fold_merges_agreeing_distinctive_names_and_denies_the_rest() {
     // The disagreeing pair still stands.
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE identifier = 'X7Y8Z9'").await, 2);
 }
+
+/// Issue 349: the name wall's carrier count is not one thing. `Stadt Echo`
+/// carries its key on 27 org rows, 25 of them the city's own identifier-less
+/// provisional rows — an echo, admitted; `Gemeinde Shared` carries it on 27
+/// rows that each hold their own VAT — a shared name, denied.
+#[tokio::test]
+async fn an_echo_generic_name_is_admitted_and_a_shared_one_denied() {
+    let path = "/tmp/tender-db-e0-echo.db";
+    let (db, conn) = seed(path).await;
+    async fn key_row(conn: &store::turso::Connection, id: i64, key: &str) {
+        conn.execute(
+            "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', ?)",
+            (Value::Integer(id), Value::Text(key.into())),
+        )
+        .await
+        .unwrap();
+    }
+    async fn org(conn: &store::turso::Connection, id: i64, cc: Option<&str>, vat: Option<&str>, name: &str) {
+        conn.execute(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 0)",
+            (
+                Value::Integer(id),
+                cc.map(|c| Value::Text(c.into())).unwrap_or(Value::Null),
+                vat.map(|_| Value::Text("vat".into())).unwrap_or(Value::Null),
+                vat.map(|v| Value::Text(v.into())).unwrap_or(Value::Null),
+                Value::Text(name.into()),
+                Value::Text(name.to_lowercase()),
+                Value::Integer(if vat.is_some() { 0 } else { 1 }),
+            ),
+        )
+        .await
+        .unwrap();
+    }
+    // The echo: the pair, plus 25 NULL/NULL provisional rows of the same city.
+    org(&conn, 68, Some("DE"), Some("DEECHO1"), "Stadt Echo").await;
+    org(&conn, 69, Some("DE"), Some("DEECHO1"), "Stadt Echo").await;
+    for id in [68, 69] {
+        key_row(&conn, id, "stadt echo").await;
+    }
+    for i in 0..25i64 {
+        org(&conn, 1000 + i, None, None, "Stadt Echo").await;
+        key_row(&conn, 1000 + i, "stadt echo").await;
+    }
+    // The shared name: the pair, plus 25 other companies with their own VATs.
+    org(&conn, 70, Some("DE"), Some("DESHARED1"), "Gemeinde Shared").await;
+    org(&conn, 71, Some("DE"), Some("DESHARED1"), "Gemeinde Shared").await;
+    for id in [70, 71] {
+        key_row(&conn, id, "gemeinde shared").await;
+    }
+    for i in 0..25i64 {
+        org(&conn, 2000 + i, Some("DE"), Some(&format!("DEOTHER{i:03}")), "Gemeinde Shared").await;
+        key_row(&conn, 2000 + i, "gemeinde shared").await;
+    }
+    let dry = db.match_org_identifiers_r2(args(true, None)).await.expect("dry");
+    assert_eq!(dry.groups, 4, "the seed's two GR triples plus the echo and the shared pair");
+    assert_eq!(dry.admitted_echo, 1, "Stadt Echo: over the wall by rows, under it by identified rows");
+    assert_eq!(dry.denied_names, 2, "Alpha / Beta disagree; Gemeinde Shared is a shared name");
+    assert_eq!(dry.plan_groups, 2);
+    let wet = db.match_org_identifiers_r2(args(false, Some(2))).await.expect("wet");
+    assert_eq!(wet.merged_groups, 2);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE identifier = 'DEECHO1'").await, 1, "the echo pair folded");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE identifier = 'DESHARED1'").await, 2, "the shared pair stands");
+}

@@ -1,6 +1,6 @@
 # 349 — the genericness wall reads fragmented Greek public bodies as generic: 22 of 155 agreeing GR groups denied, 20 of them one entity in 20–54 rows
 
-Status: MEASUREMENT BUILT 2026-09-04 (gate running) — the duplicate-identity census now probes every generic key it meets (`GENERIC_KEY_BREAKDOWN_SQL`: carriers, with identifier, with country, distinct identifiers, bounded at 1,000) and splits `agree-generic` groups into `echo` (identifier-bearing carriers alone under the cap) and `shared`, per scope, with up to 200 probes listed; test `generic_keys_are_split_into_echo_and_shared`. Then: deploy, run the census, read the 375-key split, choose (a) or (b). Was: ready-for-agent (filed 2026-09-04 from issue 348's first probe)
+Status: MEASURED 2026-09-04 (job 645, `d98d8e6`) AND FIX (c) BUILT — **315 of the 375 `agree-generic` groups are echo** (DE:vat 280/329, GR 15/22, DE:national 10/14, LT 9/9, AT 1/1): the identifier-bearing carriers alone sit under the cap. Not a Greek exception — the class itself. The E0 name rule now admits an echo key and denies only a key shared by over-cap identified rows (`admitted_echo` in the report; test `an_echo_generic_name_is_admitted_and_a_shared_one_denied`); the resolver/R3 walls are untouched and filed as issue 350. Was: MEASUREMENT BUILT 2026-09-04 (gate running) — the duplicate-identity census now probes every generic key it meets (`GENERIC_KEY_BREAKDOWN_SQL`: carriers, with identifier, with country, distinct identifiers, bounded at 1,000) and splits `agree-generic` groups into `echo` (identifier-bearing carriers alone under the cap) and `shared`, per scope, with up to 200 probes listed; test `generic_keys_are_split_into_echo_and_shared`. Then: deploy, run the census, read the 375-key split, choose (a) or (b). Was: ready-for-agent (filed 2026-09-04 from issue 348's first probe)
 Kind: identity semantics (organization layer) — the wall's statistic on one scope
 Relates to: 316/318 (the wall), 331 (asked exactly this, measured corpus-wide), 332 (closed negative corpus-wide — this is the exception it allowed for), 346 (how it surfaced), 329 (the E0 fold that loses these groups), 300 Stage 3/5 (NULL-country rescue — most of these carriers are that class)
 
@@ -84,3 +84,52 @@ shape `NNNN.ENNNNN.NNNN`, dots dropped by the normaliser), typed by hand per
 notice — hence the five variants of one authority's code — and the raw values
 carry label prefixes (`Κωδικός Ηλεκτρονικής Τιμολόγησης Ε.Α.ΔΗ.ΣΥ.: …`) of the
 issue-328 shape that the label-prefix repair's DE-centric lexicon does not strip.
+
+## Measurement (job 645, 2 s): the class is echo, not Greek
+
+| scope | agree-generic | echo | shared |
+| --- | --- | --- | --- |
+| DE:vat | 329 | **280** | 49 |
+| GR:national | 22 | 15 | 7 |
+| DE:national | 14 | 10 | 4 |
+| LT:national | 9 | 9 | 0 |
+| AT:vat | 1 | 1 | 0 |
+| **all** | **375** | **315 (84%)** | 60 |
+
+Over the 200 probed keys: echo keys have a median 44 carriers (max 1,000, the
+probe's bound) but a median **5** with an identifier and 4 distinct identifiers;
+shared keys a median 63 carriers, 28 identified, 26 distinct identifiers. The
+echo sample is `stadt burghausen` (157 rows, 7 identified), `ricoh deutschland
+gmbh` (115 / 18), `t systems international gmbh` (84 / 15), `hexal ag` (70 /
+10), `rhein main verkehrsverbund gmbh` (35 / 4): prominent single entities whose
+name-only mentions have been minting provisional rows for years. Even the
+*shared* sample is mostly one entity with many identifier spellings — `kone
+gmbh` (63 / 28, 26 distinct), `siemens healthineers ag` (30 / 29 / 27), `drees
+sommer se` (69 / 57 / 55), `technische universität darmstadt`, `landratsamt
+ortenaukreis` (328 / 21 / 19) — branch tax numbers, HRB vs VAT, and mangles,
+not 26 different Kones.
+
+**So issue 332's "99.5% genuinely shared" does not transfer to this class.** 332
+measured over-cap keys corpus-wide, where the truly generic tokens dominate;
+the `agree-generic` groups are, by construction, entities prominent enough to
+hold the same identifier twice — and prominence is exactly what inflates a
+carrier count. The wall measures how often a name was published without a
+usable identifier, which for a big supplier or a city is "often".
+
+## Decision: fix (c) — scope the correction to what E0 decides
+
+For an E0 group the members ALREADY share an exact `(country, kind,
+identifier)` triple; the name rule's job is only to keep the Organschaft and
+Land-VAT shapes out, and those keep their own numbers elsewhere — they show up
+as *shared* keys (over-cap identified carriers), never as echoes. So the E0
+rule (4b) now runs the breakdown when the carrier count is over the cap and
+admits the group if the identified carriers are under it (`admitted_echo`),
+denying only shared keys. Expected: plan 1,873 → ~2,190; the newly admitted
+groups get their own precision sample before any wet run (which is still
+awaiting Lennart on 329).
+
+Fix (a) corpus-wide — changing `GENERIC_KEY_SQL` itself — would also move the
+R3 rescue and the resolver's prevention hook, where the evidence is name-only
+and an echo of "caritas" across thirty different Caritas bodies IS a shared
+name. That needs its own measurement and is issue 350; the wall stays as it is
+there.

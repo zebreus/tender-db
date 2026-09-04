@@ -4078,6 +4078,7 @@ impl Supervisor {
                         "denied_legal_form": r.denied_legal_form,
                         "denied_group_vat": r.denied_group_vat,
                         "denied_names": r.denied_names,
+                        "admitted_echo": r.admitted_echo,
                         "merged_this_run": r.merged_groups,
                         "residual_of_wet_run": !dry_run,
                         // Dry-run blast-radius preview (the Stage-1 lesson):
@@ -4140,7 +4141,7 @@ impl Supervisor {
                     "match-org-identifiers e0 (issue 329 E0){}: {} orgs scanned, \
                      {} E0-grouped, {} groups >=2; denied: {} cap, {} gate, {} consortium \
                      ({} members excluded member-scoped), \
-                     {} legal-form, {} vat-group-wall, {} names; plan {} groups; merged {} groups \
+                     {} legal-form, {} vat-group-wall, {} names ({} echo admitted); plan {} groups; merged {} groups \
                      ({} org rows removed, {} mentions, {} parties, {} bid-parties, \
                      {} winners repointed, {} winner dups deleted, {} tenders touched)",
                     if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
@@ -4154,6 +4155,7 @@ impl Supervisor {
                     r.denied_legal_form,
                     r.denied_group_vat,
                     r.denied_names,
+                    r.admitted_echo,
                     r.plan_groups,
                     r.merged_groups,
                     r.removed,
