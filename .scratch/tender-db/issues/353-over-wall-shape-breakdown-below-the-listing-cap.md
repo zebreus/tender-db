@@ -107,6 +107,20 @@ the wall's carrier counts and this breakdown's `carriers` include them. The
 weekly tick's rebuild on Sunday 2026-09-06 drops them; re-run the dry run
 after it — some `id0/*` names may fall under the wall on their own.
 
+## The wide census (job 675, 2026-09-04, 714 s, cap 25,000; `2cd8e3e`)
+
+After job 674: 3,884,820 rows under 1,714,593 names; 56,012 names hold
+more than one row (2,226,239 rows); sizes 2: 5,313 · 3–5: 6,461 · 6–20:
+10,981 · 21–100: 28,991 · 101+: 4,266. The 25,000 largest (26 → 229 rows)
+are all raw-wall `over-wall` bar 157 verdict-refused; 168 of them carry an
+earlier `unclear` verdict (the census cannot show it — `unclear` falls to
+the wall) and are excluded by the cutter. **24,675 names / 1,573,950 rows in
+50 batches of 500**, by shape: `id0/c0` 14,945 · `id0/c1` 8,206 · `id0/c2+`
+523 · `id1-cap/c2+` 389 · `id>cap/c1` 363 · `id>cap/c2+` 130 · `id1-cap/c1`
+113 · `id1-cap/c0` 6. Ten readers, five batches each, answer by index only
+(`pec-rubric.md`; `pec-batches.py` cuts, `pec-assemble.py` builds the POST
+body from the census's stored names, so no name is ever retyped).
+
 ## Next
 
 Deploy; the cohorts 4+5 dry run (`fold-provisional-echoes {"dry_run":true}`)
