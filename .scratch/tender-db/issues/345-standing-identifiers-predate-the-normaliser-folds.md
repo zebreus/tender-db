@@ -84,3 +84,31 @@ re-derivation).
   merged-in-only row and the string-less row stand, the published string
   survives in the mention, a second pass plans nothing, the parity abort
   holds; the ingest test pins the before-folds twin against the v2.1 cases.
+
+## First prod dry run (job 634, 2026-09-04 00:1x UTC, 25 s) — and what the plan review caught
+
+| | |
+| --- | --- |
+| walked | 1,123,342 identifier-bearing rows |
+| witnessed | 1,123,333 (a sampled published string reproduces the stored triple under the old rules) |
+| unexplained | 9 |
+| planned | **3,226** (2,038 land on a standing identity) |
+| refused by the live gate | 0 |
+
+The stored plan sample (400 of 3,226) by country and change shape:
+
+| class | rows in sample | example |
+| --- | --- | --- |
+| GR, a lookalike letter now kept | 227 | 1079 `1000009610001` → `1000E009610001` (the intended class) |
+| RO, `_n` suffix stripped | 156 | org 5 `115148483` → `11514848` (the intended class) |
+| BG, a lookalike letter now kept | 12 | `121663601` → **`EK121663601`** — WRONG: the published string is `ЕИК 121663601`, a Cyrillic label; two of its letters look Latin, one does not, so the fold kept a label fragment the filter used to drop whole |
+| IE | 2 | `IE6609432` → `IE6609432C` — right: a Cyrillic С closing a VAT id |
+| CY, LU | 3 | Greek/Cyrillic fragments kept (`012019THE`, `…B…`) — the BG shape again |
+
+So the fold needs to be all-or-nothing per string: apply it only when nothing
+non-Latin remains afterwards. A string still carrying non-Latin letters after
+the fold was written in that script on purpose (a label, a word), and its
+lookalikes are its own letters. Guard added with the BG-label and IE cases
+pinned; the wet run waits for a second dry pass under the guarded fold — the
+plan should then be GR + RO (+ the two IE rows) and nothing else. This is
+exactly the review a dry-first repair exists for.

@@ -4659,9 +4659,20 @@ fn normalise_identifier_with(raw: &str, country: Option<&str>, folds: bool) -> O
     // (U+0395), and the ASCII filter below kept one letter and dropped the
     // other. Homoglyph capitals fold to Latin BEFORE the filter, so a register
     // id spelled with a lookalike letter equals its ASCII twin.
+    //
+    // ONLY when the fold leaves nothing non-Latin behind. The first dry plan of
+    // issue 345's repair showed why: a Cyrillic label in front of a Bulgarian
+    // id — `ЕИК 121663601` — has two lookalike letters and one that is not, and
+    // folding the two glued a bogus `EK` onto an id the filter used to leave
+    // bare. A string that is still non-Latin after folding was written in that
+    // script on purpose; its lookalikes are its own letters, not ours.
+    let folded: Option<String> = folds.then(|| raw.chars().map(fold_confusable).collect::<String>());
+    let raw = match &folded {
+        Some(f) if !f.chars().any(|c| c.is_alphabetic() && !c.is_ascii()) => f.as_str(),
+        _ => raw,
+    };
     let value: String = raw
         .chars()
-        .map(|c| if folds { fold_confusable(c) } else { c })
         .filter(|c| c.is_ascii_alphanumeric())
         .map(|c| c.to_ascii_uppercase())
         .collect();
@@ -5631,6 +5642,11 @@ mod tests {
         assert_eq!(normalise_identifier("16054368_3", Some("ROU")).unwrap().value, "16054368");
         assert_eq!(normalise_identifier("16054368_3", Some("RO")), normalise_identifier("16054368", Some("RO")));
         assert_eq!(normalise_identifier("16054368_3", Some("HU")).unwrap().value, "160543683");
+        // The fold is all-or-nothing per string: a Cyrillic label with one
+        // non-lookalike letter keeps the OLD reading (the bare id), a Cyrillic
+        // С closing an Irish VAT id folds because nothing non-Latin remains.
+        assert_eq!(normalise_identifier("\u{0415}\u{0418}\u{041a} 121663601", Some("BG")).unwrap().value, "121663601");
+        assert_eq!(normalise_identifier("IE6609432\u{0421}", None).unwrap().value, "IE6609432C");
         // The before-folds twin reproduces the pre-v2.1 store: the Greek letter
         // dropped, the suffix swallowed — what issue 345's repair compares against.
         assert_eq!(normalise_identifier_before_folds("1000.\u{0395}00961.0001", Some("GR")).unwrap().value, "1000009610001");
