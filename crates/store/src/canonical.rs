@@ -1524,6 +1524,15 @@ pub struct R2MergeArgs<'a> {
     pub consortium: fn(&str) -> bool,
     /// Legal-form family of a name (denial rule 7).
     pub legal_form: fn(&str) -> Option<&'static str>,
+    /// `"r2"` — the E1 cross-walk arm — or `"e0"` (issue 329): exact
+    /// `(country, kind, identifier)` groups no arm keys, merged only when the
+    /// named members agree on ONE non-generic N3 key. Written to
+    /// `org_merge_log.rule`, so the ledger says which rule folded a row.
+    pub rule: &'static str,
+    /// N3 name key (legal-form family abstracted): the E0 name rule's key.
+    pub n3: fn(&str) -> String,
+    /// The generic-name wall the E0 name rule consults (`STOPLIST_CAP`).
+    pub stoplist_cap: usize,
     pub dry_run: bool,
     /// Merge at most this many groups (the design's capped first prod run).
     pub max_groups: Option<u64>,
@@ -1560,6 +1569,9 @@ pub struct R2MergeReport {
     /// Groups denied: conflicting mention-evidence register keys (VAT-group
     /// wall).
     pub denied_group_vat: u64,
+    /// Issue 329's E0 name rule: groups whose named members do not agree on
+    /// ONE non-generic N3 key (`agree-generic`, `contained`, `disagree`).
+    pub denied_names: u64,
     /// Groups surviving every denial — the merge plan.
     pub plan_groups: u64,
     /// Groups actually merged (<= plan under a cap or a stop).
@@ -8390,7 +8402,9 @@ impl Db {
                     }
                     let Some(c) = country.as_deref() else { continue };
                     let c = if c == "EL" { "GR" } else { c };
-                    if kind == "vat" && !scheme.starts_with(c) {
+                    // The vat-scheme/country consistency check is an E1 concern:
+                    // an E0 group IS the org's own triple.
+                    if args.rule != "e0" && kind == "vat" && !scheme.starts_with(c) {
                         continue;
                     }
                     report.keyed += 1;
@@ -8476,6 +8490,53 @@ impl Db {
                         continue 'group;
                     }
                     family = Some(f);
+                }
+            }
+            // 4b. The E0 name rule (issue 329). An exact-triple group that no
+            // cross-walk arm keys carries identifier evidence only by the
+            // literal it shares, and the census showed why that is not enough on
+            // its own: a Land-level German VAT, a Greek authority code shared
+            // by a ministry and its directorates. So E0 merges ONLY the
+            // `agree-distinctive` verdict — every named member folds to one N3
+            // key and that key is not generic under the stoplist wall.
+            // `agree-generic`, `contained` and `disagree` are denied here.
+            if args.rule == "e0" {
+                let mut keys: BTreeSet<String> = BTreeSet::new();
+                for (id, _, _, _, name) in &meta {
+                    if flagged.contains(id) {
+                        continue;
+                    }
+                    let k = (args.n3)(name);
+                    if !k.is_empty() {
+                        keys.insert(k);
+                    }
+                }
+                let mut deny = keys.len() != 1;
+                if let Some(k) = keys.iter().next()
+                    && !deny
+                {
+                    // 'n3' then 'n2': see NAME_KEY_CARRIERS_SQL for why not one IN.
+                    let mut carriers = 0i64;
+                    for kk in ["n3", "n2"] {
+                        let mut q = conn
+                            .query(
+                                NAME_KEY_CARRIERS_SQL,
+                                (t(kk), t(k.as_str()), Value::Integer(args.stoplist_cap as i64 + 1)),
+                            )
+                            .await?;
+                        carriers = match q.next().await? {
+                            Some(row) => int(&row, 0).max(0),
+                            None => 0,
+                        };
+                        if carriers > 0 {
+                            break;
+                        }
+                    }
+                    deny = carriers as usize > args.stoplist_cap;
+                }
+                if deny {
+                    report.denied_names += 1;
+                    continue 'group;
                 }
             }
             let ids: Vec<i64> = members.iter().map(|m| m.id).collect();
@@ -8746,10 +8807,11 @@ impl Db {
                         };
                         conn.execute(
                             "INSERT INTO org_merge_log(keep, loser, rule, evidence, job_id, at) \
-                             VALUES(?, ?, 'r2', ?, ?, ?)",
+                             VALUES(?, ?, ?, ?, ?, ?)",
                             (
                                 Value::Integer(keep),
                                 Value::Integer(m.id),
+                                t(args.rule),
                                 Value::Text(format!(
                                     "{{\"scheme\":\"{scheme}\",\"key\":\"{}\",\"keep_id\":\"{}\",\"loser_id\":\"{}\"}}",
                                     esc(key),

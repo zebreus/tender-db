@@ -569,6 +569,31 @@ pub fn canonical_key_flat(
     canonical_key(country, kind, value).map(|ck| (ck.scheme, ck.key, ck.tier == Tier::E1))
 }
 
+/// Issue 329's E0 rule in the flat key shape: an org's exact `(country, kind,
+/// identifier)` triple is its own group WHEN no cross-walk arm keys the value
+/// — an arm-keyed value is R2's business, never both. The scheme is the
+/// literal `"E0"`; the kind rides in the key so a VAT row and a national row
+/// with the same literal never group. The store's E0 name rule (agree on one
+/// non-generic N3 key) does the rest.
+pub fn e0_key_flat(
+    country: Option<&str>,
+    kind: &str,
+    value: &str,
+) -> Option<(&'static str, String, bool)> {
+    if kind != "vat" && kind != "national" {
+        return None;
+    }
+    if canonical_key(country, kind, value).is_some() {
+        return None;
+    }
+    let norm: String =
+        value.chars().filter(char::is_ascii_alphanumeric).map(|c| c.to_ascii_uppercase()).collect();
+    if norm.is_empty() {
+        return None;
+    }
+    Some(("E0", format!("{kind}:{norm}"), true))
+}
+
 /// Consortium / temporary-grouping detection over an org NAME (the census
 /// finding, 2026-08-29): FR groupements publish the LEAD MEMBER's SIRET
 /// ("groupement colas / Barthelemy" carries Colas's establishment id — org
@@ -786,5 +811,29 @@ mod veto_tests {
         // must never veto each other.
         assert_eq!(legal_form_family("Oy Linde Gas Ab"), legal_form_family("Telinekataja Oy"));
         assert_eq!(legal_form_family("Ramboll Ab"), legal_form_family("Ramboll Oyj"));
+    }
+}
+
+#[cfg(test)]
+mod e0 {
+    use super::{canonical_key_flat, e0_key_flat};
+
+    /// The Greek authority code (the 311/1079 specimen) has no arm, so it is
+    /// an E0 group; a Finnish Y-tunnus is the FI arm's and never E0's; the
+    /// kind is part of the key; a non-identifier kind is nobody's.
+    #[test]
+    fn e0_groups_exactly_the_triples_no_arm_keys() {
+        assert_eq!(
+            e0_key_flat(Some("GR"), "national", "1000E009610001"),
+            Some(("E0", "national:1000E009610001".to_owned(), true))
+        );
+        assert!(canonical_key_flat(Some("FI"), "national", "01003158").is_some());
+        assert_eq!(e0_key_flat(Some("FI"), "national", "01003158"), None);
+        assert_ne!(
+            e0_key_flat(Some("DE"), "vat", "DEX1"),
+            e0_key_flat(Some("DE"), "national", "DEX1")
+        );
+        assert_eq!(e0_key_flat(Some("DE"), "gln", "9110000000001"), None);
+        assert_eq!(e0_key_flat(Some("DE"), "national", "--"), None);
     }
 }

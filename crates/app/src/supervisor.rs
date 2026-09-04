@@ -336,6 +336,9 @@ enum Spec {
     /// Read-only.
     OrgEdgeCensus,
     MatchOrgIdentifiersR2 { dry_run: bool, max_groups: Option<u64> },
+    /// Issue 329: the E0 fold — exact-triple duplicate groups no arm keys,
+    /// merged through the R2 denial stack plus the agree-distinctive name rule.
+    MatchOrgIdentifiersE0 { dry_run: bool, max_groups: Option<u64> },
     MatchOrgIdentifiersR3 { dry_run: bool, max_groups: Option<u64> },
     ApplyCaseReviews { dry_run: bool },
     /// Issue 312: the symmetric UNDO for `ApplyCaseReviews` — restore the
@@ -1112,9 +1115,10 @@ impl Supervisor {
                 let spec = match rule {
                     "r2" => Spec::MatchOrgIdentifiersR2 { dry_run, max_groups },
                     "r3" => Spec::MatchOrgIdentifiersR3 { dry_run, max_groups },
+                    "e0" => Spec::MatchOrgIdentifiersE0 { dry_run, max_groups },
                     other => {
                         return Err(format!(
-                            "match-org-identifiers: unknown rule '{other}' (r2 or r3)"
+                            "match-org-identifiers: unknown rule '{other}' (r2, r3 or e0)"
                         ));
                     }
                 };
@@ -3880,6 +3884,9 @@ impl Supervisor {
                         condemns: ingest::idgate::condemns,
                         consortium: ingest::crosswalk::consortium_name,
                         legal_form: ingest::crosswalk::legal_form_family,
+                        rule: "r2",
+                        n3: ingest::crosswalk::n3_key,
+                        stoplist_cap: SCAN_STOPLIST_CAP,
                         dry_run,
                         max_groups: *max_groups,
                         expect_groups,
@@ -3995,6 +4002,169 @@ impl Supervisor {
                     r.tender_changes
                 ))
             }
+            Spec::MatchOrgIdentifiersE0 { dry_run, max_groups } => Box::pin(async move {
+                let dry_run = *dry_run;
+                // The ingest-side rules, handed across as plain fns (the
+                // idgate/dissolve pattern); the flat crosswalk is the SAME fn
+                // the resolver's prevention hook injects, so repair and
+                // prevention cannot drift apart.
+                // A wet run REQUIRES the recorded dry plan: the T4 parity
+                // input, and the ladder's guarantee that nothing merges
+                // un-previewed.
+                let expect_groups = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("e0-merge-plan")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "no stored e0-merge-plan — run the dry run first".to_owned()
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    Some(
+                        v["plan_groups"]
+                            .as_u64()
+                            .ok_or_else(|| "e0-merge-plan lacks plan_groups".to_owned())?,
+                    )
+                };
+                self.set_phase(
+                    if dry_run { "planning" } else { "merging" },
+                    None,
+                    None,
+                    "preloading the identifier-bearing org layer".to_owned(),
+                );
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                let r = self
+                    .db
+                    .match_org_identifiers_r2(store::R2MergeArgs {
+                        key: ingest::crosswalk::e0_key_flat,
+                        condemns: ingest::idgate::condemns,
+                        consortium: ingest::crosswalk::consortium_name,
+                        legal_form: ingest::crosswalk::legal_form_family,
+                        rule: "e0",
+                        n3: ingest::crosswalk::n3_key,
+                        stoplist_cap: SCAN_STOPLIST_CAP,
+                        dry_run,
+                        max_groups: *max_groups,
+                        expect_groups,
+                        job_id: Some(job_id as i64),
+                        stop: &stop,
+                    })
+                    .await
+                    .map_err(|e| e.to_string())?;
+                // Keep the recorded plan CURRENT (verifier catch: a capped or
+                // stopped wet run leaves merged groups out of the next
+                // recompute, so a continuation would parity-abort against the
+                // stale figure until someone re-ran the dry run — discarding
+                // the reviewed plan). A dry run records its full plan; a wet
+                // run re-records the RESIDUAL, so the next capped slice
+                // continues under parity without ceremony. EXCEPT a stop
+                // during classification (stopped, empty plan): it computed
+                // nothing, and recording plan_groups 0 would clobber a
+                // reviewed plan (the R3 verification round's catch, mirrored
+                // here).
+                if !(r.stopped && r.plan_groups == 0) {
+                    let now = store::now_unix();
+                    let plan = serde_json::json!({
+                        "plan_groups": r.plan_groups - r.merged_groups,
+                        "scanned": r.scanned, "keyed": r.keyed, "groups": r.groups,
+                        "denied_cap": r.denied_cap, "denied_gate": r.denied_gate,
+                        "denied_consortium": r.denied_consortium,
+                        "consortium_excluded": r.consortium_excluded,
+                        "denied_legal_form": r.denied_legal_form,
+                        "denied_group_vat": r.denied_group_vat,
+                        "denied_names": r.denied_names,
+                        "merged_this_run": r.merged_groups,
+                        "residual_of_wet_run": !dry_run,
+                        // Dry-run blast-radius preview (the Stage-1 lesson):
+                        // what the plan's merges would move.
+                        "mentions": r.mentions, "parties": r.parties,
+                        "bid_parties": r.bid_parties, "winners": r.winners,
+                        // The precision-review sample (dry runs only; empty
+                        // on wet re-records).
+                        // The plan as a LISTING (issue 326): complete when it
+                        // fits the cap, which is what makes a 200-group merge
+                        // reviewable at all. `sample` below stays as it was —
+                        // a 1-in-199 content-stable draw, unbiased over large
+                        // plans but exactly one row over a small one.
+                        "plan_listing_truncated": r.plan_listing_truncated,
+                        "plan": r.plan_listing.iter().map(|(country, scheme, key, members)| {
+                            serde_json::json!({
+                                "country": country, "scheme": scheme, "key": key,
+                                "members": members.iter().map(|(id, kind, literal, name)| {
+                                    serde_json::json!({
+                                        "org_id": id, "kind": kind,
+                                        "identifier": literal, "name": name,
+                                    })
+                                }).collect::<Vec<_>>(),
+                            })
+                        }).collect::<Vec<_>>(),
+                        "sample": r.plan_sample.iter().map(|(country, scheme, key, members)| {
+                            serde_json::json!({
+                                "country": country, "scheme": scheme, "key": key,
+                                "members": members.iter().map(|(id, kind, literal, name)| {
+                                    serde_json::json!({
+                                        "org_id": id, "kind": kind,
+                                        "identifier": literal, "name": name,
+                                    })
+                                }).collect::<Vec<_>>(),
+                            })
+                        }).collect::<Vec<_>>(),
+                    })
+                    .to_string();
+                    self.db
+                        .put_report("e0-merge-plan", &plan, now)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                }
+                if r.stopped {
+                    return Ok(if r.plan_groups == 0 {
+                        "match-org-identifiers e0 STOPPED during classification: nothing \
+                         was planned or written, and the previously recorded plan was \
+                         left untouched"
+                            .to_owned()
+                    } else {
+                        format!(
+                            "match-org-identifiers e0 STOPPED at a checkpoint: {} of {} plan \
+                             groups merged before the stop; the residual plan was re-recorded, \
+                             so a re-run continues under parity",
+                            r.merged_groups, r.plan_groups
+                        )
+                    });
+                }
+                Ok(format!(
+                    "match-org-identifiers e0 (issue 329 E0){}: {} orgs scanned, \
+                     {} E0-grouped, {} groups >=2; denied: {} cap, {} gate, {} consortium \
+                     ({} members excluded member-scoped), \
+                     {} legal-form, {} vat-group-wall, {} names; plan {} groups; merged {} groups \
+                     ({} org rows removed, {} mentions, {} parties, {} bid-parties, \
+                     {} winners repointed, {} winner dups deleted, {} tenders touched)",
+                    if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
+                    r.scanned,
+                    r.keyed,
+                    r.groups,
+                    r.denied_cap,
+                    r.denied_gate,
+                    r.denied_consortium,
+                    r.consortium_excluded,
+                    r.denied_legal_form,
+                    r.denied_group_vat,
+                    r.denied_names,
+                    r.plan_groups,
+                    r.merged_groups,
+                    r.removed,
+                    r.mentions,
+                    r.parties,
+                    r.bid_parties,
+                    r.winners,
+                    r.winner_dups,
+                    r.tender_changes
+                ))
+            }).await,
             Spec::MatchOrgIdentifiersR3 { dry_run, max_groups } => {
                 // Issue 300 Stage 3: the NULL-country rescue merge — the
                 // r3-census's ladder recomputed live, hardened with the R2
