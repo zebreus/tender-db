@@ -1,6 +1,6 @@
 # 349 — the genericness wall reads fragmented Greek public bodies as generic: 22 of 155 agreeing GR groups denied, 20 of them one entity in 20–54 rows
 
-Status: MEASURED 2026-09-04 (job 645, `d98d8e6`) AND FIX (c) BUILT — **315 of the 375 `agree-generic` groups are echo** (DE:vat 280/329, GR 15/22, DE:national 10/14, LT 9/9, AT 1/1): the identifier-bearing carriers alone sit under the cap. Not a Greek exception — the class itself. The E0 name rule now admits an echo key and denies only a key shared by over-cap identified rows (`admitted_echo` in the report; test `an_echo_generic_name_is_admitted_and_a_shared_one_denied`); the resolver/R3 walls are untouched and filed as issue 350. Was: MEASUREMENT BUILT 2026-09-04 (gate running) — the duplicate-identity census now probes every generic key it meets (`GENERIC_KEY_BREAKDOWN_SQL`: carriers, with identifier, with country, distinct identifiers, bounded at 1,000) and splits `agree-generic` groups into `echo` (identifier-bearing carriers alone under the cap) and `shared`, per scope, with up to 200 probes listed; test `generic_keys_are_split_into_echo_and_shared`. Then: deploy, run the census, read the 375-key split, choose (a) or (b). Was: ready-for-agent (filed 2026-09-04 from issue 348's first probe)
+Status: DONE 2026-09-04 — measured (job 645: 315/375 echo), fix (c) deployed (`fd26638`), verified on the E0 dry run (job 646: 315 admitted, plan 1,873 → 2,151, 30/30 precision on the admitted class); the resolver/R3 half is issue 350. Was: MEASURED 2026-09-04 (job 645, `d98d8e6`) AND FIX (c) BUILT — **315 of the 375 `agree-generic` groups are echo** (DE:vat 280/329, GR 15/22, DE:national 10/14, LT 9/9, AT 1/1): the identifier-bearing carriers alone sit under the cap. Not a Greek exception — the class itself. The E0 name rule now admits an echo key and denies only a key shared by over-cap identified rows (`admitted_echo` in the report; test `an_echo_generic_name_is_admitted_and_a_shared_one_denied`); the resolver/R3 walls are untouched and filed as issue 350. Was: MEASUREMENT BUILT 2026-09-04 (gate running) — the duplicate-identity census now probes every generic key it meets (`GENERIC_KEY_BREAKDOWN_SQL`: carriers, with identifier, with country, distinct identifiers, bounded at 1,000) and splits `agree-generic` groups into `echo` (identifier-bearing carriers alone under the cap) and `shared`, per scope, with up to 200 probes listed; test `generic_keys_are_split_into_echo_and_shared`. Then: deploy, run the census, read the 375-key split, choose (a) or (b). Was: ready-for-agent (filed 2026-09-04 from issue 348's first probe)
 Kind: identity semantics (organization layer) — the wall's statistic on one scope
 Relates to: 316/318 (the wall), 331 (asked exactly this, measured corpus-wide), 332 (closed negative corpus-wide — this is the exception it allowed for), 346 (how it surfaced), 329 (the E0 fold that loses these groups), 300 Stage 3/5 (NULL-country rescue — most of these carriers are that class)
 
@@ -133,3 +133,13 @@ R3 rescue and the resolver's prevention hook, where the evidence is name-only
 and an echo of "caritas" across thirty different Caritas bodies IS a shared
 name. That needs its own measurement and is issue 350; the wall stays as it is
 there.
+
+## Verified (job 646)
+
+E0 dry run under the echo-aware rule: `denied_names` 1,590 → 1,275 with
+`admitted_echo` 315 — exactly the census's echo count, as the two share the
+probe — the VAT-group wall then took 37 of the admitted on conflicting register
+evidence, plan 1,873 → 2,151. All 500 listed groups probed; 66 admitted-echo
+among them; a seeded 30-sample reads 30/30 one entity (recorded on 329). The
+GR agree-generic count stays 22 in the census by design: the census reports
+the wall's verdict, the E0 rule reads past it.

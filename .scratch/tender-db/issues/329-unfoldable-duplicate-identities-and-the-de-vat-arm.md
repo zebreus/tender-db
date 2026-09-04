@@ -1,6 +1,6 @@
 # 329 — Unfoldable duplicate identities, and whether `canonical_key` should get a DE:vat arm
 
-Status: E0 FOLD BUILT, DEPLOYED AND DRY-PLANNED 2026-09-04 (`12434d4`; job 640: 1,874 groups, 100/100 precision sample) — **WET RUN AWAITING LENNART**: the session's auto-mode classifier denied the wet enqueue twice, so the reviewed plan sits recorded as `e0-merge-plan` (the parity input) and nothing has merged. Was: MEASURED AND DECIDED 2026-09-01 (job 568, `b7f1a8f`, 2 s).
+Status: E0 FOLD BUILT, DEPLOYED AND DRY-PLANNED 2026-09-04 (`12434d4`; job 646 under the echo-aware rule: **2,151 groups**, 100/100 sample on the distinctive class + 30/30 on the admitted-echo class) — **WET RUN AWAITING LENNART**: the session's auto-mode classifier denied the wet enqueue twice, so the reviewed plan sits recorded as `e0-merge-plan` (the parity input) and nothing has merged. Was: MEASURED AND DECIDED 2026-09-01 (job 568, `b7f1a8f`, 2 s).
 **The answer is NO: `canonical_key` must NOT get a blanket DE:vat arm.** The
 residual opportunity is a corroborated arm, filed as its own proposal below.
 Kind: measurement / identity semantics (organization layer)
@@ -381,3 +381,23 @@ identified rows. `admitted_echo` is reported beside `denied_names`. The plan
 should grow from 1,873 to ~2,190; the admitted groups get a fresh precision
 sample (the §8 bar applies to them as a new class) before the wet run — which
 still awaits Lennart, see the status line.
+
+**Dry run under the echo-aware rule (job 646, `fd26638`, 06:1x UTC, 4 s):**
+denied names 1,590 → **1,275** (315 echo admitted), VAT-group wall 161 → 198
+(it caught 37 of the admitted groups on conflicting register evidence — the
+stack working as layered), plan 1,873 → **2,151**. Blast radius grew with the
+class's prominence: 12,489 mentions, 38,587 parties, 172,311 bid-parties,
+172,350 winners repointed.
+
+**Precision on the admitted class: 30/30.** Every one of the 500 listed groups
+was probed through `/admin/name-key` (carriers, identified rows); 66 of the
+500 are admitted-echo groups, and a seeded 30-draw from them reads: Groth &
+Co. Bauunternehmung, Dräger Medical ANSY, BIG Städtebau, Hays AG, Landkreis
+Passau, Δήμος Πυλαίας-Χορτιάτη, Πανεπιστήμιο Ιωαννίνων, Autobus Oberbayern,
+Kulturstiftung Sachsen-Anhalt, Heinrich-Braun-Klinikum, Klinikum Bayreuth,
+Microsoft Deutschland, Stadt Telgte, Studentenwerk Frankfurt (Oder), Stadt
+Leuna, Museum für Naturkunde Berlin, AOK Bayern, 1 A Pharma, Flughafen Hamburg,
+Berlin Tourismus & Kongress, Studentenwerk Potsdam, St. Elisabeth-Krankenhaus
+gGmbH, Stadtwerke Rosenheim, Schmitt + Sohn Aufzüge, … — each pair one entity
+under one number, names identical or a dash/case/line-break variant. The wet
+command on the status line is unchanged; the plan it will read is job 646's.
