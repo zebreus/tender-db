@@ -127,3 +127,20 @@ bounded read, then larger slices under the residual plan.
 **Next cohort:** the 57,669 over-wall names hold ~2.9M rows and need verdicts
 — a listing job for the over-wall names by rows (the census stops at 200) and
 a 311-style read, person or agent, in cohorts of a few hundred.
+
+## Pace (job 666, the first wet slice)
+
+The planning walk took ~45 min (the class is 8M rows and every multi-row name
+asks the tier gate), then the fold ran at **~1.7 groups/s** — the same order
+as R2's merge loop (1,846 groups in 745 s), i.e. ~0.5 s per group of mostly
+fixed per-statement cost: a country-less provisional loser holds one mention
+and almost never a tender row, yet the generic repoint ran three party/winner
+UPDATEs and the winner-dup pass for every one of them. At that pace the
+516,400-group plan is ~3.5 days of folding plus a 45-min re-plan per slice.
+
+Two fixes, the first landed while the slice ran: (1) a **light repoint path**
+— the tender probe the loop already runs says whether any party/winner row
+exists; when none does, only the mention repoint runs (gate green, deploying
+with the census cap change); (2) run the residual **uncapped** once the pace is
+measured, so the 45-min re-plan is paid once, with the stop flag and the
+residual re-record as the safety net.

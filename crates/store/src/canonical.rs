@@ -14491,16 +14491,35 @@ impl Db {
                                 (Value::Integer(loser), Value::Integer(loser), Value::Integer(loser)),
                             )
                             .await?;
+                        let mut has_tender_rows = false;
                         while let Some(row) = trows.next().await? {
+                            has_tender_rows = true;
                             txn_touched.insert(int(&row, 0));
                         }
                         drop(trows);
-                        let moved = repoint_org_references(&conn, keep, loser).await?;
-                        report.mentions += moved.mentions;
-                        report.parties += moved.parties;
-                        report.bid_parties += moved.bid_parties;
-                        report.winners += moved.winners;
-                        report.winner_dups += moved.winner_dups;
+                        // The first wet slice measured ~0.5 s per group, most
+                        // of it fixed per-statement cost — and a country-less
+                        // provisional loser holds one mention and, almost
+                        // always, no tender rows at all. The tender probe
+                        // above already knows: when it found nothing, the
+                        // three party/winner UPDATEs and the winner-dup pass
+                        // would each touch zero rows, so only the mention
+                        // repoint runs. The full repoint stays for the rest.
+                        if has_tender_rows {
+                            let moved = repoint_org_references(&conn, keep, loser).await?;
+                            report.mentions += moved.mentions;
+                            report.parties += moved.parties;
+                            report.bid_parties += moved.bid_parties;
+                            report.winners += moved.winners;
+                            report.winner_dups += moved.winner_dups;
+                        } else {
+                            report.mentions += conn
+                                .execute(
+                                    "UPDATE organization_mentions SET organization_id = ? WHERE organization_id = ?",
+                                    (Value::Integer(keep), Value::Integer(loser)),
+                                )
+                                .await?;
+                        }
                         conn.execute("DELETE FROM organizations WHERE id = ?", (Value::Integer(loser),)).await?;
                         conn.execute(
                             "INSERT INTO org_merge_log(keep, loser, rule, evidence, job_id, at) \
