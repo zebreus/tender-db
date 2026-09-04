@@ -397,3 +397,25 @@ async fn the_listing_shows_every_scope_under_the_cap() {
     assert_eq!(scope_rows("LT:national"), 3, "every Lithuanian group is listed");
     assert_eq!(scope_rows("DE:vat"), 14, "the German scope takes the rest of the cap");
 }
+
+/// Issue 348: the wall made observable. The same seek the wall runs, plus the
+/// first carriers by id — counted up to `limit`, never beyond, so a probe on a
+/// genuinely generic key stays bounded.
+#[tokio::test]
+async fn the_name_key_probe_counts_carriers_and_lists_the_first_ones() {
+    let (db, conn) = open("dupid-probe").await;
+    carriers(&conn, "n2", "δημοσ χανιων", 30).await;
+    carriers(&conn, "n2", "δημοσ αβδηρων", 3).await;
+    // Duplicate rows for one carrier count once: the wall counts org ids.
+    carriers(&conn, "n2", "δημοσ αβδηρων", 3).await;
+    let (n, ids) = db.name_key_carriers("n2", "δημοσ αβδηρων", 1_000, 20).await.unwrap();
+    assert_eq!(n, 3, "three distinct carriers, however many rows they hold");
+    assert_eq!(ids, vec![900_000, 900_001, 900_002]);
+    let (n, ids) = db.name_key_carriers("n2", "δημοσ χανιων", 1_000, 5).await.unwrap();
+    assert_eq!(n, 30);
+    assert_eq!(ids.len(), 5, "`show` bounds the listing, not the count");
+    let (n, _) = db.name_key_carriers("n2", "δημοσ χανιων", 10, 0).await.unwrap();
+    assert_eq!(n, 10, "`limit` bounds the count itself — the wall's own cap+1 shape");
+    let (n, ids) = db.name_key_carriers("n3", "δημοσ χανιων", 1_000, 20).await.unwrap();
+    assert_eq!((n, ids.len()), (0, 0), "a kind the build never wrote is simply absent");
+}

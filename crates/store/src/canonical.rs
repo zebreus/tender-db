@@ -10897,6 +10897,43 @@ impl Db {
         Ok(n as usize > cap)
     }
 
+    /// The wall made OBSERVABLE (issue 348): how many distinct org rows carry
+    /// one name key under one kind — counted up to `limit`, never beyond — and
+    /// the first `show` of them, so an operator can read WHY a key is generic
+    /// instead of inferring it from a verdict tally. Same index seek as the
+    /// wall itself; `org_match_keys` is outside the public SQL surface, which
+    /// is why this exists.
+    pub async fn name_key_carriers(
+        &self,
+        kind: &str,
+        key: &str,
+        limit: usize,
+        show: usize,
+    ) -> turso::Result<(u64, Vec<i64>)> {
+        let reader = self.reader().await?;
+        let mut rows = reader
+            .query(GENERIC_KEY_SQL, (t(kind), t(key), Value::Integer(limit as i64)))
+            .await?;
+        let n = match rows.next().await? {
+            Some(row) => int(&row, 0).max(0) as u64,
+            None => 0,
+        };
+        let mut ids = Vec::new();
+        if show > 0 {
+            let mut rows = reader
+                .query(
+                    "SELECT DISTINCT org_id FROM org_match_keys \
+                      WHERE key_kind = ? AND key = ? ORDER BY org_id LIMIT ?",
+                    (t(kind), t(key), Value::Integer(show as i64)),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                ids.push(int(&row, 0));
+            }
+        }
+        Ok((n, ids))
+    }
+
     pub async fn name_key_is_generic(
         &self,
         kind: &str,

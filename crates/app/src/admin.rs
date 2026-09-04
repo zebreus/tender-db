@@ -40,6 +40,7 @@ pub fn router(supervisor: Arc<Supervisor>) -> Router {
         // Issue 335: the version before the current one, so a comparison is a
         // request rather than a thing someone had to think to save.
         .route("/admin/reports/{kind}/previous", axum::routing::get(report_previous))
+        .route("/admin/name-key", axum::routing::get(name_key))
         .route("/admin/case-reviews", post(record_case_reviews))
         .route("/admin/rehoming", post(record_rehoming))
         .with_state(supervisor)
@@ -318,6 +319,75 @@ pub fn enabled() -> bool {
 /// copying a number out by hand BEFORE re-running the job — which failed once
 /// (issue 311's cohort dropped 589 to 487 and the 102 that left are
 /// unenumerable) and worked once by diligence (issue 333's fix).
+#[derive(serde::Deserialize)]
+struct NameKeyParams {
+    name: String,
+    /// How many carrier org rows to list (default 20, at most 100).
+    show: Option<usize>,
+}
+
+/// `GET /admin/name-key?name=…` — the genericness wall, made observable
+/// (issue 348). Returns the N2 and N3 keys `ingest` derives from the name,
+/// the wall's cap, and per kind the distinct-carrier count (bounded at
+/// 1,000) with the first carriers' rows, so "why did this key read as
+/// generic" is a request rather than a guess. Bounded index seeks only.
+async fn name_key(
+    State(sup): State<Arc<Supervisor>>,
+    headers: HeaderMap,
+    Query(params): Query<NameKeyParams>,
+) -> Response {
+    if let Some(denial) = deny(&headers) {
+        return denial;
+    }
+    let show = params.show.unwrap_or(20).min(100);
+    let n2 = ingest::project::match_norm(&params.name);
+    let n3 = ingest::crosswalk::n3_key(&params.name);
+    let cap = ingest::idgate::STOPLIST_CAP;
+    let mut kinds = serde_json::Map::new();
+    // The wall's own order: 'n3' then 'n2' (see NAME_KEY_CARRIERS_SQL for why
+    // not one IN), and a name whose N3 equals its N2 has no 'n3' row at all.
+    for (kind, key) in [("n3", n3.as_str()), ("n2", n2.as_str())] {
+        if key.is_empty() {
+            continue;
+        }
+        let (carriers, ids) = match sup.db().name_key_carriers(kind, key, 1_000, show).await {
+            Ok(v) => v,
+            Err(e) => {
+                eprintln!("[admin] name-key probe failed: {e}");
+                return error(StatusCode::INTERNAL_SERVER_ERROR, "name-key probe failed");
+            }
+        };
+        let meta = match sup.db().org_health_meta(&ids).await {
+            Ok(m) => m,
+            Err(e) => {
+                eprintln!("[admin] name-key meta read failed: {e}");
+                return error(StatusCode::INTERNAL_SERVER_ERROR, "name-key probe failed");
+            }
+        };
+        kinds.insert(
+            kind.to_owned(),
+            json!({
+                "key": key,
+                "carriers": carriers,
+                "carriers_capped_at": 1_000,
+                "generic": carriers as usize > cap,
+                "rows": meta.iter().map(|(id, country, ikind, ident, name)| json!({
+                    "org_id": id, "country": country, "identifier_kind": ikind,
+                    "identifier": ident, "name": name,
+                })).collect::<Vec<_>>(),
+            }),
+        );
+    }
+    axum::Json(json!({
+        "name": params.name,
+        "n2": n2,
+        "n3": n3,
+        "stoplist_cap": cap,
+        "kinds": kinds,
+    }))
+    .into_response()
+}
+
 async fn report_previous(
     State(sup): State<Arc<Supervisor>>,
     headers: HeaderMap,
