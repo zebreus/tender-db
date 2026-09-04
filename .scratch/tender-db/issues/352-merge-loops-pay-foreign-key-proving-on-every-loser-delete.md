@@ -1,6 +1,6 @@
 # 352 — the R2/E0/R3 merge loops pay foreign-key proving on every loser delete (~0.4 s a row)
 
-Status: ready-for-agent (filed 2026-09-04 from issue 351's first wet slice)
+Status: BUILT 2026-09-04 10:45 (gate running) — both the R2 (E0 rides it) and R3 wet loops bracketed with `PRAGMA foreign_keys=OFF` … `ON`, the loop moved into an inner block so the restore runs on every return; `r2_merge.rs` and `e0_merge.rs` pin the probe before and after the wet run. Deploys at the next idle window (after job 667); the pace check is the next E0/R2 wet run. Was: ready-for-agent (filed 2026-09-04 from issue 351's first wet slice)
 Kind: throughput (organization layer merge machinery) — small, measured
 Relates to: 351 (where it was measured and fixed for the provisional fold), 19 (the projection's precedent), 300 Stage 2/3 (R2/R3), 329 (E0), the `lib.rs` re-parse note on mention deletes
 

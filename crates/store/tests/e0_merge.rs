@@ -130,7 +130,11 @@ async fn the_e0_fold_merges_agreeing_distinctive_names_and_denies_the_rest() {
     assert_eq!(dry.merged_groups, 0, "a dry run writes nothing");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 8);
 
+    assert!(db.foreign_keys_enabled().await.unwrap(), "issue 352: the writer enforces foreign keys before the wet run");
+
     let wet = db.match_org_identifiers_r2(args(false, Some(1))).await.expect("wet");
+
+    assert!(db.foreign_keys_enabled().await.unwrap(), "issue 352: and after it — the loop's OFF is bracketed");
     assert_eq!(wet.merged_groups, 1);
     assert_eq!(wet.removed, 1);
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 61").await, 0, "the provisional twin lost");

@@ -219,7 +219,9 @@ async fn the_r2_merge_applies_the_denial_stack_and_merges_the_plan() {
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 24, "abort wrote nothing");
 
     // Wet run under the recorded plan.
+    assert!(db.foreign_keys_enabled().await.unwrap(), "issue 352: the writer enforces foreign keys before the wet run");
     let wet = db.match_org_identifiers_r2(args(false, Some(3))).await.expect("wet");
+    assert!(db.foreign_keys_enabled().await.unwrap(), "issue 352: and after it — the loop's OFF is bracketed");
     assert_eq!((wet.plan_groups, wet.merged_groups, wet.removed), (3, 3, 3));
     // Survivors: 10 (non-provisional beats min id 10<11 anyway), 12 (min id),
     // and 20 (non-provisional) — with 22 its loser and 21 left STANDING.

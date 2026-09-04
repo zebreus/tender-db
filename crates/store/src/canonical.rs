@@ -9135,6 +9135,18 @@ impl Db {
 
         let cap = args.max_groups.unwrap_or(u64::MAX);
         let mut touched: BTreeSet<i64> = BTreeSet::new();
+        // Issue 352: foreign-key enforcement OFF around the wet loop, the
+        // 351 fold's bracket and the projection's issue-19 precedent. Every
+        // loser is stripped of its references BEFORE its row is deleted, so
+        // the engine's per-delete proof that no child row still points at it
+        // — measured at ~0.4 s a row on the write path — buys nothing.
+        // Restored ON whatever the loop returns; the pragma is a no-op inside
+        // a transaction, which is why it sits outside the per-txn loop.
+        {
+            let mut q = conn.query("PRAGMA foreign_keys=OFF", ()).await?;
+            while q.next().await?.is_some() {}
+        }
+        let looped: turso::Result<()> = async {
         for txn in plan.chunks(MERGE_TXN_GROUPS) {
             if (args.stop)() {
                 report.stopped = true;
@@ -9265,6 +9277,14 @@ impl Db {
             }
             let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
         }
+        Ok(())
+        }
+        .await;
+        {
+            let mut q = conn.query("PRAGMA foreign_keys=ON", ()).await?;
+            while q.next().await?.is_some() {}
+        }
+        looped?;
         report.tender_changes = touched.len() as u64;
         if report.removed > 0 {
             self.publish_cursor(&conn).await?;
@@ -11734,6 +11754,18 @@ impl Db {
 
         let cap = args.max_groups.unwrap_or(u64::MAX);
         let mut touched: BTreeSet<i64> = BTreeSet::new();
+        // Issue 352: foreign-key enforcement OFF around the wet loop, the
+        // 351 fold's bracket and the projection's issue-19 precedent. Every
+        // loser is stripped of its references BEFORE its row is deleted, so
+        // the engine's per-delete proof that no child row still points at it
+        // — measured at ~0.4 s a row on the write path — buys nothing.
+        // Restored ON whatever the loop returns; the pragma is a no-op inside
+        // a transaction, which is why it sits outside the per-txn loop.
+        {
+            let mut q = conn.query("PRAGMA foreign_keys=OFF", ()).await?;
+            while q.next().await?.is_some() {}
+        }
+        let looped: turso::Result<()> = async {
         for txn in plan.chunks(MERGE_TXN_GROUPS) {
             if (args.stop)() {
                 report.stopped = true;
@@ -11847,6 +11879,14 @@ impl Db {
             }
             let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
         }
+        Ok(())
+        }
+        .await;
+        {
+            let mut q = conn.query("PRAGMA foreign_keys=ON", ()).await?;
+            while q.next().await?.is_some() {}
+        }
+        looped?;
         report.tender_changes = touched.len() as u64;
         if report.removed > 0 {
             self.publish_cursor(&conn).await?;
