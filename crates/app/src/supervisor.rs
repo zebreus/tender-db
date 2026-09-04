@@ -579,6 +579,61 @@ fn trimmed_baseline(previous: Option<&serde_json::Value>) -> serde_json::Value {
     })
 }
 
+/// Issue 300 Stage 5's census over the weekly walk's NULL-country national
+/// rows, bucketed by identifier value. A bucket shared by two or more orgs is
+/// the class the design calls "genuinely unmeasured": if the orgs carry ONE
+/// name key it is the same entity split by a missing country (rescuable —
+/// Stage 5's merge side); if they carry several, the value is a key that
+/// different entities publish (the split side — the reason `(None, national,
+/// v)` must stop being a resolver bucket). `names` covers the sampled shared
+/// buckets only; a bucket with any member outside the sample counts as shared
+/// but is neither same- nor mixed-name.
+fn null_country_summary(
+    by_value: &std::collections::HashMap<String, Vec<(i64, u64)>>,
+    orgs: u64,
+    names: &std::collections::HashMap<i64, String>,
+) -> serde_json::Value {
+    let (mut shared_values, mut shared_orgs) = (0u64, 0u64);
+    let mut max_bucket: (usize, &str) = (0, "");
+    let (mut sampled, mut same_name, mut mixed_names) = (0u64, 0u64, 0u64);
+    for (value, members) in by_value {
+        if members.len() < 2 {
+            continue;
+        }
+        shared_values += 1;
+        shared_orgs += members.len() as u64;
+        if members.len() > max_bucket.0 || (members.len() == max_bucket.0 && value.as_str() < max_bucket.1) {
+            max_bucket = (members.len(), value.as_str());
+        }
+        let named = members.iter().filter(|(id, _)| names.contains_key(id)).count();
+        if named < members.len() {
+            continue;
+        }
+        let keys: std::collections::BTreeSet<String> = members
+            .iter()
+            .filter_map(|(id, _)| names.get(id))
+            .map(|n| n.split_whitespace().collect::<Vec<_>>().join(" ").to_lowercase())
+            .collect();
+        sampled += 1;
+        if keys.len() <= 1 {
+            same_name += 1;
+        } else {
+            mixed_names += 1;
+        }
+    }
+    serde_json::json!({
+        "orgs": orgs,
+        "values": by_value.len(),
+        "shared_values": shared_values,
+        "shared_orgs": shared_orgs,
+        "max_bucket": max_bucket.0,
+        "max_bucket_value": max_bucket.1,
+        "sampled_buckets": sampled,
+        "same_name": same_name,
+        "mixed_names": mixed_names,
+    })
+}
+
 fn parser_vs_stock_alarms(
     before: Option<&serde_json::Value>,
     no_longer_vat: u64,
@@ -3141,6 +3196,14 @@ impl Supervisor {
                     (0u64, 0u64, 0u64, 0u64);
                 let (mut hex_hash, mut compound) = (0u64, 0u64);
                 let (mut phone, mut short_numeric) = (0u64, 0u64);
+                // Issue 300 Stage 5's census: the NULL-country national-id
+                // bucket, by identifier value. The design says "census first —
+                // class size genuinely unmeasured"; this is that measurement,
+                // riding the same walk. Names are fetched afterwards for the
+                // shared buckets only (the walk carries counts, not names).
+                let mut null_by_value: std::collections::HashMap<String, Vec<(i64, u64)>> =
+                    std::collections::HashMap::new();
+                let mut null_orgs = 0u64;
                 // Issue 325 step 5: the parser-vs-stock tripwire.
                 //
                 // Not a SQL predicate. The class this watches is defined by
@@ -3251,6 +3314,13 @@ impl Supervisor {
                             let cc = r.country.clone().unwrap_or_default();
                             gln_by_value.entry(r.identifier.clone()).or_default().push(cc);
                         }
+                        if r.country.is_none() && r.kind.as_deref() == Some("national") {
+                            null_orgs += 1;
+                            null_by_value
+                                .entry(r.identifier.clone())
+                                .or_default()
+                                .push((r.org_id, r.distinct_names));
+                        }
                     }
                     watermark = next;
                     self.set_phase(
@@ -3269,6 +3339,26 @@ impl Supervisor {
                 let meta = self.db.org_health_meta(&ids).await.map_err(|e| e.to_string())?;
                 let by_id: std::collections::HashMap<i64, _> =
                     meta.into_iter().map(|m| (m.0, m)).collect();
+                // Stage 5: names for the shared NULL-country buckets, capped so
+                // the lookup stays bounded whatever the class turns out to be.
+                let null_country = {
+                    const NAME_SAMPLE: usize = 2000;
+                    let mut ids: Vec<i64> = Vec::new();
+                    for members in null_by_value.values() {
+                        if members.len() >= 2 && ids.len() + members.len() <= NAME_SAMPLE {
+                            ids.extend(members.iter().map(|(id, _)| *id));
+                        }
+                    }
+                    let names: std::collections::HashMap<i64, String> = self
+                        .db
+                        .org_health_meta(&ids)
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .into_iter()
+                        .map(|m| (m.0, m.4))
+                        .collect();
+                    null_country_summary(&null_by_value, null_orgs, &names)
+                };
                 let now = store::now_unix();
                 // Issue 325 step 5: the tripwire's baseline is the PREVIOUS run
                 // of this same report, read before this one overwrites it. No
@@ -3361,6 +3451,9 @@ impl Supervisor {
                         "baseline": trimmed_baseline(previous.as_ref()),
                         "alarms": alarms.clone(),
                     },
+                    // Issue 300 Stage 5: the NULL-country national-id bucket,
+                    // measured before anything is built on it.
+                    "null_country": null_country,
                     // Issue 327: the shared-GLN class, watched not trusted.
                     "gln_9110": {
                         "rows": gln_rows,
@@ -10984,5 +11077,45 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(bulk.len(), 1, "reclaim_only enqueues only the reclaim, no fold");
+    }
+}
+
+#[cfg(test)]
+mod stage5_census {
+    use super::null_country_summary;
+    use std::collections::HashMap;
+
+    /// The census tells the two Stage-5 sides apart on a small bed: a value
+    /// shared by two orgs with one name key (rescuable), one shared by orgs
+    /// with different names (a key different entities publish), a singleton
+    /// (not shared), and a shared bucket outside the name sample (shared,
+    /// undecided).
+    #[test]
+    fn shared_null_country_buckets_split_into_same_name_and_mixed_names() {
+        let mut by_value: HashMap<String, Vec<(i64, u64)>> = HashMap::new();
+        by_value.insert("111".into(), vec![(1, 2), (2, 1)]);
+        by_value.insert("222".into(), vec![(3, 1), (4, 1), (5, 1)]);
+        by_value.insert("333".into(), vec![(6, 1)]);
+        by_value.insert("444".into(), vec![(7, 1), (8, 1)]);
+        let names: HashMap<i64, String> = [
+            (1, "Foo  Ltd".to_owned()),
+            (2, "foo ltd".to_owned()),
+            (3, "Alpha".to_owned()),
+            (4, "Beta".to_owned()),
+            (5, "Alpha".to_owned()),
+            (7, "Only one of the pair".to_owned()),
+        ]
+        .into_iter()
+        .collect();
+        let v = null_country_summary(&by_value, 8, &names);
+        assert_eq!(v["orgs"], 8);
+        assert_eq!(v["values"], 4);
+        assert_eq!(v["shared_values"], 3, "111, 222, 444");
+        assert_eq!(v["shared_orgs"], 7);
+        assert_eq!(v["max_bucket"], 3);
+        assert_eq!(v["max_bucket_value"], "222");
+        assert_eq!(v["sampled_buckets"], 2, "444 has a member outside the sample");
+        assert_eq!(v["same_name"], 1, "111: one key modulo case and spacing");
+        assert_eq!(v["mixed_names"], 1, "222: Alpha and Beta");
     }
 }

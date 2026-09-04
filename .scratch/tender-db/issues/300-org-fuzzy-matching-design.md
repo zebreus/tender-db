@@ -1099,3 +1099,12 @@ moved 2,409 standing rows to the live normaliser's reading (RO sub-unit suffixes
 Greek lookalike letters, a handful of Cyrillic-typed Latin prefixes/suffixes); the
 R2 pass folded 1,846 groups (1,850 rows, 1.12M party rows repointed). The 311/1079
 exemplar is now a same-triple duplicate the GR arm does not key — 329's list.
+
+Stage 5 census built 2026-09-04: the weekly `org-merge-health` walk now buckets the
+NULL-country national rows by identifier value and reports `null_country` —
+orgs, distinct values, values shared by ≥2 orgs, the largest bucket, and for the
+sampled shared buckets (≤2,000 orgs' names) how many carry ONE name key (the
+same entity split by a missing country — the rescuable side) versus several (a
+value different entities publish — the split side). No enforcement; the first
+reading arrives with Sunday's run and sizes Stage 5 before anything is built on
+it, as §8 requires.
