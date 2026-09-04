@@ -157,8 +157,10 @@ async fn identical_null_country_provisionals_fold_under_the_wall_and_stand_over_
     assert!(off.is_err(), "plan 3 vs recorded 200 is outside max(2%, 50)");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 75);
 
+    assert!(db.foreign_keys_enabled().await.unwrap(), "the writer enforces foreign keys before the fold");
     let wet = db.fold_provisional_echoes(args(false, Some(3), &never, &quiet)).await.unwrap();
     assert_eq!((wet.merged_groups, wet.removed, wet.mentions), (3, 62, 2), "two mentions moved off 101 and 104");
+    assert!(db.foreign_keys_enabled().await.unwrap(), "and again after it: the wet loop's OFF is bracketed");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'stadt big' AND country IS NULL").await, 1);
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'stadt big' AND country = 'DE'").await, 2, "the identified rows are not the fold's");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'tribunal verdict'").await, 1);

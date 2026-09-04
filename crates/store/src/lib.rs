@@ -1090,6 +1090,19 @@ impl Db {
     /// satellite inserts is pure overhead there, and it grows with the
     /// referenced tables (the projection's super-linear slowdown at scale). It
     /// is restored to on afterwards, so every other write path keeps the guard.
+    /// Whether the writer connection currently enforces foreign keys — the
+    /// test probe for the paths that turn them off around a bulk write.
+    pub async fn foreign_keys_enabled(&self) -> turso::Result<bool> {
+        let conn = self.conn().await;
+        let mut rows = conn.query("PRAGMA foreign_keys", ()).await?;
+        let on = match rows.next().await? {
+            Some(row) => matches!(row.get_value(0), Ok(turso::Value::Integer(1))),
+            None => false,
+        };
+        while rows.next().await?.is_some() {}
+        Ok(on)
+    }
+
     pub async fn set_foreign_keys(&self, on: bool) -> turso::Result<()> {
         let conn = self.conn().await;
         let mut rows = conn.query(if on { "PRAGMA foreign_keys=ON" } else { "PRAGMA foreign_keys=OFF" }, ()).await?;

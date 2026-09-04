@@ -14456,6 +14456,45 @@ impl Db {
         let cap = args.max_groups.unwrap_or(u64::MAX);
         let now = crate::now_unix();
         let conn = self.conn().await;
+        // Foreign-key enforcement OFF for the wet phase, the projection's
+        // issue-19 precedent. The first wet slice measured ~0.45 s per deleted
+        // org row on NVMe with every read indexed and instant: the cost is
+        // the engine PROVING, on the write path, that no row of five child
+        // tables still references the parent (the same finding lib.rs records
+        // for mention deletes). This loop moves every child off the loser
+        // BEFORE deleting it, so the graph is self-consistent by construction
+        // and the proof buys nothing. Restored ON whatever happens below; the
+        // pragma is a no-op inside a transaction, so it brackets the loop.
+        {
+            let mut q = conn.query("PRAGMA foreign_keys=OFF", ()).await?;
+            while q.next().await?.is_some() {}
+        }
+        let folded: turso::Result<()> = self
+            .fold_provisional_plan(&conn, &args, &mut report, &plan, cap, now)
+            .await;
+        {
+            let mut q = conn.query("PRAGMA foreign_keys=ON", ()).await?;
+            while q.next().await?.is_some() {}
+        }
+        folded?;
+        if report.removed > 0 {
+            self.publish_cursor(&conn).await?;
+        }
+        Ok(report)
+    }
+
+    /// The wet loop of [`Db::fold_provisional_echoes`], on the writer with
+    /// foreign keys off; the caller restores them whatever this returns.
+    async fn fold_provisional_plan(
+        &self,
+        conn: &Connection,
+        args: &ProvisionalFoldArgs<'_>,
+        report: &mut ProvisionalFoldReport,
+        plan: &[(String, String, Vec<i64>)],
+        cap: u64,
+        now: i64,
+    ) -> turso::Result<()> {
+        const MERGE_TXN_GROUPS: usize = 50;
         let esc = |s: &str| -> String {
             s.chars()
                 .filter(|c| !c.is_control())
@@ -14506,7 +14545,7 @@ impl Db {
                         // would each touch zero rows, so only the mention
                         // repoint runs. The full repoint stays for the rest.
                         if has_tender_rows {
-                            let moved = repoint_org_references(&conn, keep, loser).await?;
+                            let moved = repoint_org_references(conn, keep, loser).await?;
                             report.mentions += moved.mentions;
                             report.parties += moved.parties;
                             report.bid_parties += moved.bid_parties;
@@ -14556,7 +14595,7 @@ impl Db {
                     if let Err(e) = conn.execute("COMMIT", ()).await {
                         let _ = conn.execute("ROLLBACK", ()).await;
                         if report.removed > 0 {
-                            let _ = self.publish_cursor(&conn).await;
+                            let _ = self.publish_cursor(conn).await;
                         }
                         return Err(e);
                     }
@@ -14565,7 +14604,7 @@ impl Db {
                 Err(e) => {
                     let _ = conn.execute("ROLLBACK", ()).await;
                     if report.removed > 0 {
-                        let _ = self.publish_cursor(&conn).await;
+                        let _ = self.publish_cursor(conn).await;
                     }
                     return Err(e);
                 }
@@ -14575,10 +14614,7 @@ impl Db {
                 &format!("folding: {} of {} groups, {} rows removed", report.merged_groups, report.plan_groups, report.removed),
             );
         }
-        if report.removed > 0 {
-            self.publish_cursor(&conn).await?;
-        }
-        Ok(report)
+        Ok(())
     }
 
     /// One complete group of the provisional-echo walk: tally it, ask the

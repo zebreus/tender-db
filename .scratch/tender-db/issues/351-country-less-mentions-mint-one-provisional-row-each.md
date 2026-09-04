@@ -144,3 +144,21 @@ exists; when none does, only the mention repoint runs (gate green, deploying
 with the census cap change); (2) run the residual **uncapped** once the pace is
 measured, so the 45-min re-plan is paid once, with the stop flag and the
 residual re-record as the safety net.
+
+### The real cost: foreign-key proving on the parent delete
+
+Timed through the SQL endpoint while job 666 folded: every read the loop makes
+(the three party probes, the mention probe, the org by PK) answers in
+milliseconds, the disks are NVMe, and load is one core — so the ~0.45 s per
+deleted org row is not I/O and not the reads. It is the engine proving, on the
+write path, that no row of the five child tables (`organization_mentions`,
+`tender_version_parties`, `…bid_parties`, `…result_winners`,
+`organization_names`) still references the parent — the same finding
+`lib.rs` records for mention deletes ("deleting one mention row costs ~2.2 s on
+prod … not index-served on the write path"). The fold moves every child off the
+loser BEFORE deleting it, so the graph is self-consistent by construction and
+the proof buys nothing. The wet loop now runs with foreign keys OFF and
+restores them whatever happens — the projection's issue-19 precedent, bracketed
+and pinned by a test through `Db::foreign_keys_enabled`. The R2/E0 merge loops
+carry the same cost and could take the same bracket (their loser deletes are
+the same shape); filed as a follow-up rather than changed blind.
