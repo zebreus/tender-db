@@ -364,3 +364,7 @@ T4 parity input), so the next operator — or this session once the action is
 allowed — runs the capped slice above, checks `org_merge_log` for `rule = 'e0'`
 rows and `/health`, then the uncapped residual (a wet run re-records the residual
 plan, so the continuation runs under parity without a new dry run).
+
+**Audit (05:0x UTC): the dry run wrote nothing.** Probed the first two listed
+pairs by primary key after job 640 — all four org rows (13996709/22922318,
+22266783/22732251) still stand, as the dry/wet split promises.
