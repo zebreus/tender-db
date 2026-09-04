@@ -4009,11 +4009,16 @@ impl Supervisor {
                         .map_err(|e| e.to_string())?;
                 }
                 if r.stopped {
-                    return Ok(if r.plan_groups == 0 {
-                        "match-org-identifiers r2 STOPPED during classification: nothing \
-                         was planned or written, and the previously recorded plan was \
-                         left untouched"
-                            .to_owned()
+                    // The same condition as the re-record guard above: a stop
+                    // before the first committed merge left the recorded plan
+                    // untouched, whatever the walk had planned so far.
+                    return Ok(if r.merged_groups == 0 {
+                        format!(
+                            "match-org-identifiers r2 STOPPED before the first merge: nothing \
+                             was written ({} plan groups seen so far), and the previously \
+                             recorded plan was left untouched",
+                            r.plan_groups
+                        )
                     } else {
                         format!(
                             "match-org-identifiers r2 STOPPED at a checkpoint: {} of {} plan \
@@ -4176,11 +4181,16 @@ impl Supervisor {
                         .map_err(|e| e.to_string())?;
                 }
                 if r.stopped {
-                    return Ok(if r.plan_groups == 0 {
-                        "match-org-identifiers e0 STOPPED during classification: nothing \
-                         was planned or written, and the previously recorded plan was \
-                         left untouched"
-                            .to_owned()
+                    // The same condition as the re-record guard above: a stop
+                    // before the first committed merge left the recorded plan
+                    // untouched, whatever the walk had planned so far.
+                    return Ok(if r.merged_groups == 0 {
+                        format!(
+                            "match-org-identifiers e0 STOPPED before the first merge: nothing \
+                             was written ({} plan groups seen so far), and the previously \
+                             recorded plan was left untouched",
+                            r.plan_groups
+                        )
                     } else {
                         format!(
                             "match-org-identifiers e0 STOPPED at a checkpoint: {} of {} plan \
@@ -6169,11 +6179,21 @@ impl Supervisor {
                         .map_err(|e| e.to_string())?;
                 }
                 if r.stopped {
-                    return Ok(format!(
-                        "fold-provisional-echoes STOPPED: {} of {} plan groups folded before the stop; \
-                         the residual plan was re-recorded",
-                        r.merged_groups, r.plan_groups
-                    ));
+                    // Mirrors the re-record guard: nothing merged, nothing re-recorded.
+                    return Ok(if r.merged_groups == 0 {
+                        format!(
+                            "fold-provisional-echoes STOPPED before the first fold: nothing was \
+                             written ({} plan groups seen so far), and the previously recorded \
+                             plan was left untouched",
+                            r.plan_groups
+                        )
+                    } else {
+                        format!(
+                            "fold-provisional-echoes STOPPED: {} of {} plan groups folded before the \
+                             stop; the residual plan was re-recorded",
+                            r.merged_groups, r.plan_groups
+                        )
+                    });
                 }
                 Ok(format!(
                     "fold-provisional-echoes (issue 351){}: {} rows walked, {} names in more than one \
