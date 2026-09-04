@@ -1,6 +1,6 @@
 # 351 — country-less mentions mint one provisional row each: 92 identical `Stadt Burghausen` rows, and 68% of prominent entities' mentions on echo rows
 
-Status: UNITS 2–4 DEPLOYED 2026-09-04 08:20 (`b41008f`); the top-200 cohort recorded (200 verdicts, `top200-2026-09-04`); the fold's dry run is job 665 (walks the 8M-row class, ~40 min). Then: review the plan (`scratchpad/pef-review.py`, 30-sample), the wet run (may hit the classifier), and the next ingest's diag line for the resolver's reuse counters. Status: UNIT 4 BUILT 2026-09-04 08:0x (gate running) — `org_name_verdicts` + `POST /admin/name-verdicts`; the three-tier gate (`EchoTier`: verdict → echo-of-one → raw wall) now decides the fold, the resolver's country-less reuse and the census listing; 30 store tests green across the five affected files. Then: deploy units 2–4 when the box is idle, POST the top-200 cohort, dry fold, 30-sample, wet. Status: CENSUS DONE 2026-09-04 (job 647, 2,511 s) — **8,032,637 country-less identifier-less provisional rows under 1,714,583 names; 574,089 names hold more than one row (6,892,143 rows; a fold removes 6,318,054)** — and the wall gate as built cannot reach the big ones: all 200 largest names are over the wall BY THEIR OWN ECHO. Units 2+3 (committed, not deployed) get a revised gate before deploying: verdict table → echo-of-one-entity rule → raw wall. Was: ALL THREE UNITS BUILT 2026-09-04 07:4x — unit 1 (census) deployed `b7d0eba`, running as job 647; unit 2 (prevention) committed `08919c9`; unit 3 (`fold-provisional-echoes`: wall-gated fold to one row per name, ledger rule `p0`, dry/wet with parity, residual re-record; test `provisional_echo_fold.rs`) gate running. Deploy of 2+3 waits for job 647; then the dry plan, a 30-sample, and the wet run (which may hit the same classifier denial as 329's). Was: UNITS 1+2 BUILT 2026-09-04 07:4x — unit 1 (census) deployed `b7d0eba`, running as job 647 (~1,670 rows/s; report pending); unit 2 (prevention: country-less reuse of the standing `(name_norm, NULL)` row when the N2 key is under the wall, mint over it, counters in the resolver's diag line; test `country_less_mentions_reuse_under_the_wall_and_mint_over_it`) gate running, deploys once the queue is idle. Was: UNIT 1 BUILT 2026-09-04 07:0x (gate running) — `provisional-echo-census`: a keyset walk of the `(name_norm, id)` index over provisional NULL-country identifier-less rows, one group in memory at a time, top-200 by rows with mentions and the wall's verdict; tests `provisional_echo_census.rs`. Then: deploy, run, record; units 2 (prevention) and 3 (repair) follow. Was: ready-for-agent (filed 2026-09-04 from issue 350's measurement)
+Status: DRY PLAN REVIEWED, FIRST WET SLICE RUNNING 2026-09-04 09:3x — job 665 planned **516,400 groups / 3,407,962 rows** (tiers: under-wall 493,882 · echo-of-one 22,361 · verdict-single 157; standing: over-wall 57,669 · verdict-refused 23); 30/30 on the listing, a 40-row tail read below; wet slice job 666 (`max_groups` 2,000) enqueued — the classifier allowed it this time. Then: verify, larger slices, and the over-wall backlog as the next verdict cohort. Status: UNITS 2–4 DEPLOYED 2026-09-04 08:20 (`b41008f`); the top-200 cohort recorded (200 verdicts, `top200-2026-09-04`); the fold's dry run is job 665 (walks the 8M-row class, ~40 min). Then: review the plan (`scratchpad/pef-review.py`, 30-sample), the wet run (may hit the classifier), and the next ingest's diag line for the resolver's reuse counters. Status: UNIT 4 BUILT 2026-09-04 08:0x (gate running) — `org_name_verdicts` + `POST /admin/name-verdicts`; the three-tier gate (`EchoTier`: verdict → echo-of-one → raw wall) now decides the fold, the resolver's country-less reuse and the census listing; 30 store tests green across the five affected files. Then: deploy units 2–4 when the box is idle, POST the top-200 cohort, dry fold, 30-sample, wet. Status: CENSUS DONE 2026-09-04 (job 647, 2,511 s) — **8,032,637 country-less identifier-less provisional rows under 1,714,583 names; 574,089 names hold more than one row (6,892,143 rows; a fold removes 6,318,054)** — and the wall gate as built cannot reach the big ones: all 200 largest names are over the wall BY THEIR OWN ECHO. Units 2+3 (committed, not deployed) get a revised gate before deploying: verdict table → echo-of-one-entity rule → raw wall. Was: ALL THREE UNITS BUILT 2026-09-04 07:4x — unit 1 (census) deployed `b7d0eba`, running as job 647; unit 2 (prevention) committed `08919c9`; unit 3 (`fold-provisional-echoes`: wall-gated fold to one row per name, ledger rule `p0`, dry/wet with parity, residual re-record; test `provisional_echo_fold.rs`) gate running. Deploy of 2+3 waits for job 647; then the dry plan, a 30-sample, and the wet run (which may hit the same classifier denial as 329's). Was: UNITS 1+2 BUILT 2026-09-04 07:4x — unit 1 (census) deployed `b7d0eba`, running as job 647 (~1,670 rows/s; report pending); unit 2 (prevention: country-less reuse of the standing `(name_norm, NULL)` row when the N2 key is under the wall, mint over it, counters in the resolver's diag line; test `country_less_mentions_reuse_under_the_wall_and_mint_over_it`) gate running, deploys once the queue is idle. Was: UNIT 1 BUILT 2026-09-04 07:0x (gate running) — `provisional-echo-census`: a keyset walk of the `(name_norm, id)` index over provisional NULL-country identifier-less rows, one group in memory at a time, top-200 by rows with mentions and the wall's verdict; tests `provisional_echo_census.rs`. Then: deploy, run, record; units 2 (prevention) and 3 (repair) follow. Was: ready-for-agent (filed 2026-09-04 from issue 350's measurement)
 Kind: data quality / identity (organization layer) — prevention + repair, the 234 shape for the country-less half
 Relates to: 234 (closed the `(name_norm, country)` half; left "nameless or country-less mentions mint fresh rows"), 350 (the measurement), 349 (why the wall reads these entities as generic), 300 Stage 3 (R3 rescues NULL-country rows WITH identifiers; these have none)
 
@@ -89,3 +89,41 @@ Three tiers, first match wins:
 Gate 2 is `GENERIC_KEY_BREAKDOWN_SQL` with a distinct-country column; the
 census's listing gets the same verdict so the next report says which tier
 each large name falls in.
+
+## Dry plan (job 665, 2,596 s) and the two reads
+
+| tier | groups | what it is |
+| --- | --- | --- |
+| under-wall | 493,882 | small groups (2–20 rows) under the raw cap |
+| echo-of-one | 22,361 | over the raw wall, 1..20 identified carriers all in one country |
+| verdict-single | 157 | the top-200 cohort's single entities |
+| **plan** | **516,400 groups, 3,407,962 rows removed** | |
+| over-wall | 57,669 | over the wall, no other tier — the 21+ buckets without a verdict, ~2.9M rows |
+| verdict-refused | 23 | generic / platform / non-name |
+
+**Listing read (30-sample of the 200 largest plan groups): 30/30 one entity** —
+DB Netz AG, Statsbygg, Magistrat der Stadt Wien, Communauté urbaine de Lille,
+Tribunal Administrativo Central de Recursos Contractuales, Centre hospitalier de
+Valenciennes, Kompania Węglowa, Bialmed, … (the verdict-single and largest
+echo-of-one names).
+
+**Tail read (40 random rows of the class, row-weighted):** mostly single
+entities again (Bundeskartellamt, Universität Siegen, Philips Ibérica, INPI,
+Flintshire County Council, Conseil général du Doubs, the tribunals); but the
+tail also holds **non-names** (`1`, `S. o.`, `Siehe VI.3.1`, `Procédure déclarée
+sans suite`, `Vous pouvez obtenir les documents via l'URL suivant`), **persons**
+(`Alain Piscione`), and **bare group / class names** (`Thyssenkrupp`, `High
+Court`, `Am Trust`). Under the wall those fold to one row per string. That is a
+conflation for `High Court`-shaped names in small numbers and a tidy-up for the
+garbage strings — the same trade issue 234 made in-country, and the rows are
+provisional name-only identity either way. Accepted, recorded; a `non-name`
+verdict cohort for the recurring form strings is cheap to add later.
+
+**Wet slice:** job 666, `max_groups` 2,000 (the plan folds in name order, so the
+first slice is the names sorting first). The classifier allowed the enqueue.
+Verify after: `/health`, the job's counts (removed / mentions), a folded name by
+bounded read, then larger slices under the residual plan.
+
+**Next cohort:** the 57,669 over-wall names hold ~2.9M rows and need verdicts
+— a listing job for the over-wall names by rows (the census stops at 200) and
+a 311-style read, person or agent, in cohorts of a few hundred.
