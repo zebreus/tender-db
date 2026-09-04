@@ -1,6 +1,6 @@
 # 345 — standing identifiers pre-date the v2.1 normaliser folds: a re-normalise repair in the 328 shape
 
-Status: BUILT 2026-09-04 (gate 813 green; deploying) — dry run on prod next, then wet, then a capped R2 pass; was: ready-for-agent (filed 2026-09-03 from the gate v2.1 deploy, `aa492dc`)
+Status: DONE 2026-09-04 — repair wet (636: 2,409 rows), R2 pass (638: 1,846 groups folded, 2439 → 2438 among them); the Greek pair 311/1079 now stands as an exact same-triple duplicate of issue 329's unkeyed class (no cross-walk arm for the 14-char GR code) — recorded there. Was: BUILT 2026-09-04 (gate 813 green; deploying) — dry run on prod next, then wet, then a capped R2 pass; was: ready-for-agent (filed 2026-09-03 from the gate v2.1 deploy, `aa492dc`)
 Kind: data quality / identity (organization layer) — the stock half of a prevention change
 Relates to: 300 (gate v2.1, top-100 read), 328 (`repair-label-prefixes`, the template), 325 (`repair-minted-countries`, the ladder), 259 (refold-invariance: prevention alone leaves the stock split)
 
@@ -125,3 +125,28 @@ The BG label class from the first plan is gone, as the guard intended. Next:
 the R2 pass folds the 2,038 reunions whose scheme has a cross-walk arm
 (GR AFM and RO CUI both do), then the ledger check for 1079 → 311 and
 2439 → 2438.
+
+## R2 pass and close-out (job 638, 2026-09-04 00:43–00:55 UTC, 745 s)
+
+```
+1123342 orgs scanned, 367362 E1-keyed, 2482 groups >=2; denied: 558 consortium,
+64 legal-form, 14 vat-group-wall; plan 1846 groups; merged 1846 groups (1850 org
+rows removed, 59949 mentions, 1120067 parties, 116 bid-parties, 116 winners
+repointed, 18834 tenders touched)
+```
+
+* **2439 → 2438**: folded (the RO CUI arm keys `16054368`); CNAIR's directorate
+  rows are its own again.
+* **311 / 1079**: both now carry `GR national 1000E009610001` — correct and
+  visible — but NOT folded: `crosswalk::canonical_key`'s GR arm keys 9-digit AFMs
+  only, and this is a 14-character authority code, so the pair is an exact
+  same-triple duplicate of the class issue 329 measured (3,450 unkeyed groups,
+  "thirty-odd scopes of 1–9 groups each"). The repair made it visible; folding
+  it is 329's per-scope decision (a GR authority-code arm — one group so far —
+  or a case-review merge verdict). Noted there.
+* Health 200 throughout; writer queue depth 1 during the big group (the GR
+  authority's ~1.1M party rows), no request cut.
+
+The job is a standing tool now: any future normaliser change is followed by
+`repair-renormalised-identifiers` (dry, review the stored plan, wet) and an R2
+pass — the 328/345 shape.

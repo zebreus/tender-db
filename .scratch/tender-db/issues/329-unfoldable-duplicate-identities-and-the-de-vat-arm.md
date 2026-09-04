@@ -260,3 +260,17 @@ corroboration + generic-name denial. That is a separate proposal with its own
 dry-plan/review/parity ladder, and it must carry a public-body veto, because the
 `disagree` reading shows the failure mode is governmental rather than corporate.
 Not started; filed here rather than begun, so the board stays the record.
+
+## 2026-09-04 — a new unkeyed same-triple pair from issue 345's repair, as a specimen
+
+Orgs 311 and 1079 (the Greek Single Public Procurement Authority, 8,029 and 3,601
+mentions) now share `GR national 1000E009610001` after the v2.1 lookalike fold
+and the 345 repair aligned their identifiers. The GR arm keys 9-digit AFMs only,
+so R2 (job 638) left the pair standing — the largest group this class has by
+mention count. Names agree modulo case and accents (`Ενιαία Αρχή Δημοσίων
+Συμβάσεων (Ε.Α.ΔΗ.ΣΥ)` / `ΕΝΙΑΙΑ ΑΡΧΗ ΔΗΜΟΣΙΩΝ ΣΥΜΒΑΣΕΩΝ`), i.e. `agree-distinctive`
+under an accent-insensitive N2. Two routes, both bounded: a GR authority-code arm
+in `canonical_key` (14-char, letter-bearing, one group so far — an arm for one
+group is the "not worth an arm" call this issue already made), or a case-review
+merge verdict through the 311 machinery. Left for the per-scope decision; the
+repair's job was to make it visible, and it is.

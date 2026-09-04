@@ -1093,3 +1093,9 @@ running since 08-29 (issues 309/310/314); what this design still owes is Stage 1
 (placeholder gate v2 + split — now with four new gate classes from the top-100:
 `t:` phone ids, scheme-`EU` short numerics, the Greek/Latin confusable fold, the
 RO `_n` suffix) and Stage 5. Re-derive the status line from that before building.
+
+Gate v2.1 follow-through 2026-09-04: `repair-renormalised-identifiers` (issue 345)
+moved 2,409 standing rows to the live normaliser's reading (RO sub-unit suffixes,
+Greek lookalike letters, a handful of Cyrillic-typed Latin prefixes/suffixes); the
+R2 pass folded 1,846 groups (1,850 rows, 1.12M party rows repointed). The 311/1079
+exemplar is now a same-triple duplicate the GR arm does not key — 329's list.
