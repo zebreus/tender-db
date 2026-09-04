@@ -2496,6 +2496,51 @@ pub struct GenericKeyProbe {
     pub echo: bool,
 }
 
+/// Issue 351: one name held by several NULL-country, identifier-less
+/// provisional rows — the echo class — as the census lists it.
+#[derive(Debug, Default, Clone)]
+pub struct ProvisionalEchoGroup {
+    pub name_norm: String,
+    /// The first row's published name.
+    pub name: String,
+    pub rows: u64,
+    /// Mentions bound to those rows (the recall the class holds).
+    pub mentions: u64,
+    /// The wall's view of the N2 key: distinct carriers (bounded at cap + 1)
+    /// and whether that is over the cap.
+    pub carriers: u64,
+    pub generic: bool,
+}
+
+/// Issue 351: the provisional-echo census. The post-234 provisional path
+/// reuses `(name_norm, country)`, so a COUNTRY-LESS mention mints a fresh
+/// row every time — `Stadt Burghausen` × 92 identical rows on 2026-09-04.
+/// This walks that class in `name_norm` order (the `(name_norm, id)` index,
+/// so one group is contiguous and the walk needs no map of every name) and
+/// reports how big it is, how it is distributed, and what the wall makes of
+/// the largest names. Writes nothing.
+#[derive(Debug, Default, Clone)]
+pub struct ProvisionalEchoReport {
+    /// Provisional, NULL-country, identifier-less rows with a name.
+    pub rows_walked: u64,
+    /// Distinct `name_norm` values among them.
+    pub names: u64,
+    /// Names held by more than one row.
+    pub groups: u64,
+    /// Rows inside those groups — the rows a fold would remove all but one of.
+    pub rows_in_groups: u64,
+    /// Group sizes: `"2"`, `"3-5"`, `"6-20"`, `"21-100"`, `"101+"` → groups.
+    pub size_hist: std::collections::BTreeMap<String, u64>,
+    /// The largest `cap` groups by rows, with mentions and the wall's verdict.
+    pub listed: Vec<ProvisionalEchoGroup>,
+    /// Mentions on the listed groups' rows.
+    pub listed_mentions: u64,
+    /// Listed groups whose key is over the wall (the Taufkirchen shape a
+    /// gated reuse would leave alone).
+    pub listed_over_wall: u64,
+    pub stopped: bool,
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct DuplicateIdentity {
     /// `"DE:vat"` — the scope this triple belongs to, so a reader can tell the
@@ -13820,6 +13865,147 @@ impl Db {
                 ids.iter().filter_map(|id| mentions_of.get(id)).sum();
         }
 
+        Ok(report)
+    }
+
+    /// The issue-351 census: NULL-country, identifier-less provisional rows
+    /// grouped by `name_norm`. See [`ProvisionalEchoReport`]. Walks the
+    /// `(name_norm, id)` index by keyset so a group arrives contiguous and the
+    /// walk carries one group at a time plus a bounded top-`cap` list; the
+    /// mention counts and the wall's verdict are fetched for the listed
+    /// groups only. Writes nothing.
+    pub async fn provisional_echo_census(
+        &self,
+        n2: fn(&str) -> String,
+        stoplist_cap: usize,
+        cap: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+        progress: &(dyn Fn(u64, &str) + Sync),
+    ) -> turso::Result<ProvisionalEchoReport> {
+        let mut report = ProvisionalEchoReport::default();
+        let reader = self.reader().await?;
+        // Top-`cap` by rows: a min-heap keyed on rows, so the smallest listed
+        // group is the one a bigger newcomer displaces.
+        let mut top: std::collections::BinaryHeap<std::cmp::Reverse<(u64, String, String, Vec<i64>)>> =
+            Default::default();
+        let mut cur: Option<(String, String, Vec<i64>)> = None;
+        let mut flush = |cur: &mut Option<(String, String, Vec<i64>)>, report: &mut ProvisionalEchoReport| {
+            let Some((norm, name, ids)) = cur.take() else { return };
+            let n = ids.len() as u64;
+            report.names += 1;
+            if n >= 2 {
+                report.groups += 1;
+                report.rows_in_groups += n;
+                let bucket = match n {
+                    2 => "2",
+                    3..=5 => "3-5",
+                    6..=20 => "6-20",
+                    21..=100 => "21-100",
+                    _ => "101+",
+                };
+                *report.size_hist.entry(bucket.to_owned()).or_default() += 1;
+                if top.len() < cap {
+                    top.push(std::cmp::Reverse((n, norm, name, ids)));
+                } else if let Some(std::cmp::Reverse((least, _, _, _))) = top.peek()
+                    && n > *least
+                {
+                    top.pop();
+                    top.push(std::cmp::Reverse((n, norm, name, ids)));
+                }
+            }
+        };
+        let (mut last_norm, mut last_id) = (String::new(), 0i64);
+        loop {
+            if stop() {
+                return Ok(ProvisionalEchoReport { stopped: true, ..Default::default() });
+            }
+            let mut rows = reader
+                .query(
+                    "SELECT name_norm, id, name FROM organizations \
+                      WHERE provisional = 1 AND country IS NULL AND identifier IS NULL \
+                        AND name_norm IS NOT NULL AND name_norm <> '' \
+                        AND (name_norm > ? OR (name_norm = ? AND id > ?)) \
+                      ORDER BY name_norm, id LIMIT 20000",
+                    (t(&last_norm), t(&last_norm), Value::Integer(last_id)),
+                )
+                .await?;
+            let mut page = 0u64;
+            while let Some(row) = rows.next().await? {
+                page += 1;
+                let norm = text(&row, 0);
+                let id = int(&row, 1);
+                let name = text(&row, 2);
+                report.rows_walked += 1;
+                match cur.as_mut() {
+                    Some((n, _, ids)) if *n == norm => ids.push(id),
+                    _ => {
+                        flush(&mut cur, &mut report);
+                        cur = Some((norm.clone(), name, vec![id]));
+                    }
+                }
+                last_norm = norm;
+                last_id = id;
+            }
+            progress(report.rows_walked, &format!("walking provisional rows, {} so far", report.rows_walked));
+            if page == 0 {
+                break;
+            }
+        }
+        flush(&mut cur, &mut report);
+        drop(flush);
+        let mut listed: Vec<(u64, String, String, Vec<i64>)> =
+            top.into_iter().map(|std::cmp::Reverse(g)| g).collect();
+        listed.sort_by(|a, b| b.0.cmp(&a.0).then_with(|| a.1.cmp(&b.1)));
+
+        // Pass 2: mentions on the listed rows only, batched by id.
+        progress(report.rows_walked, "counting mentions for the listed groups");
+        let listed_ids: Vec<i64> = listed.iter().flat_map(|g| g.3.iter().copied()).collect();
+        let mut mentions_of: std::collections::HashMap<i64, u64> = Default::default();
+        for chunk in listed_ids.chunks(IN_CHUNK) {
+            if stop() {
+                return Ok(ProvisionalEchoReport { stopped: true, ..Default::default() });
+            }
+            let sql = format!(
+                "SELECT organization_id, COUNT(*) FROM organization_mentions \
+                  WHERE organization_id IN ({}) GROUP BY organization_id",
+                placeholders(chunk.len())
+            );
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let mut q = reader.query(&sql, params).await?;
+            while let Some(r) = q.next().await? {
+                mentions_of.insert(int(&r, 0), int(&r, 1).max(0) as u64);
+            }
+        }
+        // Pass 3: the wall's verdict on each listed name — 'n3' then 'n2', the
+        // wall's own order (NAME_KEY_CARRIERS_SQL explains why not one IN).
+        for (n, norm, name, ids) in listed {
+            let key = n2(&name);
+            let mut carriers = 0u64;
+            if !key.is_empty() {
+                for kind in ["n3", "n2"] {
+                    let mut q = reader
+                        .query(
+                            NAME_KEY_CARRIERS_SQL,
+                            (t(kind), t(key.as_str()), Value::Integer(stoplist_cap as i64 + 1)),
+                        )
+                        .await?;
+                    carriers = match q.next().await? {
+                        Some(row) => int(&row, 0).max(0) as u64,
+                        None => 0,
+                    };
+                    if carriers > 0 {
+                        break;
+                    }
+                }
+            }
+            let generic = carriers as usize > stoplist_cap;
+            let mentions: u64 = ids.iter().filter_map(|id| mentions_of.get(id)).sum();
+            report.listed_mentions += mentions;
+            if generic {
+                report.listed_over_wall += 1;
+            }
+            report.listed.push(ProvisionalEchoGroup { name_norm: norm, name, rows: n, mentions, carriers, generic });
+        }
         Ok(report)
     }
 

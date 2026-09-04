@@ -382,6 +382,9 @@ enum Spec {
     /// triples, split by whether `canonical_key` can see them and — where it
     /// cannot — by whether the member names agree. Read-only measurement.
     DuplicateIdentityCensus,
+    /// Issue 351: NULL-country, identifier-less provisional rows by name —
+    /// the echo class. Read-only measurement.
+    ProvisionalEchoCensus,
     /// Issue 330: organization names carrying a line break, and whether the
     /// notice published it that way. Read-only measurement.
     NamePollutionCensus,
@@ -1362,6 +1365,14 @@ impl Supervisor {
                 )
                 .await,
             ]),
+            "provisional-echo-census" => Ok(vec![
+                self.push(
+                    "provisional-echo-census",
+                    "provisional-echo-census".into(),
+                    Spec::ProvisionalEchoCensus,
+                )
+                .await,
+            ]),
             "country-typo-census" => Ok(vec![
                 self.push(
                     "country-typo-census",
@@ -1826,6 +1837,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "country-typo-census",
     "country-cluster-census",
     "duplicate-identity-census",
+    "provisional-echo-census",
     "name-pollution-census",
     "generic-wall-census",
     "generic-statistic-census",
@@ -6033,6 +6045,63 @@ impl Supervisor {
                     r.name_lengths.last().copied().unwrap_or(0),
                 ))
             }).await,
+            Spec::ProvisionalEchoCensus => Box::pin(async move {
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase("walking", None, None, "issue 351: provisional rows by name".to_owned());
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("walking", Some(done), None, detail.to_owned());
+                };
+                const CAP: usize = 200;
+                let r = self
+                    .db
+                    .provisional_echo_census(
+                        ingest::project::match_norm,
+                        SCAN_STOPLIST_CAP,
+                        CAP,
+                        &stop,
+                        &progress,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("provisional-echo-census STOPPED by cancel — no report stored".to_owned());
+                }
+                let now = store::now_unix();
+                let body = serde_json::json!({
+                    "rows_walked": r.rows_walked,
+                    "names": r.names,
+                    "groups": r.groups,
+                    "rows_in_groups": r.rows_in_groups,
+                    "size_hist": r.size_hist,
+                    "listed_mentions": r.listed_mentions,
+                    "listed_over_wall": r.listed_over_wall,
+                    "listed": r.listed.iter().map(|g| serde_json::json!({
+                        "name_norm": g.name_norm, "name": g.name, "rows": g.rows,
+                        "mentions": g.mentions, "carriers": g.carriers, "generic": g.generic,
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("provisional-echo-census", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "provisional-echo-census (issue 351): {} NULL-country identifier-less provisional \
+                     rows under {} names; {} names hold more than one row, covering {} rows \
+                     (a fold would remove {}); sizes {:?}; the {} largest listed carry {} mentions, \
+                     {} of them over the wall",
+                    r.rows_walked,
+                    r.names,
+                    r.groups,
+                    r.rows_in_groups,
+                    r.rows_in_groups.saturating_sub(r.groups),
+                    r.size_hist,
+                    r.listed.len(),
+                    r.listed_mentions,
+                    r.listed_over_wall
+                ))
+            }).await,
             Spec::DuplicateIdentityCensus => Box::pin(async move {
                 // BOXED. `run_spec` is a 62-arm async match, so every arm's
                 // locals live in ONE future — and adding this census's arm
@@ -9210,6 +9279,7 @@ mod tests {
                 "country-typo-census",
                 "country-cluster-census",
                 "duplicate-identity-census",
+                "provisional-echo-census",
                 "name-pollution-census",
                 "generic-wall-census",
                 "generic-statistic-census",
