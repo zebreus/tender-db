@@ -121,6 +121,39 @@ the wall) and are excluded by the cutter. **24,675 names / 1,573,950 rows in
 (`pec-rubric.md`; `pec-batches.py` cuts, `pec-assemble.py` builds the POST
 body from the census's stored names, so no name is ever retyped).
 
+## Cohort 6 at scale (2026-09-04, evening)
+
+Census job 675 (cap 25,000; 714 s) listed 24,843 raw-wall names; 168 of them
+carry an earlier `unclear` verdict (a verdict that falls back to the wall
+shows as `over-wall`, so the cutter excludes the cohort files by name).
+24,675 candidates / 1,573,950 rows (26–229 rows each) went to ten reader
+subagents in fifty index-keyed batches of 500 with the rubric
+(`scratchpad/pec-rubric.md`). Pass 1: 21,507 `single` (1,364,328 rows) /
+2,002 `unclear` / 624 `generic` / 511 `non-name` / 31 `platform` — the hand
+cohorts' ratio. Assembled from the census's stored names by index
+(`pec-assemble.py`), posted as `over-wall-6-2026-09-04` in five parts.
+
+**Drift.** A spot check of the 31 `platform` verdicts found a Polish
+ambulance station carrying "UK regional procurement portal URL": pass 1's
+batch 13 had slipped one row somewhere before index 6887, so from there each
+answer described the NEXT name — `www.supplyingthesouthwest.org.uk` was
+posted `single` with a Greek ministry's rationale. A reader that writes 500
+answers in one go can lose a row and nothing in the index-only protocol
+catches it. The dry run planning on those verdicts (job 676) was cancelled
+(the b71e809 guard kept the recorded plan untouched) and batch 13 was
+re-posted as `unclear` (`353-batch13-hold.json`) until a verified read
+replaces it.
+
+**The fix in protocol, not in trust:** a second independent pass over every
+batch, in chunks of 100, where each answer carries `echo` = the first twelve
+characters of its name; `pec-verify.py` drops any answer whose echo does not
+match the stored name, and merges the two passes — agreement keeps the
+verdict, disagreement takes the more cautious one (`single` never wins over
+a refusal or `unclear`), an index with only pass 1 becomes `unclear`. The
+first pass-2 fleet (Fable) was cut off by a per-model rate limit after 17
+batches; the remaining 33 run on Opus. What changes against the posted
+cohort is re-posted (`changed.json`), then dry, then wet.
+
 ## Next
 
 Deploy; the cohorts 4+5 dry run (`fold-provisional-echoes {"dry_run":true}`)
