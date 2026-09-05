@@ -1,6 +1,6 @@
 # 357 — The identifier-under-several-codes residue, case by case through the verdict path
 
-Status: SLICES 1–5 APPLIED, SLICE 6 (the last full one) STARTING 2026-09-05 22:2x UTC — cohort
+Status: SLICES 1–5 APPLIED, SLICE 6 (the last full one) STARTING 2026-09-05 19:2x UTC — cohort
 `cluster-country-2026-09-05`. Slice 1: 488 moved / R2 316 groups. Slice 2: 239 / 171. Slice 3:
 113 / 74. Slice 4: 117 / 69. Slice 5: **144 moved (job 729), R2 89 groups / 89 rows, 179
 mentions, 325 parties, 331 bid-parties, 384 winners repointed (job 731)**. Running total:
