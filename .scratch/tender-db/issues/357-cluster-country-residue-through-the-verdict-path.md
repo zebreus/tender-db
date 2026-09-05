@@ -91,6 +91,19 @@ overseas-department class, now issue 358; 2 standing: IBM World Trade Corporatio
 B2Mobility GmbH under DE). **Apply set: 118 HIGH** (arithmetic 61, weight 36, national-format
 21). Record: `357-cluster-country-verdicts-slice3.json`.
 
+## Slice 4 reviewed (2026-09-05, 30 agents, ~2.5M tokens; resumed after a container restart)
+
+332 new clusters — the lighter end of the cohort (heaviest member 3–11 mentions by quartile),
+so the verdict mix shifts: wrong-country 193, distinct-entities 90, needs-more-evidence 34,
+same-entity-two-registrations 15. 204 moves (181 high). Challenger: agreed on 311, disputed 21,
+flagged 2 missed. Blind readers (34): 27 same verdict, 32 same HIGH set — the verdict
+disagreements are the reviewer choosing needs-more-evidence where the reader moved (the deny
+direction), and one the other way: STEMCELL Technologies FR/ES, where the reader was right that a
+Spanish CIF starting with N is a NON-RESIDENT foreign entity's own tax number (now a floor:
+`non-resident-cif`, and the case parked by hand). Floor parked 47 (39 shared-register — issue
+358; 8 own-legal-form). **Apply set: 117 HIGH** (arithmetic 67, national-format 34, weight 16);
+139 `keep` rows recorded. Record: `357-cluster-country-verdicts-slice4.json`.
+
 ## A shape the rubric missed, found on slice 2's heaviest movers (2026-09-05)
 
 The six heaviest planned moves of slice 2 were parents carrying a branch's or subsidiary's
