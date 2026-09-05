@@ -1,8 +1,12 @@
 # 355 — Verdict-gated country moves: the execution path `wrong-country` verdicts never had
 
-Status: BUILT 2026-09-05 (gate running) — `org_country_verdicts`, `POST /admin/country-verdicts`,
-`apply-country-verdicts` (dry default; wet executes the reviewed (org, from, to) tuples or
-refuses), five store tests. Deploys at the next idle window; then the campaign below feeds it.
+Status: DEPLOYED (`75db3bf`) AND CAMPAIGN REVIEWED 2026-09-05 — 487 cases reviewed and
+challenged, 315 verdicts recorded under cohort `xb-country-2026-09-05`, dry plan (job 691)
+**153 moves, exact against the recorded highs, 0 no-ops, 135 collisions for R2**. **WET RUN
+PENDING**: the session's command classifier refused the wet enqueue twice (the one step that
+rewrites rows); retry `admin.sh enqueue apply-country-verdicts '{"dry_run":false}'` at the
+next firing, then R2 dry/wet for the 135 duplicate identities, then `project`. See
+"The campaign" below.
 Kind: capability (organization layer — data quality)
 Relates to: 311 (the review loop), 314 (the same-name cross-border cohort whose verdicts are
 inert), 326 (the same move, made by a predicate), 317 Unit A (the verdict/apply template)
@@ -62,6 +66,49 @@ verdict on the same row is a separate record); the record-time refusals.
    residue clusters — the cohorts a predicate abstained on.
 3. Record → `apply-country-verdicts` dry → read the plan → wet → R2 dry/wet to fold the
    collisions → `project`.
+
+## The campaign (2026-09-05, 38 agents, ~3.4M tokens, 2h40m at two concurrent on this 4-CPU box)
+
+Shape: 17 stratified 35-case batches (identical/different identifier × none/one/several
+`country_agrees`) on the fast model — one reviewer per batch with rubric v3
+(`355-rubric.md`: v2's corrections plus the corrected packet's `probed`/`agrees`/`anchors`
+fields, four evidence classes, HIGH bar), one adversarial challenger per batch (refute every
+move literally against the fields); four blind second-reader batches (55 cases, every 9th) on
+the session model. A first launch with the session model on 20-case batches was stopped after
+40 minutes: ~30 min per reviewer at two concurrent would have taken a day.
+
+Results: 487/487 verdicts. By stratum — identical/one-agrees 112 wrong-country of 125;
+identical/none-agree 138 of 156; different/one-agrees 9 of 85 (57 distinct-entities);
+different/none-agree 50 of 109 (31 same-entity-two-registrations); different/several-agree
+0 of 12. 316 moves (225 high / 89 medium / 2 low; arithmetic 138, national-format 67,
+name-language 73, weight 38). Challenger: agreed on 452 cases, disputed 34 moves, flagged 2
+missed moves. Blind sample: 41/55 same verdict, 48/55 same HIGH move set — every
+disagreement read: three are the reviewer over-claiming (all parked below), four are
+the second reader finding a move the reviewer left as distinct/undecided (not applied;
+a second-pass class).
+
+**The deterministic floor** (the deny direction, in code over the reviewers' output — 53
+highs parked to medium): 36 `identical-identifier-weight` moves with no anchor anywhere in
+the case; 6 arithmetic moves between CZ/SK/SI, whose IČO/davčna share one mod-11 rule while the
+vocabulary carries no SK scheme (a CZ anchor on an unprobed SK row is a coincidence-proof hit,
+not a discriminator — 314's own note, re-found by the challengers; two of those would have moved
+a Slovak row with the standing, one named "Basco SK"); 11 moves inside a shared REGISTER
+(Åland↔Finland, Réunion↔France: one register serves both codes, so a validating number cannot
+separate the tags — a policy question, not a contamination). Plus 34 challenger-disputed
+highs. Apply set: **153 HIGH** (arithmetic 105, national-format 58): SE→FI 14, NO→DK 14,
+NO→SE 11, AD→CZ 8, SE→DK 7 … The six heaviest (9–23 mentions: a 13-digit Moldovan IDNO under
+RO, an identical IT partita IVA beside a 391-mention agreeing IT row, a complete Indian CIN
+under GB, an 8-digit FI y-tunnus under SE, a 14-digit FR SIRET under ES) were read by hand
+and hold. Full record: `355-xb-country-verdicts.json` (verdicts, moves with the recorded
+confidence, challenger notes, blind-sample verdicts).
+
+Two things the campaign found that the rules had not: (1) issue 325's parse-artefact class
+decided case by case — HRB register citations under NL/GE, Irish CHY charity numbers under
+CH, `Registergericht München HRB…` as an identifier under SE; (2) one recorded row could not
+be posted at all: org 16789727 stands under country `1A`, and `from_country` must be a
+two-letter code — a junk code is exactly what a contamination looks like, so the record-time
+check should accept any published code as the pre-image (small follow-up; the row is a
+medium anyway).
 
 ## Not in scope
 
