@@ -1,15 +1,12 @@
 # 357 — The identifier-under-several-codes residue, case by case through the verdict path
 
-Status: CAMPAIGN SLICE 1 RUNNING 2026-09-05 09:3x UTC — packet job deployed (`3be3f45`) and run
-(job 701, 4 s): **3,897 clusters, 2,819 reviewable** (no-one-letter-pair 2,580, nobody-asked
-148, anchor-names-one 66, anchor-names-several 18, asked-and-refused 7); the 600 heaviest
-carried (heaviest member 45–645+ mentions by quartile; 503 pairs, 97 triples or more). Split
-by census class × shape — **spray** (heaviest member ≥ 10× the next: 573) vs **balanced** (27)
-— into 23 batches of ≤ 35 plus 3 blind sample batches (60 cases); rubric v3c (`357-rubric.md`:
-v3 plus the census fields and the spray rule), fast model for reviewer + challenger, session
-model for the blind readers. Then: floors (355's plus the spray checks), POST under cohort
-`cluster-country-2026-09-05`, dry → wet → R2 dry/wet → project; slices 2–5 (the remaining
-2,219) at 600 per firing.
+Status: SLICE 1 APPLIED 2026-09-05 11:5x UTC — 590 verdicts recorded under
+`cluster-country-2026-09-05`; dry plan (job 702) **488 moves, exact against the recorded highs, 0
+no-ops**; wet (job 703) **488 rows moved**; R2 dry/wet (jobs 704/705) **316 groups merged, 394
+org rows removed, 1,395 mentions, 2,254 parties, 926 bid-parties, 9,437 winners repointed, 833
+tenders touched**; `project` (706) behind it. Slice 2 (the next 600 heaviest — folded clusters
+leave the census, so the same cap yields them) queued as the next packet run. Packet job
+deployed `3be3f45`; packet run 701: 3,897 clusters, 2,819 reviewable.
 Kind: data quality (organization layer) — campaign
 Relates to: 326 (the census and the predicate that decided what it could), 355 (the
 verdict path and the campaign shape), 314 (the per-member evidence), 311 (the principle)
