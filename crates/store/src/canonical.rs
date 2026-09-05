@@ -492,6 +492,32 @@ pub(crate) const SCHEMA: &str = "
         PRIMARY KEY (notice_id, section_id)
     ) STRICT;
 
+    -- Issue 355: per-ROW country verdicts — the execution path the issue-314
+    -- campaign's `wrong-country` verdicts never had. A case review recorded
+    -- *the SK row is the contaminated one* in free text nothing could
+    -- execute; this is the structured form: one decision per organization
+    -- row, the code the reviewer SAW (`from_country`, the pre-image the apply
+    -- pass re-checks) and the code the evidence names (`to_country`). Applied
+    -- through the same move issue 326's typo repair makes — `country` is
+    -- rewritten, the change is published, and the duplicate identity a move
+    -- lands on is left for the R2 arm ON PURPOSE (a moved row lands on the
+    -- triple it should have had all along). `applied_action` keeps the
+    -- pre-image, so a move is reversible from the row alone.
+    CREATE TABLE IF NOT EXISTS org_country_verdicts (
+        org_id         INTEGER NOT NULL,
+        cohort         TEXT    NOT NULL,
+        action         TEXT    NOT NULL CHECK (action IN ('move','keep')),
+        from_country   TEXT,             -- what the reviewer saw; NULL = country-less
+        to_country     TEXT,             -- move: where the evidence puts the row
+        rationale      TEXT    NOT NULL,
+        confidence     TEXT    NOT NULL CHECK (confidence IN ('high','medium','low')),
+        reviewed_at    INTEGER NOT NULL,
+        applied_at     INTEGER,
+        applied_action TEXT,             -- the pre-image: the country it came from
+        job_id         INTEGER,
+        PRIMARY KEY (org_id, cohort)
+    ) STRICT;
+
     -- Issue 300 §2.3 (Stage 4): REBUILDABLE scratch satellite — name keys
     -- for the E3/E4 candidate scans. Not an entity table: no change events,
     -- no FK (org ids may dangle after merges — org_merge_log precedent),
@@ -1777,6 +1803,58 @@ pub struct RehomingReport {
     /// destination (the issue-311 panel's lesson, applied up front).
     pub plan: Vec<(i64, String, i64, i64, String)>,
     pub stopped: bool,
+}
+
+/// One reviewed country verdict (issue 355): the row, the code the reviewer
+/// saw, and the code the evidence names. A `keep` is a real verdict — it
+/// records that a reviewer looked at a suspicious code and found it published
+/// on purpose (a foreign VAT names a real jurisdiction).
+#[derive(Debug, Clone)]
+pub struct CountryVerdict {
+    pub org_id: i64,
+    /// `move` or `keep`.
+    pub action: String,
+    /// The country the reviewer saw the row under — re-checked before a move,
+    /// so a row somebody else moved or merged since the review is a no-op.
+    pub from_country: Option<String>,
+    pub to_country: Option<String>,
+    pub rationale: String,
+    pub confidence: String,
+}
+
+/// One planned (dry) or executed (wet) country move.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CountryMove {
+    pub org: i64,
+    pub from: Option<String>,
+    pub to: String,
+    pub identifier_kind: Option<String>,
+    pub identifier: Option<String>,
+    pub name: String,
+    pub mentions: u64,
+    /// The row already standing on `(to, kind, identifier)` — the duplicate
+    /// identity this move creates on purpose, for the R2 arm to fold.
+    pub collides_with: Option<i64>,
+}
+
+/// What the issue-355 apply pass did (or would do, dry).
+#[derive(Debug, Default, Clone)]
+pub struct CountryVerdictReport {
+    /// Unapplied verdicts considered.
+    pub pending: u64,
+    /// In the appliable subset: `move`, high confidence, with a destination.
+    pub eligible: u64,
+    /// Rows moved (wet) / that would move (dry).
+    pub moved: u64,
+    /// Eligible verdicts that changed nothing — the row is gone, already
+    /// where the verdict puts it, or no longer under the code the reviewer
+    /// saw. Stamped so they leave the pending set.
+    pub noop: u64,
+    /// Moves landing on a triple another row already holds.
+    pub collisions: u64,
+    /// Dry-run only: the concrete move list, because a counts-only preview
+    /// cannot show a wrong destination.
+    pub plan: Vec<CountryMove>,
 }
 
 /// What the issue-311 apply job did (or would do, dry).
@@ -12464,6 +12542,346 @@ impl Db {
             }
         }
         self.publish_cursor(&conn).await?;
+        Ok(report)
+    }
+
+    /// Record one cohort's per-ROW country verdicts (issue 355). Recording
+    /// only — nothing moves here.
+    ///
+    /// Re-recording a row REPLACES its verdict but never touches an applied
+    /// stamp or its pre-image: once a row has moved, the record of where it
+    /// came from is the only way back (the issue-311 panel's catch, carried
+    /// over from `record_rehoming`). A `move` without a destination, or one
+    /// whose destination is the code it already carries, is refused here
+    /// rather than left for the apply pass to reason about.
+    pub async fn record_country_verdicts(
+        &self,
+        cohort: &str,
+        verdicts: &[CountryVerdict],
+        now: i64,
+    ) -> turso::Result<u64> {
+        for v in verdicts {
+            let is_cc = |c: &str| c.len() == 2 && c.bytes().all(|b| b.is_ascii_uppercase());
+            if let Some(f) = &v.from_country {
+                if !is_cc(f) {
+                    return Err(turso::Error::Error(format!(
+                        "org {}: from_country {f:?} is not a two-letter code",
+                        v.org_id
+                    )));
+                }
+            }
+            match v.action.as_str() {
+                "keep" => {}
+                "move" => match &v.to_country {
+                    Some(to) if is_cc(to) && Some(to) != v.from_country.as_ref() => {}
+                    Some(to) => {
+                        return Err(turso::Error::Error(format!(
+                            "org {}: a move to {to:?} from {:?} moves nothing",
+                            v.org_id, v.from_country
+                        )))
+                    }
+                    None => {
+                        return Err(turso::Error::Error(format!(
+                            "org {}: a move needs to_country",
+                            v.org_id
+                        )))
+                    }
+                },
+                other => {
+                    return Err(turso::Error::Error(format!(
+                        "org {}: action must be move|keep, got {other:?}",
+                        v.org_id
+                    )))
+                }
+            }
+        }
+        let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result: turso::Result<u64> = async {
+            let mut n = 0u64;
+            for v in verdicts {
+                conn.execute(
+                    "INSERT INTO org_country_verdicts \
+                       (org_id, cohort, action, from_country, to_country, rationale, \
+                        confidence, reviewed_at) \
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?) \
+                     ON CONFLICT(org_id, cohort) DO UPDATE SET \
+                        action = excluded.action, from_country = excluded.from_country, \
+                        to_country = excluded.to_country, rationale = excluded.rationale, \
+                        confidence = excluded.confidence, reviewed_at = excluded.reviewed_at",
+                    (
+                        Value::Integer(v.org_id),
+                        t(cohort),
+                        t(&v.action),
+                        match &v.from_country {
+                            Some(c) => t(c),
+                            None => Value::Null,
+                        },
+                        match &v.to_country {
+                            Some(c) => t(c),
+                            None => Value::Null,
+                        },
+                        t(&v.rationale),
+                        t(&v.confidence),
+                        Value::Integer(now),
+                    ),
+                )
+                .await?;
+                n += 1;
+            }
+            Ok(n)
+        }
+        .await;
+        match result {
+            Ok(n) => {
+                if let Err(e) = conn.execute("COMMIT", ()).await {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+                Ok(n)
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                Err(e)
+            }
+        }
+    }
+
+    /// Issue 355: move the rows a HIGH-confidence `move` verdict names — the
+    /// execution path the issue-314 `wrong-country` verdicts lacked.
+    ///
+    /// The move is issue 326's, statement for statement: `country` is
+    /// rewritten, the organization's change is published so a consumer
+    /// filtering on country sees the correction go by, and the duplicate
+    /// identity the row lands on is counted (`collisions`) and LEFT for the
+    /// R2 merge arm — a moved row lands on the triple it should have had all
+    /// along, and folding it is the arm's job, not this one's.
+    ///
+    /// Guards, the same shape as the 311/317 apply paths: the row must still
+    /// stand under the code the reviewer saw (`from_country`) — somebody
+    /// merging or moving it since the review makes the verdict a stamped
+    /// no-op, not a retry; a row already where the verdict puts it is a
+    /// no-op; `applied_action` keeps the pre-image; and a wet run executes
+    /// the plan a person reviewed, compared as (org, from, to) TUPLES, or
+    /// refuses.
+    pub async fn apply_country_verdicts(
+        &self,
+        dry_run: bool,
+        expect: Option<&[(i64, Option<String>, String)]>,
+        job_id: Option<i64>,
+        now: i64,
+    ) -> turso::Result<CountryVerdictReport> {
+        let conn = self.conn().await;
+        let mut report = CountryVerdictReport::default();
+        struct Pending {
+            org: i64,
+            cohort: String,
+            from: Option<String>,
+            to: Option<String>,
+            eligible: bool,
+        }
+        let mut pending: Vec<Pending> = Vec::new();
+        {
+            let mut rows = conn
+                .query(
+                    "SELECT org_id, cohort, action, from_country, to_country, confidence \
+                       FROM org_country_verdicts WHERE applied_at IS NULL \
+                      ORDER BY org_id, cohort",
+                    (),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                let to = opt_text_of(&row, 4);
+                let eligible = text(&row, 2) == "move" && text(&row, 5) == "high" && to.is_some();
+                pending.push(Pending {
+                    org: int(&row, 0),
+                    cohort: text(&row, 1),
+                    from: opt_text_of(&row, 3),
+                    to,
+                    eligible,
+                });
+            }
+        }
+        report.pending = pending.len() as u64;
+        report.eligible = pending.iter().filter(|p| p.eligible).count() as u64;
+
+        let mut moves: Vec<(CountryMove, String)> = Vec::new();
+        let mut noops: Vec<(i64, String, String)> = Vec::new();
+        for p in pending.iter().filter(|p| p.eligible) {
+            let to = p.to.clone().expect("eligible implies a destination");
+            let live = {
+                let mut rows = conn
+                    .query(
+                        "SELECT country, identifier_kind, identifier, name \
+                           FROM organizations WHERE id = ?",
+                        (Value::Integer(p.org),),
+                    )
+                    .await?;
+                match rows.next().await? {
+                    Some(row) => Some((
+                        opt_text_of(&row, 0),
+                        opt_text_of(&row, 1),
+                        opt_text_of(&row, 2),
+                        text(&row, 3),
+                    )),
+                    None => None,
+                }
+            };
+            let Some((country, kind, identifier, name)) = live else {
+                report.noop += 1;
+                noops.push((p.org, p.cohort.clone(), format!("no-op: org {} no longer exists", p.org)));
+                continue;
+            };
+            if country.as_deref() == Some(to.as_str()) {
+                report.noop += 1;
+                noops.push((p.org, p.cohort.clone(), format!("no-op: already under {to}")));
+                continue;
+            }
+            if country != p.from {
+                report.noop += 1;
+                noops.push((
+                    p.org,
+                    p.cohort.clone(),
+                    format!(
+                        "no-op: row stands under {}, the verdict saw {}",
+                        country.as_deref().unwrap_or("NULL"),
+                        p.from.as_deref().unwrap_or("NULL")
+                    ),
+                ));
+                continue;
+            }
+            let mentions = {
+                let mut rows = conn
+                    .query(
+                        "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = ?",
+                        (Value::Integer(p.org),),
+                    )
+                    .await?;
+                rows.next().await?.map(|r| int(&r, 0)).unwrap_or(0) as u64
+            };
+            let collides_with = match &identifier {
+                Some(ident) => {
+                    let mut rows = conn
+                        .query(
+                            "SELECT id FROM organizations \
+                              WHERE country = ? AND identifier = ? AND id <> ? \
+                                AND ((identifier_kind IS NULL AND ? IS NULL) OR identifier_kind = ?) \
+                              ORDER BY id LIMIT 1",
+                            (
+                                t(&to),
+                                t(ident),
+                                Value::Integer(p.org),
+                                match &kind {
+                                    Some(k) => t(k),
+                                    None => Value::Null,
+                                },
+                                match &kind {
+                                    Some(k) => t(k),
+                                    None => Value::Null,
+                                },
+                            ),
+                        )
+                        .await?;
+                    rows.next().await?.map(|r| int(&r, 0))
+                }
+                None => None,
+            };
+            if collides_with.is_some() {
+                report.collisions += 1;
+            }
+            report.moved += 1;
+            moves.push((
+                CountryMove {
+                    org: p.org,
+                    from: country,
+                    to,
+                    identifier_kind: kind,
+                    identifier,
+                    name,
+                    mentions,
+                    collides_with,
+                },
+                p.cohort.clone(),
+            ));
+        }
+        if dry_run {
+            report.plan = moves.into_iter().map(|(m, _)| m).collect();
+            return Ok(report);
+        }
+        // The T4 ladder: a wet run executes the plan a person read, or it
+        // refuses. Tuple-wise — the destination is what a reviewer checks.
+        if let Some(expect) = expect {
+            let got: Vec<(i64, Option<String>, String)> =
+                moves.iter().map(|(m, _)| (m.org, m.from.clone(), m.to.clone())).collect();
+            if got != expect {
+                return Err(turso::Error::Error(format!(
+                    "country-verdict apply ABORTED: the reviewed plan holds {} moves, this \
+                     run computes {} and they are not the same moves. Re-run the dry pass \
+                     and review the new plan.",
+                    expect.len(),
+                    got.len()
+                )));
+            }
+        }
+
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result: turso::Result<()> = async {
+            for (m, cohort) in &moves {
+                // The live country was read on this same writer connection a
+                // moment ago, so addressing by id is exact.
+                conn.execute(
+                    "UPDATE organizations SET country = ? WHERE id = ?",
+                    (t(&m.to), Value::Integer(m.org)),
+                )
+                .await?;
+                // `country` is published, so a consumer filtering on it has
+                // to see the correction go by (issue 326's move, kept).
+                append_change(&conn, "organization", m.org, None, "changed", now).await?;
+                conn.execute(
+                    "UPDATE org_country_verdicts SET applied_at = ?, applied_action = ?, \
+                            job_id = ? WHERE org_id = ? AND cohort = ?",
+                    (
+                        Value::Integer(now),
+                        t(&format!("moved from {}", m.from.as_deref().unwrap_or("NULL"))),
+                        opt_int(job_id),
+                        Value::Integer(m.org),
+                        t(cohort),
+                    ),
+                )
+                .await?;
+            }
+            for (org, cohort, why) in &noops {
+                conn.execute(
+                    "UPDATE org_country_verdicts SET applied_at = ?, applied_action = ?, \
+                            job_id = ? WHERE org_id = ? AND cohort = ?",
+                    (
+                        Value::Integer(now),
+                        t(why),
+                        opt_int(job_id),
+                        Value::Integer(*org),
+                        t(cohort),
+                    ),
+                )
+                .await?;
+            }
+            Ok(())
+        }
+        .await;
+        match result {
+            Ok(()) => {
+                if let Err(e) = conn.execute("COMMIT", ()).await {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                return Err(e);
+            }
+        }
+        if report.moved > 0 {
+            self.publish_cursor(&conn).await?;
+        }
         Ok(report)
     }
 

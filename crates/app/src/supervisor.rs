@@ -418,6 +418,9 @@ enum Spec {
     /// Issue 325 step 4: re-parse the standing `kind = 'vat'` rows and write
     /// what the identifier parser now says. Wet writes `organizations`.
     RepairMintedCountries { dry_run: bool },
+    /// Issue 355: move the rows a reviewed `wrong-country` verdict names.
+    /// Wet writes `organizations`.
+    ApplyCountryVerdicts { dry_run: bool },
     /// Issue 317 Unit A: move reviewed mentions to the row they describe.
     ApplyRehoming { dry_run: bool },
     BuildOrgMatchKeys { dry_run: bool },
@@ -1168,6 +1171,24 @@ impl Supervisor {
                         "unapply-case-reviews",
                         params,
                         Spec::UnapplyCaseReviews { dry_run },
+                    )
+                    .await,
+                ])
+            }
+            // Issue 355: the country-verdict apply. Rewrites a published
+            // column, so dry_run defaults TRUE.
+            "apply-country-verdicts" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                Ok(vec![
+                    self.push(
+                        "apply-country-verdicts",
+                        if dry_run {
+                            "apply-country-verdicts dry-run"
+                        } else {
+                            "apply-country-verdicts"
+                        }
+                        .to_owned(),
+                        Spec::ApplyCountryVerdicts { dry_run },
                     )
                     .await,
                 ])
@@ -4525,6 +4546,90 @@ impl Supervisor {
                     },
                     r.vat_scope_skipped.len()
                 ))
+            }
+            Spec::ApplyCountryVerdicts { dry_run } => {
+                let dry_run = *dry_run;
+                // Boxed: run_spec is one future holding every arm's locals.
+                Box::pin(async move {
+                    self.set_phase(
+                        if dry_run { "planning" } else { "moving" },
+                        None,
+                        None,
+                        "walking unapplied country verdicts".to_owned(),
+                    );
+                    // The T4 ladder: a wet run executes the move list a person
+                    // read, compared as (org, from, to) tuples.
+                    let expect: Option<Vec<(i64, Option<String>, String)>> = if dry_run {
+                        None
+                    } else {
+                        let (body, _) = self
+                            .db
+                            .latest_report("country-verdict-plan")
+                            .await
+                            .map_err(|e| e.to_string())?
+                            .ok_or_else(|| {
+                                "no stored country-verdict-plan — run the dry pass first"
+                            })?;
+                        let v: serde_json::Value =
+                            serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                        let moves = v["plan"].as_array().ok_or_else(|| "plan lacks moves")?;
+                        Some(
+                            moves
+                                .iter()
+                                .map(|m| {
+                                    (
+                                        m["org"].as_i64().unwrap_or(-1),
+                                        m["from"].as_str().map(|c| c.to_owned()),
+                                        m["to"].as_str().unwrap_or_default().to_owned(),
+                                    )
+                                })
+                                .collect(),
+                        )
+                    };
+                    let r = self
+                        .db
+                        .apply_country_verdicts(
+                            dry_run,
+                            expect.as_deref(),
+                            Some(job.id as i64),
+                            store::now_unix(),
+                        )
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    if dry_run {
+                        let now = store::now_unix();
+                        let body = serde_json::json!({
+                            "pending": r.pending, "eligible": r.eligible, "moves": r.moved,
+                            "noop": r.noop, "collisions": r.collisions,
+                            "plan": r.plan.iter().map(|m| {
+                                serde_json::json!({
+                                    "org": m.org, "from": m.from, "to": m.to,
+                                    "identifier_kind": m.identifier_kind,
+                                    "identifier": m.identifier, "name": m.name,
+                                    "mentions": m.mentions, "collides_with": m.collides_with,
+                                })
+                            }).collect::<Vec<_>>(),
+                        })
+                        .to_string();
+                        self.db
+                            .put_report("country-verdict-plan", &body, now)
+                            .await
+                            .map_err(|e| e.to_string())?;
+                    }
+                    Ok(format!(
+                        "apply-country-verdicts (issue 355){}: {} pending verdicts, {} eligible; \
+                         {} rows {} ({} land on a triple another row holds — duplicate \
+                         identities for the R2 arm to fold); {} no-ops",
+                        if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
+                        r.pending,
+                        r.eligible,
+                        r.moved,
+                        if dry_run { "would move" } else { "moved" },
+                        r.collisions,
+                        r.noop
+                    ))
+                })
+                .await
             }
             Spec::ApplyRehoming { dry_run } => {
                 let dry_run = *dry_run;

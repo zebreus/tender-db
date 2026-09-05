@@ -44,6 +44,7 @@ pub fn router(supervisor: Arc<Supervisor>) -> Router {
         .route("/admin/case-reviews", post(record_case_reviews))
         .route("/admin/name-verdicts", post(record_name_verdicts))
         .route("/admin/rehoming", post(record_rehoming))
+        .route("/admin/country-verdicts", post(record_country_verdicts))
         .with_state(supervisor)
 }
 
@@ -144,6 +145,106 @@ async fn record_rehoming(
         })
         .collect();
     match sup.db().record_rehoming(&req.cohort, &verdicts, store::now_unix()).await {
+        Ok(n) => (StatusCode::OK, axum::Json(json!({ "recorded": n, "cohort": req.cohort })))
+            .into_response(),
+        Err(e) => error(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()),
+    }
+}
+
+/// The issue-355 country-verdict upload shape.
+#[derive(serde::Deserialize)]
+struct CountryVerdictsBody {
+    cohort: String,
+    verdicts: Vec<CountryVerdictIn>,
+}
+
+#[derive(serde::Deserialize)]
+struct CountryVerdictIn {
+    org_id: i64,
+    action: String,
+    #[serde(default)]
+    from_country: Option<String>,
+    #[serde(default)]
+    to_country: Option<String>,
+    rationale: String,
+    confidence: String,
+}
+
+/// `POST /admin/country-verdicts` — record one cohort's per-ROW country
+/// verdicts (issue 355). Recording only; `apply-country-verdicts` executes
+/// the high-confidence `move` subset, dry-run first.
+async fn record_country_verdicts(
+    State(sup): State<Arc<Supervisor>>,
+    headers: HeaderMap,
+    body: Result<axum::Json<CountryVerdictsBody>, axum::extract::rejection::JsonRejection>,
+) -> Response {
+    if let Some(response) = deny(&headers) {
+        return response;
+    }
+    let req = match body {
+        Ok(axum::Json(b)) => b,
+        Err(e) => return error(StatusCode::BAD_REQUEST, &e.to_string()),
+    };
+    if req.cohort.is_empty() || req.verdicts.is_empty() {
+        return error(StatusCode::BAD_REQUEST, "cohort and verdicts are required");
+    }
+    let is_cc = |c: &str| c.len() == 2 && c.bytes().all(|b| b.is_ascii_uppercase());
+    for v in &req.verdicts {
+        if !matches!(v.confidence.as_str(), "high" | "medium" | "low") {
+            return error(
+                StatusCode::BAD_REQUEST,
+                &format!("org {}: confidence must be high|medium|low", v.org_id),
+            );
+        }
+        if !matches!(v.action.as_str(), "move" | "keep") {
+            return error(
+                StatusCode::BAD_REQUEST,
+                &format!("org {}: action must be move|keep", v.org_id),
+            );
+        }
+        if let Some(f) = &v.from_country {
+            if !is_cc(f) {
+                return error(
+                    StatusCode::BAD_REQUEST,
+                    &format!("org {}: from_country must be a two-letter code", v.org_id),
+                );
+            }
+        }
+        if v.action == "move" {
+            match &v.to_country {
+                Some(to) if is_cc(to) && Some(to) != v.from_country.as_ref() => {}
+                Some(_) => {
+                    return error(
+                        StatusCode::BAD_REQUEST,
+                        &format!(
+                            "org {}: to_country must be a two-letter code different from \
+                             from_country",
+                            v.org_id
+                        ),
+                    )
+                }
+                None => {
+                    return error(
+                        StatusCode::BAD_REQUEST,
+                        &format!("org {}: a move needs to_country", v.org_id),
+                    )
+                }
+            }
+        }
+    }
+    let verdicts: Vec<store::CountryVerdict> = req
+        .verdicts
+        .into_iter()
+        .map(|v| store::CountryVerdict {
+            org_id: v.org_id,
+            action: v.action,
+            from_country: v.from_country,
+            to_country: v.to_country,
+            rationale: v.rationale,
+            confidence: v.confidence,
+        })
+        .collect();
+    match sup.db().record_country_verdicts(&req.cohort, &verdicts, store::now_unix()).await {
         Ok(n) => (StatusCode::OK, axum::Json(json!({ "recorded": n, "cohort": req.cohort })))
             .into_response(),
         Err(e) => error(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()),
