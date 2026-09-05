@@ -226,3 +226,15 @@ architecture is explicitly "agent fan-outs (Workflow), ONE agent per case". I do
 not start multi-agent campaigns on my own initiative in this session, so the
 cohort is left accurate and ready rather than reviewed. The 487 are enumerable
 from the stored packet whenever a campaign is authorised.
+
+## The loop ran at scale (2026-09-05, issues 355 and 357)
+
+The architecture above — agent per case, adversarial challenger, blind sample, deterministic
+floors in the deny direction, a verdict store the apply job reads — is what issues 355 and 357
+built and ran: `org_country_verdicts` + `POST /admin/country-verdicts` + `apply-country-verdicts`
+(dry plan / wet tuples), fed by two campaigns on 2026-09-05 — the 487-case same-name cohort
+(355: 153 rows moved) and the identifier-keyed cluster residue (357: six slices, 1,100+ rows
+moved, 700+ duplicate identities folded by R2 behind them). The tooling is checked in under
+`.scratch/tender-db/355-campaign/` and `.scratch/tender-db/357-campaign/` (rubric, split,
+workflow script, post-processor with the floors, a README with the run order). The shapes the
+rubric missed and how each became a floor are in issue 357 ("A shape the rubric missed").
