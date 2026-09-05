@@ -1,9 +1,15 @@
 # 357 — The identifier-under-several-codes residue, case by case through the verdict path
 
-Status: PACKET JOB BUILT 2026-09-05 (gate running) — `country-cluster-packet` (cap via
-`max_groups`, default 600): the cluster census's residue with every member row's org id and
-the issue-314 per-member evidence, heaviest first. Next: deploy, run, size the classes, then
-the review campaign in the issue-355 shape, and apply through `apply-country-verdicts`.
+Status: CAMPAIGN SLICE 1 RUNNING 2026-09-05 09:3x UTC — packet job deployed (`3be3f45`) and run
+(job 701, 4 s): **3,897 clusters, 2,819 reviewable** (no-one-letter-pair 2,580, nobody-asked
+148, anchor-names-one 66, anchor-names-several 18, asked-and-refused 7); the 600 heaviest
+carried (heaviest member 45–645+ mentions by quartile; 503 pairs, 97 triples or more). Split
+by census class × shape — **spray** (heaviest member ≥ 10× the next: 573) vs **balanced** (27)
+— into 23 batches of ≤ 35 plus 3 blind sample batches (60 cases); rubric v3c (`357-rubric.md`:
+v3 plus the census fields and the spray rule), fast model for reviewer + challenger, session
+model for the blind readers. Then: floors (355's plus the spray checks), POST under cohort
+`cluster-country-2026-09-05`, dry → wet → R2 dry/wet → project; slices 2–5 (the remaining
+2,219) at 600 per firing.
 Kind: data quality (organization layer) — campaign
 Relates to: 326 (the census and the predicate that decided what it could), 355 (the
 verdict path and the campaign shape), 314 (the per-member evidence), 311 (the principle)
