@@ -99,6 +99,18 @@ Spanish CIF starting with N is a NON-RESIDENT foreign entity's own tax number (n
 358; 8 own-legal-form). **Apply set: 117 HIGH** (arithmetic 67, national-format 34, weight 16);
 139 `keep` rows recorded. Record: `357-cluster-country-verdicts-slice4.json`.
 
+## Slice 5 reviewed (2026-09-05, 43 agents, ~4.2M tokens, 3h19m)
+
+584 new clusters — the light tail (heaviest member 2–5 mentions; 556 balanced pairs). Verdicts:
+wrong-country 338, distinct-entities 169, needs-more-evidence 58, same-entity-two-registrations
+19. 346 moves (275 high). Challenger: agreed on 550, disputed 27, flagged 5 missed. Blind readers
+(59): 48 same verdict, 48 same HIGH set — lower than the heavier slices, as thin evidence should
+give. Floor parked 107 (86 shared-register — issue 358; 15 own-legal-form, now including the
+Estonian OÜ, which caught Estonian firms moving to Finland on their Finnish branch registration;
+6 non-resident CIF). **Apply set: 144 HIGH** (arithmetic 88, national-format 55 — mostly German
+Handelsregister numbers under AT and Northern Irish company numbers under IE — weight 4);
+246 `keep` rows recorded. Record: `357-cluster-country-verdicts-slice5.json`.
+
 ## A shape the rubric missed, found on slice 2's heaviest movers (2026-09-05)
 
 The six heaviest planned moves of slice 2 were parents carrying a branch's or subsidiary's
