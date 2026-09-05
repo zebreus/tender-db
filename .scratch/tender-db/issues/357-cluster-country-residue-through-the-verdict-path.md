@@ -79,6 +79,31 @@ Blind readers (38 cases): 36 same verdict, 35 same HIGH move set. Floor parked 3
 names). **Apply set: 243 HIGH** (arithmetic 110, weight 100, national-format 33). Record:
 `357-cluster-country-verdicts-slice2.json`.
 
+## A shape the rubric missed, found on slice 2's heaviest movers (2026-09-05)
+
+The six heaviest planned moves of slice 2 were parents carrying a branch's or subsidiary's
+number: ROLAND Rechtsschutz-Versicherungs-AG under DE (26 mentions) with its Italian branch's
+P.IVA, Agfa Graphics NV under BE with its Polish subsidiary's NIP (its own register refused the
+number), Beryl Med LTD under GB with Beryl Med Poland's NIP, Ferrovial Construcción S.A. under
+ES with its Portuguese registration, Arch Insurance (EU) DAC under IE with its Italian branch's
+number. The rubric's literal conditions held (byte-identical number, the other side validates,
+under the 30-mention standing bar) and the challengers agreed — but the entity IS registered
+where the row says, and a country move would fuse the parent's mentions into the branch row.
+That is the rubric's own same-entity-two-registrations (or a wrong IDENTIFIER, issue 311's
+class), never a country move.
+
+**Floor added** (the deny direction, in code): a mover with ≥ 10 mentions parks unless its
+own name says "branch in <to>" (`filial i Finland`, `Filiale Italiana`, `клон България`) or
+carries the DESTINATION's unambiguous legal form or script (UAB → LT, Oy → FI, A/S → DK,
+Sp. z o.o. → PL, Cyrillic → BG, GmbH → DE …) without its own country's. Slice 2: 12 heavy
+movers parked by the floor, read by hand: 5 restored (a Lithuanian UAB under LV, a Bulgarian
+АД under SK, Total E&P's `клон България` under FR, Applied Medical's `Filiale Italiana` under
+NL, a Spanish-named Acciona company under RO), 7 stay parked as mediums. The twelve heavy
+movers already applied in the 355 campaign and slice 1 were re-read against the same rule:
+all carry the destination's form or language (Protector Forsikring ASA, Kemira Oyj, Syntrade
+Oy, Stibo Complete A/S, FCC Construccion S.A., UAB Defensa, Turboenergy Power's Moldovan IDNO,
+Indo UK Healthcare's Indian CIN …) — they hold.
+
 ## Not in scope
 
 Merging the standing duplicate identities a move creates: R2's arm, run after the wet apply
