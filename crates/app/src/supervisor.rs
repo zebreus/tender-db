@@ -418,6 +418,9 @@ enum Spec {
     /// Issue 325 step 4: re-parse the standing `kind = 'vat'` rows and write
     /// what the identifier parser now says. Wet writes `organizations`.
     RepairMintedCountries { dry_run: bool },
+    /// Issue 357: the identifier-under-several-codes residue with member rows,
+    /// for per-case review through the country-verdict path. Read-only.
+    CountryClusterPacket { cases_cap: usize },
     /// Issue 355: move the rows a reviewed `wrong-country` verdict names.
     /// Wet writes `organizations`.
     ApplyCountryVerdicts { dry_run: bool },
@@ -1347,6 +1350,18 @@ impl Supervisor {
                 )
                 .await,
             ]),
+            // Issue 357: the census's residue with org ids. Read-only.
+            "country-cluster-packet" => {
+                let cases_cap = req.max_groups.unwrap_or(600).clamp(1, 20_000) as usize;
+                Ok(vec![
+                    self.push(
+                        "country-cluster-packet",
+                        format!("country-cluster-packet cap={cases_cap}"),
+                        Spec::CountryClusterPacket { cases_cap },
+                    )
+                    .await,
+                ])
+            }
             "disk-census" => Ok(vec![
                 self.push("disk-census", "disk-census".into(), Spec::DiskCensus).await,
             ]),
@@ -1889,6 +1904,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "xb-packet",
     "country-typo-census",
     "country-cluster-census",
+    "country-cluster-packet",
     "duplicate-identity-census",
     "provisional-echo-census",
     "fold-provisional-echoes",
@@ -5617,6 +5633,78 @@ impl Supervisor {
                         )
                     }
                 ))
+            }
+            Spec::CountryClusterPacket { cases_cap } => {
+                let cases_cap = *cases_cap;
+                Box::pin(async move {
+                    let job_id = job.id;
+                    let stop = || self.cancelled(job_id);
+                    self.set_phase(
+                        "walking",
+                        None,
+                        None,
+                        "issue 357: the cluster census, then each case's member rows".to_owned(),
+                    );
+                    let r = self
+                        .db
+                        .country_cluster_packet(
+                            ingest::idgate::census_anchors,
+                            ingest::idgate::census_vocabulary,
+                            ingest::countries::one_letter_apart,
+                            ingest::countries::is_operational_footprint,
+                            cases_cap,
+                            3,
+                            &stop,
+                        )
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    if r.stopped {
+                        return Ok("country-cluster-packet STOPPED by cancel — no report stored"
+                            .to_owned());
+                    }
+                    let now = store::now_unix();
+                    let member = |m: &store::XbMember| {
+                        serde_json::json!({
+                            "org": m.org, "country": m.country, "identifier_kind": m.identifier_kind,
+                            "identifier": m.identifier, "name": m.name, "mentions": m.mentions,
+                            "anchors": m.anchors, "country_probed": m.country_probed,
+                            "country_agrees": m.country_agrees,
+                            "variants": m.variants.iter().map(|(l, n)| serde_json::json!({"lang": l, "name": n})).collect::<Vec<_>>(),
+                            "notices": m.notices,
+                        })
+                    };
+                    let body = serde_json::json!({
+                        "clusters": r.clusters, "eligible": r.eligible, "by_verdict": r.by_verdict,
+                        "truncated": r.truncated,
+                        "cases": r.cases.iter().map(|c| serde_json::json!({
+                            "identifier": c.identifier, "verdict": c.verdict, "codes": c.codes,
+                            "asked": c.asked, "named": c.named, "named_schemes": c.named_schemes,
+                            "one_letter_pair": c.one_letter_pair, "heavy_one_letter": c.heavy_one_letter,
+                            "mentions": c.mentions, "total_mentions": c.total_mentions,
+                            "members": c.members.iter().map(member).collect::<Vec<_>>(),
+                        })).collect::<Vec<_>>(),
+                    })
+                    .to_string();
+                    self.db
+                        .put_report("country-cluster-packet", &body, now)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    let by = r
+                        .by_verdict
+                        .iter()
+                        .map(|(k, v)| format!("{k} {v}"))
+                        .collect::<Vec<_>>()
+                        .join(", ");
+                    Ok(format!(
+                        "country-cluster-packet (issue 357): {} clusters, {} eligible for review ({by}); \
+                         {} cases carried{}",
+                        r.clusters,
+                        r.eligible,
+                        r.cases.len(),
+                        if r.truncated { " (truncated at the cap)" } else { "" }
+                    ))
+                })
+                .await
             }
             Spec::CountryClusterCensus => {
                 let job_id = job.id;
@@ -9559,6 +9647,10 @@ mod tests {
                 "xb-packet",
                 "country-typo-census",
                 "country-cluster-census",
+                // country-cluster-packet reads it between cases (after the census,
+                // which reads it itself) and stores no packet when stopped — a half
+                // packet cannot show which cases were dropped (issue 357).
+                "country-cluster-packet",
                 "duplicate-identity-census",
                 "provisional-echo-census",
                 "fold-provisional-echoes",

@@ -2702,6 +2702,40 @@ pub struct CountryCluster {
     pub verdict: &'static str,
 }
 
+/// One review case for the identifier-under-several-codes residue (issue
+/// 357): the census's own reading of the cluster plus every member row with
+/// the evidence the issue-314 packet carries per member.
+#[derive(Debug, Default, Clone)]
+pub struct ClusterCase {
+    pub identifier: String,
+    /// The census's verdict for the cluster (`no-one-letter-pair`, `nobody-asked`, …).
+    pub verdict: String,
+    pub codes: Vec<String>,
+    pub asked: Vec<String>,
+    pub named: Vec<String>,
+    pub named_schemes: Vec<String>,
+    pub one_letter_pair: bool,
+    pub heavy_one_letter: bool,
+    /// Mentions per code, heaviest first — the census's count.
+    pub mentions: Vec<(String, u64)>,
+    pub total_mentions: u64,
+    pub members: Vec<XbMember>,
+}
+
+/// The reviewer's input for issue 357. Read-only.
+#[derive(Debug, Default, Clone)]
+pub struct ClusterPacket {
+    /// Clusters the census found (identifiers under two or more codes).
+    pub clusters: u64,
+    /// Of those, the ones a reviewer can act on: not `too-short`, not an
+    /// operational footprint.
+    pub eligible: u64,
+    pub by_verdict: std::collections::BTreeMap<String, u64>,
+    pub cases: Vec<ClusterCase>,
+    pub truncated: bool,
+    pub stopped: bool,
+}
+
 /// Issue 326 step 1 re-cut, grouped by identifier instead of by pair.
 #[derive(Debug, Default, Clone)]
 pub struct CountryClusterReport {
@@ -12946,6 +12980,178 @@ impl Db {
             out.push((0..cols.len()).map(|i| row.get_value(i).unwrap_or(Value::Null)).collect());
         }
         Ok((cols.to_vec(), out))
+    }
+
+    /// Issue 357: the reviewer's input for the IDENTIFIER-UNDER-SEVERAL-CODES
+    /// residue — every cluster issue 326's predicate abstained on (`nobody-asked`,
+    /// `no-one-letter-pair`, `anchor-names-several`, `asked-and-refused`, and the
+    /// stranger codes left standing in `anchor-names-one`), heaviest first,
+    /// each member row carried with the per-member evidence the issue-314
+    /// packet established (anchors, `country_probed`/`country_agrees`, mention
+    /// weight, name variants, a few publication ids). The census decides the
+    /// class; this only adds the org ids a country verdict needs.
+    ///
+    /// `too-short` and `footprint-excluded` clusters are left out: a two-digit
+    /// identifier is not an identity, and an embassy is one entity filed from
+    /// everywhere it operates — excluded, never corrected.
+    ///
+    /// Read-only. Member lookups are one identity-index seek per
+    /// (code, kind); the kinds in use are read once.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn country_cluster_packet(
+        &self,
+        anchors: fn(&str) -> Vec<(&'static str, String)>,
+        vocabulary: fn(&str) -> Vec<&'static str>,
+        one_letter: fn(&str, &str) -> bool,
+        footprint: fn(&str) -> bool,
+        cases_cap: usize,
+        notices_cap: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<ClusterPacket> {
+        let census = self
+            .country_cluster_census(anchors, vocabulary, one_letter, footprint, usize::MAX, stop)
+            .await?;
+        if census.stopped {
+            return Ok(ClusterPacket { stopped: true, ..Default::default() });
+        }
+        let mut packet = ClusterPacket { clusters: census.clusters, ..Default::default() };
+        let mut rows: Vec<&CountryCluster> = census
+            .rows
+            .iter()
+            .filter(|c| !matches!(c.verdict, "too-short" | "footprint-excluded"))
+            .collect();
+        packet.eligible = rows.len() as u64;
+        for c in &rows {
+            *packet.by_verdict.entry(c.verdict.to_owned()).or_default() += 1;
+        }
+        let total = |c: &CountryCluster| -> u64 { c.mentions.iter().map(|m| m.1).sum() };
+        // Heaviest first: mention weight is the reviewer's first read and the
+        // campaign's budget, and a deterministic order lets a run resume.
+        rows.sort_by(|a, b| total(b).cmp(&total(a)).then_with(|| a.identifier.cmp(&b.identifier)));
+        if rows.len() > cases_cap {
+            packet.truncated = true;
+            rows.truncate(cases_cap);
+        }
+        let reader = self.reader().await?;
+        let mut kinds: Vec<String> = Vec::new();
+        {
+            let mut r = reader
+                .query(
+                    "SELECT DISTINCT identifier_kind FROM organizations WHERE identifier_kind IS NOT NULL",
+                    (),
+                )
+                .await?;
+            while let Some(row) = r.next().await? {
+                kinds.push(text(&row, 0));
+            }
+        }
+        for c in rows {
+            if stop() {
+                return Ok(ClusterPacket { stopped: true, ..Default::default() });
+            }
+            let mut case = ClusterCase {
+                identifier: c.identifier.clone(),
+                verdict: c.verdict.to_owned(),
+                codes: c.codes.clone(),
+                asked: c.asked.clone(),
+                named: c.named.clone(),
+                named_schemes: c.named_schemes.clone(),
+                one_letter_pair: c.one_letter_pair,
+                heavy_one_letter: c.heavy_one_letter,
+                mentions: c.mentions.clone(),
+                total_mentions: total(c),
+                members: Vec::new(),
+            };
+            let mut ids: Vec<(i64, String)> = Vec::new();
+            for code in &c.codes {
+                for kind in &kinds {
+                    let mut r = reader
+                        .query(
+                            "SELECT id, name FROM organizations \
+                              WHERE country = ? AND identifier_kind = ? AND identifier = ?",
+                            (t(code), t(kind), t(&c.identifier)),
+                        )
+                        .await?;
+                    while let Some(row) = r.next().await? {
+                        ids.push((int(&row, 0), text(&row, 1)));
+                    }
+                }
+            }
+            ids.sort_unstable();
+            ids.dedup();
+            for (id, name) in ids {
+                case.members
+                    .push(Self::enrich_member(&reader, id, name, anchors, vocabulary, notices_cap).await?);
+            }
+            packet.cases.push(case);
+        }
+        Ok(packet)
+    }
+
+    /// One member row with the issue-314 packet's per-member evidence.
+    async fn enrich_member(
+        reader: &turso::Connection,
+        id: i64,
+        name: String,
+        anchors: fn(&str) -> Vec<(&'static str, String)>,
+        vocabulary: fn(&str) -> Vec<&'static str>,
+        notices_cap: usize,
+    ) -> turso::Result<XbMember> {
+        let mut m = XbMember { org: id, name, ..Default::default() };
+        let mut rows = reader
+            .query(
+                "SELECT country, identifier_kind, identifier FROM organizations WHERE id = ?",
+                (Value::Integer(id),),
+            )
+            .await?;
+        if let Some(row) = rows.next().await? {
+            m.country = opt_text_of(&row, 0);
+            m.identifier_kind = opt_text_of(&row, 1);
+            m.identifier = opt_text_of(&row, 2);
+        }
+        drop(rows);
+        if let Some(v) = m.identifier.as_deref() {
+            let all = anchors(v);
+            m.anchors =
+                all.iter().filter(|(sc, _)| !sc.contains('|')).map(|(sc, _)| (*sc).to_owned()).collect();
+            let of = |sc: &str| sc.split(':').next().unwrap_or(sc).to_owned();
+            if let Some(cc) = m.country.as_deref() {
+                m.country_agrees = m.anchors.iter().any(|sc| of(sc) == cc);
+                m.country_probed = vocabulary(v).iter().any(|sc| of(sc) == cc);
+            }
+        }
+        let mut rows = reader
+            .query(
+                "SELECT lang, name FROM organization_names WHERE org_id = ? ORDER BY lang",
+                (Value::Integer(id),),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            m.variants.push((text(&row, 0), text(&row, 1)));
+        }
+        drop(rows);
+        let mut rows = reader
+            .query(
+                "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = ?",
+                (Value::Integer(id),),
+            )
+            .await?;
+        if let Some(row) = rows.next().await? {
+            m.mentions = int(&row, 0) as u64;
+        }
+        drop(rows);
+        let mut rows = reader
+            .query(
+                "SELECT n.publication_id FROM organization_mentions om \
+                   JOIN notices n ON n.id = om.notice_id \
+                  WHERE om.organization_id = ? LIMIT ?",
+                (Value::Integer(id), Value::Integer(notices_cap as i64)),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            m.notices.push(text(&row, 0));
+        }
+        Ok(m)
     }
 
     /// Issue 311: apply the SAFE subset of recorded verdicts — today that is
