@@ -97,25 +97,26 @@ for d in diffs[:12]:
     print("  diff:", d)
 
 SHARED_CHECKSUM = {frozenset({"CZ", "SK"}), frozenset({"CZ", "SI"}), frozenset({"SK", "SI"})}
-SHARED_REGISTER = {frozenset({"FI", "AX"}), frozenset({"DK", "FO"}), frozenset({"DK", "GL"}), frozenset({"NO", "SJ"})} | {frozenset({"FR", x}) for x in ("RE", "GP", "MQ", "GF", "YT", "NC", "PF", "PM", "BL", "MF", "WF")} | {frozenset({"NL", x}) for x in ("AW", "CW", "SX", "BQ")}
+SHARED_REGISTER = {frozenset({"FI", "AX"}), frozenset({"DK", "FO"}), frozenset({"DK", "GL"}), frozenset({"NO", "SJ"})} | {frozenset({"FR", x}) for x in ("RE", "GP", "MQ", "GF", "YT", "NC", "PF", "PM", "BL", "MF", "WF", "MC")} | {frozenset({"NL", x}) for x in ("AW", "CW", "SX", "BQ")}
 BRANCH_WORDS = re.compile(r"клон|filial|sivukonttori|succursale|sucursal|niederlassung|zweigniederlassung|branch|sede secondaria|sede secundaria|oddzia|pobo[cč]ka|filiaal|filiale|rappresentanza|representa", re.I)
 COUNTRY_WORDS = {"FI": "finland|suomi|suomessa", "SE": "sweden|sverige|schweden", "NO": "norway|norge|norwegen", "DK": "denmark|danmark|dänemark", "DE": "germany|deutschland|deutsche", "IT": "italy|italia|italien", "ES": "spain|españa|espana|spanien", "PT": "portugal", "FR": "france|frankreich", "PL": "poland|polska|polen", "NL": "netherlands|nederland|niederlande", "BE": "belgium|belgique|belgië|belgie", "AT": "austria|österreich", "CZ": "czech|česk", "SK": "slovak|slovensk", "HU": "hungary|magyar", "RO": "romania|românia", "BG": "bulgaria|българия", "GB": "united kingdom|uk\\b|britain", "IE": "ireland|éire", "LT": "lithuania|lietuv", "LV": "latvia|latvij", "EE": "estonia|eesti", "GR": "greece|ελλά", "HR": "croatia|hrvatsk", "SI": "slovenia|slovenij", "CH": "switzerland|schweiz|suisse", "LU": "luxembourg", "MD": "moldova"}
 # A legal form or script that names ONE country (the ambiguous ones — S.A., AB, Ltd,
 # s.r.o., S.R.L. — are left out on purpose): a heavy mover whose own name carries the
 # DESTINATION's form is that country's company mis-tagged by foreign buyers, not a
-# parent carrying a branch's number.
+# parent carrying a branch's number. Matched case-insensitively and with the dotted
+# spellings (slice 6: PHENOX GMBH and SAFEGE S.A.S. slipped past the exact forms).
 NAME_NAMES = {"LT": r"\bUAB\b|Uždaroji", "LV": r"\bSIA\b", "FI": r"\bOyj?\b", "DK": r"\bA/S\b|\bApS\b", "NO": r"\bASA\b",
               "PL": r"Sp\.? ?z ?o\.? ?o", "BG": r"\b(ЕАД|АД|ЕООД|ООД)\b|[\u0400-\u04FF]{4,}", "DE": r"\bGmbH\b|\bAG\b", "AT": r"\bGmbH\b",
-              "NL": r"\bB\.?V\.?\b|\bN\.?V\.?\b", "IT": r"\bS\.?r\.?l\.?\b|\bS\.?p\.?A\.?\b", "FR": r"\bSAS\b|\bSARL\b",
+              "NL": r"\bB\.?V\.?\b|\bN\.?V\.?\b", "IT": r"\bS\.?r\.?l\.?\b|\bS\.?p\.?A\.?\b", "FR": r"\bS\.?A\.?S\.?\b|\bS\.?A\.?R\.?L\.?\b",
               "PT": r"\bLda\b", "HU": r"\bKft\b|\bZrt\b", "EE": r"\bO[ÜüU]\b|osaühing", "CZ": r"\ba\.s\.\b", "RO": r"\bS\.?C\.?\s", "SE": r"\bAktiebolag\b", "ES": r"\bS\.?L\.?\b|[áéíóúñ]", "GR": r"[\u0370-\u03FF]{4,}"}
 def NAME_NAMES_TO(mem, to, frm):
     name = " ".join([mem.get("name") or ""] + [v.get("name", "") for v in mem.get("variants", [])])
-    names_to = bool(re.search(NAME_NAMES.get(to, "$^"), name))
-    names_from = bool(re.search(NAME_NAMES.get(frm, "$^"), name))
+    names_to = bool(re.search(NAME_NAMES.get(to, "$^"), name, re.I))
+    names_from = bool(re.search(NAME_NAMES.get(frm, "$^"), name, re.I))
     return names_to and not names_from
 def NAME_NAMES_FROM_ONLY(mem, to, frm):
     name = " ".join([mem.get("name") or ""] + [v.get("name", "") for v in mem.get("variants", [])])
-    return bool(re.search(NAME_NAMES.get(frm, "$^"), name)) and not re.search(NAME_NAMES.get(to, "$^"), name)
+    return bool(re.search(NAME_NAMES.get(frm, "$^"), name, re.I)) and not re.search(NAME_NAMES.get(to, "$^"), name, re.I)
 def BRANCH_OF_TO(mem, to):
     name = " ".join([mem.get("name") or ""] + [v.get("name", "") for v in mem.get("variants", [])])
     return bool(BRANCH_WORDS.search(name)) and bool(re.search(COUNTRY_WORDS.get(to, "$^"), name, re.I))

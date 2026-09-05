@@ -1,6 +1,6 @@
 # 357 — The identifier-under-several-codes residue, case by case through the verdict path
 
-Status: SLICES 1–5 APPLIED, SLICE 6 (the last full one) STARTING 2026-09-05 19:2x UTC — cohort
+Status: SLICES 1–6 APPLIED, FINAL SLICE (42 clusters) REVIEWING 2026-09-05 23:5x UTC — cohort `cluster-country-2026-09-05`: 1,207 rows moved (jobs 703/710/717/723/729/735), 779 duplicate identities folded by R2 (705/712/719/725/731/737), 2,998 verdict rows recorded; the packet after slice 6 carries the last 42 eligible clusters (2,834 clusters, 1,756 eligible, 1,714 reviewed). Was: SLICES 1–5 APPLIED, SLICE 6 (the last full one) STARTING 2026-09-05 19:2x UTC — cohort
 `cluster-country-2026-09-05`. Slice 1: 488 moved / R2 316 groups. Slice 2: 239 / 171. Slice 3:
 113 / 74. Slice 4: 117 / 69. Slice 5: **144 moved (job 729), R2 89 groups / 89 rows, 179
 mentions, 325 parties, 331 bid-parties, 384 winners repointed (job 731)**. Running total:
@@ -111,6 +111,30 @@ Estonian OÜ, which caught Estonian firms moving to Finland on their Finnish bra
 6 non-resident CIF). **Apply set: 144 HIGH** (arithmetic 88, national-format 55 — mostly German
 Handelsregister numbers under AT and Northern Irish company numbers under IE — weight 4);
 246 `keep` rows recorded. Record: `357-cluster-country-verdicts-slice5.json`.
+
+## Slice 6 reviewed and applied (2026-09-05 19:2x–23:50 UTC, 45 agents, ~4.5M tokens, 3h59m)
+
+583 clusters — the very tail (heaviest member 1–3 mentions; every stratum balanced). Verdicts:
+wrong-country 284, distinct-entities 199, needs-more-evidence 84, same-entity-two-registrations
+16. 289 moves (201 high). Challenger: agreed on 551, disputed 24, flagged 5 missed. Blind readers
+(59): 43 same verdict, 47 same HIGH set; their disagreements were the Réunion/Polynesia pairs
+(they read RE/PF as geographically right — parked under 358 either way) and two parent-with-
+branch-number GmbHs (Phenox DE→FR, Inari CH→PL). Floors parked 73 (62 shared-register; 8
+own-legal-form; 3 non-resident CIF). **Apply set: 106 HIGH** (arithmetic 53, national-format 50
+— Spanish CIFs under EE/PT/FI/LV, German HRB/HRA under SE/PL/AT/LV, Northern Irish and Scottish
+company numbers under IE, a Chinese USCC under CZ, an Indian CIN under a junk code — weight 3);
+451 `keep` rows (one per reviewed cluster, the survivor). Wet: job 735 moved 106 (0 no-ops);
+R2 job 737 folded 60 groups (61 rows, 68 mentions, 77 parties, 72 winners repointed);
+projection 738 `0 notices`. Record: `357-cluster-country-verdicts-slice6.json`.
+
+Three floor gaps found reading the 110 candidate HIGHs by hand, fixed in `post.py` before
+recording: the legal-form regexes were case-sensitive (`PHENOX GMBH` passed `\bGmbH\b`), the
+French form is written `S.A.S.` as often as `SAS` (`SAFEGE S.A.S.` FR→PL), and Monaco
+establishments carry INSEE SIRETs (EUROPHTA MC→FR joins the shared-register park). Four more
+highs parked by them.
+
+The packet after slice 6 (job 739) carries 42 clusters — the whole remaining eligible set.
+Final slice launched from the checked-in tooling (`357-campaign/split.py` → `args.json`).
 
 ## The already-reviewed skip leaked reviewed clusters back (found 2026-09-05 20:0x, fixed in the post-processor)
 
