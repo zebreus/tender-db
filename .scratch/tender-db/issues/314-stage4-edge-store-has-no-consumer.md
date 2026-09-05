@@ -1,8 +1,6 @@
 # 314 — Stage 4's 1.5M candidate edges have no consumer
 
-Status: RUBRIC VALIDATED 2026-08-31 by a controlled A/B — the de-biased rubric
-drops disputes to ZERO and the contamination finding survives it. Ready to
-batch the 589
+Status: CLOSED — CONSUMED AND THE CAMPAIGN RAN (2026-09-05). The edge store has a reader: `xb_same_name_packet` (canonical.rs) builds the same-name cross-border cohort from it, and issue 355's campaign reviewed all 487 cases of that cohort (311's re-cut) on 2026-09-05 with the successor of this issue's de-biased rubric (v3: reviewer + adversarial challenger per stratified batch, blind second readers, deterministic floors in the deny direction) — 315 verdicts, 153 rows moved through `apply-country-verdicts`, 102 duplicate identities folded by R2 behind them. The 326 shape (one identifier under one-letter-apart codes) that slice 1 found decidable went the other way, as this issue asked: a census (`country-cluster-census`) plus the 357 packet/campaign — six slices, 1,100+ rows moved, 700+ folds. The 325 parse artefacts were repaired by 328/345. Slices 2–6 of THIS issue's plan are therefore not run: their cohort was reviewed under 355 and 357 instead. `census_org_candidate_edges` still sizes the store weekly; `probe_exemplar` reads it for the exemplar sheet. Tooling: `.scratch/tender-db/355-campaign/`, `357-campaign/`. Was: RUBRIC VALIDATED 2026-08-31 by a controlled A/B — the de-biased rubric drops disputes to ZERO and the contamination finding survives it. Ready to batch the 589
 Kind: capability (organization layer)
 Relates to: 300 (Stage 4 built it), 311 (was meant to consume it), 312
 
