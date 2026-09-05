@@ -68,6 +68,17 @@ directorates and municipalities with thousands of mentions beside single-mention
 VU/VA/VE/VN/GA/GH/IO/DE/FR) is most of it, read case by case and holding. Record:
 `357-cluster-country-verdicts-slice1.json`.
 
+## Slice 2 reviewed (2026-09-05, 34 agents, ~3.1M tokens, 1h41m)
+
+378/378 new clusters (the 222 slice-1 clusters still standing were excluded, not re-litigated).
+Verdicts: wrong-country 298, distinct-entities 59, same-entity-two-registrations 18,
+needs-more-evidence 3. 314 moves (296 high): arithmetic 141, weight 120, national-format 38,
+name-language 15. Challenger: agreed on 360 cases, disputed 18 moves, flagged 4 missed moves.
+Blind readers (38 cases): 36 same verdict, 35 same HIGH move set. Floor parked 37 highs
+(30 shared-register — the Svalbard/Åland/Réunion class, 5 mover-not-a-stray, 2 foreign-filing
+names). **Apply set: 243 HIGH** (arithmetic 110, weight 100, national-format 33). Record:
+`357-cluster-country-verdicts-slice2.json`.
+
 ## Not in scope
 
 Merging the standing duplicate identities a move creates: R2's arm, run after the wet apply
