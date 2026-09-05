@@ -112,6 +112,24 @@ Estonian OÜ, which caught Estonian firms moving to Finland on their Finnish bra
 Handelsregister numbers under AT and Northern Irish company numbers under IE — weight 4);
 246 `keep` rows recorded. Record: `357-cluster-country-verdicts-slice5.json`.
 
+## The already-reviewed skip leaked reviewed clusters back (found 2026-09-05 20:0x, fixed in the post-processor)
+
+Slice 6's packet carried 17 clusters that slices 1–5 had reviewed and applied (`5262239325`
+with 196,439 mentions under PL among them). Cause: the skip is `org_country_verdicts JOIN
+organizations ON o.id = v.org_id WHERE o.identifier = ?`, and a cluster whose only verdict
+rows were MOVES loses them the moment R2 folds the moved rows into the survivor — the rows
+point at merged-away orgs, the join finds nothing, the cluster reads as unreviewed while its
+remaining strays (the ones read and left) keep it a cluster. The keep-on-heaviest-member row
+was only emitted for clusters WITHOUT a move.
+
+Fix: `post.py` now records a `keep` on the heaviest member of EVERY reviewed cluster (the
+survivor; a heaviest member that is itself a mover keeps its move row — dedup keeps the first
+row per org). Backfill: 17 keeps recorded at 20:05 UTC on the 17 survivors (none had a row).
+The 42 eligible clusters the cap left out of slice 6's packet may hold more of this shape;
+the final slice's packet will show them and the same backfill applies. Tooling checked in
+under `.scratch/tender-db/357-campaign/` (rubric, split, workflow script, post-processor,
+README with the run order) — commit a2c5310.
+
 ## A shape the rubric missed, found on slice 2's heaviest movers (2026-09-05)
 
 The six heaviest planned moves of slice 2 were parents carrying a branch's or subsidiary's

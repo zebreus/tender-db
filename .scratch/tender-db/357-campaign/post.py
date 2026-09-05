@@ -203,16 +203,21 @@ for j in joined.values():
             "rationale": f"[{m['evidence']}; cluster {k}; batch {j['batch']}] " + m["rationale"][:900],
             "confidence": conf,
         })
-# A reviewed cluster WITHOUT a move gets a `keep` on its heaviest member, so the
-# packet's already-reviewed skip sees it and the next slice carries new work.
+# EVERY reviewed cluster gets a `keep` on its heaviest member (unless that member
+# is itself a mover — the move row, appended first, wins the dedup below), so the
+# packet's already-reviewed skip sees it and the next slice carries new work. It
+# used to be only clusters without a move: after the wet apply R2 folds the moved
+# rows into the survivor, the move rows then point at merged-away orgs, the skip's
+# JOIN organizations finds nothing, and the cluster came back in the next packet
+# (17 of slice 6's 600; backfilled 2026-09-05 20:1x).
 for j in joined.values():
-    if j["review"]["country_moves"]:
-        continue
     k = str(j["review"]["identifier"])
     heavy = max(cases[k]["members"], key=lambda m: m["mentions"])
+    nmoves = len(j["review"]["country_moves"])
+    tag = f"survivor; {nmoves} move(s) reviewed; " if nmoves else ""
     verdict_rows.append({
         "org_id": heavy["org"], "action": "keep", "from_country": heavy["country"], "to_country": None,
-        "rationale": f"[{j['review']['verdict']}; cluster {k}; batch {j['batch']}] " + (j["review"]["rationale"] or "")[:600],
+        "rationale": f"[{j['review']['verdict']}; {tag}cluster {k}; batch {j['batch']}] " + (j["review"]["rationale"] or "")[:600],
         "confidence": j["review"]["confidence"],
     })
 seen, dedup = set(), []
