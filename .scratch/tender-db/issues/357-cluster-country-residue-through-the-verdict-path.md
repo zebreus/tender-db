@@ -1,11 +1,12 @@
 # 357 — The identifier-under-several-codes residue, case by case through the verdict path
 
-Status: SLICES 1–2 APPLIED, SLICE 3 RUNNING 2026-09-05 12:4x UTC — cohort
-`cluster-country-2026-09-05`. Slice 1: 590 verdicts, 488 moved (job 703), R2 316 groups / 394 rows
-(job 705). Slice 2: 314 verdicts (re-recorded after the standing floor and a hand read of the
-heavy movers), **239 moved (job 710), R2 171 groups / 173 rows, 648 mentions, 756 parties, 367
-bid-parties, 1,024 winners repointed (job 712)**, `project` 713 nothing left. Slice-3 packet (job
-714): 3,300 clusters, 2,222 reviewable. Packet job deployed `3be3f45`.
+Status: SLICES 1–3 APPLIED, SLICE 4 STARTING 2026-09-05 15:1x UTC — cohort
+`cluster-country-2026-09-05`. Slice 1: 488 moved / R2 316 groups. Slice 2: 239 moved / R2 171
+groups. Slice 3: 164 verdicts (re-recorded after the own-legal-form floor), **113 moved (job
+717), R2 74 groups / 76 rows, 310 mentions, 415 parties, 218 bid-parties, 501 winners repointed
+(job 719)**. Running total: **840 rows corrected, 561 duplicate groups folded**. Slice-4 packet
+(job 721, with the reviewed-cluster skip `c4fd5f8`): 3,190 clusters, 2,112 reviewable, 230
+already reviewed left out, 600 new carried.
 Kind: data quality (organization layer) — campaign
 Relates to: 326 (the census and the predicate that decided what it could), 355 (the
 verdict path and the campaign shape), 314 (the per-member evidence), 311 (the principle)
