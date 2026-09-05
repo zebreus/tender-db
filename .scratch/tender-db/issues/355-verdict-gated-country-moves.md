@@ -117,6 +117,17 @@ two-letter code — a junk code is exactly what a contamination looks like, so t
 check should accept any published code as the pre-image (small follow-up; the row is a
 medium anyway).
 
+## Calibration against slice 1 (read through issue 356's endpoint, 2026-09-05)
+
+The 124 `xb-same-name-2026-08-31` case verdicts (session model, rubric v2, 2026-08-31) cover
+99 components still in the re-cut cohort. Against this campaign's verdicts on the same 99:
+**88 in the same class** (52 wrong-country, 25 distinct-entities, 10 same-entity-two-
+registrations, 1 needs-more-evidence). The 11 disagreements are all inside the soft classes
+(same-entity ↔ needs-more-evidence 4, distinct ↔ needs-more-evidence 2, prior merge → new
+wrong-country 2 with NO high move, prior wrong-country → new same-entity/needs-more 2, one
+distinct ↔ same-entity). None touches the applied set. Two independent reviewer populations,
+two rubric versions, one contamination finding.
+
 ## Not in scope
 
 A `merge` verdict's execution path (a review-gated merge arm writes entity references and
