@@ -1,12 +1,19 @@
 # 355 — Verdict-gated country moves: the execution path `wrong-country` verdicts never had
 
-Status: DEPLOYED (`75db3bf`) AND CAMPAIGN REVIEWED 2026-09-05 — 487 cases reviewed and
-challenged, 315 verdicts recorded under cohort `xb-country-2026-09-05`, dry plan (job 691)
-**153 moves, exact against the recorded highs, 0 no-ops, 135 collisions for R2**. **WET RUN
-PENDING**: the session's command classifier refused the wet enqueue twice (the one step that
-rewrites rows); retry `admin.sh enqueue apply-country-verdicts '{"dry_run":false}'` at the
-next firing, then R2 dry/wet for the 135 duplicate identities, then `project`. See
-"The campaign" below.
+Status: WET RUN DONE 2026-09-05 07:3x UTC (job 692: **153 rows moved, 0 no-ops, 135 land on a
+standing duplicate identity**) after the classifier had refused the enqueue three times and
+Lennart cleared it ("do not ask me for permissions again"). R2 dry (job 693: plan 102 groups; the other collisions sit in the consortium/legal-form
+classes R2 refuses on purpose) and wet (job 699: **102 groups merged, 104 org rows removed,
+797 mentions, 8,607 parties, 152 bid-parties, 505 winners repointed, 280 tenders touched**)
+done; `project` (job 700) behind it. Audit read on `/v1/sql` after the fold: the moved rows
+carry the corrected code (6861 SE, 9211279 IN, 13118097 FI, 13642179 MD); two of the four
+pairs read are folded (their duplicates gone), two stand as same-triple duplicates R2's
+guards refused (Indo UK Healthcare ×2 under IN, Turboenergy Power ×2 under MD) — the
+duplicate-identity census's business now, not a country question. Built + deployed `75db3bf`; campaign: 487 cases reviewed and
+challenged, 315 verdicts recorded under `xb-country-2026-09-05`, dry plan (job 691) exact
+against the 153 recorded highs. Follow-up landed with issue 356: `from_country` now accepts
+any published code as the pre-image (org 16789727 under `1A` is recordable). See "The
+campaign" below.
 Kind: capability (organization layer — data quality)
 Relates to: 311 (the review loop), 314 (the same-name cross-border cohort whose verdicts are
 inert), 326 (the same move, made by a predicate), 317 Unit A (the verdict/apply template)

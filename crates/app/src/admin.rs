@@ -41,6 +41,7 @@ pub fn router(supervisor: Arc<Supervisor>) -> Router {
         // request rather than a thing someone had to think to save.
         .route("/admin/reports/{kind}/previous", axum::routing::get(report_previous))
         .route("/admin/name-key", axum::routing::get(name_key))
+        .route("/admin/case-reviews", axum::routing::get(case_reviews))
         .route("/admin/case-reviews", post(record_case_reviews))
         .route("/admin/name-verdicts", post(record_name_verdicts))
         .route("/admin/rehoming", post(record_rehoming))
@@ -151,6 +152,70 @@ async fn record_rehoming(
     }
 }
 
+#[derive(serde::Deserialize)]
+struct CaseReviewsParams {
+    /// `case` (org_case_reviews, default) | `rehoming` | `name` | `country`.
+    table: Option<String>,
+    cohort: Option<String>,
+    /// Rows to return (default 500, at most 5,000), newest first.
+    limit: Option<usize>,
+}
+
+/// `GET /admin/case-reviews?table=…&cohort=…&limit=…` — read a verdict store
+/// back (issue 356). The four review tables are written through the POSTs
+/// above and were readable by nothing but their apply jobs: `/v1/sql` is a
+/// positive allow-list (issue 45) they are deliberately not on. Bounded,
+/// read-only, admin-gated like the writes.
+async fn case_reviews(
+    State(sup): State<Arc<Supervisor>>,
+    headers: HeaderMap,
+    Query(params): Query<CaseReviewsParams>,
+) -> Response {
+    if let Some(denial) = deny(&headers) {
+        return denial;
+    }
+    let table = params.table.as_deref().unwrap_or("case");
+    let limit = params.limit.unwrap_or(500).clamp(1, 5_000);
+    let (cols, rows) = match sup.db().verdict_rows(table, params.cohort.as_deref(), limit).await {
+        Ok(v) => v,
+        Err(e) => {
+            let msg = e.to_string();
+            return if msg.contains("no verdict store named") {
+                error(StatusCode::BAD_REQUEST, &msg)
+            } else {
+                eprintln!("[admin] case-reviews read failed: {e}");
+                error(StatusCode::INTERNAL_SERVER_ERROR, "case-reviews read failed")
+            };
+        }
+    };
+    let rows: Vec<serde_json::Value> = rows
+        .into_iter()
+        .map(|r| {
+            let mut o = serde_json::Map::new();
+            for (c, v) in cols.iter().zip(r) {
+                o.insert(
+                    (*c).to_owned(),
+                    match v {
+                        store::turso::Value::Integer(i) => json!(i),
+                        store::turso::Value::Real(f) => json!(f),
+                        store::turso::Value::Text(s) => json!(s),
+                        _ => serde_json::Value::Null,
+                    },
+                );
+            }
+            serde_json::Value::Object(o)
+        })
+        .collect();
+    (
+        StatusCode::OK,
+        axum::Json(json!({
+            "table": table, "cohort": params.cohort, "limit": limit,
+            "count": rows.len(), "rows": rows,
+        })),
+    )
+        .into_response()
+}
+
 /// The issue-355 country-verdict upload shape.
 #[derive(serde::Deserialize)]
 struct CountryVerdictsBody {
@@ -202,11 +267,12 @@ async fn record_country_verdicts(
                 &format!("org {}: action must be move|keep", v.org_id),
             );
         }
+        // The pre-image is whatever the row carries, junk included (`1A`).
         if let Some(f) = &v.from_country {
-            if !is_cc(f) {
+            if f.is_empty() || f.len() > 16 {
                 return error(
                     StatusCode::BAD_REQUEST,
-                    &format!("org {}: from_country must be a two-letter code", v.org_id),
+                    &format!("org {}: from_country must be the row's code as published", v.org_id),
                 );
             }
         }

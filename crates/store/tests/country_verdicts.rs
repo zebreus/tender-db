@@ -218,11 +218,52 @@ async fn a_move_that_moves_nothing_is_refused_at_record_time() {
         verdict(1, "move", Some("BE"), Some("BE"), "high"),
         verdict(1, "move", Some("BE"), None, "high"),
         verdict(1, "move", Some("BE"), Some("nl"), "high"),
-        verdict(1, "move", Some("Belgium"), Some("NL"), "high"),
+        verdict(1, "move", Some(""), Some("NL"), "high"),
         verdict(1, "split", Some("BE"), Some("NL"), "high"),
     ] {
         let err = db.record_country_verdicts("c", &[bad.clone()], 1).await.unwrap_err();
         assert!(!err.to_string().is_empty(), "{bad:?}");
     }
     assert_eq!(db.record_country_verdicts("c", &[verdict(1, "keep", None, None, "low")], 1).await.unwrap(), 1);
+    // The pre-image is whatever the row carries — a junk code like `1A` is
+    // exactly what a contamination looks like (the 355 campaign's first POST
+    // was refused on one), so it must be recordable and, once the row still
+    // reads `1A`, movable.
+    assert_eq!(
+        db.record_country_verdicts("c", &[verdict(2, "move", Some("1A"), Some("IL"), "high")], 1).await.unwrap(),
+        1
+    );
+}
+
+#[tokio::test]
+async fn a_junk_pre_image_code_is_a_real_pre_image_and_the_row_moves() {
+    let (db, conn) = open("junk").await;
+    org(&conn, 2, Some("1A"), Some("national"), Some("520045678"), "Elbit Systems Land Ltd").await;
+    db.record_country_verdicts("c", &[verdict(2, "move", Some("1A"), Some("IL"), "high")], 1).await.unwrap();
+    let plan = db.apply_country_verdicts(true, None, None, 2).await.unwrap();
+    assert_eq!((plan.eligible, plan.moved), (1, 1));
+    let expect = [(2i64, Some("1A".to_owned()), "IL".to_owned())];
+    db.apply_country_verdicts(false, Some(&expect), Some(9), 3).await.unwrap();
+    assert_eq!(text1(&conn, "SELECT country FROM organizations WHERE id = 2").await.as_deref(), Some("IL"));
+    assert_eq!(
+        text1(&conn, "SELECT applied_action FROM org_country_verdicts WHERE org_id = 2").await.as_deref(),
+        Some("moved from 1A")
+    );
+}
+
+#[tokio::test]
+async fn the_verdict_stores_read_back_bounded_and_by_cohort() {
+    let (db, _conn) = seed("readback").await;
+    let (cols, rows) = db.verdict_rows("country", Some("xb-test"), 1_000).await.unwrap();
+    assert_eq!(cols[0], "org_id");
+    assert_eq!(rows.len(), 8);
+    let (_, rows) = db.verdict_rows("country", Some("other-cohort"), 1_000).await.unwrap();
+    assert!(rows.is_empty());
+    let (_, rows) = db.verdict_rows("country", None, 3).await.unwrap();
+    assert_eq!(rows.len(), 3, "`limit` bounds the read");
+    for table in ["case", "rehoming", "name"] {
+        let (cols, rows) = db.verdict_rows(table, None, 10).await.unwrap();
+        assert!(!cols.is_empty() && rows.is_empty(), "{table}: readable, empty here");
+    }
+    assert!(db.verdict_rows("secrets", None, 10).await.is_err(), "only the four stores, by fixed name");
 }

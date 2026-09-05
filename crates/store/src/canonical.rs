@@ -12562,10 +12562,14 @@ impl Db {
     ) -> turso::Result<u64> {
         for v in verdicts {
             let is_cc = |c: &str| c.len() == 2 && c.bytes().all(|b| b.is_ascii_uppercase());
+            // `from_country` is the PRE-IMAGE — whatever the row carries today,
+            // junk included: `1A` is exactly what a contamination looks like
+            // (the 355 campaign's first POST was refused on one). Non-empty and
+            // short is all that can be asked of it; `to_country` stays strict.
             if let Some(f) = &v.from_country {
-                if !is_cc(f) {
+                if f.is_empty() || f.len() > 16 {
                     return Err(turso::Error::Error(format!(
-                        "org {}: from_country {f:?} is not a two-letter code",
+                        "org {}: from_country {f:?} must be the row's code as published (1–16 chars)",
                         v.org_id
                     )));
                 }
@@ -12883,6 +12887,65 @@ impl Db {
             self.publish_cursor(&conn).await?;
         }
         Ok(report)
+    }
+
+    /// Issue 356: read one verdict store back — the four review tables are
+    /// written through `POST /admin/*` and read by nothing but their apply
+    /// jobs, and `/v1/sql` is a positive allow-list they are not on. Bounded
+    /// (`limit`, newest first), optionally one cohort. The table and its
+    /// columns come from a fixed list here, never from the caller.
+    pub async fn verdict_rows(
+        &self,
+        table: &str,
+        cohort: Option<&str>,
+        limit: usize,
+    ) -> turso::Result<(Vec<&'static str>, Vec<Vec<Value>>)> {
+        let (name, cols, order): (&str, &[&'static str], &str) = match table {
+            "case" => (
+                "org_case_reviews",
+                &["case_org_id", "cohort", "verdict", "diagnosis", "handling", "rationale",
+                  "confidence", "reviewed_at", "applied_at", "applied_action", "job_id"],
+                "reviewed_at DESC, case_org_id",
+            ),
+            "rehoming" => (
+                "org_mention_rehoming",
+                &["case_org_id", "notice_id", "section_id", "cohort", "action", "target_org_id",
+                  "target_name", "rationale", "confidence", "reviewed_at", "applied_at",
+                  "applied_action", "job_id"],
+                "reviewed_at DESC, notice_id, section_id",
+            ),
+            "name" => (
+                "org_name_verdicts",
+                &["name_norm", "cohort", "verdict", "rationale", "recorded_at"],
+                "recorded_at DESC, name_norm",
+            ),
+            "country" => (
+                "org_country_verdicts",
+                &["org_id", "cohort", "action", "from_country", "to_country", "rationale",
+                  "confidence", "reviewed_at", "applied_at", "applied_action", "job_id"],
+                "reviewed_at DESC, org_id",
+            ),
+            other => {
+                return Err(turso::Error::Error(format!(
+                    "no verdict store named {other:?} (case|rehoming|name|country)"
+                )))
+            }
+        };
+        let sql = format!(
+            "SELECT {} FROM {name}{} ORDER BY {order} LIMIT ?",
+            cols.join(", "),
+            if cohort.is_some() { " WHERE cohort = ?" } else { "" }
+        );
+        let reader = self.reader().await?;
+        let mut out: Vec<Vec<Value>> = Vec::new();
+        let mut rows = match cohort {
+            Some(c) => reader.query(&sql, (t(c), Value::Integer(limit as i64))).await?,
+            None => reader.query(&sql, (Value::Integer(limit as i64),)).await?,
+        };
+        while let Some(row) = rows.next().await? {
+            out.push((0..cols.len()).map(|i| row.get_value(i).unwrap_or(Value::Null)).collect());
+        }
+        Ok((cols.to_vec(), out))
     }
 
     /// Issue 311: apply the SAFE subset of recorded verdicts — today that is
