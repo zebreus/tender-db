@@ -1,16 +1,11 @@
 # 357 — The identifier-under-several-codes residue, case by case through the verdict path
 
-Status: SLICES 1–3 APPLIED, SLICE 4 STARTING 2026-09-05 15:1x UTC — cohort
-`cluster-country-2026-09-05`. Slice 1: 488 moved / R2 316 groups. Slice 2: 239 moved / R2 171
-groups. Slice 3: 164 verdicts (re-recorded after the own-legal-form floor), **113 moved (job
-717), R2 74 groups / 76 rows, 310 mentions, 415 parties, 218 bid-parties, 501 winners repointed
-(job 719)**. Running total: **840 rows corrected, 561 duplicate groups folded**. Slice-4 packet
-(job 721, with the reviewed-cluster skip `c4fd5f8`): 3,190 clusters, 2,112 reviewable, 230 left out
-by the skip — but 268 more of the 600 carried were reviewed and KEPT (distinct entities,
-undecided, one entity twice), which recorded no row; a `keep` verdict on the heaviest member is
-now recorded for every such cluster (255 backfilled for slices 1–3; the post-processing emits
-them from slice 4 on). Slice 4 RUNNING on the **332 new** clusters (14 batches + 2 blind sample
-batches); the remaining cohort is lighter (heaviest member 3–11 mentions by quartile).
+Status: SLICES 1–4 APPLIED, SLICE 5 STARTING 2026-09-05 16:5x UTC — cohort
+`cluster-country-2026-09-05`. Slice 1: 488 moved / R2 316 groups. Slice 2: 239 / 171. Slice 3:
+113 / 74. Slice 4: **117 moved (job 723), R2 69 groups / 71 rows, 192 mentions, 233 parties, 319
+bid-parties, 651 winners repointed (job 725)**. Running total: **957 rows corrected, 630
+duplicate groups folded**; 1,666 verdicts recorded (keeps included). Slice-5 packet (job 727):
+3,081 clusters, 2,003 reviewable, 739 already reviewed left out by the skip, 600 new carried.
 Kind: data quality (organization layer) — campaign
 Relates to: 326 (the census and the predicate that decided what it could), 355 (the
 verdict path and the campaign shape), 314 (the per-member evidence), 311 (the principle)
