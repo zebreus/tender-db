@@ -1,6 +1,10 @@
 # 356 — Recorded case verdicts are unreadable through any surface
 
-Status: ready-for-agent (filed 2026-09-05 from the issue-355 campaign)
+Status: DEPLOYED 2026-09-05 (`589edb9`) — `GET /admin/case-reviews?table=case|rehoming|name|country&cohort=…&limit=…`
+(`Db::verdict_rows`: fixed table and column lists, newest first, limit default 500 / cap 5,000).
+Smoke on prod: the 124 `xb-same-name-2026-08-31` case verdicts read back (78 wrong-country, 27
+distinct-entities, 17 merge, 2 needs-more-evidence); the 355 country cohort reads back with its
+applied stamps; an unknown table is a 400. Was: ready-for-agent (filed 2026-09-05 from the issue-355 campaign)
 Kind: capability / operability (organization layer, review loop)
 Relates to: 311 (the review loop), 314, 355 (the campaign that needed the 124 prior verdicts
 as a calibration set and could not get them), 45 (why `/v1/sql` is an allow-list)
