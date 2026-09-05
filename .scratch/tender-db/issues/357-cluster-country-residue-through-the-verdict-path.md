@@ -4,8 +4,10 @@ Status: SLICE 1 APPLIED 2026-09-05 11:5x UTC — 590 verdicts recorded under
 `cluster-country-2026-09-05`; dry plan (job 702) **488 moves, exact against the recorded highs, 0
 no-ops**; wet (job 703) **488 rows moved**; R2 dry/wet (jobs 704/705) **316 groups merged, 394
 org rows removed, 1,395 mentions, 2,254 parties, 926 bid-parties, 9,437 winners repointed, 833
-tenders touched**; `project` (706) behind it. Slice 2 (the next 600 heaviest — folded clusters
-leave the census, so the same cap yields them) queued as the next packet run. Packet job
+tenders touched**; `project` (706) behind it. Slice 2 RUNNING (packet job 707: 3,519 clusters, 2,441 reviewable, 600 carried, of which 222
+are slice-1 clusters that persist because their strangers were parked or kept on purpose —
+excluded rather than re-litigated; the **378 new** clusters run in 16 batches + 2 blind sample
+batches). Packet job
 deployed `3be3f45`; packet run 701: 3,897 clusters, 2,819 reviewable.
 Kind: data quality (organization layer) — campaign
 Relates to: 326 (the census and the predicate that decided what it could), 355 (the
