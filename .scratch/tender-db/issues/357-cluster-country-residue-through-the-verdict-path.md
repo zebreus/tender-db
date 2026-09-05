@@ -76,6 +76,16 @@ Blind readers (38 cases): 36 same verdict, 35 same HIGH move set. Floor parked 3
 names). **Apply set: 243 HIGH** (arithmetic 110, weight 100, national-format 33). Record:
 `357-cluster-country-verdicts-slice2.json`.
 
+## Slice 3 reviewed (2026-09-05, 26 agents, ~2.1M tokens, 1h10m)
+
+219 new clusters (the packet's 600 carried 381 already reviewed — the skip landed after, `c4fd5f8`).
+Verdicts: wrong-country 159, distinct-entities 30, needs-more-evidence 23, same-entity-two-
+registrations 7. 164 moves (159 high). Challenger: agreed on 206, disputed 11, flagged 2 missed.
+Blind readers (22): 19 same verdict, 18 same HIGH set. Floor parked 32 (30 shared-register — the
+overseas-department class, now issue 358; 2 standing: IBM World Trade Corporation under US,
+B2Mobility GmbH under DE). **Apply set: 118 HIGH** (arithmetic 61, weight 36, national-format
+21). Record: `357-cluster-country-verdicts-slice3.json`.
+
 ## A shape the rubric missed, found on slice 2's heaviest movers (2026-09-05)
 
 The six heaviest planned moves of slice 2 were parents carrying a branch's or subsidiary's
