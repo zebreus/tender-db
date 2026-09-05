@@ -5,8 +5,12 @@ Status: SLICES 1–3 APPLIED, SLICE 4 STARTING 2026-09-05 15:1x UTC — cohort
 groups. Slice 3: 164 verdicts (re-recorded after the own-legal-form floor), **113 moved (job
 717), R2 74 groups / 76 rows, 310 mentions, 415 parties, 218 bid-parties, 501 winners repointed
 (job 719)**. Running total: **840 rows corrected, 561 duplicate groups folded**. Slice-4 packet
-(job 721, with the reviewed-cluster skip `c4fd5f8`): 3,190 clusters, 2,112 reviewable, 230
-already reviewed left out, 600 new carried.
+(job 721, with the reviewed-cluster skip `c4fd5f8`): 3,190 clusters, 2,112 reviewable, 230 left out
+by the skip — but 268 more of the 600 carried were reviewed and KEPT (distinct entities,
+undecided, one entity twice), which recorded no row; a `keep` verdict on the heaviest member is
+now recorded for every such cluster (255 backfilled for slices 1–3; the post-processing emits
+them from slice 4 on). Slice 4 RUNNING on the **332 new** clusters (14 batches + 2 blind sample
+batches); the remaining cohort is lighter (heaviest member 3–11 mentions by quartile).
 Kind: data quality (organization layer) — campaign
 Relates to: 326 (the census and the predicate that decided what it could), 355 (the
 verdict path and the campaign shape), 314 (the per-member evidence), 311 (the principle)
