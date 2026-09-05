@@ -54,6 +54,21 @@ verdict and by shape (spray vs balanced); the 355 floor applies (no agreeing row
 weight-only moves, shared-checksum and shared-register pairs park). Two concurrent agents on
 this box: size the first slice to what finishes in a firing.
 
+## Slice 1 reviewed (2026-09-05, 49 agents, ~4.8M tokens, 2h38m)
+
+600/600 cases. Verdicts: wrong-country 485 (no-one-letter-pair/spray 396 of 493), distinct-entities
+73, same-entity-two-registrations 27, needs-more-evidence 15. 590 moves (580 high): weight 402,
+arithmetic 158, national-format 27, name-language 3. Challenger: agreed on 569 cases, disputed 30
+moves (strangers with real standing — Lithuanian firms under LV with 6–22 mentions; an Italian
+trade agency's German office; a Belgian development agency's country offices), flagged 1 missed
+move. Blind readers (60 cases): 57 same verdict, 58 same HIGH move set. Floor parked 66 highs
+(35 mover-not-a-stray, 26 shared-register, 5 name-says-foreign-filing). **Apply set: 488 HIGH**
+(weight 333, arithmetic 134, national-format 21): VU→BG 59, VA→BG 45, VN→BG 26, VE→BG 25,
+AD→CZ 23, GA→BG 18, SE→FI 17, NO→DK 13, EE→ES 10 … — the Bulgarian spray class (ministry
+directorates and municipalities with thousands of mentions beside single-mention copies tagged
+VU/VA/VE/VN/GA/GH/IO/DE/FR) is most of it, read case by case and holding. Record:
+`357-cluster-country-verdicts-slice1.json`.
+
 ## Not in scope
 
 Merging the standing duplicate identities a move creates: R2's arm, run after the wet apply
