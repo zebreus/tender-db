@@ -1,6 +1,6 @@
 # 353 — the over-wall backlog below the listing cap: ~55,500 names / ~2.4M rows the verdict cohorts cannot reach
 
-Status: COHORTS 6+7 FOLDED 2026-09-05 01:0x — **two agent-read cohorts (24,675 + 19,166 names, both two-pass, echo-guarded) folded 1,598,214 rows** (job 679: 21,235 groups / 1,329,491 rows; job 682: 16,923 groups / 268,723 rows), parity held both times, verified by bounded reads. With the stock fold and cohorts 1–5 that is **5,746,456 rows folded under `p0`**; the country-less identifier-less provisional class is down from 8,032,637 rows to ~2.29M, of which 15,260 raw-wall names / 303,877 rows (mostly 2–5-row names) and 2,594 verdict-refused names stand. Next: the 2–5-row tail is a later cut (low rows per name); re-measure after Sunday's `org_match_keys` rebuild. Was: COHORT 6 FOLDED 2026-09-04 22:0x UTC — **job 679 folded 21,235 verdict-single names / 1,329,491 rows** (1,329,408 mentions, 1,383,354 parties, 454,816 winners repointed, 949,163 tenders touched; 1,692 s, parity held), after a two-pass agent read of 24,675 names with an echo alignment guard (pass 1 drifted in one batch; the guard caught it, the cautious merge settled 1,021 disagreements). Under rule `p0` the class has now shed **5,477,733 rows** (stock 3,407,962 + cohorts 2–5 740,280 + cohort 6 1,329,491). Standing: 33,243 raw-wall names / 607,472 rows (`id0/c0` 293k, `id0/c1` 193k; ≤26 rows each) and 1,534 verdict-refused names. Next: wait for Sunday's `org_match_keys` rebuild (stale carriers drop; some names fall under the wall on their own), re-census with the cap at 40,000, and run one more two-pass read over what stands. Was: MEASURED 2026-09-04 17:1x — deployed `7e51dcc`, measured by job 673: **90% of the standing rows (1.85M of 2.05M) sit on names with NO identified carrier at all** (`id0/c0` 32,337 names / 1,174,327 rows; `id0/c1` 19,478 / 672,599); the shared shapes (`id>cap/*`, `id1-cap/c2+`) hold 6.7%. The wall is over these names by spelling fragmentation: one N2 key unites the punctuation/case variants of one name (`COMMUNE DE SAINT-BON COURCHEVEL` + `…SAINT-BON-COURCHEVEL` + … = 44 live carriers, one commune). The 100-sample reads ~93% single, ~7% generic/non-name/multinational (`Price: Various`, `Shell`, `Centre hospitalier, service pharmacie`) — the same ratio as the hand cohorts, so a blind pure-echo rule would merge ~9% of the rows wrongly (the tendsign shape at small scale). Decision: verdicts, at scale — the census listing cap rises to 60,000 with a `shape` per listed group (this unit's second half, gate running), then the ~20k names of 21–229 rows go to agent-read batches. Re-measure after Sunday's `org_match_keys` rebuild. Was: BUILT 2026-09-04 15:5x — the fold's dry run tallies every raw-wall group by shape with rows and carries a 100-name uniform sample; deployed with `b71e809`. Was: ready-for-agent (filed 2026-09-04 from issue 351 unit 5's cohort 5)
+Status: CAMPAIGN COMPLETE 2026-09-05 02:4x UTC — **cohort 7 (19,166 names of 6–26 rows, two echo-guarded passes) folded 16,923 groups / 268,723 rows (job 682), and the `org_match_keys` rebuild alone released another 8,618 small names / 17,555 rows (job 687): stale keys of the 5.7M deleted rows had held them over the wall.** 5,764,011 rows folded under `p0` in all; the country-less provisional class is down from 8.03M to 2.27M rows. What stands is the intended set: 2,594 verdict-refused names, ~3,400 `unclear` names (bare brands, two-country names) and ~3,200 unread names of 2–5 rows, 6,642 raw-wall names in all. Was: COHORTS 6+7 FOLDED 2026-09-05 01:0x — **two agent-read cohorts (24,675 + 19,166 names, both two-pass, echo-guarded) folded 1,598,214 rows** (job 679: 21,235 groups / 1,329,491 rows; job 682: 16,923 groups / 268,723 rows), parity held both times, verified by bounded reads. With the stock fold and cohorts 1–5 that is **5,746,456 rows folded under `p0`**; the country-less identifier-less provisional class is down from 8,032,637 rows to ~2.29M, of which 15,260 raw-wall names / 303,877 rows (mostly 2–5-row names) and 2,594 verdict-refused names stand. Next: the 2–5-row tail is a later cut (low rows per name); re-measure after Sunday's `org_match_keys` rebuild. Was: COHORT 6 FOLDED 2026-09-04 22:0x UTC — **job 679 folded 21,235 verdict-single names / 1,329,491 rows** (1,329,408 mentions, 1,383,354 parties, 454,816 winners repointed, 949,163 tenders touched; 1,692 s, parity held), after a two-pass agent read of 24,675 names with an echo alignment guard (pass 1 drifted in one batch; the guard caught it, the cautious merge settled 1,021 disagreements). Under rule `p0` the class has now shed **5,477,733 rows** (stock 3,407,962 + cohorts 2–5 740,280 + cohort 6 1,329,491). Standing: 33,243 raw-wall names / 607,472 rows (`id0/c0` 293k, `id0/c1` 193k; ≤26 rows each) and 1,534 verdict-refused names. Next: wait for Sunday's `org_match_keys` rebuild (stale carriers drop; some names fall under the wall on their own), re-census with the cap at 40,000, and run one more two-pass read over what stands. Was: MEASURED 2026-09-04 17:1x — deployed `7e51dcc`, measured by job 673: **90% of the standing rows (1.85M of 2.05M) sit on names with NO identified carrier at all** (`id0/c0` 32,337 names / 1,174,327 rows; `id0/c1` 19,478 / 672,599); the shared shapes (`id>cap/*`, `id1-cap/c2+`) hold 6.7%. The wall is over these names by spelling fragmentation: one N2 key unites the punctuation/case variants of one name (`COMMUNE DE SAINT-BON COURCHEVEL` + `…SAINT-BON-COURCHEVEL` + … = 44 live carriers, one commune). The 100-sample reads ~93% single, ~7% generic/non-name/multinational (`Price: Various`, `Shell`, `Centre hospitalier, service pharmacie`) — the same ratio as the hand cohorts, so a blind pure-echo rule would merge ~9% of the rows wrongly (the tendsign shape at small scale). Decision: verdicts, at scale — the census listing cap rises to 60,000 with a `shape` per listed group (this unit's second half, gate running), then the ~20k names of 21–229 rows go to agent-read batches. Re-measure after Sunday's `org_match_keys` rebuild. Was: BUILT 2026-09-04 15:5x — the fold's dry run tallies every raw-wall group by shape with rows and carries a 100-name uniform sample; deployed with `b71e809`. Was: ready-for-agent (filed 2026-09-04 from issue 351 unit 5's cohort 5)
 Kind: measurement first (organization layer, the provisional-echo fold) — small
 Relates to: 351 (the fold, its tiers and verdict cohorts), 350 (the wall conflates fragmentation with genericness), 349 (echo vs shared carriers), 234 (the exclusion guards the wall stands in for)
 
@@ -208,6 +208,45 @@ verdict; a pass-1-only index keeps its verdict only when echo-verified) →
 assemble from the census's stored names → POST in ≤5,000-name parts → dry
 → 30-sample review → wet, with nothing posted between dry and wet.
 Concurrency ceiling: 20 subagents.
+
+## Cohort 7 and the rebuild (2026-09-05, night)
+
+**Cohort 7** (`over-wall-7-2026-09-04`): census job 680 (cap 40,000) listed
+every standing name; the cutter took the 19,166 of 6–26 rows (326,311 rows)
+with every earlier cohort excluded, in 39 batches of 500. Both passes ran on
+Opus with the echo guard from the start (the Fable pool's per-model limit
+had cut the first pass-2 fleet); 19,166 / 19,166 echoes clean in both passes,
+18,780 agree / 386 disagree → cautious. Final: 16,943 `single` (285,879
+rows), 1,163 `unclear`, 450 `generic`, 589 `non-name`, 21 `platform`. Dry
+job 681 planned 16,923 groups / 268,723 rows; wet job 682 folded exactly
+that in 550 s (268,707 mentions, 287,211 parties, 189,855 winners repointed,
+198,450 tenders touched). Verified: `barnsley mbc` 26 → 1 with its 26
+mentions, `azienda napoletana mobilita` → 1, `hospital miguel servet` → 1.
+
+**The rebuild caveat, measured.** `build-org-match-keys` defaults to a DRY
+run (job 683 "STORED NOTHING" — pass `{"dry_run":false}`); the wet rebuild
+(job 685) took 50 s and left 6,587,060 keys. The dry fold before it (job
+684) planned 0 with 15,260 raw-wall names standing; the dry fold after it
+(job 686) found **8,612 of them under the wall and 6 echo-of-one** — their
+N2 keys had been over the cap only through the deleted rows' stale keys.
+Wet job 687 folded those 8,618 groups / 17,555 rows (small names: 2–26
+rows each; `Leleman` 39 → 1, `Altmark Klinikum gGmbH` → 1). So the Sunday
+tick's rebuild is load-bearing for this class, and a fold campaign should
+end with a rebuild + one more dry/wet pair, as this one now has.
+
+**Standing after job 687:** raw-wall 6,642 names (`id0/c0` 2,114 names /
+94,603 rows; `id0/c1` 2,804 / 77,972; `id0/c2+` 587 / 29,353; `id1-cap/c2+`
+549 / 44,611; `id>cap/*` 548 / ~30k) — the rows sit in the ~3,400 names
+with an `unclear` verdict (bare multinationals, two-country names), which
+fall to the raw wall by design; the ~3,200 unread names of 2–5 rows hold
+little. Plus 2,594 verdict-refused names. That is the intended residual;
+no further cut is planned unless a reader for the `unclear` class (register
+lookups, notice-country spread) is built.
+
+**Totals under `p0`:** stock fold 3,407,962 + cohorts 2–5 740,280 + cohort
+6 1,329,491 + cohort 7 268,723 + rebuild release 17,555 = **5,764,011 rows**
+over 566,838 groups, parity held on every wet run; the class went from
+8,032,637 rows to 2,269,051.
 
 ## Next
 
