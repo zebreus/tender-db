@@ -82,9 +82,21 @@ async fn identical_null_country_provisionals_fold_under_the_wall_and_stand_over_
     // A pair.
     org(&conn, 200, None, "Kreis Zwei").await;
     org(&conn, 201, None, "KREIS ZWEI").await;
-    // A name over the wall: three rows, twelve carriers of its key.
+    // A name over the wall: three rows in the class, and nine standing
+    // (non-provisional) rows outside it carry the same key — twelve LIVE
+    // carriers. Issue 354: the wall counts live rows only, so a phantom key
+    // (an org_id with no row) would no longer count.
     for i in 0..3 {
         org(&conn, 300 + i, None, "Gemeinde Generic").await;
+    }
+    for i in 3..12 {
+        conn.execute(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, NULL, NULL, NULL, 'Gemeinde Generic', 'gemeinde generic', 0, 0)",
+            (Value::Integer(300 + i),),
+        )
+        .await
+        .unwrap();
     }
     for i in 0..12 {
         conn.execute(
@@ -94,6 +106,9 @@ async fn identical_null_country_provisionals_fold_under_the_wall_and_stand_over_
         .await
         .unwrap();
     }
+    // A phantom carrier: a key row whose org never existed (or was merged
+    // away with foreign keys off). It must not count.
+    conn.execute("INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (99999, 'n2', 'stadt echo')", ()).await.unwrap();
     // Outside the class: a DE-country pair, and a singleton.
     org(&conn, 400, Some("DE"), "Stadt Echo").await;
     org(&conn, 401, Some("DE"), "Stadt Echo").await;
@@ -176,12 +191,12 @@ async fn identical_null_country_provisionals_fold_under_the_wall_and_stand_over_
     assert_eq!((dry.plan_groups, dry.plan_rows), (3, 4 + 29 + 29));
     assert_eq!(dry.listing[0], ("stadt big".to_owned(), "Stadt Big".to_owned(), 30, 600));
     assert_eq!(dry.merged_groups, 0);
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 88, "a dry run writes nothing");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 97, "a dry run writes nothing");
 
     // Parity: a wet run against a plan that is not the one recorded aborts.
     let off = db.fold_provisional_echoes(args(false, Some(200), &never, &quiet)).await;
     assert!(off.is_err(), "plan 3 vs recorded 200 is outside max(2%, 50)");
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 88);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 97);
 
     assert!(db.foreign_keys_enabled().await.unwrap(), "the writer enforces foreign keys before the fold");
     let wet = db.fold_provisional_echoes(args(false, Some(3), &never, &quiet)).await.unwrap();
@@ -194,7 +209,11 @@ async fn identical_null_country_provisionals_fold_under_the_wall_and_stand_over_
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 100 AND provisional = 1").await, 1, "the keep stays provisional");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 100").await, 3);
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'kreis zwei'").await, 2, "a refusing verdict: untouched");
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'gemeinde generic'").await, 3, "over the wall: untouched");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'gemeinde generic'").await, 12, "over the wall: untouched");
+    // Issue 354: the folded echoes' key rows are still there (nothing cascades), but the wall
+    // counts live carriers only — 'stadt big' is now 1 country-less + 2 identified rows.
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_match_keys WHERE key = 'stadt big'").await, 32, "stale key rows stay until the rebuild");
+    assert_eq!(db.echo_tier("stadt big", "stadt big", STOPLIST_CAP).await.unwrap(), store::EchoTier::UnderWall, "but they no longer count");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'bank many'").await, 13, "shared over the wall: untouched");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'stadt echo' AND country = 'DE'").await, 2, "outside the class: untouched");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_merge_log WHERE rule = 'p0' AND keep = 100").await, 4);

@@ -1,6 +1,6 @@
 # 354 — the merge loops leave the deleted rows' `org_match_keys` behind, so the wall over-counts until the weekly rebuild
 
-Status: ready-for-agent (filed 2026-09-05 from issue 353's rebuild measurement)
+Status: BUILT 2026-09-05 03:3x UTC (gate running) — the two carrier counts (`GENERIC_KEY_SQL`, `NAME_KEY_CARRIERS_SQL`) now JOIN `organizations`, so a merged-away row's key stops counting the moment the row is gone; `provisional_echo_fold.rs` pins a phantom key that must not count and `stadt big` reading under the wall after its echoes fold while its 32 stale key rows remain. Deploys at the next idle window. Was: ready-for-agent (filed 2026-09-05 from issue 353's rebuild measurement)
 Kind: correctness of a live gate (organization layer) — small
 Relates to: 353 (the measurement), 351 (the provisional fold), 352 (foreign keys off in the merge loops), 329/300 (R2/E0/R3 use the same wall), the weekly tick (`build-org-match-keys`)
 
@@ -21,26 +21,38 @@ Between a fold and the Sunday tick the same over-count also steers the
 LIVE resolver (issue 351 unit 2 mints a fresh row for a country-less
 mention whose key reads over the wall) and the E0/R2 name denials.
 
-## Proposal
+## Built (the join, not the delete)
 
-In every wet merge loop that deletes an organization row with foreign
-keys off — `fold_provisional_plan` (p0), `match_org_identifiers_r2` (R2,
-E0) and R3 through it — delete the loser's `org_match_keys` rows in the
-same transaction, right before `DELETE FROM organizations`:
+`org_match_keys` declares no foreign key and is indexed `(key_kind, key,
+org_id)` only — there is no index leading on `org_id`, so `DELETE FROM
+org_match_keys WHERE org_id = ?` per loser would scan the 6.6M-row table
+each time (the docs at `NAME_KEY_CARRIERS_SQL` say why that index does not
+exist). The cheaper and complete fix is on the reading side: both carrier
+counts now JOIN `organizations`:
 
 ```sql
-DELETE FROM org_match_keys WHERE org_id = ?
+SELECT COUNT(*) FROM (SELECT DISTINCT k.org_id FROM org_match_keys k
+   JOIN organizations o ON o.id = k.org_id
+   WHERE k.key_kind = ? AND k.key = ? LIMIT ?)
 ```
 
-One indexed delete per loser (the table is keyed by `org_id`), so the
-1,400 rows/s pace holds. The keep's keys stay; a rebuild is then only an
-epoch change, not a correctness step. Pin it in `provisional_echo_fold.rs`
-and `r2_merge.rs`: after the wet run the loser ids have no key rows and
-the keep's are intact.
+Still bounded: the index seek stops after `LIMIT` LIVE carriers, each one
+a PK lookup; a stale-heavy key walks its stale entries once per probe until
+the weekly rebuild purges them (`build-org-match-keys` — note it defaults
+to a DRY run; the wet form is `{"dry_run":false}`). The breakdown query
+already joined, so the tiers and shapes were consistent with this reading
+all along; only the raw count lagged.
 
-Also worth a line in `docs/operations.md`: `build-org-match-keys` defaults
-to a DRY run (job 683 stored nothing); the wet form is
-`{"dry_run":false}`.
+Pinned in `provisional_echo_fold.rs`: `Gemeinde Generic` stays over the
+wall with twelve LIVE carriers (three in the class, nine standing
+non-provisional rows); a phantom key row for `stadt echo` (org 99999, no
+row) does not count; after the wet fold `stadt big` reads `UnderWall`
+(one country-less row + two identified) while its 32 stale key rows are
+still in the table.
+
+Deleting losers' keys inside the merge loops stays an option if an
+`org_id` index is ever added (the rebuild would have to drop and recreate
+it like `org_match_keys_kk`); today it is not needed.
 
 ## Not in scope
 

@@ -125,8 +125,20 @@ async fn org(
 /// `kind` is a parameter because the real build stores the same N3 key under
 /// EITHER kind: it writes an `n3` row only when the key differs from the `n2`
 /// one, so a name with no legal-form token lives under `n2` alone.
+///
+/// Issue 354: the wall counts LIVE carriers (the count joins `organizations`),
+/// so each carrier is a real row — a country-less, identifier-less provisional
+/// one, outside every identity scope this census walks. `OR IGNORE` because a
+/// test may seed the same key twice to prove duplicate key rows count once.
 async fn carriers(conn: &turso::Connection, kind: &str, key: &str, carriers: i64) {
     for i in 0..carriers {
+        conn.execute(
+            "INSERT OR IGNORE INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, NULL, NULL, NULL, ?, ?, 1, 0)",
+            (Value::Integer(900_000 + i), Value::Text(key.into()), Value::Text(key.into())),
+        )
+        .await
+        .unwrap();
         conn.execute(
             "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, ?, ?)",
             (

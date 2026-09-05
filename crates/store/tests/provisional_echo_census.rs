@@ -54,8 +54,19 @@ async fn mention(conn: &turso::Connection, notice: i64, org: i64, name: &str) {
     .unwrap();
 }
 
+/// Issue 354: the wall counts LIVE carriers, so a key row needs an org row
+/// behind it. Ids the test did not seed get a standing (non-provisional)
+/// country-less, identifier-less row — outside the class the census walks,
+/// inside the wall's count.
 async fn key_rows(conn: &turso::Connection, key: &str, from: i64, n: i64) {
     for i in 0..n {
+        conn.execute(
+            "INSERT OR IGNORE INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, NULL, NULL, NULL, ?, ?, 0, 0)",
+            (Value::Integer(from + i), Value::Text(key.into()), Value::Text(key.into())),
+        )
+        .await
+        .unwrap();
         conn.execute(
             "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', ?)",
             (Value::Integer(from + i), Value::Text(key.into())),

@@ -375,6 +375,14 @@ async fn bind_with_wall_indexed(
     .unwrap();
     // `carriers` orgs share the N2 key, which is what makes it generic.
     for o in 1..=carriers as i64 {
+        // Issue 354: the wall counts LIVE carriers — a standing row behind every key row.
+        conn.execute(
+            "INSERT OR IGNORE INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, NULL, NULL, NULL, 'yhteinennimi', 'yhteinennimi', 0, 0)",
+            (store::turso::Value::Integer(o),),
+        )
+        .await
+        .unwrap();
         conn.execute(
             "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'yhteinennimi')",
             (store::turso::Value::Integer(o),),
@@ -543,6 +551,14 @@ async fn a_wall_denial_does_not_capture_the_next_clean_mention() {
     .unwrap();
     // 25 carriers of the GENERIC key; the specific one has none.
     for o in 1..=25i64 {
+        // Issue 354: the wall counts LIVE carriers — a standing row behind every key row.
+        conn.execute(
+            "INSERT OR IGNORE INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, NULL, NULL, NULL, 'yhteinennimi', 'yhteinennimi', 0, 0)",
+            (store::turso::Value::Integer(o),),
+        )
+        .await
+        .unwrap();
         conn.execute(
             "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'yhteinennimi')",
             (store::turso::Value::Integer(o),),
@@ -652,6 +668,14 @@ async fn country_less_mentions_reuse_under_the_wall_and_mint_over_it() {
         // "gemeindetaufkirchen" is carried by three org rows: over a cap of 2,
         // and none of them identified — over the wall with no other tier.
         for id in [9001, 9002, 9003] {
+            // Issue 354: the wall counts LIVE carriers — a standing row behind every key row.
+            conn.execute(
+                "INSERT OR IGNORE INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+                 VALUES (?, NULL, NULL, NULL, 'gemeindetaufkirchen', 'gemeindetaufkirchen', 0, 0)",
+                (store::turso::Value::Integer(id),),
+            )
+            .await
+            .unwrap();
             conn.execute(
                 "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'gemeindetaufkirchen')",
                 (store::turso::Value::Integer(id),),
@@ -662,6 +686,14 @@ async fn country_less_mentions_reuse_under_the_wall_and_mint_over_it() {
         // "stadtbig": over the wall by five carriers, two of them identified
         // DE rows — an echo of one entity (unit 4's tier 2).
         for id in [9101, 9102, 9103] {
+            // Issue 354: the wall counts LIVE carriers — a standing row behind every key row.
+            conn.execute(
+                "INSERT OR IGNORE INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+                 VALUES (?, NULL, NULL, NULL, 'stadtbig', 'stadtbig', 0, 0)",
+                (store::turso::Value::Integer(id),),
+            )
+            .await
+            .unwrap();
             conn.execute(
                 "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'stadtbig')",
                 (store::turso::Value::Integer(id),),
@@ -677,6 +709,14 @@ async fn country_less_mentions_reuse_under_the_wall_and_mint_over_it() {
             )
             .await
             .unwrap();
+            // Issue 354: the wall counts LIVE carriers — a standing row behind every key row.
+            conn.execute(
+                "INSERT OR IGNORE INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+                 VALUES (?, NULL, NULL, NULL, 'stadtbig', 'stadtbig', 0, 0)",
+                (store::turso::Value::Integer(id),),
+            )
+            .await
+            .unwrap();
             conn.execute(
                 "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'stadtbig')",
                 (store::turso::Value::Integer(id),),
@@ -689,6 +729,14 @@ async fn country_less_mentions_reuse_under_the_wall_and_mint_over_it() {
     for id in [9201, 9202, 9203] {
         let raw = store::turso::Builder::new_local(path).build().await.unwrap();
         let conn = raw.connect().unwrap();
+        // Issue 354: the wall counts LIVE carriers — a standing row behind every key row.
+        conn.execute(
+            "INSERT OR IGNORE INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, NULL, NULL, NULL, 'tribunalverdict', 'tribunalverdict', 0, 0)",
+            (store::turso::Value::Integer(id),),
+        )
+        .await
+        .unwrap();
         conn.execute(
             "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'tribunalverdict')",
             (store::turso::Value::Integer(id),),

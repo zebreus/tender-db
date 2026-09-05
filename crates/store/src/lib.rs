@@ -5316,17 +5316,30 @@ tmpfs /data/ramcache tmpfs rw 0 0
             plan
         };
 
-        for sql in [crate::canonical::GENERIC_KEY_SQL, crate::canonical::STALE_KEY_COUNT_SQL] {
+        // Issue 354: the generic probe now aliases the table (`k`) and joins
+        // `organizations` by primary key, so the seek line names the alias;
+        // the predicate is what proves the index leads on (key_kind, key).
+        for sql in [
+            crate::canonical::GENERIC_KEY_SQL,
+            crate::canonical::NAME_KEY_CARRIERS_SQL,
+            crate::canonical::STALE_KEY_COUNT_SQL,
+        ] {
             let plan = plan_of(sql).await;
             assert!(
-                plan.contains("SEARCH org_match_keys USING INDEX org_match_keys_kk"),
+                plan.contains("USING INDEX org_match_keys_kk (key_kind=? AND key=?"),
                 "must seek on (key_kind, key, …) — plan was:\n{plan}"
             );
             assert!(
-                !plan.contains("SCAN org_match_keys"),
+                !plan.contains("SCAN org_match_keys") && !plan.contains("SCAN k\n") && !plan.contains("SCAN k "),
                 "a scan here is the issue-321 shape: the whole key store, per \
                  call, and the generic probe runs on the INGEST hot path:\n{plan}"
             );
+            if sql != crate::canonical::STALE_KEY_COUNT_SQL {
+                assert!(
+                    plan.contains("SEARCH o USING INTEGER PRIMARY KEY"),
+                    "the issue-354 join must be a PK lookup per carrier, not a scan of organizations:\n{plan}"
+                );
+            }
         }
 
         // The shape that shipped, kept as the negative control. If turso ever

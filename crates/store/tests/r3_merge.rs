@@ -369,6 +369,15 @@ async fn a_generic_corroborating_name_denies_unless_the_anchor_hard_checksums() 
     // corroborated on norm("RENAULT SA") = "renaultsa". Give that key three
     // holders in the satellite.
     for org in [15i64, 109, 4242] {
+        // Issue 354: the wall counts LIVE carriers, so the holder the seed
+        // did not create gets a standing country-less row.
+        conn.execute(
+            "INSERT OR IGNORE INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, NULL, NULL, NULL, 'Renault SA', 'renault sa', 0, 0)",
+            (Value::Integer(org),),
+        )
+        .await
+        .unwrap();
         conn.execute(
             "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'renaultsa')",
             (Value::Integer(org),),
@@ -414,6 +423,15 @@ async fn a_generic_corroborating_name_denies_unless_the_anchor_hard_checksums() 
     // must land on THAT rung and nowhere else, or the number the cadence
     // decision reads is inflated by merges that never happened.
     for org in [17i64, 107, 4243] {
+        // Issue 354: the wall counts LIVE carriers, so the holder the seed
+        // did not create gets a standing country-less row.
+        conn.execute(
+            "INSERT OR IGNORE INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, NULL, NULL, NULL, 'Groupement Alpha', 'groupement alpha', 0, 0)",
+            (Value::Integer(org),),
+        )
+        .await
+        .unwrap();
         conn.execute(
             "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'groupementalpha')",
             (Value::Integer(org),),
@@ -448,6 +466,7 @@ async fn a_generic_corroborating_name_denies_unless_the_anchor_hard_checksums() 
     let empty = db.match_org_null_country_r3(args_with(no_hard, 1, true, None)).await.expect("dry");
     assert_eq!((empty.denied_generic_name, empty.plan_groups), (0, 1));
 
-    // Dry throughout: the wall never wrote anything.
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 32);
+    // Dry throughout: the wall never wrote anything (32 seeded + the two
+    // standing holders 4242/4243 this test added for the wall to count).
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 34);
 }

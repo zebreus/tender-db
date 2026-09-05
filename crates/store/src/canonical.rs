@@ -2173,9 +2173,17 @@ pub(crate) const COUNTRY_TYPO_JOIN_SQL: &str =
 /// Pruned inside the same write, so it holds without a sweeper.
 pub const REPORT_HISTORY_DEPTH: usize = 10;
 
+/// Issue 354: both carrier counts JOIN `organizations`, so a key row whose
+/// org was merged away (the merge loops run with foreign keys off and the
+/// table declares none, so nothing cascades) stops counting the moment the
+/// row is gone rather than at the next weekly rebuild. Measured 2026-09-05:
+/// 8,618 names sat over the wall on stale keys alone. Still bounded: the
+/// `(key_kind, key, org_id)` index seek stops after `LIMIT` LIVE carriers,
+/// each a PK lookup.
 pub(crate) const GENERIC_KEY_SQL: &str =
-    "SELECT COUNT(*) FROM (SELECT DISTINCT org_id FROM org_match_keys \
-       WHERE key_kind = ? AND key = ? LIMIT ?)";
+    "SELECT COUNT(*) FROM (SELECT DISTINCT k.org_id FROM org_match_keys k \
+       JOIN organizations o ON o.id = k.org_id \
+       WHERE k.key_kind = ? AND k.key = ? LIMIT ?)";
 
 /// Issue 349: what the carriers of an over-cap key ARE. The wall counts org
 /// rows; a Greek hospital fragmented into thirty NULL-country, identifier-less
@@ -2375,8 +2383,9 @@ async fn echo_tier_by_wall(
 /// every legal-form token, so a key string containing `§` can only be an N3 key,
 /// and a string without one is an N2 key that equals its own N3 key.
 pub(crate) const NAME_KEY_CARRIERS_SQL: &str =
-    "SELECT COUNT(*) FROM (SELECT DISTINCT org_id FROM org_match_keys \
-       WHERE key_kind = ? AND key = ? LIMIT ?)";
+    "SELECT COUNT(*) FROM (SELECT DISTINCT k.org_id FROM org_match_keys k \
+       JOIN organizations o ON o.id = k.org_id \
+       WHERE k.key_kind = ? AND k.key = ? LIMIT ?)";
 
 /// The issue-321 stale-key count. Same index, same reason, and this one is
 /// the standing record of getting it wrong: it was written `org_id = ? AND
