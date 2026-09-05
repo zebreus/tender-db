@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Install (or restore) the tender-db watchdog timers on the production box.
 #
-# Idempotent: copies the two watch scripts to /usr/local/bin and the four unit
-# files to /etc/systemd/system, reloads systemd, and enables + starts the timers.
+# Idempotent: copies the watch scripts and the operator CLI (ops/admin.sh as
+# tender-admin) to /usr/local/bin and the unit files to /etc/systemd/system,
+# reloads systemd, and enables + starts the timers.
 # Safe to re-run at any time — this is the recovery path after a box rebuild or an
 # accidental deletion of the scripts (which is exactly what happened 2026-08-09,
 # issue 224: the scripts existed only on the box and were lost, so the timers
@@ -25,6 +26,12 @@ for s in tender-db-diskwatch.sh tender-db-jobwatch.sh tender-db-driftwatch.sh \
     install -m 0755 -o root -g root "$here/$s" "$bin/$s"
     echo "installed $bin/$s"
 done
+
+# The operator CLI rides along: ops/admin.sh's own header says it is installed
+# to /usr/local/bin under these conventions, but nothing did it — on 2026-09-05
+# the box still ran the 2026-08-17 copy, without `queue` and `cancel`.
+install -m 0755 -o root -g root "$here/../admin.sh" "$bin/tender-admin"
+echo "installed $bin/tender-admin"
 
 for u in \
     tender-db-diskwatch.service tender-db-diskwatch.timer \
