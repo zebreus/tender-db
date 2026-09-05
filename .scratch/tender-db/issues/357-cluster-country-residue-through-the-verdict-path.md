@@ -1,6 +1,6 @@
 # 357 — The identifier-under-several-codes residue, case by case through the verdict path
 
-Status: SLICES 1–2 APPLIED, SLICE 3 STARTING 2026-09-05 14:0x UTC — cohort
+Status: SLICES 1–2 APPLIED, SLICE 3 RUNNING 2026-09-05 12:4x UTC — cohort
 `cluster-country-2026-09-05`. Slice 1: 590 verdicts, 488 moved (job 703), R2 316 groups / 394 rows
 (job 705). Slice 2: 314 verdicts (re-recorded after the standing floor and a hand read of the
 heavy movers), **239 moved (job 710), R2 171 groups / 173 rows, 648 mentions, 756 parties, 367

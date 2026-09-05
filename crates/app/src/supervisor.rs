@@ -5675,7 +5675,7 @@ impl Supervisor {
                     };
                     let body = serde_json::json!({
                         "clusters": r.clusters, "eligible": r.eligible, "by_verdict": r.by_verdict,
-                        "truncated": r.truncated,
+                        "already_reviewed": r.already_reviewed, "truncated": r.truncated,
                         "cases": r.cases.iter().map(|c| serde_json::json!({
                             "identifier": c.identifier, "verdict": c.verdict, "codes": c.codes,
                             "asked": c.asked, "named": c.named, "named_schemes": c.named_schemes,
@@ -5697,9 +5697,10 @@ impl Supervisor {
                         .join(", ");
                     Ok(format!(
                         "country-cluster-packet (issue 357): {} clusters, {} eligible for review ({by}); \
-                         {} cases carried{}",
+                         {} already carry a verdict and are left out; {} cases carried{}",
                         r.clusters,
                         r.eligible,
+                        r.already_reviewed,
                         r.cases.len(),
                         if r.truncated { " (truncated at the cap)" } else { "" }
                     ))

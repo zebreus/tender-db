@@ -191,3 +191,38 @@ async fn the_cap_truncates_after_the_heaviest_and_says_so() {
     assert_eq!(p.cases.len(), 1);
     assert_eq!(p.cases[0].identifier, "12345678");
 }
+
+/// A cluster a campaign has already read stays out, whatever the verdict said
+/// — the standing verdict on any member is the record of that reading, and
+/// the cap carries new work (slice 3 of the 357 campaign found 381 of 600
+/// carried clusters already reviewed).
+#[tokio::test]
+async fn a_cluster_with_a_standing_verdict_on_a_member_is_left_out_and_counted() {
+    let (db, conn) = open("cluster-packet-reviewed").await;
+    org(&conn, 10, "SK", "12345678", "Tamtron s.r.o.", 5).await;
+    org(&conn, 11, "CZ", "12345678", "Tamtron s.r.o.", 1).await;
+    org(&conn, 20, "BG", "123456789", "Софарма АД", 2).await;
+    org(&conn, 21, "VU", "123456789", "Софарма АД", 1).await;
+    // A parked (medium) verdict on the VU stranger: reviewed, kept on purpose.
+    db.record_country_verdicts(
+        "c",
+        &[store::CountryVerdict {
+            org_id: 21,
+            action: "move".into(),
+            from_country: Some("VU".into()),
+            to_country: Some("BG".into()),
+            rationale: "parked".into(),
+            confidence: "medium".into(),
+        }],
+        1,
+    )
+    .await
+    .unwrap();
+    let p = packet(&db, 100).await;
+    assert_eq!((p.eligible, p.already_reviewed, p.cases.len()), (2, 1, 1));
+    assert_eq!(p.cases[0].identifier, "12345678");
+    assert!(!p.truncated);
+    // The cap counts CARRIED cases, so a reviewed cluster does not use it up.
+    let p = packet(&db, 1).await;
+    assert_eq!((p.cases.len(), p.already_reviewed, p.truncated), (1, 0, true), "the heaviest is carried; the cap stops before the reviewed one is even looked at");
+}

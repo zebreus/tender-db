@@ -2731,6 +2731,10 @@ pub struct ClusterPacket {
     /// operational footprint.
     pub eligible: u64,
     pub by_verdict: std::collections::BTreeMap<String, u64>,
+    /// Eligible clusters left out because a member already carries a country
+    /// verdict: reviewed once, parked or kept on purpose, and re-carrying them
+    /// only re-litigates (slice 3 of issue 357 found 381 of 600 so).
+    pub already_reviewed: u64,
     pub cases: Vec<ClusterCase>,
     pub truncated: bool,
     pub stopped: bool,
@@ -13028,10 +13032,6 @@ impl Db {
         // Heaviest first: mention weight is the reviewer's first read and the
         // campaign's budget, and a deterministic order lets a run resume.
         rows.sort_by(|a, b| total(b).cmp(&total(a)).then_with(|| a.identifier.cmp(&b.identifier)));
-        if rows.len() > cases_cap {
-            packet.truncated = true;
-            rows.truncate(cases_cap);
-        }
         let reader = self.reader().await?;
         let mut kinds: Vec<String> = Vec::new();
         {
@@ -13048,6 +13048,27 @@ impl Db {
         for c in rows {
             if stop() {
                 return Ok(ClusterPacket { stopped: true, ..Default::default() });
+            }
+            if packet.cases.len() >= cases_cap {
+                packet.truncated = true;
+                break;
+            }
+            // A cluster a campaign has already read stays out: a member with a
+            // standing country verdict (moved, parked as medium, or kept) is
+            // the record of that reading, and the cap should carry NEW work.
+            let reviewed = {
+                let mut r = reader
+                    .query(
+                        "SELECT 1 FROM org_country_verdicts v JOIN organizations o ON o.id = v.org_id \
+                          WHERE o.identifier = ? LIMIT 1",
+                        (t(&c.identifier),),
+                    )
+                    .await?;
+                r.next().await?.is_some()
+            };
+            if reviewed {
+                packet.already_reviewed += 1;
+                continue;
             }
             let mut case = ClusterCase {
                 identifier: c.identifier.clone(),
