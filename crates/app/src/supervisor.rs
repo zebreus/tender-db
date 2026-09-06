@@ -4017,6 +4017,10 @@ impl Supervisor {
                                 }).collect::<Vec<_>>(),
                             })
                         }).collect::<Vec<_>>(),
+                        // Issue 362: the reviewer's verdicts, as the planner read them.
+                        "denied_verdict": r.denied_verdict,
+                        "admitted_verdict": r.admitted_verdict,
+                        "verdict_stale": r.verdict_stale,
                         "merged_this_run": r.merged_groups,
                         "residual_of_wet_run": !dry_run,
                         // Dry-run blast-radius preview (the Stage-1 lesson):
@@ -4084,7 +4088,7 @@ impl Supervisor {
                     "match-org-identifiers r2 (issue 300 Stage 2){}: {} orgs scanned, \
                      {} E1-keyed, {} groups >=2; denied: {} cap, {} gate, {} consortium \
                      ({} members excluded member-scoped), \
-                     {} legal-form, {} vat-group-wall, {} names; plan {} groups; merged {} groups \
+                     {} legal-form, {} vat-group-wall, {} names, {} verdict-keep, {} verdict-merge; plan {} groups; merged {} groups \
                      ({} org rows removed, {} mentions, {} parties, {} bid-parties, \
                      {} winners repointed, {} winner dups deleted, {} tenders touched)",
                     if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
@@ -4098,6 +4102,8 @@ impl Supervisor {
                     r.denied_legal_form,
                     r.denied_group_vat,
                     r.denied_names,
+                    r.denied_verdict,
+                    r.admitted_verdict,
                     r.plan_groups,
                     r.merged_groups,
                     r.removed,

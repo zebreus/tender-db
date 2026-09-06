@@ -149,3 +149,72 @@ async fn r2_denies_disagreeing_names_lists_them_and_merges_the_rest() {
     );
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_merge_log WHERE rule = 'r2'").await, 4);
 }
+
+/// Issue 362: a reviewer's verdict on a group is the execution path for what
+/// the name gate leaves standing. A HIGH `merge` whose member set is exactly
+/// the live one is admitted past the gate and stamped by the wet merge; a
+/// `keep` denies its group whatever the names say; a merge whose reviewed set
+/// no longer matches the live group is stale and changes nothing.
+#[tokio::test]
+async fn a_reviewers_verdict_admits_or_denies_a_group_and_the_wet_merge_stamps_it() {
+    let (db, conn) = seed("test-r2-name-gate-verdicts.db").await;
+    let mv = |key: &str, members: Vec<i64>, action: &str, confidence: &str| store::MergeVerdict {
+        country: "FI".into(),
+        scheme: "FI:ytunnus".into(),
+        key: key.into(),
+        members,
+        action: action.into(),
+        rationale: "read by hand".into(),
+        confidence: confidence.into(),
+    };
+    // Validation: members must be ascending and distinct; action is merge|keep.
+    assert!(db.record_merge_verdicts("rev-1", &[mv("10773381", vec![31, 30], "merge", "high")], 1).await.is_err());
+    assert!(db.record_merge_verdicts("rev-1", &[mv("10773381", vec![30, 31], "fuse", "high")], 1).await.is_err());
+    let n = db
+        .record_merge_verdicts(
+            "rev-1",
+            &[
+                // The disagreeing pair, read as one entity (a rename): merge.
+                mv("10773381", vec![30, 31], "merge", "high"),
+                // The agreeing pair, read as two entities after all: keep.
+                mv("01003158", vec![10, 11], "keep", "high"),
+                // A merge reviewed on two members while the live group has three: stale.
+                mv("20445111", vec![40, 41], "merge", "high"),
+            ],
+            1,
+        )
+        .await
+        .expect("records");
+    assert_eq!(n, 3);
+    let (cols, rows) = db.verdict_rows("merge", Some("rev-1"), 10).await.expect("readable");
+    assert_eq!((cols[0], rows.len()), ("country", 3), "the store reads back through the 356 surface");
+
+    let dry = db.match_org_identifiers_r2(args(true, None)).await.expect("dry");
+    assert_eq!(dry.denied_verdict, 1, "Telinekataja is kept by verdict");
+    assert_eq!(dry.admitted_verdict, 1, "Powiat/Rekord is admitted by verdict");
+    assert_eq!(dry.verdict_stale, 1, "the two-member verdict does not cover the three-member group");
+    assert_eq!(dry.denied_names, 1, "…which the name rule then denies as before");
+    assert_eq!(
+        dry.plan_groups, 4,
+        "Powiat/Rekord (verdict), Ramboll (contained), the spelling pair, the unnamed pair"
+    );
+
+    let wet = db.match_org_identifiers_r2(args(false, Some(4))).await.expect("wet");
+    assert_eq!((wet.merged_groups, wet.removed), (4, 4));
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 31").await, 0, "Rekord folded into Powiat");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (10, 11)").await, 2, "the kept pair stands");
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM org_merge_verdicts WHERE key = '10773381' AND applied_at IS NOT NULL AND job_id = 9 AND applied_action = 'merged 1 row(s) into 30'").await,
+        1,
+        "the admitting verdict is stamped with the merge it caused"
+    );
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM org_merge_verdicts WHERE applied_at IS NULL").await,
+        2,
+        "the keep and the stale merge carry no stamp"
+    );
+    // A second run: the applied merge is stale now (its group is gone), the
+    // keep still denies.
+    let again = db.match_org_identifiers_r2(args(true, None)).await.expect("dry again");
+    assert_eq!((again.denied_verdict, again.admitted_verdict), (1, 0));
+}

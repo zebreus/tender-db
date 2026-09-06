@@ -25,7 +25,7 @@ pub use canonical::{
     LotResultState, LotState, Mention, MentionResolver, NestedOrgRepair, NoticeRef, OrgDissolve, OrgMergeBatch, OrgNameBackfill,
     CaseApplyReport, CaseBacklogReport, CaseBacklogRow, CaseReview, CaseUnapplyReport,
     ClusterCase, ClusterPacket, CountryFoldReport, CountryMove, CountryVerdict,
-    CountryVerdictReport, FusionCandidate,
+    CountryVerdictReport, FusionCandidate, MergeVerdict,
     FusionReport, RehomingReport, RehomingVerdict,
     RehomingCase, RehomingGroup, RehomingMention, RehomingPacket, RehomingParked, RehomingTarget,
     OrphanSatellite, SatelliteOrphanReport,

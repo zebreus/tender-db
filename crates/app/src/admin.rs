@@ -46,6 +46,7 @@ pub fn router(supervisor: Arc<Supervisor>) -> Router {
         .route("/admin/name-verdicts", post(record_name_verdicts))
         .route("/admin/rehoming", post(record_rehoming))
         .route("/admin/country-verdicts", post(record_country_verdicts))
+        .route("/admin/merge-verdicts", post(record_merge_verdicts))
         .with_state(supervisor)
 }
 
@@ -311,6 +312,96 @@ async fn record_country_verdicts(
         })
         .collect();
     match sup.db().record_country_verdicts(&req.cohort, &verdicts, store::now_unix()).await {
+        Ok(n) => (StatusCode::OK, axum::Json(json!({ "recorded": n, "cohort": req.cohort })))
+            .into_response(),
+        Err(e) => error(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()),
+    }
+}
+
+/// The issue-362 merge-verdict upload shape.
+#[derive(serde::Deserialize)]
+struct MergeVerdictsBody {
+    cohort: String,
+    verdicts: Vec<MergeVerdictIn>,
+}
+
+#[derive(serde::Deserialize)]
+struct MergeVerdictIn {
+    country: String,
+    scheme: String,
+    key: String,
+    /// The org ids the reviewer read, ascending — the merge is honoured only
+    /// while the live group is exactly this set.
+    members: Vec<i64>,
+    action: String,
+    rationale: String,
+    confidence: String,
+}
+
+/// `POST /admin/merge-verdicts` — record one cohort's per-GROUP merge
+/// verdicts (issue 362): the review loop's execution path for the groups the
+/// R2 name gate leaves standing. Recording only; the next wet
+/// `match-org-identifiers` run executes HIGH `merge` verdicts whose member
+/// set still matches, and `keep` denies its group from then on.
+async fn record_merge_verdicts(
+    State(sup): State<Arc<Supervisor>>,
+    headers: HeaderMap,
+    body: Result<axum::Json<MergeVerdictsBody>, axum::extract::rejection::JsonRejection>,
+) -> Response {
+    if let Some(response) = deny(&headers) {
+        return response;
+    }
+    let req = match body {
+        Ok(axum::Json(b)) => b,
+        Err(e) => return error(StatusCode::BAD_REQUEST, &e.to_string()),
+    };
+    if req.cohort.is_empty() || req.verdicts.is_empty() {
+        return error(StatusCode::BAD_REQUEST, "cohort and verdicts are required");
+    }
+    if req.verdicts.len() > 5_000 {
+        return error(StatusCode::BAD_REQUEST, "at most 5,000 verdicts per upload");
+    }
+    for v in &req.verdicts {
+        let name = format!("{}/{}/{}", v.country, v.scheme, v.key);
+        if v.country.is_empty() || v.scheme.is_empty() || v.key.is_empty() || v.key.len() > 64 {
+            return error(
+                StatusCode::BAD_REQUEST,
+                &format!("group {name}: country, scheme and a key of at most 64 chars are required"),
+            );
+        }
+        if !matches!(v.action.as_str(), "merge" | "keep") {
+            return error(StatusCode::BAD_REQUEST, &format!("group {name}: action must be merge|keep"));
+        }
+        if !matches!(v.confidence.as_str(), "high" | "medium" | "low") {
+            return error(
+                StatusCode::BAD_REQUEST,
+                &format!("group {name}: confidence must be high|medium|low"),
+            );
+        }
+        if v.members.len() < 2 || v.members.windows(2).any(|w| w[0] >= w[1]) {
+            return error(
+                StatusCode::BAD_REQUEST,
+                &format!("group {name}: members must be two or more org ids, ascending, distinct"),
+            );
+        }
+        if v.rationale.len() > 4_000 {
+            return error(StatusCode::BAD_REQUEST, &format!("group {name}: rationale over 4,000 chars"));
+        }
+    }
+    let verdicts: Vec<store::MergeVerdict> = req
+        .verdicts
+        .into_iter()
+        .map(|v| store::MergeVerdict {
+            country: v.country,
+            scheme: v.scheme,
+            key: v.key,
+            members: v.members,
+            action: v.action,
+            rationale: v.rationale,
+            confidence: v.confidence,
+        })
+        .collect();
+    match sup.db().record_merge_verdicts(&req.cohort, &verdicts, store::now_unix()).await {
         Ok(n) => (StatusCode::OK, axum::Json(json!({ "recorded": n, "cohort": req.cohort })))
             .into_response(),
         Err(e) => error(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()),

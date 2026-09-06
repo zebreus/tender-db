@@ -518,6 +518,30 @@ pub(crate) const SCHEMA: &str = "
         PRIMARY KEY (org_id, cohort)
     ) STRICT;
 
+    -- Issue 362: per-GROUP merge verdicts — the execution path for what the R2
+    -- name gate (issue 359) leaves standing. A group is (country, scheme, key)
+    -- exactly as the R2 planner names it; `members` is the ascending org-id
+    -- set the reviewer READ, and a `merge` is honoured only while the live
+    -- group (after the consortium exclusion) is exactly that set — a stranger
+    -- joining the key later voids it, parity at the smallest grain. `keep`
+    -- denies the group for good, whatever its names come to say. Only HIGH
+    -- merges execute; `applied_action` names the survivor.
+    CREATE TABLE IF NOT EXISTS org_merge_verdicts (
+        country        TEXT    NOT NULL,
+        scheme         TEXT    NOT NULL,
+        key            TEXT    NOT NULL,
+        cohort         TEXT    NOT NULL,
+        members        TEXT    NOT NULL,   -- JSON array of org ids, ascending
+        action         TEXT    NOT NULL CHECK (action IN ('merge','keep')),
+        rationale      TEXT    NOT NULL,
+        confidence     TEXT    NOT NULL CHECK (confidence IN ('high','medium','low')),
+        reviewed_at    INTEGER NOT NULL,
+        applied_at     INTEGER,
+        applied_action TEXT,
+        job_id         INTEGER,
+        PRIMARY KEY (country, scheme, key, cohort)
+    ) STRICT;
+
     -- Issue 300 §2.3 (Stage 4): REBUILDABLE scratch satellite — name keys
     -- for the E3/E4 candidate scans. Not an entity table: no change events,
     -- no FK (org ids may dangle after merges — org_merge_log precedent),
@@ -1616,6 +1640,14 @@ pub struct R2MergeReport {
     /// count but whose identifier-bearing carriers are under it — one
     /// entity's echo, admitted rather than denied.
     pub admitted_echo: u64,
+    /// Issue 362: groups a reviewer's `keep` verdict denied.
+    pub denied_verdict: u64,
+    /// Issue 362: groups a reviewer's HIGH `merge` verdict admitted past the
+    /// name rule (member set identical to the reviewed one).
+    pub admitted_verdict: u64,
+    /// Issue 362: merge verdicts found but not honoured — not HIGH, already
+    /// applied, or the live member set differs from the reviewed one.
+    pub verdict_stale: u64,
     /// Groups surviving every denial — the merge plan.
     pub plan_groups: u64,
     /// Groups actually merged (<= plan under a cap or a stop).
@@ -1829,6 +1861,29 @@ pub struct CountryVerdict {
     pub to_country: Option<String>,
     pub rationale: String,
     pub confidence: String,
+}
+
+/// One reviewer's verdict on an R2 group (issue 362): merge it, or keep it
+/// standing. `members` is the ascending org-id set the reviewer read.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MergeVerdict {
+    pub country: String,
+    pub scheme: String,
+    pub key: String,
+    pub members: Vec<i64>,
+    /// `merge` or `keep`.
+    pub action: String,
+    pub rationale: String,
+    pub confidence: String,
+}
+
+/// A stored merge verdict as the R2 planner reads it.
+struct MergeVerdictRow {
+    cohort: String,
+    members: Vec<i64>,
+    action: String,
+    confidence: String,
+    applied: bool,
 }
 
 /// One planned (dry) or executed (wet) country move.
@@ -9016,6 +9071,10 @@ impl Db {
         // The denial stack. Names arrive per group (org_health_meta), so the
         // preload never holds 1.16M name strings.
         let mut plan: Vec<((String, &'static str, String), Vec<Member>)> = Vec::new();
+        // Issue 362: groups a reviewer's merge verdict admitted, by group key,
+        // with the cohort to stamp once the wet merge has landed.
+        let mut admitted: std::collections::HashMap<(String, &'static str, String), String> =
+            std::collections::HashMap::new();
         'group: for (gk, members) in groups {
             if (args.stop)() {
                 report.stopped = true;
@@ -9089,6 +9148,32 @@ impl Db {
             // `agree-distinctive` verdict — every named member folds to one N3
             // key and that key is not generic under the stoplist wall.
             // `agree-generic`, `contained` and `disagree` are denied here.
+            //
+            // 4a, first (issue 362): a reviewer's verdict on this exact group.
+            // `keep` denies it whatever the names say; a HIGH `merge` whose
+            // member set is exactly the live one stands in for the name rule
+            // — the review loop's execution path. Anything else (medium,
+            // applied, a group that gained or lost a member since the review)
+            // is stale and the rules decide as if no verdict existed.
+            let live_ids: Vec<i64> = {
+                let mut v: Vec<i64> = members.iter().map(|m| m.id).collect();
+                v.sort_unstable();
+                v
+            };
+            let mut admitted_by_verdict = false;
+            if let Some(v) = self.merge_verdict_for(&gk.0, gk.1, &gk.2).await? {
+                if v.action == "keep" {
+                    report.denied_verdict += 1;
+                    continue 'group;
+                }
+                if v.confidence == "high" && !v.applied && v.members == live_ids {
+                    admitted_by_verdict = true;
+                    report.admitted_verdict += 1;
+                    admitted.insert(gk.clone(), v.cohort);
+                } else {
+                    report.verdict_stale += 1;
+                }
+            }
             let mut keys: BTreeSet<String> = BTreeSet::new();
             for (id, _, _, _, name) in &meta {
                 if flagged.contains(id) {
@@ -9099,7 +9184,10 @@ impl Db {
                     keys.insert(k);
                 }
             }
-            if args.rule == "e0" {
+            if admitted_by_verdict {
+                // The reviewer's word replaces the name rule; every other
+                // denial (the wall below) still applies.
+            } else if args.rule == "e0" {
                 let mut deny = keys.len() != 1;
                 if let Some(k) = keys.iter().next()
                     && !deny
@@ -9423,7 +9511,7 @@ impl Db {
             conn.execute("BEGIN IMMEDIATE", ()).await?;
             let mut txn_touched: BTreeSet<i64> = BTreeSet::new();
             let result: turso::Result<()> = async {
-                for ((_, scheme, key), members) in txn {
+                for ((country, scheme, key), members) in txn {
                     if report.merged_groups >= cap {
                         break;
                     }
@@ -9510,6 +9598,27 @@ impl Db {
                     }
                     append_change(&conn, "organization", keep, None, "changed", now).await?;
                     report.merged_groups += 1;
+                    // Issue 362: the verdict that admitted this group is stamped
+                    // with the merge it caused, in the same transaction.
+                    if let Some(cohort) = admitted.get(&(country.clone(), *scheme, key.clone())) {
+                        conn.execute(
+                            "UPDATE org_merge_verdicts SET applied_at = ?, applied_action = ?, \
+                             job_id = ? WHERE country = ? AND scheme = ? AND key = ? AND cohort = ?",
+                            (
+                                Value::Integer(now),
+                                Value::Text(format!("merged {} row(s) into {keep}", members.len() - 1)),
+                                match args.job_id {
+                                    Some(j) => Value::Integer(j),
+                                    None => Value::Null,
+                                },
+                                t(country),
+                                t(*scheme),
+                                t(key),
+                                t(cohort),
+                            ),
+                        )
+                        .await?;
+                    }
                 }
                 for &tid in &txn_touched {
                     append_change(&conn, "tender", tid, None, "changed", now).await?;
@@ -12988,6 +13097,121 @@ impl Db {
         Ok(report)
     }
 
+    /// Record one cohort's per-GROUP merge verdicts (issue 362). Recording
+    /// only — the R2 arm executes a HIGH `merge` on its next wet run, and
+    /// stamps it. Re-recording replaces the verdict but never an applied stamp.
+    pub async fn record_merge_verdicts(
+        &self,
+        cohort: &str,
+        verdicts: &[MergeVerdict],
+        now: i64,
+    ) -> turso::Result<u64> {
+        for v in verdicts {
+            let name = format!("{}/{}/{}", v.country, v.scheme, v.key);
+            if v.country.is_empty() || v.scheme.is_empty() || v.key.is_empty() {
+                return Err(turso::Error::Error(format!(
+                    "group {name:?}: country, scheme and key are required"
+                )));
+            }
+            if !matches!(v.action.as_str(), "merge" | "keep") {
+                return Err(turso::Error::Error(format!(
+                    "group {name:?}: action must be merge|keep, got {:?}",
+                    v.action
+                )));
+            }
+            if !matches!(v.confidence.as_str(), "high" | "medium" | "low") {
+                return Err(turso::Error::Error(format!(
+                    "group {name:?}: confidence must be high|medium|low"
+                )));
+            }
+            if v.members.len() < 2 || v.members.windows(2).any(|w| w[0] >= w[1]) {
+                return Err(turso::Error::Error(format!(
+                    "group {name:?}: members must be two or more org ids, ascending, distinct"
+                )));
+            }
+        }
+        let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result: turso::Result<u64> = async {
+            let mut n = 0u64;
+            for v in verdicts {
+                let members = format!(
+                    "[{}]",
+                    v.members.iter().map(|m| m.to_string()).collect::<Vec<_>>().join(",")
+                );
+                conn.execute(
+                    "INSERT INTO org_merge_verdicts \
+                       (country, scheme, key, cohort, members, action, rationale, \
+                        confidence, reviewed_at) \
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) \
+                     ON CONFLICT(country, scheme, key, cohort) DO UPDATE SET \
+                        members = excluded.members, action = excluded.action, \
+                        rationale = excluded.rationale, confidence = excluded.confidence, \
+                        reviewed_at = excluded.reviewed_at",
+                    (
+                        t(&v.country),
+                        t(&v.scheme),
+                        t(&v.key),
+                        t(cohort),
+                        Value::Text(members),
+                        t(&v.action),
+                        t(&v.rationale),
+                        t(&v.confidence),
+                        Value::Integer(now),
+                    ),
+                )
+                .await?;
+                n += 1;
+            }
+            Ok(n)
+        }
+        .await;
+        match result {
+            Ok(n) => {
+                conn.execute("COMMIT", ()).await?;
+                Ok(n)
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                Err(e)
+            }
+        }
+    }
+
+    /// The verdict the R2 planner honours for one group (issue 362): a `keep`
+    /// from any cohort first, else the newest `merge`. One indexed seek.
+    async fn merge_verdict_for(
+        &self,
+        country: &str,
+        scheme: &str,
+        key: &str,
+    ) -> turso::Result<Option<MergeVerdictRow>> {
+        let reader = self.reader().await?;
+        let mut rows = reader
+            .query(
+                "SELECT cohort, members, action, confidence, applied_at FROM org_merge_verdicts \
+                  WHERE country = ? AND scheme = ? AND key = ? \
+                  ORDER BY (action = 'keep') DESC, reviewed_at DESC LIMIT 1",
+                (t(country), t(scheme), t(key)),
+            )
+            .await?;
+        let Some(row) = rows.next().await? else {
+            return Ok(None);
+        };
+        let members: Vec<i64> = text(&row, 1)
+            .trim_matches(|c| c == '[' || c == ']')
+            .split(',')
+            .filter_map(|x| x.trim().parse::<i64>().ok())
+            .collect();
+        Ok(Some(MergeVerdictRow {
+            cohort: text(&row, 0),
+            members,
+            action: text(&row, 2),
+            confidence: text(&row, 3),
+            applied: opt_int_of(&row, 4).is_some(),
+        }))
+    }
+
     /// Issue 356: read one verdict store back — the four review tables are
     /// written through `POST /admin/*` and read by nothing but their apply
     /// jobs, and `/v1/sql` is a positive allow-list they are not on. Bounded
@@ -13024,9 +13248,15 @@ impl Db {
                   "confidence", "reviewed_at", "applied_at", "applied_action", "job_id"],
                 "reviewed_at DESC, org_id",
             ),
+            "merge" => (
+                "org_merge_verdicts",
+                &["country", "scheme", "key", "cohort", "members", "action", "rationale",
+                  "confidence", "reviewed_at", "applied_at", "applied_action", "job_id"],
+                "reviewed_at DESC, country, scheme, key",
+            ),
             other => {
                 return Err(turso::Error::Error(format!(
-                    "no verdict store named {other:?} (case|rehoming|name|country)"
+                    "no verdict store named {other:?} (case|rehoming|name|country|merge)"
                 )))
             }
         };
