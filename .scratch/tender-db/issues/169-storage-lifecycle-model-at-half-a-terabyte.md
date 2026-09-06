@@ -195,3 +195,46 @@ FULL size across any campaign that rewrites the layer it holds, and retire
 pre-campaign snapshots as soon as the campaign is accepted.** Two campaigns
 have now demonstrated it (the 08-28 epoch refold + 306 rederive: ~230 GB; the
 304 campaign: ~120 GB and counting).
+
+## 2026-09-06 01:2x UTC — 57 % → 74 % in 3.9 days; where the 297 GB went (owner probe)
+
+The weekly disk-census (job 749, 01:10 UTC) read **1,226 GiB of 1,658 used, 432 GiB free,
+71 GiB/day against the 2026-09-02 sample, "6 days to full"** — a two-point rate on the two
+heaviest write days the project has had (the 353/355/357/359 campaigns: ~1.9 M party rows
+and 400k winners repointed, 28k identifiers rewritten, 1,400 country moves, 900 folds), not
+a trend. Read against the files, bounded:
+
+| | 2026-09-02 03:51 | 2026-09-06 01:10 |
+|---|---|---|
+| volume used | 57.3 % (free 761 GB) | 73.9 % (free 464 GB) |
+| live DB, apparent | 526 GB | 649 GB (618 GiB) |
+| live DB, allocated (`du`) | — | 842 GiB |
+| snapshots (`/data/db/snapshots`, issue 269, KEEP=2) | Aug 30 (501 GiB apparent) | Aug 30 + Sep 3 (618 GiB apparent) |
+
+Three things add up to the 297 GB:
+
+1. **The live DB grew ~122 GB apparent in 3.9 days.** Attribution to tables is not done
+   (a `dbstat` walk is a corpus scan; the weekly `org-merge-health` / `canonical_rows`
+   gauges are the bounded way to follow it week to week).
+2. **Reflink divergence.** `/data` is XFS `reflink=1`; a snapshot is free the second it is
+   taken and then every page the live DB rewrites leaves the snapshot holding the old block.
+   The Aug 30 snapshot now has **29.25 M extents** (a 30 s-bounded `xfs_bmap`) — the
+   copy-on-write signature, one extent per rewritten 4 KiB page — i.e. on the order of
+   100+ GB of blocks only it references. The campaigns rewrote pages across the whole org
+   layer, which is the worst case for a same-volume snapshot ring.
+3. **Allocated exceeds apparent on the live file by ~224 GiB.** The file is not sparse and
+   reflink cannot make allocation exceed size, so this reads as XFS speculative
+   preallocation on a file that is never closed (the reclaim lifetime is 300 s after the
+   last close). Unverified: the live file's extent map did not finish inside the 30 s bound
+   and MUST NOT be read unbounded (prod-box-reads: `filefrag`/`xfs_bmap` are unbounded
+   metadata). `df` counts those blocks as used.
+
+What happens next without intervention: the snapshot timer fires Sunday 03:23 UTC (05:23
+CEST); with KEEP=2 it prunes the Aug 30 snapshot and frees its unique blocks — IF the job
+queue is idle then (the script refuses while a job runs; the weekly batch started 01:10 and
+was on its first job at 01:18). If it is skipped, the Aug 30 snapshot stands another week.
+
+Decision points (for 169's model, not tonight): a same-volume reflink ring costs the
+divergence, which on campaign weeks is ~30 GB/day per snapshot; KEEP=1, or snapshotting
+only after a `VACUUM`-free quiet week, or an off-volume artifact, are the options. The
+weekly census's `days_to_full` should be read with `sample_interval_days` and this note.
