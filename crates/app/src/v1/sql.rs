@@ -589,8 +589,11 @@ const TABLE_NOTES: &[(&str, &str)] = &[
     ("v_lot_results", "Current award decisions: one row per (result, winning organization); \
       winner_* is NULL for an unresolved or withheld award. NOT FILTERABLE, like every `v_*` view — a WHERE is applied after the view is \
       built, so a filtered query reads the whole corpus (issue 239); join `lot_results` to `tender_version_result_winners` instead."),
-    ("v_tender_current", "The (tender_id, seq) current-version pointer — join it to read any \
-      version satellite at current state cheaply."),
+    ("v_tender_current", "The (tender_id, seq) current-version pointer. NOT FILTERABLE, and \
+      not cheap to JOIN either — turso rebuilds it whole per outer row (issue 239); read \
+      `tenders.current_seq` directly: `JOIN tender_versions v ON v.tender_id = t.id AND \
+      v.seq = t.current_seq`, and the same `(tender_id, seq = current_seq)` pair for any \
+      version satellite."),
     ("notices", "One row per raw publication event. The parsed payload is in the notice_* \
       tables; the canonical layer is projected from it (ADR-0001)."),
     ("quarantine", "Whole notices whose content could not be mapped — public raw payloads \
@@ -599,22 +602,36 @@ const TABLE_NOTES: &[(&str, &str)] = &[
     ("tender_version_parties", "Organizations linked to a Tender version by role (see role)."),
     ("tender_version_classifications", "CPV and NUTS codes of a Tender version (see scheme)."),
     // Analyst convenience views (issue 50).
-    ("v_tender_buyers", "Buyers of each current Tender (one row per buyer party)."),
+    ("v_tender_buyers", "Buyers of each current Tender (one row per buyer party). NOT \
+      FILTERABLE (issue 239); join `tenders` to `tender_version_parties` on `(tender_id, \
+      seq = current_seq)` with `role LIKE '%uyer%'`, then `organizations`."),
     ("v_awards", "Current award decisions with their winner and a representative buyer — \
-      keeps v_lot_results' one-row-per-winner grain (does not multiply by buyer count)."),
-    ("v_tender_classifications", "CPV and NUTS codes of each current Tender (see scheme)."),
+      keeps v_lot_results' one-row-per-winner grain (does not multiply by buyer count). \
+      NOT FILTERABLE (issue 239); join `lot_results` to `tender_version_lot_results` and \
+      `tender_version_result_winners` on `(tender_id, seq = tenders.current_seq)`, and \
+      `tender_version_parties` (role LIKE '%uyer%') for the buyer."),
+    ("v_tender_classifications", "CPV and NUTS codes of each current Tender (see scheme). \
+      NOT FILTERABLE (issue 239); join `tenders` to `tender_version_classifications` on \
+      `(tender_id, seq = current_seq)`."),
     (
         "v_tender_amounts",
         "Money amounts of each current Tender (field, cents, currency, tax_basis, \
          eur_cents). tax_basis is 'incl', 'excl' or NULL when the source did not say — and \
          NULL is most of the corpus, so a total over mixed rows is not comparable (issue \
          251). eur_cents is the derived EUR at publication date (ADR-0014), NULL where no \
-         official rate resolves or the row predates the backfill refold.",
+         official rate resolves or the row predates the backfill refold. NOT FILTERABLE \
+         (issue 239); join `tenders` to `tender_version_amounts` on `(tender_id, seq = \
+         current_seq)`.",
     ),
-    ("v_tender_dates", "Dates of each current Tender (utc_seconds epoch + offset_minutes)."),
+    ("v_tender_dates", "Dates of each current Tender (utc_seconds epoch + offset_minutes). \
+      NOT FILTERABLE (issue 239); join `tenders` to `tender_version_dates` on `(tender_id, \
+      seq = current_seq)`."),
     ("v_tender_notices", "The notices that caused each Tender version — the ADR-0001 chain, \
-      across all versions."),
-    ("v_fetches", "Path-free fetch provenance: which source package/period a notice came from."),
+      across all versions. NOT FILTERABLE (issue 239); join `tender_versions` to `notices` \
+      on `caused_by_notice_id`."),
+    ("v_fetches", "Path-free fetch provenance: which source package/period a notice came from. \
+      Small (one row per fetched package), so a filtered read is fine — the one v_* view \
+      exempt from the issue-239 refusal."),
 ];
 
 /// Column notes and small enum vocabularies. Table `"*"` matches a column of
@@ -773,13 +790,14 @@ async fn schema(State(state): State<AppState>) -> Result<Response, ApiError> {
              onward), not just recent years. A v_* query that returns nothing for \
              a year the coverage grid shows as held is a finding worth reporting, \
              not an artefact of an unfinished backfill.",
-            "The v_* views are NOT FILTERABLE: turso applies a WHERE only after \
-             building the whole view, so even `WHERE id = ?` scans the corpus \
-             (issue 239). A SELECT that filters a view — directly, through a \
-             derived table, or through a CTE that reads one — is refused as 400 \
-             up front, naming the base-table join to use instead. Unfiltered \
-             peeks (`… FROM v_tenders LIMIT 5`) and unfiltered aggregates are \
-             accepted.",
+            "The v_* views are NOT FILTERABLE: turso applies a WHERE or a JOIN \
+             predicate only after building the whole view, so even `WHERE id = ?` \
+             scans the corpus (issue 239). A SELECT that filters or joins a view — \
+             directly, through a derived table, or through a CTE that reads one — \
+             is refused as 400 up front, naming the base-table join to use \
+             instead. Unfiltered, unjoined reads (`… FROM v_tenders LIMIT 5`, \
+             `SELECT source, COUNT(*) FROM v_tenders GROUP BY source`) are \
+             accepted. v_fetches is small and exempt.",
             "Turso SQL dialect gaps: no WITH RECURSIVE; window functions are \
              partial (row_number and aggregate OVER work; rank/lead/lag and \
              custom frames do not).",
@@ -851,8 +869,8 @@ fn classify(sql: &str) -> Result<(), ApiError> {
             "the {name} table is not in the queryable public surface"
         )));
     }
-    if let Some(view) = filtered_view(&select) {
-        return Err(bad(filtered_view_message(&view)));
+    if let Some(hit) = filtered_view(&select) {
+        return Err(bad(filtered_view_message(&hit)));
     }
     Ok(())
 }
@@ -862,46 +880,77 @@ fn classify(sql: &str) -> Result<(), ApiError> {
 /// the corpus, times out at the endpoint's cap — and keeps computing after the
 /// endpoint abandons it (turso has no interrupt), pinning a worker for the
 /// full run; two such probes in a row shed every other caller for minutes.
-/// Measured on prod 2026-08-18, re-confirmed under 0.7.2 (the plan-level
-/// tripwire in `store/tests/view_pushdown_probe.rs`) and again against
-/// 0.8.0-pre.8 on 2026-09-06. So a filtered view read is refused up front,
-/// with the base-table join the docs already teach, instead of being accepted
-/// and burning ten seconds to say 408.
+/// A JOIN is the same hazard: the join predicate is not pushed into the view
+/// either, and the plans show a joined view re-scanned in full per outer row
+/// (`v_lots`'s own `v_tender_current` join plans as `SCAN c / SCAN tenders`
+/// nested inside the outer scan). Measured on prod 2026-08-18, re-confirmed
+/// under 0.7.2 (the plan-level tripwire in `store/tests/view_pushdown_probe.rs`)
+/// and again against 0.8.0-pre.8 on 2026-09-06. So a filtered or joined view
+/// read is refused up front, with the base-table join the docs already teach,
+/// instead of being accepted and burning ten seconds to say 408.
 ///
-/// "Filtered" is a `WHERE` on a SELECT whose FROM reads a view — directly,
-/// through a derived table wrapping one, or through a CTE whose body reads one
-/// (the CTE is materialised whole, then filtered, the same way). An unfiltered
-/// peek (`… FROM v_tenders LIMIT 5`) and an unfiltered aggregate stay allowed:
-/// those ask for the whole view and get it. A JOIN against a view is not
-/// treated as a filter — not measured, and a LIMITed join can stream.
+/// The unit is one SELECT: it is refused when a FROM source reads a view — the
+/// view itself, a derived table whose body reads one, or a CTE whose body
+/// reads one (each is built whole, then filtered) — AND the SELECT carries a
+/// `WHERE` or joins that source to anything. An unfiltered, unjoined read
+/// (`… FROM v_tenders LIMIT 5`, `SELECT source, COUNT(*) FROM v_tenders GROUP
+/// BY source`) asks for the whole view and gets it, HAVING included: an
+/// aggregate materialises the view regardless, so HAVING adds no scan.
+/// A view named only inside an expression subquery of a base-table query
+/// (`… FROM tenders WHERE id IN (SELECT tender_id FROM v_lots)`) is an
+/// unfiltered read of that view and stays accepted. Resolution rides the
+/// allow-list walk's own reference tags, and each reference is resolved at
+/// its own lexical scope (issue 210's rule), so a CTE that shadows a view
+/// name with a plain query is that query.
+///
+/// `v_fetches` is exempt: a column projection of the small `fetches` table,
+/// which exists precisely because `fetches` itself (server paths) is not
+/// queryable — a full scan of it is cheap, and refusing filters would leave
+/// no way to filter provenance at all.
 ///
 /// Lift this together with the NOT FILTERABLE notes the day the tripwire
 /// fires.
-fn filtered_view(select: &turso_parser::ast::Select) -> Option<String> {
+fn filtered_view(select: &turso_parser::ast::Select) -> Option<FilteredView> {
     let mut tables = Tables::default();
     let empty = std::collections::HashSet::new();
-    walk_select(select, &Scope { names: &empty, view_ctes: &empty, parent: None }, &mut tables);
+    let no_views = std::collections::HashMap::new();
+    walk_select(
+        select,
+        &Scope { names: &empty, view_ctes: &no_views, parent: None },
+        &mut tables,
+    );
     tables.filtered_views.into_iter().next()
 }
 
-fn filtered_view_message(view: &str) -> String {
-    let guidance = table_note(view)
+/// One refused view read: the physical view, the CTE it was reached through
+/// (if any), and whether the SELECT `filters` or `joins` it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct FilteredView {
+    view: String,
+    via: Option<String>,
+    how: &'static str,
+}
+
+fn filtered_view_message(hit: &FilteredView) -> String {
+    let guidance = table_note(&hit.view)
         .and_then(|note| note.split("NOT FILTERABLE").nth(1))
         .map(|rest| rest.trim_start_matches([':', ',', ' ']).to_owned())
         .unwrap_or_else(|| {
-            "a WHERE on a view is applied after the whole view is built, so a \
-             filtered query reads the corpus and exceeds the time limit (issue 239); \
+            "a WHERE or JOIN on a view is applied after the whole view is built, so \
+             the query reads the corpus and exceeds the time limit (issue 239); \
              query the base tables instead — see /v1/docs."
                 .to_owned()
         });
-    format!("{view} is NOT FILTERABLE and this query filters it: {guidance}")
+    let via = hit.via.as_deref().map(|c| format!(" (through `{c}`)")).unwrap_or_default();
+    format!("{} is NOT FILTERABLE and this query {} it{via}: {guidance}", hit.view, hit.how)
 }
 
-/// Is `name` a `v_*` analyst view? The allow-list is the authority on what is
-/// readable; this only asks whether a readable name is a view, which is the
-/// class turso cannot filter.
-fn is_view(name: &str) -> bool {
-    name.starts_with("v_")
+/// Is `name` a `v_*` analyst view that turso cannot filter? The allow-list is
+/// the authority on what is readable; this only asks whether a readable name
+/// is in the class. `v_fetches` is the documented exemption (see
+/// [`filtered_view`]).
+fn unfilterable_view(name: &str) -> bool {
+    name.starts_with("v_") && name != "v_fetches"
 }
 
 /// Table-valued functions allowed as a `FROM` source. Deny-by-default, the same
@@ -933,10 +982,14 @@ struct Tables {
     /// against [`ALLOWED_TVF`]. A CTE cannot define a callable, so a TVF name can
     /// never resolve to one, and scope does not enter into it.
     tvfs: Vec<String>,
-    /// Views read by a SELECT that also carries a `WHERE` — the shape turso
-    /// cannot plan (issue 239, see [`filtered_view`]). Named by the view the
-    /// FROM reaches, so the refusal can quote that view's own guidance.
-    filtered_views: Vec<String>,
+    /// Every FROM-source reference that reads an unfilterable view, in walk
+    /// order, resolved at its own scope by [`walk_table`]: `(physical view,
+    /// the CTE it came through)`. Issue 239's raw material; a SELECT's FROM
+    /// sources are the slice this grew by while they were walked.
+    view_reads: Vec<(String, Option<String>)>,
+    /// The refusals (issue 239, see [`filtered_view`]): a SELECT whose FROM
+    /// reads a view and which filters or joins it. First one wins.
+    filtered_views: Vec<FilteredView>,
 }
 
 /// The CTE names visible at one point in the walk — a stack of `WITH` frames,
@@ -953,9 +1006,10 @@ struct Tables {
 struct Scope<'a> {
     names: &'a std::collections::HashSet<String>,
     /// The subset of `names` whose CTE body reads a `v_*` view (directly or
-    /// through another such CTE). A `FROM` of one of these is a view read for
-    /// issue 239's purposes: the CTE is built whole and filtered afterwards.
-    view_ctes: &'a std::collections::HashSet<String>,
+    /// through another such CTE), mapped to the physical view behind it. A
+    /// `FROM` of one of these is a view read for issue 239's purposes: the
+    /// CTE is built whole and filtered afterwards.
+    view_ctes: &'a std::collections::HashMap<String, String>,
     parent: Option<&'a Scope<'a>>,
 }
 
@@ -966,23 +1020,27 @@ impl Scope<'_> {
         self.names.contains(name) || self.parent.is_some_and(|p| p.covers(name))
     }
 
-    /// Does the CTE `name` resolves to here read a view? The innermost frame
-    /// that binds the name decides, exactly as `covers` resolves it.
-    fn cte_reads_view(&self, name: &str) -> bool {
+    /// The physical view behind the CTE `name` resolves to here, if its body
+    /// reads one. The innermost frame that binds the name decides, exactly as
+    /// `covers` resolves it.
+    fn cte_view(&self, name: &str) -> Option<String> {
         if self.names.contains(name) {
-            self.view_ctes.contains(name)
+            self.view_ctes.get(name).cloned()
         } else {
-            self.parent.is_some_and(|p| p.cte_reads_view(name))
+            self.parent.and_then(|p| p.cte_view(name))
         }
     }
 
-    /// Does a base-table reference, as tagged by [`walk_table`], read a view —
-    /// the view itself when uncovered, or a view-reading CTE when covered.
-    fn ref_reads_view(&self, name: &str, covered: bool) -> bool {
+    /// What a FROM-source reference reads, for issue 239: `(physical view,
+    /// the CTE it came through)` — the view itself when uncovered, the CTE's
+    /// view when covered by a view-reading CTE, nothing otherwise.
+    fn view_behind(&self, name: &str, covered: bool) -> Option<(String, Option<String>)> {
         if covered {
-            self.cte_reads_view(name)
+            self.cte_view(name).map(|view| (view, Some(name.to_owned())))
+        } else if unfilterable_view(name) {
+            Some((name.to_owned(), None))
         } else {
-            is_view(name)
+            None
         }
     }
 }
@@ -993,19 +1051,18 @@ impl Scope<'_> {
 fn disallowed_table(select: &turso_parser::ast::Select) -> Option<String> {
     let mut tables = Tables::default();
     let empty = std::collections::HashSet::new();
-    walk_select(select, &Scope { names: &empty, view_ctes: &empty, parent: None }, &mut tables);
+    let no_views = std::collections::HashMap::new();
+    walk_select(
+        select,
+        &Scope { names: &empty, view_ctes: &no_views, parent: None },
+        &mut tables,
+    );
     tables
         .refs
         .iter()
         .find(|(name, covered)| !covered && !ALLOWED.contains(&name.as_str()))
         .map(|(name, _)| name.clone())
         .or_else(|| tables.tvfs.iter().find(|name| !ALLOWED_TVF.contains(&name.as_str())).cloned())
-}
-
-/// The view a view-reading CTE stands for, for the refusal message: the CTE's
-/// own name is what the query shows, so say that — the guidance is generic.
-fn first_view_behind(_scope: &Scope, cte: &str) -> String {
-    cte.to_owned()
 }
 
 fn norm(name: &turso_parser::ast::Name) -> String {
@@ -1024,7 +1081,8 @@ fn walk_select(s: &turso_parser::ast::Select, scope: &Scope, t: &mut Tables) {
         return;
     };
     let mut siblings: std::collections::HashSet<String> = std::collections::HashSet::new();
-    let mut view_siblings: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut view_siblings: std::collections::HashMap<String, String> =
+        std::collections::HashMap::new();
     for cte in &with.ctes {
         let name = norm(&cte.tbl_name);
         // The body sees earlier siblings, and itself only if the WITH is RECURSIVE.
@@ -1033,13 +1091,13 @@ fn walk_select(s: &turso_parser::ast::Select, scope: &Scope, t: &mut Tables) {
             visible.insert(name.clone());
         }
         let inner = Scope { names: &visible, view_ctes: &view_siblings, parent: Some(scope) };
-        // Whether this body reads a view (issue 239) is read off the references
-        // it adds — the same tags the allow-list uses, so the two never disagree
-        // about what a name resolves to.
-        let before = t.refs.len();
+        // Whether this body reads a view (issue 239) is read off the view reads
+        // it adds, each resolved by `walk_table` at its own position — so a
+        // nested WITH that shadows a sibling's name resolves to its own body.
+        let before = t.view_reads.len();
         walk_select(&cte.select, &inner, t);
-        if t.refs[before..].iter().any(|(n, covered)| inner.ref_reads_view(n, *covered)) {
-            view_siblings.insert(name.clone());
+        if let Some((view, _)) = t.view_reads.get(before) {
+            view_siblings.insert(name.clone(), view.clone());
         }
         siblings.insert(name);
     }
@@ -1079,21 +1137,28 @@ fn walk_one_select(o: &turso_parser::ast::OneSelect, scope: &Scope, t: &mut Tabl
                     ResultColumn::Star | ResultColumn::TableStar(_) => {}
                 }
             }
-            // Issue 239: a WHERE over a FROM that reads a view. The FROM's
-            // references are read off the tags `walk_from` adds — a bare view,
-            // a derived table wrapping one, or a view-reading CTE all count,
-            // since turso builds each of those whole before filtering.
-            let before = t.refs.len();
+            // Issue 239: a WHERE or a JOIN over a FROM source that reads a
+            // view. The sources' view reads are the slice `view_reads` grew by
+            // while `walk_from` walked the tables (before its ON expressions,
+            // whose subqueries are expression reads, not sources) — a bare
+            // view, a derived table wrapping one, or a view-reading CTE all
+            // count, since turso builds each of those whole before filtering.
             if let Some(from) = from {
-                walk_from(from, scope, t);
-            }
-            if where_clause.is_some() {
-                if let Some(view) = t.refs[before..]
-                    .iter()
-                    .find(|(n, covered)| scope.ref_reads_view(n, *covered))
-                    .map(|(n, covered)| if *covered { first_view_behind(scope, n) } else { n.clone() })
+                let before = t.view_reads.len();
+                let after_sources = walk_from(from, scope, t);
+                let how = match (where_clause.is_some(), !from.joins.is_empty()) {
+                    (true, _) => Some("filters"),
+                    (false, true) => Some("joins"),
+                    (false, false) => None,
+                };
+                if let (Some(how), Some((view, via))) =
+                    (how, t.view_reads[before..after_sources].first())
                 {
-                    t.filtered_views.push(view);
+                    t.filtered_views.push(FilteredView {
+                        view: view.clone(),
+                        via: via.clone(),
+                        how,
+                    });
                 }
             }
             if let Some(w) = where_clause {
@@ -1121,16 +1186,23 @@ fn walk_one_select(o: &turso_parser::ast::OneSelect, scope: &Scope, t: &mut Tabl
     }
 }
 
-fn walk_from(f: &turso_parser::ast::FromClause, scope: &Scope, t: &mut Tables) {
+/// Walks the FROM's sources first and its ON expressions after, and returns
+/// `t.view_reads.len()` as it stood between the two — so a caller can tell a
+/// view read by a SOURCE (issue 239's class) from one inside an ON subquery.
+fn walk_from(f: &turso_parser::ast::FromClause, scope: &Scope, t: &mut Tables) -> usize {
     use turso_parser::ast::JoinConstraint;
     walk_table(&f.select, scope, t);
     for join in &f.joins {
         walk_table(&join.table, scope, t);
+    }
+    let after_sources = t.view_reads.len();
+    for join in &f.joins {
         if let Some(JoinConstraint::On(e)) = &join.constraint {
             walk_expr(e, scope, t);
         }
         // `USING (col, …)` names columns only, never a table.
     }
+    after_sources
 }
 
 fn walk_table(st: &turso_parser::ast::SelectTable, scope: &Scope, t: &mut Tables) {
@@ -1142,6 +1214,11 @@ fn walk_table(st: &turso_parser::ast::SelectTable, scope: &Scope, t: &mut Tables
         SelectTable::Table(name, _, _) => {
             let name = norm(&name.name);
             let covered = scope.covers(&name);
+            // Issue 239: resolved HERE, at the reference's own scope, so a
+            // shadowing CTE in a nested WITH binds the way SQL binds it.
+            if let Some(read) = scope.view_behind(&name, covered) {
+                t.view_reads.push(read);
+            }
             t.refs.push((name, covered));
         }
         // A table-valued function (`generate_series(…)`, `pragma_table_info(…)`):
@@ -1157,7 +1234,9 @@ fn walk_table(st: &turso_parser::ast::SelectTable, scope: &Scope, t: &mut Tables
             }
         }
         SelectTable::Select(s, _) => walk_select(s, scope, t),
-        SelectTable::Sub(f, _) => walk_from(f, scope, t),
+        SelectTable::Sub(f, _) => {
+            walk_from(f, scope, t);
+        }
     }
 }
 
@@ -1531,18 +1610,24 @@ mod tests {
             assert!(note.contains("NOT FILTERABLE"), "the view warns it cannot be filtered: {note}");
         }
 
-        // Every CURRENT-STATE view carries the warning, because the property is turso's
-        // and not one view's — `store/src/lib.rs` records it as such. Named explicitly
-        // rather than "all v_*": the pointer view v_tender_current is the thing callers
-        // are told to JOIN, so warning them off it would be wrong.
-        for name in ["v_tenders", "v_lots", "v_organizations", "v_lot_results"] {
+        // Every view the endpoint refuses to filter carries the warning AND the
+        // base-table join to use instead, because the property is turso's and not
+        // one view's — including the pointer view v_tender_current, which callers
+        // were once told to JOIN: a joined view is rebuilt whole per outer row
+        // (issue 239's plans), so that advice was wrong and now reads the
+        // `current_seq` column instead. `v_fetches` is the one exemption and says so.
+        for name in ALLOWED.iter().filter(|n| unfilterable_view(n)) {
             let note = TABLE_NOTES
                 .iter()
-                .find(|(t, _)| t == &name)
+                .find(|(t, _)| t == name)
                 .map(|(_, n)| *n)
                 .unwrap_or_else(|| panic!("{name} has a description"));
             assert!(note.contains("NOT FILTERABLE"), "{name} must warn: {note}");
+            let guidance = note.split("NOT FILTERABLE").nth(1).unwrap_or_default();
+            assert!(guidance.contains('`'), "{name}'s note names a base table to use: {note}");
         }
+        assert!(!unfilterable_view("v_fetches"));
+        assert!(table_note("v_fetches").unwrap().contains("exempt"));
     }
 
     #[test]
@@ -1586,11 +1671,33 @@ mod tests {
         // Wrapping the view in a derived table or a CTE changes nothing about
         // how turso builds it, so it changes nothing here either.
         assert!(err("SELECT * FROM (SELECT * FROM v_tenders) x WHERE x.id = 5").contains("v_tenders"));
-        assert!(err("WITH x AS (SELECT * FROM v_tenders) SELECT * FROM x WHERE id = 5").contains("x is NOT FILTERABLE"));
-        assert!(err("WITH x AS (SELECT * FROM v_tenders), y AS (SELECT * FROM x) SELECT * FROM y WHERE id = 5").contains("y is NOT FILTERABLE"));
+        let e = err("WITH x AS (SELECT * FROM v_tenders) SELECT * FROM x WHERE id = 5");
+        assert!(e.starts_with("v_tenders is NOT FILTERABLE and this query filters it (through `x`)"), "{e}");
+        let e = err("WITH x AS (SELECT * FROM v_tenders), y AS (SELECT * FROM x) SELECT * FROM y WHERE id = 5");
+        assert!(e.starts_with("v_tenders is NOT FILTERABLE and this query filters it (through `y`)"), "{e}");
         // Case and quoting do not launder the name.
         assert!(err("SELECT * FROM V_TENDERS WHERE id = 5").contains("v_tenders"));
         assert!(err("SELECT * FROM \"v_tenders\" WHERE id = 5").contains("v_tenders"));
+        // A JOIN is the same scan: the predicate is not pushed into the view
+        // either, and a joined view is rebuilt whole per outer row. So the
+        // constant-in-ON rewrite of a point read (the review's bypass) is
+        // caught, and so is the "convenience view joined onto a filtered base
+        // query" shape — the documented example that 408'd.
+        let e = err("SELECT * FROM v_lots l JOIN tenders t ON l.tender_id = 93601");
+        assert!(e.starts_with("v_lots is NOT FILTERABLE and this query joins it"), "{e}");
+        let e = err("SELECT t.id, a.winner_name FROM tenders t JOIN v_awards a ON a.tender_id = t.id WHERE t.id = 93601");
+        assert!(e.starts_with("v_awards is NOT FILTERABLE and this query filters it"), "{e}");
+        assert!(e.contains("join `lot_results`"), "{e}");
+        assert!(err("SELECT * FROM v_tenders t JOIN tender_versions v ON v.tender_id = t.id LIMIT 5").contains("joins it"));
+        assert!(err("SELECT * FROM tenders t JOIN v_tender_current c ON c.tender_id = t.id WHERE t.id = 5").contains("v_tender_current"));
+        // A CTE named after one view but reading another names the view it
+        // READS, and quotes that view's guidance — not the namesake's.
+        let e = err("WITH v_tenders AS (SELECT * FROM v_lots) SELECT * FROM v_tenders WHERE id = 1");
+        assert!(e.starts_with("v_lots is NOT FILTERABLE and this query filters it (through `v_tenders`)"), "{e}");
+        assert!(e.contains("join `lots` to `tender_version_lots`"), "{e}");
+        // A view with a note but no tailored guidance still gets the generic one.
+        let e = err("SELECT * FROM v_tender_notices WHERE tender_id = 5");
+        assert!(e.contains("join `tender_versions` to `notices`"), "{e}");
     }
 
     /// The other side of the rule: what turso CAN do with a view stays open,
@@ -1612,8 +1719,17 @@ mod tests {
             "WITH v_tenders AS (SELECT 1 AS id) SELECT * FROM v_tenders WHERE id = 1",
             // A CTE over base tables, filtered, is fine; only view-reading CTEs are the class.
             "WITH x AS (SELECT id FROM tenders) SELECT * FROM x WHERE id = 5",
-            // A JOIN against a view is not treated as a filter (unmeasured; a LIMITed join can stream).
-            "SELECT * FROM v_tenders t JOIN tender_versions v ON v.tender_id = t.id LIMIT 5",
+            // HAVING on an unfiltered aggregate: the aggregate materialises the
+            // view regardless, so HAVING adds no scan.
+            "SELECT source, COUNT(*) AS n FROM v_tenders GROUP BY source HAVING n > 5",
+            // A view inside an ON subquery is an expression read, not a source.
+            "SELECT t.id FROM tenders t JOIN lots l ON l.tender_id = t.id AND l.id IN (SELECT id FROM v_lots) WHERE t.id = 5",
+            // v_fetches is small and exempt: filtering provenance must stay possible.
+            "SELECT * FROM v_fetches WHERE period = '2026-06'",
+            "SELECT n.id FROM notices n JOIN v_fetches f ON f.id = n.fetch_id WHERE n.id = 5",
+            // A nested WITH that shadows an outer view-reading sibling binds to
+            // its own body, so `a` reads only base tables and its filter is fine.
+            "WITH z AS (SELECT * FROM v_tenders), a AS (WITH z AS (SELECT id FROM tenders) SELECT * FROM z) SELECT * FROM a WHERE id = 5",
         ] {
             assert!(classify(sql).is_ok(), "{sql}: {:?}", classify(sql).err().map(|e| e.1));
         }

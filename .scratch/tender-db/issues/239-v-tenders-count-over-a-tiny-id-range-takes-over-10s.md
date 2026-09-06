@@ -320,3 +320,26 @@ query keeps computing (no interrupt) and pins a worker for the full run, so two 
 probes shed every other caller for minutes (the issue-238 incident). A 400 in a millisecond
 with the right query in the message is strictly better for the analyst than a 408 after ten
 seconds with the same advice.
+
+**Adversarial review (same firing, before deploy) changed the rule.** A sonnet reviewer
+read the diff against the allow-list walk and found: (1) a constant predicate in a JOIN's
+ON clause (`FROM v_lots l JOIN tenders t ON l.tender_id = 93601`) evaded the WHERE-only
+rule; (2) a view joined onto a filtered base query was refused although the WHERE never
+touched it; (3) a nested `WITH` that shadowed a view-reading sibling's name was resolved at
+the wrong frame (false positive only); (4) the message named a CTE and could quote a
+namesake view's guidance; (5) no allow-list decision changed, no panic path. On (1)/(2)
+the plans decide: a joined view is not pushed into either — `v_lots`'s own
+`v_tender_current` join plans as `SCAN c / SCAN tenders` nested inside the outer scan, i.e.
+the view rebuilt whole per outer row — so a JOIN against a view IS the hazard and (2) was
+not a false positive but the documented 408 example. The rule now refuses a SELECT whose
+FROM source reads a view and which filters OR joins it; each reference resolves at its own
+lexical scope (fixes 3); the physical view is threaded through CTEs so the message names
+the view actually read, "through `x`" (fixes 4); `v_fetches` — a projection of the small
+`fetches` table that exists because `fetches` itself is not queryable — is the one exempt
+view, since refusing filters there would leave provenance unfilterable; and every other
+`v_*` note now carries NOT FILTERABLE plus the base-table join, `v_tender_current`'s
+included, whose "join it cheaply" advice was wrong under no-pushdown and now reads
+`tenders.current_seq` instead. HAVING on an unfiltered aggregate stays accepted (the
+aggregate materialises the view regardless). The remaining imprecision, documented in the
+code: a view read inside an expression subquery of a CTE or derived table body counts as
+that body reading a view — rare, false-positive-only.
