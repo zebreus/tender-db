@@ -251,3 +251,14 @@ shared them, and the live file's own allocation carries the growth. That leaves 
 allocated 842 GiB against 618 GiB apparent on the live file — as the number to explain,
 and item 1's 122 GB of apparent growth to attribute by table. The snapshot ring is cheap
 (~7 GB a week at the current cadence); it is not the lever.
+
+### 2026-09-06 03:4x UTC — 437 → 628 GB free at the 03:32 restart; filed as issue 361
+
+The deploy's service restart released ~191 GB that no on-disk path held (temp dirs sub-MiB,
+archive untouched, live-file allocation unchanged at 843,548 MiB against 618,473 apparent):
+the unlinked-but-open-files signature. Detection recipe and the plan are in issue 361. The
+live file's 225 GiB allocated-over-apparent gap survived the restart, so item 3's
+speculative-preallocation reading is wrong too; it stays open here (30.7 M extents on the
+file — copy-on-write fragmentation from the reflink ring is the remaining candidate, and
+`xfs_fsr`/defragmentation or `cp --reflink=never` into a fresh file would be the test, both
+heavy — owner conversation, not a firing).
