@@ -1,8 +1,13 @@
 # 330 — Postal addresses leak into `organizations.name`
 
-Status: MEASURED 2026-09-01 (job 569, `8f4b2dc`, 7 s).
-**NOT a parser defect — 0 of 356,749 were introduced downstream.** The remaining
-question is a normalisation policy, and it is NOT decided here.
+Status: **DECIDED 2026-09-06 (owner) — no key-builder strip, the class is too small to
+earn a key-semantics change.** Both open measurements ran (job 774, `b7fe297`, seconds):
+the address-shaped subset is **1,443** of the 106,447 line-broken names, **224** with a
+country, and a strip would move **10** same-triple pairs from `contained` to `agree`.
+The strip exists (`ingest::address::strip_trailing_address`, tested on the live
+specimens) and the census keeps measuring with it; it feeds no key. Reopen if the
+class grows or the E0 arm wants those ten. Was: MEASURED 2026-09-01 (job 569).
+**NOT a parser defect — 0 of 356,749 were introduced downstream.**
 Kind: data quality (organization layer)
 Relates to: 329 (where it surfaced), 300 Stage 4 (`org_match_keys` is built from
 these names, so a polluted name is a polluted key)
@@ -151,3 +156,53 @@ Before proposing it, two things need measuring, and neither is done:
 The `p99 = 137` / `max = 7,497` character distribution also gives the filing's
 other candidate signal ("suspiciously long name") a measured shape for the first
 time, if anyone wants to pursue it separately.
+
+## The second measurement (job 774, `b7fe297`, 2026-09-06 10:2x UTC)
+
+Built the strip the "Next" section asked for as a **measurement input**, not a key
+change: `ingest::address::strip_trailing_address` (last line a postcode-and-locality
+in the five-digit / PL-PT dashed / CZ-SK-NL spaced / country-prefixed shapes, up to two
+street-shaped lines before it, one line always kept, a bare four-digit code needing
+corroboration because it is also a year), and the census now runs it over every
+line-broken name, seeks the same-triple twins and the stripped key's carriers, and
+reports under `address`. The org layer itself has changed since job 569 — the 351
+provisional-echo fold and the 357/359 folds took it from 12,588,066 rows to
+**6,808,407**, and the line-broken class from 356,749 to **106,447** (103,079 of them
+NULL-country, still 97%).
+
+| | |
+| --- | --- |
+| address-shaped (a trailing postal block the strip recognises) | **1,443** (1.4% of the line-broken class) |
+| …with a country | **224** — DE 194, PL 16, FR 11, BE/CH/ES 1 each |
+| …with a same-triple twin (the E0 class) | 20 |
+| already agree / **would gain agreement** / still differ | 1 / **10** / 9 |
+| stripped key already held by another identifier, same country | 38 |
+
+**Question 1 answered: ten pairs.** The gain of a key-builder strip on the identifier
+arms is ten E0 pairs moving from `contained` to `agree` — the issue's own specimen
+among them (`22149904` → twins `2171, 10620, 22762191`, "Vergabekammer
+Rheinland-Pfalz"), plus `22412187→18808732` SWEG Schienenwege, `22548249→22377041`
+kommIT, `22611511→22149720,23348580` WISS, `22613968→22200296` Bucher Municipal,
+`22717230→24497978` MVG Germany, `22749425→22867022` Malerbetrieb Geibel,
+`22774437→22716766,22730735` Landesanstalt für Landwirtschaft Sachsen-Anhalt,
+`23266075→23050872,23130167` KFB Jessen, and one past the listing cap. The nine
+`still-differs` rows are department suffixes the strip correctly leaves
+(`Landratsamt Kelheim\nKreisfinanzverwaltung`, `Bundeskartellamt\nVergabekammern des
+Bundes`, `Sana Kliniken … Sommerfeld`) — an address strip is the wrong tool for them
+and nothing here should try.
+
+**Question 2 answered: the strip does not fabricate agreement.** Every stripped value in
+the listing reads as the entity's own name (`Siemens AG`, `Ziehm Imaging GmbH`,
+`Janssen-Cilag Polska Sp. z o.o.,`), and the 38 "collisions" are that name's OTHER rows
+under other identifiers — `Siemens AG` with 41 carriers, `Komtur Polska` 65 — i.e. the
+entity's echoes and second registrations, exactly what the clean spelling already
+collides with. The strip hands a row the key its clean twins hold; whether those rows
+merge stays with the arms' denial stack, unchanged.
+
+**Decision: not built into the key builder.** 1,443 rows of 6.8 M (0.02%), ten pairs on
+the identifier arms, and a strip in `match_norm`/N3 is a `NAME_KEY_EPOCH` bump — a
+from-zero rebuild of `org_match_keys` for a class this size. The strip stays as a
+tested function and the census keeps reporting the class each run, so the decision is
+cheap to reverse: if `address.twins.gains_agreement` or `address.shaped` grows, or the
+E0 arm is running and wants its ten pairs, build it then. The ten pairs are listed
+above for a verdict path if one is wanted sooner.
