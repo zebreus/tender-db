@@ -147,3 +147,10 @@ the denied groups are LISTED in the `r2-merge-plan` report (`denied_names_listin
 500) as the review queue. Test `r2_name_gate.rs`: agree, contained, disagree, a stranger in
 an agreeing pair (group-atomic deny), unnamed. Deny direction only; recall lost on renamed or
 translated names goes to review rather than to a fuse.
+
+## The 451 standing groups, resolved through issue 362 (2026-09-06 05:3x UTC)
+
+Reviewed by the 362 campaign: 172 HIGH merges admitted by verdict (169 folded, job 765),
+174 kept for good by verdict, 105 still held by the name rule (needs-more-evidence and
+challenger-disputed groups). The R2 plan after the fold holds 0 groups; the E1 space is clean
+under the gate + verdicts. Numbers and the record in issue 362.
