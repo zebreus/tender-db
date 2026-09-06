@@ -3181,6 +3181,13 @@ pub struct NamePollutionReport {
     pub collides_other_identifier: u64,
     pub address_rows: Vec<AddressStrip>,
     pub address_truncated: bool,
+    /// The per-row seeks (twins, key carriers) ran for the first
+    /// `ADDRESS_SEEK_CEILING` country-bearing address-shaped rows only; rows
+    /// past it are counted and listed as `no-twin` with no carriers, and the
+    /// twin/collision tallies are a lower bound. Guards the walk against a
+    /// class that grew far past the ~224 measured, whether by corpus growth
+    /// or a strip regression.
+    pub address_seeks_truncated: bool,
     pub stopped: bool,
 }
 
@@ -15974,9 +15981,19 @@ impl Db {
                 let mut key_carriers = 0u64;
                 let mut collides = false;
                 let stripped_key = n3(&stripped);
+                // The seeks are bounded by THIS, not by the listing cap: the
+                // walk must stay seconds even if the class is not what was
+                // measured. 224 rows carried a country on 2026-09-06.
+                const ADDRESS_SEEK_CEILING: u64 = 20_000;
+                let seeks_allowed = report.address_with_country < ADDRESS_SEEK_CEILING;
                 if !country.is_empty() {
                     report.address_with_country += 1;
                     *report.address_by_country.entry(country.clone()).or_default() += 1;
+                    if !seeks_allowed {
+                        report.address_seeks_truncated = true;
+                    }
+                }
+                if !country.is_empty() && seeks_allowed {
                     if let (Some(kind), Some(identifier)) = (&kind, &identifier) {
                         let mut q = reader
                             .query(

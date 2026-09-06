@@ -1700,6 +1700,28 @@ mod tests {
         assert!(e.contains("join `tender_versions` to `notices`"), "{e}");
     }
 
+    /// Every view the rule refuses is refused THROUGH `classify`, and the
+    /// message extracted from its note names a base table in backticks — so
+    /// a note whose phrasing broke the "NOT FILTERABLE" split would fail here
+    /// and not in an analyst's terminal.
+    #[test]
+    fn every_unfilterable_view_is_refused_with_base_table_guidance() {
+        for view in ALLOWED.iter().filter(|n| unfilterable_view(n)) {
+            let e = classify(&format!("SELECT * FROM {view} WHERE 1 = 1")).expect_err(view).1;
+            assert!(e.starts_with(&format!("{view} is NOT FILTERABLE and this query filters it: ")), "{e}");
+            let guidance = e.splitn(2, ": ").nth(1).unwrap_or_default();
+            assert!(guidance.contains('`'), "{view}: the guidance names a base table: {e}");
+            assert!(!guidance.starts_with(','), "{view}: the note's punctuation is trimmed: {e}");
+            let j = classify(&format!("SELECT t.id FROM tenders t JOIN {view} v ON v.tender_id = t.id")).expect_err(view).1;
+            assert!(j.contains("joins it"), "{view}: {j}");
+        }
+        // The exemption stays readable both ways.
+        assert!(classify("SELECT * FROM v_fetches WHERE id = 1").is_ok());
+        // Table-form IN over a view is an expression read, like `IN (SELECT …)`:
+        // accepted as an unfiltered read of that view, by the same rule.
+        assert!(classify("SELECT id FROM tenders WHERE id IN v_awards").is_ok());
+    }
+
     /// The other side of the rule: what turso CAN do with a view stays open,
     /// and the base tables — the documented fast path — are untouched.
     #[test]

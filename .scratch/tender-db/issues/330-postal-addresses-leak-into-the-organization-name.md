@@ -206,3 +206,17 @@ tested function and the census keeps reporting the class each run, so the decisi
 cheap to reverse: if `address.twins.gains_agreement` or `address.shaped` grows, or the
 E0 arm is running and wants its ten pairs, build it then. The ten pairs are listed
 above for a verdict path if one is wanted sooner.
+
+**Adversarial audit (2026-09-06 17:xx UTC), two follow-ups landed.** (1) The census's
+per-row seeks were bounded only by the measured size of the class, not by code: a
+`ADDRESS_SEEK_CEILING` of 20,000 country-bearing address-shaped rows now stops the
+twin/carrier seeks (rows past it count and list as `no-twin`, `address.seeks_truncated`
+says so, the tallies become a lower bound) so the walk stays seconds whatever the class
+does. (2) The strip's corroboration asymmetry is now documented and pinned: only the
+bare four-digit shape needs a street line or a country prefix; a bare `<five digits>
+<word>` line is stripped as an address even when it is a labelled number
+(`Kommission\n54321 Sonderfall` → `Kommission`). Accepted while the strip feeds only the
+census — whose listing shows every stripped value — and to be tightened before any key
+builder consumes it. Also pinned: the `still-differs` verdict (a department line
+surviving above the postal block), the two-letter country prefix, and the two-line
+walk-back cap.

@@ -6532,6 +6532,10 @@ impl Supervisor {
                         },
                         "collides_other_identifier": r.collides_other_identifier,
                         "truncated": r.address_truncated,
+                        // The twin/carrier seeks stopped at their ceiling: the
+                        // tallies above are a lower bound. Never on the
+                        // measured class; here so a regression says so.
+                        "seeks_truncated": r.address_seeks_truncated,
                         "rows": r.address_rows.iter().map(|a| serde_json::json!({
                             "org_id": a.org_id,
                             "country": a.country,

@@ -29,6 +29,13 @@
 //! AT/CH/BE/DK/HU/… shape, which is also a YEAR) needs corroboration — a
 //! street line before it or a country prefix (`A-1010 Wien`) — so
 //! `Expo\n2000 Hannover` keeps its year.
+//!
+//! Known asymmetry: the other shapes need no corroboration, so a trailing
+//! `<five digits> <word>` line that is not an address (a case or budget
+//! number with a label) is stripped too. Accepted while this feeds only the
+//! census, whose listing shows every stripped value for a reader; a key
+//! builder consuming it would want the street-line corroboration for every
+//! shape, at the cost of the bare `Stadt Mainz\n55116 Mainz` form.
 
 /// `Some(name without its trailing postal block)`, the surviving lines joined
 /// with single spaces, when the name ends in one; `None` when nothing
@@ -268,6 +275,21 @@ mod tests {
         assert_eq!(strip("Landesgartenschau\n2024 Wangen im Allgäu"), None);
         // With a street line before it, the same shape is an address.
         assert_eq!(strip("Expo\nMessegelände 1\n2000 Hannover").as_deref(), Some("Expo"));
+        // The documented asymmetry: a bare FIVE-digit line needs no
+        // corroboration, so a labelled number is stripped as if it were one.
+        // Pinned so the trade-off is visible, not so it is desirable.
+        assert_eq!(strip("Kommission\n54321 Sonderfall").as_deref(), Some("Kommission"));
+    }
+
+    #[test]
+    fn a_two_letter_prefix_corroborates_and_the_walk_back_stops_at_two_lines() {
+        assert_eq!(strip("Urząd Miasta\nPL-02-222 Warszawa").as_deref(), Some("Urząd Miasta"));
+        assert_eq!(strip("Stadt Wien\nCH-8000 Zürich").as_deref(), Some("Stadt Wien"));
+        // Three street-shaped lines: only the two nearest the postcode go.
+        assert_eq!(
+            strip("Firma\nGebäude 3\nEingang 2\nHauptstraße 1\n12345 Ort").as_deref(),
+            Some("Firma Gebäude 3")
+        );
     }
 
     #[test]

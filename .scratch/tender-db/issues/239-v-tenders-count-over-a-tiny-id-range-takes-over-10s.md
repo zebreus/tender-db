@@ -352,3 +352,11 @@ LIMIT 2` → 200, two rows; the documented base-table join for tender 93601 → 
 milliseconds; `v_fetches WHERE kind = 'daily' LIMIT 2` → 200 (the exemption). The tripwire
 test stays armed for the turso release that learns pushdown; lifting the rule is listed in
 its instructions.
+
+**Second audit (17:xx UTC): allow-list posture re-confirmed clean; one coverage gap
+closed.** Every `v_*` view the rule refuses is now driven through `classify` in a
+property test that checks the refusal names the view, quotes base-table guidance in
+backticks after the marker, and refuses the joined form too; `v_fetches` and table-form
+`IN v_view` (an expression read, accepted like `IN (SELECT …)`) are pinned on the
+accepting side. Known nit left as is: a CTE that unions two views is named after the
+first for the message.

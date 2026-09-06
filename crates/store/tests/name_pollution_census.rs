@@ -302,18 +302,23 @@ async fn an_address_shaped_name_is_measured_against_its_twin_and_the_key_table()
     org_with(&conn, 8, Some("DE"), Some(("vat", "DE888")), "Landeshauptstadt\nDresden, Zentrales Vergabebüro", &["Landeshauptstadt\nDresden, Zentrales Vergabebüro"]).await;
     // A NULL-country provisional row: counted as address-shaped, no seeks.
     org_with(&conn, 9, None, None, "Stadt Burghausen\n84489 Burghausen", &["Stadt Burghausen\n84489 Burghausen"]).await;
+    // A twin that STILL differs after the strip: a department line survives
+    // above the postal block, and an address strip is the wrong tool for it.
+    org_with(&conn, 10, Some("DE"), Some(("vat", "DE1010")), "Landratsamt Kelheim", &["Landratsamt Kelheim"]).await;
+    org_with(&conn, 11, Some("DE"), Some(("vat", "DE1010")), "Landratsamt Kelheim\nKreisfinanzverwaltung\n93309 Kelheim", &["Landratsamt Kelheim\nKreisfinanzverwaltung\n93309 Kelheim"]).await;
 
     let r = run(&db, 100).await;
-    assert_eq!(r.polluted, 5, "rows 2, 4, 5, 8, 9 carry a break");
-    assert_eq!(r.address_shaped, 4, "rows 2, 4, 5, 9 end in a postal block");
-    assert_eq!(r.address_with_country, 3);
-    assert_eq!(r.address_by_country.get("DE"), Some(&3));
-    assert_eq!(r.twin_rows, 2, "rows 2 and 4 have a same-triple twin");
+    assert_eq!(r.polluted, 6, "rows 2, 4, 5, 8, 9, 11 carry a break");
+    assert_eq!(r.address_shaped, 5, "rows 2, 4, 5, 9, 11 end in a postal block");
+    assert_eq!(r.address_with_country, 4);
+    assert_eq!(r.address_by_country.get("DE"), Some(&4));
+    assert_eq!(r.twin_rows, 3, "rows 2, 4 and 11 have a same-triple twin");
     assert_eq!(r.gains_agreement, 1);
     assert_eq!(r.already_agree, 1);
-    assert_eq!(r.still_differs, 0);
+    assert_eq!(r.still_differs, 1);
     assert_eq!(r.collides_other_identifier, 1, "row 5 alone: row 7's carrier is Dutch");
     assert!(!r.address_truncated);
+    assert!(!r.address_seeks_truncated, "four rows are nowhere near the seek ceiling");
 
     let by_id = |id: i64| r.address_rows.iter().find(|a| a.org_id == id).unwrap();
     let a = by_id(2);
@@ -333,10 +338,14 @@ async fn an_address_shaped_name_is_measured_against_its_twin_and_the_key_table()
     assert_eq!(s9.country, "");
     assert_eq!(s9.verdict, "no-twin");
     assert_eq!(s9.key_carriers, 0, "no seeks for a country-less row");
+    let s11 = by_id(11);
+    assert_eq!(s11.verdict, "still-differs");
+    assert_eq!(s11.twins, vec![10]);
+    assert_eq!(s11.stripped, "Landratsamt Kelheim Kreisfinanzverwaltung");
     assert!(r.address_rows.iter().all(|a| a.org_id != 8), "a wrapped name is not address-shaped");
     // The main listing and tally are untouched by the second measurement.
-    assert_eq!(r.published, 5);
-    assert_eq!(r.rows.len(), 5);
+    assert_eq!(r.published, 6);
+    assert_eq!(r.rows.len(), 6);
 }
 
 #[tokio::test]
