@@ -245,16 +245,24 @@ pub(crate) struct DeletedOpen {
 }
 
 pub(crate) fn deleted_open() -> Option<DeletedOpen> {
+    use std::os::unix::fs::MetadataExt;
     let entries = std::fs::read_dir("/proc/self/fd").ok()?;
     let mut held: Vec<(String, u64)> = Vec::new();
+    // Disk usage is per INODE, not per descriptor: a file held through two
+    // fds (dup, a duplicated handle) must count once.
+    let mut seen: std::collections::HashSet<(u64, u64)> = std::collections::HashSet::new();
     for entry in entries.flatten() {
         let Ok(target) = std::fs::read_link(entry.path()) else { continue };
         let target = target.to_string_lossy();
         let Some(path) = target.strip_suffix(" (deleted)") else { continue };
         // The descriptor still reaches the inode, so its size is readable
-        // through the fd link even though the path is gone.
-        let bytes = std::fs::metadata(entry.path()).map(|m| m.len()).unwrap_or(0);
-        held.push((path.to_owned(), bytes));
+        // through the fd link even though the path is gone. A descriptor that
+        // closed between the listing and this stat is simply not held.
+        let Ok(meta) = std::fs::metadata(entry.path()) else { continue };
+        if !seen.insert((meta.dev(), meta.ino())) {
+            continue;
+        }
+        held.push((path.to_owned(), meta.len()));
     }
     held.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
     let files = held.len() as u64;
@@ -289,30 +297,37 @@ mod tests {
     use super::*;
 
     /// Issue 361: an unlinked file this process still holds is counted with
-    /// its size, and stops being counted once the descriptor closes — the
-    /// only thing that releases the space, which is the point of reading it.
+    /// its size, once however many descriptors reach it, and stops being
+    /// counted once the last descriptor closes — the only thing that releases
+    /// the space, which is the point of reading it. Every assertion is scoped
+    /// to this test's own file: the reading is process-wide and other tests
+    /// in the binary run beside this one.
     #[test]
-    fn an_unlinked_open_file_is_counted_until_its_descriptor_closes() {
+    fn an_unlinked_open_file_is_counted_once_until_its_descriptors_close() {
         use std::io::Write;
         let dir = std::env::temp_dir();
         let path = dir.join(format!("tender-db-deleted-open-{}.bin", std::process::id()));
         let mut file = std::fs::File::create(&path).unwrap();
         file.write_all(&vec![7u8; 1 << 20]).unwrap();
         file.sync_all().unwrap();
+        // A second descriptor to the same inode: disk usage is per inode.
+        let twin = file.try_clone().unwrap();
         std::fs::remove_file(&path).unwrap();
         let Some(held) = deleted_open() else {
             eprintln!("no /proc/self/fd here; nothing to pin");
             return;
         };
         let name = path.to_string_lossy().into_owned();
-        let mine = held.sample.iter().find(|(p, _)| *p == name).expect("the unlinked file is listed");
-        assert_eq!(mine.1, 1 << 20);
-        assert!(held.files >= 1);
+        let mine: Vec<_> = held.sample.iter().filter(|(p, _)| *p == name).collect();
+        assert_eq!(mine.len(), 1, "listed once despite two descriptors: {:?}", held.sample);
+        assert_eq!(mine[0].1, 1 << 20);
         assert!(held.bytes >= 1 << 20);
+        drop(twin);
+        let still = deleted_open().unwrap();
+        assert!(still.sample.iter().any(|(p, _)| *p == name), "one descriptor still holds it");
         drop(file);
         let after = deleted_open().unwrap();
         assert!(after.sample.iter().all(|(p, _)| *p != name), "closed, so no longer held");
-        assert_eq!(after.files, held.files - 1);
     }
 
     fn run(outcome: &str, finished_at: i64) -> JobRun {

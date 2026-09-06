@@ -798,7 +798,7 @@ fn name_growth_alarms(
     if let Some(prev) = previous_top.as_ref() {
         for &(n, id) in ranked {
             match prev.get(&id) {
-                Some(&was) if n >= was + GROWN_FLOOR => {
+                Some(&was) if n >= was.saturating_add(GROWN_FLOOR) => {
                     grown.push(serde_json::json!({"org_id": id, "from": was, "to": n}));
                     alarms.push(format!("org {id} grew {was} -> {n} distinct names"));
                 }
@@ -3710,8 +3710,19 @@ impl Supervisor {
                             "name": m.map(|m| m.4.clone()),
                         })
                     }).collect::<Vec<_>>(),
-                })
-                .to_string();
+                });
+                // The report IS next week's baseline: `name_growth_alarms`
+                // reads `top` and `ge6` at its top level, and a refactor that
+                // nested them (the `name_growth` block sits right beside them)
+                // would not fail — it would read as "no baseline" every week,
+                // the muted-probe shape. So the job refuses to store a report
+                // its own tripwire could not read back.
+                if !report["top"].is_array() || report["ge6"].as_u64().is_none() {
+                    return Err("org-merge-health report lost the baseline keys `top`/`ge6` \
+                                that name_growth_alarms reads back next week — not stored"
+                        .to_owned());
+                }
+                let report = report.to_string();
                 self.db
                     .put_report("org-merge-health", &report, now)
                     .await
