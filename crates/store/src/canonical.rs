@@ -1609,7 +1609,8 @@ pub struct R2MergeReport {
     /// wall).
     pub denied_group_vat: u64,
     /// Issue 329's E0 name rule: groups whose named members do not agree on
-    /// ONE non-generic N3 key (`agree-generic`, `contained`, `disagree`).
+    /// ONE non-generic N3 key (`agree-generic`, `contained`, `disagree`). Under
+    /// R2 (issue 359) only `disagree` counts here — see [`Self::denied_listing`].
     pub denied_names: u64,
     /// Issue 349: E0 groups whose agreed key is over the wall by carrier
     /// count but whose identifier-bearing carriers are under it — one
@@ -1651,6 +1652,14 @@ pub struct R2MergeReport {
     /// [`Self::plan_listing`] is a scan-order prefix and NOT reviewable as a
     /// whole. Read `plan_sample` for the unbiased view in that case.
     pub plan_listing_truncated: bool,
+    /// Issue 359: the R2 groups the name rule denied — `disagree`, the named
+    /// members' N3 keys neither one key nor one another's token subsets —
+    /// listed like the plan so the denial is reviewable. This is the review
+    /// queue for the buyer's-id-on-the-winner's-row error the label repair
+    /// made visible (a county and an IT company under one NIP). Dry runs
+    /// only, capped at [`R2_PLAN_LISTING_CAP`].
+    pub denied_listing: Vec<(String, &'static str, String, Vec<(i64, String, String, String)>)>,
+    pub denied_listing_truncated: bool,
 }
 
 /// Inputs to the issue-300 Stage-3 R3 merge (NULL-country rescue).
@@ -9080,17 +9089,17 @@ impl Db {
             // `agree-distinctive` verdict — every named member folds to one N3
             // key and that key is not generic under the stoplist wall.
             // `agree-generic`, `contained` and `disagree` are denied here.
-            if args.rule == "e0" {
-                let mut keys: BTreeSet<String> = BTreeSet::new();
-                for (id, _, _, _, name) in &meta {
-                    if flagged.contains(id) {
-                        continue;
-                    }
-                    let k = (args.n3)(name);
-                    if !k.is_empty() {
-                        keys.insert(k);
-                    }
+            let mut keys: BTreeSet<String> = BTreeSet::new();
+            for (id, _, _, _, name) in &meta {
+                if flagged.contains(id) {
+                    continue;
                 }
+                let k = (args.n3)(name);
+                if !k.is_empty() {
+                    keys.insert(k);
+                }
+            }
+            if args.rule == "e0" {
                 let mut deny = keys.len() != 1;
                 if let Some(k) = keys.iter().next()
                     && !deny
@@ -9142,6 +9151,50 @@ impl Db {
                 }
                 if deny {
                     report.denied_names += 1;
+                    continue 'group;
+                }
+            } else if keys.len() >= 2 {
+                // 4c. The R2 arm takes the name rule's DENY half only (issue
+                // 359). The shared E1 key is merge-grade evidence by design, so
+                // `agree-generic` is not denied here — the wall says the name is
+                // common, not that the number is shared — and `contained`
+                // (`X Sp. z o.o.` / `X Sp. z o.o. Oddział Kraków`) merges:
+                // branches carry the parent's NIP or P.IVA. What denies is
+                // `disagree`: named members whose N3 keys share no core, which
+                // is the signature of a WRONG IDENTIFIER on one row — the
+                // buyer's NIP written into the winner's field, the county and
+                // the IT company, the waterworks and its contractor. The label
+                // repair reunited 16k groups in one run and the plan's own
+                // listing showed ~1.4 % of that shape; before it the rule ran on
+                // groups the campaigns had read case by case. Denied groups are
+                // listed for review, never fused.
+                let ks: Vec<String> = keys.iter().cloned().collect();
+                if !contained_name_keys(&ks) {
+                    report.denied_names += 1;
+                    if args.dry_run {
+                        if report.denied_listing.len() < R2_PLAN_LISTING_CAP {
+                            let name_of: std::collections::HashMap<i64, String> =
+                                meta.iter().map(|m| (m.0, m.4.clone())).collect();
+                            report.denied_listing.push((
+                                gk.0.clone(),
+                                gk.1,
+                                gk.2.clone(),
+                                members
+                                    .iter()
+                                    .map(|m| {
+                                        (
+                                            m.id,
+                                            m.kind.clone(),
+                                            m.literal.clone(),
+                                            name_of.get(&m.id).cloned().unwrap_or_default(),
+                                        )
+                                    })
+                                    .collect(),
+                            ));
+                        } else {
+                            report.denied_listing_truncated = true;
+                        }
+                    }
                     continue 'group;
                 }
             }

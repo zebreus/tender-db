@@ -78,3 +78,38 @@ the same for the other five.
   soft identity.
 - Do not run the repair while ingest/fold jobs run (parity abort is the safety net,
   not the plan).
+
+## Repaired, and the fold stopped at the plan (2026-09-06 00:4x UTC, rev b9c0928)
+
+Deployed at 00:41. `repair-label-prefixes` dry (job 746, 1 s): **34,375 rows carry a label,
+28,085 planned, 6,290 kept as published** (the guard refused the remainder — compounds such
+as `KRS0000001201NIP7270126358`, `CF` + a 30-hex GUID on FR/DE rows, `CF` + a UK postcode),
+**16,366 land on an identity that already stands**. The plan listing is capped at 400, so the
+risky labels were read through bounded identity-index seeks instead (country + kind fixed,
+identifier range): `CF`+digit under IT is 886 rows of which 699 leave an 11-digit P.IVA and the
+rest compounds; under FR (393) and DE (103) it is hex GUIDs, all refused; `REGON` under PL is
+9,456 rows (the biggest class after `NIP`, unmeasured before the dry run); `KRS` 1,030; `NIP`
+18,170; `NIF` 181 ES + 51 PT; `CIF` 220 ES + 5 RO. Wet (job 747, 7 s): **28,085 applied,
+0 skipped**.
+
+Then `match-org-identifiers` r2 dry (job 748): E1-keyed rows 365,627 → 392,068, **16,179
+groups planned** — 231,664 mentions, 1.73 M party rows, 242k winners to repoint — and the
+listing plus sample (569 groups) read by hand: 502 with identical name cores, ~45 with
+partial overlap (a long form and a short one), and **11 whose members' names share nothing**:
+`Powiat Wadowicki` with `REKORD SI Sp. z o.o.`, `Wodociągi i Kanalizacja w Opolu` with `WTE
+Wassertechnik (Polska)`, `Adam Biedrzycki Chemosynteza` with `Instytut Ogrodnictwa`, a county
+with a care home, a town with a school. That is the buyer's NIP written into the winner's
+identifier field — a WRONG IDENTIFIER on one row, and R2 would fuse the two organizations.
+~1.4 % of 16k groups is ~230 false merges. **The wet R2 was not run.**
+
+### The R2 name gate (built the same night)
+
+R2 had no name test: its E1 key was merge-grade by design, and every run before tonight
+folded either the standing bare-identifier stock or rows a campaign had just read one by one.
+E0 (issue 329) has the name rule; R2 now takes its DENY half — `agree` and `contained`
+(a branch carrying the parent's NIP) merge as before, `unnamed` merges, **`disagree` denies**
+(the N3 keys of the named members are neither one key nor one another's token subsets), and
+the denied groups are LISTED in the `r2-merge-plan` report (`denied_names_listing`, capped at
+500) as the review queue. Test `r2_name_gate.rs`: agree, contained, disagree, a stranger in
+an agreeing pair (group-atomic deny), unnamed. Deny direction only; recall lost on renamed or
+translated names goes to review rather than to a fuse.

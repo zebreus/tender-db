@@ -4002,6 +4002,21 @@ impl Supervisor {
                         "consortium_excluded": r.consortium_excluded,
                         "denied_legal_form": r.denied_legal_form,
                         "denied_group_vat": r.denied_group_vat,
+                        // Issue 359: the name rule's deny half, and its listing —
+                        // the review queue, same shape as `plan`.
+                        "denied_names": r.denied_names,
+                        "denied_names_listing_truncated": r.denied_listing_truncated,
+                        "denied_names_listing": r.denied_listing.iter().map(|(country, scheme, key, members)| {
+                            serde_json::json!({
+                                "country": country, "scheme": scheme, "key": key,
+                                "members": members.iter().map(|(id, kind, literal, name)| {
+                                    serde_json::json!({
+                                        "org_id": id, "kind": kind,
+                                        "identifier": literal, "name": name,
+                                    })
+                                }).collect::<Vec<_>>(),
+                            })
+                        }).collect::<Vec<_>>(),
                         "merged_this_run": r.merged_groups,
                         "residual_of_wet_run": !dry_run,
                         // Dry-run blast-radius preview (the Stage-1 lesson):
@@ -4069,7 +4084,7 @@ impl Supervisor {
                     "match-org-identifiers r2 (issue 300 Stage 2){}: {} orgs scanned, \
                      {} E1-keyed, {} groups >=2; denied: {} cap, {} gate, {} consortium \
                      ({} members excluded member-scoped), \
-                     {} legal-form, {} vat-group-wall; plan {} groups; merged {} groups \
+                     {} legal-form, {} vat-group-wall, {} names; plan {} groups; merged {} groups \
                      ({} org rows removed, {} mentions, {} parties, {} bid-parties, \
                      {} winners repointed, {} winner dups deleted, {} tenders touched)",
                     if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
@@ -4082,6 +4097,7 @@ impl Supervisor {
                     r.consortium_excluded,
                     r.denied_legal_form,
                     r.denied_group_vat,
+                    r.denied_names,
                     r.plan_groups,
                     r.merged_groups,
                     r.removed,

@@ -81,9 +81,11 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
         (35, "FI", "national", "11111111", "Poisoned", 1),
         (36, "FI", "vat", "FI11111111", "Poisoned Twin", 1),
         // VAT-group wall: two members share the group DIČ, mention evidence
-        // carries their own DIFFERENT IČOs.
-        (50, "SK", "vat", "SK2021005448", "Member One", 1),
-        (51, "SK", "national", "2021005448", "Member Two", 1),
+        // carries their own DIFFERENT IČOs. Named as a CONTAINED pair since
+        // issue 359, so the R2 name gate (which now runs first) lets the wall
+        // be the class that denies them.
+        (50, "SK", "vat", "SK2021005448", "Skupina Alfa", 1),
+        (51, "SK", "national", "2021005448", "Skupina Alfa Dva", 1),
     ];
     for (id, c, k, v, n, p) in &orgs {
         conn.execute(
