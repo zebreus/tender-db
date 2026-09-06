@@ -291,3 +291,54 @@ If that holds, the levers are (a) `xfs_spaceman -c "prealloc -s" /data` to force
 (the supported maintenance ioctl), (b) a `cowextsize` of one block on the live file so
 future COW writes preallocate nothing, and (c) a restart is NOT one (measured 03:4x).
 `df` is not lying — those blocks are allocated — so the ~220 GiB is real headroom to win.
+
+**Readings so far (14:1x–14:3x UTC).** The CLOSED scratch file was reclaimed within seven
+minutes: 243,448 → 131,192 blocks = its size plus 60 KiB of extent-tree overhead. The file
+HELD OPEN kept its full 58 MB gap through eight minutes of the periodic GC, and the forced
+trim (`xfs_spaceman -c "prealloc -s -u 0 -m 32m" /data`, scoped to root-owned scratch
+files so the live DB was untouched) returned in 24 ms and reclaimed nothing on it. So
+lever (a) is dead: neither the periodic GC nor the forced trim touches a file that is
+open, and the server holds the DB open for its whole life. What the 03:32 restart shows
+is that even a close-and-reopen did not reclaim the live file; the candidate reason is
+XFS's dirty-release rule — a file closed while dirty is flagged and its speculative
+allocation is left in place on every later close ("in this case don't do the
+truncation", fs/xfs/xfs_inode.c) — and a scratch reproduction of exactly that (a close
+without fsync, then rewrites, fsync, clean close) is being read at t+7 min.
+
+**The lever that remains, if the dirty-release reading holds: a clone swap at a restart
+window.** A reflink clone is a fresh inode sharing every data block (free, ~2.5 min for
+this file per the snapshot timings) and carrying no COW-fork reservations; unlinking the
+old inode cancels its reservations (inactivation does what release will not). Stop the
+service → `cp --reflink=always tender-db.db tender-db.new` → set `cowextsize` to one
+block on the clone so future rewrites reserve nothing beyond the page they write →
+rename into place, keep the WAL as is → start → `/health` → `rm` the old file. About
+three minutes of downtime, ~220 GiB back. Prevention alone (`cowextsize` on the live
+file) would stop the growth but reclaim nothing, since the standing reservations belong
+to the old inode.
+
+**Rehearsed on the scratch file, 14:3x UTC — the swap works exactly as designed.** With
+the gapped file: `cp --reflink=always` → clone at size + 60 KiB (no gap); `xfs_io -c
+"cowextsize 4096"` accepted (xflags gains `cowextsize`); rename into place; `rm` of the old
+inode → `df` avail rose by 55 MiB, i.e. the reservations were released; then 2,000 more
+random-page rewrites on the clone with the fd HELD OPEN left a gap of 112 KiB (was 58 MB
+for the same workload without the hint). So the procedure both reclaims and prevents.
+
+**Not executed on the live file: the session's permission classifier denied the
+step** (a `systemctl stop` + rename + `rm` of the live DB in one script, 14:4x UTC). Not
+worked around. The procedure, ready to run in one ~3-minute window on an idle queue —
+every step verified above except on the file itself:
+
+```
+cd /data/db && systemctl stop tender-db && sleep 3 && ! fuser tender-db.db
+df -B1M --output=avail /data                                  # 361 data point: after stop
+cp --reflink=always tender-db.db tender-db.db.new && sync     # ~2.5 min, shares every block
+chown tenderdb:tenderdb tender-db.db.new && chmod 600 tender-db.db.new
+xfs_io -c "cowextsize 4096" tender-db.db.new                  # one-block COW: no leftovers
+mv tender-db.db tender-db.db.old && mv tender-db.db.new tender-db.db   # WAL stays as is
+systemctl start tender-db && curl -s localhost:8080/health    # "ok":true, rev unchanged
+/root/sqlq.py "SELECT id FROM tenders WHERE id = 93601"       # a read through the clone
+rm tender-db.db.old && sync && df -B1M --output=avail /data   # expect ~+220 GiB
+```
+Rollback if health fails: stop, `mv tender-db.db tender-db.db.new; mv tender-db.db.old
+tender-db.db`, start. Expected: allocated = size + ~0.5 GB afterwards, and the weekly
+disk census's live-file line stops over-stating by a third.
