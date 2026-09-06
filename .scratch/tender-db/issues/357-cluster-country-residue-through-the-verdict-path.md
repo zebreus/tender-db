@@ -1,6 +1,6 @@
 # 357 — The identifier-under-several-codes residue, case by case through the verdict path
 
-Status: SLICES 1–6 APPLIED, FINAL SLICE (42 clusters) REVIEWING 2026-09-05 23:5x UTC — cohort `cluster-country-2026-09-05`: 1,207 rows moved (jobs 703/710/717/723/729/735), 779 duplicate identities folded by R2 (705/712/719/725/731/737), 2,998 verdict rows recorded; the packet after slice 6 carries the last 42 eligible clusters (2,834 clusters, 1,756 eligible, 1,714 reviewed). Was: SLICES 1–5 APPLIED, SLICE 6 (the last full one) STARTING 2026-09-05 19:2x UTC — cohort
+Status: CAMPAIGN COMPLETE 2026-09-06 00:15 UTC — cohort `cluster-country-2026-09-05`, seven slices: every one of the 1,730 eligible clusters carries a verdict (packet job 745: 2,808 clusters, 1,730 eligible, 1,730 reviewed, 0 carried). 1,233 rows moved (jobs 703/710/717/723/729/735/741; 0 no-ops, 0 HIGH left unapplied), 779 duplicate identities folded by R2 (705/712/719/725/731/737; 743 found none it could key), 3,077 verdict rows (1,233 HIGH moves applied, 709 MEDIUM moves recorded and not applied — 62 % of them the shared-register park awaiting issue 358 — and 1,135 keeps). With issue 355's 153 moves and 102 folds that is 1,386 country corrections and 881 folds in one day. Tooling: `.scratch/tender-db/357-campaign/`. Remaining work is not review: 358's decision releases the park; the R2-unkeyable same-triple pairs the moves created are issue 329's E0 fold. Was: SLICES 1–6 APPLIED, FINAL SLICE (42 clusters) REVIEWING 2026-09-05 23:5x UTC — cohort `cluster-country-2026-09-05`: 1,207 rows moved (jobs 703/710/717/723/729/735), 779 duplicate identities folded by R2 (705/712/719/725/731/737), 2,998 verdict rows recorded; the packet after slice 6 carries the last 42 eligible clusters (2,834 clusters, 1,756 eligible, 1,714 reviewed). Was: SLICES 1–5 APPLIED, SLICE 6 (the last full one) STARTING 2026-09-05 19:2x UTC — cohort
 `cluster-country-2026-09-05`. Slice 1: 488 moved / R2 316 groups. Slice 2: 239 / 171. Slice 3:
 113 / 74. Slice 4: 117 / 69. Slice 5: **144 moved (job 729), R2 89 groups / 89 rows, 179
 mentions, 325 parties, 331 bid-parties, 384 winners repointed (job 731)**. Running total:
@@ -111,6 +111,56 @@ Estonian OÜ, which caught Estonian firms moving to Finland on their Finnish bra
 6 non-resident CIF). **Apply set: 144 HIGH** (arithmetic 88, national-format 55 — mostly German
 Handelsregister numbers under AT and Northern Irish company numbers under IE — weight 4);
 246 `keep` rows recorded. Record: `357-cluster-country-verdicts-slice5.json`.
+
+## Final slice (7) and the close-out (2026-09-06 00:0x–00:15 UTC, 5 agents, ~0.4M tokens, 21 min)
+
+42 clusters — everything the packet still had. Verdicts: wrong-country 35, distinct-entities 5,
+same-entity-two-registrations 2. 35 moves (33 high); challenger agreed on 36, disputed 6 (five of
+them Spanish non-resident N-CIFs on FR/GB/US rows, which the floor would have parked anyway);
+blind readers 5/5 same verdict and same HIGH set. One reviewer clerical error caught by hand:
+the San Marino case `SM04649` named the SM row's org id as the mover with `from=IT`; the
+post-processor skipped it (org/from mismatch) and the IT row's move was recorded by hand as the
+reviewer meant it. The Monaco park from slice 6 was made directional: a SIRET on an MC row is
+the INSEE shared-register question, a Monaco RCI number on an FR row is a plain move (`BET
+SAMMI` FR→MC went through). **Apply set: 26 HIGH**, all national-format (German HRB/HRA under
+SE/AT/CH/LV/LU/BG/GB, Northern Irish company numbers under IE, a KVK, a Dutch B.V. under GB);
+27 keeps. Wet: job 741 moved 26 (0 no-ops); R2 job 743 planned 0 — these identifiers carry
+no E1 key (HRB…, NI…, FN… shapes), so the 26 same-triple pairs the moves created are E0's
+(issue 329), not R2's. Projection 744 `0 notices`. Packet 745: **0 cases carried**.
+Record: `357-cluster-country-verdicts-slice7.json`.
+
+### The campaign in numbers (verdict store read 00:15 UTC, feed audited per slice)
+
+| slice | clusters | HIGH applied (job) | R2 folds (job) | keeps |
+|---|---|---|---|---|
+| 1 | 600 | 488 (703) | 316 (705) | backfilled 255 |
+| 2 | 600 | 239 (710) | 171 (712) | — |
+| 3 | 219 | 113 (717) | 74 (719) | — |
+| 4 | 332 | 117 (723) | 69 (725) | — |
+| 5 | 584 | 144 (729) | 89 (731) | 246 |
+| 6 | 583 | 106 (735) | 60 (737) | 451 (+17 survivor backfill) |
+| 7 | 42 | 26 (741) | 0 (743) | 27 |
+| **total** | **1,730 eligible, all reviewed** | **1,233** | **779** | **1,135** |
+
+Verdict store, cohort `cluster-country-2026-09-05`: 3,077 rows — move/high 1,233 (every one
+stamped `moved from …` by its job; 0 unapplied), move/medium 709 (recorded, never applied),
+keep 1,135 (809 high, 271 medium, 55 low). Change feed per slice matched the jobs exactly
+(moves as `organization changed`, folds as `organization removed`, `tenders touched` as
+`tender changed`); the final slice's 26 changes and 0 removals close the audit. ~29M agent
+tokens over the seven review workflows; the wet jobs themselves ran 1–5 s each.
+
+### What is left, and whose it is
+
+- **709 MEDIUM moves** stand recorded. The largest class is the shared-register park (Åland/FI,
+  Réunion and the other DOM/FR, Faroes/DK, Monaco/FR): issue 358 is Lennart's call and its
+  answer executes through the same `apply-country-verdicts` path — re-record the parked rows at
+  HIGH under a new cohort once the rule is chosen, dry, diff, wet. The rest are the challenger's
+  disputes and the own-legal-form / standing floors: parents carrying a branch's number, which
+  are a wrong IDENTIFIER, not a wrong country — no executable path today.
+- **Same-triple pairs R2 cannot key** (identifiers with no E1 scheme: HRB, NI, FN, KVK, prefixed
+  junk): the E0 fold (issue 329) is the consumer; its wet run awaits Lennart.
+- **The packet is empty.** New clusters will form as ingest brings new codes; the census runs
+  weekly, so a packet re-run every few weeks with the checked-in tooling is the cadence.
 
 ## Slice 6 reviewed and applied (2026-09-05 19:2x–23:50 UTC, 45 agents, ~4.5M tokens, 3h59m)
 

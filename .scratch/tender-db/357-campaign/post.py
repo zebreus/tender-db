@@ -97,7 +97,7 @@ for d in diffs[:12]:
     print("  diff:", d)
 
 SHARED_CHECKSUM = {frozenset({"CZ", "SK"}), frozenset({"CZ", "SI"}), frozenset({"SK", "SI"})}
-SHARED_REGISTER = {frozenset({"FI", "AX"}), frozenset({"DK", "FO"}), frozenset({"DK", "GL"}), frozenset({"NO", "SJ"})} | {frozenset({"FR", x}) for x in ("RE", "GP", "MQ", "GF", "YT", "NC", "PF", "PM", "BL", "MF", "WF", "MC")} | {frozenset({"NL", x}) for x in ("AW", "CW", "SX", "BQ")}
+SHARED_REGISTER = {frozenset({"FI", "AX"}), frozenset({"DK", "FO"}), frozenset({"DK", "GL"}), frozenset({"NO", "SJ"})} | {frozenset({"FR", x}) for x in ("RE", "GP", "MQ", "GF", "YT", "NC", "PF", "PM", "BL", "MF", "WF")} | {frozenset({"NL", x}) for x in ("AW", "CW", "SX", "BQ")}
 BRANCH_WORDS = re.compile(r"клон|filial|sivukonttori|succursale|sucursal|niederlassung|zweigniederlassung|branch|sede secondaria|sede secundaria|oddzia|pobo[cč]ka|filiaal|filiale|rappresentanza|representa", re.I)
 COUNTRY_WORDS = {"FI": "finland|suomi|suomessa", "SE": "sweden|sverige|schweden", "NO": "norway|norge|norwegen", "DK": "denmark|danmark|dänemark", "DE": "germany|deutschland|deutsche", "IT": "italy|italia|italien", "ES": "spain|españa|espana|spanien", "PT": "portugal", "FR": "france|frankreich", "PL": "poland|polska|polen", "NL": "netherlands|nederland|niederlande", "BE": "belgium|belgique|belgië|belgie", "AT": "austria|österreich", "CZ": "czech|česk", "SK": "slovak|slovensk", "HU": "hungary|magyar", "RO": "romania|românia", "BG": "bulgaria|българия", "GB": "united kingdom|uk\\b|britain", "IE": "ireland|éire", "LT": "lithuania|lietuv", "LV": "latvia|latvij", "EE": "estonia|eesti", "GR": "greece|ελλά", "HR": "croatia|hrvatsk", "SI": "slovenia|slovenij", "CH": "switzerland|schweiz|suisse", "LU": "luxembourg", "MD": "moldova"}
 # A legal form or script that names ONE country (the ambiguous ones — S.A., AB, Ltd,
@@ -160,7 +160,11 @@ for j in joined.values():
             floor = "agreeing-row"
         elif FOOTPRINT.search(mem["name"] or "") and not BRANCH_OF_TO(mem, m["to"]):
             floor = "name-says-foreign-filing"
-        elif {m["from"], m["to"]} in SHARED_REGISTER:
+        elif {m["from"], m["to"]} in SHARED_REGISTER or (m["from"], m["to"]) == ("MC", "FR"):
+            # Monaco establishments carry INSEE SIRETs, so a SIRET on an MC row is
+            # the same policy question as the DOM (issue 358); a Monaco RCI number
+            # on an FR row is not — MC's own register issued it, and that direction
+            # stays a plain move.
             floor = "shared-register"
         elif m["evidence"] == "arithmetic" and not any(a.split(":")[0] == m["to"] for a in mem.get("anchors", [])):
             floor = "arithmetic-claimed-but-no-anchor-for-to"

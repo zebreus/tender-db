@@ -4,8 +4,8 @@ The review loop issue 311 asked for, run at scale: every organization row that c
 register number under several country codes is read by an agent against a rubric, an
 adversarial second agent tries to refute every move, a blind third reader re-reads a sample,
 deterministic floors take the deny direction, and only HIGH moves reach the database through
-`apply-country-verdicts` (issue 355's verdict store). Six slices of ≤600 clusters ran on
-2026-09-05; the per-slice records are `../357-cluster-country-verdicts-slice*.json` and the
+`apply-country-verdicts` (issue 355's verdict store). Seven slices of ≤600 clusters ran on
+2026-09-05/06 — 1,730 clusters, 1,233 rows moved, 779 folds; the per-slice records are `../357-cluster-country-verdicts-slice*.json` and the
 issue file carries the numbers.
 
 Files here:

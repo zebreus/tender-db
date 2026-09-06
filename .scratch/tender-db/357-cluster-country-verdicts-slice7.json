@@ -1,0 +1,1083 @@
+{
+"cohort": "cluster-country-2026-09-05",
+"rubric": "357-rubric v3c",
+"slice": 7,
+"cases": [
+{
+"identifier": "FN222906D",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "FN + digits + a single check letter is the Austrian Firmenbuch (companies register) number shape; Sweden's own organisationsnummer is a 10-digit hyphenated number and never takes this form. Both rows carry the identical name 'ASA Astrosysteme GmbH' and the identical identifier with no anchors or scheme tested (asked=[]), so the SE row reads as a stray duplicate of the AT registration rather than a real Swedish filing.",
+"moves": [
+{
+"org": 22947680,
+"from": "SE",
+"to": "AT",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "FN222906D's FN+digits+letter shape is specific to Austria's Firmenbuch; Sweden has no register of this shape, and the row's name matches the AT sibling exactly.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "FN+digits+letter is unambiguously Austrian Firmenbuch and Sweden's orgnr is a different all-digit hyphenated shape, so AT and HIGH confidence hold."
+},
+"blind_sample": {
+"identifier": "FN222906D",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "Both members carry the same name 'ASA Astrosysteme GmbH' and the same identifier FN222906D, which has the Austrian Firmenbuch shape (FN + 6 digits + check letter); asked is empty so anchors/country_probed are silence, not evidence. Sweden's register number is 10 digits and never uses an FN prefix, and the GmbH legal form is consistent with the AT sibling (org 22523286), so the SE row (org 22947680, variant lang ENG, 1 mention) is a publication stray of the Austrian entity.",
+"country_moves": [
+{
+"org": 22947680,
+"from": "SE",
+"to": "AT",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "FN + 6 digits + check letter is specific to the Austrian Firmenbuch and Sweden does not use that shape; the row's name (GmbH, byte-identical to the AT sibling's) is consistent with AT, raising the format class to HIGH. country_agrees is false and mentions is 1, so no standing or arithmetic contradicts the move."
+}
+]
+}
+},
+{
+"identifier": "GLO0001",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "distinct-entities",
+"confidence": "high",
+"rationale": "The value GLO0001 is a generic-looking code with no anchors and no scheme asked (asked=[]) on either side, attached to two completely unrelated organizations: a Portuguese municipality ('Municipio de Castanheira de Pera', tagged PT) and a Catalan photonics research institute ('Institut de Ciencies Fotoniques', tagged ES). Each row's country matches its own name/language; nothing points to either being mistagged, so this reads as two real, correctly-tagged organizations that happen to share a placeholder-style value.",
+"moves": [],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "GLO0001 carries no format signal for either country and each row's country matches its own name/language, so distinct-entities is right."
+},
+"blind_sample": null
+},
+{
+"identifier": "HRA30677",
+"stratum": "nobody-asked/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "Both rows name the identical entity (\"NKT GmbH & Co. KG\" / \"NKT GmbH &amp; Co. KG\"), and HRA30677 carries Germany's Handelsregister Abteilung A prefix, a register-number shape unique to German commercial courts and absent from Sweden's numeric org-number scheme. No checksum scheme covers this shape (asked=[], not probed), but the format itself is unmistakably German (national-format), so the SE row is the misfiled one; the DE row already agrees.",
+"moves": [
+{
+"org": 22968869,
+"from": "SE",
+"to": "DE",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "HRA is Germany's Handelsregister Abteilung A prefix, a format Sweden's register does not use, and the SE row's name is identical to the DE sibling's (\"NKT GmbH & Co. KG\"), confirming the same German-registered entity is misfiled under SE.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "Move stands (HRA is a Handelsregister-A prefix Sweden's purely-numeric orgnr scheme never produces, and the name is identical on both rows), but the case-level rationale's claim that the DE row already agrees is false against the literal data - country_agrees is false and country_probed is false for the DE row too, i.e. silence, not agreement; this does not undermine the move itself since the country_moves entry's own rationale does not rely on that claim."
+},
+"blind_sample": null
+},
+{
+"identifier": "HRA6295",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "HRA + digits is the German Handelsregister 'Abteilung A' number shape; Switzerland's commercial register uses its own cantonal numbering and UID scheme, never bare HRA. Both rows share the identical name 'Kurt Huttinger GmbH & Co. KG' (a German legal form) and the identical identifier, so the CH row is the misfiled sibling of the DE registration.",
+"moves": [
+{
+"org": 19449628,
+"from": "CH",
+"to": "DE",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "HRA6295's HRA-prefixed shape is specific to Germany's Handelsregister; Switzerland does not issue HRA numbers, and the name matches the DE row exactly.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "HRA is a distinctly German Handelsregister Abteilung A shape Switzerland never issues, and the identical KG name confirms DE."
+},
+"blind_sample": null
+},
+{
+"identifier": "HRB14135",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "HRB + digits is Germany's current Handelsregister 'Abteilung B' shape; Austria's live companies register has used FN numbers exclusively since its 1991 Firmenbuch reform, not HRB. Both rows carry the identical name 'Soft & Cloud GmbH' and identifier with no anchors tested, so AT is a misfiled duplicate of the DE row.",
+"moves": [
+{
+"org": 22892046,
+"from": "AT",
+"to": "DE",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "HRB14135's HRB shape is Germany's current register format, not Austria's active FN scheme; the name matches the DE sibling exactly.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "HRB is Germany's current shape and Austria's live register uses FN only; identical name confirms AT is the duplicate."
+},
+"blind_sample": null
+},
+{
+"identifier": "HRB18182",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "HRB + digits is Germany's Handelsregister Abteilung B shape; Luxembourg's own RCS Luxembourg register uses its own B+digits numbering under a different administrative prefix, not bare HRB. The LU row's name ('CCS Content Conversion Specialists GmbH', vs the DE row's near-identical 'CCS Content Coversion Specialists GmbH') is the same German GmbH entity, so LU is the misfiled tag.",
+"moves": [
+{
+"org": 24498134,
+"from": "LU",
+"to": "DE",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "HRB18182's shape is Germany's Handelsregister format, which Luxembourg's own trade register does not use in this bare form; the name is the same GmbH as the DE row.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "HRB is German-only (Luxembourg's RCS uses bare B+digits), and the near-identical GmbH name supports moving LU to DE regardless of whether it's the same or a differently-numbered sibling entity."
+},
+"blind_sample": null
+},
+{
+"identifier": "HRB21361",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "HRB + digits is unmistakably Germany's Handelsregister Abteilung B shape; Bulgaria's own EIK register is a plain 9-13 digit numeric code with no HRB prefix. Both rows carry the identical name 'PRISMA European Capacity Platform GmbH' and identifier, so BG is the misfiled sibling of the DE registration.",
+"moves": [
+{
+"org": 18538329,
+"from": "BG",
+"to": "DE",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "HRB21361's HRB shape belongs to Germany's register; Bulgaria's EIK scheme is purely numeric and never HRB-prefixed, and the name matches the DE row.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "HRB belongs to Germany; Bulgaria's EIK is purely numeric, so the identical-name BG row is the misfiled duplicate."
+},
+"blind_sample": null
+},
+{
+"identifier": "HRB216115",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "HRB + digits is Germany's Handelsregister shape; Latvia's own commercial register issues an 11-digit registracijas numurs, never an HRB-prefixed number. Both rows carry the identical name 'Rail Management Consultants International GmbH' and identifier, so LV is the misfiled duplicate of the DE row.",
+"moves": [
+{
+"org": 22655746,
+"from": "LV",
+"to": "DE",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "HRB216115's shape is Germany's register format; Latvia's own register never uses HRB, and the name matches the DE sibling.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "HRB is German-only and Latvia's registracijas numurs is an 11-digit number; identical name confirms DE."
+},
+"blind_sample": null
+},
+{
+"identifier": "HRB24995",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "HRB + digits is Germany's Handelsregister shape, not used by Latvia's own registry. The name itself, 'Wicom Germany GmbH', explicitly names Germany on both rows, reinforcing that LV is the misfiled tag of the DE registration.",
+"moves": [
+{
+"org": 22604916,
+"from": "LV",
+"to": "DE",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "HRB24995's shape is specific to Germany's register and the name literally names Germany; Latvia does not use this format.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "HRB belongs to Germany and the name itself says 'Wicom Germany GmbH', reinforcing LV as the mistake."
+},
+"blind_sample": null
+},
+{
+"identifier": "HRB3172",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "HRB + digits is Germany's Handelsregister Abteilung B shape, a format UK Companies House never issues. Both rows describe the same GmbH entity (the DE row's name even calls it 'A Joint Venture of P&WC and MTU/Germany'), so GB is the misfiled tag of the DE registration.",
+"moves": [
+{
+"org": 16218661,
+"from": "GB",
+"to": "DE",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "HRB3172's shape belongs to Germany's register; the UK has no HRB numbering, and the name/entity matches the DE row.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "Both rows use the GmbH legal form, which the UK register never issues, corroborating the HRB-based move to DE."
+},
+"blind_sample": null
+},
+{
+"identifier": "HRB360641",
+"stratum": "nobody-asked/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "The DE and SE rows name the same entity (\"Haux-Life-Support Gmbh\" / \"HAUX-LIFE-SUPPORT GmbH\"), and HRB360641 uses Germany's Handelsregister Abteilung B prefix, which Sweden's org-number scheme lacks. There is no checksum scheme to probe (asked=[]), but the format alone is decisive national-format evidence that the SE row belongs in DE.",
+"moves": [
+{
+"org": 23528060,
+"from": "SE",
+"to": "DE",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "HRB (Handelsregister Abteilung B) is a German-only commercial-register prefix; the SE row's name matches the DE row exactly (case aside) and carries the German GmbH legal form, confirming a misfile of the same entity under SE.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "Fields check out literally: both rows show country_agrees=false/country_probed=false (silence, correctly not read as contamination), and the move rests solely on HRB being an unmistakably German commercial-register prefix absent from Sweden's numeric-only scheme, with byte-identical name/legal form across rows - a sound national-format HIGH call."
+},
+"blind_sample": {
+"identifier": "HRB360641",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "Both members are 'Haux-Life-Support GmbH' with identifier HRB360641, the German Handelsregister Abteilung B shape (HRB + digits) that no Swedish register uses; the census verdict is nobody-asked, so anchors and country_probed are silence. one_letter_pair is true (DE/SE), the transcription-slip signature, and the GmbH legal form is consistent with the DE sibling (org 4358172), so the SE row (org 23528060, 1 mention) is the stray.",
+"country_moves": [
+{
+"org": 23528060,
+"from": "SE",
+"to": "DE",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "HRB + digits is the German commercial-register shape and Sweden has no such format; the row's own country does not use that shape, and the GmbH name byte-identical to the DE sibling raises the class to HIGH. country_agrees is false and mentions is 1, so nothing contradicts the move; the DE/SE one-letter pair matches the slip signature."
+}
+]
+}
+},
+{
+"identifier": "HRB41259",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "HRB + digits is Germany's current commercial-register format; Austria's active register uses FN numbers, not HRB. Both rows carry the identical name 'International SOS GmbH' and identifier, so AT is the misfiled duplicate of the DE row.",
+"moves": [
+{
+"org": 23353104,
+"from": "AT",
+"to": "DE",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "HRB41259's shape is Germany's active register format, not Austria's current FN scheme; name matches the DE sibling exactly.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "HRB is Germany's active format versus Austria's FN, and the identical name confirms AT is the stray."
+},
+"blind_sample": null
+},
+{
+"identifier": "HRB700711",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "Same HRB Handelsregister signature as the other German-format cases in this batch; Austria's live register does not use HRB. Both rows carry the identical name 'Kienzler Stadtmobiliar GmbH' and identifier, confirming AT is the misfiled sibling of the DE row.",
+"moves": [
+{
+"org": 13784374,
+"from": "AT",
+"to": "DE",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "HRB700711's shape is Germany's register format; Austria's current register uses FN, not HRB, and the name matches the DE row.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "Same HRB-vs-FN logic with an identical name on both rows; AT is the clear duplicate."
+},
+"blind_sample": null
+},
+{
+"identifier": "HRB737454",
+"stratum": "nobody-asked/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "\"VIVAVIS AG\" is named identically on both the DE and SE rows, and HRB737454 is a German Handelsregister Abteilung B number, a shape unique to Germany's court registers. No checksum scheme applies (asked=[]), so the format itself (national-format) settles that the SE row is the misfiled one.",
+"moves": [
+{
+"org": 22658704,
+"from": "SE",
+"to": "DE",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "HRB737454 carries Germany's Handelsregister Abteilung B prefix, absent from Sweden's registry, and the row's name is byte-identical to the DE sibling's (\"VIVAVIS AG\"), confirming the same German company is misfiled under SE.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "Same pattern as the other HR-prefix cases and equally solid: name is byte-identical across DE/SE rows, HRB is German-only, and org/from/to in the move match the case data exactly."
+},
+"blind_sample": null
+},
+{
+"identifier": "HRB8866",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "HRB + digits is Germany's Handelsregister shape; Switzerland does not issue HRB numbers for its own commercial register. The CH row's name ('ETC Solutions GmbH') differs slightly from the DE row's ('ETC Transport Consultants GmbH'), consistent with a rename of the same German entity over time rather than a distinct Swiss company sharing the same register number by chance.",
+"moves": [
+{
+"org": 22896384,
+"from": "CH",
+"to": "DE",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "HRB8866's shape is specific to Germany's register; Switzerland has no HRB numbering, and a single HRB number can only belong to one German register entry.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "HRB is exclusively German; whether this is a rename or two different German court registrations sharing the number, CH is wrong either way."
+},
+"blind_sample": null
+},
+{
+"identifier": "KVK71682147",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "KVK + 8 digits is the Dutch Chamber of Commerce (Kamer van Koophandel) numbering shape; UK Companies House never labels numbers 'KVK'. Both rows are 'Sony Europe B.V.' (B.V. being a Dutch legal form), so the GB row is the misfiled duplicate of the NL registration.",
+"moves": [
+{
+"org": 13349291,
+"from": "GB",
+"to": "NL",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "KVK71682147's KVK label/shape is specific to the Dutch chamber-of-commerce register; the UK has no equivalent, and the entity name (B.V.) is Dutch.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "KVK is the Dutch chamber-of-commerce label/shape with no UK equivalent, and both rows are the same Sony B.V. entity."
+},
+"blind_sample": null
+},
+{
+"identifier": "M01706003U",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "medium",
+"rationale": "M + 8 digits + a check letter matches Albania's NIPT/NUIS tax-identifier shape; Bulgaria's own EIK register is plain numeric with no letters. The BG row's own name still carries the Albanian legal-form abbreviation 'Sh.p.k' alongside a transliterated Cyrillic name, suggesting it is the same Albanian entity mistagged rather than a distinct Bulgarian filing, though the format identification is less certain than the batch's other national-format calls.",
+"moves": [
+{
+"org": 23371790,
+"from": "BG",
+"to": "AL",
+"evidence": "national-format",
+"confidence": "medium",
+"rationale": "M01706003U's letter+8digit+letter shape matches Albania's NIPT format, which Bulgaria's numeric-only EIK scheme does not use; confidence is medium given the less-common format.",
+"recorded_as": "medium"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "Letter+8digit+letter matches Albania's NIPT, not Bulgaria's numeric EIK; the reviewer correctly capped this at MEDIUM given the mixed-legal-form BG name, so there's no over-claim to flag."
+},
+"blind_sample": null
+},
+{
+"identifier": "N0010891J",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "N + 7 digits + a check letter is Spain's own NIF shape for 'entidad extranjera' (foreign entity), a category Spain issues to identify non-Spanish companies in its own tax system; France's SIREN is a plain 9-digit number and never takes this form. Both rows are named 'SOL France', so the FR row is misfiled - the number is Spain's own registration of that French supplier.",
+"moves": [
+{
+"org": 22599943,
+"from": "FR",
+"to": "ES",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "N0010891J's N+7digit+letter shape is Spain's foreign-entity NIF format, which France does not use; the name is identical to the ES sibling.",
+"recorded_as": "medium"
+}
+],
+"challenger": {
+"agree": false,
+"disputed": [
+{
+"org": 22599943,
+"reason": "Spain's 'N' NIF prefix is reserved specifically for 'entidad extranjera' (foreign entity) registrations — its existence proves the underlying company is NOT Spanish, so the ES row being the issuer doesn't make the FR row wrong. This reads as same-entity-two-registrations (a French SAS with a Spanish foreign-entity tax id), the same protection the rubric gives foreign VAT ids, not a HIGH-confidence wrong-country move."
+}
+],
+"missed_move": false,
+"note": "The national-format call ignored that Spain's N-prefix NIF is definitionally a foreign-entity marker, which argues against moving FR to ES."
+},
+"blind_sample": null
+},
+{
+"identifier": "N0014273G",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "N + 7 digits + a check letter is Spain's NIF shape for foreign entities, not a French format (French SIREN is 9 plain digits). Both rows carry the identical name 'FISHER & PAYKEL HEALTHCARE SAS', so the FR row is misfiled and belongs under ES alongside its own foreign-entity registration.",
+"moves": [
+{
+"org": 22549951,
+"from": "FR",
+"to": "ES",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "N0014273G's N+7digit+letter shape is Spain's foreign-entity NIF format; France's own register does not use this shape.",
+"recorded_as": "medium"
+}
+],
+"challenger": {
+"agree": false,
+"disputed": [
+{
+"org": 22549951,
+"reason": "Same N-prefix 'entidad extranjera' issue: the format proves Fisher & Paykel Healthcare SAS is a foreign filer in Spain's system, so the FR row is plausibly a genuine parallel registration, not a misfiled duplicate."
+}
+],
+"missed_move": false,
+"note": "Same over-claim as the batch's other Spanish 'N' NIF cases."
+},
+"blind_sample": null
+},
+{
+"identifier": "N0364121D",
+"stratum": "nobody-asked/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "\"Swiftly, Inc\" / \"SWIFTLY INC\" is the same company name on both the US and ES rows, and N0364121D has the exact letter+7digits+control-character shape of a Spanish CIF/NIF (the rubric's own CIF example format), a national tax-id scheme the US does not use. This is national-format evidence that the US row's country is a misfile of the ES-issued identifier.",
+"moves": [
+{
+"org": 23450987,
+"from": "US",
+"to": "ES",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "N0364121D's letter+7digit+control-letter shape is a Spanish CIF/NIF format not used in the US, and the US row's name is identical to the ES sibling's (\"Swiftly, Inc\" / \"SWIFTLY INC\"), confirming the same company's Spanish tax id is misfiled under US.",
+"recorded_as": "medium"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "Independently ran the Spanish CIF check-digit algorithm on N0364121D (digits 0364121, letter N = foreign entity): computed control value 4 maps to letter D, matching the actual trailing character exactly, so this is a genuine checksum-valid Spanish CIF that the system's own anchor engine never tested (asked=[]/anchors=[] for this national-kind record) - the national-format HIGH call is if anything underclaimed, and the US row (no unified letter+digit+check-letter company scheme exists federally) is correctly the one moved to ES."
+},
+"blind_sample": null
+},
+{
+"identifier": "N1625255",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "distinct-entities",
+"confidence": "high",
+"rationale": "The IE row ('Department of Housing Local Government and Heritage') and the GB row ('Glendun Plant Sales Limited') are unrelated organizations sharing the same notice id (00115852-2026) and the identical value N1625255, but that value lacks the trailing check letter seen on the batch's genuine Spanish-format identifiers, and no anchors or scheme were asked. This looks like an identifier-field collision within one notice rather than a country-tagging error, and each row's country already matches its own name.",
+"moves": [],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "Two unrelated organizations coincidentally sharing a notice and a non-checksummed value; each country already matches its own name."
+},
+"blind_sample": {
+"identifier": "N1625255",
+"verdict": "distinct-entities",
+"confidence": "high",
+"rationale": "The two members have different names on the SAME notice (00115852-2026): 'Department of Housing Local Government and Heritage' under IE (an Irish government department) and 'Glendun Plant Sales Limited' under GB (a Northern Irish 'Limited' company; the identifier reads as a Companies House NI-series number with I transcribed as 1). Each row's country matches its name-language and legal form, so the shared identifier is a buyer/supplier field crossover in that one notice, not a country error; asked is empty so anchors and country_probed are silence. No move: rewriting either country would be wrong.",
+"country_moves": []
+}
+},
+{
+"identifier": "N6062272G",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "N + 7 digits + a check letter is Spain's NIF shape for foreign entities; the UK's Companies House numbers never take this form. Both rows describe the same company ('WSO2 UK Limited' / 'WS02 (U.K.) LIMITED'), so the GB row is misfiled and belongs under ES with its Spanish foreign-entity registration.",
+"moves": [
+{
+"org": 22513555,
+"from": "GB",
+"to": "ES",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "N6062272G's N+7digit+letter shape is Spain's foreign-entity NIF format, not a UK identifier shape; the name matches the ES sibling.",
+"recorded_as": "medium"
+}
+],
+"challenger": {
+"agree": false,
+"disputed": [
+{
+"org": 22513555,
+"reason": "The ES sibling's own name is 'WSO2 UK Limited' — explicitly a UK entity. Spain's N-prefix NIF is a foreign-entity marker by definition, so its presence on the GB row does not make GB wrong; moving it would produce two ES-tagged rows for a company whose own name says UK on both sides."
+}
+],
+"missed_move": false,
+"note": "Foreign-entity NIF semantics undercut the HIGH claim; reads as same-entity-two-registrations."
+},
+"blind_sample": null
+},
+{
+"identifier": "N8261155I",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "N + 7 digits + a check letter is Spain's NIF shape for foreign entities, not a UK format. Both rows are 'Simmons & Simmons LLP', so the GB row is misfiled and belongs under ES alongside the firm's Spanish foreign-entity registration.",
+"moves": [
+{
+"org": 16533994,
+"from": "GB",
+"to": "ES",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "N8261155I's shape is Spain's foreign-entity NIF format; the UK's own register uses a different numbering convention entirely.",
+"recorded_as": "medium"
+}
+],
+"challenger": {
+"agree": false,
+"disputed": [
+{
+"org": 16533994,
+"reason": "Simmons & Simmons LLP is a well-known UK/international law firm (LLP is an English legal form); the Spanish N-prefix NIF is specifically for foreign entities, so this looks like the firm's genuine Spanish foreign-entity tax registration alongside its real GB identity, not a misfiled country tag."
+}
+],
+"missed_move": false,
+"note": "Same foreign-entity-NIF concern as the batch's other N-prefix cases."
+},
+"blind_sample": null
+},
+{
+"identifier": "NI005155",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "same-entity-two-registrations",
+"confidence": "high",
+"rationale": "The IE row's own name, 'Hospital Services Limited - Dublin Branch', explicitly names a foreign branch filing of the GB-registered company (whose NI-prefixed number is the Companies House Northern Ireland shape). Per the rubric's footprint rule, an explicit branch name marks a genuine cross-border filing of one entity rather than a country-tagging mistake, so both rows are kept as-is.",
+"moves": [],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "Dublin Branch language on the IE row is the rubric's explicit footprint signal for a genuine foreign filing; correctly kept."
+},
+"blind_sample": null
+},
+{
+"identifier": "NI027446",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "NI + digits is the Companies House Northern Ireland company-number shape (part of the UK register, tagged GB); Ireland's own CRO numbers don't use this prefix. Neither name ('The Bytes Project' / 'BT-500-Bytes Project') signals a foreign branch or mission, so the IE row is simply a misfiled duplicate of the GB registration.",
+"moves": [
+{
+"org": 23439050,
+"from": "IE",
+"to": "GB",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "NI027446's NI-prefixed shape is the UK Companies House Northern Ireland format; Ireland's CRO register does not use it, and no branch language appears in the name.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "NI+digits is the UK's own domestic Northern Ireland Companies House shape (not a foreign-entity marker), Ireland's CRO format differs, and neither name signals a branch."
+},
+"blind_sample": null
+},
+{
+"identifier": "NI032290",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "NI + digits is the Companies House Northern Ireland shape, part of the UK register (GB); Ireland's CRO numbers are a different format. Both rows are 'Anns Homecare Ltd' with no branch/mission language, so the IE row is a misfiled duplicate of the GB registration.",
+"moves": [
+{
+"org": 22219267,
+"from": "IE",
+"to": "GB",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "NI032290's shape is the UK's Northern Ireland Companies House format, not used by Ireland's own register.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "Same NI-Companies-House logic with an identical name and no branch language; IE→GB is solid."
+},
+"blind_sample": null
+},
+{
+"identifier": "NI036763",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "NI + digits is the Companies House Northern Ireland number shape (UK register, tagged GB); Uganda has no such registration convention. Both rows are essentially the same name ('Equiniti ICS Ltd' / 'Equiniti ICS Limited') with no branch language, so UG is a misfiled tag of the GB registration.",
+"moves": [
+{
+"org": 9830823,
+"from": "UG",
+"to": "GB",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "NI036763's shape is the UK's Northern Ireland Companies House format; Uganda's own business register uses an unrelated numbering scheme.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "Uganda has no register resembling this format at all, so UG→GB is essentially undisputable."
+},
+"blind_sample": null
+},
+{
+"identifier": "NI611887",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "NI + digits is the Companies House Northern Ireland shape (GB); Ireland's CRO numbers are formatted differently. Both rows share the identical name 'Tandem Partners Ltd' with no branch language, so the IE row is a misfiled duplicate of the GB registration.",
+"moves": [
+{
+"org": 23735116,
+"from": "IE",
+"to": "GB",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "NI611887's shape is the UK's Northern Ireland Companies House format, not Ireland's own register shape.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "Identical name, no branch language, Ireland's CRO doesn't use the NI-prefixed shape; IE→GB holds."
+},
+"blind_sample": null
+},
+{
+"identifier": "NI63788",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "NI + digits is the Companies House Northern Ireland shape (GB); Ireland's own register format differs. Both rows describe the same company ('O'Kane Plumbing and Electrics Ltd' / 'O'Kane Plumbing & Electrics Limited') with no branch language, so the IE row is a misfiled duplicate of the GB registration.",
+"moves": [
+{
+"org": 20880140,
+"from": "IE",
+"to": "GB",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "NI63788's shape is the UK's Northern Ireland Companies House format; Ireland's CRO register does not use it.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "Same pattern with a minor punctuation-only name difference; IE→GB is solid."
+},
+"blind_sample": null
+},
+{
+"identifier": "NIP1070013333",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "same-entity-two-registrations",
+"confidence": "high",
+"rationale": "The PL row's own name, 'JEOL (EUROPE) SPOLKA AKCYJNA UPROSZCZONA ODDZIAL W POLSCE' (explicitly 'branch in Poland'), names a genuine foreign-branch filing, and stripped of the 'NIP' label the value is a clean 10-digit number matching Poland's real NIP shape exactly. This is a real Polish registration of the French SAS's branch, so per the footprint rule it is kept as-is rather than moved.",
+"moves": [],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "The PL row's own name explicitly says 'Oddział w Polsce' (branch in Poland), the rubric's textbook footprint signal for keeping as same-entity-two-registrations."
+},
+"blind_sample": null
+},
+{
+"identifier": "NIPA41015322",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "Stripping the Polish 'NIP' label leaves A41015322 - Spain's own CIF shape (letter+8 digits, 'A' denoting a sociedad anonima) - which is only 9 characters and does not match Poland's real 10-digit-only NIP shape. Both rows name the same Spanish company ('Ayesa Ingenieria y Arquitectura S.A.'), so the PL row is a misfiled tag carrying the Spanish CIF.",
+"moves": [
+{
+"org": 22942914,
+"from": "PL",
+"to": "ES",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "After the 'NIP' label, NIPA41015322 resolves to A41015322, Spain's CIF shape, not Poland's genuine 10-digit NIP format; the name matches the ES sibling.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "Stripped of the Polish 'NIP' label the value is a 9-character Spanish CIF, not Poland's genuine 10-digit NIP, and both rows are the identical Ayesa S.A.; PL→ES holds."
+},
+"blind_sample": {
+"identifier": "NIPA41015322",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "Both members are 'Ayesa Ingeniería y Arquitectura S.A.' with identifier NIPA41015322: a Polish 'NIP' label glued onto A41015322, which is a Spanish CIF (letter A + 7 digits + control), and the CIF control digit recomputed by hand validates (2), which the census could not see because the prefix broke the shape (asked empty, anchors empty). Poland's NIP is 10 pure digits, the name is Spanish-language, and both variants are POL-tagged (Polish buyer notices), so the PL row (org 22942914, 1 mention) is the stray of the Spanish entity standing as org 22522554 under ES.",
+"country_moves": [
+{
+"org": 22942914,
+"from": "PL",
+"to": "ES",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "The core number A41015322 is unmistakably a Spanish CIF shape (letter + 7 digits + control, and the control digit checks by hand); Poland's register numbers are all-digit and never letter-led, so the row's own country does not use that shape. The Spanish-language name identical to the ES sibling raises the class to HIGH; country_agrees is false and mentions is 1, so nothing contradicts it and the name does not claim a Polish branch (no 'Oddział')."
+}
+]
+}
+},
+{
+"identifier": "NUMERNIPDE312308370",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "After the Polish 'Numer NIP' label, the value DE312308370 is exactly Germany's DE+9-digit VAT-ID shape (a format explicitly named in the rubric), not Poland's genuine 10-digit NIP. Both rows name the same company ('Acandis GmbH'), so the PL row is a misfiled tag carrying the German VAT id.",
+"moves": [
+{
+"org": 23342867,
+"from": "PL",
+"to": "DE",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "NUMERNIPDE312308370 resolves to DE312308370, Germany's VAT-ID shape, not Poland's 10-digit NIP; the name matches the DE sibling.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "This is Germany's own domestic DE+9-digit VAT id, not a foreign-entity-only classification, so it sitting under a Polish 'Numer NIP' label is a straightforward mislabeling; PL→DE holds."
+},
+"blind_sample": null
+},
+{
+"identifier": "OC306763",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "OC + digits is the Companies House LLP number shape used only for England & Wales limited liability partnerships; Germany has no such register. Both rows name the same law firm ('Allen Overy Shearman Sterling(q) LLP', an LLP legal form specific to the UK), so the DE row is the misfiled duplicate of the GB registration.",
+"moves": [
+{
+"org": 23338899,
+"from": "DE",
+"to": "GB",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "OC306763's OC-prefixed shape is the UK Companies House LLP format; Germany does not issue such numbers, and the entity's LLP form and name match the GB sibling.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "OC is the England & Wales LLP-specific Companies House prefix Germany never issues, and both rows are the same LLP name (typo aside); DE→GB holds."
+},
+"blind_sample": null
+},
+{
+"identifier": "PIVA10548370963",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "PIVA + 11 digits is specifically Italy's 'Partita IVA' label/shape; Belgium's own VAT numbers are BE+10 digits with no 'PIVA' label. Both rows are the same insurer ('Lloyd's Insurance Company S.A.' / 'LOYD'S INSURANCE COMPANY SA'), so the BE-tagged row is carrying the Italian VAT id and belongs under IT.",
+"moves": [
+{
+"org": 18730928,
+"from": "BE",
+"to": "IT",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "PIVA10548370963's PIVA label/shape is Italy's VAT format; Belgium's own VAT numbering never uses this label, and the name matches the IT sibling.",
+"recorded_as": "medium"
+}
+],
+"challenger": {
+"agree": false,
+"disputed": [
+{
+"org": 18730928,
+"reason": "Lloyd's Insurance Company S.A. is Lloyd's real Brussels-domiciled EU subsidiary — a genuinely Belgian-registered company — so the BE row is very plausibly the correct home jurisdiction; 'PIVA' being Italy's VAT label only proves Italy issued that VAT id (the rubric's own protection for the issuing-country row), not that BE is wrong. This reads as same-entity-two-registrations, not a move-worthy error."
+}
+],
+"missed_move": false,
+"note": "The reviewer treated a foreign VAT id as proof of misfiling in the wrong direction — the rubric's VAT caveat protects the issuer's row, it doesn't license moving the sibling."
+},
+"blind_sample": null
+},
+{
+"identifier": "RC000797",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "medium",
+"rationale": "No scheme was even asked (asked=[]) for either code so there is no arithmetic to lean on. The SE row's own name, 'Manchester University Press, University of Manchester', is entirely English and names the same UK university as the GB row with no Swedish legal form or language anywhere, which is name-language evidence only - medium confidence, not an executable move.",
+"moves": [
+{
+"org": 23352851,
+"from": "SE",
+"to": "GB",
+"evidence": "name-language",
+"confidence": "medium",
+"rationale": "The SE row's name is purely English and names the University of Manchester with no Swedish signal; this is name-language evidence, which caps at medium confidence on its own.",
+"recorded_as": "medium"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "No scheme was asked and the evidence is name-language only; the reviewer's own MEDIUM cap (not executed) is correctly applied, no over-claim."
+},
+"blind_sample": null
+},
+{
+"identifier": "RCCMRCDLA2017B671",
+"stratum": "nobody-asked/balanced",
+"verdict": "distinct-entities",
+"confidence": "high",
+"rationale": "The CM row (\"Digital et Média Solutions Lot 2 Cameroun\") and the CG row (\"AG Partners Congo Lot 3 Congo Brazaville\") are two unrelated organizations whose own names state their own countries, matching their current country tags; there is no anchor, checksum, or shared-name evidence tying them together (asked=[], not probed), only a coincidentally identical identifier string shared via notice 00545291-2026's two lots. No move is warranted for either row.",
+"moves": [],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "No-move is correct even though the shared identifier is clearly a data artifact - the DLA infix is Douala/Cameroon's RCCM location code, so this number is probably a Cameroonian registration wrongly copied onto the Congo-Brazzaville lot's row during notice parsing - but since both org names independently confirm their own real, distinct countries and a move only rewrites country (not identifier), no execution path exists; distinct-entities is the right, if under-explained, verdict."
+},
+"blind_sample": null
+},
+{
+"identifier": "RCI87S02328",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "RCI + digits is Monaco's own Repertoire du Commerce et de l'Industrie shape, distinct from France's RCS/SIREN numbering. The MC row's name, 'SAM DE MANAGEMENT ET D'INGENIERIE (SAMMI)', uses 'SAM' (Societe Anonyme Monegasque), a legal form unique to Monaco, so the FR row (tagged as a subcontractor) is the same company misfiled under FR.",
+"moves": [
+{
+"org": 22846675,
+"from": "FR",
+"to": "MC",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "RCI87S02328's RCI-prefixed shape belongs to Monaco's own commercial register, not France's RCS; the MC row's SAM legal form corroborates.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "RCI is Monaco's own commercial-register prefix, not a French SIREN shape, and the FR row explicitly labels the company a subcontractor sharing the SAMMI name/SAM legal form."
+},
+"blind_sample": null
+},
+{
+"identifier": "REA965162",
+"stratum": "nobody-asked/balanced",
+"verdict": "distinct-entities",
+"confidence": "high",
+"rationale": "ENAV S.p.A. (IT) and Malta's Public Contracts Review Board (MT) are unrelated real organizations sharing notice 00531263-2025 and, apparently, an identifier value; the MT row's name gives no reason to think its own country tag is wrong (it is a genuine Maltese public body), even though REA965162's REA prefix is an Italian Chamber-of-Commerce format proper to the ENAV row. No checksum or anchor evidence applies (asked=[]), so no move is made.",
+"moves": [],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "Correct: REA965162 is unmistakably ENAV's Italian Chamber-of-Commerce number leaking onto the shared-notice MT row, but Malta's Public Contracts Review Board is a genuine, correctly-named Maltese public body, so no country move is warranted despite the identifier-field artifact."
+},
+"blind_sample": null
+},
+{
+"identifier": "SC139668",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "SC + 6 digits is the Companies House Scotland company-number shape; Belgium's own KBO/BCE register uses a BE+10-digit format, never SC. Both rows are named 'Eurogentec Ltd/LTD', an 'Ltd' form consistent with a UK/Scottish registration, so the BE row is the misfiled duplicate of the GB row.",
+"moves": [
+{
+"org": 23385994,
+"from": "BE",
+"to": "GB",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "SC139668's SC-prefixed shape is the UK Companies House Scotland format; Belgium's register does not use it, and the name matches the GB sibling.",
+"recorded_as": "high"
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "SC is the Scotland-specific domestic Companies House shape that Belgium's numeric KBO/BCE never uses, and both rows use the English 'Ltd' form rather than a Belgian SA/NV."
+},
+"blind_sample": null
+},
+{
+"identifier": "SM04649",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "SM + digits is San Marino's own economic-operator code shape, not Italy's VAT/REA numbering. Both rows name the same company ('Advanced Medical Supplies S.p.A.' / 'ADVANCED MEDICAL SUPPLIES SPA'), so the IT row is the misfiled tag of the San Marino registration.",
+"moves": [
+{
+"org": 17086163,
+"from": "IT",
+"to": "SM",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "SM04649's SM-prefixed shape is San Marino's operator-code format, which Italy's own VAT/REA numbering does not use; the name matches the SM sibling.",
+"recorded_as": null
+},
+{
+"org": 23149230,
+"from": "IT",
+"to": "SM",
+"evidence": "national-format",
+"confidence": "high",
+"recorded_as": "high",
+"rationale": "HAND: the reviewer's move named the SM row's org id (17086163) with from=IT; the IT row 23149230 is the one carrying San Marino's COE number. Recorded as the reviewer meant it; challenger had agreed."
+}
+],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "The value itself spells out San Marino's own 'SM' operator-code prefix (a domestic, not foreign-entity-only, scheme), and the name is identical on both rows."
+},
+"blind_sample": null
+},
+{
+"identifier": "TPO001",
+"stratum": "nobody-asked/balanced",
+"verdict": "distinct-entities",
+"confidence": "high",
+"rationale": "Município de Guimarães (PT) and TAR Piemonte (IT) are two unrelated public bodies whose names match their own country tags exactly. TPO001 carries no recognizable national register shape and no scheme was asked or probed for either code (asked=[]), so there is no evidence field available to move either row.",
+"moves": [],
+"challenger": {
+"agree": true,
+"disputed": [],
+"missed_move": false,
+"note": "No recognizable national-register shape supports moving either the Portuguese municipality or the Italian regional court, and both names independently match their own country tags, so distinct-entities with no move is correct."
+},
+"blind_sample": {
+"identifier": "TPO001",
+"verdict": "distinct-entities",
+"confidence": "high",
+"rationale": "The members are two unrelated public bodies on different notices: 'Município de Guimarães' (variant POR) under PT and 'TAR Piemonte' (the Piedmont regional administrative court, variant ITA) under IT, each country matching its name-language. TPO001 is a placeholder-style code rather than any national register number, so the census verdict nobody-asked and the empty anchors are silence; the one_letter_pair PT/IT is coincidental against two clearly distinct names. No move.",
+"country_moves": []
+}
+},
+{
+"identifier": "VATIDGB287249363",
+"stratum": "no-one-letter-pair/balanced",
+"verdict": "wrong-country",
+"confidence": "high",
+"rationale": "The identifier literally spells out 'VATIDGB' - a UK VAT identification number - while Ireland's own VAT format is IE+7digits+1-2 letters, a completely different shape. The IE row ('Therakos EMEA Limited') is carrying the UK sibling's ('Therakos (UL) Limited') VAT id and belongs under GB.",
+"moves": [
+{
+"org": 22083379,
+"from": "IE",
+"to": "GB",
+"evidence": "national-format",
+"confidence": "high",
+"rationale": "VATIDGB287249363 explicitly encodes 'GB' in its own text as a VAT-ID format; Ireland's VAT numbering is a different shape entirely.",
+"recorded_as": "medium"
+}
+],
+"challenger": {
+"agree": false,
+"disputed": [
+{
+"org": 22083379,
+"reason": "'Therakos EMEA Limited' is a meaningfully different name from 'Therakos (UL) Limited', and the 'EMEA Limited' naming pattern commonly denotes a genuinely separate Irish-incorporated regional entity; if so, the shared VAT string is a data-contamination issue on the identifier field, not proof the IE row's country tag is wrong."
+}
+],
+"missed_move": false,
+"note": "The identifier explicitly spelling 'GB' is strong evidence of the number's origin, but the two rows' distinct legal names leave open a genuine separate-Irish-entity reading the reviewer didn't address."
+},
+"blind_sample": null
+}
+]
+}
