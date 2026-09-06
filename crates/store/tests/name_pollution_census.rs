@@ -79,14 +79,88 @@ async fn org(
     }
 }
 
+/// An org with an explicit triple (or none of it) and its mentions, for the
+/// address-shaped measurement, which is about same-triple twins.
+async fn org_with(
+    conn: &turso::Connection,
+    id: i64,
+    cc: Option<&str>,
+    triple: Option<(&str, &str)>,
+    name: &str,
+    mention_names: &[&str],
+) {
+    let cc_v = cc.map_or(Value::Null, |c| Value::Text(c.into()));
+    let (kind, identifier) = match triple {
+        Some((k, i)) => (Value::Text(k.into()), Value::Text(i.into())),
+        None => (Value::Null, Value::Null),
+    };
+    conn.execute(
+        "INSERT INTO organizations (id, country, identifier_kind, identifier, name, provisional, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, 0)",
+        (
+            Value::Integer(id),
+            cc_v.clone(),
+            kind,
+            identifier,
+            Value::Text(name.into()),
+            Value::Integer(i64::from(triple.is_none())),
+        ),
+    )
+    .await
+    .unwrap();
+    for (i, mn) in mention_names.iter().enumerate() {
+        let notice = id * 1000 + i as i64;
+        conn.execute(
+            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id,
+                                  member_path, ingested_at, parse_state, projected)
+             VALUES (?, 'ted', 'pub-' || ?, 'h' || ?, 'eforms', 1, 'm', 0, 'parsed', 1)",
+            (Value::Integer(notice), Value::Integer(notice), Value::Integer(notice)),
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier)
+             VALUES (?, 'ORG-' || ?, ?, ?, ?, NULL)",
+            (
+                Value::Integer(notice),
+                Value::Integer(notice),
+                Value::Integer(id),
+                Value::Text((*mn).into()),
+                cc_v.clone(),
+            ),
+        )
+        .await
+        .unwrap();
+    }
+}
+
 fn never() -> bool {
     false
 }
 
 fn nowhere(_done: u64, _detail: &str) {}
 
+/// Stand-in for the app's `crosswalk::n3_key`: lower-cased alphanumeric
+/// tokens, which is all the census's equality checks need.
+fn n3(s: &str) -> String {
+    s.split(|c: char| !c.is_alphanumeric())
+        .filter(|t| !t.is_empty())
+        .map(str::to_lowercase)
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+/// Stand-in for `ingest::address::strip_trailing_address` (that function has
+/// its own tests in the ingest crate): drop the trailing lines from the first
+/// one that starts with a digit, keeping at least the first line.
+fn strip(s: &str) -> Option<String> {
+    let lines: Vec<&str> = s.lines().map(str::trim).filter(|l| !l.is_empty()).collect();
+    let keep = lines.iter().position(|l| l.starts_with(|c: char| c.is_ascii_digit()))?;
+    (keep > 0).then(|| lines[..keep].join(" "))
+}
+
 async fn run(db: &store::Db, cap: usize) -> store::NamePollutionReport {
-    db.name_pollution_census(cap, &never, &nowhere).await.unwrap()
+    db.name_pollution_census(n3, strip, cap, &never, &nowhere).await.unwrap()
 }
 
 #[tokio::test]
@@ -192,10 +266,87 @@ async fn a_stop_request_returns_stopped_and_no_half_report() {
     fn always() -> bool {
         true
     }
-    let r = db.name_pollution_census(100, &always, &nowhere).await.unwrap();
+    let r = db.name_pollution_census(n3, strip, 100, &always, &nowhere).await.unwrap();
     assert!(r.stopped);
     // Issue 252's honest cancel: nothing, rather than a partial tally a reader
     // would take for a corpus-wide one.
     assert_eq!(r.polluted, 0);
     assert!(r.rows.is_empty());
+}
+
+/// Issue 330's second measurement. The strip is a key-builder candidate, not a
+/// repair, and before it is built the census says what it would change: which
+/// address-shaped rows would GAIN agreement with a same-triple twin (the E0
+/// `contained` bucket moving to `agree`), and whose stripped key another
+/// identity in the same country already holds.
+#[tokio::test]
+async fn an_address_shaped_name_is_measured_against_its_twin_and_the_key_table() {
+    let (db, conn) = open("np-address").await;
+    // The issue's specimen: same triple, one clean row, one with the postal
+    // block. The polluted key is a superset; the stripped key is the clean one.
+    org_with(&conn, 1, Some("DE"), Some(("national", "DE355604198")), "Vergabekammer Rheinland-Pfalz", &["Vergabekammer Rheinland-Pfalz"]).await;
+    org_with(&conn, 2, Some("DE"), Some(("national", "DE355604198")), "Vergabekammer Rheinland-Pfalz\n55116 Mainz", &["Vergabekammer Rheinland-Pfalz\n55116 Mainz"]).await;
+    // A twin whose key already equals the polluted one: nothing to gain.
+    org_with(&conn, 3, Some("DE"), Some(("vat", "DE111")), "Stadt Mainz 55116 Mainz", &["Stadt Mainz 55116 Mainz"]).await;
+    org_with(&conn, 4, Some("DE"), Some(("vat", "DE111")), "Stadt Mainz\n55116 Mainz", &["Stadt Mainz\n55116 Mainz"]).await;
+    // No twin, but the stripped key is carried by a row under ANOTHER
+    // identifier in the same country: the strip would hand it a shared key.
+    org_with(&conn, 5, Some("DE"), Some(("vat", "DE555")), "Landkreis Saalekreis\n06217 Merseburg", &["Landkreis Saalekreis\n06217 Merseburg"]).await;
+    org_with(&conn, 6, Some("DE"), Some(("national", "06-1-99")), "Landkreis Saalekreis", &["Landkreis Saalekreis"]).await;
+    conn.execute("INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (6, 'n3', 'landkreis saalekreis')", ()).await.unwrap();
+    // A carrier under a DIFFERENT country is not a collision: R2 keys on
+    // country, and a Dutch row cannot meet a German one there.
+    org_with(&conn, 7, Some("NL"), Some(("vat", "NL777")), "Landkreis Saalekreis", &[]).await;
+    conn.execute("INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (7, 'n3', 'landkreis saalekreis')", ()).await.unwrap();
+    // A wrapped name: polluted, not address-shaped. The bulk of the class.
+    org_with(&conn, 8, Some("DE"), Some(("vat", "DE888")), "Landeshauptstadt\nDresden, Zentrales Vergabebüro", &["Landeshauptstadt\nDresden, Zentrales Vergabebüro"]).await;
+    // A NULL-country provisional row: counted as address-shaped, no seeks.
+    org_with(&conn, 9, None, None, "Stadt Burghausen\n84489 Burghausen", &["Stadt Burghausen\n84489 Burghausen"]).await;
+
+    let r = run(&db, 100).await;
+    assert_eq!(r.polluted, 5, "rows 2, 4, 5, 8, 9 carry a break");
+    assert_eq!(r.address_shaped, 4, "rows 2, 4, 5, 9 end in a postal block");
+    assert_eq!(r.address_with_country, 3);
+    assert_eq!(r.address_by_country.get("DE"), Some(&3));
+    assert_eq!(r.twin_rows, 2, "rows 2 and 4 have a same-triple twin");
+    assert_eq!(r.gains_agreement, 1);
+    assert_eq!(r.already_agree, 1);
+    assert_eq!(r.still_differs, 0);
+    assert_eq!(r.collides_other_identifier, 1, "row 5 alone: row 7's carrier is Dutch");
+    assert!(!r.address_truncated);
+
+    let by_id = |id: i64| r.address_rows.iter().find(|a| a.org_id == id).unwrap();
+    let a = by_id(2);
+    assert_eq!(a.verdict, "gains-agreement");
+    assert_eq!(a.twins, vec![1]);
+    assert_eq!(a.stripped, "Vergabekammer Rheinland-Pfalz");
+    assert_eq!(a.name, "Vergabekammer Rheinland-Pfalz\\n55116 Mainz", "escaped like the main listing");
+    assert_eq!(a.mentions, 1);
+    assert_eq!(a.key_carriers, 0);
+    assert!(!a.collides_other_identifier);
+    assert_eq!(by_id(4).verdict, "already-agree");
+    let s5 = by_id(5);
+    assert_eq!(s5.verdict, "no-twin");
+    assert_eq!(s5.key_carriers, 2, "both carriers are counted; only the German one collides");
+    assert!(s5.collides_other_identifier);
+    let s9 = by_id(9);
+    assert_eq!(s9.country, "");
+    assert_eq!(s9.verdict, "no-twin");
+    assert_eq!(s9.key_carriers, 0, "no seeks for a country-less row");
+    assert!(r.address_rows.iter().all(|a| a.org_id != 8), "a wrapped name is not address-shaped");
+    // The main listing and tally are untouched by the second measurement.
+    assert_eq!(r.published, 5);
+    assert_eq!(r.rows.len(), 5);
+}
+
+#[tokio::test]
+async fn the_address_listing_has_its_own_cap() {
+    let (db, conn) = open("np-address-cap").await;
+    for n in 1..=6i64 {
+        org_with(&conn, n, Some("DE"), Some(("vat", &format!("DE{n}"))), &format!("Amt {n}\n1234{n} Ort"), &[]).await;
+    }
+    let r = run(&db, 4).await;
+    assert_eq!(r.address_shaped, 6, "the tally is corpus-wide");
+    assert_eq!(r.address_rows.len(), 4);
+    assert!(r.address_truncated);
 }

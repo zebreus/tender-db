@@ -6350,7 +6350,13 @@ impl Supervisor {
                 const CAP: usize = 300;
                 let r = self
                     .db
-                    .name_pollution_census(CAP, &stop, &progress)
+                    .name_pollution_census(
+                        ingest::crosswalk::n3_key,
+                        ingest::address::strip_trailing_address,
+                        CAP,
+                        &stop,
+                        &progress,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 if r.stopped {
@@ -6388,6 +6394,36 @@ impl Supervisor {
                         "mentions": c.mentions,
                         "verdict": c.verdict,
                     })).collect::<Vec<_>>(),
+                    // Issue 330's second measurement: the address-shaped
+                    // subset and what a key-builder-side strip would change
+                    // for it. `twins` is the same-triple (E0) class; a row
+                    // that `gains-agreement` is a `contained` pair the strip
+                    // would move to `agree`. `collides_other_identifier` is
+                    // the strip's own risk, counted not judged.
+                    "address": {
+                        "shaped": r.address_shaped,
+                        "with_country": r.address_with_country,
+                        "by_country": r.address_by_country,
+                        "twins": {
+                            "rows": r.twin_rows,
+                            "already_agree": r.already_agree,
+                            "gains_agreement": r.gains_agreement,
+                            "still_differs": r.still_differs,
+                        },
+                        "collides_other_identifier": r.collides_other_identifier,
+                        "truncated": r.address_truncated,
+                        "rows": r.address_rows.iter().map(|a| serde_json::json!({
+                            "org_id": a.org_id,
+                            "country": a.country,
+                            "name": a.name,
+                            "stripped": a.stripped,
+                            "mentions": a.mentions,
+                            "twins": a.twins,
+                            "verdict": a.verdict,
+                            "key_carriers": a.key_carriers,
+                            "collides_other_identifier": a.collides_other_identifier,
+                        })).collect::<Vec<_>>(),
+                    },
                 })
                 .to_string();
                 self.db
@@ -6403,7 +6439,12 @@ impl Supervisor {
                      which would be ours), and {} have no mentions to compare. By country: \
                      {}. Name length p50/p90/p99/max = {}/{}/{}/{} characters. NOTHING IS \
                      WRITTEN: the split between published and derived-only is what decides \
-                     whether this is a parser fix or a normalisation policy.",
+                     whether this is a parser fix or a normalisation policy. \
+                     ADDRESS-SHAPED (a trailing postal block the strip recognises): {} \
+                     name(s), {} with a country ({}); of those {} have a same-triple twin \
+                     — {} already agree, {} WOULD GAIN agreement if stripped, {} still \
+                     differ — and {} stripped key(s) are already held by another \
+                     identifier under the same country.",
                     r.rows_walked,
                     r.polluted,
                     r.polluted_mentions,
@@ -6417,6 +6458,18 @@ impl Supervisor {
                         .join(", "),
                     q(50), q(90), q(99),
                     r.name_lengths.last().copied().unwrap_or(0),
+                    r.address_shaped,
+                    r.address_with_country,
+                    r.address_by_country
+                        .iter()
+                        .map(|(k, v)| format!("{k}={v}"))
+                        .collect::<Vec<_>>()
+                        .join(", "),
+                    r.twin_rows,
+                    r.already_agree,
+                    r.gains_agreement,
+                    r.still_differs,
+                    r.collides_other_identifier,
                 ))
             }).await,
             Spec::FoldProvisionalEchoes { dry_run, max_groups } => Box::pin(async move {

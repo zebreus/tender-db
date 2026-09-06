@@ -44,7 +44,7 @@ pub use canonical::{
     GenericWallReport, InflatedKey,
     GhostCensusReport, GhostNotice,
     NameAttribution, NameAttributionReport,
-    NamePollutionReport, PollutedName,
+    AddressStrip, NamePollutionReport, PollutedName,
     MintedCountryFix, MintedCountryReport,
     EDGE_VOLUME_CEILING, LUHN_FAMILY, MIN_CLUSTER_IDENTIFIER, R2_PLAN_LISTING_CAP,
     REPORT_HISTORY_DEPTH,

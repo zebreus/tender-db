@@ -3086,6 +3086,36 @@ pub struct PollutedName {
     pub verdict: &'static str,
 }
 
+/// One address-shaped name (issue 330's second measurement): what a
+/// key-builder-side strip of the trailing postal block would change for it.
+#[derive(Debug, Default, Clone)]
+pub struct AddressStrip {
+    pub org_id: i64,
+    pub country: String,
+    /// Escaped like [`PollutedName::name`].
+    pub name: String,
+    /// The name with the postal block dropped, as the strip returned it.
+    pub stripped: String,
+    pub mentions: u64,
+    /// Other org rows under the same `(country, kind, identifier)` triple —
+    /// the E0 class, where a superset key is what files a pair under
+    /// `contained` instead of `agree`.
+    pub twins: Vec<i64>,
+    /// `no-twin` | `already-agree` (a twin's key equals the polluted key
+    /// already) | `gains-agreement` (a twin's key equals the STRIPPED key and
+    /// none equals the polluted one — the strip's whole gain) |
+    /// `still-differs`.
+    pub verdict: &'static str,
+    /// Rows in `org_match_keys` carrying the stripped N3 key today.
+    pub key_carriers: u64,
+    /// One of those carriers stands under the same country with a DIFFERENT
+    /// identifier: the strip would hand this row a key another identity
+    /// already holds. Counted, not judged — a same-entity second registration
+    /// and a stranger look the same here, and the merge arms' denial stack is
+    /// what tells them apart.
+    pub collides_other_identifier: bool,
+}
+
 /// What the name-pollution census found (issue 330).
 ///
 /// The question: `organizations.name` was seen carrying an embedded postal
@@ -3134,6 +3164,23 @@ pub struct NamePollutionReport {
     pub name_lengths: Vec<u32>,
     pub rows: Vec<PollutedName>,
     pub truncated: bool,
+    /// Issue 330's second measurement: the ADDRESS-SHAPED subset — polluted
+    /// names whose trailing lines the strip recognises as a postal block —
+    /// and what a key-builder-side strip would change. The seeks (twin,
+    /// key carriers) run for the country-bearing subset only, since that is
+    /// the subset the identifier arms can act on; NULL-country rows are
+    /// counted and listed without them.
+    pub address_shaped: u64,
+    pub address_with_country: u64,
+    pub address_by_country: std::collections::BTreeMap<String, u64>,
+    /// Country-bearing address-shaped rows with at least one same-triple twin.
+    pub twin_rows: u64,
+    pub already_agree: u64,
+    pub gains_agreement: u64,
+    pub still_differs: u64,
+    pub collides_other_identifier: u64,
+    pub address_rows: Vec<AddressStrip>,
+    pub address_truncated: bool,
     pub stopped: bool,
 }
 
@@ -15810,8 +15857,16 @@ impl Db {
     ///
     /// Reads [`NamePollutionReport`] for why a broken name is a silent
     /// under-merge rather than a cosmetic complaint. This writes nothing.
+    ///
+    /// `n3` and `strip` are the app's `crosswalk::n3_key` and
+    /// `address::strip_trailing_address`, passed in the way the other censuses
+    /// take their key functions: the second measurement (the address-shaped
+    /// subset and what a strip would change) is computed with the SAME key
+    /// the arms use, so its verdicts are the arms' class and not a cousin.
     pub async fn name_pollution_census(
         &self,
+        n3: fn(&str) -> String,
+        strip: fn(&str) -> Option<String>,
         cap: usize,
         stop: &(dyn Fn() -> bool + Sync),
         progress: &(dyn Fn(u64, &str) + Sync),
@@ -15821,7 +15876,7 @@ impl Db {
 
         // Pass 1: the whole org layer, by PK. Every row contributes a length to
         // the distribution; only the broken ones are carried further.
-        let mut hits: Vec<(i64, String, String)> = Vec::new();
+        let mut hits: Vec<(i64, String, String, Option<String>, Option<String>)> = Vec::new();
         let mut after = 0i64;
         loop {
             if stop() {
@@ -15830,7 +15885,7 @@ impl Db {
             let mut page = 0u64;
             let mut rows = reader
                 .query(
-                    "SELECT id, country, name FROM organizations \
+                    "SELECT id, country, name, identifier_kind, identifier FROM organizations \
                       WHERE id > ? ORDER BY id LIMIT 100000",
                     (Value::Integer(after),),
                 )
@@ -15845,7 +15900,7 @@ impl Db {
                 if name.contains('\n') || name.contains('\r') {
                     report.polluted += 1;
                     *report.by_country.entry(country.clone()).or_default() += 1;
-                    hits.push((after, country, name));
+                    hits.push((after, country, name, opt_text_of(&row, 3), opt_text_of(&row, 4)));
                 }
             }
             if page == 0 {
@@ -15864,7 +15919,7 @@ impl Db {
         // ids. (What stalled there was an IN on the leading column combined with
         // equality on a LATER one, which is a different plan entirely. Worth
         // keeping straight: the lesson is not "avoid IN".)
-        let ids: Vec<i64> = hits.iter().map(|(id, _, _)| *id).collect();
+        let ids: Vec<i64> = hits.iter().map(|h| h.0).collect();
         let mut evidence: std::collections::HashMap<i64, (bool, u64)> = Default::default();
         progress(0, &format!("checking {} polluted names against their mentions", ids.len()));
         for chunk in ids.chunks(IN_CHUNK) {
@@ -15889,7 +15944,11 @@ impl Db {
             progress(evidence.len() as u64, "reading mention names");
         }
 
-        for (id, country, name) in hits {
+        progress(0, "measuring the address-shaped subset");
+        for (i, (id, country, name, kind, identifier)) in hits.into_iter().enumerate() {
+            if i % 1000 == 0 && stop() {
+                return Ok(NamePollutionReport { stopped: true, ..Default::default() });
+            }
             let (published, mentions) = evidence.get(&id).copied().unwrap_or((false, 0));
             report.polluted_mentions += mentions;
             let verdict = if mentions == 0 {
@@ -15903,6 +15962,112 @@ impl Db {
                 "no-mentions" => report.no_mentions += 1,
                 "published" => report.published += 1,
                 _ => report.derived_only += 1,
+            }
+            // Pass 3 (issue 330's second measurement): is the trailing block a
+            // postal address, and what would dropping it change? Two seeks per
+            // country-bearing row — the twin read on the (country, kind,
+            // identifier) index, the carrier read on (key_kind, key, org_id) —
+            // for a subset measured at ~3.4k rows, so the pass stays seconds.
+            if let Some(stripped) = strip(&name) {
+                report.address_shaped += 1;
+                let mut twins: Vec<(i64, String)> = Vec::new();
+                let mut key_carriers = 0u64;
+                let mut collides = false;
+                let stripped_key = n3(&stripped);
+                if !country.is_empty() {
+                    report.address_with_country += 1;
+                    *report.address_by_country.entry(country.clone()).or_default() += 1;
+                    if let (Some(kind), Some(identifier)) = (&kind, &identifier) {
+                        let mut q = reader
+                            .query(
+                                "SELECT id, name FROM organizations \
+                                  WHERE country = ? AND identifier_kind = ? AND identifier = ? \
+                                    AND id <> ? LIMIT 50",
+                                (
+                                    Value::Text(country.clone()),
+                                    Value::Text(kind.clone()),
+                                    Value::Text(identifier.clone()),
+                                    Value::Integer(id),
+                                ),
+                            )
+                            .await?;
+                        while let Some(r) = q.next().await? {
+                            twins.push((int(&r, 0), text(&r, 1)));
+                        }
+                    }
+                    let mut carriers: Vec<i64> = Vec::new();
+                    let mut q = reader
+                        .query(
+                            "SELECT org_id FROM org_match_keys \
+                              WHERE key_kind = 'n3' AND key = ? LIMIT 200",
+                            (Value::Text(stripped_key.clone()),),
+                        )
+                        .await?;
+                    while let Some(r) = q.next().await? {
+                        let c = int(&r, 0);
+                        if c != id {
+                            carriers.push(c);
+                        }
+                    }
+                    key_carriers = carriers.len() as u64;
+                    if !carriers.is_empty() {
+                        let sql = format!(
+                            "SELECT country, identifier_kind, identifier FROM organizations \
+                              WHERE id IN ({})",
+                            placeholders(carriers.len())
+                        );
+                        let params: Vec<Value> =
+                            carriers.iter().map(|&c| Value::Integer(c)).collect();
+                        let mut q = reader.query(&sql, params).await?;
+                        while let Some(r) = q.next().await? {
+                            let c_identifier = opt_text_of(&r, 2);
+                            if text(&r, 0) == country
+                                && c_identifier.is_some()
+                                && (opt_text_of(&r, 1) != kind || c_identifier != identifier)
+                            {
+                                collides = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                let strip_verdict = if twins.is_empty() {
+                    "no-twin"
+                } else {
+                    report.twin_rows += 1;
+                    let before = n3(&name);
+                    if twins.iter().any(|(_, t)| n3(t) == before) {
+                        report.already_agree += 1;
+                        "already-agree"
+                    } else if twins.iter().any(|(_, t)| n3(t) == stripped_key) {
+                        report.gains_agreement += 1;
+                        "gains-agreement"
+                    } else {
+                        report.still_differs += 1;
+                        "still-differs"
+                    }
+                };
+                if collides {
+                    report.collides_other_identifier += 1;
+                }
+                if report.address_rows.len() < cap {
+                    report.address_rows.push(AddressStrip {
+                        org_id: id,
+                        country: country.clone(),
+                        name: name.replace('\r', "\\r").replace('\n', "\\n"),
+                        stripped,
+                        mentions,
+                        twins: twins.iter().map(|(t, _)| *t).collect(),
+                        verdict: strip_verdict,
+                        key_carriers,
+                        collides_other_identifier: collides,
+                    });
+                } else {
+                    report.address_truncated = true;
+                }
+                if report.address_shaped % 500 == 0 {
+                    progress(report.address_shaped, "measuring address-shaped names");
+                }
             }
             if report.rows.len() < cap {
                 report.rows.push(PollutedName {
