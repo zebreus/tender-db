@@ -1,6 +1,6 @@
 # 239 — counting 5,000 ids of `v_tenders` takes over 10 seconds
 
-Status: CAUSE RE-CONFIRMED under turso 0.7.2 (2026-08-23, plan-level tripwire landed); was CAUSE FOUND 2026-08-18 — turso pushes no predicate into ANY view, so the whole `v_*` analyst
+Status: FILTERED VIEW READS REFUSED UP FRONT 2026-09-06 (owner; upstream re-probed at 0.8.0-pre.8, still no pushdown — see the bottom); was CAUSE RE-CONFIRMED under turso 0.7.2 (2026-08-23, plan-level tripwire landed); was CAUSE FOUND 2026-08-18 — turso pushes no predicate into ANY view, so the whole `v_*` analyst
 surface is unusable for filtered queries (a single-table view is 1000x slower than its table). The
 `current_title` denormalisation shipped and helps unfiltered reads, but is NOT the fix
 Kind: read-path cost (the headline analyst view is not usable for aggregates)
@@ -292,3 +292,31 @@ the shape `/v1/docs` sends analysts to — as an actual regression guard.
 
 Remaining fix direction is unchanged: materialise the views as fold-maintained tables (the
 `current_*` columns are halfway there), or wait upstream with the tripwire armed.
+
+## 2026-09-06 — upstream probed (still no pushdown); the endpoint now refuses the shape up front
+
+**turso 0.8.0-pre.8 (published 2026-09-04) still plans `SCAN v_*` for every filtered view
+query.** Probed with a scratch crate pinned to that version, the tripwire's five shapes on
+the same DDL: `v_tender_current WHERE tender_id = 42` → `SCAN v_tender_current / SCAN
+tenders`; `v_tenders WHERE id = 42` and `COUNT(*) … WHERE id < 5000` → `SCAN v_tenders /
+SCAN tender_versions AS v / SEARCH t USING INTEGER PRIMARY KEY`; `v_lots`, `v_organizations`
+likewise. The base-table control seeks. So "wait upstream" has no date, and the CHANGELOG's
+0.7.0 section is the newest one published.
+
+**Built instead: the admission check issue 238 asked for, on this exact shape.** `/v1/sql`
+now refuses, as 400 before running anything, a SELECT that filters a view — a `WHERE` on a
+FROM that reads a `v_*` view directly, through a derived table wrapping one, or through a
+CTE whose body reads one (turso builds each of those whole and filters afterwards). The
+refusal quotes the view's own NOT FILTERABLE note, i.e. the base-table join to use.
+Unfiltered peeks and aggregates stay accepted (they ask for the whole view), and a JOIN
+against a view is not treated as a filter (unmeasured; a LIMITed join can stream). Resolved
+off the same reference tags the allow-list walk produces, so the two cannot disagree about
+what a name binds to (issue 210's scoping carries over: a CTE that shadows `v_tenders` with
+a plain query is that query). The `/v1/docs` notes say so; the tripwire's instructions now
+list the rule among the things to lift when turso learns pushdown.
+
+Why refuse rather than warn: the measured cost is not the 408 — it is that the abandoned
+query keeps computing (no interrupt) and pins a worker for the full run, so two innocent
+probes shed every other caller for minutes (the issue-238 incident). A 400 in a millisecond
+with the right query in the message is strictly better for the analyst than a 408 after ten
+seconds with the same advice.

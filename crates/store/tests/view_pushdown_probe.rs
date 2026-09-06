@@ -43,9 +43,11 @@ async fn plan_of(conn: &turso::Connection, sql: &str) -> String {
 ///
 /// If this test FAILS after a turso bump, that is good news, not a regression:
 /// re-run the issue-239 prod measurements, and if they hold, lift the NOT
-/// FILTERABLE warnings from the `v_*` view comments (canonical.rs) and the
+/// FILTERABLE warnings from the `v_*` view comments (canonical.rs), the
 /// `/v1/sql` + `/v1/docs` guidance (sql.rs) that points analysts at base-table
-/// joins instead.
+/// joins instead, and the up-front refusal of filtered view reads
+/// (`filtered_view` in sql.rs, 2026-09-06). Probed against 0.8.0-pre.8 on
+/// 2026-09-06 (scratch build, same shapes): still `SCAN v_*` everywhere.
 #[tokio::test]
 async fn turso_still_pushes_no_predicate_into_views() {
     let (_db, conn) = open("plans").await;
