@@ -55,3 +55,16 @@ It also means the census's "Database file" number understates what the service o
 2. If confirmed, find the creator: turso temp databases (337) are the prime suspect — the
    `.tmp*` dirs are theirs — and the fix is upstream lifecycle or an explicit close; a
    scheduled restart is the fallback, not the fix.
+
+## Probe 1 (2026-09-06 07:50 UTC): a 30 s census does not reproduce it
+
+Baselines on the fresh process: 0 `(deleted)` descriptors after the deploy restart (03:3x),
+after the two R2 folds (05:3x) and after the daily tick (07:49). Sampling `/proc/<pid>/fd`
+every 10 s through `org-merge-health` (job 772, 31 s): turso opened sorter spills as
+`/data/tmp/.tmp<rand>/tursodb_temp_file` in fresh directories — two seen, each gone within
+one sample — never in the `(deleted)` state, and the only files held afterwards are the
+process's own `tursodb-temp.db` (4 KB) and its WAL (32 B). The `.tmp*` directories stay
+behind empty (six now; tmpsweep's business). So a short read-only census neither leaks nor
+holds; the 190 GB needs the long walks — the weekly data-quality job (5,560 s, 32 windows)
+is the candidate, and the next Sunday batch (2026-09-13 01:10 UTC) is the measurement
+window: sample the descriptors and their `stat -L` sizes every minute through it.
