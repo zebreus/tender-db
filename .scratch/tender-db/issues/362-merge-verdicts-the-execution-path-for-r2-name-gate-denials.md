@@ -77,3 +77,14 @@ translations (BULiGL, PISM, PANSA, UWM, Ministero della Giustizia), typos and sp
 (Consulronix, Spektromtria, KrakTansRem, BIEGOSGERA, C-FORST, Q4 Net, Lore star, McART), and
 units of a public body publishing under its number (a gmina and its school, sports centre,
 library or road board; a region and its directorate; a hospital and its renamed successor).
+
+**Record-versus-reality probe (2026-09-06 21:xx UTC), two verdict-admitted merges.**
+`IT:piva/00110410198` (SAMEC SPA 4 mentions + S.A.M.E.C. SpA 1) and `IT:piva/00125230219`
+(Wurth 2 + Wuerth 1 + Würth 1). The verdict store (`GET /admin/case-reviews?table=merge`)
+stamps both `applied_at` 1788672628 by job 765: "merged 1 row(s) into 17127676" and
+"merged 2 row(s) into 10001015". Reality, by primary-key and index seeks through
+`/v1/sql`: exactly those two rows stand in `organizations`, the three losers are gone,
+and the survivors hold 5 and 4 mentions — the members' counts summed, none left on a
+loser. `org_merge_log` itself is an operator table off the public allow-list (correctly:
+"not in the queryable public surface") and has no admin read route, so the verdict
+store's stamps are the audit record for these; the ledger is reachable only on the box.
