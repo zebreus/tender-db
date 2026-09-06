@@ -589,8 +589,8 @@ const TABLE_NOTES: &[(&str, &str)] = &[
     ("v_lot_results", "Current award decisions: one row per (result, winning organization); \
       winner_* is NULL for an unresolved or withheld award. NOT FILTERABLE, like every `v_*` view — a WHERE is applied after the view is \
       built, so a filtered query reads the whole corpus (issue 239); join `lot_results` to `tender_version_result_winners` instead."),
-    ("v_tender_current", "The (tender_id, seq) current-version pointer. NOT FILTERABLE, and \
-      not cheap to JOIN either — turso rebuilds it whole per outer row (issue 239); read \
+    ("v_tender_current", "The (tender_id, seq) current-version pointer — not cheap to JOIN \
+      either, turso rebuilds it whole per outer row. NOT FILTERABLE (issue 239); read \
       `tenders.current_seq` directly: `JOIN tender_versions v ON v.tender_id = t.id AND \
       v.seq = t.current_seq`, and the same `(tender_id, seq = current_seq)` pair for any \
       version satellite."),
@@ -1240,6 +1240,20 @@ fn walk_table(st: &turso_parser::ast::SelectTable, scope: &Scope, t: &mut Tables
     }
 }
 
+/// An expression subquery (`EXISTS (…)`, `x IN (…)`, a scalar `(SELECT …)`):
+/// walked in full for the allow-list and for its OWN filtered-view check —
+/// then its view reads are dropped again, because they are not sources of the
+/// SELECT that contains the expression. Without this a derived table or CTE
+/// body over base tables that merely mentions a view in a subquery read as
+/// "reads a view", and a filter on it was refused (issue 239's documented
+/// imprecision, closed 2026-09-06). The allow-list tags in `refs` are left
+/// untouched: they are what the allow-list decides on.
+fn walk_subquery(s: &turso_parser::ast::Select, scope: &Scope, t: &mut Tables) {
+    let before = t.view_reads.len();
+    walk_select(s, scope, t);
+    t.view_reads.truncate(before);
+}
+
 fn walk_window(w: &turso_parser::ast::Window, scope: &Scope, t: &mut Tables) {
     use turso_parser::ast::FrameBound;
     for e in &w.partition_by {
@@ -1301,7 +1315,7 @@ fn walk_expr(e: &turso_parser::ast::Expr, scope: &Scope, t: &mut Tables) {
         }
         Cast { expr, .. } => walk_expr(expr, scope, t),
         Collate(x, _) => walk_expr(x, scope, t),
-        Exists(s) => walk_select(s, scope, t),
+        Exists(s) => walk_subquery(s, scope, t),
         FieldAccess { base, .. } => walk_expr(base, scope, t),
         FunctionCall { args, order_by, within_group, filter_over, .. } => {
             for a in args {
@@ -1321,7 +1335,7 @@ fn walk_expr(e: &turso_parser::ast::Expr, scope: &Scope, t: &mut Tables) {
         }
         InSelect { lhs, rhs, .. } => {
             walk_expr(lhs, scope, t);
-            walk_select(rhs, scope, t);
+            walk_subquery(rhs, scope, t);
         }
         InTable { lhs, rhs, args, .. } => {
             walk_expr(lhs, scope, t);
@@ -1360,7 +1374,7 @@ fn walk_expr(e: &turso_parser::ast::Expr, scope: &Scope, t: &mut Tables) {
                 walk_expr(x, scope, t);
             }
         }
-        Subquery(s) => walk_select(s, scope, t),
+        Subquery(s) => walk_subquery(s, scope, t),
         Unary(_, x) => walk_expr(x, scope, t),
         Subscript { base, index } => {
             walk_expr(base, scope, t);
@@ -1671,6 +1685,11 @@ mod tests {
         // Wrapping the view in a derived table or a CTE changes nothing about
         // how turso builds it, so it changes nothing here either.
         assert!(err("SELECT * FROM (SELECT * FROM v_tenders) x WHERE x.id = 5").contains("v_tenders"));
+        // …and a filtered view read INSIDE an expression subquery is still its
+        // own refusal: expression subqueries are transparent to the enclosing
+        // SELECT's sources, not exempt from the rule.
+        assert!(err("SELECT * FROM (SELECT id FROM tenders WHERE id IN (SELECT tender_id FROM v_lots WHERE tender_id > 5)) x").contains("v_lots"));
+        assert!(err("WITH x AS (SELECT id FROM tenders WHERE EXISTS (SELECT 1 FROM v_lots l WHERE l.tender_id = 5)) SELECT * FROM x").contains("v_lots"));
         let e = err("WITH x AS (SELECT * FROM v_tenders) SELECT * FROM x WHERE id = 5");
         assert!(e.starts_with("v_tenders is NOT FILTERABLE and this query filters it (through `x`)"), "{e}");
         let e = err("WITH x AS (SELECT * FROM v_tenders), y AS (SELECT * FROM x) SELECT * FROM y WHERE id = 5");
@@ -1752,6 +1771,12 @@ mod tests {
             // A nested WITH that shadows an outer view-reading sibling binds to
             // its own body, so `a` reads only base tables and its filter is fine.
             "WITH z AS (SELECT * FROM v_tenders), a AS (WITH z AS (SELECT id FROM tenders) SELECT * FROM z) SELECT * FROM a WHERE id = 5",
+            // A derived table or CTE over BASE tables that mentions a view only
+            // inside an expression subquery reads that view unfiltered, as an
+            // expression; filtering the derived rows filters base tables.
+            "SELECT * FROM (SELECT id FROM tenders WHERE id IN (SELECT tender_id FROM v_lots)) x WHERE x.id = 5",
+            "WITH x AS (SELECT id FROM tenders WHERE EXISTS (SELECT 1 FROM v_lots)) SELECT * FROM x WHERE id = 5",
+            "WITH x AS (SELECT id, (SELECT COUNT(*) FROM v_lots) AS n FROM tenders) SELECT * FROM x WHERE id = 5",
         ] {
             assert!(classify(sql).is_ok(), "{sql}: {:?}", classify(sql).err().map(|e| e.1));
         }

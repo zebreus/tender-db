@@ -360,3 +360,11 @@ backticks after the marker, and refuses the joined form too; `v_fetches` and tab
 `IN v_view` (an expression read, accepted like `IN (SELECT …)`) are pinned on the
 accepting side. Known nit left as is: a CTE that unions two views is named after the
 first for the message.
+
+**Imprecision closed (2026-09-06 18:xx UTC).** Expression subqueries (`EXISTS (…)`, `x IN
+(…)`, scalar `(SELECT …)`) are now transparent to the enclosing SELECT's source accounting:
+walked in full for the allow-list and for their own filtered-view check, then their view
+reads dropped. So a derived table or CTE over base tables that merely mentions a view in a
+subquery is no longer "a view read", and filtering its rows is accepted; a filtered view
+INSIDE such a subquery is still refused on its own. Pinned both ways. The `v_tender_current`
+note's guidance now follows the marker directly, so its refusal reads as the others do.
