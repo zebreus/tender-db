@@ -368,3 +368,12 @@ the trim command above is the operator's answer if the disk census ever again sh
 live file's allocation a third above its size. Probe directory removed. Item 1 (122 GB of
 apparent growth by table) stays the open question in this issue; the reflink ring's real
 cost is now ~7 GB/week of divergence plus nothing.
+
+**Tripwire built and baselined (deployed `a6cf472` 2026-09-06 15:5x UTC, job 775).** The
+weekly `disk-census` now reads `st_blocks` beside `len()` and reports
+`db_allocated_bytes`, the over-allocation in bytes and percent, and
+`db_overallocation_alarm` above 5 % (and 1 GiB) with the reclaim command in the text.
+First reading, right after the trim: file 604.0 GiB, allocated 604.6 GiB, **0.10 % over**
+(the extent-tree overhead of 30.7 M extents), alarm null; volume 49.0 % used, 846.1 GiB
+free — it read 73.9 % at 01:10 this morning. A restart (the deploy) left `df` unchanged at
+866,405 MiB and the file's `cowextsize 4096` in place.

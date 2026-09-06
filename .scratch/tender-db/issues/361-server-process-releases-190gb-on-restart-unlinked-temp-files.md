@@ -68,3 +68,11 @@ behind empty (six now; tmpsweep's business). So a short read-only census neither
 holds; the 190 GB needs the long walks — the weekly data-quality job (5,560 s, 32 windows)
 is the candidate, and the next Sunday batch (2026-09-13 01:10 UTC) is the measurement
 window: sample the descriptors and their `stat -L` sizes every minute through it.
+
+**2026-09-06 15:5x UTC — a quiet-day restart released nothing.** The deploy of `a6cf472`
+restarted the service on a box that had run only censuses since its previous restart
+(13:4x, the 239 deploy): `df` avail 866,405 MiB before and after. So the 191 GB release at
+03:32 is tied to the heavy-job night that preceded it, as the recipe assumes; the scheduled
+measurement on the next weekly walk (2026-09-13 01:40Z) stands. Note for the model: the
+live file's 220 GiB of allocated-over-apparent was a different thing entirely (issue 169
+item 3, copy-on-write leftovers, reclaimed 15:0x), not part of this issue's class.
