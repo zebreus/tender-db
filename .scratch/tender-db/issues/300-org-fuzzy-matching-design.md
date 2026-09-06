@@ -1132,3 +1132,7 @@ names, (3) `ge6` growing >5 %. Stored as `name_growth` {grown, entrants, ge6_bef
 ge6_growth_pct, alarms}; the summary line carries `NAME-GROWTH ALARM(S)` beside the
 parser-vs-stock ones. The bands are sized to the hand reading above so a 15,900-group
 repair passes quietly; no baseline (first run, older report shape) is not an alarm.
+Deployed 11006ea 2026-09-06 ~09:2x and run at once (job 773, 33 s, box idle): the block
+read its baseline from job 772 (`ge6_before` 12,360, growth 0.0 %, no grown/entrants, no
+alarm) — wired and live, not merely silent. Next real reading: the Sunday 2026-09-13
+weekly tick, against 773.
