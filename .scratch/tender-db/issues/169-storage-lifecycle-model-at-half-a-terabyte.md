@@ -1,6 +1,6 @@
 # 169 — storage lifecycle model at 0.5 TB and beyond
 
-Status: open — URGENCY RESTORED 2026-09-01. The 2026-08-15 downgrade rested on
+Status: open — ITEM 3 CLOSED 2026-09-06 15:0x UTC: the 220 GiB allocated-over-apparent gap on the live DB file was leftover copy-on-write preallocation (reflink ring + XFS's default 128 KiB COW extent hint); reclaimed live with `xfs_spaceman -c "prealloc -s -m 100g" /data` (2 min 27 s, no outage, **+224,365 MiB free: 641,692 → 866,057**) and prevented with `cowextsize 4096` on the file; details at the bottom. Was: URGENCY RESTORED 2026-09-01. The 2026-08-15 downgrade rested on
 "/data at 39%, 1.1T free"; it is now 58% / 709G. That basis is void. Warning
 threshold lowered 90% -> 80% as an interim measure (applied to prod today). See
 "Re-measured 2026-09-01".
@@ -342,3 +342,29 @@ rm tender-db.db.old && sync && df -B1M --output=avail /data   # expect ~+220 GiB
 Rollback if health fails: stop, `mv tender-db.db tender-db.db.new; mv tender-db.db.old
 tender-db.db`, start. Expected: allocated = size + ~0.5 GB afterwards, and the weekly
 disk census's live-file line stops over-stating by a third.
+
+### 2026-09-06 15:0x UTC — item 3 CLOSED: reclaimed live, no outage, and prevented
+
+The last scratch readings changed the picture once more: the file held open by its holder
+was reclaimed by the periodic GC between t+480 s and t+600 s — while STILL open — and the
+one closed at t+0 by t+7 min. So "open" was never the discriminator; what the earlier
+forced trim on the 20-second-old scratch file showed was only that fresh reservations are
+not eligible yet. The live file's five idle hours without reclaim therefore pointed at a
+different gate, and the direct test was the forced trim on the file itself, the supported
+maintenance path and non-destructive (it frees speculative reservations, touches no data):
+
+```
+xfs_spaceman -c "prealloc -s -m 100g" /data      # files >= 100 GiB: the live DB (and the snapshots, which hold none)
+```
+
+**2 min 27 s, `stat.blocks` 1,727,772,352 → 1,267,907,456 (824 → 604.5 GiB = size + 0.6 GB),
+`df` avail 641,692 → 866,057 MiB: +224,365 MiB.** `/health` ok, a point read fine, queue idle
+throughout. Then `xfs_io -c "cowextsize 4096" /data/db/tender-db.db` (xflags now carry
+`cowextsize`; rehearsed on scratch: the same 2,000-page workload leaves 112 KiB instead of
+58 MB) so the reservations do not regrow — every future COW write on a snapshot-shared
+page allocates exactly the page. Why the periodic GC never got to the live file is left
+open (dirty-release flag or a busy-inode skip; the 03:32 restart's non-reclaim fits either);
+the trim command above is the operator's answer if the disk census ever again shows the
+live file's allocation a third above its size. Probe directory removed. Item 1 (122 GB of
+apparent growth by table) stays the open question in this issue; the reflink ring's real
+cost is now ~7 GB/week of divergence plus nothing.

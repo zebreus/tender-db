@@ -781,3 +781,24 @@ Known gaps in the production setup, tracked here so they aren't rediscovered:
   currently tells a network user to request the Corresponding Source from the
   operator (AGPL §13 permits this). A public GitHub repo was declined for now (no
   external resources, 2026-07-21), so the written offer stands.
+
+### Live DB file allocation vs size (issue 169, 2026-09-06)
+
+`/data` is XFS with reflink, and the weekly snapshot ring makes the live DB a
+reflink-shared file: every page rewrite is a copy-on-write allocation. With XFS's
+default COW extent-size hint (128 KiB) each 4 KiB page rewrite reserved a 128 KiB
+window and left the unused remainder as speculative preallocation that the periodic
+GC never reclaimed on the always-open DB file — 220 GiB of `du`/`stat.blocks` over
+the file's size by 2026-09-06, counted by `df` as used. Two standing measures:
+
+- the live file carries `cowextsize 4096` (`xfs_io -r -c "stat -v" /data/db/tender-db.db`
+  shows `fsxattr.cowextsize = 4096`), so a COW write allocates exactly the page. If
+  the file is ever replaced (a clone swap, a restore), set it again on the new inode.
+- if the disk census shows the live file's allocation well above its size again:
+  `xfs_spaceman -c "prealloc -s -m 100g" /data` frees the speculative reservations of
+  every file ≥ 100 GiB, online, without touching data — 2.5 minutes and 224 GB back
+  the first time. Bounded and free under the prod-box-reads rule (metadata only).
+
+The reads that diagnose it are all bounded: `stat -c '%s %b'` on the file (size vs
+blocks × 512), `xfs_io -r -c "stat -v"` for the hints and extent count. `filefrag` and
+`xfs_bmap` on this file are NOT (30 M+ extents).
