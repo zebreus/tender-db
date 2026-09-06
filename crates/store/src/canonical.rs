@@ -15580,7 +15580,6 @@ impl Db {
             return Ok(report);
         }
 
-        const MERGE_TXN_GROUPS: usize = 50;
         let cap = args.max_groups.unwrap_or(u64::MAX);
         let now = crate::now_unix();
         let conn = self.conn().await;
