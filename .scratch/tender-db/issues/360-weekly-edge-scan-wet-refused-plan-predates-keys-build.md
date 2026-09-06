@@ -1,6 +1,6 @@
 # 360 — the weekly `scan-org-match-keys` wet run refuses itself every week: the batch rebuilds the keys first
 
-Status: DIAGNOSED 2026-09-06 03:0x UTC (owner) — fix is one line of scheduling plus a test update; lands with the next deploy. Filed from the Sunday batch's job 755 (`error`).
+Status: FIXED, DEPLOYED 2026-09-06 03:3x UTC (895acf6) — the weekly tick now enqueues a dry scan ahead of the wet one (eight jobs; `the_weekly_report_tick_enqueues_its_eight_jobs_once_each`). Verify on Sunday 2026-09-13: the wet scan must run `ok` after the dry. Was: DIAGNOSED 2026-09-06 03:0x UTC — fix is one line of scheduling plus a test update; lands with the next deploy. Filed from the Sunday batch's job 755 (`error`).
 Kind: operations / scheduling defect (organization layer, Stage 4 edge store)
 Relates to: 300 Stage 4 (the E3 edge scan and tripwire 6), 314 (the edge store's consumer), 346 (the weekly `build-org-match-keys` that joined the batch)
 

@@ -1,0 +1,8980 @@
+{
+"source": "r2-merge-plan dry run, job 759, 2026-09-06 03:3x UTC, rev 895acf6 (issue 359's R2 name gate: disjoint core tokens)",
+"denied_names": 451,
+"listed": 451,
+"truncated": false,
+"note": "Groups R2 leaves standing: two named members share no core token. Roughly half are a wrong identifier on one row (the buyer's NIP in the winner's field), half acronyms, renames, translations or spacing variants of one entity. The review queue for a same-entity verdict path; nothing here is merged.",
+"groups": [
+{
+"country": "PL",
+"key": "6460327792",
+"members": [
+{
+"identifier": "6460327792",
+"kind": "national",
+"name": "Noma 2 Sp. z o.o.",
+"org_id": 22310325
+},
+{
+"identifier": "6460327792",
+"kind": "national",
+"name": "NOMA2 Sp. z o.o.",
+"org_id": 23201311
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5862320395",
+"members": [
+{
+"identifier": "5862320395",
+"kind": "national",
+"name": "Sailovnia Sp. z o. o.",
+"org_id": 22321060
+},
+{
+"identifier": "5862320395",
+"kind": "national",
+"name": "Boat Base Sp. z o.o.",
+"org_id": 23430136
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "367849538",
+"members": [
+{
+"identifier": "367849538",
+"kind": "national",
+"name": "Krajowy Ośrodek Wsparcia Rolnictwa",
+"org_id": 12241653
+},
+{
+"identifier": "367849538",
+"kind": "national",
+"name": "Krajowa Izba Gospodarcza Centrum Promocji Sp. z o.o.",
+"org_id": 13913467
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "IT",
+"key": "05624161211",
+"members": [
+{
+"identifier": "05624161211",
+"kind": "national",
+"name": "ISVEC srl",
+"org_id": 20039089
+},
+{
+"identifier": "05624161211",
+"kind": "national",
+"name": "Isola Verde Ecologia S.r.l.",
+"org_id": 20760307
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "8133069288",
+"members": [
+{
+"identifier": "8133069288",
+"kind": "national",
+"name": "Elmar Anna Karnas",
+"org_id": 19578007
+},
+{
+"identifier": "8133069288",
+"kind": "national",
+"name": "Konkret Sp. z o.o. Sp. k",
+"org_id": 22259519
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5223020290",
+"members": [
+{
+"identifier": "5223020290",
+"kind": "national",
+"name": "Lider: Serso Sp. z o.o.",
+"org_id": 10232457
+},
+{
+"identifier": "5223020290",
+"kind": "national",
+"name": "SARINŻ Sp. z o.o.",
+"org_id": 22757690
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "006472651",
+"members": [
+{
+"identifier": "006472651",
+"kind": "national",
+"name": "Centralny Szpital Kliniczny MSW w Warszawie",
+"org_id": 2783412
+},
+{
+"identifier": "006472651",
+"kind": "national",
+"name": "Państwowy Instytut Medyczny Ministerstwa Spraw Wewnetrznych i Administracji",
+"org_id": 20728331
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5541006057",
+"members": [
+{
+"identifier": "5541006057",
+"kind": "national",
+"name": "Przedsiębiorstwo Wielobranżowe EBUD Przemysłówka Sp. z o.o.",
+"org_id": 20237526
+},
+{
+"identifier": "5541006057",
+"kind": "national",
+"name": "Rejonowy Zarząd Infrastruktury w Bydgoszczy",
+"org_id": 22749654
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7282556900",
+"members": [
+{
+"identifier": "7282556900",
+"kind": "national",
+"name": "Przedsiębiorstwo Usług Komunalnych  LE MO Monika Lenik",
+"org_id": 21280213
+},
+{
+"identifier": "7282556900",
+"kind": "national",
+"name": "PUK LE MO",
+"org_id": 22691375
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "07611700969",
+"members": [
+{
+"identifier": "07611700969",
+"kind": "national",
+"name": "RTI Make a Cube S.r.l. (mandatario)/Avanzi S.r.l. e Associazione MicroLab (mandanti)",
+"org_id": 14612584
+},
+{
+"identifier": "07611700969",
+"kind": "national",
+"name": "ACUBE SOCIETA' BENEFIT S.R.L.",
+"org_id": 22737863
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "IT",
+"key": "01872430648",
+"members": [
+{
+"identifier": "01872430648",
+"kind": "national",
+"name": "DIMMS control s.r.l.",
+"org_id": 14320268
+},
+{
+"identifier": "01872430648",
+"kind": "national",
+"name": "SOCOTEC ITALIA S.r.l.",
+"org_id": 17863014
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "5272623545",
+"members": [
+{
+"identifier": "5272623545",
+"kind": "national",
+"name": "Engave Sp. z o.o.",
+"org_id": 10203978
+},
+{
+"identifier": "5272623545",
+"kind": "national",
+"name": "TPM Services Sp. z o.o.",
+"org_id": 14083742
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5210082828",
+"members": [
+{
+"identifier": "5210082828",
+"kind": "national",
+"name": "Color Trading Sp. z o.o.",
+"org_id": 9822408
+},
+{
+"identifier": "5210082828",
+"kind": "national",
+"name": "Color Trading Sp. z o.o.",
+"org_id": 20352159
+},
+{
+"identifier": "5210082828",
+"kind": "national",
+"name": "Axon Lab Sp. z o.o.",
+"org_id": 23342871
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6340005301",
+"members": [
+{
+"identifier": "6340005301",
+"kind": "national",
+"name": "CELLLAB Krzysztof Grabowski",
+"org_id": 19389909
+},
+{
+"identifier": "6340005301",
+"kind": "national",
+"name": "Śląski Uniwersytet Medyczny w Katowicach",
+"org_id": 23175265
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6482574836",
+"members": [
+{
+"identifier": "6482574836",
+"kind": "national",
+"name": "Konsorcjum Ochrony KOpalń Sp. z o.o.",
+"org_id": 10790895
+},
+{
+"identifier": "6482574836",
+"kind": "national",
+"name": "Grupa KOK Sp. z o.o.",
+"org_id": 20696859
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5252520546",
+"members": [
+{
+"identifier": "5252520546",
+"kind": "national",
+"name": "Cryogas M&T Poland SA.",
+"org_id": 18513618
+},
+{
+"identifier": "5252520546",
+"kind": "national",
+"name": "OMNE Energia SA",
+"org_id": 22945499
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7842008454",
+"members": [
+{
+"identifier": "7842008454",
+"kind": "national",
+"name": "Zespół Opieki Zdrowotnej",
+"org_id": 8435967
+},
+{
+"identifier": "7842008454",
+"kind": "national",
+"name": "ZARYS International Group Spółka z ograniczoną odpowiedzialnością spółka komandytowa",
+"org_id": 22638062
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7011029703",
+"members": [
+{
+"identifier": "7011029703",
+"kind": "national",
+"name": "Voler Sp. z o.o.",
+"org_id": 18955944
+},
+{
+"identifier": "7011029703",
+"kind": "national",
+"name": "Applied Medical Polska sp. z o.o.",
+"org_id": 22147447
+},
+{
+"identifier": "7011029703",
+"kind": "national",
+"name": "Applied Medical Polska Sp. z o.o.",
+"org_id": 22758343
+},
+{
+"identifier": "PL7011029703",
+"kind": "vat",
+"name": "Applied Medical Polska Sp. z o.o.",
+"org_id": 23725152
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7561000550",
+"members": [
+{
+"identifier": "7561000550",
+"kind": "national",
+"name": "Pawelak Janusz",
+"org_id": 18023522
+},
+{
+"identifier": "7561000550",
+"kind": "national",
+"name": "Pełka Dariusz",
+"org_id": 23394936
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "07052080723",
+"members": [
+{
+"identifier": "07052080723",
+"kind": "national",
+"name": "Navita s.r.l.",
+"org_id": 22329425
+},
+{
+"identifier": "07052080723",
+"kind": "national",
+"name": "UNIONE DEI COMUNI MONTEDORO - COMUNE DI GIOIA DEL COLLE",
+"org_id": 23023124
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "6792974292",
+"members": [
+{
+"identifier": "6792974292",
+"kind": "national",
+"name": "KrakTransRem Spółka z o.o.",
+"org_id": 16687345
+},
+{
+"identifier": "6792974292",
+"kind": "national",
+"name": "KrakTansRem Sp. z o.o.",
+"org_id": 22421590
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5252167765",
+"members": [
+{
+"identifier": "5252167765",
+"kind": "national",
+"name": "Polski Instytut Spraw Międzynarodowych",
+"org_id": 22776212
+},
+{
+"identifier": "PL5252167765",
+"kind": "vat",
+"name": "The Polish Institute of International Affairs (PISM)",
+"org_id": 22821781
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5260002429",
+"members": [
+{
+"identifier": "5260002429",
+"kind": "national",
+"name": "DHV Hydroprojekt Sp. z o.o.",
+"org_id": 14789486
+},
+{
+"identifier": "5260002429",
+"kind": "national",
+"name": "HaskoningDHV Polska Sp. z o.o.",
+"org_id": 20199469
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5240203283",
+"members": [
+{
+"identifier": "5240203283",
+"kind": "national",
+"name": "HAKO Sp. z o. o. - zad. 2",
+"org_id": 13138
+},
+{
+"identifier": "5240203283",
+"kind": "national",
+"name": "Hako Sp. z o.o.",
+"org_id": 21338349
+},
+{
+"identifier": "PL5240203283",
+"kind": "vat",
+"name": "MILENA BIS Sp. z o.o.",
+"org_id": 22246748
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "016422763",
+"members": [
+{
+"identifier": "016422763",
+"kind": "national",
+"name": "Dimension Data Polska Spółka z ograniczoną odpowiedzialnością",
+"org_id": 12766541
+},
+{
+"identifier": "016422763",
+"kind": "national",
+"name": "NTT Poland Sp. z o.o.",
+"org_id": 21858955
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "911344332",
+"members": [
+{
+"identifier": "911344332",
+"kind": "national",
+"name": "Powszechny Zakład Ubezpieczeń S.A. Oddział Sprzedaży Korporacyjnej w Toruniu",
+"org_id": 13598618
+},
+{
+"identifier": "911344332",
+"kind": "national",
+"name": "POWIATOWY SZPITAL W ALEKSANDROWIE KUJAWSKIM SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+"org_id": 20013332
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "IT",
+"key": "14950741000",
+"members": [
+{
+"identifier": "14950741000",
+"kind": "national",
+"name": "Lore star srl",
+"org_id": 17937915
+},
+{
+"identifier": "14950741000",
+"kind": "national",
+"name": "Lorestar Srl a socio unico",
+"org_id": 22747732
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "7120161005",
+"members": [
+{
+"identifier": "7120161005",
+"kind": "national",
+"name": "Jacek Piekarczyk Insbud",
+"org_id": 17960738
+},
+{
+"identifier": "7120161005",
+"kind": "national",
+"name": "KATOLICKI UNIWERSYTET LUBELSKI JANA PAWŁA II",
+"org_id": 18688802
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "470564460",
+"members": [
+{
+"identifier": "470564460",
+"kind": "national",
+"name": "McART Sp. z o.o.",
+"org_id": 21941068
+},
+{
+"identifier": "470564460",
+"kind": "national",
+"name": "MC ART Spółka z ograniczoną odpowiedzialnością",
+"org_id": 24583723
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5492197464",
+"members": [
+{
+"identifier": "5492197464",
+"kind": "national",
+"name": "Gmina Zator",
+"org_id": 22710742
+},
+{
+"identifier": "5492197464",
+"kind": "national",
+"name": "Burmistrz Zatora",
+"org_id": 23175417
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6792108034",
+"members": [
+{
+"identifier": "6792108034",
+"kind": "national",
+"name": "Lider: Citonet – Kraków Sp. z o.o.",
+"org_id": 12082518
+},
+{
+"identifier": "6792108034",
+"kind": "national",
+"name": "Citonet-Kraków Sp. z o.o. (Lider)",
+"org_id": 18487691
+},
+{
+"identifier": "PL6792108034",
+"kind": "vat",
+"name": "Toruńskie Zakłady Materiałów Opatrunkowych S.A.",
+"org_id": 23024682
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6311009029",
+"members": [
+{
+"identifier": "6311009029",
+"kind": "national",
+"name": "BIURO PROJEKTÓW A-PROPOL Sp. z o.o. Sp.k.",
+"org_id": 11603337
+},
+{
+"identifier": "6311009029",
+"kind": "national",
+"name": "APROPOL 1 Sp. z o.o.",
+"org_id": 24601642
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "210466977",
+"members": [
+{
+"identifier": "210466977",
+"kind": "national",
+"name": "Zarząd Dróg Powiatowych w Międzyrzeczu",
+"org_id": 20336297
+},
+{
+"identifier": "210466977",
+"kind": "national",
+"name": "COLAS Polska sp. z o.o.",
+"org_id": 22593446
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "7393727411",
+"members": [
+{
+"identifier": "7393727411",
+"kind": "national",
+"name": "Polbis Auto Sp. z o.o.",
+"org_id": 21249287
+},
+{
+"identifier": "7393727411",
+"kind": "national",
+"name": "Fiedorowicz Sp. z o.o.",
+"org_id": 24614783
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5840358083",
+"members": [
+{
+"identifier": "5840358083",
+"kind": "national",
+"name": "PPU OMEGA Sp. z o.o.",
+"org_id": 19246757
+},
+{
+"identifier": "5840358083",
+"kind": "national",
+"name": "XTrack sp. z o.o.",
+"org_id": 21493588
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "03832010106",
+"members": [
+{
+"identifier": "03832010106",
+"kind": "national",
+"name": "MINISTERO DELLE INFRASTRUTTURE E DEI TRASPORTI",
+"org_id": 22382622
+},
+{
+"identifier": "03832010106",
+"kind": "national",
+"name": "RS SERVICE S.R.L.",
+"org_id": 22382624
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "330392390",
+"members": [
+{
+"identifier": "330392390",
+"kind": "national",
+"name": "Centrum Rehabilitacji Rolników Kasy Rolniczego Ubezpieczenia Społecznego NIWA",
+"org_id": 20724873
+},
+{
+"identifier": "330392390",
+"kind": "national",
+"name": "„PAULADROB - BACHOROWSKA&BACHOROWSKI” SPÓŁKA KOMANDYTOWA",
+"org_id": 22904631
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "000121583",
+"members": [
+{
+"identifier": "000121583",
+"kind": "national",
+"name": "Bureau for Forest Management and Geodesy (BULiGL)",
+"org_id": 11032803
+},
+{
+"identifier": "000121583",
+"kind": "national",
+"name": "Biuro Urządzania Lasu i Geodezji Leśnej",
+"org_id": 12212957
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "8992748673",
+"members": [
+{
+"identifier": "8992748673",
+"kind": "national",
+"name": "IMPEL SOLUTIONS SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+"org_id": 22532547
+},
+{
+"identifier": "8992748673",
+"kind": "national",
+"name": "Mediclar Sp. z o. o. (Członek Konsorcjum)",
+"org_id": 23625523
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "00110410198",
+"members": [
+{
+"identifier": "00110410198",
+"kind": "national",
+"name": "S.A.M.E.C. SpA Costruzioni meccaniche",
+"org_id": 17127676
+},
+{
+"identifier": "00110410198",
+"kind": "national",
+"name": "SAMEC SPA",
+"org_id": 23358103
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "7543077565",
+"members": [
+{
+"identifier": "7543077565",
+"kind": "national",
+"name": "Towarzystwo Oświatowo- Naukowe \"INTER-WIEDZA\" Sp. z o.o.",
+"org_id": 18133435
+},
+{
+"identifier": "7543077565",
+"kind": "national",
+"name": "Województwo Opolskie",
+"org_id": 23676757
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6482302807",
+"members": [
+{
+"identifier": "6482302807",
+"kind": "national",
+"name": "Tauron Dystrybucja  SA ul. Portowa 14a 44-100 Gliwice",
+"org_id": 20124983
+},
+{
+"identifier": "6482302807",
+"kind": "national",
+"name": "Śląskie Centrum Chorób Serca w Zabrzu",
+"org_id": 22508003
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "01420610931",
+"members": [
+{
+"identifier": "01420610931",
+"kind": "national",
+"name": "Alibus International Srl",
+"org_id": 8542063
+},
+{
+"identifier": "01420610931",
+"kind": "national",
+"name": "Nomago Italia Srl",
+"org_id": 23099125
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "017319027",
+"members": [
+{
+"identifier": "017319027",
+"kind": "national",
+"name": "TPF Sp. z o.o.",
+"org_id": 9587575
+},
+{
+"identifier": "017319027",
+"kind": "national",
+"name": "PKP Polskie Linie Kolejowe S.A.",
+"org_id": 13013235
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "7393461189",
+"members": [
+{
+"identifier": "7393461189",
+"kind": "national",
+"name": "GIERA Znaki Drogowe S.j",
+"org_id": 19650179
+},
+{
+"identifier": "7393461189",
+"kind": "national",
+"name": "TIOMAN GROUP Sp. z o.o.,- zadanie 4",
+"org_id": 23240186
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "9372686990",
+"members": [
+{
+"identifier": "9372686990",
+"kind": "national",
+"name": "Miasto Bielsko-Biała - Miejski Zarząd Dróg w Bielsku-Białej",
+"org_id": 1220
+},
+{
+"identifier": "9372686990",
+"kind": "national",
+"name": "Integral Projekt Sp. z o.o.",
+"org_id": 23084936
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6420000642",
+"members": [
+{
+"identifier": "6420000642",
+"kind": "national",
+"name": "PGE Energia Ciepła S.A.",
+"org_id": 5470
+},
+{
+"identifier": "PL6420000642",
+"kind": "vat",
+"name": "EDF Rybnik S.A.",
+"org_id": 3376873
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "9512407643",
+"members": [
+{
+"identifier": "9512407643",
+"kind": "national",
+"name": "TK BIOTECH Sp. z o. o. Sp. k.",
+"org_id": 13621150
+},
+{
+"identifier": "9512407643",
+"kind": "national",
+"name": "TKBiotech Sp. z o. o.",
+"org_id": 19878996
+},
+{
+"identifier": "PL9512407643",
+"kind": "vat",
+"name": "TK BIOTECH Sp. z o.o.",
+"org_id": 23541735
+},
+{
+"identifier": "9512407643",
+"kind": "national",
+"name": "TK Biotech Sp. z o.o.",
+"org_id": 23582911
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7010273950",
+"members": [
+{
+"identifier": "7010273950",
+"kind": "national",
+"name": "Centralny Ośrodek Sportu w Warszawie Instytucja Gospodarki Budżetowej",
+"org_id": 1370246
+},
+{
+"identifier": "7010273950",
+"kind": "national",
+"name": "ENEA S.A.",
+"org_id": 18671568
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "590028079",
+"members": [
+{
+"identifier": "590028079",
+"kind": "national",
+"name": "Gmina Testowa",
+"org_id": 22266077
+},
+{
+"identifier": "590028079",
+"kind": "national",
+"name": "Przedsiębiorstwo Gospodarki Komunalnej Sp. z o.o. w Opocznie",
+"org_id": 22492227
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "017313042",
+"members": [
+{
+"identifier": "017313042",
+"kind": "national",
+"name": "Diagons Spółka z ograniczoną odpowiedzialnością",
+"org_id": 11830570
+},
+{
+"identifier": "017313042",
+"kind": "national",
+"name": "Diagnos Sp. z o.o.",
+"org_id": 20966890
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "001344300",
+"members": [
+{
+"identifier": "001344300",
+"kind": "national",
+"name": "Willis Towers Watson Polska Sp. z o.o.",
+"org_id": 17454516
+},
+{
+"identifier": "001344300",
+"kind": "national",
+"name": "Miejskie Przedsiębiorstwo Komunikacji w Łomży sp. z o.o.",
+"org_id": 18790612
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "871242846",
+"members": [
+{
+"identifier": "871242846",
+"kind": "national",
+"name": "\"Bio-Ksel\" Sp. z o.o.",
+"org_id": 20380894
+},
+{
+"identifier": "871242846",
+"kind": "national",
+"name": "\"BIOKSEL\" SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+"org_id": 20627470
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "511001142",
+"members": [
+{
+"identifier": "511001142",
+"kind": "national",
+"name": "Skarb Państwa Państwowe Gospodarstwo Leśne Lasy Państwowe Nadleśnictwo Srokowo",
+"org_id": 12267789
+},
+{
+"identifier": "511001142",
+"kind": "national",
+"name": "Zakład Usług Leśnych Małgorzata Kaźmierczak",
+"org_id": 18609084
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "6750001202",
+"members": [
+{
+"identifier": "6750001202",
+"kind": "national",
+"name": "Miejskie Przedsiębiorstwo Energetyki Cieplnej S.A.",
+"org_id": 17275079
+},
+{
+"identifier": "6750001202",
+"kind": "national",
+"name": "MPEC S.A. w Krakowie",
+"org_id": 18392128
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "05206930488",
+"members": [
+{
+"identifier": "05206930488",
+"kind": "national",
+"name": "CRISTOFORO - SOCIETA' COOPERATIVA SOCIALE",
+"org_id": 4688
+},
+{
+"identifier": "05206930488",
+"kind": "national",
+"name": "CAD Società Cooperativa Sociale O.N.L.U.S.",
+"org_id": 13680627
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "IT",
+"key": "13325521006",
+"members": [
+{
+"identifier": "13325521006",
+"kind": "national",
+"name": "GDG Srl",
+"org_id": 10105698
+},
+{
+"identifier": "13325521006",
+"kind": "national",
+"name": "Geotechnical Design Group srl",
+"org_id": 15078331
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "7671294914",
+"members": [
+{
+"identifier": "7671294914",
+"kind": "national",
+"name": "Miejskim Zakładem Usług Komunalnych Spółka z o.o.",
+"org_id": 12942150
+},
+{
+"identifier": "7671294914",
+"kind": "national",
+"name": "NOVAGO Złotów Sp. z o. o.",
+"org_id": 20288940
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "00703580241",
+"members": [
+{
+"identifier": "00703580241",
+"kind": "national",
+"name": "CONSORZIO TUTELA FORMAGGIO ASIAGO",
+"org_id": 22532780
+},
+{
+"identifier": "00703580241",
+"kind": "national",
+"name": "Vicenza Law Court",
+"org_id": 22552884
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "000598463",
+"members": [
+{
+"identifier": "000598463",
+"kind": "national",
+"name": "Gmina Miasta Gdańsk",
+"org_id": 14249361
+},
+{
+"identifier": "000598463",
+"kind": "national",
+"name": "Gdański Ogród Zoologiczny",
+"org_id": 22572484
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "146739887",
+"members": [
+{
+"identifier": "146739887",
+"kind": "national",
+"name": "Bioventus Poland sp. z o.o.",
+"org_id": 15962730
+},
+{
+"identifier": "146739887",
+"kind": "national",
+"name": "AQVITOX Polska Sp. z o.o.",
+"org_id": 20899273
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5262548753",
+"members": [
+{
+"identifier": "5262548753",
+"kind": "national",
+"name": "TK Telkom sp.z o.o.",
+"org_id": 22526000
+},
+{
+"identifier": "5262548753",
+"kind": "national",
+"name": "TK Telekom Sp. z o.o.",
+"org_id": 23596842
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "382123092",
+"members": [
+{
+"identifier": "382123092",
+"kind": "national",
+"name": "mToilet spółka z ograniczoną odpowiedzialnością",
+"org_id": 18650014
+},
+{
+"identifier": "382123092",
+"kind": "national",
+"name": "mToiet sp. z o.o.",
+"org_id": 19562688
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "8171984740",
+"members": [
+{
+"identifier": "8171984740",
+"kind": "national",
+"name": "Gmina Tuszów Narodowy",
+"org_id": 22774549
+},
+{
+"identifier": "8171984740",
+"kind": "national",
+"name": "Miejskie Przedsiębiorstwo Gospodarki Komunalnej Sp. z o.o. – Lider Konsorcjum",
+"org_id": 23478706
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6751321469",
+"members": [
+{
+"identifier": "PL6751321469",
+"kind": "vat",
+"name": "Softbook s.c.",
+"org_id": 10771897
+},
+{
+"identifier": "6751321469",
+"kind": "national",
+"name": "Grażyna Górska-Janik, Fabian Sojka wspólnie prowadzący działalność gospodarczą pod firmą Softbooks s.c. Grażyna Górska-Janik, Fabian Sojka",
+"org_id": 18496870
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "122680121",
+"members": [
+{
+"identifier": "122680121",
+"kind": "national",
+"name": "Tarnowski Organizator Komunalny",
+"org_id": 4139770
+},
+{
+"identifier": "122680121",
+"kind": "national",
+"name": "Gmina Miasta Tarnowa - Zarząd Dróg i Komunikacji w Tarnowie",
+"org_id": 22535981
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "IT",
+"key": "80427570587",
+"members": [
+{
+"identifier": "80427570587",
+"kind": "national",
+"name": "Tar Milano",
+"org_id": 4322
+},
+{
+"identifier": "80427570587",
+"kind": "national",
+"name": "TAR Veneto",
+"org_id": 22535261
+},
+{
+"identifier": "80427570587",
+"kind": "national",
+"name": "TRIBUNALE AMMINISTRATIVO REGIONALE - VENETO",
+"org_id": 22574283
+},
+{
+"identifier": "80427570587",
+"kind": "national",
+"name": "Tribunale Amministrativo Regionale per il Veneto",
+"org_id": 23194660
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "CZ",
+"key": "64616398",
+"members": [
+{
+"identifier": "64616398",
+"kind": "national",
+"name": "NAR marketing, s.r.o.",
+"org_id": 1802668
+},
+{
+"identifier": "CZ64616398",
+"kind": "vat",
+"name": "PROEBIZ s.r.o.",
+"org_id": 22417646
+}
+],
+"scheme": "CZ:ico"
+},
+{
+"country": "PL",
+"key": "7792455983",
+"members": [
+{
+"identifier": "7792455983",
+"kind": "national",
+"name": "SYGNEA Sp. z o.o.",
+"org_id": 18432847
+},
+{
+"identifier": "7792455983",
+"kind": "national",
+"name": "BIURO OCHRONY DOGMAT Sp. z o o.",
+"org_id": 22942934
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "931935129",
+"members": [
+{
+"identifier": "931935129",
+"kind": "national",
+"name": "Gmina Siechnice",
+"org_id": 17034809
+},
+{
+"identifier": "931935129",
+"kind": "national",
+"name": "Burmistrz Siechnic",
+"org_id": 21260705
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "IT",
+"key": "13221390159",
+"members": [
+{
+"identifier": "13221390159",
+"kind": "national",
+"name": "Ernst & Young Financial Business Advisors SpA (mandante)",
+"org_id": 9648278
+},
+{
+"identifier": "13221390159",
+"kind": "national",
+"name": "RTI EY ADV mandataria - SLT mandante (EY ADVISORY SPA, Studio Legale Tributario)",
+"org_id": 22647086
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "7621747265",
+"members": [
+{
+"identifier": "7621747265",
+"kind": "national",
+"name": "JOL - MARK sp. z o. o.",
+"org_id": 23517516
+},
+{
+"identifier": "7621747265",
+"kind": "national",
+"name": "Samodzielny Publiczny Zespół Zakładów Opieki Zdrowotnej w Wyszkowie",
+"org_id": 23738877
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5261659078",
+"members": [
+{
+"identifier": "5261659078",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 23490203
+},
+{
+"identifier": "5261659078",
+"kind": "national",
+"name": "Urząd Zamówień Publicznych – Departament Odwołań",
+"org_id": 23530083
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "432519331",
+"members": [
+{
+"identifier": "432519331",
+"kind": "national",
+"name": "Bio Maxima S.A.",
+"org_id": 10948931
+},
+{
+"identifier": "432519331",
+"kind": "national",
+"name": "BioMaxima S.A.",
+"org_id": 18447009
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "320430448",
+"members": [
+{
+"identifier": "32043044800000",
+"kind": "national",
+"name": "Miejskie Przedsiębiorstwo Gospodarki Komunalnej Sp. z o.o.",
+"org_id": 9340607
+},
+{
+"identifier": "320430448",
+"kind": "national",
+"name": "MPGK Sp. z o. o. w Choszcznie",
+"org_id": 23182548
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5252248481",
+"members": [
+{
+"identifier": "5252248481",
+"kind": "national",
+"name": "Ośrodek Sportu i Rekreacji Dzielnicy Praga-Południe m.st. Warszawy",
+"org_id": 1789
+},
+{
+"identifier": "5252248481",
+"kind": "national",
+"name": "Miasto Stołeczne Warszawa - Szkoła Podstawowa Nr 303 im. Fryderyka Chopina",
+"org_id": 12176821
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "01599840848",
+"members": [
+{
+"identifier": "01599840848",
+"kind": "national",
+"name": "CADA and Sunlab",
+"org_id": 13865652
+},
+{
+"identifier": "01599840848",
+"kind": "national",
+"name": "R.T.I. CHIMICA APPLICATA DEPURAZIONE ACQUE di Filippo Giglio & C. S.n.c. (capogruppo mandataria – C.F. 01599840848) / ARIEN CONSULTING S.r.l. (mandante - C.F. 08978601006) / WSP Italia S.r.l. (mandante – C.F. 03674811009)",
+"org_id": 22748820
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "015164655",
+"members": [
+{
+"identifier": "015164655",
+"kind": "national",
+"name": "Synektik S.A",
+"org_id": 10429990
+},
+{
+"identifier": "015164655",
+"kind": "national",
+"name": "Synektic S.A.",
+"org_id": 19114428
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "7532448064",
+"members": [
+{
+"identifier": "7532448064",
+"kind": "national",
+"name": "GLOBAL 3D s.c.",
+"org_id": 11699305
+},
+{
+"identifier": "7532448064",
+"kind": "national",
+"name": "MEDIA Sp. z o.o.",
+"org_id": 20109072
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "97013610825",
+"members": [
+{
+"identifier": "97013610825",
+"kind": "national",
+"name": "TAR BRESCIA",
+"org_id": 1033
+},
+{
+"identifier": "97013610825",
+"kind": "national",
+"name": "Tribunale Amministrativo Regionale della Sicilia",
+"org_id": 22957233
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "IT",
+"key": "09197520159",
+"members": [
+{
+"identifier": "09197520159",
+"kind": "national",
+"name": "Aviva ITALIA S.p.A.",
+"org_id": 13530472
+},
+{
+"identifier": "09197520159",
+"kind": "national",
+"name": "Allianz Viva S.p.A.",
+"org_id": 21457346
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "8133380514",
+"members": [
+{
+"identifier": "8133380514",
+"kind": "national",
+"name": "Why Not Travel spółka z ograniczoną odpowiedzialnością",
+"org_id": 8582
+},
+{
+"identifier": "8133380514",
+"kind": "national",
+"name": "WhyNotTravel  Sp. z o.o. Sp.k.",
+"org_id": 19282212
+},
+{
+"identifier": "PL8133380514",
+"kind": "vat",
+"name": "WHYNOTTRAVEL Załoga Nasternak \nSp. komandytowa",
+"org_id": 22701570
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5210417157",
+"members": [
+{
+"identifier": "PL5210417157",
+"kind": "vat",
+"name": "Naukowa i Akademicka Sieć Komputerowa - Państwowy Instytut Badawczy",
+"org_id": 11434
+},
+{
+"identifier": "5210417157",
+"kind": "national",
+"name": "BCODERS Spółka Akcyjna",
+"org_id": 19303636
+},
+{
+"identifier": "PL5210417157",
+"kind": "vat",
+"name": "Grupa Huron Sp. z o.o.",
+"org_id": 23635309
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "101522855",
+"members": [
+{
+"identifier": "101522855",
+"kind": "national",
+"name": "GM Synergy Sp. z o.o. Sp. K.",
+"org_id": 13710158
+},
+{
+"identifier": "101522855",
+"kind": "national",
+"name": "Gmsynergy sp. z o.o. sp. j.",
+"org_id": 17265578
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5551540657",
+"members": [
+{
+"identifier": "5551540657",
+"kind": "national",
+"name": "FIRMA USŁUGOWO-HANDLOWA ,,ŻWIREK”, KRZYSZTOF STANISŁAWSKI,",
+"org_id": 22794250
+},
+{
+"identifier": "5551540657",
+"kind": "national",
+"name": "USŁUGI CIĄGNIKIEM HENRYK FIEREK,",
+"org_id": 22794252
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "9662101673",
+"members": [
+{
+"identifier": "9662101673",
+"kind": "national",
+"name": "Wschodnia Energia Spółka z o.o.",
+"org_id": 18692874
+},
+{
+"identifier": "9662101673",
+"kind": "national",
+"name": "Gmina Michałowo",
+"org_id": 23612770
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7481590584",
+"members": [
+{
+"identifier": "7481590584",
+"kind": "national",
+"name": "Powiatowo-Gminny Związek Transportu POGRANICZE",
+"org_id": 23526159
+},
+{
+"identifier": "7481590584",
+"kind": "national",
+"name": "Przewodniczący Zarządu Związku-Janusz Siano",
+"org_id": 23526161
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "385231280",
+"members": [
+{
+"identifier": "385231280",
+"kind": "national",
+"name": "(LIDER KONSORCJUM) p. Hanna Szamburska prowadząca działalność gospodarczą pod firmą „Usługi Leśne” Hanna Szamburska z siedzibą w 96-330 Puszcza Mariańska, Zator 22,",
+"org_id": 20761909
+},
+{
+"identifier": "385231280",
+"kind": "national",
+"name": "KRYS-WIK Wiktor Szamburski",
+"org_id": 20831837
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5540315514",
+"members": [
+{
+"identifier": "5540315514",
+"kind": "national",
+"name": "Zakład Usług Leśno-Ogrodniczych „Tilia” Renata Pindel",
+"org_id": 13024753
+},
+{
+"identifier": "5540315514",
+"kind": "national",
+"name": "Nadleśnictwo Bydgoszcz",
+"org_id": 16184457
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "12688370159",
+"members": [
+{
+"identifier": "12688370159",
+"kind": "national",
+"name": "Pro Iter Srl",
+"org_id": 10105705
+},
+{
+"identifier": "12688370159",
+"kind": "national",
+"name": "Proiter S.r.l.",
+"org_id": 13684388
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "8431629729",
+"members": [
+{
+"identifier": "8431629729",
+"kind": "national",
+"name": "C-FOREST II Sp. z o.o.",
+"org_id": 606
+},
+{
+"identifier": "8431629729",
+"kind": "national",
+"name": "C-FORST II Sp. z o.o.",
+"org_id": 23534944
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5512129478",
+"members": [
+{
+"identifier": "5512129478",
+"kind": "national",
+"name": "Powiat Wadowicki - Starostwo Powiatowe w Wadowicach",
+"org_id": 12613
+},
+{
+"identifier": "5512129478",
+"kind": "national",
+"name": "REKORD SI Sp. z o.o.",
+"org_id": 19034187
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "8960000032",
+"members": [
+{
+"identifier": "PL8960000032",
+"kind": "vat",
+"name": "Zespół Elektrociepłowni Wrocławskich \"Kogeneracja\" S.A.",
+"org_id": 1804614
+},
+{
+"identifier": "8960000032",
+"kind": "national",
+"name": "ZEC SERVICE Sp. z o.o.",
+"org_id": 18628973
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "02293180242",
+"members": [
+{
+"identifier": "02293180242",
+"kind": "national",
+"name": "MISA SRL",
+"org_id": 22211715
+},
+{
+"identifier": "02293180242",
+"kind": "national",
+"name": "M.I.S.A. - Meccaniche Idroelettriche Service Arzignano S.r.l.",
+"org_id": 30534796
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "634223083",
+"members": [
+{
+"identifier": "634223083",
+"kind": "national",
+"name": "Miasto Poznań – Zespół Szkół Specjalnych nr 105 im. Juliana Tuwima",
+"org_id": 8909223
+},
+{
+"identifier": "634223083",
+"kind": "national",
+"name": "Szpital w Puszczykowie im. Prof. S.T. Dąbrowskiego S.A.",
+"org_id": 21644872
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "7393679238",
+"members": [
+{
+"identifier": "7393679238",
+"kind": "national",
+"name": "Netland Sp. z o.o.",
+"org_id": 15195081
+},
+{
+"identifier": "7393679238",
+"kind": "national",
+"name": "GlobTree Sp. z.o.o.",
+"org_id": 23123167
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "242786533",
+"members": [
+{
+"identifier": "242786533",
+"kind": "national",
+"name": "Eplaneta Sp. z o.o.",
+"org_id": 13692820
+},
+{
+"identifier": "242786533",
+"kind": "national",
+"name": "Grupa E Sp. z o.o.",
+"org_id": 20054093
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "6762337735",
+"members": [
+{
+"identifier": "6762337735",
+"kind": "national",
+"name": "Tauron Sprzedaż Sp. z o.o.",
+"org_id": 1181153
+},
+{
+"identifier": "6762337735",
+"kind": "national",
+"name": "Miejskie Centrum Sportu i Rekreacji Sp. z o.o.",
+"org_id": 5350754
+},
+{
+"identifier": "PL6762337735",
+"kind": "vat",
+"name": "TAURON SPRZEDAŻ Sp. z o.o.",
+"org_id": 23484796
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "190241779",
+"members": [
+{
+"identifier": "190241779",
+"kind": "national",
+"name": "Gdańskie Przedsiębiorstwo Energetyki Cieplnej Sp. z o.o.",
+"org_id": 18480411
+},
+{
+"identifier": "190241779",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 22520378
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "528921719",
+"members": [
+{
+"identifier": "528921719",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 23074298
+},
+{
+"identifier": "528921719",
+"kind": "national",
+"name": "Prezes Krajowej Izby Odwoławczej",
+"org_id": 23084117
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "8512072633",
+"members": [
+{
+"identifier": "8512072633",
+"kind": "national",
+"name": "Toruńskie Zakłady Materiałów Opatrunkowych Sp. z o.o.",
+"org_id": 11707093
+},
+{
+"identifier": "8512072633",
+"kind": "national",
+"name": "Citonet Szczecin Sp. z o.o.",
+"org_id": 18391276
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "01481370482",
+"members": [
+{
+"identifier": "01481370482",
+"kind": "national",
+"name": "Sogelma srl",
+"org_id": 16138930
+},
+{
+"identifier": "01481370482",
+"kind": "national",
+"name": "SO.GE.L.M.A. S.r.l. (Impresa singola)",
+"org_id": 22629935
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "007024050",
+"members": [
+{
+"identifier": "00702405000022",
+"kind": "national",
+"name": "Związek Ochotniczych Straży Pożarnych Rzeczypospolitej Polskiej - Wytwórnia Umundurowania Strażackiego",
+"org_id": 22739608
+},
+{
+"identifier": "007024050",
+"kind": "national",
+"name": "SZYBICKI",
+"org_id": 23264349
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "7582352403",
+"members": [
+{
+"identifier": "7582352403",
+"kind": "national",
+"name": "Zakład Karny w Przytułach Starych",
+"org_id": 18632638
+},
+{
+"identifier": "7582352403",
+"kind": "national",
+"name": "Firma Handlowo-Usługowa BARTEX",
+"org_id": 19685165
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "04624690634",
+"members": [
+{
+"identifier": "04624690634",
+"kind": "national",
+"name": "I.T.M. INFORMATICA TELEMATICA MERIDIONALE",
+"org_id": 4867
+},
+{
+"identifier": "04624690634",
+"kind": "national",
+"name": "I.T.M. INFORMATICA TELEMATICA MERIDIONALE",
+"org_id": 18499566
+},
+{
+"identifier": "04624690634",
+"kind": "national",
+"name": "ITM SRL",
+"org_id": 20527036
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "5242476743",
+"members": [
+{
+"identifier": "5242476743",
+"kind": "national",
+"name": "JM Data Sp. z o.o. Sp. k.",
+"org_id": 12198127
+},
+{
+"identifier": "5242476743",
+"kind": "national",
+"name": "Copy.Net.pl",
+"org_id": 19700422
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7822874326",
+"members": [
+{
+"identifier": "7822874326",
+"kind": "national",
+"name": "TVprzemyslowa Nowak Sp. k",
+"org_id": 19644961
+},
+{
+"identifier": "7822874326",
+"kind": "national",
+"name": "UNIFORCE Sp. z o. o.",
+"org_id": 22824077
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5213916470",
+"members": [
+{
+"identifier": "5213916470",
+"kind": "national",
+"name": "Krajowy Instytut Mediów",
+"org_id": 17221415
+},
+{
+"identifier": "5213916470",
+"kind": "national",
+"name": "PBS sp. z o. o.",
+"org_id": 18781184
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "362607411",
+"members": [
+{
+"identifier": "362607411",
+"kind": "national",
+"name": "FULL-MED Sp. z o.o.",
+"org_id": 16034067
+},
+{
+"identifier": "362607411",
+"kind": "national",
+"name": "MEDCOMPLEX Sp. z o. o.",
+"org_id": 21359926
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5262369186",
+"members": [
+{
+"identifier": "5262369186",
+"kind": "national",
+"name": "Perlan Technologies Polska Sp. z o.o.",
+"org_id": 10732910
+},
+{
+"identifier": "5262369186",
+"kind": "national",
+"name": "Perlan Technologies Polska sp. z o.o.",
+"org_id": 17241668
+},
+{
+"identifier": "PL5262369186",
+"kind": "vat",
+"name": "Altium International Sp. z o.o.",
+"org_id": 22382986
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5833089127",
+"members": [
+{
+"identifier": "5833089127",
+"kind": "national",
+"name": "NetPC Sp. z o.o.",
+"org_id": 21290440
+},
+{
+"identifier": "5833089127",
+"kind": "national",
+"name": "NET PC Sp. z o.o.",
+"org_id": 23523588
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6461014115",
+"members": [
+{
+"identifier": "6461014115",
+"kind": "national",
+"name": "Intertech dental Ryszard Drobik",
+"org_id": 22644560
+},
+{
+"identifier": "6461014115",
+"kind": "national",
+"name": "Laerdal Medical Poland Sp. z o.o.",
+"org_id": 23744291
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6770066541",
+"members": [
+{
+"identifier": "6770066541",
+"kind": "national",
+"name": "Eden Springs Spółka z o.o.",
+"org_id": 22566477
+},
+{
+"identifier": "6770066541",
+"kind": "national",
+"name": "Culligan Polska Sp. z o.o.",
+"org_id": 24606531
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "8361777984",
+"members": [
+{
+"identifier": "8361777984",
+"kind": "national",
+"name": "Ekoinstal Spółka z o.o.",
+"org_id": 9788593
+},
+{
+"identifier": "8361777984",
+"kind": "national",
+"name": "Grupa Ekoenergia Sp. z o. o.",
+"org_id": 22638693
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "890718171",
+"members": [
+{
+"identifier": "890718171",
+"kind": "national",
+"name": "GMINA SZCZYTNA",
+"org_id": 19208377
+},
+{
+"identifier": "890718171",
+"kind": "national",
+"name": "Janaszek Electric sp.zo.o.",
+"org_id": 20930050
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "1251622308",
+"members": [
+{
+"identifier": "1251622308",
+"kind": "national",
+"name": "Gmina Miasto Marki",
+"org_id": 22505352
+},
+{
+"identifier": "1251622308",
+"kind": "national",
+"name": "Szkoła Podstawowa nr 2 z Oddziałami Integracyjnymi im. Żołnierzy AK II Rejonu Celków",
+"org_id": 24590657
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "260229356",
+"members": [
+{
+"identifier": "260229356",
+"kind": "national",
+"name": "Zakład Gospodarki Odpadami Komunalnymi Spółka z ograniczoną odpowiedzialnością",
+"org_id": 22464029
+},
+{
+"identifier": "260229356",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 22664763
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5751886389",
+"members": [
+{
+"identifier": "5751886389",
+"kind": "national",
+"name": "GROMEX RESTRUKTURYZACJE sp. z o.o.",
+"org_id": 21783655
+},
+{
+"identifier": "5751886389",
+"kind": "national",
+"name": "K3XMORE Sp. z o.o.",
+"org_id": 23353196
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7123438281",
+"members": [
+{
+"identifier": "7123438281",
+"kind": "national",
+"name": "Kinetik Spółka z ograniczoną odpowiedzialnością",
+"org_id": 22694964
+},
+{
+"identifier": "7123438281",
+"kind": "national",
+"name": "EV Motors Sp. z o.o.",
+"org_id": 22955695
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "9671180577",
+"members": [
+{
+"identifier": "PL9671180577",
+"kind": "vat",
+"name": "Jednostka Wojskowa 1189",
+"org_id": 1893949
+},
+{
+"identifier": "9671180577",
+"kind": "national",
+"name": "Dowództwo 1 Brygady Logistycznej",
+"org_id": 22797228
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "00973310113",
+"members": [
+{
+"identifier": "00973310113",
+"kind": "national",
+"name": "RTI Ma.Ris. Cooperativa Sociale/Il Solco con sede amministrativa in via Calata Gadda 200Y, 16128 Genova (GE)",
+"org_id": 15533777
+},
+{
+"identifier": "00973310113",
+"kind": "national",
+"name": "MaRis cooperativa sociale",
+"org_id": 15970509
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "6772087174",
+"members": [
+{
+"identifier": "6772087174",
+"kind": "national",
+"name": "UNIMA 2000 Systemy Teleinformatyczne S.A.",
+"org_id": 22159623
+},
+{
+"identifier": "6772087174",
+"kind": "national",
+"name": "yarrl S.A.",
+"org_id": 22678925
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5260214054",
+"members": [
+{
+"identifier": "5260214054",
+"kind": "national",
+"name": "RehaFund Sp. z o.o",
+"org_id": 23710363
+},
+{
+"identifier": "5260214054",
+"kind": "national",
+"name": "REHA FUND Sp. z o. o.",
+"org_id": 24494035
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6340019148",
+"members": [
+{
+"identifier": "6340019148",
+"kind": "national",
+"name": "Tractebel Engineering S.A.",
+"org_id": 17760516
+},
+{
+"identifier": "6340019148",
+"kind": "national",
+"name": "ANTEA POLSKA S.A.",
+"org_id": 22362515
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7792417853",
+"members": [
+{
+"identifier": "7792417853",
+"kind": "national",
+"name": "Graph’it Sp. z o.o.",
+"org_id": 18568605
+},
+{
+"identifier": "7792417853",
+"kind": "national",
+"name": "Graphit sp. z o.o.",
+"org_id": 19091271
+},
+{
+"identifier": "PL7792417853",
+"kind": "vat",
+"name": "GRAPH’IT Sp. z o.o.",
+"org_id": 23687645
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "05799950638",
+"members": [
+{
+"identifier": "05799950638",
+"kind": "national",
+"name": "NTERPROGETTI SRL",
+"org_id": 18007686
+},
+{
+"identifier": "05799950638",
+"kind": "national",
+"name": "RTP INTERPROGETTI S.R.L./SIRIO INGEGNERIA CONS. STABILE, IN.CO.SE.T. S.R.L., ARTELIA ITALIA S.P.A, ALPHATECH (MANDANTI)",
+"org_id": 24493600
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "RO",
+"key": "4267117",
+"members": [
+{
+"identifier": "4267117",
+"kind": "national",
+"name": "MUNICIPIUL BUCURESTI",
+"org_id": 2203
+},
+{
+"identifier": "4267117",
+"kind": "national",
+"name": "DIRECTIA GENERALA ACHIZITII PUBLICE",
+"org_id": 2204
+},
+{
+"identifier": "4267117",
+"kind": "national",
+"name": "MUNICIPIUL BUCURESTI",
+"org_id": 22537494
+},
+{
+"identifier": "4267117",
+"kind": "national",
+"name": "Municipiul Bucuresti",
+"org_id": 22537495
+}
+],
+"scheme": "RO:cui"
+},
+{
+"country": "PL",
+"key": "321482051",
+"members": [
+{
+"identifier": "321482051",
+"kind": "national",
+"name": "Paramedic24 Sp. z o.o.",
+"org_id": 22679228
+},
+{
+"identifier": "321482051",
+"kind": "national",
+"name": "PARAMEDIC 24 SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+"org_id": 23406582
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "7361039808",
+"members": [
+{
+"identifier": "7361039808",
+"kind": "national",
+"name": "Górskie Ochotnicze Pogotowie Ratunkowe Zarząd Główny",
+"org_id": 22660183
+},
+{
+"identifier": "7361039808",
+"kind": "national",
+"name": "Grupa Regionalna Ochotniczego Pogotowia Ratunkowego GRUPA KARKONOSKA GOPR",
+"org_id": 23208170
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "01735830349",
+"members": [
+{
+"identifier": "01735830349",
+"kind": "national",
+"name": "Modulcasa Line S.p.A.",
+"org_id": 11739002
+},
+{
+"identifier": "01735830349",
+"kind": "national",
+"name": "MODULCASA LINE SPA",
+"org_id": 20722820
+},
+{
+"identifier": "01735830349",
+"kind": "national",
+"name": "RTI tra MODULCASALINE S.P.A. E TEKNOSERVICE SOC. COOP.",
+"org_id": 22560760
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "7393827791",
+"members": [
+{
+"identifier": "7393827791",
+"kind": "national",
+"name": "Skarb Państwa - 22 Wojskowy Oddział Gospodarczy w Olsztynie",
+"org_id": 3798
+},
+{
+"identifier": "7393827791",
+"kind": "national",
+"name": "„FAXIKO” SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+"org_id": 21327608
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "9521851834",
+"members": [
+{
+"identifier": "9521851834",
+"kind": "national",
+"name": "Dimension Data Sp. z o.o.",
+"org_id": 10093544
+},
+{
+"identifier": "9521851834",
+"kind": "national",
+"name": "NTT Poland sp. z o.o.",
+"org_id": 18731051
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5272604418",
+"members": [
+{
+"identifier": "5272604418",
+"kind": "national",
+"name": "Eo Networks S.A.",
+"org_id": 16256455
+},
+{
+"identifier": "PL5272604418",
+"kind": "vat",
+"name": "EO NETWORKS S.A.",
+"org_id": 22367478
+},
+{
+"identifier": "5272604418",
+"kind": "national",
+"name": "Euvic SA",
+"org_id": 24592247
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5671427430",
+"members": [
+{
+"identifier": "5671427430",
+"kind": "national",
+"name": "PPHU ”LASPOL” Michał Proszewski",
+"org_id": 22477655
+},
+{
+"identifier": "5671427430",
+"kind": "national",
+"name": "ZUL Karina Kowolik",
+"org_id": 22477656
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "141172230",
+"members": [
+{
+"identifier": "141172230",
+"kind": "national",
+"name": "ONE MEDPOLSKA SP. Z OO",
+"org_id": 11140927
+},
+{
+"identifier": "141172230",
+"kind": "national",
+"name": "BATIST Medical Polska Sp. z o.o.",
+"org_id": 19959792
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "6331005336",
+"members": [
+{
+"identifier": "6331005336",
+"kind": "national",
+"name": "Arnold Röhrich",
+"org_id": 21840234
+},
+{
+"identifier": "6331005336",
+"kind": "national",
+"name": "Salon i Serwis Instrumentów Dętych Piotr Śmietana",
+"org_id": 22758273
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6492086506",
+"members": [
+{
+"identifier": "6492086506",
+"kind": "national",
+"name": "Przedsiębiorstwo Usług Technicznych Intercor Spółka z ograniczoną odpowiedzialnością",
+"org_id": 9894007
+},
+{
+"identifier": "6492086506",
+"kind": "national",
+"name": "Prezes Krajowej Izby Odwoławwczej",
+"org_id": 22414909
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "9542824564",
+"members": [
+{
+"identifier": "9542824564",
+"kind": "national",
+"name": "Lotos SPV 1 Sp. z o.o.",
+"org_id": 20384045
+},
+{
+"identifier": "9542824564",
+"kind": "national",
+"name": "ARAMCO FUELS POLAND SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+"org_id": 20515354
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "013083214",
+"members": [
+{
+"identifier": "013083214",
+"kind": "national",
+"name": "Miasto Stołeczne Warszawa",
+"org_id": 22264311
+},
+{
+"identifier": "013083214",
+"kind": "national",
+"name": "Ośrodek Sportu i Rekreacji m.st Warszawy w Dzielnicy Wola",
+"org_id": 22769557
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "6912443003",
+"members": [
+{
+"identifier": "6912443003",
+"kind": "national",
+"name": "DGP Catering Partner Sp. z o.o.",
+"org_id": 9743599
+},
+{
+"identifier": "6912443003",
+"kind": "national",
+"name": "CTG Sp. zo.o.",
+"org_id": 19396933
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "1230884753",
+"members": [
+{
+"identifier": "1230884753",
+"kind": "national",
+"name": "EURO-LIGHT Sp. z o.o. -Lider",
+"org_id": 19760964
+},
+{
+"identifier": "1230884753",
+"kind": "national",
+"name": "ILUM Sp. z o.o., ul. 1 Maja 46A,",
+"org_id": 23378313
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "491892854",
+"members": [
+{
+"identifier": "491892854",
+"kind": "national",
+"name": "Zarząd Powiatu w Limanowej",
+"org_id": 8598300
+},
+{
+"identifier": "491892854",
+"kind": "national",
+"name": "Powiat Limanowski",
+"org_id": 21908332
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "6411470472",
+"members": [
+{
+"identifier": "6411470472",
+"kind": "national",
+"name": "Miejski Ośrodek Pomocy Społecznej",
+"org_id": 22256268
+},
+{
+"identifier": "6411470472",
+"kind": "national",
+"name": "Centrum Usług Społecznych",
+"org_id": 22972497
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5431754901",
+"members": [
+{
+"identifier": "5431754901",
+"kind": "national",
+"name": "Akme Sp. z o.o. Sp. k.",
+"org_id": 17094776
+},
+{
+"identifier": "5431754901",
+"kind": "national",
+"name": "SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ W BIELSKU PODLASKIM",
+"org_id": 22917115
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5260212931",
+"members": [
+{
+"identifier": "5260212931",
+"kind": "national",
+"name": "WPRD Gravel Sp. z o.o.",
+"org_id": 13768834
+},
+{
+"identifier": "5260212931",
+"kind": "national",
+"name": "Bank Millennium S.A.",
+"org_id": 20442869
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "634582244",
+"members": [
+{
+"identifier": "634582244",
+"kind": "national",
+"name": "Sputnik Software Sp. z o.o.",
+"org_id": 10406425
+},
+{
+"identifier": "634582244",
+"kind": "national",
+"name": "Nefeni Sp. z o.o.",
+"org_id": 20859297
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "531412869",
+"members": [
+{
+"identifier": "531412869",
+"kind": "national",
+"name": "MIEJSKI ZAKŁAD KOMUNIKACJI W NYSIE SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+"org_id": 17908753
+},
+{
+"identifier": "531412869",
+"kind": "national",
+"name": "Gmina Nysa",
+"org_id": 22909353
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "240033634",
+"members": [
+{
+"identifier": "240033634",
+"kind": "national",
+"name": "Południowy Koncern Węglowy S.A.",
+"org_id": 4264977
+},
+{
+"identifier": "240033634",
+"kind": "national",
+"name": "Południowy Koncern Węglowy S.A.",
+"org_id": 4460397
+},
+{
+"identifier": "24003363400000",
+"kind": "national",
+"name": "TAURON Wydobycie S.A. w Jaworznie",
+"org_id": 5226275
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5262605735",
+"members": [
+{
+"identifier": "5262605735",
+"kind": "national",
+"name": "MBA System Sp. z o.o.",
+"org_id": 18369187
+},
+{
+"identifier": "5262605735",
+"kind": "national",
+"name": "Skarb Państwa - Generalny Dyrektor Dróg Krajowych i Autostrad Prowadzący postępowanie: Generalna Dyrekcja Dróg Krajowych i Autostrad Centrala",
+"org_id": 22171647
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5811971183",
+"members": [
+{
+"identifier": "5811971183",
+"kind": "national",
+"name": "LUKRUM Kmil Bielecki",
+"org_id": 17820981
+},
+{
+"identifier": "5811971183",
+"kind": "national",
+"name": "Konkret Sp. z o.o. Sp. k",
+"org_id": 22259518
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7651684463",
+"members": [
+{
+"identifier": "7651684463",
+"kind": "national",
+"name": "1 REGIONALNA BAZA LOGISTYCZNA",
+"org_id": 5067
+},
+{
+"identifier": "7651684463",
+"kind": "national",
+"name": "Zakłady Mechaniczne \"TARNÓW\" Spółka Akcyjna",
+"org_id": 22690705
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6492448759",
+"members": [
+{
+"identifier": "6492448759",
+"kind": "national",
+"name": "MIEJSKI ZAKŁAD USŁUG KOMUNALNYCH SPÓŁKA  OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+"org_id": 22771470
+},
+{
+"identifier": "6492448759",
+"kind": "national",
+"name": "PETROJET Sp. z o.o.",
+"org_id": 23516650
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5223165516",
+"members": [
+{
+"identifier": "5223165516",
+"kind": "national",
+"name": "Mobilne Centrum Serwisu sp. zo.o. spółka komandytowa",
+"org_id": 21116863
+},
+{
+"identifier": "5223165516",
+"kind": "national",
+"name": "MCS Serwis Sp. z o.o. Sp. k.",
+"org_id": 23488209
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PT",
+"key": "505176300",
+"members": [
+{
+"identifier": "505176300",
+"kind": "national",
+"name": "Águas do Algarve, SA",
+"org_id": 4599
+},
+{
+"identifier": "505176300",
+"kind": "national",
+"name": "Quimitejo — Produtos Químicos, Lda.",
+"org_id": 11645249
+}
+],
+"scheme": "PT:nif"
+},
+{
+"country": "PL",
+"key": "360435897",
+"members": [
+{
+"identifier": "360435897",
+"kind": "national",
+"name": "QiaLab Spółka z ograniczoną odpowiedzialnością",
+"org_id": 11354577
+},
+{
+"identifier": "360435897",
+"kind": "national",
+"name": "QIAGEN Polska Sp. z o. o.",
+"org_id": 17859424
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "6760077945",
+"members": [
+{
+"identifier": "6760077945",
+"kind": "national",
+"name": "Urząd Miasta i Gminy",
+"org_id": 22547981
+},
+{
+"identifier": "6760077945",
+"kind": "national",
+"name": "Datacomp IT Sp. z o.o.",
+"org_id": 22592774
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7791951734",
+"members": [
+{
+"identifier": "7791951734",
+"kind": "national",
+"name": "Empireum Piotr Dopieralski",
+"org_id": 21900235
+},
+{
+"identifier": "7791951734",
+"kind": "national",
+"name": "IZABELA BIERNACKA \"PASSADENA SYSTEMS\"",
+"org_id": 22652218
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "000314661",
+"members": [
+{
+"identifier": "000314661",
+"kind": "national",
+"name": "SAMODZIELNY PUBLICZNY ZESPÓŁ OPIEKI ZDROWOTNEJ",
+"org_id": 19643153
+},
+{
+"identifier": "000314661",
+"kind": "national",
+"name": "Kędzierzyn Koźle",
+"org_id": 23369120
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "IT",
+"key": "06044391214",
+"members": [
+{
+"identifier": "06044391214",
+"kind": "national",
+"name": "CONPAT S.c. a r.l.",
+"org_id": 9300817
+},
+{
+"identifier": "06044391214",
+"kind": "national",
+"name": "CCONPAT S.C.A.R.L. (Cons. esecutrici: Manelli Impresa S.r.l., AMEC S.r.l. – Imprese indicate per il PMA: HYPRO SRL e SOCOTEC ITALIA SRL",
+"org_id": 20664636
+},
+{
+"identifier": "06044391214",
+"kind": "national",
+"name": "CONPAT S.C.AR.L.",
+"org_id": 21392615
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "5250000251",
+"members": [
+{
+"identifier": "5250000251",
+"kind": "national",
+"name": "PKP SA",
+"org_id": 1279457
+},
+{
+"identifier": "5250000251",
+"kind": "national",
+"name": "Polskie Koleje Państwowe S.A.",
+"org_id": 22791611
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6652308856",
+"members": [
+{
+"identifier": "6652308856",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 22733696
+},
+{
+"identifier": "6652308856",
+"kind": "national",
+"name": "ZARZĄD DRÓG POWIATOWYCH W KONINIE",
+"org_id": 22813764
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "280266382",
+"members": [
+{
+"identifier": "280266382",
+"kind": "national",
+"name": "Hama Polska",
+"org_id": 15413553
+},
+{
+"identifier": "280266382",
+"kind": "national",
+"name": "Truck Care sp. z o.o.",
+"org_id": 21241951
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "IT",
+"key": "10619651002",
+"members": [
+{
+"identifier": "10619651002",
+"kind": "national",
+"name": "Inapro Srl",
+"org_id": 10175525
+},
+{
+"identifier": "10619651002",
+"kind": "national",
+"name": "INARPRO S.r.l.",
+"org_id": 22411695
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "5891962110",
+"members": [
+{
+"identifier": "5891962110",
+"kind": "national",
+"name": "Zakład Robót Ogólnobudowlanych Stanisław Repiński",
+"org_id": 15082073
+},
+{
+"identifier": "5891962110",
+"kind": "national",
+"name": "Spółka Komunalna Żukowo Sp. z o.o.",
+"org_id": 22564667
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "050658396",
+"members": [
+{
+"identifier": "050658396",
+"kind": "national",
+"name": "Powiat Białostocki – Starostwo Powiatowe w Białymstoku",
+"org_id": 9764429
+},
+{
+"identifier": "050658396",
+"kind": "national",
+"name": "Zarząd Powiatu Białostockiego",
+"org_id": 21187915
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5922274375",
+"members": [
+{
+"identifier": "5922274375",
+"kind": "national",
+"name": "GRUPAALFA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ SPÓŁKA KOMANDYTOWA",
+"org_id": 22518432
+},
+{
+"identifier": "5922274375",
+"kind": "national",
+"name": "Grupa Alfa Sp. z o.o. Sp.K.",
+"org_id": 22732979
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7962972939",
+"members": [
+{
+"identifier": "7962972939",
+"kind": "national",
+"name": "ITS Science Sp. z o.o. Sp.k.",
+"org_id": 21093598
+},
+{
+"identifier": "7962972939",
+"kind": "national",
+"name": "VWR International Sp. z o. o",
+"org_id": 23389036
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "1070046338",
+"members": [
+{
+"identifier": "1070046338",
+"kind": "national",
+"name": "Sieć Badawcza Łukasiewicz – Instytut Lotnictwa",
+"org_id": 17283953
+},
+{
+"identifier": "1070046338",
+"kind": "national",
+"name": "Simplicity Sp. z o.o.",
+"org_id": 21590143
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7650007795",
+"members": [
+{
+"identifier": "7650007795",
+"kind": "national",
+"name": "konsorcjum firm: Zakład Usług Leśnych Wojciech Kołosowski, Łowicz Wałecki 48, 78-650 Mirosławiec, Firma Usługowa Markal Marcin Karczewski, Kalinówka 1, 78-650 Mirosławiec",
+"org_id": 16815272
+},
+{
+"identifier": "7650007795",
+"kind": "national",
+"name": "Skarb Państwa Państwowe Gospodarstwo Leśne Lasy Państwowe Nadleśnictwo Wałcz",
+"org_id": 18002669
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6762542091",
+"members": [
+{
+"identifier": "6762542091",
+"kind": "national",
+"name": "New Amsterdam Sp. z o.o.",
+"org_id": 17130948
+},
+{
+"identifier": "6762542091",
+"kind": "national",
+"name": "Małopolskie Centrum Nauki Cogiteon",
+"org_id": 22331601
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "8661709857",
+"members": [
+{
+"identifier": "8661709857",
+"kind": "national",
+"name": "Powiat Staszowski - Starostwo Powiatowe",
+"org_id": 22852546
+},
+{
+"identifier": "8661709857",
+"kind": "national",
+"name": "Zespół Szkół Ekonomicznych im. Jana Pawła II w Staszowie",
+"org_id": 23285243
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6342324513",
+"members": [
+{
+"identifier": "6342324513",
+"kind": "national",
+"name": "Zakład Usług Rehabilitacyjno – Socjalnych Sp. z o.o.",
+"org_id": 22592308
+},
+{
+"identifier": "6342324513",
+"kind": "national",
+"name": "ZURS Sp. z o. o.",
+"org_id": 22750026
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "007001280",
+"members": [
+{
+"identifier": "007001280",
+"kind": "national",
+"name": "Komenda Główna Ochotniczych Hufców Pracy",
+"org_id": 18264589
+},
+{
+"identifier": "007001280",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 22567865
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "9662117220",
+"members": [
+{
+"identifier": "9662117220",
+"kind": "national",
+"name": "Miasto Białystok",
+"org_id": 4713
+},
+{
+"identifier": "9662117220",
+"kind": "national",
+"name": "iSpot Poland Sp. z o.o.",
+"org_id": 20932164
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "356734120",
+"members": [
+{
+"identifier": "356734120",
+"kind": "national",
+"name": "HEALTHCARE MARKETING SERVICES SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+"org_id": 19621950
+},
+{
+"identifier": "356734120",
+"kind": "national",
+"name": "HMS Sp. z o.o.",
+"org_id": 22543709
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "6492169178",
+"members": [
+{
+"identifier": "6492169178",
+"kind": "national",
+"name": "Oficyna Profilaktyczna",
+"org_id": 23276373
+},
+{
+"identifier": "6492169178",
+"kind": "national",
+"name": "Uczelnia Korczaka- Akademia Nauk Stosowanych w Warszawie",
+"org_id": 23340413
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "1182136006",
+"members": [
+{
+"identifier": "1182136006",
+"kind": "national",
+"name": "Centrum Sportu i Rekreacji w Błoniu",
+"org_id": 22856827
+},
+{
+"identifier": "1182136006",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 23411298
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "05586360488",
+"members": [
+{
+"identifier": "05586360488",
+"kind": "national",
+"name": "C.S.P.E. S.r.l., mandante, di Firenze (FI)",
+"org_id": 14145519
+},
+{
+"identifier": "05586360488",
+"kind": "national",
+"name": "CSPE S.r.l.",
+"org_id": 22677689
+},
+{
+"identifier": "05586360488",
+"kind": "national",
+"name": "(RTP) Soc. CSPE Srl di Firenze (capogruppo), Soc. DSP Srl  di Firenze, Soc. PLAN Ingegneria Soc. Coop. di Macerata e Soc. 3Energy Srl di Cinisello Balsamo (MI).",
+"org_id": 22858412
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "5732936293",
+"members": [
+{
+"identifier": "5732936293",
+"kind": "national",
+"name": "Częstobud sp. z o.o.",
+"org_id": 19862541
+},
+{
+"identifier": "PL5732936293",
+"kind": "vat",
+"name": "CZĘSTOBUD Sp. z o.o.",
+"org_id": 23687642
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "07721970635",
+"members": [
+{
+"identifier": "07721970635",
+"kind": "national",
+"name": "RTI Co.Re Soc.Coop.Soc./L'Orsa Maggiore",
+"org_id": 9520800
+},
+{
+"identifier": "07721970635",
+"kind": "national",
+"name": "CoRe Consorzio di coop. soc.",
+"org_id": 16553091
+},
+{
+"identifier": "07721970635",
+"kind": "national",
+"name": "Co.Re. Cooperazione e ReciprocitÃÃÂ  Consorzio di Cooperative Sociali SocietÃÃÂ  Cooperativa Sociale",
+"org_id": 23077958
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "000536812",
+"members": [
+{
+"identifier": "000536812",
+"kind": "national",
+"name": "Gmina Nowy Dwór",
+"org_id": 20649359
+},
+{
+"identifier": "000536812",
+"kind": "national",
+"name": "MOTO-TRUCK Sp. z o.o.",
+"org_id": 22665470
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "RO",
+"key": "2779625",
+"members": [
+{
+"identifier": "2779625",
+"kind": "national",
+"name": "Compania Națională „Imprimeria Națională” S.A.",
+"org_id": 13013889
+},
+{
+"identifier": "2779625",
+"kind": "national",
+"name": "Serviciul Juridic si Verificarea Legalităţii Actelor din cadrul companiei",
+"org_id": 22547109
+},
+{
+"identifier": "2779625",
+"kind": "national",
+"name": "COMPANIA NATIONALA \"IMPRIMERIA NATIONALA\"  S.A.",
+"org_id": 22706545
+}
+],
+"scheme": "RO:cui"
+},
+{
+"country": "PT",
+"key": "504338854",
+"members": [
+{
+"identifier": "504338854",
+"kind": "national",
+"name": "Fitonovo, SA",
+"org_id": 5121292
+},
+{
+"identifier": "504338854",
+"kind": "national",
+"name": "Perene, S. A.",
+"org_id": 11647481
+}
+],
+"scheme": "PT:nif"
+},
+{
+"country": "IT",
+"key": "80039930153",
+"members": [
+{
+"identifier": "80039930153",
+"kind": "national",
+"name": "C.I.V.I.S. CENTRO ITALIANO VIGILANZA INTERNA E STRADALE S.P.A. (mandataria)",
+"org_id": 18019313
+},
+{
+"identifier": "80039930153",
+"kind": "national",
+"name": "CIVIS S.p.A.",
+"org_id": 23060998
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "7292626565",
+"members": [
+{
+"identifier": "7292626565",
+"kind": "national",
+"name": "\"FUNDACJA LIBERTÉ!\"",
+"org_id": 23143127
+},
+{
+"identifier": "7292626565",
+"kind": "national",
+"name": "Bogusław Śliwerski",
+"org_id": 23227943
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "000617166",
+"members": [
+{
+"identifier": "000617166",
+"kind": "national",
+"name": "Przedsiębiorstwo Komunikacji Samochodowej „Polonus” w Warszawie S.A.",
+"org_id": 9218843
+},
+{
+"identifier": "000617166",
+"kind": "national",
+"name": "Gmina Pomiechówek",
+"org_id": 19598272
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "132826097",
+"members": [
+{
+"identifier": "132826097",
+"kind": "national",
+"name": "Partner 4 Medicine P. S. A.",
+"org_id": 23699280
+},
+{
+"identifier": "132826097",
+"kind": "national",
+"name": "PARTNER4MEDICINE P.S.A.",
+"org_id": 23718843
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "IT",
+"key": "03157090725",
+"members": [
+{
+"identifier": "03157090725",
+"kind": "national",
+"name": "GEA Società Cooperativa Sociale",
+"org_id": 16750112
+},
+{
+"identifier": "03157090725",
+"kind": "national",
+"name": "UNIONE DEI COMUNI MONTEDORO - COMUNE DI GIOIA DEL COLLE",
+"org_id": 23100228
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "7540013375",
+"members": [
+{
+"identifier": "7540013375",
+"kind": "national",
+"name": "Polskie Radio Regionalna Rozgłośnia w Opolu „Radio Opole” S.A. w likwidacji",
+"org_id": 11626
+},
+{
+"identifier": "7540013375",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 22611764
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5420201794",
+"members": [
+{
+"identifier": "5420201794",
+"kind": "national",
+"name": "Przedsiębiorstwo Eksploatacji Ulic i Mostów Sp. z o.o.",
+"org_id": 9981461
+},
+{
+"identifier": "5420201794",
+"kind": "national",
+"name": "PEUiM",
+"org_id": 30909207
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "06817921007",
+"members": [
+{
+"identifier": "06817921007",
+"kind": "national",
+"name": "Raggruppamento Temporaneo di Professionisti C.G.A. S.r.l., Cube S.r.l., Biogas Engineering S.r.l. e Alessandro Mascitti",
+"org_id": 22589920
+},
+{
+"identifier": "06817921007",
+"kind": "national",
+"name": "C.G.A. S.r.l. Consulenze Generali Ambientali (MANDATARIA)",
+"org_id": 22995264
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "530931076",
+"members": [
+{
+"identifier": "530931076",
+"kind": "national",
+"name": "Gwarant Agencja Ochrony Spółka z ograniczoną odpowiedzialnością",
+"org_id": 21552184
+},
+{
+"identifier": "530931076",
+"kind": "national",
+"name": "Impel Facility Services Sp. z o. o.",
+"org_id": 22673993
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "9522135614",
+"members": [
+{
+"identifier": "PL9522135614",
+"kind": "vat",
+"name": "Spektromtria Sp. z o.o.",
+"org_id": 17710652
+},
+{
+"identifier": "9522135614",
+"kind": "national",
+"name": "Spektrometria Sp. z o.o.",
+"org_id": 17777103
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "9691444246",
+"members": [
+{
+"identifier": "9691444246",
+"kind": "national",
+"name": "MAXBIT Sebastian Mehlich",
+"org_id": 19666524
+},
+{
+"identifier": "9691444246",
+"kind": "national",
+"name": "MAX BIT",
+"org_id": 22636897
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7411979704",
+"members": [
+{
+"identifier": "7411979704",
+"kind": "national",
+"name": "Szkoła Podstawowa w Słoneczniku",
+"org_id": 12488315
+},
+{
+"identifier": "7411979704",
+"kind": "national",
+"name": "Gmina Morąg",
+"org_id": 13823127
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "01012750392",
+"members": [
+{
+"identifier": "01012750392",
+"kind": "national",
+"name": "Zerocento Società Cooperativa Sociale Onlus",
+"org_id": 18479786
+},
+{
+"identifier": "01012750392",
+"kind": "national",
+"name": "ZEROCENTO  SOCIETA' COOPERATIVA SOCIALE IN SIGLA ZEROCENTO SOC. COOP. SOCIALE",
+"org_id": 22691379
+},
+{
+"identifier": "01012750392",
+"kind": "national",
+"name": "ZEROCERCHIO SOCIETÀ COOPERATIVA SOCIALE",
+"org_id": 23267556
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "7123300938",
+"members": [
+{
+"identifier": "7123300938",
+"kind": "national",
+"name": "FULL-MED. Sp. z o.o.",
+"org_id": 9983419
+},
+{
+"identifier": "7123300938",
+"kind": "national",
+"name": "MEDCOMPLEX Sp. z o.o.",
+"org_id": 22576541
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "01993590239",
+"members": [
+{
+"identifier": "01993590239",
+"kind": "national",
+"name": "Itamixer s.r.l.",
+"org_id": 20260236
+},
+{
+"identifier": "01993590239",
+"kind": "national",
+"name": "ITALMIXER S.R.L. UNIPERSONALE",
+"org_id": 23502191
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "301778608",
+"members": [
+{
+"identifier": "301778608",
+"kind": "national",
+"name": "GRACZYK Łukasz Graczyk",
+"org_id": 18322193
+},
+{
+"identifier": "301778608",
+"kind": "national",
+"name": "Przedsiębiorstwo Usługowo-Budowlane „EDBUD” Przemysław Cichy",
+"org_id": 21591186
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "6831573055",
+"members": [
+{
+"identifier": "6831573055",
+"kind": "national",
+"name": "Przedsiębiorstwo Wielobranżowe Miki Mieczysław Jakubowski",
+"org_id": 16433195
+},
+{
+"identifier": "6831573055",
+"kind": "national",
+"name": "Gmina Biskupice",
+"org_id": 22742012
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "02818501203",
+"members": [
+{
+"identifier": "02818501203",
+"kind": "national",
+"name": "„Капш Трафикком“ С.Р.Л.",
+"org_id": 16545419
+},
+{
+"identifier": "02818501203",
+"kind": "national",
+"name": "R.T.I. con MotuS21 S.r.l. (Mandataria) e Project Automation S.p.A. (Mandante)",
+"org_id": 21472748
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "9910471296",
+"members": [
+{
+"identifier": "9910471296",
+"kind": "national",
+"name": "Przedszkole Publiczne w Komprachcicach",
+"org_id": 11622915
+},
+{
+"identifier": "9910471296",
+"kind": "national",
+"name": "Gmina Komprachcice",
+"org_id": 30911190
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "017172392",
+"members": [
+{
+"identifier": "017172392",
+"kind": "national",
+"name": "Jednostka Wojskowa nr 3964",
+"org_id": 19312732
+},
+{
+"identifier": "017172392",
+"kind": "national",
+"name": "WOJSKOWE CENTRUM EDUKACJI OBYWATELSKIEJ",
+"org_id": 22340858
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "6741352787",
+"members": [
+{
+"identifier": "6741352787",
+"kind": "national",
+"name": "Firma Usługowa Markal Marcin Karczewski",
+"org_id": 16815274
+},
+{
+"identifier": "6741352787",
+"kind": "national",
+"name": "Zakład Usług Leśnych Wojciech Kołosowski",
+"org_id": 18562846
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "072183421",
+"members": [
+{
+"identifier": "072183421",
+"kind": "national",
+"name": "Powiat Wadowicki",
+"org_id": 19175951
+},
+{
+"identifier": "072183421",
+"kind": "national",
+"name": "F.H.U. MIX Paweł Ciernia",
+"org_id": 22765584
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "6310000078",
+"members": [
+{
+"identifier": "6310000078",
+"kind": "national",
+"name": "Przedsiębiorstwo Produkcyjno-Handlowo-Usługowe KOMART Sp. z o.o.",
+"org_id": 9122128
+},
+{
+"identifier": "6310000078",
+"kind": "national",
+"name": "PreZero Recycling Południe spółka z ograniczoną odpowiedzialnością",
+"org_id": 21057596
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "000001258",
+"members": [
+{
+"identifier": "000001258",
+"kind": "national",
+"name": "Uniwersytet Warszawski",
+"org_id": 11785
+},
+{
+"identifier": "000001258",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 11786
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "140886771",
+"members": [
+{
+"identifier": "140886771",
+"kind": "national",
+"name": "Polska Agencja Żeglugi Powietrznej",
+"org_id": 20061386
+},
+{
+"identifier": "140886771",
+"kind": "national",
+"name": "Polish Air Navigation Services Agency",
+"org_id": 22224941
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "8133924368",
+"members": [
+{
+"identifier": "8133924368",
+"kind": "national",
+"name": "Servsystems Sp. z o.o.",
+"org_id": 23199536
+},
+{
+"identifier": "8133924368",
+"kind": "national",
+"name": "SERVSYSTEM Polska Sp. z o. o.",
+"org_id": 23723627
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5060026477",
+"members": [
+{
+"identifier": "5060026477",
+"kind": "national",
+"name": "FlexiPower Group Sp. z o. o. Sp. k.",
+"org_id": 18045436
+},
+{
+"identifier": "5060026477",
+"kind": "national",
+"name": "GMINA KŁOCZEW",
+"org_id": 23386880
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "02115750305",
+"members": [
+{
+"identifier": "02115750305",
+"kind": "national",
+"name": "I.C.E.S. Impresa Costruzioni Edili Stradali S.r.l. (mandante)",
+"org_id": 13236106
+},
+{
+"identifier": "02115750305",
+"kind": "national",
+"name": "ICES SRL",
+"org_id": 22689965
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "590019175",
+"members": [
+{
+"identifier": "590019175",
+"kind": "national",
+"name": "Tree Company  sp. z o.o.",
+"org_id": 18550957
+},
+{
+"identifier": "590019175",
+"kind": "national",
+"name": "LASY PAŃSTWOWE NADLEŚNICTWO RADOMSKO",
+"org_id": 19850098
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "IT",
+"key": "05677500489",
+"members": [
+{
+"identifier": "05677500489",
+"kind": "national",
+"name": "RTI SAI (Coop.21 cooperativa sociale - Mandataria; OXFAM ITALIA INTERCULTURA - Mandante; CONFRATERNITA DI MISERICORDIA  - Mandante)",
+"org_id": 22563997
+},
+{
+"identifier": "05677500489",
+"kind": "national",
+"name": "COOP 21 SOCIETA’ COOPERATIVA Firenze",
+"org_id": 22591743
+},
+{
+"identifier": "05677500489",
+"kind": "national",
+"name": "Coop.21 cooperativa sociale",
+"org_id": 23684205
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "590648468",
+"members": [
+{
+"identifier": "590648468",
+"kind": "national",
+"name": "Miasto Piotrków Trybunalski",
+"org_id": 19137081
+},
+{
+"identifier": "590648468",
+"kind": "national",
+"name": "Zarząd Dróg i Utrzymania Miasta",
+"org_id": 19945594
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "356262922",
+"members": [
+{
+"identifier": "356262922",
+"kind": "national",
+"name": "Gambit Centrum Oprogramowania i Szkoleń Sp. z o.o.",
+"org_id": 15889936
+},
+{
+"identifier": "356262922",
+"kind": "national",
+"name": "SOFTBOOKS s.c., Grażyna Górska-Janik Fabian Sojka",
+"org_id": 17679834
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "IT",
+"key": "00378740344",
+"members": [
+{
+"identifier": "00378740344",
+"kind": "national",
+"name": "COLSER Società Cooperativa",
+"org_id": 11487
+},
+{
+"identifier": "00378740344",
+"kind": "national",
+"name": "CO.L.SER. Servizi scrl (mandataria)",
+"org_id": 17277697
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "630701338",
+"members": [
+{
+"identifier": "630701338",
+"kind": "national",
+"name": "PGK Sp. z o.o.",
+"org_id": 8957604
+},
+{
+"identifier": "630701338",
+"kind": "national",
+"name": "Przedsiębiorstwo Gospodarki Komunalnej w Śremie Sp. z o.o.",
+"org_id": 17217168
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "341470612",
+"members": [
+{
+"identifier": "341470612",
+"kind": "national",
+"name": "TRMEW Obrót Spółka Akcyjna",
+"org_id": 14778076
+},
+{
+"identifier": "341470612",
+"kind": "national",
+"name": "Respect Energy S.A.",
+"org_id": 21469651
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5261673166",
+"members": [
+{
+"identifier": "5261673166",
+"kind": "national",
+"name": "Pracownia C&C Sp. z o.o",
+"org_id": 21184416
+},
+{
+"identifier": "5261673166",
+"kind": "national",
+"name": "Ministerstwo Sprawiedliwości",
+"org_id": 22215697
+},
+{
+"identifier": "5261673166",
+"kind": "national",
+"name": "Ministerstwo Sprawiedliwości",
+"org_id": 22453470
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "06193090484",
+"members": [
+{
+"identifier": "06193090484",
+"kind": "national",
+"name": "Comair Industrial Equipment Srl",
+"org_id": 9582146
+},
+{
+"identifier": "06193090484",
+"kind": "national",
+"name": "CIE Srl",
+"org_id": 10001008
+},
+{
+"identifier": "06193090484",
+"kind": "national",
+"name": "CIE SRL",
+"org_id": 18470992
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "510884205",
+"members": [
+{
+"identifier": "510884205",
+"kind": "national",
+"name": "University of Warmia and Mazury",
+"org_id": 14054982
+},
+{
+"identifier": "510884205",
+"kind": "national",
+"name": "Uniwersytet Warmińsko-Mazurski w Olsztynie",
+"org_id": 17004646
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "7543091720",
+"members": [
+{
+"identifier": "7543091720",
+"kind": "national",
+"name": "SMGL Cleaning Dominika Śmigiel",
+"org_id": 22290897
+},
+{
+"identifier": "7543091720",
+"kind": "national",
+"name": "IMPEL FACILITY SERVICES sp. z o.o.",
+"org_id": 24505235
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "382177975",
+"members": [
+{
+"identifier": "382177975",
+"kind": "national",
+"name": "POLSKIE LABORATORIUM ANTYDOPINGOWE",
+"org_id": 21198327
+},
+{
+"identifier": "382177975",
+"kind": "national",
+"name": "Polish anti-Doping Laboratory",
+"org_id": 22716841
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5260152844",
+"members": [
+{
+"identifier": "5260152844",
+"kind": "national",
+"name": "Atende Medica Sp. z o.o.",
+"org_id": 10573772
+},
+{
+"identifier": "5260152844",
+"kind": "national",
+"name": "CloudiMed Sp. z o.o.",
+"org_id": 23660106
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "276902504",
+"members": [
+{
+"identifier": "276902504",
+"kind": "national",
+"name": "Grupa KOK Sp. z o.o.",
+"org_id": 11364465
+},
+{
+"identifier": "276902504",
+"kind": "national",
+"name": "Spółka Restrukturyzacji Kopalń S.A.",
+"org_id": 19897046
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "242625617",
+"members": [
+{
+"identifier": "242625617",
+"kind": "national",
+"name": "KOMEKO Spółka Akcyjna",
+"org_id": 22575150
+},
+{
+"identifier": "242625617",
+"kind": "national",
+"name": "KOM-EKO S. A.",
+"org_id": 23655825
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "8130008613",
+"members": [
+{
+"identifier": "8130008613",
+"kind": "national",
+"name": "Wydział Zamówień Publicznych UM Rzeszowa",
+"org_id": 1553016
+},
+{
+"identifier": "8130008613",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 22923104
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "08418350966",
+"members": [
+{
+"identifier": "08418350966",
+"kind": "national",
+"name": "Rivoira Gas srl",
+"org_id": 15923931
+},
+{
+"identifier": "08418350966",
+"kind": "national",
+"name": "Nippon Gases Industrial srl",
+"org_id": 16865261
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "011782971",
+"members": [
+{
+"identifier": "011782971",
+"kind": "national",
+"name": "IBCOL Spółka z ograniczoną odpowiedzialnością",
+"org_id": 12097345
+},
+{
+"identifier": "011782971",
+"kind": "national",
+"name": "IBKOL Sp. z o.o.",
+"org_id": 20338624
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5240408022",
+"members": [
+{
+"identifier": "5240408022",
+"kind": "national",
+"name": "Medilab Sp. z o. o.",
+"org_id": 18499597
+},
+{
+"identifier": "5240408022",
+"kind": "national",
+"name": "Medilab Sp. z o.o.",
+"org_id": 21953348
+},
+{
+"identifier": "PL5240408022",
+"kind": "vat",
+"name": "MEDI-PRO Sp. z o. o.",
+"org_id": 22842461
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "080226740",
+"members": [
+{
+"identifier": "080226740",
+"kind": "national",
+"name": "Zakład Zagospodarowania Odpadów Spółka z ograniczoną odpowiedzialnością",
+"org_id": 18435772
+},
+{
+"identifier": "080226740",
+"kind": "national",
+"name": "Łużyckie Centrum Recyklingu Spółka z ograniczoną odpowiedzialnością",
+"org_id": 22436855
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5512618591",
+"members": [
+{
+"identifier": "5512618591",
+"kind": "national",
+"name": "Urząd Gminy w Mucharzu",
+"org_id": 17593035
+},
+{
+"identifier": "5512618591",
+"kind": "national",
+"name": "GMINA MUCHARZ",
+"org_id": 22781928
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "072182060",
+"members": [
+{
+"identifier": "072182060",
+"kind": "national",
+"name": "Urząd Miasta Kalwarii Zebrzydowskiej",
+"org_id": 20381852
+},
+{
+"identifier": "072182060",
+"kind": "national",
+"name": "Kalwaria Zebrzydowska OSP w Zebrzydowicach",
+"org_id": 22698237
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "6191753534",
+"members": [
+{
+"identifier": "6191753534",
+"kind": "national",
+"name": "Przedsiębiorstwo Produkcyjno Handlowo Usługowe „Inkadro\" Sp. z o.o.",
+"org_id": 14398627
+},
+{
+"identifier": "6191753534",
+"kind": "national",
+"name": "Wodociągi Kępińskie Sp. z o.o.",
+"org_id": 22551297
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "9691627886",
+"members": [
+{
+"identifier": "9691627886",
+"kind": "national",
+"name": "Prezes Krajowej Izby Odwoławczej",
+"org_id": 22529369
+},
+{
+"identifier": "9691627886",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 22695586
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6770070293",
+"members": [
+{
+"identifier": "6770070293",
+"kind": "national",
+"name": "KӒRCHER SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+"org_id": 21269123
+},
+{
+"identifier": "6770070293",
+"kind": "national",
+"name": "Karcher Sp. z o.o.",
+"org_id": 22963112
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "80252050580",
+"members": [
+{
+"identifier": "80252050580",
+"kind": "national",
+"name": "Ministero della Giustizia – Dipartimento dell’Amministrazione penitenziaria — Direzione Generale del Personale e delle Risorse",
+"org_id": 12112642
+},
+{
+"identifier": "80252050580",
+"kind": "national",
+"name": "Ministry of Justice",
+"org_id": 22036298
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "5550004862",
+"members": [
+{
+"identifier": "5550004862",
+"kind": "national",
+"name": "Piekarnia Marek Gidaszewski",
+"org_id": 17898261
+},
+{
+"identifier": "5550004862",
+"kind": "national",
+"name": "Spółka Produkcyjno- Handlowa Sp. J. Tomas & Tomas",
+"org_id": 22900150
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "02589620927",
+"members": [
+{
+"identifier": "02589620927",
+"kind": "national",
+"name": "OPeA,",
+"org_id": 19306653
+},
+{
+"identifier": "02589620927",
+"kind": "national",
+"name": "Studio di Architettura Ortu, Pillola e Associati",
+"org_id": 20039342
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "6221001610",
+"members": [
+{
+"identifier": "6221001610",
+"kind": "national",
+"name": "Miejski Zakład Zieleni Sp. z o.o.",
+"org_id": 11654160
+},
+{
+"identifier": "6221001610",
+"kind": "national",
+"name": "CRK Zieleń i Rekreacja Sp. z o.o.",
+"org_id": 22557565
+},
+{
+"identifier": "6221001610",
+"kind": "national",
+"name": "CRK Zieleń i Rekreacja Sp. z o.o.",
+"org_id": 22952329
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6840011144",
+"members": [
+{
+"identifier": "6840011144",
+"kind": "national",
+"name": "Skarb Państwa PGL LP Nadleśnictwo Rymanów",
+"org_id": 22216557
+},
+{
+"identifier": "6840011144",
+"kind": "national",
+"name": "WOODy Przemysław Łątka",
+"org_id": 23016749
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7511512420",
+"members": [
+{
+"identifier": "7511512420",
+"kind": "national",
+"name": "Gmina Wołczyn",
+"org_id": 5350965
+},
+{
+"identifier": "7511512420",
+"kind": "national",
+"name": "Miejska i Gminna Biblioteka Publiczna im. J. Kani w Wołczynie",
+"org_id": 11622921
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "9512075477",
+"members": [
+{
+"identifier": "9512075477",
+"kind": "national",
+"name": "RafTrans Sp. z o.o.",
+"org_id": 21466130
+},
+{
+"identifier": "9512075477",
+"kind": "national",
+"name": "Raf Trans sp. z o.o.",
+"org_id": 22928620
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "180643965",
+"members": [
+{
+"identifier": "180643965",
+"kind": "national",
+"name": "ŁAŃCUCKI ZAKŁAD KOMUNALNY SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+"org_id": 22966157
+},
+{
+"identifier": "180643965",
+"kind": "national",
+"name": "Przedsiębiorstwo",
+"org_id": 23533287
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "8222342426",
+"members": [
+{
+"identifier": "8222342426",
+"kind": "national",
+"name": "Powiat Miński",
+"org_id": 2917672
+},
+{
+"identifier": "8222342426",
+"kind": "national",
+"name": "Dom Pomocy Społecznej św. Józefa w Mieni",
+"org_id": 22791490
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "431019359",
+"members": [
+{
+"identifier": "431019359",
+"kind": "national",
+"name": "Rekord SI Sp z o.o.",
+"org_id": 14452718
+},
+{
+"identifier": "431019359",
+"kind": "national",
+"name": "Gmina Miejska Świdnik",
+"org_id": 22418327
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "7010428306",
+"members": [
+{
+"identifier": "7010428306",
+"kind": "national",
+"name": "PIK Diagniostic Sp. z o.o.",
+"org_id": 22583202
+},
+{
+"identifier": "7010428306",
+"kind": "national",
+"name": "Helpi Optics Sp. z o.o.",
+"org_id": 23288164
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6482743351",
+"members": [
+{
+"identifier": "6482743351",
+"kind": "national",
+"name": "Gmina Zabrze",
+"org_id": 20287725
+},
+{
+"identifier": "6482743351",
+"kind": "national",
+"name": "Zabrzański Kompleks Rekreacji",
+"org_id": 22801002
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5250010901",
+"members": [
+{
+"identifier": "5250010901",
+"kind": "national",
+"name": "Pro-Holding Sp. z o.o.",
+"org_id": 21947048
+},
+{
+"identifier": "5250010901",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 22700666
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "9461814082",
+"members": [
+{
+"identifier": "9461814082",
+"kind": "national",
+"name": "Pomorska Instytucja Gospodarki Budżetowej Pomerania w Koszalinie",
+"org_id": 11519134
+},
+{
+"identifier": "9461814082",
+"kind": "national",
+"name": "Okręgowy Inspektorat Służby Więziennej w Lublinie",
+"org_id": 23037898
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "00427140397",
+"members": [
+{
+"identifier": "00427140397",
+"kind": "national",
+"name": "CEEF Società Cooperativa sociale",
+"org_id": 18657935
+},
+{
+"identifier": "00427140397",
+"kind": "national",
+"name": "COOPERATIVA EDUCATIVA FAMIGLIE FAENTINE (CEFF) - FRANCESCO BANDINI - SOCIETA' COOPERATIVA SOCIALE IN BREVE \"CEFF - SOCIETA' COOPERATIVA SOCIALE\"",
+"org_id": 23585089
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "8790166790",
+"members": [
+{
+"identifier": "PL8790166790",
+"kind": "vat",
+"name": "Toruńskie Zakłady Materiałów Opatrunkowych S.A.",
+"org_id": 9562155
+},
+{
+"identifier": "8790166790",
+"kind": "national",
+"name": "Toruńskie Zakłady Materiałów Opatrunkowych S.A.",
+"org_id": 17711010
+},
+{
+"identifier": "8790166790",
+"kind": "national",
+"name": "Toruńskie Zakłady Materiałów Opatrunkowych S.A.",
+"org_id": 22936564
+},
+{
+"identifier": "PL8790166790",
+"kind": "vat",
+"name": "CitoNet-Kraków Sp. z o.o.",
+"org_id": 23024681
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "07070980151",
+"members": [
+{
+"identifier": "07070980151",
+"kind": "national",
+"name": "Comparex Italia S.r.l.",
+"org_id": 11102522
+},
+{
+"identifier": "07070980151",
+"kind": "national",
+"name": "Systematika Distribution S.r.l.",
+"org_id": 19687550
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "8361848508",
+"members": [
+{
+"identifier": "8361848508",
+"kind": "national",
+"name": "Adam Biedrzycki Chemosynteza",
+"org_id": 19051571
+},
+{
+"identifier": "8361848508",
+"kind": "national",
+"name": "Instytut Ogrodnictwa - Państwowy Instytut Badawczy",
+"org_id": 22540353
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "01831840267",
+"members": [
+{
+"identifier": "01831840267",
+"kind": "national",
+"name": "Eurotours S.r.l.",
+"org_id": 13785280
+},
+{
+"identifier": "01831840267",
+"kind": "national",
+"name": "Euro Tours Srl",
+"org_id": 21640266
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "7292718439",
+"members": [
+{
+"identifier": "PL7292718439",
+"kind": "vat",
+"name": "ZRD Spółką z ograniczoną odpowiedzialnością",
+"org_id": 11762415
+},
+{
+"identifier": "7292718439",
+"kind": "national",
+"name": "Zakład Remontowo Drogowy Sp. z o.o. Sp.K.",
+"org_id": 22686142
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "01925561209",
+"members": [
+{
+"identifier": "01925561209",
+"kind": "national",
+"name": "CLF S.p.A. (capogruppo)",
+"org_id": 11909431
+},
+{
+"identifier": "01925561209",
+"kind": "national",
+"name": "Costruzioni Linee Ferroviarie S.p.A.",
+"org_id": 12349593
+},
+{
+"identifier": "01925561209",
+"kind": "national",
+"name": "COSTRUZIONI LINEE FERROVIARIE S.P.A.",
+"org_id": 22235506
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "5252296818",
+"members": [
+{
+"identifier": "5252296818",
+"kind": "national",
+"name": "Miasto Stołeczne Warszawa",
+"org_id": 21467260
+},
+{
+"identifier": "5252296818",
+"kind": "national",
+"name": "Urząd m.st. Warszawy-Urząd Dzielnicy Wawer",
+"org_id": 23744633
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "711582530",
+"members": [
+{
+"identifier": "711582530",
+"kind": "national",
+"name": "Gminy Zakład Gospodarki Komunalnej, spółka z o.o.",
+"org_id": 20376800
+},
+{
+"identifier": "711582530",
+"kind": "national",
+"name": "GMINA WOJCIESZKÓW",
+"org_id": 20801606
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "7540334702",
+"members": [
+{
+"identifier": "7540334702",
+"kind": "national",
+"name": "Wodociągi i Kanalizacja w Opolu sp. z o.o.",
+"org_id": 22483232
+},
+{
+"identifier": "7540334702",
+"kind": "national",
+"name": "WTE Wassertechnik (Polska) Sp. z o. o.",
+"org_id": 22533740
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5420201908",
+"members": [
+{
+"identifier": "5420201908",
+"kind": "national",
+"name": "Enea Ciepło Sp. z o.o.",
+"org_id": 18603468
+},
+{
+"identifier": "5420201908",
+"kind": "national",
+"name": "Książnica Podlaska im. Łukasza Górnickiego w Białymstoku",
+"org_id": 18831006
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6423230070",
+"members": [
+{
+"identifier": "6423230070",
+"kind": "national",
+"name": "Polimex Mostostal S.A. (Lider Konsorcjum)",
+"org_id": 20672973
+},
+{
+"identifier": "6423230070",
+"kind": "national",
+"name": "Rybnik 2050 sp. z o.o.",
+"org_id": 22964895
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5252841575",
+"members": [
+{
+"identifier": "5252841575",
+"kind": "national",
+"name": "Bionesis Sp. z o.o.",
+"org_id": 7750
+},
+{
+"identifier": "5252841575",
+"kind": "national",
+"name": "Medcoswiss Polska Sp. z o.o.",
+"org_id": 22299878
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "270176860",
+"members": [
+{
+"identifier": "270176860",
+"kind": "national",
+"name": "MW MuchaAuto Sp. z o.o.",
+"org_id": 19546561
+},
+{
+"identifier": "270176860",
+"kind": "national",
+"name": "MW AUTO Sp. z o.o.",
+"org_id": 22956295
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "8971383551",
+"members": [
+{
+"identifier": "8971383551",
+"kind": "national",
+"name": "Gmina Wrocław (w imieniu i na rzecz której działa Centrum Kształcenia Zawodowego Wrocław)",
+"org_id": 18352541
+},
+{
+"identifier": "8971383551",
+"kind": "national",
+"name": "Zespół Szkolno-Przedszkolny nr 1",
+"org_id": 20950273
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "012115159",
+"members": [
+{
+"identifier": "012115159",
+"kind": "national",
+"name": "Ltt sp. z o.o.",
+"org_id": 10796325
+},
+{
+"identifier": "012115159",
+"kind": "national",
+"name": "LTTSp.z o.o.",
+"org_id": 23356340
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5260001708",
+"members": [
+{
+"identifier": "PL5260001708",
+"kind": "vat",
+"name": "Polish Chamber of Commerce — PCC",
+"org_id": 8978392
+},
+{
+"identifier": "5260001708",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 22216558
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "008203412",
+"members": [
+{
+"identifier": "008203412",
+"kind": "national",
+"name": "Renault Retail Group Sp. z o.o.",
+"org_id": 12679165
+},
+{
+"identifier": "008203412",
+"kind": "national",
+"name": "PGD RG Motors sp. z o. o.",
+"org_id": 22857695
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "IT",
+"key": "00791570153",
+"members": [
+{
+"identifier": "00791570153",
+"kind": "national",
+"name": "Dompè Farmaceutici S.p.A.",
+"org_id": 14314108
+},
+{
+"identifier": "00791570153",
+"kind": "national",
+"name": "ORG-0022",
+"org_id": 30534497
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "010828091",
+"members": [
+{
+"identifier": "010828091",
+"kind": "national",
+"name": "Krajowa Izba  Odwoławcza",
+"org_id": 375
+},
+{
+"identifier": "010828091",
+"kind": "national",
+"name": "Urząd Zamówień Publicznych Departament Odwołań",
+"org_id": 791
+},
+{
+"identifier": "010828091",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 22216666
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5811960802",
+"members": [
+{
+"identifier": "5811960802",
+"kind": "national",
+"name": "Dom Pomocy Społecznej Słoneczne Wzgórze",
+"org_id": 22157237
+},
+{
+"identifier": "5811960802",
+"kind": "national",
+"name": "Powiat Kwidzyński",
+"org_id": 22873943
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "000002217",
+"members": [
+{
+"identifier": "000002217",
+"kind": "national",
+"name": "Ministerstwo Finansów",
+"org_id": 21197495
+},
+{
+"identifier": "000002217",
+"kind": "national",
+"name": "Krajowa Administracja Skarbowa",
+"org_id": 22539396
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "7531626078",
+"members": [
+{
+"identifier": "7531626078",
+"kind": "national",
+"name": "MGOKSiR",
+"org_id": 8058255
+},
+{
+"identifier": "7531626078",
+"kind": "national",
+"name": "Miejsko-Gminny Ośrodek Kultury, Sportu i Rekreacji w Korfantowie",
+"org_id": 9796500
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "02243290794",
+"members": [
+{
+"identifier": "02243290794",
+"kind": "national",
+"name": "Ecosistem S.r.l.",
+"org_id": 13872410
+},
+{
+"identifier": "02243290794",
+"kind": "national",
+"name": "Associazione Comunita Progetto Sud ETS",
+"org_id": 23709205
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "5240302393",
+"members": [
+{
+"identifier": "5240302393",
+"kind": "national",
+"name": "Gothaer Towarzystwo Ubezpieczeń S.A.",
+"org_id": 12863442
+},
+{
+"identifier": "5240302393",
+"kind": "national",
+"name": "Wiener TU S.A. Vienna Insurance Group",
+"org_id": 18768993
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "8961369609",
+"members": [
+{
+"identifier": "8961369609",
+"kind": "national",
+"name": "„Network Security Services” Piotr Wojtasik",
+"org_id": 12913332
+},
+{
+"identifier": "8961369609",
+"kind": "national",
+"name": "Decsoft S.A.",
+"org_id": 22366460
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6762178337",
+"members": [
+{
+"identifier": "6762178337",
+"kind": "national",
+"name": "\"EU-CONSULT” sp. z o.o.",
+"org_id": 21862130
+},
+{
+"identifier": "6762178337",
+"kind": "national",
+"name": "FIRMA HANDLOWA REMI Adam Krokowski",
+"org_id": 22383337
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6762529127",
+"members": [
+{
+"identifier": "6762529127",
+"kind": "national",
+"name": "Lider konsorcjum: EKTHESE Sp. z o.o.",
+"org_id": 22918554
+},
+{
+"identifier": "6762529127",
+"kind": "national",
+"name": "Ehthese sp. z o. o.",
+"org_id": 23258085
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6652649882",
+"members": [
+{
+"identifier": "6652649882",
+"kind": "national",
+"name": "Serwis Klinet Sp. z o.o.",
+"org_id": 16717222
+},
+{
+"identifier": "6652649882",
+"kind": "national",
+"name": "Seris Konsalnet Cleaning Sp. z o.o.",
+"org_id": 23009474
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5920006570",
+"members": [
+{
+"identifier": "5920006570",
+"kind": "national",
+"name": "PPUH Metpol",
+"org_id": 15359464
+},
+{
+"identifier": "5920006570",
+"kind": "national",
+"name": "Przedsiębiorstwo Produkcyjno-Usługowo-Handlowe \"MET-POL\" Ryszard Ossowski",
+"org_id": 23340711
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7692226881",
+"members": [
+{
+"identifier": "7692226881",
+"kind": "national",
+"name": "Przedsiębiorstwo Produkcyjno-Handlowo-Usługowe „KOŁODZIEJ” Dawid Kołodziej",
+"org_id": 22670189
+},
+{
+"identifier": "7692226881",
+"kind": "national",
+"name": "Usługi Transportowe Kinga-Trans Dopadlik Ewelina Zadanie 7",
+"org_id": 22866422
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "01240080117",
+"members": [
+{
+"identifier": "01240080117",
+"kind": "national",
+"name": "Ge.Fi.L. Gestione Fiscalità Locale S.p.A.",
+"org_id": 14678576
+},
+{
+"identifier": "01240080117",
+"kind": "national",
+"name": "Ge.Fi.L. Spa",
+"org_id": 21955790
+},
+{
+"identifier": "01240080117",
+"kind": "national",
+"name": "Gefil S.p.A",
+"org_id": 22809713
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "6251005713",
+"members": [
+{
+"identifier": "6251005713",
+"kind": "national",
+"name": "Zakład Usług Transportu Technologicznego w Elektrociepłowni „Będzin” Sp. z o.o.",
+"org_id": 23103447
+},
+{
+"identifier": "6251005713",
+"kind": "national",
+"name": "ZUTTEC Sp. z o.o.",
+"org_id": 23712637
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6572398774",
+"members": [
+{
+"identifier": "6572398774",
+"kind": "national",
+"name": "Grundfos Pompy Sp. z o.o. z siedzibą w Baranowie ul. Klonowa 23 , 62-081 Przeźmierowo",
+"org_id": 21833873
+},
+{
+"identifier": "6572398774",
+"kind": "national",
+"name": "Gmina Bieliny",
+"org_id": 22638652
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "000824907",
+"members": [
+{
+"identifier": "000824907",
+"kind": "national",
+"name": "WOPR WZ",
+"org_id": 22977153
+},
+{
+"identifier": "000824907",
+"kind": "national",
+"name": "Wodne Ochotnicze Pogotowie Ratunkowe Województwa Zachodniopomorskiego",
+"org_id": 23003450
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "017511575",
+"members": [
+{
+"identifier": "01751157500036",
+"kind": "national",
+"name": "Skarb Państwa – Generalny Dyrektor Dróg Krajowych i Autostrad, Prowadzący postępowanie: Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Bydgoszczy",
+"org_id": 6117
+},
+{
+"identifier": "017511575",
+"kind": "national",
+"name": "Generalna Dyrekcja Dróg Krajowych i Autostrad",
+"org_id": 7123
+},
+{
+"identifier": "01751157500050",
+"kind": "national",
+"name": "Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Katowicach",
+"org_id": 17839014
+},
+{
+"identifier": "01751157500090",
+"kind": "national",
+"name": "Gorzowska Inżynierska Firma Konsultingowa  Interprojekt Sp. z o.o.",
+"org_id": 18787691
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "7770002547",
+"members": [
+{
+"identifier": "7770002547",
+"kind": "national",
+"name": "BHU S.A.",
+"org_id": 1485908
+},
+{
+"identifier": "7770002547",
+"kind": "national",
+"name": "Enea Logistyka sp. z o.o.",
+"org_id": 19288931
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "010420881",
+"members": [
+{
+"identifier": "01042088100000",
+"kind": "national",
+"name": "Polskie Radio - Regionalna Rozgłośnia w Warszawie \"Radio dla Ciebie\" Spółka Akcyjna",
+"org_id": 20829277
+},
+{
+"identifier": "010420881",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 23108117
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "8992786834",
+"members": [
+{
+"identifier": "8992786834",
+"kind": "national",
+"name": "IPSP Security Partner Sp. z o.o. Sp.k.",
+"org_id": 10086482
+},
+{
+"identifier": "8992786834",
+"kind": "national",
+"name": "Impel Defender Spółką z ograniczoną odpowiedzialnością",
+"org_id": 20857045
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "276815490",
+"members": [
+{
+"identifier": "27681549000000",
+"kind": "national",
+"name": "Miejski Zakład Usług Komunalnych w Sosnowcu",
+"org_id": 15321023
+},
+{
+"identifier": "276815490",
+"kind": "national",
+"name": "Towarzystwo Ubezpieczeń i Reasekuracji WARTA S.A.",
+"org_id": 18712140
+},
+{
+"identifier": "27681549000000",
+"kind": "national",
+"name": "Miejski Zakład Usług Komunalnych",
+"org_id": 20489715
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5250009269",
+"members": [
+{
+"identifier": "5250009269",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 22264573
+},
+{
+"identifier": "5250009269",
+"kind": "national",
+"name": "Instytut Biologii Doświadczalnej im. Marcelego Nenckiego Polskiej Akademii Nauk",
+"org_id": 23209288
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "9571027149",
+"members": [
+{
+"identifier": "9571027149",
+"kind": "national",
+"name": "BIEGOSGERA Sp. z o.o.",
+"org_id": 21897034
+},
+{
+"identifier": "9571027149",
+"kind": "national",
+"name": "Biegosfera Sp. z o.o.",
+"org_id": 23290359
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "271755642",
+"members": [
+{
+"identifier": "271755642",
+"kind": "national",
+"name": "Drogowa Trasa Średnicowa S.A.",
+"org_id": 13231374
+},
+{
+"identifier": "271755642",
+"kind": "national",
+"name": "DTŚ S.A.",
+"org_id": 18276884
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "6971598635",
+"members": [
+{
+"identifier": "6971598635",
+"kind": "national",
+"name": "Aesculap Chifa Sp. z o.o.",
+"org_id": 19492184
+},
+{
+"identifier": "6971598635",
+"kind": "national",
+"name": "Wojewódzki Szpital Wielospecjalistyczny im. dr. Jana Jonstona w Lesznie",
+"org_id": 23267566
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "526229325",
+"members": [
+{
+"identifier": "526229325",
+"kind": "national",
+"name": "Prezes Krajowej Izby Odwoławczej",
+"org_id": 22267223
+},
+{
+"identifier": "526229325",
+"kind": "national",
+"name": "Urząd Zamówień Publicznych",
+"org_id": 22615747
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "IT",
+"key": "00181820663",
+"members": [
+{
+"identifier": "00181820663",
+"kind": "national",
+"name": "TAR - TRIBUNALE AMMINISTRATIVO REGIONALE",
+"org_id": 22552282
+},
+{
+"identifier": "00181820663",
+"kind": "national",
+"name": "Centrale Unica di Committenza Sulmona per conto del Comune di Sulmona",
+"org_id": 22635464
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "IT",
+"key": "80143490581",
+"members": [
+{
+"identifier": "80143490581",
+"kind": "national",
+"name": "Giunta Regionale",
+"org_id": 2560
+},
+{
+"identifier": "80143490581",
+"kind": "national",
+"name": "Regione Lazio Direzione Agricoltura, Promozione della filiera e della cultura del cibo, Caccia e Pesca",
+"org_id": 23032549
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "IT",
+"key": "02261800714",
+"members": [
+{
+"identifier": "02261800714",
+"kind": "national",
+"name": "TAR PUGLIA",
+"org_id": 21842937
+},
+{
+"identifier": "02261800714",
+"kind": "national",
+"name": "PROVINCIA DI FOGGIA, SETTORE SUA, APPALTI E CONTRATTI,",
+"org_id": 22540919
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "141122981",
+"members": [
+{
+"identifier": "141122981",
+"kind": "national",
+"name": "MDDP spółka akcyjna Akademia Biznesu sp. k.",
+"org_id": 17168698
+},
+{
+"identifier": "141122981",
+"kind": "national",
+"name": "Instytut ADN Sp. z o.o.",
+"org_id": 24590774
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "7010088170",
+"members": [
+{
+"identifier": "7010088170",
+"kind": "national",
+"name": "MDDP Sp. z o.o. Akademia Biznesu Sp. k.",
+"org_id": 10879491
+},
+{
+"identifier": "7010088170",
+"kind": "national",
+"name": "Instytutem ADN spółka z ograniczoną odpowiedzialnością sp. k.",
+"org_id": 20428190
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7351026738",
+"members": [
+{
+"identifier": "7351026738",
+"kind": "national",
+"name": "Miejski Zakład Gospodarki Komunalnej",
+"org_id": 22213671
+},
+{
+"identifier": "7351026738",
+"kind": "national",
+"name": "Miasto i Gmina Szczawnica",
+"org_id": 22718486
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "810877503",
+"members": [
+{
+"identifier": "810877503",
+"kind": "national",
+"name": "Pyrzyckie Przedsiębiorstwo Komunalne Sp. z o. o.",
+"org_id": 18224391
+},
+{
+"identifier": "810877503",
+"kind": "national",
+"name": "PPK Sp. z o. o. w Pyrzycach",
+"org_id": 23182549
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "IT",
+"key": "00125230219",
+"members": [
+{
+"identifier": "00125230219",
+"kind": "national",
+"name": "Wuerth Srl",
+"org_id": 10001015
+},
+{
+"identifier": "00125230219",
+"kind": "national",
+"name": "Würth Srl",
+"org_id": 16903721
+},
+{
+"identifier": "00125230219",
+"kind": "national",
+"name": "Wurth Srl",
+"org_id": 22646485
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "021509084",
+"members": [
+{
+"identifier": "021509084",
+"kind": "national",
+"name": "43WOG",
+"org_id": 9199806
+},
+{
+"identifier": "021509084",
+"kind": "national",
+"name": "43 WOJSKOWY ODDZIAŁ GOSPODARCZY",
+"org_id": 21917454
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "000288521",
+"members": [
+{
+"identifier": "000288521",
+"kind": "national",
+"name": "Farmacol - Logistyka Sp. z o. o.",
+"org_id": 16078092
+},
+{
+"identifier": "000288521",
+"kind": "national",
+"name": "INSTYTUT MEDYCYNY WSI IM. WITOLDA CHODŹKI",
+"org_id": 21233875
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "8992786975",
+"members": [
+{
+"identifier": "8992786975",
+"kind": "national",
+"name": "ISP Security Partner Sp. z o.o. Sp.k",
+"org_id": 10086481
+},
+{
+"identifier": "8992786975",
+"kind": "national",
+"name": "Impel Safety Sp. z o.o.",
+"org_id": 19432044
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5080013710",
+"members": [
+{
+"identifier": "5080013710",
+"kind": "national",
+"name": "Miejski Zakład Komunalny",
+"org_id": 19190019
+},
+{
+"identifier": "5080013710",
+"kind": "national",
+"name": "Gmina Pajęczno",
+"org_id": 23330423
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6760115479",
+"members": [
+{
+"identifier": "6760115479",
+"kind": "national",
+"name": "Consulronix S.A.",
+"org_id": 9055548
+},
+{
+"identifier": "6760115479",
+"kind": "national",
+"name": "Consultronix S.A.",
+"org_id": 20078036
+},
+{
+"identifier": "PL6760115479",
+"kind": "vat",
+"name": "Consultronix S.A.",
+"org_id": 20823384
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "021131390",
+"members": [
+{
+"identifier": "021131390",
+"kind": "national",
+"name": "Stangl Technik Polska Sp. z o.o.",
+"org_id": 19141939
+},
+{
+"identifier": "021131390",
+"kind": "national",
+"name": "ELEKTROTIM S.A.",
+"org_id": 22888910
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "IT",
+"key": "00818570012",
+"members": [
+{
+"identifier": "00818570012",
+"kind": "national",
+"name": "Unipolsai Divisione La Fondiaria",
+"org_id": 7883647
+},
+{
+"identifier": "00818570012",
+"kind": "national",
+"name": "Unipol Sai",
+"org_id": 7886731
+},
+{
+"identifier": "00818570012",
+"kind": "national",
+"name": "Unipolsai Assicurazoni SpA",
+"org_id": 8968862
+},
+{
+"identifier": "00818570012",
+"kind": "national",
+"name": "Società UnipolSai Assicurazioni S.p.A.",
+"org_id": 12660830
+},
+{
+"identifier": "00818570012",
+"kind": "national",
+"name": "UnipolSai Assicurazioni Spa",
+"org_id": 17863043
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "6480000290",
+"members": [
+{
+"identifier": "6480000290",
+"kind": "national",
+"name": "Miejskie Przedsiębiorstwo Gospodarki Komunalnej Sp. z o.o. w Zabrzu",
+"org_id": 13727322
+},
+{
+"identifier": "6480000290",
+"kind": "national",
+"name": "Konsorcjum firm: FCC Śląsk Sp. z o.o (lider konsorcjum)",
+"org_id": 22562869
+},
+{
+"identifier": "6480000290",
+"kind": "national",
+"name": "FCC Śląsk Sp. z o.o.",
+"org_id": 22896730
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "142726149",
+"members": [
+{
+"identifier": "142726149",
+"kind": "national",
+"name": "PGF S.A.",
+"org_id": 9022945
+},
+{
+"identifier": "142726149",
+"kind": "national",
+"name": "Polska Grupa Farmaceutyczna S.A.",
+"org_id": 9983255
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "8790172253",
+"members": [
+{
+"identifier": "8790172253",
+"kind": "national",
+"name": "Erbud S.A.",
+"org_id": 13843302
+},
+{
+"identifier": "8790172253",
+"kind": "national",
+"name": "Erbud S.A.",
+"org_id": 16294659
+},
+{
+"identifier": "PL8790172253",
+"kind": "vat",
+"name": "SB COMPLEX Sp. z o.o.",
+"org_id": 23687643
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "00787010586",
+"members": [
+{
+"identifier": "00787010586",
+"kind": "national",
+"name": "Toscana Bus S.r.l.",
+"org_id": 12415594
+},
+{
+"identifier": "00787010586",
+"kind": "national",
+"name": "AVR  S.P.A.",
+"org_id": 23174210
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "7810002075",
+"members": [
+{
+"identifier": "PL7810002075",
+"kind": "vat",
+"name": "Foundation fo the Adam Mickiewicz University (Poznan Radiocarbon Laboratory)",
+"org_id": 11167942
+},
+{
+"identifier": "7810002075",
+"kind": "national",
+"name": "Lider: Fundacja Uniwersytetu im. Adama Mickiewicza w Poznaniu",
+"org_id": 16770552
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "8421774045",
+"members": [
+{
+"identifier": "8421774045",
+"kind": "national",
+"name": "Usługi Leśne Roman Kotłowski",
+"org_id": 10878449
+},
+{
+"identifier": "8421774045",
+"kind": "national",
+"name": "ZULiT S.C. Kazimierz Rowiński, Rafał Rowiński",
+"org_id": 18957923
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PT",
+"key": "500074372",
+"members": [
+{
+"identifier": "500074372",
+"kind": "national",
+"name": "Novabase, Infrastructures&Managed Services, SA",
+"org_id": 5976030
+},
+{
+"identifier": "500074372",
+"kind": "national",
+"name": "Axianseu — Digital Solutions, S. A.",
+"org_id": 11667376
+}
+],
+"scheme": "PT:nif"
+},
+{
+"country": "PL",
+"key": "7541109976",
+"members": [
+{
+"identifier": "7541109976",
+"kind": "national",
+"name": "KOST-MED Transport Sanitarny Marcin Kost",
+"org_id": 22553200
+},
+{
+"identifier": "7541109976",
+"kind": "national",
+"name": "NOVAMED Ttansport medyczny Magdalena Nowacka",
+"org_id": 23203891
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5420201357",
+"members": [
+{
+"identifier": "5420201357",
+"kind": "national",
+"name": "CIRRO Sp. z o. o.",
+"org_id": 648
+},
+{
+"identifier": "5420201357",
+"kind": "national",
+"name": "Biameditek Spółka z ograniczoną odpowiedzialnością",
+"org_id": 16620973
+},
+{
+"identifier": "PL5420201357",
+"kind": "vat",
+"name": "Biameditek sp. z o.o.,",
+"org_id": 21557057
+},
+{
+"identifier": "5420201357",
+"kind": "national",
+"name": "CIRRO Sp. z o.o.",
+"org_id": 23021882
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5861003497",
+"members": [
+{
+"identifier": "5861003497",
+"kind": "national",
+"name": "GDYŃSKA KOMUNIKACJA MIEJSKA Sp. z o.o",
+"org_id": 11332
+},
+{
+"identifier": "5861003497",
+"kind": "national",
+"name": "Przedsiębiorstwo Komunikacji Autobusowej Sp. z o.o.",
+"org_id": 22702623
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6292462689",
+"members": [
+{
+"identifier": "6292462689",
+"kind": "national",
+"name": "DĄBROWA GÓRNICZA - MIASTO NA PRAWACH POWIATU",
+"org_id": 6727
+},
+{
+"identifier": "6292462689",
+"kind": "national",
+"name": "Miejski Zakład Gospodarowania Odpadami",
+"org_id": 22725125
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "01579830025",
+"members": [
+{
+"identifier": "01579830025",
+"kind": "national",
+"name": "All System S.p.A.",
+"org_id": 20067821
+},
+{
+"identifier": "01579830025",
+"kind": "national",
+"name": "ALLSYSTEM S.P.A.",
+"org_id": 23116098
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "122953211",
+"members": [
+{
+"identifier": "122953211",
+"kind": "national",
+"name": "MDT Sp. z o.o.",
+"org_id": 9235
+},
+{
+"identifier": "122953211",
+"kind": "national",
+"name": "EFmed Spółka z o.o.",
+"org_id": 13018138
+},
+{
+"identifier": "122953211",
+"kind": "national",
+"name": "MDT SP. Z O.O.",
+"org_id": 23666800
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "IT",
+"key": "01807790686",
+"members": [
+{
+"identifier": "01807790686",
+"kind": "national",
+"name": "SO.G.E.T. Società di Gestione Entrate e Tributi S.p.A.",
+"org_id": 20861996
+},
+{
+"identifier": "01807790686",
+"kind": "national",
+"name": "SOGET SpA",
+"org_id": 22577347
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "6482768167",
+"members": [
+{
+"identifier": "6482768167",
+"kind": "national",
+"name": "LK Inwest Sp. z o.o.",
+"org_id": 17353984
+},
+{
+"identifier": "6482768167",
+"kind": "national",
+"name": "Muzeum Górnictwa Węglowego w Zabrzu",
+"org_id": 22697036
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "9521818707",
+"members": [
+{
+"identifier": "9521818707",
+"kind": "national",
+"name": "Skarb Państwa - Jednostka Wojskowa Nr 2305",
+"org_id": 22310060
+},
+{
+"identifier": "9521818707",
+"kind": "national",
+"name": "Griffin Group S.A. DEFENCE sp.k.",
+"org_id": 22920193
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6841079078",
+"members": [
+{
+"identifier": "6841079078",
+"kind": "national",
+"name": "ZPHU Las - Pol Tadeusz Czerwień",
+"org_id": 10943366
+},
+{
+"identifier": "6841079078",
+"kind": "national",
+"name": "Zakład Usług Leśnych Kostycz Krzysztof",
+"org_id": 22963696
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "03188950103",
+"members": [
+{
+"identifier": "03188950103",
+"kind": "national",
+"name": "RTI Dedagroup Public Services S.r.l.",
+"org_id": 14296755
+},
+{
+"identifier": "03188950103",
+"kind": "national",
+"name": "Deda Next S.R.L.",
+"org_id": 22668907
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "142721347",
+"members": [
+{
+"identifier": "142721347",
+"kind": "national",
+"name": "Inov 8 I Żebrowska Sp. z o.o.",
+"org_id": 10757
+},
+{
+"identifier": "142721347",
+"kind": "national",
+"name": "Inov8 Sp. z o.o. Sp. komandytowa",
+"org_id": 14018886
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "9290116370",
+"members": [
+{
+"identifier": "9290116370",
+"kind": "national",
+"name": "Laerdal Medical Poland Sp. z o.o.",
+"org_id": 9005730
+},
+{
+"identifier": "9290116370",
+"kind": "national",
+"name": "Medline Sp. z o. o.",
+"org_id": 22949418
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "9291234953",
+"members": [
+{
+"identifier": "9291234953",
+"kind": "national",
+"name": "UNI-TRUCK Sp. z o.o.",
+"org_id": 13588731
+},
+{
+"identifier": "9291234953",
+"kind": "national",
+"name": "UNITRUCK SP. Z O.O.",
+"org_id": 21921167
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "80007580279",
+"members": [
+{
+"identifier": "80007580279",
+"kind": "national",
+"name": "Regione del Veneto",
+"org_id": 22535681
+},
+{
+"identifier": "80007580279",
+"kind": "national",
+"name": "Avvocatura Regionale",
+"org_id": 22939112
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "000557961",
+"members": [
+{
+"identifier": "000557961",
+"kind": "national",
+"name": "GRASO Zenon Sobiecki",
+"org_id": 22602115
+},
+{
+"identifier": "000557961",
+"kind": "national",
+"name": "Instytut Pomnik - Centrum Zdrowia Dziecka",
+"org_id": 23234552
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "211228381",
+"members": [
+{
+"identifier": "211228381",
+"kind": "national",
+"name": "Wielospecjalistyczny Szpital Wojewódzki w Gorzowie Wlkp. Spółka z ograniczoną odpowiedzialnością",
+"org_id": 1734
+},
+{
+"identifier": "211228381",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 10484
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5372574496",
+"members": [
+{
+"identifier": "5372574496",
+"kind": "national",
+"name": "DDG Sp. z o.o. Sp. Komandytowa",
+"org_id": 9384328
+},
+{
+"identifier": "5372574496",
+"kind": "national",
+"name": "J.S. Hamilton Consulting” Spółka z ograniczoną odpowiedzialnością Spółka komandytowa – Lider Konsorcjum",
+"org_id": 10943637
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "9281925733",
+"members": [
+{
+"identifier": "9281925733",
+"kind": "national",
+"name": "Ośrodek Sportu i Rekreacji w Lubsku",
+"org_id": 19803872
+},
+{
+"identifier": "9281925733",
+"kind": "national",
+"name": "Gmina Lubsko",
+"org_id": 22754138
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7311923934",
+"members": [
+{
+"identifier": "7311923934",
+"kind": "national",
+"name": "MZK-Pabianice Spółka z o.o. w Pabianicach",
+"org_id": 9491277
+},
+{
+"identifier": "7311923934",
+"kind": "national",
+"name": "Miejski Zakład Komunikacyjny Spółka z ograniczoną odpowiedzialnością",
+"org_id": 23636274
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "01315880516",
+"members": [
+{
+"identifier": "01315880516",
+"kind": "national",
+"name": "BONI SRL",
+"org_id": 2061
+},
+{
+"identifier": "01315880516",
+"kind": "national",
+"name": "GPA S.r.l.",
+"org_id": 21683759
+},
+{
+"identifier": "01315880516",
+"kind": "national",
+"name": "RTP GPA S.R.L./GEOLOGO ENRICO BOTTIGLIERI",
+"org_id": 24493607
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "6772398589",
+"members": [
+{
+"identifier": "6772398589",
+"kind": "national",
+"name": "ISS HS Sp. z o.o.",
+"org_id": 15556355
+},
+{
+"identifier": "PL6772398589",
+"kind": "vat",
+"name": "NAPRZÓD CATERING sp. z o.o.",
+"org_id": 22986261
+},
+{
+"identifier": "6772398589",
+"kind": "national",
+"name": "Naprzód Catering Sp. z o.o.",
+"org_id": 23003324
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "02385200122",
+"members": [
+{
+"identifier": "02385200122",
+"kind": "national",
+"name": "Novartis Farma S.p.A.",
+"org_id": 14314104
+},
+{
+"identifier": "02385200122",
+"kind": "national",
+"name": "Tema Sinergie S.p.A.",
+"org_id": 23360380
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "7861705906",
+"members": [
+{
+"identifier": "7861705906",
+"kind": "national",
+"name": "Zakład Gospodarki Komunalnej Sp. z o.o. w Zaniemyślu",
+"org_id": 23220693
+},
+{
+"identifier": "7861705906",
+"kind": "national",
+"name": "Zaniemyskie Wodociągi Sp. z o.o.",
+"org_id": 23478804
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "650016609",
+"members": [
+{
+"identifier": "650016609",
+"kind": "national",
+"name": "Skarb Państwa Państwowe Gospodarstwo Leśne Lasy Państwowe Nadleśnictwo Oleszyce w Oleszycach",
+"org_id": 2953077
+},
+{
+"identifier": "650016609",
+"kind": "national",
+"name": "Lucjan Tulej Zakład Usług Leśnych \"LARIX\"",
+"org_id": 19395947
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "060161469",
+"members": [
+{
+"identifier": "060161469",
+"kind": "national",
+"name": "SONOLOGISTIC SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ SPÓŁKA KOMANDYTOWA",
+"org_id": 1741
+},
+{
+"identifier": "060161469",
+"kind": "national",
+"name": "Plus Sp. z o. o. Spółka komandytowa",
+"org_id": 11837498
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "230425744",
+"members": [
+{
+"identifier": "230425744",
+"kind": "national",
+"name": "Usługi Leśne Sławomir Sarnecki",
+"org_id": 21607466
+},
+{
+"identifier": "230425744",
+"kind": "national",
+"name": "konsorcjum Bukowa",
+"org_id": 22569134
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "9551072595",
+"members": [
+{
+"identifier": "9551072595",
+"kind": "national",
+"name": "ART BIT Sebastian Leśnik",
+"org_id": 22767754
+},
+{
+"identifier": "9551072595",
+"kind": "national",
+"name": "ARTBIT",
+"org_id": 23604579
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "8992803047",
+"members": [
+{
+"identifier": "8992803047",
+"kind": "national",
+"name": "Dolnośląska Służba Dróg i Kolei we Wrocławiu",
+"org_id": 12953822
+},
+{
+"identifier": "8992803047",
+"kind": "national",
+"name": "Województwo Dolnośląskie - Biuro Obsługi Urzędu Marszałkowskiego Województwa Dolnośląskiego",
+"org_id": 22697472
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6772081964",
+"members": [
+{
+"identifier": "6772081964",
+"kind": "national",
+"name": "5 Wojskowy Szpital Kliniczny z Polikliniką Samodzielny Publiczny Zakład Opieki Zdrowotnej",
+"org_id": 19048445
+},
+{
+"identifier": "6772081964",
+"kind": "national",
+"name": "Sekcja Zamówień Publicznych",
+"org_id": 22532483
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "8133039695",
+"members": [
+{
+"identifier": "8133039695",
+"kind": "national",
+"name": "Zakład Wykonawstwa Sieci Elektrycznych Rzeszów Sp. z o.o.",
+"org_id": 17057106
+},
+{
+"identifier": "8133039695",
+"kind": "national",
+"name": "Grinea Sp. z o.o.",
+"org_id": 22790705
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "1251749687",
+"members": [
+{
+"identifier": "1251749687",
+"kind": "national",
+"name": "Konica Minolta Sensing Europe B.V. sp. z o.o.",
+"org_id": 22418856
+},
+{
+"identifier": "1251749687",
+"kind": "national",
+"name": "PARAMEDYK SIMULATION Sp. z o. o.",
+"org_id": 23601754
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "13365760159",
+"members": [
+{
+"identifier": "13365760159",
+"kind": "national",
+"name": "Safety 21 SpA (mandataria)",
+"org_id": 15575185
+},
+{
+"identifier": "13365760159",
+"kind": "national",
+"name": "SAFETY21 Spa",
+"org_id": 21955788
+},
+{
+"identifier": "13365760159",
+"kind": "national",
+"name": "SAFETY21 SPA",
+"org_id": 22504837
+},
+{
+"identifier": "13365760159",
+"kind": "national",
+"name": "Safety21 S.p.A.",
+"org_id": 22669084
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "6890001165",
+"members": [
+{
+"identifier": "6890001165",
+"kind": "national",
+"name": "Bauma Rafał Dzido",
+"org_id": 13851328
+},
+{
+"identifier": "6890001165",
+"kind": "national",
+"name": "Skarb Państwa Państwowe Gospodarstwo Leśne Lasy Państwowe Nadleśnictwo Ustrzyki Dolne",
+"org_id": 22153059
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "361004604",
+"members": [
+{
+"identifier": "361004604",
+"kind": "national",
+"name": "WiW Plus Sp. z o.o.",
+"org_id": 19882434
+},
+{
+"identifier": "361004604",
+"kind": "national",
+"name": "Wyburzenia M. Kwiatkowska Sp. z o.o.",
+"org_id": 22632207
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "190546036",
+"members": [
+{
+"identifier": "190546036",
+"kind": "national",
+"name": "Port Service Sp. z o.o.",
+"org_id": 11834994
+},
+{
+"identifier": "190546036",
+"kind": "national",
+"name": "EMKA S.A.",
+"org_id": 22988963
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "6991871057",
+"members": [
+{
+"identifier": "6991871057",
+"kind": "national",
+"name": "BENER Michał Benka ul. Wileńska 59b/15 80-215 Gdańsk",
+"org_id": 19518355
+},
+{
+"identifier": "6991871057",
+"kind": "national",
+"name": "Gmina Rawicz",
+"org_id": 22647605
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7471406277",
+"members": [
+{
+"identifier": "7471406277",
+"kind": "national",
+"name": "Urząd Gminy w Lubszy",
+"org_id": 5350718
+},
+{
+"identifier": "7471406277",
+"kind": "national",
+"name": "Gmina Lubsza",
+"org_id": 9796513
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7781002137",
+"members": [
+{
+"identifier": "7781002137",
+"kind": "national",
+"name": "Sigma-Aldrich Sp. z o.o.",
+"org_id": 12726216
+},
+{
+"identifier": "7781002137",
+"kind": "national",
+"name": "MERCK LIFE SCIENCE  SP. Z  O.O.",
+"org_id": 18586435
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6351796430",
+"members": [
+{
+"identifier": "6351796430",
+"kind": "national",
+"name": "MVS Sp. z o.o.",
+"org_id": 10346849
+},
+{
+"identifier": "6351796430",
+"kind": "national",
+"name": "Althea Polska Sp. z o.o.",
+"org_id": 23182846
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6172189328",
+"members": [
+{
+"identifier": "6172189328",
+"kind": "national",
+"name": "PROMED S.A.",
+"org_id": 22188796
+},
+{
+"identifier": "PL6172189328",
+"kind": "vat",
+"name": "„Szpital Powiatowy w Jarocinie” Sp. z o.o.",
+"org_id": 22203200
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "8291708273",
+"members": [
+{
+"identifier": "8291708273",
+"kind": "national",
+"name": "Miasto Zduńska Wola",
+"org_id": 1625317
+},
+{
+"identifier": "8291708273",
+"kind": "national",
+"name": "Miejski Ośrodek Sportu i Rekreacji w Zduńskiej Woli",
+"org_id": 17735586
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7352697601",
+"members": [
+{
+"identifier": "7352697601",
+"kind": "national",
+"name": "Lek S.A.",
+"org_id": 21036430
+},
+{
+"identifier": "7352697601",
+"kind": "national",
+"name": "„Szpital Miejski w Rabce – Zdroju” Sp. z o.o.",
+"org_id": 22770738
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6930008341",
+"members": [
+{
+"identifier": "6930008341",
+"kind": "national",
+"name": "Krzyszkowscy Spółka jawna",
+"org_id": 14716871
+},
+{
+"identifier": "6930008341",
+"kind": "national",
+"name": "KRZYSZKOWSKI SPÓŁKA KOMANDYTOWA",
+"org_id": 24499046
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6482779001",
+"members": [
+{
+"identifier": "6482779001",
+"kind": "national",
+"name": "Henmedical Sp. z o.o.",
+"org_id": 21597925
+},
+{
+"identifier": "6482779001",
+"kind": "national",
+"name": "HEN MEDICAL Sp. z o.o.",
+"org_id": 22641542
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "152185875",
+"members": [
+{
+"identifier": "152185875",
+"kind": "national",
+"name": "NOVUM SPÓŁKA AKCYJNA",
+"org_id": 23169433
+},
+{
+"identifier": "152185875",
+"kind": "national",
+"name": "Dorota Kuszneruk",
+"org_id": 24498247
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "8940007657",
+"members": [
+{
+"identifier": "8940007657",
+"kind": "national",
+"name": "SWISSPOLLTD sp. z o.o.",
+"org_id": 16125481
+},
+{
+"identifier": "8940007657",
+"kind": "national",
+"name": "SWISSPOL Ltd Sp. z o.o.",
+"org_id": 23329824
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5213685705",
+"members": [
+{
+"identifier": "5213685705",
+"kind": "national",
+"name": "Q4Lab Sp. z o.o.",
+"org_id": 12691512
+},
+{
+"identifier": "5213685705",
+"kind": "national",
+"name": "Qiagen Polska Sp. z o.o.",
+"org_id": 18521475
+},
+{
+"identifier": "PL5213685705",
+"kind": "vat",
+"name": "QIAGEN Polska Sp. z o.o.",
+"org_id": 22619584
+},
+{
+"identifier": "5213685705",
+"kind": "national",
+"name": "QIAGEN Polska Sp. z o.o.",
+"org_id": 23038524
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5830001089",
+"members": [
+{
+"identifier": "5830001089",
+"kind": "national",
+"name": "BIPRORAF Sp. z o.o.",
+"org_id": 22709714
+},
+{
+"identifier": "5830001089",
+"kind": "national",
+"name": "BPR ASE GROUP Sp. z o.o.",
+"org_id": 23750278
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "367866962",
+"members": [
+{
+"identifier": "367866962",
+"kind": "national",
+"name": "NARODOWE MUZEUM TECHNIKI W WARSZAWIE",
+"org_id": 19234333
+},
+{
+"identifier": "367866962",
+"kind": "national",
+"name": "Deko-Bau Sp. z o.o.",
+"org_id": 22403201
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5940001676",
+"members": [
+{
+"identifier": "5940001676",
+"kind": "national",
+"name": "Zakład Usług Leśnych Joanna Dąbrowska",
+"org_id": 19588572
+},
+{
+"identifier": "5940001676",
+"kind": "national",
+"name": "Nadleśnictwo Choszczno",
+"org_id": 23286921
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7322037248",
+"members": [
+{
+"identifier": "7322037248",
+"kind": "national",
+"name": "Miejskie Usługi Komunikacyjne w Zgierzu",
+"org_id": 22599573
+},
+{
+"identifier": "7322037248",
+"kind": "national",
+"name": "Gmina Miasto Zgierz",
+"org_id": 22944016
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5291621607",
+"members": [
+{
+"identifier": "5291621607",
+"kind": "national",
+"name": "Rafen Engineering Rafał Kiszczak",
+"org_id": 14490601
+},
+{
+"identifier": "5291621607",
+"kind": "national",
+"name": "P.H.U. Gold-Went Edyta Gierałtowska",
+"org_id": 23332573
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "03043200611",
+"members": [
+{
+"identifier": "03043200611",
+"kind": "national",
+"name": "EU KON S.R.L.",
+"org_id": 14132262
+},
+{
+"identifier": "03043200611",
+"kind": "national",
+"name": "eukon srl",
+"org_id": 22147842
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "368090080",
+"members": [
+{
+"identifier": "368090080",
+"kind": "national",
+"name": "Red Stack Poland sp. z o.o. sp.k.",
+"org_id": 18288500
+},
+{
+"identifier": "368090080",
+"kind": "national",
+"name": "RSP spółka z ograniczoną odpowiedzialnością",
+"org_id": 19521194
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "IT",
+"key": "03792890265",
+"members": [
+{
+"identifier": "03792890265",
+"kind": "national",
+"name": "Bitfox srl",
+"org_id": 15768059
+},
+{
+"identifier": "03792890265",
+"kind": "national",
+"name": "SIELTE TRASPORTI S.R.L. (MANDANTE)",
+"org_id": 22644360
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "5250000127",
+"members": [
+{
+"identifier": "5250000127",
+"kind": "national",
+"name": "Przedsiębiorstwo Komunikacji Samochodowej w Warszawie Spółka Akcyjna",
+"org_id": 10844769
+},
+{
+"identifier": "5250000127",
+"kind": "national",
+"name": "Gmina Pomiechówek",
+"org_id": 22757066
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "000288917",
+"members": [
+{
+"identifier": "000288917",
+"kind": "national",
+"name": "Medlab-Products Sp. z o.o.",
+"org_id": 18093980
+},
+{
+"identifier": "000288917",
+"kind": "national",
+"name": "OMIXYS Spółka z ograniczoną odpowiedzialnością",
+"org_id": 20837009
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5262239325",
+"members": [
+{
+"identifier": "5262239325",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 36
+},
+{
+"identifier": "5262239325",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 49
+},
+{
+"identifier": "PL5262239325",
+"kind": "vat",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 4016
+},
+{
+"identifier": "5262239325",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 11707
+},
+{
+"identifier": "5262239325",
+"kind": "national",
+"name": "Urząd Zamówień Publicznych Departament Odwołań",
+"org_id": 22493638
+},
+{
+"identifier": "5262239325",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 23154892
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "810561303",
+"members": [
+{
+"identifier": "810561303",
+"kind": "national",
+"name": "Zakład Wodociągów i Kanalizacji",
+"org_id": 13416317
+},
+{
+"identifier": "810561303",
+"kind": "national",
+"name": "Met-Instal Sp. z o.o.",
+"org_id": 15805988
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "IT",
+"key": "00464110352",
+"members": [
+{
+"identifier": "00464110352",
+"kind": "national",
+"name": "CIR Food s.c.",
+"org_id": 9113656
+},
+{
+"identifier": "00464110352",
+"kind": "national",
+"name": "CIR FOOD S.C.",
+"org_id": 12688031
+},
+{
+"identifier": "00464110352",
+"kind": "national",
+"name": "CIRFOOD S.C.",
+"org_id": 21755010
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "810504943",
+"members": [
+{
+"identifier": "810504943",
+"kind": "national",
+"name": "Żegluga Świnoujska",
+"org_id": 10322678
+},
+{
+"identifier": "810504943",
+"kind": "national",
+"name": "Gmina Miasto Świnoujście -",
+"org_id": 19716428
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "IT",
+"key": "00526150073",
+"members": [
+{
+"identifier": "00526150073",
+"kind": "national",
+"name": "SI-AM di Carradore Mattia e C. s.a.s.",
+"org_id": 22794013
+},
+{
+"identifier": "00526150073",
+"kind": "national",
+"name": "R.T.I Siam s.r.l. - Alpi Scavi s.r.l.  -  F.lli Clusaz s.r.l.",
+"org_id": 23453537
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "110042418",
+"members": [
+{
+"identifier": "110042418",
+"kind": "national",
+"name": "MPGK Sp. z o.o.",
+"org_id": 22148241
+},
+{
+"identifier": "110042418",
+"kind": "national",
+"name": "Miejskie Przedsiębiorstwo Gospodarki Komunalnej Sp. z o.o. \nwe Włodawie",
+"org_id": 23431954
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5420010723",
+"members": [
+{
+"identifier": "5420010723",
+"kind": "national",
+"name": "Elektromontaż Wschód sp. z o.o. (Lider Konsorcjum)",
+"org_id": 12838212
+},
+{
+"identifier": "5420010723",
+"kind": "national",
+"name": "ELMONT SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+"org_id": 22927544
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "8762042053",
+"members": [
+{
+"identifier": "8762042053",
+"kind": "national",
+"name": "Zakład Przetwórstwa Mięsa Roman Aniołkowski, Ewa Aniołkowska",
+"org_id": 16285329
+},
+{
+"identifier": "8762042053",
+"kind": "national",
+"name": "ZPM Aniołkowscy",
+"org_id": 22732628
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "9661652000",
+"members": [
+{
+"identifier": "9661652000",
+"kind": "national",
+"name": "Audi Centrum Białystok",
+"org_id": 19330730
+},
+{
+"identifier": "9661652000",
+"kind": "national",
+"name": "Sieńko i Syn Sp. z o.o.",
+"org_id": 23323699
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6460013450",
+"members": [
+{
+"identifier": "6460013450",
+"kind": "national",
+"name": "Gmina Miasta Tychy",
+"org_id": 10841361
+},
+{
+"identifier": "6460013450",
+"kind": "national",
+"name": "Miejski Zarząd Budynków Mieszkalnych w Tychach",
+"org_id": 22170563
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "8531456990",
+"members": [
+{
+"identifier": "8531456990",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 22596684
+},
+{
+"identifier": "8531456990",
+"kind": "national",
+"name": "Gmina Pyrzyce",
+"org_id": 23381725
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "8172031249",
+"members": [
+{
+"identifier": "8172031249",
+"kind": "national",
+"name": "System Data Sp. z o.o.",
+"org_id": 14245080
+},
+{
+"identifier": "PL8172031249",
+"kind": "vat",
+"name": "System Data Sp. z o.o.",
+"org_id": 14661116
+},
+{
+"identifier": "8172031249",
+"kind": "national",
+"name": "Sano – Centrum Zindywidualizowanej Medycyny Obliczeniowej – Międzynarodowa Fundacja Badawcza",
+"org_id": 18624919
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "8971750736",
+"members": [
+{
+"identifier": "8971750736",
+"kind": "national",
+"name": "Militaria Sp. z o.o. sp. k.",
+"org_id": 12673934
+},
+{
+"identifier": "8971750736",
+"kind": "national",
+"name": "FHTM Sp. z o.o.",
+"org_id": 22489053
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "9441802012",
+"members": [
+{
+"identifier": "9441802012",
+"kind": "national",
+"name": "Ośrodek Rehabilitacji Narządu Ruchu \"Krzeszowice\" SP ZOZ",
+"org_id": 22242222
+},
+{
+"identifier": "9441802012",
+"kind": "national",
+"name": "Małopolski Szpital Rehabilitacyjny w Krzeszowicach",
+"org_id": 22666814
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6550013577",
+"members": [
+{
+"identifier": "6550013577",
+"kind": "national",
+"name": "Skarb Państwa Państwowe Gospodarstwo Leśne Lasy Państwowe Nadleśnictwo Chmielnik",
+"org_id": 22517471
+},
+{
+"identifier": "6550013577",
+"kind": "national",
+"name": "PRZEDSIĘBIORSWO USŁUGOWO- HANDLOWE KAROL WOŹNIAK",
+"org_id": 23032824
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "02392630279",
+"members": [
+{
+"identifier": "02392630279",
+"kind": "national",
+"name": "Regione Veneto",
+"org_id": 22665409
+},
+{
+"identifier": "02392630279",
+"kind": "national",
+"name": "Regione del Veneto – Giunta Regionale – Direzione Difesa del Suolo e della Costa",
+"org_id": 22932871
+},
+{
+"identifier": "02392630279",
+"kind": "national",
+"name": "Direzione Difesa Suolo e Costa, SOS",
+"org_id": 22998677
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "8522661756",
+"members": [
+{
+"identifier": "8522661756",
+"kind": "national",
+"name": "SIGN System Sp. z o.o.",
+"org_id": 22958229
+},
+{
+"identifier": "8522661756",
+"kind": "national",
+"name": "MASS SOLUTIONS Sp. z o.o.",
+"org_id": 23457754
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5221069889",
+"members": [
+{
+"identifier": "5221069889",
+"kind": "national",
+"name": "IBCOL Polska Sp. z o.o.",
+"org_id": 11254612
+},
+{
+"identifier": "5221069889",
+"kind": "national",
+"name": "IBKOL Sp. z o. o.",
+"org_id": 22653203
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6591425756",
+"members": [
+{
+"identifier": "6591425756",
+"kind": "national",
+"name": "Konsorcjum: Lider: Archgeo Piotr Janczewski",
+"org_id": 23230146
+},
+{
+"identifier": "6591425756",
+"kind": "national",
+"name": "„GALTY” USŁUGI ZIEMNO-INŻYNIERYJNE PAWEŁ MICYK",
+"org_id": 23514740
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "491892127",
+"members": [
+{
+"identifier": "491892127",
+"kind": "national",
+"name": "Chełmiec OSP Niskowa",
+"org_id": 22698231
+},
+{
+"identifier": "491892127",
+"kind": "national",
+"name": "Zakład Gospodarki Komunalnej i Mieszkaniowej w Chełmcu",
+"org_id": 22705365
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5262883664",
+"members": [
+{
+"identifier": "5262883664",
+"kind": "national",
+"name": "Sąd Polubowny przy Prokuratorii Generalnej Rzeczypospolitej Polskiej",
+"org_id": 1142
+},
+{
+"identifier": "5262883664",
+"kind": "national",
+"name": "Sąd Polubowny przy Prokuratorii Generalnej Rzeczpospolitej Polskiej",
+"org_id": 3927
+},
+{
+"identifier": "5262883664",
+"kind": "national",
+"name": "Prokuratoria Generalna",
+"org_id": 23122753
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7671179099",
+"members": [
+{
+"identifier": "7671179099",
+"kind": "national",
+"name": "Szkoła Podstawowa nr 2",
+"org_id": 22298844
+},
+{
+"identifier": "7671179099",
+"kind": "national",
+"name": "Przetargi Andrzej",
+"org_id": 22798952
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5272702552",
+"members": [
+{
+"identifier": "5272702552",
+"kind": "national",
+"name": "ClickAd Interactive Sp. z o.o.",
+"org_id": 13036720
+},
+{
+"identifier": "5272702552",
+"kind": "national",
+"name": "Euvic Media Sp. z o.o. - Lider",
+"org_id": 20494321
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "02047620303",
+"members": [
+{
+"identifier": "02047620303",
+"kind": "national",
+"name": "A&T2000 S.p.A.",
+"org_id": 22601584
+},
+{
+"identifier": "02047620303",
+"kind": "national",
+"name": "A&T 2000 S.p.A.",
+"org_id": 22769737
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "6211816575",
+"members": [
+{
+"identifier": "6211816575",
+"kind": "national",
+"name": "BM-EKO Sp. z o. o. Sp. k.",
+"org_id": 18696723
+},
+{
+"identifier": "6211816575",
+"kind": "national",
+"name": "BMEKO BRYKCZYŃSKI SP.K.",
+"org_id": 22504022
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6830011450",
+"members": [
+{
+"identifier": "6830011450",
+"kind": "national",
+"name": "Gminny Zarząd Dróg w Wieliczce",
+"org_id": 22232427
+},
+{
+"identifier": "6830011450",
+"kind": "national",
+"name": "Gmina Wieliczka",
+"org_id": 23135533
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "9452194929",
+"members": [
+{
+"identifier": "9452194929",
+"kind": "national",
+"name": "Naprzód Marketing Sp. z o.o.",
+"org_id": 18436291
+},
+{
+"identifier": "9452194929",
+"kind": "national",
+"name": "Rekeep Facility Solutions Sp. z o. o.",
+"org_id": 23514444
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5451816373",
+"members": [
+{
+"identifier": "5451816373",
+"kind": "national",
+"name": "Powiat Sokólski",
+"org_id": 18217368
+},
+{
+"identifier": "5451816373",
+"kind": "national",
+"name": "AUTOBUSY DVL sp. z o.o.",
+"org_id": 21059780
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "380191391",
+"members": [
+{
+"identifier": "380191391",
+"kind": "national",
+"name": "GM STEEL SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+"org_id": 19886182
+},
+{
+"identifier": "380191391",
+"kind": "national",
+"name": "FERECO Sp. z o.o.",
+"org_id": 22846835
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "1181788623",
+"members": [
+{
+"identifier": "1181788623",
+"kind": "national",
+"name": "Gmina Błonie",
+"org_id": 2335
+},
+{
+"identifier": "1181788623",
+"kind": "national",
+"name": "Centrum Sportu i Rekreacji w Błoniu",
+"org_id": 21976304
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "8442155152",
+"members": [
+{
+"identifier": "8442155152",
+"kind": "national",
+"name": "Dom Pomocy Społecznej w Suwałkach „Kalina”",
+"org_id": 10662294
+},
+{
+"identifier": "8442155152",
+"kind": "national",
+"name": "Pracownia Projektowa „Promar” Mariusz Szyszkowski",
+"org_id": 10891826
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7281508738",
+"members": [
+{
+"identifier": "7281508738",
+"kind": "national",
+"name": "Zadanie 2: Zimowe utrzymanie pasów drogowych dróg powiatowych na terenie gminy Ozorków i gminy Zgierz",
+"org_id": 14285474
+},
+{
+"identifier": "7281508738",
+"kind": "national",
+"name": "Hubertus Mariusz Malarczyk",
+"org_id": 22765089
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7282684503",
+"members": [
+{
+"identifier": "7282684503",
+"kind": "national",
+"name": "Mikomax Meble Biurowe Spółka z ograniczoną odpowiedzialnością sp.k.",
+"org_id": 19337002
+},
+{
+"identifier": "7282684503",
+"kind": "national",
+"name": "M Smart Office Spółką z ograniczoną odpowiedzialnością spółką komandytową",
+"org_id": 24504633
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5213741668",
+"members": [
+{
+"identifier": "5213741668",
+"kind": "national",
+"name": "Team Consulting Spółka z o.o.",
+"org_id": 11321371
+},
+{
+"identifier": "5213741668",
+"kind": "national",
+"name": "Ekspert Security Duo Sp. z.o.o",
+"org_id": 20195883
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7631002012",
+"members": [
+{
+"identifier": "7631002012",
+"kind": "national",
+"name": "OGRODNICZA Jerzy Czerwiński",
+"org_id": 20355523
+},
+{
+"identifier": "7631002012",
+"kind": "national",
+"name": "Pralnia szop Pracz Damian Góralski",
+"org_id": 22410269
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5260302835",
+"members": [
+{
+"identifier": "5260302835",
+"kind": "national",
+"name": "SoftPoint Sp. z o.o.",
+"org_id": 22156718
+},
+{
+"identifier": "5260302835",
+"kind": "national",
+"name": "Soft Point Sp. z o. o.",
+"org_id": 22541101
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "8551478049",
+"members": [
+{
+"identifier": "8551478049",
+"kind": "national",
+"name": "Żegluga Świnoujska",
+"org_id": 21864839
+},
+{
+"identifier": "8551478049",
+"kind": "national",
+"name": "Gmina Miasto Świnoujście -",
+"org_id": 23067560
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "1133028009",
+"members": [
+{
+"identifier": "1133028009",
+"kind": "national",
+"name": "ICR Sp. z o.o.",
+"org_id": 18391284
+},
+{
+"identifier": "1133028009",
+"kind": "national",
+"name": "IMC IMPOMED CENTRUM S.A.",
+"org_id": 18730372
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5783152383",
+"members": [
+{
+"identifier": "5783152383",
+"kind": "national",
+"name": "Arkadiusz Selonke Elektryka Budowlana",
+"org_id": 19289760
+},
+{
+"identifier": "5783152383",
+"kind": "national",
+"name": "ENERGOSYSTEM SP. Z O.O.",
+"org_id": 22671376
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "351194736",
+"members": [
+{
+"identifier": "351194736",
+"kind": "national",
+"name": "Krakowskie Centrum Rehabilitacji i Ortopedii",
+"org_id": 10102561
+},
+{
+"identifier": "351194736",
+"kind": "national",
+"name": "MAŁOPOLSKI SZPITAL ORTOPEDYCZNO-REHABILITACYJNY IM. PROF.BOGUSŁAWA FRAŃCZUKA",
+"org_id": 20858237
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "146869408",
+"members": [
+{
+"identifier": "146869408",
+"kind": "national",
+"name": "CertusVia Sp. z o.o.",
+"org_id": 15773353
+},
+{
+"identifier": "146869408",
+"kind": "national",
+"name": "Certus Spółka z o.o.",
+"org_id": 18067644
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5990003619",
+"members": [
+{
+"identifier": "5990003619",
+"kind": "national",
+"name": "Miejski Zakład Komunikacji w Gorzowie Wielkopolskim Sp. z o.o.",
+"org_id": 17056649
+},
+{
+"identifier": "5990003619",
+"kind": "national",
+"name": "Miasto Gorzów Wlkp. w imieniu którego działa Gorzowskie Inwestycje Miejskie Sp. z o.o.",
+"org_id": 22405273
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5272703675",
+"members": [
+{
+"identifier": "5272703675",
+"kind": "national",
+"name": "Krajowa Izba Odwoławcza",
+"org_id": 11627
+},
+{
+"identifier": "5272703675",
+"kind": "national",
+"name": "Emitel S.A.",
+"org_id": 22639591
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "97928840582",
+"members": [
+{
+"identifier": "97928840582",
+"kind": "national",
+"name": "Ufficio Generale Centro Responsabilità Amministrativa, Centro Contrattuale",
+"org_id": 10174573
+},
+{
+"identifier": "97928840582",
+"kind": "national",
+"name": "DIREZIONE DI INTENZA ROMA AERONAUTICA MILITARE",
+"org_id": 23606214
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "6681870425",
+"members": [
+{
+"identifier": "6681870425",
+"kind": "national",
+"name": "UM w Dobrej i podmioty przez nie reprezentowane zgodnie z zał nr 1 do SIWZ",
+"org_id": 11493496
+},
+{
+"identifier": "6681870425",
+"kind": "national",
+"name": "Gmina Dobra",
+"org_id": 22552075
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "142536800",
+"members": [
+{
+"identifier": "142536800",
+"kind": "national",
+"name": "Fudeko S. A.",
+"org_id": 18719144
+},
+{
+"identifier": "142536800",
+"kind": "national",
+"name": "Food Investment S.A.",
+"org_id": 20240549
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "930156216",
+"members": [
+{
+"identifier": "930156216",
+"kind": "national",
+"name": "Komenda Wojewódzka Policji",
+"org_id": 19491092
+},
+{
+"identifier": "930156216",
+"kind": "national",
+"name": "NZOZ INTERMED Ignacy Einhorn",
+"org_id": 20322247
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "010856213",
+"members": [
+{
+"identifier": "010856213",
+"kind": "national",
+"name": "Sigma BIS SA",
+"org_id": 18180854
+},
+{
+"identifier": "010856213",
+"kind": "national",
+"name": "\"MEDIA GROUP\" SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+"org_id": 19913271
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "4990463757",
+"members": [
+{
+"identifier": "4990463757",
+"kind": "national",
+"name": "Ekoprzedsiębiorstwo Sp. z o.o.",
+"org_id": 16572633
+},
+{
+"identifier": "4990463757",
+"kind": "national",
+"name": "Gmina Mielno",
+"org_id": 22804990
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6581705655",
+"members": [
+{
+"identifier": "6581705655",
+"kind": "national",
+"name": "AESCULAP CHIFA Sp. z o.o.",
+"org_id": 21914119
+},
+{
+"identifier": "6581705655",
+"kind": "national",
+"name": "Zespół Opieki Zdrowotnej w Końskich",
+"org_id": 22533213
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5223082500",
+"members": [
+{
+"identifier": "5223082500",
+"kind": "national",
+"name": "ENOVIS POLAND Sp. z o. o.",
+"org_id": 11136
+},
+{
+"identifier": "5223082500",
+"kind": "national",
+"name": "Lima Polska Sp. z o. o.",
+"org_id": 18655159
+},
+{
+"identifier": "PL5223082500",
+"kind": "vat",
+"name": "Lima Polska Sp. z o.o.",
+"org_id": 21775601
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7251739344",
+"members": [
+{
+"identifier": "7251739344",
+"kind": "national",
+"name": "Województwo Łódzkie",
+"org_id": 9685
+},
+{
+"identifier": "7251739344",
+"kind": "national",
+"name": "Szkoła Policealna Techniki Dentystycznej w Łodzi, Al. Marszałka Józefa Piłsudskiego 159, 92-332 Łódź",
+"org_id": 23134971
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "01042210250",
+"members": [
+{
+"identifier": "01042210250",
+"kind": "national",
+"name": "DEBIASIOPROGETTI SRL",
+"org_id": 18827074
+},
+{
+"identifier": "01042210250",
+"kind": "national",
+"name": "Debiasio Progetti s.r.l.",
+"org_id": 22547008
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "180965462",
+"members": [
+{
+"identifier": "180965462",
+"kind": "national",
+"name": "ZAKŁAD GOSPODARKI KOMUNALNEJ Sp. z o.o. w KAŃCZUDZE",
+"org_id": 22943823
+},
+{
+"identifier": "180965462",
+"kind": "national",
+"name": "Przedsiębiorstwo",
+"org_id": 23532619
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "000298070",
+"members": [
+{
+"identifier": "000298070",
+"kind": "national",
+"name": "Samodzielny Wojewódzki Zespół Publicznych Zakładów Psychiatrycznej Opieki Zdrowotnej w Warszawie",
+"org_id": 18250162
+},
+{
+"identifier": "000298070",
+"kind": "national",
+"name": "Szpital Nowowiejski",
+"org_id": 22288134
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "630231571",
+"members": [
+{
+"identifier": "630231571",
+"kind": "national",
+"name": "Sigma-Aldrich Sp. z o.o.",
+"org_id": 16846973
+},
+{
+"identifier": "630231571",
+"kind": "national",
+"name": "MERCK LIFE SCIENCE Sp. z o.o.",
+"org_id": 17854248
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "7790020583",
+"members": [
+{
+"identifier": "7790020583",
+"kind": "national",
+"name": "Gas Pol S.A.",
+"org_id": 21275194
+},
+{
+"identifier": "7790020583",
+"kind": "national",
+"name": "GASPOL S.A",
+"org_id": 21561218
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "00208620369",
+"members": [
+{
+"identifier": "00208620369",
+"kind": "national",
+"name": "Consorzio stabile Viagest S.c.a.r.l. (affittuaria del ramo d’azienda Servizi di viabilità dell’impresa ECOAL S.r.l.)",
+"org_id": 12253474
+},
+{
+"identifier": "00208620369",
+"kind": "national",
+"name": "BOSCHIVA F.LLI VALENTINI SRL",
+"org_id": 18276382
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "380274361",
+"members": [
+{
+"identifier": "380274361",
+"kind": "national",
+"name": "ASCLEPIOS S.A.",
+"org_id": 13323006
+},
+{
+"identifier": "380274361",
+"kind": "national",
+"name": "Novohemo K. E. Nyczka Sp. J.",
+"org_id": 21045838
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "6922256509",
+"members": [
+{
+"identifier": "6922256509",
+"kind": "national",
+"name": "Suez Zachód Sp. z o.o.",
+"org_id": 16654878
+},
+{
+"identifier": "6922256509",
+"kind": "national",
+"name": "PreZero Dolny Śląsk Sp. z o.o.",
+"org_id": 19179193
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "IT",
+"key": "03920881210",
+"members": [
+{
+"identifier": "03920881210",
+"kind": "national",
+"name": "Bambù Cooperativa Sociale onlus",
+"org_id": 22623688
+},
+{
+"identifier": "03920881210",
+"kind": "national",
+"name": "BambÃÃÂ¹ Cooperativa Sociale Onlus",
+"org_id": 23077964
+}
+],
+"scheme": "IT:piva"
+},
+{
+"country": "PL",
+"key": "5311710166",
+"members": [
+{
+"identifier": "5311710166",
+"kind": "national",
+"name": "Obraziński Transport Group Sp. z o.o.",
+"org_id": 22815922
+},
+{
+"identifier": "5311710166",
+"kind": "national",
+"name": "OTG Sp. z o.o.",
+"org_id": 24608292
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6972057367",
+"members": [
+{
+"identifier": "6972057367",
+"kind": "national",
+"name": "REGIONALNE CENTRUM GOSPODARKI ODPADAMI RESORT SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+"org_id": 2810
+},
+{
+"identifier": "6972057367",
+"kind": "national",
+"name": "Miejski Zakład Oczyszczania Spółka z o.o.",
+"org_id": 17889174
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6492299366",
+"members": [
+{
+"identifier": "6492299366",
+"kind": "national",
+"name": "EUROBUS POLSKA sp. z o.o.",
+"org_id": 23153069
+},
+{
+"identifier": "6492299366",
+"kind": "national",
+"name": "PKS POŁUDNIE 2 SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+"org_id": 23510597
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "1132826097",
+"members": [
+{
+"identifier": "1132826097",
+"kind": "national",
+"name": "Partner4Medicine P.S.A.",
+"org_id": 6429
+},
+{
+"identifier": "1132826097",
+"kind": "national",
+"name": "Partner 4 Medicine Sp. z o.o.",
+"org_id": 12803853
+},
+{
+"identifier": "PL1132826097",
+"kind": "vat",
+"name": "Partner 4 Medicine P.S.A",
+"org_id": 23674031
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "8992630813",
+"members": [
+{
+"identifier": "8992630813",
+"kind": "national",
+"name": "Q4 Net Sp. z o.o.",
+"org_id": 20651738
+},
+{
+"identifier": "8992630813",
+"kind": "national",
+"name": "Q4Net Sp. z o.o.",
+"org_id": 23327499
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6470508638",
+"members": [
+{
+"identifier": "6470508638",
+"kind": "national",
+"name": "IZOLPLAST sp. z o.o.",
+"org_id": 10815205
+},
+{
+"identifier": "6470508638",
+"kind": "national",
+"name": "Przedsiębiorstwo-Handlowo-Produkcyjno-Usługowe Izol-Plast Spółka z o.o.",
+"org_id": 15527325
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "7770003274",
+"members": [
+{
+"identifier": "7770003274",
+"kind": "national",
+"name": "Gmina Swarzędz",
+"org_id": 17240587
+},
+{
+"identifier": "7770003274",
+"kind": "national",
+"name": "Aquanet S.A.",
+"org_id": 22298894
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "650975178",
+"members": [
+{
+"identifier": "650975178",
+"kind": "national",
+"name": "Przedsiębiorstwo",
+"org_id": 23556024
+},
+{
+"identifier": "650975178",
+"kind": "national",
+"name": "Firma Handlowo Usługowo Produkcyjna MASTER Stanisław Cygan",
+"org_id": 23591399
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "PL",
+"key": "5262239235",
+"members": [
+{
+"identifier": "5262239235",
+"kind": "national",
+"name": "Urząd Zamówień Publicznych",
+"org_id": 22478675
+},
+{
+"identifier": "5262239235",
+"kind": "national",
+"name": "KRAJOWA IZBA ODWOŁAWCZA",
+"org_id": 22802429
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "6792747188",
+"members": [
+{
+"identifier": "6792747188",
+"kind": "national",
+"name": "MAXTO Sp. z o.o. S.K.A.",
+"org_id": 10728015
+},
+{
+"identifier": "PL6792747188",
+"kind": "vat",
+"name": "MAXTO SP. Z O.O. S.K.A.",
+"org_id": 17673521
+},
+{
+"identifier": "6792747188",
+"kind": "national",
+"name": "Proasisstans Sp. z o.o. S.K.A. - Członek Konsorcjum",
+"org_id": 22947769
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "RO",
+"key": "14838148",
+"members": [
+{
+"identifier": "14838148",
+"kind": "national",
+"name": "Direcția Națională Anticorupție",
+"org_id": 13291636
+},
+{
+"identifier": "14838148",
+"kind": "national",
+"name": "DNA - Serviciul Investiții, achiziții si administrativ",
+"org_id": 22572276
+},
+{
+"identifier": "14838148",
+"kind": "national",
+"name": "DIRECTIA NATIONALA ANTICORUPTIE",
+"org_id": 22572277
+},
+{
+"identifier": "14838148",
+"kind": "national",
+"name": "DIRECŢIA NAŢIONALĂ ANTICORUPŢIE",
+"org_id": 22577869
+}
+],
+"scheme": "RO:cui"
+},
+{
+"country": "PL",
+"key": "5830011969",
+"members": [
+{
+"identifier": "5830011969",
+"kind": "national",
+"name": "PHU Labar",
+"org_id": 10125252
+},
+{
+"identifier": "PL5830011969",
+"kind": "vat",
+"name": "Gdańskie Centrum Usług Wspólnych",
+"org_id": 14026115
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "5492199463",
+"members": [
+{
+"identifier": "5492199463",
+"kind": "national",
+"name": "Stowarzyszenie „Dolina Karpia”",
+"org_id": 22105338
+},
+{
+"identifier": "5492199463",
+"kind": "national",
+"name": "Gmina Polanka Wielka",
+"org_id": 22751491
+}
+],
+"scheme": "PL:nip"
+},
+{
+"country": "PL",
+"key": "730097572",
+"members": [
+{
+"identifier": "730097572",
+"kind": "national",
+"name": "Jednostka Wojskowa 1158",
+"org_id": 3876037
+},
+{
+"identifier": "730097572",
+"kind": "national",
+"name": "32 Baza Lotnictwa Taktycznego w Łasku",
+"org_id": 22451021
+}
+],
+"scheme": "PL:regon"
+},
+{
+"country": "IT",
+"key": "02338180264",
+"members": [
+{
+"identifier": "02338180264",
+"kind": "national",
+"name": "Castelmonte Società Cooperativa Sociale Onlus",
+"org_id": 8440528
+},
+{
+"identifier": "02338180264",
+"kind": "national",
+"name": "Castel Monte società cooperativa sociale onlus",
+"org_id": 11580570
+}
+],
+"scheme": "IT:piva"
+}
+]
+}

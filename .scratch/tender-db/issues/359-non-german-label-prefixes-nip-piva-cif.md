@@ -1,6 +1,6 @@
 # 359 — the label-prefix class is not German: `NIP…` (18k rows), `PIVA…`, `CFEPIVA…`, `CIF…`, `NUMERNIP…`
 
-Status: REPAIRED, FOLD PENDING BEHIND THE WEEKLY BATCH (2026-09-06 01:2x UTC) — vocabulary + guard deployed (b9c0928), `repair-label-prefixes` wet job 747 applied 28,085 rows; the R2 dry (job 748) planned 16,179 groups and its listing showed ~1.4 % disagreeing-name groups (the buyer's NIP on the winner's row), so the wet R2 was NOT run; the R2 name gate is built, gated green and pushed (5868fba) but its deploy was refused at 01:1x because the Sunday batch (data-quality → rehash-probe → build-org-match-keys → org-merge-health → scan-org-match-keys, none of them a wet merge) is running. NEXT FIRING: when the queue is idle, `./deploy.sh`, then `match-org-identifiers` dry → read `denied_names` and the `denied_names_listing` in the r2-merge-plan report → wet (`/tmp/355-r2-wet.json`) → `project` → record the numbers here. Was: BUILDING 2026-09-06 00:3x UTC.
+Status: DONE 2026-09-06 03:4x UTC — vocabulary + guard deployed (b9c0928); `repair-label-prefixes` wet (job 747) rewrote 28,085 rows (34,375 carried a label; 6,290 kept as published by the guard); R2 folded the reunions in two passes behind the new name gate — 11,716 groups (job 757, 12,174 rows removed, 120k mentions, 664k parties, 138k winners repointed) and 4,015 (job 760, 4,475 rows, 44k mentions, 115k parties, 99k winners) — 15,731 groups, 16,649 duplicate rows gone; 451 groups stand denied for review (`359-r2-denied-names-2026-09-06.json`). Change feed reconciles to the row (see below). Was: REPAIRED, FOLD PENDING BEHIND THE WEEKLY BATCH (2026-09-06 01:2x UTC).
 Kind: data quality (organization layer identifiers) — rule-shaped, repair job exists
 Relates to: 328 (the German half of the same class: vocabulary + `repair-label-prefixes`), 345 (the renormalisation repair, sibling), 357 (where the shape surfaced), 300 Stage 2 (R2 folds the reunions), 329 (E0 folds what R2 cannot key)
 
@@ -68,6 +68,40 @@ the same for the other five.
    `match-org-identifiers` r2 dry/wet for the reunions R2 can key (PL NIP/REGON, IT
    P.IVA, DE/GB VAT), `project`. What R2 cannot key (ES CIF is E2 by design — the
    DIR3 collision) becomes same-triple pairs for E0 (issue 329).
+
+## Done (2026-09-06 00:4x–03:4x UTC)
+
+| step | job | result |
+|---|---|---|
+| vocabulary + guard deployed | b9c0928 | tests: strips in `countries.rs`, pairing/compound/shape in `project.rs` |
+| `repair-label-prefixes` dry | 746 | 34,375 labelled, 28,085 planned, 6,290 guard-kept, 16,366 reunions; plan read by label through bounded identity-index seeks per (country, prefix) — `CF…` on FR/DE rows are 32-hex GUIDs and UK postcodes, refused by the guard as designed |
+| `repair-label-prefixes` wet | 747 | 28,085 applied, 0 moved under the plan, 7 s |
+| R2 dry, no name gate | 748 | plan 16,179 groups; the 569 listed read ~1.4 % disagreeing names → wet NOT run |
+| R2 name gate v1 (N3 disagree) | 5868fba | denied 4,473 of 16,179 — the listing was spelling (Ł, `Spółka z o.o.`, role tails), not identity |
+| R2 wet under gate v1 | 757 | 11,716 groups merged, 12,174 rows removed, 119,707 mentions, 663,695 parties, 138,016 winners, 45,584 tenders touched, 76 s |
+| R2 name gate v2 (disjoint core tokens, Latin diacritics folded, role/legal words dropped) | 895acf6 | denied 451 of 4,466 remaining |
+| R2 wet under gate v2 | 760 | 4,015 groups merged, 4,475 rows removed, 43,600 mentions, 115,093 parties, 98,871 winners, 19,697 tenders touched, 27 s |
+| projection | 758, 761 | 0 notices both times (R2 repoints derived rows itself) |
+
+Change feed since the repair's first write (cursor 547508645): organization `changed`
+39,801 + 4,015 = 28,085 repaired + 11,716 + 4,015 fold winners; `removed` 12,174 + 4,475 =
+16,649 = the two folds' rows removed; tender `changed` 63,652 + 27,396.
+
+**What the campaign taught about R2.** Its E1 key was merge-grade by design and every
+earlier run folded stock or rows a review had read; the label repair handed it 16k groups
+of one provenance and the listing showed the buyer's-NIP-on-the-winner's-row error at
+~1–2 %. The name gate is the deny-direction floor for that shape. Its first form (N3
+inequality) denied 28 % — the N2 key keeps diacritics on purpose and Polish Ł does not
+decompose, the `§family` tables miss `Spółka z o.o.` spelt out, and publishers append
+`(Lider konsorcjum)`. The second form asks only whether two named members share a core
+token after folding, and denies 8.8 %: about half true errors, half acronyms
+(`PUK LE MO`), renames (`Dimension Data` → `NTT`), translations (`BULiGL`), spacing
+(`Lore star`/`Lorestar`). Those 451 are the review queue; there is no merge-verdict path
+yet (the 311 principle's next unit — a `same-entity` verdict store R2 consults, as the
+country verdicts do for `apply-country-verdicts`).
+
+Not folded and standing as exact-triple duplicates: the ES `CIF…` rows (E2 by design, the
+DIR3 collision) and every non-E1 scheme — issue 329's E0 population.
 
 ## Do not
 
