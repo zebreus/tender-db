@@ -1,6 +1,6 @@
 # 322 — The `member-row-mislabelled` class has a verdict but no repair
 
-Status: RE-MEASURED 2026-08-31 — the premise has largely dissolved.
+Status: CLOSED 2026-09-06 (owner board sweep) — the premise dissolved on the 2026-08-31 re-measure: ~2 decisive cases are an exception list, the 22 vehicle-named cases belong to the Stage-4 name keys / 321, and nothing here wants a job. Reopen rule at the bottom. Was: RE-MEASURED 2026-08-31 — the premise has largely dissolved.
 RECOMMENDATION: do NOT build the rename machinery; see the distribution
 Kind: data quality (organization layer)
 Relates to: 317 Unit A (re-homing), 311 (produced the verdicts), 300 Stage 4

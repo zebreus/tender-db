@@ -262,3 +262,32 @@ speculative-preallocation reading is wrong too; it stays open here (30.7 M exten
 file — copy-on-write fragmentation from the reflink ring is the remaining candidate, and
 `xfs_fsr`/defragmentation or `cp --reflink=never` into a fresh file would be the test, both
 heavy — owner conversation, not a firing).
+
+### 2026-09-06 14:0x UTC — item 3 reproduced in miniature: the gap is copy-on-write preallocation left behind on a reflinked file
+
+Bounded reads on the live file (`xfs_io -r -c "stat -v"`, one inode): size 648,515,756,032
+(604 GiB), `stat.blocks` 1,727,772,352 (824 GiB), `nextents` 30,739,959, `extsize` 0,
+`cowextsize` 0, no attr-fork extents; the count has not moved in four idle hours (last
+write 09:35). Both snapshots read `blocks × 512 = size + 0.47 GB` — clean clones carry
+no gap; the live file alone does. Kernel 7.0.0-22-generic, `/data` XFS `reflink=1`,
+no `allocsize`, `speculative_prealloc_lifetime` 300 s.
+
+Controlled experiment on the same volume (`/data/probe169`, 64 MiB scratch file,
+reflink clone, then 2,000 random 4 KiB `pwrite`s = 1,904 distinct pages = 7.8 MB
+rewritten, fsync): the original's allocation went from 64 MiB to **118.9 MiB — a gap of
+57.5 MB for 7.8 MB of writes**; `nextents` 3,363; the clone stayed at exactly its size.
+57.5 MB is what leftover COW preallocation predicts: with `cowextsize` 0 XFS uses its
+default COW extent-size hint of 32 blocks (128 KiB), so each rewritten page allocates a
+128 KiB COW extent of which 4 KiB is remapped and the rest stays allocated in the COW
+fork as speculative preallocation — 512 windows × 128 KiB ≈ 64 MiB minus the pages
+actually written. That is item 3's mechanism, scaled: 30.7 M extents on the live file
+are the rewritten pages, and the 220 GiB is their windows' unused remainder.
+
+Two things still to settle, both running now: whether the periodic block GC (every
+300 s) reclaims it on a CLOSED file (`orig`, re-read at t+7 min) and on a file HELD
+OPEN the way the server holds the DB (`orig2`, fd held ten minutes with readings every
+two, then closed) — the live file's four idle hours say the open case does not reclaim.
+If that holds, the levers are (a) `xfs_spaceman -c "prealloc -s" /data` to force the GC
+(the supported maintenance ioctl), (b) a `cowextsize` of one block on the live file so
+future COW writes preallocate nothing, and (c) a restart is NOT one (measured 03:4x).
+`df` is not lying — those blocks are allocated — so the ~220 GiB is real headroom to win.
