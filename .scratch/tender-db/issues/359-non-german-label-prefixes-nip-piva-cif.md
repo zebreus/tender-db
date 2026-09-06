@@ -1,6 +1,6 @@
 # 359 — the label-prefix class is not German: `NIP…` (18k rows), `PIVA…`, `CFEPIVA…`, `CIF…`, `NUMERNIP…`
 
-Status: BUILDING 2026-09-06 00:3x UTC (owner) — vocabulary extended, guard widened by the ES CIF/NIF shape, tests green in `ingest`; gate, deploy and the `repair-label-prefixes` dry/wet + R2 follow in this firing. Filed 2026-09-06 00:2x from the 357 campaign's last slices.
+Status: REPAIRED, FOLD PENDING BEHIND THE WEEKLY BATCH (2026-09-06 01:2x UTC) — vocabulary + guard deployed (b9c0928), `repair-label-prefixes` wet job 747 applied 28,085 rows; the R2 dry (job 748) planned 16,179 groups and its listing showed ~1.4 % disagreeing-name groups (the buyer's NIP on the winner's row), so the wet R2 was NOT run; the R2 name gate is built, gated green and pushed (5868fba) but its deploy was refused at 01:1x because the Sunday batch (data-quality → rehash-probe → build-org-match-keys → org-merge-health → scan-org-match-keys, none of them a wet merge) is running. NEXT FIRING: when the queue is idle, `./deploy.sh`, then `match-org-identifiers` dry → read `denied_names` and the `denied_names_listing` in the r2-merge-plan report → wet (`/tmp/355-r2-wet.json`) → `project` → record the numbers here. Was: BUILDING 2026-09-06 00:3x UTC.
 Kind: data quality (organization layer identifiers) — rule-shaped, repair job exists
 Relates to: 328 (the German half of the same class: vocabulary + `repair-label-prefixes`), 345 (the renormalisation repair, sibling), 357 (where the shape surfaced), 300 Stage 2 (R2 folds the reunions), 329 (E0 folds what R2 cannot key)
 
