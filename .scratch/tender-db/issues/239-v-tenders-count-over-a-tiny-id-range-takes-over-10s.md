@@ -1,6 +1,6 @@
 # 239 — counting 5,000 ids of `v_tenders` takes over 10 seconds
 
-Status: FILTERED VIEW READS REFUSED UP FRONT 2026-09-06 (owner; upstream re-probed at 0.8.0-pre.8, still no pushdown — see the bottom); was CAUSE RE-CONFIRMED under turso 0.7.2 (2026-08-23, plan-level tripwire landed); was CAUSE FOUND 2026-08-18 — turso pushes no predicate into ANY view, so the whole `v_*` analyst
+Status: FILTERED AND JOINED VIEW READS REFUSED UP FRONT — DEPLOYED `12bffae` 2026-09-06 12:0x UTC and verified live (below); upstream re-probed at 0.8.0-pre.8, still no pushdown; was CAUSE RE-CONFIRMED under turso 0.7.2 (2026-08-23, plan-level tripwire landed); was CAUSE FOUND 2026-08-18 — turso pushes no predicate into ANY view, so the whole `v_*` analyst
 surface is unusable for filtered queries (a single-table view is 1000x slower than its table). The
 `current_title` denormalisation shipped and helps unfiltered reads, but is NOT the fix
 Kind: read-path cost (the headline analyst view is not usable for aggregates)
@@ -343,3 +343,12 @@ included, whose "join it cheaply" advice was wrong under no-pushdown and now rea
 aggregate materialises the view regardless). The remaining imprecision, documented in the
 code: a view read inside an expression subquery of a CTE or derived table body counts as
 that body reading a view — rare, false-positive-only.
+
+**Live on `12bffae` (2026-09-06 12:0x UTC), through `/v1/sql` on the box:** `SELECT id,
+title FROM v_tenders WHERE id = 93601` → **400 in 41 ms** with the v_tenders guidance (was
+408 after 10 s with a pinned worker); `tenders t JOIN v_tender_current c … WHERE t.id =
+93601` → 400 naming v_tender_current and the `current_seq` join; `SELECT id FROM v_tenders
+LIMIT 2` → 200, two rows; the documented base-table join for tender 93601 → 200, one row,
+milliseconds; `v_fetches WHERE kind = 'daily' LIMIT 2` → 200 (the exemption). The tripwire
+test stays armed for the turso release that learns pushdown; lifting the rule is listed in
+its instructions.
