@@ -498,6 +498,21 @@ mod cluster_filters {
 /// `HRB…` and stops there: `HANDELSREGISTER` is a field name, `HRB` is the
 /// register division and carries meaning. The census separates them; a guess
 /// would have taken both.
+///
+/// **The non-German labels (issue 359).** Issue 328 read the class off the
+/// German VAT rows and stopped there; the 357 campaign's last slices then met
+/// the same shape in Polish, Italian and Spanish — `NIPA41015322` (a Spanish CIF
+/// with the Polish field name), `NUMERNIPDE312308370`, `CFEPIVA10548370963`,
+/// `CIFA48283964` — and the corpus carries 18,318 distinct `NIP…` values,
+/// ~1,000 `PIVA…`, ~280 `CFEPIVA…`, ~260 `CIF…`, ~290 `NUMERNIP…` (2026-09-06
+/// prefix reads, idle box). `NIP`, `KRS`, `REGON`, `CIF` and `NIF` are ALSO
+/// register tags in [`crate::project`]'s `REGISTER_PREFIXES`: unlike `HRB` they
+/// name the very scheme the bare value classifies as by shape (a 10-digit PL
+/// national IS a NIP, a 9-digit one a REGON, a 0-led 10-digit a KRS serial, a
+/// letter-and-eight under ES a CIF), so the tag is a field name here, not a
+/// division — the strip runs first and the register arm keeps the value only when
+/// the remainder is refused. `VAT` alone is NOT listed: `VATNO…` is as often
+/// the Norwegian country prefix as the English word.
 const LABEL_PREFIXES: &[&str] = &[
     "UMSATZSTEUERIDENTIFIKATIONSNUMMERGEM27AUMSATZSTEUERGESETZ",
     "UMSATZSTEUERIDENTIFIKATIONSNUMMERGEM27AUSTG",
@@ -514,14 +529,27 @@ const LABEL_PREFIXES: &[&str] = &[
     "UMSATZSTEUERID",
     "UMSATZSTEUERNR",
     "USTIDENTNUMMER",
+    "CODICEFISCALE",
     "STEUERNUMMER",
     "USTIDNUMMER",
+    "PARTITAIVA",
     "USTIDENTNR",
     "USTIDNRUID",
+    "NUMERNIP",
+    "NIPNUMER",
     "USTIDNR",
+    "CFEPIVA",
     "USTID",
+    "VATID",
+    "REGON",
     "IDNR",
     "STNR",
+    "PIVA",
+    "NIP",
+    "KRS",
+    "CIF",
+    "NIF",
+    "CF",
 ];
 
 /// `value` with one leading publisher label removed, or `None` when it carries
@@ -590,6 +618,23 @@ mod label_prefixes {
             ("HANDELSREGISTERNUMMERHRB12345", "HRB12345"),
             ("STEUERNUMMER12345678", "12345678"),
             ("STNRDE123456789", "DE123456789"),
+            // Issue 359 — the Polish, Italian and Spanish field names, all real
+            // prod values from the 357 campaign's packets.
+            ("NIP1070000916", "1070000916"),          // SAFEGE's Polish branch
+            ("NIPA41015322", "A41015322"),            // Ayesa: a Spanish CIF under a Polish label
+            ("NUMERNIPDE312308370", "DE312308370"),   // Acandis GmbH, "Numer NIP: DE…"
+            ("NIPNUMER5260001234", "5260001234"),
+            ("NIPPL5260001234", "PL5260001234"),      // the label AND the VAT prefix
+            ("REGON123456789", "123456789"),
+            ("KRS0000123456", "0000123456"),
+            ("PIVA10548370963", "10548370963"),       // Lloyd's Insurance Company, Italian branch
+            ("CFEPIVA10548370963", "10548370963"),    // "CF e P.IVA"
+            ("PARTITAIVA12525420159", "12525420159"),
+            ("CODICEFISCALE97819940152", "97819940152"),
+            ("CF97819940152", "97819940152"),
+            ("CIFA48283964", "A48283964"),            // IDOM
+            ("NIF501234567", "501234567"),            // a Portuguese NIF
+            ("VATIDGB287249363", "GB287249363"),      // Therakos EMEA
         ] {
             assert_eq!(label_prefix_stripped(raw), Some(want), "{raw}");
         }
@@ -602,6 +647,8 @@ mod label_prefixes {
         assert_eq!(label_prefix_stripped("UMSATZSTEUERIDENTIFIKATIONSNUMMER"), None);
         assert_eq!(label_prefix_stripped("USTID"), None);
         assert_eq!(label_prefix_stripped("STNR"), None);
+        assert_eq!(label_prefix_stripped("NIP"), None);
+        assert_eq!(label_prefix_stripped("CIF"), None);
     }
 
     /// And the remainder is returned WITHOUT a claim, which is the contract the

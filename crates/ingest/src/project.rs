@@ -4554,6 +4554,12 @@ fn split_ci<'a>(s: &'a str, delim: &str) -> Option<(&'a str, &'a str)> {
 /// German (HRB/HRA/VR/GNR/PR), Austrian (FN), Polish (KRS/NIP/REGON), Romanian
 /// (CUI), Spanish (CIF/NIF), Croatian (OIB), Danish (CVR), Czech (ICO/DIC),
 /// French (SIREN/SIRET), and the German VAT-word tag (UST).
+///
+/// Since issue 359 the label strip above runs FIRST for `NIP`, `KRS`, `REGON`,
+/// `CIF` and `NIF` (as it already did for `UST…`): those tags name the scheme
+/// the bare value classifies as by shape, so `NIP1070000916` becomes the same
+/// `1070000916` its twin row already carries. This arm still catches them when
+/// the strip is refused — a compound `NIP…REGON…` field, a bare field name.
 const REGISTER_PREFIXES: &[&str] = &[
     "HRB", "HRA", "GNR", "VR", "PR", "FN", "KRS", "NIP", "REGON", "CUI", "CIF",
     "NIF", "OIB", "CVR", "ICO", "DIC", "SIRET", "SIREN", "UST",
@@ -4758,8 +4764,15 @@ fn normalise_identifier_with(raw: &str, country: Option<&str>, folds: bool) -> O
         // it, which is the property that matters when the list is read off a
         // corpus that keeps growing.
         if let Some(id) = normalise_identifier_with(rest, country, folds) {
-            let recognisable =
-                id.kind != "national" || rest.bytes().all(|b| b.is_ascii_digit());
+            // Issue 359 widened "recognisable" by one shape: a Spanish CIF/NIF
+            // (one letter, seven digits, a check character; or eight digits
+            // and a letter; or an NIE's X/Y/Z lead). `CIFA48283964` — the
+            // label IS the scheme's name — strips to a value the national arm
+            // classifies by shape, and a leftover label fragment never has that
+            // shape (`NRHRB64128`, `ARNHEM09155985` both fail it).
+            let recognisable = id.kind != "national"
+                || rest.bytes().all(|b| b.is_ascii_digit())
+                || es_cif_or_nif_shaped(rest);
             if recognisable {
                 return Some(id);
             }
@@ -4844,6 +4857,21 @@ fn normalise_identifier_with(raw: &str, country: Option<&str>, folds: bool) -> O
     } else {
         gated(national())
     }
+}
+
+/// A Spanish CIF (`A48283964`: letter, seven digits, check digit or letter),
+/// NIF/DNI (`12345678Z`) or NIE (`X1234567L`) shape — the one national form a
+/// label strip may leave behind that is neither digits nor a VAT id (issue
+/// 359). Shape only; the letter algebra is `idgate`'s business.
+fn es_cif_or_nif_shaped(value: &str) -> bool {
+    let b = value.as_bytes();
+    if b.len() != 9 {
+        return false;
+    }
+    let digits = |r: &[u8]| r.iter().all(u8::is_ascii_digit);
+    let letter = |c: u8| c.is_ascii_uppercase();
+    (letter(b[0]) && digits(&b[1..8]) && (b[8].is_ascii_digit() || letter(b[8])))
+        || (digits(&b[..8]) && letter(b[8]))
 }
 
 /// `body` without a trailing scheme label, if it carries one.
@@ -5921,6 +5949,60 @@ mod tests {
             let id = normalise_identifier(raw, Some("DE")).expect(raw);
             assert_eq!(id.value, want, "{raw}");
             assert_eq!(id.kind, "national", "a bare number stays national");
+        }
+    }
+
+    /// Issue 359: the Polish, Italian and Spanish field names key exactly as
+    /// the bare value — the 357 campaign met these on rows whose twin already
+    /// stood under the bare number. Every value is a real prod row.
+    #[test]
+    fn a_non_german_label_prefix_resolves_to_the_same_identifier_as_the_bare_value() {
+        for (labelled, bare, country, kind) in [
+            ("NIP1070000916", "1070000916", "PL", "national"),     // SAFEGE, Polish branch
+            ("NIPNUMER1070000916", "1070000916", "PL", "national"),
+            ("NUMERNIPDE312308370", "DE312308370", "DE", "vat"),   // Acandis GmbH
+            ("NIPDE312308370", "DE312308370", "PL", "vat"),        // the label on a PL row, the id German
+            ("PIVA10548370963", "10548370963", "IT", "national"),  // Lloyd's Insurance Company, IT branch
+            ("CFEPIVA10548370963", "10548370963", "IT", "national"),
+            ("CF97819940152", "97819940152", "IT", "national"),
+            ("CIFA48283964", "A48283964", "ES", "national"),       // IDOM — the CIF shape, not digits
+            ("NIPA41015322", "A41015322", "PL", "national"),       // Ayesa: a Spanish CIF under a Polish label
+            ("VATIDGB287249363", "GB287249363", "GB", "vat"),      // Therakos EMEA
+        ] {
+            let l = normalise_identifier(labelled, Some(country)).expect(labelled);
+            let b = normalise_identifier(bare, Some(country)).expect(bare);
+            assert_eq!(
+                (l.kind.as_str(), l.country.as_deref(), l.value.as_str()),
+                (b.kind.as_str(), b.country.as_deref(), b.value.as_str()),
+                "{labelled} must key exactly as {bare}"
+            );
+            assert_eq!(l.kind, kind, "{labelled}");
+            assert_eq!(l.value, bare, "{labelled}");
+        }
+    }
+
+    /// …and the guard still holds where it must: a compound field holding TWO
+    /// Polish ids is not a labelled identifier (the strip leaves letters behind),
+    /// a label followed by a word is nothing, and a bare field name is nothing.
+    /// The compound is the splitter's (B8 rule 4), and it keeps the value the
+    /// publisher wrote.
+    #[test]
+    fn the_polish_compound_field_and_the_bare_label_are_left_alone() {
+        let compound = normalise_identifier("NIP1070000916REGON015259640", Some("PL"))
+            .expect("still an identifier — census-only class");
+        assert_eq!(compound.value, "NIP1070000916REGON015259640");
+        assert_eq!(normalise_identifier("NIPXYZ", Some("PL")), None);
+        assert_eq!(normalise_identifier("CIFEMPRESA", Some("ES")), None);
+    }
+
+    /// The shape test behind the CIF acceptance, pinned on both sides.
+    #[test]
+    fn the_spanish_cif_shape_is_nine_characters_and_nothing_else() {
+        for ok in ["A48283964", "B82351800", "S2800568D", "12345678Z", "X1234567L", "L01280796"] {
+            assert!(es_cif_or_nif_shaped(ok), "{ok}");
+        }
+        for no in ["NRHRB64128", "ARNHEM09155985", "DE312308370", "1070000916", "A4828396", "A482839644", "ABCDEFGHI"] {
+            assert!(!es_cif_or_nif_shaped(no), "{no}");
         }
     }
 
