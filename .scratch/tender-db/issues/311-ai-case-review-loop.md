@@ -1,6 +1,6 @@
 # 311 — Per-case AI review loop for rule-undetectable data errors
 
-Status: ready-for-agent (directed by Lennart, 2026-08-29: "nearly all
+Status: LIVE AND RUN AT SCALE (refreshed 2026-09-06) — the loop this issue asked for exists end to end: five verdict stores (case reviews, mention re-homing, name, country, merge) each with a POST, a read surface (`GET /admin/case-reviews?table=`) and an apply path, and four campaigns ran through them on 2026-09-05/06 (issues 355, 357, 362: ~1,400 country moves, ~17,000 duplicate identities folded, 451 name-gate denials reviewed). Tooling under `.scratch/tender-db/{355,357,362}-campaign/`. Was: ready-for-agent (directed by Lennart, 2026-08-29: "nearly all
 errors can not be detected by simple rules... they need manual ai agent
 review for each individual case and how to handle it")
 Kind: capability (data quality / organization layer)
