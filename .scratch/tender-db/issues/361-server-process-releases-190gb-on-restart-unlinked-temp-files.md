@@ -1,6 +1,6 @@
 # 361 — the running server held ~190 GB the filesystem showed as used; a restart released it
 
-Status: OBSERVED 2026-09-06 03:3x UTC (owner) — measured once, mechanism inferred, detection recipe in hand; measure on the next heavy job day before building anything. Filed from the 359 fold night.
+Status: DETECTION BUILT 2026-09-06 16:xx UTC (owner) — the recipe now runs inside the process: `/metrics` gauges `tender_db_deleted_open_{files,bytes}` and the weekly `disk-census` fields `deleted_open_*` with a 1 GiB alarm, so next Sunday's walk measures the class without anyone at the keyboard; the creator hunt (step 2) still waits for a non-zero reading. Was: OBSERVED 2026-09-06 03:3x UTC — measured once, mechanism inferred, detection recipe in hand. Filed from the 359 fold night.
 Kind: storage / operations (relates to 169's model and 337's leaked temp database)
 Relates to: 169 (storage lifecycle), 337 (turso temp database leak), 83 (service tmpdir), 269 (snapshot ring — ruled out as the cause)
 
@@ -76,3 +76,18 @@ restarted the service on a box that had run only censuses since its previous res
 measurement on the next weekly walk (2026-09-13 01:40Z) stands. Note for the model: the
 live file's 220 GiB of allocated-over-apparent was a different thing entirely (issue 169
 item 3, copy-on-write leftovers, reclaimed 15:0x), not part of this issue's class.
+
+## Detection built (2026-09-06 16:xx UTC)
+
+Step 1 of "Next" no longer needs a firing at the right moment. `health::deleted_open()`
+walks `/proc/self/fd` (bounded, ~120 entries), keeps every link ending in ` (deleted)`
+with the size read through the descriptor, and reports `{files, bytes, sample}` — the
+five largest by path. It feeds `/metrics` (`tender_db_deleted_open_files`,
+`tender_db_deleted_open_bytes`) continuously and the weekly `disk-census` report
+(`deleted_open_files`, `deleted_open_bytes`, `deleted_open_sample`, and
+`deleted_open_alarm` at 1 GiB, the alarm text carrying the recipe). Unit-tested by
+unlinking a 1 MiB file the test holds open and watching it appear with its size and
+vanish on close. Baseline after the deploy restart: 0 files, 0 bytes. The weekly walk on
+2026-09-13 (01:10 UTC start) is the first measurement that matters; the census runs in it,
+and the gauges can be read at any point during it. Step 2 (the creator) starts from the
+sample's paths.

@@ -673,6 +673,23 @@ struct DbOverallocation {
     alarm: Option<String>,
 }
 
+/// Issue 361: the alarm on unlinked-but-open files. One gibibyte is the band
+/// — a temp database or sorter spill that a job deleted while a descriptor
+/// still held it is exactly what the class is made of, and below a gibibyte
+/// it is a curiosity, not the 191 GB that hid behind `df` on 2026-09-06.
+fn deleted_open_alarm(files: u64, bytes: u64) -> Option<String> {
+    const BAND_BYTES: u64 = 1 << 30;
+    (bytes >= BAND_BYTES).then(|| {
+        format!(
+            "this process holds {files} unlinked file(s) open totalling {:.1} GiB — space df \
+             counts and no listing shows (issue 361). Only a restart releases it; find the \
+             creator first: `ls -la /proc/$(systemctl show tender-db -p MainPID --value)/fd | \
+             grep deleted`, sizes via `stat -L` on the descriptor links.",
+            bytes as f64 / 1_073_741_824.0
+        )
+    })
+}
+
 fn db_overallocation(size: u64, allocated: u64) -> DbOverallocation {
     const BAND_PCT: f64 = 5.0;
     const BAND_MIN_BYTES: u64 = 1 << 30;
@@ -6008,6 +6025,11 @@ impl Supervisor {
                     db_meta.as_ref().map(|m| m.blocks() * 512)
                 };
                 let overallocation = db_bytes.zip(db_allocated_bytes).map(|(s, a)| db_overallocation(s, a));
+                // Issue 361: what this process holds open after unlinking —
+                // the class a restart released 191 GB of on 2026-09-06 and no
+                // on-disk listing could find. Read in-process, bounded.
+                let held = crate::v1::health::deleted_open();
+                let held_alarm = held.as_ref().and_then(|h| deleted_open_alarm(h.files, h.bytes));
                 let used_pct = disk.used_fraction * 100.0;
                 let now = store::now_unix();
 
@@ -6052,6 +6074,13 @@ impl Supervisor {
                     "db_overallocation_bytes": overallocation.as_ref().map(|o| o.bytes),
                     "db_overallocation_pct": overallocation.as_ref().map(|o| (o.pct * 100.0).round() / 100.0),
                     "db_overallocation_alarm": overallocation.as_ref().and_then(|o| o.alarm.clone()),
+                    // Issue 361: unlinked-but-open files, by this process.
+                    "deleted_open_files": held.as_ref().map(|h| h.files),
+                    "deleted_open_bytes": held.as_ref().map(|h| h.bytes),
+                    "deleted_open_sample": held.as_ref().map(|h| h.sample.iter().map(|(p, b)| {
+                        serde_json::json!({"path": p, "bytes": b})
+                    }).collect::<Vec<_>>()),
+                    "deleted_open_alarm": held_alarm,
                     "sample_interval_days": trend.map(|(d, _, _)| (d * 100.0).round() / 100.0),
                     "bytes_per_day": trend.map(|(_, r, _)| r.round()),
                     "days_to_full": trend.and_then(|(_, _, f)| f).map(|f| f.round()),
@@ -6067,7 +6096,7 @@ impl Supervisor {
                 let gib = |b: u64| format!("{:.1} GiB", b as f64 / 1_073_741_824.0);
                 Ok(format!(
                     "disk-census (issue 169): {} of {} used ({:.1}%), {} free. Database file {} \
-                     (allocated {}{}); WAL {}. {} NOTHING IS WRITTEN beyond the report; report \
+                     (allocated {}{}); WAL {}. {}{} NOTHING IS WRITTEN beyond the report; report \
                      history keeps up to {} versions, so the trend this job exists to provide \
                      arrives by accumulating samples rather than by projecting from one.",
                     gib(disk.total_bytes.saturating_sub(disk.free_bytes)),
@@ -6085,6 +6114,15 @@ impl Supervisor {
                         None => String::new(),
                     },
                     disk.wal_bytes.map(gib).unwrap_or_else(|| "absent".into()),
+                    match (&held, &held_alarm) {
+                        (_, Some(alarm)) => format!("UNLINKED-OPEN ALARM: {alarm} "),
+                        (Some(h), None) => format!(
+                            "Unlinked-but-open files held by this process (issue 361): {} ({}). ",
+                            h.files,
+                            gib(h.bytes)
+                        ),
+                        (None, None) => String::new(),
+                    },
                     match trend {
                         Some((days, per_day, to_full)) => format!(
                             "Against the previous sample {:.1} day(s) ago: {}/day, which at that \
@@ -11105,6 +11143,20 @@ mod tests {
         // ...but an EMPTY previous top IS a baseline: a 50-name row arriving
         // into an empty list is still an entrant.
         assert_eq!(name_growth_alarms(Some(&empty), &[(50, 1)], 0).0.len(), 1);
+    }
+
+    /// Issue 361: the unlinked-but-open alarm has a one-gibibyte band, so a
+    /// quiet day's zero and a small temp file stay quiet and the 191 GB class
+    /// is loud — with the recipe in the text.
+    #[test]
+    fn deleted_open_alarm_has_a_gibibyte_band_and_carries_the_recipe() {
+        assert!(deleted_open_alarm(0, 0).is_none());
+        assert!(deleted_open_alarm(3, (1 << 30) - 1).is_none());
+        let a = deleted_open_alarm(2, 191 * (1 << 30)).expect("the measured class");
+        assert!(a.contains("2 unlinked file(s)"), "{a}");
+        assert!(a.contains("191.0 GiB"), "{a}");
+        assert!(a.contains("/proc/"), "{a}");
+        assert!(deleted_open_alarm(1, 1 << 30).is_some(), "the band is inclusive");
     }
 
     /// Issue 169 item 3: the copy-on-write leftover tripwire, driven on the

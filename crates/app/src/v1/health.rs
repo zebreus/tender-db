@@ -230,6 +230,39 @@ fn assess(s: &Signals) -> (bool, Value) {
     (ok, checks)
 }
 
+/// Files this process holds open after they were unlinked (issue 361): space
+/// `df` counts, no path shows, and only a process exit releases. Read off
+/// `/proc/self/fd` — one directory of ~120 entries, bounded — so the weekly
+/// census and `/metrics` see the class the 2026-09-06 restart released 191 GB
+/// of, instead of an operator stumbling on it. `None` off Linux or when
+/// `/proc` is unreadable.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub(crate) struct DeletedOpen {
+    pub(crate) files: u64,
+    pub(crate) bytes: u64,
+    /// Up to five `(path, bytes)` pairs, largest first, for the report.
+    pub(crate) sample: Vec<(String, u64)>,
+}
+
+pub(crate) fn deleted_open() -> Option<DeletedOpen> {
+    let entries = std::fs::read_dir("/proc/self/fd").ok()?;
+    let mut held: Vec<(String, u64)> = Vec::new();
+    for entry in entries.flatten() {
+        let Ok(target) = std::fs::read_link(entry.path()) else { continue };
+        let target = target.to_string_lossy();
+        let Some(path) = target.strip_suffix(" (deleted)") else { continue };
+        // The descriptor still reaches the inode, so its size is readable
+        // through the fd link even though the path is gone.
+        let bytes = std::fs::metadata(entry.path()).map(|m| m.len()).unwrap_or(0);
+        held.push((path.to_owned(), bytes));
+    }
+    held.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+    let files = held.len() as u64;
+    let bytes = held.iter().map(|(_, b)| b).sum();
+    held.truncate(5);
+    Some(DeletedOpen { files, bytes, sample: held })
+}
+
 /// Usage of the filesystem holding the database file (`TENDER_DB`, same volume
 /// as the archive in production). `None` if the path cannot be stat'd — a
 /// portability quirk must not masquerade as a full disk.
@@ -254,6 +287,33 @@ pub(crate) fn disk_usage() -> Option<Disk> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Issue 361: an unlinked file this process still holds is counted with
+    /// its size, and stops being counted once the descriptor closes — the
+    /// only thing that releases the space, which is the point of reading it.
+    #[test]
+    fn an_unlinked_open_file_is_counted_until_its_descriptor_closes() {
+        use std::io::Write;
+        let dir = std::env::temp_dir();
+        let path = dir.join(format!("tender-db-deleted-open-{}.bin", std::process::id()));
+        let mut file = std::fs::File::create(&path).unwrap();
+        file.write_all(&vec![7u8; 1 << 20]).unwrap();
+        file.sync_all().unwrap();
+        std::fs::remove_file(&path).unwrap();
+        let Some(held) = deleted_open() else {
+            eprintln!("no /proc/self/fd here; nothing to pin");
+            return;
+        };
+        let name = path.to_string_lossy().into_owned();
+        let mine = held.sample.iter().find(|(p, _)| *p == name).expect("the unlinked file is listed");
+        assert_eq!(mine.1, 1 << 20);
+        assert!(held.files >= 1);
+        assert!(held.bytes >= 1 << 20);
+        drop(file);
+        let after = deleted_open().unwrap();
+        assert!(after.sample.iter().all(|(p, _)| *p != name), "closed, so no longer held");
+        assert_eq!(after.files, held.files - 1);
+    }
 
     fn run(outcome: &str, finished_at: i64) -> JobRun {
         JobRun {

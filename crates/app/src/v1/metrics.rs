@@ -134,6 +134,16 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
             sample(&mut out, "tender_db_wal_bytes", &[], wal as f64);
         }
     }
+    // Files this process holds open after unlinking them (issue 361): space
+    // df counts, no listing shows, and only a restart releases. Zero on a
+    // quiet day; the weekly walk's temp databases and sorter spills are the
+    // suspects, and this is how that gets measured instead of inferred.
+    if let Some(held) = health::deleted_open() {
+        header(&mut out, "tender_db_deleted_open_files", "Unlinked files this process still holds open.");
+        sample(&mut out, "tender_db_deleted_open_files", &[], held.files as f64);
+        header(&mut out, "tender_db_deleted_open_bytes", "Bytes of unlinked files this process still holds open.");
+        sample(&mut out, "tender_db_deleted_open_bytes", &[], held.bytes as f64);
+    }
 
     // The running job's identity and phase (issue 65) — from the supervisor's
     // in-memory progress, a lock-and-clone, no DB. Absent when no job runs or

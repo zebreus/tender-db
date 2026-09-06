@@ -341,7 +341,7 @@ uncapped wet), so a wet run refuses unless its dry plan is on file.
 | `repair-label-prefixes` | **dry default** | issues 328/359: strips a publisher's field name glued to the identifier (`USTID…`, `NIP…`, `PIVA…`, `CIF…`), then re-validates |
 | `repair-renormalised-identifiers` | **dry default** | issue 345: standing rows re-read under the live normaliser (Greek lookalikes, RO sub-unit suffix) |
 | `repair-minted-countries` / `repair-placeholder-orgs` / `repair-nested-orgs` / `repair-swept-siblings` | **dry default** | the earlier repairs (issues 325, 300 Stage 1, 234, 259) |
-| `ghost-census` / `disk-census` | no | issues 278 and 169: weekly stamps. `disk-census` also carries the live file's `db_allocated_bytes` beside `db_bytes` and a `db_overallocation_alarm` when allocation runs more than 5 % (and 1 GiB) past the size — the copy-on-write leftover class of issue 169 item 3, with the reclaim command in the alarm text |
+| `ghost-census` / `disk-census` | no | issues 278 and 169: weekly stamps. `disk-census` also carries the live file's `db_allocated_bytes` beside `db_bytes` and a `db_overallocation_alarm` when allocation runs more than 5 % (and 1 GiB) past the size — the copy-on-write leftover class of issue 169 item 3, with the reclaim command in the alarm text; and `deleted_open_files` / `deleted_open_bytes` (+ a five-entry sample and `deleted_open_alarm` at 1 GiB) — files the server process holds open after unlinking them, issue 361's class, also on `/metrics` as `tender_db_deleted_open_{files,bytes}` |
 
 Report kinds do NOT always match the job kind that writes them. `fusion-census`
 stores under `fusion-candidates`, and `GET /admin/reports/<kind>` answers an
