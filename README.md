@@ -98,15 +98,28 @@ curl -N -H "Accept: text/event-stream" -H "Last-Event-ID: 193000" \
 ```
 
 **SQL** (needs a token — create one on the dashboard). One `SELECT`, read-only,
-against the public views (`v_tenders`, `v_lots`, `v_lot_results`,
-`v_organizations`). Discover the schema at `/v1/sql/schema`:
+against the public tables and views. See with the views (`v_tenders`, `v_lots`,
+`v_lot_results`, `v_organizations` — unfiltered peeks and whole-corpus
+aggregates), query with the tables: the engine applies a `WHERE` or `JOIN` on a
+view only after building the whole view, so a filtered view read is refused up
+front with the base-table join to use instead. Discover the schema at
+`/v1/sql/schema`; every table's notes say which join reaches it fast:
 
 ```sh
 curl -s https://tenders.zebreus.click/v1/sql/schema
 
+# a whole-corpus aggregate over a view is fine (3 s)
 curl -s -X POST https://tenders.zebreus.click/v1/sql \
   -H "Authorization: Bearer tdb_…" \
   --data 'SELECT source, count(*) FROM v_tenders GROUP BY source'
+
+# anything filtered goes to the tables (17 ms for a point read)
+curl -s -X POST https://tenders.zebreus.click/v1/sql \
+  -H "Authorization: Bearer tdb_…" \
+  --data 'SELECT t.id, t.current_title AS title, v.published_at
+            FROM tenders t JOIN tender_versions v
+              ON v.tender_id = t.id AND v.seq = t.current_seq
+           WHERE t.id = 93601'
 ```
 
 **Webhooks** — register an https URL to receive signed change batches
