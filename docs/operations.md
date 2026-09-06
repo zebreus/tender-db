@@ -316,7 +316,7 @@ uncapped wet), so a wet run refuses unless its dry plan is on file.
 
 | kind | writes? | notes |
 |---|---|---|
-| `org-merge-health`, `r2-census`, `r3-census` | no | the standing measurements; `org-merge-health` is weekly and carries the Stage-5 `null_country` bucket (issue 300) |
+| `org-merge-health`, `r2-census`, `r3-census` | no | the standing measurements; `org-merge-health` is weekly and carries the Stage-5 `null_country` bucket (issue 300) plus three tripwires read against its previous report: `parser_vs_stock.alarms` (issue 325), `gln_9110.shared_one_country` (327) and `name_growth.alarms` (300 tripwire 2: a top-100 org gaining ≥20 distinct names, a new entrant at ≥50, or `ge6` growing >5 %). Any alarm shows in the job's summary line as `… ALARM(S): …`; the first run after a deploy that adds a block has no baseline for it and stays quiet |
 | `match-org-identifiers` (`rule: r2` / `e0` / `r3`) | YES | the merge arms; `max_groups` caps a run. Since issue 359 the R2 arm denies a group whose named members share no core token (`denied_names`, listed for review in `r2-merge-plan`); since issue 362 a reviewer's verdict in `org_merge_verdicts` overrides that (`denied_verdict`, `admitted_verdict`, `verdict_stale`) |
 | `build-org-match-keys` | satellite only | wholesale rebuild, ~90 s; **weekly since issue 315** |
 | `scan-org-match-keys` | edges only | the E3 candidate scan and tripwire 6's clock; weekly, dry then wet (issue 360) |

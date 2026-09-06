@@ -1117,3 +1117,18 @@ fusing strangers — is one bucket of two same-named rows. Stage 5's prevention 
 are not built; the census keeps reporting the bucket weekly, and a reading with
 `mixed_names > 0` reopens the stage. (The R3 arm's NULL-country rescue is what kept the
 class this small — Stage 3 has been folding the rescuable side since 08-29.)
+
+Tripwire 2, read by hand across the night of 2026-09-05/06 (org-merge-health job 754 at
+02:46 vs job 772 at 07:50, bracketing the 359/362 folds of 15,900 groups): identifier-bearing
+orgs 1,121,407 → 1,104,595; ≥2 names 163,555 → 162,266; ≥6: 12,236 → 12,360 (+1.0 %);
+≥20: 1,008 → 1,044; max 700 (org 2660, unchanged); no new top-100 entrant; the largest
+growth among the top 100 was +12 names (ZARYS International Group, Bialmed — the label-
+prefixed spellings of Polish medical distributors rejoining their rows). Nothing exploded.
+The check was designed here and not built: the job carried the parser-vs-stock tripwire
+(325) against the previous run but no week-over-week name-growth alarm. **BUILT 2026-09-06**
+(`name_growth_alarms` in the org-merge-health arm, unit-tested): against the previous
+report, (1) a top-100 org gaining ≥20 distinct names, (2) a new top-100 entrant at ≥50
+names, (3) `ge6` growing >5 %. Stored as `name_growth` {grown, entrants, ge6_before,
+ge6_growth_pct, alarms}; the summary line carries `NAME-GROWTH ALARM(S)` beside the
+parser-vs-stock ones. The bands are sized to the hand reading above so a 15,900-group
+repair passes quietly; no baseline (first run, older report shape) is not an alarm.

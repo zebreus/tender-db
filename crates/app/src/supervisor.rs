@@ -691,6 +691,86 @@ fn parser_vs_stock_alarms(
     alarms
 }
 
+/// Issue 300's tripwire 2: week-over-week growth of the distinct-name tail,
+/// compared against the previous org-merge-health report. A bad merge shows up
+/// here before anywhere else — a survivor that swallowed a stranger carries
+/// both rows' name sets, so its distinct-name count jumps, and a systematic
+/// bad rule pushes many rows over the `>=6` line at once.
+///
+/// Three watches, each read by hand across the 359/362 folds (15,900 groups,
+/// jobs 754 → 772) before the thresholds were fixed, so the bands are sized to
+/// let a real repair through: that night moved `ge6` by +1.0 %, put no new row
+/// into the top 100, and the largest top-100 gain was +12 names.
+///
+/// 1. An org standing in BOTH top-100 lists that gained `GROWN_FLOOR` or more
+///    names. The union effect of merging honest twins is a handful of names;
+///    twenty is a second entity's name set arriving.
+/// 2. A NEW top-100 entrant carrying `ENTRANT_FLOOR` or more names. The tail's
+///    entry line sits around 40 names, so a row that walks in at 50+ did not
+///    grow there by accretion.
+/// 3. `ge6` growing by more than `GE6_GROWTH_PCT` per cent. The whole tail
+///    lifting is a rule that is wrong everywhere at once.
+///
+/// No baseline (the first run, or an older report shape) is not an alarm,
+/// exactly as with `parser_vs_stock_alarms`.
+///
+/// Returns the alarm lines and the block stored under `name_growth` in the
+/// report, so the next run reads its own baseline from the same shape.
+fn name_growth_alarms(
+    before: Option<&serde_json::Value>,
+    ranked: &[(u64, i64)],
+    ge6: u64,
+) -> (Vec<String>, serde_json::Value) {
+    const GROWN_FLOOR: u64 = 20;
+    const ENTRANT_FLOOR: u64 = 50;
+    const GE6_GROWTH_PCT: f64 = 5.0;
+    let mut alarms = Vec::new();
+    // An older report without `top` (or a first run) has nothing to rank
+    // against; an EMPTY previous top is a baseline all the same — a 50-name
+    // row arriving into it is still an entrant.
+    let previous_top: Option<std::collections::HashMap<i64, u64>> =
+        before.and_then(|b| b["top"].as_array()).map(|rows| {
+            rows.iter()
+                .filter_map(|r| Some((r["org_id"].as_i64()?, r["distinct_names"].as_u64()?)))
+                .collect()
+        });
+    let mut grown: Vec<serde_json::Value> = Vec::new();
+    let mut entrants: Vec<serde_json::Value> = Vec::new();
+    if let Some(prev) = previous_top.as_ref() {
+        for &(n, id) in ranked {
+            match prev.get(&id) {
+                Some(&was) if n >= was + GROWN_FLOOR => {
+                    grown.push(serde_json::json!({"org_id": id, "from": was, "to": n}));
+                    alarms.push(format!("org {id} grew {was} -> {n} distinct names"));
+                }
+                Some(_) => {}
+                None if n >= ENTRANT_FLOOR => {
+                    entrants.push(serde_json::json!({"org_id": id, "distinct_names": n}));
+                    alarms.push(format!("org {id} entered the top 100 at {n} distinct names"));
+                }
+                None => {}
+            }
+        }
+    }
+    let ge6_before = before.and_then(|b| b["ge6"].as_u64());
+    let ge6_growth_pct = ge6_before.filter(|&was| was > 0).map(|was| {
+        (ge6 as f64 - was as f64) * 100.0 / was as f64
+    });
+    if let (Some(was), Some(pct)) = (ge6_before, ge6_growth_pct) {
+        if pct > GE6_GROWTH_PCT {
+            alarms.push(format!("ge6 {was} -> {ge6} (+{pct:.1} %, band is {GE6_GROWTH_PCT} %)"));
+        }
+    }
+    let block = serde_json::json!({
+        "grown": grown,
+        "entrants": entrants,
+        "ge6_before": ge6_before,
+        "ge6_growth_pct": ge6_growth_pct,
+        "alarms": alarms.clone(),
+    });
+    (alarms, block)
+}
+
 /// The `POST /admin/jobs` body. `kind` selects the operation; the rest are its
 /// parameters. Curl-friendly and forgiving (`serde(default)` everywhere).
 #[derive(Debug, Default, Deserialize)]
@@ -3484,6 +3564,11 @@ impl Supervisor {
                     vat_refused,
                     gln_shared_one_country,
                 );
+                // Issue 300 tripwire 2: the distinct-name tail against last
+                // week's. Read by hand across the 359/362 folds before it was
+                // built; the bands let a 15,900-group repair through.
+                let (growth_alarms, name_growth) =
+                    name_growth_alarms(previous.as_ref(), &ranked, ge6);
                 let mut scheme_rows: Vec<(&str, SchemeTally)> = schemes.into_iter().collect();
                 scheme_rows.sort_by(|a, b| b.1.pop.cmp(&a.1.pop));
                 let placeholder_total = lexicon.max(sequence);
@@ -3552,6 +3637,10 @@ impl Supervisor {
                         // merge path that has opened.
                         "shared_one_country": gln_shared_one_country,
                     },
+                    // Issue 300 tripwire 2: week-over-week growth of the
+                    // distinct-name tail. `alarms` here are the growth ones
+                    // only; the summary line unions them with parser-vs-stock.
+                    "name_growth": name_growth,
                     "top": ranked.iter().map(|&(n, id)| {
                         let m = by_id.get(&id);
                         serde_json::json!({
@@ -3586,14 +3675,25 @@ impl Supervisor {
                     gln_rows,
                     gln_shared,
                     gln_shared_one_country,
-                    if alarms.is_empty() {
-                        if previous.is_some() {
-                            String::new()
-                        } else {
-                            " — first run, no baseline to compare against".to_owned()
+                    match (alarms.is_empty(), growth_alarms.is_empty()) {
+                        (true, true) if previous.is_some() => String::new(),
+                        (true, true) => " — first run, no baseline to compare against".to_owned(),
+                        (parser_quiet, growth_quiet) => {
+                            let mut suffix = String::new();
+                            if !parser_quiet {
+                                suffix.push_str(&format!(
+                                    "; PARSER-VS-STOCK ALARM(S): {}",
+                                    alarms.join(", ")
+                                ));
+                            }
+                            if !growth_quiet {
+                                suffix.push_str(&format!(
+                                    "; NAME-GROWTH ALARM(S) (issue 300 tripwire 2): {}",
+                                    growth_alarms.join(", ")
+                                ));
+                            }
+                            suffix
                         }
-                    } else {
-                        format!("; PARSER-VS-STOCK ALARM(S): {}", alarms.join(", "))
                     }
                 ))
             }
@@ -10801,6 +10901,86 @@ mod tests {
         // A count that FALLS is never an alarm — that is the residue being
         // worked down, which is the outcome this tripwire wants.
         assert!(parser_vs_stock_alarms(Some(&base), 0, 0, 0, 0).is_empty());
+    }
+
+    /// Issue 300 tripwire 2, driven directly like the parser-vs-stock one:
+    /// the bands were read by hand across the 359/362 folds (jobs 754 → 772)
+    /// and must let that night through while catching a swallowed stranger.
+    #[test]
+    fn name_growth_alarms_let_a_repair_through_and_catch_a_swallowed_stranger() {
+        let base = serde_json::json!({
+            "ge6": 12_236,
+            "top": [
+                {"org_id": 2660, "distinct_names": 700},
+                {"org_id": 10, "distinct_names": 120},
+                {"org_id": 11, "distinct_names": 60},
+                {"org_id": 12, "distinct_names": 41},
+            ],
+        });
+
+        // The night of the folds, as measured: +12 on one row, ge6 +1.0 %,
+        // no new entrant above the line, max unchanged. Quiet.
+        let ranked = [(700, 2660), (132, 10), (60, 11), (45, 12), (44, 13)];
+        let (a, block) = name_growth_alarms(Some(&base), &ranked, 12_360);
+        assert!(a.is_empty(), "{a:?}");
+        assert_eq!(block["ge6_before"], 12_236);
+        let pct = block["ge6_growth_pct"].as_f64().unwrap();
+        assert!((pct - 1.0135).abs() < 0.01, "{pct}");
+        assert_eq!(block["grown"].as_array().unwrap().len(), 0);
+        // Org 13 is new to the list at 44 names: below the entrant floor, so
+        // it is neither listed nor alarmed — accretion walks rows in at ~40.
+        assert_eq!(block["entrants"].as_array().unwrap().len(), 0);
+
+        // A survivor that swallowed a stranger: +20 in one week is the other
+        // entity's name set arriving, not a spelling variant rejoining.
+        let (a, block) = name_growth_alarms(Some(&base), &[(700, 2660), (140, 10)], 12_236);
+        assert_eq!(a.len(), 1, "{a:?}");
+        assert!(a[0].contains("org 10 grew 120 -> 140"), "{a:?}");
+        assert_eq!(block["grown"][0]["org_id"], 10);
+        assert!(name_growth_alarms(Some(&base), &[(139, 10)], 12_236).0.is_empty());
+
+        // A row that walks into the top 100 at 50+ names did not grow there.
+        let (a, block) = name_growth_alarms(Some(&base), &[(700, 2660), (50, 99)], 12_236);
+        assert_eq!(a.len(), 1, "{a:?}");
+        assert!(a[0].contains("org 99 entered the top 100 at 50"), "{a:?}");
+        assert_eq!(block["entrants"][0]["org_id"], 99);
+        assert!(name_growth_alarms(Some(&base), &[(49, 99)], 12_236).0.is_empty());
+
+        // The whole tail lifting: a rule wrong everywhere at once. 5 % of
+        // 12,236 is 611.8; the folds moved it by 124.
+        let (a, _) = name_growth_alarms(Some(&base), &[(700, 2660)], 12_847);
+        assert!(a.is_empty(), "{a:?}");
+        let (a, _) = name_growth_alarms(Some(&base), &[(700, 2660)], 12_848);
+        assert_eq!(a.len(), 1, "{a:?}");
+        assert!(a[0].contains("ge6 12236 -> 12848"), "{a:?}");
+        // Shrinking is never an alarm (the closing census of a fold REMOVES
+        // rows; issue 300's Stage 2 took the tail down by 33k orgs).
+        assert!(name_growth_alarms(Some(&base), &[(600, 2660)], 11_000).0.is_empty());
+
+        // Three at once are three lines, not one.
+        let (a, _) = name_growth_alarms(Some(&base), &[(140, 10), (50, 99)], 12_849);
+        assert_eq!(a.len(), 3, "{a:?}");
+
+        // No baseline is NOT an alarm, and neither is an older report shape
+        // without `top`/`ge6` — otherwise the first run after this ships
+        // would list the entire top 100 as entrants.
+        let (a, block) = name_growth_alarms(None, &ranked, 12_360);
+        assert!(a.is_empty(), "{a:?}");
+        assert!(block["ge6_before"].is_null());
+        assert!(block["ge6_growth_pct"].is_null());
+        let old = serde_json::json!({"parser_vs_stock": {"no_longer_vat": 7}});
+        let (a, block) = name_growth_alarms(Some(&old), &ranked, 12_360);
+        assert!(a.is_empty(), "{a:?}");
+        assert_eq!(block["entrants"].as_array().unwrap().len(), 0);
+        // A zero `ge6` baseline (an empty layer) yields no percentage rather
+        // than a division by zero.
+        let empty = serde_json::json!({"ge6": 0, "top": []});
+        let (a, block) = name_growth_alarms(Some(&empty), &[(10, 1)], 3);
+        assert!(a.is_empty(), "{a:?}");
+        assert!(block["ge6_growth_pct"].is_null());
+        // ...but an EMPTY previous top IS a baseline: a 50-name row arriving
+        // into an empty list is still an entrant.
+        assert_eq!(name_growth_alarms(Some(&empty), &[(50, 1)], 0).0.len(), 1);
     }
 
     /// Tripwire 6's guard rails (panel round 2): capped and stopped runs
