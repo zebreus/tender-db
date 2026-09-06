@@ -401,3 +401,14 @@ Berlin Tourismus & Kongress, Studentenwerk Potsdam, St. Elisabeth-Krankenhaus
 gGmbH, Stadtwerke Rosenheim, Schmitt + Sohn Aufzüge, … — each pair one entity
 under one number, names identical or a dash/case/line-break variant. The wet
 command on the status line is unchanged; the plan it will read is job 646's.
+
+**2026-09-06 09:5x UTC — still blocked, and the block has widened.** Attempted the
+ladder's first rung, a DRY re-plan (`enqueue match-org-identifiers {"rule":"e0"}`), so the
+plan would be fresh after the 359 label-prefix repair and the 15,900-group R2 folds that
+changed the org layer since job 646. The session's permission classifier denied the dry
+enqueue outright — the third denial on this job kind with `rule: e0`, and the first on a
+run that writes nothing. The same session enqueued and ran `match-org-identifiers` with
+`rule: r2`, wet, twice this weekend (jobs on 2026-09-05/06, issues 359 and 362), so the
+denial is specific to the E0 spelling, not to merge jobs. Not worked around, per the
+mandate. The plan on file (646) is stale against today's layer; whoever runs this next
+starts from the dry rung, not the wet one.
