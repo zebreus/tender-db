@@ -1652,9 +1652,9 @@ pub struct R2MergeReport {
     /// [`Self::plan_listing`] is a scan-order prefix and NOT reviewable as a
     /// whole. Read `plan_sample` for the unbiased view in that case.
     pub plan_listing_truncated: bool,
-    /// Issue 359: the R2 groups the name rule denied — `disagree`, the named
-    /// members' N3 keys neither one key nor one another's token subsets —
-    /// listed like the plan so the denial is reviewable. This is the review
+    /// Issue 359: the R2 groups the name rule denied — two named members whose
+    /// folded core tokens share nothing ([`name_cores_disjoint`]) — listed like
+    /// the plan so the denial is reviewable. This is the review
     /// queue for the buyer's-id-on-the-winner's-row error the label repair
     /// made visible (a county and an IT company under one NIP). Dry runs
     /// only, capped at [`R2_PLAN_LISTING_CAP`].
@@ -9168,8 +9168,16 @@ impl Db {
                 // listing showed ~1.4 % of that shape; before it the rule ran on
                 // groups the campaigns had read case by case. Denied groups are
                 // listed for review, never fused.
+                // The test is NOT N3 equality or containment — that denied
+                // 4,473 of 16,179 groups on the first run (2026-09-06), and
+                // the listing read as spelling: `Gmina Melgiew` / `GMINA
+                // MEŁGIEW` (N2 keeps diacritics by design and Ł does not
+                // decompose), `Spółka z o.o.` beside `§spzoo`, a `(Lider
+                // konsorcjum)` tail. The wrong-identifier shape has NO core
+                // token in common, so that is the rule: two named members whose
+                // folded core tokens are disjoint deny the group.
                 let ks: Vec<String> = keys.iter().cloned().collect();
-                if !contained_name_keys(&ks) {
+                if name_cores_disjoint(&ks) {
                     report.denied_names += 1;
                     if args.dry_run {
                         if report.denied_listing.len() < R2_PLAN_LISTING_CAP {
@@ -19766,6 +19774,77 @@ pub(crate) fn contained_name_keys(keys: &[String]) -> bool {
     }
     let Some(widest) = sets.iter().max_by_key(|s| s.len()) else { return false };
     sets.iter().all(|s| s.is_subset(widest))
+}
+
+/// Issue 359's R2 name gate: do two of these N3 keys share NO core token?
+///
+/// A core token is a key word that is not a legal-form marker (`§…`), not a
+/// legal-form or consortium-role word the marker tables miss (`spółka`,
+/// `ograniczoną`, `capogruppo`, `lider konsorcjum`…), and longer than two
+/// characters after folding Latin diacritics to ASCII. The folding is for
+/// THIS comparison only — N2 preserves diacritics on purpose, but a gate that
+/// reads `mełgiew` and `melgiew` as different organizations denies spelling,
+/// not identity. Keys with no core token left carry no evidence and abstain.
+///
+/// Deliberately the weakest test that still catches the buyer's-id-on-the-
+/// winner's-row shape (a county and an IT company, a hospital and a review
+/// chamber): those share nothing. Typos, acronyms and renames also share
+/// nothing and are denied too — they are the review queue, not a loss.
+pub(crate) fn name_cores_disjoint(keys: &[String]) -> bool {
+    let cores: Vec<std::collections::BTreeSet<String>> = keys
+        .iter()
+        .map(|k| {
+            k.split(' ')
+                .filter(|t| !t.is_empty() && !t.starts_with('§'))
+                .map(|t| t.chars().map(fold_latin).collect::<String>())
+                .filter(|t| t.chars().count() > 2 && !NAME_STOP_TOKENS.contains(&t.as_str()))
+                .collect()
+        })
+        .filter(|c: &std::collections::BTreeSet<String>| !c.is_empty())
+        .collect();
+    for (i, a) in cores.iter().enumerate() {
+        for b in &cores[i + 1..] {
+            if a.is_disjoint(b) {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+/// Legal-form and role words the `§family` tables do not mark, in the
+/// languages the E1 arms cover. Lower-case, ASCII-folded.
+const NAME_STOP_TOKENS: &[&str] = &[
+    "spolka", "ograniczona", "odpowiedzialnoscia", "akcyjna", "jawna", "komandytowa", "cywilna",
+    "oddzial", "lider", "konsorcjum", "konsorcjum", "uczestnik", "partner", "societa", "cooperativa",
+    "sociale", "onlus", "consorzio", "stabile", "capogruppo", "mandataria", "mandatario", "mandante",
+    "rti", "rtp", "ati", "sigla", "srl", "spa", "snc", "sas", "sapa", "scarl", "scrl", "soc", "coop",
+    "ltd", "limited", "gmbh", "mbh", "inc", "the", "and", "und", "von", "der", "des", "sp", "zoo",
+];
+
+/// Fold a Latin letter with a diacritic to its base letter (`ł`→`l`, `ö`→`o`,
+/// `ș`→`s`); everything else passes through. Used by the R2 name gate only.
+fn fold_latin(c: char) -> char {
+    match c {
+        'à' | 'á' | 'â' | 'ã' | 'ä' | 'å' | 'ā' | 'ă' | 'ą' | 'æ' => 'a',
+        'ç' | 'ć' | 'č' | 'ĉ' => 'c',
+        'ď' | 'đ' => 'd',
+        'è' | 'é' | 'ê' | 'ë' | 'ě' | 'ę' | 'ē' | 'ė' => 'e',
+        'ğ' | 'ģ' => 'g',
+        'ì' | 'í' | 'î' | 'ï' | 'ı' | 'ī' | 'į' => 'i',
+        'ķ' => 'k',
+        'ĺ' | 'ľ' | 'ł' | 'ļ' => 'l',
+        'ñ' | 'ń' | 'ň' | 'ņ' => 'n',
+        'ò' | 'ó' | 'ô' | 'õ' | 'ö' | 'ø' | 'ő' | 'œ' => 'o',
+        'ŕ' | 'ř' => 'r',
+        'ś' | 'š' | 'ş' | 'ș' => 's',
+        'ť' | 'ţ' | 'ț' => 't',
+        'ù' | 'ú' | 'û' | 'ü' | 'ů' | 'ű' | 'ū' | 'ų' => 'u',
+        'ý' | 'ÿ' => 'y',
+        'ź' | 'ż' | 'ž' => 'z',
+        'ß' => 's',
+        other => other,
+    }
 }
 
 pub(crate) fn placeholders(n: usize) -> String {

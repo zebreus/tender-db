@@ -1,6 +1,6 @@
-//! Issue 359: the R2 arm takes the E0 name rule's DENY half. A same-key group
-//! whose named members DISAGREE — N3 keys that are neither one key nor one
-//! another's token subsets — is the signature of a wrong identifier on one row
+//! Issue 359: the R2 arm takes a name gate in the DENY direction. A same-key
+//! group with two named members whose folded core tokens share NOTHING is the
+//! signature of a wrong identifier on one row
 //! (the buyer's NIP in the winner's field), so it is left standing and listed
 //! for review. Agreeing, contained and unnamed groups merge as before. The
 //! injected rules mirror `r2_merge.rs`.
@@ -63,6 +63,11 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
         // unnamed: no name evidence either way — merges.
         (50, "FI", "national", "30303030", "", 0),
         (51, "FI", "vat", "FI30303030", "", 1),
+        // spelling, not identity: a Polish Ł that never decomposes, all caps,
+        // and a consortium-role tail — the shapes the first gate denied by the
+        // thousand (2026-09-06). Core tokens agree after folding: merges.
+        (60, "FI", "national", "40404040", "Gmina Melgiew", 0),
+        (61, "FI", "vat", "FI40404040", "GMINA MEŁGIEW (Lider konsorcjum)", 1),
     ];
     for (id, c, k, v, n, p) in &orgs {
         conn.execute(
@@ -114,9 +119,9 @@ async fn r2_denies_disagreeing_names_lists_them_and_merges_the_rest() {
     let (db, conn) = seed("test-r2-name-gate.db").await;
 
     let dry = db.match_org_identifiers_r2(args(true, None)).await.expect("dry");
-    assert_eq!(dry.groups, 5, "five FI keys hold two or more rows");
+    assert_eq!(dry.groups, 6, "six FI keys hold two or more rows");
     assert_eq!(dry.denied_names, 2, "Powiat/Rekord and the System Data group with its stranger");
-    assert_eq!(dry.plan_groups, 3, "agree, contained and unnamed merge");
+    assert_eq!(dry.plan_groups, 4, "agree, contained, unnamed and the spelling pair merge");
     assert_eq!(
         (dry.denied_cap, dry.denied_gate, dry.denied_consortium, dry.denied_legal_form, dry.denied_group_vat),
         (0, 0, 0, 0, 0),
@@ -131,16 +136,16 @@ async fn r2_denies_disagreeing_names_lists_them_and_merges_the_rest() {
         dry.denied_listing.iter().find(|g| g.2 == "20445111").expect("the System Data group is listed");
     assert_eq!(stranger_group.3.len(), 3, "every member of a denied group is listed, names included");
     assert!(stranger_group.3.iter().any(|m| m.3 == "Sano Centrum Medycyny"));
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 11, "dry run wrote nothing");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 13, "dry run wrote nothing");
 
-    let wet = db.match_org_identifiers_r2(args(false, Some(3))).await.expect("wet");
-    assert_eq!((wet.plan_groups, wet.merged_groups, wet.removed, wet.denied_names), (3, 3, 3, 2));
+    let wet = db.match_org_identifiers_r2(args(false, Some(4))).await.expect("wet");
+    assert_eq!((wet.plan_groups, wet.merged_groups, wet.removed, wet.denied_names), (4, 4, 4, 2));
     assert_eq!(wet.denied_listing.len(), 0, "the listing is dry-run review material");
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (11, 21, 51)").await, 0, "losers gone");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (11, 21, 51, 61)").await, 0, "losers gone");
     assert_eq!(
         count(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (30, 31, 40, 41, 42)").await,
         5,
         "a denied group is never fused, not even its agreeing pair"
     );
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_merge_log WHERE rule = 'r2'").await, 3);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_merge_log WHERE rule = 'r2'").await, 4);
 }
