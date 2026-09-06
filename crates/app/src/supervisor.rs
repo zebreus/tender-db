@@ -650,6 +650,48 @@ fn null_country_summary(
     })
 }
 
+/// Issue 169 item 3: how far the database file's allocation runs past its
+/// size, and the alarm when it runs too far.
+///
+/// On the reflink-shared live file every page rewrite is a copy-on-write
+/// allocation. With no `cowextsize` hint XFS reserves a 128 KiB window per
+/// rewritten page and leaves the unused remainder as speculative
+/// preallocation that the periodic GC never reclaimed on the always-open
+/// file: 220 GiB over the size by 2026-09-06, real to `df`. The file now
+/// carries `cowextsize 4096` so a COW write allocates exactly the page — but
+/// a replaced or restored file loses the hint, and this is the reading that
+/// says so before the disk does. The band is 5 % of the size and at least
+/// 1 GiB, so the extent-tree overhead a 30 M-extent file legitimately carries
+/// (~0.5 GB, under 0.1 %) never trips it.
+#[derive(Debug, Clone, PartialEq)]
+struct DbOverallocation {
+    /// `allocated - size`, floored at zero (a sparse file allocates less).
+    bytes: u64,
+    /// `bytes` as a percentage of the size; zero for an empty file.
+    pct: f64,
+    /// The alarm text, carrying the operator's answer, when over the band.
+    alarm: Option<String>,
+}
+
+fn db_overallocation(size: u64, allocated: u64) -> DbOverallocation {
+    const BAND_PCT: f64 = 5.0;
+    const BAND_MIN_BYTES: u64 = 1 << 30;
+    let bytes = allocated.saturating_sub(size);
+    let pct = if size == 0 { 0.0 } else { bytes as f64 * 100.0 / size as f64 };
+    let alarm = (pct > BAND_PCT && bytes >= BAND_MIN_BYTES).then(|| {
+        format!(
+            "the database file has {:.1} GiB allocated beyond its {:.1} GiB size ({pct:.1}%, \
+             band {BAND_PCT}%): copy-on-write leftovers on the reflink-shared file (issue 169 \
+             item 3). Check `xfs_io -r -c \"stat -v\" <file>` shows `cowextsize = 4096` — set it \
+             if the file was replaced — and reclaim with `xfs_spaceman -c \"prealloc -s -m \
+             100g\" /data` (online, metadata only, ~2.5 min per 220 GB).",
+            bytes as f64 / 1_073_741_824.0,
+            size as f64 / 1_073_741_824.0,
+        )
+    });
+    DbOverallocation { bytes, pct, alarm }
+}
+
 fn parser_vs_stock_alarms(
     before: Option<&serde_json::Value>,
     no_longer_vat: u64,
@@ -5952,7 +5994,20 @@ impl Supervisor {
                     return Err("could not stat the database filesystem".to_owned());
                 };
                 let db_path = std::env::var("TENDER_DB").unwrap_or_else(|_| "tender-db.db".into());
-                let db_bytes = std::fs::metadata(&db_path).ok().map(|m| m.len());
+                let db_meta = std::fs::metadata(&db_path).ok();
+                let db_bytes = db_meta.as_ref().map(|m| m.len());
+                // Issue 169 item 3: what the file has ALLOCATED, beside its size.
+                // On the reflink-shared live file every page rewrite is a
+                // copy-on-write allocation, and XFS's default COW extent-size
+                // hint left the unused remainder of each 128 KiB window as
+                // speculative preallocation the GC never reclaimed on the
+                // always-open file — 220 GiB over the size by 2026-09-06,
+                // counted by df as used. `st_blocks` sees it; `len()` does not.
+                let db_allocated_bytes = {
+                    use std::os::unix::fs::MetadataExt;
+                    db_meta.as_ref().map(|m| m.blocks() * 512)
+                };
+                let overallocation = db_bytes.zip(db_allocated_bytes).map(|(s, a)| db_overallocation(s, a));
                 let used_pct = disk.used_fraction * 100.0;
                 let now = store::now_unix();
 
@@ -5990,6 +6045,13 @@ impl Supervisor {
                     "used_pct": (used_pct * 100.0).round() / 100.0,
                     "wal_bytes": disk.wal_bytes,
                     "db_bytes": db_bytes,
+                    // Issue 169 item 3, the copy-on-write leftover tripwire:
+                    // allocated minus size, and the alarm text when it is over
+                    // the band. The operator's answer is in the alarm itself.
+                    "db_allocated_bytes": db_allocated_bytes,
+                    "db_overallocation_bytes": overallocation.as_ref().map(|o| o.bytes),
+                    "db_overallocation_pct": overallocation.as_ref().map(|o| (o.pct * 100.0).round() / 100.0),
+                    "db_overallocation_alarm": overallocation.as_ref().and_then(|o| o.alarm.clone()),
                     "sample_interval_days": trend.map(|(d, _, _)| (d * 100.0).round() / 100.0),
                     "bytes_per_day": trend.map(|(_, r, _)| r.round()),
                     "days_to_full": trend.and_then(|(_, _, f)| f).map(|f| f.round()),
@@ -6004,15 +6066,24 @@ impl Supervisor {
 
                 let gib = |b: u64| format!("{:.1} GiB", b as f64 / 1_073_741_824.0);
                 Ok(format!(
-                    "disk-census (issue 169): {} of {} used ({:.1}%), {} free. Database file {}; \
-                     WAL {}. {} NOTHING IS WRITTEN beyond the report; report history keeps up to \
-                     {} versions, so the trend this job exists to provide arrives by accumulating \
-                     samples rather than by projecting from one.",
+                    "disk-census (issue 169): {} of {} used ({:.1}%), {} free. Database file {} \
+                     (allocated {}{}); WAL {}. {} NOTHING IS WRITTEN beyond the report; report \
+                     history keeps up to {} versions, so the trend this job exists to provide \
+                     arrives by accumulating samples rather than by projecting from one.",
                     gib(disk.total_bytes.saturating_sub(disk.free_bytes)),
                     gib(disk.total_bytes),
                     used_pct,
                     gib(disk.free_bytes),
                     db_bytes.map(gib).unwrap_or_else(|| "unreadable".into()),
+                    db_allocated_bytes.map(gib).unwrap_or_else(|| "unreadable".into()),
+                    match &overallocation {
+                        Some(o) if o.alarm.is_some() => format!(
+                            "; COW-LEFTOVER ALARM: {}",
+                            o.alarm.as_deref().unwrap_or_default()
+                        ),
+                        Some(o) => format!(", {:.2}% over the size", o.pct),
+                        None => String::new(),
+                    },
                     disk.wal_bytes.map(gib).unwrap_or_else(|| "absent".into()),
                     match trend {
                         Some((days, per_day, to_full)) => format!(
@@ -11034,6 +11105,37 @@ mod tests {
         // ...but an EMPTY previous top IS a baseline: a 50-name row arriving
         // into an empty list is still an entrant.
         assert_eq!(name_growth_alarms(Some(&empty), &[(50, 1)], 0).0.len(), 1);
+    }
+
+    /// Issue 169 item 3: the copy-on-write leftover tripwire, driven on the
+    /// numbers measured on prod on 2026-09-06 — before and after the trim.
+    #[test]
+    fn db_overallocation_alarms_on_the_measured_leftover_and_not_on_extent_overhead() {
+        const GIB: u64 = 1 << 30;
+        // As found: 604 GiB file, 824 GiB allocated — the leftover was a third
+        // of the file. Loud, and the alarm carries the reclaim command.
+        let found = db_overallocation(648_515_756_032, 1_727_772_352 * 512);
+        assert!((found.pct - 36.4).abs() < 0.5, "{}", found.pct);
+        let alarm = found.alarm.expect("over the band");
+        assert!(alarm.contains("xfs_spaceman"), "{alarm}");
+        assert!(alarm.contains("cowextsize = 4096"), "{alarm}");
+        assert!(alarm.contains("219.9 GiB allocated beyond"), "{alarm}");
+        // After the trim: size + ~0.65 GB of extent-tree overhead on a 30 M-extent
+        // file — 0.10 %, and below the 1 GiB floor besides. Quiet.
+        let trimmed = db_overallocation(648_515_756_032, 1_267_907_456 * 512);
+        assert!(trimmed.pct < 0.2, "{}", trimmed.pct);
+        assert!(trimmed.alarm.is_none());
+        // The band is BOTH 5 % and 1 GiB: a small file 50 % over is overhead
+        // noise, not a leftover class; a huge file 4.9 % over is under the band.
+        assert!(db_overallocation(64 * (1 << 20), 96 * (1 << 20)).alarm.is_none());
+        assert!(db_overallocation(600 * GIB, 629 * GIB).alarm.is_none());
+        assert!(db_overallocation(600 * GIB, 631 * GIB).alarm.is_some());
+        // A sparse file allocates LESS than its size: zero, never negative.
+        let sparse = db_overallocation(10 * GIB, 2 * GIB);
+        assert_eq!(sparse.bytes, 0);
+        assert_eq!(sparse.pct, 0.0);
+        // An empty file has no percentage to divide by.
+        assert_eq!(db_overallocation(0, 0).pct, 0.0);
     }
 
     /// Tripwire 6's guard rails (panel round 2): capped and stopped runs
