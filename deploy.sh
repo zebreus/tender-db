@@ -119,7 +119,11 @@ elif [ "$have_remote" != "$want_remote" ]; then
 fi
 
 say "Pushing $REF to $VPS:$REMOTE_REPO"
-git push vps "$REF:main"
+# `push.negotiate` off: the box's bare repo over the ssh tunnel speaks protocol
+# v1, so the v2 negotiation git tries first fails ("--negotiate-only requires
+# protocol v2 … the remote end hung up") and git proceeds anyway — a wasted
+# round trip and three alarming lines in every deploy log for nothing.
+git -c push.negotiate=false push vps "$REF:main"
 
 say "Building $REV on the VPS (this can take a while on a cold store)"
 $SSH "$VPS" bash -euo pipefail -s <<EOF
