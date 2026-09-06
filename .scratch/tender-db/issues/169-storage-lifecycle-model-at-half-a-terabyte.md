@@ -238,3 +238,16 @@ Decision points (for 169's model, not tonight): a same-volume reflink ring costs
 divergence, which on campaign weeks is ~30 GB/day per snapshot; KEEP=1, or snapshotting
 only after a `VACUUM`-free quiet week, or an off-volume artifact, are the options. The
 weekly census's `days_to_full` should be read with `sample_interval_days` and this note.
+
+### 2026-09-06 03:25 UTC — the Sunday snapshot ran; the prune freed 7 GB, not 100+
+
+The timer fired at 03:23 UTC with the queue idle (the weekly batch had ended 02:47; the
+359 fold and projection ended 03:01): new reflink snapshot `tender-db-1788664999.db`
+(605 GiB apparent, 2 min 24 s), Aug 30 pruned, 2 kept. **Free went 430 → 437 GB.** So the
+Aug 30 copy held only ~7 GB of blocks nothing else referenced — the divergence hypothesis
+in item 2 above is wrong in magnitude: pages rewritten since Aug 30 were mostly ALSO
+rewritten since Sep 3 (the campaigns hit the same org-layer pages), so the two snapshots
+shared them, and the live file's own allocation carries the growth. That leaves item 3 —
+allocated 842 GiB against 618 GiB apparent on the live file — as the number to explain,
+and item 1's 122 GB of apparent growth to attribute by table. The snapshot ring is cheap
+(~7 GB a week at the current cadence); it is not the lever.
