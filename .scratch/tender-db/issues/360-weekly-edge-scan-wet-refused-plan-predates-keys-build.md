@@ -32,3 +32,13 @@ was providing — the refusal was protecting against a plan computed on OTHER ke
 dry run in the chain is exactly the remedy its own message asks for. Update the tick test
 to eight jobs, dry before wet. Until it lands: `tender-admin enqueue scan-org-match-keys`
 (dry) then the wet, by hand, after the build.
+
+## This week's scan, run by hand (2026-09-06 03:38 UTC)
+
+Dry job 762 (16 s): 4.17 M keys walked, 806,664 groups ≥2, 316,739 emitting, would emit
+1,311,340 edges (1,283,641 e3-name + 27,699 e3-xlang), bounds ok, plan stamped with the
+02:44 keys build. Wet job 763 (51 s): 1,311,340 edges written — 263,526 new, 1,047,814
+refreshed — 1,762,011 standing; no tripwire alarm. Fewer edges than 2026-08-30's 1,498,485
+census because the night's folds (issues 357/359: 16,649 + 1,233 rows) removed same-name
+duplicate pairs. Tripwire 6 has its reading for the week; the schedule fix takes over on
+2026-09-13.
