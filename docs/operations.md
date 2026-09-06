@@ -316,11 +316,12 @@ uncapped wet), so a wet run refuses unless its dry plan is on file.
 
 | kind | writes? | notes |
 |---|---|---|
-| `org-merge-health`, `r2-census`, `r3-census` | no | the standing measurements |
-| `match-org-identifiers` (`rule: r2` / `r3`) | YES | the merge arms; `max_groups` caps a run |
-| `build-org-match-keys` | satellite only | wholesale rebuild, ~85 s; **weekly since issue 315** |
-| `scan-org-match-keys` | edges only | the E3 candidate scan and tripwire 6's clock; weekly |
+| `org-merge-health`, `r2-census`, `r3-census` | no | the standing measurements; `org-merge-health` is weekly and carries the Stage-5 `null_country` bucket (issue 300) |
+| `match-org-identifiers` (`rule: r2` / `e0` / `r3`) | YES | the merge arms; `max_groups` caps a run. Since issue 359 the R2 arm denies a group whose named members share no core token (`denied_names`, listed for review in `r2-merge-plan`); since issue 362 a reviewer's verdict in `org_merge_verdicts` overrides that (`denied_verdict`, `admitted_verdict`, `verdict_stale`) |
+| `build-org-match-keys` | satellite only | wholesale rebuild, ~90 s; **weekly since issue 315** |
+| `scan-org-match-keys` | edges only | the E3 candidate scan and tripwire 6's clock; weekly, dry then wet (issue 360) |
 | `org-edge-census` | no | sizes the edge store into review cohorts (issue 314) |
+| `xb-packet` | no | issues 311+314+355: the same-name cross-border review packet |
 | `apply-case-reviews` / `unapply-case-reviews` | YES | the issue-311 verdict applier and its undo |
 | `case-review-backlog` | no | the parked verdicts nobody consumes (issue 317) |
 | `fusion-census` | no | which reviewed rows hold mentions naming somebody else (317 Unit A) |
@@ -330,21 +331,36 @@ uncapped wet), so a wet run refuses unless its dry plan is on file.
 | `drop-orphan-satellites` | **dry default** | drops the orphans a destination already carries by N2 KEY (321) |
 | `restore-dropped-satellites` | **dry default** | puts them back from `org_name_drops` pre-images |
 | `anchor-wall-census` | no | issue 318: where ingest binds and batch refuses |
-| `xb-packet` | no | issues 311+314: the same-name cross-border review packet |
+| `fold-org-countries` | YES | backfills non-canonical country codes (issue 319) |
+| `country-typo-census` / `repair-country-typos` | no / **dry default** | issue 326: one-letter-off country codes beside a validating sibling |
+| `country-cluster-census` / `country-cluster-packet` | no | issue 357: one identifier under several codes, and the reviewer's packet (`max_groups`, default 600; clusters that already carry a country verdict are left out) |
+| `apply-country-verdicts` | **dry default** | issue 355: executes the HIGH `move` rows of `org_country_verdicts` (dry stores `country-verdict-plan`; wet re-checks the reviewed tuples) |
+| `duplicate-identity-census` | no | issue 328 follow-on: exact `(country, kind, identifier)` triples held by several rows, keyed and unkeyed |
+| `provisional-echo-census` / `fold-provisional-echoes` | no / **dry default** | issue 351: NULL-country provisional rows sharing one name, and their fold (wall- and verdict-gated) |
+| `generic-wall-census` / `generic-statistic-census` / `name-attribution-probe` / `name-pollution-census` | no | issues 331–334, 349–350: the genericness wall's carriers and the names behind them |
+| `repair-label-prefixes` | **dry default** | issues 328/359: strips a publisher's field name glued to the identifier (`USTID…`, `NIP…`, `PIVA…`, `CIF…`), then re-validates |
+| `repair-renormalised-identifiers` | **dry default** | issue 345: standing rows re-read under the live normaliser (Greek lookalikes, RO sub-unit suffix) |
+| `repair-minted-countries` / `repair-placeholder-orgs` / `repair-nested-orgs` / `repair-swept-siblings` | **dry default** | the earlier repairs (issues 325, 300 Stage 1, 234, 259) |
+| `ghost-census` / `disk-census` | no | issues 278 and 169: weekly stamps |
 
 Report kinds do NOT always match the job kind that writes them. `fusion-census`
 stores under `fusion-candidates`, and `GET /admin/reports/<kind>` answers an
 unknown kind with "no report of that kind has been computed" — which reads as
-"the job never ran". The kinds are, exhaustively: `anchor-wall-census`,
-`case-apply-plan`, `case-escalations`, `case-unapply-plan`, `country-fold`,
-`data-quality`, `data-quality-headlines`, `data-quality-presence`,
-`drop-orphan-satellites`, `fusion-candidates`, `org-edge-census`,
-`org-edge-scan`, `org-edge-scan-alarm`, `org-edge-scan-plan`,
-`org-match-keys-build`, `org-match-keys-plan`, `org-merge-health`, `r2-census`,
-`r2-merge-plan`, `r3-census`, `r3-merge-plan`, `rehash-cursor`, `rehash-probe`,
-`rehoming-packet`, `rehoming-plan`, `reveal-cursor`, `reveal-recheck`,
-`reveal-wrap`, `satellite-orphans`.
-| `fold-org-countries` | YES | backfills non-canonical country codes (issue 319) |
+"the job never ran". The kinds are, exhaustively (read off `put_report` in the supervisor, 2026-09-06): `anchor-wall-census`, `case-apply-plan`, `case-escalations`, `case-unapply-plan`, `country-cluster-census`, `country-cluster-packet`, `country-fold`, `country-typo-census`, `country-typo-repair`, `country-verdict-plan`, `data-quality`, `data-quality-headlines`, `data-quality-presence`, `disk-census`, `drop-orphan-satellites`, `duplicate-identity-census`, `e0-merge-plan`, `fusion-candidates`, `generic-statistic-census`, `generic-wall-census`, `ghost-census`, `label-prefix-repair`, `minted-country-repair`, `name-attribution-probe`, `name-pollution-census`, `org-edge-census`, `org-edge-scan`, `org-edge-scan-alarm`, `org-edge-scan-plan`, `org-match-keys-build`, `org-match-keys-plan`, `org-merge-health`, `provisional-echo-census`, `provisional-echo-plan`, `r2-census`, `r2-merge-plan`, `r3-census`, `r3-merge-plan`, `rehash-cursor`, `rehash-probe`, `rehoming-packet`, `rehoming-plan`, `renormalise-repair`, `reveal-cursor`, `reveal-recheck`, `reveal-wrap`, `satellite-orphans`, `xb-packet`.
+
+### The admin surface beyond jobs (issues 230, 335, 348, 356)
+
+Every route takes the operator secret (`x-admin-secret`); `tender-admin raw <METHOD> <path>`
+sends it and reads a body from stdin.
+
+| route | what |
+|---|---|
+| `GET /admin/jobs?limit=` | the queue, the running job's progress, recent runs (`limit` deepens the log, issue 313) |
+| `POST /admin/jobs`, `DELETE /admin/jobs/{id}`, `POST /admin/jobs/{id}/cancel` | enqueue; cancel a queued or checkpointed job (issues 250, 252) |
+| `GET /admin/reports/{kind}`, `…/previous` | the newest stored report of a kind, and the one before it (issue 335) |
+| `GET /admin/name-key?name=` | the genericness wall, probed for one name (issue 348) |
+| `POST /admin/case-reviews`, `/admin/rehoming`, `/admin/name-verdicts`, `/admin/country-verdicts`, `/admin/merge-verdicts` | record one cohort's verdicts into the five review stores (`org_case_reviews`, `org_mention_rehoming`, `org_name_verdicts`, `org_country_verdicts`, `org_merge_verdicts`); recording only — the apply jobs (or the R2 arm, for merge verdicts) execute the HIGH subset |
+| `GET /admin/case-reviews?table=case\|rehoming\|name\|country\|merge&cohort=&limit=` | read a verdict store back, newest first, bounded (issue 356; the stores are not on the `/v1/sql` allow-list) |
 
 Two refusals an operator will meet, both deliberate:
 

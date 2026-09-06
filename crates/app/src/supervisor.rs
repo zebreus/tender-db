@@ -4196,6 +4196,10 @@ impl Supervisor {
                         "denied_group_vat": r.denied_group_vat,
                         "denied_names": r.denied_names,
                         "admitted_echo": r.admitted_echo,
+                        // Issue 362: a reviewer's verdicts reach E0 groups too.
+                        "denied_verdict": r.denied_verdict,
+                        "admitted_verdict": r.admitted_verdict,
+                        "verdict_stale": r.verdict_stale,
                         "merged_this_run": r.merged_groups,
                         "residual_of_wet_run": !dry_run,
                         // Dry-run blast-radius preview (the Stage-1 lesson):
@@ -4263,7 +4267,8 @@ impl Supervisor {
                     "match-org-identifiers e0 (issue 329 E0){}: {} orgs scanned, \
                      {} E0-grouped, {} groups >=2; denied: {} cap, {} gate, {} consortium \
                      ({} members excluded member-scoped), \
-                     {} legal-form, {} vat-group-wall, {} names ({} echo admitted); plan {} groups; merged {} groups \
+                     {} legal-form, {} vat-group-wall, {} names ({} echo admitted), {} verdict-keep, \
+                     {} verdict-merge; plan {} groups; merged {} groups \
                      ({} org rows removed, {} mentions, {} parties, {} bid-parties, \
                      {} winners repointed, {} winner dups deleted, {} tenders touched)",
                     if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
@@ -4278,6 +4283,8 @@ impl Supervisor {
                     r.denied_group_vat,
                     r.denied_names,
                     r.admitted_echo,
+                    r.denied_verdict,
+                    r.admitted_verdict,
                     r.plan_groups,
                     r.merged_groups,
                     r.removed,
