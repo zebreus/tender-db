@@ -1,6 +1,6 @@
 # 362 — merge verdicts: the execution path for the groups the R2 name gate leaves standing
 
-Status: BUILDING 2026-09-06 04:0x UTC (owner) — store, planner, admin route and test written; gate, deploy and the review campaign over the 451 groups follow. Filed from the 359 fold night.
+Status: DEPLOYED 4489cd5 (2026-09-06 04:1x UTC), CAMPAIGN RUNNING — store, planner path (keep denies; HIGH merge with member-set parity admits; wet stamps), POST /admin/merge-verdicts and GET /admin/case-reviews?table=merge live and verified empty; the sonnet review of the 451 groups (13 batches + 3 blind samples, workflow wf_7799e1cb-bfc) started 04:0x. NEXT: post.py → POST → match-org-identifiers dry (read admitted_verdict/denied_verdict) → wet → project → record. Was: BUILDING 2026-09-06 04:0x UTC.
 Kind: capability (organization layer merge machinery; the 311 review loop's execution path for merges)
 Relates to: 359 (the name gate that creates the queue), 355 (the country-verdict store this mirrors), 311 (the loop), 329 (E0: the same path admits its reviewed groups), 300 Stage 2 (R2)
 
