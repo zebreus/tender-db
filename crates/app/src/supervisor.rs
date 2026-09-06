@@ -9084,6 +9084,25 @@ impl Supervisor {
                              skipping this week"
                         );
                     } else {
+                        // Issue 360: the DRY scan rides first. The wet scan's
+                        // parity check refuses a plan whose `keys_built_at` is
+                        // not the current build's, and the build above renews
+                        // the keys every week — so a wet scan alone refused
+                        // itself on every tick (job 755, 2026-09-06) and
+                        // tripwire 6's weekly clock had silently stopped. The
+                        // dry pass recomputes the plan against the fresh keys;
+                        // the wet pass that follows is the one the design
+                        // meant. Both go in under one already_pending guard.
+                        self.push(
+                            "scan-org-match-keys",
+                            format!(
+                                "scan-org-match-keys stoplist={} epoch={} dry-run (weekly)",
+                                SCAN_STOPLIST_CAP,
+                                ingest::crosswalk::NAME_KEY_EPOCH
+                            ),
+                            Spec::ScanOrgMatchKeys { dry_run: true, max_edges: None },
+                        )
+                        .await;
                         self.push(
                             "scan-org-match-keys",
                             format!(
@@ -10870,7 +10889,7 @@ mod tests {
     /// wall-clock Sunday, so tripwire 6's weekly clock had only ever been
     /// exercised by hand — a wiring slip would have surfaced as silence.
     #[tokio::test]
-    async fn the_weekly_report_tick_enqueues_its_seven_jobs_once_each() {
+    async fn the_weekly_report_tick_enqueues_its_eight_jobs_once_each() {
         let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
         sup.run_report_tick().await;
         let kinds: Vec<String> = sup.queued().into_iter().map(|j| j.kind).collect();
@@ -10886,16 +10905,24 @@ mod tests {
                 "rehash-probe",
                 "build-org-match-keys",
                 "org-merge-health",
+                // Issue 360: dry then wet — the dry recomputes the plan
+                // against the keys the build just renewed, the wet passes
+                // parity on it. A wet scan alone refused itself every week.
+                "scan-org-match-keys",
                 "scan-org-match-keys",
             ],
             "issue 315: the key rebuild rides AHEAD of the scan — the queue is FIFO, \
              so this order IS the dependency"
         );
-        // The scan rides as a WET run — it IS the tripwire's clock, and a dry
-        // one would refresh nothing.
-        let scan = sup.queued().into_iter().find(|j| j.kind == "scan-org-match-keys").unwrap();
-        assert!(scan.params.contains("(weekly)"), "{}", scan.params);
-        assert!(!scan.params.contains("dry-run"), "the weekly scan must be wet: {}", scan.params);
+        // The scan rides as a DRY run and then a WET one — the wet IS the
+        // tripwire's clock (a dry alone would refresh nothing), and the dry
+        // ahead of it is what lets the wet pass its own parity check.
+        let scans: Vec<_> =
+            sup.queued().into_iter().filter(|j| j.kind == "scan-org-match-keys").collect();
+        assert_eq!(scans.len(), 2, "one dry, one wet");
+        assert!(scans[0].params.contains("dry-run (weekly)"), "the first scan is dry: {}", scans[0].params);
+        assert!(scans[1].params.contains("(weekly)"), "{}", scans[1].params);
+        assert!(!scans[1].params.contains("dry-run"), "the second scan must be wet: {}", scans[1].params);
         // So does the build: a dry build measures and stores nothing, which
         // would leave the keyspace exactly as stale as before.
         let build = sup.queued().into_iter().find(|j| j.kind == "build-org-match-keys").unwrap();
@@ -10910,7 +10937,7 @@ mod tests {
         // A second tick with last week's work still queued stacks nothing
         // (the issue-282 already_pending guard).
         sup.run_report_tick().await;
-        assert_eq!(sup.queued().len(), 7, "already_pending must stop the double enqueue");
+        assert_eq!(sup.queued().len(), 8, "already_pending must stop the double enqueue");
     }
 
     /// Issue 324: the dry arm of `drop-orphan-satellites` writes its plan as
