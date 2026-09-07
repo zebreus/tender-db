@@ -1,6 +1,6 @@
 # 342 — sources beyond TED and DÖE ("international"): nothing exists, the entry contract does
 
-Status: UNIT 1 DONE 2026-09-07 (owner) — `docs/research/uk-fts.md` written from the live API and re-checked adversarially (8/8 load-bearing claims confirmed, 4 overstatements corrected): GO for unit 2, the FTS fetcher. Unit 2 is ready-for-agent (shape below). Was: ready-for-agent — DECIDED 2026-09-07 (owner): the first market is the UK
+Status: UNIT 2 IN PROGRESS — commit (a) (the fetcher) built and reviewed 2026-09-07; commits (b) profile and (c) parser next. NOT DEPLOYED: the daily chain's FTS process pass and any backfill wait for (b), since a JSON member has no profile arm yet and would quarantine as `unparsable-xml`. Unit 1 DONE: `docs/research/uk-fts.md`, re-checked adversarially (8/8 load-bearing claims confirmed, 4 overstatements corrected), GO for the fetcher. Plan: `.scratch/tender-db/342-fts-plan.md`.
 issues for that"). No non-TED/DÖE source has ever been researched for onboarding;
 the first step is a market choice, which is Lennart's.
 Kind: capability (sources) — the product-breadth half of "full internationalization"
@@ -102,3 +102,28 @@ package header, the release stored as the notice body with `original_lang = ENG`
 parties → mentions with country `GB`, `scheme` kept, `identifier_kind = national`; lots, values
 (`amount`/`amountGross`, GBP), periods, awards via `relatedLots`, suppliers; plus the crosswalk's
 GB arm. Measure on one month of 2025 before the backfill.
+
+## Unit 2 commit (a) — the fetch registry gains `fts` (2026-09-07)
+
+Built to `.scratch/tender-db/342-fts-plan.md` §1 by a subagent, then reviewed by four adversarial
+lenses (behaviour parity for TED/DÖE, fetcher correctness, operational hazard, do the tests pin
+what they claim) with three refuters per finding. 18 candidates; the corrections applied are
+recorded in the plan's new §4b. The sharpest — found independently by all four lenses — was that
+the daily chain's `fts daily (all)` process pass would quarantine every OCDS release as
+`unparsable-xml` until commit (b) exists; only the probe ships in (a).
+
+What landed: `ingest::fts` (window/URL builders, UK DST, `member_bytes` — a deterministic
+single-release package minus the page-specific header fields, `PROBE_DAY_CAP`); `fetch_fts`
+(staging dir + `cursor.json`, resume mid-window, zip assembly with fixed entry timestamps so an
+unchanged re-walk hashes equal, 0-member zip for an empty window), `probe_fts_daily` (capped
+walk-forward), `latest_fts_day`, `get_bytes`/`land`/`retrying` extracted so the paged and plain
+fetchers share the immutability and retry rules, 503 in the throttled class; the supervisor's
+`ProbeFts`, `Fetch` routing, `build_target`/`fetch_parts`/`enqueue_backfill` arms and the
+`RehashProbe` exemption (bodies moved into methods that box internally — the 62-arm `run_spec`
+future was 24 KB from the stack limit); the CLI's `fts` source. Tests: 13 in `tests/fetch.rs`
+(including the throttle-exhaustion arm, the `_noid/` archive, the staging-debris discard and the
+per-tick cap), the register-archive extension, and unit tests on the builders and DST edges.
+
+Next: commit (b) the profile arm (`fts:ocds-1.1`, publication_id = release id, procedure_key =
+ocid) with the process pushes, then commit (c) the parser and the crosswalk GB arm. First deploy
+is after (b); first measurement is `2025-06` (the plan's step 7).

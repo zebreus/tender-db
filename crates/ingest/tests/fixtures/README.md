@@ -12,7 +12,7 @@ exercises.
 Layout is `<profile>/<notice-type>-<publication-id>.xml`, one profile directory
 per mapping profile in docs/architecture.md ("Notice identity and profiles").
 
-Total: 84 fixture files, 2.3 MB (every file under this directory except this README).
+Total: 86 fixture files, 2.3 MB (every file under this directory except this README).
 
 ## Selection policy
 
@@ -225,6 +225,32 @@ per channel.
 | `sdk-0.1-numeric-cn-25599482-1.xml` | 3 003 | `eforms-sdk-0.1` | `<ns9:ContractNotice>` | `2026-07-18.eforms.zip` | **Numeric channel.** Legacy below-threshold encoding: numeric file id, fully **prefix-mangled namespaces** (`ns2`…`ns9`, with the *default* namespace bound to the eForms extension basic-components URI rather than UBL) — the hardest namespace case in the corpus. Carries an **empty `<ns3:ContractFolderID/>`**, which is why below-threshold DÖE notices can never match a TED twin and become single-notice Tenders. |
 | `sdk-0.1-uuid-can-427d4645-…-1.xml` | 6 380 | `eforms-sdk-0.1` | `<can:ContractAwardNotice>` | `2023-01.eforms.zip` | **UUID channel** — same `eforms-sdk-0.1` customization, but UUID-named and a *third* prefix scheme (`can:`). Sourced from 2023-01 deliberately: by the 2026-07-18 export the uuid channel has died out (that day is 346 numeric + 221 `eforms-de-2.1`, zero uuid `sdk-0.1`), so this encoding only exists in the older months. 2023-01 holds 1493 uuid-named vs 12807 numeric-named files. |
 | `sdk-0.1-can-awarddate-only-19191760-1.xml` | 4 960 | `eforms-sdk-0.1` | `<ns9:ContractAwardNotice>` | `2023-01.zip` | **The dialect's normal award notice** (issue 257). Its whole result block is `<ns5:TenderResult><ns3:AwardDate/><ns3:AwardTime/></>` — no `TenderResultCode`, no `WinningParty`, no value. Not an outlier: every award-type notice in the month carries a `TenderResult` (2 895 of 2 895 — the serializer, not richness) and only 13.5 % of them name a winner; by 2024-06 it is 1.9 %. Committed because the projection used to read this silence as `clos-nw` ("closed, no award") on a notice that states the day of the award. |
+
+---
+
+## `fts/` — UK Find a Tender Service (FTS), 2 files, 47 KB
+
+**Not verbatim pages** — the one exception to the rule at the top of this file,
+by construction: a real FTS page is 100 releases (≈1 MB), so these are the
+recorded pages of 3 September 2026 (`.scratch/tender-db/342-fts/recorded/`,
+issue 342 unit 1) with the `releases` array cut down to a handful. The package
+header is kept whole, each kept release is its own object unchanged (Python
+`json.dump(indent=4)` re-emits the API's own 4-space layout and key order), and
+the page-level fields the fetcher must DROP from a member (`uri`,
+`publishedDate`, `links`) are present so the tests can prove they are dropped.
+
+| File | Bytes | Releases | Shape | Why |
+|---|---|---|---|---|
+| `pages/2026-09-03-p001.json` | 29 146 | 5 | page 1 of the day, real `links.next` (opaque cursor) | The non-final page: `083674-2026` UK10 contractAmendment, `083664-2026` UK1 and `083655-2026` UK2 planning, `083608-2026` UK7 award+contract, `083662-2026` UK4 tender (the smallest tender-tagged release of the page) — every notice family on one page. |
+| `pages/2026-09-03-p002.json` | 18 666 | 3 | page 5 of the day: the final page, NO `links` | `083257-2026` a CELEX (PCR 2015) award+contract with no `noticeType`, `083256-2026` UK12 tenderCancellation, `083253-2026` UK5 award. |
+
+`tests/fetch.rs` serves the two as a paged window (rewriting `links.next` to the
+fixture server) and asserts the assembled zip holds one member per release id.
+The single-release member packages for the profile/parse tests (unit 2 commits b
+and c) are cut from the same recorded pages.
+
+Contains public sector information licensed under the Open Government Licence
+v3.0.
 
 ---
 

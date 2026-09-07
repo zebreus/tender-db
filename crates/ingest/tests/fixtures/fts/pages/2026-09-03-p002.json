@@ -1,0 +1,458 @@
+{
+    "uri": "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages?updatedFrom=2026-09-03T00:00:00&updatedTo=2026-09-03T23:59:59&limit=100",
+    "version": "1.1",
+    "extensions": [
+        "https://standard.open-contracting.org/profiles/eu/latest/en/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_amendment_rationale_classifications_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_contract_completion_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_documentation_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_suitability_extension/master/extension.json",
+        "https://raw.githubusercontent.com/portaledcahn/ocds_Links_extension/main/extension.json",
+        "https://raw.githubusercontent.com/cabinetoffice/ocds_uk_extension/main/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_performance_failures_extension/master/extension.json"
+    ],
+    "publishedDate": "2026-09-03T09:13:52+01:00",
+    "publisher": {
+        "name": "Cabinet Office",
+        "scheme": "GB-GOR",
+        "uid": "D2",
+        "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+    },
+    "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "publicationPolicy": "https://www.gov.uk/government/publications/open-contracting",
+    "releases": [
+        {
+            "ocid": "ocds-h6vhtk-06f0ca",
+            "id": "083257-2026",
+            "date": "2026-09-03T08:15:49+01:00",
+            "tag": [
+                "award",
+                "contract"
+            ],
+            "initiationType": "tender",
+            "tender": {
+                "id": "JPS3186A",
+                "legalBasis": {
+                    "id": "32014L0024",
+                    "scheme": "CELEX"
+                },
+                "title": "Multi-Functional Devices",
+                "status": "complete",
+                "classification": {
+                    "scheme": "CPV",
+                    "id": "30232100",
+                    "description": "Printers and plotters"
+                },
+                "mainProcurementCategory": "goods",
+                "description": "Lease of Multi-Functional Devices across the Surrey estate",
+                "lots": [
+                    {
+                        "id": "1",
+                        "description": "Direct Award for Lease of Multi-Functional Devices across the Surrey estate.",
+                        "awardCriteria": {
+                            "criteria": [
+                                {
+                                    "type": "price"
+                                }
+                            ]
+                        },
+                        "hasOptions": true,
+                        "options": {
+                            "description": "At the call off expiry date, there maybe an option to direct award, retaining the existing MyQ print management software and refresh the hardware where appropriate, over a new agreed term."
+                        },
+                        "status": "cancelled"
+                    }
+                ],
+                "items": [
+                    {
+                        "id": "1",
+                        "deliveryAddresses": [
+                            {
+                                "region": "UKJ"
+                            }
+                        ],
+                        "relatedLot": "1"
+                    }
+                ],
+                "procurementMethod": "limited",
+                "procurementMethodDetails": "Award procedure without prior publication of a call for competition",
+                "procurementMethodRationaleClassifications": [
+                    {
+                        "scheme": "TED_PT_AWARD_CONTRACT_WITHOUT_CALL",
+                        "id": "D_OUTSIDE_SCOPE",
+                        "description": "The procurement falls outside the scope of application of the directive"
+                    }
+                ],
+                "procurementMethodRationale": "Direct award under a framework due to cost of change and resource to be able to implement a new supplier."
+            },
+            "awards": [
+                {
+                    "id": "083257-2026-1",
+                    "relatedLots": [
+                        "1"
+                    ],
+                    "status": "active",
+                    "suppliers": [
+                        {
+                            "id": "GB-COH-02150688",
+                            "name": "KYOCERA DOCUMENT SOLUTIONS (U.K.) LIMITED"
+                        }
+                    ]
+                }
+            ],
+            "parties": [
+                {
+                    "name": "The Police and Crime Commissioner for Surrey",
+                    "id": "GB-FTS-141340",
+                    "identifier": {
+                        "legalName": "The Police and Crime Commissioner for Surrey",
+                        "noIdentifierRationale": "notOnAnyRegister"
+                    },
+                    "address": {
+                        "streetAddress": "PO Box 412",
+                        "locality": "Guildford",
+                        "region": "UKJ25",
+                        "postalCode": "GU31YJ",
+                        "countryName": "United Kingdom"
+                    },
+                    "contactPoint": {
+                        "name": "Mike Bennett",
+                        "email": "mike.bennett1@surrey.police.uk"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "url": "https://www.surrey.police.uk/",
+                        "classifications": [
+                            {
+                                "scheme": "TED_CA_TYPE",
+                                "id": "REGIONAL_AUTHORITY",
+                                "description": "Regional or local authority"
+                            },
+                            {
+                                "scheme": "COFOG",
+                                "id": "03",
+                                "description": "Public order and safety"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "KYOCERA DOCUMENT SOLUTIONS (U.K.) LIMITED",
+                    "id": "GB-COH-02150688",
+                    "identifier": {
+                        "legalName": "KYOCERA DOCUMENT SOLUTIONS (U.K.) LIMITED",
+                        "id": "02150688",
+                        "scheme": "GB-COH"
+                    },
+                    "address": {
+                        "locality": "Reading",
+                        "region": "UKJ",
+                        "countryName": "United Kingdom"
+                    },
+                    "roles": [
+                        "supplier"
+                    ],
+                    "details": {
+                        "scale": "large"
+                    }
+                },
+                {
+                    "name": "High Courts of Justice",
+                    "id": "GB-FTS-2122",
+                    "identifier": {
+                        "legalName": "High Courts of Justice"
+                    },
+                    "address": {
+                        "locality": "London",
+                        "countryName": "United Kingdom"
+                    },
+                    "roles": [
+                        "reviewBody"
+                    ]
+                }
+            ],
+            "buyer": {
+                "id": "GB-FTS-141340",
+                "name": "The Police and Crime Commissioner for Surrey"
+            },
+            "contracts": [
+                {
+                    "id": "083257-2026-1",
+                    "awardID": "083257-2026-1",
+                    "status": "active",
+                    "value": {
+                        "amount": 109801.97,
+                        "currency": "GBP"
+                    },
+                    "dateSigned": "2026-09-03T00:00:00+01:00"
+                }
+            ],
+            "bids": {
+                "statistics": [
+                    {
+                        "id": "1",
+                        "measure": "bids",
+                        "relatedLot": "1",
+                        "value": 1
+                    },
+                    {
+                        "id": "2",
+                        "measure": "smeBids",
+                        "relatedLot": "1",
+                        "value": 0
+                    }
+                ]
+            },
+            "language": "en"
+        },
+        {
+            "id": "083256-2026",
+            "tag": [
+                "tenderCancellation"
+            ],
+            "date": "2026-09-03T08:10:55+01:00",
+            "initiationType": "tender",
+            "ocid": "ocds-h6vhtk-05f9f4",
+            "parties": [
+                {
+                    "name": "Solihull Metropolitan Borough Council",
+                    "id": "GB-PPON-PGWC-7578-LYDG",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PGWC-7578-LYDG"
+                    },
+                    "address": {
+                        "streetAddress": "The Council House, Manor Square",
+                        "locality": "Solihull",
+                        "postalCode": "B91 3QB",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKG32"
+                    },
+                    "contactPoint": {
+                        "email": "procteam@solihull.gov.uk"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "url": "https://solihull.my.site.com/s/",
+                        "classifications": [
+                            {
+                                "scheme": "UK_CA_TYPE",
+                                "id": "publicAuthoritySubCentralGovernment",
+                                "description": "Public authority - sub-central government"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "tender": {
+                "id": "SOL30024",
+                "legalBasis": {
+                    "id": "2023/54",
+                    "scheme": "UKPGA",
+                    "uri": "https://www.legislation.gov.uk/ukpga/2023/54/contents"
+                },
+                "title": "SOL30024 SOL Concessions in Solihull Parks 2026",
+                "status": "withdrawn",
+                "lots": [
+                    {
+                        "id": "1",
+                        "status": "withdrawn"
+                    }
+                ],
+                "documents": [
+                    {
+                        "id": "083256-2026",
+                        "documentType": "tenderCancellationNotice",
+                        "noticeType": "UK12",
+                        "description": "Procurement termination notice on Find a Tender",
+                        "url": "https://www.find-tender.service.gov.uk/Notice/083256-2026",
+                        "datePublished": "2026-09-03T08:10:55+01:00",
+                        "format": "text/html"
+                    }
+                ]
+            },
+            "awards": [
+                {
+                    "id": "1",
+                    "status": "cancelled",
+                    "finalStatusDate": "2026-03-02T00:00:00Z",
+                    "relatedLots": [
+                        "1"
+                    ]
+                }
+            ],
+            "language": "en"
+        },
+        {
+            "ocid": "ocds-h6vhtk-06f0c7",
+            "buyerID": [],
+            "id": "083253-2026",
+            "tag": [
+                "award",
+                "contract"
+            ],
+            "date": "2026-09-03T07:44:19+01:00",
+            "initiationType": "tender",
+            "parties": [
+                {
+                    "name": "Gov Facility Services Ltd",
+                    "id": "GB-PPON-PMLQ-6732-ZLVW",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PMLQ-6732-ZLVW"
+                    },
+                    "address": {
+                        "streetAddress": "102 Petty France, C/O  2.51",
+                        "locality": "London",
+                        "postalCode": "SW1H 9AJ",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKI32"
+                    },
+                    "contactPoint": {
+                        "email": "GFSL_Supplychain@govfsl.com"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "classifications": [
+                            {
+                                "scheme": "UK_CA_TYPE",
+                                "id": "publicAuthoritySubCentralGovernment",
+                                "description": "Public authority - sub-central government"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "RELIANCE HIGH TECH LTD",
+                    "id": "GB-COH-02025063",
+                    "identifier": {
+                        "scheme": "GB-COH",
+                        "id": "02025063"
+                    },
+                    "address": {
+                        "streetAddress": "6 The Enterprise Centre, Easthampstead Road, Bracknell",
+                        "locality": "Berkshire",
+                        "postalCode": "RG12 1NF",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKJ11"
+                    },
+                    "contactPoint": {
+                        "email": "info@reliancehightech.co.uk"
+                    },
+                    "roles": [
+                        "supplier"
+                    ],
+                    "details": {
+                        "scale": "large",
+                        "vcse": false
+                    }
+                }
+            ],
+            "buyer": {
+                "id": "GB-PPON-PMLQ-6732-ZLVW",
+                "name": "Gov Facility Services Ltd"
+            },
+            "tender": {
+                "id": "GFSL-CN-24415",
+                "legalBasis": {
+                    "id": "2023/54",
+                    "scheme": "UKPGA",
+                    "uri": "https://www.legislation.gov.uk/ukpga/2023/54/contents"
+                },
+                "title": "Cameras",
+                "description": "Procurement exercise for CCTV Cameras",
+                "status": "complete",
+                "procurementMethod": "direct",
+                "procurementMethodDetails": "Below threshold - without competition",
+                "lots": [
+                    {
+                        "id": "1",
+                        "status": "complete",
+                        "description": null
+                    }
+                ]
+            },
+            "awards": [
+                {
+                    "id": "1",
+                    "status": "pending",
+                    "value": {
+                        "amountGross": 57354.0,
+                        "amount": 47795.0,
+                        "currency": "GBP"
+                    },
+                    "mainProcurementCategory": "goods",
+                    "aboveThreshold": false,
+                    "suppliers": [
+                        {
+                            "id": "GB-COH-02025063",
+                            "name": "RELIANCE HIGH TECH LTD"
+                        }
+                    ],
+                    "items": [
+                        {
+                            "id": "1",
+                            "additionalClassifications": [
+                                {
+                                    "scheme": "CPV",
+                                    "id": "35125000",
+                                    "description": "Surveillance system"
+                                }
+                            ],
+                            "deliveryAddresses": [
+                                {
+                                    "region": "UKI5",
+                                    "country": "GB",
+                                    "countryName": "United Kingdom"
+                                }
+                            ],
+                            "relatedLot": "1"
+                        }
+                    ],
+                    "contractPeriod": {
+                        "startDate": "2026-09-15T00:00:00+01:00",
+                        "endDate": "2027-09-30T23:59:59+01:00"
+                    },
+                    "hasOptions": true,
+                    "options": {
+                        "description": "Additional Services"
+                    },
+                    "relatedLots": [
+                        "1"
+                    ],
+                    "documents": [
+                        {
+                            "id": "083253-2026",
+                            "documentType": "awardNotice",
+                            "noticeType": "UK5",
+                            "description": "Transparency notice on Find a Tender",
+                            "url": "https://www.find-tender.service.gov.uk/Notice/083253-2026",
+                            "datePublished": "2026-09-03T07:44:19+01:00",
+                            "format": "text/html"
+                        }
+                    ],
+                    "milestones": [
+                        {
+                            "id": "1",
+                            "type": "futureSignatureDate",
+                            "dueDate": "2026-09-03T23:59:59+01:00",
+                            "status": "scheduled"
+                        }
+                    ]
+                }
+            ],
+            "language": "en"
+        }
+    ]
+}

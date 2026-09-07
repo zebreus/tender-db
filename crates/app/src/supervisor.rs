@@ -21,7 +21,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 
-use ingest::{doe, fetch, package, process, project, ted};
+use ingest::{doe, fetch, fts, package, process, project, ted};
 use model::ingestion::{Ingestion, JobProgress, JobRun, Phase, QueuedJob};
 use serde::{Deserialize, Serialize};
 use store::turso;
@@ -128,6 +128,7 @@ pub struct Supervisor {
     http: reqwest::Client,
     ted_base: String,
     doe_base: String,
+    fts_base: String,
     queue: Mutex<VecDeque<Job>>,
     wake: Notify,
     next_id: AtomicU64,
@@ -167,10 +168,10 @@ struct Job {
 }
 
 /// What a job does. Fetch/process/project map onto ingest's library entry
-/// points; `ProbeTed`/`ProbeDoe` are the realtime daily walk-forwards (TED probes
-/// the server for the next issue, DÖE walks calendar days from its last
-/// watermark). `Serialize`/`Deserialize` so a job survives a restart in the
-/// durable queue (issue 21).
+/// points; `ProbeTed`/`ProbeDoe`/`ProbeFts` are the realtime daily walk-forwards
+/// (TED probes the server for the next issue, DÖE and FTS walk calendar days
+/// from their last watermark). `Serialize`/`Deserialize` so a job survives a
+/// restart in the durable queue (issue 21).
 /// Rows marked per transaction by [`Spec::MarkSkippedSiblings`]. Small on
 /// purpose: turso writes a WAL frame per row and cannot checkpoint mid-statement,
 /// so one ~593k-row UPDATE is the shape that produced a 127 GB WAL and an OOM
@@ -215,6 +216,9 @@ enum Spec {
     /// Walk DÖE daily exports forward from the last fetched day (issue 69), so a
     /// missed scheduler tick catches up instead of leaving a permanent hole.
     ProbeDoe,
+    /// Walk FTS daily windows forward from the last fetched UK civil day up to
+    /// yesterday (issue 342): the DÖE shape over a paged, self-assembled source.
+    ProbeFts,
     Process { source: String, package_kind: String, period: Option<String> },
     /// Re-attempt a held quarantine bucket from the archive, writing the parsed
     /// layer in place for members that now parse (issues 71/72/73). The bucket is
@@ -838,7 +842,7 @@ pub struct JobRequest {
     /// `fetch` | `process` | `project` | `backfill` | `daily`
     /// (issue 69 catch-up) | `reprocess` (re-attempt a held quarantine bucket).
     pub kind: String,
-    /// `ted` | `doe`.
+    /// `ted` | `doe` | `fts`.
     pub source: Option<String>,
     /// `daily` | `monthly` (default `daily`).
     pub package_kind: Option<String>,
@@ -950,6 +954,7 @@ impl Supervisor {
             http,
             ted_base: ted::BASE.to_owned(),
             doe_base: doe::BASE.to_owned(),
+            fts_base: fts::BASE.to_owned(),
             queue: Mutex::new(VecDeque::new()),
             wake: Notify::new(),
             next_id: AtomicU64::new(1),
@@ -1907,13 +1912,33 @@ impl Supervisor {
                 let [a, b] = req.range.as_ref().ok_or("ted backfill needs a monthly range")?;
                 months_between(a, b)?
             }
+            // FTS (issue 342, D9): every month since 2021-01 by default, or the
+            // given range. Each monthly is walked as 1-day windows and resumes
+            // from its staging dir, so a throttled month is re-enqueued, not
+            // restarted. The current month is NOT force-refetched as DÖE's is:
+            // a re-walk costs ~150 paced requests, and the daily probe already
+            // covers every day after the backfill ran.
+            "fts" => match &req.range {
+                Some([a, b]) => months_between(a, b)?,
+                None => {
+                    let (y, m, _) = fetch::current_date_utc();
+                    fts::months_through((y, m))
+                        .into_iter()
+                        .map(|(y, m)| format!("{y}-{m:02}"))
+                        .collect()
+                }
+            },
             other => return Err(format!("unknown source {other:?}")),
         };
         if months.is_empty() {
             return Err("backfill range is empty".into());
         }
 
-        let src: &'static str = if source == "doe" { "doe" } else { "ted" };
+        let src: &'static str = match source {
+            "doe" => "doe",
+            "fts" => "fts",
+            _ => "ted",
+        };
         let mut ids = Vec::new();
         for period in &months {
             ids.push(
@@ -1949,6 +1974,7 @@ impl Supervisor {
         let source: &'static str = match req.source.as_deref() {
             Some("ted") | None => "ted",
             Some("doe") => "doe",
+            Some("fts") => "fts",
             Some(o) => return Err(format!("unknown source {o:?}")),
         };
         let package_kind: &'static str = match req.package_kind.as_deref() {
@@ -2627,17 +2653,225 @@ impl Supervisor {
         }
     }
 
+    /// The FTS fetch (issue 342), kept OUT of `run_spec`'s frame. `run_spec` is
+    /// a 62-arm async match whose debug-build poll frame is ~490 KB — a quarter
+    /// of a test thread's stack — and every future an arm materialises before
+    /// boxing it is added to that frame. The walk's future is boxed HERE, so the
+    /// arm materialises only this method's few-word future; the 2026-09-07
+    /// attempt that boxed `fetch_fts` inline in the arm overflowed
+    /// `an_execute_without_an_expected_count_is_refused` (CLAUDE.md's trap).
+    async fn run_fetch_fts(
+        &self,
+        target: &fetch::Target,
+        period: &str,
+        refetch: bool,
+    ) -> Result<fetch::Outcome, fetch::Error> {
+        Box::pin(fetch::fetch_fts(
+            &self.db,
+            &self.http,
+            &self.archive,
+            target,
+            refetch,
+            std::time::Duration::from_secs(fts::PAGE_PAUSE_SECS),
+            |day, pages, releases| {
+                self.update(|p| {
+                    p.package = Some(format!("{period} · {day} p{pages} ({releases} releases)"));
+                })
+            },
+        ))
+        .await
+    }
+
+    /// The plain (TED/DÖE) fetcher behind the same door as [`Self::run_fetch_fts`],
+    /// so the `Fetch` arm and the rehash probe materialise a few words on
+    /// `run_spec`'s frame instead of the fetcher's whole future.
+    async fn run_fetch(&self, target: &fetch::Target, refetch: bool) -> Result<fetch::Outcome, fetch::Error> {
+        Box::pin(fetch::fetch(&self.db, &self.http, &self.archive, target, refetch)).await
+    }
+
+    /// The D4 immutability probe (`Spec::RehashProbe`, issue 173), out of
+    /// `run_spec`'s frame: its findings are built with `json!`/`format!`, whose
+    /// debug-build temporaries all landed on that frame while it sat one arm
+    /// from a test thread's stack limit (2026-09-07; see [`Self::run_fetch_fts`]).
+    async fn run_rehash_probe(&self, samples: usize) -> Result<String, String> {
+        // Where the cursor stopped last run; a missing or garbled report
+        // restarts the cycle from the oldest package, which only costs
+        // re-probing rows that were probed before — idempotent by design.
+        let after = match self.db.latest_report("rehash-cursor").await {
+            Ok(Some((body, _))) => serde_json::from_str::<serde_json::Value>(&body)
+                .ok()
+                .and_then(|v| v["after"].as_i64())
+                .unwrap_or(0),
+            _ => 0,
+        };
+        let mut page =
+            self.db.registry_page(after, samples).await.map_err(|e| e.to_string())?;
+        let mut wrapped = false;
+        if page.len() < samples {
+            // The cursor reached the registry's end: wrap to the oldest
+            // packages so the cycle never stalls at the tail.
+            wrapped = true;
+            let more = self
+                .db
+                .registry_page(0, samples - page.len())
+                .await
+                .map_err(|e| e.to_string())?;
+            page.extend(more.into_iter().filter(|(id, ..)| *id <= after));
+        }
+        self.update(|p| p.packages_total = page.len() as u64);
+        let (mut unchanged, mut drifted, mut gone, mut skipped) = (0, 0, 0, 0);
+        let mut findings: Vec<serde_json::Value> = Vec::new();
+        let mut cursor = after;
+        for (id, source, kind, period) in &page {
+            self.update(|p| p.package = Some(format!("{source} {kind} {period}")));
+            if source == "fts" {
+                // An FTS package is assembled from paged windows, not
+                // served as bytes (issue 342): re-walking a month to
+                // compare hashes is ~150 paced requests against a
+                // limiter, for a drift the source cannot even express.
+                // Exempt, and said so in the report.
+                skipped += 1;
+                findings.push(serde_json::json!({
+                    "package": format!("{source} {kind} {period}"),
+                    "outcome": "exempt",
+                }));
+                cursor = cursor.max(*id);
+                self.update(|p| p.packages_done += 1);
+                continue;
+            }
+            let target = match build_target(
+                &self.ted_base,
+                &self.doe_base,
+                &self.fts_base,
+                source,
+                kind,
+                period,
+            ) {
+                Ok(t) => t,
+                Err(e) => {
+                    // A registry row no target builder covers is a finding,
+                    // not a crash — record it and keep cycling.
+                    skipped += 1;
+                    findings.push(serde_json::json!({
+                        "package": format!("{source} {kind} {period}"),
+                        "outcome": "unbuildable", "detail": e,
+                    }));
+                    cursor = cursor.max(*id);
+                    self.update(|p| p.packages_done += 1);
+                    continue;
+                }
+            };
+            match self.run_fetch(&target, true).await {
+                Ok(fetch::Outcome::Unchanged) => unchanged += 1,
+                Ok(fetch::Outcome::NewVersion) => {
+                    // Upstream serves different bytes than we ingested. The
+                    // fetch path has already archived the new version BESIDE
+                    // the original — this is the drift D4 exists to see.
+                    drifted += 1;
+                    findings.push(serde_json::json!({
+                        "package": format!("{source} {kind} {period}"),
+                        "outcome": "drifted",
+                    }));
+                }
+                Ok(fetch::Outcome::NotFound) => {
+                    gone += 1;
+                    findings.push(serde_json::json!({
+                        "package": format!("{source} {kind} {period}"),
+                        "outcome": "gone",
+                    }));
+                }
+                Ok(other) => {
+                    skipped += 1;
+                    findings.push(serde_json::json!({
+                        "package": format!("{source} {kind} {period}"),
+                        "outcome": format!("{other:?}"),
+                    }));
+                }
+                Err(e) => {
+                    // One package's transient network failure must not void
+                    // the rest of the sample; it is recorded, not retried.
+                    skipped += 1;
+                    findings.push(serde_json::json!({
+                        "package": format!("{source} {kind} {period}"),
+                        "outcome": "error", "detail": e.to_string(),
+                    }));
+                }
+            }
+            cursor = cursor.max(*id);
+            self.update(|p| p.packages_done += 1);
+        }
+        let now = store::now_unix();
+        let report = serde_json::json!({
+            "probed": page.len(), "unchanged": unchanged, "drifted": drifted,
+            "gone": gone, "skipped": skipped, "wrapped": wrapped,
+            "findings": findings,
+        })
+        .to_string();
+        self.db.put_report("rehash-probe", &report, now).await.map_err(|e| e.to_string())?;
+        // The cursor advances even when packages misbehaved: a drifted or
+        // vanished package is REPORTED, and re-probing it every week would
+        // stall the cycle on exactly the rows we already know about. Wrap
+        // resets to the newest id consumed this run.
+        let next = if wrapped { page.iter().map(|(id, ..)| *id).max().unwrap_or(0) } else { cursor };
+        self.db
+            .put_report("rehash-cursor", &serde_json::json!({ "after": next }).to_string(), now)
+            .await
+            .map_err(|e| e.to_string())?;
+        let alarm = if drifted + gone > 0 {
+            format!("; {} package(s) DRIFTED/GONE — read the report", drifted + gone)
+        } else {
+            String::new()
+        };
+        Ok(format!(
+            "rehash probe: {} probed — {unchanged} unchanged, {drifted} drifted, \
+             {gone} gone, {skipped} skipped{}{alarm}",
+            page.len(),
+            if wrapped { " (registry cycle wrapped)" } else { "" },
+        ))
+    }
+
+    /// The FTS daily walk-forward (issue 342): the DÖE shape (`Spec::ProbeDoe`)
+    /// over UK civil days. Out of `run_spec`'s frame for the reason on
+    /// [`Self::run_fetch_fts`].
+    async fn run_probe_fts(&self) -> Result<String, String> {
+        // The last completed UK civil day: the API's windows are UK-local, and a
+        // passed day is final (uk-fts.md §2).
+        let end = fts::uk_civil_date(store::now_unix() - 86_400);
+        let results = Box::pin(fetch::probe_fts_daily(
+            &self.db,
+            &self.http,
+            &self.archive,
+            &self.fts_base,
+            end,
+            std::time::Duration::from_secs(fts::PAGE_PAUSE_SECS),
+            |period, _| self.update(|p| p.package = Some(period.to_owned())),
+        ))
+        .await
+        .map_err(|e| e.to_string())?;
+        let fetched = results
+            .iter()
+            .filter(|(_, o)| matches!(o, fetch::Outcome::Fetched | fetch::Outcome::NewVersion))
+            .count();
+        Ok(format!("probed {} day(s), {fetched} new", results.len()))
+    }
+
     async fn run_spec(&self, job: &Job) -> Result<String, String> {
         match &job.spec {
             Spec::Fetch { source, package_kind, period, refetch } => {
-                let target = build_target(&self.ted_base, &self.doe_base, source, package_kind, period)?;
+                let target =
+                    build_target(&self.ted_base, &self.doe_base, &self.fts_base, source, package_kind, period)?;
                 self.update(|p| {
                     p.package = Some(period.clone());
                     p.packages_total = 1;
                 });
-                let outcome = fetch::fetch(&self.db, &self.http, &self.archive, &target, *refetch)
-                    .await
-                    .map_err(|e| e.to_string())?;
+                let outcome = if target.source == "fts" {
+                    // Paged and self-assembled (issue 342); boxed twice over — see
+                    // `run_fetch_fts` for why the walk stays off this frame.
+                    Box::pin(self.run_fetch_fts(&target, period, *refetch)).await
+                } else {
+                    Box::pin(self.run_fetch(&target, *refetch)).await
+                }
+                .map_err(|e| e.to_string())?;
                 self.update(|p| p.packages_done = 1);
                 Ok(format!("{outcome:?}"))
             }
@@ -2660,121 +2894,8 @@ impl Supervisor {
                     .count();
                 Ok(format!("probed {} issue(s), {fetched} new", results.len()))
             }
-            Spec::RehashProbe { samples } => {
-                // Where the cursor stopped last run; a missing or garbled report
-                // restarts the cycle from the oldest package, which only costs
-                // re-probing rows that were probed before — idempotent by design.
-                let after = match self.db.latest_report("rehash-cursor").await {
-                    Ok(Some((body, _))) => serde_json::from_str::<serde_json::Value>(&body)
-                        .ok()
-                        .and_then(|v| v["after"].as_i64())
-                        .unwrap_or(0),
-                    _ => 0,
-                };
-                let mut page =
-                    self.db.registry_page(after, *samples).await.map_err(|e| e.to_string())?;
-                let mut wrapped = false;
-                if page.len() < *samples {
-                    // The cursor reached the registry's end: wrap to the oldest
-                    // packages so the cycle never stalls at the tail.
-                    wrapped = true;
-                    let more = self
-                        .db
-                        .registry_page(0, *samples - page.len())
-                        .await
-                        .map_err(|e| e.to_string())?;
-                    page.extend(more.into_iter().filter(|(id, ..)| *id <= after));
-                }
-                self.update(|p| p.packages_total = page.len() as u64);
-                let (mut unchanged, mut drifted, mut gone, mut skipped) = (0, 0, 0, 0);
-                let mut findings: Vec<serde_json::Value> = Vec::new();
-                let mut cursor = after;
-                for (id, source, kind, period) in &page {
-                    self.update(|p| p.package = Some(format!("{source} {kind} {period}")));
-                    let target = match build_target(&self.ted_base, &self.doe_base, source, kind, period)
-                    {
-                        Ok(t) => t,
-                        Err(e) => {
-                            // A registry row no target builder covers is a finding,
-                            // not a crash — record it and keep cycling.
-                            skipped += 1;
-                            findings.push(serde_json::json!({
-                                "package": format!("{source} {kind} {period}"),
-                                "outcome": "unbuildable", "detail": e,
-                            }));
-                            cursor = cursor.max(*id);
-                            self.update(|p| p.packages_done += 1);
-                            continue;
-                        }
-                    };
-                    match fetch::fetch(&self.db, &self.http, &self.archive, &target, true).await {
-                        Ok(fetch::Outcome::Unchanged) => unchanged += 1,
-                        Ok(fetch::Outcome::NewVersion) => {
-                            // Upstream serves different bytes than we ingested. The
-                            // fetch path has already archived the new version BESIDE
-                            // the original — this is the drift D4 exists to see.
-                            drifted += 1;
-                            findings.push(serde_json::json!({
-                                "package": format!("{source} {kind} {period}"),
-                                "outcome": "drifted",
-                            }));
-                        }
-                        Ok(fetch::Outcome::NotFound) => {
-                            gone += 1;
-                            findings.push(serde_json::json!({
-                                "package": format!("{source} {kind} {period}"),
-                                "outcome": "gone",
-                            }));
-                        }
-                        Ok(other) => {
-                            skipped += 1;
-                            findings.push(serde_json::json!({
-                                "package": format!("{source} {kind} {period}"),
-                                "outcome": format!("{other:?}"),
-                            }));
-                        }
-                        Err(e) => {
-                            // One package's transient network failure must not void
-                            // the rest of the sample; it is recorded, not retried.
-                            skipped += 1;
-                            findings.push(serde_json::json!({
-                                "package": format!("{source} {kind} {period}"),
-                                "outcome": "error", "detail": e.to_string(),
-                            }));
-                        }
-                    }
-                    cursor = cursor.max(*id);
-                    self.update(|p| p.packages_done += 1);
-                }
-                let now = store::now_unix();
-                let report = serde_json::json!({
-                    "probed": page.len(), "unchanged": unchanged, "drifted": drifted,
-                    "gone": gone, "skipped": skipped, "wrapped": wrapped,
-                    "findings": findings,
-                })
-                .to_string();
-                self.db.put_report("rehash-probe", &report, now).await.map_err(|e| e.to_string())?;
-                // The cursor advances even when packages misbehaved: a drifted or
-                // vanished package is REPORTED, and re-probing it every week would
-                // stall the cycle on exactly the rows we already know about. Wrap
-                // resets to the newest id consumed this run.
-                let next = if wrapped { page.iter().map(|(id, ..)| *id).max().unwrap_or(0) } else { cursor };
-                self.db
-                    .put_report("rehash-cursor", &serde_json::json!({ "after": next }).to_string(), now)
-                    .await
-                    .map_err(|e| e.to_string())?;
-                let alarm = if drifted + gone > 0 {
-                    format!("; {} package(s) DRIFTED/GONE — read the report", drifted + gone)
-                } else {
-                    String::new()
-                };
-                Ok(format!(
-                    "rehash probe: {} probed — {unchanged} unchanged, {drifted} drifted, \
-                     {gone} gone, {skipped} skipped{}{alarm}",
-                    page.len(),
-                    if wrapped { " (registry cycle wrapped)" } else { "" },
-                ))
-            }
+            // Boxed — see `run_rehash_probe`.
+            Spec::RehashProbe { samples } => Box::pin(self.run_rehash_probe(*samples)).await,
             Spec::RevealRecheck => {
                 // One cursor slice per run (issue 274): the capped predecessor
                 // bounded only the reveal-EXISTS pass while its population
@@ -2869,6 +2990,9 @@ impl Supervisor {
                     .count();
                 Ok(format!("probed {} day(s), {fetched} new", results.len()))
             }
+            // Boxed twice over — see `run_fetch_fts` for why the walk stays off
+            // this frame (CLAUDE.md's stack rule).
+            Spec::ProbeFts => Box::pin(self.run_probe_fts()).await,
             Spec::Process { source, package_kind, period } => {
                 self.run_process(job.id, source, package_kind, period.as_deref(), job.resume_after.as_deref())
                     .await
@@ -9501,6 +9625,21 @@ impl Supervisor {
             )
             .await,
         );
+        // FTS publishes seven days a week (a weekend day carries a handful of
+        // notices), so its walk-forward runs every tick, like DÖE's (issue 342).
+        // On an empty registry the probe fetches only yesterday, so the chain
+        // ships dark ahead of the backfill.
+        //
+        // ONLY the probe, until the JSON profile arm exists (issue 342 commit
+        // (b)). The adversarial review of commit (a) found the trap in four
+        // independent lenses: `process` walks every member of the zip the probe
+        // just landed through `profile::dispatch_with`, which parses XML — so a
+        // `{`-leading OCDS release becomes a `quarantine` row with reason
+        // `unparsable-xml`, a few hundred a day, in the bucket the dashboard
+        // calls "genuinely malformed XML". The archived package is not lost:
+        // `current_packages(source, kind, None)` re-walks every FTS daily on the
+        // first tick after (b) lands, which is where the process push belongs.
+        ids.push(self.push("probe", "fts daily (probe)".into(), Spec::ProbeFts).await);
         // Refresh the ECB reference rates BEFORE the fold (ADR-0014): the
         // derivation's daily window is 7 days, so without a standing refresh
         // every fold more than a week after the last manual fetch-rates run
@@ -9632,6 +9771,7 @@ fn resume_skip(packages: &[store::Package], resume_after: Option<&str>) -> usize
 fn build_target(
     ted_base: &str,
     doe_base: &str,
+    fts_base: &str,
     source: &str,
     package_kind: &str,
     period: &str,
@@ -9650,6 +9790,8 @@ fn build_target(
             let (year, month) = parse_year_month(period)?;
             Ok(doe::monthly(doe_base, year, month))
         }
+        ("fts", "daily") => Ok(fts::day(fts_base, parse_ymd(period)?)),
+        ("fts", "monthly") => Ok(fts::monthly(fts_base, parse_year_month(period)?)),
         (s, k) => Err(format!("no fetch target for {s} {k}")),
     }
 }
@@ -10104,14 +10246,77 @@ mod tests {
 
     #[test]
     fn targets_are_built_per_source_and_kind() {
-        let t = build_target("https://ted", "https://doe", "ted", "daily", "2026-00137").unwrap();
+        let build = |source, kind, period| build_target("https://ted", "https://doe", "https://fts", source, kind, period);
+        let t = build("ted", "daily", "2026-00137").unwrap();
         assert_eq!(t.url, "https://ted/packages/daily/202600137");
-        let t = build_target("https://ted", "https://doe", "ted", "monthly", "2026-06").unwrap();
+        let t = build("ted", "monthly", "2026-06").unwrap();
         assert_eq!(t.rel_path, "ted/monthly/2026-06.tar");
-        let t = build_target("https://ted", "https://doe", "doe", "daily", "2026-07-18").unwrap();
+        let t = build("doe", "daily", "2026-07-18").unwrap();
         assert_eq!(t.period, "2026-07-18");
-        assert!(build_target("https://ted", "https://doe", "ted", "weekly", "x").is_err());
-        assert!(build_target("https://ted", "https://doe", "ted", "daily", "nope").is_err());
+        // FTS (issue 342): a daily is one UK civil day with the 2 h overlap, a
+        // monthly the month's first window; both on the fts base.
+        let t = build("fts", "daily", "2026-09-03").unwrap();
+        assert_eq!(t.source, "fts");
+        assert_eq!(t.period, "2026-09-03");
+        assert_eq!(t.rel_path, "fts/daily/2026-09-03.zip");
+        assert_eq!(
+            t.url,
+            "https://fts/ocdsReleasePackages?limit=100&updatedFrom=2026-09-02T22:00:00&updatedTo=2026-09-03T23:59:59"
+        );
+        let t = build("fts", "monthly", "2025-06").unwrap();
+        assert_eq!(t.rel_path, "fts/monthly/2025-06.zip");
+        assert!(t.url.starts_with("https://fts/ocdsReleasePackages?limit=100&updatedFrom=2025-06-01T00:00:00"));
+        assert!(build("fts", "daily", "2025-06").is_err(), "a daily needs a day");
+        assert!(build("fts", "weekly", "2025-06").is_err());
+        assert!(build("ted", "weekly", "x").is_err());
+        assert!(build("ted", "daily", "nope").is_err());
+    }
+
+    /// Issue 342: an FTS backfill fans every month since 2021-01 (or the given
+    /// range) into per-month fetch jobs under the `fts` source, then one
+    /// process pass over the monthlies and a projection — the DÖE shape.
+    #[tokio::test]
+    async fn fts_backfill_fans_months_under_the_fts_source() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        let ids = sup
+            .enqueue_request(&JobRequest {
+                kind: "backfill".into(),
+                source: Some("fts".into()),
+                range: Some(["2025-06".into(), "2025-07".into()]),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+        assert_eq!(ids.len(), 4, "2 monthly fetches + process + project");
+        let queued = sup.queued();
+        let fetches: Vec<&str> = queued.iter().filter(|j| j.kind == "fetch").map(|j| j.params.as_str()).collect();
+        assert_eq!(fetches, ["fts monthly 2025-06", "fts monthly 2025-07"]);
+        assert_eq!(queued[2].params, "fts monthly (all)");
+        assert_eq!(queued.last().unwrap().kind, "project");
+
+        // No range: the whole archive from FIRST_MONTH through the current month.
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        let ids = sup
+            .enqueue_request(&JobRequest { kind: "backfill".into(), source: Some("fts".into()), ..Default::default() })
+            .await
+            .unwrap();
+        let (y, m, _) = fetch::current_date_utc();
+        assert_eq!(ids.len(), fts::months_through((y, m)).len() + 2);
+        assert_eq!(sup.queued()[0].params, "fts monthly 2021-01");
+
+        // A single fetch request routes by source too.
+        let ids = sup
+            .enqueue_request(&JobRequest {
+                kind: "fetch".into(),
+                source: Some("fts".into()),
+                package_kind: Some("daily".into()),
+                period: Some("2026-09-03".into()),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+        assert_eq!(ids.len(), 1);
+        assert_eq!(sup.queued().last().unwrap().params, "fts daily 2026-09-03");
     }
 
     /// The EU DST rule: CET in winter, CEST in summer, switching on the last
@@ -12207,3 +12412,4 @@ mod stage5_census {
         assert_eq!(v["mixed_names"], 1, "222: Alpha and Beta");
     }
 }
+

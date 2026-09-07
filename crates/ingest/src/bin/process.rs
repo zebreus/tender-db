@@ -4,6 +4,7 @@
 //! process ted --package 2026-00137     # one registered daily package
 //! process ted --all                    # every registered daily package
 //! process doe --package 2026-06 --kind monthly
+//! process fts --package 2026-09-03      # one assembled FTS daily zip
 //! ```
 //!
 //! `--archive` / `--db` override the TENDER_ARCHIVE / TENDER_DB env vars
@@ -26,7 +27,7 @@ struct Args {
 
 fn usage() -> ! {
     eprintln!(
-        "usage: process (ted|doe) (--package PERIOD | --all) \
+        "usage: process (ted|doe|fts) (--package PERIOD | --all) \
          [--kind daily|monthly] [--archive DIR] [--db PATH]"
     );
     std::process::exit(2);
@@ -35,7 +36,7 @@ fn usage() -> ! {
 fn parse_args() -> Args {
     let mut args = std::env::args().skip(1);
     let source = match args.next().as_deref() {
-        Some(s @ ("ted" | "doe")) => s.to_owned(),
+        Some(s @ ("ted" | "doe" | "fts")) => s.to_owned(),
         _ => usage(),
     };
     let mut out = Args {

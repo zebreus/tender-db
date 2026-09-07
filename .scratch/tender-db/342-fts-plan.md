@@ -199,6 +199,42 @@ Tests (c): `tests/fts.rs` per fixture — `uk4_tender_maps_title_deadline_buyer_
   2021-01; ~4,700 requests ≈ 11–16 h plus back-offs, resumable per month. Measure `2025-06` first.
   Empty windows register a 0-member zip so `MAX(period)` advances; the probe never refetches.
 
+## 4b. Review corrections to this plan (2026-09-07, adversarial four-lens review of commit (a))
+
+The plan as written had commit (a) push BOTH `fts daily (probe)` and `fts daily (all)` in
+`enqueue_daily` (§1) and called the chain "dark-safe". Four independent lenses found the same
+defect and it is corrected in the built commit:
+
+- **The process push moves to commit (b).** With no JSON arm in `profile::dispatch_with`, every
+  `<id>.json` member of the zip the probe just landed reaches `roxmltree::Document::parse` and is
+  written as a `quarantine` row with reason `unparsable-xml` — a few hundred a day, in the bucket
+  the dashboard calls "genuinely malformed XML", and nothing in the plan reclaimed them. Only the
+  probe ships in (a); `current_packages(source, kind, None)` re-walks every FTS daily on the first
+  tick after (b), so nothing is lost by waiting. **The backfill must not be run before (b) either**
+  (its `Process{fts, monthly}` tail has the same shape); D9's "measure 2025-06 first" is therefore
+  a step-7 action, after (b) is deployed.
+- **The walk-forward is capped at `fts::PROBE_DAY_CAP` = 31 days per tick.** An FTS day is 4–5
+  paced requests plus any back-off where a DÖE day is one download, and the probe kind cannot be
+  cancelled; uncapped, a watermark left far behind would hold the single job runner for hours and
+  park `fetch-rates`, `project` and the fold behind it. The watermark advances per landed day, so
+  the remainder is the next tick's work.
+- **A release without a usable id is archived, not thrown.** Failing the package was deterministic:
+  that day would fail every tick and the watermark would never advance past it. Such a release now
+  lands under the reserved `_noid/` member prefix, where (b)'s profile layer quarantines it as a
+  missing publication id with the bytes intact.
+- **Staging older than the registered package is debris.** A crash (or a failing `remove_dir_all`)
+  between the `fetches` row and the cleanup leaves a `.pages/` whose `done` list would make a later
+  refetch skip the windows it must re-walk; `fetch_fts` now discards a staging dir whose cursor
+  predates the registered fetch and keeps a newer one (an interrupted refetch) to resume.
+- **503 → Throttled is corpus-wide, deliberately.** It is not FTS-scoped: a TED or DÖE 503 now
+  waits up to 150 s (480 s with `Retry-After`) instead of failing after 6 s. Three lenses raised it;
+  it is HTTP-conformant, bounded by the same cap TED's 429s already carry, and more likely to
+  succeed on a transient outage. Accepted and recorded here rather than scoped.
+- **Tests sharpened**: the 429 test now times the wait (proving the server's `Retry-After` was
+  honoured, not our 15 s fallback), the request-count assertions sum requests instead of counting
+  distinct keys (which was vacuous), and the throttle-exhaustion arm, the `_noid/` archive, the
+  staging-debris discard and the per-tick cap each got a test.
+
 ## 5. Risks and open questions (default in bold)
 
 1. Label/prefix folds in `normalise_identifier_with` (project.rs:4681, issue-359 vocabulary) or

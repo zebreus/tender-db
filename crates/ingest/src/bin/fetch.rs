@@ -7,19 +7,27 @@
 //! fetch doe --day 2026-07-18            # one completed day (T+1)
 //! fetch doe --month 2026-06             # one monthly export
 //! fetch doe --backfill                  # every month from 2022-12 to now
+//! fetch fts --day 2026-09-03            # one UK civil day, paged + assembled
+//! fetch fts --month 2025-06             # one month as 1-day windows
+//! fetch fts --backfill                  # every month from 2021-01 to now
 //! ```
 //!
 //! `--archive` / `--db` override the TENDER_ARCHIVE / TENDER_DB env vars
 //! (defaults: ./archive, tender-db.db). `--refetch` re-downloads and
 //! compares by hash (finality window); default skips known periods.
+//! `--page-pause SECS` overrides the FTS pause between page requests
+//! (default `fts::PAGE_PAUSE_SECS`); an interrupted FTS walk resumes from its
+//! `<period>.pages/` staging dir on the next run.
 
-use ingest::{doe, fetch, ted};
+use ingest::{doe, fetch, fts, ted};
 use std::path::PathBuf;
 use std::process::ExitCode;
+use std::time::Duration;
 
 enum Source {
     Ted,
     Doe,
+    Fts,
 }
 
 struct Args {
@@ -33,6 +41,7 @@ struct Args {
     archive: PathBuf,
     db: String,
     base_url: String,
+    page_pause: Duration,
 }
 
 fn usage() -> ! {
@@ -40,7 +49,9 @@ fn usage() -> ! {
         "usage: fetch ted (--daily YYYY-NNN | --month YYYY-MM | --probe-latest) \
          [--refetch] [--archive DIR] [--db PATH]\n       \
          fetch doe (--day YYYY-MM-DD | --month YYYY-MM | --backfill) \
-         [--refetch] [--archive DIR] [--db PATH]"
+         [--refetch] [--archive DIR] [--db PATH]\n       \
+         fetch fts (--day YYYY-MM-DD | --month YYYY-MM | --backfill) \
+         [--refetch] [--page-pause SECS] [--archive DIR] [--db PATH]"
     );
     std::process::exit(2);
 }
@@ -50,6 +61,7 @@ fn parse_args() -> Args {
     let (source, base_url) = match args.next().as_deref() {
         Some("ted") => (Source::Ted, ted::BASE),
         Some("doe") => (Source::Doe, doe::BASE),
+        Some("fts") => (Source::Fts, fts::BASE),
         _ => usage(),
     };
     let mut out = Args {
@@ -63,6 +75,7 @@ fn parse_args() -> Args {
         archive: std::env::var("TENDER_ARCHIVE").unwrap_or_else(|_| "archive".into()).into(),
         db: std::env::var("TENDER_DB").unwrap_or_else(|_| "tender-db.db".into()),
         base_url: base_url.into(),
+        page_pause: Duration::from_secs(fts::PAGE_PAUSE_SECS),
     };
     while let Some(arg) = args.next() {
         let mut value = || args.next().unwrap_or_else(|| usage());
@@ -84,6 +97,9 @@ fn parse_args() -> Args {
             "--archive" => out.archive = value().into(),
             "--db" => out.db = value(),
             "--base-url" => out.base_url = value(),
+            "--page-pause" => {
+                out.page_pause = Duration::from_secs(value().parse().unwrap_or_else(|_| usage()));
+            }
             _ => usage(),
         }
     }
@@ -127,8 +143,19 @@ async fn main() -> ExitCode {
         let db = &db;
         let client = &client;
         let archive = &args.archive;
+        let page_pause = args.page_pause;
         async move {
-            match fetch::fetch(db, client, archive, &target, refetch).await {
+            let result = if target.source == "fts" {
+                // Paged and self-assembled: page progress on stderr, since a
+                // month is ~150 paced requests.
+                fetch::fetch_fts(db, client, archive, &target, refetch, page_pause, |day, pages, releases| {
+                    eprintln!("  {day}: page {pages}, {releases} releases so far");
+                })
+                .await
+            } else {
+                fetch::fetch(db, client, archive, &target, refetch).await
+            };
+            match result {
                 Ok(outcome) => {
                     println!("{} {} {}: {outcome:?}", target.source, target.kind, target.period);
                     Ok(outcome)
@@ -146,15 +173,21 @@ async fn main() -> ExitCode {
     {
         failures += 1;
     }
-    if let Some(date) = args.day
-        && run(doe::day(&args.base_url, date), args.refetch).await.is_err()
-    {
-        failures += 1;
+    if let Some(date) = args.day {
+        let target = match args.source {
+            Source::Ted => usage(), // TED dailies are OJ S issues (`--daily`), not calendar days
+            Source::Doe => doe::day(&args.base_url, date),
+            Source::Fts => fts::day(&args.base_url, date),
+        };
+        if run(target, args.refetch).await.is_err() {
+            failures += 1;
+        }
     }
     if let Some((year, month)) = args.month {
         let target = match args.source {
             Source::Ted => ted::monthly(&args.base_url, year, month),
             Source::Doe => doe::monthly(&args.base_url, year, month),
+            Source::Fts => fts::monthly(&args.base_url, (year, month)),
         };
         if run(target, args.refetch).await.is_err() {
             failures += 1;
@@ -181,15 +214,32 @@ async fn main() -> ExitCode {
         }
     }
     if args.backfill {
-        // Every month since the archive starts. Closed months are immutable, so
-        // the registry skips them without a download; the current month is
-        // still accumulating (T+1 per day) and is always re-fetched.
         let (year, month, _) = fetch::current_date_utc();
-        for (y, m) in doe::months_through((year, month)) {
-            let current = (y, m) == (year, month);
-            if run(doe::monthly(&args.base_url, y, m), args.refetch || current).await.is_err() {
-                failures += 1;
+        match args.source {
+            Source::Doe => {
+                // Every month since the archive starts. Closed months are immutable, so
+                // the registry skips them without a download; the current month is
+                // still accumulating (T+1 per day) and is always re-fetched.
+                for (y, m) in doe::months_through((year, month)) {
+                    let current = (y, m) == (year, month);
+                    if run(doe::monthly(&args.base_url, y, m), args.refetch || current).await.is_err() {
+                        failures += 1;
+                    }
+                }
             }
+            Source::Fts => {
+                // Every month since 2021-01, each walked as 1-day windows and
+                // resumable from its staging dir. The current month is not
+                // force-refetched: a re-walk is ~150 paced requests, and the
+                // daily probe covers the days after this run. A failed month
+                // (the limiter) is reported and the run continues; re-run to resume.
+                for (y, m) in fts::months_through((year, month)) {
+                    if run(fts::monthly(&args.base_url, (y, m)), args.refetch).await.is_err() {
+                        failures += 1;
+                    }
+                }
+            }
+            Source::Ted => usage(), // TED backfills are monthly ranges (`--month`), not a walk
         }
     }
 

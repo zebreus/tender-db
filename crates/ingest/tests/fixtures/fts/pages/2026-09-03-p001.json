@@ -1,0 +1,674 @@
+{
+    "uri": "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages?updatedFrom=2026-09-03T00:00:00&updatedTo=2026-09-03T23:59:59&limit=100",
+    "version": "1.1",
+    "extensions": [
+        "https://standard.open-contracting.org/profiles/eu/latest/en/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_amendment_rationale_classifications_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_contract_completion_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_documentation_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_suitability_extension/master/extension.json",
+        "https://raw.githubusercontent.com/portaledcahn/ocds_Links_extension/main/extension.json",
+        "https://raw.githubusercontent.com/cabinetoffice/ocds_uk_extension/main/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_performance_failures_extension/master/extension.json"
+    ],
+    "publishedDate": "2026-09-03T23:31:32+01:00",
+    "publisher": {
+        "name": "Cabinet Office",
+        "scheme": "GB-GOR",
+        "uid": "D2",
+        "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+    },
+    "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "publicationPolicy": "https://www.gov.uk/government/publications/open-contracting",
+    "releases": [
+        {
+            "buyerID": [],
+            "id": "083674-2026",
+            "tag": [
+                "contractAmendment"
+            ],
+            "date": "2026-09-03T18:08:41+01:00",
+            "initiationType": "tender",
+            "ocid": "ocds-h6vhtk-065444",
+            "parties": [
+                {
+                    "name": "The Water Services Regulation Authority",
+                    "id": "GB-PPON-PPCX-7855-VXBT",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PPCX-7855-VXBT"
+                    },
+                    "address": {
+                        "streetAddress": "Ofwat, Centre City Tower, 7 Hill Street",
+                        "locality": "Birmingham",
+                        "postalCode": "B5 4UA",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKG31"
+                    },
+                    "contactPoint": {
+                        "email": "procurement@ofwat.gov.uk"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "url": "http://www.ofwat.gov.uk",
+                        "classifications": [
+                            {
+                                "scheme": "UK_CA_TYPE",
+                                "id": "publicAuthorityCentralGovernment",
+                                "description": "Public authority - central government"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "buyer": {
+                "id": "GB-PPON-PPCX-7855-VXBT",
+                "name": "The Water Services Regulation Authority"
+            },
+            "tender": {
+                "id": "PROC.0195",
+                "legalBasis": {
+                    "id": "2023/54",
+                    "scheme": "UKPGA",
+                    "uri": "https://www.legislation.gov.uk/ukpga/2023/54/contents"
+                },
+                "title": "Wholesaler/Retailer Risk Allocation Model"
+            },
+            "contracts": [
+                {
+                    "id": "1",
+                    "awardID": "1",
+                    "amendments": [
+                        {
+                            "date": "2026-08-21T00:00:00+01:00",
+                            "id": "083674-2026"
+                        }
+                    ],
+                    "statusDetails": null,
+                    "documents": [
+                        {
+                            "id": "083674-2026",
+                            "documentType": "contractNotice",
+                            "noticeType": "UK10",
+                            "description": "Contract change notice on Find a Tender",
+                            "url": "https://www.find-tender.service.gov.uk/Notice/083674-2026",
+                            "datePublished": "2026-09-03T18:08:41+01:00",
+                            "format": "text/html"
+                        }
+                    ],
+                    "period": {
+                        "startDate": "2026-08-21T00:00:00+01:00",
+                        "endDate": "2026-08-21T23:59:59+01:00",
+                        "maxExtentDate": "2026-12-31T23:59:59Z"
+                    },
+                    "hasRenewal": true,
+                    "value": {
+                        "amountGross": 42000,
+                        "amount": 35000,
+                        "currency": "GBP"
+                    },
+                    "aboveThreshold": false
+                }
+            ],
+            "language": "en"
+        },
+        {
+            "ocid": "ocds-h6vhtk-06f1b4",
+            "id": "083664-2026",
+            "tag": [
+                "planning"
+            ],
+            "date": "2026-09-03T17:09:51+01:00",
+            "initiationType": "tender",
+            "planning": {
+                "documents": [
+                    {
+                        "id": "083664-2026",
+                        "documentType": "plannedProcurementNotice",
+                        "noticeType": "UK1",
+                        "description": "Pipeline notice on Find a Tender",
+                        "url": "https://www.find-tender.service.gov.uk/Notice/083664-2026",
+                        "datePublished": "2026-09-03T17:09:51+01:00",
+                        "format": "text/html"
+                    }
+                ]
+            },
+            "parties": [
+                {
+                    "name": "Government Property Agency",
+                    "id": "GB-PPON-PGHR-3329-MDGL",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PGHR-3329-MDGL"
+                    },
+                    "address": {
+                        "streetAddress": "23 Stephenson Street",
+                        "locality": "Birmingham",
+                        "postalCode": "B2 4BJ",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKG31"
+                    },
+                    "contactPoint": {
+                        "name": "GPA Data & Digital Commercial Team",
+                        "email": "DDCommercial@gpa.gov.uk"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "classifications": [
+                            {
+                                "scheme": "UK_CA_TYPE",
+                                "id": "publicAuthoritySubCentralGovernment",
+                                "description": "Public authority - sub-central government"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "buyer": {
+                "id": "GB-PPON-PGHR-3329-MDGL",
+                "name": "Government Property Agency"
+            },
+            "tender": {
+                "id": "C1001396",
+                "legalBasis": {
+                    "id": "2023/54",
+                    "scheme": "UKPGA",
+                    "uri": "https://www.legislation.gov.uk/ukpga/2023/54/contents"
+                },
+                "title": "ServiceNow Development & Managed Services Delivery Partner",
+                "description": "The Government Property Agency intends to procure a ServiceNow Development and Managed Services Partner to provide ongoing support, maintenance, development and optimisation of its ServiceNow platform.\nThe requirement is expected to include platform development, application support, administration, upgrades, integrations, technical consultancy and continuous improvement services.",
+                "items": [
+                    {
+                        "id": "1",
+                        "additionalClassifications": [
+                            {
+                                "scheme": "CPV",
+                                "id": "72261000",
+                                "description": "Software support services"
+                            }
+                        ],
+                        "deliveryAddresses": [
+                            {
+                                "region": "UK",
+                                "country": "GB",
+                                "countryName": "United Kingdom"
+                            }
+                        ],
+                        "relatedLot": "1"
+                    }
+                ],
+                "value": {
+                    "amountGross": 3000000,
+                    "amount": 2500000,
+                    "currency": "GBP"
+                },
+                "procurementMethod": "selective",
+                "procurementMethodDetails": "Award under framework",
+                "competitive": true,
+                "mainProcurementCategory": "services",
+                "aboveThreshold": true,
+                "lots": [
+                    {
+                        "id": "1",
+                        "suitability": {
+                            "sme": true
+                        },
+                        "contractPeriod": {
+                            "startDate": "2027-01-10T00:00:00Z",
+                            "endDate": "2029-01-09T23:59:59Z",
+                            "maxExtentDate": "2030-01-09T23:59:59Z"
+                        },
+                        "hasRenewal": true,
+                        "status": "planned"
+                    }
+                ],
+                "status": "planned"
+            },
+            "language": "en"
+        },
+        {
+            "ocid": "ocds-h6vhtk-06f1ad",
+            "buyerID": [],
+            "id": "083655-2026",
+            "tag": [
+                "planning"
+            ],
+            "date": "2026-09-03T16:54:16+01:00",
+            "initiationType": "tender",
+            "parties": [
+                {
+                    "name": "Leeds City Council",
+                    "id": "GB-PPON-PJYG-6658-PPMY",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PJYG-6658-PPMY"
+                    },
+                    "address": {
+                        "streetAddress": "Civic Hall, Calverley Street",
+                        "locality": "Leeds",
+                        "postalCode": "LS1 1UR",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKE42"
+                    },
+                    "contactPoint": {
+                        "name": "Charlotte Kitching",
+                        "email": "charlotte.kitching@leeds.gov.uk"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "classifications": [
+                            {
+                                "scheme": "UK_CA_TYPE",
+                                "id": "publicAuthoritySubCentralGovernment",
+                                "description": "Public authority - sub-central government"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "buyer": {
+                "id": "GB-PPON-PJYG-6658-PPMY",
+                "name": "Leeds City Council"
+            },
+            "planning": {
+                "milestones": [
+                    {
+                        "id": "engagement",
+                        "type": "engagement",
+                        "description": "Please review the PME documentation on the Jaggaer profile tender_654",
+                        "dueDate": "2026-09-21T23:59:59+01:00",
+                        "status": "scheduled"
+                    }
+                ],
+                "documents": [
+                    {
+                        "id": "083655-2026",
+                        "documentType": "marketEngagementNotice",
+                        "noticeType": "UK2",
+                        "description": "Preliminary market engagement notice on Find a Tender",
+                        "url": "https://www.find-tender.service.gov.uk/Notice/083655-2026",
+                        "datePublished": "2026-09-03T16:54:16+01:00",
+                        "format": "text/html"
+                    }
+                ]
+            },
+            "tender": {
+                "id": "ocds-h6vhtk-06f1ad",
+                "legalBasis": {
+                    "id": "2023/54",
+                    "scheme": "UKPGA",
+                    "uri": "https://www.legislation.gov.uk/ukpga/2023/54/contents"
+                },
+                "title": "Automatic Doors, Barriers and Gates (Civic & Commercial Properties) Maintenance and Repairs",
+                "description": "annual servicing, remedial maintenance and responsive repairs to automatic doors, barriers and gates across the city",
+                "items": [
+                    {
+                        "id": "1",
+                        "additionalClassifications": [
+                            {
+                                "scheme": "CPV",
+                                "id": "50712000",
+                                "description": "Repair and maintenance services of mechanical building installations"
+                            }
+                        ],
+                        "deliveryAddresses": [
+                            {
+                                "region": "UK",
+                                "country": "GB",
+                                "countryName": "United Kingdom"
+                            }
+                        ],
+                        "relatedLot": "1"
+                    }
+                ],
+                "value": {
+                    "amountGross": 432000,
+                    "amount": 360000,
+                    "currency": "GBP"
+                },
+                "mainProcurementCategory": "services",
+                "aboveThreshold": true,
+                "lots": [
+                    {
+                        "id": "1",
+                        "suitability": {
+                            "sme": true
+                        },
+                        "contractPeriod": {
+                            "startDate": "2027-01-02T00:00:00+00:00",
+                            "endDate": "2029-01-01T23:59:59+00:00",
+                            "maxExtentDate": "2030-01-01T23:59:59+00:00"
+                        },
+                        "hasRenewal": true,
+                        "description": null,
+                        "status": "planning"
+                    }
+                ],
+                "status": "planning"
+            },
+            "language": "en"
+        },
+        {
+            "ocid": "ocds-h6vhtk-06f19e",
+            "id": "083608-2026",
+            "tag": [
+                "award",
+                "contract"
+            ],
+            "date": "2026-09-03T16:12:41+01:00",
+            "initiationType": "tender",
+            "parties": [
+                {
+                    "name": "West Northamptonshire Council",
+                    "id": "GB-PPON-PGDV-8944-CMBP",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PGDV-8944-CMBP"
+                    },
+                    "address": {
+                        "streetAddress": "West Northamptonshire Council",
+                        "locality": "Northampton",
+                        "postalCode": "NN1 1ED",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKF24"
+                    },
+                    "contactPoint": {
+                        "name": "Tom Callaghan",
+                        "email": "tcallaghan@northamptonshire.gov.uk"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "url": "https://www.westnorthants.gov.uk/",
+                        "classifications": [
+                            {
+                                "scheme": "UK_CA_TYPE",
+                                "id": "publicAuthoritySubCentralGovernment",
+                                "description": "Public authority - sub-central government"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "star cab daventry limited",
+                    "id": "GB-FTS-185095",
+                    "address": {
+                        "streetAddress": "152 Morning Star Road",
+                        "locality": "Daventry",
+                        "postalCode": "NN119AA",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKF24"
+                    },
+                    "contactPoint": {
+                        "name": "Sopiya Thanikasalam",
+                        "email": "sophiya250@hotmail.com"
+                    },
+                    "roles": [
+                        "supplier"
+                    ],
+                    "details": {
+                        "scale": "large",
+                        "vcse": false
+                    }
+                }
+            ],
+            "buyer": {
+                "id": "GB-PPON-PGDV-8944-CMBP",
+                "name": "West Northamptonshire Council"
+            },
+            "tender": {
+                "id": "SA1391329",
+                "legalBasis": {
+                    "id": "2023/54",
+                    "scheme": "UKPGA",
+                    "uri": "https://www.legislation.gov.uk/ukpga/2023/54/contents"
+                },
+                "title": "Passenger Transport Services 2026 - Area Based",
+                "description": "Passenger Transport Services 2026 - Area Based - Area Based",
+                "status": "complete",
+                "procurementMethod": "limited",
+                "procurementMethodDetails": "Below threshold - limited competition",
+                "specialRegime": [
+                    "lightTouch"
+                ],
+                "lots": [
+                    {
+                        "id": "2760",
+                        "status": "complete"
+                    }
+                ]
+            },
+            "awards": [
+                {
+                    "id": "1",
+                    "status": "active",
+                    "mainProcurementCategory": "services",
+                    "suppliers": [
+                        {
+                            "id": "GB-FTS-185095",
+                            "name": "star cab daventry limited"
+                        }
+                    ],
+                    "items": [
+                        {
+                            "id": "2760",
+                            "additionalClassifications": [
+                                {
+                                    "scheme": "CPV",
+                                    "id": "60000000",
+                                    "description": "Transport services (excl. Waste transport)"
+                                }
+                            ],
+                            "relatedLot": "2760"
+                        }
+                    ],
+                    "relatedLots": [
+                        "2760"
+                    ]
+                }
+            ],
+            "contracts": [
+                {
+                    "id": "1",
+                    "awardID": "1",
+                    "title": "Passenger Transport Services 2026 - Area Based",
+                    "status": "active",
+                    "period": {
+                        "startDate": "2026-09-04T00:00:00Z",
+                        "endDate": "2026-09-20T23:59:59Z"
+                    },
+                    "value": {
+                        "amountGross": 0.01,
+                        "amount": 0.01,
+                        "currency": "GBP"
+                    },
+                    "aboveThreshold": false,
+                    "dateSigned": "2026-09-03T00:00:00Z",
+                    "documents": [
+                        {
+                            "id": "083608-2026",
+                            "documentType": "contractNotice",
+                            "noticeType": "UK7",
+                            "description": "Contract details notice on Find a Tender",
+                            "url": "https://www.find-tender.service.gov.uk/Notice/083608-2026",
+                            "datePublished": "2026-09-03T16:12:41+01:00",
+                            "format": "text/html"
+                        }
+                    ]
+                }
+            ],
+            "language": "en"
+        },
+        {
+            "ocid": "ocds-h6vhtk-06f1b2",
+            "buyerID": [],
+            "id": "083662-2026",
+            "tag": [
+                "tender"
+            ],
+            "date": "2026-09-03T17:09:09+01:00",
+            "initiationType": "tender",
+            "parties": [
+                {
+                    "name": "Arts Council England",
+                    "id": "GB-PPON-PBGY-4385-GQGP",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PBGY-4385-GQGP"
+                    },
+                    "address": {
+                        "streetAddress": "The Hive, 2nd Floor 47 Lever Street",
+                        "locality": "Manchester",
+                        "postalCode": "M1 1FN",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKD33"
+                    },
+                    "contactPoint": {
+                        "name": "Mary Ealden",
+                        "email": "Mary.Ealden@artscouncil.org.uk"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "classifications": [
+                            {
+                                "scheme": "UK_CA_TYPE",
+                                "id": "publicAuthorityCentralGovernment",
+                                "description": "Public authority - central government"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "buyer": {
+                "id": "GB-PPON-PBGY-4385-GQGP",
+                "name": "Arts Council England"
+            },
+            "tender": {
+                "id": "ACE 1012 ITQ",
+                "legalBasis": {
+                    "id": "2023/54",
+                    "scheme": "UKPGA",
+                    "uri": "https://www.legislation.gov.uk/ukpga/2023/54/contents"
+                },
+                "title": "ACE 1012 ITQ - Cultural Education Network One-to-One Evaluation",
+                "description": "Arts Council England are seeking a suitably qualified Supplier to evaluate the Cultural Education Network’s free offer of one-to-one support from its launch in March 2025, to present day. This new programme offers mentoring, coaching, and signposting through free, online one-to-ones for teachers, freelance teaching artists and staff at creative and cultural organisations across England to improve children and young people’s access to learning in, with and through arts and culture. The supplier will provide a clear, evidence-based picture of how the Cultural Education Network’s one-to-ones have impacted the professional practice of teachers and cultural educators, by capturing and evaluating qualitative data and providing insight and actionable suggestions for next steps as we further develop this programme.",
+                "status": "active",
+                "items": [
+                    {
+                        "id": "1",
+                        "additionalClassifications": [
+                            {
+                                "scheme": "CPV",
+                                "id": "79419000",
+                                "description": "Evaluation consultancy services"
+                            }
+                        ],
+                        "deliveryAddresses": [
+                            {
+                                "region": "UK",
+                                "country": "GB",
+                                "countryName": "United Kingdom"
+                            }
+                        ],
+                        "relatedLot": "1"
+                    }
+                ],
+                "value": {
+                    "amountGross": 18000.0,
+                    "amount": 15000.0,
+                    "currency": "GBP"
+                },
+                "procurementMethod": "open",
+                "procurementMethodDetails": "Below threshold - open competition",
+                "mainProcurementCategory": "services",
+                "aboveThreshold": false,
+                "submissionMethodDetails": "To respond to this opportunity, please click here: https://www.delta-esourcing.com/respond/4HGGU76XS5",
+                "submissionTerms": {
+                    "electronicSubmissionPolicy": "allowed"
+                },
+                "tenderPeriod": {
+                    "endDate": "2026-09-21T10:00:00+01:00"
+                },
+                "enquiryPeriod": {
+                    "endDate": "2026-09-17T10:00:00+01:00"
+                },
+                "lots": [
+                    {
+                        "id": "1",
+                        "status": "active",
+                        "value": {
+                            "amountGross": 18000.0,
+                            "amount": 15000.0,
+                            "currency": "GBP"
+                        },
+                        "awardCriteria": {
+                            "criteria": [
+                                {
+                                    "type": "price",
+                                    "name": "Total Price",
+                                    "numbers": [
+                                        {
+                                            "number": 20,
+                                            "weight": "percentageExact"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "quality",
+                                    "name": "Quality",
+                                    "numbers": [
+                                        {
+                                            "number": 80,
+                                            "weight": "percentageExact"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "suitability": {
+                            "sme": true,
+                            "vcse": true
+                        },
+                        "contractPeriod": {
+                            "startDate": "2026-11-02T00:00:00+00:00",
+                            "endDate": "2027-03-31T23:59:59+01:00"
+                        },
+                        "description": null
+                    }
+                ],
+                "documents": [
+                    {
+                        "id": "083662-2026",
+                        "documentType": "tenderNotice",
+                        "noticeType": "UK4",
+                        "description": "Tender notice on Find a Tender",
+                        "url": "https://www.find-tender.service.gov.uk/Notice/083662-2026",
+                        "datePublished": "2026-09-03T17:09:09+01:00",
+                        "format": "text/html"
+                    }
+                ]
+            },
+            "language": "en"
+        }
+    ],
+    "links": {
+        "next": "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages?updatedFrom=2026-09-03T00:00:00&updatedTo=2026-09-03T23:59:59&limit=100&cursor=dXBkYXRlZEZyb209MjAyNi0wOS0wM1QwMDowMDowMHx1cGRhdGVkVG89MjAyNi0wOS0wM1QyMzo1OTo1OXxuZXh0Q3Vyc29yPTU5MDQ1Nw=="
+    }
+}

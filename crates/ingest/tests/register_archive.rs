@@ -98,3 +98,42 @@ async fn known_periods_keep_their_real_provenance() {
 
     let _ = std::fs::remove_dir_all(&root);
 }
+
+/// Issue 342: FTS packages are assembled zips under `fts/<kind>/<period>.zip`,
+/// and a window mid-walk leaves `<period>.pages/` — a DIRECTORY of staged
+/// pages plus `cursor.json` — beside them. The rebuild registers the zips under
+/// their own source and steps over the staging dir: it is neither a package
+/// nor an anomaly, and a half-walked window must never register as fetched.
+#[tokio::test]
+async fn fts_packages_register_and_staging_dirs_are_ignored() {
+    let (root, db_path) = scratch("fts");
+    std::fs::create_dir_all(root.join("fts/daily/2026-09-04.pages")).unwrap();
+    std::fs::create_dir_all(root.join("fts/monthly")).unwrap();
+    std::fs::write(root.join("fts/daily/2026-09-03.zip"), b"fts daily zip").unwrap();
+    std::fs::write(root.join("fts/monthly/2025-06.zip"), b"fts monthly zip").unwrap();
+    // A walk interrupted after page 1: staged page + cursor, no zip yet.
+    std::fs::write(root.join("fts/daily/2026-09-04.pages/2026-09-04-p001.json"), b"{}").unwrap();
+    std::fs::write(root.join("fts/daily/2026-09-04.pages/cursor.json"), b"{}").unwrap();
+    // And an assembly interrupted before the rename.
+    std::fs::write(root.join("fts/daily/2026-09-05.zip.part"), b"partial").unwrap();
+
+    let db = store::Db::open(&db_path).await.unwrap();
+    let done = ingest::fetch::register_archive(&db, &root).await.unwrap();
+    assert_eq!((done.registered, done.existing, done.unrecognised), (2, 0, 0));
+
+    let f = db.latest_fetch("fts", "daily", "2026-09-03").await.unwrap().expect("registered");
+    assert_eq!(f.sha256, hex(b"fts daily zip"));
+    assert_eq!(f.path, "fts/daily/2026-09-03.zip");
+    assert_eq!(f.url, "archive://fts/daily/2026-09-03.zip");
+    assert!(db.latest_fetch("fts", "monthly", "2025-06").await.unwrap().is_some());
+    assert!(db.latest_fetch("fts", "daily", "2026-09-04").await.unwrap().is_none(), "mid-walk: not a package");
+    assert!(db.latest_fetch("fts", "daily", "2026-09-05").await.unwrap().is_none(), "a .part is debris");
+
+    let again = ingest::fetch::register_archive(&db, &root).await.unwrap();
+    assert_eq!((again.registered, again.existing), (0, 2));
+
+    let _ = std::fs::remove_dir_all(&root);
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{db_path}{s}"));
+    }
+}

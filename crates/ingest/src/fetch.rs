@@ -40,15 +40,26 @@ pub enum Outcome {
 pub enum Error {
     Http(reqwest::Error),
     Status(reqwest::StatusCode),
-    /// A status the server itself says is temporary: 429 Too Many Requests or 408
-    /// Request Timeout, carrying its `Retry-After` seconds when it sent one.
+    /// A status the server itself says is temporary: 429 Too Many Requests, 408
+    /// Request Timeout or 503 Service Unavailable, carrying its `Retry-After`
+    /// seconds when it sent one.
     ///
-    /// Split from [`Error::Status`] because these are the two 4xx codes that mean
-    /// "ask again later", and lumping them in with 400/404 is what made a TED rate
-    /// limit fail a daily probe outright (2026-08-18, job 725).
+    /// Split from [`Error::Status`] because these are the codes that mean "ask
+    /// again later", and lumping them in with 400/404 is what made a TED rate
+    /// limit fail a daily probe outright (2026-08-18, job 725). 503 joined on
+    /// FTS's word (docs/research/uk-fts.md §1: handle it exactly like 429).
     Throttled { status: reqwest::StatusCode, retry_after: Option<u64> },
     Io(std::io::Error),
     Db(turso::Error),
+    /// The target's source is not what this fetcher serves — FTS windows are
+    /// paged and assembled by [`fetch_fts`], and [`fetch`] refuses them rather
+    /// than archiving a raw first page under the package's name.
+    Unsupported(&'static str),
+    /// A 200 whose body is not the shape the source documents: an FTS page
+    /// without a `releases` array, a release without a usable `id`. Not
+    /// retried — the bytes are what they are — and the job fails with its
+    /// staging intact for a person to look at.
+    Malformed(String),
 }
 
 impl std::fmt::Display for Error {
@@ -62,6 +73,8 @@ impl std::fmt::Display for Error {
             },
             Error::Io(e) => write!(f, "io: {e}"),
             Error::Db(e) => write!(f, "db: {e}"),
+            Error::Unsupported(what) => write!(f, "unsupported: {what}"),
+            Error::Malformed(what) => write!(f, "malformed response: {what}"),
         }
     }
 }
@@ -94,6 +107,11 @@ pub async fn fetch(
     target: &Target,
     refetch: bool,
 ) -> Result<Outcome, Error> {
+    if target.source == "fts" {
+        // FTS is paged and assembled by `fetch_fts`; streaming its first page to
+        // disk under the zip's name would archive a page as if it were the package.
+        return Err(Error::Unsupported("fts is a paged source: use fetch_fts"));
+    }
     let existing = db.latest_fetch(target.source, target.kind, &target.period).await?;
     if existing.is_some() && !refetch {
         return Ok(Outcome::Unchanged);
@@ -110,12 +128,28 @@ pub async fn fetch(
         Err(Error::Status(reqwest::StatusCode::BAD_REQUEST)) => return Ok(Outcome::Rejected),
         Err(e) => return Err(e),
     };
+    land(db, archive_root, target, existing.as_ref(), &final_path, bytes, sha256).await
+}
 
-    let (outcome, rel_path) = match &existing {
+/// The immutability rules, shared by every fetcher: the bytes waiting in
+/// `<final_path>.part` either land as the period's first file, are dropped
+/// because the registry's newest row already carries this hash, or land as a
+/// NEW `-vN` file beside the original — and the registry row is written only
+/// once the bytes are in place under their final name.
+async fn land(
+    db: &store::Db,
+    archive_root: &Path,
+    target: &Target,
+    existing: Option<&store::Fetch>,
+    final_path: &Path,
+    bytes: i64,
+    sha256: String,
+) -> Result<Outcome, Error> {
+    let (outcome, rel_path) = match existing {
         None => (Outcome::Fetched, target.rel_path.clone()),
         Some(prev) if prev.sha256 == sha256 => {
             // Same content — drop the temp file, keep the registry as is.
-            let _ = std::fs::remove_file(temp_path(&final_path));
+            let _ = std::fs::remove_file(temp_path(final_path));
             return Ok(Outcome::Unchanged);
         }
         Some(prev) => {
@@ -126,7 +160,7 @@ pub async fn fetch(
     };
 
     let dest = archive_root.join(&rel_path);
-    std::fs::rename(temp_path(&final_path), &dest)?;
+    std::fs::rename(temp_path(final_path), &dest)?;
 
     db.record_fetch(&store::Fetch {
         source: target.source.into(),
@@ -227,6 +261,308 @@ pub async fn latest_doe_day(db: &store::Db) -> turso::Result<Option<(u16, u8, u8
     Ok(latest.as_deref().and_then(parse_ymd))
 }
 
+/// Fetch one FTS package (docs/research/uk-fts.md §2, plan D8): walk every
+/// request window of `target` page by page, staging each page verbatim under
+/// `<archive>/<rel_path minus .zip>.pages/`, then assemble ONE zip — one member
+/// `<release id>.json` per release ([`crate::fts::member_bytes`]), sorted by
+/// id, the first occurrence winning on a duplicate — and land it under the same
+/// immutability rules as [`fetch`].
+///
+/// Resumable: `cursor.json` in the staging dir records the window being walked,
+/// how many of its pages are on disk, the `links.next` to ask for, and the
+/// windows already complete. A page is written BEFORE the cursor advances, so
+/// an interruption at any point leaves a state the next run continues from — a
+/// month that hit the limiter resumes at its page, not its start — and page 1 is
+/// never asked for twice. The staging dir is removed only after the zip has
+/// landed; an `Err` (five throttled attempts, a malformed page) leaves it
+/// intact, and the `fetches` row is written only for a complete window.
+///
+/// `refetch` is as [`fetch`]: false skips a registered period without HTTP.
+/// `page_pause` separates consecutive requests — `fts::PAGE_PAUSE_SECS` in
+/// production, zero in tests. `on_progress(day, pages, releases)` fires after
+/// every page with the window's running totals.
+///
+/// An empty window (a Sunday, December 2020) still lands a 0-member zip, so
+/// `MAX(period)` advances and the daily walk never re-asks for the day.
+pub async fn fetch_fts(
+    db: &store::Db,
+    client: &reqwest::Client,
+    archive_root: &Path,
+    target: &Target,
+    refetch: bool,
+    page_pause: std::time::Duration,
+    mut on_progress: impl FnMut(&str, usize, usize),
+) -> Result<Outcome, Error> {
+    let base = match crate::fts::base_of(&target.url) {
+        Some(base) if target.source == "fts" => base,
+        _ => return Err(Error::Unsupported("fetch_fts serves fts window targets only")),
+    };
+    let windows = crate::fts::windows(base, target);
+    if windows.is_empty() {
+        return Err(Error::Malformed(format!(
+            "no request windows for {} {} {:?}",
+            target.source, target.kind, target.period
+        )));
+    }
+    let existing = db.latest_fetch(target.source, target.kind, &target.period).await?;
+    if existing.is_some() && !refetch {
+        return Ok(Outcome::Unchanged);
+    }
+
+    let staging = staging_dir(archive_root, &target.rel_path);
+    // Debris, not a resume point (issue 342 review, lens "fetcher"): a staging
+    // dir whose cursor predates the registered landing is what an interrupted
+    // `remove_dir_all` (or a crash between the row and the cleanup) left behind,
+    // and its `done` list would make this refetch skip windows it must re-walk.
+    // A cursor NEWER than the row is an interrupted refetch and is resumed.
+    if let Some(existing) = &existing
+        && let Ok(meta) = std::fs::metadata(staging.join(CURSOR_FILE))
+        && let Ok(modified) = meta.modified()
+        && let Ok(age) = modified.duration_since(std::time::UNIX_EPOCH)
+        && (age.as_secs() as i64) < existing.fetched_at
+    {
+        std::fs::remove_dir_all(&staging)?;
+    }
+    std::fs::create_dir_all(&staging)?;
+    let cursor_path = staging.join(CURSOR_FILE);
+    let mut cursor = read_cursor(&cursor_path);
+    let mut requests = 0usize;
+    for window in &windows {
+        let day = crate::fts::ymd(window.day);
+        if cursor.done.iter().any(|done| *done == day) {
+            continue; // its pages are on disk from an earlier run
+        }
+        // Resume mid-window at the recorded `next`; otherwise the window's first page.
+        let (mut page, mut next) = if cursor.day == day && cursor.page > 0 {
+            (cursor.page, cursor.next.clone())
+        } else {
+            (0, Some(window.url.clone()))
+        };
+        let mut releases = 0usize;
+        while let Some(url) = next {
+            if requests > 0 {
+                tokio::time::sleep(page_pause).await;
+            }
+            requests += 1;
+            let bytes = get_bytes(client, &url).await?;
+            let (count, links_next) =
+                page_summary(&bytes).map_err(|what| Error::Malformed(format!("{url}: {what}")))?;
+            page += 1;
+            releases += count;
+            write_atomic(&staging.join(format!("{day}-p{page:03}.json")), &bytes)?;
+            next = links_next;
+            cursor.day.clone_from(&day);
+            cursor.page = page;
+            cursor.next.clone_from(&next);
+            write_cursor(&cursor_path, &cursor)?;
+            on_progress(&day, page as usize, releases);
+        }
+        cursor.done.push(day);
+        cursor.day.clear();
+        cursor.page = 0;
+        cursor.next = None;
+        write_cursor(&cursor_path, &cursor)?;
+    }
+
+    let final_path = archive_root.join(&target.rel_path);
+    if let Some(dir) = final_path.parent() {
+        std::fs::create_dir_all(dir)?;
+    }
+    let (bytes, sha256) = assemble_fts_zip(&staging, &temp_path(&final_path))?;
+    let outcome = land(db, archive_root, target, existing.as_ref(), &final_path, bytes, sha256).await?;
+    std::fs::remove_dir_all(&staging)?;
+    Ok(outcome)
+}
+
+/// Walk FTS daily windows forward from the newest day already registered up to
+/// and including `end` (yesterday in UK civil time), fetching each — the DÖE
+/// walk-forward shape ([`probe_doe_daily`]): a normal run advances one day, a
+/// gap catches up every missed day, and with no FTS daily on record it fetches
+/// only `end`, leaving the monthly backfill to seed history.
+///
+/// It never refetches: the API filters on a release's last-update instant,
+/// which cannot fall into a UK day that is over, so a passed day is final; a
+/// tick that ran late is covered by the next day's 2 h overlap. Days are paced
+/// by `page_pause` like pages, so a multi-day catch-up never bursts the limiter.
+pub async fn probe_fts_daily(
+    db: &store::Db,
+    client: &reqwest::Client,
+    archive_root: &Path,
+    base: &str,
+    end: (u16, u8, u8),
+    page_pause: std::time::Duration,
+    mut on_day: impl FnMut(&str, &Outcome),
+) -> Result<Vec<(String, Outcome)>, Error> {
+    let mut day = match latest_fts_day(db).await? {
+        Some(prev) => next_civil_day(prev),
+        None => end,
+    };
+    let mut out = Vec::new();
+    while day <= end {
+        // CAPPED PER TICK (issue 342 review, lens "ops"). An FTS day is 4–5
+        // paced requests, up to eight minutes of back-off if the limiter is
+        // unhappy — unlike a DÖE day, which is one download. Uncapped, a
+        // watermark left far in the past (a month of failed ticks, a restored
+        // registry) would hold the single job runner for hours and park
+        // `fetch-rates`, `project` and the fold behind it. The watermark
+        // advances per landed day, so the remainder is simply the next tick's
+        // work; a real gap closes in days, and `fetch fts --day` or a monthly
+        // backfill closes it at once.
+        if out.len() >= crate::fts::PROBE_DAY_CAP {
+            break;
+        }
+        if !out.is_empty() {
+            tokio::time::sleep(page_pause).await;
+        }
+        let target = crate::fts::day(base, day);
+        let outcome = fetch_fts(db, client, archive_root, &target, false, page_pause, |_, _, _| {}).await?;
+        on_day(&target.period, &outcome);
+        out.push((target.period.clone(), outcome));
+        day = next_civil_day(day);
+    }
+    Ok(out)
+}
+
+/// Newest FTS daily day already registered. Periods are zero-padded
+/// `YYYY-MM-DD`, so `MAX(period)` is the newest across every year.
+pub async fn latest_fts_day(db: &store::Db) -> turso::Result<Option<(u16, u8, u8)>> {
+    let latest = db.latest_fetch_period_max("fts", "daily", "").await?;
+    Ok(latest.as_deref().and_then(parse_ymd))
+}
+
+/// The walk's progress file inside the staging dir.
+const CURSOR_FILE: &str = "cursor.json";
+
+/// Where a paged package is staged while its windows are walked:
+/// `<archive>/<rel_path minus .zip>.pages/`, beside the package it becomes.
+/// A directory, so [`register_archive`] steps over it as a non-file.
+fn staging_dir(archive_root: &Path, rel_path: &str) -> PathBuf {
+    let stem = rel_path.strip_suffix(".zip").unwrap_or(rel_path);
+    archive_root.join(format!("{stem}.pages"))
+}
+
+/// `cursor.json`: the window being walked (`day`, its `page` count on disk, the
+/// `next` URL to ask for) and the windows already `done`. Every field defaults
+/// so a hand-edited or older cursor still reads.
+#[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
+struct PageCursor {
+    #[serde(default)]
+    day: String,
+    #[serde(default)]
+    page: u32,
+    #[serde(default)]
+    next: Option<String>,
+    #[serde(default)]
+    done: Vec<String>,
+}
+
+fn read_cursor(path: &Path) -> PageCursor {
+    let Ok(bytes) = std::fs::read(path) else { return PageCursor::default() };
+    match serde_json::from_slice(&bytes) {
+        Ok(cursor) => cursor,
+        Err(e) => {
+            // Restarting the walk re-fetches pages that are on disk; it never
+            // loses anything, and a cursor nobody can read is not worth trusting.
+            eprintln!("[fetch] {}: unreadable cursor ({e}), restarting the walk", path.display());
+            PageCursor::default()
+        }
+    }
+}
+
+fn write_cursor(path: &Path, cursor: &PageCursor) -> Result<(), Error> {
+    write_atomic(path, &serde_json::to_vec(cursor).expect("a cursor always serialises"))
+}
+
+/// Write via `<path>.part` + rename, so a page or cursor that was interrupted
+/// mid-write never reads as a saved one.
+fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), Error> {
+    let tmp = temp_path(path);
+    std::fs::write(&tmp, bytes)?;
+    std::fs::rename(&tmp, path)?;
+    Ok(())
+}
+
+/// What a page says about the walk: how many releases it holds and where the
+/// next page is. Anything without a `releases` array is not a release package.
+fn page_summary(bytes: &[u8]) -> Result<(usize, Option<String>), String> {
+    let page: serde_json::Value = serde_json::from_slice(bytes).map_err(|e| e.to_string())?;
+    let releases = page
+        .get("releases")
+        .and_then(serde_json::Value::as_array)
+        .ok_or("not a release package: no `releases` array")?;
+    let next = page.pointer("/links/next").and_then(serde_json::Value::as_str).map(str::to_owned);
+    Ok((releases.len(), next))
+}
+
+/// Assemble the staged pages into `part`: members `<release id>.json` built by
+/// [`crate::fts::member_bytes`], sorted by id, the first occurrence winning on
+/// a duplicate id (the 2 h overlap re-serves the previous day's tail, and pages
+/// are newest-first). Returns the written zip's (bytes, sha256-hex). A staging
+/// dir with no releases yields a valid 0-member zip.
+fn assemble_fts_zip(staging: &Path, part: &Path) -> Result<(i64, String), Error> {
+    let mut pages: Vec<PathBuf> = std::fs::read_dir(staging)?
+        .filter_map(|entry| entry.ok().map(|e| e.path()))
+        .filter(|path| {
+            path.is_file()
+                && path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .is_some_and(|n| n.ends_with(".json") && n != CURSOR_FILE)
+        })
+        .collect();
+    pages.sort(); // `<day>-p<NNN>.json`: window order, then page order
+    let mut members: std::collections::BTreeMap<String, Vec<u8>> = std::collections::BTreeMap::new();
+    for path in &pages {
+        let malformed = |what: String| Error::Malformed(format!("{}: {what}", path.display()));
+        let page: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(path)?).map_err(|e| malformed(e.to_string()))?;
+        let releases = page
+            .get("releases")
+            .and_then(serde_json::Value::as_array)
+            .ok_or_else(|| malformed("no `releases` array".into()))?;
+        for (index, release) in releases.iter().enumerate() {
+            let id = match crate::fts::release_id(release) {
+                // The id becomes a member name; a separator in it would name a directory.
+                Some(id) if !id.is_empty() && !id.contains(['/', '\\']) => id.to_owned(),
+                // A release the publisher sent without a usable id is ARCHIVED,
+                // not thrown (issue 342 review, lens "fetcher"). Failing the
+                // package here would be deterministic: the day would fail every
+                // tick, the watermark would never advance, and one malformed
+                // release would stop the whole walk-forward. Under a reserved
+                // `_noid/` prefix it reaches the profile layer, which quarantines
+                // it as a missing publication id with the bytes intact — the
+                // publisher's defect, recorded where defects are recorded.
+                _ => {
+                    let stem = path.file_stem().and_then(|n| n.to_str()).unwrap_or("page");
+                    format!("_noid/{stem}-{index:03}")
+                }
+            };
+            members.entry(id).or_insert_with(|| crate::fts::member_bytes(&page, release));
+        }
+    }
+
+    let mut zip = zip::ZipWriter::new(std::fs::File::create(part)?);
+    // A fixed entry timestamp: the zip's bytes are its registry identity, and a
+    // window re-walked with `refetch` must hash equal when nothing changed.
+    let opts = zip::write::SimpleFileOptions::default()
+        .compression_method(zip::CompressionMethod::Deflated)
+        .last_modified_time(zip::DateTime::default());
+    for (id, bytes) in &members {
+        zip.start_file(format!("{id}.json"), opts).map_err(zip_error)?;
+        zip.write_all(bytes)?;
+    }
+    let mut file = zip.finish().map_err(zip_error)?;
+    file.flush()?;
+    drop(file);
+
+    let data = std::fs::read(part)?;
+    Ok((data.len() as i64, crate::sha256_hex(&data)))
+}
+
+fn zip_error(e: zip::result::ZipError) -> Error {
+    Error::Io(std::io::Error::other(e))
+}
+
 /// Parse a zero-padded `YYYY-MM-DD` period into a civil date.
 fn parse_ymd(period: &str) -> Option<(u16, u8, u8)> {
     let (y, rest) = period.split_once('-')?;
@@ -284,11 +620,32 @@ async fn download(
     final_path: &Path,
 ) -> Result<(i64, String), Error> {
     let part = temp_path(final_path);
+    retrying(url, || download_once(client, url, &part)).await
+}
 
+/// GET a URL into memory — one FTS page — under the same retry policy as
+/// [`download`], without a file: a page is at most ~1 MB and is staged by the
+/// caller only once it has parsed.
+pub(crate) async fn get_bytes(client: &reqwest::Client, url: &str) -> Result<Vec<u8>, Error> {
+    retrying(url, || get_once(client, url)).await
+}
+
+async fn get_once(client: &reqwest::Client, url: &str) -> Result<Vec<u8>, Error> {
+    let resp = client.get(url).send().await?;
+    classify_status(resp.status(), || retry_after_secs(resp.headers()))?;
+    Ok(resp.bytes().await?.to_vec())
+}
+
+/// The retry policy every request shares — [`download`] and [`get_bytes`]
+/// differ only in what one attempt does, so the policy lives once.
+async fn retrying<T, Fut>(url: &str, mut attempt_once: impl FnMut() -> Fut) -> Result<T, Error>
+where
+    Fut: std::future::Future<Output = Result<T, Error>>,
+{
     let mut attempt = 0u32;
     loop {
         attempt += 1;
-        match download_once(client, url, &part).await {
+        match attempt_once().await {
             Ok(v) => return Ok(v),
             // Client errors are permanent — retrying a 400/404 just wastes time.
             // 429/408 are NOT in this class: they arrive as `Throttled`, below.
@@ -332,8 +689,10 @@ const THROTTLE_WAIT_CAP_SECS: u64 = 120;
 /// Its own function so the classification is testable without a server, because
 /// the distinction it draws is the whole point: 429 and 408 are the two 4xx codes
 /// that mean "later", and treating them like 404 cost a daily probe its day
-/// (job 725, 2026-08-18). `retry_after` is a closure so the header is only read
-/// when the status is one that carries it.
+/// (job 725, 2026-08-18). 503 is in the same class on FTS's documented word
+/// (uk-fts.md §1: "no further requests until after Retry-After", 503 handled the
+/// same) — its limiter sends both. `retry_after` is a closure so the header is
+/// only read when the status is one that carries it.
 fn classify_status(
     status: reqwest::StatusCode,
     retry_after: impl FnOnce() -> Option<u64>,
@@ -341,7 +700,9 @@ fn classify_status(
     match status {
         reqwest::StatusCode::OK => Ok(false), // full body (server ignored/no Range)
         reqwest::StatusCode::PARTIAL_CONTENT => Ok(true),
-        reqwest::StatusCode::TOO_MANY_REQUESTS | reqwest::StatusCode::REQUEST_TIMEOUT => {
+        reqwest::StatusCode::TOO_MANY_REQUESTS
+        | reqwest::StatusCode::REQUEST_TIMEOUT
+        | reqwest::StatusCode::SERVICE_UNAVAILABLE => {
             Err(Error::Throttled { status, retry_after: retry_after() })
         }
         status => Err(Error::Status(status)),
@@ -422,7 +783,7 @@ pub struct Registered {
 /// without hashing — re-runs are cheap and never overwrite real provenance.
 pub async fn register_archive(db: &store::Db, archive_root: &Path) -> Result<Registered, Error> {
     let mut summary = Registered::default();
-    for source in ["ted", "doe"] {
+    for source in ["ted", "doe", "fts"] {
         for kind in ["daily", "monthly"] {
             let dir = archive_root.join(source).join(kind);
             let entries = match std::fs::read_dir(&dir) {
@@ -509,8 +870,8 @@ fn versioned(rel_path: &str, version: usize) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        civil_date, classify_status, days_from_civil, retry_after_secs, versioned, Error,
-        THROTTLE_ATTEMPTS, THROTTLE_BACKOFF_SECS, THROTTLE_WAIT_CAP_SECS,
+        civil_date, classify_status, days_from_civil, retry_after_secs, staging_dir, versioned,
+        Error, THROTTLE_ATTEMPTS, THROTTLE_BACKOFF_SECS, THROTTLE_WAIT_CAP_SECS,
     };
 
     #[test]
@@ -576,6 +937,48 @@ mod tests {
         // queue stall.
         assert!(THROTTLE_WAIT_CAP_SECS >= THROTTLE_BACKOFF_SECS);
         assert!(THROTTLE_ATTEMPTS * (THROTTLE_WAIT_CAP_SECS as u32) < 900, "worst case under 15min");
+    }
+
+    /// FTS documents 503 as "handle exactly like 429: wait `Retry-After`"
+    /// (docs/research/uk-fts.md §1), and its limiter is the one that actually
+    /// sends both — so 503 joins the throttled class with the server's delay
+    /// carried through, while the other 5xx keep the generic short backoff.
+    #[test]
+    fn a_503_is_throttled_like_a_429() {
+        use reqwest::StatusCode;
+        match classify_status(StatusCode::SERVICE_UNAVAILABLE, || Some(120)) {
+            Err(Error::Throttled { status, retry_after: Some(120) }) => {
+                assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+            }
+            other => panic!("503 must be throttled with its delay, got {other:?}"),
+        }
+        assert!(matches!(
+            classify_status(StatusCode::SERVICE_UNAVAILABLE, || None),
+            Err(Error::Throttled { retry_after: None, .. })
+        ));
+        for status in [StatusCode::INTERNAL_SERVER_ERROR, StatusCode::BAD_GATEWAY, StatusCode::GATEWAY_TIMEOUT] {
+            assert!(
+                matches!(classify_status(status, || None), Err(Error::Status(s)) if s == status),
+                "{status} takes the generic backoff, not the throttle wait"
+            );
+        }
+    }
+
+    /// The staging dir sits beside the package it becomes, named so a human
+    /// reading the archive sees which zip it belongs to, and so it is a
+    /// DIRECTORY `register_archive` steps over rather than a file it misreads.
+    #[test]
+    fn staging_dir_sits_beside_its_package() {
+        let root = std::path::Path::new("/archive");
+        assert_eq!(
+            staging_dir(root, "fts/daily/2026-09-03.zip"),
+            std::path::PathBuf::from("/archive/fts/daily/2026-09-03.pages")
+        );
+        assert_eq!(
+            staging_dir(root, "fts/monthly/2025-06.zip"),
+            std::path::PathBuf::from("/archive/fts/monthly/2025-06.pages")
+        );
+        assert_eq!(staging_dir(root, "odd/name"), std::path::PathBuf::from("/archive/odd/name.pages"));
     }
 
     /// Seconds only. The header also permits an HTTP-date, and reading one would
