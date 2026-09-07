@@ -1,10 +1,13 @@
 //! Per-file profile dispatch: decide which mapping profile a payload belongs
 //! to and extract its Notice identity. No field mapping happens here.
 //!
-//! Dispatch keys off the XML root's **namespace URI + local name** — never the
-//! prefix, because real TED packages vary it freely (`ContractNotice`,
-//! `urn:ContractNotice`, `ns8:ContractNotice` and `cn:ContractNotice` all occur
-//! within a single day) — plus the eForms `CustomizationID`.
+//! For XML payloads dispatch keys off the root's **namespace URI + local name**
+//! — never the prefix, because real TED packages vary it freely
+//! (`ContractNotice`, `urn:ContractNotice`, `ns8:ContractNotice` and
+//! `cn:ContractNotice` all occur within a single day) — plus the eForms
+//! `CustomizationID`. A member that is not XML at all is recognised before any
+//! parse is attempted: the text era by its member naming, FTS by its first
+//! non-whitespace byte being `{`.
 //!
 //! Profiles, and how they were verified against the sample era ladder:
 //!
@@ -14,6 +17,7 @@
 //! | `ted-export-r208`    | 2011–2019   | root `TED_EXPORT`, version R2.0.7/R2.0.8 or unversioned |
 //! | `ted-export-r209`    | 2015–2025   | root `TED_EXPORT`, version R2.0.9        |
 //! | `eforms:<custom>`    | 2023–       | UBL root namespace + `CustomizationID`   |
+//! | `fts:ocds-<version>` | 2021–       | JSON member, OCDS package `version`      |
 //!
 //! Anything else quarantines (ADR-0004): unknown content is never silently
 //! dropped.
@@ -151,6 +155,17 @@ pub fn dispatch_with(member_path: &str, bytes: &[u8], ctx: &PackageContext) -> D
     // duplicate representation we do not ingest.
     if let Some(name) = text_era_member(member_path) {
         return dispatch_text(member_path, &name, bytes, ctx);
+    }
+
+    // FTS members are JSON, not XML (issue 342: an OCDS release package per
+    // member, assembled by the fetcher). Recognised on the payload's first
+    // non-whitespace byte and taken BEFORE the XML path, because roxmltree
+    // refuses every one of them — the whole day would land as `unparsable-xml`
+    // quarantine rows, in the bucket the dashboard calls genuinely malformed
+    // XML. `{` cannot open an XML document, so no XML-era member can be caught
+    // by this arm.
+    if bytes.iter().find(|b| !b.is_ascii_whitespace()) == Some(&b'{') {
+        return one(dispatch_fts_ocds(member_path, bytes));
     }
 
     let Ok(xml) = std::str::from_utf8(bytes) else {
@@ -328,6 +343,57 @@ fn dispatch_eforms(member_path: &str, bytes: &[u8], doc: &roxmltree::Document<'_
             content_hash: sha256_hex(bytes),
             profile,
             declared_version: Some(customization),
+            member_path: member_path.into(),
+            span: None,
+        }),
+        None => quarantine(member_path, bytes, Some(profile), "missing-publication-id", None),
+    }
+}
+
+/// UK Find a Tender (2021–). One member is a single-release OCDS package built
+/// by [`crate::fts::member_bytes`]: the page header's stable fields plus
+/// `releases: [<one release>]`. The profile is read off the package's `version`
+/// (`1.1` throughout the corpus, but the schema version is the thing a parser
+/// must gate on, so it is not assumed), and identity is the release `id`
+/// verbatim — `083685-2026`, the FTS notice number (plan D3). A re-published id
+/// with changed content hashes differently and becomes a second row, as TED
+/// versions do.
+///
+/// Every refusal quarantines with the bytes intact (ADR-0004). The one that
+/// happens by construction is a member under the fetcher's reserved `_noid/`
+/// prefix: a release the publisher sent without a usable id is ARCHIVED rather
+/// than failing the day (issue 342 review), and this is where it lands as
+/// `missing-publication-id` — never a panic, never a silent drop.
+fn dispatch_fts_ocds(member_path: &str, bytes: &[u8]) -> Record {
+    let package: serde_json::Value = match serde_json::from_slice(bytes) {
+        Ok(package) => package,
+        Err(e) => {
+            return quarantine(member_path, bytes, None, "unparsable-json", Some(e.to_string()))
+        }
+    };
+    // No version, no profile: a parser cannot be chosen for a package that does
+    // not say which OCDS it is, so this quarantines before a profile exists.
+    let Some(version) = package.get("version").and_then(serde_json::Value::as_str) else {
+        return quarantine(member_path, bytes, None, "missing-ocds-version", None);
+    };
+    let profile = format!("fts:ocds-{version}");
+
+    // Exactly one release per member is the packaging contract (plan D1): the
+    // notice IS the release, and a member carrying two of them would give one
+    // `notices` row two identities.
+    let releases = package.get("releases").and_then(serde_json::Value::as_array);
+    let Some([release]) = releases.map(Vec::as_slice) else {
+        let detail = releases
+            .map_or_else(|| "no `releases` array".to_owned(), |r| format!("{} releases", r.len()));
+        return quarantine(member_path, bytes, Some(profile), "ocds-release-count", Some(detail));
+    };
+
+    match crate::fts::release_id(release).filter(|id| !id.is_empty()) {
+        Some(id) => Record::Notice(NoticeRecord {
+            publication_id: id.to_owned(),
+            content_hash: sha256_hex(bytes),
+            profile,
+            declared_version: Some(version.to_owned()),
             member_path: member_path.into(),
             span: None,
         }),
@@ -812,5 +878,154 @@ mod tests {
             let [Record::Quarantine(q)] = &records[..] else { panic!("expected one quarantine") };
             assert_eq!(q.reason, "unparsable-xml", "a hostile entity ref must be refused");
         }
+    }
+    // ----------------------------------------------------------------- FTS
+
+    /// The recorded UK15 amendment release of 3 September 2026, as a member —
+    /// cut from the live page by `fts::member_bytes`, exactly as the fetcher
+    /// cuts it (issue 342).
+    const FTS_UK15: &[u8] = include_bytes!("../tests/fixtures/fts/members/083685-2026.json");
+    /// A real release of the same day with its `id` removed: the member the
+    /// fetcher writes under its reserved `_noid/` prefix.
+    const FTS_NOID: &[u8] =
+        include_bytes!("../tests/fixtures/fts/members/_noid-2026-09-03-p001-000.json");
+
+    /// An FTS member is always exactly one record — never a bundle, never a skip.
+    fn only_record(member_path: &str, bytes: &[u8]) -> Record {
+        let mut records = match dispatch(member_path, bytes) {
+            Disposition::Records(records) => records,
+            Disposition::Skipped(why) => panic!("{member_path} was skipped as {why}"),
+        };
+        assert_eq!(records.len(), 1, "{member_path}: an FTS member carries one release");
+        records.pop().expect("one record")
+    }
+
+    fn quarantine_of(member_path: &str, bytes: &[u8]) -> QuarantineRecord {
+        match only_record(member_path, bytes) {
+            Record::Quarantine(q) => q,
+            Record::Notice(n) => panic!("{member_path} dispatched as notice {}", n.publication_id),
+        }
+    }
+
+    #[test]
+    fn fts_release_member_dispatches_as_a_notice() {
+        let Record::Notice(n) = only_record("083685-2026.json", FTS_UK15) else {
+            panic!("the OCDS member did not dispatch as a notice");
+        };
+        // Identity is the release id verbatim — the FTS notice number (plan D3).
+        assert_eq!(n.publication_id, "083685-2026");
+        assert_eq!(n.profile, "fts:ocds-1.1");
+        assert_eq!(n.declared_version.as_deref(), Some("1.1"));
+        assert_eq!(n.content_hash, sha256_hex(FTS_UK15));
+        assert_eq!(n.member_path, "083685-2026.json");
+        // The whole member is the payload: no span, unlike the text era.
+        assert_eq!(n.span, None);
+    }
+
+    /// The JSON arm is chosen on the payload, not the member name: FTS members
+    /// are named `<id>.json` but nothing downstream may depend on that, since
+    /// the reserved `_noid/` prefix and any future container name are not.
+    #[test]
+    fn a_json_payload_dispatches_on_its_first_byte_whatever_the_member_is_called() {
+        let Record::Notice(n) = only_record("fts/daily/2026-09-03.zip!whatever", FTS_UK15) else {
+            panic!("the OCDS member did not dispatch as a notice");
+        };
+        assert_eq!(n.publication_id, "083685-2026");
+        // Leading whitespace is not content: the arm skips it, as a JSON reader would.
+        let padded = [b"\n  \t".as_slice(), FTS_UK15].concat();
+        let Record::Notice(n) = only_record("083685-2026.json", &padded) else {
+            panic!("a whitespace-led OCDS member did not dispatch as a notice");
+        };
+        assert_eq!(n.publication_id, "083685-2026");
+    }
+
+    #[test]
+    fn fts_member_without_version_quarantines() {
+        // The header field the profile string is built from. Without it there is
+        // no profile to record, so the quarantine carries none.
+        let release = serde_json::json!({ "id": "083685-2026", "ocid": "ocds-h6vhtk-0510f8" });
+        let bytes = crate::fts::member_bytes(&serde_json::json!({ "license": "OGL" }), &release);
+        let q = quarantine_of("083685-2026.json", &bytes);
+        assert_eq!(q.reason, "missing-ocds-version");
+        assert_eq!(q.profile, None);
+        assert_eq!(q.content_hash, sha256_hex(&bytes), "the bytes are kept for the reclaim");
+    }
+
+    /// One member is one release (plan D1). Two would give one `notices` row two
+    /// identities; zero is a header with nothing in it.
+    #[test]
+    fn fts_member_that_is_not_exactly_one_release_quarantines() {
+        let one_release = serde_json::json!({ "id": "083685-2026" });
+        for (releases, detail) in [
+            (serde_json::json!([one_release, serde_json::json!({ "id": "083686-2026" })]), "2 releases"),
+            (serde_json::json!([]), "0 releases"),
+            (serde_json::json!("083685-2026"), "no `releases` array"),
+        ] {
+            let bytes = serde_json::to_vec(&serde_json::json!({
+                "version": "1.1",
+                "releases": releases,
+            }))
+            .unwrap();
+            let q = quarantine_of("083685-2026.json", &bytes);
+            assert_eq!(q.reason, "ocds-release-count");
+            assert_eq!(q.detail.as_deref(), Some(detail));
+            // The version was readable, so the profile IS known — the row is
+            // reclaimable by profile once the packaging defect is understood.
+            assert_eq!(q.profile.as_deref(), Some("fts:ocds-1.1"));
+        }
+    }
+
+    #[test]
+    fn broken_json_quarantines_as_unparsable_json() {
+        // Truncated mid-array: the shape a partial write would leave.
+        let truncated = br#"{"version": "1.1", "releases": [{"id": "083685-2026""#;
+        let q = quarantine_of("083685-2026.json", truncated);
+        assert_eq!(q.reason, "unparsable-json");
+        assert!(q.detail.is_some(), "the parser's own message names the offset");
+        assert_eq!(q.profile, None);
+        // A `{` that opens nothing at all is the same refusal, not a panic.
+        assert_eq!(quarantine_of("x.json", b"{").reason, "unparsable-json");
+    }
+
+    /// The `_noid/` member exists BY CONSTRUCTION: a release the publisher sent
+    /// without a usable id is archived under that prefix rather than failing the
+    /// day (issue 342 review, lens "fetcher"), and this layer is where it is
+    /// recorded as a defect — with its bytes, never dropped and never a panic.
+    #[test]
+    fn a_noid_member_quarantines_as_a_missing_publication_id() {
+        let path = "_noid/2026-09-03-p001-000.json";
+        // The committed fixture is a real release of 3 Sep 2026 with its `id`
+        // removed, cut by `fts::member_bytes` as the fetcher would write it.
+        let q = quarantine_of(path, FTS_NOID);
+        assert_eq!(q.reason, "missing-publication-id");
+        assert_eq!(q.profile.as_deref(), Some("fts:ocds-1.1"));
+        assert_eq!(q.content_hash, sha256_hex(FTS_NOID));
+        assert_eq!(q.member_path, path);
+
+        // The two shapes `fetch::assemble_fts_zip` routes there: no `id` key at
+        // all, and an id that is present but empty.
+        let header = serde_json::json!({ "version": "1.1", "license": "OGL" });
+        for release in [
+            serde_json::json!({ "ocid": "ocds-h6vhtk-0aaaaa", "tender": { "title": "no id" } }),
+            serde_json::json!({ "id": "", "ocid": "ocds-h6vhtk-0aaaab" }),
+        ] {
+            let bytes = crate::fts::member_bytes(&header, &release);
+            let q = quarantine_of(path, &bytes);
+            assert_eq!(q.reason, "missing-publication-id");
+            assert_eq!(q.profile.as_deref(), Some("fts:ocds-1.1"));
+        }
+
+        // The fetcher's THIRD `_noid/` trigger is an id it cannot use as a
+        // FILE name — one carrying a path separator. That release has an
+        // identity, so it is a notice under it: dispatch reads the payload, not
+        // the member name, and a publisher's odd id is not a reason to lose the
+        // release. (No such id exists in the corpus; this pins the split.)
+        let odd = serde_json::json!({ "id": "08/3685-2026", "ocid": "ocds-h6vhtk-0aaaac" });
+        let bytes = crate::fts::member_bytes(&header, &odd);
+        let Record::Notice(n) = only_record(path, &bytes) else {
+            panic!("a release with an unusable member NAME still has an identity");
+        };
+        assert_eq!(n.publication_id, "08/3685-2026");
+        assert_eq!(n.member_path, path, "the member it actually arrived in");
     }
 }

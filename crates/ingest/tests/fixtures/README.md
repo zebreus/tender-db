@@ -12,7 +12,7 @@ exercises.
 Layout is `<profile>/<notice-type>-<publication-id>.xml`, one profile directory
 per mapping profile in docs/architecture.md ("Notice identity and profiles").
 
-Total: 86 fixture files, 2.3 MB (every file under this directory except this README).
+Total: 92 fixture files, 2.4 MB (every file under this directory except this README).
 
 ## Selection policy
 
@@ -228,7 +228,7 @@ per channel.
 
 ---
 
-## `fts/` — UK Find a Tender Service (FTS), 2 files, 47 KB
+## `fts/` — UK Find a Tender Service (FTS), 7 files, 71 KB
 
 **Not verbatim pages** — the one exception to the rule at the top of this file,
 by construction: a real FTS page is 100 releases (≈1 MB), so these are the
@@ -246,8 +246,36 @@ the page-level fields the fetcher must DROP from a member (`uri`,
 
 `tests/fetch.rs` serves the two as a paged window (rewriting `links.next` to the
 fixture server) and asserts the assembled zip holds one member per release id.
-The single-release member packages for the profile/parse tests (unit 2 commits b
-and c) are cut from the same recorded pages.
+
+### `fts/members/` — single-release packages, as the fetcher writes them
+
+One MEMBER of an assembled zip: the page header's stable fields
+(`version`, `extensions`, `publisher`, `license`, `publicationPolicy`) plus
+`releases: [<one release>]`, with the page-specific `uri`, `publishedDate` and
+`links` dropped. Each was cut from the recorded pages above by
+`fts::member_bytes` itself, so these files are **byte-identical to what
+`fetch::assemble_fts_zip` writes** — compact, keys sorted (serde_json's
+BTreeMap), one line. That is the byte string the `content_hash` is taken over,
+which is why they are not reformatted: re-indenting one would change the
+identity of the notice it stands for.
+
+| File | Bytes | Release | Shape | Why |
+|---|---|---|---|---|
+| `members/083563-2026.json` | 8 605 | `083563-2026`, page 2, `tender` | UK4 tender, **5 lots** each with its own item and CPV, `tenderPeriod.endDate`, net + gross value in GBP | The lot-bearing tender: the release shape the (c) parser must fan into `Lot` sections. |
+| `members/083645-2026.json` | 3 886 | `083645-2026`, page 1, `planning` | UK2 planning notice, a `planning` block beside the `tender` one, 1 party | The planning family, which carries no award and no deadline. |
+| `members/083650-2026.json` | 4 444 | `083650-2026`, page 1, `award`+`contract` | UK6 award: 1 supplier, `award.value` with **both** `amount` and `amountGross` (GBP), buyer and supplier parties with `GB-PPON` identifiers, `contractPeriod` | The winner/value path (D7's tax basis, D6's identifiers) in its smallest honest form. |
+| `members/083685-2026.json` | 4 653 | `083685-2026`, from `GET /ocdsReleasePackages/083685-2026` | UK15 award+contract, **34 awards carrying nothing but `{id, amendments}`** (35 amendments), no suppliers, no values | The delta release (D4): a re-publication that states only what changed, and must fold as an ordinary notice while emitting no result round. |
+| `members/_noid-2026-09-03-p001-000.json` | 3 082 | `083674-2026` (page 1) **with its `id` removed** | A UK10 contractAmendment package whose release has no `id` at all | The `_noid/` member the fetcher writes for a release the publisher sent without a usable id: archived rather than failing the day, then quarantined by the profile as `missing-publication-id`. Committed because that path is reached by construction, not by accident. |
+
+`tests/fts.rs` zips all five as `fts/daily/2026-09-03.zip` and processes them;
+`profile.rs`'s unit tests dispatch two of them directly.
+
+**A number no JSON reader may assume**: recorded page 2 carries
+`"maximumLotsBidPerSupplier": 1e9999` on release `083529-2026` — infinity, which
+`serde_json` refuses as "number out of range" (Python's `json` accepts it). It is
+1 release in the day's 436. The member above was therefore cut from a copy of
+that page trimmed to the one release; the raw page is in the recorded directory
+unchanged.
 
 Contains public sector information licensed under the Open Government Licence
 v3.0.

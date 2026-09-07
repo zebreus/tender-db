@@ -9630,16 +9630,26 @@ impl Supervisor {
         // On an empty registry the probe fetches only yesterday, so the chain
         // ships dark ahead of the backfill.
         //
-        // ONLY the probe, until the JSON profile arm exists (issue 342 commit
-        // (b)). The adversarial review of commit (a) found the trap in four
-        // independent lenses: `process` walks every member of the zip the probe
-        // just landed through `profile::dispatch_with`, which parses XML — so a
-        // `{`-leading OCDS release becomes a `quarantine` row with reason
-        // `unparsable-xml`, a few hundred a day, in the bucket the dashboard
-        // calls "genuinely malformed XML". The archived package is not lost:
-        // `current_packages(source, kind, None)` re-walks every FTS daily on the
-        // first tick after (b) lands, which is where the process push belongs.
+        // Commit (a) shipped the probe ALONE, deliberately: with no JSON arm in
+        // `profile::dispatch_with`, `process` would have walked every member of
+        // the zip the probe just landed into an XML parser and written a few
+        // hundred `unparsable-xml` quarantine rows a day, in the bucket the
+        // dashboard calls "genuinely malformed XML" (the adversarial review of
+        // (a) found that trap in four independent lenses). The pass below exists
+        // because commit (b) added that arm: an OCDS member now dispatches as
+        // `fts:ocds-<version>`. Nothing was lost by waiting —
+        // `current_packages(source, kind, None)` re-walks EVERY registered FTS
+        // daily on the first tick after this ships, so the days the probe landed
+        // dark are processed then.
         ids.push(self.push("probe", "fts daily (probe)".into(), Spec::ProbeFts).await);
+        ids.push(
+            self.push(
+                "process",
+                "fts daily (all)".into(),
+                Spec::Process { source: "fts".into(), package_kind: "daily".into(), period: None },
+            )
+            .await,
+        );
         // Refresh the ECB reference rates BEFORE the fold (ADR-0014): the
         // derivation's daily window is 7 days, so without a standing refresh
         // every fold more than a week after the last manual fetch-rates run
@@ -10270,6 +10280,31 @@ mod tests {
         assert!(build("fts", "weekly", "2025-06").is_err());
         assert!(build("ted", "weekly", "x").is_err());
         assert!(build("ted", "daily", "nope").is_err());
+    }
+
+    /// Issue 342 commit (b): the FTS walk-forward is followed by a process pass
+    /// over EVERY registered FTS daily, so the days commit (a)'s probe landed
+    /// while no JSON profile existed are walked on the first tick after this
+    /// ships. Pinned because the pass was deliberately absent for one commit —
+    /// its absence, and its return, are both decisions rather than oversights.
+    #[tokio::test]
+    async fn the_daily_chain_processes_what_the_fts_probe_fetches() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        sup.enqueue_daily(true).await;
+        let queued = sup.queued();
+        let probe = queued
+            .iter()
+            .position(|j| j.kind == "probe" && j.params == "fts daily (probe)")
+            .expect("the fts probe rides the daily chain");
+        let process = queued
+            .iter()
+            .position(|j| j.kind == "process" && j.params == "fts daily (all)")
+            .expect("the fts daily process pass rides the daily chain");
+        // Jobs run in queue order: fetch first, then process what it landed.
+        assert!(probe < process, "{queued:?}");
+        // …and the projection folds what the process pass just parsed.
+        let project = queued.iter().rposition(|j| j.kind == "project").expect("a projection");
+        assert!(process < project, "{queued:?}");
     }
 
     /// Issue 342: an FTS backfill fans every month since 2021-01 (or the given

@@ -948,6 +948,10 @@ pub fn era_of(profile: &str) -> &'static str {
         "eforms:eforms-sdk-0.1" => "DÖE sdk-0.1 island",
         p if p.starts_with("eforms:eforms-de") => "eForms-DE",
         p if p.starts_with("eforms:") => "eForms EU",
+        // UK Find a Tender: OCDS releases, not notices in the TED sense, and a
+        // different publisher entirely — its own era whatever OCDS version the
+        // package declares (issue 342).
+        p if p.starts_with("fts:") => "FTS OCDS",
         _ => "other",
     }
 }
@@ -2105,6 +2109,9 @@ mod tests {
         assert_eq!(era_of("eforms:eforms-de-2.1@eforms-sdk-1.13"), "eForms-DE");
         // The DÖE numeric island dialect is its own era, not lumped with eForms EU.
         assert_eq!(era_of("eforms:eforms-sdk-0.1"), "DÖE sdk-0.1 island");
+        // FTS is one era across OCDS versions (issue 342).
+        assert_eq!(era_of("fts:ocds-1.1"), "FTS OCDS");
+        assert_eq!(era_of("fts:ocds-1.2"), "FTS OCDS");
         assert_eq!(era_of("something-new"), "other");
     }
 
