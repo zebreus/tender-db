@@ -107,12 +107,34 @@ Three consequences for the plan:
 1. ~~Decide the edge-admission rule~~ — DONE, above.
 2. **Read the kind at parse time.** Extend the r209/r208 rules so a `PREVIOUS_PUBLICATION`
    reference carries its declared choice, and admit only same-procedure kinds as chain edges.
-   First step: census the `CHOICE` values actually present across the legacy corpus (one pass
-   over the archive, counted per value) so the admit-list is measured rather than guessed —
-   `PERIODIC_INDICATIVE_NOTICE` and `CONTRACT_NOTICE` are the two seen in three specimens, and
-   the qualification-system and buyer-profile forms are expected. Pin with a fixture of the
-   six-notice hub (17283790, 17284506, 17284981, 17285150, 17285196, 17285468): six components,
-   not one.
+   Pin with a fixture of the six-notice hub (17283790, 17284506, 17284981, 17285150, 17285196,
+   17285468): six components, not one.
+
+   **The census is done** (2026-09-07, four archive days of February 2013: 6,327 notices,
+   3,037 citations):
+
+   | declared kind | citations | share | same procedure? |
+   |---|---|---|---|
+   | `CONTRACT_NOTICE` | 2,214 | 72.9% | **yes** — the award's own contract notice |
+   | `PRIOR_INFORMATION_NOTICE` | 481 | 15.8% | **no** — one PIN is cited by many procurements |
+   | (no `CHOICE` within 260 bytes) | 238 | 7.8% | **unresolved — unit 2 must classify these** |
+   | `NOTICE_BUYER_PROFILE` | 53 | 1.7% | no |
+   | `PERIODIC_INDICATIVE_NOTICE` | 27 | 0.9% | no |
+   | `SIMPLIFIED_CONTRACT_NOTICE_DPS` | 13 | 0.4% | **judgement** — a DPS round; see below |
+   | `NOTICE_QUALIFICATION_SYSTEM` | 11 | 0.4% | no |
+
+   So **~19% of legacy citations are the welding kind** — a PIN, buyer profile, periodic
+   indicative or qualification-system publication that many unrelated procurements cite. That
+   share, not the phantom node, is the scale behind 43,088 tenders at ≥10 versions.
+
+   Two things unit 2 must settle rather than assume. The **238 citations with no `CHOICE`
+   nearby** are a different element shape (the F14/F20 corrigendum blocks are the likely
+   candidates) and must be classified, not default-admitted — defaulting to "edge" is exactly
+   the mistake this issue is about, so the default is now "not an edge, and counted". And
+   **`SIMPLIFIED_CONTRACT_NOTICE_DPS`**: a dynamic purchasing system's simplified notices all
+   cite the DPS's own publication, so they are one system but not one procurement — this is the
+   "some of these are legitimate DPS rounds" case the reviewer flagged, and it wants its own
+   decision with the numbers in front of it.
 3. **Guards + representative rule** as in consequence 2, with ADR-0011 amended to record that a
    phantom may link but may not name.
 4. **The component-plausibility gauge** in the weekly DQ report (also the detector for issue
