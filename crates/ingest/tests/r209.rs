@@ -624,3 +624,138 @@ fn f19_award_criteria_sentence_is_claimed_as_text() {
         other => panic!("criteria detail is not text: {other:?}"),
     }
 }
+
+/// Issue 364: every previous-publication citation in the R2.0.9-era corpus
+/// carries the kind its block declares, and the three ways a block declares one
+/// are all real bytes.
+///
+/// - A sibling `CHOICE` (the 2017 F06 utilities award: `CNT_NOTICE_INFORMATION_S
+///   CHOICE="CONTRACT_NOTICE"` → same procedure; the 2017 qualification-system
+///   award: `PREVIOUS_NOTICE_BUYER_PROFILE_F6 CHOICE="NOTICE_QUALIFICATION_SYSTEM"`
+///   → one system many procurements are called under, not an edge).
+/// - The block's own name, where there is no `CHOICE` to read: the F14
+///   corrigendum's VI.6 `COMPLEMENTARY_INFO` is its ORIGINAL notice, and the
+///   fixture proves it — the number there is the same publication the notice
+///   names in `REF_NOTICE/NO_DOC_OJS`.
+/// - Nothing at all: `OTHER_PREVIOUS_PUBLICATIONS/OTHER_PREVIOUS_PUBLICATION` is
+///   the form's deliberately unspecified slot and stays undeclared.
+#[test]
+fn a_previous_publication_citation_carries_the_kind_its_block_declares() {
+    let kinds = |parsed: &Parsed| -> Vec<(String, String)> {
+        parsed
+            .values
+            .iter()
+            .filter(|v| v.field_id == "TED-NOTICE_NUMBER_OJ")
+            .map(|v| {
+                let number = match &v.value {
+                    NoticeValue::Id { value, .. } => value.clone(),
+                    other => panic!("a citation is not an id: {other:?}"),
+                };
+                let field = format!("TED-NOTICE_NUMBER_OJ.{}", rules::CITATION_KIND_SUFFIX);
+                let kind = parsed
+                    .values
+                    .iter()
+                    .find(|k| {
+                        k.section_id == v.section_id && k.field_id == field && k.ordinal == v.ordinal
+                    })
+                    .map(|k| match &k.value {
+                        NoticeValue::Code { code, .. } => code.clone(),
+                        other => panic!("a citation kind is not a code: {other:?}"),
+                    })
+                    .expect("every citation carries its declared kind");
+                (number, kind)
+            })
+            .collect()
+    };
+
+    // A contract-notice citation, declared on the sibling: an edge.
+    let award = parse_fixture("r209/f06-002856-2017.xml");
+    assert_eq!(
+        kinds(&award),
+        vec![("2016/S 102-183197".to_owned(), "CONTRACT_NOTICE".to_owned())]
+    );
+    assert!(rules::kind_is_same_procedure("CONTRACT_NOTICE"));
+
+    // A qualification-system citation plus an undeclared "other publication":
+    // neither joins anything, and this notice has no coded REF_NOTICE either, so
+    // under the gate it stands alone rather than welding onto the QS.
+    let qs = parse_fixture("r209/f06-017037-2017.xml");
+    assert_eq!(
+        kinds(&qs),
+        vec![
+            ("2016/S 086-151949".to_owned(), "NOTICE_QUALIFICATION_SYSTEM".to_owned()),
+            ("2015/S 017-027861".to_owned(), rules::KIND_UNDECLARED.to_owned()),
+        ]
+    );
+    for (_, kind) in kinds(&qs) {
+        assert!(!rules::kind_is_same_procedure(&kind), "{kind} must not be an edge");
+    }
+
+    // The F14 corrigendum's original notice: declared by position, and the same
+    // publication the coded section names — a corrigendum corrects its own
+    // procedure, so this one IS an edge.
+    let f14 = parse_fixture("r209/f14-001311-2019.xml");
+    assert_eq!(
+        kinds(&f14),
+        vec![("2018/S 237-542350".to_owned(), "ORIGINAL_NOTICE".to_owned())]
+    );
+    assert!(rules::kind_is_same_procedure("ORIGINAL_NOTICE"));
+    assert!(matches!(
+        value(&f14, "PROCEDURE", "TED-REF_NOTICE.NO_DOC_OJS"),
+        NoticeValue::Id { value, .. } if value == "2018/S 237-542350"
+    ));
+}
+
+/// Issue 364's vocabulary cannot rot into a contradiction: no kind may be both a
+/// same-procedure predecessor and a shared publication, and the undeclared marker
+/// is neither.
+#[test]
+fn the_citation_kind_vocabulary_has_no_overlap() {
+    for kind in rules::SHARED_PUBLICATION_KINDS {
+        assert!(
+            !rules::kind_is_same_procedure(kind),
+            "{kind} is listed as a shared publication AND admitted as an edge"
+        );
+    }
+    assert!(!rules::kind_is_same_procedure(rules::KIND_UNDECLARED));
+    assert!(!rules::SHARED_PUBLICATION_KINDS.contains(&rules::KIND_UNDECLARED));
+}
+
+/// Issue 364, the by-POSITION half of the gate: three blocks name the kind with
+/// their own element name because there is no `CHOICE` to read, and the R2.0.9
+/// pair is the one no committed fixture exercises — `PROCEDURE` (IV.2.1
+/// "Previous publication concerning **this** procedure", and the F20's original
+/// award) and `COMPLEMENTARY_INFO` (the F14's original notice). Both are
+/// R2.0.9-only element names, both are the same procedure, and both are measured
+/// in ted-legacy-mapping.md §2.3/§2.4/§3 rather than guessed — so they are pinned
+/// here even though the fixture corpus cannot show them.
+///
+/// The contrast is `OTHER_PREVIOUS_PUBLICATION`: the forms' deliberately
+/// unspecified slot declares nothing, and nothing is what it gets.
+#[test]
+fn a_block_that_names_its_own_kind_is_classified_by_position() {
+    for block in ["PROCEDURE", "COMPLEMENTARY_INFO", "CNT_NOTICE_INFORMATION", "CNT_NOTICE_INFORMATION_F18"] {
+        let kind = rules::citation_kind(block, None);
+        assert!(
+            rules::kind_is_same_procedure(&kind),
+            "{block} declares its own kind ({kind}) and it is this procedure's predecessor"
+        );
+    }
+    assert_eq!(
+        rules::citation_kind("OTHER_PREVIOUS_PUBLICATION", None),
+        rules::KIND_UNDECLARED
+    );
+    assert!(!rules::kind_is_same_procedure(&rules::citation_kind("PREVIOUS_NOTICE", None)));
+
+    // A declared CHOICE always wins over the block's own name — the sibling is
+    // the payload SAYING what it cites, the block name is only a fallback.
+    assert_eq!(
+        rules::citation_kind("CNT_NOTICE_INFORMATION", Some("PRIOR_INFORMATION_NOTICE")),
+        "PRIOR_INFORMATION_NOTICE"
+    );
+    // An unrecognised spelling is recorded verbatim (so the projection's tally can
+    // name it) and refused.
+    let odd = rules::citation_kind("PREVIOUS_PUBLICATION_NOTICE_F5", Some("SOMETHING_NEW"));
+    assert_eq!(odd, "SOMETHING_NEW");
+    assert!(!rules::kind_is_same_procedure(&odd));
+}

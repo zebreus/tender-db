@@ -1399,6 +1399,196 @@ async fn unchained_awards_are_counted_per_era() {
     let _ = std::fs::remove_file(&path);
 }
 
+/// An OJS previous-publication CITATION as the legacy walker emits it (issue
+/// 364): the number, plus the `PREV_KIND` code row recording what the payload
+/// declared it to be. The pair — same section, same field stem, same ordinal —
+/// is what the identity layer gates on, and a citation whose kind is not a
+/// same-procedure predecessor joins nothing.
+fn ojs_citation(
+    section: &str,
+    field: &str,
+    ordinal: i64,
+    target: &str,
+    kind: &str,
+) -> [ValueRow; 2] {
+    [
+        ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal,
+            value: NoticeValue::Id {
+                scheme: Some("ojs".into()),
+                value: target.into(),
+                is_ref: true,
+            },
+        },
+        ValueRow {
+            section_id: section.into(),
+            field_id: format!("{field}.{}", ingest::r209::rules::CITATION_KIND_SUFFIX),
+            ordinal,
+            value: NoticeValue::Code { list: None, code: kind.into() },
+        },
+    ]
+}
+
+/// A legacy notice carrying nothing but its title, a dispatch date and the
+/// previous-publication citations given as `(target, declared kind)`.
+fn legacy_citing(
+    fetch_id: i64,
+    pub_id: &str,
+    day: i64,
+    citations: &[(&str, &str)],
+) -> (Notice, Parse) {
+    let mut parsed = Parsed {
+        sections: vec![sec("PROCEDURE", "Notice", None)],
+        values: vec![
+            ted_text("PROCEDURE", "TED-TITLE", "Roof works"),
+            ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", day * 86_400),
+        ],
+    };
+    for (ordinal, (target, kind)) in citations.iter().enumerate() {
+        parsed
+            .values
+            .extend(ojs_citation("PROCEDURE", "TED-NOTICE_NUMBER_OJ", ordinal as i64, target, kind));
+    }
+    legacy_record(fetch_id, pub_id, R209, parsed)
+}
+
+/// Issue 364: in one notice, the PIN citation joins nothing and the contract-notice
+/// citation chains — the real 2013 shape (`055142-2013` carries exactly one of
+/// each) and the shape the 2011 F03 fixture proves at the parse layer.
+///
+/// The PIN target `2012/S 123-203577` is the measured hub; the contract notice
+/// `000001-2019` is a notice the corpus actually holds. Under the pre-364 reading
+/// both were edges and the award landed in a component with the PIN node — under
+/// the gate the award chains onto its contract notice and nothing else.
+#[tokio::test]
+async fn a_pin_citation_joins_nothing_while_the_contract_notice_citation_chains() {
+    let (db, fetch_id, path) = scratch("citation-kind").await;
+    let (cn, pc) = legacy_cn(fetch_id, "000001-2019", 5, 728_000_000, &[]);
+    let (award, pa) = legacy_citing(
+        fetch_id,
+        "000200-2019",
+        30,
+        &[
+            ("2012/S 123-203577", "PERIODIC_INDICATIVE_NOTICE"),
+            ("2019/S 001-000001", "CONTRACT_NOTICE"),
+        ],
+    );
+    db.record_notice(&cn, &pc).await.expect("cn");
+    db.record_notice(&award, &pa).await.expect("award");
+
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!(report.tenders, 1, "the award chains onto its contract notice, and only that");
+    assert_eq!(
+        query_text(&db, "SELECT procedure_key FROM tenders").await.as_deref(),
+        Some("ojs:2019-000001"),
+        "keyed by the contract notice — the PIN node was never created, so it \
+         cannot become the component MIN and rename the Tender"
+    );
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM legacy_ojs_keys WHERE ojs_key = 2012000203577").await,
+        0,
+        "a refused citation contributes no adjacency key at all"
+    );
+    assert_eq!(report.citations.admitted, 1);
+    assert_eq!(report.citations.periodic_indicative, 1);
+    assert_eq!(report.citations.refused(), 1);
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 364: a citation whose kind the payload does NOT declare — the standard
+/// forms' "other previous publications" slot — is refused and COUNTED. Refusing
+/// it silently is how the defect stood; the tally is what makes an era publishing
+/// an unknown shape visible before it is mistaken for a correct split.
+#[tokio::test]
+async fn an_undeclared_citation_is_refused_and_counted() {
+    let (db, fetch_id, path) = scratch("citation-undeclared").await;
+    let (cn, pc) = legacy_cn(fetch_id, "000001-2019", 5, 728_000_000, &[]);
+    let (other, po) = legacy_citing(
+        fetch_id,
+        "000200-2019",
+        30,
+        &[("2019/S 001-000001", ingest::r209::rules::KIND_UNDECLARED)],
+    );
+    db.record_notice(&cn, &pc).await.expect("cn");
+    db.record_notice(&other, &po).await.expect("other");
+
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!(report.tenders, 2, "an undeclared citation does not join the two notices");
+    assert_eq!(report.citations.undeclared, 1);
+    assert_eq!(report.citations.admitted, 0);
+    assert_eq!(report.citations.refused(), 1);
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 364's measured hub, pinned at the grouping level: notices 17283790,
+/// 17284506, 17284981, 17285150, 17285196 and 17285468 each carry their OWN
+/// distinct predecessor in `REF_NOTICE/NO_DOC_OJS` but ALSO cite the one periodic
+/// indicative notice `2012/S 123-203577` they were all called under. Every one of
+/// those citations unioned onto node (2012, 203577), so the six became ONE
+/// component — six unrelated procurements, one Tender.
+///
+/// Six components, not one. The A/B is the point: the same six notices with the
+/// same shared citation RE-DECLARED as a contract notice do collapse into one, so
+/// what splits them is the declared kind and nothing else about the fixture.
+#[tokio::test]
+async fn six_notices_citing_one_shared_pin_stay_six_tenders() {
+    let hub = "2012/S 123-203577";
+    let publications = ["054353-2013", "055142-2013", "055143-2013", "055144-2013", "055145-2013", "055146-2013"];
+
+    for (name, kind, expected) in [
+        ("hub-pin", "PERIODIC_INDICATIVE_NOTICE", 6),
+        ("hub-cn", "CONTRACT_NOTICE", 1),
+    ] {
+        let (db, fetch_id, path) = scratch(name).await;
+        for (i, publication_id) in publications.iter().enumerate() {
+            // Each notice's own predecessor — the per-procedure edge, which is
+            // NOT gated (no declared kind: the coded-data-section reference TED
+            // itself picks per procedure).
+            let own = format!("2013/S 001-{:06}", 10_000 + i);
+            let mut parsed = Parsed {
+                sections: vec![sec("PROCEDURE", "Notice", None)],
+                values: vec![
+                    ted_text("PROCEDURE", "TED-TITLE", "Rail works"),
+                    ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", (10 + i as i64) * 86_400),
+                    ojs_edge("PROCEDURE", "TED-REF_NOTICE.NO_DOC_OJS", &own),
+                ],
+            };
+            parsed
+                .values
+                .extend(ojs_citation("PROCEDURE", "TED-NOTICE_NUMBER_OJ", 0, hub, kind));
+            let (notice, parse) = legacy_record(fetch_id, publication_id, R209, parsed);
+            db.record_notice(&notice, &parse).await.expect("notice");
+        }
+
+        let report = project::project(&db, false).await.expect("project");
+        assert_eq!(report.notices, 6);
+        assert_eq!(
+            report.tenders, expected,
+            "{name}: six notices sharing one {kind} citation"
+        );
+        assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, expected as i64);
+        if expected == 6 {
+            // Each keeps its own identity — and none is named after the hub.
+            assert_eq!(
+                scalar(&db, "SELECT COUNT(*) FROM tenders WHERE procedure_key = 'ojs:2012-203577'").await,
+                0,
+                "the hub node must not exist, let alone name a component"
+            );
+            assert_eq!(report.citations.periodic_indicative, 6);
+            assert_eq!(report.citations.admitted, 0);
+        } else {
+            assert_eq!(report.citations.admitted, 6);
+            assert_eq!(report.citations.refused(), 0);
+        }
+
+        let _ = std::fs::remove_file(&path);
+    }
+}
+
 /// The era boundary holds: an eForms notice never joins a legacy OJS chain even
 /// when a legacy reference collides with its publication number — straddling
 /// procedures are two Tenders (the accepted decision).

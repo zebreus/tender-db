@@ -140,6 +140,150 @@ pub enum IdKind {
     National,
 }
 
+// =========================================================================
+// Previous-publication citations and their declared kind (issue 364)
+// =========================================================================
+//
+// A legacy notice cites earlier publications from inside a
+// `PREVIOUS_PUBLICATION*` block, and the block SAYS what it is citing — the
+// number element carries only the number. Both of these are real bytes, from
+// the notices measured on issue 364:
+//
+//     <PREVIOUS_PUBLICATION_NOTICE_F5>
+//       <PREVIOUS_NOTICE_BUYER_PROFILE_F5 CHOICE="PERIODIC_INDICATIVE_NOTICE"/>
+//       <NOTICE_NUMBER_OJ>2012/S 123-203577</NOTICE_NUMBER_OJ>
+//
+//     <CNT_NOTICE_INFORMATION>
+//       <CNT_NOTICE_INFORMATION_S CHOICE="CONTRACT_NOTICE"/>
+//       <NOTICE_NUMBER_OJ>2012/S 206-339288</NOTICE_NUMBER_OJ>
+//
+// The two mean opposite things for identity. A contract notice is THIS
+// procedure's own earlier publication; a periodic indicative notice, buyer
+// profile or qualification system is one publication that many unrelated
+// procurements were called under. Collapsing both to `is_ref` is what welded
+// 2,983 versions and 127 buyers into one Tender (issue 364) — so the kind is
+// read here, at parse time, and recorded beside the citation.
+
+/// The elements whose text cites another OJS publication from inside a
+/// previous-publication block. The citation element itself never carries the
+/// kind — it is declared on a sibling or by the enclosing block's own name —
+/// which is why [`citation_kind`] takes the surroundings, not the element.
+///
+/// `NOTICE_NUMBER_OJ` is the whole family's spelling (defence, R2.0.8, R2.0.9)
+/// and every measured citation is one. `NOTICE_NUMBER` is an R2.0.8-only name
+/// that the rule table has always mapped to [`IdKind::Ref`] — "a reference to
+/// another OJS publication, a Tender chain edge" — but no committed fixture
+/// publishes one, so which block encloses it is unverified. It is gated with the
+/// rest rather than exempted: an undeclared reference joining two procedures is
+/// the failure this gate exists to stop, a missed link only splits a Tender
+/// (CONTEXT.md:112-113), and if the corpus does publish these they surface in
+/// the projection's `undeclared` tally rather than silently either way.
+///
+/// **Not** gated: `REF_NOTICE/NO_DOC_OJS`, the coded data section's
+/// OP-curated predecessor — one per notice, and the one TED itself picks per
+/// procedure (99.7 % agreement with the in-form citation across the 2019
+/// package, ted-legacy-mapping.md §3). It declares no kind because it needs
+/// none.
+pub const CITATION_ELEMENTS: &[&str] = &["NOTICE_NUMBER_OJ", "NOTICE_NUMBER"];
+
+/// Field-id suffix of the code row the walker records beside a citation, naming
+/// the kind the payload declared for it (`TED-NOTICE_NUMBER_OJ.PREV_KIND`). The
+/// citation's own row is untouched — value, scheme and `is_ref` are exactly what
+/// they were; this adds the qualifier the parse layer used to drop, so the
+/// identity layer can gate on it (`project::Ident::read`).
+pub const CITATION_KIND_SUFFIX: &str = "PREV_KIND";
+
+/// The kind recorded where nothing in reach declares one. **Not an edge**: a
+/// default of "edge" is the mistake issue 364 is about, and 7.8 % of legacy
+/// citations (238 of 3,037, measured over four February-2013 archive days) land
+/// here. The observed shape is the standard forms' own IV.3.2 "Other previous
+/// publications" slot (`OTHER_PREVIOUS_PUBLICATIONS/OTHER_PREVIOUS_PUBLICATION`,
+/// in the 2011 F03 and 2017 F06 fixtures), which is deliberately unspecified —
+/// the form offers it precisely for what the named checkboxes do not cover.
+pub const KIND_UNDECLARED: &str = "UNDECLARED";
+
+/// Blocks that name the kind by their OWN element name instead of a sibling
+/// `CHOICE`, with the kind they name.
+///
+/// - `CNT_NOTICE_INFORMATION` is the contract-notice slot of IV.3.2; its
+///   `CHOICE` sibling says `CONTRACT_NOTICE` in every observed payload, so this
+///   entry only matters for the defence spelling `CNT_NOTICE_INFORMATION_F18`,
+///   whose sibling carries `@VALUE` rather than `@CHOICE` (the mirrored XSDs'
+///   attribute lists; no defence fixture publishes one, so the spelling is
+///   read from the inventory, not from bytes).
+/// - `COMPLEMENTARY_INFO` is the R2.0.9 F14 corrigendum's VI.6 "Original notice
+///   reference" (`COMPLEMENTARY_INFO/NOTICE_NUMBER_OJ`, present in 143/143 F14s
+///   — ted-legacy-mapping.md §2.3/§3). Fixture-verified: in
+///   `r209/f14-001311-2019.xml` its value (`2018/S 237-542350`) is the same
+///   publication the notice names in `REF_NOTICE/NO_DOC_OJS`, and a corrigendum
+///   corrects its own procedure.
+/// - `PROCEDURE` is the R2.0.9 standard forms' IV.2.1, whose printed heading is
+///   "Previous publication concerning THIS procedure", and the F20's reference to
+///   the original award publication (ted-legacy-mapping.md §2.4/§3). Both are
+///   the "prior contract notice / prior award publication of the same procedure"
+///   half of the issue-364 decision. Not fixture-verified — no committed R2.0.9
+///   fixture fills IV.2.1 — but measured in the research: the in-form value
+///   agrees with the coded `REF_NOTICE` in 709 of 711 files of the 2019 package
+///   (99.7 %), the two mismatches being F20s citing the CAN where the coded
+///   section cites another link of the same chain. `PROCEDURE` and
+///   `COMPLEMENTARY_INFO` are R2.0.9-only names (the vendored inventory's
+///   `sources`), so neither can catch an R2.0.8 citation by accident.
+const KIND_BY_BLOCK: &[(&str, &str)] = &[
+    ("CNT_NOTICE_INFORMATION", "CONTRACT_NOTICE"),
+    ("CNT_NOTICE_INFORMATION_F18", "CONTRACT_NOTICE"),
+    ("COMPLEMENTARY_INFO", "ORIGINAL_NOTICE"),
+    ("PROCEDURE", "THIS_PROCEDURE"),
+];
+
+/// The declared kinds whose cited publication is a predecessor of THIS
+/// procedure — the only citations that may become a Tender chain edge.
+/// `CONTRACT_NOTICE` is 72.9 % of legacy citations; `ORIGINAL_NOTICE` and
+/// `THIS_PROCEDURE` are the by-position spellings of [`KIND_BY_BLOCK`].
+pub const SAME_PROCEDURE_KINDS: &[&str] =
+    &["CONTRACT_NOTICE", "ORIGINAL_NOTICE", "THIS_PROCEDURE"];
+
+/// The declared kinds that are a SHARED publication: one such notice is cited by
+/// many unrelated procurements, so joining on it merges procurements that have
+/// nothing to do with each other. Recorded as notice-layer detail, never an edge.
+///
+/// `SIMPLIFIED_CONTRACT_NOTICE_DPS` is here by decision, not by measurement: a
+/// dynamic purchasing system is one SYSTEM, not one procurement. Each call-off
+/// under a DPS has its own award and is its own procedure under CONTEXT.md's
+/// model, and the publication that established the DPS is a further, separate
+/// procedure — so the citation that every call-off makes to the DPS's own
+/// notice is exactly the many-procurements-one-publication shape above.
+pub const SHARED_PUBLICATION_KINDS: &[&str] = &[
+    "NOTICE_BUYER_PROFILE",
+    "NOTICE_QUALIFICATION_SYSTEM",
+    "PERIODIC_INDICATIVE_NOTICE",
+    "PRIOR_INFORMATION_NOTICE",
+    "SIMPLIFIED_CONTRACT_NOTICE_DPS",
+];
+
+/// The kind a citation's surroundings declare, as the code to record beside it:
+/// the sibling `CHOICE` where one is in reach (verbatim — an unrecognised
+/// spelling is recorded as itself rather than normalised away, so the
+/// projection's tally can name it), else the enclosing block's own name where
+/// that names the kind, else [`KIND_UNDECLARED`].
+pub fn citation_kind(block: &str, choice: Option<&str>) -> String {
+    if let Some(choice) = choice.map(str::trim).filter(|c| !c.is_empty()) {
+        return choice.to_owned();
+    }
+    KIND_BY_BLOCK
+        .iter()
+        .find(|&&(b, _)| b == block)
+        .map_or(KIND_UNDECLARED, |&(_, kind)| kind)
+        .to_owned()
+}
+
+/// Whether a recorded citation kind makes its citation a same-procedure
+/// predecessor, i.e. a Tender-identity chain edge. Everything else — a shared
+/// publication, an undeclared slot, a spelling this era never showed us — is
+/// refused, and the projection counts the refusal by kind.
+pub fn kind_is_same_procedure(kind: &str) -> bool {
+    SAME_PROCEDURE_KINDS.contains(&kind)
+}
+
 /// Parent-context overrides for the few names that mean different things in
 /// different places.
 const CONTEXT: &[(&str, &str, Rule)] = &[

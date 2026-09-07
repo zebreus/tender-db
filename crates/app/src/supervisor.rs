@@ -2066,6 +2066,38 @@ fn wall_suffix(w: &store::WallCounts) -> String {
     }
 }
 
+/// Issue 364: what the legacy previous-publication kind gate did this run, as the
+/// suffix that rides the DURABLE job row — the `wall_suffix` pattern, and for the
+/// same reason (this runtime's stderr does not reach journald, issues 61/63).
+///
+/// A legacy citation joins two notices into one Tender only where the payload
+/// declares a same-procedure predecessor; a prior-information, buyer-profile,
+/// periodic-indicative, qualification-system or DPS citation is one publication
+/// that many unrelated procurements make, and joining on it welds them. The
+/// refusals are printed per kind because the aggregate cannot be read: 19 % of
+/// legacy citations refused is the measured, expected shape, while the same total
+/// arriving as `undeclared` would mean an era publishes a slot this gate has not
+/// been taught. Nothing to say on a run that planned no legacy citation at all.
+fn citation_suffix(c: &project::CitationGate) -> String {
+    if c.admitted == 0 && c.refused() == 0 {
+        return String::new();
+    }
+    format!(
+        "; issue-364 previous-publication citations: {} admitted, {} refused \
+         (prior-information {}, buyer-profile {}, periodic-indicative {}, \
+         qualification-system {}, DPS {}, undeclared {}, unknown kind {})",
+        c.admitted,
+        c.refused(),
+        c.prior_information,
+        c.buyer_profile,
+        c.periodic_indicative,
+        c.qualification_system,
+        c.dps,
+        c.undeclared,
+        c.unknown_kind,
+    )
+}
+
 const STOPPABLE_KINDS: &[&str] = &[
     "reparse",
     "data-quality",
@@ -3113,8 +3145,9 @@ impl Supervisor {
                 // rule the capped reparse follows, issue 244).
                 let cancelled = if report.stopped { "CANCELLED at a checkpoint — " } else { "" };
                 let wall = wall_suffix(&report.wall);
+                let citations = citation_suffix(&report.citations);
                 Ok(format!(
-                    "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged{wall}",
+                    "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged{wall}{citations}",
                     report.notices,
                     report.tenders,
                     report.islands,
@@ -11678,6 +11711,47 @@ mod tests {
         // through at the pre-318 bar.
         let errored = store::WallCounts { resolved: true, enabled: true, errored: 2, ..Default::default() };
         assert!(wall_suffix(&errored).contains("PROBE(S) ERRORED"), "{}", wall_suffix(&errored));
+    }
+
+    /// Issue 364: the citation suffix has to say what a bare total cannot.
+    ///
+    /// ~19 % of legacy previous-publication citations are the welding kind — a
+    /// prior-information, buyer-profile, periodic-indicative or
+    /// qualification-system publication that many unrelated procurements cite —
+    /// so a large `refused` is the EXPECTED shape and must not read as an alarm.
+    /// The same total arriving as `undeclared` is the opposite: an era publishing
+    /// a slot the gate has not been taught, splitting Tenders that should chain.
+    /// Only a per-kind line tells those apart, and a run that planned no legacy
+    /// citation at all must stay silent rather than print a row of zeros.
+    #[test]
+    fn the_citation_suffix_names_the_kind_it_refused() {
+        assert_eq!(
+            citation_suffix(&project::CitationGate::default()),
+            "",
+            "a run with no legacy citation must say nothing about the gate"
+        );
+
+        let expected = project::CitationGate {
+            admitted: 2_214,
+            prior_information: 481,
+            buyer_profile: 53,
+            periodic_indicative: 27,
+            qualification_system: 11,
+            dps: 13,
+            undeclared: 238,
+            unknown_kind: 0,
+        };
+        let s = citation_suffix(&expected);
+        assert!(s.contains("2214 admitted"), "{s}");
+        assert!(s.contains("823 refused"), "{s}");
+        assert!(s.contains("prior-information 481"), "{s}");
+        assert!(s.contains("undeclared 238"), "{s}");
+
+        // Admitting everything is still worth a line: it is what a pre-re-parse
+        // corpus looks like (no kind rows yet), and reading it as "the gate is
+        // working" would be the issue-338 mistake one instrument over.
+        let none_refused = project::CitationGate { admitted: 9, ..Default::default() };
+        assert!(citation_suffix(&none_refused).contains("0 refused"));
     }
 
     /// Issue 313: the weekly pre-dawn tick must actually enqueue all three

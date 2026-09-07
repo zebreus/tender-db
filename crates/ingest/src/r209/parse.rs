@@ -558,6 +558,26 @@ impl Walk {
                         IdKind::National => (Some("national".to_owned()), false),
                     };
                     self.emit(ctx.section, &field, NoticeValue::Id { scheme, value: text, is_ref });
+                    // Issue 364: a previous-publication citation carries only
+                    // the number; WHAT it cites is declared beside it — on a
+                    // sibling's `CHOICE`, or by the enclosing block's own name.
+                    // Record that kind as a code row paired with the citation by
+                    // `(section, field, ordinal)`, which holds because both go
+                    // through `emit` once per citation, in document order, into
+                    // the same section (translation copies emit neither). The
+                    // citation row above is unchanged — this is the qualifier
+                    // the parse layer was dropping, not a reinterpretation of
+                    // what it already stored.
+                    if rules::CITATION_ELEMENTS.contains(&name) {
+                        self.emit(
+                            ctx.section,
+                            &format!("{field}.{}", rules::CITATION_KIND_SUFFIX),
+                            NoticeValue::Code {
+                                list: None,
+                                code: rules::citation_kind(ctx.parent, sibling_choice(el).as_deref()),
+                            },
+                        );
+                    }
                 }
                 self.no_element_children(el, &path)?;
             }
@@ -838,6 +858,23 @@ fn paired_time<'a>(el: roxmltree::Node<'a, '_>, date_name: &str) -> Option<Strin
 fn paired_date<'a>(el: roxmltree::Node<'a, '_>, time_name: &str) -> Option<String> {
     let date_name = DATE_TIME_PAIRS.iter().find(|(_, t)| *t == time_name)?.0;
     sibling_text(el, date_name)
+}
+
+/// The kind a previous-publication block declares on a SIBLING of the citation
+/// (issue 364): R2.0.8/R2.0.9 put it in a `CHOICE` attribute on the element
+/// *before* the number (`<CNT_NOTICE_INFORMATION_S CHOICE="CONTRACT_NOTICE"/>`),
+/// never on the number itself. Element-name-agnostic on purpose — every form
+/// family spells that element differently (`PREVIOUS_NOTICE_BUYER_PROFILE_F3/F5/
+/// F6/F15/F18/F19`, `PRIOR_INFORMATION_NOTICE_F2/F17`, `CNT_NOTICE_INFORMATION_S`)
+/// while all of them declare through the same one attribute, which is already in
+/// [`CAPTURED_ATTRIBUTES`] and so is claimed content either way.
+fn sibling_choice(el: roxmltree::Node<'_, '_>) -> Option<String> {
+    el.parent_element()?
+        .children()
+        .filter(|c| c.is_element() && *c != el)
+        .find_map(|c| c.attribute("CHOICE"))
+        .map(|c| c.trim().to_owned())
+        .filter(|c| !c.is_empty())
 }
 
 fn sibling_text(el: roxmltree::Node<'_, '_>, name: &str) -> Option<String> {

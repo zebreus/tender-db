@@ -33,6 +33,7 @@
 //! Change scoping is diff-based (ADR-0001 amendment) and lives in `store`,
 //! which has both the old and the new version in hand.
 
+use crate::r209::rules;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::fs::File;
@@ -68,6 +69,11 @@ pub struct Report {
     /// r3-merge-plan report. `errored` non-zero means the wall was
     /// unavailable and binds went through at the pre-318 bar.
     pub wall: store::WallCounts,
+    /// Issue 364: what the legacy previous-publication kind gate admitted and
+    /// refused this run, per declared kind. Counted where the plan is built, so
+    /// it covers every notice the run planned — a full run's whole corpus, an
+    /// incremental run's delta plus its touched expansion.
+    pub citations: CitationGate,
 }
 
 /// The canonical fields this layer carries, as data. Source field ids are
@@ -1153,10 +1159,12 @@ pub async fn project_with_progress_phase2_stoppable(
              skipping Phase-1 and re-running grouping + Phase-2 (salvage)"
         );
     } else {
-        let (notices, mentions, stopped) = build_plan(db, now, total, &mut on_progress, stop).await?;
+        let (notices, mentions, stopped, citations) =
+            build_plan(db, now, total, &mut on_progress, stop).await?;
         report.stopped = stopped;
         report.notices = notices;
         report.mentions = mentions;
+        report.citations = citations;
     }
     probe(db, "Phase-1 (build_plan)");
     if report.stopped {
@@ -1306,7 +1314,7 @@ async fn build_plan(
     total: u64,
     mut on_progress: impl FnMut(Progress),
     stop: &(dyn Fn() -> bool + Sync),
-) -> turso::Result<(u64, u64, bool)> {
+) -> turso::Result<(u64, u64, bool, CitationGate)> {
     const READ_CHUNK: i64 = 10_000;
     let t0 = std::time::Instant::now();
     db.reset_plan().await?;
@@ -1324,6 +1332,9 @@ async fn build_plan(
     struct PlanChunk {
         rows: Vec<store::PlanRow>,
         mentions: Vec<Mention>,
+        /// Issue 364's per-kind tally for this chunk's notices, summed by the
+        /// writer half — the sweep is where `Ident::read` runs.
+        citations: CitationGate,
     }
     let (tx, rx) = std::sync::mpsc::sync_channel::<turso::Result<PlanChunk>>(0);
     let readers = db.readers(1)?;
@@ -1361,12 +1372,14 @@ async fn build_plan(
                     after_id = last.id;
                     let mut mentions: Vec<Mention> = Vec::new();
                     let mut rows: Vec<store::PlanRow> = Vec::with_capacity(chunk.len());
+                    let mut citations = CitationGate::default();
                     for (notice, parsed) in &chunk {
                         let ident = Ident::read(notice, parsed);
                         mentions.extend(NoticeState::mentions(ident.sdk01, notice.id, parsed));
+                        citations.add(ident.citations);
                         rows.push(ident.into_plan_row());
                     }
-                    if tx.send(Ok(PlanChunk { rows, mentions })).is_err() {
+                    if tx.send(Ok(PlanChunk { rows, mentions, citations })).is_err() {
                         return; // the writer half bailed on an error
                     }
                 }
@@ -1375,6 +1388,7 @@ async fn build_plan(
     };
 
     let (mut notices, mut mentions_total) = (0u64, 0u64);
+    let mut citations = CitationGate::default();
     let mut chunks = 0usize;
     // The newest planned notice id — the legacy-adjacency attestation bound
     // (issue 58 v2). Chunks arrive id-ordered, but take the max rather than
@@ -1398,6 +1412,7 @@ async fn build_plan(
             }
         };
         notices += chunk.rows.len() as u64;
+        citations.add(chunk.citations);
         max_planned = chunk.rows.iter().map(|r| r.notice_id).fold(max_planned, i64::max);
         let resolved = match db.resolve_mentions(&mut resolver, &chunk.mentions, now).await {
             Ok(resolved) => resolved,
@@ -1479,7 +1494,7 @@ async fn build_plan(
         t0.elapsed().as_secs_f64(),
         if stopped { " — STOPPED at a checkpoint (issue 256)" } else { "" }
     );
-    Ok((notices, mentions_total, stopped))
+    Ok((notices, mentions_total, stopped, citations))
 }
 
 /// Run only the interruptible PREFIX of a full rebuild — clear the canonical
@@ -1494,8 +1509,9 @@ pub async fn project_plan_only(db: &Db) -> turso::Result<Report> {
         db.clear_canonical().await?;
         db.strip_organization_indexes().await?;
         let total = db.parsed_notice_count().await?;
-        let (notices, mentions, _) = build_plan(db, store::now_unix(), total, |_| {}, &|| false).await?;
-        Ok::<Report, turso::Error>(Report { notices, mentions, ..Default::default() })
+        let (notices, mentions, _, citations) =
+            build_plan(db, store::now_unix(), total, |_| {}, &|| false).await?;
+        Ok::<Report, turso::Error>(Report { notices, mentions, citations, ..Default::default() })
     }
     .await;
     let restored = db.set_foreign_keys(true).await;
@@ -2039,6 +2055,10 @@ pub async fn project_incremental_chunked_observed(
             if changed_set.contains(&notice.id) {
                 mentions.extend(NoticeState::mentions(ident.sdk01, notice.id, p));
             }
+            // Issue 364: counted in the PLAN build only — pass 1 above reads the
+            // same notices' identity again, and counting there too would double
+            // every citation in the delta.
+            report.citations.add(ident.citations);
             rows.push(ident.into_plan_row());
         }
         db.insert_plan(&rows).await?;
@@ -3275,11 +3295,13 @@ fn kind_of(subtype: Option<&str>) -> &'static str {
 ///   Tender with every notice under the same key, across Sources (a TED eForms
 ///   procedure and its DÖE twin publish one BT-04 UUID — ADR-0003).
 /// - **Legacy OJS chain** — a legacy TED notice publishes no key; its own OJS
-///   number is a graph node and each `is_ref` OJS id an edge. The transitive
-///   closure is one Tender, identified by the *earliest* OJS number in the
-///   component (including not-yet-ingested edge targets, so identity is stable as
-///   backfill deepens). A late edge merging two components is an ADR-0003-style
-///   merge; the absorbed key's rows are retired with `removed` events.
+///   number is a graph node and an `is_ref` OJS id an edge — but only where the
+///   payload declares the cited publication to be a predecessor of the SAME
+///   procedure ([`ojs_chain_edges`], issue 364). The transitive closure is one
+///   Tender, identified by the *earliest* OJS number in the component (including
+///   not-yet-ingested edge targets, so identity is stable as backfill deepens).
+///   A late edge merging two components is an ADR-0003-style merge; the absorbed
+///   key's rows are retired with `removed` events.
 /// - **Island** — anything else (an eForms notice without BT-04, a DÖE numeric
 ///   island) is a single-notice Tender keyed by that notice.
 struct Ident {
@@ -3297,6 +3319,146 @@ struct Ident {
     /// one named three, and a procedure republished in parts is still one procedure.
     prev_refs: Vec<String>,
     subtype: Option<String>,
+    /// Issue 364: what the previous-publication kind gate did to this notice's
+    /// citations. Not part of the plan row — a tally, summed into the run's
+    /// [`Report`] so a re-projection can be read against it.
+    citations: CitationGate,
+}
+
+/// Issue 364 — what the previous-publication kind gate did, per declared kind.
+///
+/// A legacy citation becomes a Tender chain edge only where the payload declares
+/// it to be a predecessor of THIS procedure. Everything else is refused, and
+/// refusing silently is how the defect stood for years: 212 Tenders each fusing
+/// hundreds of unrelated procurements read green because nothing counted. So the
+/// gate keeps a tally, it rides the durable [`Report`] (the `WallCounts`
+/// precedent — this runtime's stderr does not reach journald, issues 61/63), and
+/// the supervisor prints it on the job row.
+///
+/// The shares to expect, measured over four February-2013 archive days (6,327
+/// notices, 3,037 citations): `CONTRACT_NOTICE` 72.9 %, `PRIOR_INFORMATION_NOTICE`
+/// 15.8 %, undeclared 7.8 %, `NOTICE_BUYER_PROFILE` 1.7 %,
+/// `PERIODIC_INDICATIVE_NOTICE` 0.9 %, `SIMPLIFIED_CONTRACT_NOTICE_DPS` 0.4 %,
+/// `NOTICE_QUALIFICATION_SYSTEM` 0.4 %. A run whose `undeclared` dwarfs that share
+/// is the signal that an era publishes a shape this gate has not been taught —
+/// look at it before assuming the split is right.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct CitationGate {
+    /// Citations admitted as chain edges: the payload declared a same-procedure
+    /// predecessor (`CONTRACT_NOTICE`, or a corrigendum's original notice).
+    pub admitted: u64,
+    pub prior_information: u64,
+    pub periodic_indicative: u64,
+    pub buyer_profile: u64,
+    pub qualification_system: u64,
+    /// A simplified DPS notice: one system, not one procurement (see
+    /// [`rules::SHARED_PUBLICATION_KINDS`]).
+    pub dps: u64,
+    /// No kind declared anywhere in reach — the forms' own "other previous
+    /// publications" slot and anything else unnamed. Refused by default,
+    /// because defaulting to "edge" is the mistake issue 364 is about.
+    pub undeclared: u64,
+    /// A declared kind neither table knows. Refused, and worth looking at: it
+    /// means the corpus publishes a spelling this gate has never seen.
+    pub unknown_kind: u64,
+}
+
+impl CitationGate {
+    pub fn refused(&self) -> u64 {
+        self.prior_information
+            + self.periodic_indicative
+            + self.buyer_profile
+            + self.qualification_system
+            + self.dps
+            + self.undeclared
+            + self.unknown_kind
+    }
+
+    fn add(&mut self, other: CitationGate) {
+        self.admitted += other.admitted;
+        self.prior_information += other.prior_information;
+        self.periodic_indicative += other.periodic_indicative;
+        self.buyer_profile += other.buyer_profile;
+        self.qualification_system += other.qualification_system;
+        self.dps += other.dps;
+        self.undeclared += other.undeclared;
+        self.unknown_kind += other.unknown_kind;
+    }
+
+    fn refuse(&mut self, kind: &str) {
+        let slot = match kind {
+            "PRIOR_INFORMATION_NOTICE" => &mut self.prior_information,
+            "PERIODIC_INDICATIVE_NOTICE" => &mut self.periodic_indicative,
+            "NOTICE_BUYER_PROFILE" => &mut self.buyer_profile,
+            "NOTICE_QUALIFICATION_SYSTEM" => &mut self.qualification_system,
+            "SIMPLIFIED_CONTRACT_NOTICE_DPS" => &mut self.dps,
+            rules::KIND_UNDECLARED => &mut self.undeclared,
+            _ => &mut self.unknown_kind,
+        };
+        *slot += 1;
+    }
+}
+
+/// This notice's OJS chain edges, and the tally of what the kind gate refused
+/// (issue 364).
+///
+/// Every `is_ref` OJS-scheme id is a candidate edge, as before. The gate applies
+/// only to those the parse layer marked as a previous-publication CITATION — the
+/// `<field>.PREV_KIND` code row the legacy walker records beside
+/// `NOTICE_NUMBER_OJ`/`NOTICE_NUMBER`, paired by `(section, field, ordinal)`.
+///
+/// An id with no such row keeps its pre-364 meaning, and that is deliberate in
+/// three ways. `REF_NOTICE/NO_DOC_OJS` — the coded-data-section predecessor — is
+/// the reference TED itself picks per procedure, and in every fixture that has
+/// both it names the SAME publication as the same-procedure citation (the 2011
+/// F03's `CONTRACT_NOTICE`, the 2017 F06's, the 2019 F14's original notice) and
+/// never the PIN; the text era's `TXT-RN` and the eForms edge have their own
+/// warrants (ADR-0011). And a notice parsed BEFORE this gate existed carries no
+/// kind rows at all, so it keeps today's grouping until it is re-parsed — the
+/// change lands without a flag day, and takes effect era by era as the re-parse
+/// deepens.
+fn ojs_chain_edges(parsed: &Parsed) -> (Vec<OjsKey>, CitationGate) {
+    let mut gate = CitationGate::default();
+    let mut edges = Vec::new();
+    for v in &parsed.values {
+        let NoticeValue::Id { value, is_ref: true, scheme } = &v.value else { continue };
+        if scheme.as_deref() != Some("ojs") {
+            continue;
+        }
+        match citation_kind_of(parsed, v) {
+            // Not a previous-publication citation: unchanged (see above).
+            None => edges.extend(ojs_key(value)),
+            Some(kind) if rules::kind_is_same_procedure(kind) => {
+                gate.admitted += 1;
+                edges.extend(ojs_key(value));
+            }
+            // A shared publication that many unrelated procurements cite, or a
+            // slot that declares nothing. Recorded as notice detail — it is
+            // still in the parse layer, and still served — but it joins nothing.
+            Some(kind) => gate.refuse(kind),
+        }
+    }
+    (edges, gate)
+}
+
+/// The kind the parse layer recorded beside one citation, if this id is one.
+/// Paired by `(section, field, ordinal)`: the walker emits the code row
+/// immediately after the citation, in the same section, once per citation, so
+/// the ordinals of `TED-X` and `TED-X.PREV_KIND` advance together.
+fn citation_kind_of<'a>(parsed: &'a Parsed, citation: &store::ValueRow) -> Option<&'a str> {
+    let field = format!("{}.{}", citation.field_id, rules::CITATION_KIND_SUFFIX);
+    parsed
+        .values
+        .iter()
+        .find(|v| {
+            v.ordinal == citation.ordinal
+                && v.field_id == field
+                && v.section_id == citation.section_id
+        })
+        .and_then(|v| match &v.value {
+            NoticeValue::Code { code, .. } => Some(code.as_str()),
+            _ => None,
+        })
 }
 
 /// Encode an OJS key `(year, number)` as `year*1e9 + number` — a single sortable
@@ -3354,18 +3516,7 @@ impl Ident {
     fn read(notice: &store::NoticeRef, parsed: &Parsed) -> Ident {
         let legacy = is_legacy_profile(&notice.profile);
         let sdk01 = is_sdk01_profile(&notice.profile);
-        // The chain edges: every `is_ref` OJS-scheme id the notice carries. Same
-        // reading as [`NoticeState::read`], so the grouping is identical.
-        let mut ojs_edges: Vec<OjsKey> = parsed
-            .values
-            .iter()
-            .filter_map(|v| match &v.value {
-                NoticeValue::Id { value, is_ref: true, scheme } if scheme.as_deref() == Some("ojs") => {
-                    ojs_key(value)
-                }
-                _ => None,
-            })
-            .collect();
+        let (mut ojs_edges, citations) = ojs_chain_edges(parsed);
         ojs_edges.sort_unstable();
         ojs_edges.dedup();
         let ojs_self = legacy
@@ -3390,6 +3541,7 @@ impl Ident {
             ojs_edges,
             prev_refs: previous_publications(parsed),
             subtype: first_code(parsed, SUBTYPE_FIELD),
+            citations,
         }
     }
 

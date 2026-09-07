@@ -299,3 +299,77 @@ fn notice_behind_a_doctype_parses_identically() {
     assert_eq!(with_dtd.values, plain.values, "the strip must be lossless");
     assert_eq!(with_dtd.sections.len(), plain.sections.len());
 }
+
+/// Issue 364: the four previous-publication citations of one real 2011 F03 mean
+/// four different things, and the payload says which. `PREVIOUS_NOTICE_BUYER_PROFILE_F3
+/// CHOICE="PRIOR_INFORMATION_NOTICE"` is the PIN the procurement was called under —
+/// one publication many unrelated procurements cite, so not a same-procedure
+/// predecessor; `CNT_NOTICE_INFORMATION_S CHOICE="CONTRACT_NOTICE"` in the SAME
+/// notice is this award's own contract notice, and it is. The two remaining
+/// citations sit in the form's `OTHER_PREVIOUS_PUBLICATIONS` slot, which declares
+/// nothing at all — the 7.8 % undeclared class, refused by default because
+/// defaulting to "edge" is what welded 2,983 versions into one Tender.
+///
+/// Corroboration that the gate keeps the RIGHT one: the coded data section's
+/// `REF_NOTICE/NO_DOC_OJS` — TED's own per-procedure predecessor pick — names
+/// `2010/S 133-203552`, the contract notice, and not the PIN.
+#[test]
+fn a_pin_citation_and_its_contract_notice_are_told_apart_by_their_declared_kind() {
+    use ingest::r209::rules;
+
+    let f03 = parse_fixture("r208/f03-annexd-neg-022211-2011.xml");
+    let citations: Vec<(String, String)> = f03
+        .values
+        .iter()
+        .filter(|v| v.field_id == "TED-NOTICE_NUMBER_OJ")
+        .map(|v| {
+            let number = match &v.value {
+                NoticeValue::Id { value, is_ref: true, scheme }
+                    if scheme.as_deref() == Some("ojs") =>
+                {
+                    value.clone()
+                }
+                other => panic!("a citation is not an OJS reference: {other:?}"),
+            };
+            let kind = f03
+                .values
+                .iter()
+                .find(|k| {
+                    k.section_id == v.section_id
+                        && k.field_id == format!("TED-NOTICE_NUMBER_OJ.{}", rules::CITATION_KIND_SUFFIX)
+                        && k.ordinal == v.ordinal
+                })
+                .map(|k| match &k.value {
+                    NoticeValue::Code { code, .. } => code.clone(),
+                    other => panic!("a citation kind is not a code: {other:?}"),
+                })
+                .expect("every citation carries its declared kind");
+            (number, kind)
+        })
+        .collect();
+
+    assert_eq!(
+        citations,
+        vec![
+            ("2010/S 66-098284".to_owned(), "PRIOR_INFORMATION_NOTICE".to_owned()),
+            ("2010/S 133-203552".to_owned(), "CONTRACT_NOTICE".to_owned()),
+            ("2010/S 237-360907".to_owned(), rules::KIND_UNDECLARED.to_owned()),
+            ("2010/S 197-299903".to_owned(), rules::KIND_UNDECLARED.to_owned()),
+        ]
+    );
+
+    // Only the contract notice is a same-procedure predecessor — the identity
+    // layer admits exactly that one as a chain edge.
+    let admitted: Vec<&str> = citations
+        .iter()
+        .filter(|(_, kind)| rules::kind_is_same_procedure(kind))
+        .map(|(number, _)| number.as_str())
+        .collect();
+    assert_eq!(admitted, vec!["2010/S 133-203552"]);
+
+    // And it is the one TED's own coded-data-section predecessor names.
+    assert!(matches!(
+        value(&f03, "PROCEDURE", "TED-REF_NOTICE.NO_DOC_OJS"),
+        NoticeValue::Id { value, is_ref: true, .. } if value == "2010/S 133-203552"
+    ));
+}
