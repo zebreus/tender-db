@@ -1,6 +1,6 @@
 # 341 — eForms-era notices are served in their original language only; the translations are not in TED's bulk
 
-Status: ready-for-agent — DECIDED 2026-09-07 (owner): option 1, the eForms era serves the notice's original language and the docs say so; the one remaining unit is the `/v1/docs` note and a README line (decision entry at the bottom). Was: needs-decision (filed 2026-09-02 on Lennart's "didn't you create issues
+Status: DONE 2026-09-07 (owner) — option 1 documented: the `original_lang` note in `/v1/docs` (`sql.rs`) and the README's `lang=` clause now say the eForms era is served in the notice's own language and that TED's per-language renderings are machine translations outside the bulk feed, not ingested. Rides the issue-363 deploy. Was: ready-for-agent — DECIDED 2026-09-07 (owner): option 1
 for the per-era gaps"). Owner recommendation below; the decision is Lennart's
 because every option is a product/cost call, not a build.
 Kind: coverage gap (language) — the one era where "full multilanguage" is not
@@ -66,3 +66,11 @@ and 0.18 % of versions carry a second published language, which we do serve. So:
 eForms era serves the original, documented in `/v1/docs` and the README. Reversible by
 a later entry if a bulk translation source appears. Unit: the two doc lines (a `/v1/docs`
 note is a string in `sql.rs`, so it rides the next code deploy).
+
+## Unit (2026-09-07): the two doc lines
+
+`/v1/docs` — the `original_lang` column note (a string in `crates/app/src/v1/sql.rs`) now ends:
+"The eForms era is served in this language: TED's per-language renderings are machine
+translations outside the bulk feed and are not ingested, so ?lang= picks only among
+languages the publisher wrote (issue 341)." README — the `lang=de` clause of the list-tenders
+paragraph says the same in one sentence. Deployed with issue 363's bundle (see 363 for the rev).

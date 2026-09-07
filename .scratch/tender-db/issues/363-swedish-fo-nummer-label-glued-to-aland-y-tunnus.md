@@ -1,6 +1,6 @@
 # 363 — `FONR01446821`: the Swedish "FO-nummer" label glued to Åland Y-tunnus rows
 
-Status: ready-for-agent (filed 2026-09-07 by the owner from the issue-358 unit-2 listing)
+Status: BUILT 2026-09-07 (owner) — vocabulary + shape rule + tests; gate/deploy/repair recorded below. The class is ~4× the AX finding: 432 labelled FI rows, 355 with a bare twin standing. Was: ready-for-agent (filed 2026-09-07 from the issue-358 unit-2 listing)
 Kind: defect (organization layer — identifier normalisation, the issue-328/359 label class)
 Relates to: 328 (label prefixes in front of the identifier), 359 (the PL/IT/ES vocabulary
 extension and the CIF-shape guard), 358 (whose unit 2 moves these rows to `FI`)
@@ -34,3 +34,33 @@ rows: `identifier LIKE 'FONR%' OR identifier LIKE 'FONUMMER%'`.
    refused rather than mangled. Test both.
 3. Run `repair-label-prefixes` dry → wet (issue 359's path) so the standing rows catch up;
    then R2 folds the reunited pairs.
+
+## Measured (2026-09-07, bounded reads on the `FI` national rows, after 358 folded AX in)
+
+| label | rows | with a bare twin standing |
+|---|---|---|
+| `Y` + digits (`Y 0123456-7` → `Y01234567`) | 266 | 213 |
+| `YTUNNUS…` | 149 | 129 |
+| `FONR…` | 12 | 9 |
+| `FONUMMER…` | 3 | 3 |
+| `BUSINESSID…` | 2 | 1 |
+| **total** | **432** | **355** |
+
+Not taken: `YT` + digits (1 row), `YTUNNUJ…` (2, a typo), `UUDELY1…` (12 — an ELY-centre
+label, not an id), `RYHM600…` (4). The twin rate (82 %) is the 328 shape exactly: the label
+splits an organization from its own correctly-formed row.
+
+## Built (2026-09-07)
+
+- `countries::LABEL_PREFIXES` gains `YTUNNUS`, `FONUMMER`, `FONR`, `BUSINESSID` (the table is
+  re-sorted longest-first; the ordering test asserts it).
+- The bare `Y` is a SHAPE RULE in `label_prefix_stripped`, not a table entry: `Y` followed by
+  seven or eight digits and nothing else. A one-letter table entry would match every Y-led
+  word; a Spanish NIE (`Y7395817K`) ends in its check letter and never matches; `YT22493`
+  and `YMPARISTO…` keep their Y. The caller's re-validation still decides: under `FI` the
+  remainder meets the HARD Y-tunnus checksum, so `Y01274856` (bad check digit) stays as
+  published rather than being mangled — pinned in
+  `finnish_labels_come_off_and_the_y_tunnus_is_checked` (project.rs) and
+  `the_bare_y_strips_only_by_shape` (countries.rs).
+- The repair path is unchanged: `repair-label-prefixes` walks every identifier row through
+  the injected `label_prefix_stripped`, so the shape rule is picked up by the same job.

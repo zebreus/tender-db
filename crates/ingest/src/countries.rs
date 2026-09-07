@@ -513,6 +513,15 @@ mod cluster_filters {
 /// division — the strip runs first and the register arm keeps the value only when
 /// the remainder is refused. `VAT` alone is NOT listed: `VATNO…` is as often
 /// the Norwegian country prefix as the English word.
+///
+/// **The Finnish labels (issue 363).** Read off the `FI` national rows on
+/// 2026-09-07 (the issue-358 move had just folded Åland into them): `YTUNNUS…`
+/// 149 rows, `FONR…` 12 and `FONUMMER…` 3 (Swedish *FO-nummer*, how Åland and
+/// the Swedish-speaking municipalities write the same id), `BUSINESSID…` 2 —
+/// and 11 of the first 12 `YTUNNUS` rows read had a bare twin standing
+/// (Ramboll, Siemens, Kerava, Rauma…). The bare `Y` abbreviation (`Y 0123456-7`
+/// → `Y01234567`, 266 rows) is NOT a table entry: a one-letter prefix would
+/// match every Y-led word, so it is a shape rule in [`label_prefix_stripped`].
 const LABEL_PREFIXES: &[&str] = &[
     "UMSATZSTEUERIDENTIFIKATIONSNUMMERGEM27AUMSATZSTEUERGESETZ",
     "UMSATZSTEUERIDENTIFIKATIONSNUMMERGEM27AUSTG",
@@ -535,16 +544,20 @@ const LABEL_PREFIXES: &[&str] = &[
     "PARTITAIVA",
     "USTIDENTNR",
     "USTIDNRUID",
+    "BUSINESSID",
     "NUMERNIP",
     "NIPNUMER",
+    "FONUMMER",
     "USTIDNR",
     "CFEPIVA",
+    "YTUNNUS",
     "USTID",
     "VATID",
     "REGON",
     "IDNR",
     "STNR",
     "PIVA",
+    "FONR",
     "NIP",
     "KRS",
     "CIF",
@@ -576,7 +589,18 @@ pub fn label_prefix_stripped(value: &str) -> Option<&str> {
     // `UMSATZSTEUERIDENTIFIKATIONSNUMMER` into the identifier
     // `ENTIFIKATIONSNUMMER`, by matching `UMSATZSTEUERID` after the exact entry
     // left nothing. Its own test caught it.
-    let label = LABEL_PREFIXES.iter().find(|p| value.starts_with(**p))?;
+    let Some(label) = LABEL_PREFIXES.iter().find(|p| value.starts_with(**p)) else {
+        // Issue 363: the Finnish `Y` (Y-tunnus) abbreviation — shape-bound
+        // rather than a table entry. `Y` followed by seven or eight digits and
+        // NOTHING ELSE: a Spanish NIE (`Y1234567X`) ends in its check letter,
+        // a word (`YMPARISTO…`) has letters after the Y, and neither matches.
+        // The caller's re-validation still decides: under `FI` the remainder
+        // meets the HARD Y-tunnus checksum, so a mistyped one stays as
+        // published rather than being mangled.
+        let rest = value.strip_prefix('Y')?;
+        return ((7..=8).contains(&rest.len()) && rest.bytes().all(|b| b.is_ascii_digit()))
+            .then_some(rest);
+    };
     let rest = &value[label.len()..];
     // A label with nothing after it is a field name, not an identifier.
     (!rest.is_empty()).then_some(rest)
@@ -635,6 +659,15 @@ mod label_prefixes {
             ("CIFA48283964", "A48283964"),            // IDOM
             ("NIF501234567", "501234567"),            // a Portuguese NIF
             ("VATIDGB287249363", "GB287249363"),      // Therakos EMEA
+            // Issue 363 — the Finnish field names, prod values from the FI
+            // national rows (Kerava, an Åland company, Ramboll).
+            ("YTUNNUS01274855", "01274855"),
+            ("FONR01446821", "01446821"),
+            ("FONUMMER01446821", "01446821"),
+            ("BUSINESSID010111975", "010111975"),
+            // …and the bare `Y` abbreviation, by shape.
+            ("Y01274855", "01274855"),
+            ("Y1274855", "1274855"),
         ] {
             assert_eq!(label_prefix_stripped(raw), Some(want), "{raw}");
         }
@@ -649,6 +682,18 @@ mod label_prefixes {
         assert_eq!(label_prefix_stripped("STNR"), None);
         assert_eq!(label_prefix_stripped("NIP"), None);
         assert_eq!(label_prefix_stripped("CIF"), None);
+        assert_eq!(label_prefix_stripped("YTUNNUS"), None);
+        assert_eq!(label_prefix_stripped("Y"), None);
+    }
+
+    /// Issue 363: the bare `Y` is a shape, not a word — only `Y` + 7–8 digits
+    /// and nothing else. A Spanish NIE keeps its `Y`, and so does any Y-led
+    /// word or a Y-led value of another length.
+    #[test]
+    fn the_bare_y_strips_only_by_shape() {
+        for keep in ["Y1234567X", "YMPARISTOMINISTERIO123", "Y12345", "Y123456789", "Y0127485A", "YT22493"] {
+            assert_eq!(label_prefix_stripped(keep), None, "{keep} keeps its Y");
+        }
     }
 
     /// And the remainder is returned WITHOUT a claim, which is the contract the

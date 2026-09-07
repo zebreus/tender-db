@@ -694,7 +694,10 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
         "original_lang",
         "The causing notice's ORIGINAL language (ISO 639-2/T, e.g. 'DEU'), as the era \
          published it — TED LG_ORIG, eForms BT-702, text-era OL. NULL where the notice \
-         did not say. The ?lang= fallback's third leg (ADR-0013 D3).",
+         did not say. The ?lang= fallback's third leg (ADR-0013 D3). The eForms era \
+         is served in this language: TED's per-language renderings are machine \
+         translations outside the bulk feed and are not ingested, so ?lang= picks \
+         only among languages the publisher wrote (issue 341).",
     ),
     (
         "*",

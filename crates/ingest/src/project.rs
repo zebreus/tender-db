@@ -6142,6 +6142,30 @@ mod tests {
         }
     }
 
+    /// Issue 363: the Finnish field names come off and the remainder is
+    /// re-validated as the Y-tunnus it is — a HARD checksum, so a mistyped
+    /// remainder keeps the row as published; and the label is country-agnostic
+    /// while the bare `Y` shape never touches a Spanish NIE.
+    #[test]
+    fn finnish_labels_come_off_and_the_y_tunnus_is_checked() {
+        for (raw, country) in [("YTUNNUS01274855", "FI"), ("Y01274855", "FI"), ("FONR01446821", "AX"),
+                               ("FONUMMER01446821", "FI"), ("BUSINESSID01274855", "FI"), ("Y-tunnus: 0127485-5", "FI")] {
+            let id = normalise_identifier(raw, Some(country)).unwrap();
+            assert_eq!(id.country.as_deref(), Some("FI"), "{raw}");
+            assert_eq!(id.kind, "national", "{raw}");
+            assert!(id.value == "01274855" || id.value == "01446821", "{raw} → {}", id.value);
+        }
+        // A remainder that fails the FI checksum is refused, so the row keeps
+        // what the publisher wrote rather than a mangled id.
+        for raw in ["YTUNNUS01274856", "Y01274856"] {
+            let id = normalise_identifier(raw, Some("FI")).unwrap();
+            assert_eq!(id.value, raw, "a bad remainder leaves the value as published");
+        }
+        // An ES NIE keeps its Y; a Y-led value under FI that is not the shape too.
+        assert_eq!(normalise_identifier("Y7395817K", Some("ES")).unwrap().value, "Y7395817K");
+        assert_eq!(normalise_identifier("YT22493", Some("FI")).unwrap().value, "YT22493");
+    }
+
     /// Issue 358: a national id published under an overseas-department or
     /// Åland code scopes to the register's jurisdiction, so the org row it
     /// mints joins the parent's series — and is gated as that series (the
