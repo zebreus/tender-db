@@ -1,6 +1,6 @@
 # 342 — sources beyond TED and DÖE ("international"): nothing exists, the entry contract does
 
-Status: ready-for-agent — DECIDED 2026-09-07 (owner): the first market is the UK (Find a Tender Service, OCDS releases, Open Government Licence); unit 1 is the research entry at the bottom. Was: BACKLOG / needs-decision (filed 2026-09-02 on Lennart's "didn't you create
+Status: UNIT 1 DONE 2026-09-07 (owner) — `docs/research/uk-fts.md` written from the live API and re-checked adversarially (8/8 load-bearing claims confirmed, 4 overstatements corrected): GO for unit 2, the FTS fetcher. Unit 2 is ready-for-agent (shape below). Was: ready-for-agent — DECIDED 2026-09-07 (owner): the first market is the UK
 issues for that"). No non-TED/DÖE source has ever been researched for onboarding;
 the first step is a market choice, which is Lennart's.
 Kind: capability (sources) — the product-breadth half of "full internationalization"
@@ -62,3 +62,43 @@ depth available, the fetch channel (bulk vs API paging) — written up as
 `docs/research/uk-fts.md` with a go/no-go for the fetcher. Unit 2: fetcher + profile +
 parser through the existing entry contract (`normalize_lang`, `canonical_currency`, the
 profile dispatcher, the fetch registry), dry-first.
+
+## Unit 1 result (2026-09-07): GO
+
+`docs/research/uk-fts.md`. The short form: FTS is an unauthenticated, documented OCDS 1.1.5
+release API under OGL v3 (attribution "Contains public sector information licensed under the
+Open Government Licence v3.0."), English only, one publisher prefix (`ocds-h6vhtk-`), one
+notice per release, GBP for 98.9 % of amounts (AED 1.0 %, USD 0.1 %).
+
+| measured | value |
+|---|---|
+| releases per weekday (1–4 Sep 2026) | 457 / 371 / 436 / 471; weekends 7 and 1 |
+| bytes per release | 14,317 (uncompressed JSON) |
+| notices per year (year-end ids) | 32,542 (2021) · 36,737 · 38,048 · 41,642 · 86,608 (2025) · ≈123k pace (2026) |
+| full backfill | 319,742 releases ≈ 4.6 GB raw JSON, ≈ 3,200–4,700 requests, ~14 GB of DB growth |
+| history | FTS from 2 Jan 2021; Contracts Finder OCDS from 26 Feb 2015; UK notices before 2021 are in TED |
+| parties without any identifier | ~95 % before 2025, 9.2 % now; GB-PPON dominant (`AAAA-1111-AAAA`), GB-COH second |
+
+Three risks the fetcher design has to carry: (1) an opaque, variable 429 limiter (`Retry-After:
+120`) — persist (window, cursor) progress, honour every Retry-After, backfill as a resumable
+one-to-two-day job; the data.gov.uk daily XML zips are a limit-free cross-check for counts;
+(2) weak organization identity — the PPON is not in org-id.guide, Companies House numbers arrive
+unpadded and prefixed, so the crosswalk needs a GB arm (COH normalised to 8 characters, PPON as
+its own series, COH↔PPON pairs from `additionalIdentifiers` as E2 evidence) and the matcher must
+not expect TED-grade identifier rates for 2021–2024; (3) two regimes (PCR 2015 CELEX and
+Procurement Act UKPGA notices coexist), amendment-bearing releases carry only deltas (merge per
+ocid in the projection), and Contracts Finder duplicates FTS 2021–Feb 2025 with no machine link
+— so unit 2 is FTS-only and Contracts Finder is a later, deduplicated unit.
+
+## Unit 2 (ready-for-agent): the FTS fetcher, profile and parser
+
+Through the existing entry contract, dry-first, in three commits: (a) a `fts` source in the fetch
+registry — daily poll of the previous UK-local day with a 2-hour overlap on `updatedFrom`,
+idempotent on release id, `Retry-After` honoured, (window, cursor) progress persisted, a
+backfill mode by 1-day windows from 2021-01-01; (b) a profile `fts:ocds-1.1` dispatched on the
+package header, the release stored as the notice body with `original_lang = ENG`, `publication_id`
+= the release id (`nnnnnn-yyyy`), `procedure_key` = the ocid, the `tag` set and
+`documents[].noticeType` (UK1–UK17) as the subtype; (c) the parser onto the notice model —
+parties → mentions with country `GB`, `scheme` kept, `identifier_kind = national`; lots, values
+(`amount`/`amountGross`, GBP), periods, awards via `relatedLots`, suppliers; plus the crosswalk's
+GB arm. Measure on one month of 2025 before the backfill.

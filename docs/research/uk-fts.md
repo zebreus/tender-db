@@ -1,6 +1,6 @@
 # UK Find a Tender Service as a tender-db source (issue 342, unit 1)
 
-Measured on 2026-09-07 (live API calls from this container through the session's egress proxy; every number marked "measured" comes from those calls, scripts and raw pages kept under the session scratchpad).
+Measured on 2026-09-07 (live API calls from this container through the session's egress proxy; every number marked "measured" comes from those calls, scripts and raw pages kept under the session scratchpad). An independent adversarial re-check the same day confirmed the eight load-bearing claims (page shape and licence, 436 releases in 5 pages, ocid prefix and language, the PPON shape, the empty December 2020 window, the delta release, the documented parameters, the OGL wording) and corrected four overstatements, marked "(re-check)" below.
 
 ## 1. Access and terms
 
@@ -14,7 +14,7 @@ The XML notice feed is separately available as daily zip files on data.gov.uk, p
 
 Rate limits are documented only as "HTTP 429 ... no further requests should be made until after the number of seconds specified in the Retry-After header value", with 503 handled the same way (https://www.find-tender.service.gov.uk/apidocumentation/1.0/GET-ocdsReleasePackages).
 The live 429 body is the 58-byte text `Rate limit of 12 exceeded. Please retry after 120 seconds.` with `Retry-After: 120` (measured).
-The limiter's window could not be pinned down from outside: 19 page fetches back-to-back (~1.1 s each) all returned 200, yet after 150 s of silence a burst of 16 got 429 on 10, a 6-second cadence got 429 on 5 of 14, and an 11-second cadence got 429 on 7 of 13 (measured).
+The limiter's window could not be pinned down from outside: 19 page fetches back-to-back (~1.1 s each) all returned 200, yet after 150 s of silence a burst of 16 got 429 on 10, a 6-second cadence got 429 on 5 of 14, and an 11-second cadence got 429 on 7 of 13 (measured); the re-check's 8 calls at ~15 s spacing all returned 200, so the limiter is variable rather than reliably tight (re-check).
 A shared egress address or per-node counters would explain that pattern; the fetcher must treat 429 as routine, sleep `Retry-After`, and resume the same URL (measured; docs above).
 Response headers carry no `X-RateLimit-*` fields and `Cache-Control: no-store` (measured).
 
@@ -26,7 +26,7 @@ Personal data, logos and third-party rights are excluded, and "If you fail to co
 
 ## 2. Fetch channel
 
-A release package is `{uri, version:"1.1", extensions[], publishedDate, publisher{name:"Cabinet Office", scheme:"GB-GOR", uid:"D2"}, license, publicationPolicy, releases[], links{next}}` (measured, `ocdsReleasePackages?updatedFrom=2026-09-03T00:00:00&updatedTo=2026-09-03T23:59:59`).
+A release package is `{uri, version:"1.1", extensions[], publishedDate, publisher{name:"Cabinet Office", scheme:"GB-GOR", uid:"D2", uri}, license, publicationPolicy, releases[], links{next}}` (measured, `ocdsReleasePackages?updatedFrom=2026-09-03T00:00:00&updatedTo=2026-09-03T23:59:59`).
 Pages hold at most 100 releases; `limit=500` was never answered (429 both times) and `limit=0` is a 400 "'limit' must be greater than 0" (docs; measured).
 Releases within a window come newest-first: page 1 of 3 September ran from `2026-09-03T23:31:32+01:00` down to `15:46:51+01:00` (measured).
 Paging is by `links.next`, a full URL with an opaque `cursor`; the last page has no `links.next` (measured; https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/README.md).
@@ -95,7 +95,7 @@ The prefix follows OCDS's rule of a registered publisher prefix plus a local ide
 
 All twelve values are in the OCDS `releaseTag` codelist (https://standard.open-contracting.org/latest/en/schema/codelists/).
 Updates and amendments are new releases under the same ocid: the process `ocds-h6vhtk-0510f8` has 12 releases (planning → tender → ten award/contract releases), and `ocdsReleasePackages/ocds-h6vhtk-06a958` returned 5 (measured).
-An update release carries only its delta: `083685-2026` (tags award, contract) has `tender` = `{id, legalBasis, amendments, title, documents}` and `awards[0]` = `{id, amendments}` with no value, supplier or date (measured).
+An amendment-bearing release carries only its delta: `083685-2026` (tags award, contract — a UK15 notice with a `removedSupplier` party, not a `*Update` tag) has `tender` = `{id, legalBasis, amendments, title, documents}` and all 34 `awards[]` = `{id, amendments}` with no value, supplier or date (measured; re-check: the evidence is about amendment-bearing releases, and `*Update`-tagged releases were not separately inspected).
 The parser must therefore merge releases per ocid itself; fetching a record package per process is one request each and is priced out by the rate limit (§1, §2).
 
 Legal basis distinguishes the two regimes: `tender.legalBasis` is `{"scheme":"UKPGA","id":"2023/54"}` for Procurement Act 2023 notices and `{"scheme":"CELEX","id":"32014L0024"}` (or `32014L0025`) for PCR 2015 notices (measured).
@@ -123,8 +123,8 @@ The extension changed on 2025-02-22, 2025-04-30, 2025-09-01 and 2026-01-13 (http
 Packages declare ten extensions: the OCDS EU profile, amendment rationale classifications, budget breakdown, contract completion, documentation, pagination, suitability, Links, the Cabinet Office UK extension and performance failures (measured package header).
 The EU profile "describes how to express, in OCDS, the information in Tenders Electronic Daily (TED) notices" (https://standard.open-contracting.org/profiles/eu/latest/en/).
 Language: `language` is `en` in all 2,017 releases inspected; Welsh exists only as a site UI option (measured; https://www.find-tender.service.gov.uk/Developer/Documentation).
-Lots: `tender.lots` is present in 1,676 of 1,735 releases (2,210 lots over four days); in the 3 September page 31 of 118 lots carry a `value`, 42 a `contractPeriod`, all a `status`; awards point to lots via `relatedLots` (measured).
-Amounts are OCDS `{amount, currency}` plus the UK `amountGross`, e.g. an award `{"amountGross":660000.0,"amount":660000.0,"currency":"GBP"}`; `tender.value` is present in 515 of 1,735 releases, `award.value` in 48 of 100 releases on the sample page (measured).
+Lots: `tender.lots` is present in 1,676 of 1,735 releases (2,210 lots over four days); in the 3 September page 1 there are 119 lots, 31 carry a `value`, 42 a `contractPeriod`, 118 a `status` (re-check); awards point to lots via `relatedLots` (measured).
+Amounts are OCDS `{amount, currency}` plus the UK `amountGross`, e.g. an award `{"amountGross":660000.0,"amount":660000.0,"currency":"GBP"}`; `tender.value` is present in 515 of 1,735 releases; on the sample page 48 of 178 award objects carry a `value`, spread over 35 of the 66 releases that have awards (re-check).
 Dates are ISO 8601 with offset (`2026-09-01T00:00:00+01:00`, `2021-01-02T17:00:05Z`); periods use `startDate`/`endDate` (`tenderPeriod`, `enquiryPeriod`, `awardPeriod`, award `contractPeriod`, contract `period`, `dateSigned`) (measured).
 `procurementMethodDetails` is free text, including "Below threshold - open competition", "Below threshold - without competition" and "Competitive flexible procedure" (measured).
 Party `id` is `<scheme>-<id>` (`GB-PPON-PBZB-4962-TVLR`); roles seen: supplier 5,578; buyer 1,800; tenderer 829; reviewBody 223; procuringEntity 153; processContactPoint 61; centralPurchasingBody 31; mediationBody 28; reviewContactPoint 26; removedSupplier 1 (measured).
@@ -208,7 +208,7 @@ Go: build the fetcher (unit 2).
 The source is open (OGL v3), unauthenticated, documented, English-only, GBP to 99 %, one publisher prefix, one notice per release, ~5 MB a day, and five and a half years of history that TED does not have (§1–§7).
 
 Three biggest risks:
-1. Rate limiting is opaque and tighter than the docs suggest — 429s at every cadence tested from this egress — so the backfill is a one-to-two-day resumable job, and the fetcher must persist (window, cursor) progress and honour `Retry-After` on every call; the data.gov.uk XML zips are a rate-limit-free cross-check for counts (§1, §2).
+1. Rate limiting is opaque and variable — 429s at every cadence tested in the first session, none in the re-check's 15-second cadence — so the backfill is a one-to-two-day resumable job, and the fetcher must persist (window, cursor) progress and honour `Retry-After` on every call; the data.gov.uk XML zips are a rate-limit-free cross-check for counts (§1, §2).
 2. Organization identity is weak in the history and FTS-local in the present: ~95 % of pre-2025 parties have no identifier, 9 % still have none, the PPON is not in org-id.guide, and Companies House values arrive unpadded and prefixed, so the crosswalk needs a GB arm and the matcher must not expect TED-grade identifier rates for 2021–2024 (§5).
 3. Two regimes and delta releases: PCR 2015 (CELEX) and Procurement Act (UKPGA) notices coexist, the UK extension changed four times in a year, update releases carry only changed fields so the projection must merge per ocid, and Contracts Finder duplicates FTS for 2021–2025 with no machine link, which argues for FTS-only in unit 2 and Contracts Finder as a later, deduplicated unit (§3, §4).
 
