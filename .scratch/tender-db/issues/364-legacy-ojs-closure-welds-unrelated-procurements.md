@@ -127,6 +127,20 @@ Three consequences for the plan:
    indicative or qualification-system publication that many unrelated procurements cite. That
    share, not the phantom node, is the scale behind 43,088 tenders at ≥10 versions.
 
+   **Two sub-decisions, taken 2026-09-07 (owner), so unit 2 implements rather than re-litigates:**
+
+   - **`SIMPLIFIED_CONTRACT_NOTICE_DPS` is NOT an edge.** A dynamic purchasing system is one
+     system, not one procurement: each call-off has its own award and is its own procedure under
+     CONTEXT.md's definition of a Tender, and the DPS establishment publication is a separate
+     procedure again. This is the "some of these are legitimate DPS rounds" case the reviewer
+     raised, and the answer is that a DPS round is legitimately its OWN tender.
+   - **A citation whose kind is not declared is NOT an edge, and is counted** — defaulting to
+     "edge" is the mistake this issue is about. But the undeclared 7.8% must be CLASSIFIED
+     before they are refused wholesale: if a large share are corrigendum-to-original blocks
+     (which ARE same-procedure by another spelling), refusing them would needlessly split
+     Tenders. Unit 2 identifies the element shapes in real payloads, admits the ones that
+     demonstrably declare a same-procedure predecessor, and refuses-and-counts the rest.
+
    Two things unit 2 must settle rather than assume. The **238 citations with no `CHOICE`
    nearby** are a different element shape (the F14/F20 corrigendum blocks are the likely
    candidates) and must be classified, not default-admitted — defaulting to "edge" is exactly
