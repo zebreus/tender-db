@@ -1,6 +1,6 @@
 # 362 — merge verdicts: the execution path for the groups the R2 name gate leaves standing
 
-Status: DONE 2026-09-06 05:3x UTC — path deployed (4489cd5) and the 451-group review executed through it: 403 verdicts recorded (172 merge/high, 57 merge/medium, 153 keep/high, 21 keep/medium); R2 dry (job 764) admitted all 172 HIGH merges (0 stale), denied 174 by verdict and 105 by the name rule; wet job 765 merged 169 groups (191 rows, 3,338 mentions, 8,463 parties, 1,292 winners, 1,713 tenders), stamping each verdict; the 3 admitted-but-unmerged groups (RO:cui 14838148 / 2779625 / 4267117, multi-member) were stopped by a later denial in the stack. Record: `362-merge-verdicts-2026-09-06.json`. Was: DEPLOYED, CAMPAIGN RUNNING.
+Status: DONE — campaign 2 run 2026-09-07 (owner): the 170 groups the name gate held after the 358/363 folds reviewed (cohort `r2-denied-2026-09-07`, 139 verdicts: 65 merge/high applied by R2 job 794 — 65 groups, 84 rows removed, 858 mentions, 699 winners repointed — 56 merge/medium standing, 18 keeps); the gate's queue is 87 (needs-more-evidence and disputed). Campaign 1: DONE 2026-09-06 05:3x UTC — path deployed (4489cd5) and the 451-group review executed through it: 403 verdicts recorded (172 merge/high, 57 merge/medium, 153 keep/high, 21 keep/medium); R2 dry (job 764) admitted all 172 HIGH merges (0 stale), denied 174 by verdict and 105 by the name rule; wet job 765 merged 169 groups (191 rows, 3,338 mentions, 8,463 parties, 1,292 winners, 1,713 tenders), stamping each verdict; the 3 admitted-but-unmerged groups (RO:cui 14838148 / 2779625 / 4267117, multi-member) were stopped by a later denial in the stack. Record: `362-merge-verdicts-2026-09-06.json`. Was: DEPLOYED, CAMPAIGN RUNNING.
 Kind: capability (organization layer merge machinery; the 311 review loop's execution path for merges)
 Relates to: 359 (the name gate that creates the queue), 355 (the country-verdict store this mirrors), 311 (the loop), 329 (E0: the same path admits its reviewed groups), 300 Stage 2 (R2)
 
@@ -99,3 +99,42 @@ should mostly KEEP, and acronym/expansion pairs (`SEMAVIL — SAEML` / `Soc mixt
 Lamentin`, `NPEI` / `Nalem peinture étanchéité isolation`), which are the merge shape. The
 listing is complete under the cap in the stored `r2-merge-plan` (`denied_names_listing`); a
 second review campaign over these ~65 groups is this issue's next unit, same rubric and path.
+
+## Campaign 2, run (2026-09-07 09:0x–10:1x UTC, 11 agents, ~1.0M tokens, 37 min)
+
+Input: the 170 groups in the dry scan 790's `denied_names_listing` (PL 92, FR 35, FI 30, IT 12,
+CZ 1) — the 105 campaign-1 residue plus 65 pairs the 358 country moves and 363 label repair
+reunited. Tooling: `enrich.py` (on the box: provisional flag and mention count per member by
+bounded PK/index reads) and `split.py` (5 round-robin batches of 34 over the country-sorted
+list, a blind sample of every 9th case) — the two scripts campaign 1 ran ad hoc; `review.js`,
+`rubric.md` and `post.py` unchanged. Sonnet reviewers and challengers, session-model blind sample.
+
+Reviewer: merge/high 93, merge/medium 28, keep/high 13, keep/medium 9, needs-more-evidence 27.
+Challenger agreed on 124, disputed 46 (23 merge/high → recorded medium). Blind sample: 14 of 19
+same verdict. Hand-park (the campaign-1 KIO bar — a HIGH merge that fuses DISTINCT institutions
+or SIBLING units with ≥20 mentions on the smaller side is a visible misattribution, parked at
+medium): the six-member KIO/UZP group (again), the KIO/UZP REGON pair, TAR Milano with TAR
+Veneto, Sisäministeriö with Ålands polismyndighet, and a Warsaw district sports centre with a
+Warsaw primary school (1,618 and 281 mentions). Recorded 139: **65 merge/high, 56 merge/medium,
+11 keep/high, 7 keep/medium**.
+
+R2 dry (793): groups ≥2 1,343 → 1,017 (the 363 fold had run), `verdict-merge` 68 (65 + the 3
+standing Romanian groups denied downstream), `verdict-keep` 192, `denied_names` **170 → 87**,
+plan 65. Wet (794): **65 groups merged, 84 org rows removed, 858 mentions, 1,222 parties, 394
+bid-parties, 699 winners repointed, 609 tenders touched**; `project` (795) nothing to rewrite.
+Verdict store after (`GET /admin/case-reviews?table=merge&cohort=r2-denied-2026-09-07`): 65
+merge/high stamped applied, 56 merge/medium and 18 keeps standing — exact.
+
+What the HIGH merges were: renames (Liikennevirasto → Väylävirasto, Pöyry CM → Ramboll CM, Lima
+Polska → Enovis Poland, Perlan Technologies → Altium International, VR Kunnossapito → VR
+FleetCare, HUS → HUS Group, Plastic Omnium Caraïbes → Sulo Caraïbes, CA Sud Basse-Terre → CA
+Grand Sud Caraïbe), acronyms (SRR, CANGT, ATM-OI, JW 3964 / Wojskowe Centrum Edukacji
+Obywatelskiej), spacing and case (LEASE CAR, sm geag, TK Biotech, Ekokem), a city and its
+units under the city's number (Helsinki and its housing office; Oulu and its rescue enterprise;
+Ville du François and its procurement department), and consultancies' twin rows (Safege / Suez
+Consulting).
+
+The 87 the gate still holds are the needs-more-evidence (27) and challenger-disputed groups —
+names alone cannot tell; a third pass would need register-history evidence (PRH, KRS, INSEE),
+which is a different tool, not another read. Records: `362-campaign/post-body-2026-09-07.json`,
+`campaign-2026-09-07.json` (joined reviews, challenges, sample).
