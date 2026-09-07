@@ -1,6 +1,6 @@
 # 363 — `FONR01446821`: the Swedish "FO-nummer" label glued to Åland Y-tunnus rows
 
-Status: BUILT 2026-09-07 (owner) — vocabulary + shape rule + tests; gate/deploy/repair recorded below. The class is ~4× the AX finding: 432 labelled FI rows, 355 with a bare twin standing. Was: ready-for-agent (filed 2026-09-07 from the issue-358 unit-2 listing)
+Status: DONE 2026-09-07 (owner) — deployed `d80a4bd` (gate 863 passed), `repair-label-prefixes` dry (788: 456 planned, 344 landing on a standing identity) → wet (789: 456 applied, 0 skipped), R2 dry (790: plan 326 groups, 325 FI + 1 DK) → wet (791: 326 groups merged, 332 org rows removed, 5,306 mentions / 6,969 parties / 1,384 bid-parties / 60,506 winners repointed, 3,052 tenders touched), project (792) clean. 9 FI rows stay as published by design (checksum failures and nine-digit typos). Was: BUILT 2026-09-07
 Kind: defect (organization layer — identifier normalisation, the issue-328/359 label class)
 Relates to: 328 (label prefixes in front of the identifier), 359 (the PL/IT/ES vocabulary
 extension and the CIF-shape guard), 358 (whose unit 2 moves these rows to `FI`)
@@ -64,3 +64,30 @@ splits an organization from its own correctly-formed row.
   `the_bare_y_strips_only_by_shape` (countries.rs).
 - The repair path is unchanged: `repair-label-prefixes` walks every identifier row through
   the injected `label_prefix_stripped`, so the shape rule is picked up by the same job.
+
+## Run (2026-09-07)
+
+- **Deploy** `d80a4bd` (`ops/check.sh` GATE-EXIT=0, 863 passed; box gate green in 354 s, rev verified on /health).
+- **Repair dry** (job 788): 6,755 rows carry a publisher label corpus-wide; **456 planned**, 6,299 already agree
+  with the re-parse, 0 refused; 344 land on an identity that already stands. The plan (listing capped at 400):
+  FI `Y` 221, FI `YTUNNUS` 133, country-less `YTUNNUS`/`FONR`/`Y` 27 (Finnish ids published without a
+  country — stripped, still country-less), FI `FONR` 12, FI `FONUMMER` 2, `BUSINESSID` 3 (FI, DE, none),
+  and two non-Finnish `Y` strips the guard's pure-digit rule accepted (`DK Y33462344`, `DE Y21272304` —
+  eight digits each, the published string kept on the mention).
+- **Repair wet** (job 789): **456 applied, 0 skipped** (no row moved under the plan).
+- **Residue** (bounded read): 9 FI rows still carry a label, all by design — `Y` + NINE digits
+  (`Y010112636` Espoo, `Y017722010` Toivakka…: a doubled digit in the source, outside the 7–8 shape)
+  and two `YTUNNUS…` whose remainder fails the HARD Y-tunnus checksum (`08004123` Seure, `08736973`
+  Fazer Food Services) — the row keeps what the publisher wrote rather than a mangled id.
+- **R2 dry** (job 790): groups ≥2 1,303 → 1,343, **plan 326 groups** (325 FI, 1 DK); name-gate denials
+  142 → 170 (the label twins whose names differ: `Turun kaupunki, joukkoliikennetoimisto` beside
+  `…Kiinteistöliikelaitos` is one Y-tunnus and two departments — R2 rightly folds by identifier; the
+  denied ones are issue 362's queue). The biggest reunions by mentions: Turku (2,189 + 4), Espoo
+  (2,036 + 10), Senaatti-kiinteistöt (1,513 + 2), Jyväskylä (1,227 + 5), Sito Oy (20 + 1,018), Ramboll
+  (1,016 + 20), WSP Finland (653 + 15) — a low-mention labelled twin folding into the standing row.
+- **R2 wet** (job 791): 326 groups merged, 332 org rows removed, 5,306 mentions, 6,969 parties, 1,384
+  bid-parties, **60,506 winners repointed**, 3,052 tenders touched (the consultancies' lot wins).
+  `project` (792): nothing to rewrite. Spot-check: Espoo stands as 11442 (`01012636`), Ramboll as
+  2008748. /health ok.
+
+The 358 unit-2 listing's 16 Åland rows are inside these numbers (they had moved to `FI` first).
