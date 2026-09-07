@@ -4679,6 +4679,14 @@ pub fn normalise_identifier_before_folds(raw: &str, country: Option<&str>) -> Op
 }
 
 fn normalise_identifier_with(raw: &str, country: Option<&str>, folds: bool) -> Option<Identifier> {
+    // Issue 358: the identifier's country is the REGISTER's jurisdiction. A
+    // SIREN published under `RE` is French, and the org row it mints or
+    // binds has to say so, or Réunion's SDIS stands as two rows (one per
+    // code the buyer chose that day). Only the identifier's scope maps; the
+    // mention keeps the regional code the notice published. Mapped before
+    // the country-specific folds and the gate below, so a Y-tunnus under
+    // `AX` is checked as the Finnish number it is.
+    let country = country.map(store::register_jurisdiction);
     // Issue 300 (top-100 read, 2026-09-03): a Romanian CUI with a sub-unit
     // suffix — `16054368_3` for a regional directorate of CNAIR — is the
     // parent's identifier; folding the suffix away is the entity-level
@@ -6132,6 +6140,36 @@ mod tests {
                 "{raw} is scoped by its own prefix, canonicalised"
             );
         }
+    }
+
+    /// Issue 358: a national id published under an overseas-department or
+    /// Åland code scopes to the register's jurisdiction, so the org row it
+    /// mints joins the parent's series — and is gated as that series (the
+    /// FI checksum applies to a Y-tunnus under `AX`). A code with a register
+    /// of its own keeps its code.
+    #[test]
+    fn a_regional_code_scopes_its_identifier_to_the_register() {
+        for code in ["GP", "MQ", "GF", "RE", "YT", "PM", "BL", "MF", "WF"] {
+            let id = normalise_identifier("552081317", Some(code)).unwrap();
+            assert_eq!(id.country.as_deref(), Some("FR"), "{code} → FR");
+            assert_eq!(id.kind, "national", "{code}: a bare SIREN stays a national id");
+            assert_eq!(id.value, "552081317");
+        }
+        let ax = normalise_identifier("0100315-8", Some("AX")).unwrap();
+        assert_eq!((ax.country.as_deref(), ax.kind.as_str()), (Some("FI"), "national"));
+        assert!(
+            normalise_identifier("0100315-9", Some("AX")).is_none(),
+            "a Y-tunnus under AX that fails the FI checksum is refused like one under FI"
+        );
+        assert_eq!(normalise_identifier("25313763", Some("GL")).unwrap().country.as_deref(), Some("DK"));
+        assert_eq!(normalise_identifier("923609016", Some("SJ")).unwrap().country.as_deref(), Some("NO"));
+        for code in ["NC", "PF", "FO", "AW", "CW", "SX", "BQ", "DE"] {
+            let id = normalise_identifier("552081317", Some(code)).unwrap();
+            assert_eq!(id.country.as_deref(), Some(code), "{code} keeps its own register");
+        }
+        // The VAT arm is unaffected: a prefixed VAT id scopes by its prefix.
+        let vat = normalise_identifier("FR40303265045", Some("RE")).unwrap();
+        assert_eq!((vat.country.as_deref(), vat.kind.as_str()), (Some("FR"), "vat"));
     }
 
     /// Issue 48: country codes converge to one canonical alpha-2 vocabulary, so a

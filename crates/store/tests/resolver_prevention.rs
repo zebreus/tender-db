@@ -155,6 +155,79 @@ async fn equivalent_representations_reuse_and_hazards_fall_through() {
     assert_ne!(ids3[0], ids3[1], "without the injected crosswalk nothing unifies");
 }
 
+/// Issue 358, the BIND half: rows minted before the fold stand under the
+/// regional code (`RE`, national, SIREN). A mention arriving now carries the
+/// register's code on its identifier (the ingest normaliser maps `RE` → `FR`
+/// before the store sees it), so the exact triple misses — and the canonical
+/// pre-probe, which folds the standing row's country the same way, binds it
+/// to the standing row instead of minting the twin R2 would later fold. The
+/// twin-then-fold loop is what this pins against: without the fold on the
+/// preload side, every new Réunion mention would mint an `FR` twin, R2 would
+/// fold it back into the older `RE` row, and the next mention would mint
+/// again. The mention row keeps the code the notice published.
+#[tokio::test]
+async fn a_standing_regional_code_row_takes_the_mention_keyed_under_its_register() {
+    let path = "test-resolver-prevention-358.db";
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    let db = store::Db::open(path).await.unwrap();
+    {
+        let raw = store::turso::Builder::new_local(path).build().await.unwrap();
+        let conn = raw.connect().unwrap();
+        conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+        for n in 1..=3i64 {
+            conn.execute(
+                "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id,
+                                      member_path, ingested_at, parse_state, projected)
+                 VALUES (?, 'ted', ?, ?, 'eforms:test', 1, 'p', 0, 'parsed', 0)",
+                (
+                    store::turso::Value::Integer(n),
+                    store::turso::Value::Text(format!("pub-{n}")),
+                    store::turso::Value::Text(format!("h{n}")),
+                ),
+            )
+            .await
+            .unwrap();
+            conn.execute(
+                "INSERT INTO notice_sections (notice_id, section_id, kind, parent_section_id)
+                 VALUES (?, 'S-1', 'Organization', NULL)",
+                (store::turso::Value::Integer(n),),
+            )
+            .await
+            .unwrap();
+        }
+    }
+
+    // The standing row, as a pre-358 ingest minted it: identifier scoped `RE`.
+    let mut resolver = db.mention_resolver(Some(key), Some(consortium), None, None, None, None, 0).await.unwrap();
+    let standing = db
+        .resolve_mentions(&mut resolver, &[mention(1, "S-1", "SDIS de la Réunion", "RE", "national", "111222333")], 0)
+        .await
+        .unwrap();
+    db.finish_mention_resolver(resolver).await.unwrap();
+    assert_eq!(count(&db, "SELECT COUNT(*) FROM organizations WHERE country = 'RE'").await, 1);
+
+    // A fresh run (empty caches, preload from the table): the mention's
+    // identifier now arrives scoped `FR`, its mention row still says `RE`.
+    let mut resolver = db.mention_resolver(Some(key), Some(consortium), None, None, None, None, 0).await.unwrap();
+    let mut later = mention(2, "S-1", "SDIS de La Réunion", "RE", "national", "111222333");
+    later.identifier.as_mut().unwrap().country = Some("FR".into());
+    let mut metropolitan = mention(3, "S-1", "SDIS Réunion", "FR", "national", "111222333");
+    metropolitan.identifier.as_mut().unwrap().country = Some("FR".into());
+    let ids = db.resolve_mentions(&mut resolver, &[later, metropolitan], 0).await.unwrap();
+    db.finish_mention_resolver(resolver).await.unwrap();
+
+    assert_eq!(ids[0], standing[0], "the FR-keyed mention binds to the standing RE row");
+    assert_eq!(ids[1], standing[0], "…and so does one published under FR");
+    assert_eq!(count(&db, "SELECT COUNT(*) FROM organizations").await, 1, "no twin minted");
+    assert_eq!(
+        count(&db, "SELECT COUNT(*) FROM organization_mentions WHERE country = 'RE'").await,
+        2,
+        "the mention rows keep the regional code the notices published"
+    );
+}
+
 // ------------- issue 310: the Stage-3 (country-less anchor) prevention -------------
 
 fn anchors(v: &str) -> Vec<(&'static str, String)> {

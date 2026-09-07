@@ -127,7 +127,11 @@ pub fn canonical_key(country: Option<&str>, kind: &str, value: &str) -> Option<C
         (
             match country {
                 Some("EL") => "GR",
-                Some(c) => c,
+                // Issue 358: a regional code keys in its register's series,
+                // so the standing `RE` row and the `FR` row carrying one
+                // SIREN share a canonical key (R2 folds them; the resolver
+                // binds a new mention to whichever stands).
+                Some(c) => store::register_jurisdiction(c),
                 None => return None,
             },
             norm.as_str(),
@@ -339,6 +343,31 @@ pub fn canonical_key(country: Option<&str>, kind: &str, value: &str) -> Option<C
 
 #[cfg(test)]
 mod tests {
+    /// Issue 358: a national id under a regional code keys exactly as it
+    /// would under the register's own code; a code with a register of its
+    /// own has no arm and keys nothing.
+    #[test]
+    fn a_regional_code_keys_in_its_registers_series() {
+        use super::canonical_key;
+        for code in ["GP", "MQ", "GF", "RE", "YT", "PM", "BL", "MF", "WF"] {
+            assert_eq!(
+                canonical_key(Some(code), "national", "552081317"),
+                canonical_key(Some("FR"), "national", "552081317"),
+                "{code} keys as FR"
+            );
+        }
+        assert!(canonical_key(Some("RE"), "national", "552081317").is_some());
+        assert_eq!(
+            canonical_key(Some("AX"), "national", "0100315-8"),
+            canonical_key(Some("FI"), "national", "0100315-8")
+        );
+        assert_eq!(
+            canonical_key(Some("SJ"), "national", "923609016"),
+            canonical_key(Some("NO"), "national", "923609016")
+        );
+        assert!(canonical_key(Some("NC"), "national", "552081317").is_none(), "NC has no arm");
+    }
+
     /// Issue 312: a platform's v4-UUID record key never becomes a merge
     /// key, in any country, under either kind — while remaining untouched
     /// as a LINK (the resolver binds on the raw triple, not on this).

@@ -98,7 +98,11 @@ pub fn census(country: Option<&str>, kind: Option<&str>, value: &str) -> GateCen
         && !out.lexicon;
     // Scheme resolution is census-only: vat keys resolve by their own
     // prefix, national keys by (country, shape). Never used for merging.
-    let cc = if is_vat { value.get(..2) } else { country };
+    // Issue 358: a national key under a regional code resolves in the
+    // register's series — a SIREN under `RE` scores as `FR:siren`, a
+    // Y-tunnus under `AX` as `FI:ytunnus` — so the census and the gate read
+    // the row the way the resolver now mints it.
+    let cc = if is_vat { value.get(..2) } else { country.map(store::register_jurisdiction) };
     let (scheme, checksum) = match (cc, is_vat, digits.len()) {
         (Some("DE"), true, 9) => ("DE:vat", mod_11_10(&digits)),
         (Some("FR"), _, 9) => (if is_vat { "FR:vat" } else { "FR:siren" }, luhn(&digits)),
@@ -747,6 +751,23 @@ pub fn anchor_vocabulary(value: &str) -> Vec<&'static str> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Issue 358: a national key under a regional code is scored in its
+    /// register's series; a code with a register of its own is not.
+    #[test]
+    fn a_regional_code_scores_in_its_registers_series() {
+        assert_eq!(census(Some("RE"), Some("national"), "552081317").scheme, "FR:siren");
+        assert_eq!(census(Some("MQ"), Some("national"), "55208131700013").scheme, "FR:siret");
+        let ax = census(Some("AX"), Some("national"), "01003158");
+        assert_eq!((ax.scheme, ax.checksum), ("FI:ytunnus", Checksum::Pass));
+        assert!(
+            condemns(Some("AX"), "national", "01003159"),
+            "the HARD FI checksum now gates a Y-tunnus under AX"
+        );
+        assert_eq!(census(Some("SJ"), Some("national"), "923609016").scheme, "NO:orgnr");
+        assert_eq!(census(Some("NC"), Some("national"), "552081317").scheme, "other");
+        assert_eq!(census(Some("FO"), Some("national"), "01003158").scheme, "other");
+    }
 
     /// The drift guard for the two readers of `uniform_arm` (issue 314).
     ///

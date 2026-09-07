@@ -22,6 +22,7 @@ pub use accounts::{TokenRecord, User};
 pub use checkpoint::{Checkpointed, CheckpointMode};
 pub use canonical::{
     Applied, BidParty, BidState, Change, ContractState, Fact, Identifier, LayerPresence, LayerState,
+    register_jurisdiction,
     LotResultState, LotState, Mention, MentionResolver, NestedOrgRepair, NoticeRef, OrgDissolve, OrgMergeBatch, OrgNameBackfill,
     CaseApplyReport, CaseBacklogReport, CaseBacklogRow, CaseReview, CaseUnapplyReport,
     ClusterCase, ClusterPacket, CountryFoldReport, CountryMove, CountryVerdict,
@@ -4671,6 +4672,91 @@ tmpfs /data/ramcache tmpfs rw 0 0
         drop(db);
         for s in ["", "-wal", "-shm"] {
             let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
+    /// Issue 358: the table IS the decision — every code whose register is
+    /// the parent's folds, every code with a register of its own stays.
+    #[test]
+    fn register_jurisdiction_folds_only_codes_whose_register_is_the_parents() {
+        for (code, register) in [
+            ("GP", "FR"), ("MQ", "FR"), ("GF", "FR"), ("RE", "FR"), ("YT", "FR"),
+            ("PM", "FR"), ("BL", "FR"), ("MF", "FR"), ("WF", "FR"),
+            ("AX", "FI"), ("GL", "DK"), ("SJ", "NO"),
+        ] {
+            assert_eq!(register_jurisdiction(code), register, "{code} → {register}");
+        }
+        // A register of their own: RIDET, numéro Tahiti, Skráseting Føroya,
+        // the Aruban/Curaçao/Sint Maarten/BES chambers.
+        for code in ["NC", "PF", "FO", "AW", "CW", "SX", "BQ"] {
+            assert_eq!(register_jurisdiction(code), code, "{code} keeps its own register");
+        }
+        // Parents and ordinary codes pass through; so does junk.
+        for code in ["FR", "FI", "DK", "NO", "NL", "DE", "GB", "EL", "1A", ""] {
+            assert_eq!(register_jurisdiction(code), code);
+        }
+    }
+
+    /// Issue 358, the store's half: a mention tagged with a regional code
+    /// mints its org row under the register's jurisdiction, keeps the
+    /// regional code on its own mention row, and a later mention under the
+    /// parent code REUSES that row. (The identifier half — `Identifier.country`
+    /// arriving already mapped — is the ingest normaliser's, pinned there.)
+    #[tokio::test]
+    async fn a_regional_code_mention_mints_under_its_register_jurisdiction() {
+        let path = format!("/tmp/tender-db-register-jurisdiction-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+
+        let mention = |notice: i64, name: &str, country: &str| Mention {
+            notice_id: notice,
+            section_id: "ORG-1".into(),
+            name: name.into(),
+            country: Some(country.into()),
+            raw_identifier: None,
+            scheme: None,
+            identifier: None,
+            variants: Vec::new(),
+        };
+        let mut resolver = db.mention_resolver(None, None, None, None, None, None, 0).await.unwrap();
+        let ids = db
+            .resolve_mentions(
+                &mut resolver,
+                &[
+                    mention(1, "SDIS de la Réunion", "RE"),
+                    mention(2, "SDIS de la Réunion", "FR"),
+                    mention(3, "Ålands landskapsregering", "AX"),
+                    // A register of its own: New Caledonia stays NC, so the
+                    // same name under FR is another body.
+                    mention(4, "Province Sud", "NC"),
+                    mention(5, "Province Sud", "FR"),
+                ],
+                0,
+            )
+            .await
+            .unwrap();
+        db.finish_mention_resolver(resolver).await.unwrap();
+
+        assert_eq!(ids[0], ids[1], "RE and FR name the same register: one row");
+        assert_ne!(ids[3], ids[4], "NC keeps its own register: two rows");
+        let country_of = |id: i64| format!("SELECT country FROM organizations WHERE id = {id}");
+        for (id, want) in [(ids[0], "FR"), (ids[2], "FI"), (ids[3], "NC"), (ids[4], "FR")] {
+            match db.scalar(&country_of(id)).await.unwrap() {
+                Some(turso::Value::Text(c)) => assert_eq!(c, want, "org {id}"),
+                other => panic!("org {id}: {other:?}"),
+            }
+        }
+        // The mention row keeps what the notice published.
+        match db
+            .scalar("SELECT country FROM organization_mentions WHERE notice_id = 1")
+            .await
+            .unwrap()
+        {
+            Some(turso::Value::Text(c)) => assert_eq!(c, "RE", "the mention keeps the regional code"),
+            other => panic!("mention 1: {other:?}"),
         }
     }
 

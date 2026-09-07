@@ -36,7 +36,7 @@ The EU standard (Regulation 2019/1780 + SDK) defining the structure of TED notic
 One atomic eForms field definition (e.g. BT-05 "Notice Dispatch Date"); v1 must represent all of them, no omissions, accounted per SDK version.
 
 **Organization**:
-A canonical profile of a company or authority appearing across Tenders (as buyer, bidder, winner, subcontractor); one profile per real-world entity, not per notice mention.
+A canonical profile of a company or authority appearing across Tenders (as buyer, bidder, winner, subcontractor); one profile per real-world entity, not per notice mention. Its `country` is the jurisdiction of the register its identifier lives in, because it keys identity: a SIREN published under an overseas-department code (`RE`, `GP`, `MQ`, `GF`, `YT`, `PM`, `BL`, `MF`, `WF`) is French, a Y-tunnus under `AX` Finnish, a CVR under `GL` Danish, an orgnr under `SJ` Norwegian, and the row carries the register's code (issue 358). Territories with a register of their own (`NC`, `PF`, `FO`, `AW`, `CW`, `SX`, `BQ`) keep theirs. The OrganizationMention keeps the code the notice published.
 _Avoid_: company, authority (those are roles/kinds of Organization, not separate concepts)
 
 **OrganizationMention**:

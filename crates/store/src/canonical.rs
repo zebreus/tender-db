@@ -1429,6 +1429,48 @@ pub struct Identifier {
     pub value: String,
 }
 
+/// Issue 358: the register jurisdiction behind a published country code.
+///
+/// An organization row's `country` keys identity — R2 groups on
+/// `(country, scheme, key)`, the resolver binds on `(country, kind, value)` —
+/// so it has to name the REGISTER an identifier lives in, not the finer tag
+/// a buyer happened to write. Réunion is inside INSEE's Sirene (one SIREN
+/// series with metropolitan France), Åland companies sit in the Finnish
+/// trade register, Greenland in the Danish CVR, Svalbard under Brønnøysund.
+/// The 357 campaign parked ~30 such pairs per slice as `shared-register`
+/// (`SDIS de la Réunion` under `RE` and under `FR`, `SCLM Sarl` under `MQ`
+/// and `FR`) because no rule said which tag the row should carry. This is
+/// the rule. The regional code survives on the mention
+/// (`organization_mentions.country`) and on the notice, so the finer signal
+/// is not lost — only the org row, whose country is a key, folds.
+///
+/// THE CRITERION IS THE REGISTER, NOT THE FLAG. A territory with a register
+/// of its own keeps its code: New Caledonia (RIDET) and French Polynesia
+/// (numéro Tahiti) are outside Sirene; the Faroe Islands run Skráseting
+/// Føroya rather than the CVR; Aruba, Curaçao, Sint Maarten and the
+/// Caribbean Netherlands each keep their own chamber of commerce. The
+/// decision as first recorded on issue 358 listed those under their ISO
+/// parents too; it is narrowed here to what the registers cover, because a
+/// mapped code claims "this number is the same series as the parent's", and
+/// for a RIDET that claim is false. Wallis-et-Futuna is the least certain
+/// entry (one national-id row on prod); the comment on its arm is where to
+/// correct it.
+pub fn register_jurisdiction(code: &str) -> &str {
+    match code {
+        // INSEE Sirene: the five overseas departments and the collectivities
+        // Sirene covers (Saint-Pierre-et-Miquelon, Saint-Barthélemy,
+        // Saint-Martin, Wallis-et-Futuna).
+        "GP" | "MQ" | "GF" | "RE" | "YT" | "PM" | "BL" | "MF" | "WF" => "FR",
+        // Åland: the Finnish trade register (Y-tunnus).
+        "AX" => "FI",
+        // Greenland: the Danish CVR.
+        "GL" => "DK",
+        // Svalbard and Jan Mayen: the Brønnøysund register (orgnr).
+        "SJ" => "NO",
+        other => other,
+    }
+}
+
 /// What one org repoint moved — shared by the issue-234 merge and the
 /// issue-259 repair.
 #[derive(Debug, Default, Clone)]
@@ -4321,8 +4363,11 @@ pub struct MentionResolver {
 
 /// The same-country E1 canonical key for an identifier, under the merge job's
 /// exact discipline: injected crosswalk, E1 tier only, a real row country
-/// (EL folded to GR), and for VAT kinds the scheme's own country must agree
-/// with the row's — anything else gets no prevention key.
+/// (EL folded to GR, a regional code folded to its register — issue 358, so
+/// a SIREN under `RE` and the same SIREN under `FR` share one prevention
+/// key and the later mention BINDS to the standing row instead of minting
+/// the twin), and for VAT kinds the scheme's own country must agree with
+/// the row's — anything else gets no prevention key.
 fn resolver_canon_key(
     canon_key: Option<fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>>,
     country: Option<&str>,
@@ -4331,8 +4376,8 @@ fn resolver_canon_key(
 ) -> Option<(String, &'static str, String)> {
     let f = canon_key?;
     let c = country?;
-    let c = if c == "EL" { "GR" } else { c };
-    let (scheme, key, e1) = f(country, kind, value)?;
+    let c = register_jurisdiction(if c == "EL" { "GR" } else { c });
+    let (scheme, key, e1) = f(Some(c), kind, value)?;
     if !e1 {
         return None;
     }
@@ -8142,7 +8187,14 @@ impl Db {
                 // `provisional = 1`, so a later identifier can still split or
                 // canonicalise it — the merge is a reuse policy, not a promotion.
                 let name_norm = m.name.to_lowercase();
-                let scope = (!name_norm.is_empty()).then_some(()).and(m.country.clone());
+                // Issue 358: the org row's country is the register's
+                // jurisdiction even without an identifier — `SDIS de la
+                // Réunion` under `RE` and under `FR` is one provisional row,
+                // not two, and a later SIREN can canonicalise it once. The
+                // mention keeps the code the notice published.
+                let country: Option<String> =
+                    m.country.as_deref().map(|c| register_jurisdiction(c).to_owned());
+                let scope = (!name_norm.is_empty()).then_some(()).and(country.clone());
                 if let Some(country) = &scope {
                     let key = (name_norm.clone(), country.clone());
                     if let Some(&org_id) = name_of.get(&key) {
@@ -8172,7 +8224,7 @@ impl Db {
                                          name_norm, provisional, created_at)
                                      VALUES(?, NULL, NULL, ?, ?, 1, ?)",
                                     (
-                                        opt_text(m.country.as_deref()),
+                                        t(country),
                                         t(&m.name),
                                         Value::Text(name_norm.clone()),
                                         Value::Integer(now),
@@ -8186,7 +8238,7 @@ impl Db {
                         }
                     }
                 } else if !name_norm.is_empty()
-                    && m.country.is_none()
+                    && country.is_none()
                     && let Some(norm_fn) = resolver.norm
                 {
                     // Issue 351: the country-less half of the 234 reuse. Issue
@@ -8284,7 +8336,7 @@ impl Db {
                              name_norm, provisional, created_at)
                          VALUES(?, NULL, NULL, ?, ?, 1, ?)",
                         (
-                            opt_text(m.country.as_deref()),
+                            opt_text(country.as_deref()),
                             t(&m.name),
                             Value::Text(name_norm),
                             Value::Integer(now),
@@ -9099,7 +9151,7 @@ impl Db {
                         continue;
                     }
                     let Some(c) = country.as_deref() else { continue };
-                    let c = if c == "EL" { "GR" } else { c };
+                    let c = register_jurisdiction(if c == "EL" { "GR" } else { c });
                     // The vat-scheme/country consistency check is an E1 concern:
                     // an E0 group IS the org's own triple.
                     if args.rule != "e0" && kind == "vat" && !scheme.starts_with(c) {
@@ -11864,7 +11916,7 @@ impl Db {
                         // (verification-round hardening): a row whose VAT
                         // prefix contradicts its own country is mis-countried
                         // evidence and must not serve as a merge target.
-                        let c = if country == "EL" { "GR" } else { country.as_str() };
+                        let c = register_jurisdiction(if country == "EL" { "GR" } else { country.as_str() });
                         if kind == "vat" && !scheme.starts_with(c) {
                             continue;
                         }
