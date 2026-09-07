@@ -1,6 +1,6 @@
 # 370 — the served contract is hand-written prose with no gate coupling it to behaviour: twelve published claims are now false
 
-Status: ready-for-agent (filed 2026-09-07 from the external review's verified findings —
+Status: UNITS 1,2,3,5 DONE 2026-09-07 (owner) — all thirteen claims corrected at their source (`c185ed1`, 915 passed) and the provisional note coupled to the resolver by a test. Unit 4's second half (per-field provenance on `TenderRow`, so an inherited deadline is distinguishable rather than only documented) remains ready-for-agent. Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
 several reviewer "defects" are really this issue: the behaviour was decided deliberately
 and the published description was not updated)
 Kind: defect (documentation / API contract) — a drift with no detector
@@ -50,3 +50,34 @@ The deadline row is the same failure in the other direction: a per-version measu
 - a test fails if the resolver's reuse policy changes without the note changing.
 
 *One issue because:* twelve false statements across `/docs`, `/v1/sql/schema`, the OpenAPI, README, CONTEXT.md and two code comments have one cause — the published contract is prose that nothing re-derives, so a deliberate behaviour change (234/351, 219, 267, 328) leaves the description behind and the drift is only ever found by a reader.
+
+## Done (2026-09-07, `c185ed1`)
+
+All thirteen rows corrected at their source line, and — departing from unit 1 — the three whose
+code half is queued elsewhere were corrected too, to TODAY's behaviour. A served claim that is
+false is a defect whether or not a fix is queued; those lines get revised again when 366, 371 and
+367 unit 3 land, which is cheap.
+
+- **`provisional`, on all three surfaces** (`sql.rs` column note, the schema comment,
+  CONTEXT.md): it means no official identifier, with a name-scoped identity that may hold many
+  mentions. The retired promise was a year old.
+- **Corrected to today's truth**: implausible magnitudes are served, not quarantined (only
+  integer-overflowing amounts are refused; 174 tenders over €100bn, top €4.97×10¹⁶ — issue 366);
+  a timed-out query's answer is abandoned but its work can keep its slot, there being no engine
+  interrupt (issue 238); an absent filter value short-circuits only where the filter has a
+  reachability test, and `currency` has none (issue 371); a date-only publication can still
+  render with a time (issue 367 unit 3); an identifier can resolve to more than one canonical
+  org, so callers must take every id (issue 329); the org-identity index is named and NOT unique.
+- **Restated rather than corrected**, because the numbers were right and the sentence wrong: the
+  0.2–0.3% deadline-before-publication rate is a WITHIN-NOTICE measurement, and at row level it
+  is 37.6% and is the expected shape after an award notice, since a row unions its versions and
+  carries a deadline the newest notice is silent about. The research file's "zero deadlines
+  beyond publication+10y in any window" carries a dated re-take note: it was green because of
+  the windows chosen, and five counter-examples stand in the corpus.
+- **README**'s two alpha-3 examples (unit 5) now use alpha-2 and return rows.
+- **The coupling** (unit 3): `the_provisional_note_describes_what_the_resolver_actually_does`
+  reads the served note AND exercises the resolver in one test — revert the reuse and the
+  behaviour half fails; restore the old wording and the note half fails.
+
+Left: unit 4's second half — whether `TenderRow` should carry per-field provenance so a consumer
+can tell an inherited deadline from a republished one, rather than only being told about it.
