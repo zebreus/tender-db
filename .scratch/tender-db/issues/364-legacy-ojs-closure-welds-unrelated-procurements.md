@@ -1,6 +1,6 @@
 # 364 — the legacy OJS closure is an unbounded transitive closure over unguarded edges: 2,983 versions and 127 buyers in one Tender
 
-Status: ready-for-agent (filed 2026-09-07 from the external review's verified findings; five verifiers reproduced every number below on prod)
+Status: ready-for-agent — UNIT 1 DECIDED 2026-09-07 (owner), and the decision moved the fix: the reference carries its own declared KIND in the payload and the parser drops it. See "Decision" below; units re-cut accordingly. Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings; five verifiers reproduced every number below on prod)
 Kind: defect (identity / grouping) — correctness, the CONTEXT.md:112-113 invariant
 Relates to: 92 (records chain 3,282 only as a fold-performance cost, not as a correctness
 signal), ADR-0011 (the eForms edge's three guards, which this edge has none of), ADR-0003
@@ -42,3 +42,81 @@ failure for a folder id), and the sibling key defect (`procedure-key-accepted-un
 - the ≥200-version count is re-measured after re-projection and written here.
 
 *One issue because:* the 2,983-version Heidelberg/coal-mine/Reinbek tender, the 2,119-version DB Netz tender, the phantom `ojs:2001-185105` key and the whole ≥10/≥50/≥200/≥1000 distribution are one edge rule feeding one unguarded union-find — the distribution is that mechanism's blast radius, and the missing gauge is why it stood.
+
+## Decision (2026-09-07, owner): gate on the reference's declared KIND, which the payload already states
+
+I read the raw R2.0.8 payloads of the welding notices out of the archive rather than reasoning
+from the rules table, and the XML answers the question the code never asks. Every one of these
+citations sits inside a `PREVIOUS_PUBLICATION_*` block whose preceding element DECLARES what the
+reference is:
+
+```
+notice 12426474 (273139-2011, the phantom's source) and 17283790 (054353-2013):
+  <PREVIOUS_PUBLICATION_NOTICE_F5>
+    <PREVIOUS_NOTICE_BUYER_PROFILE_F5 CHOICE="PERIODIC_INDICATIVE_NOTICE"/>
+    <NOTICE_NUMBER_OJ>2012/S 123-203577</NOTICE_NUMBER_OJ>
+
+notice 17284506 (055142-2013), the SECOND citation in the same notice:
+  <CNT_NOTICE_INFORMATION>
+    <CNT_NOTICE_INFORMATION_S CHOICE="CONTRACT_NOTICE"/>
+    <NOTICE_NUMBER_OJ>2012/S 206-339288</NOTICE_NUMBER_OJ>
+```
+
+So the two citations mean opposite things and the corpus says so:
+
+- `CHOICE="CONTRACT_NOTICE"` — the award's own contract notice. **Same procedure.** A real edge.
+- `CHOICE="PERIODIC_INDICATIVE_NOTICE"` — the periodic indicative notice / buyer profile the
+  procurement was called under. **Many unrelated procurements cite one PIN.** Not an edge at all.
+
+That is the welder, and it explains the shape of the damage better than the missing guards do:
+the six-notice hub welds because six separate procurements cite one PIN, and the DB Netz tender
+welds because twelve years of rail projects were called under shared indicative publications.
+It also explains the phantom: the mistyped `2001/S 112-185105` is a PIN citation too, so under a
+kind-aware rule that edge is never created, node (2001, 185105) never exists, and nothing
+renames the component. One rule removes both symptoms.
+
+**Decided:** the identity layer keys on a reference's KIND, not on the fact that a reference
+exists. A `PREVIOUS_PUBLICATION` citation is a chain edge only where the payload declares a
+same-procedure predecessor (`CONTRACT_NOTICE` and its siblings for prior contract/award
+publications); a PIN, buyer-profile or qualification-system citation is recorded as notice-layer
+detail and never joins components.
+
+Three consequences for the plan:
+
+1. **The parser must stop discarding the kind.** `Rule::Id(IdKind::Ref)` collapses every
+   reference to one boolean (`is_ref`), and `Ident::read` then treats all of them alike
+   (`crates/ingest/src/project.rs:3313-3325`). The kind lives in a `CHOICE` attribute on a
+   sibling element, so the fix is a parse-time reading, not a post-hoc filter — the same shape as
+   the `CONTEXT` override that already disambiguates `NO_DOC_OJS`
+   (`crates/ingest/src/r209/rules.rs:145-148`), one level up: parent element AND its declared
+   choice.
+2. **The three guards are still worth having, and are now cheap.** With PIN citations gone, a
+   surviving edge should also require same-source and strictly-earlier where the target exists.
+   ADR-0011's deliberate allowance for not-yet-ingested targets is KEPT — identity stays stable
+   as backfill deepens — but a phantom endpoint may no longer NAME a component: the
+   representative is the earliest EXISTING notice. A phantom that later arrives and takes the
+   representative role is an ADR-0003 absorption, which the pipeline already handles.
+3. **The invariant gets a measurement.** CONTEXT.md:112-113 promises a missed link splits a
+   Tender and never wrongly merges; nothing checked it, which is why 212 tenders each fusing
+   hundreds of procurements read green for years. The component-plausibility gauge (distinct
+   buyers, distinct titles, year span per tender) is the detector, and it is what will show
+   whether the kind gate actually cured this class.
+
+## Units (re-cut after the decision)
+
+1. ~~Decide the edge-admission rule~~ — DONE, above.
+2. **Read the kind at parse time.** Extend the r209/r208 rules so a `PREVIOUS_PUBLICATION`
+   reference carries its declared choice, and admit only same-procedure kinds as chain edges.
+   First step: census the `CHOICE` values actually present across the legacy corpus (one pass
+   over the archive, counted per value) so the admit-list is measured rather than guessed —
+   `PERIODIC_INDICATIVE_NOTICE` and `CONTRACT_NOTICE` are the two seen in three specimens, and
+   the qualification-system and buyer-profile forms are expected. Pin with a fixture of the
+   six-notice hub (17283790, 17284506, 17284981, 17285150, 17285196, 17285468): six components,
+   not one.
+3. **Guards + representative rule** as in consequence 2, with ADR-0011 amended to record that a
+   phantom may link but may not name.
+4. **The component-plausibility gauge** in the weekly DQ report (also the detector for issue
+   369), listing the worst N.
+5. **Repair**: re-project so components re-derive; re-measure the ≥10/≥50/≥200/≥1000 distribution
+   and the two named tenders before and after, and write both here. Expect a large change-feed
+   burst (the issue-351 fold's shape).
