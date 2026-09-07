@@ -298,6 +298,17 @@ enum Spec {
     /// the eur_cents backfill refold — it aggregates the satellite's derived
     /// column, so stamping before the refold just writes NULLs.
     BackfillValues,
+    /// Populate `tender_currency_presence` from the standing corpus (issue 371) and
+    /// attest coverage when the walk reaches the end.
+    ///
+    /// The fold maintains the present-set for every amount it writes and a rebuild
+    /// clears and repopulates it, so this is the one-time sweep over the rows that
+    /// predate the table. Until it completes, `read::reachable` declines the currency
+    /// guard outright — the set is a SUBSET on such a file, and answering
+    /// `?currency=<present>` from a subset would hide real rows. So this job is what
+    /// turns the guard on; without it `?currency=XXX` keeps paying the 29.78 s
+    /// isolated walk it always did.
+    BackfillCurrencies,
     /// ADR-0013 D3's third leg (2026-09-02): stamp `tender_versions.original_lang`
     /// on the standing corpus from the notice-level language codes already in
     /// `notice_codes` — a batched PK-seek walk, not a refold. New folds write the
@@ -1226,6 +1237,17 @@ impl Supervisor {
             ]),
             "backfill-values" => Ok(vec![
                 self.push("backfill-values", "backfill-values".into(), Spec::BackfillValues).await,
+            ]),
+            // Issue 371: the one-time currency present-set sweep. Turns the read
+            // layer's `?currency=` reachability guard ON — it stays declined until
+            // this attests the set covers the standing corpus.
+            "backfill-currencies" => Ok(vec![
+                self.push(
+                    "backfill-currencies",
+                    "backfill-currencies".into(),
+                    Spec::BackfillCurrencies,
+                )
+                .await,
             ]),
             // Issue 306: re-derive the four loci's eur_cents from the current
             // rates table, then follow with backfill-values for the head column.
@@ -3349,6 +3371,47 @@ impl Supervisor {
                     "current_value_eur_cents stamped over {stamped} tenders (head-version \
                      MAX derived-EUR amount; NULL where none converts — ADR-0014 D4)"
                 ))
+            }
+            // Boxed per CLAUDE.md: every arm of this 60-plus-arm async match keeps its
+            // locals in ONE future, so an unboxed arm's frame is charged to a test that
+            // never touched it (the 2026-09-01 stack overflow in
+            // `an_execute_without_an_expected_count_is_refused`).
+            Spec::BackfillCurrencies => {
+                Box::pin(async move {
+                    // The `BackfillValues` walk exactly: bounded batch per transaction,
+                    // WAL checkpoint between batches (issue 42), progress as
+                    // members_done. The flag is set only AFTER the walk reaches the end
+                    // — a partial sweep leaves a subset, and attesting a subset is the
+                    // one failure mode the read's guard cannot survive.
+                    let mut tenders = 0i64;
+                    let mut watermark = 0i64;
+                    loop {
+                        let (rows, next) = self
+                            .db
+                            .backfill_currency_presence(BACKFILL_BATCH, watermark)
+                            .await
+                            .map_err(|e| e.to_string())?;
+                        if rows == 0 {
+                            break;
+                        }
+                        tenders += rows;
+                        watermark = next;
+                        self.update(|p| p.members_done = tenders as u64);
+                        if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                            eprintln!("supervisor: checkpoint after currency batch: {e}");
+                        }
+                    }
+                    self.db
+                        .set_currency_presence_complete(true)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    Ok(format!(
+                        "currency present-set swept over {tenders} tenders and attested \
+                         complete — `?currency=<absent>` now short-circuits instead of \
+                         walking the isolated pool (issue 371)"
+                    ))
+                })
+                .await
             }
             Spec::RederiveEur => {
                 // Reload FIRST: the walk must see the rates table as repaired,
@@ -9890,6 +9953,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "backfill-deadlines"
             | "backfill-titles"
             | "backfill-values"
+            | "backfill-currencies"
             | "backfill-org-names"
             | "backfill-legacy-adjacency"
             | "rederive-eur"

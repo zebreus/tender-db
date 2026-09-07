@@ -555,19 +555,19 @@ impl Collection {
 /// they cannot starve the main reader pool (issue 120).
 ///
 /// The classification is exhaustive BY CONSTRUCTION. `Filter` is destructured field by
-/// field below, so adding a field to it **fails to compile here** until someone
-/// classifies it. That is deliberate and non-negotiable: a hand-maintained list of
-/// "expensive filters" would silently route a newly-added unserved filter to the fast
-/// pool and reintroduce the defect — the same staleness that put `notices(source, id)`
-/// in the schema batch on the strength of a comment written when the table was eight
-/// times smaller.
+/// field in [`isolation_routed`], so adding a field to it **fails to compile there**
+/// until someone classifies it. That is deliberate and non-negotiable: a hand-maintained
+/// list of "expensive filters" would silently route a newly-added unserved filter to the
+/// fast pool and reintroduce the defect — the same staleness that put
+/// `notices(source, id)` in the schema batch on the strength of a comment written when
+/// the table was eight times smaller.
 /// Every field of [`Filter`], and why it can or cannot walk — the classification
 /// [`walks`] implements, written out so a test can check none has been missed.
 ///
-/// The destructuring in `walks` makes adding a field a COMPILE error, which forces a
-/// decision. It does not force a CORRECT one: the compiler helpfully suggests `..` to
-/// ignore the new field, and taking that suggestion silently routes it to the fast
-/// pool. This list is the belt to that brace — `filter_classification_is_exhaustive`
+/// The destructuring in `isolation_routed` makes adding a field a COMPILE error, which
+/// forces a decision. It does not force a CORRECT one: the compiler helpfully suggests
+/// `..` to ignore the new field, and taking that suggestion silently routes it to the
+/// fast pool. This list is the belt to that brace — `filter_classification_is_exhaustive`
 /// enumerates the real fields off `Filter`'s own `Debug` output and fails if any is
 /// absent here, so a field added with `..` is caught by a test even though it compiled.
 #[cfg(test)]
@@ -584,7 +584,9 @@ pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 22] = [
                     isolates pending a prod measurement (88d876a rule) — \
                     tenders_current_value_eur is the precondition, not the verdict"),
     ("max_value", "same as min_value"),
-    ("currency", "EXISTS over tender_version_amounts per row -> isolates (ADR-0014 D5)"),
+    ("currency", "EXISTS over tender_version_amounts per row -> isolates (ADR-0014 D5). \
+                  Guarded by the projection-maintained present-set tender_currency_presence \
+                  rather than by an index on the column (issue 371)"),
     ("kind", "Tenders: t.kind, NO index -> isolates. Lots: vl.kind, JOINED -> isolates. \
               Organizations/Notices: index-served"),
     ("tender", "the containment shape (issue 115), index-served -> never isolates"),
@@ -616,7 +618,78 @@ pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 22] = [
                       so it can never change where a read runs — only how fast it is there"),
 ];
 
+/// One isolation-routed filter: a filter that, on this collection, sends the request
+/// to the shed-only isolated reader pool (issue 120).
+///
+/// **This enumeration is the coupling between [`walks`] and [`reachable`], and it is
+/// the whole point of issue 371.** Issue 219 fixed the same class for
+/// country/cpv/buyer/winner/kind and stated the invariant in PROSE — "fold it into one
+/// probe so the guard set and the `walks()` set cannot drift again". Prose is what
+/// failed: `currency` was later added to `walks()` (ADR-0014 D5), `reachable()` never
+/// grew a leg, and `?currency=XXX` — a code present nowhere — was admitted, paid the
+/// full density-bounded walk (29.78 s measured on prod, rev `d80a4bd`) and held one of
+/// `SLOTS = 4` global isolation slots to answer empty. Four such requests shed every
+/// other isolated request on an unauthenticated surface.
+///
+/// So the two sets are now ONE set. [`isolation_routed`] is the only thing that decides
+/// isolation — `walks()` is `!isolation_routed(..).is_empty()` — and [`reachable`]
+/// consumes its output through an EXHAUSTIVE `match`. Routing a new filter to isolation
+/// therefore means adding a variant here, and a new variant does not compile until
+/// `reachable` gives it either a guard leg or an explicit, commented decline:
+///
+/// ```text
+/// error[E0004]: non-exhaustive patterns: `Isolated::Whatever` not covered
+///     --> crates/store/src/read.rs:1090:30
+///      |
+/// 1090 |         let admitted = match routed {
+///      |                              ^^^^^^ pattern `Isolated::Whatever` not covered
+///      |
+/// note: `Isolated` defined here
+///  670 |     Whatever,
+///      |     -------- not covered
+/// ```
+///
+/// (Reproduced 2026-09-07 by adding a variant and running `cargo check -p store`, so
+/// the shape above is the real message rather than a remembered one.)
+///
+/// A future reader cannot run that negative case (a compile error is not observable
+/// from a passing test suite), which is why the error is written out here — and why
+/// `the_isolated_set_and_the_guard_set_are_one_set` in
+/// `crates/store/tests/isolation_routing.rs` is the belt to this brace: it enumerates
+/// every variant, asserts each is reachable from a real filter, and pins which ones
+/// carry a probe.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Isolated {
+    Country,
+    Cpv,
+    Buyer,
+    Winner,
+    Bidder,
+    Currency,
+    Status,
+    MinValue,
+    MaxValue,
+    Source,
+    PublishedAfter,
+    PublishedBefore,
+    DeadlineAfter,
+    DeadlineBefore,
+    NamePrefix,
+    Kind,
+}
+
+/// Can answering this request WALK? — the boolean face of [`isolation_routed`], and the
+/// routing decision the API layer reads. Kept as the public predicate because that is
+/// what every caller wants; the LIST is what the guard needs.
 pub fn walks(collection: Collection, f: &Filter) -> bool {
+    !isolation_routed(collection, f).is_empty()
+}
+
+/// Every filter of `f` that routes THIS collection's read to the isolated pool, in the
+/// order [`reachable`] should probe them: the cheap index seeks first, the bare table
+/// scans last, so a cheaper absent leg short-circuits before an expensive one is paid
+/// for. Empty ⇒ the read cannot walk and stays on the main pool.
+pub fn isolation_routed(collection: Collection, f: &Filter) -> Vec<Isolated> {
     let Filter {
         source,
         country,
@@ -654,15 +727,21 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
     // filter is not a column of it — issue 117 Class B. Applied by `tenders` and `lots`
     // only; the other collections ignore these fields entirely, so passing one there
     // cannot walk.
-    let version_predicate = country.is_some()
-        || cpv.is_some()
-        || buyer.is_some()
-        || winner.is_some()
-        || bidder.is_some()
-        || status.is_some()
-        || min_value.is_some()
-        || max_value.is_some()
-        || currency.is_some();
+    //
+    // Ordered guard-first: the six legs `reachable` can PROBE come before the three it
+    // can only admit, so an absent country/cpv/org/currency short-circuits without the
+    // rest of the list being considered.
+    let version_predicate_set = [
+        (Isolated::Country, country.is_some()),
+        (Isolated::Cpv, cpv.is_some()),
+        (Isolated::Buyer, buyer.is_some()),
+        (Isolated::Winner, winner.is_some()),
+        (Isolated::Bidder, bidder.is_some()),
+        (Isolated::Currency, currency.is_some()),
+        (Isolated::Status, status.is_some()),
+        (Isolated::MinValue, min_value.is_some()),
+        (Isolated::MaxValue, max_value.is_some()),
+    ];
 
     // `identifier` (issue 217) is served by `organizations_identifier_id (identifier,
     // id)` on the one collection that reads it, so it seeks on the main pool exactly
@@ -680,7 +759,11 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
     // Lots arm below (issue 212). Before, this line dropped it (`let _ = tender`), so
     // a companion `kind`/`source` still isolated the bounded read and it could 503.
 
-    match collection {
+    // Each arm names the filters this collection routes to isolation, paired with
+    // whether the request actually set one; the tail filters that pair down to the
+    // routed list. Same decisions, same order of reasoning as the boolean form this
+    // replaced — a LIST rather than an OR so `reachable` can be handed the members.
+    let candidates: Vec<(Isolated, bool)> = match collection {
         // `source` is served by `tenders_source_id`. `kind` is `t.kind`, which NO index
         // covers — `tenders_procedure_key`, `tenders_island`, `tenders_current_published`
         // and `tenders_source_id` are the whole set — so a value matching nothing walks
@@ -704,15 +787,19 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         // predicate can walk while the number is present. Same accepted window
         // as notices: a box whose index is not yet built walks until the boot
         // detector's reindex lands.
-        Collection::Tenders => {
-            publication_id.is_none()
-                && (version_predicate
-                    || kind.is_some()
-                    || published_after.is_some()
-                    || published_before.is_some()
-                    || deadline_after.is_some()
-                    || deadline_before.is_some())
-        }
+        Collection::Tenders if publication_id.is_some() => Vec::new(),
+        Collection::Tenders => version_predicate_set
+            .into_iter()
+            .chain([
+                (Isolated::PublishedAfter, published_after.is_some()),
+                (Isolated::PublishedBefore, published_before.is_some()),
+                (Isolated::DeadlineAfter, deadline_after.is_some()),
+                (Isolated::DeadlineBefore, deadline_before.is_some()),
+                // LAST: its guard leg is a bare table scan, so every cheaper leg
+                // above gets to short-circuit before it is paid for.
+                (Isolated::Kind, kind.is_some()),
+            ])
+            .collect(),
         // Isolated because the COST is unbounded for sparse and absent values — NOT
         // because the filter is unserved. That distinction became load-bearing when
         // issue 16 restructured this read: `lots` now drives and the probe is a
@@ -734,14 +821,22 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         // Tender's lot slice, so no companion predicate can walk — `tender.is_none()`
         // gates the decision (issue 212). Without `tender`, the sparse/absent-density
         // cases above still isolate.
-        Collection::Lots => tender.is_none() && (version_predicate || source.is_some() || kind.is_some()),
+        Collection::Lots if tender.is_some() => Vec::new(),
+        Collection::Lots => version_predicate_set
+            .into_iter()
+            .chain([
+                // Both bare table scans on their guard side — after the seeks.
+                (Isolated::Source, source.is_some()),
+                (Isolated::Kind, kind.is_some()),
+            ])
+            .collect(),
         // `country` and `identifier_kind` are served by the issue-117 indexes, and
         // `buyer` is `o.id`, the primary key. `name_prefix` (issue 217-B) isolates
         // in THIS id-ordered shape — a sparse prefix filters the PK walk (SSE
         // snapshots take this path); the REST handler routes prefix searches
         // through `organizations_by_name`, which seeks `(name_norm, id)` by
         // construction and strips the prefix before consulting this arm.
-        Collection::Organizations => name_prefix.is_some(),
+        Collection::Organizations => vec![(Isolated::NamePrefix, name_prefix.is_some())],
         // `source` is served by `notices_source_id` and `kind` (`profile`) by
         // `notices_profile`. `publication_id` (issue 217-A) is served by
         // `notices_publication_id_id (publication_id, id)`: `notices_query` emits it
@@ -752,8 +847,9 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         // built. A box whose index is not yet built (fresh restore, pre-auto-reindex)
         // walks on the main pool for those minutes — accepted and bounded: the
         // missing-index detector enqueues the build at boot.
-        Collection::Notices => false,
-    }
+        Collection::Notices => Vec::new(),
+    };
+    candidates.into_iter().filter(|(_, set)| *set).map(|(which, _)| which).collect()
 }
 
 /// The version-scoped filters, emitted against caller-supplied expressions for the
@@ -992,112 +1088,227 @@ fn pick(table: &str, column: &str, field: Option<&str>, order: &str, lot: &str) 
 /// so that case is reachable without adversarial intent. Bounding worst-case work
 /// needs the real fix (restructuring the per-row `EXISTS`), not this.
 async fn reachable(conn: &Connection, filter: &Filter, collection: Collection) -> turso::Result<bool> {
-    // A prefix range, NOT `LIKE`. Measured on prod: `code LIKE 'ZZ%'` takes 41.05s
-    // against 0.01s for the range, because turso keeps the index but drops the second
-    // bound — `(scheme=?)` alone — and then filters the whole scheme's partition row
-    // by row. Both forms plan as `SEARCH ... USING INDEX`, so a plan cannot tell them
-    // apart; only the clock can (issue 112 rule 6).
-    for (scheme, prefix) in [("nuts", &filter.country), ("cpv", &filter.cpv)] {
-        let Some(prefix) = prefix else { continue };
-        // `LIKE` is ASCII-case-INSENSITIVE and a range comparison is not, so one range
-        // over the prefix as given is NARROWER than the predicate it stands in for.
-        // Verified: with `DE300` stored, `LIKE 'de%'` matches and `code >= 'de' AND
-        // code < 'df'` does not — so a lowercase `?country=de` would have short-
-        // circuited to an empty page while the real query returns rows. A guard that
-        // is narrower than what it guards does not make the read faster, it makes it
-        // WRONG.
-        //
-        // So probe every case variant of the prefix and treat the value as reachable
-        // if ANY of them hits: their union is exactly the set `LIKE` would match.
-        // `None` means too many variants to be worth it — skip the guard and let the
-        // full query answer, which is slow but correct.
-        let Some(ranges) = prefix_ranges(prefix) else { continue };
-        let mut any = false;
-        for (low, high) in ranges {
-            if exists(
-                conn,
-                "SELECT 1 FROM tender_version_classifications
-                  WHERE scheme = ? AND code >= ? AND code < ? LIMIT 1",
-                vec![t(scheme), t(&low), t(&high)],
-            )
-            .await?
-            {
-                any = true;
-                break;
+    // ONE list, walked in order. `isolation_routed` is the same call `walks()` makes to
+    // decide the pool, so the guard set cannot be a different set from the routed set —
+    // that drift is issue 371, and the `match` below is what now prevents it: a new
+    // `Isolated` variant does not compile until it is given a leg or an explicit
+    // decline. Ordered cheap-seek-first by `isolation_routed`, so an absent
+    // country/cpv/org/currency short-circuits before a bare scan is paid for.
+    for routed in isolation_routed(collection, filter) {
+        let admitted = match routed {
+            Isolated::Country => prefix_reachable(conn, "nuts", filter.country.as_deref()).await?,
+            Isolated::Cpv => prefix_reachable(conn, "cpv", filter.cpv.as_deref()).await?,
+            // All three seek `..._org(organization_id)`, the indexes issue 62 deferred.
+            Isolated::Buyer => org_reachable(conn, "tender_version_parties", filter.buyer).await?,
+            Isolated::Winner => {
+                org_reachable(conn, "tender_version_result_winners", filter.winner).await?
             }
-        }
-        if !any {
-            return Ok(false);
-        }
-    }
-    for (org, table) in [
-        (filter.buyer, "tender_version_parties"),
-        (filter.winner, "tender_version_result_winners"),
-        (filter.bidder, "tender_version_bid_parties"),
-    ] {
-        let Some(org) = org else { continue };
-        // Both seek `..._org(organization_id)`, the indexes issue 62 deferred.
-        let sql = format!("SELECT 1 FROM {table} WHERE organization_id = ? LIMIT 1");
-        if !exists(conn, &sql, vec![Value::Integer(org)]).await? {
-            return Ok(false);
-        }
-    }
-    // Issue 275 (measured 2026-08-25): `?source=<absent>` on LOTS ran 33.4s to
-    // the shed — the lots shape tests source through a correlated seek into
-    // `tenders` PER CANDIDATE ROW, 13.2M seeks for a value no row carries. The
-    // same absent value on TENDERS is a cheap in-row compare along its PK walk
-    // (measured 0.69s), so the guard is lots-only: a bare `WHERE source = ?
-    // LIMIT 1` over `tenders` — unindexed, so the absent case pays one plain
-    // table pass (about what the tenders read itself pays) instead of the
-    // correlated walk, and a real source hits its first row immediately. Same
-    // one-sided hazard as every leg here: it answers matches-nothing only; a
-    // present-but-rare source still walks, dense in practice (ted/doe).
-    if matches!(collection, Collection::Lots) {
-        if let Some(source) = &filter.source {
-            if !exists(conn, "SELECT 1 FROM tenders WHERE source = ? LIMIT 1", vec![t(source)]).await? {
-                return Ok(false);
+            Isolated::Bidder => {
+                org_reachable(conn, "tender_version_bid_parties", filter.bidder).await?
             }
-        }
-    }
-    // `kind` is `t.kind` (tenders) / `vl.kind` (lots), and NO index covers either — it
-    // is precisely why `walks()` routes it to the isolated pool. So an absent value
-    // walks the whole driven table INSIDE that pool, holding a reader slot for the
-    // duration: issue 219's unauthenticated saturation hole. The other legs above
-    // cover `country`/`cpv`/`buyer`/`winner`; `kind` was the survivor, guarded on
-    // `lots` but not `tenders`, so a handful of `?kind=<absent>` requests wedged the
-    // pool while every legitimate filtered read shed 503.
-    //
-    // Probe the single driven table with a bare `WHERE kind = ? LIMIT 1`. This is NOT
-    // free for an absent value — no index, so it scans the table — but it is a
-    // single-column scan with no joins, `EXISTS` subqueries or sort, orders of
-    // magnitude short of the full filtered-and-ordered walk it stands in for
-    // (`/v1/tenders?kind=` measured at 130-230s; the bare scan is a table pass), and
-    // ~1ms when the value is present (prod's first `Lot`/`procedure` row sits at the
-    // head of its table). Same one-sided hazard as the prefix probes: it answers
-    // *matches-nothing* only, so it can cost a walk it need not have but never drops a
-    // row that matches. Runs LAST so a cheaper absent country/cpv/buyer/winner leg
-    // short-circuits before this scan is paid for.
-    //
-    // What it still does NOT cover: a `kind` that EXISTS but has fewer rows than the
-    // page limit walks everything to fill a page it never can (`T(K) = T_full*50/K`).
-    // No corpus value is near that today; latent, confined by the isolation of issue
-    // 120, and recorded rather than fixed — as it was on `lots` before this moved here.
-    if let Some(kind) = &filter.kind {
-        let kind_table = match collection {
-            Collection::Tenders => "tenders",
-            Collection::Lots => "tender_version_lots",
-            // Unreachable: `walks()` isolates no other collection and `reachable()` is
-            // called from nowhere else. Decline to short-circuit rather than probe a
-            // table whose `kind` column means something different (`profile`,
-            // `identifier_kind`).
-            Collection::Organizations | Collection::Notices => return Ok(true),
+            Isolated::Currency => currency_reachable(conn, filter.currency.as_deref()).await?,
+            // Issue 275 (measured 2026-08-25): `?source=<absent>` on LOTS ran 33.4s to
+            // the shed — the lots shape tests source through a correlated seek into
+            // `tenders` PER CANDIDATE ROW, 13.2M seeks for a value no row carries. The
+            // same absent value on TENDERS is a cheap in-row compare along its PK walk
+            // (measured 0.69s), which is why `isolation_routed` routes source on Lots
+            // and not on Tenders — so this leg is reached for Lots alone, and the old
+            // `matches!(collection, Collection::Lots)` gate is now the routing itself.
+            // A bare `WHERE source = ? LIMIT 1` over `tenders` — unindexed, so the
+            // absent case pays one plain table pass (about what the tenders read itself
+            // pays) instead of the correlated walk, and a real source hits its first row
+            // immediately. Same one-sided hazard as every leg here: it answers
+            // matches-nothing only; a present-but-rare source still walks, dense in
+            // practice (ted/doe).
+            Isolated::Source => match &filter.source {
+                Some(source) => {
+                    exists(conn, "SELECT 1 FROM tenders WHERE source = ? LIMIT 1", vec![t(source)])
+                        .await?
+                }
+                None => true,
+            },
+            // NO PROBE, and each of these is a decision rather than an omission.
+            //
+            // `status` is not a value that can be absent: both members of its
+            // two-valued vocabulary are always "present" in the sense a probe could
+            // test, and the head-column range form (issue 273) already bounds the scan
+            // to the open head. There is nothing to seek.
+            Isolated::Status => true,
+            // The value bounds compare `current_value_eur_cents`, a head column. A
+            // bound outside the corpus range is not a matches-nothing VALUE but an
+            // empty RANGE, and answering that needs MIN/MAX statistics this layer does
+            // not keep (issue 117: no selectivity statistics). `tenders_current_value_eur`
+            // is the precondition for the real fix, not this guard.
+            Isolated::MinValue | Isolated::MaxValue => true,
+            // Same shape as the value bounds, over the publication/deadline head
+            // columns: a range, not a value, and a narrow-but-nonempty range is the
+            // costly case a presence probe could not detect anyway.
+            Isolated::PublishedAfter
+            | Isolated::PublishedBefore
+            | Isolated::DeadlineAfter
+            | Isolated::DeadlineBefore => true,
+            // Organizations-only (issue 217-B), and `reachable` is called from
+            // `tenders`/`lots` alone — so this arm is unreachable today. It exists
+            // because the match must be exhaustive, and it declines rather than
+            // guessing: if `organizations()` ever grows the guard, the leg belongs
+            // here, seeking `organizations_name_norm_id` over the prefix range.
+            Isolated::NamePrefix => true,
+            // `kind` is `t.kind` (tenders) / `vl.kind` (lots), and NO index covers
+            // either — it is precisely why it routes to the isolated pool. So an absent
+            // value walks the whole driven table INSIDE that pool, holding a reader slot
+            // for the duration: issue 219's unauthenticated saturation hole. `kind` was
+            // that issue's survivor, guarded on `lots` but not `tenders`, so a handful
+            // of `?kind=<absent>` requests wedged the pool while every legitimate
+            // filtered read shed 503.
+            //
+            // Probe the single driven table with a bare `WHERE kind = ? LIMIT 1`. This
+            // is NOT free for an absent value — no index, so it scans the table — but it
+            // is a single-column scan with no joins, `EXISTS` subqueries or sort, orders
+            // of magnitude short of the full filtered-and-ordered walk it stands in for
+            // (`/v1/tenders?kind=` measured at 130-230s; the bare scan is a table pass),
+            // and ~1ms when the value is present (prod's first `Lot`/`procedure` row
+            // sits at the head of its table). Same one-sided hazard as the prefix
+            // probes: it answers *matches-nothing* only, so it can cost a walk it need
+            // not have but never drops a row that matches. Routed LAST so a cheaper
+            // absent leg short-circuits before this scan is paid for.
+            //
+            // What it still does NOT cover: a `kind` that EXISTS but has fewer rows than
+            // the page limit walks everything to fill a page it never can
+            // (`T(K) = T_full*50/K`). No corpus value is near that today; latent,
+            // confined by the isolation of issue 120, and recorded rather than fixed.
+            Isolated::Kind => match (&filter.kind, collection) {
+                (Some(kind), Collection::Tenders) => kind_reachable(conn, "tenders", kind).await?,
+                (Some(kind), Collection::Lots) => {
+                    kind_reachable(conn, "tender_version_lots", kind).await?
+                }
+                // Unreachable: `isolation_routed` routes `kind` on Tenders and Lots only
+                // and `reachable` is called from nowhere else. Decline to short-circuit
+                // rather than probe a table whose `kind` column means something
+                // different (`profile`, `identifier_kind`).
+                (Some(_), Collection::Organizations | Collection::Notices) => true,
+                (None, _) => true,
+            },
         };
-        let sql = format!("SELECT 1 FROM {kind_table} WHERE kind = ? LIMIT 1");
-        if !exists(conn, &sql, vec![t(kind)]).await? {
+        if !admitted {
             return Ok(false);
         }
     }
     Ok(true)
+}
+
+/// The `country`/`cpv` leg: does any classification carry this prefix?
+///
+/// A prefix range, NOT `LIKE`. Measured on prod: `code LIKE 'ZZ%'` takes 41.05s against
+/// 0.01s for the range, because turso keeps the index but drops the second bound —
+/// `(scheme=?)` alone — and then filters the whole scheme's partition row by row. Both
+/// forms plan as `SEARCH ... USING INDEX`, so a plan cannot tell them apart; only the
+/// clock can (issue 112 rule 6).
+async fn prefix_reachable(
+    conn: &Connection,
+    scheme: &str,
+    prefix: Option<&str>,
+) -> turso::Result<bool> {
+    let Some(prefix) = prefix else { return Ok(true) };
+    // `LIKE` is ASCII-case-INSENSITIVE and a range comparison is not, so one range over
+    // the prefix as given is NARROWER than the predicate it stands in for. Verified:
+    // with `DE300` stored, `LIKE 'de%'` matches and `code >= 'de' AND code < 'df'` does
+    // not — so a lowercase `?country=de` would have short-circuited to an empty page
+    // while the real query returns rows. A guard that is narrower than what it guards
+    // does not make the read faster, it makes it WRONG.
+    //
+    // So probe every case variant of the prefix and treat the value as reachable if ANY
+    // of them hits: their union is exactly the set `LIKE` would match. `None` means too
+    // many variants to be worth it — skip the guard and let the full query answer, which
+    // is slow but correct.
+    let Some(ranges) = prefix_ranges(prefix) else { return Ok(true) };
+    for (low, high) in ranges {
+        if exists(
+            conn,
+            "SELECT 1 FROM tender_version_classifications
+              WHERE scheme = ? AND code >= ? AND code < ? LIMIT 1",
+            vec![t(scheme), t(&low), t(&high)],
+        )
+        .await?
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
+/// The `buyer`/`winner`/`bidder` leg: does this organization appear in the
+/// participation table at all? Seeks `..._org(organization_id)`.
+async fn org_reachable(conn: &Connection, table: &str, org: Option<i64>) -> turso::Result<bool> {
+    let Some(org) = org else { return Ok(true) };
+    let sql = format!("SELECT 1 FROM {table} WHERE organization_id = ? LIMIT 1");
+    exists(conn, &sql, vec![Value::Integer(org)]).await
+}
+
+/// The `kind` leg: a bare single-column scan of the one driven table.
+async fn kind_reachable(conn: &Connection, table: &str, kind: &str) -> turso::Result<bool> {
+    let sql = format!("SELECT 1 FROM {table} WHERE kind = ? LIMIT 1");
+    exists(conn, &sql, vec![t(kind)]).await
+}
+
+/// The `currency` leg (issue 371): does any amount row anywhere carry this code?
+///
+/// `currency` is a per-row `EXISTS` over `tender_version_amounts`, whose only index is
+/// `tender_version_amounts_version (tender_id, seq)` — so the column is unindexed and an
+/// absent code walked the whole corpus inside the isolated pool to answer empty: 29.78 s
+/// measured on prod for `?currency=XXX`, just inside `REQUEST_DEADLINE`, holding one of
+/// four global slots. Four such requests shed everything else on those endpoints.
+///
+/// It does NOT seek an index on `tender_version_amounts(currency)`, deliberately: that
+/// would pay write amplification on every fold across tens of millions of rows to store
+/// a key with a few dozen distinct values. It seeks the PRESENT-SET the projection
+/// maintains instead (`tender_currency_presence`, canonical.rs) — one primary-key probe
+/// over ~26 rows.
+///
+/// **The set may be a SUPERSET and must never be a subset.** Entries are only ever
+/// added: a delete (a retired Tender, a shrinking rewrite, a dropped version) never
+/// removes one, so an entry can outlive the last row carrying it. That makes this probe
+/// ADMIT a code no row carries any more, and the read then degrades to exactly the walk
+/// this guard exists to avoid — slow, and correct. The reverse, a MISSING entry for a
+/// code rows do carry, would short-circuit to an empty page and hide real rows: fast,
+/// WRONG and silent. That is why the fold writes the entry in the SAME transaction as
+/// the amount rows (`Pending::flush`), and why this declines entirely until
+/// `projection_state.currency_presence_complete` attests the standing corpus is covered
+/// — on a file whose amounts predate the table the set is a subset until
+/// `backfill-currencies` has run, and a subset is the one thing this must not read.
+///
+/// Case: the predicate it stands in for is `a.currency = ?`, an exact comparison, and so
+/// is this — the set stores codes exactly as the fold wrote them. The guard is therefore
+/// exactly as narrow as the predicate, not narrower.
+async fn currency_reachable(conn: &Connection, currency: Option<&str>) -> turso::Result<bool> {
+    let Some(currency) = currency else { return Ok(true) };
+    if !exists(
+        conn,
+        "SELECT 1 FROM projection_state WHERE id = 0 AND currency_presence_complete <> 0",
+        Vec::new(),
+    )
+    .await?
+    {
+        return Ok(true);
+    }
+    exists(
+        conn,
+        "SELECT 1 FROM tender_currency_presence WHERE currency = ? LIMIT 1",
+        vec![t(currency)],
+    )
+    .await
+}
+
+/// [`reachable`] under a test-visible name (the `_for_test` pattern of
+/// `Db::set_projection_epoch_for_test`). The guard changes SPEED and never RESULTS, so
+/// no assertion on a returned page can tell a short-circuit from a walk that happened to
+/// find nothing — the integration tests need the verdict itself to assert on the
+/// MECHANISM rather than on a clock.
+pub async fn reachable_for_test(
+    conn: &Connection,
+    filter: &Filter,
+    collection: Collection,
+) -> turso::Result<bool> {
+    reachable(conn, filter, collection).await
 }
 
 async fn exists(conn: &Connection, sql: &str, params: Vec<Value>) -> turso::Result<bool> {
@@ -2065,6 +2276,11 @@ pub async fn lots_identity(
     // half of the saturation hole (215-D). Folding both entry points through the one
     // probe keeps the guard set and the `walks()` set from drifting apart again — the
     // per-collection `kind` table lives inside `reachable()` now.
+    //
+    // That last sentence was PROSE until issue 371, and prose is what failed: `currency`
+    // was added to `walks()` and never to the probe, so a code present nowhere walked the
+    // isolated pool for 29.8 s. The two sets are now the ONE `isolation_routed` list,
+    // matched exhaustively in `reachable`, so the next drift is a compile error.
     if matches!(scope, Scope::Page { .. }) && !reachable(conn, filter, Collection::Lots).await? {
         return Ok(Vec::new());
     }

@@ -282,6 +282,37 @@ pub(crate) const SCHEMA: &str = "
     ) STRICT;
     CREATE INDEX IF NOT EXISTS tender_version_amounts_version ON tender_version_amounts(tender_id, seq);
 
+    -- The PRESENT-SET of published currency codes (issue 371): every code the
+    -- projection has written into tender_version_amounts above. A few dozen rows
+    -- over the whole corpus (26 codes occur in prod), which is the entire point.
+    --
+    -- read::reachable seeks it so `?currency=<absent>` answers empty from one
+    -- primary-key probe instead of the density-bounded walk it used to pay --
+    -- 29.78 s measured on prod for `?currency=XXX`, holding one of only four
+    -- global isolation slots to answer nothing.
+    --
+    -- NOT an index on tender_version_amounts(currency), deliberately: an index
+    -- would answer the same one question by paying write amplification on every
+    -- fold across tens of millions of rows to store a key whose cardinality is a
+    -- few dozen. The question the read asks is \"does ANY row carry this value\",
+    -- never \"which rows\", so the set is the whole answer.
+    --
+    -- ONE-SIDED, and this direction is load-bearing. Entries are only ever ADDED;
+    -- nothing removes one when the last row carrying it goes (a retired Tender, a
+    -- shrinking rewrite, a dropped version). So the set is a SUPERSET of the codes
+    -- actually present: a stale entry makes the probe ADMIT and the read degrades
+    -- to exactly today's walk -- slow, correct. A MISSING entry would make the
+    -- probe answer \"no such currency\" while rows carrying it exist -- fast,
+    -- WRONG, silent. Hence the fold writes here in the SAME transaction as the
+    -- amount rows (Pending::flush), and projection_state.currency_presence_complete
+    -- gates the guard off entirely until the standing corpus is covered.
+    --
+    -- A test or repair that inserts amount rows by raw SQL rather than through the
+    -- fold must insert here too, or it builds exactly the subset described above.
+    CREATE TABLE IF NOT EXISTS tender_currency_presence (
+        currency TEXT PRIMARY KEY
+    ) STRICT;
+
     -- Deadlines and planned periods: UTC instant plus the buyer's own offset,
     -- because the local wall-clock deadline is the meaningful one. This is the
     -- satellite ADR-0001's motivating question reads (\"how did the deadline
@@ -780,7 +811,18 @@ pub(crate) const SCHEMA: &str = "
         -- (ops-panel catch: a resume across a deploy that changed n2/n3
         -- would silently mix semantics in one table — a mismatch restarts
         -- the build from zero instead).
-        org_match_keys_epoch TEXT NOT NULL DEFAULT ''
+        org_match_keys_epoch TEXT NOT NULL DEFAULT '',
+        -- Issue 371: does `tender_currency_presence` cover the WHOLE standing
+        -- corpus? The present-set is safe as a superset and fatal as a subset, and
+        -- a file whose amount rows predate the table starts as a subset -- so the
+        -- read declines the currency guard outright while this is 0, which is
+        -- exactly the behaviour that shipped before the set existed. Set to 1 by:
+        -- Db::open when the amount layer is empty (a fresh file has nothing to
+        -- cover), the two layer wipes (clear_canonical / reset_tender_layer, after
+        -- which the refold maintains it), and the `backfill-currencies` job that
+        -- sweeps an existing corpus. Never set back to 0 by a fold -- only a wipe
+        -- or a migration can invalidate coverage, and both re-establish it.
+        currency_presence_complete INTEGER NOT NULL DEFAULT 0
     ) STRICT;
     INSERT OR IGNORE INTO projection_state(id, rebuild_in_progress) VALUES (0, 0);
 
@@ -4776,6 +4818,15 @@ impl Db {
             // fix as reset_tender_layer; the fresh path must not balloon either.
             Self::drop_and_recreate(&conn, table).await?;
         }
+        // Issue 371: the amount layer is empty again, so the currency present-set is
+        // trivially complete — clear it and attest that, and the refold that follows
+        // repopulates it fact by fact. A rebuild is the one moment the set gets to
+        // SHRINK back to reality; every other path only ever adds, which is the safe
+        // direction. ~26 rows, so the DELETE is nothing like the WAL hazard the
+        // content tables' DROP+recreate exists for.
+        conn.execute("DELETE FROM tender_currency_presence", ()).await?;
+        conn.execute("UPDATE projection_state SET currency_presence_complete = 1 WHERE id = 0", ())
+            .await?;
         // Reset the incremental-projection watermark (issue 58): a full rebuild
         // re-derives everything, so every parsed notice must be re-folded. Over a
         // fully-projected corpus this touches ~14M rows, so batch it by id range
@@ -6590,6 +6641,14 @@ impl Db {
             (),
         )
         .await?;
+        // Issue 371: the amount layer is empty again, so the currency present-set is
+        // trivially complete — clear it and attest that, and the Phase-2 fold that
+        // follows repopulates it as it writes each amount. Without this a rebuild would
+        // leave the previous corpus's codes behind: still SAFE (a superset only ever
+        // costs a walk) but never shrinking, and the flag would have nothing to mean.
+        conn.execute("DELETE FROM tender_currency_presence", ()).await?;
+        conn.execute("UPDATE projection_state SET currency_presence_complete = 1 WHERE id = 0", ())
+            .await?;
         Ok(())
     }
 
@@ -19013,6 +19072,13 @@ impl Db {
                     pending.texts.extend([a, b, c, t(field), opt_text(lang.as_deref()), t(value)]);
                 }
                 Fact::Amount { field, cents, currency, tax_basis } => {
+                    // Issue 371: note the code for the present-set. Same buffer, same
+                    // batch, same transaction as the row itself — so the set can never
+                    // be a subset of what the amounts table carries, which is the one
+                    // direction that would make the read's guard answer wrongly.
+                    if !pending.currencies.contains(currency) {
+                        pending.currencies.insert(currency.clone());
+                    }
                     pending.amounts.extend([
                         a,
                         b,
@@ -20375,6 +20441,12 @@ struct Pending {
     lot_group_members: Vec<Value>,
     texts: Vec<Value>,
     amounts: Vec<Value>,
+    /// Issue 371: the distinct currency codes of `amounts` in THIS batch, for the
+    /// present-set the read's reachability guard seeks. A set rather than a
+    /// per-row write: a batch of ~512 tenders carries one or two distinct codes,
+    /// so the whole cost of maintaining it is one or two `INSERT OR IGNORE`s per
+    /// ~15k-row batch — which is why this is not an index on the column.
+    currencies: BTreeSet<String>,
     classifications: Vec<Value>,
     dates: Vec<Value>,
     parties: Vec<Value>,
@@ -20398,6 +20470,17 @@ impl Pending {
         n += flush_rows(conn, "INSERT INTO tender_version_lot_group_members(tender_id, seq, group_lot_id, member_lot_id) VALUES ", 4, &mut self.lot_group_members).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_texts(tender_id, seq, lot_id, field, lang, value) VALUES ", 6, &mut self.texts).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_amounts(tender_id, seq, lot_id, field, cents, currency, tax_basis, eur_cents) VALUES ", 8, &mut self.amounts).await?;
+        // Issue 371's present-set, written in the SAME transaction as the amount rows
+        // just above so the two can never disagree in the unsafe direction. Not counted
+        // in `n`: that is the satellite ROW count the fold reports and snapshots, and a
+        // derived dimension row is not a fact row.
+        for currency in std::mem::take(&mut self.currencies) {
+            conn.execute(
+                "INSERT OR IGNORE INTO tender_currency_presence(currency) VALUES(?)",
+                (t(&currency),),
+            )
+            .await?;
+        }
         n += flush_rows(conn, "INSERT INTO tender_version_classifications(tender_id, seq, lot_id, field, scheme, code) VALUES ", 6, &mut self.classifications).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_dates(tender_id, seq, lot_id, field, utc_seconds, offset_minutes, has_time) VALUES ", 7, &mut self.dates).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_parties(tender_id, seq, lot_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7, &mut self.parties).await?;

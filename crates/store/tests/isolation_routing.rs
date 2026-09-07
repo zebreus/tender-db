@@ -203,3 +203,147 @@ fn organizations_and_notices_ignore_the_version_predicates() {
     assert!(!walks(Collection::Organizations, &noise));
     assert!(!walks(Collection::Notices, &noise));
 }
+
+/// ISSUE 371 unit 1: the routed set and the guard set are ONE set.
+///
+/// Issue 219 fixed this class for country/cpv/buyer/winner/kind and stated the
+/// invariant in PROSE — fold it into one probe "so the guard set and the `walks()` set
+/// cannot drift again". Prose is what failed. `currency` was later added to `walks()`
+/// (ADR-0014 D5) and `reachable()` never grew a leg, so a code present nowhere was
+/// admitted, walked 7.93M rows and held one of four global isolation slots for 29.78 s
+/// to answer empty.
+///
+/// The real fix is in the TYPE SYSTEM and cannot be tested from here: `walks()` is now
+/// `!isolation_routed(..).is_empty()`, and `reachable()` consumes `isolation_routed`'s
+/// output through an EXHAUSTIVE `match` over `read::Isolated`. Routing a new filter to
+/// isolation therefore means adding a variant, and a new variant does not compile until
+/// `reachable` gives it a probe or an explicit decline:
+///
+/// ```text
+/// error[E0004]: non-exhaustive patterns: `Isolated::Whatever` not covered
+///     --> crates/store/src/read.rs:1090:30
+///      |
+/// 1090 |         let admitted = match routed {
+///      |                              ^^^^^^ pattern `Isolated::Whatever` not covered
+///      |
+/// note: `Isolated` defined here
+///  670 |     Whatever,
+///      |     -------- not covered
+/// ```
+///
+/// (Reproduced 2026-09-07 by adding a variant and running `cargo check -p store`, so
+/// the shape above is the real message rather than a remembered one.)
+///
+/// A compile error is not observable from a passing suite, which is why it is written
+/// out above. What IS testable is the other half of the coupling — that the two faces
+/// cannot disagree about a request, and that each isolating filter is NAMED rather than
+/// folded into an anonymous boolean. A `walks()` that stopped delegating (an added
+/// `|| new_filter.is_some()`, the exact 371 shape) fails here.
+#[test]
+fn the_isolated_set_and_the_guard_set_are_one_set() {
+    use store::read::{Isolated, isolation_routed};
+
+    let cases: Vec<(&str, Filter, Vec<Isolated>)> = vec![
+        ("country", Filter { country: Some("DE".into()), ..f() }, vec![Isolated::Country]),
+        ("cpv", Filter { cpv: Some("45".into()), ..f() }, vec![Isolated::Cpv]),
+        ("buyer", Filter { buyer: Some(7), ..f() }, vec![Isolated::Buyer]),
+        ("winner", Filter { winner: Some(7), ..f() }, vec![Isolated::Winner]),
+        ("bidder", Filter { bidder: Some(7), ..f() }, vec![Isolated::Bidder]),
+        ("currency", Filter { currency: Some("EUR".into()), ..f() }, vec![Isolated::Currency]),
+        ("status", Filter { status: Some(store::read::Status::Open), ..f() }, vec![Isolated::Status]),
+        ("min_value", Filter { min_value: Some(1), ..f() }, vec![Isolated::MinValue]),
+        ("max_value", Filter { max_value: Some(1), ..f() }, vec![Isolated::MaxValue]),
+        ("kind", Filter { kind: Some("procedure".into()), ..f() }, vec![Isolated::Kind]),
+        (
+            "published_after",
+            Filter { published_after: Some(1), ..f() },
+            vec![Isolated::PublishedAfter],
+        ),
+        (
+            "deadline_before",
+            Filter { deadline_before: Some(1), ..f() },
+            vec![Isolated::DeadlineBefore],
+        ),
+    ];
+    for (name, filter, expected) in &cases {
+        assert_eq!(
+            &isolation_routed(Collection::Tenders, filter),
+            expected,
+            "tenders?{name}= must route to isolation UNDER ITS OWN NAME — an isolating \
+             filter that reaches `reachable()` as an anonymous boolean is how issue 371 \
+             happened"
+        );
+    }
+
+    // The two faces are the same decision. `walks()` delegates, so a filter cannot be
+    // routed to isolation without appearing in the list the guard consumes.
+    let collections =
+        [Collection::Tenders, Collection::Lots, Collection::Organizations, Collection::Notices];
+    let matrix: Vec<Filter> = cases
+        .iter()
+        .map(|(_, filter, _)| filter.clone())
+        .chain([
+            f(),
+            Filter { source: Some("ted".into()), ..f() },
+            Filter { name_prefix: Some("siemens".into()), ..f() },
+            Filter { tender: Some(1), kind: Some("Lot".into()), ..f() },
+            Filter { publication_id: Some("00018218-2024".into()), country: Some("DE".into()), ..f() },
+            Filter { identifier: Some("DE811907980".into()), ..f() },
+            Filter { source: Some("ted".into()), country: Some("MT".into()), ..f() },
+        ])
+        .collect();
+    for collection in collections {
+        for filter in &matrix {
+            assert_eq!(
+                walks(collection, filter),
+                !isolation_routed(collection, filter).is_empty(),
+                "{collection:?}: `walks` and `isolation_routed` disagree about {filter:?}. \
+                 They are the same decision by construction — if they can differ, the \
+                 guard is once again probing a different set from the one being routed"
+            );
+        }
+    }
+
+    // The suppressors keep suppressing, named this time: a bounded read routes NOTHING,
+    // so the guard is asked nothing either.
+    assert!(
+        isolation_routed(Collection::Lots, &Filter { tender: Some(1), country: Some("DE".into()), ..f() })
+            .is_empty(),
+        "a tender containment bound suppresses isolation entirely (issue 212)"
+    );
+    assert!(
+        isolation_routed(
+            Collection::Tenders,
+            &Filter { publication_id: Some("00018218-2024".into()), currency: Some("EUR".into()), ..f() }
+        )
+        .is_empty(),
+        "a publication seed suppresses isolation entirely (issue 217-A)"
+    );
+
+    // `source` isolates on Lots and not on Tenders, and the guard leg follows the
+    // routing rather than a second collection test of its own.
+    assert_eq!(
+        isolation_routed(Collection::Lots, &Filter { source: Some("ted".into()), ..f() }),
+        vec![Isolated::Source]
+    );
+    assert!(
+        isolation_routed(Collection::Tenders, &Filter { source: Some("ted".into()), ..f() }).is_empty(),
+        "tenders?source= seeks tenders_source_id — no isolation, so no guard leg is owed"
+    );
+
+    // `kind` is routed LAST on both collections that route it: its guard leg is a bare
+    // table scan, so every cheaper leg must get to short-circuit before it is paid for.
+    let everything = Filter {
+        country: Some("DE".into()),
+        currency: Some("EUR".into()),
+        kind: Some("procedure".into()),
+        ..f()
+    };
+    for collection in [Collection::Tenders, Collection::Lots] {
+        assert_eq!(
+            isolation_routed(collection, &everything).last(),
+            Some(&Isolated::Kind),
+            "{collection:?}: the table-scan leg must be probed last"
+        );
+    }
+}

@@ -723,6 +723,32 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
         "ALTER TABLE projection_state ADD COLUMN org_match_keys_epoch TEXT NOT NULL DEFAULT ''",
     )
     .await?;
+    // Issue 371: the currency present-set's coverage attestation (see the
+    // projection_state schema comment). Metadata-only on a STRICT table with a
+    // constant default, so O(1) even on prod. It defaults to 0 — NOT covered —
+    // because a file whose amount rows predate `tender_currency_presence` holds a
+    // SUBSET of the codes it carries, and a subset is the one state the read's
+    // guard must never answer from. `backfill-currencies` establishes it there.
+    add_column(
+        conn,
+        "ALTER TABLE projection_state ADD COLUMN currency_presence_complete INTEGER NOT NULL DEFAULT 0",
+    )
+    .await?;
+    // …but a file with NO amount rows at all has a trivially complete present-set,
+    // and that is every fresh database plus every one a rebuild has just emptied.
+    // Attest it here rather than making a new box wait for a backfill job that has
+    // no work to do. One `LIMIT 1` probe at open: on a populated file it finds a row
+    // immediately and leaves the flag alone. This only ever sets the flag TO 1 — a
+    // half-finished rebuild has an attested set covering what it has written so far,
+    // and clearing that would be wrong as well as pointless.
+    let amounts_present = {
+        let mut rows = conn.query("SELECT 1 FROM tender_version_amounts LIMIT 1", ()).await?;
+        rows.next().await?.is_some()
+    };
+    if !amounts_present {
+        conn.execute("UPDATE projection_state SET currency_presence_complete = 1 WHERE id = 0", ())
+            .await?;
+    }
     // The Unicode-lowercased org name (issue 217-B): fold-written for new orgs,
     // backfilled by the batched `backfill-org-names` job (24.6M rows — never at
     // open; the 82/83 + issue-42 lessons, same as current_deadline above).
@@ -3108,6 +3134,81 @@ impl Db {
         )
         .await?;
         Ok((count, watermark))
+    }
+
+    /// One batch of the currency present-set backfill (issue 371): fold the DISTINCT
+    /// `tender_version_amounts.currency` of the next `batch` tenders past the watermark
+    /// into `tender_currency_presence`. Windowed on `tender_id` so each batch rides
+    /// `tender_version_amounts_version (tender_id, seq)` and costs its own rows, never
+    /// the corpus — the [`Self::backfill_current_value_eur`] contract, batched and
+    /// checkpointed by the caller.
+    ///
+    /// Returns `(tenders in the window, watermark)`; `0` ends the walk. Idempotent
+    /// (`INSERT OR IGNORE` into a primary key), so a crash-restart may redo windows
+    /// harmlessly — the set only grows, and growing it is the safe direction.
+    ///
+    /// This exists for files whose amount rows predate the table. The fold maintains
+    /// the set for everything it writes, and a rebuild clears and repopulates it, so
+    /// this is the one-time sweep over what neither has touched. It deliberately does
+    /// NOT set the coverage flag: only a walk that reached the END of the corpus may
+    /// attest coverage, and that is the caller's business
+    /// ([`Self::set_currency_presence_complete`]).
+    pub async fn backfill_currency_presence(
+        &self,
+        batch: i64,
+        after: i64,
+    ) -> turso::Result<(i64, i64)> {
+        let conn = self.conn().await;
+        let mut rows = conn
+            .query(
+                "SELECT COUNT(*), MAX(id) FROM
+                   (SELECT id FROM tenders WHERE id > ? ORDER BY id LIMIT ?)",
+                (Value::Integer(after), Value::Integer(batch)),
+            )
+            .await?;
+        let (count, watermark) = match rows.next().await? {
+            Some(row) => (int(&row, 0), opt_int_of(&row, 1).unwrap_or(after)),
+            None => (0, after),
+        };
+        drop(rows);
+        if count == 0 {
+            return Ok((0, after));
+        }
+        conn.execute(
+            "INSERT OR IGNORE INTO tender_currency_presence(currency)
+             SELECT DISTINCT currency FROM tender_version_amounts
+              WHERE tender_id > ? AND tender_id <= ?",
+            (Value::Integer(after), Value::Integer(watermark)),
+        )
+        .await?;
+        Ok((count, watermark))
+    }
+
+    /// Attest (or withdraw) that `tender_currency_presence` covers the whole standing
+    /// corpus — the flag `read::reachable`'s currency leg refuses to guard without.
+    /// Set by the `backfill-currencies` job when its walk reaches the end; the layer
+    /// wipes and `Db::open`'s empty-layer check set it directly in SQL where they
+    /// already hold the connection.
+    pub async fn set_currency_presence_complete(&self, complete: bool) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute(
+            "UPDATE projection_state SET currency_presence_complete = ? WHERE id = 0",
+            (Value::Integer(i64::from(complete)),),
+        )
+        .await?;
+        Ok(())
+    }
+
+    /// Whether the currency present-set is attested to cover the standing corpus.
+    pub async fn currency_presence_complete(&self) -> turso::Result<bool> {
+        let conn = self.conn().await;
+        let mut rows = conn
+            .query("SELECT currency_presence_complete FROM projection_state WHERE id = 0", ())
+            .await?;
+        Ok(match rows.next().await? {
+            Some(row) => int(&row, 0) != 0,
+            None => false,
+        })
     }
 
     /// One batch of the `tender_versions.original_lang` backfill (ADR-0013 D3's
