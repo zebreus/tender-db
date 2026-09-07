@@ -30,6 +30,22 @@ deferred — not this issue), 238/239/120 (the same "admitted, then unstoppable"
 3. Correct `crates/app/src/v1/docs.rs:511`/:517 to name which filters short-circuit (row in `served-claims-nothing-re-derives`).
 4. **Not this issue, for the board**: the present-but-rare walk (GR first match at id 2,170,693 → 19.2 s; DEM → 6.7 s) is issue 273's deferred step 2 — `reachable()` "answers matches-nothing only; a present-but-rare source still walks" by construction (`crates/store/src/read.rs:1053`).
 
+## Decisions (2026-09-07, owner)
+
+**Unit 2 — a present-set, not an index.** The probe asks one question, "does any row carry this
+value", over a column with a few dozen distinct values. An index on
+`tender_version_amounts(currency)` would answer it by paying write amplification on every fold
+over tens of millions of rows to store a key whose cardinality is tiny. Instead the projection
+maintains a small present-set of the currencies it has written, and `reachable()` seeks that. The
+failure mode is the safe one: an entry left behind after the last row carrying it disappears makes
+the probe ADMIT, which degrades to exactly today's walk rather than to a wrong answer — so the set
+may be a superset, and never has to be exact.
+
+**Unit 1 — the compiler holds the coupling.** Make the isolation-routed filters one enumeration
+and give `reachable()` an exhaustive match over it, so a filter added to `walks()` without a
+guard leg does not compile. Prose asked for this in issue 219 and prose is what failed; the
+point is to make the next drift impossible rather than to fix this one instance.
+
 ## Done when
 
 - `?currency=XXX` answers empty in <1 ms;
