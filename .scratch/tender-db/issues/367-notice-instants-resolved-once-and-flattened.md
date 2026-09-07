@@ -1,6 +1,6 @@
 # 367 — 218,876 notices published "1970-01-01", 7,417 with NULL, and every date-only publication shifted: one resolver, run at the wrong layer, returning a scalar
 
-Status: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
+Status: UNITS 1-2 DONE 2026-09-07 (owner) — fix deployed (`4b40606`) and the 226,293 standing rows repaired (jobs 798 dry / 799 wet). Unit 3 (the offset/has_time triple and the date-only rendering) remains ready-for-agent: a date-only publication still serves a shifted instant. Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
 Kind: defect (parse → canonical instants; the notice layer vs the version layer)
 Relates to: 18 (fixed this gap for sdk-0.1 by adding SDK01-* to these two field lists),
 85 (fixed it for DE-1.x FACTS by aliasing — which is projection-only, hence this), 255
@@ -43,3 +43,49 @@ One resolver — `notice_instants` (`crates/ingest/src/project.rs:4990-4998`) �
 - a test fails if the notice row's instants and its version's diverge.
 
 *One issue because:* all three defects are the same six lines (`notice_instants` / `first_date`) plus the one call site that reads them too early — the epoch dates, the NULL prefix and the shifted date-only values are one resolver used at two layers, run once, and stripped of the offset it was given.
+
+## Units 1-2, built and run (2026-09-07)
+
+**The fix.** `notice_instants` returns `(Option<i64>, Option<i64>)` — the `.unwrap_or(0)` that
+flattened "not found" into 1970 is gone — and the two date lists now name the `DE1-*` dialect
+ids as well, each placed immediately after the eForms id it aliases. Adjacency is the load-bearing
+part: the processor resolves from the RAW parse (the notice layer keeps the publisher's own ids
+on purpose) while the projection resolves after `normalise_de1`, so an id ranked differently from
+its own alias target would make the two layers resolve two DIFFERENT real dates. Pinned by
+`every_de1_date_alias_sits_beside_its_target` and
+`the_raw_and_the_normalised_parse_resolve_the_same_instants`, with the corpus invariant
+`notices_and_their_versions_carry_the_same_instants` on top. `tender_versions.published_at` is
+NOT NULL and the fold orders by it, so the two projection call sites keep an explicit epoch
+fallback for the dateless notice — that column's nullability is unit 3's business.
+
+**The repair.** `repair-notice-instants`, dry by default, plan stored as report
+`notice-instant-repair`; the wet arm refuses a plan that was itself wet, aborts outside a
+max(2%, 5) tolerance, rewrites only rows still matching their pre-image, and writes no change
+events (the versions were never wrong, so nothing is re-projected).
+
+**Dry (job 798) reproduced the review's independent measurement exactly:**
+
+| | |
+|---|---|
+| parsed notices walked | 14,346,064 |
+| already agree with the resolver | 14,119,771 |
+| planned | **226,293** |
+| stamped the epoch | **218,876** |
+| NULL while the parse states a date | **7,417** |
+| parse states NO date, value REMOVED | **0** |
+
+By profile the two classes separate cleanly: the epoch class is entirely eForms-DE
+(`eforms-de-1.0` 31, `-1.1` 145,859, `-1.2` 72,986 = 218,876) and the NULL class entirely TED
+eForms (`eforms-sdk-1.12` 896, `-1.13` 4,535, `-1.14` 1,986 = 7,417). The subtractive class the
+repair reports separately turned out to be **empty** — no parsed notice in the corpus states no
+date at all — so nothing was removed.
+
+**Wet (job 799)** applied the plan. The issue's own probes now pass:
+
+- notice 26244735 (`eforms-de-1.1`) serves `published_at` 1704841200 = **2024-01-10**, the
+  `IssueDate` the review found in its payload;
+- notices 1, 2 and 3 carry real instants instead of NULL;
+- a bounded window of half a million ids holds **0** parsed notices at the epoch and **0** NULL.
+
+Not done, and still true: `/v1` renders through `instant()`, so a date-only publication still
+serves `2026-09-04T22:00:00Z` for a source date of 2026-09-05. That is unit 3.
