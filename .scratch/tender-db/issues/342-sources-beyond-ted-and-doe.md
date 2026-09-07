@@ -1,6 +1,6 @@
 # 342 — sources beyond TED and DÖE ("international"): nothing exists, the entry contract does
 
-Status: UNIT 2 IN PROGRESS — commit (a) (the fetcher) built and reviewed 2026-09-07; commits (b) profile and (c) parser next. NOT DEPLOYED: the daily chain's FTS process pass and any backfill wait for (b), since a JSON member has no profile arm yet and would quarantine as `unparsable-xml`. Unit 1 DONE: `docs/research/uk-fts.md`, re-checked adversarially (8/8 load-bearing claims confirmed, 4 overstatements corrected), GO for the fetcher. Plan: `.scratch/tender-db/342-fts-plan.md`.
+Status: UNIT 2 — commits (a) fetcher, (b) profile and the raw-reader fix are BUILT, DEPLOYED (`5a48d88`) and MEASURED against the live API: June 2025 fetched and processed clean (7,243 notices, 0 quarantined). Commit (c) — the parser and the crosswalk GB arm — is next; the backfill waits for it. Unit 1 DONE: `docs/research/uk-fts.md`, adversarially re-checked, GO. Plan: `.scratch/tender-db/342-fts-plan.md`.
 issues for that"). No non-TED/DÖE source has ever been researched for onboarding;
 the first step is a market choice, which is Lennart's.
 Kind: capability (sources) — the product-breadth half of "full internationalization"
@@ -127,3 +127,30 @@ per-tick cap), the register-archive extension, and unit tests on the builders an
 Next: commit (b) the profile arm (`fts:ocds-1.1`, publication_id = release id, procedure_key =
 ocid) with the process pushes, then commit (c) the parser and the crosswalk GB arm. First deploy
 is after (b); first measurement is `2025-06` (the plan's step 7).
+
+## Unit 2, first live measurement (2026-09-07, plan step 7)
+
+Deployed `5a48d88`. `POST /admin/jobs {kind:"fetch", source:"fts", package_kind:"monthly",
+period:"2025-06"}` (job 796) walked the month as 30 contiguous one-day windows against the live
+API at the paced cadence and landed **one 17.3 MB package**, `fts/monthly/2025-06.zip`, with the
+staging directory removed — the first proof the fetcher works outside its fixtures. `process`
+(job 797): **7,243 members → 7,243 notices, 0 parsed, 0 quarantined, 0 unrecognised, 0
+duplicates**.
+
+What the rows say (bounded read by primary-key range):
+
+- all 7,243 under profile `fts:ocds-1.1`, all `parse_state = 'pending'` — the identity-only rung
+  commit (b) intends, since the field parser is commit (c);
+- `published_at` is NULL, not the unix epoch — the honest absence issue 367 is about;
+- **0 members under the `_noid/` prefix**: no release in the month lacked a usable id;
+- publication ids run **028961-2025 … 036267-2025**, contiguous FTS notice numbers.
+
+**Completeness.** FTS numbers are a per-year sequence, so the captured range spans 7,307 numbers
+and we hold 7,243 of them — **99.1%**, with 64 in-range numbers absent. That is expected rather
+than lost: the API filters on a release's LAST-UPDATE instant, so a June notice amended in July
+appears in July's window, not June's. It matches the plan's ±1% acceptance bar against the
+independent data.gov.uk daily XML counts (332 files for 2025-06-11 against our ~345/weekday), and
+the daily zips remain the limit-free cross-check when the backfill runs.
+
+Nothing else in the corpus moved: these notices are pending, so the projection ignores them and
+no Tender rows exist for FTS yet — which is the dry-first rung the plan asked for.
