@@ -1,6 +1,6 @@
 # 371 — reachable() and walks() drifted apart again: ?currency=XXX holds an isolated slot for 29.8 s and answers empty
 
-Status: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
+Status: DONE 2026-09-07 (owner) — built (`50f6749`, 920 passed), deployed, and the present-set backfilled and attested on prod (job 800). `?currency=XXX` went from 30 s + 503 to **200 in 20 ms**. Unit 4 stays with issue 273 (a present-but-rare value still walks, by construction). Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
 Kind: defect (read layer — filter admission), availability
 Relates to: 219 (fixed exactly this class for country/cpv/buyer/winner/kind, and STATED
 the invariant this violates), 273 (the present-but-rare walk; step 2 deliberately
@@ -53,3 +53,33 @@ point is to make the next drift impossible rather than to fix this one instance.
 - the `/docs` performance table matches the code.
 
 *One issue because:* it is one filter, one missing probe leg, and the general failure is the coupling 219 asked for and nobody built — which is what makes it worth an issue rather than a one-line patch.
+
+## Done (2026-09-07)
+
+**Built** as decided: `isolation_routed()` names each isolation-routed filter, `walks()` is "that
+list is non-empty", and `reachable()` matches over it EXHAUSTIVELY — a filter routed to isolation
+without a guard leg does not compile, and the error text is quoted in the type's docs since a
+future reader cannot run the negative case. The honest limit is recorded too: the match forces a
+DECISION, not a correct one (five arms decline deliberately, each with its reason).
+
+The currency leg seeks a projection-maintained present-set, written in the same transaction as
+the amount rows, so it can never be observed as a subset; nothing deletes from it, so it is a
+superset and a stale entry degrades to a walk. The fatal direction is guarded twice: a corpus
+whose amounts predate the table has `currency_presence_complete = 0` and the guard declines
+entirely, and a rebuild clears the set and refills it fact by fact.
+
+**Measured on prod after `backfill-currencies` (job 800, swept 7,929,584 tenders and attested):**
+
+| request | before | after |
+|---|---|---|
+| `?currency=XXX` (absent) | 30 s, **503** | **200 in 20 ms** |
+| `?currency=EUR` (present) | rows | rows, 1.4 ms |
+| `?currency=DEM` (present, rare) | 6.7 s | 6.2 s — unchanged, and correctly so |
+
+The DEM case is the boundary of what this issue can fix: a reachability probe proves that NOTHING
+matches, never that a match is near, so a present-but-rare value still walks. That is issue 273's
+deferred step 2, cross-referenced rather than absorbed.
+
+The `/docs` performance footnote now states both halves — every isolation-routed filter has a
+probe, and a present-but-rare value still walks — with the DEM timing named, so the page can be
+checked against the service rather than believed.

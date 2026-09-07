@@ -514,7 +514,7 @@ milliseconds.</p>
   <tr><td>SQL (bounded)</td><td class="ep">POST /v1/sql (indexed SELECT)</td><td>~1 ms</td><td>isolated, 10 s cap</td></tr>
   <tr><td>Metadata</td><td class="ep">/v1, /docs, /v1/openapi.json, /health</td><td>&lt;1 ms</td><td>&mdash;</td></tr>
 </table>
-<p class="muted" style="font-size:.85rem;">* an absent filter value short-circuits to an empty page <em>where the filter has a reachability test</em>. Not every one does: <code>?currency=XXX</code> walks instead, taking ~30 s to answer empty (issue 371).</p>
+<p class="muted" style="font-size:.85rem;">* an absent filter value short-circuits to an empty page. Every isolation-routed filter has a reachability probe and the compiler will not accept one without it (issue 371). A value that is PRESENT but rare is a different case and still walks: <code>?currency=DEM</code> answers in ~6 s, since a probe can only prove that nothing matches, never that a match is near.</p>
 
 <h3>Why the shape looks like this</h3>
 <ul>
