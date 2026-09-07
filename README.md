@@ -71,7 +71,7 @@ Other collections take the same filters:
 
 ```sh
 curl -s "https://tenders.zebreus.click/v1/lots?limit=5"
-curl -s "https://tenders.zebreus.click/v1/organizations?country=ESP&limit=5"
+curl -s "https://tenders.zebreus.click/v1/organizations?country=ES&limit=5"
 curl -s "https://tenders.zebreus.click/v1/notices?limit=5"
 ```
 
@@ -88,7 +88,7 @@ endpoint. You get one `added` event per matching row, a `live` marker, then
 
 ```sh
 curl -N -H "Accept: text/event-stream" \
-  "https://tenders.zebreus.click/v1/tenders?country=DEU"
+  "https://tenders.zebreus.click/v1/tenders?country=DE"
 ```
 
 Resume exactly where you left off with the last cursor you saw (browsers send it

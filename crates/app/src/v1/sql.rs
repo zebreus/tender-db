@@ -702,7 +702,10 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
     (
         "*",
         "provisional",
-        "1 = a single-mention profile with no official identifier, never merged (CONTEXT.md).",
+        "1 = no official identifier. Identity is then NAME-scoped: mentions carrying the \
+         same normalised name and country resolve to one provisional row, so such a row can \
+         hold many mentions (issues 234, 351). It is not a promise of one mention, and a \
+         later identifier can still canonicalise or split it (issue 370).",
     ),
 ];
 
@@ -1517,6 +1520,59 @@ fn store_int(row: &store::turso::Row, idx: usize) -> i64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Issue 370: the served description of `provisional` and the resolver's
+    /// actual policy, asserted TOGETHER.
+    ///
+    /// The note said "a single-mention profile … never merged" for a year after
+    /// issue 234 made identifier-less mentions with the same normalised name and
+    /// country reuse one row, and issue 351 widened that to country-less names.
+    /// Nothing coupled the sentence to the behaviour, so the drift was only ever
+    /// found by a reader — Deutsche Bahn stands `provisional` with 7,668
+    /// mentions. This test is that coupling: revert the reuse and the resolver
+    /// half fails; restore the old wording and the note half fails.
+    #[tokio::test]
+    async fn the_provisional_note_describes_what_the_resolver_actually_does() {
+        let note = column_note("organizations", "provisional").expect("provisional is documented");
+        for retired in ["single-mention", "never merged"] {
+            assert!(
+                !note.contains(retired),
+                "the note still claims {retired:?}, which stopped being true with issue 234"
+            );
+        }
+        assert!(note.contains("NAME-scoped"), "the note must say what identity a provisional row has");
+
+        // And the behaviour the note now describes, exercised.
+        let path = format!("/tmp/tender-db-370-note-{}.db", std::process::id());
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+        let db = store::Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+        let mention = |notice: i64| store::Mention {
+            notice_id: notice,
+            section_id: "ORG-1".into(),
+            name: "Deutsche Bahn AG".into(),
+            country: Some("DE".into()),
+            raw_identifier: None,
+            scheme: None,
+            identifier: None,
+            variants: Vec::new(),
+        };
+        let mut resolver = db.mention_resolver(None, None, None, None, None, None, 0).await.unwrap();
+        let ids = db.resolve_mentions(&mut resolver, &[mention(1), mention(2)], 0).await.unwrap();
+        db.finish_mention_resolver(resolver).await.unwrap();
+        assert_eq!(ids[0], ids[1], "two identifier-less mentions of one name and country are ONE row");
+        let provisional = db
+            .scalar(&format!("SELECT provisional FROM organizations WHERE id = {}", ids[0]))
+            .await
+            .unwrap();
+        assert!(
+            matches!(provisional, Some(store::turso::Value::Integer(1))),
+            "and the reused row stays provisional — the reuse is not a promotion"
+        );
+        let _ = std::fs::remove_file(&path);
+    }
 
     /// Issue 238: the backstop must not blame the query for a reader it never got.
     ///

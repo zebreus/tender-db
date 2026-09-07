@@ -110,7 +110,7 @@ defined in the project's <code>CONTEXT.md</code>.</p>
 
 <h2 id="conventions">Conventions</h2>
 <ul>
-  <li><strong>JSON</strong> everywhere but SSE. Money is <code>{"cents": 1234, "currency": "EUR"}</code> (integer minor units — never a float). Timestamps are ISO 8601; a source that published a date only yields a date only, never an invented time.</li>
+  <li><strong>JSON</strong> everywhere but SSE. Money is <code>{"cents": 1234, "currency": "EUR"}</code> (integer minor units — never a float). Timestamps are ISO 8601. A source that published a date only <em>should</em> yield a date only, but does not yet everywhere: the stored instant carries no date-only marker, so some date-only publications render with a time (a German portal date of 2026-09-05 serves as <code>2026-09-04T22:00:00Z</code>). Issue 367 carries the fix.</li>
   <li>The change <strong>cursor is an opaque string</strong>. Compare cursors for equality and pass them back verbatim; do not parse or do arithmetic on them.</li>
   <li><strong>Auth</strong> (SQL + webhooks): <code>Authorization: Bearer tdb_…</code>. Create tokens on the <a href="/account">dashboard</a>.</li>
   <li><strong>Errors</strong> share one shape: <code>{"error": {"status": 404, "message": "no such tender"}}</code> with the matching HTTP status.</li>
@@ -235,7 +235,7 @@ a company name — resolve directly, without knowing any internal id:</p>
 </table>
 <ul>
   <li><code>publication_id</code> is an exact match on the number the source printed on the notice; pair with <code>source=</code> if the same number could exist in two sources. An unknown number is an empty page, not a <code>404</code>. The same number on <code>/v1/tenders</code> resolves the <em>tender</em> it caused — through any of its versions, so a corrigendum's number still finds the procedure. From the notice, <code>/v1/notices/{id}/content</code> gives its parsed payload and a tender detail's <code>versions[].caused_by_notice_id</code> links back the other way.</li>
-  <li><code>identifier</code> matches the official identifier <em>value</em>; <code>kind</code> names its scheme. This is the front door to participation history: resolve the VAT to a canonical org id, then ask <code>/v1/tenders?buyer=</code>, <code>?winner=</code> or <code>?bidder=</code> with it.</li>
+  <li><code>identifier</code> matches the official identifier <em>value</em>; <code>kind</code> names its scheme. This is the front door to participation history: resolve the identifier to a canonical org id, then ask <code>/v1/tenders?buyer=</code>, <code>?winner=</code> or <code>?bidder=</code> with it. An identifier can resolve to MORE THAN ONE canonical org — the identity index is deliberately not unique, and a shared VAT (an Organschaft) or an unfolded duplicate both occur — so take every id the lookup returns rather than the first (issue 329).</li>
   <li><code>name_prefix</code> is a prefix match on the organization's name, case-insensitive across the whole of Unicode (<code>müller</code>, <code>MÜLLER</code> and <code>Müller</code> all match), and switches the response to <strong>name order</strong> (id order otherwise breaks name-ordered pagination). It composes with <code>country=</code>/<code>kind=</code>; an empty prefix is <code>400</code>.</li>
 </ul>
 <pre><code># VAT → canonical org → everything they ever bid on
@@ -379,7 +379,7 @@ against a view that cannot answer it at all.</p>
   <li><strong>Time columns are epoch seconds in SQL</strong>, not ISO — unlike the REST responses above. <code>WHERE published_at LIKE '2012%'</code> matches nothing. Put the FORMAT FIRST: <code>strftime('%Y', published_at, 'unixepoch')</code>. The reversed order, <code>strftime(published_at,'unixepoch')</code>, returns <code>NULL</code> for every row and raises no error — so it silently collapses a histogram into one empty bucket. Each timestamp column is flagged in <a href="/v1/sql/schema">the schema</a>, which also carries per-table notes, enum vocabularies and worked examples.</li>
   <li><strong>Coverage:</strong> the canonical layer holds the full imported history — 7.9M Tenders, 1993 to today (1993 alone has 49k). An earlier version of this page warned that only 2026 forward was projected; that backfill has long since completed.</li>
   <li>Result caps: 10 000 rows / 10 MB — a capped response carries <code>"truncated": true</code>.</li>
-  <li>Limits per token: 2 concurrent queries, 300 per hour, 10 s per query. Over-limit is <code>429</code> with <code>Retry-After</code>; any query past the time limit — a slow scan or a heavy aggregate alike — is <code>408</code>, and its server-side work is abandoned so it never holds a slot past the cap. A <code>503</code> is different and means the query never ran: the backend had no capacity, so retry it unchanged rather than rewriting it.</li>
+  <li>Limits per token: 2 concurrent queries, 300 per hour, 10 s per query. Over-limit is <code>429</code> with <code>Retry-After</code>; any query past the time limit — a slow scan or a heavy aggregate alike — is <code>408</code>. The ANSWER is abandoned, but the work is not always: the engine offers no interrupt, so a non-yielding aggregate keeps its slot until it finishes, and while it does, further queries can meet a <code>503</code> (issue 238). A <code>503</code> is different and means the query never ran: the backend had no capacity, so retry it unchanged rather than rewriting it.</li>
   <li>Dialect gaps (Turso): no <code>WITH RECURSIVE</code>; window functions are partial (<code>row_number</code> and aggregate <code>OVER</code> work; <code>rank</code>/<code>lead</code>/<code>lag</code> and custom frames do not). A dialect or column error comes back as <code>400</code> with the engine's message.</li>
 </ul>
 <p>Response: <code>{"columns": [ … ], "rows": [[ … ]], "row_count": N, "truncated": false}</code>.</p>
@@ -514,7 +514,7 @@ milliseconds.</p>
   <tr><td>SQL (bounded)</td><td class="ep">POST /v1/sql (indexed SELECT)</td><td>~1 ms</td><td>isolated, 10 s cap</td></tr>
   <tr><td>Metadata</td><td class="ep">/v1, /docs, /v1/openapi.json, /health</td><td>&lt;1 ms</td><td>&mdash;</td></tr>
 </table>
-<p class="muted" style="font-size:.85rem;">* an absent filter value short-circuits to an empty page.</p>
+<p class="muted" style="font-size:.85rem;">* an absent filter value short-circuits to an empty page <em>where the filter has a reachability test</em>. Not every one does: <code>?currency=XXX</code> walks instead, taking ~30 s to answer empty (issue 371).</p>
 
 <h3>Why the shape looks like this</h3>
 <ul>
@@ -568,8 +568,11 @@ rates and the quarantine resolution ledger.</p>
   plus the irrevocable euro conversion rates; NULL where no official rate resolves)
   and is what <code>min_value</code>/<code>max_value</code> compare against &mdash;
   see the filter table and CHANGELOG.md in the repository.</li>
-  <li>Astronomical garbage magnitudes (10<sup>50</sup>-class) are quarantined at
-  ingestion and never enter the corpus.</li>
+  <li>Only amounts that overflow the stored integer are refused at ingestion.
+  Implausible magnitudes BELOW that are published values and are served as
+  published: 174 tenders exceed &euro;100bn and the largest is
+  &euro;4.97&times;10<sup>16</sup>, so an ordering by value is topped by
+  publisher errors rather than by the largest real procurements (issue 366).</li>
 </ul>
 
 <h3>Dates</h3>
@@ -577,8 +580,13 @@ rates and the quarantine resolution ledger.</p>
   <li>Placeholder instants occur at ~55 per 100k dates: year-0000, 1899-12-31
   (spreadsheet epoch), year-2100 &mdash; published values, kept.</li>
   <li>Deadlines <em>before</em> the publication date are a stable 0.2&ndash;0.3%
-  source background across two decades; treat &ldquo;deadline &lt; published_at&rdquo;
-  as published noise, not a data-loss signal.</li>
+  source background WITHIN ONE NOTICE &mdash; that is where the measurement was
+  taken. At ROW level the comparison means something different and the rate is
+  <strong>37.6%</strong> (2,981,402 of 7,929,584): a tender row is a union of its
+  versions, so <code>published_at</code> advances to the newest notice while a
+  deadline the newest notice is silent about is carried forward from an earlier
+  one. After an award notice, <code>deadline &lt; published_at</code> is the
+  EXPECTED shape, not noise and not data loss (issue 370).</li>
 </ul>
 
 <h3>Codes and identities</h3>

@@ -343,10 +343,15 @@ pub(crate) const SCHEMA: &str = "
         ON tender_version_parties(tender_id, seq);
 
     -- A canonical Organization profile. `identifier` is the normalised official
-    -- id that merged its mentions; a profile without one is `provisional` — it
-    -- represents exactly one mention and never absorbs another, because
-    -- name-only matching would merge distinct companies (CONTEXT.md).
-    -- The org-identity uniqueness is a NAMED index (`organizations_identity`),
+    -- id that merged its mentions; a profile without one is `provisional`, which
+    -- means exactly that — NO OFFICIAL IDENTIFIER — and nothing more. Such a row
+    -- is name-scoped and may hold many mentions: issue 234 made identifier-less
+    -- mentions with the same normalised name and country reuse one row, and 351
+    -- widened that to country-less names under the genericness wall. It stays
+    -- `provisional` through such a reuse, so a later identifier can still
+    -- canonicalise or split it. The pre-234 wording promised one mention per row
+    -- and outlived the policy by a year (issue 370).
+    -- The org-identity index (`organizations_identity`) is NAMED and NOT UNIQUE
     -- not an inline `UNIQUE` constraint, so a full-rebuild projection can DROP it,
     -- bulk-load organizations by sequential id, and rebuild it once at the end
     -- (issue 60): each new org otherwise did a random-position uniqueness *probe*

@@ -153,6 +153,8 @@ Mention-level, one window per era **[verified sample]**: r208 2014 is alpha-2 **
 
 A stable ~0.2–0.3 % across 20 years — a source-side background rate, not an era defect. Zero deadlines beyond publication+10 y in any window.
 
+> **Re-taken 2026-09-07 (issue 370).** Both halves of that line are window artefacts. The 0.2–0.3 % is a WITHIN-NOTICE rate; compared at ROW level (head `published_at` against a deadline carried forward from an earlier version) it is 37.6 %, and after an award notice that ordering is expected rather than noise. And the corpus does hold deadlines beyond publication+10 y — 3005-07-06, 2999-12-31 twice, 2924-04-15, 2205-11-18 — so "zero in any window" was green because of the windows chosen. Re-take with the queries in issue 366, not by re-reading this line.
+
 **Placeholder/impossible instants** (eForms 2024 window, 99,558 date rows): min = **year 0000** (−62,135,600,400 s), max = **2100-01-01**; 55 rows before 1980, 32 rows ≥ 2038 **[verified sample]**. Specimens: `OPT-999` = 1969-12-31 ×36 and 0000-12-31 ×7 (epoch-zero and year-zero), `BT-132(t)-Lot` 1970-01-01, `BT-536-Lot` **1899-12-31** ×2 (spreadsheet-epoch), `BT-537-Lot` 2099-12-30 ×6 / 2050-12-30 ×5 / a 2038–2045 sprinkle (some genuine long frameworks, some junk). Legacy 2021 window is far cleaner: min 2008, max 2048, 2 rows ≥ 2038, none before 1980.
 
 **Offsets** (eForms 2024 window): dominated by 0/+60/+120/+180 as expected, but **−600 ×159, −630 ×159 (UTC−10:30!), −720 ×1** on European notices **[verified sample]** — either genuine overseas-territory publishers or offset junk; small, worth one specimen read on the snapshot machine.

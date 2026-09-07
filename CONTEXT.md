@@ -55,10 +55,11 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
   procedure, their records merge into one Tender (ADR-0003).
 - **Organizations** participate in Tenders in roles (buyer, bidder, winner, …).
 - A **Notice** contains **OrganizationMentions**; an **Organization** groups
-  the mentions resolved to one real-world entity. Mentions are auto-merged
-  only on exact official identifiers (registration number, VAT id);
-  name-only mentions stay separate provisional profiles. Smarter matching may
-  be layered on later — mentions are never destroyed by merging.
+  the mentions resolved to one real-world entity. Mentions are auto-merged on
+  exact official identifiers (registration number, VAT id), and identifier-less
+  mentions sharing a normalised name and country resolve to one `provisional`
+  profile (issues 234 and 351) — `provisional` means "no official identifier",
+  not "one mention". Mentions are never destroyed by merging.
 
 ## Decisions
 

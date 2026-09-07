@@ -98,7 +98,8 @@ const OJ_HEADING_FIELD: &str = "TED-TI_DOC";
 const TEXTS: &[(&str, &str)] = &[
     ("BT-21", "title"),
     ("BT-24", "description"),
-    // legacy R2.0.7–R2.0.9 (title 100% fill, research §5.1)
+    // legacy R2.0.7–R2.0.9 (research §5.1 measured 100% title fill on its
+    // window; the corpus holds 29,455 titleless r208 tenders — issue 368)
     ("TED-TITLE", "title"),
     ("TED-TITLE_CONTRACT", "title"),
     ("TED-CONTRACT_TITLE", "title"),
