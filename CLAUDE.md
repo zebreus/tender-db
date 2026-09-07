@@ -66,7 +66,7 @@ Issues and specs live as local markdown files under `.scratch/<feature>/`. See `
 
 ### Triage labels
 
-Default vocabulary — the five canonical role names used as-is. See `docs/agents/triage-labels.md`.
+Default vocabulary — the five canonical role names used as-is. Every state is the owner's (the agent's) to set; an issue whose next step is a decision is `ready-for-agent`, and the decision is that step — nothing on the board waits for a person. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 

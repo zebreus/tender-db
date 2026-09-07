@@ -1,6 +1,6 @@
 # 304 — acquire the text era's missing language editions (the un-downloaded TED zips)
 
-Status: STAGE 1 CLOSED 2026-09-03 — policy flip deployed (`d416104` 2026-09-02) and applied corpus-wide (609/611: 7,141,552 notices, 0 failing; 612: 3,529,251 tenders written), the bundle `9f0bcea` (340/343/339/241) deployed 09:03 UTC, original_lang backfilled (632). Tender-layer breadth is bounded by the packages — see "Stage-1 acceptance at the TENDER layer". Stage 2 (text-era acquisition) and 341 (eForms translations) remain needs-decision. Was: STAGE-1 CODE BUILT 2026-08-28 ~03:2x (inert — TranslationPolicy::EnOnly
+Status: STAGE 1 CLOSED 2026-09-03 — policy flip deployed (`d416104` 2026-09-02) and applied corpus-wide (609/611: 7,141,552 notices, 0 failing; 612: 3,529,251 tenders written), the bundle `9f0bcea` (340/343/339/241) deployed 09:03 UTC, original_lang backfilled (632). Tender-layer breadth is bounded by the packages — see "Stage-1 acceptance at the TENDER layer". Stage 2 (text-era acquisition) DECIDED 2026-09-07 (owner): go, staged — see the bottom; 341 decided in its own file. Was: STAGE-1 CODE BUILT 2026-08-28 ~03:2x (inert — TranslationPolicy::EnOnly
 stays the dispatch default; the campaign act is the flip + a measured one-month
 re-parse). r208 needs no twin: both ted-export profiles run the same r209
 module, so form_section is the single change site. The policy test pins both
@@ -548,6 +548,15 @@ column and backfill ride the same deploy.
 
 Not done, deliberately: reclaiming the heading rows (a narrower `ML_TI_DOC`
 policy + a 12-hour re-parse — a 169 option); a refold to catch the 343 head
-titles up (rides the next epoch campaign). Open decisions for Lennart: stage 2
-breadth (per-language text-era editions, +~150 GB) and 341 (eForms translations
-via the API).
+titles up (rides the next epoch campaign). Decisions taken 2026-09-07 (owner): stage 2 goes, staged (bottom); 341 documents
+the original (its own file).
+
+## Stage 2 decision (2026-09-07, owner): acquire the text-era language editions, staged
+
+Storage permits it (847 GB free after the 169 reclaim; the campaign is ~150 GB), the
+fetch registry and the profile dispatcher already handle per-package archives, and the
+EN edition is often itself a translation, so the originals are worth having. Staged:
+unit 1 teaches the text-era fetcher the per-language edition names for one year
+(2005, the `{LG}_…_ISO_ORG.ZIP` shape) and measures bytes, parse rate and the fraction
+of notices whose `OL:` original is not EN; unit 2 extends to the era on that
+measurement, one year per firing, dry-first. Ready-for-agent.

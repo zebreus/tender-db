@@ -1,6 +1,6 @@
 # 342 — sources beyond TED and DÖE ("international"): nothing exists, the entry contract does
 
-Status: BACKLOG / needs-decision (filed 2026-09-02 on Lennart's "didn't you create
+Status: ready-for-agent — DECIDED 2026-09-07 (owner): the first market is the UK (Find a Tender Service, OCDS releases, Open Government Licence); unit 1 is the research entry at the bottom. Was: BACKLOG / needs-decision (filed 2026-09-02 on Lennart's "didn't you create
 issues for that"). No non-TED/DÖE source has ever been researched for onboarding;
 the first step is a market choice, which is Lennart's.
 Kind: capability (sources) — the product-breadth half of "full internationalization"
@@ -46,3 +46,19 @@ firing per candidate; the build is a multi-day unit per source.
 Below-threshold German coverage via DÖE's own feeds (already the DÖE source's
 scope) and the text-era/r209 language work (304). This is only "a source that is
 not TED or DÖE".
+
+## Decision (2026-09-07, owner)
+
+First market: the **UK** — Find a Tender Service (above-threshold, post-Brexit) with
+Contracts Finder beneath it. Reasons: the largest procurement market not in TED since
+2021, English, an open OCDS release feed with a documented API and an open licence,
+company identifiers from one register (Companies House), one currency (GBP, already in
+the rate series). Swiss SIMAP and Norwegian Doffin are the next candidates by the same
+criteria; SAM.gov is a different scale and format and comes last.
+
+Unit 1 (research, one firing): the OCDS release schema as FTS publishes it, the
+identifier schemes on parties, the licence text, the daily volume and the history
+depth available, the fetch channel (bulk vs API paging) — written up as
+`docs/research/uk-fts.md` with a go/no-go for the fetcher. Unit 2: fetcher + profile +
+parser through the existing entry contract (`normalize_lang`, `canonical_currency`, the
+profile dispatcher, the fetch registry), dry-first.

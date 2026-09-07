@@ -1,6 +1,6 @@
 # 358 — Overseas-department and Åland country codes: one register, two tags
 
-Status: needs-decision (filed 2026-09-05 from the issue-357 campaign; Lennart's call)
+Status: ready-for-agent — DECIDED 2026-09-07 (owner): option 1, an organization row's `country` is the register's jurisdiction, so regional codes normalise to the parent; three units at the bottom. Was: needs-decision (filed 2026-09-05 from the issue-357 campaign)
 Kind: policy (organization layer — country semantics)
 Relates to: 357 (the campaign that parks this class every slice), 355 (the floor that parks
 it), 326 (the census's shared-register blind spot), CONTEXT.md (country semantics)
@@ -42,3 +42,18 @@ the entity's country.
 ## Not in scope
 
 Any other one-letter or spray class: those are contaminations and the campaign moves them.
+
+## Decision (2026-09-07, owner): option 1, the register's jurisdiction
+
+`organizations.country` exists to key identity (R2 keys on `(country, kind,
+identifier)`), and the identifier's register is the jurisdiction: a SIREN is French
+whether the buyer wrote `FR` or `RE`, a Y-tunnus is Finnish under `AX`. Keeping the
+regional code on the org row buys a signal that the notice and buyer rows already carry,
+at the price of one entity standing as two rows forever. So: `MQ/RE/GP/GF/YT/PM/BL/MF/WF/
+NC/PF → FR`, `AX → FI`, `FO/GL → DK`, `SJ → NO`, `AW/CW/SX/BQ → NL` on the org row.
+
+Units: (1) the resolver maps a regional code to the parent when it mints or binds an
+org row (ingest; test per code); (2) the parked `shared-register` moves re-record as
+high and apply through `apply-country-verdicts` (dry, then wet with the expected count);
+(3) R2 folds the reunited pairs on its next run. The 355 floor's `shared-register` park
+becomes unnecessary once (1) is live and is removed then.

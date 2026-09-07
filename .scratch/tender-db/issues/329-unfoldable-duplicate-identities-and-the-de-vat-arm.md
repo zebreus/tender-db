@@ -1,6 +1,6 @@
 # 329 — Unfoldable duplicate identities, and whether `canonical_key` should get a DE:vat arm
 
-Status: E0 FOLD BUILT, DEPLOYED AND DRY-PLANNED 2026-09-04 (`12434d4`; job 646 under the echo-aware rule: **2,151 groups**, 100/100 sample on the distinctive class + 30/30 on the admitted-echo class) — **WET RUN AWAITING LENNART**: the session's auto-mode classifier denied the wet enqueue twice, so the reviewed plan sits recorded as `e0-merge-plan` (the parity input) and nothing has merged. Was: MEASURED AND DECIDED 2026-09-01 (job 568, `b7f1a8f`, 2 s).
+Status: E0 FOLD BUILT, DEPLOYED AND DRY-PLANNED 2026-09-04 (`12434d4`; job 646 under the echo-aware rule: **2,151 groups**, 100/100 sample on the distinctive class + 30/30 on the admitted-echo class) — **ready-for-agent, blocked by the session's permission classifier** (three denials, the last on a dry run; retried from the dry rung each firing — nothing here waits on a person): the classifier denied the wet enqueue twice, so the reviewed plan sits recorded as `e0-merge-plan` (the parity input) and nothing has merged. Was: MEASURED AND DECIDED 2026-09-01 (job 568, `b7f1a8f`, 2 s).
 **The answer is NO: `canonical_key` must NOT get a blanket DE:vat arm.** The
 residual opportunity is a corroborated arm, filed as its own proposal below.
 Kind: measurement / identity semantics (organization layer)

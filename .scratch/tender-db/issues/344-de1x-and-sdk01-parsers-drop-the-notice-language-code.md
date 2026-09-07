@@ -1,6 +1,6 @@
 # 344 — the eForms-DE 1.x and DÖE sdk-0.1 parsers drop `cbc:NoticeLanguageCode`, so their versions have no `original_lang`
 
-Status: DE 1.x DONE 2026-09-03 (`1e895b5` deployed 11:14 UTC, backfill 633 stamped every DE 1.x version in 78 s) / NEEDS-DECISION for sdk-0.1 (93% of its notices publish no language element; a profile default is an inference — Lennart's call). Was: ready-for-agent (filed 2026-09-03 from the 340 close-out read)
+Status: DE 1.x DONE 2026-09-03 (`1e895b5` deployed 11:14 UTC, backfill 633 stamped every DE 1.x version in 78 s) / sdk-0.1 DECIDED 2026-09-07 (owner): no profile default — issue CLOSED (see the bottom). Was: ready-for-agent (filed 2026-09-03 from the 340 close-out read)
 Kind: parse gap (era inventory) → data quality (ADR-0013 D3's third leg)
 Relates to: 340 (the leg and its backfill), 88 (the UBL-* graft), 251 (era-scoped re-parse machinery)
 
@@ -102,3 +102,12 @@ the text era's `OL:` line, EU and DE 2.x eForms, and now DE 1.x. What is left is
 exactly the sdk-0.1 residue, which is the source's silence, not ours — the
 decision item above. Test coverage: `original_lang_eras.rs` pins the three
 national fixtures; the backfill test seeds both ids.
+
+## Decision (2026-09-07, owner): no profile default for sdk-0.1
+
+93 % of DÖE sdk-0.1 notices publish no language element. Stamping `DEU` by profile
+would make `original_lang` say "the notice said German" where the notice said nothing,
+and the column's documented NULL ("the era never said") would become a lie for the one
+era where it is literally true. The fallback chain's labelled leg already serves the
+German text for these single-language notices, so nothing is lost at the read surface.
+The 7 % that do publish a code are stamped by the DE 1.x fix's shared path. Closed.

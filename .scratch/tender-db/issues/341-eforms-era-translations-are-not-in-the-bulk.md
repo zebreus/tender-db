@@ -1,6 +1,6 @@
 # 341 — eForms-era notices are served in their original language only; the translations are not in TED's bulk
 
-Status: needs-decision (filed 2026-09-02 on Lennart's "didn't you create issues
+Status: ready-for-agent — DECIDED 2026-09-07 (owner): option 1, the eForms era serves the notice's original language and the docs say so; the one remaining unit is the `/v1/docs` note and a README line (decision entry at the bottom). Was: needs-decision (filed 2026-09-02 on Lennart's "didn't you create issues
 for the per-era gaps"). Owner recommendation below; the decision is Lennart's
 because every option is a product/cost call, not a build.
 Kind: coverage gap (language) — the one era where "full multilanguage" is not
@@ -55,3 +55,14 @@ Organization names are multilingual where published (38.7M variants), amounts
 are EUR-normalised across every era, and `?lang=` works wherever a variant
 exists. This issue is only about eForms text variants that do not exist in the
 data.
+
+## Decision (2026-09-07, owner)
+
+Option 1. TED's per-language renderings are machine translations outside the bulk, on
+an interface whose terms and stability for bulk fetching are unresearched, and our own
+MT would put text in the corpus that no publisher wrote. The fallback chain already
+serves the notice's own language honestly (requested → ENG → original → any labelled),
+and 0.18 % of versions carry a second published language, which we do serve. So: the
+eForms era serves the original, documented in `/v1/docs` and the README. Reversible by
+a later entry if a bulk translation source appears. Unit: the two doc lines (a `/v1/docs`
+note is a string in `sql.rs`, so it rides the next code deploy).
