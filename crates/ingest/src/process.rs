@@ -309,6 +309,13 @@ async fn recv_next(slot: &mut Option<RecordRx>) -> Option<(Record, store::Parse)
 /// Build the store Notice for one parsed record, resolving its own
 /// publication/dispatch dates now while the payload is in hand (issue 18) — the
 /// same resolution the projection uses, so the notice row and its versions agree.
+///
+/// The parse handed here is the RAW one, still in the publisher's vocabulary
+/// (the projection's `normalise_de1` runs later, on its own chunk), which is why
+/// `PUBLICATION_DATE_FIELDS` / `DISPATCH_DATE_FIELDS` name the `DE1-*` ids too —
+/// issue 367, where they did not and every eforms-de-1.x notice was stamped
+/// `Some(0)`. `None` now means the payload states no date, not "resolved to the
+/// epoch": both axes come straight from the resolver, unwrapped by nobody.
 fn resolved_notice(
     source: &str,
     fetch_id: i64,
@@ -317,10 +324,7 @@ fn resolved_notice(
     parse: &store::Parse,
 ) -> store::Notice {
     let (published_at, dispatched_at) = match parse {
-        store::Parse::Parsed(parsed) => {
-            let (published, dispatched) = crate::project::notice_instants(parsed);
-            (Some(published), dispatched)
-        }
+        store::Parse::Parsed(parsed) => crate::project::notice_instants(parsed),
         _ => (None, None),
     };
     store::Notice {
@@ -622,4 +626,85 @@ pub async fn reparse_package(
     let tally = walker.join().expect("package walker panicked")?;
     report.members = tally.members;
     Ok(report)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use store::{NoticeValue, Parsed, ValueRow};
+
+    fn record() -> profile::NoticeRecord {
+        profile::NoticeRecord {
+            publication_id: "7d69b0f7-1".into(),
+            content_hash: "hash".into(),
+            profile: "eforms:eforms-de-1.1".into(),
+            declared_version: Some("eforms-de-1.1".into()),
+            member_path: "notice.xml".into(),
+            span: None,
+        }
+    }
+
+    fn date(field: &str, utc: i64) -> ValueRow {
+        ValueRow {
+            section_id: "PROCEDURE".into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: NoticeValue::Date { utc_seconds: utc, offset_minutes: 60, has_time: false },
+        }
+    }
+
+    fn instants(values: Vec<ValueRow>) -> (Option<i64>, Option<i64>) {
+        let parse = store::Parse::Parsed(Parsed { sections: vec![], values });
+        let n = resolved_notice("doe", 1, 1_784_490_077, record(), &parse);
+        (n.published_at, n.dispatched_at)
+    }
+
+    /// Issue 367 (a): the processor resolves from the RAW parse, whose ids are
+    /// still the publisher's — `normalise_de1` runs later, in the projection. The
+    /// eforms-de-1.x cohort therefore matched nothing here and every one of its
+    /// 218,876 notices was stamped `Some(0)` = 1970-01-01, while the VERSION
+    /// built from the same bytes carried the real date. Specimen 26244735's own
+    /// two values, byte-for-byte from the stored `notice_dates` rows.
+    #[test]
+    fn a_de1_notice_is_stamped_with_its_real_dates_at_ingest_time() {
+        assert_eq!(
+            instants(vec![
+                date("DE1-RequestedPublicationDate", 1_704_841_200),
+                date("DE1-IssueDate", 1_704_841_285),
+            ]),
+            (Some(1_704_841_200), Some(1_704_841_285)),
+            "2024-01-10 +01:00 — the dates the payload states, not the epoch"
+        );
+    }
+
+    /// Issue 367 (b): `.unwrap_or(0)` made "the payload states no publication
+    /// date" indistinguishable from "published on 1970-01-01". The column is
+    /// nullable; a notice with nothing to say now says nothing.
+    #[test]
+    fn a_notice_with_no_dates_is_stamped_null_not_the_epoch() {
+        assert_eq!(instants(vec![]), (None, None));
+        assert_eq!(
+            instants(vec![ValueRow {
+                section_id: "PROCEDURE".into(),
+                field_id: "DE1-ProcurementProject-Name".into(),
+                ordinal: 0,
+                value: NoticeValue::Text { lang: None, value: "no dates here".into() },
+            }]),
+            (None, None)
+        );
+    }
+
+    /// An unparsed payload has no instants to resolve — unchanged, and pinned
+    /// because it is the one case that was already NULL before issue 367 and the
+    /// `Option` refactor could quietly have turned into `Some(0)`.
+    #[test]
+    fn an_unparsed_notice_carries_no_instants() {
+        for parse in [store::Parse::Pending, store::Parse::Quarantined {
+            reason: "unmapped".into(),
+            detail: None,
+        }] {
+            let n = resolved_notice("doe", 1, 1_784_490_077, record(), &parse);
+            assert_eq!((n.published_at, n.dispatched_at), (None, None));
+        }
+    }
 }

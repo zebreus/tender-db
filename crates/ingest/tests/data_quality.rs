@@ -47,10 +47,7 @@ async fn ingest_from(db: &Db, fetch_id: i64, source: &str, relative: &str) {
     let parse = process::parse_payload(&n.profile, &bytes);
     assert!(matches!(parse, Parse::Parsed(_)), "{relative}: {parse:?}");
     let (published_at, dispatched_at) = match &parse {
-        Parse::Parsed(parsed) => {
-            let (p, d) = project::notice_instants(parsed);
-            (Some(p), d)
-        }
+        Parse::Parsed(parsed) => project::notice_instants(parsed),
         _ => (None, None),
     };
     db.record_notice(
@@ -90,10 +87,7 @@ async fn ingest_text(db: &Db, fetch_id: i64, fixture: &str, member_path: &str) {
         let parse = ingest::text::parse_payload(&n.member_path, &bytes[start..end]);
         assert!(matches!(parse, Parse::Parsed(_)), "{fixture}: {parse:?}");
         let (published_at, dispatched_at) = match &parse {
-            Parse::Parsed(parsed) => {
-                let (p, d) = project::notice_instants(parsed);
-                (Some(p), d)
-            }
+            Parse::Parsed(parsed) => project::notice_instants(parsed),
             _ => (None, None),
         };
         db.record_notice(

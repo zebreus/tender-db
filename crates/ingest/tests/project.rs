@@ -79,11 +79,10 @@ async fn ingest_bytes(db: &Db, fetch_id: i64, source: &str, relative: &str, byte
         None => process::parse_payload(&n.profile, bytes),
     };
     assert!(matches!(parse, Parse::Parsed(_)), "{relative}: {parse:?}");
+    // Issue 367: both axes come straight from the resolver — `None` means the
+    // payload states no date, and nothing here turns that into the epoch.
     let (published_at, dispatched_at) = match &parse {
-        Parse::Parsed(parsed) => {
-            let (p, d) = project::notice_instants(parsed);
-            (Some(p), d)
-        }
+        Parse::Parsed(parsed) => project::notice_instants(parsed),
         _ => (None, None),
     };
     db.record_notice(
@@ -1602,32 +1601,123 @@ fn published_and_dispatched_resolve_per_era() {
     let instants =
         |rows: Vec<ValueRow>| project::notice_instants(&Parsed { sections: vec![], values: rows });
 
+    // The regression pin (issue 367): each era below already resolved these
+    // dates before both axes became `Option`, and must still resolve the SAME
+    // instants. Only the wrapper changed.
+    //
     // TED eForms: the OJEU PublicationDate (OPP-012) over the dispatch (BT-05).
     assert_eq!(
         instants(vec![date("BT-05(a)-notice", 100), date("OPP-012-notice", 200)]),
-        (200, Some(100))
+        (Some(200), Some(100))
     );
     // DÖE eforms-de: no OJEU stamp → the requested/portal date; dispatch kept.
     assert_eq!(
         instants(vec![date("BT-05(a)-notice", 100), date("BT-738-notice", 250)]),
-        (250, Some(100))
+        (Some(250), Some(100))
     );
     // DÖE sdk-0.1 numeric island: only a requested publication date, no dispatch.
-    assert_eq!(instants(vec![date("SDK01-RequestedPublicationDate", 300)]), (300, None));
+    assert_eq!(instants(vec![date("SDK01-RequestedPublicationDate", 300)]), (Some(300), None));
     // DÖE sdk-0.1 with an issue date as its dispatch.
     assert_eq!(
         instants(vec![date("SDK01-IssueDate", 90), date("SDK01-RequestedPublicationDate", 300)]),
-        (300, Some(90))
+        (Some(300), Some(90))
     );
     // Legacy TED: the OJ DATE_PUB over the dispatch fields.
     assert_eq!(
         instants(vec![date("TED-DS_DATE_DISPATCH", 10), date("TED-DATE_PUB", 20)]),
-        (20, Some(10))
+        (Some(20), Some(10))
     );
     // Text era: PD over DS.
-    assert_eq!(instants(vec![date("TXT-DS", 5), date("TXT-PD", 8)]), (8, Some(5)));
+    assert_eq!(instants(vec![date("TXT-DS", 5), date("TXT-PD", 8)]), (Some(8), Some(5)));
     // Dispatch-only notice: published_at falls back to it.
-    assert_eq!(instants(vec![date("BT-05(a)-notice", 100)]), (100, Some(100)));
+    assert_eq!(instants(vec![date("BT-05(a)-notice", 100)]), (Some(100), Some(100)));
+
+    // Issue 367 (a): eForms-DE 1.x publishes the same three instants under its
+    // own path-shaped ids, and the RESOLVER — not just the projection's folded
+    // view — must see them. Before this the whole dialect resolved nothing.
+    assert_eq!(
+        instants(vec![date("DE1-IssueDate", 100), date("DE1-RequestedPublicationDate", 250)]),
+        (Some(250), Some(100))
+    );
+    assert_eq!(
+        instants(vec![
+            date("DE1-IssueDate", 100),
+            date("DE1-RequestedPublicationDate", 250),
+            date("DE1-Publication-PublicationDate", 400),
+        ]),
+        (Some(400), Some(100)),
+        "the DE-1.x publication stamp outranks the requested date, exactly as \
+         OPP-012 outranks BT-738 after normalise_de1"
+    );
+    assert_eq!(instants(vec![date("DE1-IssueDate", 100)]), (Some(100), Some(100)));
+
+    // Issue 367 (b): a payload that states no date at all is NULL on both axes.
+    // `.unwrap_or(0)` used to make this 1970-01-01, and 218,876 stored rows say
+    // so — an invented publication date that read as real to every consumer.
+    assert_eq!(instants(vec![]), (None, None));
+    assert_eq!(
+        instants(vec![ValueRow {
+            section_id: "PROCEDURE".into(),
+            field_id: "BT-21-Procedure".into(),
+            ordinal: 0,
+            value: NoticeValue::Text { lang: None, value: "a notice with no dates".into() },
+        }]),
+        (None, None)
+    );
+}
+
+/// Issue 367 (a): the resolution the PROCESSOR performs on the raw parse and the
+/// resolution the PROJECTION performs after `normalise_de1` must agree — that is
+/// the whole claim `notice_instants`' doc comment makes, and the DE-1.x cohort
+/// falsified it because only one of the two vocabularies was named.
+///
+/// The projection's fold is simulated here by renaming the ids the way
+/// `normalise_de1` does, since the fold itself is private to the crate.
+#[test]
+fn the_raw_and_the_normalised_parse_resolve_the_same_instants() {
+    use store::{NoticeValue, ValueRow};
+    let date = |field: &str, utc: i64| ValueRow {
+        section_id: "PROCEDURE".into(),
+        field_id: field.into(),
+        ordinal: 0,
+        value: NoticeValue::Date { utc_seconds: utc, offset_minutes: 60, has_time: false },
+    };
+    // The aliases normalise_de1 applies to the three DE-1.x instants.
+    let fold = |rows: &[ValueRow]| -> Vec<ValueRow> {
+        rows.iter()
+            .map(|r| {
+                let folded = match r.field_id.as_str() {
+                    "DE1-Publication-PublicationDate" => "OPP-012-notice",
+                    "DE1-RequestedPublicationDate" => "BT-738-notice",
+                    "DE1-IssueDate" => "BT-05(a)-notice",
+                    other => other,
+                };
+                ValueRow { field_id: folded.into(), ..r.clone() }
+            })
+            .collect()
+    };
+    let instants =
+        |rows: Vec<ValueRow>| project::notice_instants(&Parsed { sections: vec![], values: rows });
+
+    for raw in [
+        vec![date("DE1-IssueDate", 1_704_841_285), date("DE1-RequestedPublicationDate", 1_704_841_200)],
+        vec![date("DE1-RequestedPublicationDate", 1_704_841_200)],
+        vec![date("DE1-IssueDate", 1_704_841_285)],
+        vec![
+            date("DE1-IssueDate", 1_704_841_285),
+            date("DE1-RequestedPublicationDate", 1_704_841_200),
+            date("DE1-Publication-PublicationDate", 1_705_000_000),
+        ],
+    ] {
+        let folded = fold(&raw);
+        assert_eq!(
+            instants(raw.clone()),
+            instants(folded),
+            "the notice row (raw parse) and its version (folded parse) must resolve one \
+             pair of instants; {:?} does not",
+            raw.iter().map(|r| r.field_id.clone()).collect::<Vec<_>>()
+        );
+    }
 }
 
 /// A real TED eForms CAN stores the OJEU publication date as `published_at` and
@@ -1658,6 +1748,101 @@ async fn a_ted_eforms_notice_stores_publication_and_dispatch_separately() {
     // The notice row carries the same pair for the /v1/notices surface.
     assert_eq!(scalar(&db, "SELECT published_at FROM notices").await, opp012);
     assert_eq!(scalar(&db, "SELECT dispatched_at FROM notices").await, bt05);
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 367: the same claim for eForms-DE 1.x, the cohort where it was false.
+/// The notice row is stamped at PROCESS time from the raw `DE1-*` parse; the
+/// version is folded later, after `normalise_de1`. Both must land on the dates
+/// the payload states — the measured defect was published_at = 0 on the notice
+/// row beside the real date on its own version, for 100% of the dialect.
+#[tokio::test]
+async fn a_de1_notice_stores_its_real_instants_on_the_notice_row_too() {
+    let (db, fetch_id, path) = scratch("de1-dates").await;
+    ingest_from(&db, fetch_id, "doe", "doe/eforms-de-1.2-can-799811c4.xml").await;
+    project::project(&db, false).await.expect("project");
+
+    // The publisher's own two values, still under their DE-1.x ids in the
+    // stored parse (the notice layer keeps the source's names on purpose).
+    let requested = scalar(
+        &db,
+        "SELECT utc_seconds FROM notice_dates WHERE field_id = 'DE1-RequestedPublicationDate'",
+    )
+    .await;
+    let issued =
+        scalar(&db, "SELECT utc_seconds FROM notice_dates WHERE field_id = 'DE1-IssueDate'").await;
+    assert!(requested > issued, "the requested publication follows the issue date");
+
+    assert_eq!(
+        scalar(&db, "SELECT published_at FROM notices").await,
+        requested,
+        "the notice row's published_at is the requested/portal date, not the epoch"
+    );
+    assert_eq!(scalar(&db, "SELECT dispatched_at FROM notices").await, issued);
+    // …and the version folded from the same parse agrees, which is what the
+    // resolver's doc comment has always claimed.
+    assert_eq!(scalar(&db, "SELECT published_at FROM tender_versions").await, requested);
+    assert_eq!(scalar(&db, "SELECT dispatched_at FROM tender_versions").await, issued);
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 367, the invariant `notice_instants`' doc comment claims and nothing
+/// asserted: a notice row's instants and the version folded from the SAME parse
+/// never diverge. Run across every era in the fixture set, because the DE-1.x
+/// break was invisible to the per-era tests — each era's own test passed on the
+/// value it happened to read.
+///
+/// The version column is NOT NULL and the notice column is nullable, so the
+/// comparison carries the projection's documented epoch fallback: a notice with
+/// no date at all is NULL on the row and 0 on the version. That fallback cannot
+/// hide the defect this pins — a stored 0 beside a real version date still
+/// diverges, and so does a NULL beside one (the 7,417-row TED prefix).
+#[tokio::test]
+async fn notices_and_their_versions_carry_the_same_instants() {
+    let (db, fetch_id, path) = scratch("instant-invariant").await;
+    for (source, fixture) in [
+        ("ted", "eforms/can-29-00495054-2026.xml"),
+        ("ted", "eforms-chain/1-cn-16-831374-2025.xml"),
+        ("ted", "eforms-chain/4-can-29-380868-2026.xml"),
+        ("doe", "doe/eforms-de-1.1-cn-7d69b0f7.xml"),
+        ("doe", "doe/eforms-de-1.2-can-799811c4.xml"),
+        ("doe", "doe/sdk-0.1-numeric-cn-25599482-1.xml"),
+        ("doe", "doe/sdk-0.1-uuid-can-427d4645-163c-419d-93a9-5f5ce05ff9b7-1.xml"),
+        ("doe", "doe/eforms-de-2.1-can-15063f7d-0f02-42f6-960a-96e35c9cc374-01.xml"),
+        ("ted", "r209/f02-000245-2019.xml"),
+        ("ted", "r208/f02-000333-2014.xml"),
+    ] {
+        ingest_from(&db, fetch_id, source, fixture).await;
+    }
+    project::project(&db, false).await.expect("project");
+
+    let versions = scalar(&db, "SELECT COUNT(*) FROM tender_versions").await;
+    assert!(versions >= 8, "expected the whole fixture spread to fold, got {versions} versions");
+
+    let diverged = scalar(
+        &db,
+        "SELECT COUNT(*) FROM notices n JOIN tender_versions v
+           ON v.caused_by_notice_id = n.id
+          WHERE n.parse_state = 'parsed'
+            AND (COALESCE(n.published_at, 0) != v.published_at
+                 OR (n.dispatched_at IS NULL) != (v.dispatched_at IS NULL)
+                 OR COALESCE(n.dispatched_at, 0) != COALESCE(v.dispatched_at, 0))",
+    )
+    .await;
+    assert_eq!(
+        diverged, 0,
+        "{diverged} notice row(s) disagree with the version folded from their own parse — \
+         the two layers resolve instants through one function and must agree (issue 367)"
+    );
+    // And the epoch is not a date any of these notices claims to be published on:
+    // the fallback exists for a payload that states nothing, not as a resolver miss.
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM notices WHERE published_at = 0").await,
+        0,
+        "a stored published_at of 0 is issue 367's signature — 1970-01-01 as a real date"
+    );
 
     let _ = std::fs::remove_file(&path);
 }

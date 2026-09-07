@@ -387,25 +387,63 @@ const ORG_NATIONALID_FIELD: &str = "TED-NATIONALID";
 /// publication date DÖE carries in place of an OJEU stamp — DÖE notices are
 /// published on the national portal and have no `efac:Publication` block, so
 /// their requested date is the only publication signal they carry.
+///
+/// **Each dialect id sits immediately after the eForms id it aliases to** (issue
+/// 367). These lists are read at BOTH layers: the projection calls
+/// [`notice_instants`] after [`normalise_de1`] has folded the vocabulary, the
+/// processor calls it on the RAW parse ([`crate::process`]'s `resolved_notice`),
+/// because the stored notice layer keeps the publisher's own `DE1-*` ids on
+/// purpose (see [`DE1_FIELD_ALIASES`]) — so normalising there would either
+/// rewrite what the parse layer records or cost a clone of every parse. Naming
+/// both vocabularies here instead is the shape issue 18 already used for
+/// `SDK01-*`; adjacency is what makes the two layers agree, since a dialect id
+/// placed out of order would out- or under-rank its own alias target and the
+/// notice row would resolve a different date than its version. Pinned by
+/// `every_de1_date_alias_sits_beside_its_target`.
 const PUBLICATION_DATE_FIELDS: &[&str] = &[
-    "OPP-012-notice",                 // eForms efbc:PublicationDate (TED; DÖE when stamped)
-    "TED-DATE_PUB",                   // legacy r208/r209 REF_OJS publication date
-    "TXT-PD",                         // text-era PD: publication date
-    "BT-738-notice",                  // eForms RequestedPublicationDate — the DÖE portal date
-    "SDK01-RequestedPublicationDate", // DÖE sdk-0.1 requested publication date
+    "OPP-012-notice",                  // eForms efbc:PublicationDate (TED; DÖE when stamped)
+    "DE1-Publication-PublicationDate", // ↑ its eForms-DE 1.x spelling (issue 367)
+    "TED-DATE_PUB",                    // legacy r208/r209 REF_OJS publication date
+    "TXT-PD",                          // text-era PD: publication date
+    "BT-738-notice",                   // eForms RequestedPublicationDate — the DÖE portal date
+    "DE1-RequestedPublicationDate",    // ↑ its eForms-DE 1.x spelling (issue 367)
+    "SDK01-RequestedPublicationDate",  // DÖE sdk-0.1 requested publication date
 ];
 
 /// Dispatch-date fields, best-first (issue 18): when the notice left the
 /// sender. Kept as its own axis because ordering within a publication day, and
 /// the dispatch-vs-publication skew itself, are real questions consumers ask.
+///
+/// The `DE1-*` entry is here for the reason [`PUBLICATION_DATE_FIELDS`] gives.
 const DISPATCH_DATE_FIELDS: &[&str] = &[
     "BT-05(a)-notice",          // eForms cbc:IssueDate (TED + DÖE eforms-de)
+    "DE1-IssueDate",            // ↑ its eForms-DE 1.x spelling (issue 367)
     "SDK01-IssueDate",          // DÖE sdk-0.1 issue date
     "TED-DS_DATE_DISPATCH",     // legacy dispatch (CODIF_DATA)
     "TED-DATE_DISPATCH_NOTICE", // legacy dispatch (form body)
     "TED-DATE_DISP",            // INTERNAL_OJS 2008 dispatch (BIB_DOC_S)
     "TXT-DS",                   // text-era DS: dispatch
 ];
+
+/// Every field id either date axis can resolve — the repair job's read filter
+/// (issue 367). `notices.published_at` / `dispatched_at` are re-derived from
+/// `notice_dates` rows restricted to these ids, so the store never has to read
+/// the whole parsed layer back to check one notice's instants; filtering to the
+/// candidate ids cannot change which candidate [`first_date`] picks.
+pub const INSTANT_DATE_FIELDS: &[&str] = &{
+    let mut all = [""; PUBLICATION_DATE_FIELDS.len() + DISPATCH_DATE_FIELDS.len()];
+    let mut i = 0;
+    while i < PUBLICATION_DATE_FIELDS.len() {
+        all[i] = PUBLICATION_DATE_FIELDS[i];
+        i += 1;
+    }
+    let mut j = 0;
+    while j < DISPATCH_DATE_FIELDS.len() {
+        all[i + j] = DISPATCH_DATE_FIELDS[j];
+        j += 1;
+    }
+    all
+};
 
 /// The notice's own OJS publication number, in-form (r209 emits it as a plain
 /// `NO_DOC_OJS`; the text era's own id is `ND:`). Only used as a corroborating
@@ -3030,7 +3068,14 @@ impl NoticeState {
             })
             .collect();
 
+        // `tender_versions.published_at` is NOT NULL and the fold orders
+        // versions by it, so the version layer keeps the pre-367 epoch fallback
+        // for a notice that states no date on either axis. The honest `None`
+        // lands on the nullable NOTICE column (see [`notice_instants`]); the two
+        // still AGREE wherever the resolver found anything, which is the
+        // invariant `notices_and_their_versions_carry_the_same_instants` pins.
         let (published_at, dispatched_at) = notice_instants(parsed);
+        let published_at = published_at.unwrap_or(0);
 
         NoticeState {
             notice_id: notice.id,
@@ -3334,7 +3379,10 @@ impl Ident {
             notice_id: notice.id,
             source: notice.source.clone(),
             publication_id: notice.publication_id.clone(),
-            published_at: notice_instants(parsed).0,
+            // The plan's fold-order key. Same epoch fallback as `NoticeState`,
+            // and it must be the SAME one — the two are documented to agree by
+            // construction (see `BucketRow::snapshot`).
+            published_at: notice_instants(parsed).0.unwrap_or(0),
             legacy,
             sdk01,
             procedure_key: procedure_key(parsed, sdk01, is_de1_profile(&notice.profile)),
@@ -4986,14 +5034,22 @@ pub fn original_lang(parsed: &Parsed) -> Option<String> {
 /// date), falling back to dispatch; `dispatched_at` is the send date, or `None`
 /// when the notice carries none (e.g. a DÖE numeric island with only a
 /// requested-publication date). Shared by the processor (which stamps the
-/// notice row) and the projection (which stamps the version), so both agree.
-pub fn notice_instants(parsed: &Parsed) -> (i64, Option<i64>) {
+/// notice row) and the projection (which stamps the version), so both agree —
+/// and since issue 367 both vocabularies are named in the two field lists, so
+/// "agree" holds for the DE-1.x dialect too, whose ids the notice layer keeps.
+///
+/// **Both axes are `Option`, and a payload that states no date at all yields
+/// `None`, never the epoch** (issue 367). The old `.unwrap_or(0)` stored
+/// 1970-01-01 for every notice the resolver missed, which read as a real
+/// publication date to every consumer: 218,876 DE-1.x rows carried it, and
+/// `/v1/notices/…` served `"published_at":"1970-01-01T00:00:00Z"`. The notice
+/// column is nullable and now says so. `tender_versions.published_at` is NOT
+/// NULL, so the two projection call sites keep an explicit epoch fallback for
+/// the (vanishing) dateless notice — the fold has to order versions somehow.
+pub fn notice_instants(parsed: &Parsed) -> (Option<i64>, Option<i64>) {
     let dispatched_at = DISPATCH_DATE_FIELDS.iter().find_map(|f| first_date(parsed, f));
-    let published_at = PUBLICATION_DATE_FIELDS
-        .iter()
-        .find_map(|f| first_date(parsed, f))
-        .or(dispatched_at)
-        .unwrap_or(0);
+    let published_at =
+        PUBLICATION_DATE_FIELDS.iter().find_map(|f| first_date(parsed, f)).or(dispatched_at);
     (published_at, dispatched_at)
 }
 
@@ -5605,6 +5661,44 @@ mod tests {
         let before = seen.len();
         seen.dedup();
         assert_eq!(seen.len(), before, "duplicate DE-1.x source id in the alias table");
+    }
+
+    /// Issue 367: the two date lists are read at two layers — on the RAW parse
+    /// by the processor, on the NORMALISED parse by the projection — so every
+    /// alias into either list must appear in it, **immediately after its own
+    /// target**. Missing it stamps the notice row with a wrong date (the 218,876
+    /// epoch rows). Present but mis-ordered is worse and quieter: the raw list
+    /// would then prefer a different candidate than the folded one, and the
+    /// notice row and its version would carry two different real dates.
+    #[test]
+    fn every_de1_date_alias_sits_beside_its_target() {
+        for list in [PUBLICATION_DATE_FIELDS, DISPATCH_DATE_FIELDS] {
+            for (de1, target) in DE1_FIELD_ALIASES {
+                let Some(at) = list.iter().position(|f| f == target) else { continue };
+                let found = list.iter().position(|f| f == de1);
+                assert_eq!(
+                    found,
+                    Some(at + 1),
+                    "{de1} → {target}: a date alias must sit immediately after its target in \
+                     the same list, so the raw and the normalised parse resolve the same \
+                     candidate (issue 367). Found at {found:?}, target at {at}."
+                );
+            }
+        }
+    }
+
+    /// The repair job's read filter must cover both axes exactly — a missing id
+    /// makes the job re-derive an instant from an incomplete parse and "repair"
+    /// a correct row into a wrong one.
+    #[test]
+    fn the_instant_field_filter_is_both_lists() {
+        for f in PUBLICATION_DATE_FIELDS.iter().chain(DISPATCH_DATE_FIELDS) {
+            assert!(INSTANT_DATE_FIELDS.contains(f), "{f} missing from INSTANT_DATE_FIELDS");
+        }
+        assert_eq!(
+            INSTANT_DATE_FIELDS.len(),
+            PUBLICATION_DATE_FIELDS.len() + DISPATCH_DATE_FIELDS.len()
+        );
     }
 
     #[test]

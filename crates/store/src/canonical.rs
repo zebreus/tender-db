@@ -3504,6 +3504,51 @@ pub struct RenormaliseRepairReport {
     pub stopped: bool,
 }
 
+/// One notice row whose stored instants disagree with the resolver (issue 367).
+/// The pre-image rides along because the wet arm re-checks it before writing —
+/// and because the plan is the only record of what the row said.
+#[derive(Debug, Default, Clone)]
+pub struct NoticeInstantFix {
+    pub notice: i64,
+    pub profile: String,
+    pub from_published: Option<i64>,
+    pub from_dispatched: Option<i64>,
+    pub to_published: Option<i64>,
+    pub to_dispatched: Option<i64>,
+}
+
+/// Issue 367: what re-deriving `notices.published_at` / `dispatched_at` from the
+/// stored parse would change. Dry by default.
+#[derive(Debug, Default, Clone)]
+pub struct NoticeInstantRepairReport {
+    /// Parsed notices walked.
+    pub walked: u64,
+    /// …whose stored pair already IS what the resolver says.
+    pub agree: u64,
+    /// Planned rewrites.
+    pub rows: u64,
+    /// …of which the stored `published_at` is exactly 0 — the flattened
+    /// `.unwrap_or(0)`, served as `"1970-01-01T00:00:00Z"`. 218,876 measured,
+    /// 100% of the eforms-de-1.x profiles.
+    pub epoch_published: u64,
+    /// …of which the stored `published_at` is NULL while the parse states one —
+    /// the contiguous TED prefix ingested before issue 18 shipped (7,417
+    /// measured), which no re-parse or reclaim ever revisits.
+    pub null_published: u64,
+    /// …of which the stored value says a date and the PARSE states none, so the
+    /// repair writes NULL. Called out separately because it is the only class
+    /// that REMOVES a value, and a reviewer should see the number before the
+    /// wet run: these are dateless payloads that were stamped with the epoch.
+    pub resolver_silent: u64,
+    /// Disagreeing rows per notice profile, ascending by profile — the split
+    /// that identifies the cohort (issue 367's evidence is per-profile).
+    pub by_profile: Vec<(String, u64)>,
+    pub plan: Vec<NoticeInstantFix>,
+    pub applied: u64,
+    pub skipped_moved: u64,
+    pub stopped: bool,
+}
+
 /// One row the issue-326 repair would move: an identifier standing under a code
 /// one letter from the one its checksum names.
 #[derive(Debug, Default, Clone)]
@@ -14101,6 +14146,241 @@ impl Db {
             packet.cases.push(case);
         }
         Ok(packet)
+    }
+
+    /// Issue 367: re-derive every parsed notice's `published_at` /
+    /// `dispatched_at` from its own stored parse, and rewrite the rows whose
+    /// stored pair disagrees. Dry by default; the wet arm is gated on a reviewed
+    /// dry plan, the shape issues 328/345 established.
+    ///
+    /// **Why the stored rows need a job at all.** The notice row is stamped ONCE,
+    /// at process time, and nothing re-derives it: `MIGRATIONS` is ADD-COLUMN-only
+    /// by policy, so the two columns arrived NULL on every pre-existing row; the
+    /// re-parse and reclaim UPDATEs are the only other writers, and reclaim's
+    /// already-parsed arm short-circuits with "never re-touch a parsed notice";
+    /// and the projection writes back `projected` alone. So the 2026-08-15 rebuild
+    /// refreshed those notices' `tender_versions` — which is why the VERSIONS are
+    /// right — and left the notice rows exactly as first stamped, forever.
+    ///
+    /// Two populations, both measured on prod: 218,876 rows stamped `0` because
+    /// the resolver ran on the raw DE-1.x vocabulary and matched nothing, then
+    /// flattened not-found to the epoch; and a contiguous prefix of 7,417 TED
+    /// notices ingested one day before issue 18 shipped the resolver at all.
+    ///
+    /// **The read.** Windows over the notices PK, and for each window the
+    /// `notice_dates` rows in that id range restricted to `fields` — the caller
+    /// passes `ingest::project::INSTANT_DATE_FIELDS`, the union of the two date
+    /// lists, because store must not depend on ingest. Filtering to the candidate
+    /// ids cannot change which candidate the resolver picks, and the row order is
+    /// the same PK order the projection's own `parsed_chunk` read gives it, so the
+    /// `Parsed` handed to `resolve` resolves exactly what the projection would.
+    /// Reading only the dates (rather than a whole `parsed_chunk`) is what keeps
+    /// this one ranged index scan per window instead of one per value table.
+    ///
+    /// **`resolver_silent` is the class to read before running it wet.** A parsed
+    /// notice whose payload states no date at all resolves to NULL on both axes,
+    /// and its stored `Some(0)` is removed rather than corrected. That is the
+    /// honest answer — the column is nullable and 1970-01-01 was never a real
+    /// publication date — but it is the only class that takes a value away, so it
+    /// is counted on its own line. It cannot be an empty parsed layer masquerading
+    /// as a dateless payload: `insert_parsed` and the `parse_state = 'parsed'`
+    /// stamp commit in one transaction, so a parsed notice always has its values.
+    ///
+    /// **No change events, and no re-projection.** `notices` is not a change-feed
+    /// entity kind (`changes` carries `tender` and `organization`), and the
+    /// canonical rows this would otherwise invalidate are already CORRECT — the
+    /// versions never had this defect. Leaving `projected` alone is deliberate:
+    /// re-folding 226k notices to fix a column the fold does not read would be
+    /// hours of work for no change in output.
+    ///
+    /// Idempotent: a repaired row agrees with the resolver, so the next run
+    /// counts it in `agree` and plans nothing.
+    pub async fn repair_notice_instants(
+        &self,
+        fields: &[&str],
+        resolve: fn(&Parsed) -> (Option<i64>, Option<i64>),
+        dry_run: bool,
+        expect_rows: Option<u64>,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<NoticeInstantRepairReport> {
+        /// Parsed notices per read window. The date rows of 50k notices are a
+        /// bounded handful of MB, the same window `repair_label_prefixes` walks.
+        const WINDOW: i64 = 50_000;
+        /// Rows per write transaction. A single 226k-row transaction would grow
+        /// the WAL by its whole length before any checkpoint could run (issue 80's
+        /// lesson on the reclaim walk), so the wet arm commits in slices and
+        /// truncates between them. A stop between slices leaves the committed
+        /// prefix standing, which a re-run simply re-plans around.
+        const SLICE: usize = 20_000;
+
+        let mut report = NoticeInstantRepairReport::default();
+        let mut by_profile: std::collections::BTreeMap<String, u64> = Default::default();
+        let reader = self.reader().await?;
+        let mut plan: Vec<NoticeInstantFix> = Vec::new();
+        let mut after = 0i64;
+        loop {
+            if stop() {
+                return Ok(NoticeInstantRepairReport { stopped: true, ..Default::default() });
+            }
+            let mut window: Vec<(i64, String, Option<i64>, Option<i64>)> = Vec::new();
+            {
+                let mut rows = reader
+                    .query(
+                        "SELECT id, profile, published_at, dispatched_at FROM notices \
+                          WHERE id > ? AND parse_state = 'parsed' ORDER BY id LIMIT ?",
+                        (Value::Integer(after), Value::Integer(WINDOW)),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    window.push((
+                        int(&row, 0),
+                        text(&row, 1),
+                        opt_int_of(&row, 2),
+                        opt_int_of(&row, 3),
+                    ));
+                }
+            }
+            let (Some(&(lo, ..)), Some(&(hi, ..))) = (window.first(), window.last()) else {
+                break;
+            };
+            after = hi;
+            report.walked += window.len() as u64;
+
+            // The window's candidate date rows, in the PK order the projection
+            // reads them in — `first_date` takes the FIRST match, so the order is
+            // part of the answer, not a detail.
+            let mut dates: std::collections::HashMap<i64, Vec<ValueRow>> =
+                std::collections::HashMap::with_capacity(window.len());
+            {
+                let sql = format!(
+                    "SELECT notice_id, section_id, field_id, ordinal, utc_seconds, \
+                            offset_minutes, has_time FROM notice_dates \
+                      WHERE notice_id >= ? AND notice_id <= ? AND field_id IN ({}) \
+                      ORDER BY notice_id, section_id, field_id, ordinal",
+                    placeholders(fields.len())
+                );
+                let mut params: Vec<Value> = vec![Value::Integer(lo), Value::Integer(hi)];
+                params.extend(fields.iter().map(|f| t(*f)));
+                let mut rows = reader.query(&sql, params).await?;
+                while let Some(row) = rows.next().await? {
+                    dates.entry(int(&row, 0)).or_default().push(ValueRow {
+                        section_id: text(&row, 1),
+                        field_id: text(&row, 2),
+                        ordinal: int(&row, 3),
+                        value: crate::NoticeValue::Date {
+                            utc_seconds: int(&row, 4),
+                            offset_minutes: int(&row, 5),
+                            has_time: int(&row, 6) != 0,
+                        },
+                    });
+                }
+            }
+
+            for (id, profile, from_published, from_dispatched) in window {
+                let values = dates.remove(&id).unwrap_or_default();
+                let (to_published, to_dispatched) =
+                    resolve(&Parsed { sections: Vec::new(), values });
+                if (to_published, to_dispatched) == (from_published, from_dispatched) {
+                    report.agree += 1;
+                    continue;
+                }
+                match (from_published, to_published) {
+                    (Some(0), Some(_)) => report.epoch_published += 1,
+                    (None, Some(_)) => report.null_published += 1,
+                    (Some(_), None) => report.resolver_silent += 1,
+                    _ => {}
+                }
+                *by_profile.entry(profile.clone()).or_default() += 1;
+                plan.push(NoticeInstantFix {
+                    notice: id,
+                    profile,
+                    from_published,
+                    from_dispatched,
+                    to_published,
+                    to_dispatched,
+                });
+            }
+        }
+        report.rows = plan.len() as u64;
+        report.by_profile = by_profile.into_iter().collect();
+        report.plan = plan;
+        if dry_run || report.rows == 0 {
+            return Ok(report);
+        }
+
+        if let Some(expect) = expect_rows {
+            let tolerance = std::cmp::max(expect / 50, 5);
+            if report.rows.abs_diff(expect) > tolerance {
+                return Err(turso::Error::Error(format!(
+                    "notice-instant repair ABORTED: the reviewed plan rewrote {expect} rows, \
+                     this run computes {} — beyond the max(2%, 5) tolerance. Re-run the dry \
+                     pass and review the new plan.",
+                    report.rows
+                )));
+            }
+        }
+
+        let conn = self.conn().await;
+        for slice in report.plan.chunks(SLICE) {
+            if stop() {
+                report.stopped = true;
+                break;
+            }
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+            let mut applied = 0u64;
+            let mut skipped = 0u64;
+            let result: turso::Result<()> = async {
+                for f in slice {
+                    // Only rewrite a row that still says what the plan says —
+                    // a re-parse between the read and the write owns its own
+                    // stamp, and this job must never overwrite a fresher one.
+                    let mut current: Option<(Option<i64>, Option<i64>)> = None;
+                    {
+                        let mut rows = conn
+                            .query(
+                                "SELECT published_at, dispatched_at FROM notices WHERE id = ?",
+                                (Value::Integer(f.notice),),
+                            )
+                            .await?;
+                        if let Some(row) = rows.next().await? {
+                            current = Some((opt_int_of(&row, 0), opt_int_of(&row, 1)));
+                        }
+                    }
+                    if current != Some((f.from_published, f.from_dispatched)) {
+                        skipped += 1;
+                        continue;
+                    }
+                    conn.execute(
+                        "UPDATE notices SET published_at = ?, dispatched_at = ? WHERE id = ?",
+                        (
+                            opt_int(f.to_published),
+                            opt_int(f.to_dispatched),
+                            Value::Integer(f.notice),
+                        ),
+                    )
+                    .await?;
+                    applied += 1;
+                }
+                Ok(())
+            }
+            .await;
+            match result {
+                Ok(()) => {
+                    if let Err(e) = conn.execute("COMMIT", ()).await {
+                        let _ = conn.execute("ROLLBACK", ()).await;
+                        return Err(e);
+                    }
+                    report.applied += applied;
+                    report.skipped_moved += skipped;
+                    let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
+                }
+                Err(e) => {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
+        }
+        Ok(report)
     }
 
     /// Issue 326: same identifier, two country codes one letter apart.

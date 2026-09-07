@@ -419,6 +419,11 @@ enum Spec {
     /// through the live normaliser (v2.1 folds) and move what it now says.
     /// Wet writes `organizations`.
     RepairRenormalisedIdentifiers { dry_run: bool },
+    /// Issue 367: re-derive every parsed notice's own publication/dispatch
+    /// instants from its stored parse and rewrite the rows that disagree — the
+    /// 218,876 stamped 1970-01-01 and the 7,417-notice NULL prefix. Wet writes
+    /// `notices`; no re-projection, the versions were never wrong.
+    RepairNoticeInstants { dry_run: bool },
     /// Issue 325 step 4: re-parse the standing `kind = 'vat'` rows and write
     /// what the identifier parser now says. Wet writes `organizations`.
     RepairMintedCountries { dry_run: bool },
@@ -1474,6 +1479,20 @@ impl Supervisor {
                     .await,
                 ])
             }
+            // Issue 367, dry by default; same contract — the wet arm reads its row
+            // count out of the stored dry plan and aborts if the corpus has moved.
+            "repair-notice-instants" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                Ok(vec![
+                    self.push(
+                        "repair-notice-instants",
+                        if dry_run { "repair-notice-instants dry-run" } else { "repair-notice-instants" }
+                            .to_owned(),
+                        Spec::RepairNoticeInstants { dry_run },
+                    )
+                    .await,
+                ])
+            }
             "repair-country-typos" => {
                 let dry_run = req.dry_run.unwrap_or(true);
                 Ok(vec![
@@ -2084,6 +2103,9 @@ const STOPPABLE_KINDS: &[&str] = &[
     "repair-country-typos",
     "repair-label-prefixes",
     "repair-renormalised-identifiers",
+    // Issue 367: read between read windows AND between write slices, so a stop
+    // leaves the committed prefix standing and a re-run re-plans the rest.
+    "repair-notice-instants",
     "repair-minted-countries",
 ];
 
@@ -5638,6 +5660,125 @@ impl Supervisor {
                     }
                 ))
             }
+            // Boxed for the reason CLAUDE.md gives: `run_spec` is one 60-plus-arm
+            // async match, so every arm's locals share ONE future's frame, and a
+            // fat arm has aborted an unrelated test with a stack overflow.
+            Spec::RepairNoticeInstants { dry_run } => Box::pin(async move {
+                let dry_run = *dry_run;
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    if dry_run { "planning" } else { "repairing" },
+                    None,
+                    None,
+                    "issue 367: re-deriving each parsed notice's publication and dispatch \
+                     instants from its own stored parse"
+                        .to_owned(),
+                );
+                let expect_rows = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("notice-instant-repair")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "no stored notice-instant-repair plan — run the dry pass first"
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    if v["dry_run"] != serde_json::Value::Bool(true) {
+                        return Err("the stored notice-instant-repair report is from a WET run, \
+                                    not a reviewed plan — run the dry pass again"
+                            .to_owned());
+                    }
+                    Some(v["rows"].as_u64().ok_or_else(|| "plan lacks rows")?)
+                };
+                let r = self
+                    .db
+                    .repair_notice_instants(
+                        ingest::project::INSTANT_DATE_FIELDS,
+                        ingest::project::notice_instants,
+                        dry_run,
+                        expect_rows,
+                        &stop,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped && dry_run {
+                    return Ok(
+                        "repair-notice-instants STOPPED by cancel — nothing planned".to_owned()
+                    );
+                }
+                let now = store::now_unix();
+                const PLAN_CAP: usize = 400;
+                let body = serde_json::json!({
+                    "dry_run": dry_run,
+                    "walked": r.walked,
+                    "agree": r.agree,
+                    "rows": r.rows,
+                    "epoch_published": r.epoch_published,
+                    "null_published": r.null_published,
+                    "resolver_silent": r.resolver_silent,
+                    "by_profile": r.by_profile.iter().map(|(profile, rows)| serde_json::json!({
+                        "profile": profile, "rows": rows,
+                    })).collect::<Vec<_>>(),
+                    "applied": r.applied,
+                    "skipped_moved": r.skipped_moved,
+                    "stopped": r.stopped,
+                    "plan_truncated": r.plan.len() > PLAN_CAP,
+                    "plan": r.plan.iter().take(PLAN_CAP).map(|f| serde_json::json!({
+                        "notice": f.notice,
+                        "profile": f.profile,
+                        "from": {"published_at": f.from_published,
+                                 "dispatched_at": f.from_dispatched},
+                        "to": {"published_at": f.to_published, "dispatched_at": f.to_dispatched},
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("notice-instant-repair", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let profiles = r
+                    .by_profile
+                    .iter()
+                    .map(|(p, n)| format!("{p} {n}"))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                Ok(format!(
+                    "repair-notice-instants (issue 367, {}): {} parsed notice(s) walked, {} \
+                     already agree with the resolver. {} planned — {} stamped the epoch \
+                     (1970-01-01, the flattened not-found), {} NULL while the parse states a \
+                     date, {} whose parse states NO date and whose stored value is therefore \
+                     REMOVED. By profile: [{}]. The versions are untouched: they were never \
+                     wrong, and nothing is re-projected.{}",
+                    if dry_run { "DRY" } else { "WET" },
+                    r.walked,
+                    r.agree,
+                    r.rows,
+                    r.epoch_published,
+                    r.null_published,
+                    r.resolver_silent,
+                    if profiles.is_empty() { "none".to_owned() } else { profiles },
+                    if dry_run {
+                        String::new()
+                    } else {
+                        format!(
+                            " APPLIED {}, skipped {} whose row moved under the plan.{}",
+                            r.applied,
+                            r.skipped_moved,
+                            if r.stopped {
+                                " STOPPED by cancel — the committed prefix stands."
+                            } else {
+                                ""
+                            }
+                        )
+                    }
+                ))
+            })
+            .await,
             Spec::RepairRenormalisedIdentifiers { dry_run } => Box::pin(async move {
                 let dry_run = *dry_run;
                 let job_id = job.id;
@@ -10140,6 +10281,7 @@ mod tests {
                 "repair-country-typos",
                 "repair-label-prefixes",
                 "repair-renormalised-identifiers",
+                "repair-notice-instants",
                 "repair-minted-countries"
             ]
         );
