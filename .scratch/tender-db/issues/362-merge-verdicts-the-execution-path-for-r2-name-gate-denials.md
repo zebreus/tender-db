@@ -88,3 +88,14 @@ and the survivors hold 5 and 4 mentions — the members' counts summed, none lef
 loser. `org_merge_log` itself is an operator table off the public allow-list (correctly:
 "not in the queryable public surface") and has no admin read route, so the verdict
 store's stamps are the audit record for these; the ledger is reachable only on the box.
+
+## Queue growth from the 2026-09-07 folds (owner note)
+
+Issue 358's country moves and issue 363's label repair reunited pairs whose NAMES differ, so
+R2's name-gate denials rose 105 → 142 → 170 across the two dry scans (jobs 785, 790). Two shapes
+sit in the new 65: departments sharing one register id (`Turun kaupunki, joukkoliikennetoimisto`
+beside `…Kiinteistöliikelaitos`; `Ville de Baillif` beside `Caisse des écoles`), which a reviewer
+should mostly KEEP, and acronym/expansion pairs (`SEMAVIL — SAEML` / `Soc mixte aménag Ville
+Lamentin`, `NPEI` / `Nalem peinture étanchéité isolation`), which are the merge shape. The
+listing is complete under the cap in the stored `r2-merge-plan` (`denied_names_listing`); a
+second review campaign over these ~65 groups is this issue's next unit, same rubric and path.
