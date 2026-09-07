@@ -1,0 +1,52 @@
+# 370 — the served contract is hand-written prose with no gate coupling it to behaviour: twelve published claims are now false
+
+Status: ready-for-agent (filed 2026-09-07 from the external review's verified findings —
+several reviewer "defects" are really this issue: the behaviour was decided deliberately
+and the published description was not updated)
+Kind: defect (documentation / API contract) — a drift with no detector
+Relates to: 234 / 351 (the invariant that was deliberately retired), 219 / 238 / 267 /
+171 / 329 / 48 (the issues whose decisions these pages still contradict), 115 (the SQL
+oracle — the one place a doc claim IS pinned by a test), and the four code issues whose
+fixes make three of these rows true again
+
+## Observed — the claim, where it is served, and what falsifies it
+
+| claim | served at | measured 2026-09-07 |
+| --- | --- | --- |
+| "1 = a single-mention profile with no official identifier, **never merged** (CONTEXT.md)" | `crates/app/src/v1/sql.rs:702-706`, live on `/v1/sql/schema` | org 1197927 "Deutsche Bahn AG" is `provisional=1` with **7,668** mentions (`SELECT COUNT(*) FROM organization_mentions WHERE organization_id=1197927`). `/v1/organizations?name_prefix=Landeshauptstadt%20M%C3%BCnchen` returns provisional rows with 11 and 142 mentions **and** org 4310313 with `provisional:false` and exactly 1 — inverted in both directions |
+| a provisional profile "represents exactly one mention and never absorbs another" | `crates/store/src/canonical.rs:345-348` | same |
+| "name-only mentions stay separate provisional profiles" | `CONTEXT.md:57-61` | same |
+| "The org-identity uniqueness is a NAMED index" | `crates/store/src/canonical.rs:345-347` | `organizations_identity` is built **non-UNIQUE** (`crates/store/src/canonical.rs:6091-6094`), for the reason written at :6063-6075; VAT `DE811569869` stands on two canonical rows (22318959 "DB Engineering & Consulting GmbH", 22697494 "Deutsche Bahn AG - Tender Office …") |
+| "Astronomical garbage magnitudes (10⁵⁰-class) are quarantined at ingestion and never enter the corpus" | `crates/app/src/v1/docs.rs:571-572` | true only of i64-overflowing eForms amounts; 174 tenders over €100bn are served, the top at €4.97×10¹⁶ |
+| "any query past the time limit … is 408, and **its server-side work is abandoned** so it never holds a slot past the cap" | `crates/app/src/v1/docs.rs:382` | false for a non-yielding aggregate — `crates/app/src/v1/sql.rs:239-245` and issue 238's own prod measurement say the thread stays pinned; the per-token *slot* is released, the work is not |
+| "Filter, absent value ?country=ZZ <1 ms*" + "* an absent filter value short-circuits to an empty page" | `crates/app/src/v1/docs.rs:511`, :517 | `?currency=XXX&limit=2` → 200 empty after **29.78 s** |
+| "Timestamps are ISO 8601; a source that published a date only yields a date only, **never an invented time**" | `crates/app/src/v1/docs.rs:113` | doe date-only publications serve `2026-09-04T22:00:00Z`; tender 7954578 is published a day before it is dispatched |
+| "treat deadline < published_at as published noise", at 0.2–0.3% | `crates/app/src/v1/docs.rs:579-581`, restating `docs/research/data-profile-2026-08.md:145-154` | the ROW-level rate is **2,981,402 / 7,929,584 = 37.60%** (49.15% of rows that have a deadline). The study measured a different quantity — a deadline against its CAUSING notice, per version, where carry-forward cannot occur by construction |
+| "This is the front door to participation history: resolve the VAT to **a** canonical org id" | `crates/app/src/v1/docs.rs:238` | `/v1/organizations?identifier=DE811569869&kind=vat` returns two canonical orgs (22 and 2 mentions). Issue 329 establishes the duplicate can be legitimate (a German Organschaft), so the defect is the promised functional dependency, not the rows |
+| `organizations?country=ESP`, `tenders?country=DEU` | `README.md:74`, `README.md:91` | both 200 with **0 rows**; issue 48's 2026-08-15 note claims "every curl example" was corrected in /docs and the OpenAPI — README was missed |
+| "legacy R2.0.7–R2.0.9 (title 100% fill, research §5.1)" | `crates/ingest/src/project.rs:95` | 29,455 titleless r208 tenders |
+| "Zero deadlines beyond publication+10 y in any window" (rule 14) | `docs/research/data-profile-2026-08.md:154` | 3005-07-06, 2999-12-31 ×2, 2924-04-15, 2205-11-18 stand in the corpus — the rule was measured vacuously green on a window |
+
+## Why, exactly
+
+Every one of these is a hand-written const or a prose line with nothing that re-derives it: `COLUMN_NOTES` is a table of string literals (`crates/app/src/v1/sql.rs:~690-707`), `/docs` is a formatted HTML const, CONTEXT.md and the schema comments are prose, and the research rules are numbers taken once, in a window.
+
+The `provisional` row shows the shape exactly, and it is the most damaging because three surfaces repeat it. The invariant was **retired deliberately**: `provisional` is set purely by which INSERT arm the resolver takes — `provisional = 0` in the identifier arm (`crates/store/src/canonical.rs:8137-8142`), `= 1` in the identifier-less arms (:8225, :8337) — so it has meant `identifier IS NULL` and nothing else since issue 234, and prod agrees to the row: of 5,703,677 provisional rows, **0** carry an identifier. Issue 234 then made the identifier-less arm REUSE a standing row, and its own comment states the consequence: "The row STAYS `provisional = 1`, so a later identifier can still split or canonicalise it — the merge is a reuse policy, not a promotion" (`crates/store/src/canonical.rs:8186-8188`). Issue 351 widened the same reuse to country-less mentions (`crates/store/src/canonical.rs:8240`). So "never merged" became false by design on 2026-08-21 and more so on 2026-09-04 — and nothing couples the description to the behaviour: no test asserts a provisional row has ≤1 mention, and the change that landed 234 had no reason to touch the app crate.
+
+The deadline row is the same failure in the other direction: a per-version measurement restated in ROW terms. The row is a UNION of versions by design — `supersede` leaves a field the notice is silent about alone (`crates/ingest/src/project.rs:3465-3471`) while `published_at` advances to the new notice's own (`crates/ingest/src/project.rs:3448-3452`) — so an award notice that publishes no submission_deadline inherits it and `deadline < published_at` is the *expected* shape for every tender that reached award. Verified end to end on tender 1: head seq 7 = notice 26990894, subtype 29 (award), publishing four date rows and no submission_deadline; the deadline comes from seq 6, notice 25826280 (subtype 16), `BT-131(d)-Lot = 2026-06-30T10:00:00+02:00`. Nothing is wrong with the data; a consumer applying a 0.2–0.3% expectation to a 37.6% comparison concludes the corpus is broken. `TenderRow` (`crates/store/src/read.rs:264-284`) carries the head version's seq and published_at but no per-field "which version published this" marker, so a client cannot tell an inherited deadline from a republished one.
+
+## Units
+
+1. Correct every row of the table at its source line. The three rows whose code half is being fixed elsewhere (the 10⁵⁰ quarantine, the absent-value short-circuit, the invented time) get corrected **when that issue lands** — do not describe the future as present.
+2. Restate `provisional` for what it is on all four surfaces (`crates/app/src/v1/sql.rs:705`, `crates/store/src/canonical.rs:346-348`, `CONTEXT.md:57-61`, and the OpenAPI if it repeats it): "no official identifier — identity is name-scoped and may be reused across mentions".
+3. Couple what can be coupled: one test that reads `COLUMN_NOTES`' provisional note and the resolver's behaviour together (the 115 SQL-oracle pattern is the precedent). For the numeric claims, put the query beside the claim — the tracker's own "record how to re-take it" rule (`docs/agents/issue-tracker.md`) — so the next reader re-derives instead of trusting a photograph.
+4. The deadline claim: correct `crates/app/src/v1/docs.rs:579-581` to say the row is a union of versions and that `deadline < published_at` is expected after award, with the row-level rate measured; and decide whether to add per-field provenance to `TenderRow` (`crates/store/src/read.rs:264-284`) so the distinction is answerable rather than only documented.
+5. `README.md:74` and `README.md:91` — the two alpha-3 examples issue 48's sweep missed.
+
+## Done when
+
+- every row of the table is corrected or carries a dated re-take instruction;
+- the provisional description matches the resolver on all four surfaces;
+- a test fails if the resolver's reuse policy changes without the note changing.
+
+*One issue because:* twelve false statements across `/docs`, `/v1/sql/schema`, the OpenAPI, README, CONTEXT.md and two code comments have one cause — the published contract is prose that nothing re-derives, so a deliberate behaviour change (234/351, 219, 267, 328) leaves the description behind and the drift is only ever found by a reader.
