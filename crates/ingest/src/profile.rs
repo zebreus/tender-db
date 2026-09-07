@@ -365,15 +365,17 @@ fn dispatch_eforms(member_path: &str, bytes: &[u8], doc: &roxmltree::Document<'_
 /// than failing the day (issue 342 review), and this is where it lands as
 /// `missing-publication-id` — never a panic, never a silent drop.
 fn dispatch_fts_ocds(member_path: &str, bytes: &[u8]) -> Record {
-    let package: serde_json::Value = match serde_json::from_slice(bytes) {
+    // Read, do not parse: `fts::Page` decodes only the strings this needs and
+    // leaves every publisher value as raw bytes. A release carrying a number no
+    // `f64` can hold — `1e9999` occurs live, see [`crate::fts::Page`] — would
+    // otherwise quarantine a perfectly good notice.
+    let package = match crate::fts::Page::read(bytes) {
         Ok(package) => package,
-        Err(e) => {
-            return quarantine(member_path, bytes, None, "unparsable-json", Some(e.to_string()))
-        }
+        Err(e) => return quarantine(member_path, bytes, None, "unparsable-json", Some(e)),
     };
     // No version, no profile: a parser cannot be chosen for a package that does
     // not say which OCDS it is, so this quarantines before a profile exists.
-    let Some(version) = package.get("version").and_then(serde_json::Value::as_str) else {
+    let Some(version) = package.version() else {
         return quarantine(member_path, bytes, None, "missing-ocds-version", None);
     };
     let profile = format!("fts:ocds-{version}");
@@ -381,16 +383,17 @@ fn dispatch_fts_ocds(member_path: &str, bytes: &[u8]) -> Record {
     // Exactly one release per member is the packaging contract (plan D1): the
     // notice IS the release, and a member carrying two of them would give one
     // `notices` row two identities.
-    let releases = package.get("releases").and_then(serde_json::Value::as_array);
-    let Some([release]) = releases.map(Vec::as_slice) else {
+    let releases = package.releases();
+    let Ok([release]) = releases.as_deref() else {
         let detail = releases
-            .map_or_else(|| "no `releases` array".to_owned(), |r| format!("{} releases", r.len()));
+            .as_ref()
+            .map_or_else(|_| "no `releases` array".to_owned(), |r| format!("{} releases", r.len()));
         return quarantine(member_path, bytes, Some(profile), "ocds-release-count", Some(detail));
     };
 
     match crate::fts::release_id(release).filter(|id| !id.is_empty()) {
         Some(id) => Record::Notice(NoticeRecord {
-            publication_id: id.to_owned(),
+            publication_id: id,
             content_hash: sha256_hex(bytes),
             profile,
             declared_version: Some(version.to_owned()),
@@ -890,6 +893,17 @@ mod tests {
     const FTS_NOID: &[u8] =
         include_bytes!("../tests/fixtures/fts/members/_noid-2026-09-03-p001-000.json");
 
+    /// Build a member the way the fetcher does: serialise a page carrying this
+    /// header and release, then cut it with the same reader.
+    fn member_of(header: serde_json::Value, release: serde_json::Value) -> Vec<u8> {
+        let mut fields = header.as_object().cloned().unwrap_or_default();
+        fields.insert("releases".to_owned(), serde_json::json!([release]));
+        let page_bytes = serde_json::to_vec(&serde_json::Value::Object(fields)).unwrap();
+        let page = crate::fts::Page::read(&page_bytes).unwrap();
+        let releases = page.releases().unwrap();
+        page.member_bytes(releases[0])
+    }
+
     /// An FTS member is always exactly one record — never a bundle, never a skip.
     fn only_record(member_path: &str, bytes: &[u8]) -> Record {
         let mut records = match dispatch(member_path, bytes) {
@@ -944,7 +958,7 @@ mod tests {
         // The header field the profile string is built from. Without it there is
         // no profile to record, so the quarantine carries none.
         let release = serde_json::json!({ "id": "083685-2026", "ocid": "ocds-h6vhtk-0510f8" });
-        let bytes = crate::fts::member_bytes(&serde_json::json!({ "license": "OGL" }), &release);
+        let bytes = member_of(serde_json::json!({ "license": "OGL" }), release);
         let q = quarantine_of("083685-2026.json", &bytes);
         assert_eq!(q.reason, "missing-ocds-version");
         assert_eq!(q.profile, None);
@@ -1009,7 +1023,7 @@ mod tests {
             serde_json::json!({ "ocid": "ocds-h6vhtk-0aaaaa", "tender": { "title": "no id" } }),
             serde_json::json!({ "id": "", "ocid": "ocds-h6vhtk-0aaaab" }),
         ] {
-            let bytes = crate::fts::member_bytes(&header, &release);
+            let bytes = member_of(header.clone(), release);
             let q = quarantine_of(path, &bytes);
             assert_eq!(q.reason, "missing-publication-id");
             assert_eq!(q.profile.as_deref(), Some("fts:ocds-1.1"));
@@ -1021,7 +1035,7 @@ mod tests {
         // the member name, and a publisher's odd id is not a reason to lose the
         // release. (No such id exists in the corpus; this pins the split.)
         let odd = serde_json::json!({ "id": "08/3685-2026", "ocid": "ocds-h6vhtk-0aaaac" });
-        let bytes = crate::fts::member_bytes(&header, &odd);
+        let bytes = member_of(header.clone(), odd);
         let Record::Notice(n) = only_record(path, &bytes) else {
             panic!("a release with an unusable member NAME still has an identity");
         };

@@ -485,13 +485,8 @@ fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), Error> {
 /// What a page says about the walk: how many releases it holds and where the
 /// next page is. Anything without a `releases` array is not a release package.
 fn page_summary(bytes: &[u8]) -> Result<(usize, Option<String>), String> {
-    let page: serde_json::Value = serde_json::from_slice(bytes).map_err(|e| e.to_string())?;
-    let releases = page
-        .get("releases")
-        .and_then(serde_json::Value::as_array)
-        .ok_or("not a release package: no `releases` array")?;
-    let next = page.pointer("/links/next").and_then(serde_json::Value::as_str).map(str::to_owned);
-    Ok((releases.len(), next))
+    let page = crate::fts::Page::read(bytes)?;
+    Ok((page.releases()?.len(), page.next()))
 }
 
 /// Assemble the staged pages into `part`: members `<release id>.json` built by
@@ -514,16 +509,13 @@ fn assemble_fts_zip(staging: &Path, part: &Path) -> Result<(i64, String), Error>
     let mut members: std::collections::BTreeMap<String, Vec<u8>> = std::collections::BTreeMap::new();
     for path in &pages {
         let malformed = |what: String| Error::Malformed(format!("{}: {what}", path.display()));
-        let page: serde_json::Value =
-            serde_json::from_slice(&std::fs::read(path)?).map_err(|e| malformed(e.to_string()))?;
-        let releases = page
-            .get("releases")
-            .and_then(serde_json::Value::as_array)
-            .ok_or_else(|| malformed("no `releases` array".into()))?;
+        let bytes = std::fs::read(path)?;
+        let page = crate::fts::Page::read(&bytes).map_err(malformed)?;
+        let releases = page.releases().map_err(malformed)?;
         for (index, release) in releases.iter().enumerate() {
             let id = match crate::fts::release_id(release) {
                 // The id becomes a member name; a separator in it would name a directory.
-                Some(id) if !id.is_empty() && !id.contains(['/', '\\']) => id.to_owned(),
+                Some(id) if !id.is_empty() && !id.contains(['/', '\\']) => id,
                 // A release the publisher sent without a usable id is ARCHIVED,
                 // not thrown (issue 342 review, lens "fetcher"). Failing the
                 // package here would be deterministic: the day would fail every
@@ -537,7 +529,7 @@ fn assemble_fts_zip(staging: &Path, part: &Path) -> Result<(i64, String), Error>
                     format!("_noid/{stem}-{index:03}")
                 }
             };
-            members.entry(id).or_insert_with(|| crate::fts::member_bytes(&page, release));
+            members.entry(id).or_insert_with(|| page.member_bytes(release));
         }
     }
 

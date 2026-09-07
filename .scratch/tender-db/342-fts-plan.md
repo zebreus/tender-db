@@ -235,6 +235,35 @@ defect and it is corrected in the built commit:
   distinct keys (which was vacuous), and the throttle-exhaustion arm, the `_noid/` archive, the
   staging-debris discard and the per-tick cap each got a test.
 
+## 4c. The release no document parser can hold (found 2026-09-07 building commit (b))
+
+Live release `083529-2026` of 3 September 2026 carries
+`"maximumLotsBidPerSupplier": 1e9999` — the publisher writing "no limit". That is
+valid JSON and `serde_json::Value` REFUSES it ("number out of range"), because a
+`Value` number must fit an `f64`. Python's parser accepts it as infinity, which is
+why the unit-1 research never saw it, and why the recorded pages were needed.
+
+Parsed as a document, one field failed the page, which failed the day,
+deterministically, on every tick: the watermark would never have advanced past
+3 September 2026. That is the SAME failure shape the `_noid/` decision was
+introduced to prevent one level up, arriving through a different door — which is
+the tell that the rule was too narrow. The rule now is:
+
+**Never build a generic document over a publisher's JSON. Name the fields you
+read.** `fts::Page` decodes exactly four things — the header's five fields for the
+member, `links.next`, a release's `id`, and the package `version` — and every
+release stays raw bytes. A value we cannot represent is a value we never looked
+at. The fetcher and the profile layer both go through it, and commit (c)'s parser
+must too: read named paths, never `Value`.
+
+Two consequences worth recording. The member is now the publisher's own bytes
+spliced under a fixed header order, so **risk 5 below is retired** — a member is
+what was served, not our re-rendering of it. Against that, the old re-serialisation
+normalised key order and whitespace; the archive now depends on the API rendering a
+given release identically across the 2 h overlap, which the unit-1 re-check
+observed (the same page re-fetched byte for byte). If that ever drifts the symptom
+is an extra archived version, not lost data.
+
 ## 5. Risks and open questions (default in bold)
 
 1. Label/prefix folds in `normalise_identifier_with` (project.rs:4681, issue-359 vocabulary) or

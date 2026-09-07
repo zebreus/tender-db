@@ -37,7 +37,8 @@
 //! Licence v3.0.
 
 use crate::fetch::{civil_date, days_from_civil, Target};
-use serde_json::Value;
+use serde_json::value::RawValue;
+use std::collections::HashMap;
 
 pub const BASE: &str = "https://www.find-tender.service.gov.uk/api/1.0";
 
@@ -220,31 +221,88 @@ fn last_sunday(year: u16, month: u8) -> i64 {
 
 /// The release's `id` — the notice id (`083685-2026`), FTS's publication
 /// identity and the member name inside the package.
-pub fn release_id(release: &Value) -> Option<&str> {
-    release.get("id").and_then(Value::as_str)
+pub fn release_id(release: &RawValue) -> Option<String> {
+    let fields: HashMap<&str, &RawValue> = serde_json::from_str(release.get()).ok()?;
+    serde_json::from_str::<String>(fields.get("id")?.get()).ok()
 }
 
-/// One release as its own single-release OCDS package: the page header's
-/// [`MEMBER_HEADER_FIELDS`] plus `releases: [release]`. `uri`, `links` and
-/// `publishedDate` are DROPPED — they describe the page, and keeping them would
-/// give the same release a different hash on every fetch.
+/// One page, read WITHOUT building a document over it.
 ///
-/// Byte-deterministic: `serde_json::Map` is a BTreeMap (the `preserve_order`
-/// feature is off and must stay off — `cargo tree -e features -i serde_json`
-/// shows `default`/`std`/`raw_value` only), so keys serialise sorted whatever
-/// order the server sent them in, and compact. That determinism is what makes
-/// the 2 h overlap and a monthly-over-daily re-walk dedup on identity (D3)
-/// instead of creating a second `notices` row per re-served release.
-pub fn member_bytes(header: &Value, release: &Value) -> Vec<u8> {
-    let mut package = serde_json::Map::new();
-    for key in MEMBER_HEADER_FIELDS {
-        if let Some(v) = header.get(key) {
-            package.insert(key.to_owned(), v.clone());
-        }
-    }
-    package.insert("releases".to_owned(), Value::Array(vec![release.clone()]));
-    serde_json::to_vec(&Value::Object(package)).expect("a serde_json::Value always serialises")
+/// **A generic JSON document is the wrong tool for publisher payloads, and one
+/// live release proves it.** Release `083529-2026` of 3 September 2026 carries
+/// `"maximumLotsBidPerSupplier": 1e9999` — the publisher's way of writing "no
+/// limit". That is valid JSON syntax and `serde_json::Value` REFUSES it, because
+/// a `Value` number must fit an `f64`: "number out of range". Parsed as a
+/// document, that one field failed the whole page, which failed the whole day,
+/// deterministically, on every tick — the watermark would never have advanced
+/// past 3 September 2026. Python's parser accepts it as infinity, which is why
+/// the acquisition research never saw it.
+///
+/// So nothing here parses a number at all. The releases stay RAW: their bytes
+/// are carried into the member verbatim, so the archived member is what the
+/// publisher served rather than our re-rendering of it, and a value we cannot
+/// represent is simply a value we never looked at. Only the fields the fetcher
+/// actually reads — the header's five, `links.next`, and a release's `id` —
+/// are decoded, and each of those is a string.
+pub struct Page<'a> {
+    fields: HashMap<&'a str, &'a RawValue>,
 }
+
+#[derive(serde::Deserialize)]
+struct Links {
+    next: Option<String>,
+}
+
+impl<'a> Page<'a> {
+    /// Read a page's top level. Fails only when the bytes are not a JSON
+    /// object; what a missing or odd `releases` means is the CALLER's to say —
+    /// the fetcher refuses to archive such a page, while the profile layer
+    /// records it as a packaging defect under a profile it can still read.
+    pub fn read(bytes: &'a [u8]) -> Result<Self, String> {
+        let fields: HashMap<&str, &RawValue> =
+            serde_json::from_slice(bytes).map_err(|e| e.to_string())?;
+        Ok(Self { fields })
+    }
+
+    /// The page's releases, still unparsed.
+    pub fn releases(&self) -> Result<Vec<&'a RawValue>, String> {
+        let raw = self.fields.get("releases").ok_or("not a release package: no `releases` array")?;
+        serde_json::from_str(raw.get()).map_err(|e| format!("`releases` is not an array: {e}"))
+    }
+
+    /// The package's declared OCDS `version` — the profile the parser gates on.
+    pub fn version(&self) -> Option<String> {
+        serde_json::from_str(self.fields.get("version")?.get()).ok()
+    }
+
+    /// `links.next` — the cursor URL of the following page, absent on the last.
+    pub fn next(&self) -> Option<String> {
+        let links = self.fields.get("links")?;
+        serde_json::from_str::<Links>(links.get()).ok()?.next
+    }
+
+    /// One release as its own single-release OCDS package: the header's
+    /// [`MEMBER_HEADER_FIELDS`] in that order, then `releases: [release]`, all
+    /// spliced as raw bytes. `uri`, `links` and `publishedDate` are DROPPED —
+    /// they describe the page, and keeping them would give the same release a
+    /// different hash on every fetch.
+    pub fn member_bytes(&self, release: &RawValue) -> Vec<u8> {
+        let mut out = Vec::with_capacity(release.get().len() + 512);
+        out.push(b'{');
+        for key in MEMBER_HEADER_FIELDS {
+            if let Some(value) = self.fields.get(key) {
+                out.extend_from_slice(format!("{}:", serde_json::Value::from(key)).as_bytes());
+                out.extend_from_slice(value.get().as_bytes());
+                out.push(b',');
+            }
+        }
+        out.extend_from_slice(b"\"releases\":[");
+        out.extend_from_slice(release.get().as_bytes());
+        out.extend_from_slice(b"]}");
+        out
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -355,58 +413,105 @@ mod tests {
         assert_eq!(uk_civil_date(days_from_civil(2026, 1, 15) * 86_400 + 23 * 3_600 + 30 * 60), (2026, 1, 15));
     }
 
+    /// A member is the header's five fields, in that order, then the release's
+    /// OWN BYTES — so the archive holds what the publisher served rather than
+    /// our re-rendering of it, and nothing in a release is ever converted.
     #[test]
-    fn member_bytes_is_deterministic_and_drops_page_fields() {
-        let page_a: Value = serde_json::json!({
+    fn a_member_is_the_headers_fields_then_the_releases_own_bytes() {
+        // A page as the API serves one: pretty-printed, keys in the server's
+        // order, page-specific fields present.
+        let served = br#"{
             "uri": "https://x/ocdsReleasePackages?updatedFrom=A&cursor=one",
-            "publishedDate": "2026-09-03T23:31:32+01:00",
             "version": "1.1",
-            "extensions": ["https://ext/one.json", "https://ext/two.json"],
+            "extensions": ["https://ext/one.json"],
             "publisher": {"name": "Cabinet Office", "scheme": "GB-GOR", "uid": "D2"},
             "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
             "publicationPolicy": "https://www.gov.uk/government/publications/open-contracting",
-            "releases": [],
-            "links": {"next": "https://x/ocdsReleasePackages?cursor=two"},
-        });
-        // The same header served on a later page and with its keys in another
-        // order: different uri, no links, other publishedDate.
-        let page_b: Value = serde_json::from_str(
-            r#"{"publisher":{"uid":"D2","scheme":"GB-GOR","name":"Cabinet Office"},
-                "publicationPolicy":"https://www.gov.uk/government/publications/open-contracting",
-                "license":"http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
-                "extensions":["https://ext/one.json","https://ext/two.json"],
-                "version":"1.1","publishedDate":"2026-09-04T09:00:00+01:00",
-                "uri":"https://x/ocdsReleasePackages?updatedFrom=B","releases":[]}"#,
-        )
-        .unwrap();
-        let release_a: Value = serde_json::json!({"id": "083685-2026", "ocid": "ocds-h6vhtk-06f1bc", "tag": ["tender"], "tender": {"title": "T", "id": "x"}});
-        let release_b: Value = serde_json::from_str(
-            r#"{"tender":{"id":"x","title":"T"},"tag":["tender"],"ocid":"ocds-h6vhtk-06f1bc","id":"083685-2026"}"#,
-        )
-        .unwrap();
+            "publishedDate": "2026-09-03T23:31:32+01:00",
+            "releases": [
+                {"id": "083685-2026", "ocid": "ocds-h6vhtk-06f1bc", "tender": {"title": "T"}},
+                {"ocid": "ocds-h6vhtk-000000"}
+            ],
+            "links": {"next": "https://x/ocdsReleasePackages?cursor=two"}
+        }"#;
+        let page = Page::read(served).unwrap();
+        assert_eq!(page.version().as_deref(), Some("1.1"));
+        assert_eq!(page.next().as_deref(), Some("https://x/ocdsReleasePackages?cursor=two"));
+        let releases = page.releases().unwrap();
+        assert_eq!(releases.len(), 2);
+        assert_eq!(release_id(releases[0]).as_deref(), Some("083685-2026"));
+        assert_eq!(release_id(releases[1]), None, "no id field");
 
-        let a = member_bytes(&page_a, &release_a);
-        let b = member_bytes(&page_b, &release_b);
-        assert_eq!(a, b, "same release under the same header ⇒ same bytes, whatever the page");
-        assert_eq!(a, member_bytes(&page_a, &release_a), "and stable across calls");
-
-        let member: Value = serde_json::from_slice(&a).unwrap();
-        let obj = member.as_object().unwrap();
+        let member = page.member_bytes(releases[0]);
+        assert_eq!(member, page.member_bytes(releases[0]), "stable across calls");
+        // The release's bytes are IN there, untouched.
+        let raw = releases[0].get();
+        assert!(
+            String::from_utf8_lossy(&member).contains(raw),
+            "the release is spliced verbatim, not re-rendered"
+        );
+        // The header's fields in MEMBER_HEADER_FIELDS order, and nothing of the page.
+        let text = String::from_utf8(member.clone()).unwrap();
+        let order: Vec<usize> = MEMBER_HEADER_FIELDS
+            .iter()
+            .map(|k| text.find(&format!("\"{k}\"")).unwrap_or_else(|| panic!("{k} is carried into every member")))
+            .collect();
+        assert!(order.windows(2).all(|w| w[0] < w[1]), "header fields keep their declared order");
         for dropped in ["uri", "links", "publishedDate"] {
-            assert!(!obj.contains_key(dropped), "{dropped} is page-specific and must not be in a member");
+            assert!(!text.contains(dropped), "{dropped} is page-specific and must not be in a member");
         }
-        for kept in MEMBER_HEADER_FIELDS {
-            assert!(obj.contains_key(kept), "{kept} is carried into every member");
-        }
-        assert_eq!(member["releases"].as_array().unwrap().len(), 1);
-        assert_eq!(release_id(&member["releases"][0]), Some("083685-2026"));
-        // Compact and key-sorted: the bytes start with the lexically first key.
-        assert!(a.starts_with(br#"{"extensions":["#));
+        // And it is a package a reader can read back.
+        let back = Page::read(&member).unwrap();
+        assert_eq!(back.version().as_deref(), Some("1.1"));
+        assert_eq!(back.next(), None);
+        assert_eq!(back.releases().unwrap().len(), 1);
 
-        // A different release is different bytes; a release without an id has none.
-        let other: Value = serde_json::json!({"id": "083686-2026"});
-        assert_ne!(member_bytes(&page_a, &other), a);
-        assert_eq!(release_id(&serde_json::json!({"ocid": "x"})), None);
-        assert_eq!(release_id(&serde_json::json!({"id": 7})), None, "an id must be a string");
+        let other = page.member_bytes(releases[1]);
+        assert_ne!(other, member, "a different release is different bytes");
+    }
+
+    /// THE RELEASE THAT FORCED THE RAW READER (live, 3 September 2026, release
+    /// `083529-2026`): `1e9999` is valid JSON and no `f64` holds it. A document
+    /// parser refuses the whole page, which refused the whole day, for ever.
+    #[test]
+    fn a_number_no_f64_can_hold_passes_through_untouched() {
+        let served = br#"{"version":"1.1","license":"OGL",
+            "releases":[{"id":"083529-2026","tender":{"lotDetails":{"maximumLotsBidPerSupplier":1e9999}}}]}"#;
+        // The document parser is where this used to die.
+        assert!(
+            serde_json::from_slice::<serde_json::Value>(served).is_err(),
+            "the premise: a Value cannot hold this page"
+        );
+
+        let page = Page::read(served).expect("the raw reader reads it");
+        let releases = page.releases().unwrap();
+        assert_eq!(release_id(releases[0]).as_deref(), Some("083529-2026"));
+        let member = page.member_bytes(releases[0]);
+        assert!(
+            String::from_utf8_lossy(&member).contains("1e9999"),
+            "the publisher's value survives into the archive"
+        );
+        // And the member reads back as a package, so the profile layer can
+        // dispatch it into a notice instead of a quarantine row.
+        let back = Page::read(&member).unwrap();
+        assert_eq!(back.version().as_deref(), Some("1.1"));
+        assert_eq!(release_id(back.releases().unwrap()[0]).as_deref(), Some("083529-2026"));
+    }
+
+    /// What is NOT a page: the reader must refuse a shape we would otherwise
+    /// archive as one, and refuse it as a message rather than a panic.
+    #[test]
+    fn a_shape_that_is_not_a_release_package_is_refused() {
+        // `read` answers "is this a JSON object"; `releases` answers "is it a
+        // release package", because the two callers disagree about what to do
+        // with the second answer.
+        assert!(Page::read(br#"{"error": "not a package"}"#).unwrap().releases().is_err(), "no releases array");
+        assert!(Page::read(br#"{"releases": {"a": 1}}"#).unwrap().releases().is_err(), "not an array");
+        assert!(Page::read(b"[]").is_err(), "not an object");
+        assert!(Page::read(b"{").is_err(), "truncated");
+        // An empty page IS a page: a Sunday, or December 2020.
+        let empty = Page::read(br#"{"version":"1.1","releases":[]}"#).unwrap();
+        assert!(empty.releases().unwrap().is_empty());
+        assert_eq!(empty.next(), None);
     }
 }

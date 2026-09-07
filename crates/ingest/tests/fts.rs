@@ -94,6 +94,49 @@ async fn cell_text(db: &store::Db, sql: &str) -> Option<String> {
     }
 }
 
+/// The live release that a document parser could not hold (`1e9999`, 3 September
+/// 2026) goes all the way to a notice row. Both layers read named strings and
+/// leave publisher values raw, so the value nobody can represent is a value
+/// nobody looked at — it is archived, dispatched and stored, byte for byte.
+#[tokio::test]
+async fn a_release_carrying_an_unrepresentable_number_still_becomes_a_notice() {
+    let served = br#"{"version":"1.1","license":"OGL","releases":[
+        {"id":"083529-2026","ocid":"ocds-h6vhtk-05f2a1",
+         "tender":{"title":"Framework","lotDetails":{"maximumLotsBidPerSupplier":1e9999}}}]}"#;
+    let page = ingest::fts::Page::read(served).unwrap();
+    let member = page.member_bytes(page.releases().unwrap()[0]);
+
+    let archive = temp_dir("fts-bignum");
+    std::fs::create_dir_all(archive.join("fts/daily")).unwrap();
+    let path = archive.join("fts/daily/2026-09-03.zip");
+    let mut zip = zip::ZipWriter::new(std::fs::File::create(&path).unwrap());
+    zip.start_file("083529-2026.json", zip::write::SimpleFileOptions::default()).unwrap();
+    zip.write_all(&member).unwrap();
+    zip.finish().unwrap().flush().unwrap();
+
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    db.record_fetch(&store::Fetch {
+        source: "fts".into(),
+        kind: "daily".into(),
+        period: "2026-09-03".into(),
+        url: "https://x".into(),
+        sha256: ingest::sha256_hex(&std::fs::read(&path).unwrap()),
+        bytes: std::fs::metadata(&path).unwrap().len() as i64,
+        fetched_at: 1,
+        path: "fts/daily/2026-09-03.zip".into(),
+    })
+    .await
+    .unwrap();
+
+    let r = run(&db, &archive).await;
+    assert_eq!((r.notices, r.quarantined), (1, 0), "a notice, not a quarantine row");
+    assert_eq!(
+        cell_text(&db, "SELECT publication_id FROM notices").await.as_deref(),
+        Some("083529-2026")
+    );
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
 /// The whole chain the daily push re-enables: an assembled zip in, one notice
 /// row per release out, no `unparsable-xml` anywhere. Identity only — the
 /// field parser is commit (c), so every row is `pending` (never quarantined:
