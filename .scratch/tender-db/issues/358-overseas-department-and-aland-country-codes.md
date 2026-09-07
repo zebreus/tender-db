@@ -107,6 +107,11 @@ the_register` (normaliser incl. the AX checksum refusal and the VAT arm untouche
 `a_regional_code_scores_in_its_registers_series` (idgate), `a_regional_code_keys_in_its_
 registers_series` (crosswalk). CONTEXT.md's Organization entry now states the semantics.
 
+**Gate and deploy:** `ops/check.sh` GATE-EXIT=0, 861 passed; committed `e988e58`, pushed to
+`main` and the handover branch. First `./deploy.sh origin/main` (gate green on the box in
+343 s) REFUSED the restart because the daily `project` job 781 had started meanwhile — the
+right refusal; redeployed at the next idle window (below).
+
 **Standing rows on prod (bounded index read, 2026-09-07):** identifier rows under the mapped
 codes — RE 252, MQ 130, GP 93, AX 81, YT 37, GF 25, PM 14, GL 15, MF 2, WF 1, SJ 1 (≈650);
 provisional rows RE 2,449, MQ 1,123, GP 948, GF 352, YT 176, AX 40, GL 18, WF 10, PM 6,
