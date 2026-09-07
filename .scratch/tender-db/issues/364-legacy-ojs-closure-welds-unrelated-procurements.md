@@ -1,6 +1,6 @@
 # 364 — the legacy OJS closure is an unbounded transitive closure over unguarded edges: 2,983 versions and 127 buyers in one Tender
 
-Status: ready-for-agent — UNIT 1 DECIDED 2026-09-07 (owner), and the decision moved the fix: the reference carries its own declared KIND in the payload and the parser drops it. See "Decision" below; units re-cut accordingly. Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings; five verifiers reproduced every number below on prod)
+Status: ready-for-agent — UNITS 1-2 DONE 2026-09-07 (owner): the kind gate is built and gated (`7b7d513`, 914 passed) and LANDS INERT by design — see "Unit 2, built" for what that means for the repair. Units 3 (guards + representative), 4 (the plausibility gauge) and 5 (the legacy RE-PARSE, not a re-projection) remain. Was: ready-for-agent — UNIT 1 DECIDED 2026-09-07 (owner)
 Kind: defect (identity / grouping) — correctness, the CONTEXT.md:112-113 invariant
 Relates to: 92 (records chain 3,282 only as a fold-performance cost, not as a correctness
 signal), ADR-0011 (the eForms edge's three guards, which this edge has none of), ADR-0003
@@ -156,3 +156,38 @@ Three consequences for the plan:
 5. **Repair**: re-project so components re-derive; re-measure the ≥10/≥50/≥200/≥1000 distribution
    and the two named tenders before and after, and write both here. Expect a large change-feed
    burst (the issue-351 fold's shape).
+
+## Unit 2, built (2026-09-07, `7b7d513`)
+
+The walker reads the sibling `CHOICE` and records the declared kind beside each citation, so the
+identity layer can ask what a reference IS instead of only that one exists. The admit set is an
+ALLOW-list, so a kind nobody has classified never welds anything:
+
+- **Admitted as a chain edge**: `CONTRACT_NOTICE`; `ORIGINAL_NOTICE` — the F14 corrigendum's
+  `COMPLEMENTARY_INFO` original, fixture-verified (its value equals the notice's own
+  `REF_NOTICE/NO_DOC_OJS`); `THIS_PROCEDURE` — R2.0.9's procedure-level slot, IV.2.1 "Previous
+  publication concerning this procedure", and the F20's original award.
+- **Refused, recorded as notice detail, counted**: the four shared-publication kinds, the DPS
+  simplified notice, an undeclared slot, and any unrecognised spelling.
+- **Not gated**: `REF_NOTICE/NO_DOC_OJS`, which declares no kind and is the reference TED itself
+  curates per procedure — in all three fixtures carrying both, it names the same-procedure
+  citation and never the PIN. That is also why refusing a form-level citation rarely orphans a
+  notice.
+
+**The undeclared 7.8% resolved into three shapes**, as the sub-decision required: the forms'
+IV.3.2 "Other previous publications" slot (three real instances; no kind anywhere in the block
+— refused and counted, and almost certainly the bulk of the 238), the F14 corrigendum block
+(no `CHOICE`, but its POSITION declares it, fixture-proven — admitted, so a real share of
+undeclared citations were rescued rather than lost), and R2.0.9's procedure slot. Two shapes could
+not be settled from committed bytes and say so in the code: the R2.0.9 procedure slot is admitted
+on the repo's own measured research (it agrees with the coded reference in 709 of 711 files of the
+2019 package) because refusing it would have split the whole era from its contract notices, and
+the defence form's slot is classified by block name.
+
+**It lands inert, and that is the important operational fact.** The kind lives in the PARSED
+layer, so a citation with no recorded kind keeps its pre-364 grouping. Nothing regroups on
+deploy; no flag day; `PROJECTION_EPOCH` unchanged, because re-folding a stored chain produces
+identical output. The consequence for the repair: **unit 5 is a legacy-era RE-PARSE followed by a
+re-projection, not a re-projection alone**, and the cure arrives era by era as that re-parse
+deepens. A per-kind tally rides the durable project job row, so the effect is observable while it
+happens rather than asserted at the end.
