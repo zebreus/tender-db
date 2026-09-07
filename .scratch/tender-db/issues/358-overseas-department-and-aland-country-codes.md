@@ -1,6 +1,6 @@
 # 358 — Overseas-department and Åland country codes: one register, two tags
 
-Status: ready-for-agent — UNIT 1 BUILT 2026-09-07 (owner; gate + deploy recorded below), unit 2 next: move the standing regional-code identifier rows (~710 on prod) through `apply-country-verdicts` BEFORE the next R2 run, then unit 3. Decided 2026-09-07 (owner): option 1, refined to the codes whose REGISTER is the parent's (see "Unit 1"). Was: needs-decision (filed 2026-09-05 from the issue-357 campaign)
+Status: DONE 2026-09-07 (owner) — unit 1 built and deployed (`e988e58`, live as rev `5b09a9c`), unit 2 applied (job 784: 651 rows moved, 0 no-ops, 313 landed on a parent-code twin), unit 3 folded (R2 job 786: 321 groups merged, 354 org rows removed, 1,894 mentions / 3,687 parties / 1,017 winners repointed, 1,134 tenders touched; project job 787 clean). Residue: 31 reunited pairs held by R2's name gate — issue 362's review queue, not this issue's. Follow-up filed: issue 363 (FO-nummer label on 16 AX rows). Was: needs-decision (filed 2026-09-05 from the issue-357 campaign)
 Kind: policy (organization layer — country semantics)
 Relates to: 357 (the campaign that parks this class every slice), 355 (the floor that parks
 it), 326 (the census's shared-register blind spot), CONTEXT.md (country semantics)
@@ -126,3 +126,44 @@ count; collisions with the standing parent-code twin are counted and left for R2
 exactly the 355 path. Run it before the next R2 wet, so R2's survivor already carries the
 register's code. The 355/357 campaign floor's `shared-register` park stays correct for the
 UNMAPPED codes only; a future floor should list just those.
+
+## Units 2 and 3 (2026-09-07): the standing rows move, R2 folds the pairs
+
+Run after the unit-1 deploy (`5b09a9c` live, queue idle — the first deploy attempt refused
+the restart under the daily `project` job and was repeated at the idle window).
+
+1. **Record.** `POST /admin/country-verdicts`, cohort `358-register-jurisdiction`: 651
+   `move` × `high` verdicts, one per identifier-bearing org row under a mapped code (body
+   committed as `358-campaign/358-post-body.json`, built from the bounded listing
+   `standing-identifier-rows.json`). Recorded 651.
+2. **Dry plan** (job 783): 2,657 pending verdicts corpus-wide, 651 eligible, 651 would move,
+   0 no-ops, **313 land on a triple another row holds**. The plan's tuples equal the recorded
+   set exactly (RE 252, MQ 130, GP 93, AX 81, YT 37, GF 25, GL 15, PM 14, MF 2, WF 1, SJ 1);
+   1,596 mentions on the movers. Record: `358-campaign/country-verdict-plan-2026-09-07.json`.
+3. **Wet** (job 784): 651 rows moved, 0 no-ops, 313 collisions counted and left. Bounded
+   re-read: **0 identifier rows remain under any mapped code.**
+4. **R2 dry** (job 785) against the previous dry (2026-09-06): groups ≥2 1,113 → 1,303,
+   plan 0 → **321 groups** (318 carry a moved row); 259 of the 313 collision pairs sit
+   fully inside a plan group; 31 pairs sit in the name gate's denied listing (142 vs 105
+   before) — some rightly (`Ville de Baillif` and `Caisse des écoles` share one SIRET and
+   are two bodies), some the issue-362 review shape (`SEMAVIL — SAEML` beside `Soc mixte
+   aménag Ville Lamentin`, `NPEI` beside `Nalem peinture étanchéité isolation`); the rest
+   fall to the consortium / legal-form guards. Record: `358-campaign/r2-merge-plan-2026-09-07.json`
+   (plan and denied listings, both complete under the cap).
+5. **R2 wet** (job 786): 321 groups merged, 354 org rows removed, 1,894 mentions, 3,687
+   parties, 552 bid-parties, 1,017 winners repointed, 1,134 tenders touched. `project`
+   (job 787): 0 notices → 0 tenders, nothing to rewrite. Spot-check: `SCLM SARL`
+   (303171573), three rows under MQ/MQ/FR before, is one row under FR (15435311);
+   `Territoire de la Côte Ouest` likewise (9852812). /health ok, journal clean.
+
+**What is left, and whose it is.** The 31 name-gated pairs are issue 362's queue (a merge
+verdict per group). The GL→DK rows carry 8-digit CVRs no crosswalk arm keys, so their twins
+are E0's (issue 329, the rule whose enqueue the classifier refuses). The 16 AX rows with
+the glued `FONR`/`FONUMMER` label are issue 363. The provisional (name-only) rows under the
+regional codes (RE 2,449, MQ 1,123, GP 948 …) were not moved: they carry no key, the
+resolver now reuses them by `(name_norm, register)`, and a later identifier canonicalises
+them — a bulk move would buy nothing the next projection does not.
+
+**The floor.** The 355/357 campaign floor's `shared-register` park is now wrong for the
+mapped codes (their moves are policy, applied) and right for the unmapped ones (NC, PF, FO,
+AW, CW, SX, BQ). A future campaign's `post.py` should park only those seven.
