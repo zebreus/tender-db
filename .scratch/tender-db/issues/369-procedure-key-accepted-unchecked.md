@@ -281,6 +281,67 @@ Two things to settle when doing it:
 2. **Verify the doe↔ted merge survives** where both twins name the same buyer, since that merge is the
    thing issue 34's gate exists to permit and the island fallback currently breaks it.
 
+## Unit 5 landed and worked — and exposed a defect it introduced (2026-09-08, `e2bfbf9`, jobs 821+822)
+
+**The prediction held exactly.** Same 93 notices, same id list, re-run through `refold-notices`:
+
+| run | outcome |
+| --- | --- |
+| unit 2c (islands) | `93 notices → 91 tenders (91 islands)` |
+| **unit 5 (per buyer)** | **`93 notices → 21 tenders (0 islands)`** |
+
+21 = 3 + ~7 + ~11, one per buyer set, which is the issue's original stated goal ("tender 1 becomes
+three tenders"). **0 islands** means every one of the 93 notices named a buyer, so the buyer-less arm
+never fired here. Old tender 1's DE-1.x notice 26244735 is now in a Tender with `current_seq: 2` — it
+regrouped with the other version of the SAME heating job, which is the structure the island fallback
+had thrown away. The four correctly-grouped shaped tenders are untouched through BOTH regroupings
+(82803 seq 4, 82805/160170/778091 seq 2).
+
+### Defect introduced by unit 5: the internal group key reaches the PUBLIC `procedure_key`
+
+```
+id 7962873  procedure_key = "refused:00000000-0000-4000-8000-000000000000:DE:vat:DE200721194"
+```
+
+`crates/ingest/src/project.rs:2230-2238` and `:2735-2740` both derive the stored columns as
+`island_notice_id = group_key.strip_prefix("island:")`, then
+`procedure_key = island_notice_id.is_none().then(|| group_key.clone())` — so **any** group key that is
+not `island:` is stored verbatim as the public procedure key. That is pre-existing and applies to the
+legacy `ojs:` keys too, so a synthetic prefix in that column is not itself new.
+
+**What IS new, and wrong, is the buyer identifier inside it.** `procedure_key` is documented as the
+key the SOURCE published (BT-04 / sdk-0.1 uuid); it now carries a synthetic string embedding an
+organization's VAT number. Not a secrecy problem — VAT numbers are public register data the org layer
+already serves — but it is the wrong field, it couples tender identity to org identity on the public
+surface, and a consumer filtering `procedure_key` will be misled.
+
+**Left standing deliberately for now.** The grouping is CORRECT and the data is coherent; reverting to
+islands would be worse data, and the honest fix touches retirement logic, which should not be rushed at
+the end of a firing.
+
+## Unit 6 (new) — stop the refused group key reaching `procedure_key`
+
+The wanted end state: a refused group stores **no** published key, because it has none.
+
+The obvious move — `procedure_key = NULL` plus `island_notice_id = <the group's minimum notice>` —
+**has a trap that must be handled in the same change**: `retire_regrouped_nonlegacy_tenders`
+(`canonical.rs:19758`) retires an island tender by testing
+`p.group_key = 'island:' || t.island_notice_id`. A Tender carrying an `island_notice_id` whose plan key
+is `refused:…` matches "the plan no longer produces it" and would be **retired on every run**, then
+re-minted — churning the layer and its ids indefinitely. So either:
+
+1. teach retirement the refused shape (reconstruct `refused:…` the same way it reconstructs `island:…`),
+   which means the stored row must retain enough to rebuild the key — i.e. a column; or
+2. keep `procedure_key` non-NULL but strip the buyer identity out of the key, e.g. an ordinal per buyer
+   set within the refused key (`refused:{key}#1`, `#2`, …) assigned deterministically by sorted
+   `buyer_key`. No new column, retirement keeps working unchanged, and nothing about an organization
+   appears in the tender's key.
+
+(2) is the smaller change and looks right; (1) is more honest about the column's meaning. Decide with
+the retirement query in front of you, and pin whichever with a test that runs `build_plan_groups` TWICE
+and asserts the tender ids are stable across the second run — the churn failure above is invisible to a
+single-run test.
+
 ## Done when
 
 - the census is on this issue; ✅ 2026-09-08
