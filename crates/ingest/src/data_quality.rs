@@ -862,6 +862,19 @@ pub fn sentinel_dates_sql() -> String {
 /// Rust rather than in SQL — and unit 2 has it to hand at the point of the fix. Reading this as
 /// "declared" would overstate it; read it as "the notice was withholding something".
 ///
+/// **Covers BOTH satellites (issue 372's scope correction, 2026-09-08).** The two withheld codes the
+/// notices actually declare do not share a destination: `BT-195(BT-161)` (`not-val`) reaches
+/// `result_value` in `tender_version_amounts` through the `AMOUNTS` table, but `BT-195(BT-720)`
+/// (`win-ten-val`, the winning tender value) is not in `AMOUNTS` at all — `project.rs:3875` routes it
+/// into `raw.bids`, so it lands as a BID's own `cents` in `tender_version_bids`. An amounts-only query
+/// therefore cannot see the second population, and the fix scoped to amounts alone would leave those
+/// rows asserting a −0.01 bid.
+///
+/// Windowed probes put that population at **≥184 rows over ≥136 tenders** — a floor, not a total,
+/// because the densest `tender_id` window hit the 10 s cap and was not retried. The `UNION ALL` arm
+/// below replaces the floor with a corpus number on the next run. `ORDER BY 2` (the ordinal) rather
+/// than the alias, because the ordering applies to the whole compound select.
+///
 /// **Split by SOURCE as well as field (issue 372 unit 5's follow-up).** The undeclared residue looks
 /// like a publisher convention rather than the SDK marker, and a hand sample came back 3-of-4 `doe` —
 /// suggestive, not a finding. Establishing it needed a `GROUP BY source` over the residue, which is
@@ -886,7 +899,19 @@ pub fn withheld_markers_sql() -> String {
        JOIN notices n ON n.id = v.caused_by_notice_id \
       WHERE a.cents = -100 \
       GROUP BY a.field, n.source \
-      ORDER BY hits DESC"
+     UNION ALL \
+     SELECT 'bid_value · ' || n.source AS field, COUNT(*) AS hits, \
+            SUM(CASE WHEN EXISTS ( \
+                  SELECT 1 FROM notice_sections s \
+                   WHERE s.kind = 'FieldsPrivacy' AND s.notice_id = v.caused_by_notice_id \
+                ) THEN 1 ELSE 0 END) AS in_withholding_notice, \
+            COUNT(DISTINCT b.tender_id) AS tenders \
+       FROM tender_version_bids b \
+       JOIN tender_versions v ON v.tender_id = b.tender_id AND v.seq = b.seq \
+       JOIN notices n ON n.id = v.caused_by_notice_id \
+      WHERE b.cents = -100 \
+      GROUP BY n.source \
+      ORDER BY 2 DESC"
         .to_owned()
 }
 
