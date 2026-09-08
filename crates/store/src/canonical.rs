@@ -1230,6 +1230,16 @@ pub fn head_deadline(head: &TenderVersion) -> Option<i64> {
             }
             _ => None,
         })
+        // Issue 366: several source ids map onto the one canonical
+        // `submission_deadline`, so a version legitimately holds more than one and
+        // MAX arbitrates — which means a single implausible sibling owns the
+        // headline AND the `status` filter, since that filter is a range predicate
+        // on this column. Tender 3323836 is one 2005 notice publishing both
+        // 2005-06-15 and 3005-07-06, and it was served as open and sorted FIRST on
+        // `status=open&sort=deadline&order=desc`. A deadline a thousand years out
+        // is not a late deadline, it is a typo, so the horizon excludes it and the
+        // real date wins.
+        .filter(|d| *d - head.published_at <= DEADLINE_HORIZON_SECS)
         .max()
 }
 
@@ -1289,10 +1299,85 @@ pub fn head_value_eur_cents(head: &TenderVersion, rates: &crate::rates::RatesLoo
         .iter()
         .chain(head.lots.iter().flat_map(|l| l.facts.iter()))
         .filter_map(|f| match f {
-            Fact::Amount { cents, currency, .. } => rates.eur_cents(*cents, currency, &date),
+            // The sentinel test reads the PUBLISHED figure, not its conversion: a
+            // form-width maximum is a fact about what the publisher's field
+            // allowed, and converting it first would turn one currency's sentinel
+            // into another's ordinary number.
+            Fact::Amount { cents, currency, .. } if !sentinel_amount(*cents) => {
+                rates.eur_cents(*cents, currency, &date)
+            }
             _ => None,
         })
+        .filter(|eur| *eur <= IMPLAUSIBLE_EUR_CENTS)
         .max()
+}
+
+/// The EUR-cent ceiling above which a head value is not a figure (issue 366,
+/// measured 2026-09-08): €100 bn. 175 Tenders exceeded it and inspection of the
+/// top 25 found junk throughout — €4.97e16 for a study on anti-corruption
+/// measures, €65 trillion for cleaning services.
+///
+/// Deliberately far above any real single procurement rather than tuned close:
+/// the whole EU procures on the order of €2 trillion a year across every member
+/// state, so one notice at €100 bn is not a close call. The band BELOW it is
+/// where judgement would be needed and none is applied — €10–100 bn genuinely
+/// mixes NHS England's €10.6 bn commissioning contract and the Île-de-France
+/// transport contract with a €10.5 bn homecare notice for an island of 140,000,
+/// and no threshold separates those. That needs the tender-versus-lot-sum ratio,
+/// not a bigger constant.
+pub const IMPLAUSIBLE_EUR_CENTS: i64 = 10_000_000_000_000;
+
+/// How far past its own publication a submission deadline may sit before it is
+/// read as a typo rather than a date (issue 366). Ten years is extravagant — a
+/// submission deadline is normally weeks out, and even a long framework's is
+/// within one year — and it is set there so the rule only ever catches the
+/// unarguable, like tender 3323836's year-3005 sibling.
+pub const DEADLINE_HORIZON_SECS: i64 = 10 * 365 * 86_400;
+
+/// A published amount that is a placeholder rather than a figure, and so must
+/// never be elected as a Tender's headline value (issue 366, measured on prod
+/// 2026-09-08).
+///
+/// Two shapes, both by EXACT value rather than magnitude, because that is what
+/// the corpus actually shows:
+///
+/// - **Negative.** No procurement has a negative value. 15,650 Tenders carry
+///   one and 15,529 of those are exactly −1.00, a documented publisher
+///   convention for "not stated" that was being served as the row's value.
+/// - **An all-nines run of at least nine digits in the major unit**
+///   (999999999, 9999999999, 99999999999 …): 249 Tenders, and the counts falling
+///   with width — 199, 36, 14 — are the signature of a form-width maximum rather
+///   than a figure. Reading the €10–100 bn band top-down confirms it: it is
+///   dominated by 99,999,999,999 sitting on roof waterproofing, off-road diesel
+///   and statutory-risk insurance.
+///
+/// **Round powers of ten are deliberately NOT sentinels** (1e9 on 56 Tenders,
+/// 1e10 on 12, 1e11 on 2). A €1 bn framework is a real thing; flagging round
+/// numbers would delete genuine values to catch nothing the all-nines rule
+/// misses. **Zero is not one either** (24,512 Tenders): a planning or
+/// market-engagement notice legitimately publishes 0, as UK FTS does.
+pub fn sentinel_amount(cents: i64) -> bool {
+    if cents < 0 {
+        return true;
+    }
+    // The sentinel lives in the major unit; a value with minor units is a figure
+    // someone computed, not a field maximum someone typed.
+    if cents % 100 != 0 {
+        return false;
+    }
+    let mut major = cents / 100;
+    if major == 0 {
+        return false;
+    }
+    let mut digits = 0;
+    while major > 0 {
+        if major % 10 != 9 {
+            return false;
+        }
+        major /= 10;
+        digits += 1;
+    }
+    digits >= 9
 }
 
 /// A Lot as one version publishes it.
@@ -20730,7 +20815,10 @@ const EDGE_WRITE_BATCH: usize = 10_000;
 
 #[cfg(test)]
 mod tests {
-    use super::{Fact, LotState, MinUnionFind, TenderVersion, head_title};
+    use super::{
+        Fact, LotState, MinUnionFind, TenderVersion, head_deadline, head_title,
+        head_value_eur_cents, sentinel_amount,
+    };
     use std::collections::{BTreeSet, HashMap, HashSet, VecDeque};
 
     fn text(field: &str, lang: Option<&str>, value: &str) -> Fact {
@@ -20762,6 +20850,91 @@ mod tests {
 
     /// Issue 239: the fold's title writer must agree with the SQL backfill's, because
     /// they populate the same column and `v_tenders` now trusts it. The precedence is
+    /// Issue 366: the head election is a MAX over facts that have no field in
+    /// which to be marked implausible, so the worst value in a version became the
+    /// Tender's headline and then owned the ordering, the bounds and the status.
+    /// Every number here was measured on prod 2026-09-08.
+    #[test]
+    fn the_head_value_skips_sentinels_and_the_ceiling() {
+        let amount = |cents: i64| Fact::Amount {
+            field: "estimated_value".into(),
+            cents,
+            currency: "EUR".into(),
+            tax_basis: None,
+        };
+        // EUR short-circuits to rate 1.0 without consulting the table, so an
+        // empty lookup is exactly right for a EUR-only election test.
+        let rates = crate::rates::RatesLookup::default();
+        let value = |facts: Vec<Fact>| head_value_eur_cents(&head(facts, Vec::new()), &rates);
+
+        // The −1.00 publisher sentinel — 15,529 Tenders — was served as the row's
+        // value and satisfied `?max_value=100`. A real sibling now wins instead.
+        assert_eq!(value(vec![amount(-100), amount(500_000)]), Some(500_000));
+        // Alone, it elects nothing rather than a negative headline.
+        assert_eq!(value(vec![amount(-100)]), None);
+        // The form-width maxima: all-nines runs of nine digits and up.
+        assert_eq!(value(vec![amount(99_999_999_900), amount(250_000)]), Some(250_000));
+        assert_eq!(value(vec![amount(9_999_999_999_00), amount(250_000)]), Some(250_000));
+        // …but a round power of ten is a real framework value and is kept: 56
+        // Tenders sit on exactly €1 bn, and deleting those would catch nothing the
+        // all-nines rule misses.
+        assert_eq!(value(vec![amount(100_000_000_000)]), Some(100_000_000_000));
+        // Zero is not a sentinel either — a planning notice publishes it.
+        assert_eq!(value(vec![amount(0)]), Some(0));
+        // The ceiling: €4.97e16 for "Study on anti-corruption measures in EU
+        // border control" topped `sort=value`'s first page.
+        assert_eq!(value(vec![amount(4_970_000_000_000_000_000), amount(1_000_000)]), Some(1_000_000));
+        // And the band below the ceiling is untouched, deliberately: €10.6 bn is
+        // NHS England's real commissioning contract.
+        assert_eq!(value(vec![amount(1_060_000_000_000)]), Some(1_060_000_000_000));
+    }
+
+    /// The sentinel rule reads the published figure, digit by digit.
+    #[test]
+    fn sentinel_amounts_are_negatives_and_all_nines_runs() {
+        assert!(sentinel_amount(-100));
+        assert!(sentinel_amount(-1));
+        assert!(sentinel_amount(99_999_999_900)); // 999,999,999 — 199 Tenders
+        assert!(sentinel_amount(999_999_999_900)); // 9,999,999,999 — 36
+        assert!(sentinel_amount(9_999_999_999_900)); // 99,999,999,999 — 14
+        // Eight nines is a plausible figure, and the corpus gives no reason to
+        // doubt it: the run has to be long enough to be a field width.
+        assert!(!sentinel_amount(9_999_999_900));
+        // Round powers of ten, zero, and ordinary money.
+        assert!(!sentinel_amount(0));
+        assert!(!sentinel_amount(100_000_000_000));
+        assert!(!sentinel_amount(123_456_700));
+        // Minor units present means someone computed it, not typed a maximum.
+        assert!(!sentinel_amount(99_999_999_999));
+    }
+
+    /// Issue 366: tender 3323836 is ONE 2005 notice publishing two submission
+    /// deadlines — 2005-06-15 and 3005-07-06 — because several source ids map
+    /// onto the one canonical field. MAX arbitrated, so the tender served the
+    /// year-3005 date, was matched by `status=open`, and came back FIRST on
+    /// `status=open&sort=deadline&order=desc`.
+    #[test]
+    fn the_head_deadline_ignores_a_deadline_a_thousand_years_out() {
+        let date = |utc_seconds: i64| Fact::Date {
+            field: "submission_deadline".into(),
+            utc_seconds,
+            offset_minutes: 0,
+            has_time: true,
+        };
+        let real = 1_118_793_600; // 2005-06-15
+        let typo = 32_677_554_600; // 3005-07-06
+        let mut h = head(vec![date(real), date(typo)], Vec::new());
+        h.published_at = 1_116_460_800; // 2005-05-19, the notice's publication
+        assert_eq!(head_deadline(&h), Some(real));
+
+        // Two plausible deadlines still take the later one: the horizon excludes
+        // the unarguable, it does not change the tie rule.
+        let later = real + 30 * 86_400;
+        let mut both = head(vec![date(real), date(later)], Vec::new());
+        both.published_at = 1_116_460_800;
+        assert_eq!(head_deadline(&both), Some(later));
+    }
+
     /// the one the old per-row subquery encoded — Tender over lot, ENG over other — and
     /// `crates/store/tests/title_backfill.rs` asserts the SQL side of the same cases.
     #[test]
