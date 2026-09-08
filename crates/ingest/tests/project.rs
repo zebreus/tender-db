@@ -273,6 +273,88 @@ async fn an_r208_contract_notice_projects_its_estimated_value() {
     let _ = std::fs::remove_file(&path);
 }
 
+/// Issue 372 unit 2: a withheld amount reaches the column marked, and the mark
+/// comes from the notice's DECLARATION rather than from the number.
+///
+/// Both rows here are `-1.00`. One is declared withheld under BT-195 and one is
+/// not, and only the declared one carries `quality = 'withheld'` — so this test
+/// fails if the rule is ever reduced to "cents = -100 means withheld", which is
+/// the tempting shortcut and the wrong one: 116 of the corpus's 19,236 `-1.00`
+/// rows are publisher-invented sentinels whose notices declare nothing at all
+/// (unit 5), and calling those withheld asserts something no notice ever said.
+///
+/// End to end on purpose. `withheld_source_fields`' own tests cover the lookup;
+/// what only the write path can show is that the marker survives fact emission,
+/// the fold and the insert into the satellite's new column.
+#[tokio::test]
+async fn a_withheld_amount_is_marked_and_an_undeclared_negative_is_not() {
+    let (db, fetch_id, path) = scratch("withheld-amount").await;
+
+    // One eForms notice. `ND-Priv#0` suppresses BT-27 and says so; BT-271 beside
+    // it in the same section is published at the same -1.00 and is not declared.
+    let parsed = Parsed {
+        sections: vec![
+            sec("ND-Root", "Notice", None),
+            sec("ND-Priv#0", "FieldsPrivacy", Some("ND-Root")),
+        ],
+        values: vec![
+            ted_text("ND-Root", "TED-TITLE", "Withheld award"),
+            ted_date("ND-Root", "TED-DS_DATE_DISPATCH", 11 * 86_400),
+            ted_amount("ND-Root", "BT-27-Procedure", -100),
+            ted_amount("ND-Root", "BT-271-Procedure", -100),
+            ted_amount("ND-Root", "BT-161-NoticeResult", 500_000),
+            ValueRow {
+                section_id: "ND-Priv#0".into(),
+                field_id: "BT-195(BT-27)-Procedure".into(),
+                ordinal: 0,
+                value: NoticeValue::Code {
+                    list: Some("non-publication-identifier".into()),
+                    code: "not-val".into(),
+                },
+            },
+        ],
+    };
+    let (n, p) = legacy_record(fetch_id, "000101-2026", "eforms:eforms-sdk-1.12", parsed);
+    db.record_notice(&n, &p).await.expect("record");
+    project::project(&db, false).await.expect("project");
+
+    async fn quality_of(db: &Db, field: &str) -> Option<String> {
+        let sql = format!("SELECT quality FROM tender_version_amounts WHERE field = '{field}'");
+        match db.scalar(&sql).await.expect("query") {
+            Some(turso::Value::Text(t)) => Some(t),
+            Some(turso::Value::Null) | None => None,
+            other => panic!("{sql}: expected text or null, got {other:?}"),
+        }
+    }
+
+    assert_eq!(
+        quality_of(&db, "estimated_value").await.as_deref(),
+        Some("withheld"),
+        "BT-27 is declared withheld, so its row must say so",
+    );
+    assert_eq!(
+        quality_of(&db, "framework_maximum").await,
+        None,
+        "BT-271 carries the SAME -1.00 and no declaration: the number marks nothing",
+    );
+    assert_eq!(
+        quality_of(&db, "result_value").await,
+        None,
+        "an ordinary published figure stays unmarked",
+    );
+
+    // And the withheld figure must not win the head election (issue 366 refuses it
+    // for being negative; issue 372 refuses it for being withheld). 500_000 is the
+    // only real amount, so that is what the head must hold.
+    assert_eq!(
+        scalar(&db, "SELECT current_value_eur_cents FROM tenders").await,
+        500_000,
+        "the head value must come from the published amount, not the withheld one",
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
 /// Issue 251: an amount records whether the source called it inclusive or exclusive of
 /// tax, when the source says so — and NULL when it does not.
 ///

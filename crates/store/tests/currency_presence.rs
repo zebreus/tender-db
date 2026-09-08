@@ -261,6 +261,7 @@ fn projection(key: &str, notice: i64, code: &str) -> TenderProjection {
                 cents: 1_000,
                 currency: code.into(),
                 tax_basis: None,
+                quality: None,
             }]
             .into_iter()
             .collect(),

@@ -278,6 +278,16 @@ pub(crate) const SCHEMA: &str = "
         -- ADR-0014: the derived EUR-at-publication-date value BESIDE the
         -- published one; NULL = unconvertible or not-yet-refolded.
         eur_cents INTEGER,
+        -- Issue 372: 'withheld' when the notice declared THIS field suppressed
+        -- under BT-195/FieldsPrivacy, so `cents` holds the eForms SDK's -1
+        -- placeholder rather than a value. NULL = an ordinary published figure.
+        --
+        -- The row is kept rather than dropped because the notice says something
+        -- specific -- which field, why, and the date it becomes publishable
+        -- (ADR-0013 D5), and withheld-until-a-date is not never-published. Reading
+        -- `cents` without reading this column is reading a placeholder as data,
+        -- which is the defect this column exists to end.
+        quality TEXT,
         FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
     ) STRICT;
     CREATE INDEX IF NOT EXISTS tender_version_amounts_version ON tender_version_amounts(tender_id, seq);
@@ -1191,11 +1201,35 @@ impl MinUnionFind {
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Fact {
     Text { field: String, lang: Option<String>, value: String },
-    Amount { field: String, cents: i64, currency: String, tax_basis: Option<String> },
+    Amount {
+        field: String,
+        cents: i64,
+        currency: String,
+        tax_basis: Option<String>,
+        /// Why this figure is not a figure, when the SOURCE said so — currently
+        /// only [`QUALITY_WITHHELD`] (issue 372). `None` is the ordinary case: a
+        /// published number meant as a number.
+        ///
+        /// A canonical-layer judgement, not a parse-layer one: the parsed layer
+        /// keeps what was published (ADR-0004), and this column is where the
+        /// projection records that the notice itself declared the value absent.
+        quality: Option<String>,
+    },
     Classification { field: String, scheme: String, code: String },
     Date { field: String, utc_seconds: i64, offset_minutes: i64, has_time: bool },
     Party { role: String, organization_id: i64, notice_id: i64, section_id: String },
 }
+
+/// The one `quality` marker so far (issue 372): the notice declared this field
+/// withheld under BT-195/`FieldsPrivacy`, and the number beside the declaration
+/// is the eForms SDK's "no value here" placeholder (`-1`, and `unpublished` in
+/// the sibling code slot) rather than an amount.
+///
+/// A marker, not a suppression: "withheld until 2030-07-26" and "never
+/// published" are different claims and the source takes care to distinguish
+/// them, so the canonical layer keeps the row and stops asserting that its
+/// number means anything (issue 372 unit 2, option (b)).
+pub const QUALITY_WITHHELD: &str = "withheld";
 
 impl Fact {
     /// What "a later notice supersedes this field" replaces as a unit. All
@@ -1303,7 +1337,14 @@ pub fn head_value_eur_cents(head: &TenderVersion, rates: &crate::rates::RatesLoo
             // form-width maximum is a fact about what the publisher's field
             // allowed, and converting it first would turn one currency's sentinel
             // into another's ordinary number.
-            Fact::Amount { cents, currency, .. } if !sentinel_amount(*cents) => {
+            // Issue 372: a withheld figure is refused because the notice SAID so,
+            // not because of what its number happens to be. `sentinel_amount`
+            // already refuses the SDK's -1 placeholder, so this arm changes no
+            // election today -- and it is the one that states the reason, which
+            // matters the moment a publisher withholds a field without writing -1.
+            Fact::Amount { cents, currency, quality, .. }
+                if quality.is_none() && !sentinel_amount(*cents) =>
+            {
                 rates.eur_cents(*cents, currency, &date)
             }
             _ => None,
@@ -19280,7 +19321,7 @@ impl Db {
                 Fact::Text { field, lang, value } => {
                     pending.texts.extend([a, b, c, t(field), opt_text(lang.as_deref()), t(value)]);
                 }
-                Fact::Amount { field, cents, currency, tax_basis } => {
+                Fact::Amount { field, cents, currency, tax_basis, quality } => {
                     // Issue 371: note the code for the present-set. Same buffer, same
                     // batch, same transaction as the row itself — so the set can never
                     // be a subset of what the amounts table carries, which is the one
@@ -19297,6 +19338,7 @@ impl Db {
                         t(currency),
                         opt_text(tax_basis.as_deref()),
                         eur.cents(*cents, currency),
+                        opt_text(quality.as_deref()),
                     ]);
                 }
                 Fact::Classification { field, scheme, code } => {
@@ -20678,7 +20720,7 @@ impl Pending {
         n += flush_rows(conn, "INSERT INTO tender_version_lots(tender_id, seq, lot_id, kind) VALUES ", 4, &mut self.version_lots).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_lot_group_members(tender_id, seq, group_lot_id, member_lot_id) VALUES ", 4, &mut self.lot_group_members).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_texts(tender_id, seq, lot_id, field, lang, value) VALUES ", 6, &mut self.texts).await?;
-        n += flush_rows(conn, "INSERT INTO tender_version_amounts(tender_id, seq, lot_id, field, cents, currency, tax_basis, eur_cents) VALUES ", 8, &mut self.amounts).await?;
+        n += flush_rows(conn, "INSERT INTO tender_version_amounts(tender_id, seq, lot_id, field, cents, currency, tax_basis, eur_cents, quality) VALUES ", 9, &mut self.amounts).await?;
         // Issue 371's present-set, written in the SAME transaction as the amount rows
         // just above so the two can never disagree in the unsafe direction. Not counted
         // in `n`: that is the satellite ROW count the fold reports and snapshots, and a
@@ -20985,6 +21027,7 @@ mod tests {
             cents,
             currency: "EUR".into(),
             tax_basis: None,
+            quality: None,
         };
         // EUR short-circuits to rate 1.0 without consulting the table, so an
         // empty lookup is exactly right for a EUR-only election test.

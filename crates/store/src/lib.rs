@@ -36,7 +36,7 @@ pub use canonical::{
     XbCase, XbMember, XbPacket,
     EdgeCensusReport, MatchKeyBuildWindow, OrgEdgeScanArgs,
     OrgEdgeScanReport,
-    PlanGroup, PlanRow, R2MergeArgs,
+    PlanGroup, PlanRow, QUALITY_WITHHELD, R2MergeArgs,
     R2MergeReport, R3MergeArgs, R3MergeReport, Round, TenderProjection, TenderVersion,
     CountryCluster, CountryClusterReport, CountryTypoMove, CountryTypoRepairReport,
     DuplicateIdentity, GenericKeyProbe, ProvisionalEchoGroup, ProvisionalEchoReport, ProvisionalFoldArgs, ProvisionalFoldReport, EchoTier, NameVerdict, DuplicateIdentityReport,

@@ -41,7 +41,7 @@ use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::Path;
 use store::{
     BidParty, BidState, ContractState, Db, Fact, Identifier, LotResultState, LotState, Mention,
-    NoticeValue, Parsed, Round, TenderProjection, TenderVersion,
+    NoticeValue, Parsed, QUALITY_WITHHELD, Round, TenderProjection, TenderVersion,
 };
 
 /// What a projection run did.
@@ -2956,6 +2956,11 @@ impl NoticeState {
                 _ => {}
             }
         }
+        // Issue 372: which (section, source field) pairs this notice declared
+        // withheld, so an amount can be marked at the row it is emitted from
+        // rather than by a rule over its number.
+        let withheld = withheld_source_fields(parsed);
+
         for value in &parsed.values {
             let scope = scope_of(&sections, &value.section_id);
             let field_id = value.field_id.as_str();
@@ -2986,6 +2991,15 @@ impl NoticeState {
                                         &amount_counts,
                                     )
                                 }),
+                            // Issue 372: the notice's own declaration, not the
+                            // shape of `cents`. `-1` marks nothing on its own --
+                            // 116 of the corpus's 19,236 `-1.00` rows are
+                            // publisher-invented sentinels with no withholding
+                            // block at all (unit 5), and calling those withheld
+                            // would assert something no notice ever said.
+                            quality: withheld
+                                .contains(&(value.section_id.as_str(), stem(field_id)))
+                                .then(|| QUALITY_WITHHELD.to_owned()),
                         }
                     })
                 }
@@ -4308,6 +4322,69 @@ fn stem(field_id: &str) -> &str {
     }
 }
 
+/// `BT-195(BT-161)-NoticeResult` -> `BT-161`: the SOURCE field a withheld-field
+/// declaration names. `None` for anything that is not a BT-195 declaration.
+fn withheld_source(field_id: &str) -> Option<&str> {
+    let rest = field_id.strip_prefix("BT-195(")?;
+    let end = rest.find(')')?;
+    Some(&rest[..end])
+}
+
+/// Every withheld-field declaration of one notice, as `(section, source field)`.
+///
+/// Under BT-195/`FieldsPrivacy` (ADR-0013 D5) a buyer may suppress a publishable
+/// value. The notice then carries a `FieldsPrivacy` block anchored under the
+/// section whose value is suppressed, and inside it a `BT-195(<source>)-<context>`
+/// code naming WHICH field went unpublished -- while the SDK writes the literal
+/// `-1` into the numeric slot it left empty and `unpublished` into the sibling
+/// code slot. A projection that copies that number asserts a value the notice
+/// took care to say it was NOT publishing, which is issue 372.
+///
+/// The pair is (the block's PARENT section, the parenthesised source id): the
+/// parent because that is the section holding the suppressed value, and the bare
+/// source id because a fact's own `field_id` carries it as its [`stem`]. So the
+/// test at emission is one set lookup on `(value.section_id, stem(field_id))`,
+/// needing no new vocabulary -- the correspondence is the identity, which is what
+/// made unit 2 of 372 cheap. Verified against the committed withheld fixture in
+/// `withheld_declarations_pair_with_the_section_holding_the_suppressed_value`:
+/// all five of its blocks anchor exactly this way, across three value channels.
+///
+/// Deliberately EXACT on the section rather than notice-wide. Two consequences,
+/// and both are the ones to want:
+///
+/// - a sibling field in the same section is NOT marked (the fixture's
+///   `BT-5421-Lot` weight-type keeps its value while `BT-541` beside it is
+///   marked), which is the per-row precision issue 372 unit 2 was decided on --
+///   a blanket rule keyed on the number `-1` would re-commit this issue's own
+///   mistake of treating a value as self-describing;
+/// - a block a publisher hoisted elsewhere in the notice (issue 195 saw
+///   `FieldsPrivacy` written under the root extension) marks nothing. That miss
+///   is the SAFE direction -- an unmarked withheld row behaves exactly as it does
+///   today, refused by issue 366's negative-sentinel rule -- and it is measured
+///   rather than assumed: section 11 of the weekly report counts rows whose
+///   notice declared SOME withholding, so the gap against the marked count is
+///   readable.
+fn withheld_source_fields(parsed: &Parsed) -> BTreeSet<(&str, &str)> {
+    let privacy: HashMap<&str, &str> = parsed
+        .sections
+        .iter()
+        .filter(|s| s.kind == "FieldsPrivacy")
+        .filter_map(|s| s.parent.as_deref().map(|parent| (s.id.as_str(), parent)))
+        .collect();
+    parsed
+        .values
+        .iter()
+        // A declaration is a CODE (`non-publication-identifier`). The field id is
+        // what discriminates, so the list name is not required -- but the channel
+        // is, or a publisher echoing the id in prose would read as a declaration.
+        .filter(|v| matches!(v.value, NoticeValue::Code { .. }))
+        .filter_map(|v| {
+            let parent = privacy.get(v.section_id.as_str())?;
+            Some((*parent, withheld_source(&v.field_id)?))
+        })
+        .collect()
+}
+
 /// Which value table a parsed value came from — the channel the projection
 /// dispatches on (`NoticeState::read`'s `match &value.value`). The projection
 /// reads a field id through ONE channel, so "is this id read?" is only a
@@ -5525,6 +5602,188 @@ fn first_date(parsed: &Parsed, field_id: &str) -> Option<i64> {
 mod tests {
     use super::*;
 
+    /// Issue 372 unit 2, against real published XML rather than the schema: a
+    /// `FieldsPrivacy` block's PARENT is the section holding the value it
+    /// suppresses, and the id the declaration names is that value's [`stem`].
+    ///
+    /// That pairing is the whole mechanism -- it is what lets the marker be a set
+    /// lookup with no new vocabulary -- so it is asserted against the committed
+    /// withheld fixture instead of trusted. All five of its blocks anchor this
+    /// way across three value channels (a number, a code and a text), which is
+    /// also why the same lookup will serve unit 4's other satellites.
+    #[test]
+    fn withheld_declarations_pair_with_the_section_holding_the_suppressed_value() {
+        let relative = "eforms/can-withheld-29-00495618-2026.xml";
+        let bytes = std::fs::read(format!("tests/fixtures/{relative}")).expect("fixture");
+        let crate::profile::Disposition::Records(records) =
+            crate::profile::dispatch(relative, &bytes)
+        else {
+            panic!("dispatch skipped the withheld fixture");
+        };
+        let [crate::profile::Record::Notice(notice)] = &records[..] else {
+            panic!("expected one notice record");
+        };
+        let store::Parse::Parsed(parsed) = crate::eforms::parse_payload(&notice.profile, &bytes)
+        else {
+            panic!("the withheld fixture must parse");
+        };
+
+        let withheld = withheld_source_fields(&parsed);
+        assert_eq!(withheld.len(), 5, "the fixture declares five withheld fields: {withheld:?}");
+
+        // Every declaration names a field that IS published in the paired section,
+        // and it is reachable by the same `stem` a fact carries. If the SDK
+        // anchored the block anywhere else, this loop is where it shows up.
+        for (section, source) in &withheld {
+            let found = parsed
+                .values
+                .iter()
+                .find(|v| v.section_id == *section && stem(&v.field_id) == *source);
+            assert!(
+                found.is_some(),
+                "declaration {source} names no value in its parent section {section}",
+            );
+        }
+
+        // The three channels the marker lands on, which is unit 4's map: BT-759 is
+        // a Number(-1), BT-760 a Code('unpublished'), BT-734 a Text('unpublished').
+        let sources: BTreeSet<&str> = withheld.iter().map(|(_, f)| *f).collect();
+        for expected in ["BT-759", "BT-760", "BT-539", "BT-541", "BT-734"] {
+            assert!(sources.contains(expected), "{expected} not declared: {sources:?}");
+        }
+    }
+
+    /// The per-row precision issue 372 unit 2 was decided on: a declaration marks
+    /// the field it NAMES and leaves its siblings alone. The fixture's award
+    /// criterion is the real case — `BT-541`'s weight is withheld while
+    /// `BT-5421`'s weight TYPE beside it in the same section is published.
+    #[test]
+    fn a_declaration_marks_only_the_field_it_names() {
+        let parsed = Parsed {
+            sections: vec![
+                store::Section { id: "ND-Crit#0".into(), kind: "LotAwardCriterion".into(), parent: None },
+                store::Section {
+                    id: "ND-CritWeightUnpublish#0".into(),
+                    kind: "FieldsPrivacy".into(),
+                    parent: Some("ND-Crit#0".into()),
+                },
+            ],
+            values: vec![
+                store::ValueRow {
+                    section_id: "ND-CritWeightUnpublish#0".into(),
+                    field_id: "BT-195(BT-541)-Lot-Weight".into(),
+                    ordinal: 0,
+                    value: NoticeValue::Code {
+                        list: Some("non-publication-identifier".into()),
+                        code: "awa-cri-num".into(),
+                    },
+                },
+                store::ValueRow {
+                    section_id: "ND-Crit#0".into(),
+                    field_id: "BT-541-Lot-WeightNumber".into(),
+                    ordinal: 0,
+                    value: NoticeValue::Number { value: -1.0, unit: None },
+                },
+                store::ValueRow {
+                    section_id: "ND-Crit#0".into(),
+                    field_id: "BT-5421-Lot".into(),
+                    ordinal: 0,
+                    value: NoticeValue::Code { list: Some("number-weight".into()), code: "per-exa".into() },
+                },
+            ],
+        };
+
+        let withheld = withheld_source_fields(&parsed);
+        assert!(withheld.contains(&("ND-Crit#0", "BT-541")), "the named field: {withheld:?}");
+        assert!(
+            !withheld.contains(&("ND-Crit#0", "BT-5421")),
+            "a sibling in the same section must keep its value: {withheld:?}",
+        );
+        assert_eq!(withheld.len(), 1);
+    }
+
+    /// The claim in [`withheld_source_fields`]'s doc that the exact-section rule
+    /// misses in the SAFE direction. A block a publisher hoisted away from the
+    /// value it suppresses (issue 195 saw `FieldsPrivacy` under the root
+    /// extension) marks NOTHING — the amount stays an unmarked negative, which is
+    /// what issue 366's sentinel rule already refuses. Asserted so that if the
+    /// rule is ever widened to notice-wide, this test is the thing that says so.
+    #[test]
+    fn a_hoisted_privacy_block_marks_nothing_rather_than_guessing() {
+        let parsed = Parsed {
+            sections: vec![
+                store::Section { id: "ND-Root".into(), kind: "Root".into(), parent: None },
+                store::Section { id: "ND-Result#0".into(), kind: "NoticeResult".into(), parent: Some("ND-Root".into()) },
+                store::Section {
+                    id: "ND-Hoisted#0".into(),
+                    kind: "FieldsPrivacy".into(),
+                    parent: Some("ND-Root".into()),
+                },
+            ],
+            values: vec![
+                store::ValueRow {
+                    section_id: "ND-Hoisted#0".into(),
+                    field_id: "BT-195(BT-161)-NoticeResult".into(),
+                    ordinal: 0,
+                    value: NoticeValue::Code {
+                        list: Some("non-publication-identifier".into()),
+                        code: "not-val".into(),
+                    },
+                },
+                store::ValueRow {
+                    section_id: "ND-Result#0".into(),
+                    field_id: "BT-161-NoticeResult".into(),
+                    ordinal: 0,
+                    value: NoticeValue::Amount { cents: -100, currency: "EUR".into() },
+                },
+            ],
+        };
+
+        let withheld = withheld_source_fields(&parsed);
+        assert!(
+            !withheld.contains(&("ND-Result#0", "BT-161")),
+            "a hoisted block must not reach the value's section: {withheld:?}",
+        );
+        // It is not discarded either: the pair exists against the root, so a later
+        // widening has something to work from and section 11 can still count it.
+        assert!(withheld.contains(&("ND-Root", "BT-161")), "{withheld:?}");
+    }
+
+    /// Issue 372 unit 5, as a rule rather than a census note: a `-1` with no
+    /// declaration is NOT withheld. 116 of the corpus's 19,236 `-1.00` amount rows
+    /// are publisher-invented sentinels — notice 24158422 publishes `BT-27` = −1
+    /// with zero `FieldsPrivacy` blocks and its own lots at 0 — and marking those
+    /// `withheld` would assert something no notice ever said, which is the exact
+    /// error this issue is about, one layer along.
+    #[test]
+    fn an_undeclared_negative_amount_is_not_withheld() {
+        let parsed = Parsed {
+            sections: vec![store::Section {
+                id: "ND-Procedure".into(),
+                kind: "Procedure".into(),
+                parent: None,
+            }],
+            values: vec![store::ValueRow {
+                section_id: "ND-Procedure".into(),
+                field_id: "BT-27-Procedure".into(),
+                ordinal: 0,
+                value: NoticeValue::Amount { cents: -100, currency: "EUR".into() },
+            }],
+        };
+        assert!(withheld_source_fields(&parsed).is_empty());
+    }
+
+    /// `BT-195(BT-161)-NoticeResult` -> `BT-161`, and nothing else is a declaration.
+    #[test]
+    fn only_a_bt_195_field_id_yields_a_withheld_source() {
+        assert_eq!(withheld_source("BT-195(BT-161)-NoticeResult"), Some("BT-161"));
+        assert_eq!(withheld_source("BT-195(BT-541)-Lot-Weight"), Some("BT-541"));
+        assert_eq!(withheld_source("BT-196(BT-161)-NoticeResult"), None, "the REASON is not a declaration");
+        assert_eq!(withheld_source("BT-161-NoticeResult"), None);
+        assert_eq!(withheld_source("BT-195"), None, "no parenthesised source");
+        assert_eq!(withheld_source("BT-195(BT-161"), None, "unclosed");
+    }
+
     /// Issue 300 §2.3: the N2 key folds case, punctuation, and spacing — and
     /// nothing else. Diacritics survive (cross-language collision safety);
     /// legal forms survive as tokens (N3's job, not N2's).
@@ -5603,6 +5862,17 @@ mod tests {
             cents: 1_234_500,
             currency: "EUR".into(),
             tax_basis: None,
+            quality: None,
+        });
+        // Both readings of issue 372's marker, or the codec is only tested on the
+        // absent one -- and a bucketed fold that silently dropped `withheld` would
+        // stop matching the streaming path it is required to be byte-identical to.
+        facts.insert(Fact::Amount {
+            field: "result_value".into(),
+            cents: -100,
+            currency: "EUR".into(),
+            tax_basis: None,
+            quality: Some(QUALITY_WITHHELD.into()),
         });
         facts.insert(Fact::Classification { field: "BT-262".into(), scheme: "CPV".into(), code: "45000000".into() });
         facts.insert(Fact::Date { field: "BT-131".into(), utc_seconds: 700_000_000, offset_minutes: 60, has_time: true });
