@@ -364,6 +364,10 @@ pub struct FactRow {
     pub scheme: Option<String>,
     pub code: Option<String>,
     pub stamp: Option<Stamp>,
+    /// Issue 372: `'withheld'` when the notice declared this field suppressed
+    /// under BT-195/`FieldsPrivacy`, so `cents` is the eForms SDK's -1
+    /// placeholder and not a figure. Amounts only, so far.
+    pub quality: Option<String>,
 }
 
 /// One participation of an Organization in a Tender version.
@@ -424,6 +428,9 @@ pub struct BidRow {
     pub lot_key: Option<String>,
     pub cents: Option<i64>,
     pub currency: Option<String>,
+    /// Issue 372: `'withheld'` when the notice declared BT-720 suppressed for
+    /// this bid — the value buyers withhold most often.
+    pub quality: Option<String>,
     pub parties: Vec<ResultOrgRow>,
 }
 
@@ -1988,8 +1995,9 @@ pub async fn tender_detail(
         });
     }
 
-    let mut rows =
-        conn.query(&fact("s.cents, s.currency", "tender_version_amounts"), key.clone()).await?;
+    let mut rows = conn
+        .query(&fact("s.cents, s.currency, s.quality", "tender_version_amounts"), key.clone())
+        .await?;
     let mut amounts = Vec::new();
     while let Some(row) = rows.next().await? {
         amounts.push(FactRow {
@@ -1997,6 +2005,7 @@ pub async fn tender_detail(
             field: text(&row, 1),
             cents: opt_int_of(&row, 2),
             currency: opt_text_of(&row, 3),
+            quality: opt_text_of(&row, 4),
             ..blank()
         });
     }
@@ -2164,7 +2173,7 @@ async fn results_of(
     let mut rows = conn
         .query(
             &format!(
-                "SELECT s.bid_id, b.notice_id, b.bid_key, {lot_key}, s.cents, s.currency
+                "SELECT s.bid_id, b.notice_id, b.bid_key, {lot_key}, s.cents, s.currency, s.quality
                    FROM tender_version_bids s
                    JOIN bids b ON b.id = s.bid_id
                   WHERE s.tender_id = ? AND s.seq = ? ORDER BY s.bid_id"
@@ -2182,6 +2191,7 @@ async fn results_of(
             lot_key: opt_text_of(&row, 3),
             cents: opt_int_of(&row, 4),
             currency: opt_text_of(&row, 5),
+            quality: opt_text_of(&row, 6),
             parties: Vec::new(),
         });
     }
@@ -2242,6 +2252,7 @@ fn blank() -> FactRow {
         scheme: None,
         code: None,
         stamp: None,
+        quality: None,
     }
 }
 
@@ -2711,8 +2722,13 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
 
         let mut got = conn
             .query(
+                // Issue 372: a withheld figure is not a candidate. Without this a
+                // lot whose ONLY amount is withheld would show -0.01 as its
+                // headline value: -100 outranks the NULL default below, so it
+                // wins by being the only row rather than by being a figure.
                 "SELECT s.lot_id, s.cents, s.currency FROM tender_version_amounts s
-                  WHERE s.tender_id = ? AND s.seq = ? AND s.lot_id IS NOT NULL",
+                  WHERE s.tender_id = ? AND s.seq = ? AND s.lot_id IS NOT NULL
+                    AND s.quality IS NULL",
                 key.clone(),
             )
             .await?;

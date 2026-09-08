@@ -229,7 +229,20 @@ fn fact(f: &FactRow) -> Value {
         map.insert("value".into(), json!(text));
     }
     if f.cents.is_some() {
-        map.insert("value".into(), money(f.cents, f.currency.as_deref()));
+        // Issue 372: a withheld figure is NOT published as a value. `cents` holds
+        // the eForms SDK's -1 placeholder, so emitting it would keep asserting a
+        // -0.01 contract where the notice said the value is suppressed -- which is
+        // the whole defect. A consumer that ignores `quality` now reads "no
+        // value", which is true; one that reads it learns why.
+        match f.quality.as_deref() {
+            Some(quality) => {
+                map.insert("value".into(), Value::Null);
+                map.insert("quality".into(), json!(quality));
+            }
+            None => {
+                map.insert("value".into(), money(f.cents, f.currency.as_deref()));
+            }
+        }
     }
     if let Some(code) = &f.code {
         map.insert("scheme".into(), json!(f.scheme));
@@ -278,11 +291,15 @@ fn lot_result(r: &LotResultRow) -> Value {
 }
 
 fn bid(b: &BidRow) -> Value {
+    // Issue 372, same rule as [`fact`]: a bid whose BT-720 the notice withheld
+    // reports no value rather than the SDK's -1 placeholder, and says why.
+    let withheld = b.quality.is_some();
     json!({
         "notice_id": b.notice_id,
         "key": b.key,
         "lot": b.lot_key,
-        "value": money(b.cents, b.currency.as_deref()),
+        "value": if withheld { Value::Null } else { money(b.cents, b.currency.as_deref()) },
+        "quality": b.quality,
         "parties": b.parties.iter().map(result_org).collect::<Vec<_>>(),
     })
 }
@@ -350,4 +367,67 @@ pub fn page(items: Vec<Value>, next: Option<String>, ignored: &[&str]) -> Value 
         "more": next.is_some(),
         "ignored_filters": ignored,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn amount_fact(cents: i64, quality: Option<&str>) -> FactRow {
+        FactRow {
+            lot_key: None,
+            field: "result_value".into(),
+            lang: None,
+            text: None,
+            cents: Some(cents),
+            currency: Some("EUR".into()),
+            scheme: None,
+            code: None,
+            stamp: None,
+            quality: quality.map(str::to_owned),
+        }
+    }
+
+    /// Issue 372: the API must stop asserting a value the notice said it was not
+    /// publishing. A withheld amount reports `value: null` and says why, so a
+    /// consumer that never heard of `quality` reads "no value" — which is true —
+    /// instead of a -0.01 contract. An ordinary amount is untouched.
+    #[test]
+    fn a_withheld_amount_reports_no_value_and_says_why() {
+        let ordinary = fact(&amount_fact(1_234_500, None));
+        assert_eq!(ordinary["value"]["cents"], json!(1_234_500));
+        assert_eq!(ordinary["value"]["currency"], json!("EUR"));
+        assert!(ordinary.get("quality").is_none(), "no marker, no key: {ordinary}");
+
+        let withheld = fact(&amount_fact(-100, Some("withheld")));
+        assert_eq!(withheld["value"], Value::Null, "the placeholder must not be published");
+        assert_eq!(withheld["quality"], json!("withheld"));
+        // The field is still named, so the reader learns WHICH value is missing
+        // rather than the fact vanishing — the distinction option (b) exists for.
+        assert_eq!(withheld["field"], json!("result_value"));
+    }
+
+    /// The same rule on the bids satellite, where BT-720 lands (issue 372's
+    /// second surface). A withheld bid must not read as a -0.01 offer.
+    #[test]
+    fn a_withheld_bid_reports_no_value_and_says_why() {
+        let row = |cents: i64, quality: Option<&str>| BidRow {
+            notice_id: 7,
+            key: "TEN-0001".into(),
+            lot_key: Some("LOT-0001".into()),
+            cents: Some(cents),
+            currency: Some("EUR".into()),
+            quality: quality.map(str::to_owned),
+            parties: Vec::new(),
+        };
+
+        let ordinary = bid(&row(500_000, None));
+        assert_eq!(ordinary["value"]["cents"], json!(500_000));
+        assert_eq!(ordinary["quality"], Value::Null);
+
+        let withheld = bid(&row(-100, Some("withheld")));
+        assert_eq!(withheld["value"], Value::Null);
+        assert_eq!(withheld["quality"], json!("withheld"));
+        assert_eq!(withheld["key"], json!("TEN-0001"), "the bid is still identified");
+    }
 }
