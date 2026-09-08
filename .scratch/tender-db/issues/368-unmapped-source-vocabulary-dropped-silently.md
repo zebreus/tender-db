@@ -1,6 +1,6 @@
 # 368 — an unmapped field id or subtype is dropped with no diagnostic: 29,455 titleless r208 Tenders and whole eras of lot titles
 
-Status: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
+Status: ready-for-agent — **UNIT ORDER REVISED 2026-09-08 by measurement: unit 4 (the unmapped-field diagnostic) goes FIRST.** Unit 1 as written would have mapped `TED-TI_TEXT` to `title`, which is the CPV category label in 23 languages, not the procurement's title — see "Unit 1, measured". Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
 Kind: defect (projection destinations) — the recurring 18/85/177/231 shape, plus the
 standing detector none of them had
 Relates to: 85 (DE-1.x facts), 18 (sdk-0.1 instants), 177 (r208 values), 231 (sdk-0.1
@@ -39,6 +39,52 @@ Two closed, hand-maintained vocabularies, each with a **silent default**.
 3. `kind_of` keys on the BRIN class, not the literal — X01 and X02 both, with the SDK's `noticeTypes` pairing as the source of truth. Pin with the existing `brin-eu-00568126-2023.xml` fixture.
 4. **The detector all four (and `notice-instants-resolved-once-and-flattened`) were found without**: a projection diagnostic counting parsed values whose field id has no destination, per profile and field id, top N in the weekly report. This is the standing signal that turns "found by an external reviewer" into "flagged the week the era was ingested".
 5. Decide the synthetic lot-key shape (`LOT-1` vs `LOT-0001`) or record why the inconsistency stands.
+
+## Unit 1, measured 2026-09-08 — and it refutes the mapping it proposed
+
+Unit 1 says to map `TED-TI_TEXT`, `TED-TITLE_QUALIFICATION_SYSTEM` and `TED-DESCRIPTION` into `TEXTS`.
+**`TED-TI_TEXT` must NOT be mapped to `title`, and mapping it would have been the worst kind of fix:
+one that makes the column look populated while carrying nothing about the procurement.**
+
+Read off notice **17449765** (tender 5,000,205 — one of this issue's own four samples), the field
+carries **23 rows, one per EU language**, and the values are the CPV category label:
+
+| ordinal | lang | value |
+| --- | --- | --- |
+| 3 | DE | Dienstleistungen von Wäschereien und chemischen Reinigungen |
+| 6 | EN | Washing and dry-cleaning services |
+| 8 | FR | Services de blanchisserie et de nettoyage à sec |
+| 9 | IT | Servizi di lavanderia e di lavaggio a secco |
+
+Its siblings say the same thing about what the block is: `TED-TI_TOWN` and `TED-TI_CY` also carry 23
+rows each (`TI_CY` is the literal `"F"` in every language). This is the OJ heading — town, country,
+subject — not the procurement's own title. `TED-TI_DOC`, the sibling the existing last-resort fallback
+DOES read (`crates/ingest/src/project.rs:3053-3072`), is excluded from `TEXTS` for exactly this reason,
+and the comment there predicted this shape.
+
+A CPV label as a title would be identical across every tender sharing that CPV — thousands of rows —
+which is precisely what the genericness machinery exists to keep out of name and title space, and the
+tender already carries the CPV as a classification. Nothing is gained and search is degraded.
+
+**And the same notice publishes no title and no description at all.** Its complete text inventory:
+`TED-TI_TOWN` 23, `TED-TI_TEXT` 23, `TED-TI_CY` 23, `TED-ADDITIONAL_INFORMATION` 12,
+`TED-TOWN`/`TED-POSTAL_CODE`/`TED-OFFICIALNAME`/`TED-ADDRESS` 5 each, phone/fax 4,
+weighting/order/e-mail/criteria 3. **No `TED-DESCRIPTION`, no `TED-TITLE_QUALIFICATION_SYSTEM`, no
+title field of any spelling.** So for this notice the title is not dropped by an unmapped vocabulary —
+it was never published.
+
+### What that means for the units
+
+- The **"Done when" expectation that the r208 cohort goes to ~0 is wrong** and should not be used as an
+  acceptance test. Some unknown fraction of the 29,455 is genuinely untitled at source.
+- `TED-DESCRIPTION` reached only **3 of the 5** titleless tenders in the 5.000–5.004M band, ~9 rows
+  each, so its scope and repetition are not yet understood; `TED-TITLE_QUALIFICATION_SYSTEM` reached 3
+  with exactly 1 row each, which looks like a genuine single title. Neither is safe to map on this
+  evidence — one sample said one thing, the band says another.
+- **Unit 4 is therefore the first unit, not the last.** The unmapped-field diagnostic is what turns
+  "which spellings are we dropping, on how many notices, at what scope" from a guess into a count, and
+  every other unit here depends on that answer. Ordering it last was the mistake this measurement
+  found; unit 1 as written would have shipped a fabricated title to ~29,000 tenders.
 
 ## Done when
 
