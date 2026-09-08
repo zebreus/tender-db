@@ -86,6 +86,39 @@ it was never published.
   every other unit here depends on that answer. Ordering it last was the mistake this measurement
   found; unit 1 as written would have shipped a fabricated title to ~29,000 tenders.
 
+## Unit 4a done (`24b676f`) — the predicate; 4b is the probe
+
+`project::has_destination(field_id, Channel)` + `any_channel_reads(field_id)` are now real,
+`pub`, and called by both test gates that used to open-code their own partial unions. Per-channel
+because `role_name` accepts any `TED-` id: a channel-blind predicate reports the whole legacy era as
+read, which is the one era it has to be honest about. DE-1.x alias sources resolve to their eForms
+target first, or the entire eForms-DE vocabulary reads as dropped.
+
+### 4b — what the probe still needs to decide
+
+The diagnostic itself is not built. What the reading turned up about its shape, so the next firing does
+not rediscover it:
+
+- **Where.** `crates/ingest/src/data_quality.rs`. Register in `whole_corpus_queries()` (not
+  `windowed_queries()`): the `notice_*` tables key on `notice_id`, and the report's windowing runs over
+  `tender_versions.tender_id`, so there is nothing for `{window}` to bind to. `fresh_holds` is the
+  precedent for a whole-corpus, ranked, denominator-free section.
+- **Shape.** `SELECT n.profile, x.field_id, COUNT(*) … GROUP BY 1,2` per value table, then filter and
+  rank **in Rust** through `has_destination`. It cannot be a SQL predicate: matching is full-id OR
+  `stem` (first two dash-separated segments), and the DE-1.x alias rewrite happens in Rust.
+- **`sum_profile_counts` will corrupt a three-column row** — it treats column 0 as the group label and
+  `as_i64()`s everything after, so a `field_id` in column 1 becomes 0. Whole-corpus registration
+  avoids it; a composite `profile || '\t' || field_id` in column 0 is the alternative.
+- **Cost is the open question.** There is no index on any `field_id` (it is the 4th column of each
+  table's PK), so each table is a full scan — eight tables, the largest far bigger than
+  `tender_version_amounts`. `notice_id` IS available as a window key even though the report's existing
+  machinery does not use it, so a notice-id-windowed variant is the way to bound it. Decide that before
+  adding eight unbounded scans to a weekly job; the report's own convention is to state what it
+  deliberately does not measure rather than let a reader assume completeness.
+- **Mandatory touch points:** the label-order test (`data_quality.rs`
+  `queries_are_labelled_in_execution_order`), the `Raw` slot + `Raw::from_labelled`, and
+  `tests/data_quality.rs`'s `measure()` helper, which runs every label in `queries()`.
+
 ## Done when
 
 - the titleless count is re-measured after re-projection and written here (the r208 cohort should go to ~0 plus the genuinely untitled);
