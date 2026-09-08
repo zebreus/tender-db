@@ -862,12 +862,20 @@ pub fn sentinel_dates_sql() -> String {
 /// Rust rather than in SQL — and unit 2 has it to hand at the point of the fix. Reading this as
 /// "declared" would overstate it; read it as "the notice was withholding something".
 ///
+/// **Split by SOURCE as well as field (issue 372 unit 5's follow-up).** The undeclared residue looks
+/// like a publisher convention rather than the SDK marker, and a hand sample came back 3-of-4 `doe` —
+/// suggestive, not a finding. Establishing it needed a `GROUP BY source` over the residue, which is
+/// exactly what a bounded `/v1/sql` read cannot do: a 2,000,000-wide `tender_id` window carrying this
+/// join plus the `EXISTS` hit the 10 s cap (2026-09-08, not retried). In-process the join is already
+/// paid for, so the split is free here and the question answers itself on the next run instead of
+/// staying a guess.
+///
 /// Affordable for a measured reason: the `WHERE a.cents = -100` scan is the same shape
 /// `sentinel_amounts_sql` already pays for (the whole whole-corpus phase measured ~128 s of job
 /// 816's 6,396 s), and the `EXISTS` is a two-column seek on `notice_sections(kind, notice_id)`
 /// per matched row — ~19,000 seeks, not a second scan.
 pub fn withheld_markers_sql() -> String {
-    "SELECT a.field AS field, COUNT(*) AS hits, \
+    "SELECT a.field || ' · ' || n.source AS field, COUNT(*) AS hits, \
             SUM(CASE WHEN EXISTS ( \
                   SELECT 1 FROM notice_sections s \
                    WHERE s.kind = 'FieldsPrivacy' AND s.notice_id = v.caused_by_notice_id \
@@ -875,8 +883,9 @@ pub fn withheld_markers_sql() -> String {
             COUNT(DISTINCT a.tender_id) AS tenders \
        FROM tender_version_amounts a \
        JOIN tender_versions v ON v.tender_id = a.tender_id AND v.seq = a.seq \
+       JOIN notices n ON n.id = v.caused_by_notice_id \
       WHERE a.cents = -100 \
-      GROUP BY a.field \
+      GROUP BY a.field, n.source \
       ORDER BY hits DESC"
         .to_owned()
 }
@@ -2116,13 +2125,13 @@ pub fn render_text(report: &Report) -> String {
     } else {
         let _ = writeln!(
             out,
-            "  {:<24}{:>12}{:>16}{:>10}{:>12}",
-            "field", "rows", "in-wh-notice", "residue", "tenders"
+            "  {:<34}{:>12}{:>16}{:>10}{:>12}",
+            "field · source", "rows", "in-wh-notice", "residue", "tenders"
         );
         for r in &report.withheld_markers {
             let _ = writeln!(
                 out,
-                "  {:<24}{:>12}{:>16}{:>10}{:>12}",
+                "  {:<34}{:>12}{:>16}{:>10}{:>12}",
                 r.field,
                 group(r.hits),
                 group(r.in_withholding_notice),
