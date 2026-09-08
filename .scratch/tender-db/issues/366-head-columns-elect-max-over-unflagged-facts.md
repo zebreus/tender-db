@@ -321,6 +321,41 @@ Fixed before the gate re-ran, and the fix is now the pinned property:
 the two are not directly comparable. These establish the SHAPES and the threshold; the report's own
 first run establishes the corpus-wide magnitudes.
 
+### A better shape for both sweeps, held pending a measurement (2026-09-08)
+
+Shipped, the two sweeps are `whole_corpus_queries` — one full scan of `tender_version_amounts` and one
+of `tender_version_dates` per weekly run, because `HAVING COUNT(*) >= n` cannot be evaluated per window.
+
+There is a shape that avoids both scans, and the argument for it is worth writing down before anyone
+re-derives it: **drop the `HAVING` and window them after all.** Make the label the value itself
+(`currency` + `cents`, or the field + day), return every distinct tail value with its counts, let
+`sum_profile_counts` add them across windows, and apply the repeat threshold and the ranking in Rust.
+Then it rides the existing affordability machinery instead of adding two scans.
+
+Both count columns sum exactly, for reasons the codebase already relies on:
+
+- `COUNT(*)` per label is additive over disjoint version sets, like every other windowed count.
+- `COUNT(DISTINCT tender_id)` is additive **because the distinct key IS the window key** — windows
+  partition `tender_id`, so no tender straddles two of them. That is precisely the argument
+  [`MERGE_SQL`] carries for its inner `SELECT DISTINCT v.tender_id`, and it is the argument that must
+  be made explicitly, because a `DISTINCT` summed across windows is normally wrong.
+
+Hash state stays bounded per window (distinct tail values within one 250,000-id slice), which was the
+whole reason for the magnitude floor — so the floor could even be lowered, which is the one thing that
+would open the low-magnitude blind spot recorded above.
+
+**Not done, deliberately.** The current form is correct; the redesign is an optimisation, and its
+premise — that two extra scans are a cost worth restructuring for — is unmeasured. Job 816 (the first
+run of the shipped version) reports per-window timings in the log and runs the whole-corpus phase after
+the 32 windows, so the two scans can be bracketed from journalctl timestamps. **Measure that first.**
+If the two scans are marginal against a job that already takes ~3 hours for 16 queries × 32 windows,
+this is churn on working code; if they are minutes each, do the redesign and fold the magnitude ranking
+(unit 6's original wording) into the same single pass rather than adding a third scan for it.
+
+That sequencing is also why the magnitude-ranked listing has not been added yet: adding it as another
+`whole_corpus_query` would be a THIRD full scan of the same table, and if the redesign happens both
+rankings come free from one windowed pass.
+
 ### Still open in this issue
 
 Unit 4 (value bounds in `read.rs:855-871` excluding flagged amounts — the read side
