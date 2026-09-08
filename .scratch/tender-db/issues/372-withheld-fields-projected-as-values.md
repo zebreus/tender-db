@@ -1,7 +1,10 @@
 # 372 — a WITHHELD eForms field is projected as if it were data: `-1.00` becomes an amount and `unpublished` becomes a currency
 
-Status: needs-triage (filed 2026-09-08, found by issue 366's sentinel sweep on its
-second corpus run — job 817)
+Status: ready-for-agent — **unit 1 sampled 2026-09-08 (see "Unit 1 — the census"): 8/8 `-1.00`
+rows are `result_value`, and 4/4 of their notices declare the withholding explicitly. The BT-195 code
+names the SOURCE field, which the projection's own `AMOUNTS` mapping already translates — so unit 2
+needs no new vocabulary.** Was: needs-triage (filed 2026-09-08, found by issue 366's sentinel sweep on
+its second corpus run — job 817)
 Kind: defect (projection — the parse→canonical boundary), and the ROOT CAUSE behind the
 corpus's largest sentinel class
 Relates to: 366 (filters `-1` out of the head election — the symptom fix, and it stays
@@ -100,6 +103,58 @@ does not consult it, so a marker meaning "there is no value here" is projected a
    (`ParameterNumeric -1`) and submission statistics (`StatisticsNumeric -1`) in the same
    fixture, so the amounts column is unlikely to be the only place a `-1` was projected
    as data. Sweep the numeric satellites for the same shape before designing the fix.
+
+## Unit 1 — the census, sampled and bounded (2026-09-08, rev `1ca7427`)
+
+`notice_withheld_fields` **cannot be read unbounded**: `SELECT notice_id, withheld_field FROM
+notice_withheld_fields LIMIT 3` returned 408 at the 10 s cap (the view GROUPs over every
+`FieldsPrivacy` section corpus-wide, and `LIMIT` does not bound the aggregation). Not retried, per
+`docs/agents/prod-box-reads.md`. The census is therefore a SAMPLE through indexed seeks, and the
+underlying tables are queried directly rather than the view so the `notice_id` predicate actually
+seeks instead of being blocked behind the GROUP BY.
+
+**Every `-1.00` amount in the sample is on `result_value`.** An indexed `tender_id` range
+(`tender_id <= 100000 AND cents = -100`, 8 rows) returned `field = 'result_value'` for all eight —
+tenders 34, 189, 254, 288, 347, 511, 656, 728. The marker is concentrated in the AWARD value, which
+is the commercially sensitive one, exactly as a confidentiality mechanism would predict.
+
+**4 of 4 sampled notices carry an explicit withheld declaration for that field.** Probing
+`notice_sections` (`kind = 'FieldsPrivacy'`) joined to `notice_codes`, per notice id:
+
+| notice | BT-195 codes declared |
+| --- | --- |
+| 25390373 | `BT-195(BT-161)-NoticeResult` = `not-val`; `BT-195(BT-720)-Tender` = `win-ten-val` ×3 |
+| 24622961 | `BT-195(BT-161)-NoticeResult` = `not-val` |
+| 24666167 | `BT-195(BT-161)-NoticeResult` = `not-val` |
+| 25405915 | `BT-195(BT-161)-NoticeResult` = `not-val`; `BT-195(BT-720)-Tender` = `win-ten-val`; `BT-195(BT-193)-Tender` = `win-ten-var` |
+
+25390373 also carries `BT-197(BT-720)-Tender` = **`law-enf`** — the withholding REASON. The
+`#0/#1/#2` section suffixes are per winning tender, which is why one notice yields several `-1.00`
+rows.
+
+### The finding that de-risks unit 2: the declaration matches the fact EXACTLY, by field id
+
+`BT-161` → `result_value` is already in the projection's own amount mapping
+(`crates/ingest/src/project.rs:135`). So the BT-195 code names the withheld SOURCE field, and the
+existing `AMOUNTS` table already translates that source field to the canonical name the fact carries.
+
+**No new vocabulary is needed for the fix.** The projection can ask, of a fact it is about to emit,
+"does this notice declare a `FieldsPrivacy` withholding for the source field this fact came from?" —
+and the answer is a lookup through a mapping that already exists. That removes the main design risk
+unit 2 looked like it carried (inventing a correspondence between withheld-field codes and canonical
+facts); the correspondence is the identity.
+
+### What the sample does NOT establish
+
+- **Corpus-wide coverage.** 4/4 is a sample, not a proof that every `-1` is declared. Unit 1's third
+  number still wants a corpus count, and it needs an in-process job (the app reading its own database
+  — outside the prod-box rule, as section 10 itself is) rather than `/v1/sql`. Cheapest route: fold
+  the count into the weekly report beside section 10, where the scan is already affordable.
+- **Whether any `-1` is UNdeclared.** That residue is the interesting number for unit 2's disposition:
+  a declared withholding can be marked precisely, whereas an undeclared `-1` is a guess and might
+  deserve to stay quarantined instead.
+- **The other satellites** (unit 4). The same fixture shows `ParameterNumeric -1` on an award
+  criterion and `StatisticsNumeric -1` on submission statistics, and neither was probed here.
 
 ## Done when
 
