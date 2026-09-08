@@ -2631,9 +2631,23 @@ impl Db {
         Ok(out)
     }
 
-    /// The archived packages holding PARSED notices of these profiles, whose
+    /// The archived packages holding READABLE notices of these profiles, whose
     /// `fetch_id` exceeds `after` — the re-parse job's resumable work list (issue
     /// 100), the profile-scoped twin of [`Db::quarantine_reclaim_packages`].
+    ///
+    /// Readable is `parsed` OR **`pending`**, and the second is the whole point of
+    /// this being a set rather than an equality. A source can land on the
+    /// dry-first rung — recorded, archived, identity only, `parse_state='pending'`
+    /// — before its parser exists, which is how issue 342 brought UK FTS in: 7,243
+    /// releases sat pending for a day while the mapping was written. Selecting
+    /// only `parsed` left that rung with NO WAY BACK: the notices are not
+    /// quarantined so `reprocess` does not see them, and `process` dedupes them as
+    /// duplicates, so nothing in the system would ever read a payload it had
+    /// already stored. A pending notice is precisely one whose payload has never
+    /// been read, which makes it the clearest possible candidate for a re-read.
+    ///
+    /// Widening it costs nothing when a parser is absent: the payload is offered,
+    /// the profile returns `Pending` again, and the row is unchanged.
     ///
     /// The two differ in a way worth stating, because it decides how the job knows
     /// it is done. A reclaim's work list SHRINKS as it runs: a reclaimed row gets
@@ -2655,7 +2669,8 @@ impl Db {
         let sql = format!(
             "SELECT DISTINCT n.fetch_id, f.source, f.path
                FROM notices n JOIN fetches f ON f.id = n.fetch_id
-              WHERE n.parse_state = 'parsed' AND n.profile IN ({list}) AND n.fetch_id > ?
+              WHERE n.parse_state IN ('parsed', 'pending')
+                AND n.profile IN ({list}) AND n.fetch_id > ?
               ORDER BY n.fetch_id"
         );
         let mut params: Vec<Value> = profiles.iter().map(|p| t(*p)).collect();
@@ -2668,10 +2683,13 @@ impl Db {
         Ok(out)
     }
 
-    /// The member FILES of one package holding parsed notices of these profiles —
+    /// The member FILES of one package holding readable notices of these profiles —
     /// what a re-parse must walk in that package, and nothing else (the issue-77
     /// sparse-bucket discipline). `member_file` strips the text-era `#<ordinal>`
     /// suffix so the set matches what the archive walker yields.
+    ///
+    /// `pending` counts as readable alongside `parsed`, for the reason given on
+    /// [`Db::reparse_packages`].
     pub async fn parsed_member_files(
         &self,
         fetch_id: i64,
@@ -2684,7 +2702,8 @@ impl Db {
         let list = crate::canonical::placeholders(profiles.len());
         let sql = format!(
             "SELECT DISTINCT member_path FROM notices
-              WHERE fetch_id = ? AND parse_state = 'parsed' AND profile IN ({list})"
+              WHERE fetch_id = ? AND parse_state IN ('parsed', 'pending')
+                AND profile IN ({list})"
         );
         let mut params: Vec<Value> = vec![Value::Integer(fetch_id)];
         params.extend(profiles.iter().map(|p| t(*p)));
