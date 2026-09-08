@@ -1,6 +1,9 @@
 # 372 — a WITHHELD eForms field is projected as if it were data: `-1.00` becomes an amount and `unpublished` becomes a currency
 
-Status: ready-for-agent — **unit 1 sampled 2026-09-08 (see "Unit 1 — the census"): 8/8 `-1.00`
+Status: ready-for-agent — **unit 1 CORPUS-WIDE 2026-09-08 (job 818): 19,236 `-1.00` rows, residue
+**116** (0.6 %); `result_value` 99.57 % declared, but `estimated_value` **0 of 29** — a second cause
+wearing the same value, split out as unit 5. **Unit 2 DECIDED: option (b), a quality marker applied
+PER ROW conditioned on the notice's declaration, never as a blanket rule on the number.** Earlier: unit 1 sampled 2026-09-08 (see "Unit 1 — the census"): 8/8 `-1.00`
 rows are `result_value`, and 4/4 of their notices declare the withholding explicitly. The BT-195 code
 names the SOURCE field, which the projection's own `AMOUNTS` mapping already translates — so unit 2
 needs no new vocabulary.** Was: needs-triage (filed 2026-09-08, found by issue 366's sentinel sweep on
@@ -155,6 +158,69 @@ facts); the correspondence is the identity.
   deserve to stay quarantined instead.
 - **The other satellites** (unit 4). The same fixture shows `ParameterNumeric -1` on an award
   criterion and `StatisticsNumeric -1` on submission statistics, and neither was probed here.
+
+## Unit 1 corpus-wide (job 818, 2026-09-08) — and unit 2's disposition, DECIDED
+
+Section 11 of the weekly report, first run (job 818: ok, 4,573 s, 0 unmeasured):
+
+| field | rows | in a withholding notice | **residue** | tenders |
+| --- | --- | --- | --- | --- |
+| `result_value` | 19,201 | 19,118 | **83** | 18,097 |
+| `estimated_value` | 29 | **0** | **29** | 6 |
+| `framework_maximum` | 6 | 2 | **4** | 2 |
+
+**19,236 rows, residue 116 — 0.6 %.** The marker is real and it is trustworthy: 99.57 % of the
+dominant class (`result_value`) sits in a notice that declared a withholding. The sampled 4-of-4 was
+not luck.
+
+### The per-field split found a SECOND cause wearing the same value
+
+`estimated_value` is **0 for 29**. Not one of those notices declared a withholding — so those −1s are
+**not the eForms withheld marker at all**, whatever they are. `result_value` is 99.6 % declared and
+`estimated_value` is 0 % declared: two different phenomena that an aggregate over `cents = -100` would
+have averaged into one 99.4 % and hidden completely. Grouping by field was worth doing.
+
+6 tenders carry those 29 rows, so the class is hand-readable. **It is not part of unit 2** and gets its
+own unit below rather than being swept into the withheld disposition — marking them `withheld` would
+assert something the notice never said, which is the error this whole issue is about, one layer along.
+
+### Unit 2 DECIDED (owner, 2026-09-08): option (b), per-row, conditioned on the declaration
+
+Emit the fact **with a quality marker**, not suppressed and not NULL:
+
+- **(a) don't emit** loses the distinction between "withheld" and "never published", which the source
+  takes care to state — and ADR-0013 D5 already models it one layer down, so throwing it away here
+  would be discarding information the notice explicitly carries.
+- **(c) NULL** is the same loss with an extra ambiguity: NULL already means "no rate resolved" on the
+  sibling `eur_cents` column (ADR-0014 D4).
+- **(b) marker** keeps the parse layer faithful (ADR-0004: store as published) while making the
+  canonical layer stop *asserting* a €−0.01 contract. It is also the same `quality TEXT` column issue
+  366's Leg A proposed for sentinels — arriving here for a second, independent reason, which is decent
+  evidence the column is the right shape rather than a convenience.
+
+**The condition is per row, not per value.** A `-1.00` whose notice declares a `FieldsPrivacy`
+withholding for the field the fact came from is marked `withheld`; one that does not is NOT marked
+withheld — it stays whatever the residue investigation concludes. A blanket rule on the number −1
+would re-commit this issue's own mistake: treating a value as self-describing when the notice beside
+it says what it means.
+
+The mechanics are already available: the BT-195 code names the SOURCE field, and the projection's
+`AMOUNTS` mapping (`BT-161` → `result_value`, `project.rs:135`) already translates that to the
+canonical name — so the exact per-row test is a lookup, not new vocabulary.
+
+## Unit 5 (new) — the undeclared residue, 116 rows
+
+Split by field because they are plainly not one thing:
+
+- **`estimated_value`, 29 rows / 6 tenders, 0 declared.** The interesting half. Read all six by hand:
+  is this a different portal's "not stated" convention, a unit error, or a genuine negative estimate?
+- **`result_value`, 83 rows / (subset of 18,097 tenders), undeclared.** Most likely notices that
+  withheld the value without emitting the `FieldsPrivacy` block, or where the block names a different
+  field. Sample ~10 through the same per-notice probe unit 1 used.
+- **`framework_maximum`, 4 rows / 2 tenders.**
+
+Until read, these stay OUT of the withheld disposition. Section 11 makes the residue a standing number,
+so it is visible if it grows.
 
 ## Done when
 
