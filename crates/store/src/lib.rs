@@ -5305,6 +5305,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
             lot_key: Some("LOT-0001".into()),
             cents: Some(1_000),
             currency: Some("EUR".into()),
+            quality: None,
             parties: Vec::new(),
         };
         let round = |bids: Vec<canonical::BidState>| canonical::Round {

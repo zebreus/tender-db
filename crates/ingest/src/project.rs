@@ -3812,6 +3812,9 @@ struct RawBid {
     party_ref: Option<String>, // OPT-310
     cents: Option<i64>,        // BT-720
     currency: Option<String>,
+    /// Issue 372: the notice declared BT-720 withheld for this bid, so `cents`
+    /// is the SDK's -1 placeholder and not an offer.
+    quality: Option<String>,
 }
 
 #[derive(Default)]
@@ -3843,6 +3846,13 @@ fn read_results(
     if sdk01 {
         return read_sdk01_results(parsed);
     }
+    // Issue 372: BT-720 is the figure buyers withhold most, and it reaches the
+    // canonical layer here rather than through the amount table, so the marker
+    // has to be applied on this path too or the bids satellite keeps asserting
+    // -0.01 offers. Same rule as the amounts side: the notice's declaration for
+    // THIS section and field, never the shape of the number.
+    let withheld = withheld_source_fields(parsed);
+
     let mut raw = RawResults::default();
     for s in &parsed.sections {
         match s.kind.as_str() {
@@ -3889,6 +3899,9 @@ fn read_results(
                     ("BT-720", NoticeValue::Amount { cents, currency }) => {
                         b.cents = Some(*cents);
                         b.currency = Some(currency.clone());
+                        b.quality = withheld
+                            .contains(&(row.section_id.as_str(), "BT-720"))
+                            .then(|| QUALITY_WITHHELD.to_owned());
                     }
                     ("BT-13714", NoticeValue::Id { value, .. }) => b.lot_key = Some(value.clone()),
                     ("OPT-310", NoticeValue::Id { value, .. }) => b.party_ref = Some(value.clone()),
@@ -4185,6 +4198,7 @@ impl RawResults {
                 lot_key: b.lot_key.clone(),
                 cents: b.cents,
                 currency: b.currency.clone(),
+                quality: b.quality.clone(),
                 parties: members_of(b.party_ref.as_deref()),
             })
             .collect();
@@ -5900,6 +5914,7 @@ mod tests {
                 lot_key: Some("LOT-1".into()),
                 cents: Some(500),
                 currency: Some("EUR".into()),
+                quality: None,
                 parties: vec![BidParty { role: "tenderer".into(), organization_id: 8, section_id: "ORG-2".into() }],
             }],
             contracts: vec![ContractState {

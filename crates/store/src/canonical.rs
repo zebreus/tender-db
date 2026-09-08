@@ -735,6 +735,13 @@ pub(crate) const SCHEMA: &str = "
         cents     INTEGER,
         currency  TEXT,
         eur_cents INTEGER, -- ADR-0014 derived sibling
+        -- Issue 372, the marker's SECOND surface. BT-720 (the winning tender's
+        -- value) is the commercially sensitive figure buyers withhold most, and
+        -- it does not travel through tender_version_amounts: the issue-177
+        -- context routing sends it here, so the amount column's marker would
+        -- have left every one of these rows asserting a -0.01 bid.
+        -- 'withheld' | NULL, on the same per-row declaration rule.
+        quality   TEXT,
         PRIMARY KEY (tender_id, seq, bid_id),
         FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
     ) STRICT;
@@ -1524,6 +1531,9 @@ pub struct BidState {
     pub lot_key: Option<String>,
     pub cents: Option<i64>,
     pub currency: Option<String>,
+    /// [`QUALITY_WITHHELD`] when the notice declared BT-720 suppressed for THIS
+    /// bid, so `cents` holds the SDK's -1 placeholder (issue 372).
+    pub quality: Option<String>,
     pub parties: Vec<BidParty>,
 }
 
@@ -19201,6 +19211,7 @@ impl Db {
                 opt_int(bid.cents),
                 opt_text(bid.currency.as_deref()),
                 eur.opt(bid.cents, bid.currency.as_deref()),
+                opt_text(bid.quality.as_deref()),
             ]);
             for party in &bid.parties {
                 let (a, b) = scope();
@@ -20738,7 +20749,7 @@ impl Pending {
         n += flush_rows(conn, "INSERT INTO tender_version_lot_results(tender_id, seq, lot_result_id, lot_id, decision, reason, awarded_cents, awarded_currency, decided_utc, decided_offset, decided_has_time, awarded_eur_cents) VALUES ", 12, &mut self.lot_results).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_result_winners(tender_id, seq, lot_result_id, organization_id) VALUES ", 4, &mut self.result_winners).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_result_stats(tender_id, seq, lot_result_id, kind, count) VALUES ", 5, &mut self.result_stats).await?;
-        n += flush_rows(conn, "INSERT INTO tender_version_bids(tender_id, seq, bid_id, lot_id, cents, currency, eur_cents) VALUES ", 7, &mut self.bids).await?;
+        n += flush_rows(conn, "INSERT INTO tender_version_bids(tender_id, seq, bid_id, lot_id, cents, currency, eur_cents, quality) VALUES ", 8, &mut self.bids).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_bid_parties(tender_id, seq, bid_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7, &mut self.bid_parties).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_contracts(tender_id, seq, contract_id, buyer_contract_id, concluded_utc, concluded_offset, concluded_has_time, decided_utc, decided_offset, decided_has_time, cents, currency, eur_cents) VALUES ", 13, &mut self.contracts).await?;
         Ok(n)

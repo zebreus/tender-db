@@ -355,6 +355,77 @@ async fn a_withheld_amount_is_marked_and_an_undeclared_negative_is_not() {
     let _ = std::fs::remove_file(&path);
 }
 
+/// Issue 372's SECOND surface: BT-720, the winning tender's value, does not
+/// travel through `tender_version_amounts` — the issue-177 context routing sends
+/// it to `tender_version_bids` — so the marker has to be applied on that path
+/// too or every withheld bid keeps asserting a -0.01 offer.
+///
+/// Two bids in one notice, both at `-1.00`. Only the one whose LotTender carries
+/// a `FieldsPrivacy` block naming BT-720 is marked. That is the shape the census
+/// found in the wild: notice 25390373 declares `BT-195(BT-720)-Tender` three
+/// times, `#0/#1/#2`, one per winning tender — a per-bid withholding.
+#[tokio::test]
+async fn a_withheld_bid_value_is_marked_per_bid() {
+    let (db, fetch_id, path) = scratch("withheld-bid").await;
+
+    let parsed = Parsed {
+        sections: vec![
+            sec("ND-Root", "Notice", None),
+            sec("ND-LotResult#0", "LotResult", Some("ND-Root")),
+            // Bid 0 withholds its value and says so; bid 1 publishes the same
+            // number with no declaration anywhere.
+            sec("ND-LotTender#0", "LotTender", Some("ND-Root")),
+            sec("ND-TenderValueUnpublish#0", "FieldsPrivacy", Some("ND-LotTender#0")),
+            sec("ND-LotTender#1", "LotTender", Some("ND-Root")),
+        ],
+        values: vec![
+            ted_text("ND-Root", "TED-TITLE", "Two bids"),
+            ted_date("ND-Root", "TED-DS_DATE_DISPATCH", 12 * 86_400),
+            ted_amount("ND-LotTender#0", "BT-720-Tender", -100),
+            ted_amount("ND-LotTender#1", "BT-720-Tender", -100),
+            ValueRow {
+                section_id: "ND-TenderValueUnpublish#0".into(),
+                field_id: "BT-195(BT-720)-Tender".into(),
+                ordinal: 0,
+                value: NoticeValue::Code {
+                    list: Some("non-publication-identifier".into()),
+                    code: "win-ten-val".into(),
+                },
+            },
+        ],
+    };
+    let (n, p) = legacy_record(fetch_id, "000102-2026", "eforms:eforms-sdk-1.12", parsed);
+    db.record_notice(&n, &p).await.expect("record");
+    project::project(&db, false).await.expect("project");
+
+    // Both bids exist and both hold -100, so the only thing separating the rows
+    // is the declaration.
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_bids WHERE cents = -100").await,
+        2,
+        "both bids must be stored as published (ADR-0004)",
+    );
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_bids WHERE quality = 'withheld'").await,
+        1,
+        "exactly the declared bid is marked",
+    );
+
+    // And it is the right one: bid keys project in section order, so the marked
+    // row must be the lower bid_id.
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT b.bid_id FROM tender_version_bids b WHERE b.quality = 'withheld'"
+        )
+        .await,
+        scalar(&db, "SELECT MIN(bid_id) FROM tender_version_bids").await,
+        "the marker must land on ND-LotTender#0, the bid that declared it",
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
 /// Issue 251: an amount records whether the source called it inclusive or exclusive of
 /// tax, when the source says so — and NULL when it does not.
 ///
