@@ -1,6 +1,6 @@
 # 342 — sources beyond TED and DÖE ("international"): nothing exists, the entry contract does
 
-Status: UNIT 2 — commits (a) fetcher, (b) profile and the raw-reader fix are BUILT, DEPLOYED (`5a48d88`) and MEASURED. **Commit (c) is BUILT and GATED 2026-09-08**: the crosswalk GB arm (`db02939`) and the parser (`d7264c8`), `ops/check.sh` GATE-EXIT=0 both times. Not yet deployed, and the 7,243 June-2025 releases are still `parse_state='pending'` on the box until a Reparse runs. Remaining: deploy, Reparse 2025-06 → project → measure, then the 2021-01 backfill and the docs (plan step 12). Unit 1 DONE: `docs/research/uk-fts.md`, adversarially re-checked, GO. Plan: `.scratch/tender-db/342-fts-plan.md`.
+Status: **UNIT 2 COMPLETE and MEASURED ON PROD 2026-09-08.** Commits (a) fetcher, (b) profile, (c) the crosswalk GB arm (`db02939`) + parser (`d7264c8`), plus two fixes the live run found: reparse reaching pending notices (`3192851`) and the zone-less date (`18ce0c1`). All deployed; June 2025 reparsed and projected clean — **7,243 / 7,243 parsed, 0 quarantined, 0 failing, 0 islands → 6,239 tenders**. Remaining: the 2021-01 backfill, and the docs (plan step 12). Unit 1 DONE: `docs/research/uk-fts.md`, adversarially re-checked, GO. Plan: `.scratch/tender-db/342-fts-plan.md`.
 issues for that"). No non-TED/DÖE source has ever been researched for onboarding;
 the first step is a market choice, which is Lennart's.
 Kind: capability (sources) — the product-breadth half of "full internationalization"
@@ -189,3 +189,44 @@ layer: an exponent amount refuses rather than rounds.
 3. Measure: notices parsed vs quarantined by reason, tenders/versions created, buyers resolved, and
    whether any GB identifier reached `organizations` with a `GB:coh`/`GB:ppon` canonical key.
 4. Only then the 2021-01 backfill, and the docs (plan step 12).
+
+## Unit 2, measured on prod (2026-09-08)
+
+The month the plan gates the backfill on, run end to end on the box:
+
+| | |
+| --- | --- |
+| members walked | 7,243 |
+| notices parsed | **7,243** (100%) |
+| parse-quarantined | **0** |
+| islands | **0** — every release keyed on its `ocid`, which is the whole design |
+| tenders | **6,239** from 7,243 versions, so ~1,000 releases joined an ocid a sibling had already opened |
+
+It took three passes, and both corrections were things only the live run could show:
+
+1. **The first reparse did nothing** — "no packages hold parsed notices of fts:ocds-1.1". `reparse`
+   required `parse_state='parsed'`, so the dry-first rung it was meant to complete was invisible to it.
+   Fixed in `3192851`; the general lesson is on `Db::reparse_packages`.
+2. **13 of 7,243 then failed.** Pulling `033064-2025` out of the archive showed
+   `tenderPeriod.endDate = "2025-07-07"` — a bare date with no zone, which the parser refused. FTS
+   publishes those; a bare date is a UK civil day. Fixed in `18ce0c1` with `fts::uk_offset`, and the
+   release is now a named regression test. Note the 13 were left `pending` rather than quarantined —
+   `reparse` will not downgrade a stored row on a failing re-parse, which is what kept them
+   diagnosable.
+
+### The GB crosswalk is being fed
+
+`organizations` under country GB now carries **1,074 `GBPPON…`** identifiers and several hundred
+`GBCOH…` across the 02/03/04/07/08/10 series — the two registers the arm keys, arriving from real
+notices rather than fixtures.
+
+**Filed as noticed, not fixed:** 176 GB rows carry an identifier starting `COMPANY…`, a scheme the
+crosswalk deliberately keys as nothing (E0 exact only). Worth a look before the backfill multiplies it
+— it may be a `GB-COMPANY-` scheme worth folding onto `GB:coh`, or it may be junk the idgate should
+condemn. Not urgent at 176 rows.
+
+### Before the backfill
+
+`bids.statistics` still has no real-data coverage — no member fixture exercises it, and June 2025
+evidently did not either (no parse failure came from it). Check it against a month that has bids
+before trusting the arm, or the backfill will write untested rows at scale.
