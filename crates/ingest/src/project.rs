@@ -4296,6 +4296,139 @@ fn stem(field_id: &str) -> &str {
     }
 }
 
+/// Which value table a parsed value came from — the channel the projection
+/// dispatches on (`NoticeState::read`'s `match &value.value`). The projection
+/// reads a field id through ONE channel, so "is this id read?" is only a
+/// meaningful question with the channel attached.
+///
+/// The distinction is load-bearing rather than tidy: [`role_name`] accepts ANY
+/// `TED-`-prefixed id, so a channel-blind predicate would report every legacy
+/// field as read — including the whole titleless-r208 cohort that issue 368 is
+/// about, which is exactly the era such a predicate would have to be honest in.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Channel {
+    Text,
+    Code,
+    Classification,
+    Amount,
+    Date,
+    Integer,
+    Number,
+    /// `is_ref` splits a cross-section pointer (a role, a result edge) from a
+    /// published identifier; the projection reads the two through different code.
+    Id { is_ref: bool },
+}
+
+/// The stems the results graph reads, by the channel each arrives on
+/// (`read_results`, `read_legacy_results`, `read_sdk01_results`).
+const RESULT_ID_STEMS: &[&str] =
+    &["BT-13713", "OPT-320", "OPT-315", "BT-13714", "OPT-310", "BT-150", "BT-3202", "OPT-300"];
+const RESULT_CODE_STEMS: &[&str] = &["BT-142", "BT-144", "BT-760"];
+const RESULT_DATE_STEMS: &[&str] = &["BT-145", "BT-1451"];
+const RESULT_AMOUNT_STEMS: &[&str] = &["BT-720", "BT-161"];
+const RESULT_NUMBER_STEMS: &[&str] = &["BT-759"];
+
+/// Does the projection read this field id on this channel — does the value have
+/// anywhere to go?
+///
+/// **This is the union the codebase had only ever written inside two test
+/// gates.** `every_de1_alias_target_is_a_field_the_projection_reads` and
+/// `ubl_grafts_are_all_mapped_or_ignored` each open-coded their own version, and
+/// neither was reachable from production, so nothing could COUNT what the fold
+/// drops — which is how 29,455 titleless r208 Tenders and whole eras of lot
+/// titles stood unnoticed until an external reviewer looked (issue 368). Both
+/// gates now call this, so the answer they enforce and the answer a diagnostic
+/// reports cannot drift apart.
+///
+/// DE-1.x alias sources resolve to their eForms target first: the notice layer
+/// keeps the publisher's `DE1-*` spelling on purpose (see [`DE1_FIELD_ALIASES`]),
+/// so a reader that skipped this step would call the entire eForms-DE 1.x
+/// vocabulary unread.
+///
+/// Deliberately does NOT model scope. A value can satisfy this and still be
+/// dropped because its Lot section is missing (`NoticeState::read`'s
+/// `lots.get_mut(key)` miss), so a `true` here means "the vocabulary knows this
+/// id", not "this particular row landed".
+pub fn has_destination(field_id: &str, channel: Channel) -> bool {
+    let field_id = DE1_FIELD_ALIASES
+        .iter()
+        .find(|(de1, _)| *de1 == field_id)
+        .map_or(field_id, |(_, target)| *target);
+    let stem = stem(field_id);
+    match channel {
+        Channel::Text => {
+            canonical_name(TEXTS, field_id).is_some()
+                || field_id == OJ_HEADING_FIELD
+                || field_id == ORG_NAME_FIELD
+                || ORG_NAME_FIELDS.contains(&field_id)
+                || SDK01_PARTY_NAME_FIELDS.contains(&field_id)
+        }
+        Channel::Amount => {
+            canonical_name(AMOUNTS, field_id).is_some()
+                || RESULT_AMOUNT_STEMS.contains(&stem)
+                || field_id.ends_with(AMOUNT_ELEMENT)
+        }
+        Channel::Classification => canonical_name(CLASSIFICATIONS, field_id).is_some(),
+        Channel::Date => {
+            canonical_name(DATES, field_id).is_some()
+                || PUBLICATION_DATE_FIELDS.contains(&field_id)
+                || DISPATCH_DATE_FIELDS.contains(&field_id)
+                || RESULT_DATE_STEMS.contains(&stem)
+                || field_id == SDK01_AWARD_DATE_FIELD
+        }
+        Channel::Code => {
+            field_id == SUBTYPE_FIELD
+                || field_id == ORG_COUNTRY_FIELD
+                || field_id == SDK01_RESULT_CODE_FIELD
+                || ORG_COUNTRY_FIELDS.contains(&field_id)
+                || SDK01_PARTY_COUNTRY_FIELDS.contains(&field_id)
+                || TAX_BASIS_FIELDS.contains(&field_id)
+                || ORIGINAL_LANG_FIELDS.contains(&field_id)
+                || RESULT_CODE_STEMS.contains(&stem)
+        }
+        Channel::Integer => {
+            LEGACY_BID_COUNT_FIELDS.contains(&field_id) || field_id.ends_with(AMOUNT_ELEMENT)
+        }
+        Channel::Number => RESULT_NUMBER_STEMS.contains(&stem),
+        // A pointer: roles and the result graph's edges.
+        Channel::Id { is_ref: true } => {
+            role_name(field_id).is_some() || RESULT_ID_STEMS.contains(&stem)
+        }
+        // A published identifier the projection keys or binds on.
+        Channel::Id { is_ref: false } => {
+            field_id == PROCEDURE_KEY_FIELD
+                || field_id == LOGICAL_NOTICE_FIELD
+                || field_id == PREVIOUS_NOTICE_FIELD
+                || field_id == ORG_IDENTIFIER_FIELD
+                || field_id == ORG_NATIONALID_FIELD
+                || field_id == SDK01_FOLDER_FIELD
+                || field_id == DE1_FOLDER_FIELD
+                || field_id == GROUP_ID_FIELD
+                || field_id == GROUP_MEMBER_FIELD
+                || LEGACY_OWN_NUMBER_FIELDS.contains(&field_id)
+                || RESULT_ID_STEMS.contains(&stem)
+        }
+    }
+}
+
+/// Whether ANY channel reads this field id — the question the DE-1.x alias gate
+/// asks, where the alias table names a target rather than a stored value.
+pub fn any_channel_reads(field_id: &str) -> bool {
+    [
+        Channel::Text,
+        Channel::Code,
+        Channel::Classification,
+        Channel::Amount,
+        Channel::Date,
+        Channel::Integer,
+        Channel::Number,
+        Channel::Id { is_ref: true },
+        Channel::Id { is_ref: false },
+    ]
+    .iter()
+    .any(|c| has_destination(field_id, *c))
+}
+
 /// Map a source field to its canonical name, matching the **full field id**
 /// first, then its [`stem`]. BT-/TED-/TXT- codes are keyed by stem (`BT-21` for
 /// `BT-21-Lot`); the DÖE sdk-0.1 dialect's path-shaped ids
@@ -5771,27 +5904,63 @@ mod tests {
     /// failure mode issue 85 was. Each target must be reachable by one of the
     /// canonical tables, the instant lists, the org/identity constants, or the
     /// results-graph stems.
+    /// The predicate the two gates below and the drop diagnostic all share.
+    /// Every case here is one the union has to get right for a COUNT of dropped
+    /// values to mean anything.
+    #[test]
+    fn has_destination_answers_per_channel_not_per_field() {
+        // The case that motivated it. `TED-TI_TEXT` is the OJ heading's CPV
+        // label in 23 languages (issue 368): the projection reads its sibling
+        // TED-TI_DOC as a last-resort title and reads this one nowhere.
+        assert!(!has_destination("TED-TI_TEXT", Channel::Text));
+        assert!(has_destination("TED-TI_DOC", Channel::Text));
+        // Stem matching: the tables key `BT-21`, the notices publish contexts.
+        assert!(has_destination("BT-21-Lot", Channel::Text));
+        assert!(has_destination("BT-21-Procedure", Channel::Text));
+        // …and the channel is what makes the answer meaningful. `role_name`
+        // accepts ANY `TED-` id, so on the pointer channel a legacy id reads,
+        // while the very same id has no text destination. A channel-blind
+        // predicate would call the whole titleless r208 era "read".
+        assert!(has_destination("TED-TI_TEXT", Channel::Id { is_ref: true }));
+        assert!(!has_destination("TED-TI_TEXT", Channel::Date));
+        assert!(!has_destination("TED-TI_TEXT", Channel::Amount));
+        // A DE-1.x alias resolves to its eForms target: the notice layer keeps
+        // the publisher's spelling, so without this step the entire eForms-DE
+        // vocabulary would read as dropped.
+        assert!(has_destination("DE1-ProcurementProject-Name", Channel::Text));
+        assert!(has_destination(DE1_FOLDER_FIELD, Channel::Id { is_ref: false }));
+        // Full-id keyed dialects, which the coarse stem cannot separate.
+        assert!(has_destination("SDK01-ProcurementProject-Name", Channel::Text));
+        assert!(has_destination("SDK01-ProcurementProject-Description", Channel::Text));
+        // Identity and the results graph, on their own channels.
+        assert!(has_destination(PROCEDURE_KEY_FIELD, Channel::Id { is_ref: false }));
+        assert!(has_destination("BT-720-Tender", Channel::Amount));
+        assert!(has_destination("BT-142-LotResult", Channel::Code));
+        assert!(has_destination("BT-759-LotResult", Channel::Number));
+        assert!(has_destination("OPT-320-LotResult", Channel::Id { is_ref: true }));
+        // Channels with no fact table at all: a code or a number that no
+        // vocabulary claims really has nowhere to go, and the diagnostic should
+        // say so rather than hide it (the UBL_PARSE_ONLY ledger's whole point).
+        assert!(!has_destination("UBL-AddressFormatCode", Channel::Code));
+        assert!(!has_destination("UBL-AwardCriterionWeightNumeric", Channel::Number));
+        // Nonsense is not read on any channel.
+        assert!(!any_channel_reads("NOT-A-FIELD-ID"));
+        assert!(!any_channel_reads(""));
+    }
+
+    /// Every DE-1.x alias names an eForms field the projection actually reads,
+    /// so the rewrite cannot point at a destination that does not exist.
     #[test]
     fn every_de1_alias_target_is_a_field_the_projection_reads() {
-        const RESULT_STEMS: &[&str] = &[
-            "BT-142", "BT-144", "BT-13713", "OPT-320", "OPT-315", "BT-759", "BT-760", "BT-720",
-            "BT-13714", "OPT-310", "BT-150", "BT-145", "BT-3202", "BT-161",
-        ];
-        const IDENTITY: &[&str] = &[PROCEDURE_KEY_FIELD, LOGICAL_NOTICE_FIELD, SUBTYPE_FIELD];
-        const ORG: &[&str] = &[ORG_NAME_FIELD, ORG_IDENTIFIER_FIELD, ORG_COUNTRY_FIELD];
-
         for (de1, target) in DE1_FIELD_ALIASES {
-            let known = canonical_name(TEXTS, target).is_some()
-                || canonical_name(AMOUNTS, target).is_some()
-                || canonical_name(CLASSIFICATIONS, target).is_some()
-                || canonical_name(DATES, target).is_some()
-                || PUBLICATION_DATE_FIELDS.contains(target)
-                || DISPATCH_DATE_FIELDS.contains(target)
-                || IDENTITY.contains(target)
-                || ORG.contains(target)
-                || role_name(target).is_some()
-                || RESULT_STEMS.contains(&stem(target));
-            assert!(known, "{de1} → {target}: the projection reads no such field");
+            // One predicate, shared with the diagnostic that counts what the fold
+            // drops: this gate used to open-code its own union, and an answer
+            // enforced in a test but unavailable to production is how a whole era
+            // of unread field ids went uncounted (issue 368).
+            assert!(
+                any_channel_reads(target),
+                "{de1} → {target}: the projection reads no such field"
+            );
             assert!(de1.starts_with("DE1-"), "{de1}: not a DE-1.x source id");
         }
     }
@@ -5816,10 +5985,7 @@ mod tests {
         assert!(ids.len() >= 50, "the graft inventory extraction broke: {} ids", ids.len());
 
         for id in &ids {
-            let mapped = canonical_name(TEXTS, id).is_some()
-                || canonical_name(AMOUNTS, id).is_some()
-                || canonical_name(CLASSIFICATIONS, id).is_some()
-                || canonical_name(DATES, id).is_some();
+            let mapped = any_channel_reads(id);
             let ignored = UBL_PARSE_ONLY.iter().any(|(i, _)| i == id);
             assert!(
                 mapped || ignored,
