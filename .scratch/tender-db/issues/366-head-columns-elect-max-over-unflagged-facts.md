@@ -157,6 +157,23 @@ repair job that recomputes head columns is exactly that shape again. Leaning to 
 epoch bump for that reason, run in a quiet window — but it should be decided with
 the re-fold's cost measured, not asserted.
 
+### Baseline for verifying the re-fold (read off prod 2026-09-08, code deployed but rows not yet re-folded)
+
+| tender | `current_value_eur_cents` | `current_deadline` | expected after re-fold |
+| --- | --- | --- | --- |
+| 34 | **−100** | 2025-10-02 | value drops (sentinel: negative) |
+| 43065 | **6,010,100,611,830,592** (€60 tn) | 2026-02-17 | value drops (over ceiling) |
+| 4490098 | **4,970,000,000,000,000,000** (€4.97e16) | 2011-04-08 | value drops (over ceiling) |
+| 3323836 | NULL | **3005-07-06** | deadline becomes 2005-06-15, and it leaves `status=open` |
+| 26 | 1 | 2023-11-28 | **unchanged** |
+
+Tender 26 is in the table on purpose: €0.01 for a procurement is implausible to a
+reader, and the rule deliberately does not catch it. A one-cent amount is not a
+form-width maximum and not a negative, and there is no evidence yet about what that
+class IS — a placeholder, a unit error, or a real nominal contract. Guessing a floor
+would be the same mistake as guessing a ceiling in the €10–100 bn band. If it turns
+out to matter it needs its own measurement, and this row is where to start.
+
 ### Still open in this issue
 
 Unit 4 (value bounds in `read.rs:855-871` excluding flagged amounts — the read side
