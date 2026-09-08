@@ -19,7 +19,7 @@ zip = { workspace = true }
 roxmltree = { workspace = true }
 encoding_rs = { workspace = true }
 serde = { workspace = true }
-serde_json = { workspace = true }
+serde_json = { workspace = true, features = ["raw_value"] }
 # Codec for the Phase-2 bucketed fold's on-disk notice-state buckets (issue 62).
 postcard = { workspace = true }
 # Raise RLIMIT_NOFILE for the sharded Phase-2 pre-pass (issue 66); FFI-only.
