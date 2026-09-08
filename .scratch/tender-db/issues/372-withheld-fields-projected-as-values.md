@@ -3,7 +3,8 @@
 Status: ready-for-agent — **unit 1 CORPUS-WIDE 2026-09-08 (job 818): 19,236 `-1.00` rows, residue
 **116** (0.6 %); `result_value` 99.57 % declared, but `estimated_value` **0 of 29** — a second cause
 wearing the same value, split out as unit 5, now DONE — publisher-invented sentinels with no withholding block, already handled by 366's negative rule and NOT to be labelled withheld. **Unit 2 DECIDED: option (b), a quality marker applied
-PER ROW conditioned on the notice's declaration, never as a blanket rule on the number.** Earlier: unit 1 sampled 2026-09-08 (see "Unit 1 — the census"): 8/8 `-1.00`
+PER ROW conditioned on the notice's declaration, never as a blanket rule on the number — and it must cover
+BOTH `tender_version_amounts` AND `tender_version_bids`, see "SCOPE CORRECTION".** Earlier: unit 1 sampled 2026-09-08 (see "Unit 1 — the census"): 8/8 `-1.00`
 rows are `result_value`, and 4/4 of their notices declare the withholding explicitly. The BT-195 code
 names the SOURCE field, which the projection's own `AMOUNTS` mapping already translates — so unit 2
 needs no new vocabulary.** Was: needs-triage (filed 2026-09-08, found by issue 366's sentinel sweep on
@@ -286,6 +287,44 @@ between them, so narrowing further just fragments the count.
 `field · source`. In-process the joins are already paid for, so the split is free, and the next weekly
 run answers the question rather than leaving a suggestive sample on the board. Recorded because the
 temptation was to write "predominantly DÖE" from four rows.
+
+## SCOPE CORRECTION (2026-09-08): the marker has a SECOND surface — `tender_version_bids`
+
+Found while starting unit 2, by tracing where the census's other withheld code actually lands. The two
+BT-195 codes the notices declare do **not** go to the same table:
+
+| withheld source field | code | canonical destination |
+| --- | --- | --- |
+| `BT-161` | `not-val` | `AMOUNTS` → **`result_value`** in `tender_version_amounts` |
+| **`BT-720`** | `win-ten-val` | **NOT in `AMOUNTS`** — routed at `project.rs:3875` into `raw.bids`, so it becomes a BID's own `cents` in **`tender_version_bids`** |
+
+`BT-720` is the winning tender value. It reaches the canonical layer through the issue-177 context
+routing, not through the amount table, so **section 11 has never seen it** — its query is
+`tender_version_amounts` only.
+
+**Measured, partially:** windowed probes of `tender_version_bids WHERE cents = -100` returned **184
+rows across 136 tenders** in three of four `tender_id` windows. The densest window (0–2,000,000) **hit
+the 10 s cap and was not retried**, so the true count is higher than 184 — this is a floor, not a
+total.
+
+### Why this matters for unit 2, not just unit 4
+
+Unit 2 as scoped ("mark `withheld` where a declaration names the field the fact came from") would fix
+`tender_version_amounts` and **leave every one of these bid rows asserting a −0.01 bid** — the same
+defect, one satellite over, and now a known one rather than a suspected one. The census's own evidence
+pointed here all along: notice 25390373 declared `BT-195(BT-720)-Tender` = `win-ten-val` **three times**
+(`#0/#1/#2`, one per winning tender), which is exactly the shape a per-bid withholding takes.
+
+So unit 2 covers BOTH satellites, or it is not the fix. The declaration lookup is the same mechanism —
+the BT-195 field id names the source field either way; only the destination table differs, and that
+difference is already encoded in the projection's own routing.
+
+### And the count goes into the instrument, as before
+
+The bounded route cannot total this (the dense window times out), so section 11 should carry a second
+query over `tender_version_bids` rather than leaving "≥184" on the board. Same reasoning as the
+`field · source` split one entry above: in-process the scan is affordable, and the next weekly run
+replaces a floor with a number.
 
 ## Done when
 
