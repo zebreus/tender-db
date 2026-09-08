@@ -431,7 +431,7 @@ stays recorded above in case the cost profile changes (a much larger `tender_ver
 lowered floor), and one part of it is still worth having: it is the only route that would let the
 magnitude floor come down far enough to open the low-magnitude blind spot.
 
-### The re-fold route is answered from outside this issue (2026-09-08)
+### ~~The re-fold route is answered from outside this issue~~ — RETRACTED, see below (2026-09-08)
 
 The undecided route above — `PROJECTION_EPOCH` bump versus a targeted repair job, for the ~16,000
 standing rows — is settled by a change on another issue rather than by anything here.
@@ -539,6 +539,40 @@ verification baseline above, so this is representable and served today.
 
 That leaves unit 5 (`@FMTVAL` versus element text, needing one gated archive-member read) as the only
 original unit still open, and the magnitude-ranked half of unit 6.
+
+### RETRACTION: 369 unit 2c does NOT bump `PROJECTION_EPOCH`, so this issue's re-fold route is STILL OPEN
+
+The section above concluded that this issue's standing ~16,000 rows could ride issue 369 unit 2c's
+epoch bump, so no repair job was needed. **That conclusion is withdrawn. It rested on issue 369's
+coupling 2 claiming the bump is required there, and reading the code says it is not.**
+
+`PROJECTION_EPOCH` gates exactly one thing (`crates/store/src/canonical.rs:8748`): whether a tender
+whose stored version chain is UNCHANGED may early-return. Its own doc states the condition — a bump is
+for when "the same notices now fold to different content", i.e. changed fold LOGIC over an unchanged
+grouping. Unit 2c changes the GROUPING, not the content of unchanged groups:
+
+- the three welded tenders lose their key entirely, so their notices form new groups under new tender
+  ids, folded fresh against an empty stored chain, and the old tenders are retired by
+  `retire_regrouped_nonlegacy_tenders` — none of that consults the epoch;
+- the ten-or-so correctly-grouped shaped tenders keep their keys AND their content, so early-returning
+  them is right;
+- a refused notice that joins an existing legacy component changes THAT component's stored chain, which
+  the `keep < stored.len()` comparison already catches — again not the epoch.
+
+So unit 2c needs no bump, and **the dilemma recorded further up is live again**: an epoch bump
+(measured in the constant's own doc at **6 h 02 m / 14.2 M version writes for a 2.69 M-notice cohort**,
+issue 179 — the whole corpus is larger) versus a targeted repair job that is a second implementation of
+the election and can drift from the fold's.
+
+Nothing about the two options changed; only the free ride disappeared. The drift argument still favours
+the bump, and its cost is now quantified rather than hand-waved, which is what the earlier note said
+the decision needed. **It remains an owner decision to schedule, not a side effect of another issue.**
+
+**Why this is recorded rather than edited away:** the false conclusion was mine, and it was reached by
+trusting another issue's prose instead of the code it described — the same mistake as the meta-gate
+correction on 369 (which claimed a test would go red when it cannot). Two for two in one session is a
+pattern worth naming: **an issue's recorded coupling is a hypothesis about the code, not a reading of
+it.**
 
 ### Still open in this issue
 

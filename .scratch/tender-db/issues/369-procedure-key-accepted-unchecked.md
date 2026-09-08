@@ -316,6 +316,33 @@ declaration rather than a re-grouping.
    is regenerated only for a deliberate, reviewed derived-layer change — which this is, so say so in
    the commit rather than quietly re-recording it.
 
+#### Correction to coupling 2, 2026-09-08: unit 2c does NOT need the epoch bump
+
+Coupling 2 says `PROJECTION_EPOCH` "must be bumped so standing tenders re-fold". **It must not, and
+bumping it would buy a 6-hour corpus rewrite for nothing.**
+
+`PROJECTION_EPOCH` gates one thing (`canonical.rs:8748`): whether a tender whose stored version chain is
+UNCHANGED may early-return. Its own doc gives the condition for a bump — "the same notices now fold to
+different content", i.e. changed fold logic over an unchanged grouping. Unit 2c changes the GROUPING:
+
+- the three welded tenders lose their key, so their notices form NEW groups under new ids and fold
+  against an empty stored chain; the old tenders are retired by `retire_regrouped_nonlegacy_tenders`;
+- the correctly-grouped shaped tenders keep key AND content, so early-returning them is correct;
+- a refused notice joining an existing legacy component changes that component's stored chain, which
+  the `keep < stored.len()` comparison already catches.
+
+None of those paths reads the epoch. The cost avoided is real: the constant's doc measures a bump at
+**6 h 02 m / 14.2 M version writes for a 2.69 M-notice cohort** (issue 179).
+
+**Knock-on:** issue 366 had recorded that its own standing-row re-fold could ride this bump. That is
+retracted there — 366's epoch-vs-repair decision is live again.
+
+**The golden claim in coupling 2 is conditional, not automatic.** The snapshot moves only if a FIXTURE
+carries a placeholder-shaped key whose notices name ≥3 distinct buyer sets. Units 2a and 2b both landed
+with the golden unmoved, which is evidence the fixture corpus holds no such key. Do not pre-authorise a
+regeneration: gate 2c, and if the snapshot does not move, that is the informative result (the change
+reaches only the welded class) rather than a step skipped.
+
 Buyer-key details settled by the same reading: the buyer role is `Procedure-Buyer` (eForms and
 eForms-DE 1.x, via the `DE1-ContractingParty-Party-PartyIdentification-ID` alias) or `buyer` (legacy
 TED `ADDRESS_CONTRACTING_BODY` / `…_ADDITIONAL` / `CA_CE_CONCESSIONAIRE_PROFILE`, and the DÖE sdk-0.1
