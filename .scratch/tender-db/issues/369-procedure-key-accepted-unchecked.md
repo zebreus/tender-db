@@ -111,6 +111,40 @@ other mechanism).
 
 Blast radius at the ≥3 threshold, from the table above: **3 tenders split, 10 untouched.**
 
+### Correction, same day: the prefix probe under-counted, and the miss argues FOR the rule
+
+The census above probed 30 fixed first blocks. That is a **lower bound, not a complete list** — it can
+only find keys whose first block is one of the 30. Sampling 796 distinct real `procedure_key`s off prod
+(six id slices, `LIMIT 400` each) and running a real shape predicate over them turned up one the probe
+had missed: **`00000001-2023-4000-a000-000000000001`** — tender 2, "Landkreis Göttingen - Beschaffung
+Fachverfahren Kf…", 2 versions, **1 buyer**. Hand-typed, obviously placeholder-shaped, and **correctly
+grouped**. Shape-only would have split it; the buyer test admits it. So the miss costs the census
+completeness and *earns* the two-part rule another witness: 14 shaped tenders known, still 3 welded.
+
+The complete corpus-wide list is not reachable from here — the predicate cannot be expressed in SQL
+cheaply and a scan of `tenders` is the class of read with no compliant on-box path
+(`docs/agents/prod-box-reads.md`). It arrives for free with unit 2: once the planner computes
+`key_shaped` per notice, the count is a grouped read, and unit 4's gauge reports it.
+
+### The shape predicate, chosen against real keys
+
+`distinct(payload) <= 6`, where *payload* is the 32 hex characters with the version nibble (block 3
+char 1) and variant nibble (block 4 char 1) dropped — those two are structurally fixed and would
+otherwise inflate the count on a genuine placeholder.
+
+Measured on the 796-key sample: it flags **exactly 2** keys, both genuine placeholders, **0 false
+positives**. That is not luck — a v4 UUID draws 30 random hex characters, so P(≤6 distinct) is
+vanishingly small; the predicate is safe by construction rather than by tuning. Alternatives measured
+on the same sample: `const_blocks>=3` and `periodic` flag only 1 (they miss
+`00000001-2023-…`, whose blocks are neither constant nor periodic), `maxrun>=8` flags the same 2 and
+is a reasonable belt-and-braces disjunct.
+
+Against the known keys: `00000000-…` → 1 distinct, `11111111-1111-…` → 1, `11111111-2222-4000-8111-123412341235`
+(welded, 11 buyers) → 6, `22222222-…` → 1, `aaaaaaaa-…` → 3, `00000001-2023-…` → 4. All six flagged.
+Rostock's `…444444444444` → 5 is flagged too and `…444444444450` → 7 is not — which does not matter,
+because both have ≤2 buyers and the buyer test admits them either way. **Shape being ragged at the
+edges is harmless precisely because it is only a pre-filter.**
+
 ### Why the shape pre-filter stays even though it cannot discriminate
 
 Buyer-disagreement alone is not safe corpus-wide: a **joint procurement** legitimately names several
