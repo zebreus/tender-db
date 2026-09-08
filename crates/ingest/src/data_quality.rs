@@ -842,6 +842,45 @@ pub fn sentinel_dates_sql() -> String {
     )
 }
 
+/// The `-1.00` amount rows, and how many of them sit in a notice that DECLARED a
+/// withholding (issue 372).
+///
+/// Issue 366's sweep found `-1.00` recurring across EUR, PLN, DKK and NOK beside a currency
+/// literally spelled `unpublished`, and a sampled census traced it: under BT-195/`FieldsPrivacy`
+/// the eForms SDK writes the code `unpublished` and the number **−1** when a buyer withholds a
+/// field. So `-1.00` is not a publisher convention — it is the SDK's withheld-value marker, and
+/// the notice says which field, why, and when it becomes publishable.
+///
+/// **The number this exists to produce is the RESIDUE**, `hits - in_withholding_notice`: a
+/// declared withholding can be marked precisely, whereas an UNDECLARED `-1` is a guess about
+/// somebody's intent and may deserve to stay quarantined instead. Issue 372 unit 2's disposition
+/// decision turns on which of those dominates, and 4-of-4 on a hand sample is not an answer.
+///
+/// **Deliberately weaker than the exact test, and the gap is stated.** This asks whether the
+/// notice declared ANY withholding, not whether it declared THIS field's. The exact form needs the
+/// `AMOUNTS` source→canonical mapping (`BT-161` → `result_value`, `project.rs:135`), which lives in
+/// Rust rather than in SQL — and unit 2 has it to hand at the point of the fix. Reading this as
+/// "declared" would overstate it; read it as "the notice was withholding something".
+///
+/// Affordable for a measured reason: the `WHERE a.cents = -100` scan is the same shape
+/// `sentinel_amounts_sql` already pays for (the whole whole-corpus phase measured ~128 s of job
+/// 816's 6,396 s), and the `EXISTS` is a two-column seek on `notice_sections(kind, notice_id)`
+/// per matched row — ~19,000 seeks, not a second scan.
+pub fn withheld_markers_sql() -> String {
+    "SELECT a.field AS field, COUNT(*) AS hits, \
+            SUM(CASE WHEN EXISTS ( \
+                  SELECT 1 FROM notice_sections s \
+                   WHERE s.kind = 'FieldsPrivacy' AND s.notice_id = v.caused_by_notice_id \
+                ) THEN 1 ELSE 0 END) AS in_withholding_notice, \
+            COUNT(DISTINCT a.tender_id) AS tenders \
+       FROM tender_version_amounts a \
+       JOIN tender_versions v ON v.tender_id = a.tender_id AND v.seq = a.seq \
+      WHERE a.cents = -100 \
+      GROUP BY a.field \
+      ORDER BY hits DESC"
+        .to_owned()
+}
+
 /// The queries that measure a population no `tender_id` window can slice, so the
 /// in-process job runs them ONCE against the whole corpus instead of per window
 /// (issue 246). Distinct from [`unwindowed_labels`], which is for a query that
@@ -861,6 +900,8 @@ pub fn whole_corpus_queries() -> Vec<(String, String)> {
         // docs carry the argument.
         ("sentinel_amounts".to_owned(), sentinel_amounts_sql()),
         ("sentinel_dates".to_owned(), sentinel_dates_sql()),
+        // Issue 372: the withheld-marker residue.
+        ("withheld_markers".to_owned(), withheld_markers_sql()),
     ]
 }
 
@@ -1273,6 +1314,18 @@ pub struct SentinelRow {
     pub tenders: u64,
 }
 
+/// One canonical amount field's `-1.00` rows, and how many sat in a notice that declared a
+/// withholding (issue 372). The interesting number is the difference.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct WithheldMarkerRow {
+    pub field: String,
+    pub hits: u64,
+    /// Rows whose notice declared SOME `FieldsPrivacy` withholding — not necessarily this
+    /// field's. See [`withheld_markers_sql`] for why the exact test lives in unit 2 instead.
+    pub in_withholding_notice: u64,
+    pub tenders: u64,
+}
+
 /// The TED↔DÖE merge tally.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Merge {
@@ -1305,6 +1358,8 @@ pub struct Report {
     pub sentinel_amounts: Vec<SentinelRow>,
     /// Published dates repeating outside the plausible range (issue 366).
     pub sentinel_dates: Vec<SentinelRow>,
+    /// The `-1.00` withheld-marker rows per field, with their declared share (issue 372).
+    pub withheld_markers: Vec<WithheldMarkerRow>,
     /// The longest version chain in the corpus (`MAX(tenders.current_seq)`) —
     /// the fold-cost tripwire (issue 92). 0 when unmeasured or the layer is
     /// empty; the render distinguishes the two via [`Report::unmeasured`].
@@ -1380,6 +1435,8 @@ pub struct Raw {
     /// `[field, instant, hits, tenders]` per repeated implausible DAY (issue 366) — the
     /// instant is the day's earliest member, standing for the whole day.
     pub sentinel_dates: Rows,
+    /// `[field, hits, in_withholding_notice, tenders]` per amount field (issue 372).
+    pub withheld_markers: Rows,
     /// Labels whose query never ran (issue 230), in the order collected.
     pub unmeasured: Vec<String>,
 }
@@ -1431,6 +1488,7 @@ impl Raw {
             longest_chain: take("longest_chain", &mut unmeasured)?,
             sentinel_amounts: take("sentinel_amounts", &mut unmeasured)?,
             sentinel_dates: take("sentinel_dates", &mut unmeasured)?,
+            withheld_markers: take("withheld_markers", &mut unmeasured)?,
             unmeasured,
         })
     }
@@ -1603,6 +1661,16 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         longest_chain,
         sentinel_amounts: sentinel(&raw.sentinel_amounts),
         sentinel_dates: sentinel(&raw.sentinel_dates),
+        withheld_markers: raw
+            .withheld_markers
+            .iter()
+            .map(|r| WithheldMarkerRow {
+                field: as_str(r.first()),
+                hits: as_u64(r.get(1)),
+                in_withholding_notice: as_u64(r.get(2)),
+                tenders: as_u64(r.get(3)),
+            })
+            .collect(),
         unmeasured: raw.unmeasured.clone(),
     }
 }
@@ -2037,6 +2105,43 @@ pub fn render_text(report: &Report) -> String {
         group(16_000),
         group(15_529),
     );
+    let _ = writeln!(
+        out,
+        "\n== 11. Withheld-marker amounts (`-1.00` rows and their declared share — issue 372) =="
+    );
+    if report.unmeasured.iter().any(|l| l == "withheld_markers") {
+        let _ = writeln!(out, "  UNMEASURED — the `withheld_markers` query did not run.");
+    } else if report.withheld_markers.is_empty() {
+        let _ = writeln!(out, "  none — no amount row holds exactly -1.00.");
+    } else {
+        let _ = writeln!(
+            out,
+            "  {:<24}{:>12}{:>16}{:>10}{:>12}",
+            "field", "rows", "in-wh-notice", "residue", "tenders"
+        );
+        for r in &report.withheld_markers {
+            let _ = writeln!(
+                out,
+                "  {:<24}{:>12}{:>16}{:>10}{:>12}",
+                r.field,
+                group(r.hits),
+                group(r.in_withholding_notice),
+                group(r.hits.saturating_sub(r.in_withholding_notice)),
+                group(r.tenders),
+            );
+        }
+        let _ = writeln!(
+            out,
+            "  `-1.00` is the eForms SDK's WITHHELD-value marker, not a publisher convention: under \
+             BT-195/`FieldsPrivacy` a withheld field is published as the code `unpublished` and the \
+             number -1, with the reason and the date it becomes publishable beside it (issue 372). \
+             `residue` is the number to read — a DECLARED withholding can be marked precisely, \
+             while an undeclared -1 is a guess about intent and may deserve quarantine instead. \
+             `in-wh-notice` counts notices withholding SOMETHING, not necessarily this field: the \
+             exact test needs the source→canonical mapping, which lives in Rust, so it belongs to \
+             372 unit 2 rather than to this SQL."
+        );
+    }
     out
 }
 
@@ -2407,6 +2512,19 @@ pub fn render_json(report: &Report) -> String {
         // Issue 366's sentinel discovery sweep. The thresholds ride along because a
         // listing read six months from now must say what region it covered — a later
         // run with a different floor is not comparable to this one.
+        "withheld_markers": report
+            .withheld_markers
+            .iter()
+            .map(|r| json!({
+                "field": r.field,
+                "rows": r.hits,
+                "in_withholding_notice": r.in_withholding_notice,
+                // Precomputed: the residue is the number consumers want, and deriving it in
+                // every consumer is how two of them come to disagree about it.
+                "residue": r.hits.saturating_sub(r.in_withholding_notice),
+                "tenders": r.tenders,
+            }))
+            .collect::<Vec<Value>>(),
         "repeated_implausible": {
             "min_repeats": SENTINEL_MIN_REPEATS,
             "date_min_repeats": SENTINEL_DATE_MIN_REPEATS,
@@ -2574,6 +2692,7 @@ mod tests {
             longest_chain: 3_282,
             sentinel_amounts: vec![],
             sentinel_dates: vec![],
+            withheld_markers: vec![],
             unmeasured: vec![],
         };
         let entry = headline_history_entry(&report, 1_700_000_000);
@@ -2838,6 +2957,8 @@ mod tests {
                 // The sentinel discovery sweep (issue 366).
                 "sentinel_amounts",
                 "sentinel_dates",
+                // The withheld-marker residue (issue 372).
+                "withheld_markers",
             ]
         );
     }
@@ -3022,6 +3143,7 @@ mod tests {
             ("longest_chain".to_owned(), Some(vec![])),
             ("sentinel_amounts".to_owned(), Some(vec![])),
             ("sentinel_dates".to_owned(), Some(vec![])),
+            ("withheld_markers".to_owned(), Some(vec![])),
         ])
         .expect("labelled");
         let text = render_text(&assemble("http://x", &raw));
@@ -3457,6 +3579,7 @@ mod tests {
             // either implausible tail, which is the state this report hopes to describe.
             ("sentinel_amounts".to_owned(), Some(vec![])),
             ("sentinel_dates".to_owned(), Some(vec![])),
+            ("withheld_markers".to_owned(), Some(vec![])),
         ];
         let raw = Raw::from_labelled(results).expect("labelled");
         let report = assemble("http://x", &raw);
