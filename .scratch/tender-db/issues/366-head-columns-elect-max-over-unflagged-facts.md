@@ -174,12 +174,176 @@ class IS — a placeholder, a unit error, or a real nominal contract. Guessing a
 would be the same mistake as guessing a ceiling in the €10–100 bn band. If it turns
 out to matter it needs its own measurement, and this row is where to start.
 
+### The sentinel list was derived by CONFIRMING guesses, not by discovery — so unit 6 became a detector
+
+Asked directly whether the data had been reviewed for MORE sentinels, the honest answer was no. Every
+entry in Leg A and Leg B above came from testing a hypothesis somebody already held — negatives,
+all-nines runs, round powers of ten, zero. That method cannot find a shape nobody imagined, and the
+list is short enough that assuming it is complete would be an unfounded claim. Two sweeps then
+established that the missing instrument was harder to build than expected, and both failures are worth
+keeping because each one is a trap that will re-present.
+
+**Sweep 1 — negative, and the instrument was the reason.** A frequency sweep of the head column:
+
+```sql
+SELECT current_value_eur_cents AS cents, count(*) AS tenders FROM tenders
+ WHERE current_value_eur_cents > 100000000
+ GROUP BY current_value_eur_cents HAVING count(*) >= 40 ORDER BY tenders DESC LIMIT 30
+```
+
+Top repeats: €2 M ×10,114, €1.2 M ×8,908, €1.5 M ×7,996, €3 M ×6,337, €4 M ×5,929 — genuine budgets
+clustering on round numbers, no sentinel among them. **But the column is CONVERTED.** A PLN or HUF
+sentinel is multiplied by a rate before it lands there, so it arrives as a non-round EUR figure and
+cannot cluster at all. The sweep was structurally incapable of finding what it was looking for, and it
+returned a clean-looking result while being so. A negative result from an instrument that cannot
+register the signal is not evidence.
+
+**Sweep 2 — the corrected query has no bounded route.** On published amounts instead:
+
+```sql
+SELECT currency, cents, count(*) AS rows FROM tender_version_amounts
+ WHERE cents > 1000000000 GROUP BY currency, cents HAVING count(*) >= 25 ORDER BY rows DESC LIMIT 35
+```
+
+`{"error":{"message":"query exceeded the 10s time limit","status":408}}`. The only index on
+`tender_version_amounts` is `(tender_id, seq)` — there is no index on `cents` or `currency`, so any
+value-frequency query is a full table scan. **Not retried, per `docs/agents/prod-box-reads.md`:** the
+cap bounds the wait, not the work, and turso cannot interrupt a statement, so each retry stacks another
+uninterruptible scan. Nor is there a compliant workaround — the snapshot ring was removed in August, so
+corpus-scale scans have no ad-hoc on-box path at all.
+
+**Which is what makes this a build rather than a query.** The rule's own scope note says the app reading
+its own database in-process is not covered by it — that is the service doing its job. So the sweep
+belongs in the weekly data-quality report, and it now is one: two whole-corpus queries,
+`sentinel_amounts` and `sentinel_dates`, rendering as report section 10 "Repeated implausible values".
+It is also the better answer than a one-off: sources publish new junk continuously, so "are there more
+sentinels" is a standing question and a single sweep would only ever have answered it for one day.
+
+**The design, and the two constraints that shaped it:**
+
+- **Ranked by REPETITION inside the implausible tail, not by magnitude.** Sweep 1's real lesson is that
+  frequency alone is not a sentinel detector: genuine round budgets dominate the top of a frequency
+  ranking at every magnitude, so the discriminator has to be implausibility, with frequency ranking
+  *within* it. A value carried by thousands of rows at a magnitude no procurement reaches is a sentinel
+  whether or not anyone predicted its shape — which is the discovery property the guess-confirming
+  method lacked.
+- **The floor exists for hash state, and it is a real limitation.** `GROUP BY currency, cents` holds one
+  entry per DISTINCT value; over the full corpus that is millions of them, which is issue 278's state
+  blow-up and issue 337's leaked temp database. So amounts are swept at/above 1e11 cents (1 bn major
+  units) plus **all** negatives (~15,650 rows, small enough to group unbounded). **A low-magnitude
+  sentinel is therefore invisible to this**, and that gap cannot be closed by widening the floor — it
+  needs a different discriminator, and it is recorded below as open rather than papered over.
+- **Whole-corpus by necessity, not by nature.** The population *is* window-sliceable, but
+  `HAVING COUNT(*) >= 10` is not: a value repeating nine times in each of 25 windows passes the corpus
+  test and fails every window's. A windowed form would silently under-report exactly the values it
+  exists to find — and would do it invisibly, as a shorter listing. A test pins both labels out of
+  `windowed_queries`.
+- **Dates were never swept at all.** `3005-07-06` reached this issue by being handed over in a bug
+  report, not by being found. `sentinel_dates` sweeps both tails — before 1990-01-01 (where an
+  epoch-zero default or a century typo lands) and more than ten years past the run (mirroring
+  `DEADLINE_HORIZON_SECS`, so the detector looks where the election now refuses).
+- **`tenders` beside `rows`.** One Tender revised 90 times and 9,000 Tenders sharing a placeholder both
+  produce a large row count and want completely different fixes; `hits` alone cannot tell them apart.
+
+Two traps caught while building it, both silent-failure shaped:
+
+1. **`strftime('%s','now')` returns TEXT and SQLite orders every number below every string**, so
+   `utc_seconds > strftime(…)` is always-false and the date sweep would have reported a clean corpus
+   forever. The arithmetic (`+ SECS`) forces numeric affinity and is load-bearing rather than cosmetic.
+   `fresh_holds_sql` has been correct for the same reason since issue 246, without the reason written
+   down. Now pinned by a test.
+2. **`as_u64` clamps negatives to zero**, which would have erased the largest sentinel class in the
+   corpus (−1.00, 15,529 tenders) on its way through assembly and rendered it as a harmless `0.00`. A
+   signed reader (`as_i64`) is the fix; a test asserts the sign survives assembly *and* render.
+
+The listing is deliberately CANDIDATES, not a verdict: it says what has earned a look, and a value's
+disposition — a new leg in `sentinel_amount`, a wider horizon, or a note here that the value is genuine
+— stays a decision. When the listing is full at 40 it says so, so a truncated tail is never read as the
+whole of one; and a failed query renders `UNMEASURED` rather than "none found", because for a detector
+those two claims being confused is the worst available failure.
+
+### First real discovery: two date-sentinel shapes nobody had guessed (probe, 2026-09-08)
+
+The amount tail has no bounded route, but the DATE tail does, and it was sitting there unused:
+`tenders.current_deadline` is **indexed** (`tenders_current_deadline`) and, unlike
+`current_value_eur_cents`, it is **not converted** — it is raw utc seconds. So a frequency sweep of
+both deadline tails is an indexed range seek, bounded, and legal to run per `prod-box-reads.md`. Run
+before deploying the detector, and it changed the detector.
+
+**Far tail (beyond the ten-year horizon), grouped by DAY:**
+
+| day | tenders | | day | tenders |
+| --- | --- | --- | --- | --- |
+| **2099-12-31** | **14** | | 2038-12-31 | 3 |
+| **2037-12-31** | **12** | | 2038-12-01 | 3 |
+| 2040-12-31 | 4 | | 2038-07-01 | 3 |
+| 2039-08-31 | 4 | | 2999-12-31 | 2 |
+| 2037-01-01 | 4 | | 2050-12-31, 2036-12-31, 2043-05-31, 2040-12-30, 2039-01-01, 2050-04-30 | 2 each |
+
+Two shapes, **neither of them in the guess-derived list**:
+
+1. **Far-year 31 December.** 2099-12-31, 2040-12-31, 2038-12-31, 2050-12-31, 2036-12-31, 2999-12-31,
+   and 2040-12-30 beside it. A "no real deadline" convention, exactly parallel to the all-nines
+   form-width maximum on the amount side but expressed as a calendar rather than as digits.
+2. **A 2037–2038 concentration** — 2037-12-31 ×12, 2037-01-01 ×4, 2038-12-01, 2038-07-01, 2038-12-31,
+   2039-01-01. This is the **32-bit epoch ceiling**: 2^31 seconds lands on 2038-01-19, so a system
+   capping at its maximum representable date emits late 2037 and 2038. Nobody would have guessed this
+   one, and it is the clearest vindication of building a detector instead of extending a list.
+
+**Near tail (before 1990-01-01): a clean negative.** Exactly four rows, every one a singleton —
+1970-01-01, 0206-06-03, 0025-02-01, 0016-06-09. These are typos and epoch-zero accidents, not a
+convention, and no repeated sentinel lives there. Worth recording as a measured negative so nobody
+re-derives it: the pre-1990 tail needs no rule.
+
+### The probe found a defect in the detector, before deploy rather than after
+
+`sentinel_dates_sql` originally grouped by exact `utc_seconds`. **2099-12-31's 14 tenders are spread
+across several times of day** (00:00, 10:00, 11:59, 23:59 …) and its largest single SECOND holds only
+**4**. With `HAVING COUNT(*) >= 10` on exact instants, the strongest date cluster in the corpus would
+have returned **nothing** — a detector silent precisely where it matters, which is the worst failure
+mode available to one and indistinguishable from a clean corpus.
+
+Fixed before the gate re-ran, and the fix is now the pinned property:
+
+- **`GROUP BY d.field, date(d.utc_seconds, 'unixepoch')`** — a date sentinel is a DAY a system emits;
+  the time of day is whatever the source's formatter appended. `MIN(utc_seconds)` is the group's
+  representative instant: every member shares the group's `date(…)`, so the minimum renders to exactly
+  that day, correct by construction, and the row shape stays an `i64` like the amount half.
+- **`SENTINEL_DATE_MIN_REPEATS = 3`**, separate from the amount threshold of 10. The populations differ
+  by three orders of magnitude — negatives alone are ~15,650 amount rows, while the entire far-future
+  deadline tail is ~100 tenders. At 10 the date listing would have reported clean while 2040-12-31,
+  2038-12-01 and 2038-07-01 sat in it.
+- A test asserts the day-grouping is present AND that the exact-instant form is absent, with the
+  measured reason in the comment, so the silent form cannot come back as a "simplification".
+
+**Caveat on the numbers above:** they are per-TENDER, off the head column, whereas the detector sweeps
+`tender_version_dates` — every version, every date field — so its counts will be higher than these and
+the two are not directly comparable. These establish the SHAPES and the threshold; the report's own
+first run establishes the corpus-wide magnitudes.
+
 ### Still open in this issue
 
 Unit 4 (value bounds in `read.rs:855-871` excluding flagged amounts — the read side
-still compares against the head column with no floor), unit 5 (`@FMTVAL` versus
-element text, which needs one archive-member read), and unit 6 (267's measure
-becoming a per-currency top-N signal).
+still compares against the head column with no floor) and unit 5 (`@FMTVAL` versus
+element text, which needs one archive-member read).
+
+**Unit 6 is partly done.** The repetition-ranked detector above is built and is the
+half that answers "what shapes exist that nobody has named". Unit 6's original
+wording — a per-currency top-N by MAGNITUDE — is a different listing and is still
+open: it would show the €4.97e16 rows individually, which repetition ranking never
+will because each of them is unique. Cheap to add (a second ordering over the same
+bounded tail) and worth doing when someone next reads section 10.
+
+**Two gaps the detector cannot close, stated so they are not mistaken for covered:**
+
+1. **Low-magnitude sentinels.** Below the 1e11-cent floor, frequency ranking is
+   dominated by genuine round budgets (measured, sweep 1), and the floor cannot be
+   lowered without the hash-state blow-up. Finding a sentinel there needs a
+   different discriminator — the tender-amount-versus-lot-sum ratio is the most
+   promising, and it is the same signal unit 5 needs for the €10–100 bn band.
+2. **The re-fold route for the ~16,000 standing rows** is still undecided (above),
+   so section 10's first readings describe a corpus the election has not yet been
+   applied to retroactively. Read it as a source census, not as a defect count.
 
 ## Done when
 

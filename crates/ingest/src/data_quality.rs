@@ -699,6 +699,131 @@ fn amount_plausibility_template(scope: &str) -> String {
     )
 }
 
+/// Amounts at or above this many cents — 1,000,000,000 major units — are the region
+/// [`sentinel_amounts_sql`] looks in. The threshold is on the PUBLISHED figure rather
+/// than the EUR conversion, and that is the whole point: `tenders.current_value_eur_cents`
+/// is converted, so a PLN or HUF sentinel is smeared into a non-round EUR figure and
+/// cannot cluster there at all. Measured 2026-09-08 — a frequency sweep of the converted
+/// column returned nothing but genuine round budgets (€2 M ×10,114, €1.2 M ×8,908,
+/// €1.5 M ×7,996). The instrument was the reason it found nothing, not the corpus.
+const SENTINEL_AMOUNT_FLOOR: i64 = 100_000_000_000;
+
+/// How many satellite rows a value must repeat on to be listed. A sentinel's signature
+/// is REPETITION: one implausible figure is a typo in one notice, which section 8's
+/// per-era rates already count. Filtered in SQL rather than rendered and skipped, so
+/// the listing cap is spent on candidates instead of on noise.
+const SENTINEL_MIN_REPEATS: u64 = 10;
+
+/// The date sweep's own repeat threshold, far lower than [`SENTINEL_MIN_REPEATS`] because
+/// the populations differ by three orders of magnitude: negatives alone are ~15,650 amount
+/// rows, while the ENTIRE far-future deadline tail is on the order of a hundred tenders
+/// (measured 2026-09-08 over the indexed `tenders.current_deadline`, both tails). At 10 the
+/// date listing would report a clean corpus while 2040-12-31, 2038-12-01 and 2038-07-01 sat
+/// in it. A missed sentinel costs more here than an extra candidate row, which the cap and
+/// the ordering already bound.
+const SENTINEL_DATE_MIN_REPEATS: u64 = 3;
+
+/// At most this many values per sentinel listing. Both queries rank by repetition, so
+/// the cap keeps the values worth a rule — and a full listing SAYS it is full (see
+/// [`render_sentinels`]) rather than presenting a truncated tail as the whole of it.
+const SENTINEL_LISTING_CAP: usize = 40;
+
+/// The far edge of the plausible date range: ten years past the run. Mirrors
+/// `store::canonical::DEADLINE_HORIZON_SECS`, which bounds the head-deadline election,
+/// so the detector looks exactly where the election now refuses. Relative to the run
+/// rather than to each notice's `published_at` (which is what the election uses) —
+/// coarser, and enough for a detector whose job is to rank candidates.
+const SENTINEL_DATE_HORIZON_SECS: i64 = 10 * 365 * 86_400;
+
+/// The near edge: 1990-01-01. TED's own record starts in the 1990s, so an earlier date
+/// is a placeholder, an epoch-zero default or a century typo rather than a procurement
+/// date.
+const SENTINEL_DATE_FLOOR: i64 = 631_152_000;
+
+/// Published amounts that REPEAT inside the implausible tail (issue 366).
+///
+/// The standing sentinel list — negatives, all-nines maxima, figures past €100 bn — was
+/// derived by CONFIRMING four guesses, so by construction it holds only shapes somebody
+/// already imagined. This is the discovery instrument instead: group the tail by its
+/// published `(currency, cents)` and rank by how often each value occurs. A value
+/// carried by thousands of rows at a magnitude no procurement reaches is a sentinel
+/// whether or not anyone predicted its shape.
+///
+/// **Why the tail rather than the whole column.** The hash state of `GROUP BY currency,
+/// cents` is one entry per DISTINCT value, and over the full corpus that is millions of
+/// them — the state blow-up issue 278 met, and issue 337's leaked temp database. The
+/// floor bounds the state to the few thousand distinct values above it. The cost of the
+/// bound is stated rather than hidden: this cannot see a LOW-magnitude sentinel. In that
+/// region a frequency ranking is dominated by genuine round budgets anyway (measured —
+/// see [`SENTINEL_AMOUNT_FLOOR`]), so frequency alone would not identify one there; it
+/// would need a different discriminator, which is left as the open half of issue 366.
+///
+/// Negatives are in scope at EVERY magnitude: the class is ~15,650 rows corpus-wide, small
+/// enough to group without a floor, and `-1.00` alone accounts for 15,529 of them.
+///
+/// Whole-corpus by necessity rather than by nature. The population is window-sliceable
+/// (an amount row belongs to exactly one version), but `HAVING COUNT(*) >= n` is NOT: a
+/// value repeating nine times in each of 25 windows passes the corpus test and fails
+/// every window's. A windowed form would silently under-report precisely the values it
+/// exists to find, which is why this sits here and not in [`windowed_queries`].
+pub fn sentinel_amounts_sql() -> String {
+    format!(
+        "SELECT a.currency AS currency, a.cents AS cents, COUNT(*) AS hits, \
+                COUNT(DISTINCT a.tender_id) AS tenders \
+           FROM tender_version_amounts a \
+          WHERE a.cents < 0 OR a.cents >= {SENTINEL_AMOUNT_FLOOR} \
+          GROUP BY a.currency, a.cents \
+         HAVING COUNT(*) >= {SENTINEL_MIN_REPEATS} \
+          ORDER BY hits DESC \
+          LIMIT {SENTINEL_LISTING_CAP}"
+    )
+}
+
+/// Published dates that REPEAT outside the plausible range (issue 366) — the same
+/// instrument as [`sentinel_amounts_sql`], pointed at the other column family whose
+/// head election takes a `.max()`.
+///
+/// This half was never swept at all. `3005-07-06` reached issue 366 by being handed over
+/// in a bug report, not by being found, and a `2099-12-31` or `9999-12-31` cluster is the
+/// same defect class with nothing looking for it. The floor catches the other tail, where
+/// an epoch-zero default (`1970-01-01`) or a century typo lands.
+///
+/// **Grouped by DAY, not by instant** — and that distinction is the whole difference
+/// between a working detector and a silent one. Measured 2026-09-08 against the indexed
+/// `tenders.current_deadline`: the strongest cluster in the corpus is 2099-12-31 with 14
+/// tenders, but they are spread over several times of day (00:00, 10:00, 11:59, 23:59…)
+/// and the largest single SECOND holds only 4. An exact-instant grouping with any useful
+/// threshold returns nothing from the very cluster it exists to find. A date sentinel is a
+/// DAY that a system emits; the time of day is whatever the source's formatter appended.
+///
+/// The two shapes that grouping revealed, neither of which anyone had guessed:
+/// **far-year 31 December** (2099, 2040, 2038, 2050, 2036, 2999 — a "no real deadline"
+/// convention) and a **2037–2038 concentration**, which is the 32-bit epoch ceiling:
+/// 2^31 seconds lands on 2038-01-19, so a system capping at its maximum representable
+/// date emits late 2037 and 2038.
+///
+/// `MIN(utc_seconds)` is the group's representative instant. Every member shares the
+/// group's `date(…)`, so the minimum renders to exactly that day — correct by
+/// construction, and it keeps the row shape an `i64` like the amount half.
+///
+/// `strftime('%s','now')` returns TEXT, and SQLite orders every number below every
+/// string — so the arithmetic is load-bearing, not cosmetic: `+ SECS` forces numeric
+/// affinity and makes the comparison mean what it reads as. Without it the predicate is
+/// silently always-false. [`fresh_holds_sql`] is correct for the same reason.
+pub fn sentinel_dates_sql() -> String {
+    format!(
+        "SELECT d.field AS field, MIN(d.utc_seconds) AS instant, COUNT(*) AS hits, \
+                COUNT(DISTINCT d.tender_id) AS tenders \
+           FROM tender_version_dates d \
+          WHERE d.utc_seconds < {SENTINEL_DATE_FLOOR} \
+             OR d.utc_seconds > strftime('%s','now') + {SENTINEL_DATE_HORIZON_SECS} \
+          GROUP BY d.field, date(d.utc_seconds, 'unixepoch') \
+         HAVING COUNT(*) >= {SENTINEL_DATE_MIN_REPEATS} \
+          ORDER BY hits DESC \
+          LIMIT {SENTINEL_LISTING_CAP}"
+    )
+}
+
 /// The queries that measure a population no `tender_id` window can slice, so the
 /// in-process job runs them ONCE against the whole corpus instead of per window
 /// (issue 246). Distinct from [`unwindowed_labels`], which is for a query that
@@ -713,6 +838,11 @@ pub fn whole_corpus_queries() -> Vec<(String, String)> {
         // no GROUP BY, no hash state (the 278 turso lesson), and per-window
         // maxima don't SUM so this cannot ride the windowed machinery.
         ("longest_chain".to_owned(), "SELECT MAX(current_seq) FROM tenders".to_owned()),
+        // The sentinel discovery sweep (issue 366). Here rather than in
+        // `windowed_queries` because a `HAVING` cannot be windowed — the builders'
+        // docs carry the argument.
+        ("sentinel_amounts".to_owned(), sentinel_amounts_sql()),
+        ("sentinel_dates".to_owned(), sentinel_dates_sql()),
     ]
 }
 
@@ -1107,6 +1237,24 @@ pub struct FreshHoldRow {
     pub newest: u64,
 }
 
+/// One value the sentinel sweep found repeating in an implausible tail (issue 366).
+///
+/// Two kinds share the shape: an amount (`scope` = currency, `raw` = published cents)
+/// and a date (`scope` = the date field, `raw` = utc seconds). `raw` is SIGNED because
+/// both tails run below zero — a negative amount and a pre-epoch date are each a live
+/// class, and [`as_u64`] would clamp them to 0 and hide exactly the rows that matter.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SentinelRow {
+    pub scope: String,
+    pub raw: i64,
+    /// Satellite rows carrying the value, across every version.
+    pub hits: u64,
+    /// Distinct Tenders among them — what separates ONE Tender revised 90 times from
+    /// 9,000 Tenders each publishing the same placeholder. The two want different
+    /// fixes, and `hits` alone cannot tell them apart.
+    pub tenders: u64,
+}
+
 /// The TED↔DÖE merge tally.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Merge {
@@ -1134,6 +1282,11 @@ pub struct Report {
     pub presence: Vec<PresenceRow>,
     /// Amount plausibility per era (issue 267).
     pub plausibility: Vec<PlausibilityRow>,
+    /// Published amounts repeating in the implausible tail (issue 366), most-repeated
+    /// first.
+    pub sentinel_amounts: Vec<SentinelRow>,
+    /// Published dates repeating outside the plausible range (issue 366).
+    pub sentinel_dates: Vec<SentinelRow>,
     /// The longest version chain in the corpus (`MAX(tenders.current_seq)`) —
     /// the fold-cost tripwire (issue 92). 0 when unmeasured or the layer is
     /// empty; the render distinguishes the two via [`Report::unmeasured`].
@@ -1157,6 +1310,15 @@ fn as_u64(cell: Option<&Value>) -> u64 {
             .or_else(|| v.as_i64().map(|i| i.max(0) as u64))
             .or_else(|| v.as_f64().map(|f| f.max(0.0) as u64))
             .unwrap_or(0),
+        None => 0,
+    }
+}
+
+/// Read a JSON cell as a SIGNED value. [`as_u64`] clamps at zero, which is right for a
+/// count and wrong for a published amount or instant — the negative tails are the point.
+fn as_i64(cell: Option<&Value>) -> i64 {
+    match cell {
+        Some(v) => v.as_i64().or_else(|| v.as_f64().map(|f| f as i64)).unwrap_or(0),
         None => 0,
     }
 }
@@ -1195,6 +1357,11 @@ pub struct Raw {
     pub amount_plausibility: Rows,
     /// The single-row `MAX(current_seq)` fold-cost tripwire (issue 92).
     pub longest_chain: Rows,
+    /// `[currency, cents, hits, tenders]` per repeated implausible amount (issue 366).
+    pub sentinel_amounts: Rows,
+    /// `[field, instant, hits, tenders]` per repeated implausible DAY (issue 366) — the
+    /// instant is the day's earliest member, standing for the whole day.
+    pub sentinel_dates: Rows,
     /// Labels whose query never ran (issue 230), in the order collected.
     pub unmeasured: Vec<String>,
 }
@@ -1244,6 +1411,8 @@ impl Raw {
             factless: take("factless", &mut unmeasured)?,
             amount_plausibility: take("amount_plausibility", &mut unmeasured)?,
             longest_chain: take("longest_chain", &mut unmeasured)?,
+            sentinel_amounts: take("sentinel_amounts", &mut unmeasured)?,
+            sentinel_dates: take("sentinel_dates", &mut unmeasured)?,
             unmeasured,
         })
     }
@@ -1387,6 +1556,20 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
 
     let longest_chain = raw.longest_chain.first().map(|r| as_u64(r.first())).unwrap_or(0);
 
+    // Both sentinel listings arrive ranked by the SQL (most-repeated first) and stay in
+    // that order rather than being re-sorted: "which value has earned a rule" is the
+    // question, and repetition is the answer to it.
+    let sentinel = |rows: &Rows| -> Vec<SentinelRow> {
+        rows.iter()
+            .map(|r| SentinelRow {
+                scope: as_str(r.first()),
+                raw: as_i64(r.get(1)),
+                hits: as_u64(r.get(2)),
+                tenders: as_u64(r.get(3)),
+            })
+            .collect()
+    };
+
     Report {
         base_url: base_url.to_owned(),
         completeness,
@@ -1400,6 +1583,8 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         presence,
         plausibility,
         longest_chain,
+        sentinel_amounts: sentinel(&raw.sentinel_amounts),
+        sentinel_dates: sentinel(&raw.sentinel_dates),
         unmeasured: raw.unmeasured.clone(),
     }
 }
@@ -1792,7 +1977,121 @@ pub fn render_text(report: &Report) -> String {
             },
         );
     }
+
+    // Issue 366's discovery half. Sections 8 and 9 measure shapes we already named;
+    // this one exists to surface the ones we did not. It is a CANDIDATE listing, not a
+    // defect count: a repeated implausible value is a value that has earned a look,
+    // and the judgement of whether it is a sentinel stays with the reader.
+    let _ = writeln!(out, "\n== 10. Repeated implausible values (sentinel discovery — issue 366) ==");
+    render_sentinels(
+        &mut out,
+        "sentinel_amounts",
+        "amounts — negative at any size, or >= 1,000,000,000 major units AS PUBLISHED",
+        "currency",
+        &report.unmeasured,
+        &report.sentinel_amounts,
+        major,
+        SENTINEL_MIN_REPEATS,
+    );
+    render_sentinels(
+        &mut out,
+        "sentinel_dates",
+        &format!(
+            "dates — by DAY; before 1990-01-01, or more than {} years after this run",
+            SENTINEL_DATE_HORIZON_SECS / (365 * 86_400)
+        ),
+        "field",
+        &report.unmeasured,
+        &report.sentinel_dates,
+        day_utc_signed,
+        SENTINEL_DATE_MIN_REPEATS,
+    );
+    let _ = writeln!(
+        out,
+        "  A value here is a CANDIDATE, not a verdict. The head-column election takes an \
+         unconditional `.max()` over version facts (issue 366), so any sentinel a source \
+         publishes wins the column outright — which is how -1.00 and the all-nines maxima \
+         came to stand in roughly {} tenders before anyone looked. What makes a row \
+         suspicious is repetition at a magnitude or on a day no procurement reaches: one \
+         Tender is a typo, the {} carrying -1.00 are a publisher convention. Read `tenders` \
+         next to `rows`, then either add the shape to `store::canonical::sentinel_amount` / \
+         the deadline horizon, or record on issue 366 why the value is genuine.",
+        group(16_000),
+        group(15_529),
+    );
     out
+}
+
+/// One sentinel listing, rendered. Shared by both halves of section 10 so the amount and
+/// date tails cannot drift into different presentations of the same finding.
+///
+/// `value` formats the raw column for reading — cents as major units, seconds as a day —
+/// while the JSON keeps `raw` beside it, so a value this cannot render (a year outside
+/// `civil_date`'s `u16`) is still recoverable from the machine report.
+fn render_sentinels(
+    out: &mut String,
+    label: &str,
+    title: &str,
+    scope_head: &str,
+    unmeasured: &[String],
+    rows: &[SentinelRow],
+    value: fn(i64) -> String,
+    min_repeats: u64,
+) {
+    use std::fmt::Write;
+    let _ = writeln!(out, "  -- {title} --");
+    if unmeasured.iter().any(|l| l == label) {
+        let _ = writeln!(out, "  UNMEASURED — the `{label}` query did not run.");
+        return;
+    }
+    if rows.is_empty() {
+        let _ = writeln!(
+            out,
+            "  none — nothing in this tail repeats on {} rows or more. Not the same claim as \
+             \"the tail is empty\": singletons are filtered in SQL.",
+            group(min_repeats),
+        );
+        return;
+    }
+    let _ = writeln!(out, "  {:<10}{:>28}{:>12}{:>12}", scope_head, "value", "rows", "tenders");
+    for r in rows {
+        let mut scope = r.scope.clone();
+        if scope.chars().count() > 9 {
+            scope = scope.chars().take(8).collect::<String>() + "…";
+        }
+        let _ = writeln!(
+            out,
+            "  {:<10}{:>28}{:>12}{:>12}",
+            scope,
+            value(r.raw),
+            group(r.hits),
+            group(r.tenders),
+        );
+    }
+    if rows.len() >= SENTINEL_LISTING_CAP {
+        let _ = writeln!(
+            out,
+            "  LISTING FULL at {SENTINEL_LISTING_CAP} — ranked by repetition, so what is cut \
+             repeats least, but this is a truncated tail and not the whole of it."
+        );
+    }
+}
+
+/// Cents as major units, thousands-separated, sign kept — the reading a currency figure
+/// wants. Not localised: one format for every currency in the corpus beats twenty-six
+/// half-right ones in a diagnostic table.
+fn major(cents: i64) -> String {
+    let sign = if cents < 0 { "-" } else { "" };
+    let abs = cents.unsigned_abs();
+    format!("{sign}{}.{:02}", group(abs / 100), abs % 100)
+}
+
+/// [`day_utc`] for a SIGNED instant. Two differences, both needed here: the pre-epoch
+/// tail is a sentinel class of its own, and `0` is a real date in this section
+/// (1970-01-01, the epoch-zero default) rather than the "none" that `day_utc` reads it as.
+fn day_utc_signed(unix: i64) -> String {
+    let (y, m, d) = crate::fetch::civil_date(unix);
+    format!("{y:04}-{m:02}-{d:02}")
 }
 
 /// The chain length at which the weekly report flags the approach to the fold's
@@ -2048,6 +2347,19 @@ pub fn render_json(report: &Report) -> String {
             "eur_convertible_rate": rate(r.convertible, r.amounts),
         }))
         .collect();
+    let sentinels = |rows: &[SentinelRow], shown: fn(i64) -> String| -> Vec<Value> {
+        rows.iter()
+            .map(|r| json!({
+                "scope": r.scope,
+                // Raw AND rendered: the raw column is the one a follow-up query can use,
+                // and the rendered one is what a reader recognises a sentinel by.
+                "raw": r.raw,
+                "shown": shown(r.raw),
+                "rows": r.hits,
+                "tenders": r.tenders,
+            }))
+            .collect()
+    };
     let value = json!({
         "base_url": report.base_url,
         "unit": "tender-version",
@@ -2069,6 +2381,19 @@ pub fn render_json(report: &Report) -> String {
             "rate": rate(report.merge.merged, report.merge.doe_tenders),
         },
         "longest_chain": report.longest_chain,
+        // Issue 366's sentinel discovery sweep. The thresholds ride along because a
+        // listing read six months from now must say what region it covered — a later
+        // run with a different floor is not comparable to this one.
+        "repeated_implausible": {
+            "min_repeats": SENTINEL_MIN_REPEATS,
+            "date_min_repeats": SENTINEL_DATE_MIN_REPEATS,
+            "listing_cap": SENTINEL_LISTING_CAP,
+            "amount_floor_cents": SENTINEL_AMOUNT_FLOOR,
+            "date_floor": SENTINEL_DATE_FLOOR,
+            "date_horizon_secs": SENTINEL_DATE_HORIZON_SECS,
+            "amounts": sentinels(&report.sentinel_amounts, major),
+            "dates": sentinels(&report.sentinel_dates, day_utc_signed),
+        },
     });
     serde_json::to_string_pretty(&value).unwrap_or_else(|_| "{}".into())
 }
@@ -2224,6 +2549,8 @@ mod tests {
                 convertible: 480,
             }],
             longest_chain: 3_282,
+            sentinel_amounts: vec![],
+            sentinel_dates: vec![],
             unmeasured: vec![],
         };
         let entry = headline_history_entry(&report, 1_700_000_000);
@@ -2252,6 +2579,193 @@ mod tests {
         let recovered = append_headline_history("not json{", json!({ "at": 7 }));
         let history: Vec<serde_json::Value> = serde_json::from_str(&recovered).unwrap();
         assert_eq!(history.len(), 1);
+    }
+
+    /// Every label present and empty — the shape [`Raw::from_labelled`] wants, so a test can
+    /// fill in only the result set it is about and let the rest read as "ran, found nothing".
+    fn sentinel_scaffold() -> Vec<(String, Option<Rows>)> {
+        queries().into_iter().map(|(l, _)| (l, Some(Vec::new()))).collect()
+    }
+
+    fn put(results: &mut [(String, Option<Rows>)], label: &str, rows: Option<Rows>) {
+        results.iter_mut().find(|(l, _)| l == label).expect("label").1 = rows;
+    }
+
+    /// Issue 366's discovery half. The standing sentinel list was derived by CONFIRMING four
+    /// guesses, so the sweep that is meant to find the rest must not inherit the same blind
+    /// spots: it reads the PUBLISHED figure, because `current_value_eur_cents` is converted
+    /// and a PLN or HUF sentinel is smeared into a non-round EUR figure that cannot cluster
+    /// at all; and it keeps negatives at every magnitude, because the floor exists to bound
+    /// hash state rather than because small figures are innocent.
+    #[test]
+    fn the_amount_sweep_reads_published_cents_and_keeps_both_tails() {
+        let sql = sentinel_amounts_sql();
+        assert!(sql.contains("a.cents < 0"), "negatives at any size:\n{sql}");
+        assert!(
+            sql.contains(&format!("a.cents >= {SENTINEL_AMOUNT_FLOOR}")),
+            "the high tail is bounded by the floor:\n{sql}"
+        );
+        assert!(sql.contains("GROUP BY a.currency, a.cents"), "grouped per published pair:\n{sql}");
+        assert!(
+            sql.contains(&format!("HAVING COUNT(*) >= {SENTINEL_MIN_REPEATS}")),
+            "singletons filtered in SQL, so the cap is spent on candidates:\n{sql}"
+        );
+        assert!(sql.contains(&format!("LIMIT {SENTINEL_LISTING_CAP}")), "{sql}");
+        assert!(
+            !sql.contains("eur_cents"),
+            "the converted column is the blind spot this query exists to cover — reading it \
+             here would reproduce the sweep that found nothing on 2026-09-08:\n{sql}"
+        );
+    }
+
+    /// The trap this test exists for, and it is silent: `strftime('%s','now')` returns TEXT,
+    /// SQLite orders every number below every string, so `utc_seconds > strftime(…)` on its
+    /// own is always-false and the sweep would report a clean corpus forever. The arithmetic
+    /// forces numeric affinity and is load-bearing — `fresh_holds_sql` is correct by the same
+    /// accident and this pins the reason.
+    #[test]
+    fn the_date_sweep_forces_numeric_affinity_on_its_horizon() {
+        let sql = sentinel_dates_sql();
+        assert!(
+            sql.contains(&format!("strftime('%s','now') + {SENTINEL_DATE_HORIZON_SECS}")),
+            "the `+` is what makes the comparison numeric rather than always-false:\n{sql}"
+        );
+        assert!(
+            sql.contains(&format!("d.utc_seconds < {SENTINEL_DATE_FLOOR}")),
+            "the pre-1990 tail is swept too — an epoch-zero default lands there:\n{sql}"
+        );
+        // Measured 2026-09-08: 2099-12-31 carries 14 tenders spread over several times of
+        // day, and its largest single SECOND holds 4. Grouping by instant with any useful
+        // threshold returns nothing from the strongest cluster in the corpus — a detector
+        // that is silent exactly where it matters.
+        assert!(
+            sql.contains("GROUP BY d.field, date(d.utc_seconds, 'unixepoch')"),
+            "dates group by DAY, never by instant:\n{sql}"
+        );
+        assert!(
+            !sql.contains("GROUP BY d.field, d.utc_seconds"),
+            "the exact-instant grouping is the silent-detector bug:\n{sql}"
+        );
+        assert!(
+            sql.contains(&format!("HAVING COUNT(*) >= {SENTINEL_DATE_MIN_REPEATS}")),
+            "dates use their own, lower threshold — the whole far tail is ~100 tenders:\n{sql}"
+        );
+    }
+
+    /// Both sweeps must stay OUT of the windowed catalog. `HAVING COUNT(*) >= n` cannot be
+    /// windowed: a value repeating nine times in each of 25 windows passes the corpus test
+    /// and fails every window's, so a windowed form would under-report exactly the values the
+    /// sweep exists to find — and it would do it quietly, as a shorter listing.
+    #[test]
+    fn the_sentinel_sweeps_are_whole_corpus_because_a_having_cannot_be_windowed() {
+        let whole: Vec<String> = whole_corpus_queries().into_iter().map(|(l, _)| l).collect();
+        assert!(whole.iter().any(|l| l == "sentinel_amounts"), "{whole:?}");
+        assert!(whole.iter().any(|l| l == "sentinel_dates"), "{whole:?}");
+        for q in windowed_queries() {
+            assert!(
+                !q.label.starts_with("sentinel"),
+                "{} must not be windowed — its HAVING would be evaluated per window",
+                q.label
+            );
+        }
+    }
+
+    /// [`as_u64`] clamps negatives to zero, which would erase the largest sentinel class in
+    /// the corpus (-1.00, 15,529 tenders) on its way through assembly and render it as a
+    /// harmless `0.00`. The signed reader is the fix; this pins it end to end.
+    #[test]
+    fn a_negative_amount_keeps_its_sign_through_assembly_and_render() {
+        let mut ran = sentinel_scaffold();
+        put(
+            &mut ran,
+            "sentinel_amounts",
+            Some(vec![vec![json!("EUR"), json!(-100), json!(15_650), json!(15_529)]]),
+        );
+        let report = assemble("x", &Raw::from_labelled(ran).expect("raw"));
+        assert_eq!(report.sentinel_amounts[0].raw, -100, "the sign survives assembly");
+        let text = render_text(&report);
+        assert!(text.contains("-1.00"), "and renders as a negative:\n{text}");
+        assert!(text.contains("15,529"), "with its Tender count beside it:\n{text}");
+    }
+
+    /// The section is a CANDIDATE listing, and two things make it usable: the per-Tender count
+    /// beside the row count (one Tender revised 90 times is not 9,000 Tenders sharing a
+    /// placeholder — they want different fixes), and an honest statement when the listing is
+    /// full, so a truncated tail is never read as the whole of one.
+    #[test]
+    fn section_10_ranks_the_repeats_and_admits_when_the_listing_is_full() {
+        let mut ran = sentinel_scaffold();
+        // 3005-07-06 — the date issue 366 was handed rather than found.
+        put(
+            &mut ran,
+            "sentinel_dates",
+            Some(vec![vec![json!("BT-131"), json!(32_677_516_800_i64), json!(4_120), json!(4_010)]]),
+        );
+        let text = render_text(&assemble("x", &Raw::from_labelled(ran).expect("raw")));
+        assert!(text.contains("== 10. Repeated implausible values"), "{text}");
+        assert!(text.contains("3005-07-06"), "the raw instant renders as a day:\n{text}");
+        assert!(text.contains("4,010"), "tenders counted beside rows:\n{text}");
+        assert!(!text.contains("LISTING FULL"), "one row is not a full listing:\n{text}");
+
+        let full: Rows = (0..SENTINEL_LISTING_CAP)
+            .map(|i| {
+                vec![json!("EUR"), json!(SENTINEL_AMOUNT_FLOOR + i as i64), json!(11), json!(11)]
+            })
+            .collect();
+        let mut ran = sentinel_scaffold();
+        put(&mut ran, "sentinel_amounts", Some(full));
+        let text = render_text(&assemble("x", &Raw::from_labelled(ran).expect("raw")));
+        assert!(text.contains("LISTING FULL"), "a truncated tail says so:\n{text}");
+    }
+
+    /// Issue 230's distinction, at this section: "the query did not run" and "nothing repeats"
+    /// are different claims. A failed sweep that rendered as a clean one would be the worst
+    /// possible failure for a detector — silence meaning the opposite of what it reads as.
+    #[test]
+    fn an_unmeasured_sweep_does_not_read_as_a_clean_sweep() {
+        let mut ran = sentinel_scaffold();
+        put(&mut ran, "sentinel_amounts", None);
+        let text = render_text(&assemble("x", &Raw::from_labelled(ran).expect("raw")));
+        assert!(text.contains("UNMEASURED — the `sentinel_amounts` query did not run"), "{text}");
+        // The date half DID run and found nothing, which must still read as none.
+        assert!(text.contains("none — nothing in this tail repeats"), "{text}");
+    }
+
+    /// The two formatters the section reads through, at their edges: the sign, the sub-unit,
+    /// and the epoch — where `day_utc` would print `—` for a real 1970-01-01 sentinel.
+    #[test]
+    fn the_sentinel_formatters_render_both_tails() {
+        assert_eq!(major(-100), "-1.00");
+        assert_eq!(major(-1), "-0.01");
+        assert_eq!(major(0), "0.00");
+        assert_eq!(major(999_999_999_900), "9,999,999,999.00");
+        assert_eq!(day_utc_signed(0), "1970-01-01", "the epoch is a date here, not `none`");
+        assert_eq!(day_utc_signed(-86_400), "1969-12-31");
+        assert_eq!(day_utc_signed(32_677_516_800), "3005-07-06");
+    }
+
+    /// The machine report must carry the thresholds, not just the rows. A listing read six
+    /// months from now has to say what region it covered — a later run with a different floor
+    /// measures a different population and the two are not comparable without them.
+    #[test]
+    fn the_json_sentinel_section_carries_its_thresholds_and_both_readings() {
+        let mut ran = sentinel_scaffold();
+        put(
+            &mut ran,
+            "sentinel_amounts",
+            Some(vec![vec![json!("PLN"), json!(-100), json!(90), json!(12)]]),
+        );
+        let json_text = render_json(&assemble("x", &Raw::from_labelled(ran).expect("raw")));
+        let v: Value = serde_json::from_str(&json_text).expect("valid json");
+        let sect = &v["repeated_implausible"];
+        assert_eq!(sect["min_repeats"], SENTINEL_MIN_REPEATS);
+        assert_eq!(sect["amount_floor_cents"], SENTINEL_AMOUNT_FLOOR);
+        assert_eq!(sect["date_floor"], SENTINEL_DATE_FLOOR);
+        let row = &sect["amounts"][0];
+        assert_eq!(row["scope"], "PLN");
+        assert_eq!(row["raw"], -100, "the raw column a follow-up query can use");
+        assert_eq!(row["shown"], "-1.00", "and the reading a human recognises");
+        assert_eq!(row["tenders"], 12);
     }
 
     #[test]
@@ -2287,6 +2801,9 @@ mod tests {
                 "fresh_holds",
                 // The fold-cost tripwire (issue 92).
                 "longest_chain",
+                // The sentinel discovery sweep (issue 366).
+                "sentinel_amounts",
+                "sentinel_dates",
             ]
         );
     }
@@ -2469,6 +2986,8 @@ mod tests {
             ("amount_plausibility".to_owned(), Some(vec![])),
             ("fresh_holds".to_owned(), Some(vec![])),
             ("longest_chain".to_owned(), Some(vec![])),
+            ("sentinel_amounts".to_owned(), Some(vec![])),
+            ("sentinel_dates".to_owned(), Some(vec![])),
         ])
         .expect("labelled");
         let text = render_text(&assemble("http://x", &raw));
@@ -2900,6 +3419,10 @@ mod tests {
             ),
             // Issue 92: the single-cell whole-corpus MAX, as the runner delivers it.
             ("longest_chain".to_owned(), Some(vec![vec![json!(3_282)]])),
+            // Issue 366: the two sentinel sweeps, empty — a corpus with nothing repeating in
+            // either implausible tail, which is the state this report hopes to describe.
+            ("sentinel_amounts".to_owned(), Some(vec![])),
+            ("sentinel_dates".to_owned(), Some(vec![])),
         ];
         let raw = Raw::from_labelled(results).expect("labelled");
         let report = assemble("http://x", &raw);
