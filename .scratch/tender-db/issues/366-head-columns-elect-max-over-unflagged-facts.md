@@ -356,6 +356,81 @@ That sequencing is also why the magnitude-ranked listing has not been added yet:
 `whole_corpus_query` would be a THIRD full scan of the same table, and if the redesign happens both
 rankings come free from one windowed pass.
 
+### Section 10's first corpus-wide run (job 816, 2026-09-08) — two new shapes, and a correction to my own record
+
+Job 816: `ok`, 6,396 s, **0 labels unmeasured** — both sweeps executed against the full corpus.
+
+**Two sentinel shapes neither the guess-derived list nor the head-column probe contained:**
+
+1. **`1899-12-31` — 415 rows over 124 tenders**, on the `duration_*` fields. This is the
+   **Excel/Lotus epoch**: a spreadsheet whose day 0 is 1899-12-31 (1899-12-30 in the other system)
+   exporting a blank or zero date. Nobody had named it, and no magnitude or all-nines rule reaches it.
+2. **PLN `22,222,222,222.00` — 250 rows, 1 tender.** A **repdigit that is not nines**.
+   `store::canonical::sentinel_amount` tests for a run of ≥9 **nines** in the major unit, so it misses
+   every other repeated digit. The fix is to generalise that leg from "all nines" to "one digit
+   repeated ≥9 times" — the field-width-maximum argument that justified the nines leg applies
+   identically to a key held down.
+
+**Correction to this issue's own record.** The probe recorded above concluded the pre-1990 tail was
+"a clean negative — four singletons, no convention, no rule needed". **That is wrong as stated.** It was
+measured on `tenders.current_deadline`, which is only the head-elected *submission_deadline*; the sweep
+reads `tender_version_dates` — every date field on every version — and there the pre-1990 tail holds the
+1899 cluster above. The claim was true for deadlines and false for the corpus. Recorded rather than
+quietly edited, because the mistake is instructive: a head-column probe answers a question about the
+head column, and generalising it to "the corpus" is exactly the error the converted-EUR sweep made in
+the other direction.
+
+**The far-year December pattern is much larger than the head probe showed**, and it pairs 30 with 31:
+
+| field | day | rows | tenders |
+| --- | --- | --- | --- |
+| participation… | 2039-12-31 | 5,603 | **5** |
+| duration… | 2036-12-30 | 1,026 | 365 |
+| duration… | 2099-12-31 | 944 | 211 |
+| duration… | 2099-12-30 | 748 | 228 |
+| duration… | 2037-12-30 | 514 | 194 |
+| duration… | **1899-12-31** | 415 | 124 |
+
+`-12-30` recurring about as often as `-12-31`, together with the 1899 cluster, is consistent with
+spreadsheet serial-date handling (the two Excel epoch systems differ by one day). **Hypothesis, not a
+conclusion** — it wants one archive-member read to confirm, which is unit 5's gated read anyway.
+
+Note `participation… 2039-12-31`: **5,603 rows over 5 tenders**, ~1,120 date rows per tender. The
+`tenders` column earning its keep on the first run — by rows alone this is the corpus's biggest date
+cluster; by tenders it is five records with enormous version chains, which is a completely different
+finding and probably a fold-cost observation (issue 92) rather than a sentinel one.
+
+### Two defects in the instrument, exposed only by running it
+
+1. **The amount floor is currency-blind.** `SENTINEL_AMOUNT_FLOOR` is 1e11 cents = 1,000,000,000 major
+   units regardless of currency — which is ~€40 M in CZK and ~€2.5 M in HUF. So the top-40 is dominated
+   by ENTIRELY ORDINARY Czech, Hungarian and Swedish contracts (CZK 2,300,000,000 ×1,960 rows/6 tenders,
+   SEK 1,200,000,000 ×1,110/63, HUF 1,000,000,000 ×383/110), and the one genuine sentinel in the listing
+   (PLN 22,222,222,222) sits at rank ~35. The listing cap is being spent on noise. **Fix: a per-currency
+   floor** — the EUR-equivalent ceiling the issue already decided on for Leg B is the right basis, since
+   `eur_cents` is on the row.
+2. **The scope column is too narrow.** At `{:<10}` every date field truncates to `duration…`, so the
+   listing cannot distinguish `duration_start` from `duration_end` — and that distinction decides
+   whether a far-future date is normal (an open-ended framework's end) or wrong (a start). A diagnostic
+   that hides the discriminating half of its own key is not finished.
+
+Both listings hit `LISTING FULL at 40`, so both tails are longer than what is shown — the marker doing
+exactly what it was added for on the very first run.
+
+### Cost: measured, and the windowed redesign is refused
+
+The open question recorded above ("measure that first") is answered. Windows finished at 6,268 s
+elapsed; the job totalled 6,396 s. The whole-corpus phase — **all four** queries, including
+`fresh_holds` and `longest_chain`, which pre-date this change — cost **~128 s, about 2 % of the run**.
+The two new scans are a fraction of that, against a job whose windowed phase costs 6,268 s (`awards`
+alone is 2,212 s).
+
+**So the windowed redesign is churn on working code, and is refused on the measurement rather than on
+taste.** Its premise was that two extra scans were worth restructuring for; they are not. The argument
+stays recorded above in case the cost profile changes (a much larger `tender_version_amounts`, or a
+lowered floor), and one part of it is still worth having: it is the only route that would let the
+magnitude floor come down far enough to open the low-magnitude blind spot.
+
 ### Still open in this issue
 
 Unit 4 (value bounds in `read.rs:855-871` excluding flagged amounts — the read side
