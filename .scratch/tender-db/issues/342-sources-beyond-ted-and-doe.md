@@ -1,6 +1,6 @@
 # 342 — sources beyond TED and DÖE ("international"): nothing exists, the entry contract does
 
-Status: UNIT 2 — commits (a) fetcher, (b) profile and the raw-reader fix are BUILT, DEPLOYED (`5a48d88`) and MEASURED against the live API: June 2025 fetched and processed clean (7,243 notices, 0 quarantined). Commit (c) — the parser and the crosswalk GB arm — is next; the backfill waits for it. Unit 1 DONE: `docs/research/uk-fts.md`, adversarially re-checked, GO. Plan: `.scratch/tender-db/342-fts-plan.md`.
+Status: UNIT 2 — commits (a) fetcher, (b) profile and the raw-reader fix are BUILT, DEPLOYED (`5a48d88`) and MEASURED. **Commit (c) is BUILT and GATED 2026-09-08**: the crosswalk GB arm (`db02939`) and the parser (`d7264c8`), `ops/check.sh` GATE-EXIT=0 both times. Not yet deployed, and the 7,243 June-2025 releases are still `parse_state='pending'` on the box until a Reparse runs. Remaining: deploy, Reparse 2025-06 → project → measure, then the 2021-01 backfill and the docs (plan step 12). Unit 1 DONE: `docs/research/uk-fts.md`, adversarially re-checked, GO. Plan: `.scratch/tender-db/342-fts-plan.md`.
 issues for that"). No non-TED/DÖE source has ever been researched for onboarding;
 the first step is a market choice, which is Lennart's.
 Kind: capability (sources) — the product-breadth half of "full internationalization"
@@ -154,3 +154,38 @@ the daily zips remain the limit-free cross-check when the backfill runs.
 
 Nothing else in the corpus moved: these notices are pending, so the projection ignores them and
 no Tender rows exist for FTS yet — which is the dry-first rung the plan asked for.
+
+## Commit (c), as built (2026-09-08)
+
+`crates/ingest/src/fts/parse.rs` (935 lines incl. 9 tests) + `pub mod parse;` in `fts/mod.rs` + the
+`fts:` arm in `process.rs`; the crosswalk GB arm and its 3 tests plus the `normalise_identifier` test
+went first, in `db02939`.
+
+Built against the fixtures rather than the plan's table — §3b of the plan records the six places they
+disagreed. Departures from §3 worth knowing:
+
+- **Subtype** is the UK form code (`UK1`…`UK15`) off the single `noticeType`-bearing document, searched
+  across `tender.documents`, `planning.documents`, `awards[].documents` and `contracts[].documents`,
+  since which branch carries it depends on the archetype. `tag.join("+")` is the fallback.
+- **`BT-536/537-Procedure` are not emitted** — `tender.contractPeriod` does not exist in this source.
+  Lot-scoped contract periods are.
+- **CPVs and NUTS come off `tender.items[]`**, scoped to the item's `relatedLot` when it names one that
+  exists, else procedure-wide. `tender.classification`, when present, is `BT-262-Procedure`.
+- **A gross-only value** is emitted with `TED-VAL_TOTAL_TAX_BASIS = incl`; a net one with `excl`.
+- **Delta awards emit nothing**: `is_delta()` is "no status, no value, no suppliers", which is exactly
+  UK15's 34 `{id, amendments}` skeletons.
+- **`bids.statistics`** land on a `STAT-<id>` LotResult section. No member fixture covers them (only
+  page p002 does), so that arm is written but untested against real data — the first thing to check
+  after the Reparse.
+
+Quarantine reasons the parser can raise: `unparsable-json`, `ocds-release-count`, `missing-ocid`,
+`unrepresentable-value`. The last one is the `1e9999` guard, now at the value layer as well as the page
+layer: an exponent amount refuses rather than rounds.
+
+### Next, in order
+
+1. Deploy (queue idle).
+2. `Reparse` scoped to the fts 2025-06 fetch, then `project`. Both are small — 7,243 notices.
+3. Measure: notices parsed vs quarantined by reason, tenders/versions created, buyers resolved, and
+   whether any GB identifier reached `organizations` with a `GB:coh`/`GB:ppon` canonical key.
+4. Only then the 2021-01 backfill, and the docs (plan step 12).
