@@ -3324,6 +3324,9 @@ struct Ident {
     /// citations. Not part of the plan row — a tally, summed into the run's
     /// [`Report`] so a re-projection can be read against it.
     citations: CitationGate,
+    /// Issue 369 unit 2: the buyer SET this notice publishes, sorted and joined —
+    /// see [`buyer_key`] for why a set and not one buyer.
+    buyer_key: Option<String>,
 }
 
 /// Issue 364 — what the previous-publication kind gate did, per declared kind.
@@ -3543,6 +3546,9 @@ impl Ident {
             prev_refs: previous_publications(parsed),
             subtype: first_code(parsed, SUBTYPE_FIELD),
             citations,
+            // issue 369 unit 2: the buyer set this notice publishes, for the
+            // key-election gate. Parsed-side, so no org-layer dependency.
+            buyer_key: buyer_key(sdk01, notice.id, parsed),
         }
     }
 
@@ -3566,6 +3572,7 @@ impl Ident {
             ojs_edges: self.ojs_edges.into_iter().map(encode_ojs).collect(),
             prev_refs: self.prev_refs,
             key_shaped,
+            buyer_key: self.buyer_key,
         }
     }
 }
@@ -4630,6 +4637,88 @@ fn role_name(field_id: &str) -> Option<String> {
         }
     }
     field_id.strip_prefix("TED-").map(legacy_role)
+}
+
+/// The roles that mean "this notice's buyer", across the dialects (issue 369 unit 2).
+/// eForms names the role by its OPT-300 suffix (`Procedure-Buyer`); the legacy address
+/// blocks and sdk-0.1's `ContractingParty` both arrive as `buyer`, through
+/// [`legacy_role`] and the sdk01 synthesis in `NoticeState::read` respectively.
+const BUYER_ROLES: &[&str] = &["Procedure-Buyer", "buyer"];
+
+/// The buyer identity this notice publishes, as a stable key for issue 369's key
+/// election — `None` when it names no buyer at all.
+///
+/// **A SET, sorted and joined, not a single buyer.** A notice can legitimately name
+/// several: a joint procurement lists a central purchasing body beside its
+/// participating authorities. Keying on the SET is what makes the gate's
+/// `count(DISTINCT buyer_key) >= 3` mean the right thing — a joint procurement repeats
+/// ONE set across its notices and is admitted, while the welds this gate exists for
+/// carry buyers DISJOINT across versions (tender 1: seq 1–2 Klinikum Neumarkt, 3–4
+/// Land BW, 5–7 BG Holz und Metall) and so present three distinct sets. Counting
+/// individual buyers instead would refuse the joint procurement, which is the failure
+/// the issue's "keep the shape pre-filter" argument is about; this encoding avoids it
+/// without a second column.
+///
+/// The known gap, bounded rather than solved: notices naming overlapping but UNEQUAL
+/// subsets (`{X,Y}`, then `{X,Y,Z}`, then `{X,Z}`) present three sets and would be
+/// refused despite sharing buyers. Inside the shape pre-filter's reach — the 14
+/// measured tenders, whose welded members are disjoint — that cannot arise. If the
+/// pre-filter is ever dropped, the predicate must become pairwise-disjoint SETS rather
+/// than a count, exactly as the issue already records.
+///
+/// **Parsed-side by decision.** The buyer's PUBLISHED identifier, through the same
+/// normaliser the resolver binds on, never the resolved `organizations` row: the
+/// planner must not take a dependency on the org layer to decide TENDER identity, and
+/// the `>= 3` threshold already absorbs the duplication that layer would add (2 is the
+/// measured org-duplicate floor). The census used resolved rows only because that is
+/// all a read-only probe could reach.
+fn buyer_key(sdk01: bool, notice_id: i64, parsed: &Parsed) -> Option<String> {
+    let mut sections: BTreeSet<&str> = BTreeSet::new();
+    if sdk01 {
+        for section in &parsed.sections {
+            if section.kind == SDK01_BUYER_KIND {
+                sections.insert(section.id.as_str());
+            }
+        }
+    }
+    for value in &parsed.values {
+        // An id-ref's VALUE is the organization section it points at — the same
+        // `target` `bind_organizations` resolves through `by_section`. The `ojs`
+        // scheme is a chain edge, not a role reference.
+        if let NoticeValue::Id { value: target, is_ref: true, scheme } = &value.value
+            && scheme.as_deref() != Some("ojs")
+            && role_name(&value.field_id).is_some_and(|r| BUYER_ROLES.contains(&r.as_str()))
+        {
+            sections.insert(target.as_str());
+        }
+    }
+    if sections.is_empty() {
+        return None;
+    }
+    let mut keys: Vec<String> = NoticeState::mentions(sdk01, notice_id, parsed)
+        .into_iter()
+        .filter(|m| sections.contains(m.section_id.as_str()))
+        .filter_map(|m| match &m.identifier {
+            // The strong key: country-scoped and normalised by the function the
+            // resolver itself binds on, so two notices publishing one buyer agree
+            // here whatever they wrote in the name field.
+            Some(id) => {
+                Some(format!("{}:{}:{}", id.country.as_deref().unwrap_or(""), id.kind, id.value))
+            }
+            // No identifier that passed the plausibility gate: fall back to the N2
+            // name key, which is what the org layer falls back to. An empty key
+            // carries no identity, so it is dropped rather than colliding every
+            // nameless buyer into one.
+            None => {
+                let norm = match_norm(&m.name);
+                (!norm.is_empty())
+                    .then(|| format!("n2:{}:{norm}", m.country.as_deref().unwrap_or("")))
+            }
+        })
+        .collect();
+    keys.sort();
+    keys.dedup();
+    (!keys.is_empty()).then(|| keys.join("|"))
 }
 
 /// Fold a legacy address-block element name onto a canonical party role.
@@ -6154,6 +6243,91 @@ mod tests {
 
         // The gate is scoped: a non-DE-1.x notice never reads this field at all.
         assert_eq!(procedure_key(&uuid, false, false), None);
+    }
+
+    /// Issue 369 unit 2: the gate counts DISTINCT buyer keys across a key's notices, so
+    /// what `buyer_key` encodes decides whether the gate is right. Keying on the SET is
+    /// what lets `>= 3` refuse a weld while admitting a joint procurement — the census's
+    /// tender 1 carries three DISJOINT buyers across its versions (three sets), whereas a
+    /// central purchasing body plus its participating authorities is one set repeated.
+    /// Counting individual buyers instead would refuse the joint procurement.
+    #[test]
+    fn the_buyer_key_is_the_notices_buyer_set_so_a_joint_procurement_stays_one_key() {
+        // One eForms notice: a Procedure section referencing `orgs` as its buyers, and one
+        // Organization section per buyer carrying BT-500/501/514.
+        let notice = |orgs: &[(&str, &str, &str)]| -> Parsed {
+            let mut sections =
+                vec![store::Section { id: "PROC".into(), kind: "Notice".into(), parent: None }];
+            let mut values = Vec::new();
+            for (id, name, nat) in orgs {
+                sections.push(store::Section {
+                    id: (*id).into(),
+                    kind: ORGANIZATION_KIND.into(),
+                    parent: None,
+                });
+                values.push(store::ValueRow {
+                    section_id: "PROC".into(),
+                    field_id: "OPT-300-Procedure-Buyer".into(),
+                    ordinal: 0,
+                    value: NoticeValue::Id { scheme: None, value: (*id).into(), is_ref: true },
+                });
+                values.push(store::ValueRow {
+                    section_id: (*id).into(),
+                    field_id: ORG_NAME_FIELD.into(),
+                    ordinal: 0,
+                    value: NoticeValue::Text { value: (*name).into(), lang: None },
+                });
+                values.push(store::ValueRow {
+                    section_id: (*id).into(),
+                    field_id: ORG_COUNTRY_FIELD.into(),
+                    ordinal: 0,
+                    value: NoticeValue::Code { list: None, code: "DEU".into() },
+                });
+                if !nat.is_empty() {
+                    values.push(store::ValueRow {
+                        section_id: (*id).into(),
+                        field_id: ORG_IDENTIFIER_FIELD.into(),
+                        ordinal: 0,
+                        value: NoticeValue::Id { scheme: None, value: (*nat).into(), is_ref: false },
+                    });
+                }
+            }
+            Parsed { sections, values }
+        };
+
+        // A joint procurement: the SAME two buyers on both notices, listed in opposite
+        // order. One key, because the set is sorted before it is joined — so `>= 3` never
+        // fires on it however the source orders its parties.
+        let a = buyer_key(false, 1, &notice(&[("ORG-1", "Stadt Aachen", "DE811907980"),
+                                              ("ORG-2", "Kreis Düren", "DE121038462")]))
+            .expect("two identified buyers");
+        let b = buyer_key(false, 2, &notice(&[("ORG-2", "Kreis Düren", "DE121038462"),
+                                              ("ORG-1", "Stadt Aachen", "DE811907980")]))
+            .expect("same pair, other order");
+        assert_eq!(a, b, "order must not create a second buyer set");
+
+        // The weld's shape: three notices, three disjoint single buyers ⇒ three distinct
+        // keys, which is exactly what the gate's `count(DISTINCT buyer_key) >= 3` reads.
+        let welded: std::collections::BTreeSet<String> = [
+            ("ORG-1", "Klinikum Neumarkt", "DE133517778"),
+            ("ORG-1", "Land Baden-Württemberg", "DE811245646"),
+            ("ORG-1", "Berufsgenossenschaft Holz und Metall", "DE811188162"),
+        ]
+        .iter()
+        .filter_map(|o| buyer_key(false, 3, &notice(&[*o])))
+        .collect();
+        assert_eq!(welded.len(), 3, "disjoint buyers must present three distinct sets");
+
+        // A buyer with no plausible identifier falls back to the N2 name key rather than
+        // vanishing — otherwise a whole era of identifier-less buyers would read as
+        // agreeing with each other, which is the silent direction.
+        let nameless = buyer_key(false, 4, &notice(&[("ORG-1", "Gemeinde Alsdorf", "")]))
+            .expect("a named buyer with no id still keys");
+        assert!(nameless.starts_with("n2:"), "name-key fallback: {nameless}");
+        assert_ne!(nameless, a);
+
+        // No buyer named at all is None — distinct from naming an unidentifiable one.
+        assert_eq!(buyer_key(false, 5, &notice(&[])), None);
     }
 
     #[test]

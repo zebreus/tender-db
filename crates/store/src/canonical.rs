@@ -4607,6 +4607,17 @@ pub struct PlanRow {
     /// discriminates inside it. See the issue's "shape is necessary and NOT
     /// sufficient".
     pub key_shaped: bool,
+    /// The buyer SET this notice publishes (issue 369 unit 2), sorted and joined —
+    /// from the PARSED notice through the resolver's own identifier normaliser, never
+    /// from the resolved `organizations` row: the planner must not take a dependency
+    /// on the org layer to decide TENDER identity.
+    ///
+    /// A set rather than one buyer so the gate's `count(DISTINCT buyer_key) >= 3`
+    /// admits a joint procurement (one set repeated across its notices) and refuses a
+    /// weld (buyers disjoint across versions, so three distinct sets). `None` when the
+    /// notice names no buyer at all, which is distinct from naming an unidentifiable
+    /// one.
+    pub buyer_key: Option<String>,
 }
 
 /// One Tender's notices, streamed from the plan in fold order (issue 59). Carries
@@ -6983,7 +6994,9 @@ impl Db {
                  subtype        TEXT,
                  group_key      TEXT,
                  -- issue 369 unit 2: the placeholder-shape verdict, per notice.
-                 key_shaped     INTEGER NOT NULL DEFAULT 0
+                 key_shaped     INTEGER NOT NULL DEFAULT 0,
+                 -- issue 369 unit 2: the buyer set, sorted and joined.
+                 buyer_key      TEXT
              ) STRICT",
             (),
         )
@@ -7227,8 +7240,9 @@ impl Db {
         for r in rows {
             conn.execute(
                 "INSERT INTO plan_notice(notice_id, procedure_key, legacy, ojs_self, source,
-                     source_rank, publication_id, published_at, subtype, group_key, key_shaped)
-                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)",
+                     source_rank, publication_id, published_at, subtype, group_key, key_shaped,
+                     buyer_key)
+                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)",
                 (
                     Value::Integer(r.notice_id),
                     opt_text(r.procedure_key.as_deref()),
@@ -7240,6 +7254,7 @@ impl Db {
                     Value::Integer(r.published_at),
                     opt_text(r.subtype.as_deref()),
                     Value::Integer(i64::from(r.key_shaped)),
+                    opt_text(r.buyer_key.as_deref()),
                 ),
             )
             .await?;
@@ -21150,6 +21165,7 @@ mod tests {
             ojs_edges: Vec::new(),
             prev_refs: Vec::new(),
             key_shaped,
+            buyer_key: None,
         };
         db.insert_plan(&[
             row(1, "11111111-2222-4000-8111-123412341235", true),
