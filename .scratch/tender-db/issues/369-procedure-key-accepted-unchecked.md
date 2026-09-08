@@ -111,12 +111,53 @@ other mechanism).
 
 Blast radius at the ≥3 threshold, from the table above: **3 tenders split, 10 untouched.**
 
-### Open, for unit 3
+### Why the shape pre-filter stays even though it cannot discriminate
 
-Whether the buyer count is taken from the parsed notice (before org resolution, comparing published
-identifier/name) or from resolved `organizations` rows. Resolved rows are what the census used, and
-they over-count by exactly the duplication the ≥3 threshold is set to absorb; parsed values dodge the
-org layer but re-implement its normalisation. Decide before writing the planner change.
+Buyer-disagreement alone is not safe corpus-wide: a **joint procurement** legitimately names several
+buyers under one BT-04 (a central purchasing body plus its participating authorities), and `≥3
+distinct buyers` would refuse it. Keeping *placeholder-shaped* as a pre-condition bounds the rule's
+reach to the 13 tenders measured above, where `≥3` is exactly right — and inside that set the welds
+are not merely multi-buyer, their buyers are **disjoint across versions** (tender 1: seq 1–2 Klinikum
+Neumarkt, 3–4 Land BW, 5–7 BG Holz und Metall), which is what a joint procurement never looks like.
+So: shape bounds the blast radius, buyer-count discriminates inside it. Neither alone.
+
+If unit 2 ever wants to drop the shape pre-filter and gate every BT-04, the predicate must become
+*pairwise-disjoint buyer sets across the key's notices*, not a count — record that before widening.
+
+### The planner change unit 2 needs (design, 2026-09-08)
+
+The election is one set-blind statement — `UPDATE plan_notice SET group_key = CASE WHEN procedure_key
+IS NOT NULL THEN procedure_key …`, `crates/store/src/canonical.rs:7236-7240` — and `plan_notice`
+(`insert_plan_tx`, `canonical.rs:7117-7131`) carries no buyer and no shape. Two additive columns fix
+that, both written at plan time where the parsed notice is still in hand:
+
+- **`buyer_key TEXT`** on `PlanRow` / `plan_notice`, from the PARSED notice, not from resolved
+  `organizations` — that is the settled answer to the question below. `into_plan_row`
+  (`crates/ingest/src/project.rs:3551`) builds the row from `Parsed`, so the buyer's published
+  identifier (country + normalised value, through the resolver's own normaliser) is available with no
+  dependency on the org layer, and the ≥3 threshold already absorbs the duplication that layer would
+  add. Fall back to the N2 name key when the buyer publishes no identifier.
+- **`key_shaped INTEGER NOT NULL DEFAULT 0`** — the placeholder-shape verdict computed in Rust
+  (constant-run blocks, repeated short cycles, all-zero payload), because SQL cannot express it and
+  because storing it keeps the refusal query a cheap grouped read over `WHERE key_shaped = 1` instead
+  of a scan of every key in the plan.
+
+Then, before the batched UPDATE, materialise the refused set —
+`SELECT procedure_key FROM plan_notice WHERE key_shaped = 1 GROUP BY procedure_key
+HAVING count(DISTINCT buyer_key) >= 3` — into a small `plan_refused_key` table, and add
+`AND procedure_key NOT IN (SELECT procedure_key FROM plan_refused_key)` to the first CASE arm. A
+refused notice falls through the existing arms exactly as designed: legacy closure if it has one,
+else `island:{notice_id}`.
+
+Repair (unit 3) is then a scoped re-plan + re-project of the three welded keys' notices;
+`retire_regrouped_nonlegacy_tenders` (`canonical.rs:19525`) already retires the tenders whose key the
+plan stops producing, which is precisely what happens to 1, 82802 and 82804.
+
+### Settled, 2026-09-08
+
+Parsed-side, not resolved: see `buyer_key` above. The census used resolved rows because that is all a
+read-only probe can reach; the planner has the parsed notice and should not take a dependency on the
+org layer to decide identity.
 
 ## Done when
 
