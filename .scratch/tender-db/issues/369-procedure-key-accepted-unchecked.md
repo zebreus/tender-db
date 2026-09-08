@@ -1,6 +1,11 @@
 # 369 — a published BT-04 becomes the Tender group key verbatim: an all-zero v4 UUID glues seven notices from three buyers into one served record
 
-Status: ready-for-agent (filed 2026-09-07; unit 1 census done 2026-09-08 — it revised unit 2's rule)
+Status: ready-for-agent — **units 1, 2a, 2b, 2c and 3 DONE and verified on prod 2026-09-08 (`a83495b`,
+jobs 819+820): the gate refused exactly the census's 3 keys, the welded tenders are retired, the 4
+correct shaped tenders are untouched, and a split-out notice now serves its own title. REMAINING: unit
+4 (detector, cross-referenced to the OJS-closure issue) and NEW unit 5 — the island fallback
+over-splits (93 notices → 91 islands), so group a refused key by BUYER instead.** Was: filed 2026-09-07;
+unit 1 census done 2026-09-08 — it revised unit 2's rule
 Kind: defect (identity / grouping) — the placeholder-gate asymmetry with the org layer
 Relates to: 34 (built `is_uuid` for exactly this failure mode), 300 / idgate (the
 placeholder machinery organizations have and procedure keys do not),
@@ -217,6 +222,64 @@ plan stops producing, which is precisely what happens to 1, 82802 and 82804.
 Parsed-side, not resolved: see `buyer_key` above. The census used resolved rows because that is all a
 read-only probe can reach; the planner has the parsed notice and should not take a dependency on the
 org layer to decide identity.
+
+## Units 2c + 3 DONE and verified on prod (2026-09-08, rev `a83495b`, jobs 819+820)
+
+**The gate refused exactly the census's three keys.** Log line, unconditional by design:
+
+```
+[project] group step refused-keys: 3 placeholder-shaped key(s) with >= 3 distinct buyer sets, 0.0s
+```
+
+**Repair** (unit 3) needed no new code: `refold-notices` already takes explicit ids, re-queues them
+(`projected = 0`) and pairs an incremental projection. The 93 notices of tenders 1, 82802 and 82804
+went through it — cap is 1,000, and the ids land in the job log so the run is attributable.
+
+- job 819 `refold-notices`: `93 notice(s) named: re-queued 93, stamped 3 tender(s)`
+- job 820 `project`: `93 notices → 91 tenders (91 islands), 93 versions; 91 tenders written`, **6 s**
+
+**Verified against the pre-state recorded before the deploy:**
+
+| check | result |
+| --- | --- |
+| tenders 1 / 82802 / 82804 | **gone** (`row_count 0`) — retired by `retire_regrouped_nonlegacy_tenders` |
+| 82803, 82805, 160170, 778091 | **untouched**, same keys AND same `current_seq` (4/2/2/2) |
+| notice 26244735 (old tender 1's DE-1.x member) | now tender **7962825**, `procedure_key` NULL, `island_notice_id` 26244735, title **"HPS - Heizung"** — its OWN title, not the "Ladekabel eAutos" it used to be served as |
+
+That is the "Done when" pair satisfied on production rather than in a fixture: the shaped-but-correct
+keys still key their Tenders, and the welded ones no longer key anything.
+
+### The cost, stated plainly: this OVER-splits, and the fix for that is unit 5
+
+93 notices became **91 islands** — one tender per notice, bar two rejoined by previous-publication
+edges. For tender 1 (7 notices, 3 buyers) the issue's stated goal was "tender 1 becomes three tenders
+(or three islands)"; what landed is the islands, not the three tenders. Worse at scale: 82802's 42
+versions were ~7 real procurements by buyer and are now 42 separate Tenders; 82804's 44 were ~11 and
+are now 44.
+
+So three fabricated records were replaced by 91 truthful but FRAGMENTED ones. That is the safe
+direction (CONTEXT.md:112-113) and it is what "falls back to `island:{notice_id}`" was always going to
+do — but it is a real loss of genuine structure, not a clean win, and the cross-source doe↔ted merges
+that the hand-typed key was carrying inside those groups are gone with it.
+
+## Unit 5 (new) — group a refused key's notices BY BUYER instead of per notice
+
+The fallback should be `refused:{procedure_key}:{buyer_key}` rather than `island:{notice_id}`. Then a
+refused key splits into one Tender **per buyer set** — which is exactly the issue's original goal
+("tender 1 becomes three tenders"), and it recovers most of the structure the island fallback discards:
+tender 1 → 3, 82802 → ~7, 82804 → ~11, instead of 7/42/44.
+
+Cheap, because the input already exists: `buyer_key` is stored on `plan_notice` (unit 2b) and the
+refusal already reads it. This is a change to ONE `CASE` arm plus a re-run of the same
+`refold-notices` repair over the same 93 ids — the current islands are re-planned, not unwound, so
+there is nothing to migrate.
+
+Two things to settle when doing it:
+
+1. **A notice with no buyer at all** (`buyer_key IS NULL`) still needs `island:{notice_id}` — grouping
+   every buyer-less notice of a refused key together would be a new weld, smaller but the same kind.
+2. **Verify the doe↔ted merge survives** where both twins name the same buyer, since that merge is the
+   thing issue 34's gate exists to permit and the island fallback currently breaks it.
 
 ## Done when
 
