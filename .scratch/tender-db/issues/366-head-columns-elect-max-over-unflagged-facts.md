@@ -125,6 +125,45 @@ carrying `sentinel` or `implausible` — not a boolean, because the two have dif
 report should be able to say which. Deadlines get the same column for unit 3's ladder; the year-3005
 value is `implausible` by a date ceiling (a deadline more than ~10 years out), decided with unit 3.
 
+## Units 2 + 3 done (`aa732c5`) — and what the golden test proved
+
+`head_value_eur_cents` and `head_deadline` now filter before `.max()`:
+`sentinel_amount` (negatives, all-nines runs ≥9 digits), `IMPLAUSIBLE_EUR_CENTS`
+(€100 bn), `DEADLINE_HORIZON_SECS` (ten years past the notice's own publication).
+Four tests, including the 3323836 pair and the "two plausible deadlines still take
+the later one" case that pins the horizon as an exclusion rather than a new tie rule.
+
+**The golden snapshot did not move.** That is the informative result: the fixture
+corpus contains no sentinel and no over-ceiling amount, so the change is provably
+inert on well-formed data and reaches only the junk class. No regeneration, and no
+argument about whether a reviewed derived-layer change was being waved through.
+
+### Not decided: how standing rows pick it up
+
+New and re-folded Tenders get the new election immediately; the ~16,000 already
+written do not. Two routes, and the choice is a real one:
+
+- **`PROJECTION_EPOCH` bump** — the mechanism that exists, and it re-folds all
+  7,929,584 Tenders to correct roughly 16,000. Hours of box time, and it re-derives
+  everything else at the same time, which is both its cost and its only advantage.
+- **A targeted repair job** — select the affected rows (negative, all-nines, over
+  ceiling, deadline beyond horizon), recompute just their head columns, dry/wet with
+  a tolerance abort like `repair-notice-instants`. Cheap and auditable, but it is a
+  second implementation of the election that can drift from the fold's.
+
+The drift risk is what makes this worth deciding rather than defaulting: issue 343
+and this issue are both "two places computed the same election and disagreed". A
+repair job that recomputes head columns is exactly that shape again. Leaning to the
+epoch bump for that reason, run in a quiet window — but it should be decided with
+the re-fold's cost measured, not asserted.
+
+### Still open in this issue
+
+Unit 4 (value bounds in `read.rs:855-871` excluding flagged amounts — the read side
+still compares against the head column with no floor), unit 5 (`@FMTVAL` versus
+element text, which needs one archive-member read), and unit 6 (267's measure
+becoming a per-currency top-N signal).
+
 ## Done when
 
 - no tender above the per-currency ceiling is served as a head value, and `sort=value`'s first page is re-read and recorded here;
