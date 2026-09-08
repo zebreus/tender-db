@@ -319,6 +319,38 @@ surface, and a consumer filtering `procedure_key` will be misled.
 islands would be worse data, and the honest fix touches retirement logic, which should not be rushed at
 the end of a firing.
 
+### Verified 2026-09-08: the CURRENT state does not churn — unit 6 is cleanliness, not a live defect
+
+Unit 6's trap is real but it belongs to the PROPOSED fix, not to what is deployed. Checked rather than
+assumed, because "would this retire and re-mint every run" is a live-data question and the answer
+changes unit 6's urgency.
+
+A third `refold-notices` run over the same 93 ids (jobs 823+824), with four notices probed before and
+after by indexed seek:
+
+| notice | before | after |
+| --- | --- | --- |
+| 23688034 | tender 7962880 seq 2 | **7962880 seq 2** |
+| 25826280 | tender 7962872 seq 2 | **7962872 seq 2** |
+| 26990894 | tender 7962872 seq 3 | **7962872 seq 3** |
+| 26244735 | tender 7962873 seq 1 | **7962873 seq 1** |
+
+Identical, and the run reported `93 notices → 21 tenders (0 islands)` again. Tender ids are STABLE
+across projections: a refused group stores its `refused:…` key in `procedure_key` and
+`island_notice_id` NULL, so `retire_regrouped_nonlegacy_tenders`'s island test
+(`p.group_key = 'island:' || t.island_notice_id`) never matches it, and the ordinary key match finds
+the group the plan still produces. (`21 tenders written, 0 verified unchanged` is the requeue doing its
+job — `refold-notices` stamps them epoch-stale so the fold rewrites the versions — not churn; the
+identities are what stayed put.)
+
+**So unit 6 is a data-cleanliness fix, not an outage.** Re-ranked accordingly: the served
+`procedure_key` is wrong-in-kind and should be corrected, but nothing is degrading while it waits, and
+the fix must not introduce the churn this check just ruled out.
+
+Note also that 25826280 and 26990894 share tender 7962872 at seq 2 and 3 — two notices of one
+procurement, reunited by the buyer key. That is unit 5 doing precisely what the island fallback could
+not.
+
 ## Unit 6 (new) — stop the refused group key reaching `procedure_key`
 
 The wanted end state: a refused group stores **no** published key, because it has none.
