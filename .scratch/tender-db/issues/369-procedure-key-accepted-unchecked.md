@@ -1,6 +1,6 @@
 # 369 — a published BT-04 becomes the Tender group key verbatim: an all-zero v4 UUID glues seven notices from three buyers into one served record
 
-Status: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
+Status: ready-for-agent (filed 2026-09-07; unit 1 census done 2026-09-08 — it revised unit 2's rule)
 Kind: defect (identity / grouping) — the placeholder-gate asymmetry with the org layer
 Relates to: 34 (built `is_uuid` for exactly this failure mode), 300 / idgate (the
 placeholder machinery organizations have and procedure keys do not),
@@ -32,11 +32,99 @@ mechanism — its unit 3 gauge is this issue's detector), ADR-0003
 3. **Repair**: re-project the affected keys so the welded tenders split; tender 1 becomes three tenders (or three islands).
 4. **Detector**: the component-plausibility gauge in `legacy-ojs-closure-welds-unrelated-procurements` unit 3 (distinct buyers / titles / year span per tender) catches both mechanisms — cross-reference, do not build it twice.
 
+## Unit 1 — the census (run 2026-09-08 against prod, bounded index seeks via `/v1/sql`)
+
+**Method.** `tenders_procedure_key` is a plain index on `tenders(procedure_key)`, so a
+`>= 'nnnnnnnn-' AND < 'nnnnnnnn.'` range is an indexed seek (20–46 ms each, measured). 30 such
+ranges were probed one at a time — all 16 single-nibble first blocks in both cases, plus
+`12345678`, `01234567`, `87654321`, `11223344`, `deadbeef`, `abcdefab`. A single 31-arm `OR`
+was tried first and fell back to a scan (408 at the 10 s cap, not retried — policy).
+
+**Hits: 4 first blocks, 13 tenders.** Every other probed block returned 0, including the
+`1234…` family the org layer's `idgate` lexicon rejects and both cases of `deadbeef`.
+
+| tender | procedure_key | versions | **buyers** | orgs | titles | first → last publication |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | `00000000-0000-4000-8000-000000000000` | 7 | **3** | 10 | 3 | 2024-01-09 → 2026-07-02 |
+| 82802 | `11111111-1111-4111-9111-111111111111` | 42 | **7** | 34 | 15 | 2024-01-08 → 2025-01-06 |
+| 82804 | `11111111-2222-4000-8111-123412341235` | 44 | **11** | 42 | 31 | 2024-02-25 → 2025-05-14 |
+| 82803 | `11111111-2222-4000-8111-123412341234` | 4 | 2 | 6 | 7 | 2024-02-07 → 2024-04-16 |
+| 82805 | `11111111-2222-4aaa-8333-444444444444` | 2 | 1 | 3 | 1 | 2024-08-07 → 2024-08-11 |
+| 82806 | `…444444444445` | 4 | 2 | 8 | 2 | 2024-08-15 → 2024-10-24 |
+| 82807 | `…444444444446` | 4 | 2 | 9 | 2 | 2024-11-14 → 2024-11-19 |
+| 82808 | `…444444444447` | 4 | 1 | 3 | 2 | 2024-12-18 → 2025-02-13 |
+| 82809 | `…444444444448` | 4 | 2 | 5 | 2 | 2025-04-16 → 2025-08-20 |
+| 82810 | `…444444444449` | 4 | 2 | 6 | 2 | 2025-12-17 → 2026-01-27 |
+| 82811 | `…444444444450` | 4 | 2 | 5 | 2 | 2026-05-21 → 2026-06-18 |
+| 160170 | `22222222-2222-4222-8222-222222222222` | 2 | 1 | 3 | 1 | 2024-01-15 → 2024-01-17 |
+| 778091 | `aaaaaaaa-aaaa-4aaa-8abc-aaaaaaaaaaaa` | 2 | 1 | 3 | 1 | 2025-07-09 → 2025-07-10 |
+
+`buyers` = `count(DISTINCT organization_id)` over `tender_version_parties` at `role='Procedure-Buyer'`
+(the role vocabulary is `Procedure-Buyer` / `Tenderer` / `Lot-*` / `Procedure-SProvider`; `orgs` counts
+every role, so it is inflated by bidders and review bodies and is NOT the weld signal).
+
+### The two-buyer rows are org duplicates, not welds — checked by name
+
+- 82806's two: org 22771062 and org 30900729, both "Rostocker Gesellschaft für Stadterneuerung,
+  Stadtentwic…", both DE.
+- **82803's two: org 20040451 "Stadt Osnabrück - FD Öffentliche Aufträge" and org 22494154
+  "Stadt Osnabrück - Fachdienst Öffentliche Aufträge"** — one authority, one abbreviated. So 82803 is
+  NOT welded, despite 7 distinct title strings (4 versions × DE/EN plus lot titles).
+
+**So `buyers = 2` is the org layer's duplication noise floor, measured twice — not evidence of a weld.**
+
+### What the census actually shows
+
+**Three tenders are welded** — 1, 82802, 82804: 3, 7 and 11 distinct buyers over 93 versions.
+**Ten are correctly grouped** on placeholder-*shaped* keys that are nonetheless doing real work:
+Rostock's procurement office incremented the last block per procurement
+(`…444444444444` … `…444444444450`, one tender each, 2–4 versions, one buyer, one title in DE+EN),
+and 160170 / 778091 are single-buyer two-version records.
+
+## Unit 2 — the decision the census forces: shape is necessary and NOT sufficient
+
+The issue proposed "a plausibility/entropy test by shape … a refused key falls back to
+`island:{notice_id}`". **The census refutes shape-only, and the counter-example is inside the same
+first block.** Compare:
+
+- `11111111-2222-4000-8111-123412341234` (82803, correct) — blocks are constant runs and a repeated
+  `1234` cycle,
+- `11111111-2222-4aaa-8333-444444444444` (82805, correct) — same,
+- `11111111-2222-4000-8111-123412341235` (82804, **welded across 11 buyers**) — same, and it differs
+  from 82803's key by one final character.
+
+No entropy or lexicon rule separates them, because the failure is not that the string looks like a
+placeholder: **it is that two different buyers typed the same one.** A shape-only gate would refuse
+10 correct tenders (28 versions → islands) to fix 3.
+
+**Decision: the gate is `placeholder-shaped ∧ the key's notices disagree on their buyer`,
+with the disagreement threshold at ≥3 distinct buyers** (2 is the measured org-duplicate floor, and
+raising the floor with an org-identity fix is issue 329/362's job, not this gate's). Refused ⇒ fall
+back per `crates/store/src/canonical.rs:7126` (legacy OJS closure, else `island:{notice_id}`).
+
+This is a group-level predicate, and `build_plan_groups` is exactly where it can be evaluated: it
+already has every notice carrying a candidate key, so it can count their buyers before electing the
+key. **That is also unit 4's plausibility gauge** — the same predicate, read rather than enforced —
+so build it once, in the planner, and let the gauge report it (cross-reference
+`legacy-ojs-closure-welds-unrelated-procurements` unit 3, which needs the identical count for the
+other mechanism).
+
+Blast radius at the ≥3 threshold, from the table above: **3 tenders split, 10 untouched.**
+
+### Open, for unit 3
+
+Whether the buyer count is taken from the parsed notice (before org resolution, comparing published
+identifier/name) or from resolved `organizations` rows. Resolved rows are what the census used, and
+they over-count by exactly the duplication the ≥3 threshold is set to absorb; parsed values dodge the
+org layer but re-implement its normalisation. Decide before writing the planner change.
+
 ## Done when
 
-- the census is on this issue;
-- a test pins that `00000000-0000-4000-8000-000000000000` does not key a Tender;
+- the census is on this issue; ✅ 2026-09-08
+- a test pins that `00000000-0000-4000-8000-000000000000` does not key a Tender **when its notices
+  name three different buyers**, and that `11111111-2222-4aaa-8333-444444444444` still does key one
+  (same shape, one buyer) — the pair, not the first alone, is what pins the rule the census settled;
 - tender 1's three procurements are three records, each serving its own dates and its own bid;
-- the gauge lists no BT-04-keyed tender with three buyers.
+- the gauge lists no BT-04-keyed tender with three buyers, and Rostock's ten stay whole.
 
 *One issue because:* the served-record damage on tender 1 and the reviewer's "the nil UUID should never be accepted" both reduce to one filter — `!k.trim().is_empty()` — standing where the organization layer has a whole module.
