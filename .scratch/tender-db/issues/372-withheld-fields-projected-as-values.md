@@ -2,7 +2,7 @@
 
 Status: ready-for-agent — **unit 1 CORPUS-WIDE 2026-09-08 (job 818): 19,236 `-1.00` rows, residue
 **116** (0.6 %); `result_value` 99.57 % declared, but `estimated_value` **0 of 29** — a second cause
-wearing the same value, split out as unit 5. **Unit 2 DECIDED: option (b), a quality marker applied
+wearing the same value, split out as unit 5, now DONE — publisher-invented sentinels with no withholding block, already handled by 366's negative rule and NOT to be labelled withheld. **Unit 2 DECIDED: option (b), a quality marker applied
 PER ROW conditioned on the notice's declaration, never as a blanket rule on the number.** Earlier: unit 1 sampled 2026-09-08 (see "Unit 1 — the census"): 8/8 `-1.00`
 rows are `result_value`, and 4/4 of their notices declare the withholding explicitly. The BT-195 code
 names the SOURCE field, which the projection's own `AMOUNTS` mapping already translates — so unit 2
@@ -221,6 +221,42 @@ Split by field because they are plainly not one thing:
 
 Until read, these stay OUT of the withheld disposition. Section 11 makes the residue a standing number,
 so it is visible if it grows.
+
+## Unit 5 DONE (2026-09-08): the `estimated_value` residue is a publisher-invented sentinel, not a marker
+
+**Located, bounded.** 16 windowed probes over `tender_id` (500,000 wide, `cents = -100 AND field =
+'estimated_value'`, indexed range + filter) — all 16 answered, none shed, and they returned **exactly
+29 rows**, matching section 11's count. Six tenders: **525230** (4 rows), **555999** (1), **631695**
+(3), **858517** (12), **1081472** (2), **1094340** (7). Every row EUR, every `eur_cents` also −100.
+
+**They are eForms, not a legacy convention** — which was the hypothesis worth killing first. 858517's
+versions are `eforms:eforms-sdk-1.7`; 525230's are `eforms:eforms-sdk-1.12` and `eforms:eforms-de-2.0`.
+
+**And they publish −1 with no withholding block at all.** Notice 24158422 (858517 seq 2):
+
+| check | result |
+| --- | --- |
+| `FieldsPrivacy` sections | **0** |
+| published amounts | `BT-27-Lot` 0, `BT-27-Lot` 0, `BT-27-Lot` 0, **`BT-27-Procedure` −100** |
+
+A buyer writing **−1 into BT-27 directly** as "not stated", while its own lots publish 0, without using
+the mechanism the format provides for exactly that. So the `estimated_value` −1 is a publisher-invented
+sentinel that merely *resembles* the SDK marker.
+
+### Disposition: nothing new is needed, and they must NOT be labelled `withheld`
+
+- **Issue 366's negative-sentinel rule already handles them correctly.** The head election refuses ALL
+  negatives regardless of declaration, so these 29 rows are already excluded from
+  `current_value_eur_cents` and from the value bounds that read it. No new mechanism.
+- **They must not be marked `withheld`**, because the notice never says so. That is precisely the
+  distinction unit 2's decision was framed around — a blanket rule on the number −1 would treat the
+  value as self-describing when the notice beside it is the thing that gives it meaning. Here the
+  notice says *nothing*, so the honest reading is "an unexplained negative", not "a withheld value".
+
+**This completes unit 2's scoping**: mark `withheld` only where a `FieldsPrivacy` declaration names the
+field the fact came from; everything else stays a 366-refused negative. The `result_value` residue (83
+rows) and `framework_maximum` (4) are untriaged and are the same shape as this class — likely the same
+answer — but they were not read, so they are not claimed.
 
 ## Done when
 
