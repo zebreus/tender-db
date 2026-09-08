@@ -1369,9 +1369,21 @@ pub fn sentinel_amount(cents: i64) -> bool {
     if major == 0 {
         return false;
     }
+    // ANY repeated digit, not only nines (issue 366, measured 2026-09-08). The
+    // corpus-wide sweep found PLN 22,222,222,222.00 standing as a published
+    // amount — a field-width maximum typed by holding a key down, which the
+    // nines-only test walked straight past. The argument that justified the nines
+    // leg ("the counts falling with width, 199 → 36 → 14, are a form maximum's
+    // signature") is about a key held down, and says nothing about WHICH key.
+    //
+    // Safe at nine digits for any digit: a genuine amount does not land on nine
+    // or more identical digits to the cent. 111,111,111.00 is not a budget
+    // somebody computed, and 1,000,000,000 is untouched because its digits are
+    // not all equal — the round-power-of-ten class stays admitted, as decided.
+    let repeated = major % 10;
     let mut digits = 0;
     while major > 0 {
-        if major % 10 != 9 {
+        if major % 10 != repeated {
             return false;
         }
         major /= 10;
@@ -20912,6 +20924,16 @@ mod tests {
         assert!(sentinel_amount(99_999_999_900)); // 999,999,999 — 199 Tenders
         assert!(sentinel_amount(999_999_999_900)); // 9,999,999,999 — 36
         assert!(sentinel_amount(9_999_999_999_900)); // 99,999,999,999 — 14
+        // Any repeated digit, not only nines (issue 366, found by the corpus sweep
+        // 2026-09-08). PLN 22,222,222,222.00 stood as a published amount and the
+        // nines-only test walked past it; a field maximum is a key held down and the
+        // argument never depended on which key.
+        assert!(sentinel_amount(2_222_222_222_200), "PLN 22,222,222,222 — the sweep's find");
+        assert!(sentinel_amount(111_111_111_00), "111,111,111 — nine ones");
+        assert!(sentinel_amount(444_444_444_400), "4,444,444,444");
+        // Eight identical digits is NOT enough — the width threshold is unchanged, and
+        // 11,111,111 is a figure a person could plausibly land on.
+        assert!(!sentinel_amount(1_111_111_100), "11,111,111 — eight ones, admitted");
         // Eight nines is a plausible figure, and the corpus gives no reason to
         // doubt it: the run has to be long enough to be a field width.
         assert!(!sentinel_amount(9_999_999_900));

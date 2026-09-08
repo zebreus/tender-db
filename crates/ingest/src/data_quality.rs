@@ -758,6 +758,22 @@ const SENTINEL_DATE_FLOOR: i64 = 631_152_000;
 /// see [`SENTINEL_AMOUNT_FLOOR`]), so frequency alone would not identify one there; it
 /// would need a different discriminator, which is left as the open half of issue 366.
 ///
+/// **The floor is applied to `eur_cents`; the GROUPING stays on published `(currency, cents)`.**
+/// Measured on the first corpus run (job 816, 2026-09-08): a currency-blind floor of 1,000,000,000
+/// major units is ~€40 M in CZK and ~€2.5 M in HUF, so the top-40 filled with entirely ordinary
+/// Czech, Hungarian and Swedish contracts (CZK 2,300,000,000 ×1,960 rows, SEK 1,200,000,000 ×1,110,
+/// HUF 1,000,000,000 ×383) while the one genuine sentinel in the listing — PLN 22,222,222,222 — sat
+/// at rank ~35. The cap was being spent on noise.
+///
+/// Converting the THRESHOLD reintroduces none of the blind spot that made this query necessary: the
+/// blind spot is about CLUSTERING (a converted value is smeared off its round published figure and
+/// cannot group), and the grouping key is still the published pair. The threshold only decides scope.
+///
+/// `eur_cents IS NULL` is the honest case rather than an edge case — ADR-0014 D4 leaves it NULL when
+/// no rate resolves instead of guessing — so an unconverted row falls back to the raw floor. Without
+/// that arm every era awaiting its conversion backfill would silently leave the sweep's scope, which
+/// is the same class of quiet narrowing as the exact-instant date grouping.
+///
 /// Negatives are in scope at EVERY magnitude: the class is ~15,650 rows corpus-wide, small
 /// enough to group without a floor, and `-1.00` alone accounts for 15,529 of them.
 ///
@@ -771,7 +787,9 @@ pub fn sentinel_amounts_sql() -> String {
         "SELECT a.currency AS currency, a.cents AS cents, COUNT(*) AS hits, \
                 COUNT(DISTINCT a.tender_id) AS tenders \
            FROM tender_version_amounts a \
-          WHERE a.cents < 0 OR a.cents >= {SENTINEL_AMOUNT_FLOOR} \
+          WHERE a.cents < 0 \
+             OR a.eur_cents >= {SENTINEL_AMOUNT_FLOOR} \
+             OR (a.eur_cents IS NULL AND a.cents >= {SENTINEL_AMOUNT_FLOOR}) \
           GROUP BY a.currency, a.cents \
          HAVING COUNT(*) >= {SENTINEL_MIN_REPEATS} \
           ORDER BY hits DESC \
@@ -1986,7 +2004,7 @@ pub fn render_text(report: &Report) -> String {
     render_sentinels(
         &mut out,
         "sentinel_amounts",
-        "amounts — negative at any size, or >= 1,000,000,000 major units AS PUBLISHED",
+        "amounts — negative at any size, or >= EUR 1,000,000,000 equivalent; grouped AS PUBLISHED",
         "currency",
         &report.unmeasured,
         &report.sentinel_amounts,
@@ -2053,15 +2071,20 @@ fn render_sentinels(
         );
         return;
     }
-    let _ = writeln!(out, "  {:<10}{:>28}{:>12}{:>12}", scope_head, "value", "rows", "tenders");
+    // 22, not 10: at 10 every date field truncated to `duration…` on the first real run,
+    // so the listing could not tell `duration_start` from `duration_end` — and that is
+    // exactly what decides whether a far-future day is normal (an open-ended framework's
+    // end) or wrong (its start). A diagnostic must not hide the discriminating half of
+    // its own key.
+    let _ = writeln!(out, "  {:<22}{:>26}{:>12}{:>12}", scope_head, "value", "rows", "tenders");
     for r in rows {
         let mut scope = r.scope.clone();
-        if scope.chars().count() > 9 {
-            scope = scope.chars().take(8).collect::<String>() + "…";
+        if scope.chars().count() > 21 {
+            scope = scope.chars().take(20).collect::<String>() + "…";
         }
         let _ = writeln!(
             out,
-            "  {:<10}{:>28}{:>12}{:>12}",
+            "  {:<22}{:>26}{:>12}{:>12}",
             scope,
             value(r.raw),
             group(r.hits),
@@ -2602,8 +2625,14 @@ mod tests {
         let sql = sentinel_amounts_sql();
         assert!(sql.contains("a.cents < 0"), "negatives at any size:\n{sql}");
         assert!(
-            sql.contains(&format!("a.cents >= {SENTINEL_AMOUNT_FLOOR}")),
-            "the high tail is bounded by the floor:\n{sql}"
+            sql.contains(&format!("a.eur_cents >= {SENTINEL_AMOUNT_FLOOR}")),
+            "the high tail is bounded by an EUR-EQUIVALENT floor — a currency-blind one spent \
+             the listing cap on ordinary CZK and HUF contracts (job 816):\n{sql}"
+        );
+        assert!(
+            sql.contains(&format!("a.eur_cents IS NULL AND a.cents >= {SENTINEL_AMOUNT_FLOOR}")),
+            "an unconverted row falls back to the raw floor — ADR-0014 D4 leaves eur_cents NULL \
+             when no rate resolves, and without this arm a whole era leaves scope silently:\n{sql}"
         );
         assert!(sql.contains("GROUP BY a.currency, a.cents"), "grouped per published pair:\n{sql}");
         assert!(
@@ -2611,10 +2640,15 @@ mod tests {
             "singletons filtered in SQL, so the cap is spent on candidates:\n{sql}"
         );
         assert!(sql.contains(&format!("LIMIT {SENTINEL_LISTING_CAP}")), "{sql}");
+        // The ban is on GROUPING by the converted column, not on referencing it. Reading
+        // `eur_cents` as a THRESHOLD is what makes the floor currency-neutral (job 816);
+        // grouping BY it is what reproduced the sweep that found nothing on 2026-09-08,
+        // because conversion smears a sentinel off its round published figure so it
+        // cannot cluster. An earlier form of this test banned the string outright and
+        // failed the fix — the invariant is about the key, so it is stated about the key.
         assert!(
-            !sql.contains("eur_cents"),
-            "the converted column is the blind spot this query exists to cover — reading it \
-             here would reproduce the sweep that found nothing on 2026-09-08:\n{sql}"
+            sql.contains("GROUP BY a.currency, a.cents") && !sql.contains("GROUP BY a.eur_cents"),
+            "the grouping key must be the PUBLISHED pair — a converted value cannot cluster:\n{sql}"
         );
     }
 
