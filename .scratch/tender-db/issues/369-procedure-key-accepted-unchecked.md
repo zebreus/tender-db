@@ -229,6 +229,53 @@ org layer to decide identity.
 
 *One issue because:* the served-record damage on tender 1 and the reviewer's "the nil UUID should never be accepted" both reduce to one filter — `!k.trim().is_empty()` — standing where the organization layer has a whole module.
 
+### Units 2a + 2b landed (`7be5994`, `8f48072`) — and coupling 1's MECHANISM is the reverse of what was written
+
+**2a — `key_shaped`** on `PlanRow` / `plan_notice`, computed in Rust at plan time from the key the row
+already carries, activating the shape predicate that landed inert. Stored rather than recomputed so
+2c's refusal is a grouped read over `WHERE key_shaped = 1` instead of a scan of every key in the plan.
+A test pins that it is stored PER NOTICE rather than defaulted — a column silently holding 0 for every
+row would leave the gate a no-op that still read as fully wired.
+
+**2b — `buyer_key`**, and it is a **SET, sorted and joined**, which is a deliberate change from the
+design recorded above. The design said one buyer per notice with the gate counting distinct buyers. But
+a notice can legitimately name several, and a **joint procurement** — a central purchasing body beside
+its participating authorities — is precisely the case a buyer COUNT refuses. Keying on the set makes
+`count(DISTINCT buyer_key) >= 3` read as "three distinct buyer SETS": the joint procurement repeats one
+set across its notices and is admitted; the welds carry buyers disjoint across versions and present
+three sets. Same single column, no second one needed.
+
+Bounded gap, documented rather than solved: notices naming overlapping but UNEQUAL subsets (`{X,Y}`,
+`{X,Y,Z}`, `{X,Z}`) present three sets and would be refused despite sharing buyers. Inside the shape
+pre-filter's reach — the 14 measured tenders, whose welded members are disjoint — that cannot arise.
+The "pairwise-disjoint sets" note below therefore still stands as the rule for ever dropping the
+pre-filter.
+
+Both units are **inert**: nothing consumes either column yet, the election still computes `group_key`
+without them, and `ops/check.sh` is green at 113 suites for both.
+
+#### Correction: coupling 1 does not announce itself, and it fires on `OPT-300-Procedure-Buyer`
+
+Coupling 1 below says the meta-gate "will go red, and it should". **It will not go red on its own**, and
+waiting for that signal would waste a firing. `no_de1_alias_reaches_the_grouping_or_the_fold_order`
+(`crates/ingest/src/project.rs`) does not detect what the code reads: `decides_the_fold` is a
+**hand-maintained list**, and the assertion is only that no entry in `DE1_FIELD_ALIASES` targets
+something on that list unless it is declared in the test's `IDENTITY` allowlist. Unit 2b landed with
+org fields feeding a plan column and the gate stayed green — correctly, by its own construction.
+
+So the widening must be **declared INTO the list** by unit 2c, not waited for. And the consequence is
+now known rather than guessed: **`OPT-300-Procedure-Buyer` IS a `DE1_FIELD_ALIASES` target** (checked
+2026-09-08 over the whole alias table). The moment 2c adds the buyer role fields to `decides_the_fold`,
+the gate fires on that alias — which is exactly the review it exists to force: a DE-1.x notice's buyer
+reference becoming an input to TENDER IDENTITY is a fold-impact question, not a mapping question, and it
+lands on the same DE-1.x line that issue 34's `is_uuid` gate serves.
+
+**Unit 2c therefore owes a decision, not just an edit:** either declare
+`("DE1-…-Buyer", "OPT-300-Procedure-Buyer")` in `IDENTITY` with the fold-impact reasoning written down,
+or scope `buyer_key` so the DE-1.x alias is not one of its inputs. Recording it here because a gate that
+must be *fed* before it can protect you is the same hazard as a gate that stopped running: silence reads
+as safety either way.
+
 ### Two couplings unit 2 must pay for, found while reading (2026-09-08)
 
 1. **`no_de1_alias_reaches_the_grouping_or_the_fold_order`** (`crates/ingest/src/project.rs`) is a
