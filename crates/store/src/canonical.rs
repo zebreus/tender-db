@@ -4583,6 +4583,18 @@ pub struct PlanRow {
     /// `plan_prev_edge`, resolved to a group after the keyed/island and legacy
     /// passes have given every notice a `group_key`.
     pub prev_refs: Vec<String>,
+    /// Whether `procedure_key` is PLACEHOLDER-SHAPED (issue 369 unit 2) — an
+    /// all-zero payload, a constant-run or short-cycle UUID, the hand-typed keys
+    /// the census found. Computed in Rust at plan time because SQL cannot express
+    /// it, and STORED because the refusal query is then a cheap grouped read over
+    /// `WHERE key_shaped = 1` instead of a scan of every key in the plan.
+    ///
+    /// On its own this decides nothing: the census refuted a shape-only gate,
+    /// which would refuse 10 correctly-grouped tenders to fix 3. Shape is the
+    /// PRE-FILTER that bounds the rule's blast radius; buyer disagreement is what
+    /// discriminates inside it. See the issue's "shape is necessary and NOT
+    /// sufficient".
+    pub key_shaped: bool,
 }
 
 /// One Tender's notices, streamed from the plan in fold order (issue 59). Carries
@@ -6957,7 +6969,9 @@ impl Db {
                  publication_id TEXT NOT NULL,
                  published_at   INTEGER NOT NULL,
                  subtype        TEXT,
-                 group_key      TEXT
+                 group_key      TEXT,
+                 -- issue 369 unit 2: the placeholder-shape verdict, per notice.
+                 key_shaped     INTEGER NOT NULL DEFAULT 0
              ) STRICT",
             (),
         )
@@ -7201,8 +7215,8 @@ impl Db {
         for r in rows {
             conn.execute(
                 "INSERT INTO plan_notice(notice_id, procedure_key, legacy, ojs_self, source,
-                     source_rank, publication_id, published_at, subtype, group_key)
-                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)",
+                     source_rank, publication_id, published_at, subtype, group_key, key_shaped)
+                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)",
                 (
                     Value::Integer(r.notice_id),
                     opt_text(r.procedure_key.as_deref()),
@@ -7213,6 +7227,7 @@ impl Db {
                     t(&r.publication_id),
                     Value::Integer(r.published_at),
                     opt_text(r.subtype.as_deref()),
+                    Value::Integer(i64::from(r.key_shaped)),
                 ),
             )
             .await?;
@@ -21084,6 +21099,59 @@ mod tests {
     }
 
     use super::{Db, LayerPresence, LayerState};
+
+    /// Issue 369 unit 2: the placeholder-shape verdict must survive the trip INTO
+    /// `plan_notice`, because the refusal query reads it from there rather than
+    /// recomputing it. A column that silently stored 0 for every row would leave the
+    /// gate a no-op that still looked fully wired — the failure this pins.
+    ///
+    /// Both keys are real. `11111111-2222-4000-8111-123412341235` is the census's
+    /// welded key (11 buyers on one hand-typed string); the other is a genuine TED
+    /// BT-04 from the same census's non-flagged set.
+    #[tokio::test]
+    async fn the_plan_stores_the_placeholder_shape_verdict_per_notice() {
+        let (db, path) = scratch_db("plan-key-shaped").await;
+        // `reset_plan`, not `clear_plan`: it is the one that DROPs and recreates the
+        // plan tables bare, which is what a fresh scratch DB needs.
+        db.reset_plan().await.expect("plan tables");
+
+        let row = |notice_id: i64, key: &str, key_shaped: bool| super::PlanRow {
+            notice_id,
+            procedure_key: Some(key.to_owned()),
+            legacy: false,
+            ojs_self: None,
+            source: "ted".to_owned(),
+            source_rank: 1,
+            publication_id: format!("{notice_id}-2026"),
+            published_at: 1_700_000_000,
+            subtype: None,
+            ojs_edges: Vec::new(),
+            prev_refs: Vec::new(),
+            key_shaped,
+        };
+        db.insert_plan(&[
+            row(1, "11111111-2222-4000-8111-123412341235", true),
+            row(2, "00003744-bf2c-4313-ab4c-d065bce1ca11", false),
+        ])
+        .await
+        .expect("insert plan");
+
+        for (notice_id, want) in [(1, 1_i64), (2, 0)] {
+            let got = db
+                .scalar(&format!("SELECT key_shaped FROM plan_notice WHERE notice_id = {notice_id}"))
+                .await
+                .expect("read back");
+            assert!(
+                matches!(got, Some(turso::Value::Integer(v)) if v == want),
+                "notice {notice_id}: want key_shaped {want}, got {got:?} — \
+                 the verdict must be stored per notice, never defaulted"
+            );
+        }
+
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
 
     async fn scratch_db(name: &str) -> (Db, String) {
         let path = format!("/tmp/tender-db-{name}-{}.db", std::process::id());

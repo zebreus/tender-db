@@ -3549,6 +3549,10 @@ impl Ident {
     /// This notice's row for the on-disk grouping plan — OJS keys encoded, Source
     /// precedence precomputed (issue 59).
     fn into_plan_row(self) -> store::PlanRow {
+        // issue 369 unit 2. Computed BEFORE the literal, which moves
+        // `procedure_key` out of `self` — read off the key this row carries, so
+        // the verdict cannot disagree with the key it describes.
+        let key_shaped = self.procedure_key.as_deref().is_some_and(is_placeholder_key);
         store::PlanRow {
             notice_id: self.notice_id,
             procedure_key: self.procedure_key,
@@ -3561,6 +3565,7 @@ impl Ident {
             subtype: self.subtype,
             ojs_edges: self.ojs_edges.into_iter().map(encode_ojs).collect(),
             prev_refs: self.prev_refs,
+            key_shaped,
         }
     }
 }
@@ -4854,7 +4859,6 @@ fn is_uuid(s: &str) -> bool {
 /// `None` when `s` is not uuid-shaped at all — the caller decides what that means.
 // Inert until issue 369 unit 2 wires the refusal into the plan's key election; the
 // tests below are the only callers today, and they pin what it must keep doing.
-#[allow(dead_code)]
 fn uuid_free_nibbles(s: &str) -> Option<std::collections::BTreeSet<u8>> {
     let s = s.trim();
     if !is_uuid(s) {
@@ -4872,7 +4876,6 @@ fn uuid_free_nibbles(s: &str) -> Option<std::collections::BTreeSet<u8>> {
 
 /// The longest run of one repeated character among those free nibbles, dashes and
 /// the two fixed nibbles skipped.
-#[allow(dead_code)] // see `uuid_free_nibbles` — inert until unit 2's call site exists.
 fn uuid_longest_run(s: &str) -> usize {
     let s = s.trim();
     let b = s.as_bytes();
@@ -4921,7 +4924,6 @@ fn uuid_longest_run(s: &str) -> usize {
 ///   is far higher — order one key corpus-wide — and that is affordable only
 ///   because the buyer test stands behind it: a real key has one buyer and is
 ///   admitted regardless.
-#[allow(dead_code)] // see `uuid_free_nibbles` — inert until unit 2's call site exists.
 fn is_placeholder_key(s: &str) -> bool {
     let Some(free) = uuid_free_nibbles(s) else {
         return false;
