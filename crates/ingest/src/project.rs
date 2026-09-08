@@ -4712,6 +4712,90 @@ fn is_uuid(s: &str) -> bool {
         })
 }
 
+/// How many DISTINCT hex characters a uuid spends on the 30 nibbles it is free to
+/// choose. The version nibble (block 3, character 1) and the variant nibble
+/// (block 4, character 1) are dropped first: they are structurally fixed, so
+/// counting them would credit even an all-zero placeholder with three distinct
+/// characters and blunt the measure exactly where it has to be sharp.
+///
+/// `None` when `s` is not uuid-shaped at all — the caller decides what that means.
+// Inert until issue 369 unit 2 wires the refusal into the plan's key election; the
+// tests below are the only callers today, and they pin what it must keep doing.
+#[allow(dead_code)]
+fn uuid_free_nibbles(s: &str) -> Option<std::collections::BTreeSet<u8>> {
+    let s = s.trim();
+    if !is_uuid(s) {
+        return None;
+    }
+    let b = s.as_bytes();
+    Some(
+        (0..36)
+            // 8/13/18/23 are the dashes; 14 is the version nibble and 19 the variant.
+            .filter(|i| !matches!(i, 8 | 13 | 18 | 23 | 14 | 19))
+            .map(|i| b[i].to_ascii_lowercase())
+            .collect(),
+    )
+}
+
+/// The longest run of one repeated character among those free nibbles, dashes and
+/// the two fixed nibbles skipped.
+#[allow(dead_code)] // see `uuid_free_nibbles` — inert until unit 2's call site exists.
+fn uuid_longest_run(s: &str) -> usize {
+    let s = s.trim();
+    let b = s.as_bytes();
+    let free: Vec<u8> = (0..s.len())
+        .filter(|i| !matches!(i, 8 | 13 | 18 | 23 | 14 | 19))
+        .map(|i| b[i].to_ascii_lowercase())
+        .collect();
+    let mut best = 0;
+    let mut run = 0;
+    let mut prev = None;
+    for c in free {
+        run = if Some(c) == prev { run + 1 } else { 1 };
+        prev = Some(c);
+        best = best.max(run);
+    }
+    best
+}
+
+/// Whether a published procedure key was typed by a human rather than generated
+/// (issue 369). BT-04 is a spec-guaranteed uuid, and TED does not check that the
+/// publisher honoured the spec — so keys like `00000000-0000-4000-8000-000000000000`
+/// and `11111111-1111-4111-9111-111111111111` reach us structurally valid and
+/// utterly non-unique, and every notice publishing one collapses into a single
+/// Tender.
+///
+/// **This is a pre-filter, not the gate.** It cannot tell a placeholder that
+/// happens to be unique from one two buyers both typed: Rostock's procurement
+/// office keys real, distinct procurements
+/// `11111111-2222-4aaa-8333-444444444444` … `-444444444450`, one per procurement,
+/// while `11111111-2222-4000-8111-123412341235` — one character from a correct
+/// key on the same portal — welds eleven buyers into one record. Measured on prod
+/// 2026-09-08: of the 14 keys this refuses, 3 are welds and 11 are correct. The
+/// caller must combine it with buyer disagreement across the key's notices; see
+/// the issue.
+///
+/// Two disjuncts, both calibrated against 796 real keys sampled off prod, where
+/// together they flagged exactly the two genuine placeholders and nothing else:
+///
+/// - **≤6 distinct free nibbles.** A v4 uuid draws 30 nibbles at random, so the
+///   chance of landing on six characters or fewer is about 1.4e-9 — under ten
+///   million keys, a hundredth of one expected false positive. This is safe by
+///   arithmetic, not by tuning.
+/// - **a run of ≥8 identical nibbles**, which catches the hand-typed keys that
+///   spend many distinct characters on a decorative prefix
+///   (`abcdefab-1111-4111-9111-111111111111` uses seven). Its false-positive rate
+///   is far higher — order one key corpus-wide — and that is affordable only
+///   because the buyer test stands behind it: a real key has one buyer and is
+///   admitted regardless.
+#[allow(dead_code)] // see `uuid_free_nibbles` — inert until unit 2's call site exists.
+fn is_placeholder_key(s: &str) -> bool {
+    let Some(free) = uuid_free_nibbles(s) else {
+        return false;
+    };
+    free.len() <= 6 || uuid_longest_run(s) >= 8
+}
+
 /// Parse an OJS publication reference into `(year, number)`. Handles the OJS
 /// display form (`2019/S 001-000001`, `2011/S 1-000181`), the DOC/eForms form
 /// (`000001-2019`), and the text-era form (`154-2005`). The raw string is never
@@ -5928,6 +6012,66 @@ mod tests {
         assert!(!is_uuid("3d2aac8664286-4ae2-9bc1-08eb1cc61f80")); // hyphen misplaced
         assert!(!is_uuid("g3d2aac8-4286-4ae2-9bc1-08eb1cc61f80")); // non-hex
         assert!(!is_uuid(""));
+    }
+
+    /// Every key in this test was read off production on 2026-09-08, and the
+    /// verdicts are the measured ones — the point of the pair is that shape alone
+    /// CANNOT separate a weld from a correct grouping, so this test pins the
+    /// pre-filter's reach and nothing more. The buyer test decides.
+    #[test]
+    fn hand_typed_procedure_keys_are_refused_by_shape() {
+        // The three welds. Tender 1 serves three buyers' procurements as one
+        // record; 82802 seven; 82804 eleven.
+        assert!(is_placeholder_key("00000000-0000-4000-8000-000000000000"));
+        assert!(is_placeholder_key("11111111-1111-4111-9111-111111111111"));
+        assert!(is_placeholder_key("11111111-2222-4000-8111-123412341235"));
+        // Also refused, and CORRECTLY grouped — which is exactly why refusal by
+        // shape may not end the decision. Tender 2 (Landkreis Göttingen) is the
+        // one the first-block probe missed; 160170 and 778091 have one buyer each.
+        assert!(is_placeholder_key("00000001-2023-4000-a000-000000000001"));
+        assert!(is_placeholder_key("22222222-2222-4222-8222-222222222222"));
+        assert!(is_placeholder_key("aaaaaaaa-aaaa-4aaa-8abc-aaaaaaaaaaaa"));
+        // The long-run disjunct earns its place here: seven distinct characters,
+        // so the entropy arm alone would let this through.
+        assert!(is_placeholder_key("abcdefab-1111-4111-9111-111111111111"));
+    }
+
+    #[test]
+    fn generated_uuids_are_not_refused() {
+        // Real BT-04 keys sampled off prod. Of 796 sampled keys, the entropy arm
+        // refused exactly the two genuine placeholders and nothing else.
+        assert!(!is_placeholder_key("00003744-bf2c-4313-ab4c-d065bce1ca11"));
+        assert!(!is_placeholder_key("00005c05-f443-4f25-a20d-d647f449d456"));
+        assert!(!is_placeholder_key("00006a51-12a3-4d77-83b8-5d96d84f34ff"));
+        assert!(!is_placeholder_key("3d2aac86-4286-4ae2-9bc1-08eb1cc61f80"));
+        // Rostock's incremented family is the exception this test exists to name:
+        // hand-typed, placeholder-LOOKING, and each one keys a real distinct
+        // procurement. Shape refuses BOTH — the first on entropy (5 distinct
+        // characters), the second only on the run arm (7 distinct, but eight `1`s
+        // in the opening block). So on this family the shape filter is wrong every
+        // time, and every one of them is admitted by the buyer test instead. That
+        // is the division of labour, pinned: a later widening of the shape rule
+        // cannot fix this by tuning, because there is nothing here to tune towards.
+        assert!(is_placeholder_key("11111111-2222-4aaa-8333-444444444444"));
+        assert!(is_placeholder_key("11111111-2222-4aaa-8333-444444444450"));
+        // Not uuid-shaped at all: never this function's business.
+        assert!(!is_placeholder_key("25599482"));
+        assert!(!is_placeholder_key("LOCAL-12345"));
+        assert!(!is_placeholder_key(""));
+    }
+
+    #[test]
+    fn the_fixed_nibbles_do_not_pad_the_entropy_count() {
+        // The all-zero key spends ONE character. Counting the version `4` and the
+        // variant `8` would report three and start the threshold three characters
+        // too high on every placeholder.
+        let free = uuid_free_nibbles("00000000-0000-4000-8000-000000000000").unwrap();
+        assert_eq!(free.len(), 1);
+        assert_eq!(free.iter().copied().collect::<Vec<u8>>(), vec![b'0']);
+        assert_eq!(uuid_free_nibbles("not-a-uuid"), None);
+        // Case folds, so an upper-hex publisher is measured the same way.
+        let upper = uuid_free_nibbles("AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA").unwrap();
+        assert_eq!(upper.len(), 1);
     }
 
     #[test]

@@ -158,6 +158,31 @@ So: shape bounds the blast radius, buyer-count discriminates inside it. Neither 
 If unit 2 ever wants to drop the shape pre-filter and gate every BT-04, the predicate must become
 *pairwise-disjoint buyer sets across the key's notices*, not a count — record that before widening.
 
+### Refuted, measured: "refuse the key and let the previous-publication edges re-join it"
+
+The tempting simplification is to drop the buyer machinery entirely — refuse a placeholder-shaped key
+in `procedure_key()` (the existing extension point, right where `is_uuid` already gates the dialect
+folder ids), let the notices fall to `island:{notice_id}`, and trust ADR-0011's `plan_prev_edge`
+closure to put the genuinely-related ones back together. Ten lines instead of two schema columns.
+**It does not work, and the measurement says why twice over.**
+
+*First:* the citations are not there. `OPP-090-Procedure` counts over every version of all 13 shaped
+tenders (via `notice_ids`) are **0 on 24 of the 28 versions measured**, 1 on four (82809 seq 3–4,
+82810 seq 1–2). Refusing the key would not re-join these chains — it would shatter them into one
+island per notice, permanently.
+
+*Second, and worse:* the shaped key is carrying the **cross-source merge**. Every correct shaped
+tender alternates two publication-id shapes, and the notice rows say what they are — tender 82806's
+four versions are notices 26430096 and 26487992 (`source=doe`, `eforms:eforms-de-1.1`,
+`27aa15a5-…-01`) paired with 24171307 and 24278203 (`source=ted`, `eforms:eforms-sdk-1.7`,
+`00495356-2024`). The hand-typed key is the ONLY thing joining each German portal notice to its TED
+twin — which is precisely the merge issue 34's `is_uuid` gate was built to permit. A blanket refusal
+would undo issue 34's win to fix issue 369's, on the same notices.
+
+So the buyer test is not an optional refinement over a simpler design; it is what makes the fix
+possible at all. Recorded here because "just refuse it and let the closure sort it out" will look
+obvious again to the next reader.
+
 ### The planner change unit 2 needs (design, 2026-09-08)
 
 The election is one set-blind statement — `UPDATE plan_notice SET group_key = CASE WHEN procedure_key
@@ -203,3 +228,29 @@ org layer to decide identity.
 - the gauge lists no BT-04-keyed tender with three buyers, and Rostock's ten stay whole.
 
 *One issue because:* the served-record damage on tender 1 and the reviewer's "the nil UUID should never be accepted" both reduce to one filter — `!k.trim().is_empty()` — standing where the organization layer has a whole module.
+
+### Two couplings unit 2 must pay for, found while reading (2026-09-08)
+
+1. **`no_de1_alias_reaches_the_grouping_or_the_fold_order`** (`crates/ingest/src/project.rs`) is a
+   standing meta-gate holding the allowlist of fields that "decide the fold". A buyer-aware key
+   election makes ORGANIZATION fields (`BT-500`/`BT-501`/`BT-514`, `TED-OFFICIALNAME`,
+   `TED-NATIONALID`, the DE-1.x aliases) inputs to TENDER IDENTITY for the first time. That test will
+   go red, and it should — the widening is the decision, and it must be declared there rather than
+   worked around.
+2. **`PROJECTION_EPOCH`** (`crates/store/src/canonical.rs`) must be bumped so standing tenders
+   re-fold, and `crates/ingest/tests/fixtures/golden/project_apply.snapshot` will move because its
+   `tenders` digest covers `procedure_key` and `island_notice_id`. Per that module's header the golden
+   is regenerated only for a deliberate, reviewed derived-layer change — which this is, so say so in
+   the commit rather than quietly re-recording it.
+
+Buyer-key details settled by the same reading: the buyer role is `Procedure-Buyer` (eForms and
+eForms-DE 1.x, via the `DE1-ContractingParty-Party-PartyIdentification-ID` alias) or `buyer` (legacy
+TED `ADDRESS_CONTRACTING_BODY` / `…_ADDITIONAL` / `CA_CE_CONCESSIONAIRE_PROFILE`, and the DÖE sdk-0.1
+synthesis) — the corpus-wide `role LIKE '%uyer%'` predicate every consumer already uses. The mention's
+country and identifier are ALREADY normalised at plan time: `NoticeState::mentions` runs
+`canonical_country` then `normalise_identifier` before `into_plan_row` is called in the same loop, so
+`buyer_key` costs a join from role-target section id to mention section id through
+`nested_org_aliases`, and no new normalisation. For the identifier-less fallback prefer `match_norm`
+(the N2 key) over `organizations.name_norm`: it folds harder, so it errs towards saying two notices
+AGREE about their buyer, and every error in that direction is a weld left standing rather than a
+correct tender split.
