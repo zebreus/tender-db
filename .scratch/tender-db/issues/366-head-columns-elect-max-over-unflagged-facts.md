@@ -457,6 +457,62 @@ Two consequences to carry:
   standing until the next epoch bump. `b100e4a` is deployed as of 2026-09-08, so this is satisfied — but
   it is the ordering constraint to check rather than assume if either lands again.
 
+### Section 10's SECOND run (job 817, corrected floor + wide column) — and it re-read the dates finding
+
+Job 817: `ok`, 6,420 s, 0 unmeasured, deployed rev `b100e4a`. Both instrument fixes paid off
+immediately, and one of them overturned an interpretation recorded above.
+
+**The wide scope column settled the question it was widened for.** Every far-future date in the
+listing is **`duration_end`**; the 1899 cluster is **`duration_start`**:
+
+| field | day | rows | tenders |
+| --- | --- | --- | --- |
+| `duration_end` | 2036-12-30 | 1,026 | 365 |
+| `duration_end` | 2099-12-31 | 944 | 211 |
+| `duration_end` | 2099-12-30 | 748 | 228 |
+| **`duration_start`** | **1899-12-31** | 415 | 124 |
+| `participation_deadline` | 2039-12-31 | 5,603 | 5 |
+
+**That changes the reading, and the earlier framing above was too strong.** A `duration_end` of
+2099-12-31 is a publisher saying *open-ended* — an indefinite framework agreement — which is a
+CONVENTION carrying real information, not junk to strip. Calling the far-year December cluster a
+"no real deadline convention" (recorded above) conflated it with the deadline fields; it is a
+contract-END convention. And it never touched the head columns anyway: `head_deadline` elects only
+`submission_deadline`, so `DEADLINE_HORIZON_SECS` was correctly scoped the whole time and none of
+these rows were ever candidates for it.
+
+What IS defective, now visible because the field is legible:
+
+- **`duration_start` = 1899-12-31, 124 tenders.** A contract cannot start in 1899. The Excel/Lotus
+  epoch, confirmed as a genuine defect rather than a convention.
+- **`participation_deadline` far in the future** — 2039-12-31 on 5 tenders (5,603 rows), 2060-05-23
+  on 1. A participation deadline is a near-term date by definition; these are wrong. Small tender
+  counts, so a handful of records rather than a class.
+
+The lesson for the instrument, worth keeping: **section 10 sweeps every date field while the election
+filters only `submission_deadline`**, so most of what it lists is not a head-column defect at all.
+The "CANDIDATE, not a verdict" line in the render is carrying more weight than it looked like it
+would, and the listing must not be read as a defect count.
+
+**The EUR-equivalent floor worked as intended.** The CZK/HUF/SEK ordinary-budget noise is gone, and
+what surfaced instead is recorded on **issue 372** — the `-1.00` class is multi-currency (EUR, PLN,
+DKK, NOK) and there is a currency literally spelled `unpublished`.
+
+### Correction to Leg A's reasoning: `-1` is a SPECIFICATION, not a convention (see 372)
+
+Leg A above justifies refusing negatives with "−1.00 alone is 15,529 rows and is a documented
+publisher convention for 'not stated'". **The disposition is right and the reason is wrong.** The
+second run traced it: under BT-195/`FieldsPrivacy` the eForms SDK writes the code `unpublished` and
+the number **−1** when a buyer withholds a field — it is the SDK's withheld-value marker, published
+alongside the reason and the date it becomes publishable. The committed fixture
+`can-withheld-29-00495618-2026.xml` shows it on submission statistics and on an award criterion.
+
+This does not change anything Leg A does — the head election must still skip these, and it does. It
+changes what the fix IS: **issue 372 is the root cause** (a withheld field projected as a value at
+all, with `notice_withheld_fields` already modelling it correctly one layer down), and Leg A is
+defence in depth over it. When 372 lands, this leg stays; its doc comment must stop calling −1 a
+convention.
+
 ### Still open in this issue
 
 Unit 4 (value bounds in `read.rs:855-871` excluding flagged amounts — the read side
