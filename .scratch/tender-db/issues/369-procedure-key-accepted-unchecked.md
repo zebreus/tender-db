@@ -276,6 +276,32 @@ or scope `buyer_key` so the DE-1.x alias is not one of its inputs. Recording it 
 must be *fed* before it can protect you is the same hazard as a gate that stopped running: silence reads
 as safety either way.
 
+#### Unit 2c's coupling decision, settled 2026-09-08: DECLARE it, and here is the argument that holds
+
+The alias is `("DE1-ContractingParty-Party-PartyIdentification-ID", "OPT-300-Procedure-Buyer")`. Unit 2c
+must add the buyer role fields to `decides_the_fold`, the gate will then fire on this alias, and the
+choice is: declare it in `IDENTITY` with fold-impact reasoning, or scope `buyer_key` so DE-1.x buyer
+refs are not inputs.
+
+**Decision: declare it.** And the reasoning matters, because the obvious argument for it is FALSE and
+was checked before being written down. The tempting claim is "the DE-1.x alias is necessary to refuse
+tender 1, whose seventh notice is DE-1.x (26244735)". **It is not.** Tender 1's three buyers are each
+carried by at least two notices (seq 1–2 Klinikum Neumarkt, 3–4 Land BW, 5–7 BG Holz und Metall), so
+dropping the single DE-1.x notice still leaves three distinct buyer sets and the key is still refused.
+The fix works on the motivating tender either way.
+
+The argument that does hold is about the failure DIRECTION. The gate counts buyer disagreement, and
+excluding one dialect's buyers makes that count **dialect-dependent**: a key whose weld is visible only
+through its DE-1.x notices would be UNDER-counted and silently admitted. Under-refusing is the silent
+direction — a weld that keeps serving one fabricated record — whereas over-refusing splits, which
+CONTEXT.md:112-113 names as the safe direction. A buyer is a buyer; which vocabulary published it is
+not a property of the procurement.
+
+The fold-impact answer the gate demands: **the blast radius is unchanged.** DE-1.x buyers only ever
+reach the election through the refusal, and the refusal is gated on `key_shaped = 1` — the 14 measured
+tenders. No other tender's grouping can move, whatever the alias contributes. That is what makes this a
+declaration rather than a re-grouping.
+
 ### Two couplings unit 2 must pay for, found while reading (2026-09-08)
 
 1. **`no_de1_alias_reaches_the_grouping_or_the_fold_order`** (`crates/ingest/src/project.rs`) is a

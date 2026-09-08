@@ -431,6 +431,32 @@ stays recorded above in case the cost profile changes (a much larger `tender_ver
 lowered floor), and one part of it is still worth having: it is the only route that would let the
 magnitude floor come down far enough to open the low-magnitude blind spot.
 
+### The re-fold route is answered from outside this issue (2026-09-08)
+
+The undecided route above — `PROJECTION_EPOCH` bump versus a targeted repair job, for the ~16,000
+standing rows — is settled by a change on another issue rather than by anything here.
+
+**Issue 369 unit 2c bumps `PROJECTION_EPOCH` anyway.** Its buyer-aware key election changes how Tenders
+are GROUPED, so standing tenders cannot pick it up without a re-fold; the epoch bump is not optional
+there the way it is here. One corpus re-fold then re-derives both: 369's regrouping and this issue's
+head-column election, for the price of the one that was already required.
+
+That dissolves the dilemma rather than deciding it. The targeted repair job's only advantage was
+avoiding a full re-fold, and the re-fold is now happening regardless — while its stated cost stands
+(a second implementation of the election, which can drift from the fold's, and drift is exactly the
+failure issue 343 and this issue both already are). So: **no repair job. This issue's standing rows
+ride 369 unit 2c's epoch bump.**
+
+Two consequences to carry:
+
+- **The verification baseline above is the right instrument for both.** The five rows recorded there
+  (34, 43065, 4490098, 3323836, 26) must be re-read after that re-fold, and tender 26 must still be
+  unchanged — it is the row that pins the rule NOT catching one-cent amounts.
+- **Sequencing:** the re-fold must run AFTER the repdigit generalisation (`b100e4a`) is deployed, or the
+  ~16,000 rows get re-elected under the narrower nines-only rule and the PLN 22,222,222,222 class stays
+  standing until the next epoch bump. `b100e4a` is deployed as of 2026-09-08, so this is satisfied — but
+  it is the ordering constraint to check rather than assume if either lands again.
+
 ### Still open in this issue
 
 Unit 4 (value bounds in `read.rs:855-871` excluding flagged amounts — the read side
