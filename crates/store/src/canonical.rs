@@ -7420,6 +7420,30 @@ impl Db {
                          WHEN procedure_key IS NOT NULL
                               AND procedure_key NOT IN (SELECT procedure_key FROM plan_refused_key)
                               THEN procedure_key
+                         -- issue 369 unit 5: a REFUSED key splits per BUYER, not per notice.
+                         -- The island fallback was correct but over-split: it turned 82802's
+                         -- ~7 real procurements into 42 Tenders and lost the cross-source
+                         -- doe/ted merges inside them. Grouping the refused notices by the
+                         -- buyer they name recovers that structure while still separating the
+                         -- procurements the weld had fused.
+                         --
+                         -- `procedure_key IS NOT NULL` is load-bearing, not redundant with the
+                         -- arm above: without it a notice with NO key and any buyer would group
+                         -- by buyer alone, welding every one of that buyer's procurements into a
+                         -- single Tender — a far larger weld than the one this issue fixes. The
+                         -- explicit `IN` keeps that true even if the arms are ever reordered.
+                         --
+                         -- Legacy closure still wins: same `NOT (legacy = 1 AND ojs_self ...)`
+                         -- guard as the island arm, so an OJS chain remains the stronger identity
+                         -- signal and a refused legacy notice falls through to it as designed.
+                         WHEN procedure_key IS NOT NULL
+                              AND procedure_key IN (SELECT procedure_key FROM plan_refused_key)
+                              AND buyer_key IS NOT NULL
+                              AND NOT (legacy = 1 AND ojs_self IS NOT NULL)
+                              THEN 'refused:' || procedure_key || ':' || buyer_key
+                         -- A refused notice naming NO buyer stays an island: grouping every
+                         -- buyer-less notice of a key together would be a new weld, smaller but
+                         -- the same kind.
                          WHEN NOT (legacy = 1 AND ojs_self IS NOT NULL) THEN 'island:' || notice_id
                          ELSE NULL END
                      WHERE notice_id BETWEEN ? AND ?",
@@ -21235,6 +21259,12 @@ mod tests {
             row(1, WELDED, "DE:national:133517778"),
             row(2, WELDED, "DE:national:811245646"),
             row(3, WELDED, "DE:national:811188162"),
+            // A FOURTH notice repeating notice 1's buyer — the case that distinguishes
+            // unit 5's per-buyer grouping from the island fallback it replaced: it must
+            // land in notice 1's Tender, not a fourth one.
+            row(8, WELDED, "DE:national:133517778"),
+            // On the refused key but naming NO buyer — must stay an island (see below).
+            super::PlanRow { buyer_key: None, ..row(9, WELDED, "unused") },
             // Correctly grouped, same shape, ONE buyer repeated.
             row(4, ONE_BUYER, "DE:national:999000111"),
             row(5, ONE_BUYER, "DE:national:999000111"),
@@ -21260,15 +21290,37 @@ mod tests {
             }
         }
 
-        for n in [1, 2, 3] {
-            let got = key_of(&db, n).await;
+        // Issue 369 unit 5: the refused key splits per BUYER. Three distinct buyers over
+        // four notices ⇒ three Tenders, with notices 1 and 8 together — NOT four islands,
+        // which is what the first cut of this gate produced and what over-split 82802's
+        // ~7 real procurements into 42 records.
+        for (n, buyer) in [
+            (1, "DE:national:133517778"),
+            (2, "DE:national:811245646"),
+            (3, "DE:national:811188162"),
+            (8, "DE:national:133517778"),
+        ] {
             assert_eq!(
-                got,
-                format!("island:{n}"),
-                "notice {n} carries the welded key, whose notices name three buyer sets — it must \
-                 fall through to an island rather than keying a shared Tender"
+                key_of(&db, n).await,
+                format!("refused:{WELDED}:{buyer}"),
+                "notice {n} is on a refused key, so it groups by the buyer it names"
             );
         }
+        assert_eq!(
+            key_of(&db, 1).await,
+            key_of(&db, 8).await,
+            "two notices of a refused key naming ONE buyer are one Tender — the structure the \
+             island fallback threw away"
+        );
+        assert_ne!(key_of(&db, 1).await, key_of(&db, 2).await, "disjoint buyers stay apart");
+
+        // A refused notice naming NO buyer stays an island: grouping every buyer-less notice
+        // of the key together would be a new weld, smaller but the same kind.
+        assert_eq!(
+            key_of(&db, 9).await,
+            "island:9",
+            "a refused notice naming no buyer must stay an island, not join a buyer-less pool"
+        );
         for n in [4, 5] {
             assert_eq!(
                 key_of(&db, n).await,
