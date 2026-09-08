@@ -6122,6 +6122,22 @@ mod tests {
         decides_the_fold.extend(PUBLICATION_DATE_FIELDS); // published_at = fold order
         decides_the_fold.extend(DISPATCH_DATE_FIELDS); // dispatched_at, and published_at by fallback
         decides_the_fold.extend(LEGACY_OWN_NUMBER_FIELDS); // legacy OJS identity
+        // Issue 369 unit 2: BUYER identity now decides TENDER identity. The key election
+        // refuses a placeholder-shaped procedure key whose notices disagree on their buyer,
+        // so the buyer role pointer and the organization fields `buyer_key` reads are
+        // inputs to grouping for the first time. Declared here rather than discovered:
+        // this list is HAND-MAINTAINED and the assertion below only checks aliases against
+        // what it contains, so an undeclared widening is invisible — the gate cannot go red
+        // on its own, which is the opposite of what issue 369's coupling note assumed.
+        decides_the_fold.push("OPT-300-Procedure-Buyer"); // the eForms buyer role reference
+        decides_the_fold.push(ORG_NAME_FIELD);
+        decides_the_fold.push(ORG_IDENTIFIER_FIELD);
+        decides_the_fold.push(ORG_COUNTRY_FIELD);
+        decides_the_fold.push(ORG_NATIONALID_FIELD);
+        decides_the_fold.extend(ORG_NAME_FIELDS);
+        decides_the_fold.extend(ORG_COUNTRY_FIELDS);
+        decides_the_fold.extend(SDK01_PARTY_NAME_FIELDS);
+        decides_the_fold.extend(SDK01_PARTY_COUNTRY_FIELDS);
 
         // The identity aliases that deliberately target it (issue 85's DE-1.x line).
         const IDENTITY: &[(&str, &str)] = &[
@@ -6130,6 +6146,23 @@ mod tests {
             ("DE1-Publication-PublicationDate", "OPP-012-notice"),
             ("DE1-RequestedPublicationDate", "BT-738-notice"),
             ("DE1-IssueDate", "BT-05(a)-notice"),
+            // Issue 369 unit 2, decided 2026-09-08. A DE-1.x notice's buyer reference is an
+            // input to TENDER identity, and the fold-impact review is recorded on the issue.
+            // In short: the blast radius does not change, because a buyer only reaches the
+            // election through the refusal and the refusal is gated on `key_shaped = 1` — the
+            // 14 measured tenders. And excluding this alias would be WORSE than including it:
+            // the gate counts buyer disagreement, so dropping one dialect's buyers makes that
+            // count dialect-dependent, and a key whose weld is visible only through its DE-1.x
+            // notices would be UNDER-counted and silently admitted. Under-refusing is the
+            // silent direction; over-refusing merely splits (CONTEXT.md:112-113).
+            //
+            // NOT justified by "it is needed for tender 1" — that was checked and is false:
+            // tender 1's three buyers are each carried by >= 2 notices, so it is refused with
+            // or without the DE-1.x one.
+            ("DE1-ContractingParty-Party-PartyIdentification-ID", "OPT-300-Procedure-Buyer"),
+            ("DE1-Organizations-Organization-Company-PartyName-Name", ORG_NAME_FIELD),
+            ("DE1-Organizations-Organization-Company-PartyLegalEntity-CompanyID", ORG_IDENTIFIER_FIELD),
+            ("DE1-Organizations-Organization-Company-PostalAddress-Country-IdentificationCode", ORG_COUNTRY_FIELD),
         ];
 
         for (de1, target) in DE1_FIELD_ALIASES {

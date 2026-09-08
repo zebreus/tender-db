@@ -6978,7 +6978,14 @@ impl Db {
     /// OOM (issue 63; turso has no truncate optimisation), whereas DROP is O(1).
     /// DROP TABLE cascades the fold/edge indexes, so no explicit DROP INDEX is needed.
     async fn clear_plan_on(&self, conn: &Connection) -> turso::Result<()> {
-        for table in ["plan_notice", "plan_ojs_node", "plan_ojs_edge", "plan_prev_edge", "plan_group_merge"] {
+        for table in [
+            "plan_notice",
+            "plan_ojs_node",
+            "plan_ojs_edge",
+            "plan_prev_edge",
+            "plan_group_merge",
+            "plan_refused_key",
+        ] {
             conn.execute(&format!("DROP TABLE IF EXISTS {table}"), ()).await?;
         }
         conn.execute(
@@ -6998,6 +7005,15 @@ impl Db {
                  -- issue 369 unit 2: the buyer set, sorted and joined.
                  buyer_key      TEXT
              ) STRICT",
+            (),
+        )
+        .await?;
+        // issue 369 unit 2: the placeholder-shaped keys whose notices disagree on their
+        // buyer, materialised once per run by `build_plan_groups` so the election's CASE
+        // can exclude them with an indexed anti-join instead of re-deriving a grouped
+        // aggregate per batch. Transient like every other plan table.
+        conn.execute(
+            "CREATE TABLE plan_refused_key (procedure_key TEXT PRIMARY KEY) STRICT",
             (),
         )
         .await?;
@@ -7348,6 +7364,46 @@ impl Db {
         // mid-statement, ballooning the in-RAM WAL-index to OOM at 14M. Byte-identical
         // to the one-shot — each row's key is a pure function of its own columns.
         let t = std::time::Instant::now();
+        // issue 369 unit 2: refuse a placeholder-shaped key whose notices disagree on
+        // their BUYER. Materialised BEFORE the batched election because the predicate is
+        // a property of the whole key-group, and the election runs per notice-id range —
+        // evaluating it inside the CASE would ask a grouped question of one batch and get
+        // a different answer per batch.
+        //
+        // Both halves are load-bearing and neither alone is safe. Shape alone would refuse
+        // 10 correctly-grouped tenders to fix 3: the census found the welded
+        // `11111111-2222-4000-8111-123412341235` differs from the correct
+        // `…123412341234` by one final character, so no entropy or lexicon rule separates
+        // them. Buyer-disagreement alone would refuse joint procurements corpus-wide. So
+        // shape bounds the blast radius and the buyer count discriminates inside it.
+        //
+        // `>= 3` because 2 is the measured org-duplicate floor — two "buyers" that are one
+        // entity duplicated in the org layer (82806's two Rostock rows; 82803's two
+        // Osnabrück rows). Raising that floor is issue 329/362's job, not this gate's.
+        // `buyer_key` is a SET per notice, so this counts distinct buyer SETS: a joint
+        // procurement repeats one set and stays under the threshold.
+        {
+            let t = std::time::Instant::now();
+            conn.execute(
+                "INSERT OR IGNORE INTO plan_refused_key(procedure_key)                  SELECT procedure_key FROM plan_notice                   WHERE key_shaped = 1 AND procedure_key IS NOT NULL                   GROUP BY procedure_key                  HAVING COUNT(DISTINCT buyer_key) >= 3",
+                (),
+            )
+            .await?;
+            let mut r = conn.query("SELECT COUNT(*) FROM plan_refused_key", ()).await?;
+            let refused = match r.next().await? {
+                Some(row) => int(&row, 0),
+                None => 0,
+            };
+            drop(r);
+            // Logged unconditionally, including the zero: a gate that silently refuses
+            // nothing is indistinguishable from one that is not running, and this one is
+            // expected to refuse 3 keys out of a 14-key shaped population.
+            eprintln!(
+                "[project] group step refused-keys: {refused} placeholder-shaped key(s) with >= 3                  distinct buyer sets, {:.1}s",
+                t.elapsed().as_secs_f64()
+            );
+        }
+
         let (min_id, max_id) = {
             let mut r = conn.query("SELECT MIN(notice_id), MAX(notice_id) FROM plan_notice", ()).await?;
             match r.next().await? {
@@ -7361,7 +7417,9 @@ impl Db {
                 let hi = lo.saturating_add(GROUP_KEY_UPDATE_BATCH - 1).min(max_id);
                 conn.execute(
                     "UPDATE plan_notice SET group_key = CASE
-                         WHEN procedure_key IS NOT NULL THEN procedure_key
+                         WHEN procedure_key IS NOT NULL
+                              AND procedure_key NOT IN (SELECT procedure_key FROM plan_refused_key)
+                              THEN procedure_key
                          WHEN NOT (legacy = 1 AND ojs_self IS NOT NULL) THEN 'island:' || notice_id
                          ELSE NULL END
                      WHERE notice_id BETWEEN ? AND ?",
@@ -21136,6 +21194,112 @@ mod tests {
     }
 
     use super::{Db, LayerPresence, LayerState};
+
+    /// Issue 369 unit 2c, the pair the census settled — and the threshold between them.
+    ///
+    /// Shape alone must NOT refuse: `…4aaa-8333-444444444444` is placeholder-shaped and
+    /// correctly grouped (one buyer), and a shape-only gate would have split 10 such tenders
+    /// to fix 3. Buyer disagreement alone must not refuse either, corpus-wide, because a joint
+    /// procurement names several buyers legitimately — which is why `buyer_key` is a SET and
+    /// this counts distinct SETS.
+    ///
+    /// The 2-buyer case is here on purpose: 2 is the measured org-duplicate floor (82806's two
+    /// Rostock rows are one entity duplicated in the org layer), so exactly 2 must still key a
+    /// Tender. Without this row the test would pass with the threshold at 2 and quietly split
+    /// every duplicate-org pair in the shaped population.
+    #[tokio::test]
+    async fn a_placeholder_key_is_refused_only_when_three_buyer_sets_disagree() {
+        let (db, path) = scratch_db("plan-refused-key").await;
+        db.reset_plan().await.expect("plan tables");
+
+        let row = |notice_id: i64, key: &str, buyer: &str| super::PlanRow {
+            notice_id,
+            procedure_key: Some(key.to_owned()),
+            legacy: false,
+            ojs_self: None,
+            source: "ted".to_owned(),
+            source_rank: 1,
+            publication_id: format!("{notice_id:08}-2026"),
+            published_at: 1_700_000_000 + notice_id,
+            subtype: None,
+            ojs_edges: Vec::new(),
+            prev_refs: Vec::new(),
+            key_shaped: true,
+            buyer_key: Some(buyer.to_owned()),
+        };
+        const WELDED: &str = "11111111-2222-4000-8111-123412341235";
+        const ONE_BUYER: &str = "11111111-2222-4aaa-8333-444444444444";
+        const TWO_BUYERS: &str = "22222222-2222-4222-8222-222222222222";
+        db.insert_plan(&[
+            // The weld: three DISJOINT buyers across its notices (tender 1's shape).
+            row(1, WELDED, "DE:national:133517778"),
+            row(2, WELDED, "DE:national:811245646"),
+            row(3, WELDED, "DE:national:811188162"),
+            // Correctly grouped, same shape, ONE buyer repeated.
+            row(4, ONE_BUYER, "DE:national:999000111"),
+            row(5, ONE_BUYER, "DE:national:999000111"),
+            // Two buyer sets — the org-duplicate floor. Must still key a Tender.
+            row(6, TWO_BUYERS, "DE:national:22771062"),
+            row(7, TWO_BUYERS, "DE:national:30900729"),
+        ])
+        .await
+        .expect("insert plan");
+
+        db.build_plan_groups().await.expect("group");
+
+        // A fn rather than an `async move` closure: the closure would move `db` on its
+        // first call and the later assertions still need it.
+        async fn key_of(db: &Db, notice_id: i64) -> String {
+            match db
+                .scalar(&format!("SELECT group_key FROM plan_notice WHERE notice_id = {notice_id}"))
+                .await
+                .expect("group_key")
+            {
+                Some(turso::Value::Text(t)) => t,
+                other => panic!("notice {notice_id}: no group_key ({other:?})"),
+            }
+        }
+
+        for n in [1, 2, 3] {
+            let got = key_of(&db, n).await;
+            assert_eq!(
+                got,
+                format!("island:{n}"),
+                "notice {n} carries the welded key, whose notices name three buyer sets — it must \
+                 fall through to an island rather than keying a shared Tender"
+            );
+        }
+        for n in [4, 5] {
+            assert_eq!(
+                key_of(&db, n).await,
+                ONE_BUYER,
+                "notice {n}'s key is placeholder-SHAPED but its notices agree on the buyer — \
+                 shape alone must not refuse, or 10 correct tenders split to fix 3"
+            );
+        }
+        for n in [6, 7] {
+            assert_eq!(
+                key_of(&db, n).await,
+                TWO_BUYERS,
+                "notice {n}'s key has exactly 2 buyer sets — the measured org-duplicate floor, \
+                 which must still key a Tender (raising that floor is issue 329/362's job)"
+            );
+        }
+
+        // And the refusal is recorded, not merely implied by the group keys.
+        let refused = db
+            .scalar("SELECT COUNT(*) FROM plan_refused_key")
+            .await
+            .expect("refused count");
+        assert!(
+            matches!(refused, Some(turso::Value::Integer(1))),
+            "exactly one key refused, got {refused:?}"
+        );
+
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
 
     /// Issue 369 unit 2: the placeholder-shape verdict must survive the trip INTO
     /// `plan_notice`, because the refusal query reads it from there rather than
