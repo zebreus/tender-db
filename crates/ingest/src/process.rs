@@ -7,7 +7,7 @@
 
 use crate::package::{self, Member};
 use crate::profile::{self, Disposition, Record};
-use crate::{eforms, internal_ojs, r209};
+use crate::{eforms, fts, internal_ojs, r209};
 use std::path::Path;
 
 /// Field mapping for one notice payload, dispatched per profile. Profiles
@@ -32,6 +32,8 @@ pub fn parse_payload(profile: &str, bytes: &[u8]) -> store::Parse {
         r209::parse_payload(profile, bytes, r209::TranslationPolicy::All)
     } else if profile == internal_ojs::PROFILE {
         internal_ojs::parse_payload(profile, bytes)
+    } else if profile.starts_with("fts:") {
+        fts::parse_payload(profile, bytes)
     } else {
         store::Parse::Pending
     }

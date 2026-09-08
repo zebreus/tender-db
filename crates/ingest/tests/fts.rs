@@ -157,8 +157,11 @@ async fn fts_zip_package_processes_end_to_end() {
     assert_eq!(r.notices, NOTICE_IDS.len() as u64);
     assert_eq!(r.quarantined, 1);
     assert_eq!(r.duplicates, 0);
-    // Identity-only rung: nothing parsed, nothing parse-quarantined.
-    assert_eq!(r.parsed, 0);
+    // Commit (c) moved this rung: every notice the dispatcher accepts now
+    // PARSES, and none of them trips a value the mapping cannot represent.
+    // Before (c) this asserted `parsed == 0` — the identity-only rung — and
+    // that expectation is what the parser was supposed to retire.
+    assert_eq!(r.parsed, NOTICE_IDS.len() as u64);
     assert_eq!(r.parse_quarantined, 0);
 
     // One profile across the package, taken from the OCDS package version.
@@ -188,8 +191,13 @@ async fn fts_zip_package_processes_end_to_end() {
     }
     assert_eq!(
         cell_i64(&db, "SELECT COUNT(*) FROM notices WHERE parse_state = 'pending'").await,
+        0,
+        "commit (c) gave the fts profile a parser, so no row stays pending"
+    );
+    assert_eq!(
+        cell_i64(&db, "SELECT COUNT(*) FROM notices WHERE parse_state = 'parsed'").await,
         NOTICE_IDS.len() as i64,
-        "the fts profile has no parser until commit (c): every row stays pending"
+        "every accepted release parses"
     );
     assert_eq!(
         cell_text(&db, "SELECT DISTINCT declared_version FROM notices WHERE source = 'fts'").await,
