@@ -513,11 +513,39 @@ all, with `notice_withheld_fields` already modelling it correctly one layer down
 defence in depth over it. When 372 lands, this leg stays; its doc comment must stop calling −1 a
 convention.
 
+### Unit 4 is SUBSUMED by the re-fold — closed by reading the code, 2026-09-08
+
+Unit 4 asks for the value bounds to "exclude flagged amounts", on the premise that "the read side
+still compares against the head column with no floor". The premise is right and the conclusion does
+not follow: **because the bounds compare the HEAD COLUMN, units 2+3 already fixed them.**
+
+`version_predicates` is handed `"t.current_value_eur_cents"` by every Tenders shape
+(`crates/store/src/read.rs:1589`, `:1857`, `:1906`, `:2445`; the lots shape correlates to the same
+column at `:2594`), and `read.rs:1137-1142` says so out loud — "the value bounds compare
+`current_value_eur_cents`, a head column". That column is written by `head_value_eur_cents`, which
+since `aa732c5` filters `sentinel_amount` and the €100 bn ceiling before `.max()`. So once the rows
+are re-folded, `?max_value=0` cannot return the −1.00 rows: they are no longer in the column it reads.
+
+**No read-layer change is needed, and adding one would be the drift this issue is about** — a second
+place that decides which amounts count, free to disagree with the fold's. Unit 4 closes as subsumed.
+
+**The non-obvious consequence, worth stating because it is a behaviour change and not a bug:** a
+Tender whose ONLY amount was a sentinel now gets **NULL** in the head column (the election filters,
+then `.max()` over an empty set yields `None`). SQL's three-valued logic then excludes it from BOTH
+`min_value` and `max_value` listings, which is correct — the Tender has no *known* value, so it
+belongs in neither bound — but it does mean those tenders leave the value-filtered listings
+entirely rather than sorting to one end. Tender 3323836 already shows the NULL shape in the
+verification baseline above, so this is representable and served today.
+
+That leaves unit 5 (`@FMTVAL` versus element text, needing one gated archive-member read) as the only
+original unit still open, and the magnitude-ranked half of unit 6.
+
 ### Still open in this issue
 
-Unit 4 (value bounds in `read.rs:855-871` excluding flagged amounts — the read side
-still compares against the head column with no floor) and unit 5 (`@FMTVAL` versus
-element text, which needs one archive-member read).
+Unit 5 (`@FMTVAL` versus element text, which needs one archive-member read).
+**Unit 4 is closed as subsumed** — see "Unit 4 is SUBSUMED by the re-fold" above: the
+bounds already read the head column that units 2+3 fixed, so a read-layer filter would
+be a second, driftable decision about which amounts count.
 
 **Unit 6 is partly done.** The repetition-ranked detector above is built and is the
 half that answers "what shapes exist that nobody has named". Unit 6's original
