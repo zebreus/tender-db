@@ -258,6 +258,35 @@ field the fact came from; everything else stays a 366-refused negative. The `res
 rows) and `framework_maximum` (4) are untriaged and are the same shape as this class — likely the same
 answer — but they were not read, so they are not claimed.
 
+### The `result_value` / `framework_maximum` residue: same class, and one claim I could NOT substantiate
+
+Triaged the 83 + 4 rows left unclaimed above. A windowed probe (`tender_id` 0–500,000, `cents = -100`,
+those two fields, `NOT EXISTS` a `FieldsPrivacy` section) returned its full `LIMIT 20` — they are spread
+across the id space rather than clustered. Four sampled by era:
+
+| tender/seq | profile | source |
+| --- | --- | --- |
+| 14243 / 9 | `eforms:eforms-de-2.1` | doe |
+| 62892 / 7 | `eforms:eforms-de-2.0` | doe |
+| 134115 / 1 (`framework_maximum`) | `eforms:eforms-de-1.1` | doe |
+| 144695 / 1 | `eforms:eforms-sdk-1.8` | ted |
+
+**Same class as unit 5's `estimated_value` rows:** eForms notices with NO `FieldsPrivacy` block at all,
+publishing −1 directly. So the disposition is the same — already refused by issue 366's negative rule,
+and NOT to be labelled `withheld`. Unit 2's scoping is unchanged by this.
+
+**What I could not establish: the DÖE skew.** Three of four sampled are `source = doe`, which would make
+this a national-portal convention rather than scattered publisher error — a genuinely useful thing to
+know, and 3-of-4 is not evidence of it. The bounded route cannot settle it: a 2,000,000-wide `tender_id`
+window carrying the version join, the notices join and the `EXISTS`, grouped by source, **hit the 10 s
+cap** (2026-09-08, not retried per `prod-box-reads.md`); the three windows that did answer held 2 rows
+between them, so narrowing further just fragments the count.
+
+**So it moved into the instrument instead of staying a guess:** section 11 now groups by
+`field · source`. In-process the joins are already paid for, so the split is free, and the next weekly
+run answers the question rather than leaving a suggestive sample on the board. Recorded because the
+temptation was to write "predominantly DÖE" from four rows.
+
 ## Done when
 
 - no `tender_version_amounts` row carries `currency = 'unpublished'`;
