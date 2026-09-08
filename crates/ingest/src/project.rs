@@ -6354,6 +6354,34 @@ mod tests {
     /// Issue 359: the Polish, Italian and Spanish field names key exactly as
     /// the bare value — the 357 campaign met these on rows whose twin already
     /// stood under the bare number. Every value is a real prod row.
+    /// The UK's two registers survive normalisation as `national` identifiers
+    /// with their scheme prefix intact, which is what the crosswalk's GB arm
+    /// reads (issue 342). Both are checked here rather than assumed, because
+    /// two gates could plausibly have eaten them and neither does: the VAT
+    /// sniffer declines because `COHSC`/`PPONPBZB` exceed its letter-run
+    /// bound, and `idgate::condemns` declines because its `letter_run` census
+    /// flag is deliberately not one of the condemning conditions.
+    #[test]
+    fn the_uk_registers_normalise_to_national_identifiers_with_their_prefix() {
+        for (raw, value) in [
+            ("GB-COH-SC305103", "GBCOHSC305103"),
+            ("GB-COH-07495895", "GBCOH07495895"),
+            ("GB-PPON-PBZB-4962-TVLR", "GBPPONPBZB4962TVLR"),
+        ] {
+            let id = normalise_identifier(raw, Some("GB"))
+                .unwrap_or_else(|| panic!("{raw} must survive as an identifier"));
+            assert_eq!(
+                (id.country.as_deref(), id.kind.as_str(), id.value.as_str()),
+                (Some("GB"), "national", value),
+                "{raw}"
+            );
+        }
+        // A real GB VAT still reads as a vat, so the crosswalk's GB arm has
+        // something to guard against.
+        let vat = normalise_identifier("GB553298332", Some("GB")).expect("a GB vat");
+        assert_eq!((vat.kind.as_str(), vat.value.as_str()), ("vat", "GB553298332"));
+    }
+
     #[test]
     fn a_non_german_label_prefix_resolves_to_the_same_identifier_as_the_bare_value() {
         for (labelled, bare, country, kind) in [

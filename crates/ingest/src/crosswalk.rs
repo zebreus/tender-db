@@ -335,6 +335,64 @@ pub fn canonical_key(country: Option<&str>, kind: &str, value: &str) -> Option<C
         "SI" if digits_only && d == 8 => CanonKey::e1("SI:davcna", body),
         // GR — AFM ↔ VAT (9 digits), EL folded to GR above.
         "GR" if digits_only && d == 9 => CanonKey::e1("GR:afm", body),
+        // GB — the FIRST alphanumeric register arm, which is the event the
+        // `uuid_v4` guard above was written in anticipation of: "no platform
+        // key ever merges" stops being emergent from all-digit bodies here,
+        // and that guard is now the only thing holding it. Two registers, and
+        // they NEVER cross-walk to each other — a company can hold both, and
+        // `additionalIdentifiers` pairing them is E2 evidence for R3, not a
+        // key (issue 342).
+        //
+        // Companies House numbers are 8 characters: eight digits, or two
+        // letters and six digits (`SC123456` Scotland, `NI…`, `OC…`, `SO…`,
+        // `NF…`, `FC…`, `GE…`, `IP…`, `RC…`). Both full forms are E1. A 6-7
+        // digit body is a lost leading zero and pads ⇒ E2, the CZ/BE
+        // precedent.
+        //
+        // PPON is the Find a Tender supplier-registration series
+        // (`GB-PPON-PBZB-4962-TVLR` → `GBPPONPBZB4962TVLR`), 12 alphanumerics
+        // after the prefix and its own scheme forever: it is a PLATFORM
+        // registration, so unifying it with a company number would be exactly
+        // the merge `platform_guids_are_never_a_merge_key` refuses.
+        //
+        // `body` here is the WHOLE normalised string including `GB` — nothing
+        // upstream strips it for a `national` kind (`LABEL_PREFIXES` has no
+        // `G` entry and `REGISTER_PREFIXES` no GB one), so the strip is this
+        // arm's job. A real GB VAT arrives in this same arm with `is_vat` and
+        // a 9-digit body; every branch below is guarded against it, because
+        // the downstream `scheme.starts_with(c)` check cannot catch it —
+        // `"GB:coh".starts_with("GB")` is true.
+        "GB" if !is_vat => {
+            let ppon = body.strip_prefix("GBPPON").or_else(|| body.strip_prefix("PPON"));
+            if let Some(serial) = ppon {
+                return if serial.len() == 12 && serial.bytes().all(|b| b.is_ascii_alphanumeric()) {
+                    CanonKey::e1("GB:ppon", serial)
+                } else {
+                    None
+                };
+            }
+            let coh = body
+                .strip_prefix("GBCOH")
+                .or_else(|| body.strip_prefix("COH"))
+                .or_else(|| body.strip_prefix("GB"))
+                .unwrap_or(body);
+            if coh.is_empty() {
+                return None;
+            }
+            let digits = coh.bytes().all(|b| b.is_ascii_digit());
+            let letters_then_six = coh.len() == 8
+                && coh[..2].bytes().all(|b| b.is_ascii_alphabetic())
+                && coh[2..].bytes().all(|b| b.is_ascii_digit());
+            match coh.len() {
+                8 if digits || letters_then_six => CanonKey::e1("GB:coh", coh),
+                6 | 7 if digits => CanonKey::e2("GB:coh", format!("{:0>8}", coh)),
+                // Every other `GB<SCHEME>…` — UKPRN, CHC, NHS, MPR — is a
+                // register of its own that this arm deliberately does not
+                // know: E0 exact equality only, per the FTS census where they
+                // total 34 rows against GB-PPON's 5,606.
+                _ => None,
+            }
+        }
         // DE, AT, IE, LU, CY, MT, EE, LT, and everything unlisted: no
         // cross-walk. E0 exact equality is the only merge path.
         _ => None,
@@ -554,6 +612,67 @@ mod tests {
             key(Some("NL"), "national", "003660564").unwrap().1,
             "the head still names the same key — as an edge"
         );
+    }
+
+    /// Companies House is 8 characters in two shapes, both E1; a 6-7 digit
+    /// body is a lost leading zero and pads, so it is E2 like CZ and BE.
+    #[test]
+    fn gb_coh_pads_to_eight_at_e2_and_keys_full_forms_at_e1() {
+        // The two full forms. `SC123456` is the shape that makes this the
+        // first alphanumeric arm in the walk.
+        assert_eq!(
+            key(Some("GB"), "national", "GB-COH-SC305103"),
+            Some(("GB:coh".into(), "SC305103".into(), Tier::E1))
+        );
+        assert_eq!(
+            key(Some("GB"), "national", "GB-COH-07495895"),
+            Some(("GB:coh".into(), "07495895".into(), Tier::E1))
+        );
+        // Prefixed and bare reach the same key — the strip deletes
+        // information rather than manufacturing it, so it stays E1.
+        assert_eq!(
+            key(Some("GB"), "national", "07495895"),
+            key(Some("GB"), "national", "GB-COH-07495895")
+        );
+        // The pad DOES collide, which is exactly why it may not auto-merge.
+        let padded = key(Some("GB"), "national", "GB-COH-495895").unwrap();
+        let real = key(Some("GB"), "national", "GB-COH-00495895").unwrap();
+        assert_eq!(padded.1, real.1, "the pad collides — that is the danger");
+        assert_eq!((padded.2, real.2), (Tier::E2, Tier::E1));
+        // A letter-prefixed number is 8 characters or it is nothing: no pad
+        // can invent which of the nine prefixes was lost.
+        assert_eq!(key(Some("GB"), "national", "GB-COH-SC3051"), None);
+    }
+
+    /// PPON is Find a Tender's own supplier-registration series. Unifying it
+    /// with a company number would be the merge
+    /// `platform_guids_are_never_a_merge_key` exists to refuse.
+    #[test]
+    fn gb_ppon_is_its_own_series() {
+        let ppon = key(Some("GB"), "national", "GB-PPON-PBZB-4962-TVLR").unwrap();
+        assert_eq!(ppon, ("GB:ppon".to_owned(), "PBZB4962TVLR".to_owned(), Tier::E1));
+        // Every PPON in the FTS census matches `^[A-Z]{4}-[0-9]{4}-[A-Z]{4}$`,
+        // so 12 alphanumerics after the prefix; anything else keys nothing.
+        assert_eq!(key(Some("GB"), "national", "GB-PPON-PBZB-4962"), None);
+        // A company number and a PPON never share a scheme, so no pair of
+        // them can ever unify however their characters line up.
+        let coh = key(Some("GB"), "national", "GB-COH-SC305103").unwrap();
+        assert_ne!(ppon.0, coh.0, "PPON and COH are separate registers");
+    }
+
+    /// The registers this arm deliberately does not know, and the GB VAT that
+    /// arrives in the same arm. `scheme.starts_with(country)` cannot catch the
+    /// VAT — `"GB:coh".starts_with("GB")` is true — so the arm must.
+    #[test]
+    fn gb_other_registers_and_vats_key_nothing() {
+        for other in ["GB-UKPRN-10007789", "GB-CHC-1089464", "GB-NHS-RJ100", "GB-MPR-12345"] {
+            assert_eq!(key(Some("GB"), "national", other), None, "{other} is its own register");
+        }
+        // A real GB VAT: nine digits after the prefix, `kind = "vat"`.
+        assert_eq!(key(Some("GB"), "vat", "GB553298332"), None);
+        // Northern Ireland keeps its own code and never folds to GB, so it
+        // does not reach this arm at all.
+        assert_eq!(key(Some("XI"), "national", "GB-COH-SC305103"), None);
     }
 
     /// The pad amendment (design §3.1): pad-derived keys are E2 — candidate

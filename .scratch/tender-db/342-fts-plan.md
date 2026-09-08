@@ -169,6 +169,59 @@ Tests (c): `tests/fts.rs` per fixture — `uk4_tender_maps_title_deadline_buyer_
 `every_fts_fixture_parses`; a `project_fold_source.rs`-style fold test: two releases under one ocid
 → one Tender whose head carries the later award's winner and a resolved buyer role.
 
+## 3b. Corrections to §3's crosswalk, from the fixtures (2026-09-08)
+
+§3's table was written from the API docs and the OCDS schema. Five member fixtures cut from the live
+3 Sep 2026 page say it is wrong in six places. Fix the table by these, not the other way round.
+
+1. **`tender.contractPeriod` does not exist** — not in any member fixture nor either page. Contract
+   periods live only at `tender.lots[].contractPeriod`, `awards[].contractPeriod` and
+   `contracts[].period` (the last with a third sub-key `maxExtentDate`). So `BT-536/537-Procedure`
+   has no source; keep `BT-536/537-Lot`.
+2. **`tender.deliveryAddresses` does not exist** — delivery addresses are one level deeper, at
+   `tender.items[].deliveryAddresses[]` (and `awards[].items[].deliveryAddresses[]`), each
+   `{country?, countryName?, region?}` with all three optional. `BT-5071` must be read from the item,
+   and its scope is the item's `relatedLot` when it has one.
+3. **`tender.items[].classification` (singular) does not exist** — items carry only
+   `additionalClassifications[]` (`{scheme:"CPV", id, description}`). The singular form does appear,
+   but at `tender.classification`, and only in the page fixtures. So "first CPV = `BT-262`, rest =
+   `BT-263`" cannot key off `classification` vs `additionalClassifications`; take the item's first
+   additional as `BT-262-*` and the remainder as `BT-263-*`, and read `tender.classification` as
+   `BT-262-Procedure` when present.
+4. **`documents[]` is never release-level, and `noticeType` is not a tender/awards/contracts/planning
+   word.** Exactly ONE document per release carries `noticeType`, and its value is a UK form code —
+   `UK1`, `UK2`, `UK4`, `UK5`, `UK6`, `UK7`, `UK10`, `UK12`, `UK15` observed. That document hangs off
+   `tender.documents`, `planning.documents`, `awards[].documents` or `contracts[].documents`
+   depending on archetype, so the subtype read must search all four. Do NOT key off `documentType`:
+   `awardNotice` maps to both UK6 (award) and UK15 (dynamic-market modification), and
+   `contractNotice` here means a contract CHANGE (UK10), not a call for competition.
+5. **`tender.value.amount` can be absent while `amountGross` is present** (083645 has
+   `{amountGross: 0, currency:"GBP"}` and no `amount`) — the planned `amountGross`-only fallback is
+   load-bearing, not defensive. Amounts also arrive as JSON floats (`32800.0` in 083650) alongside
+   integers elsewhere, so the reader must accept both.
+6. **Explicit JSON nulls, not omissions**, at `tender.lots[].description` (083645) and
+   `contracts[].statusDetails` (_noid). A non-optional `String` there panics on real data.
+
+Also confirmed as planned: `awards[]` really can be `{id, amendments}` and nothing else — 083685
+carries **34** such skeletons with sparse ids — so the "delta-only → emit nothing" arm is the common
+case for UK15, not an edge. Party identity is uniform: `identifier` is always
+`{scheme:"GB-PPON", id:"<suffix>"}` with `party.id == "GB-PPON-" + identifier.id`, `legalName` and
+`additionalIdentifiers` absent from every member fixture. Roles observed: `buyer`, `supplier`,
+`removedSupplier` — none of `procuringEntity`/`centralPurchasingBody`/`reviewBody`/`mediationBody`
+appear, so those arms land untested and must stay lenient. `bids.statistics` and `relatedProcesses`
+have NO member-fixture coverage at all; `bids` appears once in page p002.
+
+Do not map release-level **`buyerID`**: it is a UK extension field whose value is an empty ARRAY.
+
+### A fetcher follow-up this uncovered
+
+`_noid-2026-09-03-p001-000.json` is release 0 of page p001 with the `id` key simply absent (verified:
+the two are deep-equal after deleting `id` from the page copy). `fts::release_id` therefore archived
+it under `_noid/`. But the notice number IS in the file — the `noticeType`-bearing document's `id` is
+`083674-2026`, which is exactly what the page-level `id` said. **That document's id equals the FTS
+notice number in all five fixtures**, so it is a sound second fallback for `release_id` and would have
+retired the `_noid/` path. Worth a separate small commit; not in scope for (c).
+
 ## 4. FTS-specific decisions
 
 - D1 Package layout: one zip per (kind, period), one member per release `<release id>.json`, each a
