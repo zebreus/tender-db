@@ -1,6 +1,6 @@
 # 366 — the head columns elect MAX over facts that carry no quality flag: a 2005 tender is served as open, and €49 quadrillion tops the value ordering
 
-Status: ready-for-agent (filed 2026-09-07 from the external review's verified findings;
+Status: ready-for-agent — **UNIT 1 DECIDED 2026-09-08 (owner), see "Unit 1 DECIDED": two flag legs (negative + all-9s sentinels, 15,899 rows; >€100bn implausible, 175 rows), with the €10–100bn band explicitly left to the lot-sum/FMTVAL signals because no threshold separates the NHS England contract from a €10bn vending-machine notice.** Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings;
 unit 1 is the decision 132 has been holding)
 Kind: defect (canonical head derivation + read filters) — data-profile rules 8/9/12 need
 somewhere to live before they can be enforced
@@ -41,6 +41,89 @@ The parse layer shows the shape: notice 12376354 carries a PROCEDURE-scope `TED-
 4. **Value bounds** exclude flagged amounts (`crates/store/src/read.rs:855-871`), so `max_value=100` stops returning the -1.00 sentinel and the zeros.
 5. **Compare `@FMTVAL` against the element text** in `Rule::Amount` (`crates/ingest/src/r209/parse.rs:426`) and flag or prefer on disagreement. Needs one archive-member read first — gated per `docs/agents/prod-box-reads.md`.
 6. **Make 267's measure a signal**: the weekly report lists the top N by magnitude per currency so the class is visible rather than counted.
+
+## Unit 1 DECIDED (owner, 2026-09-08) — and the measurement moved the rule
+
+Unit 1 asked for "a per-currency ceiling and the sentinel/placeholder lists". Measuring the tail first
+changed what the rule should be: **the dominant defect is not magnitude, it is a handful of exact
+published values**, and a magnitude threshold alone cannot separate the rest.
+
+### What the tail actually looks like
+
+Counts of `tenders.current_value_eur_cents` above each threshold:
+
+| above | tenders |
+| --- | --- |
+| €1e15 | 8 |
+| €1e14 | 12 |
+| €1e13 | 25 |
+| €1 trillion | 89 |
+| €100 bn | 175 |
+| €10 bn | 394 |
+| €1 bn | 2,902 |
+
+Every one of the top 25 is absurd on its face — €4.97e16 for "Study on anti-corruption measures in EU
+border control", €5.98e15 for "Renovation of 4 Linac flight path cabins", €65 trillion for cleaning
+services. The 25th row is still €11.7 trillion.
+
+### Exact values, and they are the bulk of it
+
+| value | tenders |
+| --- | --- |
+| **−1.00** | **15,529** |
+| any negative | 15,650 |
+| 999,999,999 | 199 |
+| 9,999,999,999 | 36 |
+| 99,999,999,999 | 14 |
+| 1,000,000,000 | 56 |
+| 10,000,000,000 | 12 |
+| 100,000,000,000 | 2 |
+| 0 | 24,512 |
+
+The all-9s family is a **form-width maximum**, and the counts falling with width (199 → 36 → 14) are its
+signature. Reading the €10–100 bn band top-down confirms it from the other side: it is dominated by
+`99,999,999,999` and `100,000,000,000` sitting on tiny municipal contracts — "Étanchéité terrasse"
+(roof waterproofing), "Gazole non routier" (off-road diesel), "Épinal", "Assurance des risques
+statutaires". €100 bn for a roof is not a magnitude error, it is the widest number the form accepted.
+
+### The decision
+
+**Leg A — `sentinel`, by exact value.** Flag, exclude from the head columns and from the value bounds,
+keep the published row:
+1. **any negative amount.** No procurement has a negative value; −1.00 alone is 15,529 rows and is a
+   documented publisher convention for "not stated".
+2. **an all-9s run of ≥9 digits in the major unit** (999999999, 9999999999, 99999999999, …) — 249 rows,
+   evidenced above as a field-width maximum rather than a figure.
+
+**Leg B — `implausible`, by magnitude.** Flag amounts **above €100 bn EUR-equivalent** (1e13 cents).
+175 rows, and inspection of the top 25 plus the 99999999999 cluster shows the class is junk throughout.
+This is deliberately far above any real single procurement: the whole EU procures on the order of
+€2 trillion a year across every member state, so one notice at €100 bn is not a close call.
+
+**Explicitly NOT flagged, and why:**
+- **Round powers of ten** (1e9 → 56, 1e10 → 12, 1e11 → 2 rows). A €1 bn framework is a real thing; the
+  all-9s neighbours are not. Flagging round numbers would delete genuine values to catch nothing the
+  all-9s rule misses.
+- **Zero** (24,512 rows). Ambiguous by construction — a planning or market-engagement notice
+  legitimately publishes 0 (UK FTS release 083645 does exactly this, issue 342). It stays, and
+  `?max_value=0` returning zeros is correct; what that filter must stop returning is the negatives.
+- **The €10 bn–€100 bn band** (219 rows between the two thresholds). This is the honest limit of a
+  magnitude rule: the band genuinely mixes real mega-frameworks — "NHS England 2019/21 Specialised
+  Commissioning Contracts" €10.6 bn, the Île-de-France transport authority contract €10.8 bn — with
+  obvious junk like "Homecare and Support on the Isle of Wight" €10.5 bn (population ~140,000) and
+  "Vending Machine Services" €10.65 bn. **No threshold separates those**, and picking one would either
+  delete the NHS contract or keep the vending machines. Separating them needs the tender-amount-versus-
+  lot-sum ratio and unit 5's `@FMTVAL`-versus-element-text comparison — the two signals that can tell a
+  10¹⁰ scale error from a big contract. That is the next unit, not a number guessed here.
+
+**Rule 9/12 (placeholder null-out):** subsumed. A flagged fact is not nulled — it is stored as
+published and skipped by the election, which is rule 8's disposition and keeps the parse layer
+faithful (ADR-0004). Nothing needs a separate null-out path.
+
+**Shape of the flag:** one nullable `quality TEXT` on `Fact::Amount`/`Fact::Date` and their satellites,
+carrying `sentinel` or `implausible` — not a boolean, because the two have different causes and the
+report should be able to say which. Deadlines get the same column for unit 3's ladder; the year-3005
+value is `implausible` by a date ceiling (a deadline more than ~10 years out), decided with unit 3.
 
 ## Done when
 
