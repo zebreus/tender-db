@@ -411,8 +411,16 @@ impl Walk {
 fn instant(text: &str, what: &str) -> Result<NoticeValue, Rejected> {
     let bad = |detail: String| Rejected { reason: "unrepresentable-value", detail };
     let text = text.trim();
-    let (body, offset) = split_offset(text)
-        .ok_or_else(|| bad(format!("{what}: no zone offset in {text:?}")))?;
+    // FTS publishes SOME values with no zone at all — `"2025-07-07"` as a
+    // tenderPeriod end, measured on 13 of June 2025's 7,243 releases. That is a
+    // whole day in UK civil time, not a defect, so the publisher's zone is
+    // supplied here rather than the release being refused. Demanding an offset
+    // on every value quarantined all 13.
+    let (body, offset): (&str, String) = match split_offset(text) {
+        Some((body, offset)) => (body, offset.to_owned()),
+        None => (text, uk_zone(text).ok_or_else(|| bad(format!("{what}: not a date: {text:?}")))?),
+    };
+    let offset = offset.as_str();
     let value = match body.split_once('T') {
         Some((date, clock)) => {
             eforms::timestamp(&format!("{date}{offset}"), Some(&format!("{clock}{offset}")))
@@ -422,6 +430,27 @@ fn instant(text: &str, what: &str) -> Result<NoticeValue, Rejected> {
         None => eforms::timestamp(&format!("{body}{offset}"), None),
     };
     value.map_err(|e| bad(format!("{what}: {e}")))
+}
+
+/// The UK civil offset that applies on the date this string names, as an
+/// ISO-8601 designator. FTS is a UK service publishing UK local dates, so a
+/// zone-less value is read in the zone the publisher was standing in.
+///
+/// The offset is looked up at UTC midnight of the named day, which differs from
+/// the true local midnight only inside the one-hour DST transition window — and
+/// only for a value that names no clock time anyway.
+fn uk_zone(text: &str) -> Option<String> {
+    let date = text.split_once('T').map_or(text, |(d, _)| d);
+    let mut parts = date.split('-');
+    let y: u16 = parts.next()?.parse().ok()?;
+    let m: u8 = parts.next()?.parse().ok()?;
+    let d: u8 = parts.next()?.parse().ok()?;
+    if parts.next().is_some() || !(1..=12).contains(&m) || !(1..=31).contains(&d) {
+        return None;
+    }
+    let seconds = crate::fetch::days_from_civil(y, m, d) * 86_400;
+    let minutes = super::uk_offset(seconds) / 60;
+    Some(format!("+{:02}:{:02}", minutes / 60, minutes % 60))
 }
 
 /// Split a trailing zone designator off an ISO-8601 string.
@@ -930,6 +959,52 @@ mod tests {
             panic!("a date-only value must convert")
         };
         assert!(!has_time);
-        assert!(instant("2026-09-03T15:18:45", "t").is_err(), "no offset, no instant");
+        // A zone-less value is the publisher's UK civil day, not an error: FTS
+        // published `"2025-07-07"` as a tenderPeriod end on 13 of June 2025's
+        // 7,243 releases, and demanding an offset quarantined every one of them.
+        let Ok(NoticeValue::Date { offset_minutes, has_time, .. }) =
+            instant("2025-07-07", "t").map_err(|e| e.detail)
+        else {
+            panic!("a zone-less date must convert")
+        };
+        assert_eq!((offset_minutes, has_time), (60, false), "July is BST");
+        // January is GMT, so the same shape reads with no offset.
+        let Ok(NoticeValue::Date { offset_minutes, .. }) =
+            instant("2025-01-07", "t").map_err(|e| e.detail)
+        else {
+            panic!("a winter zone-less date must convert")
+        };
+        assert_eq!(offset_minutes, 0, "January is GMT");
+        // A zone-less date-TIME gets the same treatment, and keeps its clock.
+        let Ok(NoticeValue::Date { offset_minutes, has_time, .. }) =
+            instant("2025-07-07T09:30:00", "t").map_err(|e| e.detail)
+        else {
+            panic!("a zone-less datetime must convert")
+        };
+        assert_eq!((offset_minutes, has_time), (60, true));
+        // Still not a date at all: refused.
+        assert!(instant("not-a-date", "t").is_err());
+        assert!(instant("", "t").is_err());
+    }
+
+    /// The exact release that exposed the zone-less date — reconstructed from
+    /// what the archive holds, so the regression has a named witness.
+    #[test]
+    fn the_release_that_published_a_zone_less_deadline_parses() {
+        let payload = br#"{"version":"1.1","releases":[{"ocid":"ocds-h6vhtk-054e86",
+            "id":"033064-2025","date":"2025-06-17T16:12:12+01:00","language":"en",
+            "tag":["tender"],
+            "tender":{"title":"A thing","value":{"amount":10000,"currency":"GBP"},
+                      "tenderPeriod":{"endDate":"2025-07-07"}}}]}"#;
+        let p = match parse(payload) {
+            Ok(p) => p,
+            Err(Rejected { reason, detail }) => panic!("quarantined as {reason}: {detail}"),
+        };
+        let Some(NoticeValue::Date { has_time, offset_minutes, .. }) =
+            one(&p, ROOT, "BT-131(d)-Procedure")
+        else {
+            panic!("the deadline must land")
+        };
+        assert_eq!((has_time, offset_minutes), (false, 60));
     }
 }
