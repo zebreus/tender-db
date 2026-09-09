@@ -1,8 +1,10 @@
 # 365 — any ≥4-character alphanumeric string containing a digit becomes an Organization merge key: field labels, phone numbers, notice numbers, department names
 
-Status: ready-for-agent — **UNITS 1 AND 2 SHIPPED AND DEPLOYED 2026-09-09 (`6da7320`)**, standing
-stock dissolved the same firing; see "Units 1+2 DONE" below. Units 3 (letter-run, now 22,827 rows),
-4 (carry the publisher's scheme) and 5 (the nameless class) remain.
+Status: ready-for-agent — **UNITS 1 AND 2 SHIPPED, DEPLOYED AND VERIFIED ON PROD 2026-09-09
+(`6da7320`)**, standing stock dissolved and re-censused the same firing; every "done when" bullet
+for these two units is met. See "Units 1+2 DONE" and "The dissolve, verified". Units 3 (letter-run,
+22,796 rows), 4 (carry the publisher's scheme into the normaliser and apply the denial list at E0)
+and 5 (the 1.4M nameless class, an owner decision) remain.
 Kind: defect (organization layer — identifier admission); units 1-3 are prevention + the
 328/345 repair path, unit 5 is a decision
 Relates to: 300 (the gate — its exemplar sheet already classifies the phone class
@@ -104,6 +106,74 @@ placeholder dissolve DRY RUN: 1108688 identifier-bearing orgs scanned, 8319 cond
 nothing unexpected swept in. That reconciliation is why the wet run was safe to make: a total
 alone would not have shown whether a rule over-reached. `letter_run` (22,827) and `hex_hash`
 (276,962) stay census-only and untouched, as units 3 and issue 312 respectively require.
+
+## The dissolve, verified (2026-09-09, jobs 835-837)
+
+The wet run matched the dry plan on every count but two, and both differences are dry-run
+artifacts rather than surprises:
+
+| | dry | wet |
+| --- | --- | --- |
+| identifier-bearing orgs scanned | 1,108,688 | 1,108,688 |
+| condemned by the gate | 8,319 | 8,319 |
+| dissolved / skipped | 8,319 / 0 | 8,319 / 0 |
+| mentions re-resolved | 259,342 | 259,342 |
+| — of those, fresh provisionals | 27,160 | **4,982** |
+| — of those, reused | 232,182 | **254,360** |
+| winner-row duplicates removed | 0 | **3** |
+| tenders touched | 78,556 | 78,556 |
+
+The fresh/reused split moves because a dry pass writes nothing, so every mention that *would*
+mint a provisional row counts as fresh — it cannot see that an earlier mention in the same run
+already created the row it would reuse. Wet, those rows exist and get reused, so only **4,982**
+new org rows appeared instead of 27,160 (the total is identical either way). The 3 duplicate
+winner rows are the same effect: they only become duplicates once the dissolve actually
+re-points them. Both differences are in the harmless direction, and worth stating rather than
+glossing, because "the wet run differed from its plan" would otherwise read as a problem.
+
+Then `project` (job 836) re-derived exactly the stamped set: *579 notices → 45 tenders, 45
+written*.
+
+### The re-census reconciles exactly
+
+```
+before: 53 lexicon, 0 sequence, 22827 letter-run, 0 short-vat, 276962 hex-hash,
+        3655 phone-id, 1725 short-numeric, 4611 bare-4-digit, 3349 compound
+after:   0 lexicon, 0 sequence, 22796 letter-run, 0 short-vat, 276962 hex-hash,
+            0 phone-id, 1725 short-numeric,    0 bare-4-digit, 3349 compound
+```
+
+All three condemned classes stand at **0**. Identifier-bearing orgs fell 1,108,688 → 1,100,369,
+which is **−8,319 exactly**.
+
+The classes that were meant to be left alone were left alone, which is the check that the rules
+did not over-reach: **hex-hash is unchanged to the row at 276,962** (issue 312's
+deliberately-spared class), `short_numeric` unchanged at 1,725, `compound` unchanged at 3,349.
+`letter_run` moved only 22,827 → 22,796; those 31 rows carried a condemned class *as well*, so
+they left with the dissolve — the class itself is untouched and unit 3 still owes its
+composition read.
+
+### The "done when" bullets, checked individually
+
+- `identifier = 'BT501ORGANIZATIONCOMPANY'` → **0 rows**; `identifier IN ('2022','1000')` → **0
+  rows**; the phone shape → 0 (census).
+- **The raw values survived on their mentions**, which is what makes this a refusal rather than a
+  deletion: `raw_identifier LIKE 'BT-501%'` still returns them, including one publisher's
+  `BT-501- PANTRY AND CORKSCREW` — a field id and a company name pasted together, caught because
+  the normalised form carries a ≥4-letter tail.
+- **Org 660, the switchboard fusion, is gone** — the row no longer exists and holds 0 mentions.
+  The bodies it had fused now stand separately (`Vergabekammer des Bundes` id 255, distinct from
+  the regional chambers), keyed by their own platform GUIDs rather than by a shared telephone
+  number. That is precisely what `300-exemplars.md:170` asked for in classifying this
+  must-CONDEMN.
+
+One number moved the *wrong* way and is worth flagging rather than hiding: the worst multi-name
+org went from 700 distinct names to **701** (org 2660, already the report's own exemplar), because
+a dissolved mention re-resolved onto it. Corpus multi-name counts fell only modestly
+(162,266 → 161,591 at ≥2 names), since dissolving mints name-keyed rows that can themselves carry
+name variants. So this fixed a fusion class; it is not a general cure for multi-name orgs, which
+is 329/351 territory.
+
 
 ## Units
 
