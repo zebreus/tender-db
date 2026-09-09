@@ -50,12 +50,28 @@ pub struct GateCensus {
     /// two bodies share a switchboard (org 660: Vergabekammer Niedersachsen
     /// + the Bund's chambers, 2026-09-03 top-100 read). Census-only.
     pub phone: bool,
-    /// A bare 4–5-digit number on a DE national row (`8477`, `13754`,
-    /// `13124`): no German register issues such ids, and each of the three
-    /// live specimens fused unrelated municipalities and associations (a
-    /// platform's own record number under a raw `EU` scheme). Census-only
-    /// until the weekly report sizes the class.
+    /// A bare 5-digit number on a DE national row (`13754`, `13124`): no
+    /// German register issues such ids, and each of the live specimens fused
+    /// unrelated municipalities and associations (a platform's own record
+    /// number under a raw `EU` scheme). Census-only until the weekly report
+    /// sizes the class.
+    ///
+    /// The 4-digit half moved to [`GateCensus::bare_four_digit`] when that
+    /// became a condemning rule (issue 365 unit 2); the two classes stay
+    /// disjoint so the weekly report's counts remain readable.
     pub short_numeric: bool,
+    /// A bare four-digit number — `2022`, `1000`, `8477`. CONDEMNING (issue
+    /// 365 unit 2).
+    ///
+    /// `2022` and `1000` each key six unrelated bodies across six countries,
+    /// and over `id <= 3000000` on prod 2026-09-09 the class ran 93 orgs with
+    /// 37 (40 %) carrying ≥2 distinct mention names against a 14.7 % corpus
+    /// baseline, the worst holding 71. The argument does not rest on whether
+    /// some registry issues such numbers: 10,000 possible values cannot
+    /// discriminate between 5.7M organizations — the same reasoning
+    /// [`GateCensus::short_vat`] already applies to a short VAT tail. Five
+    /// digits and up stay in; they are real short registry numbers.
+    pub bare_four_digit: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -89,11 +105,17 @@ pub fn census(country: Option<&str>, kind: Option<&str>, value: &str) -> GateCen
         out.short_vat = tail_digits.is_some_and(|n| n < 6);
     }
     out.phone = phone_shaped(value);
+    out.bare_four_digit = !is_vat
+        && value.len() == 4
+        && value.bytes().all(|b| b.is_ascii_digit())
+        // A sequence ("1234") or a zero-padded stub ("0012") is already its own
+        // class, and double-counting would make the weekly report unreadable.
+        && !out.sequence
+        && !out.lexicon;
     out.short_numeric = !is_vat
         && country == Some("DE")
-        && (4..=5).contains(&value.len())
+        && value.len() == 5
         && value.bytes().all(|b| b.is_ascii_digit())
-        // A sequence or lexicon hit ("1234") is already its own class.
         && !out.sequence
         && !out.lexicon;
     // Scheme resolution is census-only: vat keys resolve by their own
@@ -207,18 +229,32 @@ pub fn hard_scheme(scheme: &str) -> bool {
 /// The Stage-1 gate flip's verdict: does this identifier lose merge-key
 /// status (⇒ the mention goes provisional)? TRUE for the measured
 /// false-merge classes only: the placeholder lexicon, suspicious digit
-/// runs, short VAT stubs, and a HARD-scheme checksum failure. Letter-run
-/// and hex/compound classes deliberately stay census-only — the letter-run
-/// composition is not fully sampled and the compound class is RECOVERABLE
-/// (Stage 2's canonical_key splits it at match time; rejecting it here
-/// would discard real identifier evidence). Rejection can never create a
-/// false SPLIT against the standing stock: the repair job dissolves the
-/// stock twins with this same predicate.
+/// runs, short VAT stubs, PHONE NUMBERS (issue 365 unit 1), and a
+/// HARD-scheme checksum failure. Letter-run and hex/compound classes
+/// deliberately stay census-only — the letter-run composition is not fully
+/// sampled (issue 365 unit 3 owes that read) and the compound class is
+/// RECOVERABLE (Stage 2's canonical_key splits it at match time; rejecting
+/// it here would discard real identifier evidence). Rejection can never
+/// create a false SPLIT against the standing stock: the repair job
+/// dissolves the stock twins with this same predicate.
+///
+/// `phone` was census-only on the reading in its own field doc — the review
+/// chambers publish a switchboard consistently, so it keys a body more often
+/// than it fuses two. Measured on prod 2026-09-09 over `id <= 3000000`, the
+/// stock says otherwise: of 68 phone-keyed canonical orgs, 47 (69 %) carry
+/// ≥2 distinct mention names and 24 (35 %) carry ≥6, against a corpus
+/// baseline of 14.7 % and 1.1 %, with 264 distinct names on the worst single
+/// row and 154,671 mentions riding those 68 rows. Note WHY the obvious
+/// metric misses this: after a fusion the bad key still holds exactly one
+/// row, so rows-per-distinct-value (the measure that spared the hex class in
+/// issue 312) reads 1.0 and looks clean. Name diversity is what exposes it.
 pub fn condemns(country: Option<&str>, kind: &str, value: &str) -> bool {
     let c = census(country, Some(kind), value);
     c.lexicon
         || c.sequence
         || c.short_vat
+        || c.phone
+        || c.bare_four_digit
         || (c.checksum == Checksum::Fail && hard_scheme(c.scheme))
 }
 
@@ -261,8 +297,27 @@ pub fn lexicon_hit(value: &str) -> bool {
             return true;
         }
     }
-    if value == "BT501" {
-        return true;
+    // The eForms field vocabulary pasted into the identifier slot. This was an
+    // equality on "BT501" alone, which refused the bare field id while letting
+    // `BT-501-Organization-Company` — normalised to BT501ORGANIZATIONCOMPANY,
+    // and the form publishers actually paste — become a live merge key for six
+    // unrelated bodies in six countries (issue 365).
+    //
+    // Kept deliberately narrow so real registrants are not swept: the prefix
+    // must be BT/OPT/OPP, the field number at most four digits, and what follows
+    // must be either nothing or a run of ≥4 letters (the "ORGANIZATIONCOMPANY"
+    // tail). So BT12345678 and OPTIMA2020 are still identifiers.
+    for prefix in ["BT", "OPT", "OPP"] {
+        if let Some(rest) = value.strip_prefix(prefix) {
+            let digits = rest.bytes().take_while(u8::is_ascii_digit).count();
+            let tail = &rest[digits..];
+            if (1..=4).contains(&digits)
+                && (tail.is_empty()
+                    || (tail.len() >= 4 && tail.bytes().all(|b| b.is_ascii_uppercase())))
+            {
+                return true;
+            }
+        }
     }
     // ^0+\d{1,2}$ — "0001", "00001", "0002": zero-run padding around a stub.
     if v.len() >= 3 && v.iter().all(u8::is_ascii_digit) {
@@ -1044,11 +1099,16 @@ mod tests {
         for v in ["210220Y", "HRB12345", "16900334000129", "T1234"] {
             assert!(!census(Some("DE"), Some("national"), v).phone, "{v} is not a phone number");
         }
-        // Orgs 22165664, 22318692, 21985079: bare 4–5-digit DE "identifiers".
-        for v in ["8477", "13754", "13124"] {
+        // Orgs 22318692, 21985079: bare 5-digit DE "identifiers". The 4-digit
+        // half of this class (org 22165664's `8477`) moved to
+        // `bare_four_digit` when issue 365 unit 2 made it condemning; the two
+        // stay disjoint so the weekly report's counts stay readable.
+        for v in ["13754", "13124"] {
             let c = census(Some("DE"), Some("national"), v);
             assert!(c.short_numeric && !c.sequence, "{v} is the short-numeric class");
         }
+        let c = census(Some("DE"), Some("national"), "8477");
+        assert!(c.bare_four_digit && !c.short_numeric, "8477 is the four-digit class now");
         // Not the class: a sequence (already caught), a zero-padded 8-digit
         // Hessian id, the same digits on a non-DE row, a VAT stub.
         assert!(!census(Some("DE"), Some("national"), "1234").short_numeric);
@@ -1057,6 +1117,81 @@ mod tests {
         assert!(!census(Some("DE"), Some("vat"), "8477").short_numeric);
         // A phone id is never a checksum candidate.
         assert_eq!(census(Some("DE"), Some("national"), "T03455141536").checksum, Checksum::Unknown);
+    }
+
+    /// Issue 365 unit 1: the phone class now LOSES merge-key status, not just a
+    /// census tick.
+    ///
+    /// The class was left census-only on the reading that the review chambers
+    /// publish a switchboard consistently, so it keys a body more often than it
+    /// fuses two. Re-measured on prod 2026-09-09 over `id <= 3000000`, that is
+    /// not what the stock looks like: of 68 phone-keyed canonical orgs, 47 (69 %)
+    /// carry two or more distinct mention names and 24 (35 %) carry six or more,
+    /// against a corpus baseline of 14.7 % and 1.1 % — and the worst single row
+    /// holds **264** distinct names over 154,671 mentions on those 68 rows. A row
+    /// with 264 names is a switchboard, not an organization.
+    ///
+    /// This is the mirror image of the hex-hash class (issue 312), which was
+    /// measured and deliberately spared because its values were 1:1 with rows and
+    /// were doing the linking. Same method, opposite answer.
+    #[test]
+    fn phone_numbers_lose_merge_key_status() {
+        for v in ["t:04131153308", "T03455141536", "T03318661719", "T022894990"] {
+            assert!(condemns(Some("DE"), "national", v), "{v} must not be a merge key");
+        }
+        // The shape stays narrow: a real register id that merely starts with T,
+        // and a too-short run, are untouched.
+        // Non-sequential on purpose: an ascending digit run like HRB12345 is
+        // condemned by `sequence` regardless, so it would prove nothing here.
+        for v in ["T1234", "HRB93017", "210220Y"] {
+            assert!(!condemns(Some("DE"), "national", v), "{v} is a real identifier");
+        }
+    }
+
+    /// Issue 365 unit 2: the eForms field NAME, not just its bare id.
+    ///
+    /// `lexicon_hit` already knew `BT501` — but as an equality, so the bare field
+    /// id was refused while `BT-501-Organization-Company`, which is what
+    /// publishers actually paste into the identifier slot, walked straight past
+    /// and became a live merge key for six unrelated bodies in six countries
+    /// (ES/FR/GR/IE/IT/SE, 32 mentions on one key).
+    #[test]
+    fn an_eforms_field_name_is_never_an_identifier() {
+        for v in [
+            "BT501ORGANIZATIONCOMPANY",   // the six-country row, as stored
+            "BT500ORGANIZATIONCOMPANY",   // its sibling, seen as a mention NAME
+            "BT501",                      // the bare id, already covered
+            "OPT200ORGANIZATIONTECHNICAL",
+            "OPP105BUSINESS",
+        ] {
+            assert!(condemns(None, "national", v), "{v} is a field name, not an id");
+        }
+        // Not swept: real identifiers that merely begin with those letters, and
+        // a long digit run that is a plausible registration number.
+        for v in ["BT93017425", "OPTIMA2020", "BTG1234", "OPPENHEIM99"] {
+            assert!(!condemns(None, "national", v), "{v} is a real identifier");
+        }
+    }
+
+    /// Issue 365 unit 2: a bare four-digit number is not a register number.
+    ///
+    /// `2022` and `1000` each key six unrelated bodies across six countries.
+    /// Measured on prod 2026-09-09 over `id <= 3000000`: 93 orgs keyed by a bare
+    /// four-digit value, 37 (40 %) carrying two or more distinct mention names
+    /// against the 14.7 % baseline, the worst holding 71. Independently of
+    /// whether some registry issues such numbers, a 10,000-value space cannot
+    /// discriminate between 5.7M organizations — the same reasoning `short_vat`
+    /// already applies to a short VAT tail.
+    #[test]
+    fn a_bare_four_digit_number_is_not_a_merge_key() {
+        for v in ["2022", "1000", "2019", "8477"] {
+            assert!(condemns(None, "national", v), "{v} cannot discriminate");
+        }
+        // Five digits and up stay in: those are real short registry numbers,
+        // and the zero-padded and sequence families already have their own rules.
+        for v in ["84771", "52830", "HRB1234"] {
+            assert!(!condemns(None, "national", v), "{v} keeps its merge-key status");
+        }
     }
 }
 

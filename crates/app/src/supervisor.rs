@@ -3663,6 +3663,7 @@ impl Supervisor {
                     (0u64, 0u64, 0u64, 0u64);
                 let (mut hex_hash, mut compound) = (0u64, 0u64);
                 let (mut phone, mut short_numeric) = (0u64, 0u64);
+                let mut bare_four_digit = 0u64;
                 // Issue 300 Stage 5's census: the NULL-country national-id
                 // bucket, by identifier value. The design says "census first —
                 // class size genuinely unmeasured"; this is that measurement,
@@ -3754,6 +3755,7 @@ impl Supervisor {
                         if c.hex_hash { hex_hash += 1; }
                         if c.phone { phone += 1; }
                         if c.short_numeric { short_numeric += 1; }
+                        if c.bare_four_digit { bare_four_digit += 1; }
                         if c.compound { compound += 1; }
                         // Issue 325 step 5. Free: the walk already holds
                         // everything the parser needs. Passing the row's OWN
@@ -3882,6 +3884,7 @@ impl Supervisor {
                         "letter_run": letter_run, "short_vat": short_vat,
                         "hex_hash": hex_hash, "compound": compound,
                         "phone": phone, "short_numeric": short_numeric,
+                        "bare_four_digit": bare_four_digit,
                         "schemes": scheme_rows.iter().map(|(k, t)| serde_json::json!({
                             "scheme": k, "pop": t.pop, "pass": t.pass, "fail": t.fail,
                         })).collect::<Vec<_>>(),
@@ -3973,7 +3976,7 @@ impl Supervisor {
                     "org-merge-health census (issue 300): {orgs} identifier-bearing orgs, \
                      {ge2} with >=2 distinct mention names, {ge6} >=6, {ge20} >=20, \
                      max {} (org {}); gate census: {lexicon} lexicon, {sequence} sequence, \
-                     {letter_run} letter-run, {short_vat} short-vat, {hex_hash} hex-hash, {phone} phone-id, {short_numeric} short-numeric, \
+                     {letter_run} letter-run, {short_vat} short-vat, {hex_hash} hex-hash, {phone} phone-id, {short_numeric} short-numeric, {bare_four_digit} bare-4-digit, \
                      {compound} compound hits (~{placeholder_total}+ placeholder-keyed; \
                      checksum rates now exclude condemned ids). Parser-vs-stock \
                      (issue 325 step 5): {no_longer_vat} no longer vat, \
