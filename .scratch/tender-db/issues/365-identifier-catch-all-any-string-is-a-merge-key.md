@@ -4,7 +4,8 @@ Status: ready-for-agent — **UNITS 1 AND 2 SHIPPED, DEPLOYED AND VERIFIED ON PR
 (`6da7320`)**, standing stock dissolved and re-censused the same firing; every "done when" bullet
 for these two units is met. See "Units 1+2 DONE" and "The dissolve, verified". Units 3 (letter-run,
 22,796 rows), 4 (carry the publisher's scheme into the normaliser and apply the denial list at E0)
-and 5 (the 1.4M nameless class, an owner decision) remain.
+and 5 (the 1.4M nameless class, an owner decision) remain. **UNIT 3 ANSWERED AND SHIPPED
+2026-09-09 (`330c7ca`)** — the answer was "do not wire the class"; see "Unit 3 ANSWERED".
 Kind: defect (organization layer — identifier admission); units 1-3 are prevention + the
 328/345 repair path, unit 5 is a decision
 Relates to: 300 (the gate — its exemplar sheet already classifies the phone class
@@ -173,6 +174,85 @@ a dissolved mention re-resolved onto it. Corpus multi-name counts fell only mode
 (162,266 → 161,591 at ≥2 names), since dissolving mints name-keyed rows that can themselves carry
 name variants. So this fixed a fusion class; it is not a general cure for multi-name orgs, which
 is 329/351 territory.
+
+
+## Unit 3 ANSWERED (2026-09-09, `330c7ca`) — the class does not condemn; two prefixes inside it do
+
+Issue 300 parked `letter_run` as "census-only pending composition" with the class sized at
+27,781 rows. This is that composition read, and wiring the class would have been wrong in
+**both** directions simultaneously.
+
+### The aggregate says "mildly elevated" and is misleading
+
+Over `id <= 3000000`: 513 rows, **25.7 %** carrying ≥2 distinct mention names against the
+14.7 % baseline, 6.0 % at ≥6 against 1.1 %. Elevated — but nothing like the phone class's
+69 %/35 %, and those 513 rows carry **523,601 mentions**. On the aggregate alone this is closer
+to the hex class that issue 312 deliberately spared than to anything worth condemning.
+
+### Reading the worst rows shows it is three different things
+
+| what | example | verdict |
+| --- | --- | --- |
+| routing / reporting references | `LEITWEGID08A986640` (43 names), `BERICHTSEINHEITID00002636` (47) | **condemn** |
+| real registry ids wearing a LABEL | `CVRNR…`, `SIRET…`, `HANDELSREGISTERHRB…`, `REGISTRIERUNGSNUMMER…` | **strip, don't refuse** (issue 374) |
+| genuine high-volume keys | org 28 `0204994DOEVD83` — **370,791 mentions** over 15 names | **leave alone** |
+
+Eight of the top 18 by name diversity are Leitweg-IDs and four are Berichtseinheit-IDs, which
+is what makes the class look bad in aggregate. Condemning it wholesale would have discarded a
+370,791-mention key and thrown away four label-prefixed registry numbers that the 359/363 strip
+vocabulary should be *recovering*. So `letter_run` stays census-only — now with the reason
+recorded instead of a TODO.
+
+### What justifies the two condemns is the worst row, not the percentage
+
+A Leitweg-ID addresses **where an electronic invoice is delivered**; a Berichtseinheit-ID names
+a **statistical reporting bucket**. Neither is a party, and shared-service arrangements put many
+bodies behind one of each. Corpus-wide:
+
+| | orgs | ≥2 names | max names | mentions |
+| --- | --- | --- | --- | --- |
+| `LEITWEGID` | 766 | 221 (28.9 %) | **43** | 43,715 |
+| `BERICHTSEINHEITID` | 611 | 193 (31.6 %) | **47** | 28,787 |
+
+28.9 % is unremarkable; **43 distinct organization names on one invoice-routing address** is
+not. `300-org-fuzzy-matching-design.md:827` had already ruled these out ("location/office/
+routing scoped: never merge keys") — the rule was simply never wired.
+
+Matched as prefix FAMILIES because publishers spell them many ways: `LEITWEG` covers
+LEITWEGID/LEITWEGEID/LEITWEGSID/LEITWEGLD/LEITWEG, `BERICHT` covers
+BERICHTSEINHEITID/BERICHTEINHEITID/BERICHTSID. That is worth 44 extra rows over exact-string
+matching (1,421 condemned vs the 1,377 the two exact globs measure). `LEITID`/`LEITWERTID`
+(3 rows) are deliberately left unmatched — stretching the prefix further would be guessing.
+
+### Dissolved and verified the same firing
+
+Wet run (job 839) matched its dry plan (838) on every count but the fresh/reused provisional
+split — 863 fresh wet against 11,507 dry, identical 73,021 total — the same dry-run artifact
+explained above. Only **863** new org rows, so these mentions almost all landed on rows that
+already existed under the bodies' names. `project` (840) re-derived exactly the stamped 6
+notices → 2 tenders.
+
+```
+before: 0 lexicon, 0 sequence, 22796 letter-run, 276962 hex-hash, 0 phone-id,
+        1725 short-numeric, 0 bare-4-digit,    — routing-scope, 3349 compound
+after:  0 lexicon, 0 sequence, 21375 letter-run, 276962 hex-hash, 0 phone-id,
+        1725 short-numeric, 0 bare-4-digit,    0 routing-scope, 3349 compound
+```
+
+`routing_scope` → 0; identifier-bearing orgs 1,100,369 → 1,098,948, **−1,421 exactly**.
+`letter_run` fell 22,796 → 21,375, which is the same 1,421 (a routing id also carries a letter
+run) — so the 21,375 rows the decision means to keep, including org 28's key and the label-
+prefixed registry numbers, are untouched. **hex-hash is unchanged to the row at 276,962 for
+the second dissolve running**, which is the standing proof neither rule has crept.
+
+### One pre-existing test moved rather than bent
+
+`a_word_that_starts_with_a_country_code_does_not_mint_that_country` used
+`BERICHTSEINHEITID00002636` as a "starts with BE" specimen. This rule gates it away before
+country election runs, which is a different question from the one that test asks, so the
+fixture was removed with the reason inline — BE stays covered twice by
+`BERLINCHARLOTTENBURG93627` and a `BE2A…` GUID. Bending the new rule to keep an incidental
+fixture alive would have been the wrong repair.
 
 
 ## Units
