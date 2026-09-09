@@ -50,3 +50,27 @@ last job (`last_job.ok`) and ingest freshness. These timers are the app-independ
 complement: `diskwatch` runs even if the server is down, and `jobwatch` sees the
 whole recent-run window and the wedged-in-flight case, not just the single last
 job. They do not replace `/health/deep`; they cover the gaps it structurally can't.
+
+## Testing them offline
+
+`ops/watchdogs/test-watchdogs.sh` runs the jobwatch cases against a fixture
+`/admin/jobs` server — no box, no admin secret, no network. Run it after editing
+any watchdog:
+
+```
+ops/watchdogs/test-watchdogs.sh     # exits 0 on success
+```
+
+It exists because issue 373 could only have been caught this way. `jobwatch`
+was applying a 26 h failure lookback to the endpoint's DEFAULT depth of 20
+runs; on prod that reached back 17.7 h, so a daily failing in the 8.3 h gap left
+the journal saying `ok`. Running the script against the real box could not
+distinguish a saturated window from a quiet one — both print `ok` — so the
+fixture server deliberately honours `?limit=` the way the real endpoint does,
+and the cases pin the ARITHMETIC between the lookback and what the script can
+actually see.
+
+The harness is checked against its own negative: with the `?limit=` and the
+saturation guard removed, the shallow-window case fails with exactly the
+historical symptom (`20 recent covering 19h` reported as `ok`). A test that
+passed against both the fixed and the broken script would be worth nothing.
