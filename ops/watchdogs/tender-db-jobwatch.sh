@@ -24,6 +24,15 @@ base=${TENDER_ADMIN_URL:-http://localhost:8080}
 secret_file=${TENDER_ADMIN_SECRET_FILE:-/root/tender-admin-secret}
 lookback=${TENDER_JOB_FAIL_LOOKBACK_SECS:-93600}   # 26 h — one daily cycle + slack
 wedged=${TENDER_JOB_WEDGED_SECS:-28800}            # 8 h — clears the ~5 h full rebuild
+# How deep to read the job log. This MUST be asked for explicitly: `GET
+# /admin/jobs` with no `limit` returns the newest 20 runs, and a 26 h lookback
+# over a 20-entry window is only a 26 h check on a quiet box. Measured 2026-09-09
+# — the default 20 reached back just 17.7 h while the lookback claimed 26 h, an
+# 8.3 h blind band, and one session's eight refold jobs had eaten 40 % of the
+# window. Issue 313 added this parameter for exactly this reason ("a hard-coded 20
+# hid a day of history during an incident hunt") and this watchdog never used it.
+# 200 is the supervisor's JOB_LOG_MAX; at the observed rate that spans ~5 days.
+depth=${TENDER_JOB_LOG_DEPTH:-200}
 
 # /root/tender-admin-secret is a systemd EnvironmentFile (`TENDER_ADMIN_SECRET=…`),
 # so the operator secret is the value after the first '='.
@@ -34,7 +43,7 @@ if [ -z "$secret" ]; then
 fi
 
 now=$(date +%s)
-if ! json=$(curl -sS --max-time 15 "$base/admin/jobs" -H "x-admin-secret: $secret" 2>/dev/null); then
+if ! json=$(curl -sS --max-time 15 "$base/admin/jobs?limit=$depth" -H "x-admin-secret: $secret" 2>/dev/null); then
     echo "WARN jobwatch: /admin/jobs unreachable at $base"
     exit 1
 fi
@@ -57,6 +66,20 @@ if [ -n "$failed" ]; then
     status=1
 fi
 
+# Even at depth 200 a busy enough day can fill the window inside the lookback.
+# That is the failure mode this watchdog just had, so it must never be silent
+# again: when the log comes back full AND its oldest entry is younger than the
+# lookback start, an older failure cannot be seen and the "ok" below would be a
+# claim about a window, not about the day.
+oldest=$(printf '%s' "$json" | jq -r '[.recent[]?.finished_at // empty] | min // empty')
+returned=$(printf '%s' "$json" | jq -r '.recent | length')
+if [ -n "$oldest" ] && [ "$returned" -ge "$depth" ] && [ "$oldest" -gt "$((now - lookback))" ]; then
+    echo "WARN jobwatch: job log saturated — $returned entries reach back only" \
+         "$(((now - oldest) / 3600))h but the lookback is $((lookback / 3600))h;" \
+         "a failure older than that is INVISIBLE here (raise TENDER_JOB_LOG_DEPTH)"
+    status=1
+fi
+
 wedged_line=$(printf '%s' "$json" | jq -r --argjson now "$now" --argjson w "$wedged" '
     (.current // empty)
     | select((.started_at // $now) <= ($now - $w))
@@ -71,7 +94,8 @@ if [ "$status" -eq 0 ]; then
         (.recent | length) as $n
         | (.recent[0] // {}) as $last
         | (if .current then "running \(.current.kind) #\(.current.id) (\($now - .current.started_at)s)" else "idle" end) as $cur
-        | "ok jobwatch: \($cur), \((.queued | length)) queued, \($n) recent, last \($last.kind // "?") → \($last.outcome // "?")"')
+        | ([.recent[]?.finished_at // empty] | min) as $oldest
+        | "ok jobwatch: \($cur), \((.queued | length)) queued, \($n) recent covering \(if $oldest then (($now - $oldest) / 3600 | floor) else 0 end)h, last \($last.kind // "?") → \($last.outcome // "?")"')
     echo "$summary"
 fi
 
