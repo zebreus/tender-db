@@ -6,6 +6,8 @@ for these two units is met. See "Units 1+2 DONE" and "The dissolve, verified". U
 22,796 rows), 4 (carry the publisher's scheme into the normaliser and apply the denial list at E0)
 and 5 (the 1.4M nameless class, an owner decision) remain. **UNIT 3 ANSWERED AND SHIPPED
 2026-09-09 (`330c7ca`)** — the answer was "do not wire the class"; see "Unit 3 ANSWERED".
+**UNIT 4's SCHEME GATE LANDED 2026-09-09** with a narrower design than this issue proposed and
+one measured entry; see "Unit 4 — the scheme gate".
 Kind: defect (organization layer — identifier admission); units 1-3 are prevention + the
 328/345 repair path, unit 5 is a decision
 Relates to: 300 (the gate — its exemplar sheet already classifies the phone class
@@ -253,6 +255,74 @@ country election runs, which is a different question from the one that test asks
 fixture was removed with the reason inline — BE stays covered twice by
 `BERLINCHARLOTTENBURG93627` and a `BE2A…` GUID. Bending the new rule to keep an incidental
 fixture alive would have been the wrong repair.
+
+
+## Unit 4 — the scheme gate (2026-09-09)
+
+### The design in this issue was wrong, and the correction matters
+
+Unit 4 as filed says to "carry the publisher's declared scheme into
+`normalise_identifier_with` (`project.rs:4681`, called at `:3161`)". That is a **78-call-site
+signature change** — and it asks the normaliser a question it should not be asked. That function
+converts a STRING into an identifier; whether a MENTION's identifier may key a merge is a
+different decision, and the scheme is already sitting on `m` at the one production call site
+(`project.rs`, `m.identifier = m.raw_identifier…`). Of those 78 sites, exactly **one** is the
+production path and four more are admin probes; the other 73 are tests.
+
+So the gate went in there, as a three-line filter, with no signature change at all:
+
+```rust
+m.identifier = m.raw_identifier.as_deref()
+    .filter(|_| !scheme_never_keys(m.scheme.as_deref()))
+    .and_then(|raw| normalise_identifier(raw, m.country.as_deref()));
+```
+
+### `OTROS` — the class no value-shape rule can reach
+
+This is the case that justifies gating on the scheme at all. Everything condemned in units 1-3
+was caught by the VALUE's shape, which worked only because those classes happened to look
+distinctive — `LEITWEGID` has a prefix, a phone number has a shape. `OTROS` is Spanish for
+"others": a dropdown default, after which whatever the publisher types in the identifier box
+collides with everyone else who picked the same default. The values are arbitrary, so no shape
+rule can find them.
+
+The corpus agrees, measured 2026-09-09:
+
+| canonical orgs carrying an `OTROS` mention | 1,654 |
+| carrying ≥2 distinct mention names | **610 (36.9 %)** vs the 14.7 % baseline |
+| most names on one row | **231** |
+| mentions | 127,115 |
+
+Matched case-insensitively, since the scheme is stored as published.
+
+### What is deliberately NOT in the list
+
+Two bigger candidates are **unmeasured and therefore untouched**: `ID_PLATAFORMA` (41,579
+mentions) and the raw `eu`/`EU` scheme (252,658 combined). The name-diversity read timed out
+three times on both — a self-join over `organization_mentions` at that traffic exceeds the 10 s
+read cap — and it was not retried a fourth time. A scheme carrying a quarter of a million
+mentions must not be refused on a guess; issue 312's hex class is the standing reminder of what
+condemning an unmeasured class costs. Sizing them belongs in the weekly report, where a
+whole-corpus pass is affordable.
+
+And one candidate was measured and **declined**, which is why this list is not simply "every
+scheme that sounds administrative": `ID_UTE_TEMP_PLATAFORMA` is a *temporary* joint-venture id —
+about as obviously unstable as a scheme name gets — and it runs **1.2 %** multi-name over 1,529
+orgs, well BELOW the 14.7 % baseline. Each temporary id is in practice unique to its venture, so
+refusing it would have been pure loss. That is the third a-priori-obvious condemn the data has
+refused today, after `SPRAWA` and `KODNUTSPL` on issue 374.
+
+### Still open on unit 4
+
+The design's denial list also names GLN/IPA/DIR3/OIN as location/office scoped, and asks for the
+denial to apply at **E0** (`canonical.rs:7873`) rather than only at E1/E2. Neither is done here:
+- GLN etc. arrive as ISO 6523 numeric scheme codes (`0192`, `002`) rather than named schemes, and
+  issue 327's Austrian GLN read ("46 values held by more than one row, wrong about two thirds of
+  the time") is the measurement to build on;
+- the gate above sits at MINT time, so it stops new junk keys but does not re-examine standing
+  rows — the `repair-placeholder-orgs` path only consults `idgate::condemns`, which is
+  value-shaped and cannot see a scheme. A standing-row catch-up for scheme-denied rows needs its
+  own pass.
 
 
 ## Units
