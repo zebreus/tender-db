@@ -3876,6 +3876,21 @@ impl Supervisor {
                 let mut scheme_rows: Vec<(&str, SchemeTally)> = schemes.into_iter().collect();
                 scheme_rows.sort_by(|a, b| b.1.pop.cmp(&a.1.pop));
                 let placeholder_total = lexicon.max(sequence);
+                // Issue 365 unit 5: the nameless class, which the walk above
+                // structurally CANNOT see — it visits identifier-BEARING rows,
+                // and `provisional` is exactly `identifier IS NULL`. So the
+                // largest single population in the table was the one the
+                // standing tripwire had no number for. It grows by one row per
+                // nameless mention forever, and that is deliberate (issue 234:
+                // a nameless mention is a distinct unknown party, and most
+                // affected notices carry two or more, so collapsing them would
+                // assert a sameness nothing supports) — but deliberate is not
+                // the same as observed.
+                let (nameless, nameless_no_country) = self
+                    .db
+                    .count_nameless_provisional_orgs()
+                    .await
+                    .map_err(|e| e.to_string())?;
                 let report = serde_json::json!({
                     "identifier_bearing": orgs,
                     "ge2": ge2, "ge6": ge6, "ge20": ge20,
@@ -3947,6 +3962,9 @@ impl Supervisor {
                     // distinct-name tail. `alarms` here are the growth ones
                     // only; the summary line unions them with parser-vs-stock.
                     "name_growth": name_growth,
+                    // Issue 365 unit 5. `without_country` is the subset carrying
+                    // no information whatsoever: no name, no identifier, no country.
+                    "nameless": { "rows": nameless, "without_country": nameless_no_country },
                     "top": ranked.iter().map(|&(n, id)| {
                         let m = by_id.get(&id);
                         serde_json::json!({
@@ -3980,6 +3998,8 @@ impl Supervisor {
                      max {} (org {}); gate census: {lexicon} lexicon, {sequence} sequence, \
                      {letter_run} letter-run, {short_vat} short-vat, {hex_hash} hex-hash, {phone} phone-id, {short_numeric} short-numeric, {bare_four_digit} bare-4-digit, {routing_scope} routing-scope, \
                      {compound} compound hits (~{placeholder_total}+ placeholder-keyed; \
+                     {nameless} nameless provisional row(s), {nameless_no_country} of them \
+                     without a country — one per nameless mention by design (issue 234/365 u5); \
                      checksum rates now exclude condemned ids). Parser-vs-stock \
                      (issue 325 step 5): {no_longer_vat} no longer vat, \
                      {vat_country_differs} vat under another country, \

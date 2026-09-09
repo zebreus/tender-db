@@ -18259,6 +18259,38 @@ impl Db {
         Ok((report, watermark))
     }
 
+    /// The NAMELESS provisional organizations: no name and no identifier, so
+    /// nothing about them can ever be matched, merged or looked up (issue 365
+    /// unit 5).
+    ///
+    /// The `org-merge-health` walk cannot see this class — it visits
+    /// identifier-BEARING rows, and `provisional` is exactly
+    /// `identifier IS NULL` — so the largest single population in the table was
+    /// the one the standing tripwire could not report. It grows by one row per
+    /// nameless mention, forever, and that is a DELIBERATE decision (issue 234:
+    /// a nameless mention is a distinct unknown party, and collapsing several in
+    /// one notice would assert a sameness nothing supports — measured 2026-09-09,
+    /// most affected notices carry two or more). Deliberate is not the same as
+    /// observed, which is what this count fixes.
+    ///
+    /// Returns `(nameless, nameless_without_country)`: the second is the subset
+    /// with no country either, which carries no information at all.
+    ///
+    /// `name = ''` and not `name IS NULL OR name = ''`: the column is NOT NULL
+    /// (see the DDL), so a nameless row is always the empty string. The
+    /// defensive OR was written first and removed — a branch that cannot fire
+    /// reads as though NULL names were a real second shape to worry about.
+    pub async fn count_nameless_provisional_orgs(&self) -> turso::Result<(i64, i64)> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT COUNT(*), SUM(CASE WHEN country IS NULL THEN 1 ELSE 0 END)                    FROM organizations                   WHERE provisional = 1 AND name = ''",
+                (),
+            )
+            .await?;
+        Ok(rows.next().await?.map_or((0, 0), |row| (int(&row, 0), int(&row, 1))))
+    }
+
     /// One read-only batch of the issue-300 Stage-0 `org-merge-health` census:
     /// distinct N2 mention names per IDENTIFIER-BEARING org — the standing
     /// bad-merge tripwire's engine (a placeholder-keyed org shows up as one id

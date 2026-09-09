@@ -285,3 +285,67 @@ async fn the_nested_org_repair_repoints_dedups_and_deletes_with_guards() {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
 }
+
+/// Issue 365 unit 5: the nameless class is counted, including the subset that
+/// carries no country either.
+///
+/// This population is invisible to the `org-merge-health` walk by construction —
+/// that walk visits identifier-BEARING rows, and `provisional` is exactly
+/// `identifier IS NULL` — so the biggest group in the table had no number in the
+/// standing weekly report. The class is left to grow by design (issue 234: a
+/// nameless mention is a distinct unknown party), which is precisely why it needs
+/// to be observed rather than assumed.
+#[tokio::test]
+async fn the_nameless_provisional_rows_are_counted_with_and_without_a_country() {
+    let path = "/tmp/tender-nameless-count.db";
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    let db = store::Db::open(path).await.unwrap();
+    let raw = store::turso::Builder::new_local(path).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+
+    // Four nameless rows — two with a country, two without — and two that must
+    // NOT be counted: a named provisional, and an identifier-bearing row whose
+    // name happens to be empty.
+    //
+    // All the nameless ones use the EMPTY STRING because `organizations.name` is
+    // NOT NULL; the first draft of this test tried a NULL name and the schema
+    // refused it, which is how the counter's dead `name IS NULL` branch came out.
+    for (id, name, country, identifier, provisional) in [
+        (100, "", None, None, 1),
+        (101, "", Some("DE"), None, 1),
+        (102, "", Some("FR"), None, 1),
+        (103, "", None, None, 1),
+        (104, "Ein Name GmbH", Some("DE"), None, 1),
+        (105, "", Some("DE"), Some("DE123456780"), 0),
+    ] {
+        conn.execute(
+            "INSERT INTO organizations (id, name, name_norm, country, identifier, provisional, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, 0)",
+            (
+                Value::Integer(id),
+                Value::Text(name.into()),
+                Value::Text(name.to_lowercase()),
+                country.map_or(Value::Null, |c| Value::Text(c.into())),
+                identifier.map_or(Value::Null, |i| Value::Text(i.into())),
+                Value::Integer(provisional),
+            ),
+        )
+        .await
+        .unwrap();
+    }
+
+    let (nameless, without_country) = db.count_nameless_provisional_orgs().await.unwrap();
+    assert_eq!(nameless, 4, "every nameless provisional counts; a named row does not");
+    assert_eq!(without_country, 2, "and the no-information subset is separable");
+
+    // The identifier-bearing row is excluded even though its name is empty —
+    // it is not provisional, so the resolver can still reach it by key.
+    assert_eq!(
+        db.scalar("SELECT COUNT(*) FROM organizations WHERE name = '' AND provisional = 0")
+            .await
+            .unwrap(),
+        Some(Value::Integer(1)),
+    );
+}
