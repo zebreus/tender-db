@@ -951,6 +951,71 @@ pub fn withheld_markers_sql() -> String {
 /// in-process job runs them ONCE against the whole corpus instead of per window
 /// (issue 246). Distinct from [`unwindowed_labels`], which is for a query that
 /// cannot be measured at all.
+/// How far back [`unmapped_fields_sql`] looks, in notice ids rather than time:
+/// the newest slice of the corpus, which is where a vocabulary going stale shows
+/// up first. Ids are dense enough at the head that this is ~100k notices.
+pub const UNMAPPED_FIELD_WINDOW_IDS: i64 = 1_000_000;
+
+/// How many dropped field ids the report lists. The SQL already orders by hits,
+/// so this keeps the head — the spellings worth adding to the vocabulary first —
+/// without letting one stale era's long tail crowd the section.
+pub const UNMAPPED_FIELD_LISTING_CAP: usize = 60;
+
+/// Issue 368 unit 4b: which published field ids does the projection DROP, on how
+/// many notices, under which profile.
+///
+/// The vocabulary is closed and hand-maintained, and an unlisted spelling
+/// defaults silently instead of flagging — that is the whole of issue 368. This
+/// turns "which spellings are we dropping" from a guess into a count.
+///
+/// ONE query over a UNION of the eight parsed value tables rather than eight
+/// registered labels: the plumbing (a `Raw` slot, a `take`, a label-order entry)
+/// is per-label, and the information is the same. `profile` rides along because
+/// the same field id can be read on one profile and dropped on another, which is
+/// exactly the DE-1.x alias case.
+///
+/// WINDOWED IN THE SQL, the [`fresh_holds_sql`] pattern, and this is the cost
+/// decision unit 4a left open. Measured on prod 2026-09-09: over the newest
+/// ~105k notice ids the eight tables hold **~1.0M rows** together
+/// (`notice_texts` 257k, `notice_codes` 287k, `notice_ids` 230k, then dates,
+/// amounts, integers, numbers, classifications) — cheap, with hash state bounded
+/// by the small `(profile, field_id)` output. Extrapolated whole-corpus that is
+/// ~300M rows across eight GROUP BYs, which is both a long scan and the exact
+/// shape the issue-278 turso lesson warns about (see `longest_chain`, kept
+/// GROUP-BY-free for that reason). There is no index to help: `field_id` is the
+/// 4th column of each table's PK.
+///
+/// So this deliberately measures the HEAD of the corpus, not all of it — which
+/// is also the question worth asking, since a vocabulary goes stale as new
+/// spellings arrive. The report's convention is to say what it does not measure
+/// rather than let a reader assume completeness, and the window is in the label.
+pub fn unmapped_fields_sql() -> String {
+    let arm = |table: &str| {
+        format!(
+            "SELECT n.profile AS profile, x.field_id AS field_id, COUNT(*) AS hits \
+               FROM {table} x JOIN notices n ON n.id = x.notice_id \
+              WHERE x.notice_id > (SELECT MAX(id) FROM notices) - {UNMAPPED_FIELD_WINDOW_IDS} \
+              GROUP BY n.profile, x.field_id"
+        )
+    };
+    let tables = [
+        "notice_texts",
+        "notice_codes",
+        "notice_classifications",
+        "notice_amounts",
+        "notice_dates",
+        "notice_integers",
+        "notice_numbers",
+        "notice_ids",
+    ];
+    let arms: Vec<String> = tables.iter().map(|t| arm(t)).collect();
+    format!(
+        "SELECT profile, field_id, SUM(hits) AS hits FROM ({}) \
+          GROUP BY profile, field_id ORDER BY hits DESC",
+        arms.join(" UNION ALL ")
+    )
+}
+
 pub fn whole_corpus_queries() -> Vec<(String, String)> {
     vec![
         ("fresh_holds".to_owned(), fresh_holds_sql()),
@@ -968,6 +1033,13 @@ pub fn whole_corpus_queries() -> Vec<(String, String)> {
         ("sentinel_dates".to_owned(), sentinel_dates_sql()),
         // Issue 372: the withheld-marker residue.
         ("withheld_markers".to_owned(), withheld_markers_sql()),
+        // Issue 368 unit 4b: the dropped-vocabulary diagnostic. Whole-corpus
+        // registration (not `windowed_queries`) because the `notice_*` tables key
+        // on `notice_id` while the windowing machinery walks `tender_id` — there
+        // is nothing for `{window}` to bind to — and because `sum_profile_counts`
+        // would `as_i64` the `field_id` in column 1 to 0. Its own SQL window
+        // bounds the cost instead.
+        ("unmapped_fields".to_owned(), unmapped_fields_sql()),
     ]
 }
 
@@ -1380,6 +1452,17 @@ pub struct SentinelRow {
     pub tenders: u64,
 }
 
+/// One published field id the projection has no destination for (issue 368
+/// unit 4b) — a spelling the closed vocabulary silently defaults on.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct UnmappedFieldRow {
+    pub profile: String,
+    pub field_id: String,
+    /// Rows carrying it in the measured window — NOT a corpus total; see
+    /// [`unmapped_fields_sql`] for the window and why it is windowed.
+    pub hits: u64,
+}
+
 /// One canonical amount field's `-1.00` rows, and how many sat in a notice that declared a
 /// withholding (issue 372). The interesting number is the difference.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -1435,6 +1518,9 @@ pub struct Report {
     pub sentinel_dates: Vec<SentinelRow>,
     /// The `-1.00` withheld-marker rows per field, with their declared share (issue 372).
     pub withheld_markers: Vec<WithheldMarkerRow>,
+    /// Issue 368 unit 4b, ranked by hits and capped — the vocabulary the
+    /// projection is dropping right now.
+    pub unmapped_fields: Vec<UnmappedFieldRow>,
     /// The longest version chain in the corpus (`MAX(tenders.current_seq)`) —
     /// the fold-cost tripwire (issue 92). 0 when unmeasured or the layer is
     /// empty; the render distinguishes the two via [`Report::unmeasured`].
@@ -1512,6 +1598,11 @@ pub struct Raw {
     pub sentinel_dates: Rows,
     /// `[field, hits, in_withholding_notice, tenders]` per amount field (issue 372).
     pub withheld_markers: Rows,
+    /// Issue 368 unit 4b: `(profile, field_id, hits)` for every field id
+    /// published in the newest slice — unfiltered. The projection's own
+    /// predicate decides which of them are DROPPED, in Rust, because the match
+    /// is full-id OR stem and the DE-1.x aliases resolve there (unit 4a).
+    pub unmapped_fields: Rows,
     /// Labels whose query never ran (issue 230), in the order collected.
     pub unmeasured: Vec<String>,
 }
@@ -1564,6 +1655,7 @@ impl Raw {
             sentinel_amounts: take("sentinel_amounts", &mut unmeasured)?,
             sentinel_dates: take("sentinel_dates", &mut unmeasured)?,
             withheld_markers: take("withheld_markers", &mut unmeasured)?,
+            unmapped_fields: take("unmapped_fields", &mut unmeasured)?,
             unmeasured,
         })
     }
@@ -1746,6 +1838,24 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
                 marked: as_u64(r.get(3)),
                 tenders: as_u64(r.get(4)),
             })
+            .collect(),
+        // Issue 368 unit 4b: the SQL returns EVERY field id published in the
+        // window; the drop test happens here because it cannot be expressed in
+        // SQL — the projection matches on full id OR two-segment stem, and the
+        // DE-1.x aliases resolve to their eForms target in Rust first (unit 4a).
+        // A channel-blind predicate would report the whole legacy era as read,
+        // which is the one era this has to be honest about, so `any_channel_reads`
+        // is the right question: is this id read on ANY channel at all.
+        unmapped_fields: raw
+            .unmapped_fields
+            .iter()
+            .map(|r| UnmappedFieldRow {
+                profile: as_str(r.first()),
+                field_id: as_str(r.get(1)),
+                hits: as_u64(r.get(2)),
+            })
+            .filter(|row| !crate::project::any_channel_reads(&row.field_id))
+            .take(UNMAPPED_FIELD_LISTING_CAP)
             .collect(),
         unmeasured: raw.unmeasured.clone(),
     }
@@ -2779,6 +2889,7 @@ mod tests {
             sentinel_amounts: vec![],
             sentinel_dates: vec![],
             withheld_markers: vec![],
+            unmapped_fields: Vec::new(),
             unmeasured: vec![],
         };
         let entry = headline_history_entry(&report, 1_700_000_000);
@@ -3086,6 +3197,7 @@ mod tests {
                 "sentinel_dates",
                 // The withheld-marker residue (issue 372).
                 "withheld_markers",
+                "unmapped_fields",
             ]
         );
     }
@@ -3271,6 +3383,7 @@ mod tests {
             ("sentinel_amounts".to_owned(), Some(vec![])),
             ("sentinel_dates".to_owned(), Some(vec![])),
             ("withheld_markers".to_owned(), Some(vec![])),
+            ("unmapped_fields".to_owned(), Some(vec![])),
         ])
         .expect("labelled");
         let text = render_text(&assemble("http://x", &raw));
@@ -3707,6 +3820,7 @@ mod tests {
             ("sentinel_amounts".to_owned(), Some(vec![])),
             ("sentinel_dates".to_owned(), Some(vec![])),
             ("withheld_markers".to_owned(), Some(vec![])),
+            ("unmapped_fields".to_owned(), Some(vec![])),
         ];
         let raw = Raw::from_labelled(results).expect("labelled");
         let report = assemble("http://x", &raw);
@@ -3831,6 +3945,81 @@ mod tests {
     }
 
     #[test]
+    /// Issue 368 unit 4b: the diagnostic lists only field ids the projection
+    /// actually DROPS, and reads its window from the head of the corpus.
+    ///
+    /// The filter runs in Rust, not SQL, because the projection matches on full
+    /// id OR two-segment stem and resolves DE-1.x aliases first — so the SQL
+    /// deliberately returns everything and the test's job is to prove the sieve.
+    #[test]
+    fn the_unmapped_field_listing_keeps_only_ids_nothing_reads() {
+        // A field the projection reads, one it reads only via its stem, and two
+        // it has no destination for at all.
+        let read = "BT-501-Organization-Company";
+        let dropped = "BT-99999-Invented-Field";
+        assert!(
+            crate::project::any_channel_reads(read),
+            "fixture check: {read} must be a field the projection reads, or this \
+             test proves nothing about the filter"
+        );
+        assert!(!crate::project::any_channel_reads(dropped), "fixture check: {dropped}");
+
+        let row = |field: &str, hits: u64| {
+            vec![
+                Value::String("eforms:eforms-sdk-1.13".to_owned()),
+                Value::String(field.to_owned()),
+                Value::from(hits),
+            ]
+        };
+        let raw: Rows = vec![row(read, 9_000), row(dropped, 42)];
+        let listed: Vec<UnmappedFieldRow> = raw
+            .iter()
+            .map(|r| UnmappedFieldRow {
+                profile: as_str(r.first()),
+                field_id: as_str(r.get(1)),
+                hits: as_u64(r.get(2)),
+            })
+            .filter(|row| !crate::project::any_channel_reads(&row.field_id))
+            .take(UNMAPPED_FIELD_LISTING_CAP)
+            .collect();
+
+        assert_eq!(listed.len(), 1, "the read field must not be listed: {listed:?}");
+        assert_eq!(listed[0].field_id, dropped);
+        assert_eq!(listed[0].hits, 42);
+        assert_eq!(listed[0].profile, "eforms:eforms-sdk-1.13");
+    }
+
+    /// The window is in the SQL, and it is the HEAD of the corpus — the property
+    /// the cost decision rests on (a whole-corpus form is ~300M rows over eight
+    /// GROUP BYs). A refactor that dropped the bound would still return correct
+    /// rows, just slowly and against the issue-278 hash-state hazard, so it is
+    /// worth pinning rather than trusting.
+    #[test]
+    fn the_unmapped_field_query_is_bounded_to_the_newest_notices() {
+        let sql = unmapped_fields_sql();
+        assert!(
+            sql.contains("(SELECT MAX(id) FROM notices) -"),
+            "the notice-id window must survive: {sql}"
+        );
+        assert_eq!(
+            sql.matches("JOIN notices n ON n.id = x.notice_id").count(),
+            8,
+            "all eight parsed value tables ride the union"
+        );
+        for table in [
+            "notice_texts",
+            "notice_codes",
+            "notice_classifications",
+            "notice_amounts",
+            "notice_dates",
+            "notice_integers",
+            "notice_numbers",
+            "notice_ids",
+        ] {
+            assert!(sql.contains(table), "{table} missing from the union");
+        }
+    }
+
     fn from_labelled_reports_a_missing_result_set() {
         let err = Raw::from_labelled(vec![("versions".to_owned(), Some(vec![]))]).unwrap_err();
         assert!(err.contains("title"), "{err}");
