@@ -1,6 +1,11 @@
 # 372 — a WITHHELD eForms field is projected as if it were data: `-1.00` becomes an amount and `unpublished` becomes a currency
 
-Status: ready-for-agent — **unit 1 CORPUS-WIDE 2026-09-08 (job 818): 19,236 `-1.00` rows, residue
+Status: ready-for-agent — **UNIT 2 BUILT AND LANDED 2026-09-09** across four commits
+(`4633443` amounts, `796473b` bids, `436f73e` read layer + `/v1`, `d7bb7db` the report's
+`marked` column). Not yet deployed. See "Unit 2 BUILT". Remaining: unit 3 (`currency =
+'unpublished'`, and the column is `NOT NULL` — see the constraint finding), unit 4 (the other
+satellites, whose channel map the fixture probe now gives), and the standing-row re-fold, still
+the open owner decision shared with 366. Earlier: **unit 1 CORPUS-WIDE 2026-09-08 (job 818): 19,236 `-1.00` rows, residue
 **116** (0.6 %); `result_value` 99.57 % declared, but `estimated_value` **0 of 29** — a second cause
 wearing the same value, split out as unit 5, now DONE — publisher-invented sentinels with no withholding block, already handled by 366's negative rule and NOT to be labelled withheld. **Unit 2 DECIDED: option (b), a quality marker applied
 PER ROW conditioned on the notice's declaration, never as a blanket rule on the number — and it must cover
@@ -208,6 +213,103 @@ it says what it means.
 The mechanics are already available: the BT-195 code names the SOURCE field, and the projection's
 `AMOUNTS` mapping (`BT-161` → `result_value`, `project.rs:135`) already translates that to the
 canonical name — so the exact per-row test is a lookup, not new vocabulary.
+
+
+## Unit 2 BUILT (2026-09-09) — four commits, gate green each time, none deployed yet
+
+Option (b) as decided: the fact is emitted with a marker, per row, conditioned on the notice's
+own declaration. Nothing keys on the number `-1`.
+
+| commit | what |
+| --- | --- |
+| `4633443` | `Fact::Amount` + `tender_version_amounts` gain `quality`; the declaration lookup; the head election refuses a marked fact |
+| `796473b` | the bids satellite: `BidState` + `tender_version_bids` gain `quality`, `read_results` marks a bid whose LotTender declared BT-720 |
+| `436f73e` | `/v1` stops publishing the placeholder as a value; the lot headline value stops picking one |
+| `d7bb7db` | section 11 counts the rows actually marked, so the anchoring gap is measurable |
+
+### The mechanism, verified against real XML rather than read off the schema
+
+`withheld_source_fields(parsed)` returns the notice's declarations as `(section, source field)`
+pairs — the FieldsPrivacy block's **parent** section paired with the id in the declaration's
+parentheses. The test at emission is then one set lookup on `(value.section_id,
+stem(value.field_id))`, needing **no new vocabulary**: the correspondence is the identity.
+
+That pairing was the fix's load-bearing assumption, so it is asserted against the committed
+withheld fixture (`withheld_declarations_pair_with_the_section_holding_the_suppressed_value`).
+All five of its blocks anchor exactly that way. The probe output is worth keeping:
+
+| block's parent | declaration | the suppressed value in that section |
+| --- | --- | --- |
+| `ND-ReceivedSubmissions#0` | `BT-195(BT-759)` = `rec-sub-cou` | `BT-759-LotResult` = `Number(-1.0)` |
+| `ND-ReceivedSubmissions#0` | `BT-195(BT-760)` = `rec-sub-typ` | `BT-760-LotResult` = `Code('unpublished')` |
+| `ND-LotAwardCriterion#0` | `BT-195(BT-541)` = `awa-cri-num` | `BT-541-Lot-WeightNumber` = `Number(-1.0)` |
+| `ND-LotAwardCriterion#0` | `BT-195(BT-734)` = `awa-cri-nam` | `BT-734-Lot` = **`Text('unpublished')`** |
+| `ND-LotAwardCriterion#0` | `BT-195(BT-539)` = `awa-cri-typ` | `BT-539-Lot` = `Code('unpublished')` |
+
+**This is unit 4's map, obtained for free.** The marker lands on three value channels — a
+number, a code and a TEXT literally reading `unpublished` — and the same lookup serves all of
+them, because the declaration names a field and does not care what channel the field uses. Unit
+4 is therefore an application of unit 2's mechanism, not a new investigation.
+
+Also note `BT-5421-Lot` = `per-exa` sitting in `ND-LotAwardCriterion#0` **undeclared**. That is
+the per-row precision made concrete: the weight NUMBER is withheld while the weight TYPE beside
+it in the same section is published, and a section-wide or value-shaped rule would have marked
+both. `a_declaration_marks_only_the_field_it_names` pins it.
+
+### The blind spot, stated and then measured rather than left as a caveat
+
+The rule is EXACT on the section. A block a publisher hoisted away from the value it suppresses
+— issue 195 saw `FieldsPrivacy` written under the root extension, 4× on sdk-1.9 — marks nothing.
+
+That direction is the safe one: an unmarked withheld row behaves exactly as it does today,
+refused by 366's negative-sentinel rule. But "safe" is not "known", so section 11 now carries
+`marked` beside the notice-wide `in-wh-notice`, and **`in-wh-notice` minus `marked` is the
+anchoring gap**. `a_hoisted_privacy_block_marks_nothing_rather_than_guessing` pins the current
+behaviour so that widening the rule later has to change a test that says why.
+
+Read that column on recently folded rows only. Standing rows carry no marker until re-folded, so
+a low corpus-wide `marked` would say nothing about the rule — the report's own prose says so.
+
+### `/v1`: suppression, not a flag beside the old number — a decision worth naming
+
+A withheld amount or bid now reports `value: null` with `quality: "withheld"`.
+
+The additive alternative (keep `value: {cents: -100}`, add a flag) was rejected: a consumer that
+never heard of `quality` would **still** be told the value is −0.01, and this issue is precisely
+about a layer copying a placeholder as data. Under the shipped shape a reader who ignores the key
+sees "no value", which is true. The field or bid is still named either way, so *which* value is
+missing stays identifiable — the distinction option (b) exists for. This does change output for
+the affected rows once they are re-folded; that is the correction, not a regression.
+
+Second find in the same pass: **a lot's headline value could be a withheld figure.** In
+`read::summarise`'s pick, `-100` outranks the `i64::MIN` default, so a lot whose ONLY amount was
+withheld showed −0.01 as its value — winning by being the only row rather than by being a
+figure. Now excluded.
+
+### The head election refuses a marked fact for the RIGHT reason
+
+`head_value_eur_cents` gained `quality.is_none()` beside the existing `!sentinel_amount(cents)`.
+This changes **no election today** — `sentinel_amount` already refuses −1 — and it is recorded
+here so that is not mistaken for redundancy: it is the arm that states the reason, and it starts
+mattering the moment a publisher withholds a field without writing −1 into it.
+
+### One risk checked before touching the shape
+
+`Fact` is `postcard`-serialized into the Phase-2 bucketed fold's spill files, so widening
+`Fact::Amount` changes that wire format. Safe: `project.rs:2279` does `remove_dir_all` on the
+bucket directory at the START of every fold, so no bucket outlives a run. Checked rather than
+assumed, because a stale bucket read with a new codec is a silent corruption rather than an
+error. `bucket_row_survives_the_postcard_codec` now carries a marked amount as well as an
+unmarked one, so the codec is tested on both readings.
+
+### Unit 3 has a constraint the earlier write-up did not record
+
+`tender_version_amounts.currency` is `TEXT NOT NULL`. So "never store `unpublished` as a
+currency" cannot be done by NULLing the column — the options are a placeholder code, dropping the
+row (which unit 2 rejected for the amount itself), or relaxing the column. `/v1` no longer
+*publishes* the currency of a withheld row, since the whole value object is now `null`, so the
+user-visible half of unit 3 is already addressed for declared rows; the 141 stored rows are what
+remains, and the `NOT NULL` is the thing that shapes the choice.
 
 ## Unit 5 (new) — the undeclared residue, 116 rows
 
