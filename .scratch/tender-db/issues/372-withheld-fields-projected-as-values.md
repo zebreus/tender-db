@@ -5,9 +5,8 @@ Status: ready-for-agent — **UNIT 2 BUILT, DEPLOYED AND VERIFIED ON PROD 2026-0
 `marked` column, **`ce6d2c2` the migration without which the whole thing was INERT**).
 **UNIT 4 ALSO BUILT, DEPLOYED AND VERIFIED (`4c7ad40`)** — the statistics satellite; the
 award criteria turned out to need nothing. Live on `4c7ad40`; see "Unit 2 VERIFIED ON PROD"
-and "Unit 4" below, both with negative controls. Remaining: unit 3 (`currency =
-'unpublished'`, shaped by the `NOT NULL` constraint) and the standing-row re-fold, still the
-open owner decision shared with 366. See "Unit 2 BUILT". Remaining: unit 3 (`currency =
+and "Unit 4" below, both with negative controls. **UNIT 3 CLOSED as subsumed** — see below; it was never a separate defect class. Remaining:
+only the standing-row re-fold, still the open owner decision shared with 366. See "Unit 2 BUILT". Remaining: unit 3 (`currency =
 'unpublished'`, and the column is `NOT NULL` — see the constraint finding), unit 4 (the other
 satellites, whose channel map the fixture probe now gives), and the standing-row re-fold, still
 the open owner decision shared with 366. Earlier: **unit 1 CORPUS-WIDE 2026-09-08 (job 818): 19,236 `-1.00` rows, residue
@@ -448,6 +447,43 @@ rows, every one a real kind with a real count, **all `quality = null`**. Two of 
 **zeros** (`t-no-eea` 0, `t-oth-eea` 0) and stayed unmarked — which is the distinction that
 matters here: 0 means "none of that type were received" and is a reading; −1 means "we are not
 telling you" and is not.
+
+
+## Unit 3 CLOSED (2026-09-09) — subsumed by unit 2, verified at the source
+
+Unit 3 was filed as its own defect: 141 rows carrying the literal `unpublished` where a
+currency code belongs, with `currency TEXT NOT NULL` (confirmed) apparently forcing a choice
+between a placeholder code, a schema relaxation, and dropping the row. None of that is needed.
+
+**It is a strict subset of unit 2's population.** Bounded census over `tender_id <= 200000`:
+
+| rows with `currency = 'unpublished'` | 13 (12 tenders) |
+| of those, also `cents = -100` | **13 — all of them** |
+
+So the currency placeholder never appears on its own. Every row carrying it is a row unit 2's
+marker already identifies, and once re-folded `quality = 'withheld'` labels the whole row.
+(The unbounded form of this census hit the 10 s read cap and was not retried.)
+
+**`/v1` already publishes neither half.** The amounts arm emits `value: null` plus `quality`
+for a marked row and never calls `money()`, so the bogus currency has no route out — checked
+in `json.rs`, not assumed from the unit-2 commit message.
+
+**Verified at the source, because the ADR-0004 justification depends on it.** Extracted the
+actual published XML for notice 23287971 from the monthly archive:
+
+```xml
+<cbc:TotalAmount currencyID="unpublished">-1</cbc:TotalAmount>
+<cbc:PayableAmount currencyID="EUR">-1</cbc:PayableAmount>
+```
+
+The publisher wrote the string `unpublished` into `currencyID` themselves; our parser did not
+synthesise it. Storing it is ADR-0004 behaving correctly, not a bug. And the same notice shows
+both shapes side by side — one amount with the currency withheld, one keeping `EUR` — which is
+exactly the split the census measured.
+
+What actually remains is the standing-row question (a not-yet-refolded row still serves
+`{cents: -100, currency: "unpublished"}` because its marker is NULL), and that is the shared
+re-fold decision, not unit 3.
 
 ## Unit 5 (new) — the undeclared residue, 116 rows
 
