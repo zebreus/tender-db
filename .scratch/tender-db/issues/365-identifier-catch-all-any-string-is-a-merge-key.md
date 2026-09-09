@@ -359,6 +359,17 @@ rows with no name, no identifier and no country, which carry no information what
 Deliberate is not the same as observed. If this class ever starts growing faster than ingest
 does, the report will now say so instead of nobody noticing.
 
+**Verified on prod** (job 858, 2026-09-09 09:14Z), and the numbers are a useful cross-check of
+the counter itself:
+
+| | report says | this issue recorded independently |
+| --- | --- | --- |
+| nameless provisional rows | **1,415,302** | 1,415,301 |
+| of those, no country either | **309,204** | 309,203 |
+
+One row apart on each, which is a day of ingest — so the count agrees with a figure derived by a
+different route months earlier, rather than merely being self-consistent.
+
 ### Two things the work corrected in itself
 
 - The counter's predicate was first written `name IS NULL OR name = ''`. `organizations.name` is
