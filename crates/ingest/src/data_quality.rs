@@ -870,6 +870,23 @@ pub fn sentinel_dates_sql() -> String {
 /// therefore cannot see the second population, and the fix scoped to amounts alone would leave those
 /// rows asserting a −0.01 bid.
 ///
+/// **A third arm for the statistics satellite (issue 372 unit 4).** BT-759 (the received-submission
+/// count) and BT-760 (its type) are withheld the same way, and the SDK writes -1 into the count and
+/// the literal `unpublished` into the code — so an unmarked row asserts that -1 submissions of type
+/// `unpublished` were received. Its predicate is `count < 0 OR kind = 'unpublished'` rather than a
+/// cents test, because BOTH halves of the pair are placeholders and either can appear alone.
+///
+/// Denser than the amount case: a bounded probe of `tender_id <= 100000` alone returned **2,752
+/// rows over 164 tenders** (~17 per tender — one statistics block per lot result), and 92 of 93 in a
+/// narrower window sat in a notice that declared a withholding, matching the 99.6 % the amount side
+/// showed. The corpus total is what this arm produces; the unbounded form of that probe hit the 10 s
+/// cap and was not retried.
+///
+/// NOT included: the award-criterion markers from the same fixture (`BT-539`/`BT-541`/`BT-734`).
+/// Those field ids reach no canonical satellite at all — verified 2026-09-09, they appear in no
+/// field map and no routing arm — so their `-1`/`unpublished` values stay in the parsed layer where
+/// ADR-0004 says they belong. There is nothing to mark and nothing to count.
+///
 /// Windowed probes put that population at **≥184 rows over ≥136 tenders** — a floor, not a total,
 /// because the densest `tender_id` window hit the 10 s cap and was not retried. The `UNION ALL` arm
 /// below replaces the floor with a corpus number on the next run. `ORDER BY 2` (the ordinal) rather
@@ -912,6 +929,19 @@ pub fn withheld_markers_sql() -> String {
        JOIN tender_versions v ON v.tender_id = b.tender_id AND v.seq = b.seq \
        JOIN notices n ON n.id = v.caused_by_notice_id \
       WHERE b.cents = -100 \
+      GROUP BY n.source \
+     UNION ALL \
+     SELECT 'submission_stat · ' || n.source AS field, COUNT(*) AS hits, \
+            SUM(CASE WHEN EXISTS ( \
+                  SELECT 1 FROM notice_sections s \
+                   WHERE s.kind = 'FieldsPrivacy' AND s.notice_id = v.caused_by_notice_id \
+                ) THEN 1 ELSE 0 END) AS in_withholding_notice, \
+            SUM(CASE WHEN t.quality IS NOT NULL THEN 1 ELSE 0 END) AS marked, \
+            COUNT(DISTINCT t.tender_id) AS tenders \
+       FROM tender_version_result_stats t \
+       JOIN tender_versions v ON v.tender_id = t.tender_id AND v.seq = t.seq \
+       JOIN notices n ON n.id = v.caused_by_notice_id \
+      WHERE t.count < 0 OR t.kind = 'unpublished' \
       GROUP BY n.source \
       ORDER BY 2 DESC"
         .to_owned()
@@ -2190,7 +2220,9 @@ pub fn render_text(report: &Report) -> String {
              exact — so `in-wh-notice` minus `marked` is what the section-anchored rule does not \
              reach, a block the publisher hoisted away from the value it suppresses. Read it on \
              recently folded rows: standing rows carry no marker until they are re-folded, so a \
-             low corpus-wide `marked` says nothing about the rule."
+             low corpus-wide `marked` says nothing about the rule. `submission_stat` rows are the \
+             BT-759/BT-760 pair, where the marker means neither the count NOR the type is a \
+             reading."
         );
     }
     out

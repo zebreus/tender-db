@@ -417,7 +417,9 @@ pub struct LotResultRow {
     /// When the buyer decided — the legacy eras' award-block date (issue 255).
     pub decided: Option<Stamp>,
     pub winners: Vec<ResultOrgRow>,
-    pub statistics: Vec<(String, i64)>,
+    /// `(kind, count, quality)` — a `quality` of `'withheld'` means the notice
+    /// declared BT-759/BT-760 suppressed, so neither value is a reading (372 u4).
+    pub statistics: Vec<(String, i64, Option<String>)>,
 }
 
 /// One Bid (eForms LotTender) in the Tender's current state.
@@ -2159,14 +2161,14 @@ async fn results_of(
     }
     let mut rows = conn
         .query(
-            "SELECT lot_result_id, kind, count FROM tender_version_result_stats
+            "SELECT lot_result_id, kind, count, quality FROM tender_version_result_stats
               WHERE tender_id = ? AND seq = ?",
             key.clone(),
         )
         .await?;
     while let Some(row) = rows.next().await? {
         if let Some(&i) = result_index.get(&int(&row, 0)) {
-            lot_results[i].statistics.push((text(&row, 1), int(&row, 2)));
+            lot_results[i].statistics.push((text(&row, 1), int(&row, 2), opt_text_of(&row, 3)));
         }
     }
 

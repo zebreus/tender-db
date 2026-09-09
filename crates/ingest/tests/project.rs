@@ -355,6 +355,81 @@ async fn a_withheld_amount_is_marked_and_an_undeclared_negative_is_not() {
     let _ = std::fs::remove_file(&path);
 }
 
+/// Issue 372 unit 4, the THIRD surface: a withheld received-submission statistic.
+///
+/// Denser than the amount case — one CAN carries a statistics block per lot
+/// result — and it fails differently: `kind` is the literal `unpublished` and
+/// `count` is −1, so an unmarked row asserts that −1 submissions of a type called
+/// `unpublished` were received. Both halves are junk, which is why the marker is
+/// on the ROW rather than on either column.
+///
+/// Two blocks, identical `-1`/`unpublished` payloads, one declared and one not.
+/// Only the declared one is marked, so this fails if the rule ever degenerates
+/// into keying on the value — the same guard as the amounts and bids tests.
+#[tokio::test]
+async fn a_withheld_submission_statistic_is_marked_and_an_undeclared_one_is_not() {
+    let (db, fetch_id, path) = scratch("withheld-stats").await;
+
+    let code = |section: &str, field: &str, list: &str, code: &str| ValueRow {
+        section_id: section.into(),
+        field_id: field.into(),
+        ordinal: 0,
+        value: NoticeValue::Code { list: Some(list.into()), code: code.into() },
+    };
+    let number = |section: &str, field: &str, n: i64| ValueRow {
+        section_id: section.into(),
+        field_id: field.into(),
+        ordinal: 0,
+        value: NoticeValue::Integer(n),
+    };
+
+    let parsed = Parsed {
+        sections: vec![
+            sec("ND-Root", "Notice", None),
+            sec("ND-LotResult#0", "LotResult", Some("ND-Root")),
+            // Declared: the privacy block hangs under the statistics block itself,
+            // which is where the SDK anchors it (verified against the committed
+            // withheld fixture — parent is ND-ReceivedSubmissions#0, not the LotResult).
+            sec("ND-Subs#0", "ReceivedSubmissions", Some("ND-LotResult#0")),
+            sec("ND-SubsCountUnpublish#0", "FieldsPrivacy", Some("ND-Subs#0")),
+            // Undeclared: same payload, no privacy block anywhere near it.
+            sec("ND-Subs#1", "ReceivedSubmissions", Some("ND-LotResult#0")),
+        ],
+        values: vec![
+            ted_text("ND-Root", "TED-TITLE", "Withheld statistics"),
+            ted_date("ND-Root", "TED-DS_DATE_DISPATCH", 13 * 86_400),
+            code("ND-Subs#0", "BT-760-LotResult", "received-submission-type", "unpublished"),
+            number("ND-Subs#0", "BT-759-LotResult", -1),
+            code(
+                "ND-SubsCountUnpublish#0",
+                "BT-195(BT-759)-LotResult",
+                "non-publication-identifier",
+                "rec-sub-cou",
+            ),
+            code("ND-Subs#1", "BT-760-LotResult", "received-submission-type", "unpublished"),
+            number("ND-Subs#1", "BT-759-LotResult", -1),
+        ],
+    };
+    let (n, p) = legacy_record(fetch_id, "000103-2026", "eforms:eforms-sdk-1.12", parsed);
+    db.record_notice(&n, &p).await.expect("record");
+    project::project(&db, false).await.expect("project");
+
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_result_stats WHERE count = -1").await,
+        2,
+        "both blocks are stored as published (ADR-0004)",
+    );
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM tender_version_result_stats WHERE quality = 'withheld'"
+        )
+        .await,
+        1,
+        "exactly the block whose notice declared BT-759 is marked",
+    );
+}
+
 /// Issue 372's SECOND surface: BT-720, the winning tender's value, does not
 /// travel through `tender_version_amounts` — the issue-177 context routing sends
 /// it to `tender_version_bids` — so the marker has to be applied on that path

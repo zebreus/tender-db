@@ -3793,7 +3793,7 @@ struct RawLotResult {
     reason: Option<String>,      // BT-144
     bid_refs: Vec<String>,       // OPT-320
     contract_refs: Vec<String>,  // OPT-315
-    statistics: Vec<(String, i64)>, // BT-760 code, BT-759 count
+    statistics: Vec<(String, i64, Option<String>)>, // BT-760 code, BT-759 count, issue-372 quality
     /// The legacy eras' `CONTRACT_AWARD_DATE`, on the award block (issue 255).
     decided: Option<(i64, i64, bool)>,
     /// Legacy award blocks name their winner(s) directly (inline
@@ -3943,11 +3943,23 @@ fn read_results(
             _ => {}
         }
     }
-    for (code, count, owner) in stats.into_values() {
+    // `into_iter`, not `into_values`: the KEY is the ReceivedSubmissions section,
+    // and issue 372 needs it to ask whether this notice declared BT-759 or BT-760
+    // withheld for THIS block. Either declaration marks the row, because the row is
+    // the pair — a withheld count with a published type is still not a statistic,
+    // and the fixture shows publishers declaring both together (`rec-sub-cou` and
+    // `rec-sub-typ` side by side).
+    for (section, (code, count, owner)) in stats {
         if let (Some(code), Some(count)) = (code, count)
             && let Some(r) = raw.lot_results.iter_mut().find(|r| r.key == owner)
         {
-            r.statistics.push((code.to_owned(), count));
+            let suppressed = withheld.contains(&(section, "BT-759"))
+                || withheld.contains(&(section, "BT-760"));
+            r.statistics.push((
+                code.to_owned(),
+                count,
+                suppressed.then(|| QUALITY_WITHHELD.to_owned()),
+            ));
         }
     }
     raw
@@ -4021,10 +4033,10 @@ fn read_legacy_results(sections: &HashMap<&str, &store::Section>, parsed: &Parse
             }
             ("TED-NO_AWARDED_CONTRACT", _) => r.decision = Some("clos-nw".to_owned()),
             (f, NoticeValue::Integer(n)) if LEGACY_BID_COUNT_FIELDS.contains(&f) => {
-                r.statistics.push(("tenders".to_owned(), *n));
+                r.statistics.push(("tenders".to_owned(), *n, None));
             }
             (f, NoticeValue::Number { value: n, .. }) if LEGACY_BID_COUNT_FIELDS.contains(&f) => {
-                r.statistics.push(("tenders".to_owned(), *n as i64));
+                r.statistics.push(("tenders".to_owned(), *n as i64, None));
             }
             _ => {}
         }
@@ -5907,7 +5919,7 @@ mod tests {
                 awarded_currency: Some("EUR".into()),
                 decided: Some((700_050_000, -60, false)),
                 winners: vec![7, 8],
-                statistics: vec![("t1".into(), 4)],
+                statistics: vec![("t1".into(), 4, None)],
             }],
             bids: vec![BidState {
                 key: "TEN-1".into(),

@@ -284,9 +284,17 @@ fn lot_result(r: &LotResultRow) -> Value {
         // When the buyer decided — the legacy eras' award-block date (issue 255).
         "decided": stamp(r.decided),
         "winners": r.winners.iter().map(result_org).collect::<Vec<_>>(),
+        // Issue 372 unit 4: a withheld statistic is not a statistic. Its `kind` is
+        // the literal `unpublished` and its count -1, so publishing the pair would
+        // put a fake submission type in a map keyed BY type and assert -1 of them.
+        // The map therefore holds only real readings, and the withheld ones are
+        // reported as a count of what is missing — which is what the notice
+        // actually says: "there were statistics here and they are suppressed".
         "statistics": r.statistics.iter()
-            .map(|(kind, count)| (kind.clone(), json!(count)))
+            .filter(|(_, _, quality)| quality.is_none())
+            .map(|(kind, count, _)| (kind.clone(), json!(count)))
             .collect::<serde_json::Map<_, _>>(),
+        "statistics_withheld": r.statistics.iter().filter(|(_, _, q)| q.is_some()).count(),
     })
 }
 
@@ -405,6 +413,45 @@ mod tests {
         // The field is still named, so the reader learns WHICH value is missing
         // rather than the fact vanishing — the distinction option (b) exists for.
         assert_eq!(withheld["field"], json!("result_value"));
+    }
+
+    /// Issue 372 unit 4: a withheld statistic leaves the `statistics` map rather
+    /// than sitting in it as `{"unpublished": -1}`.
+    ///
+    /// The map is keyed BY submission type, so publishing a withheld entry puts a
+    /// fake type in the key position and −1 in the value — junk on both halves.
+    /// Dropping it silently would be its own lie though (a reader could not tell a
+    /// suppressed statistic from a notice that published none), so the count of
+    /// what is missing is reported beside the map.
+    #[test]
+    fn a_withheld_statistic_leaves_the_map_and_is_counted_instead() {
+        let result = LotResultRow {
+            notice_id: 7,
+            key: "RES-0001".into(),
+            lot_key: Some("LOT-0001".into()),
+            decision: Some("selec-w".into()),
+            reason: None,
+            awarded_cents: None,
+            awarded_currency: None,
+            decided: None,
+            winners: Vec::new(),
+            statistics: vec![
+                ("tenders".into(), 4, None),
+                ("unpublished".into(), -1, Some("withheld".into())),
+            ],
+        };
+        let out = lot_result(&result);
+        assert_eq!(out["statistics"]["tenders"], json!(4), "the real reading survives");
+        assert!(
+            out["statistics"].get("unpublished").is_none(),
+            "the placeholder must not appear as a submission type: {out}",
+        );
+        assert_eq!(out["statistics_withheld"], json!(1), "but the reader is told one is missing");
+
+        // No withholding, no phantom: the count is 0 rather than absent, so a
+        // consumer can read the field unconditionally.
+        let plain = LotResultRow { statistics: vec![("tenders".into(), 4, None)], ..result };
+        assert_eq!(lot_result(&plain)["statistics_withheld"], json!(0));
     }
 
     /// The same rule on the bids satellite, where BT-720 lands (issue 372's

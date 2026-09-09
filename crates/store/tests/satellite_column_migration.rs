@@ -52,11 +52,21 @@ async fn an_existing_database_gains_the_withheld_marker_column() {
         )
         .await
         .unwrap();
+        // The statistics satellite (issue 372 unit 4), same treatment.
+        c.execute(
+            "CREATE TABLE tender_version_result_stats (
+                 tender_id INTEGER NOT NULL, seq INTEGER NOT NULL,
+                 lot_result_id INTEGER NOT NULL, kind TEXT NOT NULL, count INTEGER NOT NULL
+             ) STRICT",
+            (),
+        )
+        .await
+        .unwrap();
     }
 
     let db = Db::open(&path).await.unwrap();
 
-    for table in ["tender_version_amounts", "tender_version_bids"] {
+    for table in ["tender_version_amounts", "tender_version_bids", "tender_version_result_stats"] {
         // Sanity that the precondition held: an old-shaped table really did survive
         // the open. If `CREATE TABLE IF NOT EXISTS` had replaced it, this test would
         // be asserting nothing at all — it would pass on a fresh table every time.

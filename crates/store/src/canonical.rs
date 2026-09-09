@@ -720,6 +720,14 @@ pub(crate) const SCHEMA: &str = "
         lot_result_id INTEGER NOT NULL REFERENCES lot_results(id),
         kind          TEXT NOT NULL,
         count         INTEGER NOT NULL,
+        -- Issue 372 unit 4, the marker's THIRD surface. A buyer may withhold the
+        -- submission count (BT-759) or its type (BT-760) under BT-195, and the SDK
+        -- then writes -1 into the count and the literal `unpublished` into the code
+        -- -- so an unmarked row here asserts that -1 submissions of type
+        -- `unpublished` were received. Denser per tender than the amount case: one
+        -- CAN carries a statistics block per lot result.
+        -- 'withheld' | NULL, on the same per-row declaration rule.
+        quality       TEXT,
         FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
     ) STRICT;
     CREATE INDEX IF NOT EXISTS tender_version_result_stats_version
@@ -1521,7 +1529,10 @@ pub struct LotResultState {
     /// Winning Organization ids, resolved through the notice's own graph.
     pub winners: Vec<i64>,
     /// (received-submission-type code, count), from BT-759/BT-760.
-    pub statistics: Vec<(String, i64)>,
+    /// `(kind, count, quality)` — `quality` is [`QUALITY_WITHHELD`] when the
+    /// notice declared BT-759 or BT-760 suppressed for this statistics block
+    /// (issue 372 unit 4), so neither the kind nor the count is a reading.
+    pub statistics: Vec<(String, i64, Option<String>)>,
 }
 
 /// A Bid (eForms LotTender, TEN-): one offer on one Lot.
@@ -19188,11 +19199,16 @@ impl Db {
                     .result_winners
                     .extend([a, b, Value::Integer(id), Value::Integer(*organization_id)]);
             }
-            for (kind, count) in &result.statistics {
+            for (kind, count, quality) in &result.statistics {
                 let (a, b) = scope();
-                pending
-                    .result_stats
-                    .extend([a, b, Value::Integer(id), t(kind), Value::Integer(*count)]);
+                pending.result_stats.extend([
+                    a,
+                    b,
+                    Value::Integer(id),
+                    t(kind),
+                    Value::Integer(*count),
+                    opt_text(quality.as_deref()),
+                ]);
             }
         }
         for bid in &round.bids {
@@ -20748,7 +20764,7 @@ impl Pending {
         n += flush_rows(conn, "INSERT INTO tender_version_parties(tender_id, seq, lot_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7, &mut self.parties).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_lot_results(tender_id, seq, lot_result_id, lot_id, decision, reason, awarded_cents, awarded_currency, decided_utc, decided_offset, decided_has_time, awarded_eur_cents) VALUES ", 12, &mut self.lot_results).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_result_winners(tender_id, seq, lot_result_id, organization_id) VALUES ", 4, &mut self.result_winners).await?;
-        n += flush_rows(conn, "INSERT INTO tender_version_result_stats(tender_id, seq, lot_result_id, kind, count) VALUES ", 5, &mut self.result_stats).await?;
+        n += flush_rows(conn, "INSERT INTO tender_version_result_stats(tender_id, seq, lot_result_id, kind, count, quality) VALUES ", 6, &mut self.result_stats).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_bids(tender_id, seq, bid_id, lot_id, cents, currency, eur_cents, quality) VALUES ", 8, &mut self.bids).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_bid_parties(tender_id, seq, bid_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7, &mut self.bid_parties).await?;
         n += flush_rows(conn, "INSERT INTO tender_version_contracts(tender_id, seq, contract_id, buyer_contract_id, concluded_utc, concluded_offset, concluded_has_time, decided_utc, decided_offset, decided_has_time, cents, currency, eur_cents) VALUES ", 13, &mut self.contracts).await?;
