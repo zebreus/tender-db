@@ -60,6 +60,29 @@ pub struct GateCensus {
     /// became a condemning rule (issue 365 unit 2); the two classes stay
     /// disjoint so the weekly report's counts remain readable.
     pub short_numeric: bool,
+    /// An identifier scoped to a ROUTING DESTINATION or a REPORTING UNIT
+    /// rather than to a legal person. CONDEMNING (issue 365 unit 3).
+    ///
+    /// A German Leitweg-ID addresses where an electronic invoice is delivered;
+    /// a Berichtseinheit-ID names a statistical reporting bucket. Neither is a
+    /// party, and shared-service arrangements put many bodies behind one of
+    /// each — which is why `300-org-fuzzy-matching-design.md:827` already ruled
+    /// that "GLN/IPA/DIR3/OIN/Leitweg are location/office/routing scoped: never
+    /// merge keys".
+    ///
+    /// Measured corpus-wide on prod 2026-09-09. The aggregate elevation is real
+    /// but unremarkable (28.9 % and 31.6 % of rows carry ≥2 distinct mention
+    /// names against a 14.7 % baseline); the number that settles it is the
+    /// WORST ROW: **43** distinct names on one invoice-routing address and
+    /// **47** on one reporting unit. A routing address cannot be 43
+    /// organizations. 766 + 611 rows, 72,502 mentions.
+    ///
+    /// Prefix families, not exact strings — publishers spell these many ways.
+    /// `LEITWEG` covers LEITWEGID/LEITWEGEID/LEITWEGSID/LEITWEGLD/LEITWEG and
+    /// `BERICHT` covers BERICHTSEINHEITID/BERICHTEINHEITID/BERICHTSID. The
+    /// stragglers `LEITID`/`LEITWERTID` (3 rows) are deliberately NOT matched:
+    /// stretching the prefix to reach them would start guessing.
+    pub routing_scope: bool,
     /// A bare four-digit number — `2022`, `1000`, `8477`. CONDEMNING (issue
     /// 365 unit 2).
     ///
@@ -105,6 +128,10 @@ pub fn census(country: Option<&str>, kind: Option<&str>, value: &str) -> GateCen
         out.short_vat = tail_digits.is_some_and(|n| n < 6);
     }
     out.phone = phone_shaped(value);
+    // Prefix FAMILIES, because publishers spell these several ways (issue 365
+    // unit 3): LEITWEGID/LEITWEGEID/LEITWEGSID/LEITWEGLD/LEITWEG, and
+    // BERICHTSEINHEITID/BERICHTEINHEITID/BERICHTSID.
+    out.routing_scope = ROUTING_SCOPE_PREFIXES.iter().any(|p| value.starts_with(p));
     out.bare_four_digit = !is_vat
         && value.len() == 4
         && value.bytes().all(|b| b.is_ascii_digit())
@@ -255,6 +282,7 @@ pub fn condemns(country: Option<&str>, kind: &str, value: &str) -> bool {
         || c.short_vat
         || c.phone
         || c.bare_four_digit
+        || c.routing_scope
         || (c.checksum == Checksum::Fail && hard_scheme(c.scheme))
 }
 
@@ -283,6 +311,18 @@ pub fn uuid_v4(value: &str) -> bool {
 /// The placeholder lexicon, seeded from the measured top-30 (probe §2) and
 /// the census run-1330 findings: NIMATn (SI e-procurement family — 794
 /// measured strangers on one id), ORGnnn/ORG-0001 (eForms technical ids),
+/// Value prefixes that mark an identifier as addressing a ROUTE or a REPORTING
+/// UNIT rather than a party (issue 365 unit 3, and the routing denial recorded
+/// at `300-org-fuzzy-matching-design.md:827`).
+///
+/// Kept as a short explicit list rather than a general rule: the letter-run
+/// class these live in ALSO contains real registry numbers wearing a label
+/// (`CVRNR…`, `SIRET…`, `HANDELSREGISTERHRB…`, `REGISTRIERUNGSNUMMER…`), which
+/// the 359/363 strip vocabulary should recover rather than have refused here,
+/// and at least one genuine high-volume key (org 28's `0204994DOEVD83`,
+/// 370,791 mentions). A blanket letter-run rule would take all of them.
+const ROUTING_SCOPE_PREFIXES: &[&str] = &["LEITWEG", "BERICHT"];
+
 /// BT501 (the field id itself as a value), 0-padded stubs, 1234-prefix runs.
 pub fn lexicon_hit(value: &str) -> bool {
     let v = value.as_bytes();
@@ -1117,6 +1157,53 @@ mod tests {
         assert!(!census(Some("DE"), Some("vat"), "8477").short_numeric);
         // A phone id is never a checksum candidate.
         assert_eq!(census(Some("DE"), Some("national"), "T03455141536").checksum, Checksum::Unknown);
+    }
+
+    /// Issue 365 unit 3: routing and reporting ids lose merge-key status, while
+    /// the letter-run class they sit inside does NOT.
+    ///
+    /// The composition read this unit owed found the class is a mixture, so
+    /// condemning `letter_run` wholesale would have been wrong in both
+    /// directions. It holds routing references that fuse (a Leitweg-ID with 43
+    /// distinct mention names), real registry numbers merely wearing a label
+    /// (`CVRNR…`, `SIRET…`, `HANDELSREGISTERHRB…` — those want STRIPPING, not
+    /// refusing), and at least one genuine high-volume key: org 28's
+    /// `0204994DOEVD83` carries **370,791** mentions across only 15 names,
+    /// which is a key doing its job.
+    ///
+    /// So the negative cases below are the point of the test, not decoration.
+    #[test]
+    fn routing_ids_are_refused_but_the_letter_run_class_around_them_is_not() {
+        for v in [
+            "LEITWEGID08A986640",
+            "LEITWEGID09162000ZRE100000009",
+            "LEITWEGEID140201004SK0113",
+            "LEITWEGSID0516200080083100142",
+            "LEITWEGLD08A986640",
+            "BERICHTSEINHEITID00002636",
+            "BERICHTEINHEITID00002636",
+            "BERICHTSID00007427",
+        ] {
+            assert!(condemns(Some("DE"), "national", v), "{v} addresses a route, not a party");
+            assert!(census(Some("DE"), Some("national"), v).routing_scope, "{v} classified");
+        }
+
+        // Real registry numbers wearing a label prefix. These are the 359/363
+        // strip vocabulary's business — recovering the id underneath — and must
+        // NOT be swept away here, even though every one of them has a ≥4 letter
+        // run and would fall to a blanket letter-run rule.
+        // NB: realistic digit runs on purpose. An ascending run like
+        // `CVRNR12345678` is condemned by `sequence` whatever this rule does, so
+        // it would assert nothing — a trap that has now caught two of these
+        // tests during authoring.
+        for v in ["CVRNR29189498", "SIRET78467169500087", "HANDELSREGISTERHRB93017"] {
+            assert!(!condemns(Some("DK"), "national", v), "{v} is a real id under a label");
+        }
+        // And the high-volume genuine key, which a blanket rule would have cost
+        // 370,791 mentions.
+        assert!(!condemns(Some("DE"), "national", "0204994DOEVD83"));
+        // The class itself stays census-only: computed, reported, not condemning.
+        assert!(census(Some("DE"), Some("national"), "0204994DOEVD83").letter_run);
     }
 
     /// Issue 365 unit 1: the phone class now LOSES merge-key status, not just a

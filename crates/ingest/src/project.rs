@@ -7146,7 +7146,13 @@ mod tests {
             // values in the first draft of this test did exactly that.
             ("CHARITYNO298028", "CH"),          // a British charity
             ("CHARITYNUMBER1040303", "CH"),     // Citizens Advice Wandsworth
-            ("BERICHTSEINHEITID00002636", "BE"), // traffiQ, Frankfurt
+            // `BERICHTSEINHEITID00002636` (traffiQ, Frankfurt) used to sit here as
+            // a third "BE" specimen. Issue 365 unit 3 measured the Berichtseinheit
+            // class and refused it as a merge key outright — one reporting unit
+            // carried 47 distinct mention names — so it is now gated away before
+            // country election ever runs, which is a different question from the
+            // one this test asks. `BERLINCHARLOTTENBURG93627` and the `BE2A…` GUID
+            // below still cover the BE prefix twice over.
             ("BERLINCHARLOTTENBURG93627", "BE"), // the Amtsgericht
             ("FINANZAMTBIELEFELD34959", "FI"),  // a German tax office
             ("FIRMENBUCHNUMMER441612F", "FI"),  // an Austrian Firmenbuch number
