@@ -5390,9 +5390,19 @@ fn normalise_identifier_with(raw: &str, country: Option<&str>, folds: bool) -> O
             // label IS the scheme's name — strips to a value the national arm
             // classifies by shape, and a leftover label fragment never has that
             // shape (`NRHRB64128`, `ARNHEM09155985` both fail it).
+            // Issue 374 widens "recognisable" by one more shape, the same way
+            // 359 did for the CIF: a German register division followed by
+            // digits. `HANDELSREGISTERHRB93017` strips to `HRB93017`, which is
+            // neither pure digits nor a CIF, so the guard used to throw the
+            // strip away and leave the labelled form standing as its own merge
+            // key — the same company published bare as `HRB93017` got a second
+            // org row. The ANCHORING is what keeps this safe: the two leftover
+            // fragments the guard exists for, `NRHRB64128` and
+            // `ARNHEM09155985`, do not START with a division and still fail.
             let recognisable = id.kind != "national"
                 || rest.bytes().all(|b| b.is_ascii_digit())
-                || es_cif_or_nif_shaped(rest);
+                || es_cif_or_nif_shaped(rest)
+                || de_register_division_shaped(rest);
             if recognisable {
                 return Some(id);
             }
@@ -5483,6 +5493,22 @@ fn normalise_identifier_with(raw: &str, country: Option<&str>, folds: bool) -> O
 /// NIF/DNI (`12345678Z`) or NIE (`X1234567L`) shape — the one national form a
 /// label strip may leave behind that is neither digits nor a VAT id (issue
 /// 359). Shape only; the letter algebra is `idgate`'s business.
+/// A German commercial-register value: the register division then digits and
+/// nothing else — `HRB93017`, `HRA2132`, `VR326`, `PR258`, `GNR22`.
+///
+/// The five divisions are the ones the corpus actually carries in bare form
+/// (HRB 11,439 rows, HRA 2,132, VR 326, PR 258, GnR 22 — prod 2026-09-09), so
+/// a labelled row stripping to one of them rejoins real company rows rather
+/// than a shape someone guessed at. Anchored and digits-only on purpose: a
+/// court suffix (`HRB93017B`) will not strip, which is the conservative
+/// direction — the row keeps what the publisher wrote.
+fn de_register_division_shaped(rest: &str) -> bool {
+    ["HRB", "HRA", "GNR", "VR", "PR"].iter().any(|div| {
+        rest.strip_prefix(div)
+            .is_some_and(|n| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()))
+    })
+}
+
 fn es_cif_or_nif_shaped(value: &str) -> bool {
     let b = value.as_bytes();
     if b.len() != 9 {
@@ -6988,7 +7014,9 @@ mod tests {
         // classified happily as `national`.
         for raw in [
             "UMSATZSTEUERIDENTIFIKATIONSNRENTEGAPLUSGMBHDE813810149",
-            "HANDELSREGISTERNRHRB64128",
+            // `HANDELSREGISTERNRHRB64128` used to be here. It is no longer a
+            // fragment case and now strips correctly — see
+            // `the_handelsregister_strip_reunites_the_labelled_and_bare_forms`.
             "HANDELSREGISTERARNHEM09155985",
             "HANDELSREGISTERAMTSGERICHTESSENHRB11082",
             "STNRDE811183963REGNRAMTSGERICHTKLNHRB2130",
@@ -7108,24 +7136,106 @@ mod tests {
     /// The `HANDELSREGISTER` entry is currently INERT, and that is worth pinning
     /// so nobody "fixes" it into working.
     ///
-    /// `HANDELSREGISTERHRB12345` strips to `HRB12345` — correct, `HRB` is the
-    /// register division and must survive — but the v2 gate condemns `HRB…`
-    /// values on their own account, so both forms return `None` and the 96
-    /// affected rows are unchanged either way. The strip is right and the class
-    /// is simply out of reach until the gate's view of `HRB` changes.
+    /// The Handelsregister strip, and the fixture that made it look inert
+    /// (issue 374, correcting this test's own earlier conclusion).
+    ///
+    /// This test used to assert that both `HANDELSREGISTERHRB12345` and bare
+    /// `HRB12345` return `None`, and concluded from that pair that "the v2 gate
+    /// condemns `HRB…` values on their own account… the class is simply out of
+    /// reach". That conclusion was wrong, and the reason is the fixture: the
+    /// digits `12345` are an ascending run, so `suspicious_digit_run` condemns
+    /// BOTH forms whatever the strip does. The test was measuring the sequence
+    /// rule and reading the answer as a fact about `HRB`.
+    ///
+    /// A realistic register number tells the real story: `HRB93017` is not
+    /// condemned at all, and before issue 374 `HANDELSREGISTERHRB93017`
+    /// normalised to ITSELF — the strip was computed, then thrown away by the
+    /// `recognisable` guard, because `HRB93017` is neither pure digits nor a
+    /// Spanish CIF. So the two forms were separate live merge keys and the same
+    /// company published both ways got two org rows.
     #[test]
-    fn the_handelsregister_strip_is_correct_and_currently_inert() {
+    fn the_handelsregister_strip_reunites_the_labelled_and_bare_forms() {
         assert_eq!(
-            crate::countries::label_prefix_stripped("HANDELSREGISTERHRB12345"),
-            Some("HRB12345"),
+            crate::countries::label_prefix_stripped("HANDELSREGISTERHRB93017"),
+            Some("HRB93017"),
             "the field name comes off and the register division stays"
         );
-        assert_eq!(normalise_identifier("HANDELSREGISTERHRB12345", Some("DE")), None);
+        let labelled = normalise_identifier("HANDELSREGISTERHRB93017", Some("DE"));
+        let bare = normalise_identifier("HRB93017", Some("DE"));
         assert_eq!(
-            normalise_identifier("HRB12345", Some("DE")),
-            None,
-            "…because the bare form is refused too — the strip changes nothing here"
+            labelled.as_ref().map(|i| i.value.as_str()),
+            Some("HRB93017"),
+            "the labelled form must resolve to the register number, not to itself",
         );
+        assert_eq!(labelled, bare, "both spellings are one identifier");
+
+        // Every German register division that the corpus actually carries in
+        // bare form (HRB 11,439 rows, HRA 2,132, VR 326, PR 258, GnR 22 on prod
+        // 2026-09-09) — so a labelled row stripping to one of these is a real
+        // reunion, not a guess.
+        for div in ["HRB", "HRA", "GNR", "VR", "PR"] {
+            let raw = format!("HANDELSREGISTER{div}93017");
+            assert_eq!(
+                normalise_identifier(&raw, Some("DE")).map(|i| i.value),
+                Some(format!("{div}93017")),
+                "{raw} strips to its register division",
+            );
+        }
+
+        // `HANDELSREGISTERNRHRB64128` reads "Handelsregister-Nr. HRB 64128", so
+        // `HRB64128` is the right answer — and this case moved HERE from
+        // `a_leftover_label_fragment_never_becomes_an_identifier`, which is
+        // worth explaining rather than quietly re-pointing.
+        //
+        // That test's comment cited this value as producing the fragment
+        // `NRHRB64128`, which was true when the vocabulary's longest match was
+        // `HANDELSREGISTER` (15). The list has since gained
+        // `HANDELSREGISTERNR` (17), so longest-match consumes the label's `NR`
+        // too and the remainder has been the clean register value for a while —
+        // the row only kept its labelled form because the `recognisable` guard
+        // was still rejecting `HRB…`. Issue 374 removes that last obstacle, so
+        // the old assertion was protecting a fragment the code no longer makes.
+        assert_eq!(
+            normalise_identifier("HANDELSREGISTERNRHRB64128", Some("DE")).map(|i| i.value),
+            Some("HRB64128".to_owned()),
+        );
+
+        // The guard's original job still holds: a LEFTOVER label fragment must
+        // not pass. Neither of these starts with an anchored register division,
+        // and the second is a real prod value from the issue-328 dry plan.
+        for raw in ["NRHRB64128", "ARNHEM09155985"] {
+            let id = normalise_identifier(raw, Some("DE")).expect("kept as written");
+            assert_eq!(id.value, raw, "{raw} is leftover label text, not an id");
+        }
+
+        // And the ascending-digit case that misled the old test still refuses,
+        // for the reason it always did — the sequence rule, not the strip.
+        assert_eq!(normalise_identifier("HANDELSREGISTERHRB12345", Some("DE")), None);
+        assert_eq!(normalise_identifier("HRB12345", Some("DE")), None);
+    }
+
+    /// Issue 374 unit 1: three label prefixes whose stripped remainder is pure
+    /// digits, so the existing `recognisable` guard already admits them — they
+    /// were simply missing from the vocabulary. 165 `CVRNR` rows, 540 `SIRET`,
+    /// 31 `REGISTRIERUNGSNUMMER` on prod 2026-09-09.
+    ///
+    /// Digits chosen to be realistic: an ascending run is condemned by the
+    /// `sequence` rule regardless of the strip, so it would assert nothing.
+    #[test]
+    fn a_registry_number_under_its_registers_name_resolves_to_the_bare_number() {
+        for (raw, bare, country) in [
+            ("CVRNR29189498", "29189498", "DK"),
+            ("SIRET78467169500087", "78467169500087", "FR"),
+            ("REGISTRIERUNGSNUMMER84067219", "84067219", "DE"),
+        ] {
+            let labelled = normalise_identifier(raw, Some(country));
+            assert_eq!(
+                labelled.as_ref().map(|i| i.value.as_str()),
+                Some(bare),
+                "{raw} must resolve to the number the publisher meant",
+            );
+            assert_eq!(labelled, normalise_identifier(bare, Some(country)), "{raw} == {bare}");
+        }
     }
 
     /// Issue 325: a word whose first two letters spell a VAT country must not

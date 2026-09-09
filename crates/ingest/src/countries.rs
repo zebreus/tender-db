@@ -530,6 +530,8 @@ const LABEL_PREFIXES: &[&str] = &[
     "USTIDENTIFIKATIONSNUMMER",
     "UMSATZSTEUERIDENTNUMMER",
     "HANDELSREGISTERNUMMER",
+    // Issue 374: the German "registration number" label, 31 prod rows.
+    "REGISTRIERUNGSNUMMER",
     "UMSATZSTEUERIDENTNR",
     "UMSATZSTEUERGESETZ",
     "HANDELSREGISTERNR",
@@ -554,6 +556,12 @@ const LABEL_PREFIXES: &[&str] = &[
     "USTID",
     "VATID",
     "REGON",
+    // Issue 374: the Danish CVR and French SIRET registers, published under
+    // their own names (165 and 540 prod rows). Both strip to pure digits, so
+    // the existing `recognisable` guard already admits them — they were only
+    // ever missing from this list.
+    "CVRNR",
+    "SIRET",
     "IDNR",
     "STNR",
     "PIVA",
