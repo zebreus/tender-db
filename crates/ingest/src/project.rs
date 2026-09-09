@@ -3235,9 +3235,24 @@ impl NoticeState {
                 // stored AND before it scopes a national id, so both agree and a
                 // country filter no longer splits `DEU`/`DE`/`UK` apart.
                 m.country = m.country.map(|c| canonical_country(&c));
+                // Issue 365 unit 4: the publisher's DECLARED scheme decides
+                // admission before the value's shape gets a say. The scheme was
+                // already captured onto the mention and then never consulted, so
+                // "this scheme is never a register" was inexpressible — and no
+                // value-shape rule can substitute, because the values under such
+                // a scheme are arbitrary.
+                //
+                // Deliberately gated HERE rather than inside
+                // `normalise_identifier`. The issue proposed threading the scheme
+                // into the normaliser, but that is a 78-call-site signature change
+                // for a question the normaliser should not be asked: it converts a
+                // STRING to an identifier, while this is a decision about whether
+                // a MENTION's identifier may key a merge. The scheme is already in
+                // scope on `m` at exactly this point.
                 m.identifier = m
                     .raw_identifier
                     .as_deref()
+                    .filter(|_| !scheme_never_keys(m.scheme.as_deref()))
                     .and_then(|raw| normalise_identifier(raw, m.country.as_deref()));
                 m
             })
@@ -5493,6 +5508,34 @@ fn normalise_identifier_with(raw: &str, country: Option<&str>, folds: bool) -> O
 /// NIF/DNI (`12345678Z`) or NIE (`X1234567L`) shape — the one national form a
 /// label strip may leave behind that is neither digits nor a VAT id (issue
 /// 359). Shape only; the letter algebra is `idgate`'s business.
+/// Schemes that are never a register, so nothing published under them may
+/// become a merge key (issue 365 unit 4).
+///
+/// `OTROS` is Spanish for "others" — a dropdown default. Whatever a publisher
+/// then types in the identifier box collides with everyone else who picked the
+/// same default, and the corpus shows exactly that: of 1,654 canonical orgs
+/// carrying an `OTROS` mention on prod 2026-09-09, **610 (36.9 %)** hold ≥2
+/// distinct mention names against a 14.7 % baseline, with **231** on the worst
+/// single row.
+///
+/// Case-insensitive because the value is stored as published.
+///
+/// DELIBERATELY SHORT. Two larger candidates are NOT here because they are not
+/// measured: `ID_PLATAFORMA` (41,579 mentions) and the raw `eu`/`EU` scheme
+/// (252k) both timed out the bounded read three times, and a scheme carrying
+/// that much traffic must not be refused on a guess — issue 312's hex class is
+/// the standing reminder of what condemning an unmeasured class costs. Sizing
+/// them belongs in the weekly report, where a whole-corpus pass is affordable.
+///
+/// Two candidates were measured and DECLINED, which is why this list is not
+/// simply "every scheme that sounds administrative":
+/// `ID_UTE_TEMP_PLATAFORMA` — a *temporary* joint-venture id, so obviously
+/// unstable — runs 1.2 % multi-name, well BELOW the baseline, and
+/// `KODNUTSPL` (a NUTS region code, issue 374) sits at baseline over 12 rows.
+fn scheme_never_keys(scheme: Option<&str>) -> bool {
+    scheme.is_some_and(|s| s.eq_ignore_ascii_case("OTROS"))
+}
+
 /// A German commercial-register value: the register division then digits and
 /// nothing else — `HRB93017`, `HRA2132`, `VR326`, `PR258`, `GNR22`.
 ///
