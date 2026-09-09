@@ -956,10 +956,30 @@ pub fn withheld_markers_sql() -> String {
 /// up first. Ids are dense enough at the head that this is ~100k notices.
 pub const UNMAPPED_FIELD_WINDOW_IDS: i64 = 1_000_000;
 
-/// How many dropped field ids the report lists. The SQL already orders by hits,
-/// so this keeps the head — the spellings worth adding to the vocabulary first —
-/// without letting one stale era's long tail crowd the section.
-pub const UNMAPPED_FIELD_LISTING_CAP: usize = 60;
+/// How many unmodelled field ids the report lists.
+///
+/// Deliberately SMALL, and the reason is a measurement that arrived after this
+/// section was first built. Run against prod 2026-09-09 over the window below,
+/// **109 of 164 distinct published field ids have no destination, and they carry
+/// 61.7 % of all published field rows** — because the canonical model is a
+/// narrow subset by design. The head of that list is postal addresses
+/// (`BT-513/512/510(a)-Organization-Company`), exclusion grounds (`BT-67(a/b)`),
+/// award-criterion detail (`BT-539/540/5421-Lot`) and main nature (`BT-23-Lot`):
+/// all correctly out of scope, none of them a defect.
+///
+/// So this is NOT issue 368's vocabulary diagnostic, and listing 60 of them
+/// would have put a weekly section in front of a reader where 9 in 10 entries
+/// are working-as-intended — the shape a diagnostic gets ignored for. What it
+/// IS: a ranked "largest thing the model does not hold", useful for scope
+/// decisions. Small cap, honest name.
+///
+/// 368's actual failure — a MODELLED concept missing because the closed
+/// vocabulary did not know this publisher's spelling — needs the completeness
+/// section as its entry point (a profile with a title gap), then this list
+/// restricted to that profile. Filed as the follow-up rather than guessed at
+/// here, because `any_channel_reads` is profile-BLIND: a field is either always
+/// read or never, so no per-profile asymmetry is detectable with it.
+pub const UNMAPPED_FIELD_LISTING_CAP: usize = 15;
 
 /// Issue 368 unit 4b: which published field ids does the projection DROP, on how
 /// many notices, under which profile.
@@ -1518,8 +1538,10 @@ pub struct Report {
     pub sentinel_dates: Vec<SentinelRow>,
     /// The `-1.00` withheld-marker rows per field, with their declared share (issue 372).
     pub withheld_markers: Vec<WithheldMarkerRow>,
-    /// Issue 368 unit 4b, ranked by hits and capped — the vocabulary the
-    /// projection is dropping right now.
+    /// Issue 368 unit 4b, ranked by hits and capped: the biggest field volumes
+    /// the canonical model does not hold. Mostly out of scope BY DESIGN — see
+    /// [`UNMAPPED_FIELD_LISTING_CAP`] for the 61.7 % measurement that says so,
+    /// and why this is not yet the vocabulary diagnostic 368 asked for.
     pub unmapped_fields: Vec<UnmappedFieldRow>,
     /// The longest version chain in the corpus (`MAX(tenders.current_seq)`) —
     /// the fold-cost tripwire (issue 92). 0 when unmeasured or the layer is

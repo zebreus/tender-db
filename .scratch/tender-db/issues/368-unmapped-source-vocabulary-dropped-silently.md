@@ -94,7 +94,55 @@ because `role_name` accepts any `TED-` id: a channel-blind predicate reports the
 read, which is the one era it has to be honest about. DE-1.x alias sources resolve to their eForms
 target first, or the entire eForms-DE vocabulary reads as dropped.
 
-### 4b — what the probe still needs to decide
+### 4b BUILT, then CORRECTED by its own first measurement (2026-09-09, `894f623`)
+
+The cost question 4a left open is **answered**: over the newest ~105k notice ids the eight parsed
+value tables hold **~1.0M rows** together (`notice_texts` 257,185; `notice_codes` 287,168;
+`notice_ids` 229,861; `notice_classifications` 65,067; `notice_integers` 62,226;
+`notice_numbers` 41,551; `notice_dates` 36,856; `notice_amounts` 23,023). Extrapolated
+whole-corpus that is ~300M rows across eight `GROUP BY`s — a long scan AND the issue-278 turso
+hash-state shape `longest_chain` is kept group-by-free to avoid. So it is **windowed in the SQL**
+(the `fresh_holds_sql` pattern, 1,000,000 notice ids off `MAX(id)`), which also asks the more
+useful question since a closed vocabulary goes stale as new spellings arrive. The eight-arm union
+was then run against prod through the capped public endpoint and **returned 400 rows inside 10 s**
+— cheaper than the estimate.
+
+**And then the first real output showed the section does not answer this issue's question.**
+Applying the projection's own `any_channel_reads` to those 400 rows:
+
+| distinct published field ids in the window | 164 |
+| of them, no destination at all | **109** |
+| share of all published field rows they carry | **61.7 %** |
+
+The head of that list is `BT-67(a)/(b)-Procedure` (exclusion grounds),
+`BT-513/512/510(a)/507/506/503-Organization-Company` (postal address parts), `BT-539/540/5421-Lot`
+(award-criterion detail), `BT-23-Lot` (main nature), `OPT-200-Organization-Company`. **Every one
+correctly out of scope** — the canonical model is a narrow subset on purpose. None is a defect.
+
+So a section listing 60 of these would have put a weekly page in front of a reader where nine in
+ten entries are working as intended, which is exactly how a diagnostic earns being ignored. The
+cap is now **15** and the section is named for what it actually is: the largest field volumes the
+model does not hold, useful for scope decisions.
+
+**What 368 actually needs, and why it is a separate unit.** This issue's failures were a MODELLED
+concept going missing because the closed vocabulary did not know a publisher's spelling — 29,455
+titleless tenders, r208's 100 %-null lot titles. The entry point for that is the completeness
+section (a profile with a title gap), and *then* this list restricted to that profile. It cannot
+be inferred from what 4b built, because `any_channel_reads` is profile-BLIND: a field is either
+always read or never, so no per-profile asymmetry is detectable through it. Filed as unit 4c below
+rather than guessed at.
+
+### Unit 4c (new) — the targeted vocabulary diagnostic 4b turned out not to be
+
+Join the two signals that already exist: for each profile whose completeness on a modelled field
+is materially below its peers, list the field ids that profile publishes which nothing reads. That
+names the missing SPELLING, which is the actionable output — "r208 publishes X where the map
+expects Y" — rather than "the model does not hold postal addresses".
+
+Needs a profile-aware destination test, since `any_channel_reads` cannot distinguish; the DE-1.x
+alias resolution in `has_destination` is the existing precedent for profile-dependent mapping.
+
+### 4b — what the probe originally needed to decide (kept for the record)
 
 The diagnostic itself is not built. What the reading turned up about its shape, so the next firing does
 not rediscover it:
