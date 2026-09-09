@@ -893,6 +893,7 @@ pub fn withheld_markers_sql() -> String {
                   SELECT 1 FROM notice_sections s \
                    WHERE s.kind = 'FieldsPrivacy' AND s.notice_id = v.caused_by_notice_id \
                 ) THEN 1 ELSE 0 END) AS in_withholding_notice, \
+            SUM(CASE WHEN a.quality IS NOT NULL THEN 1 ELSE 0 END) AS marked, \
             COUNT(DISTINCT a.tender_id) AS tenders \
        FROM tender_version_amounts a \
        JOIN tender_versions v ON v.tender_id = a.tender_id AND v.seq = a.seq \
@@ -905,6 +906,7 @@ pub fn withheld_markers_sql() -> String {
                   SELECT 1 FROM notice_sections s \
                    WHERE s.kind = 'FieldsPrivacy' AND s.notice_id = v.caused_by_notice_id \
                 ) THEN 1 ELSE 0 END) AS in_withholding_notice, \
+            SUM(CASE WHEN b.quality IS NOT NULL THEN 1 ELSE 0 END) AS marked, \
             COUNT(DISTINCT b.tender_id) AS tenders \
        FROM tender_version_bids b \
        JOIN tender_versions v ON v.tender_id = b.tender_id AND v.seq = b.seq \
@@ -1357,6 +1359,15 @@ pub struct WithheldMarkerRow {
     /// Rows whose notice declared SOME `FieldsPrivacy` withholding — not necessarily this
     /// field's. See [`withheld_markers_sql`] for why the exact test lives in unit 2 instead.
     pub in_withholding_notice: u64,
+    /// Rows the projection actually marked `withheld` (issue 372 unit 2). The
+    /// per-row test is exact where `in_withholding_notice` is notice-wide, so the
+    /// gap between the two is what the section-anchored rule does NOT reach —
+    /// a publisher who hoisted the `FieldsPrivacy` block away from the value it
+    /// suppresses. That was a stated risk of the fix; this makes it a number.
+    ///
+    /// Reads low against the standing corpus until rows are re-folded, so read it
+    /// on the recent-notice rows, not as a corpus share.
+    pub marked: u64,
     pub tenders: u64,
 }
 
@@ -1702,7 +1713,8 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
                 field: as_str(r.first()),
                 hits: as_u64(r.get(1)),
                 in_withholding_notice: as_u64(r.get(2)),
-                tenders: as_u64(r.get(3)),
+                marked: as_u64(r.get(3)),
+                tenders: as_u64(r.get(4)),
             })
             .collect(),
         unmeasured: raw.unmeasured.clone(),
@@ -2150,17 +2162,18 @@ pub fn render_text(report: &Report) -> String {
     } else {
         let _ = writeln!(
             out,
-            "  {:<34}{:>12}{:>16}{:>10}{:>12}",
-            "field · source", "rows", "in-wh-notice", "residue", "tenders"
+            "  {:<34}{:>12}{:>16}{:>10}{:>10}{:>12}",
+            "field · source", "rows", "in-wh-notice", "residue", "marked", "tenders"
         );
         for r in &report.withheld_markers {
             let _ = writeln!(
                 out,
-                "  {:<34}{:>12}{:>16}{:>10}{:>12}",
+                "  {:<34}{:>12}{:>16}{:>10}{:>10}{:>12}",
                 r.field,
                 group(r.hits),
                 group(r.in_withholding_notice),
                 group(r.hits.saturating_sub(r.in_withholding_notice)),
+                group(r.marked),
                 group(r.tenders),
             );
         }
@@ -2173,7 +2186,11 @@ pub fn render_text(report: &Report) -> String {
              while an undeclared -1 is a guess about intent and may deserve quarantine instead. \
              `in-wh-notice` counts notices withholding SOMETHING, not necessarily this field: the \
              exact test needs the source→canonical mapping, which lives in Rust, so it belongs to \
-             372 unit 2 rather than to this SQL."
+             372 unit 2 rather than to this SQL. `marked` is unit 2's per-row verdict, which IS \
+             exact — so `in-wh-notice` minus `marked` is what the section-anchored rule does not \
+             reach, a block the publisher hoisted away from the value it suppresses. Read it on \
+             recently folded rows: standing rows carry no marker until they are re-folded, so a \
+             low corpus-wide `marked` says nothing about the rule."
         );
     }
     out
@@ -2556,6 +2573,9 @@ pub fn render_json(report: &Report) -> String {
                 // Precomputed: the residue is the number consumers want, and deriving it in
                 // every consumer is how two of them come to disagree about it.
                 "residue": r.hits.saturating_sub(r.in_withholding_notice),
+                // Unit 2's exact per-row verdict, beside the notice-wide count it
+                // refines. Their difference is the anchoring gap.
+                "marked": r.marked,
                 "tenders": r.tenders,
             }))
             .collect::<Vec<Value>>(),
@@ -2903,6 +2923,47 @@ mod tests {
         put(&mut ran, "sentinel_amounts", Some(full));
         let text = render_text(&assemble("x", &Raw::from_labelled(ran).expect("raw")));
         assert!(text.contains("LISTING FULL"), "a truncated tail says so:\n{text}");
+    }
+
+    /// Section 11 carries FOUR readings of one population and they mean different
+    /// things: `rows` is every `-1.00`, `in-wh-notice` is notice-wide ("this notice
+    /// withheld something"), `marked` is unit 2's exact per-row verdict, and
+    /// `residue` is the undeclared remainder. The gap that matters is
+    /// `in-wh-notice` minus `marked` — a withholding block the publisher hoisted
+    /// away from the value it suppresses, which the section-anchored rule cannot
+    /// reach. This pins that the two counts stay SEPARATE columns, because
+    /// collapsing them would hide exactly the risk the marker was shipped with.
+    #[test]
+    fn section_11_keeps_the_notice_wide_count_apart_from_the_per_row_verdict() {
+        let mut ran = sentinel_scaffold();
+        put(
+            &mut ran,
+            "withheld_markers",
+            Some(vec![
+                // 100 rows, 90 in a withholding notice, only 80 marked: 10 hoisted
+                // blocks the rule did not reach, and 10 undeclared as residue.
+                vec![json!("result_value · ted"), json!(100), json!(90), json!(80), json!(97)],
+            ]),
+        );
+        let report = assemble("x", &Raw::from_labelled(ran).expect("raw"));
+        let text = render_text(&report);
+        assert!(text.contains("== 11. Withheld-marker amounts"), "{text}");
+        assert!(text.contains("marked"), "the per-row verdict has its own column:\n{text}");
+
+        let row = &report.withheld_markers[0];
+        assert_eq!(row.hits, 100);
+        assert_eq!(row.in_withholding_notice, 90);
+        assert_eq!(row.marked, 80, "column 4 is the marker, not the tender count");
+        assert_eq!(row.tenders, 97);
+
+        let json_text = render_json(&report);
+        let v: Value = serde_json::from_str(&json_text).expect("valid json");
+        let out = &v["withheld_markers"][0];
+        assert_eq!(out["rows"], json!(100));
+        assert_eq!(out["in_withholding_notice"], json!(90));
+        assert_eq!(out["marked"], json!(80));
+        assert_eq!(out["residue"], json!(10), "residue is rows - in_withholding_notice");
+        assert_eq!(out["tenders"], json!(97));
     }
 
     /// Issue 230's distinction, at this section: "the query did not run" and "nothing repeats"
