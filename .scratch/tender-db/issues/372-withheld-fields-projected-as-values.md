@@ -1,8 +1,10 @@
 # 372 — a WITHHELD eForms field is projected as if it were data: `-1.00` becomes an amount and `unpublished` becomes a currency
 
-Status: ready-for-agent — **UNIT 2 BUILT AND LANDED 2026-09-09** across four commits
+Status: ready-for-agent — **UNIT 2 BUILT, DEPLOYED AND VERIFIED ON PROD 2026-09-09**
 (`4633443` amounts, `796473b` bids, `436f73e` read layer + `/v1`, `d7bb7db` the report's
-`marked` column). Not yet deployed. See "Unit 2 BUILT". Remaining: unit 3 (`currency =
+`marked` column, **`ce6d2c2` the migration without which the whole thing was INERT**).
+Live on `ce6d2c2`; see "Unit 2 VERIFIED ON PROD" for the numbers, including the negative
+control. See "Unit 2 BUILT". Remaining: unit 3 (`currency =
 'unpublished'`, and the column is `NOT NULL` — see the constraint finding), unit 4 (the other
 satellites, whose channel map the fixture probe now gives), and the standing-row re-fold, still
 the open owner decision shared with 366. Earlier: **unit 1 CORPUS-WIDE 2026-09-08 (job 818): 19,236 `-1.00` rows, residue
@@ -310,6 +312,82 @@ row (which unit 2 rejected for the amount itself), or relaxing the column. `/v1`
 *publishes* the currency of a withheld row, since the whole value object is now `null`, so the
 user-visible half of unit 3 is already addressed for declared rows; the 141 stored rows are what
 remains, and the `NOT NULL` is the thing that shapes the choice.
+
+
+## The fix shipped INERT, and the gate could not have told me (2026-09-09)
+
+Between `d7bb7db` and `ce6d2c2` this was three commits of nothing. `CREATE TABLE IF NOT
+EXISTS` never evolves an existing table, so `quality` reached only databases created after
+it — and **every test in the workspace builds its database fresh**, where the CREATE TABLE
+carries the column. So 113 suites went green while the box answered:
+
+```
+{"error":{"message":"Parse error: no such column: quality","status":400}}
+```
+
+Worse than inert: `436f73e` deployed read paths that SELECT `quality`, so `/v1` tender detail
+and the bids listing were erroring against the live database until `ce6d2c2` landed.
+
+The mechanism was already there — `MIGRATIONS` in `store/src/lib.rs`, with a doc comment
+stating this exact hazard, and `tax_basis` on this very table as precedent. I did not use it.
+
+**Found by probing prod, not by the suite.** The probe was only being run to answer a
+different question (does the marker fire on real notices?); the first query returned the
+error above. Had I trusted the green gate and moved on, this would have sat broken.
+
+Guarded now by `store/tests/satellite_column_migration.rs`, which does the one thing the rest
+of the suite structurally cannot: pre-creates both satellites in their PRE-column shape
+through a raw connection — the prod shape — then opens the database the way the binary does,
+leaving the ALTER as the only route. **Verified against its own negative**: with the two
+migrations removed it fails at the `SELECT quality` probe (exit 101). A test that passed
+either way would have been worth nothing here.
+
+**Audited the rest rather than assuming it was one slip.** All 17 canonical tables probed on
+prod with their full declared column lists (`SELECT <every column> FROM <table> LIMIT 0`);
+`quality` on these two satellites was the only drift. An isolated miss, not a pattern.
+
+## Unit 2 VERIFIED ON PROD (2026-09-09, rev `ce6d2c2`)
+
+Re-folded the four notices unit 1's census found declaring `BT-195(BT-161)` (jobs 825/826,
+both ok, 4 tenders), then read the satellites back.
+
+**Amounts — 4 of 4 marked.** Before the re-fold all four were `null` (standing rows, correct);
+after, all four read `withheld`:
+
+| tender | seq | field | cents | quality |
+| --- | --- | --- | --- | --- |
+| 34 | 4 | `result_value` | −100 | **withheld** |
+| 189 | 4 | `result_value` | −100 | **withheld** |
+| 254 | 4 | `result_value` | −100 | **withheld** |
+| 288 | 2 | `result_value` | −100 | **withheld** |
+
+**Bids — the count matched the prediction exactly.** Notice 25390373 declared
+`BT-195(BT-720)-Tender` **three times** (`#0/#1/#2`, one per winning tender), and tender 34
+seq 4 came back with **exactly three** marked bids — 151, 152, 153 — while bids 148/149/150 in
+the same version, which carry no BT-720, stayed `null`. Tender 288 has one declaration and one
+marked bid (636). 14 unmarked bid rows alongside the 4 marked ones.
+
+That is the per-bid granularity the scope correction argued for, confirmed on real data rather
+than on a fixture: an amounts-only fix would have left all four of these asserting a −0.01 offer.
+
+### The negative control, which is the one that mattered
+
+The whole design rests on keying the marker to the DECLARATION and not to the number. So the
+test that could have falsified it: re-fold unit 5's undeclared class — notices 24158422 and
+25734164, established there as publishing −1 with **zero** `FieldsPrivacy` blocks — and require
+the marker to stay absent (jobs 827/828, both ok).
+
+**16 rows, every one `cents = -100`, every one `quality = null`.** Same value as the four marked
+rows above, no declaration, not marked. If the rule had quietly degenerated into "−100 means
+withheld" — the tempting shortcut this issue exists to warn against — these 16 rows are where it
+would have shown, and they are clean.
+
+### No anchoring loss in this sample
+
+The section-anchored rule's known blind spot (a `FieldsPrivacy` block hoisted away from the
+value it suppresses, issue 195) cost nothing here: 4 of 4 amounts and 4 of 4 predicted bids were
+reached. One sample of four TED notices is not a corpus rate — section 11's `marked` column is
+what will give that on the next weekly run.
 
 ## Unit 5 (new) — the undeclared residue, 116 rows
 
