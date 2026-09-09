@@ -7,7 +7,10 @@ for these two units is met. See "Units 1+2 DONE" and "The dissolve, verified". U
 and 5 (the 1.4M nameless class, an owner decision) remain. **UNIT 3 ANSWERED AND SHIPPED
 2026-09-09 (`330c7ca`)** — the answer was "do not wire the class"; see "Unit 3 ANSWERED".
 **UNIT 4's SCHEME GATE LANDED 2026-09-09** with a narrower design than this issue proposed and
-one measured entry; see "Unit 4 — the scheme gate".
+one measured entry; see "Unit 4 — the scheme gate". **UNIT 5 DECIDED 2026-09-09 (`1b9efc2`)** —
+keep minting, start observing; see "Unit 5 DECIDED". What remains of this issue is unit 4's two
+loose ends: the ISO 6523 numeric schemes (GLN etc.) and standing-row catch-up for scheme-denied
+rows.
 Kind: defect (organization layer — identifier admission); units 1-3 are prevention + the
 328/345 repair path, unit 5 is a decision
 Relates to: 300 (the gate — its exemplar sheet already classifies the phone class
@@ -323,6 +326,47 @@ denial to apply at **E0** (`canonical.rs:7873`) rather than only at E1/E2. Neith
   rows — the `repair-placeholder-orgs` path only consults `idgate::condemns`, which is
   value-shaped and cannot see a scheme. A standing-row catch-up for scheme-denied rows needs its
   own pass.
+
+
+## Unit 5 DECIDED (2026-09-09, `1b9efc2`) — keep minting, start observing
+
+The owner's call this unit asked for. **A nameless mention keeps minting its own row.** What
+changes is that the class is now counted.
+
+### The collapse option is refuted by measurement, not by preference
+
+The three options were: mint per mention (current, ~1.4M rows), attach to the notice's own party
+section, or share one sentinel row per notice. The third fails on the distribution — nameless
+mentions per notice, measured over `notice_id > 25500000`:
+
+| nameless mentions in a notice | 1 | 2 | 3 | 4 | 5 | 6 | 7-12 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| notices | 8,982 | 9,062 | 2,575 | 3,895 | 657 | 376 | declining tail |
+
+So roughly **17,250 notices carry two or more** against 8,982 with exactly one. One sentinel per
+notice would assert that a notice's several unnamed parties are the same party — and with neither
+a name nor an identifier there is no evidence either way, so the assertion would be invented.
+Issue 234's original reasoning ("nameless rows are distinct unknown parties") survives being
+re-derived against 1.4M rows rather than the handful it was written on.
+
+### What was actually wrong was the observability, not the minting
+
+`org-merge-health` walks identifier-BEARING orgs, and `provisional` is exactly
+`identifier IS NULL` — so **the largest single population in the table was the one the standing
+weekly tripwire had no number for**. It now reports `nameless` and the `without_country` subset:
+rows with no name, no identifier and no country, which carry no information whatsoever.
+
+Deliberate is not the same as observed. If this class ever starts growing faster than ingest
+does, the report will now say so instead of nobody noticing.
+
+### Two things the work corrected in itself
+
+- The counter's predicate was first written `name IS NULL OR name = ''`. `organizations.name` is
+  **NOT NULL**, so the NULL branch cannot fire, and leaving it in reads as though NULL names were
+  a second real shape to handle. Simplified to `name = ''` with the reason recorded at the
+  method.
+- The test that exposed that tried to INSERT a NULL name and the schema refused it — which is the
+  evidence for the point above, so the episode is noted in the fixture rather than tidied away.
 
 
 ## Units
