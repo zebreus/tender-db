@@ -486,10 +486,17 @@ enum Spec {
     /// structural rather than statistical (`expect`-style slack is meaningless for
     /// a list you typed): the list is capped, and a list over the cap is refused.
     RefoldNotices { notices: Vec<i64> },
-    /// Issue 365 unit 6: re-queue every notice carrying a mention under a
-    /// scheme the unit-4 gate denies, so standing rows catch up with it.
+    /// Issue 365 unit 6: re-queue every notice carrying a mention under one of
+    /// `schemes`, so standing rows catch up with the unit-4 gate.
     /// `dry_run` counts and writes nothing (the org-mutating convention).
-    RefoldDeniedSchemes { dry_run: bool },
+    ///
+    /// The list is a PARAMETER rather than a read of `DENIED_SCHEMES`, because
+    /// the same walk has to serve both directions. `OTROS` was denied and then
+    /// reverted within a day (see that constant), and with the denial list empty
+    /// a job hardwired to it selects nothing — so the notices whose keys the
+    /// denial removed could not have been re-folded back. A cohort selector
+    /// pinned to the current policy can apply a change but never undo one.
+    RefoldDeniedSchemes { dry_run: bool, schemes: Vec<String> },
     /// Issue 278: count the notices whose `caused_by` appears under 2+ Tenders —
     /// the ghost signature — in bounded slices of the notice-id space. READ-ONLY.
     ///
@@ -1860,17 +1867,31 @@ impl Supervisor {
             // fold early-returns (issues 85/99/179).
             "refold-denied-schemes" => {
                 let dry_run = req.dry_run.unwrap_or(true);
-                let params = if dry_run {
-                    "refold-denied-schemes dry-run"
-                } else {
-                    "refold-denied-schemes"
+                // Defaults to the live denial list; an explicit `profiles` list
+                // overrides it, which is how a REVERTED denial gets re-folded
+                // back (the list itself is empty by then).
+                let schemes: Vec<String> = match req.profiles.clone() {
+                    Some(s) if !s.is_empty() => s,
+                    _ => ingest::project::DENIED_SCHEMES
+                        .iter()
+                        .map(|s| (*s).to_owned())
+                        .collect(),
+                };
+                if schemes.is_empty() {
+                    return Err("refold-denied-schemes has no schemes: the denial list is \
+                                empty, so name them explicitly in `profiles`"
+                        .to_owned());
                 }
-                .to_owned();
+                let params = format!(
+                    "refold-denied-schemes {}{}",
+                    schemes.join(","),
+                    if dry_run { " dry-run" } else { "" }
+                );
                 let mut ids = vec![
                     self.push(
                         "refold-denied-schemes",
                         params,
-                        Spec::RefoldDeniedSchemes { dry_run },
+                        Spec::RefoldDeniedSchemes { dry_run, schemes },
                     )
                     .await,
                 ];
@@ -8227,12 +8248,13 @@ impl Supervisor {
                     kinds
                 ))
             }
-            Spec::RefoldDeniedSchemes { dry_run } => Box::pin(async move {
+            Spec::RefoldDeniedSchemes { dry_run, schemes } => Box::pin(async move {
                 // Walk `notice_id` in fixed strides rather than counting matches:
                 // `organization_mentions.scheme` has no index, so a match-filling
                 // window would scan an unbounded stretch when hits are sparse,
                 // while a stride costs the same per call at any hit rate.
                 const STRIDE: i64 = 250_000;
+                let borrowed: Vec<&str> = schemes.iter().map(String::as_str).collect();
                 let max_id = self.db.max_notice_id().await.map_err(|e| e.to_string())?;
                 let (mut requeued, mut stamped, mut notices, mut windows) = (0u64, 0u64, 0u64, 0u64);
                 let mut after = 0i64;
@@ -8247,11 +8269,7 @@ impl Supervisor {
                     let through = (after + STRIDE).min(max_id);
                     let ids = self
                         .db
-                        .notices_with_denied_scheme(
-                            ingest::project::DENIED_SCHEMES,
-                            after,
-                            through,
-                        )
+                        .notices_with_denied_scheme(&borrowed, after, through)
                         .await
                         .map_err(|e| e.to_string())?;
                     notices += ids.len() as u64;
@@ -8271,11 +8289,11 @@ impl Supervisor {
                     after = through;
                 }
                 Ok(format!(
-                    "refold-denied-schemes (issue 365 u6){}: {} scheme(s) denied, \
+                    "refold-denied-schemes (issue 365 u6){}: {}, \
                      {notices} notice(s) carry one over {windows} window(s); \
                      re-queued {requeued}, stamped {stamped} tender(s) epoch-stale",
                     if *dry_run { " DRY RUN — nothing written" } else { "" },
-                    ingest::project::DENIED_SCHEMES.len(),
+                    schemes.join(","),
                 ))
             })
             .await,

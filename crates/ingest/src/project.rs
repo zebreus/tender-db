@@ -5511,32 +5511,40 @@ fn normalise_identifier_with(raw: &str, country: Option<&str>, folds: bool) -> O
 /// Schemes that are never a register, so nothing published under them may
 /// become a merge key (issue 365 unit 4).
 ///
-/// Exposed as [`DENIED_SCHEMES`] as well as through this predicate, because the
-/// standing-row catch-up (unit 6) has to SELECT by the same list, and the store
-/// cannot call into ingest — one source of truth, passed down as data.
+/// **CURRENTLY EMPTY, and that is the finding rather than a gap.** `OTROS` was
+/// added here on 2026-09-09 and REVERTED the same day, because the measurement
+/// that justified it was scoped wrongly. What it measured was "canonical orgs
+/// that carry an `OTROS` mention" — 36.9 % of them held ≥2 distinct mention
+/// names against a 14.7 % baseline, worst row 231. But an org reached by an
+/// `OTROS` mention is usually reached by many others too, so that statistic
+/// attributed a large buyer's whole name spread to whichever scheme happened to
+/// appear among its mentions. It is guilt by association.
 ///
-/// `OTROS` is Spanish for "others" — a dropdown default. Whatever a publisher
-/// then types in the identifier box collides with everyone else who picked the
-/// same default, and the corpus shows exactly that: of 1,654 canonical orgs
-/// carrying an `OTROS` mention on prod 2026-09-09, **610 (36.9 %)** hold ≥2
-/// distinct mention names against a 14.7 % baseline, with **231** on the worst
-/// single row.
+/// Scoped to the thing actually under suspicion — one `OTROS` VALUE, and the
+/// distinct names published against it — the class declines flatly:
 ///
-/// Case-insensitive because the value is stored as published.
+/// | distinct `OTROS` values (`notice_id > 25000000`) | 887 |
+/// | spanning ≥2 distinct names | **16 (1.8 %)** |
+/// | worst value | **11** names |
 ///
-/// DELIBERATELY SHORT. Two larger candidates are NOT here because they are not
-/// measured: `ID_PLATAFORMA` (41,579 mentions) and the raw `eu`/`EU` scheme
-/// (252k) both timed out the bounded read three times, and a scheme carrying
-/// that much traffic must not be refused on a guess — issue 312's hex class is
-/// the standing reminder of what condemning an unmeasured class costs. Sizing
-/// them belongs in the weekly report, where a whole-corpus pass is affordable.
+/// 1.8 % is the same territory as `SPRAWA` (1.8 %) and `ID_UTE_TEMP_PLATAFORMA`
+/// (1.2 %), both of which were measured and DECLINED. And reading the 16: fifteen
+/// are real VAT or CIF numbers carrying two or three NAME VARIANTS of one company
+/// (`A95758389`, `NL862416000B01`, `IT03412740171`…) — a key doing its job, not
+/// fusing. The sixteenth is the literal word `UTE` (Spanish for a temporary
+/// business consortium) with 11 names, and `UTE` is already refused by the shape
+/// filters: no digit, three characters. So the denial protected NOTHING and cost
+/// the linking value of ~871 working keys — the issue-312 calculus exactly.
 ///
-/// Two candidates were measured and DECLINED, which is why this list is not
-/// simply "every scheme that sounds administrative":
-/// `ID_UTE_TEMP_PLATAFORMA` — a *temporary* joint-venture id, so obviously
-/// unstable — runs 1.2 % multi-name, well BELOW the baseline, and
-/// `KODNUTSPL` (a NUTS region code, issue 374) sits at baseline over 12 rows.
-pub const DENIED_SCHEMES: &[&str] = &["OTROS"];
+/// The mechanism stays: the predicate, the case-insensitive match, and unit 6's
+/// cohort re-fold are all sound and tested, and a future denial needs them. What
+/// changed is that no scheme currently earns one.
+///
+/// Two candidates never made it in for the same reason: `ID_PLATAFORMA` (41,579
+/// mentions) and the raw `eu`/`EU` scheme (252k) are UNMEASURED — the read timed
+/// out three times — and after the `OTROS` episode the standard for adding one is
+/// a per-VALUE fusion measurement, not a per-org one.
+pub const DENIED_SCHEMES: &[&str] = &[];
 
 fn scheme_never_keys(scheme: Option<&str>) -> bool {
     scheme.is_some_and(|s| DENIED_SCHEMES.iter().any(|d| s.eq_ignore_ascii_case(d)))

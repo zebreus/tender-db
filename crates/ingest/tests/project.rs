@@ -355,21 +355,27 @@ async fn a_withheld_amount_is_marked_and_an_undeclared_negative_is_not() {
     let _ = std::fs::remove_file(&path);
 }
 
-/// Issue 365 unit 4: a scheme the publisher declares as "others" is not a
-/// register, so nothing published under it becomes a merge key.
+/// Issue 365 unit 4, AFTER the reversal: an identifier declared under the
+/// `OTROS` ("others") scheme keys normally, and the scheme gate is inert.
 ///
-/// This is the class no value-shape rule can reach, which is the whole argument
-/// for gating on the declared scheme at all. Measured on prod 2026-09-09: of
-/// 1,654 canonical orgs carrying an `OTROS` mention, **610 (36.9 %)** hold two
-/// or more distinct mention names against a 14.7 % corpus baseline, and the
-/// worst single row holds **231** — because `OTROS` is a dropdown default, so
-/// whatever a publisher then types in the identifier box collides with everyone
-/// else who did the same.
+/// This test asserted the opposite for a few hours on 2026-09-09. The denial was
+/// added on a measurement of "orgs that carry an `OTROS` mention" — 36.9 % of
+/// them holding ≥2 distinct mention names against a 14.7 % baseline — which is
+/// guilt by association: such an org is usually reached by many other mentions,
+/// so a large buyer's whole name spread got attributed to this scheme.
 ///
-/// The published string stays on the mention either way; only its promotion to
-/// a merge key is refused.
+/// Per VALUE, which is the thing under suspicion, the class declines: 887
+/// distinct `OTROS` values above notice 25,000,000, only **16 (1.8 %)** spanning
+/// two or more names, worst 11 — and fifteen of those sixteen are real VAT or CIF
+/// numbers carrying name VARIANTS of one company. The sixteenth is the literal
+/// word `UTE`, which the shape filters already refuse.
+///
+/// So the value below must keep its key. The GATE's plumbing is still covered —
+/// `DENIED_SCHEMES` being empty is what makes it inert, and the cohort selector
+/// that would propagate a real denial is pinned in
+/// `store/tests/nested_org_repair.rs`.
 #[tokio::test]
-async fn an_identifier_declared_under_the_others_scheme_is_not_a_merge_key() {
+async fn the_others_scheme_does_not_by_itself_cost_an_identifier_its_key() {
     let (db, fetch_id, path) = scratch("scheme-otros").await;
 
     let org = |parsed: &mut Parsed, section: &str, name: &str, scheme: &str, value: &str| {
@@ -400,11 +406,12 @@ async fn an_identifier_declared_under_the_others_scheme_is_not_a_merge_key() {
     let mut parsed = Parsed { sections: vec![sec("ND-Root", "Notice", None)], values: vec![] };
     parsed.values.push(ted_text("ND-Root", "TED-TITLE", "Scheme-gated identifiers"));
     parsed.values.push(ted_date("ND-Root", "TED-DS_DATE_DISPATCH", 21 * 86_400));
-    // Two unrelated bodies that a publisher gave the same "others" value.
-    org(&mut parsed, "ORG-0001", "Ayuntamiento de Alfa", "OTROS", "A48283964");
-    org(&mut parsed, "ORG-0002", "Diputacion de Beta", "OTROS", "A48283964");
-    // A real register scheme with the same value shape, for contrast.
-    org(&mut parsed, "ORG-0003", "Empresa Gamma SL", "NIF", "B72925496");
+    // A real Spanish CIF published under `OTROS` — the shape the reversal is
+    // about. It must key, because 98.2 % of this class keys exactly one body.
+    org(&mut parsed, "ORG-0001", "Empresa Alfa SL", "OTROS", "A95758389");
+    // The same value under a declared register, for contrast: both must resolve
+    // to the same identifier, which is the point — the scheme is not the signal.
+    org(&mut parsed, "ORG-0002", "Empresa Alfa SL", "NIF", "A95758389");
 
     let (n, p) = legacy_record(fetch_id, "000104-2026", "eforms:eforms-sdk-1.12", parsed);
     db.record_notice(&n, &p).await.expect("record");
@@ -413,39 +420,20 @@ async fn an_identifier_declared_under_the_others_scheme_is_not_a_merge_key() {
     assert_eq!(
         scalar(
             &db,
-            "SELECT COUNT(*) FROM organizations o JOIN organization_mentions m                ON m.organization_id = o.id              WHERE m.scheme = 'OTROS' AND o.identifier IS NOT NULL"
-        )
-        .await,
-        0,
-        "nothing declared under OTROS may carry a merge key",
-    );
-    assert_eq!(
-        scalar(
-            &db,
-            "SELECT COUNT(DISTINCT organization_id) FROM organization_mentions              WHERE scheme = 'OTROS'"
-        )
-        .await,
-        2,
-        "and the two bodies stay apart rather than fusing on the shared value",
-    );
-    assert_eq!(
-        scalar(
-            &db,
-            "SELECT COUNT(*) FROM organization_mentions              WHERE scheme = 'OTROS' AND raw_identifier = 'A48283964'"
-        )
-        .await,
-        2,
-        "the published string is still recorded — this is a refusal, not a deletion",
-    );
-    // The real register scheme is untouched.
-    assert_eq!(
-        scalar(
-            &db,
-            "SELECT COUNT(*) FROM organizations o JOIN organization_mentions m                ON m.organization_id = o.id              WHERE m.scheme = 'NIF' AND o.identifier = 'B72925496'"
+            "SELECT COUNT(*) FROM organizations o JOIN organization_mentions m \
+               ON m.organization_id = o.id \
+             WHERE UPPER(m.scheme) = 'OTROS' AND o.identifier = 'A95758389'"
         )
         .await,
         1,
-        "a declared register still keys normally",
+        "an OTROS-declared registry number keeps its merge key",
+    );
+    // And the two spellings land on ONE org, which is the linking the denial
+    // would have thrown away.
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM organizations WHERE identifier = 'A95758389'").await,
+        1,
+        "the OTROS and NIF mentions resolve to the same body",
     );
     drop(path);
 }
