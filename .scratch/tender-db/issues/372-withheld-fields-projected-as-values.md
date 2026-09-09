@@ -3,8 +3,11 @@
 Status: ready-for-agent — **UNIT 2 BUILT, DEPLOYED AND VERIFIED ON PROD 2026-09-09**
 (`4633443` amounts, `796473b` bids, `436f73e` read layer + `/v1`, `d7bb7db` the report's
 `marked` column, **`ce6d2c2` the migration without which the whole thing was INERT**).
-Live on `ce6d2c2`; see "Unit 2 VERIFIED ON PROD" for the numbers, including the negative
-control. See "Unit 2 BUILT". Remaining: unit 3 (`currency =
+**UNIT 4 ALSO BUILT, DEPLOYED AND VERIFIED (`4c7ad40`)** — the statistics satellite; the
+award criteria turned out to need nothing. Live on `4c7ad40`; see "Unit 2 VERIFIED ON PROD"
+and "Unit 4" below, both with negative controls. Remaining: unit 3 (`currency =
+'unpublished'`, shaped by the `NOT NULL` constraint) and the standing-row re-fold, still the
+open owner decision shared with 366. See "Unit 2 BUILT". Remaining: unit 3 (`currency =
 'unpublished'`, and the column is `NOT NULL` — see the constraint finding), unit 4 (the other
 satellites, whose channel map the fixture probe now gives), and the standing-row re-fold, still
 the open owner decision shared with 366. Earlier: **unit 1 CORPUS-WIDE 2026-09-08 (job 818): 19,236 `-1.00` rows, residue
@@ -388,6 +391,63 @@ The section-anchored rule's known blind spot (a `FieldsPrivacy` block hoisted aw
 value it suppresses, issue 195) cost nothing here: 4 of 4 amounts and 4 of 4 predicted bids were
 reached. One sample of four TED notices is not a corpus rate — section 11's `marked` column is
 what will give that on the next weekly run.
+
+
+## Unit 4 DONE (2026-09-09, `4c7ad40`) — one surface to fix, three that never needed it
+
+### The award criteria are a non-issue, and that is worth stating
+
+The fixture's other markers — `BT-539` (criterion type, `Code('unpublished')`), `BT-541`
+(weight, `Number(-1)`) and `BT-734` (name, **`Text('unpublished')`**) — looked like three more
+surfaces. They are not: **those field ids reach no canonical satellite at all.** Verified by
+grep on 2026-09-09 — they appear in no field map (`TEXTS`/`AMOUNTS`/`CLASSIFICATIONS`/`DATES`)
+and no routing arm in `read_results`; the only hits in `project.rs` are my own unit-2 tests and
+doc comments. So their placeholders stay in the parsed layer, which is exactly where ADR-0004
+says they belong.
+
+Recorded because the fixture makes them *look* like work, and "checked, nothing to do" is a
+different claim from "not looked at".
+
+### The statistics satellite, which did need it
+
+`BT-759` (received-submission count) and `BT-760` (its type) both route to
+`tender_version_result_stats(kind, count)`. Withheld, the SDK writes `-1` into the count and
+`unpublished` into the code — so an unmarked row asserts **that −1 submissions of a type called
+`unpublished` were received**. Junk on BOTH halves, which is why the marker sits on the row and
+why EITHER declaration marks it.
+
+Denser than the amount case — one CAN carries a statistics block per lot result:
+
+| probe | result |
+| --- | --- |
+| `tender_id <= 100000`, `kind='unpublished' OR count<0` | **2,752 rows / 164 tenders** (~17 each) |
+| of those, `kind='unpublished'` | 2,640 |
+| of those, `count < 0` | 2,708 |
+| `tender_id <= 20000`, in a withholding notice | **92 of 93 (98.9 %)** |
+
+98.9 % declared matches the amount side's 99.57 %, so it is the same mechanism and equally
+trustworthy. The unbounded form of the first probe hit the 10 s cap and was **not retried**;
+section 11's new third arm produces the corpus total.
+
+### Verified on prod, including the case the design decision was actually about
+
+Re-folded notices 24173766 and 24089978 (jobs 829/830, ok). Both rows read `null` before:
+
+| tender | kind | count | quality after | what it proves |
+| --- | --- | --- | --- | --- |
+| 1623 (×6) | `unpublished` | −1 | **withheld** | both halves suppressed |
+| 3711 (×2) | **`t-esubm`** | −1 | **withheld** | the TYPE was published and only the COUNT withheld |
+
+3711 is the one that mattered. `t-esubm` is a real submission type, so BT-760 was published
+while BT-759 was withheld — the "either declaration alone marks the row" rule, confirmed on real
+data rather than on my synthetic test. A rule keyed on `kind = 'unpublished'` would have missed
+these entirely.
+
+**Negative control (job 831/832):** re-folded notice 23828920 → tender 1606's five statistics
+rows, every one a real kind with a real count, **all `quality = null`**. Two of them are genuine
+**zeros** (`t-no-eea` 0, `t-oth-eea` 0) and stayed unmarked — which is the distinction that
+matters here: 0 means "none of that type were received" and is a reading; −1 means "we are not
+telling you" and is not.
 
 ## Unit 5 (new) — the undeclared residue, 116 rows
 
