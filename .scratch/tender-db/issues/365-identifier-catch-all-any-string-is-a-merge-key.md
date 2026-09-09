@@ -1,6 +1,8 @@
 # 365 — any ≥4-character alphanumeric string containing a digit becomes an Organization merge key: field labels, phone numbers, notice numbers, department names
 
-Status: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
+Status: ready-for-agent — **UNITS 1 AND 2 SHIPPED AND DEPLOYED 2026-09-09 (`6da7320`)**, standing
+stock dissolved the same firing; see "Units 1+2 DONE" below. Units 3 (letter-run, now 22,827 rows),
+4 (carry the publisher's scheme) and 5 (the nameless class) remain.
 Kind: defect (organization layer — identifier admission); units 1-3 are prevention + the
 328/345 repair path, unit 5 is a decision
 Relates to: 300 (the gate — its exemplar sheet already classifies the phone class
@@ -31,6 +33,77 @@ already diagnosed the BT-501 class per-row)
 - **There is no third state.** `gated()` (`crates/ingest/src/project.rs:4811`) maps a condemned id to `None`; the mention takes the identifier-less path and the row gets `identifier NULL`. "Not condemned" is identically "live merge key", bound at `crates/store/src/canonical.rs:7873` (`org_of.get(&key)`) and written by the `provisional = 0` INSERT at `crates/store/src/canonical.rs:8137-8142`. So refusing a value cannot mean "keep it, don't merge on it" today — that state has to be built or the value goes to NULL.
 - **The enforcement decision was already taken and not wired.** `.scratch/tender-db/issues/300-exemplars.md:170` classifies org 660's `t:04131153308` must-CONDEMN because that phone number FUSES Vergabekammer Niedersachsen (~17k mentions) with Die Vergabekammern des Bundes (708) — two different review bodies under one switchboard — and line 303 records the remedy "phone numbers → NULL the id". `300-org-fuzzy-matching-design.md:91` defers letter-run: "rule 4 (letter-run) stays census-only pending composition", class sized 27,781 rows. Gate v2.1 shipped the two FOLDS from that read (Greek confusables, RO sub-unit suffix) and left the two CONDEMN classes unwired. The routing-scheme denial ("GLN/IPA/DIR3/OIN/Leitweg are location/office/routing scoped: never merge keys", design:827-828) is unimplemented and, as written, guards only E1/E2 auto-merge — not the E0 exact-triple bind at canonical.rs:7873.
 - **Unit 5's separate mechanism.** Both identifier-less reuse arms require a non-empty name: `let scope = (!name_norm.is_empty()).then_some(()).and(country.clone())` (`crates/store/src/canonical.rs:8197`, issue 234) and `} else if !name_norm.is_empty() && country.is_none()` (`crates/store/src/canonical.rs:8240`, issue 351). A nameless mention therefore falls through to the unconditional mint at `crates/store/src/canonical.rs:8333-8344` and creates a brand-new row *every time, forever* — the pre-234 behaviour, preserved deliberately (234: "nameless rows are distinct unknown parties"), with nothing bounding or ever collapsing the class. Issue 259's nested-org repair only rescues nameless rows with a single named child.
+
+
+## Units 1+2 DONE (2026-09-09, `6da7320`)
+
+Three classes `census` already computed and `condemns` never read are now condemning:
+`phone`, the eForms field-name lexicon, and a new `bare_four_digit`.
+
+### Unit 1's premise was worth re-testing, and the first metric said the wrong thing
+
+The field's own doc argued to keep `phone` census-only: the review chambers publish a
+switchboard consistently, so it keys a body more often than it fuses two. That is a real
+argument — it is exactly the reasoning that (correctly) spared the hex class in issue 312 — so
+it was measured rather than overridden.
+
+**The obvious metric agreed with the doc and was wrong.** Rows-per-distinct-value over
+`id <= 3000000` reads 68 rows / 68 values = **1.0**, which is the "harmless, doing the linking"
+signature. But that measure detects prevented SPLITS: after a fusion the bad key still holds
+exactly one row, so a switchboard is invisible to it. The measure that exposes fusion is name
+diversity:
+
+| phone-keyed canonical orgs (`id <= 3000000`) | 68 |
+| carrying ≥2 distinct mention names | **47 (69 %)** vs 14.7 % corpus baseline |
+| carrying ≥6 | **24 (35 %)** vs 1.1 % baseline |
+| most distinct names on one row | **264** |
+| mentions riding those 68 rows | 154,671 |
+
+A row with 264 names is a switchboard, not an organization. Same method as 312, opposite
+answer — and the difference is entirely which question you ask.
+
+### Unit 2, both halves
+
+**The field NAME, not just the id.** `lexicon_hit` knew `BT501` as an *equality*, so the bare
+field id was refused while `BT-501-Organization-Company` — normalised to
+`BT501ORGANIZATIONCOMPANY`, and the form publishers actually paste — walked past. Now a narrow
+shape: `BT`/`OPT`/`OPP`, at most four digits, then either nothing or a run of ≥4 letters.
+`BT93017425` and `OPTIMA2020` stay identifiers.
+
+**Bare four digits.** `2022` and `1000` each key six unrelated bodies in six countries; over
+`id <= 3000000`, 93 such orgs with 37 (40 %) carrying ≥2 names against the 14.7 % baseline,
+worst 71. The rule does not rest on that sample: 10,000 possible values cannot discriminate
+between 5.7M organizations, which is precisely what `short_vat` already says about a short VAT
+tail.
+
+### Two things the tests caught that review would not have
+
+1. **Folding the 4-digit rule into `lexicon_hit` silently stole a reported class.**
+   `short_numeric` excludes lexicon hits to avoid double-counting, so `8477` stopped being
+   short-numeric and the weekly report's count would have shifted with no explanation. A RED
+   PRE-EXISTING test caught it. The rule now has its own census field and the two classes are
+   disjoint (`short_numeric` is 5-digit DE only) — confirmed by the census below: 2,296 became
+   1,725 + 571.
+2. **Three of my own negative controls were invalid.** `12345`, `BT12345678` and `HRB12345` each
+   contain an ascending digit run that the pre-existing `sequence` rule condemns anyway, so they
+   asserted nothing about the new rules. Replaced with non-sequential specimens.
+
+### The dissolve reconciles exactly
+
+Post-deploy census, then the dry plan:
+
+```
+gate census: 53 lexicon, 0 sequence, 22827 letter-run, 0 short-vat, 276962 hex-hash,
+             3655 phone-id, 1725 short-numeric, 4611 bare-4-digit, 3349 compound
+placeholder dissolve DRY RUN: 1108688 identifier-bearing orgs scanned, 8319 condemned,
+             8319 dissolved, 0 skipped, 259342 mentions re-resolved
+             (27160 fresh provisionals, 232182 reused), 78556 tenders touched
+```
+
+**53 + 3,655 + 4,611 = 8,319** — the condemned set is exactly the three wired classes, with
+nothing unexpected swept in. That reconciliation is why the wet run was safe to make: a total
+alone would not have shown whether a rule over-reached. `letter_run` (22,827) and `hex_hash`
+(276,962) stay census-only and untouched, as units 3 and issue 312 respectively require.
 
 ## Units
 
