@@ -18259,6 +18259,63 @@ impl Db {
         Ok((report, watermark))
     }
 
+    /// The highest `notices.id`, or 0 on an empty corpus — the upper bound a
+    /// stride walk needs to know when to stop (issue 365 unit 6).
+    pub async fn max_notice_id(&self) -> turso::Result<i64> {
+        let conn = self.reader().await?;
+        let mut rows = conn.query("SELECT MAX(id) FROM notices", ()).await?;
+        Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
+    }
+
+    /// One `notice_id` WINDOW of the notices carrying a mention under a denied
+    /// scheme (issue 365 unit 6) — the standing-row half of unit 4's gate.
+    ///
+    /// The gate refuses a denied scheme at MINT time, so rows folded before it
+    /// keep their key. Nothing existing reaches them: `repair-placeholder-orgs`
+    /// asks `idgate::condemns(country, kind, value)` and never sees a scheme,
+    /// and the scheme lives on the MENTION rather than the org row, so widening
+    /// that predicate would not help either. `refold-notices` refuses more than
+    /// 1,000 explicit ids and says so ("a list this long is a cohort"), while
+    /// `refold`/`refold-fields` are profile- and field-scoped. Hence a cohort
+    /// selector of its own.
+    ///
+    /// Windowed by RANGE rather than `LIMIT`: `organization_mentions.scheme`
+    /// carries no index, so a match-counting limit would scan an unbounded
+    /// stretch to fill a sparse window, while a fixed id stride costs the same
+    /// per call whatever the hit rate — the `build-org-match-keys` shape. The
+    /// caller walks strides and feeds each result to the EXISTING
+    /// [`Db::unmark_projected_by_ids`] and [`Db::stamp_stale_for_notices`],
+    /// which is why this returns ids and writes nothing.
+    ///
+    /// `schemes` is passed in as data because the store must never depend on
+    /// ingest, where the denial list lives (`project::DENIED_SCHEMES`).
+    /// Comparison is case-insensitive: the value is stored as published.
+    pub async fn notices_with_denied_scheme(
+        &self,
+        schemes: &[&str],
+        after_id: i64,
+        through_id: i64,
+    ) -> turso::Result<Vec<i64>> {
+        if schemes.is_empty() {
+            return Ok(Vec::new());
+        }
+        let placeholders = vec!["UPPER(?)"; schemes.len()].join(", ");
+        let sql = format!(
+            "SELECT DISTINCT notice_id FROM organization_mentions \
+              WHERE notice_id > ? AND notice_id <= ? AND UPPER(scheme) IN ({placeholders}) \
+              ORDER BY notice_id"
+        );
+        let mut params: Vec<Value> = vec![Value::Integer(after_id), Value::Integer(through_id)];
+        params.extend(schemes.iter().map(|s| Value::Text((*s).to_owned())));
+        let conn = self.reader().await?;
+        let mut rows = conn.query(&sql, params).await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push(int(&row, 0));
+        }
+        Ok(out)
+    }
+
     /// The NAMELESS provisional organizations: no name and no identifier, so
     /// nothing about them can ever be matched, merged or looked up (issue 365
     /// unit 5).

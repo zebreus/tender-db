@@ -5511,6 +5511,10 @@ fn normalise_identifier_with(raw: &str, country: Option<&str>, folds: bool) -> O
 /// Schemes that are never a register, so nothing published under them may
 /// become a merge key (issue 365 unit 4).
 ///
+/// Exposed as [`DENIED_SCHEMES`] as well as through this predicate, because the
+/// standing-row catch-up (unit 6) has to SELECT by the same list, and the store
+/// cannot call into ingest — one source of truth, passed down as data.
+///
 /// `OTROS` is Spanish for "others" — a dropdown default. Whatever a publisher
 /// then types in the identifier box collides with everyone else who picked the
 /// same default, and the corpus shows exactly that: of 1,654 canonical orgs
@@ -5532,8 +5536,10 @@ fn normalise_identifier_with(raw: &str, country: Option<&str>, folds: bool) -> O
 /// `ID_UTE_TEMP_PLATAFORMA` — a *temporary* joint-venture id, so obviously
 /// unstable — runs 1.2 % multi-name, well BELOW the baseline, and
 /// `KODNUTSPL` (a NUTS region code, issue 374) sits at baseline over 12 rows.
+pub const DENIED_SCHEMES: &[&str] = &["OTROS"];
+
 fn scheme_never_keys(scheme: Option<&str>) -> bool {
-    scheme.is_some_and(|s| s.eq_ignore_ascii_case("OTROS"))
+    scheme.is_some_and(|s| DENIED_SCHEMES.iter().any(|d| s.eq_ignore_ascii_case(d)))
 }
 
 /// A German commercial-register value: the register division then digits and

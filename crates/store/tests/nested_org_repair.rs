@@ -349,3 +349,68 @@ async fn the_nameless_provisional_rows_are_counted_with_and_without_a_country() 
         Some(Value::Integer(1)),
     );
 }
+
+/// Issue 365 unit 6: the windowed cohort selector that finds standing rows the
+/// unit-4 scheme gate cannot reach.
+///
+/// The gate refuses a denied scheme at MINT time only, so anything folded before
+/// it keeps its key, and no existing path gets there: `repair-placeholder-orgs`
+/// asks a value-shaped predicate that never sees a scheme, and `refold-notices`
+/// caps explicit ids at 1,000 while `refold`/`refold-fields` are profile- and
+/// field-scoped.
+#[tokio::test]
+async fn the_denied_scheme_cohort_is_selected_by_window_and_case_insensitively() {
+    let path = "/tmp/tender-denied-scheme-cohort.db";
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    let db = store::Db::open(path).await.unwrap();
+    let raw = store::turso::Builder::new_local(path).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+
+    for (notice_id, section, scheme) in [
+        (10, "ORG-1", Some("OTROS")),
+        (10, "ORG-2", Some("NIF")),   // same notice, a real scheme too
+        (20, "ORG-1", Some("otros")), // lower case, as some publishers send it
+        (30, "ORG-1", Some("NIF")),   // never selected
+        (40, "ORG-1", None),          // no scheme at all
+        (900, "ORG-1", Some("OTROS")), // outside the first window
+    ] {
+        conn.execute(
+            "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, scheme)
+             VALUES (?, ?, 1, 'x', ?)",
+            (
+                Value::Integer(notice_id),
+                Value::Text(section.into()),
+                scheme.map_or(Value::Null, |s| Value::Text(s.into())),
+            ),
+        )
+        .await
+        .unwrap();
+    }
+
+    // First window: notices 10 and 20, each ONCE despite notice 10 having two
+    // mentions, and `otros` matched case-insensitively because the scheme is
+    // stored exactly as the publisher wrote it.
+    let first = db.notices_with_denied_scheme(&["OTROS"], 0, 100).await.unwrap();
+    assert_eq!(first, vec![10, 20]);
+
+    // The next window picks up what the first deliberately did not reach — the
+    // property that makes a stride walk safe to resume.
+    let second = db.notices_with_denied_scheme(&["OTROS"], 100, 1000).await.unwrap();
+    assert_eq!(second, vec![900]);
+
+    // An empty denial list selects nothing rather than everything, which is the
+    // failure mode that would re-fold the entire corpus by accident.
+    assert!(db.notices_with_denied_scheme(&[], 0, 1000).await.unwrap().is_empty());
+
+    // And a scheme that is not denied is never swept in.
+    assert!(
+        db.notices_with_denied_scheme(&["OTROS"], 0, 1000)
+            .await
+            .unwrap()
+            .iter()
+            .all(|id| *id != 30 && *id != 40)
+    );
+}

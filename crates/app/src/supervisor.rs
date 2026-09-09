@@ -486,6 +486,10 @@ enum Spec {
     /// structural rather than statistical (`expect`-style slack is meaningless for
     /// a list you typed): the list is capped, and a list over the cap is refused.
     RefoldNotices { notices: Vec<i64> },
+    /// Issue 365 unit 6: re-queue every notice carrying a mention under a
+    /// scheme the unit-4 gate denies, so standing rows catch up with it.
+    /// `dry_run` counts and writes nothing (the org-mutating convention).
+    RefoldDeniedSchemes { dry_run: bool },
     /// Issue 278: count the notices whose `caused_by` appears under 2+ Tenders —
     /// the ghost signature — in bounded slices of the notice-id space. READ-ONLY.
     ///
@@ -1851,6 +1855,37 @@ impl Supervisor {
             // tenders"). `sweep-regrouped-ghosts` stays accepted as an alias, because
             // durable job rows carry the kind string and a recovered row from before
             // the rename must still resolve — and it now resolves to something safe.
+            // Issue 365 unit 6. Trailing `project rebuild=false` like every other
+            // requeue arm: the requeue alone leaves the chains identical and the
+            // fold early-returns (issues 85/99/179).
+            "refold-denied-schemes" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let params = if dry_run {
+                    "refold-denied-schemes dry-run"
+                } else {
+                    "refold-denied-schemes"
+                }
+                .to_owned();
+                let mut ids = vec![
+                    self.push(
+                        "refold-denied-schemes",
+                        params,
+                        Spec::RefoldDeniedSchemes { dry_run },
+                    )
+                    .await,
+                ];
+                if !dry_run {
+                    ids.push(
+                        self.push(
+                            "project",
+                            "rebuild=false".into(),
+                            Spec::Project { rebuild: false, clear_changes: false },
+                        )
+                        .await,
+                    );
+                }
+                Ok(ids)
+            }
             "ghost-census" | "sweep-regrouped-ghosts" => Ok(vec![
                 self.push("ghost-census", "ghost-census".into(), Spec::GhostCensus).await,
             ]),
@@ -8192,6 +8227,58 @@ impl Supervisor {
                     kinds
                 ))
             }
+            Spec::RefoldDeniedSchemes { dry_run } => Box::pin(async move {
+                // Walk `notice_id` in fixed strides rather than counting matches:
+                // `organization_mentions.scheme` has no index, so a match-filling
+                // window would scan an unbounded stretch when hits are sparse,
+                // while a stride costs the same per call at any hit rate.
+                const STRIDE: i64 = 250_000;
+                let max_id = self.db.max_notice_id().await.map_err(|e| e.to_string())?;
+                let (mut requeued, mut stamped, mut notices, mut windows) = (0u64, 0u64, 0u64, 0u64);
+                let mut after = 0i64;
+                // No stop-flag check on purpose. The readers are enumerated in a
+                // const above (issue 252) precisely so an unregistered kind is
+                // REFUSED cancellation rather than told "asked it to stop" and
+                // then ignored. This walk is ~one pass of the mentions table in
+                // fixed strides — minutes, not the grinding fold that rule was
+                // written for — so refusal is the honest answer, and registering
+                // it would claim a responsiveness it does not have.
+                while after < max_id {
+                    let through = (after + STRIDE).min(max_id);
+                    let ids = self
+                        .db
+                        .notices_with_denied_scheme(
+                            ingest::project::DENIED_SCHEMES,
+                            after,
+                            through,
+                        )
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    notices += ids.len() as u64;
+                    windows += 1;
+                    if !*dry_run && !ids.is_empty() {
+                        requeued += self
+                            .db
+                            .unmark_projected_by_ids(&ids)
+                            .await
+                            .map_err(|e| e.to_string())?;
+                        stamped += self
+                            .db
+                            .stamp_stale_for_notices(&ids)
+                            .await
+                            .map_err(|e| e.to_string())?;
+                    }
+                    after = through;
+                }
+                Ok(format!(
+                    "refold-denied-schemes (issue 365 u6){}: {} scheme(s) denied, \
+                     {notices} notice(s) carry one over {windows} window(s); \
+                     re-queued {requeued}, stamped {stamped} tender(s) epoch-stale",
+                    if *dry_run { " DRY RUN — nothing written" } else { "" },
+                    ingest::project::DENIED_SCHEMES.len(),
+                ))
+            })
+            .await,
             Spec::RefoldNotices { notices } => {
                 let requeued =
                     self.db.unmark_projected_by_ids(notices).await.map_err(|e| e.to_string())?;
