@@ -626,7 +626,7 @@ pub async fn state() -> Arc<Db> {
 /// answers "duplicate column name" and the statement is skipped. Anything
 /// beyond ADD COLUMN stays out of scope by policy — the canonical layer is
 /// rebuildable, and destructive changes recreate from the archive instead.
-const MIGRATIONS: [&str; 13] = [
+const MIGRATIONS: [&str; 15] = [
     "ALTER TABLE notices ADD COLUMN published_at INTEGER",
     "ALTER TABLE notices ADD COLUMN dispatched_at INTEGER",
     "ALTER TABLE tender_versions ADD COLUMN dispatched_at INTEGER",
@@ -662,6 +662,18 @@ const MIGRATIONS: [&str; 13] = [
     "ALTER TABLE tender_version_lot_results ADD COLUMN decided_utc INTEGER",
     "ALTER TABLE tender_version_lot_results ADD COLUMN decided_offset INTEGER",
     "ALTER TABLE tender_version_lot_results ADD COLUMN decided_has_time INTEGER",
+    // The withheld marker on both amount-bearing satellites (issue 372). Existing
+    // rows answer NULL until re-folded, which is the honest reading: they were
+    // written by a projection that never consulted the notice's BT-195 declaration,
+    // so it does not know whether their figure is a value or a placeholder.
+    //
+    // These two are here because the fix SHIPPED WITHOUT THEM and was inert on prod
+    // (2026-09-09): every test creates its database fresh, where the CREATE TABLE
+    // carries the column, so the whole gate passed green while `SELECT quality FROM
+    // tender_version_amounts` on the box answered "no such column". Caught by
+    // probing the production database rather than by the suite.
+    "ALTER TABLE tender_version_amounts ADD COLUMN quality TEXT",
+    "ALTER TABLE tender_version_bids ADD COLUMN quality TEXT",
 ];
 
 async fn migrate(conn: &Connection) -> turso::Result<()> {
