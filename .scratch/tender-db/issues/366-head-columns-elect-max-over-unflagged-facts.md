@@ -1,6 +1,18 @@
 # 366 — the head columns elect MAX over facts that carry no quality flag: a 2005 tender is served as open, and €49 quadrillion tops the value ordering
 
-Status: ready-for-agent — **UNIT 1 DECIDED 2026-09-08 (owner), see "Unit 1 DECIDED": two flag legs (negative + all-9s sentinels, 15,899 rows; >€100bn implausible, 175 rows), with the €10–100bn band explicitly left to the lot-sum/FMTVAL signals because no threshold separates the NHS England contract from a €10bn vending-machine notice.** Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings;
+Status: ready-for-agent — **STANDING ROWS DRAINED 2026-09-09 (owner), see "The standing-rows route is
+ANSWERED": the epoch-bump-versus-repair-job dilemma was a false choice — `refold-notices` aims the
+FOLD'S OWN election at the affected notices, so there is no second implementation to drift and no
+corpus re-fold. Over-ceiling 175 → 0, negatives 15,644 → 0, beyond-horizon future deadlines 379 → 0;
+the five-row verification baseline re-read and matching, `?max_value=0` clean, 3323836 out of
+`status=open`.** Next: the 322-row repdigit drain, waiting on `7c8a443` (a nines-at-cent-level leg —
+re-reading the ordering after the drain found €99,999,999,999.99 standing, which the rule's
+`cents % 100 != 0` guard walked past). Then unit 3's unfinished half — the DETAIL payload still serves
+the year-3005 deadline and the 257-trillion-PLN value in the same field names the filters now
+disagree with — and the 24,585 exact zeros. Earlier: **UNIT 1 DECIDED 2026-09-08 (owner), see "Unit 1
+DECIDED": two flag legs (negative + all-9s sentinels, 15,899 rows; >€100bn implausible, 175 rows),
+with the €10–100bn band explicitly left to the lot-sum/FMTVAL signals because no threshold separates
+the NHS England contract from a €10bn vending-machine notice.** Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings;
 unit 1 is the decision 132 has been holding)
 Kind: defect (canonical head derivation + read filters) — data-profile rules 8/9/12 need
 somewhere to live before they can be enforced
@@ -607,3 +619,173 @@ bounded tail) and worth doing when someone next reads section 10.
 - `/docs#caveats`' quarantine sentence is corrected (see `served-claims-nothing-re-derives`).
 
 *One issue because:* the €4.97e16 head value, the 257-trillion-PLN row, the -1.00 sentinel in `value`, the year-3005 deadline and the 2005-tender-served-as-open are one derivation — `.max()` over facts that have no field in which to be marked implausible — plus its mirror in the read layer's `ORDER BY … DESC LIMIT 1`.
+
+## The standing-rows route is ANSWERED — by a third option neither side of the dilemma listed (2026-09-09)
+
+The dilemma recorded twice above — `PROJECTION_EPOCH` bump (6 h 02 m / 14.2 M version writes for a
+2.69 M-notice cohort, and the whole corpus is larger) versus a targeted repair job (a second
+implementation of the election, free to drift, which is the failure this issue and 343 both ARE) —
+was a false choice. **Both options were about recomputing the head columns. A third route recomputes
+nothing: hand the affected notices to `refold-notices` and let the fold run its OWN election.**
+
+That has the repair job's cost — only the affected rows — and the epoch bump's correctness, because
+there is no second implementation to drift. `refold-notices` unmarks the notices as projected and
+stamps their tenders epoch-stale; the incremental fold then re-derives them through
+`head_value_eur_cents` and `head_deadline` themselves. Nothing in this issue's code was touched to
+make it work; the mechanism already existed for issue 259.
+
+**Why the dilemma looked binary:** both horns were framed as "how do we get the NEW RULE applied to
+OLD ROWS", and from there the only question seemed to be whether to re-derive everything or to write
+a second derivation. The question that dissolves it is "what already applies the rule?" — the fold —
+"and can it be aimed?" It can, per notice.
+
+### What was drained, and the reconciliation
+
+Batched at the `refold-notices` cap of 1,000, one batch at a time, waiting for the queue to go idle
+between rounds (`scratchpad/drain366.sh`, `scratchpad/drain366-deadline.sh`).
+
+| leg | selector | before | after | rounds |
+| --- | --- | --- | --- | --- |
+| over-ceiling amounts | `current_value_eur_cents > 1e13` | **175** | **0** | 1 (jobs 864/865) |
+| negative amounts | `current_value_eur_cents < 0` | **15,644** | **0** | 16 (jobs 866–897) |
+| beyond-horizon future deadlines | `current_deadline > now AND current_deadline - current_published_at > 315360000` | **379** | **0** | 1 (jobs 898/899) |
+
+Every round moved exactly its batch size (15,644 → 14,644 → … → 644 → 0), which is the check that the
+selector and the fold agree: had the fold re-elected a row into the cohort it just left, a round would
+have moved less than 1,000.
+
+**The negative count 15,644 against Leg A's recorded 15,650** — the six-row gap is the issue's own
+figures being measured a day apart, not a discrepancy in the drain.
+
+### The deadline leg's cohort is narrower than "beyond horizon", deliberately
+
+`DEADLINE_HORIZON_SECS` is relative to the head version's own publication (`d - head.published_at`),
+so the full violating set needs `current_published_at`, and a scan. The cohort drained is the
+intersection with `current_deadline > now`, which is **the half that causes the visible harm**: those
+are the rows `status=open` matches and that own `sort=deadline&order=desc`. A beyond-horizon deadline
+already in the PAST is still wrong in the `dates` payload but changes no listing, and it is left to
+whatever re-folds those rows next. Sized at 379; not sized for the past half, and that is a gap rather
+than a finding.
+
+### The verification baseline, re-read (head columns, off prod)
+
+The five rows recorded above, read straight from `tenders`:
+
+| tender | before | after | expected |
+| --- | --- | --- | --- |
+| 26 | `1` | **`1`** | unchanged — and it is |
+| 34 | `−100` | **NULL** | value drops (negative sentinel) |
+| 43065 | `6,010,100,611,830,592` | **NULL** | value drops (over ceiling) |
+| 4490098 | `4,970,000,000,000,000,000` | **`5,000,000`** | value drops |
+| 3323836 | deadline `3005-07-06` | **`1118793600` = 2005-06-15** | the real date wins |
+
+**4490098 is the informative one.** It did not go NULL — it fell back to €50,000, which is unit 2's
+"falls back to the best unflagged fact" doing exactly that rather than the easier "elects nothing".
+Tender 26 unchanged at one cent keeps pinning the rule NOT catching that class.
+
+Served behaviour, both "done when" items:
+
+- `?status=open&sort=deadline&order=desc` now tops at **2036-04-30** (3323836 gone). That top is
+  itself within horizon for a notice published in 2026, so the ladder is consistent rather than
+  merely shorter.
+- `?max_value=0` now returns **only zeros** (49, 98, 137, 144, 181, 269). The −1.00 rows are out of
+  the column the bound reads, which is the "unit 4 is subsumed" reasoning holding up in production.
+
+### Correction to this issue's own "done when": there is no `sort=value`
+
+"`sort=value`'s first page is re-read and recorded here" names a sort the API does not have —
+`/v1/tenders?sort=value` returns *"sort must be 'id', 'published_at' or 'deadline'"*. The ordering
+this issue has been talking about throughout is the SQL one its Observed section actually ran
+(`ORDER BY current_value_eur_cents DESC`), reachable to a caller only through `min_value`/`max_value`.
+Worth fixing in the text because "the ordering is topped by publisher errors" reads as a claim about a
+served sort, and it is a claim about a column.
+
+### Re-reading the ordering after the drain found a leg the rule was written to catch and did not
+
+With the over-ceiling rows gone, the top of `ORDER BY current_value_eur_cents DESC` reads:
+
+| cents | major | tenders | title |
+| --- | --- | --- | --- |
+| 10,000,000,000,000 | €100,000,000,000.00 | 2 | "SPS/CT", "Acquisition de prestations…" |
+| **9,999,999,999,999** | **€99,999,999,999.99** | 4 | "Épinal", "Étanchéité"-class municipal work |
+| 9,999,999,999,900 | €99,999,999,999.00 | 2 | — |
+
+The first row is the ceiling itself (`IMPLAUSIBLE_EUR_CENTS` is compared with `<=`), which is expected.
+**The second row is not.** €99,999,999,999.99 is thirteen nines, and `sentinel_amount` walked past it
+because of its `cents % 100 != 0` guard: *"a value with minor units is a figure someone computed, not
+a field maximum someone typed."*
+
+The third row, one cent lower, IS caught by the major-unit leg. So the rule was splitting one publisher
+behaviour in two on whether the form happened to append two decimal places — and the issue's OWN
+evidence for the nines leg cited "Épinal" and "Étanchéité terrasse" at `99,999,999,999`. Same notices,
+one decimal shift away.
+
+**Measured completely rather than sampled.** The repdigit-cents values with ≥9 digits are a finite set
+(90 of them under `i64`), so each is an index seek on `tenders_current_value_eur` — bounded and exact,
+no scan:
+
+| cents | major | tenders | | cents | major | tenders |
+| --- | --- | --- | --- | --- | --- | --- |
+| 999,999,999 | €9,999,999.99 | **33** | | 111,111,111 | €1,111,111.11 | 12 |
+| 9,999,999,999 | €99,999,999.99 | **20** | | 222,222,222 | €2,222,222.22 | 7 |
+| 99,999,999,999 | €999,999,999.99 | **14** | | 333,333,333 | €3,333,333.33 | 26 |
+| 999,999,999,999 | €9,999,999,999.99 | **2** | | 8,888,888,888 | €88,888,888.88 | 11 |
+| 9,999,999,999,999 | €99,999,999,999.99 | **4** | | others (1s–7s) | | 17 |
+
+**Nines: 73 tenders across five widths. Non-nines: 73 across eleven values.**
+
+**The nines are field maxima, and the titles settle it.** All 20 rows at the three highest widths are
+small municipal contracts — *Straßenreinigung in der Stadt Gronau* (street cleaning, population
+~47,000) and *Aquisição de refeições escolares* (one municipality's school meals) at €999,999,999.99;
+*Étanchéité* at €9,999,999,999.99; *Épinal* at €99,999,999,999.99. At €99,999,999.99: road salt, HD
+cycloramas, an **Elsevier subscription**, routine building maintenance.
+
+**And the width ladder is the argument, not the titles alone** — it is the same argument the nines leg
+already rests on ("the counts falling with width, 199 → 36 → 14, are a form maximum's signature").
+The value recurs at nine, ten, eleven, twelve and thirteen nines. A deliberate "must stay under €10 M"
+cap — the one genuine reading of €9,999,999.99, and the weakest case here — would appear at ONE width.
+Five widths is a key held down.
+
+**Nines only, and the asymmetry is deliberate.** Division genuinely produces a repdigit tail:
+€3,333,333.33 (26 tenders) is €10 M / 3 and €1,111,111.11 (12) is €10 M / 9. Those are computed
+figures and stay admitted. Nothing divides to a run of nines. The major-unit leg can afford ANY digit
+(which is how the sweep's PLN 22,222,222,222.00 is caught) precisely because landing on `.00` means the
+figure was rounded, and a rounded figure whose major unit is nine identical digits is not computed.
+
+**€88,888,888.88, 11 tenders, is the one left unresolved.** It is not a clean division either, so it
+may well be a key held down — admitted for want of evidence rather than because it was cleared. Its
+titles were not read, and reading them is the way to move it. Pinned as such by an assertion so the
+gap is visible in the test rather than implicit.
+
+Fixed in `7c8a443`: a nines-at-cent-level leg, the digit walk extracted as `repdigit_len` so both legs
+share it, and the test's last assertion — which was `!sentinel_amount(99_999_999_999)` with the
+comment "someone computed it, not typed a maximum" — inverted with the measurement in its place.
+
+**This is the fourth time on this issue that a rule was decided, deployed, and left inert on standing
+rows**, and it is worth naming as a shape rather than a run of bad luck: 372's `quality` column
+(migration missing), the OTROS gate, 366 unit 1 (drained above), and now this. The remedy is the same
+every time — re-fold the affected class and re-measure it — and the tell is the same: the rule's own
+class still has members when you go looking.
+
+### Still open after this firing
+
+- **The 322-row drain** (249 major-unit repdigits the current rule already refuses but that were never
+  in any cohort drained above, plus the 73 nines-in-cents the fix adds) waits on `7c8a443` reaching
+  the box. **Ordering matters and the issue already learned it:** drain before the deploy and the rows
+  are re-elected under the narrower rule.
+- **The 24,585 exact zeros** stay an open decision. `sentinel_amount` deliberately returns false for
+  zero and Leg A's reasoning for that stands (a planning notice publishes 0).
+- **The detail payload and the head column disagree, and that is unit 3's unfinished half.**
+  `/v1/tenders/3323836` still serves `submission_deadline = "3005-07-06"` while `status` and
+  `sort=deadline` use the elected 2005-06-15; `/v1/tenders/43065` still serves
+  `value {cents: 25756286172000000, currency: PLN}` while its head column is NULL. The read layer's own
+  pick (`read.rs:1435-1443`, `ORDER BY s.utc_seconds DESC LIMIT 1`) was never brought onto the same
+  ladder — "unit 4 is SUBSUMED" reasoned correctly about the BOUNDS, which compare the head column, and
+  that reasoning does not extend to the display pick. Keeping the published figure in the payload is
+  ADR-0004-faithful and may well be right; **serving it in the same field name the filters disagree
+  with is not**, and that is the decision unit 3 still owes.
+- **Non-EUR published sentinels are invisible to the cohort selectors** above, which read the converted
+  head column: a PLN nines-run converts to a non-repdigit EUR figure. The RULE catches them (it reads
+  published cents), so any row re-folded for any reason is fixed; nothing systematically hunts them.
+  Section 10's sweep is the instrument that can see them.
+
