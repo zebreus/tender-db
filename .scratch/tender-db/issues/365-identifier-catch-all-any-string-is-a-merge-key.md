@@ -294,7 +294,16 @@ The corpus agrees, measured 2026-09-09:
 | canonical orgs carrying an `OTROS` mention | 1,654 |
 | carrying ≥2 distinct mention names | **610 (36.9 %)** vs the 14.7 % baseline |
 | most names on one row | **231** |
-| mentions | 127,115 |
+| `OTROS` mentions (`notice_id > 25000000`) | 1,197 |
+
+**Correction (2026-09-09).** This table first reported "mentions 127,115", which was wrong — my
+query joined `organization_mentions` twice (once filtered to the scheme, once not) and the
+`COUNT(*)` counted the CROSS PRODUCT per org, not mentions of anything. The real `OTROS` mention
+count over `notice_id > 25000000` is **1,197**, which agrees exactly with the independent
+scheme-vocabulary census. The org, multi-name and max-name figures are unaffected: they come
+from `COUNT(DISTINCT m2.name)` per org, which the double join does not distort. So the verdict
+stands on the evidence that carried it — 36.9 % multi-name and 231 names on one row — but the
+class is roughly a hundredth the size the bad figure implied.
 
 Matched case-insensitively, since the scheme is stored as published.
 
@@ -324,8 +333,41 @@ denial to apply at **E0** (`canonical.rs:7873`) rather than only at E1/E2. Neith
   the time") is the measurement to build on;
 - the gate above sits at MINT time, so it stops new junk keys but does not re-examine standing
   rows — the `repair-placeholder-orgs` path only consults `idgate::condemns`, which is
-  value-shaped and cannot see a scheme. A standing-row catch-up for scheme-denied rows needs its
-  own pass.
+  value-shaped and cannot see a scheme. That is now unit 6.
+
+## Unit 6 (new) — a scheme-driven cohort re-fold, for the standing rows unit 4 cannot reach
+
+Unit 4's gate refuses a scheme-denied identifier at MINT time. Standing rows keep theirs, and no
+existing path can fix them:
+
+- `repair-placeholder-orgs` walks organizations and asks `idgate::condemns(country, kind, value)`
+  — it never sees a scheme, and the scheme lives on the MENTION rather than the org row, so
+  widening `condemns` is not the fix either;
+- `refold-notices` takes explicit ids and **refuses more than 1,000**, with an error that names
+  the right mechanism: *"a list this long is a cohort, and a cohort wants `refold` or
+  `refold-fields`"*;
+- but `refold` is profile-scoped and `refold-fields` is field-scoped. Neither is scheme-scoped,
+  so the cohort this needs cannot currently be expressed.
+
+**Sized as far as bounded reads allow.** Over `notice_id > 25000000`: **1,095 notices, 1,197
+mentions**, spanning ids 25,003,067 to 31,105,607. The older range is **unmeasured** — the same
+count below 25,000,000 exceeded the 10 s cap, as did the unbounded form, because
+`organization_mentions.scheme` carries no index. So the total is at least 1,095 notices and
+possibly much more.
+
+That unknown is why this was NOT hand-driven as two sub-cap batches this firing: fixing a
+measured fraction of an unmeasured population leaves a state nobody can describe, and the guard's
+own message says a cohort wants a cohort mechanism.
+
+**What to build.** A scheme cohort arm beside `refold`/`refold-fields` — re-queue every notice
+carrying a mention whose scheme the gate denies, batched over `notice_id` (the PK's leading
+column, so it windows cheaply) rather than materialising an id list. Then the existing trailing
+`project rebuild=false` re-derives, exactly as the 365 dissolves and 374's strip did. It wants to
+be scheme-GENERAL rather than `OTROS`-specific, since `ID_PLATAFORMA` and the raw `eu`/`EU`
+scheme may join the denial list once the weekly report sizes them.
+
+Worth noting the shape is reusable: any future gate that keys on something the org row does not
+carry will need this same cohort route.
 
 
 ## Unit 5 DECIDED (2026-09-09, `1b9efc2`) — keep minting, start observing
