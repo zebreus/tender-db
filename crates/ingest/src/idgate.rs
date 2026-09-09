@@ -265,16 +265,38 @@ pub fn hard_scheme(scheme: &str) -> bool {
 /// create a false SPLIT against the standing stock: the repair job
 /// dissolves the stock twins with this same predicate.
 ///
+/// THE STANDARD FOR ADDING A CLASS HERE — read this before wiring the next
+/// one, because it was got wrong once and the wrong version is persuasive.
+///
+/// Measure **per VALUE**: group the published identifier values and count the
+/// distinct organization names published against each. Do NOT measure per ORG
+/// ("orgs that carry a mention of this class"), which is what the `OTROS`
+/// scheme denial used on 2026-09-09 before being reverted the same day. An org
+/// in such a class is usually reached by hundreds of other mentions, so that
+/// statistic attributes a large buyer's whole name spread to whichever class
+/// happens to appear among them — guilt by association. It read as 36.9 %
+/// against a 14.7 % baseline for a class that is in fact BELOW baseline.
+///
+/// The per-value yardstick, prod 2026-09-09 (`notice_id > 30000000`, every
+/// identifier value): **31,161 values, 5.8 % spanning >=2 distinct names,
+/// worst 93.** That 5.8 % is what a candidate has to beat.
+///
+/// | class | values | >=2 names | worst |
+/// | --- | --- | --- | --- |
+/// | baseline | 31,161 | 5.8 % | 93 |
+/// | `phone` (condemned) | 4,245 | **13.1 %** | **254** |
+/// | `OTROS` (reverted) | 887 | 1.8 % | 11 |
+///
 /// `phone` was census-only on the reading in its own field doc — the review
 /// chambers publish a switchboard consistently, so it keys a body more often
-/// than it fuses two. Measured on prod 2026-09-09 over `id <= 3000000`, the
-/// stock says otherwise: of 68 phone-keyed canonical orgs, 47 (69 %) carry
-/// ≥2 distinct mention names and 24 (35 %) carry ≥6, against a corpus
-/// baseline of 14.7 % and 1.1 %, with 264 distinct names on the worst single
-/// row and 154,671 mentions riding those 68 rows. Note WHY the obvious
-/// metric misses this: after a fusion the bad key still holds exactly one
-/// row, so rows-per-distinct-value (the measure that spared the hex class in
-/// issue 312) reads 1.0 and looks clean. Name diversity is what exposes it.
+/// than it fuses two. It does not: 13.1 % of phone-shaped values carry two or
+/// more distinct names, and the worst single value carries **254**. A telephone
+/// number cannot be 254 organizations.
+///
+/// Note WHY the obvious metric misses this: after a fusion the bad key still
+/// holds exactly one org row, so rows-per-distinct-value — the measure that
+/// correctly spared the hex class in issue 312 — reads 1.0 and looks clean.
+/// Names per VALUE is what exposes it.
 pub fn condemns(country: Option<&str>, kind: &str, value: &str) -> bool {
     let c = census(country, Some(kind), value);
     c.lexicon

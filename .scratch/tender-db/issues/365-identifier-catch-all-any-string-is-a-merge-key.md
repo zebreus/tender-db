@@ -335,6 +335,42 @@ denial to apply at **E0** (`canonical.rs:7873`) rather than only at E1/E2. Neith
   rows — the `repair-placeholder-orgs` path only consults `idgate::condemns`, which is
   value-shaped and cannot see a scheme. That is now unit 6.
 
+## The per-VALUE yardstick (2026-09-09) — what every future gate decision should use
+
+The `OTROS` reversal below exposed that this issue had been measuring the wrong thing, so the
+right thing is now measured and recorded here rather than left implicit.
+
+**Measure per VALUE**: group published identifier values, count the distinct organization names
+published against each. Not per ORG — an org in a suspect class is usually reached by hundreds of
+other mentions, so a per-org statistic attributes a large buyer's whole name spread to whichever
+class appears among them.
+
+Baseline, prod 2026-09-09 (`notice_id > 30000000`, every identifier value): **31,161 values,
+1,798 (5.8 %) spanning ≥2 distinct names, worst 93.** That is the number a candidate must beat —
+NOT the 14.7 % quoted earlier on this issue, which belongs to the per-org metric and is not
+comparable.
+
+Both decisions re-checked on this footing:
+
+| class | values | ≥2 names | worst | verdict |
+| --- | --- | --- | --- | --- |
+| baseline | 31,161 | 5.8 % | 93 | — |
+| `phone` | 4,245 | **13.1 %** | **254** | condemn CONFIRMED (2.3× baseline) |
+| `OTROS` | 887 | **1.8 %** | 11 | revert CONFIRMED (0.31× baseline) |
+
+So the phone condemn survives the corrected method with room to spare — a telephone number
+carrying 254 distinct organization names is the switchboard the class was condemned for. And
+`OTROS` is not merely un-elevated but **three times more discriminating than an average
+identifier**, which is a stronger reversal than the comparison to `SPRAWA` first suggested.
+
+Units 1-3 are therefore confirmed, not just argued: they were measured per org, but the suspect
+value there IS the org's own identifier, so the names were attributable — and phone, the largest
+of the three, now checks out per value as well. Only the scheme measure was structurally
+mention-based, because a scheme lives on the mention rather than the org row.
+
+This yardstick is recorded on `idgate::condemns` too, since that is where the next candidate will
+be wired.
+
 ## Unit 4 REVERTED and unit 6 FOUND INEFFECTIVE (2026-09-09) — two corrections
 
 Both are mine, both from the same firing, and the second was already written down in this
