@@ -21,6 +21,21 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
+# Gate the install on the offline tests (issue 373). They need no box and no
+# secret, so there is no reason to skip them — and the bug they exist for was a
+# watchdog that ran green against the real box while structurally unable to see
+# the failures it was watching for. Catching that BEFORE the script reaches
+# /usr/local/bin is the whole point. Set TENDER_SKIP_WATCHDOG_TESTS=1 only to
+# recover a box when the harness itself is what is broken.
+if [ "${TENDER_SKIP_WATCHDOG_TESTS:-0}" != "1" ]; then
+    echo "--- watchdog offline tests ---"
+    if ! bash "$here/test-watchdogs.sh"; then
+        echo "install.sh: watchdog tests FAILED — refusing to install" >&2
+        echo "  (override with TENDER_SKIP_WATCHDOG_TESTS=1 if the harness is the broken part)" >&2
+        exit 1
+    fi
+fi
+
 for s in tender-db-diskwatch.sh tender-db-jobwatch.sh tender-db-driftwatch.sh \
     tender-db-snapshot.sh tender-db-tmpsweep.sh; do
     install -m 0755 -o root -g root "$here/$s" "$bin/$s"
