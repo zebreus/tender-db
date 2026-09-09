@@ -335,7 +335,62 @@ denial to apply at **E0** (`canonical.rs:7873`) rather than only at E1/E2. Neith
   rows — the `repair-placeholder-orgs` path only consults `idgate::condemns`, which is
   value-shaped and cannot see a scheme. That is now unit 6.
 
-## Unit 6 (new) — a scheme-driven cohort re-fold, for the standing rows unit 4 cannot reach
+## Unit 4 REVERTED and unit 6 FOUND INEFFECTIVE (2026-09-09) — two corrections
+
+Both are mine, both from the same firing, and the second was already written down in this
+codebase before I started.
+
+### The `OTROS` denial rested on a mis-scoped measurement
+
+What justified it: "canonical orgs that carry an `OTROS` mention" — 1,654 of them, **610
+(36.9 %)** holding ≥2 distinct mention names against a 14.7 % baseline, worst row **231**. Those
+numbers are real and none of them is about `OTROS`. An org reached by an `OTROS` mention is
+usually reached by hundreds of others, so the statistic attributed a large buyer's entire name
+spread to whichever scheme happened to appear somewhere among its mentions. **Guilt by
+association.**
+
+Scoped to one VALUE and the names published against it, the class declines:
+
+| distinct `OTROS` values (`notice_id > 25000000`) | 887 |
+| spanning ≥2 distinct names | **16 (1.8 %)** |
+| worst value | **11** names |
+
+1.8 % is the same ground as `SPRAWA` (1.8 %) and `ID_UTE_TEMP_PLATAFORMA` (1.2 %), both of which
+I measured and DECLINED by this very standard. And reading the sixteen: **fifteen are real VAT or
+CIF numbers carrying two or three NAME VARIANTS of one company** (`A95758389`, `NL862416000B01`,
+`IT03412740171`, …) — a key doing its job, not fusing. The sixteenth is the literal word `UTE`
+(Spanish for a temporary business consortium) with 11 names, and `UTE` is **already refused by
+the shape filters** — no digit, three characters, verified directly.
+
+So the denial protected nothing and cost the linking value of ~871 working keys. Reverted in
+`67dcdc3`; `DENIED_SCHEMES` is now empty and the bar for adding to it is a per-value measurement.
+
+**Which units this does NOT touch.** Units 1-3 measure name diversity per org where the ORG'S OWN
+IDENTIFIER is the suspect value, so the names are properly attributable. Only the scheme measure
+was mention-based — because a scheme lives on the mention rather than the org row, which is
+exactly the asymmetry that made it easy to get wrong.
+
+### Unit 6's mechanism cannot do what it was built for
+
+`resolve_mentions` keeps an already-recorded `(notice, section)` on its Organization **by
+design**. That is documented verbatim at `Db::repair_nested_org_mentions_batch`, where issue 259
+hit the identical surprise: *"the 2026-08-20 nested-org fix changed what `mentions()` EMITS, but
+`resolve_mentions`' idempotency map keeps an already-recorded (notice, section) on its
+Organization by design — so THE epoch refold re-folded every satellite yet left the pre-fix
+mention layer standing."*
+
+I built a re-fold cohort without finding that, and prod proves it: **two wet runs** (2,641
+notices re-queued, 2,381 tenders stamped, 2,162 projected — once to apply the denial, once to
+revert it) left the mention→org split **byte-identical at 1,076/121**. Both were no-ops. The
+silver lining is that the wrong denial therefore never reached standing rows at all.
+
+What a real catch-up needs is the shape `repair-placeholder-orgs` and the nested-org repair both
+use: **walk the stored mention layer and repoint directly** — which is why their counts say
+"mentions re-resolved", they do that work themselves rather than delegating to a fold. The
+selector built here is correct and tested and is the right input to that; the re-fold is the part
+that cannot work.
+
+## Unit 6 (superseded above) — a scheme-driven cohort re-fold, for the standing rows unit 4 cannot reach
 
 Unit 4's gate refuses a scheme-denied identifier at MINT time. Standing rows keep theirs, and no
 existing path can fix them:

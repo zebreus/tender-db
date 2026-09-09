@@ -487,7 +487,23 @@ enum Spec {
     /// a list you typed): the list is capped, and a list over the cap is refused.
     RefoldNotices { notices: Vec<i64> },
     /// Issue 365 unit 6: re-queue every notice carrying a mention under one of
-    /// `schemes`, so standing rows catch up with the unit-4 gate.
+    /// `schemes`.
+    ///
+    /// **DOES NOT achieve the standing-row catch-up it was built for, and the
+    /// reason was already documented.** `resolve_mentions` keeps an
+    /// already-recorded `(notice, section)` on its Organization BY DESIGN — see
+    /// [`Db::repair_nested_org_mentions_batch`], where issue 259 records the
+    /// identical surprise: "the epoch refold re-folded every satellite yet left
+    /// the pre-fix mention layer standing". So re-queueing and re-folding does
+    /// not re-bind an existing mention, and two wet runs on prod (2026-09-09,
+    /// 2,641 notices, 2,381 tenders stamped, 2,162 projected — twice) left the
+    /// mention→org split byte-identical at 1,076/121.
+    ///
+    /// Kept because the SELECTOR is correct and tested, and a real catch-up needs
+    /// it: what it must feed is a DIRECT repoint of the stored layer, the shape
+    /// `repair-placeholder-orgs` and the nested-org repair both use (their counts
+    /// say "mentions re-resolved" because they do that work themselves). Re-fold
+    /// alone is the one thing that cannot work here.
     /// `dry_run` counts and writes nothing (the org-mutating convention).
     ///
     /// The list is a PARAMETER rather than a read of `DENIED_SCHEMES`, because
