@@ -552,8 +552,16 @@ rates and the quarantine resolution ledger.</p>
   with more than two fraction digits (real practice: unit-price mills, float artifacts)
   is rounded half-away-from-zero to the cent &mdash; error &le; half a cent; the archived
   notice keeps the original lexical value.</li>
-  <li><strong>Negative amounts are source-published</strong>, kept as published. A known
-  shape is the <code>-1.00</code> publisher sentinel.</li>
+  <li><strong>Negative amounts are source-published</strong>, kept as published, and they
+  are not one thing. About 15,500 are exactly <code>-1.00</code>, the eForms SDK's marker
+  for a figure the buyer withheld. A much smaller set carries ordinary magnitudes
+  (&minus;&euro;151m on a Troms&oslash; bank agreement, &minus;&euro;28m on waste
+  treatment, scrap metal, waste paper, land leasing) and reads as
+  <strong>revenue-side</strong>: the supplier pays the authority, and the minus sign is the
+  publisher saying so in a field with no sign convention. These are ordinary award notices
+  &mdash; subtypes 29 and 30, no concession marker &mdash; so nothing but the sign and the
+  subject matter distinguishes them, and this API does not model a direction (issue 376).
+  A negative <code>value</code> is therefore a figure to read, not a defect to discard.</li>
   <li><strong>Zero often means &ldquo;no value given&rdquo;</strong>, not a free tender:
   measured at 2.7&ndash;8.9% of EUR amounts depending on era. Filter zeros out of
   aggregates unless you specifically want them.</li>
@@ -574,7 +582,8 @@ rates and the quarantine resolution ledger.</p>
   181.5 million.</li>
   <li><strong>But <code>min_value</code>/<code>max_value</code> do not compare
   that figure.</strong> They compare a derived EUR column that skips three
-  classes: negative amounts (the SDK's withheld marker, ~15,500 rows), a run of
+  classes: negative amounts (mostly the SDK's withheld marker, ~15,500 rows &mdash;
+  but see above, a few are revenue-side contracts and this bound loses them too), a run of
   nine or more identical digits, which is a form-width maximum rather than a
   figure (&euro;999,999,999.99 on street cleaning in a town of 47,000), and
   anything above &euro;100bn EUR-equivalent. Two consequences worth planning
