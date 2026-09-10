@@ -9,8 +9,10 @@ successor is built — `rederive-eur` now reports the tenders whose value actual
 exactly those epoch-stale, so the FOLD re-elects them on the next `project`. The last divergent
 writer is DELETED and the writer count is pinned by a test — `current_value_eur_cents` and
 `current_deadline` now have exactly two writers, the fold's own election and the deadline backfill
-that transcribes the horizon faithfully.** Every unit and every "Done when" is met; what remains is
-one live-run observation, below. Was: ready-for-agent (filed 2026-09-10 by the owner while landing 366 unit 3; found by reading
+that transcribes the horizon faithfully. THE LIVE RUN IS DONE TOO (job 1001): 0 of 267,401,093 money
+rows changed, 0 tenders stamped — the wiring works, the no-op case does not stamp the corpus, and the
+daily rate reload is confirmed not to move `eur_cents`.** Every unit, every "Done when" and the live
+observation are met. **Nothing is open.** Was: ready-for-agent (filed 2026-09-10 by the owner while landing 366 unit 3; found by reading
 the third implementation rather than by a failure, and it had no test that could catch it)
 Kind: defect (corpus regression on a routine maintenance path — not latent, see the escalation below)
 Relates to: 366 (the election these two disagree with, and the drain they would undo), 343 (the same
@@ -292,4 +294,42 @@ is worth knowing the next time that trade-off comes up.
 This run verifies the deadline half. The unit-3 successor — `rederive-eur` reporting changed tenders
 and stamping them epoch-stale — has still not executed against real data, and that gap stands exactly
 as recorded above. `backfill-deadlines` exercises none of that path.
+
+## The live run happened (job 1001, 2026-09-10) — and it is a clean measured negative
+
+The one thing left open above was that `rederive-eur`'s new successor had never executed against real
+data. It has now, over the whole corpus:
+
+```
+rederive-eur ok, 646 s: eur_cents re-derived from 277,358 cached rates over 7,942,759 tenders:
+0 of 267,401,093 money rows changed, 0 tender(s) stamped epoch-stale for the fold to re-elect
+their head value (issue 375) — run `project` to apply
+```
+
+Three things this settles:
+
+1. **The wiring works end to end.** The changed-tender count is computed, reported in the job's own
+   completion message, and reached the stamping call. It was previously only tested on fixtures.
+2. **The no-op case behaves.** Zero rows moved, so zero tenders were stamped — the corpus was NOT
+   marked stale. That is the property `currency_rates.rs`' idempotence assertion pins in a unit test,
+   confirmed here at 267 M rows. A walk that stamped on every run would have triggered a full re-fold
+   each time and quietly reintroduced the cost this unit exists to avoid.
+3. **It answers a question that prompted the run.** `fetch-rates` upserts ~220,629 rows every morning
+   into a 277,358-row table — most of the history, daily, with REPLACE semantics. The obvious worry is
+   that a revised historical rate would leave `eur_cents` silently stale corpus-wide with nothing
+   re-deriving it. **It does not: zero of 267 M money rows changed.** The daily reload is idempotent
+   in effect, and the derived layer is not drifting.
+
+### Cost intuition was wrong AGAIN, in the same direction
+
+The previous firing declined to run this because it "walks the whole corpus … would hold the queue
+for hours". **It took 646 s.** That is the second time in two days a full-corpus walk was assumed
+expensive and measured cheap — `backfill-deadlines` was the first, at 111 s for 7.9 M tenders after
+the same reasoning.
+
+Worth stating as a correction rather than a coincidence: **on this box, a single-pass walk over the
+tenders table or the four money loci is minutes, not hours.** The expensive thing is the FOLD
+(issue 179's 6 h 02 m for a 2.69 M-notice cohort), because it re-derives; a scan that reads and
+compares is a different order entirely. Estimates on this issue and on 366 repeatedly conflated the
+two, and both times the conflation argued against taking a measurement that turned out to be cheap.
 
