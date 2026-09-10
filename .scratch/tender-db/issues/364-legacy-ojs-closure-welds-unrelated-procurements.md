@@ -320,3 +320,14 @@ The daily incremental relabels a legacy component only when it touches one (and 
 a legacy delta expands to its whole OJS component before grouping); everything else waits for unit 5's
 rebuild. So expect the ≥50-buyer band to move in steps, not at once.
 
+## Pending on the box (2026-09-10 ~14:00 CEST)
+
+- **Deployed:** `1fd72fa` — the gauge (section 12). The representative rule (`2c05c8d`, tightened by
+  `353431a`) and the timing correction (`bbed912`) are pushed but **not deployed**: the weekly
+  `data-quality` job (1003) started at ~13:05 and runs ~4 h (32 windows at ~460 s each, historically
+  416–493 s, so this run is normal). A deploy restarts the service and re-runs the job from the top,
+  which would throw away hours — wait for it.
+- **Then:** deploy, and read section 12's first real numbers out of the stored report. The weld
+  queries run in the whole-corpus phase at the END of the job, so nothing about their cost is known
+  until it lands; that is what the doc comment now says instead of borrowing job 816's figure.
+
