@@ -109,8 +109,16 @@ statutaires". €100 bn for a roof is not a magnitude error, it is the widest nu
 
 **Leg A — `sentinel`, by exact value.** Flag, exclude from the head columns and from the value bounds,
 keep the published row:
-1. **any negative amount.** No procurement has a negative value; −1.00 alone is 15,529 rows and is a
-   documented publisher convention for "not stated".
+1. **any negative amount.** −1.00 alone is 15,529 rows. **The reason given here has now failed TWICE
+   and the current wording is the third attempt** — see "Correction to Leg A's reasoning" below for
+   the first (it is the SDK's withheld marker, not a convention) and **issue 376 for the second: "No
+   procurement has a negative value" is simply false.** Waste sold for processing, scrap metal, land
+   leases and bank agreements are revenue-side contracts where the supplier pays the authority, and
+   the corpus holds them — a NOK 151 M Tromsø bank agreement among them. The DISPOSITION stands, and
+   for a better reason: this column means *what the buyer pays*, and a revenue contract is not that.
+   Excluding it because the column's domain is expenditure is defensible; excluding it because "no
+   procurement has a negative value" is not, and the difference decides whether the fix is a filter
+   or a field.
 2. **an all-9s run of ≥9 digits in the major unit** (999999999, 9999999999, 99999999999, …) — 249 rows,
    evidenced above as a field-width maximum rather than a figure.
 

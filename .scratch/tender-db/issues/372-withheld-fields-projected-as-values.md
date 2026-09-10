@@ -503,6 +503,15 @@ Split by field because they are plainly not one thing:
 Until read, these stay OUT of the withheld disposition. Section 11 makes the residue a standing number,
 so it is visible if it grows.
 
+**READ 2026-09-10, and the framing above is wrong — see issue 376.** All 118 were pulled rather than
+sampled. Only **43 are −1.00**; **75 are other magnitudes across 57 distinct values**, and the large
+ones sit on waste sale, scrap metal, residual-waste delivery, land leasing and bank agreements. They
+are **revenue-side contracts**, where the supplier pays the authority, and the minus sign is the
+publisher saying so in a field with no sign convention. Calling the residue "publisher-invented
+sentinels" was a guess from the −1.00 half generalised to the rest — the same guess-confirming
+method issue 366 caught itself using. The unit's own split BY FIELD hid it: field says nothing about
+magnitude, and magnitude is what separates the three causes.
+
 ## Unit 5 DONE (2026-09-08): the `estimated_value` residue is a publisher-invented sentinel, not a marker
 
 **Located, bounded.** 16 windowed probes over `tender_id` (500,000 wide, `cents = -100 AND field =
