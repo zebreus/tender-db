@@ -6,8 +6,11 @@ message instructed it too, so a routine rates correction would have reverted iss
 corpus-wide.** The chain is cut, `backfill-values` refuses with the reason, `backfill-deadlines` is
 repaired (it was the transcribable half), and the discriminating test exists. **UNIT 3 DONE too: the
 successor is built — `rederive-eur` now reports the tenders whose value actually moved and stamps
-exactly those epoch-stale, so the FOLD re-elects them on the next `project`.** All four units done;
-what remains is a live-run observation, below. Was: ready-for-agent (filed 2026-09-10 by the owner while landing 366 unit 3; found by reading
+exactly those epoch-stale, so the FOLD re-elects them on the next `project`. The last divergent
+writer is DELETED and the writer count is pinned by a test — `current_value_eur_cents` and
+`current_deadline` now have exactly two writers, the fold's own election and the deadline backfill
+that transcribes the horizon faithfully.** Every unit and every "Done when" is met; what remains is
+one live-run observation, below. Was: ready-for-agent (filed 2026-09-10 by the owner while landing 366 unit 3; found by reading
 the third implementation rather than by a failure, and it had no test that could catch it)
 Kind: defect (corpus regression on a routine maintenance path — not latent, see the escalation below)
 Relates to: 366 (the election these two disagree with, and the drain they would undo), 343 (the same
@@ -207,3 +210,46 @@ It is safe to run — the failure mode it replaced was silent corruption, and th
 stamping too few — but the first live run should be read for two things: the ratio of stamped tenders
 to `updated` rows (expected far below 1, since a tender carries several money rows), and whether the
 following `project` actually clears them. Recorded here rather than assumed.
+
+## The audit "Done when" asked for, and the last writer (2026-09-10)
+
+*"No code path writes `current_deadline` or `current_value_eur_cents` with a rule that differs from
+`head_deadline`/`head_value_eur_cents`."* Checked by grepping every assignment, and it was not yet
+true: **`backfill_current_value_eur` had only been blocked at the JOB level**, so the method remained
+a divergent writer and `lots_filter_fixture.rs` was still calling it.
+
+Deleted. Both reasons for keeping it had expired without being revisited:
+
+- *"`rederive-eur` still needs a successor and that successor wants this batching structure"* — the
+  successor was then built and does not use it at all. It stamps epoch-stale instead.
+- *"it can be repaired later"* — it cannot, for the digit-walk reason recorded above, and that was
+  known when it was kept.
+
+Worth naming as a habit: **a thing kept "for now" needs its reason re-read when the work that
+justified it lands**, or it survives on a justification that has quietly stopped being true. That is
+the same failure as the two doc comments this issue opened with.
+
+The job KIND stays, refusal only, so an operator who enqueues `backfill-values` gets the explanation
+rather than "unknown job kind" — the error is the useful artefact.
+
+**The fixture's comment was its own small version of the same thing.** It said it used the real walk
+because the fixture "needs it stamped exactly the way prod stamps it", which had already stopped
+being true when the fold grew filters. It now computes the column inline, and the comment records the
+property that makes that honest rather than a shortcut: its amounts are 10,000, 500,000 and
+999,999,900 cents — no sentinel, nothing over the ceiling, and 9,999,999 is seven identical digits
+where the rule needs nine — so the filtered and unfiltered rules agree on that data. If a value there
+ever grows into one of those classes, the comment is the warning that it must move to the fold.
+
+### The pin, and why counting is the only way to check this
+
+`the_head_columns_have_exactly_one_writer_that_decides_them` reads the four source files and counts
+assignments to either column. Two are expected: the fold's write, and the deadline backfill.
+
+Counting is not a stylistic choice. **Each of the six writers this issue dealt with was internally
+self-consistent** — the read pick, the two backfills, the fold — and every one would have passed a
+unit test of itself. The defect existed only BETWEEN them, and appeared only when one changed. There
+is no test of a single writer that could have caught it, which is exactly why it survived `aa732c5`,
+the drain, and two rounds of reading the code.
+
+Verified against its own negative: adding a fourth writer fails the test and names its file and line.
+
