@@ -1406,11 +1406,12 @@ pub const DEADLINE_HORIZON_SECS: i64 = 10 * 365 * 86_400;
 ///   than a figure. Reading the €10–100 bn band top-down confirms it: it is
 ///   dominated by 99,999,999,999 sitting on roof waterproofing, off-road diesel
 ///   and statutory-risk insurance.
-/// - **A run of at least nine nines in the CENTS**, decimal point included
-///   (999999999 → €9,999,999.99, up to 9999999999999 → €99,999,999,999.99): 73
-///   Tenders across five widths. The same publisher behaviour as the leg above,
-///   split from it only by whether the form appended two decimal places — see
-///   the body for the ladder that settles it and for why this leg is nines-only.
+/// - **A run of at least nine identical digits in the CENTS**, decimal point
+///   included (999999999 → €9,999,999.99; 333333333 → €3,333,333.33): 73 Tenders
+///   on the nines across five widths, 75 more on the other digits. The same
+///   publisher behaviour as the leg above, split from it only by whether the form
+///   appended two decimal places. The body carries the width ladder that settles
+///   the nines and the buyer-diversity measurement that settles the rest.
 ///
 /// **Round powers of ten are deliberately NOT sentinels** (1e9 on 56 Tenders,
 /// 1e10 on 12, 1e11 on 2). A €1 bn framework is a real thing; flagging round
@@ -1439,13 +1440,43 @@ pub fn sentinel_amount(cents: i64) -> bool {
     // Their titles read road salt, an Elsevier subscription and routine building
     // maintenance, none of them a €100 M procurement.
     //
-    // NINES ONLY here, unlike the major-unit test, and the asymmetry is the point:
-    // division genuinely produces a repdigit tail, so €3,333,333.33 (26 Tenders)
-    // is €10 M / 3 and €1,111,111.11 (12) is €10 M / 9 — computed figures, and
-    // they stay admitted. Nothing divides to a run of nines. The major unit can
-    // afford ANY digit because landing on `.00` means the figure was rounded, and
-    // a rounded figure whose major unit is nine identical digits is not computed.
-    if cents % 10 == 9 && repdigit_len(cents) >= 9 {
+    // ANY digit, not only nines — and this leg was NINES ONLY until 2026-09-10,
+    // on the reasoning that "division genuinely produces a repdigit tail, so
+    // €3,333,333.33 is €10 M / 3 and €1,111,111.11 is €10 M / 9 — computed
+    // figures". **Measuring the carriers refutes that**, and the measurement is
+    // one query that should have been run before the asymmetry was written:
+    //
+    //   value              tenders   DISTINCT BUYERS
+    //   €3,333,333.33         26          17
+    //   €2,222,222.22          7           7
+    //   €1,111,111.11         12          10
+    //   €88,888,888.88        13           1
+    //
+    // Seventeen unrelated buyers do not each divide their own budget by three and
+    // land on the identical cent. **One exact value shared across unrelated
+    // buyers and unrelated subjects is a TYPED constant, not a computed one** —
+    // which is the repdigit rule's original argument, and it never depended on
+    // which key was held down.
+    //
+    // The titles settle it the same way the nines did. €88,888,888.88 sits on
+    // thermal clothing, street sweeping, snow clearing on a département's roads,
+    // and home visits to childminders — all one buyer, so that one is a local
+    // habit rather than a form maximum, but no more a real €88 M procurement for
+    // that. €3,333,333.33 spans road signage, street-lighting maintenance, a
+    // family magazine's distribution, meal vouchers and school cleaning, across
+    // seventeen buyers.
+    //
+    // The `.99` half of this leg was found first (issue 366, 2026-09-09): the
+    // major-unit test used to be guarded by `cents % 100 != 0` on the reasoning
+    // that "a value with minor units is a figure someone computed", and 20
+    // standing Tenders refuted it — €999,999,999.99 on street cleaning in Gronau
+    // (population ~47,000) and on one Portuguese municipality's school meals,
+    // €9,999,999,999.99 on "Étanchéité" (roof waterproofing), €99,999,999,999.99
+    // on "Épinal". Those are the SAME notices the nines leg was written for, one
+    // decimal shift away, and the width ladder settles it: the value recurs at
+    // nine nines (33 Tenders), ten (20), eleven (14), twelve (2) and thirteen (4),
+    // where a deliberate "must stay under €10 M" cap would appear at ONE width.
+    if repdigit_len(cents) >= 9 {
         return true;
     }
     // The sentinel otherwise lives in the major unit; minor units that are not
@@ -21266,16 +21297,23 @@ mod tests {
             sentinel_amount(9_999_999_999_999),
             "€99,999,999,999.99 — 4, one of them \"Épinal\""
         );
-        // Nines only at the cent level: division produces a repdigit tail, so
-        // these are computed figures and stay admitted. €3,333,333.33 is €10 M / 3
-        // (26 Tenders) and €1,111,111.11 is €10 M / 9 (12).
-        assert!(!sentinel_amount(333_333_333), "€3,333,333.33 — €10 M / 3");
-        assert!(!sentinel_amount(111_111_111), "€1,111,111.11 — €10 M / 9");
-        // €88,888,888.88 (11 Tenders) is the least settled of these: it is not a
-        // clean division either, so it may well be a key held down. Admitted for
-        // want of evidence rather than because it was cleared — the titles were
-        // not read, and reading them is the way to move it.
-        assert!(!sentinel_amount(8_888_888_888), "€88,888,888.88 — unmeasured");
+        // ANY digit at the cent level too, since 2026-09-10. These three were
+        // asserted NOT sentinels until the carriers were measured: €3,333,333.33
+        // is carried by 26 Tenders across SEVENTEEN distinct buyers, and
+        // seventeen buyers do not each divide their own budget by three and land
+        // on the identical cent. The old comment here read "€10 M / 3 — computed
+        // figures, and they stay admitted", which was a hypothesis stated as a
+        // finding.
+        assert!(sentinel_amount(333_333_333), "€3,333,333.33 — 26 Tenders, 17 buyers");
+        assert!(sentinel_amount(111_111_111), "€1,111,111.11 — 12 Tenders, 10 buyers");
+        assert!(sentinel_amount(222_222_222), "€2,222,222.22 — 7 Tenders, 7 buyers");
+        // 13 Tenders, all ONE buyer — a local habit rather than a form maximum,
+        // and no more a real €88 M procurement for it: thermal clothing, street
+        // sweeping, snow clearing, home visits to childminders.
+        assert!(sentinel_amount(8_888_888_888), "€88,888,888.88 — 13 Tenders, 1 buyer");
+        // Eight identical digits is still admitted: the WIDTH threshold is what
+        // this change did not touch.
+        assert!(!sentinel_amount(11_111_111), "€111,111.11 — eight ones");
         // The width threshold is the same on both legs: eight nines is admitted.
         assert!(!sentinel_amount(99_999_999), "€999,999.99 — eight nines");
     }
