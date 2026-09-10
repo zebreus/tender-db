@@ -548,3 +548,28 @@ projection immediately after folded only its 241, so nothing ran away. But it me
 re-parse, however small, ages the whole r209 era**, and that is worth knowing before someone runs a
 one-package probe expecting a one-package blast radius.
 
+## What a `reparse` package actually costs (2026-09-10) — sized wrong by 150x
+
+The 2-package pilot re-parsed **283** notices in **55 s**, and I sized a 20-package run from it at
+~2,800 notices and ~9 minutes. The real 20-package run is at **817,967 notices and 92 minutes**, and
+still going.
+
+**The first two packages are not packages of r209 notices.** They walked 128,234 archive members and
+matched 283 — so they are overwhelmingly other content, and their per-package cost says nothing about
+the era. Packages further in are r209-dense.
+
+| | notices | wall |
+| --- | --- | --- |
+| packages 1–2 | 283 | 55 s |
+| packages 1–20 | **817,967** (at pkg 19/20) | **92 min** |
+| r209 era, extrapolated (103 packages) | ~4.5 M | **~8 h** |
+
+**So the era-wide re-parse is an overnight job, not an afternoon one.** That is the number to plan
+unit 5 with, and it is worth having before someone enqueues 103 packages expecting the 47 minutes a
+55-second sample implies.
+
+*Recorded because it is the third time in one day that a small sample misled about scale here* — the
+weld gauge's `>= 50` threshold, the `/v1/sql` window width, and now this. In all three the sample was
+not merely small, it was **drawn from the cheap end**: the first packages, the first window, the
+easiest rows. A sample taken from the front of an ordered corpus is not a random sample of it.
+
