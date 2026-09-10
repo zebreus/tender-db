@@ -1,6 +1,8 @@
 # 376 — a negative amount is not always junk: revenue-side contracts publish one, and we drop the value entirely
 
-Status: ready-for-agent — UNIT 1 DONE 2026-09-10 (both stated reasons corrected: 366 Leg A now
+Status: ready-for-agent — UNITS 1 AND 2 DONE 2026-09-10 (unit 2: no modelled direction, because the
+field could not be populated honestly — see the decision at the end, with the three things that reopen
+it). Units 3 (the 17 sub-€10k negatives, needs a gated archive read) and 4 remain. Unit 1 DONE (both stated reasons corrected: 366 Leg A now
 rests on the column's domain rather than on "no procurement has a negative value", and 372's unit 5
 heading is scoped to the 29 rows at −100 it actually measured). Units 2, 3, 4 remain.
 Was: needs-triage (filed 2026-09-10 by the owner while hand-reading issue 372's residue; the
@@ -108,3 +110,63 @@ both mis-read them is the same — the sign was treated as a defect signal rathe
 *Not done here:* no archive member was read. Every claim above is from the canonical layer and the
 notice metadata, so "the publisher meant revenue" is a well-supported reading of the subject matter,
 not a confirmed reading of the source XML.
+
+## Unit 2 DECIDED (2026-09-10, owner): no modelled direction — option (a), and the reason is populability
+
+The issue framed this as "is direction worth modelling". That is the wrong question, and asking it that
+way is what makes option (c) look like the principled choice. The right question is **whether a
+`direction` field could be populated honestly**, and the evidence already on this issue says no.
+
+**The sign is the only signal, and publishers are not required to use it.** The six largest revenue
+contracts are ordinary award notices — eForms subtypes 29 and 30, no concession subtype, no schema-level
+marker. So the only thing separating a revenue contract from a spend contract is that *this* publisher
+chose to write a minus. Nothing obliges the next one to. A Danish authority publishing a bank agreement
+as `2000000000` positive is indistinguishable, in this corpus, from a Danish authority spending the same
+sum.
+
+**So a field populated from the sign would be systematically incomplete in an unmeasurable way.** Every
+row would get `direction`, but only ~75 would get it from evidence; the rest would get `expenditure` from
+a default. A consumer reading `direction: expenditure` cannot tell those apart, and would reasonably read
+it as a published fact. **That is worse than having no field**: an absent column is honestly absent,
+while a defaulted one manufactures a fact out of a publisher's silence. It is the same failure as the
+head column electing a MAX over unflagged facts (issue 366) — a derived value that looks like a
+measurement.
+
+**And the population is unmeasured in the direction that matters.** We know 75 rows carry a negative and
+read as revenue. We have no idea how many revenue contracts carry a POSITIVE figure, and no instrument
+that could find them: no marker, no subtype, no field. Sizing the class the field would serve is not
+merely undone, it is not currently possible. Building a model of a population you cannot size is how you
+get a rule calibrated on one era (this issue's own sibling failure — 364's `Procedure-Buyer`-only
+calibration).
+
+**What is done instead, and it is not nothing:**
+
+- The published figure is already served. `/v1/tenders/{id}` serialises every amount fact verbatim,
+  sign included (`crates/app/src/v1/json.rs`, `detail`), so a consumer who cares can see it. ADR-0004
+  earns its keep here.
+- The API caveats now SAY this rather than calling every negative a withheld marker, which is what they
+  said until today. Two places were wrong in the user-facing direction: the amounts caveat called
+  `-1.00` a "publisher sentinel" (it is the SDK's withheld marker, issue 372) and said nothing else, and
+  the `min_value`/`max_value` caveat glossed the whole negative class as "the SDK's withheld marker,
+  ~15,500 rows". A reader following those would have discarded the Tromsø bank agreement as junk.
+- `current_value_eur_cents` keeps excluding negatives, on 366 Leg A's corrected reason: the column's
+  domain is **what the buyer pays**, and a revenue contract is not that. That is a statement about the
+  column, not about the row.
+
+**What would reopen this.** Any of these, and the third is the one to watch:
+
+1. A source that publishes a direction, a concession/revenue subtype, or a signed-amount convention we
+   could read as a fact rather than infer. The GB FTS arm (issue 342) is the nearest candidate corpus
+   with a different schema.
+2. Evidence that the negative sign is *reliable* — e.g. an archive read showing publishers who use it do
+   so consistently across their notices. That would not fix the positive-published class, but it would
+   turn the 75 from a reading into a fact.
+3. **The class growing.** 75 rows is a rounding error against 267M money rows; the decision is partly a
+   size judgement, and size judgements expire. The weekly report's section 11 already carries the
+   undeclared-negative residue as a standing number, so growth is visible without anyone remembering to
+   look.
+
+*Not decided here:* unit 3's 17 sub-€10k negatives on ordinary service contracts. Those do not fit the
+revenue reading and are still unexplained; they need the gated archive-member read that 366 unit 5 also
+wants, and they may turn out to be sign errors rather than either class.
+
