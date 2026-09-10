@@ -808,9 +808,23 @@ pub fn sentinel_amounts_sql() -> String {
 ///
 /// **Three is an UPPER bound on welds, not a count of them** — joint procurement
 /// is legal and real. Measured corpus-wide 2026-09-10: 102,840 tenders at ≥3,
-/// 32,497 at ≥5, 13,297 at ≥10, **1,326 at ≥50**. The listing opens on the last
-/// of those, because no joint procurement has fifty buyers and org duplication
-/// does not multiply by fifty.
+/// 32,497 at ≥5, 13,297 at ≥10, **1,326 at ≥50**. Two instruments agree on those
+/// four numbers exactly — a windowed `/v1/sql` census and this whole-corpus query —
+/// which is worth more than either alone.
+///
+/// **NO THRESHOLD SEPARATES A WELD FROM A JOINT PROCUREMENT, and the first run of
+/// this section proved it.** The sentence that stood here said the listing opens at
+/// ≥50 "because no joint procurement has fifty buyers". That is false. Tender 331647
+/// carries **505 buyers on ONE version** and is titled `Skupno javno naročilo` —
+/// Slovenian for joint public procurement — and several more of the top 40 are the
+/// same country's joint fuel-purchasing notices. The claim was an assertion dressed
+/// as a calibration, it shipped, and the first data it met refuted it.
+///
+/// What separates them is not the count but the SHAPE: a joint procurement names all
+/// its buyers in one notice, a weld accumulates them across versions. The report
+/// renders buyers-per-version as a hint (331647 scores 505.0; tender 2816628, the weld
+/// issue 364 was filed about, scores 0.04 over 2,983 versions). The honest test is the
+/// widest SINGLE version, which needs a second grouped pass nobody has paid for.
 pub const WELD_MIN_BUYERS: i64 = 3;
 
 /// Bands the summary reports, so one number cannot hide the shape.
@@ -2468,14 +2482,27 @@ pub fn render_text(report: &Report) -> String {
             .map(|(n, c)| format!(">= {n}: {}", group(*c)))
             .collect();
         let _ = writeln!(out, "  Tenders by DISTINCT buyer organizations — {}", bands.join("   "));
-        let _ = writeln!(out, "  {:<12} {:>8} {:>10}", "tender", "buyers", "versions");
+        let _ = writeln!(
+            out,
+            "  {:<12} {:>8} {:>10} {:>9}",
+            "tender", "buyers", "versions", "per-ver"
+        );
         for row in &report.weld_candidates {
+            // Derived here rather than in SQL: both numbers are already on the row, so
+            // the discriminator costs nothing. A zero version count cannot happen (a
+            // buyer row implies a version) but is not worth a panic in a report.
+            let per_version = if row.versions == 0 {
+                "—".to_owned()
+            } else {
+                format!("{:.1}", row.buyers as f64 / row.versions as f64)
+            };
             let _ = writeln!(
                 out,
-                "  {:<12} {:>8} {:>10}",
+                "  {:<12} {:>8} {:>10} {:>9}",
                 row.tender_id,
                 group(row.buyers),
-                group(row.versions)
+                group(row.versions),
+                per_version
             );
         }
         if report.weld_candidates.len() >= WELD_LISTING_CAP {
@@ -2486,16 +2513,26 @@ pub fn render_text(report: &Report) -> String {
         }
         let _ = writeln!(
             out,
-            "  A Tender is ONE procurement, so many buyers means unrelated procurements were \
-             fused — the legacy OJS closure (364) or an unchecked procedure key (369). Both \
-             look identical here, which is why one detector serves both. Read the bands, not \
-             just the listing: >= {} is an UPPER bound, since joint procurement is legal and \
-             the org layer's own duplication can render one authority as two rows, while >= 50 \
-             is where the reading is safe — no joint procurement has fifty buyers. Counted over \
-             ALL versions and over BOTH buyer roles (`buyer` for the legacy era, \
-             `Procedure-Buyer` for eForms): tender 2816628 carries 127 buyers under the former \
-             and none under the latter, so a one-vocabulary gauge reads green on the very weld \
-             issue 364 was filed about.",
+            "  Many buyers on one Tender means EITHER unrelated procurements were fused — the \
+             legacy OJS closure (364) or an unchecked procedure key (369) — OR a genuine joint \
+             procurement. **The buyer count alone does NOT tell them apart, at any threshold.** \
+             The first run of this section (2026-09-10) refuted the claim that stood here: \
+             tender 331647 carries 505 buyers on ONE version, and its title reads `Skupno javno \
+             naročilo` — Slovenian for joint public procurement. Several more of the top 40 are \
+             the same Slovenian joint fuel-purchasing notices. So >= 50 is NOT a safe reading, \
+             and neither is >= 500.\n  \
+             Read the `per-ver` column instead: it is buyers divided by versions, and it \
+             separates the two shapes at a glance. A joint procurement names all its buyers in \
+             ONE notice, so per-ver is close to the buyer count (331647: 505.0). A weld \
+             accumulates buyers ACROSS versions, so per-ver is small — tender 2816628, the weld \
+             issue 364 was filed about, is 127 buyers over 2,983 versions (0.04). It is a HINT, \
+             not a test: a weld whose versions each named many buyers would score high too. The \
+             honest discriminator is the widest SINGLE version, which is a second pass nobody \
+             has paid for yet (issue 364).\n  \
+             Counted over ALL versions and over BOTH buyer roles (`buyer` for the legacy era, \
+             `Procedure-Buyer` for eForms): 2816628 carries its 127 under the former and none \
+             under the latter, so a one-vocabulary gauge reads green on it. Bands open at >= {}."
+            ,
             WELD_MIN_BUYERS
         );
     }
@@ -3232,6 +3269,37 @@ mod tests {
             assert!(sql.contains("p.role IN"), "roles must be restricted: {sql}");
             assert!(!sql.contains("Tenderer"), "{sql}");
         }
+    }
+
+    /// Issue 364, from the first live run: the section must not tell a reader that any
+    /// buyer count is a safe weld verdict.
+    ///
+    /// It used to. "No joint procurement has fifty buyers" shipped in the render, and
+    /// the first report it produced listed tender 331647 with 505 buyers on ONE version
+    /// under the title `Skupno javno naročilo` — Slovenian for joint public procurement.
+    /// This pins the correction so the assertion cannot creep back as a tidier sentence.
+    #[test]
+    fn the_weld_section_claims_no_safe_threshold() {
+        let mut ran = sentinel_scaffold();
+        put(
+            &mut ran,
+            "weld_candidates",
+            Some(vec![vec![json!(331_647), json!(505), json!(1)]]),
+        );
+        put(&mut ran, "weld_bands", Some(vec![vec![json!(2), json!(1), json!(1), json!(1)]]));
+        let text = render_text(&assemble("x", &Raw::from_labelled(ran).expect("raw")));
+        assert!(
+            !text.contains("no joint procurement has fifty buyers"),
+            "the refuted claim must not return:\n{text}"
+        );
+        assert!(
+            text.contains("does NOT tell them apart"),
+            "the section must say the count alone cannot decide:\n{text}"
+        );
+        // And the discriminator must be rendered, not merely described: 505 over one
+        // version is 505.0, which is what marks it as joint rather than welded.
+        assert!(text.contains("505.0"), "the per-version hint must render:\n{text}");
+        assert!(text.contains("per-ver"), "the column must be labelled:\n{text}");
     }
 
     /// The lowest band and the query's floor are ONE number wearing two names, and
