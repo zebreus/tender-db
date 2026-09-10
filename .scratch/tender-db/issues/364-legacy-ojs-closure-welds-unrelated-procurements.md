@@ -573,3 +573,31 @@ weld gauge's `>= 50` threshold, the `/v1/sql` window width, and now this. In all
 not merely small, it was **drawn from the cheap end**: the first packages, the first window, the
 easiest rows. A sample taken from the front of an ordered corpus is not a random sample of it.
 
+## A legacy re-parse over 500,000 notices forces a FULL corpus re-projection
+
+The 20-package run finished at **879,331 notices in 5,693 s (95 min)**. The projection behind it did
+not run incrementally:
+
+```
+[project] INCREMENTAL → FULL fallback BEFORE identity pass: 879331 un-projected legacy notices
+          exceed the closure cap (500000) (issue 305); re-projecting the whole corpus
+```
+
+**That is the planning fact unit 5 actually needs**, and it is not in this issue anywhere. The legacy
+closure's scoped-incremental path has a cap of **500,000** un-projected legacy notices; above it, the
+run re-projects all 14.4 M notices. So the era-wide re-parse is not "8 hours of re-parsing" — it is
+8 hours of re-parsing **plus a full corpus projection**, and the projection is the larger half.
+
+Two ways to spend that, and the choice belongs to whoever runs unit 5:
+
+- **Chunk under the cap.** Packages sized so each re-parse stays below 500,000 notices, each followed
+  by a scoped incremental fold. More jobs, no full pass. From the measured density (~44,000 notices
+  per package over packages 3–20), that is roughly **11 packages per chunk**, ~9 chunks for the era.
+- **Take the full pass once.** Re-parse the whole era, accept one whole-corpus projection at the end.
+  Fewer moving parts, one long window, and the rebuild path is well-trodden.
+
+The run in flight took the second by accident — 20 packages was chosen to be a *pilot*, and it landed
+79 % over a cap nobody had put in front of me. It is safe (the documented fallback, announced loudly,
+serving continues over WAL) and it will produce the citation measurement this pilot was for. But the
+next person sizing a legacy re-parse should size it against 500,000, not against packages.
+
