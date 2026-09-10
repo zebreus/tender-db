@@ -4,9 +4,10 @@ Status: ready-for-agent — **UNITS 1, 2 AND 4 DONE 2026-09-10, and the severity
 filed. This is not latent: `rederive-eur` chained `backfill-values` AUTOMATICALLY and its completion
 message instructed it too, so a routine rates correction would have reverted issue 366's election
 corpus-wide.** The chain is cut, `backfill-values` refuses with the reason, `backfill-deadlines` is
-repaired (it was the transcribable half), and the discriminating test exists. **Unit 3 remains, and
-it is now sharper than "retire vs fix": `rederive-eur` needs a correct successor** — see "What is
-left". Was: ready-for-agent (filed 2026-09-10 by the owner while landing 366 unit 3; found by reading
+repaired (it was the transcribable half), and the discriminating test exists. **UNIT 3 DONE too: the
+successor is built — `rederive-eur` now reports the tenders whose value actually moved and stamps
+exactly those epoch-stale, so the FOLD re-elects them on the next `project`.** All four units done;
+what remains is a live-run observation, below. Was: ready-for-agent (filed 2026-09-10 by the owner while landing 366 unit 3; found by reading
 the third implementation rather than by a failure, and it had no test that could catch it)
 Kind: defect (corpus regression on a routine maintenance path — not latent, see the escalation below)
 Relates to: 366 (the election these two disagree with, and the drain they would undo), 343 (the same
@@ -167,3 +168,42 @@ Option 1 is the obvious lead and matches what issue 366 learned — aim the fold
 it. **Until it exists, `rederive-eur` leaves head values stale on the rows it touched**, which is
 recorded here rather than in the job's output because it is a property of the pair, not of one run.
 
+
+## Unit 3 landed: the successor is a scoped stale-stamp, not a recomputation (2026-09-10)
+
+Option 1 from "What is left", which was the lead and is also what issue 366 had already learned:
+**aim the fold rather than reimplement its election.**
+
+`rederive_eur_window` now returns the tender ids whose stored `eur_cents` actually moved, and the
+`RederiveEur` arm stamps exactly those `projection_epoch = 0`. The next `project` re-elects their head
+value through `head_value_eur_cents` — the filtered implementation, and the only one left that decides
+this. `stamp_stale_for_tenders` is the third caller `stamp_tenders_stale`'s own doc had anticipated,
+beside the profile join and the notice-id join, so the primitive was already there.
+
+**Scoping is the substance, not an optimisation.** A rate correction usually touches one
+currency-day, so the changed set is a handful of tenders. The alternative that would also have been
+correct — a `PROJECTION_EPOCH` bump — costs 6 h 02 m for a 2.69 M-notice cohort every time a single
+rate is fixed. Reporting *which* rows moved is what makes the cheap route available at all, and the
+information was already in the loop: `rederive_eur_window` selected `a.tender_id` and threw it away.
+
+Two details that are load-bearing rather than tidy:
+
+- **Stamped per window, not accumulated to the end.** A crash mid-walk then leaves the finished
+  windows correctly marked, matching the watermark's own resume discipline.
+- **An empty cohort is a no-op.** "Nothing changed" and "everything changed" must not differ by a
+  missing guard — an unguarded `IN ()` or a bare `UPDATE tenders` would turn the cheapest case into
+  the most expensive one. Pinned by a test.
+
+The two pre-existing walks in `currency_rates.rs` now assert the changed-id contract on both sides: a
+window that rewrote rows names its tender exactly once (deduped across the four loci), and a window
+that rewrote nothing names none. That second one extends the file's existing idempotence claim — which
+was about WRITES — to re-elections, and it matters: a walk that stamped on every run would trigger a
+full re-fold each time and quietly reintroduce the cost this unit exists to avoid.
+
+### Not yet observed on a live run
+
+`rederive-eur` has not been run since this landed, so the stamped count is untested against real data.
+It is safe to run — the failure mode it replaced was silent corruption, and this one's is at worst
+stamping too few — but the first live run should be read for two things: the ratio of stamped tenders
+to `updated` rows (expected far below 1, since a tender carries several money rows), and whether the
+following `project` actually clears them. Recorded here rather than assumed.
