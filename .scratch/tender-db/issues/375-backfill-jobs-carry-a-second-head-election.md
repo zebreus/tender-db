@@ -1,6 +1,8 @@
 # 375 — two backfill jobs still compute the head columns with a raw extremum, so running either silently undoes issue 366's drain
 
-Status: ready-for-agent — **UNITS 1, 2 AND 4 DONE 2026-09-10, and the severity was understated when
+Status: DONE 2026-09-10 — every unit, every "Done when" and the live observation are met; the label
+said `ready-for-agent` for a firing after that became true, which is exactly the drift `/triage` exists
+to catch. Was: ready-for-agent — **UNITS 1, 2 AND 4 DONE 2026-09-10, and the severity was understated when
 filed. This is not latent: `rederive-eur` chained `backfill-values` AUTOMATICALLY and its completion
 message instructed it too, so a routine rates correction would have reverted issue 366's election
 corpus-wide.** The chain is cut, `backfill-values` refuses with the reason, `backfill-deadlines` is
