@@ -7621,15 +7621,58 @@ impl Db {
                 uf.union(int(&row, 0), int(&row, 1));
             }
         }
+        // Every legacy notice's OWN OJS number, which is also the set of nodes that
+        // EXIST — an edge target nobody has ingested appears in `plan_ojs_edge` but
+        // never here.
+        let mut existing: Vec<i64> = Vec::new();
         {
             let mut rows = conn
                 .query("SELECT ojs_self FROM plan_notice WHERE legacy = 1 AND ojs_self IS NOT NULL", ())
                 .await?;
             while let Some(row) = rows.next().await? {
-                uf.add(int(&row, 0));
+                let k = int(&row, 0);
+                uf.add(k);
+                existing.push(k);
             }
         }
         eprintln!("[project] group step union-load: {:.1}s ({} nodes)", t.elapsed().as_secs_f64(), uf.parent.len());
+
+        // ISSUE 364 unit 3 — a phantom may LINK but may not NAME.
+        //
+        // `union` is union-to-min, so a component's union-find root is its minimum
+        // OJS number over ALL nodes, phantom endpoints included. ADR-0011 admits
+        // those endpoints deliberately (identity stays stable as backfill deepens),
+        // but letting one NAME the component means a single mistyped digit
+        // permanently renames a Tender — the component gets an identity no notice in
+        // it ever published, and the name changes again if the phantom is later
+        // ingested under different circumstances.
+        //
+        // So the representative is the earliest EXISTING notice's number. The edge
+        // still joins the component exactly as before: this changes what a component
+        // is CALLED, never which notices are in it. A phantom that later arrives and
+        // takes the representative role is an ADR-0003 absorption, which the pipeline
+        // already handles (`retire_regrouped_tenders`).
+        //
+        // Complete on an incremental run too: a legacy delta expands to its whole OJS
+        // component before grouping (`legacy_closure`, issue 58 v2 step 3) or falls
+        // back to a full pass, so the minimum-existing node is never merely
+        // out-of-plan. A run that saw a partial component would pick a later
+        // representative than a full run, which is exactly why that expansion exists.
+        let t = std::time::Instant::now();
+        let mut named_by: std::collections::HashMap<i64, i64> = std::collections::HashMap::new();
+        for k in &existing {
+            let root = uf.find(*k);
+            named_by.entry(root).and_modify(|m| *m = (*m).min(*k)).or_insert(*k);
+        }
+        // Logged including the zero: a rule that renames nothing is indistinguishable
+        // from one that is not running, and this one is expected to move the 364 welds.
+        let phantom_named = named_by.iter().filter(|(root, min)| *root != *min).count();
+        eprintln!(
+            "[project] group step representative: {} component(s) named by their earliest EXISTING \
+             notice instead of a phantom minimum, {:.1}s (issue 364)",
+            phantom_named,
+            t.elapsed().as_secs_f64()
+        );
 
         // Assign each legacy notice its component's earliest-OJS key, formatted to
         // match `ojs_procedure_key`: `ojs:{year}-{number:06}`, computed in Rust from
@@ -7662,7 +7705,13 @@ impl Db {
         for chunk in legacy.chunks(NODE_WRITE_BATCH) {
             conn.execute("BEGIN IMMEDIATE", ()).await?;
             for (notice_id, ojs_self) in chunk {
-                let rep = uf.find(*ojs_self);
+                let root = uf.find(*ojs_self);
+                // The earliest EXISTING number, falling back to the root. The fallback
+                // is unreachable by construction — every component holds at least the
+                // ojs_self of the notice being labelled — and is kept so a future
+                // change to the node set degrades to the old behaviour rather than
+                // panicking on a missing key.
+                let rep = named_by.get(&root).copied().unwrap_or(root);
                 let group_key = format!("ojs:{}-{:06}", rep / 1_000_000_000, rep % 1_000_000_000);
                 conn.execute(
                     "UPDATE plan_notice SET group_key = ? WHERE notice_id = ?",
@@ -21622,6 +21671,130 @@ mod tests {
         assert!(
             matches!(refused, Some(turso::Value::Integer(1))),
             "exactly one key refused, got {refused:?}"
+        );
+
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
+
+    /// Issue 364 unit 3: a phantom OJS endpoint may LINK a component but may not
+    /// NAME it.
+    ///
+    /// The closure is union-TO-MIN, so before this rule a component's label was its
+    /// minimum OJS number over ALL nodes — and ADR-0011 deliberately admits nodes
+    /// nobody has ingested, so one mistyped digit in one citation could permanently
+    /// rename a Tender to an identity no notice in it ever published. The edge is
+    /// still honoured: this changes what a component is CALLED, never who is in it.
+    #[tokio::test]
+    async fn a_phantom_ojs_endpoint_links_a_component_but_does_not_name_it() {
+        let (db, path) = scratch_db("plan-phantom-rep").await;
+        db.reset_plan().await.expect("plan tables");
+
+        // OJS numbers are `{year}{number:09}` as the label formatter reads them.
+        const PHANTOM: i64 = 2024_000_000_111; // cited, never ingested — the lowest node
+        const EARLIEST: i64 = 2024_000_000_222; // the earliest notice that EXISTS
+        const LATER: i64 = 2024_000_000_333;
+
+        let row = |notice_id: i64, ojs_self: i64, edges: Vec<i64>| super::PlanRow {
+            notice_id,
+            procedure_key: None,
+            legacy: true,
+            ojs_self: Some(ojs_self),
+            source: "ted".to_owned(),
+            source_rank: 1,
+            publication_id: format!("{notice_id:08}-2024"),
+            published_at: 1_700_000_000 + notice_id,
+            subtype: None,
+            ojs_edges: edges,
+            prev_refs: Vec::new(),
+            key_shaped: false,
+            buyer_key: None,
+        };
+        db.insert_plan(&[
+            // Both real notices cite the phantom, so it is what joins them.
+            row(1, EARLIEST, vec![PHANTOM]),
+            row(2, LATER, vec![PHANTOM]),
+        ])
+        .await
+        .expect("insert plan");
+
+        db.build_plan_groups().await.expect("group");
+
+        async fn key_of(db: &Db, notice_id: i64) -> String {
+            match db
+                .scalar(&format!("SELECT group_key FROM plan_notice WHERE notice_id = {notice_id}"))
+                .await
+                .expect("group_key")
+            {
+                Some(turso::Value::Text(t)) => t,
+                other => panic!("notice {notice_id}: no group_key ({other:?})"),
+            }
+        }
+
+        // The edge still links: one component, not two.
+        assert_eq!(
+            key_of(&db, 1).await,
+            key_of(&db, 2).await,
+            "a phantom endpoint still JOINS the component — ADR-0011's allowance is kept, \
+             so identity stays stable as backfill deepens"
+        );
+        // And the name is the earliest EXISTING notice, not the phantom minimum.
+        assert_eq!(
+            key_of(&db, 1).await,
+            "ojs:2024-000222",
+            "the component must be named by the earliest notice that exists; naming it \
+             ojs:2024-000111 would give it an identity no notice in it ever published"
+        );
+
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
+
+    /// The counterweight: when the component's minimum IS a real notice, nothing
+    /// moves. Without this the test above passes just as well for a rule that always
+    /// picked the SECOND-lowest node, which would be a different and wrong change.
+    #[tokio::test]
+    async fn a_component_whose_minimum_exists_keeps_the_name_it_had() {
+        let (db, path) = scratch_db("plan-real-rep").await;
+        db.reset_plan().await.expect("plan tables");
+
+        const FIRST: i64 = 2024_000_000_444;
+        const SECOND: i64 = 2024_000_000_555;
+
+        let row = |notice_id: i64, ojs_self: i64, edges: Vec<i64>| super::PlanRow {
+            notice_id,
+            procedure_key: None,
+            legacy: true,
+            ojs_self: Some(ojs_self),
+            source: "ted".to_owned(),
+            source_rank: 1,
+            publication_id: format!("{notice_id:08}-2024"),
+            published_at: 1_700_000_000 + notice_id,
+            subtype: None,
+            ojs_edges: edges,
+            prev_refs: Vec::new(),
+            key_shaped: false,
+            buyer_key: None,
+        };
+        db.insert_plan(&[row(1, FIRST, Vec::new()), row(2, SECOND, vec![FIRST])])
+            .await
+            .expect("insert plan");
+
+        db.build_plan_groups().await.expect("group");
+
+        let key = match db
+            .scalar("SELECT group_key FROM plan_notice WHERE notice_id = 2")
+            .await
+            .expect("group_key")
+        {
+            Some(turso::Value::Text(t)) => t,
+            other => panic!("no group_key ({other:?})"),
+        };
+        assert_eq!(
+            key, "ojs:2024-000444",
+            "the ordinary case is unchanged — the earliest notice still names its component"
         );
 
         for suffix in ["", "-wal", "-shm"] {

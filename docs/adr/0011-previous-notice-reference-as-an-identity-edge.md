@@ -35,8 +35,16 @@ All four hold on the 563 resolvable edges of the measured month:
    `notices` is unique on `(source, publication_id, content_hash)`.
 2. **The target must exist.** A reference to a notice we do not hold creates nothing — no placeholder
    Tender, no pending edge. (Unlike the legacy OJS closure, which deliberately admits not-yet-ingested
-   edge targets so identity is stable as backfill deepens: there the target's OJS number is itself the
-   component key, so an absent target still names the component. Here it names nothing.)
+   edge targets so identity is stable as backfill deepens. Here an absent target names nothing.)
+
+   **Amended 2026-09-10 (issue 364): over there, a phantom may LINK but may not NAME.** The allowance
+   stands — an absent endpoint still joins the component, and identity still survives a deepening
+   backfill. What changed is the representative: the closure is union-to-min, so the component's label
+   used to be its minimum OJS number over *all* nodes, phantoms included, and one mistyped digit in one
+   citation could permanently give a Tender an identity no notice in it ever published. The label is now
+   the minimum over the nodes that EXIST. A phantom that is later ingested and turns out to be the
+   earliest is an ADR-0003 absorption, which the pipeline already handles. Membership is untouched: this
+   decides what a component is called, never who is in it.
 3. **The target must be EARLIER.** 563 of 563 references point at an earlier publication; none pointed
    at the same instant or later. A forward or self reference is therefore not a shape the corpus has, and
    refusing it costs nothing while ruling out a cycle.
