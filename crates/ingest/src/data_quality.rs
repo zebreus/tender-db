@@ -853,6 +853,17 @@ pub const WELD_LISTING_CAP: usize = 40;
 /// adds a sort of that whole grouped result for its top-N, and nothing has timed
 /// that. If it turns out expensive, the listing is the half to reconsider — the
 /// bands are what the reading actually rests on.
+///
+/// The prior, so the first measurement is interpretable rather than just a number:
+/// the `ORDER BY` sorts what survives the `HAVING` (102,840 rows), not the corpus,
+/// so the top-N is cheap and the GROUP BY is the whole cost. Windowed at 100,000
+/// `tender_id`s this shape answered inside `/v1/sql`'s 10 s cap riding
+/// `tender_version_parties(tender_id, seq)` as a range scan, which extrapolates to
+/// ~15 min for one whole-corpus pass. But **no index carries `role`**, so turso may
+/// instead pick a full table scan with a hash group over ~8M keys, and that is a
+/// different cost with a memory profile behind it. A result far above ~30 min for
+/// the two together means it chose the second plan, and the fix is an index on
+/// `(role, tender_id)` rather than a smaller query.
 pub fn weld_candidates_sql() -> String {
     format!(
         "SELECT p.tender_id AS tender_id, \
