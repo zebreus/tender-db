@@ -918,3 +918,72 @@ undoes the drain — and both docs asserted the agreement they no longer had. Fi
 here because the disposition (retire in favour of `refold-notices`, or repair) is a real decision, and
 the value half cannot be repaired in SQL for the same digit-walk reason as above.
 
+### The cent-level leg was nines-only on a HYPOTHESIS, and the carriers refute it (2026-09-10, `5bec250`)
+
+The nines-in-cents leg was committed with an asymmetry: nines refused, every other digit admitted,
+because *"division genuinely produces a repdigit tail, so €3,333,333.33 is €10 M / 3 and
+€1,111,111.11 is €10 M / 9 — computed figures, and they stay admitted"*. **That was a hypothesis
+written as a finding**, and the query that settles it is one line:
+
+| value | tenders | **distinct buyers** |
+| --- | --- | --- |
+| €3,333,333.33 | 26 | **17** |
+| €2,222,222.22 | 7 | **7** |
+| €1,111,111.11 | 12 | **10** |
+| €88,888,888.88 | 13 | **1** |
+
+Seventeen unrelated buyers do not each divide their own budget by three and land on the identical
+cent. **One exact value shared across unrelated buyers and unrelated subjects is a TYPED constant** —
+the repdigit rule's original argument, which never depended on which key was held down. The titles
+agree: €88,888,888.88 on thermal clothing, street sweeping, snow clearing and home visits to
+childminders (one buyer, so a local habit rather than a form maximum, and no more a real €88 M
+procurement for it); €3,333,333.33 across road signage, street lighting, a family magazine's
+distribution, meal vouchers and school cleaning.
+
+The test comment on that class read *"admitted for want of evidence rather than because it was
+cleared — the titles were not read, and reading them is the way to move it"*. This is that read, and
+it moved it. **The width threshold is untouched:** eight identical digits stays admitted, pinned.
+
+### The drain exposed two defects in ITSELF, and they are the same defect twice
+
+**1. The value list encoded the OLD rule.** The drain selects by an explicit list of every refused
+value — bounded and index-served, which is why it was built that way — but the list is a SECOND
+IMPLEMENTATION of `sentinel_amount`, and the moment the rule widened the list did not. First run
+after the deploy: `round 1: 0 repdigit head value(s) left`, which reads exactly like success. It was
+the tool still asking the old question. Regenerated to 170 values; the same run then found 75.
+
+That is this issue's own recurring shape, one level out: **a cohort selector that restates a rule
+will drift from it, and its failure mode is a confident zero.**
+
+**2. The selector reads the CONVERTED column; the rule reads the PUBLISHED cents.** After the drain
+the count stuck at 22 across five rounds — re-folding them changed nothing, because there was nothing
+to change:
+
+| head (EUR cents) | published | currency |
+| --- | --- | --- |
+| 111,111,111 | 1,200,000,000 | NOK |
+| 111,111,111 | 2,800,000,000 | CZK |
+| 111,111,111 | 100,000,000 | GBP |
+
+NOK 12,000,000 and CZK 28,000,000 are round real budgets that happen to convert to €1,111,111.11.
+The rule admits them correctly. The selector's prefilter cannot see that, so it produced 22 FALSE
+POSITIVES — the mirror of the blind spot already recorded here (a PLN nines-run converts to a
+non-repdigit EUR figure and the prefilter never sees it). Fixed by keeping the converted column as a
+prefilter and adding an `EXISTS` on the published cents; the corrected selector reports **0**.
+
+So of the 75, **53 were real and are fixed; 22 were never defects.**
+
+**A third, smaller lesson from the fix itself:** the first attempt to patch the script replaced
+nothing — the escaping was wrong — and printed "selector fixed" anyway, because the transform had no
+assertion. It was caught only by re-running and seeing 22 again. A patch script that reports success
+without asserting its replacement count is the same silent-failure shape as the two above.
+
+### Left unexplained, and NOT investigable with a bounded query
+
+Seven tenders still hold a head value of exactly €1,111,111.11 from different currencies and
+different published amounts. For a CONVERTED quantity that convergence is odd, and it may be nothing
+— but `tender_version_amounts` has no index on `eur_cents`, so `WHERE eur_cents = …` is a full scan
+and both attempts returned **408**. Per `docs/agents/prod-box-reads.md` they were not retried: the cap
+bounds the wait, not the work. Recorded as an observation, not a finding, and reachable through the
+weekly report's own scans rather than an ad-hoc query.
+
