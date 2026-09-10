@@ -7621,58 +7621,15 @@ impl Db {
                 uf.union(int(&row, 0), int(&row, 1));
             }
         }
-        // Every legacy notice's OWN OJS number, which is also the set of nodes that
-        // EXIST — an edge target nobody has ingested appears in `plan_ojs_edge` but
-        // never here.
-        let mut existing: Vec<i64> = Vec::new();
         {
             let mut rows = conn
                 .query("SELECT ojs_self FROM plan_notice WHERE legacy = 1 AND ojs_self IS NOT NULL", ())
                 .await?;
             while let Some(row) = rows.next().await? {
-                let k = int(&row, 0);
-                uf.add(k);
-                existing.push(k);
+                uf.add(int(&row, 0));
             }
         }
         eprintln!("[project] group step union-load: {:.1}s ({} nodes)", t.elapsed().as_secs_f64(), uf.parent.len());
-
-        // ISSUE 364 unit 3 — a phantom may LINK but may not NAME.
-        //
-        // `union` is union-to-min, so a component's union-find root is its minimum
-        // OJS number over ALL nodes, phantom endpoints included. ADR-0011 admits
-        // those endpoints deliberately (identity stays stable as backfill deepens),
-        // but letting one NAME the component means a single mistyped digit
-        // permanently renames a Tender — the component gets an identity no notice in
-        // it ever published, and the name changes again if the phantom is later
-        // ingested under different circumstances.
-        //
-        // So the representative is the earliest EXISTING notice's number. The edge
-        // still joins the component exactly as before: this changes what a component
-        // is CALLED, never which notices are in it. A phantom that later arrives and
-        // takes the representative role is an ADR-0003 absorption, which the pipeline
-        // already handles (`retire_regrouped_tenders`).
-        //
-        // Complete on an incremental run too: a legacy delta expands to its whole OJS
-        // component before grouping (`legacy_closure`, issue 58 v2 step 3) or falls
-        // back to a full pass, so the minimum-existing node is never merely
-        // out-of-plan. A run that saw a partial component would pick a later
-        // representative than a full run, which is exactly why that expansion exists.
-        let t = std::time::Instant::now();
-        let mut named_by: std::collections::HashMap<i64, i64> = std::collections::HashMap::new();
-        for k in &existing {
-            let root = uf.find(*k);
-            named_by.entry(root).and_modify(|m| *m = (*m).min(*k)).or_insert(*k);
-        }
-        // Logged including the zero: a rule that renames nothing is indistinguishable
-        // from one that is not running, and this one is expected to move the 364 welds.
-        let phantom_named = named_by.iter().filter(|(root, min)| *root != *min).count();
-        eprintln!(
-            "[project] group step representative: {} component(s) named by their earliest EXISTING \
-             notice instead of a phantom minimum, {:.1}s (issue 364)",
-            phantom_named,
-            t.elapsed().as_secs_f64()
-        );
 
         // Assign each legacy notice its component's earliest-OJS key, formatted to
         // match `ojs_procedure_key`: `ojs:{year}-{number:06}`, computed in Rust from
@@ -7699,6 +7656,40 @@ impl Db {
                 legacy.push((int(&row, 0), int(&row, 1)));
             }
         }
+        // ISSUE 364 unit 3 — a phantom may LINK but may not NAME.
+        //
+        // `union` is union-to-min, so a component's union-find root is its minimum
+        // OJS number over ALL nodes, phantom endpoints included. ADR-0011 admits
+        // those endpoints deliberately (identity stays stable as backfill deepens),
+        // but letting one NAME the component means a single mistyped digit
+        // permanently renames a Tender — the component gets an identity no notice in
+        // it ever published, and the name changes again if the phantom is later
+        // ingested under different circumstances.
+        //
+        // So the representative is the earliest EXISTING notice's number. The edge
+        // still joins the component exactly as before: this changes what a component
+        // is CALLED, never which notices are in it. A phantom that later arrives and
+        // takes the representative role is an ADR-0003 absorption, which the pipeline
+        // already handles (`retire_regrouped_tenders`).
+        //
+        // Complete on an incremental run too: a legacy delta expands to its whole OJS
+        // component before grouping (`legacy_closure`, issue 58 v2 step 3) or falls
+        // back to a full pass, so the minimum-existing node is never merely
+        // out-of-plan. A run that saw a partial component would pick a later
+        // representative than a full run, which is exactly why that expansion exists.
+        let mut named_by: std::collections::HashMap<i64, i64> = std::collections::HashMap::new();
+        for (_, ojs_self) in &legacy {
+            let root = uf.find(*ojs_self);
+            named_by.entry(root).and_modify(|m| *m = (*m).min(*ojs_self)).or_insert(*ojs_self);
+        }
+        // Logged including the zero: a rule that renames nothing is indistinguishable
+        // from one that is not running, and this one is expected to move the 364 welds.
+        let phantom_named = named_by.iter().filter(|(root, min)| *root != *min).count();
+        eprintln!(
+            "[project] group step representative: {phantom_named} component(s) named by their \
+             earliest EXISTING notice instead of a phantom minimum (issue 364)"
+        );
+
         // TRUNCATE between chunks so the accumulated legacy UPDATEs (millions of
         // rows across all chunks) don't balloon the WAL as one un-checkpointed run
         // (issue 63) — the per-chunk BEGIN/COMMIT alone never reclaimed it.
