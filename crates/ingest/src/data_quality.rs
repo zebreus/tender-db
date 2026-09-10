@@ -797,6 +797,84 @@ pub fn sentinel_amounts_sql() -> String {
     )
 }
 
+/// A tender is flagged as a WELD CANDIDATE at this many distinct buyer
+/// organizations (issue 364 unit 3).
+///
+/// Three, and the floor is measured rather than chosen: two is the organization
+/// layer's own duplication noise (82803 carries "Stadt Osnabrück - FD Öffentliche
+/// Aufträge" beside "… - Fachdienst Öffentliche Aufträge"; 82806 carries the same
+/// Rostock company as two org rows), so an alarm at two would fire on the org
+/// layer rather than on the grouping.
+///
+/// **Three is an UPPER bound on welds, not a count of them** — joint procurement
+/// is legal and real. Measured corpus-wide 2026-09-10: 102,840 tenders at ≥3,
+/// 32,497 at ≥5, 13,297 at ≥10, **1,326 at ≥50**. The listing opens on the last
+/// of those, because no joint procurement has fifty buyers and org duplication
+/// does not multiply by fifty.
+pub const WELD_MIN_BUYERS: i64 = 3;
+
+/// Bands the summary reports, so one number cannot hide the shape.
+pub const WELD_BANDS: [i64; 4] = [3, 5, 10, 50];
+
+/// How many candidates the listing names, worst first.
+pub const WELD_LISTING_CAP: usize = 40;
+
+/// Tenders carrying many DISTINCT buyer organizations — the detector for issue
+/// 364's legacy-OJS weld and for `procedure-key-accepted-unchecked` (369), built
+/// once because both defects present identically: unrelated procurements fused
+/// into one Tender.
+///
+/// **Both buyer roles, and that is the whole trick.** The corpus carries two
+/// vocabularies — `Procedure-Buyer` from eForms and `buyer` from the legacy
+/// r208/r209 era. Issue 364's calibration recorded `Procedure-Buyer` only,
+/// derived from an eForms-only sample, and following it would have made this
+/// blind to the legacy era: tender 2816628, the 2,983-version 127-buyer weld the
+/// issue was FILED about, has 2,983 `buyer` rows and zero `Procedure-Buyer`. The
+/// gauge would have reported nought for it and read green.
+///
+/// Counted across ALL versions rather than the head, because a weld shows along
+/// the version chain — 2816628 accumulated its buyers over 2,983 of them.
+///
+/// `longest_chain` cannot substitute: it reads 212 tenders at ≥200 versions while
+/// 1,326 carry ≥50 distinct buyers, and a two-version Tender welding two
+/// unrelated procurements is invisible to a chain-length gauge by construction.
+///
+/// Whole-corpus rather than windowed for the same reason as the sentinel sweeps:
+/// the `HAVING` is per tender, and although a tender never straddles a window (so
+/// this one COULD be windowed correctly), the top-N ordering could not be merged
+/// without keeping every window's tail. Registered beside them and paid for out
+/// of the same phase, measured at ~128 s for all four.
+pub fn weld_candidates_sql() -> String {
+    format!(
+        "SELECT p.tender_id AS tender_id, \
+                COUNT(DISTINCT p.organization_id) AS buyers, \
+                COUNT(DISTINCT p.seq) AS versions \
+           FROM tender_version_parties p \
+          WHERE p.role IN ('buyer', 'Procedure-Buyer') \
+          GROUP BY p.tender_id \
+         HAVING COUNT(DISTINCT p.organization_id) >= {WELD_MIN_BUYERS} \
+          ORDER BY buyers DESC \
+          LIMIT {WELD_LISTING_CAP}"
+    )
+}
+
+/// The band counts behind [`weld_candidates_sql`]'s listing, so the listing's cap
+/// cannot be mistaken for the population's size.
+pub fn weld_bands_sql() -> String {
+    let cases: Vec<String> = WELD_BANDS
+        .iter()
+        .map(|n| format!("SUM(CASE WHEN buyers >= {n} THEN 1 ELSE 0 END)"))
+        .collect();
+    format!(
+        "SELECT {} FROM (SELECT COUNT(DISTINCT p.organization_id) AS buyers \
+           FROM tender_version_parties p \
+          WHERE p.role IN ('buyer', 'Procedure-Buyer') \
+          GROUP BY p.tender_id \
+         HAVING COUNT(DISTINCT p.organization_id) >= {WELD_MIN_BUYERS})",
+        cases.join(", ")
+    )
+}
+
 /// Published dates that REPEAT outside the plausible range (issue 366) — the same
 /// instrument as [`sentinel_amounts_sql`], pointed at the other column family whose
 /// head election takes a `.max()`.
@@ -1053,6 +1131,10 @@ pub fn whole_corpus_queries() -> Vec<(String, String)> {
         ("sentinel_dates".to_owned(), sentinel_dates_sql()),
         // Issue 372: the withheld-marker residue.
         ("withheld_markers".to_owned(), withheld_markers_sql()),
+        // Issue 364 unit 3: the weld detector, and the detector for 369 too —
+        // both defects look identical from outside, so it is built once.
+        ("weld_candidates".to_owned(), weld_candidates_sql()),
+        ("weld_bands".to_owned(), weld_bands_sql()),
         // Issue 368 unit 4b: the dropped-vocabulary diagnostic. Whole-corpus
         // registration (not `windowed_queries`) because the `notice_*` tables key
         // on `notice_id` while the windowing machinery walks `tender_id` — there
@@ -1472,6 +1554,18 @@ pub struct SentinelRow {
     pub tenders: u64,
 }
 
+/// One weld candidate (issue 364 unit 3): a Tender carrying many distinct buyer
+/// organizations, which is what a fused component looks like from the outside.
+#[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct WeldRow {
+    pub tender_id: i64,
+    /// Distinct buyer organizations across every version, BOTH role vocabularies.
+    pub buyers: u64,
+    /// Versions carrying a buyer — context for whether the buyers accumulated
+    /// along a long chain or arrived on a short one.
+    pub versions: u64,
+}
+
 /// One published field id the projection has no destination for (issue 368
 /// unit 4b) — a spelling the closed vocabulary silently defaults on.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -1533,6 +1627,9 @@ pub struct Report {
     pub plausibility: Vec<PlausibilityRow>,
     /// Published amounts repeating in the implausible tail (issue 366), most-repeated
     /// first.
+    pub weld_candidates: Vec<WeldRow>,
+    /// Tenders at each of [`WELD_BANDS`], so the listing cap cannot be read as the population.
+    pub weld_bands: Vec<u64>,
     pub sentinel_amounts: Vec<SentinelRow>,
     /// Published dates repeating outside the plausible range (issue 366).
     pub sentinel_dates: Vec<SentinelRow>,
@@ -1614,6 +1711,8 @@ pub struct Raw {
     /// The single-row `MAX(current_seq)` fold-cost tripwire (issue 92).
     pub longest_chain: Rows,
     /// `[currency, cents, hits, tenders]` per repeated implausible amount (issue 366).
+    pub weld_candidates: Rows,
+    pub weld_bands: Rows,
     pub sentinel_amounts: Rows,
     /// `[field, instant, hits, tenders]` per repeated implausible DAY (issue 366) — the
     /// instant is the day's earliest member, standing for the whole day.
@@ -1674,6 +1773,8 @@ impl Raw {
             factless: take("factless", &mut unmeasured)?,
             amount_plausibility: take("amount_plausibility", &mut unmeasured)?,
             longest_chain: take("longest_chain", &mut unmeasured)?,
+            weld_candidates: take("weld_candidates", &mut unmeasured)?,
+            weld_bands: take("weld_bands", &mut unmeasured)?,
             sentinel_amounts: take("sentinel_amounts", &mut unmeasured)?,
             sentinel_dates: take("sentinel_dates", &mut unmeasured)?,
             withheld_markers: take("withheld_markers", &mut unmeasured)?,
@@ -1848,6 +1949,23 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         presence,
         plausibility,
         longest_chain,
+        weld_candidates: raw
+            .weld_candidates
+            .iter()
+            .map(|r| WeldRow {
+                tender_id: as_i64(r.first()),
+                buyers: as_u64(r.get(1)),
+                versions: as_u64(r.get(2)),
+            })
+            .collect(),
+        // One row of N sums; an absent query leaves it empty and the render says
+        // UNMEASURED rather than printing zeros, which for a detector is the one
+        // confusion worth spending a branch on.
+        weld_bands: raw
+            .weld_bands
+            .first()
+            .map(|r| (0..WELD_BANDS.len()).map(|i| as_u64(r.get(i))).collect())
+            .unwrap_or_default(),
         sentinel_amounts: sentinel(&raw.sentinel_amounts),
         sentinel_dates: sentinel(&raw.sentinel_dates),
         withheld_markers: raw
@@ -2313,6 +2431,54 @@ pub fn render_text(report: &Report) -> String {
         group(16_000),
         group(15_529),
     );
+    let _ = writeln!(
+        out,
+        "\n== 12. Weld candidates (Tenders with many distinct buyers — issues 364 / 369) =="
+    );
+    if report.unmeasured.iter().any(|l| l == "weld_candidates" || l == "weld_bands") {
+        let _ = writeln!(
+            out,
+            "  UNMEASURED — the weld query did not run. This is NOT 'no welds found'; \
+             the two claims are opposite and a detector must never render them alike."
+        );
+    } else {
+        let bands: Vec<String> = WELD_BANDS
+            .iter()
+            .zip(report.weld_bands.iter())
+            .map(|(n, c)| format!(">= {n}: {}", group(*c)))
+            .collect();
+        let _ = writeln!(out, "  Tenders by DISTINCT buyer organizations — {}", bands.join("   "));
+        let _ = writeln!(out, "  {:<12} {:>8} {:>10}", "tender", "buyers", "versions");
+        for row in &report.weld_candidates {
+            let _ = writeln!(
+                out,
+                "  {:<12} {:>8} {:>10}",
+                row.tender_id,
+                group(row.buyers),
+                group(row.versions)
+            );
+        }
+        if report.weld_candidates.len() >= WELD_LISTING_CAP {
+            let _ = writeln!(
+                out,
+                "  LISTING FULL at {WELD_LISTING_CAP} — the tail is longer than what is shown."
+            );
+        }
+        let _ = writeln!(
+            out,
+            "  A Tender is ONE procurement, so many buyers means unrelated procurements were \
+             fused — the legacy OJS closure (364) or an unchecked procedure key (369). Both \
+             look identical here, which is why one detector serves both. Read the bands, not \
+             just the listing: >= {} is an UPPER bound, since joint procurement is legal and \
+             the org layer's own duplication can render one authority as two rows, while >= 50 \
+             is where the reading is safe — no joint procurement has fifty buyers. Counted over \
+             ALL versions and over BOTH buyer roles (`buyer` for the legacy era, \
+             `Procedure-Buyer` for eForms): tender 2816628 carries 127 buyers under the former \
+             and none under the latter, so a one-vocabulary gauge reads green on the very weld \
+             issue 364 was filed about.",
+            WELD_MIN_BUYERS
+        );
+    }
     let _ = writeln!(
         out,
         "\n== 11. Withheld-marker amounts (`-1.00` rows and their declared share — issue 372) =="
@@ -2908,6 +3074,8 @@ mod tests {
                 convertible: 480,
             }],
             longest_chain: 3_282,
+            weld_candidates: vec![],
+            weld_bands: vec![],
             sentinel_amounts: vec![],
             sentinel_dates: vec![],
             withheld_markers: vec![],
@@ -3025,6 +3193,71 @@ mod tests {
     }
 
     /// Both sweeps must stay OUT of the windowed catalog. `HAVING COUNT(*) >= n` cannot be
+    /// Issue 364 unit 3: the weld detector must name BOTH buyer vocabularies.
+    ///
+    /// This is the whole reason the unit exists in the shape it does. The issue's
+    /// recorded calibration said `role='Procedure-Buyer'` only, derived from an
+    /// eForms-only sample — and tender 2816628, the 2,983-version 127-buyer weld
+    /// the issue was FILED about, carries 2,983 `buyer` rows and zero
+    /// `Procedure-Buyer`. A one-vocabulary gauge reports nought for it and reads
+    /// green, which is the worst failure available to a detector.
+    #[test]
+    fn the_weld_detector_counts_both_buyer_vocabularies() {
+        for sql in [weld_candidates_sql(), weld_bands_sql()] {
+            assert!(sql.contains("'buyer'"), "the legacy role must be counted: {sql}");
+            assert!(sql.contains("'Procedure-Buyer'"), "the eForms role must be counted: {sql}");
+            // Not a role-blind count: Tenderer and the review bodies would swamp
+            // it (tender 2816628 carries 1,986 orgs under AWARD_AND_CONTRACT_VALUE
+            // against its 127 buyers), which is what the calibration got RIGHT.
+            assert!(sql.contains("p.role IN"), "roles must be restricted: {sql}");
+            assert!(!sql.contains("Tenderer"), "{sql}");
+        }
+    }
+
+    /// The bands and the listing must come from the SAME predicate, or the
+    /// summary line describes a different population from the rows under it.
+    #[test]
+    fn the_weld_bands_and_listing_share_their_predicate() {
+        let listing = weld_candidates_sql();
+        let bands = weld_bands_sql();
+        for fragment in [
+            "p.role IN ('buyer', 'Procedure-Buyer')",
+            "COUNT(DISTINCT p.organization_id)",
+            "GROUP BY p.tender_id",
+        ] {
+            assert!(listing.contains(fragment), "listing missing {fragment}: {listing}");
+            assert!(bands.contains(fragment), "bands missing {fragment}: {bands}");
+        }
+        // The listing is capped; the bands are not, which is the point of having
+        // both — a full listing must never be read as the population's size.
+        assert!(listing.contains(&format!("LIMIT {WELD_LISTING_CAP}")), "{listing}");
+        assert!(!bands.contains("LIMIT"), "the bands must count the whole population: {bands}");
+    }
+
+    #[test]
+    fn the_weld_detector_is_whole_corpus() {
+        let whole: Vec<String> = whole_corpus_queries().into_iter().map(|(l, _)| l).collect();
+        assert!(whole.iter().any(|l| l == "weld_candidates"), "{whole:?}");
+        assert!(whole.iter().any(|l| l == "weld_bands"), "{whole:?}");
+        for q in windowed_queries() {
+            assert!(!q.label.starts_with("weld"), "{} must not be windowed", q.label);
+        }
+    }
+
+    /// A detector that renders "0" when it did not run is worse than one that
+    /// fails loudly: the two claims are opposite and look identical.
+    #[test]
+    fn an_unmeasured_weld_query_renders_unmeasured_not_zero() {
+        let mut ran = sentinel_scaffold();
+        put(&mut ran, "weld_candidates", None);
+        let text = render_text(&assemble("x", &Raw::from_labelled(ran).expect("raw")));
+        assert!(text.contains("UNMEASURED — the weld query did not run"), "{text}");
+        assert!(
+            !text.contains(">= 3: 0"),
+            "an unmeasured detector must not print a zero population: {text}"
+        );
+    }
+
     /// windowed: a value repeating nine times in each of 25 windows passes the corpus test
     /// and fails every window's, so a windowed form would under-report exactly the values the
     /// sweep exists to find — and it would do it quietly, as a shorter listing.
@@ -3219,6 +3452,10 @@ mod tests {
                 "sentinel_dates",
                 // The withheld-marker residue (issue 372).
                 "withheld_markers",
+                // Issue 364 unit 3: the weld detector, registered beside the
+                // other whole-corpus sweeps it shares its phase with.
+                "weld_candidates",
+                "weld_bands",
                 "unmapped_fields",
             ]
         );
@@ -3405,6 +3642,8 @@ mod tests {
             ("sentinel_amounts".to_owned(), Some(vec![])),
             ("sentinel_dates".to_owned(), Some(vec![])),
             ("withheld_markers".to_owned(), Some(vec![])),
+            ("weld_candidates".to_owned(), Some(vec![])),
+            ("weld_bands".to_owned(), Some(vec![])),
             ("unmapped_fields".to_owned(), Some(vec![])),
         ])
         .expect("labelled");
@@ -3842,6 +4081,12 @@ mod tests {
             ("sentinel_amounts".to_owned(), Some(vec![])),
             ("sentinel_dates".to_owned(), Some(vec![])),
             ("withheld_markers".to_owned(), Some(vec![])),
+            // Issue 364 unit 3: one weld candidate and the bands behind it. The
+            // listing is a subset of the >= 3 band by construction (the cap), so a
+            // one-row listing under a band count of 2 is the ordinary shape, not a
+            // contradiction.
+            ("weld_candidates".to_owned(), Some(vec![vec![json!(2_816_628), json!(127), json!(2_983)]])),
+            ("weld_bands".to_owned(), Some(vec![vec![json!(2), json!(1), json!(1), json!(1)]])),
             ("unmapped_fields".to_owned(), Some(vec![])),
         ];
         let raw = Raw::from_labelled(results).expect("labelled");
