@@ -1,6 +1,6 @@
 # 364 — the legacy OJS closure is an unbounded transitive closure over unguarded edges: 2,983 versions and 127 buyers in one Tender
 
-Status: ready-for-agent — UNITS 1-2 DONE 2026-09-07 (owner): the kind gate is built and gated (`7b7d513`, 914 passed) and LANDS INERT by design — see "Unit 2, built" for what that means for the repair. Units 3 (guards + representative), 4 (the plausibility gauge) and 5 (the legacy RE-PARSE, not a re-projection) remain. Was: ready-for-agent — UNIT 1 DECIDED 2026-09-07 (owner)
+Status: ready-for-agent — UNITS 1-2 DONE 2026-09-07 (owner): the kind gate is built and gated (`7b7d513`, 914 passed) and LANDS INERT by design — see "Unit 2, built" for what that means for the repair. Units 3 (guards + representative), 4 (the plausibility gauge) and 5 (the legacy RE-PARSE, not a re-projection) remain. **UNIT 3's CALIBRATION IS CORRECTED 2026-09-10 and the class is now MEASURED — see the two sections at the end. The recorded `role='Procedure-Buyer'` predicate is blind to the legacy era, where this issue's own 127-buyer weld lives (tender 2816628 has 2,983 `buyer` rows and ZERO `Procedure-Buyer`); the corpus carries two buyer vocabularies and the predicate must be `role IN ('buyer','Procedure-Buyer')`. Measured corpus-wide: 102,840 tenders with ≥3 distinct buyers, 1,326 with ≥50 — six times the ≥200-version set `longest_chain` can see.** Was: ready-for-agent — UNIT 1 DECIDED 2026-09-07 (owner)
 Kind: defect (identity / grouping) — correctness, the CONTEXT.md:112-113 invariant
 Relates to: 92 (records chain 3,282 only as a fold-performance cost, not as a correctness
 signal), ADR-0011 (the eForms edge's three guards, which this edge has none of), ADR-0003
@@ -192,3 +192,76 @@ identical output. The consequence for the repair: **unit 5 is a legacy-era RE-PA
 re-projection, not a re-projection alone**, and the cure arrives era by era as that re-parse
 deepens. A per-kind tally rides the durable project job row, so the effect is observable while it
 happens rather than asserted at the end.
+
+## Unit 3's calibration is WRONG for this issue's own corpus — the corpus has two buyer roles (2026-09-10)
+
+Unit 3 above records, from issue 369's unit-1 census: *"count buyers at `role='Procedure-Buyer'` only
+(counting every role inflates by bidders and review bodies …)"*. The exclusion reasoning is right.
+**The role name is not, and following it would have shipped a detector blind to exactly the era this
+issue is about.**
+
+`tender_version_parties` carries **two** buyer vocabularies:
+
+| role | where |
+| --- | --- |
+| `Procedure-Buyer` | eForms era |
+| `buyer` | legacy (r208/r209) era |
+
+And this issue's flagship weld is legacy. **Tender 2816628** — 2,983 versions, the 127 buyers named at
+the top of this issue:
+
+| role | rows | distinct orgs |
+| --- | --- | --- |
+| AWARD_AND_CONTRACT_VALUE | 15,287 | 1,986 |
+| **`buyer`** | **2,983** | **127** |
+| winner | 908 | 107 |
+| LODGING_INFORMATION_FOR_SERVICE | 2,983 | 103 |
+| APPEAL_PROCEDURE_BODY_RESPONSIBLE | 2,983 | 100 |
+
+**Zero `Procedure-Buyer` rows.** The gauge as calibrated would have reported *0 distinct buyers* for
+the tender the issue was filed about, and read green.
+
+**How the calibration went wrong, since that is the transferable part:** it was derived from issue
+369's census, which examined tenders 82803 and 82806 — both eForms. The exclusion rule ("not Tenderer,
+not ReviewOrg") generalises correctly from that sample; the role NAME does not, because the sample
+contained only one of the corpus's two eras. **A vocabulary calibrated on one era is a rule about that
+era**, and this corpus has never had one vocabulary.
+
+Note also what the legacy roles look like: `AWARD_AND_CONTRACT_VALUE`,
+`LODGING_INFORMATION_FOR_SERVICE`, `APPEAL_PROCEDURE_BODY_RESPONSIBLE` — raw TED field names, i.e.
+issue 368's unmapped-vocabulary subject showing up in the party layer. `buyer` and `winner` are the
+two that were mapped. So the legacy party roles are mostly unmapped, and any rule that names roles
+must say which era's names it means.
+
+**Corrected predicate: `role IN ('buyer','Procedure-Buyer')`.**
+
+## The measurement unit 3 was missing (corpus-wide, both roles, 2026-09-10)
+
+Counted across ALL versions rather than the head only — a weld shows along the version chain, and it
+avoids a per-row join to `current_seq` that put a 500k-id window over the `/v1/sql` 10 s cap (narrowed
+to 100k windows; the over-cap query was NOT retried, per `docs/agents/prod-box-reads.md`).
+
+| distinct buyer orgs per tender | tenders |
+| --- | --- |
+| **≥3** | **102,840** |
+| ≥5 | 32,497 |
+| ≥10 | 13,297 |
+| **≥50** | **1,326** |
+
+**This is a broader signal than the version count, which is the point of unit 3.** The issue's own
+blast radius reads 43,088 tenders at ≥10 versions, 2,574 at ≥50, 212 at ≥200 — but **1,326 tenders
+carry 50 or more distinct buyers**, six times the ≥200-version set. `longest_chain` cannot see them.
+
+**What the numbers do NOT say, stated so the gauge is not over-sold:**
+
+- **≥3 buyers is an upper bound on welds, not a count of them.** Joint procurement is real and legal,
+  and the org layer's own duplication (issues 329/351) can render one authority as two or three rows.
+  The issue's ≥3 alarm was calibrated against that noise floor on eForms samples; against 102,840
+  corpus-wide it will need a listing to be actionable, not just a count.
+- **≥50 is where the reading gets safe.** No joint procurement has fifty buyers, and org duplication
+  does not multiply by fifty. That is 1,326 tenders that are almost certainly welded, and it is the
+  number to open the listing on.
+
+**Not built this firing, deliberately.** The measurement and the vocabulary correction are what unit 3
+needed before it could be built correctly; building it first would have hard-coded the wrong role.
+
