@@ -1,6 +1,6 @@
 # 364 — the legacy OJS closure is an unbounded transitive closure over unguarded edges: 2,983 versions and 127 buyers in one Tender
 
-Status: ready-for-agent — UNITS 1-2 DONE 2026-09-07, GAUGE (re-cut unit 4) DONE 2026-09-10 `c0c2581` and the REPRESENTATIVE RULE (re-cut unit 3, the phantom half) DONE 2026-09-10 `2c05c8d`, both gates green: the kind gate is built and gated (`7b7d513`, 914 passed) and LANDS INERT by design — see "Unit 2, built" for what that means for the repair. Units 3 (guards + representative), 4 (the plausibility gauge) and 5 (the legacy RE-PARSE, not a re-projection) remain. **UNIT 3's CALIBRATION IS CORRECTED 2026-09-10 and the class is now MEASURED — see the two sections at the end. The recorded `role='Procedure-Buyer'` predicate is blind to the legacy era, where this issue's own 127-buyer weld lives (tender 2816628 has 2,983 `buyer` rows and ZERO `Procedure-Buyer`); the corpus carries two buyer vocabularies and the predicate must be `role IN ('buyer','Procedure-Buyer')`. Measured corpus-wide: 102,840 tenders with ≥3 distinct buyers, 1,326 with ≥50 — six times the ≥200-version set `longest_chain` can see.** Was: ready-for-agent — UNIT 1 DECIDED 2026-09-07 (owner)
+Status: ready-for-agent — UNITS 1-2 DONE 2026-09-07, GAUGE (re-cut unit 4) DONE 2026-09-10 `c0c2581` and the REPRESENTATIVE RULE (re-cut unit 3, the phantom half) DONE 2026-09-10 `2c05c8d`, both gates green and DEPLOYED (rev `7e023e4`). **THE GAUGE'S FIRST RUN REFUTED ITS OWN >=50 CALIBRATION — see the last section; the top of the listing is Slovenian JOINT PROCUREMENT, not welds, and the weld this issue was filed about does not make the top 40 at all.** Corrected in `831b8f9`; the next unit is the widest-single-version discriminator: the kind gate is built and gated (`7b7d513`, 914 passed) and LANDS INERT by design — see "Unit 2, built" for what that means for the repair. Units 3 (guards + representative), 4 (the plausibility gauge) and 5 (the legacy RE-PARSE, not a re-projection) remain. **UNIT 3's CALIBRATION IS CORRECTED 2026-09-10 and the class is now MEASURED — see the two sections at the end. The recorded `role='Procedure-Buyer'` predicate is blind to the legacy era, where this issue's own 127-buyer weld lives (tender 2816628 has 2,983 `buyer` rows and ZERO `Procedure-Buyer`); the corpus carries two buyer vocabularies and the predicate must be `role IN ('buyer','Procedure-Buyer')`. Measured corpus-wide: 102,840 tenders with ≥3 distinct buyers, 1,326 with ≥50 — six times the ≥200-version set `longest_chain` can see.** Was: ready-for-agent — UNIT 1 DECIDED 2026-09-07 (owner)
 Kind: defect (identity / grouping) — correctness, the CONTEXT.md:112-113 invariant
 Relates to: 92 (records chain 3,282 only as a fold-performance cost, not as a correctness
 signal), ADR-0011 (the eForms edge's three guards, which this edge has none of), ADR-0003
@@ -330,4 +330,60 @@ rebuild. So expect the ≥50-buyer band to move in steps, not at once.
 - **Then:** deploy, and read section 12's first real numbers out of the stored report. The weld
   queries run in the whole-corpus phase at the END of the job, so nothing about their cost is known
   until it lands; that is what the doc comment now says instead of borrowing job 816's figure.
+
+## The gauge's FIRST RUN refuted the gauge's own calibration (2026-09-10, job 1912)
+
+`data-quality` job 1912: 5,247 s total, 0 labels unmeasured. Windows took 4,599 s; the whole-corpus
+phase took **646 s against ~128 s before these two queries existed**, so **the weld pair cost ~518 s
+(8.6 min)**. That is inside the prior recorded before the run (~15 min for one pass; above ~30 min for
+the two would have meant the planner took the full-scan plan). **It took the good plan. No index on
+`role` is needed.**
+
+**The bands reproduce the census exactly** — 102,840 / 32,497 / 13,297 / 1,326 at ≥3/5/10/50, from a
+windowed `/v1/sql` census and an in-process whole-corpus query, two instruments with nothing in common
+but the predicate. That agreement is worth more than either number alone.
+
+**And then the listing refuted the sentence this issue wrote into the render.** It said ">= 50 is
+where the reading is safe — no joint procurement has fifty buyers". The top of the very first listing:
+
+| tender | buyers | versions | what it is |
+| --- | --- | --- | --- |
+| 331647 | **505** | **1** | `Dobava električne energije …` — 505 `Procedure-Buyer` rows, ONE version |
+| 7966979 | 234 | 1 | **`Skupno javno naročilo za nakup goriva …`** |
+| 386418 | 228 | 1 | **`Skupno javno naročilo za nakup goriva …`** |
+
+`Skupno javno naročilo` is Slovenian for **joint public procurement**. These are not welds. They are
+exactly what the caveat said could not exist at that scale, and they sit at the TOP of the listing.
+
+**Note what the weld this issue was FILED about does here: nothing.** Tender 2816628 has 127 buyers,
+and the top-40 cutoff is 210. It does not make the listing at all. A detector whose worst-40 excludes
+its own motivating case is measuring something else.
+
+**The shape, not the count, is the discriminator.** A joint procurement names all its buyers in ONE
+notice; a weld accumulates them across versions:
+
+| | buyers | versions | buyers/version |
+| --- | --- | --- | --- |
+| 331647 (joint) | 505 | 1 | **505.0** |
+| 2816628 (the weld) | 127 | 2,983 | **0.04** |
+
+Four orders of magnitude apart on a ratio the listing already had both halves of. `buyers/versions`
+now renders as a `per-ver` column, free, and the render says plainly that it is a hint rather than a
+test — a weld whose versions each named many buyers would also score high.
+
+### Next unit (new): the widest SINGLE version
+
+The honest discriminator is `MAX over seq of COUNT(DISTINCT organization_id)` per tender, compared
+against the overall distinct count. Equal ⇒ one notice named them all ⇒ joint procurement. Overall
+much larger ⇒ they accumulated ⇒ weld. Not built, and the reason is cost: it is a second grouped pass
+over `tender_version_parties` (~8 min at the rate just measured), and it cannot be folded into the
+existing query because `COUNT(DISTINCT …)` across versions is not derivable from per-version counts.
+Worth paying once the `per-ver` column has been read for a week and shown whether the cheap hint is
+already enough.
+
+**The lesson, for the third time on this issue.** Unit 3's calibration was eForms-only and would have
+blinded the gauge to the legacy era. Unit 4's timing figure was borrowed from a run that predated the
+queries. This threshold was an assertion in the shape of a measurement. All three were caught, two of
+them before shipping and this one by the first data it met — but the pattern is the same, and the fix
+each time was to state what was measured and what was not.
 
