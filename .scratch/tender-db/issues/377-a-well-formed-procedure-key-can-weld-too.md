@@ -1,0 +1,97 @@
+# 377 — a well-formed BT-04 procedure key welds 378 buyers across four countries, and issue 369's gate cannot see it
+
+Status: needs-triage (filed 2026-09-10 by the owner, from the weld gauge's first run carrying the
+per-version column — issue 364's section 12). The gauge was built to find this and it did, on the
+first output that could distinguish a weld from a joint procurement.
+Kind: defect (identity / grouping) — the same fusion issue 369 fixed, through a key its gate is
+blind to by construction
+Relates to: 369 (whose placeholder-SHAPE gate this evades), 364 (the legacy-OJS twin, and the gauge
+that found this), ADR-0003 (BT-04 as a published fact)
+
+## Observed
+
+Tender **430681**, title `Tervakosken koulu- ja monitoimikeskus, Vaihe 1` — a Finnish school and
+multipurpose centre, phase 1. It carries:
+
+| | |
+| --- | --- |
+| versions | **789** (2023-09-12 → 2025-01-13, subtypes 16/29/17/30) |
+| distinct buyer organizations | **378** |
+| buyers per version | **0.5** |
+| procedure key | `5e001394-80da-44e1-8955-e9fe17674c90` |
+
+**The buyers are not Finnish.** Grouped by the organization layer's country:
+
+| country | orgs |
+| --- | --- |
+| **CH** | **341** |
+| DK | 24 |
+| FI | 12 |
+| FR | 1 |
+
+By name they are Swiss federal, cantonal and municipal bodies — `Bundesamt für Bauten und Logistik
+BBL`, `Stadt Zürich Amt für Hochbauten`, `Flughafen Zürich AG`, `Swissgrid AG`, `Bau- und
+Verkehrsdepartement des Kantons Basel-Stadt`, `Bundesamt für Strassen ASTRA`. One Tender fuses
+several hundred unrelated construction procurements across four countries.
+
+## Why issue 369's gate cannot catch it
+
+369 refuses a procedure key only when it is **placeholder-SHAPED** and its notices disagree on the
+buyer. `is_placeholder_key` (`crates/ingest/src/project.rs:5134`) is
+`free.len() <= 6 || uuid_longest_run(s) >= 8`. This key has **14 distinct free nibbles and a longest
+run of 2**, so the shape half never fires and the buyer half is never consulted. The key is a
+perfectly ordinary random UUID.
+
+**369's choice of shape as the pre-filter was right on its own evidence and is what makes this
+invisible.** Its census refuted a shape-only gate (it would refuse 10 correctly-grouped tenders to
+fix 3), and buyer-disagreement alone "would refuse joint procurements corpus-wide". Shape bounded the
+blast radius. But shape is a property of the STRING, and nothing stops a publisher emitting one
+well-formed UUID for everything it publishes.
+
+## What actually separates the two, and it is now measured
+
+The gauge's `per-ver` column (buyers ÷ versions) splits the >= 50 band cleanly, because a joint
+procurement names all its buyers in ONE notice while a weld accumulates them across notices:
+
+| tender | buyers | versions | per-ver | what it is |
+| --- | --- | --- | --- | --- |
+| 331647 | 505 | 1 | **505.0** | `Skupno javno naročilo` — genuine Slovenian joint procurement |
+| 7940336 | 541 | 4 | 135.2 | same shape |
+| **430681** | **378** | **789** | **0.5** | **this issue** |
+| 4228069 | 354 | 928 | **0.4** | legacy weld, key `ojs:2010-001662` |
+| 4459994 / 4459995 | 274 / 272 | 277 / 276 | **1.0** | legacy welds, keys `ojs:2011-010241` / `-010242` |
+
+Three orders of magnitude between the two populations. **This is the discriminator 369 needed and did
+not have** — and unlike shape, it is a property of the GROUPING rather than of the string, so a
+publisher cannot evade it by generating prettier keys.
+
+Note the adjacent pair 4459994/4459995: consecutive tender ids, consecutive OJS keys, near-identical
+counts, one Lithuanian lab equipment and one Slovak office furniture. The legacy mechanism fires on
+neighbouring notices.
+
+## Units
+
+1. **Size the class.** How many tenders carry a NON-`ojs:` key with many buyers and low per-version?
+   **Not done, and the attempt is recorded rather than hidden:** a windowed `/v1/sql` census joining
+   `tenders` for `procedure_key` exceeded the 10 s cap at 250,000-id windows, and the un-joined
+   variant exceeded it too on its second window. Not retried wider (`docs/agents/prod-box-reads.md`:
+   the cap bounds the wait, not the work). This wants an in-process job or a narrower stride, not a
+   bigger `/v1/sql` read.
+2. **Decide whether per-version concentration joins the gate.** The candidate rule: refuse a
+   procedure key whose notices disagree on the buyer AND whose buyers-per-version is low — replacing
+   shape as the pre-filter, or sitting beside it. Needs unit 1's numbers first; a rule calibrated on
+   one tender is what this project keeps having to correct.
+3. **Read the source.** Is one publishing platform emitting a constant BT-04? 341 of 378 buyers are
+   Swiss, which points at one national platform rather than at scattered publisher error. Bounded
+   metadata read of the notices' sources and platform ids.
+4. **Repair, once the rule exists.** Same shape as 369's: refuse, re-group, retire the welded Tender.
+
+## Done when
+
+- the class is sized rather than exemplified;
+- there is a decision, written with its reasoning, on whether per-version concentration gates the key;
+- 430681 is either split or explained.
+
+*Not claimed here:* that this is common. It is one tender, found because the gauge's first useful
+listing surfaced it. The whole point of unit 1 is that a single example is not a population — the
+mistake this issue's two siblings each had to correct.
