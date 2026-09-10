@@ -987,3 +987,51 @@ and both attempts returned **408**. Per `docs/agents/prod-box-reads.md` they wer
 bounds the wait, not the work. Recorded as an observation, not a finding, and reachable through the
 weekly report's own scans rather than an ad-hoc query.
 
+### The widened rule discriminates correctly — and my evidence for it was measured on the wrong column
+
+After deploying the any-digit cent-level leg, the repdigit head-value census read 75 → 22. I took that
+as "22 still to drain" and re-ran the drain, which reported **0 to do**. The drain was right and the
+reading was wrong, for a reason this issue has already recorded once, in mirror image.
+
+**The 22 are not sentinels at all.** Their published amounts:
+
+| head (EUR cents) | published | currency |
+| --- | --- | --- |
+| 333333333 | 39,000,000.00 | NOK |
+| 111111111 | 12,000,000.00 | NOK |
+| 222222222 | 2,000,000.00 | GBP |
+| 2222222222 | 6,000,000,000 | HUF |
+| 111111111 | 28,000,000 | CZK |
+| 4444444444 | 35,000,000 | GBP |
+
+**Round published amounts whose exchange conversion lands on a repdigit.** NOK 39 M at 11.7 is exactly
+€3,333,333.33; GBP 2 M at 0.90 is exactly €2,222,222.22. That is arithmetic, not a publisher holding a
+key down. All 22 are non-EUR — GBP 13, NOK 3, SEK 2, HUF 2, CZK 2, **zero EUR** — and
+`sentinel_amount` reads the PUBLISHED cents, so it refuses none of them. Correctly.
+
+So the real split of the original 75: **53 were EUR-published repdigits** (where `cents == eur_cents`),
+refused by the widened rule and re-elected away by the refolds that followed the deploy; **22 were
+conversion coincidences** that were never candidates.
+
+**This is the same trap the issue's own "Sweep 1" recorded, run backwards.** That sweep looked for
+sentinels in `current_value_eur_cents` and could not find PLN ones, because *"the column is CONVERTED
+— a PLN or HUF sentinel is multiplied by a rate before it lands there"*. Here I censused the same
+converted column to evaluate a rule that governs the SOURCE column, and got the opposite error: extra
+members that the rule never claimed. **A derived column cannot answer a question about the rule that
+feeds it — in either direction.**
+
+**The buyer-diversity evidence that justified widening was measured the same way**, so it mixed both
+populations: the 26 tenders / 17 distinct buyers on €3,333,333.33 included some NOK/GBP coincidences.
+The conclusion survives — 53 of the 75 were genuinely EUR-published and the drained outcome is exactly
+those — but the specific counts in that table were inflated, and the honest version is "a large
+majority of a mixed population", not "seventeen buyers typed this".
+
+**The drain script was more correct than my reasoning about it.** Its selector carries an `EXISTS`
+requiring the published `cents` to be a repdigit too, not just the head column — the discrimination
+above, encoded months before it was needed and forgotten by me between writing it and re-reading it.
+That guard is why the drain answered 0 while the census answered 22.
+
+Worth keeping as the durable form: **a rule that reads published values must be measured against
+published values.** The head column is where the rule's EFFECT shows, never where its population
+lives.
+
