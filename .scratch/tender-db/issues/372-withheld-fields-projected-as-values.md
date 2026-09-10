@@ -1,6 +1,11 @@
 # 372 — a WITHHELD eForms field is projected as if it were data: `-1.00` becomes an amount and `unpublished` becomes a currency
 
-Status: ready-for-agent — **UNIT 2 BUILT, DEPLOYED AND VERIFIED ON PROD 2026-09-09**
+Status: DONE 2026-09-10 — every unit is built, deployed, verified, and the standing rows are drained.
+The last open item was unit 5's hand-read of the 118 undeclared negatives; **that read is done** (see
+"READ 2026-09-10" below) and it did not close the way this issue expected: only 43 are the -1.00
+withheld marker, and the other 75 are revenue-side contracts, which is a MEANING finding rather than
+anything this issue can act on. It moved to **issue 376**, which owns it now. Nothing here is open.
+Was: ready-for-agent — **UNIT 2 BUILT, DEPLOYED AND VERIFIED ON PROD 2026-09-09**
 (`4633443` amounts, `796473b` bids, `436f73e` read layer + `/v1`, `d7bb7db` the report's
 `marked` column, **`ce6d2c2` the migration without which the whole thing was INERT**).
 **UNIT 4 ALSO BUILT, DEPLOYED AND VERIFIED (`4c7ad40`)** — the statistics satellite; the
