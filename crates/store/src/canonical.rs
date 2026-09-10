@@ -5466,6 +5466,24 @@ impl Db {
         Self::stamp_tenders_stale(&conn, ids).await
     }
 
+    /// Stamp a TENDER-ID cohort epoch-stale — the third caller
+    /// [`Db::stamp_tenders_stale`]'s doc anticipated, beside the profile join and
+    /// the notice-id join.
+    ///
+    /// Its caller is `rederive-eur` (issue 375): moving `eur_cents` invalidates
+    /// the head value elected from it, and the tenders affected are known
+    /// directly rather than through a notice cohort. Stamping them stale hands
+    /// the re-election to the FOLD, which is the point — the successor that used
+    /// to do this job, `backfill-values`, recomputed the head with an unfiltered
+    /// `MAX` and undid issue 366's sentinel and ceiling filtering.
+    pub async fn stamp_stale_for_tenders(&self, ids: &[i64]) -> turso::Result<u64> {
+        if ids.is_empty() {
+            return Ok(0);
+        }
+        let conn = self.conn().await;
+        Self::stamp_tenders_stale(&conn, ids.to_vec()).await
+    }
+
     pub async fn unmark_projected_for_profiles(&self, profiles: &[&str]) -> turso::Result<u64> {
         let requeued = self.projected_notice_count_for_profiles(profiles).await?;
         if requeued == 0 {

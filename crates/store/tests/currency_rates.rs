@@ -210,13 +210,21 @@ async fn rederive_walks_all_four_loci_by_rowid_and_only_writes_changes() {
         loop {
             // batch=1 (one tender per window) forces the watermark loop to
             // iterate; the fixture's single tender means one full window.
-            let (tenders, scanned, updated, next) =
+            let (tenders, scanned, updated, changed_tenders, next) =
                 db.rederive_eur_window(&rates, 1, watermark).await.expect("window");
             if tenders == 0 {
                 break;
             }
             total_scanned += scanned;
             total_updated += updated;
+            // Issue 375: a window that rewrote a value must name the tender, so
+            // the caller can hand its head-value re-election back to the fold.
+            // Deduped, so six rewritten rows on one tender report it once.
+            if updated > 0 {
+                assert_eq!(changed_tenders, vec![1], "the one fixture tender, once");
+            } else {
+                assert!(changed_tenders.is_empty(), "nothing moved, nothing to re-elect");
+            }
             watermark = next;
         }
     }
@@ -257,16 +265,84 @@ async fn rederive_walks_all_four_loci_by_rowid_and_only_writes_changes() {
     {
         let mut watermark = 0i64;
         loop {
-            let (tenders, _, updated, next) =
+            let (tenders, _, updated, changed_tenders, next) =
                 db.rederive_eur_window(&rates, 100, watermark).await.expect("window");
             if tenders == 0 {
                 break;
             }
             second_pass += updated;
+            // The idempotence claim below is about writes; this is the same claim
+            // about re-elections. A walk that rewrites nothing must not stamp the
+            // corpus stale, or every rederive would trigger a full re-fold.
+            assert!(changed_tenders.is_empty(), "an idempotent walk re-elects nothing");
             watermark = next;
         }
     }
     assert_eq!(second_pass, 0, "a second walk writes nothing");
+
+    drop(conn);
+    drop(db);
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
+/// Issue 375: `stamp_stale_for_tenders` is what hands a rederive's head-value
+/// re-election back to the fold, and it must be SCOPED to what moved.
+///
+/// The job that used to follow `rederive-eur` was `backfill-values`, which
+/// recomputed `current_value_eur_cents` with an unfiltered `MAX` and undid issue
+/// 366's sentinel and ceiling filtering across the whole corpus. Stamping
+/// epoch-stale instead means the fold re-elects — one implementation, the
+/// filtered one — and stamping only the changed tenders is what keeps a rate
+/// correction from costing a full re-fold.
+#[tokio::test]
+async fn stamping_stale_is_scoped_to_the_tenders_whose_value_moved() {
+    let path = format!("/tmp/tender-db-restamp-{}.db", std::process::id());
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    let db = store::Db::open(&path).await.unwrap();
+    db.set_foreign_keys(false).await.unwrap();
+    let raw = store::turso::Builder::new_local(&path).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+
+    // Three tenders, all folded under a current epoch.
+    for id in 1..=3 {
+        conn.execute(
+            "INSERT INTO tenders (id, source, procedure_key, kind, current_seq,
+                                  current_published_at, created_at, projection_epoch)
+             VALUES (?, 'ted', ?, 'procedure', 1, 100, 0, 7)",
+            (store::turso::Value::Integer(id), store::turso::Value::Text(format!("pk-{id}"))),
+        )
+        .await
+        .unwrap();
+    }
+
+    async fn epoch_of(conn: &store::turso::Connection, id: i64) -> i64 {
+        let mut rows = conn
+            .query("SELECT projection_epoch FROM tenders WHERE id = ?", [store::turso::Value::Integer(id)])
+            .await
+            .unwrap();
+        let row = rows.next().await.unwrap().unwrap();
+        row.get_value(0).unwrap().as_integer().copied().unwrap()
+    }
+
+    let stamped = db.stamp_stale_for_tenders(&[1, 3]).await.unwrap();
+    assert_eq!(stamped, 2, "two tenders named, two stamped");
+
+    assert_eq!(epoch_of(&conn, 1).await, 0, "tender 1 moved, so it is re-elected");
+    assert_eq!(epoch_of(&conn, 3).await, 0, "tender 3 moved, so it is re-elected");
+    assert_eq!(
+        epoch_of(&conn, 2).await,
+        7,
+        "tender 2 did NOT move — leaving it alone is what makes this cheaper than an epoch bump"
+    );
+
+    // Empty is a no-op rather than a corpus-wide stamp: the difference between
+    // "nothing changed" and "everything changed" must not be a missing guard.
+    assert_eq!(db.stamp_stale_for_tenders(&[]).await.unwrap(), 0);
+    assert_eq!(epoch_of(&conn, 2).await, 7, "an empty cohort still touches nothing");
 
     drop(conn);
     drop(db);

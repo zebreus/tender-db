@@ -420,12 +420,27 @@ impl Db {
         Ok(())
     }
 
+    /// Re-derive one window's `eur_cents` from the current rates, returning
+    /// `(tenders, scanned, updated, changed_tender_ids, watermark)`.
+    ///
+    /// **`changed_tender_ids` exists because moving `eur_cents` silently
+    /// invalidates the head value column** (issue 375). `current_value_eur_cents`
+    /// is elected FROM these values, so a rate correction that changes them
+    /// leaves the head stale — and the successor that used to fix it,
+    /// `backfill-values`, re-elected with an unfiltered `MAX` and undid issue
+    /// 366's sentinel/ceiling filtering. Reporting the affected tenders lets the
+    /// caller stamp exactly those epoch-stale so the FOLD re-elects them, which
+    /// is the one implementation allowed to decide this.
+    ///
+    /// Only tenders whose stored value actually moved are reported — a rate
+    /// correction usually touches one currency-day, so this is a handful of rows
+    /// rather than the corpus, which is the whole reason it beats an epoch bump.
     pub async fn rederive_eur_window(
         &self,
         rates: &RatesLookup,
         batch: i64,
         after: i64,
-    ) -> turso::Result<(i64, i64, i64, i64)> {
+    ) -> turso::Result<(i64, i64, i64, Vec<i64>, i64)> {
         let conn = self.conn().await;
         let mut rows = conn
             .query(
@@ -440,7 +455,7 @@ impl Db {
         };
         drop(rows);
         if tenders == 0 {
-            return Ok((0, 0, 0, after));
+            return Ok((0, 0, 0, Vec::new(), after));
         }
         // The versions' publication dates, joined IN RUST: the SQL join
         // (`JOIN tender_versions ON (tender_id, seq)`) is what wedged BOTH
@@ -469,6 +484,10 @@ impl Db {
         }
         let mut scanned = 0i64;
         let mut updated = 0i64;
+        // Deduped at the end rather than per row: the four loci can each report
+        // the same tender, and a BTreeSet per window would allocate for the
+        // common case (nothing changed) as well as the rare one.
+        let mut changed: Vec<i64> = Vec::new();
         for (table, cents_col, currency_col, eur_col) in EUR_LOCI {
             let mut rows = conn
                 .query(
@@ -495,6 +514,7 @@ impl Db {
                 };
                 if derived != stored {
                     pending.push((crate::int(&row, 0), derived));
+                    changed.push(crate::int(&row, 4));
                 }
             }
             drop(rows);
@@ -508,7 +528,9 @@ impl Db {
                 }
             }
         }
-        Ok((tenders, scanned, updated, watermark))
+        changed.sort_unstable();
+        changed.dedup();
+        Ok((tenders, scanned, updated, changed, watermark))
     }
 }
 

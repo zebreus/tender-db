@@ -3538,8 +3538,9 @@ impl Supervisor {
                 if resumed > 0 {
                     eprintln!("[rederive-eur] resuming past tender id {resumed}");
                 }
+                let mut restamped = 0u64;
                 loop {
-                    let (t, rows, changed, next) = self
+                    let (t, rows, changed, changed_tenders, next) = self
                         .db
                         .rederive_eur_window(&rates, BACKFILL_BATCH, watermark)
                         .await
@@ -3550,6 +3551,18 @@ impl Supervisor {
                     tenders += t;
                     scanned += rows;
                     updated += changed;
+                    // Issue 375: a moved `eur_cents` invalidates the head value
+                    // elected from it. Stamp exactly those tenders epoch-stale so
+                    // the FOLD re-elects them on the next `project` — the job that
+                    // used to follow this one, `backfill-values`, recomputed the
+                    // head with an unfiltered MAX and undid issue 366's drain.
+                    // Stamped per window rather than accumulated, so a crash
+                    // mid-walk leaves the windows already done correctly marked.
+                    restamped += self
+                        .db
+                        .stamp_stale_for_tenders(&changed_tenders)
+                        .await
+                        .map_err(|e| e.to_string())?;
                     watermark = next;
                     if let Err(e) = self.db.set_rederive_watermark(watermark).await {
                         eprintln!("supervisor: rederive watermark write: {e}");
@@ -3569,9 +3582,9 @@ impl Supervisor {
                 self.db.set_rederive_watermark(0).await.map_err(|e| e.to_string())?;
                 Ok(format!(
                     "eur_cents re-derived from {cached} cached rates over {tenders} tenders{}: \
-                     {updated} of {scanned} money rows changed — the head value columns do NOT \
-                     follow automatically; re-fold the affected notices (issue 375, was \
-                     backfill-values)",
+                     {updated} of {scanned} money rows changed, {restamped} tender(s) stamped \
+                     epoch-stale for the fold to re-elect their head value (issue 375) — run \
+                     `project` to apply",
                     if resumed > 0 {
                         format!(" (resumed past tender id {resumed})")
                     } else {
