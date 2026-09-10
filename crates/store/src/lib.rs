@@ -3055,9 +3055,9 @@ impl Db {
     ///
     /// It is transcribed rather than looked up because it CAN be: one comparison
     /// against one constant, interpolated from `canonical` so the number cannot
-    /// drift. Its twin [`Self::backfill_current_value_eur`] has no such luck —
-    /// `sentinel_amount` is a digit walk — which is why that one is refused at
-    /// the job level instead of repaired here.
+    /// drift. Its twin for the value column had no such luck — `sentinel_amount`
+    /// is a digit walk — which is why that one was deleted rather than repaired,
+    /// leaving the fold as the only thing that elects a head value.
     ///
     /// Batched for the same reason as [`Self::mark_skipped_siblings`]: turso writes
     /// a WAL frame per row and cannot checkpoint mid-statement, so the caller
@@ -3148,63 +3148,29 @@ impl Db {
         Ok((count, watermark))
     }
 
-    /// One batch of the `current_value_eur_cents` backfill (ADR-0014 D5): stamp
-    /// the next `batch` tenders past the watermark with their head version's
-    /// MAX derived-EUR amount, straight from `tender_version_amounts.eur_cents`
-    /// (the `tender_version_amounts_version` index serves the correlated MAX).
-    /// Run AFTER the eur_cents refold: before it the satellite is NULL and this
-    /// walk just stamps NULLs. Batched, checkpointed by the caller, idempotent
-    /// — the [`Self::backfill_current_deadline`] contract.
-    ///
-    /// **DO NOT RUN THIS — see issue 375.** This doc used to say the aggregate
-    /// "mirrors `head_value_eur_cents` exactly — same population, already-derived
-    /// values, so the two can never disagree on a rate". True when written, false
-    /// now: since `aa732c5` the election skips withheld amounts (`quality`), the
-    /// €100 bn ceiling and `sentinel_amount`'s repdigit field maxima, and this
-    /// `MAX` skips none of them. Running it re-stamps every row issue 366's drain
-    /// corrected — ~15,600 −1.00 rows back into the value bounds, and tender
-    /// 4490098 back to €4.97×10¹⁶.
-    ///
-    /// It also cannot be fixed in place the way the deadline one could:
-    /// `sentinel_amount` is a digit walk, and transcribing it into SQL would BE
-    /// the second implementation. `refold-notices` is the route.
-    pub async fn backfill_current_value_eur(
-        &self,
-        batch: i64,
-        after: i64,
-    ) -> turso::Result<(i64, i64)> {
-        let conn = self.conn().await;
-        let mut rows = conn
-            .query(
-                "SELECT COUNT(*), MAX(id) FROM
-                   (SELECT id FROM tenders WHERE id > ? ORDER BY id LIMIT ?)",
-                (Value::Integer(after), Value::Integer(batch)),
-            )
-            .await?;
-        let (count, watermark) = match rows.next().await? {
-            Some(row) => (int(&row, 0), opt_int_of(&row, 1).unwrap_or(after)),
-            None => (0, after),
-        };
-        drop(rows);
-        if count == 0 {
-            return Ok((0, after));
-        }
-        conn.execute(
-            "UPDATE tenders SET current_value_eur_cents =
-                 (SELECT MAX(a.eur_cents) FROM tender_version_amounts a
-                   WHERE a.tender_id = tenders.id AND a.seq = tenders.current_seq)
-              WHERE id > ? AND id <= ?",
-            (Value::Integer(after), Value::Integer(watermark)),
-        )
-        .await?;
-        Ok((count, watermark))
-    }
+    // `backfill_current_value_eur` was here, and it is DELETED (issue 375).
+    //
+    // It stamped `current_value_eur_cents` with a plain `MAX(a.eur_cents)`, which
+    // stopped being the head-value election in `aa732c5` — that skips withheld
+    // amounts, the EUR 100bn ceiling and `sentinel_amount`'s repdigit field
+    // maxima. Its doc claimed the two "can never disagree", so a reader checking
+    // whether it was safe to run found a promise that it was.
+    //
+    // Deleted rather than left refused, because the two reasons for keeping it
+    // both expired: `rederive-eur` no longer needs it (it now stamps the affected
+    // tenders epoch-stale and lets the FOLD re-elect), and it cannot be repaired
+    // in place the way its deadline twin could — `sentinel_amount` is a digit
+    // walk, and transcribing that into SQL would be the second implementation
+    // this whole class of bug is made of.
+    //
+    // `current_value_eur_cents` now has exactly ONE writer that decides it: the
+    // fold. `refold-notices` aims it at a cohort. A test pins the writer count.
 
     /// One batch of the currency present-set backfill (issue 371): fold the DISTINCT
     /// `tender_version_amounts.currency` of the next `batch` tenders past the watermark
     /// into `tender_currency_presence`. Windowed on `tender_id` so each batch rides
     /// `tender_version_amounts_version (tender_id, seq)` and costs its own rows, never
-    /// the corpus — the [`Self::backfill_current_value_eur`] contract, batched and
+    /// the corpus — the [`Self::backfill_current_deadline`] contract, batched and
     /// checkpointed by the caller.
     ///
     /// Returns `(tenders in the window, watermark)`; `0` ends the walk. Idempotent
@@ -3360,7 +3326,7 @@ impl Db {
             }
             conn.execute("COMMIT", ()).await?;
         }
-        // Like `backfill_current_value_eur`: the count is the WINDOW's tenders, so
+        // Like `backfill_current_deadline`: the count is the WINDOW's tenders, so
         // a window whose versions were all stamped already (or all NULL-by-era)
         // still advances the walk rather than ending it.
         Ok((count, watermark))

@@ -125,21 +125,31 @@ async fn seed(path: &str) -> store::turso::Connection {
     }
     conn.execute("COMMIT", ()).await.unwrap();
 
-    // Stamp `tenders.current_value_eur_cents` through the REAL backfill walk
-    // (ADR-0014 D5) rather than a hand-rolled UPDATE: the value bounds compare
-    // the head column, so the fixture needs it stamped exactly the way prod
-    // stamps it — and this doubles as the walk's integration coverage. A small
-    // batch size forces the watermark loop to actually iterate.
-    let sdb = store::Db::open(path).await.unwrap();
-    let mut after = 0;
-    loop {
-        let (rows, next) = sdb.backfill_current_value_eur(17, after).await.unwrap();
-        if rows == 0 {
-            break;
-        }
-        after = next;
-    }
-    drop(sdb);
+    // Stamp `tenders.current_value_eur_cents`, which the value bounds compare.
+    //
+    // This used to run the REAL backfill walk, on the reasoning that the fixture
+    // "needs it stamped exactly the way prod stamps it". **That walk is gone
+    // (issue 375)**, and the reasoning had already stopped being true before it
+    // went: prod stamps this column through the FOLD's election, which skips
+    // sentinels, the EUR 100bn ceiling and repdigit field maxima, while the walk
+    // was a plain MAX.
+    //
+    // A plain MAX is nonetheless the right thing HERE, and the reason is a
+    // property of the fixture rather than a shortcut: its amounts are 10,000,
+    // 500,000 and 999,999,900 cents — no sentinel, nothing over the ceiling, and
+    // 9,999,999 is seven identical digits where the rule needs nine. On this data
+    // the filtered and unfiltered rules agree, so the fixture can compute the
+    // column directly without either depending on a second implementation or
+    // pretending to exercise one. If a value here ever grows into one of those
+    // classes, this comment is the warning that it must move to the fold.
+    conn.execute(
+        "UPDATE tenders SET current_value_eur_cents =
+             (SELECT MAX(a.eur_cents) FROM tender_version_amounts a
+               WHERE a.tender_id = tenders.id AND a.seq = tenders.current_seq)",
+        (),
+    )
+    .await
+    .unwrap();
     conn
 }
 

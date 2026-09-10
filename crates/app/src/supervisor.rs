@@ -3440,50 +3440,19 @@ impl Supervisor {
                 // of bug is made of. Its twin `BackfillDeadlines` was repairable
                 // (one comparison against one constant) and was repaired.
                 //
-                // Refusing costs nothing today — it is a one-time migration that
-                // has already run, and `refold-notices` re-elects correctly by
-                // aiming the fold itself. What it DOES cost is `rederive-eur`'s
-                // successor, which needs the head columns recomputed after the
-                // satellites move; that is issue 375's open unit, and the chain
-                // which used to run this job automatically is cut.
+                // The walk itself is DELETED along with `Db::backfill_current_value_eur`.
+                // The kind is kept so an operator who enqueues it gets this
+                // explanation rather than "unknown job kind" — the error is the
+                // useful artefact. `rederive-eur` no longer needs a recomputation
+                // at all: it stamps the tenders whose value moved epoch-stale and
+                // the fold re-elects them.
                 return Err(
                     "backfill-values is refused: it re-elects head values with an unfiltered MAX \
                      and would undo issue 366's drain (~15,600 sentinel rows). Use refold-notices, \
                      which runs the fold's own election. See issue 375."
                         .to_owned(),
                 );
-                #[allow(unreachable_code)]
-                // The walk is kept, unreachable, because issue 375 unit 3 has not
-                // decided between retiring it and giving `rederive-eur` a correct
-                // successor built on this shape. Deleting it would throw away the
-                // batching/checkpoint/watermark structure that successor needs.
-                let mut stamped = 0i64;
-                let mut watermark = 0i64;
-                loop {
-                    let (rows, next) = self
-                        .db
-                        .backfill_current_value_eur(BACKFILL_BATCH, watermark)
-                        .await
-                        .map_err(|e| e.to_string())?;
-                    if rows == 0 {
-                        break;
-                    }
-                    stamped += rows;
-                    watermark = next;
-                    self.update(|p| p.members_done = stamped as u64);
-                    if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
-                        eprintln!("supervisor: checkpoint after value batch: {e}");
-                    }
-                }
-                Ok(format!(
-                    "current_value_eur_cents stamped over {stamped} tenders (head-version \
-                     MAX derived-EUR amount; NULL where none converts — ADR-0014 D4)"
-                ))
             }
-            // Boxed per CLAUDE.md: every arm of this 60-plus-arm async match keeps its
-            // locals in ONE future, so an unboxed arm's frame is charged to a test that
-            // never touched it (the 2026-09-01 stack overflow in
-            // `an_execute_without_an_expected_count_is_refused`).
             Spec::BackfillCurrencies => {
                 Box::pin(async move {
                     // The `BackfillValues` walk exactly: bounded batch per transaction,

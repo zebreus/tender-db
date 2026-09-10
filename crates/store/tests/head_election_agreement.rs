@@ -198,3 +198,41 @@ fn the_read_layer_reuses_the_election_rather_than_repeating_it() {
         "the raw published extremum must be gone from the display pick: {sql}"
     );
 }
+
+/// Issue 375's "Done when": **no code path writes the head columns with a rule
+/// that differs from the fold's election.** That is a property of the whole
+/// source, not of any one function, so it is checked the only way such a thing
+/// can be — by counting the writers.
+///
+/// The history is why it is worth a test. `current_value_eur_cents` had three
+/// writers (the fold, a backfill walk, and the read layer recomputing its own
+/// display value) and `current_deadline` had the same three. Two of the six
+/// diverged silently when the election grew filters in `aa732c5`, and one of
+/// those two ran AUTOMATICALLY as the second half of `rederive-eur`. None of it
+/// was catchable by a unit test of any single writer, because each was
+/// self-consistent; the defect only existed between them.
+///
+/// If this test fails, the question to ask is not "is the new writer correct
+/// today" but "what makes it stay correct when the election next changes".
+#[test]
+fn the_head_columns_have_exactly_one_writer_that_decides_them() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let mut writers: Vec<String> = Vec::new();
+    for rel in ["src/lib.rs", "src/canonical.rs", "src/read.rs", "src/rates.rs"] {
+        let text = std::fs::read_to_string(root.join(rel)).expect(rel);
+        for (n, line) in text.lines().enumerate() {
+            let code = line.split("//").next().unwrap_or("");
+            if code.contains("current_value_eur_cents =") || code.contains("current_deadline =") {
+                writers.push(format!("{rel}:{}", n + 1));
+            }
+        }
+    }
+    assert_eq!(
+        writers.len(),
+        2,
+        "expected exactly two writers of the head columns — the fold's own write, and the \
+         deadline backfill which transcribes the horizon faithfully from DEADLINE_HORIZON_SECS. \
+         Found: {writers:?}. A third writer is how issue 375 happened: it will agree with the \
+         fold on the day it is written and diverge the next time the election grows a filter."
+    );
+}
