@@ -822,3 +822,23 @@ Two observations for whoever takes that band, neither of them a rule:
   rules meet exactly there. Consistent with what was decided, and worth knowing before someone reads
   the top of the ordering and thinks the ceiling leaks.
 
+### The "Done when" list is fully met, and the issue is NOT closeable — read this before closing it
+
+All four acceptance items now hold: no head value above the ceiling (and the ordering re-read and
+recorded above), 3323836 out of `status=open`, `?max_value=0` returning no negatives, and the
+`/docs#caveats` sentence corrected (see 370 for the rewrite and why it became a rule rather than a
+count).
+
+**That list was written before the issue understood itself.** Three units it later grew are open, and
+two of them are user-visible:
+
+1. **Unit 3's read-layer half.** `/v1/tenders/3323836` still serves `submission_deadline` =
+   `3005-07-06` and 43065 still serves 257 trillion PLN, in the same field names the filters now
+   disagree with. The acceptance list only ever asked about `status=open`, so it cannot see this.
+2. **Unit 5** (`@FMTVAL` versus element text) — the signal the €10–100 bn band needs, and that band is
+   what now tops the ordering.
+3. **Unit 6's magnitude-ranked listing**, and the 24,585 exact zeros.
+
+Recorded because a "Done when" list that passes is exactly when an issue gets closed by someone
+skimming, and this one's bar is narrower than its own findings.
+
