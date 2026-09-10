@@ -859,25 +859,24 @@ pub const WELD_LISTING_CAP: usize = 40;
 /// without keeping every window's tail. Registered beside them and paid for out
 /// of the same phase.
 ///
-/// **The phase's ~128 s (job 816) is the cost WITHOUT these two — it does not
-/// cover them, and borrowing it as though it did would be the same
-/// measured-elsewhere mistake this issue keeps catching.** Their own cost is
-/// unmeasured until the first run that includes them: the bands aggregate the
-/// same grouped subquery the corpus census already ran windowed, but the listing
-/// adds a sort of that whole grouped result for its top-N, and nothing has timed
-/// that. If it turns out expensive, the listing is the half to reconsider — the
-/// bands are what the reading actually rests on.
+/// **MEASURED 2026-09-10 (job 1912): the pair costs ~518 s (8.6 min).** The
+/// whole-corpus phase went from ~128 s without them (job 816) to 646 s with them,
+/// and the difference is these two.
 ///
-/// The prior, so the first measurement is interpretable rather than just a number:
-/// the `ORDER BY` sorts what survives the `HAVING` (102,840 rows), not the corpus,
-/// so the top-N is cheap and the GROUP BY is the whole cost. Windowed at 100,000
-/// `tender_id`s this shape answered inside `/v1/sql`'s 10 s cap riding
-/// `tender_version_parties(tender_id, seq)` as a range scan, which extrapolates to
-/// ~15 min for one whole-corpus pass. But **no index carries `role`**, so turso may
-/// instead pick a full table scan with a hash group over ~8M keys, and that is a
-/// different cost with a memory profile behind it. A result far above ~30 min for
-/// the two together means it chose the second plan, and the fix is an index on
-/// `(role, tender_id)` rather than a smaller query.
+/// The number is worth keeping WITH its prior, because the prior is what makes it
+/// interpretable. Two plans were possible. The `ORDER BY` sorts only what survives
+/// the `HAVING` (102,840 rows), not the corpus, so the top-N is cheap and the GROUP
+/// BY is the whole cost; windowed at 100,000 `tender_id`s this shape answered inside
+/// `/v1/sql`'s 10 s cap riding `tender_version_parties(tender_id, seq)` as a range
+/// scan, which extrapolated to ~15 min for one pass. But **no index carries
+/// `role`**, so turso could instead have taken a full table scan with a hash group
+/// over ~8M keys — a different cost with a memory profile behind it, and one that
+/// would have shown as far above ~30 min for the two together.
+///
+/// It came in under the range-scan estimate, so **it took the indexed plan and the
+/// `(role, tender_id)` index this would otherwise need is not warranted.** Re-check
+/// that if the figure ever jumps: the planner's choice is what the number is really
+/// reporting.
 pub fn weld_candidates_sql() -> String {
     format!(
         "SELECT p.tender_id AS tender_id, \
