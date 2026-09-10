@@ -417,3 +417,63 @@ That hand-read is the next unit worth doing here, ahead of the widest-single-ver
 rows, it decides whether the repair has a target at all, and the country-spread signal that convicted
 377's one real weld (341 Swiss buyers under a Finnish title) is cheap to compute for all 83.
 
+## The 83 read (2026-09-10) — and THREE discriminators have now failed
+
+All 83 spread legacy candidates, classified by how their buyers' countries distribute over **all**
+buyers (not just the ones carrying a country):
+
+| | tenders |
+| --- | --- |
+| one country >= 80 % of all buyers — DPS / national framework shape | **57** |
+| cross-border (top country < 80 %) — weld shape | **8** |
+| unjudgeable: fewer than half the buyers carry a country at all | **18** |
+
+The 8 cross-border: 4204255 (159 buyers, BG 121), 4211417 (146, GB 89 — under an **Austrian**
+hospital title, `LKH Univ.-Klinikum Graz`), 4017457 (111, DE 86), 3919485, 4235691, 4184397, 4011075,
+4037790.
+
+### The result that matters is negative
+
+**Tender 2816628 — the weld THIS ISSUE WAS FILED ABOUT — lands in the "single country, legitimate"
+bucket.** Its buyers are PL 103, DE 14, ES 3, SE 1: 81 % Polish, which is exactly what a Polish
+national framework looks like. The country signal does not convict it.
+
+That is the third discriminator to fail today, all three tried in order and all three measured:
+
+| signal | fails because |
+| --- | --- |
+| **buyer count** (the >= 50 band) | 1,155 of 1,326 name their buyers in ONE notice — joint procurement, not fusion |
+| **buyers per version** (issue 377) | a Dynamic Purchasing System accumulates buyers across notices too, identically |
+| **country spread** | a weld confined to one country is indistinguishable from that country's framework — 2816628 |
+
+**So no aggregate over the buyer set separates a weld from a legitimate multi-buyer arrangement.**
+What actually convicted the two known welds was neither: 430681 by a Finnish title over Swiss buyers,
+2816628 by knowing the mechanism has no guards. Both are semantic, and neither generalises to a
+threshold.
+
+### What this changes about this issue's plan
+
+**Stop looking for a detector that decides.** The gauge's job is to MEASURE, and it does that well —
+three instruments now agree on the bands, and the spread/concentrated split is real and useful. It
+was never going to adjudicate individual tenders, and the two units that assumed it would (the
+widest-single-version pass, and 377's candidate rule) are both worth less than they looked this
+morning.
+
+**The guards are the work.** The legacy closure admits an edge with no target-exists, no same-source
+and no strictly-earlier check — consequence 2 of this issue's own decision, still unbuilt. Land those,
+re-project, and read the spread bucket before and after. That is a falsifiable prediction about a
+number this gauge already produces, which is worth more than any threshold argued from examples.
+
+**The 18 unjudgeable are a second finding.** Fewer than half their buyers carry a country, which is
+the organization layer's coverage gap (issues 355/357/358) showing through a different window. Worth
+a line on those issues: the country campaign's residue is large enough to blind an unrelated
+detector.
+
+*Method note, recorded because two earlier cuts of this same measurement produced WRONG numbers:*
+the first computed the dominant share over named countries only (a tender with 59 of 62 buyers
+country-less read as "67 % dominant, cross-border" off a denominator of 3); the second could not tell
+a failed query from an empty one, so transient failures under 83 back-to-back reads were recorded as
+"0 countries" — 6006174 came back 0/0 and is actually SI 105, MT 1. Both were caught by sampling rows
+by hand and finding them impossible. The third cut retries and separates the buckets, and reports 0
+failures.
+
