@@ -5,8 +5,12 @@ Status: ready-for-agent — **UNIT 2 BUILT, DEPLOYED AND VERIFIED ON PROD 2026-0
 `marked` column, **`ce6d2c2` the migration without which the whole thing was INERT**).
 **UNIT 4 ALSO BUILT, DEPLOYED AND VERIFIED (`4c7ad40`)** — the statistics satellite; the
 award criteria turned out to need nothing. Live on `4c7ad40`; see "Unit 2 VERIFIED ON PROD"
-and "Unit 4" below, both with negative controls. **UNIT 3 CLOSED as subsumed** — see below; it was never a separate defect class. Remaining:
-only the standing-row re-fold, still the open owner decision shared with 366. See "Unit 2 BUILT". Remaining: unit 3 (`currency =
+and "Unit 4" below, both with negative controls. **UNIT 3 CLOSED as subsumed** — see below; it was never a separate defect class.
+**THE STANDING ROWS ARE DRAINED 2026-09-10: unmarked negative amount rows 3,092 → 118, marked
+16,275 → 19,249, and 84 % of the backlog turned out to have been closed already as a side effect of
+issue 366's drain, since both fixes live in the same fold. The 118 that stay are unit 5's undeclared
+residue (measured there at 116), which the fold is right to leave unmarked.** Nothing is open but
+unit 5's hand-read of those 118. See "Unit 2 BUILT". Remaining: unit 3 (`currency =
 'unpublished'`, and the column is `NOT NULL` — see the constraint finding), unit 4 (the other
 satellites, whose channel map the fixture probe now gives), and the standing-row re-fold, still
 the open owner decision shared with 366. Earlier: **unit 1 CORPUS-WIDE 2026-09-08 (job 818): 19,236 `-1.00` rows, residue
@@ -615,3 +619,59 @@ replaces a floor with a number.
 *One issue because:* the `-1.00` amount, the `unpublished` currency and the award-criterion
 `-1` are one mechanism (BT-195 `FieldsPrivacy`) projected through a layer that never asks
 whether the value it is copying is a value.
+
+## The standing rows are DRAINED, and 84 % of them were already done by issue 366 (2026-09-10)
+
+The last open item was *"the standing-row re-fold, still the open owner decision shared with 366"*.
+**That decision is no longer open**: 366 settled it by taking a third route neither horn listed — hand
+the affected notices to `refold-notices` and let the fold run its own election, so there is no second
+implementation and no corpus re-fold. The same route applies here, and it applies for a stronger
+reason: the marker is conditioned on the notice's BT-195 declaration, which **only the fold reads**, so
+a SQL repair could not do this even in principle.
+
+**Most of it was already done, as a side effect nobody planned.** Issue 366's negative drain re-folded
+15,644 tenders whose head value was a negative sentinel — and a re-fold runs the WHOLE fold, including
+this issue's marker logic. So those tenders' amount rows came back marked. Measured before starting:
+
+| negative amount rows | before this drain | after |
+| --- | --- | --- |
+| marked `withheld` | **16,275** | **19,249** |
+| unmarked | **3,092** | **118** |
+
+**One drain closed two issues' standing backlogs**, because both fixes live in the same fold. Worth
+generalising: when two issues fix different parts of one derivation, the first re-fold to run collects
+both, and the second issue should MEASURE before assuming it has work to do. Had this not been
+measured first, ~16,000 rows would have been re-folded a second time for nothing.
+
+**What remained was the class 366's cohort could not reach.** Its selector was "head value is
+negative"; a tender with a withheld `result_value` of −1.00 AND a plausible `estimated_value` elects
+the plausible one, so its head was never negative and it never entered that drain. Tender 1000039 is
+exactly that shape, and it is now correct end to end:
+
+```json
+"value":   {"cents": 70000000, "currency": "EUR"},
+"amounts": [ {"field": "estimated_value", "value": {"cents": 70000000, "currency": "EUR"}},
+             {"field": "result_value", "quality": "withheld", "value": null}, … ]
+```
+
+### The residue landed where unit 5 predicted, and the drain's own loop was wrong about it
+
+**118 rows stay unmarked, against unit 5's corpus measurement of 116** — the difference is two days of
+ingestion, not a discrepancy. These are negatives whose notice carries no `FieldsPrivacy` block, and
+the fold is RIGHT to leave them alone: unit 5 established they are publisher-invented sentinels, not
+withheld fields, and 366's negative rule already keeps them out of the head election.
+
+**The first run of the drain script exposed a defect in itself, not in the code it drove.** Its only
+exit was `n == 0`, so on reaching the undeclared residue it re-folded the same 28 notices per window
+for every remaining round, to no effect. Harmless in outcome and instantly visible in the log — but it
+is the shape of a loop whose success condition disagrees with the code it is driving, and it would
+have looked identical to a genuinely stuck drain. Fixed to **stop when the count stops falling**, with
+the reason in the comment, and the script is committed with that fix rather than as it ran.
+
+**One thing the sample corrects about unit 5's framing.** Its residue was split by FIELD
+(`estimated_value` 29 / `result_value` 83 / `framework_maximum` 4), which reads as though the residue
+is all −1.00 wearing different field names. It is not: the sample turned up `-4998934` — minus
+€49,989.34, an ordinary-looking magnitude with a minus sign, not a sentinel at all. So the residue
+holds at least two shapes, and "publisher-invented sentinel" describes only one of them. Reading the
+116 by hand, which unit 5 already asks for, should split on MAGNITUDE as well as field.
+
