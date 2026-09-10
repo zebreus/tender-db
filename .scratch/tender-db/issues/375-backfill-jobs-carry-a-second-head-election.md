@@ -253,3 +253,43 @@ the drain, and two rounds of reading the code.
 
 Verified against its own negative: adding a fourth writer fails the test and names its file and line.
 
+## The repaired deadline backfill, verified on the real corpus (job 903, 2026-09-10)
+
+The fixes above were tested on fixtures. `backfill-deadlines` was then run against prod — safe by
+construction now, and the strongest available check, since this is the exact job whose unfiltered
+form would have reverted the drain.
+
+**7,940,318 tenders stamped in 111 s**, `ok`. The decisive reading is what did NOT happen:
+
+| tender | before the walk | after |
+| --- | --- | --- |
+| **3323836** | deadline **2005-06-15** | **2005-06-15** — the old walk would have put 3005-07-06 back |
+| 26 | 2023-11-28, value €0.01 | unchanged |
+| 34 | 2025-10-02, value NULL | unchanged |
+| 43065 | 2026-02-17, value NULL | unchanged |
+| 4490098 | 2011-04-08, value €50,000 | unchanged |
+
+Beyond-horizon FUTURE head deadlines: **0 before, 0 after**. `?status=open&sort=deadline&order=desc`
+still tops at 2036-04-30. The value column is untouched, as it must be — this walk writes only
+`current_deadline`.
+
+**It also closed a gap issue 366 had left open and could not cheaply close.** That issue drained only
+the future half of the beyond-horizon cohort (379 rows), because the full set needs
+`current_published_at` per row and the selector for it is a scan; the PAST half was recorded there as
+"a gap rather than a finding". This walk applies the horizon to every row in the table, so the past
+half is now correct **by construction rather than by measurement** — worth stating precisely, because
+its before-count was never taken and cannot be recovered.
+
+**The cost was nothing like what was assumed.** The walk was expected to be heavy enough to want a
+quiet window; 111 s for 7.9 M rows, with 838 GB free on `/data` and no warning in the journal. A
+transient 503 on the first read straight after it ("a stalled internal wait … safe to retry")
+resolved on retry. Recorded because the earlier reasoning on issue 366 treated "re-stamp the whole
+tenders table" as expensive enough to shape a decision, and at this measured cost it is not — which
+is worth knowing the next time that trade-off comes up.
+
+### Still unobserved: `rederive-eur`'s stamped count
+
+This run verifies the deadline half. The unit-3 successor — `rederive-eur` reporting changed tenders
+and stamping them epoch-stale — has still not executed against real data, and that gap stands exactly
+as recorded above. `backfill-deadlines` exercises none of that path.
+
