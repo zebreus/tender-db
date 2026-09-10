@@ -3039,10 +3039,21 @@ impl Db {
 
     /// One batch of the `current_deadline` backfill (issue 216, deadline half):
     /// stamp the next `batch` tenders past the `after` watermark with their head
-    /// version's submission deadline, straight from `tender_version_dates` — the
-    /// same MAX-over-the-version's-rows (lot rows included) the fold's
-    /// `head_deadline` computes in memory for new writes. Returns `(rows,
-    /// watermark)`; `rows == 0` means the walk is complete.
+    /// version's submission deadline, straight from `tender_version_dates`.
+    /// Returns `(rows, watermark)`; `rows == 0` means the walk is complete.
+    ///
+    /// **DO NOT RUN THIS — see issue 375.** This doc used to say the aggregate
+    /// below is "the same MAX-over-the-version's-rows the fold's `head_deadline`
+    /// computes in memory for new writes". That was true when written and is
+    /// false now: `head_deadline` has excluded deadlines beyond
+    /// `DEADLINE_HORIZON_SECS` since `aa732c5`, and this `MAX` does not. Running
+    /// it re-stamps every row issue 366's drain corrected — tender 3323836's
+    /// head deadline goes back to 3005-07-06 and it returns to `status=open`.
+    ///
+    /// `refold-notices` is the correct route: it aims the fold's own election at
+    /// the notices that need it, so there is no second implementation to drift.
+    /// `deadline_backfill.rs` cannot catch the divergence — its fixture's dates
+    /// sit well inside the horizon, so both rules agree on every input it has.
     ///
     /// Batched for the same reason as [`Self::mark_skipped_siblings`]: turso writes
     /// a WAL frame per row and cannot checkpoint mid-statement, so the caller
@@ -3133,11 +3144,22 @@ impl Db {
     /// the next `batch` tenders past the watermark with their head version's
     /// MAX derived-EUR amount, straight from `tender_version_amounts.eur_cents`
     /// (the `tender_version_amounts_version` index serves the correlated MAX).
-    /// The aggregate mirrors `head_value_eur_cents` exactly — same population,
-    /// already-derived values, so the two can never disagree on a rate. Run
-    /// AFTER the eur_cents refold: before it the satellite is NULL and this
+    /// Run AFTER the eur_cents refold: before it the satellite is NULL and this
     /// walk just stamps NULLs. Batched, checkpointed by the caller, idempotent
     /// — the [`Self::backfill_current_deadline`] contract.
+    ///
+    /// **DO NOT RUN THIS — see issue 375.** This doc used to say the aggregate
+    /// "mirrors `head_value_eur_cents` exactly — same population, already-derived
+    /// values, so the two can never disagree on a rate". True when written, false
+    /// now: since `aa732c5` the election skips withheld amounts (`quality`), the
+    /// €100 bn ceiling and `sentinel_amount`'s repdigit field maxima, and this
+    /// `MAX` skips none of them. Running it re-stamps every row issue 366's drain
+    /// corrected — ~15,600 −1.00 rows back into the value bounds, and tender
+    /// 4490098 back to €4.97×10¹⁶.
+    ///
+    /// It also cannot be fixed in place the way the deadline one could:
+    /// `sentinel_amount` is a digit walk, and transcribing it into SQL would BE
+    /// the second implementation. `refold-notices` is the route.
     pub async fn backfill_current_value_eur(
         &self,
         batch: i64,
