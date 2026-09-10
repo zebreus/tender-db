@@ -3023,6 +3023,57 @@ pub fn render_json(report: &Report) -> String {
             "amounts": sentinels(&report.sentinel_amounts, major),
             "dates": sentinels(&report.sentinel_dates, day_utc_signed),
         },
+        // Issue 364's weld gauge, and 368's unmodelled-field listing. Both were in
+        // the text render and NOT here, which is the same inertia issue 368 unit 4b
+        // had against `render_text` — a machine consumer could not see them at all.
+        //
+        // `per_version` is precomputed for the same reason `residue` is above: it is
+        // the number that separates a weld from a joint procurement, and deriving it
+        // in every consumer is how two of them come to disagree. `bands` pairs each
+        // threshold with its count so the array cannot be read against the wrong
+        // WELD_BANDS if the constant ever changes.
+        "weld_candidates": {
+            "min_buyers": WELD_MIN_BUYERS,
+            "listing_cap": WELD_LISTING_CAP,
+            "bands": WELD_BANDS
+                .iter()
+                .zip(report.weld_bands.iter())
+                .map(|(n, c)| json!({ "at_least": n, "tenders": c }))
+                .collect::<Vec<Value>>(),
+            "listing": report
+                .weld_candidates
+                .iter()
+                .map(|r| json!({
+                    "tender_id": r.tender_id,
+                    "buyers": r.buyers,
+                    "versions": r.versions,
+                    "per_version": if r.versions == 0 {
+                        Value::Null
+                    } else {
+                        json!(r.buyers as f64 / r.versions as f64)
+                    },
+                }))
+                .collect::<Vec<Value>>(),
+        },
+        "unmodelled_fields": {
+            "window_notice_ids": UNMAPPED_FIELD_WINDOW_IDS,
+            "listing_cap": UNMAPPED_FIELD_LISTING_CAP,
+            "listing": report
+                .unmapped_fields
+                .iter()
+                .map(|r| json!({
+                    "profile": r.profile,
+                    "field_id": r.field_id,
+                    // Window rows, NOT a corpus total — see `window_notice_ids`.
+                    "rows": r.hits,
+                }))
+                .collect::<Vec<Value>>(),
+        },
+        // THE field a machine consumer cannot do without, and it was missing. Without
+        // it an absent or empty section is ambiguous between "measured, nothing found"
+        // and "the query never ran" — opposite claims. The text render spends a branch
+        // on exactly this distinction; the JSON had no way to express it.
+        "unmeasured": report.unmeasured,
     });
     serde_json::to_string_pretty(&value).unwrap_or_else(|_| "{}".into())
 }
@@ -3318,6 +3369,58 @@ mod tests {
         }
     }
 
+    /// The source-reading guard proves a field is MENTIONED; this proves the JSON
+    /// consumer can actually act on it. `unmeasured` is the one that matters: without
+    /// it an empty listing is ambiguous between "measured, nothing found" and "the
+    /// query never ran", which are opposite claims about the corpus.
+    #[test]
+    fn the_json_says_which_queries_did_not_run() {
+        let mut ran = sentinel_scaffold();
+        put(&mut ran, "weld_candidates", None);
+        let report = assemble("x", &Raw::from_labelled(ran).expect("raw"));
+        let v: serde_json::Value =
+            serde_json::from_str(&render_json(&report)).expect("valid JSON");
+
+        let unmeasured = v["unmeasured"].as_array().expect("unmeasured array");
+        assert!(
+            unmeasured.iter().any(|l| l == "weld_candidates"),
+            "a query that did not run must be named in the JSON: {v:#}"
+        );
+        // And the section is still present rather than absent, so a consumer reads an
+        // empty listing beside the reason it is empty, not a missing key.
+        assert!(v["weld_candidates"]["listing"].is_array(), "{v:#}");
+    }
+
+    /// The weld listing's JSON must carry the discriminator precomputed, for the same
+    /// reason `residue` is precomputed beside the withheld markers: two consumers
+    /// deriving it separately is how they come to disagree about it.
+    #[test]
+    fn the_weld_json_precomputes_the_per_version_discriminator() {
+        let mut ran = sentinel_scaffold();
+        put(
+            &mut ran,
+            "weld_candidates",
+            Some(vec![
+                vec![json!(331_647), json!(505), json!(1)],
+                vec![json!(2_816_628), json!(127), json!(2_983)],
+            ]),
+        );
+        put(&mut ran, "weld_bands", Some(vec![vec![json!(2), json!(2), json!(2), json!(2)]]));
+        let report = assemble("x", &Raw::from_labelled(ran).expect("raw"));
+        let v: serde_json::Value =
+            serde_json::from_str(&render_json(&report)).expect("valid JSON");
+        let listing = v["weld_candidates"]["listing"].as_array().expect("listing");
+
+        assert_eq!(listing[0]["per_version"].as_f64().expect("f64"), 505.0);
+        let weld = listing[1]["per_version"].as_f64().expect("f64");
+        assert!(weld < 0.1, "the weld's ratio must stay small, got {weld}");
+        // The bands pair each threshold with its count, so an array cannot be read
+        // against the wrong WELD_BANDS if the constant ever moves.
+        let bands = v["weld_candidates"]["bands"].as_array().expect("bands");
+        assert_eq!(bands.len(), WELD_BANDS.len());
+        assert_eq!(bands[0]["at_least"], json!(WELD_BANDS[0]));
+    }
+
     /// The guard that would have caught issue 368 unit 4b's inertia, generalised.
     ///
     /// `unmapped_fields` was registered, ran every week, and was assembled into
@@ -3343,14 +3446,19 @@ mod tests {
             .collect();
         assert!(fields.len() > 10, "parsed too few fields: {fields:?}");
 
-        let r = src.find("pub fn render_text(").expect("render_text");
-        let render = &src[r..src[r..].find("\n}\n").expect("render end") + r];
-        let missing: Vec<&&str> = fields.iter().filter(|f| !render.contains(**f)).collect();
-        assert!(
-            missing.is_empty(),
-            "these Report fields are assembled and never rendered, so their queries cost \
-             their scan every week and show nobody anything: {missing:?}"
-        );
+        // BOTH renderers. The JSON one had four fields missing when this test was
+        // written — including `unmeasured`, without which a machine consumer cannot
+        // tell "measured, nothing found" from "the query never ran".
+        for renderer in ["pub fn render_text(", "pub fn render_json("] {
+            let r = src.find(renderer).expect(renderer);
+            let render = &src[r..src[r..].find("\n}\n").expect("render end") + r];
+            let missing: Vec<&&str> = fields.iter().filter(|f| !render.contains(**f)).collect();
+            assert!(
+                missing.is_empty(),
+                "{renderer} never reads these Report fields, so their queries cost their scan \
+                 every week and show that consumer nothing: {missing:?}"
+            );
+        }
     }
 
     /// Sections must print in their numbered order. They did not: adding section 12
