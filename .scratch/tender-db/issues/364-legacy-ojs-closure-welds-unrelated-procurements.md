@@ -1,6 +1,6 @@
 # 364 — the legacy OJS closure is an unbounded transitive closure over unguarded edges: 2,983 versions and 127 buyers in one Tender
 
-Status: ready-for-agent — UNITS 1-2 DONE 2026-09-07 (owner): the kind gate is built and gated (`7b7d513`, 914 passed) and LANDS INERT by design — see "Unit 2, built" for what that means for the repair. Units 3 (guards + representative), 4 (the plausibility gauge) and 5 (the legacy RE-PARSE, not a re-projection) remain. **UNIT 3's CALIBRATION IS CORRECTED 2026-09-10 and the class is now MEASURED — see the two sections at the end. The recorded `role='Procedure-Buyer'` predicate is blind to the legacy era, where this issue's own 127-buyer weld lives (tender 2816628 has 2,983 `buyer` rows and ZERO `Procedure-Buyer`); the corpus carries two buyer vocabularies and the predicate must be `role IN ('buyer','Procedure-Buyer')`. Measured corpus-wide: 102,840 tenders with ≥3 distinct buyers, 1,326 with ≥50 — six times the ≥200-version set `longest_chain` can see.** Was: ready-for-agent — UNIT 1 DECIDED 2026-09-07 (owner)
+Status: ready-for-agent — UNITS 1-2 DONE 2026-09-07, GAUGE (re-cut unit 4 / original unit 3) DONE 2026-09-10 `c0c2581`, gate green: the kind gate is built and gated (`7b7d513`, 914 passed) and LANDS INERT by design — see "Unit 2, built" for what that means for the repair. Units 3 (guards + representative), 4 (the plausibility gauge) and 5 (the legacy RE-PARSE, not a re-projection) remain. **UNIT 3's CALIBRATION IS CORRECTED 2026-09-10 and the class is now MEASURED — see the two sections at the end. The recorded `role='Procedure-Buyer'` predicate is blind to the legacy era, where this issue's own 127-buyer weld lives (tender 2816628 has 2,983 `buyer` rows and ZERO `Procedure-Buyer`); the corpus carries two buyer vocabularies and the predicate must be `role IN ('buyer','Procedure-Buyer')`. Measured corpus-wide: 102,840 tenders with ≥3 distinct buyers, 1,326 with ≥50 — six times the ≥200-version set `longest_chain` can see.** Was: ready-for-agent — UNIT 1 DECIDED 2026-09-07 (owner)
 Kind: defect (identity / grouping) — correctness, the CONTEXT.md:112-113 invariant
 Relates to: 92 (records chain 3,282 only as a fold-performance cost, not as a correctness
 signal), ADR-0011 (the eForms edge's three guards, which this edge has none of), ADR-0003
@@ -265,3 +265,25 @@ carry 50 or more distinct buyers**, six times the ≥200-version set. `longest_c
 **Not built this firing, deliberately.** The measurement and the vocabulary correction are what unit 3
 needed before it could be built correctly; building it first would have hard-coded the wrong role.
 
+## The gauge, built (2026-09-10, `c0c2581`)
+
+Section 12 of the weekly DQ report, `weld_candidates` + `weld_bands` in
+`crates/ingest/src/data_quality.rs`. Registered whole-corpus beside the sentinel sweeps, since the
+`HAVING` is per tender and the top-N ordering could not be merged across windows without keeping
+every window's tail.
+
+- **Predicate** `p.role IN ('buyer', 'Procedure-Buyer')` over `tender_version_parties`, all versions,
+  `COUNT(DISTINCT organization_id) >= 3`. The both-roles requirement has its own test, negative-checked
+  by dropping `'buyer'` and watching it fail.
+- **Bands above the listing** at 3/5/10/50, uncapped, so the 40-row listing cap can never be read as
+  the population's size. A full listing says so on its own line.
+- **UNMEASURED renders as UNMEASURED, not 0.** For a detector those two claims are opposite, and the
+  test holds that open.
+- The render carries the calibration caveats from the section above, so a reader of the report gets
+  the upper-bound reading without having to find this issue.
+
+**Not the repair.** The gauge measures; unit 3's guards and unit 5's re-projection are what would move
+the numbers. The bands are the before-picture those units will be measured against.
+
+**Remaining:** unit 3 (guards + representative rule, ADR-0011 amendment), unit 5 (legacy re-parse and
+re-projection), and unit 2's DPS-round decision.
