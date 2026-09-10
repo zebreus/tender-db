@@ -1,6 +1,6 @@
 # 368 — an unmapped field id or subtype is dropped with no diagnostic: 29,455 titleless r208 Tenders and whole eras of lot titles
 
-Status: ready-for-agent — **UNIT ORDER REVISED 2026-09-08 by measurement: unit 4 (the unmapped-field diagnostic) goes FIRST.** Unit 1 as written would have mapped `TED-TI_TEXT` to `title`, which is the CPV category label in 23 languages, not the procurement's title — see "Unit 1, measured". Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
+Status: ready-for-agent — **UNIT 4b WAS INERT AND IS NOW FIXED 2026-09-10 (`c5d6e79`): the query ran every week and had NO render section, so the diagnostic showed nobody anything. See the last section, including the source-reading guard that now holds it.** Units 1-3 unblock on the next weekly run. Was: **UNIT ORDER REVISED 2026-09-08 by measurement: unit 4 (the unmapped-field diagnostic) goes FIRST.** Unit 1 as written would have mapped `TED-TI_TEXT` to `title`, which is the CPV category label in 23 languages, not the procurement's title — see "Unit 1, measured". Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
 Kind: defect (projection destinations) — the recurring 18/85/177/231 shape, plus the
 standing detector none of them had
 Relates to: 85 (DE-1.x facts), 18 (sdk-0.1 instants), 177 (r208 values), 231 (sdk-0.1
@@ -175,3 +175,35 @@ not rediscover it:
 - the unmapped-field diagnostic is in the weekly report and its top entries are triaged.
 
 *One issue because:* the 29,455 titleless tenders, the 100%-null r208 lot titles and the X02 misclassification are all "a closed hand-maintained vocabulary silently defaults instead of flagging" — three tables in two files, one missing diagnostic.
+
+## Unit 4b was INERT until 2026-09-10 (`c5d6e79`) — built, deployed, marked done, rendering nothing
+
+The query was registered in `whole_corpus_queries()`, ran on every weekly report, and its rows were
+filtered through `any_channel_reads` and capped into `Report::unmapped_fields`. **`render_text` never
+mentioned the field.** So the diagnostic paid its scan every run and produced nothing a reader could
+see, for as long as nobody looked.
+
+**How it was found, which matters more than the fix.** The first report carrying section 12 came back
+and I searched it for the unmapped-field listing to advance units 1–3, which depend on that answer.
+There was none — no header, no rows, not even an `UNMEASURED` line, while the job reported *0 labels
+unmeasured*. The label HAD run. Walking `Report`'s 19 fields against the renderer's body found exactly
+one that nothing read.
+
+**Nothing about the query or the assembly was wrong**, which is why no test caught it: every unit test
+here asserts on `Raw`, on the SQL text, or on the assembled `Report`, and all of those were correct.
+The gap was between a correct `Report` and the text a person reads, and no assertion spanned it.
+
+**The guard now does.** `every_report_field_is_read_by_the_renderer` reads this file's own source and
+fails if any `Report` field is assembled and never rendered. It has to read the SOURCE: a field that
+renders nothing is invisible to any assertion about output, so the property cannot be stated in terms
+of the text. Same shape as the head-column writer-count test in `store`, for the same reason.
+Negative-checked by deleting the new section and watching it name `unmapped_fields`.
+
+A second guard holds the sections to ascending contiguous numbers. Section 12 had been added beside
+the query it belonged to, which put it AHEAD of section 11 — the first real report printed 10, 12, 11.
+
+**Units 1–3 are still blocked on the numbers**, but no longer on the instrument: the next weekly run
+renders section 13, and the listing is the cohort those units need. The prior measurement stands (109
+of 164 published ids had no destination), and the cap of 15 is why the section is a queue rather than
+a wall.
+
