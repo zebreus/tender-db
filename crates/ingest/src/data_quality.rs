@@ -3234,6 +3234,29 @@ mod tests {
         }
     }
 
+    /// The lowest band and the query's floor are ONE number wearing two names, and
+    /// nothing else makes them agree.
+    ///
+    /// `weld_bands_sql` sums `buyers >= n` over a subquery that has already applied
+    /// `HAVING COUNT(...) >= WELD_MIN_BUYERS`. So if the floor were raised to 5 while
+    /// `WELD_BANDS` still opened at 3, the ">= 3" column would report the >= 5 count
+    /// and read as a fall in welds — a silent wrong number in the one direction that
+    /// looks like good news. The render labels the column from `WELD_BANDS`, so
+    /// nothing downstream could catch it either.
+    #[test]
+    fn the_lowest_band_is_the_querys_floor() {
+        assert_eq!(
+            WELD_BANDS[0], WELD_MIN_BUYERS,
+            "the first band must be the HAVING floor, or its column reports a different \
+             population than its label claims"
+        );
+        // And the bands ascend, so each column is a strict subset of the one before —
+        // the reading "3,000 at >= 3 of which 40 at >= 50" depends on it.
+        for pair in WELD_BANDS.windows(2) {
+            assert!(pair[0] < pair[1], "bands must ascend: {WELD_BANDS:?}");
+        }
+    }
+
     /// The bands and the listing must come from the SAME predicate, or the
     /// summary line describes a different population from the rows under it.
     #[test]
