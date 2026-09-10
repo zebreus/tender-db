@@ -2613,17 +2613,26 @@ pub fn render_text(report: &Report) -> String {
         }
         let _ = writeln!(
             out,
-            "  A field id here is PUBLISHED by the source and read by NO channel, so whatever it \
-             says is dropped silently — the 18/85/177/231 shape, with no standing detector until \
-             this one. Two things bound the reading. It is WINDOWED to the newest \
-             {UNMAPPED_FIELD_WINDOW_IDS} notice ids (~100k notices), because a vocabulary going \
-             stale shows up at the head first, so `rows` is a window count and NOT a corpus \
-             total. And the listing is capped at {UNMAPPED_FIELD_LISTING_CAP} on purpose: 109 of \
-             164 distinct published ids had no destination when this was measured, so an \
-             uncapped list is a wall of text rather than a cohort to act on. Read the top of it \
-             as the queue, not the whole problem. `any_channel_reads` is the test — a \
-             channel-blind predicate would report the entire legacy era as read, which is the one \
-             era this has to be honest about."
+            "  **Being on this list is NOT a defect.** A field id here is published by the source \
+             and read by no channel, and the canonical model is a narrow subset ON PURPOSE — when \
+             these were hand-read (2026-09-09), every one of the top entries was correctly out of \
+             scope: exclusion grounds, postal-address parts, award-criterion detail, main nature. \
+             What the section is FOR is scope decisions: it names the largest volumes the model \
+             does not hold, so choosing to hold one is an informed choice rather than a \
+             discovery.\n  \
+             **And it is NOT the detector for issue 368's own failures.** Those were a MODELLED \
+             concept going missing because the closed vocabulary did not know one publisher's \
+             spelling — 29,455 titleless tenders, r208's 100 %-null lot titles. \
+             `any_channel_reads` is profile-BLIND: a field is either always read or never, so no \
+             per-profile asymmetry can show through it. That entry point is the completeness \
+             section (a profile with a gap), then this list restricted to that profile — issue \
+             368 unit 4c.\n  \
+             Two bounds on the numbers. WINDOWED to the newest {UNMAPPED_FIELD_WINDOW_IDS} notice \
+             ids (~100k notices), because a vocabulary going stale shows at the head first, so \
+             `rows` is a window count and NOT a corpus total. And capped at \
+             {UNMAPPED_FIELD_LISTING_CAP}: 109 of 164 distinct published ids had no destination \
+             when measured, and a page where nine entries in ten are working as intended is how a \
+             diagnostic earns being ignored."
         );
     }
     out
@@ -3482,6 +3491,34 @@ mod tests {
             numbers,
             (1..=numbers.len() as u32).collect::<Vec<_>>(),
             "section numbers must run 1..N with no gaps: {numbers:?}"
+        );
+    }
+
+    /// Issue 368: the section must not read as a defect list.
+    ///
+    /// Every one of its top entries was hand-read and found correctly out of scope —
+    /// the canonical model is a narrow subset on purpose. A section that presents
+    /// them as silent drops asks a reader to act on fifteen things that are working
+    /// as intended, which is how a diagnostic earns being ignored. It also is not the
+    /// detector for this issue's own failures, since `any_channel_reads` is
+    /// profile-blind and those failures are per-profile asymmetries.
+    #[test]
+    fn the_unmodelled_field_section_is_scope_not_defect() {
+        let mut ran = sentinel_scaffold();
+        put(
+            &mut ran,
+            "unmapped_fields",
+            Some(vec![vec![json!("eforms:eforms-sdk-1.13"), json!("BT-67(a)-Procedure"), json!(63_814)]]),
+        );
+        let text = render_text(&assemble("x", &Raw::from_labelled(ran).expect("raw")));
+        assert!(text.contains("NOT a defect"), "the section must say so outright:\n{text}");
+        assert!(
+            text.contains("profile-BLIND"),
+            "it must say why it cannot detect this issue's own failures:\n{text}"
+        );
+        assert!(
+            text.contains("window count and NOT a corpus"),
+            "the window bound must stay attached to the number:\n{text}"
         );
     }
 
