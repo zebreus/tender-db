@@ -1277,10 +1277,18 @@ impl Supervisor {
                 .await,
             ]),
             // Issue 306: re-derive the four loci's eur_cents from the current
-            // rates table, then follow with backfill-values for the head column.
+            // rates table.
+            //
+            // The `backfill-values` step that used to follow automatically is
+            // GONE (issue 375). That chain was the live path by which a routine
+            // rates correction would have reverted issue 366's head-value
+            // election corpus-wide — re-electing the sentinels and the
+            // over-ceiling amounts the drain had just removed, with nothing in
+            // the job log to say so. `rederive-eur` moves the satellites; the
+            // head columns must follow through the FOLD, and building that
+            // successor is issue 375's open unit.
             "rederive-eur" => Ok(vec![
                 self.push("rederive-eur", "rederive-eur".into(), Spec::RederiveEur).await,
-                self.push("backfill-values", "backfill-values".into(), Spec::BackfillValues).await,
             ]),
             // Issue 307: one-time satellite population for the standing corpus.
             "backfill-org-name-variants" => Ok(vec![
@@ -3419,8 +3427,36 @@ impl Supervisor {
                 ))
             }
             Spec::BackfillValues => {
-                // The `BackfillDeadlines` walk exactly: bounded batch per transaction,
-                // WAL checkpoint between batches (issue 42), progress as members_done.
+                // REFUSED (issue 375). This walk stamps `current_value_eur_cents`
+                // with a plain `MAX(a.eur_cents)`, and since `aa732c5` the fold's
+                // election skips withheld amounts, the €100 bn ceiling and
+                // `sentinel_amount`'s repdigit field maxima. Running it re-elects
+                // exactly the junk issue 366's drain removed: ~15,600 −1.00 rows
+                // back into the value bounds, tender 4490098 back to €4.97×10¹⁶.
+                //
+                // It is refused rather than repaired because it CANNOT be
+                // repaired here: `sentinel_amount` is a digit walk, and writing
+                // that in SQL would be the second implementation this whole class
+                // of bug is made of. Its twin `BackfillDeadlines` was repairable
+                // (one comparison against one constant) and was repaired.
+                //
+                // Refusing costs nothing today — it is a one-time migration that
+                // has already run, and `refold-notices` re-elects correctly by
+                // aiming the fold itself. What it DOES cost is `rederive-eur`'s
+                // successor, which needs the head columns recomputed after the
+                // satellites move; that is issue 375's open unit, and the chain
+                // which used to run this job automatically is cut.
+                return Err(
+                    "backfill-values is refused: it re-elects head values with an unfiltered MAX \
+                     and would undo issue 366's drain (~15,600 sentinel rows). Use refold-notices, \
+                     which runs the fold's own election. See issue 375."
+                        .to_owned(),
+                );
+                #[allow(unreachable_code)]
+                // The walk is kept, unreachable, because issue 375 unit 3 has not
+                // decided between retiring it and giving `rederive-eur` a correct
+                // successor built on this shape. Deleting it would throw away the
+                // batching/checkpoint/watermark structure that successor needs.
                 let mut stamped = 0i64;
                 let mut watermark = 0i64;
                 loop {
@@ -3533,8 +3569,9 @@ impl Supervisor {
                 self.db.set_rederive_watermark(0).await.map_err(|e| e.to_string())?;
                 Ok(format!(
                     "eur_cents re-derived from {cached} cached rates over {tenders} tenders{}: \
-                     {updated} of {scanned} money rows changed — follow with backfill-values \
-                     (issue 306)",
+                     {updated} of {scanned} money rows changed — the head value columns do NOT \
+                     follow automatically; re-fold the affected notices (issue 375, was \
+                     backfill-values)",
                     if resumed > 0 {
                         format!(" (resumed past tender id {resumed})")
                     } else {

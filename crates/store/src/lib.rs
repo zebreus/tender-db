@@ -3042,18 +3042,22 @@ impl Db {
     /// version's submission deadline, straight from `tender_version_dates`.
     /// Returns `(rows, watermark)`; `rows == 0` means the walk is complete.
     ///
-    /// **DO NOT RUN THIS — see issue 375.** This doc used to say the aggregate
-    /// below is "the same MAX-over-the-version's-rows the fold's `head_deadline`
-    /// computes in memory for new writes". That was true when written and is
-    /// false now: `head_deadline` has excluded deadlines beyond
-    /// `DEADLINE_HORIZON_SECS` since `aa732c5`, and this `MAX` does not. Running
-    /// it re-stamps every row issue 366's drain corrected — tender 3323836's
-    /// head deadline goes back to 3005-07-06 and it returns to `status=open`.
+    /// The `MAX` excludes deadlines beyond `DEADLINE_HORIZON_SECS` past the
+    /// version's publication, which is what `head_deadline` does in memory.
     ///
-    /// `refold-notices` is the correct route: it aims the fold's own election at
-    /// the notices that need it, so there is no second implementation to drift.
-    /// `deadline_backfill.rs` cannot catch the divergence — its fixture's dates
-    /// sit well inside the horizon, so both rules agree on every input it has.
+    /// **That filter was missing until issue 375**, and its absence was a live
+    /// corpus regression rather than an untidiness: `head_deadline` grew the
+    /// horizon in `aa732c5` and this walk did not, so running it re-stamped
+    /// every row issue 366's drain had corrected — tender 3323836's head
+    /// deadline back to 3005-07-06, and back into `status=open`. Worse, the doc
+    /// here asserted the two "compute the same thing", so a reader checking
+    /// whether a backfill was safe found a promise that it was.
+    ///
+    /// It is transcribed rather than looked up because it CAN be: one comparison
+    /// against one constant, interpolated from `canonical` so the number cannot
+    /// drift. Its twin [`Self::backfill_current_value_eur`] has no such luck —
+    /// `sentinel_amount` is a digit walk — which is why that one is refused at
+    /// the job level instead of repaired here.
     ///
     /// Batched for the same reason as [`Self::mark_skipped_siblings`]: turso writes
     /// a WAL frame per row and cannot checkpoint mid-statement, so the caller
@@ -3081,11 +3085,15 @@ impl Db {
             return Ok((0, after));
         }
         conn.execute(
-            "UPDATE tenders SET current_deadline =
-                 (SELECT MAX(d.utc_seconds) FROM tender_version_dates d
-                   WHERE d.tender_id = tenders.id AND d.seq = tenders.current_seq
-                     AND d.field = 'submission_deadline')
-              WHERE id > ? AND id <= ?",
+            &format!(
+                "UPDATE tenders SET current_deadline =
+                     (SELECT MAX(d.utc_seconds) FROM tender_version_dates d
+                       WHERE d.tender_id = tenders.id AND d.seq = tenders.current_seq
+                         AND d.field = 'submission_deadline'
+                         AND d.utc_seconds - tenders.current_published_at <= {})
+                  WHERE id > ? AND id <= ?",
+                crate::canonical::DEADLINE_HORIZON_SECS
+            ),
             (Value::Integer(after), Value::Integer(watermark)),
         )
         .await?;
