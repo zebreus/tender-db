@@ -1,8 +1,14 @@
 # 375 — two backfill jobs still compute the head columns with a raw extremum, so running either silently undoes issue 366's drain
 
-Status: ready-for-agent (filed 2026-09-10 by the owner while landing 366 unit 3; found by reading
-the third implementation rather than by a failure, and it has no test that can catch it)
-Kind: defect (latent corpus regression — a runnable admin job that reverts a correctness fix)
+Status: ready-for-agent — **UNITS 1, 2 AND 4 DONE 2026-09-10, and the severity was understated when
+filed. This is not latent: `rederive-eur` chained `backfill-values` AUTOMATICALLY and its completion
+message instructed it too, so a routine rates correction would have reverted issue 366's election
+corpus-wide.** The chain is cut, `backfill-values` refuses with the reason, `backfill-deadlines` is
+repaired (it was the transcribable half), and the discriminating test exists. **Unit 3 remains, and
+it is now sharper than "retire vs fix": `rederive-eur` needs a correct successor** — see "What is
+left". Was: ready-for-agent (filed 2026-09-10 by the owner while landing 366 unit 3; found by reading
+the third implementation rather than by a failure, and it had no test that could catch it)
+Kind: defect (corpus regression on a routine maintenance path — not latent, see the escalation below)
 Relates to: 366 (the election these two disagree with, and the drain they would undo), 343 (the same
 shape: two places computed one election and disagreed), 216 (the deadline backfill's original job
 706), ADR-0014 D5 (the value backfill)
@@ -91,3 +97,73 @@ chosen on purpose, and this test's were chosen to exercise MAX-over-rows, lot ro
 *One issue because:* both jobs are the same defect — a second implementation of an election that has
 since grown filters — and the disposition (retire vs fix) has to be taken once for both, since the
 value half is the one that cannot be transcribed and therefore decides the answer.
+
+## ESCALATION: this was never latent — `rederive-eur` ran the corrupting job automatically (2026-09-10)
+
+Filed above as "a runnable admin job that reverts a correctness fix", i.e. something an operator would
+have to choose to run. **That was wrong, and the correction matters more than the original filing.**
+
+```rust
+"rederive-eur" => Ok(vec![
+    self.push("rederive-eur", "rederive-eur".into(), Spec::RederiveEur).await,
+    self.push("backfill-values", "backfill-values".into(), Spec::BackfillValues).await,   // ← this
+]),
+```
+
+`rederive-eur` (issue 306) re-derives `eur_cents` across the corpus from the current rates table —
+exactly what you run when a rate is corrected, and `fetch-rates` runs on the daily pipeline. Its
+second step re-stamped every head value with the unfiltered `MAX`. **So the corpus-wide reversion of
+issue 366's election was not something a careless operator might trigger; it was the documented,
+automatic second half of a routine maintenance job**, with nothing in the job log to distinguish it
+from a normal run. The completion message pointed the same way: *"follow with backfill-values (issue
+306)"*.
+
+**How the mis-severity happened, since it is the reusable part:** the filing was written from reading
+the two `Db` methods and their docs. Who CALLS them is one grep further, and that grep is what turned
+"latent" into "live". *Reading a defect's implementation tells you what is wrong; only reading its
+callers tells you how often it happens.* The habit to keep is to grep for callers before assigning
+severity, not after.
+
+## What landed (units 1, 2, 4)
+
+The two halves are not symmetric, and the fix follows the asymmetry rather than treating them alike:
+
+- **`backfill-deadlines` is REPAIRED, not refused.** Its rule transcribes faithfully — one comparison
+  against one constant — so the SQL now carries
+  `AND d.utc_seconds - tenders.current_published_at <= {DEADLINE_HORIZON_SECS}`, interpolated from
+  `canonical` exactly as `tender_select_head` does. The job stays usable.
+- **`backfill-values` is REFUSED**, with the reason in the error. `sentinel_amount` is a digit walk;
+  writing it in SQL would be the second implementation this issue is made of.
+- **The automatic chain is cut**, and `rederive-eur`'s completion message now says the head columns do
+  NOT follow and must be re-folded.
+- **The walk body is kept unreachable rather than deleted**, because `rederive-eur` still needs a
+  successor and that successor wants this batching/checkpoint/watermark structure.
+
+**The discriminating test** (`the_backfill_refuses_a_deadline_beyond_the_horizon`) covers the 3323836
+shape, the only-a-typo case, and the boundary — inclusive, matching `head_deadline`'s `<=`, because a
+drifting comparison is the whole risk. Verified against its own negative: with the filter reverted the
+new test fails naming 3323836 and **the old test still passes**, which is the point that section "Why
+the tests cannot catch it" was making, now demonstrated rather than argued.
+
+## What is left — unit 3, and it is a different question now
+
+"Retire vs fix" is settled for the mechanism: the deadline half is fixed, the value half is refused.
+What is NOT settled is the hole that leaves.
+
+**`rederive-eur` has no correct successor.** It moves `eur_cents` on the satellites; the head values
+must then be re-elected, and only the fold can do that. Options, none costed yet:
+
+1. **Have `rederive-eur` collect the tender ids whose `eur_cents` actually changed** and stamp just
+   those epoch-stale, so the next `project` re-elects them. `rederive_eur_window` already counts
+   `changed` per window but does not record WHICH — that is the work. Cheapest by far if the changed
+   set is small, which it usually will be (a rate correction touches one currency-day).
+2. **A `PROJECTION_EPOCH` bump** after any rederive. Correct and enormous — measured at 6 h 02 m for a
+   2.69 M-notice cohort — for what is typically a handful of rows.
+3. **Leave the head columns stale** until something re-folds those tenders naturally, and say so. Not
+   as bad as it sounds: stale-but-filtered is a value the election once approved, whereas
+   freshly-wrong is a sentinel. But it is silent drift and needs at least a report line.
+
+Option 1 is the obvious lead and matches what issue 366 learned — aim the fold rather than reimplement
+it. **Until it exists, `rederive-eur` leaves head values stale on the rows it touched**, which is
+recorded here rather than in the job's output because it is a property of the pair, not of one run.
+
