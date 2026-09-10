@@ -477,3 +477,43 @@ a failed query from an empty one, so transient failures under 83 back-to-back re
 by hand and finding them impossible. The third cut retries and separates the buckets, and reports 0
 failures.
 
+## The three guards are measured, and they cannot move anything (2026-09-10)
+
+Consequence 2 recorded that "the three guards are still worth having, and are now cheap". Measured
+against the corpus before building them, none of the three can change a single grouping:
+
+**Same-source is VACUOUS.** Every `ojs:`-keyed tender is TED-only. Checked in four 200,000-tender
+windows spanning the id range: `ted` accounts for 200,000 of 200,000 in each, and the count of
+`ojs:`-keyed tenders whose notices span more than one source is **0**. The corpus has three sources
+(ted 13.2M notices, doe 1.1M, fts 8,667), but the legacy OJS era is TED alone — DÖE and FTS are
+eForms-era and carry UUID keys. A same-source guard on this closure refuses nothing.
+
+*And it is worth being clear about the risk it would have carried if that had come out differently:*
+the weekly report tracks TED↔DÖE merging as a GOOD outcome (section 4). A same-source guard that did
+bite would have broken exactly that.
+
+**Strictly-earlier is unmeasurable as built.** `plan_ojs_edge` is written symmetrically —
+`(own, edge)` and `(edge, own)` — so the citation's DIRECTION is not recoverable at grouping time.
+Without direction the guard can only refuse a same-instant pair, not a forward reference. Making it
+real means making the edge table directed, which is a schema change to the projection's hottest write
+path for a guard whose eForms twin measured 563 of 563 references already pointing backwards.
+
+**Target-exists is deliberately waived** and stays waived — ADR-0011's allowance, kept so identity
+survives a deepening backfill, and already qualified this morning by the phantom-may-not-NAME rule.
+
+### So the guards are hygiene, and unit 5 is the lever
+
+This is not a contradiction of consequence 2 — it decided the guards were worth having, not that they
+would cure anything, and it named unit 2's kind gate as the cure. But the plan since then has read as
+though the guards were the fix, and they are not.
+
+**Unit 2's kind gate IS the cure and it is deployed and INERT**, by its own design note: it reads the
+declared kind at PARSE time, so standing legacy notices — parsed before it existed — still carry the
+PIN citations it would now refuse. Nothing re-derives that without re-parsing them.
+
+**So unit 5, the legacy re-parse, is the only thing that moves the 83.** Everything else measured
+today is instrumentation: the gauge measures, the bands are trustworthy, three discriminators failed,
+and the guards are no-ops. The re-parse is the one action with a predicted, falsifiable effect —
+re-run it and the spread bucket should shrink, and section 12 will say by how much without anyone
+remembering to look.
+
