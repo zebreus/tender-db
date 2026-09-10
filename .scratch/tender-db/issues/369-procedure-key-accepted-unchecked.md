@@ -2,7 +2,8 @@
 
 Status: ready-for-agent — **units 1, 2a, 2b, 2c and 3 DONE and verified on prod 2026-09-08 (`a83495b`,
 jobs 819+820): the gate refused exactly the census's 3 keys, the welded tenders are retired, the 4
-correct shaped tenders are untouched, and a split-out notice now serves its own title. REMAINING: unit
+correct shaped tenders are untouched, and a split-out notice now serves its own title. **UNIT 4 SERVED 2026-09-10 by 364's weld gauge (`c0c2581`) — see the section at the end for where it
+was placed and why that differs from the plan here.** Was: REMAINING: unit
 4 (detector, cross-referenced to the OJS-closure issue) and NEW unit 5 — the island fallback
 over-splits (93 notices → 91 islands), so group a refused key by BUYER instead.** Was: filed 2026-09-07;
 unit 1 census done 2026-09-08 — it revised unit 2's rule
@@ -510,3 +511,32 @@ country and identifier are ALREADY normalised at plan time: `NoticeState::mentio
 (the N2 key) over `organizations.name_norm`: it folds harder, so it errs towards saying two notices
 AGREE about their buyer, and every error in that direction is a weld left standing rather than a
 correct tender split.
+
+## Unit 4 is SERVED (2026-09-10, `c0c2581`) — built on 364, as this issue asked
+
+Section 12 of the weekly data-quality report counts, per Tender, distinct buyer organizations across
+all versions, with bands at 3/5/10/50 above a listing of the worst 40. Built once for both mechanisms,
+which is what the cross-reference above asked for: an unchecked procedure key and the legacy OJS
+closure produce the same shape, so a detector that told them apart would be answering a question
+neither issue has.
+
+**Placed in the report, not the planner.** This issue proposed evaluating it in `build_plan_groups`,
+beside the enforcement that already counts buyer sets there. The gauge instead reads the canonical
+layer. That is a better place for a detector and worth saying why: the planner's count is what the
+gate WOULD decide on the next run, while the report's count is what the corpus actually holds right
+now — including welds that predate the gate and welds no gate would refuse. A gauge that measured the
+planner's own opinion would agree with the planner by construction.
+
+**One difference to keep straight.** The gate counts distinct buyer SETS on a shaped key; the gauge
+counts distinct buyer ORGANIZATIONS on a Tender. They are different measures of the same worry, and
+the gauge is the looser one — deliberately, since it must also see welds with no key involved at all.
+So the gauge's ≥3 band is an upper bound on welds and not a count of them; the ≥50 band is where the
+reading is safe.
+
+**Both buyer vocabularies.** `role IN ('buyer', 'Procedure-Buyer')`. This issue's own census, like
+364's, was calibrated on eForms and would have named only the latter; the legacy era carries the
+former, and a one-vocabulary gauge reads green on the very welds these two issues are about.
+
+Numbers land with the first report run that includes it. Unit 5 (the island fallback's over-split) is
+already done and lives in the grouping SQL.
+
