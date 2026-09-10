@@ -8,10 +8,15 @@ the five-row verification baseline re-read and matching, `?max_value=0` clean, 3
 `status=open`. Repdigit field maxima 322 → 0 as well (rev `aa55f6e`), after `7c8a443` added a
 nines-at-cent-level leg — re-reading the ordering had found €99,999,999,999.99 standing, which the
 rule's `cents % 100 != 0` guard walked past. No sentinel and no over-ceiling value remains in the
-head column.** Next: unit 3's unfinished half — the DETAIL payload still serves the year-3005
-deadline and the 257-trillion-PLN value in the same field names the filters now disagree with — then
-the 24,585 exact zeros, and unit 5's gated archive read for the €10–100bn band that now tops the
-ordering. Earlier: **UNIT 1 DECIDED 2026-09-08 (owner), see "Unit 1
+head column. UNIT 3 DONE 2026-09-10 (rev `45c18c7`): the display pick — every list shape and the
+detail payload — now reads the fold's election instead of repeating it, the deadline by transcribing
+the one constant and the amount by looking up the row the fold chose (`s.eur_cents =
+t.current_value_eur_cents`), because a digit walk cannot be transcribed without becoming the second
+implementation. 3323836 serves 2005-06-15, 4490098 serves €50,000, and the `dates`/`amounts` arrays
+still carry every published figure.** Next: the 24,585 exact zeros, unit 5's gated archive read for
+the €10–100bn band that now tops the ordering, and unit 6's magnitude listing. **Issue 375** carries
+the third and fourth implementations this turned up — two backfill jobs that would undo the drain.
+Earlier: **UNIT 1 DECIDED 2026-09-08 (owner), see "Unit 1
 DECIDED": two flag legs (negative + all-9s sentinels, 15,899 rows; >€100bn implausible, 175 rows),
 with the €10–100bn band explicitly left to the lot-sum/FMTVAL signals because no threshold separates
 the NHS England contract from a €10bn vending-machine notice.** Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings;
@@ -841,4 +846,67 @@ two of them are user-visible:
 
 Recorded because a "Done when" list that passes is exactly when an issue gets closed by someone
 skimming, and this one's bar is narrower than its own findings.
+
+### Unit 3 is DONE — and the drain is what made it urgent (2026-09-10, rev `45c18c7`)
+
+Unit 3 asked to "state the deadline tie-break once … and make canonical.rs:1186 and read.rs:1440 read
+the same ladder, the 343 way". Done, for the amount half as well as the deadline half, and the
+sequencing is worth recording because it inverts how the unit was framed.
+
+**The drain created the urgency rather than revealing a pre-existing gap.** Before it, the head column
+and the display pick were wrong in the SAME way — both elected the junk — so they agreed and nothing
+looked broken. Landing the election in the fold and then correcting ~16,500 standing rows made the
+head column right and left the display pick alone, so the divergence became real on exactly the rows
+the drain had just fixed. **A correctness fix applied to one of two agreeing implementations converts
+a silent shared bug into a visible disagreement**, and that is a reason to look for the second
+implementation as part of the fix, not afterwards.
+
+`current_value_eur_cents`' own doc had already named the second implementation without anyone
+noticing: it calls itself *"the eur_cents twin of the read layer's OLD `MAX(a.cents)`"*. The word
+"old" was wishful — the head column replaced the aggregate for the BOUNDS only, while
+`tender_select_head` (every list shape AND the detail payload) kept the raw extrema for display.
+
+**Two techniques, and the difference is about drift rather than taste:**
+
+- **The deadline horizon transcribes faithfully** — one comparison against one constant — so the SQL
+  carries `s.utc_seconds - v.published_at <= {DEADLINE_HORIZON_SECS}`, interpolated from the constant
+  rather than retyped.
+- **The amount rule does NOT transcribe.** `sentinel_amount` is a digit walk; writing it in SQL would
+  be precisely the second implementation this issue is about. So the amount pick re-derives nothing —
+  it looks up the row the fold already chose, matching `s.eur_cents = t.current_value_eur_cents`.
+  Zero drift by construction: change the election and this follows with no edit here.
+
+That second technique is the transferable one. **When a rule cannot be expressed in the other
+language, do not translate it — look up its result.** It needs the deciding side to persist its
+answer, which the head columns already did.
+
+**A separate incoherence fell out of it.** `MAX(a.cents)` compared raw numbers across currencies, so
+1,000,000 HUF outranked 500,000 EUR, and `cents` and `currency` were independent picks that could
+describe different rows. Matching on `eur_cents` ranks by value and takes both columns from one row.
+
+**Nothing was lost from the payload.** The scalar fields are now the elected values; the `amounts` and
+`dates` arrays still carry every published figure, which is where ADR-0004 faithfulness lives. Read
+off prod after the deploy:
+
+| tender | `value` | `submission_deadline` | published rows kept |
+| --- | --- | --- | --- |
+| 3323836 | — | **2005-06-15** (was 3005-07-06) | 2 dates |
+| 43065 | **null** (was 257 tn PLN) | 2026-02-17 | 1 amount |
+| 4490098 | **€50,000** (was €4.97×10¹⁶) | 2011-04-08 | 2 amounts |
+| 26 | €0.01 unchanged | 2023-11-28 | 1 amount |
+
+List timings after the change, since it touches the hot query: plain 0.79 s,
+`status=open&sort=deadline&order=desc` 0.81 s, `min_value` 0.50 s, `country=DE` 0.59 s. The
+subquery reads the same `(tender_id, seq)` slice the old aggregate did.
+
+**Tests drive `apply_tenders`** — the fold's own path — so the head columns are written by
+`head_value_eur_cents`/`head_deadline` themselves and the expectations are read back off them rather
+than written as literals a stale pick could match by coincidence. Verified by reverting both filters:
+all three go red.
+
+**And it found a THIRD and FOURTH implementation, now issue 375.** `backfill_current_deadline` and
+`backfill_current_value_eur` still write these columns with unfiltered aggregates, so running either
+undoes the drain — and both docs asserted the agreement they no longer had. Filed rather than fixed
+here because the disposition (retire in favour of `refold-notices`, or repair) is a real decision, and
+the value half cannot be repaired in SQL for the same digit-walk reason as above.
 
