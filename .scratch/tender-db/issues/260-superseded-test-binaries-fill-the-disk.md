@@ -1,6 +1,9 @@
 # 260 — superseded test binaries fill the build disk, and the third symptom does not look like a disk problem
 
-Status: FIXED 2026-08-20 (the prune; `ops/check.sh` now runs it before building). Filed anyway because
+Status: FIXED-BUT-RECURRING — the prune landed 2026-08-20 and still works; on 2026-09-10 four gate
+runs in one session filled the allowance anyway, in artifacts the prune does not cover. See the
+recurrence at the end, including the `df` reading that makes this look like plenty of free space.
+Was: FIXED 2026-08-20 (the prune; `ops/check.sh` now runs it before building). Filed anyway because
 the SYMPTOM is worth recording — one of the three failures does not mention the disk at all
 Kind: operational / build hygiene
 Blocked by: —
@@ -63,3 +66,41 @@ binaries behind. Fixed in Cargo.toml: `[profile.dev] debug = "line-tables-only"`
 build small by default, panic backtraces keep file:line, check.sh's env override is now
 belt-and-braces. The pruning in check.sh stays (the graveyard mechanic itself is cargo's,
 only its per-binary cost shrank ~5-10x).
+
+## Recurred 2026-09-10 despite the prune — the prune is necessary, not sufficient
+
+Four `ops/check.sh` runs in one session (three green, each after edits to `canonical.rs` and
+`data_quality.rs`) filled the container's writable allowance. The fourth died mid-link:
+
+```
+error: failed to build archive at .../libingest-*.rlib: No space left on device (os error 28)
+error: linking with `cc` failed: ... ld terminated with signal 7 [Bus error]
+```
+
+**GATE-EXIT=101 with ZERO `FAILED` lines** — the fourth face of this issue, and it wears the same
+disguise as the third: a compile error prints no `test result:` line, so a grep for failures reports
+nothing wrong. Reading the echoed `GATE-EXIT=` value is what caught it, exactly as CLAUDE.md says.
+
+| | |
+| --- | --- |
+| `target/` at failure | **24 GiB** |
+| of which `target/debug/deps` | **18 GiB** |
+| recovered by `cargo clean` | **24.5 GiB, 26,459 files** |
+| free after | 24 GiB |
+
+**`df` lies about the headroom, and this is the part worth remembering.** It reported
+`252G size, 38G used, 31M avail, 100%` — a reader would see 214 GB of slack. The writable allowance
+is per-session and is what "avail" tracks; the size column is not a budget. **Low "Used" with zero
+"Avail" means the allowance is spent, not that the disk is broken.**
+
+**Why the prune did not save it.** The prune removes superseded test EXECUTABLES; most of today's 18
+GiB in `deps` was rlibs and fresh artifacts from rebuilding two large crates four times. So the fix
+this issue landed still works and is still worth having — it just addresses one of the two things
+that grow.
+
+**Not fixed here, and deliberately.** The cheap mitigations (a `cargo clean` when free space drops
+below a threshold; `--profile` sharing so gate runs reuse artifacts) each have a cost measured in gate
+minutes, and one session hitting it is not enough evidence to pick one. What this entry buys is that
+the next `GATE-EXIT=101` with no failing test is diagnosed in a minute rather than debugged as a code
+error. Reopen with a rule if it happens twice more.
+
