@@ -306,6 +306,27 @@ so progress and cancellation stay per-package. Jobs run **one at a time** in
 enqueue order — the writer is single anyway — so a fetch → process → project
 sequence lands in order.
 
+### Sizing a `reparse`, because packages are the wrong unit (measured 2026-09-10)
+
+`reparse` takes `profiles` and an optional `packages` cap, and the cap tempts you to think in
+packages. Two behaviours make that misleading, both measured on prod:
+
+- **A legacy re-parse above 500,000 un-projected notices forces a FULL corpus re-projection.**
+  The legacy OJS closure's scoped-incremental path caps there (issue 305); above it the run
+  announces `INCREMENTAL → FULL fallback BEFORE identity pass … re-projecting the whole corpus`
+  and re-plans all ~14.4 M notices. A 20-package `ted-export-r209` run produced **879,331**
+  notices and tripped it. **Size against 500,000 notices, not against packages** — at the
+  measured density (~44,000 r209 notices per package) that is ~11 packages per chunk.
+- **Package size is wildly uneven, and the first ones are not representative.** Packages 1–2
+  walked 128,234 archive members for **283** matching notices in 55 s; packages 1–20 walked
+  1,312,001 for **879,331** in 95 min. Extrapolating a per-package cost from the front of the
+  archive is off by two orders of magnitude.
+
+Also worth knowing before a small probe: **`reparse` stamps tenders epoch-stale by PROFILE, not by
+the ids it touched.** Re-parsing 283 r209 notices stamped 2,131,375 tenders. That is deliberate
+(a stale stamp forces a rewrite that recomputes identical content, a missed one silently loses the
+re-parse), but a one-package probe does not have a one-package blast radius.
+
 ### The organization-layer jobs (issues 300, 311-317)
 
 These are their own family: censuses that measure, merge arms that write, and
