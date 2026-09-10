@@ -387,3 +387,33 @@ queries. This threshold was an assertion in the shape of a measurement. All thre
 them before shipping and this one by the first data it met — but the pattern is the same, and the fix
 each time was to state what was measured and what was not.
 
+## The >=50 band, split (2026-09-10, issue 377 unit 1) — the weld class is 83, not 1,326
+
+Every tender with >= 50 distinct buyers, classified by key type and by whether its buyers are
+concentrated in single notices or spread across them:
+
+| key | concentrated (>= 10 buyers/version) | mixed (1–10) | **spread (< 1/version)** |
+| --- | --- | --- | --- |
+| **`ojs:` — this issue's mechanism** | 872 | 54 | **83** |
+| other (eForms BT-04) | 283 | 30 | 4 |
+
+**1,155 of 1,326 are concentrated**, i.e. many buyers named in ONE notice, which is joint procurement
+rather than fusion. So the ">= 50 is where the reading is safe" sentence this issue wrote into the
+render was wrong about seven entries in eight, and the section now says so.
+
+**This issue's actual candidate set is the 83 spread legacy tenders**, not the 1,326 the band
+suggested. Confirmed examples inside it: 4228069 (`ojs:2010-001662`, 354 buyers over 928 versions,
+2010–2014, all legacy era) and the adjacent pair 4459994/4459995 (`ojs:2011-010241` / `-010242`,
+274/272 buyers, consecutive tender ids, one Lithuanian lab equipment and one Slovak office furniture —
+the mechanism firing on neighbouring notices).
+
+**But 83 is a candidate count, not a weld count, and issue 377 found out why.** Reading the eForms
+side's four spread tenders, two name themselves a **Dynamic Purchasing System**. A DPS runs rounds
+over years and admits buyers over time, so its buyers accumulate across notices — the same shape as a
+weld. This issue's own unit 2 predicted exactly that ("some of these are legitimate DPS rounds"). So
+some unknown fraction of the 83 is legitimate, and **nobody has read them**.
+
+That hand-read is the next unit worth doing here, ahead of the widest-single-version pass: it is 83
+rows, it decides whether the repair has a target at all, and the country-spread signal that convicted
+377's one real weld (341 Swiss buyers under a Finnish title) is cheap to compute for all 83.
+
