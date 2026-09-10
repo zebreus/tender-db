@@ -1,6 +1,6 @@
 # 364 — the legacy OJS closure is an unbounded transitive closure over unguarded edges: 2,983 versions and 127 buyers in one Tender
 
-Status: ready-for-agent — UNITS 1-2 DONE 2026-09-07, GAUGE (re-cut unit 4 / original unit 3) DONE 2026-09-10 `c0c2581`, gate green: the kind gate is built and gated (`7b7d513`, 914 passed) and LANDS INERT by design — see "Unit 2, built" for what that means for the repair. Units 3 (guards + representative), 4 (the plausibility gauge) and 5 (the legacy RE-PARSE, not a re-projection) remain. **UNIT 3's CALIBRATION IS CORRECTED 2026-09-10 and the class is now MEASURED — see the two sections at the end. The recorded `role='Procedure-Buyer'` predicate is blind to the legacy era, where this issue's own 127-buyer weld lives (tender 2816628 has 2,983 `buyer` rows and ZERO `Procedure-Buyer`); the corpus carries two buyer vocabularies and the predicate must be `role IN ('buyer','Procedure-Buyer')`. Measured corpus-wide: 102,840 tenders with ≥3 distinct buyers, 1,326 with ≥50 — six times the ≥200-version set `longest_chain` can see.** Was: ready-for-agent — UNIT 1 DECIDED 2026-09-07 (owner)
+Status: ready-for-agent — UNITS 1-2 DONE 2026-09-07, GAUGE (re-cut unit 4) DONE 2026-09-10 `c0c2581` and the REPRESENTATIVE RULE (re-cut unit 3, the phantom half) DONE 2026-09-10 `2c05c8d`, both gates green: the kind gate is built and gated (`7b7d513`, 914 passed) and LANDS INERT by design — see "Unit 2, built" for what that means for the repair. Units 3 (guards + representative), 4 (the plausibility gauge) and 5 (the legacy RE-PARSE, not a re-projection) remain. **UNIT 3's CALIBRATION IS CORRECTED 2026-09-10 and the class is now MEASURED — see the two sections at the end. The recorded `role='Procedure-Buyer'` predicate is blind to the legacy era, where this issue's own 127-buyer weld lives (tender 2816628 has 2,983 `buyer` rows and ZERO `Procedure-Buyer`); the corpus carries two buyer vocabularies and the predicate must be `role IN ('buyer','Procedure-Buyer')`. Measured corpus-wide: 102,840 tenders with ≥3 distinct buyers, 1,326 with ≥50 — six times the ≥200-version set `longest_chain` can see.** Was: ready-for-agent — UNIT 1 DECIDED 2026-09-07 (owner)
 Kind: defect (identity / grouping) — correctness, the CONTEXT.md:112-113 invariant
 Relates to: 92 (records chain 3,282 only as a fold-performance cost, not as a correctness
 signal), ADR-0011 (the eForms edge's three guards, which this edge has none of), ADR-0003
@@ -287,3 +287,36 @@ the numbers. The bands are the before-picture those units will be measured again
 
 **Remaining:** unit 3 (guards + representative rule, ADR-0011 amendment), unit 5 (legacy re-parse and
 re-projection), and unit 2's DPS-round decision.
+
+## Unit 3, built (2026-09-10): a phantom may link but may not name
+
+`build_plan_groups` labelled each legacy component with its union-find root, and the closure is
+union-TO-MIN, so the label was the minimum OJS number over **all** nodes — including the
+not-yet-ingested edge targets ADR-0011 deliberately admits. One mistyped digit in one citation could
+therefore hand a Tender an identity no notice in it ever published, and change it again if that number
+was later ingested under other circumstances.
+
+The label is now the minimum over the nodes that **exist** (`named_by`, built from every legacy
+notice's own `ojs_self`). Three things are deliberately unchanged:
+
+- **The allowance itself.** A phantom endpoint still joins the component, so identity still survives a
+  deepening backfill — that was ADR-0011's reason and it is still good.
+- **Membership.** This decides what a component is *called*, never who is in it. No Tender gains or
+  loses a notice from this commit.
+- **The ordinary case.** A component whose minimum is a real notice keeps the name it had, and a second
+  test holds that open — without it, a rule that always took the second-lowest node would pass.
+
+Negative-checked: reverting the pick to the raw root makes the phantom test fail. A per-run log line
+counts the components named by a non-root, including the zero, so a rule that stops firing is
+distinguishable from one that finds nothing.
+
+**Same-source and strictly-earlier are NOT built here.** Consequence 2 asked for all three guards; this
+commit is the representative half. The other two need the edge's target resolved at plan time, which is
+the shape unit 2's kind gate already established but for a different question — worth its own unit
+rather than being smuggled in beside a labelling change.
+
+**Inert on standing rows, by construction.** Only a projection that re-groups a component relabels it.
+The daily incremental relabels a legacy component only when it touches one (and then completely, since
+a legacy delta expands to its whole OJS component before grouping); everything else waits for unit 5's
+rebuild. So expect the ≥50-buyer band to move in steps, not at once.
+
