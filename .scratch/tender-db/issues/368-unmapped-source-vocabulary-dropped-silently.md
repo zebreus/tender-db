@@ -207,3 +207,38 @@ renders section 13, and the listing is the cohort those units need. The prior me
 of 164 published ids had no destination), and the cap of 15 is why the section is a queue rather than
 a wall.
 
+## Section 13 verified on prod (2026-09-10, job 1005) — and the render was mis-framed
+
+The section renders, in order, with real data. Its top 15 reproduce the 2026-09-09 hand-read exactly:
+
+| profile | field id | window rows |
+| --- | --- | --- |
+| sdk-1.13 | `BT-67(a)-Procedure` | 63,814 |
+| sdk-1.13 | `BT-67(b)-Procedure` | 54,510 |
+| sdk-1.13 | `OPT-200-Organization-Company` | 38,194 |
+| sdk-1.13 | `BT-512/513/507/506/503-Organization-Company` | 38,193 … 34,971 |
+| sdk-1.13 | `BT-23-Lot` (main nature) | 37,576 |
+| sdk-1.13 | `BT-5141-Lot`, `BT-540-Lot`, `BT-539-Lot` | 36,931 / 36,808 / 36,767 |
+| sdk-1.13 | `OPT-321-Tender`, `BT-3201-Tender`, `BT-773-Tender` | 34,200 / 34,200 / 33,668 |
+
+Exclusion grounds, postal-address parts, award-criterion detail, main nature, tender identifiers.
+**The same set this issue already hand-read and found correctly out of scope.**
+
+**The render was wrong about them, and it was my wording.** It said a field here "is dropped
+silently — the 18/85/177/231 shape, with no standing detector until this one". That reads as a defect
+list. It is not one: the canonical model is a narrow subset ON PURPOSE, and a page where nine entries
+in ten are working as intended is how a diagnostic earns being ignored — which is the exact reason
+this issue set the cap to 15 in the first place. Corrected in `1447b45`, with a test pinning it.
+
+The section now says two things it must: **being listed is not a defect**, and **this is not the
+detector for 368's own failures** — `any_channel_reads` is profile-blind, so a field is either always
+read or never and no per-profile asymmetry can show through it. That entry point is unit 4c.
+
+**Third time today the same mistake, in three different sections.** 364's ">=50 is safe" was an
+assertion in the shape of a calibration; its cost figure was borrowed from a run that predated it;
+this one described a scope list as a defect list. None was caught by a test, because all three were
+prose. Two were caught by the first data they met and one by re-reading the issue that had already
+measured it. The pattern is worth naming: **the numbers in these sections get measured, and the
+sentences around them do not.** Each now has a test asserting what the sentence may claim, which is
+the only mechanism that has actually held.
+
