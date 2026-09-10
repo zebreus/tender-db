@@ -1,6 +1,9 @@
 # 377 — a well-formed BT-04 procedure key welds 378 buyers across four countries, and issue 369's gate cannot see it
 
-Status: ready-for-agent — **UNIT 1 DONE 2026-09-10, and it CORRECTS this issue's own claim: the class
+Status: ready-for-agent — **UNIT 2 DECIDED 2026-09-10: NO GATE. Three signals have now been measured
+and all three are blind to a case they exist for; the class is 4 tenders of which 3 are probably
+legitimate. Unit 3 (read the source for a platform-level cause) is the only open unit that could still
+produce a rule.** UNIT 1 DONE 2026-09-10, and it CORRECTS this issue's own claim: the class
 is 4 tenders, only ONE of which is convicted, and buyers-per-version does NOT separate a weld from a
 Dynamic Purchasing System — both accumulate buyers across notices. Country spread is what convicted
 430681. See the last section before building anything.** Was: needs-triage (filed 2026-09-10 by the owner, from the weld gauge's first run carrying the
@@ -152,4 +155,33 @@ single-country (91/91 LV; 46 of 52 SE; 68 of 71 IT), consistent with legitimate 
   three of which are correct as they stand, is not obviously worth building at all.
 - **Issue 364's 83 spread legacy tenders inherit the same question** and are the larger prize. Some
   are certainly DPS too; nobody has read them.
+
+## Unit 2 DECIDED (2026-09-10): no rule. The signal it would key on does not work.
+
+Issue 364 read all 83 of its own spread candidates the same way this issue read its 4, and the
+country signal that convicted 430681 **fails on 2816628** — the weld 364 was filed about, whose
+buyers are 81 % Polish and therefore indistinguishable from a Polish national framework.
+
+So the count is now three signals tried and three failed: buyer count (87 % of the >= 50 band is
+joint procurement named in one notice), buyers-per-version (a DPS accumulates identically), and
+country spread (a single-country weld looks like that country's framework). **No aggregate over the
+buyer set separates a weld from a legitimate multi-buyer arrangement.**
+
+**Therefore this issue does not get a gate.** Building one would mean picking a threshold on a signal
+already measured to be blind to the case it exists for, over a class of 4 tenders of which 3 are
+probably legitimate Dynamic Purchasing Systems. That is the shape of every calibration this issue's
+siblings have had to withdraw.
+
+**What stands instead:**
+
+- **430681 is a confirmed weld** and can be split by hand if anyone wants it split — 341 Swiss buyers
+  under a Finnish school title is not a judgement call. Unit 4's repair applies to it alone.
+- **Unit 3 (read the source) is still worth doing** and is now the only open unit with a chance of
+  producing a rule: if one publishing platform emits a constant BT-04, the fix is at the parser, keyed
+  on the platform, not on any statistic about buyers.
+- **The gauge keeps its value** without a gate. It measures, three instruments agree on its bands, and
+  the spread/concentrated split is real. Adjudicating individual tenders was never its job.
+
+*Reversed if:* unit 3 finds a platform-level cause, or the class grows past four in a later run —
+section 12 makes that visible without anyone remembering to look.
 
