@@ -517,3 +517,34 @@ and the guards are no-ops. The re-parse is the one action with a predicted, fals
 re-run it and the spread bucket should shrink, and section 12 will say by how much without anyone
 remembering to look.
 
+## The re-parse lever, piloted (2026-09-10, jobs 1005/1006) — and it refused nothing
+
+Two-package `reparse` on `ted-export-r209`, then the projection that folds what it re-queued:
+
+```
+1914 reparse: re-parsed 283 notices across 2 packages (128234 members walked,
+              0 unmatched, 0 now failing and left untouched);
+              stamped 2131375 tender(s) epoch-stale; 101 package(s) held back by the cap
+1915 project: 283 notices → 241 tenders (0 islands), 730 versions; 241 tenders written;
+              issue-364 previous-publication citations: 260 ADMITTED, 0 REFUSED
+              (prior-information 0, buyer-profile 0, periodic-indicative 0, qualification-system 0)
+```
+
+**Unit 2's kind gate refused nothing.** Not one prior-information, buyer-profile, periodic-indicative
+or qualification-system citation in 260. If that holds at scale, the re-parse is inert too, and this
+issue has no remaining lever — the gauge measures, the guards are vacuous, the discriminators failed,
+and the cure has nothing to cure.
+
+**Do not read that as settled.** It is 283 notices from 2 of 103 packages, and the packages the cap
+took first are not chosen to be representative. The weld this issue was filed about (2816628) spans
+2010–2014 and is not in this sample. The honest next step is a wider pilot — 20 packages, still
+bounded, still cheap — before concluding anything about 4.5M r209 notices.
+
+**Operational note, because a pilot should not surprise the next person.** `stamp_stale_for_profiles`
+scopes by PROFILE, not by the ids actually re-parsed, so re-parsing 283 notices stamped **2,131,375**
+tenders epoch-stale. That is deliberate and documented at the call site — a stale stamp forces a
+rewrite that recomputes identical content, while a missed one silently loses the re-parse — and the
+projection immediately after folded only its 241, so nothing ran away. But it means **any r209
+re-parse, however small, ages the whole r209 era**, and that is worth knowing before someone runs a
+one-package probe expecting a one-package blast radius.
+
