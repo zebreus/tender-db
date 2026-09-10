@@ -1,6 +1,9 @@
 # 376 — a negative amount is not always junk: revenue-side contracts publish one, and we drop the value entirely
 
-Status: needs-triage (filed 2026-09-10 by the owner while hand-reading issue 372's residue; the
+Status: ready-for-agent — UNIT 1 DONE 2026-09-10 (both stated reasons corrected: 366 Leg A now
+rests on the column's domain rather than on "no procurement has a negative value", and 372's unit 5
+heading is scoped to the 29 rows at −100 it actually measured). Units 2, 3, 4 remain.
+Was: needs-triage (filed 2026-09-10 by the owner while hand-reading issue 372's residue; the
 finding is a MEANING correction, not a code defect, and it makes two other issues' stated reasons
 wrong even though their behaviour may be right)
 Kind: data-model gap (the canonical layer has no way to say "money flows TO the buyer"), plus two

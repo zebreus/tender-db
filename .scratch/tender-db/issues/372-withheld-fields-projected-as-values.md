@@ -512,7 +512,11 @@ sentinels" was a guess from the −1.00 half generalised to the rest — the sam
 method issue 366 caught itself using. The unit's own split BY FIELD hid it: field says nothing about
 magnitude, and magnitude is what separates the three causes.
 
-## Unit 5 DONE (2026-09-08): the `estimated_value` residue is a publisher-invented sentinel, not a marker
+## Unit 5 DONE (2026-09-08): the **−100** `estimated_value` residue is a publisher-invented sentinel, not a marker
+
+*(Scoped 2026-09-10 — the heading said "the `estimated_value` residue" and the finding below only ever
+covered the 29 rows at exactly −100. The other magnitudes in the same field are revenue-side contracts;
+see issue 376 and the correction above.)*
 
 **Located, bounded.** 16 windowed probes over `tender_id` (500,000 wide, `cents = -100 AND field =
 'estimated_value'`, indexed range + filter) — all 16 answered, none shed, and they returned **exactly
