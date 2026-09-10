@@ -843,7 +843,16 @@ pub const WELD_LISTING_CAP: usize = 40;
 /// the `HAVING` is per tender, and although a tender never straddles a window (so
 /// this one COULD be windowed correctly), the top-N ordering could not be merged
 /// without keeping every window's tail. Registered beside them and paid for out
-/// of the same phase, measured at ~128 s for all four.
+/// of the same phase.
+///
+/// **The phase's ~128 s (job 816) is the cost WITHOUT these two — it does not
+/// cover them, and borrowing it as though it did would be the same
+/// measured-elsewhere mistake this issue keeps catching.** Their own cost is
+/// unmeasured until the first run that includes them: the bands aggregate the
+/// same grouped subquery the corpus census already ran windowed, but the listing
+/// adds a sort of that whole grouped result for its top-N, and nothing has timed
+/// that. If it turns out expensive, the listing is the half to reconsider — the
+/// bands are what the reading actually rests on.
 pub fn weld_candidates_sql() -> String {
     format!(
         "SELECT p.tender_id AS tender_id, \
