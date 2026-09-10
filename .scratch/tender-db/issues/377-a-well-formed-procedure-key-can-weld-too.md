@@ -1,6 +1,9 @@
 # 377 — a well-formed BT-04 procedure key welds 378 buyers across four countries, and issue 369's gate cannot see it
 
-Status: needs-triage (filed 2026-09-10 by the owner, from the weld gauge's first run carrying the
+Status: ready-for-agent — **UNIT 1 DONE 2026-09-10, and it CORRECTS this issue's own claim: the class
+is 4 tenders, only ONE of which is convicted, and buyers-per-version does NOT separate a weld from a
+Dynamic Purchasing System — both accumulate buyers across notices. Country spread is what convicted
+430681. See the last section before building anything.** Was: needs-triage (filed 2026-09-10 by the owner, from the weld gauge's first run carrying the
 per-version column — issue 364's section 12). The gauge was built to find this and it did, on the
 first output that could distinguish a weld from a joint procurement.
 Kind: defect (identity / grouping) — the same fusion issue 369 fixed, through a key its gate is
@@ -95,3 +98,58 @@ neighbouring notices.
 *Not claimed here:* that this is common. It is one tender, found because the gauge's first useful
 listing surfaced it. The whole point of unit 1 is that a single example is not a population — the
 mistake this issue's two siblings each had to correct.
+
+## Unit 1 DONE (2026-09-10) — and it corrects this issue's own discriminator claim
+
+**The class is 4 tenders, not a population.** Every tender with >= 50 distinct buyers (1,326 of them,
+a third instrument agreeing with the census and the report), classified by key type and by whether
+its buyers are concentrated in single notices or spread across them:
+
+| key | concentrated (>= 10 buyers/version) | mixed (1–10) | **spread (< 1/version)** |
+| --- | --- | --- | --- |
+| `ojs:` (legacy closure, 364) | 872 | 54 | **83** |
+| other (eForms BT-04) | 283 | 30 | **4** |
+
+Two things fall out immediately. **1,155 of 1,326 are concentrated** — many buyers named in ONE
+notice, which is joint procurement, not fusion. The ">= 50 is where the reading is safe" claim this
+gauge shipped with was not merely unproven, it was wrong about seven entries in eight. And the
+genuinely weld-SHAPED set is **87 tenders, 6.6 % of the band** — 83 legacy, 4 eForms.
+
+### The correction: per-version does NOT separate a weld from a DPS
+
+This issue claimed buyers-per-version is "the discriminator 369 needed". **That is too strong**, and
+reading the other three of the four says why:
+
+| tender | buyers | per-ver | title | buyer countries |
+| --- | --- | --- | --- | --- |
+| **430681** | 378 | 0.48 | Finnish school, phase 1 | **CH 341, DK 24, FI 12, FR 1** |
+| 333104 | 91 | 0.57 | **`Dinamiskās iepirkumu sistēmas`** izveide … elektroenerģijas | LV 91 |
+| 1012301 | 54 | 0.35 | **`DIS`** avseende projektledare … Naturhistoriska riksmuseet | SE 46, +6 |
+| 769785 | 71 | 0.36 | Italian irrigation-system works | IT 68, +3 |
+
+**Two of the three name themselves a Dynamic Purchasing System** — `dinamiskās iepirkumu sistēmas`
+(Latvian), `DIS` (Swedish). A DPS runs many rounds over years and admits buyers over time, so its
+buyers accumulate ACROSS notices — **the same shape as a weld**. Issue 364 unit 2 flagged exactly this
+("some of these are legitimate DPS rounds… one system but not one procurement") and it is the shape,
+not an edge case.
+
+So per-version separates *joint procurement named in one notice* from *buyers accumulated across
+notices*. It does not separate the two things that accumulate. It is a hint, which is what the render
+says, and now there is a concrete reason rather than a hedge.
+
+**What actually convicted 430681 was the COUNTRY spread**: 341 Swiss buyers under a Finnish title.
+A DPS is one system under one authority's rules; it does not span four countries. The other three are
+single-country (91/91 LV; 46 of 52 SE; 68 of 71 IT), consistent with legitimate systems.
+
+### What this changes
+
+- **Unit 2's rule cannot key on per-version alone.** Any rule that refuses a low-per-version key would
+  refuse Latvia's and Sweden's DPS notices. Country spread is the candidate signal that survived this
+  reading — but it is one example, and that is exactly how this issue's siblings got their thresholds
+  wrong.
+- **The class is 4, of which 1 is convicted.** Sizing it was worth doing precisely because it turned
+  "a defect class" into "one tender and three probable false positives". A rule built for four rows,
+  three of which are correct as they stand, is not obviously worth building at all.
+- **Issue 364's 83 spread legacy tenders inherit the same question** and are the larger prize. Some
+  are certainly DPS too; nobody has read them.
+
