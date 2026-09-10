@@ -568,11 +568,20 @@ rates and the quarantine resolution ledger.</p>
   plus the irrevocable euro conversion rates; NULL where no official rate resolves)
   and is what <code>min_value</code>/<code>max_value</code> compare against &mdash;
   see the filter table and CHANGELOG.md in the repository.</li>
-  <li>Only amounts that overflow the stored integer are refused at ingestion.
-  Implausible magnitudes BELOW that are published values and are served as
-  published: 174 tenders exceed &euro;100bn and the largest is
-  &euro;4.97&times;10<sup>16</sup>, so an ordering by value is topped by
-  publisher errors rather than by the largest real procurements (issue 366).</li>
+  <li>Only amounts that overflow the stored integer are refused at ingestion, so
+  a Tender's <code>value</code> is the figure its notice published, however
+  implausible &mdash; 257 trillion PLN on one row whose own lot results award
+  181.5 million.</li>
+  <li><strong>But <code>min_value</code>/<code>max_value</code> do not compare
+  that figure.</strong> They compare a derived EUR column that skips three
+  classes: negative amounts (the SDK's withheld marker, ~15,500 rows), a run of
+  nine or more identical digits, which is a form-width maximum rather than a
+  figure (&euro;999,999,999.99 on street cleaning in a town of 47,000), and
+  anything above &euro;100bn EUR-equivalent. Two consequences worth planning
+  for: a Tender whose only published amount falls in one of those classes has
+  <em>no known value</em> and is returned by NEITHER bound, and the
+  <code>value</code> in its payload can therefore be a figure the value filters
+  ignore (issue 366).</li>
 </ul>
 
 <h3>Dates</h3>

@@ -81,3 +81,34 @@ false is a defect whether or not a fix is queued; those lines get revised again 
 
 Left: unit 4's second half — whether `TenderRow` should carry per-field provenance so a consumer
 can tell an inherited deadline from a republished one, rather than only being told about it.
+
+## The 10⁵⁰-quarantine row is revised again, as unit 2 said it would be (2026-09-10)
+
+Unit 2's note said the three rows whose code half was queued elsewhere were corrected to *today's*
+truth and would "get revised again when 366, 371 and 367 unit 3 land, which is cheap". **366's
+standing rows landed**, so the quarantine row's replacement text is now itself out of date: it read
+*"174 tenders exceed €100bn and the largest is €4.97×10¹⁶, so an ordering by value is topped by
+publisher errors"*, and after 366's drain there are **zero** tenders above €100bn in the head column.
+
+Revised, and the revision changed shape rather than just numbers, because the interesting fact is no
+longer a magnitude:
+
+- **The published figure is still served** — 257 trillion PLN on tender 43065, whose own lot results
+  award 181.5 million. Ingestion still refuses only i64 overflow, and ADR-0004 keeps the parse layer
+  faithful. That half of the old sentence was right and stays.
+- **`min_value`/`max_value` no longer compare it.** They compare the derived EUR head column, which
+  now skips negatives, repdigit field maxima and anything over €100bn. The caveat has to say so,
+  because a caller filtering on value and a caller reading `value` are now looking at two different
+  numbers — which is the *substance* of the change, and no magnitude figure conveys it.
+- **Two consequences stated rather than left to be discovered:** a Tender whose only amount is refused
+  has no known value and is returned by NEITHER bound (SQL three-valued logic on a NULL column), and
+  its payload's `value` can therefore be a figure the value filters ignore.
+
+**The general lesson for this issue, which is about served claims going stale:** a caveat written as a
+*measurement* ("174 tenders exceed €100bn, the top is €4.97×10¹⁶") goes stale the moment the defect it
+describes is fixed, and then reads as a live warning about a corpus that no longer exists. A caveat
+written as a *rule* ("the bounds skip these three classes; the payload does not") stays true across
+the fix. Unit 1's instruction was "do not describe the future as present"; this is its mirror — **do
+not describe the present as a number when the durable claim is a rule.** Worth applying to the
+remaining rows the next time one is touched.
+

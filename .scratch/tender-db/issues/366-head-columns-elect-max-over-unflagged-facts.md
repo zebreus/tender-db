@@ -5,11 +5,13 @@ ANSWERED": the epoch-bump-versus-repair-job dilemma was a false choice — `refo
 FOLD'S OWN election at the affected notices, so there is no second implementation to drift and no
 corpus re-fold. Over-ceiling 175 → 0, negatives 15,644 → 0, beyond-horizon future deadlines 379 → 0;
 the five-row verification baseline re-read and matching, `?max_value=0` clean, 3323836 out of
-`status=open`.** Next: the 322-row repdigit drain, waiting on `7c8a443` (a nines-at-cent-level leg —
-re-reading the ordering after the drain found €99,999,999,999.99 standing, which the rule's
-`cents % 100 != 0` guard walked past). Then unit 3's unfinished half — the DETAIL payload still serves
-the year-3005 deadline and the 257-trillion-PLN value in the same field names the filters now
-disagree with — and the 24,585 exact zeros. Earlier: **UNIT 1 DECIDED 2026-09-08 (owner), see "Unit 1
+`status=open`. Repdigit field maxima 322 → 0 as well (rev `aa55f6e`), after `7c8a443` added a
+nines-at-cent-level leg — re-reading the ordering had found €99,999,999,999.99 standing, which the
+rule's `cents % 100 != 0` guard walked past. No sentinel and no over-ceiling value remains in the
+head column.** Next: unit 3's unfinished half — the DETAIL payload still serves the year-3005
+deadline and the 257-trillion-PLN value in the same field names the filters now disagree with — then
+the 24,585 exact zeros, and unit 5's gated archive read for the €10–100bn band that now tops the
+ordering. Earlier: **UNIT 1 DECIDED 2026-09-08 (owner), see "Unit 1
 DECIDED": two flag legs (negative + all-9s sentinels, 15,899 rows; >€100bn implausible, 175 rows),
 with the €10–100bn band explicitly left to the lot-sum/FMTVAL signals because no threshold separates
 the NHS England contract from a €10bn vending-machine notice.** Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings;
@@ -788,4 +790,35 @@ class still has members when you go looking.
   head column: a PLN nines-run converts to a non-repdigit EUR figure. The RULE catches them (it reads
   published cents), so any row re-folded for any reason is fixed; nothing systematically hunts them.
   Section 10's sweep is the instrument that can see them.
+
+### The repdigit drain, and the ordering read back clean (2026-09-10, rev `aa55f6e`)
+
+**322 → 0 in one batch** — exactly the 249 + 73 predicted, which is the check that the value list and
+`sentinel_amount` agree about what the rule refuses. Deployed first, drained second, per the ordering
+constraint this issue recorded the last time a rule was widened.
+
+The top of `ORDER BY current_value_eur_cents DESC` now:
+
+| cents | tenders | title |
+| --- | --- | --- |
+| 10,000,000,000,000 | 2 | "SPS/CT", "Acquisition de prestations…" |
+| 9,464,095,587,365 | 1 | "Strategic Partner for the Sunderland Smart City" |
+| 9,406,231,628,454 | **2** | "Construction Works and Associated Services…" |
+| 9,235,038,944,626 | 1 | "Modernizarea liniei CF București Nord – Jilava" |
+
+No sentinel and no repdigit remains. **What is left at the top is the €10–100 bn band this issue
+deliberately did not gate** — Sunderland (population ~275,000) is not a €94 bn smart-city programme,
+and separating it from a real mega-framework needs the tender-versus-lot-sum ratio and unit 5's
+`@FMTVAL` comparison, which is where the issue already put it.
+
+Two observations for whoever takes that band, neither of them a rule:
+
+- **9,406,231,628,454 stands on TWO tenders.** A non-round implausible value repeating exactly is the
+  shape section 10's repetition detector exists to surface, and it is not a repdigit — so it is a
+  sentinel family nobody has named, or it is one procurement folded into two tenders (which would make
+  it a 364-shaped grouping finding instead). Worth one look before assuming either.
+- **The two rows AT the ceiling** sit there because `IMPLAUSIBLE_EUR_CENTS` is compared with `<=` and
+  €100,000,000,000.00 is also a round power of ten, which Leg B's decision explicitly admits. The two
+  rules meet exactly there. Consistent with what was decided, and worth knowing before someone reads
+  the top of the ordering and thinks the ceiling leaks.
 
