@@ -2467,6 +2467,50 @@ pub fn render_text(report: &Report) -> String {
     );
     let _ = writeln!(
         out,
+        "\n== 11. Withheld-marker amounts (`-1.00` rows and their declared share — issue 372) =="
+    );
+    if report.unmeasured.iter().any(|l| l == "withheld_markers") {
+        let _ = writeln!(out, "  UNMEASURED — the `withheld_markers` query did not run.");
+    } else if report.withheld_markers.is_empty() {
+        let _ = writeln!(out, "  none — no amount row holds exactly -1.00.");
+    } else {
+        let _ = writeln!(
+            out,
+            "  {:<34}{:>12}{:>16}{:>10}{:>10}{:>12}",
+            "field · source", "rows", "in-wh-notice", "residue", "marked", "tenders"
+        );
+        for r in &report.withheld_markers {
+            let _ = writeln!(
+                out,
+                "  {:<34}{:>12}{:>16}{:>10}{:>10}{:>12}",
+                r.field,
+                group(r.hits),
+                group(r.in_withholding_notice),
+                group(r.hits.saturating_sub(r.in_withholding_notice)),
+                group(r.marked),
+                group(r.tenders),
+            );
+        }
+        let _ = writeln!(
+            out,
+            "  `-1.00` is the eForms SDK's WITHHELD-value marker, not a publisher convention: under \
+             BT-195/`FieldsPrivacy` a withheld field is published as the code `unpublished` and the \
+             number -1, with the reason and the date it becomes publishable beside it (issue 372). \
+             `residue` is the number to read — a DECLARED withholding can be marked precisely, \
+             while an undeclared -1 is a guess about intent and may deserve quarantine instead. \
+             `in-wh-notice` counts notices withholding SOMETHING, not necessarily this field: the \
+             exact test needs the source→canonical mapping, which lives in Rust, so it belongs to \
+             372 unit 2 rather than to this SQL. `marked` is unit 2's per-row verdict, which IS \
+             exact — so `in-wh-notice` minus `marked` is what the section-anchored rule does not \
+             reach, a block the publisher hoisted away from the value it suppresses. Read it on \
+             recently folded rows: standing rows carry no marker until they are re-folded, so a \
+             low corpus-wide `marked` says nothing about the rule. `submission_stat` rows are the \
+             BT-759/BT-760 pair, where the marker means neither the count NOR the type is a \
+             reading."
+        );
+    }
+    let _ = writeln!(
+        out,
         "\n== 12. Weld candidates (Tenders with many distinct buyers — issues 364 / 369) =="
     );
     if report.unmeasured.iter().any(|l| l == "weld_candidates" || l == "weld_bands") {
@@ -2536,48 +2580,51 @@ pub fn render_text(report: &Report) -> String {
             WELD_MIN_BUYERS
         );
     }
+
+    // Issue 368 unit 4b. This section did not exist until 2026-09-10: the query was
+    // registered, ran every week, and its rows were assembled into `Report` — where
+    // nothing read them. `assemble` filtered and capped them; `render_text` never
+    // mentioned the field. So the diagnostic cost its scan every run and produced
+    // nothing anybody could see, which is the "deployed but inert" shape this
+    // codebase keeps finding. Caught by walking `Report`'s fields against the
+    // renderer's body; it was the only one.
     let _ = writeln!(
         out,
-        "\n== 11. Withheld-marker amounts (`-1.00` rows and their declared share — issue 372) =="
+        "\n== 13. Unmodelled published fields (source vocabulary nothing reads — issue 368) =="
     );
-    if report.unmeasured.iter().any(|l| l == "withheld_markers") {
-        let _ = writeln!(out, "  UNMEASURED — the `withheld_markers` query did not run.");
-    } else if report.withheld_markers.is_empty() {
-        let _ = writeln!(out, "  none — no amount row holds exactly -1.00.");
-    } else {
+    if report.unmeasured.iter().any(|l| l == "unmapped_fields") {
+        let _ = writeln!(out, "  UNMEASURED — the `unmapped_fields` query did not run.");
+    } else if report.unmapped_fields.is_empty() {
         let _ = writeln!(
             out,
-            "  {:<34}{:>12}{:>16}{:>10}{:>10}{:>12}",
-            "field · source", "rows", "in-wh-notice", "residue", "marked", "tenders"
+            "  none in the window — every field id the newest notices publish has a \
+             destination on some channel."
         );
-        for r in &report.withheld_markers {
+    } else {
+        let _ = writeln!(out, "  {:<26} {:<34} {:>12}", "profile", "field id", "rows");
+        for r in &report.unmapped_fields {
+            let _ = writeln!(out, "  {:<26} {:<34} {:>12}", r.profile, r.field_id, group(r.hits));
+        }
+        if report.unmapped_fields.len() >= UNMAPPED_FIELD_LISTING_CAP {
             let _ = writeln!(
                 out,
-                "  {:<34}{:>12}{:>16}{:>10}{:>10}{:>12}",
-                r.field,
-                group(r.hits),
-                group(r.in_withholding_notice),
-                group(r.hits.saturating_sub(r.in_withholding_notice)),
-                group(r.marked),
-                group(r.tenders),
+                "  LISTING FULL at {UNMAPPED_FIELD_LISTING_CAP} — there are more; the cap is \
+                 deliberate, see below."
             );
         }
         let _ = writeln!(
             out,
-            "  `-1.00` is the eForms SDK's WITHHELD-value marker, not a publisher convention: under \
-             BT-195/`FieldsPrivacy` a withheld field is published as the code `unpublished` and the \
-             number -1, with the reason and the date it becomes publishable beside it (issue 372). \
-             `residue` is the number to read — a DECLARED withholding can be marked precisely, \
-             while an undeclared -1 is a guess about intent and may deserve quarantine instead. \
-             `in-wh-notice` counts notices withholding SOMETHING, not necessarily this field: the \
-             exact test needs the source→canonical mapping, which lives in Rust, so it belongs to \
-             372 unit 2 rather than to this SQL. `marked` is unit 2's per-row verdict, which IS \
-             exact — so `in-wh-notice` minus `marked` is what the section-anchored rule does not \
-             reach, a block the publisher hoisted away from the value it suppresses. Read it on \
-             recently folded rows: standing rows carry no marker until they are re-folded, so a \
-             low corpus-wide `marked` says nothing about the rule. `submission_stat` rows are the \
-             BT-759/BT-760 pair, where the marker means neither the count NOR the type is a \
-             reading."
+            "  A field id here is PUBLISHED by the source and read by NO channel, so whatever it \
+             says is dropped silently — the 18/85/177/231 shape, with no standing detector until \
+             this one. Two things bound the reading. It is WINDOWED to the newest \
+             {UNMAPPED_FIELD_WINDOW_IDS} notice ids (~100k notices), because a vocabulary going \
+             stale shows up at the head first, so `rows` is a window count and NOT a corpus \
+             total. And the listing is capped at {UNMAPPED_FIELD_LISTING_CAP} on purpose: 109 of \
+             164 distinct published ids had no destination when this was measured, so an \
+             uncapped list is a wall of text rather than a cohort to act on. Read the top of it \
+             as the queue, not the whole problem. `any_channel_reads` is the test — a \
+             channel-blind predicate would report the entire legacy era as read, which is the one \
+             era this has to be honest about."
         );
     }
     out
@@ -3269,6 +3316,66 @@ mod tests {
             assert!(sql.contains("p.role IN"), "roles must be restricted: {sql}");
             assert!(!sql.contains("Tenderer"), "{sql}");
         }
+    }
+
+    /// The guard that would have caught issue 368 unit 4b's inertia, generalised.
+    ///
+    /// `unmapped_fields` was registered, ran every week, and was assembled into
+    /// `Report` — and `render_text` never mentioned it. The query paid its scan and
+    /// produced nothing a reader could see, for as long as it took someone to walk
+    /// the struct by hand. Reading the SOURCE is the only way to state the property
+    /// "every measured field reaches the renderer", because a field that renders
+    /// nothing is invisible to any assertion about output.
+    ///
+    /// Same shape as the head-column writer-count test in `store`, and for the same
+    /// reason: the invariant is about the code, so the code is what it reads.
+    #[test]
+    fn every_report_field_is_read_by_the_renderer() {
+        let src = include_str!("data_quality.rs");
+        // Past the opening brace, so the declaration line itself is not read as a field.
+        let start =
+            src.find("pub struct Report {").expect("Report struct") + "pub struct Report {".len();
+        let body = &src[start..];
+        let fields: Vec<&str> = body[..body.find("\n}").expect("struct end")]
+            .lines()
+            .filter_map(|l| l.trim().strip_prefix("pub "))
+            .filter_map(|l| l.split(':').next())
+            .collect();
+        assert!(fields.len() > 10, "parsed too few fields: {fields:?}");
+
+        let r = src.find("pub fn render_text(").expect("render_text");
+        let render = &src[r..src[r..].find("\n}\n").expect("render end") + r];
+        let missing: Vec<&&str> = fields.iter().filter(|f| !render.contains(**f)).collect();
+        assert!(
+            missing.is_empty(),
+            "these Report fields are assembled and never rendered, so their queries cost \
+             their scan every week and show nobody anything: {missing:?}"
+        );
+    }
+
+    /// Sections must print in their numbered order. They did not: adding section 12
+    /// beside the query it belonged to put it AHEAD of section 11 in the output, so
+    /// the first real report read 10, 12, 11. Harmless to a machine, confusing to a
+    /// person, and free to hold.
+    #[test]
+    fn the_sections_render_in_numbered_order() {
+        let text = render_text(&assemble("x", &Raw::from_labelled(sentinel_scaffold()).expect("raw")));
+        let numbers: Vec<u32> = text
+            .lines()
+            .filter_map(|l| l.trim().strip_prefix("== "))
+            .filter_map(|l| l.split('.').next())
+            .filter_map(|n| n.parse().ok())
+            .collect();
+        assert!(numbers.len() >= 10, "too few sections parsed: {numbers:?}");
+        let mut sorted = numbers.clone();
+        sorted.sort_unstable();
+        assert_eq!(numbers, sorted, "sections must print in order, got {numbers:?}");
+        // And contiguous from 1, so a section cannot be dropped without notice.
+        assert_eq!(
+            numbers,
+            (1..=numbers.len() as u32).collect::<Vec<_>>(),
+            "section numbers must run 1..N with no gaps: {numbers:?}"
+        );
     }
 
     /// Issue 364, from the first live run: the section must not tell a reader that any
