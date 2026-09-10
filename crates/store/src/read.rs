@@ -1652,21 +1652,65 @@ fn tender_select_head(from: &str, lang: Option<&str>) -> String {
         &title_rank(lang),
         "1 = 1",
     );
+    // Issue 366 unit 3: both picks below now read the SAME ladder the fold's
+    // election reads, because until they did, this query contradicted the
+    // filters on the very rows the election exists for.
+    //
+    // `head_deadline`'s doc calls `current_value_eur_cents` "the eur_cents twin
+    // of the read layer's OLD `MAX(a.cents)`" — and the word "old" was wishful:
+    // the head column replaced the aggregate for the BOUNDS, while this SELECT
+    // (shared by every list shape AND the detail payload) kept running the raw
+    // extremum for display. So tender 4490098 served `value` €4.97×10¹⁶ from a
+    // response whose own `amounts` array carried the €50,000 the fold elected,
+    // and 3323836 served `submission_deadline` 3005-07-06 while `status` and
+    // `sort=deadline` used the real 2005-06-15.
+    //
+    // Two different techniques, and the difference is about DRIFT rather than
+    // taste — this issue and 343 are both "two places computed one election and
+    // disagreed", so a second implementation is the thing to avoid:
+    //
+    // - The deadline horizon is one arithmetic comparison against one constant,
+    //   so it transcribes faithfully and the constant itself is interpolated
+    //   from `canonical` rather than retyped.
+    // - The amount rule is a DIGIT WALK (`sentinel_amount`) plus a ceiling, and
+    //   transcribing that into SQL would be exactly the second implementation.
+    //   So the amount pick does not re-derive anything: it looks up the row the
+    //   fold already chose, by matching `eur_cents` against the head column.
+    //   Zero drift by construction — if the election changes, this follows with
+    //   no edit here.
     let deadline = |column| {
         pick(
             "tender_version_dates",
             column,
             Some("submission_deadline"),
             "s.utc_seconds DESC",
-            "1 = 1",
+            &format!(
+                "s.utc_seconds - v.published_at <= {}",
+                crate::canonical::DEADLINE_HORIZON_SECS
+            ),
+        )
+    };
+    // The published figure the fold elected, in ITS OWN currency. This also
+    // repairs an incoherence the old pair had independently of this issue:
+    // `MAX(a.cents)` compared raw numbers across currencies, so 1,000,000 HUF
+    // outranked 500,000 EUR and the two columns could describe different rows.
+    // Matching on `eur_cents` ranks by value, which is what a reader assumes.
+    let elected = |column| {
+        pick(
+            "tender_version_amounts",
+            column,
+            None,
+            // Deterministic among ties: several rows can share one eur_cents.
+            "s.cents DESC, s.currency",
+            "t.current_value_eur_cents IS NOT NULL
+               AND s.eur_cents = t.current_value_eur_cents",
         )
     };
     format!(
         "SELECT t.id, t.source, t.procedure_key, t.kind, v.seq, v.published_at,
                 v.publication_id, v.notice_subtype,
                 {title},
-                (SELECT MAX(a.cents) FROM tender_version_amounts a
-                  WHERE a.tender_id = t.id AND a.seq = v.seq),
+                {cents},
                 {currency},
                 {utc}, {offset}, {has_time},
                 (SELECT COUNT(*) FROM tender_version_lots l
@@ -1682,7 +1726,8 @@ fn tender_select_head(from: &str, lang: Option<&str>) -> String {
                 v.original_lang
            FROM {from}
            JOIN tender_versions v ON v.tender_id = t.id AND v.seq = ",
-        currency = pick("tender_version_amounts", "currency", None, "s.cents DESC", "1 = 1"),
+        cents = elected("cents"),
+        currency = elected("currency"),
         utc = deadline("utc_seconds"),
         offset = deadline("offset_minutes"),
         has_time = deadline("has_time"),
