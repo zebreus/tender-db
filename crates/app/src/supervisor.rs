@@ -320,8 +320,13 @@ enum Spec {
     /// the in-memory lookup, updating only rows whose value changes. The
     /// repair for a poisoned/incomplete rates load — hours cheaper than a
     /// whole-corpus refold and quiet on the change feed, because the corpus
-    /// content did not change, only the derived-beside layer. Run
-    /// `backfill-values` after so the head column follows.
+    /// content did not change, only the derived-beside layer. Nothing needs to
+    /// run after: this stamps the tenders whose value moved epoch-stale and the
+    /// fold re-elects them. This line used to say "run `backfill-values` after
+    /// so the head column follows", which issue 375 made wrong twice over —
+    /// that job is REFUSED (it re-elects with an unfiltered MAX and would undo
+    /// issue 366's drains), and an operator following this doc would have got an
+    /// error rather than a head column.
     RederiveEur,
     /// Repair the stale nested-org mention layer (issue 259 landing): the
     /// 2026-08-20 alias fix changed what `mentions()` emits, but the resolver's
@@ -3430,9 +3435,11 @@ impl Supervisor {
                 // REFUSED (issue 375). This walk stamps `current_value_eur_cents`
                 // with a plain `MAX(a.eur_cents)`, and since `aa732c5` the fold's
                 // election skips withheld amounts, the €100 bn ceiling and
-                // `sentinel_amount`'s repdigit field maxima. Running it re-elects
-                // exactly the junk issue 366's drain removed: ~15,600 −1.00 rows
-                // back into the value bounds, tender 4490098 back to €4.97×10¹⁶.
+                // `sentinel_amount`'s exact zeros and repdigit field maxima.
+                // Running it re-elects exactly the junk issue 366's drains
+                // removed — tens of thousands of rows, and growing every time the
+                // rule widens: ~15,600 −1.00 rows and 24,039 published zeros back
+                // into the value bounds, tender 4490098 back to €4.97×10¹⁶.
                 //
                 // It is refused rather than repaired because it CANNOT be
                 // repaired here: `sentinel_amount` is a digit walk, and writing
@@ -3448,8 +3455,9 @@ impl Supervisor {
                 // the fold re-elects them.
                 return Err(
                     "backfill-values is refused: it re-elects head values with an unfiltered MAX \
-                     and would undo issue 366's drain (~15,600 sentinel rows). Use refold-notices, \
-                     which runs the fold's own election. See issue 375."
+                     and would undo issue 366's drains (tens of thousands of sentinel rows: \
+                     negatives, exact zeros, repdigit field maxima, the ceiling). Use \
+                     refold-notices, which runs the fold's own election. See issue 375."
                         .to_owned(),
                 );
             }
