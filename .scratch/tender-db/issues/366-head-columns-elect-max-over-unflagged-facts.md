@@ -1061,3 +1061,57 @@ stopped taking a raw `MAX(cents)` and now follows the head column's election. Th
 notice publishes 0), unit 5's gated archive read for `@FMTVAL` versus element text, and the non-EUR
 published sentinels that only section 10's sweep can see.
 
+## The exact zeros, DECIDED (2026-09-11): a 0 is a blank, and the head column must not elect one
+
+Measured first, windowed, **0 failed windows**:
+
+| | |
+| --- | --- |
+| tenders whose head value is exactly 0 | **24,647** |
+| of those, the head version ALSO carries a positive amount | 613 |
+| 0 is the only figure | 24,034 |
+
+**The 613 are NOT a defect — the election is right and I expected otherwise.** Sampled: tender 852656
+carries `result_value = €11,792,993` marked **`quality: withheld`**, and 68566 carries
+`result_value = 999999999`, a nines-run field maximum. The election refuses both, correctly, and the
+published 0 is what remains. A hypothesis that the election was losing a real figure did not survive
+the data.
+
+**Which field carries the zeros settles the question:**
+
+| field | zero rows |
+| --- | --- |
+| `estimated_value` | 32,461 |
+| **`result_value`** | **11,793** |
+| **`framework_maximum`** | **1,408** |
+
+**You cannot award a contract for nothing, and you cannot cap a framework at nothing.** 13,201 of
+these rows sit on fields where 0 has no possible reading as a figure. `estimated_value = 0` is the
+arguable one ("not estimated yet"), and it too is an absence rather than a price.
+
+### Decided: do not elect 0
+
+The head column is DERIVED, not stored, so this costs no fidelity — ADR-0004 is satisfied by the
+`amounts` array, which keeps every published 0 exactly as it arrived. What changes is that a tender
+whose only figure is 0 serves **no known value** instead of **€0**.
+
+**The decisive argument is coherence, the same one unit 3 just settled.** `/docs` already tells every
+reader *"Zero often means 'no value given', not a free tender … Filter zeros out of aggregates unless
+you specifically want them."* A derived column that asserts €0 while the documentation beside it says
+do not believe zeros is the payload-versus-filter incoherence again, one layer down.
+
+**The counter-argument, recorded because it is real:** a genuinely free contract becomes
+indistinguishable from an unstated one, and nothing separates them — the same shape that defeated
+three discriminators on issue 364. The difference is that here the ambiguity already exists and the
+column currently resolves it the FALSE way for at least 13,201 rows. Refusing is wrong less often
+than electing.
+
+**`?max_value=0` loses these 24,647**, and that is the point rather than a cost: a reader asking for
+free contracts is today handed thousands of contracts that are not free.
+
+### Next unit, with the ordering this issue already learned
+
+Widen `sentinel_amount` to refuse 0, deploy, THEN drain the standing rows — **that order**, because
+draining first re-elects them under the old rule. Same shape as the repdigit widening (`7c8a443` →
+`aa55f6e`), which this issue recorded going the wrong way round once already.
+
