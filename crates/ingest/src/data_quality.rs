@@ -1092,6 +1092,21 @@ pub const UNMAPPED_FIELD_WINDOW_IDS: i64 = 1_000_000;
 /// read or never, so no per-profile asymmetry is detectable with it.
 pub const UNMAPPED_FIELD_LISTING_CAP: usize = 15;
 
+/// How many rows any ONE profile may take of that cap (issue 368 unit 4c, the
+/// per-scope quota issue 347 established for the org census).
+///
+/// Without it the listing is sorted by raw hits and the largest profile takes
+/// everything: the first live run (2026-09-10) returned **15 of 15 rows under
+/// `eforms:eforms-sdk-1.13`**, so a section whose whole purpose is per-profile
+/// showed exactly one profile. A gap in a SMALL era — which is what issue 368's
+/// own failures were, r208's 100 %-null lot titles among them — could not appear
+/// at any cap, because a bigger profile's ordinary fields outrank it.
+///
+/// Two, not more: the total cap stays 15 for the reason it was set (a page where
+/// nine entries in ten are working as intended earns being ignored), so the quota
+/// buys breadth out of depth rather than out of that decision.
+pub const UNMAPPED_FIELD_PER_PROFILE: usize = 2;
+
 /// Issue 368 unit 4b: which published field ids does the projection DROP, on how
 /// many notices, under which profile.
 ///
@@ -2028,6 +2043,16 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
                 hits: as_u64(r.get(2)),
             })
             .filter(|row| !crate::project::any_channel_reads(&row.field_id))
+            // Issue 368 unit 4c: at most `UNMAPPED_FIELD_PER_PROFILE` rows per
+            // profile, so the largest era cannot take the whole listing. The rows
+            // arrive sorted by hits DESC, so each profile still contributes its
+            // own worst offenders.
+            .scan(std::collections::HashMap::<String, usize>::new(), |seen, row| {
+                let n = seen.entry(row.profile.clone()).or_default();
+                *n += 1;
+                Some((*n <= UNMAPPED_FIELD_PER_PROFILE).then_some(row))
+            })
+            .flatten()
             .take(UNMAPPED_FIELD_LISTING_CAP)
             .collect(),
         unmeasured: raw.unmeasured.clone(),
@@ -3492,6 +3517,56 @@ mod tests {
             (1..=numbers.len() as u32).collect::<Vec<_>>(),
             "section numbers must run 1..N with no gaps: {numbers:?}"
         );
+    }
+
+    /// Issue 368 unit 4c: one profile must not be able to take the whole listing.
+    ///
+    /// The first live run returned 15 of 15 rows under `eforms:eforms-sdk-1.13`,
+    /// because the rows arrive sorted by raw hits and that era is the largest.
+    /// A section whose whole purpose is per-profile showed one profile, and a gap
+    /// in a small era — r208's 100 %-null lot titles, say — could not have surfaced
+    /// at any cap.
+    #[test]
+    fn the_unmodelled_listing_gives_every_profile_a_quota() {
+        // One dominant profile with more rows than the whole cap, and two small
+        // eras underneath it, exactly the shape prod returned.
+        let mut rows: Vec<Vec<serde_json::Value>> = (0..20)
+            .map(|i| vec![json!("eforms:eforms-sdk-1.13"), json!(format!("BIG-{i}")), json!(9_000 - i)])
+            .collect();
+        // Ids nothing reads — a real modelled spelling (`TED-LOT_TITLE`) would be
+        // filtered out by `any_channel_reads` before the quota ever saw it, which
+        // is correct and would make this test measure the filter instead.
+        rows.push(vec![json!("ted-export-r208"), json!("SMALL-A"), json!(40)]);
+        rows.push(vec![json!("ted-export-r208"), json!("SMALL-B"), json!(30)]);
+        rows.push(vec![json!("ted-export-r209"), json!("SMALL-C"), json!(20)]);
+
+        let mut ran = sentinel_scaffold();
+        put(&mut ran, "unmapped_fields", Some(rows));
+        let report = assemble("x", &Raw::from_labelled(ran).expect("raw"));
+
+        let by_profile: std::collections::HashMap<&str, usize> =
+            report.unmapped_fields.iter().fold(Default::default(), |mut m, r| {
+                *m.entry(r.profile.as_str()).or_default() += 1;
+                m
+            });
+        assert_eq!(
+            by_profile.get("eforms:eforms-sdk-1.13"),
+            Some(&UNMAPPED_FIELD_PER_PROFILE),
+            "the largest profile must be held to its quota: {by_profile:?}"
+        );
+        // And the small eras are present at all, which is the whole point.
+        assert!(by_profile.contains_key("ted-export-r208"), "{by_profile:?}");
+        assert!(by_profile.contains_key("ted-export-r209"), "{by_profile:?}");
+        // The total cap still binds.
+        assert!(report.unmapped_fields.len() <= UNMAPPED_FIELD_LISTING_CAP);
+        // Within a profile the worst offender is kept, not an arbitrary one.
+        let big: Vec<&str> = report
+            .unmapped_fields
+            .iter()
+            .filter(|r| r.profile == "eforms:eforms-sdk-1.13")
+            .map(|r| r.field_id.as_str())
+            .collect();
+        assert_eq!(big, vec!["BIG-0", "BIG-1"], "quota must keep the highest-hit rows");
     }
 
     /// Issue 368: the section must not read as a defect list.
