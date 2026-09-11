@@ -265,3 +265,67 @@ era's unmodelled field. That id IS modelled, so the reads filter removed it befo
 the test would have measured the filter and passed for the wrong reason. The fixture uses ids nothing
 reads and says why.
 
+
+## Unit 1 ANSWERED (2026-09-11): it is a family of FOUR form-specific title elements, none of them mapped
+
+The two weekly runs unblocked this (jobs 1305 and 1306). The answer is not the one unit 1 was written
+with, and not the one the 2026-09-08 correction left either.
+
+### The gap is still real and still r208's
+
+| | |
+| --- | --- |
+| Tenders with no `current_title` | **30,285** |
+| …on `ted-export-r208` | **29,763 (98.3 %)** |
+| next largest profile | eforms-sdk-1.13, **119** |
+
+Section 1 agrees: r208 is the only era below 99.9 % on title, at **98.0 %**.
+
+*(A five-row sample ordered by tender id showed eForms profiles and looked like a contradiction. It
+was not — low tender ids skew eForms. The grouped count is the reading; the five rows were the
+sampling trap this repo keeps documenting.)*
+
+### What the titleless notices publish
+
+Over **300 titleless r208 notices** (a sample, taken in scan order, notice ids spanning
+4,352,732–27,161,161):
+
+- **None of the four mapped title fields appears** — not `TED-TITLE`, `TED-TITLE_CONTRACT`,
+  `TED-CONTRACT_TITLE`, nor `TXT-TI`. So it is not a case of one of them being spelled differently.
+- Every notice carries `TED-TI_TEXT` / `TI_TOWN` / `TI_CY` at 23 rows each — the OJ heading, which
+  the 2026-09-08 correction already established is the CPV category label and is correctly unmapped.
+- **148 of the 300 — 49 % — carry a form-specific title element that nothing reads:**
+
+| field id | notices (of 300) |
+| --- | --- |
+| `TED-TITLE_QUALIFICATION_SYSTEM` | 65 |
+| `TED-TITLE_RESULT_DESIGN_CONTEST` | 40 |
+| `TED-TITLE_DESIGN_CONTACT_NOTICE` | 38 |
+| `TED-TITLE_NOTICE_BUYER_PROFILE` | 5 |
+
+All four are parsed — they sit in `r209/rules.rs`'s element list — and none has a projection
+destination. `project.rs`'s title map holds seven ids and none of these.
+
+**This IS this issue's stated shape**, with one word changed: *"a MODELLED concept going missing
+because the closed vocabulary did not know one publisher's spelling"* — except the spelling belongs
+to a FORM, not a publisher. A qualification-system notice, a design-contest result and a
+buyer-profile notice each name their subject in their own element. The concept is the same one.
+
+### Why this needed hand queries, which is the diagnostic's remaining gap
+
+Section 13 is **windowed to the newest 1,000,000 notice ids**, so it cannot see r208 at all — the one
+profile with the title gap is outside the diagnostic built to find such gaps. The section's own note
+names the entry point ("the completeness section, then this list restricted to that profile") and
+that path does not work for a legacy profile. Sizing this corpus-wide also exceeds the 10 s read cap,
+so it needs to run inside the job.
+
+### Next units
+
+1. **A per-profile arm for section 13 that is not windowed**, or a window keyed to the profile rather
+   than to the corpus head. Without it, every legacy-era gap is invisible to the instrument.
+2. **Map the four**, once (1) has sized them corpus-wide. Care needed on the destination: a
+   qualification system's name is arguably the Tender's title for that form, but
+   `TITLE_RESULT_DESIGN_CONTEST` may name the CONTEST rather than the procurement. Read one of each
+   before choosing, the way `TED-TI_TEXT` was read before being rejected.
+3. **The other half.** 152 of the 300 carry no title element of any kind; for those the gap is
+   publisher omission and the honest answer is that no title exists.
