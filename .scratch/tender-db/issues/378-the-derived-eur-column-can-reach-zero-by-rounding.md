@@ -3,7 +3,9 @@
 Status: ready-for-agent (filed 2026-09-11 by the owner, found while building issue 366's zero drain —
 the drain's own termination guard is what exposed it). Scope NARROWED 2026-09-11: the HUF 1.00
 question this issue opened turned out to be the small end of a much larger class, now **issue 379**
-(112,244 Tenders). What is left here is the conversion floor, which 379 does not fix.
+(112,244 Tenders). **CORRECTED 2026-09-11: 379 does subsume ~602 of the 608** — see the correction
+at the end. What is left here is a drain of the 608 and then a decision about the conversion floor on
+the ~6 that survive.
 Kind: defect (derived values) — small (608 Tenders), but it falsifies the shape of the claim issue 366
 just made, not merely its count
 Blocked by: nothing
@@ -110,3 +112,44 @@ first page reads:
 608 Tenders, `more: true`. **A reader asking for free contracts is handed contracts priced at one
 forint** — which is a smaller and more legible wrong answer than the 24,039 it used to hand back, but
 it is the same wrong answer in kind, and it now has nothing else hiding it.
+
+## CORRECTION (2026-09-11): issue 379 DOES subsume almost all of this, by a road neither issue predicted
+
+This issue's "Next unit" section says, in bold, that 379 does not subsume it — *"refusing an exact
+1.00 stops it being ELECTED, while the floor stops what survives election from CONVERTING to zero"*.
+**That reasoning is sound and its conclusion is wrong**, because it treats the two populations as
+disjoint and they are almost the same population.
+
+The 608 Tenders here reach a derived zero by rounding **a published HUF 1.00 or a published one
+minor unit**. Those are exactly the values 379's token leg now refuses. So the amount that was
+rounding to zero is not surviving election any more — it is refused before the conversion is even
+consulted, and the tender falls through to its next amount or to no value at all.
+
+Measured breakdown of the 608, from this issue's own table: HUF 1.00 on 547, one minor unit
+(RON/PLN/CZK/NOK/DKK/SEK/LTL 0.01) on 55, and **six** on values the token leg does not reach —
+CZK 0.10, CZK 0.12, HUF 1.48, HUF 0.79, LIT 2.89. So 379 takes roughly 602 of 608 and leaves ~6.
+
+### They are still standing, and no drain reaches them
+
+`SELECT COUNT(*) FROM tenders WHERE current_value_eur_cents = 0` reads **608** on rev `2130cf4`,
+unchanged. Both drains missed them by construction, and each for a correct reason at the time:
+
+- **The zero drain** (issue 366) excluded them ON PURPOSE. Its published-cents `EXISTS` guard was
+  what made the loop terminate, and these rows were the exact case it was written to exclude.
+- **The token drain** (issue 379) selects by `current_value_eur_cents IN (1, 100)`. These serve 0.
+
+Neither selector is wrong. **A cohort can fall between two correct selectors**, and that is the
+lesson worth keeping: selecting by the OUTCOME protects against drift from the rule, but the outcome
+a fix produces can move when a LATER rule changes what gets elected. A drain is only complete
+against the rule as it stood when the drain ran.
+
+### Next unit, revised
+
+1. **Drain the 608** — one round, the smallest of this family's drains. Same script shape, selector
+   `current_value_eur_cents = 0` with an `EXISTS` on the elected row, and NO published-cents guard
+   this time: the point is precisely to catch the rows the zero drain's guard excluded.
+2. **Re-measure.** Expect ~6 left, all on values the token leg does not reach.
+3. **Then decide the conversion floor on the residue, not on 608.** The argument for it was never
+   the count — it was that the derived column's zero means two things — but at six rows that is a
+   judgement call rather than the clear-cut case this issue opened with, and it should be made on
+   the real number.
