@@ -797,6 +797,70 @@ pub fn sentinel_amounts_sql() -> String {
     )
 }
 
+/// The top of the LOW-end sweep, in published minor units: 10.00 of whatever the
+/// currency is (issue 380).
+///
+/// [`sentinel_amounts_sql`] searches negatives and the top of the range and
+/// declines the rest, on a documented argument that turned out to be wrong: it
+/// said a frequency ranking below the floor "is dominated by genuine round
+/// budgets anyway, so frequency alone would not identify one there". The
+/// measurement behind that ranked the WHOLE column, where ordinary round budgets
+/// own the top because they are the commonest thing in a procurement corpus.
+/// **At the bottom there are no round budgets to compete with, because nothing
+/// real costs a cent** — so frequency is not merely adequate there, it is
+/// decisive. Issue 379 is the counter-example: 59,030 Tenders at €0.01, 53,214 at
+/// €1.00, then 1,463 at €0.10. Two spikes and a 36× cliff, found by frequency
+/// alone, in the region this instrument was declining to search.
+///
+/// **Bounded on the PUBLISHED figure, and currency-blind on purpose** — the
+/// opposite of the floor, which had to be converted (issue 366 measured a
+/// currency-blind floor filling the listing with ordinary Czech and Hungarian
+/// contracts, because 1e9 major units is ~€40 M in CZK and ~€2.5 M in HUF). Down
+/// here the asymmetry inverts: one unit of ANY currency is small, the token is a
+/// fact about a form rather than about a value, and the grouping key is the
+/// published pair anyway. It also means this arm never reads `eur_cents`, so it
+/// needs no `IS NULL` twin — an era awaiting its conversion backfill stays in
+/// scope for free, where the high arm needed a second clause to manage it.
+///
+/// 10.00 rather than 100.00 because of the group state the floor exists to bound:
+/// 3,090 distinct `(currency, cents)` pairs at or below 1,000, against 22,361 at
+/// or below 10,000 (measured 2026-09-11). 3,090 is the same order as the high
+/// arm's "few thousand", and 10.00 clears both issue 379 spikes by 100×.
+const SENTINEL_AMOUNT_CEILING: i64 = 1_000;
+
+/// Published amounts that REPEAT at the BOTTOM of the range (issue 380) — the
+/// same instrument as [`sentinel_amounts_sql`], pointed at the region that one
+/// declines to search. See [`SENTINEL_AMOUNT_CEILING`] for why the region was
+/// skipped, and why the reason given does not hold.
+///
+/// **A separate query rather than a fourth `OR`**, which is the listing-cap
+/// decision as much as a readability one. One ranking with one
+/// [`SENTINEL_LISTING_CAP`] would let whichever end is louder crowd out the
+/// other, and this end is far louder: the top three values here carry hundreds of
+/// thousands of rows between them. Splitting gives each region its own cap — the
+/// per-scope quota issue 347 built for the census listing, reached by separation
+/// instead of a window function.
+///
+/// **The classes already refused by `store::canonical::sentinel_amount` are NOT
+/// excluded**, so 0, 1 and 100 will sit at the top of this listing saying nothing
+/// new. That is deliberate twice over. Excluding them would be a second
+/// implementation of the election rule, which is the drift this issue family
+/// keeps meeting; and a discovery instrument that hides what is already known
+/// cannot show you when a known class starts GROWING again. Read them as the
+/// baseline and read what sits under them.
+pub fn sentinel_amounts_low_sql() -> String {
+    format!(
+        "SELECT a.currency AS currency, a.cents AS cents, COUNT(*) AS hits, \
+                COUNT(DISTINCT a.tender_id) AS tenders \
+           FROM tender_version_amounts a \
+          WHERE a.cents >= 0 AND a.cents <= {SENTINEL_AMOUNT_CEILING} \
+          GROUP BY a.currency, a.cents \
+         HAVING COUNT(*) >= {SENTINEL_MIN_REPEATS} \
+          ORDER BY hits DESC \
+          LIMIT {SENTINEL_LISTING_CAP}"
+    )
+}
+
 /// A tender is flagged as a WELD CANDIDATE at this many distinct buyer
 /// organizations (issue 364 unit 3).
 ///
@@ -1176,6 +1240,9 @@ pub fn whole_corpus_queries() -> Vec<(String, String)> {
         // `windowed_queries` because a `HAVING` cannot be windowed — the builders'
         // docs carry the argument.
         ("sentinel_amounts".to_owned(), sentinel_amounts_sql()),
+        // Issue 380: the same sweep at the other end of the range, separate so
+        // the two regions do not share one listing cap.
+        ("sentinel_amounts_low".to_owned(), sentinel_amounts_low_sql()),
         ("sentinel_dates".to_owned(), sentinel_dates_sql()),
         // Issue 372: the withheld-marker residue.
         ("withheld_markers".to_owned(), withheld_markers_sql()),
@@ -1679,6 +1746,9 @@ pub struct Report {
     /// Tenders at each of [`WELD_BANDS`], so the listing cap cannot be read as the population.
     pub weld_bands: Vec<u64>,
     pub sentinel_amounts: Vec<SentinelRow>,
+    /// Published amounts repeating at the BOTTOM of the range (issue 380), which
+    /// [`sentinel_amounts`](Self::sentinel_amounts) does not reach.
+    pub sentinel_amounts_low: Vec<SentinelRow>,
     /// Published dates repeating outside the plausible range (issue 366).
     pub sentinel_dates: Vec<SentinelRow>,
     /// The `-1.00` withheld-marker rows per field, with their declared share (issue 372).
@@ -1762,6 +1832,9 @@ pub struct Raw {
     pub weld_candidates: Rows,
     pub weld_bands: Rows,
     pub sentinel_amounts: Rows,
+    /// `[currency, cents, hits, tenders]` per repeated amount at the bottom of the
+    /// range (issue 380).
+    pub sentinel_amounts_low: Rows,
     /// `[field, instant, hits, tenders]` per repeated implausible DAY (issue 366) — the
     /// instant is the day's earliest member, standing for the whole day.
     pub sentinel_dates: Rows,
@@ -1824,6 +1897,7 @@ impl Raw {
             weld_candidates: take("weld_candidates", &mut unmeasured)?,
             weld_bands: take("weld_bands", &mut unmeasured)?,
             sentinel_amounts: take("sentinel_amounts", &mut unmeasured)?,
+            sentinel_amounts_low: take("sentinel_amounts_low", &mut unmeasured)?,
             sentinel_dates: take("sentinel_dates", &mut unmeasured)?,
             withheld_markers: take("withheld_markers", &mut unmeasured)?,
             unmapped_fields: take("unmapped_fields", &mut unmeasured)?,
@@ -2015,6 +2089,7 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
             .map(|r| (0..WELD_BANDS.len()).map(|i| as_u64(r.get(i))).collect())
             .unwrap_or_default(),
         sentinel_amounts: sentinel(&raw.sentinel_amounts),
+        sentinel_amounts_low: sentinel(&raw.sentinel_amounts_low),
         sentinel_dates: sentinel(&raw.sentinel_dates),
         withheld_markers: raw
             .withheld_markers
@@ -2465,6 +2540,16 @@ pub fn render_text(report: &Report) -> String {
     );
     render_sentinels(
         &mut out,
+        "sentinel_amounts_low",
+        "amounts — the BOTTOM of the range, <= 10.00 as published; grouped AS PUBLISHED (issue 380)",
+        "currency",
+        &report.unmeasured,
+        &report.sentinel_amounts_low,
+        major,
+        SENTINEL_MIN_REPEATS,
+    );
+    render_sentinels(
+        &mut out,
         "sentinel_dates",
         &format!(
             "dates — by DAY; before 1990-01-01, or more than {} years after this run",
@@ -2485,7 +2570,12 @@ pub fn render_text(report: &Report) -> String {
          suspicious is repetition at a magnitude or on a day no procurement reaches: one \
          Tender is a typo, the {} carrying -1.00 are a publisher convention. Read `tenders` \
          next to `rows`, then either add the shape to `store::canonical::sentinel_amount` / \
-         the deadline horizon, or record on issue 366 why the value is genuine.",
+         the deadline horizon, or record on issue 366 why the value is genuine.\n  \
+         In the BOTTOM listing, 0, 1.00 and 0.01 are EXPECTED and mean nothing new — the \
+         election already refuses all three (issues 366, 379). They are left in rather than \
+         filtered because filtering them would restate the election rule here, which is the \
+         drift this family keeps meeting, and because a known class that starts growing \
+         again is only visible against its own baseline. Read what sits UNDER them.",
         group(16_000),
         group(15_529),
     );
@@ -3051,9 +3141,14 @@ pub fn render_json(report: &Report) -> String {
             "date_min_repeats": SENTINEL_DATE_MIN_REPEATS,
             "listing_cap": SENTINEL_LISTING_CAP,
             "amount_floor_cents": SENTINEL_AMOUNT_FLOOR,
+            "amount_ceiling_cents": SENTINEL_AMOUNT_CEILING,
             "date_floor": SENTINEL_DATE_FLOOR,
             "date_horizon_secs": SENTINEL_DATE_HORIZON_SECS,
             "amounts": sentinels(&report.sentinel_amounts, major),
+            // Issue 380: the bottom of the range, a SEPARATE key because it is a
+            // separate ranking under its own cap — merging them here would undo
+            // in the payload the quota the two queries exist to give.
+            "amounts_low": sentinels(&report.sentinel_amounts_low, major),
             "dates": sentinels(&report.sentinel_dates, day_utc_signed),
         },
         // Issue 364's weld gauge, and 368's unmodelled-field listing. Both were in
@@ -3265,6 +3360,7 @@ mod tests {
             weld_candidates: vec![],
             weld_bands: vec![],
             sentinel_amounts: vec![],
+            sentinel_amounts_low: vec![],
             sentinel_dates: vec![],
             withheld_markers: vec![],
             unmapped_fields: Vec::new(),
@@ -3306,6 +3402,107 @@ mod tests {
 
     fn put(results: &mut [(String, Option<Rows>)], label: &str, rows: Option<Rows>) {
         results.iter_mut().find(|(l, _)| l == label).expect("label").1 = rows;
+    }
+
+    /// Issue 380: the high sweep declines the bottom of the range on the stated
+    /// ground that "frequency alone would not identify one there", and issue 379
+    /// is the counter-example — 59,030 Tenders at €0.01 and 53,214 at €1.00,
+    /// found by a frequency ranking with a 36× cliff under it.
+    ///
+    /// This pins the three decisions that make the low arm different from the
+    /// high one, each of which inverts for a reason.
+    #[test]
+    fn the_low_sweep_searches_where_the_high_one_declines() {
+        let low = sentinel_amounts_low_sql();
+        let high = sentinel_amounts_sql();
+
+        // 1. Bounded on the PUBLISHED figure, and NEVER on the converted one.
+        //    The high arm had to convert its threshold (a currency-blind floor
+        //    of 1e9 major units is ~€40 M in CZK and ~€2.5 M in HUF, and it
+        //    spent the listing cap on ordinary contracts). Down here one unit is
+        //    small in every currency, and the token is a fact about a form.
+        assert!(
+            low.contains(&format!("a.cents >= 0 AND a.cents <= {SENTINEL_AMOUNT_CEILING}")),
+            "the low arm is bounded on published cents:\n{low}"
+        );
+        assert!(
+            !low.contains("eur_cents"),
+            "and never reads the converted column — which is also why it needs no \
+             `IS NULL` twin, where the high arm needed a second clause:\n{low}"
+        );
+        assert!(high.contains("eur_cents"), "the high arm still converts its threshold:\n{high}");
+
+        // 2. The ceiling clears issue 379's two spikes with room, and stops well
+        //    short of the group-state blow-up the floor exists to prevent:
+        //    3,090 distinct (currency, cents) pairs at or below 1,000 against
+        //    22,361 at or below 10,000 (measured on prod 2026-09-11).
+        assert!(SENTINEL_AMOUNT_CEILING >= 100, "must reach one major unit — 53,214 Tenders");
+        assert!(SENTINEL_AMOUNT_CEILING <= 10_000, "and stop short of 22,361 distinct pairs");
+
+        // 3. The two regions do NOT share one ranking. The bottom is far louder
+        //    — its top three values carry hundreds of thousands of rows — so one
+        //    `LIMIT` over both would let it crowd the high tail out entirely.
+        //    Separate queries are the per-scope quota issue 347 built for the
+        //    census listing, reached by separation rather than a window function.
+        assert_ne!(low, high, "two rankings, two caps");
+        assert!(low.contains(&format!("LIMIT {SENTINEL_LISTING_CAP}")), "{low}");
+        assert!(high.contains(&format!("LIMIT {SENTINEL_LISTING_CAP}")), "{high}");
+
+        // Everything else is the high arm's shape, deliberately: same grouping
+        // key, same repeat floor, so the two listings read the same way.
+        assert!(low.contains("GROUP BY a.currency, a.cents"), "{low}");
+        assert!(low.contains(&format!("HAVING COUNT(*) >= {SENTINEL_MIN_REPEATS}")), "{low}");
+
+        // The regions do not overlap: the high arm's positive scope starts at the
+        // floor, the low arm's ends at the ceiling, and the floor is far above it.
+        assert!(SENTINEL_AMOUNT_CEILING < SENTINEL_AMOUNT_FLOOR, "no double-counting");
+    }
+
+    /// Issue 380: the classes the ELECTION already refuses (0, 0.01, 1.00) are
+    /// deliberately NOT filtered out of the low listing, and the section note has
+    /// to say so — otherwise the first reader sees three enormous known values at
+    /// the top and concludes the instrument is broken.
+    ///
+    /// Filtering them would be a second implementation of
+    /// `store::canonical::sentinel_amount`, which is the drift this issue family
+    /// keeps meeting; and a known class that starts growing again is only visible
+    /// against its own baseline.
+    #[test]
+    fn the_low_listing_keeps_the_known_classes_and_says_why() {
+        let mut ran = sentinel_scaffold();
+        put(
+            &mut ran,
+            "sentinel_amounts_low",
+            Some(vec![
+                vec![json!("EUR"), json!(1), json!(79_846), json!(64_065)],
+                vec![json!("EUR"), json!(100), json!(69_405), json!(53_578)],
+                vec![json!("EUR"), json!(250), json!(40), json!(38)],
+            ]),
+        );
+        let report = assemble("x", &Raw::from_labelled(ran).expect("raw"));
+        let text = render_text(&report);
+
+        assert!(text.contains("BOTTOM of the range"), "the low listing is titled:\n{text}");
+        assert!(text.contains("0.01"), "and the known baseline is shown, not hidden:\n{text}");
+        assert!(
+            text.contains("EXPECTED and mean nothing new"),
+            "the note must tell the reader the top of this listing is the baseline:\n{text}"
+        );
+        assert!(text.contains("Read what sits UNDER them"), "{text}");
+
+        // Separate JSON key, for the same reason the queries are separate:
+        // merging them in the payload would undo the quota.
+        let v: Value = serde_json::from_str(&render_json(&report)).expect("valid json");
+        let sect = &v["repeated_implausible"];
+        assert_eq!(sect["amount_ceiling_cents"], SENTINEL_AMOUNT_CEILING);
+        assert_eq!(sect["amounts_low"][0]["scope"], "EUR");
+        assert_eq!(sect["amounts_low"][0]["raw"], 1);
+        assert_eq!(sect["amounts_low"][0]["tenders"], 64_065);
+        assert_eq!(sect["amounts_low"][2]["raw"], 250, "and the row UNDER the baseline survives");
+        assert!(
+            sect["amounts"].as_array().expect("array").is_empty(),
+            "the high listing is its own ranking and stays empty here"
+        );
     }
 
     /// Issue 366's discovery half. The standing sentinel list was derived by CONFIRMING four
@@ -3756,6 +3953,7 @@ mod tests {
             .collect();
         let mut ran = sentinel_scaffold();
         put(&mut ran, "sentinel_amounts", Some(full));
+        put(&mut ran, "sentinel_amounts_low", Some(vec![]));
         let text = render_text(&assemble("x", &Raw::from_labelled(ran).expect("raw")));
         assert!(text.contains("LISTING FULL"), "a truncated tail says so:\n{text}");
     }
@@ -3808,6 +4006,7 @@ mod tests {
     fn an_unmeasured_sweep_does_not_read_as_a_clean_sweep() {
         let mut ran = sentinel_scaffold();
         put(&mut ran, "sentinel_amounts", None);
+        put(&mut ran, "sentinel_amounts_low", Some(vec![]));
         let text = render_text(&assemble("x", &Raw::from_labelled(ran).expect("raw")));
         assert!(text.contains("UNMEASURED — the `sentinel_amounts` query did not run"), "{text}");
         // The date half DID run and found nothing, which must still read as none.
@@ -3886,6 +4085,7 @@ mod tests {
                 "longest_chain",
                 // The sentinel discovery sweep (issue 366).
                 "sentinel_amounts",
+                "sentinel_amounts_low",
                 "sentinel_dates",
                 // The withheld-marker residue (issue 372).
                 "withheld_markers",
@@ -4077,6 +4277,7 @@ mod tests {
             ("fresh_holds".to_owned(), Some(vec![])),
             ("longest_chain".to_owned(), Some(vec![])),
             ("sentinel_amounts".to_owned(), Some(vec![])),
+            ("sentinel_amounts_low".to_owned(), Some(vec![])),
             ("sentinel_dates".to_owned(), Some(vec![])),
             ("withheld_markers".to_owned(), Some(vec![])),
             ("weld_candidates".to_owned(), Some(vec![])),
@@ -4516,6 +4717,7 @@ mod tests {
             // Issue 366: the two sentinel sweeps, empty — a corpus with nothing repeating in
             // either implausible tail, which is the state this report hopes to describe.
             ("sentinel_amounts".to_owned(), Some(vec![])),
+            ("sentinel_amounts_low".to_owned(), Some(vec![])),
             ("sentinel_dates".to_owned(), Some(vec![])),
             ("withheld_markers".to_owned(), Some(vec![])),
             // Issue 364 unit 3: one weld candidate and the bands behind it. The
