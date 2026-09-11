@@ -861,6 +861,64 @@ pub fn sentinel_amounts_low_sql() -> String {
     )
 }
 
+/// A currency needs this many amount rows before its low-end RATE is reported
+/// (issue 381). A rate over 40 rows is noise, and the listing it sits beside is
+/// ranked by rate — so without a floor the top of the table would be whichever
+/// near-empty currency happens to hold one small figure.
+const SENTINEL_RATE_MIN_ROWS: u64 = 1_000;
+
+/// The exact values inside the low sweep's range that the ELECTION already
+/// refuses — derived by ASKING the rule, never by copying it (issue 381).
+///
+/// This is the shape the whole issue family keeps re-learning. The repdigit
+/// drain's cohort was an explicit value list, which was a second implementation
+/// of `sentinel_amount`; the moment the rule widened the list did not, and the
+/// drain reported `0 left` on a corpus with 75 standing rows. A literal
+/// `[0, 1, 100]` here would be the same bug with a longer fuse: correct today,
+/// silently wrong the next time a leg is added.
+///
+/// A thousand calls at report-build time is nothing, and what it buys is that
+/// this CANNOT disagree with the election. Widen `sentinel_amount` and the
+/// residual column follows with no edit here.
+fn low_range_refused() -> Vec<i64> {
+    (0..=SENTINEL_AMOUNT_CEILING).filter(|c| store::canonical::sentinel_amount(*c)).collect()
+}
+
+/// Each currency's low-end residue as a SHARE of its own rows (issue 381).
+///
+/// [`sentinel_amounts_low_sql`] ranks by count inside one currency-blind
+/// ordering, and on its first run that was shown to mislead twice in opposite
+/// directions:
+///
+/// - **Raw count** put BGN in 8 of the 40 slots, more than any currency but EUR.
+///   That is a VOLUME artefact — BGN has 1,432,752 amount rows.
+/// - **Raw rate** then said BGN was unremarkable: 1.55 % of its rows sit at or
+///   below the ceiling, against EUR's 4.07 %. That is a BASELINE artefact — EUR's
+///   share is almost entirely the 0 / 0.01 / 1.00 tokens the election refuses.
+/// - **Residual rate**, with those tokens removed, inverts the ordering: BGN
+///   0.829 %, GBP 0.587 %, EUR 0.185 %, HUF 0.015 %. BGN's residue is 4.5× EUR's
+///   and 55× HUF's, and reading it is what found the per-unit rates of issue 381
+///   (three "Taxi Vehicles" tenders serving £8.57, which is 60/7).
+///
+/// So the listing keeps its baseline — issue 380's argument for that stands, and
+/// nothing is filtered out of it — and the comparable number lives BESIDE it
+/// rather than replacing it.
+pub fn sentinel_low_rate_sql() -> String {
+    let refused: Vec<String> = low_range_refused().iter().map(|c| c.to_string()).collect();
+    let refused = refused.join(", ");
+    format!(
+        "SELECT a.currency AS currency, \
+                SUM(CASE WHEN a.cents >= 0 AND a.cents <= {SENTINEL_AMOUNT_CEILING} \
+                          AND a.cents NOT IN ({refused}) THEN 1 ELSE 0 END) AS residual, \
+                COUNT(*) AS rows \
+           FROM tender_version_amounts a \
+          GROUP BY a.currency \
+         HAVING COUNT(*) >= {SENTINEL_RATE_MIN_ROWS} \
+          ORDER BY residual * 1.0 / COUNT(*) DESC \
+          LIMIT {SENTINEL_LISTING_CAP}"
+    )
+}
+
 /// A tender is flagged as a WELD CANDIDATE at this many distinct buyer
 /// organizations (issue 364 unit 3).
 ///
@@ -1243,6 +1301,9 @@ pub fn whole_corpus_queries() -> Vec<(String, String)> {
         // Issue 380: the same sweep at the other end of the range, separate so
         // the two regions do not share one listing cap.
         ("sentinel_amounts_low".to_owned(), sentinel_amounts_low_sql()),
+        // Issue 381: the residual RATE beside the low listing's counts, because
+        // the counts were measured misleading in both directions.
+        ("sentinel_low_rate".to_owned(), sentinel_low_rate_sql()),
         ("sentinel_dates".to_owned(), sentinel_dates_sql()),
         // Issue 372: the withheld-marker residue.
         ("withheld_markers".to_owned(), withheld_markers_sql()),
@@ -1669,6 +1730,19 @@ pub struct SentinelRow {
     pub tenders: u64,
 }
 
+/// One currency's low-end residue, as the share of its own rows that sits at or
+/// below the ceiling WITHOUT being a value the election already refuses
+/// (issue 381).
+#[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct LowRateRow {
+    pub currency: String,
+    /// Rows at or below the ceiling that the election does NOT already refuse.
+    pub residual: u64,
+    /// Every amount row in that currency — the denominator, carried so the
+    /// reader can see whether a rate rests on millions of rows or on a thousand.
+    pub rows: u64,
+}
+
 /// One weld candidate (issue 364 unit 3): a Tender carrying many distinct buyer
 /// organizations, which is what a fused component looks like from the outside.
 #[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -1749,6 +1823,9 @@ pub struct Report {
     /// Published amounts repeating at the BOTTOM of the range (issue 380), which
     /// [`sentinel_amounts`](Self::sentinel_amounts) does not reach.
     pub sentinel_amounts_low: Vec<SentinelRow>,
+    /// Each currency's low-end residue as a share of its own rows (issue 381),
+    /// ranked by that share — the comparable reading the count listing cannot give.
+    pub sentinel_low_rate: Vec<LowRateRow>,
     /// Published dates repeating outside the plausible range (issue 366).
     pub sentinel_dates: Vec<SentinelRow>,
     /// The `-1.00` withheld-marker rows per field, with their declared share (issue 372).
@@ -1835,6 +1912,8 @@ pub struct Raw {
     /// `[currency, cents, hits, tenders]` per repeated amount at the bottom of the
     /// range (issue 380).
     pub sentinel_amounts_low: Rows,
+    /// `[currency, residual, rows]` per currency with enough rows to rate (issue 381).
+    pub sentinel_low_rate: Rows,
     /// `[field, instant, hits, tenders]` per repeated implausible DAY (issue 366) — the
     /// instant is the day's earliest member, standing for the whole day.
     pub sentinel_dates: Rows,
@@ -1898,6 +1977,7 @@ impl Raw {
             weld_bands: take("weld_bands", &mut unmeasured)?,
             sentinel_amounts: take("sentinel_amounts", &mut unmeasured)?,
             sentinel_amounts_low: take("sentinel_amounts_low", &mut unmeasured)?,
+            sentinel_low_rate: take("sentinel_low_rate", &mut unmeasured)?,
             sentinel_dates: take("sentinel_dates", &mut unmeasured)?,
             withheld_markers: take("withheld_markers", &mut unmeasured)?,
             unmapped_fields: take("unmapped_fields", &mut unmeasured)?,
@@ -2090,6 +2170,15 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
             .unwrap_or_default(),
         sentinel_amounts: sentinel(&raw.sentinel_amounts),
         sentinel_amounts_low: sentinel(&raw.sentinel_amounts_low),
+        sentinel_low_rate: raw
+            .sentinel_low_rate
+            .iter()
+            .map(|r| LowRateRow {
+                currency: as_str(r.first()),
+                residual: as_u64(r.get(1)),
+                rows: as_u64(r.get(2)),
+            })
+            .collect(),
         sentinel_dates: sentinel(&raw.sentinel_dates),
         withheld_markers: raw
             .withheld_markers
@@ -2548,6 +2637,50 @@ pub fn render_text(report: &Report) -> String {
         major,
         SENTINEL_MIN_REPEATS,
     );
+    // Issue 381: the listing above ranks by COUNT, and on its first run that
+    // misled twice in opposite directions — once on volume (BGN took 8 of 40
+    // slots because it has 1.4 M rows) and once on the baseline (BGN's raw low
+    // share looked innocent beside EUR's, whose share is almost all tokens). The
+    // comparable number is the residue AFTER the election's own refusals, over
+    // each currency's own rows.
+    let _ = writeln!(
+        out,
+        "  -- and as a SHARE of each currency's own rows, excluding what the election already \
+         refuses (issue 381) --"
+    );
+    if report.unmeasured.iter().any(|l| l == "sentinel_low_rate") {
+        let _ = writeln!(out, "  UNMEASURED — the `sentinel_low_rate` query did not run.");
+    } else if report.sentinel_low_rate.is_empty() {
+        let _ = writeln!(
+            out,
+            "  none — no currency carries {} amount rows, which is the floor below which a \
+             share is noise rather than a reading.",
+            group(SENTINEL_RATE_MIN_ROWS),
+        );
+    } else {
+        let _ = writeln!(out, "  {:<22}{:>14}{:>16}{:>12}", "currency", "residual", "rows", "share");
+        for r in &report.sentinel_low_rate {
+            let share =
+                if r.rows == 0 { "—".to_owned() } else { format!("{:.3}%", 100.0 * r.residual as f64 / r.rows as f64) };
+            let _ = writeln!(
+                out,
+                "  {:<22}{:>14}{:>16}{:>12}",
+                r.currency,
+                group(r.residual),
+                group(r.rows),
+                share,
+            );
+        }
+        let _ = writeln!(
+            out,
+            "  Ranked by share, floor {} rows. The values the election refuses are excluded by \
+             ASKING `store::canonical::sentinel_amount`, not by a copied list — widen the rule and \
+             this column follows with no edit. A currency far above its neighbours here is \
+             carrying something the token classes do not explain: that is how issue 381's per-unit \
+             rates were found (BGN 0.829 %, GBP 0.587 %, against EUR 0.185 %).",
+            group(SENTINEL_RATE_MIN_ROWS),
+        );
+    }
     render_sentinels(
         &mut out,
         "sentinel_dates",
@@ -3149,6 +3282,26 @@ pub fn render_json(report: &Report) -> String {
             // separate ranking under its own cap — merging them here would undo
             // in the payload the quota the two queries exist to give.
             "amounts_low": sentinels(&report.sentinel_amounts_low, major),
+            // Issue 381: the share, with its numerator and denominator beside it
+            // and the share PRECOMPUTED — a machine consumer should not have to
+            // re-derive the one number the section exists to show.
+            "amounts_low_rate": report
+                .sentinel_low_rate
+                .iter()
+                .map(|r| {
+                    json!({
+                        "currency": r.currency,
+                        "residual": r.residual,
+                        "rows": r.rows,
+                        "share": if r.rows == 0 {
+                            Value::Null
+                        } else {
+                            json!(r.residual as f64 / r.rows as f64)
+                        },
+                    })
+                })
+                .collect::<Vec<Value>>(),
+            "rate_min_rows": SENTINEL_RATE_MIN_ROWS,
             "dates": sentinels(&report.sentinel_dates, day_utc_signed),
         },
         // Issue 364's weld gauge, and 368's unmodelled-field listing. Both were in
@@ -3361,6 +3514,7 @@ mod tests {
             weld_bands: vec![],
             sentinel_amounts: vec![],
             sentinel_amounts_low: vec![],
+            sentinel_low_rate: vec![],
             sentinel_dates: vec![],
             withheld_markers: vec![],
             unmapped_fields: Vec::new(),
@@ -3402,6 +3556,90 @@ mod tests {
 
     fn put(results: &mut [(String, Option<Rows>)], label: &str, rows: Option<Rows>) {
         results.iter_mut().find(|(l, _)| l == label).expect("label").1 = rows;
+    }
+
+    /// Issue 381: the residual column excludes what the ELECTION refuses, and it
+    /// learns that set by ASKING the rule rather than carrying a copy.
+    ///
+    /// This is the property the whole issue family keeps paying for. The repdigit
+    /// drain's cohort was a literal value list, it did not widen when the rule
+    /// did, and it reported "0 left" on a corpus with 75 standing rows. So the
+    /// test is not "the list is [0, 1, 100]" — that would pin the copy this is
+    /// built to avoid. It is "the list AGREES with `sentinel_amount`, value by
+    /// value, across the whole range", which stays true when the rule moves.
+    #[test]
+    fn the_residual_excludes_exactly_what_the_election_refuses() {
+        let sql = sentinel_low_rate_sql();
+        let refused = low_range_refused();
+
+        for cents in 0..=SENTINEL_AMOUNT_CEILING {
+            assert_eq!(
+                refused.contains(&cents),
+                store::canonical::sentinel_amount(cents),
+                "{cents} must be excluded iff the election refuses it"
+            );
+        }
+
+        // And the generated SQL carries that set, so the agreement is not just a
+        // property of a helper nobody calls.
+        for cents in &refused {
+            assert!(sql.contains(&format!("{cents}")), "the NOT IN list carries {cents}:\n{sql}");
+        }
+        assert!(sql.contains("NOT IN ("), "the exclusion is expressed in SQL:\n{sql}");
+
+        // Today that set is exactly these three, and the two values beside them
+        // are NOT excluded — the residual is meant to contain 0.10 and 2.00,
+        // because those are what a reader is being pointed at.
+        assert!(refused.contains(&0) && refused.contains(&1) && refused.contains(&100));
+        assert!(!refused.contains(&10), "€0.10 is residue, not baseline");
+        assert!(!refused.contains(&200), "€2.00 is residue, not baseline");
+
+        // The floor keeps a near-empty currency off the top of a rate ranking.
+        assert!(
+            sql.contains(&format!("HAVING COUNT(*) >= {SENTINEL_RATE_MIN_ROWS}")),
+            "a share over a handful of rows is noise:\n{sql}"
+        );
+        assert!(sql.contains("ORDER BY residual * 1.0 / COUNT(*) DESC"), "ranked by SHARE:\n{sql}");
+    }
+
+    /// Issue 381: the share is what the count listing cannot say, so it is
+    /// rendered beside it and precomputed in the payload.
+    ///
+    /// The numbers below are the prod measurement that motivated the column:
+    /// ranked by raw count BGN leads on volume, ranked by raw share EUR leads on
+    /// the token baseline, and only this column puts BGN above EUR.
+    #[test]
+    fn the_low_rate_ranks_currencies_by_residue_not_by_volume() {
+        let mut ran = sentinel_scaffold();
+        put(
+            &mut ran,
+            "sentinel_low_rate",
+            Some(vec![
+                vec![json!("BGN"), json!(11_877), json!(1_432_752)],
+                vec![json!("GBP"), json!(2_225), json!(379_052)],
+                vec![json!("EUR"), json!(18_121), json!(9_807_417)],
+            ]),
+        );
+        let report = assemble("x", &Raw::from_labelled(ran).expect("raw"));
+        let text = render_text(&report);
+
+        assert!(text.contains("SHARE of each currency's own rows"), "{text}");
+        assert!(text.contains("0.829%"), "BGN's share is shown to three places:\n{text}");
+        assert!(text.contains("0.185%"), "and EUR's, which is smaller despite 6.8x the rows:\n{text}");
+        // EUR has the largest residual COUNT and the smallest share — the whole
+        // point of the column, so the order on the page must not be by count.
+        let bgn = text.find("BGN").expect("BGN");
+        let eur = text.find("\n  EUR ").expect("EUR row");
+        assert!(bgn < eur, "ranked by share, so BGN precedes EUR:\n{text}");
+
+        let v: Value = serde_json::from_str(&render_json(&report)).expect("valid json");
+        let rate = &v["repeated_implausible"]["amounts_low_rate"];
+        assert_eq!(rate[0]["currency"], "BGN");
+        assert_eq!(rate[0]["residual"], 11_877);
+        assert_eq!(rate[0]["rows"], 1_432_752);
+        let share = rate[0]["share"].as_f64().expect("precomputed share");
+        assert!((share - 0.008289).abs() < 1e-5, "share precomputed, not left to the consumer: {share}");
+        assert_eq!(v["repeated_implausible"]["rate_min_rows"], SENTINEL_RATE_MIN_ROWS);
     }
 
     /// Issue 380: the high sweep declines the bottom of the range on the stated
@@ -3954,6 +4192,7 @@ mod tests {
         let mut ran = sentinel_scaffold();
         put(&mut ran, "sentinel_amounts", Some(full));
         put(&mut ran, "sentinel_amounts_low", Some(vec![]));
+        put(&mut ran, "sentinel_low_rate", Some(vec![]));
         let text = render_text(&assemble("x", &Raw::from_labelled(ran).expect("raw")));
         assert!(text.contains("LISTING FULL"), "a truncated tail says so:\n{text}");
     }
@@ -4007,6 +4246,7 @@ mod tests {
         let mut ran = sentinel_scaffold();
         put(&mut ran, "sentinel_amounts", None);
         put(&mut ran, "sentinel_amounts_low", Some(vec![]));
+        put(&mut ran, "sentinel_low_rate", Some(vec![]));
         let text = render_text(&assemble("x", &Raw::from_labelled(ran).expect("raw")));
         assert!(text.contains("UNMEASURED — the `sentinel_amounts` query did not run"), "{text}");
         // The date half DID run and found nothing, which must still read as none.
@@ -4086,6 +4326,7 @@ mod tests {
                 // The sentinel discovery sweep (issue 366).
                 "sentinel_amounts",
                 "sentinel_amounts_low",
+                "sentinel_low_rate",
                 "sentinel_dates",
                 // The withheld-marker residue (issue 372).
                 "withheld_markers",
@@ -4278,6 +4519,7 @@ mod tests {
             ("longest_chain".to_owned(), Some(vec![])),
             ("sentinel_amounts".to_owned(), Some(vec![])),
             ("sentinel_amounts_low".to_owned(), Some(vec![])),
+            ("sentinel_low_rate".to_owned(), Some(vec![])),
             ("sentinel_dates".to_owned(), Some(vec![])),
             ("withheld_markers".to_owned(), Some(vec![])),
             ("weld_candidates".to_owned(), Some(vec![])),
@@ -4718,6 +4960,7 @@ mod tests {
             // either implausible tail, which is the state this report hopes to describe.
             ("sentinel_amounts".to_owned(), Some(vec![])),
             ("sentinel_amounts_low".to_owned(), Some(vec![])),
+            ("sentinel_low_rate".to_owned(), Some(vec![])),
             ("sentinel_dates".to_owned(), Some(vec![])),
             ("withheld_markers".to_owned(), Some(vec![])),
             // Issue 364 unit 3: one weld candidate and the bands behind it. The
