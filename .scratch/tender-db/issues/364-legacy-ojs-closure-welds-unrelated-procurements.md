@@ -713,3 +713,29 @@ measured to move anything), r209 carries no refusable citations in 502,402 of th
 are vacuous, and the gate is correct by test. That is enough to leave this issue with a clear next
 action and no open question that another job would answer.
 
+## The rename, verified on the tender this issue was FILED about (2026-09-11)
+
+The phantom rule's 5,054 renames include the exhibit. Read off prod after the full projection:
+
+| | before | after |
+| --- | --- | --- |
+| tender id | 2816628 | **7972470** (old id now a clean `404 no such tender`) |
+| procedure key | `ojs:2001-185105` — the **typo's** year, a publication the corpus does not hold | **`ojs:2011-052696`** — a real notice, `052696-2011`, published 2011-02-16 |
+| versions | 2,983 | **2,983** |
+| span | 2011→2018 | 2011-02-16 → 2018-11-09 |
+
+**Both halves of the claim hold.** The component is now named by a publication that exists, and its
+membership is byte-for-byte the same 2,983 versions — the rule changes what a component is called and
+nothing else. The old id retiring into a 404 is `retire_regrouped_tenders` doing its job; the notices
+moved, they were not lost.
+
+**The weld itself is untouched, and that was never this rule's job.** 7972470 still fuses a 2011
+heating-and-plumbing installation with seven more years of unrelated procurements. What changed is
+that it no longer claims to be a 2001 publication nobody ever made.
+
+*Method note:* the first probe of 2816628 printed `procedure_key: None, versions: 0` and read as a
+silently emptied tender. It was a `404` with a perfectly clear error body, and the script printed
+`.get()` defaults over it — the same "an error body is not data" mistake `docs/agents/prod-box-reads.md`
+warns about, made an hour after I added a section to that file about it. Check the status, then the
+body, then the number.
+
