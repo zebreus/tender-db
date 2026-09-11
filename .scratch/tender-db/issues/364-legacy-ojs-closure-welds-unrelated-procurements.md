@@ -601,3 +601,34 @@ The run in flight took the second by accident — 20 packages was chosen to be a
 serving continues over WAL) and it will produce the citation measurement this pilot was for. But the
 next person sizing a legacy re-parse should size it against 500,000, not against packages.
 
+## The representative rule, measured: 5,054 components were named by a phantom
+
+The full projection this pilot triggered is the first corpus-scale run of unit 3's phantom rule
+(`2c05c8d`, deployed in `d87b95d`). Its unconditional log line:
+
+```
+[project] group step union-load: 7.0s (11007709 nodes)
+[project] group step representative: 5054 component(s) named by their earliest EXISTING
+          notice instead of a phantom minimum (issue 364)
+[project] group step legacy-update: 116.1s (11003671 legacy)
+```
+
+**5,054 legacy components carried an identity no notice in them ever published.** Their minimum OJS
+number was an edge target nobody has ingested — a mistyped digit, a citation into a year the corpus
+does not hold — and under the old union-to-min labelling that phantom named the whole component.
+Tender 2816628, named by `2001/S 112-185105` when its eleven siblings write `2011/…`, is one of
+these.
+
+**So the rule is not a no-op, and this is the number that says so.** Out of 11,007,709 nodes it moved
+5,054 names. That is small as a share and large as a count: 5,054 Tenders are now called what their
+own earliest notice calls them, and they keep exactly the members they had — the rule changes names,
+never membership, and ADR-0011's allowance for phantom LINKS is untouched.
+
+Worth setting beside the rest of today's measurements on this issue, because it is the only one that
+moved anything: the guards are vacuous, three discriminators failed, the kind gate refused 0 of 260
+on its pilot cohort. The phantom rule is the single change measured to have an effect, and it was the
+cheapest of them.
+
+*Also visible in the same run, and consistent with issue 369's own census:* `group step refused-keys:
+3 placeholder-shaped key(s) with >= 3 distinct buyer sets`. Three, as measured there.
+
