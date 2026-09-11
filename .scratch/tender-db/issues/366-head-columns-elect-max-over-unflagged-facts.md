@@ -1035,3 +1035,29 @@ Worth keeping as the durable form: **a rule that reads published values must be 
 published values.** The head column is where the rule's EFFECT shows, never where its population
 lives.
 
+## Unit 3's unfinished half is DONE, and verified on prod (2026-09-11)
+
+The issue recorded this as the decision unit 3 still owed: *"the detail payload and the head column
+disagree … serving it in the same field name the filters disagree with is not [right]"*, with two
+named exhibits. Both were re-read on prod just now, against the deployed read layer:
+
+| | was | now serves | the published figure |
+| --- | --- | --- | --- |
+| `/v1/tenders/3323836` `submission_deadline` | `3005-07-06` | **`2005-06-15`** — the elected date | still in `dates`, both rows: `2005-06-15` AND `3005-07-06T10:30:00+00:00` |
+| `/v1/tenders/43065` `value` | `{25756286172000000, PLN}` | **`null`** — matching its NULL head column | still in `amounts`: `{cents: 25756286172000000, currency: PLN}` |
+
+**So the decision resolved the way this issue hoped it would, and the resolution is checkable rather
+than asserted.** The summary field agrees with what `status`, `sort=deadline` and the value bounds
+do, so a reader who filters and a reader who reads one record now see the same claim. And nothing was
+lost: both published figures survive verbatim in the fact arrays, which is ADR-0004's whole point and
+the reason the change was safe to make.
+
+The fix was the read layer's own pick being brought onto the same ladder as the head columns
+(`read.rs`, `tender_select_head`): the deadline pick gained the horizon filter, and the amount pick
+stopped taking a raw `MAX(cents)` and now follows the head column's election. That is exactly the
+"never brought onto the same ladder" gap this entry named.
+
+**Still open on this issue, unchanged:** the 24,585 exact zeros (a decision, not a defect — a planning
+notice publishes 0), unit 5's gated archive read for `@FMTVAL` versus element text, and the non-EUR
+published sentinels that only section 10's sweep can see.
+
