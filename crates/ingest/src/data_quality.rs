@@ -1257,6 +1257,69 @@ pub const UNMAPPED_FIELD_PER_PROFILE: usize = 2;
 /// is also the question worth asking, since a vocabulary goes stale as new
 /// spellings arrive. The report's convention is to say what it does not measure
 /// rather than let a reader assume completeness, and the window is in the label.
+/// How far back [`unmapped_fields_per_profile_sql`] looks, in notice ids, from
+/// EACH PROFILE's own newest notice rather than from the corpus head.
+///
+/// Smaller than [`UNMAPPED_FIELD_WINDOW_IDS`] because it is spent once per
+/// profile: at ~24 profiles this selects at most ~2.4 M ids against the corpus
+/// arm's 1 M, and most profiles are smaller than the window so for them it is
+/// "the whole profile" rather than a slice.
+pub const UNMAPPED_FIELD_PROFILE_WINDOW_IDS: i64 = 100_000;
+
+/// The same listing as [`unmapped_fields_sql`], windowed PER PROFILE (issue 368).
+///
+/// The corpus arm measures the head of the corpus, on the argument that a
+/// vocabulary goes stale as new spellings arrive. That argument is right and it
+/// has a consequence nobody costed: **a profile that stopped publishing is
+/// entirely invisible to it**, and those are exactly the profiles whose gaps are
+/// already baked into the served corpus.
+///
+/// Measured 2026-09-11, which is what made this concrete. `ted-export-r208`
+/// carries **29,763 of the 30,285 Tenders that have no title at all** — 98.3 % of
+/// them, and section 1 shows r208 as the only era under 99.9 % on title. Its
+/// newest notice is id 27,161,439 against a corpus maximum of 31,499,822, so it
+/// sits **4.3 million ids below the corpus window's floor**. The one profile with
+/// the gap was outside the diagnostic built to find gaps, and the finding that
+/// followed — four form-specific title elements (`TITLE_QUALIFICATION_SYSTEM`,
+/// `TITLE_RESULT_DESIGN_CONTEST`, `TITLE_DESIGN_CONTACT_NOTICE`,
+/// `TITLE_NOTICE_BUYER_PROFILE`) parsed and mapped nowhere, on 148 of 300 sampled
+/// titleless notices — had to be found by hand.
+///
+/// **Each profile's own head, not a uniform sample.** A modulo sample over the
+/// whole corpus would also see every era, and was rejected on cost: `notice_id %
+/// n` cannot use an index, so it is a full scan of all eight tables, where the
+/// window is an index range. The per-profile maximum costs one grouped scan of
+/// `notices` per arm, which is a column pair rather than a payload.
+pub fn unmapped_fields_per_profile_sql() -> String {
+    let arm = |table: &str| {
+        format!(
+            "SELECT n.profile AS profile, x.field_id AS field_id, COUNT(*) AS hits \
+               FROM {table} x \
+               JOIN notices n ON n.id = x.notice_id \
+               JOIN (SELECT profile AS p, MAX(id) AS max_id FROM notices GROUP BY profile) h \
+                 ON h.p = n.profile \
+              WHERE x.notice_id > h.max_id - {UNMAPPED_FIELD_PROFILE_WINDOW_IDS} \
+              GROUP BY n.profile, x.field_id"
+        )
+    };
+    let tables = [
+        "notice_texts",
+        "notice_codes",
+        "notice_classifications",
+        "notice_amounts",
+        "notice_dates",
+        "notice_integers",
+        "notice_numbers",
+        "notice_ids",
+    ];
+    let arms: Vec<String> = tables.iter().map(|t| arm(t)).collect();
+    format!(
+        "SELECT profile, field_id, SUM(hits) AS hits FROM ({}) \
+          GROUP BY profile, field_id ORDER BY hits DESC",
+        arms.join(" UNION ALL ")
+    )
+}
+
 pub fn unmapped_fields_sql() -> String {
     let arm = |table: &str| {
         format!(
@@ -1318,6 +1381,9 @@ pub fn whole_corpus_queries() -> Vec<(String, String)> {
         // would `as_i64` the `field_id` in column 1 to 0. Its own SQL window
         // bounds the cost instead.
         ("unmapped_fields".to_owned(), unmapped_fields_sql()),
+        // Issue 368: the same listing keyed to each profile's own head, so a
+        // profile that stopped publishing is not invisible to it.
+        ("unmapped_fields_per_profile".to_owned(), unmapped_fields_per_profile_sql()),
     ]
 }
 
@@ -1835,6 +1901,9 @@ pub struct Report {
     /// [`UNMAPPED_FIELD_LISTING_CAP`] for the 61.7 % measurement that says so,
     /// and why this is not yet the vocabulary diagnostic 368 asked for.
     pub unmapped_fields: Vec<UnmappedFieldRow>,
+    /// The same listing keyed to each PROFILE's own newest notices (issue 368), so
+    /// an era that stopped publishing still shows its vocabulary.
+    pub unmapped_fields_per_profile: Vec<UnmappedFieldRow>,
     /// The longest version chain in the corpus (`MAX(tenders.current_seq)`) —
     /// the fold-cost tripwire (issue 92). 0 when unmeasured or the layer is
     /// empty; the render distinguishes the two via [`Report::unmeasured`].
@@ -1924,6 +1993,8 @@ pub struct Raw {
     /// predicate decides which of them are DROPPED, in Rust, because the match
     /// is full-id OR stem and the DE-1.x aliases resolve there (unit 4a).
     pub unmapped_fields: Rows,
+    /// `(profile, field_id, hits)` keyed to each profile's own head (issue 368).
+    pub unmapped_fields_per_profile: Rows,
     /// Labels whose query never ran (issue 230), in the order collected.
     pub unmeasured: Vec<String>,
 }
@@ -1981,6 +2052,7 @@ impl Raw {
             sentinel_dates: take("sentinel_dates", &mut unmeasured)?,
             withheld_markers: take("withheld_markers", &mut unmeasured)?,
             unmapped_fields: take("unmapped_fields", &mut unmeasured)?,
+            unmapped_fields_per_profile: take("unmapped_fields_per_profile", &mut unmeasured)?,
             unmeasured,
         })
     }
@@ -2127,6 +2199,37 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
     // Both sentinel listings arrive ranked by the SQL (most-repeated first) and stay in
     // that order rather than being re-sorted: "which value has earned a rule" is the
     // question, and repetition is the answer to it.
+    // Issue 368: both unmapped listings are shaped identically — the filter, the
+    // per-profile quota and the cap are the same question asked of two windows —
+    // so they share ONE implementation. Two copies is how the quota would come to
+    // apply on one listing and not the other.
+    let unmapped = |rows: &Rows| -> Vec<UnmappedFieldRow> {
+        rows.iter()
+            .map(|r| UnmappedFieldRow {
+                profile: as_str(r.first()),
+                field_id: as_str(r.get(1)),
+                hits: as_u64(r.get(2)),
+            })
+            // The projection matches on full id OR two-segment stem, and the
+            // DE-1.x aliases resolve to their eForms target in Rust first (unit
+            // 4a). A channel-blind predicate would report the whole legacy era as
+            // read, which is the one era this has to be honest about, so
+            // `any_channel_reads` is the right question: is this id read on ANY
+            // channel at all.
+            .filter(|row| !crate::project::any_channel_reads(&row.field_id))
+            // Unit 4c: at most `UNMAPPED_FIELD_PER_PROFILE` rows per profile, so
+            // the largest era cannot take the whole listing. The rows arrive
+            // sorted by hits DESC, so each profile still contributes its own worst
+            // offenders.
+            .scan(std::collections::HashMap::<String, usize>::new(), |seen, row| {
+                let n = seen.entry(row.profile.clone()).or_default();
+                *n += 1;
+                Some((*n <= UNMAPPED_FIELD_PER_PROFILE).then_some(row))
+            })
+            .flatten()
+            .take(UNMAPPED_FIELD_LISTING_CAP)
+            .collect()
+    };
     let sentinel = |rows: &Rows| -> Vec<SentinelRow> {
         rows.iter()
             .map(|r| SentinelRow {
@@ -2198,27 +2301,8 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         // A channel-blind predicate would report the whole legacy era as read,
         // which is the one era this has to be honest about, so `any_channel_reads`
         // is the right question: is this id read on ANY channel at all.
-        unmapped_fields: raw
-            .unmapped_fields
-            .iter()
-            .map(|r| UnmappedFieldRow {
-                profile: as_str(r.first()),
-                field_id: as_str(r.get(1)),
-                hits: as_u64(r.get(2)),
-            })
-            .filter(|row| !crate::project::any_channel_reads(&row.field_id))
-            // Issue 368 unit 4c: at most `UNMAPPED_FIELD_PER_PROFILE` rows per
-            // profile, so the largest era cannot take the whole listing. The rows
-            // arrive sorted by hits DESC, so each profile still contributes its
-            // own worst offenders.
-            .scan(std::collections::HashMap::<String, usize>::new(), |seen, row| {
-                let n = seen.entry(row.profile.clone()).or_default();
-                *n += 1;
-                Some((*n <= UNMAPPED_FIELD_PER_PROFILE).then_some(row))
-            })
-            .flatten()
-            .take(UNMAPPED_FIELD_LISTING_CAP)
-            .collect(),
+        unmapped_fields: unmapped(&raw.unmapped_fields),
+        unmapped_fields_per_profile: unmapped(&raw.unmapped_fields_per_profile),
         unmeasured: raw.unmeasured.clone(),
     }
 }
@@ -2883,6 +2967,37 @@ pub fn render_text(report: &Report) -> String {
              diagnostic earns being ignored."
         );
     }
+
+    // Issue 368: the same listing keyed to each PROFILE's own head. The corpus
+    // window above cannot see an era that stopped publishing, and those are the
+    // eras whose gaps are already baked into what the API serves.
+    let _ = writeln!(
+        out,
+        "\n  -- and the same, keyed to EACH PROFILE's own newest {} notice ids (issue 368) --",
+        group(UNMAPPED_FIELD_PROFILE_WINDOW_IDS as u64),
+    );
+    if report.unmeasured.iter().any(|l| l == "unmapped_fields_per_profile") {
+        let _ = writeln!(out, "  UNMEASURED — the `unmapped_fields_per_profile` query did not run.");
+    } else if report.unmapped_fields_per_profile.is_empty() {
+        let _ = writeln!(
+            out,
+            "  none — every field id at every profile's head has a destination on some channel."
+        );
+    } else {
+        let _ = writeln!(out, "  {:<26} {:<34} {:>12}", "profile", "field id", "rows");
+        for r in &report.unmapped_fields_per_profile {
+            let _ = writeln!(out, "  {:<26} {:<34} {:>12}", r.profile, r.field_id, group(r.hits));
+        }
+        let _ = writeln!(
+            out,
+            "  This window is what the corpus one above structurally cannot show. Measured \
+             2026-09-11: `ted-export-r208` holds 29,763 of the 30,285 Tenders with NO title, and \
+             its newest notice is 4.3 million ids below the corpus window's floor — the one \
+             profile with the gap sat outside the diagnostic built to find gaps, and its cause \
+             (four form-specific title elements parsed and mapped nowhere) had to be found by \
+             hand. Same filter, same per-profile quota, same cap as above; only the window differs."
+        );
+    }
     out
 }
 
@@ -3349,6 +3464,21 @@ pub fn render_json(report: &Report) -> String {
                     "rows": r.hits,
                 }))
                 .collect::<Vec<Value>>(),
+            // Issue 368: a SEPARATE key for the per-profile window, because the
+            // two listings answer different questions and merging them would
+            // lose which window a row came from — the only thing that tells a
+            // reader whether an absence means "not published lately" or "not
+            // published by that era at all".
+            "per_profile_window_notice_ids": UNMAPPED_FIELD_PROFILE_WINDOW_IDS,
+            "per_profile_listing": report
+                .unmapped_fields_per_profile
+                .iter()
+                .map(|r| json!({
+                    "profile": r.profile,
+                    "field_id": r.field_id,
+                    "rows": r.hits,
+                }))
+                .collect::<Vec<Value>>(),
         },
         // THE field a machine consumer cannot do without, and it was missing. Without
         // it an absent or empty section is ambiguous between "measured, nothing found"
@@ -3518,6 +3648,7 @@ mod tests {
             sentinel_dates: vec![],
             withheld_markers: vec![],
             unmapped_fields: Vec::new(),
+            unmapped_fields_per_profile: Vec::new(),
             unmeasured: vec![],
         };
         let entry = headline_history_entry(&report, 1_700_000_000);
@@ -3891,6 +4022,81 @@ mod tests {
 
     /// The guard that would have caught issue 368 unit 4b's inertia, generalised.
     ///
+    /// Issue 368: the corpus window cannot see a profile that stopped publishing,
+    /// and those are the eras whose gaps are already served. `ted-export-r208`
+    /// holds 29,763 of the 30,285 titleless Tenders, and its newest notice is
+    /// 4.3 M ids below the corpus window's floor — so the ONE profile with the
+    /// gap was outside the diagnostic built to find gaps.
+    ///
+    /// The test pins the three things that make the second window worth its cost:
+    /// it is keyed per profile, it shares the first listing's shaping rather than
+    /// copying it, and the two stay separate in the payload.
+    #[test]
+    fn the_per_profile_window_sees_an_era_the_corpus_window_cannot() {
+        let sql = unmapped_fields_per_profile_sql();
+        assert!(
+            sql.contains("SELECT profile AS p, MAX(id) AS max_id FROM notices GROUP BY profile"),
+            "keyed to EACH profile's own newest notice:\n{sql}"
+        );
+        assert!(
+            sql.contains(&format!("h.max_id - {UNMAPPED_FIELD_PROFILE_WINDOW_IDS}")),
+            "windowed from that maximum, not from the corpus head:\n{sql}"
+        );
+        assert!(
+            !sql.contains("(SELECT MAX(id) FROM notices)"),
+            "and NOT from the corpus head — that is the arm this one exists beside:\n{sql}"
+        );
+        assert!(
+            unmapped_fields_sql().contains("(SELECT MAX(id) FROM notices)"),
+            "while the corpus arm still measures the head, which is its own question"
+        );
+
+        // Both listings share one shaping: the `any_channel_reads` filter, the
+        // per-profile quota and the cap. A profile over quota in ONE listing must
+        // be over quota in the other, which is what two copies would drift on.
+        let over_quota = |label: &str| {
+            let mut ran = sentinel_scaffold();
+            put(
+                &mut ran,
+                label,
+                Some(
+                    (0..5)
+                        .map(|i| {
+                            vec![json!("ted-export-r208"), json!(format!("NOPE-{i}")), json!(100 - i)]
+                        })
+                        .collect(),
+                ),
+            );
+            assemble("x", &Raw::from_labelled(ran).expect("raw"))
+        };
+        assert_eq!(
+            over_quota("unmapped_fields").unmapped_fields.len(),
+            UNMAPPED_FIELD_PER_PROFILE,
+            "the corpus listing caps one profile at the quota"
+        );
+        assert_eq!(
+            over_quota("unmapped_fields_per_profile").unmapped_fields_per_profile.len(),
+            UNMAPPED_FIELD_PER_PROFILE,
+            "and so does the per-profile one, because they are ONE implementation"
+        );
+
+        // Separate in text and in the payload: which window a row came from is
+        // the only thing that says whether an absence means "not lately" or
+        // "not by that era at all".
+        let report = over_quota("unmapped_fields_per_profile");
+        let text = render_text(&report);
+        assert!(text.contains("keyed to EACH PROFILE's own newest"), "{text}");
+        assert!(text.contains("4.3 million ids below"), "the reason is on the page:\n{text}");
+        let v: Value = serde_json::from_str(&render_json(&report)).expect("valid json");
+        let sect = &v["unmodelled_fields"];
+        assert_eq!(sect["per_profile_window_notice_ids"], UNMAPPED_FIELD_PROFILE_WINDOW_IDS);
+        assert_eq!(sect["per_profile_listing"][0]["profile"], "ted-export-r208");
+        assert!(
+            sect["listing"].as_array().expect("array").is_empty(),
+            "the corpus listing is its own window and stays empty here"
+        );
+    }
+
     /// `unmapped_fields` was registered, ran every week, and was assembled into
     /// `Report` — and `render_text` never mentioned it. The query paid its scan and
     /// produced nothing a reader could see, for as long as it took someone to walk
@@ -4335,6 +4541,7 @@ mod tests {
                 "weld_candidates",
                 "weld_bands",
                 "unmapped_fields",
+                "unmapped_fields_per_profile",
             ]
         );
     }
@@ -4525,6 +4732,7 @@ mod tests {
             ("weld_candidates".to_owned(), Some(vec![])),
             ("weld_bands".to_owned(), Some(vec![])),
             ("unmapped_fields".to_owned(), Some(vec![])),
+            ("unmapped_fields_per_profile".to_owned(), Some(vec![])),
         ])
         .expect("labelled");
         let text = render_text(&assemble("http://x", &raw));
@@ -4970,6 +5178,7 @@ mod tests {
             ("weld_candidates".to_owned(), Some(vec![vec![json!(2_816_628), json!(127), json!(2_983)]])),
             ("weld_bands".to_owned(), Some(vec![vec![json!(2), json!(1), json!(1), json!(1)]])),
             ("unmapped_fields".to_owned(), Some(vec![])),
+            ("unmapped_fields_per_profile".to_owned(), Some(vec![])),
         ];
         let raw = Raw::from_labelled(results).expect("labelled");
         let report = assemble("http://x", &raw);
