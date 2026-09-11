@@ -1,7 +1,9 @@
 # 378 — the derived EUR column reaches zero by ROUNDING, which the zero sentinel does not touch
 
 Status: ready-for-agent (filed 2026-09-11 by the owner, found while building issue 366's zero drain —
-the drain's own termination guard is what exposed it)
+the drain's own termination guard is what exposed it). Scope NARROWED 2026-09-11: the HUF 1.00
+question this issue opened turned out to be the small end of a much larger class, now **issue 379**
+(112,244 Tenders). What is left here is the conversion floor, which 379 does not fix.
 Kind: defect (derived values) — small (608 Tenders), but it falsifies the shape of the claim issue 366
 just made, not merely its count
 Blocked by: nothing
@@ -62,9 +64,18 @@ read the titles.
 
 ## Next unit
 
-Measure the carriers of HUF 1.00 — distinct buyers, distinct subjects, the spread over time — and
-decide whether it joins `sentinel_amount` as a token leg. The rounding floor (fix 1) is the separate,
-smaller change and does not depend on that answer.
+**The HUF 1.00 question is ANSWERED, and the answer is issue 379.** Measured 2026-09-11: 2,580
+Tenders publish HUF 1.00 across **1,620 distinct buyers**, over ten years, 99.8% of it on
+`estimated_value` — and the same query pointed at the other currencies found the convention is not
+Hungarian. Every one of ten currencies spikes at exactly one major unit, and the head-value
+distribution has a second spike at one minor unit: **112,244 Tenders serve €0.01 or €1.00**. That is
+185× this issue's 608 and it is now tracked separately.
+
+What remains HERE is fix 1 alone — **floor a positive published amount at one cent in the
+conversion**, so a surviving amount cannot reach a derived zero by rounding. It does not depend on
+379 and 379 does not subsume it: refusing an exact 1.00 stops it being ELECTED, while the floor stops
+what survives election from CONVERTING to zero. Both are needed for the head column's zero to mean
+one thing.
 
 ## ADR-0010 is the precedent, and it argues for fix 1 rather than against it
 
