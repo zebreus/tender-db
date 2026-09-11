@@ -1394,12 +1394,18 @@ pub const DEADLINE_HORIZON_SECS: i64 = 10 * 365 * 86_400;
 /// never be elected as a Tender's headline value (issue 366, measured on prod
 /// 2026-09-08).
 ///
-/// Two shapes, both by EXACT value rather than magnitude, because that is what
+/// Four shapes, all by EXACT value rather than magnitude, because that is what
 /// the corpus actually shows:
 ///
 /// - **Negative.** No procurement has a negative value. 15,650 Tenders carry
 ///   one and 15,529 of those are exactly −1.00, a documented publisher
 ///   convention for "not stated" that was being served as the row's value.
+/// - **Exactly zero** (24,647 Tenders, measured 2026-09-11). A 0 is an absence,
+///   not a price. Which field carries it settles that: 11,793 of the zero rows
+///   are a `result_value` and 1,408 a `framework_maximum`, and you cannot award
+///   a contract for nothing or cap a framework at nothing. The remaining
+///   `estimated_value = 0` is the arguable one ("not estimated yet") and it too
+///   is an absence. See the body for the reversal this leg records.
 /// - **An all-nines run of at least nine digits in the major unit**
 ///   (999999999, 9999999999, 99999999999 …): 249 Tenders, and the counts falling
 ///   with width — 199, 36, 14 — are the signature of a form-width maximum rather
@@ -1416,10 +1422,49 @@ pub const DEADLINE_HORIZON_SECS: i64 = 10 * 365 * 86_400;
 /// **Round powers of ten are deliberately NOT sentinels** (1e9 on 56 Tenders,
 /// 1e10 on 12, 1e11 on 2). A €1 bn framework is a real thing; flagging round
 /// numbers would delete genuine values to catch nothing the all-nines rule
-/// misses. **Zero is not one either** (24,512 Tenders): a planning or
-/// market-engagement notice legitimately publishes 0, as UK FTS does.
+/// misses.
 pub fn sentinel_amount(cents: i64) -> bool {
     if cents < 0 {
+        return true;
+    }
+    // Zero was ADMITTED until 2026-09-11, on the reasoning that "a planning or
+    // market-engagement notice legitimately publishes 0, as UK FTS does". That
+    // is true and it does not reach the decision, because it argues about the
+    // PUBLISHED figure while this function governs the DERIVED head column. The
+    // published 0 survives either way: the head columns are derived, the
+    // `amounts` array is stored, and ADR-0004 is satisfied by the array keeping
+    // every 0 exactly as it arrived. What changes is only what the derived
+    // column ASSERTS, and today it asserts €0.
+    //
+    // Which field carries the zeros is what settled it (measured on prod
+    // 2026-09-11, windowed, 0 failed windows):
+    //
+    //   field                tenders with a 0 in that field
+    //   estimated_value           32,461
+    //   result_value              11,793
+    //   framework_maximum          1,408
+    //
+    // **You cannot award a contract for nothing, and you cannot cap a framework
+    // at nothing.** 13,201 rows sit on fields where 0 has no reading as a figure
+    // at all, and `estimated_value = 0` is an absence too, just an arguable one.
+    //
+    // The decisive argument is coherence. `/docs` already tells every reader
+    // "Zero often means 'no value given', not a free tender ... Filter zeros out
+    // of aggregates unless you specifically want them." A derived column that
+    // asserts €0 while the documentation beside it says do not believe zeros is
+    // the payload-versus-filter incoherence issue 366 unit 3 just removed one
+    // layer up.
+    //
+    // The counter-argument is real and is recorded rather than answered: a
+    // genuinely free contract now looks identical to an unstated one, and
+    // nothing in the data separates them. The difference is that the ambiguity
+    // already exists and the column currently resolves it the FALSE way for at
+    // least 13,201 rows. Refusing is wrong less often than electing.
+    //
+    // `?max_value=0` loses 24,647 Tenders by this change, which is the point
+    // rather than a cost: a reader asking for free contracts is handed
+    // thousands of contracts that are not free.
+    if cents == 0 {
         return true;
     }
     // A run of nine or more NINES is a field width whether or not it stops at the
@@ -1500,9 +1545,11 @@ pub fn sentinel_amount(cents: i64) -> bool {
 
 /// How many digits `n` has when every one of them is the same digit, else 0.
 ///
-/// Zero returns 0 rather than 1: it is not a repdigit for this purpose, and both
-/// callers need it excluded — `sentinel_amount`'s decision that a published 0 is
-/// a legitimate planning-notice value depends on it.
+/// Zero returns 0 rather than 1: it is not a repdigit for this purpose. Zero is
+/// a sentinel since 2026-09-11, but by its OWN leg and for its own reason (a 0
+/// is an absence), so this must stay a fact about digit runs — a `repdigit_len`
+/// that answered 1 for zero would make `sentinel_amount` refuse it twice and
+/// bury the reason in a width test.
 fn repdigit_len(mut n: i64) -> u32 {
     let repeated = n % 10;
     let mut digits = 0;
@@ -21288,8 +21335,11 @@ mod tests {
         // Tenders sit on exactly €1 bn, and deleting those would catch nothing the
         // all-nines rule misses.
         assert_eq!(value(vec![amount(100_000_000_000)]), Some(100_000_000_000));
-        // Zero is not a sentinel either — a planning notice publishes it.
-        assert_eq!(value(vec![amount(0)]), Some(0));
+        // Zero is refused since 2026-09-11 — this read `Some(0)` with the
+        // comment "zero is not a sentinel either — a planning notice publishes
+        // it", and `the_head_column_does_not_assert_a_price_of_zero` carries
+        // the field split that reversed it.
+        assert_eq!(value(vec![amount(0)]), None);
         // The ceiling: €4.97e16 for "Study on anti-corruption measures in EU
         // border control" topped `sort=value`'s first page.
         assert_eq!(value(vec![amount(4_970_000_000_000_000_000), amount(1_000_000)]), Some(1_000_000));
@@ -21319,10 +21369,13 @@ mod tests {
         // Eight nines is a plausible figure, and the corpus gives no reason to
         // doubt it: the run has to be long enough to be a field width.
         assert!(!sentinel_amount(9_999_999_900));
-        // Round powers of ten, zero, and ordinary money.
-        assert!(!sentinel_amount(0));
+        // Round powers of ten and ordinary money stay admitted.
         assert!(!sentinel_amount(100_000_000_000));
         assert!(!sentinel_amount(123_456_700));
+        // Zero is refused since 2026-09-11; this line read `!sentinel_amount(0)`
+        // with the comment "round powers of ten, zero, and ordinary money", and
+        // `the_head_column_does_not_assert_a_price_of_zero` carries the reason.
+        assert!(sentinel_amount(0));
         // Minor units present means someone computed it — UNLESS they are part of
         // the same run of nines. This assertion used to read `!sentinel_amount`
         // with the comment "someone computed it, not typed a maximum", and the
@@ -21356,6 +21409,46 @@ mod tests {
         assert!(!sentinel_amount(11_111_111), "€111,111.11 — eight ones");
         // The width threshold is the same on both legs: eight nines is admitted.
         assert!(!sentinel_amount(99_999_999), "€999,999.99 — eight nines");
+    }
+
+    /// Issue 366, decided 2026-09-11: a published 0 is an absence, not a price,
+    /// so the DERIVED head column must not assert €0. Measured on prod: 24,647
+    /// Tenders had a head value of exactly 0, and the field split is what
+    /// settles it — `result_value` carries 11,793 of the zero rows and
+    /// `framework_maximum` 1,408, and you cannot award a contract for nothing
+    /// or cap a framework at nothing.
+    ///
+    /// This costs no fidelity. The head columns are derived; the `amounts`
+    /// array is stored and keeps every published 0 exactly as it arrived, which
+    /// is what ADR-0004 asks for. So the pair below is the whole claim: the
+    /// election refuses the 0, and the payload beside it still carries it.
+    #[test]
+    fn the_head_column_does_not_assert_a_price_of_zero() {
+        // `result_value` deliberately, because it is the field that settled the
+        // decision: you cannot award a contract for nothing.
+        let amount = |cents: i64| Fact::Amount {
+            field: "result_value".into(),
+            cents,
+            currency: "EUR".into(),
+            tax_basis: None,
+            quality: None,
+        };
+        let rates = crate::rates::RatesLookup::default();
+        let value = |facts: Vec<Fact>| head_value_eur_cents(&head(facts, Vec::new()), &rates);
+        // A tender whose only figure is 0 serves NO KNOWN VALUE, not €0 — the
+        // 24,034 rows where 0 is the only figure.
+        assert_eq!(value(vec![amount(0)]), None);
+        // A 0 beside a real figure never mattered (MAX already picked the
+        // figure), and still does not. Asserted so the change is legible as
+        // "refuse the 0", not "refuse the tender".
+        assert_eq!(value(vec![amount(0), amount(450_000_00)]), Some(450_000_00));
+        // The negative leg's reason is DIFFERENT from zero's — "not stated"
+        // written as −1.00 versus an absence written as 0 — and both refuse.
+        assert_eq!(value(vec![amount(0), amount(-100)]), None);
+        // And 1 cent is not zero: the leg is EXACT, not a small-value floor. A
+        // €0.01 award is implausible, but nothing here measures plausibility and
+        // a magnitude rule is the thing this function keeps refusing to become.
+        assert_eq!(value(vec![amount(1)]), Some(1));
     }
 
     /// Issue 366: tender 3323836 is ONE 2005 notice publishing two submission

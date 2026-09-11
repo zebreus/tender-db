@@ -4,6 +4,32 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## 2026-09-11 — the value filters skip placeholder amounts, zero among them
+
+`min_value`/`max_value` compare a derived EUR column, and that column now
+declines to elect an amount that is a placeholder rather than a figure. Four
+classes, each measured on the corpus rather than assumed (issue 366):
+
+- **Negative** (~15,650 Tenders, 15,529 of them exactly −1.00, the eForms SDK's
+  marker for a withheld figure).
+- **Exactly zero** (24,647 Tenders). A 0 is an absence, not a price: 11,793 of
+  the zero rows sit on `result_value` and 1,408 on `framework_maximum`, and you
+  cannot award a contract for nothing or cap a framework at nothing.
+- **A run of nine or more identical digits**, with or without the decimal point
+  (€999,999,999.99 on street cleaning in a town of 47,000; PLN 22,222,222,222) —
+  a form-width maximum typed by holding a key down.
+- **Above €100 bn** EUR-equivalent.
+
+Two observable consequences. A Tender whose only published amount falls in one
+of these classes has **no known value** and is returned by NEITHER bound —
+notably `?max_value=0`, which used to hand back thousands of contracts that are
+not free. And the `value` in a payload can be a figure the value filters ignore.
+
+**Published amounts are unchanged.** The `amounts` array still carries every
+figure exactly as it arrived, negatives and zeros included; this entry is about
+the derived column the filters compare, which layers beside the published
+values rather than over them.
+
 ## 2026-08-27 — `min_value`/`max_value` compare derived EUR, not raw cents
 
 The value bounds on `/v1/tenders` and `/v1/lots` now compare against the

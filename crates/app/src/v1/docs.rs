@@ -564,7 +564,12 @@ rates and the quarantine resolution ledger.</p>
   A negative <code>value</code> is therefore a figure to read, not a defect to discard.</li>
   <li><strong>Zero often means &ldquo;no value given&rdquo;</strong>, not a free tender:
   measured at 2.7&ndash;8.9% of EUR amounts depending on era. Filter zeros out of
-  aggregates unless you specifically want them.</li>
+  aggregates unless you specifically want them. Published zeros are kept in
+  <code>amounts</code> as published; the derived EUR column the value filters
+  compare treats a 0 as an absence and elects nothing from it, so a Tender whose
+  only figure is 0 has <em>no known value</em> rather than a value of zero
+  (24,647 Tenders; 11,793 of the zero rows sit on <code>result_value</code> and
+  1,408 on <code>framework_maximum</code>, fields where 0 cannot be a price).</li>
   <li><code>tax_basis</code> is <code>incl</code>, <code>excl</code>, or NULL &mdash; NULL
   means the source did not say, and the incl/excl mix is era-biased; do not compare raw
   sums across eras without checking it.</li>
@@ -581,9 +586,10 @@ rates and the quarantine resolution ledger.</p>
   implausible &mdash; 257 trillion PLN on one row whose own lot results award
   181.5 million.</li>
   <li><strong>But <code>min_value</code>/<code>max_value</code> do not compare
-  that figure.</strong> They compare a derived EUR column that skips three
+  that figure.</strong> They compare a derived EUR column that skips four
   classes: negative amounts (mostly the SDK's withheld marker, ~15,500 rows &mdash;
-  but see above, a few are revenue-side contracts and this bound loses them too), a run of
+  but see above, a few are revenue-side contracts and this bound loses them too),
+  exactly zero (an absence, not a price &mdash; see the zero bullet above), a run of
   nine or more identical digits, which is a form-width maximum rather than a
   figure (&euro;999,999,999.99 on street cleaning in a town of 47,000), and
   anything above &euro;100bn EUR-equivalent. Two consequences worth planning
