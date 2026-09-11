@@ -13,8 +13,12 @@ detail payload — now reads the fold's election instead of repeating it, the de
 the one constant and the amount by looking up the row the fold chose (`s.eur_cents =
 t.current_value_eur_cents`), because a digit walk cannot be transcribed without becoming the second
 implementation. 3323836 serves 2005-06-15, 4490098 serves €50,000, and the `dates`/`amounts` arrays
-still carry every published figure.** Next: the 24,585 exact zeros, unit 5's gated archive read for
-the €10–100bn band that now tops the ordering, and unit 6's magnitude listing. **Issue 375** carries
+still carry every published figure.** The exact zeros are DONE 2026-09-11: decided, shipped
+(`55d239d`) and drained (24,039 tenders, 26 rounds, 0 left) — see "The exact zeros, DECIDED" and
+"The zero drain" at the end. Next: unit 5's gated archive read for
+the €10–100bn band that now tops the ordering, and unit 6's magnitude listing. **Issue 378** is what
+the drain's own termination guard turned up: 608 tenders still serve a derived €0, reached by
+ROUNDING rather than election. **Issue 375** carries
 the third and fourth implementations this turned up — two backfill jobs that would undo the drain.
 Earlier: **UNIT 1 DECIDED 2026-09-08 (owner), see "Unit 1
 DECIDED": two flag legs (negative + all-9s sentinels, 15,899 rows; >€100bn implausible, 175 rows),
@@ -1115,3 +1119,45 @@ Widen `sentinel_amount` to refuse 0, deploy, THEN drain the standing rows — **
 draining first re-elects them under the old rule. Same shape as the repdigit widening (`7c8a443` →
 `aa55f6e`), which this issue recorded going the wrong way round once already.
 
+
+## The zero drain, and what its termination guard found (2026-09-11, rev `55d239d`)
+
+Deployed first, drained second, per the ordering this issue recorded after getting it backwards on
+the repdigit widening. `55d239d` widened `sentinel_amount` with a zero leg (its own leg, not a
+`repdigit_len` tweak, so the reason stays legible), flipped the two assertions that pinned the old
+behaviour, and updated `/docs` and CHANGELOG from three skipped classes to four.
+
+**The drain: 24,039 tenders, 26 rounds of 1,000, `0 zero head value(s) left`.** Script committed as
+`.scratch/tender-db/drain366-zero.sh`.
+
+The exhibit, tender 137 (`Ganzjahresstützpunkt Maulbronn`, one `result_value` of €0):
+
+| | before | after |
+| --- | --- | --- |
+| `value` | `{cents: 0, currency: EUR}` | `null` |
+| `amounts` | one €0 row | **unchanged** |
+
+That pair is the whole claim: the election refuses the 0, and the payload beside it still carries it.
+It works because unit 3 made the payload read the fold's election (`s.eur_cents =
+t.current_value_eur_cents`, gated on NOT NULL) instead of repeating it — the two changes compose, and
+neither would have been visible alone.
+
+### The cohort selector, built to avoid this issue's own trap
+
+The repdigit drain selected by an explicit value list, which was a SECOND IMPLEMENTATION of the rule
+and drifted the moment the rule widened, reporting `0 left` on a corpus with 75. This one selects by
+the OUTCOME — `current_value_eur_cents = 0` — which cannot drift, because it names the served number
+the change is meant to remove. The published-cents `EXISTS` beside it is not a second rule either: it
+is the other half of the same fact, and it is what makes the loop terminate.
+
+### The guard is what found issue 378
+
+Without the `EXISTS`, the cohort would have included 608 tenders that the zero leg does not touch and
+re-folded them every round forever. **Those 608 serve a head of 0 from a published amount that is not
+zero** — HUF 1.00 (547), one minor unit of RON/PLN/CZK/NOK/DKK/SEK/LTL (55), and six odd ones — which
+convert to under half a cent and round to zero.
+
+So the derived column can still say €0, by rounding rather than by election, and `?max_value=0` now
+returns exactly those 608: a reader asking for free contracts is handed contracts priced at one
+forint. Filed as **issue 378**, with ADR-0010's rounding amendment read as the precedent and a floor
+at one cent as the candidate fix. Smaller wrong answer than the 24,039, same kind.
