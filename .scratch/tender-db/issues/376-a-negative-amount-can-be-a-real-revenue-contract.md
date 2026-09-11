@@ -170,3 +170,49 @@ calibration).
 revenue reading and are still unexplained; they need the gated archive-member read that 366 unit 5 also
 wants, and they may turn out to be sign errors rather than either class.
 
+## Unit 3 ANSWERED (2026-09-11) — two publishers, not seventeen mysteries
+
+The 17 sub-€10k negatives were re-found windowed (80 windows, **0 failed**, exactly 17 rows, all EUR:
+13 `result_value`, 3 `framework_maximum`, 1 `estimated_value`). Then two structural questions were
+asked of them, and both answered without the archive read this unit was waiting on.
+
+**Does the negative sit beside a positive?** For **12 of 16 tenders it is the ONLY amount on the head
+version.** For 4 it sits beside positives — and there it is plainly not a value:
+
+| tender | negative | largest positive | buyer |
+| --- | --- | --- | --- |
+| 736357 | **−279.81** | 83,558,193.75 | Fira 2000, S.A. (ES) |
+| 728550 | **−3.00** | 1,167,000.00 | Klinikum Freising GmbH (DE) |
+| 836867 | **−3.00** | 319,297.22 | Centrale di Committenza … Fontanafredda (IT) |
+| 411760 | −418,857.60 | 408,288.51 | IMOG (BE) — waste collection/processing |
+
+**Who publishes the other 12?** Two buyers:
+
+| family | tenders | buyer | subject |
+| --- | --- | --- | --- |
+| Spanish | **6** | **`Servicio Madrileño de Salud - Hospital Universitario La …`** | `SERVICIO(S) DE MANTENIMIENTO` — equipment maintenance |
+| German | **4** | **`Studierendenwerk München Oberbayern`** | `Architekten- und Ingenieurleistungen` |
+
+**All six Spanish rows are one buyer. All four German rows are one buyer.** The issue guessed
+"several are the same Spanish buyer"; it is stronger than that — ten of the seventeen rows come from
+exactly two publishers, each consistent with itself.
+
+### Disposition
+
+1. **The 10 are publisher SIGN ERRORS.** A hospital is not paid to have its equipment maintained and
+   a student-services body is not paid to receive architectural drawings, so the revenue reading that
+   explains this issue's main class does not apply. The magnitudes (€1,588 to €8,385) are plausible
+   small service contracts. ADR-0004 means the minus is the publisher's, not ours. They stay excluded
+   from the head column for the reason unit 2 settled: the column means what the buyer PAYS.
+2. **`−3.00` twice, from unrelated buyers in different countries, beside six- and seven-figure
+   positives, is a SENTINEL and not a price.** Two is thin, but two identical implausible values from
+   unrelated publishers is the shape section 10's sweep exists to catch. It is below that sweep's
+   repeat threshold, which is why nothing has flagged it.
+3. **411760 belongs to this issue's MAIN class, not unit 3.** IMOG is a Belgian waste
+   intermunicipality and its −418,857.60 is revenue-side, exactly like the Tromsø bank agreement. It
+   appeared here only because it ALSO carries a −6,671.28 row.
+
+**No archive read was needed.** The unit assumed one because the question was framed as "what did the
+publisher mean"; asked instead as "is there a positive beside it, and who published it", the canonical
+layer answers. Worth remembering before gating the next question on an expensive instrument.
+
