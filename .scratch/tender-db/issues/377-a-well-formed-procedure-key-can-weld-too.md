@@ -1,6 +1,13 @@
 # 377 — a well-formed BT-04 procedure key welds 378 buyers across four countries, and issue 369's gate cannot see it
 
-Status: ready-for-agent — **UNIT 2 DECIDED 2026-09-10: NO GATE. Three signals have now been measured
+Status: DONE 2026-09-11 — **UNIT 3 ANSWERED: a Swiss publishing platform emitted one constant BT-04
+for 16 months across four SDK versions (730 of 789 versions are sdk-1.6; the earliest four publication
+ids sit within 47 of each other on one day). The cause is a publisher habit, not a one-off.** It does
+not reopen unit 2, but it corrects the impact arithmetic: a constant-key publisher makes exactly ONE
+welded Tender however many notices it publishes, so the four affected tenders hold ~1,300 notices and
+*notices* is the honest unit. What would catch a recurrence is section 12's `per-ver` column, which is
+a better reason for that gauge than the one it was built with. Only the platform's NAME is unestablished,
+and that needs the archive read. Was: UNIT 2 DECIDED 2026-09-10: NO GATE. Three signals have now been measured
 and all three are blind to a case they exist for; the class is 4 tenders of which 3 are probably
 legitimate. Unit 3 (read the source for a platform-level cause) is the only open unit that could still
 produce a rule.** UNIT 1 DONE 2026-09-10, and it CORRECTS this issue's own claim: the class
@@ -184,4 +191,43 @@ siblings have had to withdraw.
 
 *Reversed if:* unit 3 finds a platform-level cause, or the class grows past four in a later run —
 section 12 makes that visible without anyone remembering to look.
+
+## Unit 3 ANSWERED (2026-09-11): a publisher's 16-month habit, not a one-off
+
+Read off the canonical layer, no archive member needed:
+
+| | |
+| --- | --- |
+| versions by profile | **730 `eforms:eforms-sdk-1.6`**, 27 sdk-1.10, 21 sdk-1.9, 11 sdk-1.7 |
+| span | **2023-09-12 → 2025-01-13** (16 months) |
+| distinct publication ids | 789 — every version is its own notice, nothing duplicated |
+| the earliest four | `00550500-2023`, `00550519-2023`, `00550538-2023`, `00550547-2023` |
+
+**Those four ids sit within 47 of each other, on one day, under one SDK.** That is a batch: one
+publisher pushing many notices at once, every one carrying the same BT-04 UUID. And the habit did not
+stop with sdk-1.6 — it carried through 1.7, 1.9 and 1.10 for sixteen months, so it is the platform's
+behaviour rather than one release's bug.
+
+Combine with what unit 1 already established — **341 of 378 buyers are Swiss** — and the cause is a
+Swiss publishing platform emitting a constant procedure key into TED.
+
+### What that changes, and what it does not
+
+**It does not reopen unit 2's "no gate".** A rule would still have to separate this from a Dynamic
+Purchasing System, and country spread still fails on issue 364's own weld. Nothing here makes a
+threshold work that did not work yesterday.
+
+**It does change the impact arithmetic, and in a way worth writing down.** A constant-key publisher
+produces exactly ONE welded Tender no matter how many notices it publishes, because they all share
+one key. So "4 affected tenders" badly understates it — those four hold **789 + 198 + 160 + 154 ≈
+1,300 notices**. *Tenders* is the wrong unit for this defect; *notices* is the honest one.
+
+**And it names what would catch a recurrence.** The habit could restart tomorrow under a fresh UUID
+and no gate would see it. Section 12 would: 789 notices accumulating buyers across versions is exactly
+the low `per-ver` shape it now renders. That is the argument for the gauge continuing to earn its
+8.6 minutes a week, and it is a better reason than the one it was built with.
+
+*Not established:* which platform. That needs the notice's own publisher/platform field, which is
+among the unmodelled ids section 13 lists (`OPT-200-Organization-Company` and neighbours) and would
+need the archive read this unit was originally gated on. The behaviour is identified; the name is not.
 
