@@ -138,6 +138,21 @@ So, for any loop of probes:
   measurement.
 - **Prefer one set-based bounded query to N per-row probes** when the plan allows it — it is one
   request against the budget instead of N, and it cannot half-succeed.
+
+**The Python shape of `${a:-0}`, because it bit again on 2026-09-11.** A helper written as
+
+```python
+def sq(sql):
+    out = subprocess.run(["bash", "/root/sq.sh"], input=sql, ...).stdout
+    return json.loads(out).get("rows", [])          # <-- this
+```
+
+returns the SAME empty list for "the query matched nothing" and "the query returned an error body".
+An 83-probe loop over weld candidates recorded eight tenders as having **zero buyer countries**;
+re-running one of them by hand returned `SI 105, MT 1`. The rule above is right and was written
+down; `.get("rows", [])` is just what it looks like when the loop is in Python instead of bash.
+Return `None` on a body with no `rows` key, count the failures, and print the count — a run that
+reports **0 failures** is the only one whose numbers mean anything.
 - **Print, then count.** A loop whose intermediate values are visible is one whose failures are
   visible. The counting version is exactly as wrong and says nothing.
 
@@ -154,3 +169,33 @@ neither is a judgement call.
 *Adopted from a joint proposal: the category framing and the impact-vs-success axis are proj-fix's, the
 metadata-**and**-bounded correction is sdk-vendor's, and it was run-driver's one-row `sqlite_stat1` read —
 which caught a false premise in a design — that the rule had to keep permitted.*
+
+## Pick the sample that contains the phenomenon, then check that it does
+
+Three separate measurements went wrong this way on 2026-09-10, and the shape was identical each
+time: **the sample was chosen for convenience, and convenience correlates with not containing the
+thing being measured.**
+
+| what was sampled | why it was chosen | what it missed |
+| --- | --- | --- |
+| the first 2 `reparse` packages | they are first | 128,234 archive members held **283** matching notices; packages 3–20 held **879,048**. The cost estimate was off by 150x |
+| profile `ted-export-r209` | it is the LARGEST legacy profile (4.5 M against 2.7 M) | r209 begins **2015-12-05**. The phenomenon was measured over February-2013 archive days, which is r208 only. The run found 0 of 502,402 and could not have found otherwise |
+| the `>= 50 buyers` band | it is a round number that sounded safe | 1,155 of its 1,326 members are joint procurement named in one notice, so the threshold was wrong about 7 entries in 8 |
+
+The corrective is one question, asked before spending anything:
+
+> **Does this sample contain a known instance of what I am measuring?**
+
+Every one of the three had a known instance available and unused — the issue's own exhibit tenders,
+its own dated measurement, its own named weld. Checking the sample against ONE of them costs a single
+bounded read and would have caught all three.
+
+Two corollaries worth keeping:
+
+- **A sample from the front of an ordered corpus is not a random sample of it.** Archives, id ranges
+  and package lists are all ordered by time or ingestion, and their heads are systematically sparse,
+  cheap and old.
+- **Extrapolating a cost from the cheap end under-quotes the work.** The 20-package run that was
+  sized at 9 minutes took 95, and the projection it triggered took **5.2 hours** — because it crossed
+  a 500,000-notice cap that the 2-package sample gave no hint of.
+
