@@ -1,6 +1,10 @@
 # 374 — real registry numbers wearing a label prefix, found inside the letter-run class
 
-Status: ready-for-agent — **UNIT 1 SHIPPED, DEPLOYED AND REPAIRED 2026-09-09 (`a398a4d`)**;
+Status: DONE 2026-09-11 — unit 1 shipped and repaired, units 3 and 4 measured and declined, and the
+only thing left is owned by issue 329, which records it (the `HRA16270` key that became shared once
+this issue's label strip landed, and the 3,215 exact duplicate `(DE, vat, DEnnnnnnnnn)` rows). A
+handoff the receiving issue does not know about is not a handoff; this one it does.
+Was: ready-for-agent — **UNIT 1 SHIPPED, DEPLOYED AND REPAIRED 2026-09-09 (`a398a4d`)**;
 **UNITS 3 AND 4 MEASURED AND DECLINED** the same firing. See "Unit 1 DONE" and "Units 3+4
 DECLINED". What remains is the German exact-duplicate residue the strip made visible, which is
 E0's business (issue 329) rather than this issue's.
