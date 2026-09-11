@@ -242,3 +242,26 @@ measured it. The pattern is worth naming: **the numbers in these sections get me
 sentences around them do not.** Each now has a test asserting what the sentence may claim, which is
 the only mechanism that has actually held.
 
+## Unit 4c BUILT (2026-09-11, `9943fef`) — a per-profile quota, because the section showed one profile
+
+The first live section 13 returned **15 of 15 rows under `eforms:eforms-sdk-1.13`**. The rows arrive
+sorted by raw hits and that era is the largest, so the listing had no room for anything else — a
+section whose entire purpose is per-profile was showing one profile, and this issue's own failures
+(r208's 100 %-null lot titles, the 29,455 titleless tenders) live in SMALL eras that could not have
+appeared at any cap.
+
+Each profile now takes at most **2** of the 15 (`UNMAPPED_FIELD_PER_PROFILE`), the per-scope quota
+issue 347 established for the org census. The total cap is unchanged, so this buys breadth out of
+depth rather than out of the decision that set it.
+
+**What this does and does not do for units 1–3.** It makes a small profile's unmodelled spellings
+*visible*, which is the precondition. It does not tell you which of them is a missing MODELLED concept
+— `any_channel_reads` is profile-blind, so that still requires reading the completeness section for a
+profile with a gap and then looking up that profile's rows here. The section is now able to answer
+that question; before it could not.
+
+*One thing the test caught, worth keeping:* the fixture's first draft used `TED-LOT_TITLE` as a small
+era's unmodelled field. That id IS modelled, so the reads filter removed it before the quota saw it —
+the test would have measured the filter and passed for the wrong reason. The fixture uses ids nothing
+reads and says why.
+
