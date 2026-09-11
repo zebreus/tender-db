@@ -1,6 +1,9 @@
 # 378 — the derived EUR column reaches zero by ROUNDING, which the zero sentinel does not touch
 
-Status: ready-for-agent (filed 2026-09-11 by the owner, found while building issue 366's zero drain —
+Status: **DONE 2026-09-11** — drained, decided on the measured residue, shipped (`335104e`) and
+verified: `current_value_eur_cents = 0` reads **0** and `?max_value=0` returns nothing. The fix this
+issue proposed was DECLINED in favour of a smaller one; see "Closed" at the end. Was:
+ready-for-agent (filed 2026-09-11 by the owner, found while building issue 366's zero drain —
 the drain's own termination guard is what exposed it). Scope NARROWED 2026-09-11: the HUF 1.00
 question this issue opened turned out to be the small end of a much larger class, now **issue 379**
 (112,244 Tenders). **CORRECTED 2026-09-11: 379 does subsume ~602 of the 608** — see the correction
@@ -153,3 +156,53 @@ against the rule as it stood when the drain ran.
    the count — it was that the derived column's zero means two things — but at six rows that is a
    judgement call rather than the clear-cut case this issue opened with, and it should be made on
    the real number.
+
+## Closed (2026-09-11, rev `335104e`) — and this issue's own proposed fix was declined
+
+**The drain settled the size before the decision was made**, which is the order this issue family
+keeps proving right. 608 → 6 in two rounds, then a round that changed nothing, and the residue was
+exactly the five values predicted from the earlier breakdown:
+
+| published | Tenders |
+| --- | --- |
+| CZK 0.10 | 2 |
+| CZK 0.12 | 1 |
+| HUF 0.79 | 1 |
+| HUF 1.48 | 1 |
+| LIT 2.89 | 1 |
+
+So the decision was taken on **six rows**, not on 608. That matters, because the two candidate fixes
+have very different costs and the count is what separates them.
+
+### Fix 1 — a one-cent floor in the conversion — DECLINED
+
+This issue argued for it, twice, including against ADR-0010's precedent. It is still the more
+complete answer in the abstract. It is also a change to every conversion in the corpus to repair six
+rows, and its blast radius is the whole `eur_cents` layer that `min_value`/`max_value`,
+`v_tender_amounts` and the dashboard all read.
+
+### What shipped instead — the ELECTION declines a converted zero
+
+One `filter` in `head_value_eur_cents`. It cannot reach anything but this class, because nothing
+except a sub-half-cent amount converts to zero.
+
+**And it belongs to a different layer than `sentinel_amount`, deliberately.** The published figures
+here are not sentinels — CZK 0.10 and HUF 1.48 are real amounts, honestly published, and
+`sentinel_amount` reads the published figure by design. This rule is about the COLUMN's own
+vocabulary: after issues 366 and 379, a 0 in the derived column already means "the election found
+nothing", so a derived 0 would have the column asserting €0.00 for a HUF 1.48 procurement. That is a
+wrong number. Declining says "no value this column can express", which is the true one.
+
+### Verified
+
+| | |
+| --- | --- |
+| `current_value_eur_cents = 0` | **0 Tenders** |
+| `?max_value=0` | **returns nothing** (`items: 0, more: false`) |
+
+A zero no longer appears in the derived column for ANY reason — not an elected published zero
+(issue 366), not a token (379), not a rounding artefact (this issue). It had three meanings when this
+sequence started and it now has one.
+
+`/docs` and CHANGELOG say so. The published figures are all still in `amounts`, as they were
+throughout.
