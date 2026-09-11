@@ -111,6 +111,39 @@ The deploy also writes the rev into a systemd drop-in
 revision — while the `nix build` never sees the rev and stays reproducible. A
 plain local build (no `COMMIT_SHA` in the environment) reports `dev`.
 
+### Waiting for a deploy: track the PID, not a `pgrep` pattern
+
+A deploy runs 20–40 minutes, so it is natural to background it and poll. The
+obvious poll is wrong:
+
+```sh
+until ! pgrep -f "deploy.sh origin/main"; do sleep 30; done   # NEVER EXITS
+```
+
+**The waiter's own command line contains the pattern, so `pgrep` matches the
+waiter itself.** It reports "still running" forever, including long after the
+deploy has finished — and the failure is silent, because "still running" is
+exactly what a healthy in-progress deploy looks like. On 2026-09-11 seven of
+these accumulated, each waiting on the next, while the log they were guarding had
+already moved on. `pkill -f` with the same pattern has the matching bug plus one
+more: it kills itself mid-sweep.
+
+Capture the PID when you start it and wait on that:
+
+```sh
+nohup ./deploy.sh origin/main > deploy.log 2>&1 &
+DEPLOY_PID=$!
+while kill -0 "$DEPLOY_PID" 2>/dev/null; do sleep 30; done
+```
+
+If the PID is already lost, `ps -eo pid,args | grep -E "[d]eploy\.sh"` finds it —
+the bracket around the first letter is what keeps the grep out of its own results,
+the same trick for the same reason.
+
+**Read the deploy's own verdict, not the process exit.** The last lines are
+`OK  <url>/health -> 200, database ok` and `OK  deployed rev: <sha>`; confirm the
+sha against `git ls-remote --heads origin main` and against `/health`'s `rev`.
+
 Rollback: point the symlink at a previous store path and restart.
 
 ```sh
