@@ -1,6 +1,9 @@
 # 379 — a published 0.01 or 1.00 is a token, and 112,244 Tenders serve one as their value
 
-Status: ready-for-agent (filed 2026-09-11 by the owner, found while measuring issue 378's HUF 1.00
+Status: **DONE 2026-09-11** — units 1 and 2 shipped and drained the same day (rule `bfe7ac6`,
+112,229 Tenders drained in 114 rounds, 0 left, both spikes gone from the distribution). Unit 3 (separate
+the unit-price reading) is optional and stays open; see "Shipped and drained" at the end. Was:
+ready-for-agent (filed 2026-09-11 by the owner, found while measuring issue 378's HUF 1.00
 class — the measurement went one query wider than the issue asked and hit something much larger)
 Kind: defect (derived values) — **the largest placeholder class in the corpus, and it has never been
 named**: 4.7× the exact zeros just drained, 7× the negatives
@@ -138,3 +141,56 @@ unit" (measure the HUF 1.00 carriers) is answered here and should point at this 
 are independent**: refusing an exact 1.00 stops it being elected, and flooring the conversion at one
 cent stops a surviving amount converting to a derived 0. Both are needed for the head column to mean
 one thing.
+
+## Shipped and drained (2026-09-11, rev `bfe7ac6`)
+
+Deployed first, drained second, per the ordering issue 366 recorded the hard way twice.
+
+**Unit 1, the rule.** Two exact legs, `cents == 1 || cents == 100`, with the spike table as the doc
+comment's evidence. `one_unit_is_a_token_and_the_values_beside_it_are_not` pins the boundary that
+matters — €0.10 and €2.00 stay admitted — so a later edit cannot quietly turn a measured spike into a
+magnitude threshold. `/docs` and CHANGELOG went from four skipped classes to five.
+
+One assertion had to be flipped **three hours after it was written**. The zero test carried
+`assert_eq!(value(vec![amount(1)]), Some(1))` with the comment *"a €0.01 award is implausible, but
+nothing here measures plausibility and a magnitude rule is the thing this function keeps refusing to
+become"*. That was right about the METHOD and wrong about this value, and the replacement says which:
+0.01 turned out to be an exact typed constant on 59,030 Tenders, which the exact design reaches
+without becoming a threshold. The comment defended a principle the evidence never threatened.
+
+**Unit 2, the drain.** 112,229 Tenders, 114 rounds of 1,000, `0 one-unit head value(s) left`. Script
+committed as `.scratch/tender-db/drain379-token.sh`.
+
+**The distribution afterwards**, which is the verification that matters — both spikes are gone and
+what was underneath them is untouched:
+
+| head (EUR cents) | before | after |
+| --- | --- | --- |
+| 1 (€0.01) | 59,030 | **0** |
+| 100 (€1.00) | 53,214 | **0** |
+| 10 (€0.10) | 1,463 | 1,504 |
+| 200 (€2.00) | 658 | 658 |
+| 13 | 562 | 562 |
+
+**€0.10 went UP by 41**, and that is the refusal working rather than a leak: 41 Tenders that used to
+elect a token now elect the next amount down, which happens to be €0.10. The election falls through;
+it does not empty the column by reflex.
+
+The exhibits, all three serving `value: null` with their published figure intact in `amounts`:
+
+| tender | subject | published |
+| --- | --- | --- |
+| 930 | Wolfgang-Borchert-Gymnasium Langenzenn, general renovation and extension | `result_value` €1.00 |
+| 994 | Objektschutz for Deutsche Bundesbank sites in Frankfurt | `result_value` €1.00 |
+| 26 | REZ SW AsAflex | `result_value` €0.01 |
+
+A gymnasium's general renovation did not cost one euro, and the Bundesbank's site security did not
+either. Both now say so.
+
+### What this issue's instrument gap became
+
+The discovery sweep could never have found this class: it searches negatives and everything above
+€100 bn, and declines the middle and bottom on the stated ground that "frequency alone would not
+identify one there". This class was found by a frequency ranking at the bottom, with a 36× cliff.
+Filed as **issue 380**, which carries the refutation and why the state-blow-up argument behind the
+floor does not reach a bounded low-end arm.
