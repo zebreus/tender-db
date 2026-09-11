@@ -632,3 +632,45 @@ cheapest of them.
 *Also visible in the same run, and consistent with issue 369's own census:* `group step refused-keys:
 3 placeholder-shaped key(s) with >= 3 distinct buyer sets`. Three, as measured there.
 
+## The pilot measured the WRONG PROFILE, and the eras say so
+
+The full projection finished (job 1917, 18,812 s): **14,366,679 notices → 7,942,429 tenders (684,070
+islands); 2,136,456 tenders written, 5,805,973 verified unchanged**. And the citation gate:
+
+```
+issue-364 previous-publication citations: 502402 admitted, 0 refused
+(prior-information 0, buyer-profile 0, periodic-indicative 0,
+ qualification-system 0, DPS 0, undeclared 0, unknown kind 0)
+```
+
+**Half a million citations, not one refusable.** The admit list is three entries
+(`CONTRACT_NOTICE`, `ORIGINAL_NOTICE`, `THIS_PROCEDURE`) and the refuse lists are disjoint from it, so
+the gate is not a catch-all — every one of those 502,402 genuinely declared a same-procedure kind.
+
+**The explanation is the era, and it is the third instance of one mistake.** The 19 % figure this issue
+records was *"238 of 3,037, measured over four February-2013 archive days"*. Those days are **r208**:
+
+| profile | earliest | latest | notices |
+| --- | --- | --- | --- |
+| `ted-export-r208` | **2010-03-10** | 2024-06-28 | 2,699,213 |
+| `ted-export-r209` | **2015-12-05** | 2024-06-28 | 4,490,549 |
+
+**r209 does not reach February 2013 at all.** I re-parsed r209 — and I chose it because it is the
+LARGER profile (4.49 M against 2.70 M), which is exactly the wrong reason. The welding measurement,
+and this issue's own exhibits, are r208: 4228069 is `ojs:2010-001662`, the adjacent pair 4459994/5
+are `ojs:2011-010241`/`-010242`, and 2816628's typo'd name is `2001/S 112-185105`. Every one predates
+r209's first notice.
+
+So the night's zero is **not** evidence that the kind gate is inert. It is evidence that **r209 carries
+no shared-publication citations**, which is a real and useful finding about r209, and says nothing
+about the era the issue is about.
+
+**Unit 5 targets `ted-export-r208`.** That is the correction, and it is worth the 5-hour projection it
+cost to find.
+
+*The mistake, named because it is now three for three today:* the weld gauge's `>= 50` threshold, the
+`/v1/sql` window width, the reparse package cost — and now the profile. Each time the sample was
+chosen for convenience (the round number, the first window, the first packages, the biggest profile)
+rather than for containing the thing being measured. **Pick the sample that contains the phenomenon,
+then check it does, before spending anything on it.**
+
