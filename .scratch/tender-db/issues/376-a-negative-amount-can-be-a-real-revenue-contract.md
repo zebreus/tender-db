@@ -1,8 +1,13 @@
 # 376 — a negative amount is not always junk: revenue-side contracts publish one, and we drop the value entirely
 
-Status: ready-for-agent — UNITS 1 AND 2 DONE 2026-09-10 (unit 2: no modelled direction, because the
+Status: DONE 2026-09-11 — all four units are answered. **Unit 3 needed no archive read after all:**
+ten of the seventeen sub-€10k negatives come from exactly TWO publishers (one Madrid hospital on
+equipment maintenance, one Munich student-services body on architect services) and are sign errors;
+two identical `−3.00` rows from unrelated buyers in different countries are a sentinel; one row
+belongs to this issue's main revenue class. See the last section. Unit 4's −1.00 half was never in
+dispute. Was: ready-for-agent — UNITS 1 AND 2 DONE 2026-09-10 (unit 2: no modelled direction, because the
 field could not be populated honestly — see the decision at the end, with the three things that reopen
-it). Units 3 (the 17 sub-€10k negatives, needs a gated archive read) and 4 remain. Unit 1 DONE (both stated reasons corrected: 366 Leg A now
+it). Unit 1 DONE (both stated reasons corrected: 366 Leg A now
 rests on the column's domain rather than on "no procurement has a negative value", and 372's unit 5
 heading is scoped to the 29 rows at −100 it actually measured). Units 2, 3, 4 remain.
 Was: needs-triage (filed 2026-09-10 by the owner while hand-reading issue 372's residue; the
