@@ -4,6 +4,27 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## 2026-09-11 (later) — the value filters also skip a published 0.01 or 1.00
+
+A fifth class joins the four below: **exactly one minor unit or one major unit**.
+112,244 Tenders served one as their headline value, which makes this the largest
+placeholder class in the corpus — larger than the zeros and the negatives put
+together.
+
+The evidence is a distribution with two spikes and nothing after them: 59,030
+Tenders at €0.01, 53,214 at €1.00, and the third-placed value 36× smaller. Ten
+currencies each spike at exactly one major unit against their own two (EUR 125×,
+CZK 730×, DKK 412×). Most of it sits on `result_value`, on ordinary award notices
+— subtypes 29/16/33/30, no concession marker — for a gymnasium renovation, site
+security, painting works, school meals. You cannot award a contract for a cent.
+
+**The rule is two exact values, not a floor.** `0.10` (1,463 Tenders) and `2.00`
+(658) are a tail rather than a convention and are still elected.
+
+**Published amounts are unchanged**, as ever: `amounts` carries every figure as it
+arrived. What changes is that a Tender whose only figure is a one-unit token now
+has **no known value** and is returned by neither value bound.
+
 ## 2026-09-11 — the value filters skip placeholder amounts, zero among them
 
 `min_value`/`max_value` compare a derived EUR column, and that column now

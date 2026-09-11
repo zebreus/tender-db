@@ -570,6 +570,14 @@ rates and the quarantine resolution ledger.</p>
   only figure is 0 has <em>no known value</em> rather than a value of zero
   (24,647 Tenders; 11,793 of the zero rows sit on <code>result_value</code> and
   1,408 on <code>framework_maximum</code>, fields where 0 cannot be a price).</li>
+  <li><strong>A published <code>0.01</code> or <code>1.00</code> is usually a token</strong>,
+  not a price &mdash; the largest placeholder class in the corpus. 59,000 Tenders published
+  exactly one minor unit and 53,000 exactly one major unit, and the next value down carries
+  36&times; fewer; ten currencies each spike at exactly one unit. Most of it sits on
+  <code>result_value</code>, on ordinary award notices for works and services. Kept in
+  <code>amounts</code> as published; the derived EUR column does not elect it, so these
+  Tenders have <em>no known value</em>. <code>0.10</code> and <code>2.00</code> are a tail
+  rather than a convention and ARE elected.</li>
   <li><code>tax_basis</code> is <code>incl</code>, <code>excl</code>, or NULL &mdash; NULL
   means the source did not say, and the incl/excl mix is era-biased; do not compare raw
   sums across eras without checking it.</li>
@@ -586,10 +594,12 @@ rates and the quarantine resolution ledger.</p>
   implausible &mdash; 257 trillion PLN on one row whose own lot results award
   181.5 million.</li>
   <li><strong>But <code>min_value</code>/<code>max_value</code> do not compare
-  that figure.</strong> They compare a derived EUR column that skips four
+  that figure.</strong> They compare a derived EUR column that skips five
   classes: negative amounts (mostly the SDK's withheld marker, ~15,500 rows &mdash;
   but see above, a few are revenue-side contracts and this bound loses them too),
-  exactly zero (an absence, not a price &mdash; see the zero bullet above), a run of
+  exactly zero (an absence, not a price &mdash; see the zero bullet above), exactly
+  one minor or one major unit (a typed token, ~112,000 Tenders &mdash; see the bullet
+  above), a run of
   nine or more identical digits, which is a form-width maximum rather than a
   figure (&euro;999,999,999.99 on street cleaning in a town of 47,000), and
   anything above &euro;100bn EUR-equivalent. Two consequences worth planning

@@ -1394,7 +1394,7 @@ pub const DEADLINE_HORIZON_SECS: i64 = 10 * 365 * 86_400;
 /// never be elected as a Tender's headline value (issue 366, measured on prod
 /// 2026-09-08).
 ///
-/// Four shapes, all by EXACT value rather than magnitude, because that is what
+/// Five shapes, all by EXACT value rather than magnitude, because that is what
 /// the corpus actually shows:
 ///
 /// - **Negative.** No procurement has a negative value. 15,650 Tenders carry
@@ -1406,6 +1406,13 @@ pub const DEADLINE_HORIZON_SECS: i64 = 10 * 365 * 86_400;
 ///   a contract for nothing or cap a framework at nothing. The remaining
 ///   `estimated_value = 0` is the arguable one ("not estimated yet") and it too
 ///   is an absence. See the body for the reversal this leg records.
+/// - **Exactly one unit** — one minor unit (`1`, i.e. 0.01) or one major unit
+///   (`100`, i.e. 1.00) — on 112,244 Tenders, the largest placeholder class in
+///   the corpus (issue 379, measured 2026-09-11). Two spikes and then nothing:
+///   59,030 Tenders at €0.01, 53,214 at €1.00, and the third-placed head value
+///   is 36× smaller. Ten currencies each spike at exactly one major unit against
+///   their own two (EUR 125×, CZK 730×, DKK 412×, HUF 216×), and `result_value`
+///   carries most of it — you cannot award a contract for a cent.
 /// - **An all-nines run of at least nine digits in the major unit**
 ///   (999999999, 9999999999, 99999999999 …): 249 Tenders, and the counts falling
 ///   with width — 199, 36, 14 — are the signature of a form-width maximum rather
@@ -1465,6 +1472,54 @@ pub fn sentinel_amount(cents: i64) -> bool {
     // rather than a cost: a reader asking for free contracts is handed
     // thousands of contracts that are not free.
     if cents == 0 {
+        return true;
+    }
+    // ONE UNIT — one minor unit (0.01) or one major unit (1.00) — is a typed
+    // token, not a price (issue 379, measured 2026-09-11). It is the largest
+    // placeholder class in the corpus: 112,244 Tenders, 4.7× the exact zeros and
+    // 7× the negatives, and nothing had named it.
+    //
+    // The head-value distribution is two spikes and then nothing:
+    //
+    //   head (EUR cents)   tenders
+    //   1  (€0.01)          59,030
+    //   100 (€1.00)         53,214
+    //   10 (€0.10)           1,463     <- 36x below, and ADMITTED
+    //   200 (€2.00)            658     <- 80x below, and ADMITTED
+    //
+    // The spike is in the PUBLISHED figure, not the conversion. Rows at one
+    // major unit against rows at two, per currency: EUR 125×, HUF 216×, CZK
+    // 730×, SEK 144×, DKK 412×, GBP 84×, NOK 160×. Ten currencies, every one of
+    // them spiking at exactly one unit. **A distribution does not do that; a
+    // typed constant does** — the same argument that convicted the repdigit
+    // field maxima, in a different part of the number line.
+    //
+    // Which field carries it settles what it means, as it did for zero:
+    // `result_value` holds 64,065 of the one-cent Tenders and 53,578 of the
+    // one-euro ones. You cannot award a contract for a cent. (HUF is the
+    // interesting exception — there the token sits on `estimated_value`, 99.8%
+    // of it, reading as "no estimate stated" rather than "award withheld". Same
+    // token, different field, same meaning.)
+    //
+    // Both readings that would EXCUSE it were tested and both fail. A symbolic
+    // €1 sale is a real legal device, but these are not concessions: the notice
+    // subtypes are 29/16/33/30, ordinary award notices with no concession
+    // marker, the same shape issue 376 found for the revenue-side negatives.
+    // And the subjects are ordinary works and services — a gymnasium general
+    // renovation, Deutsche Bundesbank site security, a Max Planck Institute
+    // new building's painting works, fire-brigade defibrillators, school meals.
+    //
+    // One reading DOES survive: a per-unit price honestly published in a value
+    // field (€1.00 per meal, per licence). It is not separated out, and it does
+    // not change this leg — a unit price is not the procurement's value either,
+    // so a derived column asserting it as the headline is wrong under either
+    // reading. `amounts` keeps the published figure (ADR-0004) regardless.
+    //
+    // EXACT, not a floor. €0.10 (1,463 Tenders) and €2.00 (658) stay admitted:
+    // 36× and 80× below the spikes is a tail, not a convention, and reaching
+    // them is precisely where an exact test would become the magnitude rule this
+    // function keeps refusing to become.
+    if cents == 1 || cents == 100 {
         return true;
     }
     // A run of nine or more NINES is a field width whether or not it stops at the
@@ -21445,10 +21500,63 @@ mod tests {
         // The negative leg's reason is DIFFERENT from zero's — "not stated"
         // written as −1.00 versus an absence written as 0 — and both refuse.
         assert_eq!(value(vec![amount(0), amount(-100)]), None);
-        // And 1 cent is not zero: the leg is EXACT, not a small-value floor. A
-        // €0.01 award is implausible, but nothing here measures plausibility and
-        // a magnitude rule is the thing this function keeps refusing to become.
-        assert_eq!(value(vec![amount(1)]), Some(1));
+        // And 1 cent is not zero — the zero leg is EXACT, not a small-value
+        // floor. This line read `Some(1)` on 2026-09-11 with the comment "a
+        // €0.01 award is implausible, but nothing here measures plausibility".
+        // That was right about the METHOD and wrong about this value: hours
+        // later the head-value distribution was read and 0.01 turned out to be
+        // an exact typed constant on 59,030 Tenders (issue 379), which the
+        // exact design reaches without becoming a threshold. Still no
+        // plausibility test — a measured spike is not a magnitude rule.
+        assert_eq!(value(vec![amount(1)]), None);
+        // €0.10 and €2.00 are the boundary, and they are ADMITTED: 36× and 80×
+        // below the spikes is a tail, not a convention.
+        assert_eq!(value(vec![amount(10)]), Some(10));
+        assert_eq!(value(vec![amount(200)]), Some(200));
+    }
+
+    /// Issue 379: a published 0.01 or 1.00 is a typed token, and 112,244
+    /// Tenders served one as their headline value — the largest placeholder
+    /// class in the corpus, 4.7× the exact zeros and 7× the negatives.
+    ///
+    /// The evidence is a distribution with two spikes and nothing after them:
+    /// 59,030 Tenders at €0.01, 53,214 at €1.00, then €0.10 at 1,463 — 36×
+    /// below. Ten currencies each spike at one major unit against their own two
+    /// (EUR 125×, CZK 730×, DKK 412×). `result_value` carries most of it, and
+    /// you cannot award a contract for a cent.
+    ///
+    /// **The boundary is the point of this test.** The rule is two EXACT values,
+    /// not a floor — so €0.10 and €2.00 stay admitted, and the assertions below
+    /// are what stop a later edit turning a measured spike into a magnitude
+    /// threshold.
+    #[test]
+    fn one_unit_is_a_token_and_the_values_beside_it_are_not() {
+        // Both legs, on the published figure rather than its conversion.
+        assert!(sentinel_amount(1), "0.01 — 59,030 Tenders");
+        assert!(sentinel_amount(100), "1.00 — 53,214 Tenders");
+        // The neighbours, ADMITTED. A tail is not a convention.
+        assert!(!sentinel_amount(10), "€0.10 — 1,463 Tenders, 36x below the spike");
+        assert!(!sentinel_amount(200), "€2.00 — 658 Tenders, 80x below");
+        assert!(!sentinel_amount(2), "€0.02");
+        assert!(!sentinel_amount(99), "€0.99");
+        assert!(!sentinel_amount(101), "€1.01");
+        // Currency-blind by construction: the leg reads the published minor
+        // units, so HUF 1.00 and EUR 1.00 are the same fact about a form. That
+        // is why the HUF class (2,580 Tenders, 1,620 distinct buyers) needs no
+        // leg of its own.
+        let amount = |cents: i64, currency: &str| Fact::Amount {
+            field: "estimated_value".into(),
+            cents,
+            currency: currency.into(),
+            tax_basis: None,
+            quality: None,
+        };
+        let rates = crate::rates::RatesLookup::default();
+        let value = |facts: Vec<Fact>| head_value_eur_cents(&head(facts, Vec::new()), &rates);
+        assert_eq!(value(vec![amount(100, "EUR")]), None);
+        // A real figure beside the token still elects — this refuses the 1.00,
+        // not the Tender.
+        assert_eq!(value(vec![amount(100, "EUR"), amount(450_000_00, "EUR")]), Some(450_000_00));
     }
 
     /// Issue 366: tender 3323836 is ONE 2005 notice publishing two submission
