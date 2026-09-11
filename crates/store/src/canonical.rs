@@ -1365,6 +1365,29 @@ pub fn head_value_eur_cents(head: &TenderVersion, rates: &crate::rates::RatesLoo
             _ => None,
         })
         .filter(|eur| *eur <= IMPLAUSIBLE_EUR_CENTS)
+        // A conversion that lands on ZERO is declined (issue 378, decided
+        // 2026-09-11 on the measured residue of six Tenders).
+        //
+        // This is NOT a sentinel test and deliberately does not live in
+        // `sentinel_amount`, which reads the PUBLISHED figure by design. The
+        // published figures here are fine: CZK 0.10, CZK 0.12, HUF 0.79,
+        // HUF 1.48, LIT 2.89. They are simply smaller than half a euro cent, so
+        // ADR-0010's half-away-from-zero rounding puts them on 0 — and 0 is the
+        // one output value that already means something else in this column,
+        // namely "the election found nothing" (issues 366, 379).
+        //
+        // So the rule is about the COLUMN's vocabulary rather than the
+        // publisher's: a derived zero would be the column asserting €0.00 for a
+        // HUF 1.48 procurement, which is a wrong number, where declining says
+        // "no value this column can express", which is the true one. Every
+        // published figure survives in `amounts` either way (ADR-0004).
+        //
+        // Six Tenders today. The alternative on the table was a floor of one cent
+        // in the conversion itself (issue 378's fix 1), and it was declined:
+        // it touches every conversion in the corpus to repair six rows, where
+        // this touches one election and cannot reach anything else — nothing but
+        // a sub-half-cent amount converts to zero.
+        .filter(|eur| *eur != 0)
         .max()
 }
 
@@ -21513,6 +21536,40 @@ mod tests {
         // below the spikes is a tail, not a convention.
         assert_eq!(value(vec![amount(10)]), Some(10));
         assert_eq!(value(vec![amount(200)]), Some(200));
+    }
+
+    /// Issue 378, decided 2026-09-11: a conversion that lands on zero is
+    /// declined, so the derived column's 0 has exactly one meaning.
+    ///
+    /// The measured residue was SIX Tenders — CZK 0.10, CZK 0.12, HUF 0.79,
+    /// HUF 1.48, LIT 2.89 — published figures that are perfectly fine and simply
+    /// smaller than half a euro cent, which ADR-0010's rounding puts on 0. The
+    /// published figures are NOT sentinels and this is not a sentinel test; it
+    /// belongs to the election, which knows what its own output vocabulary means.
+    #[test]
+    fn a_conversion_that_rounds_to_zero_elects_nothing() {
+        // HUF at a rate where 1.48 major units is well under half a euro cent.
+        let mut rates = crate::rates::RatesLookup::default();
+        rates.insert_for_test("HUF", "2024-01-01", 400.0);
+        let amount = |cents: i64, currency: &str| Fact::Amount {
+            field: "estimated_value".into(),
+            cents,
+            currency: currency.into(),
+            tax_basis: None,
+            quality: None,
+        };
+        let mut version = head(vec![amount(148, "HUF")], Vec::new());
+        version.published_at = 1_704_067_200; // 2024-01-01
+        assert_eq!(
+            head_value_eur_cents(&version, &rates),
+            None,
+            "HUF 1.48 is a real figure, and EUR 0.00 is not what it is worth"
+        );
+        // A figure that converts to one cent is kept: the rule is about the
+        // output value 0, not about smallness.
+        let mut version = head(vec![amount(400, "HUF")], Vec::new());
+        version.published_at = 1_704_067_200;
+        assert_eq!(head_value_eur_cents(&version, &rates), Some(1));
     }
 
     /// Issue 379: a published 0.01 or 1.00 is a typed token, and 112,244

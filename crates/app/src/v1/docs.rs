@@ -569,7 +569,10 @@ rates and the quarantine resolution ledger.</p>
   compare treats a 0 as an absence and elects nothing from it, so a Tender whose
   only figure is 0 has <em>no known value</em> rather than a value of zero
   (24,647 Tenders; 11,793 of the zero rows sit on <code>result_value</code> and
-  1,408 on <code>framework_maximum</code>, fields where 0 cannot be a price).</li>
+  1,408 on <code>framework_maximum</code>, fields where 0 cannot be a price). The derived
+  column also declines a conversion that ROUNDS to zero &mdash; a published CZK 0.10 or
+  HUF 1.48 is a real figure worth less than half a euro cent, and &euro;0.00 is not what it
+  is worth &mdash; so a zero never appears in it for any reason.</li>
   <li><strong>A published <code>0.01</code> or <code>1.00</code> is usually a token</strong>,
   not a price &mdash; the largest placeholder class in the corpus. 59,000 Tenders published
   exactly one minor unit and 53,000 exactly one major unit, and the next value down carries

@@ -198,6 +198,20 @@ impl RatesLookup {
         let rate = self.rate(currency, date)?;
         Some(((cents as f64) / rate).round() as i64)
     }
+
+    /// Seed one rate, for tests that need a conversion without a database.
+    ///
+    /// The real lookup is built by [`Db::reload_rates_lookup`] from the rates
+    /// table, which a unit test of the ELECTION has no business standing up —
+    /// issue 378's rounding rule is about what the election does with a
+    /// converted zero, and it needs exactly one non-EUR rate to exercise.
+    #[cfg(test)]
+    pub fn insert_for_test(&mut self, currency: &str, date: &str, per_eur: f64) {
+        self.by_currency
+            .entry(currency.to_owned())
+            .or_default()
+            .push((date.to_owned(), per_eur, false));
+    }
 }
 
 impl Db {

@@ -4,6 +4,22 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## 2026-09-11 (last) — the derived EUR column never reports zero
+
+Completing the two entries below: the column also declines a conversion that
+**rounds** to zero. Six Tenders reached €0.00 that way — published CZK 0.10,
+CZK 0.12, HUF 0.79, HUF 1.48 and LIT 2.89, all real figures smaller than half a
+euro cent, which the documented half-away-from-zero rounding puts on 0.
+
+This is not a placeholder rule and the published figures are fine. It is about
+the column's own vocabulary: 0 already means "no value was elected", so a derived
+0 would have the column asserting €0.00 for a HUF 1.48 procurement. Declining
+says "no value this column can express", which is the true statement.
+
+So `min_value`/`max_value` never match on a zero, `?max_value=0` returns nothing,
+and a zero in the derived column means one thing rather than three. Published
+amounts are unchanged, as in both entries below.
+
 ## 2026-09-11 (later) — the value filters also skip a published 0.01 or 1.00
 
 A fifth class joins the four below: **exactly one minor unit or one major unit**.
