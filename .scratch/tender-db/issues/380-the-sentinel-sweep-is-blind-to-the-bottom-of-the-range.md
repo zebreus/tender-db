@@ -1,7 +1,10 @@
 # 380 — the sentinel discovery sweep cannot see the bottom of the range, and the reason it gives for not looking is refuted
 
-Status: ready-for-agent (filed 2026-09-11 by the owner, after issue 379 found 112,244 Tenders in
-exactly the region this instrument declines to search)
+Status: **DONE 2026-09-11** — built (`5491fc6`), deployed, and run twice on the corpus (jobs 1305
+and 1306, 0 labels unmeasured both times). It found a real class on its first run, filed as issue
+381. The residual-share column that issue 381 asked for landed in `2130cf4`. Was: ready-for-agent
+(filed 2026-09-11 by the owner, after issue 379 found 112,244 Tenders in exactly the region this
+instrument declines to search)
 Kind: defect (instrument blind spot) — the sweep is the thing that is supposed to find an unimagined
 placeholder shape, and the largest one in the corpus sat outside its scope for its whole life
 Blocked by: nothing
@@ -100,3 +103,26 @@ Both of this instrument's blind spots have now produced a real class: the conver
 (a non-EUR sentinel smears off its round published figure) is recorded on issue 366 and still open,
 and this one cost 112,244 Tenders that were found by hand. **An instrument whose stated purpose is to
 find what nobody imagined should not decline to look where nobody has looked.**
+
+## Closed (2026-09-11)
+
+Built as a SEPARATE query rather than a fourth `OR`, which gave each region its own listing cap —
+the per-scope quota of issue 347, reached by separation. Bounded on the published figure and
+currency-blind, the inverse of the floor and for the inverse reason. The known classes were left in
+rather than filtered, and the section note says why in those words.
+
+**It worked on its first run.** The baseline sat at the top, labelled, and directly under it were
+the per-unit rates now tracked as issue 381 — a class the exact-value design cannot reach and which
+nothing in the corpus had ever named.
+
+Open questions 1–4 from the filing all resolved in the build:
+
+1. **Ceiling** — 10.00 as published: 3,090 distinct `(currency, cents)` pairs at or below 1,000
+   against 22,361 at or below 10,000, so it stays the same order as the high arm's "few thousand".
+2. **The `eur_cents IS NULL` twin DISSOLVED.** Bounding on published cents means the arm never reads
+   `eur_cents` at all, so an era awaiting its conversion backfill stays in scope for free. The
+   question only existed because the high arm's shape was assumed to carry over.
+3. **The shared cap** — solved by separation, as above.
+4. **The known classes dominating** — they do, exactly as predicted, and that is the design. Issue
+   381 then showed the missing piece was not filtering them but NORMALISING past them, which is what
+   the residual-share column does.

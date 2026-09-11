@@ -573,6 +573,15 @@ rates and the quarantine resolution ledger.</p>
   column also declines a conversion that ROUNDS to zero &mdash; a published CZK 0.10 or
   HUF 1.48 is a real figure worth less than half a euro cent, and &euro;0.00 is not what it
   is worth &mdash; so a zero never appears in it for any reason.</li>
+  <li><strong>A very small value may be a per-unit rate</strong>, not the contract's worth.
+  Three tenders titled &ldquo;Taxi Vehicles&rdquo; publish &pound;8.57 into both
+  <code>estimated_value</code> and <code>result_value</code>; that is a fare, honestly
+  published into a field with no per-unit marker. 8,951 Tenders serve a value at or under
+  &euro;10. <strong>These are NOT filtered</strong>, unlike the placeholder classes above:
+  a unit rate is a real figure, the source carries no field that distinguishes it from a
+  total, and the band has no cliff to cut at (2,892 at or under &euro;0.10, 1,304 to
+  &euro;1, 4,755 to &euro;10, then 30,191 more to &euro;1,000). Treat an implausibly small
+  value as unreliable rather than as the contract's size.</li>
   <li><strong>A published <code>0.01</code> or <code>1.00</code> is usually a token</strong>,
   not a price &mdash; the largest placeholder class in the corpus. 59,000 Tenders published
   exactly one minor unit and 53,000 exactly one major unit, and the next value down carries

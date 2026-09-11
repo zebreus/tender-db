@@ -1,7 +1,10 @@
 # 381 — a per-unit rate stands as the tender's value, and the new bottom-of-range sweep found it on its first run
 
-Status: ready-for-agent (filed 2026-09-11 by the owner, from the first run of issue 380's low-end
-sweep — job 1305, 7,051 s, 0 labels unmeasured)
+Status: **DONE 2026-09-11** — unit 1 shipped (`2130cf4`, verified against the prod numbers), units 2
+and 3 answered: there is NO per-unit signal to gate on, so the class is DOCUMENTED rather than
+filtered, and the harm is 8,951 Tenders. See "Closed" at the end. Was: ready-for-agent (filed
+2026-09-11 by the owner, from the first run of issue 380's low-end sweep — job 1305, 7,051 s, 0
+labels unmeasured)
 Kind: defect (derived values) — the class issue 379 recorded as "the one reading that survives" and
 did not separate out, now measured and exhibited
 Blocked by: nothing
@@ -92,3 +95,53 @@ ordering.
 It worked, first run, exactly as argued: the baseline sat at the top, labelled and explained, and the
 new class was directly under it. The gap it has is unit 1 above — the listing shows counts where the
 question needs rates.
+
+## Closed (2026-09-11)
+
+### Unit 1 — shipped and verified against prod
+
+The residual share landed in `2130cf4` and the next report run reproduced, from independently
+written SQL, every number this issue was filed with: BGN 11,877 / 1,432,752 = 0.829 %, GBP 2,225 /
+379,052 = 0.587 %, EUR 18,121 / 9,807,417 = 0.185 %, and DKK / RON / SEK / NOK / PLN / CZK / HUF all
+matching to the row. Two implementations agreeing is the check that the column measures what the
+hand-rolled queries measured.
+
+It also surfaced what hand-picking ten currencies had missed: LVL 0.338 % and FRF 0.281 % rank above
+EUR, on 31 and 35 residual rows. And the pre-euro currencies (ATS, ESP, ITL, PTA, SKK, MDL) sit at
+**0.000 %** — the habit is a modern-era one, which no count-ranked listing could have shown.
+
+### Unit 3 — the harm, in Tenders
+
+**8,951 Tenders serve a head value at or under €10**, after the token drain removed 112,229:
+
+| band | Tenders |
+| --- | --- |
+| ≤ €0.10 | 2,892 |
+| ≤ €1 | 1,304 |
+| ≤ €10 | 4,755 |
+| ≤ €1,000 | 30,191 |
+
+**There is no cliff.** The bands rise again above €10, which is the opposite of the 36× gap that
+convicted the tokens. A distribution with no step has no honest threshold in it.
+
+### Unit 2 — DECIDED: no signal exists, so document rather than rule
+
+The issue said the decision turned on whether a per-unit indicator is available. It is not, on two
+independent counts:
+
+1. **The source does not publish one.** eForms amounts carry `@currencyID`. `@unitCode` exists in the
+   schema but belongs to the `measure` type, which is how DURATIONS are expressed (value + DAY /
+   MONTH / YEAR) — not amounts. There is no field that says "per journey".
+2. **The model could not hold one anyway.** The dropped-vocabulary list in `project.rs` records
+   `UBL-ExpectedOperatorQuantity` as *"integer; no integer fact channel"*, and the same for number
+   and code fields. A quantity to multiply by has nowhere to land.
+
+So refusing this class would need a magnitude floor, which `sentinel_amount` refuses by construction
+and which the band table above shows would be arbitrary. **Documented instead**, the way issue 376
+documented the revenue-side negatives: `/docs` now tells readers that a very small value may be a
+per-unit rate, gives the taxi exhibit and the band counts, and says plainly that these are NOT
+filtered and why.
+
+**What would reopen this**: a source that does mark per-unit amounts. FTS and any future source
+should be checked for one when they are mapped — that is a cheaper question at mapping time than a
+retrofit.
