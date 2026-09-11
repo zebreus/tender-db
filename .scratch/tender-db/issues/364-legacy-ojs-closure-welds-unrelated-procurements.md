@@ -674,3 +674,42 @@ chosen for convenience (the round number, the first window, the first packages, 
 rather than for containing the thing being measured. **Pick the sample that contains the phenomenon,
 then check it does, before spending anything on it.**
 
+## The r208 probe, and why unit 5 is a REPAIR rather than a measurement
+
+One r208 package (job 1918): **62,834 members walked, 1 notice re-parsed**, 19 s; 160 packages held
+back; `{"after": 24}` to continue. So r208's front is sparse exactly as r209's was, and its 161
+packages are one more thing not to extrapolate from the first of.
+
+**But the measurement this was reaching for does not need a re-parse at all.** Two things were
+conflated last night, and separating them is the point of this entry:
+
+1. **Does the corpus publish shared-publication citations?** Already answered, and by this issue:
+   19 % of 3,037 citations over four February-2013 archive days. That is a property of the archive
+   XML. Re-parsing cannot tell us anything the archive read did not.
+2. **Does the gate refuse them correctly?** A code question, and it is **already under test** —
+   `crates/ingest/tests/project.rs`: a refused citation "contributes no adjacency key at all" with
+   `refused() == 1`, an undeclared citation "is refused and COUNTED", and a same-procedure case gives
+   `refused() == 0`.
+
+So **unit 5's re-parse is a repair, not an experiment.** Its job is to make standing legacy rows carry
+the kind rows the gate needs, so the grouping they already have gets re-derived under the rule. It
+has no finding to deliver and should not be run to produce one.
+
+**And its price is now known, which is what last night actually bought:**
+
+| | |
+| --- | --- |
+| r208 packages | **161** |
+| r209 packages | 103 |
+| cost of 20 r209 packages | 879,331 notices, 95 min |
+| the projection that followed | **14.4 M notices, 7.94 M tenders, 18,812 s (5.2 h)** |
+| trigger | >500,000 un-projected legacy notices (issue 305) |
+
+Run it when a repair is wanted and an overnight window is available, chunked under 500,000 notices if
+the full pass is not, and against **r208** — the era that holds this issue's exhibits. Not before.
+
+**What last night established, in order:** the phantom rule renames 5,054 components (the only change
+measured to move anything), r209 carries no refusable citations in 502,402 of them, the three guards
+are vacuous, and the gate is correct by test. That is enough to leave this issue with a clear next
+action and no open question that another job would answer.
+
