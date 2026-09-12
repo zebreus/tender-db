@@ -184,6 +184,49 @@ async fn admin_api_drives_ingestion_end_to_end() {
     h.drain(2).await;
     assert!(!h.db.list_tenders(10).await.unwrap().is_empty(), "projection built a Tender");
 
+    // --- the per-profile unmapped-field probe (issue 368) --------------------
+    // Gated like everything here; 404 for a profile no notice carries; and for the
+    // fixture's own profile a listing whose every row is an id the projection does
+    // NOT read on the channel of the table it sits in — the per-table sieve, which
+    // the channel-blind one this replaced got wrong on the whole legacy vocabulary.
+    let probe = |q: &str| {
+        h.http
+            .get(format!("{}/admin/unmapped-fields?{q}", h.base))
+            .header("x-admin-secret", SECRET)
+    };
+    let ungated = h.http.get(format!("{}/admin/unmapped-fields?profile=x", h.base));
+    assert_eq!(ungated.send().await.unwrap().status().as_u16(), 403, "the probe is gated");
+    assert_eq!(
+        probe("profile=no-such-profile").send().await.unwrap().status().as_u16(),
+        404,
+        "a profile nothing carries is absent, not an empty listing"
+    );
+    let (profile, _) = h.db.notice_counts_by_profile().await.unwrap().into_iter().next().unwrap();
+    let listing: Value =
+        probe(&format!("profile={profile}&show=200")).send().await.unwrap().json().await.unwrap();
+    assert_eq!(listing["profile"], profile);
+    let published = listing["published_field_ids"].as_u64().unwrap();
+    let unmapped = listing["unmapped_field_ids"].as_u64().unwrap();
+    assert!(published > 0, "the fixture publishes field ids: {listing}");
+    assert!(unmapped <= published);
+    let newest = listing["newest_notice_id"].as_i64().unwrap();
+    assert_eq!(listing["ids_read"][1], newest, "the window ends at the profile's newest notice");
+    let rows = listing["unmapped"].as_array().unwrap();
+    assert_eq!(rows.len() as u64, unmapped.min(200), "the listing is the filtered set, capped");
+    for row in rows {
+        let table = row["table"].as_str().expect("table");
+        let field = row["field_id"].as_str().expect("field id");
+        assert!(row["rows"].as_u64().unwrap() > 0);
+        assert!(
+            !ingest::project::table_reads(table, field),
+            "{field} in {table} is read on that table's channel and must not be listed"
+        );
+    }
+    // `show` caps the listing without changing the counts.
+    let one: Value = probe(&format!("profile={profile}&show=1")).send().await.unwrap().json().await.unwrap();
+    assert_eq!(one["unmapped_field_ids"], listing["unmapped_field_ids"]);
+    assert!(one["unmapped"].as_array().unwrap().len() <= 1);
+
     // --- DELETE an unknown queued job ⇒ 404 (and the route is gated) --------
     let unknown =
         h.http.delete(format!("{}/admin/jobs/999999", h.base)).header("x-admin-secret", SECRET);
