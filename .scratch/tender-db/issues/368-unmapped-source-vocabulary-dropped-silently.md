@@ -428,3 +428,43 @@ attempt on a hypothesis.**
 r208 holds 29,763 of the 30,285 titleless Tenders, its newest notice is 4.3 M ids below the corpus
 window's floor, and the four form-specific title elements still have no destination. The gap is real.
 The instrument for it is not built, and three-quarters of the cost so far has been avoidable.
+
+### And the run that DID complete proves the design was wrong for a third, worse reason
+
+Job 1314 finished (11,635 s; whole-corpus phase ~5,648 s, i.e. the two-sided form cost the same as
+the one-sided one). So the listing it produced is the best case for this design. **r208 is not in
+it.** Nor is r209, nor the 1993–2010 text era. The fifteen rows are:
+
+    eforms-de-2.0   BT-67(a)-Procedure                    78,522
+    eforms-de-1.2   DE1-…-TendererRequirementTypeCode     62,722
+    eforms-sdk-1.6  BT-67(a)-Procedure                    58,855
+    eforms-sdk-1.6  BT-772-Lot                            58,800
+    eforms-de-1.1   DE1-…-TendererRequirementTypeCode     57,096
+    …               …                                     …
+    eforms-sdk-1.9  BT-67(a)-Procedure                     3,288
+
+`UNMAPPED_FIELD_LISTING_CAP` is **15**, the rows are sorted by volume, and the per-profile quota is
+**2**. With ~24 profiles, at most **seven** can appear, and the seven are whichever are busiest at
+their own head. The legacy profiles publish fewer rows per 100k ids and lose every time.
+
+**So the instrument could not have answered the question even when it worked.** I paid two ~3-hour
+runs and two production changes for a listing that is structurally incapable of showing the profile
+the whole exercise was about, and I never checked that the OUTPUT could contain the answer. The cost
+argument was a distraction from a correctness one.
+
+### The design that actually fits the question
+
+Not a global listing. **A parameterised probe** — "for profile X, what does it publish that no
+channel reads" — in the shape of issue 348's `GET /admin/name-key`:
+
+- **Cheap by construction**: one profile, bounded by that profile's own id range, no cap contention
+  with other eras, no whole-corpus GROUP BY.
+- **Answers the question it is asked**, rather than ranking questions against each other. The weekly
+  report is the wrong home for a per-profile query precisely because a report must choose what to
+  show and a probe does not.
+- **The report keeps the corpus arm**, which is good at what it is for: watching the head for a
+  vocabulary going stale. That was never the broken part.
+
+The entry point stays what section 13's note already says — the completeness table names the profile
+with a gap — and the probe is what you run next, instead of hoping a global listing happened to
+include it.
