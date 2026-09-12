@@ -468,3 +468,48 @@ channel reads" — in the shape of issue 348's `GET /admin/name-key`:
 The entry point stays what section 13's note already says — the completeness table names the profile
 with a gap — and the probe is what you run next, instead of hoping a global listing happened to
 include it.
+
+## The real cause, finally MEASURED (2026-09-12) — and it was neither hypothesis
+
+`EXPLAIN QUERY PLAN`, run against a scratch `store::Db` in **0.4 seconds**, on the actual statements.
+`/v1/sql` refuses `EXPLAIN` and the box has no `sqlite3`, but the schema is what decides a plan, so a
+scratch database answers it exactly. This was available from the first minute.
+
+**Control — the corpus arm, constant floor:**
+
+    SCALAR SUBQUERY 1
+    SCAN notices                                  <- MAX(id), once
+    SEARCH x USING INDEX … (notice_id>?)          <- the satellite DRIVES, as a RANGE
+    SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+
+**Candidate — per-profile, two-sided:**
+
+    SCAN notices AS n USING COVERING INDEX notices_profile   <- 31 M rows, as the OUTER loop
+    SEARCH x USING INDEX … (notice_id=?)                     <- satellite seeked by EQUALITY, per notice
+    SEARCH h USING INDEX ephemeral_subquery (p=?)
+    SCAN notices USING COVERING INDEX notices_profile
+    USE SORTER FOR GROUP BY
+
+**The planner INVERTS the join.** Joining to a per-profile maximum makes `notices` the natural
+driver, so it scans all 31 M and seeks the satellite once per notice by equality. **The window then
+bounds nothing at all** — which is why the one-sided and two-sided forms cost the same ~60 minutes,
+and why my two hypotheses (the missing ceiling; the grouped subquery) were both beside the point.
+
+Reordering the FROM clause to put the heads first was also tested: **the plan is identical**. SQLite
+reorders regardless, so the shape cannot be coaxed.
+
+### What this settles
+
+**A per-profile window needs literal per-profile ranges, not a join.** Only a CONSTANT floor gives a
+range scan. That rules out every variant of this query as a single statement, and it is the technical
+argument for the parameterised probe proposed above: a probe takes one profile, so its floor and
+ceiling are scalars by construction, and it plans like the control.
+
+### What is now guarded
+
+`store`'s `the_unmapped_field_window_plans_as_a_range_scan` asserts the corpus arm's plan — the
+satellite driven by a range, and `notices` NOT the outer loop — with the inversion written out as the
+reason. The repo already had this rule (`store`'s batch-apply test: *"a laptop-scale clock cannot
+tell a seek from a scan"*); I broke it twice on this query, and the guard is there so the next person
+does not.

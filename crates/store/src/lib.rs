@@ -3889,6 +3889,68 @@ pub(crate) async fn max_cursor(conn: &Connection) -> turso::Result<i64> {
 
 #[cfg(test)]
 mod tests {
+    /// Issue 368: the unmapped-field sweep's window must plan as a RANGE SCAN of
+    /// the satellite, and that holds only while its floor is a CONSTANT.
+    ///
+    /// Asserted as a plan rather than a stopwatch, which is this repo's own rule
+    /// (see the batch-apply guarantee below: "a laptop-scale clock cannot tell a
+    /// seek from a scan"). I broke that rule twice on this query and paid two
+    /// three-hour production runs for it; the answer took 0.4 s once asked here.
+    ///
+    /// **What the two plans showed.** With a constant floor the driver is the
+    /// satellite and the predicate is a range:
+    ///
+    ///     SEARCH x USING INDEX … (notice_id>?)
+    ///     SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+    ///
+    /// Join to a per-profile maximum instead and the planner INVERTS it — it
+    /// drives from `notices`, all 31 M of them, and seeks the satellite by
+    /// EQUALITY once per notice:
+    ///
+    ///     SCAN notices AS n USING COVERING INDEX notices_profile
+    ///     SEARCH x USING INDEX … (notice_id=?)
+    ///
+    /// The window then bounds nothing at all, which is why the per-profile arm
+    /// cost ~60 minutes in both its one-sided and two-sided forms. Reordering the
+    /// FROM clause to put the heads first does not help; the planner reorders
+    /// anyway. **A per-profile window therefore needs literal per-profile ranges
+    /// computed in a prior pass, not a join** — see issue 368.
+    #[tokio::test]
+    async fn the_unmapped_field_window_plans_as_a_range_scan() {
+        let dir = std::env::temp_dir().join(format!("plan-368-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let db = Db::open(dir.join("t.db").to_str().unwrap()).await.unwrap();
+        let conn = db.reader().await.unwrap();
+        let mut rows = conn
+            .query(
+                "EXPLAIN QUERY PLAN \
+                 SELECT n.profile, x.field_id, COUNT(*) \
+                   FROM notice_texts x JOIN notices n ON n.id = x.notice_id \
+                  WHERE x.notice_id > (SELECT MAX(id) FROM notices) - 1000000 \
+                  GROUP BY n.profile, x.field_id",
+                (),
+            )
+            .await
+            .unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            if let Ok(turso::Value::Text(d)) = row.get_value(3) {
+                plan.push_str(&d);
+                plan.push('\n');
+            }
+        }
+        assert!(
+            plan.contains("SEARCH x USING INDEX") && plan.contains("notice_id>?"),
+            "the satellite must be driven by a RANGE on notice_id:\n{plan}"
+        );
+        assert!(
+            !plan.contains("SCAN notices AS n"),
+            "and `notices` must NOT be the outer loop — that inversion is what made the \
+             per-profile variant scan 31 M rows per arm:\n{plan}"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
     /// Issue 175: the page-cache valve parses positive KiB, clamps the absurd at
     /// both ends (a 100 KiB cache thrashes, an unbounded one re-creates the
     /// issue-61 swap incident as a typo), and falls back to the 128 MiB default
