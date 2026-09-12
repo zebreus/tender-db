@@ -1,6 +1,6 @@
 # 383 — `TED-DATE_OF_CONTRACT_AWARD`: a second legacy spelling of the award date that the results reader does not match
 
-Status: ready-for-agent — units 1–2 DONE 2026-09-12 (read, matched, fixture, tests; see Answer); unit 3 (size, refold its carriers, re-probe) waits for the box to go idle after issue 368's fold. Was: ready-for-agent (filed 2026-09-12 by the owner, from issue 368's per-profile probe)
+Status: DONE 2026-09-12 — read, matched, fixture, tests (units 1–2), then 88,251 carriers refolded into 75,124 tenders (unit 3): every award block of the read carrier now dates its decision, and the r208 probe no longer lists the id. The sizer's first answer of 0 exposed and fixed a defect in the carrier sweep on the way (`79534cf`). Was: ready-for-agent (filed 2026-09-12 by the owner, from issue 368's per-profile probe)
 Kind: defect (data) — a MODELLED concept (the award decision date, issue 255) missing for one
 spelling, which is exactly issue 368's shape
 Blocked by: nothing
@@ -85,3 +85,21 @@ which folded with no decision date until now. The real run is submitted (job 133
 same narrowing) with the incremental `project` queued behind it (1331); the fold plans the whole
 corpus regardless of cohort size (issue 368's 319k-tender cohort took 4.04 h), so the re-count and
 the probe re-run follow that.
+
+### Unit 3 done (2026-09-12, jobs 1330 / 1331)
+
+`refold-fields` over `TED-DATE_OF_CONTRACT_AWARD`, `tables: ["notice_dates"]`, `expect: 88251`
+(job 1330, **11 s**): 88,251 carriers re-queued, **75,124 tenders stamped**. The incremental fold
+(job 1331, **2,651 s**): 88,251 notices → 75,124 tenders, 208,794 versions, 75,124 written — and its
+plan covered the cohort, not the corpus, which is why it took 44 minutes where issue 368's 319k-tender
+cohort took 4 hours.
+
+| | before | after |
+| --- | --- | --- |
+| r208 probe, unmapped ids in the head window | 275 | **274** — `TED-DATE_OF_CONTRACT_AWARD` gone |
+| notice 27,159,613 (the read carrier) → tender 3,947,120 seq 2, lot results | 17, none dated | **17, all 17 `decided_utc` = 1243814400 (2009-06-01)** |
+
+Closed. What this issue leaves behind: the per-channel probe finds era spellings that section 13
+cannot, the reader-vs-predicate guard (384) holds the fix in place, and the carrier sweep now walks
+every value table (`79534cf`) — the three things that made a one-day turnaround out of a gap that had
+stood for the whole R2.0.7 era.
