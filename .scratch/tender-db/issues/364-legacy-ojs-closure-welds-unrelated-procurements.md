@@ -739,3 +739,26 @@ silently emptied tender. It was a `404` with a perfectly clear error body, and t
 warns about, made an hour after I added a section to that file about it. Check the status, then the
 body, then the number.
 
+
+## Unit 5 STARTED (2026-09-12 21:52 CEST) — the r208 re-parse, chunked, with one fold at the end
+
+The plan, from what this issue already measured plus one coupling read off `supervisor.rs` tonight:
+
+- **`reparse` enqueues a `project` behind itself unless `reclaim_only: true`.** So the era can be
+  re-parsed in chunks with no fold per chunk, and folded once.
+- **A fold per chunk would be the wrong shape twice over.** `reparse` stamps tenders epoch-stale by
+  PROFILE (the runbook's "not a one-package blast radius"), so every chunk's fold would rewrite all
+  ~2.7 M r208 tenders; and above 500,000 un-projected notices the fold falls back to the full pass
+  anyway (issue 305). One full pass at the end (~5.2 h measured 2026-09-10) is cheaper than nine
+  r208-wide incremental ones.
+- **The daily tick's `project` (~09:30) will fold whatever has accumulated** — above 500,000 that is
+  the full pass, 5.2 h, mid-campaign. Accepted: it costs one extra fold and makes the first half of
+  the repair visible early; it blocks nothing that matters on a Sunday.
+- **Chunk size 10 packages, one per hourly firing while the box is otherwise idle**, `after` carried
+  from each run's continuation. Density is the unknown — r208's front is sparse (package 1: 62,834
+  members, 1 notice) and r209 ran ~44,000 notices per package further in — so the first chunks size
+  the rest. 161 packages ≈ 16 chunks if none is skipped; the weekly tick (Sunday 03:10) and the daily
+  ingest interleave between chunks, delayed by at most one chunk.
+
+**Chunk 1: job 1332**, `{"kind":"reparse","profiles":["ted-export-r208"],"packages":10,"after":24,
+"reclaim_only":true}`, submitted 21:52 CEST. Its `after`, notice count and wall go here, then the next.
