@@ -625,3 +625,16 @@ re-count `current_title IS NULL` (was 30,285 / 29,763 on r208) and lots 6,000,00
   spelling of the award date that the results reader does not match. Same shape as this issue.
 - A source-reading guard that every `("TED-…", NoticeValue::…)` literal the legacy readers match
   on has a destination on that channel, so the predicate cannot drift from the readers again.
+
+### Sized corpus-wide (2026-09-12): 345,203 carriers of the six ids
+
+Used the `refold-fields` job's own count gate as a dry run — `expect: 1` makes it enumerate the
+carriers, report the number in its abort message, and write nothing (job 1322). **345,203 notices
+carry at least one of the six ids**, `TED-LOT_TITLE`/`TED-LOT_DESCRIPTION` supplying most of it; the
+enumeration is a full sweep of `notice_texts` + `notice_amounts` and took **2,786 s (46 min)** on an
+idle box. That is the cost of one `refold-fields` run and it is paid twice: once to size, once to do.
+
+Plan: deploy `095ba3f`, then `refold-fields` with `expect: 345203` (the gate admits ±25 %), which
+requeues the carriers, stamps their tenders epoch-stale and queues the incremental `project` behind
+itself. On the earlier per-profile numbers (~8 h for 2.7 M r208 notices) the fold is roughly an hour
+and a half; the box is idle.
