@@ -600,10 +600,23 @@ async fn cancel(
             (StatusCode::OK, axum::Json(json!({ "cancelled": id, "state": "dropped" })))
                 .into_response()
         }
-        Cancelled::Stopping => {
-            (StatusCode::OK, axum::Json(json!({ "cancelled": id, "state": "stopping" })))
-                .into_response()
-        }
+        // Issue 382: "stopping" is honest only with its bound stated. The flag is read
+        // between work items, and one item can be an hour-long whole-corpus query, so
+        // the answer names the item in flight — the difference between "wait for this
+        // query" and "restart the service", which the bare word could not convey.
+        Cancelled::Stopping { kind, in_flight } => (
+            StatusCode::OK,
+            axum::Json(json!({
+                "cancelled": id,
+                "state": "stopping",
+                "kind": kind,
+                "in_flight": in_flight,
+                "checkpoint": "the stop flag is read between work items; the item in flight \
+                               runs to completion first, and a whole-corpus query can take an \
+                               hour — a restart is the only way to end THAT item early",
+            })),
+        )
+            .into_response(),
         Cancelled::Unstoppable(kind) => error(
             StatusCode::CONFLICT,
             &format!("job {id} is running as kind {kind:?}, which has no stop checkpoint"),

@@ -1,6 +1,6 @@
 # 382 — a job in STOPPABLE_KINDS cannot actually be stopped while it sits inside one long whole-corpus query
 
-Status: ready-for-agent (filed 2026-09-12 by the owner, from cancelling job 1313)
+Status: DONE 2026-09-12 — fix 1 shipped (the answer names the item in flight); fix 2 was already in place; fix 3 declined as written. Was: ready-for-agent (filed 2026-09-12 by the owner, from cancelling job 1313)
 Kind: defect (operability) — the stop contract promises more than it can deliver, and the gap only
 shows on the runs where stopping matters most
 Blocked by: nothing
@@ -54,3 +54,25 @@ service.
 It is also a good example of the shape that triggers this: a single statement whose cost the job's
 own progress reporting cannot show, because `done/total` counts QUERIES and this one query was
 roughly 67 minutes against ~1,500 s for the whole rest of its phase.
+
+## Answer (2026-09-12)
+
+**Fix 1, shipped.** `Cancelled::Stopping` carries the running job's kind and the work item in
+flight, formatted from the phase record (`name: detail (done/total)`), and the admin answer is now
+
+    {"cancelled": 7, "state": "stopping", "kind": "data-quality",
+     "in_flight": "whole-corpus: unmapped_fields (480/483)",
+     "checkpoint": "the stop flag is read between work items; the item in flight runs to
+                    completion first, and a whole-corpus query can take an hour — a restart
+                    is the only way to end THAT item early"}
+
+`stopping_names_the_work_item_in_flight` pins it; the journal line says the same. The runbook's
+cancel section reads the field before reaching for the restart.
+
+**Fix 2 was already there.** The data-quality loop has read the flag between queries since issue
+252 (`if self.cancelled(job_id) { stopped = true; break; }` inside the window×query loop, and again
+before each whole-corpus statement). So the bound was already one query; what was missing was
+saying so, which is fix 1.
+
+**Fix 3 stays declined** for the reason the issue gives: a query timeout would make the weekly
+report silently partial. If a hard bound is ever wanted it belongs on the admin path.

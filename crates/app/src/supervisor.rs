@@ -2302,7 +2302,11 @@ pub enum Cancelled {
     /// Dropped from the queue before it ever ran; the durable row is gone too.
     Queued,
     /// Running, and its kind checks the stop flag — it will end at its next checkpoint.
-    Stopping,
+    /// Carries the kind and the work item in flight (issue 382): the flag is read BETWEEN
+    /// items, and one item can be an hour-long whole-corpus query, so "stopping" alone
+    /// promised more than it could deliver. Naming the item lets the operator tell
+    /// "wait for this query" from "restart the service".
+    Stopping { kind: String, in_flight: Option<String> },
     /// Running, but nothing in this kind's loop reads the flag, so the honest answer is
     /// no. Carries the kind so the caller can say which.
     Unstoppable(String),
@@ -2343,8 +2347,16 @@ impl Supervisor {
             return Cancelled::Unstoppable(running.kind);
         }
         self.cancel_running.store(id, Ordering::Relaxed);
-        eprintln!("supervisor: job {id} is running — asked it to stop at its next checkpoint");
-        Cancelled::Stopping
+        let in_flight = running.phase.as_ref().map(|p| match (p.done, p.total) {
+            (Some(d), Some(t)) => format!("{}: {} ({d}/{t})", p.name, p.detail),
+            _ => format!("{}: {}", p.name, p.detail),
+        });
+        eprintln!(
+            "supervisor: job {id} is running — asked it to stop at its next checkpoint \
+             (in flight: {})",
+            in_flight.as_deref().unwrap_or("no phase reported")
+        );
+        Cancelled::Stopping { kind: running.kind, in_flight }
     }
 
     /// Whether this running job has been asked to stop (issue 247). Checked at a job's
@@ -10438,12 +10450,44 @@ mod tests {
         assert!(!sup.cancelled(42), "not cancelled until asked");
         assert_eq!(
             sup.cancel(42).await,
-            Cancelled::Stopping,
+            Cancelled::Stopping { kind: "reparse".into(), in_flight: None },
             "reparse reads the flag, so the running job accepts a stop request"
         );
         assert!(sup.cancelled(42), "and the job sees it at its next checkpoint");
         // The flag names ONE job: a different id must not stop on someone else's request.
         assert!(!sup.cancelled(43));
+    }
+
+    /// Issue 382: "stopping" names the work item in flight. The flag is read between
+    /// items, and on 2026-09-12 the item was a 67-minute whole-corpus query: the
+    /// operator read `stopping`, waited, and could not tell a slow query from a hung
+    /// one. With the phase carried, the answer says what it is waiting on.
+    #[tokio::test]
+    async fn stopping_names_the_work_item_in_flight() {
+        let db = scratch().await;
+        let sup = Arc::new(Supervisor::new(db, "archive".into(), reqwest::Client::new()));
+        sup.set_current(Some(JobProgress {
+            id: 7,
+            kind: "data-quality".into(),
+            params: "data-quality".into(),
+            started_at: 0,
+            package: None,
+            packages_done: 0,
+            packages_total: 0,
+            members_done: 0,
+            members_total: 0,
+            notices: 0,
+            duplicates: 0,
+            phase: None,
+        }));
+        sup.set_phase("whole-corpus", Some(480), Some(483), "unmapped_fields".into());
+        assert_eq!(
+            sup.cancel(7).await,
+            Cancelled::Stopping {
+                kind: "data-quality".into(),
+                in_flight: Some("whole-corpus: unmapped_fields (480/483)".into()),
+            }
+        );
     }
 
     /// Issue 252: a running job whose kind reads no stop flag must be REFUSED, not told it
@@ -10482,7 +10526,7 @@ mod tests {
 
         // `data-quality` now checks between queries, so it is accepted.
         sup.set_current(running("data-quality"));
-        assert_eq!(sup.cancel(7).await, Cancelled::Stopping);
+        assert!(matches!(sup.cancel(7).await, Cancelled::Stopping { .. }));
         assert!(sup.cancelled(7));
 
         // And every kind named stoppable must actually be one — the list is the contract,

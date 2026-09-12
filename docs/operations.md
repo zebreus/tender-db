@@ -276,7 +276,11 @@ curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/41
 #
 # Four answers (issue 252):
 #   200 {"state":"dropped"}   it was queued and is gone
-#   200 {"state":"stopping"}  it is running and its kind checks the stop flag
+#   200 {"state":"stopping","kind":…,"in_flight":"whole-corpus: unmapped_fields (480/483)","checkpoint":…}
+#                             it is running and its kind checks the stop flag — BETWEEN work
+#                             items. `in_flight` names the item it must finish first (issue 382):
+#                             a whole-corpus query can take an hour, and only a restart ends
+#                             that one early. Read it before reaching for the restart.
 #   409                       it is running as a kind with NO stop checkpoint — the
 #                             honest refusal. The stoppable set is STOPPABLE_KINDS in
 #                             supervisor.rs (a contract test pins it): reparse,
@@ -316,7 +320,7 @@ curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' 
   -d '{"kind":"refold-fields","profiles":["TED-LOT_TITLE","TED-LOT_DESCRIPTION"],"expect":1}' $BASE/admin/jobs
 #   → error "refold-fields aborted: 345203 notices carry [...], expected ~1 (nothing was written)"
 
-# Cancel a still-queued job (the running one cannot be cancelled).
+# Drop a still-queued job (a RUNNING one is asked to stop via /cancel above).
 curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/42
 
 # Read the newest stored data-quality report (issue 230). The measurement is a
