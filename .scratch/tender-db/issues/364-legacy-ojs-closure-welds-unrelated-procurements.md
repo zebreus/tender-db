@@ -772,10 +772,17 @@ The plan, from what this issue already measured plus one coupling read off `supe
 | 3 | 1334 | 20 | 56 → 76 | 8,573 | 1,086,637 | 161 s |
 | 4 | 1335 | 20 | 76 → 96 | 36,666 | 1,016,902 | 435 s |
 | 5 | 1336 | 20 | 96 → 116 | 203,089 | 890,400 | 1,812 s |
-| 6 | 1337 | 20 | 116 → ? | running | | |
+| 6 | 1337 | 20 | 116 → 136 | 685,456 | 766,735 | 5,471 s |
+| 7 | 1338 | 20 | 136 → ? | running (submitted 01:33 CEST) | | |
 
 Every chunk stamps the same **1,455,097** r208 tenders epoch-stale — the profile-wide stamp the
 runbook warns about, which is why the fold is taken once at the end rather than per chunk. The front
 is sparse and the density climbs with depth (2.5k → 36.7k → 203k notices per chunk); chunk 5 reached
 the r209-like density (~10k notices per package, 30 min per chunk), and 70 packages remain after it —
 about three more chunks of the expensive kind. Chunk size stays 20; the weekly window (03:10 CEST) is left clear.
+
+Running total after chunk 6: **944,068 notices re-parsed over 111 of 161 packages** — already past the
+500,000 cap, so the next `project` (the daily tick's, ~09:30 CEST, or an explicit one) takes the full
+pass. Chunk 6 was the era's dense middle: 685k notices in 91 min, ~34k per package. Chunk 7 runs into
+the 03:10 weekly window by a few minutes at most; the weekly jobs queue behind it. 30 packages remain
+after chunk 7 — two more chunks on Sunday morning, then the fold.
