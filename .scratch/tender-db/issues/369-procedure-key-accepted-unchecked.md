@@ -1,6 +1,6 @@
 # 369 — a published BT-04 becomes the Tender group key verbatim: an all-zero v4 UUID glues seven notices from three buyers into one served record
 
-Status: ready-for-agent — **units 1, 2a, 2b, 2c and 3 DONE and verified on prod 2026-09-08 (`a83495b`,
+Status: DONE 2026-09-12 (owner, board re-read) — every unit is shipped: units 1, 2a, 2b, 2c and 3 verified on prod 2026-09-08, unit 4 served by the gauge built on 364 (`c0c2581`, first run read on 364 on 2026-09-10), unit 5 lives in the grouping SQL. Nothing remains that another job would answer. Was: ready-for-agent — **units 1, 2a, 2b, 2c and 3 DONE and verified on prod 2026-09-08 (`a83495b`,
 jobs 819+820): the gate refused exactly the census's 3 keys, the welded tenders are retired, the 4
 correct shaped tenders are untouched, and a split-out notice now serves its own title. **UNIT 4 SERVED 2026-09-10 by 364's weld gauge (`c0c2581`) — see the section at the end for where it
 was placed and why that differs from the plan here.** Was: REMAINING: unit
@@ -540,3 +540,10 @@ former, and a one-vocabulary gauge reads green on the very welds these two issue
 Numbers land with the first report run that includes it. Unit 5 (the island fallback's over-split) is
 already done and lives in the grouping SQL.
 
+
+## Closed on re-read (2026-09-12)
+
+Every unit is delivered and its numbers have landed: the gauge's first report run was read on issue
+364 (it refuted its own >=50 calibration — Slovenian joint procurement at the top, not welds — and was
+corrected in `831b8f9`). The status line was still `ready-for-agent` only because nobody re-read it
+after unit 4 was served. Closed; the weld work continues on 364 (unit 5, the r208 repair).

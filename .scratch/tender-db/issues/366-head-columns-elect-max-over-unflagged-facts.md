@@ -1,6 +1,6 @@
 # 366 — the head columns elect MAX over facts that carry no quality flag: a 2005 tender is served as open, and €49 quadrillion tops the value ordering
 
-Status: ready-for-agent — **STANDING ROWS DRAINED 2026-09-09 (owner), see "The standing-rows route is
+Status: DONE 2026-09-12 (owner, board re-read) — the four items of 'Still open after this firing' are each closed: the 322-row repdigit drain (2026-09-10, `aa55f6e`), the exact zeros (refused and drained 2026-09-11, `55d239d`), unit 3's unfinished half (payload and head column on one ladder, verified on prod 2026-09-11), and non-EUR sentinels (section 10's sweep, issue 380). Was: ready-for-agent — **STANDING ROWS DRAINED 2026-09-09 (owner), see "The standing-rows route is
 ANSWERED": the epoch-bump-versus-repair-job dilemma was a false choice — `refold-notices` aims the
 FOLD'S OWN election at the affected notices, so there is no second implementation to drift and no
 corpus re-fold. Over-ceiling 175 → 0, negatives 15,644 → 0, beyond-horizon future deadlines 379 → 0;
@@ -1161,3 +1161,12 @@ So the derived column can still say €0, by rounding rather than by election, a
 returns exactly those 608: a reader asking for free contracts is handed contracts priced at one
 forint. Filed as **issue 378**, with ADR-0010's rounding amendment read as the precedent and a floor
 at one cent as the candidate fix. Smaller wrong answer than the 24,039, same kind.
+
+## Closed on re-read (2026-09-12)
+
+The "Still open after this firing" list of 2026-09-10 is empty now, item by item: the 322-row
+repdigit drain ran clean after the deploy (`aa55f6e`); the 24,585 exact zeros stopped being a decision
+when the zero leg landed and the drain ran 26 rounds to `0 left` (`55d239d`); unit 3's unfinished half
+put the payload on the fold's election and was verified on prod (2026-09-11); and non-EUR published
+sentinels are what section 10 sweeps for (issue 380, with 381's per-unit-rate class read off it).
+The follow-ons that grew out of this issue have their own files (378, 379, 380, 381), all DONE. Closed.
