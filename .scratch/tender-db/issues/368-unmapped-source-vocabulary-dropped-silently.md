@@ -329,3 +329,50 @@ so it needs to run inside the job.
    before choosing, the way `TED-TI_TEXT` was read before being rejected.
 3. **The other half.** 152 of the 300 carry no title element of any kind; for those the gap is
    publisher omission and the honest answer is that no title exists.
+
+## The per-profile arm was built, SHIPPED, MEASURED and REVERTED (2026-09-12)
+
+`9073eca` added it; `5b0eb4c` reverted it. What follows is the measurement, including a correction to
+what I first claimed about it.
+
+### The cost, measured on prod (job 1313)
+
+| | |
+| --- | --- |
+| whole job | **11,457 s** (3 h 11 m) |
+| windowed phase (32 windows × 16 queries) | 5,771 s |
+| whole-corpus phase **with** the per-profile arm | **~5,686 s** |
+| whole-corpus phase on the two runs before it | ~1,300–1,600 s |
+| **attributable to the new query** | **~4,000 s (67 min)** |
+
+**Correction to my own revert message.** `5b0eb4c` says *"the weekly report would not have
+finished"*. That is false — job 1313 completed, `ok`, `0 label(s) unmeasured`. I cancelled it while
+it was still inside the query and wrote the revert from that observation instead of waiting for the
+number. The honest statement is a **55 % increase on a two-hour job for one diagnostic listing**,
+which is still a bad trade, and not the same claim.
+
+### Why it is still reverted
+
+67 minutes buys one listing, and the cost is a design error rather than an inherent price. The
+corpus arm's floor is a **scalar constant**, so `notice_id > <const>` is an index range on each
+table's primary key. Joining to a per-profile maximum makes the floor **join-dependent**, which
+defeats that index; and `GROUP BY profile` over 31 M notices has no index to serve it, because
+`notices` is not keyed on profile.
+
+### What a redesign must preserve
+
+**The scalar floor.** Two candidates, both to be MEASURED before shipping this time:
+
+1. **Compute the per-profile floors in a prior pass** and emit them as literal constants — a union of
+   ~24 explicit id ranges, each an index range. Needs the job to support a query whose text depends
+   on an earlier result, which `queries()` does not do today.
+2. **An index on `notices(profile, id)`**, which turns the maxima into a cheap skip-scan over ~24
+   groups. Cheaper to build, but it does not fix the join-dependent floor — worth measuring whether
+   the floor alone was the cost or the grouping was.
+
+### The requirement has not changed
+
+r208 still holds **29,763 of the 30,285** titleless Tenders and its newest notice is still 4.3 M ids
+below the corpus window's floor. The profile with the gap is still invisible to the diagnostic built
+to find gaps, and the four form-specific title elements still have no destination. Only the
+instrument for seeing them corpus-wide is missing.

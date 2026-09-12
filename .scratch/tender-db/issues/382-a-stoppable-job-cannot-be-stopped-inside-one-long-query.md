@@ -44,7 +44,13 @@ but not reachable for an unbounded time.**
 
 ## Corroborating detail worth keeping
 
-The runaway query was the per-profile unmapped-field arm, reverted in the same firing. Its cost is
-issue 368's problem, not this one — but it is a good example of the shape that triggers this: a
-single statement whose cost is unbounded in a way the job's own progress reporting cannot show,
-because `done/total` counts QUERIES and one query was 30× the rest of the phase combined.
+The long query was the per-profile unmapped-field arm, reverted in the same firing. Its cost is
+issue 368's problem, not this one. **And it did finish** — job 1313 completed `ok` about 20 minutes
+after the cancel, at 11,457 s total. So this issue is not about a hang: the query was healthy and
+simply long, which is precisely the case the fix has to serve. An operator cancelling a HUNG job and
+an operator cancelling a SLOW one get the same word back, and only one of them should restart the
+service.
+
+It is also a good example of the shape that triggers this: a single statement whose cost the job's
+own progress reporting cannot show, because `done/total` counts QUERIES and this one query was
+roughly 67 minutes against ~1,500 s for the whole rest of its phase.
