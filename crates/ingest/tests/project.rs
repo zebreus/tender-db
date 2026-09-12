@@ -3139,6 +3139,35 @@ async fn the_legacy_annex_b_lot_title_reaches_the_lot() {
     let _ = std::fs::remove_file(&path);
 }
 
+/// Issue 383: the R2.0.7 spelling of the award-block date. A 2010 F06 dates each of its
+/// seventeen awards as `DATE_OF_CONTRACT_AWARD` (DAY/MONTH/YEAR), the fact R2.0.8 spells
+/// `CONTRACT_AWARD_DATE`; the parse layer had made it one instant and the reader matched
+/// only the later spelling, so every one of these awards folded with no decision date.
+#[tokio::test]
+async fn the_r207_award_date_spelling_dates_the_award() {
+    let (db, fetch_id, path) = scratch("r207-decided").await;
+    ingest(&db, fetch_id, "r208/f06-r207-070248-2010.xml").await;
+    project::project(&db, false).await.expect("project");
+
+    let results = scalar(&db, "SELECT COUNT(*) FROM tender_version_lot_results").await;
+    assert!(results >= 1, "the F06's award blocks must fold as results");
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM tender_version_lot_results WHERE decided_utc = 1243814400",
+        )
+        .await,
+        results,
+        "every award carries its published date, 2009-06-01, as the decision instant"
+    );
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_lot_results WHERE decided_utc IS NULL").await,
+        0
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
 /// Issue 237: a LotsGroup's membership reaches the canonical layer, so a bid that names
 /// the group can be attributed to the lots it actually covers.
 ///

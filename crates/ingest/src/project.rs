@@ -568,6 +568,13 @@ const SDK01_AWARD_DATE_FIELD: &str = "SDK01-TenderResult-AwardDate";
 /// while the reader consumed every one — a literal in the reader that the
 /// predicate could not see.
 const LEGACY_AWARD_DATE_FIELD: &str = "TED-CONTRACT_AWARD_DATE";
+/// The same award-block date under its R2.0.7 spelling (issue 383): F06 awards of
+/// 2010 publish `DATE_OF_CONTRACT_AWARD` as DAY/MONTH/YEAR, which the parse layer
+/// has already made one instant. Read on one carrier (070248-2010, seventeen
+/// award blocks, all 2009-06-01) before being matched: same section, same fact.
+/// The r208 probe listed 79 rows of it as dropped in the era's head window; its
+/// corpus size is whatever `refold-fields` counts.
+const LEGACY_AWARD_DATE_FIELD_R207: &str = "TED-DATE_OF_CONTRACT_AWARD";
 /// The legacy "no contract was awarded" marker on the award block, a `Rule::Marker`
 /// the parser stores as `Integer(1)`; the results reader turns it into the
 /// `clos-nw` decision. Named for the same reason as the award date (issue 384):
@@ -4079,7 +4086,10 @@ fn read_legacy_results(sections: &HashMap<&str, &store::Section>, parsed: &Parse
             // for eForms' contract-scoped BT-1451 to land on. The r209 defence form
             // splits it into DAY/MONTH/YEAR elements; the parse layer has already made
             // that one instant.
-            (LEGACY_AWARD_DATE_FIELD, NoticeValue::Date { utc_seconds, offset_minutes, has_time }) => {
+            (
+                LEGACY_AWARD_DATE_FIELD | LEGACY_AWARD_DATE_FIELD_R207,
+                NoticeValue::Date { utc_seconds, offset_minutes, has_time },
+            ) => {
                 r.decided = Some((*utc_seconds, *offset_minutes, *has_time));
             }
             (LEGACY_NO_AWARD_MARKER, NoticeValue::Integer(_)) => r.decision = Some("clos-nw".to_owned()),
@@ -4542,6 +4552,7 @@ pub fn has_destination(field_id: &str, channel: Channel) -> bool {
                 || RESULT_DATE_STEMS.contains(&stem)
                 || field_id == SDK01_AWARD_DATE_FIELD
                 || field_id == LEGACY_AWARD_DATE_FIELD
+                || field_id == LEGACY_AWARD_DATE_FIELD_R207
         }
         Channel::Code => {
             field_id == SUBTYPE_FIELD
@@ -6526,6 +6537,7 @@ mod tests {
         // The legacy award date is consumed by the results reader; the predicate
         // must say so or the probe lists 1,688 rows of it as dropped (it did).
         assert!(table_reads("notice_dates", LEGACY_AWARD_DATE_FIELD));
+        assert!(table_reads("notice_dates", LEGACY_AWARD_DATE_FIELD_R207));
         // Two more the issue-384 guard found on its first run: the no-award marker
         // (a wildcard arm in the reader, an Integer(1) in the store) and the bid
         // count on its Number spelling.
@@ -6602,13 +6614,19 @@ mod tests {
 
         // The const-named arms and slices the reader consults, held by name.
         assert!(has_destination(LEGACY_AWARD_DATE_FIELD, Channel::Date));
+        assert!(has_destination(LEGACY_AWARD_DATE_FIELD_R207, Channel::Date));
         assert!(has_destination(LEGACY_NO_AWARD_MARKER, Channel::Integer));
         for f in LEGACY_BID_COUNT_FIELDS {
             assert!(has_destination(f, Channel::Integer), "{f}: Integer");
             assert!(has_destination(f, Channel::Number), "{f}: Number");
         }
         // And every const the reader matches on is one this test names.
-        for name in ["LEGACY_AWARD_DATE_FIELD", "LEGACY_NO_AWARD_MARKER", "LEGACY_BID_COUNT_FIELDS"] {
+        for name in [
+            "LEGACY_AWARD_DATE_FIELD",
+            "LEGACY_AWARD_DATE_FIELD_R207",
+            "LEGACY_NO_AWARD_MARKER",
+            "LEGACY_BID_COUNT_FIELDS",
+        ] {
             assert!(body.contains(name), "{name} is no longer used by the reader; update this test");
         }
     }

@@ -12,7 +12,7 @@ exercises.
 Layout is `<profile>/<notice-type>-<publication-id>.xml`, one profile directory
 per mapping profile in docs/architecture.md ("Notice identity and profiles").
 
-Total: 96 fixture files, 2.5 MB (every file under this directory except this README).
+Total: 97 fixture files, 2.5 MB (every file under this directory except this README).
 
 ## Selection policy
 
@@ -172,7 +172,7 @@ because that is where it is actually found in the wild.
 - `f19-concession-award-criteria-281627-2012.xml` (12,346 B): **issue 194 residue** — F19 sub-contract concession (defence, R2.0.8.S02.E01, EN/BE) whose `AWARD_CRITERIA_DETAIL` carries the award-criteria sentence as BARE TEXT where every other form nests children there. Pins the TextGroup rule (both shapes consumed). One of exactly 2 such members in 30 years of corpus.
 - `f13-prize-winner-362996-2018.xml` (7,875 B): **issue 259** — F13 design-contest result (PT, from monthly `2018-08`) whose prize block nests `<ADDRESS_WINNER>` inside `<WINNER>`. Both are `Rule::Org`, so ONE company opens TWO Organization sections: the outer empty and referenced as the winner, the inner holding `OFFICIALNAME`. The only `WINNER`/`ADDRESS_WINNER` pair in the corpus — every other award fixture uses `CONTRACTOR` > `ADDRESS_CONTRACTOR`, where the wrapper is a transparent container and nothing nests, which is why the defect was invisible for as long as it was.
 
-## `r208/` — TED_EXPORT R2.0.8 (and R2.0.7), 9 files, 339 KB
+## `r208/` — TED_EXPORT R2.0.8 (and R2.0.7), 10 files, 363 KB
 
 Mostly from TED daily package **`daily-201400001`** (published 2014-01-01, 1139
 notices, uniformly `R2.0.8.S02.E01`), plus one R2.0.7 file — issue 10 scopes
@@ -189,6 +189,7 @@ difference between the eras.
 | `f12-185289-2013.xml` | 13 183 | `FORM="12"` — design contest notice | R2.0.8.S02.E01 | DE | DE | **Issue 368 unit 2.** Same package. `TITLE_DESIGN_CONTACT_NOTICE` (TED's own spelling) names the contest, which is the procurement: "Neubau Ev.-luth. Paulus Kinder- und Familienzentrum". |
 | `f13-187010-2013.xml` | 11 604 | `FORM="13"` — result of a design contest | R2.0.8.S02.E01 | FR | FR | **Issue 368 unit 2.** From `20130607_109`. `TITLE_RESULT_DESIGN_CONTEST`; read to settle whether a result names the contest or something else — it names the procurement. |
 | `f08-198630-2013.xml` | 9 004 | `FORM="8"` — notice on a buyer profile | R2.0.8.S02.E01 | EN | UK | **Issue 368 unit 2.** From `20130618_116`. `TITLE_NOTICE_BUYER_PROFILE`: "GLA Helicopter Services 2015" — the procurement, not the profile. |
+| `f06-r207-070248-2010.xml` | 23 824 | `FORM="6"` — contract award, utilities | **R2.0.7.S02.E01** | EN | — | **Issue 383.** From monthly `2010-03` (`20100310_48`). Seventeen award blocks, each dating the award as `DATE_OF_CONTRACT_AWARD` (DAY/MONTH/YEAR) — the R2.0.7 spelling of the award-block date that R2.0.8 calls `CONTRACT_AWARD_DATE`; every one of them 2009-06-01. |
 
 ---
 
