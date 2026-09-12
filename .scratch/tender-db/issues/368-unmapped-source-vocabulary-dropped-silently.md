@@ -1,6 +1,6 @@
 # 368 — an unmapped field id or subtype is dropped with no diagnostic: 29,455 titleless r208 Tenders and whole eras of lot titles
 
-Status: ready-for-agent — **UNIT 4b WAS INERT AND IS NOW FIXED 2026-09-10 (`c5d6e79`): the query ran every week and had NO render section, so the diagnostic showed nobody anything. See the last section, including the source-reading guard that now holds it.** Units 1-3 unblock on the next weekly run. Was: **UNIT ORDER REVISED 2026-09-08 by measurement: unit 4 (the unmapped-field diagnostic) goes FIRST.** Unit 1 as written would have mapped `TED-TI_TEXT` to `title`, which is the CPV category label in 23 languages, not the procurement's title — see "Unit 1, measured". Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
+Status: ready-for-agent — **UNIT 2 DONE AND REFOLDED 2026-09-12: titleless tenders 30,285 → 16,126 (r208 29,763 → 15,604), the 6.0M lot band 100 → 7 untitled; the remaining 15,604 r208 tenders publish no title element of any spelling (unit 3, 'the other half', is the honest answer that none exists — sampled below). The diagnostics are honest per channel (aa9c080) and the probe is a 7-second call. Open: unit 3's write-up; issue 383's award-date refold.** Was: ready-for-agent — **UNIT 4b WAS INERT AND IS NOW FIXED 2026-09-10 (`c5d6e79`): the query ran every week and had NO render section, so the diagnostic showed nobody anything. See the last section, including the source-reading guard that now holds it.** Units 1-3 unblock on the next weekly run. Was: **UNIT ORDER REVISED 2026-09-08 by measurement: unit 4 (the unmapped-field diagnostic) goes FIRST.** Unit 1 as written would have mapped `TED-TI_TEXT` to `title`, which is the CPV category label in 23 languages, not the procurement's title — see "Unit 1, measured". Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
 Kind: defect (projection destinations) — the recurring 18/85/177/231 shape, plus the
 standing detector none of them had
 Relates to: 85 (DE-1.x facts), 18 (sdk-0.1 instants), 177 (r208 values), 231 (sdk-0.1
@@ -638,3 +638,37 @@ Plan: deploy `095ba3f`, then `refold-fields` with `expect: 345203` (the gate adm
 requeues the carriers, stamps their tenders epoch-stale and queues the incremental `project` behind
 itself. On the earlier per-profile numbers (~8 h for 2.7 M r208 notices) the fold is roughly an hour
 and a half; the box is idle.
+
+## Unit 2 refolded and re-counted (2026-09-12)
+
+**The refold** (job 1324, `refold-fields` over the six ids, `expect: 345203`): 345,203 carriers,
+345,203 notices re-queued, **319,349 tenders stamped epoch-stale**, 2,779 s. **The fold** (job 1325,
+`project`): 14,372,914 notices → 7,945,750 tenders, 2,926,296 versions; **1,450,488 tenders written,
+6,495,262 verified unchanged; 14,540 s (4.04 h)** — a stamped cohort of 319k rewrites as a
+full-corpus plan plus the cohort's writes, which is the cost to budget for the next one.
+
+| | before | after |
+| --- | --- | --- |
+| tenders with no `current_title` | 30,285 | **16,126** |
+| …of which `ted-export-r208` | 29,763 | **15,604** |
+| …of which `kind = 'registration'` (X01, documented) | 131 | 131 |
+| lots 6,000,001–6,000,100 with no title | 100 of 100 | **7 of 100** |
+| r208 probe, unmapped ids in the head window | 281 | **275** (the six are gone; `TED-DATE_OF_CONTRACT_AWARD` stays until 383's deploy) |
+
+**14,159 tenders gained a title**, which is 47.6 % of the r208 cohort — the sampled 148/300 (49 %)
+that carried one of the four form-specific elements, within sampling error. **The remaining 15,604
+are the other half:** they publish no title element of any spelling (the 300-sample's 152), and for
+them "no title" is the true statement, not a gap in the vocabulary. That is unit 3, and it is an
+answer rather than a fix: ADR-0004 keeps the notice faithful, the OJ heading is the CPV label and was
+rejected as a title on 2026-09-08, and nothing else on the form names the procurement.
+
+The r209 half of the lot titles rode along (`TED-LOT_TITLE` / `TED-LOT_DESCRIPTION` are the same
+elements in both eras), which is where most of the 345k carriers came from.
+
+### Done when — re-read
+
+- titleless re-measured after re-projection: **done, 16,126**, with the r208 cohort's 15,604 being
+  the genuinely untitled (unit 3) plus 131 documented registrations;
+- a lot in the 6.0M band serves its title: **done, 93 of 100**;
+- X02 notices are `kind='registration'`: not touched by this unit — still open under this issue's
+  unit for `kind_of`, and small (285 tenders across sdk-1.8…1.14 in the 1.0–1.5M band).
