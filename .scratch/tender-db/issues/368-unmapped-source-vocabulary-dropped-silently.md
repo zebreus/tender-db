@@ -376,3 +376,55 @@ r208 still holds **29,763 of the 30,285** titleless Tenders and its newest notic
 below the corpus window's floor. The profile with the gap is still invisible to the diagnostic built
 to find gaps, and the four form-specific title elements still have no destination. Only the
 instrument for seeing them corpus-wide is missing.
+
+## The per-profile arm failed TWICE, and both failures were the same mistake (2026-09-12)
+
+`9073eca` shipped it, `5b0eb4c` reverted it, `61f18dd` re-landed it with a fix, and it is reverted
+again. Two hypotheses, two ~3-hour runs, both wrong. **The common cause is not the SQL — it is that I
+measured a PROXY for the statement instead of the statement.**
+
+| attempt | hypothesis | what I measured | time on that step |
+| --- | --- | --- | --- |
+| 1 (`9073eca`) | — (shipped without measuring; cost flagged as the open risk) | nothing | ~67 min |
+| 2 (`61f18dd`) | the window was one-sided, so each profile scanned to the end of the corpus | a CONSTANT-floor range on ONE table: `BETWEEN` 3.5 s vs `>` over 10 s | **~58 min and counting** |
+
+Attempt 2's measurement was real and it was about a different query. The real statement's floor comes
+from a JOIN (`h.max_id - W`), not from a constant, and that is exactly the property the probe could
+not exercise — a constant-floor range is an index seek whether or not it has a ceiling. **The
+two-sidedness was never the variable.** I tested the thing I could test cheaply and treated it as
+evidence about the thing I could not.
+
+That is `docs/agents/prod-box-reads.md`'s sampling rule — *pick the sample that contains the
+phenomenon, then check that it does* — in a performance costume, and it is the third time in this
+session's work that the same shape has cost real time.
+
+### What is actually established
+
+- The corpus arm (`unmapped_fields_sql`, constant floor) costs ~1,300–1,600 s for the whole
+  whole-corpus phase, i.e. it is not the problem.
+- The per-profile arm costs **~60 minutes on its own** in both the one-sided and two-sided forms.
+- Therefore the cost is in the **join-dependent floor**, the **`GROUP BY profile` over 31 M notices**,
+  or both — and NOTHING measured so far separates those two.
+- `notices` carries `notices_profile(profile)`, a single-column index. It is NOT covering for
+  `MAX(id)`, so the grouped subquery still fetches every row it walks.
+
+### The rule for the next attempt, which is not optional
+
+**Measure the REAL statement before writing any more of it.** `/v1/sql` refuses `EXPLAIN`, so this
+needs `sqlite3` against a SNAPSHOT per `docs/agents/prod-box-reads.md` — that is the documented path
+for exactly this and it should have been the first step, not the fourth. What to get:
+
+1. `EXPLAIN QUERY PLAN` of the real statement, to see whether the notice-id predicate is a range scan
+   or a full scan, and what the subquery does.
+2. The same for the corpus arm, as the control that is known to be fast.
+3. A timing of the grouped-maximum subquery ALONE, which separates the two candidate causes.
+
+Only then choose between the candidates (a covering `notices(profile, id)` index; per-profile floors
+computed in a prior pass and emitted as constants; or dropping the idea). **Do not ship another
+attempt on a hypothesis.**
+
+### The requirement is unchanged and still unmet
+
+r208 holds 29,763 of the 30,285 titleless Tenders, its newest notice is 4.3 M ids below the corpus
+window's floor, and the four form-specific title elements still have no destination. The gap is real.
+The instrument for it is not built, and three-quarters of the cost so far has been avoidable.
