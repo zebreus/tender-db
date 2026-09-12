@@ -12523,6 +12523,35 @@ mod tests {
             .expect("a dry run needs no expectation");
     }
 
+    /// The refold-fields count gate, and the sizing trick the runbook documents on
+    /// it (issue 368, 2026-09-12): an impossible `expect` makes the job enumerate
+    /// the carriers, name the count in its abort message and write nothing. On an
+    /// empty scratch database the sweep finds 0, so expecting 1 must abort (the
+    /// slack is a quarter of expect, 0 here) and the message must carry the found
+    /// count — that number is the whole point of the dry run. Without `expect` the
+    /// same request runs through and reports the zero it found.
+    #[tokio::test]
+    async fn refold_fields_names_the_carrier_count_when_the_expectation_fails() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let fields = vec!["TED-LOT_TITLE".to_owned(), "TED-LOT_DESCRIPTION".to_owned()];
+
+        let err = sup
+            .run_spec(&job(Spec::RefoldFields { fields: fields.clone(), expect: Some(1) }))
+            .await
+            .expect_err("a carrier count outside the expectation must abort");
+        assert!(err.contains("0 notices carry"), "the abort names the found count: {err}");
+        assert!(err.contains("expected ~1"), "{err}");
+        assert!(err.contains("nothing was written"), "{err}");
+
+        let ok = sup
+            .run_spec(&job(Spec::RefoldFields { fields, expect: None }))
+            .await
+            .expect("without an expectation the request runs");
+        assert!(ok.contains("0 carriers of 2 field id(s)"), "{ok}");
+        assert!(ok.contains("re-queued 0 notices"), "{ok}");
+    }
+
     /// `expect_gaps` re-aims the guard; it does not disarm it (issue 138 criterion 5).
     ///
     /// The guard's value is that it rejected 154 and passed 592,856 — discrimination,
