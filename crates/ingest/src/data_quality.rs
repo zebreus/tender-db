@@ -1210,7 +1210,7 @@ pub const UNMAPPED_FIELD_WINDOW_IDS: i64 = 1_000_000;
 /// vocabulary did not know this publisher's spelling — needs the completeness
 /// section as its entry point (a profile with a title gap), then this list
 /// restricted to that profile. Filed as the follow-up rather than guessed at
-/// here, because `any_channel_reads` is profile-BLIND: a field is either always
+/// here, because the destination test is profile-BLIND: a field is either always
 /// read or never, so no per-profile asymmetry is detectable with it.
 pub const UNMAPPED_FIELD_LISTING_CAP: usize = 15;
 
@@ -1258,9 +1258,15 @@ pub const UNMAPPED_FIELD_PER_PROFILE: usize = 2;
 /// spellings arrive. The report's convention is to say what it does not measure
 /// rather than let a reader assume completeness, and the window is in the label.
 pub fn unmapped_fields_sql() -> String {
+    // Each arm names its table, because the drop test is PER CHANNEL: a row in
+    // `notice_texts` asks whether the text channel reads its id, not whether any
+    // channel does (`project::table_reads`). Without the column the sieve had to
+    // be channel-blind, and channel-blind it called the whole legacy vocabulary
+    // read — see `table_channels` for the live number that exposed it.
     let arm = |table: &str| {
         format!(
-            "SELECT n.profile AS profile, x.field_id AS field_id, COUNT(*) AS hits \
+            "SELECT n.profile AS profile, '{table}' AS channel, x.field_id AS field_id, \
+                    COUNT(*) AS hits \
                FROM {table} x JOIN notices n ON n.id = x.notice_id \
               WHERE x.notice_id > (SELECT MAX(id) FROM notices) - {UNMAPPED_FIELD_WINDOW_IDS} \
               GROUP BY n.profile, x.field_id"
@@ -1278,8 +1284,8 @@ pub fn unmapped_fields_sql() -> String {
     ];
     let arms: Vec<String> = tables.iter().map(|t| arm(t)).collect();
     format!(
-        "SELECT profile, field_id, SUM(hits) AS hits FROM ({}) \
-          GROUP BY profile, field_id ORDER BY hits DESC",
+        "SELECT profile, channel, field_id, SUM(hits) AS hits FROM ({}) \
+          GROUP BY profile, channel, field_id ORDER BY hits DESC",
         arms.join(" UNION ALL ")
     )
 }
@@ -1760,6 +1766,9 @@ pub struct WeldRow {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct UnmappedFieldRow {
     pub profile: String,
+    /// The satellite table the rows sit in (`notice_texts`, …), which is the
+    /// channel the drop test is asked on: `project::table_reads`.
+    pub table: String,
     pub field_id: String,
     /// Rows carrying it in the measured window — NOT a corpus total; see
     /// [`unmapped_fields_sql`] for the window and why it is windowed.
@@ -1919,10 +1928,11 @@ pub struct Raw {
     pub sentinel_dates: Rows,
     /// `[field, hits, in_withholding_notice, tenders]` per amount field (issue 372).
     pub withheld_markers: Rows,
-    /// Issue 368 unit 4b: `(profile, field_id, hits)` for every field id
+    /// Issue 368 unit 4b: `(profile, table, field_id, hits)` for every field id
     /// published in the newest slice — unfiltered. The projection's own
     /// predicate decides which of them are DROPPED, in Rust, because the match
-    /// is full-id OR stem and the DE-1.x aliases resolve there (unit 4a).
+    /// is full-id OR stem and the DE-1.x aliases resolve there (unit 4a); it is
+    /// asked per table, i.e. per channel, which is why the table travels.
     pub unmapped_fields: Rows,
     /// Labels whose query never ran (issue 230), in the order collected.
     pub unmeasured: Vec<String>,
@@ -2195,18 +2205,22 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         // window; the drop test happens here because it cannot be expressed in
         // SQL — the projection matches on full id OR two-segment stem, and the
         // DE-1.x aliases resolve to their eForms target in Rust first (unit 4a).
-        // A channel-blind predicate would report the whole legacy era as read,
-        // which is the one era this has to be honest about, so `any_channel_reads`
-        // is the right question: is this id read on ANY channel at all.
+        // Asked PER CHANNEL — the row's own table — not "on any channel". The
+        // first version of this comment argued the opposite, and the predicate
+        // it chose called the entire legacy vocabulary read: `role_name` takes
+        // any `TED-` id, so the pointer channel answered for the text one. The
+        // corpus head is eForms, so the section never showed the blindness; the
+        // r208 probe did, at 0 unmapped of 311 (2026-09-12).
         unmapped_fields: raw
             .unmapped_fields
             .iter()
             .map(|r| UnmappedFieldRow {
                 profile: as_str(r.first()),
-                field_id: as_str(r.get(1)),
-                hits: as_u64(r.get(2)),
+                table: as_str(r.get(1)),
+                field_id: as_str(r.get(2)),
+                hits: as_u64(r.get(3)),
             })
-            .filter(|row| !crate::project::any_channel_reads(&row.field_id))
+            .filter(|row| !crate::project::table_reads(&row.table, &row.field_id))
             // Issue 368 unit 4c: at most `UNMAPPED_FIELD_PER_PROFILE` rows per
             // profile, so the largest era cannot take the whole listing. The rows
             // arrive sorted by hits DESC, so each profile still contributes its
@@ -2848,9 +2862,20 @@ pub fn render_text(report: &Report) -> String {
              destination on some channel."
         );
     } else {
-        let _ = writeln!(out, "  {:<26} {:<34} {:>12}", "profile", "field id", "rows");
+        let _ = writeln!(
+            out,
+            "  {:<26} {:<16} {:<34} {:>12}",
+            "profile", "channel", "field id", "rows"
+        );
         for r in &report.unmapped_fields {
-            let _ = writeln!(out, "  {:<26} {:<34} {:>12}", r.profile, r.field_id, group(r.hits));
+            let _ = writeln!(
+                out,
+                "  {:<26} {:<16} {:<34} {:>12}",
+                r.profile,
+                r.table.trim_start_matches("notice_"),
+                r.field_id,
+                group(r.hits)
+            );
         }
         if report.unmapped_fields.len() >= UNMAPPED_FIELD_LISTING_CAP {
             let _ = writeln!(
@@ -2871,10 +2896,13 @@ pub fn render_text(report: &Report) -> String {
              **And it is NOT the detector for issue 368's own failures.** Those were a MODELLED \
              concept going missing because the closed vocabulary did not know one publisher's \
              spelling — 29,455 titleless tenders, r208's 100 %-null lot titles. \
-             `any_channel_reads` is profile-BLIND: a field is either always read or never, so no \
-             per-profile asymmetry can show through it. That entry point is the completeness \
-             section (a profile with a gap), then this list restricted to that profile — issue \
-             368 unit 4c.\n  \
+             the destination test is profile-BLIND: a field is either always read or never, so \
+             no per-profile asymmetry can show through it. That entry point is the completeness \
+             section (a profile with a gap), then `GET /admin/unmapped-fields?profile=` — the \
+             per-profile probe (issue 368). `channel` is the table the rows sit in, and the \
+             test is asked on that channel: a legacy address block is read as a role, and a \
+             legacy title element that no text channel reads is listed even though the same \
+             spelling would pass as a role.\n  \
              Two bounds on the numbers. WINDOWED to the newest {UNMAPPED_FIELD_WINDOW_IDS} notice \
              ids (~100k notices), because a vocabulary going stale shows at the head first, so \
              `rows` is a window count and NOT a corpus total. And capped at \
@@ -3344,6 +3372,9 @@ pub fn render_json(report: &Report) -> String {
                 .iter()
                 .map(|r| json!({
                     "profile": r.profile,
+                    // The satellite table the rows sit in — the channel the drop
+                    // test was asked on.
+                    "table": r.table,
                     "field_id": r.field_id,
                     // Window rows, NOT a corpus total — see `window_notice_ids`.
                     "rows": r.hits,
@@ -3965,15 +3996,16 @@ mod tests {
     fn the_unmodelled_listing_gives_every_profile_a_quota() {
         // One dominant profile with more rows than the whole cap, and two small
         // eras underneath it, exactly the shape prod returned.
+        let t = || json!("notice_texts");
         let mut rows: Vec<Vec<serde_json::Value>> = (0..20)
-            .map(|i| vec![json!("eforms:eforms-sdk-1.13"), json!(format!("BIG-{i}")), json!(9_000 - i)])
+            .map(|i| vec![json!("eforms:eforms-sdk-1.13"), t(), json!(format!("BIG-{i}")), json!(9_000 - i)])
             .collect();
-        // Ids nothing reads — a real modelled spelling (`TED-LOT_TITLE`) would be
-        // filtered out by `any_channel_reads` before the quota ever saw it, which
-        // is correct and would make this test measure the filter instead.
-        rows.push(vec![json!("ted-export-r208"), json!("SMALL-A"), json!(40)]);
-        rows.push(vec![json!("ted-export-r208"), json!("SMALL-B"), json!(30)]);
-        rows.push(vec![json!("ted-export-r209"), json!("SMALL-C"), json!(20)]);
+        // Ids nothing reads — a real modelled spelling (`TED-TITLE`) would be
+        // filtered out by `table_reads` before the quota ever saw it, which is
+        // correct and would make this test measure the filter instead.
+        rows.push(vec![json!("ted-export-r208"), t(), json!("SMALL-A"), json!(40)]);
+        rows.push(vec![json!("ted-export-r208"), t(), json!("SMALL-B"), json!(30)]);
+        rows.push(vec![json!("ted-export-r209"), t(), json!("SMALL-C"), json!(20)]);
 
         let mut ran = sentinel_scaffold();
         put(&mut ran, "unmapped_fields", Some(rows));
@@ -4010,7 +4042,7 @@ mod tests {
     /// the canonical model is a narrow subset on purpose. A section that presents
     /// them as silent drops asks a reader to act on fifteen things that are working
     /// as intended, which is how a diagnostic earns being ignored. It also is not the
-    /// detector for this issue's own failures, since `any_channel_reads` is
+    /// detector for this issue's own failures, since the destination test is
     /// profile-blind and those failures are per-profile asymmetries.
     #[test]
     fn the_unmodelled_field_section_is_scope_not_defect() {
@@ -4018,7 +4050,12 @@ mod tests {
         put(
             &mut ran,
             "unmapped_fields",
-            Some(vec![vec![json!("eforms:eforms-sdk-1.13"), json!("BT-67(a)-Procedure"), json!(63_814)]]),
+            Some(vec![vec![
+                json!("eforms:eforms-sdk-1.13"),
+                json!("notice_codes"),
+                json!("BT-67(a)-Procedure"),
+                json!(63_814),
+            ]]),
         );
         let text = render_text(&assemble("x", &Raw::from_labelled(ran).expect("raw")));
         assert!(text.contains("NOT a defect"), "the section must say so outright:\n{text}");
@@ -5093,49 +5130,65 @@ mod tests {
         assert!(text.contains("merged with TED: 0"), "a measured zero is still reported: {text}");
     }
 
-    #[test]
     /// Issue 368 unit 4b: the diagnostic lists only field ids the projection
-    /// actually DROPS, and reads its window from the head of the corpus.
+    /// actually DROPS — asked on the channel the row arrived on.
     ///
     /// The filter runs in Rust, not SQL, because the projection matches on full
     /// id OR two-segment stem and resolves DE-1.x aliases first — so the SQL
     /// deliberately returns everything and the test's job is to prove the sieve.
+    /// The first version of this test proved it against one invented `BT-` id
+    /// and passed for two days while the sieve called every `TED-` id read: the
+    /// pointer channel takes any of them as a role, and the sieve asked "any
+    /// channel". The legacy rows below are the case it never checked.
     #[test]
     fn the_unmapped_field_listing_keeps_only_ids_nothing_reads() {
-        // A field the projection reads, one it reads only via its stem, and two
-        // it has no destination for at all.
-        let read = "BT-501-Organization-Company";
-        let dropped = "BT-99999-Invented-Field";
-        assert!(
-            crate::project::any_channel_reads(read),
-            "fixture check: {read} must be a field the projection reads, or this \
-             test proves nothing about the filter"
-        );
-        assert!(!crate::project::any_channel_reads(dropped), "fixture check: {dropped}");
-
-        let row = |field: &str, hits: u64| {
+        let row = |profile: &str, table: &str, field: &str, hits: u64| {
             vec![
-                Value::String("eforms:eforms-sdk-1.13".to_owned()),
+                Value::String(profile.to_owned()),
+                Value::String(table.to_owned()),
                 Value::String(field.to_owned()),
                 Value::from(hits),
             ]
         };
-        let raw: Rows = vec![row(read, 9_000), row(dropped, 42)];
+        let raw: Rows = vec![
+            // Read via its stem on the text channel.
+            row("eforms:eforms-sdk-1.13", "notice_texts", "BT-21-Lot", 9_000),
+            // No destination anywhere.
+            row("eforms:eforms-sdk-1.13", "notice_texts", "BT-99999-Invented-Field", 42),
+            // r208's unmapped title element: a role on the pointer channel by
+            // `role_name`'s catch-all, and read by NO text channel. The blind
+            // sieve dropped this row; it is the whole titleless-r208 finding.
+            row("ted-export-r208", "notice_texts", "TED-TITLE_QUALIFICATION_SYSTEM", 65),
+            // The OJ heading's CPV label, deliberately unmapped — same trap.
+            row("ted-export-r208", "notice_texts", "TED-TI_TEXT", 6_900),
+            // A legacy address block IS read where it is stored: as a role.
+            row("ted-export-r208", "notice_ids", "TED-ADDRESS_CONTRACTING_BODY", 300),
+        ];
         let listed: Vec<UnmappedFieldRow> = raw
             .iter()
             .map(|r| UnmappedFieldRow {
                 profile: as_str(r.first()),
-                field_id: as_str(r.get(1)),
-                hits: as_u64(r.get(2)),
+                table: as_str(r.get(1)),
+                field_id: as_str(r.get(2)),
+                hits: as_u64(r.get(3)),
             })
-            .filter(|row| !crate::project::any_channel_reads(&row.field_id))
+            .filter(|row| !crate::project::table_reads(&row.table, &row.field_id))
             .take(UNMAPPED_FIELD_LISTING_CAP)
             .collect();
 
-        assert_eq!(listed.len(), 1, "the read field must not be listed: {listed:?}");
-        assert_eq!(listed[0].field_id, dropped);
+        let ids: Vec<(&str, &str)> =
+            listed.iter().map(|r| (r.table.as_str(), r.field_id.as_str())).collect();
+        assert_eq!(
+            ids,
+            vec![
+                ("notice_texts", "BT-99999-Invented-Field"),
+                ("notice_texts", "TED-TITLE_QUALIFICATION_SYSTEM"),
+                ("notice_texts", "TED-TI_TEXT"),
+            ],
+            "read rows must not be listed and unread legacy rows must: {listed:?}"
+        );
         assert_eq!(listed[0].hits, 42);
-        assert_eq!(listed[0].profile, "eforms:eforms-sdk-1.13");
+        assert_eq!(listed[1].profile, "ted-export-r208");
     }
 
     /// The window is in the SQL, and it is the HEAD of the corpus — the property
@@ -5155,6 +5208,9 @@ mod tests {
             8,
             "all eight parsed value tables ride the union"
         );
+        // Each arm names its table, so the sieve can be asked per channel.
+        assert_eq!(sql.matches("' AS channel").count(), 8, "every arm must label its channel");
+        assert!(sql.contains("GROUP BY profile, channel, field_id"), "{sql}");
         for table in [
             "notice_texts",
             "notice_codes",

@@ -4541,9 +4541,51 @@ pub fn has_destination(field_id: &str, channel: Channel) -> bool {
     }
 }
 
+/// The channel(s) one notice-layer satellite table feeds, keyed by the table's
+/// name, so a diagnostic that found a row in `notice_texts` asks the TEXT
+/// question of its field id — [`table_reads`] — rather than whether some
+/// channel somewhere reads that id.
+///
+/// The distinction decided a live result. The r208 probe's first run
+/// (2026-09-12) returned **311 published field ids and 0 unmapped**, with four
+/// title elements nothing reads among the 311, because its sieve was the
+/// channel-blind [`any_channel_reads`]: `role_name` accepts any `TED-` id, so
+/// the pointer channel alone answered "read" for the whole legacy vocabulary.
+/// The weekly report's section 13 used the same sieve and was blind the same
+/// way — invisibly, since the corpus head is eForms and only a `TED-` id trips
+/// it. An unknown table has no channel and so reads nothing: a typo lists that
+/// table's every row as dropped instead of hiding them.
+pub fn table_channels(table: &str) -> &'static [Channel] {
+    match table {
+        "notice_texts" => &[Channel::Text],
+        "notice_codes" => &[Channel::Code],
+        "notice_classifications" => &[Channel::Classification],
+        "notice_amounts" => &[Channel::Amount],
+        "notice_dates" => &[Channel::Date],
+        "notice_integers" => &[Channel::Integer],
+        "notice_numbers" => &[Channel::Number],
+        "notice_ids" => &[Channel::Id { is_ref: true }, Channel::Id { is_ref: false }],
+        _ => &[],
+    }
+}
+
+/// Whether the projection reads `field_id` on the channel(s) that `table`
+/// feeds — the sieve for "published and dropped" diagnostics (issue 368: the
+/// weekly report's section 13 and `GET /admin/unmapped-fields`).
+pub fn table_reads(table: &str, field_id: &str) -> bool {
+    table_channels(table).iter().any(|c| has_destination(field_id, *c))
+}
+
 /// Whether ANY channel reads this field id — the question the DE-1.x alias gate
 /// asks, where the alias table names a target rather than a stored value.
-pub fn any_channel_reads(field_id: &str) -> bool {
+///
+/// **Not a sieve for stored rows, and private so it cannot become one again.**
+/// A stored row arrived on ONE channel, and this asks about all of them: on the
+/// pointer channel `role_name` accepts any `TED-` id, so through this predicate
+/// the entire legacy vocabulary reads as read — the r208 probe reported 0
+/// unmapped of 311 that way (2026-09-12). [`table_reads`] is the question a
+/// diagnostic wants.
+fn any_channel_reads(field_id: &str) -> bool {
     [
         Channel::Text,
         Channel::Code,
@@ -6417,6 +6459,65 @@ mod tests {
         // Nonsense is not read on any channel.
         assert!(!any_channel_reads("NOT-A-FIELD-ID"));
         assert!(!any_channel_reads(""));
+
+        // The sieve the diagnostics use asks the question of the row's OWN
+        // channel. This is the case the channel-blind form got wrong on prod:
+        // r208's four unmapped title elements, read by no text channel, yet
+        // "read" through `any_channel_reads` because every `TED-` id is a role
+        // on the pointer channel — 0 unmapped of 311 (2026-09-12).
+        for title in [
+            "TED-TITLE_QUALIFICATION_SYSTEM",
+            "TED-TITLE_RESULT_DESIGN_CONTEST",
+            "TED-TITLE_DESIGN_CONTACT_NOTICE",
+            "TED-TITLE_NOTICE_BUYER_PROFILE",
+            "TED-TI_TEXT",
+        ] {
+            assert!(any_channel_reads(title), "{title}: the blind form says read, which is the trap");
+            assert!(!table_reads("notice_texts", title), "{title}: no text destination");
+        }
+        assert!(table_reads("notice_texts", "TED-TI_DOC"));
+        assert!(table_reads("notice_texts", "TED-TITLE"));
+        assert!(table_reads("notice_texts", "BT-21-Lot"));
+        // A legacy address block IS read where it is stored — as a role.
+        assert!(table_reads("notice_ids", "TED-ADDRESS_CONTRACTING_BODY"));
+        // The same id on a channel that does not carry it is not read there.
+        assert!(!table_reads("notice_amounts", "TED-TITLE"));
+        // An unknown table reads nothing, so a misspelling shows as everything dropped.
+        assert!(table_channels("notice_typo").is_empty());
+        assert!(!table_reads("notice_typo", "BT-21-Lot"));
+    }
+
+    /// Every satellite table a "published and dropped" diagnostic walks has a
+    /// channel here, so a new satellite cannot be walked and then reported as
+    /// wholly dropped for want of a mapping. The list is the one both
+    /// diagnostics use (`data_quality::unmapped_fields_sql`, the store probe).
+    #[test]
+    fn every_walked_satellite_table_has_a_channel() {
+        for table in [
+            "notice_texts",
+            "notice_codes",
+            "notice_classifications",
+            "notice_amounts",
+            "notice_dates",
+            "notice_integers",
+            "notice_numbers",
+            "notice_ids",
+        ] {
+            assert!(!table_channels(table).is_empty(), "{table} feeds no channel");
+        }
+    }
+
+    /// The report's sieve must be the per-channel one. Source-read, because the
+    /// blind form is private now and a same-crate caller is the one path left;
+    /// the same guard shape as `every_report_field_is_read_by_the_renderer`.
+    #[test]
+    fn the_report_sieve_is_per_channel() {
+        let src = include_str!("data_quality.rs");
+        assert!(
+            !src.contains("any_channel_reads("),
+            "data_quality.rs must sieve with table_reads, not the channel-blind predicate"
+        );
+        assert!(src.contains("table_reads("), "data_quality.rs must use table_reads");
     }
 
     /// Every DE-1.x alias names an eForms field the projection actually reads,

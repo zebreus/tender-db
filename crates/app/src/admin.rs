@@ -727,9 +727,16 @@ struct UnmappedFieldsParams {
 /// each cost ~60 minutes and were reverted; the plan showed the join to a
 /// per-profile maximum inverts the driver onto `notices`. A probe takes ONE
 /// profile, so its bounds are constants and it plans as a range scan — see
-/// `store`'s plan guard. The `any_channel_reads` filter is applied here, in
-/// the crate that owns it, and both the unfiltered and filtered counts are
-/// returned so a reader can see what the filter removed.
+/// `store`'s plan guard. The `table_reads` sieve is applied here, in the crate
+/// that owns it, and both the unfiltered and filtered counts are returned so a
+/// reader can see what the sieve removed.
+///
+/// Per TABLE, i.e. per channel — not "does any channel read this id". The first
+/// run of this probe on r208 answered 311 published, 0 unmapped, with four
+/// unmapped title elements among the 311: the channel-blind predicate it used
+/// takes any `TED-` id as a role on the pointer channel, so the whole legacy
+/// vocabulary read as read. The projection's own test had already written that
+/// trap down (`has_destination_answers_per_channel_not_per_field`).
 async fn unmapped_fields(
     State(sup): State<Arc<Supervisor>>,
     headers: HeaderMap,
@@ -752,13 +759,14 @@ async fn unmapped_fields(
         return error(StatusCode::NOT_FOUND, "no notices carry that profile");
     };
     let published_ids = published.len();
+    let dropped = |(table, field, _): &(String, String, u64)| !ingest::project::table_reads(table, field);
     let unmapped: Vec<serde_json::Value> = published
         .iter()
-        .filter(|(field, _)| !ingest::project::any_channel_reads(field))
+        .filter(|r| dropped(r))
         .take(show)
-        .map(|(field, hits)| json!({ "field_id": field, "rows": hits }))
+        .map(|(table, field, hits)| json!({ "table": table, "field_id": field, "rows": hits }))
         .collect();
-    let unmapped_ids = published.iter().filter(|(f, _)| !ingest::project::any_channel_reads(f)).count();
+    let unmapped_ids = published.iter().filter(|r| dropped(r)).count();
     axum::Json(json!({
         "profile": params.profile,
         "newest_notice_id": max_id,
@@ -769,9 +777,9 @@ async fn unmapped_fields(
         "listing_cap": show,
         "unmapped": unmapped,
         "note": "rows are counts inside this profile's own head window, not corpus totals; \
-                 a field id here is published by the source and read by no channel, which is \
-                 a scope decision rather than a defect unless section 1 shows the profile \
-                 missing a MODELLED field (issue 368).",
+                 a field id here is published by the source in `table` and not read on that \
+                 table's channel, which is a scope decision rather than a defect unless \
+                 section 1 shows the profile missing a MODELLED field (issue 368).",
     }))
     .into_response()
 }

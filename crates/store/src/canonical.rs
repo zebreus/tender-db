@@ -12483,14 +12483,18 @@ impl Db {
     /// asserts exactly that shape.
     ///
     /// Returns the profile's newest notice id (so the caller can say which ids
-    /// were read) and `(field_id, hits)` per published field id, unfiltered — the
-    /// caller decides which of them any channel reads, because that predicate
-    /// lives in `ingest` and this crate must not grow a copy of it.
+    /// were read) and `(table, field_id, hits)` per published field id and
+    /// satellite table, unfiltered — the caller decides which of them the
+    /// projection reads, because that predicate lives in `ingest` and this crate
+    /// must not grow a copy of it. The TABLE travels because the question is
+    /// asked per channel: a legacy id is a role on the pointer channel and may
+    /// be nothing on the text one, and a sieve that asked "any channel" reported
+    /// 0 unmapped of 311 for r208 on this probe's first run (2026-09-12).
     pub async fn unmapped_fields_for_profile(
         &self,
         profile: &str,
         window_ids: i64,
-    ) -> turso::Result<(Option<i64>, Vec<(String, u64)>)> {
+    ) -> turso::Result<(Option<i64>, Vec<(String, String, u64)>)> {
         let reader = self.reader().await?;
         let mut rows = reader
             .query("SELECT MAX(id) FROM notices WHERE profile = ?", (t(profile),))
@@ -12506,7 +12510,7 @@ impl Db {
             return Ok((None, Vec::new()));
         };
         let floor = max_id - window_ids;
-        let mut hits: std::collections::BTreeMap<String, u64> = std::collections::BTreeMap::new();
+        let mut out: Vec<(String, String, u64)> = Vec::new();
         for table in [
             "notice_texts",
             "notice_codes",
@@ -12543,11 +12547,10 @@ impl Db {
                     Ok(Value::Text(f)) => f,
                     _ => continue,
                 };
-                *hits.entry(field).or_default() += int(&row, 1).max(0) as u64;
+                out.push((table.to_owned(), field, int(&row, 1).max(0) as u64));
             }
         }
-        let mut out: Vec<(String, u64)> = hits.into_iter().collect();
-        out.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        out.sort_by(|a, b| b.2.cmp(&a.2).then_with(|| a.0.cmp(&b.0)).then_with(|| a.1.cmp(&b.1)));
         Ok((Some(max_id), out))
     }
 

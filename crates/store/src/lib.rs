@@ -3924,7 +3924,7 @@ mod tests {
         let mut rows = conn
             .query(
                 "EXPLAIN QUERY PLAN \
-                 SELECT n.profile, x.field_id, COUNT(*) \
+                 SELECT n.profile, 'notice_texts' AS channel, x.field_id, COUNT(*) \
                    FROM notice_texts x JOIN notices n ON n.id = x.notice_id \
                   WHERE x.notice_id > (SELECT MAX(id) FROM notices) - 1000000 \
                   GROUP BY n.profile, x.field_id",

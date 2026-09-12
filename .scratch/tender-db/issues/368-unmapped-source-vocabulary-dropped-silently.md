@@ -513,3 +513,50 @@ satellite driven by a range, and `notices` NOT the outer loop — with the inver
 reason. The repo already had this rule (`store`'s batch-apply test: *"a laptop-scale clock cannot
 tell a seek from a scan"*); I broke it twice on this query, and the guard is there so the next person
 does not.
+
+## The probe shipped, ran in 7 s — and answered 0 unmapped of 311, which was the sieve, not r208 (2026-09-12)
+
+`5d12e60` deployed; `GET /admin/unmapped-fields?profile=ted-export-r208` over the default
+100,000-id window (ids 27,061,440–27,161,439) returned in **7 seconds**: the plan guard held, the
+cost question is closed. Its answer: **311 published field ids, 0 unmapped.** For the profile that
+holds 29,763 titleless tenders and four title elements nothing reads.
+
+### The cause: the sieve asked "any channel", and every `TED-` id is a role on the pointer channel
+
+`project::any_channel_reads` ORs `has_destination` across all nine channels, including
+`Channel::Id { is_ref: true }`, whose test is `role_name(field_id).is_some()` — and `role_name`
+is `field_id.strip_prefix("TED-").map(legacy_role)`, which accepts **any** `TED-` id. So through
+that predicate the entire legacy vocabulary reads as read: `TED-TITLE_QUALIFICATION_SYSTEM`,
+`TED-TI_TEXT`, all of it.
+
+The projection's own test had written this down in so many words (`project.rs`,
+`has_destination_answers_per_channel_not_per_field`): *"`role_name` accepts ANY `TED-` id, so on the
+pointer channel a legacy id reads, while the very same id has no text destination. A channel-blind
+predicate would call the whole titleless r208 era 'read'."* And then unit 4b's assemble comment
+argued the opposite — *"a channel-blind predicate would report the whole legacy era as read … so
+`any_channel_reads` is the right question"* — and picked exactly that predicate. Its fixture test
+checked the sieve against one invented `BT-` id, which the pointer channel does not accept, and
+passed.
+
+**So section 13 has been blind the same way since it shipped (2026-09-10).** Invisibly: the corpus
+head is eForms, and only a `TED-` id trips the catch-all. The probe, being the first thing to point
+the sieve at a legacy profile, showed it in its first run.
+
+### The fix (this commit)
+
+- `project::table_channels(table)` / `project::table_reads(table, field_id)`: the sieve is asked on
+  the channel the row's OWN table feeds (`notice_texts` → Text, `notice_ids` → both Id arms, …).
+  An unknown table has no channel and reads nothing, so a misspelling lists that table's every row
+  rather than hiding them.
+- `any_channel_reads` is now **private** to `project.rs`. Its one legitimate use is the DE-1.x
+  alias gate, where the target has no stored channel; a diagnostic cannot reach it any more, and a
+  source-reading test asserts `data_quality.rs` sieves with `table_reads`.
+- The report's SQL carries the table as a `channel` column per arm; `UnmappedFieldRow` gains
+  `table`; the text render shows it as a column, the JSON as `"table"`. The plan is unchanged — a
+  literal column on a constant-floor arm.
+- The store probe returns `(table, field_id, rows)`; the endpoint's entries gain `"table"`.
+- Tests: the per-channel projection test now asserts all four r208 title elements and `TED-TI_TEXT`
+  pass the blind form and FAIL the text-channel one, plus `TED-ADDRESS_CONTRACTING_BODY` reads on
+  `notice_ids`; the report sieve test carries legacy rows; every walked satellite has a channel.
+
+Next: deploy, re-run the probe, and record what r208 actually publishes and drops at its head.
