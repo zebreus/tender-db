@@ -12,7 +12,7 @@ exercises.
 Layout is `<profile>/<notice-type>-<publication-id>.xml`, one profile directory
 per mapping profile in docs/architecture.md ("Notice identity and profiles").
 
-Total: 92 fixture files, 2.4 MB (every file under this directory except this README).
+Total: 96 fixture files, 2.5 MB (every file under this directory except this README).
 
 ## Selection policy
 
@@ -172,7 +172,7 @@ because that is where it is actually found in the wild.
 - `f19-concession-award-criteria-281627-2012.xml` (12,346 B): **issue 194 residue** — F19 sub-contract concession (defence, R2.0.8.S02.E01, EN/BE) whose `AWARD_CRITERIA_DETAIL` carries the award-criteria sentence as BARE TEXT where every other form nests children there. Pins the TextGroup rule (both shapes consumed). One of exactly 2 such members in 30 years of corpus.
 - `f13-prize-winner-362996-2018.xml` (7,875 B): **issue 259** — F13 design-contest result (PT, from monthly `2018-08`) whose prize block nests `<ADDRESS_WINNER>` inside `<WINNER>`. Both are `Rule::Org`, so ONE company opens TWO Organization sections: the outer empty and referenced as the winner, the inner holding `OFFICIALNAME`. The only `WINNER`/`ADDRESS_WINNER` pair in the corpus — every other award fixture uses `CONTRACTOR` > `ADDRESS_CONTRACTOR`, where the wrapper is a transparent container and nothing nests, which is why the defect was invisible for as long as it was.
 
-## `r208/` — TED_EXPORT R2.0.8 (and R2.0.7), 5 files, 281 KB
+## `r208/` — TED_EXPORT R2.0.8 (and R2.0.7), 9 files, 339 KB
 
 Mostly from TED daily package **`daily-201400001`** (published 2014-01-01, 1139
 notices, uniformly `R2.0.8.S02.E01`), plus one R2.0.7 file — issue 10 scopes
@@ -185,6 +185,10 @@ difference between the eras.
 | `f02-000333-2014.xml` | 13 050 | `FORM="2"` — contract notice (F02-equivalent) | R2.0.8.S02.E01 | EN | UK | The R2.0.8 contract-notice shape, `DIRECTIVE VALUE="2004/18/EC"`. Second most common form in the package (322). Diff this against `r209/f02-000245-2019.xml` to see the era delta issue 10 must absorb. |
 | `oth-not-000030-2014.xml` | 41 204 | `OTH_NOT` | R2.0.8.S02.E01 | DA | PT | Prose corrigendum — issue 10's "OTH_NOT prose corrigenda as version events **without** typed diffs". Carries a `REF_NOTICE` edge. **This is the largest legacy fixture and that is inherent to the type**: OTH_NOT bodies are free prose and all 150 instances in this package run 41–55 KB; this is the smallest one. All OTH_NOT in this package are DA. |
 | `f02-r207-001441-2011.xml` | 11 982 | `FORM="2"` — contract notice | **R2.0.7.S03.E01** | EN | UK | **The R2.0.7 case.** From `daily-201100001` (`20110104_001`, published 2011-01-04), which is uniformly `R2.0.7.S03.E01` — 533 `FORM="2"` and 853 `FORM="3"`. Issue 10 notes the R2.0.7 XSD hunt was inconclusive and the delta must be derived from real files: this is that file, and the same-form/same-language/same-country pairing with `f02-000333-2014.xml` makes the R2.0.7→R2.0.8 delta a direct diff. |
+| `f07-185353-2013.xml` | 24 562 | `FORM="7"` — qualification system | R2.0.8.S02.E01 | ES | ES | **Issue 368 unit 2.** From monthly `2013-06` (`20130606_108`). Names its subject in `TITLE_QUALIFICATION_SYSTEM`, not `TITLE_CONTRACT` — one of the four form-specific title elements that left 29,763 r208 tenders titleless. Read before mapping: "Sistema de Clasificación Proveedores Endesa Local" is the procurement. |
+| `f12-185289-2013.xml` | 13 183 | `FORM="12"` — design contest notice | R2.0.8.S02.E01 | DE | DE | **Issue 368 unit 2.** Same package. `TITLE_DESIGN_CONTACT_NOTICE` (TED's own spelling) names the contest, which is the procurement: "Neubau Ev.-luth. Paulus Kinder- und Familienzentrum". |
+| `f13-187010-2013.xml` | 11 604 | `FORM="13"` — result of a design contest | R2.0.8.S02.E01 | FR | FR | **Issue 368 unit 2.** From `20130607_109`. `TITLE_RESULT_DESIGN_CONTEST`; read to settle whether a result names the contest or something else — it names the procurement. |
+| `f08-198630-2013.xml` | 9 004 | `FORM="8"` — notice on a buyer profile | R2.0.8.S02.E01 | EN | UK | **Issue 368 unit 2.** From `20130618_116`. `TITLE_NOTICE_BUYER_PROFILE`: "GLA Helicopter Services 2015" — the procurement, not the profile. |
 
 ---
 

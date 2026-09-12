@@ -5155,10 +5155,11 @@ mod tests {
             row("eforms:eforms-sdk-1.13", "notice_texts", "BT-21-Lot", 9_000),
             // No destination anywhere.
             row("eforms:eforms-sdk-1.13", "notice_texts", "BT-99999-Invented-Field", 42),
-            // r208's unmapped title element: a role on the pointer channel by
-            // `role_name`'s catch-all, and read by NO text channel. The blind
-            // sieve dropped this row; it is the whole titleless-r208 finding.
-            row("ted-export-r208", "notice_texts", "TED-TITLE_QUALIFICATION_SYSTEM", 65),
+            // A legacy prose element with no text destination: a role on the
+            // pointer channel by `role_name`'s catch-all, and read by NO text
+            // channel. The blind sieve dropped rows of this shape, which is how
+            // r208's four title elements went unlisted (mapped since unit 2).
+            row("ted-export-r208", "notice_texts", "TED-DESCRIPTION", 65),
             // The OJ heading's CPV label, deliberately unmapped — same trap.
             row("ted-export-r208", "notice_texts", "TED-TI_TEXT", 6_900),
             // A legacy address block IS read where it is stored: as a role.
@@ -5182,7 +5183,7 @@ mod tests {
             ids,
             vec![
                 ("notice_texts", "BT-99999-Invented-Field"),
-                ("notice_texts", "TED-TITLE_QUALIFICATION_SYSTEM"),
+                ("notice_texts", "TED-DESCRIPTION"),
                 ("notice_texts", "TED-TI_TEXT"),
             ],
             "read rows must not be listed and unread legacy rows must: {listed:?}"

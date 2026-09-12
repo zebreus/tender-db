@@ -99,10 +99,34 @@ const TEXTS: &[(&str, &str)] = &[
     ("BT-21", "title"),
     ("BT-24", "description"),
     // legacy R2.0.7–R2.0.9 (research §5.1 measured 100% title fill on its
-    // window; the corpus holds 29,455 titleless r208 tenders — issue 368)
+    // window; the corpus held 29,763 titleless r208 tenders — issue 368)
     ("TED-TITLE", "title"),
     ("TED-TITLE_CONTRACT", "title"),
     ("TED-CONTRACT_TITLE", "title"),
+    // Issue 368 unit 2: the legacy forms that name their subject in a
+    // form-specific element rather than TITLE_CONTRACT — F07 qualification
+    // system, F12 design contest, F13 result of a design contest, F08 notice on
+    // a buyer profile. Half of the titleless r208 cohort carried one of these
+    // and nothing read it. Each was read before being mapped (2026-09-12,
+    // fixtures f07-185353-2013 / f12-185289-2013 / f13-187010-2013 /
+    // f08-198630-2013): every one sits in the root PROCEDURE section and names
+    // the procurement itself — "Sistema de Clasificación Proveedores Endesa
+    // Local", "GLA Helicopter Services 2015" — and in a bounded band of 91
+    // carriers none also published a TITLE_CONTRACT, so this adds no second,
+    // competing title. (`TED-TI_TEXT` beside them stays out: it is the OJ
+    // heading's CPV label in 23 languages, see the 2026-09-08 note on 368.)
+    ("TED-TITLE_QUALIFICATION_SYSTEM", "title"),
+    ("TED-TITLE_DESIGN_CONTACT_NOTICE", "title"),
+    ("TED-TITLE_RESULT_DESIGN_CONTEST", "title"),
+    ("TED-TITLE_NOTICE_BUYER_PROFILE", "title"),
+    // Issue 368 unit 2, the lot half: the legacy Annex B lot's own title and
+    // description. r208's lots were 100 %-null on title (lots 6,000,001–
+    // 6,000,100: 100 of 100) because nothing read these, while the notice
+    // layer held them all along; scope comes from the enclosing Lot section,
+    // as for every text. The r208 probe put them at 1,816 and 3,244 rows in
+    // the era's own head window (2026-09-12).
+    ("TED-LOT_TITLE", "title"),
+    ("TED-LOT_DESCRIPTION", "description"),
     ("TED-SHORT_DESCR", "description"),
     ("TED-SHORT_CONTRACT_DESCRIPTION", "description"),
     ("TED-SHORT_DESCRIPTION_CONTRACT", "description"),
@@ -538,6 +562,12 @@ const SDK01_RESULT_CODE_FIELD: &str = "SDK01-TenderResult-TenderResultCode";
 /// winner, no value. `AwardTime` is published beside it and is not merged: the
 /// day is the fact anyone reads, and a half-carried instant is worse than a date.
 const SDK01_AWARD_DATE_FIELD: &str = "SDK01-TenderResult-AwardDate";
+/// The legacy eras' award date, read on the award block by `read_legacy_results`
+/// (issue 255). Named so the destination predicate and the reader agree: the
+/// r208 probe listed 1,688 rows of it as unread on the date channel (2026-09-12)
+/// while the reader consumed every one — a literal in the reader that the
+/// predicate could not see.
+const LEGACY_AWARD_DATE_FIELD: &str = "TED-CONTRACT_AWARD_DATE";
 /// sdk-0.1's procedure folder id (its BT-04 analogue). Only a genuine uuid is a
 /// strong-enough cross-reference to key a Tender on (issue 34); the numeric
 /// channel's non-uuid folder ids are notice-local and stay islands.
@@ -4043,7 +4073,7 @@ fn read_legacy_results(sections: &HashMap<&str, &store::Section>, parsed: &Parse
             // for eForms' contract-scoped BT-1451 to land on. The r209 defence form
             // splits it into DAY/MONTH/YEAR elements; the parse layer has already made
             // that one instant.
-            ("TED-CONTRACT_AWARD_DATE", NoticeValue::Date { utc_seconds, offset_minutes, has_time }) => {
+            (LEGACY_AWARD_DATE_FIELD, NoticeValue::Date { utc_seconds, offset_minutes, has_time }) => {
                 r.decided = Some((*utc_seconds, *offset_minutes, *has_time));
             }
             ("TED-NO_AWARDED_CONTRACT", _) => r.decision = Some("clos-nw".to_owned()),
@@ -4505,6 +4535,7 @@ pub fn has_destination(field_id: &str, channel: Channel) -> bool {
                 || DISPATCH_DATE_FIELDS.contains(&field_id)
                 || RESULT_DATE_STEMS.contains(&stem)
                 || field_id == SDK01_AWARD_DATE_FIELD
+                || field_id == LEGACY_AWARD_DATE_FIELD
         }
         Channel::Code => {
             field_id == SUBTYPE_FIELD
@@ -6462,21 +6493,27 @@ mod tests {
 
         // The sieve the diagnostics use asks the question of the row's OWN
         // channel. This is the case the channel-blind form got wrong on prod:
-        // r208's four unmapped title elements, read by no text channel, yet
-        // "read" through `any_channel_reads` because every `TED-` id is a role
-        // on the pointer channel — 0 unmapped of 311 (2026-09-12).
+        // a legacy text element read by no text channel, yet "read" through
+        // `any_channel_reads` because every `TED-` id is a role on the pointer
+        // channel — 0 unmapped of 311 for r208 (2026-09-12). `TED-TI_TEXT` is
+        // the standing example; the four form-specific title elements that
+        // finding exposed are mapped now (unit 2) and read on the text channel.
+        assert!(any_channel_reads("TED-TI_TEXT"), "the blind form says read, which is the trap");
+        assert!(!table_reads("notice_texts", "TED-TI_TEXT"), "no text destination");
         for title in [
             "TED-TITLE_QUALIFICATION_SYSTEM",
             "TED-TITLE_RESULT_DESIGN_CONTEST",
             "TED-TITLE_DESIGN_CONTACT_NOTICE",
             "TED-TITLE_NOTICE_BUYER_PROFILE",
-            "TED-TI_TEXT",
         ] {
-            assert!(any_channel_reads(title), "{title}: the blind form says read, which is the trap");
-            assert!(!table_reads("notice_texts", title), "{title}: no text destination");
+            assert!(table_reads("notice_texts", title), "{title}: mapped to title in unit 2");
         }
         assert!(table_reads("notice_texts", "TED-TI_DOC"));
         assert!(table_reads("notice_texts", "TED-TITLE"));
+        assert!(table_reads("notice_texts", "TED-LOT_TITLE"));
+        // The legacy award date is consumed by the results reader; the predicate
+        // must say so or the probe lists 1,688 rows of it as dropped (it did).
+        assert!(table_reads("notice_dates", LEGACY_AWARD_DATE_FIELD));
         assert!(table_reads("notice_texts", "BT-21-Lot"));
         // A legacy address block IS read where it is stored — as a role.
         assert!(table_reads("notice_ids", "TED-ADDRESS_CONTRACTING_BODY"));

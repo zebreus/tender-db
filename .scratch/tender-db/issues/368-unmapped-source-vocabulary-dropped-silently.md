@@ -560,3 +560,68 @@ the sieve at a legacy profile, showed it in its first run.
   `notice_ids`; the report sieve test carries legacy rows; every walked satellite has a channel.
 
 Next: deploy, re-run the probe, and record what r208 actually publishes and drops at its head.
+
+## The probe with the per-channel sieve, and what it showed (2026-09-12, `aa9c080` deployed)
+
+Same window (ids 27,061,440–27,161,439, the era's own head), same 7 seconds. Now: **325 published
+field ids, 281 unmapped.** The listing is honest and reads as the scope decision it should — the top
+of it is the OJ heading and table-of-contents machinery (`TED-CONTENTS` 97,473, `TED-STI_DOC`
+66,217, `TI_CY`/`TI_TEXT`/`TI_TOWN` 38,137 each), then postal-address parts and prose fields. What
+matters for this issue, in this window:
+
+| field id | table | rows | reading |
+| --- | --- | --- | --- |
+| `TED-LOT_DESCRIPTION` | texts | 3,244 | **the lot half of this issue**, visible for the first time |
+| `TED-LOT_TITLE` | texts | 1,816 | same |
+| `TED-CONTRACT_AWARD_DATE` | dates | 1,688 | **a false positive of the diagnostic** — see below |
+| `TED-VALUE` | amounts | 2,783 | the coded-data section's `VALUES_LIST` copy; the form's `VALUE_COST`/`VAL_TOTAL` are what the results reader takes — unread by design, worth a scope note, not a mapping |
+| `TED-DATE_OF_CONTRACT_AWARD` | dates | 79 | a second award-date spelling nothing reads — **open**: an award date is a modelled concept, so these 79 notices' awards carry no decision date |
+| `TED-TITLE_DESIGN_CONTACT_NOTICE` | texts | 16 | rank 198 of 281 |
+
+The other three title elements sit below rank 200 (the endpoint's `show` cap). That is the window,
+not the corpus: the era's head is 2016–2019 F02/F03 traffic and the four form-specific title
+elements live with the 2010–2016 cohort at ids 3.5–6.5 M. The head window was never going to size
+them; `refold-fields` enumerates their carriers corpus-wide, and that count is recorded below.
+
+### The award date: the predicate did not know what the reader reads
+
+`read_legacy_results` consumes `TED-CONTRACT_AWARD_DATE` on the award block (issue 255) — and
+`has_destination(…, Channel::Date)` knew only the eForms stems and the sdk-0.1 field, so the probe
+listed 1,688 rows of a consumed field as dropped. A literal in the reader that the predicate could
+not see. Fixed in this unit by naming it (`LEGACY_AWARD_DATE_FIELD`) and using the name in both
+places, with the per-channel test asserting `table_reads("notice_dates", …)`. The general guard —
+"every literal the legacy readers match on has a destination on its channel" — is worth its own
+source-reading test and is filed as a follow-up below, because the same shape can recur on any
+channel.
+
+### Unit 2, read then mapped
+
+One real notice of each, pulled from `/data/archive/ted/monthly/2013-06.tar` and committed
+verbatim as fixtures (`f07-185353-2013`, `f12-185289-2013`, `f13-187010-2013`,
+`f08-198630-2013`):
+
+| element | form | title read | verdict |
+| --- | --- | --- | --- |
+| `TITLE_QUALIFICATION_SYSTEM` | F07 | "Sistema de Clasificación Proveedores Endesa Local" | the procurement |
+| `TITLE_DESIGN_CONTACT_NOTICE` | F12 | "Neubau Ev.-luth. Paulus Kinder- und Familienzentrum" | the procurement (the contest IS it) |
+| `TITLE_RESULT_DESIGN_CONTEST` | F13 | "Construction d'un ensemble de bureaux … concours d'architecture et d'ingénierie sur esquisse." | the procurement, not something else |
+| `TITLE_NOTICE_BUYER_PROFILE` | F08 | "GLA Helicopter Services 2015" | the procurement, not the profile |
+
+All four sit in the root `PROCEDURE` section (Tender scope). In a bounded band of 91 carriers
+(ids 17,449,000–17,459,000: 40 / 22 / 19 / 10) **none also published `TITLE`/`TITLE_CONTRACT`/
+`CONTRACT_TITLE`/`TXT-TI`**, so a plain `TEXTS` mapping adds no second, competing title — the
+hazard the OJ-heading fallback was built around does not arise here. Mapped, all four to `title`,
+together with the lot half (`TED-LOT_TITLE` → `title`, `TED-LOT_DESCRIPTION` → `description`,
+scope from the enclosing Lot section). Tests: the four fixtures project to exactly four
+Tender-level titles with the exact texts and no heading fallback beside them; the R2.0.7 fixture's
+three Annex B lots each get their title and the Tender keeps exactly its own.
+
+Next: deploy; `refold-fields` over the six ids (carrier count is the corpus-wide size); `project`;
+re-count `current_title IS NULL` (was 30,285 / 29,763 on r208) and lots 6,000,001–6,000,100.
+
+### Follow-ups filed from this unit
+
+- `TED-DATE_OF_CONTRACT_AWARD` (79 rows in the head window; corpus size unknown): a second legacy
+  spelling of the award date that the results reader does not match. Same shape as this issue.
+- A source-reading guard that every `("TED-…", NoticeValue::…)` literal the legacy readers match
+  on has a destination on that channel, so the predicate cannot drift from the readers again.

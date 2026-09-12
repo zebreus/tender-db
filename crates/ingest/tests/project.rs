@@ -3034,6 +3034,111 @@ async fn the_oj_heading_never_displaces_a_published_title() {
     let _ = std::fs::remove_file(&path);
 }
 
+/// Issue 368 unit 2: the legacy forms that name their subject somewhere other than
+/// `TITLE_CONTRACT` — F07 (qualification system), F12 (design contest), F13 (result of a
+/// design contest), F08 (notice on a buyer profile) — get a title from that element.
+///
+/// These four elements were parsed and dropped for the whole r208 era: 29,763 titleless
+/// tenders, about half of which carried one of them. All four fixtures are real notices
+/// from June 2013, read before being mapped: each names the procurement itself, in the
+/// root PROCEDURE section, and none publishes a TITLE_CONTRACT beside it — so exactly
+/// one Tender-level title per notice, and never the OJ heading fallback in its place.
+#[tokio::test]
+async fn the_form_specific_legacy_titles_are_titles() {
+    let (db, fetch_id, path) = scratch("form-titles").await;
+    for (file, member) in [
+        ("f07-185353-2013.xml", "20130606_108/185353_2013.xml"),
+        ("f12-185289-2013.xml", "20130606_108/185289_2013.xml"),
+        ("f13-187010-2013.xml", "20130607_109/187010_2013.xml"),
+        ("f08-198630-2013.xml", "20130618_116/198630_2013.xml"),
+    ] {
+        ingest_as(&db, fetch_id, "ted", &format!("r208/{file}"), member).await;
+    }
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!(report.notices, 4);
+
+    // Exactly one Tender-level title per notice, from the form's own element — and
+    // never the OJ heading fallback in its place.
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_texts WHERE field = 'title' AND lot_id IS NULL")
+            .await,
+        4,
+        "one title per notice"
+    );
+    for expected in [
+        "Sistema de Clasificación Proveedores Endesa Local",
+        "Neubau Ev.-luth. Paulus Kinder- und Familienzentrum",
+        "Construction d'un ensemble de bureaux pour la Direction Générale des Interventions Sanitaires et Sociales à VANNES - concours d'architecture et d'ingénierie sur esquisse.",
+        "GLA Helicopter Services 2015",
+    ] {
+        assert_eq!(
+            scalar(
+                &db,
+                &format!(
+                    "SELECT COUNT(*) FROM tender_version_texts                       WHERE field = 'title' AND lot_id IS NULL AND value = '{}'",
+                    expected.replace("'", "''")
+                ),
+            )
+            .await,
+            1,
+            "missing title: {expected}"
+        );
+    }
+    // The OJ heading's CPV label (`TI_TEXT`, 23 languages) sits beside every one
+    // of them in the notice layer and stays unmapped: the count of 4 above is
+    // what says none of it became a title.
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(DISTINCT notice_id) FROM notice_texts WHERE field_id = 'TED-TI_TEXT'").await,
+        4
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 368 unit 2, the lot half: the legacy Annex B lot's `LOT_TITLE` and
+/// `LOT_DESCRIPTION` reach the Lot. r208's lots were 100 %-null on title (lots
+/// 6,000,001–6,000,100: 100 of 100) because nothing read the element, while the notice
+/// layer held every one of them. The fixture is the R2.0.7 contract notice with
+/// 3 Annex B lots; the Tender's own title is untouched beside them.
+#[tokio::test]
+async fn the_legacy_annex_b_lot_title_reaches_the_lot() {
+    let (db, fetch_id, path) = scratch("lot-titles").await;
+    ingest(&db, fetch_id, "r208/f02-r207-001441-2011.xml").await;
+    project::project(&db, false).await.expect("project");
+
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_texts WHERE field = 'title' AND lot_id IS NOT NULL")
+            .await,
+        3,
+        "one title per Annex B lot"
+    );
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM tender_version_texts \
+              WHERE field = 'title' AND lot_id IS NOT NULL AND value = 'Electrical goods and supplies'",
+        )
+        .await,
+        1
+    );
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM tender_version_texts WHERE field = 'description' AND lot_id IS NOT NULL",
+        )
+        .await,
+        2,
+        "one description per lot that publishes one"
+    );
+    // The Tender keeps exactly its own TITLE_CONTRACT.
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_texts WHERE field = 'title' AND lot_id IS NULL").await,
+        1
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
 /// Issue 237: a LotsGroup's membership reaches the canonical layer, so a bid that names
 /// the group can be attributed to the lots it actually covers.
 ///
