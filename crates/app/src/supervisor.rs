@@ -8249,6 +8249,7 @@ impl Supervisor {
                 // Count BEFORE writing: a mistyped profile string matching a far larger
                 // set would otherwise re-queue that set silently, and the trailing
                 // projection would fold it. Abort while nothing has been written yet.
+                self.set_phase("counting", None, None, format!("projected notices under {:?}", profiles));
                 let found = self
                     .db
                     .projected_notice_count_for_profiles(&refs)
@@ -8264,6 +8265,7 @@ impl Supervisor {
                         ));
                     }
                 }
+                self.set_phase("re-queueing", Some(0), Some(found), "notices un-marked".into());
                 let requeued =
                     self.db.unmark_projected_for_profiles(&refs).await.map_err(|e| e.to_string())?;
                 // issue 179: the requeue alone leaves each Tender's chain identical,
@@ -8272,6 +8274,12 @@ impl Supervisor {
                 // epoch-stale so exactly THEY rewrite; the global PROJECTION_EPOCH
                 // stays put, so nobody else does. Unconditional (not gated on
                 // requeued > 0) so a job re-run after a crash heals both halves.
+                self.set_phase(
+                    "stamping",
+                    Some(requeued as u64),
+                    Some(found),
+                    "notices re-queued; their tenders now stamped epoch-stale".into(),
+                );
                 let stamped =
                     self.db.stamp_stale_for_profiles(&refs).await.map_err(|e| e.to_string())?;
                 Ok(format!(
@@ -8611,6 +8619,23 @@ impl Supervisor {
                 // read-only), then gate on `expect` exactly like `refold`: a
                 // mistyped field id matching a far larger carrier set must abort
                 // while nothing has been written.
+                //
+                // Phased, because the sweep is a full walk of notice_texts and
+                // notice_amounts (46 min for 31.7 M notices on 2026-09-12) and the
+                // job view showed `phase: null` for all of it — an operator could not
+                // tell the read-only sweep from the re-queue that follows, and the
+                // cancel answer (issue 382) had nothing to name as in flight.
+                self.set_phase(
+                    "sweeping",
+                    None,
+                    None,
+                    format!(
+                        "carriers of {} field id(s): a full walk of notice_amounts + \
+                         notice_texts, read-only (the [store] field sweep lines in the \
+                         journal count it)",
+                        refs.len()
+                    ),
+                );
                 let carriers =
                     self.db.notice_ids_carrying_fields(&refs).await.map_err(|e| e.to_string())?;
                 let found = carriers.len() as u64;
@@ -8623,10 +8648,17 @@ impl Supervisor {
                         ));
                     }
                 }
+                self.set_phase("re-queueing", Some(0), Some(found), "carriers un-marked".into());
                 let requeued =
                     self.db.unmark_projected_by_ids(&carriers).await.map_err(|e| e.to_string())?;
                 // Same issue-179 pair as `refold`: requeue + scoped stale-stamp,
                 // both idempotent so a crashed job heals on re-run.
+                self.set_phase(
+                    "stamping",
+                    Some(requeued as u64),
+                    Some(found),
+                    "carriers re-queued; their tenders now stamped epoch-stale".into(),
+                );
                 let stamped =
                     self.db.stamp_stale_for_notices(&carriers).await.map_err(|e| e.to_string())?;
                 Ok(format!(
