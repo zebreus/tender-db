@@ -771,10 +771,11 @@ The plan, from what this issue already measured plus one coupling read off `supe
 | 2 | 1333 | 20 | 36 → 56 | 7,713 | 1,244,654 | 134 s |
 | 3 | 1334 | 20 | 56 → 76 | 8,573 | 1,086,637 | 161 s |
 | 4 | 1335 | 20 | 76 → 96 | 36,666 | 1,016,902 | 435 s |
-| 5 | 1336 | 20 | 96 → ? | running | | |
+| 5 | 1336 | 20 | 96 → 116 | 203,089 | 890,400 | 1,812 s |
+| 6 | 1337 | 20 | 116 → ? | running | | |
 
 Every chunk stamps the same **1,455,097** r208 tenders epoch-stale — the profile-wide stamp the
 runbook warns about, which is why the fold is taken once at the end rather than per chunk. The front
-is sparse and the density climbs with depth (2.5k → 36.7k notices per chunk); 90 packages remain
-after chunk 5, and the r209-era density (~44k notices per package) says the remaining chunks are the
-expensive ones. Chunk size stays 20; the weekly window (03:10 CEST) is left clear.
+is sparse and the density climbs with depth (2.5k → 36.7k → 203k notices per chunk); chunk 5 reached
+the r209-like density (~10k notices per package, 30 min per chunk), and 70 packages remain after it —
+about three more chunks of the expensive kind. Chunk size stays 20; the weekly window (03:10 CEST) is left clear.
