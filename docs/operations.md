@@ -306,6 +306,16 @@ curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' 
 curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
   -d '{"kind":"refold-notices","notices":[123,124,125]}' $BASE/admin/jobs
 
+# Re-fold every notice carrying one of these FIELD ids (issue 88's twin of `refold`; the
+# list rides the `profiles` key). The carrier sweep walks notice_texts + notice_amounts in
+# full — 46 min on 2026-09-12, ~31.7 M notices — and only then writes, gated on `expect`
+# (±25 %). SIZE FIRST: `"expect": 1` makes the job enumerate, report the count in its abort
+# message and write nothing, which is the dry run this job otherwise lacks. Then the real
+# run with that count; a `project` is queued behind it automatically.
+curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
+  -d '{"kind":"refold-fields","profiles":["TED-LOT_TITLE","TED-LOT_DESCRIPTION"],"expect":1}' $BASE/admin/jobs
+#   → error "refold-fields aborted: 345203 notices carry [...], expected ~1 (nothing was written)"
+
 # Cancel a still-queued job (the running one cannot be cancelled).
 curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/42
 
