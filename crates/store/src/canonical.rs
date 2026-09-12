@@ -1049,6 +1049,20 @@ const WRITE_BATCH: usize = 512;
 /// checkpoint cost is noise against the writes it follows.
 const CHECKPOINT_EVERY_BATCHES: usize = 32;
 
+/// The eight notice-layer value tables, each keyed `(notice_id, section_id,
+/// field_id, ordinal)` — the satellites a "which notices carry field X" sweep
+/// walks by default, and the names a request may narrow it to.
+pub const NOTICE_VALUE_TABLES: &[&str] = &[
+    "notice_texts",
+    "notice_codes",
+    "notice_classifications",
+    "notice_amounts",
+    "notice_dates",
+    "notice_integers",
+    "notice_numbers",
+    "notice_ids",
+];
+
 /// Legacy `plan_ojs_node` rows written per transaction when materialising the
 /// union-find result (path-B). Chunked so the sorted bulk load keeps the WAL
 /// bounded, like the plan bulk load (issue 60).
@@ -5503,16 +5517,32 @@ impl Db {
     /// The parsed notices whose value layer carries any of `field_ids` — the
     /// FIELD-scoped cohort a mapping fix affects (issue 88's follow-up), where the
     /// profile-scoped refold would over-fold whole profiles for a handful of
-    /// carriers. Sweeps `notice_amounts` and `notice_texts` (the two channels the
-    /// issue-88 mappings use — extend the table list when a mapped id needs
-    /// another channel) in notice-id windows that ride each table's
+    /// carriers. Sweeps every value table in [`NOTICE_VALUE_TABLES`] unless
+    /// `tables` narrows it, in notice-id windows that ride each table's
     /// `(notice_id, …)` primary key, so each statement is bounded and progress is
-    /// visible. `field_id` itself is unindexed — this is a full pass over both
-    /// tables by design; run it as a queued job in a quiet window, never inline.
-    pub async fn notice_ids_carrying_fields(&self, field_ids: &[&str]) -> turso::Result<Vec<i64>> {
+    /// visible. `field_id` itself is unindexed — this is a full pass over each
+    /// table by design; run it as a queued job in a quiet window, never inline.
+    ///
+    /// It used to sweep `notice_amounts` and `notice_texts` only, with a comment
+    /// saying to extend the list when a mapped id needed another channel. On
+    /// 2026-09-12 the sizer for `TED-DATE_OF_CONTRACT_AWARD` (issue 383) answered
+    /// **0 carriers** for a field the probe listed at 79 rows in one window and a
+    /// direct read had just shown — the id lives in `notice_dates`, which the
+    /// sweep never opened, and the answer looked like a mistyped id. A cohort
+    /// finder that cannot find a channel's rows fails silent in the worst way, so
+    /// the default is now every table and the narrowing is explicit.
+    pub async fn notice_ids_carrying_fields(
+        &self,
+        field_ids: &[&str],
+        tables: Option<&[&str]>,
+    ) -> turso::Result<Vec<i64>> {
         if field_ids.is_empty() {
             return Ok(Vec::new());
         }
+        let tables: Vec<&str> = match tables {
+            Some(t) => t.to_vec(),
+            None => NOTICE_VALUE_TABLES.to_vec(),
+        };
         let conn = self.conn().await;
         let max_id = {
             let mut rows = conn.query("SELECT MAX(id) FROM notices", ()).await?;
@@ -5524,7 +5554,7 @@ impl Db {
         const WINDOW: i64 = 500_000;
         let list = placeholders(field_ids.len());
         let mut ids: Vec<i64> = Vec::new();
-        for table in ["notice_amounts", "notice_texts"] {
+        for table in tables {
             let sql = format!(
                 "SELECT DISTINCT notice_id FROM {table}
                   WHERE notice_id >= ? AND notice_id < ? AND field_id IN ({list})"

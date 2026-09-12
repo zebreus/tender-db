@@ -57,3 +57,18 @@ asserts every lot result carries 2009-06-01 as its decision instant.
 **Unit 3, pending the box.** Size the carriers with `refold-fields` + `expect: 1` (one full sweep,
 ~46 min), then the real run, then the probe should no longer list the id. Not started: issue 368's
 345k-carrier refold and fold hold the box.
+
+## Unit 3, first attempt: the sizer answered 0, and the sizer was wrong (2026-09-12)
+
+`refold-fields` over `TED-DATE_OF_CONTRACT_AWARD` with `expect: 1` (job 1326, 2,318 s): **"0 notices
+carry [...]"**. For a field the probe lists at 79 rows in one 100k-id window and a direct read had
+just shown on notice 27,159,613. The sweep (`notice_ids_carrying_fields`) opened `notice_amounts`
+and `notice_texts` only — its doc comment said to extend the list when a mapped id needed another
+channel, and nobody had — so a date field could never be found, and the answer was indistinguishable
+from a mistyped id. That is the worst shape for a cohort finder: a silent, confident zero.
+
+Fixed: the sweep walks every value table by default (`NOTICE_VALUE_TABLES`, the store's constant),
+the request may narrow it with `"tables": [...]` when the channel is known, and a name outside the
+eight is refused at enqueue rather than after an hour. Store test seeds a date-channel carrier and
+finds it; a narrowed sweep pointed at the wrong table honestly misses it; the supervisor refuses
+`notice_typo` naming the list. Deploying, then the sizer again with `"tables": ["notice_dates"]`.

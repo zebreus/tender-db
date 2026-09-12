@@ -546,7 +546,7 @@ enum Spec {
     /// tables (bounded windows), then requeues the carriers and stamps their
     /// tenders epoch-stale (issue 179's scoped-staleness pair). `expect` guards
     /// like `Refold`'s: abort before any write if the cohort size surprises.
-    RefoldFields { fields: Vec<String>, expect: Option<u64> },
+    RefoldFields { fields: Vec<String>, expect: Option<u64>, tables: Option<Vec<String>> },
     /// Issue 84: mark the 2008 per-language duplicate siblings as
     /// skipped-by-policy, so the outstanding count stops reporting ~593k rows of
     /// work that no reprocess can ever do. `dry_run` counts and writes nothing.
@@ -939,6 +939,12 @@ pub struct JobRequest {
     /// off by more than a quarter — the shape of a mistyped profile string.
     pub profiles: Option<Vec<String>>,
     pub expect: Option<u64>,
+    /// `refold-fields` only: narrow the carrier sweep to these value tables
+    /// (issue 383). Omitted, every table in `store::canonical::NOTICE_VALUE_TABLES`
+    /// is walked — the sweep used to open two of the eight and answered 0 for a
+    /// date field. A name outside that list is refused at enqueue, not after an
+    /// hour of sweeping.
+    pub tables: Option<Vec<String>>,
     /// `refold-notices` only: the explicit notice ids to re-fold (issue 58 v2's
     /// step-3 exerciser). Capped — see [`REFOLD_NOTICES_CAP`].
     pub notices: Option<Vec<i64>>,
@@ -1825,10 +1831,27 @@ impl Supervisor {
                 if fields.is_empty() {
                     return Err("refold-fields needs at least one field id (pass via profiles)".into());
                 }
-                let params = format!("refold-fields {}", fields.join(","));
+                if let Some(tables) = &req.tables {
+                    for t in tables {
+                        if !store::canonical::NOTICE_VALUE_TABLES.contains(&t.as_str()) {
+                            return Err(format!(
+                                "refold-fields: {t:?} is not a notice value table; the sweep can walk {}",
+                                store::canonical::NOTICE_VALUE_TABLES.join(", ")
+                            ));
+                        }
+                    }
+                }
+                let params = match &req.tables {
+                    Some(t) => format!("refold-fields {} in {}", fields.join(","), t.join(",")),
+                    None => format!("refold-fields {}", fields.join(",")),
+                };
                 Ok(vec![
-                    self.push("refold-fields", params, Spec::RefoldFields { fields, expect: req.expect })
-                        .await,
+                    self.push(
+                        "refold-fields",
+                        params,
+                        Spec::RefoldFields { fields, expect: req.expect, tables: req.tables.clone() },
+                    )
+                    .await,
                     self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false })
                         .await,
                 ])
@@ -8613,8 +8636,10 @@ impl Supervisor {
                     surplus,
                 ))
             }).await,
-            Spec::RefoldFields { fields, expect } => {
+            Spec::RefoldFields { fields, expect, tables } => {
                 let refs: Vec<&str> = fields.iter().map(String::as_str).collect();
+                let table_refs: Option<Vec<&str>> =
+                    tables.as_ref().map(|t| t.iter().map(String::as_str).collect());
                 // Enumerate BEFORE writing (the sweep is the expensive step and is
                 // read-only), then gate on `expect` exactly like `refold`: a
                 // mistyped field id matching a far larger carrier set must abort
@@ -8630,14 +8655,20 @@ impl Supervisor {
                     None,
                     None,
                     format!(
-                        "carriers of {} field id(s): a full walk of notice_amounts + \
-                         notice_texts, read-only (the [store] field sweep lines in the \
-                         journal count it)",
-                        refs.len()
+                        "carriers of {} field id(s): a full walk of {}, read-only (the [store] \
+                         field sweep lines in the journal count it)",
+                        refs.len(),
+                        match &table_refs {
+                            Some(t) => t.join(" + "),
+                            None => "every notice value table".to_owned(),
+                        }
                     ),
                 );
-                let carriers =
-                    self.db.notice_ids_carrying_fields(&refs).await.map_err(|e| e.to_string())?;
+                let carriers = self
+                    .db
+                    .notice_ids_carrying_fields(&refs, table_refs.as_deref())
+                    .await
+                    .map_err(|e| e.to_string())?;
                 let found = carriers.len() as u64;
                 if let Some(expect) = expect {
                     let slack = expect / 4;
@@ -12537,7 +12568,7 @@ mod tests {
         let fields = vec!["TED-LOT_TITLE".to_owned(), "TED-LOT_DESCRIPTION".to_owned()];
 
         let err = sup
-            .run_spec(&job(Spec::RefoldFields { fields: fields.clone(), expect: Some(1) }))
+            .run_spec(&job(Spec::RefoldFields { fields: fields.clone(), expect: Some(1), tables: None }))
             .await
             .expect_err("a carrier count outside the expectation must abort");
         assert!(err.contains("0 notices carry"), "the abort names the found count: {err}");
@@ -12545,11 +12576,31 @@ mod tests {
         assert!(err.contains("nothing was written"), "{err}");
 
         let ok = sup
-            .run_spec(&job(Spec::RefoldFields { fields, expect: None }))
+            .run_spec(&job(Spec::RefoldFields { fields, expect: None, tables: None }))
             .await
             .expect("without an expectation the request runs");
         assert!(ok.contains("0 carriers of 2 field id(s)"), "{ok}");
         assert!(ok.contains("re-queued 0 notices"), "{ok}");
+    }
+
+    /// Issue 383: a `tables` narrowing outside the value-table list is refused at
+    /// enqueue, naming the list — not discovered after an hour of sweeping. The
+    /// eight names are the store's constant, so a new satellite cannot be
+    /// misspelled here without the store disagreeing.
+    #[tokio::test]
+    async fn refold_fields_refuses_a_table_the_sweep_cannot_walk() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let req = JobRequest {
+            kind: "refold-fields".into(),
+            profiles: Some(vec!["TED-DATE_OF_CONTRACT_AWARD".into()]),
+            tables: Some(vec!["notice_dates".into(), "notice_typo".into()]),
+            ..Default::default()
+        };
+        let err = sup.enqueue_request(&req).await.expect_err("an unknown table must be refused");
+        assert!(err.contains("\"notice_typo\" is not a notice value table"), "{err}");
+        assert!(err.contains("notice_dates"), "the refusal names the walkable tables: {err}");
+        assert!(sup.queue.lock().expect("queue lock").is_empty(), "nothing was enqueued");
     }
 
     /// `expect_gaps` re-aims the guard; it does not disarm it (issue 138 criterion 5).

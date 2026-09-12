@@ -3990,6 +3990,57 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 
+    /// Issue 383: the carrier sweep finds a field on EVERY value table, and a
+    /// narrowed sweep finds only what it was pointed at. The sizer for a date
+    /// field answered 0 carriers on prod because the sweep opened two tables of
+    /// eight — an answer indistinguishable from a mistyped id.
+    #[tokio::test]
+    async fn the_carrier_sweep_reaches_every_value_table() {
+        let path = format!("/tmp/tender-db-carriers-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+        {
+            let conn = db.conn().await;
+            conn.execute_batch(
+                "INSERT INTO fetches(id, source, kind, period, url, sha256, bytes, fetched_at, path)
+                   VALUES (1,'ted','monthly','2010-03','u','s',1,0,'p');
+                 INSERT INTO notices(id, source, publication_id, content_hash, profile, fetch_id,
+                                     member_path, ingested_at, parse_state)
+                   VALUES (7,'ted','070248-2010','h','ted-export-r208',1,'m',0,'parsed'),
+                          (8,'ted','070249-2010','h2','ted-export-r208',1,'m2',0,'parsed');
+                 INSERT INTO notice_dates(notice_id, section_id, field_id, ordinal, utc_seconds,
+                                          offset_minutes, has_time)
+                   VALUES (7,'RES-1','TED-DATE_OF_CONTRACT_AWARD',0,1243814400,0,0);
+                 INSERT INTO notice_texts(notice_id, section_id, field_id, ordinal, lang, value)
+                   VALUES (8,'PROCEDURE','TED-TITLE_CONTRACT',0,'EN','A title');",
+            )
+            .await
+            .unwrap();
+        }
+        // Every table by default: the date carrier is found.
+        let found = db.notice_ids_carrying_fields(&["TED-DATE_OF_CONTRACT_AWARD"], None).await.unwrap();
+        assert_eq!(found, vec![7], "a date-channel field must be found on notice_dates");
+        // Narrowed to a table that does not hold it: an honest miss, by request.
+        let narrowed = db
+            .notice_ids_carrying_fields(&["TED-DATE_OF_CONTRACT_AWARD"], Some(&["notice_texts"]))
+            .await
+            .unwrap();
+        assert!(narrowed.is_empty(), "narrowing to the wrong table finds nothing: {narrowed:?}");
+        // Two ids on two channels in one sweep, deduplicated and sorted.
+        let both = db
+            .notice_ids_carrying_fields(&["TED-DATE_OF_CONTRACT_AWARD", "TED-TITLE_CONTRACT"], None)
+            .await
+            .unwrap();
+        assert_eq!(both, vec![7, 8]);
+        assert_eq!(canonical::NOTICE_VALUE_TABLES.len(), 8);
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
     /// Issue 175: the page-cache valve parses positive KiB, clamps the absurd at
     /// both ends (a 100 KiB cache thrashes, an unbounded one re-creates the
     /// issue-61 swap incident as a typo), and falls back to the 128 MiB default

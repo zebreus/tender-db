@@ -86,7 +86,7 @@ async fn the_field_sweep_finds_exactly_the_carriers_and_the_pair_scopes_to_them(
     }
 
     let carriers = db
-        .notice_ids_carrying_fields(&["UBL-FrameworkMaximumAmount", "UBL-FundingProgram"])
+        .notice_ids_carrying_fields(&["UBL-FrameworkMaximumAmount", "UBL-FundingProgram"], None)
         .await
         .unwrap();
     assert_eq!(carriers, vec![1, 2, 3], "both channels, deduped, the non-carrier excluded");
@@ -109,5 +109,5 @@ async fn the_field_sweep_finds_exactly_the_carriers_and_the_pair_scopes_to_them(
     assert_eq!(stale, vec![10, 30], "exactly the carriers' tenders are aged");
 
     // An id nothing carries sweeps to an empty cohort.
-    assert!(db.notice_ids_carrying_fields(&["UBL-NoSuchThing"]).await.unwrap().is_empty());
+    assert!(db.notice_ids_carrying_fields(&["UBL-NoSuchThing"], None).await.unwrap().is_empty());
 }
