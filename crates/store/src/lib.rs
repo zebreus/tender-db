@@ -3948,6 +3948,45 @@ mod tests {
             "and `notices` must NOT be the outer loop — that inversion is what made the \
              per-profile variant scan 31 M rows per arm:\n{plan}"
         );
+
+        // The probe's shape (`unmapped_fields_for_profile`): CONSTANT bounds on
+        // the satellite and the profile as a rowid-seek filter. This is the form
+        // that replaced the reverted report arm, and it must plan like the
+        // control — satellite driven by a range, notices seeked by rowid — or it
+        // is the same 60-minute query wearing a different hat.
+        //
+        // The CROSS JOIN is what makes it hold. The first draft used a plain JOIN
+        // and THIS assertion failed on it: the planner took the profile
+        // equality as the driver (`SEARCH n USING INDEX notices_profile
+        // (profile=?)`), which is the 2.7 M-row walk again. That is the guard
+        // paying for itself on the first change it was written to catch.
+        let mut rows = conn
+            .query(
+                "EXPLAIN QUERY PLAN \
+                 SELECT x.field_id, COUNT(*) FROM notice_texts x \
+                   CROSS JOIN notices n ON n.id = x.notice_id AND n.profile = 'ted-export-r208' \
+                  WHERE x.notice_id > 27061439 AND x.notice_id <= 27161439 \
+                  GROUP BY x.field_id",
+                (),
+            )
+            .await
+            .unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            if let Ok(turso::Value::Text(d)) = row.get_value(3) {
+                plan.push_str(&d);
+                plan.push('\n');
+            }
+        }
+        assert!(
+            plan.contains("SEARCH x USING INDEX") && plan.contains("notice_id>?"),
+            "the probe's satellite scan must be a bounded RANGE:\n{plan}"
+        );
+        assert!(
+            plan.contains("SEARCH n USING INTEGER PRIMARY KEY"),
+            "and the profile filter must be a rowid SEEK into notices, not a scan:\n{plan}"
+        );
+        assert!(!plan.contains("SCAN notices AS n"), "{plan}");
         let _ = std::fs::remove_dir_all(&dir);
     }
 

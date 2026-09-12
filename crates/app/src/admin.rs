@@ -41,6 +41,7 @@ pub fn router(supervisor: Arc<Supervisor>) -> Router {
         // request rather than a thing someone had to think to save.
         .route("/admin/reports/{kind}/previous", axum::routing::get(report_previous))
         .route("/admin/name-key", axum::routing::get(name_key))
+        .route("/admin/unmapped-fields", axum::routing::get(unmapped_fields))
         .route("/admin/case-reviews", axum::routing::get(case_reviews))
         .route("/admin/case-reviews", post(record_case_reviews))
         .route("/admin/name-verdicts", post(record_name_verdicts))
@@ -702,6 +703,75 @@ async fn name_key(
         "n3": n3,
         "stoplist_cap": cap,
         "kinds": kinds,
+    }))
+    .into_response()
+}
+
+#[derive(serde::Deserialize)]
+struct UnmappedFieldsParams {
+    profile: String,
+    /// How many notice ids back from the profile's own newest notice to read
+    /// (default 100,000, at most 1,000,000).
+    window: Option<i64>,
+    /// How many field ids to list (default 40, at most 200).
+    show: Option<usize>,
+}
+
+/// `GET /admin/unmapped-fields?profile=…` — what one profile publishes at its
+/// own head that no channel reads (issue 368).
+///
+/// The weekly report's section 13 answers this for the corpus HEAD, and an era
+/// that stopped publishing is invisible to it: `ted-export-r208` holds 29,763
+/// of the 30,285 titleless Tenders and its newest notice sits 4.3 M ids below
+/// that window's floor. Two attempts to put a per-profile window in the report
+/// each cost ~60 minutes and were reverted; the plan showed the join to a
+/// per-profile maximum inverts the driver onto `notices`. A probe takes ONE
+/// profile, so its bounds are constants and it plans as a range scan — see
+/// `store`'s plan guard. The `any_channel_reads` filter is applied here, in
+/// the crate that owns it, and both the unfiltered and filtered counts are
+/// returned so a reader can see what the filter removed.
+async fn unmapped_fields(
+    State(sup): State<Arc<Supervisor>>,
+    headers: HeaderMap,
+    Query(params): Query<UnmappedFieldsParams>,
+) -> Response {
+    if let Some(denial) = deny(&headers) {
+        return denial;
+    }
+    let window = params.window.unwrap_or(100_000).clamp(1, 1_000_000);
+    let show = params.show.unwrap_or(40).min(200);
+    let (max_id, published) = match sup.db().unmapped_fields_for_profile(&params.profile, window).await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("[admin] unmapped-fields probe failed: {e}");
+            return error(StatusCode::INTERNAL_SERVER_ERROR, "unmapped-fields probe failed");
+        }
+    };
+    let Some(max_id) = max_id else {
+        return error(StatusCode::NOT_FOUND, "no notices carry that profile");
+    };
+    let published_ids = published.len();
+    let unmapped: Vec<serde_json::Value> = published
+        .iter()
+        .filter(|(field, _)| !ingest::project::any_channel_reads(field))
+        .take(show)
+        .map(|(field, hits)| json!({ "field_id": field, "rows": hits }))
+        .collect();
+    let unmapped_ids = published.iter().filter(|(f, _)| !ingest::project::any_channel_reads(f)).count();
+    axum::Json(json!({
+        "profile": params.profile,
+        "newest_notice_id": max_id,
+        "window_notice_ids": window,
+        "ids_read": [max_id - window + 1, max_id],
+        "published_field_ids": published_ids,
+        "unmapped_field_ids": unmapped_ids,
+        "listing_cap": show,
+        "unmapped": unmapped,
+        "note": "rows are counts inside this profile's own head window, not corpus totals; \
+                 a field id here is published by the source and read by no channel, which is \
+                 a scope decision rather than a defect unless section 1 shows the profile \
+                 missing a MODELLED field (issue 368).",
     }))
     .into_response()
 }

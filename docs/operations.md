@@ -414,6 +414,7 @@ sends it and reads a body from stdin.
 | `POST /admin/jobs`, `DELETE /admin/jobs/{id}`, `POST /admin/jobs/{id}/cancel` | enqueue; cancel a queued or checkpointed job (issues 250, 252) |
 | `GET /admin/reports/{kind}`, `…/previous` | the newest stored report of a kind, and the one before it (issue 335) |
 | `GET /admin/name-key?name=` | the genericness wall, probed for one name (issue 348) |
+| `GET /admin/unmapped-fields?profile=` | what one profile publishes at its own head that no channel reads (issue 368); `window` ids back from its newest notice, `show` rows |
 | `POST /admin/case-reviews`, `/admin/rehoming`, `/admin/name-verdicts`, `/admin/country-verdicts`, `/admin/merge-verdicts` | record one cohort's verdicts into the five review stores (`org_case_reviews`, `org_mention_rehoming`, `org_name_verdicts`, `org_country_verdicts`, `org_merge_verdicts`); recording only — the apply jobs (or the R2 arm, for merge verdicts) execute the HIGH subset |
 | `GET /admin/case-reviews?table=case\|rehoming\|name\|country\|merge&cohort=&limit=` | read a verdict store back, newest first, bounded (issue 356; the stores are not on the `/v1/sql` allow-list) |
 

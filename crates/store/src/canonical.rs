@@ -12467,6 +12467,90 @@ impl Db {
         Ok((n, ids))
     }
 
+    /// Issue 368: what ONE profile publishes at its own head, by field id, across
+    /// every satellite — the per-profile half of the weekly report's unmapped-field
+    /// listing, built as a probe because it cannot be a report section.
+    ///
+    /// **Why a probe and not a report arm.** Two attempts to add this to the
+    /// weekly report (9073eca, 61f18dd) each cost ~60 minutes on prod and were
+    /// reverted. The plan showed why: joining the satellites to a per-profile
+    /// maximum makes the planner drive from `notices` — all 31 M — and seek the
+    /// satellite by equality per notice, so the window bounds nothing. Only a
+    /// CONSTANT floor and ceiling plan as a range scan, and a probe that takes one
+    /// profile has constant bounds by construction: the maximum is one scalar
+    /// read, then every satellite is a bounded range with a rowid seek into
+    /// `notices` for the profile check. `the_unmapped_field_window_plans_as_a_range_scan`
+    /// asserts exactly that shape.
+    ///
+    /// Returns the profile's newest notice id (so the caller can say which ids
+    /// were read) and `(field_id, hits)` per published field id, unfiltered — the
+    /// caller decides which of them any channel reads, because that predicate
+    /// lives in `ingest` and this crate must not grow a copy of it.
+    pub async fn unmapped_fields_for_profile(
+        &self,
+        profile: &str,
+        window_ids: i64,
+    ) -> turso::Result<(Option<i64>, Vec<(String, u64)>)> {
+        let reader = self.reader().await?;
+        let mut rows = reader
+            .query("SELECT MAX(id) FROM notices WHERE profile = ?", (t(profile),))
+            .await?;
+        let max_id = match rows.next().await? {
+            Some(row) => match row.get_value(0) {
+                Ok(Value::Integer(n)) => Some(n),
+                _ => None,
+            },
+            None => None,
+        };
+        let Some(max_id) = max_id else {
+            return Ok((None, Vec::new()));
+        };
+        let floor = max_id - window_ids;
+        let mut hits: std::collections::BTreeMap<String, u64> = std::collections::BTreeMap::new();
+        for table in [
+            "notice_texts",
+            "notice_codes",
+            "notice_classifications",
+            "notice_amounts",
+            "notice_dates",
+            "notice_integers",
+            "notice_numbers",
+            "notice_ids",
+        ] {
+            // Constant bounds on the satellite's own primary-key prefix, then a
+            // rowid seek into `notices` for the profile — the control plan.
+            //
+            // CROSS JOIN, not JOIN, and it is load-bearing. With a plain JOIN the
+            // planner drove from `notices` on the profile EQUALITY (the plan
+            // guard caught it: `SEARCH n USING INDEX notices_profile (profile=?)`
+            // then `SEARCH x … (notice_id=?)`), which walks every notice in the
+            // profile — 2.7 M for r208 — and seeks the satellite once each. The
+            // range on `x.notice_id` is the selective side and the planner's
+            // heuristics, with no statistics, rank an indexed equality above it.
+            // SQLite documents CROSS JOIN as the one construct that fixes the
+            // left table as the outer loop, and that is exactly what is needed.
+            let sql = format!(
+                "SELECT x.field_id, COUNT(*) FROM {table} x \
+                   CROSS JOIN notices n ON n.id = x.notice_id AND n.profile = ? \
+                  WHERE x.notice_id > ? AND x.notice_id <= ? \
+                  GROUP BY x.field_id"
+            );
+            let mut rows = reader
+                .query(&sql, (t(profile), Value::Integer(floor), Value::Integer(max_id)))
+                .await?;
+            while let Some(row) = rows.next().await? {
+                let field = match row.get_value(0) {
+                    Ok(Value::Text(f)) => f,
+                    _ => continue,
+                };
+                *hits.entry(field).or_default() += int(&row, 1).max(0) as u64;
+            }
+        }
+        let mut out: Vec<(String, u64)> = hits.into_iter().collect();
+        out.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        Ok((Some(max_id), out))
+    }
+
     pub async fn name_key_is_generic(
         &self,
         kind: &str,
