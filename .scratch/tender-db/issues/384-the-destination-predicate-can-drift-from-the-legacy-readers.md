@@ -1,6 +1,6 @@
 # 384 — `has_destination` can drift from what the legacy readers actually consume; a source-reading guard
 
-Status: ready-for-agent (filed 2026-09-12 by the owner, from issue 368's per-profile probe)
+Status: DONE 2026-09-12 — the guard is in `project.rs` and found two more gaps on its first run; see the Answer below. Was: ready-for-agent (filed 2026-09-12 by the owner, from issue 368's per-profile probe)
 Kind: defect (diagnostic honesty) — the "published and dropped" diagnostics answer from a
 predicate that is maintained by hand beside the readers it describes
 Blocked by: nothing
@@ -36,3 +36,27 @@ the one legitimate blind use); this is the same idea for the legacy side.
 
 Making `has_destination` derive from the readers (a registry the readers consult). Worth it if the
 guard fires more than once; the guard first.
+
+## Answer (2026-09-12)
+
+`every_id_the_legacy_results_reader_matches_has_a_destination_on_its_channel` in `project.rs`: it
+reads `read_legacy_results`' body, parses every `("TED-…" | …, NoticeValue::Variant …)` arm, maps
+the variant to its channel and asserts `has_destination` for each literal; the const-named arms and
+the slices the reader consults (`LEGACY_AWARD_DATE_FIELD`, `LEGACY_NO_AWARD_MARKER`,
+`LEGACY_BID_COUNT_FIELDS`) are asserted by name, and the test refuses a wildcard value pattern on a
+`TED-` literal because it hides the channel.
+
+**Two gaps on the first run**, both fixed in the same commit:
+
+| id | how the reader consumed it | what the predicate said | fix |
+| --- | --- | --- | --- |
+| `TED-NO_AWARDED_CONTRACT` | `("TED-NO_AWARDED_CONTRACT", _)` — a wildcard; the parser stores a `Rule::Marker` as `Integer(1)` | nothing reads it on Integer | named `LEGACY_NO_AWARD_MARKER`, matched as `NoticeValue::Integer(_)`, added to the Integer arm |
+| `TED-NB_TENDERS_RECEIVED` / `TED-OFFERS_RECEIVED_NUMBER` | as Integer AND as Number | Integer yes, Number no | the Number arm consults `LEGACY_BID_COUNT_FIELDS` too |
+
+Neither had shown in the r208 probe's top 200 — both are rare at the era's head — which is the
+point: the guard finds them without a probe happening to rank them.
+
+**Negative check:** dropping the marker from the Integer arm makes the test fail naming the id
+(`read_legacy_results consumes TED-NO_AWARDED_CONTRACT on [Integer] but has_destination says
+nothing reads it there`); restored. The "registry the readers consult" alternative stays out of
+scope until the guard fires again.

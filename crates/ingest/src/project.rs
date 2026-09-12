@@ -568,6 +568,12 @@ const SDK01_AWARD_DATE_FIELD: &str = "SDK01-TenderResult-AwardDate";
 /// while the reader consumed every one — a literal in the reader that the
 /// predicate could not see.
 const LEGACY_AWARD_DATE_FIELD: &str = "TED-CONTRACT_AWARD_DATE";
+/// The legacy "no contract was awarded" marker on the award block, a `Rule::Marker`
+/// the parser stores as `Integer(1)`; the results reader turns it into the
+/// `clos-nw` decision. Named for the same reason as the award date (issue 384):
+/// the reader matched it with a wildcard value pattern, so the predicate had
+/// no channel to know it on and would have listed it as dropped.
+const LEGACY_NO_AWARD_MARKER: &str = "TED-NO_AWARDED_CONTRACT";
 /// sdk-0.1's procedure folder id (its BT-04 analogue). Only a genuine uuid is a
 /// strong-enough cross-reference to key a Tender on (issue 34); the numeric
 /// channel's non-uuid folder ids are notice-local and stay islands.
@@ -4076,7 +4082,7 @@ fn read_legacy_results(sections: &HashMap<&str, &store::Section>, parsed: &Parse
             (LEGACY_AWARD_DATE_FIELD, NoticeValue::Date { utc_seconds, offset_minutes, has_time }) => {
                 r.decided = Some((*utc_seconds, *offset_minutes, *has_time));
             }
-            ("TED-NO_AWARDED_CONTRACT", _) => r.decision = Some("clos-nw".to_owned()),
+            (LEGACY_NO_AWARD_MARKER, NoticeValue::Integer(_)) => r.decision = Some("clos-nw".to_owned()),
             (f, NoticeValue::Integer(n)) if LEGACY_BID_COUNT_FIELDS.contains(&f) => {
                 r.statistics.push(("tenders".to_owned(), *n, None));
             }
@@ -4548,9 +4554,15 @@ pub fn has_destination(field_id: &str, channel: Channel) -> bool {
                 || RESULT_CODE_STEMS.contains(&stem)
         }
         Channel::Integer => {
-            LEGACY_BID_COUNT_FIELDS.contains(&field_id) || field_id.ends_with(AMOUNT_ELEMENT)
+            LEGACY_BID_COUNT_FIELDS.contains(&field_id)
+                || field_id.ends_with(AMOUNT_ELEMENT)
+                || field_id == LEGACY_NO_AWARD_MARKER
         }
-        Channel::Number => RESULT_NUMBER_STEMS.contains(&stem),
+        // The legacy bid count arrives as an Integer OR a Number (the reader takes
+        // both), so it has a destination on both channels.
+        Channel::Number => {
+            RESULT_NUMBER_STEMS.contains(&stem) || LEGACY_BID_COUNT_FIELDS.contains(&field_id)
+        }
         // A pointer: roles and the result graph's edges.
         Channel::Id { is_ref: true } => {
             role_name(field_id).is_some() || RESULT_ID_STEMS.contains(&stem)
@@ -6514,6 +6526,12 @@ mod tests {
         // The legacy award date is consumed by the results reader; the predicate
         // must say so or the probe lists 1,688 rows of it as dropped (it did).
         assert!(table_reads("notice_dates", LEGACY_AWARD_DATE_FIELD));
+        // Two more the issue-384 guard found on its first run: the no-award marker
+        // (a wildcard arm in the reader, an Integer(1) in the store) and the bid
+        // count on its Number spelling.
+        assert!(table_reads("notice_integers", LEGACY_NO_AWARD_MARKER));
+        assert!(table_reads("notice_numbers", LEGACY_BID_COUNT_FIELDS[0]));
+        assert!(table_reads("notice_integers", LEGACY_BID_COUNT_FIELDS[0]));
         assert!(table_reads("notice_texts", "BT-21-Lot"));
         // A legacy address block IS read where it is stored — as a role.
         assert!(table_reads("notice_ids", "TED-ADDRESS_CONTRACTING_BODY"));
@@ -6522,6 +6540,77 @@ mod tests {
         // An unknown table reads nothing, so a misspelling shows as everything dropped.
         assert!(table_channels("notice_typo").is_empty());
         assert!(!table_reads("notice_typo", "BT-21-Lot"));
+    }
+
+    /// Issue 384: every field id the legacy results reader matches on has a
+    /// destination on the channel it matches it on, so `has_destination` cannot
+    /// drift from the reader again. The drift is what put 1,688 rows of a consumed
+    /// award date on the r208 probe's dropped list (issue 368), and this test's
+    /// first run found two more: the no-award marker behind a wildcard arm, and
+    /// the bid count on its Number spelling.
+    ///
+    /// Source-read, like `every_report_field_is_read_by_the_renderer`: the
+    /// invariant is about the reader's match arms, so the arms are what it reads.
+    /// Literal arms are parsed; const-named arms are asserted by name below, and a
+    /// wildcard value pattern on a `TED-` literal is refused outright, because it
+    /// hides the channel the predicate would need.
+    #[test]
+    fn every_id_the_legacy_results_reader_matches_has_a_destination_on_its_channel() {
+        let src = include_str!("project.rs");
+        let start = src.find("\nfn read_legacy_results(").expect("reader");
+        let body = &src[start..start + src[start..].find("\n}\n").expect("reader end")];
+
+        let mut literal_arms = 0;
+        let mut rest = body;
+        while let Some(i) = rest.find("(\"TED-") {
+            let arm = &rest[i + 1..];
+            let end = arm.find(", ").expect("a value pattern after the field literal");
+            let (ids, value) = (&arm[..end], &arm[end + 2..]);
+            let channels: &[Channel] = if value.starts_with("NoticeValue::Amount") {
+                &[Channel::Amount]
+            } else if value.starts_with("NoticeValue::Date") {
+                &[Channel::Date]
+            } else if value.starts_with("NoticeValue::Integer") {
+                &[Channel::Integer]
+            } else if value.starts_with("NoticeValue::Number") {
+                &[Channel::Number]
+            } else if value.starts_with("NoticeValue::Text") {
+                &[Channel::Text]
+            } else if value.starts_with("NoticeValue::Code") {
+                &[Channel::Code]
+            } else if value.starts_with("NoticeValue::Id") {
+                &[Channel::Id { is_ref: true }, Channel::Id { is_ref: false }]
+            } else {
+                panic!(
+                    "read_legacy_results matches {ids} with a value pattern that names no \
+                     channel ({}) — name the variant, so the predicate can be held to it",
+                    value.split(')').next().unwrap_or(value)
+                );
+            };
+            for id in ids.split('|').map(|s| s.trim().trim_matches('"')) {
+                assert!(id.starts_with("TED-"), "unexpected pattern piece {id:?} in {ids}");
+                assert!(
+                    channels.iter().any(|c| has_destination(id, *c)),
+                    "read_legacy_results consumes {id} on {channels:?} but has_destination says \
+                     nothing reads it there — the diagnostics would list it as dropped"
+                );
+                literal_arms += 1;
+            }
+            rest = &arm[end..];
+        }
+        assert!(literal_arms >= 5, "parsed too few literal arms ({literal_arms}); the scan is broken");
+
+        // The const-named arms and slices the reader consults, held by name.
+        assert!(has_destination(LEGACY_AWARD_DATE_FIELD, Channel::Date));
+        assert!(has_destination(LEGACY_NO_AWARD_MARKER, Channel::Integer));
+        for f in LEGACY_BID_COUNT_FIELDS {
+            assert!(has_destination(f, Channel::Integer), "{f}: Integer");
+            assert!(has_destination(f, Channel::Number), "{f}: Number");
+        }
+        // And every const the reader matches on is one this test names.
+        for name in ["LEGACY_AWARD_DATE_FIELD", "LEGACY_NO_AWARD_MARKER", "LEGACY_BID_COUNT_FIELDS"] {
+            assert!(body.contains(name), "{name} is no longer used by the reader; update this test");
+        }
     }
 
     /// Every satellite table a "published and dropped" diagnostic walks has a
