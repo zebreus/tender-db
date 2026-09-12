@@ -672,3 +672,20 @@ elements in both eras), which is where most of the 345k carriers came from.
 - a lot in the 6.0M band serves its title: **done, 93 of 100**;
 - X02 notices are `kind='registration'`: not touched by this unit — still open under this issue's
   unit for `kind_of`, and small (285 tenders across sdk-1.8…1.14 in the 1.0–1.5M band).
+
+### Unit 3, sampled after the refold (2026-09-12): the other half publishes no title element at all
+
+Five of the remaining titleless r208 procedures in the 5.000–5.004M tender band (head notices
+17,449,765 / 17,449,909 / 17,451,128 / 17,451,144 / 17,451,411), every text field id whose name
+contains `TITLE`, `TI_` or `DESCR`:
+
+- all five: `TED-SHORT_CONTRACT_DESCRIPTION` ×1 (mapped → `description`), and the OJ heading trio
+  `TI_CY` / `TI_TEXT` / `TI_TOWN` ×23 each (the CPV label, correctly unmapped);
+- one: `TED-LOT_DESCRIPTION` ×6 (mapped since unit 2);
+- **none: any element with `TITLE` in its name**, under any of the eight spellings the projection now
+  reads or any other.
+
+So the remaining 15,604 have a description and no title, because the form they were published on
+carries none. The honest state of the record is what the API now serves: `title` null, `description`
+filled. Deriving a title from the description's first line would be the fabrication this issue
+already refused for `TI_TEXT`. **Unit 3 closes as an answer.**
