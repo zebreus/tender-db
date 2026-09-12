@@ -72,3 +72,16 @@ the request may narrow it with `"tables": [...]` when the channel is known, and 
 eight is refused at enqueue rather than after an hour. Store test seeds a date-channel carrier and
 finds it; a narrowed sweep pointed at the wrong table honestly misses it; the supervisor refuses
 `notice_typo` naming the list. Deploying, then the sizer again with `"tables": ["notice_dates"]`.
+
+### Sized with the fixed sweep (2026-09-12, `79534cf` deployed)
+
+`refold-fields` over `TED-DATE_OF_CONTRACT_AWARD`, `tables: ["notice_dates"]`, `expect: 1` (job
+1328): **88,251 notices carry it**, in **116 s** — against the 2,318 s the blind two-table sweep spent
+answering zero. The narrowing is what makes a single-channel sizing cheap: the dates table is a
+fraction of texts.
+
+88,251 carriers is the R2.0.7 era's award notices (2010–2011 F06 and its siblings), every one of
+which folded with no decision date until now. The real run is submitted (job 1330, `expect: 88251`,
+same narrowing) with the incremental `project` queued behind it (1331); the fold plans the whole
+corpus regardless of cohort size (issue 368's 319k-tender cohort took 4.04 h), so the re-count and
+the probe re-run follow that.
