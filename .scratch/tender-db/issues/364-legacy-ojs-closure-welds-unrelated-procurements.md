@@ -1,6 +1,6 @@
 # 364 — the legacy OJS closure is an unbounded transitive closure over unguarded edges: 2,983 versions and 127 buyers in one Tender
 
-Status: ready-for-agent — **UNIT 5 DONE 2026-09-13: the whole r208 era re-parsed (161 packages, 2,699,212 notices) and re-projected under the kind gate; 348,221 citations refused where 0 were before; the flagship weld 2816628 is dissolved and 4228069 went from 928 to 88 versions — but the adjacent pair 4459994/5 still holds ~195 buyers each, so the next unit is a per-tender read of the edges that survive the gate (see the last section).** Was: ready-for-agent — UNITS 1-2 DONE 2026-09-07, GAUGE (re-cut unit 4) DONE 2026-09-10 `c0c2581` and the REPRESENTATIVE RULE (re-cut unit 3, the phantom half) DONE 2026-09-10 `2c05c8d`, both gates green and DEPLOYED (rev `7e023e4`). **THE GAUGE'S FIRST RUN REFUTED ITS OWN >=50 CALIBRATION — see the last section; the top of the listing is Slovenian JOINT PROCUREMENT, not welds, and the weld this issue was filed about does not make the top 40 at all.** Corrected in `831b8f9`; the next unit is the widest-single-version discriminator: the kind gate is built and gated (`7b7d513`, 914 passed) and LANDS INERT by design — see "Unit 2, built" for what that means for the repair. Units 3 (guards + representative), 4 (the plausibility gauge) and 5 (the legacy RE-PARSE, not a re-projection) remain. **UNIT 3's CALIBRATION IS CORRECTED 2026-09-10 and the class is now MEASURED — see the two sections at the end. The recorded `role='Procedure-Buyer'` predicate is blind to the legacy era, where this issue's own 127-buyer weld lives (tender 2816628 has 2,983 `buyer` rows and ZERO `Procedure-Buyer`); the corpus carries two buyer vocabularies and the predicate must be `role IN ('buyer','Procedure-Buyer')`. Measured corpus-wide: 102,840 tenders with ≥3 distinct buyers, 1,326 with ≥50 — six times the ≥200-version set `longest_chain` can see.** Was: ready-for-agent — UNIT 1 DECIDED 2026-09-07 (owner)
+Status: UNIT 6 DONE 2026-09-13 (owner) — the target-type gate is deployed (`b9800a2`) and the full pass under it (job 2268) dissolved the residual weld: 4228069 went from 88 versions to the PIN alone, its 35 text-era citers are 35 tenders, 501,696 edges refused by the cited notice's own type, `unknown kind` 0 on both lines, 8,505,541 tenders. Open: read the weld gauge's ≥50 band on the 2026-09-20 report against this pass.
 Kind: defect (identity / grouping) — correctness, the CONTEXT.md:112-113 invariant
 Relates to: 92 (records chain 3,282 only as a fold-performance cost, not as a correctness
 signal), ADR-0011 (the eForms edge's three guards, which this edge has none of), ADR-0003
@@ -970,3 +970,30 @@ flagged node(s)`; union-load 11,007,420 nodes; 4,932 components renamed off a ph
 (unit 3); **8,505,541 tenders** in 256 s. Phase-1 planned 14,373,394 notices (WAL 2.9 GB, peak
 RSS 4.2 GB). The fold started 18:13 CEST (2.41M of 8.51M by 18:50); the job row's two issue-364
 lines and 4228069's version count are read when it finishes.
+
+### Unit 6 DONE (2026-09-13 19:5x CEST): the full pass under the target-type gate dissolved 4228069
+
+Job 2268 (`project` 1359, 15:40 → ~19:45 CEST): `14373394 notices → 8505541 tenders (685278
+islands), 4389176 versions; 3211324 tenders written, 5294217 verified unchanged; issue-364
+previous-publication citations: 1185269 admitted, 348221 refused (prior-information 176572,
+buyer-profile 25821, periodic-indicative 11405, qualification-system 8803, DPS 8722, undeclared
+116898, unknown kind 0); issue-364 edges refused by the cited notice's own type: 501696
+(prior-information 367612, buyer-profile 5781, periodic-indicative 38941, qualification-system
+40517, DPS 48845, unknown kind 0)`.
+
+| | before (unit 5 pass, 2026-09-13 morning) | after (unit 6) |
+| --- | --- | --- |
+| tenders | 7,942,429 | **8,505,541** (+563,112: the 501,696 refused edges split their components, and a cited shared publication now stands alone) |
+| 4228069 (`ojs:2010-001662`) | 88 versions, 57 titles, 34 buyers | **1 version — the PIN 3964521 itself** (`kind = procedure`) |
+| the 35 text-era notices citing `1662-2010` through `TXT-RN` | one tender | **35 tenders** — one per procurement |
+| `unknown kind` on either line | — | 0: every refusal landed in a named slot |
+
+Read against the read-time gate: the target-type gate refused 501,696 edges where the citing
+side had declared nothing (or had declared a same-procedure kind against a target whose own
+type says otherwise); prior-information dominates (367,612) because the text era's `TXT-RN`
+to a `0`/`P` notice was the whole mechanism. Both `unknown kind` counts at 0 mean the two
+vocabularies (declared kinds, TD codes) cover everything the corpus published.
+
+**Remaining on this issue:** the weld gauge's ≥50 band on the 2026-09-20 weekly report, read
+against this pass; and unit 6's `A`/`M` (with-call-for-competition) decision can be sized in
+the r2.0.9 era if the split ever matters. Nothing else is open.
