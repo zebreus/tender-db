@@ -875,3 +875,29 @@ issue's problem.**
 of its versions' notices, the previous-publication citations (field, cited publication, declared kind,
 admitted or refused) and the `NO_DOC_OJS` self-numbers — to name the edge class the gate admits and
 should not, or the non-citation join. Bounded: 88 notices by id.
+
+### The residual weld's mechanism, read off 4228069 (2026-09-13 15:2x CEST): text-era `TXT-RN` edges to a PIN, outside the kind gate by construction
+
+| | |
+| --- | --- |
+| 4228069's 88 versions by profile | **60 `text` (2010)**, 28 `ted-export-r208` (2011) |
+| its notices' `TXT-RN` targets | **35 notices → `1662-2010`**; the rest name each other (63905/63907/293067/… 2010) |
+| the target `1662-2010` | notice 3964521, profile `text`, **`TXT-TD = P`** — the text era's PRIOR INFORMATION NOTICE code |
+| its `.PREV_KIND` rows | **none** — the text era records no citation kind on the citing notice |
+
+So the weld is the issue's own mechanism in the era the kind gate cannot see: KW SA's 2010 contract
+notices and awards each cite the company's annual PIN through `TXT-RN` (the text era's related-notice
+field, a kind-less OJS edge admitted under ADR-0011's text-era warrant), the PIN's node welds all
+2010 procurements into one component, and the 2011 r208 notices join by citing 2010 publications.
+The r208 re-parse could not touch it: the gate keys on the CITING notice's declared kind, and the text
+era declares none — while the TARGET's kind is sitting in the parse layer as `TXT-TD` on the cited
+notice.
+
+**Unit 6 (the next lever): classify a kind-less OJS edge by its TARGET's document type.** When a
+citation carries no `.PREV_KIND`, look the cited publication up (it is a notice we hold, by
+`publication_id`) and refuse the edge if the target's own document-type code says PIN / periodic
+indicative / qualification system / buyer profile (`TXT-TD` for the text era, `TD_DOCUMENT_TYPE` for
+r208 targets cited kind-lessly). Same refusal classes as the citing-side gate, same counters, one more
+column in the tally (`by-target`). Costs: one indexed lookup per kind-less edge in the planner; then a
+text-era re-fold (the text profile's stamp is era-wide like r208's, and above the cap it is the full
+pass again — ~4 h, measured today). Not a re-parse: the `TXT-TD` rows are already in the parse layer.
