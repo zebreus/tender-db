@@ -1,6 +1,6 @@
 # 364 — the legacy OJS closure is an unbounded transitive closure over unguarded edges: 2,983 versions and 127 buyers in one Tender
 
-Status: ready-for-agent — UNITS 1-2 DONE 2026-09-07, GAUGE (re-cut unit 4) DONE 2026-09-10 `c0c2581` and the REPRESENTATIVE RULE (re-cut unit 3, the phantom half) DONE 2026-09-10 `2c05c8d`, both gates green and DEPLOYED (rev `7e023e4`). **THE GAUGE'S FIRST RUN REFUTED ITS OWN >=50 CALIBRATION — see the last section; the top of the listing is Slovenian JOINT PROCUREMENT, not welds, and the weld this issue was filed about does not make the top 40 at all.** Corrected in `831b8f9`; the next unit is the widest-single-version discriminator: the kind gate is built and gated (`7b7d513`, 914 passed) and LANDS INERT by design — see "Unit 2, built" for what that means for the repair. Units 3 (guards + representative), 4 (the plausibility gauge) and 5 (the legacy RE-PARSE, not a re-projection) remain. **UNIT 3's CALIBRATION IS CORRECTED 2026-09-10 and the class is now MEASURED — see the two sections at the end. The recorded `role='Procedure-Buyer'` predicate is blind to the legacy era, where this issue's own 127-buyer weld lives (tender 2816628 has 2,983 `buyer` rows and ZERO `Procedure-Buyer`); the corpus carries two buyer vocabularies and the predicate must be `role IN ('buyer','Procedure-Buyer')`. Measured corpus-wide: 102,840 tenders with ≥3 distinct buyers, 1,326 with ≥50 — six times the ≥200-version set `longest_chain` can see.** Was: ready-for-agent — UNIT 1 DECIDED 2026-09-07 (owner)
+Status: ready-for-agent — **UNIT 5 DONE 2026-09-13: the whole r208 era re-parsed (161 packages, 2,699,212 notices) and re-projected under the kind gate; 348,221 citations refused where 0 were before; the flagship weld 2816628 is dissolved and 4228069 went from 928 to 88 versions — but the adjacent pair 4459994/5 still holds ~195 buyers each, so the next unit is a per-tender read of the edges that survive the gate (see the last section).** Was: ready-for-agent — UNITS 1-2 DONE 2026-09-07, GAUGE (re-cut unit 4) DONE 2026-09-10 `c0c2581` and the REPRESENTATIVE RULE (re-cut unit 3, the phantom half) DONE 2026-09-10 `2c05c8d`, both gates green and DEPLOYED (rev `7e023e4`). **THE GAUGE'S FIRST RUN REFUTED ITS OWN >=50 CALIBRATION — see the last section; the top of the listing is Slovenian JOINT PROCUREMENT, not welds, and the weld this issue was filed about does not make the top 40 at all.** Corrected in `831b8f9`; the next unit is the widest-single-version discriminator: the kind gate is built and gated (`7b7d513`, 914 passed) and LANDS INERT by design — see "Unit 2, built" for what that means for the repair. Units 3 (guards + representative), 4 (the plausibility gauge) and 5 (the legacy RE-PARSE, not a re-projection) remain. **UNIT 3's CALIBRATION IS CORRECTED 2026-09-10 and the class is now MEASURED — see the two sections at the end. The recorded `role='Procedure-Buyer'` predicate is blind to the legacy era, where this issue's own 127-buyer weld lives (tender 2816628 has 2,983 `buyer` rows and ZERO `Procedure-Buyer`); the corpus carries two buyer vocabularies and the predicate must be `role IN ('buyer','Procedure-Buyer')`. Measured corpus-wide: 102,840 tenders with ≥3 distinct buyers, 1,326 with ≥50 — six times the ≥200-version set `longest_chain` can see.** Was: ready-for-agent — UNIT 1 DECIDED 2026-09-07 (owner)
 Kind: defect (identity / grouping) — correctness, the CONTEXT.md:112-113 invariant
 Relates to: 92 (records chain 3,282 only as a fold-performance cost, not as a correctness
 signal), ADR-0011 (the eForms edge's three guards, which this edge has none of), ADR-0003
@@ -815,3 +815,42 @@ stamp is profile-wide (1,455,097 r208 tenders epoch-stale, the same number every
 ~2.7 M un-projected legacy notices are far past the 500,000 closure cap, so the daily tick's
 `project` (~09:30 CEST) takes the FULL pass: every r208 tender re-derived under the kind gate and
 the representative rule. Its outcome, the four exhibits and the next weekly weld gauge close unit 5.
+
+## Unit 5 DONE — the full pass, and what it did to the exhibits (2026-09-13)
+
+**The fold** (job 1354, the daily tick's `project`, 09:35 → 13:23 CEST, **13,723 s = 3.8 h**):
+`INCREMENTAL → FULL fallback BEFORE identity pass: 2699212 un-projected legacy notices exceed the
+closure cap` as planned; 14,373,394 notices → **8,007,356 tenders** (from 7,945,750: **+61,606**),
+685,278 islands, 2,935,804 versions; 1,516,784 tenders written, 6,490,572 verified unchanged.
+
+**The gate, finally with something to refuse.** Before the re-parse the r208 era carried no kind rows,
+so the previous-publication gate reported `502402 admitted, 0 refused`. Now: **1,185,269 admitted,
+348,221 refused** — prior-information 176,572, undeclared 116,898, buyer-profile 25,821,
+periodic-indicative 11,405, qualification-system 8,803, DPS 8,722, unknown kind 0. Every one of those
+is an edge that used to weld.
+
+**The exhibits, before → after:**
+
+| tender | before (issue's record) | after the full pass |
+| --- | --- | --- |
+| 2816628 — the flagship, `ojs:2001-185105`, 2,983 versions, 127 buyers | welded | **gone**: no tender carries the typo'd key, no version carries the id — the component dissolved into its real `2011/…` procurements |
+| 4228069 — `ojs:2010-001662` | 354 buyers / 928 versions | **34 buyers / 88 versions** |
+| 4459994 — `ojs:2011-010241` | 274 buyers | **194 buyers / 197 versions** |
+| 4459995 — `ojs:2011-010242` | 272 buyers | **195 buyers / 198 versions** |
+
+Two of four are what unit 5 promised. **The adjacent pair barely moved**, which says its weld does
+not run through the citation kinds the gate refuses: whatever holds 197 versions and 194 buyers
+together in `ojs:2011-010241` survives a gate that just refused 348k edges elsewhere. That is the
+next unit, and it is a READ before anything else: for tender 4459994, list the citation edges its
+versions carry (source notice, cited publication, declared kind, admitted/refused) and the
+non-citation edges (`NO_DOC_OJS` self-numbers, the OJS union-find's own joins), and find the edge
+class the 197 have in common. Expect either an admitted kind that should not chain across
+procurements (contract-award → contract-notice is legitimate, but a shared *framework* notice cited
+by hundreds of call-offs is the joint-procurement shape issue 377 named), or a non-citation join.
+
+The weld gauge's ≥50 band re-reads on next Sunday's report (2026-09-20); this fold landed after
+this morning's run.
+
+*Unit 5's bill, for the record:* nine reclaim-only chunks, ~6.5 h of re-parse wall clock across two
+nights, one 3.8-h full pass, no job ever queued behind another of mine, and the weekly batch and
+the daily tick ran on time in between.
