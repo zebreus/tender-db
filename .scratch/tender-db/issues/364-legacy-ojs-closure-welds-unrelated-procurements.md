@@ -799,9 +799,19 @@ org-merge-health, dry and wet scan-org-match-keys (1,289,554 edges, 28,065 new) 
 follows before the 09:30 daily tick if chunk 8 finishes in time, else after the daily project.
 
 | 8 | 1347 | 20 | 156 → 176 | 698,307 | 698,307 | 4,891 s |
-| 9 | 1348 | 10 | 176 → (end) | running (submitted 07:53 CEST) | | |
+| 9 | 1348 | 10 | 176 → (end) | 309,606 | 310,572 | 1,944 s |
 
 Chunk 8 (06:32 → 07:53 CEST): 698,307 notices in 82 min. **Running total 2,389,606 notices over 151
 of 161 packages.** Chunk 9 — the last ten packages — is running and should finish before the 09:30
 daily tick, whose `project` will then take the full pass over the whole era (2.4 M+ un-projected
 legacy notices, far past the 500,000 cap; ~5.2 h on the 2026-09-10 measurement).
+
+### The era is walked (2026-09-13 08:26 CEST)
+
+Chunk 9 reported no continuation. **161 packages, 2,699,212 notices re-parsed, 0 unmatched, 0
+failing**, over nine reclaim-only jobs between 21:52 Saturday and 08:26 Sunday — about 6.5 hours of
+re-parse wall clock, interleaved with the weekly batch and never more than one chunk queued. The
+stamp is profile-wide (1,455,097 r208 tenders epoch-stale, the same number every chunk), and the
+~2.7 M un-projected legacy notices are far past the 500,000 closure cap, so the daily tick's
+`project` (~09:30 CEST) takes the FULL pass: every r208 tender re-derived under the kind gate and
+the representative rule. Its outcome, the four exhibits and the next weekly weld gauge close unit 5.
