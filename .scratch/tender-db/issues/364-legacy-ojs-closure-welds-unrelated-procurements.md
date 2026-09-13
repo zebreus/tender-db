@@ -901,3 +901,58 @@ r208 targets cited kind-lessly). Same refusal classes as the citing-side gate, s
 column in the tally (`by-target`). Costs: one indexed lookup per kind-less edge in the planner; then a
 text-era re-fold (the text profile's stamp is era-wide like r208's, and above the cap it is the full
 pass again — ~4 h, measured today). Not a re-parse: the `TXT-TD` rows are already in the parse layer.
+
+### Unit 6 built (2026-09-13 16:xx CEST): the grouping refuses an edge whose endpoint IS a shared publication
+
+Not a lookup per edge in the planner after all — the plan already holds both ends. The planner
+(`Ident::read`) stamps every legacy row's `shared_kind` from the notice's OWN document-type code
+(`TED-TD_DOCUMENT_TYPE`, `TXT-TD`, `TED-NAT_NOTICE`; first hit), the plan table carries it
+(`plan_notice.shared_kind TEXT`), and `build_plan_groups` skips a `plan_ojs_edge` row when EITHER
+endpoint's node belongs to a stamped notice — counting once per citation, per kind, and returning
+the tally so it rides the `Report` as `target_refusals` (the citation gate's own struct and slots)
+and the job row as a second `issue-364 edges refused by the cited notice's own type: …` line.
+Either end, not just the target, because a shared publication is not a link in ANY chain (a
+qualification-system notice citing last year's is the same shape from the other side, and the
+declared-kind gate already refuses that direction). A stamped notice keeps its node and becomes a
+singleton named after itself. An endpoint not in the plan (phantom) has no type and is admitted
+unchanged; full and incremental runs agree because the legacy closure pulls every notice touching
+a key into the plan before grouping.
+
+**The code table, measured rather than recalled.** Labels are not stored (`notice_codes` keeps the
+code only), so the vocabulary is the Publications Office's own legacy→eForms mapping
+(OP-TED/ted-xml-data-converter `xslt/notice-type-mapping.xml`), cross-checked on prod against
+`TED-FORM` over 100k r2.0.8 notices (ids 12.3M–12.4M, 2011):
+
+| TD | form | n | mapping label | stamped as |
+| --- | --- | --- | --- | --- |
+| `0` | F01 | 2,161 | prior information notice without call for competition | `PRIOR_INFORMATION_NOTICE` |
+| `A` | — (2014 directives, none in 2011) | 0 | prior information notice WITH call for competition | `PRIOR_INFORMATION_NOTICE` |
+| `P` | F04 | 241 | periodic indicative notice without call for competition | `PERIODIC_INDICATIVE_NOTICE` |
+| `M` | F04 | 35 | periodic indicative notice with call for competition | `PERIODIC_INDICATIVE_NOTICE` |
+| `B` | F08 | 49 | buyer profile | `NOTICE_BUYER_PROFILE` |
+| `O` / `Q` | F07 | 171 / 78 | qualification system with / without call for competition | `NOTICE_QUALIFICATION_SYSTEM` |
+| `Y` | F02 | 19 | dynamic purchasing system | `SIMPLIFIED_CONTRACT_NOTICE_DPS` |
+| `3` / `7` / `2` / `1` | F02,F05,F09 / F03,F06 / F14 / F14 | 44k / 36k / 12k / 21 | contract notice / award / additional information / corrigendum | not stamped |
+| `D` / `R` / `V` / `C` / `E` | F12 / F13 / F15 / F10 / F11 | 505 / 279 / 2,932 / 106 / 25 | design contest / its results / VEAT / works concession / concessionaire's notice | not stamped |
+| `S` / `I` / `6` / `G` / `4` / `5` / `8` / `9` | no form | 74 / 38 / 38 / 31 / – | European company / call for expressions of interest / ? / EEIG / prequalification / RFP / ? / n.a. | not stamped (unmeasured tail; an unlisted code keeps today's grouping — the visible failure) |
+
+The text era publishes the same list: 100k notices at 3.9M–4.0M (2010) → `7` 44k, `3` 39k, `2`
+11k, `0` 3.5k, **`P` 511**, `D` 508, `R` 418, `O` 292, `V` 167, `C` 136, `Q` 80, `M` 71, …; at
+1.5M–1.6M (2000) the same shape (`P` 818, `M` 301, `O` 265, `Q` 228). 4228069's hub 3964521 is
+`P`. The 1993 fixtures spell `0` as "Pre-information procedures".
+
+**The with-call-for-competition variants (`A`, `M`) are stamped too, by decision:** the
+declared-kind gate refuses `PRIOR_INFORMATION_NOTICE`/`PERIODIC_INDICATIVE_NOTICE` whether or not
+the PIN opened the procedure, and a planning notice that lists many contracts is one publication
+many procedures cite either way — ADR-0011 rates the weld worse than the missing link. `M` is 35
+per 100k in 2011; `A` is an r2.0.9-era code and can be sized there if the split ever matters.
+
+Tests: store `an_edge_touching_a_shared_publication_joins_nothing` (A/B on the flag: 3 components
+vs 1, tally `[("PERIODIC_INDICATIVE_NOTICE", 2)]` counted once per citation despite symmetric
+rows), ingest `a_kind_less_citation_of_a_periodic_indicative_notice_joins_nothing` (four text-era
+notices through `TXT-RN`, hub typed `P` vs `3`, the award still chains onto its CN, the read-time
+tally stays zero), supervisor `the_target_refusal_suffix_names_the_kind_of_the_cited_notice`, and
+the sieve now knows the three document-type fields are read (`has_destination(_, Code)`).
+
+Next: gate, commit, deploy; then the text-era refold in a quiet window (era-wide stamp, ~4 h full
+pass — never alongside the daily tick), and re-read 4228069 and the weld gauge after it.

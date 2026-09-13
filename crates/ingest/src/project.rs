@@ -74,6 +74,13 @@ pub struct Report {
     /// it covers every notice the run planned — a full run's whole corpus, an
     /// incremental run's delta plus its touched expansion.
     pub citations: CitationGate,
+    /// Issue 364 unit 6: the legacy OJS edges the GROUPING refused because one
+    /// endpoint is a shared publication by its own document type (the text era's
+    /// kind-less `TXT-RN` naming the periodic indicative notice it was called
+    /// under). Counted per kind in the gate's own slots; `admitted`, `undeclared`
+    /// and `unknown_kind` stay zero here. Read beside `citations`: the read-time
+    /// gate refuses by what the CITER declares, this one by what the CITED IS.
+    pub target_refusals: CitationGate,
 }
 
 /// The canonical fields this layer carries, as data. Source field ids are
@@ -480,6 +487,58 @@ pub const INSTANT_DATE_FIELDS: &[&str] = &{
 /// `NO_DOC_OJS`; the text era's own id is `ND:`). Only used as a corroborating
 /// node source — the publication id is the authoritative one.
 const LEGACY_OWN_NUMBER_FIELDS: &[&str] = &["TED-NO_DOC_OJS", "TXT-ND"];
+
+/// The legacy notice's OWN document-type code, per era — the TED-wide `TD`
+/// vocabulary as r2.0.8/r2.0.9 publish it, the text era's `TD:` line, and the
+/// 2008 export's `NAT_NOTICE`, which carries the same codes (all three measured
+/// in `data_quality::DOC_TYPE_MARKERS`). First hit wins; a notice carries one.
+const LEGACY_DOC_TYPE_FIELDS: &[&str] = &["TED-TD_DOCUMENT_TYPE", "TXT-TD", "TED-NAT_NOTICE"];
+
+/// Issue 364 unit 6: the `TD` codes that make a legacy notice a SHARED
+/// publication, mapped onto the kind the citation gate refuses when a citer
+/// declares it (`rules::SHARED_PUBLICATION_KINDS`) — one vocabulary for both
+/// gates, so the two tallies read side by side.
+///
+/// A citation with no declared kind — the text era's `TXT-RN`, the coded-data
+/// `REF_NOTICE/NO_DOC_OJS` — cannot be refused by what the citer says, because
+/// the citer says nothing. What the cited notice IS can be: the planner stamps
+/// each legacy row with this classification of its own type, and the grouping
+/// refuses an edge touching a stamped node (canonical.rs, `build_plan_groups`).
+///
+/// The code meanings are the Publications Office's own legacy→eForms mapping
+/// (OP-TED/ted-xml-data-converter, `notice-type-mapping.xml`), cross-checked
+/// against `TED-FORM` on prod (r2.0.8, 2011, 100k notices): `0`↔F01 prior
+/// information (2,161), `B`↔F08 buyer profile (49), `M`/`P`↔F04 periodic
+/// indicative (35/241), `O`/`Q`↔F07 qualification system (171/78), `Y`↔F02
+/// dynamic purchasing system (19). The text era publishes the same list
+/// (`TD: 0 - Pre-information procedures` in the 1993 fixtures; `P` on 4228069's
+/// hub). Both "with" and "without call for competition" variants are here, by
+/// the same decision the declared-kind gate made: a planning notice that lists
+/// many contracts is one publication that many procedures cite, whether or not
+/// it also opened them — and ADR-0011 rates a weld worse than a missing link.
+///
+/// Everything else — contract notice `3`, award `7`, corrigendum `1`/`2`, design
+/// contests `D`/`R`, concessions `C`/`E`/`H`/`J`, modification `K`, VEAT `V`,
+/// and the unmeasured tail (`4` prequalification, `I` expressions of interest,
+/// `G`, `S`) — is NOT flagged: an unlisted code keeps today's grouping, which is
+/// the visible failure (a weld the census can find) rather than the silent one
+/// (a chain split nobody counts).
+const SHARED_DOC_TYPES: &[(&str, &str)] = &[
+    ("0", "PRIOR_INFORMATION_NOTICE"),
+    ("A", "PRIOR_INFORMATION_NOTICE"),
+    ("P", "PERIODIC_INDICATIVE_NOTICE"),
+    ("M", "PERIODIC_INDICATIVE_NOTICE"),
+    ("B", "NOTICE_BUYER_PROFILE"),
+    ("O", "NOTICE_QUALIFICATION_SYSTEM"),
+    ("Q", "NOTICE_QUALIFICATION_SYSTEM"),
+    ("Y", "SIMPLIFIED_CONTRACT_NOTICE_DPS"),
+];
+
+/// The shared-publication kind a legacy document-type code names, if any — see
+/// [`SHARED_DOC_TYPES`].
+pub fn shared_publication_kind(td_code: &str) -> Option<&'static str> {
+    SHARED_DOC_TYPES.iter().find(|(code, _)| *code == td_code).map(|(_, kind)| *kind)
+}
 
 /// Received-bid count fields (research §5.1) — one legacy statistic, mapped to
 /// the eForms `tenders` received-submission kind.
@@ -1225,7 +1284,7 @@ pub async fn project_with_progress_phase2_stoppable(
     // union-find, islands — entirely in SQL over the on-disk plan (issue 59), so no
     // whole-corpus structure ever enters RAM.
     let t1 = std::time::Instant::now();
-    db.build_plan_groups().await?;
+    report.target_refusals.add_refused(&db.build_plan_groups().await?);
     probe(db, "grouping (build_plan_groups)");
     let (tenders, islands, legacy_keys) = db.plan_summary().await?;
     report.tenders = tenders;
@@ -2129,7 +2188,7 @@ pub async fn project_incremental_chunked_observed(
     stage(&format!("pass-2 plan build ({} mentions resolved)", report.mentions));
 
     // Group the whole plan (same SQL as a full run — over the touched set only).
-    db.build_plan_groups().await?;
+    report.target_refusals.add_refused(&db.build_plan_groups().await?);
     let (tenders, islands) = db.plan_counts().await?;
     report.tenders = tenders;
     report.islands = islands;
@@ -3399,6 +3458,11 @@ struct Ident {
     /// Issue 369 unit 2: the buyer SET this notice publishes, sorted and joined —
     /// see [`buyer_key`] for why a set and not one buyer.
     buyer_key: Option<String>,
+    /// Issue 364 unit 6: the shared-publication kind this legacy notice IS, by
+    /// its own document-type code ([`SHARED_DOC_TYPES`]); `None` for a procedure
+    /// notice and for every non-legacy profile. Goes on the plan row so the
+    /// grouping can read it at the far end of an edge.
+    shared_kind: Option<&'static str>,
 }
 
 /// Issue 364 — what the previous-publication kind gate did, per declared kind.
@@ -3462,6 +3526,20 @@ impl CitationGate {
     }
 
     fn refuse(&mut self, kind: &str) {
+        self.refuse_n(kind, 1);
+    }
+
+    /// Fold the grouping's per-kind refusals (issue 364 unit 6) into this tally.
+    /// The kinds are the plan rows' `shared_kind`, which the planner writes from
+    /// [`SHARED_DOC_TYPES`] — so every one lands in a named slot, and one that does
+    /// not is an `unknown_kind`, visible rather than dropped.
+    pub fn add_refused(&mut self, refused: &[(String, u64)]) {
+        for (kind, n) in refused {
+            self.refuse_n(kind, *n);
+        }
+    }
+
+    fn refuse_n(&mut self, kind: &str, n: u64) {
         let slot = match kind {
             "PRIOR_INFORMATION_NOTICE" => &mut self.prior_information,
             "PERIODIC_INDICATIVE_NOTICE" => &mut self.periodic_indicative,
@@ -3471,7 +3549,7 @@ impl CitationGate {
             rules::KIND_UNDECLARED => &mut self.undeclared,
             _ => &mut self.unknown_kind,
         };
-        *slot += 1;
+        *slot += n;
     }
 }
 
@@ -3493,6 +3571,10 @@ impl CitationGate {
 /// kind rows at all, so it keeps today's grouping until it is re-parsed — the
 /// change lands without a flag day, and takes effect era by era as the re-parse
 /// deepens.
+///
+/// A kind-less id is still gated once more, at grouping time, by what the CITED
+/// notice is (unit 6, [`SHARED_DOC_TYPES`]): `TXT-RN` naming a periodic
+/// indicative notice is refused there, where both ends of the edge are in view.
 fn ojs_chain_edges(parsed: &Parsed) -> (Vec<OjsKey>, CitationGate) {
     let mut gate = CitationGate::default();
     let mut edges = Vec::new();
@@ -3621,6 +3703,14 @@ impl Ident {
             // issue 369 unit 2: the buyer set this notice publishes, for the
             // key-election gate. Parsed-side, so no org-layer dependency.
             buyer_key: buyer_key(sdk01, notice.id, parsed),
+            shared_kind: legacy
+                .then(|| {
+                    LEGACY_DOC_TYPE_FIELDS
+                        .iter()
+                        .find_map(|f| first_code(parsed, f))
+                        .and_then(|code| shared_publication_kind(&code))
+                })
+                .flatten(),
         }
     }
 
@@ -3645,6 +3735,7 @@ impl Ident {
             prev_refs: self.prev_refs,
             key_shaped,
             buyer_key: self.buyer_key,
+            shared_kind: self.shared_kind.map(str::to_owned),
         }
     }
 }
@@ -4556,6 +4647,7 @@ pub fn has_destination(field_id: &str, channel: Channel) -> bool {
         }
         Channel::Code => {
             field_id == SUBTYPE_FIELD
+                || LEGACY_DOC_TYPE_FIELDS.contains(&field_id)
                 || field_id == ORG_COUNTRY_FIELD
                 || field_id == SDK01_RESULT_CODE_FIELD
                 || ORG_COUNTRY_FIELDS.contains(&field_id)
@@ -6464,6 +6556,39 @@ mod tests {
         // Its publication_id shape is `<number>-<year>` — the DOC/text-era form
         // ojs_key parses, so ojs_self populates once the profile is legacy.
         assert_eq!(ojs_key("115165-2008"), Some((2008, 115165)));
+    }
+
+    /// Issue 364 unit 6: the document-type table speaks the citation gate's own
+    /// vocabulary, so every target-type refusal lands in a NAMED slot of the tally.
+    /// A code mapped to a kind `refuse_n` does not know would count as
+    /// `unknown_kind`, and a job row reading "unknown kind 348" for the text
+    /// era's periodic indicative notices would be the silent failure this unit
+    /// exists to remove, one instrument over.
+    #[test]
+    fn the_shared_document_types_are_the_gates_own_kinds() {
+        for (code, kind) in SHARED_DOC_TYPES {
+            assert!(rules::SHARED_PUBLICATION_KINDS.contains(kind), "{code} → {kind} is not a gate kind");
+            let mut g = CitationGate::default();
+            g.refuse_n(kind, 3);
+            assert_eq!(g.unknown_kind, 0, "{code} → {kind} lands in unknown_kind");
+            assert_eq!(g.refused(), 3);
+            assert_eq!(shared_publication_kind(code), Some(*kind));
+        }
+        // 4228069's hub is a `P`; the forms that open or close a procedure are not shared.
+        assert_eq!(shared_publication_kind("P"), Some("PERIODIC_INDICATIVE_NOTICE"));
+        assert_eq!(shared_publication_kind("0"), Some("PRIOR_INFORMATION_NOTICE"));
+        for code in ["3", "7", "2", "1", "D", "R", "V", "K", "C", "J", "I", "4", ""] {
+            assert_eq!(shared_publication_kind(code), None, "{code:?} must keep today's grouping");
+        }
+        // The sieve knows the planner reads the three document-type fields now.
+        for field in LEGACY_DOC_TYPE_FIELDS {
+            assert!(has_destination(field, Channel::Code), "{field}");
+            assert!(table_reads("notice_codes", field), "{field}");
+        }
+        // `add_refused` folds the grouping's (kind, n) pairs into the same slots.
+        let mut g = CitationGate::default();
+        g.add_refused(&[("PERIODIC_INDICATIVE_NOTICE".to_owned(), 348), ("NOTICE_BUYER_PROFILE".to_owned(), 2)]);
+        assert_eq!((g.periodic_indicative, g.buyer_profile, g.refused()), (348, 2, 350));
     }
 
     /// The DE-1.x fold is only correct if every alias target is an id the

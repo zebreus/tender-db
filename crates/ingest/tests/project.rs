@@ -1835,6 +1835,93 @@ async fn an_undeclared_citation_is_refused_and_counted() {
     let _ = std::fs::remove_file(&path);
 }
 
+/// Issue 364 unit 6: the text era's `TXT-RN` declares no kind, so the read-time
+/// gate admits it unexamined — every award and contract notice that named the
+/// periodic indicative notice it was called under became an edge onto it, and
+/// one such hub (`TXT-TD` = `P`) welded 928 versions into Tender 4228069. What
+/// the CITED notice is can be read where both ends of the edge are in view: the
+/// planner stamps each legacy row's own document type, and the grouping refuses
+/// the edge.
+///
+/// A/B on the hub's own type alone: the same fixture with the hub typed `3` (a
+/// contract notice) collapses into one Tender, so what splits it is the type
+/// and nothing else. The award still chains onto its contract notice through
+/// the same kind-less field, and the read-time tally stays at zero — those
+/// citations were never its to count.
+#[tokio::test]
+async fn a_kind_less_citation_of_a_periodic_indicative_notice_joins_nothing() {
+    // A fn rather than an `async move` closure: the closure would move `db` on its
+    // first call and the later assertions still need it.
+    async fn versions_of(db: &Db, key: &str) -> i64 {
+        scalar(
+            db,
+            &format!(
+                "SELECT COUNT(*) FROM tender_versions v JOIN tenders t ON t.id = v.tender_id \
+                 WHERE t.procedure_key = '{key}'"
+            ),
+        )
+        .await
+    }
+    for (name, hub_type, expected) in [("target-pin", "P", 3u64), ("target-cn", "3", 1u64)] {
+        let (db, fetch_id, path) = scratch(name).await;
+        let hub = "000005-2009";
+        let text_notice = |pub_id: &str, td: &str, day: i64, cites: Option<&str>| {
+            let mut parsed = Parsed {
+                sections: vec![sec("PROCEDURE", "Notice", None)],
+                values: vec![
+                    ted_text("PROCEDURE", "TED-TITLE", "Drilling services"),
+                    ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", day * 86_400),
+                    ValueRow {
+                        section_id: "PROCEDURE".into(),
+                        field_id: "TXT-TD".into(),
+                        ordinal: 0,
+                        value: NoticeValue::Code { list: None, code: td.into() },
+                    },
+                ],
+            };
+            if let Some(target) = cites {
+                parsed.values.push(ojs_edge("PROCEDURE", "TXT-RN", target));
+            }
+            legacy_record(fetch_id, pub_id, TEXT, parsed)
+        };
+        for (notice, parse) in [
+            // The hub: cites nothing, is cited by two unrelated contract notices.
+            text_notice(hub, hub_type, 1, None),
+            text_notice("000001-2010", "3", 10, Some(hub)),
+            text_notice("000003-2010", "3", 12, Some(hub)),
+            // The award chains onto the FIRST contract notice through the same
+            // kind-less field — the per-procedure edge that must survive.
+            text_notice("000009-2010", "7", 20, Some("000001-2010")),
+        ] {
+            db.record_notice(&notice, &parse).await.expect("record");
+        }
+
+        let report = project::project(&db, false).await.expect("project");
+        assert_eq!(report.notices, 4, "{name}");
+        assert_eq!(report.tenders, expected, "{name}: four text-era notices around a hub typed {hub_type}");
+        if expected == 3 {
+            assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 3, "{name}");
+            assert_eq!(versions_of(&db, "ojs:2009-000005").await, 1, "{name}: the hub stands alone, named after itself");
+            assert_eq!(versions_of(&db, "ojs:2010-000001").await, 2, "{name}: the award is inside its contract notice's Tender");
+            assert_eq!(versions_of(&db, "ojs:2010-000003").await, 1, "{name}: the second contract notice keys its own procedure");
+            assert_eq!(report.target_refusals.periodic_indicative, 2, "{name}");
+            assert_eq!(report.target_refusals.refused(), 2, "{name}");
+        } else {
+            assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 1, "{name}");
+            assert_eq!(
+                versions_of(&db, "ojs:2009-000005").await,
+                4,
+                "{name}: a hub NOT typed as shared welds all four, exactly as before"
+            );
+            assert_eq!(report.target_refusals.refused(), 0, "{name}");
+        }
+        // Kind-less citations are not the read-time gate's to count, either way.
+        assert_eq!(report.citations, project::CitationGate::default(), "{name}");
+
+        let _ = std::fs::remove_file(&path);
+    }
+}
+
 /// Issue 364's measured hub, pinned at the grouping level: notices 17283790,
 /// 17284506, 17284981, 17285150, 17285196 and 17285468 each carry their OWN
 /// distinct predecessor in `REF_NOTICE/NO_DOC_OJS` but ALSO cite the one periodic

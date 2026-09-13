@@ -2228,6 +2228,31 @@ fn citation_suffix(c: &project::CitationGate) -> String {
     )
 }
 
+/// Issue 364 unit 6: the grouping's own refusals, on the same job row. A citation
+/// with no declared kind — the text era's `TXT-RN`, the coded-data `REF_NOTICE` —
+/// passes the read-time gate above unexamined, and is refused instead where both
+/// ends of the edge are in view, by what the CITED notice is (its own document
+/// type). Printed per kind for the same reason as the read-time line, and silent
+/// on a run that refused nothing: there is no "admitted" to report here, because
+/// an edge this gate lets through is simply one it had no type to read.
+fn target_refusal_suffix(t: &project::CitationGate) -> String {
+    if t.refused() == 0 {
+        return String::new();
+    }
+    format!(
+        "; issue-364 edges refused by the cited notice's own type: {} \
+         (prior-information {}, buyer-profile {}, periodic-indicative {}, \
+         qualification-system {}, DPS {}, unknown kind {})",
+        t.refused(),
+        t.prior_information,
+        t.buyer_profile,
+        t.periodic_indicative,
+        t.qualification_system,
+        t.dps,
+        t.unknown_kind,
+    )
+}
+
 const STOPPABLE_KINDS: &[&str] = &[
     "reparse",
     "data-quality",
@@ -3287,7 +3312,11 @@ impl Supervisor {
                 // rule the capped reparse follows, issue 244).
                 let cancelled = if report.stopped { "CANCELLED at a checkpoint — " } else { "" };
                 let wall = wall_suffix(&report.wall);
-                let citations = citation_suffix(&report.citations);
+                let citations = format!(
+                    "{}{}",
+                    citation_suffix(&report.citations),
+                    target_refusal_suffix(&report.target_refusals)
+                );
                 Ok(format!(
                     "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged{wall}{citations}",
                     report.notices,
@@ -12096,6 +12125,21 @@ mod tests {
         // working" would be the issue-338 mistake one instrument over.
         let none_refused = project::CitationGate { admitted: 9, ..Default::default() };
         assert!(citation_suffix(&none_refused).contains("0 refused"));
+    }
+
+    /// Issue 364 unit 6: the grouping's target-type refusals get their own line,
+    /// per kind, and only when there is one. A text-era fold is where this line
+    /// carries the number the read-time gate cannot see (its citations declare no
+    /// kind), and a run that refused nothing must not print a row of zeros.
+    #[test]
+    fn the_target_refusal_suffix_names_the_kind_of_the_cited_notice() {
+        assert_eq!(target_refusal_suffix(&project::CitationGate::default()), "");
+        let t = project::CitationGate { periodic_indicative: 348, prior_information: 12, ..Default::default() };
+        let s = target_refusal_suffix(&t);
+        assert!(s.contains("cited notice's own type: 360"), "{s}");
+        assert!(s.contains("periodic-indicative 348"), "{s}");
+        assert!(s.contains("prior-information 12"), "{s}");
+        assert!(!s.contains("admitted"), "no admitted count exists for this gate: {s}");
     }
 
     /// Issue 313: the weekly pre-dawn tick must actually enqueue all three

@@ -4887,6 +4887,14 @@ pub struct PlanRow {
     /// notice names no buyer at all, which is distinct from naming an unidentifiable
     /// one.
     pub buyer_key: Option<String>,
+    /// Issue 364 unit 6: the kind of SHARED publication this notice itself is, by
+    /// its own document-type code (`PRIOR_INFORMATION_NOTICE`, `NOTICE_BUYER_PROFILE`,
+    /// `PERIODIC_INDICATIVE_NOTICE`, `NOTICE_QUALIFICATION_SYSTEM`,
+    /// `SIMPLIFIED_CONTRACT_NOTICE_DPS` — the citation gate's own vocabulary), or
+    /// `None` for a procedure notice. Classified in the projection, where the
+    /// per-era code tables live; STORED because the grouping needs it for the
+    /// notice at the OTHER end of an edge, which the planner never sees.
+    pub shared_kind: Option<String>,
 }
 
 /// One Tender's notices, streamed from the plan in fold order (issue 59). Carries
@@ -7306,7 +7314,10 @@ impl Db {
                  -- issue 369 unit 2: the placeholder-shape verdict, per notice.
                  key_shaped     INTEGER NOT NULL DEFAULT 0,
                  -- issue 369 unit 2: the buyer set, sorted and joined.
-                 buyer_key      TEXT
+                 buyer_key      TEXT,
+                 -- issue 364 unit 6: the shared-publication kind this notice IS, by its
+                 -- own document type; NULL for a procedure notice.
+                 shared_kind    TEXT
              ) STRICT",
             (),
         )
@@ -7560,8 +7571,8 @@ impl Db {
             conn.execute(
                 "INSERT INTO plan_notice(notice_id, procedure_key, legacy, ojs_self, source,
                      source_rank, publication_id, published_at, subtype, group_key, key_shaped,
-                     buyer_key)
-                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)",
+                     buyer_key, shared_kind)
+                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)",
                 (
                     Value::Integer(r.notice_id),
                     opt_text(r.procedure_key.as_deref()),
@@ -7574,6 +7585,7 @@ impl Db {
                     opt_text(r.subtype.as_deref()),
                     Value::Integer(i64::from(r.key_shaped)),
                     opt_text(r.buyer_key.as_deref()),
+                    opt_text(r.shared_kind.as_deref()),
                 ),
             )
             .await?;
@@ -7638,7 +7650,12 @@ impl Db {
     ///   encoded `year*1e9 + number` so a single `MIN` gives the earliest.
     ///
     /// Finally builds the fold-order index Phase 2 streams by.
-    pub async fn build_plan_groups(&self) -> turso::Result<()> {
+    ///
+    /// Returns the issue-364 unit-6 tally: the legacy edges refused because one
+    /// endpoint is a SHARED publication by its own document type (`plan_notice.
+    /// shared_kind`), as `(kind, edges)` pairs sorted by kind. A resumed grouping
+    /// returns an empty tally — the refusals happened in the run that built it.
+    pub async fn build_plan_groups(&self) -> turso::Result<Vec<(String, u64)>> {
         let conn = self.conn().await;
         // Resumable grouping: the fold index is this method's LAST write, so its
         // presence means a prior run already assigned every group_key from the SAME
@@ -7655,7 +7672,7 @@ impl Db {
             if r.next().await?.is_some() {
                 drop(r);
                 eprintln!("[project] group: reusing complete on-disk grouping (fold index present)");
-                return Ok(());
+                return Ok(Vec::new());
             }
         }
         // Fresh grouping (the fold index is absent — reset_plan dropped it). The
@@ -7770,12 +7787,72 @@ impl Db {
         // singleton component). Edges are symmetric, so one side covers endpoints.
         let t = std::time::Instant::now();
         let mut uf = MinUnionFind::default();
+        // ISSUE 364 unit 6 — an edge is refused when EITHER end is a shared
+        // publication by its own document type.
+        //
+        // The read-time gate (`ojs_chain_edges`) can refuse a citation only where
+        // the citing payload DECLARES the cited publication's kind; the text era's
+        // `TXT-RN` and the coded-data `REF_NOTICE/NO_DOC_OJS` declare nothing, so
+        // every text-era award that names the periodic indicative notice it was
+        // called under became an edge, and one PIN welded hundreds of unrelated
+        // procurements (4228069: 928 versions). The cited notice's OWN type is the
+        // fact the citer cannot state, and it is known here: the planner stamps
+        // each legacy row's `shared_kind` from its document-type code, and the
+        // grouping is the first place both ends of an edge are in view.
+        //
+        // Either end, not just the target: a shared publication is not a link in
+        // ANY procedure chain — a qualification-system notice citing last year's
+        // is the same many-procurements-one-publication shape from the other side,
+        // and the declared-kind gate already refuses that direction too. A flagged
+        // notice keeps its own node (added below from `ojs_self`), so it becomes a
+        // singleton Tender named after itself rather than vanishing. An endpoint
+        // NOT in the plan (a phantom, or a notice never ingested) has no type to
+        // read and its edge is admitted unchanged — the same allowance ADR-0011
+        // makes for phantoms, and the same on a full and an incremental run, since
+        // the legacy closure pulls every notice touching a key into the plan.
+        //
+        // Counted per kind, once per citation (the rows are symmetric, so the
+        // `a < b` orientation of each pair is counted): the tally rides the run's
+        // Report beside the read-time gate's, because a refusal nobody can read is
+        // how this defect stood for years.
+        let shared: std::collections::HashMap<i64, String> = {
+            let mut map = std::collections::HashMap::new();
+            let mut rows = conn
+                .query(
+                    "SELECT ojs_self, shared_kind FROM plan_notice
+                      WHERE legacy = 1 AND ojs_self IS NOT NULL AND shared_kind IS NOT NULL",
+                    (),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                map.insert(int(&row, 0), text(&row, 1));
+            }
+            map
+        };
+        let mut refused_by_kind: std::collections::BTreeMap<String, u64> =
+            std::collections::BTreeMap::new();
         {
             let mut rows = conn.query("SELECT a, b FROM plan_ojs_edge", ()).await?;
             while let Some(row) = rows.next().await? {
-                uf.union(int(&row, 0), int(&row, 1));
+                let (a, b) = (int(&row, 0), int(&row, 1));
+                if let Some(kind) = shared.get(&a).or_else(|| shared.get(&b)) {
+                    if a < b {
+                        *refused_by_kind.entry(kind.clone()).or_default() += 1;
+                    }
+                    continue;
+                }
+                uf.union(a, b);
             }
         }
+        // Logged including the zero, for the same reason as the representative
+        // rule below: silence and "not running" look the same.
+        eprintln!(
+            "[project] group step shared-publication: {} edge(s) refused because an endpoint \
+             is a shared publication by its own document type, over {} flagged node(s) \
+             (issue 364 unit 6)",
+            refused_by_kind.values().sum::<u64>(),
+            shared.len()
+        );
         {
             let mut rows = conn
                 .query("SELECT ojs_self FROM plan_notice WHERE legacy = 1 AND ojs_self IS NOT NULL", ())
@@ -8098,7 +8175,7 @@ impl Db {
             eprintln!("[project] ANALYZE plan_notice failed (non-fatal): {e}");
         }
         eprintln!("[project] group step analyze: {:.1}s", t.elapsed().as_secs_f64());
-        Ok(())
+        Ok(refused_by_kind.into_iter().collect())
     }
 
     /// `(tenders, islands)` in the built plan — distinct group keys, and those that
@@ -21941,6 +22018,7 @@ mod tests {
             prev_refs: Vec::new(),
             key_shaped: true,
             buyer_key: Some(buyer.to_owned()),
+            shared_kind: None,
         };
         const WELDED: &str = "11111111-2222-4000-8111-123412341235";
         const ONE_BUYER: &str = "11111111-2222-4aaa-8333-444444444444";
@@ -22076,6 +22154,7 @@ mod tests {
             prev_refs: Vec::new(),
             key_shaped: false,
             buyer_key: None,
+            shared_kind: None,
         };
         db.insert_plan(&[
             // Both real notices cite the phantom, so it is what joins them.
@@ -22143,6 +22222,7 @@ mod tests {
             prev_refs: Vec::new(),
             key_shaped: false,
             buyer_key: None,
+            shared_kind: None,
         };
         db.insert_plan(&[row(1, FIRST, Vec::new()), row(2, SECOND, vec![FIRST])])
             .await
@@ -22165,6 +22245,96 @@ mod tests {
 
         for suffix in ["", "-wal", "-shm"] {
             let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
+
+    /// Issue 364 unit 6: an edge touching a SHARED publication joins nothing.
+    ///
+    /// The text era's `TXT-RN` declares no kind, so the read-time gate admits every
+    /// citation it makes; the periodic indicative notice each award was called under
+    /// was then the hub that welded 928 versions into one Tender (4228069). The cited
+    /// notice's OWN document type is the fact the citer cannot state — and it is in
+    /// the plan, so the grouping can read it for both ends of the edge.
+    ///
+    /// A/B on the flag alone: the same four rows with the PIN unflagged are ONE
+    /// component, so what splits them is `shared_kind` and nothing else about the
+    /// fixture. The PIN keeps its own node and becomes a singleton named after itself.
+    #[tokio::test]
+    async fn an_edge_touching_a_shared_publication_joins_nothing() {
+        const PIN: i64 = 2009_000_000_005;
+        const CN: i64 = 2010_000_000_001;
+        const CN2: i64 = 2010_000_000_003;
+        const AWARD: i64 = 2010_000_000_009;
+
+        for (name, pin_kind) in [("plan-shared-pin", Some("PERIODIC_INDICATIVE_NOTICE")), ("plan-shared-none", None)] {
+            let (db, path) = scratch_db(name).await;
+            db.reset_plan().await.expect("plan tables");
+
+            let row = |notice_id: i64, ojs_self: i64, edges: Vec<i64>, shared_kind: Option<&str>| super::PlanRow {
+                notice_id,
+                procedure_key: None,
+                legacy: true,
+                ojs_self: Some(ojs_self),
+                source: "ted".to_owned(),
+                source_rank: 1,
+                publication_id: format!("{notice_id:08}-2010"),
+                published_at: 1_260_000_000 + notice_id,
+                subtype: None,
+                ojs_edges: edges,
+                prev_refs: Vec::new(),
+                key_shaped: false,
+                buyer_key: None,
+                shared_kind: shared_kind.map(str::to_owned),
+            };
+            db.insert_plan(&[
+                // The periodic indicative notice: cites nothing, is cited by both CNs.
+                row(1, PIN, Vec::new(), pin_kind),
+                // Two unrelated contract notices called under it, and one award chaining
+                // onto the first — the per-procedure edge that must survive.
+                row(2, CN, vec![PIN], None),
+                row(3, AWARD, vec![CN], None),
+                row(4, CN2, vec![PIN], None),
+            ])
+            .await
+            .expect("insert plan");
+
+            let refused = db.build_plan_groups().await.expect("group");
+
+            async fn key_of(db: &Db, notice_id: i64) -> String {
+                match db
+                    .scalar(&format!("SELECT group_key FROM plan_notice WHERE notice_id = {notice_id}"))
+                    .await
+                    .expect("group_key")
+                {
+                    Some(turso::Value::Text(t)) => t,
+                    other => panic!("notice {notice_id}: no group_key ({other:?})"),
+                }
+            }
+
+            if pin_kind.is_some() {
+                assert_eq!(key_of(&db, 2).await, "ojs:2010-000001", "{name}: the CN keys its own procedure");
+                assert_eq!(key_of(&db, 3).await, "ojs:2010-000001", "{name}: the award still chains onto its CN");
+                assert_eq!(key_of(&db, 4).await, "ojs:2010-000003", "{name}: the second CN is its own procedure");
+                assert_eq!(
+                    key_of(&db, 1).await,
+                    "ojs:2009-000005",
+                    "{name}: the PIN keeps its node and stands alone rather than vanishing"
+                );
+                assert_eq!(
+                    refused,
+                    vec![("PERIODIC_INDICATIVE_NOTICE".to_owned(), 2)],
+                    "{name}: two citations refused, counted once each despite the symmetric rows"
+                );
+            } else {
+                for n in [1, 2, 3, 4] {
+                    assert_eq!(key_of(&db, n).await, "ojs:2009-000005", "{name}: unflagged, the PIN welds all four");
+                }
+                assert!(refused.is_empty(), "{name}: nothing to refuse without a flag: {refused:?}");
+            }
+
+            for suffix in ["", "-wal", "-shm"] {
+                let _ = std::fs::remove_file(format!("{path}{suffix}"));
+            }
         }
     }
 
@@ -22197,6 +22367,7 @@ mod tests {
             prev_refs: Vec::new(),
             key_shaped,
             buyer_key: None,
+            shared_kind: None,
         };
         db.insert_plan(&[
             row(1, "11111111-2222-4000-8111-123412341235", true),
