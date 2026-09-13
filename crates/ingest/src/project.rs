@@ -5737,6 +5737,13 @@ fn normalise_identifier_with(raw: &str, country: Option<&str>, folds: bool) -> O
 /// mentions) and the raw `eu`/`EU` scheme (252k) are UNMEASURED — the read timed
 /// out three times — and after the `OTROS` episode the standard for adding one is
 /// a per-VALUE fusion measurement, not a per-org one.
+///
+/// The ISO 6523 numeric codes were measured by that standard on 2026-09-13
+/// (`notice_id > 30M`; baseline 5.8 % of values spanning ≥2 names, worst 93):
+/// `002` (SIRENE — 2,119 values, 4.7 %, worst 13) and `0192` (the Norwegian
+/// organisation number — 27 values, 3.7 %, worst 2) are the ONLY numeric schemes
+/// the eForms era publishes, no GLN code (`0088`) or GLN-named scheme exists, and
+/// both are register keys running below baseline. Declined; still empty.
 pub const DENIED_SCHEMES: &[&str] = &[];
 
 fn scheme_never_keys(scheme: Option<&str>) -> bool {
