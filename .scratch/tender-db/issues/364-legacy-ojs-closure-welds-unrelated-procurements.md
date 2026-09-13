@@ -854,3 +854,24 @@ this morning's run.
 *Unit 5's bill, for the record:* nine reclaim-only chunks, ~6.5 h of re-parse wall clock across two
 nights, one 3.8-h full pass, no job ever queued behind another of mine, and the weekly batch and
 the daily tick ran on time in between.
+
+### The exhibits read after the pass (2026-09-13 14:5x CEST) — the pair is joint procurement, 4228069 is the residual weld
+
+| tender | what the versions say |
+| --- | --- |
+| 4459994 (`ojs:2011-010241`) | 195 versions in 2011 + 2 in 2012, every one titled **"Samenaankoop Elektriciteit 2012-2014"** — a Dutch/Belgian collective electricity purchase, consecutive publications 112143-2011 … 112241-2011, one buyer each |
+| 4459995 (`ojs:2011-010242`) | the twin: **"Samenaankoop Aardgas 2012-2014"** (gas), 26 distinct title variants over 198 versions |
+| 4228069 (`ojs:2010-001662`) | **57 distinct titles over 88 versions**: "drilling and exploration work", "underground work other than tunnels", "Wykonanie przebudowy Zbiorczej Drogi Wentylacyjnej", "chodnika kamiennego nr 9" — separate procurements of one Polish mining company (KW SA), chained to the 2010/S 2-001662 heading |
+
+So the "adjacent pair" the issue listed as a mechanism exhibit is **the joint-procurement shape issue 377
+named**: ~195 buyers because ~195 municipalities each published their own notice against one shared
+procurement, and the gate is right to admit those citations. The 2026-09-10 note that called them "one
+Lithuanian lab equipment and one Slovak office furniture" read the head titles of a weld that the pass
+has since dissolved around them; their true titles are above. **They are not welds and are not this
+issue's problem.**
+
+4228069 is: 34 buyers (the company's mines), 57 procurements, one tender, after a pass that refused
+348k citations. **Next unit (a read): the edges that hold 4228069's 88 notices together** — for each
+of its versions' notices, the previous-publication citations (field, cited publication, declared kind,
+admitted or refused) and the `NO_DOC_OJS` self-numbers — to name the edge class the gate admits and
+should not, or the non-citation join. Bounded: 88 notices by id.
