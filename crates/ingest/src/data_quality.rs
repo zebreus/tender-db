@@ -2896,7 +2896,7 @@ pub fn render_text(report: &Report) -> String {
              **And it is NOT the detector for issue 368's own failures.** Those were a MODELLED \
              concept going missing because the closed vocabulary did not know one publisher's \
              spelling — 29,455 titleless tenders, r208's 100 %-null lot titles. \
-             the destination test is profile-BLIND: a field is either always read or never, so \
+             The destination test is profile-BLIND: a field is either always read or never, so \
              no per-profile asymmetry can show through it. That entry point is the completeness \
              section (a profile with a gap), then `GET /admin/unmapped-fields?profile=` — the \
              per-profile probe (issue 368). `channel` is the table the rows sit in, and the \
