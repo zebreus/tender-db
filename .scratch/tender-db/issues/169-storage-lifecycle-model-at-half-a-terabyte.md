@@ -377,3 +377,8 @@ First reading, right after the trim: file 604.0 GiB, allocated 604.6 GiB, **0.10
 (the extent-tree overhead of 30.7 M extents), alarm null; volume 49.0 % used, 846.1 GiB
 free — it read 73.9 % at 01:10 this morning. A restart (the deploy) left `df` unchanged at
 866,405 MiB and the file's `cowextsize 4096` in place.
+
+*2026-09-13:* the issue-361 hand sample during the weekly data-quality job read 0 `(deleted)`
+descriptors in 15 of 15 readings and `df` unchanged at 61 %; the disk-census the same morning read
+1005.2 GiB used (60.6 %), file 614.3 GiB allocated 0.15 % over, 0 unlinked-but-open, and a
+two-point rate of −31.5 GiB/day against last Sunday (the r208 refold and the reflink trim between).

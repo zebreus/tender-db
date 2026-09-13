@@ -91,3 +91,27 @@ vanish on close. Baseline after the deploy restart: 0 files, 0 bytes. The weekly
 2026-09-13 (01:10 UTC start) is the first measurement that matters; the census runs in it,
 and the gauges can be read at any point during it. Step 2 (the creator) starts from the
 sample's paths.
+
+## Sunday 2026-09-13 sample during the weekly data-quality job
+
+The scheduled measurement window, run as the recipe says: pid 3635482, one reading a minute for 15
+minutes (03:43–03:58 CEST) while job 1341 (`data-quality`) was in its `measuring` phase (units 42 →
+58 of 522 — the windowed queries, before the whole-corpus statements). Bounded reads only.
+
+| reading | `(deleted)` descriptors | files under `/data/tmp` | sizes |
+| --- | --- | --- | --- |
+| every one of 15 | **0** | `tursodb-temp.db`, `tursodb-temp.db-wal` | 4,096 B, 32 B |
+
+`df /data`: 1006 G used, 654 G free, 61 % at start and at end — unchanged. The in-process gauge
+`tender_db_deleted_open_files` read 0 at the end of the window, and this Sunday's `disk-census`
+(job 1339, 03:10) read 0 unlinked-but-open files (0.0 GiB) before the job started.
+
+**So the class did not reproduce in this window.** The two `/data/tmp` files are the fresh
+process's standing turso temp database (the 2026-09-06 baseline saw the same pair), never in the
+`(deleted)` state and 4 KiB in size. What this window did NOT cover: the job's whole-corpus
+statements (they run after the 480 windowed units) and the org-scan jobs queued behind it — the
+2026-09-06 observation was tied to the heavy-job night as a whole, not to one phase. The detection
+built on 2026-09-06 watches continuously (gauge + weekly census with the 1 GiB alarm), so a
+non-zero reading will land on the report without a keyboard; a hand sample at a chosen minute is
+the wrong instrument for a class that may appear for seconds, and this one is the last of its kind
+unless the gauge fires.
