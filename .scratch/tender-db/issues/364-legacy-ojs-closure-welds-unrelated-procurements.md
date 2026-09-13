@@ -956,3 +956,10 @@ the sieve now knows the three document-type fields are read (`has_destination(_,
 
 Next: gate, commit, deploy; then the text-era refold in a quiet window (era-wide stamp, ~4 h full
 pass — never alongside the daily tick), and re-read 4228069 and the weld gauge after it.
+
+**Deployed b9800a2 (2026-09-13 15:36 CEST, box idle) and started the text-era refold** — sized
+first (`refold text, expect 1` → 3,786,955 notices), then job 1358 `refold text` with that count
+and project 1359 behind it (15:40 CEST). 3.79M un-projected legacy notices is far above the
+500k cap, so 1359 is the full pass (~4 h): read its job row for the new
+`issue-364 edges refused by the cited notice's own type: …` line, then re-read 4228069
+(`ojs:2010-001662`, 88 versions before) and the weld gauge on the 2026-09-20 report.
