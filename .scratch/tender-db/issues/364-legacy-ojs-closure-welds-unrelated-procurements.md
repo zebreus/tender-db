@@ -963,3 +963,10 @@ and project 1359 behind it (15:40 CEST). 3.79M un-projected legacy notices is fa
 500k cap, so 1359 is the full pass (~4 h): read its job row for the new
 `issue-364 edges refused by the cited notice's own type: …` line, then re-read 4228069
 (`ojs:2010-001662`, 88 versions before) and the weld gauge on the 2026-09-20 report.
+
+**The grouping under unit 6 (project 1359, 2026-09-13 18:10 CEST, journal):** `501,696 edge(s)
+refused because an endpoint is a shared publication by its own document type, over 463,663
+flagged node(s)`; union-load 11,007,420 nodes; 4,932 components renamed off a phantom minimum
+(unit 3); **8,505,541 tenders** in 256 s. Phase-1 planned 14,373,394 notices (WAL 2.9 GB, peak
+RSS 4.2 GB). The fold started 18:13 CEST (2.41M of 8.51M by 18:50); the job row's two issue-364
+lines and 4228069's version count are read when it finishes.
