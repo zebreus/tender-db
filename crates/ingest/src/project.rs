@@ -4731,6 +4731,11 @@ pub fn table_reads(table: &str, field_id: &str) -> bool {
 /// the entire legacy vocabulary reads as read — the r208 probe reported 0
 /// unmapped of 311 that way (2026-09-12). [`table_reads`] is the question a
 /// diagnostic wants.
+///
+/// Test-only since 2026-09-13: its last non-test caller was the sieve above, and
+/// the alias gate that asks this question is the test below — so it is compiled
+/// only there, rather than warning as dead code on every build.
+#[cfg(test)]
 fn any_channel_reads(field_id: &str) -> bool {
     [
         Channel::Text,
