@@ -797,3 +797,11 @@ data-quality (10,018 s, 0 labels unmeasured), rehash-probe (8 unchanged), build-
 org-merge-health, dry and wet scan-org-match-keys (1,289,554 edges, 28,065 new) — all `ok`.
 **Chunk 8: job 1347**, `after: 156`, 20 packages, submitted 06:32; chunk 9 (the last 10 packages)
 follows before the 09:30 daily tick if chunk 8 finishes in time, else after the daily project.
+
+| 8 | 1347 | 20 | 156 → 176 | 698,307 | 698,307 | 4,891 s |
+| 9 | 1348 | 10 | 176 → (end) | running (submitted 07:53 CEST) | | |
+
+Chunk 8 (06:32 → 07:53 CEST): 698,307 notices in 82 min. **Running total 2,389,606 notices over 151
+of 161 packages.** Chunk 9 — the last ten packages — is running and should finish before the 09:30
+daily tick, whose `project` will then take the full pass over the whole era (2.4 M+ un-projected
+legacy notices, far past the 500,000 cap; ~5.2 h on the 2026-09-10 measurement).
