@@ -1,6 +1,6 @@
 # 365 — any ≥4-character alphanumeric string containing a digit becomes an Organization merge key: field labels, phone numbers, notice numbers, department names
 
-Status: ready-for-agent — **UNITS 1 AND 2 SHIPPED, DEPLOYED AND VERIFIED ON PROD 2026-09-09
+Status: DONE 2026-09-13 (owner) — the last loose end is MEASURED AND DECLINED: the only ISO 6523 numeric scheme codes the eForms era publishes are `002` (SIRENE) and `0192` (Norwegian org number), no GLN code or GLN-named scheme exists, and both run BELOW the 5.8 % per-value fusion baseline (4.7 % / 3.7 %, worst 13 / 2), so no scheme earns a denial and there is no standing-row catch-up to build. `DENIED_SCHEMES` stays empty. Units 1-3 shipped, 4 landed-then-reverted on measurement, 5 decided, 6 superseded; see the section below.
 (`6da7320`)**, standing stock dissolved and re-censused the same firing; every "done when" bullet
 for these two units is met. See "Units 1+2 DONE" and "The dissolve, verified". Units 3 (letter-run,
 22,796 rows), 4 (carry the publisher's scheme into the normaliser and apply the denial list at E0)
@@ -528,3 +528,36 @@ different route months earlier, rather than merely being self-consistent.
 - the weekly org report carries the letter-run and nameless-row counts, so neither class can grow unobserved again.
 
 *One issue because:* the field name, the phone numbers, the department name, the Leitweg ids, the OJS numbers and the DB reference numbers are all the same line of code — the `national()` catch-all with the scheme thrown away and `condemns` reading half of what `census` computes. Unit 5 is the same admission rule seen from the other side (no key at all), which is why it lives here rather than under 234/351.
+
+
+## The ISO 6523 loose end — MEASURED AND DECLINED (2026-09-13, owner)
+
+The premise was "GLN etc. arrive as ISO 6523 numeric scheme codes (`0192`, `002`)". Measured on
+prod with bounded reads over `organization_mentions.scheme`:
+
+| window | numeric schemes present | mentions | distinct values |
+| --- | --- | --- | --- |
+| `notice_id > 30,000,000` | `002` | 8,980 | 2,119 |
+| | `0192` | 72 | 27 |
+| `25,000,000 < notice_id ≤ 30,000,000` | `002` | 331,664 | 26,385 |
+| | `0192` | 342 | 72 |
+| `> 30,000,000`, scheme containing GLN / EAN / 6523 | — | 0 | 0 |
+
+No other numeric code exists in either window — no `0088` (GLN/EAN), no `0208` (KBO), no `0210`.
+`002` is ICD 0002 with its leading zero dropped: SIRENE, the French SIREN/SIRET register — a
+company register key, the opposite of location-scoped. `0192` is the Norwegian Enhetsregisteret
+organisation number, likewise a register key.
+
+The per-VALUE yardstick (this issue's standard, `notice_id > 30,000,000`; baseline 5.8 %
+multi-name, worst 93):
+
+| scheme | values | ≥2 names | worst | verdict |
+| --- | --- | --- | --- | --- |
+| `002` | 2,119 | 100 (**4.7 %**) | 13 | working key — DECLINED (0.8× baseline) |
+| `0192` | 27 | 1 (**3.7 %**) | 2 | working key — DECLINED |
+
+Both are below baseline, so neither earns a denial; the Austrian GLN read on issue 327 was by
+VALUE shape inside national ids, not by scheme, and stays where it is. With no scheme denied,
+unit 6's standing-row catch-up has nothing to catch up, and the mechanism note above ("the
+selector is right, the re-fold cannot work") stands as the design record for a future denial.
+`DENIED_SCHEMES` remains empty by measurement, recorded on the constant too.
