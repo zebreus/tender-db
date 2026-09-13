@@ -359,6 +359,36 @@ so progress and cancellation stay per-package. Jobs run **one at a time** in
 enqueue order — the writer is single anyway — so a fetch → process → project
 sequence lands in order.
 
+### Reading a `project` job's `counts` line (issues 318, 364)
+
+A finished `project` writes one summary line to its job row (`GET /admin/jobs` →
+`recent[].counts`), and the run's gate tallies ride it because this runtime's
+stderr does not reach journald (issues 61/63):
+
+```
+<n> notices → <t> tenders (<i> islands), <v> versions; <w> tenders written, <u> verified unchanged
+; <the issue-318 genericness-wall suffix, when the wall was consulted>
+; issue-364 previous-publication citations: N admitted, M refused (prior-information …, buyer-profile …, periodic-indicative …, qualification-system …, DPS …, undeclared …, unknown kind …)
+; issue-364 edges refused by the cited notice's own type: K (prior-information …, buyer-profile …, periodic-indicative …, qualification-system …, DPS …, unknown kind …)
+```
+
+The two issue-364 lines are two different gates and read differently:
+
+- **`previous-publication citations`** is the read-time gate — what the CITING
+  notice declared its citation to be (the r2.0.8/r2.0.9 `.PREV_KIND` rows). About
+  19 % refused is the measured, expected shape; the same total arriving as
+  `undeclared` means an era publishes a slot the gate has not been taught. Absent
+  when the run planned no legacy citation at all.
+- **`edges refused by the cited notice's own type`** is the grouping-time gate —
+  what the CITED notice IS by its own document-type code (`TXT-TD`,
+  `TED-TD_DOCUMENT_TYPE`, `TED-NAT_NOTICE`). It is the only line that can count
+  the text era, whose `TXT-RN` declares no kind, and it is absent when nothing was
+  refused. A resumed grouping (fold index already on disk) reports nothing here:
+  the refusals happened in the run that built it.
+
+`unknown kind` non-zero on either line is a vocabulary gap in the code, not a
+corpus fact — look at it before reading the split as right.
+
 ### Sizing a `reparse`, because packages are the wrong unit (measured 2026-09-10)
 
 `reparse` takes `profiles` and an optional `packages` cap, and the cap tempts you to think in
