@@ -791,3 +791,9 @@ Chunk 7 (01:33 → 03:09 CEST): 747,231 notices in 96 min, every member a notice
 **Running total 1,691,299 notices over 131 of 161 packages**; 30 packages remain (chunks 8–9). The
 weekly tick's eight jobs queued behind chunk 7 and started at 03:10 as scheduled: disk-census read
 **0 unlinked-but-open files (issue 361)** and 60.6 % used, ghost-census 0, data-quality running.
+
+Sunday 06:32 CEST: the weekly batch behind chunk 7 ran clean — disk-census, ghost-census (0 ghosts),
+data-quality (10,018 s, 0 labels unmeasured), rehash-probe (8 unchanged), build-org-match-keys,
+org-merge-health, dry and wet scan-org-match-keys (1,289,554 edges, 28,065 new) — all `ok`.
+**Chunk 8: job 1347**, `after: 156`, 20 packages, submitted 06:32; chunk 9 (the last 10 packages)
+follows before the 09:30 daily tick if chunk 8 finishes in time, else after the daily project.
