@@ -281,3 +281,53 @@ Under a minute, public API only.
   empty 200.
 - Issue 217's Verification line is corrected where it records `&kind=VAT` as passing, so the wrong
   assumption stops being cited as evidence.
+
+## BOTH UNITS BUILT 2026-09-15 (owner)
+
+### Unit 1 — `successor` steps a character, not a byte
+
+`crates/store/src/read.rs`. The old body incremented the last BYTE and then called
+`String::from_utf8(…).ok()`, so a `0xBF` tail byte became `0xC0`, the string stopped being UTF-8, and
+the `.ok()` that noticed turned it into `None` — which both call sites (`read.rs:2906` and the
+name-ordered `organizations_by_name` at `:2943`) read as "no upper bound". The new body pops the last
+CHARACTER, increments its scalar value, steps over the surrogate gap (`U+D7FF` → `U+E000`), and
+carries into the previous character when the last one is `char::MAX`.
+
+`None` now means what those call sites already assume: there genuinely is no upper bound. It happens
+for the empty prefix (everything matches) and for a prefix that is entirely `char::MAX` (nothing
+sorts above it). Neither widens a result, so no call site needed changing.
+
+**Why the test is on the function and not end to end.** A too-wide range and a correct one differ
+only in rows the page limit cut off, so an assertion on a served page cannot distinguish them — the
+same reason issue 117's guard test sits on `prefix_ranges`. `the_prefix_successor_steps_a_character_not_a_byte`
+asserts the two properties that make `>= prefix AND < successor` mean "has this prefix": the successor
+is strictly greater than the prefix, and the prefix extended by `U+10FFFF` still sorts below it. It
+covers one carrier per alphabet the corpus holds (`яп` `d0 bf`, `δήμο` `ce bf`, `¿` `c2 bf`), the
+surrogate gap, and the two degenerate cases. It bites on the old code: `succ("яп")` returned `None`
+where the test demands `Some("яр")`.
+
+### Unit 2 — `kind` is folded at the edge
+
+`crates/app/src/v1/mod.rs`: `kind: self.kind.clone()` → trimmed and ASCII-lowercased, in the same
+block that already folds `name_prefix` (Unicode-lowercased) and `currency`. Every vocabulary this
+parameter filters is lowercase-only in store — `vat`, `national` on organizations, `procedure` on
+tenders — so no casing can be lost, and the uppercase spelling `/docs` prints as the front-door
+identifier lookup now works.
+
+Empty-string handling is deliberately UNCHANGED: `kind=` still yields `Some("")` and matches nothing,
+as before. Turning it into `None` would silently drop a filter the response reports as applied, which
+is the issue-118/284 failure mode one step over; if that shape is worth refusing it is its own change.
+
+`organizations_can_be_looked_up_by_identifier` now runs the identifier+kind pairing in three casings
+(lower, upper, title) and asserts the org comes back in each.
+
+### Still open
+
+- **Neither unit's served-side numbers have been re-measured on prod** — the fixes are built and
+  gated but not deployed; the box is folding the issue-395 backfill. The `## Done when` bullets
+  (`name_prefix=яп` returning 1/1, `δήμο&country=FR` returning an empty page, `kind=VAT` returning
+  org 2) are the acceptance reads for the next idle window.
+- The issue notes `successor`'s sibling risk: `prefix_ranges` (the case-variant expansion for
+  `cpv`/`country`) calls `successor` too, at `read.rs:1381`. It is ASCII-only by construction — the
+  guard declines non-ASCII prefixes outright (issue 117) — so it was never exposed to the defect, and
+  it inherits the fix for free.

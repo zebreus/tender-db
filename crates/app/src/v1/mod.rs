@@ -641,7 +641,14 @@ impl Params {
                     )));
                 }
             },
-            kind: self.kind.clone(),
+            // Issue 387 unit 2: folded HERE, once, like `name_prefix` below and
+            // `currency` above. Every stored vocabulary this parameter filters is
+            // lowercase-only — `vat`/`national` on organizations, `procedure` on
+            // tenders — so an uppercase spelling matched nothing and reported it as
+            // `ignored_filters: []`, i.e. as an applied filter with an empty result.
+            // `/docs` prints `kind=VAT` as the front-door identifier lookup, so the
+            // documented example was the failing one.
+            kind: self.kind.as_deref().map(|k| k.trim().to_ascii_lowercase()),
             tender: self.tender,
             publication_id: self.publication_id.clone(),
             identifier: self.identifier.clone(),

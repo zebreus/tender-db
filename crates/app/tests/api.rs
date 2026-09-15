@@ -943,13 +943,23 @@ async fn organizations_can_be_looked_up_by_identifier() {
         );
 
         // Paired with its scheme, still a hit (kind narrows, does not exclude).
+        // Issue 387 unit 2: in EVERY casing. The stored vocabulary is lowercase
+        // (`vat`, `national`), and `kind` used to be passed through unfolded — so
+        // the uppercase spelling `/docs` prints as the front-door identifier
+        // lookup returned an empty page with `ignored_filters: []`, which reads
+        // as "filter applied, nothing matches" rather than "filter never matched".
         if let Some(kind) = kind {
-            let paired =
-                server.get(&format!("/v1/organizations?identifier={value}&kind={kind}")).await;
-            assert!(
-                items(&paired).iter().any(|o| o["id"].as_i64() == Some(id)),
-                "identifier + its own kind still returns the org"
-            );
+            for spelling in [kind.to_lowercase(), kind.to_uppercase(), {
+                let mut c = kind.chars();
+                c.next().map(|f| f.to_uppercase().collect::<String>() + c.as_str()).unwrap_or_default()
+            }] {
+                let paired =
+                    server.get(&format!("/v1/organizations?identifier={value}&kind={spelling}")).await;
+                assert!(
+                    items(&paired).iter().any(|o| o["id"].as_i64() == Some(id)),
+                    "identifier + its own kind spelled {spelling:?} still returns the org"
+                );
+            }
         }
     }
 

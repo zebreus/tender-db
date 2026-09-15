@@ -1342,6 +1342,11 @@ pub(crate) fn prefix_ranges_for_test(prefix: &str) -> Option<Vec<(String, String
     prefix_ranges(prefix)
 }
 
+#[cfg(test)]
+pub(crate) fn successor_for_test(prefix: &str) -> Option<String> {
+    successor(prefix)
+}
+
 fn prefix_ranges(prefix: &str) -> Option<Vec<(String, String)>> {
     /// 2^4 = 16 seeks at ~0.01s is still four orders of magnitude under the walk it
     /// avoids; beyond that the guard stops paying for itself.
@@ -1383,12 +1388,36 @@ fn prefix_ranges(prefix: &str) -> Option<Vec<(String, String)>> {
 
 /// The least string greater than every string starting with `prefix`, so
 /// `code >= prefix AND code < successor` is exactly "has this prefix".
+///
+/// Increments the last CHARACTER, not the last byte (issue 387). The byte
+/// version looked equivalent — UTF-8 sorts byte-wise in code-point order, which
+/// is what makes this range trick work at all — but incrementing a byte can
+/// leave a string that is not UTF-8 at all, and the `String::from_utf8(…).ok()`
+/// that noticed turned into a `None`, which both call sites read as "no upper
+/// bound". The search then walked from the prefix to the end of the table and
+/// served whatever the page limit cut it off at.
+///
+/// It fires on any prefix whose last character ends in byte `0xBF` — the last
+/// code point of each UTF-8 block, so roughly 1 letter in 64 across the alphabets
+/// that need more than ASCII: Cyrillic `п` (`d0 bf`), Greek `ο` (`ce bf`), `¿`
+/// (`c2 bf`). Measured on prod: `name_prefix=яп` returned 1 match and 4
+/// non-matches on the first page, and `name_prefix=δήμο&country=FR` returned five
+/// rows of which none started with the prefix, both with `ignored_filters: []`.
+///
+/// `None` now means what the call sites already assume: there IS no upper bound,
+/// because the prefix is empty (everything matches) or is entirely `char::MAX`
+/// (nothing sorts above it). Neither widens a result.
 fn successor(prefix: &str) -> Option<String> {
-    let mut bytes = prefix.as_bytes().to_vec();
-    while let Some(last) = bytes.pop() {
-        if last < 0xFF {
-            bytes.push(last + 1);
-            return String::from_utf8(bytes).ok();
+    let mut out = prefix.to_owned();
+    while let Some(last) = out.pop() {
+        // The next scalar value, stepping over the surrogate gap D800..=DFFF,
+        // which `char::from_u32` rejects. `char::MAX + 1` is rejected too, and
+        // that is the carry: drop this character and increment the one before.
+        let next = u32::from(last) + 1;
+        let next = if next == 0xD800 { 0xE000 } else { next };
+        if let Some(next) = char::from_u32(next) {
+            out.push(next);
+            return Some(out);
         }
     }
     None

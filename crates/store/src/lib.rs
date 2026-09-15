@@ -6558,6 +6558,60 @@ tmpfs /data/ramcache tmpfs rw 0 0
         }
     }
 
+    /// Issue 387: the prefix range's UPPER bound, asserted on the function itself.
+    ///
+    /// `name_prefix` is served as `name_norm >= prefix AND name_norm < successor`,
+    /// and both call sites treat a `None` successor as "no upper bound". So a
+    /// `successor` that returns `None` where a bound exists does not fail loudly —
+    /// it serves the whole tail of the table, page-limited, with
+    /// `ignored_filters: []`. That is what the byte-incrementing version did for
+    /// every prefix ending in byte `0xBF`: `яп` on prod returned 1 match and 4
+    /// non-matches, `δήμο&country=FR` returned 5 rows and 0 matches.
+    ///
+    /// The end-to-end symptom cannot pin this down — a too-wide range and a
+    /// correct one differ only in rows the page cut off — so the boundary is
+    /// asserted here, on the two properties that make the range trick valid:
+    /// the successor must be strictly greater than the prefix, and NOT a prefix
+    /// of itself extended (i.e. it must exclude everything at or past it).
+    #[test]
+    fn the_prefix_successor_steps_a_character_not_a_byte() {
+        use read::successor_for_test as succ;
+
+        // ASCII: unchanged behaviour, the case the old version got right.
+        assert_eq!(succ("stadt").as_deref(), Some("stadu"));
+        assert_eq!(succ("a").as_deref(), Some("b"));
+
+        // The 0xBF tail bytes that used to yield None and drop the upper bound.
+        // One per alphabet the corpus actually carries.
+        assert_eq!(succ("яп").as_deref(), Some("яр"), "Cyrillic п = d0 bf");
+        assert_eq!(succ("δήμο").as_deref(), Some("δήμπ"), "Greek ο = ce bf");
+        assert_eq!(succ("¿").as_deref(), Some("À"), "c2 bf");
+        assert_eq!(succ("zzzzп").as_deref(), Some("zzzzр"));
+
+        // The property that makes `>= prefix AND < successor` mean "has this
+        // prefix": strictly greater, and no string starting with the prefix
+        // reaches it. Byte order is code-point order in UTF-8, so `<` on the
+        // stored column is the same comparison.
+        for prefix in ["stadt", "яп", "δήμο", "¿", "a", "\u{10FFFE}", "é", "中"] {
+            let hi = succ(prefix).expect("a bound exists for every non-degenerate prefix");
+            assert!(hi.as_str() > prefix, "{prefix:?} -> {hi:?} must be greater");
+            // Anything starting with the prefix sorts below the bound — including
+            // the prefix with the largest possible continuation.
+            let extended = format!("{prefix}\u{10FFFF}");
+            assert!(extended.as_str() < hi.as_str(), "{extended:?} must fall inside {hi:?}");
+        }
+
+        // The surrogate gap: U+D7FF's successor is U+E000, not an invalid scalar.
+        assert_eq!(succ("\u{D7FF}").as_deref(), Some("\u{E000}"));
+
+        // `None` only where there genuinely is no upper bound, which is what the
+        // call sites already assume. Empty matches everything; a run of the
+        // maximum scalar has nothing above it.
+        assert_eq!(succ(""), None, "the empty prefix is unbounded, correctly");
+        assert_eq!(succ("\u{10FFFF}"), None, "nothing sorts above the maximum scalar");
+        assert_eq!(succ("a\u{10FFFF}").as_deref(), Some("b"), "the carry drops the maxed char");
+    }
+
     /// The short-circuit guard's BOUNDARY, asserted on the function itself.
     ///
     /// The end-to-end cases in `tenders_shortcircuit.rs` cannot establish this: the
