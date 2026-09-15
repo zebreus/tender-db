@@ -1376,9 +1376,19 @@ async fn tender_notices(state: &AppState, tender_id: i64, ignored: &[&str]) -> A
     Ok(axum::Json(json::page(items, None, ignored)).into_response())
 }
 
-/// The poll half of the change feed. Same events, same cursor and same
-/// filtering as SSE — a client that cannot hold a connection open loses
-/// nothing but latency.
+/// The poll half of the change feed: same events, same cursor and the same
+/// `entity` narrowing as SSE — a client that cannot hold a connection open
+/// loses nothing but latency.
+///
+/// **It applies NO collection filter** (issue 399). `Params` is shared with the
+/// list endpoints for parsing convenience, so `country`, `cpv`, `source`,
+/// `status`, `min_value`… all parse here and none of them reaches the query;
+/// the SSE arm on a collection endpoint probes each changed entity against its
+/// `Filter`, and this route has no such arm. The doc comment used to claim
+/// "same filtering as SSE" flatly, which was the silent half of the defect: a
+/// client falling back from a filtered subscription to this feed was served the
+/// whole corpus as its filtered feed. Every such parameter is now NAMED in
+/// `ignored_filters` (issue 118's convention), so the answer says what it is.
 async fn changes(State(state): State<AppState>, ApiQuery(params): ApiQuery<Params>) -> ApiResult {
     // The `entity` filter is the public-feed enum only (issue 211): the projection
     // also writes lot_result/bid/contract change rows, but those are not on the
@@ -1405,6 +1415,9 @@ async fn changes(State(state): State<AppState>, ApiQuery(params): ApiQuery<Param
     // events, same cursor and same filtering as SSE": SSE does not error here, it
     // tells the client to drop state and re-snapshot, and `last_cursor: 0` is
     // where it tells it to resume.
+    // Issue 399: this route applies no collection filter at all, so everything
+    // the client set is ignored — named rather than silently dropped.
+    let ignored = params.provided_filters();
     let since = params.since();
     let oldest = read::oldest_cursor(&reader).await?;
     // Append-only and never renumbered, so below-the-horizon means pruned. The
@@ -1425,6 +1438,7 @@ async fn changes(State(state): State<AppState>, ApiQuery(params): ApiQuery<Param
             "more": false,
             "generation": generation,
             "reset": reason,
+            "ignored_filters": ignored,
         }))
         .into_response());
     }
@@ -1458,6 +1472,12 @@ async fn changes(State(state): State<AppState>, ApiQuery(params): ApiQuery<Param
         // has are from a world that no longer exists — drop state, re-snapshot
         // the collections, and continue from this response's last_cursor.
         "generation": generation,
+        // Issue 399: every collection filter the caller sent, because this route
+        // honours none of them. `provided_filters` excludes the streaming
+        // controls (`since`, `limit`, `entity`) by construction, so the array is
+        // empty for a well-formed poll and non-empty exactly when the client
+        // believes it asked for something narrower than it got.
+        "ignored_filters": ignored,
     }))
     .into_response())
 }

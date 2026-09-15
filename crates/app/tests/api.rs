@@ -1388,6 +1388,53 @@ async fn notice_content_serves_the_whole_parsed_layer() {
     assert_eq!(server.status("/v1/notices/999999999/content").await, 404);
 }
 
+/// Issue 399: `/v1/changes` applies `entity` and nothing else, and now says so.
+///
+/// `Params` is shared with the list endpoints, so every collection filter parses
+/// on this route and none of them reaches the query — there is no SSE arm here
+/// to apply a `Filter`. Measured on prod before the fix: `source=nonesuch`,
+/// `status=open`, `min_value=999999999999`, `buyer=1` and `country=ZZ` each left
+/// the answer byte-identical, while the handler's own doc comment promised "the
+/// same filtering as SSE". A client falling back from a filtered subscription
+/// was served the whole corpus as its filtered feed.
+#[tokio::test]
+async fn the_change_feed_names_every_filter_it_does_not_apply() {
+    let server = Server::start("changes-ignored").await;
+    server.ingest_chain().await;
+
+    // The well-formed poll: nothing extra sent, nothing named.
+    let plain = server.get("/v1/changes?since=0&limit=5").await;
+    assert_eq!(
+        plain["ignored_filters"].as_array().map(Vec::len),
+        Some(0),
+        "streaming controls are not filters: {plain}"
+    );
+    // `entity` IS honoured, so it must never be named — that would be the
+    // opposite lie, and it is the one filter a client can rely on here.
+    let entity = server.get("/v1/changes?since=0&limit=5&entity=tender").await;
+    assert_eq!(entity["ignored_filters"].as_array().map(Vec::len), Some(0));
+
+    // Everything else is named, in the fixed declaration order.
+    let filtered =
+        server.get("/v1/changes?since=0&limit=5&source=ted&status=open&min_value=5").await;
+    let named: Vec<&str> = filtered["ignored_filters"]
+        .as_array()
+        .expect("an array")
+        .iter()
+        .map(|v| v.as_str().expect("a name"))
+        .collect();
+    assert_eq!(named, ["source", "status", "min_value"], "{filtered}");
+
+    // …including on the reset body, which is where a confused client lands.
+    let reset = server.get("/v1/changes?since=999999999&limit=5&source=ted").await;
+    assert_eq!(reset["reset"], "cursor_ahead");
+    assert_eq!(
+        reset["ignored_filters"].as_array().map(Vec::len),
+        Some(1),
+        "a reset answer still says what it ignored: {reset}"
+    );
+}
+
 /// Issue 390 unit 1: `country` and `cpv` are code prefixes, not `LIKE` patterns.
 ///
 /// The store binds them into `c.code LIKE ?` as `format!("{value}%")` with no

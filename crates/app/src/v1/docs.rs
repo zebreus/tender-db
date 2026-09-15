@@ -297,7 +297,13 @@ events as SSE, without holding a connection open. Optional
 <code>entity=tender|lot|organization</code> narrows the stream.</p>
 <pre><code>curl -s "https://tenders.zebreus.click/v1/changes?since=0&amp;limit=100"</code></pre>
 <p>Response: <code>{"events": [ … ], "last_cursor": "193055", "more": false,
-"generation": 3}</code>.
+"generation": 3, "ignored_filters": []}</code>.
+<strong>Only <code>entity</code> narrows this feed.</strong> The collection
+filters (<code>country</code>, <code>cpv</code>, <code>source</code>,
+<code>status</code>, <code>min_value</code>&hellip;) parse but are not applied
+here, and each one you send is named back in <code>ignored_filters</code> rather
+than silently dropped. To follow a filtered subset, subscribe to the collection
+endpoint with <code>Accept: text/event-stream</code>, which does apply them.
 Loop, passing <code>last_cursor</code> as the next <code>since</code>, until
 <code>more</code> is false; then poll periodically for new ones.
 If you ever send a cursor this feed did not issue — one past the head, or one

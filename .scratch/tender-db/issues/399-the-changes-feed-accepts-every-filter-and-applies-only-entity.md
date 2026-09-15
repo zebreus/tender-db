@@ -97,3 +97,53 @@ Either way:
 `since`/`limit` validation on this route (issue 216's lenience, and 392's reset guards which landed
 2026-09-15). Whether `/v1/changes` should grow an SSE arm at all — it is poll-only by design, and
 the collection endpoints carry the streams.
+
+## TRIAGED AND FIXED 2026-09-16 (owner) — named, not honoured
+
+**Decision: name them.** The issue offered two answers and they are not equal. Honouring the filters
+means applying the SSE arm's `read_matches` per row, which probes each changed entity's head against
+the `Filter` — a per-row cost on a page the client polls in a loop. That is a performance decision
+that should be measured before it is taken, and it is not what is broken. What is broken is that the
+answer does not say what it did, which `ignored_filters` has been the convention for since issue 118.
+
+`changes()` now computes `params.provided_filters()` and returns it as `ignored_filters` on **both**
+bodies — the ordinary page and the issue-392 reset page. The reset body matters as much as the
+ordinary one: a client that has just been told to drop its state and re-snapshot is exactly the
+client about to re-send its filters.
+
+`provided_filters()` excludes the streaming controls (`since`, `limit`, `entity`, `cursor`,
+`include_data`) by construction, so the array is empty for a well-formed poll and non-empty exactly
+when the client believes it asked for something narrower than it got. **`entity` is never named** —
+it is the one filter this route does honour, and naming it would be the opposite lie.
+
+The handler's doc comment was the other half of the defect and is rewritten. It claimed "Same
+events, same cursor and same filtering as SSE" flatly; it now says the `entity` narrowing is shared,
+that no collection filter is applied here, and why (there is no SSE arm on this route — `/v1/changes`
+is registered `get(changes)` and the streams live on the collection endpoints).
+
+Docs: `openapi.json`'s `/v1/changes` description and the `/docs` polling paragraph both say **only
+`entity` narrows this feed**, that the rest come back in `ignored_filters`, and where to go instead
+— subscribe to the collection endpoint with `Accept: text/event-stream`, which does apply them.
+That last sentence is the one a client actually needs: the old text left them with no route to a
+filtered feed at all.
+
+Test: `the_change_feed_names_every_filter_it_does_not_apply` — the empty case, the `entity` control
+(honoured, never named), three filters named in declaration order, and the reset body carrying the
+array too.
+
+### The 390 asymmetry is resolved as predicted
+
+`/v1/tenders?country=_E` is a 400 (issue 390 unit 1 validates it in `Params::filter()`), and
+`/v1/changes?country=_E` remains a 200 — but now with `ignored_filters: ["country"]`, so the two
+answers no longer contradict each other. The changes feed never builds the `Filter`, so it never
+validates it; that is consistent with it not applying it, and the client is told.
+
+### Still open
+
+- Not deployed. The text-era re-parse (issue 397, job 1386) is running; this rides the next deploy.
+- Acceptance reads for after: `/v1/changes?since=0&limit=3` → `ignored_filters: []`;
+  `&entity=tender` → still `[]`; `&source=nonesuch&status=open` → `["source","status"]`;
+  `&since=999999999999&source=ted` → `reset: cursor_ahead` **and** `ignored_filters: ["source"]`.
+- **Honouring the filters is NOT filed as a follow-up**, deliberately. Nothing has asked for it, the
+  SSE path already serves that need, and filing speculative work would put an unmeasured performance
+  question on the board as if it were a defect.

@@ -304,7 +304,7 @@
       "get": {
         "tags": ["changes"],
         "summary": "Change feed (poll)",
-        "description": "Everything the canonical layer learned after `since` (start at 0). Same events as SSE without holding a connection. Loop, passing `last_cursor` as the next `since`, until `more` is false. The cursor is learn order (ingestion), independent of publication date. Store `generation` beside your cursor: when it moves, drop local state, re-snapshot, and continue from that response's `last_cursor`.",
+        "description": "Everything the canonical layer learned after `since` (start at 0). Same events as SSE without holding a connection. **Only `entity` narrows this feed** \u2014 the collection filters (`country`, `cpv`, `source`, `status`, `min_value`\u2026) parse but are not applied here, and every one you send comes back named in `ignored_filters`. To follow a filtered subset, subscribe to the collection endpoint with `Accept: text/event-stream`, which does apply them. Loop, passing `last_cursor` as the next `since`, until `more` is false. The cursor is learn order (ingestion), independent of publication date. Store `generation` beside your cursor: when it moves, drop local state, re-snapshot, and continue from that response's `last_cursor`.",
         "operationId": "pollChanges",
         "parameters": [
           {
