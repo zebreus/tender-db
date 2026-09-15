@@ -205,3 +205,50 @@ newline-carrying title. The FTS titles are ordinary prose and were never in scop
 - **The re-parse and re-fold.** Nothing on prod changes until the text era is re-parsed (the issue-364
   units 5–6 shape) and re-folded. The acceptance counts in `## Done when` are for after that.
 - Not deployed.
+
+## Unit 1 DEPLOYED 2026-09-16 — rev `170c726`; the era re-parse is STARTED and resumable
+
+Deployed, then one package re-parsed as a dry-run before committing to the era:
+
+```
+/root/aj.sh /admin/jobs '{"kind":"reparse","profiles":["text"],"packages":1,"reclaim_only":true}'
+→ job 1385 (internal 2294) ok
+  re-parsed 35830 notices across 1 packages (1012 members walked, 0 unmatched,
+  0 now failing and left untouched); stamped 2830901 tender(s) epoch-stale;
+  214 package(s) held back by the cap — continue with {"after": 186}
+```
+
+**0 unmatched and 0 now failing** is the number that mattered: the new `Rule::Heading` arm parses
+real archive bytes at scale without rejecting a single member it previously accepted.
+
+### Where this stands, precisely
+
+- **The parser is verified on real bytes.** `crates/ingest/tests/text.rs` runs against a committed
+  1993 daily from the archive, and `F-Paris: lighting supports` is what the fix produces from it.
+  The one-package run adds scale, not correctness.
+- **Nothing served has changed yet**, and will not until the fold runs. The three notices the issue
+  names (17424, 18031, 19397) still serve the two-line title because they sit in a package after the
+  cursor.
+- **The re-parse cursor is `after: 186`**, 1 of 215 packages done. Continue with
+  `{"kind":"reparse","profiles":["text"],"after":186,"reclaim_only":true}` — re-enqueueing the
+  original params restarts at their floor, so the cursor must be carried.
+
+### Two things for whoever continues it
+
+**The epoch stamp is era-wide, not per package.** One package stamped **2,830,901** tenders
+epoch-stale, because a parser-version epoch bump marks the whole `text` profile rather than the
+notices actually re-parsed. So the fold cost is paid once for the era however many packages the
+re-parse is split into — but it also means **~2.8M tenders are already stamped and the next ordinary
+incremental projection will rewrite them**. That is correct behaviour and a much larger daily fold
+than usual; do not read it as a runaway.
+
+**`reclaim_only: true` was deliberate.** It suppresses the automatic follow-on `project`, so the
+era's fold happens once at the end rather than after every chunk.
+
+### Acceptance, still to run after the era re-parse and fold
+
+The `## Done when` counts: `title_with_newline` and `title_with_footnote` both 0 over ids
+7,960,000–8,059,999, `title_with_newline` 0 over 8,100,000–8,199,999, the control range
+5,000,000–5,099,999 still exactly 4 (publisher-written `\r\n`, ids 5076998 / 5088993 / 5095378 /
+5098520), 1993-03-05 `limit=100` returning 0 newline titles, and 8037963 reading
+`D-Herzogenrath: sewage-treatment plant`.
