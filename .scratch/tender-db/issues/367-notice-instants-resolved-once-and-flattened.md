@@ -89,3 +89,116 @@ date at all — so nothing was removed.
 
 Not done, and still true: `/v1` renders through `instant()`, so a date-only publication still
 serves `2026-09-04T22:00:00Z` for a source date of 2026-09-05. That is unit 3.
+
+## Comments
+
+### 2026-09-15 — API/data-quality review fan-out: date-only publications served as shifted instants, quantified (unit 3, still live — not a regression)
+
+Four lenses of the 2026-09-15 fan-out (api-tender-detail, api-notices, dq-dates,
+dq-islands-sdk01-fts) independently hit unit 3's defect. The adversarial judge ruled it is
+this issue, not a new one, and **not** a regression of units 1-2: the Status line above
+already says unit 3 "remains ready-for-agent: a date-only publication still serves a shifted
+instant", and no commit since `4b40606` touches the rendering in `json.rs` / `project.rs`.
+Status is therefore left alone. What is new here is the *measured rate* of the
+dispatched_at > published_at inversion, which the issue asserted only from the single probe
+7954578.
+
+**Notice layer** (bounded id window, ids 26,200,000–26,250,000):
+
+```
+ssh root@zebreus.click 'echo "SELECT profile, count(*) AS notices, sum(dispatched_at IS NULL) AS disp_null, sum(dispatched_at > published_at) AS disp_after_pub FROM notices WHERE id BETWEEN 26200000 AND 26250000 GROUP BY +profile" | /root/sq.sh'
+```
+
+| profile | notices | dispatched_at NULL | dispatched_at > published_at |
+|---|---|---|---|
+| `eforms:eforms-de-1.0` | 21 | 0 | 0 |
+| `eforms:eforms-de-1.1` | 25,869 | 0 | **22,418 (86.7%)** |
+| `eforms:eforms-sdk-0.1` | 23,955 | 17,264 | **6,454 (96.5% of the 6,691 carrying a dispatch)** |
+| `eforms:eforms-sdk-1.0` | 156 | 0 | 0 |
+
+**Version layer** (current versions only, bounded tender ids):
+
+```
+ssh root@zebreus.click 'echo "SELECT n.profile, count(*) AS tenders, sum(v.dispatched_at > v.published_at) AS dispatch_after_pub, sum(v.dispatched_at IS NULL) AS no_dispatch FROM tenders t JOIN tender_versions v ON v.tender_id = t.id AND v.seq = t.current_seq JOIN notices n ON n.id = v.caused_by_notice_id WHERE t.id BETWEEN 1 AND 50000 GROUP BY n.profile" | /root/sq.sh'
+```
+
+| profile | tenders 1–50,000 (inverted / dispatch-bearing) | tenders 100,000–150,000 (inverted / dispatch-bearing) |
+|---|---|---|
+| `eforms-de-1.1` | 23 / 26 | 24 / 31 |
+| `eforms-de-1.2` | 26 / 28 | 24 / 27 |
+| `eforms-de-2.0` | 313 / 345 | 183 / 214 (85.5%) |
+| `eforms-de-2.1` | 416 / 449 | 253 / 298 (84.9%) |
+| `eforms-sdk-0.1` | 1,266 / 1,435 | 1,466 / 1,677 (87.4%) |
+| TED `eforms-sdk-1.x` | 9 of ~49,000 (sdk-1.8 6, sdk-1.10 2, sdk-1.13 1) | 12 of ~46,700 (sdk-1.8 10/2,431, sdk-1.10 2/4,723, rest 0) |
+
+Window 1,460,000–1,510,000 (49,333 tenders, 38,173 without a dispatch): sdk-0.1 **10,766 of
+11,160** dispatch-bearing versions inverted. TED-only notice window 27,300,000–27,350,000
+(3,753 rows, sdk-1.12/1.13/1.14): **0** — the inversion is a DÖE/DE-dialect phenomenon plus a
+handful of TED rows where a no-offset `OPP-012` date sits beside an offset-bearing `BT-05(a)` time.
+
+The 9 TED rows, listed:
+
+```
+ssh root@zebreus.click 'echo "SELECT t.id, v.publication_id, n.profile, v.published_at, v.dispatched_at FROM tenders t JOIN tender_versions v ON v.tender_id = t.id AND v.seq = t.current_seq JOIN notices n ON n.id = v.caused_by_notice_id WHERE t.id BETWEEN 1 AND 50000 AND v.dispatched_at > v.published_at AND +n.profile LIKE '"'"'eforms:eforms-sdk-1%'"'"'" | /root/sq.sh'
+```
+→ tenders 5724, 15315, 17671, 18557, 22786, 32428, 33301, 38608, 47421.
+
+**Named rows, live at rev `9e082fd`:**
+
+| probe | served `published_at` | served `dispatched_at` | what the source says |
+|---|---|---|---|
+| `curl -sS https://tenders.zebreus.click/v1/tenders/15315` | `2024-03-27T00:00:00Z` | `2024-03-27T12:55:32Z` | `/v1/notices/23838327/content`: `OPP-012-notice` = `"2024-03-27"` (date only), `BT-05(a)-notice` = `"2024-03-27T13:55:32+01:00"`; stored notices row (1711497600, 1711544132), `notice_dates` OPP-012 = (1711497600, offset 0, has_time 0), BT-05(a) = (1711544132, 60, 1) |
+| `curl -sS https://tenders.zebreus.click/v1/tenders/1542367` | `2025-01-07T23:00:00Z` | — | notice 26542889 content: `SDK01-RequestedPublicationDate` = `"2025-01-08"`; stored triple (1736290800, 60, 0) — **served a calendar day early** |
+| `curl -sS https://tenders.zebreus.click/v1/tenders/5724` | `2024-05-08T00:00:00Z` | `2024-05-08T06:58:57Z` | |
+| `curl -sS https://tenders.zebreus.click/v1/tenders/7954578` | `2026-09-04T22:00:00Z` | `2026-09-05T17:32:26Z` | the issue's own probe, still failing |
+| `/v1/tenders?source=doe&sort=published_at&order=desc` | whole page at `2026-09-11T22:00:00Z` | | |
+| `/v1/tenders?sort=published_at&order=asc&limit=5` | `1993-01-02T00:00:00Z` … | | r209/text era, no offsets published; date-only dispatches days earlier, so **no** inversion there |
+
+**One refinement to the issue's line 18.** The T00:00:00Z vs T22:00/23:00Z split is per published
+*value* — whether that lexical date carried an offset — not per profile or era. In window
+26,200,000–26,250,000 every publication-date field has `has_time=0`, while
+`SDK01-RequestedPublicationDate` carries offset 60 on 22,076 rows and 0 on 1,879, and
+`DE1-RequestedPublicationDate` offset 60 on 23,493 and 0 on 2,396. The sdk-0.1 named row
+(1542367) itself carries offset 60, so "sdk-0.1 ⇒ T00:00:00Z" does not hold as a rule.
+
+**Contract.** The live `/v1/openapi.json` still states, unconditionally,
+`components.schemas.Tender.properties.published_at.description` = *"ISO 8601; a source that
+published a date only yields a date only."* (source `crates/app/data/openapi.json:905`), while
+`/docs` (`crates/app/src/v1/docs.rs:113`) now discloses the gap and cites this issue — the two
+served documents contradict each other. Note the render sites have moved since this issue was
+filed: `instant()` is called for published_at at `crates/app/src/v1/json.rs:66, 118, 331`
+(the issue body says 306). `stamp()` is right there in the same file and is already used for
+`submission_deadline` in the same payload — 15315 serves `"2024-04-26T11:00:00+02:00"` beside
+its Z-flattened published_at.
+
+**Judge's reasoning for why this is ours and belongs here:** *"System-introduced and still live:
+the parse layer stores the (utc_seconds, offset_minutes, has_time) triple (CONTEXT.md decision
+'timestamps as UTC + original offset'), but notice_instants/first_date flatten it to a bare UTC
+scalar and /v1 renders published_at through instant() (crates/app/src/v1/json.rs:66,118,331), so a
+date-only publication carrying +01:00/+02:00 becomes local midnight re-expressed in UTC (T23:00Z/
+T22:00Z of the previous day) and an offset-less date-only value becomes T00:00:00Z. Verified live
+at rev 9e082fd: /v1/tenders/15315 → published_at 2024-03-27T00:00:00Z, dispatched_at
+2024-03-27T12:55:32Z; /v1/tenders/1542367 → 2025-01-07T23:00:00Z for a portal date of 2025-01-08.
+The OpenAPI schema description for Tender.published_at still promises 'a source that published a
+date only yields a date only', while /docs (crates/app/src/v1/docs.rs:113) now discloses the gap
+and cites 367 — the two documents contradict each other. This is exactly issue 367 unit 3, whose
+Status line says it 'remains ready-for-agent: a date-only publication still serves a shifted
+instant'; units 1-2 shipped 2026-09-07 but no commit since touches json.rs/project.rs for the
+rendering, so it is open, not regressed and not resolved. Issue 18 (published_at = publication not
+dispatch) is resolved and does not cover the rendering. The finding's new contribution over 367 is
+the quantified dispatch-after-publication rate (86.7% of de-1.1 notices and 96.5% of
+dispatch-bearing sdk-0.1 in the id window; ~90% of current eforms-de-2.x versions; 9 TED sdk-1.x
+rows where a no-offset OPP-012 date sits beside an offset-bearing BT-05 time) — which should be
+attached to 367 rather than filed twice. Medium: a documented field on ~90% of DÖE/DE rows serves
+the wrong calendar day and violates the dispatch ≤ publication invariant, but the fix is already
+specified (unit 3) and /docs discloses it."*
+
+One caveat the judge recorded against the finding's own framing, which does not defeat it:
+CONTEXT.md does not state "dispatch ≤ publication" as a literal invariant (line 215 names only
+"publication-date order, dispatch fallback" for the supersession fold), so the *expected* behaviour
+here rests on the OpenAPI contract, which is verified live.
+
+**To close:** unit 3 as already written — offset/has_time columns on `notices` and
+`tender_versions`, backfilled, with published_at/dispatched_at rendered through `stamp()` at
+`json.rs:66/118/331` — after which 15315, 1542367, 5724 and 7954578 stop inverting and the
+OpenAPI promise at `openapi.json:905` becomes true instead of contradicted by `/docs`.

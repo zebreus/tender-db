@@ -230,3 +230,99 @@ condemn. Not urgent at 176 rows.
 `bids.statistics` still has no real-data coverage — no member fixture exercises it, and June 2025
 evidently did not either (no parse failure came from it). Check it against a month that has bids
 before trusting the arm, or the backfill will write untested rows at scale.
+
+## Comments
+
+### 2026-09-15 — API/data-quality review fan-out: `bids.statistics` becomes phantom `STAT-<id>` lot_results on FTS
+
+This is the check the "Before the backfill" section above asks for, run against prod (rev `9e082fd`) on
+2026-09-15 — and it fails. The arm that "still has no real-data coverage" does have real data now, and it
+turns every OCDS `bids.statistics[]` entry into its own award decision.
+
+Evidence, literally as run:
+
+```
+curl -s https://tenders.zebreus.click/v1/tenders/7954620 | python3 -c "import json,sys,collections;d=json.load(sys.stdin);lr=d['lot_results'];print(d['lots'],len(lr),collections.Counter(str(r['decision']) for r in lr));print([r for r in lr if r['key'].startswith('STAT-')][:2]);print(sum(1 for r in lr if r['decision'] and r['statistics']))"
+# -> 28 103 Counter({'None': 66, 'selec-w': 33, 'clos-nw': 4})
+# -> [{'awarded': None, 'decided': None, 'decision': None, 'key': 'STAT-215', 'lot': None,
+#      'notice_id': 30808088, 'reason': None, 'statistics': {'bids': 3},
+#      'statistics_withheld': 0, 'winners': []}, {... 'key': 'STAT-216' ...}]
+# -> 0    (none of the genuine results carries any statistic)
+```
+
+Tender 7954620 (`fts:ocds-1.1`, 5 award+contract releases), by decision:
+
+| lots | lot_results served | `STAT-` rows (decision/lot/winners null) | `selec-w` | `clos-nw` | genuine results carrying a statistic |
+|---|---|---|---|---|---|
+| 28 | 103 | 66 | 33 | 4 | 0 of 37 |
+
+Per notice on that tender:
+
+| notice | `STAT-` rows | real results |
+|---|---|---|
+| 30808088 | 10 | 5 `selec-w` |
+| 30808648 | 20 | 10 `selec-w` |
+| 30808828 | 8 | 2 `clos-nw` + 4 `selec-w` |
+| 30808920 | 18 | 1 `clos-nw` + 9 `selec-w` |
+| 30809108 | 10 | 1 `clos-nw` + 5 `selec-w` |
+
+Not a one-tender accident — the same endpoint over the adjacent ids:
+
+| window (GET /v1/tenders/{id}) | tenders carrying `STAT-` rows | lot_results rows | of those, `STAT-` | genuine results with a statistic |
+|---|---|---|---|---|
+| 7954610–7954620 (11 consecutive FTS tenders) | 8 of 11 | 205 | 128 (62%) | 0 of 77 |
+
+Kinds served are the OCDS measure names — `bids`, `electronicBids`, `smeBids`, `foreignBidsFromEU`,
+`foreignBidsFromNonEU`, `lowestValidBidValue`, `highestValidBidValue` — not the received-submission-type
+codes `crates/store/src/canonical.rs:715` documents for `tender_version_result_stats.kind` (`tenders`,
+`t-sme`, `t-eea`, …). And the value measures land in the same integer slot as the counts: on tender
+7954611, `{'lowestValidBidValue': 4725722}` / `{'highestValidBidValue': 4725722}` — a monetary amount
+served as a bare count, the `Statistic` struct having no currency field and `project.rs:4005-4045`
+casting BT-759 `as i64`.
+
+Mechanism, in our code: `crates/ingest/src/fts/parse.rs:305-317` opens a fresh `LotResult` section
+`STAT-<id>` parented at `ROOT` per statistic and pushes BT-759/BT-760 onto it; the `Statistic` struct
+(`parse.rs:688`) deserializes only `id`/`measure`/`value`, so `relatedLot` — which the real page fixture
+`crates/ingest/tests/fixtures/fts/pages/2026-09-03-p002.json` carries on every statistic — is never read
+and the lot link is dropped by construction on every FTS release that has bids.
+
+Judge's reasoning for why this is ours, not the publisher's: *Premise verified live (curl
+/v1/tenders/7954620): 28 lots, 103 lot_results = 33 selec-w + 4 clos-nw + 66 rows keyed STAT-<n> with
+decision/lot/winners/awarded all null and only {"bids": N} or {"electronicBids": N}; 0 of the 37 genuine
+RES- rows carry any statistic. This is something THIS system introduced, not a publisher shape: OCDS
+bids.statistics[] is a per-lot submission count (relatedLot names the lot, as fixture
+pages/2026-09-03-p002.json line ~199 shows), but crates/ingest/src/fts/parse.rs ~line 305 opens a fresh
+`LotResult` section `STAT-<id>` parented at ROOT per statistic and pushes BT-759/BT-760 onto it, and the
+`Statistic` struct (line 688) deserializes only id/measure/value — `relatedLot` is never read — so the
+linkage to the award/lot is dropped on the floor and every stat becomes a phantom award decision. The
+plan (.scratch/tender-db/342-fts-plan.md §3, line 155) specified "sub-section of the LotResult", so the
+build diverged from its own design. Consequences the maintainer can act on: lot_results/v_lot_results/
+v_awards carry ~2x phantom rows per FTS award notice; the served `statistics` kinds are OCDS measure
+names (bids, electronicBids) while the schema note on tender_version_result_stats (canonical.rs line 715)
+promises the eForms received-submission-type code (tenders, t-esubm, t-sme…), so cross-era consumers
+summing statistics.tenders get nothing for FTS; and the DQ `with_awardable` predicate (data_quality.rs
+line ~496) counts a NULL-decision result as awardable, so every STAT row inflates the FTS winner-rate
+denominator. Not resolved on the board: issue 342 is open (status: unit 2 complete, backfill and docs
+remaining) and its final section says verbatim that bids.statistics "still has no real-data coverage…
+Check it against a month that has bids before trusting the arm, or the backfill will write untested rows
+at scale" — this finding is that check, failing. No other issue covers it (grep for STAT-,
+bids.statistics, result_stats hits only 372's eForms withheld-marker work and 342). Attach to 342 rather
+than file twice. One correction to the finding's title: "currency and decimals dropped" is not a real
+loss here — submission counts have no currency; the count value itself is served intact. Severity medium:
+contained to fts:ocds-1.1 (one month today), but the 319k-release backfill 342 is about to run would
+write it at scale, and it corrupts three consumer surfaces (lot_results row semantics, the stats kind
+vocabulary, the DQ denominator).*
+
+Two parts of the original draft did **not** survive checking, recorded so nobody re-derives them: (1) the
+DQ `with_awardable` **denominator is not inflated in this sample** — that counter is per version, not per
+row, a NULL-decision row with no winner evaluates NULL under `NOT (decision IN (...) AND NOT EXISTS
+winners)` (verified in sqlite), and every notice here that has STAT rows also has a real `selec-w` row;
+the judge's paragraph above still states the inflation as a consequence, and on this evidence only the
+per-row predicate shape supports it, not the measured FTS denominator. (2) "decimals dropped" is
+code-supported (`as i64`) but not data-confirmed. `v_lot_results`/`v_awards` were not checked — box SQL
+reads were denied this session.
+
+To close: parent the statistic section on the LotResult its `relatedLot` names (the plan's §3 shape)
+instead of at ROOT, deserialize `relatedLot` on `Statistic`, map the OCDS measure names onto the
+documented received-submission-type vocabulary (and give the value measures their own non-count slot),
+with the p002 page fixture as the regression test — before the 319k-release backfill writes it at scale.

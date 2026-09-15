@@ -1,6 +1,7 @@
 # 370 — the served contract is hand-written prose with no gate coupling it to behaviour: twelve published claims are now false
 
-Status: UNITS 1,2,3,5 DONE 2026-09-07 (owner) — all thirteen claims corrected at their source (`c185ed1`, 915 passed) and the provisional note coupled to the resolver by a test. Unit 4's second half (per-field provenance on `TenderRow`, so an inherited deadline is distinguishable rather than only documented) remains ready-for-agent. Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
+Status: REOPENED 2026-09-15 — units 1-2's "all thirteen claims corrected at their source" is incomplete: two of those claims (`provisional` = single-mention; a timed-out query's server-side work "was abandoned") are still served live on prod at rev `9e082fd` from surfaces the table never listed — the `/docs` const at `crates/app/src/v1/docs.rs:643` and the vendored spec at `crates/app/data/openapi.json:412`. See Comments, 2026-09-15.
+Was: UNITS 1,2,3,5 DONE 2026-09-07 (owner) — all thirteen claims corrected at their source (`c185ed1`, 915 passed) and the provisional note coupled to the resolver by a test. Unit 4's second half (per-field provenance on `TenderRow`, so an inherited deadline is distinguishable rather than only documented) remains ready-for-agent. Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
 several reviewer "defects" are really this issue: the behaviour was decided deliberately
 and the published description was not updated)
 Kind: defect (documentation / API contract) — a drift with no detector
@@ -112,3 +113,206 @@ the fix. Unit 1's instruction was "do not describe the future as present"; this 
 not describe the present as a number when the durable claim is a rule.** Worth applying to the
 remaining rows the next time one is touched.
 
+## Comments
+
+### 2026-09-15 — API/data-quality review fan-out: INCOMPLETE FIX — `/docs` still calls provisional organizations "single-mention"
+
+**This is rows 1–3 of the table above, still live on prod at rev `9e082fd1`**, on surfaces the
+table never listed. Unit 2 named `crates/app/src/v1/sql.rs:705`, `crates/store/src/canonical.rs:346-348`,
+`CONTEXT.md:57-61` "and the OpenAPI if it repeats it"; the `/docs` prose const at
+`crates/app/src/v1/docs.rs:643` and the served-JSON builder comment at `crates/app/src/v1/json.rs:101-102`
+are in neither the table nor the Done note, and `c185ed1` has no hunk touching the provisional line in
+`docs.rs` and does not touch `json.rs` at all. Both lines blame to `b4a18a2` (2026-08-31) — the retired
+wording predates and survived the sweep. So the "Done when" bullet *"the provisional description matches
+the resolver on all four surfaces"* is not met: `/v1/sql/schema` and `/docs` now contradict each other
+inside one binary.
+
+Evidence (literal):
+
+```
+curl -sS https://tenders.zebreus.click/docs | grep -o 'Organizations are aggregated by identifier.\{0,220\}'
+curl -sS https://tenders.zebreus.click/v1/organizations/77984
+curl -sS 'https://tenders.zebreus.click/v1/organizations?name_prefix=stadt&limit=3'
+curl -sS 'https://tenders.zebreus.click/v1/organizations?name_prefix=gemeinde&limit=5'
+```
+
+Served at rev `9e082fd1`:
+
+> "Organizations are aggregated by identifier where the source publishes one, else by (name, country);
+> mentions without either stay \<em\>provisional\</em\> single-mention organizations. The provisional flag
+> on /v1/organizations tells you which kind you are looking at."
+
+| org id | name | provisional | country | mentions |
+| --- | --- | --- | --- | --- |
+| 77984 | Katholische Kirchengemeinde St. Birgid (buyer of doe tender 7976396) | true | null | 6 |
+| 46912 | Stadt | true | null | 6 |
+| 11995507 | Stadt | true | DE | 3 |
+| 22371859 | (`?name_prefix=stadt` row 3) | false | — | 2 |
+| 4308436 | Gemeinde | true | — | 163 |
+| 4 further `?name_prefix=gemeinde` rows | — | true | — | 8, 4, 2, 3 |
+
+77984 and 46912 carry neither identifier nor country — exactly the "without either" case the sentence
+says stays single-mention — and hold 6 mentions each, so the claim is false under the narrow reading as
+well as the broad one. 5/5 rows of `?name_prefix=gemeinde&limit=5` are provisional and multi-mention.
+
+**Judge:** Verified. (1) System-introduced, not source-published: the sentence is a hand-written HTML
+const in `crates/app/src/v1/docs.rs:643` ("mentions without either stay \<em\>provisional\</em\>
+single-mention organizations"), served live at `/docs` on rev 9e082fd1 (re-run:
+`curl -sS https://tenders.zebreus.click/docs | grep -o 'Organizations are aggregated by identifier.{0,260}'`
+still prints it). The behaviour it describes was deliberately retired by issue 234 (CLOSED 2026-08-21:
+identifier-less mentions reuse the standing (name_norm, country) row, rows stay provisional) and issue 351
+(DONE 2026-09-05: country-less mentions reuse the (name_norm, NULL) row under the wall, plus a 5.76M-row
+fold). Live confirms: `/v1/organizations/77984` returns country:null, identifier:null, provisional:true,
+mentions:6 — exactly a 351-shape row that the /docs sentence says cannot exist. (2) Not already resolved:
+issue 370 corrected this claim on three surfaces (sql.rs:705 column note, canonical.rs comment,
+CONTEXT.md:57-62) in c185ed1, and its unit-3 coupling test (sql.rs:1536, asserts the COLUMN_NOTES text
+contains neither "single-mention" nor "never merged") pins only the SQL column note.
+`git show c185ed1 -- crates/app/src/v1/docs.rs` has no hunk touching the provisional line and the commit
+does not touch json.rs at all; `git log -S'single-mention' -- docs.rs` and `-S'deliberately never merged'
+-- json.rs` both last land at b4a18a2 (2026-08-31), i.e. the retired wording predates and survived 370's
+sweep. 370's own unit-2 list named "sql.rs:705, canonical.rs:346-348, CONTEXT.md:57-61, and the OpenAPI" —
+/docs was never in the list. The OpenAPI does not repeat the claim (it never uses the word "provisional").
+(3) Actionable: one sentence to rewrite in docs.rs:643 (and the dead comment at json.rs:101-102), ideally
+with the 370 unit-3 pattern extended to the /docs const so the same drift cannot recur there. Result
+today: two surfaces of the same binary contradict each other — /v1/sql/schema says a provisional row "can
+hold many mentions … not a promise of one mention" while /docs says provisional rows are single-mention —
+which is the "serves inconsistently" case. Severity low: documentation only, one sentence, no data or
+API-shape defect; but it sits on the primary human docs page and actively misleads consumers about what
+`provisional:true` means.
+
+**To close:** rewrite `crates/app/src/v1/docs.rs:643` and the dead comment at `crates/app/src/v1/json.rs:101-102`
+in the wording unit 2 already landed on the other three surfaces, and widen unit 3's coupling test
+(`crates/app/src/v1/sql.rs:1527-1537`, which greps `COLUMN_NOTES` only) to the `/docs` HTML const.
+
+### 2026-09-15 — API/data-quality review fan-out: INCOMPLETE FIX — the OpenAPI's 408 text still says a timed-out query's "server-side work was abandoned"
+
+**This is row 6 of the table above, still live on prod at rev `9e082fd`**, on the second of its two
+surfaces. `crates/app/src/v1/docs.rs:382` was corrected by `c185ed1` and the corrected sentence is live;
+`git show --stat c185ed1` touches `docs.rs` but **not** `crates/app/data/openapi.json`, even though unit 2's
+surface list names "the OpenAPI". The vendored spec is served verbatim via `include_str!`
+(`crates/app/src/v1/openapi.rs:18`), so the retired claim is still published — this is a missed residue of
+the sweep, not deploy lag and not a separately decided wording.
+
+Evidence (literal):
+
+```
+curl -s https://tenders.zebreus.click/v1/openapi.json | grep -o 'its server-side work was abandoned[^"]*'
+  -> its server-side work was abandoned. Make the query cheaper (narrow the range, add a LIMIT) before retrying.
+
+curl -s https://tenders.zebreus.click/v1/openapi.json | python3 -c "import json,sys; print(json.load(sys.stdin)['paths']['/v1/sql']['post']['responses']['503']['description'])"
+  -> '… every SQL worker thread is pinned by an earlier query that cannot be interrupted …'
+```
+
+| surface | source line | what it says | true? |
+| --- | --- | --- | --- |
+| OpenAPI `/v1/sql` 408 description | `crates/app/data/openapi.json:412` | "its server-side work was abandoned" | **no** |
+| OpenAPI `/v1/sql` 503 description | `crates/app/data/openapi.json:414` | "pinned by an earlier query that cannot be interrupted" | yes |
+| `/docs` | `crates/app/src/v1/docs.rs:382` (corrected in `c185ed1`) | "the ANSWER is abandoned, but the work is not always … further queries can meet a 503 (issue 238)" | yes |
+| `/v1/sql/schema` note | `crates/app/src/v1/sql.rs:812-815` | "a query past the cap — including a slow aggregate — is 408" | silent, not wrong |
+| code | `sql.rs:55-59`, :191, :239-245, `SATURATED` :492-493, :887-890 | "the work itself is never stopped — turso exposes no `interrupt()`" | — |
+
+Both OpenAPI strings were authored together in `b4a18a2` (2026-08-31) and are untouched since. Measured
+during this review on the live box: a `notice_withheld_fields … LIMIT 1` query returned 408 at **11.0 s**
+while its GROUP BY kept running. Scope correction from the review: only the 408 string is wrong — the 503
+string is the accurate side of the pair, and the runtime 408 body (`sql.rs:432`) makes no "abandoned" claim.
+
+**Judge:** System-introduced and still live. The 408 description is a hand-written string in the vendored
+static file `crates/app/data/openapi.json:412` (served verbatim via `include_str!` in
+`crates/app/src/v1/openapi.rs:18`), written in b4a18a2 on 2026-08-31 and untouched since. It states "its
+server-side work was abandoned", which the system's own code contradicts: the sql.rs module doc (lines
+55-58, "The work itself is never stopped — turso exposes no interrupt()"), the `in_flight` counter comment
+(sql.rs:239-245, "keeps computing after the client has gone and after AbortOnDrop has fired"), and the
+`SATURATED` const (sql.rs:493) plus the 503 description in the same OpenAPI document ("pinned by an earlier
+query that cannot be interrupted"). Issue 238's prod measurement established the mechanism. Not already
+resolved: issue 370 (c185ed1, 2026-09-07) corrected this exact claim on the /docs surface (docs.rs, now
+reading "The ANSWER is abandoned, but the work is not always …") but c185ed1's file list does not include
+crates/app/data/openapi.json, so the OpenAPI twin was missed even though 370's scope line names "the
+OpenAPI" as one of the surfaces. c185ed1 is deployed (live /docs shows the corrected sentence; live
+/v1/openapi.json still shows the old 408 text), so this is a live residual, not deploy lag. Actionable: one
+string edit mirroring the docs.rs wording, optionally with a test in openapi.rs (which already parses SPEC
+in two tests) asserting the 408 description does not claim the work is abandoned — the 370 unit-3 coupling
+pattern. Correction to the finding: only the 408 string is wrong; the 503 string is accurate, so the scope
+is one description, not two. Severity low: a contract-text inconsistency whose practical effect (a client
+re-sending a still-heavy rewrite and meeting 503) is already explained by the 503 text and /docs.
+
+**To close:** one string edit at `crates/app/data/openapi.json:412` mirroring the landed `docs.rs:382`
+wording (the request is abandoned, the query keeps its worker until it finishes, expect 503 if re-sent too
+soon), plus an assertion in `crates/app/src/v1/openapi.rs`'s existing SPEC-parsing tests that the 408
+description makes no "abandoned" claim.
+
+### 2026-09-15 — API/data-quality review fan-out: unlisted row — `/v1/sql/schema` says `tender_version_classifications.scheme` is "One of: cpv, nuts", but 9.7% of sampled rows carry scheme `cc`
+
+**Not a regression and not one of the thirteen** — no row of the table names the scheme note and no other
+board issue mentions it. It is a fourteenth instance of exactly this issue's class: a `COLUMN_NOTES` string
+literal that nothing re-derives, true when issue 50 (RESOLVED-VERIFIED) wrote it on 2026-07-23 and made
+false by the text-era projection landing afterwards. Recorded here rather than filed anew. Status untouched
+by this comment; the two entries above are what reopened it.
+
+Evidence (literal):
+
+```
+Doc text (crates/app/src/v1/sql.rs:674; served at /v1/sql/schema
+  tables[name=tender_version_classifications].columns[name=scheme].note): "One of: cpv, nuts."
+
+ssh root@zebreus.click 'echo "SELECT scheme, COUNT(*) FROM tender_version_classifications WHERE tender_id BETWEEN 8000000 AND 8050000 GROUP BY scheme" | /root/sq.sh'
+  -> ["cc",35396],["cpv",276812],["nuts",53870]
+
+ssh root@zebreus.click 'echo "SELECT field, code, COUNT(*) FROM tender_version_classifications WHERE tender_id BETWEEN 8000000 AND 8050000 AND scheme='cc' GROUP BY field, code ORDER BY 3 DESC LIMIT 8" | /root/sq.sh'
+  -> main/5011 4048, main/5041 2624, main/5031 2576, main/5027 1996, main/5022 1389, main/5043 1241, main/5025 1121, main/5017 1043
+```
+
+| scheme | rows, `tender_id` 8000000–8050000 | share | documented? |
+| --- | --- | --- | --- |
+| cpv | 276,812 | 75.6% | yes |
+| nuts | 53,870 | 14.7% | yes |
+| **cc** | **35,396** | **9.7%** | **no** |
+| total | 366,078 | 100% | |
+
+All `cc` rows sit on field `main`; top codes 5011 (4,048), 5041 (2,624), 5031 (2,576), 5027 (1,996),
+5022 (1,389), 5043 (1,241), 5025 (1,121), 5017 (1,043).
+
+REST cross-check at rev `9e082fd` (the SQL above could not be re-run by the verifier — the box helper was
+denied by the permission classifier and public `POST /v1/sql` is 401 without a bearer token — so the fact
+was re-derived through the served REST surface):
+
+| request | result |
+| --- | --- |
+| `GET /v1/tenders/8039943` (published 1993-12-31) | `classifications = [{code 5027, field main, scheme "cc"}]`; list-level `cpv = []` |
+| `GET /v1/tenders/8039938` | 4 rows, all scheme `cc` (3410/3420/3430/3446), field main |
+| `GET /v1/tenders/1900306` (1993-12-31) | scheme `cc`, code 3710 |
+| `GET /v1/tenders/8042224` (1994-06-02) | 13 rows, all `cc` (5002, 5011, 5012, …) |
+| `GET /v1/tenders/8087528` (text era, 2000-03-02) | cpv 7 + nuts 1, **no** `cc` |
+| `GET /v1/tenders?published_before=1994-01-01T00:00:00Z&limit=50` | 50/50 items have `cpv = []` |
+| `GET /v1/tenders?cpv=50&published_before=1994-01-01T00:00:00Z&limit=3` | 0 items, though 8039943 carries `cc` 5027 and 8042224 carries 5002/5011 |
+
+Origin: `crates/ingest/src/text/rules.rs:65` maps the text-era header `CC` to `Type::Product` and
+`crates/ingest/src/text/parse.rs:1387` emits `classification("cc", raw)`; fixtures
+`crates/ingest/tests/text.rs:205` and `:270` assert `scheme == "cc"`; `docs/research/ted-legacy-mapping.md:493`
+and issue 11 record CC/CT as the pre-CPV product codes of the 1993-era files. Scope correction from the
+review: `cc` is the **early** text-era vintage (1993 through at least June 1994), not the whole 1993–2010
+text era — PC (CPV) supersedes CC/CT within the text files, and issue 11's "1993-only" is itself slightly
+narrow. 1997 has no tenders in the corpus at all.
+
+**Judge:** Verified live: `SELECT scheme, COUNT(*) FROM tender_version_classifications WHERE tender_id
+BETWEEN 8000000 AND 8050000 GROUP BY scheme` returns cc 35,396 / cpv 276,812 / nuts 53,870, while
+/v1/sql/schema serves the hand-written note "One of: cpv, nuts." (crates/app/src/v1/sql.rs:674) and the
+table notes at :603 and :613 say "CPV and NUTS codes". The third scheme is this system's own label:
+crates/ingest/src/text/rules.rs:65 maps the text-era header CC to Type::Product and
+crates/ingest/src/text/parse.rs:1387 emits classification("cc", raw); docs/research/ted-legacy-mapping.md:493
+records CC/CT as the pre-CPV product codes of the 1993-era files. The rows themselves are source-published,
+but the scheme vocabulary and the enum note are this system's, and the note is false today. Not resolved on
+the board: no issue mentions the cc scheme or the scheme note. Issue 50 (RESOLVED-VERIFIED) wrote the enum
+note on 2026-07-23 before the text era was projected, so it was true when written; issue 370 (open, unit 4
+second half ready-for-agent) is the umbrella for exactly this drift class (COLUMN_NOTES literals nothing
+re-derives, "correct every row at its source line") but its thirteen-row table does not list the scheme
+note, so this is an unlisted row of 370, not a regression of a fixed one. Actionable: a one-line note change
+plus the two table notes; the enum test at crates/app/tests/sql.rs:499 does not pin the scheme string.
+Surface is SQL-schema only: the REST detail serves all schemes unfiltered (crates/store/src/read.rs:2077)
+but the OpenAPI describes classification as {scheme, code} with no enum, so REST docs are not wrong.
+Severity low: a docs-only mismatch that misleads someone enumerating schemes or assuming cpv filters reach
+the whole corpus; no data is lost or mislinked.
+
+**To close:** extend the note at `crates/app/src/v1/sql.rs:674` to "One of: cpv, nuts, cc" naming `cc` as the
+1993–94 pre-CPV TED product code (4-digit, not comparable to CPV, unreachable by `?cpv=` prefix filters) and
+fix the two table notes at `:603` and `:613`; nothing fails today because `crates/app/tests/sql.rs:499` does
+not pin the scheme string.

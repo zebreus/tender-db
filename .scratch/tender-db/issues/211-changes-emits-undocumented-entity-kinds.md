@@ -1,5 +1,12 @@
 # 211 — /v1/changes emits three undocumented entity kinds (lot_result, bid, contract), contradicting the schema and the "same events as SSE" promise
 
+Status: REOPENED 2026-09-15 — incomplete fix, not a regression: the Option-1 filter is live and correct
+(no undocumented kind reaches the wire at serving rev `9e082fd`), but filtering post-fetch silently redefined
+`limit` on the unfiltered poll path — it bounds change-log ROWS scanned, not events, so pages come back short
+(158 of 1000) or empty with `more:true`, while the published contract still calls `limit` "Page size"; the
+closing claim below that "the code now matches the docs" is false for `limit`. See the 2026-09-15 comment.
+
+History — previous status:
 Status: RESOLVED — DEPLOYED & VERIFIED 2026-08-16 (serving rev `005c617`). Prod re-probe:
 `/v1/changes?entity=lot_result` and `?entity=bid` → **400**; `/v1/changes?since=0` returns only public
 kinds (a 50-row page was all `organization`, no lot_result/bid/contract). Fix in `5023ceb` ("changes: filter the poll feed and
@@ -97,3 +104,92 @@ fetch the referenced entity — the change event is a dead reference. This sharp
 
 The underlying data is reachable today via the parent tender's detail (`lot_results`/`bids`/`contracts`
 are embedded there), so no data is lost — only the change feed's own ids are unfetchable.
+
+## Comments
+
+### 2026-09-15 — API/data-quality review fan-out: `limit` on the unfiltered `/v1/changes` is a raw change-log row window, not a page size (INCOMPLETE FIX — not a regression of the original symptom)
+
+**Plainly, what is and is not live at serving rev `9e082fd`.** The defect this issue was filed for is
+**fixed and stays fixed**: no `lot_result`/`bid`/`contract` event reaches the wire, and `entity=` restricted
+to the non-public kinds is rejected. What is still live is the *contract half* of the Option-1 fix. Filtering
+was implemented **post-fetch** (`changes_since(limit + 1)` → `truncate(limit)` → `filter(is_public_change_kind)`),
+so on the unfiltered poll path `limit` bounds **change-log rows scanned**, not **events delivered** — while the
+published OpenAPI and `/docs` still call it "Page size". This issue's closing line, "the code now matches the
+docs", is therefore false for `limit` on the very endpoint it fixed. That is why this is recorded here as an
+incomplete fix rather than as a new regression.
+
+**Evidence (literal commands and values).**
+
+```
+curl -s 'https://tenders.zebreus.click/v1/changes?since=605108400&limit=1000' | jq '(.events|length), .last_cursor, .more'
+→ 158, "605108675", false
+  (last_cursor − since = 275 change-log rows consumed; 158 events delivered; last event cursor 605108672)
+
+curl -s 'https://tenders.zebreus.click/v1/changes?since=605099999&limit=11' | jq '(.events|length), .last_cursor, .more'
+→ 0, "605100010", true          (rows 605100000..605100010 are eleven consecutive lot_result rows)
+
+curl -s 'https://tenders.zebreus.click/v1/changes?since=605099999&entity=lot&limit=11' | jq '.events|length'
+→ 11                            (with entity= set, limit IS an event count — the kind predicate is pushed into SQL)
+
+# judge re-probe, sharper minimal case:
+curl -s 'https://tenders.zebreus.click/v1/changes?since=605100027&limit=1' | jq '(.events|length), .last_cursor, .more'
+→ 0, "605100028", true          (an empty page while more:true, live)
+
+ssh -o BatchMode=yes -o StrictHostKeyChecking=no root@zebreus.click 'echo "SELECT entity_kind, op, count(*) AS n FROM changes WHERE cursor BETWEEN 605058675 AND 605108675 GROUP BY entity_kind, op" | /root/sq.sh'
+→ lot/added 18994, lot/changed 2559, lot/removed 584,
+  lot_result/added 17131, lot_result/removed 1826,
+  tender/added 7568, tender/changed 1339
+```
+
+Hidden (fetched, counted against `limit`, then dropped before serialisation) share by window:
+
+| cursor window | log rows | public-kind rows emitted | hidden `lot_result` rows | hidden share |
+|---|---|---|---|---|
+| 605108401–605108675 (the `limit=1000` page above) | 275 | 158 | 117 | 42.5 % |
+| 605058675–605108675 (tail sample) | 50,001 | 31,044 | 18,957 | 37.9 % |
+| 300000000–300020000 (older sample) | 20,001 | 12,095 | 7,906 | 39.5 % |
+
+So the hidden share is structural, not a tail artefact — a poll request returns roughly 62 % of its nominal
+page size, and a window dominated by result-graph rows (a retirement/sweep burst of `lot_result removed`)
+returns `events: []` with `more: true`.
+
+| request | `limit` | events returned | `more` |
+|---|---|---|---|
+| `since=605108400&limit=1000` | 1000 | 158 | false |
+| `since=605099999&limit=11` | 11 | 0 | true |
+| `since=605100027&limit=1` | 1 | 0 | true |
+| `since=605099999&entity=lot&limit=11` | 11 | 11 | — |
+
+Code and published text, as they stand today: `crates/app/src/v1/mod.rs:1319-1331` (fetch `limit + 1`,
+`rows.truncate(limit)`, then `.filter(|c| sse::is_public_change_kind(&c.entity_kind))`);
+`crates/store/src/read.rs:3113` and `:3137-3153` (`changes_since` applies a kind predicate in SQL **only**
+when `entity=` is given — hence one parameter with two meanings);
+`crates/app/data/openapi.json` `components.parameters.limit` → `"Page size."`;
+`crates/app/src/v1/docs.rs:168` → `"Page size, default 100, max 1000"`. Neither the `/v1/changes` description
+nor the `/docs` change-feed paragraph discloses that a page may be short or empty while `more` is true.
+
+**Judge's reasoning for why this is ours.** Premise re-verified live: `GET /v1/changes?since=605108400&limit=1000`
+→ 158 events (116 `lot`, 42 `tender`), `last_cursor` 605108675, `more:false` — 275 change-log rows consumed for
+158 events; the sharper probe `since=605100027&limit=1` → 0 events, `last_cursor "605100028"`, `more:true`, exactly
+the case the finding predicts. The cause is in the changes handler (`crates/app/src/v1/mod.rs`): `changes_since(…, limit + 1, entity)`
+then `rows.truncate(limit)` then `.filter(is_public_change_kind)`, while the store's `changes_since` only applies a kind
+filter when `entity=` is given — so without `entity=` the `lot_result`/`bid`/`contract` rows that issue 211 hides still
+count against `limit`. This is behaviour tender-db introduced — its own change-log rows and its own fix in `5023ceb` —
+not anything a publisher published. Board state: 211 is RESOLVED/DEPLOYED 2026-08-16 and deliberately chose "the cursor
+advances over the full fetch", but it records that only in the issue text and a code comment; it did not touch the
+published contract, which still reads "Page size" for every endpoint. Issue 215-C (also resolved) fixed `more` on an
+exactly-full page and is unrelated; grepping the board for empty/short poll pages, "carries the client past" and
+"until more" found no other issue, open or closed — so this residual is untracked and 211 is its origin. Two genuine
+inconsistencies a maintainer can act on: (1) `limit` means "events" with `entity=` set and "raw rows including hidden
+kinds" without it; (2) the published "Page size" wording is false for the unfiltered feed. Severity stays **low**:
+the documented loop ("pass `last_cursor` as the next `since` until `more` is false") terminates correctly, so only a
+client using the undocumented `events.length < limit ⇒ done` idiom stops early and silently misses everything after;
+the otherwise-practical cost is throughput (~62 % of nominal per request in the sampled tail). The same shape exists on
+the webhook transport (`webhooks.rs` `post()`: a BATCH-row window filtered post-fetch, so a non-reset batch can carry
+`events: []`, distinguishable from the reset notice by the `reset` key).
+
+**To close:** either add one sentence to the `/v1/changes` OpenAPI description, `/docs` #changes and the webhook docs —
+`limit` bounds change-log rows scanned, pages may be short or empty while `more` is true, and only `more` signals the
+end — or make the unfiltered poll collect `limit` *public* events (loop the fetch, or push
+`entity_kind IN (tender,lot,organization)` into SQL, checking issue 70's turso planner caveat before relying on an `IN`
+over the `changes_entity_cursor` index).
