@@ -137,3 +137,47 @@ The standing detector (without this, the backfill is a one-off and the blindness
 - A unit test pins the case this issue is: a registry whose latest period is in the current year **and** which has a hole in the middle does **not** read `fetch_complete`, and the hole is named. A second arm pins that a duplicated period does not mask a missing neighbour.
 - The coverage legend (`crates/app/src/ui.rs:532-541`) stops promising that a low ratio is "work still in progress, not a permanent gap" for a year with a known registry hole — that year's row carries a flag distinct from the `†` era-boundary marker.
 - Controls hold: 2011–2024 still read 12/12 distinct, and the funnel returns to `fetch complete ✓` once 2025-06 is on disk.
+
+## The hole is filled 2026-09-15 (owner) — 71,831 notices, and the detector is still missing
+
+    /root/aj.sh /admin/jobs '{"kind":"backfill","source":"ted","package_kind":"monthly","range":["2025-06","2025-06"]}'
+    -> {"enqueued":[1378,1379,1380]}   # fetch, process, project
+
+| job | outcome |
+| --- | --- |
+| 1378 fetch | ok — the 2025-06 monthly package, the URL form the issue verified upstream |
+| 1379 process | ok — `10,077,077 members → 71,831 notices (71,818 parsed, 13 quarantined, 8 unrecognised, 13,241,723 dup)` |
+| 1380 project | folded behind it |
+
+**71,831 against the issue's ~72k estimate.** The registry is now whole:
+
+    SELECT period, COUNT(*) FROM v_fetches WHERE source='ted' AND kind='monthly' AND period LIKE '2025-%' GROUP BY period
+
+12 distinct periods, `2025-06` present. (`2025-09` still carries its two rows — the duplicate that
+masked the hole from a `rows == 12` check. Harmless in itself; it is why the naive count passed.)
+
+Two things worth recording because they are not obvious from the job row:
+
+**The `process` step walked all 402 packages, not just the new one.** A backfill with no `period`
+fans into `fetch(range)` + `process(whole source)` + `project`, which is the documented behaviour —
+but it means filling a one-month hole costs a full-archive re-walk (~35 minutes here, 13.2M members
+skipped as duplicates by content hash). Correct, just far more expensive than the repair needs. If
+hole-filling becomes routine, `process` wants the same `period` narrowing `fetch` already takes.
+
+**13 quarantined and 8 unrecognised** in the new month — the ordinary triage loop, not part of this
+issue, but they are new rows in the quarantine bucket and the next quarantine read will see them.
+
+### Still open — and it is the half that matters
+
+The backfill repaired the data. **Nothing yet detects the next hole.** `fetch_complete` in
+`crates/app/src/coverage.rs:448` still asks only whether the latest fetched period is in the current
+year, which is exactly what greenlit a 2025-06 gap for months while the dashboard showed the range
+green. Until an interior-gap check exists, this issue is half done: the corpus is right today and
+blind tomorrow. The check itself is cheap — the registry is 401 rows, and the query that found this
+hole is the one that should run on a schedule:
+
+    SELECT period FROM v_fetches WHERE source='ted' AND kind='monthly'
+    -- expect every month from the source's first period to the current one, no gaps
+
+Done when: the funnel reports an interior hole rather than "complete", and a gap in any source's
+period sequence shows up in the weekly report or as a job-row alarm.
