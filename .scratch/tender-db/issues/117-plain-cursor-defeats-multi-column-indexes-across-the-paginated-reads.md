@@ -1,6 +1,10 @@
 # 117 — a plain `id > ?` cursor defeats every multi-column index across the paginated reads
 
-Status: RESOLVED-VERIFIED (2026-08-25, owner) — live prod timings of the measured
+Status: REOPENED 2026-09-15 — the §"The short-circuit's real scope" residual is LIVE on prod at
+rev `9e082fd`: a prefix the guard DECLINES (non-ASCII, a `LIKE` metacharacter, or 5+ ASCII letters)
+still walks the corpus and answers 503 after 30.4–30.7 s, and the "adversarial-only" premise fails
+for `?country=Germany`. Incomplete fix, not an index regression — see the 2026-09-15 comment.
+Was: RESOLVED-VERIFIED (2026-08-25, owner) — live prod timings of the measured
 shapes, all sub-second network-inclusive: `/v1/organizations?country=DE&limit=50`
 0.90s (was 15.16s server-side), `?kind=vat&limit=50` 0.86s (the 99.08s kind-only
 case), `?country=DE&cursor=2000000` 0.75s. The issue-111 detector's silence at the
@@ -1137,3 +1141,79 @@ opinion, and the claim could still be quoted without it.
 What stood here was my paraphrase of a one-line summary of that finding — a paraphrase of a paraphrase,
 in the record of a defect a paraphrase caused. It existed only because their wording had not yet
 arrived. It is gone; theirs stands, with their attribution intact.
+
+## Comments
+
+### 2026-09-15 — API/data-quality review fan-out: INCOMPLETE FIX (now REOPENED) — a prefix the reachability guard DECLINES still walks to the 30 s bound and answers 503, live on prod at rev `9e082fd`
+
+**This is not a regression of the `(filter, id)` index work this issue verified on 2026-08-25.** It is
+the residual that §"The short-circuit's real scope" recorded *knowingly* and signed off as
+"adversarial-only … not a shape any real code takes", measured live and found to be both reachable and
+worse than when it was dismissed. The three decline conditions are exactly the ones this issue
+documents; what has changed is the premises around them, so the sign-off no longer holds (see the
+judge's paragraph below).
+
+**Evidence — literal commands, live prod, rev `9e082fd` (confirmed via `GET /health`):**
+
+```
+curl -sS -o /dev/null -w '%{http_code} %{time_total}\n' "https://tenders.zebreus.click/v1/tenders?cpv=$(python3 -c "print('%C3%BC'*1500)")&limit=1"
+→ 503 30.417663
+body: {"error":{"message":"no response within the 30s service bound — a stalled internal wait, not your request; safe to retry","status":503}}
+```
+
+Reproduced literally, then varied onto the *other* decline branch and the *other* scheme
+(`/v1/lots` and `/v1/tenders` route `cpv`/`country` through the same `reachable()` leg):
+
+| request (`&limit=1` on each) | prefix shape | guard | status | time |
+|---|---|---|---|---|
+| `/v1/tenders?cpv=` 1500× `%C3%BC` | non-ASCII | **declined** | **503** | **30.46 s** |
+| `/v1/tenders?country=ZZZZZ` | 5 ASCII letters (`1<<5 > MAX_CASE_VARIANTS=16`) | **declined** | **503** | **30.68 s** |
+| `/v1/tenders?country=ZZZZ` | 4 ASCII letters | guarded | 200 | 0.70 s |
+| `/v1/tenders?country=ZZ` | 2 ASCII letters | guarded | 200 | 0.72 s |
+| `/v1/tenders?cpv=99999999` | digits only | guarded | 200 | 0.70 s |
+
+The boundary sits **exactly** where this issue's own §"The boundary" puts it — 4 letters fast, 5 letters
+30 s. `/metrics` `tender_db_request_deadline_hits_total` went **8 → 10** across the two 503s, so both
+were cut by `REQUEST_DEADLINE` (`crates/app/src/v1/mod.rs:408`, 30 s) rather than answered; the original
+finding recorded the counter at 4. The LIKE-metacharacter branch was not separately timed — it is the
+same `None` path, and re-running a third uncancellable 30 s walk was declined deliberately.
+
+Source path at the live rev, unchanged since this issue closed: `crates/store/src/read.rs:1360-1366`
+`prefix_ranges()` returns `None` for an empty, non-ASCII, `%`/`_`/`\`-bearing, or 5+-ASCII-letter
+prefix; `prefix_reachable()` (`read.rs:1232`) turns that `None` into `Ok(true)`, **admitting** the read,
+which then pays the per-row `EXISTS (… c.code LIKE ?)` over ~8.5 M tenders with the bind
+`format!("{cpv}%")` (`read.rs:899-904`). `country_seed_viable()` cannot seed it (`read.rs:1822`) and
+`cpv` has no seed at all (`read.rs:2583`). `Params::filter` copies `country`/`cpv` into `Filter`
+verbatim (`crates/app/src/v1/mod.rs:595-596`; `read.rs:1356` says outright "Nothing upstream validates
+these") while `currency` (`mod.rs:613-620`) and `lang` (`mod.rs:627-633`, "junk is a 400, never a silent
+default") on the same struct are shape-checked.
+
+**Judge (adversarial panel), on why this is ours and why 117 is the right home:** System-introduced and
+verified from source at the live rev — a declined guard admits the walk, and nothing upstream validates
+`cpv`/`country`, so this is our API layer, not a publisher fact. It is not resolved on the board: this
+issue records exactly this boundary and knowingly left it unguarded as "adversarial-only", but that was
+a *recorded residual, not a fix*, and its premises have since changed on four counts. (a) The deadline
+layer (issue 241) now converts the >380 s hang into a 503 whose body says "not your request; safe to
+retry" — factually wrong here, since the request *is* the cause and a retry re-runs the same
+uncancellable walk. (b) Issues 219/371 elevated "an absent filter value never walks" to an invariant,
+and `docs.rs:517` now serves the claim "Every isolation-routed filter has a reachability probe" — a
+probe that *declines* is not a short-circuit, so that is served-claim drift. (c) Issue 273 closed with
+"the 30 s→503 class is dead", which these two measurements falsify for declined shapes. (d)
+`?country=Germany` / `?country=Deutschland` (7 and 11 ASCII letters → declined) is a naive-user shape,
+which directly contradicts this issue's "not reachable by an ordinary user or a naive crawler". Issue
+336 (CLOSED NOT-WORTH-IT) rejected a 400 only for *valid-shaped* unknown codes such as `DEU`/`ZZ`, which
+are guarded and answer in under a second; its stated risk ("breaking clients that legitimately query a
+country with no current tenders") cannot apply to non-ASCII or metacharacter values, which no NUTS or
+CPV code can ever match — so 336 does not decide this. Issue 275's residual list names min/max_value and
+sparse kind/org combos, not this; issue 120 (open) is the cancellability umbrella and names
+`tender_db_request_deadline_hits_total` recurring as its reopen trigger, which this user-shaped request
+increments, muddying 120's own signal. `tenders_shortcircuit.rs:266-271` pins the store-layer
+fall-through as intended ("correct either way"), so the actionable gap is at the API layer. Severity
+**medium**: unauthenticated and trivially reachable, four such requests pin all `SLOTS=4` isolated
+readers for 30 s each, the work is uncancellable, and the error text invites a retry — mitigated by the
+10 rps/IP limiter, the adversarial shape of most (not all) triggering inputs, and 336's 10-day log
+survey showing no such values in real traffic.
+
+**To close:** shape-check `cpv` (ASCII digits, ≤8) and `country` (ASCII letters-then-digits, ≤5) in
+`Params::filter` exactly as `currency`/`lang` already are — a 400 at zero query cost — and correct
+`docs.rs:517` to name the shapes the probe declines.

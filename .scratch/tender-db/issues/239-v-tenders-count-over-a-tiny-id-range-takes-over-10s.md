@@ -368,3 +368,84 @@ reads dropped. So a derived table or CTE over base tables that merely mentions a
 subquery is no longer "a view read", and filtering its rows is accepted; a filtered view
 INSIDE such a subquery is still refused on its own. Pinned both ways. The `v_tender_current`
 note's guidance now follows the marker directly, so its refusal reads as the others do.
+
+## Comments
+
+### 2026-09-15 — API/data-quality review fan-out: `notice_withheld_fields` 408s on an unfiltered `LIMIT 1`, and the refusal built here does not cover it
+
+Status deliberately left unchanged. This issue was never closed — line 256 still carries the
+open acceptance item and line 293 "Remaining fix direction is unchanged: materialise the
+views" — so this is more evidence on an open issue, not a regression of `12bffae`. What it
+does show is that the up-front refusal deployed on 2026-09-06 is **incomplete in two
+independent ways**: it keys on the `v_` name prefix (`fn unfilterable_view`, `sql.rs:958-960`:
+`name.starts_with("v_") && name != "v_fetches"`), and it deliberately accepts unfiltered peeks
+because "they ask for the whole view". `notice_withheld_fields` is the only ALLOWED view
+outside the `v_` prefix (`const ALLOWED`, `sql.rs:127`), and for it an unfiltered `LIMIT 1` is
+not a cheap whole-view peek — it is a corpus-wide `GROUP BY` that blows the 10 s cap and pins a
+worker. Live at rev `9e082fd` its `/v1/sql/schema` entry carries **no note at all**, while
+every `v_*` view carries NOT FILTERABLE.
+
+Evidence, literal (2026-09-13 ~20:02 UTC, rev `9e082fd`):
+
+    ssh -o BatchMode=yes -o StrictHostKeyChecking=no root@zebreus.click \
+      'echo "SELECT * FROM notice_withheld_fields LIMIT 1" | /root/sq.sh'
+      -> {"error":{"message":"query exceeded the 10s time limit","status":408}}
+
+    echo "SELECT * FROM v_lot_results LIMIT 1" | /root/sq.sh   -> 200 (row id 4, tender 3)
+    echo "SELECT * FROM v_fetches LIMIT 1"     | /root/sq.sh   -> 200
+
+The 408 was **not** re-run (retrying a 408 is forbidden, and re-running it is exactly the
+outage risk this issue's own "Note for whoever measures next" warns about). It is corroborated
+independently at a different rev: issue 372 unit 1 (2026-09-08, rev `1ca7427`) recorded
+`SELECT notice_id, withheld_field FROM notice_withheld_fields LIMIT 3` → 408 at the cap with
+the same diagnosis, and issue 173 D5 (2026-08-24) measured an aggregate over this same view
+pinning a reader **>12 min uncancellably** on prod — fixed by moving the *job* onto base
+tables; the view itself was never changed.
+
+| query (one SELECT per call, sequential) | result | time |
+| --- | --- | --- |
+| `SELECT * FROM notice_withheld_fields LIMIT 1` | 408, "query exceeded the 10s time limit" | 11.004 s |
+| `SELECT * FROM v_lot_results LIMIT 1` (control) | 200, row id 4 / tender 3 / notice 24135424 | 0.003 s (0.011 s on re-run) |
+| `SELECT * FROM v_fetches LIMIT 1` (control) | 200 | 0.002 s |
+| `SELECT * FROM notice_sections LIMIT 1` (control) | 200 | 0.011 s |
+| `SELECT 1` (control) | 200 | 0.011 s |
+| `SELECT COUNT(*), MIN(notice_id), MAX(notice_id) FROM notice_sections WHERE kind='FieldsPrivacy' AND notice_id BETWEEN 20000000 AND 31700000` | 284,990 rows (lo 23,160,004 · hi 31,497,343) | 0.058 s |
+| the view body inlined, bounded: `… AND s.notice_id BETWEEN 31100000 AND 31110000 … GROUP BY s.notice_id, s.section_id LIMIT 1` | 200, one row (31102580, PROCEDURE, not-val, eo-int, …) | 0.060 s |
+
+So the view's `GROUP BY` input is ≥ 285k groups, each with a `notice_codes` LEFT JOIN plus two
+correlated subqueries, and the `LIMIT 1` sits *above* the aggregation — while the same rows are
+60 ms when the predicate can seek. The failure is the unbounded view wrapper, not the data.
+Definition at `crates/store/src/lib.rs:381-393`. Runtime facts that make it an availability
+problem rather than a slow query are this issue's own: `SQL_RUNTIME_THREADS = 2`
+(`sql.rs:194`), the in-flight counter decremented only when the computation returns because
+turso has no `interrupt()` (`sql.rs:236-247`), `SATURATED` at `sql.rs:492`. The saturation mode
+was seen live and unprovoked at ~2026-09-14T01:30:10Z: three sequential cheap reads each
+returned 503 "sql backend busy … every worker is pinned by an earlier query that cannot be
+interrupted" after 0.77 s (the 750 ms `CAPACITY_GRACE` shed), `/health` 200 throughout (issue
+17's isolation), recovered by 01:31:08Z; cause unattributed — none of the verifier's own
+queries took more than 60 ms.
+
+Judge's reasoning for why this is ours, verbatim in substance:
+
+> This is system-introduced, not source-published: the view is this repo's own definition
+> (`crates/store/src/lib.rs:381-393`, GROUP BY over `notice_sections` + LEFT JOIN
+> `notice_codes` + two correlated subqueries), it is placed on the positive allow-list by this
+> repo (`crates/app/src/v1/sql.rs:127`, "public metadata"), and the issue-239 refusal that
+> protects analysts from exactly this class keys on the name prefix (`fn unfilterable_view`,
+> `sql.rs:958`), so `notice_withheld_fields` — the only ALLOWED view outside the `v_` prefix —
+> is neither refused nor annotated. The live `/v1/sql/schema` entry confirms: type "view", six
+> TEXT columns, no note, while the endpoint's own notes promise "only the tables and views
+> listed above are readable" and "Unfiltered, unjoined reads (… LIMIT 5) are accepted". No
+> shape of read on this view can finish: unfiltered `LIMIT 1` is the measured 408, and a
+> `WHERE` cannot rescue it because 239 established turso pushes no predicate into ANY view.
+> The only code-level guard, test `every_allowlisted_table_is_queryable` (`sql.rs:2004`),
+> checks classification only, not that a peek answers. It belongs on 239 rather than on 372
+> (DONE; scope was withheld values as data) or 173 (closed; moved the internal job off the
+> view), because 239's refuse-up-front mechanism is precisely what this view falls through.
+
+To close: extend the refusal/annotation class from the `v_` prefix to the allow-listed views
+by classification rather than by name — mark `notice_withheld_fields` NOT FILTERABLE/unreadable
+and refuse it up front, or drop it from `ALLOWED`, or rewrite it without the corpus-wide
+`GROUP BY` (on the `(kind, notice_id)` index, or fold-maintained as a table, which is this
+issue's standing "materialise" direction) — and strengthen `every_allowlisted_table_is_queryable`
+so it asserts a `LIMIT 1` peek actually answers instead of only classifying.
