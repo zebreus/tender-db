@@ -510,6 +510,20 @@ fn PipelinePanel(rows: Vec<PipelineStage>) -> Element {
                                 if s.fetch_complete {
                                     span { " · fetch complete ✓" }
                                 }
+                                // Issue 395: name the hole. An operator reading
+                                // "missing: 2025-06" knows what to enqueue; a
+                                // silently absent ✓ only says something is wrong
+                                // somewhere in thirty years of packages.
+                                if !s.missing_periods.is_empty() {
+                                    span { class: "warning",
+                                        " · missing: {s.missing_periods.join(\", \")}"
+                                    }
+                                }
+                                if !s.duplicate_periods.is_empty() {
+                                    span { class: "muted",
+                                        " · registered twice: {s.duplicate_periods.join(\", \")}"
+                                    }
+                                }
                             }
                             td { class: "num", "{group(s.processed_notices)}" }
                             td { class: "num", "{group(s.projected_tenders)}" }
@@ -538,7 +552,10 @@ fn CoveragePanel(rows: Vec<Coverage>) -> Element {
                 "During the historical backfill these ratios climb: the importer works through the "
                 "eras in the background and in learn-order, not calendar-order, so an old year can "
                 "sit well below 100 % simply because its packages have not been processed yet. A low "
-                "ratio here is work still in progress, not a permanent gap."
+                "ratio here is usually work still in progress — but not always, which is why the "
+                "Pipeline panel above now names any monthly package the fetch registry is missing "
+                "(issue 395). A year whose package is named there is a permanent gap until that "
+                "package is fetched, not a backfill in flight."
             }
             if eras.is_empty() {
                 p { class: "muted", "Nothing ingested yet — every year is at 0 %." }

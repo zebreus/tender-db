@@ -425,6 +425,12 @@ async fn the_metrics_endpoint_exposes_prometheus_text() {
         "tender_db_job_last_ok",
         "tender_db_quarantine_outstanding",
         "tender_db_canonical_rows",
+        // Issue 395: the fetch-gap gauges follow the same rule. A fresh box has
+        // measured no pipeline, and emitting `missing_periods 0` for it would
+        // claim the registry was checked and found whole — the precise false
+        // reassurance the issue is about, restated one layer out.
+        "tender_db_fetch_missing_periods",
+        "tender_db_fetch_duplicate_periods",
         // Issue 230: a report nobody has computed emits no series at all. A zero
         // here would be a 1970 stamp — perpetually "stale", so perpetually alerting,
         // and therefore perpetually muted.

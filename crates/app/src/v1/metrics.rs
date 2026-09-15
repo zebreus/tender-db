@@ -312,6 +312,39 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
             sample(&mut out, "tender_db_ingest_notice_age_seconds", &[], age as f64);
         }
     }
+    // Issue 395: the fetch registry's interior holes, as an alertable number.
+    // The dashboard names them, but a gap that only a human opening a web page
+    // can see is the blindness this exists to remove — TED's 2025-06 hole sat
+    // under a green tick for months. 0 is the steady state for every source, so
+    // `tender_db_fetch_missing_periods > 0` is the whole alert rule.
+    if let Some(pipeline) = &dash.pipeline {
+        header(
+            &mut out,
+            "tender_db_fetch_missing_periods",
+            "Monthly packages absent from the middle of a source's fetch registry (issue 395).",
+        );
+        for s in pipeline {
+            sample(
+                &mut out,
+                "tender_db_fetch_missing_periods",
+                &[("source", &s.source)],
+                s.missing_periods.len() as f64,
+            );
+        }
+        header(
+            &mut out,
+            "tender_db_fetch_duplicate_periods",
+            "Monthly periods registered by more than one fetch row (issue 395).",
+        );
+        for s in pipeline {
+            sample(
+                &mut out,
+                "tender_db_fetch_duplicate_periods",
+                &[("source", &s.source)],
+                s.duplicate_periods.len() as f64,
+            );
+        }
+    }
     if let Some(counts) = &dash.counts {
         header(&mut out, "tender_db_canonical_rows", "Rows per canonical table (dashboard cache).");
         for c in counts {

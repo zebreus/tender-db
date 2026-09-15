@@ -435,22 +435,40 @@ async fn measure_coverage_pipeline(
     }
     let published_ted: i64 = truth.iter().map(|p| p.notices).sum();
     let projected: HashMap<String, i64> = db.tenders_by_source().await?.into_iter().collect();
-    // "Fetch complete" = the latest fetched period is in the current year, i.e.
-    // downloading has caught up to the present (periods are YYYY-prefixed).
+    // "Fetch complete" needs BOTH halves (issue 395). The old test was only the
+    // first — "the latest fetched period is in the current year", i.e. downloading
+    // has caught up to the present — and it greenlit a missing TED 2025-06 for
+    // months, because a hole in the middle leaves the newest period exactly where
+    // it was. The second half is a contiguity test over the monthly sequence, and
+    // the missing months are NAMED so the funnel says what to enqueue.
     let current_year = (1970 + now / 31_557_600).to_string();
+    let mut monthly: HashMap<String, Vec<(String, i64)>> = HashMap::new();
+    for (source, period, rows) in db.monthly_fetch_periods().await? {
+        monthly.entry(source).or_default().push((period, rows));
+    }
     let pipeline: Vec<PipelineStage> = db
         .fetch_registry_summary()
         .await?
         .into_iter()
-        .map(|(source, fetched_packages, from, to)| PipelineStage {
-            published: (source == GROUND_TRUTH_SOURCE).then_some(published_ted),
-            fetched_packages,
-            fetch_complete: to.starts_with(&current_year),
-            fetched_from: Some(from),
-            fetched_to: Some(to),
-            processed_notices: processed.get(&source).copied().unwrap_or(0),
-            projected_tenders: projected.get(&source).copied().unwrap_or(0),
-            source,
+        .map(|(source, fetched_packages, from, to)| {
+            let gaps = store::monthly_period_gaps(monthly.get(&source).map_or(&[][..], |v| v));
+            PipelineStage {
+                published: (source == GROUND_TRUTH_SOURCE).then_some(published_ted),
+                fetched_packages,
+                // A source with an unparsed monthly period cannot be called
+                // complete either: the sequence test did not cover it, and
+                // "we could not check" must never render as "we checked".
+                fetch_complete: to.starts_with(&current_year)
+                    && gaps.missing.is_empty()
+                    && gaps.unparsed.is_empty(),
+                missing_periods: gaps.missing,
+                duplicate_periods: gaps.duplicated,
+                fetched_from: Some(from),
+                fetched_to: Some(to),
+                processed_notices: processed.get(&source).copied().unwrap_or(0),
+                projected_tenders: projected.get(&source).copied().unwrap_or(0),
+                source,
+            }
         })
         .collect();
 
@@ -460,6 +478,71 @@ async fn measure_coverage_pipeline(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Issue 395: the funnel must not call a source complete when its monthly
+    /// sequence has a hole, even though the newest period is in the current year.
+    ///
+    /// That combination is not hypothetical — it is precisely what prod looked
+    /// like: TED's 2025-06 package was never fetched, the range read
+    /// `1993-01 … 2026-06`, and the dashboard showed `fetch complete ✓` over a
+    /// ~72,000-notice gap. The old test was `to.starts_with(&current_year)`
+    /// alone, which this fixture passes.
+    ///
+    /// Two sources in one registry, so the healthy arm is a CONTROL rather than a
+    /// separate run: a contiguity check that fails everything is as useless as
+    /// one that fails nothing.
+    #[tokio::test]
+    async fn an_interior_hole_denies_fetch_complete_even_when_the_newest_period_is_current() {
+        let path = format!("/tmp/tender-db-funnel-gap-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = store::Db::open(&path).await.expect("open");
+
+        // The clock the funnel reads, and the year it derives from it.
+        let now = store::now_unix();
+        let year = 1970 + now / 31_557_600;
+
+        // `holed`: January and March of the current year, no February.
+        // `whole`: January, February and March — the same shape, no hole.
+        for (source, month) in [("holed", 1), ("holed", 3), ("whole", 1), ("whole", 2), ("whole", 3)]
+        {
+            db.record_fetch(&store::Fetch {
+                source: source.to_owned(),
+                kind: "monthly".to_owned(),
+                period: format!("{year}-{month:02}"),
+                url: "u".to_owned(),
+                sha256: format!("{source}{month}"),
+                bytes: 1,
+                fetched_at: 0,
+                path: "p".to_owned(),
+            })
+            .await
+            .expect("register the package");
+        }
+
+        let (_, pipeline) = measure_coverage_pipeline(&db, now).await.expect("measure");
+        let stage = |name: &str| {
+            pipeline.iter().find(|s| s.source == name).unwrap_or_else(|| panic!("{name} missing"))
+        };
+
+        let holed = stage("holed");
+        assert!(
+            holed.fetched_to.as_deref().is_some_and(|to| to.starts_with(&year.to_string())),
+            "the fixture's newest period IS in the current year — the old check passed here"
+        );
+        assert!(!holed.fetch_complete, "a hole in the middle is not 'fetch complete'");
+        assert_eq!(
+            holed.missing_periods,
+            [format!("{year}-02")],
+            "and the funnel names what to enqueue"
+        );
+        assert!(holed.duplicate_periods.is_empty());
+
+        let whole = stage("whole");
+        assert!(whole.fetch_complete, "the contiguous control must still read complete");
+        assert!(whole.missing_periods.is_empty());
+
+        let _ = std::fs::remove_file(&path);
+    }
 
     #[test]
     fn the_vendored_ground_truth_parses_and_covers_the_ted_era() {

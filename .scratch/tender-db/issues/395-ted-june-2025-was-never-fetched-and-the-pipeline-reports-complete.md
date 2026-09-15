@@ -181,3 +181,94 @@ hole is the one that should run on a schedule:
 
 Done when: the funnel reports an interior hole rather than "complete", and a gap in any source's
 period sequence shows up in the weekly report or as a job-row alarm.
+
+## The detector is BUILT 2026-09-15 (owner) — the second half, the one that matters
+
+`fetch_complete` is no longer `to.starts_with(&current_year)`. It is that test **and** a contiguity
+test over the source's monthly period sequence, and the missing months are named everywhere they
+are counted.
+
+**The arithmetic lives in one place** — `store::monthly_period_gaps`, beside the registry it reads —
+so the funnel, the metrics gauge and anything added later cannot disagree about what a hole is. It
+returns three lists:
+
+| list | meaning |
+| --- | --- |
+| `missing` | `YYYY-MM` months between the first and last registered period that no row covers |
+| `duplicated` | periods registered by more than one row — **the shape that hid this hole** |
+| `unparsed` | a `monthly` period that is not `YYYY-MM` at all |
+
+Three decisions in it are load-bearing:
+
+**Interior only.** The sequence runs from the earliest registered period to the latest, so the check
+can never claim a source should have started earlier or should already hold next month. Neither is
+knowable from the registry, and guessing either would make the check cry wolf on every source's
+first day — which is how a check gets muted, and a muted check is what we already had.
+
+**Distinct periods, never row counts.** Deduping before the sequence test IS the fix. The `##
+Done when` bullet says it: a `rows == 12` check passed 2025 precisely because 2025-09 was registered
+twice. The test `a_duplicate_does_not_mask_the_missing_month` builds that exact registry — eleven
+distinct months, twelve rows, September doubled — and asserts the hole is still named.
+
+**An unreadable period is surfaced, not skipped.** `period` means different things per kind, and a
+census of the live registry (2026-09-15) is why this matters:
+
+| source / kind | rows | distinct | shape |
+| --- | --- | --- | --- |
+| ted monthly | 403 | 402 | `YYYY-MM`, 1993-01 … 2026-06 |
+| doe monthly | 44 | 44 | `YYYY-MM`, 2022-12 … 2026-07 |
+| fts monthly | 1 | 1 | `YYYY-MM` |
+| ted daily | 43 | 43 | **`2026-00136`** — an OJ issue number |
+| doe / fts daily | 57 / 8 | — | `YYYY-MM-DD` |
+| eurostat rates-ecu-* | 1 each | — | the literal **`1993-1998`** |
+
+So the check is `kind = 'monthly'` only — only a month sequence has a notion of "the month in
+between" — and a `monthly` period it cannot parse makes that source **not complete**, because "we
+could not check" must never render as "we checked". A source quietly dropping out of the check is
+the same blindness one level up.
+
+**Where it surfaces.** Three places, and the third is the one the issue insisted on:
+
+1. The funnel names them: `· missing: 2025-06` in the warning colour, and `· registered twice: …`
+   muted beside it. An operator knows what to enqueue without an ssh.
+2. The coverage legend no longer promises that a low ratio is "work still in progress, not a
+   permanent gap" full stop — it now points at the Pipeline panel and says a year whose package is
+   named there IS a permanent gap until fetched.
+3. **`/metrics`**: `tender_db_fetch_missing_periods{source="ted"}` and
+   `tender_db_fetch_duplicate_periods{source=…}`. This is the "fires without anyone opening the
+   dashboard" leg. `/health/deep` was considered and rejected: it returns **503** when unhealthy, and
+   a thirty-year-old data gap is not an availability failure — flipping the service out of rotation
+   over a missing 2015 package would be worse than the blindness. A gauge with `0` as the steady
+   state makes `> 0` the entire alert rule, and costs nothing: the pipeline section is already
+   measured by the dashboard's background refresher on its own cadence, not by the scrape.
+
+The gauges follow the report's absent-until-measured rule (issue 230) — a fresh box emits no series
+rather than `0`, because a zero there would claim the registry was checked and found whole, which is
+this issue restated one layer out. `the_metrics_endpoint_exposes_prometheus_text` pins that.
+
+**Live state at build time**, from the same census: `ted monthly` is 403 rows over **402 distinct**
+periods spanning 1993-01 … 2026-06 — exactly 402 months, so the sequence is now whole and the funnel
+will read `fetch complete ✓` honestly for the first time. The 2025-09 duplicate survives and will
+render as `registered twice: 2025-09`. `doe monthly`'s 44 rows span 2022-12 … 2026-07, which is 44
+months, so it is contiguous too — worth recording because a first reading of the census made it look
+like three months short, and the check correctly reports no gap.
+
+Tests: `a_duplicate_does_not_mask_the_missing_month` (the issue's own registry),
+`a_contiguous_registry_has_no_gaps` (the real 402-month TED shape, a year boundary, a single period,
+an empty registry), `the_sequence_is_bounded_by_what_is_registered` (interior-only, multi-month
+holes, input order), `an_unreadable_period_is_surfaced_rather_than_ignored` (all four live non-month
+shapes), the extended `pipeline_stage_queries_summarise_per_source`, and — the wiring —
+`an_interior_hole_denies_fetch_complete_even_when_the_newest_period_is_current`, which builds the
+combination the old check called done (a hole in the middle, newest period in the current year) and
+asserts the funnel refuses it, with a contiguous second source as the control.
+
+### Still open
+
+- Not deployed. Rides the next deploy with issues 392 and 385 unit 2.
+- The **2025-09 duplicate** is reported but not reconciled. It is harmless on its own (the same
+  period fetched twice); the `## Done when` bullet asks for it to be "reconciled or explained", and
+  now that it is visible on the funnel and in a gauge, that is a decision someone can make with the
+  evidence in front of them rather than an ssh away.
+- The check covers `monthly` only, by construction. `ted daily`'s `2026-00136` periods are an OJ
+  issue sequence and could in principle be gap-checked too, but that is a different arithmetic
+  (issue numbers are not dense across years) and no hole has been observed there.

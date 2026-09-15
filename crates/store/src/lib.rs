@@ -3495,6 +3495,38 @@ impl Db {
             .unwrap_or((0, 0, 0)))
     }
 
+    /// Every MONTHLY fetch period per source, with how many rows registered it
+    /// (issue 395) — the input [`monthly_period_gaps`] turns into a gap report.
+    ///
+    /// Rows rather than a count, because the question is which months are ABSENT
+    /// and SQL cannot enumerate a month sequence. Cheap regardless: the whole
+    /// fetch registry is in the hundreds of rows (403 monthly TED periods plus a
+    /// few dozen others, measured 2026-09-15), so this is a full read of a table
+    /// smaller than one page of most others.
+    ///
+    /// Monthly only, and that is a shape decision rather than a preference: the
+    /// registry's `period` means different things per kind. `ted daily` is
+    /// `2026-00136` (an OJ issue number), `doe daily` and `fts daily` are
+    /// `YYYY-MM-DD`, and eurostat's rate tables register the literal `1993-1998`.
+    /// Only `monthly` is a `YYYY-MM` sequence with a meaningful notion of "the
+    /// month in between", so only `monthly` can have a hole in it.
+    pub async fn monthly_fetch_periods(&self) -> turso::Result<Vec<(String, String, i64)>> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT source, period, COUNT(*)
+                   FROM fetches WHERE kind = 'monthly'
+                  GROUP BY source, period ORDER BY source, period",
+                (),
+            )
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push((text(&row, 0), text(&row, 1), int(&row, 2)));
+        }
+        Ok(out)
+    }
+
     /// The fetch stage per source (issue 33): how many distinct package periods
     /// are on disk and the range they span. Small — one row per source over the
     /// tiny fetch registry.
@@ -7262,6 +7294,37 @@ tmpfs /data/ramcache tmpfs rw 0 0
         );
         assert_eq!(db.tenders_by_source().await.unwrap(), vec![("doe".to_owned(), 1), ("ted".to_owned(), 2)]);
 
+        // Issue 395: the same registry, per MONTHLY period with its row count —
+        // the shape the gap check reads. The 1993-01 re-fetch that
+        // `fetch_registry_summary` collapses to one distinct period shows here as
+        // two rows, which is the point: a duplicate must be visible, because a
+        // duplicate is what made 2025's naive count come out right over a hole.
+        // The `doe` daily row is absent — `period` means an OJ issue number or a
+        // date for the non-monthly kinds, so it is not part of any month sequence.
+        assert_eq!(
+            db.monthly_fetch_periods().await.unwrap(),
+            vec![
+                ("ted".to_owned(), "1993-01".to_owned(), 2),
+                ("ted".to_owned(), "2026-07".to_owned(), 1),
+            ],
+        );
+        // And end to end: that registry IS a hole — 1993-02 … 2026-06 is missing,
+        // while the newest period sits in the current year, which is exactly the
+        // combination the old `fetch_complete` called done.
+        let ted: Vec<(String, i64)> = db
+            .monthly_fetch_periods()
+            .await
+            .unwrap()
+            .into_iter()
+            .filter(|(s, _, _)| s == "ted")
+            .map(|(_, p, n)| (p, n))
+            .collect();
+        let gaps = monthly_period_gaps(&ted);
+        assert_eq!(gaps.missing.len(), 401, "every month between the two ends");
+        assert_eq!(gaps.missing.first().map(String::as_str), Some("1993-02"));
+        assert_eq!(gaps.missing.last().map(String::as_str), Some("2026-06"));
+        assert_eq!(gaps.duplicated, ["1993-01"]);
+
         let _ = std::fs::remove_file(&path);
     }
 
@@ -8620,5 +8683,193 @@ mod fk_enforcement {
             )
         };
         assert_eq!((children, parents), (1, 1), "the refused DELETE must leave the pair intact, not cascade");
+    }
+}
+
+/// What a source's monthly fetch registry is missing, and what it registered
+/// twice (issue 395).
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct MonthlyGaps {
+    /// `YYYY-MM` months between the first and last registered period that no row
+    /// covers. Empty is the healthy state, and the only state the funnel may
+    /// call "fetch complete".
+    pub missing: Vec<String>,
+    /// Periods registered by more than one row. Not a coverage loss on its own —
+    /// reported separately because a duplicate is what let a naive count MASK a
+    /// hole: TED's 2025 held 12 rows over 11 distinct months, so `rows == 12`
+    /// passed the year that was missing June.
+    pub duplicated: Vec<String>,
+    /// Periods that are not `YYYY-MM` at all, so no sequence could be derived.
+    /// Non-empty means `monthly` acquired a period shape this function has never
+    /// seen, and the gap verdict for that source is NOT trustworthy — it is
+    /// surfaced rather than silently skipped, because a source quietly dropping
+    /// out of the check is the same blindness one level up.
+    pub unparsed: Vec<String>,
+}
+
+/// The months absent from, and duplicated in, one source's monthly periods
+/// (issue 395).
+///
+/// The bug this exists for: the funnel's "fetch complete ✓" asked only whether
+/// the NEWEST period was in the current year, so a hole anywhere before it sat
+/// under a green tick — TED's 2025-06 did, for months, while the dashboard
+/// showed the range as `1993-01 … 2026-06` and the year read 91.75 % under a
+/// legend promising that a low ratio is "work still in progress, not a permanent
+/// gap".
+///
+/// **Interior only.** The sequence runs from the earliest registered period to
+/// the latest, so this cannot claim a source should have started earlier or
+/// should already hold next month — neither is knowable from the registry, and
+/// guessing either would make the check cry wolf on every source's first day.
+/// The "caught up to the present" question stays where it was, beside this one.
+///
+/// **Distinct periods, never row counts.** Deduping before the sequence test is
+/// the whole point: the shape that hid the original hole was a duplicate making
+/// the arithmetic come out right.
+pub fn monthly_period_gaps(periods: &[(String, i64)]) -> MonthlyGaps {
+    let mut gaps = MonthlyGaps::default();
+    let mut months: Vec<(i32, u32)> = Vec::with_capacity(periods.len());
+    for (period, rows) in periods {
+        match parse_month(period) {
+            Some(m) => {
+                months.push(m);
+                if *rows > 1 {
+                    gaps.duplicated.push(period.clone());
+                }
+            }
+            None => gaps.unparsed.push(period.clone()),
+        }
+    }
+    months.sort_unstable();
+    months.dedup();
+    let (Some(&first), Some(&last)) = (months.first(), months.last()) else { return gaps };
+    let held: std::collections::HashSet<(i32, u32)> = months.iter().copied().collect();
+    let (mut y, mut m) = first;
+    while (y, m) <= last {
+        if !held.contains(&(y, m)) {
+            gaps.missing.push(format!("{y:04}-{m:02}"));
+        }
+        m += 1;
+        if m == 13 {
+            m = 1;
+            y += 1;
+        }
+    }
+    gaps.duplicated.sort();
+    gaps.duplicated.dedup();
+    gaps.unparsed.sort();
+    gaps.unparsed.dedup();
+    gaps
+}
+
+/// `YYYY-MM` as `(year, month)`. Strict: anything else is not a month sequence
+/// and is reported as unparsed rather than skipped, so a new period shape cannot
+/// quietly remove a source from the check.
+fn parse_month(period: &str) -> Option<(i32, u32)> {
+    let (y, m) = period.split_once('-')?;
+    if y.len() != 4 || m.len() != 2 {
+        return None;
+    }
+    let (y, m) = (y.parse::<i32>().ok()?, m.parse::<u32>().ok()?);
+    (1..=12).contains(&m).then_some((y, m))
+}
+
+#[cfg(test)]
+mod monthly_gap_tests {
+    use super::*;
+
+    fn periods(spec: &[(&str, i64)]) -> Vec<(String, i64)> {
+        spec.iter().map(|(p, n)| ((*p).to_owned(), *n)).collect()
+    }
+
+    /// Issue 395, exactly as it happened: TED's 2025 registry held twelve rows
+    /// over ELEVEN distinct months, because 2025-09 was registered twice and
+    /// 2025-06 was never fetched. A `rows == 12` check passed the year, and the
+    /// funnel's "the newest period is in the current year" test passed it too —
+    /// so ~72,000 notices were missing under a green tick.
+    #[test]
+    fn a_duplicate_does_not_mask_the_missing_month() {
+        let mut spec: Vec<(&str, i64)> = (1..=12)
+            .filter(|m| *m != 6)
+            .map(|m| (Box::leak(format!("2025-{m:02}").into_boxed_str()) as &str, 1i64))
+            .collect();
+        // 2025-09 registered twice — ids 15 and 542 on the real box.
+        spec.iter_mut().find(|(p, _)| *p == "2025-09").expect("september").1 = 2;
+        assert_eq!(spec.len(), 11, "eleven distinct months, twelve rows");
+        assert_eq!(spec.iter().map(|(_, n)| n).sum::<i64>(), 12);
+
+        let gaps = monthly_period_gaps(&periods(&spec));
+        assert_eq!(gaps.missing, ["2025-06"], "the hole must be named, not merely counted");
+        assert_eq!(gaps.duplicated, ["2025-09"], "and the duplicate reported separately");
+        assert!(gaps.unparsed.is_empty());
+    }
+
+    /// The healthy states, because a gap check that cries wolf gets turned off.
+    #[test]
+    fn a_contiguous_registry_has_no_gaps() {
+        // The real TED shape after the backfill: 1993-01 … 2026-06, every month.
+        let mut spec: Vec<(String, i64)> = Vec::new();
+        let (mut y, mut m) = (1993, 1u32);
+        while (y, m) <= (2026, 6) {
+            spec.push((format!("{y:04}-{m:02}"), 1));
+            m += 1;
+            if m == 13 {
+                m = 1;
+                y += 1;
+            }
+        }
+        assert_eq!(spec.len(), 402, "402 months, the live count");
+        assert_eq!(monthly_period_gaps(&spec), MonthlyGaps::default());
+
+        // A year boundary is not a hole.
+        assert!(monthly_period_gaps(&periods(&[("2024-11", 1), ("2024-12", 1), ("2025-01", 1)]))
+            .missing
+            .is_empty());
+        // Neither is a single period, nor none at all — a source's first day
+        // must not read as a source full of holes.
+        assert_eq!(monthly_period_gaps(&periods(&[("2025-06", 1)])), MonthlyGaps::default());
+        assert_eq!(monthly_period_gaps(&[]), MonthlyGaps::default());
+    }
+
+    /// INTERIOR only. The registry cannot say a source should have started
+    /// earlier or should already hold next month, so the sequence runs from the
+    /// first registered period to the last and claims nothing outside it.
+    #[test]
+    fn the_sequence_is_bounded_by_what_is_registered() {
+        let gaps = monthly_period_gaps(&periods(&[("2022-12", 1), ("2023-01", 1), ("2023-02", 1)]));
+        assert!(gaps.missing.is_empty(), "nothing before 2022-12 or after 2023-02 is claimed");
+
+        // Several holes, in order, including a multi-month one.
+        let gaps = monthly_period_gaps(&periods(&[
+            ("2024-10", 1),
+            ("2025-01", 1),
+            ("2025-02", 1),
+            ("2025-05", 1),
+        ]));
+        assert_eq!(gaps.missing, ["2024-11", "2024-12", "2025-03", "2025-04"]);
+
+        // Input order must not matter — the registry query happens to sort, but
+        // the arithmetic must not depend on it.
+        let gaps = monthly_period_gaps(&periods(&[("2025-05", 1), ("2024-10", 1), ("2025-01", 1)]));
+        assert_eq!(gaps.missing.first().map(String::as_str), Some("2024-11"));
+        assert_eq!(gaps.missing.last().map(String::as_str), Some("2025-04"));
+    }
+
+    /// A period shape the sequence cannot read is REPORTED, never skipped. The
+    /// registry's other kinds use `2026-00136` (an OJ issue), `YYYY-MM-DD` and
+    /// the literal `1993-1998`; if one of those ever lands under `monthly`, the
+    /// source must not silently drop out of the check.
+    #[test]
+    fn an_unreadable_period_is_surfaced_rather_than_ignored() {
+        let gaps = monthly_period_gaps(&periods(&[
+            ("2025-01", 1),
+            ("2025-03", 1),
+            ("2026-00136", 1),
+            ("1993-1998", 1),
+            ("2025-13", 1),
+            ("2025-1", 1),
+        ]));
+        assert_eq!(gaps.missing, ["2025-02"], "the readable months still sequence");
+        assert_eq!(gaps.unparsed, ["1993-1998", "2025-1", "2025-13", "2026-00136"]);
     }
 }

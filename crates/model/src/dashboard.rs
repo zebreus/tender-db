@@ -207,10 +207,25 @@ pub struct PipelineStage {
     pub fetched_packages: i64,
     pub fetched_from: Option<String>,
     pub fetched_to: Option<String>,
-    /// Whether fetching has caught up to the present — the latest fetched period
-    /// is in the current year, so downloading is effectively done and what
-    /// remains is processing (resolved server-side against the measure clock).
+    /// Whether fetching is genuinely done: the latest fetched period is in the
+    /// current year AND the monthly sequence has no hole in it (issue 395).
+    ///
+    /// The second half was missing until 2026-09-15, and its absence is the
+    /// whole of issue 395: TED's 2025-06 package was never fetched, yet the
+    /// newest period was in the current year, so the funnel showed a ✓ over a
+    /// ~72,000-notice hole for months. "The newest period is recent" says
+    /// nothing about the middle.
     pub fetch_complete: bool,
+    /// Monthly periods between the first and last fetched that no package covers
+    /// (issue 395) — named, so an operator reading the funnel knows what to
+    /// enqueue without an ssh. Empty is the healthy state.
+    #[serde(default)]
+    pub missing_periods: Vec<String>,
+    /// Monthly periods registered by more than one fetch row (issue 395). Not a
+    /// coverage loss — shown because a duplicate is what let a naive count hide
+    /// the original hole (2025 held 12 rows over 11 distinct months).
+    #[serde(default)]
+    pub duplicate_periods: Vec<String>,
     /// Notices processed out of those packages.
     pub processed_notices: i64,
     /// Tenders projected from those notices.
