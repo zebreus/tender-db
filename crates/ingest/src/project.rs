@@ -81,6 +81,11 @@ pub struct Report {
     /// and `unknown_kind` stay zero here. Read beside `citations`: the read-time
     /// gate refuses by what the CITER declares, this one by what the CITED IS.
     pub target_refusals: CitationGate,
+    /// Issue 385 unit 2: what the F14 corrigendum-date target gate did, by the
+    /// class of form coordinate each `CHG-n` block named. Counted beside
+    /// `citations` in the plan sweep, and read the same way — `other` is the
+    /// alarm, the named classes are context.
+    pub f14_targets: F14TargetGate,
 }
 
 /// The canonical fields this layer carries, as data. Source field ids are
@@ -326,14 +331,54 @@ const F14_TARGET_DATES: &[(&str, &str)] = &[
     ("IV.3.8", "opening_date"),
 ];
 
+/// The refused coordinates this layer has CLASSIFIED, and what each one is
+/// (issue 385 unit 2).
+///
+/// Every entry is a coordinate measured carrying a `NEW_VALUE.DATE` on prod and
+/// labelled from the form it belongs to — see [`F14_TARGET_DATES`] for the
+/// counts. Naming them buys one thing: a rise in a class we understand reads
+/// differently from a rise in [`F14TargetGate::other`], which is the only slot
+/// that means "the corpus published a coordinate nobody has classified". An
+/// unclassified coordinate is refused either way; the table changes how the
+/// number READS, not what the fold does.
+///
+/// Deliberately short. A coordinate is listed only where the measurement in
+/// `F14_TARGET_DATES`'s docs names what it is; `II.2.4`, `II.2.14`, `III.1.3`,
+/// `I.3`, `II.2.2` and `II.1.4` were counted but never identified, so they sit
+/// in `other` rather than being guessed into a slot.
+const F14_REFUSED_TARGETS: &[(&str, &str)] = &[
+    // The tender VALIDITY period — "the offer must remain valid until" — months
+    // after bidding closes. The single largest wrong deadline issue 385 served.
+    ("IV.2.6", "validity"),
+    // Contract duration.
+    ("II.2.7", "duration"),
+    // Free-text additional information.
+    ("VI.3", "information"),
+    // Date the invitations to tender go out, not the date bids are due.
+    ("IV.2.3", "invitations"),
+];
+
+/// One `TED-SECTION` coordinate, normalised. The corpus publishes `IV.2.2` and
+/// `IV.2.2)` for the same coordinate, roughly two to one, so a literal match
+/// would silently drop whichever spelling a table did not carry. Both lookups
+/// go through this, so neither can normalise differently from the other.
+fn f14_coordinate(target: &str) -> &str {
+    target.trim().trim_end_matches(')').trim()
+}
+
 /// The canonical date a corrigendum's `TED-SECTION` coordinate corrects, if it
-/// is one this layer maps. Normalises the trailing `)` and surrounding space:
-/// the corpus publishes `IV.2.2` and `IV.2.2)` for the same coordinate, roughly
-/// two to one, and a literal match would silently drop whichever spelling the
-/// table did not carry.
+/// is one this layer maps.
 fn f14_target_date(target: &str) -> Option<&'static str> {
-    let key = target.trim().trim_end_matches(')').trim();
+    let key = f14_coordinate(target);
     F14_TARGET_DATES.iter().find(|(coord, _)| *coord == key).map(|(_, field)| *field)
+}
+
+/// What class of thing a REFUSED coordinate is, or `"other"` for one nobody has
+/// classified. Only meaningful for a coordinate [`f14_target_date`] returned
+/// `None` for; the caller establishes that.
+fn f14_refusal_class(target: &str) -> &'static str {
+    let key = f14_coordinate(target);
+    F14_REFUSED_TARGETS.iter().find(|(coord, _)| *coord == key).map(|(_, class)| *class).unwrap_or("other")
 }
 
 /// The grafted `UBL-*` ids that stay PARSE-LAYER-ONLY, each with its reason
@@ -1317,12 +1362,13 @@ pub async fn project_with_progress_phase2_stoppable(
              skipping Phase-1 and re-running grouping + Phase-2 (salvage)"
         );
     } else {
-        let (notices, mentions, stopped, citations) =
+        let (notices, mentions, stopped, citations, f14) =
             build_plan(db, now, total, &mut on_progress, stop).await?;
         report.stopped = stopped;
         report.notices = notices;
         report.mentions = mentions;
         report.citations = citations;
+        report.f14_targets = f14;
     }
     probe(db, "Phase-1 (build_plan)");
     if report.stopped {
@@ -1472,7 +1518,7 @@ async fn build_plan(
     total: u64,
     mut on_progress: impl FnMut(Progress),
     stop: &(dyn Fn() -> bool + Sync),
-) -> turso::Result<(u64, u64, bool, CitationGate)> {
+) -> turso::Result<(u64, u64, bool, CitationGate, F14TargetGate)> {
     const READ_CHUNK: i64 = 10_000;
     let t0 = std::time::Instant::now();
     db.reset_plan().await?;
@@ -1493,6 +1539,9 @@ async fn build_plan(
         /// Issue 364's per-kind tally for this chunk's notices, summed by the
         /// writer half — the sweep is where `Ident::read` runs.
         citations: CitationGate,
+        /// Issue 385 unit 2's F14 target tally, carried and summed the same way
+        /// and for the same reason.
+        f14: F14TargetGate,
     }
     let (tx, rx) = std::sync::mpsc::sync_channel::<turso::Result<PlanChunk>>(0);
     let readers = db.readers(1)?;
@@ -1531,13 +1580,15 @@ async fn build_plan(
                     let mut mentions: Vec<Mention> = Vec::new();
                     let mut rows: Vec<store::PlanRow> = Vec::with_capacity(chunk.len());
                     let mut citations = CitationGate::default();
+                    let mut f14 = F14TargetGate::default();
                     for (notice, parsed) in &chunk {
                         let ident = Ident::read(notice, parsed);
                         mentions.extend(NoticeState::mentions(ident.sdk01, notice.id, parsed));
                         citations.add(ident.citations);
+                        f14.add(ident.f14_targets);
                         rows.push(ident.into_plan_row());
                     }
-                    if tx.send(Ok(PlanChunk { rows, mentions, citations })).is_err() {
+                    if tx.send(Ok(PlanChunk { rows, mentions, citations, f14 })).is_err() {
                         return; // the writer half bailed on an error
                     }
                 }
@@ -1547,6 +1598,7 @@ async fn build_plan(
 
     let (mut notices, mut mentions_total) = (0u64, 0u64);
     let mut citations = CitationGate::default();
+    let mut f14 = F14TargetGate::default();
     let mut chunks = 0usize;
     // The newest planned notice id — the legacy-adjacency attestation bound
     // (issue 58 v2). Chunks arrive id-ordered, but take the max rather than
@@ -1571,6 +1623,7 @@ async fn build_plan(
         };
         notices += chunk.rows.len() as u64;
         citations.add(chunk.citations);
+        f14.add(chunk.f14);
         max_planned = chunk.rows.iter().map(|r| r.notice_id).fold(max_planned, i64::max);
         let resolved = match db.resolve_mentions(&mut resolver, &chunk.mentions, now).await {
             Ok(resolved) => resolved,
@@ -1652,7 +1705,7 @@ async fn build_plan(
         t0.elapsed().as_secs_f64(),
         if stopped { " — STOPPED at a checkpoint (issue 256)" } else { "" }
     );
-    Ok((notices, mentions_total, stopped, citations))
+    Ok((notices, mentions_total, stopped, citations, f14))
 }
 
 /// Run only the interruptible PREFIX of a full rebuild — clear the canonical
@@ -1667,9 +1720,15 @@ pub async fn project_plan_only(db: &Db) -> turso::Result<Report> {
         db.clear_canonical().await?;
         db.strip_organization_indexes().await?;
         let total = db.parsed_notice_count().await?;
-        let (notices, mentions, _, citations) =
+        let (notices, mentions, _, citations, f14_targets) =
             build_plan(db, store::now_unix(), total, |_| {}, &|| false).await?;
-        Ok::<Report, turso::Error>(Report { notices, mentions, citations, ..Default::default() })
+        Ok::<Report, turso::Error>(Report {
+            notices,
+            mentions,
+            citations,
+            f14_targets,
+            ..Default::default()
+        })
     }
     .await;
     let restored = db.set_foreign_keys(true).await;
@@ -2217,6 +2276,7 @@ pub async fn project_incremental_chunked_observed(
             // same notices' identity again, and counting there too would double
             // every citation in the delta.
             report.citations.add(ident.citations);
+            report.f14_targets.add(ident.f14_targets);
             rows.push(ident.into_plan_row());
         }
         db.insert_plan(&rows).await?;
@@ -3538,6 +3598,11 @@ struct Ident {
     /// citations. Not part of the plan row — a tally, summed into the run's
     /// [`Report`] so a re-projection can be read against it.
     citations: CitationGate,
+    /// Issue 385 unit 2: what this notice's F14 corrigendum dates targeted. Not
+    /// part of the plan row either — it rides [`citations`](Self::citations)'
+    /// rail into the run's [`Report`], which is the whole reason it is read
+    /// here rather than in the fold.
+    f14_targets: F14TargetGate,
     /// Issue 369 unit 2: the buyer SET this notice publishes, sorted and joined —
     /// see [`buyer_key`] for why a set and not one buyer.
     buyer_key: Option<String>,
@@ -3634,6 +3699,167 @@ impl CitationGate {
         };
         *slot += n;
     }
+}
+
+/// Issue 385 unit 2: what the F14 corrigendum-date target gate did this run, by
+/// the class of form coordinate each `CHG-n` block named.
+///
+/// Unit 1 stopped every `TED-NEW_VALUE.DATE` from becoming a `submission_deadline`
+/// regardless of what it corrects, and refused the coordinates it does not map.
+/// That refusal was SILENT, which is the failure mode issue 364 spent a unit
+/// removing for citations: a date that quietly stopped being corrected looks
+/// exactly like a date nobody ever corrected. This is the [`CitationGate`]
+/// treatment for it — same shape, same reason, same place on the [`Report`] and
+/// the job row.
+///
+/// **[`other`](Self::other) is the alarm and the rest is context.** A rise in
+/// `validity` or `duration` means TED published more of a class we already
+/// understand and correctly decline; a rise in `other` means the corpus
+/// publishes a coordinate nobody has classified, and until someone does, its
+/// corrections are being dropped. The counter cannot say WHICH coordinate — the
+/// [`Report`] is `Copy` and a per-string map is not — so when `other` moves, the
+/// identity is one bounded query away:
+///
+/// ```sql
+/// SELECT s.value AS target, COUNT(*) AS hits
+///   FROM notice_dates d
+///   JOIN notice_texts s ON s.notice_id = d.notice_id
+///                      AND s.section_id = d.section_id
+///                      AND s.field_id = 'TED-SECTION'
+///  WHERE d.field_id = 'TED-NEW_VALUE.DATE'
+///    AND d.notice_id BETWEEN ? AND ?
+///  GROUP BY s.value ORDER BY hits DESC
+/// ```
+///
+/// Counted where the PLAN is built, like [`CitationGate`] and for the same
+/// reason: that sweep runs in both the full and the incremental path and
+/// already carries its tally to the `Report`, so a full pass covers the whole
+/// corpus and an incremental run covers its delta plus the touched expansion.
+/// A resumed run skips Phase 1 entirely and therefore reports zeroes here, as
+/// it already does for `citations`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct F14TargetGate {
+    /// Admitted: the block corrects the receipt-of-tenders coordinate, so its
+    /// date becomes the `submission_deadline` fact.
+    pub to_deadline: u64,
+    /// Admitted: the block corrects the opening-of-tenders coordinate.
+    pub to_opening: u64,
+    /// Admitted to a destination this tally does not name — a new entry in
+    /// [`F14_TARGET_DATES`] whose slot nobody added. Zero by construction:
+    /// `every_f14_destination_has_a_slot` fails the build if it can ever be
+    /// non-zero, so this is a tripwire rather than a bucket.
+    pub to_other: u64,
+    /// Refused: the tender VALIDITY period, months after bidding closed. The
+    /// single largest wrong deadline the pre-385 mapping served.
+    pub validity: u64,
+    /// Refused: contract duration.
+    pub duration: u64,
+    /// Refused: free-text additional information.
+    pub information: u64,
+    /// Refused: the date invitations to tender go out.
+    pub invitations: u64,
+    /// Refused: a coordinate [`F14_REFUSED_TARGETS`] does not classify. **The
+    /// number to watch** — see the type's docs.
+    pub other: u64,
+    /// Refused: the block carries a new date and states no `TED-SECTION` at all.
+    /// Measured 0 of 5,234 on prod (unit 1), so a non-zero value here is a shape
+    /// the corpus has never produced, not a tail.
+    pub untargeted: u64,
+}
+
+impl F14TargetGate {
+    pub fn admitted(&self) -> u64 {
+        self.to_deadline + self.to_opening + self.to_other
+    }
+
+    pub fn refused(&self) -> u64 {
+        self.validity
+            + self.duration
+            + self.information
+            + self.invitations
+            + self.other
+            + self.untargeted
+    }
+
+    fn add(&mut self, other: F14TargetGate) {
+        self.to_deadline += other.to_deadline;
+        self.to_opening += other.to_opening;
+        self.to_other += other.to_other;
+        self.validity += other.validity;
+        self.duration += other.duration;
+        self.information += other.information;
+        self.invitations += other.invitations;
+        self.other += other.other;
+        self.untargeted += other.untargeted;
+    }
+
+    /// Count one corrigendum date by the coordinate its own block named, or
+    /// `None` if the block named none.
+    ///
+    /// Routed through [`f14_target_date`] rather than re-testing the coordinate,
+    /// so this CANNOT disagree with the mapping the fold actually applies — the
+    /// property `sentinel_amount`'s census arm is built for too. Add a
+    /// coordinate to [`F14_TARGET_DATES`] and it starts counting as admitted in
+    /// the same commit that starts mapping it.
+    fn count(&mut self, target: Option<&str>) {
+        let Some(target) = target else {
+            self.untargeted += 1;
+            return;
+        };
+        match f14_target_date(target) {
+            Some("submission_deadline") => self.to_deadline += 1,
+            Some("opening_date") => self.to_opening += 1,
+            Some(_) => self.to_other += 1,
+            None => {
+                let slot = match f14_refusal_class(target) {
+                    "validity" => &mut self.validity,
+                    "duration" => &mut self.duration,
+                    "information" => &mut self.information,
+                    "invitations" => &mut self.invitations,
+                    _ => &mut self.other,
+                };
+                *slot += 1;
+            }
+        }
+    }
+}
+
+/// Classify this notice's F14 corrigendum dates by the coordinate their own
+/// `CHG-n` block names (issue 385 unit 2).
+///
+/// Reads the same two field ids the fold pairs in `NoticeState::read`, the same
+/// way — the target travels as a SIBLING of the new value, so pairing is a
+/// lookup within one `section_id`. The sieve is the `Date` channel because that
+/// is the only channel the fold's F14 arm sits on: a `NEW_VALUE.DATE` published
+/// as anything else was never a candidate date fact and must not be counted as
+/// one refused.
+///
+/// The early return is the cost decision. `TED-NEW_VALUE.DATE` exists only in
+/// the r2.0.9 id range (unit 1 measured 0 rows in five windows across the text,
+/// r2.0.7 and r2.0.8 eras), so for the overwhelming majority of the 14.4M
+/// notices a full-corpus pass walks this predicate once and allocates nothing.
+fn f14_target_gate(parsed: &Parsed) -> F14TargetGate {
+    let mut gate = F14TargetGate::default();
+    let is_f14_date = |v: &&store::ValueRow| {
+        v.field_id == F14_DATE_FIELD && matches!(v.value, NoticeValue::Date { .. })
+    };
+    if !parsed.values.iter().any(|v| is_f14_date(&v)) {
+        return gate;
+    }
+    let targets: BTreeMap<&str, &str> = parsed
+        .values
+        .iter()
+        .filter_map(|v| match &v.value {
+            NoticeValue::Text { value, .. } if v.field_id == F14_TARGET_FIELD => {
+                Some((v.section_id.as_str(), value.as_str()))
+            }
+            _ => None,
+        })
+        .collect();
+    for v in parsed.values.iter().filter(is_f14_date) {
+        gate.count(targets.get(v.section_id.as_str()).copied());
+    }
+    gate
 }
 
 /// This notice's OJS chain edges, and the tally of what the kind gate refused
@@ -3783,6 +4009,7 @@ impl Ident {
             prev_refs: previous_publications(parsed),
             subtype: first_code(parsed, SUBTYPE_FIELD),
             citations,
+            f14_targets: f14_target_gate(parsed),
             // issue 369 unit 2: the buyer set this notice publishes, for the
             // key-election gate. Parsed-side, so no org-layer dependency.
             buyer_key: buyer_key(sdk01, notice.id, parsed),
@@ -6700,6 +6927,80 @@ mod tests {
         // reports a field the projection demonstrably consumes as dropped.
         assert!(has_destination(F14_DATE_FIELD, Channel::Date));
         assert!(table_reads("notice_dates", F14_DATE_FIELD));
+    }
+
+    /// Issue 385 unit 2: the tally cannot disagree with the mapping.
+    ///
+    /// [`F14TargetGate::to_other`] exists only as a tripwire for a destination
+    /// added to [`F14_TARGET_DATES`] without a slot here; this is the assertion
+    /// that keeps it provably zero in the field. A run reporting `to_other`
+    /// would be reporting "mapped, to somewhere this summary cannot name",
+    /// which is the same silent shape unit 2 exists to remove.
+    #[test]
+    fn every_f14_destination_has_a_slot() {
+        for (coord, _) in F14_TARGET_DATES {
+            let mut g = F14TargetGate::default();
+            g.count(Some(coord));
+            assert_eq!(g.to_other, 0, "{coord} maps to a destination with no slot");
+            assert_eq!(g.admitted(), 1, "{coord} must count as admitted");
+            assert_eq!(g.refused(), 0);
+        }
+        // And every classified refusal lands in a NAMED slot rather than in
+        // `other` — the issue-364 property, one instrument over: a job row
+        // reading "UNCLASSIFIED 375" for coordinates we HAVE classified would be
+        // the false alarm that teaches a reader to ignore the real one.
+        for (coord, class) in F14_REFUSED_TARGETS {
+            let mut g = F14TargetGate::default();
+            g.count(Some(coord));
+            assert_eq!(g.refused(), 1, "{coord} must count as refused");
+            assert_eq!(g.admitted(), 0);
+            assert_eq!(g.other, 0, "{coord} ({class}) fell through to UNCLASSIFIED");
+        }
+    }
+
+    /// The gate's classification, including the two shapes that carry the alarm:
+    /// a coordinate nobody has classified, and a block that states no target.
+    #[test]
+    fn the_f14_gate_separates_the_unclassified_from_the_merely_refused() {
+        let mut g = F14TargetGate::default();
+        // Both spellings of both mapped coordinates.
+        for c in ["IV.2.2", "IV.2.2)", "IV.2.7)", "IV.3.4", "IV.3.8"] {
+            g.count(Some(c));
+        }
+        assert_eq!((g.to_deadline, g.to_opening), (3, 2));
+        assert_eq!(g.admitted(), 5);
+        assert_eq!(g.refused(), 0);
+
+        // Classified refusals, each in its own slot.
+        g.count(Some("IV.2.6)"));
+        g.count(Some("II.2.7"));
+        g.count(Some("VI.3"));
+        g.count(Some("IV.2.3"));
+        assert_eq!((g.validity, g.duration, g.information, g.invitations), (1, 1, 1, 1));
+        assert_eq!(g.other, 0, "a classified coordinate must not raise the alarm");
+
+        // The alarm itself: a coordinate the corpus publishes and nobody has
+        // classified. Counted, refused, and distinguishable from the above.
+        g.count(Some("II.2.14"));
+        g.count(Some("XI.9.9)"));
+        assert_eq!(g.other, 2);
+
+        // And a block with a new date but no `TED-SECTION` — 0 of 5,234 on prod,
+        // so this slot moving at all is news.
+        g.count(None);
+        assert_eq!(g.untargeted, 1);
+
+        assert_eq!(g.refused(), 7);
+        assert_eq!(g.admitted(), 5, "refusals must not disturb the admitted side");
+
+        // `add` folds one notice's tally into a run's, slot for slot.
+        let mut run = F14TargetGate::default();
+        run.add(g);
+        run.add(g);
+        assert_eq!(run.to_deadline, 6);
+        assert_eq!(run.other, 4);
+        assert_eq!(run.untargeted, 2);
+        assert_eq!(run.refused(), 14);
     }
 
     /// Issue 364 unit 6: the document-type table speaks the citation gate's own

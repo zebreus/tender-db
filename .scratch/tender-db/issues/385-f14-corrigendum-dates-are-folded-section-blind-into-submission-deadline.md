@@ -246,3 +246,70 @@ still reads as mapped so issue 368's sieve does not report it as dropped).
 - **The refold and the re-measurement.** The carriers must be refolded and the census re-run to zero
   on both windows (the `## Done when` bullets). Not started: the box is processing the issue-395
   backfill.
+
+## Unit 2 BUILT 2026-09-15 (owner) — the refusal is a number on the job row
+
+Unit 1's strict fallback was correct and **silent**, which is the failure mode issue 364 spent a
+unit removing one instrument over: a date that quietly stopped being corrected looks exactly like a
+date nobody ever corrected. `F14TargetGate` in `crates/ingest/src/project.rs` is the `CitationGate`
+treatment for it — same shape, same rail, same place on the `Report` and the job row.
+
+| slot | meaning |
+| --- | --- |
+| `to_deadline` / `to_opening` | admitted, by destination |
+| `to_other` | admitted to a destination with no slot — **structurally zero**, see below |
+| `validity` / `duration` / `information` / `invitations` | refused, and classified (`IV.2.6`, `II.2.7`, `VI.3`, `IV.2.3`) |
+| `other` | refused, and **unclassified — the only number anyone acts on** |
+| `untargeted` | a new date with no `TED-SECTION` at all (0 of 5,234 measured, so any movement is news) |
+
+**Where it is counted, and why there.** In `Ident::read`, the PLAN sweep — not in
+`NoticeState::read` where the mapping happens. The plan sweep already carries `citations` to the
+`Report` in both the full pass (`build_plan`'s parallel producer, via `PlanChunk`) and the
+incremental one (`project_incremental_chunked_observed`), so the tally needed no new plumbing at
+all: no change to `store::Applied`, none to the postcard `BucketRow` format, no atomics across the
+pre-pass shards. The refusal is a pure function of the parsed layer, so reading it one phase earlier
+costs an early-return predicate per notice and allocates nothing outside the r2.0.9 era.
+
+Both wiring sites are real, and **each was a separate chance to ship a counter that reports zero
+forever** — the first draft wired only the incremental one and the end-to-end test caught it by
+returning `(0,0)` where it wanted `(1,1)`. The test now folds through both doors.
+
+**The tally cannot drift from the mapping.** `count()` routes through `f14_target_date` rather than
+re-testing the coordinate, so adding a coordinate to `F14_TARGET_DATES` starts counting it as
+admitted in the same commit that starts mapping it — the property the `sentinel_amount` census arm
+is built for. `to_other` is the tripwire for the one remaining way to drift (a new *destination*
+with no slot), and `every_f14_destination_has_a_slot` fails the build if it can ever be non-zero.
+
+**What it deliberately does NOT do: name the coordinate.** `Report` is `Copy` and a per-string map
+is not, so `other` is a count, not a list. That is the accepted limit, stated rather than hidden —
+and the identity is one bounded `GROUP BY` away, which the type's doc comment carries verbatim so
+whoever reads a non-zero `other` does not have to reconstruct it. Naming coordinates in the counter
+would mean either dropping `Copy` from `Report` (a ripple through every `report` use for a number
+nobody reads weekly) or inventing labels for `II.2.4`, `II.2.14`, `III.1.3`, `I.3`, `II.2.2` and
+`II.1.4` — coordinates that were counted but never identified. They sit in `other` rather than being
+guessed into a slot.
+
+`UNCLASSIFIED` prints even at zero, alone among the numbers on the line: a reader must be able to
+tell "checked, still none" from "not measured". The rest of the line is silent when a run saw no
+corrigendum date at all, which is every run that does not touch r2.0.9.
+
+Tests: `every_f14_destination_has_a_slot` and
+`the_f14_gate_separates_the_unclassified_from_the_merely_refused` (classification, both spellings,
+`add` folding slot for slot), `the_run_reports_which_sections_its_corrigendum_dates_targeted` (a
+four-block corrigendum — mapped, mapped, classified-refusal, unclassified-refusal — through the full
+pass AND the incremental one, plus a corrigendum-free corpus reporting nothing), and
+`the_f14_suffix_prints_the_unclassified_count_even_at_zero` in the supervisor.
+
+### Still open on this issue
+
+- **The refold and the re-measurement** (the `## Done when` bullets). Job 1384's projection is the
+  unit-1 refold and is still running; the acceptance reads (6762566 → 09:00 + `opening_date` 09:30,
+  6737588 → 2020-05-11T10:00, 6752749 → 2020-05-19T17:00, and the IV.2.7 census to zero on both
+  windows) are for the next idle window. Unit 2 is not deployed yet either, so the first job row to
+  carry the new line will be the projection after that deploy.
+- **A corpus-wide coordinate census.** The counter says how many; `other` moving says someone should
+  ask which. Doing that in the weekly DQ report was considered and NOT built: `TED-NEW_VALUE.DATE`
+  lives only in the r2.0.9 id band, so `unmapped_fields_sql`'s newest-1M-ids window returns nothing
+  for it, and the unwindowed form is a whole-corpus `GROUP BY` over `notice_dates` with no index to
+  help (`field_id` is the 4th PK column) — the exact shape the issue-278 turso lesson warns about.
+  It needs its own id-band window, and that band needs measuring on an idle box first.

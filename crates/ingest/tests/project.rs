@@ -1723,6 +1723,89 @@ async fn a_corrigendum_moves_the_opening_and_the_deadline_to_different_fields() 
     let _ = std::fs::remove_file(&path);
 }
 
+/// Issue 385 unit 2: the run REPORTS what its corrigendum dates targeted, so a
+/// coordinate nobody has classified is a number instead of a date that quietly
+/// stopped being corrected.
+///
+/// End to end on purpose. The unit tests pin the classification; what only a
+/// fold can pin is the wiring — that the gate reads the `Date` channel, pairs
+/// each value with its OWN `CHG-n` block's `TED-SECTION`, and rides `Ident`'s
+/// rail into the `Report`. An unwired gate passes every unit test and reports
+/// zero forever, which is indistinguishable from a clean corpus.
+#[tokio::test]
+async fn the_run_reports_which_sections_its_corrigendum_dates_targeted() {
+    let (db, fetch_id, path) = scratch("f14-tally").await;
+    let (cn, pc) = legacy_cn(fetch_id, "000001-2019", 5, 728_000_000, &[]);
+    let corrigendum = Parsed {
+        sections: vec![
+            sec("PROCEDURE", "Notice", None),
+            sec("CHG-1", "Change", Some("PROCEDURE")),
+            sec("CHG-2", "Change", Some("PROCEDURE")),
+            sec("CHG-3", "Change", Some("PROCEDURE")),
+            sec("CHG-4", "Change", Some("PROCEDURE")),
+        ],
+        values: vec![
+            ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", 20 * 86_400),
+            ojs_edge("PROCEDURE", "TED-REF_NOTICE.NO_DOC_OJS", "000001-2019"),
+            // Mapped.
+            ted_text("CHG-1", "TED-SECTION", "IV.2.2)"),
+            ted_date("CHG-1", "TED-NEW_VALUE.DATE", 728_600_000),
+            ted_text("CHG-2", "TED-SECTION", "IV.2.7"),
+            ted_date("CHG-2", "TED-NEW_VALUE.DATE", 728_601_800),
+            // Refused, and classified: the tender-validity expiry.
+            ted_text("CHG-3", "TED-SECTION", "IV.2.6)"),
+            ted_date("CHG-3", "TED-NEW_VALUE.DATE", 740_000_000),
+            // Refused, and NOT classified — the one the counter exists for.
+            ted_text("CHG-4", "TED-SECTION", "II.2.14)"),
+            ted_date("CHG-4", "TED-NEW_VALUE.DATE", 741_000_000),
+        ],
+    };
+    let (f14, pf) = legacy_record(fetch_id, "000119-2019", R209, corrigendum);
+    db.record_notice(&cn, &pc).await.expect("cn");
+    db.record_notice(&f14, &pf).await.expect("f14");
+
+    let report = project::project(&db, false).await.expect("project");
+    let g = report.f14_targets;
+    assert_eq!((g.to_deadline, g.to_opening), (1, 1), "both mapped coordinates counted");
+    assert_eq!(g.to_other, 0, "a destination with no slot means the tally drifted from the mapping");
+    assert_eq!(g.validity, 1, "IV.2.6 is refused, and refused under its own name");
+    assert_eq!(g.other, 1, "II.2.14 is refused and UNCLASSIFIED — the alarm");
+    assert_eq!(g.untargeted, 0, "every block stated its target");
+    assert_eq!((g.admitted(), g.refused()), (2, 2));
+
+    // The counted refusals are the SAME rows the fold declined to write, which is
+    // what makes the number worth reading: two dates in, two facts out.
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_dates WHERE seq = 2 AND field IN ('submission_deadline', 'opening_date')").await,
+        2,
+    );
+
+    // The INCREMENTAL plan build counts too, and it is wired separately from the
+    // full pass's parallel sweep — two call sites, so two chances to leave one
+    // silent. Re-queue the corrigendum and fold it again through the other door.
+    let f14_id = scalar(&db, "SELECT id FROM notices WHERE publication_id = '000119-2019'").await;
+    assert_eq!(db.unmark_projected_by_ids(&[f14_id]).await.expect("requeue"), 1);
+    let inc = project::project_incremental(&db).await.expect("refold");
+    let g = inc.f14_targets;
+    assert_eq!(
+        (g.to_deadline, g.to_opening, g.validity, g.other),
+        (1, 1, 1, 1),
+        "the incremental plan build must report what the full pass reports"
+    );
+
+    // A corpus with no corrigenda reports nothing rather than a row of zeroes —
+    // the condition the job-row suffix is silent on.
+    let (db2, fetch2, path2) = scratch("f14-tally-quiet").await;
+    let (plain, pp) = legacy_cn(fetch2, "000002-2019", 5, 728_000_000, &[]);
+    db2.record_notice(&plain, &pp).await.expect("plain");
+    let quiet = project::project(&db2, false).await.expect("project");
+    assert_eq!(quiet.f14_targets.admitted(), 0);
+    assert_eq!(quiet.f14_targets.refused(), 0);
+
+    let _ = std::fs::remove_file(&path);
+    let _ = std::fs::remove_file(&path2);
+}
+
 /// Issue 385: a corrigendum whose only date targets a section this layer does
 /// not map contributes NO canonical date at all, and in particular does not
 /// become a deadline by default.

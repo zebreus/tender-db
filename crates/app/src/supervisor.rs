@@ -2253,6 +2253,38 @@ fn target_refusal_suffix(t: &project::CitationGate) -> String {
     )
 }
 
+/// Issue 385 unit 2: what the F14 corrigendum-date target gate did, on the job
+/// row that recorded the run.
+///
+/// Silent when the run saw no corrigendum date at all, which is every run that
+/// does not touch the r2.0.9 era — the same "say nothing rather than print a row
+/// of zeroes" rule [`target_refusal_suffix`] follows.
+///
+/// `other` is printed even at zero, and that is deliberate: it is the one number
+/// here anybody acts on (a coordinate nobody has classified, whose corrections
+/// are being dropped), so it must be readable as "still zero" rather than absent
+/// because nothing happened to it.
+fn f14_target_suffix(t: &ingest::project::F14TargetGate) -> String {
+    if t.admitted() == 0 && t.refused() == 0 {
+        return String::new();
+    }
+    format!(
+        "; issue-385 F14 corrigendum dates: {} mapped (deadline {}, opening {}), \
+         {} refused (validity {}, duration {}, information {}, invitations {}, \
+         UNCLASSIFIED {}, no target stated {})",
+        t.admitted(),
+        t.to_deadline,
+        t.to_opening,
+        t.refused(),
+        t.validity,
+        t.duration,
+        t.information,
+        t.invitations,
+        t.other,
+        t.untargeted,
+    )
+}
+
 const STOPPABLE_KINDS: &[&str] = &[
     "reparse",
     "data-quality",
@@ -3313,9 +3345,10 @@ impl Supervisor {
                 let cancelled = if report.stopped { "CANCELLED at a checkpoint — " } else { "" };
                 let wall = wall_suffix(&report.wall);
                 let citations = format!(
-                    "{}{}",
+                    "{}{}{}",
                     citation_suffix(&report.citations),
-                    target_refusal_suffix(&report.target_refusals)
+                    target_refusal_suffix(&report.target_refusals),
+                    f14_target_suffix(&report.f14_targets)
                 );
                 Ok(format!(
                     "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged{wall}{citations}",
@@ -12125,6 +12158,54 @@ mod tests {
         // working" would be the issue-338 mistake one instrument over.
         let none_refused = project::CitationGate { admitted: 9, ..Default::default() };
         assert!(citation_suffix(&none_refused).contains("0 refused"));
+    }
+
+    /// Issue 385 unit 2: the F14 target gate gets its own line, and the
+    /// unclassified count is printed even at zero.
+    ///
+    /// The zero matters. Every other number on this line is context a reader
+    /// skims; `UNCLASSIFIED` is the one that means "TED published a coordinate
+    /// nobody has taught this layer, and its corrections are being dropped". A
+    /// suffix that omitted it at zero would leave a reader unable to tell
+    /// "checked, still none" from "not measured".
+    #[test]
+    fn the_f14_suffix_prints_the_unclassified_count_even_at_zero() {
+        assert_eq!(
+            f14_target_suffix(&project::F14TargetGate::default()),
+            "",
+            "a run that saw no corrigendum date must say nothing at all"
+        );
+
+        // The shape of a real r2.0.9 pass, from the window issue 385 measured.
+        let live = project::F14TargetGate {
+            to_deadline: 3_015,
+            to_opening: 2_717,
+            to_other: 0,
+            validity: 375,
+            duration: 274,
+            information: 288,
+            invitations: 17,
+            other: 0,
+            untargeted: 0,
+        };
+        let s = f14_target_suffix(&live);
+        assert!(s.contains("5732 mapped"), "{s}");
+        assert!(s.contains("deadline 3015"), "{s}");
+        assert!(s.contains("opening 2717"), "{s}");
+        assert!(s.contains("954 refused"), "{s}");
+        assert!(s.contains("validity 375"), "{s}");
+        assert!(s.contains("UNCLASSIFIED 0"), "a clean run must SAY it is clean: {s}");
+
+        // And the case the line exists for: a coordinate nobody has classified.
+        let alarm = project::F14TargetGate { other: 412, ..live };
+        assert!(f14_target_suffix(&alarm).contains("UNCLASSIFIED 412"));
+
+        // A run that only refused is still a run worth a line — that is exactly
+        // what an era publishing nothing we map looks like.
+        let all_refused = project::F14TargetGate { other: 7, ..Default::default() };
+        let s = f14_target_suffix(&all_refused);
+        assert!(s.contains("0 mapped"), "{s}");
+        assert!(s.contains("7 refused"), "{s}");
     }
 
     /// Issue 364 unit 6: the grouping's target-type refusals get their own line,
