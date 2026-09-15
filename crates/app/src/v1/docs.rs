@@ -262,6 +262,15 @@ enough: to see a field the canonical layer does not model, or to check what a
 quarantined notice did yield. A held or unparsed notice returns its metadata
 row via <code>/v1/notices/{id}</code> but an empty <code>sections</code> array
 here; an unknown id is <code>404</code>.</p>
+<p><strong>To ask whether a notice is held, read <code>parse_state</code>, not
+the presence of <code>quarantine</code>.</strong> The <code>quarantine</code>
+object on <code>/v1/notices/{id}</code> is the notice&rsquo;s hold
+<em>history</em>: the row is kept after a member is reclaimed, so the reclaim
+campaign stays auditable, and reclaimed is what happened to most of them. A
+notice with <code>parse_state: "parsed"</code> and a non-null
+<code>quarantine</code> whose <code>reprocessed_at</code> is set was held once,
+was fixed, and is fully served &mdash; its content is right here. Only
+<code>parse_state: "quarantined"</code> means held now.</p>
 <pre><code>{
   "notice_id": 14327,
   "sections": [

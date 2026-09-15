@@ -1388,12 +1388,22 @@ async fn notice_content_serves_the_whole_parsed_layer() {
     assert_eq!(server.status("/v1/notices/999999999/content").await, 404);
 }
 
-/// Issue 218: `/v1/notices/{id}` carries a `quarantine` field so a held notice
-/// explains why it is absent from the canonical layer instead of returning a bare
-/// `parse_state` stub. A cleanly-parsed notice reports `null`; the list rows stay
-/// lean (no per-item quarantine lookup). The positive, held-notice case is covered
-/// at the store layer (`tests/notice_quarantine.rs`), because the fixtures ingest
-/// only clean notices and a held row cannot be minted through the public API.
+/// Issue 218: `/v1/notices/{id}` carries a `quarantine` field so a notice held out
+/// of the canonical layer explains why, instead of returning a bare `parse_state`
+/// stub. The list rows stay lean (no per-item quarantine lookup).
+///
+/// **What this test pins is NEVER-held → `null`, which is not the same claim as
+/// "parsed → null"** (issue 398). The ledger keeps the quarantine row after a
+/// member is reclaimed, so a notice can be `parse_state: "parsed"`, fully served,
+/// and still carry a non-null `quarantine` whose `reprocessed_at` is set — and
+/// that is the MAJORITY shape (71.7 % of rows on 2026-08-05). This fixture's
+/// notice was never quarantined at all, so it is silent about the reclaimed case;
+/// reading it as "parsed implies null" is the misreading the issue is about.
+///
+/// The held, reclaimed and skipped arms all live at the store layer
+/// (`store/tests/notice_quarantine.rs`), because `insert_quarantine` writes
+/// neither `notice_id` nor the terminal stamps — the reclaim path stamps them
+/// later — so none of those shapes can be minted through the public write API.
 #[tokio::test]
 async fn notice_detail_carries_the_quarantine_field() {
     let server = Server::start("notice_quarantine").await;
@@ -1406,10 +1416,11 @@ async fn notice_detail_carries_the_quarantine_field() {
     // The identity the list row carries is still present on the detail...
     assert_eq!(detail["id"].as_i64(), Some(id));
     assert!(detail["publication_id"].is_string(), "detail keeps the notice identity");
-    // ...plus the quarantine field, which is null for a cleanly-parsed notice — the
-    // field is ALWAYS present, so absent (parsed) is never confused with absent (bug).
+    // ...plus the quarantine field, which is null for a notice that was NEVER held —
+    // the field is ALWAYS present, so absent (never held) is never confused with
+    // absent (bug). Null means no hold in the notice's history, not "parsed today".
     assert!(detail.get("quarantine").is_some(), "the quarantine field is always present");
-    assert!(detail["quarantine"].is_null(), "a parsed notice is not held → quarantine null");
+    assert!(detail["quarantine"].is_null(), "this notice was never quarantined → null");
 
     // The lean list shape does NOT carry the field (it pays no per-item lookup).
     assert!(

@@ -71,4 +71,43 @@ mod tests {
             }
         }
     }
+    /// Issue 398: the spec must not describe `NoticeDetail.quarantine` as a
+    /// held-today flag, and must name the field that IS one.
+    ///
+    /// A prose guard, and deliberately a narrow one — it cannot prove the
+    /// sentence is right, only that the specific wrong reading does not come
+    /// back. It is worth having because that reading was wrong for ~99.75 % of
+    /// the notices it applied to and nothing noticed for months: the ledger keeps
+    /// a quarantine row after the member is reclaimed, so a non-null
+    /// `quarantine` is the hold HISTORY. The behavioural half is pinned in
+    /// `store/tests/notice_quarantine.rs`
+    /// (`a_reclaimed_hold_is_still_served_and_says_so_in_its_stamps`); this only
+    /// keeps the document from drifting back out of step with it.
+    #[test]
+    fn the_quarantine_field_is_not_described_as_a_held_today_flag() {
+        let spec: Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        let detail = &spec["components"]["schemas"]["NoticeDetail"];
+        let field = detail["allOf"]
+            .as_array()
+            .and_then(|a| a.iter().find_map(|s| s["properties"]["quarantine"].as_object()))
+            .expect("NoticeDetail describes a quarantine property");
+        let text = field["description"].as_str().expect("the property is described");
+        assert!(
+            text.contains("parse_state"),
+            "the field must name the held-today predicate: {text}"
+        );
+        assert!(
+            text.contains("reprocessed_at"),
+            "and say what a reclaimed record looks like: {text}"
+        );
+        assert!(
+            !text.contains("null when it parsed"),
+            "the retired claim: most notices carrying this object DID parse: {text}"
+        );
+        let whole = detail["description"].as_str().expect("NoticeDetail is described");
+        assert!(
+            !whole.contains("A held notice has no parsed satellites and no canonical tender, so its"),
+            "the description must not assert held-ness of every notice carrying the field: {whole}"
+        );
+    }
 }

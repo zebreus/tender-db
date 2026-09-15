@@ -978,7 +978,7 @@
         }
       },
       "NoticeDetail": {
-        "description": "One Notice by id: the list-row identity plus `quarantine`. A held notice has no parsed satellites and no canonical tender, so its quarantine row is the only content it carries.",
+        "description": "One Notice by id: the list-row identity plus `quarantine`, which is the notice's hold HISTORY and not a statement about today. Ask `parse_state` whether the notice is held now: `quarantined` means held, and only a held notice lacks parsed satellites and a canonical tender. Most notices carrying a `quarantine` object parsed long ago \u2014 the row is retained after a reclaim so the hold stays auditable.",
         "allOf": [
           { "$ref": "#/components/schemas/Notice" },
           {
@@ -986,7 +986,7 @@
             "properties": {
               "quarantine": {
                 "nullable": true,
-                "description": "Why the notice is held out of the canonical layer, or null when it parsed.",
+                "description": "Why the notice was ever held out of the canonical layer, or null if it never was. NOT a held-today flag: the row is retained after the member is reclaimed, so `reprocessed_at != null` means the member was reclaimed and its content IS served (`/v1/notices/{id}/content`, and it backs a tender version). `skipped_at != null` means resolved as a policy skip and still out of the corpus; both stamps null means outstanding. For \\\"is this notice held?\\\" read `parse_state`.",
                 "allOf": [{ "$ref": "#/components/schemas/Quarantine" }]
               }
             }

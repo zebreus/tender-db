@@ -122,11 +122,18 @@ pub fn notice(n: &NoticeRow) -> Value {
 }
 
 /// The single-notice detail: the identity [`notice`] returns, plus `quarantine`
-/// (issue 218). For a held notice this is its ONLY content — a quarantined notice
-/// has no parsed satellites and no canonical tender — so a consumer learns why it
-/// is absent from the data instead of receiving a bare `parse_state` stub. `null`
-/// when the notice parsed. The list endpoint keeps the lean [`notice`] shape; only
-/// this by-id path pays the extra `(notice_id)` lookup.
+/// (issue 218). For a notice held TODAY this is its only content — a still-held
+/// notice has no parsed satellites and no canonical tender — so a consumer learns
+/// why it is absent instead of receiving a bare `parse_state` stub.
+///
+/// But the field is the hold HISTORY, not a held-today flag (issue 398): the
+/// ledger keeps the row after a reclaim, and reclaimed is the majority outcome, so
+/// most notices carrying a non-null `quarantine` parsed and are fully served.
+/// `null` means the notice was never held; `parse_state` answers "is it held now".
+/// See [`store::read::notice_quarantine`] for the measurements.
+///
+/// The list endpoint keeps the lean [`notice`] shape; only this by-id path pays
+/// the extra `(notice_id)` lookup.
 pub fn notice_detail(n: &NoticeRow, q: Option<&QuarantineRow>) -> Value {
     let mut base = notice(n);
     base["quarantine"] = q.map(quarantine).unwrap_or(Value::Null);

@@ -3102,10 +3102,25 @@ fn notices_query(filter: &Filter, scope: Scope) -> Query {
     }    q
 }
 
-/// The quarantine row for one notice, if it is held (issue 218). Seeks
+/// The quarantine row for one notice — its hold HISTORY, whatever outcome that
+/// hold reached (issue 218; meaning settled by issue 398). Seeks
 /// `quarantine_notice_id` — a bounded `(notice_id)` lookup, never a scan. A notice
-/// maps to at most one member, so at most one held row; the newest by `first_seen`
-/// wins if a re-ingest ever produced more. `None` means the notice is not held.
+/// maps to at most one member, so at most one row; the newest by `first_seen` wins
+/// if a re-ingest ever produced more.
+///
+/// **`Some` does NOT mean the notice is held today**, and reading it that way is
+/// wrong for the large majority of the rows it returns. The ledger retains the row
+/// after the member is reclaimed — deliberately, so the reclaim campaign stays
+/// auditable (issues 40/76/84/137) — and reclaimed is the DOMINANT outcome:
+/// 1,734,594 rows, 71.7 %, on 2026-08-05, and 11,737 of 11,766 in a spot-checked
+/// id band, every one of them joined to a notice whose `parse_state` is `parsed`.
+/// Read the terminal stamps: `reprocessed_at` set means reclaimed and its content
+/// is served; `skipped_at` set means resolved as a policy skip and still out of the
+/// corpus; both null means outstanding. `None` means the notice was NEVER held.
+///
+/// The filter that would make `Some` mean "held today" is deliberately absent: it
+/// would leave no REST path to a reclaim record at all, and the record is the point.
+/// `parse_state` is the held-today predicate.
 pub async fn notice_quarantine(
     conn: &Connection,
     notice_id: i64,
