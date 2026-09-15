@@ -1362,8 +1362,88 @@ fn flush(emit: &mut Emit, field: Option<Field>) -> Result<(), Rejected> {
                 }
             }
         }
+        Rule::Heading(lang) => {
+            // Issue 397: one line, space-joined — the wrapper's break is never
+            // content in a heading — then the OJ's authenticity boilerplate is
+            // dropped from the trailing annotation block.
+            let text = strip_authenticity_note(&flatten(&field.lines.join(" ")));
+            if !text.is_empty() {
+                emit.text(&id, lang, text);
+            }
+        }
     }
     Ok(())
+}
+
+/// The annotation atoms the OJ prints in a parenthesis under a text-era title.
+///
+/// A CLOSED vocabulary, measured rather than guessed: over tender ids
+/// 7,960,000–8,059,999 there are 26 distinct trailing `(…)` blocks on
+/// newline-carrying titles, covering 10,993 rows, and splitting them on ` - `
+/// yields exactly these atoms plus two one-off strings that are not annotations
+/// at all (`(PCs)` and `(GeophysB 2026)`, one row each — genuine title text that
+/// the wrapper happened to isolate).
+///
+/// Those two are why the block is matched by VOCABULARY and not by shape. A
+/// "trailing parenthetical is boilerplate" rule would have eaten them, which is
+/// the same silent-loss mistake in the other direction: a title is content, and
+/// content nobody has classified must be kept, not tidied away.
+///
+/// Case varies in the source (`With participation…` 686 rows, `with…` 269;
+/// `Supply contract` 2,918, `supply contract` 11), so matching is
+/// case-insensitive.
+const TITLE_ANNOTATIONS: &[&str] = &[
+    "only the original text is authentic",
+    "supply contract",
+    "works contract",
+    "service contract",
+    "combined contract",
+    "open to us bidders",
+    "with participation by gatt countries",
+];
+
+/// The OJ's authenticity notice — pure boilerplate, printed under 8,576 of the
+/// 11,769 wrapped titles in the measured range and under none of the XML or
+/// eForms eras, so it is the single largest reason a text-era title cannot be
+/// compared with a modern one.
+const AUTHENTICITY_NOTE: &str = "only the original text is authentic";
+
+/// Drop the authenticity boilerplate from a title's trailing annotation block,
+/// leaving the block's substantive atoms in place (issue 397).
+///
+/// Conservative by construction: the trailing `(…)` is rewritten only when EVERY
+/// one of its ` - `-separated atoms is in [`TITLE_ANNOTATIONS`]. An unrecognised
+/// atom means this is not an annotation block — it is title text that happens to
+/// be parenthesised — and the title is returned untouched.
+///
+/// The substantive atoms (`Supply contract`, `Open to US bidders`,
+/// `With participation by GATT countries`, …) are deliberately KEPT in the title
+/// for now. They are real facts and moving them to their own parse-layer fields
+/// is issue 397's unit 2; dropping them here to make the title tidier would
+/// destroy them, which is worse than the defect being fixed.
+fn strip_authenticity_note(title: &str) -> String {
+    let trimmed = title.trim_end();
+    let Some(open) = trimmed.rfind('(') else { return title.trim().to_owned() };
+    if !trimmed.ends_with(')') {
+        return title.trim().to_owned();
+    }
+    let block = &trimmed[open + 1..trimmed.len() - 1];
+    let atoms: Vec<&str> = block.split(" - ").map(str::trim).collect();
+    if atoms.is_empty()
+        || !atoms.iter().all(|a| {
+            let a = a.to_lowercase();
+            TITLE_ANNOTATIONS.contains(&a.as_str())
+        })
+    {
+        return title.trim().to_owned();
+    }
+    let kept: Vec<&str> =
+        atoms.into_iter().filter(|a| !a.eq_ignore_ascii_case(AUTHENTICITY_NOTE)).collect();
+    let head = trimmed[..open].trim_end();
+    if kept.is_empty() {
+        return head.to_owned();
+    }
+    format!("{head} ({})", kept.join(" - "))
 }
 
 #[derive(Default)]
@@ -2830,4 +2910,84 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
         assert!(awarded_names("Award notice 6. Successful contractor(s): Not applicable, none.").is_empty());
     }
 
+    /// Issue 397: the authenticity boilerplate leaves the title, the substantive
+    /// atoms stay, and anything the vocabulary does not know is left alone.
+    ///
+    /// Every input here is a real trailing block from the corpus (tender ids
+    /// 7,960,000–8,059,999), with its measured row count, so this is a test
+    /// against what TED published rather than against what a rule would like.
+    #[test]
+    fn the_authenticity_note_leaves_the_title_and_the_rest_stays() {
+        let case = |t: &str| strip_authenticity_note(t);
+
+        // The boilerplate alone: the whole block goes, parentheses included (5,742).
+        assert_eq!(
+            case("D-Herzogenrath: sewage-treatment plant (Only the original text is authentic)"),
+            "D-Herzogenrath: sewage-treatment plant"
+        );
+        // Mixed with a substantive atom: the block is rebuilt without the note (1,312).
+        assert_eq!(
+            case("F-Lyons: batteries (Supply contract - Only the original text is authentic)"),
+            "F-Lyons: batteries (Supply contract)"
+        );
+        // Three atoms, one dropped, order preserved (397).
+        assert_eq!(
+            case("X: y (Supply contract - Only the original text is authentic - Open to US bidders)"),
+            "X: y (Supply contract - Open to US bidders)"
+        );
+        // Case varies in the source, both spellings measured (686 vs 269).
+        assert_eq!(
+            case("X: y (With participation by GATT countries - Only the original text is authentic)"),
+            "X: y (With participation by GATT countries)"
+        );
+        assert_eq!(
+            case("X: y (with participation by GATT countries)"),
+            "X: y (with participation by GATT countries)"
+        );
+        // A block with nothing to drop is returned unchanged (883).
+        assert_eq!(case("X: y (Supply contract)"), "X: y (Supply contract)");
+
+        // THE POINT: an unrecognised atom means this is not an annotation block,
+        // it is title text that happens to be parenthesised. Both of these are
+        // real titles — one row each in the measured range — and a shape-based
+        // rule would have eaten them.
+        assert_eq!(case("X: personal computers (PCs)"), "X: personal computers (PCs)");
+        assert_eq!(case("X: survey (GeophysB 2026)"), "X: survey (GeophysB 2026)");
+        // Including when the note is mixed WITH an unknown atom: refuse the whole
+        // block rather than guess which half is content.
+        assert_eq!(
+            case("X: y (PCs - Only the original text is authentic)"),
+            "X: y (PCs - Only the original text is authentic)"
+        );
+
+        // Shapes that are not a trailing block at all.
+        assert_eq!(case("D-Naumburg: general construction work (new work and renovation)"),
+                   "D-Naumburg: general construction work (new work and renovation)");
+        assert_eq!(case("X: y"), "X: y");
+        assert_eq!(case("X: y (unclosed"), "X: y (unclosed");
+        assert_eq!(case(""), "");
+        // A title that is ONLY the note collapses to empty rather than to "()".
+        assert_eq!(case("(Only the original text is authentic)"), "");
+    }
+
+    /// Issue 397: a wrapped heading is space-joined, and the `flatten` it goes
+    /// through is the same one the parser already used for `TX`-derived facts —
+    /// so a continuation that itself wrapped (`Open to US\nbidders`, 15 rows)
+    /// rejoins before the vocabulary is consulted.
+    #[test]
+    fn a_wrapped_heading_rejoins_before_its_annotation_is_read() {
+        let joined = flatten(&["X: y (Supply contract - Open to US", "bidders)"].join(" "));
+        assert_eq!(joined, "X: y (Supply contract - Open to US bidders)");
+        assert_eq!(strip_authenticity_note(&joined), "X: y (Supply contract - Open to US bidders)");
+
+        let wrapped = flatten(
+            &["NO-Tromso: architectural, engineering, construction and related technical", "consultancy services"]
+                .join(" "),
+        );
+        assert_eq!(
+            wrapped,
+            "NO-Tromso: architectural, engineering, construction and related technical consultancy services"
+        );
+        assert!(!wrapped.contains('\n'));
+    }
 }

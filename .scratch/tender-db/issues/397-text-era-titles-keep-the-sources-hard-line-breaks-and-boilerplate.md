@@ -104,3 +104,104 @@ Caveat carried forward for whoever fixes it: `crates/ingest/tests/text.rs:209` a
 - `curl` on 1993-03-05 `limit=100` returns 0 of 100 titles containing `\n`; the 8037963 title reads `D-Herzogenrath: sewage-treatment plant`.
 - The CPV and `TX`/`AB` bodies keep their wraps — this change touches `TI` only, and a test asserts a `TX` body still carries its newlines.
 - `openapi.json` / `/docs` say what `Tender.title` is now guaranteed to be (single line), or a gate asserts it, so the guarantee is not just true but stated.
+
+## Unit 1 BUILT 2026-09-16 (owner) — the wrap is flattened, and the vocabulary is measured, not guessed
+
+### The continuation line is a structured annotation block, not the two families the issue names
+
+Before touching the code I censused what the corpus actually puts after the newline, over tender ids
+7,960,000–8,059,999:
+
+| rows | trailing continuation |
+| --- | --- |
+| 5,742 | `(Only the original text is authentic)` |
+| 1,312 | `(Supply contract - Only the original text is authentic)` |
+| 883 | `(Supply contract)` |
+| 519 | `(Works contract - Only the original text is authentic)` |
+| 397 | `(Supply contract - Only the original text is authentic - Open to US bidders)` |
+| 376 | `(With participation by GATT countries - Only the original text is authentic)` |
+| 326 | `(Supply contract - Open to US bidders)` |
+| 310 / 269 | `(With participation by GATT countries)` / `(with participation by GATT countries)` |
+| 251 | `(Open to US bidders)` |
+| 222 | `(Works contract)` |
+| **194** | **`renovation)`** |
+| 144 | `(Open to US bidders - Only the original text is authentic)` |
+| 66 | `(Service contract)` |
+| … | 35 `works`, 29 `runways`, … |
+
+It is one parenthesis holding a ` - `-separated list. Splitting the 26 distinct paren-shaped blocks
+(10,993 rows) into atoms gives a **closed vocabulary of seven**, plus two one-offs:
+
+| rows | atom |
+| --- | --- |
+| 8,576 | `Only the original text is authentic` |
+| 2,918 + 11 | `Supply contract` / `supply contract` |
+| 1,208 + 15 | `Open to US bidders` / `Open to US`⏎`bidders` |
+| 811 | `Works contract` |
+| 686 + 269 | `With participation by GATT countries` / `with…` |
+| 104 | `Service contract` |
+| 53 + 2 | `Combined contract` / `combined contract` |
+| **1** | **`PCs`** |
+| **1** | **`GeophysB 2026`** |
+
+**Those last two are why the rule is gated on VOCABULARY and not on shape.** `(PCs)` and
+`(GeophysB 2026)` are genuine title text that the wrapper happened to isolate onto its own line, and
+a "a trailing parenthetical is boilerplate" rule would have eaten both. Content nobody has classified
+is kept, not tidied away — the same refuse-by-default discipline as issue 385's coordinate table.
+`renovation)`, `works` and `runways` are wrapped mid-sentence and never look like a block at all, so
+they are simply space-joined back.
+
+Note also `Open to US`⏎`bidders` (15 rows): a continuation can itself wrap, so flattening must happen
+**before** the vocabulary is consulted. A test pins that ordering.
+
+### What was built
+
+`Rule::Heading(Option<&'static str>)`, a new variant beside `Prose`, and `TI` moves to it. A heading
+is space-joined through the parser's existing `flatten()` — the helper that already undoes this exact
+wrapper for `TX`-derived facts, and whose doc comment already called the wrap a transport artefact.
+`TX`/`AB` stay `Prose`: there the line structure is the document's own and paragraph breaks mean
+something, and a test now asserts a body still contains newlines.
+
+`strip_authenticity_note` then rewrites the trailing block **only when every atom is in the
+vocabulary**, dropping `Only the original text is authentic` and keeping the rest in order. A block
+containing one unknown atom is returned untouched in full, rather than half-parsed.
+
+Tests: `the_authenticity_note_leaves_the_title_and_the_rest_stays` (every input is a real block from
+the census, with its row count in the comment, including both false positives and a
+note-mixed-with-unknown case), `a_wrapped_heading_rejoins_before_its_annotation_is_read`, and the
+re-pinned `crates/ingest/tests/text.rs` assertion — red-first, as the issue's caveat predicted, since
+the two-line value was a deliberate parser choice.
+
+### The substantive atoms are KEPT in the title, deliberately — unit 2
+
+The `## Done when` asks for `(with participation by GATT countries)` to be "kept as a flag rather
+than as title text". It is not, yet, and the reason is a measurement that says the routing question
+is not settled:
+
+`Supply contract` and friends look redundant with the era's own `TXT-NC` code, which would make them
+droppable rather than needing a new home. They are not obviously so. Sampled carriers:
+
+| title block | same notice's `TXT-NC` |
+| --- | --- |
+| `(supply contract)` — notice 18031 | `2` |
+| `(Combined contract - …)` — notice 20651 | `3` |
+| `(Service contract)` — notice 39302 | `4` |
+
+That is not a codelist anyone has written down here, and `docs/research/ted-legacy-mapping.md` §7 is
+headed "quick assessment only". Until `NC`'s vocabulary is established, moving the atoms out of the
+title is a choice between "drop as duplicate" and "mint a new field", and picking wrong destroys a
+fact. **Keeping them in the title loses nothing** — they are still served, still searchable, and the
+title is now one line, which is the defect this issue was filed for.
+
+A correction worth recording so nobody repeats it: my first pass at that table used
+`current_title LIKE '%Works contract%'` without gating on position, and matched **2025 UK FTS**
+titles ("Fire Remedial Works Contract for Eldon Housing Association", profile `fts:ocds-1.1`) that
+share the tender id range. The three rows above are position-gated to a trailing paren block on a
+newline-carrying title. The FTS titles are ordinary prose and were never in scope.
+
+### Still open
+
+- **Unit 2**: settle `TXT-NC`'s codelist, then decide where the substantive atoms go.
+- **The re-parse and re-fold.** Nothing on prod changes until the text era is re-parsed (the issue-364
+  units 5–6 shape) and re-folded. The acceptance counts in `## Done when` are for after that.
+- Not deployed.

@@ -205,15 +205,23 @@ fn a_1993_record_maps_its_coded_header() {
         NoticeValue::Classification { scheme, code } if scheme == "cc" && code == "3140"));
     assert_eq!(text_value(rec, "TXT-CT"), (Some("EN".into()), "STRUCTURAL METAL PRODUCTS".into()));
 
-    // Title (with its authenticity note continuation), buyer, one-row body.
+    // Title, buyer, one-row body. Issue 397: the title is ONE line — TED's
+    // ~72-column wrapper broke it and the break is not content — and the OJ's
+    // authenticity notice is boilerplate that leaves the title with it. This
+    // assertion used to pin the two-line form, which is why the fix was red-first
+    // here rather than a bug-fix against an accident.
     let (lang, title) = text_value(rec, "TXT-TI");
     assert_eq!(lang.as_deref(), Some("EN"));
-    assert_eq!(title, "F-Paris: lighting supports\n(Only the original text is authentic)");
+    assert_eq!(title, "F-Paris: lighting supports");
     assert_eq!(text_value(rec, "TXT-AU").1, "MAIRIE DE PARIS");
     let (lang, body) = text_value(rec, "TXT-TX");
     assert_eq!(lang.as_deref(), Some("EN"));
     assert!(body.starts_with(" 1.  Awarding authority: Mairie de Paris"));
     assert!(body.ends_with("Notice received on: 24. 12. 1992."));
+    // …and the body KEEPS its line structure (issue 397). Only `TI` is a heading;
+    // in a `TX`/`AB` prose blob the lines are the document's own and the
+    // paragraph breaks mean something.
+    assert!(body.contains('\n'), "a prose body is not flattened: {body:?}");
 }
 
 /// Issue 31: `RP` code `2` (international financing) is published as the lead

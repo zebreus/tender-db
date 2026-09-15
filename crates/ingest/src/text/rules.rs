@@ -23,6 +23,21 @@ pub enum Rule {
     /// language tag is `Some("EN")` for English renderings, `None` for names
     /// and original-language bodies (see the module doc on `OT`).
     Prose(Option<&'static str>),
+    /// Head + continuation lines are ONE LINE, space-joined — a heading that
+    /// TED's ~72-column wrapper happened to break (issue 397).
+    ///
+    /// Distinct from [`Prose`](Rule::Prose) because in a heading the newline is
+    /// never content. `TI` used to be `Prose`, so the wrap reached the served
+    /// `title`: 11,769 of 99,741 tenders in one measured id range (11.8 %) carried
+    /// a literal newline mid-title, which broke display at an arbitrary column and
+    /// made the string sort, prefix-match and dedupe as something other than what
+    /// it renders as. The parser already called this wrap a transport artefact
+    /// (`parse.rs`'s `flatten`, used for facts derived from `TX`); the headline
+    /// title simply never went through it.
+    ///
+    /// A `TX`/`AB` body keeps [`Prose`](Rule::Prose): there the line structure is
+    /// the document's own and paragraph breaks mean something.
+    Heading(Option<&'static str>),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -53,7 +68,7 @@ pub enum Type {
     Line(Option<&'static str>),
 }
 
-use Rule::{PerLine, Prose, Scalar};
+use Rule::{Heading, PerLine, Prose, Scalar};
 
 /// Every decided field code. Kept sorted; the completeness tests hold this
 /// bijective with the vendored inventory.
@@ -101,7 +116,9 @@ const FIELDS: &[(&str, Rule)] = &[
     // one-line case of the same rule (issue 31).
     ("RP", PerLine(Type::Code)),
     ("TD", Scalar(Type::Code)),
-    ("TI", Prose(Some("EN"))),
+    // Issue 397: a HEADING, not prose — TED's wrapper breaks it at ~72 columns
+    // and the break is never content. See `Rule::Heading`.
+    ("TI", Heading(Some("EN"))),
     ("TW", Prose(None)),
     ("TX", Prose(Some("EN"))),
     ("TY", Scalar(Type::Code)),
