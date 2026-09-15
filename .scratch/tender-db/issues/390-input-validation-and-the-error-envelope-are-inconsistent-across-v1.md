@@ -267,3 +267,87 @@ One of the two, and the docs say so either way:
 - **Or refuse it visibly:** `?tender=` plus `Accept: text/event-stream` answers 400 the way `sort`/`order` on a stream does, and the reason is in the envelope.
 - `/docs` and `openapi.json`'s `tender` parameter description state the chosen rule, so a reader of either surface can predict the response media type without trying it.
 - A test pins it, since 227's name-walking guard structurally cannot.
+
+## Units 1 and 2 BUILT 2026-09-15 (owner)
+
+### Unit 1 — validated at the boundary, not escaped in the predicate
+
+The `## Done when` offered "shape-check in `Params::filter()`" **and/or** "stop the predicate being a
+user-controlled pattern". I took the first and deliberately did **not** take the second, which is a
+decision worth recording rather than an omission.
+
+`Params::filter()` now runs `country` and `cpv` through one `shaped_prefix` helper: present means
+non-empty and ASCII alphanumeric, anything else is a 400 in the standard envelope naming the
+parameter. That is exactly the two vocabularies — NUTS is letters and digits (`DE91C`), CPV is
+digits — and it is the posture `currency`, `lang` and `name_prefix` already take within twenty lines
+of the same function. `%`, `_`, `\`, the empty string and a whitespace-only value can no longer
+reach the store.
+
+**Why not `LIKE ? ESCAPE '\'`.** The API is the contract boundary and the place the vocabulary is
+documented; escaping in the read layer would instead make `?country=%` a *valid request for a
+literal percent sign*, which is not a NUTS code and not something any client wants. It would also
+change a hot predicate for no gain once the metacharacters are unreachable. Crucially the store
+guard stays as it is: `read::prefix_ranges` still DECLINES on `%`/`_`/`\` (issue 117), because the
+store is reachable independently of `/v1` by the supervisor and the censuses, and a guard that
+assumed the API had already validated would be a guard that is wrong for its other callers. The two
+layers are now belt and braces rather than one relying on the other.
+
+**Case is not folded**, and that is deliberate: SQLite's `LIKE` is ASCII-case-insensitive, so
+`?country=de` matches `DE300` today and `prefix_ranges` generates both case variants precisely to
+stay consistent with it. Uppercasing "while validating" would have been a silent behaviour change.
+
+**`tenders_shortcircuit.rs` needed no change**, contrary to the `## Done when`'s expectation that the
+fix would fail it. Its `%` / `_E` assertions call the STORE directly, not the API, so they still pin
+what they were written to pin — the guard-consistency invariant that a range can never be narrower
+than the `LIKE`. That invariant is still live and still correct for internal callers; the fix removed
+the input path, not the semantics it guards.
+
+Tests: `a_code_prefix_filter_rejects_patterns_instead_of_reinterpreting_them` — nine refused shapes
+per parameter (`%`, `_E`, empty, whitespace, `D%`, `4_`, `a\b`, `DE-91`, `DE 91`), the envelope
+naming the parameter, and controls that matter as much: `DE`, `de`, `PL62`, `45`, `45000000` all
+still 200 on `/v1/tenders` AND `/v1/lots`, and `country=ZZ` is still an empty 200 page rather than a
+400 (issue 336 settled that an unmatchable value is conventional; only an unfiltered page dressed as
+a filtered one was ever the defect). The SSE half is covered on `/v1/tenders` and `/v1/lots`, where
+the `Filter` is built before the stream opens — a long-lived subscription silently carrying the wrong
+rows is worse than one wrong page.
+
+**A finding fell out of writing that test, filed as issue 399.** The draft asserted
+`/v1/changes?country=_E` → 400 and it came back 200. `/v1/changes` is registered `get(changes)` with
+no SSE branch, and `changes()` never calls `params.filter()` — it uses `since`, `limit` and `entity`
+and silently drops every other filter, with no `ignored_filters` array to say so. Verified on prod:
+`source=nonesuch`, `status=open`, `min_value=999999999999`, `buyer=1` and `country=ZZ` all leave the
+answer unchanged while `entity=tender` changes it. So unit 1 introduces a visible asymmetry —
+`/v1/tenders?country=_E` 400 vs `/v1/changes?country=_E` 200 — and that asymmetry is issue 399's
+symptom, not a regression here. Fixing it inside this commit would have meant adding a whole
+`ignored_filters` contract to the changes response, which is its own review.
+
+### Unit 2 — the one sub-resource is named, not a loosened depth rule
+
+`is_public_surface()` grants `/v1/notices/{id}/content` explicitly. The route takes no `AuthUser` and
+carries no `security` in the spec, so both doc surfaces' promise — "every endpoint that needs no
+token is CORS-open to any origin" — already covered it; the code was the stale half. The
+one-extra-segment rule predates the route (CORS grant 2026-08-15, content route 2026-08-16 under
+issue 218-B) and swallowed it silently, so a browser client was blocked twice: 405 on the preflight
+and no ACAO on the GET, on the very endpoint 218-B built to make the parsed payload reachable without
+`/v1/sql`.
+
+Named exactly rather than by allowing depth ≥ 2, because the completeness test's `/v1/tenders/1/x`
+case must stay non-public and this is the only route in the surface with a segment after `{id}`. A
+future sub-resource should have to say so here. The negative cases are now pinned too:
+`/v1/tenders/1/content`, `/v1/notices//content`, `/v1/notices/1/2/content`,
+`/v1/notices/1/content/x` and `/v1/notices/1/contents` all stay out, and the e2e asserts the
+preflight is answered for the content route and NOT for `/v1/tenders/1/content`.
+
+Docs: `openapi.json`'s `country` and `cpv` parameters now state the letters-and-digits rule and the
+400. The CORS sentences needed no change — after unit 2 they are simply true.
+
+### Still open on this issue
+
+- **Units 3, 4 and 5 are not built**: the bodyless 405, `limit` clamping instead of 400ing, and the
+  `Accept: text/event-stream` gap on `/v1/notices?tender=<id>`. All three are the low-severity tier
+  and none is touched here.
+- Not deployed. Rides the next deploy with 392, 385 unit 2, 395 and 398.
+- Acceptance reads for after the deploy: `?country=_E`, `?country=`, `?cpv=%25` → 400 on
+  `/v1/tenders` and `/v1/lots`; `?country=DE`, `?country=de`, `?cpv=45`, `?country=ZZ` → 200 with the
+  same rows as today; `HEAD /v1/notices/1/content` with an `Origin` → ACAO `*`; `OPTIONS` on it → 204
+  with the preflight set.

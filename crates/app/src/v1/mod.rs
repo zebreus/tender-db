@@ -212,6 +212,34 @@ pub fn router(state: AppState) -> Router {
 /// `/v1/webhooks…`) are deliberately absent: nothing here is
 /// cookie-credentialed, so opening them would not be unsafe — but the public
 /// grant is scoped to what needs no credential at all.
+/// A code-prefix filter value, shape-checked (issue 390 unit 1).
+///
+/// `None` and an absent parameter are the same thing; anything present must be
+/// non-empty and ASCII alphanumeric. That is exactly the two vocabularies these
+/// parameters name — NUTS codes are letters and digits (`DE91C`), CPV codes are
+/// digits — and it is what makes the value safe to bind into the store's `LIKE`
+/// pattern, since the metacharacters `%`, `_` and `\\` cannot survive it.
+///
+/// Case is deliberately NOT folded. SQLite's `LIKE` is ASCII-case-insensitive, so
+/// `?country=de` matches `DE300` today and `read::prefix_ranges` generates both
+/// case variants for the range guard precisely to stay consistent with that.
+/// Uppercasing here would be a silent behaviour change dressed as validation.
+fn shaped_prefix(
+    value: Option<&str>,
+    name: &str,
+    expected: &str,
+) -> Result<Option<String>, ApiError> {
+    match value.map(str::trim) {
+        None => Ok(None),
+        Some(v) if !v.is_empty() && v.chars().all(|c| c.is_ascii_alphanumeric()) => {
+            Ok(Some(v.to_owned()))
+        }
+        Some(other) => Err(ApiError::bad_request(format!(
+            "{name} must be {expected} — letters and digits only, not {other:?}"
+        ))),
+    }
+}
+
 fn is_public_surface(method: &axum::http::Method, path: &str) -> bool {
     // HEAD rides along: axum's `get()` routes serve it, so the grant matches.
     if method != axum::http::Method::GET && method != axum::http::Method::HEAD {
@@ -221,10 +249,29 @@ fn is_public_surface(method: &axum::http::Method, path: &str) -> bool {
         "/v1" | "/v1/tenders" | "/v1/lots" | "/v1/organizations" | "/v1/notices"
         | "/v1/changes" | "/v1/sql/schema" | "/v1/openapi.json" | "/health" | "/health/deep"
         | "/_source" | "/docs" => true,
-        // The id-detail forms: exactly one extra segment, nothing deeper.
+        // The id-detail forms: exactly one extra segment, nothing deeper...
         _ => ["/v1/tenders/", "/v1/organizations/", "/v1/notices/"].iter().any(|prefix| {
             path.strip_prefix(prefix).is_some_and(|rest| !rest.is_empty() && !rest.contains('/'))
-        }),
+        })
+            // ...plus the one legitimate sub-resource (issue 390 unit 2).
+            // `/v1/notices/{id}/content` takes no `AuthUser` and carries no
+            // `security` in the spec, so it needs no token — and both doc
+            // surfaces promise that "every endpoint that needs no token is
+            // CORS-open to any origin". It was not: the one-segment rule above
+            // predates the route (the CORS grant landed 2026-08-15, the content
+            // route 2026-08-16 under issue 218-B) and silently swallowed it, so
+            // a browser client got a 405 on the preflight AND no ACAO on the GET
+            // — blocked twice — on the very endpoint issue 218-B built to make
+            // the parsed payload reachable without `/v1/sql`.
+            //
+            // Named exactly rather than by loosening the depth rule: the
+            // completeness test's `/v1/tenders/1/x` case must stay non-public,
+            // and this is the only route in the surface with a segment after
+            // `{id}`. A new sub-resource should have to say so here.
+            || path
+                .strip_prefix("/v1/notices/")
+                .and_then(|rest| rest.strip_suffix("/content"))
+                .is_some_and(|id| !id.is_empty() && !id.contains('/')),
     }
 }
 
@@ -275,12 +322,20 @@ mod cors_tests {
             "/v1", "/v1/tenders", "/v1/tenders/14327", "/v1/lots", "/v1/organizations",
             "/v1/organizations/9", "/v1/notices", "/v1/notices/12", "/v1/changes",
             "/v1/sql/schema", "/v1/openapi.json", "/health", "/health/deep", "/_source", "/docs",
+            // Issue 390 unit 2: the one sub-resource. It takes no `AuthUser`, so
+            // the CORS promise covers it; the one-segment rule below predates it.
+            "/v1/notices/12/content",
         ] {
             assert!(is_public_surface(&Method::GET, path), "{path} is public");
         }
-        // Token-gated, unknown, and deeper paths are not in the grant.
+        // Token-gated, unknown, and deeper paths are not in the grant. The
+        // `/content` arm is NAMED, not a loosened depth rule — these must all
+        // stay out, including a `/content` under the wrong collection and a
+        // notice id that is itself a path.
         for path in [
             "/v1/me", "/v1/sql", "/v1/webhooks", "/v1/webhooks/3", "/v1/tenders/1/x", "/v1/x", "/",
+            "/v1/tenders/1/content", "/v1/notices//content", "/v1/notices/1/2/content",
+            "/v1/notices/1/content/x", "/v1/notices/1/contents",
         ] {
             assert!(!is_public_surface(&Method::GET, path), "{path} is not public");
         }
@@ -592,8 +647,27 @@ impl Params {
             // after probing (issue 273 step 2); the API layer has no say.
             country_seed: false,
             source: self.source.clone(),
-            country: self.country.clone(),
-            cpv: self.cpv.clone(),
+            // Issue 390 unit 1: shape-checked, because the store binds these into
+            // a `LIKE` pattern (`read::version_predicates`: `c.code LIKE ?` with
+            // `format!("{country}%")`, no `ESCAPE`). A value carrying `%` or `_`
+            // therefore changed what the filter MEANT rather than what it matched:
+            // `?country=_E` served DE rows as if `_E` had been asked for,
+            // `?cpv=%` served the unfiltered collection, and `?country=` — an
+            // empty form field or an interpolated missing variable — became the
+            // pattern `%` and disabled the filter entirely. Every one answered 200
+            // with `ignored_filters: []`, i.e. "your filter was applied".
+            //
+            // Validated HERE rather than by escaping the pattern, for two
+            // reasons. This is the contract boundary: `openapi.json` documents
+            // `country` as a NUTS place-code prefix and `cpv` as a CPV code
+            // prefix, and neither vocabulary contains a metacharacter — so junk
+            // is a 400, the same posture `currency`, `lang` and `name_prefix`
+            // already take two lines from here. And `read::prefix_ranges` still
+            // DECLINES on `%`/`_`/`\\` (issue 117), which keeps the store correct
+            // for its internal callers; that guard is not weakened by this, and
+            // must not be, since the two layers are reachable independently.
+            country: shaped_prefix(self.country.as_deref(), "country", "a NUTS place code (e.g. DE, PL62)")?,
+            cpv: shaped_prefix(self.cpv.as_deref(), "cpv", "a CPV code prefix (e.g. 45, 45000000)")?,
             buyer: self.buyer,
             winner: self.winner,
             bidder: self.bidder,

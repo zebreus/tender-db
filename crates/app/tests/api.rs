@@ -1388,6 +1388,82 @@ async fn notice_content_serves_the_whole_parsed_layer() {
     assert_eq!(server.status("/v1/notices/999999999/content").await, 404);
 }
 
+/// Issue 390 unit 1: `country` and `cpv` are code prefixes, not `LIKE` patterns.
+///
+/// The store binds them into `c.code LIKE ?` as `format!("{value}%")` with no
+/// `ESCAPE`, so a value carrying a metacharacter changed what the filter MEANT
+/// rather than what it matched — and every such request answered 200 with
+/// `ignored_filters: []`, i.e. "your filter was applied". Measured on prod:
+/// `?country=_E` served DE rows (the `_` matched the `D`), `?cpv=%` served the
+/// unfiltered collection, and `?country=` — an empty form field, or a template
+/// that interpolated a missing variable — became the pattern `%` and disabled the
+/// filter entirely while reporting it honoured.
+///
+/// The controls are the point of the test as much as the rejections: a filter
+/// that started 400ing on real codes would be a worse bug than the one fixed.
+#[tokio::test]
+async fn a_code_prefix_filter_rejects_patterns_instead_of_reinterpreting_them() {
+    let server = Server::start("prefix-shape").await;
+    server.ingest_chain().await;
+
+    // The shapes that used to change the filter's meaning. `\\` is included
+    // because SQLite treats it literally only while no ESCAPE clause exists —
+    // accepting it would make adding one later a silent behaviour change.
+    // Percent-encoded where the raw character would not survive a query string.
+    for param in ["country", "cpv"] {
+        for value in ["%25", "_E", "", "%20%20", "D%25", "4_", "a%5Cb", "DE-91", "DE%2091"] {
+            let url = format!("/v1/tenders?{param}={value}&limit=2");
+            assert_eq!(
+                server.status(&url).await,
+                400,
+                "{param}={value} must be refused, not reinterpreted as a pattern"
+            );
+        }
+    }
+
+    // The error is the standard envelope and names the parameter, so a client
+    // learns which one it got wrong (issue 51).
+    let body = server.get_allow_error("/v1/tenders?country=_E").await;
+    let message = body["error"]["message"].as_str().unwrap_or_default();
+    assert!(message.contains("country"), "the envelope names the parameter: {body}");
+    assert_eq!(body["error"]["status"].as_i64(), Some(400));
+
+    // Controls: real codes still work, on both collections that share `Filter`.
+    // `country=ZZ` matches nothing and is a 200 with an empty page — issue 336
+    // settled that an unmatchable value is conventional; only an unfiltered page
+    // dressed as a filtered one was the defect.
+    for path in ["/v1/tenders", "/v1/lots"] {
+        assert_eq!(server.status(&format!("{path}?country=DE&limit=2")).await, 200);
+        assert_eq!(server.status(&format!("{path}?country=de&limit=2")).await, 200, "case is not folded away");
+        assert_eq!(server.status(&format!("{path}?cpv=45&limit=2")).await, 200);
+        let empty = server.get(&format!("{path}?country=ZZ&limit=2")).await;
+        assert_eq!(items(&empty).len(), 0, "an unmatchable code is an empty page, not a 400");
+        assert_eq!(server.status(&format!("{path}?country=_E&limit=2")).await, 400, "{path} shares the Filter");
+    }
+    // A NUTS code with digits is the common real shape, and must pass.
+    assert_eq!(server.status("/v1/tenders?country=PL62&limit=2").await, 200);
+    assert_eq!(server.status("/v1/tenders?cpv=45000000&limit=2").await, 200);
+
+    // The SSE half builds the same `Filter` before the stream opens, so a
+    // subscription cannot be established on a filter that means something else —
+    // a long-lived stream silently carrying the wrong rows is worse than a page.
+    let stream_status = |path: String| {
+        let http = server.http.clone();
+        let base = server.base.clone();
+        async move {
+            http.get(format!("{base}{path}"))
+                .header("accept", "text/event-stream")
+                .send()
+                .await
+                .expect("sse request")
+                .status()
+                .as_u16()
+        }
+    };
+    assert_eq!(stream_status("/v1/tenders?country=_E".to_owned()).await, 400);
+    assert_eq!(stream_status("/v1/lots?cpv=%25".to_owned()).await, 400);
+}
+
 /// Issue 218: `/v1/notices/{id}` carries a `quarantine` field so a notice held out
 /// of the canonical layer explains why, instead of returning a bare `parse_state`
 /// stub. The list rows stay lean (no per-item quarantine lookup).
@@ -2307,9 +2383,20 @@ fn the_docs_page_names_the_whole_spec_surface() {
 async fn the_unauthenticated_surface_is_cors_open() {
     let server = Server::start("cors").await;
 
-    for path in
-        ["/v1", "/v1/tenders", "/v1/changes?since=0", "/v1/sql/schema", "/v1/openapi.json", "/health"]
-    {
+    for path in [
+        "/v1",
+        "/v1/tenders",
+        "/v1/changes?since=0",
+        "/v1/sql/schema",
+        "/v1/openapi.json",
+        "/health",
+        // Issue 390 unit 2: the notice-content sub-resource. It needs no token,
+        // so both doc surfaces promise it is CORS-open — and it was not, because
+        // the grant's one-extra-segment rule was written before the route
+        // existed. A browser client was blocked twice: 405 on the preflight and
+        // no ACAO on the GET.
+        "/v1/notices/1/content",
+    ] {
         let response = server
             .http
             .get(format!("{}{path}", server.base))
@@ -2342,6 +2429,39 @@ async fn the_unauthenticated_surface_is_cors_open() {
         .unwrap_or_default()
         .to_ascii_lowercase();
     assert!(allowed.contains("last-event-id"), "SSE resume needs Last-Event-ID allowed: {allowed}");
+
+    // Issue 390 unit 2: the content route answers its preflight too — the half a
+    // browser hits FIRST, and the half that returned a bare 405 with no CORS
+    // headers at all. A `/content` under the wrong collection still must not.
+    let content_preflight = server
+        .http
+        .request(reqwest::Method::OPTIONS, format!("{}/v1/notices/1/content", server.base))
+        .header("origin", "https://example.com")
+        .header("access-control-request-method", "GET")
+        .send()
+        .await
+        .expect("preflight");
+    assert_eq!(content_preflight.status().as_u16(), 204, "the content preflight is answered");
+    assert_eq!(
+        content_preflight
+            .headers()
+            .get("access-control-allow-origin")
+            .and_then(|v| v.to_str().ok()),
+        Some("*"),
+    );
+    let not_granted = server
+        .http
+        .request(reqwest::Method::OPTIONS, format!("{}/v1/tenders/1/content", server.base))
+        .header("origin", "https://example.com")
+        .header("access-control-request-method", "GET")
+        .send()
+        .await
+        .expect("preflight");
+    assert_ne!(
+        not_granted.status().as_u16(),
+        204,
+        "the grant names ONE sub-resource; it is not a loosened depth rule"
+    );
 
     // Token-gated endpoints carry no CORS grant — call them server-side.
     for (method, path) in [
