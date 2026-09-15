@@ -160,3 +160,19 @@ while two spec guards that compare names only sat right next to it (issue 370's 
   answers "which notices are currently held" without reading `parse_state` per notice. `/v1/sql`
   does it; a filter on `/v1/notices` would be the REST answer. Nothing observed to be broken by its
   absence, so it is not filed.
+
+## DEPLOYED AND VERIFIED 2026-09-16 — rev `5affd75`
+
+Behaviour unchanged, as intended — this was a contract fix, and the three notices read exactly as
+they did before:
+
+| notice | `parse_state` | `quarantine` |
+| --- | --- | --- |
+| 28783598 | `parsed` | `reason=unrepresentable-value`, `reprocessed_at=2026-08-22T01:04:15Z` — reclaimed, and served |
+| 28783590 (never held) | `parsed` | `null` |
+| 31276597 (held today) | `quarantined` | `reason=unrepresentable-value`, `reprocessed_at=None` |
+
+The served spec now names the predicate: `NoticeDetail.quarantine`'s description contains
+`parse_state` and no longer contains "null when it parsed" (checked against the live
+`/v1/openapi.json`, not the vendored file). The three rows above are now readable as three different
+states instead of two — which was the whole point.

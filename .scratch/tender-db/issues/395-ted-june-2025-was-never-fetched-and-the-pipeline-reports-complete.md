@@ -272,3 +272,34 @@ asserts the funnel refuses it, with a contiguous second source as the control.
 - The check covers `monthly` only, by construction. `ted daily`'s `2026-00136` periods are an OJ
   issue sequence and could in principle be gap-checked too, but that is a different arithmetic
   (issue numbers are not dense across years) and no hole has been observed there.
+
+## DEPLOYED AND VERIFIED 2026-09-16 — rev `5affd75`
+
+`/metrics`, once the dashboard refresher reached its coverage section:
+
+```
+tender_db_fetch_missing_periods{source="doe"}   0
+tender_db_fetch_missing_periods{source="ecb"}   0
+tender_db_fetch_missing_periods{source="eurostat"} 0
+tender_db_fetch_missing_periods{source="fts"}   0
+tender_db_fetch_missing_periods{source="ted"}   0
+tender_db_fetch_duplicate_periods{source="ted"} 1
+```
+
+Every source contiguous, so `tender_db_fetch_missing_periods > 0` — the entire alert rule — is quiet,
+and the one number that is not zero is the 2025-09 duplicate this issue predicted. `ecb` and
+`eurostat` read 0/0 because they register no `monthly` rows at all, which is the empty-input case the
+arithmetic returns `default()` for; correct, and not a claim that they were checked and found whole.
+
+The funnel renders both: `fetch complete ✓` and `registered twice: 2025-09`. That ✓ is now an earned
+one — for the first time it means "the monthly sequence has no hole", not "the newest period is
+recent".
+
+One operational note for whoever reads this next: the pipeline section is measured by the dashboard's
+background refresher and lands **last** in its sequence, after quarantine and counts, because the
+coverage scan is the heaviest read on the box. After a restart the gauges are legitimately absent for
+several minutes. That is the issue-230 absent-until-measured rule working, not a fault — do not read
+a missing series as a zero.
+
+Both halves of this issue are now done: the June-2025 hole is filled (71,831 notices) and the
+detector that would have caught it exists and is live.

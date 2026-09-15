@@ -351,3 +351,25 @@ Docs: `openapi.json`'s `country` and `cpv` parameters now state the letters-and-
   `/v1/tenders` and `/v1/lots`; `?country=DE`, `?country=de`, `?cpv=45`, `?country=ZZ` → 200 with the
   same rows as today; `HEAD /v1/notices/1/content` with an `Origin` → ACAO `*`; `OPTIONS` on it → 204
   with the preflight set.
+
+## Units 1 and 2 DEPLOYED AND VERIFIED 2026-09-16 — rev `5affd75`
+
+**Unit 1, refused (all 400):** `/v1/tenders?country=_E`, `?country=`, `?cpv=%25`; `/v1/lots?country=_E`,
+`?cpv=%25`. The envelope is the standard one and names the parameter:
+
+```
+{"error":{"message":"country must be a NUTS place code (e.g. DE, PL62) — letters and digits only, not \"_E\"","status":400}}
+```
+
+**Unit 1, controls (all 200, unchanged):** `country=DE`, `country=de` (case still not folded),
+`country=PL62`, `cpv=45` on `/v1/tenders`; `country=DE` on `/v1/lots`. And `country=ZZ` is still a
+**200 with 0 items**, not a 400 — issue 336's settled position survives the fix.
+
+**Unit 2:** `GET /v1/notices/1/content` with an `Origin` now carries
+`access-control-allow-origin: *`, and its `OPTIONS` preflight answers **204**. The negative control
+`OPTIONS /v1/tenders/1/content` is **404** (no such route) rather than 204 — the grant is one named
+sub-resource, not a loosened depth rule.
+
+Units 1 and 2 are done. **Units 3, 4 and 5 remain open** (the bodyless 405, `limit` clamping instead
+of 400ing, and the SSE `Accept` gap on `/v1/notices?tender=<id>`) — all three are the low-severity
+tier and none was touched.

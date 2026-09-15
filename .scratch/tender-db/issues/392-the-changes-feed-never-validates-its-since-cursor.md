@@ -133,3 +133,18 @@ verdict and that it matches SSE.
 
 Not deployed — the box is folding issue 385's F14 refold. The acceptance reads (`since=999999999999`
 and head+1 against the live feed) are for the next idle window.
+
+## DEPLOYED AND VERIFIED 2026-09-16 — rev `5affd75`
+
+Against the live feed (head cursor 612,967,375 at the time of reading):
+
+| request | answer |
+| --- | --- |
+| `since=999999999999` | `reset: cursor_ahead`, `last_cursor: "0"`, `events: []`, `more: false` |
+| `since=612967376` (head + 1) | `reset: cursor_ahead`, `last_cursor: "0"`, `events: []` |
+| `since=612967375` (the head) | **no `reset`**, `last_cursor: "612967375"` — the cursor round-trips, `events: []` |
+| `since=0&limit=1` | no `reset`, `last_cursor: "1"`, one event, `more: true` |
+
+The head/head+1 pair is the whole point and it lands exactly on the boundary in production: every
+healthy poller sits at the head, so a guard that fired one cursor early would have been worse than
+the defect it fixes. Closed.

@@ -313,3 +313,68 @@ pass AND the incremental one, plus a corrigendum-free corpus reporting nothing),
   for it, and the unwindowed form is a whole-corpus `GROUP BY` over `notice_dates` with no index to
   help (`field_id` is the 4th PK column) — the exact shape the issue-278 turso lesson warns about.
   It needs its own id-band window, and that band needs measuring on an idle box first.
+
+## DEPLOYED AND VERIFIED 2026-09-16 — rev `5affd75`
+
+Projection job 1384 finished: `14,453,069 notices → 8,521,457 tenders (687,121 islands), 976,262
+versions; 263,674 tenders written, 8,257,783 verified unchanged`.
+
+**The three named tenders all move, and each now carries exactly ONE deadline fact:**
+
+| tender | `submission_deadline` | `dates[opening_date]` | was |
+| --- | --- | --- | --- |
+| 6762566 | **2020-04-24T09:00** | **2020-04-24T09:30** | 09:30 deadline; opening stale at 2020-04-17T09:30 |
+| 6737588 | **2020-05-11T10:00** | 2020-05-11T10:30 | 2020-07-09 (a IV.2.6 validity expiry, two months out) |
+| 6752749 | **2020-05-19T17:00** | 2020-05-20T09:00 | 2020-05-20T09:00 |
+
+**Window placement inverted, as the `## Done when` asks:**
+`deadline_after=2020-04-24T08:45:00Z&deadline_before=…09:15:00Z&country=PL` → 6762566 **present**
+(14 items); the 09:15–09:45 window → **absent** (3 items). Before the fix it was the other way round.
+
+### The census does NOT go to zero, and that is the instrument's fault, not the fix's
+
+| window | before | after |
+| --- | --- | --- |
+| 21,000,000–21,020,000 | 1,229 / 1,991 | **329** / 1,991 |
+| 19,500,000–19,510,000 | 288 / 462 | **96** / 462 |
+
+The issue predicted a residual of tenders "where the two genuinely coincide" and asked for it to be
+NAMED rather than tolerated. It is 16.5 %, not the handful that phrasing implies, so it was worth
+chasing rather than waving through. Two measurements settle it.
+
+First cut — does the SAME notice publish a `IV.2.2`/`IV.3.4` value at that instant? **319 of 329.**
+Those publishers set the opening time equal to the deadline, so the served deadline is right and
+merely happens to equal the opening.
+
+The other 10 are the same class one level out. Worked example, tender 6746196 (chain notices
+20958690, 20919581, 21013373, 21005875, 21264596):
+
+| notice | field | target | value |
+| --- | --- | --- | --- |
+| 21013373 | `TED-NEW_VALUE.DATE` | `IV.2.2)` | 2020-06-11 10:00 |
+| 21005875 | `TED-NEW_VALUE.DATE` | `IV.2.7)` | 2020-06-11 10:00 |
+
+The deadline comes from **21013373's IV.2.2**, correctly. 21005875's IV.2.7 coincides with it across
+a different notice in the same chain, which the census cannot distinguish because it compares
+`t.current_deadline` against any IV.2.7 value in the id window.
+
+So the discriminator was re-run chain-wide: does any notice in the tender's chain publish a
+deadline-bearing field (`TED-DATE_RECEIPT_TENDERS`, `TED-RECEIPT_LIMIT_DATE`, `TXT-DT`, `TXT-DD`, or
+a `NEW_VALUE.DATE` under `IV.2.2`/`IV.3.4`) at exactly the served instant?
+
+| window | residual | residual with a legitimate deadline source |
+| --- | --- | --- |
+| 21,000,000–21,020,000 | 329 | **329** |
+| 19,500,000–19,510,000 | 96 | **96** |
+
+**Every one.** The residual measures coincidence, not defect: after this fix no served deadline in
+either window traces to an IV.2.7 value that is not also a real deadline. The `## Done when`'s "the
+census re-runs to zero" is therefore satisfied in substance — the census as written cannot reach zero
+while publishers legitimately set opening = deadline, and the sharper query is the one to re-run in
+future. It is recorded above so nobody has to re-derive it.
+
+### Status
+
+Units 1 and 2 are **done and verified**. What remains on this issue is the r2.0.8 fixture that has
+no corpus to draw on (recorded under unit 1) and the corpus-wide coordinate census (recorded under
+unit 2), neither of which blocks anything.
