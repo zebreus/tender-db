@@ -269,17 +269,72 @@ const DATES: &[(&str, &str)] = &[
     ("TED-DATE_OPENING_TENDERS", "opening_date"),
     ("TED-DATE_START", "duration_start"),
     ("TED-DATE_END", "duration_end"),
-    // an F14 corrigendum's new deadline is the canonical delta ADR-0001's
-    // motivating question reads ("how did the deadline move?"). Section-aware
-    // mapping of every F14 WHERE target is deferred; the deadline is the
-    // dominant, highest-value case (research §2.3: 210 DATE changes / package).
-    ("TED-NEW_VALUE.DATE", "submission_deadline"),
+    // An F14 corrigendum's new date is NOT in this table: it is section-aware,
+    // resolved per `CHG-n` through [`F14_TARGET_DATES`]. It used to sit here
+    // mapped unconditionally to `submission_deadline`, which fed the opening
+    // time (IV.2.7) and the tender-validity expiry (IV.2.6) into the deadline
+    // election — issue 385, 62 % of the tenders an IV.2.7 corrigendum touched.
     // text era deadline codes (DT/DD)
     ("TXT-DT", "submission_deadline"),
     ("TXT-DD", "submission_deadline"),
     // DÖE sdk-0.1: the lot's tender-submission deadline (an EndDate period).
     ("SDK01-ProcurementProjectLot-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate", "submission_deadline"),
 ];
+
+/// The F14 corrigendum's new date, and the sibling that says what it corrects.
+///
+/// The publisher states the target and the parse layer keeps it: the legacy
+/// walker files each `CHANGE` (r2.0.9) or `ADD`/`DELETE`/`REPLACE` (r2.0.8)
+/// block as its own `CHG-n` section (`rules::Rule::Section(Kind::Change)`) and
+/// writes the form-section coordinate it names into `TED-SECTION` beside the
+/// value. Both ids are per-section, so the pair is a lookup within one
+/// `section_id` — the `tax_bases` shape, not a rescan per date.
+const F14_DATE_FIELD: &str = "TED-NEW_VALUE.DATE";
+const F14_TARGET_FIELD: &str = "TED-SECTION";
+
+/// What a corrigendum's new date MEANS, by the form section it corrects
+/// (issue 385). Only the coordinates whose canonical destination is unambiguous
+/// are here; everything else is deliberately absent — see below.
+///
+/// The r2.0.9 F14 numbering is the 2014-directive one (`IV.2.2` receipt of
+/// tenders, `IV.2.7` opening of tenders); `IV.3.4` and `IV.3.8` are the same two
+/// concepts in the 2004-directive numbering the r2.0.8-era forms use, kept so
+/// the mapping does not depend on which era republished the correction.
+///
+/// **Measured, not assumed** (prod, r2.0.9 window 21,000,000–21,020,000): the
+/// targets that actually carry a `NEW_VALUE.DATE` are `IV.2.2` (2,051+964
+/// rows), `IV.2.7` (1,699+1,018), `IV.2.6` (205+170), `II.2.7` (154+120),
+/// `VI.3` (146+142), `II.2.4`, `II.2.14`, `III.1.3`, `I.3`, `II.2.2`, `II.1.4`.
+/// Every coordinate is published in two spellings, with and without a trailing
+/// `)`, which is why the lookup normalises rather than matching literally.
+///
+/// **What is NOT mapped, and why that is the point.** `IV.2.6` is the tender
+/// VALIDITY period ("offer must remain valid until"), months after bidding
+/// closes; `II.2.7` is the contract duration; `VI.3` is free-text additional
+/// information. None of them is a deadline, and under the old unconditional
+/// mapping all three became `submission_deadline` facts indistinguishable from
+/// the real one — then `head_deadline`'s MAX election served the latest. A
+/// coordinate this table does not name contributes NO canonical date fact: it
+/// stays in the notice layer, served verbatim by `/v1/notices/{id}/content`,
+/// and a coordinate nobody has classified can never again become a deadline by
+/// default. That direction is deliberate: a missing correction is visible as a
+/// stale date, an invented one is not.
+const F14_TARGET_DATES: &[(&str, &str)] = &[
+    ("IV.2.2", "submission_deadline"),
+    ("IV.3.4", "submission_deadline"),
+    ("IV.2.7", "opening_date"),
+    ("IV.3.8", "opening_date"),
+];
+
+/// The canonical date a corrigendum's `TED-SECTION` coordinate corrects, if it
+/// is one this layer maps. Normalises the trailing `)` and surrounding space:
+/// the corpus publishes `IV.2.2` and `IV.2.2)` for the same coordinate, roughly
+/// two to one, and a literal match would silently drop whichever spelling the
+/// table did not carry.
+fn f14_target_date(target: &str) -> Option<&'static str> {
+    let key = target.trim().trim_end_matches(')').trim();
+    F14_TARGET_DATES.iter().find(|(coord, _)| *coord == key).map(|(_, field)| *field)
+}
 
 /// The grafted `UBL-*` ids that stay PARSE-LAYER-ONLY, each with its reason
 /// (issue 88). ADR-0004 allows two dispositions — mapped, or explicitly
@@ -3063,6 +3118,21 @@ impl NoticeState {
         // rather than by a rule over its number.
         let withheld = withheld_source_fields(parsed);
 
+        // Issue 385: what each F14 `CHG-n` block says it corrects, keyed by the
+        // section that says it. Built before the loop for the same reason
+        // `tax_bases` is — the target travels as a SIBLING of the new value, so
+        // pairing is a lookup rather than a rescan per date.
+        let change_targets: std::collections::BTreeMap<&str, &str> = parsed
+            .values
+            .iter()
+            .filter_map(|v| match &v.value {
+                NoticeValue::Text { value, .. } if v.field_id == F14_TARGET_FIELD => {
+                    Some((v.section_id.as_str(), value.as_str()))
+                }
+                _ => None,
+            })
+            .collect();
+
         for value in &parsed.values {
             let scope = scope_of(&sections, &value.section_id);
             let field_id = value.field_id.as_str();
@@ -3112,7 +3182,20 @@ impl NoticeState {
                         code: code.clone(),
                     }),
                 NoticeValue::Date { utc_seconds, offset_minutes, has_time } => {
-                    canonical_name(DATES, field_id).map(|field| Fact::Date {
+                    // Issue 385: an F14 corrigendum's new date means whatever the
+                    // block's own `TED-SECTION` says it corrects. A coordinate
+                    // `F14_TARGET_DATES` does not name yields no canonical fact —
+                    // it must not fall through to `submission_deadline`, which is
+                    // exactly how an opening time became the served deadline.
+                    let canonical = if field_id == F14_DATE_FIELD {
+                        change_targets
+                            .get(value.section_id.as_str())
+                            .and_then(|target| f14_target_date(target))
+                            .map(str::to_owned)
+                    } else {
+                        canonical_name(DATES, field_id)
+                    };
+                    canonical.map(|field| Fact::Date {
                         field,
                         utc_seconds: *utc_seconds,
                         offset_minutes: *offset_minutes,
@@ -4638,6 +4721,12 @@ pub fn has_destination(field_id: &str, channel: Channel) -> bool {
         Channel::Classification => canonical_name(CLASSIFICATIONS, field_id).is_some(),
         Channel::Date => {
             canonical_name(DATES, field_id).is_some()
+                // Issue 385: read, but section-aware — its destination depends on
+                // the sibling `TED-SECTION`, so it cannot live in `DATES`. It is
+                // still READ, which is what this predicate answers; whether a
+                // given block's coordinate is one we map is a per-notice question
+                // the field-level sieve cannot express.
+                || field_id == F14_DATE_FIELD
                 || PUBLICATION_DATE_FIELDS.contains(&field_id)
                 || DISPATCH_DATE_FIELDS.contains(&field_id)
                 || RESULT_DATE_STEMS.contains(&stem)
@@ -6568,6 +6657,49 @@ mod tests {
         // Its publication_id shape is `<number>-<year>` — the DOC/text-era form
         // ojs_key parses, so ojs_self populates once the profile is legacy.
         assert_eq!(ojs_key("115165-2008"), Some((2008, 115165)));
+    }
+
+    /// Issue 385: the F14 target vocabulary, and the normalisation it depends on.
+    ///
+    /// The corpus publishes every coordinate in two spellings, with and without a
+    /// trailing `)` — for IV.2.2 it is 2,051 parenthesised against 964 bare in the
+    /// measured window — so a literal match would drop whichever the table omitted.
+    /// The refusals are the point of the rule and are asserted explicitly: a
+    /// validity date, a duration and a free-text section must all yield None
+    /// rather than falling through to the deadline.
+    #[test]
+    fn the_f14_target_vocabulary_normalises_and_refuses_by_default() {
+        for spelling in ["IV.2.2", "IV.2.2)", " IV.2.2 ", "IV.2.2 )"] {
+            assert_eq!(f14_target_date(spelling), Some("submission_deadline"), "{spelling:?}");
+        }
+        for spelling in ["IV.2.7", "IV.2.7)"] {
+            assert_eq!(f14_target_date(spelling), Some("opening_date"), "{spelling:?}");
+        }
+        // The 2004-directive numbering for the same two concepts.
+        assert_eq!(f14_target_date("IV.3.4"), Some("submission_deadline"));
+        assert_eq!(f14_target_date("IV.3.8"), Some("opening_date"));
+
+        // Everything else contributes NO canonical date. IV.2.6 (tender validity,
+        // months later) and II.2.7 (contract duration) are the two that used to
+        // win the MAX deadline election; the rest are simply unclassified, and an
+        // unclassified coordinate must never become a deadline by default.
+        for refused in ["IV.2.6", "IV.2.6)", "II.2.7", "VI.3", "II.2.4", "II.2.14", "III.1.3", "I.3", ""] {
+            assert_eq!(f14_target_date(refused), None, "{refused:?} must not map");
+        }
+
+        // Every destination the table names is a real canonical date field, or the
+        // fold would write a fact nothing reads.
+        for (coord, field) in F14_TARGET_DATES {
+            assert!(
+                DATES.iter().any(|(_, canonical)| canonical == field),
+                "{coord} -> {field} is not a canonical date this layer writes elsewhere"
+            );
+        }
+
+        // And the field itself must still read as mapped, or issue 368's sieve
+        // reports a field the projection demonstrably consumes as dropped.
+        assert!(has_destination(F14_DATE_FIELD, Channel::Date));
+        assert!(table_reads("notice_dates", F14_DATE_FIELD));
     }
 
     /// Issue 364 unit 6: the document-type table speaks the citation gate's own

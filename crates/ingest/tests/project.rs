@@ -1630,6 +1630,12 @@ async fn an_f14_corrigendum_moves_the_deadline_as_a_version_event() {
         values: vec![
             ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", 20 * 86_400),
             ojs_edge("PROCEDURE", "TED-REF_NOTICE.NO_DOC_OJS", "000001-2019"),
+            // Issue 385: the block says WHAT it corrects, and every real one does
+            // — 5,234 of 5,234 `NEW_VALUE.DATE` rows in the r209 window
+            // 21,000,000-21,020,000 carry a sibling `TED-SECTION`. The
+            // parenthesised spelling is the corpus's majority form (2,051 of
+            // 3,015 for IV.2.2) and exercises the normalisation.
+            ted_text("CHG-1", "TED-SECTION", "IV.2.2)"),
             ted_date("CHG-1", "TED-NEW_VALUE.DATE", 728_600_000),
             ted_text("CHG-1", "TED-NEW_VALUE.TEXT", "Deadline extended"),
         ],
@@ -1648,6 +1654,107 @@ async fn an_f14_corrigendum_moves_the_deadline_as_a_version_event() {
         changes(&db, 0, 100).await
             .iter()
             .any(|c| c.entity_kind == "tender" && c.op == "changed" && c.version_seq == Some(2))
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 385: a corrigendum that moves BOTH the deadline and the opening must
+/// move each to its own field — the shape of the real notice 21000077, whose
+/// CHG-1 targets IV.2.2 (deadline 09:00) and CHG-2 targets IV.2.7 (opening
+/// 09:30).
+///
+/// Before the section-aware mapping both dates became `submission_deadline`
+/// facts and `head_deadline`'s MAX election served 09:30 — the tender-OPENING
+/// time — as the deadline, for 1,229 of the 1,991 tenders an IV.2.7 corrigendum
+/// touched in one measured window. The A/B is the assertion pair below: same
+/// fixture, the later instant must land on `opening_date` and must NOT win the
+/// deadline.
+#[tokio::test]
+async fn a_corrigendum_moves_the_opening_and_the_deadline_to_different_fields() {
+    let (db, fetch_id, path) = scratch("f14-sections").await;
+    let (cn, pc) = legacy_cn(fetch_id, "000001-2019", 5, 728_000_000, &[]);
+    const DEADLINE: i64 = 728_600_000; // IV.2.2, the real deadline
+    const OPENING: i64 = 728_601_800; // IV.2.7, 30 minutes later
+    let corrigendum = Parsed {
+        sections: vec![
+            sec("PROCEDURE", "Notice", None),
+            sec("CHG-1", "Change", Some("PROCEDURE")),
+            sec("CHG-2", "Change", Some("PROCEDURE")),
+        ],
+        values: vec![
+            ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", 20 * 86_400),
+            ojs_edge("PROCEDURE", "TED-REF_NOTICE.NO_DOC_OJS", "000001-2019"),
+            ted_text("CHG-1", "TED-SECTION", "IV.2.2"),
+            ted_date("CHG-1", "TED-NEW_VALUE.DATE", DEADLINE),
+            ted_text("CHG-2", "TED-SECTION", "IV.2.7)"),
+            ted_date("CHG-2", "TED-NEW_VALUE.DATE", OPENING),
+        ],
+    };
+    let (f14, pf) = legacy_record(fetch_id, "000119-2019", R209, corrigendum);
+    db.record_notice(&cn, &pc).await.expect("cn");
+    db.record_notice(&f14, &pf).await.expect("f14");
+    project::project(&db, false).await.expect("project");
+
+    assert_eq!(
+        deadline(&db, 2).await,
+        DEADLINE,
+        "the IV.2.2 value is the deadline; the later IV.2.7 instant must not win the election"
+    );
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT utc_seconds FROM tender_version_dates WHERE seq = 2 AND field = 'opening_date'"
+        )
+        .await,
+        OPENING,
+        "the IV.2.7 value corrects the opening, which nothing else could correct"
+    );
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM tender_version_dates WHERE seq = 2 AND field = 'submission_deadline'"
+        )
+        .await,
+        1,
+        "exactly one deadline fact — two indistinguishable ones is the defect"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 385: a corrigendum whose only date targets a section this layer does
+/// not map contributes NO canonical date at all, and in particular does not
+/// become a deadline by default.
+///
+/// IV.2.6 is the tender-VALIDITY expiry ("the offer must remain valid until"),
+/// routinely months after bidding closed — 205+170 rows in the measured window.
+/// Under the old unconditional mapping it became a `submission_deadline` fact
+/// and, being the latest, won the MAX election. The value stays in the notice
+/// layer either way; what it must not do is displace a real deadline.
+#[tokio::test]
+async fn a_corrigendum_to_an_unmapped_section_contributes_no_date() {
+    let (db, fetch_id, path) = scratch("f14-validity").await;
+    let (cn, pc) = legacy_cn(fetch_id, "000001-2019", 5, 728_000_000, &[]);
+    let corrigendum = Parsed {
+        sections: vec![sec("PROCEDURE", "Notice", None), sec("CHG-1", "Change", Some("PROCEDURE"))],
+        values: vec![
+            ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", 20 * 86_400),
+            ojs_edge("PROCEDURE", "TED-REF_NOTICE.NO_DOC_OJS", "000001-2019"),
+            ted_text("CHG-1", "TED-SECTION", "IV.2.6)"),
+            // Six months after the CN's deadline — the shape that used to win.
+            ted_date("CHG-1", "TED-NEW_VALUE.DATE", 728_000_000 + 180 * 86_400),
+        ],
+    };
+    let (f14, pf) = legacy_record(fetch_id, "000119-2019", R209, corrigendum);
+    db.record_notice(&cn, &pc).await.expect("cn");
+    db.record_notice(&f14, &pf).await.expect("f14");
+    project::project(&db, false).await.expect("project");
+
+    assert_eq!(
+        deadline(&db, 2).await,
+        728_000_000,
+        "the CN's deadline stands; a validity date is not a deadline"
     );
 
     let _ = std::fs::remove_file(&path);

@@ -167,3 +167,82 @@ File separately if it is not already tracked.
   re-run should name rather than tolerate silently).
 - `deadline_after=2020-04-24T08:45:00Z&deadline_before=2020-04-24T09:15:00Z&country=PL` returns
   6762566 and the 09:15–09:45 window does not.
+
+## Unit 1 BUILT 2026-09-15 (owner) — the mapping is section-aware, and two premises were measured first
+
+`crates/ingest/src/project.rs`: `TED-NEW_VALUE.DATE` is gone from the flat `DATES` table and now
+resolves per `CHG-n` through a new `F14_TARGET_DATES` table, paired with the block's own
+`TED-SECTION` via a `change_targets` map built before the value loop — the `tax_bases` shape this
+file already uses for the other sibling-qualified field, so pairing is a lookup rather than a rescan
+per date.
+
+| target coordinate | destination |
+| --- | --- |
+| `IV.2.2`, `IV.3.4` | `submission_deadline` |
+| `IV.2.7`, `IV.3.8` | `opening_date` |
+| everything else | **no canonical date fact** |
+
+Two decisions the issue left open, both settled by measurement rather than by preference:
+
+**1. A block that states no target contributes nothing — and that costs nothing.** The strict
+fallback is only safe if real corrigenda always state their target. They do:
+
+    SELECT COUNT(*) AS date_rows,
+           SUM(CASE WHEN EXISTS (SELECT 1 FROM notice_texts s
+                                 WHERE s.notice_id = d.notice_id AND s.section_id = d.section_id
+                                   AND s.field_id = 'TED-SECTION') THEN 1 ELSE 0 END) AS with_target
+      FROM notice_dates d
+     WHERE d.notice_id BETWEEN 21000000 AND 21020000 AND d.field_id = 'TED-NEW_VALUE.DATE'
+
+**5,234 of 5,234.** Every one. So "no target stated" is a shape the corpus does not produce, and
+refusing it drops no real correction. The one place it did appear was our own synthetic test fixture
+(`an_f14_corrigendum_moves_the_deadline_as_a_version_event`), which published a `CHG-1` with a
+`NEW_VALUE.DATE` and no `TED-SECTION` — a notice TED never emits. That fixture now carries
+`TED-SECTION = "IV.2.2)"` and its assertion is unchanged.
+
+**2. Both spellings are real, so the lookup normalises.** Every coordinate is published with and
+without a trailing `)`, and the parenthesised form is the majority — `IV.2.2)` 2,051 against
+`IV.2.2` 964, `IV.2.7)` 1,699 against `IV.2.7` 1,018 in the same window. A literal match would have
+silently dropped whichever spelling the table omitted, which is the same class of defect one level
+down. `f14_target_date` trims and strips the paren; the unit test asserts all four spellings.
+
+**The r208 fixture the "Done when" asks for has no corpus to draw on.** `TED-NEW_VALUE.DATE` appears
+**only** in the r2.0.9 id range. Counts over `notice_dates`, one bounded window per era:
+
+| window | era | `TED-NEW_VALUE.DATE` rows |
+| --- | --- | --- |
+| 4,500,000–4,600,000 | text/r207 | 0 |
+| 8,000,000–8,100,000 | text | 0 |
+| 12,600,000–12,700,000 | r2.0.8 (2012) | 0 |
+| 13,500,000–13,600,000 | r2.0.8 | 0 |
+| 17,000,000–17,100,000 | — | 0 |
+| **21,000,000–21,100,000** | **r2.0.9** | **20,739** |
+
+`SELECT COUNT(*) FROM notice_sections WHERE kind = 'Change' AND notice_id BETWEEN 4400000 AND
+13000000` is **0** as well: the r2.0.8 range holds no corrigendum sections at all, although
+`rules.rs:683` files `ADD`/`DELETE`/`REPLACE` as `Kind::Change` and would emit the same field if one
+arrived. The mapping carries the 2004-directive coordinates (`IV.3.4`, `IV.3.8`) so a future r2.0.8
+corrigendum maps correctly on arrival, but **no r2.0.8 fixture is committed, because there is no
+r2.0.8 carrier to build one from.** Committing a hand-written one would assert a shape nobody has
+observed. If the era's corrigenda turn out to be filed under a different field id, that is a separate
+finding and the count above is where to start.
+
+Tests: `a_corrigendum_moves_the_opening_and_the_deadline_to_different_fields` (the 21000077 shape —
+IV.2.2 at 09:00 and IV.2.7 30 minutes later; asserts the deadline is the earlier value, the opening
+carries the later one, and exactly ONE deadline fact exists, since two indistinguishable ones is the
+defect), `a_corrigendum_to_an_unmapped_section_contributes_no_date` (IV.2.6 six months out leaves the
+CN's deadline standing), and `the_f14_target_vocabulary_normalises_and_refuses_by_default` (all four
+spellings, the nine refused coordinates, every destination is a real canonical field, and the field
+still reads as mapped so issue 368's sieve does not report it as dropped).
+
+### Still open on this issue
+
+- **The refusal is not observable.** A coordinate the table does not name is refused silently, which
+  is the failure mode issue 364 spent a unit removing for citations. It wants the `CitationGate`
+  treatment — a per-coordinate tally on the run's `Report` and the job row — so a new TED coordinate
+  shows up as a number rather than as a date that quietly stopped being corrected. Not built here
+  because the date mapping happens in `NoticeState::read` on the fold path, where no counter is
+  plumbed; that plumbing is its own unit.
+- **The refold and the re-measurement.** The carriers must be refolded and the census re-run to zero
+  on both windows (the `## Done when` bullets). Not started: the box is processing the issue-395
+  backfill.
