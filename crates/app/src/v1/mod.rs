@@ -1320,14 +1320,52 @@ async fn changes(State(state): State<AppState>, ApiQuery(params): ApiQuery<Param
     }
     let limit = params.limit();
     let reader = state.readers.get().await?;
+    let generation = read::feed_generation(&reader).await?;
+    // Issue 392: the same two resume verdicts SSE gives (`sse.rs`), for the same
+    // cursors. Without them a `since` the server never issued came back as an
+    // empty page with `more:false` — indistinguishable from "you are caught up" —
+    // and the value was echoed in `last_cursor`, the field the docs tell a client
+    // to store and resend. A poller that carried a stale cursor across a wipe
+    // therefore stalled silently and forever, exactly where SSE resets it. The
+    // reset body rather than a 400 because this handler's contract is "same
+    // events, same cursor and same filtering as SSE": SSE does not error here, it
+    // tells the client to drop state and re-snapshot, and `last_cursor: 0` is
+    // where it tells it to resume.
+    let since = params.since();
+    let oldest = read::oldest_cursor(&reader).await?;
+    // Append-only and never renumbered, so below-the-horizon means pruned. The
+    // `oldest > 0` guard keeps an empty log from rejecting `since=0`; the `- 1` is
+    // SSE's, since a cursor of `oldest - 1` is a legitimate "everything from the
+    // start" position.
+    let reset = if oldest > 0 && since < oldest - 1 {
+        Some("cursor_expired")
+    } else if since > read::latest_cursor(&reader).await? {
+        Some("cursor_ahead")
+    } else {
+        None
+    };
+    if let Some(reason) = reset {
+        return Ok(axum::Json(json!({
+            "events": [],
+            "last_cursor": json::cursor(0),
+            "more": false,
+            "generation": generation,
+            "reset": reason,
+        }))
+        .into_response());
+    }
     // Fetch one past the page (issue 215-C): `more` comes from the overflow row, not
     // from a full page, so an exactly-`limit` final page reports `more:false` instead
     // of costing the client one extra empty poll — mirrors the list handler.
     let mut rows =
-        read::changes_since(&reader, params.since(), limit + 1, params.entity.as_deref()).await?;
+        read::changes_since(&reader, since, limit + 1, params.entity.as_deref()).await?;
     let more = rows.len() as i64 > limit;
     rows.truncate(limit as usize);
-    let last = rows.last().map(|c| c.cursor).unwrap_or_else(|| params.since());
+    // Issue 392: echoing `since` on an empty page is safe now and only now — the
+    // guards above have established it is a cursor this feed could have issued
+    // (within [oldest-1, latest]), so an empty page here means "caught up", which
+    // is exactly the position the client should resume from.
+    let last = rows.last().map(|c| c.cursor).unwrap_or(since);
     // Serialize only the public-feed kinds (issue 211). The cursor still advances
     // over the FULL fetch (`last`/`more` above), so a window dominated by result-
     // graph rows carries the client past them without redelivering — keeping the
@@ -1345,7 +1383,7 @@ async fn changes(State(state): State<AppState>, ApiQuery(params): ApiQuery<Param
         // its cursor: when it moves, the stored cursor and every entity id it
         // has are from a world that no longer exists — drop state, re-snapshot
         // the collections, and continue from this response's last_cursor.
-        "generation": read::feed_generation(&reader).await?,
+        "generation": generation,
     }))
     .into_response())
 }

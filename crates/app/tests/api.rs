@@ -1896,6 +1896,69 @@ async fn a_rebuild_moves_the_generation_and_resets_stale_resumes() {
     let first = bare.next().await.expect("an answer, not silence");
     assert_eq!(first.name, "reset");
     assert_eq!(first.data["reason"], "cursor_ahead");
+
+    // Issue 392: and the POLL half gives the same verdict for the same cursor.
+    // This is what made issue 46's "settled once across all three transports"
+    // untrue of the code: only SSE had the guard, so a poller carrying a
+    // pre-rebuild cursor got an empty page with `more:false` — the byte-identical
+    // answer to "you are caught up" — and stalled there forever.
+    let stalled = server.get("/v1/changes?since=999999&limit=5").await;
+    assert_eq!(stalled["reset"], "cursor_ahead", "poll and SSE must agree on the same cursor");
+    assert_eq!(stalled["generation"].as_i64(), Some(3));
+    assert_eq!(stalled["last_cursor"], "0", "resume from the start, not from the invented value");
+    assert!(stalled["events"].as_array().is_some_and(|e| e.is_empty()));
+    assert_eq!(stalled["more"], false);
+}
+
+/// Issue 392: the ahead-of-head boundary on the poll feed, pinned at exactly
+/// head+1 — the value the documented post-rebuild recovery walks into, and the
+/// one an off-by-one in the guard would let through.
+///
+/// The controls matter as much as the case: `since` at the head is "caught up"
+/// (empty page, NO reset, and the cursor echoed back so the client resumes from
+/// it), and `since=0` is the first page. A guard that fired on either would be
+/// worse than the defect, because every healthy poller sits at the head.
+#[tokio::test]
+async fn the_poll_feed_resets_a_cursor_past_its_head_but_not_at_it() {
+    let server = Server::start("changes-head").await;
+    server.ingest_chain().await;
+
+    let head = server.get("/v1/changes?since=0&limit=1000").await["last_cursor"]
+        .as_str()
+        .expect("last_cursor is a string")
+        .parse::<i64>()
+        .expect("the cursor is an integer");
+    assert!(head > 0, "the fixture produced a feed");
+
+    // At the head: caught up. No reset, and the cursor round-trips so the next
+    // poll resumes from the same place.
+    let at = server.get(&format!("/v1/changes?since={head}&limit=5")).await;
+    assert!(at.get("reset").is_none(), "the head is a valid position, not a reset: {at}");
+    assert!(at["events"].as_array().is_some_and(|e| e.is_empty()));
+    assert_eq!(at["last_cursor"], head.to_string(), "a real cursor round-trips");
+
+    // One past it: a value this feed never issued.
+    let past = server.get(&format!("/v1/changes?since={}&limit=5", head + 1)).await;
+    assert_eq!(past["reset"], "cursor_ahead", "head+1 was never issued");
+    assert_eq!(past["last_cursor"], "0");
+    assert_ne!(
+        past["last_cursor"],
+        (head + 1).to_string(),
+        "an unissued value must never be certified back to the client"
+    );
+
+    // Controls from the issue, unchanged: the first page, and the two 400s.
+    let first = server.get("/v1/changes?since=0&limit=5").await;
+    assert!(first.get("reset").is_none(), "since=0 is the documented start position");
+    assert!(first["events"].as_array().is_some_and(|e| !e.is_empty()));
+    assert_eq!(server.status("/v1/changes?since=0&entity=bogus").await, 400);
+
+    // Lenience preserved deliberately (issue 216): an unparseable `since` still
+    // serves the first page rather than erroring. Tightening that belongs with
+    // `/v1/tenders?cursor=`, not here.
+    let garbage = server.get("/v1/changes?since=garbage&limit=5").await;
+    assert!(garbage.get("reset").is_none(), "unparseable `since` stays lenient");
+    assert!(garbage["events"].as_array().is_some_and(|e| !e.is_empty()));
 }
 
 #[tokio::test]

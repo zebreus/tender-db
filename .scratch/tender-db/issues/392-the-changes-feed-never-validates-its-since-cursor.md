@@ -87,3 +87,49 @@ Under two minutes, no token:
 - `/docs` and `openapi.json`'s `since` description say what an ahead-of-head cursor gets, and the generation-move recovery paragraph (`mod.rs:1337-1340`) stops being the instruction that creates the stall.
 - Controls unchanged: `since=0` returns the first page, a real `last_cursor` round-trips, `entity=bogus` → 400, `limit=garbage` → 400.
 - `since=garbage` / `since=-5` still return the first page, unless triage explicitly decides otherwise together with `/v1/tenders?cursor=` and issue 216's lenience comment.
+
+## BUILT 2026-09-15 (owner) — the poll half gets SSE's two resume verdicts
+
+**Triage's pick from the "Done when" fork: the reset body, not a 400.** The handler's own doc
+comment is the argument — "Same events, same cursor and same filtering as SSE — a client that
+cannot hold a connection open loses nothing but latency." SSE does not error on an incomposable
+resume; it emits `reset` with a reason and a cursor of `0`, meaning "drop state, re-snapshot,
+start over". A 400 would make the two transports disagree in a second way while fixing the first.
+
+`crates/app/src/v1/mod.rs`, mirroring `sse.rs:294-315` predicate for predicate:
+
+| `since` | answer |
+| --- | --- |
+| `< oldest_cursor - 1` (a pruned log's horizon) | `{"events":[],"last_cursor":"0","more":false,"generation":N,"reset":"cursor_expired"}` |
+| `> latest_cursor` | the same body with `"reset":"cursor_ahead"` |
+| otherwise | unchanged |
+
+The `oldest > 0` guard keeps an empty log from rejecting `since=0`, and the `- 1` is SSE's: a
+cursor of `oldest - 1` is a legitimate "everything from the start" position. `feed_generation` was
+already read once per request and is now read once and reused, so the guarded path costs at most
+two extra O(1) cursor reads.
+
+`last_cursor`'s `unwrap_or_else(|| params.since())` is kept, and it is now *safe* rather than
+merely harmless: the guards establish that `since` lies within `[oldest-1, latest]`, so an empty
+page means "caught up" and echoing the cursor back is the position the client should resume from.
+An unissued value can no longer reach that line.
+
+**Deliberately NOT changed:** `since=garbage`, `since=-5`, `since=` still serve the first page, per
+the issue's own "What is not filed here" and issue 216's lenience. A test now pins that so the
+lenience is a decision on the record rather than an accident.
+
+Tests: `the_poll_feed_resets_a_cursor_past_its_head_but_not_at_it` — head+1 gets `cursor_ahead` and
+`last_cursor "0"` (asserted NOT to be the invented value), while the head itself is caught-up with
+NO reset and the cursor round-tripping, `since=0` is the first page, `entity=bogus` is still 400,
+and unparseable `since` is still lenient. The boundary pair is the point: a guard that fired at the
+head would be worse than the defect, because every healthy poller sits there. And
+`a_rebuild_moves_the_generation_and_resets_stale_resumes` grows the poll arm the issue asked for, so
+issue 46's "settled once across all three transports" is now true of the test, not just the prose.
+
+Docs: the `since` parameter in `openapi.json` and the `/docs` polling paragraph both state the reset
+verdict and that it matches SSE.
+
+### Still open
+
+Not deployed — the box is folding issue 385's F14 refold. The acceptance reads (`since=999999999999`
+and head+1 against the live feed) are for the next idle window.

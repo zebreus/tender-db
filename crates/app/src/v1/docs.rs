@@ -290,7 +290,14 @@ events as SSE, without holding a connection open. Optional
 <p>Response: <code>{"events": [ … ], "last_cursor": "193055", "more": false,
 "generation": 3}</code>.
 Loop, passing <code>last_cursor</code> as the next <code>since</code>, until
-<code>more</code> is false; then poll periodically for new ones. The cursor is
+<code>more</code> is false; then poll periodically for new ones.
+If you ever send a cursor this feed did not issue — one past the head, or one
+from before a rebuild — the answer carries a <code>reset</code> field
+(<code>cursor_ahead</code> or <code>cursor_expired</code>) with an empty
+<code>events</code> array and <code>last_cursor: "0"</code>: drop your state,
+re-snapshot the collections, and resume from <code>0</code>. That is the same
+verdict the SSE transport gives for the same cursor, so the two halves never
+disagree about where you are. The cursor is
 <em>learn order</em> (ingestion), independent of a notice's publication date —
 historical backfill and live updates share one monotonic sequence, which is what
 makes out-of-order ingestion harmless. Sort by <code>published_at</code> if you

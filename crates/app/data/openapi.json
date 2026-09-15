@@ -310,7 +310,7 @@
           {
             "name": "since",
             "in": "query",
-            "description": "The cursor to read after — `0` or a previous response's `last_cursor`, verbatim.",
+            "description": "The cursor to read after — `0` or a previous response's `last_cursor`, verbatim. A cursor this feed never issued (past the head, or below a pruned log's horizon) is answered with a `reset` field — `cursor_ahead` or `cursor_expired` — an empty `events` array and `last_cursor: \"0\"`, the same verdict the SSE transport gives for the same cursor: drop your state, re-snapshot, resume from `0`. An unparseable `since` is lenient and serves the first page.",
             "schema": { "type": "string" }
           },
           {
