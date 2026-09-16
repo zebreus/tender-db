@@ -1,6 +1,6 @@
 # 394 — DÖE serves two publisher strings as its own keys: 7,158 notices keyed on TED's placeholder publication id `00000000-1900`, and sdk-0.1 CPV codes in four shapes under one `scheme`
 
-Status: ready-for-agent — unit 1's GUARD built and gated 2026-09-16 (the election refuses the all-zero placeholder; blast radius re-measured corpus-wide as exactly one value, 7,177 rows, all `doe`). The **re-key of those 7,177 carriers is the next unit and is now unblocked**, since issue 290 — which this issue required settled first — was resolved the same day. Unit 2 (sdk-0.1 CPV shapes) untouched. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — unit 1's GUARD built and gated 2026-09-16 (the election refuses the all-zero placeholder; blast radius re-measured corpus-wide as exactly one value, 7,177 rows, all `doe`). The re-key RAN and reached **6,896 of 7,177**; the last 281 are blocked on **issue 404** (the ingest path minted twins for them mid-campaign) and will be resolved there as a duplicate cleanup, not by another re-parse — every DÖE package is walked and the count is stable across two consecutive runs. Unit 2 (sdk-0.1 CPV shapes) untouched. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (ingest → fold boundary, source `doe`) — unit 1 is the publication-id election in `crates/ingest/src/profile.rs`, unit 2 is the unnormalised classification code from `crates/ingest/src/eforms/value.rs` through `crates/ingest/src/project.rs`; both land on a served identity/vocabulary field and on the documented filter over it
 Relates to: 12 (RESOLVED — the DÖE source, eForms-DE + sdk-0.1 profiles, the parent of both units), 217 (RESOLVED & VERIFIED 2026-08-16/17 — it shipped `publication_id=` on `/v1/notices` and `/v1/tenders` as "the keys real consumers hold"; unit 1 is 7,158 rows where that key is a placeholder shared by the whole cohort), 290 (ANALYSIS, open — "a parser change that shifts `publication_id` derivation makes `reparse_notice` silently no-op (counted as benign `unmatched`)", filed at LOW confidence it ever bites: unit 1's re-key is exactly the case that makes it bite, and it must be checked before the re-key, not after), 369 (DONE — a published BT-04 taken verbatim as the Tender group key, gated by `is_placeholder_key`; unit 1 is the same placeholder-as-key shape one field over), 366 (DONE — its unit-6 sentinel discovery sweep is DQ report section 10, but it sweeps AMOUNTS, so an all-zero identity STRING is invisible to it; its unit 3 is also the precedent against a second, display-side implementation of a fold rule, which unit 2's "done when" keeps), 365 (DONE — "any ≥4-character alphanumeric string containing a digit becomes an Organization merge key": the same any-string-is-a-key class on the org layer), 364 (the legacy OJS closure weld and its weld gauge `c0c2581` — the only broad board hit near DÖE publication identity, and unrelated to this cohort), 29 (VERIFIED on prod 2026-08-18 — the sdk-0.1 projection gap; it split the residual value/CPV out to 231), 231 (CLOSED 2026-08-27 — closed the sdk-0.1 CPV half on PRESENCE only, 93.8 % from 0.0 %, and never looked at representation; unit 2 is precisely what a presence measure cannot see), 172 (CURRENCY half CLOSED as ADR-0014, CLASSIFICATION half OPEN — and that half is codelist VINTAGE drift, 2003-vs-2008 meanings, explicitly not string shape; its closed half's answer, an alias map at the fold, is the pattern unit 2 wants), 292 (FIX DEPLOYED 2026-08-26 — `normalize_lang` at the fold boundary, the precedent in terms: "each new source adds a dialect unless a normalization layer exists"), 319 (org layer DONE 2026-08-30 — the country column held alpha-3 codes and free text; same normalise-at-the-boundary shape), 171 (its `/docs` #caveats deliverable, shipped 2026-08-23, today naming only CPV-2003/2008 coexistence — where unit 2's division-level-code caveat belongs), 118 (RESOLVED — `ignored_filters`; note `cpv` DOES narrow tenders and lots, so unit 2's glued rows are not an ignored filter, they are a filter that runs and misses), ADR-0003, ADR-0004 (the per-profile mapped-or-ignored checklist), ADR-0014 (the alias-map precedent), CONTEXT.md (TED owns publication identity), `docs/research/eforms-de-profile.md` §2
 Blocked by: nothing
@@ -419,3 +419,34 @@ DISPATCH-level failure is invisible to the walk's counters, so this count is the
 `now failing` is 3 this chunk against 5 in three packages last chunk — it scales with packages and
 not with carriers, which is what "pre-existing parse-level residue" looks like and is the second
 reason to believe the guard is not causing it.
+
+### The last 281 will NOT come from re-parsing — see issue 404 (2026-09-16)
+
+Every DÖE package has now been walked. The last two chunks report **0 unmatched AND 0 re-keyed**
+(job 2320: 40 packages, 17,826 notices; job 2322: the final package, 467 notices), and the cohort has
+not moved off **281**.
+
+The cause is **issue 404**, filed today and self-inflicted: the daily `process doe` ran at 07:58Z in
+the middle of this campaign, and for every member the re-parse had not yet reached, the new
+derivation matched nothing and the INGEST path minted a SECOND row rather than adopting the key. So
+each remaining carrier now has a twin holding the same bytes under the correct stem — 27608916 and
+45616483 are the confirmed pair — and the later re-parse chunk matched the TWIN on the full triple,
+replaced its layer, and left the placeholder orphaned.
+
+Issue 290's fallback would have refused those adoptions anyway, and correctly: two `doe` notices now
+share that content hash, so `(source, content_hash)` names 2 and the uniqueness guard declines.
+
+**So the re-key is done, and it reached 6,896 of 7,177.** What is left is not a re-key problem:
+
+- the bytes of all 281 ARE held under the correct key, in their twins;
+- the 281 placeholder rows are now REDUNDANT, not unfixed;
+- driving the cohort to 0 is a DUPLICATE RESOLUTION, which is issue 404's third unit, and it must
+  respect that these rows have PROJECTED (issue 278's precedent).
+
+The acceptance on this issue stands but its owner moves: **the cohort reaches 0 when 404 resolves the
+duplicates**, not when another re-parse runs. Do not enqueue another DÖE re-parse expecting it to
+move — every package is walked and the count is stable at 281 across two consecutive runs.
+
+The live reads this issue still owes (26447665 and 1499198 serving the stem, `?publication_id=00000000-1900`
+returning 0, tenders 316/391 no longer answering it, the newest-100k daily re-check at 0) are also
+downstream of 404 and should be run once, after it.
