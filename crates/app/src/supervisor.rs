@@ -9851,9 +9851,35 @@ impl Supervisor {
                     while self.latest_ted_issue_now().await <= ted_before
                         && store::now_unix() < deadline
                     {
-                        self.push("probe", "ted daily (catch-up)".into(), Spec::ProbeTed { refetch: true })
-                            .await;
+                        // Issue 403: do not push a second copy while the first is
+                        // still WAITING. This loop's exit condition is the
+                        // watermark advancing, and the watermark can only advance
+                        // when a queued probe RUNS — so on a queue held by a long
+                        // job it would push every 5 minutes for the whole 3-hour
+                        // window, up to 36 identical jobs, none of which can have
+                        // any effect until the long job finishes. Measured on prod
+                        // 2026-09-16: four of them queued behind a DÖE re-parse
+                        // campaign, 75 minutes in.
+                        //
+                        // "The retries are cheap no-op probes" is true of RUNNING
+                        // one and false of QUEUING one: the queue is serialized, so
+                        // each copy takes a turn ahead of the next real job — it
+                        // slows the campaign it is stuck behind while doing nothing
+                        // for the package it is waiting on.
+                        //
+                        // `caught_up` is still set every pass, because it means
+                        // "this morning needed a catch-up" and drives the trailing
+                        // `enqueue_daily` that folds a late package. Gating the
+                        // push must not gate the fold.
                         caught_up = true;
+                        if !self.catch_up_probe_pending() {
+                            self.push(
+                                "probe",
+                                "ted daily (catch-up)".into(),
+                                Spec::ProbeTed { refetch: true },
+                            )
+                            .await;
+                        }
                         tokio::time::sleep(std::time::Duration::from_secs(Self::CATCHUP_POLL_SECS)).await;
                     }
                     // A package that landed DURING catch-up was fetched by the probes
@@ -9867,6 +9893,27 @@ impl Supervisor {
                 tokio::time::sleep(std::time::Duration::from_secs(61)).await;
             }
         });
+    }
+
+    /// Is a catch-up probe already waiting its turn (issue 403)?
+    ///
+    /// The same question [`Self::catch_up_missed_tick`] asks before serving a
+    /// missed tick, asked by the polling arm before pushing a repeat. Matched on
+    /// the params string rather than on `kind` alone, so an ordinary `probe` from
+    /// the daily tick does not suppress a catch-up that is genuinely needed —
+    /// those are different jobs with different reasons to exist, and a catch-up
+    /// suppressed by the tick's own probe would defeat issue 222.
+    ///
+    /// Reads the in-memory queue, which is what the worker actually pops. It
+    /// cannot see a probe that has already been popped and is RUNNING — and it
+    /// does not need to: that one is about to advance the watermark, which ends
+    /// the loop.
+    fn catch_up_probe_pending(&self) -> bool {
+        self.queue
+            .lock()
+            .expect("queue lock")
+            .iter()
+            .any(|j| j.kind == "probe" && j.params == "ted daily (catch-up)")
     }
 
     /// TED's newest registered daily issue for the current UTC year, or `None`
@@ -13102,6 +13149,44 @@ mod tests {
             thread_name.starts_with("job-exec"),
             "a job runs on the isolated runtime's threads, got {thread_name:?}"
         );
+    }
+
+    /// Issue 403: the weekday catch-up must not stack copies of a probe that has
+    /// not run yet.
+    ///
+    /// The loop's exit condition is the TED watermark advancing, which only a
+    /// probe that EXECUTES can do — so on a queue held by a long job it pushed
+    /// every 5 minutes for the whole 3-hour window, up to 36 identical jobs.
+    /// Measured on prod 2026-09-16: four of them behind a DÖE re-parse campaign.
+    ///
+    /// The predicate is what is testable here — the loop itself is a
+    /// `tokio::spawn` with three-hour sleeps — and it is the whole of the fix.
+    #[tokio::test]
+    async fn a_catch_up_probe_is_not_stacked_on_one_that_has_not_run() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        assert!(!sup.catch_up_probe_pending(), "an empty queue has nothing pending");
+
+        // The DAILY tick's own probe must NOT suppress a catch-up: they are
+        // different jobs with different reasons to exist, and issue 222's whole
+        // point is that the tick's probe can run and still miss a late package.
+        sup.push("probe", "ted daily (probe)".into(), Spec::ProbeTed { refetch: false }).await;
+        assert!(
+            !sup.catch_up_probe_pending(),
+            "the tick's probe is not a catch-up — suppressing on `kind` alone would defeat 222"
+        );
+
+        sup.push("probe", "ted daily (catch-up)".into(), Spec::ProbeTed { refetch: true }).await;
+        assert!(sup.catch_up_probe_pending(), "now one is waiting its turn");
+
+        // And an unrelated long job in the queue does not make one appear.
+        let sup2 = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        sup2.push(
+            "project",
+            "rebuild=false".into(),
+            Spec::Project { rebuild: false, clear_changes: false },
+        )
+        .await;
+        assert!(!sup2.catch_up_probe_pending());
     }
 
     /// Issue 61: the worker loop still executes a queued job correctly through the
