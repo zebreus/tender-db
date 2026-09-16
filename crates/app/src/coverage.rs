@@ -229,13 +229,22 @@ async fn refresh_into(
     {
         return;
     }
-    publish(cell, "quarantine", measure_quarantine(db).await, |d, v| d.quarantine = Some(v));
-    publish(cell, "award-linkage", measure_award_linkage(db).await, |d, v| d.award_linkage = Some(v));
-    publish(cell, "counts", measure_counts(db).await, |d, v| d.counts = Some(v));
-    publish(cell, "coverage", measure_coverage_pipeline(db, now).await, |d, (coverage, pipeline)| {
-        d.coverage = Some(coverage);
-        d.pipeline = Some(pipeline);
+    publish(cell, "quarantine", timed("quarantine", measure_quarantine(db)).await, |d, v| {
+        d.quarantine = Some(v)
     });
+    publish(cell, "award-linkage", timed("award-linkage", measure_award_linkage(db)).await, |d, v| {
+        d.award_linkage = Some(v)
+    });
+    publish(cell, "counts", timed("counts", measure_counts(db)).await, |d, v| d.counts = Some(v));
+    publish(
+        cell,
+        "coverage",
+        timed("coverage", measure_coverage_pipeline(db, now)).await,
+        |d, (coverage, pipeline)| {
+            d.coverage = Some(coverage);
+            d.pipeline = Some(pipeline);
+        },
+    );
     // Record the watermark the heavy sections were measured at, so the next idle pass
     // with an unchanged DB skips the scan above.
     if let Some(k) = key {
@@ -252,6 +261,36 @@ pub async fn measure(db: &Db) -> Dashboard {
     // `None` watermark forces the measure (never skips).
     refresh_into(db, &cell, false, 0, &mut None).await;
     cell.into_inner().expect("snapshot")
+}
+
+/// Say how long a heavy section took, whichever way it went (issue 405).
+///
+/// Until this existed the refresher was mute on success — `publish` logs the
+/// `Err` arm only — so a section that had NEVER completed and one completing
+/// every minute produced byte-identical logs: none. That made "Measuring…" on the
+/// dashboard unreadable. On 2026-09-16 the `coverage` panel was blank for the
+/// quarter-hour after a deploy while `counts`, `quarantine` and `award-linkage`
+/// were populated, and nothing on the box could say whether the scan was running,
+/// wedged on a pinned reader, or disabled. It was running: the first pass takes
+/// on the order of 13 minutes at this corpus size. That number should not have
+/// needed an external poller to discover.
+///
+/// `coverage` is published LAST of the four, which is why it is reliably the one
+/// a reader sees missing.
+async fn timed<T, E>(
+    section: &str,
+    measure: impl std::future::Future<Output = Result<T, E>>,
+) -> Result<T, E> {
+    let t = std::time::Instant::now();
+    let out = measure.await;
+    // Logged on the error path too: how long it took to fail is the difference
+    // between a timeout and a refusal, and `publish` says only that it failed.
+    eprintln!(
+        "coverage: {section} measured in {:.1}s{}",
+        t.elapsed().as_secs_f64(),
+        if out.is_err() { " (failed)" } else { "" }
+    );
+    out
 }
 
 /// Publish one measured section into the snapshot, or keep the last good value
