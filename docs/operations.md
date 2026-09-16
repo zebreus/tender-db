@@ -410,6 +410,17 @@ the ids it touched.** Re-parsing 283 r209 notices stamped 2,131,375 tenders. Tha
 (a stale stamp forces a rewrite that recomputes identical content, a missed one silently loses the
 re-parse), but a one-package probe does not have a one-package blast radius.
 
+**Do not edit the working tree while a backgrounded `./deploy.sh` is running.** Its test gate runs
+`ops/check.sh` LOCALLY, against the working tree as it is when the gate reaches it — not against the
+committed ref it is deploying. On 2026-09-16 a deploy of `87d6a6d` failed on
+`a_placeholder_publication_number_loses_to_the_notices_own_id`, a test that does not exist at that
+commit: the gate had picked up the next issue's half-finished edits, including a predicate
+temporarily short-circuited for a red-first check. It **failed closed** — nothing reached the box —
+which is the right direction, but the deploy is wasted and the error names a commit that is not the
+one being built, which reads as a mystery. Either let a deploy finish before starting the next edit,
+or run `ops/check.sh` to green on a clean tree first (the deploy then skips its own gate on the
+`target/.tests-green` marker, which is only written when the tree IS clean).
+
 **Read the `unmatched` and `re-keyed` counts before calling a re-parse complete (issue 290).**
 `reparse_notice` finds its target by `(source, publication_id, content_hash)`. The hash is the same
 bytes and is stable; `publication_id` is parser-EXTRACTED. So a parser change that also moves how
