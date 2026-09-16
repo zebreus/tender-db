@@ -6868,7 +6868,7 @@ impl Db {
     /// is the measured-safe kind — not the org-identity NULL-unique hang (issue 62);
     /// the identity indexes are non-unique because a rebuild's group_keys are
     /// distinct by construction and the incremental probe guards otherwise.
-    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 17] = [
+    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 19] = [
         ("tender_versions_published", "tender_versions(published_at)"),
         ("tender_versions_notice", "tender_versions(caused_by_notice_id)"),
         // Issue 217-A: `/v1/tenders?publication_id=` seeds its FROM with "the
@@ -6894,6 +6894,26 @@ impl Db {
         // `role` is mid-index so the org's slice scans index-only even though the
         // `%Buyer%` match is not a prefix; `tender_id` last makes the seed covered.
         ("tender_version_parties_org_role", "tender_version_parties(organization_id, role, tender_id)"),
+        // Issue 388: the winner/bidder reverse-lookup seeds, covered. The narrow
+        // `(organization_id)` pair below them served the seek but not the SELECT, so
+        // `SELECT DISTINCT tender_id ... WHERE organization_id = ?` hauled every one
+        // of a prolific org's rows through a per-row table lookup: org 357 (ALLIANCE
+        // HEALTHCARE ROMÂNIA, 193,890 mentions, 3.55M winner rows over 3,668 tenders)
+        // measured 2.3–4.7 s warm and 15–28 s cold per page against issue 223's
+        // documented sub-25 ms — and 1.8 s from the 30 s deadline that turns a valid
+        // query into a 503. `tender_id` last is the whole fix, exactly the shape
+        // issue 225 gave `buyer=`.
+        //
+        // NEW NAMES rather than widened definitions, and that is load-bearing:
+        // `missing_tender_indexes` filters by NAME, so re-defining an index under its
+        // existing name would leave prod on the narrow one forever while the code
+        // claimed otherwise. And the narrow pair STAYS, which is measured rather than
+        // cautious: turso's planner picks the wide index for the seed and falls back
+        // to the narrow one the moment a query needs a column the wide one does not
+        // carry (the control in `the_winner_and_bidder_seeds_are_covered_after_a_rebuild`
+        // shows both halves). Dropping them would cost those shapes their index.
+        ("tender_version_result_winners_org_tender", "tender_version_result_winners(organization_id, tender_id)"),
+        ("tender_version_bid_parties_org_tender", "tender_version_bid_parties(organization_id, tender_id)"),
         ("tender_version_result_winners_org", "tender_version_result_winners(organization_id)"),
         ("tender_version_bid_parties_org", "tender_version_bid_parties(organization_id)"),
         // The by-version index every other satellite carries — bid_parties was the

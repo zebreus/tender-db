@@ -1,6 +1,6 @@
 # 388 — a reverse lookup by a prolific bidder/winner org re-pays the org's whole participation set on every page: 2.3–4.7 s warm, 15–28 s cold, against a documented sub-25 ms contract
 
-Status: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — unit 1 (the two covering indexes) LANDED 2026-09-16, see the foot; the cursor-inside-the-seed rewrite and the prod re-measurement are open. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (read layer — the participation reverse-lookup seed; performance and availability)
 Relates to: 223 (RESOLVED "every `winner=`/`bidder=` lookup is sub-25 ms" — that is the contract this
 breaks, and its residual section states the premise that fails here: "an org's row count is bounded by
@@ -162,3 +162,50 @@ else warms the page cache if the cold figure is what needs re-measuring.
 - Issue 223's status line and `participation_seed`'s doc comment ("their tables are
   participation-bounded already") are corrected to say what is actually bounded and by what, with the
   357/355 numbers, so the premise is not re-derived from the old prose.
+
+
+## Unit 1 landed 2026-09-16 — the seeds are covered
+
+`tender_version_result_winners(organization_id, tender_id)` and
+`tender_version_bid_parties(organization_id, tender_id)` join `DEFERRED_TENDER_INDEXES`, the shape
+issue 225 gave `buyer=`.
+
+**New names, not widened definitions, and that is the load-bearing part.**
+`missing_tender_indexes` filters by NAME. Re-defining `tender_version_result_winners_org` in place
+would have left prod on the narrow index forever while the code and this issue both claimed the fix
+had shipped — the builder would have seen the name present and skipped it. So the wide ones are
+`…_org_tender` and the narrow pair stays.
+
+### What the test could and could not prove, measured rather than assumed
+
+The first draft asserted `USING COVERING INDEX …` and FAILED against a plan that was correct:
+
+    SEARCH tender_version_result_winners USING INDEX tender_version_result_winners_org_tender (organization_id=?)
+
+turso does not print the word COVERING for a SEARCH. Rather than weaken the assertion to "an index
+was used" — which would pass on the narrow index too, i.e. on the bug — the test now uses the
+planner's own discrimination as the evidence:
+
+| query | index chosen |
+| --- | --- |
+| `SELECT DISTINCT tender_id … WHERE organization_id = ?` (the seed) | `…_org_tender` |
+| `SELECT DISTINCT seq … WHERE organization_id = ?` (needs a column outside it) | `…_org` |
+
+The wide index is chosen exactly when the query can be served from it. That also settles, with data
+rather than caution, the open question of whether to DROP the narrow pair: no — the planner still
+picks them for the shapes the wide ones cannot serve.
+
+The test runs through `strip_tender_indexes` → `reset_tender_layer` → `build_tender_indexes`, because
+these are deferred indexes and that is the path that creates them on prod; an index asserted only
+against a fresh schema would pass while being absent where it matters.
+
+### Still open
+
+- **The cursor inside the seed.** The `Done when` above asks a page's cost to scale with the page
+  rather than the org, which this does not do on its own: the seed still materialises the org's whole
+  DISTINCT set before `ORDER BY … LIMIT`. Cheaper per row now, still O(org) per page.
+- **The prod re-measurement.** The numbers in this issue are from 2026-09-13; the acceptance is
+  `?bidder=357`, `?winner=357`, `?bidder=355`, `?winner=355`, `/v1/lots?bidder=357` each under 1 s
+  warm at `limit=100`, with the controls unmoved. That needs the indexes BUILT on prod — they are
+  deferred, so the next rebuild or the issue-111 builder creates them; until then nothing changes
+  live, and this unit must not be read as the issue being fixed.

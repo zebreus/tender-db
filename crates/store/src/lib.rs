@@ -6288,6 +6288,96 @@ tmpfs /data/ramcache tmpfs rw 0 0
     /// index MUST be in the set or the newest-Tenders list silently falls back to a
     /// full scan of all 8M+ tenders until the next restart. Reproduce the rebuild's
     /// index lifecycle and assert the list plan still reads the covering index.
+    /// Issue 388: the winner and bidder reverse-lookup seeds must be index-ONLY.
+    ///
+    /// `participation_seed` builds `SELECT DISTINCT tender_id FROM <table> WHERE
+    /// organization_id = ?`. With only `(organization_id)` indexed, the seek finds
+    /// the org's rows and then fetches `tender_id` from the TABLE, once per row —
+    /// which for org 357 (3.55M winner rows over 3,668 tenders) measured 2.3–4.7 s
+    /// warm and 15–28 s cold per page, against issue 223's documented sub-25 ms and
+    /// 1.8 s short of the 30 s deadline that turns a valid query into a 503.
+    ///
+    /// Asserted through the REBUILD lifecycle, like the test below it: these are
+    /// deferred indexes, so a strip/reset/build is the path that actually creates
+    /// them on prod, and an index that only exists in a fresh-schema database would
+    /// pass a naive test and be absent where it matters.
+    ///
+    /// Measured while writing this: turso does NOT print `USING COVERING INDEX` for
+    /// a SEARCH, so the first draft's assertion on that string failed against a plan
+    /// that was in fact correct. What turso does do is CHOOSE — the coverable query
+    /// takes `…_org_tender`, and the same query asking for a column outside it falls
+    /// back to `…_org`. That pair is the evidence here, and it is also why the narrow
+    /// indexes stay: the planner still uses them for the shapes the wide ones cannot
+    /// serve.
+    #[tokio::test]
+    async fn the_winner_and_bidder_seeds_are_covered_after_a_rebuild() {
+        let path = format!("/tmp/tender-db-eqp-388-{}.db", std::process::id());
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        db.strip_tender_indexes().await.unwrap();
+        db.reset_tender_layer().await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        let conn = db.reader().await.unwrap();
+
+        for (table, want) in [
+            ("tender_version_result_winners", "tender_version_result_winners_org_tender"),
+            ("tender_version_bid_parties", "tender_version_bid_parties_org_tender"),
+        ] {
+            let mut rows = conn
+                .query(
+                    &format!(
+                        "EXPLAIN QUERY PLAN \
+                         SELECT DISTINCT tender_id FROM {table} WHERE organization_id = 357"
+                    ),
+                    (),
+                )
+                .await
+                .unwrap();
+            let mut plan = String::new();
+            while let Some(row) = rows.next().await.unwrap() {
+                plan.push_str(&text(&row, 3));
+                plan.push('\n');
+            }
+            assert!(
+                plan.contains(&format!("USING INDEX {want}")),
+                "{table}'s seed must be driven by the covering index:\n{plan}"
+            );
+
+            // The control, and the reason this test can claim COVERAGE at all.
+            // turso does not print the word COVERING for a SEARCH — the coverable
+            // plan reads `SEARCH … USING INDEX …_org_tender (organization_id=?)`,
+            // which on its own says only that an index was used. But the planner
+            // DISCRIMINATES: ask for a column the wide index does not carry and it
+            // falls back to the narrow `…_org`. So the pair is the evidence — the
+            // wide index is chosen exactly when the query can be served from it.
+            let mut rows = conn
+                .query(
+                    &format!(
+                        "EXPLAIN QUERY PLAN \
+                         SELECT DISTINCT seq FROM {table} WHERE organization_id = 357"
+                    ),
+                    (),
+                )
+                .await
+                .unwrap();
+            let mut uncoverable = String::new();
+            while let Some(row) = rows.next().await.unwrap() {
+                uncoverable.push_str(&text(&row, 3));
+                uncoverable.push('\n');
+            }
+            assert!(
+                !uncoverable.contains(&format!("USING INDEX {want}")),
+                "a query needing a column outside the wide index must NOT claim it — \
+                 if it does, the plan text is not evidence of coverage:\n{uncoverable}"
+            );
+        }
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
+
     #[tokio::test]
     async fn rebuild_preserves_the_current_published_covering_index() {
         let path = format!("/tmp/tender-db-eqp-rebuild-{}.db", std::process::id());
