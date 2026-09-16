@@ -171,3 +171,28 @@ Fetched cell says how current the rate table is instead."
   counts, `fetch complete ✓` still on all three, and `ted` still carrying
   `registered twice: 2025-09` (issue 395's open duplicate).
 - `currency_rates` still reads 277,445 rows over 54 currencies — presentation only, nothing refetched.
+
+## RESOLVED-VERIFIED 2026-09-16 — read live off `/api/dashboard` at rev `c40cccc`
+
+The five pipeline rows as served:
+
+| source | reference_feed | fetch_complete | rates_through | processed | projected |
+| --- | :-: | :-: | --- | ---: | ---: |
+| ecb | **true** | false | 2026-09-15 | 0 | 0 |
+| eurostat | **true** | false | 2026-09-15 | 0 | 0 |
+| doe | false | true | — | 1,136,716 | 676,258 |
+| fts | false | true | — | 10,600 | 9,233 |
+| ted | false | true | — | 13,311,187 | 7,838,453 |
+
+So `ecb` and `eurostat` render `· rates through 2026-09-15 | — | —`: no `fetch complete ✓` claim they
+cannot earn, and no `0 processed / 0 projected` reading as a broken import. The three import sources
+are byte-identical to before — `reference_feed: false`, `rates_through: null`, `fetch_complete: true`.
+
+(`rates_through` is 2026-09-15 rather than the 09-14 the acceptance wrote down: it is the newest rate
+date and moves every day. The ECB `fetch-rates` job ran at 09:12Z today.)
+
+Two things visible in the same read that belong to other issues and are already on the board:
+`ted.fetched_to` is `2026-06` (issue 402 — the monthly/daily namespace max), and
+`ted.duplicate_periods` is `['2025-09']` (issue 395).
+
+Closing.

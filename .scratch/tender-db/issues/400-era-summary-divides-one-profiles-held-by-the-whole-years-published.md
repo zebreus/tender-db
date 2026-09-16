@@ -216,3 +216,28 @@ The `‡` addendum above: `published_cell(era.published)` sums denominators that
 year, and the summary shows no `‡`. Under (c) the denominator survives, so it still needs the date
 qualification. Not done in this unit — the summary now says `… published †` and the partial-year
 date is one glyph further than this unit went.
+
+## RESOLVED-VERIFIED 2026-09-16 — read live off `/api/dashboard` at rev `c40cccc`
+
+Every cell the `## Done when` names, measured rather than assumed. `year_held` is the era's numerator
+now, so the summary divides the years' WHOLE held by the years' published:
+
+| source · profile | held | published | year_held | coverage | † |
+| --- | ---: | ---: | ---: | ---: | :-: |
+| ted · eforms:eforms-sdk-1.5 | 35 | 1,597,124 | 1,597,124 | **100.00 %** | yes |
+| ted · internal-ojs | 26,955 | 339,534 | 340,014 | **100.14 %** | yes |
+| ted · ted-export-r208 | 2,699,213 | 8,421,040 | 8,421,133 | **100.00 %** | yes |
+| ted · ted-export-r209 | 4,490,549 | 6,313,458 | 6,313,456 | **100.00 %** | yes |
+| ted · text | 3,786,955 | 3,802,937 | 3,815,808 | **100.34 %** | yes |
+
+- `eforms-sdk-1.5` was the headline defect at **0.00 %** (35 ÷ 1,597,124 rounded away); it reads 100.00 %.
+- `internal-ojs` was **7.94 %** (26,955 ÷ 339,534); it reads 100.14 %.
+- r208 and r209 both read 100.00 %† — the 400-era question "are they understated by the defect or
+  backfilled short" is answered: understated.
+- `ted · text` gains its † and lands at 100.34 %, as predicted.
+- **`doe` and `fts` still render `—`**: every one of their 12 profile rows carries `published: 0`, so
+  no denominator is invented for a source with no published-count feed.
+- The one row WITHOUT † is `fts · fts:ocds-1.1` (held 10,600 = year_held 10,600) — correct, it is the
+  only profile serving its years, so nothing is shared and the mark would be noise.
+
+Closing.
