@@ -147,3 +147,16 @@ validates it; that is consistent with it not applying it, and the client is told
 - **Honouring the filters is NOT filed as a follow-up**, deliberately. Nothing has asked for it, the
   SSE path already serves that need, and filing speculative work would put an unmeasured performance
   question on the board as if it were a defect.
+
+## DEPLOYED AND VERIFIED 2026-09-16 — rev `a5db49e`
+
+| request | `ignored_filters` | `reset` |
+| --- | --- | --- |
+| `?since=0&limit=3` | `[]` | — |
+| `?since=0&limit=3&entity=tender` | `[]` | — |
+| `?since=0&limit=3&source=nonesuch&status=open` | `["source","status"]` | — |
+| `?since=999999999999&source=ted` | `["source"]` | `cursor_ahead` |
+
+`entity` is honoured and correctly never named; the reset body carries the array, which is the case
+that matters most — a client just told to drop state and re-snapshot is the one about to re-send its
+filters. Closed.

@@ -439,3 +439,21 @@ Acceptance reads for after: `POST /v1/tenders` → 405 with the JSON envelope an
 `/v1/tenders?limit=0`, `?limit=-5`, `?limit=1001` → 400 and `?limit=1`, `?limit=1000` → 200;
 `Accept: text/event-stream` on `/v1/notices?tender=<id>` → 400 while `/v1/notices?limit=2` and
 `/v1/lots?tender=<id>` still stream.
+
+## Units 3, 4 and 5 DEPLOYED AND VERIFIED 2026-09-16 — rev `a5db49e`
+
+| unit | request | answer |
+| --- | --- | --- |
+| 3 | `POST /v1/tenders` | `405`, `content-type: application/json`, `allow: GET,HEAD`, `{"error":{"message":"method not allowed","status":405}}` |
+| 3 | `DELETE /v1/tenders` | the same |
+| 4 | `?limit=0` / `-5` / `1001` | `400` — `limit must be between 1 and 1000, not 0` |
+| 4 | `?limit=1` / `?limit=1000` | `200` (the bounds themselves still valid) |
+| 5 | `Accept: text/event-stream` on `/v1/notices?tender=2` | `400`, `application/json` |
+| 5 | same header on `/v1/notices?limit=2` | `200 text/event-stream` |
+| 5 | same header on `/v1/lots?tender=2` | `200 text/event-stream` |
+
+The unit-5 controls are the ones that matter: the endpoint still streams without `?tender=`, and
+`tender` still streams on another collection, so the refusal is scoped to the one branch that was
+never a subscription rather than to an endpoint or a parameter.
+
+**Issue 390 is complete — all five units built, deployed and verified.**
