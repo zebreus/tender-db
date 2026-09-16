@@ -178,3 +178,94 @@ exterior to the monthly sequence. Measuring what is HELD is what makes it namesp
   been run against the corpus, only against fixtures.
 - `fetched_to` still understates TED's range as `2026-06` (a lexical MAX across namespaces). Not
   touched by this unit.
+
+## 2026-09-16, first run against the corpus: section 14 is NOISE, and the window is why
+
+Status: REGRESSION in my own unit, found by running the acceptance instead of assuming it. The section
+was deployed at 09:58Z in `1bd7dc1`; job 2324 (11:35Z, 5,277 s) is the first data-quality run that
+computed it against the real corpus rather than fixtures. **Every one of the 37 stretches it printed is
+an artifact of the window, the two TED entries are false alarms, and the hole this section exists to
+find is not among them.**
+
+### What it printed
+
+    ted   2025-06-30   2025-09-24    87 days   before 3,765   after 1
+    ted   2025-09-26   2026-09-14   354 days   before 1       after 3,534
+    doe   … 35 further stretches, 2025-05-19 through 2026-07-19 …
+
+The 2026-06-30…2026-07-15 stretch this issue was filed for is not named; it is swallowed inside the
+354-day entry, indistinguishable from 11 months of ordinary publishing.
+
+### Why — the window does not sample publication time at all
+
+`publication_days_sql` takes `id > (SELECT MAX(id) FROM notices) - 2000000`, and the doc comment on
+`PUBLICATION_GAP_WINDOW_IDS` claims that is "roughly the last five months at the corpus head". Measured
+on the box today, it is not:
+
+| in the id window (43,650,996 … 45,650,995) | |
+| --- | --- |
+| rows, all sources | **76,946** — roughly the last day or two of INGEST, not five months of publishing |
+| `doe` | 1,138 rows carrying **88 distinct publication days**, 2025-05-18 … 2026-09-15 |
+| `fts` | 443 rows |
+| `ted` | 75,365 rows carrying **21 distinct publication days**, essentially all of June 2025 |
+
+The id space is SPARSE — 14.4 M notices under a MAX(id) of 45.65 M — so two million ids is about 77 k
+rows, not two million. That alone breaks the five-month claim. But the deeper error survives any window
+size: **ids are assigned at INGEST time and the measure reads PUBLICATION time.** A re-ingest or a
+backfill puts old publication days at the head of the id space — which is exactly what the June-2025
+TED block in the window is — and one day's DÖE ingest spreads 1,138 notices over 88 publication days
+across sixteen months. A set of days sampled that way is not an interval, so "the gaps between
+consecutive days" is not a question it can answer.
+
+### The false alarms were diagnosable from the report's own text
+
+The note under the table already says it: *"`before` and `after` are the notice counts on the days
+bracketing the stretch. BOTH being ordinary is what makes a stretch a hole rather than the edge of a
+source's life."* Both TED entries have a bracket of **1**. The principle was written down and then not
+enforced in code, so the renderer printed as findings two stretches its own caption disqualifies.
+
+### Two units, and they are separable
+
+- **Unit A — enforce the bracket rule the note already states.** A stretch is reported only when BOTH
+  bracketing days are ordinary for that source inside the window. Cheap, no schema, and it suppresses
+  both TED entries (bracket 1) and most of the DÖE ones (brackets of 1–6 against a DÖE in-window day
+  average of ~13), while the real 2026-06-30…07-15 hole (3,470 before, 3,722 after, ~3,500 typical)
+  passes untouched. This makes the section trustworthy; it does not make it able to SEE that hole.
+- **Unit B — a window that samples publication time.** The options, none free:
+  (a) predicate on `published_at` directly — correct, but the column has no index, so it is a full scan
+      of `notices`; (b) index `notices(published_at)` — one build over 14.4 M rows plus standing disk,
+      against issue 169's concern; (c) measure on the canonical layer instead, where
+      `tenders.current_published_at` is indexed (issue 82) — answers "which publication days the corpus
+      reached" for projected tenders, which is close to but not identical with "what is HELD"; (d) keep
+      the id window and simply print its coverage, which is honest and useless. **Measure before
+      choosing** — and a corpus-scale characterisation has no compliant on-box path
+      (`docs/agents/prod-box-reads.md`), so this is not a read to improvise.
+
+### What this does not change
+
+The gap itself is still real and still unclosed — 2026-06-30…2026-07-15, ~12 publication days, ~44,600
+notices, with 3,470 notices held the day before and 3,722 the day after. This entry is about the
+detector, not the defect. That work (probe a `2026-07` monthly and daily issues ~125–135, then fetch
+and process) is untouched.
+
+### Unit A landed 2026-09-16 — the caption's rule is now the predicate
+
+`publication_gaps` computes an `ordinary_bracket_floor` — `ORDINARY_BRACKET_SHARE_PCT` (50 %) of that
+source's MEDIAN day count within the window — and reports a stretch only when BOTH bracketing days
+clear it. Median rather than mean on purpose: the population being excluded is a long tail of
+near-empty days, and a mean is dragged down by exactly the rows it must not admit.
+
+50 % is bounded by the calibration rather than picked: across 2026-07-27…2026-08-09 every published
+TED day carries 3,247–3,752, a spread of ±7 % around the median, so a floor five times wider than the
+observed variation cannot suppress a real bracket. Issue 402's own hole brackets at 3,470 and 3,722
+against a ~3,500 median — 99 % and 106 % — and still reports.
+
+Test `a_stretch_bracketed_by_a_barely_sampled_day_is_the_window_not_a_hole` replays the window as it
+actually was (the June-2025 block, the 1-notice stray, the head a year later): every candidate in it
+brackets on the stray, so nothing is reported — and the same window with a genuine ordinary-to-ordinary
+silence appended still reports that one, so the guard is not "refuse everything". Red first with the
+share at 0.
+
+**Unit B — a window that samples publication time — is untouched and is the one that matters.** With
+unit A the section is quiet and honest; it is still blind to the 2026-06-30…07-15 hole, because that
+hole is not inside the id window at all.

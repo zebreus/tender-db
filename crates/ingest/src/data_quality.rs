@@ -1311,6 +1311,24 @@ pub const PUBLICATION_GAP_WINDOW_IDS: i64 = 2_000_000;
 /// magnitude of headroom over the noise and is nowhere near the signal.
 pub const PUBLICATION_GAP_MIN_DAYS: i64 = 4;
 
+/// A bracketing day carrying less than this share of that source's typical day
+/// is not evidence the pipeline reached it (issue 402, 2026-09-16).
+///
+/// The report's own caption has always said this — *"BOTH being ordinary is what
+/// makes a stretch a hole rather than the edge of a source's life"* — and the
+/// first run against the corpus proved the principle has to be a PREDICATE and
+/// not a note. It printed two TED stretches, of 87 and 354 days, whose brackets
+/// were 3,765/**1** and **1**/3,534: the 1-notice days are days the id window
+/// barely sampled, not days TED barely published, and the caption disqualified
+/// both entries while the code printed them as findings.
+///
+/// Half the median, because ordinary days cluster tightly: across the calibration
+/// fortnight (2026-07-27…2026-08-09) every published day carries 3,247–3,752, a
+/// spread of ±7 % around the median. A floor five times wider than the observed
+/// variation cannot suppress a real bracket — issue 402's own hole brackets at
+/// 3,470 and 3,722 against a ~3,500 median, which is 99 % and 106 % of it.
+pub const ORDINARY_BRACKET_SHARE_PCT: i64 = 50;
+
 /// Distinct publication days per source at the corpus head (issue 402).
 ///
 /// The report folds these into silent stretches. It is days rather than counts
@@ -1835,13 +1853,17 @@ pub struct PublicationGapRow {
 /// monthly sequence. Measuring what is HELD rather than what was fetched is what
 /// makes this namespace-agnostic.
 pub fn publication_gaps(days: &[(String, i64)], min_days: i64) -> Vec<(String, String, i64, i64, i64)> {
+    let floor = ordinary_bracket_floor(days);
     let mut out = Vec::new();
     for pair in days.windows(2) {
         let (lo, before) = &pair[0];
         let (hi, after) = &pair[1];
         let (Some(a), Some(b)) = (civil_days(lo), civil_days(hi)) else { continue };
         let silent = b - a - 1;
-        if silent >= min_days {
+        // Both brackets must be ORDINARY days for this source, not just present.
+        // A stretch between two barely-sampled days says something about the
+        // window, not about the corpus (issue 402).
+        if silent >= min_days && *before >= floor && *after >= floor {
             out.push((
                 day_string(a + 1).unwrap_or_else(|| lo.clone()),
                 day_string(b - 1).unwrap_or_else(|| hi.clone()),
@@ -1852,6 +1874,26 @@ pub fn publication_gaps(days: &[(String, i64)], min_days: i64) -> Vec<(String, S
         }
     }
     out
+}
+
+/// The count below which a bracketing day is not evidence the pipeline reached
+/// it: [`ORDINARY_BRACKET_SHARE_PCT`] of this source's MEDIAN day in the window.
+///
+/// Median rather than mean because the population being defended against is
+/// exactly a long tail of near-empty days — a mean is dragged down by the very
+/// rows this is meant to exclude, and would then admit them.
+///
+/// A source with one day, or two, has no distribution to speak of, and the floor
+/// it yields is small enough not to bite; that is deliberate, so the day
+/// arithmetic stays testable on a two-day fixture.
+fn ordinary_bracket_floor(days: &[(String, i64)]) -> i64 {
+    if days.is_empty() {
+        return 0;
+    }
+    let mut counts: Vec<i64> = days.iter().map(|(_, n)| *n).collect();
+    counts.sort_unstable();
+    let median = counts[counts.len() / 2];
+    median * ORDINARY_BRACKET_SHARE_PCT / 100
 }
 
 /// `YYYY-MM-DD` to a day number, and back. Howard Hinnant's civil-from-days, the
@@ -3120,7 +3162,10 @@ pub fn render_text(report: &Report) -> String {
             "  `before` and `after` are the notice counts on the days bracketing the stretch. \
              BOTH being ordinary is what makes a stretch a hole rather than the edge of a \
              source's life — that pair is the whole diagnosis of issue 402 (2026-06-30…07-15, \
-             3,470 the day before and 3,722 the day after, nothing in between).\n  \
+             3,470 the day before and 3,722 the day after, nothing in between). That is a \
+             PREDICATE, not advice: a stretch whose brackets are under \
+             {ORDINARY_BRACKET_SHARE_PCT} % of that source's median day in the window is a \
+             stretch between two days the window barely sampled, and it is not listed.\n  \
              The threshold is {PUBLICATION_GAP_MIN_DAYS} days and it is CALIBRATED, not guessed: \
              TED publishes Sunday–Thursday, so a normal weekend is 2 silent days and a weekend \
              plus a holiday is 3. A source with a different rhythm may show a benign entry here; \
@@ -4522,6 +4567,56 @@ mod tests {
         // A single day, or none, has no interior to report.
         assert!(publication_gaps(&[("2026-08-06".to_owned(), 1)], 1).is_empty());
         assert!(publication_gaps(&[], 1).is_empty());
+    }
+
+    /// Issue 402, 2026-09-16 — the first corpus run, reproduced.
+    ///
+    /// Section 14's first real run printed two TED stretches of 87 and 354 days
+    /// whose bracketing counts were 3,765/1 and 1/3,534. Neither is a hole: the
+    /// 1-notice days are days the id window barely sampled. The report's caption
+    /// said so all along; this is that sentence as a predicate.
+    #[test]
+    fn a_stretch_bracketed_by_a_barely_sampled_day_is_the_window_not_a_hole() {
+        // The window as it actually was: a dense June-2025 block, one stray day
+        // eleven weeks later, then the corpus head a year on.
+        let mut sampled: Vec<(String, i64)> = [
+            ("2025-06-23", 3100),
+            ("2025-06-24", 6222),
+            ("2025-06-25", 3561),
+            ("2025-06-26", 3526),
+            ("2025-06-29", 3765),
+            ("2025-09-25", 1),
+            ("2026-09-15", 3534),
+        ]
+        .iter()
+        .map(|(d, n)| ((*d).to_owned(), *n))
+        .collect();
+        assert!(
+            publication_gaps(&sampled, PUBLICATION_GAP_MIN_DAYS).is_empty(),
+            "every candidate here brackets on the 1-notice day, so none is a finding"
+        );
+
+        // And the guard is not simply "refuse everything": give the same window a
+        // genuine hole — two ordinary days with sixteen silent days between them —
+        // and it is reported.
+        // Appended so they abut the head day — a stretch between the head and the
+        // first added day would be a second, equally genuine hole and would say
+        // nothing about the guard.
+        sampled.push(("2026-09-16".to_owned(), 3470));
+        sampled.push(("2026-10-03".to_owned(), 3722));
+        assert_eq!(
+            publication_gaps(&sampled, PUBLICATION_GAP_MIN_DAYS),
+            vec![("2026-09-17".to_owned(), "2026-10-02".to_owned(), 16, 3470, 3722)],
+            "an ordinary-to-ordinary silence still reports, in the same window"
+        );
+
+        // The floor is a share of the MEDIAN, so a long tail of near-empty days
+        // cannot drag it down far enough to admit them — which a mean would.
+        let floor = ordinary_bracket_floor(&sampled);
+        assert!(
+            (1..3_100).contains(&floor),
+            "floor {floor} must exclude the 1-notice day and admit every ordinary one"
+        );
     }
 
     /// The civil-day round trip the fold rests on, across leap years, century
