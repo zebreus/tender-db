@@ -124,3 +124,66 @@ one path because the issue named one path is how it was missed.
 
 What worked: the acceptance was "the cohort must reach 0, not a small number", it did not, and that
 refusal to round down is what exposed this within hours rather than at the next audit.
+
+## The BLEEDING is stopped 2026-09-16 — the ingest path adopts a moved key
+
+Status: the mint is fixed and gated (`GATE-EXIT=0`), not yet deployed. The 281 standing duplicates
+are NOT yet resolved — that is the remaining unit.
+
+### What changed
+
+`record_notice` returns `Recorded::{Inserted, Duplicate, Rekeyed}` instead of a bool, and
+`record_notice_tx` asks one new question: is the same `(source, member_path, content_hash)` already
+held under a DIFFERENT `publication_id`? If exactly one row is, that row is this notice under a name
+the parser no longer derives — so its parsed layer is cleared, the row removed, and the new one
+written with its layer, all inside the existing transaction.
+
+Three decisions worth reading:
+
+- **Keyed on `(source, member_path, content_hash)`, not on the hash alone.** `member_path` is the
+  physical location and `content_hash` is over the record's own payload, so together they name one
+  thing the publisher published once. Matching on bytes alone would silently merge two packages that
+  legitimately carry identical payloads, and the test has an arm for exactly that: same bytes,
+  different member, still mints.
+- **Exactly one, or nothing.** The same discipline `reparse_target` applies. Two rows sharing a member
+  and bytes is a shape nobody has explained, and adopting one on a guess is worse than leaving a
+  duplicate a census can find.
+- **Asked AFTER the insert, not before.** The ordinary path — the overwhelming majority, where nothing
+  moved — pays one indexed insert and nothing else. The lookup only runs for a row that was genuinely
+  new, which on a normal day is the small tail.
+
+`write_parse` was extracted so the ordinary insert and the adoption cannot drift into writing
+different things for the same payload.
+
+### It says so now
+
+The `process` summary gains `N re-keyed` with the same NOTE clause issue 290 put on `reparse`.
+The line that hid this read
+
+    44835 members → 1138 notices (1138 parsed, 0 quarantined, 0 unrecognised, 43697 dup)
+
+— an ordinary-looking day, with 281 of those 1,138 being duplicates of notices the corpus already
+held. It would now carry `, 281 re-keyed — NOTE: this run CHANGED publication_id derivation`.
+
+### Test
+
+`a_member_re_ingested_under_a_moved_identity_is_not_a_second_notice` walks the whole sequence: ingest
+under the old derivation, re-process (still `Duplicate`, so the idempotency the `dup` counter reports
+is undisturbed), then the same member under the new derivation → `Rekeyed`, **`COUNT(*) = 1`**, the
+surviving row carrying the new identity with its parsed layer, and a second offer now `Duplicate` —
+the adoption is a one-time bridge. Plus the different-member-same-bytes arm.
+
+Run red first: `left: Inserted, right: Rekeyed` — the mint, reproduced.
+
+### Still owed
+
+- **The 281 standing duplicates.** They have PROJECTED, so this is issue 278's shape, not a DELETE.
+  The placeholder rows are the redundant half (their bytes are held under the correct key in the
+  twin), so the repair is to drop them AND repair the tender versions folded from them.
+- **The real size**, per the measurement note above — triples held under more than one
+  `publication_id`, by source. 281 is the floor.
+- **The sequencing rule in `docs/operations.md`**: a re-parse that changes identity derivation must
+  not overlap the daily ingest. With this fix the overlap no longer duplicates, but the two jobs still
+  race for the same rows and the campaign is slower for it.
+- Live after deploy: the next DÖE daily reports `0 re-keyed` (nothing left to move) and the notice
+  count does not jump.

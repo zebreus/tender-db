@@ -1553,9 +1553,11 @@ impl Db {
     /// payload, atomically: a notice is either absent, or present with its
     /// complete parsed form — never half-imported (ADR-0004).
     ///
-    /// Returns false when this identity is already known, which is what makes
-    /// re-processing a package idempotent.
-    pub async fn record_notice(&self, n: &Notice, parse: &Parse) -> turso::Result<bool> {
+    /// Returns [`Recorded::Duplicate`] when this identity is already known, which
+    /// is what makes re-processing a package idempotent, and [`Recorded::Rekeyed`]
+    /// when the same member and bytes are held under a DIFFERENT
+    /// `publication_id` — see [`Recorded`] for why that is not a new notice.
+    pub async fn record_notice(&self, n: &Notice, parse: &Parse) -> turso::Result<Recorded> {
         let conn = self.conn().await;
         conn.execute("BEGIN IMMEDIATE", ()).await?;
         let result = self.record_notice_tx(&conn, n, parse).await;
@@ -1573,13 +1575,51 @@ impl Db {
         }
     }
 
-    async fn record_notice_tx(&self, conn: &Connection, n: &Notice, parse: &Parse) -> turso::Result<bool> {
+    async fn record_notice_tx(
+        &self,
+        conn: &Connection,
+        n: &Notice,
+        parse: &Parse,
+    ) -> turso::Result<Recorded> {
         if !self.insert_notice_row(conn, n).await? {
-            return Ok(false);
+            return Ok(Recorded::Duplicate);
+        }
+        // Issue 404: the row is new, but is it a new NOTICE? If the same archived
+        // member and the same bytes are already held under a different
+        // `publication_id`, the parser's identity derivation moved and this is
+        // that notice under a new name. Minting a second row asserts two notices
+        // where the publisher published one, and both then project.
+        //
+        // Checked AFTER the insert rather than before, so the ordinary path — the
+        // overwhelming majority, where nothing moved — pays one indexed insert and
+        // nothing else. The twin is removed inside the same transaction, so a
+        // crash leaves one row either way.
+        if let Some(stale) = self.moved_identity_twin(conn, n).await? {
+            self.clear_parsed(conn, stale, &Default::default()).await?;
+            conn.execute("DELETE FROM notices WHERE id = ?", (Value::Integer(stale),)).await?;
+            let Some(id) = self.notice_id(conn, n).await? else {
+                return Ok(Recorded::Duplicate);
+            };
+            self.write_parse(conn, id, n, parse).await?;
+            return Ok(Recorded::Rekeyed);
         }
         let Some(id) = self.notice_id(conn, n).await? else {
-            return Ok(false);
+            return Ok(Recorded::Duplicate);
         };
+        self.write_parse(conn, id, n, parse).await?;
+        Ok(Recorded::Inserted)
+    }
+
+    /// The parsed layer (or the quarantine row) for a freshly written notice.
+    /// Shared by the ordinary insert and by issue 404's key adoption, so the two
+    /// cannot drift into writing different things for the same payload.
+    async fn write_parse(
+        &self,
+        conn: &Connection,
+        id: i64,
+        n: &Notice,
+        parse: &Parse,
+    ) -> turso::Result<()> {
         match parse {
             Parse::Pending => {}
             Parse::Parsed(parsed) => {
@@ -1606,7 +1646,41 @@ impl Db {
                 .await?;
             }
         }
-        Ok(true)
+        Ok(())
+    }
+
+    /// The notice this record was held under before the parser's identity
+    /// derivation moved (issue 404): same source, same archived member, same
+    /// bytes, DIFFERENT `publication_id`.
+    ///
+    /// The triple is what makes it the same record rather than a similar one —
+    /// `member_path` is the physical location and `content_hash` is over the
+    /// record's own payload, so together they name one thing the publisher
+    /// published once.
+    ///
+    /// Returns `None` unless EXACTLY ONE such row exists, the same discipline
+    /// [`Db::reparse_target`] applies: two rows sharing a member and bytes is a
+    /// shape nobody has explained, and adopting one of them on a guess is worse
+    /// than leaving a duplicate that a census can find.
+    async fn moved_identity_twin(
+        &self,
+        conn: &Connection,
+        n: &Notice,
+    ) -> turso::Result<Option<i64>> {
+        let mut rows = conn
+            .query(
+                "SELECT id FROM notices
+                  WHERE source = ? AND member_path = ? AND content_hash = ?
+                    AND publication_id <> ? LIMIT 2",
+                (t(&n.source), t(&n.member_path), t(&n.content_hash), t(&n.publication_id)),
+            )
+            .await?;
+        let Some(first) = rows.next().await? else { return Ok(None) };
+        let id = int(&first, 0);
+        if rows.next().await?.is_some() {
+            return Ok(None);
+        }
+        Ok(Some(id))
     }
 
     async fn notice_id(&self, conn: &Connection, n: &Notice) -> turso::Result<Option<i64>> {
@@ -2111,7 +2185,9 @@ impl Db {
             // member's row by (fetch_id, member_path) so a content-hash difference
             // between the raw-bytes quarantine and the notice can't leave it stuck.
             None => {
-                if !self.record_notice_tx(conn, n, parse).await? {
+                // Issue 404: `Rekeyed` counts as written here — the reclaim wrote
+                // the parsed layer either way; only WHERE it wrote it differed.
+                if self.record_notice_tx(conn, n, parse).await? == Recorded::Duplicate {
                     return Ok(Reclaim::AlreadyParsed);
                 }
                 if matches!(parse, Parse::Parsed(_)) {
@@ -3883,6 +3959,35 @@ pub enum Parse {
     /// Unmapped content or an unrepresentable value: the notice is recorded,
     /// its payload stays in the archive, and nothing of it is imported.
     Quarantined { reason: String, detail: Option<String> },
+}
+
+/// The outcome of recording one member on the ORDINARY ingest path
+/// ([`Db::record_notice`]).
+///
+/// `Rekeyed` exists for the same reason [`Reparsed::Rekeyed`] does, one path over
+/// — and its absence cost 281 duplicate notices on 2026-09-16 (issue 404). When a
+/// parser change moves `publication_id` derivation, the daily ingest meets members
+/// it already holds and derives a key that matches nothing. `INSERT OR IGNORE` on
+/// `(source, publication_id, content_hash)` then MINTS a second row for bytes the
+/// corpus already has, and both project: one publisher notice becomes two, with a
+/// spurious version and a spurious change-feed event.
+///
+/// `reparse_notice` was taught this by issue 290 and the ingest path was not,
+/// because 290 was scoped to the re-parse. The ingest path is the one that runs
+/// every day.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Recorded {
+    /// A notice the corpus did not hold.
+    Inserted,
+    /// This exact identity is already known — the idempotency signal that makes
+    /// re-processing a package a no-op.
+    Duplicate,
+    /// The same source, member and bytes were held under a DIFFERENT
+    /// `publication_id`: the parser now derives a different identity for a record
+    /// the corpus already has. The row is written under the new key and the stale
+    /// one removed, inside one transaction. A nonzero count means this run changed
+    /// identity derivation.
+    Rekeyed,
 }
 
 /// The outcome of re-parsing one member in place ([`Db::reparse_notice`]).
@@ -7705,7 +7810,10 @@ tmpfs /data/ramcache tmpfs rw 0 0
         let db = Db::open(&path).await.unwrap();
         seed_fetch(&db).await;
         let notice = held_notice();
-        assert!(db.record_notice(&notice, &Parse::Parsed(tiny_parsed())).await.unwrap());
+        assert_eq!(
+            db.record_notice(&notice, &Parse::Parsed(tiny_parsed())).await.unwrap(),
+            Recorded::Inserted
+        );
         let id = int_of(&db, "SELECT id FROM notices").await.expect("the notice row");
 
         // A mention on `PROCEDURE`, the section `tiny_parsed` declares — and the section
@@ -7791,7 +7899,10 @@ tmpfs /data/ramcache tmpfs rw 0 0
         let db = Db::open(&path).await.unwrap();
         seed_fetch(&db).await;
         let notice = held_notice();
-        assert!(db.record_notice(&notice, &Parse::Parsed(tiny_parsed())).await.unwrap());
+        assert_eq!(
+            db.record_notice(&notice, &Parse::Parsed(tiny_parsed())).await.unwrap(),
+            Recorded::Inserted
+        );
         let id = int_of(&db, "SELECT id FROM notices").await.expect("the notice row");
         db.mark_projected(&[id]).await.unwrap();
         assert!(db.unprojected_parsed_notice_ids().await.unwrap().is_empty(), "starts folded");
@@ -7975,6 +8086,91 @@ tmpfs /data/ramcache tmpfs rw 0 0
         }
     }
 
+    /// Issue 404: the same archived member, offered twice with two different
+    /// derived `publication_id`s, is ONE notice.
+    ///
+    /// This is what cost 281 duplicate rows on 2026-09-16. Issue 394's guard
+    /// changed DÖE identity derivation; the daily ingest then met members it
+    /// already held, derived a key that matched nothing, and `INSERT OR IGNORE`
+    /// minted a second row for bytes the corpus already had. Both projected, so
+    /// one publisher notice became two versions.
+    ///
+    /// `reparse_notice` had been taught this by issue 290 and the ingest path had
+    /// not, because 290 was scoped to the re-parse — and the ingest path is the one
+    /// that runs every day.
+    #[tokio::test]
+    async fn a_member_re_ingested_under_a_moved_identity_is_not_a_second_notice() {
+        let path = format!("/tmp/tender-db-moved-identity-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        seed_fetch(&db).await;
+
+        // The ingest as it was, under the OLD derivation.
+        let before = Notice { publication_id: "00000000-1900".into(), ..held_notice() };
+        assert_eq!(
+            db.record_notice(&before, &Parse::Parsed(tiny_parsed())).await.unwrap(),
+            Recorded::Inserted
+        );
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM notices").await, Some(1));
+
+        // Re-processing the SAME package under the same derivation stays a no-op:
+        // that is the idempotency the `dup` counter reports, and it must not be
+        // disturbed by the new arm.
+        assert_eq!(
+            db.record_notice(&before, &Parse::Parsed(tiny_parsed())).await.unwrap(),
+            Recorded::Duplicate
+        );
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM notices").await, Some(1));
+
+        // Now the parser changes: same member, same bytes, a different derived id.
+        let after = Notice { publication_id: "a-real-stem-01".into(), ..before.clone() };
+        assert_eq!(
+            db.record_notice(&after, &Parse::Parsed(tiny_parsed())).await.unwrap(),
+            Recorded::Rekeyed,
+            "the corpus already holds these bytes from this member — that is this \
+             notice under a new name, not a second notice"
+        );
+        assert_eq!(
+            int_of(&db, "SELECT COUNT(*) FROM notices").await,
+            Some(1),
+            "re-keyed, NOT doubled — this is the assertion the 281 rows would have failed"
+        );
+        assert_eq!(
+            text_of(&db, "SELECT publication_id FROM notices").await.as_deref(),
+            Some("a-real-stem-01"),
+            "and the surviving row carries the identity the parser now derives"
+        );
+        assert_eq!(
+            text_of(&db, "SELECT parse_state FROM notices").await.as_deref(),
+            Some("parsed"),
+            "with its parsed layer intact — the adoption writes it under the new row"
+        );
+
+        // And once adopted, the ordinary path finds it: the adoption is a one-time
+        // bridge, not a permanent second lookup.
+        assert_eq!(
+            db.record_notice(&after, &Parse::Parsed(tiny_parsed())).await.unwrap(),
+            Recorded::Duplicate
+        );
+
+        // A DIFFERENT member with the same bytes is a different record and must
+        // still mint. Two packages can legitimately carry identical payloads —
+        // matching on bytes alone would silently merge them.
+        let elsewhere = Notice {
+            publication_id: "another-01".into(),
+            member_path: "pkg/m2".into(),
+            ..before.clone()
+        };
+        assert_eq!(
+            db.record_notice(&elsewhere, &Parse::Parsed(tiny_parsed())).await.unwrap(),
+            Recorded::Inserted,
+            "same bytes, different member — a different record"
+        );
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM notices").await, Some(2));
+
+        let _ = std::fs::remove_file(&path);
+    }
+
     /// Issue 305: the incremental pre-check's cheap upper bound counts exactly
     /// the LEGACY profiles (text / internal-ojs / ted-export*) still in the
     /// un-projected set — the SQL predicate must mirror ingest's
@@ -7992,7 +8188,10 @@ tmpfs /data/ramcache tmpfs rw 0 0
             n.publication_id = format!("p{i}");
             n.content_hash = format!("h{i}");
             n.profile = (*profile).into();
-            assert!(db.record_notice(&n, &Parse::Parsed(tiny_parsed())).await.unwrap());
+            assert_eq!(
+                db.record_notice(&n, &Parse::Parsed(tiny_parsed())).await.unwrap(),
+                Recorded::Inserted
+            );
         }
         assert_eq!(db.unprojected_legacy_notice_count().await.unwrap(), 4);
         // Projecting a legacy notice removes it from the pre-check's count.
@@ -8038,7 +8237,10 @@ tmpfs /data/ramcache tmpfs rw 0 0
                 member_path: format!("pkg/m{i}"),
                 ..held_notice()
             };
-            assert!(db.record_notice(&notice, &Parse::Parsed(tiny_parsed())).await.unwrap());
+            assert_eq!(
+            db.record_notice(&notice, &Parse::Parsed(tiny_parsed())).await.unwrap(),
+            Recorded::Inserted
+        );
         }
         // Fold them: every notice is projected, so the change-set is empty.
         db.mark_projected(&[1, 2, 3]).await.unwrap();
@@ -8085,13 +8287,15 @@ tmpfs /data/ramcache tmpfs rw 0 0
 
         // Ingest quarantined: a notice row (state quarantined) + a held quarantine
         // row keyed to it, no parsed values.
-        assert!(db
-            .record_notice(
+        assert_eq!(
+            db.record_notice(
                 &held_notice(),
                 &Parse::Quarantined { reason: "unknown-field-code".into(), detail: Some("line 3: OC".into()) },
             )
             .await
-            .unwrap());
+            .unwrap(),
+            Recorded::Inserted
+        );
         assert_eq!(text_of(&db, "SELECT parse_state FROM notices WHERE id=1").await.as_deref(), Some("quarantined"));
         assert_eq!(int_of(&db, "SELECT COUNT(*) FROM notice_texts WHERE notice_id=1").await, Some(0));
 
@@ -8610,13 +8814,15 @@ tmpfs /data/ramcache tmpfs rw 0 0
 
         // The stranded shape: a parse-level quarantine whose notice was later
         // parsed without the ledger stamp landing.
-        assert!(db
-            .record_notice(
+        assert_eq!(
+            db.record_notice(
                 &held_notice(),
                 &Parse::Quarantined { reason: "unparsable-xml".into(), detail: Some("XML with DTD detected".into()) },
             )
             .await
-            .unwrap());
+            .unwrap(),
+            Recorded::Inserted
+        );
         db.conn().await.execute("UPDATE notices SET parse_state = 'parsed' WHERE id = 1", ()).await.unwrap();
         assert_eq!(int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE notice_id = 1").await, None);
 

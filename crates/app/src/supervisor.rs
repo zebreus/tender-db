@@ -9085,14 +9085,30 @@ impl Supervisor {
             }
         }
 
+        // Issue 404: a derivation shift must be a NUMBER here, not an invisible
+        // change in what the corpus holds. On 2026-09-16 this line read
+        // "44835 members → 1138 notices (1138 parsed … 43697 dup)" while 281 of
+        // those 1,138 were duplicates of notices already held under the identity
+        // the parser had just stopped deriving — an ordinary-looking day.
+        let identity = if total.rekeyed > 0 {
+            format!(
+                ", {} re-keyed — NOTE: this run CHANGED publication_id derivation (issue 404). \
+                 Those rows moved to their new identity rather than doubling; a nonzero count is \
+                 either the point of a deploy or a regression, and never an ordinary day",
+                total.rekeyed
+            )
+        } else {
+            String::new()
+        };
         Ok(format!(
-            "{} members → {} notices ({} parsed, {} quarantined, {} unrecognised, {} dup)",
+            "{} members → {} notices ({} parsed, {} quarantined, {} unrecognised, {} dup{})",
             total.members,
             total.notices,
             total.parsed,
             total.parse_quarantined,
             total.quarantined,
-            total.duplicates
+            total.duplicates,
+            identity
         ))
     }
 

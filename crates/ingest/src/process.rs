@@ -54,6 +54,13 @@ pub struct Report {
     pub notices: u64,
     /// Records whose identity was already known — the idempotency signal.
     pub duplicates: u64,
+    /// Records the corpus already held under a DIFFERENT `publication_id` for the
+    /// same member and bytes, because the parser's identity derivation moved
+    /// (issue 404). The row was re-keyed in place rather than doubled, and these
+    /// are also counted in `notices` — this is HOW the row was written, not
+    /// whether. **Nonzero means this run changed identity derivation**, which is
+    /// either the point of a deploy or a regression, and is never an ordinary day.
+    pub rekeyed: u64,
     /// Records quarantined before a Notice identity existed — unrecognised
     /// payloads (ADR-0004).
     pub quarantined: u64,
@@ -115,6 +122,7 @@ pub async fn process(
         total.skipped += report.skipped;
         total.notices += report.notices;
         total.duplicates += report.duplicates;
+        total.rekeyed += report.rekeyed;
         total.quarantined += report.quarantined;
         total.parsed += report.parsed;
         total.parse_quarantined += report.parse_quarantined;
@@ -358,17 +366,25 @@ pub async fn process_package(
     while let Some((record, parse)) = recv_next(&mut slot).await {
         match record {
             Record::Notice(n) => {
-                let inserted =
+                let recorded =
                     db.record_notice(&resolved_notice(source, fetch_id, now, n, &parse), &parse).await?;
-                if inserted {
+                if recorded == store::Recorded::Rekeyed {
+                    // Issue 404: the corpus already held these bytes under the
+                    // identity the parser USED to derive. The row moved rather
+                    // than doubling, and the count is what makes that visible —
+                    // without it a derivation change shows up as an ordinary day's
+                    // ingest and 281 duplicate notices go unnoticed for weeks.
+                    report.rekeyed += 1;
+                }
+                if recorded == store::Recorded::Duplicate {
+                    report.duplicates += 1;
+                } else {
                     report.notices += 1;
                     match parse {
                         store::Parse::Parsed(_) => report.parsed += 1,
                         store::Parse::Quarantined { .. } => report.parse_quarantined += 1,
                         store::Parse::Pending => {}
                     }
-                } else {
-                    report.duplicates += 1;
                 }
             }
             Record::Quarantine(q) => {
