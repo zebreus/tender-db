@@ -9027,6 +9027,7 @@ impl Supervisor {
             });
             let base_notices = total.notices;
             let base_duplicates = total.duplicates;
+            let started = std::time::Instant::now();
             // Resilient: a corrupt package is quarantined and skipped, so one
             // bad archived file never aborts a multi-year job; only a systemic
             // (database) failure is fatal (ADR-0004).
@@ -9084,6 +9085,30 @@ impl Supervisor {
             if report.cancelled {
                 total.cancelled = true;
             }
+            // How fast the walk actually went (issue 407). Until this line the
+            // ingest said NOTHING per package, so on 2026-09-16 a 240x slowdown —
+            // issue 404's unindexed twin lookup took a TED daily from 30 notices/s
+            // to 0.12 — was invisible for two hours, and was found only by reading
+            // `members_done` out of /admin/jobs by hand and comparing it against a
+            // job summary from the morning before.
+            //
+            // No threshold, deliberately: the floor that would have caught today is
+            // easy to pick and easy to get wrong, and this codebase's habit is to
+            // calibrate a threshold against measurement rather than guess one
+            // (PUBLICATION_GAP_MIN_DAYS says so in as many words). These lines ARE
+            // that measurement; a guard belongs on top of a few weeks of them.
+            let secs = started.elapsed().as_secs_f64();
+            eprintln!(
+                "[process] {} {} {}: {} members → {} notices ({} dup) in {:.1}s ({:.1} members/s)",
+                source,
+                kind,
+                pkg.period,
+                report.members,
+                report.notices,
+                report.duplicates,
+                secs,
+                if secs > 0.0 { report.members as f64 / secs } else { 0.0 },
+            );
             match self.db.checkpoint(store::CheckpointMode::Truncate).await {
                 Ok(c) if c.busy => eprintln!(
                     "supervisor: job {job_id} checkpoint after {} busy (reader pinned), wal {} MB",
