@@ -80,3 +80,31 @@ where a test belongs.
 - **Serve the age.** `measuring since <age>` on the section so the UI can render "measuring for
   12 min" instead of "measuring…". That is a `Dashboard` model change and the unit that actually
   fixes the reader's problem; the log line only fixes the operator's.
+
+### Live, and it corrected the issue's own arithmetic — 2026-09-16, rev `acf5103`
+
+The first sequence after the deploy:
+
+    14:12:12  coverage: quarantine    measured in  18.6s
+    14:12:49  coverage: award-linkage measured in  37.2s
+    14:15:52  coverage: counts        measured in 182.6s
+    14:15:59  coverage: coverage      measured in   7.4s
+
+Two corrections to what is written above, both from the instrument's first output:
+
+- **The pass is ~4 minutes, not ~13.** The 13 minutes in the "Observed" section is wall-clock from
+  restart to the panel appearing, measured by polling from outside; it includes service startup and a
+  box that had just finished an 88-minute data-quality run. The sum of the four measurements here is
+  246 s.
+- **`counts` dominates, not `coverage`.** `refresh_into`'s own gate comment calls
+  `coverage`/`pipeline` "the one full `notices` `GROUP BY`, the heaviest read". On this pass it was
+  the CHEAPEST of the four at 7.4 s, against 182.6 s for `counts`. Caveat, stated rather than
+  glossed: the four run in sequence, so `coverage` reads `notices` right after `counts` has walked
+  it, and a cold first pass may divide differently.
+
+That second point is a standing claim in the code that the measurement does not support, and it is
+now checkable across restarts instead of being settled by a comment. If it holds up over a few cold
+starts, the gate comment should be rewritten and the ORDER reconsidered — publishing the 7-second
+section before the 3-minute one would put the panel a reader is waiting for on screen first.
+
+Unit 1 is done. The two skip paths and the served age remain open above.

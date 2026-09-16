@@ -271,12 +271,21 @@ pub async fn measure(db: &Db) -> Dashboard {
 /// dashboard unreadable. On 2026-09-16 the `coverage` panel was blank for the
 /// quarter-hour after a deploy while `counts`, `quarantine` and `award-linkage`
 /// were populated, and nothing on the box could say whether the scan was running,
-/// wedged on a pinned reader, or disabled. It was running: the first pass takes
-/// on the order of 13 minutes at this corpus size. That number should not have
-/// needed an external poller to discover.
+/// wedged on a pinned reader, or disabled. It was running — but the only way to
+/// learn that was to poll the endpoint from outside for a quarter of an hour.
 ///
 /// `coverage` is published LAST of the four, which is why it is reliably the one
 /// a reader sees missing.
+///
+/// The first thing this instrument said, on the pass after its own deploy
+/// (2026-09-16 14:12–14:15Z): quarantine 18.6 s, award-linkage 37.2 s, **counts
+/// 182.6 s**, coverage **7.4 s** — about four minutes in total, with `counts`
+/// dominating and the section this module calls "the heaviest read" in the gate
+/// comment above being the cheapest of the four. Read that with its caveat: the
+/// four run in sequence, so `coverage` scans `notices` immediately after `counts`
+/// has already walked it, and a cold first pass may divide differently. Which is
+/// the point — that question is now answerable from the log across restarts
+/// instead of being settled by a comment nobody could check.
 async fn timed<T, E>(
     section: &str,
     measure: impl std::future::Future<Output = Result<T, E>>,
