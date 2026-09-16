@@ -33,6 +33,7 @@
 //! Change scoping is diff-based (ADR-0001 amendment) and lives in `store`,
 //! which has both the old and the new version in hand.
 
+use crate::fts::parse::CONTRACT_VALUE as FTS_CONTRACT_VALUE;
 use crate::r209::rules;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -4283,6 +4284,11 @@ struct RawContract {
     concluded: Option<(i64, i64, bool)>, // BT-145
     decided: Option<(i64, i64, bool)>,  // BT-1451
     bid_refs: Vec<String>,              // BT-3202
+    /// The contract's OWN published value, where the source publishes one
+    /// (issue 386 unit 2). Only ever a fallback: a bid-derived total is the
+    /// eForms answer and wins wherever the graph provides it.
+    direct_cents: Option<i64>,
+    direct_currency: Option<String>,
 }
 
 #[derive(Default)]
@@ -4337,6 +4343,15 @@ fn read_results(
                     ("BT-13713", NoticeValue::Id { value, .. }) => r.lot_key = Some(value.clone()),
                     ("OPT-320", NoticeValue::Id { value, .. }) => r.bid_refs.push(value.clone()),
                     ("OPT-315", NoticeValue::Id { value, .. }) => r.contract_refs.push(value.clone()),
+                    // The winner-DECISION date where the source scopes it to the
+                    // RESULT rather than to a settled contract (issue 386 unit 2).
+                    // An FTS UK6/UK5 award publishes no `contracts[]` at all, so
+                    // eForms' contract-scoped BT-1451 has nothing to land on and
+                    // the date was dropped whole. Same destination issue 255 gave
+                    // the legacy award blocks, for the same reason.
+                    ("BT-1451", NoticeValue::Date { utc_seconds, offset_minutes, has_time }) => {
+                        r.decided = Some((*utc_seconds, *offset_minutes, *has_time));
+                    }
                     ("BT-759", NoticeValue::Number { value, .. }) => {
                         stats.entry(row.section_id.as_str()).or_insert((None, None, owner)).1 =
                             Some(*value as i64);
@@ -4384,6 +4399,10 @@ fn read_results(
                         c.decided = Some((*utc_seconds, *offset_minutes, *has_time));
                     }
                     ("BT-3202", NoticeValue::Id { value, .. }) => c.bid_refs.push(value.clone()),
+                    (FTS_CONTRACT_VALUE, NoticeValue::Amount { cents, currency }) => {
+                        c.direct_cents = Some(*cents);
+                        c.direct_currency = Some(currency.clone());
+                    }
                     _ => {}
                 }
             }
@@ -4682,9 +4701,15 @@ impl RawResults {
             .iter()
             .map(|c| {
                 // A contract's value is the value of the Bid(s) it settled —
-                // eForms contracts carry no value of their own.
+                // eForms contracts carry no value of their own. Where the source
+                // publishes the contract's own amount and the bid graph yields
+                // nothing (every FTS contract; issue 386 unit 2), that published
+                // amount is the value. Bid-first, so no eForms contract moves.
                 let (cents, currency) =
-                    single_currency_total(c.bid_refs.iter().filter_map(|r| self.bid(r)));
+                    match single_currency_total(c.bid_refs.iter().filter_map(|r| self.bid(r))) {
+                        (None, _) => (c.direct_cents, c.direct_currency.clone()),
+                        settled => settled,
+                    };
                 ContractState {
                     key: c.key.clone(),
                     buyer_contract_id: c.buyer_contract_id.clone(),
@@ -6226,6 +6251,64 @@ fn first_date(parsed: &Parsed, field_id: &str) -> Option<i64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Issue 386 unit 2, on the two releases the finding named.
+    ///
+    /// FTS publishes a settled contract's money on the CONTRACT and leaves the
+    /// award it settles value-less — 028961-2025 carries `awards[0].value: null`
+    /// beside `contracts[0].value: 54393.6 GBP`. eForms has no contract-value BT,
+    /// so the reader had no destination and served every FTS contract in the
+    /// corpus as `value: null` against a figure in plain sight.
+    ///
+    /// And 083650-2026 is the other half: a UK6 award with NO `contracts[]` at
+    /// all, whose decision date used to be emitted only inside the contracts
+    /// loop and was therefore dropped whole.
+    #[test]
+    fn an_fts_contract_keeps_its_published_value_and_a_contractless_award_its_date() {
+        let round = |name: &str| {
+            let bytes = std::fs::read(format!("tests/fixtures/fts/members/{name}.json"))
+                .expect("fixture");
+            let store::Parse::Parsed(parsed) = crate::fts::parse_payload("fts:ocds-1.1", &bytes)
+            else {
+                panic!("{name} must parse");
+            };
+            let sections: HashMap<&str, &store::Section> =
+                parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
+            read_results(&sections, &parsed, false, false).bind(1, None, &HashMap::new())
+        };
+
+        let settled = round("028961-2025");
+        let [contract] = &settled.contracts[..] else {
+            panic!("028961-2025 publishes one contract: {:?}", settled.contracts);
+        };
+        assert_eq!(
+            (contract.cents, contract.currency.as_deref()),
+            (Some(5_439_360), Some("GBP")),
+            "54393.6 GBP is published on the contract, and the award it settles carries none"
+        );
+        // Not a bid total wearing a contract's name: the award has no value, so
+        // there is no BidState for the fallback to have come from.
+        assert!(
+            settled.bids.iter().all(|b| b.cents.is_none()),
+            "this release publishes no bid value: {:?}",
+            settled.bids
+        );
+
+        let contractless = round("083650-2026");
+        assert!(
+            contractless.contracts.is_empty(),
+            "the UK6 shape publishes no contracts[] at all"
+        );
+        let [result] = &contractless.lot_results[..] else {
+            panic!("one award, one related lot: {:?}", contractless.lot_results);
+        };
+        assert_eq!(
+            result.decided,
+            // 2026-09-03T00:00:00+01:00
+            Some((1_788_390_000, 60, true)),
+            "the award's own date, which no settled contract exists to carry"
+        );
+    }
 
     /// Issue 372 unit 2, against real published XML rather than the schema: a
     /// `FieldsPrivacy` block's PARENT is the section holding the value it

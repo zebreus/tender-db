@@ -1,6 +1,6 @@
 # 386 — FTS: a publisher-reused ocid welds different buyers' procurements into one Tender, and no FTS contract value is ever parsed
 
-Status: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — unit 2a FIXED and gated 2026-09-16 (the contract's own published value, and the contract-less award's decision date; see the section at the foot). Unit 1 (the ocid weld) and unit 2b (periods, `BT-3202`/`OPT-315`, the ADR-0004 checklist) are open. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (sources / fts profile) — unit 1 welds records that were never one procurement, unit 2 serves money and dates the source publishes as `null`
 Relates to: 342 (the FTS source; unit 2 complete, OPEN on the 2021-01 backfill and the docs — the parent of both units), 369 (the placeholder procedure-key gate and its unit-5 buyer grouping, which unit 1 extends), 377 (the same constant-key-publisher shape, decided NO GATE on TED for a class of 4 — and it says a platform-level cause reverses that), 34 (the original "every notice sharing the key collapses into one Tender"), 364 (the weld gauge `c0c2581` the FTS arm should feed), 255 (the award decision date's canonical homes, which unit 2's award-only releases never reach), ADR-0003 (merge only on a strong explicit cross-reference), ADR-0004 (the per-profile mapped-or-ignored checklist the `fts` module does not declare), ADR-0014 (contracts as one of the four money loci), CONTEXT.md:113-114, `docs/research/uk-fts.md` §4, `.scratch/tender-db/342-fts-plan.md` §3
 Blocked by: nothing
@@ -295,3 +295,71 @@ adds value or period; no issue on the board mentions FTS contract values, `BT-32
 - The `fts` module declares the per-profile mapped-or-ignored checklist ADR-0004's amendment promises, so
   a published field cannot go unmapped silently again.
 - Shipped BEFORE plan step 11's 69-month backfill, or the backfill pays a full FTS reparse afterwards.
+
+## Unit 2a landed 2026-09-16 — the contract's own value, and the contract-less award's date
+
+Status: fixed and gated, not yet deployed. Unit 1 (the ocid weld) and unit 2b (periods,
+`BT-3202`/`OPT-315`, the ADR-0004 checklist) are untouched.
+
+### What changed
+
+**`Contract` deserialises `value`, and it has a destination.** The awkward part of this unit was
+that there is nowhere obvious to put it: eForms contracts carry no value of their own — their money
+is the value of the Bid they settled, reached through `BT-3202` — so there is no BT to borrow, and
+`crates/ingest/src/fts/parse.rs` opens by saying its field ids are "the eForms ones the projection
+already reads … not cosmetic". Weighed three ways:
+
+- **Route it through `BT-3202` to the award's LotTender.** Rejected: on the shape that actually
+  carries the money the award publishes NO value (028961-2025 has `awards[0].value: null` beside
+  `contracts[0].value: 54393.6`), so this would mean writing the contract's amount onto a *bid* the
+  publisher never priced, and two contracts settling one award would each report the other's money.
+- **Mint a LotTender per contract.** Rejected outright — it invents a bid object, with no supplier
+  and no tender behind it, to hold a number.
+- **One new field id, `OCDS-ContractValue`, read as the contract's value.** Taken. It is the
+  source's own vocabulary for a fact eForms does not model, `pub(crate)` in the FTS parser and
+  IMPORTED by `project.rs` rather than re-spelled, so the emitter and the reader cannot drift.
+
+The projection prefers the bid-derived total and falls back to the published amount, so **no eForms
+or TED contract changes shape** — they emit no `OCDS-ContractValue` and take the same branch they
+always did.
+
+**The award's decision date now lands on the RESULT too.** It was emitted only inside
+`for contract in &release.contracts`, so the UK6/UK5 classes — an award with no `contracts[]` at all,
+483 + 285 notices — dropped it whole. It is emitted as `BT-1451-LotResult` on the result section and
+read there into `lot_results.decided`: the same destination and the same reasoning issue 255 recorded
+for the legacy award blocks, which also have no contract graph to hang it on. Inert for every other
+profile, which emits no such spelling.
+
+### Test
+
+`a_contracts_own_value_and_a_contractless_awards_date_are_both_emitted` (parse layer) and
+`an_fts_contract_keeps_its_published_value_and_a_contractless_award_its_date` (projection), both on
+committed fixtures of the two releases the finding named. Run red first, one destination at a time:
+`left: (None, None)` against the published 54,393.60 GBP, and `left: None` against the award date.
+
+`028961-2025.json` is a new fixture, fetched from the live API today; it independently reproduces the
+finding's central claim (`awards[0].value` null, `contracts[0].value` 54,393.60 GBP).
+
+### Deliberately NOT done, and why — unit 2b
+
+- **The periods.** `Contract.period` and `Award.contractPeriod` are read by nothing because
+  `tender_version_contracts` has no duration columns at all (`crates/store/src/canonical.rs:783`),
+  and the `BT-536/537` pair this issue points at is a LOT-scoped destination that
+  `tender.lots[].contractPeriod` already fills. Pushing a contract's duration there would collide
+  with a different fact under the same key. That is a schema decision, not a parser one, and
+  inventing the collision is worse than the current absence. Unit 2b, stated as a choice rather than
+  an omission.
+- **`BT-3202-Contract` / `OPT-315-LotResult`**, which 342-fts-plan.md:154 promises: they link the
+  results graph rather than carry money, and with the value question settled independently they are
+  now a linkage unit, not a blocker. Still owed, still unit 2b.
+- **The ADR-0004 per-profile mapped-or-ignored checklist** for the `fts` module — the thing that
+  would have caught this class before a consumer did.
+
+### Live acceptance, owed after deploy (needs an FTS re-parse — the parse layer changed)
+
+- `/v1/notices/30805632/content` `CON-1` carries 54,393.60 GBP, and `/v1/tenders/7956308` serves that
+  contract with a value and a non-empty `amounts`.
+- `/v1/notices/30805683/content` carries the 2025-05-08 award date.
+- The two canonical SELECTs over 7954583–7975000 re-run and recorded: FTS contracts `with_value` and
+  lot_results `with_decided` are no longer 0 of 5,158 and 0 of 16,948, with the residue explained by
+  source absence.

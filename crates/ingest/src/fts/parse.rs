@@ -34,6 +34,11 @@ use crate::eforms::value as eforms;
 /// The root section every profile in the corpus uses.
 const ROOT: &str = "PROCEDURE";
 
+/// A settled contract's own published value (issue 386 unit 2). Named in the
+/// source's vocabulary because eForms has no contract-value BT to reuse — see
+/// the emission site for why that is a departure worth making.
+pub(crate) const CONTRACT_VALUE: &str = "OCDS-ContractValue";
+
 /// Why a release was refused.
 pub struct Rejected {
     pub reason: &'static str,
@@ -260,6 +265,16 @@ pub fn parse(bytes: &[u8]) -> Result<Parsed, Rejected> {
             if let Some(l) = lot {
                 w.push(&rid, "BT-13713-LotResult", NoticeValue::Id { scheme: None, value: l.to_owned(), is_ref: false });
             }
+            // When the buyer decided. eForms scopes BT-1451 to the settled
+            // contract, and it is emitted there too — but the UK6/UK5 shapes
+            // publish an award with NO `contracts[]` at all, and inside the
+            // contract loop is the only place this date used to be read, so for
+            // those releases it was dropped whole. Issue 255 already settled where
+            // a contract-less award date lives: on the result. Same BT, scoped
+            // where this source publishes it (issue 386 unit 2).
+            if let Some(date) = award.date.as_deref() {
+                w.push(&rid, "BT-1451-LotResult", instant(date, "award date")?);
+            }
             for (n, supplier) in award.suppliers.iter().enumerate() {
                 let Some(sup_id) = supplier.id.as_deref().filter(|s| !s.is_empty()) else { continue };
                 let ten = format!("TEN-{aid}-{n}");
@@ -294,6 +309,15 @@ pub fn parse(bytes: &[u8]) -> Result<Parsed, Rejected> {
         if let Some(signed) = contract.date_signed.as_deref() {
             w.push(&sid, "BT-145-Contract", instant(signed, "contract dateSigned")?);
         }
+        // The one field id here that is NOT an eForms one, and deliberately so:
+        // eForms contracts carry no value of their own (their money is the value
+        // of the Bid they settled, reached through BT-3202), so there is no BT to
+        // borrow. OCDS publishes the contract's own amount, and dropping it —
+        // which is what happened until now — served every FTS contract in the
+        // corpus as `value: null` against a published figure. The projection
+        // learns this one id and prefers a bid-derived total wherever one exists,
+        // so no eForms notice changes shape (issue 386 unit 2).
+        w.money(&sid, CONTRACT_VALUE, contract.value.as_ref())?;
         if let Some(award) = release.awards.iter().find(|a| a.id.as_deref() == contract.award_id.as_deref())
             && let Some(date) = award.date.as_deref()
         {
@@ -673,6 +697,10 @@ struct Contract {
     #[serde(rename = "awardID")]
     award_id: Option<String>,
     date_signed: Option<String>,
+    /// What the contract is worth. Published on the CONTRACT, not on the award
+    /// it settles: 028961-2025 carries `awards[0].value = null` beside
+    /// `contracts[0].value = 54393.6 GBP` (issue 386 unit 2).
+    value: Option<Money>,
     #[serde(default)]
     documents: Vec<Document>,
 }
@@ -813,6 +841,47 @@ mod tests {
         assert!(
             !all(&p, "BT-262-Lot").is_empty(),
             "each item names a relatedLot, so its CPV is lot-scoped"
+        );
+    }
+
+    /// Issue 386 unit 2: the money OCDS puts on the contract, and the award date
+    /// a contract-less release would otherwise lose.
+    ///
+    /// 028961-2025 is the shape that made every FTS contract serve `value: null`:
+    /// `awards[0].value` is null and `contracts[0].value` is 54,393.60 GBP, so an
+    /// award-scoped read finds nothing. 083650-2026 is the mirror — a UK6 award
+    /// with no `contracts[]` at all, whose `date` used to be emitted only inside
+    /// the contracts loop.
+    #[test]
+    fn a_contracts_own_value_and_a_contractless_awards_date_are_both_emitted() {
+        let p = parsed("028961-2025");
+        assert_eq!(
+            one(&p, "CON-1", CONTRACT_VALUE),
+            Some(NoticeValue::Amount { cents: 5_439_360, currency: "GBP".into() }),
+            "54393.6 is a JSON float and still exact in minor units"
+        );
+        assert_eq!(
+            one(&p, "CON-1", "BT-145-Contract"),
+            Some(NoticeValue::Date { utc_seconds: 1_743_724_800, offset_minutes: 0, has_time: true }),
+            "dateSigned 2025-04-04Z, unchanged"
+        );
+        assert!(
+            all(&p, "BT-720-Tender").is_empty(),
+            "the award publishes no value, so nothing may appear as a bid"
+        );
+
+        // The contract-less award: its date is on the RESULT, because there is no
+        // settled contract for eForms' contract-scoped BT-1451 to hang on.
+        let q = parsed("083650-2026");
+        assert!(q.sections.iter().all(|s| s.kind != "SettledContract"), "no contracts[]");
+        assert_eq!(
+            one(&q, "RES-1-1", "BT-1451-LotResult"),
+            Some(NoticeValue::Date {
+                utc_seconds: 1_788_390_000,
+                offset_minutes: 60,
+                has_time: true
+            }),
+            "2026-09-03T00:00:00+01:00"
         );
     }
 
