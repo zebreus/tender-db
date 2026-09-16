@@ -389,3 +389,33 @@ parse exists. They are parse-level (the publication-id guard is a dispatch-stage
 reach the parser), so they are pre-existing and nothing was lost — the re-parse leaves their stored
 layer alone by design. Worth a census once the re-key is done, since nobody has looked at DÖE's
 parse-failure residue and this run is the first thing to count it.
+
+### Chunk 2 done, 281 carriers left (2026-09-16)
+
+**Job 1389 / internal 2298:**
+
+    re-parsed 401228 notices across 45 packages (764302 members walked, 0 unmatched, 6195 re-keyed,
+    3 now failing and left untouched); stamped 246265 tender(s) epoch-stale; 40 package(s) held
+    back — continue with {"after": 477} — NOTE: 6195 re-keyed by content hash …
+
+The arithmetic keeps closing exactly:
+
+| | |
+| --- | --- |
+| carriers at the start | 7,177 |
+| chunk 1 re-keyed | 701 |
+| chunk 2 re-keyed | **6,195** |
+| carriers now | **281** |
+| 7,177 − 701 − 6,195 | **281** ✓ |
+
+`0 unmatched` on both chunks. **Job 1411 is enqueued for the final 40 packages**, this time WITHOUT
+`reclaim_only`, so job 1412 folds it — the era's last chunk pays for its own projection rather than
+leaving the corpus with un-projected notices.
+
+The acceptance stands: the cohort must reach **0**, not 281 or any other small number. A residue
+would mean carriers are being skipped rather than re-keyed, and per issue 290's own note a
+DISPATCH-level failure is invisible to the walk's counters, so this count is the only detector.
+
+`now failing` is 3 this chunk against 5 in three packages last chunk — it scales with packages and
+not with carriers, which is what "pre-existing parse-level residue" looks like and is the second
+reason to believe the guard is not causing it.
