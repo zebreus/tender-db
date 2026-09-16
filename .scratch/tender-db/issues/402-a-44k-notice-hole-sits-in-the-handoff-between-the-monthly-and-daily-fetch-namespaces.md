@@ -117,3 +117,64 @@ available, dailies from a start issue, with no check that the second begins wher
   readable at all.
 - 395's `duplicate_periods` entry for `2025-09` is still live and still unreconciled; not this issue's,
   but re-check it in the same pass since both are fetch-registry hygiene.
+
+## The DURABLE half BUILT 2026-09-16 — DQ report section 14, publication-day continuity
+
+Status: the detector is built and gated (`GATE-EXIT=0`), not yet deployed. The gap itself is NOT yet
+closed — that is the other half and it needs the queue idle.
+
+### Where it lives, and why not the dashboard
+
+The `## Done when` asked for "a publication-day continuity test over `notices.published_at` … which is
+namespace-agnostic and would have flagged 12 consecutive silent days immediately". It is **weekly DQ
+report section 14**, not a dashboard panel, and the reason is cost measured rather than assumed:
+`notices.published_at` carries **no index** (the table has `notices_profile`, `notices_parse_state`,
+`notices_fetch_id` and nothing else), so any predicate on it is a full scan of 14.4M rows. The
+dashboard's coverage section already pays for one such scan per refresh; adding a second would double
+that section's cost forever, to detect something that does not need hourly resolution — a 12-day hole
+is not a thing that opens and closes between two weekly runs.
+
+The report bounds it the same way section 13 does: a NOTICE-ID window
+(`id > MAX(id) - PUBLICATION_GAP_WINDOW_IDS`, 2,000,000 ≈ the last five months at the head), which is
+a primary-key range rather than a scan.
+
+### The threshold is calibrated, and the calibration is in the code
+
+`PUBLICATION_GAP_MIN_DAYS = 4`. TED publishes **Sunday–Thursday** — measured on the known-good
+fortnight 2026-07-27…2026-08-09, where the absent days come in Fri/Sat pairs every week and every
+other day carries 3,247–3,752 notices. So a normal weekend is 2 silent days, a weekend plus a public
+holiday is 3, and 4 is the first length that cannot be the calendar. This issue's hole was **12
+publication days**, so the threshold has an order of magnitude of headroom over the noise and is
+nowhere near the signal. The test pins exactly that: the real fortnight produces no gaps, a 3-day
+silence produces none, a 4-day one produces one.
+
+### `before` / `after` are the diagnosis, not decoration
+
+Each row carries the notice counts on the days BRACKETING the stretch. Both being ordinary is what
+makes a stretch a hole rather than the beginning or end of a source's life — this issue in two
+numbers, 3,470 the day before and 3,722 the day after, nothing in between. The renderer says so.
+
+Interior-only by construction: a stretch exists only BETWEEN two days that both carry notices, so the
+window's own edges can never be reported. That is the same discipline issue 395 applied to monthly
+periods — and the reason 395 could not catch this is that this hole is interior to the NOTICES and
+exterior to the monthly sequence. Measuring what is HELD is what makes it namespace-agnostic.
+
+### Two things the codebase caught, worth recording
+
+- **The "deployed but inert" guard fired on me.** `every_report_field_is_read_by_the_renderer` failed
+  with `pub fn render_json( never reads these Report fields, so their queries cost their scan every
+  week and show that consumer nothing: ["publication_gaps"]`. That guard exists because section 13
+  shipped in exactly that state and ran inert for weeks. It works. `render_json` now emits
+  `publication_gaps`, present even when empty — an absent key and a healthy corpus are the same thing
+  to a JSON consumer, and this section's whole point is that silence was being read as health.
+- The civil-day round trip the fold rests on has its own test across leap years, century boundaries
+  and this issue's own span, because a silent off-by-one would mis-name every stretch by a day.
+
+### Still owed
+
+- **The gap itself.** Nothing is fetched yet. Settle (a) lag vs (b) permanent hole by asking TED for a
+  `2026-07` monthly and by probing daily issues ~125–135; then fetch and process.
+- Once deployed, run the DQ report and confirm section 14 names this stretch — the detector has never
+  been run against the corpus, only against fixtures.
+- `fetched_to` still understates TED's range as `2026-06` (a lexical MAX across namespaces). Not
+  touched by this unit.

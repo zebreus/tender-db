@@ -1290,6 +1290,45 @@ pub fn unmapped_fields_sql() -> String {
     )
 }
 
+/// How far back [`publication_days_sql`] looks, in notice ids. A notice-id window
+/// rather than a time one for the same reason as [`UNMAPPED_FIELD_WINDOW_IDS`]:
+/// `notices.published_at` carries no index, so a time predicate is a full scan
+/// while an id predicate is a primary-key range. Two million ids is roughly the
+/// last five months at the corpus head — comfortably more than the interval
+/// between weekly runs, so a hole cannot open and close between two reports.
+pub const PUBLICATION_GAP_WINDOW_IDS: i64 = 2_000_000;
+
+/// A silent stretch shorter than this is the publication calendar, not a hole.
+///
+/// Calibrated, not guessed. TED publishes **Sunday–Thursday** — measured on a
+/// known-good fortnight 2026-07-27…2026-08-09, where the absent days come in
+/// Fri/Sat pairs every week and every other day carries ~3,300–3,750 notices. So
+/// a normal weekend is 2 silent days and a weekend plus a public holiday is 3.
+/// Four is the first length that cannot be the calendar.
+///
+/// The hole this section exists for was **12 publication days** (16 calendar
+/// days, 2026-06-30…2026-07-15, issue 402), so the threshold has an order of
+/// magnitude of headroom over the noise and is nowhere near the signal.
+pub const PUBLICATION_GAP_MIN_DAYS: i64 = 4;
+
+/// Distinct publication days per source at the corpus head (issue 402).
+///
+/// The report folds these into silent stretches. It is days rather than counts
+/// because the defect is ABSENCE: a day with one notice and a day with 4,000 are
+/// both evidence the pipeline reached that day, and a day with none is the only
+/// thing being looked for.
+pub fn publication_days_sql() -> String {
+    format!(
+        "SELECT n.source AS source, \
+                strftime('%Y-%m-%d', n.published_at, 'unixepoch') AS day, \
+                COUNT(*) AS notices \
+           FROM notices n \
+          WHERE n.id > (SELECT MAX(id) FROM notices) - {PUBLICATION_GAP_WINDOW_IDS} \
+            AND n.published_at IS NOT NULL \
+          GROUP BY n.source, day ORDER BY n.source, day"
+    )
+}
+
 pub fn whole_corpus_queries() -> Vec<(String, String)> {
     vec![
         ("fresh_holds".to_owned(), fresh_holds_sql()),
@@ -1324,6 +1363,11 @@ pub fn whole_corpus_queries() -> Vec<(String, String)> {
         // would `as_i64` the `field_id` in column 1 to 0. Its own SQL window
         // bounds the cost instead.
         ("unmapped_fields".to_owned(), unmapped_fields_sql()),
+        // Issue 402: publication-day continuity. Whole-corpus registration for the
+        // same reason as the sieve above — it keys on `notices`, which the
+        // tender-id windowing machinery has nothing to bind to — and its own id
+        // window bounds the cost.
+        ("publication_days".to_owned(), publication_days_sql()),
     ]
 }
 
@@ -1761,6 +1805,90 @@ pub struct WeldRow {
     pub versions: u64,
 }
 
+/// One silent stretch in a source's publication days (issue 402).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PublicationGapRow {
+    pub source: String,
+    /// First silent day, inclusive.
+    pub from: String,
+    /// Last silent day, inclusive.
+    pub to: String,
+    /// Calendar days in the stretch. Not publication days — the section cannot
+    /// know a source's calendar, so it reports what it measured and lets the
+    /// reader apply the rhythm.
+    pub days: i64,
+    /// Notices on the day BEFORE the stretch, and on the day after. Both being
+    /// ordinary is what makes a stretch a hole rather than the start or end of a
+    /// source's life — the whole diagnosis of issue 402 in two numbers.
+    pub before: i64,
+    pub after: i64,
+}
+
+/// Fold a source's ordered distinct publication days into the silent stretches
+/// between them (issue 402).
+///
+/// Interior only, by construction: a stretch exists only BETWEEN two days that
+/// both carry notices, so the window's own edges can never be reported as a gap.
+/// That is the same discipline issue 395 applied to monthly periods — and the
+/// reason 395 could not catch 402 is that 402's hole is at the seam between two
+/// period NAMESPACES, which is interior to the notices and exterior to the
+/// monthly sequence. Measuring what is HELD rather than what was fetched is what
+/// makes this namespace-agnostic.
+pub fn publication_gaps(days: &[(String, i64)], min_days: i64) -> Vec<(String, String, i64, i64, i64)> {
+    let mut out = Vec::new();
+    for pair in days.windows(2) {
+        let (lo, before) = &pair[0];
+        let (hi, after) = &pair[1];
+        let (Some(a), Some(b)) = (civil_days(lo), civil_days(hi)) else { continue };
+        let silent = b - a - 1;
+        if silent >= min_days {
+            out.push((
+                day_string(a + 1).unwrap_or_else(|| lo.clone()),
+                day_string(b - 1).unwrap_or_else(|| hi.clone()),
+                silent,
+                *before,
+                *after,
+            ));
+        }
+    }
+    out
+}
+
+/// `YYYY-MM-DD` to a day number, and back. Howard Hinnant's civil-from-days, the
+/// same algorithm `store::rates::civil_date` inverts — kept here rather than
+/// reached for across crates because this module is the ingest side and the only
+/// thing it needs is the round trip.
+fn civil_days(day: &str) -> Option<i64> {
+    let mut it = day.split('-');
+    let y: i64 = it.next()?.parse().ok()?;
+    let m: i64 = it.next()?.parse().ok()?;
+    let d: i64 = it.next()?.parse().ok()?;
+    if !(1..=12).contains(&m) || !(1..=31).contains(&d) {
+        return None;
+    }
+    let y = y - i64::from(m <= 2);
+    let era = if y >= 0 { y } else { y - 399 } / 400;
+    let yoe = y - era * 400;
+    let mp = (m + 9) % 12;
+    let doy = (153 * mp + 2) / 5 + d - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    Some(era * 146_097 + doe - 719_468)
+}
+
+fn day_string(z: i64) -> Option<String> {
+    let z = z + 719_468;
+    let era = if z >= 0 { z } else { z - 146_096 } / 146_097;
+    let doe = z - era * 146_097;
+    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146_096) / 365;
+    let y = yoe + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y = y + i64::from(m <= 2);
+    Some(format!("{y:04}-{m:02}-{d:02}"))
+}
+
 /// One published field id the projection has no destination for (issue 368
 /// unit 4b) — a spelling the closed vocabulary silently defaults on.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -1844,6 +1972,10 @@ pub struct Report {
     /// [`UNMAPPED_FIELD_LISTING_CAP`] for the 61.7 % measurement that says so,
     /// and why this is not yet the vocabulary diagnostic 368 asked for.
     pub unmapped_fields: Vec<UnmappedFieldRow>,
+    /// Silent stretches of [`PUBLICATION_GAP_MIN_DAYS`] days or more in each
+    /// source's publication calendar, at the corpus head (issue 402). Empty is
+    /// the healthy state.
+    pub publication_gaps: Vec<PublicationGapRow>,
     /// The longest version chain in the corpus (`MAX(tenders.current_seq)`) —
     /// the fold-cost tripwire (issue 92). 0 when unmeasured or the layer is
     /// empty; the render distinguishes the two via [`Report::unmeasured`].
@@ -1934,6 +2066,9 @@ pub struct Raw {
     /// is full-id OR stem and the DE-1.x aliases resolve there (unit 4a); it is
     /// asked per table, i.e. per channel, which is why the table travels.
     pub unmapped_fields: Rows,
+    /// `(source, day, notices)` at the corpus head, ordered — the raw material
+    /// [`publication_gaps`] folds (issue 402).
+    pub publication_days: Rows,
     /// Labels whose query never ran (issue 230), in the order collected.
     pub unmeasured: Vec<String>,
 }
@@ -1991,6 +2126,7 @@ impl Raw {
             sentinel_dates: take("sentinel_dates", &mut unmeasured)?,
             withheld_markers: take("withheld_markers", &mut unmeasured)?,
             unmapped_fields: take("unmapped_fields", &mut unmeasured)?,
+            publication_days: take("publication_days", &mut unmeasured)?,
             unmeasured,
         })
     }
@@ -2233,6 +2369,36 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
             .flatten()
             .take(UNMAPPED_FIELD_LISTING_CAP)
             .collect(),
+        // Issue 402: fold the head's publication days into silent stretches, per
+        // source, in Rust — a gap is a relation between CONSECUTIVE rows, which
+        // is a window function turso only partly supports (see the dialect note
+        // in `/v1/sql/schema`), and the fold is three lines here against a
+        // `LAG()` that would have to be tested against the engine's own gaps.
+        publication_gaps: {
+            let mut by_source: std::collections::BTreeMap<String, Vec<(String, i64)>> =
+                Default::default();
+            for r in &raw.publication_days {
+                by_source
+                    .entry(as_str(r.first()))
+                    .or_default()
+                    .push((as_str(r.get(1)), as_u64(r.get(2)) as i64));
+            }
+            by_source
+                .into_iter()
+                .flat_map(|(source, days)| {
+                    publication_gaps(&days, PUBLICATION_GAP_MIN_DAYS).into_iter().map(
+                        move |(from, to, days, before, after)| PublicationGapRow {
+                            source: source.clone(),
+                            from,
+                            to,
+                            days,
+                            before,
+                            after,
+                        },
+                    )
+                })
+                .collect()
+        },
         unmeasured: raw.unmeasured.clone(),
     }
 }
@@ -2911,6 +3077,60 @@ pub fn render_text(report: &Report) -> String {
              diagnostic earns being ignored."
         );
     }
+
+    // Issue 402. The section exists because three independent completeness
+    // signals read GREEN over a 12-publication-day blackout: `fetch complete ✓`
+    // (a lexical MAX over two period namespaces), issue 395's monthly sequence
+    // check (monthly-only and interior-only, both by design), and the 2026
+    // coverage cell (whose stale-denominator SURPLUS exceeded the deficit). All
+    // three ask what was FETCHED. This one asks what is HELD, which is the only
+    // question a namespace seam cannot hide from.
+    let _ = writeln!(
+        out,
+        "\n== 14. Publication-day continuity (silent stretches in what is HELD — issue 402) =="
+    );
+    if report.unmeasured.iter().any(|l| l == "publication_days") {
+        let _ = writeln!(out, "  UNMEASURED — the `publication_days` query did not run.");
+    } else if report.publication_gaps.is_empty() {
+        let _ = writeln!(
+            out,
+            "  none — no source is silent for {PUBLICATION_GAP_MIN_DAYS}+ consecutive days \
+             anywhere in the newest {PUBLICATION_GAP_WINDOW_IDS} notice ids."
+        );
+    } else {
+        let _ = writeln!(
+            out,
+            "  {:<10} {:<12} {:<12} {:>6} {:>12} {:>12}",
+            "source", "from", "to", "days", "before", "after"
+        );
+        for r in &report.publication_gaps {
+            let _ = writeln!(
+                out,
+                "  {:<10} {:<12} {:<12} {:>6} {:>12} {:>12}",
+                r.source,
+                r.from,
+                r.to,
+                r.days,
+                group(r.before as u64),
+                group(r.after as u64)
+            );
+        }
+        let _ = writeln!(
+            out,
+            "  `before` and `after` are the notice counts on the days bracketing the stretch. \
+             BOTH being ordinary is what makes a stretch a hole rather than the edge of a \
+             source's life — that pair is the whole diagnosis of issue 402 (2026-06-30…07-15, \
+             3,470 the day before and 3,722 the day after, nothing in between).\n  \
+             The threshold is {PUBLICATION_GAP_MIN_DAYS} days and it is CALIBRATED, not guessed: \
+             TED publishes Sunday–Thursday, so a normal weekend is 2 silent days and a weekend \
+             plus a holiday is 3. A source with a different rhythm may show a benign entry here; \
+             read it against that source's calendar rather than assuming a defect.\n  \
+             Interior only, by construction — a stretch exists only BETWEEN two days that both \
+             carry notices, so the window's edges can never be reported. Windowed to the newest \
+             {PUBLICATION_GAP_WINDOW_IDS} notice ids because `notices.published_at` carries no \
+             index; an id predicate is a primary-key range where a time predicate is a full scan."
+        );
+    }
     out
 }
 
@@ -3269,6 +3489,21 @@ pub fn render_json(report: &Report) -> String {
             "window_days": FRESH_HOLD_WINDOW_SECS / 86_400,
             "reasons": fresh_holds,
         },
+        // Issue 402. Present even when empty, because an absent key and a healthy
+        // corpus are the same thing to a JSON consumer, and this section's whole
+        // point is that silence was already being read as health.
+        "publication_gaps": report
+            .publication_gaps
+            .iter()
+            .map(|r| json!({
+                "source": r.source,
+                "from": r.from,
+                "to": r.to,
+                "days": r.days,
+                "before": r.before,
+                "after": r.after,
+            }))
+            .collect::<Vec<_>>(),
         "amount_vat_basis": amount_basis,
         "content_presence": presence,
         "amount_plausibility": plausibility,
@@ -3499,6 +3734,7 @@ mod tests {
     fn the_headline_history_entry_carries_num_den_pairs_and_stays_bounded() {
         let report = Report {
             base_url: "x".into(),
+            publication_gaps: Vec::new(),
             completeness: vec![CompletenessRow {
                 profile: "eforms:eforms-sdk-1.13".into(),
                 versions: 1_000,
@@ -4234,6 +4470,129 @@ mod tests {
         assert!(text.contains("LISTING FULL"), "a truncated tail says so:\n{text}");
     }
 
+    /// Issue 402: the day fold reports interior silences and nothing else.
+    ///
+    /// Pinned on the real shape rather than on invented dates — TED's Sunday–Thursday
+    /// week, so the ordinary rhythm has 2-day holes everywhere and the section must
+    /// stay quiet through all of them.
+    #[test]
+    fn a_publication_gap_is_an_interior_silence_and_a_weekend_is_not_one() {
+        // A fortnight of the real rhythm: Sun–Thu, Fri/Sat absent. Measured on
+        // prod 2026-07-27…2026-08-09.
+        let rhythm: Vec<(String, i64)> = [
+            ("2026-07-27", 3419),
+            ("2026-07-28", 3635),
+            ("2026-07-29", 3436),
+            ("2026-07-30", 3712),
+            ("2026-08-02", 3752),
+            ("2026-08-03", 3247),
+            ("2026-08-04", 3272),
+            ("2026-08-05", 3312),
+            ("2026-08-06", 3344),
+            ("2026-08-09", 3414),
+        ]
+        .iter()
+        .map(|(d, n)| ((*d).to_owned(), *n))
+        .collect();
+        assert!(
+            publication_gaps(&rhythm, PUBLICATION_GAP_MIN_DAYS).is_empty(),
+            "every Fri/Sat pair is the calendar, not a hole"
+        );
+
+        // Issue 402's own hole, with its real bracketing counts.
+        let holed: Vec<(String, i64)> = [("2026-06-29", 3470), ("2026-07-16", 3722)]
+            .iter()
+            .map(|(d, n)| ((*d).to_owned(), *n))
+            .collect();
+        assert_eq!(
+            publication_gaps(&holed, PUBLICATION_GAP_MIN_DAYS),
+            vec![("2026-06-30".to_owned(), "2026-07-15".to_owned(), 16, 3470, 3722)],
+            "the stretch is named by its own first and last silent day, and brackets \
+             with the counts that make it a hole rather than an edge"
+        );
+
+        // A three-day silence — a weekend plus a public holiday — stays under the
+        // threshold, and a four-day one does not. This is the calibration itself.
+        let span = |a: &str, b: &str| {
+            publication_gaps(&[(a.to_owned(), 1), (b.to_owned(), 1)], PUBLICATION_GAP_MIN_DAYS)
+        };
+        assert!(span("2026-08-06", "2026-08-10").is_empty(), "3 silent days is a long weekend");
+        assert_eq!(span("2026-08-06", "2026-08-11").len(), 1, "4 is the first that is not");
+
+        // A single day, or none, has no interior to report.
+        assert!(publication_gaps(&[("2026-08-06".to_owned(), 1)], 1).is_empty());
+        assert!(publication_gaps(&[], 1).is_empty());
+    }
+
+    /// The civil-day round trip the fold rests on, across leap years, century
+    /// boundaries and the corpus's own range. A silent off-by-one here would
+    /// mis-name every stretch by a day, which is exactly the kind of error a
+    /// section nobody re-derives would carry for years.
+    #[test]
+    fn the_civil_day_round_trip_is_exact_across_the_corpus_range() {
+        for day in [
+            "1993-01-01", "1993-03-05", "1996-02-29", "1999-12-31", "2000-02-29", "2000-03-01",
+            "2008-12-31", "2024-02-29", "2026-06-30", "2026-07-15", "2100-01-01",
+        ] {
+            let z = civil_days(day).unwrap_or_else(|| panic!("{day} parses"));
+            assert_eq!(day_string(z).as_deref(), Some(day), "round trip {day}");
+        }
+        // Consecutive days differ by exactly one, including across a leap day.
+        assert_eq!(
+            civil_days("2024-03-01").unwrap() - civil_days("2024-02-29").unwrap(),
+            1
+        );
+        assert_eq!(civil_days("2026-07-01").unwrap() - civil_days("2026-06-30").unwrap(), 1);
+        // And the issue's own span is the 16 the section reports.
+        assert_eq!(civil_days("2026-07-16").unwrap() - civil_days("2026-06-29").unwrap() - 1, 16);
+        // Junk is refused rather than silently folded to a date.
+        assert!(civil_days("not-a-date").is_none());
+        assert!(civil_days("2026-13-01").is_none());
+        assert!(civil_days("2026-07").is_none());
+    }
+
+    /// Section 14 renders, and says the two things a reader needs: the bracketing
+    /// counts and that the threshold is calibrated rather than picked.
+    #[test]
+    fn section_14_names_the_stretch_and_its_brackets() {
+        let mut ran = sentinel_scaffold();
+        put(
+            &mut ran,
+            "publication_days",
+            Some(vec![
+                vec![json!("ted"), json!("2026-06-29"), json!(3470)],
+                vec![json!("ted"), json!("2026-07-16"), json!(3722)],
+                // A second source whose only silence is a weekend: the control, so
+                // a section that flagged everything would fail here.
+                vec![json!("doe"), json!("2026-08-06"), json!(10)],
+                vec![json!("doe"), json!("2026-08-09"), json!(11)],
+            ]),
+        );
+        let report = assemble("x", &Raw::from_labelled(ran).expect("raw"));
+        let text = render_text(&report);
+        assert!(text.contains("== 14. Publication-day continuity"), "{text}");
+        assert!(text.contains("2026-06-30"), "the first silent day is named:\n{text}");
+        assert!(text.contains("2026-07-15"), "and the last:\n{text}");
+        assert!(
+            text.contains(&group(3_470)) && text.contains(&group(3_722)),
+            "brackets, grouped the way the report groups:\n{text}"
+        );
+        assert_eq!(report.publication_gaps.len(), 1, "the doe weekend is not a gap");
+        assert_eq!(report.publication_gaps[0].source, "ted");
+        assert_eq!(report.publication_gaps[0].days, 16);
+    }
+
+    /// The healthy state renders as an explicit "none", not as an absent section —
+    /// the issue-368 lesson: a diagnostic that vanishes when it has nothing to say
+    /// is indistinguishable from one that never ran.
+    #[test]
+    fn section_14_says_none_rather_than_disappearing() {
+        let report = assemble("x", &Raw::from_labelled(sentinel_scaffold()).expect("raw"));
+        let text = render_text(&report);
+        assert!(text.contains("== 14. Publication-day continuity"), "{text}");
+        assert!(text.contains("  none —"), "{text}");
+    }
+
     /// Section 11 carries FOUR readings of one population and they mean different
     /// things: `rows` is every `-1.00`, `in-wh-notice` is notice-wide ("this notice
     /// withheld something"), `marked` is unit 2's exact per-row verdict, and
@@ -4372,6 +4731,7 @@ mod tests {
                 "weld_candidates",
                 "weld_bands",
                 "unmapped_fields",
+                "publication_days",
             ]
         );
     }
@@ -4562,6 +4922,7 @@ mod tests {
             ("weld_candidates".to_owned(), Some(vec![])),
             ("weld_bands".to_owned(), Some(vec![])),
             ("unmapped_fields".to_owned(), Some(vec![])),
+            ("publication_days".to_owned(), Some(vec![])),
         ])
         .expect("labelled");
         let text = render_text(&assemble("http://x", &raw));
@@ -5007,6 +5368,7 @@ mod tests {
             ("weld_candidates".to_owned(), Some(vec![vec![json!(2_816_628), json!(127), json!(2_983)]])),
             ("weld_bands".to_owned(), Some(vec![vec![json!(2), json!(1), json!(1), json!(1)]])),
             ("unmapped_fields".to_owned(), Some(vec![])),
+            ("publication_days".to_owned(), Some(vec![])),
         ];
         let raw = Raw::from_labelled(results).expect("labelled");
         let report = assemble("http://x", &raw);
