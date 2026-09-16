@@ -83,6 +83,19 @@ false is a defect whether or not a fix is queued; those lines get revised again 
 Left: unit 4's second half — whether `TenderRow` should carry per-field provenance so a consumer
 can tell an inherited deadline from a republished one, rather than only being told about it.
 
+**Now a two-row question, not a one-row question (2026-09-16, from issue 389 unit 2).** The lot row
+inherits too: a lot that publishes no `submission_deadline` serves the PROCEDURE's, because the
+`status=open` filter is decided by the union of both scopes and 73 of 73 open-with-lots tenders in
+the newest 100k were being returned as open with `null` there. 389 deliberately did NOT invent a
+marker — that would have decided this unit from one level down, and risked two shapes for one idea —
+and documented the existing path instead (`/docs` caveats → Dates, the OpenAPI `Lot` schema, the
+`status` parameter row, `LotRow::deadline`), each pointing here. So whatever shape this unit picks
+lands on `TenderRow` and `LotRow` together, as an addition to both rather than a correction to one.
+
+The existing path, for reference when choosing: the tender detail's `dates` array already names each
+date's `lot` (`null` for a procedure-scoped one), verified live on tender 8353548. Whatever the
+row-level marker becomes should agree with that array rather than duplicate it in a third spelling.
+
 ## The 10⁵⁰-quarantine row is revised again, as unit 2 said it would be (2026-09-10)
 
 Unit 2's note said the three rows whose code half was queued elsewhere were corrected to *today's*

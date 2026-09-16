@@ -551,10 +551,23 @@ pub struct ReparseReport {
     /// Notices whose parsed layer was REPLACED from the archive.
     pub reparsed: u64,
     /// Records that re-parsed fine but matched no notice row — nothing to replace.
-    /// Not an error: the selected members come from `notices`, but a package walk
-    /// can yield records the selection did not name (a text-era member file holds
-    /// several records, and only some may be in the cohort).
+    /// Not an error BY ITSELF: the selected members come from `notices`, but a
+    /// package walk can yield records the selection did not name (a text-era member
+    /// file holds several records, and only some may be in the cohort).
+    ///
+    /// It stops being benign when it SPIKES. Issue 290: a parser change that also
+    /// moves `publication_id` derivation makes the identity lookup miss, and the
+    /// stale layer under the old key is never replaced — which looks exactly like
+    /// this counter going up. `rekeyed` catches the recoverable half of that;
+    /// whatever is left here on a run that expected few is worth stopping for, and
+    /// the supervisor's summary says so when the count is nonzero.
     pub unmatched: u64,
+    /// Records matched by `(source, content_hash)` after the full identity missed,
+    /// because the parser now derives a different `publication_id` for the same
+    /// bytes (issue 290). Their layer WAS replaced and their key adopted, so they
+    /// are also counted in `reparsed`; this is how they were found, not whether it
+    /// worked. Nonzero means this run changed identity derivation.
+    pub rekeyed: u64,
     /// Records the CURRENT parser quarantines. Their existing parsed layer is left
     /// untouched — a re-parse must never trade a good layer for a failure.
     pub now_failing: u64,
@@ -598,10 +611,18 @@ pub async fn reparse_package(
             match &parse {
                 store::Parse::Parsed(parsed) => {
                     let resolved = resolved_notice(source, fetch_id, now, n, &parse);
-                    if db.reparse_notice(&resolved, parsed).await? {
-                        report.reparsed += 1;
-                    } else {
-                        report.unmatched += 1;
+                    match db.reparse_notice(&resolved, parsed).await? {
+                        store::Reparsed::Replaced => report.reparsed += 1,
+                        // Issue 290: the bytes matched but the key did not, so the
+                        // parser's `publication_id` derivation moved under this
+                        // run. Counted separately AND as re-parsed, because the
+                        // layer really was replaced — the split says how it was
+                        // found, not whether it worked.
+                        store::Reparsed::Rekeyed => {
+                            report.reparsed += 1;
+                            report.rekeyed += 1;
+                        }
+                        store::Reparsed::Unmatched => report.unmatched += 1,
                     }
                 }
                 // Quarantined now: keep what the corpus already has.

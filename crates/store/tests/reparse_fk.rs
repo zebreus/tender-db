@@ -162,7 +162,11 @@ async fn a_projected_notice_can_be_reparsed() {
     // The re-parse under test: same notice, a parser that now reads a better name.
     let reparsed = db.reparse_notice(&n, &parsed("ACME GESELLSCHAFT MBH")).await;
     let reparsed = reparsed.expect("a projected notice must be re-parsable, FK and all");
-    assert!(reparsed, "the notice exists, so the re-parse replaced its parsed layer");
+    assert_eq!(
+        reparsed,
+        store::Reparsed::Replaced,
+        "the notice exists and its full identity matched, so the layer was replaced"
+    );
 
     // The new parse replaced the old one rather than doubling it (the reason
     // reparse_notice exists instead of a plain insert_parsed).

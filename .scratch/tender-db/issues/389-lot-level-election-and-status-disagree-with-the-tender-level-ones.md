@@ -1,6 +1,6 @@
 # 389 — the lot row re-decides two facts the tender row has already decided: it serves an exact-zero `value` the tender headline refuses, and it serves `submission_deadline: null` on the lots its own `status=open` returned
 
-Status: ready-for-agent — unit 1 BUILT 2026-09-16 (gate green, not yet deployed; see the build section at the foot for the technique, the decisions recorded with it, and the live acceptance still owed). Unit 2 — the lot `submission_deadline`'s scope against the `status` filter's — is undecided and is this issue's open half. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: **RESOLVED-VERIFIED 2026-09-16** — unit 1 on rev `347893a`, unit 2 on rev `19010b8`, each with its live before/after recorded at the foot. Hands one note forward to issue 370 unit 4: the lot row is now a second carrier for whatever per-field provenance shape it picks. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (read layer — `summarise()` in `crates/store/src/read.rs`, the lot row served by `/v1/lots` and by `lot_details` on the tender detail; unit 2 is also a docs defect, in `/docs` and the OpenAPI `Lot` schema)
 Relates to: 366 (DONE — its unit 3 retired the display-side "second implementation" of the value
 election for "every list shape AND the detail payload" by reading the fold's election
@@ -493,3 +493,22 @@ for agreement.
 - `/v1/lots?tender=132&status=open` → lot 322 still serves its OWN `2026-09-29T10:30:00+02:00`.
 - `/v1/lots?tender=8436333&status=closed` → still 0 items.
 - `/v1/tenders/8353548` → its 9 lot_details now carry `2015-03-24T11:00:00+00:00`.
+
+## Unit 2 VERIFIED LIVE 2026-09-16 — rev `19010b8`. Issue 389 is complete.
+
+| read | result |
+| --- | --- |
+| `/v1/lots?tender=8436333&status=open&limit=5` | all 5 lots (13900615–13900619) carry **`2029-04-29T10:00:00+00:00`**, `ignored_filters: []` — was `null` × 5 |
+| `/v1/lots?tender=8436333&status=closed` | 0 items — the other arm is unchanged |
+| `/v1/lots?tender=132&status=open` (control) | lot 322 still serves its OWN `2026-09-29T10:30:00+02:00`, NOT the procedure's — scope still beats recency on live data |
+| `/v1/tenders/8353548` | tender `2015-03-24T11:00:00+00:00`; all **9** `lot_details` now carry the same string — was `null` × 9 |
+| the same response's `dates` | `[{"field":"submission_deadline","lot":null,"value":"2015-03-24T11:00:00+00:00"}]` — the documented provenance path works: one entry, `lot: null`, so a consumer can see the date is procedure-scoped |
+
+That last row is the one worth keeping: the deferred provenance MARKER is not a gap a consumer falls
+into, because the tender detail already answers the question and now says so in `/docs`, the OpenAPI
+`Lot` schema and `LotRow::deadline`. When issue 370 unit 4 picks a shape, it lands on the rows as an
+addition, not as a correction.
+
+Status: **RESOLVED-VERIFIED 2026-09-16**, both units, both surfaces, with the live before/after on
+each. The one thing this issue hands forward is a note on 370 unit 4: the lot row is now a second
+carrier for whatever provenance shape it chooses, and the choice should be made for both at once.

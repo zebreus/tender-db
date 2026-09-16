@@ -410,6 +410,24 @@ the ids it touched.** Re-parsing 283 r209 notices stamped 2,131,375 tenders. Tha
 (a stale stamp forces a rewrite that recomputes identical content, a missed one silently loses the
 re-parse), but a one-package probe does not have a one-package blast radius.
 
+**Read the `unmatched` and `re-keyed` counts before calling a re-parse complete (issue 290).**
+`reparse_notice` finds its target by `(source, publication_id, content_hash)`. The hash is the same
+bytes and is stable; `publication_id` is parser-EXTRACTED. So a parser change that also moves how
+`publication_id` is derived makes the lookup miss its own targets, and those notices **keep their
+old parse** while the run reports success — `unmatched` is documented as benign ("a package walk can
+yield records the selection did not name"), which is exactly what makes it silent.
+
+Two counters now make it legible, and the job summary calls each out when it is nonzero:
+
+| counter | means | what to do |
+|---|---|---|
+| `re-keyed` | the row was found by `(source, content_hash)` after the full identity missed, its layer WAS replaced and its new `publication_id` adopted | nothing, if a re-key is what the run was for. Otherwise the parser changed identity derivation by accident — find out why |
+| `unmatched` on a run that expected few | the row was not found by either key | **stop.** Either those members were never ingested (fine) or the derivation moved AND the hash is ambiguous (two notices of that source share the bytes), and those notices still carry their old parse |
+
+The fallback is deliberately narrow: it fires only when the content hash names EXACTLY ONE notice of
+that source, so it can never merge two notices on the strength of duplicate bytes, and it never
+applies to the reclaim path, where a missing identity should mint rather than adopt.
+
 ### The organization-layer jobs (issues 300, 311-317)
 
 These are their own family: censuses that measure, merge arms that write, and

@@ -1619,6 +1619,56 @@ impl Db {
         Ok(rows.next().await?.map(|row| int(&row, 0)))
     }
 
+    /// The RE-PARSE path's identity lookup: the full triple, then a
+    /// `(source, content_hash)` fallback when the triple misses and that hash
+    /// names exactly one notice of the source (issue 290).
+    ///
+    /// The hazard the fallback closes: `reparse_notice` re-keys its target by the
+    /// NEW parse's `(source, publication_id, content_hash)`. `content_hash` is the
+    /// same bytes and so is stable, but `publication_id` is parser-EXTRACTED — so
+    /// if the very parser change being re-folded also changes how `publication_id`
+    /// is derived, the lookup misses, the record is counted `unmatched`, and the
+    /// stale parsed layer under the OLD key is never replaced. `unmatched` reads
+    /// as a non-event ("a package walk can yield records the selection did not
+    /// name"), which is what makes it silent.
+    ///
+    /// Strict by construction rather than by care: the fallback fires only when
+    /// the hash names EXACTLY ONE notice of that source, and the identity is
+    /// `UNIQUE(source, publication_id, content_hash)`, so a second row holding the
+    /// new triple would have the same source and hash and would have made the
+    /// count 2. The adoption in `reparse_notice` therefore cannot collide.
+    ///
+    /// Not shared with the reclaim path, deliberately. A reclaim that finds no
+    /// exact identity is looking at a record the corpus does not carry under that
+    /// key, and minting is the right answer there; adopting a hash-twin would
+    /// merge two notices on the strength of duplicate bytes.
+    ///
+    /// Returns the id and whether the fallback was taken.
+    async fn reparse_target(
+        &self,
+        conn: &Connection,
+        n: &Notice,
+    ) -> turso::Result<Option<(i64, bool)>> {
+        if let Some((id, _)) = self.notice_state(conn, n).await? {
+            return Ok(Some((id, false)));
+        }
+        let mut rows = conn
+            .query(
+                "SELECT id FROM notices WHERE source = ? AND content_hash = ? LIMIT 2",
+                (t(&n.source), t(&n.content_hash)),
+            )
+            .await?;
+        let Some(first) = rows.next().await? else { return Ok(None) };
+        let id = int(&first, 0);
+        // Ambiguous: two notices of this source carry these bytes, so which one the
+        // re-parse means is not decidable here. Left unmatched, which the loud
+        // summary now surfaces rather than burying.
+        if rows.next().await?.is_some() {
+            return Ok(None);
+        }
+        Ok(Some((id, true)))
+    }
+
     /// The id and parse state of a notice by identity, if it exists.
     async fn notice_state(&self, conn: &Connection, n: &Notice) -> turso::Result<Option<(i64, String)>> {
         let mut rows = conn
@@ -1884,10 +1934,13 @@ impl Db {
     /// commit as one transaction, so a crash leaves the notice with its old parsed
     /// layer intact rather than a half-replaced one.
     ///
-    /// Returns `false` when there is no notice row for `n` (nothing to re-parse);
-    /// the caller counts that rather than treating it as an error, since a cohort
-    /// walk can legitimately meet a member whose notice was never ingested.
-    pub async fn reparse_notice(&self, n: &Notice, parsed: &Parsed) -> turso::Result<bool> {
+    /// Returns [`Reparsed::Unmatched`] when there is no notice row for `n`
+    /// (nothing to re-parse); the caller counts that rather than treating it as an
+    /// error, since a cohort walk can legitimately meet a member whose notice was
+    /// never ingested. [`Reparsed::Rekeyed`] is the issue-290 case: the row was
+    /// found by its content hash because the parser's `publication_id` derivation
+    /// moved, and the new key was adopted.
+    pub async fn reparse_notice(&self, n: &Notice, parsed: &Parsed) -> turso::Result<Reparsed> {
         let conn = self.conn().await;
         conn.execute("BEGIN IMMEDIATE", ()).await?;
         // Defer the foreign-key checks to COMMIT (issue 247). Measured on prod: deleting
@@ -1913,7 +1966,9 @@ impl Db {
             // the reader pool, so if a re-parse crawls the cost has to be attributed on
             // the connection it actually runs on.
             let t0 = std::time::Instant::now();
-            let Some((id, _)) = self.notice_state(&conn, n).await? else { return Ok(false) };
+            let Some((id, rekeyed)) = self.reparse_target(&conn, n).await? else {
+                return Ok(Reparsed::Unmatched);
+            };
             let t1 = std::time::Instant::now();
             // The sections the new parse re-creates: kept rather than deleted, so their
             // mentions survive and the expensive FK proof never runs (issue 248).
@@ -1938,7 +1993,20 @@ impl Db {
                 (opt_int(n.published_at), opt_int(n.dispatched_at), Value::Integer(id)),
             )
             .await?;
-            Ok(true)
+            if rekeyed {
+                // Issue 290: matched by bytes because the parser's `publication_id`
+                // derivation moved. ADOPT the new key in the same transaction —
+                // without this the row keeps the stale one, every later re-parse
+                // takes the fallback again, and the served `publication_id` stays
+                // the value the parser has stopped producing. Safe by the
+                // uniqueness argument on `reparse_target`.
+                conn.execute(
+                    "UPDATE notices SET publication_id = ? WHERE id = ?",
+                    (t(&n.publication_id), Value::Integer(id)),
+                )
+                .await?;
+            }
+            Ok(if rekeyed { Reparsed::Rekeyed } else { Reparsed::Replaced })
         }
         .await;
         match result {
@@ -3767,6 +3835,28 @@ pub enum Parse {
     /// Unmapped content or an unrepresentable value: the notice is recorded,
     /// its payload stays in the archive, and nothing of it is imported.
     Quarantined { reason: String, detail: Option<String> },
+}
+
+/// The outcome of re-parsing one member in place ([`Db::reparse_notice`]).
+///
+/// `Rekeyed` exists because `Replaced` and `Unmatched` alone cannot express the
+/// issue-290 hazard: a re-parse whose own parser change moved `publication_id`
+/// derivation misses the identity lookup and lands in `Unmatched`, which the
+/// report documents as benign. Splitting the case out makes a derivation shift a
+/// number in the job summary rather than a silence.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Reparsed {
+    /// Found by the full `(source, publication_id, content_hash)` identity and
+    /// replaced — the ordinary case.
+    Replaced,
+    /// Found by `(source, content_hash)` alone, because the parser now derives a
+    /// DIFFERENT `publication_id` for these bytes. The parsed layer was replaced
+    /// and the new key adopted. A nonzero count means the run changed identity
+    /// derivation; that is either the point of the run or a regression, and either
+    /// way it is not something to read past.
+    Rekeyed,
+    /// No notice row matched, by either key. Nothing was touched.
+    Unmatched,
 }
 
 /// The outcome of re-attempting one quarantined member ([`Db::reclaim_notice`]).
@@ -7595,7 +7685,11 @@ tmpfs /data/ramcache tmpfs rw 0 0
                 value: NoticeValue::Text { lang: None, value: "rewritten".into() },
             }],
         };
-        assert!(db.reparse_notice(&notice, &reparsed).await.unwrap(), "the notice exists");
+        assert_eq!(
+            db.reparse_notice(&notice, &reparsed).await.unwrap(),
+            Reparsed::Replaced,
+            "the notice exists and its full identity matched"
+        );
 
         // The mention SURVIVED, still pointing at the same organization: no delete, so no
         // foreign-key proof, so no 2.2 seconds.
@@ -7667,7 +7761,11 @@ tmpfs /data/ramcache tmpfs rw 0 0
         db.finish_mention_resolver(resolver).await.unwrap();
         assert_eq!(int_of(&db, "SELECT COUNT(*) FROM organization_mentions").await, Some(1));
 
-        assert!(db.reparse_notice(&notice, &reparsed).await.unwrap(), "the notice exists");
+        assert_eq!(
+            db.reparse_notice(&notice, &reparsed).await.unwrap(),
+            Reparsed::Replaced,
+            "the notice exists and its full identity matched"
+        );
 
         // The stale mention is gone with the section it named — it could not
         // survive (its FK points at a deleted section) and the following fold
@@ -7702,7 +7800,11 @@ tmpfs /data/ramcache tmpfs rw 0 0
         // the one whose unconditional DELETE cost 153 ms a notice scanning 41.78M rows —
         // so it has to reach the same end state as the first pass rather than quietly
         // leaving the parse layer half-replaced.
-        assert!(db.reparse_notice(&notice, &reparsed).await.unwrap(), "a second re-parse works");
+        assert_eq!(
+            db.reparse_notice(&notice, &reparsed).await.unwrap(),
+            Reparsed::Replaced,
+            "a second re-parse works"
+        );
         assert_eq!(int_of(&db, "SELECT COUNT(*) FROM organization_mentions").await, Some(0));
         assert_eq!(int_of(&db, "SELECT COUNT(*) FROM notice_sections").await, Some(1));
         assert_eq!(int_of(&db, "SELECT COUNT(*) FROM notice_texts").await, Some(1));
@@ -7714,9 +7816,46 @@ tmpfs /data/ramcache tmpfs rw 0 0
         );
 
         // An unknown notice is reported, not an error: a cohort walk can meet a
-        // member that was never ingested.
-        let stranger = Notice { publication_id: "999-2099".into(), ..held_notice() };
-        assert!(!db.reparse_notice(&stranger, &tiny_parsed()).await.unwrap());
+        // member that was never ingested. DIFFERENT BYTES as well as a different
+        // key — with the same bytes this is now the issue-290 case below, which is
+        // the whole point of the split.
+        let stranger = Notice {
+            publication_id: "999-2099".into(),
+            content_hash: "not-the-same-bytes".into(),
+            ..held_notice()
+        };
+        assert_eq!(
+            db.reparse_notice(&stranger, &tiny_parsed()).await.unwrap(),
+            Reparsed::Unmatched
+        );
+
+        // Issue 290: the parser's `publication_id` derivation MOVES under the very
+        // re-parse being run. Same member, same bytes, new key. Before the
+        // fallback this landed in `unmatched`, which the report documents as
+        // benign — so the notice kept its old parse and the run read as complete.
+        let shifted = Notice { publication_id: "a-new-derivation-01".into(), ..notice.clone() };
+        assert_eq!(
+            db.reparse_notice(&shifted, &reparsed).await.unwrap(),
+            Reparsed::Rekeyed,
+            "the bytes are the corpus's, so the row is found and the shift is REPORTED"
+        );
+        assert_eq!(
+            text_of(&db, "SELECT publication_id FROM notices").await.as_deref(),
+            Some("a-new-derivation-01"),
+            "and the new key is ADOPTED — without this the row keeps a value the \
+             parser no longer produces and every later re-parse takes the fallback again"
+        );
+        assert_eq!(
+            int_of(&db, "SELECT COUNT(*) FROM notices").await,
+            Some(1),
+            "adopted, not duplicated"
+        );
+        // Now that the row carries the new key, the ordinary path finds it again.
+        assert_eq!(
+            db.reparse_notice(&shifted, &reparsed).await.unwrap(),
+            Reparsed::Replaced,
+            "the fallback is a one-time bridge, not a permanent second lookup"
+        );
 
         let _ = std::fs::remove_file(&path);
     }

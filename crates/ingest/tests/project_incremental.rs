@@ -534,7 +534,11 @@ async fn reparse(db: &Db, fetch_id: i64, pub_id: &str, parsed: Parsed) {
         )
         .await
         .expect("reparse notice");
-    assert!(applied, "reparse must find and re-parse {pub_id}");
+    assert_eq!(
+        applied,
+        store::Reparsed::Replaced,
+        "reparse must find {pub_id} by its full identity and re-parse it"
+    );
 }
 
 /// Issue 278: a reparse that regroups a keyed Tender to a new BT-04 — or upgrades

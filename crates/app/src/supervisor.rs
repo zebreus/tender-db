@@ -9468,6 +9468,7 @@ impl Supervisor {
         }
 
         let (mut reparsed, mut unmatched, mut failing, mut members) = (0u64, 0u64, 0u64, 0u64);
+        let mut rekeyed = 0u64;
         // Issue 247: how far the run got, and whether it stopped because it was asked to.
         let (mut stopped, mut packages_done) = (false, 0usize);
         for (i, (fetch_id, source, path)) in packages.iter().enumerate() {
@@ -9510,6 +9511,7 @@ impl Supervisor {
             .await
             .map_err(|e| format!("db: {e}"))?;
             reparsed += report.reparsed;
+            rekeyed += report.rekeyed;
             unmatched += report.unmatched;
             failing += report.now_failing;
             members += report.members;
@@ -9582,10 +9584,35 @@ impl Supervisor {
         } else {
             String::new()
         };
+        // Issue 290: `unmatched` and `rekeyed` are the two faces of a parser change
+        // that also moved `publication_id` derivation, and the hazard was always the
+        // REPORTING — `unmatched` is documented as benign, so a cohort silently
+        // keeping its old parse reads as a clean run. Both are ordinary numbers in
+        // the line when they are zero and are called out when they are not, so the
+        // operator does not have to know to look.
+        let identity = match (rekeyed, unmatched) {
+            (0, 0) => String::new(),
+            (0, _) => format!(
+                " — CHECK: {unmatched} unmatched. On a run that expected few, that is the \
+                 issue-290 shape: the parser changed how it derives publication_id, the \
+                 identity lookup missed, and those notices KEPT THEIR OLD PARSE. Do not \
+                 read this run as complete until the count is explained"
+            ),
+            (_, 0) => format!(
+                " — NOTE: {rekeyed} re-keyed by content hash, so this run CHANGED \
+                 publication_id derivation (issue 290). Intended for a re-key run; a \
+                 regression otherwise"
+            ),
+            (_, _) => format!(
+                " — CHECK: {rekeyed} re-keyed by content hash and {unmatched} unmatched. \
+                 This run changed publication_id derivation (issue 290); the re-keyed ones \
+                 recovered, the unmatched ones KEPT THEIR OLD PARSE"
+            ),
+        };
         Ok(format!(
             "re-parsed {reparsed} notices across {} packages ({members} members walked, \
-             {unmatched} unmatched, {failing} now failing and left untouched); \
-             stamped {stamped} tender(s) epoch-stale{remaining}",
+             {unmatched} unmatched, {rekeyed} re-keyed, {failing} now failing and left \
+             untouched); stamped {stamped} tender(s) epoch-stale{remaining}{identity}",
             packages.len()
         ))
     }
