@@ -363,3 +363,49 @@ finding's central claim (`awards[0].value` null, `contracts[0].value` 54,393.60 
 - The two canonical SELECTs over 7954583–7975000 re-run and recorded: FTS contracts `with_value` and
   lot_results `with_decided` are no longer 0 of 5,158 and 0 of 16,948, with the residue explained by
   source absence.
+
+### Unit 2a VERIFIED LIVE 2026-09-16, rev `8bf051b`
+
+FTS re-parsed and re-projected to pick up the parse-layer change — job 2325: 10,600 notices across
+10 packages, **0 unmatched, 0 re-keyed, 0 now failing**; job 2326: 9,233 tenders written.
+
+**The contract's own value reaches the API.**
+
+    GET /v1/tenders/7956308 → contracts[0].value = {cents: 5439360, currency: "GBP"}
+
+54,393.60 GBP, the figure `contracts[0].value` publishes and the award it settles does not. It was
+`null` for every FTS contract in the corpus.
+
+**The contract-less award keeps its date.**
+
+    GET /v1/notices/30805683/content → ('RES-1-1', 'BT-1451-LotResult', '2025-05-08T00:00:00+00:00')
+
+Exactly the date this issue recorded as "absent".
+
+**Canonical counts over tender ids 7954583–7975000:**
+
+| | before (finding, 2026-09-14) | now |
+| --- | ---: | ---: |
+| fts contracts | 5,158 | 17,482 |
+| … with `cents` | **0 (0 %)** | **16,553 (94.7 %)** |
+| … with `decided_utc` | **0** | 1,009 |
+| fts lot_results | 16,948 | 55,609 |
+| … with `decided_utc` | **0** | **11,819 (21.3 %)** |
+
+Read the DENOMINATORS with care: they roughly tripled, so this is not a like-for-like delta — the FTS
+corpus grew between the finding and today (the source now holds 10 packages from 2025-06). The claim
+that stands is the zero-to-nonzero transition in each "with" row, which no amount of corpus growth
+produces on its own.
+
+**One correction to this issue's own acceptance.** It asked for `/v1/tenders/7956308` to serve the
+contract "with a value and a non-empty `amounts`". `amounts` is `null` on TED contracts too — checked
+against `/v1/tenders/4`, whose contracts carry `value: {cents: 63895000, currency: "PLN"}` beside
+`amounts: null`. So a non-empty `amounts` was never the shape of a contract in this API, for any
+source, and it is the wrong thing to have asked for. The right test is the one this issue argues for
+everywhere else — PARITY with a TED tender carrying the same facts — and FTS now matches it field for
+field.
+
+**The residue, named rather than rounded off:** 929 contracts still without a value and 43,790
+lot_results still without a decision date. Sizing that against source absence (the contract-bearing
+shapes genuinely publish no `awards[].date`, per the note in unit 2 above) is unit 2b's work, beside
+the periods and the `BT-3202`/`OPT-315` linkage.
