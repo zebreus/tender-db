@@ -387,3 +387,58 @@ and an explicit note still winning).
   spec and docs, fire each at the test server, assert no 4xx — is NOT built. It is the one guard that
   would also catch unit 4, and it is worth doing properly rather than as a tail of this commit.
 - Not deployed: the issue-397 text-era projection (job 1387) is running.
+
+## The example-runner guard is BUILT 2026-09-16 (owner)
+
+`every_published_example_is_a_request_the_server_accepts` — the guard the issue asks for under unit
+1, and the one neither existing gate is. `the_openapi_spec_matches_the_served_surface` compares spec
+paths to the router; `the_docs_page_names_the_whole_spec_surface` checks that every parameter NAME
+occurs somewhere in `docs.rs`. Neither reads a VALUE, which is how `deadline_after=now` spent its
+whole life answering 400 while both stayed green.
+
+Two halves, because the surfaces publish examples in different shapes:
+
+| half | what it extracts | count today |
+| --- | --- | --- |
+| `/docs` | whole `/v1/…?…` URLs, `&amp;` un-escaped | **15** |
+| `openapi.json` | bare `name=value` in a parameter description, where `name` is a declared parameter | **5** |
+
+All 20 are fired at the test server and none may answer 4xx. The `/docs` half covers
+`?country=DE&status=open&limit=50&cursor=14327`, `?sort=deadline&status=open&country=DE&deadline_after=1786910000`,
+`?identifier=RO42283735&kind=VAT`, `?publication_id=123456-2026`, `?name_prefix=m`, `?bidder=2` and
+nine more; the spec half covers `deadline_after=now`, `order=asc`, `sort=published_at|deadline|id`.
+
+**The spec half needed a correction mid-build.** The first version took a pair only from the
+description of the parameter it names — the strict reading, so prose about a neighbour could not
+invent an assertion. That found exactly ONE pair: the useful examples mostly live in a *different*
+parameter's text (`sort=published_at` is published inside `deadline_after`'s "Implies
+sort=published_at"). A published example is a claim about what the server accepts wherever it is
+written, so the rule became "the KEY must be a declared parameter name" — which still keeps prose
+from inventing parameters, and covers all five.
+
+**It is not vacuous, and the test says so itself**: it asserts `deadline_after=now` is among the
+pairs it fires and that the `/docs` extractor still finds at least 8 URLs. Both fail loudly if an
+extractor silently stops seeing its page — the failure mode that makes a green example-runner worse
+than no runner at all.
+
+### What it deliberately does NOT cover
+
+Stated so nobody reads more into a green run than is there: `{id}` templates (no concrete value),
+token-gated paths (`/v1/me`, `/v1/sql`, `/v1/webhooks` — a 401 there is correct), and examples naming
+a specific PROD id such as `/v1/tenders/14327`, which a fixture server cannot resolve.
+
+**That last exclusion means this guard does NOT cover unit 4**, contrary to what the issue's unit-1
+bullet hoped. Unit 4's defect is that `/docs` shows notice **14327**, whose `/content` is a 404 on
+prod, alongside a response body (`"section_id": 1`, `"kind": "root"`, `"lang": "deu"`) that no parser
+emits — the served shapes are `"PROCEDURE"`, `"Notice"`, `"SPA"`. Neither half is checkable against a
+fixture: the id is prod-specific and the body is illustrative. Unit 4 wants the example rewritten to
+a shape the fixture CAN produce, which is an edit, not a gate. Recorded here rather than left for the
+next reader to rediscover.
+
+### Still open on this issue
+
+- **Unit 4** — rewrite the notice-content example to a shape that is true, per above.
+- **Unit 5** — `components.schemas.{Tender,Lot,Organization,Notice}` declare 6/2/2/2 properties
+  against 16/8/7/11 served keys. The derivable form the issue suggests — serialize one row per
+  collection and diff its keys against the declared properties — is a natural second test beside this
+  one, and is the right way to do it.

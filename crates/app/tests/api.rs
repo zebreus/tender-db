@@ -1388,6 +1388,122 @@ async fn notice_content_serves_the_whole_parsed_layer() {
     assert_eq!(server.status("/v1/notices/999999999/content").await, 404);
 }
 
+/// Issue 391: every example the contract publishes is fired at the server, and
+/// none of them may 4xx.
+///
+/// This is the guard the issue asks for and the one neither existing gate is.
+/// `the_openapi_spec_matches_the_served_surface` compares spec paths to the
+/// router; `the_docs_page_names_the_whole_spec_surface` checks that every
+/// parameter NAME occurs somewhere in `docs.rs`. Neither reads a VALUE — which is
+/// how `deadline_after=now`, the spec's own flagship "closes soon" example, spent
+/// its whole life answering 400 while both gates stayed green.
+///
+/// Two halves, because the two surfaces publish examples in different shapes:
+/// `/docs` carries whole URLs, the spec carries bare `name=value` inside a
+/// parameter's description.
+///
+/// **What it deliberately does not cover**, so nobody reads more into a green
+/// run than is there: `{id}`-style templates (no concrete value), token-gated
+/// paths (`/v1/me`, `/v1/sql`, `/v1/webhooks` — a 401 is correct there), and
+/// examples naming a specific PROD id (`/v1/tenders/14327`), which a fixture
+/// server cannot resolve and whose staleness is a different question.
+#[tokio::test]
+async fn every_published_example_is_a_request_the_server_accepts() {
+    let server = Server::start("doc-examples").await;
+    server.ingest_chain().await;
+
+    let spec: Value =
+        serde_json::from_str(include_str!("../data/openapi.json")).expect("openapi.json parses");
+    let docs = include_str!("../src/v1/docs.rs");
+
+    // --- half one: whole URLs in /docs -------------------------------------
+    // `&amp;` because the page is HTML; a raw `&` would end the example early
+    // and silently shrink what this gate covers.
+    let mut examples: Vec<String> = Vec::new();
+    for raw in docs.split("/v1/").skip(1) {
+        let end = raw
+            .find(|c: char| !(c.is_ascii_alphanumeric() || "_/?=&;%.:,-+{}".contains(c)))
+            .unwrap_or(raw.len());
+        let url = format!("/v1/{}", &raw[..end]).replace("&amp;", "&");
+        // Concrete, public, collection-shaped queries only — see the doc comment.
+        let public = ["/v1/tenders?", "/v1/lots?", "/v1/organizations?", "/v1/notices?"]
+            .iter()
+            .any(|p| url.starts_with(p));
+        let concrete = !url.contains('{') && !url.ends_with('=') && !url.contains("=&");
+        if public && concrete {
+            examples.push(url);
+        }
+    }
+    examples.sort();
+    examples.dedup();
+    assert!(
+        examples.len() >= 8,
+        "the extractor found only {} examples — it has stopped seeing the page: {examples:?}",
+        examples.len()
+    );
+
+    for url in &examples {
+        let status = server.status(url).await;
+        assert!(
+            !(400..500).contains(&status),
+            "/docs publishes `{url}` and the server answers {status}"
+        );
+    }
+
+    // --- half two: bare `name=value` in a spec parameter's description ------
+    // Fired against `/v1/tenders`, which declares every filter these examples
+    // belong to. A pair counts when its KEY is a declared parameter name — not
+    // only when it appears in that parameter's own description, because the
+    // useful examples mostly do not: `sort=published_at` is published inside
+    // `deadline_after`'s text ("Implies sort=published_at"), and it is just as
+    // much a claim about what the server accepts. Requiring a declared key is
+    // what keeps prose from inventing assertions the spec never made.
+    let names: Vec<&str> = spec["components"]["parameters"]
+        .as_object()
+        .expect("parameters")
+        .values()
+        .filter_map(|p| p["name"].as_str())
+        .collect();
+    let mut pairs: Vec<String> = Vec::new();
+    for (_, param) in spec["components"]["parameters"].as_object().expect("parameters") {
+        let Some(desc) = param["description"].as_str() else { continue };
+        for name in &names {
+            let needle = format!("{name}=");
+            for (i, _) in desc.match_indices(&needle) {
+                // `published_at=` inside `sort=published_at` is not a new pair.
+                if i > 0 && desc.as_bytes()[i - 1].is_ascii_alphanumeric() {
+                    continue;
+                }
+                let rest = &desc[i + needle.len()..];
+                let end = rest
+                    .find(|c: char| !(c.is_ascii_alphanumeric() || "_.:%-+".contains(c)))
+                    .unwrap_or(rest.len());
+                // Prose ends a sentence with `.`; that is punctuation, not a value.
+                let value = rest[..end].trim_end_matches('.');
+                if !value.is_empty() {
+                    pairs.push(format!("{name}={value}"));
+                }
+            }
+        }
+    }
+    pairs.sort();
+    pairs.dedup();
+    assert!(pairs.len() >= 4, "the spec's own examples vanished from the extractor: {pairs:?}");
+    assert!(
+        pairs.iter().any(|p| p == "deadline_after=now"),
+        "the flagship example must be among what this gate fires: {pairs:?}"
+    );
+
+    for pair in &pairs {
+        let url = format!("/v1/tenders?{pair}");
+        let status = server.status(&url).await;
+        assert!(
+            !(400..500).contains(&status),
+            "openapi.json publishes `{pair}` and the server answers {status} to {url}"
+        );
+    }
+}
+
 /// Issue 391 unit 1: `now` is a valid instant on all four time bounds.
 ///
 /// `openapi.json` has advertised `deadline_after=now` as the headline "closes
