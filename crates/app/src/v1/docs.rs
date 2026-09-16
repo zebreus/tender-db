@@ -152,7 +152,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
   <tr><td class="ep">buyer</td><td>Organization id that is the buyer.</td></tr>
   <tr><td class="ep">winner</td><td>Organization id that won at least one Lot.</td></tr>
   <tr><td class="ep">bidder</td><td>Organization id that submitted a bid on at least one Lot — won or not, a superset of <code>winner</code>.</td></tr>
-  <tr><td class="ep">status</td><td><code>open</code> or <code>closed</code> (by submission deadline).</td></tr>
+  <tr><td class="ep">status</td><td><code>open</code> or <code>closed</code> (by submission deadline). On <code>/v1/lots</code> the deadline may be the procedure's rather than the lot's &mdash; see <a href="#caveats">caveats &rarr; Dates</a>.</td></tr>
   <tr><td class="ep"><code>min_value</code> / <code>max_value</code></td><td>Value in <strong>EUR cents</strong>, compared against the tender's highest amount converted to EUR at its publication date (the derived <code>eur_cents</code> — see <a href="#caveats">caveats</a>). A tender with no convertible amount never matches a value bound.</td></tr>
   <tr><td class="ep">currency</td><td>ISO&nbsp;4217 code, case-insensitive (e.g. <code>EUR</code>, <code>sek</code>) — Tenders/Lots whose current version publishes at least one amount in that currency, <em>as published</em>.</td></tr>
   <tr><td class="ep">lang</td><td>Preferred language for the <em>picked</em> text values (the <code>title</code> on tenders, lots and the detail header): ISO&nbsp;639 code, case-insensitive (<code>de</code> and <code>DEU</code> both work). Fallback chain: requested &rarr; English &rarr; the notice's original language &rarr; any labelled &rarr; unlabelled. A <em>selector</em>, not a filter &mdash; it changes which title a row serves, never which rows match, so it is never reported in <code>ignored_filters</code>. The detail's <code>texts</code> array always carries every stored language variant regardless.</td></tr>
@@ -677,6 +677,20 @@ rates and the quarantine resolution ledger.</p>
   deadline the newest notice is silent about is carried forward from an earlier
   one. After an award notice, <code>deadline &lt; published_at</code> is the
   EXPECTED shape, not noise and not data loss (issue 370).</li>
+  <li>A Lot's <code>submission_deadline</code> is <strong>the lot's own if it published
+  one, otherwise the procedure's</strong> (issue 389). The legacy form generations
+  publish ONE procedure-level deadline for the whole notice &mdash; the r209 era's
+  <code>DATE_RECEIPT_TENDERS</code> is procedure-scoped by design &mdash; so most
+  pre-eForms lots have no date of their own, and that procedure deadline is the one a
+  bidder submits by. It is also the one <code>?status=open</code> evaluates, for lots as
+  well as tenders, which is why the row shows it: a lot returned as open carries the
+  deadline that opened it. A lot that publishes its OWN deadline keeps it even when the
+  procedure's is later.
+  <strong>The row does not yet say which of the two it is.</strong> To tell them apart,
+  read <code>dates</code> on <a href="#detail">the tender detail</a>: each entry names its
+  <code>lot</code> (<code>null</code> for a procedure-scoped date). A per-field provenance
+  marker on the rows themselves is issue 370's open unit, and will land on Tenders and
+  Lots together rather than in two shapes.</li>
 </ul>
 
 <h3>Codes and identities</h3>

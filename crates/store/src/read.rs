@@ -296,6 +296,17 @@ pub struct LotRow {
     pub title: Option<String>,
     pub value_cents: Option<i64>,
     pub currency: Option<String>,
+    /// The lot's own submission deadline where it publishes one, otherwise the
+    /// PROCEDURE's (issue 389 unit 2). Lot-scoped wins even when the procedure's
+    /// is later, because scope is the question and recency is not.
+    ///
+    /// Inherited rather than lot-only because `?status=open` is decided by the
+    /// union of both scopes (`version_predicates`' EXISTS carries no `lot_id`
+    /// term — issue 275 pins that form), so a lot-only field returned rows
+    /// asserted to be open whose only visible deadline was `null`. Which scope a
+    /// served date came from is not on the row yet; the tender detail's `dates`
+    /// array names each date's `lot`, and a provenance marker for the rows
+    /// themselves is issue 370's open unit, to land on Tenders and Lots together.
     pub deadline: Option<Stamp>,
 }
 
@@ -2851,21 +2862,67 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
             }
         }
 
+        // Issue 389 unit 2: a LOT-scoped deadline still wins, and a tender-scoped
+        // one is now the FALLBACK rather than nothing — so `AND s.lot_id IS NOT
+        // NULL` is gone from the WHERE and decided per row below.
+        //
+        // The `status=open` filter on `/v1/lots` runs `version_predicates`, whose
+        // EXISTS carries NO `lot_id` term: a procedure-scoped deadline opens every
+        // lot of the procedure. Issue 275 pins that form deliberately, on 273's
+        // status ≡ head-range equivalence, so the filter is not the thing to
+        // change. The row field, though, read lot-scoped rows only — so 73 of 73
+        // open-with-lots tenders over ids 8,436,069–8,536,069 were RETURNED as open
+        // while serving `submission_deadline: null`, a page a bidder-facing client
+        // can neither sort by nor display a date for.
+        //
+        // There is no lot-level date to find in those: they are r209-era, whose
+        // form-section `DATE_RECEIPT_TENDERS` is procedure-level BY DESIGN, and the
+        // projection stored it faithfully with `lot_id NULL`. The deadline that
+        // decided `open` IS the tender's, and a bidder submitting for LOT-1 of
+        // 8436333 submits by it. Inheritance in this direction is not new — it is
+        // the mirror of what already happens upward, where `head_deadline` takes
+        // MAX over the version with lot rows INCLUDED and
+        // `crates/store/tests/deadline_backfill.rs` asserts "a lot-level deadline
+        // counts". What was missing was the other half.
+        let mut inherited: Option<Stamp> = None;
         let mut got = conn
             .query(
                 "SELECT s.lot_id, s.utc_seconds, s.offset_minutes, s.has_time
                    FROM tender_version_dates s
-                  WHERE s.tender_id = ? AND s.seq = ? AND s.field = 'submission_deadline'
-                    AND s.lot_id IS NOT NULL",
+                  WHERE s.tender_id = ? AND s.seq = ? AND s.field = 'submission_deadline'",
                 key,
             )
             .await?;
         while let Some(row) = got.next().await? {
-            let Some(&i) = opt_int_of(&row, 0).and_then(|id| at.get(&(tender_id, seq, id))) else { continue };
-            let rank = opt_int_of(&row, 1).unwrap_or(i64::MIN);
-            if best_deadline[i].is_none_or(|best| rank > best) {
-                best_deadline[i] = Some(rank);
-                rows[i].deadline = stamp(&row, 1);
+            match opt_int_of(&row, 0) {
+                // Lot-scoped: this lot's own date, latest wins — unchanged.
+                Some(lot_id) => {
+                    let Some(&i) = at.get(&(tender_id, seq, lot_id)) else { continue };
+                    let rank = opt_int_of(&row, 1).unwrap_or(i64::MIN);
+                    if best_deadline[i].is_none_or(|best| rank > best) {
+                        best_deadline[i] = Some(rank);
+                        rows[i].deadline = stamp(&row, 1);
+                    }
+                }
+                // Tender-scoped: it belongs to EVERY lot of this version, so it is
+                // held here and applied after the scan to the lots that published
+                // none of their own. MAX, the extremum `head_deadline` takes.
+                None => {
+                    if let Some(c) = stamp(&row, 1) {
+                        if inherited.is_none_or(|held| c.utc_seconds > held.utc_seconds) {
+                            inherited = Some(c);
+                        }
+                    }
+                }
+            }
+        }
+        if let Some(fallback) = inherited {
+            for (i, row) in rows.iter_mut().enumerate() {
+                // `best_deadline` is set only by the lot-scoped arm, so `None` here
+                // means exactly "this lot published no deadline of its own".
+                if row.tender_id == tender_id && row.seq == seq && best_deadline[i].is_none() {
+                    row.deadline = Some(fallback);
+                }
             }
         }
     }

@@ -3092,3 +3092,78 @@ async fn a_lot_priced_at_zero_is_served_as_no_value_and_agrees_with_the_filter()
         "and it is not an ignored filter: the empty page is the honest answer"
     );
 }
+
+/// Issue 389 unit 2: a lot the `status=open` filter returns must show the deadline
+/// that opened it, on both surfaces `summarise` feeds.
+///
+/// `version_predicates`' status EXISTS carries no `lot_id` term, so a
+/// procedure-scoped deadline opens every lot (issue 275 pins that form). The row
+/// field read lot-scoped rows only, so all 73 open-with-lots tenders over ids
+/// 8,436,069–8,536,069 came back asserted OPEN with `submission_deadline: null` —
+/// tender 8436333 six times, in a response whose tender row read
+/// `2029-04-29T10:00:00+00:00`.
+#[tokio::test]
+async fn an_open_lot_shows_the_procedure_deadline_that_opened_it() {
+    let server = Server::start("lot-deadline-scope").await;
+    server.ingest_chain().await;
+
+    let id = items(&server.get("/v1/tenders").await)[0]["id"].as_i64().expect("tender id");
+
+    // Reproduce the legacy shape on the fixture: move every lot-scoped deadline of
+    // the head version up to procedure scope, which is how the r209 era publishes
+    // it, and push it past now so the procedure is open.
+    let future = 1_871_000_000_i64; // 2029-04-19, comfortably ahead
+    {
+        let db = store::turso::Builder::new_local(&server.path).build().await.expect("open");
+        let conn = db.connect().expect("connect");
+        conn.execute(
+            "DELETE FROM tender_version_dates
+              WHERE tender_id = ?1 AND field = 'submission_deadline'
+                AND seq = (SELECT current_seq FROM tenders WHERE id = ?1)",
+            (store::turso::Value::Integer(id),),
+        )
+        .await
+        .expect("clear the lot-scoped deadlines");
+        conn.execute(
+            "INSERT INTO tender_version_dates (tender_id, seq, lot_id, field, utc_seconds, offset_minutes, has_time)
+             SELECT ?1, current_seq, NULL, 'submission_deadline', ?2, 0, 1 FROM tenders WHERE id = ?1",
+            (store::turso::Value::Integer(id), store::turso::Value::Integer(future)),
+        )
+        .await
+        .expect("publish one procedure-scoped deadline");
+        conn.execute(
+            "UPDATE tenders SET current_deadline = ? WHERE id = ?",
+            (store::turso::Value::Integer(future), store::turso::Value::Integer(id)),
+        )
+        .await
+        .expect("carry it to the head column");
+    }
+
+    // The pair: what the filter returns, and what those rows say.
+    let open = items(&server.get(&format!("/v1/lots?tender={id}&status=open")).await).clone();
+    assert!(!open.is_empty(), "the procedure-scoped deadline opens its lots (issue 275)");
+    for lot in &open {
+        assert!(
+            !lot["submission_deadline"].is_null(),
+            "lot {} was returned as OPEN and must carry the deadline that opened it",
+            lot["lot_key"]
+        );
+    }
+
+    // And `lot_details`, built by the same function.
+    let detail = server.get(&format!("/v1/tenders/{id}")).await;
+    let tender_deadline =
+        detail["submission_deadline"].as_str().expect("the tender row has the deadline").to_owned();
+    let details = detail["lot_details"].as_array().expect("lot_details");
+    assert_eq!(details.len(), open.len(), "non-vacuity: both surfaces carry the same lots");
+    for lot in details {
+        assert_eq!(
+            lot["submission_deadline"].as_str(),
+            Some(tender_deadline.as_str()),
+            "the lot row and the tender row must not read one stored date two ways"
+        );
+    }
+
+    // The other arm of the filter is unchanged.
+    assert!(items(&server.get(&format!("/v1/lots?tender={id}&status=closed")).await).is_empty());
+}

@@ -10,6 +10,20 @@
 //! runs the ORIGINAL subquery SQL, verbatim, as an oracle over deliberately
 //! awkward data, and requires the new code to agree with it row for row. If the
 //! two ever diverge the test names the field and the lot.
+//!
+//! TWO picks have since diverged from the oracle ON PURPOSE, and this fixture
+//! carries no row that triggers either, which is why it still passes unchanged:
+//!
+//!   * value — issue 389 unit 1 refuses a candidate the FOLD would refuse (a
+//!     withheld marker, a sentinel, an amount over the ceiling). Pinned in
+//!     `lot_value_election.rs`.
+//!   * deadline — issue 389 unit 2 falls back to the procedure's deadline when the
+//!     lot publishes none. Pinned in `lot_deadline_scope.rs`.
+//!
+//! Both are cases where agreeing with the pre-115 SQL would mean keeping a defect,
+//! so they are pinned in their own files rather than by weakening this oracle. If
+//! a future fixture row here starts tripping one, that is the signal to split it
+//! out — not to relax the assertion.
 
 use store::read::{self, Filter, Scope};
 use store::turso::{self, Value};

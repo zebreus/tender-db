@@ -375,3 +375,121 @@ against a vacuous pass.
 - `/v1/lots?tender=25773` and `…&max_value=0` agree.
 - The bounded SELECTs are UNCHANGED — 706 over ids 1–100,000 and 23 over 5,000,000–5,100,000. This is
   a read-layer election; nothing is drained and no stored row moves, exactly as the issue specifies.
+
+## Unit 1 VERIFIED LIVE 2026-09-16 — rev `347893a`
+
+Every acceptance read in `## Done when` passes:
+
+| read | result |
+| --- | --- |
+| `/v1/tenders/25773` | `value: null`, `lot_details[0]` = `{"id":62039,"value":null}` |
+| the same response's `amounts` | still `[{lot:null, {cents:0,currency:GBP}}, {lot:"LOT-0000", {cents:0,currency:GBP}}]` — the PUBLISHED figure is untouched at both scopes, which is ADR-0004 and the whole point of fixing the derived column instead |
+| `/v1/tenders/31033` | `value: null`, lot 80385 `null` |
+| `/v1/lots?tender=25773` | lot 62039, `value: null`, `ignored_filters: []` |
+| `/v1/lots?tender=25773&max_value=0` | `items: []`, `ignored_filters: []` — payload and filter now agree |
+| `/v1/lots?currency=GBP&limit=10` | no lot on the page carries `{cents:0}`; 62039 and 80385 are still RETURNED (they still publish a GBP amount, so the currency filter still matches them) — served without a value, not withheld |
+
+### The stored-row counts moved, and not because of this
+
+The issue asked for 706 (ids 1–100,000) and 23 (ids 5,000,000–5,100,000) to be unchanged, since a
+read-layer election drains nothing. **23 is unchanged. 706 now reads 696**, and the lot-level count
+1,280 now reads 1,257.
+
+That is corpus drift between the filing measurement (2026-09-14) and today, not an effect of the fix:
+
+- **Mechanically it cannot be the fix.** `summarise` issues `SELECT`s and mutates `LotRow`s in
+  memory. There is no write path in it, and `tenders.current_value_eur_cents` and
+  `tender_version_amounts` are not reachable from the read layer at all.
+- **Something else did write.** Job 1387 (a full incremental projection) wrote **2,830,901 tender
+  rows** on 2026-09-15/16, and job 1383 re-queued 374,399 notices for a `TED-NEW_VALUE.DATE` refold.
+  Either moves a head value, which moves this predicate.
+- Both counts fell by about the same fraction — tenders 1.4 %, lots 1.8 % — which is what drift looks
+  like and not what a systematic change looks like.
+
+A better baseline for whoever re-checks, because the original measurement recorded only one number
+and so could not distinguish "a carrier gained a head value" from "a carrier lost its zero":
+
+    ids 1-100,000, carriers of an unflagged zero lot amount at the head version
+      total     1,235
+      NULL head   696   <- the population this issue is about
+      valued      539
+
+Re-take all three, not just the third.
+
+## Unit 2 DECIDED and BUILT 2026-09-16 — the fallback, with the provenance marker handed to 370
+
+The `## Done when` demanded one of two and the other closed off. **Taken: the fallback.** The
+documentation branch is closed off by being absorbed — it is written anyway, because the fallback
+needs saying — but the behaviour changes.
+
+### Why the fallback rather than the doc sentence
+
+The adversarial judge's case for LOW was that the row field is undocumented, so no stated contract
+breaks. That is true and it does not reach the decision, because the defect is not a broken promise;
+it is **a row asserted to be open with nothing on it saying when it closes**. `status` is documented
+for every collection as "by submission deadline", the row carries a field of that name, and 73 of 73
+open-with-lots tenders in the newest 100k read `null` there. A bidder-facing client filtering
+`status=open` gets a page it cannot order and cannot show a date for. Documenting that would make it
+expected without making it usable.
+
+The substance is that the inherited date is **the right answer, not a convenient one**. The r209 era
+publishes ONE procedure-scoped `DATE_RECEIPT_TENDERS` by design; a bidder submitting for LOT-1 of
+tender 8436333 submits by 2029-04-29 because that is the only deadline the procedure has. Serving
+`null` is not more honest than serving it — it withholds a fact the publisher stated, at the scope
+they stated it. And inheritance in this direction is the mirror of what the system already does in
+the other: `head_deadline` takes MAX over the version with lot rows INCLUDED, and
+`crates/store/tests/deadline_backfill.rs` asserts "a lot-level deadline counts". Only the downward
+half was missing.
+
+Issue 275's `EXISTS` form is untouched — the filter was never the thing to change.
+
+### The rule
+
+A lot-scoped deadline wins. A tender-scoped one is the fallback. **Scope beats recency**: a lot's own
+date wins even when the procedure's is LATER, which is the opposite of the MAX taken within a scope,
+and is pinned by a fixture whose lot date is deliberately earlier than its procedure's.
+
+### The provenance marker is deferred, explicitly
+
+The chosen branch also asked that "the row says which scope it came from, in the shape issue 370 unit
+4 is choosing for `TenderRow`". **370 unit 4 has not chosen a shape** — it is still "whether
+`TenderRow` should carry per-field provenance". Inventing one here would decide 370 from one level
+down and risk two shapes for one idea.
+
+So the marker waits, and what replaces it is a documented path that already exists: the tender
+detail's `dates` array names each date's `lot`, `null` for a procedure-scoped one, so a consumer who
+needs the distinction can get it today. Written into `/docs` (caveats → Dates), the OpenAPI `Lot`
+schema, the `status` parameter row, and `LotRow::deadline`'s own doc comment — each of which also
+points at 370 so the marker lands on Tenders and Lots together when it lands.
+
+### Tests
+
+`crates/store/tests/lot_deadline_scope.rs`, new — the PAIR in one assertion set, because the two
+readings can only drift apart when a test pins one without the other:
+
+- `an_open_lot_carries_the_deadline_that_opened_it_whatever_its_scope` — two undated lots and one with
+  its own EARLIER date; asserts the full served triple, then that `status=open` returns all three AND
+  that every returned row carries a deadline, then that `status=closed` is still empty.
+- `an_inherited_deadline_keeps_the_published_offset` — `-300` survives the inheritance, so an
+  inherited deadline still renders in the buyer's wall-clock (CONTEXT.md).
+- `a_lot_of_a_deadline_less_tender_still_has_none` — the fallback adds an inherited fact, it does not
+  invent one; and a deadline-less tender is not open, so filter and row agree there too.
+
+Plus `an_open_lot_shows_the_procedure_deadline_that_opened_it` in `crates/app/tests/api.rs`, which
+moves the fixture's lot-scoped deadlines up to procedure scope, then asserts `/v1/lots?status=open`
+AND `lot_details` both carry the tender row's own string, with `details.len() == open.len()` guarding
+non-vacuity.
+
+Run red first: the store tests failed with `[("LOT-1", None), ("LOT-2", None), ("LOT-3", Some(...))]`
+— the live shape, reproduced.
+
+`lot_summary_equivalence.rs`'s header now records both of this issue's deliberate divergences from the
+pre-115 oracle and where each is pinned instead, so a future reader does not take the oracle's silence
+for agreement.
+
+### Live acceptance still owed (after the next deploy)
+
+- `/v1/lots?tender=8436333&status=open&limit=5` → the 5 rows carry `2029-04-29T10:00:00+00:00`.
+- `/v1/lots?tender=132&status=open` → lot 322 still serves its OWN `2026-09-29T10:30:00+02:00`.
+- `/v1/lots?tender=8436333&status=closed` → still 0 items.
+- `/v1/tenders/8353548` → its 9 lot_details now carry `2015-03-24T11:00:00+00:00`.

@@ -948,8 +948,8 @@
           "lot_key": { "type": "string", "description": "The source's own lot identifier within its notice, e.g. `LOT-0001` — unique per tender, not globally." },
           "title": { "type": "string", "nullable": true, "description": "The lot's title, or the tender's when the lot publishes none." },
           "version": { "type": "integer", "description": "The parent Tender version this lot belongs to." },
-          "submission_deadline": { "type": "string", "format": "date-time", "nullable": true, "description": "The lot's own deadline where the source states one per lot." },
-          "value": { "nullable": true, "allOf": [{ "$ref": "#/components/schemas/Money" }], "description": "The lot's value, or null when none was published." }
+          "submission_deadline": { "type": "string", "format": "date-time", "nullable": true, "description": "The lot's own deadline where the source states one per lot, otherwise the procedure's. The legacy form generations publish one procedure-level deadline for the whole notice (the r209 era's DATE_RECEIPT_TENDERS is procedure-scoped by design), and that is the date a bidder submits by and the date `?status=open` evaluates — so a lot returned as open carries the deadline that opened it. A lot's own deadline wins even when the procedure's is later. The row does not say which of the two it is; `dates` on the tender detail names each date's `lot` (null for procedure-scoped)." },
+          "value": { "nullable": true, "allOf": [{ "$ref": "#/components/schemas/Money" }], "description": "The lot's value, or null when none was published — and null, too, when every published figure is one the derived value election refuses: a withheld marker, an exact zero, a negative, a repdigit field maximum, or a converted amount above the implausibility ceiling. The same rule the tender headline uses, so the two cannot disagree about one figure." }
         },
         "additionalProperties": true
       },
