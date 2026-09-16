@@ -496,3 +496,19 @@ Acceptance reads for after the deploy: `/v1/tenders?deadline_after=now&sort=dead
 → 200; `/v1/sql/schema` `notes[2]` containing "FORMAT FIRST" and no longer
 "Filter/format with strftime(col,'unixepoch')"; `currency_rates.rate_date`'s note naming ISO;
 `/v1/openapi.json` `components.schemas.Tender.properties` holding 16 keys.
+
+## VERIFIED LIVE 2026-09-16 — all five units, rev `347893a`
+
+| acceptance read | result |
+| --- | --- |
+| `/v1/tenders?deadline_after=now&sort=deadline&order=asc&limit=3` | **200** — the spec's flagship "closes soon" query answers instead of 400 |
+| `/v1/sql/schema` `notes[2]` | "Time columns are Unix epoch seconds, NOT ISO — the REST API returns ISO, so the two disagree. **Put the FORMAT FIRST**: `strftime('%Y', published_at, 'unixepoch')`. The reversed order, `strftime(col,'unixepoch')`, …" — the silent-NULL idiom the headline used to teach is gone and named as the trap |
+| `currency_rates.rate_date`'s column note | "An ISO date STRING (`1993-01-04`), not epoch seconds — the one time column in this schema that is text. `LIKE '2012%'` works here and nowhere else; do NOT wrap it in `strftime(…, 'unixepoch')`." |
+| `/v1/openapi.json` property counts | `Tender` **16**, `Lot` **8**, `Organization` **7**, `Notice` **11** — was 6/2/2/2 |
+
+Status: **RESOLVED-VERIFIED 2026-09-16.** The two derived units stay derived: the epoch note is
+generated from the column names rather than restated, and the property set is diffed against a live
+serialized row by `every_served_key_is_declared_in_its_schema`, so the next field added to a
+serializer fails the gate until the spec catches up. (`Lot`'s two property DESCRIPTIONS were rewritten
+again on 2026-09-16 by issue 389, which is the gate working as intended: the shape held, the prose
+followed the behaviour.)
