@@ -5588,6 +5588,7 @@ mod tests {
         }
     }
 
+    #[test]
     fn from_labelled_reports_a_missing_result_set() {
         let err = Raw::from_labelled(vec![("versions".to_owned(), Some(vec![]))]).unwrap_err();
         assert!(err.contains("title"), "{err}");
