@@ -902,7 +902,17 @@
           "title": { "type": "string", "nullable": true },
           "cpv": { "type": "array", "items": { "type": "string" } },
           "country": { "type": "array", "items": { "type": "string" }, "description": "NUTS place codes." },
-          "published_at": { "type": "string", "nullable": true, "description": "ISO 8601; a source that published a date only yields a date only." }
+          "published_at": { "type": "string", "nullable": true, "description": "ISO 8601; a source that published a date only yields a date only." },
+          "kind": { "type": "string", "description": "What this row IS: `procedure` for a procurement, or a non-procedure publication kind." },
+          "version": { "type": "integer", "description": "The current version's sequence number in this Tender's chain (ADR-0001)." },
+          "publication_id": { "type": "string", "nullable": true, "description": "Publication number of the notice that caused the current version, e.g. `00710890-2023`." },
+          "procedure_key": { "type": "string", "nullable": true, "description": "The grouping key binding this chain's notices into one Tender; null for an island." },
+          "notice_subtype": { "type": "string", "nullable": true, "description": "The source's own notice-subtype code for the current version." },
+          "original_lang": { "type": "string", "nullable": true, "description": "Language the current version was originally published in, uppercase ISO 639-2/T (ADR-0013)." },
+          "dispatched_at": { "type": "string", "format": "date-time", "nullable": true, "description": "When the buyer dispatched the notice for publication — earlier than published_at." },
+          "submission_deadline": { "type": "string", "format": "date-time", "nullable": true, "description": "The instant deadline_after/deadline_before filter on and sort=deadline orders by." },
+          "lots": { "type": "integer", "description": "How many Lots the current version publishes; 0 is normal for a single-lot procurement." },
+          "value": { "nullable": true, "allOf": [{ "$ref": "#/components/schemas/Money" }], "description": "Headline value, or null when none was published." }
         },
         "additionalProperties": true
       },
@@ -933,7 +943,13 @@
         "description": "A subdivision of a Tender.",
         "properties": {
           "id": { "type": "integer", "format": "int64" },
-          "tender_id": { "type": "integer", "format": "int64" }
+          "tender_id": { "type": "integer", "format": "int64" },
+          "kind": { "type": "string", "description": "The source's section kind for this lot (`Lot`, `LotGroup`, …)." },
+          "lot_key": { "type": "string", "description": "The source's own lot identifier within its notice, e.g. `LOT-0001` — unique per tender, not globally." },
+          "title": { "type": "string", "nullable": true, "description": "The lot's title, or the tender's when the lot publishes none." },
+          "version": { "type": "integer", "description": "The parent Tender version this lot belongs to." },
+          "submission_deadline": { "type": "string", "format": "date-time", "nullable": true, "description": "The lot's own deadline where the source states one per lot." },
+          "value": { "nullable": true, "allOf": [{ "$ref": "#/components/schemas/Money" }], "description": "The lot's value, or null when none was published." }
         },
         "additionalProperties": true
       },
@@ -942,7 +958,12 @@
         "description": "A canonical Organization — buyer, bidder or winner.",
         "properties": {
           "id": { "type": "integer", "format": "int64" },
-          "name": { "type": "string", "nullable": true }
+          "name": { "type": "string", "nullable": true },
+          "country": { "type": "string", "nullable": true, "description": "ISO 3166-1 alpha-2; null where no publication stated one." },
+          "identifier": { "type": "string", "nullable": true, "description": "Registration identifier, normalised (issue 300); null for a provisional row." },
+          "identifier_kind": { "type": "string", "nullable": true, "description": "Which register the identifier belongs to — `national`, `vat`, `eu`, …. Matched case-insensitively by ?kind=." },
+          "mentions": { "type": "integer", "description": "How many notice mentions resolve to this organization — a proxy for how well-attested the identity is." },
+          "provisional": { "type": "boolean", "description": "True when minted from a name alone with no identifier to bind it: a placeholder a later publication may merge away." }
         },
         "additionalProperties": true
       },
@@ -951,7 +972,16 @@
         "description": "A raw import record — the traceability anchor of every canonical version (ADR-0001).",
         "properties": {
           "id": { "type": "integer", "format": "int64" },
-          "source": { "type": "string" }
+          "source": { "type": "string" },
+          "publication_id": { "type": "string", "description": "Official publication number, e.g. `00497150-2026`. Filter with ?publication_id=." },
+          "published_at": { "type": "string", "format": "date-time", "nullable": true, "description": "When it was published; null for a notice held out of the canonical layer." },
+          "dispatched_at": { "type": "string", "format": "date-time", "nullable": true, "description": "When the buyer dispatched it for publication." },
+          "ingested_at": { "type": "string", "format": "date-time", "description": "When this system first stored it — learn order, not publication order." },
+          "profile": { "type": "string", "description": "The mapping profile that parsed it, e.g. `eforms:eforms-sdk-1.13`, `text`, `ted-export-r209`." },
+          "declared_version": { "type": "string", "nullable": true, "description": "The schema version the payload declared for itself, where it declares one." },
+          "parse_state": { "type": "string", "description": "`pending`, `parsed` or `quarantined` (ADR-0004). THIS — not the presence of `quarantine` — says whether the notice is held today." },
+          "content_hash": { "type": "string", "description": "Hash of the stored payload; the identity a re-fetch dedupes against." },
+          "member_path": { "type": "string", "description": "Where the notice sits inside its source package — the provenance a /v1/sql join on v_fetches resolves." }
         },
         "additionalProperties": true
       },

@@ -442,3 +442,57 @@ next reader to rediscover.
   against 16/8/7/11 served keys. The derivable form the issue suggests — serialize one row per
   collection and diff its keys against the declared properties — is a natural second test beside this
   one, and is the right way to do it.
+
+## Units 4 and 5 BUILT 2026-09-16 (owner) — issue 391 is now complete
+
+### Unit 4 — the example shows shapes the parser emits
+
+Every field in the old block was wrong, checked against a live
+`/v1/notices/{id}/content`:
+
+| field | published | actually served |
+| --- | --- | --- |
+| `section_id` | `1` | `"PROCEDURE"`, `"LOT-0001"` — the SOURCE's own ids, strings |
+| `kind` | `"root"` | `"Notice"`, `"Lot"` — the parser's section vocabulary |
+| `lang` | `"deu"` | `"DEU"` — uppercase ISO 639-2/T for eForms |
+| `parent_section_id` | only `null` shown | `"PROCEDURE"` on a nested section |
+| `notice_id` | `14327` | **404** |
+
+The example now shows two sections (a root `PROCEDURE` and a child `LOT-0001`) so the parent link is
+visible at all, and real value shapes — a `text` with `"lang": "DEU"`, an `integer`, and an `id`
+carrying `scheme`/`is_ref`.
+
+**The stale id is fixed by explaining it, not by swapping in a fresh one.** Entity ids are scoped to
+the feed's `generation` and are REISSUED by a rebuild — which is exactly why 14327 died — so any
+literal in a doc page is a future 404. The caption now says so and tells the reader to take an id
+from `/v1/notices`. Swapping in today's id would have reset the same clock.
+
+### Unit 5 — the schemas declare what they serve, and a gate keeps it that way
+
+| schema | declared before | served | properties added |
+| --- | --- | --- | --- |
+| `Tender` | 6 | 16 | `kind`, `version`, `publication_id`, `procedure_key`, `notice_subtype`, `original_lang`, `dispatched_at`, `submission_deadline`, `lots`, `value` |
+| `Lot` | 2 | 8 | `kind`, `lot_key`, `title`, `version`, `submission_deadline`, `value` |
+| `Organization` | 2 | 7 | `country`, `identifier`, `identifier_kind`, `mentions`, `provisional` |
+| `Notice` | 2 | 11 | `publication_id`, `published_at`, `dispatched_at`, `ingested_at`, `profile`, `declared_version`, `parse_state`, `content_hash`, `member_path` |
+
+30 properties, each typed from a LIVE row rather than guessed — `value` is `Money`-or-null, `lots`
+and `mentions` are integers, `provisional` is a boolean, the instants carry `format: date-time`.
+`Notice.parse_state` states in bold that it, and not the presence of `quarantine`, says whether a
+notice is held today (issue 398's contract, now in the machine-readable half too).
+
+`every_served_key_is_declared_in_its_schema` serializes one real row per collection and diffs its
+keys against the declaration, so a field added to a serializer fails here until the spec catches up.
+It guards against passing vacuously in both directions: an empty page fails, and a row with fewer
+than 7 keys fails as "the fixture has thinned out and this gate no longer covers the shape".
+
+### Issue 391 is complete
+
+All five units built, plus the example-runner guard. Two of the five are now DERIVED rather than
+restated — unit 3's epoch note and unit 5's property set — which was the fix shape the issue argued
+for. Not deployed: the issue-397 text-era projection (job 1387) is still folding.
+
+Acceptance reads for after the deploy: `/v1/tenders?deadline_after=now&sort=deadline&order=asc&limit=3`
+→ 200; `/v1/sql/schema` `notes[2]` containing "FORMAT FIRST" and no longer
+"Filter/format with strftime(col,'unixepoch')"; `currency_rates.rate_date`'s note naming ISO;
+`/v1/openapi.json` `components.schemas.Tender.properties` holding 16 keys.

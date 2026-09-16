@@ -277,18 +277,31 @@ notice with <code>parse_state: "parsed"</code> and a non-null
 was fixed, and is fully served &mdash; its content is right here. Only
 <code>parse_state: "quarantined"</code> means held now.</p>
 <pre><code>{
-  "notice_id": 14327,
+  "notice_id": 23555356,
   "sections": [
     {
-      "section_id": 1, "kind": "root", "parent_section_id": null,
+      "section_id": "PROCEDURE", "kind": "Notice", "parent_section_id": null,
+      "values": [ … ]
+    },
+    {
+      "section_id": "LOT-0001", "kind": "Lot", "parent_section_id": "PROCEDURE",
       "values": [
-        {"type": "text",   "field_id": "BT-21",  "ordinal": 0, "lang": "deu", "value": "…"},
-        {"type": "amount", "field_id": "BT-27",  "ordinal": 0, "cents": 1200000, "currency": "EUR"},
-        {"type": "date",   "field_id": "BT-131", "ordinal": 0, "value": "2026-09-01T10:00:00+02:00"}
+        {"type": "text",    "field_id": "BT-21-Lot",  "ordinal": 0, "lang": "DEU", "value": "…"},
+        {"type": "integer", "field_id": "BT-115-Lot", "ordinal": 0, "value": 1},
+        {"type": "id",      "field_id": "BT-01(c)-Procedure", "ordinal": 0,
+         "scheme": null, "is_ref": false, "value": "vgv"}
       ]
     }
   ]
 }</code></pre>
+<p class="muted">Section ids are the source&rsquo;s own
+(<code>PROCEDURE</code>, <code>LOT-0001</code>, <code>ORG-0003</code>&hellip;),
+not integers, and <code>kind</code> is the parser&rsquo;s section vocabulary
+(<code>Notice</code>, <code>Lot</code>, <code>Organization</code>&hellip;);
+<code>lang</code> is the source&rsquo;s own tag, uppercase ISO 639-2/T for
+eForms. The <code>notice_id</code> above is illustrative: entity ids are scoped
+to the feed&rsquo;s <code>generation</code> and are reissued by a rebuild, so
+take one from <code>/v1/notices</code> rather than copying a literal.</p>
 <p class="muted">Value types: <code>text</code>, <code>code</code>,
 <code>classification</code>, <code>amount</code>, <code>date</code>,
 <code>integer</code>, <code>number</code>, <code>id</code> — each carrying its

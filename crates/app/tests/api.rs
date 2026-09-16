@@ -1388,6 +1388,62 @@ async fn notice_content_serves_the_whole_parsed_layer() {
     assert_eq!(server.status("/v1/notices/999999999/content").await, 404);
 }
 
+/// Issue 391 unit 5: a collection's schema declares every key it actually
+/// serves.
+///
+/// The four entity schemas declared 6, 2, 2 and 2 properties against 16, 8, 7
+/// and 11 served keys, so a generated client saw a Tender with no `value`, no
+/// `submission_deadline` and no `kind`, and `/docs` leaned on `provisional` —
+/// which the spec did not mention at all. Neither existing gate could see it:
+/// both compare NAMES of paths and parameters, never a schema's property set.
+///
+/// Derived rather than restated: the test serializes a real row from each
+/// collection and diffs its keys against the declaration, so a field added to a
+/// serializer fails here until the spec catches up.
+#[tokio::test]
+async fn every_served_key_is_declared_in_its_schema() {
+    let server = Server::start("schema-breadth").await;
+    server.ingest_chain().await;
+
+    let spec: Value =
+        serde_json::from_str(include_str!("../data/openapi.json")).expect("openapi.json parses");
+
+    for (schema, path) in [
+        ("Tender", "/v1/tenders?limit=1"),
+        ("Lot", "/v1/lots?limit=1"),
+        ("Organization", "/v1/organizations?limit=1"),
+        ("Notice", "/v1/notices?limit=1"),
+    ] {
+        let declared: Vec<&str> = spec["components"]["schemas"][schema]["properties"]
+            .as_object()
+            .unwrap_or_else(|| panic!("{schema} declares properties"))
+            .keys()
+            .map(String::as_str)
+            .collect();
+
+        let page = server.get(path).await;
+        let rows = items(&page).clone();
+        assert!(!rows.is_empty(), "{path} served nothing, so this gate would pass vacuously");
+        let row = rows[0].as_object().expect("an object row");
+
+        for key in row.keys() {
+            assert!(
+                declared.contains(&key.as_str()),
+                "{path} serves `{key}` and components.schemas.{schema} does not declare it \
+                 — a generated client cannot see the field"
+            );
+        }
+        // Not vacuous the other way either: a schema that declared nothing, or a
+        // serializer that emitted one key, would slip through the loop above.
+        assert!(
+            row.len() >= 7,
+            "{path} served only {} keys — the fixture has thinned out and this gate \
+             no longer covers the shape",
+            row.len()
+        );
+    }
+}
+
 /// Issue 391: every example the contract publishes is fired at the server, and
 /// none of them may 4xx.
 ///
