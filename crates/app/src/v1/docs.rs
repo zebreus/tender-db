@@ -113,7 +113,7 @@ defined in the project's <code>CONTEXT.md</code>.</p>
   <li><strong>JSON</strong> everywhere but SSE. Money is <code>{"cents": 1234, "currency": "EUR"}</code> (integer minor units — never a float). Timestamps are ISO 8601. A source that published a date only <em>should</em> yield a date only, but does not yet everywhere: the stored instant carries no date-only marker, so some date-only publications render with a time (a German portal date of 2026-09-05 serves as <code>2026-09-04T22:00:00Z</code>). Issue 367 carries the fix.</li>
   <li>The change <strong>cursor is an opaque string</strong>. Compare cursors for equality and pass them back verbatim; do not parse or do arithmetic on them.</li>
   <li><strong>Auth</strong> (SQL + webhooks): <code>Authorization: Bearer tdb_…</code>. Create tokens on the <a href="/account">dashboard</a>.</li>
-  <li><strong>Errors</strong> share one shape: <code>{"error": {"status": 404, "message": "no such tender"}}</code> with the matching HTTP status.</li>
+  <li><strong>Errors</strong> share one shape: <code>{"error": {"status": 404, "message": "no such tender"}}</code> with the matching HTTP status &mdash; <em>every</em> status, including a <code>405</code> for a wrong method on a path that exists (which carries an <code>Allow</code> header beside the envelope).</li>
   <li><strong>Rate limits</strong>: ~10 req/s per client (burst 50) across <code>/v1</code>; live streams capped at 5 per client; SQL has its own limits (below). Behind the proxy the client is keyed by <code>X-Forwarded-For</code>.</li>
   <li><strong>CORS</strong>: every endpoint that needs no token is callable from browser JavaScript on any origin (<code>Access-Control-Allow-Origin: *</code>), SSE resume preflights included — build a client-side app directly against the API. The token-gated endpoints (SQL, webhooks, <code>/v1/me</code>) are not CORS-open; call them server-side.</li>
 </ul>
@@ -165,7 +165,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
   <tr><td class="ep"><code>deadline_after</code><br><code>deadline_before</code></td><td>Bound Tenders by submission deadline (rows without one never match). A single bound implies <code>sort=deadline</code>.</td></tr>
   <tr><td class="ep">sort</td><td>Tenders only: <code>id</code> (default), <code>published_at</code> or <code>deadline</code>. See <a href="#ordering">ordering</a>.</td></tr>
   <tr><td class="ep">order</td><td><code>asc</code> | <code>desc</code>. Defaults per sort: <code>published_at</code> newest-first, <code>deadline</code> soonest-first, <code>id</code> ascending (its only direction).</td></tr>
-  <tr><td class="ep">limit</td><td>Page size, default 100, max 1000.</td></tr>
+  <tr><td class="ep">limit</td><td>Page size, default 100. Must be 1&ndash;1000 inclusive &mdash; a value outside that range is a <code>400</code>, not silently clamped.</td></tr>
   <tr><td class="ep">cursor</td><td>Opaque page position — pass back the previous page's <code>next_cursor</code>, to the same query shape (a cursor is specific to its <code>sort</code>).</td></tr>
 </table>
 <p>An unknown or misspelled query parameter is rejected with <code>400</code>
@@ -328,7 +328,11 @@ generation.</p>
 
 <h2 id="sse">Live feed — Server-Sent Events</h2>
 <p>Send <code>Accept: text/event-stream</code> to any collection endpoint (with
-any filters). The protocol:</p>
+any filters). The one exception is
+<code>/v1/notices?tender=&lt;id&gt;</code>, which is a lookup rather than a
+subscription and answers <code>400</code> to a stream request rather than
+quietly returning JSON; subscribe to <code>/v1/notices</code> without
+<code>tender</code> if you need a live feed. The protocol:</p>
 <ol>
   <li><strong>Snapshot</strong> — one <code>added</code> event per row currently matching your filter, read in a single consistent transaction.</li>
   <li>A <code>live</code> marker carrying the snapshot's cursor.</li>

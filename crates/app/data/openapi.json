@@ -757,7 +757,7 @@
       "tender": {
         "name": "tender",
         "in": "query",
-        "description": "Restrict Lots to one Tender id; on /v1/notices, list the Notices that caused that Tender's versions.",
+        "description": "Restrict Lots to one Tender id; on /v1/notices, list the Notices that caused that Tender's versions (a lookup, not a subscription: sending Accept: text/event-stream with this parameter is a 400).",
         "schema": { "type": "integer", "format": "int64" }
       },
       "publication_id": {
@@ -817,7 +817,7 @@
       "limit": {
         "name": "limit",
         "in": "query",
-        "description": "Page size.",
+        "description": "Page size. Must be between 1 and 1000 inclusive; anything outside that range is a 400, not silently clamped.",
         "schema": { "type": "integer", "default": 100, "maximum": 1000, "minimum": 1 }
       },
       "cursor": {

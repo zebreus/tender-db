@@ -1388,6 +1388,166 @@ async fn notice_content_serves_the_whole_parsed_layer() {
     assert_eq!(server.status("/v1/notices/999999999/content").await, 404);
 }
 
+/// Issue 390 unit 3: a wrong METHOD on a served path is the same JSON envelope
+/// as every other error, and keeps its `Allow` header.
+///
+/// This was the one status on `/v1` with no body and no content-type — axum's
+/// `MethodRouter` default, because `/v1` installed a PATH fallback and not a
+/// METHOD one. Issue 51 closed "every /v1 error is JSON" on 400/404/429 and
+/// never exercised 405, so a client parsing error bodies unconditionally threw
+/// here, in its error handler.
+#[tokio::test]
+async fn wrong_methods_on_served_paths_are_json_405() {
+    let server = Server::start("method-405").await;
+
+    for (method, path, expect_allow) in [
+        (reqwest::Method::POST, "/v1/tenders", "GET"),
+        (reqwest::Method::DELETE, "/v1/tenders/1", "GET"),
+        (reqwest::Method::PUT, "/v1/notices", "GET"),
+        (reqwest::Method::GET, "/v1/sql", "POST"),
+        // A non-public path, so `public_cors` does not short-circuit the OPTIONS.
+        (reqwest::Method::OPTIONS, "/v1/sql", "POST"),
+    ] {
+        let response = server
+            .http
+            .request(method.clone(), format!("{}{path}", server.base))
+            .send()
+            .await
+            .expect("request");
+        assert_eq!(response.status().as_u16(), 405, "{method} {path}");
+        assert_eq!(
+            response.headers().get("content-type").and_then(|v| v.to_str().ok()),
+            Some("application/json"),
+            "{method} {path} must carry the envelope's content-type"
+        );
+        // The Allow header is axum's routing verdict and must survive the
+        // fallback — the body is replaced, not the decision.
+        let allow = response
+            .headers()
+            .get("allow")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or_default()
+            .to_owned();
+        assert!(allow.contains(expect_allow), "{method} {path} → allow {allow:?}");
+        let body: Value = response.json().await.expect("a JSON body");
+        assert_eq!(body["error"]["status"].as_i64(), Some(405), "{method} {path}: {body}");
+        assert!(body["error"]["message"].is_string(), "{body}");
+    }
+}
+
+/// Issue 390 unit 4: `limit` outside 1..=1000 is rejected, not silently rewritten.
+///
+/// It used to `clamp`, so `?limit=0` and `?limit=-5` each served ONE row and
+/// `?limit=1001` served 1000, with nothing saying the request had been changed —
+/// while `?limit=abc` on the same endpoint 400s and the spec declares
+/// `{"minimum": 1, "maximum": 1000}`. A caller asking for more than the maximum
+/// now learns the maximum instead of paginating forever wondering why.
+#[tokio::test]
+async fn an_out_of_range_limit_is_rejected_rather_than_clamped() {
+    let server = Server::start("limit-range").await;
+    server.ingest_chain().await;
+
+    // All five endpoints share `Params::limit`, so the rule is one rule.
+    for path in ["/v1/tenders", "/v1/lots", "/v1/organizations", "/v1/notices", "/v1/changes"] {
+        for bad in ["0", "-5", "1001"] {
+            assert_eq!(
+                server.status(&format!("{path}?limit={bad}")).await,
+                400,
+                "{path}?limit={bad} must be refused"
+            );
+        }
+        // The bounds themselves are VALID — an off-by-one here would be worse
+        // than the clamp, because 1000 is the documented maximum.
+        assert_eq!(server.status(&format!("{path}?limit=1")).await, 200);
+        assert_eq!(server.status(&format!("{path}?limit=1000")).await, 200);
+        // And absent still means the default.
+        assert_eq!(server.status(path).await, 200);
+    }
+
+    let body = server.get_allow_error("/v1/tenders?limit=0").await;
+    assert_eq!(body["error"]["status"].as_i64(), Some(400));
+    assert!(
+        body["error"]["message"].as_str().is_some_and(|m| m.contains("1000")),
+        "the message names the maximum so a client can correct itself: {body}"
+    );
+
+    // The verdict must not depend on the Accept header (the check sits before
+    // the stream branch): an SSE subscription with a bad limit is a 400 too.
+    let streamed = server
+        .http
+        .get(format!("{}/v1/tenders?limit=0", server.base))
+        .header("accept", "text/event-stream")
+        .send()
+        .await
+        .expect("request");
+    assert_eq!(streamed.status().as_u16(), 400, "validation must not switch on Accept");
+}
+
+/// Issue 390 unit 5: `/v1/notices?tender=` refuses a stream visibly instead of
+/// answering JSON to `Accept: text/event-stream`.
+///
+/// The branch is a lookup, not a subscription — but it used to change the
+/// response MEDIA TYPE on one filter of an endpoint that streams for every other
+/// shape, so a browser `EventSource` on the documented URL failed on the MIME
+/// type with nothing anywhere predicting it. Refused the way `sort`/`order` on a
+/// stream already is.
+#[tokio::test]
+async fn the_tender_notices_lookup_refuses_a_stream_instead_of_answering_json() {
+    let server = Server::start("notices-stream").await;
+    server.ingest_chain().await;
+
+    let stream = |path: String| {
+        let http = server.http.clone();
+        let base = server.base.clone();
+        async move {
+            http.get(format!("{base}{path}"))
+                .header("accept", "text/event-stream")
+                .send()
+                .await
+                .expect("request")
+        }
+    };
+
+    // The fixture's own tender, not a guessed id — a 404 control would pass the
+    // refusal assertion for the wrong reason.
+    let tid = items(&server.get("/v1/tenders?limit=1").await)[0]["id"]
+        .as_i64()
+        .expect("the fixture folded a tender");
+
+    let refused = stream(format!("/v1/notices?tender={tid}")).await;
+    assert_eq!(refused.status().as_u16(), 400);
+    assert_eq!(
+        refused.headers().get("content-type").and_then(|v| v.to_str().ok()),
+        Some("application/json"),
+    );
+    let body: Value = refused.json().await.expect("json");
+    assert!(
+        body["error"]["message"].as_str().is_some_and(|m| m.contains("tender")),
+        "the envelope names the offending shape: {body}"
+    );
+
+    // Controls. Without the header the lookup still answers JSON…
+    let json = server.get(&format!("/v1/notices?tender={tid}")).await;
+    assert!(json["items"].is_array(), "the lookup is unchanged for a JSON client");
+    // …the same endpoint WITHOUT `?tender=` still streams (it was never the
+    // endpoint that was JSON-only, only this branch)…
+    let plain = stream("/v1/notices?limit=2".to_owned()).await;
+    assert_eq!(
+        plain.headers().get("content-type").and_then(|v| v.to_str().ok()).map(|t| t
+            .starts_with("text/event-stream")),
+        Some(true),
+    );
+    // …and `tender` on another collection still streams, so the parameter was
+    // never the cause either.
+    let lots = stream(format!("/v1/lots?tender={tid}")).await;
+    assert!(
+        lots.headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .is_some_and(|t| t.starts_with("text/event-stream")),
+    );
+}
+
 /// Issue 399: `/v1/changes` applies `entity` and nothing else, and now says so.
 ///
 /// `Params` is shared with the list endpoints, so every collection filter parses

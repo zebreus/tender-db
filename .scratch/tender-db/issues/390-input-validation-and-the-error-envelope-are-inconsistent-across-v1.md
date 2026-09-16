@@ -373,3 +373,69 @@ sub-resource, not a loosened depth rule.
 Units 1 and 2 are done. **Units 3, 4 and 5 remain open** (the bodyless 405, `limit` clamping instead
 of 400ing, and the SSE `Accept` gap on `/v1/notices?tender=<id>`) — all three are the low-severity
 tier and none was touched.
+
+## Units 3, 4 and 5 BUILT 2026-09-16 (owner) — the issue is now complete
+
+### Unit 3 — `method_not_allowed_fallback`
+
+`/v1` installed a PATH fallback and not a METHOD one, so a matched-path/wrong-method request fell to
+axum's `MethodRouter` default: 405, `content-length: 0`, no content-type. One line on the router
+(`.method_not_allowed_fallback(method_not_allowed)`) plus an `ApiError` constructor fixes it. The
+`Allow` header survives, because the fallback replaces the BODY and not the routing verdict — the
+test asserts `allow: GET…` on `POST /v1/tenders` and `allow: POST` on `GET /v1/sql`, since a 405
+without `Allow` would trade one contract break for another.
+
+`wrong_methods_on_served_paths_are_json_405` covers a collection path, an id path, `/v1/sql`, and an
+OPTIONS on a non-public path (where `public_cors` does not short-circuit with its 204). `/docs`'
+errors bullet now says the one shape covers *every* status, naming the 405 and its `Allow` header.
+
+### Unit 4 — reject, not document
+
+The `## Done when` left the direction open. **Reject**, for two reasons. `/docs` already states the
+API's posture — bad query input is "rejected with 400 rather than silently ignored" — and `limit=abc`
+on the same endpoint already 400s, so `limit` was the single parameter contradicting its own
+endpoint. And documenting the clamp leaves a spec-generated client and the server pointing in
+opposite directions: the client refuses to send `limit=0` that the server quietly accepts.
+
+`Params::limit()` returns `Result<i64, ApiError>` and 400s outside `1..=1000`, naming the maximum so
+a caller can correct itself rather than paginating forever wondering why its pages are short.
+
+**The check moved ABOVE the `wants_events` branch**, which the issue did not ask for and which
+matters: `collection()` validated after the SSE early-return, so `?limit=0` would have been a 400 as
+JSON and accepted as a stream. An API whose validation switches on a request header is the
+inconsistency this whole issue is about. A test pins it.
+
+`an_out_of_range_limit_is_rejected_rather_than_clamped` runs all five `Params`-sharing endpoints
+against `0`, `-5`, `1001`, and — the assertion that matters more — `1` and `1000` still 200, because
+an off-by-one at the bounds would be worse than the clamp ever was.
+
+### Unit 5 — refuse the stream visibly
+
+`/v1/notices?tender=` answers 400 to `Accept: text/event-stream` instead of silently returning JSON.
+Refused rather than streamed: the branch is a lookup and the comment at its head has always said so;
+building a snapshot stream for it would be inventing a feature to fix a documentation gap.
+
+**400 and not 406**, deliberately, though 406 is the more literal status for "I cannot produce that
+media type". This API has exactly one refusal shape for "that request shape is not servable here" —
+`reject_sort` uses it for `sort`/`order` on a stream — and introducing a second status for the same
+class of refusal would be a new inconsistency inside the issue that exists to remove them.
+
+The controls are the interesting half and all three are pinned: the same endpoint WITHOUT `?tender=`
+still streams, `tender` on `/v1/lots` still streams, and the lookup still answers JSON to a JSON
+client. Neither the endpoint nor the parameter was ever the cause — only their combination.
+
+### Docs
+
+`openapi.json`: `limit.description` states the 1–1000 rule and that out-of-range is a 400, not a
+clamp; the `tender` parameter says the `/v1/notices` form is a lookup and a stream request is a 400.
+`/docs`: the same two, plus the errors bullet covering 405.
+
+### Status
+
+**Units 1–5 are all built.** Not deployed — the issue-397 text-era re-parse (job 1386) is running;
+this rides the next deploy with issue 399.
+
+Acceptance reads for after: `POST /v1/tenders` → 405 with the JSON envelope and an `Allow` header;
+`/v1/tenders?limit=0`, `?limit=-5`, `?limit=1001` → 400 and `?limit=1`, `?limit=1000` → 200;
+`Accept: text/event-stream` on `/v1/notices?tender=<id>` → 400 while `/v1/notices?limit=2` and
+`/v1/lots?tender=<id>` still stream.

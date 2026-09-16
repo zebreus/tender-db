@@ -166,6 +166,11 @@ pub fn router(state: AppState) -> Router {
         // leaking its route names (issue 51). Static routes above are more
         // specific, so this only catches the genuinely unmatched.
         .route("/v1/{*rest}", any(unknown_endpoint))
+        // …and a wrong METHOD on a path that DID match gets the same envelope
+        // (issue 390 unit 3). The path fallback above cannot serve this: it only
+        // fires when nothing matched, and a matched-path/wrong-method request is
+        // axum's `MethodRouter` default — a bodiless 405.
+        .method_not_allowed_fallback(method_not_allowed)
         // The rate limiter's own 429 is emitted as our JSON envelope, not
         // tower_governor's plain-text default (issue 51).
         .layer(GovernorLayer::new(limits).error_handler(governor_json_error))
@@ -452,6 +457,23 @@ type ApiResult = Result<Response, ApiError>;
 /// never falls through to the dashboard's HTML router or leaks a route name.
 async fn unknown_endpoint() -> ApiError {
     ApiError::not_found("endpoint")
+}
+
+/// A wrong method on a served path (issue 390 unit 3).
+///
+/// axum's `MethodRouter` answers an unmatched method with a bodiless 405 and no
+/// content-type, so this was the ONE status on `/v1` with no envelope — against
+/// `/docs`' and the spec's flat promise that "errors share one shape … with the
+/// matching HTTP status". A client that parses error bodies unconditionally
+/// throws on a zero-length body, in its error handler, which is the code path
+/// least likely to be exercised. Issue 51 closed on 400/404/429 and never saw
+/// this one.
+///
+/// Installed as `method_not_allowed_fallback`, so the `Allow` header axum
+/// computed for the path still rides on the response — the fallback replaces the
+/// body, not the routing verdict.
+async fn method_not_allowed() -> ApiError {
+    ApiError(StatusCode::METHOD_NOT_ALLOWED, "method not allowed".to_owned())
 }
 
 /// The whole-request bound on `/v1` (issue 241, gap 2). Sized far above the
@@ -753,8 +775,31 @@ impl Params {
         self.cursor.as_deref().and_then(|c| c.parse().ok()).unwrap_or(0)
     }
 
-    fn limit(&self) -> i64 {
-        self.limit.unwrap_or(DEFAULT_LIMIT).clamp(1, read::MAX_PAGE)
+    /// The page size, rejected rather than clamped when out of range (issue 390
+    /// unit 4).
+    ///
+    /// `openapi.json` declares this parameter `{"minimum": 1, "maximum": 1000}`
+    /// and `/docs` states the API's posture — bad query input is "rejected with
+    /// 400 rather than silently ignored". `limit` was the one parameter where
+    /// neither was true: it `clamp`ed, so `?limit=0` and `?limit=-5` each served
+    /// ONE row and `?limit=1001` served 1000, with nothing saying the request had
+    /// been rewritten — while `?limit=abc` on the same endpoint 400s.
+    ///
+    /// Rejecting both bounds rather than documenting the clamp, because the
+    /// alternative leaves a spec-generated client and the server pointing in
+    /// opposite directions: the client refuses to send what the server quietly
+    /// accepts. A caller asking for more than the maximum now learns the maximum
+    /// instead of silently receiving a short page and wondering why its
+    /// pagination never ends.
+    fn limit(&self) -> Result<i64, ApiError> {
+        match self.limit {
+            None => Ok(DEFAULT_LIMIT),
+            Some(n) if (1..=read::MAX_PAGE).contains(&n) => Ok(n),
+            Some(n) => Err(ApiError::bad_request(format!(
+                "limit must be between 1 and {}, not {n}",
+                read::MAX_PAGE
+            ))),
+        }
     }
 
     fn since(&self) -> i64 {
@@ -942,10 +987,15 @@ async fn collection(
     params: Params,
 ) -> ApiResult {
     let filter = params.filter(store::now_unix())?;
+    // Validated BEFORE the Accept branch (issue 390 unit 4), so whether `limit=0`
+    // is a 400 does not depend on a request header. The stream arm does not use
+    // `limit` — it pages by `sse::SNAPSHOT_PAGE` — but a parameter that is
+    // out of range is out of range either way, and an API whose validation
+    // switches on `Accept` is the inconsistency this issue is about.
+    let limit = params.limit()?;
     if wants_events(&headers) {
         return sse::subscribe(collection, state, headers, params, filter).await;
     }
-    let limit = params.limit();
     // One extra row answers "is there another page?" without a second query.
     let scope = Scope::Page { after: params.after(), limit: limit + 1 };
     // A filter shape that CAN walk runs on the isolated runtime and pool, so a walk
@@ -1127,7 +1177,7 @@ async fn tenders_ordered(
             }
         },
     };
-    let limit = params.limit();
+    let limit = params.limit()?;
     // The published bounds are SERVED by this read's index ride; the REMAINING
     // filters decide isolation exactly as on the id-ordered list (issue 120) — a
     // sparse version-predicate walks the ordered stream the same way it walks the
@@ -1211,7 +1261,7 @@ async fn organizations_by_name(
             }
         },
     };
-    let limit = params.limit();
+    let limit = params.limit()?;
     // A companion filter beside the name range flips the planner onto the
     // companion's index and scans its whole slice (country=DE: 4.9 s over 3.85M
     // rows, measured on prod) — correct but walk-shaped, so it runs isolated;
@@ -1260,6 +1310,25 @@ fn reject_sort(params: &Params, path: &str) -> Result<(), ApiError> {
 
 async fn notices(State(s): State<AppState>, h: HeaderMap, ApiQuery(p): ApiQuery<Params>) -> ApiResult {
     reject_sort(&p, "/v1/notices")?;
+    // Issue 390 unit 5: the `?tender=` branch is a lookup, not a subscription, so
+    // it cannot stream — and it used to answer `application/json` to
+    // `Accept: text/event-stream` anyway, silently changing the media type on one
+    // filter branch of an endpoint that streams for every other shape. A browser
+    // `EventSource` opened on the documented URL failed on the MIME type with
+    // nothing anywhere saying it would.
+    //
+    // Refused rather than streamed, and refused the way `sort`/`order` on a
+    // stream already is (`reject_sort`): a 400 in the standard envelope naming
+    // the alternative. 406 would be the more literal HTTP status, but this API
+    // has one refusal shape for "that request shape is not servable here" and a
+    // second one would be its own inconsistency.
+    if p.tender.is_some() && wants_events(&h) {
+        return Err(ApiError::bad_request(
+            "/v1/notices?tender= is a lookup, not a subscription, and cannot stream; \
+             drop Accept: text/event-stream, or subscribe to /v1/notices without \
+             ?tender= and filter client-side",
+        ));
+    }
     // `?tender=` lists the Notices that caused a Tender's versions — the
     // ADR-0001 chain, walkable from a detail's `caused_by_notice_id`. The store
     // has no notice→tender predicate, so this is answered in the app from the
@@ -1402,7 +1471,7 @@ async fn changes(State(state): State<AppState>, ApiQuery(params): ApiQuery<Param
             "unknown entity {entity:?}; expected one of tender, lot, organization"
         )));
     }
-    let limit = params.limit();
+    let limit = params.limit()?;
     let reader = state.readers.get().await?;
     let generation = read::feed_generation(&reader).await?;
     // Issue 392: the same two resume verdicts SSE gives (`sse.rs`), for the same
