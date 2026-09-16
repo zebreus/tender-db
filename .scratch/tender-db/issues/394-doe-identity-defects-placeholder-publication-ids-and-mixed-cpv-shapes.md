@@ -341,3 +341,51 @@ not this rule's business.
   collections; tenders 316 and 391 no longer answering it; the newest-100k daily re-check at 0.
 - The DQ report's repeated-identity-string sweep (the "recurrence is visible without a human looking"
   bullet) — not started.
+
+## Unit 1 RE-KEY IN PROGRESS 2026-09-16 — 701 of 7,177 done, the mechanism proven
+
+Deployed on rev `6612b2b`; the re-key runs as an ordinary `reparse` over the four carrier profiles,
+`reclaim_only: true` so the era folds once at the end rather than after every chunk.
+
+**Job 1388 (3 packages, the probe):**
+
+    re-parsed 37145 notices across 3 packages (64549 members walked, 0 unmatched, 701 re-keyed,
+    5 now failing and left untouched); stamped 246265 tender(s) epoch-stale; 85 package(s) held
+    back — continue with {"after": 403} — NOTE: 701 re-keyed by content hash, so this run CHANGED
+    publication_id derivation (issue 290). Intended for a re-key run; a regression otherwise
+
+The `## Done when` asked for a re-key that "reports a carrier count that matches 7,158, or explains
+the difference". It reports one, and it is checkable against the corpus rather than trusted:
+
+| | |
+| --- | --- |
+| carriers before | **7,177** |
+| `re-keyed` reported by the job | **701** |
+| carriers after | **6,476** |
+| 7,177 − 701 | **6,476** ✓ |
+
+`0 unmatched` is the number that says issue 290's fix is load-bearing: without the content-hash
+fallback all 701 would have been counted benign and kept their old parse.
+
+**Job 1389 (45 packages, `after: 403`) is running.** Remaining after that: ~40 packages.
+
+### The acceptance is that the count reaches ZERO
+
+Not "a small number". A residue would mean some carriers are being skipped rather than re-keyed —
+and per issue 290's own note, a DISPATCH-level failure is invisible to the walk's counters, so the
+cohort count is the only detector. Re-run
+`SELECT count(*) FROM notices WHERE publication_id = '00000000-1900'` after the last chunk; if it is
+not 0, do not close this, investigate the residue.
+
+Then the live reads still owed: `/v1/notices/26447665` and `/v1/tenders/1499198` serving
+`a4406a20-3edd-4ddc-921e-fcd05fc6fd5c-01` (the tender half needs the fold);
+`?publication_id=00000000-1900` returning 0 on both collections; tenders 316 and 391 no longer
+answering it; the newest-100k daily re-check at 0.
+
+### Noticed in passing, not this issue's
+
+`5 now failing` per 3 packages — DÖE members the CURRENT eForms parser quarantines while a stored
+parse exists. They are parse-level (the publication-id guard is a dispatch-stage decision and cannot
+reach the parser), so they are pre-existing and nothing was lost — the re-parse leaves their stored
+layer alone by design. Worth a census once the re-key is done, since nobody has looked at DÖE's
+parse-failure residue and this run is the first thing to count it.

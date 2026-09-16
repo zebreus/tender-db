@@ -101,3 +101,40 @@ parallel one, so the ordinary and the shifted paths are read side by side:
 have 7,158 DISTINCT content hashes (394's own measurement), so every one satisfies the fallback's
 uniqueness condition, the re-parse re-keys them, and the job summary reports the count so it can be
 checked against 7,158 rather than assumed.
+
+## PROVEN LIVE 2026-09-16 — job 1388, the first real derivation shift
+
+The fallback and the loud summary were exercised end to end by issue 394 unit 1's re-key, on rev
+`6612b2b`, three DÖE packages:
+
+    re-parsed 37145 notices across 3 packages (64549 members walked, 0 unmatched, 701 re-keyed,
+    5 now failing and left untouched); stamped 246265 tender(s) epoch-stale; 85 package(s) held
+    back by the cap — continue with {"after": 403} — NOTE: 701 re-keyed by content hash, so this
+    run CHANGED publication_id derivation (issue 290). Intended for a re-key run; a regression
+    otherwise
+
+- **701 re-keyed** — 701 notices whose identity the new parser derives differently were found by
+  their bytes, re-parsed, and had the new `publication_id` adopted.
+- **0 unmatched** — nothing was lost to the shift, which is the whole point. Before this issue, all
+  701 would have landed in `unmatched` and the run would have reported a clean re-parse over a cohort
+  that kept its old parse.
+- The NOTE clause fired and says the right thing for a re-key run.
+
+Arithmetically confirmed against the stored rows, not just the counter: the placeholder cohort went
+**7,177 → 6,476**, a drop of exactly **701**. The counter and the corpus agree.
+
+### One thing this run exposed that is NOT covered, recorded here rather than assumed away
+
+`now_failing` counts a PARSE-level quarantine (`reparse_package` matches `Record::Notice` and then
+`Parse::Parsed`). A **dispatch**-level quarantine — the record never becoming a `Record::Notice` at
+all, which is exactly what a botched identity guard would cause — is neither counted nor reported: it
+is silently skipped by the walk. So the reporting this issue fixed covers the case where identity
+derivation MOVES, and not the case where it DISAPPEARS.
+
+That gap is real but it is not this issue's; the cheap guard for it is the same one 394 already
+relies on — the cohort count must reach **0**, not "some small number", and a residue is the signal.
+Filed here as the note a future reader needs; if a run ever shows a cohort that stops shrinking, this
+is where to look first.
+
+(The `5 now failing` in this run are parse-level and pre-existing — the guard changes only the
+publication-id election, which is a dispatch-stage decision and cannot reach the eForms parser.)
