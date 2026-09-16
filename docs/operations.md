@@ -283,8 +283,8 @@ curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/41
 #                             that one early. Read it before reaching for the restart.
 #   409                       it is running as a kind with NO stop checkpoint — the
 #                             honest refusal. The stoppable set is STOPPABLE_KINDS in
-#                             supervisor.rs (a contract test pins it): reparse,
-#                             data-quality, project, merge-provisional-orgs,
+#                             supervisor.rs (a contract test pins it): process,
+#                             reparse, data-quality, project, merge-provisional-orgs,
 #                             org-merge-health, r2-census, r3-census,
 #                             match-org-identifiers, build-org-match-keys,
 #                             scan-org-match-keys, org-edge-census,

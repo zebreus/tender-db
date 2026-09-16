@@ -148,10 +148,58 @@ async fn fixture(name: &str) -> (PathBuf, store::Db) {
 }
 
 async fn run(db: &store::Db, archive: &Path) -> process::Report {
-    process::process(db, archive, "ted", "daily", None, |_, _| {}).await.unwrap()
+    process::process(db, archive, "ted", "daily", None, |_, _| {}, || false).await.unwrap()
 }
 
 // --- tests ------------------------------------------------------------------
+
+/// Issue 406: a `process` walk stops when asked, and the stop is SAFE because
+/// re-running finishes the job.
+///
+/// The flag alone would be a weak test — a walk that stopped and lost the package
+/// would pass it. What makes stopping safe is that each member is its own
+/// transaction and the dedup path skips what is already held, so both halves are
+/// asserted: what the stopped walk wrote is still there, and a second walk with no
+/// stop reaches exactly the state an uninterrupted walk would have.
+///
+/// This lever is why the issue exists: a `process` degraded by issue 404's
+/// unindexed lookup ran for six hours, could not be cancelled, and held the queue
+/// against the deploy that fixed it.
+#[tokio::test]
+async fn a_stopped_walk_keeps_what_it_wrote_and_a_re_run_finishes_the_package() {
+    let (archive, db) = fixture("process-stop").await;
+
+    // Stop after the first member: `should_stop` is checked AFTER each member is
+    // committed, so exactly one record must survive.
+    let seen = std::cell::Cell::new(0u64);
+    let stopped = process::process(&db, &archive, "ted", "daily", None, |_, _| {}, || {
+        seen.set(seen.get() + 1);
+        true
+    })
+    .await
+    .unwrap();
+    assert!(stopped.cancelled, "the walk must report that it stopped: {stopped:?}");
+    let after_stop = cell_i64(&db, "SELECT COUNT(*) FROM notices").await.unwrap_or(0);
+    assert!(after_stop > 0, "the member that committed before the stop is kept");
+
+    // The reference: what an uninterrupted walk reaches from scratch.
+    let (whole_archive, whole_db) = fixture("process-whole").await;
+    let whole = run(&whole_db, &whole_archive).await;
+    let want = cell_i64(&whole_db, "SELECT COUNT(*) FROM notices").await.unwrap_or(0);
+    assert!(after_stop < want, "the stop must actually have cut the walk short: {after_stop} vs {want}");
+
+    // Re-running the stopped one finishes it, and lands on the same corpus.
+    let second = run(&db, &archive).await;
+    assert!(!second.cancelled);
+    assert_eq!(
+        cell_i64(&db, "SELECT COUNT(*) FROM notices").await.unwrap_or(0),
+        want,
+        "a re-run reaches exactly the uninterrupted state: {second:?} vs {whole:?}"
+    );
+
+    let _ = std::fs::remove_dir_all(&archive);
+    let _ = std::fs::remove_dir_all(&whole_archive);
+}
 
 #[tokio::test]
 async fn dispatches_every_era_and_accounts_for_every_file() {
@@ -242,7 +290,7 @@ async fn monthly_of_nested_dailies_dedupes_against_the_daily() {
     .await
     .unwrap();
 
-    let monthly = process::process(&db, &archive, "ted", "monthly", None, |_, _| {}).await.unwrap();
+    let monthly = process::process(&db, &archive, "ted", "monthly", None, |_, _| {}, || false).await.unwrap();
 
     // The nested daily's members surface as the monthly's own, under
     // `<daily>.tar.gz/<file>` paths — same counts as the standalone daily.
@@ -361,7 +409,7 @@ async fn a_corrupt_package_is_quarantined_and_the_run_continues() {
     .unwrap();
 
     // The whole-source run completes despite the unreadable package.
-    let report = process::process(&db, &archive, "ted", "daily", None, |_, _| {}).await.unwrap();
+    let report = process::process(&db, &archive, "ted", "daily", None, |_, _| {}, || false).await.unwrap();
 
     // The good package's notices still landed.
     assert!(report.notices > 0, "the readable package still processed: {report:?}");
@@ -552,7 +600,7 @@ async fn reclaim_accounts_for_held_members_a_dispatch_policy_skips() {
 
     // A fresh ingest of this package today: the English file is a notice, the
     // French sibling is skipped by policy — neither is a quarantine.
-    let r = process::process(&db, &archive, "ted", "monthly", None, |_, _| {}).await.unwrap();
+    let r = process::process(&db, &archive, "ted", "monthly", None, |_, _| {}, || false).await.unwrap();
     assert_eq!((r.members, r.notices, r.skipped, r.quarantined), (2, 1, 1, 0));
 
     // Rewind to the pre-issue-36 state both members were in: a stale
@@ -796,7 +844,7 @@ async fn corrupt_utf8_bundle_stops_superseding_its_readable_iso() {
     // First walk: the UTF8 twin exists by NAME, so the ISO is skipped as
     // superseded — and the UTF8 bundle dies unreadable. Only the OTHER day's
     // readable UTF8 ingests; the corrupt day is lost.
-    let first = process::process(&db, archive, "ted", "daily", None, |_, _| {}).await.unwrap();
+    let first = process::process(&db, archive, "ted", "daily", None, |_, _| {}, || false).await.unwrap();
     assert_eq!(first.notices, 1, "only the other day's record ingests: {first:?}");
     assert_eq!(
         cell_i64(&db, "SELECT COUNT(*) FROM notices WHERE member_path LIKE '%20050409%'").await,
@@ -812,7 +860,7 @@ async fn corrupt_utf8_bundle_stops_superseding_its_readable_iso() {
     // Second walk: the held unreadable bundle no longer supersedes ITS day —
     // the other day's intact UTF8 must not veto this — so the readable ISO
     // dispatches and the day's records ingest.
-    let second = process::process(&db, archive, "ted", "daily", None, |_, _| {}).await.unwrap();
+    let second = process::process(&db, archive, "ted", "daily", None, |_, _| {}, || false).await.unwrap();
     assert_eq!(second.notices, 2, "the day ingests from the ISO copy: {second:?}");
     assert_eq!(
         cell_i64(&db, "SELECT COUNT(*) FROM notices WHERE member_path LIKE '%20050409%'").await,

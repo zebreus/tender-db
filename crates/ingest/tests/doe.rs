@@ -395,7 +395,7 @@ async fn doe_zip_package_processes_end_to_end() {
     .await
     .unwrap();
 
-    let r = process::process(&db, &archive, "doe", "daily", None, |_, _| {}).await.unwrap();
+    let r = process::process(&db, &archive, "doe", "daily", None, |_, _| {}, || false).await.unwrap();
     assert_eq!(r.members, 3);
     assert_eq!(r.notices, 3);
     assert_eq!(r.parsed, 3);

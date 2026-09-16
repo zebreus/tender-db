@@ -69,6 +69,11 @@ pub struct Report {
     /// Notices quarantined by their profile parser: unmapped content, or a
     /// value the schema cannot hold without loss.
     pub parse_quarantined: u64,
+    /// The walk stopped early on an operator's cancel (issue 406). What it wrote
+    /// stands — each member is its own transaction — and a later run redoes the
+    /// package from the top, where the dedup path skips everything already held.
+    /// Reported so a partial walk can never read as a finished one.
+    pub cancelled: bool,
 }
 
 #[derive(Debug)]
@@ -105,6 +110,7 @@ pub async fn process(
     kind: &str,
     period: Option<&str>,
     mut on_package: impl FnMut(&store::Package, &Report),
+    should_stop: impl Fn() -> bool,
 ) -> Result<Report, Error> {
     let mut total = Report::default();
     for pkg in db.current_packages(source, kind, period).await? {
@@ -114,6 +120,7 @@ pub async fn process(
             source,
             pkg.fetch_id,
             |_, _, _| {},
+            &should_stop,
         )
         .await?;
         on_package(&pkg, &report);
@@ -126,6 +133,12 @@ pub async fn process(
         total.quarantined += report.quarantined;
         total.parsed += report.parsed;
         total.parse_quarantined += report.parse_quarantined;
+        // Stop between packages as well as within one: a source-wide walk is the
+        // shape an operator most wants back (issue 406).
+        if report.cancelled {
+            total.cancelled = true;
+            break;
+        }
     }
     Ok(total)
 }
@@ -142,8 +155,9 @@ pub async fn process_package_resilient(
     source: &str,
     fetch_id: i64,
     on_progress: impl FnMut(u64, u64, &Report),
+    should_stop: impl Fn() -> bool,
 ) -> Result<Report, turso::Error> {
-    match process_package(db, archive, source, fetch_id, on_progress).await {
+    match process_package(db, archive, source, fetch_id, on_progress, should_stop).await {
         Ok(report) => Ok(report),
         Err(Error::Db(e)) => Err(e),
         Err(Error::Package(e)) => {
@@ -357,6 +371,7 @@ pub async fn process_package(
     source: &str,
     fetch_id: i64,
     mut on_progress: impl FnMut(u64, u64, &Report),
+    should_stop: impl Fn() -> bool,
 ) -> Result<Report, Error> {
     let (rx, walker, estimated) = spawn_record_producer(archive, None, &db.unreadable_bundle_members(fetch_id).await?)?;
     let mut report = Report::default();
@@ -403,6 +418,16 @@ pub async fn process_package(
         }
         done += 1;
         on_progress(done, estimated.max(done), &report);
+        // A cooperative stop between members (issue 406), the same shape
+        // `reparse_package` has had since issue 247 and safe for the same reason:
+        // each member is its own transaction, so what is written stays written and
+        // the rest is simply not yet read. Cheaper here than there, in fact — a
+        // re-run re-walks the package and the dedup path skips what is held, which
+        // is what an ordinary daily already does to 145k members every morning.
+        if should_stop() {
+            report.cancelled = true;
+            break;
+        }
     }
     drop(slot);
 

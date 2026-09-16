@@ -77,7 +77,7 @@ async fn fixture(name: &str) -> (PathBuf, store::Db) {
 }
 
 async fn run(db: &store::Db, archive: &Path) -> process::Report {
-    process::process(db, archive, "fts", "daily", None, |_, _| {}).await.unwrap()
+    process::process(db, archive, "fts", "daily", None, |_, _| {}, || false).await.unwrap()
 }
 
 async fn cell_i64(db: &store::Db, sql: &str) -> i64 {

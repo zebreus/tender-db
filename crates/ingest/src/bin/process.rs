@@ -97,6 +97,8 @@ async fn main() -> ExitCode {
                 r.skipped
             );
         },
+        // The CLI has no operator to ask: it runs to completion (issue 406).
+        || false,
     )
     .await;
 

@@ -2286,6 +2286,7 @@ fn f14_target_suffix(t: &ingest::project::F14TargetGate) -> String {
 }
 
 const STOPPABLE_KINDS: &[&str] = &[
+    "process",
     "reparse",
     "data-quality",
     "project",
@@ -9046,6 +9047,12 @@ impl Supervisor {
                         });
                     }
                 },
+                // Honoured between members (issue 406), the same lever `reparse`
+                // has had since 247. An ingest that has gone wrong — 404's
+                // unindexed twin lookup turned a 2-minute daily into a 9-hour one —
+                // must be stoppable, or it holds the queue and every deploy behind
+                // it, including the deploy that fixes it.
+                || self.cancelled(job_id),
             )
             .await
             .map_err(|e| format!("db: {e}"))?;
@@ -9074,6 +9081,9 @@ impl Supervisor {
             // a busy result (a reader mid-scan) simply reclaims on the next package
             // (verified in store::checkpoint tests). Best-effort: a failed
             // checkpoint only delays reclaim, never correctness.
+            if report.cancelled {
+                total.cancelled = true;
+            }
             match self.db.checkpoint(store::CheckpointMode::Truncate).await {
                 Ok(c) if c.busy => eprintln!(
                     "supervisor: job {job_id} checkpoint after {} busy (reader pinned), wal {} MB",
@@ -9100,15 +9110,25 @@ impl Supervisor {
         } else {
             String::new()
         };
+        // A stopped walk must never read as a finished one (issue 406): the counts
+        // below are of what it DID, and without this line they are also exactly
+        // what a complete run of a smaller package looks like.
+        let stopped = if total.cancelled {
+            " — STOPPED on request before the walk finished; what is written stands, and \
+             re-running the same package completes it (the dedup path skips what is held)"
+        } else {
+            ""
+        };
         Ok(format!(
-            "{} members → {} notices ({} parsed, {} quarantined, {} unrecognised, {} dup{})",
+            "{} members → {} notices ({} parsed, {} quarantined, {} unrecognised, {} dup{}){}",
             total.members,
             total.notices,
             total.parsed,
             total.parse_quarantined,
             total.quarantined,
             total.duplicates,
-            identity
+            identity,
+            stopped
         ))
     }
 
@@ -10771,9 +10791,17 @@ mod tests {
         // which is the one wrong answer this census must never give. Its
         // predecessor could not be stopped at all: one unbounded statement
         // with no checkpoint between anything (issue 278 INCIDENT).
+        // process reads it between MEMBERS and again between packages (issue 406).
+        // Safe for the reason reparse's is, and cheaper: each member is its own
+        // transaction, and a re-run re-walks the package where the dedup path
+        // skips everything already held — which is what an ordinary daily does to
+        // 145k members every morning. Added after a `process` degraded by issue
+        // 404's unindexed lookup needed six hours, could not be cancelled, and
+        // blocked the deploy of the fix that would have ended it.
         assert_eq!(
             STOPPABLE_KINDS,
             &[
+                "process",
                 "reparse",
                 "data-quality",
                 "project",
