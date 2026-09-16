@@ -769,13 +769,13 @@
       "published_after": {
         "name": "published_after",
         "in": "query",
-        "description": "Only tenders whose current version was published at or after this instant (unix seconds or RFC 3339). Implies sort=published_at unless sort=id is explicit. /v1/tenders only.",
+        "description": "Only tenders whose current version was published at or after this instant (unix seconds, RFC 3339, or the literal `now`). Implies sort=published_at unless sort=id is explicit. /v1/tenders only.",
         "schema": { "type": "string" }
       },
       "published_before": {
         "name": "published_before",
         "in": "query",
-        "description": "Only tenders whose current version was published before this instant (exclusive; unix seconds or RFC 3339). Implies sort=published_at unless sort=id is explicit. /v1/tenders only.",
+        "description": "Only tenders whose current version was published before this instant (exclusive; unix seconds, RFC 3339, or the literal `now`). Implies sort=published_at unless sort=id is explicit. /v1/tenders only.",
         "schema": { "type": "string" }
       },
       "sort": {
@@ -793,13 +793,13 @@
       "deadline_after": {
         "name": "deadline_after",
         "in": "query",
-        "description": "Only tenders whose current version's submission deadline is at or after this instant (unix seconds or RFC 3339). `deadline_after=now` with sort=deadline&order=asc is the \"closes soon\" query. Implies sort=deadline unless an explicit sort says otherwise. /v1/tenders only.",
+        "description": "Only tenders whose current version's submission deadline is at or after this instant (unix seconds, RFC 3339, or the literal `now`). `deadline_after=now` with sort=deadline&order=asc is the \"closes soon\" query. Implies sort=deadline unless an explicit sort says otherwise. /v1/tenders only.",
         "schema": { "type": "string" }
       },
       "deadline_before": {
         "name": "deadline_before",
         "in": "query",
-        "description": "Only tenders whose current version's submission deadline is before this instant (exclusive; unix seconds or RFC 3339). Implies sort=deadline unless an explicit sort says otherwise. /v1/tenders only.",
+        "description": "Only tenders whose current version's submission deadline is before this instant (exclusive; unix seconds, RFC 3339, or the literal `now`). Implies sort=deadline unless an explicit sort says otherwise. /v1/tenders only.",
         "schema": { "type": "string" }
       },
       "name_prefix": {

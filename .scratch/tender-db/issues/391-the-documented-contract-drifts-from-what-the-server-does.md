@@ -316,3 +316,74 @@ Under two minutes, no token:
 - `Lot`, `Organization` and `Notice` either become complete or carry `Tender`'s explicit "unknown fields must be tolerated" caveat — silence stops reading as completeness.
 - A drift test, mirroring 227's guard one level down: serialize one row per collection, assert every key is a declared property of that schema, and assert every declared property appears on the row. This is the guard that makes units 4 and 5 unable to recur.
 - `/v1`'s `endpoints` list includes `/v1/notices/{id}/content`, and the guard at `api.rs:2150` checks both directions for data endpoints (a deliberate exclusion for the webhook sub-routes is fine if it is written down where the list is built).
+
+## Units 1, 2 and 3 BUILT 2026-09-16 (owner)
+
+### Unit 1 — the parser learns `now`, rather than the spec forgetting it
+
+The `## Done when` offered both directions. **Accept it.** A moving instant is exactly what a
+"closes soon" query needs, and striking it would make every caller compute a timestamp to ask the one
+question the endpoint exists for — a literal that goes stale the moment they save it. `parse_instant`
+now maps a case-insensitive `now` to `store::now_unix()`, so all four bounds
+(`published_after/_before`, `deadline_after/_before`) take it from one parser.
+
+Nothing else is a word, deliberately: `today`, `tomorrow` and friends stay 400, because each needs a
+timezone and this API has no notion of the caller's. The error message now names `now` so a caller
+who tried `today` is told what does work.
+
+`openapi.json` names `now` on all four instant parameters (two phrasings, `(unix seconds or RFC
+3339)` and the `(exclusive; …)` variant), and `/docs` says it beside the RFC-3339 sentence.
+
+### Unit 2 — the headline note stops teaching the trap
+
+It prescribed `strftime(col,'unixepoch')`, the reversed argument order that the same document's 14
+column notes, its own example and `/docs` all name as the silent-NULL trap — SQLite's signature is
+`strftime(FORMAT, timevalue, …)`, so the column is read as a format string and every row comes back
+NULL without an error (issue 239 measured one NULL bucket holding all 7,924,659 Tenders). Issue 239's
+fix rewrote `EPOCH_NOTE` and the examples and never touched this string.
+
+**The notes are now a named `SCHEMA_NOTES` const rather than literals inside a `json!`,** which is
+the point of the unit and not incidental: they were unreachable by any test, which is how the
+contradiction survived. Two of the notes interpolate runtime limits, so those moved into
+`schema_limit_notes(timeout_secs)` and are appended at serve time — the static ones are testable and
+the dynamic ones stay honest.
+
+### Unit 3 — derived, and one real exception found by checking
+
+The claim "each timestamp column's note flags this" was 14 of 26 true. `column_note` now falls back
+to `EPOCH_NOTE` for any time-shaped column name, so the promise holds by construction; the eight
+hand-listed `("*", …)` rows are gone.
+
+**By NAME, not by declared type**, and the reason is measured: SQLite carries no reliable type for a
+VIEW's columns. `PRAGMA table_info` reports `TEXT` for `v_tenders.published_at`,
+`v_fetches.fetched_at` and `v_tender_dates.utc_seconds`, all of which serve epoch integers (prod
+values 1700611200, 1784489994, 1703232000). A type-driven rule would have un-flagged exactly the
+friendly views a `/v1/sql` caller reaches for first.
+
+The predicate was checked against the live schema before it was written: over the 344 queryable
+columns it selects **26 and no others** — every time column, and neither `projection_epoch` (a
+version counter) nor the `*_has_time` booleans.
+
+**And one column is genuinely not epoch seconds.** `currency_rates.rate_date` is `TEXT` holding
+`1993-01-04`. Blanket-flagging it would have been precisely the false claim this issue is about, so
+it keeps an explicit note — which wins over the derivation — saying it is an ISO string, that `LIKE
+'2012%'` works there and nowhere else, and not to wrap it in `strftime(…, 'unixepoch')`. The twelve
+that were missing were `created_at`, `skipped_at`, `last_attempt_at`, `decided_utc` (×3),
+`concluded_utc`, `current_published_at`, `current_deadline`, `rate_date` and `organizations.created_at`
+— the newer ones, because a note has to be remembered and a derivation does not.
+
+Tests: `the_time_bounds_accept_the_literal_now` (four bounds, case, the flagship query whole, five
+refused words, and the two forms that already worked), `the_schema_headline_note_teaches_format_first_like_every_other_surface`,
+and `every_timestamp_column_carries_the_epoch_note_and_rate_date_says_otherwise` (all 15 name shapes
+from the live schema, the `rate_date` exception, the four look-temporal columns that must NOT match,
+and an explicit note still winning).
+
+### Still open
+
+- **Units 4 and 5** are not built: the `/docs` notice-content example showing a shape nothing emits
+  (`"section_id": 1`, `"kind": "root"`, notice 14327 → 404), and the component schemas declaring
+  2–6 properties where 7–16 are served.
+- **The example-runner guard** the issue asks for under unit 1 — extract every `name=value` from
+  spec and docs, fire each at the test server, assert no 4xx — is NOT built. It is the one guard that
+  would also catch unit 4, and it is worth doing properly rather than as a tail of this commit.
+- Not deployed: the issue-397 text-era projection (job 1387) is running.

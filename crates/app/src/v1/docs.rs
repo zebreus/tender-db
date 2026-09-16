@@ -208,8 +208,13 @@ domain time:</p>
 <code>sort=published_at</code>, a <code>deadline_after</code>/<code>deadline_before</code>
 bound implies <code>sort=deadline</code>. Bounds on <em>both</em> columns need an
 explicit <code>sort</code> to pick the ordering, else <code>400</code>. Instants
-are unix seconds or RFC 3339 (the format the API itself serves; an unencoded
-<code>+01:00</code> offset pasted into a URL works). All of this composes with the
+are unix seconds, RFC 3339 (the format the API itself serves; an unencoded
+<code>+01:00</code> offset pasted into a URL works), or the literal
+<code>now</code> &mdash; which is what makes
+<code>?deadline_after=now&amp;sort=deadline&amp;order=asc</code> the
+&ldquo;closes soon&rdquo; query without the caller computing a timestamp that
+goes stale the moment it is saved. No other word is accepted;
+<code>today</code> would need a timezone this API has no notion of. All of this composes with the
 other filters, and pagination is unchanged: follow <code>next_cursor</code>, back
 into the <em>same</em> query shape — a cursor is specific to its sort. Sorted
 reads are REST-only; an SSE subscription snapshots in id order and then follows

@@ -638,15 +638,26 @@ const TABLE_NOTES: &[(&str, &str)] = &[
 /// that name in any table (the epoch columns recur widely). Open or
 /// era-dependent vocabularies are described rather than exhaustively listed.
 const COLUMN_NOTES: &[(&str, &str, &str)] = &[
-    // The epoch-seconds columns — the time-format trap.
-    ("*", "published_at", EPOCH_NOTE),
-    ("*", "dispatched_at", EPOCH_NOTE),
-    ("*", "ingested_at", EPOCH_NOTE),
-    ("*", "fetched_at", EPOCH_NOTE),
-    ("*", "changed_at", EPOCH_NOTE),
-    ("*", "first_seen", EPOCH_NOTE),
-    ("*", "reprocessed_at", EPOCH_NOTE),
-    ("*", "utc_seconds", EPOCH_NOTE),
+    // The epoch-seconds columns are NOT listed here — they are derived by name in
+    // [`is_epoch_column`] (issue 391 unit 3). Hand-listing them meant the schema
+    // claimed "each timestamp column's note flags this" while flagging 14 of 26;
+    // the twelve it missed (`created_at`, `skipped_at`, `last_attempt_at`,
+    // `decided_utc`, `concluded_utc`, `current_published_at`, `current_deadline`…)
+    // were the newer ones, because a note has to be remembered and a derivation
+    // does not.
+    //
+    // The ONE exception, and it is a real one: `rate_date` is TEXT holding an ISO
+    // date (`1993-01-04`), not epoch seconds. It is therefore the single time
+    // column where `LIKE '2012%'` does what a reader expects, and the epoch note
+    // would be a false claim on it — the exact failure this issue is about. An
+    // explicit entry wins over the derivation, so it says its own truth.
+    (
+        "currency_rates",
+        "rate_date",
+        "An ISO date STRING (`1993-01-04`), not epoch seconds — the one time column \
+         in this schema that is text. `LIKE '2012%'` works here and nowhere else; \
+         do NOT wrap it in strftime(…, 'unixepoch').",
+    ),
     // Enum / coded columns.
     ("notices", "parse_state", "One of: pending, parsed, quarantined (ADR-0004)."),
     // The derived-EUR columns (ADR-0014): visible through PRAGMA introspection
@@ -714,8 +725,35 @@ fn table_note(name: &str) -> Option<&'static str> {
     TABLE_NOTES.iter().find(|(t, _)| *t == name).map(|&(_, note)| note)
 }
 
+/// Is this column epoch seconds, by its name (issue 391 unit 3)?
+///
+/// Derived rather than listed so the schema's promise that every timestamp column
+/// is flagged stays true as columns are added — it was 14 of 26 when a human had
+/// to remember each one.
+///
+/// **By NAME, deliberately not by declared type.** SQLite does not carry a
+/// reliable type for a VIEW's columns: `PRAGMA table_info` reports `TEXT` for
+/// `v_tenders.published_at`, `v_fetches.fetched_at` and `v_tender_dates.utc_seconds`,
+/// all of which serve epoch integers (checked against prod values 1700611200,
+/// 1784489994, 1703232000). A type-driven rule would have un-flagged exactly the
+/// friendly views a `/v1/sql` caller reaches for first.
+///
+/// The suffixes are matched against the live schema rather than guessed: over the
+/// 344 queryable columns this selects 26 and no others, which is every time column
+/// and nothing else. `projection_epoch` (a version counter, not an instant) and the
+/// `*_has_time` booleans are correctly outside it.
+fn is_epoch_column(column: &str) -> bool {
+    column.ends_with("_at")
+        || column.ends_with("_utc")
+        || column.ends_with("_seconds")
+        || column.ends_with("_date")
+        || column.contains("deadline")
+        || column == "first_seen"
+}
+
 /// The note for a column — an exact `(table, column)` match wins over a `"*"`
-/// (any-table) one, so a table can override the generic vocabulary.
+/// (any-table) one, so a table can override the generic vocabulary, and both win
+/// over the derived epoch note so a genuine exception can state its own truth.
 fn column_note(table: &str, column: &str) -> Option<&'static str> {
     let matches = |t: &str| t == table || t == "*";
     COLUMN_NOTES
@@ -723,6 +761,75 @@ fn column_note(table: &str, column: &str) -> Option<&'static str> {
         .find(|(t, c, _)| *t == table && *c == column)
         .or_else(|| COLUMN_NOTES.iter().find(|(t, c, _)| matches(t) && *c == column))
         .map(|&(_, _, note)| note)
+        .or_else(|| is_epoch_column(column).then_some(EPOCH_NOTE))
+}
+
+/// The schema document's standing notes (issue 391 unit 2).
+///
+/// A named const rather than an inline array so a test can read them. They are
+/// the API's own words about how to query it, and until this issue they were
+/// literals inside a `json!` that no gate could reach — which is how the time
+/// note came to prescribe the exact idiom its fourteen column notes call a trap.
+const SCHEMA_NOTES: &[&str] = &[
+    "Read-only: only a single SELECT is accepted.",
+    "Queryable surface is a positive allow-list: only the tables and \
+     views listed above are readable. Account, webhook and operator \
+     tables (users, api_tokens, sessions, webhook_endpoints, job_queue, …) \
+     and the raw-fetch registry (fetches, which holds server filesystem \
+     paths) are not queryable.",
+    // Issue 391 unit 2: this note used to prescribe `strftime(col,'unixepoch')`
+    // — the REVERSED argument order that its own 14 column notes, the
+    // schema's own example and `/docs` all name as the silent-NULL trap.
+    // SQLite's signature is `strftime(FORMAT, timevalue, modifier…)`, so
+    // the reversed form reads the column as a format string and returns
+    // NULL for every row without erroring: issue 239 measured one NULL
+    // bucket holding all 7,924,659 Tenders. The headline note was teaching
+    // the exact mistake the rest of the document exists to prevent, and
+    // issue 239's fix rewrote the examples and `EPOCH_NOTE` but never this
+    // string.
+    "Time columns are Unix epoch seconds, NOT ISO — the REST API returns \
+     ISO, so the two disagree. Put the FORMAT FIRST: \
+     strftime('%Y', published_at, 'unixepoch'). The reversed order, \
+     strftime(col,'unixepoch'), returns NULL for every row without \
+     erroring. Every timestamp column carries this note (currency_rates.rate_date \
+     is the one exception and says so). WHERE published_at LIKE '2012%' \
+     silently matches nothing.",
+    // Was "Backfill in progress: … 2026 forward …" — true when written and
+    // FALSE since the backfill completed (14.27M notices → 7.9M tenders).
+    // A stale scope note is worse than none: it tells an analyst their
+    // empty result for 2012 is expected, so a real gap reads as normal.
+    "The canonical v_* layer covers the full imported history (1993 \
+     onward), not just recent years. A v_* query that returns nothing for \
+     a year the coverage grid shows as held is a finding worth reporting, \
+     not an artefact of an unfinished backfill.",
+    "The v_* views are NOT FILTERABLE: turso applies a WHERE or a JOIN \
+     predicate only after building the whole view, so even `WHERE id = ?` \
+     scans the corpus (issue 239). A SELECT that filters or joins a view — \
+     directly, through a derived table, or through a CTE that reads one — \
+     is refused as 400 up front, naming the base-table join to use \
+     instead. Unfiltered, unjoined reads (`… FROM v_tenders LIMIT 5`, \
+     `SELECT source, COUNT(*) FROM v_tenders GROUP BY source`) are \
+     accepted. v_fetches is small and exempt.",
+    "Turso SQL dialect gaps: no WITH RECURSIVE; window functions are \
+     partial (row_number and aggregate OVER work; rank/lead/lag and \
+     custom frames do not).",
+];
+
+/// The two notes that interpolate runtime limits, so they cannot be `const`.
+/// Appended after [`SCHEMA_NOTES`] in the served document.
+fn schema_limit_notes(timeout_secs: u64) -> Vec<String> {
+    vec![
+        format!(
+            "Results are capped at {MAX_ROWS} rows / {}MB; a capped response carries \
+             \"truncated\": true.",
+            MAX_BYTES / 1024 / 1024
+        ),
+        format!(
+            "Limits: {MAX_CONCURRENT} concurrent queries and {PER_HOUR} queries per hour \
+             per token; each query may run {timeout_secs}s (a query past the cap — \
+             including a slow aggregate — is 408)."
+        ),
+    ]
 }
 
 /// The queryable schema: every allow-listed table and view with its columns,
@@ -777,43 +884,11 @@ async fn schema(State(state): State<AppState>) -> Result<Response, ApiError> {
 
     Ok(Json(json!({
         "tables": tables,
-        "notes": [
-            "Read-only: only a single SELECT is accepted.",
-            "Queryable surface is a positive allow-list: only the tables and \
-             views listed above are readable. Account, webhook and operator \
-             tables (users, api_tokens, sessions, webhook_endpoints, job_queue, …) \
-             and the raw-fetch registry (fetches, which holds server filesystem \
-             paths) are not queryable.",
-            "Time columns are Unix epoch seconds, NOT ISO — the REST API returns \
-             ISO, so the two disagree. Filter/format with strftime(col,'unixepoch'); \
-             each timestamp column's note flags this. WHERE published_at LIKE \
-             '2012%' silently matches nothing.",
-            // Was "Backfill in progress: … 2026 forward …" — true when written and
-            // FALSE since the backfill completed (14.27M notices → 7.9M tenders).
-            // A stale scope note is worse than none: it tells an analyst their
-            // empty result for 2012 is expected, so a real gap reads as normal.
-            "The canonical v_* layer covers the full imported history (1993 \
-             onward), not just recent years. A v_* query that returns nothing for \
-             a year the coverage grid shows as held is a finding worth reporting, \
-             not an artefact of an unfinished backfill.",
-            "The v_* views are NOT FILTERABLE: turso applies a WHERE or a JOIN \
-             predicate only after building the whole view, so even `WHERE id = ?` \
-             scans the corpus (issue 239). A SELECT that filters or joins a view — \
-             directly, through a derived table, or through a CTE that reads one — \
-             is refused as 400 up front, naming the base-table join to use \
-             instead. Unfiltered, unjoined reads (`… FROM v_tenders LIMIT 5`, \
-             `SELECT source, COUNT(*) FROM v_tenders GROUP BY source`) are \
-             accepted. v_fetches is small and exempt.",
-            "Turso SQL dialect gaps: no WITH RECURSIVE; window functions are \
-             partial (row_number and aggregate OVER work; rank/lead/lag and \
-             custom frames do not).",
-            format!("Results are capped at {MAX_ROWS} rows / {}MB; a capped \
-                     response carries \"truncated\": true.", MAX_BYTES / 1024 / 1024),
-            format!("Limits: {MAX_CONCURRENT} concurrent queries and {PER_HOUR} \
-                     queries per hour per token; each query may run {}s (a query \
-                     past the cap — including a slow aggregate — is 408).",
-                    state.sql.timeout.as_secs()),
-        ],
+        "notes": SCHEMA_NOTES
+            .iter()
+            .map(|n| (*n).to_owned())
+            .chain(schema_limit_notes(state.sql.timeout.as_secs()))
+            .collect::<Vec<String>>(),
         // Every example here has been RUN against prod and its timing recorded in
         // the comments. The three it replaces had not: two aggregated over `v_tenders`
         // (408 — see the note on the views below) and the third joined two views, and
@@ -1670,7 +1745,66 @@ mod tests {
             !EPOCH_NOTE.contains("strftime(published_at,'unixepoch')"),
             "and must not teach the reversed order, which silently yields NULL: {EPOCH_NOTE}"
         );
+    }
 
+    /// Issue 391 unit 2: the HEADLINE note must teach the same idiom its column
+    /// notes do. It used to prescribe `strftime(col,'unixepoch')` — the reversed
+    /// order that every other surface in the same document names as the
+    /// silent-NULL trap (issue 239 measured one NULL bucket holding all 7,924,659
+    /// Tenders). Issue 239's fix rewrote `EPOCH_NOTE` and the examples and never
+    /// touched this string, so the document contradicted itself three paragraphs
+    /// apart.
+    #[test]
+    fn the_schema_headline_note_teaches_format_first_like_every_other_surface() {
+        let note = SCHEMA_NOTES.iter().find(|n| n.contains("epoch seconds")).expect("the time note");
+        assert!(note.contains("FORMAT FIRST"), "{note}");
+        assert!(note.contains("strftime('%Y', published_at, 'unixepoch')"), "{note}");
+        // The reversed form may appear only as the named trap, never as advice.
+        let teaches_reversed = note.contains("Filter/format with strftime(col,'unixepoch')");
+        assert!(!teaches_reversed, "the headline must not prescribe the reversed order: {note}");
+    }
+
+    /// Issue 391 unit 3: every timestamp column is flagged, by derivation rather
+    /// than by memory — it was 14 of 26 while each one had to be hand-listed.
+    ///
+    /// The names below are the live schema's 26 time columns (read from
+    /// `/v1/sql/schema` on 2026-09-16), so this is a test against the real surface
+    /// and not against the predicate's own shape.
+    #[test]
+    fn every_timestamp_column_carries_the_epoch_note_and_rate_date_says_otherwise() {
+        for column in [
+            "published_at", "dispatched_at", "ingested_at", "fetched_at", "changed_at",
+            "first_seen", "reprocessed_at", "utc_seconds", "created_at", "skipped_at",
+            "last_attempt_at", "decided_utc", "concluded_utc", "current_published_at",
+            "current_deadline",
+        ] {
+            assert_eq!(
+                column_note("tenders", column),
+                Some(EPOCH_NOTE),
+                "{column} must carry the epoch note"
+            );
+        }
+
+        // The one genuine exception: TEXT holding an ISO date, so the epoch note
+        // would be a false claim. Verified against prod — `1993-01-04`.
+        let rate = column_note("currency_rates", "rate_date").expect("rate_date is described");
+        assert_ne!(rate, EPOCH_NOTE, "rate_date is not epoch seconds");
+        assert!(rate.contains("ISO date"), "{rate}");
+        assert!(rate.contains("LIKE"), "it must say where LIKE does work: {rate}");
+
+        // And the predicate must not sweep in things that merely look temporal.
+        // `projection_epoch` is a version counter; `*_has_time` are booleans.
+        for column in ["projection_epoch", "has_time", "decided_has_time", "concluded_has_time"] {
+            assert!(!is_epoch_column(column), "{column} is not an instant");
+        }
+        // An explicit note still wins over the derivation.
+        assert_ne!(column_note("notices", "parse_state"), Some(EPOCH_NOTE));
+    }
+
+    /// Issue 239 (continued): the views' own descriptions carry the not-filterable
+    /// warning, since that is what a caller reads before writing a query.
+    #[test]
+    fn the_view_descriptions_warn_that_a_view_cannot_be_filtered() {
         // The views' own descriptions have to carry the warning, since that is what a
         // caller reads before writing a query against them.
         let views: Vec<&str> = TABLE_NOTES

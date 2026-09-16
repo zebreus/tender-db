@@ -1031,6 +1031,23 @@ async fn collection(
 /// timestamp in the responses uses). Anything else is a 400 naming the parameter.
 fn parse_instant(value: Option<&str>, name: &str) -> Result<Option<i64>, ApiError> {
     let Some(raw) = value else { return Ok(None) };
+    // `now`, the moving instant (issue 391 unit 1). The spec has advertised
+    // `deadline_after=now` as the headline "closes soon" query since issue 216 —
+    // whose own status line records it prod-verified — and this parser has never
+    // accepted it, so the flagship example was a 400. Taught here rather than
+    // struck from the spec because a moving instant is exactly what that query
+    // needs: the alternative makes every caller compute a timestamp to ask the
+    // one question the endpoint exists for, and their literal goes stale the
+    // moment they save it.
+    //
+    // One parser serves all four bounds (`published_after/_before`,
+    // `deadline_after/_before`), so the word works identically on each. Nothing
+    // else is accepted: `today`, `tomorrow` and friends stay 400, because each
+    // would need a timezone to mean anything and this API has no notion of the
+    // caller's.
+    if raw.eq_ignore_ascii_case("now") {
+        return Ok(Some(store::now_unix()));
+    }
     if let Ok(unix) = raw.parse::<i64>() {
         return Ok(Some(unix));
     }
@@ -1048,7 +1065,7 @@ fn parse_instant(value: Option<&str>, name: &str) -> Result<Option<i64>, ApiErro
     match chrono::DateTime::parse_from_rfc3339(candidate) {
         Ok(dt) => Ok(Some(dt.timestamp())),
         Err(_) => Err(ApiError::bad_request(format!(
-            "{name} must be unix seconds or RFC 3339, not {raw:?}"
+            "{name} must be unix seconds, RFC 3339, or the literal `now`, not {raw:?}"
         ))),
     }
 }

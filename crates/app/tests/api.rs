@@ -1388,6 +1388,49 @@ async fn notice_content_serves_the_whole_parsed_layer() {
     assert_eq!(server.status("/v1/notices/999999999/content").await, 404);
 }
 
+/// Issue 391 unit 1: `now` is a valid instant on all four time bounds.
+///
+/// `openapi.json` has advertised `deadline_after=now` as the headline "closes
+/// soon" query since issue 216 — whose status line records it prod-verified —
+/// and `parse_instant` had never accepted it, so the flagship example was a 400.
+/// Taught rather than struck from the spec: a moving instant is what that query
+/// needs, and the alternative makes every caller compute a timestamp that goes
+/// stale the moment they save it.
+#[tokio::test]
+async fn the_time_bounds_accept_the_literal_now() {
+    let server = Server::start("instant-now").await;
+    server.ingest_chain().await;
+
+    // One parser, four bounds — so the word works identically on each.
+    for bound in ["deadline_after", "deadline_before", "published_after", "published_before"] {
+        assert_eq!(server.status(&format!("/v1/tenders?{bound}=now")).await, 200, "{bound}=now");
+    }
+    // Case-insensitive, since a URL-writing human is not consistent.
+    assert_eq!(server.status("/v1/tenders?deadline_after=NOW").await, 200);
+
+    // The spec's flagship query, whole.
+    assert_eq!(
+        server.status("/v1/tenders?deadline_after=now&sort=deadline&order=asc&limit=3").await,
+        200,
+        "the documented closes-soon query must work as published"
+    );
+
+    // And nothing else is a word: `today` would need a timezone this API has no
+    // notion of, so it stays a 400 with the self-describing message.
+    for junk in ["today", "tomorrow", "yesterday", "no", "nowish"] {
+        assert_eq!(server.status(&format!("/v1/tenders?deadline_after={junk}")).await, 400, "{junk}");
+    }
+    let body = server.get_allow_error("/v1/tenders?deadline_after=today").await;
+    assert!(
+        body["error"]["message"].as_str().is_some_and(|m| m.contains("now")),
+        "the message offers the word that does work: {body}"
+    );
+
+    // Controls: the two forms that already worked still do.
+    assert_eq!(server.status("/v1/tenders?deadline_after=0").await, 200);
+    assert_eq!(server.status("/v1/tenders?deadline_after=2020-04-24T09:00:00Z").await, 200);
+}
+
 /// Issue 390 unit 3: a wrong METHOD on a served path is the same JSON envelope
 /// as every other error, and keeps its `Allow` header.
 ///
