@@ -454,19 +454,33 @@ async fn measure_coverage_pipeline(
     for (source, period, rows) in db.monthly_fetch_periods().await? {
         monthly.entry(source).or_default().push((period, rows));
     }
+    // Issue 401: one index extremum, read once for the whole funnel rather than
+    // per row — both rate feeds load the same table.
+    let rates_through = db.newest_rate_date().await?;
     let pipeline: Vec<PipelineStage> = db
         .fetch_registry_summary()
         .await?
         .into_iter()
-        .map(|(source, fetched_packages, from, to)| {
+        .map(|row| {
+            let store::FetchRegistryRow { source, packages, from, to, reference_only } = row;
             let gaps = store::monthly_period_gaps(monthly.get(&source).map_or(&[][..], |v| v));
             PipelineStage {
                 published: (source == GROUND_TRUTH_SOURCE).then_some(published_ted),
-                fetched_packages,
+                fetched_packages: packages,
+                reference_feed: reference_only,
+                rates_through: reference_only.then(|| rates_through.clone()).flatten(),
                 // A source with an unparsed monthly period cannot be called
                 // complete either: the sequence test did not cover it, and
                 // "we could not check" must never render as "we checked".
-                fetch_complete: to.starts_with(&current_year)
+                //
+                // Issue 401: a REFERENCE FEED is never "fetch complete", because
+                // the question does not apply to it — its completeness is whether
+                // today's rates arrived, which `rates_through` answers. `ecb`
+                // passed the year test by accident (its period IS a civil date)
+                // and `eurostat` failed it by accident (`1993-1998`), so both
+                // verdicts were noise.
+                fetch_complete: !reference_only
+                    && to.starts_with(&current_year)
                     && gaps.missing.is_empty()
                     && gaps.unparsed.is_empty(),
                 missing_periods: gaps.missing,
@@ -548,6 +562,90 @@ mod tests {
         let whole = stage("whole");
         assert!(whole.fetch_complete, "the contiguous control must still read complete");
         assert!(whole.missing_periods.is_empty());
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 401: a source whose packages are ALL rates downloads is a reference
+    /// feed, and the funnel must not render notice counts for it.
+    ///
+    /// On prod the `ecb` row read `20 pkgs … fetch complete ✓ | 0 | 0` and
+    /// `eurostat` read `1 pkgs (1993-1998 … 1993-1998) | 0 | 0`, while
+    /// `currency_rates` held 277,445 rows over 54 currencies continuous from
+    /// 1993-01-04 to 2026-09-14. Two of five rows permanently showed the shape of
+    /// a stalled import, which is what teaches a reader to ignore zeros in that
+    /// column.
+    ///
+    /// The classification is by fetch KIND, never by source name, and this test
+    /// says so by using names that are nothing like `ecb` or `eurostat`: a match
+    /// arm on the names would pass a test written with the names in it, and then
+    /// miss the next reference feed.
+    #[tokio::test]
+    async fn a_source_that_fetches_only_rates_is_never_counted_as_an_import_source() {
+        let path = format!("/tmp/tender-db-funnel-rates-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = store::Db::open(&path).await.expect("open");
+        let now = store::now_unix();
+        let year = 1970 + now / 31_557_600;
+
+        // `ratesonly` fetches nothing but rates, under two different rates kinds —
+        // the real shape, where one feed uses `rates` and another `rates-ecu-h`.
+        // `mixed` fetches a rates package AND a notice package, so it is an import
+        // source that happens to also carry reference data: the `MIN(...)`
+        // aggregate has to refuse it, or a single rates row would blank a real
+        // source's counts.
+        for (source, kind, period) in [
+            ("ratesonly", "rates", format!("{year}-09-15")),
+            ("ratesonly", "rates-ecu-h", "1993-1998".to_owned()),
+            ("mixed", "rates", format!("{year}-09-15")),
+            ("mixed", "monthly", format!("{year}-01")),
+            ("notices", "monthly", format!("{year}-01")),
+        ] {
+            db.record_fetch(&store::Fetch {
+                source: source.to_owned(),
+                kind: kind.to_owned(),
+                period,
+                url: "u".to_owned(),
+                sha256: format!("{source}{kind}"),
+                bytes: 1,
+                fetched_at: 0,
+                path: "p".to_owned(),
+            })
+            .await
+            .expect("register the package");
+        }
+
+        let (_, pipeline) = measure_coverage_pipeline(&db, now).await.expect("measure");
+        let stage = |name: &str| {
+            pipeline.iter().find(|s| s.source == name).unwrap_or_else(|| panic!("{name} missing"))
+        };
+
+        let rates = stage("ratesonly");
+        assert!(rates.reference_feed, "every package is a rates download");
+        assert!(
+            !rates.fetch_complete,
+            "a reference feed is never 'fetch complete' — its completeness is whether \
+             today's rates arrived, which is a different question and a different cell"
+        );
+
+        let mixed = stage("mixed");
+        assert!(
+            !mixed.reference_feed,
+            "ONE rates package does not make an import source a reference feed"
+        );
+        assert!(!stage("notices").reference_feed);
+
+        // The invariant this issue is actually about, stated over the whole
+        // pipeline rather than over the two names: no reference feed is rendered
+        // with a notice count. The UI dashes those cells; here we pin that the
+        // stage never claims a nonzero one, so a future renderer cannot regress by
+        // reading the raw field.
+        for s in &pipeline {
+            if s.reference_feed {
+                assert_eq!(s.processed_notices, 0, "{} is a reference feed", s.source);
+                assert_eq!(s.projected_tenders, 0, "{} is a reference feed", s.source);
+            }
+        }
 
         let _ = std::fs::remove_file(&path);
     }

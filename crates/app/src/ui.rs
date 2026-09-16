@@ -483,7 +483,10 @@ fn PipelinePanel(rows: Vec<PipelineStage>) -> Element {
             h2 { "Pipeline" }
             p { class: "muted",
                 "Where each source is in the import — fetched packages, then notices "
-                "processed out of them, then Tenders projected."
+                "processed out of them, then Tenders projected. A source whose packages "
+                "are exchange rates rather than notices has no notices and no Tenders to "
+                "count (issue 401): its last two cells read — and its Fetched cell says "
+                "how current the rate table is instead."
             }
             table {
                 thead {
@@ -510,6 +513,17 @@ fn PipelinePanel(rows: Vec<PipelineStage>) -> Element {
                                 if s.fetch_complete {
                                     span { " · fetch complete ✓" }
                                 }
+                                // Issue 401: a reference feed's completeness is
+                                // whether today's rates arrived, not whether a
+                                // period sequence is contiguous — so it gets the
+                                // number that answers that instead of a tick that
+                                // answers nothing.
+                                if s.reference_feed {
+                                    span { class: "muted",
+                                        title: "Both rate feeds load the same `currency_rates` table, so both rows show its newest date.",
+                                        " · {rates_cell(s.rates_through.clone())}"
+                                    }
+                                }
                                 // Issue 395: name the hole. An operator reading
                                 // "missing: 2025-06" knows what to enqueue; a
                                 // silently absent ✓ only says something is wrong
@@ -525,8 +539,19 @@ fn PipelinePanel(rows: Vec<PipelineStage>) -> Element {
                                     }
                                 }
                             }
-                            td { class: "num", "{group(s.processed_notices)}" }
-                            td { class: "num", "{group(s.projected_tenders)}" }
+                            // Issue 401: a rates feed produces no notices and no
+                            // Tenders, ever. Rendering `0` gave two of five rows
+                            // the exact display signature of a stalled import —
+                            // packages in, nothing out — which teaches a reader to
+                            // ignore zeros in this column, so the next source that
+                            // really does stall looks like these always have.
+                            if s.reference_feed {
+                                td { class: "num", title: "{REFERENCE_FEED_NOTE}", "—" }
+                                td { class: "num", title: "{REFERENCE_FEED_NOTE}", "—" }
+                            } else {
+                                td { class: "num", "{group(s.processed_notices)}" }
+                                td { class: "num", "{group(s.projected_tenders)}" }
+                            }
                         }
                     }
                 }
@@ -721,6 +746,19 @@ fn coverage_pct(ratio: Option<f64>, partial: bool) -> String {
     match ratio {
         Some(r) => format!("{:.2} %{}", r * 100.0, if partial { " *" } else { "" }),
         None => "—".to_owned(),
+    }
+}
+
+/// Why a reference feed's notice columns are dashed rather than zero (issue 401).
+const REFERENCE_FEED_NOTE: &str =
+    "This source fetches exchange rates, not notices — it produces no notices and no Tenders, \
+     so these are not counts that can rise. A 0 here would look like a stalled import.";
+
+/// How current the rate table is, for a reference feed's Fetched cell.
+fn rates_cell(through: Option<String>) -> String {
+    match through {
+        Some(d) => format!("rates through {d}"),
+        None => "no rates loaded".to_owned(),
     }
 }
 

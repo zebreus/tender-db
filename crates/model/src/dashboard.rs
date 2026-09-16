@@ -226,6 +226,28 @@ pub struct PipelineStage {
     /// the original hole (2025 held 12 rows over 11 distinct months).
     #[serde(default)]
     pub duplicate_periods: Vec<String>,
+    /// This source is a REFERENCE FEED, not an import source (issue 401): every
+    /// package it fetches is a rates download, so `processed_notices` and
+    /// `projected_tenders` are structurally zero and must not be rendered as
+    /// counts. `ecb` and `eurostat` are the two today; the flag is derived from
+    /// the fetch KIND so the next one classifies itself.
+    ///
+    /// The funnel's own sentence — "fetched packages, then notices processed out
+    /// of them, then Tenders projected" — is not true of these rows, and before
+    /// this flag they displayed the exact signature of a stalled import while
+    /// being among the healthiest things running.
+    #[serde(default)]
+    pub reference_feed: bool,
+    /// For a [`Self::reference_feed`], the newest date `currency_rates` carries —
+    /// the number that says whether the feed is WORKING, as distinct from when it
+    /// was last fetched, which is all the registry knows (issue 401). `None` for an
+    /// import source, and for a reference feed whose table is empty.
+    ///
+    /// Both rate feeds load the same table, so both rows carry the same date; the
+    /// cell's title says so. Attributing rows to one feed or the other would be a
+    /// bigger measurement than the defect this closes.
+    #[serde(default)]
+    pub rates_through: Option<String>,
     /// Notices processed out of those packages.
     pub processed_notices: i64,
     /// Tenders projected from those notices.

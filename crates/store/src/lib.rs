@@ -3598,20 +3598,48 @@ impl Db {
     /// The fetch stage per source (issue 33): how many distinct package periods
     /// are on disk and the range they span. Small — one row per source over the
     /// tiny fetch registry.
-    pub async fn fetch_registry_summary(&self) -> turso::Result<Vec<(String, i64, String, String)>> {
+    pub async fn fetch_registry_summary(&self) -> turso::Result<Vec<FetchRegistryRow>> {
         let conn = self.reader().await?;
         let mut rows = conn
             .query(
-                "SELECT source, COUNT(DISTINCT period), MIN(period), MAX(period)
+                // Issue 401: `reference_only` is the fourth aggregate — whether EVERY
+                // package of this source is a rates download. Derived from the fetch
+                // KIND rather than from the source name, because the name list is the
+                // version of this that goes stale: `ecb` fetches kind `rates` and
+                // `eurostat` kinds `rates-ecu-h`/`rates-ecu-bil`, and the next
+                // reference feed added should be classified by what it downloads, not
+                // by someone remembering to extend a match arm in the UI.
+                "SELECT source, COUNT(DISTINCT period), MIN(period), MAX(period),
+                        MIN(kind LIKE 'rates%')
                    FROM fetches GROUP BY source ORDER BY source",
                 (),
             )
             .await?;
         let mut out = Vec::new();
         while let Some(row) = rows.next().await? {
-            out.push((text(&row, 0), int(&row, 1), text(&row, 2), text(&row, 3)));
+            out.push(FetchRegistryRow {
+                source: text(&row, 0),
+                packages: int(&row, 1),
+                from: text(&row, 2),
+                to: text(&row, 3),
+                reference_only: int(&row, 4) != 0,
+            });
         }
         Ok(out)
+    }
+
+    /// The newest date `currency_rates` carries (issue 401). `rate_date` is the
+    /// first column of that table's primary key, so this is an index extremum and
+    /// not a scan.
+    ///
+    /// It is the number that says whether the ECB feed is actually WORKING —
+    /// distinct from when it was last fetched, which is all the fetch registry
+    /// knows. A fetch that lands a stale file looks healthy in the registry and
+    /// shows up here.
+    pub async fn newest_rate_date(&self) -> turso::Result<Option<String>> {
+        let conn = self.reader().await?;
+        let mut rows = conn.query("SELECT MAX(rate_date) FROM currency_rates", ()).await?;
+        Ok(rows.next().await?.and_then(|row| opt_text_of(&row, 0)))
     }
 
     /// Projected Tenders per source (issue 33) — the pipeline's last stage.
@@ -3729,6 +3757,26 @@ impl Db {
 async fn max_instant(conn: &Connection, sql: &str) -> turso::Result<Option<i64>> {
     let mut rows = conn.query(sql, ()).await?;
     Ok(rows.next().await?.and_then(|row| opt_int_of(&row, 0)))
+}
+
+/// One source's row in the fetch registry summary — the Pipeline funnel's
+/// Fetched column.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct FetchRegistryRow {
+    pub source: String,
+    /// Distinct periods held.
+    pub packages: i64,
+    pub from: String,
+    pub to: String,
+    /// Every package of this source is a rates download, so it is a REFERENCE
+    /// FEED and not an import source (issue 401): it will never produce a notice
+    /// or a Tender, and a funnel that counts those for it shows zeros that are
+    /// structurally permanent.
+    ///
+    /// Read off the fetch KIND (`rates`, `rates-ecu-h`, `rates-ecu-bil`, …), never
+    /// off the source name — the name list is the version of this that goes stale
+    /// the next time a reference feed is added.
+    pub reference_only: bool,
 }
 
 /// One cell of the coverage grid.
@@ -7377,9 +7425,25 @@ tmpfs /data/ramcache tmpfs rw 0 0
         assert_eq!(
             fetch,
             vec![
-                ("doe".to_owned(), 1, "2026-07-18".to_owned(), "2026-07-18".to_owned()),
+                FetchRegistryRow {
+                    source: "doe".to_owned(),
+                    packages: 1,
+                    from: "2026-07-18".to_owned(),
+                    to: "2026-07-18".to_owned(),
+                    // Issue 401: both fixture sources fetch notice packages, so
+                    // neither is a reference feed. The rates case is pinned in
+                    // `crates/app/src/coverage.rs`, where the funnel that renders
+                    // the distinction lives.
+                    reference_only: false,
+                },
                 // ted: two distinct periods (the 1993-01 re-fetch counts once), range 1993→2026.
-                ("ted".to_owned(), 2, "1993-01".to_owned(), "2026-07".to_owned()),
+                FetchRegistryRow {
+                    source: "ted".to_owned(),
+                    packages: 2,
+                    from: "1993-01".to_owned(),
+                    to: "2026-07".to_owned(),
+                    reference_only: false,
+                },
             ],
         );
         assert_eq!(db.tenders_by_source().await.unwrap(), vec![("doe".to_owned(), 1), ("ted".to_owned(), 2)]);

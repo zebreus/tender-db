@@ -108,3 +108,66 @@ What this system then did was list two reference-data feeds in a table whose col
 
 `ted`'s Fetched cell still reads `registered twice: 2025-09`, which is issue 395's known-open
 duplicate reconciliation, confirmed still live here. Not this issue's.
+
+## BUILT 2026-09-16 — decision: (b), and the discriminator is the fetch KIND
+
+Status: built, gate green (`GATE-EXIT=0`), not yet deployed.
+
+### The decision
+
+Three renderings were offered. **Taken: (b)** — the rate rows stay in the funnel, their
+`Processed`/`Projected` cells render `—` with a title, and their `fetch complete` verdict is replaced
+by a freshness one.
+
+- Not **(a), two tables**: splitting a five-row panel in two for two rows is a bigger change to how
+  the page reads than the defect justifies, and it buries the fact that these feeds ARE part of the
+  import — ADR-0014's EUR conversion depends on them.
+- Not **(c), exclude them**: the `## Done when` requires a rates feed's health to be visible after the
+  change, and removing the only place they appear makes that harder, not easier. A working feed that
+  is nowhere on the dashboard is one nobody checks.
+
+### The discriminator is `fetches.kind`, never the source name
+
+`ecb` fetches kind `rates`; `eurostat` fetches `rates-ecu-h` and `rates-ecu-bil`. So
+`fetch_registry_summary` gains a fourth aggregate, `MIN(kind LIKE 'rates%')` — **every** package of
+the source must be a rates download — surfaced as `FetchRegistryRow::reference_only` and carried to
+`PipelineStage::reference_feed`.
+
+A name list (`source == "ecb" || source == "eurostat"`) would have been three lines shorter and is
+the version of this that goes stale: it silently mis-classifies the next reference feed, which is
+exactly how these two came to be mis-classified in the first place. The test says so by using source
+names (`ratesonly`, `mixed`, `notices`) that no name-matching implementation could pass.
+
+`MIN(...)` rather than `MAX(...)` is load-bearing and has its own fixture arm: a source that fetches
+one rates package AND notice packages (`mixed`) is an import source, and a `MAX` would have blanked
+its real counts on the strength of a single row.
+
+### Rate health is now on the page
+
+`Db::newest_rate_date()` — `SELECT MAX(rate_date) FROM currency_rates`, an index extremum on that
+table's primary key, read once for the whole funnel rather than per row. It rides as
+`PipelineStage::rates_through` and renders as `· rates through 2026-09-14`.
+
+That is deliberately the DATA's newest date and not the fetch date: a fetch that lands a stale file
+looks healthy in the registry, and this is the number that would show it. Both feeds load the same
+table so both rows show the same date; the cell's title says so, and per-feed attribution would be a
+bigger measurement than this defect warrants.
+
+`fetch_complete` is now `false` for a reference feed by construction. Both of its old verdicts were
+accidents: `ecb` passed the current-year test because its period IS a civil date (`2026-09-15`), and
+`eurostat` failed it because its period is the span label `1993-1998`. Neither said anything.
+
+### The panel's own sentence
+
+Extended to cover the rows it was not true of: "A source whose packages are exchange rates rather
+than notices has no notices and no Tenders to count (issue 401): its last two cells read — and its
+Fetched cell says how current the rate table is instead."
+
+### Live acceptance still owed (after deploy)
+
+- `ecb` reads `20 pkgs (…) · rates through 2026-09-14 | — | —`, with no `fetch complete ✓`.
+- `eurostat` reads `1 pkgs (1993-1998 … 1993-1998) · rates through 2026-09-14 | — | —`.
+- `ted`, `doe` and `fts` are byte-identical: 445/101/9 packages, the same processed and projected
+  counts, `fetch complete ✓` still on all three, and `ted` still carrying
+  `registered twice: 2025-09` (issue 395's open duplicate).
+- `currency_rates` still reads 277,445 rows over 54 currencies — presentation only, nothing refetched.
