@@ -181,6 +181,19 @@ const SCHEMA: &str = "
     -- rewrite is the actual DoS fix, this is FK-hygiene insurance).
     CREATE INDEX IF NOT EXISTS notices_fetch_id ON notices(fetch_id);
 
+    -- The twin lookup the ingest path gained with issue 404 (`moved_identity_twin`)
+    -- asks whether this member is already held under a DIFFERENT publication_id,
+    -- and it seeks by (source, member_path). Nothing indexed that, so every
+    -- GENUINELY-NEW notice full-scanned `notices` — and genuinely-new is not a
+    -- tail, it is exactly what an ingest exists to add. MEASURED on prod 2026-09-16, hours
+    -- after 404 deployed: 9 s per lookup over 14.4M rows, which took a 3,550-member
+    -- TED daily from 119 s (job 2300, the morning before) to a projected 9 HOURS —
+    -- 0.12 notices/s against 30/s. Caught on a backfill; the next daily would have
+    -- hit it just the same. Idempotent CREATE INDEX, not an ALTER-only migration:
+    -- the first open after this change builds it once over the corpus, and
+    -- deploy.sh's health check waits minutes for exactly that.
+    CREATE INDEX IF NOT EXISTS notices_member_identity ON notices(source, member_path);
+
     -- The only failure mode of ingestion (ADR-0004): a notice with unmapped or
     -- unrecognised content is quarantined whole, never partially imported. The
     -- raw payload stays reachable via (fetch_id, member_path), so a fixed
@@ -4190,6 +4203,62 @@ mod tests {
     /// FROM clause to put the heads first does not help; the planner reorders
     /// anyway. **A per-profile window therefore needs literal per-profile ranges
     /// computed in a prior pass, not a join** — see issue 368.
+    /// Issue 404's twin lookup must SEEK, and this is the guard that says so.
+    ///
+    /// `moved_identity_twin` runs once per genuinely-new notice, and it was
+    /// shipped with no index behind it. Measured on prod the same day: 9 s per
+    /// call over 14.4M rows, which turned a 3,550-member TED daily into a
+    /// nine-hour job — the same shape that ran in 119 s the morning before. The
+    /// reasoning in the commit that introduced it ("the lookup only runs for a
+    /// row that was genuinely new, which on a normal day is the small tail") was
+    /// wrong twice over: the lookup was not indexed, and new rows are not a tail,
+    /// they are the point of an ingest.
+    ///
+    /// A plan test rather than a timing test because the failure is a SCAN, and a
+    /// SCAN is visible here in milliseconds on an empty table while a timing test
+    /// would need the corpus to show anything at all.
+    #[tokio::test]
+    async fn the_moved_identity_twin_lookup_seeks_by_member_rather_than_scanning() {
+        let dir = std::env::temp_dir().join(format!("plan-404-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let db = Db::open(dir.join("t.db").to_str().unwrap()).await.unwrap();
+        let conn = db.reader().await.unwrap();
+        let mut rows = conn
+            .query(
+                "EXPLAIN QUERY PLAN \
+                 SELECT id FROM notices \
+                  WHERE source = ? AND member_path = ? AND content_hash = ? \
+                    AND publication_id <> ? LIMIT 2",
+                (
+                    Value::Text("ted".into()),
+                    Value::Text("m.xml".into()),
+                    Value::Text("h".into()),
+                    Value::Text("p".into()),
+                ),
+            )
+            .await
+            .unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            if let Ok(turso::Value::Text(d)) = row.get_value(3) {
+                plan.push_str(&d);
+                plan.push('\n');
+            }
+        }
+        // `contains` on the bare name is not enough: the first red check renamed the
+        // index to `notices_member_identity_DISABLED` and the assertion still passed,
+        // because a prefix matches. Anchor on the seek TERMS instead, which only an
+        // index on (source, member_path) can produce.
+        assert!(
+            plan.contains("USING INDEX notices_member_identity (source=? AND member_path=?)"),
+            "the twin lookup must SEEK on (source, member_path):\n{plan}"
+        );
+        assert!(
+            !plan.contains("SCAN notices"),
+            "a SCAN here is 9 s per new notice on the real corpus:\n{plan}"
+        );
+    }
+
     #[tokio::test]
     async fn the_unmapped_field_window_plans_as_a_range_scan() {
         let dir = std::env::temp_dir().join(format!("plan-368-{}", std::process::id()));

@@ -189,3 +189,74 @@ Run red first: `left: Inserted, right: Rekeyed` — the mint, reproduced.
   scheduled).
 - Live after deploy: the next DÖE daily reports `0 re-keyed` (nothing left to move) and the notice
   count does not jump.
+
+## 2026-09-16 — the fix was O(corpus) per new notice, and it is a severe regression
+
+Status: REGRESSION from this issue's own fix, found the same day by running a backfill into it, and
+fixed in the same sitting. Caught **before** the next daily ingest hit it.
+
+### What happened
+
+The 402 backfill fetched OJ S `2026-00135` (3,550 members, all genuinely new) and enqueued a
+`process`. Two hours later it had done **896 of 3,550 members** — about **7.5 members per minute**,
+i.e. 0.12 notices/s. The same shape ran at **30 notices/s** the morning before (job 2300: 145,386
+members walked, 3,534 new notices, **119 s**; job 2270: 3,647 new in 109 s).
+
+### Why
+
+`moved_identity_twin` — added by this issue's fix, deployed 09:58Z the same morning — runs
+
+    SELECT id FROM notices
+     WHERE source = ? AND member_path = ? AND content_hash = ? AND publication_id <> ? LIMIT 2
+
+and **nothing indexes `member_path`.** `notices` has UNIQUE(source, publication_id, content_hash) and
+indexes on profile, parse_state and fetch_id; none can serve this. So the lookup full-scans a
+14.4M-row table.
+
+Measured on the box, the exact query shape against a real member:
+
+    ~9 s per call.
+
+3,550 new notices × 9 s ≈ 9 hours, which is precisely the observed rate. The daily ingest adds ~3,500
+new notices every morning, so tomorrow's 07:00Z run would have taken the same nine hours instead of
+two minutes — and a 12-issue backfill would have taken four days.
+
+### The reasoning that produced it, quoted so it is not repeated
+
+From this issue's own write-up, hours earlier:
+
+> **Asked AFTER the insert, not before.** The ordinary path — the overwhelming majority, where
+> nothing moved — pays one indexed insert and nothing else. The lookup only runs for a row that was
+> genuinely new, which on a normal day is the small tail.
+
+Wrong twice in one sentence. The lookup was **not indexed** — I wrote "one indexed insert and nothing
+else" about the insert and never asked what the lookup cost. And genuinely-new rows are **not a small
+tail**: they are exactly what an ingest exists to add. The clause is true only of a re-process, which
+is the shape I had in my head from the 394 re-key campaign.
+
+### The fix
+
+    CREATE INDEX IF NOT EXISTS notices_member_identity ON notices(source, member_path);
+
+in the schema batch beside `notices_fetch_id`, which has the same "first open after this change
+builds it once" property; `deploy.sh`'s health check already waits minutes for exactly that, and says
+so in a comment. `(source, member_path)` rather than the full triple: a member path names one thing,
+so the seek returns one or two rows and the hash filters them — indexing the 64-char hash as well
+would double the index for nothing.
+
+Pinned by `the_moved_identity_twin_lookup_seeks_by_member_rather_than_scanning`, an EXPLAIN QUERY
+PLAN test: a plan test rather than a timing test, because the failure is a SCAN and a SCAN shows up
+on an empty table in milliseconds while a timing test would need the whole corpus to show anything.
+
+**The first red check of that test passed when it should have failed** — renaming the index to
+`notices_member_identity_DISABLED` still satisfied `plan.contains("USING INDEX notices_member_identity")`,
+because a prefix matches. The assertion now anchors on the seek TERMS
+(`notices_member_identity (source=? AND member_path=?)`), which only an index on those two columns
+produces, and the real red check deleted the index outright.
+
+### What this costs
+
+One index over 14.4M rows on a short text column, built once at the first open after deploy. Disk on
+the box is 1.2 T used of 1.7 T, 527 G free, so this is affordable — but it IS the kind of standing
+cost issue 169 tracks, and it is here because the ingest path now asks a question the schema was
+never shaped for.
