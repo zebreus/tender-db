@@ -1,6 +1,6 @@
 # 405 — the dashboard's heavy sections log nothing on success, so "Measuring…" cannot be told from "stuck"
 
-Status: ready-for-agent — unit 1 (the success-path timing line) LANDED 2026-09-16, see the foot; the two skip paths and the served age are still open. Found 2026-09-16 while trying to read issue 400/401's live acceptance off the deployed dashboard and finding the panel they changed simply absent, with nothing anywhere saying whether that was normal.
+Status: ready-for-agent — units 1 (the success-path timing line) and 2 (the skip paths) LANDED 2026-09-16, see the foot; only the served age is still open. Found 2026-09-16 while trying to read issue 400/401's live acceptance off the deployed dashboard and finding the panel they changed simply absent, with nothing anywhere saying whether that was normal.
 Kind: defect (observability — `crates/app/src/coverage.rs`, the background refresher's `publish`/`refresh_into`)
 Relates to: 37 (the sectioned `None` default — "measuring…" rather than a false `0`, which is the right rendering and is exactly what makes the silence ambiguous), 61 (the coverage regression that moved the refresher onto its own thread and added the change-gate), 53 / 42 (why the heavy sections are gated behind `heavy_write_active` at all), 400 and 401 (whose acceptance this blocked for ~15 minutes)
 Blocked by: nothing
@@ -108,3 +108,30 @@ starts, the gate comment should be rewritten and the ORDER reconsidered — publ
 section before the 3-minute one would put the panel a reader is waiting for on screen first.
 
 Unit 1 is done. The two skip paths and the served age remain open above.
+
+
+## Unit 2 landed 2026-09-16 — a skip says why, once
+
+`refresh_into` carries a `said: &mut Option<&'static str>` and calls `announce` on each of the two
+paths that used to `return` in silence: `heavy_write_active` ("a write-heavy job holds the WAL") and
+the change-gate ("nothing has been written since the last measurement"). Measuring clears the state,
+so the next skip is heard even when its reason has not changed.
+
+Announced on the TRANSITION rather than every pass, and that is the whole design: the backfill job
+this afternoon held the WAL for hours, which at a 60 s cadence would be several hundred identical
+lines — the shape that trains a reader to stop looking.
+
+`announce` returns whether it actually spoke, so the rule is testable instead of merely observable in
+a log; `a_skip_announces_its_reason_once_per_run_of_that_reason` pins first-speaks / next-is-quiet /
+changed-reason-speaks / after-a-measurement-speaks. Red first by short-circuiting the guard, which
+fails on "and the next 359 do not". That is the difference from unit 1, whose `eprintln!` has no
+observable surface and is deliberately untested.
+
+The cost of the change is eleven call sites gaining a parameter — mechanical, and the reason this was
+split out of unit 1 rather than bundled with it.
+
+### Still open
+
+- **Serve the age.** `measuring since <age>` on the section, so the UI can render "measuring for
+  12 min" instead of "measuring…". A `Dashboard` model change, and the unit that fixes the READER's
+  problem rather than the operator's.

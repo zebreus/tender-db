@@ -120,6 +120,7 @@ pub fn init(db: Arc<Db>) {
                 .expect("build the coverage runtime");
             rt.block_on(async move {
                 let mut last_heavy_key: Option<HeavyKey> = None;
+                let mut said: Option<&'static str> = None;
                 loop {
                     // Skip the heavy coverage scan while a write-heavy job holds the
                     // WAL (issue 53) — see `refresh_into`. The supervisor may not
@@ -131,7 +132,8 @@ pub fn init(db: Arc<Db>) {
                     // flips) move no cursor and add no rows, so without this a
                     // finished reprocess never triggered a heavy re-measure.
                     let jobs_completed = sup.map_or(0, |s| s.jobs_completed());
-                    refresh_into(&db, cell(), heavy_write, jobs_completed, &mut last_heavy_key).await;
+                    refresh_into(&db, cell(), heavy_write, jobs_completed, &mut last_heavy_key, &mut said)
+                        .await;
                     tokio::time::sleep(REFRESH).await;
                 }
             });
@@ -184,6 +186,7 @@ async fn refresh_into(
     heavy_write_active: bool,
     jobs_completed: u64,
     last_heavy_key: &mut Option<HeavyKey>,
+    said: &mut Option<&'static str>,
 ) {
     let now = store::now_unix();
     // `system` is the only measurement safe to run while a write-heavy job holds
@@ -215,6 +218,7 @@ async fn refresh_into(
     // (Gated `quarantine`/`coverage` render as "measuring…" not a false `0` — the
     // sectioned `None` default, issue 37 — so the boot-zero guard still holds.)
     if heavy_write_active {
+        let _ = announce(said, "a write-heavy job holds the WAL");
         return;
     }
     // Change-gate (issue 61 coverage): when nothing has been written since the last
@@ -227,8 +231,11 @@ async fn refresh_into(
     if let (Some(k), Some(last)) = (key.as_ref(), last_heavy_key.as_ref())
         && k == last
     {
+        let _ = announce(said, "nothing has been written since the last measurement");
         return;
     }
+    // Back to measuring: the next skip, whatever its reason, is worth saying again.
+    *said = None;
     publish(cell, "quarantine", timed("quarantine", measure_quarantine(db)).await, |d, v| {
         d.quarantine = Some(v)
     });
@@ -259,8 +266,34 @@ pub async fn measure(db: &Db) -> Dashboard {
     let cell = RwLock::new(Dashboard::default());
     // One-shot: measure every section, including the heavy coverage scan. A fresh
     // `None` watermark forces the measure (never skips).
-    refresh_into(db, &cell, false, 0, &mut None).await;
+    refresh_into(db, &cell, false, 0, &mut None, &mut None).await;
     cell.into_inner().expect("snapshot")
+}
+
+/// Say WHY the heavy sections were skipped, once per run of the same reason
+/// (issue 405 unit 2).
+///
+/// `heavy_write_active` and the change-gate are both correct behaviour, and both
+/// used to `return` in silence — which from outside is indistinguishable from a
+/// refresher wedged on a pinned reader. That ambiguity is not hypothetical: it
+/// cost a live acceptance read on 2026-09-16, and again the same afternoon when a
+/// backfill job held the WAL for hours and the only way to tell a gated refresher
+/// from a hung one was to reason about code.
+///
+/// Announced on the TRANSITION, not every 60 s: a skip that persists for an hour
+/// is one line, and the line changes when the reason does. Measuring again clears
+/// the state, so the next skip speaks up even if its reason is unchanged.
+///
+/// Returns whether it actually spoke, so the transition rule is testable rather
+/// than only observable in a log — the same reason unit 1's timing line is NOT
+/// tested and this is.
+fn announce(said: &mut Option<&'static str>, reason: &'static str) -> bool {
+    if *said == Some(reason) {
+        return false;
+    }
+    eprintln!("coverage: heavy sections skipped — {reason}");
+    *said = Some(reason);
+    true
 }
 
 /// Say how long a heavy section took, whichever way it went (issue 405).
@@ -549,6 +582,37 @@ async fn measure_coverage_pipeline(
 mod tests {
     use super::*;
 
+    /// Issue 405 unit 2: a skip says WHY, once, and says it again after the
+    /// condition changes or after a measurement intervenes.
+    ///
+    /// The two skip paths are correct behaviour that used to `return` in silence,
+    /// which from outside is the same shape as a refresher wedged on a pinned
+    /// reader. It cost a live acceptance read twice on 2026-09-16 — once after a
+    /// deploy, once while a backfill held the WAL for hours.
+    ///
+    /// Announcing on the TRANSITION is the whole design: a job that holds the WAL
+    /// for six hours is one line, not 360.
+    #[test]
+    fn a_skip_announces_its_reason_once_per_run_of_that_reason() {
+        const WAL: &str = "a write-heavy job holds the WAL";
+        const UNCHANGED: &str = "nothing has been written since the last measurement";
+        let mut said = None;
+
+        assert!(announce(&mut said, WAL), "the first skip speaks");
+        assert!(!announce(&mut said, WAL), "and the next 359 do not");
+        assert!(!announce(&mut said, WAL));
+
+        // A DIFFERENT reason is news even without a measurement between: the job
+        // finished and the gate took over, which is a different thing to know.
+        assert!(announce(&mut said, UNCHANGED), "a changed reason speaks again");
+        assert!(!announce(&mut said, UNCHANGED));
+
+        // `refresh_into` clears the state when it measures, so the next skip is
+        // heard even though its reason never changed.
+        said = None;
+        assert!(announce(&mut said, UNCHANGED), "a skip after a measurement speaks");
+    }
+
     /// Issue 395: the funnel must not call a source complete when its monthly
     /// sequence has a hole, even though the newest period is in the current year.
     ///
@@ -771,7 +835,7 @@ mod tests {
         let _ = std::fs::remove_file(&path);
         let db = Db::open(&path).await.unwrap();
         let cell = RwLock::new(Dashboard::default());
-        refresh_into(&db, &cell, false, 0, &mut None).await;
+        refresh_into(&db, &cell, false, 0, &mut None, &mut None).await;
         let d = cell.read().unwrap();
         assert!(d.system.is_some(), "system");
         assert!(d.counts.is_some(), "counts");
@@ -798,7 +862,7 @@ mod tests {
 
         // A prior idle pass measured coverage.
         let cell = RwLock::new(Dashboard::default());
-        refresh_into(&db, &cell, false, 0, &mut None).await;
+        refresh_into(&db, &cell, false, 0, &mut None, &mut None).await;
         assert!(cell.read().unwrap().coverage.is_some(), "an idle pass measures coverage");
 
         // Now a write-heavy job is active: only the cheap `system` point-read
@@ -806,7 +870,7 @@ mod tests {
         // counts, coverage) is skipped and its last value preserved — no new
         // WAL-pinning reader snapshot is opened. (Each guard is scoped so it is
         // never held across the next await.)
-        refresh_into(&db, &cell, true, 0, &mut None).await;
+        refresh_into(&db, &cell, true, 0, &mut None, &mut None).await;
         {
             let d = cell.read().unwrap();
             assert!(d.system.is_some(), "system (cheap point read) still refreshes while a job runs");
@@ -822,7 +886,7 @@ mod tests {
         // WAL-pinning snapshot. This is the airtight property: during ingestion
         // the refresher holds no long-lived reader at all (issue 53).
         let fresh = RwLock::new(Dashboard::default());
-        refresh_into(&db, &fresh, true, 0, &mut None).await;
+        refresh_into(&db, &fresh, true, 0, &mut None, &mut None).await;
         {
             let f = fresh.read().unwrap();
             assert!(f.system.is_some(), "the cheap point-read section lands");
@@ -852,13 +916,13 @@ mod tests {
         let mut key = None;
 
         // First pass measures the heavy sections and records the watermark.
-        refresh_into(&db, &cell, false, 0, &mut key).await;
+        refresh_into(&db, &cell, false, 0, &mut key, &mut None).await;
         assert!(key.is_some(), "the first pass records the heavy-measure watermark");
         assert!(cell.read().unwrap().counts.is_some(), "the first pass measures counts");
 
         // (A) UNCHANGED → SKIP. Poison `counts`; an unchanged pass must leave it.
         cell.write().unwrap().counts = Some(vec![Count { label: "SENTINEL".into(), value: -1 }]);
-        refresh_into(&db, &cell, false, 0, &mut key).await;
+        refresh_into(&db, &cell, false, 0, &mut key, &mut None).await;
         assert_eq!(
             cell.read().unwrap().counts.as_ref().unwrap()[0].label,
             "SENTINEL",
@@ -878,7 +942,7 @@ mod tests {
         })
         .await
         .unwrap();
-        refresh_into(&db, &cell, false, 0, &mut key).await;
+        refresh_into(&db, &cell, false, 0, &mut key, &mut None).await;
         let d = cell.read().unwrap();
         assert_ne!(
             d.counts.as_ref().unwrap().first().map(|c| c.label.as_str()),
@@ -892,13 +956,13 @@ mod tests {
         // (issue 191): a reprocess stamps quarantine rows in place — no cursor
         // movement, no new fetch or notice — and the panel must still refresh.
         cell.write().unwrap().counts = Some(vec![Count { label: "SENTINEL".into(), value: -1 }]);
-        refresh_into(&db, &cell, false, 0, &mut key).await;
+        refresh_into(&db, &cell, false, 0, &mut key, &mut None).await;
         assert_eq!(
             cell.read().unwrap().counts.as_ref().unwrap()[0].label,
             "SENTINEL",
             "still-unchanged DB and job count: the gate skips"
         );
-        refresh_into(&db, &cell, false, 1, &mut key).await;
+        refresh_into(&db, &cell, false, 1, &mut key, &mut None).await;
         assert_ne!(
             cell.read().unwrap().counts.as_ref().unwrap().first().map(|c| c.label.as_str()),
             Some("SENTINEL"),
