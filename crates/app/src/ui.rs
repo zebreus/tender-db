@@ -564,8 +564,18 @@ fn CoveragePanel(rows: Vec<Coverage>) -> Element {
                     details { key: "{era.source}-{era.profile}", class: "era",
                         summary {
                             span { "{era.source} · {era.profile}" }
+                            // Issue 400: the collapsed line used to read
+                            // `era.held / era.published`, which is ONE profile's
+                            // numerator over EVERY profile's denominator wherever
+                            // a year is shared. `eforms-sdk-1.5` summarised as
+                            // 0.00 % above two year rows that both read 100.00 %†,
+                            // and `internal-ojs` reproduced 229's own cited 0.079
+                            // one level up from where 229 fixed it. The held count
+                            // is still this era's; the ratio is now the years', and
+                            // the `†` says which is which.
                             span { class: "era-cover",
-                                "{group(era.held)} / {published_cell(era.published)} · {coverage_pct(era.ratio, era.partial)}"
+                                title: "{era_cover_note(era.shared)}",
+                                "{group(era.held)} held · {published_cell(era.published)} published{era_mark(era.shared)} · {coverage_pct(era.ratio, era.partial)}"
                             }
                         }
                         table {
@@ -618,7 +628,9 @@ fn CoveragePanel(rows: Vec<Coverage>) -> Element {
                 p { class: "muted",
                     "† the year is served by more than one profile (an era boundary), so the figure is \
                      the whole year across all of them — there is no ground truth for one profile's \
-                     share of a year."
+                     share of a year. On a collapsed era row the same mark means the era contains \
+                     such a year, so its percentage is the coverage of the years it SPANS rather \
+                     than of what it holds: the held count beside it is still the era's own."
                 }
             }
         }
@@ -630,10 +642,18 @@ fn CoveragePanel(rows: Vec<Coverage>) -> Element {
 struct CoverageEra {
     source: String,
     profile: String,
+    /// What THIS era holds. Always its own, never anyone else's.
     held: i64,
     /// Sum of the years with a known denominator; `None` if none has one.
     published: Option<i64>,
+    /// Coverage of the YEARS THIS ERA SPANS, across every profile serving them —
+    /// not this era's share of them (issue 400). Equal to `held / published` when
+    /// the era has no shared year, which is why the mark below exists to say which
+    /// of the two a reader is looking at.
     ratio: Option<f64>,
+    /// At least one year of this era is served by another profile too, so `ratio`
+    /// is the year's and not this era's (issue 400). Drives the `†`.
+    shared: bool,
     /// Any year in the era is still open, so the aggregate ratio is a floor.
     partial: bool,
     years: Vec<Coverage>,
@@ -643,10 +663,13 @@ struct CoverageEra {
 /// first within each — so 34 years collapse behind a single scannable summary.
 fn coverage_by_era(rows: Vec<Coverage>) -> Vec<CoverageEra> {
     let mut eras: Vec<CoverageEra> = Vec::new();
+    // The numerator of the summary ratio, accumulated beside `held` because the two
+    // are DIFFERENT questions once a year is shared: `held` is what this era holds,
+    // this is what the years it spans hold across every profile serving them.
+    let mut year_held: Vec<i64> = Vec::new();
     for row in rows {
-        let era = match eras.iter_mut().find(|e| e.source == row.source && e.profile == row.profile)
-        {
-            Some(e) => e,
+        let at = match eras.iter().position(|e| e.source == row.source && e.profile == row.profile) {
+            Some(i) => i,
             None => {
                 eras.push(CoverageEra {
                     source: row.source.clone(),
@@ -654,21 +677,30 @@ fn coverage_by_era(rows: Vec<Coverage>) -> Vec<CoverageEra> {
                     held: 0,
                     published: None,
                     ratio: None,
+                    shared: false,
                     partial: false,
                     years: Vec::new(),
                 });
-                eras.last_mut().expect("just pushed")
+                year_held.push(0);
+                eras.len() - 1
             }
         };
+        let era = &mut eras[at];
         era.held += row.held;
         if let Some(p) = row.published {
             era.published = Some(era.published.unwrap_or(0) + p);
+            // Issue 400: over the same years the denominator covers, so the two
+            // sides of the ratio always describe the same set. `year_held` equals
+            // `held` for a year this era serves alone, so an era with no shared
+            // year is arithmetically unchanged by this.
+            year_held[at] += row.year_held;
         }
+        era.shared |= row.shared_year();
         era.partial |= row.partial;
         era.years.push(row);
     }
-    for era in &mut eras {
-        era.ratio = era.published.map(|p| era.held as f64 / p as f64);
+    for (era, numerator) in eras.iter_mut().zip(year_held) {
+        era.ratio = era.published.map(|p| numerator as f64 / p as f64);
         era.years.sort_by(|a, b| b.year.cmp(&a.year));
     }
     eras
@@ -689,6 +721,25 @@ fn coverage_pct(ratio: Option<f64>, partial: bool) -> String {
     match ratio {
         Some(r) => format!("{:.2} %{}", r * 100.0, if partial { " *" } else { "" }),
         None => "—".to_owned(),
+    }
+}
+
+/// The `†` on a collapsed era row: at least one of its years is served by another
+/// profile too, so the percentage beside it is the YEARS' coverage and not this
+/// era's share (issue 400). An era whose years are all its own is unmarked, and
+/// its percentage is unchanged from before — `year_held` equals `held` there.
+fn era_mark(shared: bool) -> &'static str {
+    if shared { " †" } else { "" }
+}
+
+/// What that mark means, on hover.
+fn era_cover_note(shared: bool) -> &'static str {
+    if shared {
+        "Some of these years are served by more than one profile, so the percentage is how much of \
+         those YEARS is held across all of them — there is no ground truth for one profile's share \
+         of a year. The held count is this era's own."
+    } else {
+        "Every year here is served by this profile alone, so the percentage is this era's own."
     }
 }
 
@@ -1478,6 +1529,82 @@ mod tests {
             year_ratio: Some(0.3),
         };
         assert!(!alone.shared_year(), "a sole profile's ratio is its own and stands");
+    }
+
+    /// Issue 400: the collapsed era summary divided ONE profile's held count by the
+    /// WHOLE year's published count, so ten of the fourteen `ted` eras with a
+    /// denominator read a shortfall that was not theirs.
+    ///
+    /// The two live cases this pins, measured on prod 2026-09-16:
+    ///   * `eforms-sdk-1.5` summarised as **0.00 %** above two per-year rows that
+    ///     both read `100.00 %†` — 35 notices over a 1,597,124 denominator it
+    ///     shares with thirteen sibling SDK profiles.
+    ///   * `internal-ojs` summarised as **7.94 %** — 26 955 / 339 534 = 0.0794,
+    ///     which is the exact figure issue 229's own test doc-comment names as the
+    ///     bug it fixed, still on the page one DOM level above where 229 fixed it.
+    #[test]
+    fn an_era_summary_never_divides_one_profiles_held_by_a_shared_years_published() {
+        // 229's fixture, at the level 229 did not reach: 2008 served by two
+        // profiles, 339,534 published, 26,955 + 313,059 held between them.
+        let shared = |profile: &str, held| Coverage {
+            source: "ted".into(),
+            profile: profile.into(),
+            year: "2008".into(),
+            held,
+            published: Some(339_534),
+            ratio: None,
+            partial: false,
+            published_as_of: None,
+            year_held: 26_955 + 313_059,
+            year_ratio: Some((26_955 + 313_059) as f64 / 339_534.0),
+        };
+        let eras =
+            coverage_by_era(vec![shared("internal-ojs", 26_955), shared("text", 313_059)]);
+        assert_eq!(eras.len(), 2);
+        for era in &eras {
+            assert!(era.shared, "{} contains a shared year", era.profile);
+            assert_eq!(era_mark(era.shared), " †");
+            let pct = era.ratio.expect("a shared year still has the year's ratio");
+            assert!(
+                (pct - 1.0014).abs() < 1e-3,
+                "{} summarises the YEAR's coverage, not its own share: {pct}",
+                era.profile
+            );
+            assert!(
+                pct > 0.5,
+                "{} must not reproduce issue 229's 0.079 one level up: {pct}",
+                era.profile
+            );
+        }
+        // The held counts stay the eras' OWN — only the ratio changed meaning.
+        assert_eq!(eras[0].held, 26_955);
+        assert_eq!(eras[1].held, 313_059);
+
+        // An era whose years are all its own is UNMARKED and arithmetically
+        // unchanged by this: `year_held` equals `held` there, so the ratio is the
+        // same number it always was.
+        let sole = |year: &str, held, published| Coverage {
+            source: "ted".into(),
+            profile: "eforms".into(),
+            year: year.into(),
+            held,
+            published: Some(published),
+            ratio: Some(held as f64 / published as f64),
+            partial: false,
+            published_as_of: None,
+            year_held: held,
+            year_ratio: Some(held as f64 / published as f64),
+        };
+        let alone = coverage_by_era(vec![sole("2025", 30, 100), sole("2024", 70, 100)]);
+        assert_eq!(alone.len(), 1);
+        assert!(!alone[0].shared, "no shared year, no mark");
+        assert_eq!(era_mark(alone[0].shared), "");
+        assert_eq!(alone[0].held, 100);
+        assert!((alone[0].ratio.unwrap() - 0.5).abs() < 1e-9, "100 / 200, as before");
+
+        // And the mark's hover says which of the two a reader is looking at.
+        assert!(era_cover_note(true).contains("held count is this era's own"));
+        assert!(era_cover_note(false).contains("this era's own"));
     }
 
     /// Issue 396 unit 1: a partial year's denominator is DATED on the page, and

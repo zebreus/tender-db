@@ -141,3 +141,78 @@ Whichever rendering this issue picks, the `‡` (or whatever the summary's denom
 with it: `era.published` sums years that may be partial, so if it survives at all it needs the same
 qualification the cell got. If the denominator is dropped — options (b) and (d) — the question
 disappears with it, which is one more argument for those.
+
+## BUILT 2026-09-16 — decision: (c), the years' coverage, marked; and r208/r209 answered
+
+Status: built, gate green (`GATE-EXIT=0`), not yet deployed.
+
+### The decision
+
+Four renderings were offered. **Taken: (c) — the summary shows the coverage of the years the era
+SPANS, `†`-marked, with the era's own held count beside it.** The line becomes
+
+    ted · eforms:eforms-sdk-1.5      35 held · 1 597 124 published † · 100.00 %
+
+and its hover reads "Some of these years are served by more than one profile, so the percentage is
+how much of those YEARS is held across all of them … The held count is this era's own."
+
+Why not the others:
+
+- **(b) suppress the ratio** is 229's conclusion applied unchanged, and it is the tempting one — but
+  it costs a figure for **10 of the 14** `ted` eras with a denominator, including every eForms one.
+  The question "are the years this era touches covered" HAS a ground-truth answer; refusing to print
+  it because the era's own share does not is throwing away the half that is knowable.
+- **(d) held alone** is (b) with less information.
+- **(a) the sole years only** looked principled and is worse in practice: an era whose years are ALL
+  shared (10 of 14) gets nothing, and an era with a mix would silently report on a subset of its
+  years without saying which — a new version of the same "the number is not what it looks like".
+
+(c) degenerates to today's arithmetic exactly where nothing is shared: `year_held == held` for a sole
+year, so an unshared era's percentage is unchanged and unmarked. The `†` is doing the whole job of
+saying which of the two questions the number answers, which is why it is the same mark the per-year
+cells use — one idea, one glyph.
+
+### r208 and r209, which the `## Done when` required answering either way
+
+They are **understated for exactly this reason. Neither is a backfill shortfall.**
+
+| era | summary today | per-year rows |
+| --- | --- | --- |
+| `ted · ted-export-r208` | `2 699 213 / 8 421 040 · 32.05 %` | 15 years, **11 shared**; every row reads `100.00 %†` (2010 `100.03 %†`), and the four SOLE years read ~100 % too (2012 `414 836 / 414 837`, 2011 `411 850 / 411 850`) |
+| `ted · ted-export-r209` | `4 490 549 / 6 313 458 · 71.13 %` | 10 years, **10 shared**; every row reads `100.00 %†` |
+
+So two eras that today advertise 68 % and 29 % missing have, by the page's own per-year rows, no hole
+at all. After the fix both read ≈ 100 %†. That is the sharpest before/after on the panel and the
+reason this was worth separating from 396 rather than riding it.
+
+### Tests
+
+`an_era_summary_never_divides_one_profiles_held_by_a_shared_years_published` uses 229's own fixture
+one level up — 2008 shared between `internal-ojs` (26,955) and `text` (313,059) against 339,534
+published — and asserts both eras are `shared`, carry the `†`, summarise at the YEAR's 1.0014, and
+explicitly that neither reproduces 0.079. It then asserts the held counts are still the eras' own
+(26,955 and 313,059, not the year's), that an era with no shared year is UNMARKED and
+arithmetically unchanged (100 / 200 = 0.5, as before), and that the hover distinguishes the two.
+
+Run red first against the old arithmetic: it failed with
+`internal-ojs summarises the YEAR's coverage, not its own share: 0.07938822032550495` — the live
+figure, to the digit, and issue 229's own cited number.
+
+### Live acceptance still owed (after deploy)
+
+- `ted · eforms:eforms-sdk-1.5` reads ≈ `35 held · 1 597 124 published † · 100.00 %`, not `0.00 %`.
+- `ted · internal-ojs` no longer reads `7.94 %`.
+- `ted · ted-export-r208` and `r209` read ≈ 100 %†, not 32.05 % / 71.13 %.
+- The 13 `doe`/`fts` eras still read `—` (no ground truth, untouched).
+- The per-year cells are byte-identical: 2008 still `100.14 %†` on both profiles, 2026 still
+  `118.74 % *†` with its `‡`.
+- `ted · text`, whose years are nearly all its own, gains the `†` (2008 is shared) and its percentage
+  moves from 99.58 % to ≈ 100.3 % — correct, and worth reading as the check that the mark is doing
+  its job rather than as a change in what is held.
+
+### Still open on this issue after the fix
+
+The `‡` addendum above: `published_cell(era.published)` sums denominators that may include a PARTIAL
+year, and the summary shows no `‡`. Under (c) the denominator survives, so it still needs the date
+qualification. Not done in this unit — the summary now says `… published †` and the partial-year
+date is one glyph further than this unit went.
