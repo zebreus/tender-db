@@ -314,3 +314,27 @@ the issue predicted has continued, 2026 is now **118.74 %**, not the 117.38 % fi
 | 2008 ted (`text`) | `339 534 \| 100.14 %†` | unchanged, unmarked (229's verification) |
 | quarantine row 1 | class `benign`, "Content this notice's profile has no mapping for …" | class `benign`, "A corrupt archive entry …" |
 | `/metrics` reason members | `8` | `8` |
+
+### VERIFIED LIVE 2026-09-16 — rev `94d8f61`, both units
+
+    curl https://tenders.zebreus.click/health   -> {"ok":true,"rev":"94d8f61eee86…"}
+
+| row | reads |
+| --- | --- |
+| 2026 ted (`sdk-1.13`, `sdk-1.14`) | `497 791 ‡ \| 118.74 % *†` — the denominator is marked |
+| that `‡`'s hover | "Counted through 2026-07-17 and frozen there — the year is still publishing, so this is a floor, not a total. Coverage above 100 % means the corpus has grown past the snapshot, not that notices are duplicated." |
+| 2025 ted (`sdk-1.13`) | `871 149 \| 100.00 %†` — complete year, UNmarked |
+| 2008 ted (`text`) | `339 534 \| 100.14 %†` — issue 229's verification, unchanged |
+| the `*` footnote | "the year is not over, and its published count is a snapshot (‡, hover for its date): a shortfall is the calendar, and a figure above 100 % is the corpus having grown past the snapshot — neither is a gap, and neither is a duplicate." |
+| the `†` footnote | unchanged |
+| quarantine row 1 | `unreadable zip bundle: invalid Zip archive: Could not find EOCD` \| **benign** \| "A corrupt archive entry — the bundle or member cannot be opened at all, so it was never a notice to map. Held whole as evidence (issues 201/202)." \| 8 |
+
+The gloss now agrees with the class beside it and with the resolved-categories ledger two panels
+down, and the count is still 8, so 303's `Fixed(8)` terminal policy is untouched.
+
+Status: **RESOLVED-VERIFIED 2026-09-16**. The carve-out is issue 400, filed and specified.
+
+One thing the live read turned up that belongs to 400 rather than here: the ERA SUMMARY line still
+prints `104 355 / 497 791 · 20.96 % *` with no `‡`, because `published_cell(era.published)` is a
+separate call site from the per-year cell. So the era summary is now the only place a partial-year
+denominator appears undated — recorded on 400, whose fix touches that same line.

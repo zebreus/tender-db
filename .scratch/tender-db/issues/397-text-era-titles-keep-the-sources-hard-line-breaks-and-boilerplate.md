@@ -1,6 +1,6 @@
 # 397 — text-era titles are served with the source's hard line break inside them, and in 1993–1994 with the OJ boilerplate footnote `(Only the original text is authentic)`
 
-Status: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — unit 1 RESOLVED-VERIFIED 2026-09-16 (rev `170c726`, era re-parsed by job 1386 and re-folded by job 1387; every `## Done when` count met, see the acceptance section at the foot). Unit 2 — settle `TXT-NC`'s codelist, then decide where the substantive annotation atoms go — is the only thing still open. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (ingest — the text-era `TI` rule in `crates/ingest/src/text/rules.rs:104` and the newline join in `crates/ingest/src/text/parse.rs:1344`, served verbatim through `crates/ingest/src/project.rs:144`; the current value is pinned by `crates/ingest/tests/text.rs:209`)
 Relates to: 199 (RESOLVED 2026-08-15 — the SAME TED ~72-column wrapper, and it already classifies the wrapper's output as layout: "all but 4 are TED's own line-wrapper emitting a wrapped tail flush-left". It fixed only column-0 orphan lines in `unclaimed-content`; it never touches the newline that sits INSIDE `TI`'s own value, which is where this one lives), 368 (ready-for-agent — unmapped source vocabulary; it names `TXT-TI` twice, at lines 294 and 612, but only as a mapping question — "which element becomes the title", never what the title string contains), 343 (FIXED 2026-09-02, DEPLOYED 2026-09-03 — the fold-vs-read tie-break) and 292 (FIX DEPLOYED 2026-08-26 — the inert English pick) and 340 (CLOSED — the original-language leg): all three decide WHICH title is picked; this is the content of the one that wins, so none of them can catch it, 364 (unit 6 done 2026-09-13 — its units 5–6 re-parsed r208 and re-folded the text era, which is exactly the follow-on this fix needs and shows it is a routine operation), 11 (resolved — the text-era profile), 232 (the text-era buyer/value/winner campaign whose sweeps a text-era re-parse would ride), `docs/research/ted-legacy-mapping.md` §7, which is headed "Text era (1993–2010) — quick assessment only" and records no decision to preserve wraps in a title
 
@@ -252,3 +252,70 @@ The `## Done when` counts: `title_with_newline` and `title_with_footnote` both 0
 5,000,000–5,099,999 still exactly 4 (publisher-written `\r\n`, ids 5076998 / 5088993 / 5095378 /
 5098520), 1993-03-05 `limit=100` returning 0 newline titles, and 8037963 reading
 `D-Herzogenrath: sewage-treatment plant`.
+
+
+## Unit 1 ACCEPTED 2026-09-16 — the era is re-parsed, re-folded, and every count is met
+
+Status: unit 1 RESOLVED-VERIFIED. Unit 2 (`TXT-NC`'s codelist, and where the substantive atoms go)
+is still open and is the only thing left on this issue.
+
+The re-parse finished (job 1386 / internal 2295: **3,890,846 notices across 214 packages, 106,108
+members walked, 0 unmatched, 0 now failing**) and the era fold followed (job 1387 / internal 2296:
+2,830,901 tenders written, 5,690,556 verified unchanged). Read live against rev `94d8f61`.
+
+### Every `## Done when` count, before → after
+
+| measure | filed (2026-09-15) | now |
+| --- | --- | --- |
+| ids 8,100,000–8,199,999 · `title_with_newline` | 8,671 (8.7 %) | **0** |
+| ids 8,060,000–8,099,999 · `title_with_newline` | 2,412 (6.0 %) | **0** |
+| ids 7,960,000–8,059,999 · `title_with_footnote` | 8,579 | **0** |
+| ids 7,960,000–8,059,999 · `title_with_newline` | 11,769 (11.8 %) | **123** — see below |
+| control ids 5,000,000–5,099,999 · `title_with_newline` | 4 | **4**, unchanged |
+| 1993-03-05 `limit=100` · titles containing `\n` | 66 of 100 | **0 of 100** |
+| 1993-03-05 `limit=100` · titles carrying the footnote | 59 of 100 | **0 of 100** |
+
+    curl -sS 'https://tenders.zebreus.click/v1/tenders/8037963' -> "D-Herzogenrath: sewage-treatment plant"
+    curl -sS 'https://tenders.zebreus.click/v1/notices/17424/content'
+      -> {"field_id":"TXT-TI","lang":"EN","ordinal":0,"type":"text","value":"F-Paris: lighting supports"}
+
+Both are the exact strings the issue asked for, on both surfaces — the parse layer and the fold.
+
+### The 123 are not the defect: they are publisher-written line breaks
+
+The one range that does not read 0 is the one that SPANS ERAS — 7,960,000–8,059,999 covers
+1993–2026, not just the text era. Broken down:
+
+| source | year | count |
+| --- | --- | --- |
+| ted | 2026 | 119 |
+| doe | 2026 | 2 |
+| ted | 2016 | 1 |
+| ted | 2014 | 1 |
+
+Every one is eForms or XML-era, none is text-era, and the content is a title the buyer typed across
+lines — `Zadanie 1: Bieżące utrzymanie czystości … ;\nZadanie 2: Odbiór i zagospodarowanie …`,
+`Polizeipräsidium, Gesamtsanierung\n\nHeizungs- und Kälteanlage`,
+`Massivbau UF Steilshooper Straße D005\nProjekt Brücken Barmbek`. The two pre-2026 rows are the same
+shape as the control range's four: 8035112 (2016) carries a publisher `\r\n`, 8011843 (2014) has a
+trailing `.` on its own line.
+
+That is exactly the class the control range exists to protect, and it is protected: 5076998 and
+5098520 still carry `<CR><LF>`, 5088993 and 5095378 still carry their bare `\n`, all four unchanged.
+**The fix removed the WRAPPER's newline and left the PUBLISHER's**, which is what it was built to do.
+
+### The last `## Done when` bullet is answered by refusing it
+
+> `openapi.json` / `/docs` say what `Tender.title` is now guaranteed to be (single line), or a gate
+> asserts it, so the guarantee is not just true but stated.
+
+**Not written, deliberately: the guarantee would be false.** 123 tenders in one 100k range and 4 in
+the control range carry a newline the publisher wrote, and this system does not get to flatten those
+— they are the source's own text (ADR-0004). Stating "single line" in `openapi.json` would replace a
+defect with a lie, and a gate asserting it would fail on real data the moment a buyer presses return.
+
+What IS true and now stated here: **no title carries a line break this system introduced.** The
+wrapper's ~72-column fold is gone from the text era, and the authenticity footnote with it. Any
+newline a consumer still sees came from the notice. That is a claim about provenance, not about
+shape, and it is the honest form of what the bullet was reaching for. If a consumer needs
+single-line titles, that is a presentation choice for them, not a guarantee this corpus can make.

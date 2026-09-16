@@ -125,3 +125,19 @@ rendered as a ratio. This system then went on rendering exactly that, one level 
   `ted · ted-export-r208` (32.05 %) and `ted · ted-export-r209` (71.13 %) are understated for the same
   reason — both eras overlap the `text` era's years — or whether those figures are real backfill
   shortfalls. The answer goes in this issue either way, because a reader cannot currently tell.
+
+## Also on this line: the `‡` stops at the per-year cell (noticed 2026-09-16, rev `94d8f61`)
+
+Issue 396 unit 1 dated the partial-year denominator, but only in the per-year `td`: the era summary
+calls `published_cell(era.published)` directly and gains no mark. Live, one era now reads
+
+    ted · eforms:eforms-sdk-1.14        104 355 / 497 791 · 20.96 % *
+      2026 | 104 355 | 497 791 ‡ | 118.74 % *†
+
+— the same 497 791, dated one line down and undated on the line a reader scans. So the summary is
+now the ONLY place on the page where a frozen mid-year count is served without its date.
+
+Whichever rendering this issue picks, the `‡` (or whatever the summary's denominator becomes) goes
+with it: `era.published` sums years that may be partial, so if it survives at all it needs the same
+qualification the cell got. If the denominator is dropped — options (b) and (d) — the question
+disappears with it, which is one more argument for those.

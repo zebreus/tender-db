@@ -1,6 +1,6 @@
 # 389 — the lot row re-decides two facts the tender row has already decided: it serves an exact-zero `value` the tender headline refuses, and it serves `submission_deadline: null` on the lots its own `status=open` returned
 
-Status: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — unit 1 BUILT 2026-09-16 (gate green, not yet deployed; see the build section at the foot for the technique, the decisions recorded with it, and the live acceptance still owed). Unit 2 — the lot `submission_deadline`'s scope against the `status` filter's — is undecided and is this issue's open half. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (read layer — `summarise()` in `crates/store/src/read.rs`, the lot row served by `/v1/lots` and by `lot_details` on the tender detail; unit 2 is also a docs defect, in `/docs` and the OpenAPI `Lot` schema)
 Relates to: 366 (DONE — its unit 3 retired the display-side "second implementation" of the value
 election for "every list shape AND the detail payload" by reading the fold's election
@@ -311,3 +311,67 @@ One of the two is chosen and the OTHER is closed off, not left ambiguous:
   `2029-04-29T10:00:00+00:00` (fallback path) or the field is documented as lot-scoped and the rows
   still read `null` (docs path); `/v1/lots?tender=132&status=open` still serves lot 322 with
   `2026-09-29T10:30:00+02:00`; `/v1/lots?tender=8436333&status=closed` still returns 0 items.
+
+
+## Unit 1 BUILT 2026-09-16 — the lot pick CALLS the fold's predicate; unit 2 still open
+
+Status: unit 1 ready to deploy, gate green (`GATE-EXIT=0`). Unit 2 (the `submission_deadline` scope)
+is untouched and remains this issue's open half.
+
+### What was done
+
+`summarise()` (`crates/store/src/read.rs`) skips a candidate row when
+`crate::canonical::sentinel_amount(cents)` — the fold's own function, called, not transcribed — and
+when the row's `eur_cents` exceeds `crate::canonical::IMPLAUSIBLE_EUR_CENTS`. The `SELECT` gains
+`s.eur_cents` for the second test. Nothing else about the pick changes: it is still `MAX(cents)` over
+the survivors, still `quality IS NULL` (issue 372), still first-of-ties for the currency.
+
+The Done-when offered two techniques and this is the second one, for a reason worth recording.
+`tender_select_head`'s own comment rules out the first: it warns that walking the digits in SQL would
+be "exactly the second implementation" this class of bug is made of, and solves the tender pick by
+LOOKING UP the row the fold chose (`s.eur_cents = t.current_value_eur_cents`). That lookup is not
+available a level down — `current_value_eur_cents` is tender-scoped and no per-LOT twin exists — but
+`summarise` is Rust, so the predicate itself is in reach and there is still exactly one rule.
+
+**The ceiling is applied only where a EUR conversion exists**, and that is deliberate. The tender head
+column IS a EUR figure, so an unconvertible amount has nothing to say there and drops out. The lot row
+serves the PUBLISHED figure, so blanking it for want of a rate would be a new defect rather than this
+one's fix. A 900 000 XXX lot still serves 900 000 XXX.
+
+**Issue 378's zero-conversion rule is NOT carried down**, for the same reason: it governs the derived
+EUR column ("a conversion that lands on ZERO is declined"), and the lot row is not that column. Said
+here so the omission is a decision rather than an oversight.
+
+### Tests
+
+`crates/store/tests/lot_value_election.rs`, new — NOT an oracle test, because
+`lot_summary_equivalence.rs` pins `summarise` against the pre-115 SQL and this is exactly where the
+two are meant to diverge. One fixture, seven lots, one page:
+
+| lot | amounts (all `quality IS NULL` unless noted) | serves |
+| --- | --- | --- |
+| LOT-0000 | `0 GBP` | `null` — the issue's case |
+| LOT-0001 | `0 GBP`, `50 000 GBP` | `50 000 GBP` — the zero is skipped, not the lot |
+| LOT-0002 | `1 234 EUR` | `1 234 EUR` — control |
+| LOT-0003 | `-1 EUR` | `null` — `sentinel_amount`'s oldest leg |
+| LOT-0004 | `9.99…e16 EUR`, converted | `null` — over the ceiling |
+| LOT-0005 | `900 000 XXX`, no `eur_cents` | `900 000 XXX` — no conversion is not a reason to blank |
+| LOT-0006 | `-1 EUR`, `quality = withheld` | `null` — issue 372, pinned so the new arms cannot drop the old one |
+
+Plus `the_lot_payload_and_the_value_filter_agree_about_a_zero`, and in `crates/app/tests/api.rs`
+`a_lot_priced_at_zero_is_served_as_no_value_and_agrees_with_the_filter`, which drives the real router:
+it ingests the chain, asserts a positive lot value as a precondition, rewrites every head-version lot
+amount to an exact zero with `current_value_eur_cents` NULL (the measured shape), then asserts
+`/v1/lots`, `lot_details` AND `?max_value=0` all agree — `lot_details.len() == lots.len()` guards
+against a vacuous pass.
+
+**All three were run red first**, by short-circuiting the guard. The store test failed with
+`left: ("LOT-0000", Some(0), Some("GBP"))` — the live payload from tender 25773, reproduced exactly.
+
+### Live acceptance still owed (after the next deploy)
+
+- `/v1/tenders/25773` → `lot_details[0].value` is `null`; `/v1/tenders/31033` → lot 80385 `null`.
+- `/v1/lots?currency=GBP&limit=10` no longer serves 62039 or 80385 at `{cents: 0}`.
+- `/v1/lots?tender=25773` and `…&max_value=0` agree.
+- The bounded SELECTs are UNCHANGED — 706 over ids 1–100,000 and 23 over 5,000,000–5,100,000. This is
+  a read-layer election; nothing is drained and no stored row moves, exactly as the issue specifies.

@@ -2715,7 +2715,10 @@ fn lots_query(filter: &Filter, scope: Scope) -> Query {
 ///     unlabelled row; ties keep the first in scan order. SQLite sorts NULL below
 ///     both 0 and 1 under DESC, which is what puts unlabelled last.
 ///   * value and currency — `MAX(cents)` and `ORDER BY cents DESC LIMIT 1` resolve
-///     to the SAME row, so one max-cents row serves both.
+///     to the SAME row, so one max-cents row serves both. Over the CANDIDATES,
+///     which since issue 389 are the rows the fold would also have accepted: not
+///     withheld (issue 372), not a sentinel, and under the ceiling where a EUR
+///     conversion exists to measure it against.
 ///   * deadline — the three columns were three subqueries sharing
 ///     `ORDER BY utc_seconds DESC LIMIT 1`, so one max-utc row serves all three.
 async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -> turso::Result<()> {
@@ -2802,7 +2805,7 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
                 // lot whose ONLY amount is withheld would show -0.01 as its
                 // headline value: -100 outranks the NULL default below, so it
                 // wins by being the only row rather than by being a figure.
-                "SELECT s.lot_id, s.cents, s.currency FROM tender_version_amounts s
+                "SELECT s.lot_id, s.cents, s.currency, s.eur_cents FROM tender_version_amounts s
                   WHERE s.tender_id = ? AND s.seq = ? AND s.lot_id IS NOT NULL
                     AND s.quality IS NULL",
                 key.clone(),
@@ -2811,6 +2814,33 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
         while let Some(row) = got.next().await? {
             let Some(&i) = opt_int_of(&row, 0).and_then(|id| at.get(&(tender_id, seq, id))) else { continue };
             let cents = opt_int_of(&row, 1);
+            // Issue 389 unit 1: the fold's own predicate, CALLED rather than
+            // transcribed. `tender_select_head` warns that walking the digits in
+            // SQL would be the second implementation this whole class of bug is
+            // made of, and solves it by looking up the row the fold chose via
+            // `eur_cents = t.current_value_eur_cents`. That trick is unavailable
+            // here — the head column is tender-scoped and no per-LOT twin exists
+            // — but `summarise` is Rust, so the function itself is in reach and
+            // there is still only one rule.
+            //
+            // What it fixes: tender 25773 served `value: null` (the head refuses
+            // an exact zero since issue 366's `55d239d`) in the same response
+            // that priced its only lot at `{cents: 0, currency: "GBP"}`, from the
+            // same published figure — and `?tender=25773&max_value=0` returned
+            // nothing, because the FILTER reads the head column while this pick
+            // re-derived. 1,280 lots over ids 1–100,000 were served that way.
+            if cents.is_some_and(crate::canonical::sentinel_amount) {
+                continue;
+            }
+            // The ceiling is defined on the EUR conversion, so it is applied
+            // where that conversion exists and nowhere else. An unconvertible
+            // amount is NOT refused: unlike the tender head column, which is a
+            // EUR figure and so has nothing to say without a rate, the lot row
+            // serves the PUBLISHED figure, and blanking a published amount for
+            // want of a rate would be a new defect rather than this one's fix.
+            if opt_int_of(&row, 3).is_some_and(|eur| eur > crate::canonical::IMPLAUSIBLE_EUR_CENTS) {
+                continue;
+            }
             // A NULL sorts last under `cents DESC` and is ignored by `MAX`, so it
             // ranks below every real amount rather than above them.
             let rank = cents.unwrap_or(i64::MIN);

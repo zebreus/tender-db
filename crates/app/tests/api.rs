@@ -3002,3 +3002,93 @@ async fn the_quality_gauges_appear_with_the_history_and_never_lie_a_zero() {
         let _ = std::fs::remove_file(format!("{}{s}", server.path));
     }
 }
+
+/// Issue 389 unit 1: the lot row and the value filter are the same endpoint, and
+/// they disagreed about one lot.
+///
+/// On prod, `/v1/tenders/25773` served `value: null` — the head column refuses an
+/// exact zero since issue 366's `55d239d` — and priced its only lot at
+/// `{"cents":0,"currency":"GBP"}` in the SAME response, from the same published
+/// figure. `?tender=25773&max_value=0` returned nothing, because the FILTER reads
+/// the head column while `summarise` re-derived its own `MAX(cents)`.
+///
+/// The store test pins the election; this pins what a consumer actually sees,
+/// across BOTH surfaces `summarise` feeds — a fix that moved only one would be
+/// the next instance of the same issue.
+#[tokio::test]
+async fn a_lot_priced_at_zero_is_served_as_no_value_and_agrees_with_the_filter() {
+    let server = Server::start("lot-zero-value").await;
+    server.ingest_chain().await;
+
+    let id = items(&server.get("/v1/tenders").await)[0]["id"].as_i64().expect("tender id");
+
+    // Precondition: the fixture's lots carry a real figure, so the assertions
+    // below are about the zero and not about an empty page.
+    let before = items(&server.get(&format!("/v1/lots?tender={id}")).await).clone();
+    assert!(
+        before.iter().any(|l| l["value"]["cents"].as_i64().is_some_and(|c| c > 0)),
+        "fixture precondition: at least one lot must start with a positive value"
+    );
+
+    // Rewrite every lot amount of the head version to an exact zero, and clear the
+    // head column the way the fold would have: `sentinel_amount(0)` is true, so no
+    // figure survives the election and `current_value_eur_cents` is NULL. This is
+    // the measured shape (1,280 lots over ids 1–100,000) reproduced exactly.
+    {
+        let db = store::turso::Builder::new_local(&server.path).build().await.expect("open");
+        let conn = db.connect().expect("connect");
+        conn.execute(
+            "UPDATE tender_version_amounts SET cents = 0, eur_cents = 0
+              WHERE tender_id = ?1 AND lot_id IS NOT NULL
+                AND seq = (SELECT current_seq FROM tenders WHERE id = ?1)",
+            (store::turso::Value::Integer(id),),
+        )
+        .await
+        .expect("zero the lot amounts");
+        conn.execute(
+            "UPDATE tenders SET current_value_eur_cents = NULL WHERE id = ?",
+            (store::turso::Value::Integer(id),),
+        )
+        .await
+        .expect("clear the head value");
+    }
+
+    // The list row.
+    let lots = items(&server.get(&format!("/v1/lots?tender={id}")).await).clone();
+    assert!(!lots.is_empty(), "the lots are still served — only their value changed");
+    for lot in &lots {
+        assert!(
+            lot["value"].is_null(),
+            "a lot whose only figure is an exact zero has no value, got {}",
+            lot["value"]
+        );
+    }
+
+    // The detail payload, built by the same `summarise`.
+    let detail = server.get(&format!("/v1/tenders/{id}")).await;
+    assert!(detail["value"].is_null(), "the tender headline refuses it, as it always did");
+    let details = detail["lot_details"].as_array().expect("lot_details");
+    assert_eq!(
+        details.len(),
+        lots.len(),
+        "non-vacuity: the detail surface carries the same lots the list does"
+    );
+    for lot in details {
+        assert!(
+            lot["value"].is_null(),
+            "lot_details must agree with /v1/lots — one function feeds both, got {}",
+            lot["value"]
+        );
+    }
+
+    // And the filter the payload used to contradict.
+    let filtered = server.get(&format!("/v1/lots?tender={id}&max_value=0")).await;
+    assert!(
+        items(&filtered).is_empty(),
+        "`max_value=0` reads the head column and finds nothing — as before"
+    );
+    assert!(
+        filtered["ignored_filters"].as_array().expect("ignored_filters").is_empty(),
+        "and it is not an ignored filter: the empty page is the honest answer"
+    );
+}
