@@ -182,8 +182,10 @@ Run red first: `left: Inserted, right: Rekeyed` — the mint, reproduced.
   twin), so the repair is to drop them AND repair the tender versions folded from them.
 - **The real size**, per the measurement note above — triples held under more than one
   `publication_id`, by source. 281 is the floor.
-- **The sequencing rule in `docs/operations.md`**: a re-parse that changes identity derivation must
-  not overlap the daily ingest. With this fix the overlap no longer duplicates, but the two jobs still
-  race for the same rows and the campaign is slower for it.
+- ~~**The sequencing rule in `docs/operations.md`**~~ — recorded 2026-09-16 beside the issue-290
+  re-key counters, where anyone sizing a re-parse already reads: either the campaign takes the queue,
+  or the derivation change ships after the cohort is drained, and `/admin/jobs` is checked before the
+  FIRST chunk (an idle queue now is not an idle queue in forty minutes, because the daily is
+  scheduled).
 - Live after deploy: the next DÖE daily reports `0 re-keyed` (nothing left to move) and the notice
   count does not jump.

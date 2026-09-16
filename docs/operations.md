@@ -439,6 +439,26 @@ The fallback is deliberately narrow: it fires only when the content hash names E
 that source, so it can never merge two notices on the strength of duplicate bytes, and it never
 applies to the reclaim path, where a missing identity should mint rather than adopt.
 
+**A re-parse that CHANGES identity derivation must not overlap the daily ingest (issue 404).**
+The two jobs race for the same rows, and before the ingest path learned to adopt a moved key they
+raced destructively: on 2026-09-16 issue 394's guard deployed at 07:00Z, a re-key campaign was
+walking the 7,177 standing carriers in chunks, and `process doe daily (all)` ran at 07:58Z in the
+middle of it. For every member the campaign had not yet reached, the new derivation named a key the
+corpus did not hold, so `INSERT OR IGNORE` minted a SECOND row over the same archived bytes — 281 of
+them — and the later chunk then matched the twin, which is why the last two chunks could report
+`0 unmatched, 0 re-keyed` while the cohort stood still. The ingest path now adopts a moved key
+instead of minting (issue 404), so the overlap no longer duplicates, but the jobs still race for the
+same rows and the campaign is slower for it. So:
+
+- **Either the campaign takes the queue** — pause the daily (or run it to completion first and
+  enqueue the chunks back to back, checking `/admin/jobs` between them) —
+- **or the derivation change ships AFTER the cohort is drained**, which is the ordering that never
+  had the race to begin with.
+
+Check `/admin/jobs` for a running or queued `process … daily` before enqueueing the first chunk, not
+just before the last one: the daily is scheduled, so an idle queue now is not an idle queue in forty
+minutes.
+
 ### The organization-layer jobs (issues 300, 311-317)
 
 These are their own family: censuses that measure, merge arms that write, and
