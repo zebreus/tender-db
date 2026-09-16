@@ -37,6 +37,11 @@ struct Published {
     year: String,
     notices: i64,
     partial: bool,
+    /// Issue 396 unit 1: for a PARTIAL year, the date this count was taken.
+    /// Served beside the denominator, because a frozen mid-year number presented
+    /// undated reads as a coverage percentage — and 2026 passed 117 % as the
+    /// corpus grew past a 2026-07-17 snapshot the page never dated.
+    as_of: Option<String>,
 }
 
 fn ground_truth() -> Vec<Published> {
@@ -50,6 +55,8 @@ fn ground_truth() -> Vec<Published> {
                 year: fields.next()?.to_owned(),
                 notices: fields.next()?.parse().ok()?,
                 partial: fields.next()? == "1",
+                // Optional 4th column; absent for every complete year.
+                as_of: fields.next().map(str::trim).filter(|d| !d.is_empty()).map(str::to_owned),
             })
         })
         .collect()
@@ -420,6 +427,7 @@ async fn measure_coverage_pipeline(
                     .then(|| published.map(|p| cell.notices as f64 / p.notices as f64))
                     .flatten(),
                 partial: published.is_some_and(|p| p.partial),
+                published_as_of: published.and_then(|p| p.as_of.clone()),
                 year_held,
                 year_ratio: published.map(|p| year_held as f64 / p.notices as f64),
             }

@@ -26,7 +26,12 @@
 # 2026 is a partial year (through 2026-07-17) — `partial` marks it so the
 # dashboard does not report a shortfall that is really just the calendar.
 #
-# year,notices,partial
+# year,notices,partial,as_of
+#
+# `as_of` is set only for a partial year: the date the count was taken. It is
+# SERVED on the dashboard beside the denominator (issue 396 unit 1), because a
+# frozen mid-year number presented undated reads as a coverage percentage and
+# went over 100 % as the corpus grew past it.
 1993,66521,0
 1994,94457,0
 1995,126385,0
@@ -60,4 +65,4 @@
 2023,795680,0
 2024,801444,0
 2025,871149,0
-2026,497791,1
+2026,497791,1,2026-07-17

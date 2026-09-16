@@ -340,6 +340,17 @@ pub struct Coverage {
     /// The ground-truth year is incomplete (the current year), so a ratio below
     /// 1.0 is expected and not a gap.
     pub partial: bool,
+    /// When that incomplete count was taken (issue 396 unit 1). `Some` exactly
+    /// when `partial`, for TED years the vendored CSV dates.
+    ///
+    /// The denominator is a frozen snapshot, and the corpus keeps growing past
+    /// it: 2026 read **117.38 %** against a 2026-07-17 count while dailies had
+    /// been ingested through 2026-09-11. Undated, that is indistinguishable from
+    /// 86,502 duplicate notices. Dated, it is obviously a stale floor — which is
+    /// also how `verify.rs`'s `classify()` already treats a partial year, so the
+    /// page and the verifier now agree.
+    #[serde(default)]
+    pub published_as_of: Option<String>,
     /// Notices ALL profiles of this source hold for this year (issue 229). Equal
     /// to `held` for a year one profile serves alone.
     ///

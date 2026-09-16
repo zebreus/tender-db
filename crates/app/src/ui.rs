@@ -582,7 +582,10 @@ fn CoveragePanel(rows: Vec<Coverage>) -> Element {
                                     tr { key: "{row.year}",
                                         td { "{row.year}" }
                                         td { class: "num", "{group(row.held)}" }
-                                        td { class: "num", "{published_cell(row.published)}" }
+                                        td { class: "num",
+                                            title: "{published_note(row.published_as_of.clone())}",
+                                            "{published_cell(row.published)}{published_mark(row.published_as_of.clone())}"
+                                        }
                                         // A year served by two profiles has no
                                         // per-profile ratio (issue 229): show the
                                         // YEAR's coverage, marked, so a boundary
@@ -603,7 +606,15 @@ fn CoveragePanel(rows: Vec<Coverage>) -> Element {
                         }
                     }
                 }
-                p { class: "muted", "* the year is not over; a shortfall there is the calendar, not a gap." }
+                // Issue 396 unit 1: the note used to cover only the shortfall
+                // direction, while `coverage_pct` stars BOTH — so 2026 read
+                // 117.38 % under "a shortfall there is the calendar".
+                p { class: "muted",
+                    "* the year is not over, and its published count is a snapshot (‡, hover for \
+                     its date): a shortfall is the calendar, and a figure above 100 % is the \
+                     corpus having grown past the snapshot — neither is a gap, and neither is a \
+                     duplicate."
+                }
                 p { class: "muted",
                     "† the year is served by more than one profile (an era boundary), so the figure is \
                      the whole year across all of them — there is no ground truth for one profile's \
@@ -678,6 +689,24 @@ fn coverage_pct(ratio: Option<f64>, partial: bool) -> String {
     match ratio {
         Some(r) => format!("{:.2} %{}", r * 100.0, if partial { " *" } else { "" }),
         None => "—".to_owned(),
+    }
+}
+
+/// The `‡` that marks a denominator taken mid-year (issue 396 unit 1).
+fn published_mark(as_of: Option<String>) -> &'static str {
+    if as_of.is_some() { " ‡" } else { "" }
+}
+
+/// What that mark means, on hover — the date, spelled out, because the number it
+/// qualifies is a FLOOR and not a year total.
+fn published_note(as_of: Option<String>) -> String {
+    match as_of {
+        Some(d) => format!(
+            "Counted through {d} and frozen there — the year is still publishing, so this is a \
+             floor, not a total. Coverage above 100 % means the corpus has grown past the \
+             snapshot, not that notices are duplicated."
+        ),
+        None => "The whole year's published count.".to_owned(),
     }
 }
 
@@ -1290,6 +1319,19 @@ fn quarantine_reason_explained(reason: &str) -> &'static str {
         "form-without-category" => "A form gave no category to classify it by.",
         "no-original-form" => "The notice had no original-language form to key on.",
         "translation-structure-mismatch" => "A translation's structure did not line up with the original.",
+        // Issue 396 unit 2: PREFIX arms, because ingest formats these reasons with
+        // a variable trailing detail — `format!("unreadable zip bundle: {e}")`
+        // (`ingest/src/package.rs`) — so no exact-match arm can ever hit them.
+        // The live row read "unreadable zip bundle: invalid Zip archive: Could not
+        // find EOCD" glossed as "content this profile has no mapping for", i.e. a
+        // phantom mapping gap, while the SAME ROW was classed `benign` and the
+        // resolved-categories ledger two panels down said the bundle cannot be
+        // opened at all. `quarantine_class` and `quarantine_terminal_policy`
+        // already match this family by prefix; this function was the odd one out.
+        r if r.starts_with("unreadable zip") => {
+            "A corrupt archive entry — the bundle or member cannot be opened at all, so it \
+             was never a notice to map. Held whole as evidence (issues 201/202)."
+        }
         _ => "Content this notice's profile has no mapping for — held whole (ADR-0004).",
     }
 }
@@ -1377,6 +1419,7 @@ mod tests {
             published,
             ratio: published.map(|p| held as f64 / p as f64),
             partial: false,
+            published_as_of: None,
             year_held: held,
             year_ratio: published.map(|p| held as f64 / p as f64),
         };
@@ -1411,6 +1454,7 @@ mod tests {
             // per-profile ratio exists, so none is offered.
             ratio: None,
             partial: false,
+            published_as_of: None,
             year_held: 26_955 + 313_059,
             year_ratio: Some((26_955 + 313_059) as f64 / 339_534.0),
         };
@@ -1429,9 +1473,79 @@ mod tests {
             published: Some(100),
             ratio: Some(0.3),
             partial: false,
+            published_as_of: None,
             year_held: 30,
             year_ratio: Some(0.3),
         };
         assert!(!alone.shared_year(), "a sole profile's ratio is its own and stands");
+    }
+
+    /// Issue 396 unit 1: a partial year's denominator is DATED on the page, and
+    /// the starred note covers the surplus direction as well as the shortfall.
+    ///
+    /// 2026 read `497 791 | 117.38 % *` against a count frozen on 2026-07-17
+    /// while dailies had been ingested through 2026-09-11 — undated, that is
+    /// indistinguishable from 86,502 duplicate notices, and the only footnote on
+    /// the page explained a shortfall. `verify.rs`'s `classify()` already treats
+    /// a partial year's count as a FLOOR (`Over` only `if !partial`), so this
+    /// makes the page agree with the verifier instead of contradicting it.
+    #[test]
+    fn a_partial_years_denominator_is_dated_and_its_surplus_explained() {
+        // A dated snapshot marks itself and says what the mark means.
+        assert_eq!(published_mark(Some("2026-07-17".into())), " ‡");
+        let note = published_note(Some("2026-07-17".into()));
+        assert!(note.contains("2026-07-17"), "the date itself must be on the page: {note}");
+        assert!(note.contains("floor"), "{note}");
+        assert!(
+            note.contains("not that notices are duplicated"),
+            "the surplus must be explained, since that is the reading it invites: {note}"
+        );
+
+        // A complete year is unmarked — the mark has to mean something.
+        assert_eq!(published_mark(None), "");
+        assert!(!published_note(None).contains("floor"));
+
+        // The ratio itself is unchanged: still printed, still starred for a
+        // partial year. Suppressing it was the alternative and was not taken —
+        // a reader still needs the number, they need it qualified.
+        assert_eq!(coverage_pct(Some(1.17377), true), "117.38 % *");
+        assert_eq!(coverage_pct(Some(0.9175), false), "91.75 %");
+        assert_eq!(coverage_pct(None, true), "—");
+    }
+
+    /// Issue 396 unit 2: the corrupt-archive reasons are glossed by PREFIX, so
+    /// the one benign family stops being described as unmapped content.
+    ///
+    /// Ingest formats them with a variable trailing detail
+    /// (`format!("unreadable zip bundle: {e}")`), so no exact-match arm can ever
+    /// hit them — the live row fell to the "no mapping for" fallback while being
+    /// classed `benign` in the very same row.
+    #[test]
+    fn a_corrupt_archive_is_not_glossed_as_unmapped_content() {
+        let fallback = quarantine_reason_explained("something-nobody-has-seen");
+        for reason in [
+            "unreadable zip bundle: invalid Zip archive: Could not find EOCD",
+            "unreadable zip entry #3: unexpected EOF",
+            "unreadable zip entry: bad CRC",
+        ] {
+            let gloss = quarantine_reason_explained(reason);
+            assert_ne!(gloss, fallback, "{reason} still falls to the unmapped-content gloss");
+            assert!(gloss.contains("corrupt archive"), "{reason} → {gloss}");
+            // Served copy, so a lost `\` continuation would show as a gap in the
+            // sentence. It did, in the first cut of this arm.
+            assert!(!gloss.contains("  "), "a wrapped literal leaked its indentation: {gloss}");
+            // And the gloss agrees with the class the same row shows.
+            assert_eq!(quarantine_class_label(reason), "benign", "{reason}");
+        }
+        // The rule is the PREFIX, not one more exact spelling: a trailing detail
+        // nobody has written yet is glossed the same way.
+        assert!(
+            quarantine_reason_explained("unreadable zip bundle: a failure mode from 2031")
+                .contains("corrupt archive")
+        );
+        // The exact-match arms are untouched, and the fallback still exists for a
+        // reason nobody has taught the page.
+        assert!(quarantine_reason_explained("unknown-root").contains("not a notice format"));
+        assert!(fallback.contains("no mapping for"));
     }
 }

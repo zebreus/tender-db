@@ -222,3 +222,95 @@ matches on an exact string that ingest can never emit.
 - `/metrics` still reports `tender_db_quarantine_reason_members{reason="unreadable zip bundle:
   invalid Zip archive: Could not find EOCD"} 8` — this is copy only; the count and 303's `Fixed(8)`
   terminal policy must not move.
+
+---
+
+## Resolution — 2026-09-16, both units built (gate green, `GATE-EXIT=0`, 133 tests)
+
+Status: RESOLVED (pending the live re-read, which needs the deploy) — worked locally because a fold
+job was running; neither unit touches data, so nothing here waited on the box.
+
+### Unit 1 — decision: option (b), plus the durability clause
+
+The fork offered (a) refresh/fetch the denominator, (b) print "published through 2026-07-17" beside a
+partial year, (c) suppress the ratio once `year_held > published`. **Taken: (b), with the as-of date
+carried in the vendored data rather than written into the page** — which is also the answer to the
+separate Done-when bullet "the fix is durable across year-ends, not a one-off re-vendor".
+
+Why not (a): re-vendoring 497 791 → ~644 000 fixes today's reading and re-breaks in eight weeks; the
+number is stale by construction, not by neglect. Fetching live from the Search API's
+`totalNoticeCount` would be durable, but it puts a network dependency in a dashboard render and gives
+the page a denominator that no longer matches `docs/research/ted-access-channels.md` §6 — the
+transcription chain issue 06 deliberately set up. Neither is worth it for a presentation defect.
+
+Why not (c): a reader still needs the number; they need it qualified. Suppressing it would make a real
+2026 gap *more* invisible, not less — the failure mode the "Why it matters" paragraph names.
+
+What (b) actually is, end to end:
+
+- `crates/app/data/ted-notice-counts.csv` grows a fourth column `as_of`, and the 2026 row becomes
+  `2026,497791,1,2026-07-17`. The header documents `year,notices,partial,as_of`. The date was always
+  in the header prose; now it is data, so a future re-vendor carries its own date or it does not
+  parse. **This is the durability clause: no year can be vendored undated again.**
+- It rides `Published.as_of` → `Coverage.published_as_of` → the page.
+- The Published cell gains `‡` (`published_mark`) and a hover (`published_note`) naming the date and
+  saying the count is a floor, not a ceiling — which is the wording `verify.rs`'s `classify()` already
+  uses internally (`Over` only `if !partial`). The Done-when's "dashboard and `verify.rs` agree in
+  writing" is that sentence.
+- The `*` footnote is rewritten to cover both directions, since `coverage_pct` stars both:
+  "* the year is not over, and its published count is a snapshot (‡, hover for its date): a shortfall
+  is the calendar, and a figure above 100 % is the corpus having grown past the snapshot — neither is
+  a gap, and neither is a duplicate."
+
+Test: `ui::tests::a_partial_years_denominator_is_dated_and_its_surplus_explained` — pins the mark, the
+date, "floor" and "not that notices are duplicated" in the note, that a complete year is UNmarked, and
+that the ratio itself is unchanged (`coverage_pct(Some(1.17377), true) == "117.38 % *"`), so the
+decision not to suppress is pinned too.
+
+### Unit 2 — the prefix arm
+
+`quarantine_reason_explained` gains
+
+    r if r.starts_with("unreadable zip") => "A corrupt archive entry — the bundle or member cannot be
+    opened at all, so it was never a notice to map. Held whole as evidence (issues 201/202)."
+
+placed so the 17 exact arms still win where they match. One rule covers all three emitted spellings
+(`… bundle: {e}`, `… entry #{i}: {e}`, `… entry: {e}`), mirroring `quarantine_class`'s prefix.
+
+Test: `ui::tests::a_corrupt_archive_is_not_glossed_as_unmapped_content` — asserts each of the three
+spellings, plus an invented trailing detail nobody has written yet, is glossed with "corrupt archive"
+and NOT with the `_` fallback, and that `quarantine_class_label` says `benign` for the same string, so
+the gloss and the class in that row cannot drift apart again. It also asserts the fallback still
+exists and an exact arm (`unknown-root`) is untouched.
+
+`/metrics` is unaffected — no counter, label or terminal policy is touched, so 303's `Fixed(8)` and
+the `…{reason="unreadable zip bundle: invalid Zip archive: Could not find EOCD"} 8` series stand.
+
+### The adjacent era-summary line — filed, not fixed: **issue 400**
+
+The last Done-when bullet required this to be decided rather than left open. Decided: **filed as its
+own issue**, because measuring it turned it into something much larger than the one line recorded
+above, and because the fix is a genuine design choice (four candidate renderings) that would have
+ridden this copy fix unexamined.
+
+What the measurement found (prod, 2026-09-16, rev `a5db49e`): the defect is not confined to
+`eforms-sdk-1.14`. **Ten of the fourteen `ted` eras with a denominator are wholly composed of shared
+years**, so their summary ratio has no valid reading at all — and the cleanest case is
+`ted · eforms:eforms-sdk-1.5`, which summarises as **0.00 %** above two per-year rows that both read
+**100.00 %†**. `ted · internal-ojs` summarises as **7.94 %**, i.e. 26 955 / 339 534 = 0.0794 — the
+exact figure issue 229's own test doc-comment names as the bug it fixed, still on the page one DOM
+level above where 229 fixed it. See issue 400 for the inventory, the mechanism in `coverage_by_era`,
+and the four rendering options.
+
+### Live re-read still owed (the deploy is queued behind 391/399/390)
+
+Baseline captured 2026-09-16 pre-fix so the re-read has something to compare against — note the drift
+the issue predicted has continued, 2026 is now **118.74 %**, not the 117.38 % filed on 2026-09-14:
+
+| row | pre-fix (rev `a5db49e`) | expected post-fix |
+| --- | --- | --- |
+| 2026 ted, any eforms profile | `497 791 \| 118.74 % *†` | `497 791‡ \| 118.74 % *†`, hover "published through 2026-07-17 …" |
+| 2025 ted (`sdk-1.13`) | `871 149 \| 100.00 %†` | unchanged, unmarked |
+| 2008 ted (`text`) | `339 534 \| 100.14 %†` | unchanged, unmarked (229's verification) |
+| quarantine row 1 | class `benign`, "Content this notice's profile has no mapping for …" | class `benign`, "A corrupt archive entry …" |
+| `/metrics` reason members | `8` | `8` |
