@@ -335,6 +335,7 @@ fn dispatch_eforms(member_path: &str, bytes: &[u8], doc: &roxmltree::Document<'_
     // docs/research/eforms-de-profile.md — which is also the member file
     // name's stem (`<uuid|numeric>-<version>.xml`).
     let publication_id = first_text(doc, "NoticePublicationID")
+        .filter(|id| !is_placeholder_ojs_number(id))
         .or_else(|| publication_id_from_name(member_path))
         .or_else(|| notice_id_and_version(doc));
     match publication_id {
@@ -348,6 +349,43 @@ fn dispatch_eforms(member_path: &str, bytes: &[u8], doc: &roxmltree::Document<'_
         }),
         None => quarantine(member_path, bytes, Some(profile), "missing-publication-id", None),
     }
+}
+
+/// An OJS publication number whose number half is all zeros — `00000000-1900` and
+/// its kin — is not a publication number (issue 394 unit 1).
+///
+/// 7,177 DÖE notices across `eforms-de-1.1` … `2.1` carry
+/// `<efbc:NoticePublicationID schemeName="ojs-notice-id">00000000-1900</…>` beside
+/// a perfectly good `DE1-ID` + `DE1-VersionID`, and the election above took the
+/// placeholder because it is first. Every one of them then answered
+/// `/v1/notices?publication_id=00000000-1900` — and the real key
+/// (`a4406a20-…-01`) answered nothing — so the field 217 shipped *because it is
+/// the key consumers hold* was wrong in both directions for the cohort.
+///
+/// A SHAPE guard on the value rather than a `source = "doe"` reordering,
+/// deliberately. The reordering would fix these rows and leave the next publisher
+/// that emits the placeholder to be found the same way, one census at a time; the
+/// shape is what is actually wrong, and nothing legitimate is refused by it.
+/// Blast radius, measured corpus-wide on 2026-09-16 rather than assumed: a range
+/// scan over `publication_id >= '00000000-' AND < '00000000.'` grouped by source
+/// returns exactly ONE value across all 14.4M notices — `00000000-1900`, 7,177
+/// rows, every one `source=doe`. Nothing outside the cohort is touched. (7,158 on
+/// 2026-09-14 when 394 was filed; the daily tick adds ~9 per 1,395 DÖE notices,
+/// so the cohort was still growing.)
+///
+/// The predicate is written for any all-zero number half, not just the 8-digit
+/// spelling that was measured, so a shorter one cannot slip past later. A real OJS
+/// number counts publications within a year and never reaches zero.
+///
+/// Narrow on purpose: only the NUMBER half is required to be all-zero, and only
+/// when it is all digits. `00001505-2024` keeps its leading zeros and is admitted,
+/// which is the ordinary shape of every real TED number.
+fn is_placeholder_ojs_number(id: &str) -> bool {
+    let Some((number, year)) = id.split_once('-') else { return false };
+    !number.is_empty()
+        && number.bytes().all(|b| b == b'0')
+        && !year.is_empty()
+        && year.bytes().all(|b| b.is_ascii_digit())
 }
 
 /// UK Find a Tender (2021–). One member is a single-release OCDS package built
@@ -655,6 +693,35 @@ fn one(record: Record) -> Disposition {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Issue 394 unit 1: the guard is a SHAPE, and its narrowness is the whole
+    /// reason it is safe to apply to every source rather than only to DÖE.
+    #[test]
+    fn only_an_all_zero_ojs_number_is_a_placeholder() {
+        // The live value, and the shorter spellings the measurement did not cover
+        // but the predicate must still refuse.
+        assert!(is_placeholder_ojs_number("00000000-1900"));
+        assert!(is_placeholder_ojs_number("0-2024"));
+        assert!(is_placeholder_ojs_number("0000-2024"));
+
+        // Real TED numbers are zero-PADDED, which is the shape a lazier guard
+        // (`starts_with("0000")`) would have eaten. 7.3M notices look like this.
+        assert!(!is_placeholder_ojs_number("00001505-2024"));
+        assert!(!is_placeholder_ojs_number("00000001-2024"));
+        assert!(!is_placeholder_ojs_number("000373130-2026"));
+
+        // A DÖE stem is not an OJS number at all and must not be mistaken for one
+        // in either direction — it is what the guard falls through TO.
+        assert!(!is_placeholder_ojs_number("7d69b0f7-2605-448f-9495-676458dcddc2-01"));
+        assert!(!is_placeholder_ojs_number("25599482-1"));
+
+        // Shapes with no year half, or a non-numeric one: not this rule's business.
+        assert!(!is_placeholder_ojs_number("00000000"));
+        assert!(!is_placeholder_ojs_number("00000000-"));
+        assert!(!is_placeholder_ojs_number("00000000-abcd"));
+        assert!(!is_placeholder_ojs_number("-1900"));
+        assert!(!is_placeholder_ojs_number(""));
+    }
 
     #[test]
     fn version_tokens_come_from_every_marker_shape() {

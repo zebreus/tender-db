@@ -20,6 +20,12 @@ const PAIR_TED: &str = "doe-ted-pair/ted-cn-00373130-2026.xml";
 // exists, so it is parsed against the merged empirical inventory (fields-de-1.x.json).
 const DE1_CN: &str = "doe/eforms-de-1.1-cn-7d69b0f7.xml";
 const DE1_CAN: &str = "doe/eforms-de-1.2-can-799811c4.xml";
+// Issue 394 unit 1: the same DE-1.1 member with the placeholder OJS number the
+// live cohort carries — `<efbc:NoticePublicationID schemeName="ojs-notice-id">
+// 00000000-1900</…>` inside the eForms extension, beside a perfectly good
+// notice id and version. 7,177 real notices look like this (measured corpus-wide
+// 2026-09-16); before the guard, `grep -rn '00000000-1900' crates/` found nothing.
+const DE1_PLACEHOLDER_PUBID: &str = "doe/eforms-de-1.1-cn-placeholder-pubid-7d69b0f7.xml";
 
 fn dispatch_fixture(relative: &str) -> (ingest::profile::NoticeRecord, Vec<u8>) {
     let path = format!("tests/fixtures/{relative}");
@@ -110,6 +116,37 @@ fn doe_notice_identity_is_id_plus_version() {
     let (n, _) = dispatch_fixture(DE_CAN);
     assert_eq!(n.publication_id, "15063f7d-0f02-42f6-960a-96e35c9cc374-01");
     assert_eq!(n.profile, "eforms:eforms-de-2.1");
+}
+
+/// Issue 394 unit 1: a DÖE member that DOES carry a `NoticePublicationID` — the
+/// all-zero placeholder — still keys on its own notice id plus version.
+///
+/// The election takes `NoticePublicationID` first, and the comment above it
+/// assumed DÖE exports carry none. 7,177 of them do, and it is
+/// `00000000-1900` every time: the identity the code's own comment names sits in
+/// the SAME file (`<cbc:ID schemeName="notice-id">` + `<cbc:VersionID>`) and lost
+/// the election. Every one of those notices then answered
+/// `?publication_id=00000000-1900` while its real key answered nothing — the
+/// field issue 217 shipped *because it is the key a consumer holds*, wrong in both
+/// directions.
+///
+/// A shape guard on the value, not a `source = "doe"` reordering: the placeholder
+/// is what is wrong, whoever emits it.
+#[test]
+fn a_placeholder_publication_number_loses_to_the_notices_own_id() {
+    let (n, _) = dispatch_fixture(DE1_PLACEHOLDER_PUBID);
+    assert_eq!(
+        n.publication_id, "7d69b0f7-2605-448f-9495-676458dcddc2-01",
+        "an all-zero OJS number is not a publication number; the notice id and \
+         version are, and they are in the same file"
+    );
+    assert_eq!(n.profile, "eforms:eforms-de-1.1");
+
+    // The control: the same member WITHOUT the placeholder keys identically, so
+    // the guard changed nothing about how a DÖE notice is identified — it only
+    // stopped one value from winning.
+    let (plain, _) = dispatch_fixture(DE1_CN);
+    assert_eq!(plain.publication_id, n.publication_id);
 }
 
 // ------------------------------------------------------------- sdk-0.1
