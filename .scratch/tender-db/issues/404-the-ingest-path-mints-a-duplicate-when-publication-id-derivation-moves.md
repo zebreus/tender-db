@@ -1,6 +1,6 @@
 # 404 — the ordinary INGEST path has no identity-shift fallback, so a derivation change makes `process` MINT a duplicate notice instead of matching the one it already holds
 
-Status: ready-for-agent — found 2026-09-16 09:40Z while verifying issue 394's re-key acceptance. **Self-inflicted and confirmed to the row**: my own 394 unit 1 guard, deployed 07:00Z, caused it, and the evidence is two notices holding the same bytes under two keys. At least **281** duplicate rows exist now and the count grows with every DÖE daily until this is fixed.
+Status: ready-for-agent — **THE SIZE IS MEASURED CORPUS-WIDE 2026-09-17** (job 1466, 3 s over 14.5M rows): the corpus holds **exactly 281** members under two identities, all `doe`, all this cohort — 281 was not a floor after all. The mint is fixed (and its own fix was broken and re-fixed, issue 411). Only the repair of the 281 standing pairs remains, and every input it needs is now written down. Was: found 2026-09-16 09:40Z while verifying issue 394's re-key acceptance. **Self-inflicted and confirmed to the row**: my own 394 unit 1 guard, deployed 07:00Z, caused it, and the evidence is two notices holding the same bytes under two keys. At least **281** duplicate rows exist now and the count grows with every DÖE daily until this is fixed.
 Kind: defect (ingest — the mint/match decision in the `process` path, `crates/ingest/src/process.rs` + `store::Db`'s notice insert; NOT the re-parse path, which was given the fallback by issue 290 and behaved correctly here)
 Relates to: 290 (RESOLVED 2026-09-16 — it gave `reparse_notice` a `(source, content_hash)` fallback and made a derivation shift loud; this is the SAME hazard on the sibling path, which nobody looked at because 290 was scoped to the re-parse), 394 (the derivation change that triggered it, and whose acceptance this blocks — the placeholder cohort cannot reach 0 by re-parsing), 278 (the ghost-tender cleanup — the precedent for draining rows that projected before being found redundant), 21 (durable job rows and recovery, which is why the two jobs could overlap at all), ADR-0004 (the archive is the record; both rows point at the same archived member, so nothing is lost — what is wrong is that the corpus holds it twice)
 Blocked by: nothing
@@ -545,3 +545,49 @@ query itself is **about 0.3 s per 2M rows** — roughly **2 s for the whole 14.4
 settles a question the plan text cannot answer: turso prints the same `SEARCH … USING INDEX` string
 whether or not a seek is covering, but 2M rowid lookups could not complete in 0.3 s, so the walk is
 served from the index and never touches a page of `notices`.
+
+## Comment — 2026-09-17: the size is measured CORPUS-WIDE, and 281 was not a floor — it is the number
+
+`member-twin-census` deployed at rev `df9fd64` and run as job 1466. **Three seconds**, against the
+~2 s predicted from the `/v1/sql` timings:
+
+    14,508,563 rows walked across 3 sources in 147 batches of 100,000
+    stalled_batches 0
+
+| | duplicate member names | twin sets | twin rows |
+| --- | --- | --- | --- |
+| `doe` | 281 | **281** | **562** |
+| `ted` | 107 | **0** | 0 |
+| `fts` | 0 | 0 | 0 |
+| **total** | 388 | **281** | **562** |
+
+**This unit's first bullet is closed.** The issue said *"281 is a floor, not the number"* — it counted
+orphaned PLACEHOLDER rows of one DÖE incident and could say nothing about the rest of the corpus.
+Walked end to end, the corpus holds **exactly 281** members under more than one `publication_id`,
+every one of them `doe`, every one of them the 2026-09-16 cohort, pairing 1:1 into 562 rows. Nothing
+else in 14.5M notices has this shape.
+
+**And the two-stage design earned itself on the first run.** TED holds 107 member names twice — a
+one-stage census keyed on the name alone would have reported 388 "duplicates" and sent a destructive
+sweep at 107 rows that are not duplicates at all: the same member name over DIFFERENT bytes is two
+records, which is exactly what the second stage tests and what the fixture arm
+`the_same_name_over_other_bytes_is_not` pins.
+
+**The report carries the whole cohort.** 281 sets is under the 400 listing cap, so
+`sample_truncated` is `false` and every pair is named in the stored report, with both notice ids and
+both keys, lowest id first. The repair's dry arm has something exact to be checked against rather
+than a count to be trusted.
+
+### What is left on this issue
+
+Only the repair itself. Everything it needs is now measured and written down:
+
+- the cohort is **exactly** these 281 pairs, corpus-wide, and the report names them;
+- the split is **278 keyed / 3 island**, and that boundary is the group key, not a property of the
+  data;
+- the row to KEEP is the older one, re-keyed in place — which is also what the ingest path now does
+  (issue 411), so the repair and the daily agree on which row survives;
+- the churn is **249 middle versions / 29 heads / 3 whole Tenders**, all of it handled by
+  re-derivation plus `retire_tenders_chunked` for the three;
+- and the head columns of the 29 do not move, because the twins hold the SAME BYTES — only
+  `current_seq` does.
