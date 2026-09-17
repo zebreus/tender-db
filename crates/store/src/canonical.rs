@@ -4188,6 +4188,19 @@ pub struct TwinRepair {
     pub drop: Vec<TwinDrop>,
 }
 
+/// What [`Db::apply_member_twin_repair`] actually wrote.
+#[derive(Debug, Default, Clone)]
+pub struct TwinRepairOutcome {
+    pub sets: usize,
+    pub notices_deleted: usize,
+    pub survivors_rekeyed: usize,
+    pub survivors_requeued: usize,
+    pub tenders_retired: usize,
+    /// Rows removed per table, so the summary can be read against the plan
+    /// rather than trusted.
+    pub rows_deleted: std::collections::BTreeMap<String, u64>,
+}
+
 /// What [`Db::plan_member_twin_repair`] found. Read-only.
 #[derive(Debug, Default, Clone)]
 pub struct TwinRepairPlan {
@@ -20632,6 +20645,151 @@ impl Db {
         Ok(out)
     }
 
+    /// Execute a plan [`Db::plan_member_twin_repair`] produced. **DESTRUCTIVE.**
+    ///
+    /// The caller is answerable for the plan matching a stored, reviewed one;
+    /// this writes what it is given.
+    ///
+    /// ## What it does NOT touch, and why that is the load-bearing decision
+    ///
+    /// It never deletes a `tender_versions` row, and never touches `lot_results`,
+    /// `bids`, `contracts` or the `tender_version_*` satellites. The fold owns
+    /// those, and doing them here would be worse than redundant — it would be
+    /// wrong. `apply_tender_tx` decides what to rewrite by comparing the stored
+    /// version chain with the newly folded one; removing a `tender_versions` row
+    /// by hand makes that comparison see an UNCHANGED chain, take the early
+    /// return, and **leak every version-keyed satellite of the version removed**.
+    ///
+    /// Left alone, the fold does the whole canonical half correctly: the chain
+    /// shrinks because a member notice is gone, `delete_version` removes each
+    /// version past the common prefix WITH its satellites,
+    /// `sweep_orphaned_entities` clears the `lot_results` / `bids` / `contracts` /
+    /// `lots` rows no surviving version points at (issues 103 and 279), and
+    /// `head_update` rewrites the head columns under `assert_heads_match`.
+    ///
+    /// That is also how the three unindexed tables never get scanned: everything
+    /// this function deletes is keyed by `notice_id`, and every such table leads
+    /// its primary key or its index with that column.
+    ///
+    /// ## Foreign keys off, deliberately
+    ///
+    /// Same bracket the R2/E0/R3 merge loop uses (issue 352) and for the same
+    /// reason. Deleting a notice's `organization_mentions` while
+    /// `tender_version_parties` still references them is a real dangling window —
+    /// it closes when the fold rewrites those versions, or, for the emptied
+    /// Tenders, when `retire_chunk_tx` deletes their party rows in this same
+    /// transaction.
+    ///
+    /// ## The emptied Tenders are retired here, not by the fold
+    ///
+    /// An incremental fold builds its touched set from notices. The three Tenders
+    /// whose only member is being deleted are named by nothing afterwards, so
+    /// nothing would ever reach them — they would stand as issue 278's ghost.
+    /// They are in the plan, so they are retired explicitly, with their `removed`
+    /// events.
+    pub async fn apply_member_twin_repair(
+        &self,
+        plan: &TwinRepairPlan,
+        now: i64,
+    ) -> turso::Result<TwinRepairOutcome> {
+        let drops: Vec<i64> =
+            plan.plan.iter().flat_map(|r| r.drop.iter().map(|d| d.notice)).collect();
+        let mut out = TwinRepairOutcome { sets: plan.plan.len(), ..Default::default() };
+        if drops.is_empty() {
+            return Ok(out);
+        }
+        self.set_foreign_keys(false).await?;
+        // BOXED. This nests `twin_repair_writes` → `twin_repair_tx` →
+        // `retire_chunk_tx`, and an async fn's future CONTAINS the futures it
+        // awaits — so the composed frame reaches the supervisor's match arm and
+        // overflowed the stack of a supervisor test with no relation to it.
+        // Boxing here bounds what any caller has to hold.
+        let result = Box::pin(self.twin_repair_writes(plan, &drops, now, &mut out)).await;
+        let restored = self.set_foreign_keys(true).await;
+        result?;
+        restored?;
+        Ok(out)
+    }
+
+    async fn twin_repair_writes(
+        &self,
+        plan: &TwinRepairPlan,
+        drops: &[i64],
+        now: i64,
+        out: &mut TwinRepairOutcome,
+    ) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        match Box::pin(self.twin_repair_tx(&conn, plan, drops, now, out)).await {
+            Ok(()) => conn.execute("COMMIT", ()).await?,
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                return Err(e);
+            }
+        };
+        let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
+        Ok(())
+    }
+
+    async fn twin_repair_tx(
+        &self,
+        conn: &Connection,
+        plan: &TwinRepairPlan,
+        drops: &[i64],
+        now: i64,
+        out: &mut TwinRepairOutcome,
+    ) -> turso::Result<()> {
+        // Mentions before the sections they reference — the ordering `clear_parsed`
+        // needs. Redundant with the keys off, kept because the next reader should
+        // not have to work out whether it was.
+        let mut tables: Vec<&str> = vec!["organization_mentions"];
+        tables.extend(Self::PARSED_TABLES);
+        tables.push("quarantine");
+        for table in tables {
+            for part in drops.chunks(IN_CHUNK) {
+                let sql =
+                    format!("DELETE FROM {table} WHERE notice_id IN ({})", placeholders(part.len()));
+                let params: Vec<Value> = part.iter().map(|&i| Value::Integer(i)).collect();
+                let n = conn.execute(&sql, params).await?;
+                *out.rows_deleted.entry(table.to_owned()).or_default() += n;
+            }
+        }
+        for part in drops.chunks(IN_CHUNK) {
+            let sql = format!("DELETE FROM notices WHERE id IN ({})", placeholders(part.len()));
+            let params: Vec<Value> = part.iter().map(|&i| Value::Integer(i)).collect();
+            let n = conn.execute(&sql, params).await?;
+            *out.rows_deleted.entry("notices".to_owned()).or_default() += n;
+        }
+        out.notices_deleted = drops.len();
+        // Every survivor is re-queued, whether or not its identity moved: its
+        // Tender's chain just lost a member and has to be re-derived either way.
+        // `projected = 0` is what puts it in the next incremental run's change set
+        // (issue 58), and the same clause `reparse_notice` and the issue-411
+        // adoption use.
+        for repair in &plan.plan {
+            if repair.keep_key != repair.elect {
+                conn.execute(
+                    "UPDATE notices SET publication_id = ?, projected = 0 WHERE id = ?",
+                    (t(&repair.elect), Value::Integer(repair.keep)),
+                )
+                .await?;
+                out.survivors_rekeyed += 1;
+            } else {
+                conn.execute(
+                    "UPDATE notices SET projected = 0 WHERE id = ?",
+                    (Value::Integer(repair.keep),),
+                )
+                .await?;
+            }
+            out.survivors_requeued += 1;
+        }
+        if !plan.tenders_emptied.is_empty() {
+            Box::pin(self.retire_chunk_tx(conn, &plan.tenders_emptied, now)).await?;
+            out.tenders_retired = plan.tenders_emptied.len();
+        }
+        Ok(())
+    }
+
     /// The Tender one notice folded into, if any — an indexed seek.
     async fn tender_of(reader: &crate::Reader, notice: i64) -> turso::Result<Option<i64>> {
         let mut rows = reader
@@ -22725,6 +22883,118 @@ mod tests {
             "Tender 201 exists only because the re-key minted a new notice id; \
              removing that notice leaves it with nothing"
         );
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 404's wet arm. The assertion that matters most is a NEGATIVE one:
+    /// `tender_versions` is untouched. Deleting a version row here would make
+    /// `apply_tender_tx`'s chain-compare see an unchanged chain, take the early
+    /// return, and leak every version-keyed satellite of the version removed —
+    /// so the repair deletes notices and lets the fold shrink the chains.
+    #[tokio::test]
+    async fn the_twin_repair_deletes_notices_rekeys_survivors_and_leaves_the_versions_to_the_fold() {
+        let (db, path) = scratch_db("twin-repair-wet").await;
+        async fn seed(db: &Db, sql: &str) {
+            let conn = db.conn().await;
+            conn.execute(sql, ()).await.expect("seed");
+        }
+        async fn count(db: &Db, sql: &str) -> i64 {
+            match db.scalar(sql).await.expect("count") {
+                Some(turso::Value::Integer(i)) => i,
+                _ => -1,
+            }
+        }
+        seed(&db, "INSERT INTO fetches(id, source, kind, period, url, sha256, bytes, fetched_at, path)
+                   VALUES(1,'doe','daily','2026-1','u','h',1,0,'pkg')").await;
+        for (id, key, member) in [
+            (10, "00000000-1900", "keyed.xml"),
+            (20, "real-keyed-01", "keyed.xml"),
+            (11, "00000000-1900", "island.xml"),
+            (21, "real-island-01", "island.xml"),
+        ] {
+            seed(&db, &format!(
+                "INSERT INTO notices(id, source, publication_id, content_hash, profile, fetch_id,
+                     member_path, ingested_at, parse_state, projected)
+                 VALUES({id}, 'doe', '{key}', 'hash-{member}', 'eforms', 1, '{member}', 0, 'parsed', 1)"
+            )).await;
+            // A parsed layer for each, so the delete has something to remove.
+            seed(&db, &format!(
+                "INSERT INTO notice_sections(notice_id, section_id, kind) VALUES({id}, 'PROCEDURE', 'Notice')"
+            )).await;
+        }
+        seed(&db, "INSERT INTO tenders(id, source, procedure_key, kind, created_at, current_seq)
+                   VALUES(100, 'doe', 'proc-1', 'procedure', 0, 2)").await;
+        for (seq, notice) in [(1, 10), (2, 20)] {
+            seed(&db, &format!(
+                "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, publication_id)
+                 VALUES(100, {seq}, {notice}, 0, 'x')"
+            )).await;
+        }
+        seed(&db, "INSERT INTO tenders(id, source, island_notice_id, kind, created_at, current_seq)
+                   VALUES(200, 'doe', 11, 'procedure', 0, 1)").await;
+        seed(&db, "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, publication_id)
+                   VALUES(200, 1, 11, 0, 'x')").await;
+        seed(&db, "INSERT INTO tenders(id, source, island_notice_id, kind, created_at, current_seq)
+                   VALUES(201, 'doe', 21, 'procedure', 0, 1)").await;
+        seed(&db, "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, publication_id)
+                   VALUES(201, 1, 21, 0, 'x')").await;
+
+        let quiet = |_: u64, _: &str| {};
+        let never = || false;
+        let plan = db.plan_member_twin_repair(1000, 100, &never, &quiet).await.expect("plan");
+        assert_eq!(plan.sets, 2);
+        let versions_before = count(&db, "SELECT COUNT(*) FROM tender_versions").await;
+        assert_eq!(versions_before, 4);
+
+        let out = db.apply_member_twin_repair(&plan, 1_000).await.expect("apply");
+
+        assert_eq!(out.notices_deleted, 2);
+        assert_eq!(out.survivors_rekeyed, 2);
+        assert_eq!(out.survivors_requeued, 2);
+        assert_eq!(out.tenders_retired, 1, "only Tender 201 was left with nothing");
+        assert_eq!(count(&db, "SELECT COUNT(*) FROM notices WHERE id IN (20, 21)").await, 0);
+        assert_eq!(
+            count(&db, "SELECT COUNT(*) FROM notice_sections WHERE notice_id IN (20, 21)").await,
+            0,
+            "the parsed layer goes with the row"
+        );
+        assert_eq!(
+            count(&db, "SELECT COUNT(*) FROM notices WHERE id IN (10, 11)").await,
+            2,
+            "the survivors stand"
+        );
+        assert_eq!(
+            count(&db, "SELECT COUNT(*) FROM notices WHERE publication_id = '00000000-1900'").await,
+            0,
+            "and they carry the identity the parser derives now — this is 394's acceptance"
+        );
+        assert_eq!(
+            count(&db, "SELECT COUNT(*) FROM notices WHERE projected = 0").await,
+            2,
+            "both survivors are re-queued, so the next fold re-derives their Tenders"
+        );
+        // The load-bearing negative.
+        assert_eq!(
+            count(&db, "SELECT COUNT(*) FROM tender_versions WHERE tender_id = 100").await,
+            2,
+            "the repair must NOT delete the version — the fold shrinks the chain, and \
+             only the fold takes the satellites with it"
+        );
+        // The emptied Tender is gone, with its version and a `removed` event.
+        assert_eq!(count(&db, "SELECT COUNT(*) FROM tenders WHERE id = 201").await, 0);
+        assert_eq!(
+            count(&db, "SELECT COUNT(*) FROM tender_versions WHERE tender_id = 201").await,
+            0
+        );
+        assert_eq!(
+            count(&db, "SELECT COUNT(*) FROM changes WHERE entity_kind = 'tender' \
+                        AND entity_id = 201 AND op = 'removed'").await,
+            1,
+            "retirement is an event, not a silent disappearance"
+        );
+        // The long-lived island Tender, whose notice survived, is untouched.
+        assert_eq!(count(&db, "SELECT COUNT(*) FROM tenders WHERE id = 200").await, 1);
 
         let _ = std::fs::remove_file(&path);
     }

@@ -1989,7 +1989,7 @@ impl Supervisor {
             ]),
             "repair-member-twins" => {
                 let dry_run = req.dry_run.unwrap_or(true);
-                Ok(vec![
+                let mut ids = vec![
                     self.push(
                         "repair-member-twins",
                         if dry_run { "repair-member-twins dry-run" } else { "repair-member-twins" }
@@ -1997,7 +1997,24 @@ impl Supervisor {
                         Spec::RepairMemberTwins { dry_run },
                     )
                     .await,
-                ])
+                ];
+                if !dry_run {
+                    // The wet arm leaves the canonical half undone ON PURPOSE —
+                    // the fold is what shrinks each chain and takes the versions'
+                    // satellites with them. Queuing the projection here rather
+                    // than trusting an operator to remember is the difference
+                    // between a repair and a half-repair: until it runs, 281
+                    // Tenders hold a version whose causing notice is gone.
+                    ids.push(
+                        self.push(
+                            "project",
+                            "rebuild=false (issue 404 repair)".into(),
+                            Spec::Project { rebuild: false, clear_changes: false },
+                        )
+                        .await,
+                    );
+                }
+                Ok(ids)
             }
             "ghost-census" | "sweep-regrouped-ghosts" => Ok(vec![
                 self.push("ghost-census", "ghost-census".into(), Spec::GhostCensus).await,
@@ -3154,6 +3171,122 @@ impl Supervisor {
             .filter(|(_, o)| matches!(o, fetch::Outcome::Fetched | fetch::Outcome::NewVersion))
             .count();
         Ok(format!("probed {} day(s), {fetched} new", results.len()))
+    }
+
+    /// Issue 404's repair, as its own async fn rather than inline in
+    /// `run_spec`'s match.
+    ///
+    /// Not a style choice. `run_spec` is one giant async match, and
+    /// `Box::pin(async move { … })` moves an arm's frame to the heap only
+    /// AFTER constructing it on the stack — so a boxed arm still has to be
+    /// SMALL. Inline, this body overflowed the stack of
+    /// `an_execute_without_an_expected_count_is_refused`, a test with no
+    /// relation to it, which is the same messenger CLAUDE.md records from
+    /// 2026-09-01. As a separate fn the frame belongs to this future, and the
+    /// arm is one boxed call.
+    async fn run_repair_member_twins(
+        &self,
+        job: &Job,
+        dry_run: bool,
+    ) -> Result<String, String> {
+            // BOXED, as every census-shaped arm here is: `run_spec` is one
+            // giant async match and an arm's locals live in its future.
+            // The wet arm executes a plan a DRY run stored and re-derived
+            // identically — `RepairNoticeInstants`' contract. A cohort that
+            // moved between the two is a plan nobody reviewed.
+            let expected: Option<Vec<String>> = if dry_run {
+                None
+            } else {
+                let (body, _) = self
+                    .db
+                    .latest_report("member-twin-repair")
+                    .await
+                    .map_err(|e| e.to_string())?
+                    .ok_or_else(|| "no stored member-twin-repair plan — run the dry pass first")?;
+                let v: serde_json::Value =
+                    serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                if v["dry_run"] != serde_json::Value::Bool(true) {
+                    return Err("the stored member-twin-repair report is from a WET run, \
+                                not a reviewed plan — run the dry pass again"
+                        .to_owned());
+                }
+                if v["plan_truncated"] == serde_json::Value::Bool(true) {
+                    return Err("the stored member-twin-repair plan is TRUNCATED — it is a \
+                                prefix of the cohort, not the cohort"
+                        .to_owned());
+                }
+                Some(twin_plan_signature_json(&v))
+            };
+            let job_id = job.id;
+            let stop = || self.cancelled(job_id);
+            self.set_phase(
+                "planning",
+                None,
+                None,
+                "issue 404: planning the removal of members held under two identities"
+                    .to_owned(),
+            );
+            let progress = |done: u64, detail: &str| {
+                self.set_phase("planning", Some(done), None, detail.to_owned());
+            };
+            const TWIN_BATCH: usize = 100_000;
+            // Every set the repair would touch has to be IN the plan — a
+            // truncated plan is not a cohort, and the report says so rather
+            // than quietly describing a prefix of one.
+            const PLAN_CAP: usize = 5_000;
+            // BOXED: this nests `member_twin_census`, which nests
+            // `record_twin_candidate`, and an async fn's future CONTAINS the
+            // futures it awaits. Unboxed, that composed frame propagates out
+            // through this fn into `run_spec`'s match and overflows the stack of
+            // a test with no relation to it.
+            let r = Box::pin(self.db.plan_member_twin_repair(
+                TWIN_BATCH,
+                PLAN_CAP,
+                &stop,
+                &progress,
+            ))
+            .await
+            .map_err(|e| e.to_string())?;
+            if r.stopped {
+                return Ok("repair-member-twins STOPPED by cancel — no plan stored".to_owned());
+            }
+            if let Some(expected) = &expected {
+                let fresh = twin_plan_signature(&r);
+                if &fresh != expected {
+                    return Err(format!(
+                        "the cohort MOVED since the dry pass: the stored plan has {} set(s) \
+                         and the fresh one {}, and they do not match set for set. Nothing \
+                         was written. Re-run the dry pass and read it.",
+                        expected.len(),
+                        fresh.len(),
+                    ));
+                }
+            }
+            let now = store::now_unix();
+            let outcome = if dry_run {
+                None
+            } else {
+                // BOXED like the arm itself, and for the same reason one
+                // level down: `apply_member_twin_repair` nests
+                // `twin_repair_writes` → `twin_repair_tx` → `retire_chunk_tx`,
+                // so awaiting it inline adds that whole composed frame to this
+                // arm's future. Boxing the arm is not enough when the arm
+                // awaits something big.
+                Some(
+                    Box::pin(self.db.apply_member_twin_repair(&r, now))
+                        .await
+                        .map_err(|e| e.to_string())?,
+                )
+            };
+            let body = twin_repair_report_json(&r, dry_run);
+            self.db
+                .put_report("member-twin-repair", &body, now)
+                .await
+                .map_err(|e| e.to_string())?;
+            Ok(match outcome {
+                Some(o) => twin_wet_summary(&o),
+                None => twin_dry_summary(&r),
+            })
     }
 
     async fn run_spec(&self, job: &Job) -> Result<String, String> {
@@ -8676,109 +8809,9 @@ impl Supervisor {
                     summary.join("; ")
                 ))
             }
-            Spec::RepairMemberTwins { dry_run } => Box::pin(async move {
-                // BOXED, as every census-shaped arm here is: `run_spec` is one
-                // giant async match and an arm's locals live in its future.
-                let dry_run = *dry_run;
-                if !dry_run {
-                    // Deliberate, not an oversight. The write side removes rows
-                    // from fourteen tables — four of them carrying no index at all
-                    // — retires Tenders, and moves head pointers. It lands with its
-                    // own tests and its own acceptance, checked against the plan
-                    // this arm stores, and not as a rider on the planner.
-                    return Err("repair-member-twins has no WET arm yet — this job \
-                                plans only. Run it dry, read the stored \
-                                member-twin-repair report, and see issue 404."
-                        .to_owned());
-                }
-                let job_id = job.id;
-                let stop = || self.cancelled(job_id);
-                self.set_phase(
-                    "planning",
-                    None,
-                    None,
-                    "issue 404: planning the removal of members held under two identities"
-                        .to_owned(),
-                );
-                let progress = |done: u64, detail: &str| {
-                    self.set_phase("planning", Some(done), None, detail.to_owned());
-                };
-                const TWIN_BATCH: usize = 100_000;
-                // Every set the repair would touch has to be IN the plan — a
-                // truncated plan is not a cohort, and the report says so rather
-                // than quietly describing a prefix of one.
-                const PLAN_CAP: usize = 5_000;
-                let r = self
-                    .db
-                    .plan_member_twin_repair(TWIN_BATCH, PLAN_CAP, &stop, &progress)
-                    .await
-                    .map_err(|e| e.to_string())?;
-                if r.stopped {
-                    return Ok("repair-member-twins STOPPED by cancel — no plan stored".to_owned());
-                }
-                let now = store::now_unix();
-                let body = serde_json::json!({
-                    "dry_run": true,
-                    "sets": r.sets,
-                    "notices_dropped": r.notices_dropped,
-                    "versions_dropped": r.versions_dropped,
-                    "heads_dropped": r.heads_dropped,
-                    "unfolded_drops": r.unfolded_drops,
-                    "same_tender": r.same_tender,
-                    "cross_tender": r.cross_tender,
-                    "rekeys": r.rekeys,
-                    "tenders_emptied": r.tenders_emptied,
-                    "plan_truncated": r.truncated,
-                    "plan": r.plan.iter().map(|p| serde_json::json!({
-                        "source": p.source,
-                        "member_path": p.member_path,
-                        "content_hash": p.content_hash,
-                        "keep": p.keep,
-                        "keep_key": p.keep_key,
-                        "elect": p.elect,
-                        "drop": p.drop.iter().map(|d| serde_json::json!({
-                            "notice": d.notice,
-                            "key": d.key,
-                            "tender": d.version.map(|(t, _)| t),
-                            "seq": d.version.map(|(_, s)| s),
-                            "head": d.head,
-                            "empties_tender": d.empties_tender,
-                        })).collect::<Vec<_>>(),
-                    })).collect::<Vec<_>>(),
-                })
-                .to_string();
-                self.db
-                    .put_report("member-twin-repair", &body, now)
-                    .await
-                    .map_err(|e| e.to_string())?;
-                Ok(format!(
-                    "repair-member-twins (issue 404, DRY): {} twin set(s) planned — keep the \
-                     OLDEST row of each and drop {} twin(s), of which {} caused a Tender version \
-                     and {} never folded. {} set(s) fold into ONE Tender, {} span more than one; \
-                     {} survivor(s) take a new identity. Removing those versions moves {} head \
-                     pointer(s) and leaves {} Tender(s) with no version at all, which the wet arm \
-                     would RETIRE rather than delete piecemeal. The head moves are harmless for \
-                     THIS cohort and only for it: twins hold the same bytes, so every current_* \
-                     column but current_seq is unchanged.{} NOTHING IS WRITTEN — the plan is \
-                     stored as `member-twin-repair` and the wet arm is not built yet (issue 404).",
-                    r.sets,
-                    r.notices_dropped,
-                    r.versions_dropped,
-                    r.unfolded_drops,
-                    r.same_tender,
-                    r.cross_tender,
-                    r.rekeys,
-                    r.heads_dropped,
-                    r.tenders_emptied.len(),
-                    if r.truncated {
-                        " PLAN TRUNCATED at the cap — this is NOT the whole cohort and must not \
-                         be executed."
-                    } else {
-                        ""
-                    },
-                ))
-            })
-            .await,
+            Spec::RepairMemberTwins { dry_run } => {
+                Box::pin(self.run_repair_member_twins(job, *dry_run)).await
+            }
             Spec::MemberTwinCensus => Box::pin(async move {
                 // BOXED, for the reason spelled out on the arm below: `run_spec`
                 // is one giant async match and a census arm's locals once
@@ -10898,6 +10931,155 @@ fn last_sunday(year: u16, month: u8) -> i64 {
 /// seconds this run spent on that label, the windowed ones already summed across
 /// every window — which is what a sizing decision compares. What the marker
 /// carries is the different thing: how that cost moves as the corpus grows.
+/// The stored `member-twin-repair` report (issue 404).
+///
+/// A plain function, not inline in the match arm, and that is not only tidiness.
+/// `run_spec` is one giant async match whose arms' locals live in ONE future;
+/// `Box::pin` moves a boxed arm's frame to the heap but still CONSTRUCTS it on
+/// the stack first. Building this `json!` tree and the two summaries inside the
+/// arm overflowed the stack of `an_execute_without_an_expected_count_is_refused`
+/// — a test with no relation to this code, exactly as CLAUDE.md warns, and the
+/// second time that same test has been the messenger. Out here the temporaries
+/// live in an ordinary frame that is gone before the future is built.
+fn twin_repair_report_json(r: &store::canonical::TwinRepairPlan, dry_run: bool) -> String {
+    serde_json::json!({
+        "dry_run": dry_run,
+        "sets": r.sets,
+        "notices_dropped": r.notices_dropped,
+        "versions_dropped": r.versions_dropped,
+        "heads_dropped": r.heads_dropped,
+        "unfolded_drops": r.unfolded_drops,
+        "same_tender": r.same_tender,
+        "cross_tender": r.cross_tender,
+        "rekeys": r.rekeys,
+        "tenders_emptied": r.tenders_emptied,
+        "plan_truncated": r.truncated,
+        "plan": r.plan.iter().map(|p| serde_json::json!({
+            "source": p.source,
+            "member_path": p.member_path,
+            "content_hash": p.content_hash,
+            "keep": p.keep,
+            "keep_key": p.keep_key,
+            "elect": p.elect,
+            "drop": p.drop.iter().map(|d| serde_json::json!({
+                "notice": d.notice,
+                "key": d.key,
+                "tender": d.version.map(|(t, _)| t),
+                "seq": d.version.map(|(_, s)| s),
+                "head": d.head,
+                "empties_tender": d.empties_tender,
+            })).collect::<Vec<_>>(),
+        })).collect::<Vec<_>>(),
+    })
+    .to_string()
+}
+
+fn twin_dry_summary(r: &store::canonical::TwinRepairPlan) -> String {
+    format!(
+        "repair-member-twins (issue 404, DRY): {} twin set(s) planned — keep the OLDEST row of \
+         each and drop {} twin(s), of which {} caused a Tender version and {} never folded. {} \
+         set(s) fold into ONE Tender, {} span more than one; {} survivor(s) take a new identity. \
+         Removing those versions moves {} head pointer(s) and leaves {} Tender(s) with no version \
+         at all, which the wet arm RETIRES rather than deleting piecemeal. The head moves are \
+         harmless for THIS cohort and only for it: twins hold the same bytes, so every current_* \
+         column but current_seq is unchanged.{} NOTHING IS WRITTEN — the plan is stored as \
+         `member-twin-repair`, and the wet arm refuses unless a fresh plan matches it set for set.",
+        r.sets,
+        r.notices_dropped,
+        r.versions_dropped,
+        r.unfolded_drops,
+        r.same_tender,
+        r.cross_tender,
+        r.rekeys,
+        r.heads_dropped,
+        r.tenders_emptied.len(),
+        if r.truncated {
+            " PLAN TRUNCATED at the cap — this is NOT the whole cohort and must not be executed."
+        } else {
+            ""
+        },
+    )
+}
+
+fn twin_wet_summary(o: &store::canonical::TwinRepairOutcome) -> String {
+    let deleted = o
+        .rows_deleted
+        .iter()
+        .filter(|(_, n)| **n > 0)
+        .map(|(table, n)| format!("{table} {n}"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    format!(
+        "repair-member-twins (issue 404, WET): {} set(s) resolved — {} notice(s) deleted, {} \
+         survivor(s) re-keyed and {} re-queued, {} Tender(s) retired. Rows removed: [{}]. NOTHING \
+         in `tender_versions` was touched, and that is deliberate: the fold shrinks each chain, and \
+         only `delete_version` takes a version's satellites with it — deleting the row here would \
+         make the chain-compare see an UNCHANGED chain and leak them. A `project rebuild=false` is \
+         queued behind this job, and the acceptance is two numbers: the placeholder cohort reads 0 \
+         (issue 394), and COUNT(*) FROM tender_versions falls by exactly {}.",
+        o.sets,
+        o.notices_deleted,
+        o.survivors_rekeyed,
+        o.survivors_requeued,
+        o.tenders_retired,
+        if deleted.is_empty() { "none".to_owned() } else { deleted },
+        o.notices_deleted,
+    )
+}
+
+/// The signature the wet arm of `repair-member-twins` compares a fresh plan
+/// against the stored one with (issue 404).
+///
+/// One line per set — the survivor, the identity it takes, and every notice it
+/// removes — sorted, so the comparison is of CONTENT and not of walk order. A
+/// count alone would pass a cohort in which one pair had been replaced by
+/// another, which is exactly the shape a destructive pass must not accept: the
+/// mint that created this cohort happened BETWEEN two chunks of a campaign that
+/// had checked its size and not its members.
+fn twin_plan_signature(plan: &store::canonical::TwinRepairPlan) -> Vec<String> {
+    let mut out: Vec<String> = plan
+        .plan
+        .iter()
+        .map(|r| {
+            let mut drops: Vec<i64> = r.drop.iter().map(|d| d.notice).collect();
+            drops.sort_unstable();
+            let drops =
+                drops.iter().map(|d| d.to_string()).collect::<Vec<_>>().join(",");
+            format!("{}|{}|{}", r.keep, r.elect, drops)
+        })
+        .collect();
+    out.sort();
+    out
+}
+
+/// The same signature, read back out of a stored plan's JSON.
+fn twin_plan_signature_json(v: &serde_json::Value) -> Vec<String> {
+    let mut out: Vec<String> = v["plan"]
+        .as_array()
+        .map(|sets| {
+            sets.iter()
+                .map(|r| {
+                    let mut drops: Vec<i64> = r["drop"]
+                        .as_array()
+                        .map(|ds| ds.iter().filter_map(|d| d["notice"].as_i64()).collect())
+                        .unwrap_or_default();
+                    drops.sort_unstable();
+                    let drops =
+                        drops.iter().map(|d| d.to_string()).collect::<Vec<_>>().join(",");
+                    format!(
+                        "{}|{}|{}",
+                        r["keep"].as_i64().unwrap_or(-1),
+                        r["elect"].as_str().unwrap_or(""),
+                        drops
+                    )
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    out.sort();
+    out
+}
+
 fn cost_line(
     cost: &std::collections::BTreeMap<String, f64>,
     once_only: &std::collections::BTreeSet<String>,
