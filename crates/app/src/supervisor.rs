@@ -9414,7 +9414,15 @@ impl Supervisor {
         // exactly what a sizing decision needs. The distinction that remains is
         // how the cost would MOVE if the corpus grew, and a marker plus a legend
         // carries that without splitting the ordering a reader wants.
-        let expected: Vec<String> = results.iter().map(|(label, _)| label.clone()).collect();
+        // `expected` is what the run ATTEMPTED to measure — the windowed labels plus
+        // the whole-corpus ones — and deliberately NOT `results`, which by this point
+        // also carries `unwindowed_labels()`: labels with no query at all, pushed as
+        // `None` on purpose. Those have no timing because nothing ran, so counting
+        // them would make the UNTIMED warning fire on every single run the moment
+        // that list stops being empty. A diagnostic that cries wolf is one nobody
+        // reads, which is the failure mode this whole line is being repaired for.
+        let expected: Vec<String> =
+            queries.iter().map(|q| q.label.clone()).chain(once_only.iter().cloned()).collect();
         eprintln!("{}", cost_line(&cost, &once_only, windows.len(), &expected));
 
         let raw = Raw::from_labelled(results).map_err(|e| e.to_string())?;
@@ -10712,6 +10720,18 @@ mod tests {
             holed.contains("UNTIMED (1): weld_candidates"),
             "a measured label with no timing must be NAMED, not dropped — that silence is \
              the whole defect:\n{holed}"
+        );
+
+        // And the warning must not cry wolf. A label with NO query behind it
+        // (`data_quality::unwindowed_labels`, deliberately unmeasured) has no timing
+        // because nothing ran, so it is not in `expected` and must not be reported.
+        // The caller builds `expected` from the queries it ATTEMPTED for exactly this
+        // reason; pinned here because the tempting source is the results vector, which
+        // carries those labels and would fire this warning on every run.
+        let quiet = cost_line(&cost, &once, 35, &measured);
+        assert!(
+            !quiet.contains("UNTIMED"),
+            "a label nothing ran for is not a missing timing: {quiet}"
         );
     }
     use super::*;
