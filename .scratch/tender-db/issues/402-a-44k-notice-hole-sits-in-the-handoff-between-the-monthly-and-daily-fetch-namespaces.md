@@ -1,6 +1,10 @@
 # 402 — ~44,600 TED notices are missing from 2026-06-30 to 2026-07-15, in the seam between the monthly and the daily fetch namespaces, and every guard on the board reads green over it
 
-Status: ready-for-agent — found 2026-09-16 by the hourly audit (step 3) on prod rev `19010b8`. The hole is MEASURED, not inferred: zero notices in the window, on both sides of which the corpus publishes ~3,720/day. The fix has two halves — fetch the missing issues, and make the seam checkable — and the second is the one that matters, because nothing on the board can currently see a hole in this position.
+Status: ready-for-agent — **HALF (a) IS DONE AND VERIFIED ON PROD 2026-09-17**: the twelve OJ S
+dailies 2026-00124…00135 are fetched, processed and folded (job 2352: **44,854 notices → 40,848
+tenders, 85,747 versions**, then job 2353 rebuilt the deferred indexes), and the window that served
+ZERO now serves on every day sampled. **Unit B (the seam guard) is the open half and is the one that
+matters** — see the 2026-09-17 comment. Was: found 2026-09-16 by the hourly audit (step 3) on prod rev `19010b8`. The hole is MEASURED, not inferred: zero notices in the window, on both sides of which the corpus publishes ~3,720/day. The fix has two halves — fetch the missing issues, and make the seam checkable — and the second is the one that matters, because nothing on the board can currently see a hole in this position.
 Kind: defect (coverage — the fetch plan's monthly→daily handoff, and the completeness verdict in `crates/app/src/coverage.rs` / `store::monthly_period_gaps`)
 Relates to: 395 (RESOLVED 2026-09-15 — it built `monthly_period_gaps` exactly to catch a fetch hole the ✓ was hiding, and it CANNOT see this one: its sequence test is monthly-only and interior-only by design, and this hole is at the boundary between two period namespaces, which is neither), 396 (RESOLVED-VERIFIED 2026-09-16 — its 2026 SURPLUS and this DEFICIT are in the same coverage cell and cancel: 2026 reads 118.74 % because the denominator is a 2026-07-17 snapshot while the held count runs to 2026-09-11, so ~44,600 missing notices are invisible under an over-100 % ratio), 15 (RESOLVED 2026-08-16 — the backfill that set the fetch plan, and where OJ S issue numbering is pinned), 33 (the funnel panel), 401 (filed the same hour — the same panel, a different way its cells mislead), 06 (the ground truth the coverage ratio divides by)
 Blocked by: nothing
@@ -269,3 +273,41 @@ share at 0.
 **Unit B — a window that samples publication time — is untouched and is the one that matters.** With
 unit A the section is quiet and honest; it is still blind to the 2026-06-30…07-15 hole, because that
 hole is not inside the id window at all.
+
+
+## Comment — 2026-09-17: half (a) closed, measured on prod
+
+The backfill ran to completion on the drained queue. Per-daily `process` outcomes, all `ok`, from
+`/admin/jobs` (its recent window holds 20 entries, so 124/125/135 had already aged out of it by the
+time this was read — they are accounted for in the fold total below rather than by their own rows):
+
+| daily | members | daily | members |
+| --- | --- | --- | --- |
+| 2026-00126 | 3,908 | 2026-00131 | 3,737 |
+| 2026-00127 | 4,151 | 2026-00132 | 4,133 |
+| 2026-00128 | 3,429 | 2026-00133 | 3,404 |
+| 2026-00129 | 3,899 | 2026-00134 | 3,334 |
+| 2026-00130 | 3,771 | **visible subtotal** | **33,766** |
+
+Seven quarantined across the nine, zero unrecognised. The fold that followed (job **2352**,
+`project rebuild=false`) reports **44,854 notices → 40,848 tenders (843 islands), 85,747 versions**,
+which covers all twelve dailies and lands within 0.6 % of this issue's headline estimate of ~44,600 —
+the estimate was built from the ~3,720/day rate on either side of the window, so the agreement is a
+genuine check of the arithmetic rather than a restatement of it.
+
+**Served acceptance** — the real test, since a fold that ran is not the same as a window that answers.
+Three days spread across the hole, each of which returned nothing before:
+
+    /v1/tenders?published_after=2026-06-30T00:00:00Z&published_before=2026-07-01T00:00:00Z&limit=3
+      → 200, 3 rows, 0.48 s — "Hangtauglicher Geräteträger, spezial-Doppelach…"
+    …2026-07-07 → 200, 3 rows, 0.63 s — "Fenster-, Türelemente und Sonnenschutz"
+    …2026-07-15 → 200, 3 rows, 0.45 s — "Liepājas ostas piestātnes Nr. 46 pārbūves būvp…"
+
+(First attempt used bare `2026-07-01`, which is a 400: these bounds are unix seconds or RFC 3339, and
+the error message says so plainly. Noted because the issue's own measurement is in unix seconds and
+the two spellings are easy to mix up when re-checking this window later.)
+
+**What remains is unit B**, and this comment does not touch it. Half (a) removes the symptom; nothing
+yet detects the NEXT hole in this position, because 395's sequence test is monthly-only and
+interior-only and this seam is neither. The hole existed for two months under a green ✓ and an
+over-100 % coverage ratio (396), and that is the part of this issue worth finishing.
