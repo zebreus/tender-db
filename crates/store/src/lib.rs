@@ -57,7 +57,7 @@ pub use jobs::QueuedJobRow;
 pub use read::{Filter, Reader, Readers, Status};
 pub use webhooks::{Delivery, Endpoint};
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use tokio::sync::{Mutex, MutexGuard, OnceCell, watch};
@@ -3698,20 +3698,50 @@ impl Db {
                 // `eurostat` kinds `rates-ecu-h`/`rates-ecu-bil`, and the next
                 // reference feed added should be classified by what it downloads, not
                 // by someone remembering to extend a match arm in the UI.
-                "SELECT source, COUNT(DISTINCT period), MIN(period), MAX(period),
-                        MIN(kind LIKE 'rates%')
-                   FROM fetches GROUP BY source ORDER BY source",
+                // Issue 402: grouped by (source, kind) rather than by source, and
+                // folded below. The per-source aggregates are recomputed in Rust
+                // from the kind rows — `COUNT(DISTINCT period)` does not sum across
+                // groups when one period could appear under two kinds, so the
+                // distinct set is rebuilt rather than added up.
+                "SELECT source, kind, period, kind LIKE 'rates%'
+                   FROM fetches GROUP BY source, kind, period ORDER BY source, kind, period",
                 (),
             )
             .await?;
-        let mut out = Vec::new();
+        // (source, kind) -> periods, in period order; plus whether every kind of
+        // the source is a rates download.
+        let mut by_source: BTreeMap<String, (BTreeSet<String>, BTreeMap<String, Vec<String>>, bool)> =
+            BTreeMap::new();
         while let Some(row) = rows.next().await? {
+            let (source, kind, period, rates) =
+                (text(&row, 0), text(&row, 1), text(&row, 2), int(&row, 3) != 0);
+            let entry = by_source.entry(source).or_insert_with(|| (BTreeSet::new(), BTreeMap::new(), true));
+            entry.0.insert(period.clone());
+            entry.1.entry(kind).or_default().push(period);
+            entry.2 &= rates;
+        }
+        let mut out = Vec::new();
+        for (source, (periods, kinds, reference_only)) in by_source {
+            // `periods` is a BTreeSet, so first/last are the lexical extrema the
+            // old query returned — kept identical on purpose, so this stays a
+            // pure addition for every caller that reads `from`/`to`.
+            let from = periods.iter().next().cloned().unwrap_or_default();
+            let to = periods.iter().next_back().cloned().unwrap_or_default();
             out.push(FetchRegistryRow {
-                source: text(&row, 0),
-                packages: int(&row, 1),
-                from: text(&row, 2),
-                to: text(&row, 3),
-                reference_only: int(&row, 4) != 0,
+                source,
+                packages: periods.len() as i64,
+                from,
+                to,
+                reference_only,
+                kinds: kinds
+                    .into_iter()
+                    .map(|(kind, mut ps)| {
+                        ps.sort();
+                        let lo = ps.first().cloned().unwrap_or_default();
+                        let hi = ps.last().cloned().unwrap_or_default();
+                        (kind, lo, hi)
+                    })
+                    .collect(),
             });
         }
         Ok(out)
@@ -3866,6 +3896,24 @@ pub struct FetchRegistryRow {
     /// off the source name — the name list is the version of this that goes stale
     /// the next time a reference feed is added.
     pub reference_only: bool,
+    /// The period range **per fetch kind**, `(kind, from, to)`, kind-sorted
+    /// (issue 402).
+    ///
+    /// `from`/`to` above are `MIN`/`MAX` over the whole source, and `period` does
+    /// not mean the same thing across kinds — `ted monthly` is `2026-06`, `ted
+    /// daily` is the OJ S issue number `2026-00136`, `doe daily` is `2026-07-18`,
+    /// eurostat registers the literal `1993-1998`. A lexical extremum over that
+    /// mixture is not a range, it is whichever namespace happens to sort highest:
+    /// `'2026-06' > '2026-00136'` (common prefix `2026-0`, then `6` > `0`), so on
+    /// 2026-09-16 the funnel printed `445 pkgs (1993-01 … 2026-06) · fetch
+    /// complete ✓` while the daily series ran to 2026-09-11 — a range ending 2½
+    /// months earlier beside a tick claiming caught-up, over a 44,600-notice hole.
+    ///
+    /// Splitting by kind is what makes the range honest WITHOUT needing a
+    /// period→instant mapping, which OJ S issue numbers would require and which is
+    /// a bigger measurement than the defect deserves. The source-wide `from`/`to`
+    /// stay for callers that only want one string.
+    pub kinds: Vec<(String, String, String)>,
 }
 
 /// One cell of the coverage grid.
@@ -7676,6 +7724,12 @@ tmpfs /data/ramcache tmpfs rw 0 0
                    ('ted','monthly','1993-01','u','a',1,0,'p'),
                    ('ted','monthly','1993-01','u','b',1,1,'p'),
                    ('ted','monthly','2026-07','u','c',1,0,'p'),
+                   -- Issue 402: a SECOND namespace for the same source. `period`
+                   -- here is an OJ S issue number, and '2026-00136' sorts BELOW
+                   -- '2026-07' while being two months later in time. This row is
+                   -- what makes the source-wide extremum a lie and the per-kind
+                   -- ranges the truth.
+                   ('ted','daily','2026-00136','u','e',1,0,'p'),
                    ('doe','daily','2026-07-18','u','d',1,0,'p');
                  INSERT INTO tenders(source, kind, created_at) VALUES
                    ('ted','procedure',0),('ted','procedure',0),('doe','procedure',0);",
@@ -7699,14 +7753,32 @@ tmpfs /data/ramcache tmpfs rw 0 0
                     // `crates/app/src/coverage.rs`, where the funnel that renders
                     // the distinction lives.
                     reference_only: false,
+                    // One namespace, so the per-kind range restates the row's own.
+                    kinds: vec![(
+                        "daily".to_owned(),
+                        "2026-07-18".to_owned(),
+                        "2026-07-18".to_owned(),
+                    )],
                 },
-                // ted: two distinct periods (the 1993-01 re-fetch counts once), range 1993→2026.
+                // ted: three distinct periods (the 1993-01 re-fetch counts once)
+                // across TWO namespaces.
                 FetchRegistryRow {
                     source: "ted".to_owned(),
-                    packages: 2,
+                    packages: 3,
                     from: "1993-01".to_owned(),
+                    // Issue 402, the defect in one assertion: the source-wide
+                    // extremum is LEXICAL, so it reads `2026-07` while the daily
+                    // series below runs to `2026-00136` — OJ S issue 136, which is
+                    // 2026-07-16, two weeks LATER. The `to` is not the newest
+                    // thing held; it is the newest STRING.
                     to: "2026-07".to_owned(),
                     reference_only: false,
+                    // And this is what says so without needing to know that issue
+                    // 136 is a date at all.
+                    kinds: vec![
+                        ("daily".to_owned(), "2026-00136".to_owned(), "2026-00136".to_owned()),
+                        ("monthly".to_owned(), "1993-01".to_owned(), "2026-07".to_owned()),
+                    ],
                 },
             ],
         );

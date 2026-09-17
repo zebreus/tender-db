@@ -207,6 +207,21 @@ pub struct PipelineStage {
     pub fetched_packages: i64,
     pub fetched_from: Option<String>,
     pub fetched_to: Option<String>,
+    /// The period range per fetch KIND, `(kind, from, to)` (issue 402).
+    ///
+    /// `fetched_from`/`fetched_to` are lexical extrema over a `period` column
+    /// whose meaning depends on the kind: `ted monthly` is `2026-06`, `ted daily`
+    /// is the OJ S issue number `2026-00136`, `doe daily` is a date. Comparing
+    /// across those namespaces does not yield a range — `'2026-06' > '2026-00136'`
+    /// — and on 2026-09-16 the funnel printed `445 pkgs (1993-01 … 2026-06)`
+    /// while the daily series ran to 2026-09-11, understating by 2½ months beside
+    /// a `fetch complete ✓`, over what turned out to be a 44,600-notice hole.
+    ///
+    /// The cell names the namespaces separately rather than reconciling them,
+    /// because reconciling needs a period→instant mapping that OJ S issue numbers
+    /// do not carry. One string per namespace is honest and costs nothing.
+    #[serde(default)]
+    pub fetched_ranges: Vec<(String, String, String)>,
     /// Whether fetching is genuinely done: the latest fetched period is in the
     /// current year AND the monthly sequence has no hole in it (issue 395).
     ///

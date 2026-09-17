@@ -507,7 +507,30 @@ fn PipelinePanel(rows: Vec<PipelineStage>) -> Element {
                             }
                             td {
                                 "{group(s.fetched_packages)} pkgs"
-                                if let (Some(from), Some(to)) = (s.fetched_from.clone(), s.fetched_to.clone()) {
+                                // Issue 402: one range per NAMESPACE once a source
+                                // has more than one. `period` means different
+                                // things per kind — `2026-06` is a month,
+                                // `2026-00136` an OJ S issue number — so a single
+                                // MIN…MAX across them is a lexical extremum rather
+                                // than a range: this cell read `(1993-01 … 2026-06)`
+                                // beside `fetch complete ✓` while the daily series
+                                // ran to 2026-09-11, over a 44,600-notice hole.
+                                //
+                                // Named separately rather than reconciled, because
+                                // reconciling needs a period→instant mapping that
+                                // OJ S issue numbers do not carry. A source with
+                                // one namespace renders exactly as before.
+                                if s.fetched_ranges.len() > 1 {
+                                    span { class: "muted",
+                                        title: "`period` means something different per fetch kind, so these are not comparable to each other — each namespace is shown on its own terms.",
+                                        " ("
+                                        {s.fetched_ranges.iter()
+                                            .map(|(kind, from, to)| format!("{kind} {from} … {to}"))
+                                            .collect::<Vec<_>>()
+                                            .join(" · ")}
+                                        ")"
+                                    }
+                                } else if let (Some(from), Some(to)) = (s.fetched_from.clone(), s.fetched_to.clone()) {
                                     span { class: "muted", " ({from} … {to})" }
                                 }
                                 if s.fetch_complete {

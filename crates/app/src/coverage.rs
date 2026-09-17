@@ -543,7 +543,7 @@ async fn measure_coverage_pipeline(
         .await?
         .into_iter()
         .map(|row| {
-            let store::FetchRegistryRow { source, packages, from, to, reference_only } = row;
+            let store::FetchRegistryRow { source, packages, from, to, reference_only, kinds } = row;
             let gaps = store::monthly_period_gaps(monthly.get(&source).map_or(&[][..], |v| v));
             PipelineStage {
                 published: (source == GROUND_TRUTH_SOURCE).then_some(published_ted),
@@ -560,6 +560,29 @@ async fn measure_coverage_pipeline(
                 // passed the year test by accident (its period IS a civil date)
                 // and `eurostat` failed it by accident (`1993-1998`), so both
                 // verdicts were noise.
+                // Issue 402 looked at this line and left it ALONE, deliberately.
+                // `to` is a lexical MAX over a `period` column whose meaning
+                // depends on the kind, which is a real defect — it is why the cell
+                // beside this tick understated TED's range by 2½ months, and the
+                // per-kind ranges below now fix the DISPLAY. But splitting the
+                // namespaces does not repair this predicate, and it is worth
+                // saying why so nobody re-derives it:
+                //
+                // - `any(kind is current)` is equivalent to what is already here.
+                //   If some kind's newest period starts with the current year then
+                //   the lexical max does too, since it is ≥ that string. It would
+                //   change no verdict on any real source.
+                // - `all(kind is current)` is wrong. A source legitimately RETIRES
+                //   a namespace — TED's monthlies end where its dailies begin, and
+                //   `2026-06` is their permanent final value — so this would deny
+                //   every source that ever changed how it publishes.
+                //
+                // The question the predicate actually needs is "is this namespace
+                // still expected to receive packages", and the fetch registry does
+                // not know that about itself. So the honest state is: the display
+                // is fixed, this is unchanged, and the thing that genuinely catches
+                // a stalled namespace is issue 402's publication-day continuity
+                // check, which asks what is HELD and never consults a period at all.
                 fetch_complete: !reference_only
                     && to.starts_with(&current_year)
                     && gaps.missing.is_empty()
@@ -568,6 +591,7 @@ async fn measure_coverage_pipeline(
                 duplicate_periods: gaps.duplicated,
                 fetched_from: Some(from),
                 fetched_to: Some(to),
+                fetched_ranges: kinds,
                 processed_notices: processed.get(&source).copied().unwrap_or(0),
                 projected_tenders: projected.get(&source).copied().unwrap_or(0),
                 source,
@@ -611,6 +635,95 @@ mod tests {
         // heard even though its reason never changed.
         said = None;
         assert!(announce(&mut said, UNCHANGED), "a skip after a measurement speaks");
+    }
+
+    /// Issue 402: a source with two period NAMESPACES gets one range per
+    /// namespace, because a single MIN…MAX across them is not a range.
+    ///
+    /// The exhibit, from prod on 2026-09-16: TED holds monthly packages through
+    /// `2026-06` and daily packages — OJ S ISSUE NUMBERS, not dates — from
+    /// `2026-00136` onward. `'2026-06' > '2026-00136'` lexically (common prefix
+    /// `2026-0`, then `6` > `0`), so `MAX(period)` returned the monthly value and
+    /// the cell read `445 pkgs (1993-01 … 2026-06) · fetch complete ✓` while the
+    /// dailies ran to 2026-09-11. A range ending 2½ months early, beside a tick
+    /// claiming caught-up, over what turned out to be a 44,600-notice hole.
+    ///
+    /// This pins that the per-kind ranges tell the truth AND that the source-wide
+    /// extremum still does not — the second half deliberately, because callers
+    /// read `fetched_to` and this change is meant to be a pure addition. The fix
+    /// is that the dashboard stops SHOWING the misleading number, not that the
+    /// number becomes right; making it right needs a period→instant mapping that
+    /// OJ S issue numbers do not carry.
+    #[tokio::test]
+    async fn a_source_with_two_period_namespaces_gets_one_range_per_namespace() {
+        let path = format!("/tmp/tender-db-funnel-ns-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = store::Db::open(&path).await.expect("open");
+        let now = store::now_unix();
+        let year = 1970 + now / 31_557_600;
+
+        // `two`: the TED shape — a monthly series that ends, then a daily series
+        // in a different namespace. `one`: a single-namespace control, which must
+        // keep rendering exactly as it did before this change.
+        for (source, kind, period) in [
+            ("two", "monthly", format!("{year}-01")),
+            ("two", "monthly", format!("{year}-06")),
+            ("two", "daily", format!("{year}-00136")),
+            ("two", "daily", format!("{year}-00178")),
+            ("one", "monthly", format!("{year}-01")),
+        ] {
+            db.record_fetch(&store::Fetch {
+                source: source.to_owned(),
+                kind: kind.to_owned(),
+                period: period.clone(),
+                url: "u".to_owned(),
+                sha256: format!("{source}{kind}{period}"),
+                bytes: 1,
+                fetched_at: 0,
+                path: "p".to_owned(),
+            })
+            .await
+            .expect("register the package");
+        }
+
+        let (_, pipeline) = measure_coverage_pipeline(&db, now).await.expect("measure");
+        let stage = |name: &str| {
+            pipeline.iter().find(|s| s.source == name).unwrap_or_else(|| panic!("{name} missing"))
+        };
+
+        let two = stage("two");
+        assert_eq!(
+            two.fetched_ranges,
+            vec![
+                ("daily".to_owned(), format!("{year}-00136"), format!("{year}-00178")),
+                ("monthly".to_owned(), format!("{year}-01"), format!("{year}-06")),
+            ],
+            "one range per namespace, each on its own terms"
+        );
+        // The lie, asserted so the fix cannot be mistaken for having changed it:
+        // the source-wide max is the MONTHLY value even though the daily series is
+        // the one that is current.
+        assert_eq!(two.fetched_to.as_deref(), Some(format!("{year}-06").as_str()));
+        // The daily series is the CURRENT one and its newest period sorts BELOW
+        // the monthly value that won the lexical max. That inversion is the whole
+        // defect in one comparison: ordering these strings is not ordering time.
+        assert!(
+            two.fetched_ranges
+                .iter()
+                .any(|(k, _, to)| k == "daily" && to.as_str() < format!("{year}-06").as_str()),
+            "the daily namespace's newest period must sort BELOW the monthly one that \
+             `MAX(period)` returned — {:?}",
+            two.fetched_ranges
+        );
+        assert_eq!(two.fetched_packages, 4, "distinct periods across both namespaces");
+
+        // The control: one namespace, so nothing about its rendering changes.
+        let one = stage("one");
+        assert_eq!(
+            one.fetched_ranges,
+            vec![("monthly".to_owned(), format!("{year}-01"), format!("{year}-01"))],
+        );
+        assert_eq!(one.fetched_ranges.len(), 1, "the cell keeps the single-range form for this row");
     }
 
     /// Issue 395: the funnel must not call a source complete when its monthly
