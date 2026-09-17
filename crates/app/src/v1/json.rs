@@ -98,8 +98,9 @@ pub fn organization(o: &OrganizationRow) -> Value {
         "country": o.country,
         "identifier_kind": o.identifier_kind,
         "identifier": o.identifier,
-        // A provisional profile is one mention with no usable official
-        // identifier — deliberately never merged with another (CONTEXT.md).
+        // A provisional profile has NO official identifier, and nothing more is
+        // implied: its identity is name-scoped, so mentions sharing a normalised
+        // name and country land on one row and it may hold many (234, 351, 370).
         "provisional": o.provisional,
         "mentions": o.mentions,
     })

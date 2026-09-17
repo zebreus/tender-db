@@ -125,3 +125,22 @@ stay green.
   case in `reachable()`'s own comment — unchanged.
 * Org combo shapes (`country+kind` residual, `name_prefix`+companion): measured
   1.7–2.0s — mediocre, bounded, main-pool. Watch, don't build.
+
+## Comment — 2026-09-17: cause #1 has a live twin on TENDERS, filed as 408
+
+This issue's round-2 note says the over-cap countries are handled on the other endpoint:
+
+> On tenders the over-cap countries are saved by the `current_deadline` head-range (273 step 1);
+> lots have no head column, so an over-cap country got NOTHING.
+
+True, and **conditional in a way the sentence does not say**: 273's head-range only bounds the read
+when `status` is in the filter. A bare `/v1/tenders?country=<over-cap>` gets no seed (cap declined)
+and no head-range (no status) — which is the same "got NOTHING" as the lots case this issue fixed.
+
+Found from outside on `?country=GR` and measured 2026-09-17: `GR` and `EL` are **both** at the 60,000
+cap, so both decline the seed, yet `EL` answers in 0.44 s and `GR` runs to the 30 s deadline. So the
+cap is not what separates them — `GR` is a retired NUTS spelling (pre-2013 Greece), dense over
+history and absent from the head of the id order, and `COUNTRY_SEED_CAP`'s premise ("at the cap ⇒
+dense country, the range shape is already the right drive side") is false exactly there. Full
+measurement and the three candidate fixes are on **408**. Nothing reopens here; this issue's own fix
+is verified and unaffected.

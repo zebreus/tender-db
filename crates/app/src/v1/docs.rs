@@ -697,10 +697,14 @@ rates and the quarantine resolution ledger.</p>
 <ul>
   <li>CPV-2003 and CPV-2008 classifications coexist (era-dependent); no cross-era
   mapping is applied. NUTS carries occasional pseudo-codes.</li>
-  <li>Organizations are aggregated by identifier where the source publishes one, else
-  by (name, country); mentions without either stay <em>provisional</em> single-mention
-  organizations. The <code>provisional</code> flag on
-  <code>/v1/organizations</code> tells you which kind you are looking at.</li>
+  <li>Organizations are aggregated by identifier where the source publishes one. A
+  row without one is <em>provisional</em>, which means exactly that &mdash; no official
+  identifier &mdash; and nothing more. Its identity is then NAME-scoped: mentions
+  carrying the same normalised name and country resolve to one provisional row, so
+  such a row can hold many thousands of mentions (issues 234, 351). It is not a
+  promise of one mention, and a later identifier can still canonicalise or split it.
+  The <code>provisional</code> flag on <code>/v1/organizations</code> tells you which
+  kind you are looking at.</li>
 </ul>
 
 <p class="muted">Ingestion is strict by design: a notice the parser cannot fully and
@@ -733,3 +737,57 @@ running server offers the source of its exact revision at
 </body>
 </html>
 "####;
+
+#[cfg(test)]
+mod tests {
+    use super::PAGE;
+    use crate::v1::openapi::SPEC;
+
+    /// Issue 370: retired claims must not survive on ANY served surface.
+    ///
+    /// 370 corrected thirteen published claims at their source and still shipped
+    /// two of them live, because the fix walked a hand-written list of files and
+    /// this page and the vendored spec were not on it. The `provisional` note in
+    /// `sql.rs` got a detector (`the_provisional_note_describes_what_the_resolver
+    /// _actually_does`, which also exercises the resolver); `/docs` and
+    /// `/v1/openapi.json` got none, so the same sentence sat on prod for another
+    /// eight days and was re-reported by the next reader to look.
+    ///
+    /// This is that detector for the two remaining surfaces. It is a prose guard
+    /// and deliberately narrow — it cannot prove a sentence is right, only that a
+    /// specific retired reading does not come back. Narrow is the point: every
+    /// entry below was served as fact and measurably false.
+    #[test]
+    fn no_served_surface_repeats_a_retired_claim() {
+        // (retired phrasing, what actually holds now)
+        const RETIRED: &[(&str, &str)] = &[
+            ("single-mention", "issue 234 made identifier-less mentions reuse one row by (name, country)"),
+            ("single mention", "issue 234 made identifier-less mentions reuse one row by (name, country)"),
+            ("never merged", "issue 351 widened that reuse to country-less names under the wall"),
+            ("work was abandoned", "a non-yielding aggregate keeps its slot past the 408 (issue 238)"),
+            ("work is abandoned", "a non-yielding aggregate keeps its slot past the 408 (issue 238)"),
+        ];
+        for (surface, text) in [("/docs", PAGE), ("/v1/openapi.json", SPEC)] {
+            for (retired, why) in RETIRED {
+                assert!(
+                    !text.contains(retired),
+                    "{surface} still serves the retired claim {retired:?} — {why}"
+                );
+            }
+        }
+    }
+
+    /// The other half of the guard above: the corrections themselves are load
+    /// bearing, so a rewrite that simply deletes the sentence must fail too.
+    #[test]
+    fn the_docs_say_what_provisional_and_a_408_actually_mean() {
+        assert!(
+            PAGE.contains("NAME-scoped"),
+            "/docs must say what identity a provisional row has, not just that it lacks an identifier"
+        );
+        assert!(
+            SPEC.contains("no interrupt"),
+            "the spec's 408 must say the answer is abandoned but the work may not be"
+        );
+    }
+}

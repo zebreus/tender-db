@@ -409,7 +409,7 @@
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
-          "408": { "description": "The QUERY exceeded the per-query time limit; its server-side work was abandoned. Make the query cheaper (narrow the range, add a LIMIT) before retrying.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "408": { "description": "The QUERY exceeded the per-query time limit. The ANSWER is abandoned, but the server-side work is not always: the engine offers no interrupt, so a non-yielding aggregate keeps its slot until it finishes, and while it does further queries can meet a 503 (issue 238). Make the query cheaper (narrow the range, add a LIMIT) before retrying — never retry it unchanged.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
           "429": { "$ref": "#/components/responses/RateLimited" },
           "503": { "description": "The BACKEND could not get to the query, so it was never run — either no reader connection came free, or every SQL worker thread is pinned by an earlier query that cannot be interrupted. Distinct from 408 on purpose: retry the same query unchanged rather than rewriting it. The message names which of the two it was.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
         }

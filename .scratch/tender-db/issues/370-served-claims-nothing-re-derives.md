@@ -329,3 +329,42 @@ the whole corpus; no data is lost or mislinked.
 1993–94 pre-CPV TED product code (4-digit, not comparable to CPV, unreachable by `?cpv=` prefix filters) and
 fix the two table notes at `:603` and `:613`; nothing fails today because `crates/app/tests/sql.rs:499` does
 not pin the scheme string.
+
+### 2026-09-17 — the two surviving claims are fixed, and the drift now has a detector
+
+Re-reported from the outside within two days of the 2026-09-15 comment: a third-party evaluation of
+the DB against rev `5841c9b` reached the same `provisional` sentence and the same exhibits — org
+**1197927 "Deutsche Bahn AG", `provisional=true`, `mentions=7789`** (verified live today, up from
+this issue's 7,668), and VAT `DE811569869` standing on two canonical rows. An outside reader hitting
+the identical sentence is the strongest available evidence that "the source was corrected" is not the
+same as "the claim stopped being served".
+
+**Fixed, all three surfaces the 2026-09-15 comment named:**
+
+| surface | was | now |
+| --- | --- | --- |
+| `crates/app/src/v1/docs.rs` (the `/docs` prose const) | "mentions without either stay *provisional* single-mention organizations" | states that `provisional` means NO OFFICIAL IDENTIFIER and nothing more, that identity is then NAME-scoped, and that such a row can hold many thousands of mentions (234, 351) |
+| `crates/app/data/openapi.json` (`/v1/sql` 408) | "its server-side work was abandoned" | the ANSWER is abandoned but the work is not always — no interrupt, a non-yielding aggregate keeps its slot and further queries can meet a 503 (238). Matches `docs.rs:426`, which unit 2 had already corrected |
+| `crates/app/src/v1/json.rs` (the served-JSON builder comment) | "one mention … deliberately never merged" | no official identifier; name-scoped; may hold many |
+
+**And the reason it took two rounds is now gated.** Unit 2 corrected the claims by walking a
+hand-written list of files, so a surface absent from the list kept serving the retired sentence — the
+same failure mode this issue is *about*, one level up. `sql.rs` had a detector
+(`the_provisional_note_describes_what_the_resolver_actually_does`) and was the one surface that did
+not regress. `/docs` had **no test module at all**; `openapi.json` had prose guards for issue 398 and
+none for this.
+
+New in `crates/app/src/v1/docs.rs`:
+
+- `no_served_surface_repeats_a_retired_claim` — walks `[("/docs", PAGE), ("/v1/openapi.json", SPEC)]`
+  against one list of retired phrasings, each paired with what actually holds. Adding a surface is
+  adding it to that array; adding a retired claim is one line.
+- `the_docs_say_what_provisional_and_a_408_actually_mean` — the other half, so a rewrite that deletes
+  the correction instead of restating it fails too.
+
+Narrow prose guards, deliberately: they cannot prove a sentence is right, only that a specific wrong
+reading does not come back. Every entry in the list was served as fact and measurably false.
+
+**Still open on this issue:** unit 4's second half (per-field provenance on `TenderRow`). The
+`?country=ZZ`/`?currency=XXX` row of the table above is 371's, and the same report supplies a new
+live instance of that class on a filter value that is PRESENT rather than absent — filed as **408**.

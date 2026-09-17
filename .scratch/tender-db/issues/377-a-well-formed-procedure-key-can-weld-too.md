@@ -231,3 +231,31 @@ the low `per-ver` shape it now renders. That is the argument for the gauge conti
 among the unmodelled ids section 13 lists (`OPT-200-Organization-Company` and neighbours) and would
 need the archive read this unit was originally gated on. The behaviour is identified; the name is not.
 
+
+## Comments
+
+### 2026-09-17 — independently re-found from outside, six days after NO GATE; the decision stands
+
+A third-party evaluation of the DB against rev `5841c9b` reached tender **430681** and the key
+**`5e001394-80da-44e1-8955-e9fe17674c90`** on its own, reporting "789 notices … 378 distinct buyers,
+351 distinct winners" — the same tender, the same key, and the same buyer count this issue measured
+on 2026-09-10. Re-verified live today via `/v1/tenders/430681`: 789 versions (`00550462-2023` →
+`00024419-2025`), 246 parties, 446 lot_results, 391 contracts, and a `country` array mixing
+`DK032 / FI1C2 / DK013 / DK011 / FI1B1` under the Finnish title "Tervakosken koulu- ja
+monitoimikeskus, Vaihe 1", with CPVs (79624000 personnel supply, 85141210 home medical treatment,
+85144100 nursing home) that belong to none of it. The weld is exactly as described and has not moved.
+
+**Its recommendation is the option this issue measured and declined**, and it is worth recording that
+the decision survives an outside reader proposing the obvious alternative. The report's suggestion was
+that the key "looks like a shared placeholder identifier that should be rejected as a key, just as the
+all-zero UUID was". Unit 2's answer, unchanged: that is 369's gate, 369's gate is shape-based, and this
+key has 14 distinct free nibbles and a longest run of 2 — it is a perfectly ordinary random UUID and no
+shape predicate can separate it from the ones that group correctly. Widening to buyer-disagreement
+refuses joint procurements corpus-wide; unit 1 measured the class at **4 tenders, only one convicted**,
+and established that buyers-per-version does not separate a weld from a Dynamic Purchasing System.
+Rejecting this key costs three correct tenders to fix one.
+
+What the re-finding does change is the **discoverability** reading, not the gate reading. Country
+spread is what convicted 430681 here, and it is also what an outside reader noticed first — which
+supports section 12's `per-ver` column continuing to carry a country-spread signal (unit 3's
+conclusion) rather than any new refusal at the fold. No unit reopens.
