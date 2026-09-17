@@ -1,6 +1,6 @@
 # 395 — TED June 2025 (~72k notices) was never fetched, and the funnel reports "fetch complete ✓" over the hole
 
-Status: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — **BOTH HALVES ARE LANDED AND VERIFIED ON PROD 2026-09-17; the board simply never said so.** The hole is backfilled (2025-06 present, the FR June window starts on day 1 like its May and July controls) and the detector is built (`monthly_period_gaps` → `missing_periods` / `duplicate_periods`, and `fetch_complete` requires both clean). The 2025-09 "duplicate" is explained below and is NOT a defect. **One "Done when" item is genuinely open: the check still runs only on a coverage refresh, so a hole introduced tomorrow waits for someone to open the dashboard.** Was: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: operational (ingestion — one missing monthly package in the TED fetch registry, plus the funnel's `fetch_complete` heuristic in `crates/app/src/coverage.rs:448` that cannot see an interior hole)
 Relates to: 33 (RESOLVED-VERIFIED — the pipeline funnel panel; its spec asks for "an explicit 'fetch complete ✓' when the full range is on disk" and its Fix section openly narrowed that to "the latest fetched period is in the current year", which is the heuristic that greenlights this gap), 15 (RESOLVED — the full backfill; its own log records "397 TED monthlies" on disk and a 401-package process job for a 402-month range, so the hole dates from the original backfill and was never noticed), 342 (the FTS source, whose unit-2 measurement is over June 2025 — every `2025-06` hit on the board today is that package, not this one), `docs/research/ted-access-channels.md` §6 (the coverage definition the dashboard legend cites), `crates/app/src/ui.rs:532-541` (the legend that promises "100 % means we hold the whole year" and "a low ratio here is work still in progress, not a permanent gap")
 
@@ -303,3 +303,71 @@ a missing series as a zero.
 
 Both halves of this issue are now done: the June-2025 hole is filled (71,831 notices) and the
 detector that would have caught it exists and is live.
+
+## Comment — 2026-09-17: verified on prod. Both halves are done; one item is not.
+
+Picked this up as the highest-value `needs-triage` item and found most of it already shipped — by
+the 401/402 work, which touched the same funnel — with nothing recorded here. Verified rather than
+assumed, against the live box at rev `b6750d5`.
+
+### The backfill: done
+
+    v_fetches, source=ted kind=monthly:  403 rows, 402 DISTINCT periods, 1993-01 … 2026-06
+
+402 distinct over a 402-month range is a contiguous registry. And the repro's own control triple now
+reads clean — the FR window that used to start on the last day of June starts on the first:
+
+| window | first TED-numbered item |
+| --- | --- |
+| May 2025 (control) | 16017 @ 2025-05-01T22:00:00Z |
+| **June 2025** | **85565 @ 2025-06-01T22:00:00Z** |
+| July 2025 (control) | 16500 @ 2025-07-01T22:00:00Z |
+
+Both controls are unchanged from the filing, so nothing else moved under this.
+
+### The detector: done
+
+`fetch_complete` is no longer `to.starts_with(&current_year)`. It is
+
+    !reference_only && to.starts_with(&current_year)
+        && gaps.missing.is_empty() && gaps.unparsed.is_empty()
+
+over `store::monthly_period_gaps`, which counts **distinct** periods and reports duplicates
+separately — the exact shape this issue asked for, including its warning that a `rows == 12` check
+must not be the fix. The funnel names the hole rather than dropping the tick silently
+(`ui.rs`: `· missing: …`, `· registered twice: …`), and the unit test
+`an_interior_hole_denies_fetch_complete_even_when_the_newest_period_is_current` pins the case.
+
+Controls: every year 2011–2024 reads **12 rows / 12 distinct**. Only 2025 deviates, at 13/12.
+
+### The 2025-09 "duplicate" is a REPUBLICATION, and the corpus handled it correctly
+
+This issue asked for it to be "reconciled or explained". Explained, and it should NOT be reconciled
+away:
+
+| fetch id | bytes | sha256 | notices contributed |
+| --- | --- | --- | --- |
+| 15 | 353,083,923 | `d6e1a8e0…` | **73,110** |
+| 542 | 352,934,443 | `e724bd59…` | **1** |
+
+Two DIFFERENT packages — different sizes, different hashes — for the same period. TED re-published
+the September monthly, the fetcher landed it, and the dedup did its job: of ~73k members, exactly
+**one** was not already held. Deleting fetch 542 to make the count read 402/402 would destroy the
+provenance of that one notice to tidy a cosmetic number.
+
+What it does argue is that the funnel's wording is off. `· registered twice` reads as an operator
+error; `two packages for one period` is what happened, and it is the normal, correct outcome of a
+publisher re-issuing a monthly. Worth a word change, not a data change.
+
+## Still open — the only one
+
+**The check fires only on a coverage refresh.** `monthly_period_gaps` is called from exactly one
+place, `coverage.rs:547`, on the dashboard path. This issue's own acceptance says:
+
+> The check runs on a schedule, not only on the funnel refresh: a hole introduced tomorrow is
+> surfaced within one cycle … it must fire without anyone opening the dashboard.
+
+That is still true and still unbuilt. The natural home is the weekly tick, beside `ghost-census` and
+`member-twin-census` — both of which exist for precisely this reason, to notice a signature coming
+back when nobody is looking. The coverage legend flag (`ui.rs:532-541`, "work still in progress, not
+a permanent gap") is the second, smaller half of the same unit.
