@@ -349,3 +349,45 @@ rows that had projected could not simply be dropped. Any repair job needs:
 
 Not executed here: `/v1/sql` is SELECT-only by design, so this belongs in a job with dry/wet arms,
 and the measurement above is what that job's dry arm has to reproduce before anything is written.
+
+## Comment — 2026-09-17 (later): the repair is existing machinery, not surgery
+
+Read the store layer rather than assuming the cleanup needs bespoke repair code. It does not, and
+that materially de-risks the remaining unit.
+
+**The notices → tenders step already exists.** `Db::tenders_for_notice_ids` resolves a notice set to
+the Tenders those notices fold into, via exactly the `caused_by_notice_id` lookup this cohort needs,
+and its doc says the walk "pulls each hop's tender memberships so those Tenders **re-derive IN
+FULL**". `Db::touched_existing_tender_ids` is the same lookup on the changed set. So identifying what
+to rebuild after deleting the 281 is a call, not an algorithm.
+
+**Targeted re-derivation exists twice over**, and either works here:
+
+- **Re-queue by watermark** (issue 85): clear the `projected` watermark for the affected parsed
+  notices so the next `project rebuild=false` "re-derives just those Tenders. The parsed layer is
+  untouched." Batched by id range with a TRUNCATE between, because a cohort-wide UPDATE balloons the
+  WAL-index (issue 63) — a trap already solved and documented.
+- **Stamp epoch-stale** (issue 179): set `projection_epoch = 0` on the affected Tenders so the next
+  fold's chain-compare keeps nothing for THEM and rewrites them under current logic, without bumping
+  the global `PROJECTION_EPOCH`.
+
+### So the repair reduces to
+
+1. Select the cohort (`source='doe' AND publication_id='00000000-1900'`) — an indexed seek, already
+   measured at exactly 281.
+2. Resolve its Tenders with `tenders_for_notice_ids`, and assert the split is **278 same-tender /
+   3 cross-tender** before writing anything; a different split means the cohort moved and the plan is
+   stale.
+3. Delete the 281 notices and their `tender_versions` rows.
+4. Mark those Tenders for full re-derivation by one of the two mechanisms above.
+5. `project rebuild=false`, then check 394's acceptance: the placeholder cohort reads **0**.
+
+The only genuinely new code is the cohort selection, the delete, and the dry/wet plumbing — which is
+the shape every `repair-*` job in `supervisor.rs` already has, including the guard I want here:
+`Spec::RepairNoticeInstants` refuses a wet run unless a stored DRY report matches, and says so
+("no stored … plan — run the dry pass first"). Copy that.
+
+**The 3 cross-tender cases still need a decision, not a rule** — the placeholder sits on an old
+Tender while the sibling minted a new one, so step 4 rebuilds an old Tender that may end up with one
+fewer version, or none. Whether that old Tender should survive is the judgement the sweep must not
+make on its own, and it is why step 2 asserts the split rather than trusting it.
