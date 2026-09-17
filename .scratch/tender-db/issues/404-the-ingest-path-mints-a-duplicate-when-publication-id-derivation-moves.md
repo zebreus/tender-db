@@ -591,3 +591,44 @@ Only the repair itself. Everything it needs is now measured and written down:
   re-derivation plus `retire_tenders_chunked` for the three;
 - and the head columns of the 29 do not move, because the twins hold the SAME BYTES — only
   `current_seq` does.
+
+## Comment — 2026-09-17: why no "delete a projected notice" path exists, and what the repair must therefore do
+
+Before writing the repair, I inventoried what actually references a notice. **Seventeen foreign keys,
+across fourteen tables:**
+
+| handled by | tables |
+| --- | --- |
+| `clear_parsed` | `notice_sections`, `notice_texts`, `notice_codes`, `notice_classifications`, `notice_amounts`, `notice_dates`, `notice_integers`, `notice_numbers`, `notice_ids`, `organization_mentions` (+ `tender_version_parties` / `tender_version_bid_parties` by `mention_notice_id`) |
+| **nothing** | `quarantine`, `tenders.island_notice_id`, `tender_versions.caused_by_notice_id`, `lot_results`, `bids`, `contracts`, `legacy_adjacency` |
+
+`clear_parsed` says so itself, and deliberately: *"`lot_results`, `bids` and `contracts` also
+reference this notice … so nothing breaks by leaving them for the fold to replace."* True for a
+re-parse, which keeps the row. **Not true for a delete.**
+
+And the four canonical tables in the second row — `lot_results`, `bids`, `contracts`,
+`legacy_adjacency` — **carry no index at all.** Not on `notice_id`, not on `tender_id`, none. So
+deleting one notice row makes SQLite prove the constraint by scanning four multi-million-row tables,
+and deleting their rows by `notice_id` is itself a full scan per statement. At 281 notices that is
+issue 247's ~10 s-per-row shape multiplied by four tables.
+
+**That is why this path does not exist anywhere in the codebase**, and the only `DELETE FROM notices`
+outside tests is issue 411's — which now removes a row that has no children by construction.
+
+### So the repair batches by TABLE, not by notice
+
+- Bracket the whole pass with `set_foreign_keys(false)`, restored after — `project.rs` already does
+  exactly this for the R2/E0/R3 merge loop (issue 352), for exactly this cost.
+- Delete the child rows explicitly, **one statement per table over all 281 ids** (chunked into `IN`
+  lists), so an unindexed table is scanned a handful of times in total rather than 281 times.
+- The three island Tenders go through `retire_tenders_chunked`, which already deletes every
+  `tender_id`-keyed satellite and emits the `removed` events.
+- Then the keepers: `publication_id` = the elected key, `projected = 0`.
+
+Deferring the FK checks is NOT an alternative here: a deferred constraint is still proved at COMMIT,
+so it moves the scan rather than removing it.
+
+**Not yet measured:** how many rows the 281 siblings actually hold in those four tables. It does not
+change the design — a batched DELETE costs the same whether it matches 0 rows or 500 — but it is
+worth knowing, and it cannot be asked cheaply for the same reason the delete is expensive. The dry
+arm is the right place to count it, once, under the same bracket.
