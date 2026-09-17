@@ -2077,6 +2077,20 @@ pub struct Report {
     /// source's publication calendar, at the corpus head (issue 402). Empty is
     /// the healthy state.
     pub publication_gaps: Vec<PublicationGapRow>,
+    /// How many `(source, day)` rows the continuity query actually returned, and
+    /// over how many sources (issue 402).
+    ///
+    /// Carried so that `none` can be DISTINGUISHED from `nothing was measured`.
+    /// An empty `publication_gaps` renders as "none", and it renders that way
+    /// both when every source is continuous and when the query matched no rows
+    /// at all — a clean verdict and a blind one printing the same sentence. That
+    /// is the exact failure this whole section exists to stop making, one level
+    /// up: for two months a fetch hole read as a green tick. The window is now a
+    /// time predicate over an unindexed column, so "matched nothing" is a
+    /// reachable state (a wrong bound, a clock skew, an empty corpus) rather
+    /// than a hypothetical.
+    pub publication_days_seen: usize,
+    pub publication_sources: usize,
     /// The longest version chain in the corpus (`MAX(tenders.current_seq)`) —
     /// the fold-cost tripwire (issue 92). 0 when unmeasured or the layer is
     /// empty; the render distinguishes the two via [`Report::unmeasured`].
@@ -2475,6 +2489,13 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         // is a window function turso only partly supports (see the dialect note
         // in `/v1/sql/schema`), and the fold is three lines here against a
         // `LAG()` that would have to be tested against the engine's own gaps.
+        publication_days_seen: raw.publication_days.len(),
+        publication_sources: raw
+            .publication_days
+            .iter()
+            .map(|r| as_str(r.first()))
+            .collect::<std::collections::BTreeSet<_>>()
+            .len(),
         publication_gaps: {
             let mut by_source: std::collections::BTreeMap<String, Vec<(String, i64)>> =
                 Default::default();
@@ -3196,7 +3217,11 @@ pub fn render_text(report: &Report) -> String {
         let _ = writeln!(
             out,
             "  none — no source is silent for {PUBLICATION_GAP_MIN_DAYS}+ consecutive days \
-             anywhere in the last {PUBLICATION_GAP_WINDOW_DAYS} days of publication time."
+             anywhere in the last {PUBLICATION_GAP_WINDOW_DAYS} days of publication time. \
+             Measured over {} publication day(s) across {} source(s) — if that pair is 0, this \
+             line is saying the query matched NOTHING, which is not the same as continuous.",
+            report.publication_days_seen,
+            report.publication_sources
         );
     } else {
         let _ = writeln!(
@@ -3600,6 +3625,8 @@ pub fn render_json(report: &Report) -> String {
         // Issue 402. Present even when empty, because an absent key and a healthy
         // corpus are the same thing to a JSON consumer, and this section's whole
         // point is that silence was already being read as health.
+        "publication_days_seen": report.publication_days_seen,
+        "publication_sources": report.publication_sources,
         "publication_gaps": report
             .publication_gaps
             .iter()
@@ -3843,6 +3870,8 @@ mod tests {
         let report = Report {
             base_url: "x".into(),
             publication_gaps: Vec::new(),
+            publication_days_seen: 0,
+            publication_sources: 0,
             completeness: vec![CompletenessRow {
                 profile: "eforms:eforms-sdk-1.13".into(),
                 versions: 1_000,
@@ -4749,6 +4778,46 @@ mod tests {
         let text = render_text(&report);
         assert!(text.contains("== 14. Publication-day continuity"), "{text}");
         assert!(text.contains("  none —"), "{text}");
+    }
+
+    /// Issue 402: `none` must say what it was measured over, because "every source
+    /// is continuous" and "the query matched nothing" render the same sentence.
+    ///
+    /// This is the section's own failure mode one level up. It exists because a
+    /// fetch hole read as a green tick for two months; a `none` that cannot be
+    /// told apart from a blind run would reintroduce exactly that. The risk is not
+    /// hypothetical now that the window is a TIME predicate over an unindexed
+    /// column — a wrong bound or a clock skew matches no rows and says "none".
+    #[test]
+    fn a_continuous_none_is_distinguishable_from_a_none_that_measured_nothing() {
+        let mut ran = sentinel_scaffold();
+        put(
+            &mut ran,
+            "publication_days",
+            Some(vec![
+                vec![json!("ted"), json!("2026-08-06"), json!(3300)],
+                vec![json!("ted"), json!("2026-08-09"), json!(3400)],
+                vec![json!("doe"), json!("2026-08-09"), json!(12)],
+            ]),
+        );
+        let measured = assemble("x", &Raw::from_labelled(ran).expect("raw"));
+        assert!(measured.publication_gaps.is_empty(), "a weekend is not a gap");
+        assert_eq!(measured.publication_days_seen, 3);
+        assert_eq!(measured.publication_sources, 2, "ted and doe");
+        let text = render_text(&measured);
+        assert!(text.contains("3 publication day(s) across 2 source(s)"), "{text}");
+
+        // The blind run: the query RAN and returned nothing. Same `none`, and the
+        // counts are what separate it.
+        let mut empty = sentinel_scaffold();
+        put(&mut empty, "publication_days", Some(Vec::new()));
+        let blind = assemble("x", &Raw::from_labelled(empty).expect("raw"));
+        let blind_text = render_text(&blind);
+        assert!(blind_text.contains("  none —"), "both render none: {blind_text}");
+        assert!(
+            blind_text.contains("0 publication day(s) across 0 source(s)"),
+            "and the zero is what gives it away:\n{blind_text}"
+        );
     }
 
     /// Section 11 carries FOUR readings of one population and they mean different
