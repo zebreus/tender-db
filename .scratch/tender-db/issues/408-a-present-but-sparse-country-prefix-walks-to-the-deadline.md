@@ -150,3 +150,63 @@ That is not a criticism of the report; it is the useful part of the signal. Thos
 explanations the board holds. `GR` is the one thing it found that the board did not have — and the
 mechanism underneath it turned out to be neither what the report proposed nor what this issue first
 assumed.
+
+## Comment — 2026-09-17: unit 1 is DECIDED — (b), and (a) turns out not to be cheaply buildable
+
+Read the schema and the read path rather than reasoning from the options as written. Two facts
+change the choice.
+
+### (a) "seed by head presence" is not cheaply implementable
+
+The probe it needs is *"does this country prefix appear among recent tender ids"*. The index is
+
+    CREATE INDEX tender_version_classifications_code ON tender_version_classifications(scheme, code);
+
+— **no `tender_id`**. So `MAX(tender_id) … WHERE scheme='nuts' AND code >= ? AND code < ?` has to
+visit every matching ROW, which for a dense prefix like `DE` is millions. Widening the index to
+`(scheme, code, tender_id)` does not rescue it either: the index would be ordered by code THEN
+tender_id, and a country prefix spans many distinct codes (`DE1`, `DE11`, `DE300`…), so a max across
+the range still touches every code in it unless the engine skip-scans, which turso is not assumed to
+do. The cheap version of (a) does not exist with a realistic index, and the expensive version is the
+thing being avoided.
+
+Choosing (a) anyway would need timing evidence for the dense-country seed, and that is a
+**characterisation run**, which `docs/agents/prod-box-reads.md` says has *no compliant on-box path*.
+So (a) is not merely harder — it is blocked behind an owner conversation, for a fix that is narrower
+than (b).
+
+### (b) "bound the fallback walk" needs no new measurement, and no contract change
+
+This was the open worry: a bounded walk returns a SHORT page, and a short page sounds like a breaking
+change. It is not, and the reason is already in the served contract:
+
+> Envelope: `{"items": [ … ], "next_cursor": "1234"|null, "more": true|false, "ignored_filters": []}`
+> … Paginate by following `next_cursor` until `more` is false.
+
+Pagination is **`more`-driven, not length-driven**. A compliant client follows the cursor until
+`more` is false; it is never told that a short page means the end. And `more` is not derived from
+page length — every list handler fetches `limit + 1` and truncates:
+
+    crates/app/src/v1/mod.rs:1204,1215  read_ordered(… limit + 1)   → rows.truncate(limit)
+    crates/app/src/v1/mod.rs:1290,1301  read_org_named(… limit + 1) → rows.truncate(limit)
+    crates/app/src/v1/mod.rs:1535       changes_since(… limit + 1)  → rows.truncate(limit)
+
+So "we stopped early, there is more" is expressible in the envelope exactly as it stands.
+
+### The one detail that must be right
+
+**The cursor must be the last row EXAMINED, not the last row RETURNED.** A bounded walk that gives
+up after N driven rows has examined far past whatever it managed to return; emitting a cursor at the
+last returned item makes the next page re-walk the same ground and the client loops forever without
+advancing. That is the whole risk of (b) and it is a single, testable property:
+
+> given a bound that trips, two successive pages must not examine overlapping ranges, and following
+> the cursor must terminate.
+
+### Unit 1: decided
+
+**(b), bound the fallback walk.** It fixes the whole class rather than the country leg — the same
+bound serves `kind`, `source`, a sparse `currency`, and every future filter that routes to the
+isolated pool — it needs no new index, no new statistics, and no measurement that has no compliant
+path. Unit 2 (enumerate other retired spellings) stays useful but drops from blocking to
+informational, since the fix no longer depends on knowing which values are sparse.
