@@ -513,3 +513,35 @@ larger and want the same slicing discipline. Noted while sizing it: the obvious 
 `SELECT source, COUNT(*), MIN(member_path), MAX(member_path) FROM notices GROUP BY source`, is
 UNBOUNDED and returned a **408** on the first try. Per `docs/agents/prod-box-reads.md` it was not
 retried.
+
+### The census is built, and it costs about two seconds
+
+`member-twin-census` (`Spec::MemberTwinCensus`, read-only, stoppable, stores no report when
+stopped) walks `notices_member_identity` one source at a time and reports, per source, how many
+member names are held more than once and how many of those are ONE payload under two or more
+`publication_id`s.
+
+**The first shape written for it would have been quadratic**, and reading the plan rather than
+assuming it is the only reason that was caught before it ran. The obvious corpus-wide keyset —
+`source > ?1 OR (source = ?1 AND (member_path > ?2 OR …))` — plans as
+
+    SCAN notices USING COVERING INDEX notices_member_identity
+
+with the whole predicate applied as a FILTER, so every batch restarts at the head of the index: 144
+batches over 14.4M rows would examine a billion of them. Seeking needs an EQUALITY on the leading
+column, so the walk takes one source at a time (`source = ?1 AND member_path >= ?2`, which plans as
+`SEARCH … (source=? AND member_path>=?)`) and steps between sources with `source > ?1 … LIMIT 1`,
+itself a seek. Both are pinned by a plan test anchored on the seek TERMS, because this issue already
+taught that a bare `contains` matches `notices_member_identity_DISABLED`.
+
+Measured through `/v1/sql` on the live box, same statement shape as the job's batch:
+
+    LIMIT 1,000        1.96 s      LIMIT 200,000      1.84 s
+    LIMIT 10,000       1.68 s      LIMIT 500,000      1.70 s
+    LIMIT 50,000       1.69 s      LIMIT 2,000,000    1.98 s
+
+Two million rows cost the same wall time as one thousand, so ~1.7 s of that is ssh and HTTP and the
+query itself is **about 0.3 s per 2M rows** — roughly **2 s for the whole 14.4M-row corpus**. It also
+settles a question the plan text cannot answer: turso prints the same `SEARCH … USING INDEX` string
+whether or not a seek is covering, but 2M rowid lookups could not complete in 0.3 s, so the walk is
+served from the index and never touches a page of `notices`.

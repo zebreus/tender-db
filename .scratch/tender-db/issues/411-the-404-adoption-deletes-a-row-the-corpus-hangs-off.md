@@ -1,6 +1,6 @@
 # 411 — issue 404's own adoption arm could not run: it DELETED the projected row, and `tender_versions` is a real foreign key
 
-Status: ready-for-agent — **FIX BUILT AND GATED 2026-09-17**, found by reading 404's remaining unit rather than by an incident, and reproduced red before it was written. See "Repro" — the failure is `Constraint("immediate foreign key constraint failed")`, which `process` propagates with `?`.
+Status: ready-for-agent — **FIX DEPLOYED 2026-09-17** at rev `22f5bab`, health green (gated `GATE-EXIT=0`), found by reading 404's remaining unit rather than by an incident, and reproduced red before it was written. See "Repro" — the failure is `Constraint("immediate foreign key constraint failed")`, which `process` propagates with `?`.
 Kind: defect (store — `Db::record_notice_tx`'s moved-identity arm, `crates/store/src/lib.rs`; self-inflicted, by the fix on issue 404)
 Relates to: 404 (whose fix this is — the mint it stopped was real and the counter it added is right; only the adoption itself was wrong), 290 (`reparse_notice`'s adoption, which does it correctly and was the model 404 claimed to follow), 247 (the deferred FK checks `clear_parsed` needs and this arm did not set), 248 (the `keep` set that stops the expensive mention proof), 85 (`projected = 0` as the way a store-layer change reaches the canonical layer), ADR-0001 (the canonical layer is derived; the ingest path must not write it)
 Blocked by: nothing
@@ -77,7 +77,9 @@ Two things the arm was also missing, both already solved on the re-parse path:
 - ~~A test folds the stale notice before the re-key~~ — `a_moved_identity_is_adopted_even_when_the_stale_notice_has_projected`,
   run red first (the FK constraint above), and asserting the surviving id, the new key,
   `projected = 0`, and that the Tender still holds the version this notice caused.
-- Deployed, and the next ordinary weekday fold reports `0 re-keyed` with no `process` failure.
+- ~~Deployed~~ — `22f5bab`, 2026-09-17 15:31 CEST, `/health` 200 and `rev` confirmed. The next
+  ordinary weekday fold should report `0 re-keyed` with no `process` failure, as every fold since 404
+  shipped has.
 - **The live exercise is still owed.** Nothing has re-keyed on the ingest path since 404 shipped
   (job 1455 omitted the clause entirely), so neither the broken arm nor the fixed one has run on
   prod. The 281-row repair on issue 404 is the natural place to exercise it, because that cohort is
