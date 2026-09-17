@@ -527,6 +527,20 @@ enum Spec {
     /// the ~45k having drained away with the reparse backlog. What was missing was
     /// anything that would notice them coming back, which is what this now is.
     GhostCensus,
+    /// Issue 404: every archived member the corpus holds under MORE THAN ONE
+    /// `publication_id`, in bounded batches of the
+    /// `notices_member_identity(source, member_path)` index. READ-ONLY.
+    ///
+    /// This is the number issue 404 asked for and could not get: its own note
+    /// records that the obvious form, a `GROUP BY` on the unindexed
+    /// `publication_id`, returned a 408 twice and was not retried. 281 was only
+    /// ever a FLOOR — it counted the DÖE placeholder rows of one incident, and
+    /// said nothing about whether any other source carries the same shape.
+    ///
+    /// Read-only and separate from the repair on purpose, the way `ghost-census`
+    /// is separate from the cleanup it detects: a destructive sweep should be
+    /// scoped by a measurement, not by the incident that prompted it.
+    MemberTwinCensus,
     /// Fetch the ECB daily reference-rate history and load `currency_rates`
     /// (ADR-0014 unit 2): archive the CSV under the ordinary fetch registry
     /// (source `ecb`, kind `rates`, period = fetch date), parse, seed the
@@ -1959,6 +1973,10 @@ impl Supervisor {
                 }
                 Ok(ids)
             }
+            "member-twin-census" => Ok(vec![
+                self.push("member-twin-census", "member-twin-census".into(), Spec::MemberTwinCensus)
+                    .await,
+            ]),
             "ghost-census" | "sweep-regrouped-ghosts" => Ok(vec![
                 self.push("ghost-census", "ghost-census".into(), Spec::GhostCensus).await,
             ]),
@@ -2320,6 +2338,10 @@ const STOPPABLE_KINDS: &[&str] = &[
     // can keep. Its predecessor's whole incident was being un-stoppable —
     // one 40-minute statement with nothing to check a flag between.
     "ghost-census",
+    // Issue 404: read between index batches, and a stopped run stores NO report
+    // — the same discipline as ghost-census above, and for the same reason: a
+    // partial twin count reads as a clean corpus.
+    "member-twin-census",
     "repair-country-typos",
     "repair-label-prefixes",
     "repair-renormalised-identifiers",
@@ -8629,6 +8651,99 @@ impl Supervisor {
                     summary.join("; ")
                 ))
             }
+            Spec::MemberTwinCensus => Box::pin(async move {
+                // BOXED, for the reason spelled out on the arm below: `run_spec`
+                // is one giant async match and a census arm's locals once
+                // overflowed an unrelated test's stack.
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    "walking",
+                    None,
+                    None,
+                    "issue 404: members held under more than one publication_id".to_owned(),
+                );
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("walking", Some(done), None, detail.to_owned());
+                };
+                // Rows per statement. Wide enough that 14.4M notices is a few
+                // hundred statements rather than thousands, narrow enough that no
+                // single one can become the uninterruptible scan issue 406 was
+                // filed on. Also the threshold past which a single member name
+                // would have to hold more rows than one batch before the walk has
+                // to count it outright — see `stalled_batches`.
+                const TWIN_BATCH: usize = 100_000;
+                const CAP: usize = 400;
+                let r = self
+                    .db
+                    .member_twin_census(TWIN_BATCH, CAP, &stop, &progress)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    // No report on a stop, the same rule ghost-census keeps: a
+                    // partial twin count reads as a clean corpus, and that is the
+                    // one wrong answer this census must never give.
+                    return Ok("member-twin-census STOPPED by cancel — no report stored".to_owned());
+                }
+                let now = store::now_unix();
+                let body = serde_json::json!({
+                    "batch": r.batch,
+                    "rows_walked": r.rows_walked,
+                    "batches": r.batches,
+                    "sources": r.sources,
+                    "stalled_batches": r.stalled_batches,
+                    "duplicate_keys": r.duplicate_keys,
+                    "twin_sets": r.twin_sets,
+                    "twin_rows": r.twin_rows,
+                    "by_source": r.by_source.iter().map(|(source, per)| serde_json::json!({
+                        "source": source,
+                        "duplicate_keys": per.duplicate_keys,
+                        "twin_sets": per.twin_sets,
+                        "twin_rows": per.twin_rows,
+                    })).collect::<Vec<_>>(),
+                    "sample_truncated": r.truncated,
+                    "sample": r.sample.iter().map(|set| serde_json::json!({
+                        "source": set.source,
+                        "member_path": set.member_path,
+                        "content_hash": set.content_hash,
+                        "notices": set.rows.iter().map(|(id, key)| serde_json::json!({
+                            "id": id, "publication_id": key,
+                        })).collect::<Vec<_>>(),
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("member-twin-census", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let by_source = r
+                    .by_source
+                    .iter()
+                    .filter(|(_, per)| per.twin_sets > 0)
+                    .map(|(source, per)| format!("{source} {} set(s)/{} row(s)", per.twin_sets, per.twin_rows))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                Ok(format!(
+                    "member-twin-census (issue 404): {} row(s) walked across {} source(s) in {} \
+                     batch(es) of {}, {} member name(s) held more than once, of which {} are ONE payload \
+                     under 2+ publication_ids, covering {} notice row(s). By source: [{}]. \
+                     NOTHING IS WRITTEN. A duplicate NAME is not a defect — publishers reuse \
+                     member names across packages and different bytes are different records; \
+                     the twin count is the one that matters, and 281 was only ever the floor \
+                     of one DÖE incident. The ingest path can no longer create this shape \
+                     (issue 411): a moved identity is now adopted in place, on the row the \
+                     corpus already hangs off.",
+                    r.rows_walked,
+                    r.sources,
+                    r.batches,
+                    r.batch,
+                    r.duplicate_keys,
+                    r.twin_sets,
+                    r.twin_rows,
+                    if by_source.is_empty() { "none".to_owned() } else { by_source },
+                ))
+            })
+            .await,
             Spec::GhostCensus => Box::pin(async move {
                 // BOXED. `run_spec` is a 62-arm async match, so every arm's locals
                 // live in ONE future; a census arm added to it once overflowed the
@@ -10093,6 +10208,20 @@ impl Supervisor {
                         // would catch a second one, which is the part that was
                         // missing while the ~45k sat on prod unnoticed for weeks.
                         self.push("ghost-census", "ghost-census (weekly)".into(), Spec::GhostCensus).await;
+                        // Issue 404: the same kind of standing check, for the same
+                        // kind of reason — the 281 duplicate notices it was filed on
+                        // sat in the corpus because nothing was counting members held
+                        // under two identities. Issue 411 closed the mechanism that
+                        // made them; this is what would catch another. Measured on
+                        // prod at ~2 s for the whole 14.4M-row corpus (0.3 s per 2M
+                        // rows, index-only), so it is cheaper than the ghost census it
+                        // rides beside.
+                        self.push(
+                            "member-twin-census",
+                            "member-twin-census (weekly)".into(),
+                            Spec::MemberTwinCensus,
+                        )
+                        .await;
                         self.push(
                             "data-quality",
                             "data-quality (weekly)".into(),
@@ -10992,6 +11121,7 @@ mod tests {
                 "generic-statistic-census",
                 "name-attribution-probe",
                 "ghost-census",
+                "member-twin-census",
                 "repair-country-typos",
                 "repair-label-prefixes",
                 "repair-renormalised-identifiers",
@@ -12498,13 +12628,13 @@ mod tests {
         assert!(!s.contains("admitted"), "no admitted count exists for this gate: {s}");
     }
 
-    /// Issue 313: the weekly pre-dawn tick must actually enqueue all three
+    /// Issue 313: the weekly pre-dawn tick must actually enqueue all nine
     /// of its jobs, and must not stack a second copy of any of them. Until
     /// this test existed the body lived inside a loop that sleeps until a
     /// wall-clock Sunday, so tripwire 6's weekly clock had only ever been
     /// exercised by hand — a wiring slip would have surfaced as silence.
     #[tokio::test]
-    async fn the_weekly_report_tick_enqueues_its_eight_jobs_once_each() {
+    async fn the_weekly_report_tick_enqueues_its_nine_jobs_once_each() {
         let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
         sup.run_report_tick().await;
         let kinds: Vec<String> = sup.queued().into_iter().map(|j| j.kind).collect();
@@ -12516,6 +12646,8 @@ mod tests {
                 "disk-census",
                 // Issue 278: read-only, ~9 s, rides with the cheap stamps.
                 "ghost-census",
+                // Issue 404: ~2 s read-only, the twin of the line above.
+                "member-twin-census",
                 "data-quality",
                 "rehash-probe",
                 "build-org-match-keys",
@@ -12552,7 +12684,7 @@ mod tests {
         // A second tick with last week's work still queued stacks nothing
         // (the issue-282 already_pending guard).
         sup.run_report_tick().await;
-        assert_eq!(sup.queued().len(), 8, "already_pending must stop the double enqueue");
+        assert_eq!(sup.queued().len(), 9, "already_pending must stop the double enqueue");
     }
 
     /// Issue 324: the dry arm of `drop-orphan-satellites` writes its plan as

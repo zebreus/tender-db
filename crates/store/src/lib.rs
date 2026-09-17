@@ -1764,6 +1764,275 @@ impl Db {
         Ok(Some(id))
     }
 
+    /// Every archived member the corpus holds under MORE THAN ONE
+    /// `publication_id` — issue 404's duplication as a census rather than as an
+    /// incident, walked in BOUNDED batches through
+    /// `notices_member_identity(source, member_path)`.
+    ///
+    /// ## Why this needs a walk at all
+    ///
+    /// 404's own scope note says the number it wanted — "how many
+    /// `(source, member_path, content_hash)` triples are held under more than one
+    /// `publication_id`" — could not be produced, because a `GROUP BY` on the
+    /// unindexed `publication_id` returned a 408 twice and per
+    /// `docs/agents/prod-box-reads.md` a 408 is never retried. The index that
+    /// issue added for the ingest lookup is exactly the one this question wants.
+    ///
+    /// ## Why it is a SEEK per source rather than one keyset over the corpus
+    ///
+    /// The obvious keyset — `source > ?1 OR (source = ?1 AND member_path > ?2 …)`
+    /// — is not a seek. Its plan, read rather than assumed, is
+    /// `SCAN notices USING COVERING INDEX notices_member_identity`
+    /// with the whole predicate applied as a FILTER, so every batch restarts at
+    /// the head of the index and skips forward: 144 batches over 14.4M entries is
+    /// a billion entries examined, quadratic in the corpus. Seeking needs an
+    /// EQUALITY on the leading column, so the walk takes one source at a time —
+    /// `source = ?1 AND member_path >= ?2`, which plans as a range SEARCH — and
+    /// steps between sources with `source > ?1 … LIMIT 1`, itself a seek.
+    ///
+    /// ## Why bounding cannot lose a pair
+    ///
+    /// Each statement reads at most `batch` rows. The cursor is
+    /// `(member_path, id)` and the seek is INCLUSIVE on `member_path`, so a group
+    /// straddling a batch boundary is re-read from its start and the rows already
+    /// counted are skipped by id; its running count is carried in `pending`.
+    /// Nothing can hide in a seam — the seam is inside a group, and the cursor is
+    /// what closes it.
+    ///
+    /// A batch whose rows were ALL already counted has made no progress, and the
+    /// inclusive seek would re-read them forever. That batch counts its group
+    /// outright and steps past with the exclusive form. It happens whenever
+    /// `batch` is too small to step over a group — always, at `batch = 1` — and in
+    /// production, where a batch is 100,000 rows, only if one member name holds
+    /// more rows than that. Either way the walk terminates, which is the point:
+    /// a non-terminating loop in a production job is not a risk worth carrying
+    /// for ten lines.
+    ///
+    /// ## Two stages, because a duplicate NAME is not a duplicate RECORD
+    ///
+    /// A `(source, member_path)` held twice is only a CANDIDATE: publishers reuse
+    /// member names across packages, and two members with the same name and
+    /// different bytes are two records. Only the candidates — rare — are read for
+    /// their hashes, and only a `content_hash` group holding two or more distinct
+    /// `publication_id`s is counted as a twin set.
+    pub async fn member_twin_census(
+        &self,
+        batch: usize,
+        cap: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+        progress: &(dyn Fn(u64, &str) + Sync),
+    ) -> turso::Result<MemberTwinCensus> {
+        let reader = self.reader().await?;
+        let batch = batch.max(1);
+        let mut report = MemberTwinCensus { batch, ..Default::default() };
+        let mut source = String::new();
+        loop {
+            if stop() {
+                report.stopped = true;
+                return Ok(report);
+            }
+            let mut rows = reader
+                .query(
+                    "SELECT source FROM notices WHERE source > ?1 ORDER BY source LIMIT 1",
+                    (t(&source),),
+                )
+                .await?;
+            let Some(row) = rows.next().await? else { break };
+            let next = text(&row, 0);
+            drop(rows);
+            source = next;
+            report.sources += 1;
+
+            // `seek_from` is inclusive, so the previous batch's last group is
+            // re-read; `counted_upto` is the highest id of it already counted.
+            let mut seek_from = String::new();
+            let mut counted_upto = i64::MIN;
+            let mut pending: Option<(String, u64)> = None;
+            loop {
+                if stop() {
+                    report.stopped = true;
+                    return Ok(report);
+                }
+                let mut rows = reader
+                    .query(
+                        "SELECT member_path, id FROM notices
+                          WHERE source = ?1 AND member_path >= ?2
+                          ORDER BY member_path, id
+                          LIMIT ?3",
+                        (t(&source), t(&seek_from), batch as i64),
+                    )
+                    .await?;
+                let mut raw = 0u64;
+                let mut fresh = 0u64;
+                let mut candidates: Vec<String> = Vec::new();
+                let (mut last_member, mut last_id) = (seek_from.clone(), counted_upto);
+                while let Some(row) = rows.next().await? {
+                    raw += 1;
+                    let member = text(&row, 0);
+                    let id = int(&row, 1);
+                    if member == seek_from && id <= counted_upto {
+                        continue;
+                    }
+                    fresh += 1;
+                    match &mut pending {
+                        Some((pm, n)) if *pm == member => *n += 1,
+                        _ => {
+                            if let Some((pm, n)) = pending.replace((member.clone(), 1))
+                                && n > 1
+                            {
+                                candidates.push(pm);
+                            }
+                        }
+                    }
+                    last_member = member;
+                    last_id = id;
+                }
+                drop(rows);
+                report.rows_walked += raw;
+                report.batches += 1;
+                let done = raw < batch as u64;
+                if done && let Some((pm, n)) = pending.take()
+                    && n > 1
+                {
+                    candidates.push(pm);
+                }
+                // No progress: every row this batch returned was one the last
+                // batch had already counted. Count the group outright and step
+                // past it, so the inclusive seek cannot re-read it forever.
+                //
+                // `pending` can only concern `seek_from` here — it is whatever the
+                // previous batch was left mid-group on, and that group is the one
+                // the seek is parked at — so dropping it loses nothing that the
+                // exact count does not replace.
+                let stalled = !done && fresh == 0;
+                if stalled {
+                    let held = self.count_member_rows(&reader, &source, &seek_from).await?;
+                    pending = None;
+                    if held > 1 {
+                        candidates.push(seek_from.clone());
+                    }
+                    report.stalled_batches += 1;
+                }
+                for member in candidates {
+                    self.record_twin_candidate(&reader, &mut report, cap, &source, &member).await?;
+                }
+                if done {
+                    break;
+                }
+                if stalled {
+                    let mut rows = reader
+                        .query(
+                            "SELECT member_path FROM notices
+                              WHERE source = ?1 AND member_path > ?2
+                              ORDER BY member_path LIMIT 1",
+                            (t(&source), t(&seek_from)),
+                        )
+                        .await?;
+                    let next_member = rows.next().await?.map(|r| text(&r, 0));
+                    drop(rows);
+                    match next_member {
+                        Some(m) => {
+                            seek_from = m;
+                            counted_upto = i64::MIN;
+                        }
+                        None => break,
+                    }
+                } else {
+                    seek_from = last_member;
+                    counted_upto = last_id;
+                }
+                progress(
+                    report.batches,
+                    &format!(
+                        "issue 404 member-twin census: {} row(s) walked, at {source}/{seek_from}, \
+                         {} duplicate name(s), {} twin set(s) so far",
+                        report.rows_walked, report.duplicate_keys, report.twin_sets
+                    ),
+                );
+            }
+            progress(
+                report.batches,
+                &format!(
+                    "issue 404 member-twin census: source {source} done, {} row(s) walked, \
+                     {} duplicate name(s), {} twin set(s) so far",
+                    report.rows_walked, report.duplicate_keys, report.twin_sets
+                ),
+            );
+        }
+        Ok(report)
+    }
+
+    /// How many rows one `(source, member_path)` holds — the exact count for the
+    /// oversized-group path, which cannot use the batched walk by definition.
+    async fn count_member_rows(
+        &self,
+        reader: &Reader,
+        source: &str,
+        member: &str,
+    ) -> turso::Result<u64> {
+        let mut rows = reader
+            .query(
+                "SELECT COUNT(*) FROM notices WHERE source = ? AND member_path = ?",
+                (t(source), t(member)),
+            )
+            .await?;
+        Ok(match rows.next().await? {
+            Some(row) => int(&row, 0).max(0) as u64,
+            None => 0,
+        })
+    }
+
+    /// Stage two for one `(source, member_path)` held more than once: read its
+    /// rows and count a twin set only where ONE payload wears two identities.
+    async fn record_twin_candidate(
+        &self,
+        reader: &Reader,
+        report: &mut MemberTwinCensus,
+        cap: usize,
+        source: &str,
+        member: &str,
+    ) -> turso::Result<()> {
+        report.duplicate_keys += 1;
+        report.by_source.entry(source.to_owned()).or_default().duplicate_keys += 1;
+        let mut rows = reader
+            .query(
+                "SELECT id, publication_id, content_hash FROM notices
+                  WHERE source = ? AND member_path = ?
+                  ORDER BY id",
+                (t(source), t(member)),
+            )
+            .await?;
+        let mut by_hash: std::collections::BTreeMap<String, Vec<(i64, String)>> =
+            std::collections::BTreeMap::new();
+        while let Some(row) = rows.next().await? {
+            by_hash.entry(text(&row, 2)).or_default().push((int(&row, 0), text(&row, 1)));
+        }
+        drop(rows);
+        for (content_hash, members) in by_hash {
+            let identities: std::collections::BTreeSet<&str> =
+                members.iter().map(|(_, k)| k.as_str()).collect();
+            if identities.len() < 2 {
+                continue;
+            }
+            report.twin_sets += 1;
+            report.twin_rows += members.len() as u64;
+            let per = report.by_source.entry(source.to_owned()).or_default();
+            per.twin_sets += 1;
+            per.twin_rows += members.len() as u64;
+            if report.sample.len() < cap {
+                report.sample.push(MemberTwinSet {
+                    source: source.to_owned(),
+                    member_path: member.to_owned(),
+                    content_hash,
+                    rows: members,
+                });
+            } else {
+                report.truncated = true;
+            }
+        }
+        Ok(())
+    }
+
     async fn notice_id(&self, conn: &Connection, n: &Notice) -> turso::Result<Option<i64>> {
         let mut rows = conn
             .query(
@@ -4090,6 +4359,59 @@ pub enum Parse {
     Quarantined { reason: String, detail: Option<String> },
 }
 
+/// One archived member held under two or more identities — the shape issue 404
+/// made 281 of, found by [`Db::member_twin_census`].
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct MemberTwinSet {
+    pub source: String,
+    pub member_path: String,
+    pub content_hash: String,
+    /// `(notice id, publication_id)`, LOWEST ID FIRST. The order is the answer to
+    /// "which row survives a repair": the oldest is the one the corpus hangs off,
+    /// by `tender_versions.caused_by_notice_id` and by an island Tender's
+    /// `island:<notice_id>` group key — see [`Recorded::Rekeyed`].
+    pub rows: Vec<(i64, String)>,
+}
+
+/// One source's share of [`MemberTwinCensus`].
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct MemberTwinsBySource {
+    pub duplicate_keys: u64,
+    pub twin_sets: u64,
+    pub twin_rows: u64,
+}
+
+/// What [`Db::member_twin_census`] found.
+#[derive(Clone, Debug, Default)]
+pub struct MemberTwinCensus {
+    /// Rows per statement — the bound, echoed so a report says what the walk
+    /// actually cost.
+    pub batch: usize,
+    /// Rows the walk read, INCLUDING the boundary rows an inclusive seek re-reads
+    /// and skips. It is the walk's cost, not the corpus's size.
+    pub rows_walked: u64,
+    pub batches: u64,
+    pub sources: u64,
+    /// Batches that made no progress — every row already counted — and so
+    /// counted their group outright and stepped past it. At a production batch
+    /// size this means one member name holds more rows than a whole batch, and is
+    /// expected to stay 0; at `batch = 1` every group does it.
+    pub stalled_batches: u64,
+    /// `(source, member_path)` pairs held by more than one row. A CANDIDATE
+    /// count, not a defect count: publishers reuse member names across packages,
+    /// and the same name over different bytes is two records.
+    pub duplicate_keys: u64,
+    /// Of those, the payloads wearing two or more `publication_id`s. This is the
+    /// number issue 404 asked for and could not get.
+    pub twin_sets: u64,
+    /// The notice rows inside those sets — always at least twice `twin_sets`.
+    pub twin_rows: u64,
+    pub by_source: std::collections::BTreeMap<String, MemberTwinsBySource>,
+    pub sample: Vec<MemberTwinSet>,
+    pub truncated: bool,
+    pub stopped: bool,
+}
+
 /// The outcome of recording one member on the ORDINARY ingest path
 /// ([`Db::record_notice`]).
 ///
@@ -4379,6 +4701,195 @@ mod tests {
             !plan.contains("SCAN notices"),
             "a SCAN here is 9 s per new notice on the real corpus:\n{plan}"
         );
+    }
+
+    /// Issue 404's census must SEEK, and this is the guard that says so.
+    ///
+    /// The first shape written for it was the obvious corpus-wide keyset,
+    /// `source > ?1 OR (source = ?1 AND (member_path > ?2 OR …))`, and its plan —
+    /// read rather than assumed, which is the only reason this was caught before
+    /// it ran on prod — was
+    ///
+    ///     SCAN notices USING COVERING INDEX notices_member_identity
+    ///
+    /// a full scan with the predicate as a FILTER. Every batch would have
+    /// restarted at the head of the index, making a 144-batch walk over 14.4M
+    /// entries examine a billion of them. The fix is an EQUALITY on the leading
+    /// column, which is why the walk goes source by source.
+    ///
+    /// Anchored on the seek TERMS, not the index name: issue 404's own plan test
+    /// passed against `notices_member_identity_DISABLED` because a bare
+    /// `contains` matches a prefix.
+    #[tokio::test]
+    async fn the_member_twin_walk_seeks_rather_than_filtering_a_scan() {
+        let dir = std::env::temp_dir().join(format!("plan-404-walk-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let db = Db::open(dir.join("t.db").to_str().unwrap()).await.unwrap();
+        let conn = db.reader().await.unwrap();
+        let plan_of = async |sql: &str, params: Vec<Value>| {
+            let mut rows = conn.query(sql, params).await.unwrap();
+            let mut plan = String::new();
+            while let Some(row) = rows.next().await.unwrap() {
+                if let Ok(turso::Value::Text(d)) = row.get_value(3) {
+                    plan.push_str(&d);
+                    plan.push('\n');
+                }
+            }
+            plan
+        };
+        let step = plan_of(
+            "EXPLAIN QUERY PLAN \
+             SELECT source FROM notices WHERE source > ?1 ORDER BY source LIMIT 1",
+            vec![Value::Text(String::new())],
+        )
+        .await;
+        assert!(
+            step.contains("notices_member_identity (source>?)"),
+            "stepping to the next source must seek:\n{step}"
+        );
+        let walk = plan_of(
+            "EXPLAIN QUERY PLAN \
+             SELECT member_path, id FROM notices \
+              WHERE source = ?1 AND member_path >= ?2 \
+              ORDER BY member_path, id LIMIT ?3",
+            vec![Value::Text("ted".into()), Value::Text(String::new()), Value::Integer(10)],
+        )
+        .await;
+        assert!(
+            walk.contains("notices_member_identity (source=? AND member_path>=?)"),
+            "the batch must seek on (source, member_path) — a SCAN here makes the \
+             walk quadratic in the corpus:\n{walk}"
+        );
+        assert!(
+            !walk.contains("SCAN notices"),
+            "a SCAN restarts at the head of the index every batch:\n{walk}"
+        );
+        assert!(
+            !walk.to_uppercase().contains("TEMP B-TREE"),
+            "the ORDER BY is the index's own order:\n{walk}"
+        );
+    }
+
+    /// The census's own arithmetic, and the distinction it exists to draw: a
+    /// duplicate member NAME is not a duplicate RECORD.
+    #[tokio::test]
+    async fn a_member_under_two_identities_is_a_twin_and_the_same_name_over_other_bytes_is_not() {
+        let path = format!("/tmp/tender-db-twin-census-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        seed_fetch(&db).await;
+        let base = held_notice();
+        let seed = |publication_id: &str, member_path: &str, content_hash: &str| Notice {
+            publication_id: publication_id.into(),
+            member_path: member_path.into(),
+            content_hash: content_hash.into(),
+            ..base.clone()
+        };
+        // Written with `insert_notice_row` rather than `record_notice`, because
+        // the ingest path now REFUSES to create this shape (issue 411) — the
+        // census exists for the rows already standing.
+        let conn = db.conn().await;
+        for n in [
+            // A twin: one payload, one member, two identities.
+            seed("00000000-1900", "pkg/m1", "hashA"),
+            seed("a-real-stem-01", "pkg/m1", "hashA"),
+            // Same member name, different bytes: two records, not a twin.
+            seed("other-01", "pkg/m2", "hashB"),
+            seed("other-02", "pkg/m2", "hashC"),
+            // An ordinary, singly-held member.
+            seed("plain-01", "pkg/m3", "hashD"),
+            // A second source, so the per-source stepping is exercised.
+            Notice { source: "doe".into(), ..seed("d-1", "pkg/m1", "hashE") },
+            Notice { source: "doe".into(), ..seed("d-2", "pkg/m1", "hashE") },
+        ] {
+            assert!(db.insert_notice_row(&conn, &n).await.unwrap());
+        }
+        drop(conn);
+
+        let quiet = |_: u64, _: &str| {};
+        let never = || false;
+        // Batch of ONE, so every group straddles a seam and the cursor has to
+        // carry it. The counts must not depend on the batch size.
+        let r = db.member_twin_census(1, 50, &never, &quiet).await.unwrap();
+        assert_eq!(r.sources, 2, "both sources are stepped to by seek");
+        assert_eq!(r.duplicate_keys, 3, "ted pkg/m1, ted pkg/m2, doe pkg/m1");
+        assert_eq!(r.twin_sets, 2, "ted pkg/m1 and doe pkg/m1 — NOT ted pkg/m2");
+        assert_eq!(r.twin_rows, 4);
+        assert_eq!(
+            r.stalled_batches, 4,
+            "at batch = 1 the inclusive seek cannot step over ANY group, so all four \
+             (ted pkg/m1, pkg/m2, pkg/m3, doe pkg/m1) count themselves outright — and \
+             the totals above are identical either way, which is the assertion that \
+             matters"
+        );
+        let ted = r.sample.iter().find(|s| s.source == "ted").unwrap();
+        assert_eq!(ted.member_path, "pkg/m1");
+        assert_eq!(ted.content_hash, "hashA");
+        assert_eq!(
+            ted.rows.iter().map(|(_, k)| k.as_str()).collect::<Vec<_>>(),
+            vec!["00000000-1900", "a-real-stem-01"],
+            "lowest id first — the oldest row is the one a repair keeps"
+        );
+        assert!(ted.rows[0].0 < ted.rows[1].0);
+        assert_eq!(r.by_source["ted"].twin_sets, 1);
+        assert_eq!(r.by_source["doe"].twin_sets, 1);
+        assert!(!r.truncated && !r.stopped);
+
+        // A batch big enough to hold each source in one statement must agree.
+        let big = db.member_twin_census(1000, 50, &never, &quiet).await.unwrap();
+        assert_eq!(big.batches, 2, "one statement per source");
+        assert_eq!(
+            (big.duplicate_keys, big.twin_sets, big.twin_rows, big.stalled_batches),
+            (3, 2, 4, 0),
+            "and a batch that clears each source in one statement stalls on nothing"
+        );
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// A `(source, member_path)` wider than one batch cannot be walked by an
+    /// inclusive seek — every batch would re-read the same rows and skip them
+    /// all. It counts itself and steps past instead, and the walk TERMINATES,
+    /// which is the whole point of the arm.
+    #[tokio::test]
+    async fn a_member_group_wider_than_one_batch_is_counted_and_stepped_past() {
+        let path = format!("/tmp/tender-db-twin-wide-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        seed_fetch(&db).await;
+        let base = held_notice();
+        let conn = db.conn().await;
+        // Four rows under one member name, all the same bytes: one twin set of
+        // four. Then an ordinary member after it, which the walk must still reach.
+        for i in 0..4 {
+            let n = Notice {
+                publication_id: format!("wide-{i}"),
+                member_path: "pkg/wide".into(),
+                content_hash: "hashW".into(),
+                ..base.clone()
+            };
+            assert!(db.insert_notice_row(&conn, &n).await.unwrap());
+        }
+        let after = Notice {
+            publication_id: "zz-1".into(),
+            member_path: "pkg/zz".into(),
+            content_hash: "hashZ".into(),
+            ..base.clone()
+        };
+        assert!(db.insert_notice_row(&conn, &after).await.unwrap());
+        drop(conn);
+
+        let quiet = |_: u64, _: &str| {};
+        let never = || false;
+        let r = db.member_twin_census(2, 50, &never, &quiet).await.unwrap();
+        assert_eq!(r.stalled_batches, 1, "pkg/wide is wider than a batch of 2");
+        assert_eq!(r.duplicate_keys, 1);
+        assert_eq!(r.twin_sets, 1);
+        assert_eq!(r.twin_rows, 4, "counted in full, not just the batch that fit");
+        assert_eq!(r.sample[0].rows.len(), 4);
+        assert!(!r.stopped, "and it finished — pkg/zz is past the wide group");
+
+        let _ = std::fs::remove_file(&path);
     }
 
     #[tokio::test]
