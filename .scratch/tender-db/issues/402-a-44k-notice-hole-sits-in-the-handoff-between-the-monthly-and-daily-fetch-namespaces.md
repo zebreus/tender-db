@@ -3,8 +3,11 @@
 Status: ready-for-agent — **HALF (a) IS DONE AND VERIFIED ON PROD 2026-09-17**: the twelve OJ S
 dailies 2026-00124…00135 are fetched, processed and folded (job 2352: **44,854 notices → 40,848
 tenders, 85,747 versions**, then job 2353 rebuilt the deferred indexes), and the window that served
-ZERO now serves on every day sampled. **Unit B (the seam guard) is the open half and is the one that
-matters** — see the 2026-09-17 comment. Was: found 2026-09-16 by the hourly audit (step 3) on prod rev `19010b8`. The hole is MEASURED, not inferred: zero notices in the window, on both sides of which the corpus publishes ~3,720/day. The fix has two halves — fetch the missing issues, and make the seam checkable — and the second is the one that matters, because nothing on the board can currently see a hole in this position.
+ZERO now serves on every day sampled. **Unit B's DETECTOR half is fixed and gated 2026-09-17** — the continuity window was the newest
+2M NOTICE IDS, i.e. ingest order, and this hole ended exactly on that window's edge where
+`publication_gaps` (interior-only, by design) can never see it; it is now 550 days of PUBLICATION
+time, red-checked. **What remains is `fetched_to`'s lexical `MAX(period)` across two namespaces**
+(`store/src/lib.rs:3702`), located and written up but not fixed — see the 2026-09-17 comment. Was: found 2026-09-16 by the hourly audit (step 3) on prod rev `19010b8`. The hole is MEASURED, not inferred: zero notices in the window, on both sides of which the corpus publishes ~3,720/day. The fix has two halves — fetch the missing issues, and make the seam checkable — and the second is the one that matters, because nothing on the board can currently see a hole in this position.
 Kind: defect (coverage — the fetch plan's monthly→daily handoff, and the completeness verdict in `crates/app/src/coverage.rs` / `store::monthly_period_gaps`)
 Relates to: 395 (RESOLVED 2026-09-15 — it built `monthly_period_gaps` exactly to catch a fetch hole the ✓ was hiding, and it CANNOT see this one: its sequence test is monthly-only and interior-only by design, and this hole is at the boundary between two period namespaces, which is neither), 396 (RESOLVED-VERIFIED 2026-09-16 — its 2026 SURPLUS and this DEFICIT are in the same coverage cell and cancel: 2026 reads 118.74 % because the denominator is a 2026-07-17 snapshot while the held count runs to 2026-09-11, so ~44,600 missing notices are invisible under an over-100 % ratio), 15 (RESOLVED 2026-08-16 — the backfill that set the fetch plan, and where OJ S issue numbering is pinned), 33 (the funnel panel), 401 (filed the same hour — the same panel, a different way its cells mislead), 06 (the ground truth the coverage ratio divides by)
 Blocked by: nothing
@@ -311,3 +314,74 @@ the two spellings are easy to mix up when re-checking this window later.)
 yet detects the NEXT hole in this position, because 395's sequence test is monthly-only and
 interior-only and this seam is neither. The hole existed for two months under a green ✓ and an
 over-100 % coverage ratio (396), and that is the part of this issue worth finishing.
+
+## Comment — 2026-09-17: unit B's detector half is fixed, and the reason it was blind
+
+The continuity section could not have caught this hole, and the reason is sharper than
+"it had a window". Section 14 windowed by **notice id** — the newest 2,000,000 — because
+`notices.published_at` carries no index, so a time predicate scans where an id predicate is a
+primary-key range. Right about the cost, wrong about the measurement: **notice ids are ingest
+order**, and ingest order has nothing to do with publication order.
+
+Two consequences, and the second is the one that mattered:
+
+1. **A backfill re-shuffles the window.** The dailies backfilled for half (a) were ingested on
+   2026-09-16/17, so they now hold some of the corpus's NEWEST ids while holding its OLDEST 2026
+   publication dates. Nothing about an id window is stable under the one operation this report
+   exists to check.
+2. **A hole at the window's oldest publication day has no `before` bracket.** `publication_gaps`
+   reports interior silences only — a stretch lies between two days that BOTH carry notices — and
+   the caption has always said so. This hole sat exactly there: the monthlies were ingested before
+   the dailies, so the newest 2M ids began at publication day **2026-07-16**, which is the day the
+   hole ENDS. The stretch was off the edge of the window rather than inside it.
+
+So it was never a threshold problem. Neither `PUBLICATION_GAP_MIN_DAYS` nor the ordinary-bracket
+floor could have helped, because the rows were not in the result set to be judged. Interior-only
+is a sound design; interior-only **plus an ingest-ordered window** is what made a 12-day blackout
+render as `none`.
+
+**Fixed:** the window is now `PUBLICATION_GAP_WINDOW_DAYS = 550` days of publication time, and the
+query pays a full pass over `notices` — the same shape as the whole-corpus sweeps it is registered
+beside (`fresh_holds`, `sentinel_dates`, `weld_candidates`), in a weekly background report rather
+than on a served path. The bounds are computed in Rust (`publication_days_sql_at(now)`) so the
+window is a pure function of an argument the test controls and the query does not depend on turso's
+`'now'` modifier. The upper bound is load-bearing as well: `published_at` is publisher-supplied and
+the corpus holds far-future values (section 10 sweeps for exactly that), and a single 2099 notice
+would otherwise become the newest publication day and drag the median that the bracket floor is
+computed from.
+
+**Gated** by `the_continuity_window_is_publication_time_not_ingest_order`
+(`crates/ingest/tests/data_quality.rs`), which builds this issue's shape in miniature and asserts
+both halves — that the time window SEES the 28-day stretch and that the id window it replaced does
+NOT. The counterfactual is executed rather than described. A third block published 600 days back
+and ingested LAST is what makes it discriminate at fixture scale: `MAX(id) - 2,000,000` is negative
+on a 24-row fixture, so without that block the forward assertions would pass under either
+implementation — the false-green this repo keeps re-learning. Red-checked by reverting the
+predicate; the test fails naming the `2025-01-24` row the id window wrongly admits.
+
+### What remains on unit B
+
+**`fetched_to` still lies about the range, and the mechanism is now located.**
+`Db::fetch_registry_summary` (`crates/store/src/lib.rs:3702`) is
+
+    SELECT source, COUNT(DISTINCT period), MIN(period), MAX(period), MIN(kind LIKE 'rates%')
+      FROM fetches GROUP BY source
+
+— a **lexical** extremum over a column whose meaning depends on `kind`. `'2026-06' > '2026-00136'`
+(common prefix `2026-0`, then `6` > `0`), so `to` reads `2026-06` while the daily series runs to
+`2026-00178` = 2026-09-11, and the funnel prints `445 pkgs (1993-01 … 2026-06) · fetch complete ✓`
+— a range ending 2½ months ago beside a tick claiming caught-up.
+
+`fetch_complete`'s year test (`to.starts_with(current_year)`) is passing on that stale value. Note
+it would ALSO have passed had the dailies stopped in January, so the test is weak independently of
+this hole.
+
+Making the range span both namespaces honestly needs a per-kind `period → instant` mapping, and
+that is a design decision rather than a one-liner: `ted daily` periods are **OJ S issue numbers**
+(`2026-00136`), not dates, so the mapping needs the issue→date relation this issue established by
+measurement (`2026-00135` = 2026-07-15, `2026-00136` = 2026-07-16). The alternative the "Done when"
+already offers — the cell NAMES the two namespaces separately — needs no mapping at all and is
+probably the right first move. Left for its own unit rather than rushed in beside the detector.
+
+The detector, though, is the half that generalises: it is namespace-agnostic by construction, so it
+would flag the next seam hole whatever the two period vocabularies turn out to be.
