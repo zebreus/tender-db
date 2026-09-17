@@ -1,6 +1,6 @@
 # 399 — `/v1/changes` accepts every collection filter, applies only `entity`, and has no `ignored_filters` to say so
 
-Status: needs-triage — filed 2026-09-15 by the owner, found while fixing issue 390 unit 1
+Status: **DONE 2026-09-17** — verified on the live box: the ignored filters are NAMED in the envelope. Was: needs-triage — filed 2026-09-15 by the owner, found while fixing issue 390 unit 1
 Kind: defect (app — the `changes` handler in `crates/app/src/v1/mod.rs`; a contract/observability gap, no wrong stored data)
 Relates to: 118 (RESOLVED — introduced `ignored_filters` for exactly this class: a collection that does not honour a parameter must NAME it rather than accept it silently; the changes response never grew the array), 390 (unit 1, the sibling defect one endpoint over — shape-checking `country`/`cpv`; fixing it makes the inconsistency below observable), 211 (the public-feed `entity` enum, the ONE filter this endpoint does honour), 46 / 392 (the "same events, same cursor and same filtering as SSE" contract this contradicts), 336 (CLOSED NOT-WORTH-IT — an unmatchable filter returning an empty page is conventional; a filter that is not applied at all is a different claim)
 
@@ -160,3 +160,13 @@ validates it; that is consistent with it not applying it, and the client is told
 `entity` is honoured and correctly never named; the reset body carries the array, which is the case
 that matters most — a client just told to drop state and re-snapshot is the one about to re-send its
 filters. Closed.
+
+
+## Comment — 2026-09-17: verified fixed on prod
+
+    curl '/v1/changes?since=0&limit=3&country=ZZ&source=nonesuch&status=banana'
+    → "ignored_filters":["source","country","status"]
+
+The field this issue asked for exists and names exactly the three filters the feed does not apply, so
+a client passing a filter that does nothing is told rather than quietly served an unfiltered page.
+Checked as part of the 412 sweep, before doing any work on it.

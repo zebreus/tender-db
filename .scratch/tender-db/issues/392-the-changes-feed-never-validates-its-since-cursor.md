@@ -1,6 +1,6 @@
 # 392 — `/v1/changes` never validates `since`: a cursor ahead of the head is echoed back as `last_cursor` with `more:false`, so a poller stalls forever where SSE resets
 
-Status: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: **DONE 2026-09-17** — verified on the live box: a cursor ahead of the head is detected and SIGNALLED, not echoed back. Was: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (app — the poll half of the change feed, `crates/app/src/v1/mod.rs`; the guard it is missing already exists one file over in `crates/app/src/v1/sse.rs`)
 Relates to: 46 (RESOLVED-VERIFIED — the generation/reset protocol; its status line says it was "settled once across all three transports", but only SSE got the ahead-of-head guard and its conformance test `a_rebuild_moves_the_generation_and_resets_stale_resumes` exercises SSE only), 178 (the same stale-cursor class one transport over — the webhook sweeper's stored cursor, split out of 46 with a design sketch; poll was never split out at all), 211 (RESOLVED — the sibling parameter on this exact endpoint: an out-of-enum `entity` is a 400, which is the value-validation precedent here), 215-C (RESOLVED — the `limit+1` look-ahead in this same handler, i.e. the last time `more` was made to mean what it says), 216 (RESOLVED — the deliberate lenience for the id-ordered LIST cursor; its own status line scopes that lenience to `/v1/tenders?cursor=`, where an unparseable cursor "restarts visibly rather than strands"), 70 (F1 — `oldest_cursor` on the changes feed; the read this fix needs is already there and already cheap), 390 (filed by this fan-out — the `/v1` input-validation cluster; `since` is the one parameter on this endpoint that is neither in that cluster nor validated)
 
@@ -148,3 +148,13 @@ Against the live feed (head cursor 612,967,375 at the time of reading):
 The head/head+1 pair is the whole point and it lands exactly on the boundary in production: every
 healthy poller sits at the head, so a guard that fired one cursor early would have been worse than
 the defect it fixes. Closed.
+
+
+## Comment — 2026-09-17: verified fixed on prod
+
+    curl '/v1/changes?since=999999999999&limit=3'
+    {"events":[],"generation":2,"ignored_filters":[],"last_cursor":"0","more":false,"reset":"cursor_ahead"}
+
+`reset: "cursor_ahead"` and `last_cursor: "0"` — the cursor is recognised as ahead of the head and the
+client is told to reset, rather than having its own impossible cursor handed back as if it were the
+new position. Checked as part of the 412 sweep, before doing any work on it.

@@ -79,3 +79,36 @@ Two of my own issues this week did the same thing one level down: 404's own fix 
 404 was wrong until I re-derived it. The common failure is **writing down what should be true
 instead of what was checked**, and a board that is never re-checked preserves those errors
 indefinitely. The three issues above are the same failure with a longer feedback loop.
+
+## Comment — 2026-09-17: the sweep this issue asked for, run. The base rate is 7 in 10.
+
+`## Done when`'s third bullet — check the rest of the `needs-triage` queue against prod BEFORE
+working it — done for the ones with a runnable repro. Each took one `curl`.
+
+| issue | claim | live verdict |
+| --- | --- | --- |
+| 392 `/v1/changes` never validates `since` | cursor ahead echoed back | **FIXED** — `"reset":"cursor_ahead"`, `last_cursor:"0"` |
+| 399 `/v1/changes` has no `ignored_filters` | filters silently dropped | **FIXED** — `"ignored_filters":["source","country","status"]` |
+| 387 unit 1 `name_prefix` upper bound dropped | `яп` → 1 match / 99 non-matches, `more:true` forever | **FIXED** — 1 item, all matching, `more:false`; the `zzzzп` control returns 0 with `more:false` |
+| 393 legacy party identity | raw source roles, transliterated names | **STILL LIVE** — tender 8414191 serves `ECONOMIC_OPERATOR_NAME_ADDRESS` and `APPEAL_PROCEDURE_BODY_RESPONSIBLE` as roles; org 9954048 is `Perifereia Attikis - Geniki Dieythynsi…`, a Latin transliteration of Greek |
+
+With 395, 385 and 398 from the previous three firings, that is **seven of ten** `needs-triage` issues
+from the 2026-09-15 fan-out already resolved, and **one confirmed open**. 390, 391 and 396 are not
+yet checked (their repros are multi-step rather than a single call).
+
+**The base rate is the finding.** Picking work by `Status` from this queue has been wrong ~70 % of
+the time. That is not a tracker with a few stale rows; it is a signal that is worse than useless for
+prioritisation, because it systematically points at the *finished* work — the fan-out filed 14 issues
+in one batch on 2026-09-15 and the subsequent fixes were done by whoever was in that code, not by
+whoever owned the issue.
+
+**And the sweep is cheap.** Four issues, four `curl`s, under two minutes — against roughly three
+firings spent re-deriving 395, 385 and 398 the long way. That ratio is the argument for the `## Verify`
+convention proposed above, and it is now measured rather than asserted.
+
+### Next, concretely
+
+- 393 is the one confirmed-open issue of the four and is where the next firing should go.
+- 390, 391 and 396 still need a verdict; their repros want more than one call, which is itself
+  evidence for the `## Verify` bullet — an issue whose state cannot be established in one command is
+  an issue that will drift.
