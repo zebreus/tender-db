@@ -667,3 +667,57 @@ A repair does know the version, and that changes the cost by four orders of magn
 `clear_parsed` is therefore NOT the primitive to reuse here, despite being the obvious one. That is
 worth saying plainly, because reusing it would have looked like good practice and would have made
 this repair take hours per notice.
+
+## Comment — 2026-09-17: the plan exists, on prod, and it agrees with the bounded reads
+
+`repair-member-twins` (dry) deployed at rev `dde3b7a`, run as job 1468:
+
+    281 twin set(s) planned — keep the OLDEST row of each and drop 281 twin(s),
+    of which 281 caused a Tender version and 0 never folded.
+    278 set(s) fold into ONE Tender, 3 span more than one.
+    281 survivor(s) take a new identity.
+    32 head pointer(s) move; 3 Tender(s) are left with no version at all.
+
+**Every one of those is a cross-check, not a restatement.** The planner walks the index and seeks
+`tender_versions`; the numbers on this issue came from bounded `/v1/sql` reads days apart and by a
+different route. They agree exactly:
+
+| | bounded reads | the plan |
+| --- | --- | --- |
+| twin sets | 281 | 281 |
+| keyed / island | 278 / 3 | 278 same-Tender / 3 cross-Tender |
+| head versions removed | 29 same-Tender + 3 cross-Tender = **32** | **32** |
+| Tenders emptied | 3 (the island twins' own) | 3 |
+| twins that never folded | 0 of 281 | 0 |
+
+The stored `member-twin-repair` report names every set: keeper id, the key it holds now, the key it
+takes, and for each dropped notice its `(tender, seq)`, whether it is the head, and whether it empties
+its Tender.
+
+### The wet arm refuses, on purpose
+
+`dry_run: false` returns
+
+    repair-member-twins has no WET arm yet — this job plans only.
+
+That is not an oversight left in the code. The write side removes rows from fourteen tables, four of
+which carry **no index at all**, retires Tenders and moves head pointers; it lands with its own tests
+and its own acceptance against this plan, rather than as a rider on the planner that produced it. The
+last two times this issue's code moved faster than that, the result was 281 duplicate notices and
+then issue 411.
+
+### What the wet arm has to do, now fully specified
+
+1. Re-plan and refuse unless the fresh plan **matches the stored one**, set for set
+   (`Spec::RepairNoticeInstants`' contract).
+2. Bracket with `set_foreign_keys(false)`, restored after (issue 352).
+3. Per dropped version `(tender, seq)`: delete its `tender_version_*` satellite rows **by version**,
+   which is indexed — NOT by `mention_notice_id`, which is not.
+4. One statement per table, over all 281 dropped ids, for the parsed layer, `quarantine`,
+   `organization_mentions`, and the four unindexed tables.
+5. `retire_tenders_chunked` for the 3 emptied Tenders — it already emits the `removed` events and
+   clears every `tender_id`-keyed satellite.
+6. Where a dropped version was the head and the Tender survives: `current_seq = MAX(remaining seq)`.
+   The other `current_*` columns need no touching, because the twins hold the same bytes.
+7. Re-key the 281 survivors, `projected = 0`.
+8. `project rebuild=false`, then 394's acceptance: the placeholder cohort reads **0**.
