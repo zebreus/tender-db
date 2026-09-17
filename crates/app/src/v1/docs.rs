@@ -147,7 +147,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
 <table>
   <tr><th>Param</th><th>Meaning</th></tr>
   <tr><td class="ep">source</td><td>Source key, e.g. <code>ted</code>.</td></tr>
-  <tr><td class="ep">country</td><td>A <strong>NUTS place-code prefix</strong> matched against the tender's places. At the country level NUTS is ISO-3166 <strong>alpha-2</strong>, so Germany is <code>DE</code> (not <code>DEU</code>); a longer prefix narrows to a region, e.g. <code>DE1</code> (Baden-Württemberg) or <code>DEB35</code> (a specific place).</td></tr>
+  <tr><td class="ep">country</td><td>A <strong>NUTS place-code prefix</strong> matched against the tender's places. At the country level NUTS is ISO-3166 <strong>alpha-2</strong>, so Germany is <code>DE</code> (not <code>DEU</code>); a longer prefix narrows to a region, e.g. <code>DE1</code> (Baden-Württemberg) or <code>DEB35</code> (a specific place). <strong>NUTS is not ISO everywhere</strong>: Greece is <code>EL</code> and the United Kingdom is <code>UK</code> &mdash; <code>GB</code> is not a NUTS code at all and matches nothing, and <code>GR</code> is Greece's pre-2013 NUTS spelling, which the corpus still holds on notices published under it.</td></tr>
   <tr><td class="ep">cpv</td><td>CPV code prefix, e.g. <code>45</code> (construction).</td></tr>
   <tr><td class="ep">buyer</td><td>Organization id that is the buyer.</td></tr>
   <tr><td class="ep">winner</td><td>Organization id that won at least one Lot.</td></tr>
@@ -696,7 +696,11 @@ rates and the quarantine resolution ledger.</p>
 <h3>Codes and identities</h3>
 <ul>
   <li>CPV-2003 and CPV-2008 classifications coexist (era-dependent); no cross-era
-  mapping is applied. NUTS carries occasional pseudo-codes.</li>
+  mapping is applied. NUTS carries occasional pseudo-codes, and NUTS <em>vintages</em>
+  coexist the same way CPV's do: a notice is coded in the revision current when it was
+  published, and no code is rewritten afterwards. So Greece appears as <code>GR</code>
+  before the 2013 revision and <code>EL</code> after it, and a query for one does not
+  find the other.</li>
   <li>Organizations are aggregated by identifier where the source publishes one. A
   row without one is <em>provisional</em>, which means exactly that &mdash; no official
   identifier &mdash; and nothing more. Its identity is then NAME-scoped: mentions
