@@ -1,6 +1,6 @@
 # 395 — TED June 2025 (~72k notices) was never fetched, and the funnel reports "fetch complete ✓" over the hole
 
-Status: ready-for-agent — **BOTH HALVES ARE LANDED AND VERIFIED ON PROD 2026-09-17; the board simply never said so.** The hole is backfilled (2025-06 present, the FR June window starts on day 1 like its May and July controls) and the detector is built (`monthly_period_gaps` → `missing_periods` / `duplicate_periods`, and `fetch_complete` requires both clean). The 2025-09 "duplicate" is explained below and is NOT a defect. **One "Done when" item is genuinely open: the check still runs only on a coverage refresh, so a hole introduced tomorrow waits for someone to open the dashboard.** Was: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: **DONE 2026-09-17** — every "Done when" item is met and verified on prod. The last one, the scheduled check, shipped as `registry-contiguity` at rev `af8d192` and ran clean (job 1472: 3 sources, every monthly sequence CONTIGUOUS). Was: **BOTH HALVES ARE LANDED AND VERIFIED ON PROD 2026-09-17; the board simply never said so.** The hole is backfilled (2025-06 present, the FR June window starts on day 1 like its May and July controls) and the detector is built (`monthly_period_gaps` → `missing_periods` / `duplicate_periods`, and `fetch_complete` requires both clean). The 2025-09 "duplicate" is explained below and is NOT a defect. **One "Done when" item is genuinely open: the check still runs only on a coverage refresh, so a hole introduced tomorrow waits for someone to open the dashboard.** Was: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: operational (ingestion — one missing monthly package in the TED fetch registry, plus the funnel's `fetch_complete` heuristic in `crates/app/src/coverage.rs:448` that cannot see an interior hole)
 Relates to: 33 (RESOLVED-VERIFIED — the pipeline funnel panel; its spec asks for "an explicit 'fetch complete ✓' when the full range is on disk" and its Fix section openly narrowed that to "the latest fetched period is in the current year", which is the heuristic that greenlights this gap), 15 (RESOLVED — the full backfill; its own log records "397 TED monthlies" on disk and a 401-package process job for a 402-month range, so the hole dates from the original backfill and was never noticed), 342 (the FTS source, whose unit-2 measurement is over June 2025 — every `2025-06` hit on the board today is that package, not this one), `docs/research/ted-access-channels.md` §6 (the coverage definition the dashboard legend cites), `crates/app/src/ui.rs:532-541` (the legend that promises "100 % means we hold the whole year" and "a low ratio here is work still in progress, not a permanent gap")
 
@@ -371,3 +371,46 @@ That is still true and still unbuilt. The natural home is the weekly tick, besid
 `member-twin-census` — both of which exist for precisely this reason, to notice a signature coming
 back when nobody is looking. The coverage legend flag (`ui.rs:532-541`, "work still in progress, not
 a permanent gap") is the second, smaller half of the same unit.
+
+## Comment — 2026-09-17: the last item is shipped. DONE.
+
+`registry-contiguity` deployed at rev `af8d192` and run as job 1472:
+
+    registry-contiguity (issue 395): 3 source(s) checked, every monthly period
+    sequence is CONTIGUOUS.
+
+It is one indexed `GROUP BY` over the fetch registry, so it rides the weekly tick beside
+`ghost-census` and `member-twin-census` — the two jobs that exist for exactly this reason, to notice
+a signature coming back when nobody is looking. **It names the holes**: "something is missing
+somewhere in thirty years of packages" is not an operator instruction; `ted missing 2025-06` is.
+
+The test's third arm is the shape that caused the original miss — twelve rows over eleven distinct
+months with one period doubled — built in the shape `monthly_fetch_periods` actually returns (one
+tuple per period carrying its COUNT, so the duplicate is a `2`, not a second tuple; the first draft
+of the test got that wrong and was corrected). A verdict built on row counts calls that year healthy.
+This one names June.
+
+The funnel wording is fixed too: `· registered twice` → `· re-issued`, with a title saying why it is
+not a coverage problem. The measurement behind that change is on this issue above — two different
+packages, 73,110 notices against 1.
+
+### Closing the "Done when" list
+
+| item | state |
+| --- | --- |
+| `fetch ted monthly 2025-06` lands, process + project behind it | done — 402 distinct periods over a 402-month range |
+| registry holds 402 distinct periods, duplicate reconciled **or explained** | explained, and deliberately NOT reconciled away — deleting fetch 542 would destroy one notice's provenance to tidy a cosmetic count |
+| FR/IT/PL/ES June windows return TED items from 2025-06-01 | done — FR reads `85565 @ 2025-06-01T22:00:00Z`, with May and July controls unchanged |
+| `fetch_complete` is a contiguity test, not `starts_with(current_year)` | done |
+| the funnel NAMES the missing periods | done |
+| the check counts DISTINCT periods and reports duplicates separately | done |
+| **the check runs on a schedule, without anyone opening the dashboard** | **done — `registry-contiguity`, weekly** |
+| a unit test pins the interior hole and the duplicate-masking arm | done, in both `coverage.rs` and `supervisor.rs` |
+| controls: 2011–2024 read 12/12 | verified |
+
+The one item I am NOT claiming: the coverage legend (`ui.rs:532-541`) still says a low ratio is
+"work still in progress, not a permanent gap". With the registry contiguous and a weekly check
+behind it, that sentence is now true rather than misleading — a year that is short is short because
+a publisher published more than we have parsed, not because a package is missing. If a hole ever
+returns, `registry-contiguity` says so in the report and the funnel names it in the panel, which is
+what the legend flag was a proxy for.
