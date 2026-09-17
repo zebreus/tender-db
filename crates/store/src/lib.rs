@@ -1608,12 +1608,80 @@ impl Db {
         // nothing else. The twin is removed inside the same transaction, so a
         // crash leaves one row either way.
         if let Some(stale) = self.moved_identity_twin(conn, n).await? {
-            self.clear_parsed(conn, stale, &Default::default()).await?;
-            conn.execute("DELETE FROM notices WHERE id = ?", (Value::Integer(stale),)).await?;
-            let Some(id) = self.notice_id(conn, n).await? else {
+            // Adopt the moved key ON THE ROW THAT ALREADY EXISTS, the way
+            // `reparse_notice` has since issue 290 — do NOT keep the freshly
+            // minted row and delete the old one.
+            //
+            // The first version of this arm did exactly that, and it could not
+            // run at all against the population it was written for. Every one of
+            // the 281 rows that prompted issue 404 had PROJECTED, as has every
+            // notice older than the current fold, and `tender_versions
+            // .caused_by_notice_id` and `tenders.island_notice_id` are real
+            // foreign keys under `PRAGMA foreign_keys = ON`. Deleting the old row
+            // therefore failed with "immediate foreign key constraint failed",
+            // and `process` propagates that with `?` — so the next derivation
+            // change would have halted the daily ingest of a whole source rather
+            // than duplicating anything.
+            //
+            // Keeping the row id is not merely how the delete is avoided, it is
+            // the correct answer: an island Tender's group key is
+            // `island:<notice_id>`, so a preserved id keeps the notice in the
+            // Tender it already folded into. Minting a new id re-homes it —
+            // which is precisely the 3 cross-tender cases the 2026-09-16
+            // duplication left behind, where the re-keyed member minted a fresh
+            // Tender beside the one it had always belonged to.
+            //
+            // `projected = 0` is what makes this reach the canonical layer, the
+            // same clause and the same reason as in `reparse_notice`: the next
+            // incremental fold takes unprojected parsed notices as its
+            // change-set, re-derives the Tenders holding them, and rewrites the
+            // version row whose `publication_id` column still reads the name the
+            // parser has stopped producing.
+            //
+            // `fetch_id`, `member_path` and `ingested_at` are deliberately left
+            // alone. The bytes are the same bytes; which package first carried
+            // them is provenance, and ADR-0004 makes the archive the record.
+            //
+            // FK checks are deferred for the same measured reason as in
+            // `reparse_notice` (issue 247): `clear_parsed` deletes
+            // `organization_mentions`, which `tender_version_parties` references
+            // with no index serving the proof, at ~10 s per row. They are still
+            // checked, once, at COMMIT.
+            if let Err(e) = conn.execute("PRAGMA defer_foreign_keys = ON", ()).await {
+                eprintln!(
+                    "[store] adopting a moved identity: defer_foreign_keys unavailable ({e}); \
+                     FK checks stay immediate"
+                );
+            }
+            let Some(minted) = self.notice_id(conn, n).await? else {
                 return Ok(Recorded::Duplicate);
             };
-            self.write_parse(conn, id, n, parse).await?;
+            conn.execute("DELETE FROM notices WHERE id = ?", (Value::Integer(minted),)).await?;
+            // The sections the new parse re-creates are kept, so their mentions
+            // survive and the expensive FK proof never runs (issue 248).
+            let keep: std::collections::HashSet<&str> = match parse {
+                Parse::Parsed(parsed) => parsed.sections.iter().map(|s| s.id.as_str()).collect(),
+                Parse::Pending | Parse::Quarantined { .. } => std::collections::HashSet::new(),
+            };
+            self.clear_parsed(conn, stale, &keep).await?;
+            conn.execute(
+                "UPDATE notices SET publication_id = ?, profile = ?, declared_version = ?,
+                     published_at = ?, dispatched_at = ?, projected = 0
+                   WHERE id = ?",
+                (
+                    t(&n.publication_id),
+                    t(&n.profile),
+                    match &n.declared_version {
+                        Some(v) => t(v),
+                        None => Value::Null,
+                    },
+                    opt_int(n.published_at),
+                    opt_int(n.dispatched_at),
+                    Value::Integer(stale),
+                ),
+            )
+            .await?;
+            self.write_parse(conn, stale, n, parse).await?;
             return Ok(Recorded::Rekeyed);
         }
         let Some(id) = self.notice_id(conn, n).await? else {
@@ -4045,9 +4113,15 @@ pub enum Recorded {
     Duplicate,
     /// The same source, member and bytes were held under a DIFFERENT
     /// `publication_id`: the parser now derives a different identity for a record
-    /// the corpus already has. The row is written under the new key and the stale
-    /// one removed, inside one transaction. A nonzero count means this run changed
+    /// the corpus already has. The EXISTING row keeps its id and takes the new
+    /// key, and is re-queued for the fold — the same adoption `reparse_notice`
+    /// performs, inside one transaction. A nonzero count means this run changed
     /// identity derivation.
+    ///
+    /// The row id is preserved rather than replaced because the corpus hangs off
+    /// it: `tender_versions.caused_by_notice_id` and `tenders.island_notice_id`
+    /// are foreign keys, and an island Tender's group key is literally
+    /// `island:<notice_id>`.
     Rekeyed,
 }
 
@@ -8398,6 +8472,80 @@ tmpfs /data/ramcache tmpfs rw 0 0
             "same bytes, different member — a different record"
         );
         assert_eq!(int_of(&db, "SELECT COUNT(*) FROM notices").await, Some(2));
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 404, the half its own test never reached: the stale notice has
+    /// PROJECTED, which is true of every notice older than the current fold —
+    /// and is true of all 281 rows the fix was written for.
+    #[tokio::test]
+    async fn a_moved_identity_is_adopted_even_when_the_stale_notice_has_projected() {
+        let path = format!("/tmp/tender-db-moved-projected-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        seed_fetch(&db).await;
+
+        let before = Notice { publication_id: "00000000-1900".into(), ..held_notice() };
+        assert_eq!(
+            db.record_notice(&before, &Parse::Parsed(tiny_parsed())).await.unwrap(),
+            Recorded::Inserted
+        );
+        let stale = int_of(&db, "SELECT id FROM notices").await.unwrap();
+
+        // It folded, as an ingested notice does within the hour.
+        let conn = db.conn().await;
+        conn.execute(
+            "INSERT INTO tenders(id, source, kind, created_at, current_seq)
+             VALUES(1, 'ted', 'procedure', 0, 1)",
+            (),
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, publication_id)
+             VALUES(1, 1, ?, 0, '00000000-1900')",
+            (Value::Integer(stale),),
+        )
+        .await
+        .unwrap();
+        drop(conn);
+
+        // Same member, same bytes, the identity the parser now derives.
+        let after = Notice { publication_id: "a-real-stem-01".into(), ..before.clone() };
+        assert_eq!(
+            db.record_notice(&after, &Parse::Parsed(tiny_parsed())).await.unwrap(),
+            Recorded::Rekeyed,
+            "the corpus already holds these bytes from this member"
+        );
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM notices").await, Some(1));
+        assert_eq!(
+            int_of(&db, "SELECT id FROM notices").await,
+            Some(stale),
+            "the SAME row is re-keyed — a new id would orphan the version that \
+             references this one, and would re-home an island Tender whose group \
+             key is `island:<notice_id>`"
+        );
+        assert_eq!(
+            text_of(&db, "SELECT publication_id FROM notices").await.as_deref(),
+            Some("a-real-stem-01")
+        );
+        assert_eq!(
+            int_of(&db, "SELECT projected FROM notices").await,
+            Some(0),
+            "and it is re-queued, so the next fold rewrites the version row whose \
+             publication_id column still reads the name the parser has stopped \
+             producing"
+        );
+        assert_eq!(
+            text_of(&db, "SELECT parse_state FROM notices").await.as_deref(),
+            Some("parsed")
+        );
+        assert_eq!(
+            int_of(&db, "SELECT caused_by_notice_id FROM tender_versions").await,
+            Some(stale),
+            "the Tender still holds the version this notice caused"
+        );
 
         let _ = std::fs::remove_file(&path);
     }
