@@ -1890,10 +1890,14 @@ pub struct PublicationGapRow {
     pub from: String,
     /// Last silent day, inclusive.
     pub to: String,
-    /// Calendar days in the stretch. Not publication days — the section cannot
-    /// know a source's calendar, so it reports what it measured and lets the
-    /// reader apply the rhythm.
-    pub days: i64,
+    /// Days in the stretch that carried NO notices at all (issue 410 follow-up).
+    ///
+    /// Was the whole span between two ordinary days, which counted days the source
+    /// did publish on — so a holiday week where every day ran at reduced volume
+    /// scored as a multi-day "silence" containing no silent day whatsoever. The
+    /// span is still recoverable as `silent + inside`, and `from`/`to` still name
+    /// its ends.
+    pub silent: i64,
     /// Notices on the day BEFORE the stretch, and on the day after. Both being
     /// ordinary is what makes a stretch a hole rather than the start or end of a
     /// source's life — the whole diagnosis of issue 402 in two numbers.
@@ -1954,9 +1958,6 @@ pub fn publication_gaps(
         let (hi, after) = pair[1];
         let (Some(a), Some(b)) = (civil_days(lo), civil_days(hi)) else { continue };
         let span = b - a - 1;
-        if span < min_days {
-            continue;
-        }
         // Days inside the span that DID carry notices — the stragglers the old
         // rule let veto the whole finding. Reported rather than erased: a reader
         // must not be told a day with notices on it was silent, and a stretch
@@ -1966,10 +1967,31 @@ pub fn publication_gaps(
             .iter()
             .filter(|(d, _)| civil_days(d).is_some_and(|x| x > a && x < b))
             .count() as i64;
+        // Issue 410 follow-up: the threshold belongs on the days that are actually
+        // SILENT, not on the span between two ordinary days.
+        //
+        // [`PUBLICATION_GAP_MIN_DAYS`] is calibrated on consecutive non-publishing
+        // days — its own doc says "a normal weekend is 2 silent days and a weekend
+        // plus a public holiday is 3. Four is the first length that cannot be the
+        // calendar." Applying it to the SPAN measured something else, and the first
+        // corpus run after issue 410 showed what: seven stretches, of which six were
+        // public holidays — Good Friday 2025-04-18, Good Friday 2026-04-03,
+        // Ascension 2026-05-14, and two Christmas/New Year windows. The four DÖE
+        // ones had `inside == span`, meaning NOT ONE DAY was silent; the two TED
+        // ones had exactly 3 silent days, which is the number the calibration
+        // explicitly calls the calendar.
+        //
+        // Subtracting `inside` makes the gate honour the calibration the constant
+        // was written with, and both real holes survive it untouched: issue 402's
+        // TED blackout (16 silent of 16) and `fts` (432 silent of 433).
+        let silent = span - inside;
+        if silent < min_days {
+            continue;
+        }
         out.push((
             day_string(a + 1).unwrap_or_else(|| lo.clone()),
             day_string(b - 1).unwrap_or_else(|| hi.clone()),
-            span,
+            silent,
             *before,
             *after,
             inside,
@@ -2552,11 +2574,11 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
                 .into_iter()
                 .flat_map(|(source, days)| {
                     publication_gaps(&days, PUBLICATION_GAP_MIN_DAYS).into_iter().map(
-                        move |(from, to, days, before, after, inside)| PublicationGapRow {
+                        move |(from, to, silent, before, after, inside)| PublicationGapRow {
                             source: source.clone(),
                             from,
                             to,
-                            days,
+                            silent,
                             before,
                             after,
                             inside,
@@ -3271,7 +3293,7 @@ pub fn render_text(report: &Report) -> String {
         let _ = writeln!(
             out,
             "  {:<10} {:<12} {:<12} {:>6} {:>12} {:>12} {:>7}",
-            "source", "from", "to", "days", "before", "after", "inside"
+            "source", "from", "to", "silent", "before", "after", "inside"
         );
         for r in &report.publication_gaps {
             let _ = writeln!(
@@ -3280,7 +3302,7 @@ pub fn render_text(report: &Report) -> String {
                 r.source,
                 r.from,
                 r.to,
-                r.days,
+                r.silent,
                 group(r.before as u64),
                 group(r.after as u64),
                 r.inside
@@ -3302,7 +3324,11 @@ pub fn render_text(report: &Report) -> String {
              on the day before a source resumed hid a 432-day hole (`fts`, 2026-09-17 — the day \
              after the gap carried 1 against a floor of 165, while the first ordinary day, one \
              day further on, carried 492).\n  \
-             The threshold is {PUBLICATION_GAP_MIN_DAYS} days and it is CALIBRATED, not guessed: \
+             The threshold is {PUBLICATION_GAP_MIN_DAYS} days and it applies to the SILENT count, \
+             not to the span — a holiday week where every day published at reduced volume contains \
+             no silent day at all, and the first run after issue 410 printed four such DÖE stretches \
+             (Good Friday, Ascension, Christmas) plus two TED ones at exactly 3 silent days. It is \
+             CALIBRATED, not guessed: \
              TED publishes Sunday–Thursday, so a normal weekend is 2 silent days and a weekend \
              plus a holiday is 3. A source with a different rhythm may show a benign entry here; \
              read it against that source's calendar rather than assuming a defect.\n  \
@@ -3686,7 +3712,7 @@ pub fn render_json(report: &Report) -> String {
                 "source": r.source,
                 "from": r.from,
                 "to": r.to,
-                "days": r.days,
+                "silent": r.silent,
                 "before": r.before,
                 "after": r.after,
             }))
@@ -4761,7 +4787,7 @@ mod tests {
             vec![(
                 "2025-06-30".to_owned(),
                 "2026-09-14".to_owned(),
-                442,
+                441,
                 3765,
                 3534,
                 1
@@ -4782,7 +4808,7 @@ mod tests {
         assert_eq!(
             publication_gaps(&sampled, PUBLICATION_GAP_MIN_DAYS),
             vec![
-                ("2025-06-30".to_owned(), "2026-09-14".to_owned(), 442, 3765, 3534, 1),
+                ("2025-06-30".to_owned(), "2026-09-14".to_owned(), 441, 3765, 3534, 1),
                 ("2026-09-17".to_owned(), "2026-10-02".to_owned(), 16, 3470, 3722, 0),
             ],
             "an ordinary-to-ordinary silence still reports, in the same window"
@@ -4838,11 +4864,79 @@ mod tests {
 
         let gaps = publication_gaps(&days, PUBLICATION_GAP_MIN_DAYS);
         assert_eq!(gaps.len(), 1, "one stretch, not none and not several: {gaps:?}");
-        let (from, to, span, before, after, inside) = &gaps[0];
+        let (from, to, silent, before, after, inside) = &gaps[0];
         assert_eq!((from.as_str(), to.as_str()), ("2025-07-01", "2026-09-06"));
-        assert_eq!(*span, 433, "2025-06-30 to 2026-09-07, exclusive of both");
+        // 433 days lie between the two ordinary days; ONE of them (2026-09-06)
+        // carried a notice, so 432 were actually silent. The threshold is on the
+        // silent count, not the span (issue 410 follow-up).
+        assert_eq!(*silent, 432, "433 days between the brackets, 1 of them not silent");
         assert_eq!((*before, *after), (329, 492), "both brackets are ORDINARY days");
         assert_eq!(*inside, 1, "the straggler is disclosed, not erased and not a veto");
+    }
+
+    /// Issue 410 follow-up: a holiday week where EVERY day published is not a
+    /// silent stretch, however far below ordinary those days ran.
+    ///
+    /// The first corpus run after 410 shipped printed seven stretches and six were
+    /// public holidays. Four of them — all DÖE — had `inside == span`: not one day
+    /// in the stretch was silent. The source had simply dipped below its ordinary
+    /// volume around Good Friday, Ascension and Christmas. The other two were TED
+    /// at exactly **3** silent days, which [`PUBLICATION_GAP_MIN_DAYS`]'s own
+    /// calibration names as the calendar ("a weekend plus a public holiday is 3;
+    /// four is the first length that cannot be").
+    ///
+    /// Both classes disappear once the threshold is applied to the SILENT days
+    /// rather than to the span, which is what the constant was calibrated on all
+    /// along. This pins that, and pins that a real hole is untouched by it.
+    #[test]
+    fn a_week_where_every_day_published_is_not_a_silence_however_quiet() {
+        // The DÖE Christmas shape, from prod: ordinary days either side, and twelve
+        // days between them that ALL carried notices, just few of them.
+        let quiet: Vec<(String, i64)> = [
+            ("2025-12-19", 775),
+            ("2025-12-22", 774),
+            ("2025-12-23", 40),
+            ("2025-12-24", 12),
+            ("2025-12-25", 3),
+            ("2025-12-26", 4),
+            ("2025-12-27", 6),
+            ("2025-12-28", 5),
+            ("2025-12-29", 30),
+            ("2025-12-30", 28),
+            ("2025-12-31", 9),
+            ("2026-01-01", 2),
+            ("2026-01-02", 25),
+            ("2026-01-05", 700),
+        ]
+        .iter()
+        .map(|(d, n)| ((*d).to_owned(), *n))
+        .collect();
+        assert!(
+            publication_gaps(&quiet, PUBLICATION_GAP_MIN_DAYS).is_empty(),
+            "every day between the brackets published — there is no silence to report: {:?}",
+            publication_gaps(&quiet, PUBLICATION_GAP_MIN_DAYS)
+        );
+
+        // Three silent days is the calendar, and four is not — the calibration
+        // itself, now measured where it was always meant to apply.
+        let with_silence = |silent_days: i64| {
+            let mut v = vec![("2026-02-02".to_owned(), 500)];
+            v.push((day_string(civil_days("2026-02-02").unwrap() + 1 + silent_days).unwrap(), 500));
+            publication_gaps(&v, PUBLICATION_GAP_MIN_DAYS)
+        };
+        assert!(with_silence(3).is_empty(), "3 silent days is a weekend plus a holiday");
+        assert_eq!(with_silence(4).len(), 1, "4 is the first length that cannot be the calendar");
+
+        // And a genuine hole with a straggler in it still reports, because its
+        // silent count is what carries it over the threshold.
+        let holed: Vec<(String, i64)> = [("2026-03-01", 500), ("2026-03-06", 1), ("2026-03-20", 500)]
+            .iter()
+            .map(|(d, n)| ((*d).to_owned(), *n))
+            .collect();
+        let gaps = publication_gaps(&holed, PUBLICATION_GAP_MIN_DAYS);
+        assert_eq!(gaps.len(), 1, "one stretch: {gaps:?}");
+        assert_eq!(gaps[0].2, 17, "18 days between the brackets, 1 of them not silent");
+        assert_eq!(gaps[0].5, 1, "and the straggler is disclosed rather than hidden");
     }
 
     /// Issue 410: a source whose ordinary days are all sparse still works.
@@ -4921,7 +5015,7 @@ mod tests {
         );
         assert_eq!(report.publication_gaps.len(), 1, "the doe weekend is not a gap");
         assert_eq!(report.publication_gaps[0].source, "ted");
-        assert_eq!(report.publication_gaps[0].days, 16);
+        assert_eq!(report.publication_gaps[0].silent, 16, "16 silent days, none of them carrying notices");
     }
 
     /// The healthy state renders as an explicit "none", not as an absent section —
