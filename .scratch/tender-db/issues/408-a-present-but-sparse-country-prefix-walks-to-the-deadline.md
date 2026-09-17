@@ -210,3 +210,38 @@ bound serves `kind`, `source`, a sparse `currency`, and every future filter that
 isolated pool — it needs no new index, no new statistics, and no measurement that has no compliant
 path. Unit 2 (enumerate other retired spellings) stays useful but drops from blocking to
 informational, since the fix no longer depends on knowing which values are sparse.
+
+## Comment — 2026-09-17 (later): I overstated the cap's irrelevance, and the correction is shippable
+
+This issue says, twice, that *"the cap is not what separates them, and no adjustment of the cap fixes
+this"*. **The second clause is wrong**, and the reason I wrote it is that I never measured the two
+cohorts — both probes were the app's own CAPPED count, which returns `60000` for anything at or above
+the cap and therefore cannot distinguish 60,001 from six million.
+
+Uncapped, on prod:
+
+| prefix | classification entries | vs the old 60,000 cap |
+| --- | --- | --- |
+| `GR` (pre-2013 Greece) | **87,026** | 1.45× over — *barely* |
+| `EL` (current Greece) | **656,330** | 10.9× over |
+
+GR was sitting just above the line. Raising the cap past it moves GR into the SEEDED regime, where it
+is fast for a different reason than EL is — so a cap change does fix this value, even though the cap
+remains the wrong KIND of instrument. Those are two different claims and I collapsed them.
+
+**Shipped**: `COUNTRY_SEED_CAP` 60,000 → **200,000**, chosen to clear GR with room and stay far below
+EL, with both measured cohorts pinned by
+`the_cap_admits_a_retired_spelling_and_still_declines_a_dense_one` so the constant is a decision
+rather than a guess — it fails if anyone restores 60,000.
+
+### What this does and does not settle
+
+- **Does**: `?country=GR` should now seed instead of walking. That is a falsifiable prediction with a
+  one-request test, and the result is recorded below either way.
+- **Does not**: make the cap measure head density. It still counts history off an index with no
+  `tender_id`, and **a retired spelling with more than 200,000 entries fails exactly as GR did.**
+  Unit 1's decision — option (b), a bounded fallback walk — stands, and the code comment and the test
+  both say so in as many words. This is a cheap fix for a live 503, not a replacement for the
+  structural one.
+- The crossover is still unmeasured. 200,000 is a judgement; so was 60,000, and nobody wrote down
+  where it came from either. Recorded so the next person does not mistake it for a derived number.
