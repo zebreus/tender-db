@@ -721,3 +721,65 @@ then issue 411.
    The other `current_*` columns need no touching, because the twins hold the same bytes.
 7. Re-key the 281 survivors, `projected = 0`.
 8. `project rebuild=false`, then 394's acceptance: the placeholder cohort reads **0**.
+
+## Comment — 2026-09-17: the wet arm is much SMALLER than the plan above said, and the FK inventory had an error
+
+Two corrections to the previous two comments, both found by reading the fold rather than the schema.
+
+### 1. The inventory was wrong about `legacy_adjacency`, and about the totals
+
+I derived it with a script that attributed each `REFERENCES notices(id)` line to the last
+`CREATE TABLE` seen, and that slipped. `legacy_adjacency` is a **one-row watermark table** — `id`
+and `watermark`, nothing else — and does not reference notices at all. Re-derived by reading the 25
+lines above each reference, the real list is **sixteen references across sixteen tables**, not
+seventeen across fourteen:
+
+| | |
+| --- | --- |
+| parsed layer + quarantine (`lib.rs`) | `quarantine`, `notice_sections`, `notice_texts`, `notice_codes`, `notice_classifications`, `notice_amounts`, `notice_dates`, `notice_integers`, `notice_numbers`, `notice_ids` |
+| canonical (`canonical.rs`) | `tenders.island_notice_id`, `tender_versions.caused_by_notice_id`, `organization_mentions`, `lot_results`, `bids`, `contracts` |
+
+**Three** unindexed tables, not four: `lot_results`, `bids`, `contracts`. The cost argument is
+unchanged — those are the 19.6M / 7.7M / 5.3M ones — but the count and `legacy_adjacency` were wrong
+and are wrong in two commit messages too.
+
+### 2. The fold already removes a shrinking chain's versions AND their satellites
+
+`apply_tender_tx` is not an append-only path. It compares the stored chain with the new one, and:
+
+- `for seq in (keep + 1..=stored.len()).rev() { self.delete_version(...) }` — every version past the
+  common prefix goes, **with its version-keyed satellites**;
+- `sweep_orphaned_entities` runs "whenever the chain SHRANK", deleting the Tender's `lot_results` /
+  `bids` / `contracts` / `lots` rows that no surviving version points at (issues 103 and 279);
+- `head_update` rewrites `current_seq`, `current_published_at`, `current_deadline`, `current_title`
+  and `current_value_eur_cents`.
+
+So **three of the eight steps I wrote an hour ago are unnecessary and one was actively wrong**:
+
+- ~~delete the `tender_version_*` satellites by version~~ — `delete_version` does it, and doing it by
+  hand would be the *only* way to get it wrong, because deleting a `tender_versions` row myself
+  makes the chain-compare see an UNCHANGED chain, early-return, and **leak every satellite of the
+  version I removed**. The repair must NOT touch `tender_versions`.
+- ~~delete `lot_results` / `bids` / `contracts` rows by `notice_id`~~ — the shrink sweep removes
+  exactly the orphans, by Tender, through indexed reads. The three unindexed scans are avoided
+  entirely.
+- ~~`current_seq = MAX(remaining seq)`~~ — `head_update` owns the head, and `assert_heads_match`
+  gates the transaction on it.
+
+### The wet arm, corrected
+
+1. Re-plan and refuse unless it matches the stored plan, set for set.
+2. Bracket with `set_foreign_keys(false)`, restored after (issue 352).
+3. Delete the 281 dropped notices and their **notice-keyed** rows only: the parsed layer,
+   `organization_mentions`, `quarantine`, and the `notices` rows. All indexed.
+4. Re-key the 281 survivors and set `projected = 0`.
+5. `retire_tenders_chunked` for the 3 emptied Tenders — nothing else will reach them, because the
+   only notice that named them is gone and an incremental fold's touched set is built from notices.
+6. `project rebuild=false`, which does the canonical work: shrink each of the 278 chains, sweep the
+   orphaned entities, rewrite the heads.
+7. 394's acceptance: the placeholder cohort reads **0**.
+
+**And the expected side effect must be stated up front**, because `apply_tender_tx`'s own comment
+says a net change in `COUNT(*) FROM tender_versions` means "the grouping moved — treat it as a stop,
+not as expected growth". Here it is expected, and in the other direction: the count must fall by
+**exactly 281**. That is this repair's headline acceptance number.
