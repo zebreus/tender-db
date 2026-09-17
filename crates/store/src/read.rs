@@ -1855,7 +1855,36 @@ fn country_seed_hits(ranges: Vec<(String, String)>) -> (String, Vec<Value>) {
 /// enumerates quickly and the read stops paying an EXISTS per deadline-range
 /// candidate; at the cap ⇒ dense country, the range shape is already the right
 /// drive side. Only consulted when no publication/participation seed outranks it.
-const COUNTRY_SEED_CAP: i64 = 60_000;
+///
+/// **Raised from 60,000 to 200,000 on 2026-09-17 (issue 408), and the second half
+/// of the sentence above is why it had to be.** "At the cap ⇒ dense country ⇒ the
+/// range shape is right" reads density over ALL HISTORY off an index that carries
+/// no `tender_id`, and uses it as a proxy for density in the id order the fallback
+/// walks. For a CURRENT codelist spelling those agree. For a RETIRED one they are
+/// opposites, and `?country=GR` — Greece's pre-2013 NUTS spelling — was the proof:
+/// 503 after 30.7 s on an idle box, against `EL` at 0.69 s the same minute.
+///
+/// Measured on prod the same day, uncapped:
+///
+/// | prefix | entries | at 60,000 | at 200,000 |
+/// | --- | --- | --- | --- |
+/// | `GR` (pre-2013 Greece) | **87,026** | declined ⇒ walked ⇒ 503 | seeds |
+/// | `EL` (current Greece) | **656,330** | declined ⇒ walked ⇒ 0.69 s | declined, unchanged |
+///
+/// So GR sat just 1.45× over the old cap while EL is 7.5× over any cap in this
+/// range: one number admits the value that needs seeding without disturbing the
+/// dense one that does not. That is the whole justification — it is NOT a claim
+/// that the cap now measures the right thing. It still measures history, and a
+/// retired spelling with more than 200,000 entries would fail exactly as GR did.
+///
+/// **The crossover is unmeasured.** Nobody has established where enumerating
+/// costs more than walking; 60,000 was not derived from one either. 200,000 is
+/// chosen to clear GR with room and stay far below EL, and the honest test is the
+/// served latency of `?country=GR` after this deploys — a single ordinary request,
+/// not a characterisation run. If it is still slow, the seed does not pay at 87k
+/// and issue 408's option (b), a bounded fallback walk, is required rather than
+/// merely preferable.
+const COUNTRY_SEED_CAP: i64 = 200_000;
 pub async fn country_seed_viable(conn: &Connection, prefix: &str) -> turso::Result<bool> {
     // The same case-variant union the seed itself enumerates; a prefix the
     // range machinery declines cannot be seeded at all.
@@ -3373,4 +3402,49 @@ fn stamp(row: &turso::Row, idx: usize) -> Option<Stamp> {
         offset_minutes: opt_int_of(row, idx + 1).unwrap_or(0),
         has_time: opt_int_of(row, idx + 2).unwrap_or(0) != 0,
     })
+}
+
+#[cfg(test)]
+mod country_seed_cap_tests {
+    use super::COUNTRY_SEED_CAP;
+
+    /// Issue 408: the cap must admit the value that needs seeding and still
+    /// decline the dense one that does not.
+    ///
+    /// Both numbers are MEASURED on prod (2026-09-17), uncapped, and they are what
+    /// makes this constant a decision rather than a guess:
+    ///
+    /// * `GR` — Greece's pre-2013 NUTS spelling — carries **87,026** classification
+    ///   entries. Under the old 60,000 cap it declined the seed, fell back to the
+    ///   id-ordered walk, and `?country=GR` returned **503 after 30.7 s** on an idle
+    ///   box. It is the retired spelling of a member state, not an exotic probe
+    ///   value, and every pre-2013 notice in the corpus carries it.
+    /// * `EL` — current Greece — carries **656,330**, is dense at the head of the id
+    ///   order, and answers in **0.69 s** through the plain range walk. It must keep
+    ///   declining: seeding it is the cost this cap exists to avoid.
+    ///
+    /// So the constant has to sit strictly between them. This test is the thing
+    /// that fails if someone restores 60,000 — the old value looks defensible right
+    /// up until you know GR sits 1.45x above it.
+    ///
+    /// It deliberately does NOT assert the cap is the right KIND of measurement. It
+    /// is not: it counts entries over all history off an index carrying no
+    /// `tender_id`, and a retired spelling above 200,000 would fail exactly as GR
+    /// did. That is issue 408's option (b), a bounded fallback walk, and this test
+    /// is not a substitute for it.
+    #[test]
+    fn the_cap_admits_a_retired_spelling_and_still_declines_a_dense_one() {
+        const GR_ENTRIES: i64 = 87_026;
+        const EL_ENTRIES: i64 = 656_330;
+        assert!(
+            COUNTRY_SEED_CAP > GR_ENTRIES,
+            "GR ({GR_ENTRIES}) must SEED — under a cap of {COUNTRY_SEED_CAP} it falls back to \
+             the id walk, which is the 30.7 s / 503 this issue is about"
+        );
+        assert!(
+            COUNTRY_SEED_CAP < EL_ENTRIES,
+            "EL ({EL_ENTRIES}) must keep DECLINING — it is dense at the head and the range walk \
+             already answers it in 0.69 s; seeding it is the cost the cap exists to avoid"
+        );
+    }
 }
