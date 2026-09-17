@@ -293,3 +293,59 @@ gone.
 **What remains** is the 281 standing duplicates. The bleeding is stopped and measured; the stock is
 not drained. Issue 278's ghost cleanup is the precedent to re-read first, because rows that have
 PROJECTED cannot simply be deleted.
+
+## Comment — 2026-09-17: the 281 are measured, and they are not one population
+
+The remaining unit's first bullet — *"the size is measured … everything below is scoped by that
+number"* — done, on an idle box, four bounded reads through `/v1/sql`. The cohort has **not moved**,
+which is itself the expected result now that the bleeding is stopped:
+
+    SELECT COUNT(*) FROM notices
+     WHERE source='doe' AND publication_id='00000000-1900'          → 281
+
+**Every one is genuinely redundant.** Each has a sibling holding the same archived member under a
+different key — the 404 shape exactly:
+
+    … JOIN notices b ON b.source=a.source AND b.member_path=a.member_path
+                    AND b.publication_id <> a.publication_id        → 281 of 281
+
+**And every one has PROJECTED**, so issue 278's precedent binds and a bare `DELETE` is off the table:
+
+    … JOIN tender_versions v ON v.caused_by_notice_id = a.id        → 281 of 281
+
+**But they are two populations, not one**, and this is the part that decides the repair:
+
+| class | count | shape |
+| --- | --- | --- |
+| placeholder and sibling on the **same** tender | **278** | a spurious extra VERSION on a tender that already holds the real one |
+| placeholder and sibling on **different** tenders | **3** | the placeholder sits on an old tender; the sibling minted a new one |
+
+The three, named so they cannot be rounded away:
+
+| placeholder notice | its tender | sibling notice | sibling key | sibling tender |
+| --- | --- | --- | --- | --- |
+| 31145658 | 7,964,960 | 45642425 | `06b602e1-5053-442b-b5ad-3371e3ed4ac2-01` | 8,555,911 |
+| 29332209 | 7,939,911 | 45632756 | `71fa2d15-c6cb-479b-b7b9-66c5a529692e-01` | 8,555,910 |
+| 28130872 | 1,745,988 | 45623699 | `9fbf38c9-f0e2-44d5-83bf-bc991033ca6e-01` | 8,555,909 |
+
+The sibling tenders are **consecutive** (8,555,909–911) — minted together during the 394 re-key
+campaign — while the placeholder tenders are scattered across the corpus (1.7M, 7.9M, 7.96M). So for
+these three the placeholder is the OLD identity on an OLD tender and the re-key minted a fresh tender
+beside it, rather than adding a version to the existing one. Removing the placeholder version there
+could leave an old tender with one fewer version, or none.
+
+### What this means for the cleanup
+
+The 278 are the easy, uniform case and the 3 are not, so **a single sweep that assumes one shape
+would quietly do the wrong thing to three tenders** — which is the same failure as issue 278's, where
+rows that had projected could not simply be dropped. Any repair job needs:
+
+- a dry arm that reports the two classes separately and refuses if the split is not 278/3, because a
+  changed split means the cohort moved and the plan is stale;
+- the 3 handled explicitly, by decision rather than by the same rule;
+- the projection re-run afterwards, with 394's acceptance (the placeholder cohort reaching **0**) as
+  the check — restated on this issue precisely because reaching 0 is now a consequence of resolving
+  these rows, not of re-parsing.
+
+Not executed here: `/v1/sql` is SELECT-only by design, so this belongs in a job with dry/wet arms,
+and the measurement above is what that job's dry arm has to reproduce before anything is written.
