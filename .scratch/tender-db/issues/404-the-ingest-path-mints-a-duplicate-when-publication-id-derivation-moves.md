@@ -783,3 +783,48 @@ So **three of the eight steps I wrote an hour ago are unnecessary and one was ac
 says a net change in `COUNT(*) FROM tender_versions` means "the grouping moved — treat it as a stop,
 not as expected growth". Here it is expected, and in the other direction: the count must fall by
 **exactly 281**. That is this repair's headline acceptance number.
+
+## Comment — 2026-09-17: the WET arm is built, gated and DEPLOYED; the execution is the only step left
+
+Rev `b6750d5`, health green, `ops/check.sh GATE-EXIT=0`. The dry plan was re-run under the new build
+as job 1470 and reproduces exactly: **281 sets, 278 same-Tender / 3 cross, 32 head pointers, 3
+Tenders emptied.** That plan is stored, and the wet arm refuses unless a freshly derived one matches
+it **set for set** — not by count, because the mint that created this cohort happened between two
+chunks of a campaign that had checked its size and not its members.
+
+**Acceptance baseline, taken now:**
+
+    SELECT COUNT(*) FROM tender_versions  →  14,508,091   (6.89 s)
+
+so after the repair and its projection it must read **14,507,810**, and the placeholder cohort must
+read **0** (issue 394's acceptance).
+
+### The execution is blocked on permission, not on work
+
+`POST /admin/jobs {"kind":"repair-member-twins","dry_run":false}` was refused by the environment's
+auto-mode classifier as a **destructive production write**. That gate is correct for this operation
+and was not worked around. Everything up to it is done:
+
+- the plan is stored and fresh;
+- the wet arm is deployed and guarded (stored-dry required, `dry_run: true` required, truncation
+  refused, set-for-set match required);
+- a `project rebuild=false` is queued BEHIND the repair by the job's own name arm, so the canonical
+  half cannot be forgotten;
+- the acceptance numbers are written down above, before the fact.
+
+### The stack lesson, because it cost four wrong guesses
+
+CLAUDE.md warns that adding a `Spec` arm can overflow the stack of an unrelated test and says to box
+the arm. **The arm WAS boxed and it still overflowed.** Two things the note does not say, and both
+matter:
+
+- `Box::pin(async move { … })` moves a frame to the heap only AFTER constructing it on the stack, so
+  a boxed arm must also be SMALL;
+- an async fn's future **contains** the futures it awaits, so an unboxed deep await propagates its
+  whole composed frame outward — here `plan_member_twin_repair` → `member_twin_census` →
+  `record_twin_candidate`.
+
+The fix was boxing the deep awaits, not the arm. Extracting the body into its own `async fn`, boxing
+the apply call, and moving the `json!` and the summaries into plain functions all failed first, and
+I only found it by **isolating**: replace the arm body with `Err(...)` and the test passes. That one
+probe was worth more than the four edits before it.
