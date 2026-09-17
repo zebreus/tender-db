@@ -632,3 +632,38 @@ so it moves the scan rather than removing it.
 change the design — a batched DELETE costs the same whether it matches 0 rows or 500 — but it is
 worth knowing, and it cannot be asked cheaply for the same reason the delete is expensive. The dry
 arm is the right place to count it, once, under the same bracket.
+
+### The delete is affordable — measured, and the fork is decided
+
+The previous note left a real fork: **delete** the redundant notice (honest, but fourteen tables and
+four of them unindexed) or **mark** it and let the fold drop its version (nearly free, but the corpus
+keeps asserting two notices, which is the thing this issue says is wrong). The deciding question is
+what those unindexed scans actually cost, so I measured instead of arguing.
+
+Table sizes, by the O(1) `ORDER BY id DESC LIMIT 1` idiom:
+
+    lot_results   19,568,776
+    bids           7,730,823
+    contracts      5,283,325
+
+~32.6M rows across the three, plus `legacy_adjacency`. One scan each — because the repair batches by
+TABLE — against a box that walked 14.5M index entries in 3 s. That is a one-off cost of the order of
+a minute, not the hours a per-notice loop would have been.
+
+**And everything else is already indexed**, which I checked rather than assumed:
+
+| by | index |
+| --- | --- |
+| parsed layer (`notice_texts`, …) | `PRIMARY KEY (notice_id, …)` — notice_id leads |
+| `organization_mentions` | `organization_mentions_notice(notice_id)` (issue 247's, since built) |
+| `tender_version_parties` / `_bid_parties` | `…_version` — so the party rows go by **VERSION**, not by `mention_notice_id`, which is the unindexed 78M-row scan issue 248 measured at ~2.2 s per mention |
+| `tender_versions` | `tender_versions_notice(caused_by_notice_id)` |
+| `quarantine` | `quarantine_notice_id` |
+
+So: **delete, not mark.** The expensive path was only expensive because `clear_parsed` is shaped for
+a re-parse — it deletes party rows by `mention_notice_id` because a re-parse does not know a version.
+A repair does know the version, and that changes the cost by four orders of magnitude.
+
+`clear_parsed` is therefore NOT the primitive to reuse here, despite being the obvious one. That is
+worth saying plainly, because reusing it would have looked like good practice and would have made
+this repair take hours per notice.
