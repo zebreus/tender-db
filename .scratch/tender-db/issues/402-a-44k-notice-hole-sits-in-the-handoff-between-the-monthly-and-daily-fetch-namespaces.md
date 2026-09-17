@@ -6,8 +6,9 @@ tenders, 85,747 versions**, then job 2353 rebuilt the deferred indexes), and the
 ZERO now serves on every day sampled. **Unit B's DETECTOR half is fixed and gated 2026-09-17** — the continuity window was the newest
 2M NOTICE IDS, i.e. ingest order, and this hole ended exactly on that window's edge where
 `publication_gaps` (interior-only, by design) can never see it; it is now 550 days of PUBLICATION
-time, red-checked. **What remains is `fetched_to`'s lexical `MAX(period)` across two namespaces**
-(`store/src/lib.rs:3702`), located and written up but not fixed — see the 2026-09-17 comment. Was: found 2026-09-16 by the hourly audit (step 3) on prod rev `19010b8`. The hole is MEASURED, not inferred: zero notices in the window, on both sides of which the corpus publishes ~3,720/day. The fix has two halves — fetch the missing issues, and make the seam checkable — and the second is the one that matters, because nothing on the board can currently see a hole in this position.
+time, red-checked. **`fetched_to`'s lexical `MAX(period)` is now ADDRESSED too** (2026-09-17): the funnel names each
+namespace separately rather than comparing across them. Every unit of this issue is closed; see
+the comments below for what was deliberately NOT changed and why. Was: found 2026-09-16 by the hourly audit (step 3) on prod rev `19010b8`. The hole is MEASURED, not inferred: zero notices in the window, on both sides of which the corpus publishes ~3,720/day. The fix has two halves — fetch the missing issues, and make the seam checkable — and the second is the one that matters, because nothing on the board can currently see a hole in this position.
 Kind: defect (coverage — the fetch plan's monthly→daily handoff, and the completeness verdict in `crates/app/src/coverage.rs` / `store::monthly_period_gaps`)
 Relates to: 395 (RESOLVED 2026-09-15 — it built `monthly_period_gaps` exactly to catch a fetch hole the ✓ was hiding, and it CANNOT see this one: its sequence test is monthly-only and interior-only by design, and this hole is at the boundary between two period namespaces, which is neither), 396 (RESOLVED-VERIFIED 2026-09-16 — its 2026 SURPLUS and this DEFICIT are in the same coverage cell and cancel: 2026 reads 118.74 % because the denominator is a 2026-07-17 snapshot while the held count runs to 2026-09-11, so ~44,600 missing notices are invisible under an over-100 % ratio), 15 (RESOLVED 2026-08-16 — the backfill that set the fetch plan, and where OJ S issue numbering is pinned), 33 (the funnel panel), 401 (filed the same hour — the same panel, a different way its cells mislead), 06 (the ground truth the coverage ratio divides by)
 Blocked by: nothing
@@ -454,3 +455,51 @@ The detector half is **done and accepted on prod**. What remains on unit B is
 `fetched_to`'s lexical `MAX(period)` across namespaces, written up in the previous
 comment. Finding 1 above is a separate small unit, and belongs with the report's
 instrumentation rather than with this issue's seam.
+
+
+## Comment — 2026-09-17: the funnel names the namespaces, and what was left alone
+
+`Db::fetch_registry_summary` now groups by `(source, kind)` and each row carries
+`kinds: Vec<(kind, from, to)>`. The dashboard prints one range per namespace once a source has more
+than one; a single-namespace source renders exactly as before. Prod's TED row goes from
+
+    445 pkgs (1993-01 … 2026-06) · fetch complete ✓
+
+to naming both series, so the 2½-month understatement is gone from the surface a reader actually
+looks at.
+
+**`from`/`to` keep their old lexical values**, deliberately — this is a pure addition for every
+caller that reads them, and the fix is that the dashboard stops SHOWING the misleading number rather
+than that the number becomes right. Making it right needs the period→instant mapping that OJ S issue
+numbers do not carry, which the previous comment sized and this one declines.
+
+### `fetch_complete` is unchanged, and that is a finding rather than an omission
+
+I started to change its year test and backed it out, because neither alternative survives:
+
+- **`any(kind is current)` is equivalent to what is there.** If some kind's newest period starts
+  with the current year, the source-wide lexical max does too — it is ≥ that string. It would change
+  no verdict on any real source, and shipping it would have been motion dressed as a fix.
+- **`all(kind is current)` is wrong.** A source legitimately RETIRES a namespace: TED's monthlies end
+  where its dailies begin, so `2026-06` is their permanent final value. Requiring every namespace to
+  be current denies every source that ever changed how it publishes.
+
+The predicate needs to know **which namespaces are still expected to receive packages**, and the
+fetch registry does not know that about itself. So the honest position, now written beside the code:
+the display is fixed, this is unchanged, and the thing that actually catches a stalled namespace is
+this issue's own publication-day continuity check — which asks what is HELD and never consults a
+`period` at all. That is the second time this issue has landed on the same conclusion from a
+different direction, which is worth noticing: **every fetch-side completeness signal is guessing, and
+the held-side one is not.**
+
+### Tests
+
+The store test gained the two-namespace shape and asserts the inversion directly — the daily
+series' newest period sorts BELOW the monthly one that won the max while being later in time. The
+first version of that assertion had the comparison backwards and the test caught it, which is the
+cheapest possible demonstration that string order is not time order.
+
+`a_source_with_two_period_namespaces_gets_one_range_per_namespace` pins the per-kind ranges, a
+single-namespace control that must keep rendering as before, and — deliberately — that
+`fetched_to` still returns the monthly value, so a later reader cannot mistake this change for
+having repaired it.
