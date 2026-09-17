@@ -1,8 +1,12 @@
 # 409 — the data-quality run's cost breakdown covers only the WINDOWED queries, so eleven whole-corpus sweeps (~10 % of the run) are unattributed
 
-Status: needs-triage — filed 2026-09-17 from job 1446's output while accepting issue 402 unit B.
-Measured, not inferred: the logged breakdown sums to 4,933 s against a run the job itself reports
-as 5,507 s.
+Status: ready-for-agent — **units 1 and 2 DONE and gated 2026-09-17**, same day as filing: the
+whole-corpus sweeps are timed into the same map, the line prints AFTER them (it was printed
+before, so it structurally could not include them), whole-corpus labels are marked `*`, and the
+line now states its total and NAMES any measured label it has no timing for. Awaiting only the
+next `data-quality` run for the numbers. Was: filed 2026-09-17 from job 1446's output while
+accepting issue 402 unit B. Measured, not inferred: the logged breakdown sums to 4,933 s against
+a run the job itself reports as 5,507 s.
 Kind: defect (instrumentation) — the instrument built to inform sizing and indexing decisions is
 blind to a tenth of the work, including a full-table scan added the same day
 Relates to: 402 (whose unit-B fix made one of the invisible sweeps a full `notices` pass — the
@@ -69,3 +73,34 @@ someone adds a third query category later — which is how this gap arose in the
 Whether `publication_days` is *worth* its cost, or whether `notices.published_at` should be
 indexed. Unit 1 is what makes that question answerable; answering it belongs with 402 or its own
 issue, and answering it before the instrument can measure it would be guessing.
+
+
+## Comment — 2026-09-17: units 1 and 2 shipped
+
+Three changes in `crates/app/src/supervisor.rs`:
+
+- the whole-corpus loop times each query into the **same** `cost` map;
+- the breakdown is printed **after** that loop. It was printed before it, which is why no amount of
+  care with the map alone would have fixed this — the line ran before the data existed;
+- one table, both kinds, whole-corpus marked `*` with a legend, as unit 1 decided.
+
+And one thing unit 1 did not ask for, which is the part that actually matters. The line now states
+its **total** and **names any measured label it has no timing for**:
+
+    [data-quality] cost by query (2811s total, * = whole-corpus, run once; the rest are sums over
+      35 windows): awards 1630s, title 971s, publication_days* 210s — UNTIMED (1): weld_candidates
+
+A wrong number announces itself; a missing row does not. The original defect was invisible precisely
+because the omission left no trace — it took reconciling the printed sum against the run total by
+hand to see it. A future third query category would have been wrong the same way, and now it fails
+loudly on its first run instead of quietly shrinking the denominator.
+
+`cost_line` is extracted as a pure function so this is testable without a 90-minute job.
+`the_cost_line_covers_every_measured_label_and_names_any_it_missed` pins the ranking, the marker,
+the stated total and the UNTIMED report.
+
+**What this does NOT do** is answer whether `publication_days` is worth its cost, or whether
+`notices.published_at` should be indexed. It makes that answerable: the next run gives that query
+its own number instead of hiding it inside a ~574 s upper bound shared with ten other sweeps. The
+answer belongs to 402 or its own issue, and reaching it before the instrument could measure it would
+have been guessing — which is the thing this issue exists to stop.
