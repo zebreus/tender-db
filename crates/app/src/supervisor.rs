@@ -551,6 +551,17 @@ enum Spec {
     /// write side of this one removes rows from fourteen tables — four of them
     /// unindexed — so it is not something to half-land beside its planner.
     RepairMemberTwins { dry_run: bool },
+    /// Issue 395: the fetch registry's monthly period sequence, per source,
+    /// checked on a SCHEDULE. READ-ONLY.
+    ///
+    /// The contiguity test itself already exists and already gates the funnel's
+    /// "fetch complete ✓" — but it is called from one place, the dashboard, so a
+    /// hole waits for a human to open a page. TED 2025-06 sat missing from the
+    /// original backfill until a review found it, ~72,000 notices and 0.5 % of
+    /// the corpus: exactly the size that trips nothing. This is the part of 395's
+    /// acceptance that says the check "must fire without anyone opening the
+    /// dashboard".
+    RegistryContiguity,
     /// Fetch the ECB daily reference-rate history and load `currency_rates`
     /// (ADR-0014 unit 2): archive the CSV under the ordinary fetch registry
     /// (source `ecb`, kind `rates`, period = fetch date), parse, seed the
@@ -1986,6 +1997,14 @@ impl Supervisor {
             "member-twin-census" => Ok(vec![
                 self.push("member-twin-census", "member-twin-census".into(), Spec::MemberTwinCensus)
                     .await,
+            ]),
+            "registry-contiguity" => Ok(vec![
+                self.push(
+                    "registry-contiguity",
+                    "registry-contiguity".into(),
+                    Spec::RegistryContiguity,
+                )
+                .await,
             ]),
             "repair-member-twins" => {
                 let dry_run = req.dry_run.unwrap_or(true);
@@ -8812,6 +8831,22 @@ impl Supervisor {
             Spec::RepairMemberTwins { dry_run } => {
                 Box::pin(self.run_repair_member_twins(job, *dry_run)).await
             }
+            Spec::RegistryContiguity => Box::pin(async move {
+                self.set_phase(
+                    "checking",
+                    None,
+                    None,
+                    "issue 395: monthly period contiguity, per source".to_owned(),
+                );
+                let rows = self.db.monthly_fetch_periods().await.map_err(|e| e.to_string())?;
+                let (body, summary) = registry_contiguity_report(&rows, store::now_unix());
+                self.db
+                    .put_report("registry-contiguity", &body, store::now_unix())
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(summary)
+            })
+            .await,
             Spec::MemberTwinCensus => Box::pin(async move {
                 // BOXED, for the reason spelled out on the arm below: `run_spec`
                 // is one giant async match and a census arm's locals once
@@ -10383,6 +10418,17 @@ impl Supervisor {
                             Spec::MemberTwinCensus,
                         )
                         .await;
+                        // Issue 395: one indexed GROUP BY over the fetch registry,
+                        // so it rides with the cheap stamps. Its whole value is
+                        // that it fires when nobody is looking — the TED 2025-06
+                        // hole sat under a green tick from the original backfill
+                        // until a review went looking for it.
+                        self.push(
+                            "registry-contiguity",
+                            "registry-contiguity (weekly)".into(),
+                            Spec::RegistryContiguity,
+                        )
+                        .await;
                         self.push(
                             "data-quality",
                             "data-quality (weekly)".into(),
@@ -10931,6 +10977,82 @@ fn last_sunday(year: u16, month: u8) -> i64 {
 /// seconds this run spent on that label, the windowed ones already summed across
 /// every window — which is what a sizing decision compares. What the marker
 /// carries is the different thing: how that cost moves as the corpus grows.
+/// Issue 395's contiguity verdict, as a report body and a one-line summary.
+///
+/// A plain function for the reason the 404 helpers are plain functions: the
+/// temporaries must not live in `run_spec`'s future.
+///
+/// It names the holes. "Something is missing somewhere in thirty years of
+/// packages" is not an operator instruction; "ted missing 2025-06" is. And it
+/// reports duplicates SEPARATELY rather than folding them into a count, because
+/// a duplicate is exactly what hid the original hole: TED's 2025 held twelve
+/// rows over eleven distinct months, so `rows == 12` passed the year that was
+/// missing June.
+fn registry_contiguity_report(
+    rows: &[(String, String, i64)],
+    now: i64,
+) -> (String, String) {
+    let mut by_source: std::collections::BTreeMap<String, Vec<(String, i64)>> = Default::default();
+    for (source, period, n) in rows {
+        by_source.entry(source.clone()).or_default().push((period.clone(), *n));
+    }
+    let mut sources = Vec::new();
+    let mut holed = Vec::new();
+    let mut unparsed_sources = Vec::new();
+    for (source, periods) in &by_source {
+        let gaps = store::monthly_period_gaps(periods);
+        if !gaps.missing.is_empty() {
+            holed.push(format!("{source} missing {}", gaps.missing.join(", ")));
+        }
+        if !gaps.unparsed.is_empty() {
+            unparsed_sources.push(source.clone());
+        }
+        sources.push(serde_json::json!({
+            "source": source,
+            "rows": periods.iter().map(|(_, n)| n).sum::<i64>(),
+            "distinct_periods": periods.len(),
+            "missing": gaps.missing,
+            "duplicated": gaps.duplicated,
+            "unparsed": gaps.unparsed,
+        }));
+    }
+    let body = serde_json::json!({
+        "checked_at": now,
+        "sources": sources,
+        "holes": holed.len(),
+    })
+    .to_string();
+    let summary = if holed.is_empty() && unparsed_sources.is_empty() {
+        format!(
+            "registry-contiguity (issue 395): {} source(s) checked, every monthly period sequence \
+             is CONTIGUOUS. Nothing is written. A duplicate period is reported per source but is \
+             not a hole — TED re-issued its 2025-09 monthly and the dedup held all but one member \
+             of ~73,000, which is the system working.",
+            by_source.len()
+        )
+    } else {
+        format!(
+            "registry-contiguity (issue 395): **{} source(s) have a HOLE** — {}.{} Enqueue the \
+             named period(s) with a `fetch` job. This is the check that fires without anyone \
+             opening the dashboard: TED 2025-06 (~72,000 notices, 0.5 % of the corpus) sat missing \
+             from the original backfill under a green `fetch complete` tick until a review went \
+             looking.",
+            holed.len(),
+            holed.join("; "),
+            if unparsed_sources.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    " Also, {} carries a period shape the sequence test cannot read, so ITS \
+                     verdict is not trustworthy either.",
+                    unparsed_sources.join(", ")
+                )
+            },
+        )
+    };
+    (body, summary)
+}
+
 /// The stored `member-twin-repair` report (issue 404).
 ///
 /// A plain function, not inline in the match arm, and that is not only tidiness.
@@ -12939,13 +13061,58 @@ mod tests {
         assert!(!s.contains("admitted"), "no admitted count exists for this gate: {s}");
     }
 
-    /// Issue 313: the weekly pre-dawn tick must actually enqueue all nine
+    /// Issue 395: the scheduled contiguity check must NAME the hole, and must
+    /// not let a duplicate stand in for a missing neighbour.
+    ///
+    /// The second arm is the shape that caused the original miss: TED's 2025 held
+    /// twelve rows over eleven distinct months, so a `rows == 12` check passed the
+    /// year that was missing June. A verdict built on row counts would call this
+    /// cohort healthy.
+    #[test]
+    fn the_contiguity_check_names_the_hole_and_a_duplicate_does_not_mask_one() {
+        let row = |source: &str, period: &str, n: i64| (source.to_owned(), period.to_owned(), n);
+
+        // Contiguous: no hole, whatever the duplicates.
+        let (_, ok) = registry_contiguity_report(
+            &[row("ted", "2025-01", 1), row("ted", "2025-02", 2), row("ted", "2025-03", 1)],
+            0,
+        );
+        assert!(ok.contains("CONTIGUOUS"), "{ok}");
+        assert!(!ok.contains("HOLE"), "a duplicated period is not a hole: {ok}");
+
+        // A hole, named.
+        let (body, bad) = registry_contiguity_report(
+            &[row("ted", "2025-01", 1), row("ted", "2025-03", 1)],
+            0,
+        );
+        assert!(bad.contains("ted missing 2025-02"), "the summary must NAME it: {bad}");
+        assert!(bad.contains("HOLE"), "{bad}");
+        assert!(body.contains("2025-02"), "and the report body carries it: {body}");
+
+        // The original shape, in the SHAPE `monthly_fetch_periods` actually
+        // returns: one tuple per (source, period) carrying its row COUNT. So the
+        // duplicate is a 2, not a second tuple — eleven tuples, twelve rows.
+        let year: Vec<(String, String, i64)> = (1..=12)
+            .filter(|m| *m != 6)
+            .map(|m| row("ted", &format!("2025-{m:02}"), if m == 9 { 2 } else { 1 }))
+            .collect();
+        assert_eq!(year.len(), 11, "eleven distinct months");
+        let rows: i64 = year.iter().map(|(_, _, n)| n).sum();
+        assert_eq!(rows, 12, "twelve rows — the count a naive check passed");
+        let (_, masked) = registry_contiguity_report(&year, 0);
+        assert!(
+            masked.contains("ted missing 2025-06"),
+            "twelve rows over eleven months is a HOLE, not a healthy year: {masked}"
+        );
+    }
+
+    /// Issue 313: the weekly pre-dawn tick must actually enqueue all ten
     /// of its jobs, and must not stack a second copy of any of them. Until
     /// this test existed the body lived inside a loop that sleeps until a
     /// wall-clock Sunday, so tripwire 6's weekly clock had only ever been
     /// exercised by hand — a wiring slip would have surfaced as silence.
     #[tokio::test]
-    async fn the_weekly_report_tick_enqueues_its_nine_jobs_once_each() {
+    async fn the_weekly_report_tick_enqueues_its_ten_jobs_once_each() {
         let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
         sup.run_report_tick().await;
         let kinds: Vec<String> = sup.queued().into_iter().map(|j| j.kind).collect();
@@ -12959,6 +13126,8 @@ mod tests {
                 "ghost-census",
                 // Issue 404: ~2 s read-only, the twin of the line above.
                 "member-twin-census",
+                // Issue 395: one GROUP BY over the fetch registry.
+                "registry-contiguity",
                 "data-quality",
                 "rehash-probe",
                 "build-org-match-keys",
@@ -12995,7 +13164,7 @@ mod tests {
         // A second tick with last week's work still queued stacks nothing
         // (the issue-282 already_pending guard).
         sup.run_report_tick().await;
-        assert_eq!(sup.queued().len(), 9, "already_pending must stop the double enqueue");
+        assert_eq!(sup.queued().len(), 10, "already_pending must stop the double enqueue");
     }
 
     /// Issue 324: the dry arm of `drop-orphan-satellites` writes its plan as

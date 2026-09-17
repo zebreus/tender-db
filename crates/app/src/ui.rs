@@ -556,9 +556,19 @@ fn PipelinePanel(rows: Vec<PipelineStage>) -> Element {
                                         " · missing: {s.missing_periods.join(\", \")}"
                                     }
                                 }
+                                // Issue 395, re-worded 2026-09-17 after measuring
+                                // one: "registered twice" reads as an operator
+                                // error, and TED's 2025-09 is not one. Two
+                                // DIFFERENT packages (353,083,923 vs 352,934,443
+                                // bytes, different hashes) carry the same period
+                                // because the publisher re-issued the monthly; the
+                                // dedup then held all but ONE member of ~73,000.
+                                // That is the system working, so it is reported,
+                                // not accused.
                                 if !s.duplicate_periods.is_empty() {
                                     span { class: "muted",
-                                        " · registered twice: {s.duplicate_periods.join(\", \")}"
+                                        title: "A publisher re-issuing a package registers a second fetch for the same period. The dedup keeps only members the corpus does not already hold, so this is normal and not a coverage problem.",
+                                        " · re-issued: {s.duplicate_periods.join(\", \")}"
                                     }
                                 }
                             }
