@@ -1,6 +1,13 @@
 # 370 — the served contract is hand-written prose with no gate coupling it to behaviour: twelve published claims are now false
 
-Status: REOPENED 2026-09-15 — units 1-2's "all thirteen claims corrected at their source" is incomplete: two of those claims (`provisional` = single-mention; a timed-out query's server-side work "was abandoned") are still served live on prod at rev `9e082fd` from surfaces the table never listed — the `/docs` const at `crates/app/src/v1/docs.rs:643` and the vendored spec at `crates/app/data/openapi.json:412`. See Comments, 2026-09-15.
+Status: ready-for-agent — **the REOPENED unit is CLOSED and VERIFIED ON PROD 2026-09-17** at rev
+`62031e2`: `/docs` and `/v1/openapi.json` both serve the corrected wording (checked positively, not
+just by absence — `NAME-scoped` and `no interrupt` are present and the retired phrases score 0 hits
+on both surfaces), and the drift now has a detector on every served surface
+(`no_served_surface_repeats_a_retired_claim`, red-checked). Remaining on this issue: **unit 4's second
+half only** — per-field provenance on `TenderRow`, so an inherited deadline is distinguishable rather
+than merely documented. See Comments, 2026-09-17.
+Was: REOPENED 2026-09-15 — units 1-2's "all thirteen claims corrected at their source" is incomplete: two of those claims (`provisional` = single-mention; a timed-out query's server-side work "was abandoned") are still served live on prod at rev `9e082fd` from surfaces the table never listed — the `/docs` const at `crates/app/src/v1/docs.rs:643` and the vendored spec at `crates/app/data/openapi.json:412`. See Comments, 2026-09-15.
 Was: UNITS 1,2,3,5 DONE 2026-09-07 (owner) — all thirteen claims corrected at their source (`c185ed1`, 915 passed) and the provisional note coupled to the resolver by a test. Unit 4's second half (per-field provenance on `TenderRow`, so an inherited deadline is distinguishable rather than only documented) remains ready-for-agent. Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
 several reviewer "defects" are really this issue: the behaviour was decided deliberately
 and the published description was not updated)
@@ -368,3 +375,29 @@ reading does not come back. Every entry in the list was served as fact and measu
 **Still open on this issue:** unit 4's second half (per-field provenance on `TenderRow`). The
 `?country=ZZ`/`?currency=XXX` row of the table above is 371's, and the same report supplies a new
 live instance of that class on a filter value that is PRESENT rather than absent — filed as **408**.
+
+### 2026-09-17 (later) — deployed and verified on prod
+
+`62031e2` deployed, `ops/check.sh` GATE-EXIT=0, deploy exit 0, `/health` ok with
+`rev 62031e2b00ab4b378e74e657b95b525c66fd3dc1` matching `origin/main`.
+
+Verified on the SERVED surfaces, positively rather than by absence — a page that 404'd would also
+score zero retired-phrase hits, which is the mistake this issue exists to stop making:
+
+| check | result |
+| --- | --- |
+| `/docs` retired phrases (`single-mention`, `never merged`, `work was abandoned`) | **0 hits** |
+| `/v1/openapi.json` retired phrases | **0 hits** |
+| `/docs` contains `NAME-scoped`, `no official identifier`, `many thousands of mentions` | **all present** |
+| `/v1/sql` 408 description, as served | "The ANSWER is abandoned, but the server-side work is not always: the engine offers no interrupt, so a non-yielding aggregate keeps its slot until it finishes … never retry it unchanged." |
+
+The served `provisional` sentence now reads:
+
+> Organizations are aggregated by identifier where the source publishes one. A row without one is
+> *provisional*, which means exactly that — no official identifier — and nothing more. Its identity
+> is then NAME-scoped: mentions carrying the same normalised name and country resolve to one
+> provisional row, so such a row can hold many thousands of mentions (issues 234, 351). It is not a
+> promise of one mention, and a later identifier can still canonicalise or split it.
+
+Which is what the resolver has actually done since 234, and what `sql.rs`'s coupled note has said
+since unit 2. All three surfaces now agree with each other and with the behaviour.
