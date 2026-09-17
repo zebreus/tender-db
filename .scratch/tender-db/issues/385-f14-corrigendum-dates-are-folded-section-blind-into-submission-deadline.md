@@ -1,6 +1,6 @@
 # 385 — every F14 corrigendum date is folded into `submission_deadline` regardless of the section it changes, and the MAX election then serves the IV.2.7 opening time (or an IV.2.6 validity date months later) as the tender's deadline
 
-Status: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: **DONE 2026-09-17** — units 1 and 2 were built 2026-09-15 and the refold has since landed; every acceptance in `## Done when` is verified on prod today, including both census windows. The raw census metric does NOT reach 0 and CANNOT — see the closing comment: it is a value-equality test, so it counts coincidences, and the residual is 10 tenders in one window and 3 in the other, each explained. Was: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (ingest → canonical projection, r208/r209 F14 corrigenda)
 Relates to: 366 (the MAX election this rides on; its line 56 lists `TED-NEW_VALUE.DATE` among the
 co-published deadline sources and calls two deadlines "structurally normal" — its fix was a
@@ -378,3 +378,60 @@ future. It is recorded above so nobody has to re-derive it.
 Units 1 and 2 are **done and verified**. What remains on this issue is the r2.0.8 fixture that has
 no corpus to draw on (recorded under unit 1) and the corpus-wide coordinate census (recorded under
 unit 2), neither of which blocks anything.
+
+## Comment — 2026-09-17: the refold has landed and every acceptance passes. DONE.
+
+Picked this up as `needs-triage` and found the mapping units deployed and the carriers already
+refolded, with nothing recorded here. Verified end to end against the live box.
+
+### The three exemplars, all corrected
+
+| tender | served `submission_deadline` | `dates` |
+| --- | --- | --- |
+| 6762566 | **2020-04-24T09:00** (was 09:30) | `opening_date` 2020-04-24T09:30, `submission_deadline` 09:00 |
+| 6737588 | **2020-05-11T10:00** (was 2020-07-09) | opening 10:30, deadline 10:00 |
+| 6752749 | **2020-05-19T17:00** (was 2020-05-20T09:00) | opening 2020-05-20T09:00, deadline 17:00 |
+
+And the second-order win this issue predicted: 6762566's `opening_date` is now **2020-04-24T09:30**,
+not the stale 2020-04-17 value from the superseded CN. The corrigendum that moved the opening finally
+corrects the opening.
+
+### The API acceptance, exactly as written
+
+    deadline_after=2020-04-24T08:45Z&deadline_before=09:15Z&country=PL → 6762566 PRESENT (14 items)
+    deadline_after=2020-04-24T09:15Z&deadline_before=09:45Z&country=PL → NOT present (3 items)
+
+### The census does NOT reach zero, and it never can — here is why, measured
+
+`## Done when` asks for the IV.2.7 count to drop "to 0 (barring the rare tenders where the two
+genuinely coincide, which the re-run should name rather than tolerate silently)". Named:
+
+| window | before | now | of which the corrigendum set IV.2.2 and IV.2.7 to the SAME instant | unexplained |
+| --- | --- | --- | --- | --- |
+| 21,000,000–21,020,000 | 1,229 / 1,991 | **329** | **319** | **10** |
+| 19,500,000–19,510,000 | 288 / 462 | **96** | **93** | **3** |
+
+**The metric is a value-equality test, so it counts coincidences by construction.** A buyer who moves
+the deadline and the opening to the same clock instant produces a tender whose `current_deadline`
+equals an IV.2.7 value and is entirely correct. 319 of 329 and 93 of 96 are that.
+
+**The last 10 and 3 are a second coincidence class, and they are also correct.** Read one to the
+bottom rather than assuming: tender 6746196, notice 21005875, holds **one** change block —
+
+    CHG-1   IV.2.7)   2020-06-11 10:00
+
+no IV.2.2 change at all. The mapping routed it to `opening_date`, which is right. The served
+`submission_deadline` of 2020-06-11T10:00 comes from a different carrier and merely *equals* the
+moved opening. So the corpus is correct and the metric is coarse.
+
+**The sharp acceptance is structural, not statistical**: post-fix, a `submission_deadline` fact can no
+longer originate from an IV.2.7 change, because IV.2.7 routes to `opening_date` and an unknown
+coordinate routes nowhere. That is what unit 1's tests pin and what unit 2's `F14TargetGate` counts.
+Anyone re-reading this census later should expect a few hundred, not zero, and should not chase it.
+
+### What is deliberately not done
+
+- **No r208 fixture.** `TED-NEW_VALUE.DATE` appears only in the r2.0.9 id range — 0 rows in five
+  bounded windows across text/r207/r208, and 0 `Change` sections in 4.4M–13M. Committing a
+  hand-written r2.0.8 carrier would assert a shape nobody has observed. The mapping carries the
+  2004-directive coordinates so a future one maps on arrival.
