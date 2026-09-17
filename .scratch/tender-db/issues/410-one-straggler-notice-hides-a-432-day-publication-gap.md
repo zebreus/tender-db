@@ -136,3 +136,52 @@ section 14 must list `fts 2025-07-01 … 2026-09-06, 433 days, before 329, after
 one that flags nothing. That same run also delivers issue 409's first attributed cost line, which
 will finally price `publication_days` on its own rather than inside a ~574 s bound shared with ten
 other sweeps.
+
+## Comment — 2026-09-17: ACCEPTED on prod, and the run found one rough edge
+
+Job **1462** (`data-quality`, rev `301ee34`): `ok`, 5,382 s, **0 label(s) unmeasured**. Section 14,
+as served:
+
+    source     from         to             days       before        after  inside
+    doe        2025-04-17   2025-04-20        4        1,543        1,085       4
+    doe        2025-12-23   2026-01-03       12          775          774      12
+    doe        2026-04-02   2026-04-05        4        1,316          987       4
+    doe        2026-05-13   2026-05-16        4        1,444        1,193       4
+    fts        2025-07-01   2026-09-06      433          329          492       1
+    ted        2025-12-24   2025-12-28        5        3,648        2,488       2
+    ted        2025-12-31   2026-01-04        5        2,847        2,371       2
+
+**The `fts` row is the prediction, byte for byte.** This issue's Verification section asked for
+`fts 2025-07-01 … 2026-09-06, 433 days, before 329, after 492, inside 1` and that is what it says. The
+432-day hole that rendered as `none` is now a line.
+
+**Six more stretches appeared that nobody had seen**, and every one has `inside > 0` — which is
+exactly why the old adjacency rule hid them all. Checked against the calendar rather than assumed:
+
+| stretch | holiday inside it |
+| --- | --- |
+| `doe` 2025-04-17…04-20 | Good Friday **2025-04-18** |
+| `doe` 2026-04-02…04-05 | Good Friday **2026-04-03** |
+| `doe` 2026-05-13…05-16 | Ascension **2026-05-14** |
+| `doe` 2025-12-23…2026-01-03 | Christmas / New Year |
+| `ted` 2025-12-24…12-28, 2025-12-31…2026-01-04 | Christmas / New Year |
+
+So none of the six is a defect. The caption already anticipates this — *"a source with a different
+rhythm may show a benign entry here; read it against that source's calendar"* — and the brackets make
+it legible.
+
+### The rough edge: `inside == days` is not a silence at all
+
+Look at the four `doe` rows: **`inside` equals `days` in every one.** Every single day inside those
+stretches carried notices. Nothing was silent; the source published at BELOW-ORDINARY volume for a few
+days around a holiday. Calling that a "silent stretch" is wrong, and the `inside` column discloses it
+only to a reader who thinks to compare the two numbers.
+
+The `ted` rows are different — `inside` 2 of 5 days — so three days really were silent, consistent
+with Sun–Thu publishing plus a holiday. And `fts` is 1 of 433.
+
+**`inside == days` deserves its own treatment**: either suppressed, or labelled as a volume dip rather
+than a silence. That is a follow-up unit on this issue, and the criterion is exact and needs no new
+measurement. It is a consequence of the fix, recorded the same day it shipped rather than left for a
+reader to trip over — the old rule hid these entirely, so this is a new way to be slightly wrong, not
+a regression.

@@ -503,3 +503,18 @@ cheapest possible demonstration that string order is not time order.
 single-namespace control that must keep rendering as before, and — deliberately — that
 `fetched_to` still returns the monthly value, so a later reader cannot mistake this change for
 having repaired it.
+
+## Comment — 2026-09-17: unit B's cost is measured — 83 s, 1.5 % of the run
+
+Issue 409's fix landed and job **1462** priced `publication_days` for the first time:
+**83 s of a 5,371 s run.**
+
+The comment above could only say *"all eleven whole-corpus sweeps together are bounded by ~574 s"*,
+which was a subtraction, not an attribution — and it was also low: measured directly, the eleven come
+to **728 s**. The conclusion stands and is now evidence rather than inference: turning this query from
+a 2M-id primary-key range into a full pass over `notices` cost **1.5 %** of the weekly report, and
+bought a measurement that can see the thing it was written to find.
+
+Corollary worth recording so nobody re-opens it: **`notices.published_at` does not need an index** on
+this evidence. The full scan is affordable at this cadence, and the index would have to be maintained
+on every ingest for the benefit of one weekly query.
