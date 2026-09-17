@@ -1,6 +1,11 @@
 # 408 — `?country=GR` walks to the 30 s deadline: the country seed's density cap measures history, and the walk it hands off to is ordered by id
 
-Status: ready-for-agent — REPRODUCED FIRSTHAND on an idle box 2026-09-17 (`GR` 503 at **30.68 s**,
+Status: ready-for-agent — **the 503 IS FIXED on prod 2026-09-17** (`301ee34`): `?country=GR` went from
+503-after-30.68 s to **200 in 5.29 s** with correct rows, by raising `COUNTRY_SEED_CAP` past GR's
+measured 87,026 entries. It is still ~7x slower than a dense country, and a retired spelling above the
+new cap would fail the same way — so **unit 1's decision, option (b), a bounded fallback walk, STANDS**
+as the structural fix and the 5.29 s is now evidence for it. See the two comments at the foot.
+Was: REPRODUCED FIRSTHAND on an idle box 2026-09-17 (`GR` 503 at **30.68 s**,
 `EL` 200 at **0.69 s**, queue empty, so it is the shape and not contention) and the mechanism is
 MEASURED by three bounded probes below. It is not the mechanism the report proposed, nor the one
 this issue's first draft assumed. Unit 1 is a DECISION, not a measurement: `COUNTRY_SEED_CAP`'s
@@ -245,3 +250,35 @@ rather than a guess — it fails if anyone restores 60,000.
   structural one.
 - The crossover is still unmeasured. 200,000 is a judgement; so was 60,000, and nobody wrote down
   where it came from either. Recorded so the next person does not mistake it for a derived number.
+
+
+## Comment — 2026-09-17: the prediction held — 503 → 200 in 5.29 s
+
+The cap change deployed at `301ee34`, then `?country=GR` run **once** on an idle box with two
+same-minute controls:
+
+| value | before (`92f12ec`) | after (`301ee34`) |
+| --- | --- | --- |
+| **`GR`** | **503 after 30.68 s** | **200 in 5.29 s**, 2 rows, `more: true` |
+| `EL` | 200 in 0.69 s | 200 in 0.77 s |
+| `UK` | 200 in 1.16 s | 200 in 0.95 s |
+
+The ROWS are right, which matters as much as the latency — the first is
+`GR-Veroia: arts, cultural or leisure fac…`, a genuine Greek tender carried under the retired
+spelling. The controls did not move, so nothing was traded away for it.
+
+### Read this honestly: fixed, not fast
+
+**5.29 s is ~7x EL's 0.77 s.** The seed does pay at 87,026 entries — it is the difference between a
+503 and an answer — but it is nowhere near the sub-second the dense path gives. The result splits:
+
+- **The live defect is gone.** An unauthenticated request no longer pins a reader for 30 s, which was
+  issue 219's concern and why this was worth fixing today rather than after the refactor.
+- **The structural problem is not.** The cap still measures history rather than head density, 5.29 s
+  is still an outlier among country queries, and a retired codelist spelling with more than 200,000
+  entries falls off the same cliff GR did. **Option (b) stands**, and the 5.29 s is now evidence FOR
+  it rather than a prediction, because it shows the seeded path is not itself cheap at this size.
+
+Recorded as the crossover data nobody had: the seed is viable but expensive somewhere around 87k
+entries. That is one point, not the curve — but it is the first real evidence about where this
+threshold belongs, and 60,000 never had any.
