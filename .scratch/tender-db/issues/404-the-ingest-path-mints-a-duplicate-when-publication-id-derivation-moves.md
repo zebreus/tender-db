@@ -127,7 +127,11 @@ refusal to round down is what exposed this within hours rather than at the next 
 
 ## The BLEEDING is stopped 2026-09-16 — the ingest path adopts a moved key
 
-Status: the mint is fixed and gated (`GATE-EXIT=0`), not yet deployed. The 281 standing duplicates
+Status: the mint is fixed and gated (`GATE-EXIT=0`), **DEPLOYED** — verified present in the
+running build 2026-09-17 (`Recorded::Rekeyed` in `crates/store/src/lib.rs`, `report.rekeyed` in
+`crates/ingest/src/process.rs`, serving rev `7726bcb`). Live acceptance is the next DÖE daily
+reporting NO `re-keyed` clause in its counts — the summary omits the clause entirely at zero, so
+its ABSENCE is the signal. A passive observer is watching the 2026-09-17 fold window for it. The 281 standing duplicates
 are NOT yet resolved — that is the remaining unit.
 
 ### What changed

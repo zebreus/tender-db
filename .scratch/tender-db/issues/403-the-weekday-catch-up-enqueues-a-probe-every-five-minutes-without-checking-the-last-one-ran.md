@@ -96,7 +96,10 @@ cannot observe.
 
 ## FIXED 2026-09-16 — the push is gated, the poll and the fold are not
 
-Status: fixed, gate green (`GATE-EXIT=0`), not yet deployed.
+Status: fixed, gate green (`GATE-EXIT=0`), **DEPLOYED** — verified present in the running build
+2026-09-17 (`catch_up_probe_pending` at `crates/app/src/supervisor.rs:9993`, serving rev
+`7726bcb`). The live acceptance below is still owed, and see the 2026-09-17 note for why it is
+harder to obtain than it looks.
 
 `catch_up_probe_pending()` asks the same question `catch_up_missed_tick` already asks, and the
 polling arm now asks it before pushing. Three things were deliberately left alone:
@@ -134,3 +137,26 @@ seen holding more than two.
 Hold the queue with a long job on a weekday morning and confirm the queued
 `probe | ted daily (catch-up)` count stays at 1 rather than climbing. Today's four were the
 observation that prompted this; they will drain on their own.
+
+
+## Comment — 2026-09-17: deployed; the acceptance needs a conjunction I will not manufacture
+
+The gate is in the running build (checked by reading the deployed revision's source, not by assuming
+a bundle carried it). What is still owed is the live observation, and it is worth stating plainly why
+it has not happened across several weekday mornings:
+
+**The acceptance needs three things at once** — a weekday morning, a TED package that is LATE enough
+to start the catch-up loop, and a queue busy enough for probes to accumulate. Only the first is under
+my control. On an idle queue the loop is unobservable: each probe pops immediately, so the count is 1
+whether the gate exists or not, and "I saw 1" would be evidence of nothing.
+
+The tempting shortcut is to hold the queue with a long job through the catch-up window. **Declined.**
+That delays the day's ingest by however long the job runs — on 2026-09-17 a `data-quality` run is
+~92 minutes — to obtain a verification of a defect that costs queue turns and loses no data. Paying
+in real ingest latency for a green tick on a cosmetic-cost bug is the wrong trade, and it is the kind
+of trade that is easy to make when the acceptance is the thing being optimised rather than the
+system.
+
+So: observed passively when the conjunction happens to occur. A passive observer ran over this
+morning's fold window recording the queued catch-up count alongside 404's and 407's signals; if the
+package lands on time there is no catch-up and nothing to see, which is itself the expected case.
