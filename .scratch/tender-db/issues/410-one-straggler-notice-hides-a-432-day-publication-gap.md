@@ -1,6 +1,8 @@
 # 410 — the continuity check tests the days IMMEDIATELY adjacent to a stretch, so one straggler notice hides a 432-day publication gap
 
-Status: needs-triage — filed 2026-09-17, measured end to end on prod. `fts` has a **432-day silent
+Status: ready-for-agent — **FIX SHIPPED AND DEPLOYED 2026-09-17** (`7726bcb`), red-checked; the
+live re-run is the only thing outstanding and is deliberately deferred to a non-colliding window
+(see the comment at the foot). Was: filed 2026-09-17, measured end to end on prod. `fts` has a **432-day silent
 stretch inside the continuity window** and section 14 reported `none`. The mechanism is exact and
 arithmetic, not a judgement call: the day after the gap carries **1** notice against a floor of
 **165**, so the stretch is disqualified by the bracket rule while the first ordinary day sits one
@@ -93,3 +95,44 @@ Re-run `data-quality` and confirm section 14 lists `fts 2025-07-01 … 2026-09-0
 before 329, after 492`, and that `ted` still reports nothing. Both arms in one run — a rule that
 flags everything is as useless as one that flags nothing, which is the control issue 395 and 402
 both used.
+
+
+## Comment — 2026-09-17: fixed and deployed; live re-run deferred on purpose
+
+`publication_gaps` now filters to ordinary days and walks consecutive ORDINARY days, so brackets are
+ordinary by construction and a straggler cannot veto a stretch. New `inside` column reports days
+within a stretch that carried notices — 0 is a clean blackout, more is a source resuming raggedly.
+Deployed at `7726bcb`, `ops/check.sh` GATE-EXIT=0.
+
+**Red-checked**: restoring the adjacency predicate makes the fts fixture return `[]` — exactly what
+prod did — so the change is provably the thing that surfaces the hole.
+
+**Unit A's test had to be rewritten, and that is the interesting part.** It asserted `is_empty()` on
+a fixture with a 1-notice day between two dense blocks. That assertion belonged to the ID-WINDOW era:
+a 1-count day then meant *the window clipped this day*, and the emptiness around it was an artifact of
+which notice ids happened to fall in range. Since 402 unit B the window is publication time, so the
+same shape now means *the source published nothing for fourteen months* — for TED at ~3,500/day the
+loudest possible finding rather than an artifact. The fixture outlived the semantics it was written
+against.
+
+It also turns out the new rule implements unit A's own **stated** principle more faithfully than unit
+A's code did. The caption says "BOTH being ordinary is what makes a stretch a hole" — that describes
+the bracketing days. The code required the two IMMEDIATELY ADJACENT days to be ordinary, which is
+stricter and different, and the gap between the sentence and the predicate is where a 432-day hole
+lived.
+
+### Why the live re-run is not in this firing
+
+`Supervisor::REPORT_TICK` is Sunday 03:10 Berlin, and the test beside it asserts
+`hour < 9, "the measurement must not collide with the daily fold"` — so the daily fold runs from
+09:00 Berlin. This firing ended at 08:30 Berlin and a `data-quality` run takes ~92 minutes (job 1446:
+5,514 s), which would put it straight through the fold while holding the queue. The codebase states
+that constraint in an assertion; ignoring it to get a verification an hour sooner is not a trade
+worth making.
+
+**Verification, when a clean window comes** (the scheduled Sunday run will do it unprompted):
+section 14 must list `fts 2025-07-01 … 2026-09-06, 433 days, before 329, after 492, inside 1`, and
+`ted` must still report nothing. Both arms in one run — a rule that flags everything is as useless as
+one that flags nothing. That same run also delivers issue 409's first attributed cost line, which
+will finally price `publication_days` on its own rather than inside a ~574 s bound shared with ten
+other sweeps.
