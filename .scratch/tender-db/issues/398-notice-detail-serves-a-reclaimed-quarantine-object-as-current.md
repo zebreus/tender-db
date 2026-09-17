@@ -1,6 +1,6 @@
 # 398 — `/v1/notices/{id}` serves the reclaimed quarantine record on a parsed, projected notice: the read has no stamp filter, so `quarantine != null` means "ever held", not the documented "held"
 
-Status: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: **DONE 2026-09-17** — the triage decision this issue asked for has been taken and all three prose sites carry it: the row is KEPT after a reclaim and the docs say so, with `parse_state` named as the held-today predicate. Verified against the live box and the live `/v1/openapi.json`. Was: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: docs (the served contract — `NoticeDetail` in `crates/app/data/openapi.json:989`, mirrored in the two code docstrings at `crates/store/src/read.rs:3079` and `crates/app/src/v1/json.rs:124-128`; the alternative fix is a one-line predicate in `read::notice_quarantine`, so triage's job is to pick which half is the stale one)
 Relates to: 218 (RESOLVED — Part A, rev `d127ccb`, is what put this field on the detail; its acceptance reads "held notice 20 → zero sections (its `quarantine` field on the detail says why)", i.e. held vs never-held only, and it is silent on what a RECLAIMED notice should serve), 137 (the measurement that makes this the majority shape, not the exception: 1,734,594 quarantine rows — **71.7%** — were already reclaimed on 2026-08-05, and the retained row is the ledger's design, not a leak), 288 (CLOSED 2026-08-26 — the sibling question about these same three outcomes one layer down; it settled "reclaimed WINS" for `quarantine_resolution`'s counters, and nobody settled the same question for this endpoint), 87 (RESOLVED-VERIFIED — the neighbouring "a served quarantine field is stale" class, there the reason on a still-held row), 40 / 76 (the resolution ledger and the reprocess mechanism the historical row exists to serve), 370 (DONE units 1,2,3,5 — the class this belongs to: served claims that are hand-written prose with no gate re-deriving them from behaviour), 391 (filed by this fan-out — the same drift cluster in the same three files; its unit 5 is `components.schemas` BREADTH, not `NoticeDetail.quarantine`'s meaning, so this is deliberately filed apart)
 
@@ -176,3 +176,39 @@ The served spec now names the predicate: `NoticeDetail.quarantine`'s description
 `parse_state` and no longer contains "null when it parsed" (checked against the live
 `/v1/openapi.json`, not the vendored file). The three rows above are now readable as three different
 states instead of two — which was the whole point.
+
+## Comment — 2026-09-17: the decision was taken, and it went the other way. DONE.
+
+This issue framed itself as a fork — "triage's job is to pick which half is the stale one", the read
+or the docs. **The docs were the stale half, and they have been fixed.** All three sites now carry
+the same answer, verified rather than assumed:
+
+- `crates/store/src/read.rs` on `notice_quarantine`: *"`Some` does NOT mean the notice is held
+  today** … The filter that would make `Some` mean 'held today' is deliberately absent: it would
+  leave no REST path to a reclaim record at all, and the record is the point. `parse_state` is the
+  held-today predicate."*
+- `crates/app/src/v1/json.rs`: the same, in the serialiser's own words.
+- `crates/app/data/openapi.json`, and **the live `/v1/openapi.json`**: *"Why the notice was ever held
+  out of the canonical layer … NOT a held-today flag … For 'is this notice held?' read
+  `parse_state`."*
+
+That is the right half to have moved, and it is worth saying why rather than only that it happened.
+Filtering the field would have destroyed real provenance — issue 137 measured **71.7 %** of
+quarantine rows as already reclaimed, so 1.7M notices would lose the only served record of why their
+content was once withheld and when it came back. "This notice's amounts were unrepresentable until
+2026-08-22" is exactly what a consumer needs to explain a hole in their own series. The three
+outcomes remain readable from the object itself (`reprocessed_at` / `skipped_at` / both null), and
+the held-today question has a dedicated field that was always there.
+
+### Verified on prod today
+
+| | |
+| --- | --- |
+| notice 28783598 | `parse_state: parsed`, quarantine present, `reprocessed_at 2026-08-22T01:04:15Z` |
+| its `/content` | **26 sections served** — the documentation's claim that a reclaimed member's content IS served, checked rather than trusted |
+| notice 31276597 (control) | `parse_state: quarantined`, `published_at: null`, both stamps null — outstanding |
+| live `/v1/openapi.json` | carries "NOT a held-today flag" |
+
+Nothing left to build. The one thing this issue asked for that did NOT happen is the read-side
+filter, and its absence is now a documented decision rather than an oversight — which is the whole
+difference between the two.
