@@ -9220,7 +9220,7 @@ impl Supervisor {
     /// indexed `MAX`, having touched no data page.
     async fn run_data_quality(&self, job_id: u64, confirmed: bool) -> Result<String, String> {
         use ingest::data_quality::{self, Raw, Rows};
-        use std::collections::BTreeMap;
+        use std::collections::{BTreeMap, BTreeSet};
         use std::time::Instant;
 
         // Two separate indexed aggregates, not one `MIN(), MAX()` query: SQLite
@@ -9358,19 +9358,6 @@ impl Supervisor {
             ));
         }
 
-        // Costliest first: the line an operator reads to decide what to index or
-        // resize next.
-        let mut ranked: Vec<(&String, &f64)> = cost.iter().collect();
-        ranked.sort_by(|a, b| b.1.total_cmp(a.1));
-        eprintln!(
-            "[data-quality] cost by query: {}",
-            ranked
-                .iter()
-                .map(|(label, secs)| format!("{label} {secs:.0}s"))
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
-
         let mut results: Vec<(String, Option<Rows>)> = Vec::new();
         for query in &queries {
             let rows = if broken.contains(&query.label) {
@@ -9387,9 +9374,20 @@ impl Supervisor {
         // than per window. A failure records the label as unmeasured, exactly as a
         // failed windowed query does: "the query did not run" and "nothing arrived"
         // must stay different claims (issue 230).
+        // Issue 409: these are timed into the SAME map as the windowed queries.
+        // They were not, and the breakdown below — whose stated job is to say what
+        // to index next — was silently missing about a tenth of the run. That
+        // stopped being tidy on 2026-09-17, when issue 402 unit B turned
+        // `publication_days` into a full pass over `notices` on purpose: the
+        // instrument built to price a scan could not see the scan.
+        let mut once_only: BTreeSet<String> = BTreeSet::new();
         for (label, sql) in whole {
             self.set_phase("measuring", Some(done), Some(units), format!("whole-corpus {label}"));
-            match self.db.measure_rows(&sql).await {
+            let query_started = Instant::now();
+            let measured = self.db.measure_rows(&sql).await;
+            *cost.entry(label.clone()).or_default() += query_started.elapsed().as_secs_f64();
+            once_only.insert(label.clone());
+            match measured {
                 Ok(rows) => {
                     results.push((label, Some(rows.into_iter().map(json_row).collect())));
                 }
@@ -9403,6 +9401,21 @@ impl Supervisor {
         for label in data_quality::unwindowed_labels() {
             results.push((label, None));
         }
+
+        // Costliest first: the line an operator reads to decide what to index or
+        // resize next. Printed HERE, after the whole-corpus sweeps have run, rather
+        // than after the window loop where it used to sit — a breakdown that omits
+        // a tenth of the work is worse than none, because it reads complete
+        // (issue 409).
+        //
+        // One table, both kinds, and the once-per-run ones MARKED with `*`. The
+        // windowed figures are already sums across every window, so both are the
+        // same quantity — total seconds this run spent on that label — which is
+        // exactly what a sizing decision needs. The distinction that remains is
+        // how the cost would MOVE if the corpus grew, and a marker plus a legend
+        // carries that without splitting the ordering a reader wants.
+        let expected: Vec<String> = results.iter().map(|(label, _)| label.clone()).collect();
+        eprintln!("{}", cost_line(&cost, &once_only, windows.len(), &expected));
 
         let raw = Raw::from_labelled(results).map_err(|e| e.to_string())?;
         let report = data_quality::assemble("(in-process)", &raw);
@@ -10600,8 +10613,107 @@ fn last_sunday(year: u16, month: u8) -> i64 {
     (z - weekday) * 86_400
 }
 
+
+/// The `cost by query` line (issue 409).
+///
+/// Pure, and separated from the job for one reason: the defect it fixes was not
+/// a wrong number, it was a line that READ COMPLETE while omitting a tenth of the
+/// run. Eleven whole-corpus sweeps were never timed, so they never appeared, so
+/// nothing about the output suggested anything was missing — and this is the line
+/// whose stated purpose is deciding what to index next.
+///
+/// So it takes `expected`: every label the run actually measured. Any label with
+/// no timing is NAMED rather than dropped. A future third query category will be
+/// wrong in the same way the whole-corpus one was, and this is what makes that
+/// wrongness visible on the first run instead of after someone reconciles the
+/// sum against the total by hand.
+///
+/// `once_only` marks the whole-corpus labels with `*`. They share one ordering
+/// with the windowed labels because both figures are the same quantity — total
+/// seconds this run spent on that label, the windowed ones already summed across
+/// every window — which is what a sizing decision compares. What the marker
+/// carries is the different thing: how that cost moves as the corpus grows.
+fn cost_line(
+    cost: &std::collections::BTreeMap<String, f64>,
+    once_only: &std::collections::BTreeSet<String>,
+    windows: usize,
+    expected: &[String],
+) -> String {
+    let mut ranked: Vec<(&String, &f64)> = cost.iter().collect();
+    ranked.sort_by(|a, b| b.1.total_cmp(a.1));
+    let total: f64 = cost.values().sum();
+    let body = ranked
+        .iter()
+        .map(|(label, secs)| {
+            let mark = if once_only.contains(*label) { "*" } else { "" };
+            format!("{label}{mark} {secs:.0}s")
+        })
+        .collect::<Vec<_>>()
+        .join(", ");
+    let untimed: Vec<&str> =
+        expected.iter().filter(|l| !cost.contains_key(*l)).map(String::as_str).collect();
+    let missing = if untimed.is_empty() {
+        String::new()
+    } else {
+        format!(" — UNTIMED ({}): {}", untimed.len(), untimed.join(","))
+    };
+    format!(
+        "[data-quality] cost by query ({total:.0}s total, * = whole-corpus, run once; \
+         the rest are sums over {windows} windows): {body}{missing}"
+    )
+}
+
 #[cfg(test)]
 mod tests {
+    use super::cost_line;
+
+    /// Issue 409: the cost line must cover every label the run measured, mark the
+    /// whole-corpus ones, and NAME any it has no timing for.
+    ///
+    /// The defect was not a wrong number. `cost` was written inside the windowed
+    /// loop only, so eleven whole-corpus sweeps — about a tenth of a 5,507 s run —
+    /// were absent from a line whose stated purpose is deciding what to index
+    /// next, and nothing in the output hinted at it. Reconciling the printed sum
+    /// against the run total by hand was the only way to notice, and that is how
+    /// it was noticed.
+    ///
+    /// So the assertion that matters is the third one: a measured label with no
+    /// timing is reported. That is what makes a future third query category fail
+    /// loudly on its first run instead of silently shrinking the denominator.
+    #[test]
+    fn the_cost_line_covers_every_measured_label_and_names_any_it_missed() {
+        use std::collections::{BTreeMap, BTreeSet};
+        let cost: BTreeMap<String, f64> = [
+            ("awards".to_owned(), 1630.0),
+            ("title".to_owned(), 971.0),
+            ("publication_days".to_owned(), 210.0),
+        ]
+        .into_iter()
+        .collect();
+        let once: BTreeSet<String> = ["publication_days".to_owned()].into_iter().collect();
+        let measured: Vec<String> =
+            ["awards", "title", "publication_days"].iter().map(|s| (*s).to_owned()).collect();
+
+        let line = cost_line(&cost, &once, 35, &measured);
+        // Costliest first, and the whole-corpus one is marked and in the SAME
+        // ordering rather than relegated to a second line.
+        let awards = line.find("awards 1630s").expect("awards listed");
+        let title = line.find("title 971s").expect("title listed");
+        let pubdays = line.find("publication_days* 210s").expect("marked and listed");
+        assert!(awards < title && title < pubdays, "ranked by cost: {line}");
+        assert!(line.contains("2811s total"), "the total is stated so it can be reconciled: {line}");
+        assert!(!line.contains("UNTIMED"), "nothing is missing here: {line}");
+
+        // The regression itself: a label that was measured but never timed.
+        let mut more = measured.clone();
+        more.push("weld_candidates".to_owned());
+        let holed = cost_line(&cost, &once, 35, &more);
+        assert!(
+            holed.contains("UNTIMED (1): weld_candidates"),
+            "a measured label with no timing must be NAMED, not dropped — that silence is \
+             the whole defect:\n{holed}"
+        );
+    }
     use super::*;
 
     /// Issue 308: the reveal-cursor report accumulates per-wrap totals and only a
