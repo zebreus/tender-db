@@ -160,3 +160,19 @@ system.
 So: observed passively when the conjunction happens to occur. A passive observer ran over this
 morning's fold window recording the queued catch-up count alongside 404's and 407's signals; if the
 package lands on time there is no catch-up and nothing to see, which is itself the expected case.
+
+
+### 2026-09-17 fold: no catch-up occurred, so still nothing to observe
+
+The weekday fold ran (jobs 1452–1460) and the TED probe found its package first time:
+
+    probe | ted daily (probe) | ok | probed 3 issue(s), 1 new
+
+`journalctl` carries no `catch-up` line for the instance at all, and the queued catch-up count was 0
+on every poll. So the loop never started — which is the HEALTHY case and exactly the reason this
+acceptance keeps not arriving. It needs a late package, and the package was not late.
+
+Recording the non-event rather than leaving the gap silent: three weekday mornings have now passed
+without the conjunction. If it has not occurred by the time something else needs the queue held on a
+weekday morning for its own reasons, that is the run to observe — piggy-backing on a hold someone
+else is already paying for, rather than manufacturing one.

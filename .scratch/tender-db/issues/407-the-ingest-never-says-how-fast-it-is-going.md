@@ -40,3 +40,29 @@ kind, and filing it now with a number in it would be exactly the guess the rest 
 
 - The calibrated guard: once the daily/monthly/FTS lines have accumulated, set a per-(source, kind)
   floor and make the job summary carry an ALARM clause the way `org-merge-health` does.
+
+## Comment — 2026-09-17: first ordinary fold with the line in place, and it earns itself
+
+The weekday fold on rev `7726bcb`, read straight out of `journalctl`:
+
+    [process] ted daily 2026-00179: 3534 members → 0 notices (3534 dup) in 2.1s (1719.2 members/s)
+    [process] ted daily 2026-00180: 3424 members → 3424 notices (0 dup) in 25.1s (136.4 members/s)
+    [process] doe daily 2026-09-15:  857 members → 0 notices (857 dup)  in 0.2s (4721.4 members/s)
+    [process] doe daily 2026-09-16: 1184 members → 1184 notices (0 dup) in 4.2s (281.8 members/s)
+    [process] fts daily 2026-09-15:  444 members → 0 notices (444 dup)  in 0.0s (15065.6 members/s)
+    [process] fts daily 2026-09-16:  453 members → 446 notices (7 dup)  in 0.7s (680.0 members/s)
+
+**The shape the line makes visible, which the job summary never could:** a package that is pure
+dedup runs at 1,700–15,000 members/s, and a package that actually WRITES runs at 136–680. An
+order of magnitude and more between "walking members we already hold" and "inserting notices", per
+package, per source, every day — so a change in either regime is legible the morning it happens
+rather than as an aggregate that moved.
+
+It also priced issue 404's index regression without anybody setting up a measurement: `ted daily
+2026-00180` at **136.4 members/s** against the 0.12 notices/s that regression produced. That is what
+this line was built for — 404 was found by noticing a job was slow and having no per-package number
+to confirm it with.
+
+Worth noting the dedup rates differ by source by 3–8x (fts ~15k/s, doe ~4.7k/s, ted ~1.7k/s) and
+that is not yet explained. Probably member size and archive layout; not investigated, recorded so the
+next person reading these numbers knows the spread is expected rather than a finding.

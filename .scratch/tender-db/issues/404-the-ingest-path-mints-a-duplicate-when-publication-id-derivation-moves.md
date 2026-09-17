@@ -129,10 +129,9 @@ refusal to round down is what exposed this within hours rather than at the next 
 
 Status: the mint is fixed and gated (`GATE-EXIT=0`), **DEPLOYED** — verified present in the
 running build 2026-09-17 (`Recorded::Rekeyed` in `crates/store/src/lib.rs`, `report.rekeyed` in
-`crates/ingest/src/process.rs`, serving rev `7726bcb`). Live acceptance is the next DÖE daily
-reporting NO `re-keyed` clause in its counts — the summary omits the clause entirely at zero, so
-its ABSENCE is the signal. A passive observer is watching the 2026-09-17 fold window for it. The 281 standing duplicates
-are NOT yet resolved — that is the remaining unit.
+`crates/ingest/src/process.rs`, serving rev `7726bcb`). **LIVE ACCEPTANCE PASSED 2026-09-17** on the first ordinary weekday fold since the deploy — twice
+over, on both halves of what 404 broke. See the comment at the foot. The 281 standing duplicates
+are NOT yet resolved — that is the only remaining unit.
 
 ### What changed
 
@@ -264,3 +263,33 @@ One index over 14.4M rows on a short text column, built once at the first open a
 the box is 1.2 T used of 1.7 T, 527 G free, so this is affordable — but it IS the kind of standing
 cost issue 169 tracks, and it is here because the ingest path now asks a question the schema was
 never shaped for.
+
+
+## Comment — 2026-09-17: live acceptance passed on both halves
+
+The first ordinary weekday fold since the deploy (jobs 1452–1460, serving rev `7726bcb`). Both of
+404's failure modes were visible in it, and both are clean.
+
+**1. The mint no longer doubles.** Job 1455:
+
+    doe daily (all): 46019 members → 1184 notices (1184 parsed, 0 quarantined, 0 unrecognised, 44835 dup)
+
+**No `re-keyed` clause**, which is the signal — the summary omits it entirely at zero. Compare the
+regression this issue was filed on, quoted in the code comment that now guards it:
+`44835 members → 1138 notices (1138 parsed … 43697 dup)`, an ordinary-looking day during which 281 of
+those 1,138 were duplicates of notices already held. Same shape, same scale, and today nothing was
+re-keyed and nothing was doubled.
+
+**2. The index regression stays fixed.** The other half of 404 was the `notices(source, member_path)`
+index whose absence made every genuinely-new notice full-scan 14.4M rows — 9 s per lookup, a TED daily
+projected at 9 HOURS, 0.12 notices/s against 30/s. Issue 407's per-package line prices it directly now:
+
+    [process] ted daily 2026-00180: 3424 members → 3424 notices (0 dup) in 25.1s (136.4 members/s)
+
+25 seconds for a full genuinely-new daily, consistent with the 155.7 members/s measured right after
+the index shipped. The gap between that and 0.12 notices/s is the whole of the regression, and it is
+gone.
+
+**What remains** is the 281 standing duplicates. The bleeding is stopped and measured; the stock is
+not drained. Issue 278's ghost cleanup is the precedent to re-read first, because rows that have
+PROJECTED cannot simply be deleted.
