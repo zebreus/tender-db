@@ -485,3 +485,121 @@ async fn a_stripped_cohort_reads_factless_while_every_row_count_stays_green() {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
 }
+
+/// Issue 402 unit B: the continuity window must be PUBLICATION time, because an
+/// ingest-ordered window cannot see the hole this section exists for.
+///
+/// The shape is issue 402's exactly, in miniature. The corpus was built in two
+/// sittings: the monthly packages (publication through 2026-06-29) were fetched
+/// first and so hold the LOW notice ids, and the daily packages (publication from
+/// 2026-07-16) were fetched after and hold the HIGH ones. A window over the newest
+/// N ids therefore contains only the dailies, so the oldest publication day IN THE
+/// WINDOW is 2026-07-16 — the day the hole ends. `publication_gaps` reports
+/// interior silences only (a stretch lies between two days that both carry
+/// notices, and the caption says so), so with no earlier day inside the window
+/// there was no `before` bracket, no stretch, and a 12-day blackout rendered as
+/// "none". Neither the 4-day threshold nor the ordinary-bracket floor could have
+/// helped: the rows were not in the result set to be judged.
+///
+/// This test asserts both halves — that the time window SEES the stretch, and
+/// that the id window it replaced does NOT. The counterfactual is executed rather
+/// than described, so the change is provably load-bearing.
+#[tokio::test]
+async fn the_continuity_window_is_publication_time_not_ingest_order() {
+    let (db, fetch_id, _path) = scratch("pubwindow").await;
+    let now = 1_789_600_000_i64;
+    let midnight = now / 86_400 * 86_400;
+    let day = |back: i64| midnight - back * 86_400;
+
+    // Ingest order is the variable under test, so it is explicit: the "monthly"
+    // block is recorded FIRST and takes the low ids, exactly as the real corpus
+    // was built. Four notices a day so the median day is 4 and the ordinary
+    // bracket floor (50%) is 2 — every day here is an ordinary one.
+    //
+    // The third block is what makes this test discriminate at fixture scale. A
+    // deep backfill ingests OLD publications LAST, so it holds the newest ids of
+    // all — and `MAX(id) - 2_000_000` is negative on a 24-row fixture, meaning the
+    // id window this replaced would admit every row here and the forward half
+    // would pass under either implementation. Publishing this block 600 days back,
+    // outside the 550-day window, is what separates them: the time window excludes
+    // it (5 days, one stretch) and any id window includes it (6 days, two).
+    let mut seq = 0;
+    for (label, backs) in [
+        ("monthly", vec![40_i64, 39]),
+        ("daily", vec![10_i64, 9, 8]),
+        ("ancient-backfill", vec![600_i64]),
+    ] {
+        for back in backs {
+            for _ in 0..4 {
+                seq += 1;
+                db.record_notice(
+                    &Notice {
+                        source: "ted".into(),
+                        publication_id: format!("{label}-{seq:05}"),
+                        content_hash: format!("hash{seq:05}"),
+                        profile: "eforms-sdk-1.6".into(),
+                        declared_version: None,
+                        fetch_id,
+                        member_path: format!("{label}/{seq:05}.xml"),
+                        ingested_at: 0,
+                        published_at: Some(day(back)),
+                        dispatched_at: None,
+                    },
+                    &Parse::Pending,
+                )
+                .await
+                .expect("record notice");
+            }
+        }
+    }
+
+    // The window under test, evaluated at a fixed instant so the fixture days sit
+    // where a real corpus would put them and the test cannot rot as time passes.
+    let days = rows(&db, &data_quality::publication_days_sql_at(now)).await;
+    let as_pairs = |rs: &data_quality::Rows| -> Vec<(String, i64)> {
+        rs.iter()
+            .map(|r| (r[1].as_str().expect("day").to_owned(), r[2].as_i64().expect("count")))
+            .collect()
+    };
+    let pairs = as_pairs(&days);
+    assert_eq!(
+        pairs.len(),
+        5,
+        "the five days inside the publication window, and NOT the 600-day-old backfill \
+         whose ids are the newest in the corpus: {pairs:?}"
+    );
+    assert_eq!(pairs[0].1, 4, "and each carries its four notices: {pairs:?}");
+
+    let gaps = data_quality::publication_gaps(&pairs, data_quality::PUBLICATION_GAP_MIN_DAYS);
+    assert_eq!(
+        gaps.len(),
+        1,
+        "one stretch, between the monthly and daily blocks — the ancient backfill is out \
+         of the window, so it does not add a second, 559-day one: {gaps:?}"
+    );
+    assert_eq!(gaps[0].2, 28, "day-39 to day-10 is 28 silent days: {gaps:?}");
+    assert_eq!((gaps[0].3, gaps[0].4), (4, 4), "both brackets are ordinary days: {gaps:?}");
+
+    // The counterfactual: the id window this replaced. Twelve ids is exactly the
+    // "daily" block, so the "monthly" block falls outside it — which is the real
+    // corpus's situation, at the real corpus's scale.
+    let id_windowed = rows(
+        &db,
+        "SELECT n.source AS source, \
+                strftime('%Y-%m-%d', n.published_at, 'unixepoch') AS day, \
+                COUNT(*) AS notices \
+           FROM notices n \
+          WHERE n.id > (SELECT MAX(id) FROM notices) - 16 \
+            AND n.id <= (SELECT MAX(id) FROM notices) - 4 \
+            AND n.published_at IS NOT NULL \
+          GROUP BY n.source, day ORDER BY n.source, day",
+    )
+    .await;
+    let blind = as_pairs(&id_windowed);
+    assert_eq!(blind.len(), 3, "the id window holds only the last-ingested block: {blind:?}");
+    assert!(
+        data_quality::publication_gaps(&blind, data_quality::PUBLICATION_GAP_MIN_DAYS).is_empty(),
+        "THIS is the defect: with the earlier block outside the window there is no `before` \
+         bracket, so the 28-day blackout reports as no gap at all — {blind:?}"
+    );
+}

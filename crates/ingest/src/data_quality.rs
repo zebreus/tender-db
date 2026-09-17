@@ -1290,13 +1290,42 @@ pub fn unmapped_fields_sql() -> String {
     )
 }
 
-/// How far back [`publication_days_sql`] looks, in notice ids. A notice-id window
-/// rather than a time one for the same reason as [`UNMAPPED_FIELD_WINDOW_IDS`]:
-/// `notices.published_at` carries no index, so a time predicate is a full scan
-/// while an id predicate is a primary-key range. Two million ids is roughly the
-/// last five months at the corpus head — comfortably more than the interval
-/// between weekly runs, so a hole cannot open and close between two reports.
-pub const PUBLICATION_GAP_WINDOW_IDS: i64 = 2_000_000;
+/// How far back [`publication_days_sql`] looks, in DAYS OF PUBLICATION TIME.
+///
+/// This was a notice-id window (`PUBLICATION_GAP_WINDOW_IDS`, two million) on the
+/// reasoning that `notices.published_at` carries no index, so a time predicate is
+/// a full scan while an id predicate is a primary-key range. That reasoning was
+/// right about the COST and wrong about the MEASUREMENT: **notice ids are ingest
+/// order, not publication order**, so an id window samples what was recently
+/// FETCHED, and the two orders are unrelated whenever a backfill runs.
+///
+/// Two consequences, and the second is why this section read clean over the very
+/// hole it was written for:
+///
+/// 1. **A backfill re-shuffles the window.** The 2026-06-30…07-15 dailies were
+///    ingested on 2026-09-16/17, so they now carry some of the corpus's NEWEST
+///    ids while carrying its OLDEST 2026 publication dates. Nothing about the
+///    window is stable under the one operation this report exists to check.
+/// 2. **A hole at the window's oldest publication day has no `before` bracket.**
+///    [`publication_gaps`] reports interior silences only — a stretch exists
+///    between two days that BOTH carry notices — and the caption says so. Issue
+///    402's hole sat exactly there: the monthlies were ingested before the
+///    dailies, so the newest two million ids began at publication day 2026-07-16,
+///    which is the day the hole ENDS. The stretch was off the edge of the window
+///    rather than inside it, and no threshold or bracket rule could have found it.
+///
+/// So the window is publication time, and the query pays a full pass over
+/// `notices`. That is the same shape as the whole-corpus sweeps it is registered
+/// beside — `fresh_holds`, `sentinel_dates`, `weld_candidates` — in a weekly
+/// background report, not on a served path. The cost was never the risk here; a
+/// measurement that cannot see its own subject was.
+///
+/// 550 days ≈ 18 months: far more than the interval between weekly runs, so a
+/// hole cannot open and close unseen between two reports; long enough to bracket
+/// a stretch spanning a year boundary; and short enough to stay inside one
+/// publishing regime, so the median day that [`ordinary_bracket_floor`] is built
+/// on describes today's corpus rather than an average over three eras.
+pub const PUBLICATION_GAP_WINDOW_DAYS: i64 = 550;
 
 /// A silent stretch shorter than this is the publication calendar, not a hole.
 ///
@@ -1336,13 +1365,43 @@ pub const ORDINARY_BRACKET_SHARE_PCT: i64 = 50;
 /// both evidence the pipeline reached that day, and a day with none is the only
 /// thing being looked for.
 pub fn publication_days_sql() -> String {
+    publication_days_sql_at(now_seconds())
+}
+
+/// The clock, as one function, so the window is a pure function of it and the
+/// test can put the fixture days where a real corpus would put them rather than
+/// at literal dates that rot as the calendar moves past them.
+fn now_seconds() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs() as i64)
+}
+
+/// [`publication_days_sql`] against a given instant.
+///
+/// The bounds are computed HERE rather than as `strftime('%s','now')` inside the
+/// statement for two reasons: the window is then a pure function of an argument
+/// the test controls, and the query stops depending on turso's handling of the
+/// `'now'` modifier, which is engine surface this report does not otherwise use.
+///
+/// The upper bound matters as much as the lower one. `published_at` is a
+/// publisher-supplied instant and the corpus holds far-future ones (that is what
+/// section 10's `sentinel_dates` sweep is for). Without a ceiling, a single notice
+/// dated 2099 becomes the newest "publication day" and manufactures a silent
+/// stretch of decades ending at it. [`ordinary_bracket_floor`] would refuse to
+/// LIST that stretch, since a one-notice day is far under the median — but the
+/// fix belongs in the window rather than resting on the bracket rule, because the
+/// same outlier would also drag the median the bracket rule is computed from.
+pub fn publication_days_sql_at(now: i64) -> String {
+    let floor = now - PUBLICATION_GAP_WINDOW_DAYS * 86_400;
+    let ceiling = now;
     format!(
         "SELECT n.source AS source, \
                 strftime('%Y-%m-%d', n.published_at, 'unixepoch') AS day, \
                 COUNT(*) AS notices \
            FROM notices n \
-          WHERE n.id > (SELECT MAX(id) FROM notices) - {PUBLICATION_GAP_WINDOW_IDS} \
-            AND n.published_at IS NOT NULL \
+          WHERE n.published_at IS NOT NULL \
+            AND n.published_at >= {floor} AND n.published_at <= {ceiling} \
           GROUP BY n.source, day ORDER BY n.source, day"
     )
 }
@@ -3137,7 +3196,7 @@ pub fn render_text(report: &Report) -> String {
         let _ = writeln!(
             out,
             "  none — no source is silent for {PUBLICATION_GAP_MIN_DAYS}+ consecutive days \
-             anywhere in the newest {PUBLICATION_GAP_WINDOW_IDS} notice ids."
+             anywhere in the last {PUBLICATION_GAP_WINDOW_DAYS} days of publication time."
         );
     } else {
         let _ = writeln!(
@@ -3171,9 +3230,13 @@ pub fn render_text(report: &Report) -> String {
              plus a holiday is 3. A source with a different rhythm may show a benign entry here; \
              read it against that source's calendar rather than assuming a defect.\n  \
              Interior only, by construction — a stretch exists only BETWEEN two days that both \
-             carry notices, so the window's edges can never be reported. Windowed to the newest \
-             {PUBLICATION_GAP_WINDOW_IDS} notice ids because `notices.published_at` carries no \
-             index; an id predicate is a primary-key range where a time predicate is a full scan."
+             carry notices, so the window's edges can never be reported. That is why the window is \
+             {PUBLICATION_GAP_WINDOW_DAYS} days of PUBLICATION time and not a range of notice ids: \
+             ids are ingest order, so an id window's oldest publication day moves with whatever was \
+             fetched last, and issue 402's hole ended exactly on that edge — interior-only plus an \
+             ingest-ordered window is what made a 12-day blackout invisible here. The time predicate \
+             costs a full pass over `notices`, which is what the other whole-corpus sweeps in this \
+             report already pay."
         );
     }
     out
