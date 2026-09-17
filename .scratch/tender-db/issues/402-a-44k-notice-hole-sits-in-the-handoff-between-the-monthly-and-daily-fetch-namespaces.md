@@ -385,3 +385,72 @@ probably the right first move. Left for its own unit rather than rushed in besid
 
 The detector, though, is the half that generalises: it is namespace-agnostic by construction, so it
 would flag the next seam hole whatever the two period vocabularies turn out to be.
+
+## Comment — 2026-09-17: live acceptance of the new window, and what it cost
+
+Job **1446** (`data-quality`, confirmed), the first run on rev `92f12ec`:
+
+    outcome ok | 5,514 s | 24 eras over 35 windows | 0 label(s) unmeasured ()
+
+`0 label(s) unmeasured` is the load-bearing part: the rewritten `publication_days`
+query ran clean against the real corpus — no timeout, no failure — which is the thing a
+full-table predicate could plausibly have got wrong.
+
+**Section 14, as served after the run:**
+
+    == 14. Publication-day continuity (silent stretches in what is HELD — issue 402) ==
+      none — no source is silent for 4+ consecutive days anywhere in the last 550 days
+      of publication time.
+
+Two things make that a verdict rather than the old blind "none". The caption names the
+new window, and the window (2025-03-16 → today) **contains 2026-06-30…07-15**, which is
+exactly where this issue's hole was. The old id window's oldest publication day was
+2026-07-16, the day the hole ended.
+
+### The cost of going from an id range to a full pass
+
+The run logs elapsed per label, and that breakdown is **windowed queries only**:
+
+| query | s | query | s |
+| --- | --- | --- | --- |
+| awards | 1,630 | merge | 81 |
+| sections_can | 977 | amount_basis | 80 |
+| title | 971 | amount_plausibility | 56 |
+| doc_types | 330 | winner | 53 |
+| cpv | 219 | linkage | 40 |
+| buyer | 188 | value | 40 |
+| deadline | 102 | factless | 37 |
+| versions | 100 | sections_with | 29 |
+
+Sum **4,933 s** against the run's measured 5,507 s, so **all eleven whole-corpus sweeps
+together are bounded by ~574 s — about 10 % of the run** — and `publication_days` is one
+of the eleven. The run is dominated by `awards` and the two `sections_*`/`title` probes,
+none of which this issue touched. So the window change did not make the weekly report
+materially more expensive, and the honest limit on that statement is that it is an upper
+bound rather than an attribution.
+
+### Two findings from the run
+
+**1. The cost breakdown cannot see the whole-corpus sweeps.** `cost` accumulates inside
+the windowed loop (`crates/app/src/supervisor.rs`), so the eleven whole-corpus statements
+contribute nothing to a table whose own comment says it is "the input to the next sizing
+or indexing decision". That is now a live gap rather than a tidy one: one of those
+eleven is a full `notices` scan this issue just introduced, and the instrument built to
+tell us what to index is the one that cannot see it. Small fix, own unit.
+
+**2. `none` was ambiguous, and FIXED in the same sitting.** The section prints the same
+sentence when every source is continuous and when the query matched no rows at all — a
+clean verdict and a blind one, indistinguishable. That is this section's own failure mode
+one level up, and it stopped being hypothetical the moment the window became a time
+predicate over an unindexed column: a wrong bound or a clock skew matches nothing and
+says "none", where the old id predicate would have had to be very wrong to return zero
+rows. The report now carries `publication_days_seen` and `publication_sources`, prints
+them on the none branch, and puts both in the machine JSON; pinned by
+`a_continuous_none_is_distinguishable_from_a_none_that_measured_nothing`.
+
+### Unit B status
+
+The detector half is **done and accepted on prod**. What remains on unit B is
+`fetched_to`'s lexical `MAX(period)` across namespaces, written up in the previous
+comment. Finding 1 above is a separate small unit, and belongs with the report's
+instrumentation rather than with this issue's seam.
