@@ -1,9 +1,10 @@
 # 408 — `?country=GR` walks to the 30 s deadline: the country seed's density cap measures history, and the walk it hands off to is ordered by id
 
-Status: needs-triage — filed 2026-09-17 from a third-party evaluation report (rev `5841c9b`).
-The mechanism is MEASURED (three bounded probes, below) and it is not the one the report or this
-issue's first draft assumed. Unit 1 is a decision, not a measurement: `COUNTRY_SEED_CAP`'s premise
-is false for a retired codelist vintage and the fix has to choose what replaces it.
+Status: ready-for-agent — REPRODUCED FIRSTHAND on an idle box 2026-09-17 (`GR` 503 at **30.68 s**,
+`EL` 200 at **0.69 s**, queue empty, so it is the shape and not contention) and the mechanism is
+MEASURED by three bounded probes below. It is not the mechanism the report proposed, nor the one
+this issue's first draft assumed. Unit 1 is a DECISION, not a measurement: `COUNTRY_SEED_CAP`'s
+premise is false for a retired codelist vintage, and the fix has to choose what replaces it.
 Kind: performance / availability (issue-61 class; unauthenticated, trivially reachable) — the
 `tenders` endpoint with a bare `country` and no `status`, the one combination 273 and 275 both miss
 Relates to: 275 (RESOLVED — the same over-cap country failure, on LOTS; its cause #1 is this cause,
@@ -33,12 +34,18 @@ so a corpus reaching back to the text era carries both.
 
 Timed live 2026-09-17, `?country=<c>&limit=2`, with a `project` job folding (warm-but-contended):
 
-| value | HTTP | wall |
-| --- | --- | --- |
-| `GB` | 200 | 2.13 s (absent ⇒ short-circuit to an empty page) |
-| `UK` | 200 | 1.16 s |
-| `EL` | 200 | 0.44 s |
-| `GR` | — | **not run** — this is the 30 s uninterruptible walk; measuring it belongs in an idle window, not beside a running fold |
+| value | HTTP | wall | box state |
+| --- | --- | --- | --- |
+| `GB` | 200 | 2.13 s | fold running — absent from NUTS ⇒ short-circuit to an empty page |
+| `UK` | 200 | 1.16 s | fold running |
+| `EL` | 200 | 0.44 s | fold running |
+| **`GR`** | **503** | **30.68 s** | **queue idle** — `no response within the 30s service bound` |
+| `EL` | 200 | 0.69 s | queue idle (control, same minute as the `GR` run) |
+
+The `GR` request was deliberately deferred until the fold drained and then run **once**: a 408/503
+here is an uninterruptible statement and prod-box-reads.md forbids stacking retries on it. Measuring
+it against an idle box with `EL` as a same-minute control is what rules out contention — the two
+differ by 44x on a box doing nothing else.
 
 ## The mechanism, measured
 
