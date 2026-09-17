@@ -1899,6 +1899,17 @@ pub struct PublicationGapRow {
     /// source's life — the whole diagnosis of issue 402 in two numbers.
     pub before: i64,
     pub after: i64,
+    /// Days INSIDE the stretch that carried notices (issue 410). `0` is a clean
+    /// blackout; anything more is a stretch between two ordinary days with
+    /// stragglers in it, which is a different shape and must not be described as
+    /// fully silent.
+    ///
+    /// It exists because one straggler used to VETO the finding: the brackets
+    /// were the immediately adjacent days, so a single notice on the day before a
+    /// source resumed disqualified a 432-day hole (`fts`, measured 2026-09-17).
+    /// Now such a day is counted here instead of deciding whether anyone hears
+    /// about the stretch at all.
+    pub inside: i64,
 }
 
 /// Fold a source's ordered distinct publication days into the silent stretches
@@ -1911,26 +1922,58 @@ pub struct PublicationGapRow {
 /// period NAMESPACES, which is interior to the notices and exterior to the
 /// monthly sequence. Measuring what is HELD rather than what was fetched is what
 /// makes this namespace-agnostic.
-pub fn publication_gaps(days: &[(String, i64)], min_days: i64) -> Vec<(String, String, i64, i64, i64)> {
+pub fn publication_gaps(
+    days: &[(String, i64)],
+    min_days: i64,
+) -> Vec<(String, String, i64, i64, i64, i64)> {
     let floor = ordinary_bracket_floor(days);
+    // Issue 410: walk consecutive ORDINARY days, not consecutive present days.
+    //
+    // The bracket rule used to be a predicate on the two days immediately beside
+    // a stretch: both had to carry at least [`ORDINARY_BRACKET_SHARE_PCT`] of the
+    // source's median day, or the stretch was dropped. Issue 402 unit A added it
+    // for a real reason — a barely-sampled day is not evidence the pipeline
+    // reached that date — and the reach was wrong. It DISCARDED the stretch
+    // instead of looking one day further for a day that is ordinary.
+    //
+    // Measured on prod 2026-09-17: `fts` holds 2025-06 and 2026-09-07 onward,
+    // a 432-day hole, and section 14 reported `none`. Its 39 days have a median
+    // of 330, so the floor is 165; the day before the gap carries 329 and passes,
+    // and the day after carries **1** — a single straggler notice on 2026-09-06,
+    // the day before the source genuinely resumes at 492. One row hid fourteen
+    // months.
+    //
+    // Filtering first makes the brackets ordinary by construction, so the
+    // predicate disappears into the filter and cannot be defeated by what happens
+    // to sit beside a stretch. It still suppresses unit A's artifacts, because a
+    // barely-sampled day is never a bracket now either.
+    let ordinary: Vec<&(String, i64)> = days.iter().filter(|(_, n)| *n >= floor).collect();
     let mut out = Vec::new();
-    for pair in days.windows(2) {
-        let (lo, before) = &pair[0];
-        let (hi, after) = &pair[1];
+    for pair in ordinary.windows(2) {
+        let (lo, before) = pair[0];
+        let (hi, after) = pair[1];
         let (Some(a), Some(b)) = (civil_days(lo), civil_days(hi)) else { continue };
-        let silent = b - a - 1;
-        // Both brackets must be ORDINARY days for this source, not just present.
-        // A stretch between two barely-sampled days says something about the
-        // window, not about the corpus (issue 402).
-        if silent >= min_days && *before >= floor && *after >= floor {
-            out.push((
-                day_string(a + 1).unwrap_or_else(|| lo.clone()),
-                day_string(b - 1).unwrap_or_else(|| hi.clone()),
-                silent,
-                *before,
-                *after,
-            ));
+        let span = b - a - 1;
+        if span < min_days {
+            continue;
         }
+        // Days inside the span that DID carry notices — the stragglers the old
+        // rule let veto the whole finding. Reported rather than erased: a reader
+        // must not be told a day with notices on it was silent, and a stretch
+        // with stragglers in it is a different shape from one without (a source
+        // resuming raggedly, versus a clean blackout).
+        let inside = days
+            .iter()
+            .filter(|(d, _)| civil_days(d).is_some_and(|x| x > a && x < b))
+            .count() as i64;
+        out.push((
+            day_string(a + 1).unwrap_or_else(|| lo.clone()),
+            day_string(b - 1).unwrap_or_else(|| hi.clone()),
+            span,
+            *before,
+            *after,
+            inside,
+        ));
     }
     out
 }
@@ -2509,13 +2552,14 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
                 .into_iter()
                 .flat_map(|(source, days)| {
                     publication_gaps(&days, PUBLICATION_GAP_MIN_DAYS).into_iter().map(
-                        move |(from, to, days, before, after)| PublicationGapRow {
+                        move |(from, to, days, before, after, inside)| PublicationGapRow {
                             source: source.clone(),
                             from,
                             to,
                             days,
                             before,
                             after,
+                            inside,
                         },
                     )
                 })
@@ -3226,19 +3270,20 @@ pub fn render_text(report: &Report) -> String {
     } else {
         let _ = writeln!(
             out,
-            "  {:<10} {:<12} {:<12} {:>6} {:>12} {:>12}",
-            "source", "from", "to", "days", "before", "after"
+            "  {:<10} {:<12} {:<12} {:>6} {:>12} {:>12} {:>7}",
+            "source", "from", "to", "days", "before", "after", "inside"
         );
         for r in &report.publication_gaps {
             let _ = writeln!(
                 out,
-                "  {:<10} {:<12} {:<12} {:>6} {:>12} {:>12}",
+                "  {:<10} {:<12} {:<12} {:>6} {:>12} {:>12} {:>7}",
                 r.source,
                 r.from,
                 r.to,
                 r.days,
                 group(r.before as u64),
-                group(r.after as u64)
+                group(r.after as u64),
+                r.inside
             );
         }
         let _ = writeln!(
@@ -3249,7 +3294,14 @@ pub fn render_text(report: &Report) -> String {
              3,470 the day before and 3,722 the day after, nothing in between). That is a \
              PREDICATE, not advice: a stretch whose brackets are under \
              {ORDINARY_BRACKET_SHARE_PCT} % of that source's median day in the window is a \
-             stretch between two days the window barely sampled, and it is not listed.\n  \
+             stretch between two days the window barely sampled, and it is not a BRACKET.\n  \
+             `inside` is how many days WITHIN the stretch carried notices at all — 0 is a clean \
+             blackout, and anything more is a source resuming raggedly rather than a silence. \
+             Those days are counted here rather than allowed to suppress the finding: until \
+             issue 410 the brackets were the IMMEDIATELY ADJACENT days, so one straggler notice \
+             on the day before a source resumed hid a 432-day hole (`fts`, 2026-09-17 — the day \
+             after the gap carried 1 against a floor of 165, while the first ordinary day, one \
+             day further on, carried 492).\n  \
              The threshold is {PUBLICATION_GAP_MIN_DAYS} days and it is CALIBRATED, not guessed: \
              TED publishes Sunday–Thursday, so a normal weekend is 2 silent days and a weekend \
              plus a holiday is 3. A source with a different rhythm may show a benign entry here; \
@@ -4643,9 +4695,10 @@ mod tests {
             .collect();
         assert_eq!(
             publication_gaps(&holed, PUBLICATION_GAP_MIN_DAYS),
-            vec![("2026-06-30".to_owned(), "2026-07-15".to_owned(), 16, 3470, 3722)],
+            vec![("2026-06-30".to_owned(), "2026-07-15".to_owned(), 16, 3470, 3722, 0)],
             "the stretch is named by its own first and last silent day, and brackets \
-             with the counts that make it a hole rather than an edge"
+             with the counts that make it a hole rather than an edge; `inside` is 0 \
+             because this one is a clean blackout (issue 410)"
         );
 
         // A three-day silence — a weekend plus a public holiday — stays under the
@@ -4683,14 +4736,44 @@ mod tests {
         .iter()
         .map(|(d, n)| ((*d).to_owned(), *n))
         .collect();
-        assert!(
-            publication_gaps(&sampled, PUBLICATION_GAP_MIN_DAYS).is_empty(),
-            "every candidate here brackets on the 1-notice day, so none is a finding"
+        // The 1-notice day is not a BRACKET — that is unit A's rule and it stands.
+        // What changed with issue 410 is that it no longer VETOES: the stretch is
+        // now measured between the ordinary days on either side of it, and the
+        // straggler is disclosed as `inside` instead of deciding whether anyone
+        // hears about 443 silent days at all.
+        //
+        // Unit A asserted `is_empty()` here, and that assertion belonged to the
+        // ID-WINDOW era. Then, a 1-notice day meant "the window clipped this day"
+        // and the emptiness between June 2025 and September 2026 was an artifact
+        // of which notice ids fell in the window. Since issue 402 unit B the
+        // window is PUBLICATION TIME, so the same shape means TED published
+        // nothing for fourteen months — which for a source running ~3,500/day is
+        // not an artifact, it is the loudest possible finding.
+        //
+        // Note this also implements unit A's own STATED principle more faithfully
+        // than unit A's code did. The caption says "BOTH being ordinary is what
+        // makes a stretch a hole"; the code required the two IMMEDIATELY ADJACENT
+        // days to be ordinary, which is a stricter and different thing. Here both
+        // brackets are ordinary — 3,765 and 3,534 — so the stretch qualifies under
+        // the rule as written.
+        assert_eq!(
+            publication_gaps(&sampled, PUBLICATION_GAP_MIN_DAYS),
+            vec![(
+                "2025-06-30".to_owned(),
+                "2026-09-14".to_owned(),
+                442,
+                3765,
+                3534,
+                1
+            )],
+            "bracketed by two ordinary days, with the barely-sampled day counted \
+             INSIDE rather than allowed to suppress it"
         );
 
-        // And the guard is not simply "refuse everything": give the same window a
-        // genuine hole — two ordinary days with sixteen silent days between them —
-        // and it is reported.
+        // And the rule is not simply "report everything": a three-day silence is
+        // still the calendar, and the 1-notice day is still refused as a bracket —
+        // both pinned below and in the calibration test.
+        //
         // Appended so they abut the head day — a stretch between the head and the
         // first added day would be a second, equally genuine hole and would say
         // nothing about the guard.
@@ -4698,7 +4781,10 @@ mod tests {
         sampled.push(("2026-10-03".to_owned(), 3722));
         assert_eq!(
             publication_gaps(&sampled, PUBLICATION_GAP_MIN_DAYS),
-            vec![("2026-09-17".to_owned(), "2026-10-02".to_owned(), 16, 3470, 3722)],
+            vec![
+                ("2025-06-30".to_owned(), "2026-09-14".to_owned(), 442, 3765, 3534, 1),
+                ("2026-09-17".to_owned(), "2026-10-02".to_owned(), 16, 3470, 3722, 0),
+            ],
             "an ordinary-to-ordinary silence still reports, in the same window"
         );
 
@@ -4709,6 +4795,75 @@ mod tests {
             (1..3_100).contains(&floor),
             "floor {floor} must exclude the 1-notice day and admit every ordinary one"
         );
+    }
+
+    /// Issue 410, from prod: one straggler notice must not hide a 432-day hole.
+    ///
+    /// `fts`'s real shape on 2026-09-17 — a June-2025 pilot month, then nothing
+    /// until the source went live in September 2026. The day it resumes is
+    /// preceded by a single notice on 2026-09-06, and under the old rule that one
+    /// row disqualified the entire stretch: 39 days, median 330, floor 165, and
+    /// the `after` bracket was 1.
+    ///
+    /// The counts here are the measured ones, not invented, because the whole
+    /// point is that the arithmetic is real. Weekend days are included at their
+    /// true low values so the median is the one prod computed.
+    #[test]
+    fn a_straggler_the_day_before_a_source_resumes_does_not_hide_the_hole() {
+        let june = [
+            3, 371, 324, 394, 353, 330, 4, 6, 342, 274, 326, 392, 319, 3, 3, 338, 336, 402, 368,
+            328, 3, 1, 323, 335, 343, 325, 361, 5, 2, 329,
+        ];
+        let mut days: Vec<(String, i64)> = june
+            .iter()
+            .enumerate()
+            .map(|(i, n)| (format!("2025-06-{:02}", i + 1), *n))
+            .collect();
+        for (d, n) in [
+            ("2026-09-06", 1),
+            ("2026-09-07", 492),
+            ("2026-09-08", 487),
+            ("2026-09-09", 444),
+            ("2026-09-10", 577),
+            ("2026-09-11", 495),
+            ("2026-09-13", 3),
+            ("2026-09-14", 415),
+            ("2026-09-15", 443),
+        ] {
+            days.push((d.to_owned(), n));
+        }
+
+        // The floor prod computed, reproduced from the same numbers.
+        assert_eq!(ordinary_bracket_floor(&days), 165, "median 330, half of it");
+
+        let gaps = publication_gaps(&days, PUBLICATION_GAP_MIN_DAYS);
+        assert_eq!(gaps.len(), 1, "one stretch, not none and not several: {gaps:?}");
+        let (from, to, span, before, after, inside) = &gaps[0];
+        assert_eq!((from.as_str(), to.as_str()), ("2025-07-01", "2026-09-06"));
+        assert_eq!(*span, 433, "2025-06-30 to 2026-09-07, exclusive of both");
+        assert_eq!((*before, *after), (329, 492), "both brackets are ORDINARY days");
+        assert_eq!(*inside, 1, "the straggler is disclosed, not erased and not a veto");
+    }
+
+    /// Issue 410: a source whose ordinary days are all sparse still works.
+    ///
+    /// The floor is a share of the median, so a source publishing one or two
+    /// notices a day has a floor of 0 and every day is ordinary — nothing is
+    /// filtered and the walk is over every day, exactly as before. Worth pinning
+    /// because the filter is the case that could silently empty the list, and an
+    /// empty list reports `none`, which is the failure this section exists to
+    /// stop making.
+    #[test]
+    fn a_source_whose_every_day_is_sparse_still_reports_its_holes() {
+        let sparse: Vec<(String, i64)> = [("2026-03-01", 1), ("2026-03-02", 2), ("2026-04-01", 1)]
+            .iter()
+            .map(|(d, n)| ((*d).to_owned(), *n))
+            .collect();
+        assert_eq!(ordinary_bracket_floor(&sparse), 0, "half of a median of 1, floored");
+        let gaps = publication_gaps(&sparse, PUBLICATION_GAP_MIN_DAYS);
+        assert_eq!(gaps.len(), 1, "the March-to-April silence is still a finding: {gaps:?}");
+        assert_eq!((gaps[0].0.as_str(), gaps[0].1.as_str()), ("2026-03-03", "2026-03-31"));
+        assert_eq!(gaps[0].5, 0, "no day inside carried anything");
     }
 
     /// The civil-day round trip the fold rests on, across leap years, century
