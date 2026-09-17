@@ -391,3 +391,125 @@ the shape every `repair-*` job in `supervisor.rs` already has, including the gua
 Tender while the sibling minted a new one, so step 4 rebuilds an old Tender that may end up with one
 fewer version, or none. Whether that old Tender should survive is the judgement the sweep must not
 make on its own, and it is why step 2 asserts the split rather than trusting it.
+
+## Comment — 2026-09-17: the fix's own adoption arm could not run — issue 411
+
+Before building the repair, I read the adoption arm this issue shipped, against the state the 281
+rows are actually in. **It deletes the stale notice row, and the corpus hangs off that row's id.**
+`tender_versions.caused_by_notice_id` and `tenders.island_notice_id` are foreign keys under
+`PRAGMA foreign_keys = ON`, and all 281 have projected — so the delete fails with
+`Constraint("immediate foreign key constraint failed")`, which `process` propagates with `?`.
+
+The mint this issue stopped was real and the `re-keyed` counter is right. What was wrong is that the
+arm copied `reparse_notice`'s DECISION and not its MECHANISM: the re-parse path adopts by
+`UPDATE notices SET publication_id = …, projected = 0 WHERE id = ?`, in place. Filed and fixed as
+**issue 411**, red-checked against a stale notice that has folded.
+
+This also settles a question this issue left open. Preserving the notice id is not just how the FK is
+avoided — an island Tender's group key is `island:<notice_id>`, so a preserved id keeps the notice in
+the Tender it already belongs to. **A new id re-homes it, which is exactly the 3 cross-tender cases
+below.** The in-place adoption would have produced none of them.
+
+### And the 278/3 split has a SHAPE, not just a count
+
+Re-measured on the idle box, one bounded read, grouping the cohort by whether the placeholder's
+version is its Tender's head and how many versions that Tender holds:
+
+    is_head  versions  count
+    0        2          29
+    0        3         194
+    0        5          38
+    0        6           8
+    0        8           2
+    0        9           4
+    0       15           3
+    1        1           3
+
+The two populations are **exactly** these: 278 placeholders that are NOT the head of a Tender holding
+2–15 versions, and 3 that ARE the head of a Tender holding exactly ONE version. The 3 are the same 3
+named above — confirmed directly: tenders 1,745,988 / 7,939,911 / 7,964,960 each hold one version,
+and so do their day-old siblings 8,555,909–911.
+
+That is a far better dry-arm assertion than a bare 278/3: **a repair can refuse on the SHAPE** — no
+placeholder may be the head of a multi-version Tender, and no singleton-Tender placeholder may be
+anything but one of the three — rather than on a count that says nothing about which row is which.
+
+### Which row to keep, decided
+
+Keep the OLD (placeholder) notice and give it the correct key; delete the day-old sibling. Not the
+other way round, which is what this issue's earlier sketch assumed:
+
+- it is what issue 411's in-place adoption does, so the repair and the ingest path agree rather than
+  each having their own idea of which row survives;
+- the placeholder is the row the Tender already references, so for the 278 no version changes
+  membership at all — only the sibling's extra version is removed;
+- for the 3, keeping the placeholder keeps the LONG-LIVED Tender (created 2026-05 to 2026-08) and
+  retires the one created 2026-09-16. Served ids stay stable and the `removed` event lands on a
+  Tender that existed for a day, rather than on one consumers may have been citing for months.
+
+### The pairing is a function, and the sibling's headship splits three ways
+
+Two more bounded reads, so the repair's dry arm can assert shape rather than trust it:
+
+    sibling count per placeholder:   1 → 281        (exactly one, 281 of 281)
+
+    sib_head  same_tender  count
+    0         1            249     sibling is a middle version of the SAME Tender
+    1         1             29     sibling is the HEAD of the same Tender
+    1         0              3     sibling is the head of its OWN one-version Tender
+
+So deleting the sibling is three distinct amounts of churn, all of them correct and all of them
+handled by re-derivation rather than by a rule:
+
+- **249** — a middle version disappears; the head is untouched.
+- **29** — the head disappears; `current_seq` and the `current_*` columns drop back to the
+  placeholder's version. The served content does not change, because the two rows hold the SAME
+  BYTES — what changes is that the corpus stops asserting a republication that never happened.
+- **3** — the sibling's whole Tender is left with no versions and must be retired, with its `removed`
+  events, by `retire_tenders_chunked`. It is one day old.
+
+### And the split is not arbitrary — it IS the keyed/island distinction
+
+    shape   size        count
+    island  singleton     3
+    keyed   multi       278
+
+Complete, and derivable rather than observed:
+
+- **278** sit on **keyed** Tenders. Both notices carry the same `procedure_key`, so the re-keyed twin
+  folded into the Tender that was already there — as a second version of it.
+- **3** sit on **island** Tenders, which have no key: their group key is literally
+  `island:<notice_id>`. A new notice id is a new group, so the twin could not land anywhere but a
+  fresh Tender.
+
+So the class boundary is the group key, not a property of the data, and the dry arm should assert
+exactly that: **every placeholder on a keyed Tender shares it with its sibling; every placeholder on
+an island Tender is the only version of it.** A cohort that violates that has moved since this
+measurement, and the plan is stale.
+
+It also closes issue 411's argument from the other end. The 3 exist *because* the ingest path minted
+a new id; an in-place adoption keeps `island:<notice_id>` pointing at the same group and produces
+none of them.
+
+### The "real size" bullet, first slice: no unexplained duplicates in DÖE
+
+The cohort is 281 **placeholders**; the duplication is the PAIR, and the issue asked for the honest
+number — triples held under more than one `publication_id`. That is now cheap to ask, because the
+`notices_member_identity(source, member_path)` index this issue shipped serves it, and it is safe to
+ask because the slice key is the group key (issue 278's argument): no group can straddle a boundary.
+
+One bounded slice, DÖE member paths `0…1` — a sixteenth of the uuid hex space:
+
+    duplicate member_path groups        17
+    rows in them                        34
+    groups holding a placeholder        17
+    groups holding NO placeholder        0
+
+So within that slice the duplicates are **exactly** the known cohort and nothing else, and 17 × 16
+≈ 272 extrapolates onto the 281 pairs. Nothing in DÖE is duplicated for some other reason.
+
+A corpus-wide answer still belongs in the job rather than in a probe — the other sources are much
+larger and want the same slicing discipline. Noted while sizing it: the obvious form of this question,
+`SELECT source, COUNT(*), MIN(member_path), MAX(member_path) FROM notices GROUP BY source`, is
+UNBOUNDED and returned a **408** on the first try. Per `docs/agents/prod-box-reads.md` it was not
+retried.
