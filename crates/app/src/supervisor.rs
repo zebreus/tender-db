@@ -541,6 +541,16 @@ enum Spec {
     /// is separate from the cleanup it detects: a destructive sweep should be
     /// scoped by a measurement, not by the incident that prompted it.
     MemberTwinCensus,
+    /// Issue 404: resolve the members held under two identities that
+    /// `member-twin-census` counts — keep the OLDEST row, give it the identity
+    /// the parser derives today, and remove its twins.
+    ///
+    /// Dry by default and, for now, dry ONLY: the plan is the deliverable and
+    /// the wet arm refuses until it is built. The plan is what a wet arm has to
+    /// be checked against anyway (`RepairNoticeInstants`' contract), and the
+    /// write side of this one removes rows from fourteen tables — four of them
+    /// unindexed — so it is not something to half-land beside its planner.
+    RepairMemberTwins { dry_run: bool },
     /// Fetch the ECB daily reference-rate history and load `currency_rates`
     /// (ADR-0014 unit 2): archive the CSV under the ordinary fetch registry
     /// (source `ecb`, kind `rates`, period = fetch date), parse, seed the
@@ -1977,6 +1987,18 @@ impl Supervisor {
                 self.push("member-twin-census", "member-twin-census".into(), Spec::MemberTwinCensus)
                     .await,
             ]),
+            "repair-member-twins" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                Ok(vec![
+                    self.push(
+                        "repair-member-twins",
+                        if dry_run { "repair-member-twins dry-run" } else { "repair-member-twins" }
+                            .to_owned(),
+                        Spec::RepairMemberTwins { dry_run },
+                    )
+                    .await,
+                ])
+            }
             "ghost-census" | "sweep-regrouped-ghosts" => Ok(vec![
                 self.push("ghost-census", "ghost-census".into(), Spec::GhostCensus).await,
             ]),
@@ -2342,6 +2364,9 @@ const STOPPABLE_KINDS: &[&str] = &[
     // — the same discipline as ghost-census above, and for the same reason: a
     // partial twin count reads as a clean corpus.
     "member-twin-census",
+    // Issue 404: its plan is the census walk plus indexed seeks, and it reads the
+    // flag between batches for the same reason the census does.
+    "repair-member-twins",
     "repair-country-typos",
     "repair-label-prefixes",
     "repair-renormalised-identifiers",
@@ -8651,6 +8676,109 @@ impl Supervisor {
                     summary.join("; ")
                 ))
             }
+            Spec::RepairMemberTwins { dry_run } => Box::pin(async move {
+                // BOXED, as every census-shaped arm here is: `run_spec` is one
+                // giant async match and an arm's locals live in its future.
+                let dry_run = *dry_run;
+                if !dry_run {
+                    // Deliberate, not an oversight. The write side removes rows
+                    // from fourteen tables — four of them carrying no index at all
+                    // — retires Tenders, and moves head pointers. It lands with its
+                    // own tests and its own acceptance, checked against the plan
+                    // this arm stores, and not as a rider on the planner.
+                    return Err("repair-member-twins has no WET arm yet — this job \
+                                plans only. Run it dry, read the stored \
+                                member-twin-repair report, and see issue 404."
+                        .to_owned());
+                }
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    "planning",
+                    None,
+                    None,
+                    "issue 404: planning the removal of members held under two identities"
+                        .to_owned(),
+                );
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("planning", Some(done), None, detail.to_owned());
+                };
+                const TWIN_BATCH: usize = 100_000;
+                // Every set the repair would touch has to be IN the plan — a
+                // truncated plan is not a cohort, and the report says so rather
+                // than quietly describing a prefix of one.
+                const PLAN_CAP: usize = 5_000;
+                let r = self
+                    .db
+                    .plan_member_twin_repair(TWIN_BATCH, PLAN_CAP, &stop, &progress)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("repair-member-twins STOPPED by cancel — no plan stored".to_owned());
+                }
+                let now = store::now_unix();
+                let body = serde_json::json!({
+                    "dry_run": true,
+                    "sets": r.sets,
+                    "notices_dropped": r.notices_dropped,
+                    "versions_dropped": r.versions_dropped,
+                    "heads_dropped": r.heads_dropped,
+                    "unfolded_drops": r.unfolded_drops,
+                    "same_tender": r.same_tender,
+                    "cross_tender": r.cross_tender,
+                    "rekeys": r.rekeys,
+                    "tenders_emptied": r.tenders_emptied,
+                    "plan_truncated": r.truncated,
+                    "plan": r.plan.iter().map(|p| serde_json::json!({
+                        "source": p.source,
+                        "member_path": p.member_path,
+                        "content_hash": p.content_hash,
+                        "keep": p.keep,
+                        "keep_key": p.keep_key,
+                        "elect": p.elect,
+                        "drop": p.drop.iter().map(|d| serde_json::json!({
+                            "notice": d.notice,
+                            "key": d.key,
+                            "tender": d.version.map(|(t, _)| t),
+                            "seq": d.version.map(|(_, s)| s),
+                            "head": d.head,
+                            "empties_tender": d.empties_tender,
+                        })).collect::<Vec<_>>(),
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("member-twin-repair", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "repair-member-twins (issue 404, DRY): {} twin set(s) planned — keep the \
+                     OLDEST row of each and drop {} twin(s), of which {} caused a Tender version \
+                     and {} never folded. {} set(s) fold into ONE Tender, {} span more than one; \
+                     {} survivor(s) take a new identity. Removing those versions moves {} head \
+                     pointer(s) and leaves {} Tender(s) with no version at all, which the wet arm \
+                     would RETIRE rather than delete piecemeal. The head moves are harmless for \
+                     THIS cohort and only for it: twins hold the same bytes, so every current_* \
+                     column but current_seq is unchanged.{} NOTHING IS WRITTEN — the plan is \
+                     stored as `member-twin-repair` and the wet arm is not built yet (issue 404).",
+                    r.sets,
+                    r.notices_dropped,
+                    r.versions_dropped,
+                    r.unfolded_drops,
+                    r.same_tender,
+                    r.cross_tender,
+                    r.rekeys,
+                    r.heads_dropped,
+                    r.tenders_emptied.len(),
+                    if r.truncated {
+                        " PLAN TRUNCATED at the cap — this is NOT the whole cohort and must not \
+                         be executed."
+                    } else {
+                        ""
+                    },
+                ))
+            })
+            .await,
             Spec::MemberTwinCensus => Box::pin(async move {
                 // BOXED, for the reason spelled out on the arm below: `run_spec`
                 // is one giant async match and a census arm's locals once
@@ -11122,6 +11250,7 @@ mod tests {
                 "name-attribution-probe",
                 "ghost-census",
                 "member-twin-census",
+                "repair-member-twins",
                 "repair-country-typos",
                 "repair-label-prefixes",
                 "repair-renormalised-identifiers",

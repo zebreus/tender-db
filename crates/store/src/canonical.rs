@@ -4146,6 +4146,73 @@ pub struct GhostNotice {
 /// nothing else watches for the signature returning — issue 278's track-1 fix
 /// closes the one known mechanism, and a standing count is what would catch a
 /// second one.
+/// One notice the repair will REMOVE, and what removing it disturbs.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct TwinDrop {
+    pub notice: i64,
+    /// The identity it is held under now.
+    pub key: String,
+    /// The Tender version this notice caused, `(tender_id, seq)`. `None` means it
+    /// never folded — possible in principle, and the plan says so rather than
+    /// assuming every row has projected.
+    pub version: Option<(i64, i64)>,
+    /// That version is its Tender's HEAD, so `current_seq` moves when it goes.
+    /// Harmless for this cohort — the twins hold the SAME BYTES, so every other
+    /// `current_*` column is unchanged — but it is not harmless in general, and
+    /// the plan counts it.
+    pub head: bool,
+    /// Its Tender holds no other version, so removing it leaves a Tender with
+    /// nothing in it: issue 278's ghost shape, and the Tender is retired instead.
+    pub empties_tender: bool,
+}
+
+/// One twin set as the repair plans to resolve it.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct TwinRepair {
+    pub source: String,
+    pub member_path: String,
+    pub content_hash: String,
+    /// The row that SURVIVES — the LOWEST id. Not a preference: the corpus hangs
+    /// off that id by `tender_versions.caused_by_notice_id`, by
+    /// `tenders.island_notice_id`, and by an island Tender's `island:<notice_id>`
+    /// group key, so keeping it is what keeps the notice in the Tender it already
+    /// belongs to. It is also the rule issue 411 gave the ingest path, so the
+    /// repair and the daily agree on which row survives.
+    pub keep: i64,
+    /// The identity the survivor holds NOW.
+    pub keep_key: String,
+    /// The identity it takes: the one the NEWEST row holds, which is what the
+    /// parser derives today. Equal to `keep_key` when the survivor already holds
+    /// it, in which case the repair only removes its twins.
+    pub elect: String,
+    pub drop: Vec<TwinDrop>,
+}
+
+/// What [`Db::plan_member_twin_repair`] found. Read-only.
+#[derive(Debug, Default, Clone)]
+pub struct TwinRepairPlan {
+    pub sets: usize,
+    pub notices_dropped: usize,
+    pub versions_dropped: usize,
+    pub heads_dropped: usize,
+    pub unfolded_drops: usize,
+    /// Tenders left with no version at all — retired rather than deleted piecemeal.
+    pub tenders_emptied: Vec<i64>,
+    /// Sets whose rows all fold into ONE Tender (the keyed shape) against those
+    /// spread over more than one (the island shape). The boundary is the group
+    /// key, not a property of the data — see issue 404.
+    pub same_tender: usize,
+    pub cross_tender: usize,
+    /// Survivors whose identity actually changes. A set whose lowest id already
+    /// holds the elected key needs no re-key, only its twins removed.
+    pub rekeys: usize,
+    pub plan: Vec<TwinRepair>,
+    /// The census found more sets than `cap`, so this plan is NOT the whole
+    /// cohort and must not be executed.
+    pub truncated: bool,
+    pub stopped: bool,
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct GhostCensusReport {
     /// The slice width actually used, and the upper bound walked.
@@ -20432,6 +20499,150 @@ impl Db {
     /// `cap` bounds what is REPORTED, never what is COUNTED: `ghost_notices` and
     /// `ghost_tender_refs` are totals over the whole space however large the
     /// sample is allowed to grow.
+    /// Plan the removal of every member the corpus holds under more than one
+    /// identity — issue 404's 281 standing pairs. **READ-ONLY**; the wet arm
+    /// executes a plan this produced, and refuses one it did not.
+    ///
+    /// ## What it decides, and why the survivor is the OLDEST row
+    ///
+    /// Each twin set keeps its LOWEST notice id and drops the rest. That is not a
+    /// preference between two equivalent rows: `tender_versions.caused_by_notice_id`
+    /// and `tenders.island_notice_id` are foreign keys onto that id, and an island
+    /// Tender's group key is literally `island:<notice_id>` — so keeping the oldest
+    /// row keeps the notice in the Tender it already folded into, while minting a
+    /// new id re-homes it. That re-homing is exactly what produced issue 404's three
+    /// cross-Tender cases. It is also the rule issue 411 gave the ingest path, so
+    /// the repair and the daily ingest agree on which row survives rather than each
+    /// having its own idea.
+    ///
+    /// The survivor takes the identity the NEWEST row holds, because that is what
+    /// the parser derives today — the same election `reparse_notice` and
+    /// `record_notice` make.
+    ///
+    /// ## What it measures, so the wet arm can refuse a cohort that moved
+    ///
+    /// Per dropped notice: the version it caused, whether that version is its
+    /// Tender's head, and whether removing it empties the Tender. Those three are
+    /// the whole difference between "delete a row" and "retire a Tender", and a
+    /// plan that reports a shape the operator did not expect is a plan not to run.
+    ///
+    /// Head movement is harmless FOR THIS COHORT and the reason is worth stating:
+    /// twins hold the SAME BYTES, so the surviving version folds to the same title,
+    /// deadline and value as the one that goes — only `current_seq` moves. That is
+    /// a property of twins, not of versions in general.
+    ///
+    /// Bounded throughout: the census walk is bounded by construction, and every
+    /// enrichment here is an indexed seek per dropped notice
+    /// (`tender_versions_notice`, then the Tender by primary key).
+    pub async fn plan_member_twin_repair(
+        &self,
+        batch: usize,
+        cap: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+        progress: &(dyn Fn(u64, &str) + Sync),
+    ) -> turso::Result<TwinRepairPlan> {
+        let census = self.member_twin_census(batch, cap, stop, progress).await?;
+        let mut out = TwinRepairPlan {
+            truncated: census.truncated,
+            stopped: census.stopped,
+            sets: census.twin_sets as usize,
+            ..Default::default()
+        };
+        if census.stopped {
+            return Ok(out);
+        }
+        let reader = self.reader().await?;
+        // How many of a Tender's versions this plan removes, so "does it empty the
+        // Tender" is answered against the WHOLE plan rather than one notice at a
+        // time. Two dropped notices on one Tender would each look survivable alone.
+        let mut dropped_per_tender: std::collections::BTreeMap<i64, usize> = Default::default();
+        let mut versions_total: std::collections::BTreeMap<i64, i64> = Default::default();
+        let mut drafts: Vec<TwinRepair> = Vec::new();
+        for set in &census.sample {
+            let Some((keep, keep_key)) = set.rows.first() else { continue };
+            let Some((_, elect)) = set.rows.last() else { continue };
+            let mut repair = TwinRepair {
+                source: set.source.clone(),
+                member_path: set.member_path.clone(),
+                content_hash: set.content_hash.clone(),
+                keep: *keep,
+                keep_key: keep_key.clone(),
+                elect: elect.clone(),
+                drop: Vec::new(),
+            };
+            for (id, key) in set.rows.iter().skip(1) {
+                let mut going = TwinDrop { notice: *id, key: key.clone(), ..Default::default() };
+                let mut rows = reader
+                    .query(
+                        "SELECT v.tender_id, v.seq, t.current_seq,
+                                (SELECT COUNT(*) FROM tender_versions w WHERE w.tender_id = v.tender_id)
+                           FROM tender_versions v JOIN tenders t ON t.id = v.tender_id
+                          WHERE v.caused_by_notice_id = ?",
+                        (Value::Integer(*id),),
+                    )
+                    .await?;
+                if let Some(row) = rows.next().await? {
+                    let tender = int(&row, 0);
+                    let seq = int(&row, 1);
+                    going.version = Some((tender, seq));
+                    going.head = int(&row, 2) == seq;
+                    versions_total.insert(tender, int(&row, 3));
+                    *dropped_per_tender.entry(tender).or_default() += 1;
+                }
+                drop(rows);
+                repair.drop.push(going);
+            }
+            drafts.push(repair);
+        }
+        // Second pass, now that the whole plan's per-Tender tally is known.
+        for repair in &mut drafts {
+            let keeper_tender = Self::tender_of(&reader, repair.keep).await?;
+            let mut cross = false;
+            for d in &mut repair.drop {
+                if let Some((tender, _)) = d.version {
+                    let total = versions_total.get(&tender).copied().unwrap_or(0);
+                    let going = dropped_per_tender.get(&tender).copied().unwrap_or(0) as i64;
+                    d.empties_tender = total > 0 && going >= total;
+                    if d.empties_tender && !out.tenders_emptied.contains(&tender) {
+                        out.tenders_emptied.push(tender);
+                    }
+                    if keeper_tender != Some(tender) {
+                        cross = true;
+                    }
+                    out.versions_dropped += 1;
+                    if d.head {
+                        out.heads_dropped += 1;
+                    }
+                } else {
+                    out.unfolded_drops += 1;
+                }
+                out.notices_dropped += 1;
+            }
+            if cross {
+                out.cross_tender += 1;
+            } else {
+                out.same_tender += 1;
+            }
+        }
+        // The survivor re-keys only when it does not already hold the elected
+        // identity — which for issue 404's cohort is all 281, since the survivor
+        // is the placeholder and the elected key is the twin's.
+        out.rekeys = drafts.iter().filter(|r| r.keep_key != r.elect).count();
+        out.plan = drafts;
+        Ok(out)
+    }
+
+    /// The Tender one notice folded into, if any — an indexed seek.
+    async fn tender_of(reader: &crate::Reader, notice: i64) -> turso::Result<Option<i64>> {
+        let mut rows = reader
+            .query(
+                "SELECT tender_id FROM tender_versions WHERE caused_by_notice_id = ?",
+                (Value::Integer(notice),),
+            )
+            .await?;
+        Ok(rows.next().await?.map(|row| int(&row, 0)))
+    }
+
     pub async fn ghost_census(
         &self,
         window: i64,
@@ -22417,6 +22628,105 @@ mod tests {
         let path = format!("/tmp/tender-db-{name}-{}.db", std::process::id());
         let _ = std::fs::remove_file(&path);
         (Db::open(&path).await.expect("open scratch db"), path)
+    }
+
+    /// Issue 404's repair plan, on the two shapes the real cohort has: a KEYED
+    /// pair whose twins share one Tender, and an ISLAND pair whose twin minted a
+    /// Tender of its own. The plan must tell them apart, because the first ends
+    /// with a Tender one version shorter and the second with a Tender that has
+    /// to be retired — and a sweep that assumed one shape would quietly do the
+    /// wrong thing to the other.
+    #[tokio::test]
+    async fn the_twin_repair_plan_keeps_the_oldest_row_and_names_what_each_drop_disturbs() {
+        let (db, path) = scratch_db("twin-repair-plan").await;
+        async fn seed(db: &Db, sql: &str) {
+            let conn = db.conn().await;
+            conn.execute(sql, ()).await.expect("seed");
+        }
+        seed(&db, "INSERT INTO fetches(id, source, kind, period, url, sha256, bytes, fetched_at, path)
+                   VALUES(1,'doe','daily','2026-1','u','h',1,0,'pkg')").await;
+        // Two twin pairs. In each the OLDER row wears the placeholder key and the
+        // NEWER one the identity the parser derives today.
+        for (id, key, member) in [
+            (10, "00000000-1900", "keyed.xml"),
+            (20, "real-keyed-01", "keyed.xml"),
+            (11, "00000000-1900", "island.xml"),
+            (21, "real-island-01", "island.xml"),
+        ] {
+            seed(&db, &format!(
+                "INSERT INTO notices(id, source, publication_id, content_hash, profile, fetch_id,
+                     member_path, ingested_at, parse_state, projected)
+                 VALUES({id}, 'doe', '{key}', 'hash-{member}', 'eforms', 1, '{member}', 0, 'parsed', 1)"
+            )).await;
+        }
+        // The KEYED shape: both notices fold into one Tender, the twin's version
+        // being the head of three.
+        seed(&db, "INSERT INTO tenders(id, source, procedure_key, kind, created_at, current_seq)
+                   VALUES(100, 'doe', 'proc-1', 'procedure', 0, 3)").await;
+        seed(&db, "INSERT INTO notices(id, source, publication_id, content_hash, profile, fetch_id,
+                       member_path, ingested_at, parse_state, projected)
+                   VALUES(12, 'doe', 'other-01', 'hash-other', 'eforms', 1, 'other.xml', 0, 'parsed', 1)").await;
+        for (seq, notice) in [(1, 10), (2, 12), (3, 20)] {
+            seed(&db, &format!(
+                "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, publication_id)
+                 VALUES(100, {seq}, {notice}, 0, 'x')"
+            )).await;
+        }
+        // The ISLAND shape: the older row's Tender holds only it, and the twin
+        // minted a fresh Tender of its own — which is what a new notice id does
+        // to a group key of `island:<notice_id>`.
+        seed(&db, "INSERT INTO tenders(id, source, island_notice_id, kind, created_at, current_seq)
+                   VALUES(200, 'doe', 11, 'procedure', 0, 1)").await;
+        seed(&db, "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, publication_id)
+                   VALUES(200, 1, 11, 0, 'x')").await;
+        seed(&db, "INSERT INTO tenders(id, source, island_notice_id, kind, created_at, current_seq)
+                   VALUES(201, 'doe', 21, 'procedure', 0, 1)").await;
+        seed(&db, "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, publication_id)
+                   VALUES(201, 1, 21, 0, 'x')").await;
+
+        let quiet = |_: u64, _: &str| {};
+        let never = || false;
+        let plan = db.plan_member_twin_repair(1000, 100, &never, &quiet).await.expect("plan");
+
+        assert_eq!(plan.sets, 2);
+        assert_eq!(plan.notices_dropped, 2, "one twin per set");
+        assert_eq!(plan.versions_dropped, 2);
+        assert_eq!(plan.unfolded_drops, 0);
+        assert_eq!(plan.rekeys, 2, "both survivors wear the placeholder key today");
+        assert_eq!(
+            (plan.same_tender, plan.cross_tender),
+            (1, 1),
+            "the keyed pair shares a Tender; the island pair does not"
+        );
+        assert_eq!(
+            plan.tenders_emptied,
+            vec![201],
+            "only the island twin's own Tender is left with nothing — the keyed \
+             Tender keeps two of its three versions"
+        );
+        assert_eq!(plan.heads_dropped, 2, "both twins' versions are their Tender's head");
+
+        let keyed = plan.plan.iter().find(|r| r.member_path == "keyed.xml").expect("keyed set");
+        assert_eq!(keyed.keep, 10, "the OLDEST row survives — the corpus hangs off its id");
+        assert_eq!(keyed.keep_key, "00000000-1900");
+        assert_eq!(keyed.elect, "real-keyed-01", "and it takes the identity the parser derives now");
+        assert_eq!(keyed.drop.len(), 1);
+        assert_eq!(keyed.drop[0].notice, 20);
+        assert_eq!(keyed.drop[0].version, Some((100, 3)));
+        assert!(keyed.drop[0].head);
+        assert!(!keyed.drop[0].empties_tender);
+
+        let island = plan.plan.iter().find(|r| r.member_path == "island.xml").expect("island set");
+        assert_eq!(island.keep, 11);
+        assert_eq!(island.drop[0].notice, 21);
+        assert_eq!(island.drop[0].version, Some((201, 1)));
+        assert!(
+            island.drop[0].empties_tender,
+            "Tender 201 exists only because the re-key minted a new notice id; \
+             removing that notice leaves it with nothing"
+        );
+
+        let _ = std::fs::remove_file(&path);
     }
 
     fn state_of<'a>(presence: &'a [LayerPresence], name: &str) -> &'a LayerState {
