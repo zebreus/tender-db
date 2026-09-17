@@ -185,3 +185,36 @@ than a silence. That is a follow-up unit on this issue, and the criterion is exa
 measurement. It is a consequence of the fix, recorded the same day it shipped rather than left for a
 reader to trip over — the old rule hid these entirely, so this is a new way to be slightly wrong, not
 a regression.
+
+## Comment — 2026-09-17: follow-up shipped — the threshold moves onto the silent days
+
+Deployed `bc143db`, `ops/check.sh` GATE-EXIT=0.
+
+The rough edge the acceptance run exposed turned out to have a sharper cause than "`inside == days`
+should be suppressed". `PUBLICATION_GAP_MIN_DAYS` is calibrated on consecutive NON-PUBLISHING days —
+its own doc says *"a normal weekend is 2 silent days and a weekend plus a public holiday is 3. Four
+is the first length that cannot be the calendar."* The gate was applying it to the SPAN. Subtracting
+`inside` makes it measure what the constant was calibrated on, and the `inside == days` case falls
+out for free rather than needing a rule of its own.
+
+Checked against every row the live run produced before writing any code:
+
+| source | span | inside | silent | verdict |
+| --- | --- | --- | --- | --- |
+| `doe` ×4 (Good Friday, Ascension, Christmas) | 4 / 12 | 4 / 12 | **0** | suppressed — not one day was silent |
+| `ted` ×2 (Christmas, New Year) | 5 | 2 | **3** | suppressed — exactly the number the calibration calls the calendar |
+| `fts` | 433 | 1 | **432** | **reported** |
+| `ted` (402's hole) | 16 | 0 | **16** | **reported** |
+
+Only the two genuine holes survive, and both do so untouched. That the two TED holiday rows land on
+**exactly 3** — the value the calibration singles out — is the strongest evidence the gate was simply
+pointed at the wrong quantity.
+
+`PublicationGapRow.days` is now `.silent`, since that is what it counts; the span stays recoverable as
+`silent + inside` and `from`/`to` still name its ends.
+`a_week_where_every_day_published_is_not_a_silence_however_quiet` pins the DÖE Christmas shape
+(twelve days, every one publishing, reported as nothing), the 3-vs-4 boundary measured where it was
+always meant to apply, and a real hole with a straggler still reporting.
+
+**Expected on the next run**: section 14 lists `fts` alone. If a holiday row returns, the gate is not
+reading `inside`.
