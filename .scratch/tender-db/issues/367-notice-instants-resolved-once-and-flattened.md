@@ -281,3 +281,15 @@ list row cost nothing visible.** `/v1/tenders?limit=100` 0.91 s, `?limit=1000` 0
 2.47–2.79 s), `?bidder=357&limit=1000` 3.66–3.88 s (388: 3.96–4.11 s), `?winner=357&limit=1000`
 2.09 s (388: 4.36 s), `?buyer=28&limit=1000` 0.49 s, `/v1/tenders/7954578` 0.45 s,
 `/v1/notices?limit=1000` 0.88 s. Every seeded shape reads at or under its 388 figure.
+
+**On the candidate unit 4, read again 2026-09-18 22:5x UTC — the gap is narrower than stated
+above.** A bound that CARRIES its offset already has civil semantics: `published_after=
+2026-07-16T00:00:00+02:00` is 2026-07-15T22:00:00Z, which is exactly where a date-only German
+publication of 2026-07-16 is stored, so it is included. Only the bare-date form (taken as
+midnight UTC, unit 3's rule) misses the same-day European publications. That leaves two honest
+options for unit 4, neither taken tonight: (i) store a date-only value at its civil day's UTC
+midnight — fold-wide, touches date-only deadlines too, needs the re-parse the other units already
+wait for, and makes `strftime('%Y', published_at)` in `/v1/sql` read the civil year; or (ii) leave
+storage alone and document that a bare-date bound is UTC midnight and an offset-bearing bound is
+the way to ask for a civil day. The dry run of `repair-notice-instants` (gated) will say how many
+date-only publications there are per era; decide on that number.

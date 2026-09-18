@@ -1,6 +1,6 @@
 # 370 — the served contract is hand-written prose with no gate coupling it to behaviour: twelve published claims are now false
 
-Status: ready-for-agent — **the REOPENED unit is CLOSED and VERIFIED ON PROD 2026-09-17** at rev
+Status: **DONE 2026-09-18** — the last open piece, unit 4's version half, CLOSES AS DOCUMENTED (decision at the foot): the row already says whether its deadline was carried forward — `submission_deadline < published_at` is that marker to the 0.2–0.3 % within-notice background, documented since 2026-09-07 — so a fold-wide origin column would restate what the two instants say, at the cost of a schema change and a corpus refold. The scope half landed at `5d245cb` (`submission_deadline_scope`). Was: ready-for-agent — **the REOPENED unit is CLOSED and VERIFIED ON PROD 2026-09-17** at rev
 `62031e2`: `/docs` and `/v1/openapi.json` both serve the corrected wording (checked positively, not
 just by absence — `NAME-scoped` and `no interrupt` are present and the retired phrases score 0 hits
 on both surfaces), and the drift now has a detector on every served surface
@@ -453,3 +453,30 @@ on every served lot. Issue 391's `## Verify` literal moves from 16 to 17 declare
 properties (annotated).
 
 **Read after the deploy (22:05 UTC):** 389's exemplar 8436333 (r209, one procedure-scoped deadline) serves `2029-04-29T10:00:00+00:00 procedure` on the tender and `procedure` on each of its three lots; the newest 200 tenders read 88 × `lot` (eForms deadlines are lot-level) and 112 × `null` beside a null deadline; a 200-lot eForms page reads 172 × `lot`, 28 × `null` — the marker never outruns the date, and `every_served_key_is_declared_in_its_schema` holds on the served surface.
+
+## Unit 4's version half — DECIDED 2026-09-18: closes as documented
+
+The question was whether the row should say that its `submission_deadline` was republished by the
+newest notice or carried forward from an earlier version. Taking it apart:
+
+- **The row already says it.** A notice cannot publish a deadline before its own publication
+  (the within-notice background is 0.2–0.3 %, measured, and is source noise), so on a served row
+  `submission_deadline < published_at` means exactly "carried forward from an earlier version" —
+  the after-an-award shape the Dates caveat has described since 2026-09-07, and the 37.6 %
+  row-level rate it quantifies. Both instants are on every Tender row; the comparison is one
+  line for a consumer and needs no new field.
+- **What a fold-wide origin would add** is the WHICH: the version (`since_seq`) or notice that
+  first published the date. That is a new column on `tender_version_dates` (and, for symmetry,
+  the other fact satellites), a fold change that records first-appearance per fact, and a corpus
+  refold to fill it — hours of gated production time to restate, more precisely, a fact the two
+  instants already establish. The detail's `versions` list (each version's `published_at`)
+  brackets the WHICH to within one version for a consumer who needs it.
+- **Two shapes for one idea, avoided.** The scope half landed as `submission_deadline_scope`
+  because nothing on the row could tell `lot` from `procedure`; the version half does not meet
+  that bar, and a second marker beside the first would invite the drift this issue exists to
+  detect.
+
+So: no origin column, no refold. The `/docs` Dates caveat is the contract for the version axis,
+`submission_deadline_scope` for the scope axis, and `every_served_key_is_declared_in_its_schema`
+plus `no_served_surface_repeats_a_retired_claim` are the detectors that keep the two honest. If a
+consumer ever needs the exact version, that is a new issue with a use case, not this one.
