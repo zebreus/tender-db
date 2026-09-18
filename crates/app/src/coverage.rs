@@ -11,8 +11,7 @@
 use crate::ledger::resolution_ledger;
 use model::dashboard::{
     AwardLinkage, Count, Coverage, Dashboard, Lag, PipelineStage, Quarantine, QuarantineClass,
-    Quarantined, ResolvedCategory, System, quarantine_class,
-};
+    Quarantined, ResolvedCategory, System, quarantine_class, HeavyStatus};
 use std::collections::HashMap;
 use std::sync::{Arc, OnceLock, RwLock};
 use std::time::Duration;
@@ -81,12 +80,78 @@ fn cell() -> &'static RwLock<Dashboard> {
     SNAPSHOT.get_or_init(|| RwLock::new(Dashboard::default()))
 }
 
+/// Issue 405: the heavy sections' current state, kept beside the snapshot and
+/// served with it. The snapshot says WHAT was measured; this says what the
+/// refresher is doing about the sections that are not there yet.
+static HEAVY: OnceLock<RwLock<HeavyTrack>> = OnceLock::new();
+
+fn heavy() -> &'static RwLock<HeavyTrack> {
+    HEAVY.get_or_init(|| RwLock::new(HeavyTrack::boot(store::now_unix())))
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum HeavyState {
+    /// Nothing has landed and no pass is running — the state a fresh boot is in
+    /// until the first heavy pass starts.
+    Boot,
+    Measuring,
+    Skipped(&'static str),
+    Idle,
+}
+
+/// The heavy sections' state and when it began — the mutable half of
+/// [`HeavyStatus`], kept with `&'static str` reasons so a skip can be recorded
+/// on every 60 s pass without allocating, and so the same reason repeated keeps
+/// its original `since` (which is what makes "for 6 h" readable as one event).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct HeavyTrack {
+    state: HeavyState,
+    since: i64,
+}
+
+impl HeavyTrack {
+    fn boot(now: i64) -> HeavyTrack {
+        HeavyTrack { state: HeavyState::Boot, since: now }
+    }
+
+    /// A pass declined for `reason`. The same reason repeated keeps its `since`;
+    /// a new reason (the job finished, the change-gate took over) starts a new one.
+    fn skipped(&mut self, reason: &'static str, now: i64) {
+        if self.state != HeavyState::Skipped(reason) {
+            *self = HeavyTrack { state: HeavyState::Skipped(reason), since: now };
+        }
+    }
+
+    fn measuring(&mut self, now: i64) {
+        *self = HeavyTrack { state: HeavyState::Measuring, since: now };
+    }
+
+    fn landed(&mut self, now: i64) {
+        *self = HeavyTrack { state: HeavyState::Idle, since: now };
+    }
+
+    /// The served form at `now` — an age, not an instant, so a browser with a
+    /// wrong clock cannot misread it.
+    fn status(&self, now: i64) -> HeavyStatus {
+        let (state, reason) = match self.state {
+            HeavyState::Boot => ("boot", None),
+            HeavyState::Measuring => ("measuring", None),
+            HeavyState::Skipped(reason) => ("skipped", Some(reason.to_owned())),
+            HeavyState::Idle => ("idle", None),
+        };
+        HeavyStatus { state: state.to_owned(), reason, for_seconds: (now - self.since).max(0) }
+    }
+}
+
 /// Serve the newest memoized snapshot — a synchronous, store-free read, so a
 /// request can never recompute or block. Its sections fill in independently
 /// (issue 37): before a section's first measurement it is `None`, which the page
 /// renders as "measuring since boot…" — never as zeros.
 pub fn latest() -> Dashboard {
-    cell().read().expect("coverage snapshot").clone()
+    let mut snapshot = cell().read().expect("coverage snapshot").clone();
+    // Issue 405: the heavy sections' state, aged at serve time.
+    snapshot.heavy = Some(heavy().read().expect("heavy track").status(store::now_unix()));
+    snapshot
 }
 
 /// Spawn the background refresher: measure on an interval, off the request path,
@@ -121,6 +186,8 @@ pub fn init(db: Arc<Db>) {
             rt.block_on(async move {
                 let mut last_heavy_key: Option<HeavyKey> = None;
                 let mut said: Option<&'static str> = None;
+                // Stamp the boot instant the served age counts from (issue 405).
+                let track = heavy();
                 loop {
                     // Skip the heavy coverage scan while a write-heavy job holds the
                     // WAL (issue 53) — see `refresh_into`. The supervisor may not
@@ -132,7 +199,7 @@ pub fn init(db: Arc<Db>) {
                     // flips) move no cursor and add no rows, so without this a
                     // finished reprocess never triggered a heavy re-measure.
                     let jobs_completed = sup.map_or(0, |s| s.jobs_completed());
-                    refresh_into(&db, cell(), heavy_write, jobs_completed, &mut last_heavy_key, &mut said)
+                    refresh_into(&db, cell(), track, heavy_write, jobs_completed, &mut last_heavy_key, &mut said)
                         .await;
                     tokio::time::sleep(REFRESH).await;
                 }
@@ -183,6 +250,7 @@ async fn current_heavy_key(db: &Db, jobs_completed: u64) -> Option<HeavyKey> {
 async fn refresh_into(
     db: &Db,
     cell: &RwLock<Dashboard>,
+    track: &RwLock<HeavyTrack>,
     heavy_write_active: bool,
     jobs_completed: u64,
     last_heavy_key: &mut Option<HeavyKey>,
@@ -218,7 +286,9 @@ async fn refresh_into(
     // (Gated `quarantine`/`coverage` render as "measuring…" not a false `0` — the
     // sectioned `None` default, issue 37 — so the boot-zero guard still holds.)
     if heavy_write_active {
-        let _ = announce(said, "a write-heavy job holds the WAL");
+        const REASON: &str = "a write-heavy job holds the WAL";
+        let _ = announce(said, REASON);
+        track.write().expect("heavy track").skipped(REASON, now);
         return;
     }
     // Change-gate (issue 61 coverage): when nothing has been written since the last
@@ -231,11 +301,14 @@ async fn refresh_into(
     if let (Some(k), Some(last)) = (key.as_ref(), last_heavy_key.as_ref())
         && k == last
     {
-        let _ = announce(said, "nothing has been written since the last measurement");
+        const REASON: &str = "nothing has been written since the last measurement";
+        let _ = announce(said, REASON);
+        track.write().expect("heavy track").skipped(REASON, now);
         return;
     }
     // Back to measuring: the next skip, whatever its reason, is worth saying again.
     *said = None;
+    track.write().expect("heavy track").measuring(now);
     publish(cell, "quarantine", timed("quarantine", measure_quarantine(db)).await, |d, v| {
         d.quarantine = Some(v)
     });
@@ -257,6 +330,7 @@ async fn refresh_into(
     if let Some(k) = key {
         *last_heavy_key = Some(k);
     }
+    track.write().expect("heavy track").landed(store::now_unix());
 }
 
 /// Measure every section once and return the assembled snapshot — the one-shot
@@ -266,7 +340,8 @@ pub async fn measure(db: &Db) -> Dashboard {
     let cell = RwLock::new(Dashboard::default());
     // One-shot: measure every section, including the heavy coverage scan. A fresh
     // `None` watermark forces the measure (never skips).
-    refresh_into(db, &cell, false, 0, &mut None, &mut None).await;
+    let track = RwLock::new(HeavyTrack::boot(store::now_unix()));
+    refresh_into(db, &cell, &track, false, 0, &mut None, &mut None).await;
     cell.into_inner().expect("snapshot")
 }
 
@@ -637,6 +712,42 @@ mod tests {
         assert!(announce(&mut said, UNCHANGED), "a skip after a measurement speaks");
     }
 
+    /// Issue 405 (the served age): the heavy sections' state says how long it has
+    /// held and why, so "measuring…" can be told from "declining for six hours"
+    /// and from "wedged". The same skip reason repeated keeps its `since` — six
+    /// hours behind one backfill is one event, not 360 — while a changed reason,
+    /// a pass or a landing each start a new one.
+    #[test]
+    fn the_heavy_status_says_how_long_and_why() {
+        const WAL: &str = "a write-heavy job holds the WAL";
+        const UNCHANGED: &str = "nothing has been written since the last measurement";
+        let mut track = HeavyTrack::boot(100);
+        let s = track.status(160);
+        assert_eq!((s.state.as_str(), s.reason.as_deref(), s.for_seconds), ("boot", None, 60));
+
+        track.measuring(200);
+        let s = track.status(230);
+        assert_eq!((s.state.as_str(), s.for_seconds), ("measuring", 30));
+
+        track.landed(300);
+        assert_eq!((track.status(360).state.as_str(), track.status(360).for_seconds), ("idle", 60));
+
+        track.skipped(WAL, 400);
+        track.skipped(WAL, 460);
+        track.skipped(WAL, 520);
+        let s = track.status(520);
+        assert_eq!((s.state.as_str(), s.reason.as_deref(), s.for_seconds), ("skipped", Some(WAL), 120), "the same reason keeps its since");
+
+        track.skipped(UNCHANGED, 580);
+        let s = track.status(600);
+        assert_eq!((s.reason.as_deref(), s.for_seconds), (Some(UNCHANGED), 20), "a changed reason starts over");
+
+        track.measuring(700);
+        assert_eq!(track.status(700).for_seconds, 0);
+        // A clock that went backwards never serves a negative age.
+        assert_eq!(track.status(650).for_seconds, 0);
+    }
+
     /// Issue 402: a source with two period NAMESPACES gets one range per
     /// namespace, because a single MIN…MAX across them is not a range.
     ///
@@ -948,7 +1059,7 @@ mod tests {
         let _ = std::fs::remove_file(&path);
         let db = Db::open(&path).await.unwrap();
         let cell = RwLock::new(Dashboard::default());
-        refresh_into(&db, &cell, false, 0, &mut None, &mut None).await;
+        refresh_into(&db, &cell, &RwLock::new(HeavyTrack::boot(0)), false, 0, &mut None, &mut None).await;
         let d = cell.read().unwrap();
         assert!(d.system.is_some(), "system");
         assert!(d.counts.is_some(), "counts");
@@ -975,7 +1086,7 @@ mod tests {
 
         // A prior idle pass measured coverage.
         let cell = RwLock::new(Dashboard::default());
-        refresh_into(&db, &cell, false, 0, &mut None, &mut None).await;
+        refresh_into(&db, &cell, &RwLock::new(HeavyTrack::boot(0)), false, 0, &mut None, &mut None).await;
         assert!(cell.read().unwrap().coverage.is_some(), "an idle pass measures coverage");
 
         // Now a write-heavy job is active: only the cheap `system` point-read
@@ -983,7 +1094,7 @@ mod tests {
         // counts, coverage) is skipped and its last value preserved — no new
         // WAL-pinning reader snapshot is opened. (Each guard is scoped so it is
         // never held across the next await.)
-        refresh_into(&db, &cell, true, 0, &mut None, &mut None).await;
+        refresh_into(&db, &cell, &RwLock::new(HeavyTrack::boot(0)), true, 0, &mut None, &mut None).await;
         {
             let d = cell.read().unwrap();
             assert!(d.system.is_some(), "system (cheap point read) still refreshes while a job runs");
@@ -999,7 +1110,7 @@ mod tests {
         // WAL-pinning snapshot. This is the airtight property: during ingestion
         // the refresher holds no long-lived reader at all (issue 53).
         let fresh = RwLock::new(Dashboard::default());
-        refresh_into(&db, &fresh, true, 0, &mut None, &mut None).await;
+        refresh_into(&db, &fresh, &RwLock::new(HeavyTrack::boot(0)), true, 0, &mut None, &mut None).await;
         {
             let f = fresh.read().unwrap();
             assert!(f.system.is_some(), "the cheap point-read section lands");
@@ -1029,13 +1140,13 @@ mod tests {
         let mut key = None;
 
         // First pass measures the heavy sections and records the watermark.
-        refresh_into(&db, &cell, false, 0, &mut key, &mut None).await;
+        refresh_into(&db, &cell, &RwLock::new(HeavyTrack::boot(0)), false, 0, &mut key, &mut None).await;
         assert!(key.is_some(), "the first pass records the heavy-measure watermark");
         assert!(cell.read().unwrap().counts.is_some(), "the first pass measures counts");
 
         // (A) UNCHANGED → SKIP. Poison `counts`; an unchanged pass must leave it.
         cell.write().unwrap().counts = Some(vec![Count { label: "SENTINEL".into(), value: -1 }]);
-        refresh_into(&db, &cell, false, 0, &mut key, &mut None).await;
+        refresh_into(&db, &cell, &RwLock::new(HeavyTrack::boot(0)), false, 0, &mut key, &mut None).await;
         assert_eq!(
             cell.read().unwrap().counts.as_ref().unwrap()[0].label,
             "SENTINEL",
@@ -1055,7 +1166,7 @@ mod tests {
         })
         .await
         .unwrap();
-        refresh_into(&db, &cell, false, 0, &mut key, &mut None).await;
+        refresh_into(&db, &cell, &RwLock::new(HeavyTrack::boot(0)), false, 0, &mut key, &mut None).await;
         let d = cell.read().unwrap();
         assert_ne!(
             d.counts.as_ref().unwrap().first().map(|c| c.label.as_str()),
@@ -1069,13 +1180,13 @@ mod tests {
         // (issue 191): a reprocess stamps quarantine rows in place — no cursor
         // movement, no new fetch or notice — and the panel must still refresh.
         cell.write().unwrap().counts = Some(vec![Count { label: "SENTINEL".into(), value: -1 }]);
-        refresh_into(&db, &cell, false, 0, &mut key, &mut None).await;
+        refresh_into(&db, &cell, &RwLock::new(HeavyTrack::boot(0)), false, 0, &mut key, &mut None).await;
         assert_eq!(
             cell.read().unwrap().counts.as_ref().unwrap()[0].label,
             "SENTINEL",
             "still-unchanged DB and job count: the gate skips"
         );
-        refresh_into(&db, &cell, false, 1, &mut key, &mut None).await;
+        refresh_into(&db, &cell, &RwLock::new(HeavyTrack::boot(0)), false, 1, &mut key, &mut None).await;
         assert_ne!(
             cell.read().unwrap().counts.as_ref().unwrap().first().map(|c| c.label.as_str()),
             Some("SENTINEL"),

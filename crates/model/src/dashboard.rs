@@ -28,6 +28,32 @@ pub struct Dashboard {
     /// Award-chaining health per era: how many award Tenders are a lone notice
     /// that never linked to its contract notice (docs/research/ted-legacy-mapping.md §3).
     pub award_linkage: Option<Vec<AwardLinkage>>,
+    /// Issue 405: what the heavy sections (quarantine, award linkage, counts,
+    /// coverage/pipeline) are doing right now, so a panel that still reads
+    /// "measuring" can say for how long and why. Filled server-side when the
+    /// snapshot is served (the client needs no clock); absent from a one-shot
+    /// measurement and from any snapshot older than the field.
+    #[serde(default)]
+    pub heavy: Option<HeavyStatus>,
+}
+
+/// The heavy sections' current state (issue 405). Before this the page could
+/// only say "measuring…", which from outside is the same shape whether the
+/// refresher is 30 s into a 4-minute scan, has been declining for six hours
+/// because a backfill holds the WAL, or is wedged — and telling those apart cost
+/// a live acceptance read twice on 2026-09-16.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct HeavyStatus {
+    /// `boot` — nothing has landed yet and no pass is running; `measuring` — a
+    /// pass over the heavy sections is running; `skipped` — the last pass
+    /// declined, see `reason`; `idle` — the last pass landed and nothing has
+    /// been written since.
+    pub state: String,
+    /// The skip reason the refresher announced, when `state` is `skipped`.
+    pub reason: Option<String>,
+    /// Seconds the current state has held: since boot, since the pass began,
+    /// since the first skip of this reason, or since the last landing.
+    pub for_seconds: i64,
 }
 
 /// The weekly data-quality headline history (issue 265): the stored runs,

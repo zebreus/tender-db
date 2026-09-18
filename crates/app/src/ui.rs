@@ -11,8 +11,7 @@ use dioxus::prelude::*;
 use model::account::LOST_PASSWORD_NOTICE;
 use model::dashboard::{
     AwardLinkage, Coverage, Lag, PipelineStage, QuarantineClass, Quarantined, ResolvedCategory,
-    quarantine_class,
-};
+    quarantine_class, HeavyStatus};
 use model::ingestion::{Ingestion, JobProgress, JobRun};
 use model::{Account, NewToken, NewWebhook, Token, Webhook};
 use std::time::Duration;
@@ -84,14 +83,14 @@ pub fn DashboardPage() -> Element {
                                 }
                             }
                         },
-                        None => rsx! { Measuring { title: "Contents" } },
+                        None => rsx! { Measuring { title: "Contents", heavy: d.heavy.clone() } },
                     }
 
                     match &d.system {
                         Some(s) => rsx! {
                             SystemPanel { rev: s.service_rev.clone(), cursor: s.cursor, lag: s.lag }
                         },
-                        None => rsx! { Measuring { title: "System" } },
+                        None => rsx! { Measuring { title: "System", heavy: d.heavy.clone() } },
                     }
 
                     match &d.quarantine {
@@ -109,12 +108,12 @@ pub fn DashboardPage() -> Element {
                                 resolved: q.resolved_categories.clone(),
                             }
                         },
-                        None => rsx! { Measuring { title: "Quarantine" } },
+                        None => rsx! { Measuring { title: "Quarantine", heavy: d.heavy.clone() } },
                     }
 
                     match &d.award_linkage {
                         Some(rows) => rsx! { AwardLinkagePanel { rows: rows.clone() } },
-                        None => rsx! { Measuring { title: "Award linkage" } },
+                        None => rsx! { Measuring { title: "Award linkage", heavy: d.heavy.clone() } },
                     }
 
                     // The weekly quality headlines (issue 265) — its own poll,
@@ -123,12 +122,12 @@ pub fn DashboardPage() -> Element {
 
                     match &d.pipeline {
                         Some(rows) => rsx! { PipelinePanel { rows: rows.clone() } },
-                        None => rsx! { Measuring { title: "Pipeline" } },
+                        None => rsx! { Measuring { title: "Pipeline", heavy: d.heavy.clone() } },
                     }
 
                     match &d.coverage {
                         Some(rows) => rsx! { CoveragePanel { rows: rows.clone() } },
-                        None => rsx! { Measuring { title: "Coverage" } },
+                        None => rsx! { Measuring { title: "Coverage", heavy: d.heavy.clone() } },
                     }
                 },
                 Err(e) => rsx! { p { class: "error", "Could not measure: {e}" } },
@@ -144,12 +143,46 @@ pub fn DashboardPage() -> Element {
 /// strictness guarantee holds perfectly", which the boot transient must never
 /// assert. Each section clears this the moment its first scan lands.
 #[component]
-fn Measuring(title: &'static str) -> Element {
+fn Measuring(title: &'static str, heavy: Option<HeavyStatus>) -> Element {
+    // Issue 405: say how long and why, so "measuring…" can be told from "declining
+    // for six hours behind a backfill" and from "wedged" without a journal read.
+    let line = match &heavy {
+        Some(h) => match h.state.as_str() {
+            "measuring" => format!(
+                "Measuring for {} — this panel fills when the running scan lands.",
+                held(h.for_seconds)
+            ),
+            "skipped" => format!(
+                "Not measured yet: {} (for {}). This panel fills once the refresher can scan again.",
+                h.reason.as_deref().unwrap_or("the refresher declined"),
+                held(h.for_seconds)
+            ),
+            "idle" => format!(
+                "The last scan landed {} ago without this section — its measurement failed; the coverage log says why.",
+                held(h.for_seconds)
+            ),
+            _ => format!(
+                "Measuring since boot ({} ago)… this panel fills once its first background scan completes.",
+                held(h.for_seconds)
+            ),
+        },
+        None => "Measuring since boot… this panel fills once its first background scan completes.".to_owned(),
+    };
     rsx! {
         section { class: "panel",
             h2 { "{title}" }
-            p { class: "muted", "Measuring since boot… this panel fills once its first background scan completes." }
+            p { class: "muted", "{line}" }
         }
+    }
+}
+
+/// A duration held so far, in the coarsest unit that still says something —
+/// "45 s", "12 min", "6 h 20 min".
+fn held(seconds: i64) -> String {
+    match seconds.max(0) {
+        s @ 0..120 => format!("{s} s"),
+        s @ 120..7200 => format!("{} min", s / 60),
+        s => format!("{} h {} min", s / 3600, (s % 3600) / 60),
     }
 }
 
@@ -390,7 +423,7 @@ fn QualityPanel() -> Element {
                     }
                 }
             }
-            Ok(_) => rsx! { Measuring { title: "Data quality" } },
+            Ok(_) => rsx! { Measuring { title: "Data quality", heavy: None } },
             Err(e) => rsx! { section { class: "panel", h2 { "Data quality" } p { class: "error", "Could not read: {e}" } } },
         }
     }
