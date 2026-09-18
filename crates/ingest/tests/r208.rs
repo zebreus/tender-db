@@ -68,7 +68,7 @@ fn every_r208_fixture_is_consumed_exhaustively() {
         })
         .collect();
     names.sort();
-    assert_eq!(names.len(), 10, "corpus changed; update the expectation");
+    assert_eq!(names.len(), 11, "corpus changed; update the expectation");
 
     for relative in names {
         let parsed = parse_fixture(&relative);
@@ -372,4 +372,35 @@ fn a_pin_citation_and_its_contract_notice_are_told_apart_by_their_declared_kind(
         value(&f03, "PROCEDURE", "TED-REF_NOTICE.NO_DOC_OJS"),
         NoticeValue::Id { value, is_ref: true, .. } if value == "2010/S 133-203552"
     ));
+}
+
+/// Issue 393 unit 1: the R2.0.8 `TRANSLATION_SECTION > TRANSLITERATIONS >
+/// TRANSLITERATED_ADDR` block (099900-2018, a Greek F03) is TED's Latin rendering
+/// of the buyer's own name and address. It is claimed whole and opens nothing:
+/// no `TED-TRANSLITERATED_ADDR` reference, no Organization section carrying the
+/// Latin spelling — while the Greek contracting body is still there.
+#[test]
+fn a_transliterated_address_block_is_claimed_and_opens_no_party() {
+    let p = parse_fixture("r208/f03-099900-2018.xml");
+    assert!(
+        p.values.iter().all(|v| v.field_id != "TED-TRANSLITERATED_ADDR"),
+        "the transliteration block must not be referenced as a party"
+    );
+    let names: Vec<&str> = p
+        .values
+        .iter()
+        .filter(|v| v.field_id == "TED-OFFICIALNAME")
+        .filter_map(|v| match &v.value {
+            NoticeValue::Text { value, .. } => Some(value.as_str()),
+            _ => None,
+        })
+        .collect();
+    assert!(
+        !names.iter().any(|n| n.starts_with("Perifereia Attikis")),
+        "no Organization section carries the Latin twin: {names:?}"
+    );
+    assert!(
+        names.iter().any(|n| n.starts_with("Περιφέρεια Αττικής")),
+        "the Greek contracting body is still a party: {names:?}"
+    );
 }

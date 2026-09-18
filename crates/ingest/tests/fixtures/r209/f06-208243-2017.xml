@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="UTF-8"?><TED_EXPORT xmlns="http://formex.publications.europa.eu/ted/schema/export/R2.0.9.S01.E01" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink" VERSION="R2.0.9.S01.E01" xsi:schemaLocation="http://formex.publications.europa.eu/ted/schema/export/R2.0.9.S01.E01 TED_EXPORT.xsd" DOC_ID="208243-2017" EDITION="2017104">
+<TECHNICAL_SECTION>
+<RECEPTION_ID>17-222580-001</RECEPTION_ID>
+<DELETION_DATE>20170906</DELETION_DATE>
+<FORM_LG_LIST>BG </FORM_LG_LIST>
+<COMMENTS>From Convertor</COMMENTS>
+</TECHNICAL_SECTION>
+<LINKS_SECTION>
+<XML_SCHEMA_DEFINITION_LINK xlink:title="TED WEBSITE" xlink:href="http://ted.europa.eu" xlink:type="simple"/>
+<OFFICIAL_FORMS_LINK xlink:href="http://ted.europa.eu" xlink:type="simple"/>
+<FORMS_LABELS_LINK xlink:href="http://ted.europa.eu" xlink:type="simple"/>
+<ORIGINAL_CPV_LINK xlink:href="http://ted.europa.eu" xlink:type="simple"/>
+<ORIGINAL_NUTS_LINK xlink:href="http://ted.europa.eu" xlink:type="simple"/>
+</LINKS_SECTION>
+<CODED_DATA_SECTION>
+<REF_OJS>
+<COLL_OJ>S</COLL_OJ>
+<NO_OJ>104</NO_OJ>
+<DATE_PUB>20170601</DATE_PUB>
+</REF_OJS>
+<NOTICE_DATA>
+<NO_DOC_OJS>2017/S 104-208243</NO_DOC_OJS>
+<URI_LIST>
+<URI_DOC LG="BG">http://ted.europa.eu/udl?uri=TED:NOTICE:208243-2017:TEXT:BG:HTML</URI_DOC>
+</URI_LIST>
+<LG_ORIG>BG</LG_ORIG>
+<ISO_COUNTRY VALUE="BG"/>
+<IA_URL_GENERAL>www.evn.bg</IA_URL_GENERAL>
+<ORIGINAL_CPV CODE="31681410">Electrical materials</ORIGINAL_CPV>
+<ORIGINAL_NUTS CODE="BG421">Plovdiv</ORIGINAL_NUTS>
+<CA_CE_NUTS CODE="BG421">Plovdiv</CA_CE_NUTS>
+<TENDERER_NUTS CODE="BG411">Sofia (stolitsa)</TENDERER_NUTS>
+<VALUES>
+<VALUE TYPE="PROCUREMENT_TOTAL" CURRENCY="BGN">235349</VALUE>
+</VALUES>
+<REF_NOTICE>
+<NO_DOC_OJS>2016/S 144-260261</NO_DOC_OJS>
+</REF_NOTICE>
+</NOTICE_DATA>
+<CODIF_DATA>
+<DS_DATE_DISPATCH>20170529</DS_DATE_DISPATCH>
+<AA_AUTHORITY_TYPE CODE="4">Utilities entity</AA_AUTHORITY_TYPE>
+<TD_DOCUMENT_TYPE CODE="7">Contract award notice</TD_DOCUMENT_TYPE>
+<NC_CONTRACT_NATURE CODE="2">Supplies</NC_CONTRACT_NATURE>
+<PR_PROC CODE="4">Negotiated procedure</PR_PROC>
+<RP_REGULATION CODE="4">European Union</RP_REGULATION>
+<TY_TYPE_BID CODE="9">Not applicable</TY_TYPE_BID>
+<AC_AWARD_CRIT CODE="1">Lowest price</AC_AWARD_CRIT>
+<MA_MAIN_ACTIVITIES CODE="N">Electricity</MA_MAIN_ACTIVITIES>
+<HEADING>01F06</HEADING>
+<INITIATOR>01</INITIATOR>
+<DIRECTIVE VALUE="2014/25/EU"/>
+</CODIF_DATA>
+</CODED_DATA_SECTION>
+<TRANSLATION_SECTION>
+<ML_TITLES>
+<ML_TI_DOC LG="BG">
+<TI_CY>България</TI_CY>
+<TI_TOWN>Пловдив</TI_TOWN>
+<TI_TEXT>
+<P>Електрически материали</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="CS">
+<TI_CY>Bulharsko</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Elektrické materiály</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="DA">
+<TI_CY>Bulgarien</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Elektriske materialer</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="DE">
+<TI_CY>Bulgarien</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Elektroartikel</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="EL">
+<TI_CY>Βουλγαρία</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Ηλεκτρολογικό υλικό</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="EN">
+<TI_CY>Bulgaria</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Electrical materials</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="ES">
+<TI_CY>Bulgaria</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Materiales eléctricos</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="ET">
+<TI_CY>Bulgaaria</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Elektrimaterjalid</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="FI">
+<TI_CY>Bulgaria</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Sähkötarvikkeet</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="FR">
+<TI_CY>Bulgarie</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Matériels électriques</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="GA">
+<TI_CY>Bhulgáir, an</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Electrical materials</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="HR">
+<TI_CY>Bugarska</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Električni materijali</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="HU">
+<TI_CY>Bulgária</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Villamossági szerelési anyagok</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="IT">
+<TI_CY>Bulgaria</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Attrezzature elettriche</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="LT">
+<TI_CY>Bulgarija</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Elektros medžiagos</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="LV">
+<TI_CY>Bulgārija</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Elektromateriāli</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="MT">
+<TI_CY>il-Bulgarija</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Materjali elettriċi</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="NL">
+<TI_CY>Bulgarije</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Elektrische materialen</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="PL">
+<TI_CY>Bułgaria</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Tworzywa elektryczne</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="PT">
+<TI_CY>Bulgária</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Materiais eléctricos</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="RO">
+<TI_CY>Bulgaria</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Materiale electrice</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="SK">
+<TI_CY>Bulharsko</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Elektromateriály</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="SL">
+<TI_CY>Bolgarija</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Elektromaterial</P>
+</TI_TEXT>
+</ML_TI_DOC>
+<ML_TI_DOC LG="SV">
+<TI_CY>Bulgarien</TI_CY>
+<TI_TOWN>Plovdiv</TI_TOWN>
+<TI_TEXT>
+<P>Elmateriel</P>
+</TI_TEXT>
+</ML_TI_DOC>
+</ML_TITLES>
+<ML_AA_NAMES>
+<AA_NAME LG="BG">„Електроразпределение Юг“ ЕАД</AA_NAME>
+</ML_AA_NAMES>
+<TRANSLITERATIONS>
+<TRANSLITERATED_ADDR>
+<OFFICIALNAME>„Elektrorazpredelenie Yug“ EAD</OFFICIALNAME>
+<NATIONALID>115552190</NATIONALID>
+<ADDRESS>ul. „Hristo G. Danov“ No. 37</ADDRESS>
+<TOWN>Plovdiv</TOWN>
+<POSTAL_CODE>4000</POSTAL_CODE>
+<COUNTRY VALUE="BG"/>
+<CONTACT_POINT>Rumen Bogdanov-targovski vaprosi, Kostadin Tjokov-tehnicheski vaprosi</CONTACT_POINT>
+<PHONE>+359 882834015</PHONE>
+<E_MAIL>rumen.bogdanov@evn.bg</E_MAIL>
+<FAX>+359 32278500</FAX>
+<NUTS CODE="BG421"/>
+<URL_GENERAL>www.evn.bg</URL_GENERAL>
+<URL_BUYER>https://www.evn.bg/Za-nas/BuyersProfile/16_EP_474_Armatura_VL_20_kV.aspx?listnode=/Za-nas/BuyersProfile</URL_BUYER>
+</TRANSLITERATED_ADDR>
+</TRANSLITERATIONS>
+</TRANSLATION_SECTION>
+<FORM_SECTION>
+<F06_2014 CATEGORY="ORIGINAL" FORM="F06" LG="BG">
+<CONTRACTING_BODY>
+<ADDRESS_CONTRACTING_BODY>
+<OFFICIALNAME>„Електроразпределение Юг“ ЕАД</OFFICIALNAME>
+<NATIONALID>115552190</NATIONALID>
+<ADDRESS>ул. „Христо Г. Данов“ № 37</ADDRESS>
+<TOWN>Пловдив</TOWN>
+<POSTAL_CODE>4000</POSTAL_CODE>
+<COUNTRY VALUE="BG"/>
+<CONTACT_POINT>Румен Богданов-търговски въпроси, Костадин Тьоков-технически въпроси</CONTACT_POINT>
+<PHONE>+359 882834015</PHONE>
+<E_MAIL>rumen.bogdanov@evn.bg</E_MAIL>
+<FAX>+359 32278500</FAX>
+<NUTS CODE="BG421"/>
+<URL_GENERAL>www.evn.bg</URL_GENERAL>
+<URL_BUYER>https://www.evn.bg/Za-nas/BuyersProfile/16_EP_474_Armatura_VL_20_kV.aspx?listnode=/Za-nas/BuyersProfile</URL_BUYER>
+</ADDRESS_CONTRACTING_BODY>
+<CE_ACTIVITY VALUE="ELECTRICITY"/>
+</CONTRACTING_BODY>
+<OBJECT_CONTRACT>
+<TITLE>
+<P>Доставка на арматура за въздушни линии 20 kV.</P>
+</TITLE>
+<REFERENCE_NUMBER>С-16-ЕР-МР-Д-20</REFERENCE_NUMBER>
+<CPV_MAIN>
+<CPV_CODE CODE="31681410"/>
+</CPV_MAIN>
+<TYPE_CONTRACT CTYPE="SUPPLIES"/>
+<SHORT_DESCR>
+<P>Доставка на арматура за въздушни линии 20 kV, включваща:</P>
+<P>Клема опъвателна за ас 35-95 мм, комплект;</P>
+<P>Клема носеща за ас, комплект;</P>
+<P>Кратунка К2;</P>
+<P>Обеца К2;</P>
+<P>Стремена за клема опъвателна;</P>
+<P>Болт U 16/ 180;</P>
+<P>Пеперуда К2;</P>
+<P>Нит с шплент? 16/ 130 мм;</P>
+<P>Нит с шплент? 16/ 65 мм;</P>
+<P>Кратунка К1;</P>
+<P>Обеца К1.</P>
+</SHORT_DESCR>
+<VAL_TOTAL CURRENCY="BGN" PUBLICATION="YES">235349</VAL_TOTAL>
+<NO_LOT_DIVISION/>
+<OBJECT_DESCR ITEM="1">
+<CPV_ADDITIONAL>
+<CPV_CODE CODE="31681410"/>
+</CPV_ADDITIONAL>
+<NUTS CODE="BG421"/>
+<MAIN_SITE>
+<P>Централен склад на „Електроразпределение Юг“ ЕАД.</P>
+</MAIN_SITE>
+<SHORT_DESCR>
+<P>Доставка на арматура за въздушни линии 20 kV, включваща:</P>
+<P>Клема опъвателна за ас 35-95 мм, комплект;</P>
+<P>Клема носеща за ас, комплект;</P>
+<P>Кратунка К2;</P>
+<P>Обеца К2;</P>
+<P>Стремена за клема опъвателна;</P>
+<P>Болт U 16/ 180;</P>
+<P>Пеперуда К2;</P>
+<P>Нит с шплент? 16/ 130 мм;</P>
+<P>Нит с шплент? 16/ 65 мм;</P>
+<P>Кратунка К1;</P>
+<P>Обеца К1.</P>
+</SHORT_DESCR>
+<AC PUBLICATION="YES">
+<AC_PRICE/>
+</AC>
+<NO_OPTIONS/>
+<NO_EU_PROGR_RELATED/>
+</OBJECT_DESCR>
+</OBJECT_CONTRACT>
+<PROCEDURE>
+<PT_NEGOTIATED_WITH_PRIOR_CALL/>
+<NO_CONTRACT_COVERED_GPA/>
+<NOTICE_NUMBER_OJ>2016/S 144-260261</NOTICE_NUMBER_OJ>
+</PROCEDURE>
+<AWARD_CONTRACT ITEM="1">
+<CONTRACT_NO>4600004127</CONTRACT_NO>
+<TITLE>
+<P>Доставка на арматура за въздушни линии 20 kV</P>
+</TITLE>
+<AWARDED_CONTRACT>
+<DATE_CONCLUSION_CONTRACT>2017-05-26</DATE_CONCLUSION_CONTRACT>
+<TENDERS PUBLICATION="YES">
+<NB_TENDERS_RECEIVED>3</NB_TENDERS_RECEIVED>
+<NB_TENDERS_RECEIVED_SME>0</NB_TENDERS_RECEIVED_SME>
+<NB_TENDERS_RECEIVED_OTHER_EU>0</NB_TENDERS_RECEIVED_OTHER_EU>
+<NB_TENDERS_RECEIVED_NON_EU>0</NB_TENDERS_RECEIVED_NON_EU>
+<NB_TENDERS_RECEIVED_EMEANS>0</NB_TENDERS_RECEIVED_EMEANS>
+</TENDERS>
+<CONTRACTORS PUBLICATION="YES">
+<NO_AWARDED_TO_GROUP/>
+<CONTRACTOR>
+<ADDRESS_CONTRACTOR>
+<OFFICIALNAME>„Кобра 01“ ООД</OFFICIALNAME>
+<NATIONALID>130935057</NATIONALID>
+<ADDRESS>ул. „Професор Д-р Димитър Атанасов“ № 15, ет. 2, ап. 3</ADDRESS>
+<TOWN>София</TOWN>
+<POSTAL_CODE>1680</POSTAL_CODE>
+<COUNTRY VALUE="BG"/>
+<PHONE>+359 29585825</PHONE>
+<E_MAIL>info@cobra01.bg</E_MAIL>
+<FAX>+359 29585833</FAX>
+<NUTS CODE="BG411"/>
+</ADDRESS_CONTRACTOR>
+<NO_SME/>
+</CONTRACTOR>
+</CONTRACTORS>
+<VALUE PUBLICATION="YES">
+<VAL_TOTAL CURRENCY="BGN">235349</VAL_TOTAL>
+</VALUE>
+</AWARDED_CONTRACT>
+</AWARD_CONTRACT>
+<COMPLEMENTARY_INFO>
+<ADDRESS_REVIEW_BODY>
+<OFFICIALNAME>Комисия за защита на конкуренцията</OFFICIALNAME>
+<ADDRESS>бул. „Витоша“ № 18</ADDRESS>
+<TOWN>София</TOWN>
+<POSTAL_CODE>1000</POSTAL_CODE>
+<COUNTRY VALUE="BG"/>
+<PHONE>+359 29884070</PHONE>
+<E_MAIL>cpcadmin@cpc.bg</E_MAIL>
+<FAX>+359 29807315</FAX>
+<URL>http://www.cpc.bg</URL>
+</ADDRESS_REVIEW_BODY>
+<REVIEW_PROCEDURE>
+<P>В 10-дневен срок от предвидените в чл. 197 от ЗОП хипотези.</P>
+</REVIEW_PROCEDURE>
+<DATE_DISPATCH_NOTICE>2017-05-29</DATE_DISPATCH_NOTICE>
+</COMPLEMENTARY_INFO>
+</F06_2014>
+</FORM_SECTION>
+</TED_EXPORT>

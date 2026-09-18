@@ -70,7 +70,7 @@ fn every_r209_fixture_is_consumed_exhaustively() {
         })
         .collect();
     names.sort();
-    assert_eq!(names.len(), 11, "corpus changed; update the expectation");
+    assert_eq!(names.len(), 12, "corpus changed; update the expectation");
 
     for relative in names {
         let (profile, parse) = ingest_fixture(&relative);
@@ -758,4 +758,25 @@ fn a_block_that_names_its_own_kind_is_classified_by_position() {
     let odd = rules::citation_kind("PREVIOUS_PUBLICATION_NOTICE_F5", Some("SOMETHING_NEW"));
     assert_eq!(odd, "SOMETHING_NEW");
     assert!(!rules::kind_is_same_procedure(&odd));
+}
+
+/// Issue 393 unit 1, the R2.0.9 shape (208243-2017, a Bulgarian F06, whose
+/// transliteration block also restates the NATIONALID): claimed whole, no
+/// `TED-TRANSLITERATED_ADDR` reference, no Organization section under the Latin
+/// spelling, the Cyrillic contracting entity still present.
+#[test]
+fn a_transliterated_address_block_is_claimed_and_opens_no_party() {
+    let p = parse_fixture("r209/f06-208243-2017.xml");
+    assert!(p.values.iter().all(|v| v.field_id != "TED-TRANSLITERATED_ADDR"));
+    let names: Vec<&str> = p
+        .values
+        .iter()
+        .filter(|v| v.field_id == "TED-OFFICIALNAME")
+        .filter_map(|v| match &v.value {
+            NoticeValue::Text { value, .. } => Some(value.as_str()),
+            _ => None,
+        })
+        .collect();
+    assert!(!names.iter().any(|n| n.contains("Elektrorazpredelenie Yug")), "{names:?}");
+    assert!(names.iter().any(|n| n.contains("Електроразпределение Юг")), "{names:?}");
 }

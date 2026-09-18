@@ -2626,6 +2626,49 @@ async fn notices_and_their_versions_carry_the_same_instants() {
 }
 
 
+/// Issue 393 unit 1: the legacy `TRANSLITERATED_ADDR` block is TED's Latin
+/// rendering of the buyer's own name and address, not a party. It used to open a
+/// sibling Organization section and a `TRANSLITERATED_ADDR` role row, so every
+/// Greek or Bulgarian buyer was served twice — the native row as `buyer`, a Latin
+/// twin under the raw tag — and the name+country resolver minted a second
+/// provisional organization for the twin (35 mentions each on tender 8414191).
+/// Ignored at the parse layer now: one buyer, one organization, no raw role.
+#[tokio::test]
+async fn a_transliterated_address_block_opens_no_party_and_mints_no_twin() {
+    let (db, fetch_id, path) = scratch("transliterated-addr").await;
+    ingest_from(&db, fetch_id, "ted", "r208/f03-099900-2018.xml").await;
+    ingest_from(&db, fetch_id, "ted", "r209/f06-208243-2017.xml").await;
+    project::project(&db, false).await.expect("project");
+
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_parties WHERE role = 'TRANSLITERATED_ADDR'").await,
+        0,
+        "the raw tag is no role"
+    );
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM organizations
+              WHERE name LIKE 'Perifereia Attikis%' OR name LIKE '%Elektrorazpredelenie Yug%'"
+        )
+        .await,
+        0,
+        "no Latin twin is minted"
+    );
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM tender_version_parties p JOIN organizations o ON o.id = p.organization_id
+              WHERE p.role = 'buyer' AND o.name LIKE 'Περιφέρεια Αττικής%'"
+        )
+        .await,
+        1,
+        "the Greek authority is the one buyer"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
 // ----------------------------------------------- issue 12: cross-source merge
 
 /// One procedure published on both TED and DÖE (a shared BT-04 UUID) collapses

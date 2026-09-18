@@ -344,9 +344,23 @@ static GROUPED: &[(Rule, &[&str])] = &[
         "ADDRESS_REVIEW_BODY", "ADDRESS_REVIEW_INFO", "ADDRESS_WINNER",
         "CA_CE_CONCESSIONAIRE_PROFILE", "CONTACT_DATA",
         "CONTACT_DATA_OTHER_BEHALF_CONTRACTING_AUTORITHY", "CONTACT_DATA_WITHOUT_RESPONSIBLE_NAME",
-        "TRANSLITERATED_ADDR", "WINNER",
+        "WINNER",
     ]),
     // ------------------------------------------------------------- ignores
+    // Issue 393 unit 1. `TRANSLATION_SECTION > TRANSLITERATIONS > TRANSLITERATED_ADDR`
+    // is TED's own Latin rendering of the buyer's name and address for a
+    // non-Latin-script notice (GR, BG, CY) — the same party the contracting-body
+    // block already names, in a second alphabet. As a `Rule::Org` it opened a
+    // SIBLING Organization section under the procedure (so issue 259's nested-org
+    // alias could not fold it), a `TRANSLITERATED_ADDR` role row on every such
+    // tender, and — the name+country resolver never meeting the Greek and the Latin
+    // spelling — a second provisional organization per buyer: 8414191 served
+    // Περιφέρεια Αττικής twice, 35 mentions each. Claimed and dropped whole: the
+    // transliteration is derivable from the block it restates, and a Latin alias
+    // would be a resolver feature (issues 349/350's cross-script class), not a party.
+    (Rule::Ignore("TED-generated Latin transliteration of the buyer's own name and address, not a party (issue 393 unit 1)"), &[
+        "TRANSLITERATED_ADDR",
+    ]),
     (Rule::Ignore("boilerplate xlink links; every value points at ted.europa.eu"), &[
         "FORMS_LABELS_LINK", "LINKS_SECTION", "OFFICIAL_FORMS_LINK", "ORIGINAL_CPV_LINK",
         "ORIGINAL_NUTS_LINK", "XML_SCHEMA_DEFINITION_LINK",

@@ -5570,11 +5570,13 @@ fn legacy_role(element: &str) -> String {
         "EMPLOYMENT_PROTECTION_WORKING_CONDITIONS" => {
             "employment-legislation-information".to_owned()
         }
-        // Deliberately NOT folded: `TRANSLITERATED_ADDR` is issue 393 unit 1's
-        // subject (a TED-generated transliteration block that should not be a
-        // party at all), and `AWARD_AND_CONTRACT_VALUE` is a section wrapper whose
-        // party meaning nobody has established. An unfolded name still reaches
-        // issue 368's sieve, which is where a new one should show up.
+        // Deliberately NOT folded: `TRANSLITERATED_ADDR` no longer arrives here
+        // at all — issue 393 unit 1 claims and drops the block at the parse layer
+        // (`r209::rules`), a TED-generated transliteration that was never a party;
+        // standing rows still carry it until the legacy eras are re-projected.
+        // `AWARD_AND_CONTRACT_VALUE` is a section wrapper whose party meaning
+        // nobody has established. An unfolded name still reaches issue 368's
+        // sieve, which is where a new one should show up.
         other => other.to_owned(),
     }
 }
