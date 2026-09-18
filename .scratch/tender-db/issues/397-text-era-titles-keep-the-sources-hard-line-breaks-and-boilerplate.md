@@ -358,7 +358,7 @@ duplicate" vs "mint a new field") as an ordering:
 Step 1 is the next unit, filed as the continuation of this issue rather than a new one, because it
 is what makes the `## Done when`'s "kept as a flag rather than as title text" honest.
 
-## Step 1 BUILT 2026-09-18 — contract nature is a classification, in every era
+## Step 1 BUILT, gated (127/127) and DEPLOYED 2026-09-18 16:21 UTC (`89d0646`) — contract nature is a classification, in every era
 
 `project.rs`: a nature pre-arm in the fold loop turns a `Code` value under `BT-23-*`, `TED-NC_CONTRACT_NATURE`
 or `TXT-NC` into `Fact::Classification { field: "nature", scheme: "nature", code }` at the scope it
@@ -380,4 +380,9 @@ other fold units — and since every era publishes a nature, that refold IS corp
 for Lennart's word with the other production writes rather than being queued from here.
 
 Step 2 (drop the four nature atoms from text-era titles) is unblocked by this and is the next unit.
+
+**Live acceptance, owed after the 2026-09-19 daily tick:** a tender folded from a notice ingested
+after the deploy serves a `{"scheme": "nature", …}` row in `classifications` (the eForms `BT-23`
+path, the daily source); the gate's fold golden already pins the text-era and XML-era paths on the
+committed chain. The standing rows take the fact only through the gated corpus-wide refold.
 
