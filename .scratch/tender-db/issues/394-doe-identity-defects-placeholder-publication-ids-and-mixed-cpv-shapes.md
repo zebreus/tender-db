@@ -1,6 +1,6 @@
 # 394 — DÖE serves two publisher strings as its own keys: 7,158 notices keyed on TED's placeholder publication id `00000000-1900`, and sdk-0.1 CPV codes in four shapes under one `scheme`
 
-Status: ready-for-agent — unit 1's GUARD built and gated 2026-09-16 (the election refuses the all-zero placeholder; blast radius re-measured corpus-wide as exactly one value, 7,177 rows, all `doe`). The re-key RAN and reached **6,896 of 7,177**; the last 281 are blocked on **issue 404** (the ingest path minted twins for them mid-campaign) and will be resolved there as a duplicate cleanup, not by another re-parse — every DÖE package is walked and the count is stable across two consecutive runs. Unit 2 (sdk-0.1 CPV shapes) untouched. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — unit 1's GUARD built and gated 2026-09-16 (the election refuses the all-zero placeholder; blast radius re-measured corpus-wide as exactly one value, 7,177 rows, all `doe`). The re-key RAN and reached **6,896 of 7,177**; the last 281 are blocked on **issue 404** (the ingest path minted twins for them mid-campaign) and will be resolved there as a duplicate cleanup, not by another re-parse — every DÖE package is walked and the count is stable across two consecutive runs. **Unit 2's normaliser is BUILT and gated 2026-09-18** (see the foot): CPV folds to the bare 8-digit code, one per fact — check digit dropped, division padded, glued strings split — with the 2-digit decision recorded (pad); the island's refold and its sizing probe are production writes the operating session's classifier refuses, so they wait for Lennart's go-ahead with the exact commands at the foot. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (ingest → fold boundary, source `doe`) — unit 1 is the publication-id election in `crates/ingest/src/profile.rs`, unit 2 is the unnormalised classification code from `crates/ingest/src/eforms/value.rs` through `crates/ingest/src/project.rs`; both land on a served identity/vocabulary field and on the documented filter over it
 Relates to: 12 (RESOLVED — the DÖE source, eForms-DE + sdk-0.1 profiles, the parent of both units), 217 (RESOLVED & VERIFIED 2026-08-16/17 — it shipped `publication_id=` on `/v1/notices` and `/v1/tenders` as "the keys real consumers hold"; unit 1 is 7,158 rows where that key is a placeholder shared by the whole cohort), 290 (ANALYSIS, open — "a parser change that shifts `publication_id` derivation makes `reparse_notice` silently no-op (counted as benign `unmatched`)", filed at LOW confidence it ever bites: unit 1's re-key is exactly the case that makes it bite, and it must be checked before the re-key, not after), 369 (DONE — a published BT-04 taken verbatim as the Tender group key, gated by `is_placeholder_key`; unit 1 is the same placeholder-as-key shape one field over), 366 (DONE — its unit-6 sentinel discovery sweep is DQ report section 10, but it sweeps AMOUNTS, so an all-zero identity STRING is invisible to it; its unit 3 is also the precedent against a second, display-side implementation of a fold rule, which unit 2's "done when" keeps), 365 (DONE — "any ≥4-character alphanumeric string containing a digit becomes an Organization merge key": the same any-string-is-a-key class on the org layer), 364 (the legacy OJS closure weld and its weld gauge `c0c2581` — the only broad board hit near DÖE publication identity, and unrelated to this cohort), 29 (VERIFIED on prod 2026-08-18 — the sdk-0.1 projection gap; it split the residual value/CPV out to 231), 231 (CLOSED 2026-08-27 — closed the sdk-0.1 CPV half on PRESENCE only, 93.8 % from 0.0 %, and never looked at representation; unit 2 is precisely what a presence measure cannot see), 172 (CURRENCY half CLOSED as ADR-0014, CLASSIFICATION half OPEN — and that half is codelist VINTAGE drift, 2003-vs-2008 meanings, explicitly not string shape; its closed half's answer, an alias map at the fold, is the pattern unit 2 wants), 292 (FIX DEPLOYED 2026-08-26 — `normalize_lang` at the fold boundary, the precedent in terms: "each new source adds a dialect unless a normalization layer exists"), 319 (org layer DONE 2026-08-30 — the country column held alpha-3 codes and free text; same normalise-at-the-boundary shape), 171 (its `/docs` #caveats deliverable, shipped 2026-08-23, today naming only CPV-2003/2008 coexistence — where unit 2's division-level-code caveat belongs), 118 (RESOLVED — `ignored_filters`; note `cpv` DOES narrow tenders and lots, so unit 2's glued rows are not an ignored filter, they are a filter that runs and misses), ADR-0003, ADR-0004 (the per-profile mapped-or-ignored checklist), ADR-0014 (the alias-map precedent), CONTEXT.md (TED owns publication identity), `docs/research/eforms-de-profile.md` §2
 Blocked by: nothing
@@ -450,3 +450,61 @@ move — every package is walked and the count is stable at 281 across two conse
 The live reads this issue still owes (26447665 and 1499198 serving the stem, `?publication_id=00000000-1900`
 returning 0, tenders 316/391 no longer answering it, the newest-100k daily re-check at 0) are also
 downstream of 404 and should be run once, after it.
+
+## Unit 2 BUILT 2026-09-18 — CPV folds to one spelling; the refold waits for a go-ahead
+
+**What landed (`492aceb`).** `normalize_cpv` beside `normalize_lang` in `crates/ingest/src/project.rs` —
+the importer's boundary (CONTEXT.md), applied once where a parse-layer classification becomes a fact, so
+every source funnels through one rule:
+
+- a whitespace/comma-glued string is several codes, in published order, repeats collapsed (the
+  publisher glues the same code twice: `45421100-5  45421110-8 45421100-5`);
+- `NNNNNNNN-C` drops its check digit (derivable from the eight digits — nothing lost);
+- a 2–7 digit code is right-padded with zeros: `50` → `50000000`;
+- anything else passes through unchanged, so an unknown shape fails visible (as an unknown language
+  tag does) instead of being guessed at.
+
+The Classification value now folds BEFORE the one-fact match — one fact per code, routed to tender or
+lot scope exactly as before — because a glued string is several facts and the match yields one. NUTS is
+stored as published. `read.rs`'s `split_codes` is untouched, per the "not display-side" clause.
+
+**The 2-digit decision: PAD.** `50` and `50000000` denote the same CPV category — the vocabulary's own
+codes are hierarchical with trailing zeros, and `50000000` IS its spelling of division 50 — so padding
+invents no precision and collapses the shape, where a `/docs` caveat alone would have left 31 % of the
+island's rows as a second string for the same concept under `GROUP BY code`. The prefix filter matched
+both before and matches both after. The caveat is written anyway, as the contract's statement of the rule.
+
+**Tests.** `cpv_codes_normalise_to_one_bare_eight_digit_spelling` (the four shapes, a repeat, a leading
+zero, the pass-through, an empty string) and
+`the_sdk01_cpv_shapes_fold_to_one_spelling_and_a_glued_string_to_several_facts` (the shapes through
+`NoticeState::read` with the SDK01 field ids: tender-scope `main` = `45421146` from `45421146-9`;
+`additional` = `45421146`,`50000000`; the lot's glued main = three facts; NUTS `DE21` untouched).
+
+**Docs.** `/docs` #caveats "Codes and identities" gains the CPV bullet (bare 8-digit, one per row; what
+the island publishes and what the fold does with it); `docs/research/eforms-de-profile.md`'s sdk-0.1
+checklist item names CPV representation as normalised, not tolerated.
+
+**What did NOT happen, and why.**
+
+- The `tender_version_classifications` shape census: a `GROUP BY field_id` count over
+  `notice_classifications` for the four SDK01 ids hit the 10 s cap (408, not retried — the table has no
+  `field_id` index, so the read is a full walk). The count belongs to the sizing probe below.
+- The sizing probe (the refold with `expect: 1`, which walks read-only and aborts with the true count,
+  per `docs/operations.md`) was **refused by the operating session's classifier** as a shared-resource
+  write — the same class as 393's refold and 404's wet run. Not routed around.
+
+**To finish unit 2 — three steps, in order, each one admin call (via `/root/aj.sh` on the box):**
+
+1. **Size it** (read-only): `refold-fields` over the four `SDK01-…-ItemClassificationCode` field ids
+   (the two `MainCommodityClassification` and the two `AdditionalCommodityClassification` ids, procedure
+   and lot) with `tables: ["notice_classifications"]` and `expect: 1`. It aborts with
+   "N notices carry […], expected ~1 (nothing was written)" — N is the carrier count.
+2. **The wet run**: the same body with `expect: N`. It re-queues the carriers and stamps their tenders
+   epoch-stale; nothing is re-parsed (the stored parse already holds the published text — only the fold
+   changes).
+3. **The fold**: a `project` job, or the daily tick's.
+
+**Acceptance after step 3** (the `## Done when` lines, each a curl): `?cpv=45421146` in the 2025-01-06..09
+window returns 1542904; `/v1/tenders/1723219` serves `09000000`,`09123000` (bare, like 1173962); the
+shape count over the two measured windows reads `dashed 0 glued 0 only2 0`; 1431255's `main` is
+`50000000`. Record the before/after table here.
