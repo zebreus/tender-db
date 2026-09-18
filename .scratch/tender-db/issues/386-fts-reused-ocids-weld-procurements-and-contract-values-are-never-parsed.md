@@ -1,6 +1,6 @@
 # 386 — FTS: a publisher-reused ocid welds different buyers' procurements into one Tender, and no FTS contract value is ever parsed
 
-Status: ready-for-agent — **unit 1's key election is BUILT and gated 2026-09-18** (`2c2d0b0`, see the foot): an FTS ocid whose releases carry two or more distinct buyer sets splits per buyer at the plan's refused-key gate, pinned at the store and end to end; the standing FTS rows keep the welded shape until the fts profile is refolded — a production write the operating session's classifier refuses, so it waits for Lennart's go-ahead with the command at the foot. Unit 2a FIXED and gated 2026-09-16 (the contract's own published value, and the contract-less award's decision date). Unit 2b's ADR-0004 checklist is BUILT and gated 2026-09-18 (see the foot: `fts::checklist`, pinned by a census over every fixture release — 224 paths, all disposed, 35 owed); the rest of unit 2b (the periods' schema decision, `BT-3202`/`OPT-315`) stays open and is now NAMED as `owed:` entries in that checklist rather than remembered. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — **unit 1's key election is BUILT and gated 2026-09-18** (`2c2d0b0`, see the foot): an FTS ocid whose releases carry two or more distinct buyer sets splits per buyer at the plan's refused-key gate, pinned at the store and end to end; the standing FTS rows keep the welded shape until the fts profile is refolded — a production write the operating session's classifier refuses, so it waits for Lennart's go-ahead with the command at the foot. Unit 2a FIXED and gated 2026-09-16 (the contract's own published value, and the contract-less award's decision date). Unit 2b's ADR-0004 checklist is BUILT, gated (126/126) and DEPLOYED 2026-09-18 11:11 UTC at `8b895e1` (see the foot: `fts::checklist`, pinned by a census over every fixture release — 224 paths, all disposed, 35 owed); the rest of unit 2b (the periods' schema decision, `BT-3202`/`OPT-315`) stays open and is now NAMED as `owed:` entries in that checklist rather than remembered. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (sources / fts profile) — unit 1 welds records that were never one procurement, unit 2 serves money and dates the source publishes as `null`
 Relates to: 342 (the FTS source; unit 2 complete, OPEN on the 2021-01 backfill and the docs — the parent of both units), 369 (the placeholder procedure-key gate and its unit-5 buyer grouping, which unit 1 extends), 377 (the same constant-key-publisher shape, decided NO GATE on TED for a class of 4 — and it says a platform-level cause reverses that), 34 (the original "every notice sharing the key collapses into one Tender"), 364 (the weld gauge `c0c2581` the FTS arm should feed), 255 (the award decision date's canonical homes, which unit 2's award-only releases never reach), ADR-0003 (merge only on a strong explicit cross-reference), ADR-0004 (the per-profile mapped-or-ignored checklist the `fts` module does not declare), ADR-0014 (contracts as one of the four money loci), CONTEXT.md:113-114, `docs/research/uk-fts.md` §4, `.scratch/tender-db/342-fts-plan.md` §3
 Blocked by: nothing
@@ -466,7 +466,7 @@ Then: `GET /v1/tenders?source=fts&publication_id=033117-2025` and `…=031078-20
 tenders; `GET /v1/tenders/7954584` (or whichever id Anglian's part keeps) lists only Anglian's 11
 contracts; the next weekly report's `weld_fts` reads 0. Record the before/after here.
 
-## Unit 2b — the ADR-0004 checklist landed 2026-09-18; the periods and the linkage are now named debts
+## Unit 2b — the ADR-0004 checklist landed 2026-09-18 (`8b895e1`, gate 126/126, deployed 11:11 UTC on an idle queue); the periods and the linkage are now named debts
 
 **What exists.** `crates/ingest/src/fts/checklist.rs` is the profile's disposition record for
 `fts:ocds-1.1`: a `CHECKLIST` of every published OCDS path the parser has decided about, each
@@ -508,6 +508,7 @@ Reclassifying one of these to `Mapped` is how the next unit records itself. `BT-
 still owed, still this unit.
 
 **Not a served change.** Nothing in the parser or the fold moved; the profile's output is
-byte-identical. The deploy carries it only so the box's tree matches main. Doc pointer:
+byte-identical. The deploy (`/health` reads `8b895e1` at 11:11 UTC) carries it only so the box's tree
+matches main. Doc pointer:
 `docs/research/uk-fts.md` §4, last paragraph.
 
