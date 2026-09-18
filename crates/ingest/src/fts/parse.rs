@@ -249,6 +249,21 @@ pub fn parse(bytes: &[u8]) -> Result<Parsed, Rejected> {
                 None => format!("RES-{aid}"),
             };
             w.section(&rid, "LotResult", ROOT);
+            // The contracts this award settled (issue 386 unit 2b): OPT-315 on
+            // the result names each `CON-<id>` whose `awardID` is this award, so
+            // the fold reaches a contract from its result — and, through the
+            // contract's BT-3202 below, the result's bids from the contract. The
+            // same refs sit on every lot-result of a multi-lot award: OCDS links
+            // contracts to awards, never to lots.
+            for contract in release.contracts.iter().filter(|c| c.award_id.as_deref() == Some(aid)) {
+                if let Some(cid) = contract.id.as_deref().filter(|s| !s.is_empty()) {
+                    w.push(
+                        &rid,
+                        "OPT-315-LotResult",
+                        NoticeValue::Id { scheme: None, value: format!("CON-{cid}"), is_ref: true },
+                    );
+                }
+            }
             if let Some(status) = award.status.as_deref() {
                 // `selec-w` is "a winner was chosen"; `clos-nw` is "closed with
                 // none". Anything else the publisher invents is left unmapped
@@ -318,10 +333,32 @@ pub fn parse(bytes: &[u8]) -> Result<Parsed, Rejected> {
         // learns this one id and prefers a bid-derived total wherever one exists,
         // so no eForms notice changes shape (issue 386 unit 2).
         w.money(&sid, CONTRACT_VALUE, contract.value.as_ref())?;
-        if let Some(award) = release.awards.iter().find(|a| a.id.as_deref() == contract.award_id.as_deref())
-            && let Some(date) = award.date.as_deref()
-        {
-            w.push(&sid, "BT-1451-Contract", instant(date, "award date")?);
+        let award = release
+            .awards
+            .iter()
+            .find(|a| a.id.as_deref().is_some_and(|id| !id.is_empty()) && a.id.as_deref() == contract.award_id.as_deref());
+        if let Some(award) = award {
+            if let Some(date) = award.date.as_deref() {
+                w.push(&sid, "BT-1451-Contract", instant(date, "award date")?);
+            }
+            // The winning tenders this contract settled (issue 386 unit 2b):
+            // BT-3202 names the award's `TEN-<award>-<n>` sections — the same
+            // ids the awards loop minted, one per supplier WITH an id, so the
+            // index `n` must be the enumerate index there, gaps included. A
+            // delta award (`{id, amendments}`) minted nothing, so it gets no
+            // reference either: a dangling ref is worse than an absent one.
+            if !award.is_delta() {
+                let aid = award.id.as_deref().unwrap_or_default();
+                for (n, supplier) in award.suppliers.iter().enumerate() {
+                    if supplier.id.as_deref().is_some_and(|s| !s.is_empty()) {
+                        w.push(
+                            &sid,
+                            "BT-3202-Contract",
+                            NoticeValue::Id { scheme: None, value: format!("TEN-{aid}-{n}"), is_ref: true },
+                        );
+                    }
+                }
+            }
         }
     }
 
@@ -986,6 +1023,38 @@ mod tests {
             Some(NoticeValue::Code { list: None, code: "UK10".into() })
         );
         assert!(p.sections.iter().any(|s| s.id == "CON-1" && s.kind == "SettledContract"));
+    }
+
+    /// Issue 386 unit 2b: the results graph is linked both ways. The result
+    /// names the contracts its award settled (OPT-315 → `CON-<id>`), and the
+    /// contract names the winning tenders it settled (BT-3202 → `TEN-<award>-<n>`),
+    /// which is how the fold reaches a contract's bids — and its lot — from
+    /// either end. An award with no contracts carries no OPT-315; a contract
+    /// whose award is not in the release (an amendment skeleton) carries no
+    /// BT-3202, rather than a reference to a section nobody minted.
+    #[test]
+    fn a_contract_and_its_award_reference_each_other_and_only_each_other() {
+        let p = parsed("028961-2025");
+        assert_eq!(
+            one(&p, "RES-1-1", "OPT-315-LotResult"),
+            Some(NoticeValue::Id { scheme: None, value: "CON-1".into(), is_ref: true }),
+            "the award's result names the contract that settled it"
+        );
+        assert_eq!(
+            one(&p, "CON-1", "BT-3202-Contract"),
+            Some(NoticeValue::Id { scheme: None, value: "TEN-1-0".into(), is_ref: true }),
+            "the contract names the winning tender it settled"
+        );
+        assert!(p.sections.iter().any(|s| s.id == "TEN-1-0"), "the referenced tender exists");
+
+        // UK6 award, no contracts[] at all: the result stands alone.
+        let q = parsed("083650-2026");
+        assert_eq!(one(&q, "RES-1-1", "OPT-315-LotResult"), None);
+
+        // A contract amendment with no awards[]: the contract has no bid to name.
+        let r = parsed("_noid-2026-09-03-p001-000");
+        assert!(r.sections.iter().any(|s| s.id == "CON-1"));
+        assert_eq!(one(&r, "CON-1", "BT-3202-Contract"), None);
     }
 
     #[test]

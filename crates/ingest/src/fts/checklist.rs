@@ -146,7 +146,7 @@ pub const CHECKLIST: &[(&str, Disposition)] = &[
     // -------------------------------------------------------------- contracts
     ("contracts", Mapped("one SettledContract per contract — see the leaves")),
     ("contracts[].id", Mapped("BT-150-Contract and the SettledContract section id (`CON-<id>`)")),
-    ("contracts[].awardID", Mapped("the award whose date the contract carries as BT-1451-Contract")),
+    ("contracts[].awardID", Mapped("BT-3202-Contract (the award's winning tenders, `TEN-<award>-<n>`) and OPT-315-LotResult on the award's results (`CON-<id>`) — the results graph linked both ways (issue 386 unit 2b) — and the award's date as BT-1451-Contract")),
     ("contracts[].dateSigned", Mapped("BT-145-Contract")),
     ("contracts[].value", Mapped("the contract's own value (`fts::parse::CONTRACT_VALUE`), preferred over a bid-derived total only when no bid carries one (issue 386 unit 2a)")),
     ("contracts[].documents", Mapped("OPP-070-notice from the one document carrying `noticeType`")),

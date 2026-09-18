@@ -1,6 +1,6 @@
 # 386 — FTS: a publisher-reused ocid welds different buyers' procurements into one Tender, and no FTS contract value is ever parsed
 
-Status: ready-for-agent — **unit 1's key election is BUILT and gated 2026-09-18** (`2c2d0b0`, see the foot): an FTS ocid whose releases carry two or more distinct buyer sets splits per buyer at the plan's refused-key gate, pinned at the store and end to end; the standing FTS rows keep the welded shape until the fts profile is refolded — a production write the operating session's classifier refuses, so it waits for Lennart's go-ahead with the command at the foot. Unit 2a FIXED and gated 2026-09-16 (the contract's own published value, and the contract-less award's decision date). Unit 2b's ADR-0004 checklist is BUILT, gated (126/126) and DEPLOYED 2026-09-18 11:11 UTC at `8b895e1` (see the foot: `fts::checklist`, pinned by a census over every fixture release — 224 paths, all disposed, 35 owed); the rest of unit 2b (the periods' schema decision, `BT-3202`/`OPT-315`) stays open and is now NAMED as `owed:` entries in that checklist rather than remembered. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — **unit 1's key election is BUILT and gated 2026-09-18** (`2c2d0b0`, see the foot): an FTS ocid whose releases carry two or more distinct buyer sets splits per buyer at the plan's refused-key gate, pinned at the store and end to end; the standing FTS rows keep the welded shape until the fts profile is refolded — a production write the operating session's classifier refuses, so it waits for Lennart's go-ahead with the command at the foot. Unit 2a FIXED and gated 2026-09-16 (the contract's own published value, and the contract-less award's decision date). Unit 2b's ADR-0004 checklist is BUILT, gated (126/126) and DEPLOYED 2026-09-18 11:11 UTC at `8b895e1` (see the foot: `fts::checklist`, pinned by a census over every fixture release — 224 paths, all disposed, 35 owed); **the `BT-3202`/`OPT-315` linkage is BUILT and gated 2026-09-18 (see the foot)**; the periods' schema decision is the last open piece of unit 2b, named as `owed:` entries in that checklist rather than remembered. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (sources / fts profile) — unit 1 welds records that were never one procurement, unit 2 serves money and dates the source publishes as `null`
 Relates to: 342 (the FTS source; unit 2 complete, OPEN on the 2021-01 backfill and the docs — the parent of both units), 369 (the placeholder procedure-key gate and its unit-5 buyer grouping, which unit 1 extends), 377 (the same constant-key-publisher shape, decided NO GATE on TED for a class of 4 — and it says a platform-level cause reverses that), 34 (the original "every notice sharing the key collapses into one Tender"), 364 (the weld gauge `c0c2581` the FTS arm should feed), 255 (the award decision date's canonical homes, which unit 2's award-only releases never reach), ADR-0003 (merge only on a strong explicit cross-reference), ADR-0004 (the per-profile mapped-or-ignored checklist the `fts` module does not declare), ADR-0014 (contracts as one of the four money loci), CONTEXT.md:113-114, `docs/research/uk-fts.md` §4, `.scratch/tender-db/342-fts-plan.md` §3
 Blocked by: nothing
@@ -351,7 +351,7 @@ finding's central claim (`awards[0].value` null, `contracts[0].value` 54,393.60 
   an omission.
 - **`BT-3202-Contract` / `OPT-315-LotResult`**, which 342-fts-plan.md:154 promises: they link the
   results graph rather than carry money, and with the value question settled independently they are
-  now a linkage unit, not a blocker. Still owed, still unit 2b.
+  now a linkage unit, not a blocker. **Landed 2026-09-18, see the foot.**
 - **The ADR-0004 per-profile mapped-or-ignored checklist** for the `fts` module — the thing that
   would have caught this class before a consumer did. **Landed 2026-09-18, see the foot.**
 
@@ -511,4 +511,31 @@ still owed, still this unit.
 byte-identical. The deploy (`/health` reads `8b895e1` at 11:11 UTC) carries it only so the box's tree
 matches main. Doc pointer:
 `docs/research/uk-fts.md` §4, last paragraph.
+
+## Unit 2b — the results graph is linked both ways (2026-09-18)
+
+`crates/ingest/src/fts/parse.rs` now emits the two references the plan's §3b table promised and
+the checklist carried as debt:
+
+- **`OPT-315-LotResult`** on every lot-result of an award: one `CON-<id>` ref per contract whose
+  `awardID` is that award. The same refs on every lot-result of a multi-lot award, because OCDS links
+  contracts to awards and never to lots.
+- **`BT-3202-Contract`** on the contract: one `TEN-<award>-<n>` ref per supplier WITH an id, `n`
+  being the awards loop's own enumerate index (gaps included) so the ids agree with the sections it
+  minted. A delta award (`{id, amendments}`) minted nothing, so a contract pointing at it gets no
+  reference — a dangling ref is worse than an absent one.
+
+What the fold gains: `RawLotResult.contract_refs` and `RawContract.bid_refs` are the eForms paths it
+already walks, so an FTS contract now reaches its bids (and its lot) from either end, and its value
+is the bid-derived total wherever the award carries one — the contract's own published amount
+(unit 2a's `CONTRACT_VALUE`) stays the fallback exactly as unit 2a designed it. Pinned by
+`a_contract_and_its_award_reference_each_other_and_only_each_other`: 028961-2025 (award 1 ↔ contract
+1, `RES-1-1` → `CON-1`, `CON-1` → `TEN-1-0`, and the tender exists), 083650-2026 (a UK6 award with no
+contracts carries no OPT-315), the contract-amendment member (a contract whose award is not in the
+release carries no BT-3202). The checklist's `contracts[].awardID` entry reads the linkage now.
+
+**Standing rows.** A parse-layer change: the FTS notices on prod carry it only after the same
+re-parse unit 2a already owes (the gated FTS reprocess at the foot of unit 2a's section, then a
+refold); nothing on prod changes at the deploy. The periods' schema decision is the last open piece
+of unit 2b.
 
