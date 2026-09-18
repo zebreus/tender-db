@@ -62,3 +62,35 @@ rest run. It is the 254/260 class: a green that is not measuring what it says.
 - `ops/check.sh` runs the app crate's integration tests. Disk is the cost (issue 260): five more
   test binaries per gate, which the prune step already handles by name.
 - `.cargo/config.toml`'s comment stops calling `test-app` "all server-side tests".
+
+## Comment — 2026-09-18: the red outside the gate, sized — two tests, one cause; the gate and both tests fixed
+
+All five suites run by hand on the committed tree (`2df1a49` + issue 50's schema change, which
+touches none of them):
+
+| suite | result |
+| --- | --- |
+| `api` | 59 passed, 0 failed (119 s) |
+| `accounts` | 4 / 0 |
+| `admin` | 1 / 0 |
+| `webhooks` | 5 / 0 |
+| `sql` | 12 passed, **2 failed** |
+
+So the exposure is real but narrow: the two `sql` tests, and both for the same reason — queries
+written before issue 239 that the 239 refusal now rejects, verbatim in their bodies:
+
+- `a_real_analytical_query_answers`: `v_tender_current is NOT FILTERABLE and this query filters
+  it` — its acceptance query drove from the pointer view.
+- `the_analyst_views_answer`: `v_tender_classifications is NOT FILTERABLE and this query filters
+  it` — `SELECT count(*) FROM v_tender_classifications WHERE scheme = 'cpv'`.
+
+**Fixed on their merits**, in the form the refusal itself prescribes (and the surface documents):
+the acceptance query reads the head version off `tenders.current_seq` and joins each satellite on
+`(tender_id, seq = current_seq)`; the CPV count joins `tender_version_classifications` the same
+way. Nothing about the assertions changed — the queries were the defect.
+
+**The gate**: `ops/check.sh` now runs `cargo test-app-all` = `test -p tender-db --features
+server --tests` (unit tests AND every file under `crates/app/tests`), a new alias beside
+`test-app`, whose comment no longer calls the `--lib` run "all server-side tests". Cost: five
+more test binaries per gate, which the prune step handles by name, and ~2½ minutes of wall clock
+(the `api` suite is 119 s of it).
