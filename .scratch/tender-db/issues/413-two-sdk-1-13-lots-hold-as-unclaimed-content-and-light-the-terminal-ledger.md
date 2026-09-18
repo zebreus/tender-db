@@ -1,6 +1,6 @@
 # 413 — two sdk-1.13 notices hold as `unclaimed-content` on a `StrategicProcurement` block the parser already knows, and the quarantine terminal ledger has been lit by them since the June-2025 backfill
 
-Status: ready-for-agent — found 2026-09-18 02:5xZ by the hourly audit (step 3): `/metrics` reads `tender_db_quarantine_terminal_exceeded 1`, and the one reason over its policy is `unclaimed-content` at 2 rows against `Fixed(0)`.
+Status: ready-for-agent — **the ignore rule is DEPLOYED 2026-09-18 07:41 UTC (`d813915`)**; the shape is read and recorded below (NOT a Part-scheme lot — a legacy `listName="indicator"`/false CVD block), the fixtures and test are in, the ledger entry is in with `resolved: null`. What remains is the two rows' reprocess — a production write the operating session's classifier refuses, so it waits for Lennart's go-ahead like the other gated jobs (the exact command is in the 2026-09-18 comment); until it runs, `/metrics` still reads `tender_db_quarantine_reason_members{reason="unclaimed-content"} 2 tender_db_quarantine_terminal_exceeded 1`. Was: ready-for-agent — found 2026-09-18 02:5xZ by the hourly audit (step 3): `/metrics` reads `tender_db_quarantine_terminal_exceeded 1`, and the one reason over its policy is `unclaimed-content` at 2 rows against `Fixed(0)`.
 Kind: defect (ingest — the eForms element mounts in `crates/ingest/src/eforms/index.rs`; plus two held rows to reprocess) — and an operational one: the terminal ledger's alarm is now permanently on for two rows, which is how an alarm stops meaning anything.
 Relates to: 195 (RESOLVED 2026-08-14 — drained `unclaimed-content` to ZERO and installed the mount for exactly this block under a `Lot`-scheme lot; these two are the first rows of the reason since), 303 (the terminal ledger: `quarantine_terminal_policy` defaults an unnamed reason to `Fixed(0)` DELIBERATELY, so a new hold of a drained class is an alarm, not noise), 402 (the OJ S daily backfill of 2025-06 that brought both members in on 2026-09-15 16:54Z), 268 (`unrepresentable-value` is `AcceptedInflow` — the 326 held under it today are the accepted class and are NOT this issue)
 Blocked by: nothing
@@ -103,6 +103,20 @@ Fixtures (byte-identical): `eforms/can-cvd-legacy-00412845-2025.xml` (both shape
 one BT-717-Lot (`true`, list `cvd-scope`) and nothing under list `indicator`; the second parses with no
 BT-717/BT-735 value at all. Ledger: a new `unclaimed-content` entry for profile `eforms:eforms-sdk-1.13`,
 `detail_like %StrategicProcurement/%ApplicableLegalBasis`, `resolved: null` until the two rows are reprocessed.
+
+### 2026-09-18 07:41 UTC — ignore rule deployed at `d813915`; the reprocess is the gated remainder
+
+Gate 124/124 green, deployed on an idle queue. The rule is in the running build; nothing changes on prod
+until the two held rows are re-parsed, which is a production write:
+
+```
+# via /root/aj.sh on the box (operator secret stays there):
+aj.sh /admin/jobs '{"kind":"reprocess","reason":"unclaimed-content","profile":"eforms:eforms-sdk-1.13"}'
+```
+
+Expected after it runs and the daily `project` folds the two notices: `tender_db_quarantine_reason_members{reason="unclaimed-content"}`
+line gone, `tender_db_quarantine_terminal_exceeded 0`, and 00381774-2025 / 00412845-2025 served under their Norwegian buyers.
+Then the ledger entry's `resolved` flips from `null` to the date (a one-line commit that rides the next deploy).
 
 ## Verify
 
