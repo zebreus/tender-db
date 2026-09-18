@@ -186,13 +186,6 @@ the field for views) — and extend `the_schema_documents_time_format_and_enums`
 (`crates/app/tests/sql.rs:499`) to assert a view column's type, since today no test touches the
 field; the cheap interim is a schema note saying view `type` is unreliable, consult the base table.
 
-## Verify
-
-    curl -s https://tenders.zebreus.click/v1/sql/schema | python3 -c "import sys,json; ts=json.load(sys.stdin)['tables']; v=[t for t in ts if t['name']=='v_tenders'][0]; print([(c['name'],c['type']) for c in v['columns'][:3]])"
-
-- **done**: `[('id', 'INTEGER'), ('source', 'TEXT'), ('procedure_key', 'TEXT')]` — a view column carries its base column's declared type, or `null`, or a note says view types are unreliable
-- **open**: `[('id', 'TEXT'), ('source', 'TEXT'), ('procedure_key', 'TEXT')]` — every view column is `TEXT` (read 2026-09-18; the base table reads `INTEGER` for `id`)
-
 ## Comment — 2026-09-18: point 2's column-type clause, built
 
 **What changed.** `schema()` (`v1/sql.rs`) used to copy `PRAGMA table_info`'s type column for
