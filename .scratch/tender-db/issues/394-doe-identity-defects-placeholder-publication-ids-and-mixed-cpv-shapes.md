@@ -453,7 +453,8 @@ downstream of 404 and should be run once, after it.
 
 ## Unit 2 BUILT 2026-09-18 — CPV folds to one spelling; the refold waits for a go-ahead
 
-**What landed (`492aceb`).** `normalize_cpv` beside `normalize_lang` in `crates/ingest/src/project.rs` —
+**What landed (`492aceb`; gate 124/124 green; DEPLOYED 2026-09-18 07:53 UTC at `71a15b1`, the `/docs` caveat
+reads live).** `normalize_cpv` beside `normalize_lang` in `crates/ingest/src/project.rs` —
 the importer's boundary (CONTEXT.md), applied once where a parse-layer classification becomes a fact, so
 every source funnels through one rule:
 
