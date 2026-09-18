@@ -1,6 +1,6 @@
 # 397 — text-era titles are served with the source's hard line break inside them, and in 1993–1994 with the OJ boilerplate footnote `(Only the original text is authentic)`
 
-Status: ready-for-agent — unit 1 RESOLVED-VERIFIED 2026-09-16 (rev `170c726`, era re-parsed by job 1386 and re-folded by job 1387; every `## Done when` count met, see the acceptance section at the foot). Unit 2 — settle `TXT-NC`'s codelist, then decide where the substantive annotation atoms go — is the only thing still open. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — unit 1 RESOLVED-VERIFIED 2026-09-16 (rev `170c726`, era re-parsed by job 1386 and re-folded by job 1387; every `## Done when` count met, see the acceptance section at the foot). Unit 2's codelist is SETTLED 2026-09-18 from the era's own header (see the foot: `NC: 1 - Public works contract`, `2 - Supply contract`, `3 - Combined contract`, `4 - Service contract` — the title atoms are that label re-published by the wrapper, and the parser already stores the code as `TXT-NC`); the decision is recorded there too: nature becomes a cross-era classification first, and the atoms leave the title only once it exists. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (ingest — the text-era `TI` rule in `crates/ingest/src/text/rules.rs:104` and the newline join in `crates/ingest/src/text/parse.rs:1344`, served verbatim through `crates/ingest/src/project.rs:144`; the current value is pinned by `crates/ingest/tests/text.rs:209`)
 Relates to: 199 (RESOLVED 2026-08-15 — the SAME TED ~72-column wrapper, and it already classifies the wrapper's output as layout: "all but 4 are TED's own line-wrapper emitting a wrapped tail flush-left". It fixed only column-0 orphan lines in `unclaimed-content`; it never touches the newline that sits INSIDE `TI`'s own value, which is where this one lives), 368 (ready-for-agent — unmapped source vocabulary; it names `TXT-TI` twice, at lines 294 and 612, but only as a mapping question — "which element becomes the title", never what the title string contains), 343 (FIXED 2026-09-02, DEPLOYED 2026-09-03 — the fold-vs-read tie-break) and 292 (FIX DEPLOYED 2026-08-26 — the inert English pick) and 340 (CLOSED — the original-language leg): all three decide WHICH title is picked; this is the content of the one that wins, so none of them can catch it, 364 (unit 6 done 2026-09-13 — its units 5–6 re-parsed r208 and re-folded the text era, which is exactly the follow-on this fix needs and shows it is a routine operation), 11 (resolved — the text-era profile), 232 (the text-era buyer/value/winner campaign whose sweeps a text-era re-parse would ride), `docs/research/ted-legacy-mapping.md` §7, which is headed "Text era (1993–2010) — quick assessment only" and records no decision to preserve wraps in a title
 
@@ -319,3 +319,42 @@ wrapper's ~72-column fold is gone from the text era, and the authenticity footno
 newline a consumer still sees came from the notice. That is a claim about provenance, not about
 shape, and it is the honest form of what the bullet was reaching for. If a consumer needs
 single-line titles, that is a presentation choice for them, not a guarantee this corpus can make.
+
+## Unit 2 — the codelist, settled 2026-09-18 from the era's own header
+
+The question unit 1 left open was whether `(Supply contract)` and friends duplicate `TXT-NC` or
+carry a fact of their own. They duplicate it, and the evidence is in the repository, not in a guess:
+
+- The text era publishes the code WITH its label on the header line. Over the eight committed
+  text-era fixtures (`crates/ingest/tests/fixtures/text/`, 1993–2008): `NC: 2 - Supply contract`
+  ×122, `NC: 1 - Public works contract` ×81, `NC: 3 - Combined contract` ×1, `NC: 4 - Service
+  contract` ×1. That is the codelist: **1 works, 2 supplies, 3 combined, 4 services.**
+- The parser's `code()` (`text/parse.rs`: "`3 - Invitation to tender` → `3`; the label is the
+  redundant display text") stores the number and drops the label — so `TXT-NC` on notice 18031 is
+  `2`, exactly as unit 1's sample table read, and the `(supply contract)` on its title line is the
+  same label the ~72-column wrapper carried into the title block.
+
+So the "supply/works/service/combined contract" atoms are a duplicate of a code the notice already
+carries, and dropping them from the title loses no fact **provided the code is served somewhere**.
+Today it is not: `grep` finds no fold of `TXT-NC`, of the XML era's `TED-NC_CONTRACT_NATURE`, or of
+eForms' `BT-23` — contract nature is not a canonical field in any era, and the text-era title atoms
+are the corpus's only accidental exposure of it. That reframes the choice the issue posed ("drop as
+duplicate" vs "mint a new field") as an ordering:
+
+1. **Mint the field, cross-era.** Contract nature as a classification — `scheme = 'nature'` in
+   `tender_version_classifications`, the satellite that already carries `cpv` and `nuts` with a
+   `(scheme, code)` index and an API filter shape — fed by all three sources: `TXT-NC` 1/2/3/4,
+   `TED-NC_CONTRACT_NATURE` (its codes to be read off a SMALL corpus slice: the first census
+   attempt over 100k tenders ran past the `/v1/sql` cap and pinned the runtime, recorded in
+   `docs/agents/prod-box-reads.md`), and `BT-23` (`works`/`supplies`/`services`). One vocabulary,
+   the eForms one, with `combined` for the text era's 3. A fold change, an epoch, a refold — the
+   refold is a production write and waits with the other gated jobs.
+2. **Then drop the four nature atoms** from text-era titles as the duplicates they are — a parser
+   rule beside unit 1's vocabulary, and the era re-parse that unit 1 already needed.
+3. `Open to US bidders` / `With participation by GATT countries` are not natures and not duplicates
+   of any stored code: they stay in the title until a regime/participation flag exists to carry them,
+   which this issue does not build.
+
+Step 1 is the next unit, filed as the continuation of this issue rather than a new one, because it
+is what makes the `## Done when`'s "kept as a flag rather than as title text" honest.
+
