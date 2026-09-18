@@ -3197,6 +3197,30 @@ impl NoticeState {
         for value in &parsed.values {
             let scope = scope_of(&sections, &value.section_id);
             let field_id = value.field_id.as_str();
+            // Issue 397 (unit 2): the contract nature, one vocabulary across eras.
+            // Every era publishes it as a Code under its own id and none folded it,
+            // so the text era's title atoms ("(Supply contract)") were the corpus's
+            // only — accidental — exposure. It lands beside cpv/nuts as a
+            // classification of scheme `nature`, at the scope it was published.
+            if let NoticeValue::Code { code, .. } = &value.value
+                && let Some(nature) = contract_nature(field_id, code)
+            {
+                let fact = Fact::Classification {
+                    field: "nature".to_owned(),
+                    scheme: "nature".to_owned(),
+                    code: nature.to_owned(),
+                };
+                match &scope {
+                    Scope::Tender => {
+                        facts.insert(fact);
+                    }
+                    Scope::Lot(key) => {
+                        if let Some(lot) = lots.get_mut(key) {
+                            lot.facts.insert(fact);
+                        }
+                    }
+                }
+            }
             // Issue 394 (unit 2): a classification value may be SEVERAL codes — the
             // DÖE sdk-0.1 island glues them into one string — so it folds here, one
             // fact per code, rather than through the one-fact match below. CPV goes
@@ -5142,6 +5166,34 @@ fn canonical_name(table: &[(&str, &str)], field_id: &str) -> Option<String> {
         .map(|(_, name)| (*name).to_owned())
 }
 
+/// The contract nature — works, supplies, services — in one vocabulary across eras
+/// (issue 397, unit 2). eForms' BT-23 codelist is the canonical spelling; the XML
+/// era's `NC_CONTRACT_NATURE` and the text era's `NC` header carry the same
+/// numbering, read off the committed fixtures where each prints code and label
+/// together (`NC: 2 - Supply contract`, `<NC_CONTRACT_NATURE CODE="4">Services`):
+/// 1 works, 2 supplies, 3 combined, 4 services. `combined` has no eForms
+/// counterpart and is kept as its own code rather than guessed into one of the
+/// three. Anything outside the lists is left unfolded, not invented.
+pub fn contract_nature(field_id: &str, code: &str) -> Option<&'static str> {
+    let code = code.trim();
+    match stem(field_id) {
+        "BT-23" => match code.to_ascii_lowercase().as_str() {
+            "works" => Some("works"),
+            "supplies" => Some("supplies"),
+            "services" => Some("services"),
+            _ => None,
+        },
+        "TXT-NC" | "TED-NC_CONTRACT_NATURE" => match code {
+            "1" => Some("works"),
+            "2" => Some("supplies"),
+            "3" => Some("combined"),
+            "4" => Some("services"),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
 /// The canonical CPV spelling for `Fact::Classification.code` (issue 394, unit 2):
 /// the bare 8-digit code, one code per fact. Every era but DÖE's sdk-0.1 island
 /// publishes exactly that; the island publishes the publisher's own text — the
@@ -7083,6 +7135,65 @@ mod tests {
         assert_eq!(normalize_cpv(" 09123000-7 "), vec!["09123000"], "a leading zero survives");
         assert_eq!(normalize_cpv("45.42"), vec!["45.42"], "an unknown shape passes through, visibly");
         assert!(normalize_cpv("   ").is_empty());
+    }
+
+    /// Issue 397 (unit 2): the contract nature folds from every era's own code
+    /// into one `nature` classification at the scope it was published — the text
+    /// era's `TXT-NC`, the XML era's `TED-NC_CONTRACT_NATURE`, eForms' BT-23 at
+    /// procedure and lot scope — and a code outside the lists folds to nothing.
+    #[test]
+    fn the_contract_nature_folds_from_every_era_into_one_classification() {
+        assert_eq!(contract_nature("TXT-NC", "2"), Some("supplies"));
+        assert_eq!(contract_nature("TXT-NC", "3"), Some("combined"));
+        assert_eq!(contract_nature("TED-NC_CONTRACT_NATURE", "1"), Some("works"));
+        assert_eq!(contract_nature("TED-NC_CONTRACT_NATURE", "4"), Some("services"));
+        assert_eq!(contract_nature("BT-23-Procedure", "works"), Some("works"));
+        assert_eq!(contract_nature("BT-23-Lot", "Services"), Some("services"));
+        assert_eq!(contract_nature("TXT-NC", "9"), None, "a code outside the list is not invented");
+        assert_eq!(contract_nature("BT-142-LotResult", "1"), None, "only the nature ids");
+
+        fn code_value(section: &str, field: &str, ordinal: i64, code: &str) -> store::ValueRow {
+            store::ValueRow {
+                section_id: section.into(),
+                field_id: field.into(),
+                ordinal,
+                value: store::NoticeValue::Code { list: None, code: code.into() },
+            }
+        }
+        let parsed = Parsed {
+            sections: vec![
+                store::Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None },
+                store::Section { id: "LOT-1".into(), kind: "Lot".into(), parent: Some("PROCEDURE".into()) },
+            ],
+            values: vec![
+                code_value("PROCEDURE", "BT-23-Procedure", 0, "supplies"),
+                code_value("LOT-1", "BT-23-Lot", 1, "services"),
+                code_value("PROCEDURE", "BT-142-LotResult", 2, "selec-w"), // not a nature
+            ],
+        };
+        let notice = store::NoticeRef {
+            id: 26544170,
+            source: "ted".into(),
+            publication_id: "00001-2026".into(),
+            profile: "eforms:eforms-sdk-1.13".into(),
+        };
+        let state = NoticeState::read(&notice, &parsed);
+        fn natures<'a>(facts: impl IntoIterator<Item = &'a Fact>) -> Vec<String> {
+            let mut out: Vec<String> = facts
+                .into_iter()
+                .filter_map(|f| match f {
+                    Fact::Classification { field, scheme, code } if field == "nature" && scheme == "nature" => {
+                        Some(code.clone())
+                    }
+                    _ => None,
+                })
+                .collect();
+            out.sort();
+            out
+        }
+        assert_eq!(natures(&state.facts), vec!["supplies"], "the procedure's nature at Tender scope");
+        let lot = state.lots.iter().find(|l| l.key == "LOT-1").expect("the lot");
+        assert_eq!(natures(&lot.facts), vec!["services"], "the lot's own nature at Lot scope");
     }
 
     /// Issue 394 (unit 2): the sdk-0.1 shapes through the fold. One code serves

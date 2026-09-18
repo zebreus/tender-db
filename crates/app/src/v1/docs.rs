@@ -261,7 +261,9 @@ curl -s "https://tenders.zebreus.click/v1/tenders?bidder=2"</code></pre>
 <p><code class="ep">GET /v1/tenders/{id}</code> returns the current version of a
 Tender plus its satellites: <code>lots</code> count and <code>lot_details</code>,
 <code>texts</code>, <code>amounts</code>, <code>dates</code>,
-<code>classifications</code>, <code>parties</code>, <code>lot_results</code>
+<code>classifications</code> (schemes <code>cpv</code>, <code>nuts</code> and <code>nature</code>
+&mdash; the contract nature, <code>works</code>/<code>supplies</code>/<code>services</code>, in one
+vocabulary across eras), <code>parties</code>, <code>lot_results</code>
 (award decisions, accumulating across framework/DPS rounds), <code>bids</code>,
 <code>contracts</code>, and <code>versions</code> — each version naming the
 <code>caused_by_notice_id</code> that produced it (the ADR-0001 traceability

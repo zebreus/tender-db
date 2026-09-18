@@ -358,3 +358,26 @@ duplicate" vs "mint a new field") as an ordering:
 Step 1 is the next unit, filed as the continuation of this issue rather than a new one, because it
 is what makes the `## Done when`'s "kept as a flag rather than as title text" honest.
 
+## Step 1 BUILT 2026-09-18 — contract nature is a classification, in every era
+
+`project.rs`: a nature pre-arm in the fold loop turns a `Code` value under `BT-23-*`, `TED-NC_CONTRACT_NATURE`
+or `TXT-NC` into `Fact::Classification { field: "nature", scheme: "nature", code }` at the scope it
+was published (procedure → Tender, lot → Lot), through `contract_nature(field_id, code)`. The
+vocabulary is eForms' — `works`, `supplies`, `services` — plus `combined` for the text era's 3, and
+the numeric codelist the XML and text eras share is read off the committed fixtures, which print
+code and label together in both eras (`<NC_CONTRACT_NATURE CODE="4">Services`, `NC: 4 - Service
+contract`): 1 works, 2 supplies, 3 combined, 4 services. A code outside the lists folds to nothing
+rather than a guess. Pinned by `the_contract_nature_folds_from_every_era_into_one_classification`
+(the lookup on all three ids, both cases of the eForms word, a code off the list, a non-nature id;
+then a synthetic notice folding a procedure-scope `supplies` and a lot-scope `services` to the right
+scopes). The OpenAPI `classifications` description names the three schemes; `/v1/sql`'s
+`v_tender_classifications` serves the new rows with no change.
+
+**No projection-epoch bump, deliberately:** the store's own comment prices a global bump at the
+whole corpus rewritten on the next full walk (7.9M tenders, the issue-179 half-day). New ingests
+carry the fact from the deploy; the standing rows take it through the gated refold path like the
+other fold units — and since every era publishes a nature, that refold IS corpus-wide, so it waits
+for Lennart's word with the other production writes rather than being queued from here.
+
+Step 2 (drop the four nature atoms from text-era titles) is unblocked by this and is the next unit.
+
