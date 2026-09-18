@@ -828,3 +828,16 @@ The fix was boxing the deep awaits, not the arm. Extracting the body into its ow
 the apply call, and moving the `json!` and the summaries into plain functions all failed first, and
 I only found it by **isolating**: replace the arm body with `Err(...)` and the test passes. That one
 probe was worth more than the four edits before it.
+
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh /admin/reports/member-twin-census" | python3 -c "import sys,json; d=json.load(sys.stdin); j=json.loads(d['body']); print(d['computed_at'], j['twin_sets'], j['twin_rows'], j['rows_walked'])"
+
+- **done**: a fresh `computed_at` (the census runs on the weekly tick and after the wet repair), then `0 0 <rows_walked>` — no member under two identities anywhere in the corpus
+- **open**: `1789654374 281 562 14508563` — the 281 standing twin sets, unchanged since the mint fix (read 2026-09-18)
+
+The wet arm is deployed (`b6750d5`) and its plan is fresh (job 1470); the only step left is
+`POST /admin/jobs {"kind":"repair-member-twins","dry_run":false}`, which the permission classifier
+refused on 2026-09-17 as a destructive production write. It is not being routed around; it waits for
+an explicit go-ahead. After it runs: `tender_versions` must read 14,507,810 (from 14,508,091) and the
+line above must read `0 0`.

@@ -1,6 +1,6 @@
 # 411 — issue 404's own adoption arm could not run: it DELETED the projected row, and `tender_versions` is a real foreign key
 
-Status: ready-for-agent — **FIX DEPLOYED 2026-09-17** at rev `22f5bab`, health green (gated `GATE-EXIT=0`), found by reading 404's remaining unit rather than by an incident, and reproduced red before it was written. See "Repro" — the failure is `Constraint("immediate foreign key constraint failed")`, which `process` propagates with `?`.
+Status: needs-info — three of four `Done when` items met (built, red-then-green test, deployed `22f5bab`); the fourth, the live exercise, waits on issue 404's wet `repair-member-twins` run, the only population that can re-key on prod — and that run waits on an explicit go-ahead (the permission classifier refused it 2026-09-17). The signal is that job's outcome row; `## Verify` reads it. Was: ready-for-agent — **FIX DEPLOYED 2026-09-17** at rev `22f5bab`, health green (gated `GATE-EXIT=0`), found by reading 404's remaining unit rather than by an incident, and reproduced red before it was written. See "Repro" — the failure is `Constraint("immediate foreign key constraint failed")`, which `process` propagates with `?`.
 Kind: defect (store — `Db::record_notice_tx`'s moved-identity arm, `crates/store/src/lib.rs`; self-inflicted, by the fix on issue 404)
 Relates to: 404 (whose fix this is — the mint it stopped was real and the counter it added is right; only the adoption itself was wrong), 290 (`reparse_notice`'s adoption, which does it correctly and was the model 404 claimed to follow), 247 (the deferred FK checks `clear_parsed` needs and this arm did not set), 248 (the `keep` set that stops the expensive mention proof), 85 (`projected = 0` as the way a store-layer change reaches the canonical layer), ADR-0001 (the canonical layer is derived; the ingest path must not write it)
 Blocked by: nothing
@@ -96,3 +96,12 @@ constraints.
 
 The same shape as 404 itself, one level up: looking at one path because the issue named one path.
 Here it was looking at one LAYER because the fix lived in one layer.
+
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh '/admin/jobs?limit=60'" | python3 -c "import sys,json; r=[j for j in json.load(sys.stdin)['recent'] if j['kind']=='repair-member-twins' and 'dry' not in (j.get('params') or '')]; print([(j['job_id'], j['outcome'], (j.get('counts') or '')[:120]) for j in r] or 'no wet run yet')"
+
+- **done**: one wet row, `ok`, whose counts line names 281 survivor(s) re-keyed and no `process` failure after it — the adoption arm ran on prod and held
+- **open**: `no wet run yet` — only dry-run rows exist (read 2026-09-18)
+
+A metadata read (the job table), free per `prod-box-reads.md`.
