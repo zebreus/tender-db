@@ -411,8 +411,10 @@ async fn a_real_analytical_query_answers() {
               LIMIT 10",
         )
         .await;
-    assert_eq!(response.status(), 200, "the analytical query should run");
-    let body: Value = response.json().await.unwrap();
+    let status = response.status();
+    let text = response.text().await.unwrap();
+    assert_eq!(status, 200, "the analytical query should run: {text}");
+    let body: Value = serde_json::from_str(&text).unwrap();
     assert_eq!(body["columns"], serde_json::json!(["name", "total_cents"]));
     assert_eq!(body["truncated"], Value::Bool(false));
 }
@@ -439,7 +441,7 @@ async fn the_analyst_views_answer() {
     }
 
     // The chain publishes a buyer, CPV codes and causing notices — the views see them.
-    let count = |v: &Value| v["rows"][0][0].as_i64().unwrap();
+    let count = |v: &Value| v["rows"][0][0].as_i64().unwrap_or_else(|| panic!("no count in {v}"));
     let buyers: Value = server.sql("SELECT count(*) FROM v_tender_buyers").await.json().await.unwrap();
     assert!(count(&buyers) >= 1, "the chain has a buyer");
     let cpv: Value = server
@@ -527,6 +529,41 @@ async fn the_schema_documents_time_format_and_enums() {
         published["note"].as_str().is_some_and(|n| n.contains("strftime")),
         "the time-format trap is flagged on the column: {published}"
     );
+
+    // Issue 50, the clause its closure dropped: a VIEW's columns carry their base
+    // column's declared type, not the `TEXT` the PRAGMA reports for every view column.
+    let col_type = |table: &str, col: &str| -> Value {
+        tables
+            .iter()
+            .find(|t| t["name"] == table)
+            .unwrap_or_else(|| panic!("{table}"))["columns"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|c| c["name"] == col)
+            .unwrap_or_else(|| panic!("{table}.{col}"))["type"]
+            .clone()
+    };
+    assert_eq!(col_type("v_tenders", "id"), "INTEGER", "the base column's type, through the view");
+    assert_eq!(col_type("v_tenders", "published_at"), "INTEGER");
+    assert_eq!(col_type("v_tenders", "title"), "TEXT");
+    assert_eq!(col_type("v_fetches", "bytes"), "INTEGER", "a bare-column view over one source");
+    assert_eq!(col_type("v_organizations", "mentions"), "INTEGER", "COUNT(*) is an integer");
+    assert_eq!(col_type("v_lots", "title"), "TEXT", "a scalar subquery follows the column it projects");
+    assert_eq!(col_type("v_awards", "winner_name"), "TEXT", "a view over a view over a view resolves through");
+    assert_eq!(col_type("v_awards", "awarded_cents"), "INTEGER");
+    // Every integer key of every view resolves to INTEGER — no view column that is a
+    // row id or a sequence may read TEXT any more, whatever the PRAGMA says.
+    // (`section_id` is a genuine TEXT key, `"RES-1"`, and is not in this set.)
+    const INTEGER_KEYS: &[&str] = &["id", "tender_id", "notice_id", "organization_id", "lot_id", "lot_result_id", "seq"];
+    for t in tables.iter().filter(|t| t["type"] == "view") {
+        for c in t["columns"].as_array().unwrap() {
+            let name = c["name"].as_str().unwrap();
+            if INTEGER_KEYS.contains(&name) || name.ends_with("_organization_id") {
+                assert_eq!(c["type"], "INTEGER", "{}.{name} must resolve to INTEGER: {c}", t["name"]);
+            }
+        }
+    }
 
     // parse_state's vocabulary is listed on its column.
     let parse_state = tables

@@ -870,12 +870,29 @@ async fn schema(State(state): State<AppState>) -> Result<Response, ApiError> {
         let mut cols = Vec::new();
         // `name` came from sqlite_schema and passed `safe_identifier`, so the
         // interpolation into this PRAGMA is safe (PRAGMA takes no bind params).
+        // Issue 50: a view's declared types are resolved from its own SQL — the
+        // PRAGMA reports `TEXT` for every view column, which is not a type, it is
+        // the absence of one.
+        let view_types = if kind == "view" {
+            Some(view_column_types(&reader, &name, 0).await?)
+        } else {
+            None
+        };
         let mut info = reader.query(&format!("PRAGMA table_info(\"{name}\")"), ()).await?;
         while let Some(row) = info.next().await? {
             let col_name = store_text(&row, 1);
+            let declared = match &view_types {
+                Some(types) => types
+                    .get(&col_name)
+                    .cloned()
+                    .flatten()
+                    .map(serde_json::Value::String)
+                    .unwrap_or(serde_json::Value::Null),
+                None => serde_json::Value::String(store_text(&row, 2)),
+            };
             let mut col = json!({
                 "name": col_name,
-                "type": store_text(&row, 2),
+                "type": declared,
                 "notnull": store_int(&row, 3) != 0,
                 "pk": store_int(&row, 5) != 0,
             });
@@ -1581,6 +1598,184 @@ fn too_many(message: &str, retry_after: u64) -> Response {
 }
 
 /// Whether a name is a plain identifier safe to interpolate into a PRAGMA.
+/// Issue 50 (the clause its closure dropped): the declared type of a VIEW's columns.
+///
+/// `PRAGMA table_info` reports `TEXT` for every column of every view — turso carries
+/// no declared type through a view — so the schema published all 105 view columns as
+/// `TEXT`, `v_tenders.id` included, while each serves its base column's real type
+/// (`typeof(id)` → `integer` on prod). Resolved here from the view's own SQL, read
+/// out of `sqlite_schema`: each SELECT item is followed to the column it projects —
+/// `alias.col [AS name]` and bare `col` to a FROM/JOIN table, recursing when that
+/// is itself a view (`v_awards` → `v_lot_results` → `v_tender_current`); `COUNT(*)`
+/// is INTEGER; a scalar subquery projecting one column follows that column; and
+/// anything else is `null` — "unknown", stated — rather than `TEXT`, asserted.
+///
+/// No row is sampled, deliberately: a `typeof()` probe needs a non-NULL value, so on
+/// a mostly-NULL column it is a table walk, on the request path.
+async fn view_column_types(
+    reader: &store::turso::Connection,
+    view: &str,
+    depth: u8,
+) -> Result<std::collections::HashMap<String, Option<String>>, ApiError> {
+    let mut out = std::collections::HashMap::new();
+    if depth > 4 {
+        return Ok(out);
+    }
+    let mut rows = reader
+        .query("SELECT sql FROM sqlite_schema WHERE type = 'view' AND name = ?", [store::turso::Value::Text(view.to_owned())])
+        .await?;
+    let Some(row) = rows.next().await? else { return Ok(out) };
+    let sql = store_text(&row, 0);
+    drop(rows);
+    let parsed = parse_select(&sql);
+    for (expr, name) in &parsed.items {
+        let ty = resolve_projection(reader, expr, &parsed.tables, depth).await?;
+        out.insert(name.clone(), ty);
+    }
+    Ok(out)
+}
+
+/// The declared type of one projected expression (see [`view_column_types`]).
+fn resolve_projection<'a>(
+    reader: &'a store::turso::Connection,
+    expr: &'a str,
+    tables: &'a std::collections::HashMap<String, String>,
+    depth: u8,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Option<String>, ApiError>> + Send + 'a>> {
+    Box::pin(async move {
+        let expr = expr.trim();
+        // turso re-serialises stored view SQL with a space before the call's
+        // parenthesis (`COUNT (*)`), so the match ignores spacing.
+        if expr.to_ascii_uppercase().replace(' ', "").starts_with("COUNT(") {
+            return Ok(Some("INTEGER".to_owned()));
+        }
+        if expr.starts_with('(') && expr.ends_with(')') {
+            let inner = parse_select(&expr[1..expr.len() - 1]);
+            return match inner.items.first() {
+                Some((e, _)) => resolve_projection(reader, e, &inner.tables, depth).await,
+                None => Ok(None),
+            };
+        }
+        let (table, column) = match expr.split_once('.') {
+            Some((alias, col)) if is_identifier(alias) && is_identifier(col) => {
+                let Some(table) = tables.get(alias) else { return Ok(None) };
+                (table.clone(), col.to_owned())
+            }
+            None if is_identifier(expr) && tables.len() == 1 => {
+                (tables.values().next().expect("one table").clone(), expr.to_owned())
+            }
+            _ => return Ok(None),
+        };
+        if table.starts_with("v_") {
+            let nested = view_column_types(reader, &table, depth + 1).await?;
+            return Ok(nested.get(&column).cloned().flatten());
+        }
+        if !safe_identifier(&table) {
+            return Ok(None);
+        }
+        let mut info = reader.query(&format!("PRAGMA table_info(\"{table}\")"), ()).await?;
+        while let Some(row) = info.next().await? {
+            if store_text(&row, 1) == column {
+                let declared = store_text(&row, 2);
+                return Ok((!declared.is_empty()).then_some(declared));
+            }
+        }
+        Ok(None)
+    })
+}
+
+/// A view's SELECT, taken apart just far enough to follow its columns: the projected
+/// `(expression, output name)` pairs, and every FROM/JOIN source keyed by the alias it
+/// is read under (and by its own name, for bare-column views like `v_fetches`).
+#[derive(Debug, Default, PartialEq)]
+struct ParsedSelect {
+    items: Vec<(String, String)>,
+    tables: std::collections::HashMap<String, String>,
+}
+
+fn parse_select(sql: &str) -> ParsedSelect {
+    let flat: String = sql.split_whitespace().collect::<Vec<_>>().join(" ");
+    let upper = flat.to_ascii_uppercase();
+    let Some(select_at) = upper.find("SELECT ") else { return ParsedSelect::default() };
+    let body = &flat[select_at + "SELECT ".len()..];
+    // The projection ends at the first depth-0 ` FROM `; commas at depth 0 split items.
+    let (mut depth, mut from_at, mut splits) = (0i32, None, vec![]);
+    for (i, c) in body.char_indices() {
+        match c {
+            '(' => depth += 1,
+            ')' => depth -= 1,
+            ',' if depth == 0 => splits.push(i),
+            _ => {}
+        }
+        if depth == 0 && from_at.is_none() && body[i..].to_ascii_uppercase().starts_with(" FROM ") {
+            from_at = Some(i);
+            break;
+        }
+    }
+    let Some(from_at) = from_at else { return ParsedSelect::default() };
+    let mut items = Vec::new();
+    let mut start = 0;
+    for end in splits.into_iter().chain(std::iter::once(from_at)) {
+        let item = body[start..end].trim();
+        start = end + 1;
+        if item.is_empty() {
+            continue;
+        }
+        let (expr, name) = match split_alias(item) {
+            Some((e, n)) => (e.to_owned(), n.to_owned()),
+            None => (item.to_owned(), item.rsplit('.').next().unwrap_or(item).to_owned()),
+        };
+        items.push((expr, name));
+    }
+    // Sources: every `FROM <source> [<alias>]` and `JOIN <source> [<alias>]` in the tail.
+    let mut tables = std::collections::HashMap::new();
+    let tail: Vec<&str> = body[from_at..].split_whitespace().collect();
+    const KEYWORDS: &[&str] = &["ON", "WHERE", "JOIN", "LEFT", "INNER", "RIGHT", "CROSS", "GROUP", "ORDER", "LIMIT", "AND", "OR", "USING"];
+    let mut i = 0;
+    while i < tail.len() {
+        let word = tail[i].to_ascii_uppercase();
+        if word == "FROM" || word == "JOIN" {
+            if let Some(source) = tail.get(i + 1) {
+                let source = source.trim_end_matches([';', ',', ')']).trim_start_matches('(');
+                if is_identifier(source) {
+                    tables.insert(source.to_owned(), source.to_owned());
+                    if let Some(alias) = tail.get(i + 2) {
+                        let alias = alias.trim_end_matches([';', ',', ')']);
+                        if is_identifier(alias) && !KEYWORDS.contains(&alias.to_ascii_uppercase().as_str()) {
+                            tables.insert(alias.to_owned(), source.to_owned());
+                        }
+                    }
+                }
+            }
+        }
+        i += 1;
+    }
+    ParsedSelect { items, tables }
+}
+
+/// `expr AS name` at depth 0, case-insensitive on the keyword.
+fn split_alias(item: &str) -> Option<(&str, &str)> {
+    let upper = item.to_ascii_uppercase();
+    let mut depth = 0i32;
+    for (i, c) in item.char_indices() {
+        match c {
+            '(' => depth += 1,
+            ')' => depth -= 1,
+            _ => {}
+        }
+        if depth == 0 && upper[i..].starts_with(" AS ") {
+            return Some((item[..i].trim(), item[i + 4..].trim()));
+        }
+    }
+    None
+}
+
+fn is_identifier(s: &str) -> bool {
+    let mut chars = s.chars();
+    matches!(chars.next(), Some(c) if c.is_ascii_alphabetic() || c == '_')
+        && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+}
+
 fn safe_identifier(name: &str) -> bool {
     !name.is_empty()
         && name.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_')
@@ -2235,6 +2430,51 @@ mod tests {
         // NaN cannot be JSON, so it degrades to null rather than erroring.
         assert_eq!(cell(Value::Real(f64::NAN)).0, Json_::Null);
         assert_eq!(cell(Value::Blob(vec![0xde, 0xad])).0, json!("dead"));
+    }
+
+    /// Issue 50: a view's SELECT is taken apart into projected items and aliased
+    /// sources — the three shapes the thirteen views use: `alias.col [AS name]`, a
+    /// bare column over one source, and a scalar subquery with an alias.
+    #[test]
+    fn a_views_select_is_followed_to_its_sources() {
+        let p = parse_select(
+            "CREATE VIEW v_tenders AS
+             SELECT t.id, t.source, v.seq, v.published_at, t.current_title AS title
+               FROM tenders t
+               JOIN tender_versions v ON v.tender_id = t.id AND v.seq = t.current_seq;",
+        );
+        assert_eq!(
+            p.items,
+            vec![
+                ("t.id".to_owned(), "id".to_owned()),
+                ("t.source".to_owned(), "source".to_owned()),
+                ("v.seq".to_owned(), "seq".to_owned()),
+                ("v.published_at".to_owned(), "published_at".to_owned()),
+                ("t.current_title".to_owned(), "title".to_owned()),
+            ]
+        );
+        assert_eq!(p.tables["t"], "tenders");
+        assert_eq!(p.tables["v"], "tender_versions");
+
+        let bare = parse_select("CREATE VIEW v_fetches AS SELECT id, source, bytes, fetched_at FROM fetches;");
+        assert_eq!(bare.items[2], ("bytes".to_owned(), "bytes".to_owned()));
+        assert_eq!(bare.tables.len(), 1, "one source, keyed by its own name: {:?}", bare.tables);
+
+        let sub = parse_select(
+            "CREATE VIEW v_lots AS
+             SELECT l.id, (SELECT x.value FROM tender_version_texts x
+                            WHERE x.tender_id = l.tender_id AND x.field = 'title'
+                            ORDER BY (x.lang = 'ENG') DESC LIMIT 1) AS title
+               FROM lots l JOIN v_tender_current c ON c.tender_id = l.tender_id;",
+        );
+        assert_eq!(sub.items.len(), 2, "a comma inside the subquery does not split it: {:?}", sub.items);
+        assert_eq!(sub.items[1].1, "title");
+        assert!(sub.items[1].0.starts_with("(SELECT x.value"));
+        let inner = parse_select(&sub.items[1].0[1..sub.items[1].0.len() - 1]);
+        assert_eq!(inner.items, vec![("x.value".to_owned(), "value".to_owned())]);
+        assert_eq!(inner.tables["x"], "tender_version_texts");
+        assert_eq!(sub.tables["c"], "v_tender_current", "a view read by a view is a source too");
+        assert_eq!(split_alias("COUNT (*) AS mentions"), Some(("COUNT (*)", "mentions")), "turso stores the call with a space before the parenthesis");
     }
 
     #[test]
