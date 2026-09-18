@@ -317,3 +317,19 @@ The gate bit once on the way, and it was CLAUDE.md's documented trap: the two ex
 `run_spec`'s one giant future, and `an_execute_without_an_expected_count_is_refused` — a test with no
 relation to any of this — overflowed its stack. Boxing the arm's body (`Box::pin(async move …)`) is
 the fix the note prescribes, and it held (117 suites, 0 overflows).
+
+## Comment — 2026-09-18 (later): the winners index is built; the final numbers, and what the unit still owes
+
+Job **1478**, `reindex auto: tender_version_result_winners_org_tender`, `ok`, **281 s** — the first
+time that job has done anything but refuse in 0 s. Read afterwards, warm: `?winner=357` **3.0 s**
+(5.8 s before the index), `?bidder=357` **3.7–3.8 s**, `?buyer=357` 0.6 s, `?winner=388` 0.4 s. One
+`bidder=357` read in the minute after the sort: 20.6 s — a cold page cache over 137k lots, the exact
+residual this issue is about.
+
+So, against `## Done when`: the 30 s → 503 class is dead for the most prolific org in the corpus
+(unit 1's index is finally real, and the per-lot predicate is gone); the "cost scales with the page"
+clause is NOT met — warm cost is the org's lot count enumerated and sorted, cold cost is that
+count's I/O. The design that meets it is recorded above (page the org-seeded lots stream in
+`(tender_id, lot id)` order with a compound opaque cursor, so the participation index serves the
+order and a page reads a page), and it is a contract decision for that one shape, taken separately.
+Issue 223 is closed on today's numbers; this issue stays open on that clause.

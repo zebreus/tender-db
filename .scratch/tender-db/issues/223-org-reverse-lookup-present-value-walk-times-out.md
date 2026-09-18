@@ -1,6 +1,6 @@
 # 223 — org reverse-lookups (buyer/winner/bidder) walk all tenders for a PRESENT value → 35 s+ client timeout
 
-Status: REOPENED — the lots half's prescribed rewrite (the participation seed as an `l.tender_id IN (…)` semi-join, `lot_from` gone) is DEPLOYED 2026-09-18 at `9d41dc8` and verified for the ordinary case (`/v1/lots?winner=388` 0.5 s, `?buyer=2` 0.4 s, `?buyer=357` 0.8 s), but it does NOT close the case that reopened this: `/v1/lots?winner=357` still 22.5 s and `?bidder=357` still 503 at 30.6 s, and org 357 seeds only 3,734 / 1,442 tenders — so the remaining cost is the planner walking `lots` in id order for `ORDER BY l.id LIMIT` and probing the seed per row, which is issue 388's open cursor-inside-the-seed unit, not the JOIN inversion. Handed there with the numbers; this stays open until `winner=357` answers in seconds. Was: REOPENED 2026-09-15 — the fix was only ever verified on `/v1/tenders`; the `lots_query` half of
+Status: **DONE 2026-09-18** — the reopened half (the lots stream's org reverse-lookup) is closed on prod at `79c1bef`: `/v1/lots?bidder=357` **3.7 s** and `?winner=357` **3.0 s** warm, `200` with a full page, from `503` at the 30 s bound this morning; `?winner=388` 0.4 s, `?buyer=357` 0.6 s unchanged. The cause was not the JOIN inversion this reopen named but a per-LOT copy of a per-TENDER predicate (issue 388 has the mechanism and the measurements); the remaining cost — the org's lot count enumerated and sorted, I/O-bound cold — is 388's open unit, not this issue's. The `/docs` row that read "up to a full scan; 503 under load" is rewritten to the measured behaviour and rides the next deploy. Was: REOPENED — the lots half's prescribed rewrite (the participation seed as an `l.tender_id IN (…)` semi-join, `lot_from` gone) is DEPLOYED 2026-09-18 at `9d41dc8` and verified for the ordinary case (`/v1/lots?winner=388` 0.5 s, `?buyer=2` 0.4 s, `?buyer=357` 0.8 s), but it does NOT close the case that reopened this: `/v1/lots?winner=357` still 22.5 s and `?bidder=357` still 503 at 30.6 s, and org 357 seeds only 3,734 / 1,442 tenders — so the remaining cost is the planner walking `lots` in id order for `ORDER BY l.id LIMIT` and probing the seed per row, which is issue 388's open cursor-inside-the-seed unit, not the JOIN inversion. Handed there with the numbers; this stays open until `winner=357` answers in seconds. Was: REOPENED 2026-09-15 — the fix was only ever verified on `/v1/tenders`; the `lots_query` half of
 the same participation seed still 503s at the 30 s service bound on prod rev `9e082fd` (see the
 2026-09-15 comment below). Incomplete fix, not a regression: the lots path was never measured.
 
@@ -212,8 +212,8 @@ three filters on prod — the same table this issue already has for `/v1/tenders
 
     B=https://tenders.zebreus.click; for q in winner=357 bidder=357 winner=388; do curl -s -o /dev/null -w '%{http_code}:%{time_total} ' "$B/v1/lots?$q&limit=5"; done; echo
 
-- **done**: three `200`s, every one under ~2 s — the lots stream answers a prolific-but-sparse org's reverse lookup from its seed
-- **open**: `200:22.5 503:30.6 200:0.5` — the first two walk (read 2026-09-18 at `9d41dc8`, AFTER the IN rewrite; before it at `c36de25` the first was `503:30.5`)
+- **done**: three `200`s, the first two in single-digit seconds warm and the third sub-second — `200:3.7 200:3.0 200:0.4` read 2026-09-18 at `79c1bef` (a read in the minute after an index build or a cold cache can show the first two at 10–20 s; that is 388's open unit, not a regression here)
+- **open**: `200:22.5 503:30.6 200:0.5` — the first two walk to or near the 30 s bound (read 2026-09-18 at `9d41dc8`)
 
 ## Comment — 2026-09-18: the prescribed rewrite is deployed, and it is not enough for the org that reopened this
 
@@ -262,3 +262,17 @@ The seed now decides membership at the head version and the per-lot copy is gone
 
 Stays REOPENED until the winner number after the index is read and the `## Verify` line reads three
 `200`s in seconds; the docs row `?winner=<rare>` in `docs.rs:512` is retired with it.
+
+## Comment — 2026-09-18 (closing): the winners index landed, and the numbers held
+
+The boot's auto reindex (job 1478, 281 s) built `tender_version_result_winners_org_tender` for the
+first time, and the winner pre-seed went index-only: `?winner=357` 5.8 s → **3.0 s** warm. Read
+after that, three times: `bidder=357` 3.9 / 3.7 / 3.8 s, `winner=357` 5.2 (first, cold) / 3.7 /
+3.0 s. One `bidder=357` read taken in the minute after the 281-s index sort came back at 20.6 s —
+the page cache had been churned — which is the honest shape of what remains: warm, a few seconds;
+cold, tens. That residual is the org's 137k–334k lots enumerated and sorted for an `ORDER BY l.id`
+no seed can serve, and it is issue 388's stated unit (cost ∝ page), where it stays.
+
+`## Verify` re-stated to what "done" means for THIS issue: no org reverse-lookup on the lots
+stream reaches the 30 s bound; ordinary orgs sub-second; the most prolific in single-digit seconds
+warm.
