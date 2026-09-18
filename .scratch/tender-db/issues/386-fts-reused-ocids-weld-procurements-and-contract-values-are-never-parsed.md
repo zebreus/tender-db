@@ -412,7 +412,8 @@ the periods and the `BT-3202`/`OPT-315` linkage.
 
 ## Unit 1 BUILT 2026-09-18 — the register ocid splits per buyer; the refold waits for a go-ahead
 
-**The rule, and where it lives (`2c2d0b0`).** The `## Done when` offered two routes; the first is taken:
+**The rule, and where it lives (`2c2d0b0`; gate 124/124 green; DEPLOYED 2026-09-18 08:15 UTC at `a52390b` on an
+idle queue — new FTS ingests group under the rule from the next daily tick, the standing rows wait for the refold below).** The `## Done when` offered two routes; the first is taken:
 issue 369 unit 5's refused-key pre-filter is extended to `source = 'fts'`. In `build_plan_groups`
 (`crates/store/src/canonical.rs`) a second arm fills `plan_refused_key` with every FTS `procedure_key`
 whose notices carry **two or more distinct buyer SETS** (`COUNT(DISTINCT buyer_key) >= 2`), and the
