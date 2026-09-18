@@ -1,6 +1,6 @@
 # 415 — `/v1/lots?kind=` can never match (the parameter is lowercased, the stored lot kinds are `Lot`/`LotsGroup`/`Part`), and the guard's lots `kind` probe is a bare scan of `tender_version_lots` that walks to the 30 s deadline
 
-Status: ready-for-agent — found 2026-09-18 09:0xZ while pinning issue 408 (b)'s handler test: the lots leg of a bounded walk on `?kind=` matched nothing on the fixture, and the same probe on prod is a 503.
+Status: **DONE 2026-09-18** — fixed, gated (125/125) and DEPLOYED at `4099740` 09:30 UTC, verified live (see the foot): `/v1/lots?kind=Lot`, `?kind=lot`, `?kind=LotsGroup` and `?kind=Part` each answer in 0.4–0.6 s with a lot, and `?kind=procedure` is a 400 naming the vocabulary; the guard's lots kind leg is a membership check in `store::read::LOT_KINDS` and no longer touches the table. Was: ready-for-agent — found 2026-09-18 09:0xZ while pinning issue 408 (b)'s handler test: the lots leg of a bounded walk on `?kind=` matched nothing on the fixture, and the same probe on prod is a 503.
 Kind: defect (API contract + performance/availability — the documented `kind` filter on `/v1/lots` returns an empty page for every spelling, and the absent-value guard leg that answers it is the expensive one, not the cheap one)
 Relates to: 408 (the bounded fallback walk — this walk runs BEFORE it, inside `reachable()`, so option (b) does not shorten it), 219/120 (the isolated pool and the absent-value guard: "cheap index seeks first, the bare table scans last" — the lots `kind` leg is the bare scan, and there is nothing cheaper in front of it), 371 (the guard set and the routed set are one list — they agree here; the leg is present, just slow), 217-B (the `kind` lowercasing was added so the documented `kind=VAT` identifier lookup matched — lowercase-only vocabularies on organizations and tenders), 118 (`ignored_filters` — an empty page here reads as an applied filter with no matches, which is the wrong claim)
 Blocked by: nothing
@@ -71,3 +71,30 @@ fixed on organizations. And the cheapest way to hold an isolated slot for 30 s i
 - A test drives `/v1/lots?kind=Lot` through the handler on the chain fixture and gets lots back, and
   408 (b)'s bounded-walk test gains the lots `kind` leg it had to skip.
 - `/docs` names the lot kind vocabulary beside the tender one.
+
+## FIXED, DEPLOYED and VERIFIED 2026-09-18 — `4099740`
+
+**What changed.** `store::read::LOT_KINDS = ["Lot", "LotsGroup", "Part"]` is the served vocabulary
+(measured over an early, a legacy and a recent id range before it was written down: 148,972 / 110 /
+14 in ids 1–20,000; `Lot` only in 5,200,000–5,203,000 and 8,400,000–8,420,000 — nothing else
+occurs), and the fold imports it instead of keeping its own copy. `reachable()`'s lots `kind` arm
+answers membership in it: a kind in the vocabulary is admitted even when no row carries it today
+(`Part` is rare) and the bounded walk (408 (b)) answers one band at a time; a spelling outside it is
+unreachable without touching the table. The lots collection canonicalises `kind` onto the
+vocabulary in `collection()`, before the page or the SSE branch reads it, and a spelling outside it
+is a 400 naming the three values — never an empty page with `ignored_filters: []`. The docs' filter
+table names the vocabulary. Tests: `the_lots_kind_filter_matches_the_stored_vocabulary_in_any_case`
+(`Lot`/`lot`/`LOT` return the chain's lots, `part` is an honest empty page, `procedure`/`nonsense`
+are 400s, tenders' own vocabulary untouched) and the bounded-walk test regained the lots `kind` leg.
+
+**Live, same idle box, one run each:**
+
+| request | before (`6386ecc`, 09:0x) | after (`4099740`, 09:31) |
+| --- | --- | --- |
+| `/v1/lots?kind=lot&limit=1` | **503 after 30.66 s** | **200 in 0.45 s**, 1 item, `next_cursor` 2 |
+| `/v1/lots?kind=Lot&limit=1` | 200 in 3.40 s, **0 items** | 200 in 0.61 s, 1 item |
+| `/v1/lots?kind=LotsGroup&limit=1` | 200 in 2.99 s, 0 items | 200 in 0.40 s, 1 item (id 489) |
+| `/v1/lots?kind=Part&limit=1` | — | 200 in 0.46 s, 1 item (id 7092) |
+| `/v1/lots?kind=procedure&limit=1` | (an empty page claiming the filter applied) | **400** `kind on /v1/lots must be one of Lot, LotsGroup or Part, not "procedure"` |
+
+`## Verify` read 2026-09-18 09:31 at `4099740`: `200 0.61` then `1` → done.
