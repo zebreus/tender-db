@@ -229,20 +229,43 @@ pub fn router(state: AppState) -> Router {
 /// `?country=de` matches `DE300` today and `read::prefix_ranges` generates both
 /// case variants for the range guard precisely to stay consistent with that.
 /// Uppercasing here would be a silent behaviour change dressed as validation.
+///
+/// Length-bounded too, and `cpv` to digits (issue 117). The store's range guard
+/// enumerates one seek per ASCII-case variant of the prefix and DECLINES above
+/// its cap, and a declined guard means the full `LIKE` walk — so a value with more
+/// letters than any code in the vocabulary slipped past the character check and
+/// ran to the 30 s deadline: `?country=Germany` (seven letters) answered 503 after
+/// 30.6 s on prod 2026-09-18, with a body saying "safe to retry", and four such
+/// requests pin every isolated reader. The vocabularies are finite: a NUTS code is
+/// at most five characters (`DEB35`), a CPV code eight digits. Nothing longer can
+/// be a prefix of a real code, so it is a 400 at zero query cost — and with the
+/// guard's cap raised to cover five letters (`read::MAX_CASE_VARIANTS`), every
+/// value this admits is one the guard can bound.
 fn shaped_prefix(
     value: Option<&str>,
     name: &str,
     expected: &str,
+    shape: PrefixShape,
 ) -> Result<Option<String>, ApiError> {
+    let (max, alphabet, allowed): (usize, fn(char) -> bool, &str) = match shape {
+        PrefixShape::Alnum { max } => (max, |c| c.is_ascii_alphanumeric(), "letters and digits"),
+        PrefixShape::Digits { max } => (max, |c| c.is_ascii_digit(), "digits"),
+    };
     match value.map(str::trim) {
         None => Ok(None),
-        Some(v) if !v.is_empty() && v.chars().all(|c| c.is_ascii_alphanumeric()) => {
-            Ok(Some(v.to_owned()))
-        }
+        Some(v) if !v.is_empty() && v.len() <= max && v.chars().all(alphabet) => Ok(Some(v.to_owned())),
         Some(other) => Err(ApiError::bad_request(format!(
-            "{name} must be {expected} — letters and digits only, not {other:?}"
+            "{name} must be {expected} — 1 to {max} {allowed}, not {other:?}"
         ))),
     }
+}
+
+/// The finite shape of a code-prefix filter: how long the longest code is, and
+/// what it is made of.
+#[derive(Clone, Copy)]
+enum PrefixShape {
+    Alnum { max: usize },
+    Digits { max: usize },
 }
 
 fn is_public_surface(method: &axum::http::Method, path: &str) -> bool {
@@ -688,8 +711,18 @@ impl Params {
             // DECLINES on `%`/`_`/`\\` (issue 117), which keeps the store correct
             // for its internal callers; that guard is not weakened by this, and
             // must not be, since the two layers are reachable independently.
-            country: shaped_prefix(self.country.as_deref(), "country", "a NUTS place code (e.g. DE, PL62)")?,
-            cpv: shaped_prefix(self.cpv.as_deref(), "cpv", "a CPV code prefix (e.g. 45, 45000000)")?,
+            country: shaped_prefix(
+                self.country.as_deref(),
+                "country",
+                "a NUTS place code (e.g. DE, PL62, DEB35)",
+                PrefixShape::Alnum { max: 5 },
+            )?,
+            cpv: shaped_prefix(
+                self.cpv.as_deref(),
+                "cpv",
+                "a CPV code prefix (e.g. 45, 45000000)",
+                PrefixShape::Digits { max: 8 },
+            )?,
             buyer: self.buyer,
             winner: self.winner,
             bidder: self.bidder,

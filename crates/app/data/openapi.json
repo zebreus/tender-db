@@ -691,13 +691,13 @@
       "country": {
         "name": "country",
         "in": "query",
-        "description": "On Tenders and Lots, a NUTS place-code prefix matched against the notice's places: at the country level NUTS is ISO-3166 alpha-2, so Germany is `DE` (not `DEU`), and a longer prefix narrows to a region, e.g. `DE1` or `DEB35`. On Organizations, an exact match on the Organization's own (alpha-2) country. Not applied by Notices. Letters and digits only \u2014 a value containing anything else (including an empty one) is a 400, because the prefix is matched as a pattern and a metacharacter would change what the filter means rather than what it matches.",
+        "description": "On Tenders and Lots, a NUTS place-code prefix matched against the notice's places: at the country level NUTS is ISO-3166 alpha-2, so Germany is `DE` (not `DEU`), and a longer prefix narrows to a region, e.g. `DE1` or `DEB35`. On Organizations, an exact match on the Organization's own (alpha-2) country. Not applied by Notices. Letters and digits only \u2014 a value containing anything else (including an empty one) is a 400, because the prefix is matched as a pattern and a metacharacter would change what the filter means rather than what it matches. At most five characters \u2014 a NUTS code is `DEB35` at its longest \u2014 so a longer value, which can prefix no code, is a 400 rather than a walk to the service deadline.",
         "schema": { "type": "string" }
       },
       "cpv": {
         "name": "cpv",
         "in": "query",
-        "description": "CPV code prefix, e.g. `45` (construction). Digits only \u2014 anything else, including an empty value, is a 400.",
+        "description": "CPV code prefix, e.g. `45` (construction). One to eight digits \u2014 the length of a full code \u2014 and nothing else: a letter, an empty value or a ninth digit is a 400.",
         "schema": { "type": "string" }
       },
       "buyer": {

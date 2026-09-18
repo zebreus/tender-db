@@ -32,6 +32,48 @@ fn a_viable_country_drives_the_lots_stream_from_the_classifications_seed() {
     assert!(!sql.contains("l.tender_id IN"), "bare status stays unseeded (fills from the dense walk): {sql}");
 }
 
+/// Issue 223, the LOTS half: an org reverse-lookup (winner/bidder/buyer) seeds
+/// the lots stream as an `l.tender_id IN (…)` semi-join, never as a JOIN in the
+/// FROM clause. The JOIN form is what issue 275 measured inverting on lots (turso
+/// drives from `lots` for `ORDER BY l.id` and probes the seed per row); 223's fix
+/// kept it for the org seed because it was only ever measured on `/v1/tenders`,
+/// and on prod 2026-09-18 `/v1/lots?winner=357` walked to the 30 s deadline.
+#[test]
+fn an_org_reverse_lookup_seeds_the_lots_stream_as_an_in_semi_join() {
+    let base = Filter { now: 1_756_000_000, ..Filter::default() };
+    let cases = [
+        (Filter { winner: Some(357), ..base.clone() }, "tender_version_result_winners", false),
+        (Filter { bidder: Some(357), ..base.clone() }, "tender_version_bid_parties", false),
+        (Filter { buyer: Some(357), ..base.clone() }, "tender_version_parties", true),
+    ];
+    for (filter, table, role_narrowed) in cases {
+        let (sql, params) = lots_statement(&filter, Scope::Page { after: 0, limit: 25 });
+        assert!(sql.contains("FROM lots l"), "the stream always drives from lots: {sql}");
+        assert!(
+            !sql.contains("JOIN lots"),
+            "the JOIN form inverts on lots (issue 275's measurement) and must not come back: {sql}"
+        );
+        assert!(
+            sql.contains(&format!("l.tender_id IN (SELECT DISTINCT tender_id FROM {table}")),
+            "{table} must seed as an IN semi-join: {sql}"
+        );
+        assert_eq!(
+            sql.contains("role LIKE '%Buyer%'"),
+            role_narrowed,
+            "only the buyer seed narrows by role (issue 225): {sql}"
+        );
+        assert!(params.iter().any(|p| matches!(p, Value::Integer(357))), "the org id is bound: {params:?}");
+    }
+    // The org seed outranks the country arms: one seed, not two.
+    let both = Filter { winner: Some(357), country: Some("LU".into()), country_seed: true, ..base };
+    let (sql, _) = lots_statement(&both, Scope::Page { after: 0, limit: 25 });
+    assert_eq!(sql.matches("l.tender_id IN").count(), 1, "exactly one seed when an org is given: {sql}");
+    assert!(
+        sql.contains("l.tender_id IN (SELECT DISTINCT tender_id FROM tender_version_result_winners"),
+        "and it is the org seed, not the country one (the country still filters, via the version predicate): {sql}"
+    );
+}
+
 /// The superset trap, lots edition (the tenders twin lives in
 /// status_head_range.rs): the seed enumerates tenders where ANY version matched
 /// the prefix, so a lot whose tender's OLD version was CY but whose head moved

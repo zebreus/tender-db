@@ -1359,9 +1359,13 @@ pub(crate) fn successor_for_test(prefix: &str) -> Option<String> {
 }
 
 fn prefix_ranges(prefix: &str) -> Option<Vec<(String, String)>> {
-    /// 2^4 = 16 seeks at ~0.01s is still four orders of magnitude under the walk it
-    /// avoids; beyond that the guard stops paying for itself.
-    const MAX_CASE_VARIANTS: usize = 16;
+    /// 2^5 = 32 seeks at ~0.02s is still four orders of magnitude under the walk it
+    /// avoids; beyond that the guard stops paying for itself. Five, not four,
+    /// because the API admits a `country` of up to five characters (a NUTS code is
+    /// `DEB35` at its longest — issue 117) and every value it admits must be one
+    /// this guard can bound: a declined guard is the 30 s walk the bound exists to
+    /// prevent, and `?country=Germany` (seven letters, declined at 16) reached it.
+    const MAX_CASE_VARIANTS: usize = 32;
 
     // A `LIKE` METACHARACTER makes the prefix a pattern, and a range is not one.
     // `version_predicates` binds `format!("{prefix}%")`, so `?country=%` becomes
@@ -2606,35 +2610,25 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
 /// the data is already wrong — removing a cross-check at the moment it is most needed.
 /// Recomputing costs ~1.9x on the sparse band and nothing on the dense path.
 /// See issue 27 for enforcing the invariant, after which this may be revisited.
-/// The seeded FROM clause for the lots stream. issue 223: an org reverse-lookup
-/// drives from the participation table's `organization_id` index rather than
-/// walking `lots`. The country/status seeds do NOT live here: on lots they are
-/// `l.tender_id IN (…)` predicates (see `lot_seed_predicates`), because the
-/// join form inverts — measured on prod 2026-08-25: turso drives the
-/// `hits JOIN lots … ORDER BY l.id` shape from `lots` to serve the ORDER BY
-/// and probes `hits` per row (CY 2.1s via JOIN vs 0.32s via IN; LU+open 7.8s
-/// vs 0.48s). Publication numbers are a tenders-only filter — `tender_from`'s
-/// exact-seed arm has no mirror here.
-fn lot_from(filter: &Filter) -> (String, Vec<Value>) {
-    match participation_seed(filter) {
-        Some((table, extra, org)) => (
-            format!(
-                "(SELECT DISTINCT tender_id FROM {table} WHERE organization_id = ?{extra}) hits
-                   JOIN lots l ON l.tender_id = hits.tender_id"
-            ),
-            vec![Value::Integer(org)],
-        ),
-        None => ("lots l".to_owned(), vec![]),
-    }
-}
-
 /// Issue 275: the lots-stream seeds, as `l.tender_id IN (…)` predicates — the
-/// form turso executes as a semi-join without the join-order inversion the
-/// doc above records. The seed set is a candidate SUPERSET (or an exact
-/// restatement); the untouched EXISTS/version predicates still decide
-/// membership, so results match the unseeded walk exactly.
+/// form turso executes as a semi-join. The JOIN form inverts on lots: measured
+/// on prod 2026-08-25, turso drives a `hits JOIN lots … ORDER BY l.id` shape from
+/// `lots` to serve the ORDER BY and probes `hits` per row (CY 2.1s via JOIN vs
+/// 0.32s via IN; LU+open 7.8s vs 0.48s). The seed set is a candidate SUPERSET
+/// (or an exact restatement); the untouched EXISTS/version predicates still
+/// decide membership, so results match the unseeded walk exactly.
 ///
-/// Two arms, mutually exclusive:
+/// Three arms, mutually exclusive, the org seed outranking the country ones:
+/// * An org reverse-lookup (issue 223, the LOTS half): `l.tender_id IN (SELECT
+///   DISTINCT tender_id FROM <participation table> WHERE organization_id = ?)`,
+///   the `buyer` arm narrowed by role exactly as `participation_seed` says. This
+///   was the FROM clause's JOIN until 2026-09-18 — the very shape 275 measured
+///   inverting — because 223's fix was only ever measured on `/v1/tenders`, where
+///   the JOIN is on the outer table's own PK and does not invert. On lots it did:
+///   `?winner=357` and `?bidder=357` walked to the 30 s deadline (503) on prod
+///   2026-09-18 while the same seeds answered `/v1/tenders` in 0.4 s. Publication
+///   numbers are a tenders-only filter — `tender_from`'s exact-seed arm has no
+///   mirror here.
 /// * A VIABLE sparse country (`country_seed`, issue 273 step 2's probe):
 ///   the case-variant UNION ALL enumeration off the classifications index.
 ///   Measured on prod: `?country=CY` 0.32s against 30s-class walks.
@@ -2651,8 +2645,15 @@ fn lot_from(filter: &Filter) -> (String, Vec<Value>) {
 /// from the dense walk, 1.1s), over-cap country without status (1.7s), and
 /// `cpv`+`status` (no cpv seed anywhere yet).
 fn lot_seed_predicates(q: &mut Query, filter: &Filter) {
-    if participation_seed(filter).is_some() {
-        return; // the FROM clause already drives from the tighter org seed
+    if let Some((table, extra, org)) = participation_seed(filter) {
+        q.push(
+            &format!(
+                " AND l.tender_id IN (SELECT DISTINCT tender_id FROM {table}
+                                       WHERE organization_id = ?{extra})"
+            ),
+            [Value::Integer(org)],
+        );
+        return; // the org seed is the tighter one; the country arms stay out
     }
     match (&filter.country, filter.country_seed) {
         (Some(prefix), true) => {
@@ -2691,7 +2692,8 @@ fn lots_query(filter: &Filter, scope: Scope) -> Query {
     // version they are reading.
     const SEQ: &str = "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)";
 
-    let (from, seed_param) = lot_from(filter);
+    // Always `FROM lots l`: every seed is an `l.tender_id IN (…)` predicate
+    // (`lot_seed_predicates`), never a JOIN in the FROM clause.
     let mut q = Query::default();
     q.push(
         &format!(
@@ -2700,12 +2702,12 @@ fn lots_query(filter: &Filter, scope: Scope) -> Query {
                       WHERE vl.tender_id = l.tender_id AND vl.seq = {SEQ}
                         AND vl.lot_id = l.id),
                     {SEQ}
-               FROM {from}
+               FROM lots l
               WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
                              WHERE vl.tender_id = l.tender_id AND vl.seq = {SEQ}
                                AND vl.lot_id = l.id"
         ),
-        seed_param,
+        [],
     );
     // `kind` filters INSIDE the existence probe: it is a property of the version's lot
     // row, so a lot whose current version does not carry the kind must not match.

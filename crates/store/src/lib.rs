@@ -7690,8 +7690,10 @@ tmpfs /data/ramcache tmpfs rw 0 0
     /// What actually decides the size of issue 117's remaining Class B hole is whether
     /// the decline counts CHARACTERS or ASCII LETTERS. Digits do not case-fold, so they
     /// do not branch: a NUTS-shaped prefix (two letters then digits) is guarded at any
-    /// length, and only 5-or-more LETTERS declines — which is not a NUTS shape at all,
-    /// so the hole is adversarial-only rather than reachable by ordinary use.
+    /// length, and only 6-or-more LETTERS declines. The API admits at most five
+    /// characters for `country` (issue 117's close, 2026-09-18), so the cap covers
+    /// every value it admits: nothing an ordinary or a naive user can send declines
+    /// the guard any more, and the hole is the store's internal callers' alone.
     #[test]
     fn the_guard_declines_on_letter_count_not_length() {
         use read::prefix_ranges_for_test as ranges;
@@ -7702,9 +7704,11 @@ tmpfs /data/ramcache tmpfs rw 0 0
         assert_eq!(ranges("ZZ999").map(|r| r.len()), Some(4), "a 5-CHAR prefix is still guarded");
         assert_eq!(ranges("45210000").map(|r| r.len()), Some(1), "an all-digit CPV prefix: one range");
 
-        // Four letters is the last guarded width; five declines.
-        assert_eq!(ranges("ABCD").map(|r| r.len()), Some(16), "16 variants is the cap, inclusive");
-        assert_eq!(ranges("ABCDE"), None, "5 LETTERS = 32 variants, past the cap");
+        // Five letters is the last guarded width — the longest `country` the API
+        // admits — and six declines.
+        assert_eq!(ranges("ABCD").map(|r| r.len()), Some(16));
+        assert_eq!(ranges("ABCDE").map(|r| r.len()), Some(32), "32 variants is the cap, inclusive");
+        assert_eq!(ranges("ABCDEF"), None, "6 LETTERS = 64 variants, past the cap");
         assert_eq!(ranges("DE30A").map(|r| r.len()), Some(8), "3 letters among digits -> 8");
 
         // The declines that exist for correctness rather than cost.

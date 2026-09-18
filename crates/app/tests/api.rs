@@ -1886,6 +1886,51 @@ async fn a_code_prefix_filter_rejects_patterns_instead_of_reinterpreting_them() 
     assert_eq!(stream_status("/v1/lots?cpv=%25".to_owned()).await, 400);
 }
 
+/// Issue 117: the shape check above bounded the CHARACTERS of a code-prefix
+/// filter but not its LENGTH, and the store's range guard declines a prefix with
+/// more letters than it can enumerate — so `?country=Germany` (seven letters, a
+/// naive-user shape) passed validation, declined the guard, and walked the whole
+/// collection to the 30 s deadline: 503 after 30.6 s on prod 2026-09-18, with a
+/// body saying "safe to retry", and four such requests pin every isolated reader.
+/// A NUTS code is at most five characters and a CPV code eight digits, so nothing
+/// longer can prefix a real code: it is a 400 at zero query cost, on every
+/// collection sharing the `Filter`.
+#[tokio::test]
+async fn a_code_prefix_longer_than_its_vocabulary_is_a_400_not_a_walk() {
+    let server = Server::start("prefix-length").await;
+    server.ingest_chain().await;
+
+    for path in ["/v1/tenders", "/v1/lots"] {
+        for value in ["Germany", "Deutschland", "ABCDEF", "DE1234"] {
+            assert_eq!(
+                server.status(&format!("{path}?country={value}&limit=2")).await,
+                400,
+                "{path}?country={value} cannot prefix a NUTS code and must not walk"
+            );
+        }
+        for value in ["450000001", "45abc", "abcdefgh"] {
+            assert_eq!(
+                server.status(&format!("{path}?cpv={value}&limit=2")).await,
+                400,
+                "{path}?cpv={value} cannot prefix a CPV code and must not walk"
+            );
+        }
+        // The longest real shapes still pass — an off-by-one at the bound would be
+        // a worse bug than the walk: a five-character NUTS-3 code and a full CPV code.
+        assert_eq!(server.status(&format!("{path}?country=DEB35&limit=2")).await, 200);
+        assert_eq!(server.status(&format!("{path}?country=ABCDE&limit=2")).await, 200, "five letters are admitted (and guarded)");
+        assert_eq!(server.status(&format!("{path}?cpv=45000000&limit=2")).await, 200);
+    }
+
+    // The envelope names the parameter and the bound, so a client can correct itself.
+    let body = server.get_allow_error("/v1/tenders?country=Germany").await;
+    let message = body["error"]["message"].as_str().unwrap_or_default();
+    assert!(message.contains("country") && message.contains("1 to 5"), "names the bound: {body}");
+    let body = server.get_allow_error("/v1/tenders?cpv=45abc").await;
+    let message = body["error"]["message"].as_str().unwrap_or_default();
+    assert!(message.contains("cpv") && message.contains("1 to 8 digits"), "names the bound: {body}");
+}
+
 /// Issue 218: `/v1/notices/{id}` carries a `quarantine` field so a notice held out
 /// of the canonical layer explains why, instead of returning a bare `parse_state`
 /// stub. The list rows stay lean (no per-item quarantine lookup).

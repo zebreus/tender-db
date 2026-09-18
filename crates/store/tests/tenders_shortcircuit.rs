@@ -263,12 +263,19 @@ async fn the_guard_changes_speed_not_results() {
         vec![1],
         "and the same shape matching a stored code must still return it"
     );
-    // 5 ASCII letters = 32 variants, past the cap: the guard declines and the full
-    // query answers. Correct either way; the point is that it is the LETTER count
-    // that triggers it, which is a much narrower hole than a character count.
+    // 5 ASCII letters = 32 variants, AT the cap (raised from 16 on 2026-09-18 so the
+    // guard covers every `country` the API admits — issue 117): guarded. 6 letters =
+    // 64, past it: the guard declines and the full query answers. Correct either way;
+    // the point is that it is the LETTER count that triggers it, which is a much
+    // narrower hole than a character count — and one the API bound now keeps
+    // unreachable from outside.
     assert!(
         ids(&conn, &country("ABCDE")).await.is_empty(),
-        "a 5-LETTER prefix declines the guard and falls through to the full query, \
+        "a 5-LETTER prefix is guarded and finds nothing"
+    );
+    assert!(
+        ids(&conn, &country("ABCDEF")).await.is_empty(),
+        "a 6-LETTER prefix declines the guard and falls through to the full query, \
          which correctly finds nothing"
     );
 
