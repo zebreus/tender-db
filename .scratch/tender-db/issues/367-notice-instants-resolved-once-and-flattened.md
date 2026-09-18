@@ -293,3 +293,12 @@ wait for, and makes `strftime('%Y', published_at)` in `/v1/sql` read the civil y
 storage alone and document that a bare-date bound is UTC midnight and an offset-bearing bound is
 the way to ask for a civil day. The dry run of `repair-notice-instants` (gated) will say how many
 date-only publications there are per era; decide on that number.
+
+**The candidate unit 4 is now issue 418 (filed 2026-09-18 23:5x UTC), with the decision taken.** A
+bounded measurement over three 50k-notice windows found that EVERY publication date in the
+eForms/DÖE era is date-only and ~92 % carry a positive offset — TED's own `OPP-012-notice`
+included — so the local-midnight instant is the rule of the whole era, not a dialect corner, and
+`published_after=2026-09-05&published_before=2026-09-06&source=doe` finds 0 of the tenders the API
+serves as published on the 5th. 418 stores the publication/dispatch instant at the civil day's UTC
+midnight at the resolver (unit 1, buildable now) and extends this issue's repair job with a
+streamed `shifted` class for the standing rows (unit 2, gated). Nothing more is owed on 367.
