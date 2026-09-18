@@ -1,6 +1,6 @@
 # 405 — the dashboard's heavy sections log nothing on success, so "Measuring…" cannot be told from "stuck"
 
-Status: ready-for-agent — units 1 (the success-path timing line) and 2 (the skip paths) LANDED 2026-09-16, see the foot; only the served age is still open. Found 2026-09-16 while trying to read issue 400/401's live acceptance off the deployed dashboard and finding the panel they changed simply absent, with nothing anywhere saying whether that was normal.
+Status: **DONE 2026-09-18** — the third unit, the served age, is DEPLOYED and VERIFIED at `9880839` (see the foot): `/api/dashboard` carries `heavy: {state, reason, for_seconds}` and the page's measuring panel says how long and why; watched live across a boot — `measuring` for 11 s then 32 s with only the cheap sections present, `idle` 5 s after every section landed. Units 1 (the success-path timing line) and 2 (the skip paths) LANDED 2026-09-16. Was: ready-for-agent — only the served age was still open. Found 2026-09-16 while trying to read issue 400/401's live acceptance off the deployed dashboard and finding the panel they changed simply absent, with nothing anywhere saying whether that was normal.
 Kind: defect (observability — `crates/app/src/coverage.rs`, the background refresher's `publish`/`refresh_into`)
 Relates to: 37 (the sectioned `None` default — "measuring…" rather than a false `0`, which is the right rendering and is exactly what makes the silence ambiguous), 61 (the coverage regression that moved the refresher onto its own thread and added the change-gate), 53 / 42 (why the heavy sections are gated behind `heavy_write_active` at all), 400 and 401 (whose acceptance this blocked for ~15 minutes)
 Blocked by: nothing
@@ -135,3 +135,33 @@ split out of unit 1 rather than bundled with it.
 - **Serve the age.** `measuring since <age>` on the section, so the UI can render "measuring for
   12 min" instead of "measuring…". A `Dashboard` model change, and the unit that fixes the READER's
   problem rather than the operator's.
+
+## Unit 3 landed 2026-09-18 — the age is served, with its reason (`9880839`)
+
+`Dashboard.heavy: Option<HeavyStatus>` — `state` (`boot`, `measuring`, `skipped`, `idle`), the skip
+`reason` when skipped, and `for_seconds`, an age filled server-side in `latest()` so the client needs
+no clock (191's lesson, the same way `QualityHistory.age_seconds` is served). `serde(default)`, so a
+snapshot older than the field still reads. Beside the snapshot the refresher keeps a `HeavyTrack`:
+stamped at boot, set to measuring when a heavy pass starts, to idle when it lands, to skipped with the
+announced reason when a pass declines — and the same reason repeated keeps its `since`, so six hours
+behind one backfill reads as ONE event ("for 6 h 20 min"), which is the served twin of unit 2's
+announce-on-transition. The `Measuring` panel reads the state:
+
+| state | the panel says |
+| --- | --- |
+| measuring | "Measuring for 3 min — this panel fills when the running scan lands." |
+| skipped | "Not measured yet: a write-heavy job holds the WAL (for 6 h 20 min). This panel fills once the refresher can scan again." |
+| idle (section still absent) | "The last scan landed 2 min ago without this section — its measurement failed; the coverage log says why." |
+| boot | "Measuring since boot (45 s ago)… this panel fills once its first background scan completes." |
+
+Pinned by `the_heavy_status_says_how_long_and_why`: boot / measuring / idle ages, a repeated skip keeps
+its since, a changed reason starts over, a backwards clock never serves a negative age.
+
+**Verified live across the deploy's own boot, 10:04–10:05 UTC (`GET /api/dashboard`):**
+
+    heavy: {state: "measuring", reason: null, for_seconds: 11}   sections present: system, quarantine
+    heavy: {state: "measuring", reason: null, for_seconds: 32}   sections present: system, quarantine
+    heavy: {state: "idle",      reason: null, for_seconds: 5}    every section present
+
+So the boot pass took ~45 s on today's corpus, and for those 45 s a reader of the page could see a
+scan was RUNNING and for how long — the exact reading that was missing on 2026-09-16.
