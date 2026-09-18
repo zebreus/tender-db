@@ -226,7 +226,8 @@ goes stale the moment it is saved. No other word is accepted;
 <code>today</code> would need a timezone this API has no notion of. All of this composes with the
 other filters, and pagination is unchanged: follow <code>next_cursor</code>, back
 into the <em>same</em> query shape — a cursor is specific to its sort. Sorted
-reads are REST-only; an SSE subscription snapshots in id order and then follows
+reads are REST-only; an SSE subscription snapshots in the list's own order (ascending id; the
+organization-seeded lots stream in its <em>(tender, lot)</em> order) and then follows
 the change log, so <code>sort</code>/<code>order</code> on a stream is
 <code>400</code>.</p>
 <pre><code># the five newest tenders

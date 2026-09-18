@@ -3475,3 +3475,50 @@ async fn an_org_seeded_lots_walk_pages_in_tender_order_with_a_compound_cursor() 
     }
     assert_eq!(walked, expected, "the tenders walk at limit=1 reproduces the one-page answer");
 }
+
+/// Issue 416: an organization-seeded subscription's snapshot pages through the
+/// windowed walk (issue 388) instead of DISTINCTing the org's whole participation
+/// slice on every snapshot page, and it ends on the read's own "no next page"
+/// rather than on page length. Pinned on the chain fixture with a two-row
+/// snapshot page, so the snapshot crosses several pages of the walk: the `added`
+/// set equals the REST list's one-page answer, in the list's order, once each —
+/// `(tender, lot)` on lots, id on tenders — and the `live` marker follows.
+#[tokio::test]
+async fn an_org_seeded_subscription_snapshots_through_the_windowed_walk() {
+    let server = Server::boot("seeded-snapshot", Some(2), None).await;
+    server.ingest_chain().await;
+    let reader = server.db.readers(1).expect("readers").get().await.expect("reader");
+    let mut rows = reader
+        .query(
+            "SELECT w.organization_id, COUNT(*) AS lots
+               FROM tender_version_result_winners w
+               JOIN tender_version_lots vl ON vl.tender_id = w.tender_id AND vl.seq = w.seq
+              WHERE w.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = w.tender_id)
+              GROUP BY w.organization_id
+              ORDER BY lots DESC, w.organization_id
+              LIMIT 1",
+            (),
+        )
+        .await
+        .expect("query winners");
+    let org = rows.next().await.expect("row").map(|r| r.get_value(0).unwrap().as_integer().copied().unwrap());
+    drop(rows);
+    drop(reader);
+    let org = org.expect("the chain fixture has a head-version winner with lots");
+
+    for collection in ["lots", "tenders"] {
+        let one = server.get(&format!("/v1/{collection}?winner={org}&limit=1000")).await;
+        assert_eq!(one["more"], false);
+        let expected: Vec<i64> = items(&one).iter().map(|i| i["id"].as_i64().expect("id")).collect();
+        assert!(!expected.is_empty(), "{collection}: org {org} matches something");
+
+        let mut tape = Tape::open(&server, &format!("/v1/{collection}?winner={org}"), None).await;
+        let (snapshot, live) = tape.until_live().await;
+        assert_eq!(live.name, "live");
+        assert!(snapshot.iter().all(|e| e.data["op"] == "added"), "a snapshot is `added` rows");
+        let got: Vec<i64> = snapshot.iter().map(|e| e.data["id"].as_i64().expect("id")).collect();
+        assert_eq!(got, expected, "{collection}: the snapshot is the list's answer, in its order, once each");
+        // Snapshot events carry no SSE id (a mid-snapshot reconnect re-snapshots).
+        assert!(snapshot.iter().all(|e| e.id.is_none()), "no resumable id inside a snapshot");
+    }
+}

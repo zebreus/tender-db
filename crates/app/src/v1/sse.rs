@@ -31,6 +31,7 @@
 
 use super::{
     ApiError, ApiResult, AppState, Collection, Params, StreamSlot, json, read_items, read_matches,
+    read_page,
 };
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::IntoResponse;
@@ -169,9 +170,16 @@ fn events(
             // disconnect drops it at the next yield and each page's reader
             // goes back to the pool before anything is sent.
             Started::Snapshot { cursor, generation } => {
-                let mut after = 0;
-                loop {
-                    let scope = Scope::Page { after, limit: snapshot_page };
+                // The page read is the REST list's own (`read_page`, issue
+                // 416): an organization-seeded subscription pages through the
+                // windowed walk (issue 388) with that walk's own cursor grammar,
+                // and the snapshot ends when the read says there is no next
+                // page — never on page length, which a windowed page cannot
+                // promise. The band is left open (`i64::MAX`), so the unseeded
+                // walk reads as it always did: one unbounded id-ordered page
+                // after another, a short page being the last.
+                let mut next: Option<String> = Some(String::new());
+                while let Some(after) = next.take() {
                     // A filter shape that CAN walk pages on the isolated
                     // runtime and pool, exactly as the list endpoint routes it
                     // (issue 120) — a connected subscriber paging a walk-shaped
@@ -180,7 +188,7 @@ fn events(
                     // snapshot failure: the client re-subscribes and
                     // re-snapshots under the isolated pool's own admission.
                     let result = if store::read::walks(collection.into(), &filter) {
-                        match isolated.read(collection, filter.clone(), scope).await {
+                        match isolated.read_page(collection, filter.clone(), after, snapshot_page, i64::MAX).await {
                             Ok(result) => result,
                             Err(super::isolate::Shed) => {
                                 let shed = "too many expensive filtered reads in flight; retry shortly";
@@ -190,7 +198,7 @@ fn events(
                         }
                     } else {
                         match readers.get().await {
-                            Ok(reader) => read_items(collection, &reader, &filter, scope).await,
+                            Ok(reader) => read_page(collection, &reader, &filter, &after, snapshot_page, i64::MAX).await,
                             Err(e) => Err(e),
                         }
                     };
@@ -201,10 +209,8 @@ fn events(
                             return;
                         }
                     };
-                    let Some(last) = page.last() else { break };
-                    after = last.id;
-                    let full = page.len() as i64 == snapshot_page;
-                    for item in &page {
+                    next = page.next;
+                    for item in &page.items {
                         // Deliberately NO SSE id on snapshot events: an
                         // EventSource that loses the stream mid-snapshot must
                         // reconnect with no Last-Event-ID and re-snapshot.
@@ -221,9 +227,6 @@ fn events(
                             Some(&item.json),
                             true,
                         ));
-                    }
-                    if !full {
-                        break;
                     }
                 }
                 yield Ok(live_event(cursor, generation));
