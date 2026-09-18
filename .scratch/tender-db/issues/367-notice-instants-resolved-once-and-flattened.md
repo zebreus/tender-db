@@ -1,11 +1,18 @@
 # 367 — 218,876 notices published "1970-01-01", 7,417 with NULL, and every date-only publication shifted: one resolver, run at the wrong layer, returning a scalar
 
-Status: UNITS 1-2 DONE 2026-09-07 (owner) — fix deployed (`4b40606`) and the 226,293 standing rows repaired (jobs 798 dry / 799 wet). Unit 3 (the offset/has_time triple and the date-only rendering) remains ready-for-agent: a date-only publication still serves a shifted instant. Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
+Status: ready-for-agent — **UNIT 3 BUILT, gated (127/127) and DEPLOYED 2026-09-18 19:24 UTC at `665e75a`** (see the foot): the notice row carries the offset and precision each instant was published with, and every surface renders a date-only publication as the date the source stated. New ingests carry it from the next tick; **the standing rows wait for the gated wet `repair-notice-instants` run** (its new streaming class stamps the pair on every row whose instants already agree — expect ~14.5M `unstamped`, ~0 planned on the dry run), after which 7954578 and the other probes stop inverting. The candidate unit 4 (a bare-date bound vs a date-only publication's local-midnight instant) is named at the foot, not decided. Was: UNITS 1-2 DONE 2026-09-07 (owner) — fix deployed (`4b40606`) and the 226,293 standing rows repaired (jobs 798 dry / 799 wet). Unit 3 (the offset/has_time triple and the date-only rendering) remains ready-for-agent: a date-only publication still serves a shifted instant. Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
 Kind: defect (parse → canonical instants; the notice layer vs the version layer)
 Relates to: 18 (fixed this gap for sdk-0.1 by adding SDK01-* to these two field lists),
 85 (fixed it for DE-1.x FACTS by aliasing — which is projection-only, hence this), 255
 (the decided_utc / decided_offset / decided_has_time triple that already does the right
 thing on another axis), ADR-0013
+
+## Verify
+
+    curl -s --max-time 20 https://tenders.zebreus.click/v1/tenders/7954578 | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['published_at'], d['dispatched_at'])"
+
+- **done**: a bare date (`2026-09-05`) beside `2026-09-05T…+02:00` — the standing row carries its pair, i.e. the gated wet `repair-notice-instants` run has stamped the corpus
+- **open**: `2026-09-04T22:00:00Z 2026-09-05T17:32:26Z` — the pre-unit-3 rendering of an unstamped row (read 2026-09-18 after the deploy: `2026-09-04T22:00:00Z 2026-09-05T17:32:26Z` at `665e75a`, 19:25 UTC; the row's four pair columns read NULL by PK)
 
 ## Observed
 
@@ -202,3 +209,68 @@ here rests on the OpenAPI contract, which is verified live.
 `tender_versions`, backfilled, with published_at/dispatched_at rendered through `stamp()` at
 `json.rs:66/118/331` — after which 15315, 1542367, 5724 and 7954578 stop inverting and the
 OpenAPI promise at `openapi.json:905` becomes true instead of contradicted by `/docs`.
+
+## Unit 3 BUILT 2026-09-18 — the instants carry the offset and precision they were published with (`665e75a`, gate 127/127, deployed 19:24 UTC on an idle queue)
+
+**What the API serves now.** A date-only publication is served as the date the source stated:
+the DÖE fixture's `RequestedPublicationDate 2026-07-16+02:00` renders `"published_at": "2026-07-16"`
+beside `"dispatched_at": "2026-07-16T16:21:42+02:00"` — on the tender list, the detail, its
+version list and the notice. Before, that row served `2026-07-15T22:00:00Z` (the civil day's local
+midnight in UTC) beside `2026-07-16T14:21:42Z`: the "published a day before it was dispatched"
+inversion that the 2026-09-15 fan-out measured on 86.7 % of DE-1.1 notices and ~90 % of current
+DE-2.x versions. Timed instants render in their published offset (`+02:00`), no longer re-expressed
+as `Z` — the rule every other stamped field (`submission_deadline`, `decided`, `concluded`) already
+followed.
+
+**Where the pair lives, and why not on the versions.** Four ADD-COLUMN migrations on `notices`:
+`published_offset`, `published_has_time`, `dispatched_offset`, `dispatched_has_time` — the same
+`(utc, offset, has_time)` shape issue 255 gave the award axis. `notice_stamps` (the resolver, now
+returning `store::Stamp`s; `notice_instants` is its UTC projection and still feeds the fold order)
+hands the processor the pair, and all four notice writers store it (the process-time INSERT, the
+re-parse and reclaim UPDATEs, the repair job). The version layer gets NO column: a version and its
+causing notice resolve their instants through one function (the invariant
+`notices_and_their_versions_carry_the_same_instants` pins), so the list/detail/version reads take
+the pair off the notice by primary-key seek — four scalar subqueries on the head SELECT, a LEFT JOIN
+on the version list. That is what makes the standing corpus fixable by ONE notice-side job instead
+of a 14.5M-version refold.
+
+**A row without the pair renders as before, never guessed.** `stored_stamp` yields `Some` only when
+all three columns are present; the renderer (`json::published` / `published_opt`) falls back to the
+bare UTC instant otherwise. Pinned end to end: the same DÖE tender re-read after NULLing the pair
+serves `2026-07-15T22:00:00Z` again — the pre-unit-3 shape, not a civil date computed from a zero
+offset.
+
+**The standing rows: `repair-notice-instants` gained a streaming class.** A parsed notice whose
+instants already agree with the resolver but whose pair is missing (every row stamped before today)
+is counted as `unstamped` on the dry run and STAMPED AS THE WALK GOES on the wet run — guarded per
+row on the two instants it was read with (`… WHERE id = ? AND published_at IS ? AND dispatched_at
+IS ?`), committed in 20k-row slices with a checkpoint between, and never put in the plan: the
+instant does not change, so there is nothing for a reviewer to weigh, and a 14.5M-entry plan would
+not fit in memory anyway. The planned classes (epoch / NULL / resolver-silent) are unchanged and now
+write the pair with the instant; the wet gate on the reviewed plan's row count applies to them
+alone. A row whose instant MOVED (a re-parse between runs) is a planned disagreement, not an
+unstamped row. Report and job summary carry `unstamped` / `stamped`; the plan's `to` values carry
+the pair. **The wet run over the corpus is the gated production write** — the same job as unit 2's
+foot, dry first (expect ~14.5M `unstamped`, ~0 planned), then wet. Until it runs, standing rows
+serve the old rendering; notices ingested from the next daily tick carry the pair.
+
+**The bound parser accepts what the API serves.** `published_after=2026-06-03` was a `400` once the
+list served a bare date (the sort test found it): `parse_instant` now takes `YYYY-MM-DD` as that
+day's midnight UTC, on all four bounds, documented in `/docs` and the OpenAPI.
+
+**Open, on record — the bound's semantics for date-only publications.** A date-only publication is
+STORED as its civil day's local midnight (`2026-07-16+02:00` → `2026-07-15T22:00:00Z`), and a
+bare-date bound is midnight UTC, so `published_after=2026-07-16` excludes a tender the API serves
+as published on `2026-07-16`. Unit 3 as written ("carry the triple, render through `stamp()`")
+does not touch the stored instant; changing it (UTC midnight for a date-only value) is a fold-wide
+rule that also governs date-only deadlines and would move every such instant in the corpus, and a
+civil-date comparison at query time has no offset to compare with. Named here as the candidate
+unit 4, not decided.
+
+**Tests.** `notice_instant_repair.rs` (9): the unstamped class stamped without a plan and idempotent
+on the next walk, a moved row planned not stamped, a recorded Notice reading back its pair, the
+existing five with the pair asserted beside the instants. `process.rs`: the processor's stamp keeps
+`(offset 60, has_time false)`. `lib.rs`: the pre-issue-18 database migrates the four columns in.
+`api.rs`: the DÖE date-only tender on every surface plus the unstamped fallback; the cross-sort
+cursor test reads the stored epoch off the store (the served string no longer carries it); the
+ISO assertion accepts a bare date or an offset-bearing instant. Gate 127/127.
