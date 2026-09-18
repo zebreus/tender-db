@@ -7463,6 +7463,16 @@ impl Db {
             (),
         )
         .await?;
+        // Issue 386 unit 1: the FTS key-election arm groups `plan_notice` by key for
+        // ONE source. A partial index keeps that a read of the FTS rows (~7.6k tenders'
+        // worth) rather than a walk of the whole plan; it holds no non-FTS entry, so
+        // the bulk insert pays nothing for TED/DÖE rows and the index-free `group_key`
+        // UPDATE never touches it (`group_key` is not in it).
+        conn.execute(
+            "CREATE INDEX plan_notice_fts_key ON plan_notice(procedure_key, buyer_key) WHERE source = 'fts'",
+            (),
+        )
+        .await?;
         // The legacy OJS graph: one node per OJS number (including not-yet-ingested
         // edge targets, so identity is stable as backfill deepens), symmetric edges.
         conn.execute(
@@ -7852,6 +7862,47 @@ impl Db {
             // expected to refuse 3 keys out of a 14-key shaped population.
             eprintln!(
                 "[project] group step refused-keys: {refused} placeholder-shaped key(s) with >= 3                  distinct buyer sets, {:.1}s",
+                t.elapsed().as_secs_f64()
+            );
+        }
+
+        // Issue 386 unit 1: an FTS ocid is not always one procurement. Find a
+        // Tender's utilities qualification systems (CELEX 32014L0025) publish every
+        // participating utility's awards under the REGISTER's ocid —
+        // `ocds-h6vhtk-02874c` carries 29 distinct buyers on its first page alone —
+        // and keying on the ocid alone folded Scottish Hydro's and SSE's contracts
+        // under Anglian Water (tender 7954584: 7 of 18 contracts another
+        // utility's). On FTS the buyer key is the publisher's own stable party id
+        // (`GB-PPON-…`), so two distinct buyer SETS under one ocid are two
+        // procurements, not the org-layer duplicate the placeholder gate's `>= 3`
+        // absorbs: the threshold here is 2. A joint procurement repeats ONE set and
+        // stays one Tender; a single-buyer chain of any length (7954590's 123
+        // versions) is untouched; a refused ocid splits per buyer through the same
+        // `refused:` arm below, so the split reads in the served `procedure_key`.
+        // The failure direction is CONTEXT.md's: a buyer that re-registers under a
+        // new id splits its chain — never a weld.
+        {
+            let t = std::time::Instant::now();
+            conn.execute(
+                "INSERT OR IGNORE INTO plan_refused_key(procedure_key)                  SELECT procedure_key FROM plan_notice                   WHERE source = 'fts' AND procedure_key IS NOT NULL AND buyer_key IS NOT NULL                   GROUP BY procedure_key                  HAVING COUNT(DISTINCT buyer_key) >= 2",
+                (),
+            )
+            .await?;
+            let mut r = conn
+                .query(
+                    "SELECT COUNT(*) FROM (SELECT procedure_key FROM plan_notice                       WHERE source = 'fts' AND procedure_key IS NOT NULL AND buyer_key IS NOT NULL                       GROUP BY procedure_key HAVING COUNT(DISTINCT buyer_key) >= 2)",
+                    (),
+                )
+                .await?;
+            let refused = match r.next().await? {
+                Some(row) => int(&row, 0),
+                None => 0,
+            };
+            drop(r);
+            // Logged unconditionally, including the zero, for the same reason as the
+            // placeholder gate above.
+            eprintln!(
+                "[project] group step refused-keys (fts): {refused} ocid(s) carrying >= 2 distinct                  buyer sets, split per buyer, {:.1}s",
                 t.elapsed().as_secs_f64()
             );
         }
@@ -22572,6 +22623,99 @@ mod tests {
             matches!(refused, Some(turso::Value::Integer(1))),
             "exactly one key refused, got {refused:?}"
         );
+
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
+
+    /// Issue 386 unit 1: an FTS ocid shared by two buyers is two procurements —
+    /// the utilities qualification-system shape, where independent utilities file
+    /// their awards under the register's ocid. Two distinct buyer SETS split the
+    /// key per buyer (threshold 2, because FTS buyer keys are the publisher's own
+    /// party ids, not org-layer duplicates); a one-buyer chain of any length stays
+    /// one Tender; a joint procurement repeating one SET stays one Tender; and the
+    /// arm is FTS-only — a TED key with two buyer sets and no placeholder shape is
+    /// untouched, as before.
+    #[tokio::test]
+    async fn an_fts_ocid_shared_by_two_buyers_splits_per_buyer_and_a_one_buyer_chain_stays_one() {
+        let (db, path) = scratch_db("plan-fts-ocid").await;
+        db.reset_plan().await.expect("plan tables");
+
+        let row = |notice_id: i64, source: &str, key: &str, buyer: Option<&str>| super::PlanRow {
+            notice_id,
+            procedure_key: Some(key.to_owned()),
+            legacy: false,
+            ojs_self: None,
+            source: source.to_owned(),
+            source_rank: 0,
+            publication_id: format!("{notice_id:06}-2025"),
+            published_at: 1_700_000_000 + notice_id,
+            subtype: None,
+            ojs_edges: Vec::new(),
+            prev_refs: Vec::new(),
+            key_shaped: false,
+            buyer_key: buyer.map(str::to_owned),
+            shared_kind: None,
+        };
+        const REGISTER: &str = "ocds-h6vhtk-02874c";
+        const CHAIN: &str = "ocds-h6vhtk-0a0a0a";
+        const JOINT: &str = "ocds-h6vhtk-0b0b0b";
+        const TED_TWO: &str = "3d2aac86-4286-4ae2-9bc1-08eb1cc61f80";
+        db.insert_plan(&[
+            // The register: Anglian Water, then Scottish Hydro twice, then SSE.
+            row(1, "fts", REGISTER, Some("GB:GB-PPON:ANGL")),
+            row(2, "fts", REGISTER, Some("GB:GB-PPON:SHET")),
+            row(3, "fts", REGISTER, Some("GB:GB-PPON:SHET")),
+            row(4, "fts", REGISTER, Some("GB:GB-PPON:SSE")),
+            // A register release naming NO buyer stays an island (no pool of the buyer-less).
+            row(5, "fts", REGISTER, None),
+            // A genuine single-buyer chain (7954590's shape), five releases.
+            row(11, "fts", CHAIN, Some("GB:GB-PPON:TAXI")),
+            row(12, "fts", CHAIN, Some("GB:GB-PPON:TAXI")),
+            row(13, "fts", CHAIN, Some("GB:GB-PPON:TAXI")),
+            row(14, "fts", CHAIN, Some("GB:GB-PPON:TAXI")),
+            row(15, "fts", CHAIN, Some("GB:GB-PPON:TAXI")),
+            // A joint procurement: the SAME two-buyer set on every release.
+            row(21, "fts", JOINT, Some("GB:GB-PPON:AAA|GB:GB-PPON:BBB")),
+            row(22, "fts", JOINT, Some("GB:GB-PPON:AAA|GB:GB-PPON:BBB")),
+            // TED, two buyer sets, a real (unshaped) key: not this arm's business.
+            row(31, "ted", TED_TWO, Some("DE:national:22771062")),
+            row(32, "ted", TED_TWO, Some("DE:national:30900729")),
+        ])
+        .await
+        .expect("insert plan");
+
+        db.build_plan_groups().await.expect("group");
+
+        async fn key_of(db: &Db, notice_id: i64) -> String {
+            match db
+                .scalar(&format!("SELECT group_key FROM plan_notice WHERE notice_id = {notice_id}"))
+                .await
+                .expect("group_key")
+            {
+                Some(turso::Value::Text(t)) => t,
+                other => panic!("notice {notice_id}: no group_key ({other:?})"),
+            }
+        }
+
+        assert_eq!(key_of(&db, 1).await, format!("refused:{REGISTER}:GB:GB-PPON:ANGL"));
+        assert_eq!(key_of(&db, 2).await, format!("refused:{REGISTER}:GB:GB-PPON:SHET"));
+        assert_eq!(key_of(&db, 3).await, key_of(&db, 2).await, "one buyer's releases under the register are one Tender");
+        assert_eq!(key_of(&db, 4).await, format!("refused:{REGISTER}:GB:GB-PPON:SSE"));
+        assert_ne!(key_of(&db, 1).await, key_of(&db, 2).await, "two utilities under one ocid are two Tenders");
+        assert_eq!(key_of(&db, 5).await, "island:5", "a buyer-less release of a split ocid stays an island");
+        for n in 11..=15 {
+            assert_eq!(key_of(&db, n).await, CHAIN, "a single-buyer chain keeps its ocid, however long");
+        }
+        for n in [21, 22] {
+            assert_eq!(key_of(&db, n).await, JOINT, "a joint procurement repeats one buyer SET and stays one Tender");
+        }
+        for n in [31, 32] {
+            assert_eq!(key_of(&db, n).await, TED_TWO, "the FTS arm never reaches a TED key");
+        }
+        let refused = db.scalar("SELECT COUNT(*) FROM plan_refused_key").await.expect("refused count");
+        assert!(matches!(refused, Some(turso::Value::Integer(1))), "exactly the register is refused, got {refused:?}");
 
         for suffix in ["", "-wal", "-shm"] {
             let _ = std::fs::remove_file(format!("{path}{suffix}"));

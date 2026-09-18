@@ -1030,6 +1030,25 @@ pub fn weld_bands_sql() -> String {
     )
 }
 
+/// Issue 386 unit 1: the FTS arm of the weld detector. On Find a Tender a
+/// Tender is keyed on the ocid, and the utilities register publishes many
+/// buyers' awards under ONE ocid — a weld of 2–30 buyers, far below
+/// [`WELD_MIN_BUYERS`] and invisible in a corpus-wide top-40 listing. So this
+/// counts the FTS Tenders carrying two or more distinct buyer organizations
+/// across their versions: with the per-buyer key election in place the honest
+/// reading is ZERO, and any non-zero is a recurrence (or a joint procurement,
+/// which the listing's `per-ver` column separates) — the tripwire for the
+/// 2021→ backfill. Scoped through `tenders(source, id)`, so it is an index read
+/// over ~8k tenders, not a corpus pass.
+pub fn weld_fts_sql() -> String {
+    "SELECT COUNT(*) FROM (SELECT p.tender_id \
+       FROM tenders t JOIN tender_version_parties p ON p.tender_id = t.id \
+      WHERE t.source = 'fts' AND p.role IN ('buyer', 'Procedure-Buyer') \
+      GROUP BY p.tender_id \
+     HAVING COUNT(DISTINCT p.organization_id) >= 2)"
+        .to_owned()
+}
+
 /// Published dates that REPEAT outside the plausible range (issue 366) — the same
 /// instrument as [`sentinel_amounts_sql`], pointed at the other column family whose
 /// head election takes a `.max()`.
@@ -1433,6 +1452,8 @@ pub fn whole_corpus_queries() -> Vec<(String, String)> {
         // both defects look identical from outside, so it is built once.
         ("weld_candidates".to_owned(), weld_candidates_sql()),
         ("weld_bands".to_owned(), weld_bands_sql()),
+        // Issue 386 unit 1: the FTS register weld, below the bands' reach.
+        ("weld_fts".to_owned(), weld_fts_sql()),
         // Issue 368 unit 4b: the dropped-vocabulary diagnostic. Whole-corpus
         // registration (not `windowed_queries`) because the `notice_*` tables key
         // on `notice_id` while the windowing machinery walks `tender_id` — there
@@ -2122,6 +2143,9 @@ pub struct Report {
     pub weld_candidates: Vec<WeldRow>,
     /// Tenders at each of [`WELD_BANDS`], so the listing cap cannot be read as the population.
     pub weld_bands: Vec<u64>,
+    /// Issue 386 unit 1: FTS Tenders carrying >= 2 distinct buyer organizations —
+    /// `None` when the query did not run, which a detector must never render as 0.
+    pub weld_fts: Option<u64>,
     pub sentinel_amounts: Vec<SentinelRow>,
     /// Published amounts repeating at the BOTTOM of the range (issue 380), which
     /// [`sentinel_amounts`](Self::sentinel_amounts) does not reach.
@@ -2229,6 +2253,8 @@ pub struct Raw {
     /// `[currency, cents, hits, tenders]` per repeated implausible amount (issue 366).
     pub weld_candidates: Rows,
     pub weld_bands: Rows,
+    /// Issue 386 unit 1: one row, one count — FTS Tenders with >= 2 distinct buyers.
+    pub weld_fts: Rows,
     pub sentinel_amounts: Rows,
     /// `[currency, cents, hits, tenders]` per repeated amount at the bottom of the
     /// range (issue 380).
@@ -2300,6 +2326,7 @@ impl Raw {
             longest_chain: take("longest_chain", &mut unmeasured)?,
             weld_candidates: take("weld_candidates", &mut unmeasured)?,
             weld_bands: take("weld_bands", &mut unmeasured)?,
+            weld_fts: take("weld_fts", &mut unmeasured)?,
             sentinel_amounts: take("sentinel_amounts", &mut unmeasured)?,
             sentinel_amounts_low: take("sentinel_amounts_low", &mut unmeasured)?,
             sentinel_low_rate: take("sentinel_low_rate", &mut unmeasured)?,
@@ -2494,6 +2521,7 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
             .first()
             .map(|r| (0..WELD_BANDS.len()).map(|i| as_u64(r.get(i))).collect())
             .unwrap_or_default(),
+        weld_fts: raw.weld_fts.first().map(|r| as_u64(r.get(0))),
         sentinel_amounts: sentinel(&raw.sentinel_amounts),
         sentinel_amounts_low: sentinel(&raw.sentinel_amounts_low),
         sentinel_low_rate: raw
@@ -3141,6 +3169,25 @@ pub fn render_text(report: &Report) -> String {
             .map(|(n, c)| format!(">= {n}: {}", group(*c)))
             .collect();
         let _ = writeln!(out, "  Tenders by DISTINCT buyer organizations — {}", bands.join("   "));
+        // Issue 386 unit 1: the FTS register weld sits far below the bands, so it
+        // has its own line — and its own UNMEASURED, for the same reason as above.
+        match report.weld_fts {
+            Some(n) => {
+                let _ = writeln!(
+                    out,
+                    "  FTS Tenders with >= 2 distinct buyers: {} — expected 0 under the per-buyer \
+                     ocid split (issue 386); any non-zero is a recurrence or a joint procurement",
+                    group(n)
+                );
+            }
+            None => {
+                let _ = writeln!(
+                    out,
+                    "  FTS Tenders with >= 2 distinct buyers: UNMEASURED — issue 386's query did \
+                     not run, which is not 'none found'"
+                );
+            }
+        }
         let _ = writeln!(
             out,
             "  {:<12} {:>8} {:>10} {:>9}",
@@ -3792,6 +3839,8 @@ pub fn render_json(report: &Report) -> String {
         "weld_candidates": {
             "min_buyers": WELD_MIN_BUYERS,
             "listing_cap": WELD_LISTING_CAP,
+            // Issue 386 unit 1: null when unmeasured, never 0.
+            "fts_multi_buyer": report.weld_fts,
             "bands": WELD_BANDS
                 .iter()
                 .zip(report.weld_bands.iter())
@@ -3994,6 +4043,7 @@ mod tests {
             longest_chain: 3_282,
             weld_candidates: vec![],
             weld_bands: vec![],
+            weld_fts: None,
             sentinel_amounts: vec![],
             sentinel_amounts_low: vec![],
             sentinel_low_rate: vec![],
@@ -4308,7 +4358,7 @@ mod tests {
     /// green, which is the worst failure available to a detector.
     #[test]
     fn the_weld_detector_counts_both_buyer_vocabularies() {
-        for sql in [weld_candidates_sql(), weld_bands_sql()] {
+        for sql in [weld_candidates_sql(), weld_bands_sql(), weld_fts_sql()] {
             assert!(sql.contains("'buyer'"), "the legacy role must be counted: {sql}");
             assert!(sql.contains("'Procedure-Buyer'"), "the eForms role must be counted: {sql}");
             // Not a role-blind count: Tenderer and the review bodies would swamp
@@ -5206,6 +5256,7 @@ mod tests {
                 // other whole-corpus sweeps it shares its phase with.
                 "weld_candidates",
                 "weld_bands",
+                "weld_fts",
                 "unmapped_fields",
                 "publication_days",
             ]
@@ -5397,6 +5448,7 @@ mod tests {
             ("withheld_markers".to_owned(), Some(vec![])),
             ("weld_candidates".to_owned(), Some(vec![])),
             ("weld_bands".to_owned(), Some(vec![])),
+            ("weld_fts".to_owned(), Some(vec![])),
             ("unmapped_fields".to_owned(), Some(vec![])),
             ("publication_days".to_owned(), Some(vec![])),
         ])
@@ -5843,6 +5895,9 @@ mod tests {
             // contradiction.
             ("weld_candidates".to_owned(), Some(vec![vec![json!(2_816_628), json!(127), json!(2_983)]])),
             ("weld_bands".to_owned(), Some(vec![vec![json!(2), json!(1), json!(1), json!(1)]])),
+            // Issue 386 unit 1: the FTS arm measured, and reading zero — which the
+            // renderer must print as 0, not as UNMEASURED.
+            ("weld_fts".to_owned(), Some(vec![vec![json!(0)]])),
             ("unmapped_fields".to_owned(), Some(vec![])),
             ("publication_days".to_owned(), Some(vec![])),
         ];

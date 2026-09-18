@@ -9,7 +9,7 @@
 //! Contains public sector information licensed under the Open Government
 //! Licence v3.0.
 
-use ingest::process;
+use ingest::{process, project};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
@@ -45,6 +45,11 @@ fn temp_dir(name: &str) -> PathBuf {
 /// An archive holding one assembled FTS daily, registered exactly as
 /// `fetch_fts` leaves it.
 async fn fixture(name: &str) -> (PathBuf, store::Db) {
+    fixture_of(name, &MEMBERS).await
+}
+
+/// The same archive, assembled from the members given.
+async fn fixture_of(name: &str, members: &[(&str, &[u8])]) -> (PathBuf, store::Db) {
     let archive = temp_dir(name);
     std::fs::create_dir_all(archive.join("fts/daily")).unwrap();
     let path = archive.join("fts/daily/2026-09-03.zip");
@@ -52,8 +57,8 @@ async fn fixture(name: &str) -> (PathBuf, store::Db) {
     let opts = zip::write::SimpleFileOptions::default()
         .compression_method(zip::CompressionMethod::Deflated)
         .last_modified_time(zip::DateTime::default());
-    for (member, bytes) in MEMBERS {
-        zip.start_file(member, opts).unwrap();
+    for (member, bytes) in members {
+        zip.start_file(*member, opts).unwrap();
         zip.write_all(bytes).unwrap();
     }
     zip.finish().unwrap().flush().unwrap();
@@ -219,6 +224,115 @@ async fn fts_zip_package_processes_end_to_end() {
         cell_i64(&db, "SELECT COUNT(*) FROM notices").await,
         NOTICE_IDS.len() as i64,
         "re-processing the same package must not duplicate a release"
+    );
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// One synthetic FTS release: a UK6 award under `ocid`, published by `buyer`
+/// (a GB-PPON party id, the form the crosswalk's GB arm keys on).
+fn release(ocid: &str, id: &str, day: u32, buyer: &str, name: &str, title: &str) -> Vec<u8> {
+    let pkg = serde_json::json!({
+        "version": "1.1",
+        "publisher": {"name": "Find a Tender (test)"},
+        "releases": [{
+            "ocid": ocid,
+            "id": id,
+            "date": format!("2026-09-{day:02}T10:00:00+01:00"),
+            "tag": ["award"],
+            "language": "en",
+            "initiationType": "tender",
+            "buyer": {"id": format!("GB-PPON-{buyer}"), "name": name},
+            "parties": [{
+                "id": format!("GB-PPON-{buyer}"),
+                "name": name,
+                "identifier": {"scheme": "GB-PPON", "id": buyer},
+                "address": {"country": "GB"},
+                "roles": ["buyer"]
+            }],
+            "tender": {
+                "id": format!("{id}-t"),
+                "title": title,
+                "legalBasis": {"scheme": "CELEX", "id": "32014L0025"},
+                "documents": [{"id": format!("{id}-d"), "documentType": "awardNotice", "noticeType": "UK6"}]
+            }
+        }]
+    });
+    serde_json::to_vec(&pkg).unwrap()
+}
+
+/// Issue 386 unit 1: a reused ocid is not always one procurement. Find a Tender's
+/// utilities qualification systems publish every participating utility's awards
+/// under the REGISTER's ocid, and keying on the ocid alone folded seven of
+/// tender 7954584's eighteen contracts under a buyer that never awarded them.
+/// Both directions are pinned here through the real walk — ingest, parse, plan,
+/// fold: two buyers' releases under one ocid become TWO Tenders, each carrying
+/// only its own buyer, while a single-buyer chain under one ocid stays ONE Tender
+/// with every release as a version.
+#[tokio::test]
+async fn releases_under_one_ocid_from_two_buyers_fold_to_two_tenders_and_a_one_buyer_chain_to_one() {
+    let a1 = release("ocds-t-register", "900001-2026", 1, "ANGL-0001-AAAA", "Anglian Test Water", "Supply of Pipe & Fittings");
+    let b1 = release("ocds-t-register", "900002-2026", 2, "SHET-0002-BBBB", "Scottish Hydro Test", "Super Grid Transformers");
+    let a2 = release("ocds-t-register", "900003-2026", 3, "ANGL-0001-AAAA", "Anglian Test Water", "Supply of Pipe & Fittings (2)");
+    let c1 = release("ocds-t-chain", "900011-2026", 1, "TAXI-0003-CCCC", "Taxi Test Council", "Taxi Vehicles");
+    let c2 = release("ocds-t-chain", "900012-2026", 2, "TAXI-0003-CCCC", "Taxi Test Council", "Taxi Vehicles");
+    let c3 = release("ocds-t-chain", "900013-2026", 3, "TAXI-0003-CCCC", "Taxi Test Council", "Taxi Vehicles");
+    let members: [(&str, &[u8]); 6] = [
+        ("900001-2026.json", &a1),
+        ("900002-2026.json", &b1),
+        ("900003-2026.json", &a2),
+        ("900011-2026.json", &c1),
+        ("900012-2026.json", &c2),
+        ("900013-2026.json", &c3),
+    ];
+    let (archive, db) = fixture_of("fts-386", &members).await;
+    let r = run(&db, &archive).await;
+    assert_eq!(r.parsed, 6, "every synthetic release parses: {r:?}");
+    assert_eq!(r.parse_quarantined, 0);
+
+    project::project(&db, false).await.expect("project");
+
+    // The register: two buyers, two Tenders — and the split is visible in the served
+    // key, which carries the ocid AND the buyer it was split on.
+    assert_eq!(
+        cell_i64(&db, "SELECT COUNT(*) FROM tenders WHERE source = 'fts' AND procedure_key LIKE 'refused:ocds-t-register:%'").await,
+        2,
+        "two utilities under one register ocid are two Tenders"
+    );
+    assert_eq!(
+        cell_i64(&db, "SELECT COUNT(*) FROM tenders WHERE source = 'fts' AND procedure_key = 'ocds-t-register'").await,
+        0,
+        "nothing is keyed on the bare register ocid any more"
+    );
+    // Anglian's two releases are one Tender with two versions; Scottish Hydro's one is its own.
+    assert_eq!(
+        cell_i64(&db, "SELECT MAX(current_seq) FROM tenders WHERE procedure_key LIKE 'refused:ocds-t-register:%'").await,
+        2,
+        "one buyer's two releases are two versions of ONE Tender"
+    );
+    // Every Tender's buyer set is exactly one organization: no Tender carries another
+    // utility's buyer, which is what 7954584 did.
+    assert_eq!(
+        cell_i64(
+            &db,
+            "SELECT COUNT(*) FROM (SELECT p.tender_id FROM tender_version_parties p JOIN tenders t ON t.id = p.tender_id \
+              WHERE t.source = 'fts' AND p.role IN ('buyer', 'Procedure-Buyer') \
+              GROUP BY p.tender_id HAVING COUNT(DISTINCT p.organization_id) > 1)",
+        )
+        .await,
+        0,
+        "no FTS Tender carries two buyers"
+    );
+    // The single-buyer chain keeps its ocid and all three releases as versions.
+    assert_eq!(
+        cell_i64(&db, "SELECT COUNT(*) FROM tenders WHERE source = 'fts' AND procedure_key = 'ocds-t-chain'").await,
+        1,
+        "a single-buyer chain is one Tender under its ocid"
+    );
+    assert_eq!(
+        cell_i64(&db, "SELECT current_seq FROM tenders WHERE procedure_key = 'ocds-t-chain'").await,
+        3,
+        "every release of the chain is a version of it"
     );
 
     let _ = std::fs::remove_dir_all(&archive);

@@ -222,6 +222,18 @@ it under `_noid/`. But the notice number IS in the file — the `noticeType`-bea
 notice number in all five fixtures**, so it is a sound second fallback for `release_id` and would have
 retired the `_noid/` path. Worth a separate small commit; not in scope for (c).
 
+7. **`procedure_key` = ocid is NOT one Tender per ocid on the utilities register (issue 386 unit 1,
+   2026-09-18).** Find a Tender's utilities qualification systems (CELEX 32014L0025) publish every
+   participating utility's awards under the REGISTER's ocid — `ocds-h6vhtk-02874c` carried 29 distinct
+   buyers on its first page — so §3's "one Tender per ocid" welded Scottish Hydro's and SSE's contracts
+   under Anglian Water. The key election departs from §3 here: an FTS ocid whose releases carry two or
+   more distinct buyer SETS is split per buyer at the plan's refused-key gate (threshold 2, since the
+   buyer key is the publisher's own `GB-PPON` party id, not an org-layer duplicate), and the served
+   `procedure_key` of each part reads `refused:<ocid>:<buyer key>` — the same arm issue 369 unit 5 gave
+   TED's placeholder keys. A single-buyer chain of any length and a joint procurement repeating one buyer
+   set still fold to one Tender under the bare ocid. Failure direction is CONTEXT.md's: a buyer that
+   re-registers under a new id splits its own chain; nothing welds.
+
 ## 4. FTS-specific decisions
 
 - D1 Package layout: one zip per (kind, period), one member per release `<release id>.json`, each a
