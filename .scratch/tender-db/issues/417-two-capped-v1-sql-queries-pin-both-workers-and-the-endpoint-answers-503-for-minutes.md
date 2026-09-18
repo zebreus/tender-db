@@ -1,6 +1,6 @@
 # 417 — two capped `/v1/sql` queries pin both runtime workers, and the endpoint answers `503 saturated` until they finish (12+ minutes measured)
 
-Status: ready-for-agent — found 2026-09-18 15:51 UTC by the owner's own census read (issue 397 unit 2): two join-bridged range reads each ran past the 10 s cap, the caller got its two `408`s in 20 s, and `/v1/sql` then answered `503 sql backend busy: the SQL runtime is saturated` to EVERY query — `SELECT 1` included — from 15:51 until the two computations finished (still pinned at 16:02; the duration is recorded at the foot when it clears). The public API was untouched throughout (`/health` 0.7 s, list pages normal): the SQL runtime is isolated (issue 17), which is exactly what confined it.
+Status: ready-for-agent — found 2026-09-18 15:51 UTC by the owner's own census read (issue 397 unit 2): two join-bridged range reads each ran past the 10 s cap, the caller got its two `408`s in 20 s, and `/v1/sql` then answered `503 sql backend busy: the SQL runtime is saturated` to EVERY query — `SELECT 1` included — from 15:51 until the two computations finished **13.5 minutes: pinned from 15:51:50 to 16:05:23 UTC**, polled with `SELECT 1` every 30–60 s. The public API was untouched throughout (`/health` 0.7 s, list pages normal): the SQL runtime is isolated (issue 17), which is exactly what confined it.
 Kind: defect (availability of `/v1/sql` — a capped query is not cancelled, so the cap bounds the caller's wait but not the worker's)
 Relates to: 17 (the isolated SQL runtime), 239 (the time limit and its 408), `docs/agents/prod-box-reads.md` (the traps table gained this shape today), 397 (the census that hit it)
 Blocked by: nothing
@@ -31,3 +31,11 @@ Blocked by: nothing
 - Check turso for an interrupt hook first (`Connection::interrupt`, a progress handler, anything that makes a running statement return); if one exists in the pinned version, use it and the abandonment cap becomes the fallback for statements that do not honour it.
 - The `503` body says how many computations are pinned and since when.
 - A test: with a 50 ms cap, two runaway queries plus a third `SELECT 1` — the third answers, and the gauge reads 2.
+
+## The duration, measured
+
+Two queries, sent 10 s apart at 15:51:40 and 15:51:50 (each `408` after its 10 s), and every
+`SELECT 1` through `/root/sq.sh` answered `503 saturated` until **16:05:23** — the first `200` after
+13 minutes 33 seconds. Load average on the box read 1.13 for the period (two pinned computations
+on a mostly idle machine); `/health`, the list pages and the seeded walks were unaffected.
+
