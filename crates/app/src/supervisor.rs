@@ -3572,11 +3572,20 @@ impl Supervisor {
                 // organizations + notices together would be ~2.3 GB against a ~4 GB
                 // bounded-memory ceiling on a box still carrying issue 57's swap
                 // band-aid. One at a time.
-                self.db.build_organization_indexes().await.map_err(|e| e.to_string())?;
-                self.db.build_tender_indexes().await.map_err(|e| e.to_string())?;
-                self.db.build_notice_indexes().await.map_err(|e| e.to_string())?;
-                let _ = self.db.checkpoint(store::CheckpointMode::Truncate).await;
-                Ok("deferred org + tender + notice indexes rebuilt".into())
+                // Boxed: the three builders' futures — each a loop of estimate +
+                // build queries, and the estimate grew two queries on 2026-09-18
+                // (issue 388's exact-count cap) — otherwise live inside run_spec's one
+                // giant future, and that growth overflowed the stack of
+                // `an_execute_without_an_expected_count_is_refused`, a test with no
+                // relation to this arm (CLAUDE.md's trap, re-bitten).
+                Box::pin(async move {
+                    self.db.build_organization_indexes().await.map_err(|e| e.to_string())?;
+                    self.db.build_tender_indexes().await.map_err(|e| e.to_string())?;
+                    self.db.build_notice_indexes().await.map_err(|e| e.to_string())?;
+                    let _ = self.db.checkpoint(store::CheckpointMode::Truncate).await;
+                    Ok::<String, String>("deferred org + tender + notice indexes rebuilt".into())
+                })
+                .await
             }
             Spec::RegisterArchive => {
                 let done = ingest::fetch::register_archive(&self.db, &self.archive)
