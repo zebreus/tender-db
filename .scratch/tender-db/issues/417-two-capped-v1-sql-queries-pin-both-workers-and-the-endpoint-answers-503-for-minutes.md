@@ -1,6 +1,6 @@
 # 417 — two capped `/v1/sql` queries pin both runtime workers, and the endpoint answers `503 saturated` until they finish (12+ minutes measured)
 
-Status: ready-for-agent — found 2026-09-18 15:51 UTC by the owner's own census read (issue 397 unit 2): two join-bridged range reads each ran past the 10 s cap, the caller got its two `408`s in 20 s, and `/v1/sql` then answered `503 sql backend busy: the SQL runtime is saturated` to EVERY query — `SELECT 1` included — from 15:51 until the two computations finished **13.5 minutes: pinned from 15:51:50 to 16:05:23 UTC**, polled with `SELECT 1` every 30–60 s. The public API was untouched throughout (`/health` 0.7 s, list pages normal): the SQL runtime is isolated (issue 17), which is exactly what confined it.
+Status: ready-for-agent — **FIXED and gated 2026-09-18 (see the foot), deploy pending**: every `/v1/sql` computation runs on its own blocking thread, an abandoned one is counted from the moment its request stops waiting until it returns, admission refuses at four with a 503 that says how many and since when, `/metrics` serves the count, the oldest abandonment and the in-flight total, and the end-to-end test proves a cheap query answers at once behind two capped bombs. Was: found 2026-09-18 15:51 UTC by the owner's own census read (issue 397 unit 2): two join-bridged range reads each ran past the 10 s cap and pinned the two workers for **13.5 minutes** (15:51:50–16:05:23), during which `/v1/sql` answered `503 saturated` to everything, `SELECT 1` included; a third capped read at 16:33 pinned one again. The public API was untouched throughout (the SQL runtime is isolated, issue 17).
 Kind: defect (availability of `/v1/sql` — a capped query is not cancelled, so the cap bounds the caller's wait but not the worker's)
 Relates to: 17 (the isolated SQL runtime), 239 (the time limit and its 408), `docs/agents/prod-box-reads.md` (the traps table gained this shape today), 397 (the census that hit it)
 Blocked by: nothing
@@ -20,10 +20,10 @@ Blocked by: nothing
 
 ## Verify
 
-    grep -c "spawn_blocking\|abandoned\|ABANDONED_CAP" crates/app/src/v1/sql.rs
+    curl -s --max-time 20 https://tenders.zebreus.click/metrics | grep -E '^tender_db_sql_(pinned_computations|in_flight) '
 
-- **done**: `1` or more — a capped query is moved off the shared workers so the endpoint stays answerable
-- **open**: `0` (read 2026-09-18: `0`)
+- **done**: two lines — the gauges are served; `pinned_computations` reads `0` on an idle box, and the endpoint stays answerable while it is under `4`
+- **open**: no such lines (read 2026-09-18 before the deploy: none)
 
 ## Done when
 
@@ -83,4 +83,44 @@ reaches `/v1/sql` without its `EXPLAIN QUERY PLAN` read on a scratch database in
 session, and the plan pasted into the write-up beside the numbers.** The census itself is closed —
 the codelist was settled from the committed fixtures before any of this — and the plan for the
 notices-driven shape will be read locally before it is ever sent again.
+
+## FIXED 2026-09-18 — the computation gets its own thread; an abandoned one is counted and capped
+
+**The mechanism (`crates/app/src/v1/sql.rs`).** The isolated runtime's two workers now do only
+what can always finish — take the per-user permits, borrow the reader, coordinate — and the
+computation itself runs inside `tokio::task::spawn_blocking` on its own thread, under a
+per-query current-thread runtime so the in-task timeout still drops a streaming query between
+rows and frees its reader promptly. turso still cannot be interrupted, and the non-yielding
+aggregate still runs to completion; what changed is WHERE: on a blocking thread of its own, so
+the workers are free, the next query gets a fresh thread, and the runtime never saturates on
+computations nobody is waiting for. `max_blocking_threads(16)` sizes the pool; admission keeps
+the live count under it, so the pool's own queue is never reached.
+
+**The accounting.** Each computation carries a three-state record — RUNNING, FINISHED,
+ABANDONED — resolved by one atomic exchange from each side: the handler's `Watch` guard marks it
+ABANDONED on every way out that is not the computation finishing first (the backstop, a
+disconnect, an early return), and the `Running` guard moved into the blocking closure marks it
+FINISHED when the computation actually returns. Pinned = abandoned-and-still-running, counted
+exactly from the abandonment to the return whichever transition lands first (the unit test
+drives both orders), with the unix second of the oldest current abandonment beside it.
+Admission refuses at `ABANDONED_CAP = 4` with a 503 that says so — *"4 abandoned computation(s)
+are still running on their own threads and cannot be interrupted (cap 4), the oldest since unix
+second N; they finish on their own"* — instead of the wordless `saturated`, which stays only for
+the never-polled backstop case that the change makes near-impossible. `/metrics` serves
+`tender_db_sql_pinned_computations`, `tender_db_sql_pinned_since_seconds` and
+`tender_db_sql_in_flight`.
+
+**Tests.** Unit: `an_abandoned_computation_is_counted_until_it_returns_and_a_finished_one_never`
+(finished-then-left counts nothing; left-then-finished counts exactly in between, a second
+abandon is a no-op, the since clears) and the updated in-flight test. End to end
+(`crates/app/tests/sql.rs`, `an_abandoned_computation_keeps_no_worker_and_is_counted`): at a
+300 ms cap, two non-yielding bombs each 408, `/metrics` then reads
+`tender_db_sql_pinned_computations 2` with a since, and `SELECT 1` answers `200` in well under
+two seconds — the request that was a `503` for 13.5 minutes this afternoon. The suite's 15 pass.
+
+**Not built, deliberately.** turso's `Connection` in the pinned version has no interrupt or
+progress hook to check for (the module's own comment, unchanged); the cap-of-four refusal is the
+whole bound, and an operator who sees the gauge at 4 for minutes has the number and the time to
+act on. Owed after the deploy: the gauges read on prod (the `## Verify` block) — no runaway
+query is sent to the box to prove the rest, the end-to-end test did that.
 

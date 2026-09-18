@@ -74,7 +74,7 @@ use governor::{DefaultKeyedRateLimiter, Quota, RateLimiter};
 use serde_json::{Value as Json_, json};
 use std::collections::HashMap;
 use std::num::NonZeroU32;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU8, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tokio::sync::Semaphore;
@@ -186,12 +186,30 @@ const ALLOWED: [&str; 48] = [
     //    with issue 50's analyst views.
 ];
 
-/// Worker threads on the isolated SQL runtime (issue 17). Query execution runs
-/// here, never on the main API/SSE/dashboard runtime, so a non-yielding
-/// aggregate (which no timeout can interrupt — turso has no `interrupt()`) can
-/// pin at most this many threads and never starves the rest of the server. The
-/// per-token concurrency cap and this thread count together bound SQL CPU.
+/// Worker threads on the isolated SQL runtime (issue 17): reader acquisition and
+/// the coordination around each query run here, never on the main
+/// API/SSE/dashboard runtime. The computation itself no longer runs on these
+/// (issue 417) — see [`SQL_BLOCKING_THREADS`] — so a non-yielding aggregate,
+/// which no timeout can interrupt (turso has no `interrupt()`), pins a blocking
+/// thread and never one of these.
 const SQL_RUNTIME_THREADS: usize = 2;
+
+/// Abandoned computations the endpoint carries before it refuses new queries
+/// (issue 417). A computation is ABANDONED when its request stopped waiting —
+/// the backstop fired or the client went away — while turso was still inside
+/// one poll; it runs to completion on its own blocking thread, and this is how
+/// many such threads may be burning before the next query is told so. Measured
+/// need: two of them held the whole endpoint for 13.5 minutes on 2026-09-18
+/// when every computation shared the two workers above.
+const ABANDONED_CAP: usize = 4;
+
+/// Blocking threads on the isolated runtime, where every computation runs
+/// (issue 417): room for the live queries the per-token cap admits plus the
+/// abandoned ones the cap above allows, with margin, so a query never queues
+/// for a thread behind an abandoned computation. Admission is gated on
+/// [`ABANDONED_CAP`] and on the live count staying under this, so the pool's
+/// own queue is never reached.
+const SQL_BLOCKING_THREADS: usize = 16;
 
 /// A tokio runtime dedicated to SQL query execution, owned by a parked thread so
 /// it lives for the whole process and is never dropped in an async context
@@ -208,6 +226,7 @@ fn spawn_sql_runtime() -> tokio::runtime::Handle {
         .spawn(move || {
             let runtime = tokio::runtime::Builder::new_multi_thread()
                 .worker_threads(SQL_RUNTIME_THREADS)
+                .max_blocking_threads(SQL_BLOCKING_THREADS)
                 .thread_name("sql-exec")
                 .enable_all()
                 .build()
@@ -240,9 +259,13 @@ pub struct SqlState {
     /// `interrupt()`), so its future keeps computing after the client has gone and
     /// after `AbortOnDrop` has fired. A semaphore permit released on abort would
     /// therefore report capacity that does not exist. This count is decremented by a
-    /// guard INSIDE the task, whose drop cannot run until the computation actually
-    /// returns — so it tracks pinned threads, not live requests.
+    /// guard INSIDE the computation, whose drop cannot run until the computation
+    /// actually returns — so it tracks threads doing SQL work, not live requests.
     in_flight: Arc<AtomicUsize>,
+    /// The computations whose request has already gone (issue 417): how many
+    /// blocking threads are burning for nobody, and since when. Admission refuses
+    /// at [`ABANDONED_CAP`], and `/metrics` serves both numbers.
+    pinned: Arc<Pinned>,
 }
 
 impl SqlState {
@@ -261,7 +284,21 @@ impl SqlState {
             runtime: spawn_sql_runtime(),
             timeout,
             in_flight: Arc::new(AtomicUsize::new(0)),
+            pinned: Arc::new(Pinned::default()),
         }
+    }
+
+    /// Computations currently occupying a blocking thread — live and abandoned
+    /// alike (issue 417; the `/metrics` gauge `tender_db_sql_in_flight`).
+    pub fn in_flight(&self) -> usize {
+        self.in_flight.load(Ordering::Acquire)
+    }
+
+    /// Abandoned computations still burning a blocking thread, and the unix
+    /// second the oldest of them was abandoned (0 when none) — issue 417's
+    /// `tender_db_sql_pinned_computations` gauge and the 503's numbers.
+    pub fn pinned_computations(&self) -> (usize, i64) {
+        (self.pinned.count.load(Ordering::Acquire), self.pinned.since.load(Ordering::Acquire))
     }
 
     /// The per-user concurrency gate, shared across a user's in-flight queries.
@@ -321,7 +358,15 @@ async fn run(
     //
     // Racy by construction, harmlessly: the count can change between the last read
     // and the spawn, and the backstop still reports saturation correctly if it does.
-    if !wait_for_capacity(&sql_state.in_flight).await {
+    //
+    // Issue 417: the abandoned computations come first, and their refusal is
+    // immediate and NUMBERED — a pinned thread lasts minutes, no grace separates
+    // it from anything, and the caller deserves to know how many and since when.
+    let (pinned, since) = sql_state.pinned_computations();
+    if pinned >= ABANDONED_CAP {
+        return Err(busy(&pinned_message(pinned, since)).into());
+    }
+    if !wait_for_capacity(&sql_state.in_flight, SQL_BLOCKING_THREADS).await {
         return Err(busy(SATURATED).into());
     }
 
@@ -343,11 +388,16 @@ async fn run(
     let started = Arc::new(AtomicBool::new(false));
     let acquired = Arc::new(AtomicBool::new(false));
     let (started_in_task, acquired_in_task) = (started.clone(), acquired.clone());
-    let in_flight = InFlight::enter(&sql_state.in_flight);
+    // Issue 417: the computation's own record — running, finished, or abandoned by
+    // a request that stopped waiting. `_watch` marks it abandoned on every way out
+    // of this handler that is not the computation finishing first, and the
+    // `Running` guard, moved INTO the blocking closure below, is what says it
+    // finished — so an abandoned thread is counted from the moment nobody waits
+    // for it until the moment it actually returns.
+    let computation = Arc::new(Computation::new(sql_state.pinned.clone()));
+    let _watch = Watch(computation.clone());
+    let running = Running::enter(&sql_state.in_flight, computation);
     let handle = sql_state.runtime.spawn(async move {
-        // Moved in, so the count falls only when this future is really finished —
-        // including the abandoned-but-still-computing case.
-        let _in_flight = in_flight;
         // Set on the first poll, BEFORE borrowing anything. Its absence means the
         // task was never polled at all, i.e. every `sql-exec` thread is pinned —
         // which is a different failure from waiting on a reader and needs a
@@ -365,13 +415,36 @@ async fn run(
         if waited > SLOW_ACQUIRE {
             eprintln!("[sql] waited {:.1}s for a reader before executing", waited.as_secs_f64());
         }
-        // The in-task timeout drops a *streaming* query between rows, freeing its
-        // reader promptly. A non-yielding aggregate computes in one poll and
-        // slips past it — the handler-side backstop below is what bounds that.
-        match tokio::time::timeout(timeout, execute(&reader, &sql)).await {
-            Ok(Ok(result)) => Ok(result),
-            Ok(Err(e)) => Err(Executed::Db(e)),
-            Err(_) => Err(Executed::Timeout),
+        // Issue 417: the computation runs on its OWN blocking thread, not on one
+        // of the runtime's workers. turso computes a non-yielding aggregate inside
+        // one poll and nothing can interrupt it; before this, such a computation
+        // kept its worker after the request was gone, and two of them denied the
+        // whole endpoint for 13.5 minutes. On a blocking thread the same
+        // computation still runs to completion — but the workers stay free, the
+        // next query gets its own thread, and the abandoned one is counted
+        // (`Running`, moved in here) and capped at admission.
+        //
+        // A current-thread runtime per query, so the in-task timeout still drops a
+        // *streaming* query between rows and frees its reader promptly; the
+        // handler-side backstop below is what bounds the non-yielding case.
+        let worked = tokio::task::spawn_blocking(move || {
+            let _running = running;
+            let runtime = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .map_err(|e| Executed::Runtime(format!("query runtime: {e}")))?;
+            runtime.block_on(async {
+                match tokio::time::timeout(timeout, execute(&reader, &sql)).await {
+                    Ok(Ok(result)) => Ok(result),
+                    Ok(Err(e)) => Err(Executed::Db(e)),
+                    Err(_) => Err(Executed::Timeout),
+                }
+            })
+        })
+        .await;
+        match worked {
+            Ok(outcome) => outcome,
+            Err(join) => Err(Executed::Runtime(format!("query thread: {join}"))),
         }
     });
     // Abandon the isolated task whenever this handler stops waiting — the backstop
@@ -403,6 +476,9 @@ async fn run(
         // backstop firing on a non-yielding aggregate — both are the query
         // exceeding the time limit, and both are a 408.
         Ok(Ok(Err(Executed::Timeout))) => Err(timed_out(timeout)),
+        // The per-query thread or runtime could not be set up — ours, not the
+        // caller's (issue 417).
+        Ok(Ok(Err(Executed::Runtime(e)))) => Err(ApiError(StatusCode::INTERNAL_SERVER_ERROR, e)),
         // The backstop fired. WHICH limit was hit depends on whether a reader was
         // ever borrowed: if not, the time went on waiting for one and this is the
         // backend being busy, not the query being slow.
@@ -462,19 +538,20 @@ fn backstop_error(started: bool, acquired: bool, timeout: Duration) -> ApiError 
 /// enough that a pinned runtime answers in under a second instead of eleven.
 const CAPACITY_GRACE: Duration = Duration::from_millis(750);
 
-/// Poll for a free worker until [`CAPACITY_GRACE`] elapses. `true` if one appeared.
+/// Poll for a free thread — fewer than `limit` computations in flight — until
+/// [`CAPACITY_GRACE`] elapses. `true` if one appeared.
 ///
 /// Polls rather than waits on a notification because the thing being waited for — a
 /// non-yielding computation finishing — cannot signal anything; there is nobody to
 /// send the wakeup. This runs on the MAIN runtime, where it only ever sleeps, so it
 /// costs no SQL capacity of its own.
-async fn wait_for_capacity(in_flight: &AtomicUsize) -> bool {
+async fn wait_for_capacity(in_flight: &AtomicUsize, limit: usize) -> bool {
     const STEP: Duration = Duration::from_millis(25);
     // tokio's clock, not std's, so this honours a paused clock under test and the
     // grace costs the suite nothing.
     let deadline = tokio::time::Instant::now() + CAPACITY_GRACE;
     loop {
-        if in_flight.load(Ordering::Acquire) < SQL_RUNTIME_THREADS {
+        if in_flight.load(Ordering::Acquire) < limit {
             return true;
         }
         if tokio::time::Instant::now() >= deadline {
@@ -492,20 +569,116 @@ async fn wait_for_capacity(in_flight: &AtomicUsize) -> bool {
 const SATURATED: &str = "the SQL runtime is saturated — every worker is pinned by an earlier query \
      that cannot be interrupted";
 
-/// Increments a counter for as long as it is alive. Held INSIDE the isolated task so
-/// its drop waits on the computation, not on the request (issue 238).
-struct InFlight(Arc<AtomicUsize>);
+/// The 503 for a runtime carrying its cap of abandoned computations (issue 417):
+/// how many, and since when, so a caller can tell a minute-long condition from a
+/// permanent one and an operator can read it off the response.
+fn pinned_message(count: usize, since: i64) -> String {
+    let since = if since > 0 {
+        format!(", the oldest since unix second {since}")
+    } else {
+        String::new()
+    };
+    format!(
+        "{count} abandoned computation(s) are still running on their own threads and cannot be \
+         interrupted (cap {ABANDONED_CAP}){since}; they finish on their own"
+    )
+}
 
-impl InFlight {
-    fn enter(counter: &Arc<AtomicUsize>) -> InFlight {
-        counter.fetch_add(1, Ordering::AcqRel);
-        InFlight(counter.clone())
+const RUNNING: u8 = 0;
+const FINISHED: u8 = 1;
+const ABANDONED: u8 = 2;
+
+/// The abandoned computations the endpoint carries (issue 417): a count, and the
+/// unix second the oldest of the current ones was abandoned — 0 while none is.
+#[derive(Default)]
+struct Pinned {
+    count: AtomicUsize,
+    since: AtomicI64,
+}
+
+impl Pinned {
+    fn take(&self) {
+        if self.count.fetch_add(1, Ordering::AcqRel) == 0 {
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_secs() as i64)
+                .unwrap_or(0);
+            self.since.store(now, Ordering::Release);
+        }
+    }
+
+    fn release(&self) {
+        if self.count.fetch_sub(1, Ordering::AcqRel) == 1 {
+            self.since.store(0, Ordering::Release);
+        }
     }
 }
 
-impl Drop for InFlight {
+/// One computation's life beside the request that asked for it (issue 417):
+/// RUNNING until whichever comes first — the computation returning (FINISHED) or
+/// the request stopping to wait for it (ABANDONED). The two transitions race on
+/// purpose and resolve by a single atomic exchange each, so an abandoned thread is
+/// counted exactly from the abandonment to its return and never leaks a count.
+struct Computation {
+    state: AtomicU8,
+    pinned: Arc<Pinned>,
+}
+
+impl Computation {
+    fn new(pinned: Arc<Pinned>) -> Computation {
+        Computation { state: AtomicU8::new(RUNNING), pinned }
+    }
+
+    /// The request stopped waiting. Counts the computation as pinned if it is still
+    /// running; a no-op if it already finished.
+    fn abandon(&self) {
+        if self
+            .state
+            .compare_exchange(RUNNING, ABANDONED, Ordering::AcqRel, Ordering::Acquire)
+            .is_ok()
+        {
+            self.pinned.take();
+        }
+    }
+
+    /// The computation returned. Releases the pinned count if nobody was waiting.
+    fn finished(&self) {
+        if self.state.swap(FINISHED, Ordering::AcqRel) == ABANDONED {
+            self.pinned.release();
+        }
+    }
+}
+
+/// Marks the computation abandoned when the handler leaves without it having
+/// finished — the backstop, a disconnect, any early return. Idempotent against a
+/// computation that finished first.
+struct Watch(Arc<Computation>);
+
+impl Drop for Watch {
     fn drop(&mut self) {
-        self.0.fetch_sub(1, Ordering::AcqRel);
+        self.0.abandon();
+    }
+}
+
+/// Counts a computation for as long as it is alive and records its end. Held
+/// INSIDE the blocking closure so its drop waits on the computation, not on the
+/// request (issue 238, then 417).
+struct Running {
+    in_flight: Arc<AtomicUsize>,
+    computation: Arc<Computation>,
+}
+
+impl Running {
+    fn enter(counter: &Arc<AtomicUsize>, computation: Arc<Computation>) -> Running {
+        counter.fetch_add(1, Ordering::AcqRel);
+        Running { in_flight: counter.clone(), computation }
+    }
+}
+
+impl Drop for Running {
+    fn drop(&mut self) {
+        self.in_flight.fetch_sub(1, Ordering::AcqRel);
+        self.computation.finished();
     }
 }
 
@@ -539,6 +712,8 @@ impl Drop for AbortOnDrop {
 enum Executed {
     Db(store::turso::Error),
     Timeout,
+    /// The per-query thread or runtime could not be set up (issue 417).
+    Runtime(String),
 }
 
 /// Time columns are Unix epoch seconds in SQL while REST returns ISO — the trap
@@ -1911,21 +2086,59 @@ mod tests {
     #[tokio::test]
     async fn in_flight_tracks_the_computation_not_the_request() {
         let counter = Arc::new(AtomicUsize::new(0));
+        let pinned = Arc::new(Pinned::default());
         assert_eq!(counter.load(Ordering::Acquire), 0);
 
-        let one = InFlight::enter(&counter);
-        assert_eq!(counter.load(Ordering::Acquire), 1, "entering occupies a worker");
-        let two = InFlight::enter(&counter);
-        assert_eq!(counter.load(Ordering::Acquire), SQL_RUNTIME_THREADS, "both workers occupied");
+        let one = Running::enter(&counter, Arc::new(Computation::new(pinned.clone())));
+        assert_eq!(counter.load(Ordering::Acquire), 1, "entering occupies a thread");
+        let two = Running::enter(&counter, Arc::new(Computation::new(pinned.clone())));
+        assert_eq!(counter.load(Ordering::Acquire), 2, "both occupied");
 
-        // At the cap the handler's capacity check must report no room.
-        assert!(!wait_for_capacity(&counter).await, "at the cap, capacity is refused");
+        // At a cap of two the handler's capacity check must report no room.
+        assert!(!wait_for_capacity(&counter, 2).await, "at the cap, capacity is refused");
 
         drop(one);
         assert_eq!(counter.load(Ordering::Acquire), 1, "one finishing frees exactly one");
-        assert!(wait_for_capacity(&counter).await, "one free worker is enough to admit a query");
+        assert!(wait_for_capacity(&counter, 2).await, "one free thread is enough to admit a query");
         drop(two);
         assert_eq!(counter.load(Ordering::Acquire), 0, "and the last leaves it clean");
+    }
+
+    /// Issue 417: an abandoned computation is counted from the moment its request
+    /// stops waiting until the moment it returns — and never otherwise. The two
+    /// transitions race in production (a backstop firing as the aggregate returns)
+    /// and must resolve to the same count whichever lands first.
+    #[test]
+    fn an_abandoned_computation_is_counted_until_it_returns_and_a_finished_one_never() {
+        let pinned = Arc::new(Pinned::default());
+        let counter = Arc::new(AtomicUsize::new(0));
+
+        // Finished first, then the request leaves: nothing pinned.
+        let c = Arc::new(Computation::new(pinned.clone()));
+        let running = Running::enter(&counter, c.clone());
+        drop(running); // the computation returned
+        drop(Watch(c)); // then the request left
+        assert_eq!(pinned.count.load(Ordering::Acquire), 0, "a finished computation is never pinned");
+        assert_eq!(pinned.since.load(Ordering::Acquire), 0);
+
+        // Abandoned first, then it returns: pinned exactly in between.
+        let c = Arc::new(Computation::new(pinned.clone()));
+        let running = Running::enter(&counter, c.clone());
+        let watch = Watch(c.clone());
+        drop(watch); // the request stopped waiting
+        assert_eq!(pinned.count.load(Ordering::Acquire), 1, "still running with nobody waiting: pinned");
+        assert!(pinned.since.load(Ordering::Acquire) > 0, "and since when");
+        // A second abandon is a no-op.
+        c.abandon();
+        assert_eq!(pinned.count.load(Ordering::Acquire), 1);
+        drop(running); // the computation finally returned
+        assert_eq!(pinned.count.load(Ordering::Acquire), 0, "returning releases it");
+        assert_eq!(pinned.since.load(Ordering::Acquire), 0, "and clears the since");
+        assert_eq!(counter.load(Ordering::Acquire), 0);
+
+        // The 503 names the count and the cap.
+        let msg = pinned_message(ABANDONED_CAP, 1_789_750_000);
+        assert!(msg.contains("4 abandoned") && msg.contains("cap 4") && msg.contains("1789750000"), "{msg}");
     }
 
     /// Issue 239: two documentation defects that cost an analyst silently, so both are

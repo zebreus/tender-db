@@ -64,6 +64,25 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
         super::DEADLINE_HITS.load(std::sync::atomic::Ordering::Relaxed) as f64,
     );
 
+    // Issue 417: the /v1/sql computations still burning a thread for a request
+    // that has already gone. Two of them held the whole endpoint for 13.5
+    // minutes on 2026-09-18 with nothing on this page saying so.
+    let (pinned, since) = state.sql.pinned_computations();
+    header(
+        &mut out,
+        "tender_db_sql_pinned_computations",
+        "/v1/sql computations abandoned by their request and still running (cannot be interrupted).",
+    );
+    sample(&mut out, "tender_db_sql_pinned_computations", &[], pinned as f64);
+    header(
+        &mut out,
+        "tender_db_sql_pinned_since_seconds",
+        "Unix second the oldest currently abandoned /v1/sql computation was abandoned; 0 when none.",
+    );
+    sample(&mut out, "tender_db_sql_pinned_since_seconds", &[], since as f64);
+    header(&mut out, "tender_db_sql_in_flight", "/v1/sql computations occupying a thread, live or abandoned.");
+    sample(&mut out, "tender_db_sql_in_flight", &[], state.sql.in_flight() as f64);
+
     let writer = state.db.writer_stats();
     header(&mut out, "tender_db_writer_queue_depth", "Callers blocked waiting for the writer.");
     sample(&mut out, "tender_db_writer_queue_depth", &[], writer.depth as f64);
