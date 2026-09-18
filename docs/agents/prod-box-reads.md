@@ -92,19 +92,20 @@ safety one, and the two must not be conflated in either direction:
   low-traffic window (no snapshots exist to name any more). Someone with box access runs it; the
   requester does not need to be that person.
 
-## turso's planner, three traps that each cost a 10 s cap this week
+## turso's planner, four traps that each cost a 10 s cap
 
 A bounded read is only bounded if the plan seeks. turso 0.7.2 does not always pick the seek
 you wrote the `WHERE` for, and `/v1/sql` refuses `EXPLAIN`, so check the plan LOCALLY first —
 `Db::open` on a scratch file gives the real schema, and `EXPLAIN QUERY PLAN` through turso is a
 few milliseconds (`the_requeue_statements_seek_notices_by_rowid` in `store/src/lib.rs` is the
-pattern). Measured on prod, all three:
+pattern). Measured on prod, all four:
 
 | you wrote | turso did | fix |
 | --- | --- | --- |
 | `WHERE entity_kind = ? AND entity_id IN (a, b, c, d)` | walked the index — an `IN` on an indexed column is not split into seeks (issue 329; 10 s cap) | one equality probe per value (50 ms each) |
 | `WHERE parse_state = 'parsed' AND id > ? AND id <= ?` | preferred `notices_parse_state` and walked every parsed row, id range ignored (issue 323, 354× on a scoped call) | unary `+` on the column you do NOT want driving: `+parse_state` |
 | `WHERE fetch_id = ? GROUP BY profile` | chose `notices_profile` to serve the GROUP BY and scanned 7.5M entries filtering on `fetch_id` (10 s cap) | `GROUP BY +profile` — seeks `notices_fetch_id`, sorts the few thousand rows |
+| `tenders … JOIN tender_versions … JOIN notice_codes c ON c.notice_id = v.caused_by_notice_id AND c.field_id = ? WHERE t.id BETWEEN a AND a+100000` | three seeks per tender is 300k seeks; the range bound made it "bounded" on paper and it still ran 10 s+ (2026-09-18, issue 397) — and a capped query is NOT cancelled: it pins its worker to completion, and two of them in a row left `/v1/sql` answering `503 saturated` for minutes | size a join-bridged read on a 1,000–2,000-id slice FIRST and scale by the measured cost; never fire the second heavy read before the first has answered |
 
 The common shape: the planner steers by whichever index matches the *last* clause it looks at
 (an `IN`, a `GROUP BY`, an equality on a low-cardinality column) and the `+` is how you take a
