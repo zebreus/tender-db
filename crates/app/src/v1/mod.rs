@@ -1029,7 +1029,7 @@ pub async fn read_page(
             start,
             limit,
             read::DEFAULT_SEED_WINDOW,
-            read::DEFAULT_SEED_WINDOWS_PER_PAGE,
+            read::seed_windows(limit),
         )
         .await?;
         return Ok(PageOut {

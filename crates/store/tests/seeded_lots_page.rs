@@ -260,6 +260,15 @@ async fn the_seeded_walk_returns_the_stream_set_in_tender_order_once_and_termina
     }
 }
 
+/// A page's window budget grows with its size: the floor for small pages, and
+/// enough windows to fill a big page from a seed that admits every tender.
+#[test]
+fn the_window_budget_can_fill_the_page_it_is_asked_for() {
+    assert_eq!(read::seed_windows(1), read::DEFAULT_SEED_WINDOWS_PER_PAGE);
+    assert_eq!(read::seed_windows(100), read::DEFAULT_SEED_WINDOWS_PER_PAGE);
+    assert!(read::seed_windows(1001) as i64 * read::DEFAULT_SEED_WINDOW > 1001, "a limit=1000 page can fill");
+}
+
 /// The cursor grammar: round-trips, and is not the bare-id grammar.
 #[test]
 fn the_compound_cursor_round_trips_and_rejects_a_bare_id() {

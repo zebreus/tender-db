@@ -2037,7 +2037,7 @@ pub async fn tenders_page(
     // order, one window per step, instead of DISTINCTing the org's whole slice
     // per page. Tenders already page by id, so the cursor is unchanged.
     if seeded_tenders(filter) {
-        return tenders_seeded_page(conn, filter, after, limit, DEFAULT_SEED_WINDOW, DEFAULT_SEED_WINDOWS_PER_PAGE).await;
+        return tenders_seeded_page(conn, filter, after, limit, DEFAULT_SEED_WINDOW, seed_windows(limit)).await;
     }
     if !reachable(conn, filter, Collection::Tenders).await? {
         return Ok(Banded { rows: Vec::new(), examined_to: None });
@@ -3063,8 +3063,17 @@ pub const DEFAULT_SEED_WINDOW: i64 = 64;
 /// Windows one page may read before handing back a short page with a cursor.
 /// The 408 (b) contract already says a page can be short while `more` is true;
 /// this cap is what makes a page's cost bounded even when the org's next
-/// hundreds of tenders carry no lot the companion filters admit.
+/// hundreds of tenders carry no lot the companion filters admit. The floor —
+/// [`seed_windows`] raises it with the page size, so a `limit=1000` page can
+/// actually fill (8 × 64 examined tenders capped every such page at 512 rows,
+/// prod 2026-09-18 12:47).
 pub const DEFAULT_SEED_WINDOWS_PER_PAGE: usize = 8;
+
+/// Windows a page of `limit` rows may read: the floor, or enough windows to fill
+/// the page from a seed that admits every tender, plus one for the row past it.
+pub fn seed_windows(limit: i64) -> usize {
+    DEFAULT_SEED_WINDOWS_PER_PAGE.max((limit.max(1) / DEFAULT_SEED_WINDOW) as usize + 2)
+}
 
 /// Does this lots read take the seeded walk? The two org seeds whose covering
 /// index `(organization_id, tender_id)` serves the walk's order — `winner` and
