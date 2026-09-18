@@ -1,6 +1,6 @@
 # 408 — `?country=GR` walks to the 30 s deadline: the country seed's density cap measures history, and the walk it hands off to is ordered by id
 
-Status: ready-for-agent — **the 503 IS FIXED on prod 2026-09-17** (`301ee34`): `?country=GR` went from
+Status: ready-for-agent — **option (b) is BUILT and gated 2026-09-18** (`de36071`, see the foot): an isolated, unseeded id-ordered list walk examines one band of 500,000 ids per page and hands back the last id EXAMINED as the cursor, on tenders and lots, pinned at the store and through the handler; deploy pending, then the live probe. Was: **the 503 IS FIXED on prod 2026-09-17** (`301ee34`): `?country=GR` went from
 503-after-30.68 s to **200 in 5.29 s** with correct rows, by raising `COUNTRY_SEED_CAP` past GR's
 measured 87,026 entries. It is still ~7x slower than a dense country, and a retired spelling above the
 new cap would fail the same way — so **unit 1's decision, option (b), a bounded fallback walk, STANDS**
@@ -291,3 +291,41 @@ spelling. The controls did not move, so nothing was traded away for it.
 Recorded as the crossover data nobody had: the seed is viable but expensive somewhere around 87k
 entries. That is one point, not the curve — but it is the first real evidence about where this
 threshold belongs, and 60,000 never had any.
+
+## Option (b) BUILT 2026-09-18 — the fallback walk is bounded; cursor = last id examined
+
+**What landed (`de36071`).** In `crates/store/src/read.rs`: `DEFAULT_FALLBACK_BAND = 500_000` ids,
+`Banded { rows, examined_to }`, and `bounded_walk(collection, filter)` — exactly the isolated reads no
+seed drives (no publication seed, no org participation seed, no armed country seed, no lot
+containment). `tenders_page` / `lots_page` are the existing page reads plus a second PK bound,
+`id <= after + band`, on that shape; `examined_to` is the band's end when the page is not full AND
+the end is below the table's last id (a PK seek, `ORDER BY id DESC LIMIT 1`, never a scan). A full
+page resumes from its last row exactly as before. The unbounded `tenders`/`lots` reads are untouched
+on purpose: the SSE snapshot reads a short page as the end of the snapshot, and a bounded short page
+is not that.
+
+In the app: `AppState.fallback_band`, `read_page`, the isolated pool's `read_page` (same slot
+admission, same permit-tracks-the-query lifetime, same shed), and the list handler hands
+`examined_to` back as `next_cursor` when the page came up short. `more` follows `next_cursor`, so the
+documented loop ("until `more` is false") carries a client across the band with no new rule; a page
+can be empty while `more` is true, and `/docs` and the OpenAPI envelope description now say so.
+
+**The one detail that had to be right, pinned.** The cursor is the last id EXAMINED, never the last
+row RETURNED — a value with no rows in a band would otherwise re-walk it for ever. Store test
+(`crates/store/tests/fallback_band.rs`): six tenders, two matches at ids 5 and 6, a band of 2 →
+three pages `1..2`, `3..4`, `5..6`, no overlap, nothing skipped, terminates; a full page issues no
+band cursor; a walk ending on the table's last id issues none; a read that cannot walk is never
+banded. Handler test (`a_bounded_list_walk_pages_without_overlap_and_reproduces_the_unbounded_answer`):
+band of ONE id on tenders (`kind`) and lots (`source`) against a default-band reference server over
+the same chain — one page per id, cursors strictly increase, every page ≤ `limit`, the concatenation
+is the unbounded answer.
+
+**Sizing.** 500,000 ids is ~2 s per page at the ~280k ids/s the unbounded GR walk measured, so a
+value that is sparse in the head costs ~2 s per page instead of 30 s and a 503, and a dense value
+fills its page long before the band ends and pays nothing.
+
+**Found on the way — issue 415.** The handler test could not use `?kind=` on lots: the parameter is
+lowercased for every collection while lot kinds are stored `Lot`/`LotsGroup`/`Part`, so the filter
+never matches, and the guard's lots `kind` probe is a bare scan of `tender_version_lots` that ran to
+the 30 s deadline on prod (`?kind=lot` → 503 in 30.66 s). That walk runs INSIDE `reachable()`, before
+the page query, so option (b) does not shorten it. Filed as 415 with the measurements.
