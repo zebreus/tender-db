@@ -1,6 +1,6 @@
 # 410 — the continuity check tests the days IMMEDIATELY adjacent to a stretch, so one straggler notice hides a 432-day publication gap
 
-Status: ready-for-agent — **FIX SHIPPED AND DEPLOYED 2026-09-17** (`7726bcb`), red-checked; the
+Status: needs-info — waiting on the scheduled Sunday 2026-09-20 `data-quality` run (the weekly tick), the first run since the fix deployed at `7726bcb`. Checked 2026-09-18 01:5xZ: the newest stored report is still job 1462 (computed 2026-09-17 12:19Z, rev `301ee34`, pre-fix) and its section 14 still lists the four `doe` holiday rows and two `ted` ones beside `fts`. Nothing to do until that run lands; then `## Verify` below decides. Was: ready-for-agent — **FIX SHIPPED AND DEPLOYED 2026-09-17** (`7726bcb`), red-checked; the
 live re-run is the only thing outstanding and is deliberately deferred to a non-colliding window
 (see the comment at the foot). Was: filed 2026-09-17, measured end to end on prod. `fts` has a **432-day silent
 stretch inside the continuity window** and section 14 reported `none`. The mechanism is exact and
@@ -218,3 +218,21 @@ always meant to apply, and a real hole with a straggler still reporting.
 
 **Expected on the next run**: section 14 lists `fts` alone. If a holiday row returns, the gate is not
 reading `inside`.
+
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh /admin/reports/data-quality" | python3 -c "import sys,json; d=json.load(sys.stdin); b=d['body']; s=b[b.find('== 14.'):]; print(d['computed_at']); print(sorted({l.split()[0] for l in s.split('\n')[2:] if l.strip() and l.split()[0] in ('doe','fts','ted')}))"
+
+- **done**: a `computed_at` after 2026-09-20 00:00Z, then `['fts']` — the 433-day FTS stretch is the only row; every holiday row (`inside` equal to `days`) is gone
+- **open**: `1789647552` (job 1462, 2026-09-17 12:19Z), then `['doe', 'fts', 'ted']` — four DÖE holiday rows and two TED ones still listed (read 2026-09-18)
+
+A metadata read on the box (the admin secret never leaves it), so it is free per `prod-box-reads.md`.
+
+## Comment — 2026-09-18: the next run has not happened yet — parked against the Sunday tick
+
+The newest stored `data-quality` report is still job 1462 (computed 2026-09-17 12:19Z), the pre-fix run
+this issue's acceptance comment already read. Section 14 as served today, unchanged: `doe` ×4
+(2025-04-17, 2025-12-23, 2026-04-02, 2026-05-13 — each with `inside` = `days`), `fts` ×1, `ted` ×2.
+Not re-running it by hand: a `data-quality` run holds the writer for ~90 minutes, and the box has a
+legacy re-projection queued for issue 393 unit 2 tonight. The weekly tick's Sunday run is the signal;
+Status moved to `needs-info` against it, with the check above.
