@@ -1,6 +1,6 @@
 # 50 — SQL analyst surface: time format, schema noise, missing views
 
-Status: REOPENED 2026-09-15 — point 2's column-type clause was never fixed: all 105 columns of
+Status: REOPENED — **the view-type clause is BUILT 2026-09-18**: `/v1/sql/schema` resolves every view column's type from the view's own SQL (through views, through a scalar subquery's single item; `COUNT(*)` is INTEGER; anything else an honest `null`), with a parser unit test and the schema integration test asserting `v_tenders.id` INTEGER and every integer key of every view; deploy pending — and the gate that would have caught the schema test is issue 414's, which never ran `tests/sql.rs`. Was: REOPENED 2026-09-15 — point 2's column-type clause was never fixed: all 105 columns of
 all 13 views still publish `"type": "TEXT"` on prod rev `9e082fd` while the served values are
 integers. Incomplete fix, not a regression — the 2026-08-17 closure verified the other clauses.
 
@@ -192,3 +192,33 @@ field; the cheap interim is a schema note saying view `type` is unreliable, cons
 
 - **done**: `[('id', 'INTEGER'), ('source', 'TEXT'), ('procedure_key', 'TEXT')]` — a view column carries its base column's declared type, or `null`, or a note says view types are unreliable
 - **open**: `[('id', 'TEXT'), ('source', 'TEXT'), ('procedure_key', 'TEXT')]` — every view column is `TEXT` (read 2026-09-18; the base table reads `INTEGER` for `id`)
+
+## Comment — 2026-09-18: point 2's column-type clause, built
+
+**What changed.** `schema()` (`v1/sql.rs`) used to copy `PRAGMA table_info`'s type column for
+tables and views alike, and turso reports `TEXT` for every column of every view — 105 columns,
+`v_tenders.id` and `v_fetches.bytes` included, against `typeof()` reading `integer` on prod. A view
+now gets its types from `view_column_types`: the view's SQL is read out of `sqlite_schema`, the
+SELECT list is taken apart at depth 0 (`parse_select`: items and FROM/JOIN sources by alias), and
+each item is followed to the column it projects — `alias.col` and bare `col` to a source table's
+declared type, recursing when the source is itself a view (`v_awards` → `v_lot_results` →
+`v_tender_current`), `COUNT(*)` to INTEGER, a scalar subquery to its single item, and anything
+else to `null` — "unknown", stated, rather than `TEXT`, asserted. No row is sampled: a `typeof()`
+probe needs a non-NULL value and would walk a mostly-NULL column on the request path.
+
+**One turso fact learned on the way**, recorded because the unit test passes without it and the
+integration test fails: turso re-serialises a stored view's SQL with a space before a call's
+parenthesis — `sqlite_schema` holds `COUNT (*)` for what the source wrote as `COUNT(*)` — so the
+aggregate match ignores spacing, and the unit test pins the spaced spelling.
+
+**Tests.** `a_views_select_is_followed_to_its_sources` (the three shapes the thirteen views use);
+`the_schema_documents_time_format_and_enums` now asserts `v_tenders.id`/`published_at` INTEGER,
+`title` TEXT, `v_fetches.bytes` INTEGER, `v_organizations.mentions` INTEGER, `v_lots.title` TEXT
+(a subquery), `v_awards.winner_name`/`awarded_cents` through three view levels, and that every
+integer key (`id`, `tender_id`, `notice_id`, `organization_id`, `lot_id`, `lot_result_id`, `seq`,
+`*_organization_id`) of every view resolves to INTEGER — `section_id` is a genuine TEXT key
+(`"RES-1"`) and is deliberately outside that set.
+
+**Deploy pending**, and this is where issue 414 came from: `tests/sql.rs` turned out to have two
+tests red since 2026-09-06, which the gate never ran because its app step is `--lib` only. Those
+are fixed under 414; this rides the same deploy. `## Verify` below.
