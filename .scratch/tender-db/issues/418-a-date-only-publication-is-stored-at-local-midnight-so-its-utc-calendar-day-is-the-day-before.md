@@ -10,7 +10,7 @@ Blocked by: nothing
     B=https://tenders.zebreus.click; for w in "2026-09-05&published_before=2026-09-06" "2026-09-04&published_before=2026-09-05"; do curl -s --max-time 30 "$B/v1/tenders?published_after=$w&source=doe&limit=200" | python3 -c "import json,sys; d=json.load(sys.stdin); print('$w'.split('&')[0], len(d['items']), 'items')"; done
 
 - **done**: the first line (the civil day 2026-09-05) counts the DÖE tenders published that day and the second (2026-09-04) does not carry them — a bare-date window finds a publication by the date the API serves for it
-- **open**: `2026-09-05 0 items` then `2026-09-04 N items` — the tenders the API serves as published on 09-05 sit in the 09-04 window, because their instant is 2026-09-04T22:00:00Z (read 2026-09-18 23:5x UTC at `5d245cb`: 0, then 200 with `more`)
+- **open**: `2026-09-05 0 items` then `2026-09-04 N items` — the tenders the API serves as published on 09-05 sit in the 09-04 window, because their instant is 2026-09-04T22:00:00Z (read 2026-09-18 23:5x UTC at `5d245cb`: `2026-09-05 0 items` then `2026-09-04 45 items`)
 
 ## Observed (2026-09-18, prod)
 
