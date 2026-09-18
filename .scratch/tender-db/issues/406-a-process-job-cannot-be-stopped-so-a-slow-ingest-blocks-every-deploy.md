@@ -1,9 +1,17 @@
 # 406 — `process` has no stop checkpoint, so one slow ingest blocks every deploy for as long as it runs
 
-Status: ready-for-agent — found 2026-09-16 the hard way: a `process` job degraded by the issue-404 regression needed six hours, could not be cancelled, and blocked the deploy of the very fix that would have ended it.
+Status: **DONE 2026-09-18** — every `Done when` item landed 2026-09-16 (see "Landed") and the deployed revision carries it: the box's `deployed-rev` is `723e4e8`, and that revision's `supervisor.rs` heads `STOPPABLE_KINDS` with `"process"`; `docs/operations.md`'s cancel section lists `process` first among the stoppable kinds. The one thing not exercised live is a real `DELETE` on a running `process` — no ingest was running to stop, and manufacturing one would delay a daily for a cosmetic tick (403's reasoning). The next slow ingest that needs a deploy is the live acceptance; the contract test pins the list until then. Was: ready-for-agent — found 2026-09-16 the hard way: a `process` job degraded by the issue-404 regression needed six hours, could not be cancelled, and blocked the deploy of the very fix that would have ended it.
 Kind: defect (operations — `crates/ingest/src/process.rs`'s package walk has no `should_stop`, and `STOPPABLE_KINDS` in `crates/app/src/supervisor.rs` therefore cannot list `process`)
 Relates to: 247 (which gave the RE-PARSE walk exactly this cooperative stop — `reparse_package` takes `should_stop`, checks it between notices and sets `report.cancelled`; this is that, one function over), 252 (the four cancel answers, of which the 409 here is the honest one), 404 (the regression that made a `process` job take 9 hours instead of 2 minutes, which is what exposed this), 21 (durable job rows: a stopped `process` re-runs from the top, which is safe because ingestion is idempotent by identity)
 Blocked by: nothing
+
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click 'git --git-dir=/opt/tender-db/repo.git show $(cat /opt/tender-db/deployed-rev):crates/app/src/supervisor.rs | grep -A1 "^const STOPPABLE_KINDS" | tail -1'
+
+- **done**: `"process",` — the DEPLOYED revision's stoppable set opens with `process`, so `DELETE /admin/jobs/{id}` on a running ingest answers `200 stopping`, not `409`
+- **open**: any other line (`"reparse",` would mean the deployed revision predates the fix)
+- read 2026-09-18 at `723e4e8`: `"process",` → done
 
 ## What happened
 
