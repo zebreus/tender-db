@@ -91,7 +91,7 @@ fn every_ted_eforms_fixture_is_consumed_exhaustively() {
         .chain(fixtures("eforms-chain"))
         .chain(fixtures("eforms-prev-ref"))
         .collect();
-    assert_eq!(corpus.len(), 45, "corpus changed; update the expectation");
+    assert_eq!(corpus.len(), 47, "corpus changed; update the expectation");
 
     for relative in corpus {
         match ingest_fixture(&relative) {
