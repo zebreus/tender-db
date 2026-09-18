@@ -4,9 +4,14 @@ Status: ready-for-agent — **the REOPENED unit is CLOSED and VERIFIED ON PROD 2
 `62031e2`: `/docs` and `/v1/openapi.json` both serve the corrected wording (checked positively, not
 just by absence — `NAME-scoped` and `no interrupt` are present and the retired phrases score 0 hits
 on both surfaces), and the drift now has a detector on every served surface
-(`no_served_surface_repeats_a_retired_claim`, red-checked). Remaining on this issue: **unit 4's second
-half only** — per-field provenance on `TenderRow`, so an inherited deadline is distinguishable rather
-than merely documented. See Comments, 2026-09-17.
+(`no_served_surface_repeats_a_retired_claim`, red-checked). **Unit 4's scope half is BUILT, gated (127/127) and DEPLOYED 2026-09-18 22:05 UTC at `5d245cb`
+(see the foot): `submission_deadline_scope` — `lot` / `procedure`, null exactly when the deadline
+is — rides beside `submission_deadline` on Tenders and Lots alike, so an inherited deadline is
+distinguishable on the row.** Remaining, and the next step is a DECISION: the version axis
+(whether the newest notice republished the date or the row carries it forward from an earlier
+version) is not derivable today — the fact satellites carry no origin — so it is either a
+fold-wide `since_seq`/`notice_id` on the facts plus a refold, or it closes as documented with the
+detail's `dates` array as the nearest reading. See the foot.
 Was: REOPENED 2026-09-15 — units 1-2's "all thirteen claims corrected at their source" is incomplete: two of those claims (`provisional` = single-mention; a timed-out query's server-side work "was abandoned") are still served live on prod at rev `9e082fd` from surfaces the table never listed — the `/docs` const at `crates/app/src/v1/docs.rs:643` and the vendored spec at `crates/app/data/openapi.json:412`. See Comments, 2026-09-15.
 Was: UNITS 1,2,3,5 DONE 2026-09-07 (owner) — all thirteen claims corrected at their source (`c185ed1`, 915 passed) and the provisional note coupled to the resolver by a test. Unit 4's second half (per-field provenance on `TenderRow`, so an inherited deadline is distinguishable rather than only documented) remains ready-for-agent. Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
 several reviewer "defects" are really this issue: the behaviour was decided deliberately
@@ -16,6 +21,13 @@ Relates to: 234 / 351 (the invariant that was deliberately retired), 219 / 238 /
 171 / 329 / 48 (the issues whose decisions these pages still contradict), 115 (the SQL
 oracle — the one place a doc claim IS pinned by a test), and the four code issues whose
 fixes make three of these rows true again
+
+## Verify
+
+    B=https://tenders.zebreus.click; curl -s --max-time 20 "$B/v1/tenders/8436333" | python3 -c "import json,sys; d=json.load(sys.stdin); print('tender', d['submission_deadline_scope'])"; curl -s --max-time 20 "$B/v1/lots?tender=8436333&limit=3" | python3 -c "import json,sys; print('lots', [l['submission_deadline_scope'] for l in json.load(sys.stdin)['items']])"
+
+- **done**: `tender procedure` then `lots ['procedure', 'procedure', 'procedure']` — 389's exemplar (one r209 procedure-scoped deadline, three undated lots) says on every row where its date came from (read 2026-09-18 22:05 UTC at `5d245cb`)
+- **open**: `tender None` and `lots [None, None, None]` on a dated tender — the marker is missing (a serializer or election regression), since null is legitimate only beside a null deadline
 
 ## Observed — the claim, where it is served, and what falsifies it
 
@@ -401,3 +413,43 @@ The served `provisional` sentence now reads:
 
 Which is what the resolver has actually done since 234, and what `sql.rs`'s coupled note has said
 since unit 2. All three surfaces now agree with each other and with the behaviour.
+
+## Unit 4, second half — BUILT 2026-09-18 (`5d245cb`, gate 127/127, deployed 22:05 UTC on an idle queue): the row says which scope its deadline came from
+
+**The shape.** One sibling field, `submission_deadline_scope`, on Tenders and Lots alike — the
+"one shape for one idea" 389 asked for — with the vocabulary `lot` / `procedure`, and `null`
+exactly when `submission_deadline` is. On a Lot, `procedure` is the inherited case 389 unit 2
+built (the lot published no deadline of its own and serves the procedure's); on a Tender, `lot`
+is the mirror the head election already performed silently (the newest deadline over both scopes
+can be a lot-level date). Not a generic per-field provenance object: nothing else on the row
+inherits across the lot/procedure line today except `title` (documented on the Lot schema), and a
+second consumer of an object shape would have been invented rather than found; if provenance
+grows, `<field>_scope` is the pattern.
+
+**Where it comes from.** The head SELECT (`tender_select_head`) picks the elected deadline's
+`lot_id` as a fifth correlated subquery beside utc/offset/has_time, and the deadline's ORDER BY
+gained a total tiebreak (`utc DESC, procedure first, then lot id`) so the five columns are read off
+ONE row rather than off whichever tied row each subquery met. The lot summary sets the marker in
+the two arms 389 wrote — the lot's own (`lot`) and the procedure-scoped fallback (`procedure`) —
+so there is no second election. Served through `json::tender` / `json::lot`, declared in the
+OpenAPI on both schemas (the served-keys gate `every_served_key_is_declared_in_its_schema`
+covers it), and the `/docs` Dates caveat now names the field instead of pointing here.
+
+**What the row still cannot say — the version axis, on record.** Whether the newest notice
+republished the deadline or the row carries it forward from an earlier version (the 37.6 %
+row-level `deadline < published_at` shape after an award notice) is not derivable from the
+canonical tables: `tender_version_dates` carries `(tender_id, seq, lot_id, field, instant)` and no
+origin — the fold unions facts across versions without recording which notice published each. A
+`since_seq` (or `notice_id`) on the fact satellites is a fold-wide addition plus a refold, and the
+detail's `dates` array is the nearest reading until then. That is the honest boundary of this
+unit: the scope half of the provenance question is answered on both rows; the version half needs
+fact provenance in the fold, filed here as the remaining open piece rather than approximated.
+
+**Tests.** `lot_deadline_scope.rs` (6): the two inheriting lots say `procedure`, the lot with its
+own date says `lot`, the tender says `procedure` when the procedure's date is the newest and `lot`
+when a lot's is, and a deadline-less tender/lot carries no scope. `api.rs`: the collections test
+asserts the vocabulary on the tender and that the scope is present exactly when the deadline is,
+on every served lot. Issue 391's `## Verify` literal moves from 16 to 17 declared Tender
+properties (annotated).
+
+**Read after the deploy (22:05 UTC):** 389's exemplar 8436333 (r209, one procedure-scoped deadline) serves `2029-04-29T10:00:00+00:00 procedure` on the tender and `procedure` on each of its three lots; the newest 200 tenders read 88 × `lot` (eForms deadlines are lot-level) and 112 × `null` beside a null deadline; a 200-lot eForms page reads 172 × `lot`, 28 × `null` — the marker never outruns the date, and `every_served_key_is_declared_in_its_schema` holds on the served surface.
