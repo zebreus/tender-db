@@ -1,6 +1,6 @@
 # 117 — a plain `id > ?` cursor defeats every multi-column index across the paginated reads
 
-Status: REOPENED 2026-09-15 — the §"The short-circuit's real scope" residual is LIVE on prod at
+Status: **DONE 2026-09-18** — the reopened residual is closed at the API layer and verified on the live box at rev `9d41dc8`: `?country=Germany` and `?country=Deutschland` answer `400` in ~0.5 s (they answered `503` after 30.6 s this morning), `?cpv=45abc` `400`, while `?country=DEB35`, `?country=ABCDE` and `?cpv=45000000` still `200`. `country` is bounded to five characters and `cpv` to eight digits — the vocabularies' own lengths — and the store guard's cap was raised from 16 to 32 case variants so every value the API admits is one the guard can bound; nothing an ordinary or a naive user can send declines the guard any more. Was: REOPENED 2026-09-15 — the §"The short-circuit's real scope" residual is LIVE on prod at
 rev `9e082fd`: a prefix the guard DECLINES (non-ASCII, a `LIKE` metacharacter, or 5+ ASCII letters)
 still walks the corpus and answers 503 after 30.4–30.7 s, and the "adversarial-only" premise fails
 for `?country=Germany`. Incomplete fix, not an index regression — see the 2026-09-15 comment.
@@ -1217,3 +1217,38 @@ survey showing no such values in real traffic.
 **To close:** shape-check `cpv` (ASCII digits, ≤8) and `country` (ASCII letters-then-digits, ≤5) in
 `Params::filter` exactly as `currency`/`lang` already are — a 400 at zero query cost — and correct
 `docs.rs:517` to name the shapes the probe declines.
+
+## Verify
+
+    B=https://tenders.zebreus.click; for q in country=Germany country=Deutschland cpv=45abc country=DEB35 country=ABCDE; do curl -s -o /dev/null -w '%{http_code}:%{time_total} ' "$B/v1/tenders?$q&limit=1"; done; echo
+
+- **done**: `400:0.x 400:0.x 400:0.x 200:0.x 200:0.x` — the three over-long / mis-shaped values refused in milliseconds, the five-character NUTS code and the five-letter value served (read 2026-09-18 at `9d41dc8`)
+- **open**: `503:30.6 503:30.6 …` — the first two walk to the service deadline (read 2026-09-18 at `c36de25`, before the fix)
+
+## Comment — 2026-09-18: closed — a length bound at the API and a matching cap in the guard
+
+Re-read this morning at `c36de25`, the reopen's claim held exactly: `?country=Germany` → `503`
+after 30.657 s, `?country=Deutschland` → `503` after 30.617 s, both with the deadline layer's "not
+your request; safe to retry" body — and a third and fourth such request would have pinned the
+last isolated readers (the 0.5 s `503`s the same probe run got on unrelated `/v1/lots` requests
+were exactly that pool, exhausted). `?cpv=%CE%B4` was already a `400` (390 unit 1's character
+check), `?country=DE1234567` a fast `200` — the hole was precisely the one the reopen named:
+letters beyond the guard's cap, admitted by a check that bounded characters but not length.
+
+**The fix, in two places that now agree.** `Params::filter` (`v1/mod.rs`, `shaped_prefix` with a
+`PrefixShape`): `country` is 1–5 ASCII alphanumerics, `cpv` 1–8 ASCII digits — the longest NUTS
+code is `DEB35`, the longest CPV code eight digits, so nothing longer can prefix a real code and
+it is a `400` at zero query cost, on every collection sharing the `Filter` and on the SSE half.
+`read::prefix_ranges`: `MAX_CASE_VARIANTS` 16 → 32, so the five letters the API now admits
+(`ABCDE`, 32 seeks at ~0.02 s) are guarded rather than declined — every admitted value is one the
+guard can bound, which is what the reopen's "(b) served-claim drift" bullet needed to be true.
+`docs.rs`'s probe paragraph now names the shapes the API refuses, and `openapi.json` states both
+bounds. The boundary tests moved with the cap (`the_guard_declines_on_letter_count_not_length`:
+five guarded, six declines; `tenders_shortcircuit.rs` likewise), and
+`a_code_prefix_longer_than_its_vocabulary_is_a_400_not_a_walk` pins the API side including the
+off-by-one at both bounds.
+
+What this does NOT change, deliberately: a PRESENT but rare value (`?currency=DEM`, ~6 s) still
+walks — a probe proves absence, never nearness — and the store's internal callers can still hand
+the guard a six-letter prefix and get the correct slow answer. The 503 body's "safe to retry" is
+now accurate for everything that can reach it from outside.

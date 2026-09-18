@@ -1,6 +1,6 @@
 # 223 — org reverse-lookups (buyer/winner/bidder) walk all tenders for a PRESENT value → 35 s+ client timeout
 
-Status: REOPENED 2026-09-15 — the fix was only ever verified on `/v1/tenders`; the `lots_query` half of
+Status: REOPENED — the lots half's prescribed rewrite (the participation seed as an `l.tender_id IN (…)` semi-join, `lot_from` gone) is DEPLOYED 2026-09-18 at `9d41dc8` and verified for the ordinary case (`/v1/lots?winner=388` 0.5 s, `?buyer=2` 0.4 s, `?buyer=357` 0.8 s), but it does NOT close the case that reopened this: `/v1/lots?winner=357` still 22.5 s and `?bidder=357` still 503 at 30.6 s, and org 357 seeds only 3,734 / 1,442 tenders — so the remaining cost is the planner walking `lots` in id order for `ORDER BY l.id LIMIT` and probing the seed per row, which is issue 388's open cursor-inside-the-seed unit, not the JOIN inversion. Handed there with the numbers; this stays open until `winner=357` answers in seconds. Was: REOPENED 2026-09-15 — the fix was only ever verified on `/v1/tenders`; the `lots_query` half of
 the same participation seed still 503s at the 30 s service bound on prod rev `9e082fd` (see the
 2026-09-15 comment below). Incomplete fix, not a regression: the lots path was never measured.
 
@@ -207,3 +207,45 @@ IN (SELECT DISTINCT tender_id FROM <participation table> WHERE organization_id =
 statement in a test beside `crates/store/tests/lots_country_seed.rs`, then re-measure `/v1/lots` for all
 three filters on prod — the same table this issue already has for `/v1/tenders` — and retire the stale
 `?winner=<rare>` row in `crates/app/src/v1/docs.rs:512`.
+
+## Verify
+
+    B=https://tenders.zebreus.click; for q in winner=357 bidder=357 winner=388; do curl -s -o /dev/null -w '%{http_code}:%{time_total} ' "$B/v1/lots?$q&limit=5"; done; echo
+
+- **done**: three `200`s, every one under ~2 s — the lots stream answers a prolific-but-sparse org's reverse lookup from its seed
+- **open**: `200:22.5 503:30.6 200:0.5` — the first two walk (read 2026-09-18 at `9d41dc8`, AFTER the IN rewrite; before it at `c36de25` the first was `503:30.5`)
+
+## Comment — 2026-09-18: the prescribed rewrite is deployed, and it is not enough for the org that reopened this
+
+**Deployed `9d41dc8`.** `lot_seed_predicates` now pushes the org seed as
+`l.tender_id IN (SELECT DISTINCT tender_id FROM <participation table> WHERE organization_id = ?)`
+(the buyer arm role-narrowed as before) and outranks the country arms; `lot_from` is gone, the
+stream is always `FROM lots l`; `an_org_reverse_lookup_seeds_the_lots_stream_as_an_in_semi_join`
+pins the statement beside the country seed's test. Gate 117/117.
+
+**Measured on prod, before and after**, `/v1/lots?<seed>&limit=5`:
+
+| seed | org | seeded tenders | before (`c36de25`) | after (`9d41dc8`) |
+| --- | --- | ---: | --- | --- |
+| `winner=357` | ALLIANCE HEALTHCARE ROMÂNIA SRL (194,301 mentions) | 3,734 | `503` 30.5 s | `200` **22.5 s** |
+| `bidder=357` | same | 1,442 | `503` 30.6 s | `503` **30.6 s** |
+| `buyer=357` | same (not a buyer) | — | — | `200` 0.8 s |
+| `winner=388` / `bidder=388` | Enablon (1 mention) | 1 | `200` 1.6 s / 0.6 s | `200` 0.5 s / 0.4 s |
+| `buyer=2` | Operator SEAP (122,934 mentions) | many | `200` 0.5 s | `200` 0.4 s |
+
+**What the numbers say.** The seed sets are SMALL — a few thousand tenders — so "the IN form
+iterates the org's whole participation" cannot cost 22 s; and the one-tender org answers in
+0.5 s only because its single lot (id 2,327,016) sits early in `lots`. The consistent reading is
+that turso still drives from `lots` in rowid order to serve `ORDER BY l.id LIMIT 5` and probes
+the seed (and the per-lot EXISTS) per row, so the time is "how far into `lots` this org's fifth
+lot sits" — org 357's lots are recent and sparse, so the walk runs to the deadline. That is the
+same inversion 275 measured, and the IN form did not cure it here as it did for the country
+seed, presumably because a country's lots are dense from the first ids. `EXPLAIN QUERY PLAN` is
+refused by `/v1/sql` ("send the SELECT itself"), so the plan has to be probed locally, the way
+`the_pre_115_lots_shape_still_plans_as_the_walk_we_left` does.
+
+**Where it goes.** This is exactly issue 388's open unit — "the cursor inside the seed": a page's
+cost must scale with the page, which means driving from the seed and paging within it rather
+than walking `lots` for an `ORDER BY` the seed cannot serve. The numbers above are recorded
+there. The `?winner=<rare>` docs row (`docs.rs:512`) stays as it is until that lands, because it
+is currently true for lots.

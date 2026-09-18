@@ -209,3 +209,24 @@ against a fresh schema would pass while being absent where it matters.
   warm at `limit=100`, with the controls unmoved. That needs the indexes BUILT on prod — they are
   deferred, so the next rebuild or the issue-111 builder creates them; until then nothing changes
   live, and this unit must not be read as the issue being fixed.
+
+## Comment — 2026-09-18: the prod re-measurement, on the lots stream, after issue 223's IN rewrite
+
+Issue 223's lots half deployed today (`9d41dc8`): the org seed is now `l.tender_id IN (…)`
+instead of a FROM-clause JOIN. It did not move the prolific case on `/v1/lots`:
+
+| request | seeded tenders | time |
+| --- | ---: | --- |
+| `/v1/lots?winner=357&limit=5` | 3,734 | `200` 22.5 s |
+| `/v1/lots?bidder=357&limit=5` | 1,442 | `503` 30.6 s |
+| `/v1/lots?winner=388&limit=5` | 1 | `200` 0.5 s |
+
+Org 357 (ALLIANCE HEALTHCARE ROMÂNIA SRL, 194,301 mentions) seeds a few THOUSAND tenders, not
+hundreds of thousands, and still costs 22–30 s — so the cost is not the seed's size, it is the
+planner serving `ORDER BY l.id LIMIT` by walking `lots` in rowid order and probing the seed per
+row until the fifth match, which for a recent, sparse org is most of the table. That is the
+"cursor inside the seed" unit stated above, measured: a page's cost scales with how deep into
+`lots` the org's lots sit, not with the page. `/v1/sql` refuses `EXPLAIN` — probe the plan locally
+(`the_pre_115_lots_shape_still_plans_as_the_walk_we_left` is the pattern) for the IN form, the
+JOIN form, and a materialised-seed form (`SELECT … FROM (SELECT … FROM lots l WHERE l.tender_id
+IN (seed) AND <predicates>) ORDER BY id LIMIT ?`), and take whichever drives from the seed.
