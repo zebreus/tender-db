@@ -1,6 +1,6 @@
 # 412 — the board drifts behind the code: three consecutive `needs-triage` issues were already built, deployed and verified, and none of them said so
 
-Status: ready-for-agent — found 2026-09-17 by working the `needs-triage` queue three issues deep and finding the same thing each time. Not a code defect; a defect in the thing CLAUDE.md calls the source of truth.
+Status: **DONE 2026-09-18** — all three `## Done when` bullets met: the `## Verify` convention is written into `docs/agents/issue-tracker.md` (395/385/398 retrofitted as the worked examples, plus the seven issues closed by this sweep), `ops/board-verify.sh` runs the blocks over the open issues (first cut, run today), and the 2026-09-15 fan-out queue is fully swept — NINE of ten were already done, 393 is the one live issue. Residual: 37 open issues carry no `## Verify` yet; the script names them every run and they are retrofitted on touch. Was: ready-for-agent — found 2026-09-17 by working the `needs-triage` queue three issues deep and finding the same thing each time. Not a code defect; a defect in the thing CLAUDE.md calls the source of truth.
 Kind: operational (issue tracker hygiene — `.scratch/tender-db/issues/`, `docs/agents/triage-labels.md`)
 Relates to: 395 / 385 / 398 (the three instances, all closed 2026-09-17 after verification), `docs/agents/issue-tracker.md` (the tracker's own contract), `docs/agents/triage-labels.md` (the state vocabulary that is not being applied on the way OUT of a state)
 Blocked by: nothing
@@ -112,3 +112,65 @@ convention proposed above, and it is now measured rather than asserted.
 - 390, 391 and 396 still need a verdict; their repros want more than one call, which is itself
   evidence for the `## Verify` bullet — an issue whose state cannot be established in one command is
   an issue that will drift.
+
+## Verify
+
+    test -x ops/board-verify.sh && grep -c 'one command, both outputs' docs/agents/issue-tracker.md && ops/board-verify.sh 2>/dev/null | tail -1
+
+- **done**: `1`, then `N verify line(s) run; no \`## Verify\` on: …` — the trailing list is the residual, and it should only shrink (37 on 2026-09-18)
+- **open**: nothing, or `0` — no script, or no convention
+
+## Comment — 2026-09-18: the sweep finished, the convention written, the script built. Closing.
+
+**The last three, plus 387.** 390, 391 and 396 each carried their own closure in the body —
+"Issue 390 is complete — all five units built, deployed and verified", "Status: **RESOLVED-VERIFIED
+2026-09-16**" twice — under a line 3 that still said `needs-triage`. Re-read live today at rev
+`ba9eb1f`, every acceptance table holds (the per-unit rows are on each issue). 387's body listed the
+three prod reads it still owed; taken today, all three met. So the fan-out queue, complete:
+
+| issue | live verdict | how it went stale |
+| --- | --- | --- |
+| 395, 385, 398 | done | (a) fixed by adjacent work that never read the issue |
+| 392, 399 | done | (a) — fixed while working 390 unit 1 |
+| 387 | done | (c) built, three reads owed "at the next idle window"; the window came, nobody wrote back |
+| 390, 391, 396 | done | **(b) the owner wrote the closure at the BOTTOM and never touched line 3** |
+| 393 | **live** | — (and its own line 3 still said `needs-triage` after I had shipped unit 2 and measured unit 3: mechanism (b), mine, flipped today) |
+
+**Nine of ten.** The base rate is now measured over the whole queue, not four of it.
+
+**Mechanism (b) is scriptable, so I scripted it.** A grep over every issue whose Status line is
+non-terminal and whose body contains `RESOLVED-VERIFIED` / `is complete` / `VERIFIED LIVE` /
+`Status: **DONE` gave 13 candidates: the three above, **two more from the same week that no hand
+sweep had reached — 400 and 401, both `## RESOLVED-VERIFIED 2026-09-16 … Closing.` under
+`ready-for-agent`** — and eight false positives (REOPENED issues citing their own past closure,
+multi-unit issues with one unit verified, one `Relates to:` line). Both flipped today with their
+evidence. Five issues in one week, then, went on reading as open after their owner had written
+"verified" — that is not a discipline problem, it is a place-of-writing problem: the closure went
+where the evidence goes (the bottom) and the state lives where the reader looks (line 3).
+
+**And the vocabulary is why the grep needed a hand pass.** Counting the first word after `Status:`
+across the board: `DONE` 61, `RESOLVED` 49, `resolved` 41, `CLOSED` 40, `RESOLVED-VERIFIED` 31,
+`RESOLVED-DEPLOYED` 12, `FIXED` 11, and some seventy further spellings with one to six issues each
+(`SETTLED`, `REPAIRED`, `RESOLVED-DIAGNOSED-HONEST`, `CLOSED-SUPERSEDED-DELIVERED`, …). The five
+labels in `triage-labels.md` are applied on the way INTO a state and almost never on the way out.
+Decision: not rewriting ~300 closed issues. New closures spell `DONE <date>`; the script classifies
+by an explicit OPEN list (the five labels plus `REOPENED`/`open`/`BACKLOG`/`PARKED`/`DORMANT`) and
+treats every other spelling as closed. Recorded in `triage-labels.md`.
+
+**What shipped, against `## Done when`:**
+
+1. *A convention in `issue-tracker.md`* — the `## Verify` section: one command on one indented line,
+   both outputs stated, free to run, the last open unit of a multi-unit issue. 395/385/398 carry the
+   retrofits as worked examples; 390/391/396/387/393/400/401 got blocks as they were closed or
+   re-stated. `triage-labels.md` gained the on-the-way-out rule: line 3 moves FIRST.
+2. *Something runs it* — `ops/board-verify.sh [--all] [NNN …]`: extracts each open issue's command,
+   runs it (60 s cap), prints the output beside the stated done/open lines, names the open issues with
+   no block. It decides nothing. Run today: 1 open issue with a block (393, output equals its stated
+   open state), 37 without. The weekly-tick job the bullet also offered is deliberately NOT built:
+   it would mean the supervisor executing shell lines out of markdown, and the by-hand step the
+   bullet allowed as a first cut is what a triage pass needs anyway.
+3. *The remaining queue checked before being worked* — done, above; 9/10.
+
+**Residual, named so it is not mistaken for done:** 37 open issues have no `## Verify`. They are
+retrofitted on touch, not by a job — writing a verify line means re-deriving the issue's state, which
+is the firing's work anyway, and the script prints the list every run so it cannot go unnoticed.

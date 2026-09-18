@@ -9,6 +9,7 @@ Issues and specs (you may know a spec as a PRD) for this repo live as markdown f
 - Implementation issues are one file per ticket at `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01` — never a single combined tickets file
 - Triage state is recorded as a `Status:` line near the top of each issue file (see `triage-labels.md` for the role strings)
 - Comments and conversation history append to the bottom of the file under a `## Comments` heading
+- Every issue carries a `## Verify` block — one free-to-run command and what it prints in BOTH states (see below); `ops/board-verify.sh` runs them over the open issues
 
 ## When a skill says "publish to the issue tracker"
 
@@ -86,3 +87,49 @@ So, when parking:
 - **Re-read the parked pile periodically.** None of the three above announced
   itself. They were found by going and looking, which nothing on the board asked
   anyone to do.
+
+## `## Verify`: one command, both outputs
+
+Measured 2026-09-17/18 (issue 412), by checking every `needs-triage` issue from the 2026-09-15
+review fan-out against prod BEFORE working it: **nine of ten were already done.** Three (395, 385,
+398) had been fixed by adjacent work that never read the issue. Three more (390, 391, 396) had their
+closure — "all five units built, deployed and verified", "Status: RESOLVED-VERIFIED" — written into
+the BODY by the owner while line 3 still said `needs-triage`; a grep for that shape across the board
+found two more of the same week (400, 401) under `ready-for-agent`. Two mechanisms, one symptom: the
+Status line is a photograph, and nothing re-takes it. Picking work by Status from that queue was
+wrong nine times in ten, and each miss cost most of a firing to re-derive a state that was already
+true.
+
+So every issue carries a `## Verify` block:
+
+    ## Verify
+
+        <one command, on a single indented line>
+
+    - **done**: <what it prints when the issue is done>
+    - **open**: <what it prints while the issue is open>
+
+The rules that make it a check rather than a story:
+
+- **One command.** If the state needs three calls, the issue will drift, because nobody runs three
+  calls to decide whether to re-read something. Pick the one that distinguishes the states; the rest
+  of the evidence stays in `## Repro`.
+- **Both outputs.** `## Repro` states the open output only. The verify line states what "done" prints
+  too, so a reader — or the script — can tell which state it is looking at without re-deriving the
+  issue. Record the date you last saw each output, so the next reader knows how old the photograph is.
+- **Free to run.** No token, no data pages, no box load: a public `curl`, a bounded read per
+  `prod-box-reads.md`, or a `grep` over a served document. A verify that needs permission will not
+  be run, and then it is not a check.
+- **A multi-unit issue verifies its LAST open unit**, and says which; the closed units' lines can
+  stay in the body as prose.
+
+`ops/board-verify.sh [--all] [NNN ...]` extracts each open issue's command, runs it, and prints the
+output beside the stated done/open lines; it also names the open issues that carry no `## Verify`
+yet. It decides nothing — the reading is the owner's — but it turns re-triage from a reading
+exercise into a scroll. Run it at the top of a triage pass and before picking work by Status.
+
+Worked examples, retrofitted 2026-09-18: 395 (a public-API window whose first row moves from the
+month's last day to its first), 385 (two exemplar deadlines), 398 (a `grep -c` over the served
+OpenAPI for the sentence the decision put there — the DATA reads the same in both states, so the
+prose is the only thing a check can look at).
+

@@ -212,3 +212,15 @@ the held-today question has a dedicated field that was always there.
 Nothing left to build. The one thing this issue asked for that did NOT happen is the read-side
 filter, and its absence is now a documented decision rather than an oversight — which is the whole
 difference between the two.
+
+## Verify
+
+    curl -s https://tenders.zebreus.click/v1/openapi.json | grep -c 'the row is retained after a reclaim'
+
+- **done**: `1` or more — the served contract says the `quarantine` object is retained after a reclaim and is NOT a held-today flag
+- **open**: `0`
+
+The DATA reads the same in both states — `/v1/notices/28783598` is `parse_state "parsed"` with
+`reprocessed_at "2026-08-22T01:04:15Z"` before and after — because the decision this issue asked for
+was to KEEP the row and say so. So the prose is the only thing a check can look at, and this is the
+sentence the decision put there. (Retrofitted 2026-09-18 as one of issue 412's three worked examples.)

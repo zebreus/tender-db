@@ -414,3 +414,13 @@ behind it, that sentence is now true rather than misleading — a year that is s
 a publisher published more than we have parsed, not because a package is missing. If a hole ever
 returns, `registry-contiguity` says so in the report and the funnel names it in the panel, which is
 what the legend flag was a proxy for.
+
+## Verify
+
+    curl -s 'https://tenders.zebreus.click/v1/tenders?source=ted&country=FR&published_after=2025-06-01T00:00:00Z&published_before=2025-07-01T00:00:00Z&order=asc&limit=1' | python3 -c "import sys,json; print(json.load(sys.stdin)['items'][0]['published_at'])"
+
+- **done**: `2025-06-01T22:00:00Z` — June starts on its first day (read 2026-09-18: id 85565)
+- **open**: `2025-06-30T22:00:00Z` — the month's first row is its last day, because the monthly package was never fetched
+
+(Retrofitted 2026-09-18 as one of issue 412's three worked examples. The `## Repro` above states
+only the open output; this block states both, which is what makes it a check rather than a story.)

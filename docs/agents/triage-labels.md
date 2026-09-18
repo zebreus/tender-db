@@ -20,5 +20,15 @@ step. The owner decides on the evidence in the issue, writes the decision and it
 reasoning into the issue, and proceeds. A decision is reversed the same way — a later
 entry with new evidence — never by leaving the issue parked.
 
+**On the way OUT of a state, the Status line moves first.** A closure is
+`Status: **DONE <date>** — <what was checked, where>. Was: <the line it replaces>` on line 3,
+written BEFORE the `## RESOLVED-VERIFIED` section at the bottom, not instead of it. Issue 412 found
+five issues in one week whose bodies said verified-complete while line 3 still said `needs-triage`
+or `ready-for-agent`; a Status line nobody re-reads is a photograph, and the `## Verify` block
+(`issue-tracker.md`) is what re-takes it. Closed issues on this board spell their terminal state some
+forty ways (`DONE`, `RESOLVED`, `RESOLVED-VERIFIED`, `FIXED`, `CLOSED`, `DEPLOYED`, …) — do not
+rewrite them; new closures use `DONE <date>`, and `ops/board-verify.sh` treats the five labels above
+plus `REOPENED`/`open`/`BACKLOG`/`PARKED`/`DORMANT` as open and every other spelling as closed.
+
 When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the
 corresponding label string from this table.

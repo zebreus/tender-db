@@ -1,6 +1,6 @@
 # 387 — `/v1/organizations`: the `name_prefix` upper bound is silently dropped for a whole class of prefixes, and `kind` is a case-sensitive match on a lowercase vocabulary
 
-Status: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: **DONE 2026-09-18** — both units built 2026-09-15 and now verified on the live box at rev `ba9eb1f`: `name_prefix=яп` → 1 item, all matching, `more:false`; `kind=VAT` → org 2 (case-insensitive); `name_prefix=δήμο&country=FR` → an empty page. The body's own "Still open" was exactly these three reads, owed to the next idle window; the window came and nobody wrote back (issue 412). Was: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (app + store — the `/v1/organizations` read path; unit 2 is also a docs defect, in `/docs` and `openapi.json`)
 Relates to: 217 / 217-B (the name-ordered builder and the `identifier`+`kind` lookup both units sit on;
 its Verification line reads `GET /v1/organizations?identifier=DE123456789&kind=VAT returns the org`,
@@ -331,3 +331,17 @@ is the issue-118/284 failure mode one step over; if that shape is worth refusing
   `cpv`/`country`) calls `successor` too, at `read.rs:1381`. It is ASCII-only by construction — the
   guard declines non-ASCII prefixes outright (issue 117) — so it was never exposed to the defect, and
   it inherits the fix for free.
+
+## Verify
+
+    B=https://tenders.zebreus.click; curl -s "$B/v1/organizations?name_prefix=%D1%8F%D0%BF&limit=5" | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d['items']), d['more'])"; curl -s "$B/v1/organizations?kind=VAT&limit=1" | python3 -c "import sys,json; print([i['id'] for i in json.load(sys.stdin)['items']])"
+
+- **done**: `1 False` then `[2]` — the `0xBF`-tail prefix keeps its upper bound, and `kind` matches case-insensitively (read 2026-09-18)
+- **open**: `1 True` (or more items than matches, paging forever) then `[]`
+
+## Comment — 2026-09-18: closed by the 412 sweep
+
+Both units were built on 2026-09-15 and the body listed the three prod reads still owed. Taken today
+at rev `ba9eb1f`: `name_prefix=яп` → 1 item (`ЯПИ ГРУП ЕООД`), `more:false`; `kind=VAT&limit=1` →
+org 2 (`Operator SEAP`, `identifier_kind "vat"`); `name_prefix=δήμο&country=FR` → `items []`,
+`more:false`. Every `## Done when` read is met.

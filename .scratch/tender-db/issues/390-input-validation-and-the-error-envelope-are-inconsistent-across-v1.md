@@ -1,6 +1,6 @@
 # 390 — `/v1`: input validation and the error envelope are inconsistent across the surface — a filter value is a LIKE pattern, `limit` is silently clamped, and three routes sit outside the contracts `/docs` publishes
 
-Status: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: **DONE 2026-09-18** — verified on the live box at rev `ba9eb1f`: all five units answer as their acceptance tables say (400 / 204 / 405-with-envelope / 400 / 400) — the body recorded completion on 2026-09-16 and this line never followed. Was: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (app — the `/v1` serving layer in `crates/app/src/v1/mod.rs`, plus one predicate in `crates/store/src/read.rs`; units 2, 4 and 5 are also docs defects, in `/docs` and `openapi.json`)
 Relates to: 117 (RESOLVED-VERIFIED — it analysed `?country=_E`, `%`, `d%` and the empty string, but only far enough to make the reachability guard DECLINE on them; its own comment says "Nothing upstream validates these ... the answer is to decline the guard rather than to interpret the pattern", and unit 1 is the input path it deferred), 118 (RESOLVED — introduced `ignored_filters`; unit 1 is the case that array cannot describe, because it names parameter NAMES, not values), 336 (CLOSED NOT-WORTH-IT — the opposite direction, an unmatchable value returning an EMPTY page; its closing argument "an empty list for a filter that matches nothing is conventional" does not extend to a value returning EVERYTHING), 284 (RESOLVED — the same org-search path silently dropping filters while reporting them honoured), 387 (filed by this fan-out — `name_prefix`/`kind` on `/v1/organizations`; unit 1 is the same class one parameter over), 215 (RESOLVED — the OpenAPI drift cluster; 215-A raised the `limit` ceiling in the spec from 500 to 1000 but never said the value is clamped, and never touched the floor), 51 (RESOLVED-VERIFIED — the uniform JSON error envelope; unit 3 is the status its three tests never exercised), 218-B (RESOLVED — landed `/v1/notices/{id}/content`, rev `4c3c367`, one day after the CORS grant; it never mentions CORS), 227 (RESOLVED — the `/docs`-vs-spec guard; it walks parameter NAMES, so it cannot catch units 4 or 5), 49 (RESOLVED-VERIFIED — made `?tender=` honoured on `/v1/notices`), 220 (RESOLVED — the performance of that same branch), 370 (served claims with no gate coupling them to behaviour — units 2, 4 and 5 are all that class)
 
@@ -457,3 +457,27 @@ The unit-5 controls are the ones that matter: the endpoint still streams without
 never a subscription rather than to an endpoint or a parameter.
 
 **Issue 390 is complete — all five units built, deployed and verified.**
+
+## Verify
+
+One command; its output distinguishes open from done.
+
+    B=https://tenders.zebreus.click; for u in 'tenders?country=_E&limit=1' 'tenders?limit=0'; do curl -s -o /dev/null -w '%{http_code} ' "$B/v1/$u"; done; curl -s -o /dev/null -w '%{http_code} ' -X OPTIONS "$B/v1/notices/1/content" -H 'Origin: https://x' -H 'Access-Control-Request-Method: GET'; curl -s -X POST "$B/v1/tenders" | head -c 40; echo; curl -s -o /dev/null -w '%{http_code}\n' -H 'Accept: text/event-stream' "$B/v1/notices?tender=2"
+
+- **done**: `400 400 204 {"error":{"message":"method not allowed"` then `400`
+- **open**: `200 200 405` then an empty line (bodiless 405), then `200`
+
+## Comment — 2026-09-18: closed by the 412 sweep
+
+Status line flipped. The body said "complete — all five units built, deployed and verified" since
+2026-09-16 and line 3 still said `needs-triage`; that is issue 412's drift, mechanism (b): the
+closure was written at the bottom and the Status line was never touched. Re-read live today at rev
+`ba9eb1f`, every unit as its acceptance table says:
+
+| unit | request | live |
+| --- | --- | --- |
+| 1 | `?country=_E` / `?country=` / `?cpv=%25` | `400` each, message naming the offending value; `?country=ZZ` → `200` with 0 items |
+| 2 | `HEAD /v1/notices/1/content` + Origin; `OPTIONS` on it | ACAO `*`; `204` with the full preflight set |
+| 3 | `POST /v1/tenders` | `405`, `application/json`, `allow: GET,HEAD`, `{"error":{"message":"method not allowed","status":405}}` |
+| 4 | `?limit=0` / `?limit=1000` | `400` "limit must be between 1 and 1000, not 0" / `200` |
+| 5 | `Accept: text/event-stream` on `/v1/notices?tender=2` | `400 application/json` |

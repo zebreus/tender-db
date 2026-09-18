@@ -1,6 +1,6 @@
 # 391 — the documented contract drifts from what the server does: the spec's flagship "closes soon" query answers 400, the SQL schema's headline note teaches the silent-NULL idiom its own column notes warn about, and three published shapes are shapes nothing serves
 
-Status: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: **DONE 2026-09-18** — verified on the live box at rev `ba9eb1f`: `deadline_after=now` answers 200, the schema note puts the FORMAT FIRST, `Tender` declares 16 properties — the body recorded RESOLVED-VERIFIED on 2026-09-16 and this line never followed. Was: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: docs (the served contract — `crates/app/data/openapi.json`, `/docs` in `crates/app/src/v1/docs.rs`, and the `/v1/sql/schema` notes in `crates/app/src/v1/sql.rs`; unit 1 is equally an app defect, because teaching `parse_instant` the word `now` is the other half of its fix)
 Relates to: 216 (RESOLVED — it shipped `sort=deadline` + `deadline_after/_before`, and its status line records `deadline_after=now` as a "prod-verified flagship"; unit 1 is that record being impossible, since the parser it shipped rejects the literal), 227 (RESOLVED — the `/docs`-vs-spec guard `the_docs_page_names_the_whole_spec_surface`, an anchored byte-grep over parameter and path NAMES; it cannot see an example literal, an example block or a schema's field set, which is why units 1, 4 and 5 are invisible to it), 215 (RESOLVED — the OpenAPI drift cluster; it fixed four drifts in this same document and never touched component-schema breadth, unit 5), 239 (its "Two documentation defects found by running the endpoint's own advice (FIXED, `8519810`)" is the fix unit 2 shows is incomplete — `8519810` rewrote `EPOCH_NOTE` and the examples, never `notes[2]`), 50 (RESOLVED-VERIFIED 2026-08-17 — its acceptance clauses quote the reversed `strftime(col,'unixepoch')` form verbatim as satisfied (unit 2) and claim "every timestamp column carries an epoch-seconds note" (unit 3); both were blessed by a verification that never held), 370 (DONE units 1,2,3,5 — the class all five of these belong to: served claims that are hand-written consts with no gate re-deriving them from behaviour; its unit 2 restates `provisional` on four surfaces and its "the OpenAPI if it repeats it" clause is moot precisely because of unit 5, the spec never mentions the field), 218-B (RESOLVED, rev `4c3c367` — landed `/v1/notices/{id}/content`, the endpoint whose `/docs` example unit 4 is about and which unit 5 shows is missing from the `/v1` endpoint list), 292 (FIX DEPLOYED — the three lang-tag dialects; its `normalize_lang` applies at the fold boundary to `tender_version_texts`, NOT to `notice_texts`, which is why unit 4's `lang` half is "the source's tag verbatim" and not "uppercase 639-2/T"), 211 / 118 (RESOLVED — earlier spec-vs-served vocabulary drifts on `/v1/changes` and the ignored-filter array; neither covers schema breadth), 387 / 389 / 390 (filed by this fan-out — 390 unit 4 carries the `limit` clamp-vs-reject half of the spec mismatch, so it is deliberately out of scope here)
 
@@ -512,3 +512,18 @@ serialized row by `every_served_key_is_declared_in_its_schema`, so the next fiel
 serializer fails the gate until the spec catches up. (`Lot`'s two property DESCRIPTIONS were rewritten
 again on 2026-09-16 by issue 389, which is the gate working as intended: the shape held, the prose
 followed the behaviour.)
+
+## Verify
+
+    B=https://tenders.zebreus.click; curl -s -o /dev/null -w '%{http_code} ' "$B/v1/tenders?deadline_after=now&sort=deadline&order=asc&limit=3"; curl -s "$B/v1/openapi.json" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['components']['schemas']['Tender']['properties']))"
+
+- **done**: `200 16`
+- **open**: `400 6`
+
+## Comment — 2026-09-18: closed by the 412 sweep
+
+Status line flipped. The body carried "Status: **RESOLVED-VERIFIED 2026-09-16**" at its tail while
+line 3 still read `needs-triage` — issue 412's mechanism (b). Re-read live today at rev `ba9eb1f`:
+`deadline_after=now&sort=deadline` → `200`; `/v1/sql/schema` `notes[2]` opens "Time columns are Unix
+epoch seconds, NOT ISO … Put the FORMAT FIRST: strftime('%Y', published_at, 'unixepoch')"; the
+OpenAPI property counts are `Tender 16, Lot 8, Organization 7, Notice 11`.

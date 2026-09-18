@@ -1,6 +1,6 @@
 # 396 — the dashboard's own explanatory copy contradicts the numbers beside it: 2026 reads 117.38 % under a footnote about shortfalls, and the only benign quarantine reason is glossed as unmapped content
 
-Status: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: **DONE 2026-09-18** — verified on the live box at rev `ba9eb1f`: the partial-year denominator carries the ‡ and its dated hover, the corrupt-archive reason is glossed as benign — the body recorded RESOLVED-VERIFIED on 2026-09-16 and this line never followed. Was: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: docs (dashboard presentation, `crates/app/src/ui.rs` + the vendored denominator `crates/app/data/ted-notice-counts.csv`) — no data or API surface is wrong in either unit; both are the page saying one thing while its own adjacent column, footnote or ledger says another
 Relates to: 229 (RESOLVED-VERIFIED 2026-08-18, rev `cc0ef20` — it introduced `year_held`/`year_ratio` and the † that unit 1's cell carries; it fixed the NUMERATOR side of a shared year and never touched the denominator's age), 189 (RESOLVED-VERIFIED 2026-08-12 — the other issue on this board where a coverage ratio reads above 1.0; there the cause is TED reusing document numbers in 1993–1999 and the CSV header calls "ratios marginally above 1.0 expected and healthy" for those years only, a mechanism that cannot produce 2026's 17 %), 06 (resolved — the panel itself, and the decision that ground truth is vendored at `crates/app/data/ted-notice-counts.csv` via `include_str!`, transcribed from `docs/research/ted-access-channels.md` §6), 33 (RESOLVED-VERIFIED 2026-08-17 — the sibling panel, and the precedent that a number which stops moving must SAY why), 15 (RESOLVED 2026-08-16 — the backfill that made the coverage grid the standing read, and where the `unreadable zip bundle …` reason first appeared in job 1's final counts), 30 (RESOLVED-VERIFIED 2026-08-17 — the quarantine class split that put unit 2's Class column on the page), 201 (RESOLVED 2026-08-14/15 — named the 8-row "unreadable zip bundle: … Could not find EOCD" bucket and ledgered it), 202 (RESOLVED 2026-08-14 — wrote the ledger entry unit 2's gloss contradicts), 137 (measured 2026-08-05 — "unreadable zip (EOCD) | 8 | 0 | 8" in the reclaim census), 303 (CLOSED 2026-08-27 — `quarantine_terminal_policy`, EOCD-corrupt zips `Fixed(8)`; it pins the count, not the copy), ADR-0004 (quarantine is content-no-profile-maps held whole — the sentence unit 2's fallback is quoting at a row it does not describe)
 Blocked by: nothing
@@ -338,3 +338,17 @@ One thing the live read turned up that belongs to 400 rather than here: the ERA 
 prints `104 355 / 497 791 · 20.96 % *` with no `‡`, because `published_cell(era.published)` is a
 separate call site from the per-year cell. So the era summary is now the only place a partial-year
 denominator appears undated — recorded on 400, whose fix touches that same line.
+
+## Verify
+
+    curl -s https://tenders.zebreus.click/ | grep -o 'Counted through 2026-07-17 and frozen there\|Held whole as evidence (issues 201/202)' | wc -l
+
+- **done**: `2` or more (the ‡ hover on every partial-year row plus the benign gloss; `7` on 2026-09-18 — `grep -o | wc -l` counts matches, where `grep -c` would count the page's one line)
+- **open**: `0`
+
+## Comment — 2026-09-18: closed by the 412 sweep
+
+Status line flipped. The body carried "Status: **RESOLVED-VERIFIED 2026-09-16**" while line 3 still
+read `needs-triage` — issue 412's mechanism (b). Re-read live today at rev `ba9eb1f`: six rows carry
+"Counted through 2026-07-17 and frozen there", one carries "Held whole as evidence (issues 201/202)".
+The era-summary carve-out stays on issue 400.

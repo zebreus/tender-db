@@ -435,3 +435,12 @@ Anyone re-reading this census later should expect a few hundred, not zero, and s
   bounded windows across text/r207/r208, and 0 `Change` sections in 4.4M–13M. Committing a
   hand-written r2.0.8 carrier would assert a shape nobody has observed. The mapping carries the
   2004-directive coordinates so a future one maps on arrival.
+
+## Verify
+
+    for id in 6762566 6737588; do curl -s "https://tenders.zebreus.click/v1/tenders/$id" | python3 -c "import sys,json; print(json.load(sys.stdin)['submission_deadline'])"; done
+
+- **done**: `2020-04-24T09:00:00+00:00` then `2020-05-11T10:00:00+00:00` — IV.2.2's value on each, not IV.2.7's opening (read 2026-09-18)
+- **open**: `2020-04-24T09:30:00+00:00` (the opening folded in as the deadline) and `2020-07-09…` (the months-off class)
+
+(Retrofitted 2026-09-18 as one of issue 412's three worked examples.)
