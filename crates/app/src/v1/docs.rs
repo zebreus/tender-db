@@ -193,7 +193,12 @@ envelope — not the German ones, and the field says so.</p>
 can be short &mdash; even empty &mdash; while <code>more</code> is true: a filtered read that
 has to walk the id order examines one bounded band of ids per page, and its cursor is the last
 id <em>examined</em>, so following it never re-reads a range and always terminates. Page length
-is not an end-of-results signal; <code>more</code> is:</p>
+is not an end-of-results signal; <code>more</code> is. One stream pages in a different order: a
+lots read seeded by an organization (<code>winner</code> or <code>bidder</code>) is served in
+<em>(tender, lot)</em> order &mdash; the order its participation index provides, so a page costs a
+page however many lots the organization has &mdash; and its cursor is compound. Pass it back
+verbatim like any other; it is not a lot id, and a cursor from another query shape restarts the
+walk from the first page.</p>
 <pre><code>curl -s "https://tenders.zebreus.click/v1/tenders?country=DE&amp;status=open&amp;limit=50"
 curl -s "https://tenders.zebreus.click/v1/tenders?country=DE&amp;status=open&amp;limit=50&amp;cursor=14327"</code></pre>
 
@@ -572,7 +577,7 @@ milliseconds.</p>
 <ul>
   <li>Everything reachable by id or a small page is <strong>index-served</strong>, so it is sub-millisecond to tens of milliseconds regardless of corpus size. The organization list is the heaviest &ldquo;fast&rdquo; read because it counts each row's mentions.</li>
   <li>Filterable collection reads run on a <strong>separate isolated reader pool</strong>. A filter on a common value fills its page quickly; a filter on a <em>selective</em> value can walk the whole corpus, so it is kept off the main pool &mdash; it may be slow or return <code>503</code> under contention, but it <strong>never slows point lookups, indexed lists, or other clients</strong>. (Measured: main-pool reads stayed under 18 ms while a walking filter ran.) A <code>name_prefix</code> search paired with <code>country</code>/<code>kind</code> is one of these walking shapes; alone it is index-served and fast.</li>
-  <li>For a fast, predictable read, filter on a value you expect to be common, keep <code>limit</code> modest, and paginate with the returned <code>next_cursor</code>. Ascending id is the default order everywhere (a stable keyset order for pagination); the tender <a href="#ordering">sorts</a> and the org <a href="#lookups">name search</a> ride their own indexes, so they are equally page-cheap at any depth.</li>
+  <li>For a fast, predictable read, filter on a value you expect to be common, keep <code>limit</code> modest, and paginate with the returned <code>next_cursor</code>. Ascending id is the default order everywhere (a stable keyset order for pagination), except the organization-seeded lots stream (<code>winner</code>/<code>bidder</code>), which pages in (tender, lot) order off its participation index; the tender <a href="#ordering">sorts</a> and the org <a href="#lookups">name search</a> ride their own indexes, so they are equally page-cheap at any depth.</li>
   <li><code>/v1/sql</code> is bounded by design: one <code>SELECT</code>, a 10-second cap, and its own runtime, so an expensive query returns <code>408</code> instead of degrading the REST surface.</li>
   <li>Rate limit: ~10 requests/second sustained, burst 50, per client &mdash; page within that.</li>
 </ul>

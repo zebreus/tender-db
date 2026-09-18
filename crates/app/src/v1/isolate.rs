@@ -80,7 +80,7 @@ use std::sync::Arc;
 
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 
-use crate::v1::{Collection, Item, read_items, read_page};
+use crate::v1::{Collection, Item, PageOut, read_items, read_page};
 use store::read::{Filter, Scope};
 
 /// Worker threads on the isolated read runtime. **Must equal [`SLOTS`]** — see the
@@ -220,17 +220,17 @@ impl IsolatedReads {
         &self,
         collection: Collection,
         filter: Filter,
-        after: i64,
+        cursor: String,
         limit: i64,
         band: i64,
-    ) -> Result<store::turso::Result<(Vec<Item>, Option<i64>)>, Shed> {
+    ) -> Result<store::turso::Result<PageOut>, Shed> {
         let permit: OwnedSemaphorePermit =
             self.slots.clone().try_acquire_owned().map_err(|_| Shed)?;
         let readers = self.readers.clone();
         let handle = self.runtime.spawn(async move {
             let _permit = permit;
             let reader = readers.get().await?;
-            read_page(collection, &reader, &filter, after, limit, band).await
+            read_page(collection, &reader, &filter, &cursor, limit, band).await
         });
         let _abandon = AbortOnDrop(handle.abort_handle());
         match handle.await {

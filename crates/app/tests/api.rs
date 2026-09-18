@@ -3369,3 +3369,84 @@ async fn an_open_lot_shows_the_procedure_deadline_that_opened_it() {
     // The other arm of the filter is unchanged.
     assert!(items(&server.get(&format!("/v1/lots?tender={id}&status=closed")).await).is_empty());
 }
+
+/// Issue 388, the last clause: an organization-seeded lots read pages in the
+/// order its participation index serves — `(tender, lot)` — with a compound
+/// cursor, so a page costs a page and not the org. Pinned through the handler on
+/// the chain fixture: the walk at `limit=1` reproduces the one-page answer row for
+/// row, every cursor is the compound grammar, the rows come in `(tender, lot)`
+/// order, and a cursor from the id-ordered shape restarts the walk rather than
+/// resuming it somewhere wrong. The tenders shape keeps its bare-id cursor.
+#[tokio::test]
+async fn an_org_seeded_lots_walk_pages_in_tender_order_with_a_compound_cursor() {
+    let server = Server::start("seeded-lots-walk").await;
+    server.ingest_chain().await;
+
+    // The head-version winner with the most lots — grounded in the fixture.
+    let reader = server.db.readers(1).expect("readers").get().await.expect("reader");
+    let mut rows = reader
+        .query(
+            "SELECT w.organization_id, COUNT(*) AS lots
+               FROM tender_version_result_winners w
+               JOIN tender_version_lots vl ON vl.tender_id = w.tender_id AND vl.seq = w.seq
+              WHERE w.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = w.tender_id)
+              GROUP BY w.organization_id
+              ORDER BY lots DESC, w.organization_id
+              LIMIT 1",
+            (),
+        )
+        .await
+        .expect("query winners");
+    let org = rows.next().await.expect("row").map(|r| r.get_value(0).unwrap().as_integer().copied().unwrap());
+    drop(rows);
+    drop(reader);
+    let org = org.expect("the chain fixture has a head-version winner with lots");
+
+    let key = |i: &Value| (i["tender_id"].as_i64().expect("tender_id"), i["id"].as_i64().expect("id"));
+    let one = server.get(&format!("/v1/lots?winner={org}&limit=1000")).await;
+    assert_eq!(one["more"], false, "one page holds the org's lots");
+    let expected: Vec<(i64, i64)> = items(&one).iter().map(key).collect();
+    assert!(!expected.is_empty(), "org {org} has lots");
+    let mut sorted = expected.clone();
+    sorted.sort();
+    assert_eq!(expected, sorted, "the seeded stream is served in (tender, lot) order");
+
+    let mut walked: Vec<(i64, i64)> = Vec::new();
+    let mut cursor: Option<String> = None;
+    let mut pages = 0;
+    loop {
+        pages += 1;
+        assert!(pages <= expected.len() + 2, "the walk terminates: {walked:?}");
+        let url = match &cursor {
+            Some(c) => format!("/v1/lots?winner={org}&limit=1&cursor={c}"),
+            None => format!("/v1/lots?winner={org}&limit=1"),
+        };
+        let page = server.get(&url).await;
+        assert!(items(&page).len() <= 1, "a page never exceeds its limit");
+        walked.extend(items(&page).iter().map(key));
+        match page["next_cursor"].as_str() {
+            Some(next) => {
+                assert_eq!(page["more"], true);
+                assert!(next.contains(':'), "the seeded stream's cursor is compound, not a lot id: {next}");
+                cursor = Some(next.to_owned());
+            }
+            None => {
+                assert_eq!(page["more"], false);
+                break;
+            }
+        }
+    }
+    assert_eq!(walked, expected, "the walk at limit=1 reproduces the one-page answer, row for row");
+    assert_eq!(pages, expected.len(), "one row per page, and the last page says it is the last");
+
+    // A bare-id cursor is another shape's grammar: the walk restarts from its first
+    // page rather than resuming somewhere it never was.
+    let restart = server.get(&format!("/v1/lots?winner={org}&limit=1&cursor={}", expected[0].1)).await;
+    assert_eq!(items(&restart).iter().map(key).collect::<Vec<_>>(), vec![expected[0]]);
+
+    // The tenders shape is untouched: bare-id cursor, id order.
+    let tenders = server.get(&format!("/v1/tenders?winner={org}&limit=1")).await;
+    if let Some(c) = tenders["next_cursor"].as_str() {
+        assert!(!c.contains(':'), "tenders keep their bare-id cursor: {c}");
+    }
+}

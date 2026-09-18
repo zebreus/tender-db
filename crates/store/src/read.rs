@@ -2850,6 +2850,265 @@ fn lot_seed_predicates(q: &mut Query, filter: &Filter) {
     }
 }
 
+/// The current version, correlated on the outer lot `l`. Used in the stream's
+/// SELECT list, its EXISTS probe and every version predicate, so they cannot
+/// disagree about which version they are reading.
+const LOT_SEQ: &str = "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)";
+
+/// The stream shape's head, shared by the id-ordered page and the seeded walk
+/// (issue 388) so the two cannot disagree about what a matching lot IS: the
+/// identity columns, the existence probe at the current version — with `kind`
+/// INSIDE it, because kind is a property of the version's lot row, so a lot whose
+/// current version does not carry the kind must not match — and the `source`
+/// predicate. Everything after it is a predicate on `l`.
+fn lots_stream_head(filter: &Filter) -> Query {
+    let mut q = Query::default();
+    q.push(
+        &format!(
+            "SELECT l.id, l.tender_id, l.lot_key,
+                    (SELECT vl.kind FROM tender_version_lots vl
+                      WHERE vl.tender_id = l.tender_id AND vl.seq = {LOT_SEQ}
+                        AND vl.lot_id = l.id),
+                    {LOT_SEQ}
+               FROM lots l
+              WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
+                             WHERE vl.tender_id = l.tender_id AND vl.seq = {LOT_SEQ}
+                               AND vl.lot_id = l.id"
+        ),
+        [],
+    );
+    if let Some(kind) = &filter.kind {
+        q.push(" AND vl.kind = ?", [t(kind)]);
+    }
+    q.push(")", []);
+    if let Some(source) = &filter.source {
+        q.push(" AND (SELECT tt.source FROM tenders tt WHERE tt.id = l.tender_id) = ?", [t(source)]);
+    }
+    q
+}
+
+/// The stream shape's version predicates, with the SEEDED org's own per-lot copy
+/// dropped. Issue 388: the seed decides membership at the head version, exactly,
+/// so its per-lot EXISTS (which never named the lot and cost hundreds of index
+/// rows per lot on a prolific org) is not added again. Only the seeded one: a
+/// second org filter alongside it still decides per lot.
+fn lots_stream_predicates(q: &mut Query, filter: &Filter) {
+    let mut predicates = filter.clone();
+    match participation_seed(filter) {
+        Some(("tender_version_result_winners", ..)) => predicates.winner = None,
+        Some(("tender_version_bid_parties", ..)) => predicates.bidder = None,
+        Some(("tender_version_parties", ..)) => predicates.buyer = None,
+        _ => {}
+    }
+    version_predicates(q, &predicates, "l.tender_id", LOT_SEQ, None,
+        "(SELECT tt.current_value_eur_cents FROM tenders tt WHERE tt.id = l.tender_id)");
+}
+
+// ------------------------------------------------------------ seeded lots walk
+
+/// The page position of an organization-seeded lots read (issue 388, the last
+/// clause): every tender of the seed below `tender_id` is done, and of
+/// `tender_id` itself every lot up to and including `lot_id` has been returned.
+/// Rendered for clients as `<tender_id>:<lot_id>` — opaque, like every cursor
+/// (`/docs`: pass it back verbatim), and deliberately NOT the bare-id grammar
+/// the other list shapes use: this stream pages in `(tender, lot)` order, the
+/// order its participation index serves, and a bare lot id cannot resume it.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct LotCursor {
+    pub tender_id: i64,
+    pub lot_id: i64,
+}
+
+impl LotCursor {
+    pub fn render(self) -> String {
+        format!("{}:{}", self.tender_id, self.lot_id)
+    }
+
+    /// `None` for anything outside this grammar — a bare id from the id-ordered
+    /// shape included — so the caller restarts from the first page, exactly as an
+    /// unparseable cursor already restarts every other list.
+    pub fn parse(s: &str) -> Option<Self> {
+        let (tender_id, lot_id) = s.trim().split_once(':')?;
+        Some(Self { tender_id: tender_id.parse().ok()?, lot_id: lot_id.parse().ok()? })
+    }
+
+    /// The position after every lot of `tender_id`: the next tender, from its
+    /// first lot. `tender_id + 1` need not be the org's next tender — the seed
+    /// window reads from `>= tender_id`, so it is simply the first id past it.
+    fn past(tender_id: i64) -> Self {
+        Self { tender_id: tender_id.saturating_add(1), lot_id: 0 }
+    }
+}
+
+/// One page of the seeded walk: the rows, and where to continue from — `None`
+/// when the seed is exhausted, i.e. this page is the last.
+pub struct SeededPage {
+    pub rows: Vec<LotRow>,
+    pub next: Option<LotCursor>,
+}
+
+/// Rows of the participation index one window of the seeded walk reads. In ROWS
+/// of the index, not tenders: a tender the org bid on across 135 versions has 135
+/// rows there, so a tender count would not bound the read. 256 rows is a few
+/// tenders for the deepest procurements and a couple of hundred for ordinary
+/// ones — either way one index range read, and the lots of those tenders are the
+/// only lots the page sorts.
+pub const DEFAULT_SEED_WINDOW: i64 = 256;
+
+/// Windows one page may read before handing back a short page with a cursor.
+/// The 408 (b) contract already says a page can be short while `more` is true;
+/// this cap is what makes a page's cost bounded even when the org's next
+/// hundreds of tenders carry no lot the companion filters admit.
+pub const DEFAULT_SEED_WINDOWS_PER_PAGE: usize = 8;
+
+/// Does this lots read take the seeded walk? The two org seeds whose covering
+/// index `(organization_id, tender_id)` serves the walk's order — `winner` and
+/// `bidder`, in `participation_seed`'s precedence — with no containing tender:
+/// the tender-scoped shape (issue 115) drives from the tender already. The buyer
+/// seed stays on the id-ordered stream: its index is `(organization_id, role,
+/// tender_id)` behind a `LIKE` on role, which serves no order, and its cost was
+/// never the problem (org 357 as buyer: 0.6 s; as bidder: a 503).
+pub fn seeded_lots(filter: &Filter) -> bool {
+    filter.tender.is_none()
+        && matches!(
+            participation_seed(filter),
+            Some(("tender_version_result_winners" | "tender_version_bid_parties", ..))
+        )
+}
+
+/// The seed window's statement: the org's index rows from a tender on, in
+/// tender order, `LIMIT`ed — one index range read that both the walk's order
+/// and its bound come from. Public so a test can read its plan.
+#[doc(hidden)]
+pub fn seeded_window_sql(filter: &Filter) -> Option<String> {
+    let (table, extra, _) = participation_seed(filter)?;
+    Some(format!(
+        "SELECT tender_id FROM {table}
+          WHERE organization_id = ? AND tender_id >= ?{extra}
+          ORDER BY tender_id LIMIT ?"
+    ))
+}
+
+/// Which of the candidate tenders the org holds AT THE HEAD VERSION, in the
+/// seed's role — the seed IS the predicate (issue 388's first unit), decided
+/// once per tender here rather than once per lot. One index seek per candidate.
+async fn head_members(
+    conn: &Connection,
+    table: &str,
+    role: &str,
+    org: i64,
+    candidates: &[i64],
+) -> turso::Result<Vec<i64>> {
+    if candidates.is_empty() {
+        return Ok(Vec::new());
+    }
+    let marks = vec!["?"; candidates.len()].join(", ");
+    let mut q = Query::default();
+    q.push(
+        &format!(
+            "SELECT DISTINCT p.tender_id FROM {table} p
+              WHERE p.organization_id = ? AND p.tender_id IN ({marks}){role}
+                AND p.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = p.tender_id)
+              ORDER BY p.tender_id"
+        ),
+        std::iter::once(Value::Integer(org)).chain(candidates.iter().map(|&c| Value::Integer(c))),
+    );
+    q.rows(conn, |r| int(r, 0)).await
+}
+
+/// The REST list's Lot page for an organization-seeded read, paged in the order
+/// the participation index serves (issue 388, the last clause).
+///
+/// The id-ordered stream enumerates and sorts EVERY lot of the org's tenders
+/// before `LIMIT` — `ORDER BY l.id` is an order no seed can serve — so a page of
+/// `?bidder=357` cost the org's 137k lots (3.7 s warm, 20 s cold, prod 2026-09-18)
+/// whatever `limit` said. This walk pages in `(tender_id, lot id)` order instead:
+/// one window of the org's index rows (`DEFAULT_SEED_WINDOW`, from the cursor's
+/// tender on), membership decided at the head version once per tender, then
+/// those tenders' lots after the cursor, sorted — a sorter over one window's
+/// lots, not the org's. A window whose tenders carry no admitted lot costs one
+/// range read; after `windows` of them the page comes back short with a cursor,
+/// which is the documented 408 (b) contract. `next` is `None` only when the
+/// seed ran out inside this call.
+pub async fn lots_seeded_page(
+    conn: &Connection,
+    filter: &Filter,
+    cursor: LotCursor,
+    limit: i64,
+    window: i64,
+    windows: usize,
+) -> turso::Result<SeededPage> {
+    let Some((table, _, org)) = participation_seed(filter) else {
+        return Ok(SeededPage { rows: Vec::new(), next: None });
+    };
+    let Some(window_sql) = seeded_window_sql(filter) else {
+        return Ok(SeededPage { rows: Vec::new(), next: None });
+    };
+    if !reachable(conn, filter, Collection::Lots).await? {
+        return Ok(SeededPage { rows: Vec::new(), next: None });
+    }
+    let role = participation_role(filter);
+    let want = limit.max(1) as usize;
+    let window = window.max(1);
+    let mut rows: Vec<LotRow> = Vec::new();
+    let mut cursor = cursor;
+    let mut next = None;
+    for _ in 0..windows.max(1) {
+        // 1. One window of the org's index rows from the cursor's tender on, in
+        //    tender order — the same index range read whether the org holds ten
+        //    tenders or ten thousand.
+        let mut q = Query::default();
+        q.push(&window_sql, [Value::Integer(org), Value::Integer(cursor.tender_id), Value::Integer(window)]);
+        let raw = q.rows(conn, |r| int(r, 0)).await?;
+        let Some(&last) = raw.last() else {
+            next = None; // nothing at or past the cursor: the seed is exhausted
+            break;
+        };
+        let exhausted = (raw.len() as i64) < window;
+        let mut candidates = raw;
+        candidates.dedup(); // ordered, so adjacent equal ids are one tender
+        // 2. Membership at the head version, once per tender.
+        let members = head_members(conn, table, role, org, &candidates).await?;
+        // 3. The members' lots after the cursor, in (tender, lot) order — the
+        //    stream's own head and predicates, so a matching lot is the same lot
+        //    the id-ordered page would return. One row past the page tells
+        //    whether it is full.
+        if !members.is_empty() {
+            let marks = vec!["?"; members.len()].join(", ");
+            let mut q = lots_stream_head(filter);
+            q.push(
+                &format!(" AND l.tender_id IN ({marks}) AND (l.tender_id > ? OR (l.tender_id = ? AND l.id > ?))"),
+                members.iter().map(|&m| Value::Integer(m)).chain([
+                    Value::Integer(cursor.tender_id),
+                    Value::Integer(cursor.tender_id),
+                    Value::Integer(cursor.lot_id),
+                ]),
+            );
+            lots_stream_predicates(&mut q, filter);
+            let room = (want + 1 - rows.len()) as i64;
+            q.push(" ORDER BY l.tender_id, l.id LIMIT ?", [Value::Integer(room)]);
+            let mut page = q.rows(conn, lot_identity_row).await?;
+            rows.append(&mut page);
+        }
+        if rows.len() > want {
+            // Full, with more behind it: continue from the last row RETURNED.
+            rows.truncate(want);
+            let l = rows.last().expect("a full page has a last row");
+            next = Some(LotCursor { tender_id: l.tender_id, lot_id: l.id });
+            break;
+        }
+        // Every tender of this window is done, including the one the window may
+        // have ended inside: its lots were read whole above.
+        cursor = LotCursor::past(last);
+        next = (!exhausted).then_some(cursor);
+        if exhausted {
+            break;
+        }
+    }
+    summarise(conn, &mut rows, filter.lang.as_deref()).await?;
+    Ok(SeededPage { rows, next })
+}
+
 fn lots_query(filter: &Filter, scope: Scope) -> Query {
     lots_query_banded(filter, scope, None)
 }
@@ -2866,51 +3125,11 @@ fn lots_query_banded(filter: &Filter, scope: Scope, band_end: Option<i64>) -> Qu
         return lots_query_previous(filter, scope);
     }
 
-    // The current version, correlated on the outer lot. Used in the SELECT list, the
-    // EXISTS probe and every version predicate, so they cannot disagree about which
-    // version they are reading.
-    const SEQ: &str = "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)";
-
     // Always `FROM lots l`: every seed is an `l.tender_id IN (…)` predicate
     // (`lot_seed_predicates`), never a JOIN in the FROM clause.
-    let mut q = Query::default();
-    q.push(
-        &format!(
-            "SELECT l.id, l.tender_id, l.lot_key,
-                    (SELECT vl.kind FROM tender_version_lots vl
-                      WHERE vl.tender_id = l.tender_id AND vl.seq = {SEQ}
-                        AND vl.lot_id = l.id),
-                    {SEQ}
-               FROM lots l
-              WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
-                             WHERE vl.tender_id = l.tender_id AND vl.seq = {SEQ}
-                               AND vl.lot_id = l.id"
-        ),
-        [],
-    );
-    // `kind` filters INSIDE the existence probe: it is a property of the version's lot
-    // row, so a lot whose current version does not carry the kind must not match.
-    if let Some(kind) = &filter.kind {
-        q.push(" AND vl.kind = ?", [t(kind)]);
-    }
-    q.push(")", []);
-    if let Some(source) = &filter.source {
-        q.push(" AND (SELECT tt.source FROM tenders tt WHERE tt.id = l.tender_id) = ?", [t(source)]);
-    }
+    let mut q = lots_stream_head(filter);
     lot_seed_predicates(&mut q, filter);
-    // Issue 388: the seeded org filter is decided by the seed, at the head
-    // version, exactly — so its per-lot EXISTS (which never named the lot and
-    // cost hundreds of index rows per lot on a prolific org) is not added again.
-    // Only the seeded one: a second org filter alongside it still decides per lot.
-    let mut predicates = filter.clone();
-    match participation_seed(filter) {
-        Some(("tender_version_result_winners", ..)) => predicates.winner = None,
-        Some(("tender_version_bid_parties", ..)) => predicates.bidder = None,
-        Some(("tender_version_parties", ..)) => predicates.buyer = None,
-        _ => {}
-    }
-    version_predicates(&mut q, &predicates, "l.tender_id", SEQ, None,
-        "(SELECT tt.current_value_eur_cents FROM tenders tt WHERE tt.id = l.tender_id)");
+    lots_stream_predicates(&mut q, filter);
     match (scope, band_end) {
         // Issue 408 (b): see `tenders_page_query` — one id band per page.
         (Scope::Page { after, limit }, Some(end)) => q.push(

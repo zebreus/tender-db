@@ -1,6 +1,6 @@
 # 388 — a reverse lookup by a prolific bidder/winner org re-pays the org's whole participation set on every page: 2.3–4.7 s warm, 15–28 s cold, against a documented sub-25 ms contract
 
-Status: ready-for-agent — unit 1 (the two covering indexes) LANDED 2026-09-16, see the foot; the cursor-inside-the-seed rewrite and the prod re-measurement are open. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — **the cursor is inside the seed: BUILT and gated 2026-09-18** (see the last comment): an organization-seeded lots read (`winner`/`bidder`) pages in `(tender, lot)` order off its covering index with a compound opaque cursor, so a page costs a page; the prod re-measurement of `?bidder=357` / `?winner=357` at `limit=100` page 1 and a deep page is owed after the deploy. Unit 1 (the two covering indexes) LANDED 2026-09-16; the winners index was actually built on prod 2026-09-18 (job 1478). Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (read layer — the participation reverse-lookup seed; performance and availability)
 Relates to: 223 (RESOLVED "every `winner=`/`bidder=` lookup is sub-25 ms" — that is the contract this
 breaks, and its residual section states the premise that fails here: "an org's row count is bounded by
@@ -340,3 +340,59 @@ The `2df1a49` boot (the first since job 1478 built the winners index) logged no 
 missing" line and queued no reindex — the first boot since 2026-09-16 to do neither — and printed no
 `REFUSING` line for the indexes that exist. The estimator's two-day loop is over; `## Verify`-class
 read for it: `journalctl -u tender-db -b | grep -c REFUSING` → `0`.
+
+## Comment — 2026-09-18: the cursor inside the seed — BUILT; a page now costs a page
+
+**The decision, taken.** The "contract change for that one shape" the previous comments deferred:
+the organization-seeded lots stream (`/v1/lots?winner=` and `?bidder=`, `participation_seed`'s
+two covering-index shapes, with no `tender=`) no longer pages in lot-id order. It pages in
+**`(tender_id, lot id)` order** — the order `tender_version_result_winners_org_tender` /
+`tender_version_bid_parties_org_tender` serve — and its `next_cursor` is **compound**,
+`<tender_id>:<lot_id>`. Within the documented contract: `/docs` and `openapi.json` have always
+said the cursor is opaque, pass it back verbatim, and is specific to its query shape. A bare-id
+cursor sent to this shape (a client mid-walk across the deploy) parses as nothing and restarts the
+walk from page one, which is what every list already does with an unparseable cursor; the docs'
+pagination paragraph and the "ascending id everywhere" sentence now name the exception. The buyer
+seed stays on the id-ordered stream: its index is `(organization_id, role, tender_id)` behind a
+`LIKE` on role, which serves no order, and its cost was never the problem (org 357 as buyer 0.6 s).
+
+**The mechanism (`store::read::lots_seeded_page`).** Per page, up to `DEFAULT_SEED_WINDOWS_PER_PAGE`
+(8) windows of:
+
+1. one index range read — `SELECT tender_id FROM <table> WHERE organization_id = ? AND tender_id >= ?
+   ORDER BY tender_id LIMIT 256` — the walk's order AND its bound in one statement; the plan, pinned by
+   `the_seed_window_is_an_index_range_read_in_tender_order`, is `SEARCH … USING INDEX …_org_tender
+   (organization_id=? AND tender_id>=?)`, no scan, no sorter. The window is in index ROWS, not
+   tenders, because a tender the org bid on across 135 versions has 135 rows there;
+2. membership at the HEAD version once per candidate tender (`head_members`: one seek each, the
+   seed IS the predicate — the first unit's rule, kept), never per lot;
+3. those tenders' lots after the cursor, through the SAME stream head and predicates the id-ordered
+   page uses (`lots_stream_head` / `lots_stream_predicates`, factored out of `lots_query_banded` so
+   the two shapes cannot disagree about what a matching lot is), `ORDER BY l.tender_id, l.id LIMIT
+   room` — a sorter over one window's lots, not the org's.
+
+A full page's cursor is the last row returned; a page that runs out of windows comes back short with
+the cursor past the last tender examined (the 408 (b) contract, unchanged: page length is not an
+end signal, `more` is); `next: null` only when the seed ran out inside the call.
+
+**Tests.** Store (`crates/store/tests/seeded_lots_page.rs`): a nine-tender fixture where
+`(tender, lot)` order is visibly not lot-id order, versions per tender vary so 2-row windows end
+inside tenders, a stale-version win, a subcontractor-only bid and a lotless winning tender all sit
+in the seed — the walk returns exactly the id-ordered stream's SET (`read::lots`, the oracle) in
+`(tender, lot)` order once each and terminates, at window 2 / one window per page (many short pages)
+and at the production window; a companion `kind=Part` admits nothing and still pages short-with-
+cursor, not a corpus pass; the cursor round-trips and rejects a bare id. Handler
+(`an_org_seeded_lots_walk_pages_in_tender_order_with_a_compound_cursor`): on the chain fixture the
+`limit=1` walk reproduces the one-page answer row for row with a compound cursor on every page, a
+bare-id cursor restarts, and `/v1/tenders?winner=` keeps its bare-id cursor. The bounded-walk,
+lots-kind and winner-semantics suites still pass beside it.
+
+**What the handler gained on the way.** `read_page` now owns the whole page contract — the `+1`
+probe, the truncation, the examined-to cursor and the seeded arm — and returns `PageOut {items,
+next}`; the handler passes the raw cursor string in and the rendered cursor out, so no cursor
+grammar is parsed anywhere but beside the read that defines it (`Params::after` is gone).
+
+**Owed after the deploy — the `## Done when` numbers, on prod, warm, `limit=100`:** `?bidder=357`
+and `?winner=357` page 1, and a page deep in the walk (follow ten cursors), against today's 3.7 s /
+3.0 s; the controls (`buyer=357`, `winner=388`) unmoved. Recorded below when read.
+

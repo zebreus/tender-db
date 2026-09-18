@@ -806,13 +806,6 @@ impl Params {
         })
     }
 
-    /// The pagination cursor is opaque to clients but is the last row id;
-    /// anything unparseable starts from the beginning rather than erroring, so
-    /// a truncated cursor never strands a client.
-    fn after(&self) -> i64 {
-        self.cursor.as_deref().and_then(|c| c.parse().ok()).unwrap_or(0)
-    }
-
     /// The page size, rejected rather than clamped when out of range (issue 390
     /// unit 4).
     ///
@@ -1000,29 +993,76 @@ pub async fn read_items(
     })
 }
 
+/// One REST list page: at most `limit` items, and the cursor the client follows
+/// for the next page — `None` when this page is the last. The cursor grammar is
+/// the read's own: a bare id for the id-ordered shapes, `LotCursor` for the
+/// organization-seeded lots stream — which is why the raw parameter comes in and
+/// the rendered cursor goes out, and neither is parsed anywhere else.
+pub struct PageOut {
+    pub items: Vec<Item>,
+    pub next: Option<String>,
+}
+
 /// The REST list's page (issue 408 (b)): [`read_items`] for the id-ordered page,
 /// with the fallback walk bounded on the two collections that can walk a PK with
-/// per-row predicates. The second half of the pair is the cursor the handler
-/// must hand back when the page came up short: the last id EXAMINED.
+/// per-row predicates, and the cursor handed back when a page came up short
+/// being the last id EXAMINED. The organization-seeded lots stream (issue 388)
+/// pages in the order its participation index serves, with its own cursor.
+///
+/// One extra row answers "is there another page?" without a second query; the
+/// pagination cursor is opaque to clients, and anything unparseable starts from
+/// the beginning rather than erroring, so a truncated cursor never strands a
+/// client (a cursor is specific to its query shape — `/docs`).
 pub async fn read_page(
     collection: Collection,
     conn: &store::turso::Connection,
     filter: &Filter,
-    after: i64,
+    cursor: &str,
     limit: i64,
     band: i64,
-) -> store::turso::Result<(Vec<Item>, Option<i64>)> {
-    Ok(match collection {
+) -> store::turso::Result<PageOut> {
+    if matches!(collection, Collection::Lots) && read::seeded_lots(filter) {
+        let start = read::LotCursor::parse(cursor).unwrap_or_default();
+        let page = read::lots_seeded_page(
+            conn,
+            filter,
+            start,
+            limit,
+            read::DEFAULT_SEED_WINDOW,
+            read::DEFAULT_SEED_WINDOWS_PER_PAGE,
+        )
+        .await?;
+        return Ok(PageOut {
+            items: page.rows.iter().map(|r| Item { id: r.id, json: json::lot(r) }).collect(),
+            next: page.next.map(read::LotCursor::render),
+        });
+    }
+    let after: i64 = cursor.parse().unwrap_or(0);
+    let probe = limit + 1;
+    let (mut items, examined_to) = match collection {
         Collection::Tenders => {
-            let page = read::tenders_page(conn, filter, after, limit, band).await?;
-            (page.rows.iter().map(|r| Item { id: r.id, json: json::tender(r) }).collect(), page.examined_to)
+            let page = read::tenders_page(conn, filter, after, probe, band).await?;
+            (page.rows.iter().map(|r| Item { id: r.id, json: json::tender(r) }).collect::<Vec<_>>(), page.examined_to)
         }
         Collection::Lots => {
-            let page = read::lots_page(conn, filter, after, limit, band).await?;
+            let page = read::lots_page(conn, filter, after, probe, band).await?;
             (page.rows.iter().map(|r| Item { id: r.id, json: json::lot(r) }).collect(), page.examined_to)
         }
-        other => (read_items(other, conn, filter, Scope::Page { after, limit }).await?, None),
-    })
+        other => (read_items(other, conn, filter, Scope::Page { after, limit: probe }).await?, None),
+    };
+    let mut next = (items.len() as i64 > limit).then(|| items[limit as usize - 1].id.to_string());
+    items.truncate(limit as usize);
+    // Issue 408 (b): a bounded walk that came up short hands back the last id it
+    // EXAMINED, never the last row it returned — the page may hold nothing at all,
+    // and a cursor at the last returned row would re-walk the same band for ever.
+    // `more` follows `next_cursor`, so the client's documented loop ("until `more`
+    // is false") carries it across the band with no new rule to learn.
+    if next.is_none()
+        && let Some(end) = examined_to
+    {
+        next = Some(end.to_string());
+    }
+    Ok(PageOut { items, next })
 }
 
 /// Whether a matching entity exists at `scope` — the SSE diff's classification need
@@ -1077,15 +1117,14 @@ async fn collection(
     if wants_events(&headers) {
         return sse::subscribe(collection, state, headers, params, filter).await;
     }
-    // One extra row answers "is there another page?" without a second query.
-    let after = params.after();
+    let cursor = params.cursor.clone().unwrap_or_default();
     // A filter shape that CAN walk runs on the isolated runtime and pool, so a walk
     // nobody can cancel cannot hold one of the API's own readers (issue 120). The
     // routing is derived from the read layer's own predicates, never a list here.
     // On that pool the walk is also BOUNDED (issue 408 (b)): one id band per page,
     // so a sparse value answers in a bounded time instead of crossing the corpus.
-    let (mut items, examined_to) = if store::read::walks(collection.into(), &filter) {
-        match state.isolated.read_page(collection, filter.clone(), after, limit + 1, state.fallback_band).await {
+    let PageOut { items, next } = if store::read::walks(collection.into(), &filter) {
+        match state.isolated.read_page(collection, filter.clone(), cursor, limit, state.fallback_band).await {
             Ok(result) => result?,
             Err(isolate::Shed) => {
                 return Err(ApiError(
@@ -1096,20 +1135,8 @@ async fn collection(
         }
     } else {
         let reader = state.readers.get().await?;
-        read_page(collection, &reader, &filter, after, limit + 1, state.fallback_band).await?
+        read_page(collection, &reader, &filter, &cursor, limit, state.fallback_band).await?
     };
-    let mut next = (items.len() as i64 > limit).then(|| items[limit as usize - 1].id.to_string());
-    items.truncate(limit as usize);
-    // Issue 408 (b): a bounded walk that came up short hands back the last id it
-    // EXAMINED, never the last row it returned — the page may hold nothing at all,
-    // and a cursor at the last returned row would re-walk the same band for ever.
-    // `more` follows `next_cursor`, so the client's documented loop ("until `more`
-    // is false") carries it across the band with no new rule to learn.
-    if next.is_none()
-        && let Some(end) = examined_to
-    {
-        next = Some(end.to_string());
-    }
     // Name any filter the client sent that this collection does not apply, so an
     // unfiltered page never masquerades as a filtered one (issue 118). The honoured
     // set lives in the read layer next to the builders it describes.
