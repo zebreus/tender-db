@@ -1,6 +1,6 @@
 # 388 — a reverse lookup by a prolific bidder/winner org re-pays the org's whole participation set on every page: 2.3–4.7 s warm, 15–28 s cold, against a documented sub-25 ms contract
 
-Status: ready-for-agent — **the cursor is inside the seed: BUILT and gated 2026-09-18** (see the last comment): an organization-seeded lots read (`winner`/`bidder`) pages in `(tender, lot)` order off its covering index with a compound opaque cursor, so a page costs a page; DEPLOYED 2026-09-18 12:13 UTC at `c283dd8` and READ LIVE: `/v1/lots?bidder=357&limit=100` **0.62 s** (was 3.7 s warm / 20 s cold), `?winner=357` **0.89 s** (was 3.0 s), ten consecutive deep pages 0.52–0.75 s each, controls unmoved. The TENDERS shape of the same org (`/v1/tenders?bidder=357` 3.15 s) is the last open clause — the same O(org) DISTINCT, and the same windowed walk fixes it with NO cursor change (tenders already page by id). Unit 1 (the two covering indexes) LANDED 2026-09-16; the winners index was actually built on prod 2026-09-18 (job 1478). Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — **the cursor is inside the seed: BUILT and gated 2026-09-18** (see the last comment): an organization-seeded lots read (`winner`/`bidder`) pages in `(tender, lot)` order off its covering index with a compound opaque cursor, so a page costs a page; DEPLOYED 2026-09-18 12:13 UTC at `c283dd8` and READ LIVE: `/v1/lots?bidder=357&limit=100` **0.62 s** (was 3.7 s warm / 20 s cold), `?winner=357` **0.89 s** (was 3.0 s), ten consecutive deep pages 0.52–0.75 s each, controls unmoved. The TENDERS half is BUILT and gated the same afternoon (see the last comment): `/v1/tenders?winner|bidder=` takes the same windowed walk with its bare-id cursor unchanged; its live numbers (`?bidder=357` 3.15 s before) are owed after the deploy. Unit 1 (the two covering indexes) LANDED 2026-09-16; the winners index was actually built on prod 2026-09-18 (job 1478). Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (read layer — the participation reverse-lookup seed; performance and availability)
 Relates to: 223 (RESOLVED "every `winner=`/`bidder=` lookup is sub-25 ms" — that is the contract this
 breaks, and its residual section states the premise that fails here: "an org's row count is bounded by
@@ -410,4 +410,25 @@ FROM <table> WHERE organization_id = ?) hits JOIN tenders t … ORDER BY t.id LI
 index slice DISTINCTed per page. The `## Done when` asks under 1 s there too. The walk above fixes
 it with no contract change at all — tenders already page in `tender_id` order, so the window IS
 the page order and the cursor stays a bare id. Next unit.
+
+## Comment — 2026-09-18 (later): the tenders half — the same walk, no cursor change
+
+`tenders_page` routes `seeded_tenders(filter)` — the winner/bidder seeds with no publication seed
+— to `tenders_seeded_page`: the same `(organization_id, tender_id)` window (`tender_id > cursor`,
+the plan pinned for both bounds), the same `head_members`, then the paged shape's OWN predicates
+(`tender_page_predicates`, factored out of `tenders_page_query` so the two cannot drift) over
+`t.id IN (members) AND t.id > cursor ORDER BY t.id LIMIT room`, wrapped by the same satellite
+SELECT (`tender_page_wrap`). Tenders already page in `tender_id` order, so the window IS the page
+order: a full page's cursor is its last row, a short page's is the last tender examined
+(`examined_to`), `None` means the seed ran out — the existing `Banded` contract, and the handler
+did not change at all. The seeded org's per-tender EXISTS is dropped (`without_seeded_org`, now
+shared with the lots walk), because `head_members` decided it.
+
+Pinned: `the_seeded_tenders_walk_returns_the_stream_set_in_id_order_once_and_terminates` — the
+id-ordered stream's set (`read::tenders`, the oracle; a lotless winning tender IS a tender here) at
+2-row windows and at the production window, routed through `tenders_page`, a guard-answered
+companion (`source=doe`) and a walk-answered one (`published_after` in 2033: short pages with a
+cursor, then the end); and the handler walk at `limit=1` over `/v1/tenders?winner=` beside the
+lots one. Owed live: `?bidder=357` and `?winner=357` at `limit=100`, page 1 and deep, against
+3.15 s / 1.25 s.
 

@@ -280,25 +280,109 @@ async fn the_seed_window_is_an_index_range_read_in_tender_order() {
         (Filter { winner: Some(ORG), ..Filter::default() }, "tender_version_result_winners_org_tender"),
         (Filter { bidder: Some(ORG), ..Filter::default() }, "tender_version_bid_parties_org_tender"),
     ] {
-        let sql = read::seeded_window_sql(&filter).expect("a seeded shape");
-        let mut rows = conn
-            .query(
-                &format!("EXPLAIN QUERY PLAN {sql}"),
-                vec![Value::Integer(ORG), Value::Integer(0), Value::Integer(256)],
-            )
-            .await
-            .unwrap();
-        let mut plan = Vec::new();
-        while let Some(r) = rows.next().await.unwrap() {
-            plan.push(r.get_value(3).unwrap().as_text().cloned().unwrap_or_default());
+        for inclusive in [true, false] {
+            let sql = read::seeded_window_sql(&filter, inclusive).expect("a seeded shape");
+            let mut rows = conn
+                .query(
+                    &format!("EXPLAIN QUERY PLAN {sql}"),
+                    vec![Value::Integer(ORG), Value::Integer(0), Value::Integer(256)],
+                )
+                .await
+                .unwrap();
+            let mut plan = Vec::new();
+            while let Some(r) = rows.next().await.unwrap() {
+                plan.push(r.get_value(3).unwrap().as_text().cloned().unwrap_or_default());
+            }
+            let text = plan.join("\n");
+            eprintln!("seed window plan ({index}, inclusive={inclusive}):\n{text}");
+            assert!(text.contains(index), "the window seeks the covering index: {text}");
+            assert!(!text.contains("SCAN"), "no table scan: {text}");
+            assert!(!text.to_uppercase().contains("SORT") && !text.contains("TEMP B-TREE"), "the index serves the order: {text}");
         }
-        let text = plan.join("\n");
-        eprintln!("seed window plan ({index}):\n{text}");
-        assert!(text.contains(index), "the window seeks the covering index: {text}");
-        assert!(!text.contains("SCAN"), "no table scan: {text}");
-        assert!(!text.to_uppercase().contains("SORT") && !text.contains("TEMP B-TREE"), "the index serves the order: {text}");
     }
     for suffix in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{suffix}"));
     }
 }
+
+/// Walk the seeded TENDERS page to the end the way the handler does: ask for one
+/// row past the page, take the page's last row as the cursor when it overflowed,
+/// the examined-to cursor when it came up short, stop when neither is there.
+async fn walk_tenders(
+    conn: &turso::Connection,
+    filter: &Filter,
+    limit: i64,
+    window: i64,
+    windows: usize,
+) -> (Vec<i64>, usize) {
+    let mut after = 0i64;
+    let mut out = Vec::new();
+    let mut pages = 0;
+    loop {
+        pages += 1;
+        assert!(pages <= 60, "the walk must terminate: {out:?}");
+        let page = read::tenders_seeded_page(conn, filter, after, limit + 1, window, windows).await.unwrap();
+        let full = page.rows.len() as i64 > limit;
+        let rows: Vec<i64> = page.rows.iter().take(limit as usize).map(|r| r.id).collect();
+        out.extend(rows.iter().copied());
+        let next = if full { *rows.last().unwrap() } else if let Some(e) = page.examined_to { e } else { return (out, pages) };
+        assert!(next > after, "the cursor only moves forward: {next} after {after}");
+        after = next;
+    }
+}
+
+/// The tenders half (issue 388): the same windowed walk, routed from
+/// `tenders_page`, with the bare-id cursor — the set the id-ordered stream
+/// returns, in id order, once each, terminating, at tiny windows and at the
+/// production window; a lotless tender the org won IS a tender here.
+#[tokio::test]
+async fn the_seeded_tenders_walk_returns_the_stream_set_in_id_order_once_and_terminates() {
+    let (conn, path) = scratch("seeded-tenders").await;
+    seed(&conn).await;
+    let winner = Filter { winner: Some(ORG), now: 1_756_000_000, ..Filter::default() };
+    let bidder = Filter { bidder: Some(ORG), now: 1_756_000_000, ..Filter::default() };
+    assert!(read::seeded_tenders(&winner) && read::seeded_tenders(&bidder));
+    let expected_winner: Vec<i64> = vec![1, 2, 4, 5, 7, 8, 9];
+    let expected_bidder: Vec<i64> = vec![2, 5, 9];
+    for (label, filter, expected) in [("winner", &winner, &expected_winner), ("bidder", &bidder, &expected_bidder)] {
+        // The oracle: the id-ordered stream's own answer.
+        let mut oracle: Vec<i64> = read::tenders(&conn, filter, Scope::Page { after: 0, limit: 1000 })
+            .await
+            .unwrap()
+            .iter()
+            .map(|r| r.id)
+            .collect();
+        oracle.sort();
+        assert_eq!(&oracle, expected, "{label}: the oracle agrees with the hand count");
+
+        let (small, pages_small) = walk_tenders(&conn, filter, 2, 2, 1).await;
+        assert_eq!(&small, expected, "{label}: tiny windows return the set in id order");
+        let (prod, pages_prod) = walk_tenders(&conn, filter, 3, read::DEFAULT_SEED_WINDOW, read::DEFAULT_SEED_WINDOWS_PER_PAGE).await;
+        assert_eq!(&prod, expected, "{label}: production windows return the same set");
+        assert_eq!(pages_prod, expected.len().div_ceil(3), "{label}: pages of 3");
+        assert!(pages_small > pages_prod, "{label}: tiny windows take more pages ({pages_small} > {pages_prod})");
+
+        // Routed: `tenders_page` itself takes the walk for this shape, one page holds all.
+        let routed = read::tenders_page(&conn, filter, 0, 100, read::DEFAULT_FALLBACK_BAND).await.unwrap();
+        assert_eq!(routed.rows.iter().map(|r| r.id).collect::<Vec<_>>(), *expected);
+        assert_eq!(routed.examined_to, None, "{label}: the seed is exhausted inside one page");
+    }
+
+    // A companion still narrows: no tender of the org is `doe` — the guard answers.
+    let elsewhere = Filter { winner: Some(ORG), source: Some("doe".into()), now: 1_756_000_000, ..Filter::default() };
+    let none = read::tenders_page(&conn, &elsewhere, 0, 100, read::DEFAULT_FALLBACK_BAND).await.unwrap();
+    assert!(none.rows.is_empty() && none.examined_to.is_none());
+    // …and a bound the guard never answers alone (a publication instant — always
+    // reachable, decided per row) narrows inside the walk: nothing is published in
+    // 2033, and at one tiny window per page the read pages short with a cursor first.
+    let future = Filter { winner: Some(ORG), published_after: Some(2_000_000_000), now: 1_756_000_000, ..Filter::default() };
+    let short = read::tenders_seeded_page(&conn, &future, 0, 11, 2, 1).await.unwrap();
+    assert!(short.rows.is_empty() && short.examined_to.is_some(), "one window read, a cursor to continue from");
+    let (all, pages) = walk_tenders(&conn, &future, 10, 2, 1).await;
+    assert!(all.is_empty() && pages >= 5, "{pages} short pages, nothing admitted, and it ends");
+
+    for suffix in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{suffix}"));
+    }
+}
+

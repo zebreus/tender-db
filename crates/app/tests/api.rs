@@ -3444,9 +3444,34 @@ async fn an_org_seeded_lots_walk_pages_in_tender_order_with_a_compound_cursor() 
     let restart = server.get(&format!("/v1/lots?winner={org}&limit=1&cursor={}", expected[0].1)).await;
     assert_eq!(items(&restart).iter().map(key).collect::<Vec<_>>(), vec![expected[0]]);
 
-    // The tenders shape is untouched: bare-id cursor, id order.
-    let tenders = server.get(&format!("/v1/tenders?winner={org}&limit=1")).await;
-    if let Some(c) = tenders["next_cursor"].as_str() {
-        assert!(!c.contains(':'), "tenders keep their bare-id cursor: {c}");
+    // The tenders shape takes the same walk with its bare-id cursor unchanged: the
+    // `limit=1` walk reproduces the one-page answer, in id order, once each.
+    let one = server.get(&format!("/v1/tenders?winner={org}&limit=1000")).await;
+    assert_eq!(one["more"], false);
+    let expected: Vec<i64> = items(&one).iter().map(|t| t["id"].as_i64().expect("id")).collect();
+    assert!(!expected.is_empty());
+    let mut sorted = expected.clone();
+    sorted.sort();
+    assert_eq!(expected, sorted, "tenders page in id order");
+    let mut walked: Vec<i64> = Vec::new();
+    let mut cursor: Option<String> = None;
+    let mut pages = 0;
+    loop {
+        pages += 1;
+        assert!(pages <= expected.len() + 2, "the tenders walk terminates: {walked:?}");
+        let url = match &cursor {
+            Some(c) => format!("/v1/tenders?winner={org}&limit=1&cursor={c}"),
+            None => format!("/v1/tenders?winner={org}&limit=1"),
+        };
+        let page = server.get(&url).await;
+        walked.extend(items(&page).iter().map(|t| t["id"].as_i64().expect("id")));
+        match page["next_cursor"].as_str() {
+            Some(next) => {
+                assert!(!next.contains(':'), "tenders keep their bare-id cursor: {next}");
+                cursor = Some(next.to_owned());
+            }
+            None => break,
+        }
     }
+    assert_eq!(walked, expected, "the tenders walk at limit=1 reproduces the one-page answer");
 }

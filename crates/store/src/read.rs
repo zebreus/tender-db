@@ -2033,6 +2033,12 @@ pub async fn tenders_page(
     limit: i64,
     band: i64,
 ) -> turso::Result<Banded<TenderRow>> {
+    // Issue 388: an org-seeded read walks its participation index in tender
+    // order, one window per step, instead of DISTINCTing the org's whole slice
+    // per page. Tenders already page by id, so the cursor is unchanged.
+    if seeded_tenders(filter) {
+        return tenders_seeded_page(conn, filter, after, limit, DEFAULT_SEED_WINDOW, DEFAULT_SEED_WINDOWS_PER_PAGE).await;
+    }
     if !reachable(conn, filter, Collection::Tenders).await? {
         return Ok(Banded { rows: Vec::new(), examined_to: None });
     }
@@ -2125,8 +2131,30 @@ fn tenders_page_query(filter: &Filter, scope: Scope, band_end: Option<i64>) -> Q
         ),
         seed_param,
     );
-    // Same predicate set, same order, same hazards as the inline shape above —
-    // see the issue 217-A comment there for why a publication seed rides alone.
+    tender_page_predicates(&mut inner, filter);
+    match band_end {
+        // Issue 408 (b): a bounded fallback walk examines one id band per page. The
+        // band is a second PK bound beside the cursor, so the walk it limits is the
+        // same walk, just told where to stop.
+        Some(end) => inner.push(
+            " AND t.id > ? AND t.id <= ? ORDER BY t.id LIMIT ?",
+            [Value::Integer(after), Value::Integer(end), Value::Integer(limit)],
+        ),
+        None => inner.push(
+            " AND t.id > ? ORDER BY t.id LIMIT ?",
+            [Value::Integer(after), Value::Integer(limit)],
+        ),
+    }
+
+    tender_page_wrap(inner, filter.lang.as_deref())
+}
+
+/// The paged shape's predicates on the ids-only inner query: the `t.`-column
+/// companions (none beside a publication seed — the issue 217-A hazard, see
+/// `tenders_query`) and the version predicates. Same set, same order, for the
+/// id-ordered page and the seeded walk (issue 388), so the two cannot disagree
+/// about what a matching tender is.
+fn tender_page_predicates(inner: &mut Query, filter: &Filter) {
     if filter.publication_id.is_none() {
         if let Some(source) = &filter.source {
             inner.push(" AND t.source = ?", [t(source)]);
@@ -2147,28 +2175,113 @@ fn tenders_page_query(filter: &Filter, scope: Scope, band_end: Option<i64>) -> Q
             inner.push(" AND t.current_deadline < ?", [Value::Integer(before)]);
         }
     }
-    version_predicates(&mut inner, filter, "t.id", "v.seq", Some("t.current_deadline"), "t.current_value_eur_cents");
-    match band_end {
-        // Issue 408 (b): a bounded fallback walk examines one id band per page. The
-        // band is a second PK bound beside the cursor, so the walk it limits is the
-        // same walk, just told where to stop.
-        Some(end) => inner.push(
-            " AND t.id > ? AND t.id <= ? ORDER BY t.id LIMIT ?",
-            [Value::Integer(after), Value::Integer(end), Value::Integer(limit)],
-        ),
-        None => inner.push(
-            " AND t.id > ? ORDER BY t.id LIMIT ?",
-            [Value::Integer(after), Value::Integer(limit)],
-        ),
-    }
+    version_predicates(inner, filter, "t.id", "v.seq", Some("t.current_deadline"), "t.current_value_eur_cents");
+}
 
+/// The satellite SELECT list joined back onto the ≤limit page rows the inner
+/// query found, in id order.
+fn tender_page_wrap(inner: Query, lang: Option<&str>) -> Query {
     let mut q = Query::default();
     q.push(
-        &tender_select_head(&format!("({}) w JOIN tenders t ON t.id = w.wid", inner.sql), filter.lang.as_deref()),
+        &tender_select_head(&format!("({}) w JOIN tenders t ON t.id = w.wid", inner.sql), lang),
         inner.params,
     );
     q.push("w.wseq ORDER BY t.id", []);
     q
+}
+
+/// The seeded walk's page over one window's member tenders (issue 388): the
+/// paged shape's own predicates over `t.id IN (members)`, after the cursor, in
+/// id order — the seeded org's per-tender EXISTS dropped, because `head_members`
+/// decided it already.
+fn tenders_seeded_query(filter: &Filter, members: &[i64], after: i64, limit: i64) -> Query {
+    let marks = vec!["?"; members.len()].join(", ");
+    let mut inner = Query::default();
+    inner.push(
+        &format!(
+            "SELECT t.id AS wid, v.seq AS wseq FROM tenders t
+               JOIN tender_versions v ON v.tender_id = t.id AND v.seq =
+                    (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)
+              WHERE t.id IN ({marks}) AND t.id > ?"
+        ),
+        members.iter().map(|&m| Value::Integer(m)).chain([Value::Integer(after)]),
+    );
+    tender_page_predicates(&mut inner, &without_seeded_org(filter));
+    inner.push(" ORDER BY t.id LIMIT ?", [Value::Integer(limit)]);
+    tender_page_wrap(inner, filter.lang.as_deref())
+}
+
+/// Does this tenders page take the seeded walk? The two org seeds whose covering
+/// index serves the walk (see `seeded_lots`), with no publication seed — which
+/// `tender_from` ranks above them, exactly, and which is a handful of rows anyway.
+pub fn seeded_tenders(filter: &Filter) -> bool {
+    filter.publication_id.is_none()
+        && matches!(
+            participation_seed(filter),
+            Some(("tender_version_result_winners" | "tender_version_bid_parties", ..))
+        )
+}
+
+/// The REST list's id-ordered Tender page for an organization-seeded read,
+/// walked through the participation index one window at a time (issue 388 —
+/// the tenders half of the seeded walk; the mechanism is `lots_seeded_page`'s).
+/// Tenders already page in `tender_id` order, so the window IS the page order
+/// and the cursor stays a bare id: a full page's cursor is its last row, a short
+/// page's is the last tender examined (`examined_to`, the 408 (b) contract),
+/// and `None` there means the seed ran out.
+///
+/// Before: `tender_from`'s `(SELECT DISTINCT tender_id FROM <table> WHERE
+/// organization_id = ?) hits` DISTINCTed the org's whole index slice on every
+/// page — `/v1/tenders?bidder=357&limit=100` 3.15 s on prod, 2026-09-18.
+pub async fn tenders_seeded_page(
+    conn: &Connection,
+    filter: &Filter,
+    after: i64,
+    limit: i64,
+    window: i64,
+    windows: usize,
+) -> turso::Result<Banded<TenderRow>> {
+    let empty = || Banded { rows: Vec::new(), examined_to: None };
+    let Some((table, _, org)) = participation_seed(filter) else { return Ok(empty()) };
+    let Some(window_sql) = seeded_window_sql(filter, false) else { return Ok(empty()) };
+    if !reachable(conn, filter, Collection::Tenders).await? {
+        return Ok(empty());
+    }
+    let role = participation_role(filter);
+    let want = limit.max(1) as usize; // the caller's probe count, one past its page
+    let window = window.max(1);
+    let mut rows: Vec<TenderRow> = Vec::new();
+    let mut from = after;
+    let mut examined_to = None;
+    for _ in 0..windows.max(1) {
+        let mut q = Query::default();
+        q.push(&window_sql, [Value::Integer(org), Value::Integer(from), Value::Integer(window)]);
+        let raw = q.rows(conn, |r| int(r, 0)).await?;
+        let Some(&last) = raw.last() else {
+            examined_to = None; // nothing past the cursor: the seed is exhausted
+            break;
+        };
+        let exhausted = (raw.len() as i64) < window;
+        let mut candidates = raw;
+        candidates.dedup();
+        let members = head_members(conn, table, role, org, &candidates).await?;
+        if !members.is_empty() {
+            let room = (want - rows.len()) as i64;
+            let mut page = tenders_seeded_query(filter, &members, from, room).rows(conn, tender_row).await?;
+            rows.append(&mut page);
+        }
+        if rows.len() >= want {
+            examined_to = None; // full: the caller's cursor is the page's own last row
+            break;
+        }
+        // Every tender of this window is done — the page had room for all of them.
+        from = last;
+        examined_to = (!exhausted).then_some(last);
+        if exhausted {
+            break;
+        }
+    }
+    Ok(Banded { rows, examined_to })
 }
 
 /// A `group_concat` result — a comma-joined code list, or `None` when the
@@ -2893,14 +3006,7 @@ fn lots_stream_head(filter: &Filter) -> Query {
 /// rows per lot on a prolific org) is not added again. Only the seeded one: a
 /// second org filter alongside it still decides per lot.
 fn lots_stream_predicates(q: &mut Query, filter: &Filter) {
-    let mut predicates = filter.clone();
-    match participation_seed(filter) {
-        Some(("tender_version_result_winners", ..)) => predicates.winner = None,
-        Some(("tender_version_bid_parties", ..)) => predicates.bidder = None,
-        Some(("tender_version_parties", ..)) => predicates.buyer = None,
-        _ => {}
-    }
-    version_predicates(q, &predicates, "l.tender_id", LOT_SEQ, None,
+    version_predicates(q, &without_seeded_org(filter), "l.tender_id", LOT_SEQ, None,
         "(SELECT tt.current_value_eur_cents FROM tenders tt WHERE tt.id = l.tender_id)");
 }
 
@@ -2980,13 +3086,29 @@ pub fn seeded_lots(filter: &Filter) -> bool {
 /// tender order, `LIMIT`ed — one index range read that both the walk's order
 /// and its bound come from. Public so a test can read its plan.
 #[doc(hidden)]
-pub fn seeded_window_sql(filter: &Filter) -> Option<String> {
+pub fn seeded_window_sql(filter: &Filter, inclusive: bool) -> Option<String> {
     let (table, extra, _) = participation_seed(filter)?;
+    let op = if inclusive { ">=" } else { ">" };
     Some(format!(
         "SELECT tender_id FROM {table}
-          WHERE organization_id = ? AND tender_id >= ?{extra}
+          WHERE organization_id = ? AND tender_id {op} ?{extra}
           ORDER BY tender_id LIMIT ?"
     ))
+}
+
+/// The filter with the SEEDED org's own predicate cleared: the seed decides
+/// membership at the head version, exactly (`head_members`), so its per-row
+/// EXISTS is not evaluated again. Only the seeded one — a second org filter
+/// alongside it still decides per row.
+fn without_seeded_org(filter: &Filter) -> Filter {
+    let mut predicates = filter.clone();
+    match participation_seed(filter) {
+        Some(("tender_version_result_winners", ..)) => predicates.winner = None,
+        Some(("tender_version_bid_parties", ..)) => predicates.bidder = None,
+        Some(("tender_version_parties", ..)) => predicates.buyer = None,
+        _ => {}
+    }
+    predicates
 }
 
 /// Which of the candidate tenders the org holds AT THE HEAD VERSION, in the
@@ -3041,7 +3163,7 @@ pub async fn lots_seeded_page(
     let Some((table, _, org)) = participation_seed(filter) else {
         return Ok(SeededPage { rows: Vec::new(), next: None });
     };
-    let Some(window_sql) = seeded_window_sql(filter) else {
+    let Some(window_sql) = seeded_window_sql(filter, true) else {
         return Ok(SeededPage { rows: Vec::new(), next: None });
     };
     if !reachable(conn, filter, Collection::Lots).await? {
