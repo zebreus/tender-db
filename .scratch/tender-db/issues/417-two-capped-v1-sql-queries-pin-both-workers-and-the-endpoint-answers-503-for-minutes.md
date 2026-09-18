@@ -39,3 +39,16 @@ Two queries, sent 10 s apart at 15:51:40 and 15:51:50 (each `408` after its 10 s
 13 minutes 33 seconds. Load average on the box read 1.13 for the period (two pinned computations
 on a mostly idle machine); `/health`, the list pages and the seeded walks were unaffected.
 
+## Second event, 16:06 — the same shape on 2,000 tenders also hit the cap: it is the plan, not the size
+
+Re-sized per the new rule: the same join over `t.id BETWEEN 7960000 AND 7961999` (2,000 tenders,
+50× smaller) — `408` after 10 s all the same, and one worker is pinned again as this is written. So
+the range bound never bounded anything: turso is not driving from `tenders` by primary key and
+seeking `notice_codes` per version; it is driving from `notice_codes` by `field_id` (the equality on
+a low-cardinality column, the traps table's known shape) and walking the corpus. The census moves
+off `/v1/sql` — the codelist was already settled from the committed fixtures — and the plan is to be
+read LOCALLY on a scratch database, which is the rule the traps table already states and this
+caller skipped twice. Two lessons for the rule, both now in `docs/agents/prod-box-reads.md`: a
+join-bridged read is sized by its plan, not its range; and after ONE 408 the next read of any
+shape waits until the runtime answers `SELECT 1` again.
+
