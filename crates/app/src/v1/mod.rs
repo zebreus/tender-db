@@ -1543,9 +1543,12 @@ async fn changes(State(state): State<AppState>, ApiQuery(params): ApiQuery<Param
     // `oldest > 0` guard keeps an empty log from rejecting `since=0`; the `- 1` is
     // SSE's, since a cursor of `oldest - 1` is a legitimate "everything from the
     // start" position.
+    // Read the head BEFORE the page: a page that is not full has read every
+    // public row up to (at least) this head, so it may certify the head back.
+    let head = read::latest_cursor(&reader).await?;
     let reset = if oldest > 0 && since < oldest - 1 {
         Some("cursor_expired")
-    } else if since > read::latest_cursor(&reader).await? {
+    } else if since > head {
         Some("cursor_ahead")
     } else {
         None
@@ -1564,19 +1567,36 @@ async fn changes(State(state): State<AppState>, ApiQuery(params): ApiQuery<Param
     // Fetch one past the page (issue 215-C): `more` comes from the overflow row, not
     // from a full page, so an exactly-`limit` final page reports `more:false` instead
     // of costing the client one extra empty poll — mirrors the list handler.
-    let mut rows =
-        read::changes_since(&reader, since, limit + 1, params.entity.as_deref()).await?;
+    let mut rows = match params.entity.as_deref() {
+        Some(kind) => read::changes_since(&reader, since, limit + 1, Some(kind)).await?,
+        // Issue 211, the reopened half: the unfiltered poll collects `limit` PUBLIC
+        // events — one seek per public kind, merged by cursor — so `limit` means
+        // events on every page, with or without `entity`, and a window dominated
+        // by result-graph rows can no longer come back short or empty with
+        // `more: true`. Hidden kinds are never selected, so they are neither
+        // delivered nor redelivered; the cursor advances over the rows returned.
+        None => read::changes_since_kinds(&reader, since, limit + 1, &sse::PUBLIC_CHANGE_KINDS).await?,
+    };
     let more = rows.len() as i64 > limit;
     rows.truncate(limit as usize);
     // Issue 392: echoing `since` on an empty page is safe now and only now — the
     // guards above have established it is a cursor this feed could have issued
     // (within [oldest-1, latest]), so an empty page here means "caught up", which
     // is exactly the position the client should resume from.
+    //
+    // Issue 211 (reopened): the page selects PUBLIC rows only, so its last row
+    // is not the last row of the log — a stretch of result-graph rows may sit
+    // behind it. A page that is not full has read every public row past `since`,
+    // so it certifies the head read above (every row ≤ `head` was seen; rows
+    // that landed since are > `head` and the next poll finds them). That keeps
+    // "read to the end" landing on the same cursor `GET /v1` reports, and stops a
+    // caught-up client re-scanning the hidden tail on every poll. A full page
+    // resumes from its last row: rows between it and the head are unread.
     let last = rows.last().map(|c| c.cursor).unwrap_or(since);
-    // Serialize only the public-feed kinds (issue 211). The cursor still advances
-    // over the FULL fetch (`last`/`more` above), so a window dominated by result-
-    // graph rows carries the client past them without redelivering — keeping the
-    // poll feed identical to what SSE emits.
+    let last = if more { last } else { last.max(head) };
+    // Every row is a public-feed kind by construction now (issue 211): the
+    // unfiltered fetch selects only `PUBLIC_CHANGE_KINDS`, and an `entity` filter
+    // was validated public above. The filter stays as the invariant's witness.
     let events: Vec<Value> = rows
         .iter()
         .filter(|c| sse::is_public_change_kind(&c.entity_kind))

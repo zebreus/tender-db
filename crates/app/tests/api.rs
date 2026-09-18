@@ -593,6 +593,29 @@ async fn the_change_feed_carries_only_the_public_entity_kinds() {
         );
     }
 
+    // Issue 211, the reopened half: `limit` counts EVENTS, not change-log rows. Walk
+    // the feed one event per page and it must yield every public event, one per page,
+    // with no short or empty page while `more` is true — the pre-fix feed answered
+    // `0 events, more: true` for a window that opened on result-graph rows.
+    let all = server.get("/v1/changes?since=0&limit=1000").await;
+    let all_events = all["events"].as_array().expect("events").clone();
+    let mut walked = Vec::new();
+    let mut since = 0i64;
+    for _ in 0..(all_events.len() + 2) {
+        let page = server.get(&format!("/v1/changes?since={since}&limit=1")).await;
+        let page_events = page["events"].as_array().expect("events");
+        let more = page["more"].as_bool().expect("more");
+        if more {
+            assert_eq!(page_events.len(), 1, "a non-final page of limit=1 carries exactly one event: {page}");
+        }
+        walked.extend(page_events.iter().cloned());
+        since = page["last_cursor"].as_str().expect("cursor").parse().expect("integer cursor");
+        if !more {
+            break;
+        }
+    }
+    assert_eq!(walked, all_events, "paging one event at a time reproduces the whole public feed");
+
     // The filter param rejects a non-public value with a 400, never undocumented rows.
     assert_eq!(server.status("/v1/changes?since=0&entity=lot_result").await, 400);
     assert_eq!(server.status("/v1/changes?since=0&entity=bid").await, 400);
@@ -607,17 +630,20 @@ async fn the_change_feed_carries_only_the_public_entity_kinds() {
 /// Issue 215-C: `/v1/changes` must report `more:true` only when a next page really
 /// exists — an exactly-`limit` FINAL page reports `more:false` (a `limit+1`
 /// look-ahead), so a caller is not sent one extra empty poll. `more`/the cursor
-/// operate over the raw change rows (all kinds, issue 211), so the total is read
-/// through the store.
+/// operate over the PUBLIC events (issue 211, the reopened half — until then the
+/// raw rows), so the total is read through the store the same way the feed reads it.
 #[tokio::test]
 async fn the_change_feed_reports_more_only_when_a_next_page_exists() {
     let server = Server::start("changes-more").await;
     server.ingest_chain().await;
 
     let reader = server.db.readers(1).expect("readers").get().await.expect("reader");
-    let total = store::read::changes_since(&reader, 0, 100_000, None).await.expect("changes").len() as i64;
+    let total = store::read::changes_since_kinds(&reader, 0, 100_000, &["tender", "lot", "organization"])
+        .await
+        .expect("changes")
+        .len() as i64;
     drop(reader);
-    assert!(total >= 2, "the chain produced change rows");
+    assert!(total >= 2, "the chain produced public change events");
 
     // A page of EXACTLY the total is the final page.
     let full = server.get(&format!("/v1/changes?since=0&limit={total}")).await;
@@ -2283,7 +2309,9 @@ async fn the_change_feed_replays_the_cursor_spine() {
     let tenders = server.get("/v1/changes?since=0&limit=1000&entity=tender").await;
     assert!(tenders["events"].as_array().expect("events").iter().all(|e| e["entity"] == "tender"));
 
-    // Reading to the end lands on the same cursor the root reports.
+    // Reading to the end lands on the same cursor the root reports — even though
+    // the chain's newest log rows are result-graph kinds the feed never carries
+    // (issue 211): a page that is not full certifies the head, not its last row.
     assert_eq!(all["last_cursor"], server.get("/v1").await["cursor"]);
 }
 

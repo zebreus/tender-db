@@ -3359,6 +3359,46 @@ pub async fn changes_since(
             .await?
         }
     };
+    read_changes(&mut rows).await
+}
+
+/// The next `limit` change rows after `cursor` whose kind is one of `kinds`, in cursor
+/// order — issue 211, the reopened half. The unfiltered poll used to fetch `limit`
+/// RAW rows and drop the non-public kinds afterwards, so `limit` meant "change-log rows
+/// scanned" without a filter and "events" with one, and a window dominated by
+/// result-graph rows came back short or empty with `more: true` (measured on prod:
+/// `since=605100027&limit=1` → 0 events, `more: true`). One index seek per kind
+/// (`entity_kind = ? AND cursor > ? ORDER BY cursor LIMIT ?`, each the planner-clean
+/// shape `changes_since` already uses), merged by cursor here — three small queries
+/// rather than one `IN (…)`, whose plan over `changes_entity_cursor` issue 70 could not
+/// vouch for. The result is exact: every returned row is one of `kinds`, and there is
+/// no row of those kinds between `cursor` and the last returned one that is missing.
+pub async fn changes_since_kinds(
+    conn: &Connection,
+    cursor: i64,
+    limit: i64,
+    kinds: &[&str],
+) -> turso::Result<Vec<Change>> {
+    let mut merged: Vec<Change> = Vec::new();
+    for kind in kinds {
+        if !ENTITY_KINDS.contains(kind) {
+            continue; // never emitted: zero rows by definition, see `changes_since`
+        }
+        let mut rows = conn
+            .query(
+                "SELECT cursor, entity_kind, entity_id, version_seq, op, changed_at FROM changes
+                  WHERE entity_kind = ? AND cursor > ? ORDER BY cursor LIMIT ?",
+                (Value::Text((*kind).to_owned()), Value::Integer(cursor), Value::Integer(limit)),
+            )
+            .await?;
+        merged.extend(read_changes(&mut rows).await?);
+    }
+    merged.sort_by_key(|c| c.cursor);
+    merged.truncate(limit.max(0) as usize);
+    Ok(merged)
+}
+
+async fn read_changes(rows: &mut turso::Rows) -> turso::Result<Vec<Change>> {
     let mut out = Vec::new();
     while let Some(row) = rows.next().await? {
         out.push(Change {

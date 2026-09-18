@@ -397,6 +397,18 @@ impl Sweeper {
         }
         for _ in 0..MAX_BATCHES_PER_SWEEP {
             let from = endpoint.last_delivered_cursor;
+            // The head is read BEFORE the batch (issue 211): a partial batch has
+            // read every public row up to at least this head, so the slot may
+            // park on it — the same "read to the end lands on the head" rule the
+            // poll feed keeps — instead of on the last public row with a stretch
+            // of hidden result-graph rows behind it that every sweep re-scans.
+            let head = match self.db.latest_cursor().await {
+                Ok(head) => head,
+                Err(e) => {
+                    eprintln!("webhooks: read head for endpoint {}: {e}", endpoint.id);
+                    return;
+                }
+            };
             let changes = match self.read_batch(from).await {
                 Ok(changes) => changes,
                 Err(e) => {
@@ -407,13 +419,15 @@ impl Sweeper {
             if changes.is_empty() {
                 return; // caught up
             }
-            let to = changes.last().map(|c| c.cursor).unwrap_or(from);
+            let partial = (changes.len() as i64) < BATCH;
+            let last = changes.last().map(|c| c.cursor).unwrap_or(from);
+            let to = if partial { last.max(head) } else { last };
             let outcome = self.post(&endpoint, from, to, generation, &changes).await;
             self.record(&endpoint, from, to, changes.len() as i64, generation, &outcome).await;
             match outcome {
                 Outcome::Ok => {
                     endpoint.last_delivered_cursor = to;
-                    if (changes.len() as i64) < BATCH {
+                    if partial {
                         return; // last batch was partial → drained
                     }
                 }
@@ -446,7 +460,13 @@ impl Sweeper {
 
     async fn read_batch(&self, from: i64) -> Result<Vec<store::Change>, String> {
         let reader = self.readers.get().await.map_err(|e| e.to_string())?;
-        read::changes_since(&reader, from, BATCH, None).await.map_err(|e| e.to_string())
+        // Issue 211, the reopened half: a batch is `BATCH` PUBLIC events, not a
+        // `BATCH`-row window filtered afterwards — so a non-reset batch never
+        // carries `events: []` for a stretch of result-graph rows, and the
+        // "partial batch means drained" rule in `deliver` reads the public feed.
+        read::changes_since_kinds(&reader, from, BATCH, &crate::v1::sse::PUBLIC_CHANGE_KINDS)
+            .await
+            .map_err(|e| e.to_string())
     }
 
     /// Build, sign and POST one batch; classify the result.
@@ -461,8 +481,9 @@ impl Sweeper {
         // Deliver only the public-feed kinds (issue 211): the webhook transport is
         // one of the three feeds that must carry the same documented, resolvable
         // events SSE does — lot_result/bid/contract change rows are filtered out.
-        // The cursor still advances over the full window (`to`/`changes.len()` in
-        // `deliver`), so a batch of only result-graph rows acks and moves on.
+        // The batch is public rows by construction now (`read_batch`, issue 211);
+        // the filter stays as the invariant's witness. `to` is the last public
+        // row, or the head when the batch drained the backlog (see `deliver`).
         let events: Vec<serde_json::Value> = changes
             .iter()
             .filter(|c| crate::v1::sse::is_public_change_kind(&c.entity_kind))

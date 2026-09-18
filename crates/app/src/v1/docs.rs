@@ -323,7 +323,11 @@ here, and each one you send is named back in <code>ignored_filters</code> rather
 than silently dropped. To follow a filtered subset, subscribe to the collection
 endpoint with <code>Accept: text/event-stream</code>, which does apply them.
 Loop, passing <code>last_cursor</code> as the next <code>since</code>, until
-<code>more</code> is false; then poll periodically for new ones.
+<code>more</code> is false; then poll periodically for new ones. A page with
+<code>more: false</code> has read to the end, and its <code>last_cursor</code>
+is the feed head &mdash; the value <code>GET /v1</code> reports &mdash; even
+when the log's newest rows are kinds this feed does not carry.
+<code>limit</code> counts events: every page but the last is full.
 If you ever send a cursor this feed did not issue — one past the head, or one
 from before a rebuild — the answer carries a <code>reset</code> field
 (<code>cursor_ahead</code> or <code>cursor_expired</code>) with an empty
