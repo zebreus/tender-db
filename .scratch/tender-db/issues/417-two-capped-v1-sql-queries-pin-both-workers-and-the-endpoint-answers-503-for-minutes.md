@@ -1,6 +1,6 @@
 # 417 — two capped `/v1/sql` queries pin both runtime workers, and the endpoint answers `503 saturated` until they finish (12+ minutes measured)
 
-Status: ready-for-agent — **FIXED and gated 2026-09-18 (see the foot), deploy pending**: every `/v1/sql` computation runs on its own blocking thread, an abandoned one is counted from the moment its request stops waiting until it returns, admission refuses at four with a 503 that says how many and since when, `/metrics` serves the count, the oldest abandonment and the in-flight total, and the end-to-end test proves a cheap query answers at once behind two capped bombs. Was: found 2026-09-18 15:51 UTC by the owner's own census read (issue 397 unit 2): two join-bridged range reads each ran past the 10 s cap and pinned the two workers for **13.5 minutes** (15:51:50–16:05:23), during which `/v1/sql` answered `503 saturated` to everything, `SELECT 1` included; a third capped read at 16:33 pinned one again. The public API was untouched throughout (the SQL runtime is isolated, issue 17).
+Status: **DONE 2026-09-18** — FIXED, gated (127/127) and DEPLOYED at `0005861` 17:08 UTC, `## Verify` read at 17:09: `tender_db_sql_pinned_computations 0`, `tender_db_sql_pinned_since_seconds 0`, `tender_db_sql_in_flight 0` on an idle box, and `SELECT 1` answers through the endpoint. Every `/v1/sql` computation now runs on its own blocking thread; an abandoned one is counted from the moment its request stops waiting until it returns, admission refuses at four with a 503 that says how many and since when, and the end-to-end test proves a cheap query answers at once behind two capped bombs. Was: found 2026-09-18 15:51 UTC by the owner's own census read (issue 397 unit 2): two join-bridged range reads each ran past the 10 s cap and pinned the two workers for **13.5 minutes** (15:51:50–16:05:23), during which `/v1/sql` answered `503 saturated` to everything, `SELECT 1` included; a third capped read at 16:33 pinned one again. The public API was untouched throughout (the SQL runtime is isolated, issue 17).
 Kind: defect (availability of `/v1/sql` — a capped query is not cancelled, so the cap bounds the caller's wait but not the worker's)
 Relates to: 17 (the isolated SQL runtime), 239 (the time limit and its 408), `docs/agents/prod-box-reads.md` (the traps table gained this shape today), 397 (the census that hit it)
 Blocked by: nothing
@@ -23,7 +23,7 @@ Blocked by: nothing
     curl -s --max-time 20 https://tenders.zebreus.click/metrics | grep -E '^tender_db_sql_(pinned_computations|in_flight) '
 
 - **done**: two lines — the gauges are served; `pinned_computations` reads `0` on an idle box, and the endpoint stays answerable while it is under `4`
-- **open**: no such lines (read 2026-09-18 before the deploy: none)
+- **open**: no such lines (read 2026-09-18 before the deploy: none; at `0005861` 17:09 UTC: both lines, `0` and `0`)
 
 ## Done when
 
@@ -121,6 +121,8 @@ two seconds — the request that was a `503` for 13.5 minutes this afternoon. Th
 **Not built, deliberately.** turso's `Connection` in the pinned version has no interrupt or
 progress hook to check for (the module's own comment, unchanged); the cap-of-four refusal is the
 whole bound, and an operator who sees the gauge at 4 for minutes has the number and the time to
-act on. Owed after the deploy: the gauges read on prod (the `## Verify` block) — no runaway
-query is sent to the box to prove the rest, the end-to-end test did that.
+act on. Read on prod after the deploy (`0005861`, 17:09 UTC): the three gauges served at `0`, `SELECT 1`
+answering — the `## Verify` block. No runaway query was sent to the box to prove the rest; the
+end-to-end test did that, and the next real one will show on the gauge instead of as a silent
+`503`.
 
