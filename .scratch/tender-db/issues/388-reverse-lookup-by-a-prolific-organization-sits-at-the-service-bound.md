@@ -230,3 +230,67 @@ row until the fifth match, which for a recent, sparse org is most of the table. 
 (`the_pre_115_lots_shape_still_plans_as_the_walk_we_left` is the pattern) for the IN form, the
 JOIN form, and a materialised-seed form (`SELECT … FROM (SELECT … FROM lots l WHERE l.tender_id
 IN (seed) AND <predicates>) ORDER BY id LIMIT ?`), and take whichever drives from the seed.
+
+## Comment — 2026-09-18: the cost structure, measured; two fixes built; one thing this issue said had landed had not
+
+**The plan was never the problem.** Probed locally (turso has no statistics, so the plan is
+structural; `/v1/sql` refuses `EXPLAIN`): the deployed IN form drives from the org's seed —
+`LIST SUBQUERY` off the `(organization_id)` index, then `SEARCH l USING INDEX
+sqlite_autoindex_lots_1 (tender_id=?)`, then `USE SORTER FOR ORDER BY` — for winner, bidder and
+buyer alike. The JOIN form, a materialised subquery, a `MATERIALIZED` CTE and an id-set all plan
+the same way. So the 22 s was not a lots walk (the 223 comment's reading; corrected there), it was
+VOLUME plus cache: `?winner=357` is 22.5 s cold and 6.1 s warm, and org 357's 3,734 winner tenders
+carry **334,537 lots**, its 1,442 bidder tenders **137,564** — every one enumerated,
+predicate-checked and sorted before `LIMIT 5`. The enumerate-and-sort floor alone, through
+`/v1/sql` with no predicates: ~3 s warm for the winner set, ~2 s for the bidder set.
+
+**Why bidder was a 503 and buyer 0.8 s.** The per-LOT org predicate `version_predicates` adds —
+`EXISTS (… bp.tender_id = l.tender_id AND bp.seq = MAX(seq) AND bp.organization_id = ?)` — never
+names the lot; it is a per-TENDER fact evaluated 137k times. And its seek: with the index set prod
+carries, turso takes `tender_version_bid_parties_org_tender (organization_id=? AND tender_id=?)`,
+i.e. org 357's rows for that tender across every version (~135), per lot — tens of millions of
+index rows. `parties` has `_version (tender_id, seq)` and `result_winners` has its PK for the same
+seek, which is why those two answered. Timed on prod through `/v1/sql`, bidder page: seed + sort
+2.0 s, + `EXISTS(vl)` 2.3 s, + the per-lot bidder predicate → past the 10 s limit.
+
+**Fix 1 (built): the seed IS the predicate, and the per-lot copy is gone.** `lot_seed_predicates`
+now seeds `l.tender_id IN (SELECT s.tender_id FROM (SELECT DISTINCT tender_id FROM <table> WHERE
+organization_id = ?[buyer role]) s WHERE EXISTS (SELECT 1 FROM <table> p WHERE p.tender_id =
+s.tender_id AND p.seq = MAX(seq of s.tender_id) AND p.organization_id = ?<predicate role>))` — decided
+at the head version, once per DISTINCT tender — and `lots_query` clears the seeded org from the
+`Filter` it hands `version_predicates`. Two shapes that looked right and measured wrong on the way:
+the head probe written per participation ROW (8–10 s: the correlated `MAX` re-evaluated for each of
+194k rows), and the bidder role in the DISTINCT pre-level (4.2 s against 2.1 s — `_org_tender`
+carries no `role`, so it was a table lookup per row). With the role only at the head level:
+bidder page **4.8 s wall through `/v1/sql`, from a 30.6 s 503**; winner 5.4 s (its floor is below).
+`the_org_seed_decides_membership_at_the_head_version_exactly` pins that a stale-version
+participation and a subcontractor row do not leak now that nothing re-checks per lot;
+`an_org_reverse_lookup_seeds_the_lots_stream_as_an_in_semi_join` pins the statement.
+
+**Unit 1 had not landed on prod, and the reason is a second bug.** The journal at every boot:
+`store: REFUSING to auto-build tender_version_result_winners_org_tender: … has ~845874165 rows,
+over the 240000000 row cap`. `too_large_to_build` bounded by `MAX(rowid)`, and every full rebuild
+deletes and re-inserts every satellite row, so after a dozen rebuilds the rowid space is an order
+of magnitude past the row count — 845M for a table that cannot exceed `lot_results`' ~20M. The
+covering index this issue's unit 1 recorded as LANDED 2026-09-16 was refused at every boot since;
+`missing_deferred_indexes` queued an auto reindex after each deploy, the builder refused again in
+0 s, and the loop repeated (jobs 1469 → 1477). The bid_parties twin built (its rowid space is
+under the cap), which is why only the winner pre-seed still pays a per-row table lookup over org
+357's 3.55M winner rows (~3 s of the 5.4 s). The refusal lines for `parties_org`, `_org_role`,
+`classifications_code` are noise on top: those indexes exist (built index-first at a rebuild) and
+the builder printed a refusal before checking.
+
+**Fix 2 (built): `too_large_to_build` takes the cheap bound first and the truth second.** An
+index that already exists is never refused (no line, no estimate); past the `MAX(rowid)` bound the
+exact `COUNT(*)` decides — a scan, but on the background reindex path and only for tables whose
+rowid space outgrew the cap. `a_high_rowid_alone_does_not_refuse_an_index_build` pins both halves.
+After the deploy, the boot's auto reindex will build `tender_version_result_winners_org_tender`
+for real (~20M rows sorted, well inside the 62 GB budget), and the winner pre-seed becomes
+index-only.
+
+**What stays open — the unit as this issue states it.** A page's cost still scales with the org's
+lot count, not the page: the seed's lots are enumerated and sorted because `ORDER BY l.id` is an
+order no seed can serve. Making it ∝ page means paging in an order the participation index CAN
+serve — (tender_id, lot id), with a compound opaque cursor for the org-seeded lots stream — which is
+a contract change for that one shape and wants its own decision. Not taken today; the numbers
+above are its input.
