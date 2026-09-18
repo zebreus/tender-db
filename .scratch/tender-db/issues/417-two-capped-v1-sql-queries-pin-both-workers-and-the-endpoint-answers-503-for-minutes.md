@@ -70,3 +70,17 @@ cure (`+` on the column that must not drive). The two queries that pinned the ru
 minutes were each a full pass over `notice_codes`. The docs row now says exactly that, and this
 issue stays open on its own clause: a capped computation should not hold a request worker.
 
+## Third event, 16:33 — the caller broke the rule it had just written
+
+With the runtime free again and the `+` cure in hand, a notices-driven shape (`notices n JOIN
+notice_codes c ON c.notice_id = n.id AND +c.field_id = 'TXT-NC' WHERE n.id BETWEEN 2000000 AND
+2001999`) was sent WITHOUT reading its plan locally first — on the assumption that a primary-key
+range on `notices` would drive it. `408` after 10 s; one worker pinned again for the length of
+whatever turso chose to do. Three capped computations in 45 minutes, all from one caller, all the
+same class: a join into `notice_codes` whose plan was assumed rather than read. The rule in
+`docs/agents/prod-box-reads.md` is therefore absolute now, not advisory: **no join-bridged read
+reaches `/v1/sql` without its `EXPLAIN QUERY PLAN` read on a scratch database in the same
+session, and the plan pasted into the write-up beside the numbers.** The census itself is closed —
+the codelist was settled from the committed fixtures before any of this — and the plan for the
+notices-driven shape will be read locally before it is ever sent again.
+
