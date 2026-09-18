@@ -157,3 +157,18 @@ Note on where this belongs: the judge's own read is that 343 does not *cover* th
 Also in scope by construction: the docs premise. `docs/research/ted-legacy-mapping.md:341` states the canonical Title is `OBJECT_CONTRACT/TITLE` (r209) / `TITLE_CONTRACT` (r208), and line 147 lists AWARD_CONTRACT's TITLE as a member of the award block (CONTRACT_NO, LOT_NO, TITLE) — so the expectation is the documented design, not a reviewer's preference. No test or fixture pins a RES-n title at tender scope (fixture `f03-000988-2019.xml` has an AWARD_CONTRACT without TITLE), so the current behaviour is an unpinned side effect.
 
 To close: either route result-section `TED-TITLE` to the LotResult's lot via `LOT_NO` (mirroring `read_legacy_results`) or drop result-section `TED-TITLE` from the `title` mapping as BT-721 already is, pin it with a fixture whose AWARD_CONTRACT title differs from and sorts before the PROCEDURE title (asserting list == detail == `current_title` == the procedure title), then refold the r208/r209 award carriers and re-probe 6751050/6751051.
+
+## Verify
+
+    curl -s https://tenders.zebreus.click/v1/tenders/6751050 | python3 -c "import sys,json; print(json.load(sys.stdin)['title'])"
+
+- **done**: `Marché public de fournitures relatif à …` — the PROCEDURE-scope II.1.1 title
+- **open**: `Acquisition d'autocars et leur entretien` — the RES-1 award-block contract title filed at tender scope (read 2026-09-18 at rev `c36de25`, unchanged)
+
+## Comment — 2026-09-18: re-read live, still open
+
+Tender 6751050 still serves `Acquisition d'autocars et leur entretien` (kind `procedure`, FRA). No
+fix has been built; the two closes the reopen names (route result-section `TED-TITLE` to the
+LotResult's lot via `LOT_NO`, or drop it from the `title` mapping as BT-721 already is) both end in
+an r209-wide refold, which is the same permission class the classifier refused for issue 393
+unit 2's run today — so the code half can be built any firing, and the refold waits with the others.

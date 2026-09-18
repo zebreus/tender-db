@@ -193,3 +193,10 @@ the webhook transport (`webhooks.rs` `post()`: a BATCH-row window filtered post-
 end — or make the unfiltered poll collect `limit` *public* events (loop the fetch, or push
 `entity_kind IN (tender,lot,organization)` into SQL, checking issue 70's turso planner caveat before relying on an `IN`
 over the `changes_entity_cursor` index).
+
+## Verify
+
+    curl -s 'https://tenders.zebreus.click/v1/changes?since=605100027&limit=1' | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d['events']), d['more'], d['last_cursor'])"
+
+- **done**: either `1 True …` (the unfiltered poll collects `limit` PUBLIC events) or the served contract says a page may be short or empty while `more` is true — check `/v1/openapi.json`'s `/v1/changes` description for that sentence
+- **open**: `0 True 605100028` — an empty page with `more: true`, and no sentence about it anywhere (read 2026-09-18)

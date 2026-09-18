@@ -1,6 +1,6 @@
 # 229 — the coverage grid divides each profile's held count by the WHOLE year, so a year served by two profiles reads as two gaps
 
-Status: REOPENED 2026-09-15 — incomplete fix: the fix landed on the per-year grid rows only, and the
+Status: **DONE 2026-09-18** — the REOPENED residual (the era summary dividing one profile's held by the whole years' published) was fixed by issue 400 on 2026-09-16 (`c40cccc`: `year_held` is the era numerator), which never wrote back here; read live today, the internal-ojs era line reads `26 955 held · 339 534 published † · 100.14 %` where this reopen quoted `7.94 %`, and eforms-sdk-1.5 reads `100.00 %` where it quoted `0.00 %`. Was: REOPENED 2026-09-15 — incomplete fix: the fix landed on the per-year grid rows only, and the
 collapsed era summary line still divides one profile's held count by the WHOLE-year denominators, so
 the 0.079 this issue was filed to remove is served on prod (rev `9e082fd`) as "7.94 %". See Comments.
 
@@ -138,3 +138,19 @@ compute the era figure from `year_held` for shared years plus `held` for sole ye
 denominators; then extend `a_shared_year_shows_the_years_coverage_not_a_profiles_share` to the era fold —
 the existing `coverage_folds_into_eras_newest_year_first` builds only sole-profile cells
 (`year_held: held`), which is why the era level was never exercised.
+
+## Verify
+
+    curl -s https://tenders.zebreus.click/ | python3 -c "import sys,re,html; t=html.unescape(re.sub(r'\s+',' ',re.sub(r'<[^>]+>',' ',sys.stdin.read()))); print(re.search(r'internal-ojs\s+[\d ]+held[^%]*%', t).group(0))"
+
+- **done**: `internal-ojs 26 955 held · 339 534 published † · 100.14 %` — the era summary divides the years' whole held by their published (read 2026-09-18)
+- **open**: `internal-ojs 26 955 held · 339 534 published · 7.94 %` — one profile's slice over the whole years
+
+## Comment — 2026-09-18: closed by the 412 sweep — fixed by issue 400, unrecorded here
+
+The reopen named `coverage_by_era` and the `7.94 %` headline. Issue 400 (filed from 396's carve-out
+the day after this reopen) rewrote exactly that fold — the era numerator became `year_held` for
+shared years — verified it live at `c40cccc`, and closed; it cites 229 only as the shape it mirrors,
+so this file kept saying REOPENED. Mechanism (a) of issue 412: fixed by adjacent work that never
+read the issue. Live today, all four era lines this reopen would flag read 100 %-class: internal-ojs
+100.14 %, eforms-sdk-1.5 100.00 %, text 100.34 %, ted-export-r208 100.00 %.
