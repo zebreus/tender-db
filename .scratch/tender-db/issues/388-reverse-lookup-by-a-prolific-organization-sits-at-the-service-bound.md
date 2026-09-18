@@ -1,6 +1,6 @@
 # 388 — a reverse lookup by a prolific bidder/winner org re-pays the org's whole participation set on every page: 2.3–4.7 s warm, 15–28 s cold, against a documented sub-25 ms contract
 
-Status: ready-for-agent — **the cursor is inside the seed: BUILT and gated 2026-09-18** (see the last comment): an organization-seeded lots read (`winner`/`bidder`) pages in `(tender, lot)` order off its covering index with a compound opaque cursor, so a page costs a page; DEPLOYED 2026-09-18 12:13 UTC at `c283dd8` and READ LIVE: `/v1/lots?bidder=357&limit=100` **0.62 s** (was 3.7 s warm / 20 s cold), `?winner=357` **0.89 s** (was 3.0 s), ten consecutive deep pages 0.52–0.75 s each, controls unmoved. The TENDERS half is BUILT and gated the same afternoon (see the last comment): `/v1/tenders?winner|bidder=` takes the same windowed walk with its bare-id cursor unchanged; its live numbers (`?bidder=357` 3.15 s before) are owed after the deploy. Unit 1 (the two covering indexes) LANDED 2026-09-16; the winners index was actually built on prod 2026-09-18 (job 1478). Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: **DONE 2026-09-18** — the cursor is inside the seed on both streams, DEPLOYED at `62b3ce5` 13:13 UTC and read live (closing matrix at the foot): `/v1/lots?bidder=357&limit=100` **0.71 s** (503 at 30 s when filed), `?winner=357` 0.55 s, `/v1/tenders?bidder=357` **0.90 s** (3.15 s this morning), `?winner=357` 0.74 s, a page of 1 / 100 / 1000 rows 0.42 / 0.71 / 0.92 s on lots — a page costs a page, not the org. Two clauses read honestly rather than met to the digit: `?bidder=355` 1.10 s against the 1 s line, and a deep tenders page 1.39 s warm against page 1's 0.88 s, both the satellites of the particular tenders (an unseeded page in that id region reads 0.63–0.96 s), not the walk. Was: ready-for-agent — unit 1 (the two covering indexes) LANDED 2026-09-16 and built on prod 2026-09-18 (job 1478); the seeded lots walk, the tenders half, and two same-day corrections (the head check and the window unit) landed 2026-09-18, see the comments. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (read layer — the participation reverse-lookup seed; performance and availability)
 Relates to: 223 (RESOLVED "every `winner=`/`bidder=` lookup is sub-25 ms" — that is the contract this
 breaks, and its residual section states the premise that fails here: "an org's row count is bounded by
@@ -453,4 +453,41 @@ afternoon:
 
 The lots walk gained both fixes too; its first-cut numbers above stood only because a page of
 100 lots spans a handful of org-357 tenders. Numbers after the second deploy below.
+
+## Verify
+
+    for u in 'lots?bidder=357&limit=100' 'tenders?bidder=357&limit=100'; do curl -s -o /tmp/v.json -w "$u %{http_code} %{time_total}s " --max-time 40 "https://tenders.zebreus.click/v1/$u"; python3 -c "import json; print(len(json.load(open('/tmp/v.json'))['items']))"; done
+
+- **done**: both `200`, both well under 3 s warm, both `100` — a page of the most prolific org costs a page
+- **open**: either over ~3 s, a `503`, or fewer than 100 items (read 2026-09-18 13:14 at `62b3ce5`: `200 0.71s 100` and `200 0.89s 100`)
+
+## Closing matrix — 2026-09-18 13:14 UTC, rev `62b3ce5`, warm, network-inclusive
+
+Three deploys today, each read live and corrected the same afternoon: `c283dd8` (the lots walk),
+`5be4c5c` (the tenders half — read at 12:31 with `?winner=357` at 3.4 s and pages of 26, the two
+defects above), `2083c63` (the head check seeks per candidate; the window is in tenders),
+`4c93965` (the window budget follows the page), `62b3ce5` (the window itself follows the page; the
+plan probe builds from the index recipe).
+
+**A page costs a page.** `limit` 1 / 100 / 1000: lots `?bidder=357` **0.42 / 0.71 / 0.92 s**;
+tenders `?bidder=357` **0.42 / 0.89 / 3.18 s** (the 1000-row tenders page is 1000 tenders'
+satellites, 558 kB; the unseeded `?limit=1000` is 0.96 s over CONTIGUOUS ids 1–1029, the seeded one
+spans ids 1,724–823,196). A one-row page reads a four-tender window now; at the fixed 64-tender
+window it cost 0.92 s, more than a hundred rows.
+
+**The `## Done when` reads, clause by clause:**
+
+| clause | reading |
+| --- | --- |
+| covering indexes exist, built, index-only plans | unit 1 + job 1478 (2026-09-18); `the_seed_window_is_an_index_range_read_in_tender_order` pins `SEARCH … USING INDEX …_org_tender (organization_id=? AND tender_id>?)`, no scan, no sorter, for both tables and both bounds — and the fixture builds its indexes through `Db::build_tender_indexes`, the recipe itself |
+| cursor inside the seed; `limit=1` cheaper than `limit=1000`; the deep page no dearer than page 1 | 0.42 s vs 0.92 s (lots), 0.42 s vs 3.18 s (tenders). Deep page: `?bidder=357&cursor=859213` **1.39 s warm** (4.5 s cold) against page 1's 0.88 s, alternated three times. The walk is not the difference — the four-candidate head check at that cursor reads 13 ms on the box, the grouped window 37–59 ms with 1.35M of the org's rows past it (a scan would be ≥109 ms, the `COUNT`); the difference is the SATELLITES of those particular hundred tenders (an unseeded hundred in the same id region: 0.63 s, contiguous). Read as: the org-dependent cost is gone, the tender-dependent cost is every page's |
+| the five reads under 1 s warm at `limit=100`, cold first under 3 s | `?bidder=357` **0.90**, `?winner=357` **0.74**, `?bidder=355` **1.10**, `?winner=355` **0.80**, `/v1/lots?bidder=357` **0.71 s**. Four of five; the fifth at the line, and its unseeded twin costs 0.9–1.0 s. Cold first reads after each deploy today: 0.73–0.89 s |
+| controls unmoved; `winner=357&limit=1000` byte-identical | `bidder=23494787` 0.44 s (≤0.42), `bidder=28` 0.43 s (≤0.43), `buyer=28&limit=1000` 0.50 s (≤0.89). The 1000-row page is **557,774 B** against 556,138 B on 09-13 — five daily ingests apart, so identity cannot be asserted; what was checked instead: its 1000 ids are strictly increasing and unique, and on the first hundred the served set EQUALS the org's index superset up to the cursor (100 = 100, `/v1/sql`), while `current_seq = MAX(seq)` on every tender in that range (drift 0 of 75,810) |
+| a gate pins the class | the plan probe over the recipe-built fixture, above |
+| 223's status line and `participation_seed`'s comment corrected | 223 closed on today's numbers; the comment now says what the seeds bound (the org's ROWS — 3.26M bid rows, 3.55M win rows for org 357 — not its tenders) and that the pages walk instead |
+
+**What still reads the seed whole.** The SSE snapshot for an org-seeded subscription
+(`read_items`, id order) — one pass per subscription rather than per page, and filed as its own
+issue (416) rather than folded in here. The `buyer` seed is untouched on both streams (0.5 s on
+the controls; its index serves no order).
 
