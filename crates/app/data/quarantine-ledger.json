@@ -373,5 +373,14 @@
   "diagnosis": "The integer-cents policy refused any amount with more than two fraction digits, and that held the last FED quarantine bucket: 3,249 members of publisher mills (555.242), float-serialization artifacts (893513.4400000001) and deep trailing zeros, plus 1,574 pre-fix OPT-999 zoneless dates the issue-195 exception had already made parseable. cents() now rounds half-away-from-zero to the cent (error <= half a cent; the archived member stays byte-faithful, the canonical layer is a projection). Reprocess job 308 reclaimed 4,898 of 5,196; the 298 still held are the genuine garbage class (10^50-magnitude integers, e.g. BT-113 with fifty zeros) and hold by design.",
   "fix": "issue 268",
   "resolved": "2026-08-22"
+ },
+ {
+  "category": "eForms legacy boolean CVD block (listName=indicator)",
+  "reason": "unclaimed-content",
+  "profile": "eforms:eforms-sdk-1.13",
+  "detail_like": "%StrategicProcurement/%ApplicableLegalBasis",
+  "diagnosis": "Two sdk-1.13 CANs from the 2025-06 OJ S backfill (issue 402; S 2025/112 and 2025/120, first seen 2026-09-15) publish efbc:ApplicableLegalBasis with listName=indicator - BT-717's pre-1.8 TYPE name in the attribute slot - saying false, beside a cvd-contract-type category default; one also publishes the conformant cvd-scope block (true) in the same lot. The SDK defines the leaf only under cvd-scope/ipi-scope/eed-scope, and the alias-grafted LotResult branch that matched the block on its category code has no ApplicableLegalBasis child, so the leaf held each notice whole and the terminal ledger (Fixed(0) for a drained class) lit. Explicit ignore (index::IGNORED) of the indicator/false block only: its false says what its absence says, and a legacy block saying true keeps quarantining until one is seen. The fold reads neither BT-717 nor BT-735, so the canonical layer is unchanged either way. Resolved when the two rows are reprocessed.",
+  "fix": "issue 413",
+  "resolved": null
  }
 ]

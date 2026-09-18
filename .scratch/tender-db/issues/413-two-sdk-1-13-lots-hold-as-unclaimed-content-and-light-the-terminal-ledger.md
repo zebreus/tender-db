@@ -54,6 +54,56 @@ photograph", one level down.
     curl -s https://tenders.zebreus.click/metrics | grep -E 'unclaimed-content|terminal_exceeded'
     curl -s https://tenders.zebreus.click/api/dashboard | python3 -c "import sys,json; print([r['member_path'] for r in json.load(sys.stdin)['quarantine']['recent'] if r['reason']=='unclaimed-content'])"
 
+## Read off the members 2026-09-18 — NOT a Part-scheme lot; a legacy `listName="indicator"` block
+
+Both members were read out of the archive (`/data/archive/ted/monthly/2025-06.tar` →
+`06/20250613_2025112.tar.gz` and `06/20250626_2025120.tar.gz`, one member each, a bounded read) and
+run through `cargo run -p ingest --example diag139`, which reproduces the hold exactly.
+
+**The hypothesis above was wrong.** Both notices are Norwegian sdk-1.13 CANs (`can-social` 00381774-2025,
+`can-standard` 00412845-2025) with ONE lot each, `LOT-0000`, `schemeName="Lot"` — the block sits at the
+canonical anchor, predicate and all. What differs is the leaf's attribute:
+
+```
+<efac:StrategicProcurement>
+  <efbc:ApplicableLegalBasis listName="indicator">false</efbc:ApplicableLegalBasis>
+  <efac:StrategicProcurementInformation>
+    <efbc:ProcurementCategoryCode listName="cvd-contract-type">oth-serv-contr</efbc:ProcurementCategoryCode>
+  </efac:StrategicProcurementInformation>
+</efac:StrategicProcurement>
+```
+
+Every SDK defines `efbc:ApplicableLegalBasis` only under a `@listName` it enumerates — sdk-1.13's
+`fields-1.13.0.json` has BT-717-Lot at `StrategicProcurement[efbc:ApplicableLegalBasis/@listName='cvd-scope']`,
+BT-684-Lot at `…='ipi-scope'`, BT-810-Lot at `…='eed-scope'`. `indicator` is none of these: it is the field's
+pre-1.8 TYPE name (BT-717 was a boolean `indicator` before it became a `cvd-scope` code), leaked into the
+attribute slot by an eSender template. 00412845-2025 publishes the block TWICE in the one lot — the legacy
+`indicator`/`false` block and the conformant `cvd-scope`/`true` one — which is what makes the legacy block a
+template artefact rather than a second answer.
+
+**Why the hold names the leaf and not the block.** The walker's relaxed claim (known element, unlisted
+discriminator) never engaged: the block matches the alias-grafted LotResult branch EXACTLY on its
+`efac:StrategicProcurementInformation/efbc:ProcurementCategoryCode/@listName='cvd-contract-type'` predicate
+(`index::ALIASES`, the issue-195 LotResult→Lot graft), so `relaxed = false` and the only selected branch is
+that one — which has no `efbc:ApplicableLegalBasis` child, because BT-717 lives under the cvd-scope-predicated
+branch. So the leaf is `unclaimed element`, exactly as reported.
+
+**Disposition: explicit ignore, narrowly.** `index::IGNORED` gains
+`…/efac:StrategicProcurement[efbc:ApplicableLegalBasis/@listName='indicator'][efbc:ApplicableLegalBasis/text()='false']`
+— the legacy block saying `false` is claimed whole and carries nothing: its `false` says what the block's absence
+says, and its category-code default goes with it. A legacy block saying `true` is deliberately NOT covered — that
+would be a real claim, and it keeps quarantining loudly until one is seen and decided. Mapping was considered and
+declined: grafting `indicator` onto `cvd-scope` would give 00412845's lot two BT-717 values (`false` from the
+template, `true` from the SDK block). The fold reads neither BT-717 nor BT-735 (no reference outside
+`eforms/index.rs`), so the canonical layer is unchanged either way.
+
+Fixtures (byte-identical): `eforms/can-cvd-legacy-00412845-2025.xml` (both shapes) and
+`eforms/can-cvd-legacy-00381774-2025.xml` (legacy only). Test
+`a_legacy_false_cvd_block_is_ignored_and_the_conformant_one_beside_it_still_claims`: the first parses with exactly
+one BT-717-Lot (`true`, list `cvd-scope`) and nothing under list `indicator`; the second parses with no
+BT-717/BT-735 value at all. Ledger: a new `unclaimed-content` entry for profile `eforms:eforms-sdk-1.13`,
+`detail_like %StrategicProcurement/%ApplicableLegalBasis`, `resolved: null` until the two rows are reprocessed.
+
 ## Verify
 
     curl -s https://tenders.zebreus.click/metrics | grep -E '^tender_db_quarantine_(reason_members\{reason="unclaimed-content"\}|terminal_exceeded) '

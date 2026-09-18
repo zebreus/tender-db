@@ -38,10 +38,29 @@ pub struct FieldInfo {
 /// Elements published TED notices carry that the SDK's own inventory does not
 /// describe. ADR-0004 forbids a lenient default, so each one is an explicit,
 /// reasoned rule; the subtree below an ignored element is claimed whole.
-pub const IGNORED: &[(&str, &str)] = &[(
-    "/*/cbc:ProfileID",
-    "UBL profile marker restating cbc:CustomizationID (OPT-002-notice); no field id in any SDK version",
-)];
+pub const IGNORED: &[(&str, &str)] = &[
+    (
+        "/*/cbc:ProfileID",
+        "UBL profile marker restating cbc:CustomizationID (OPT-002-notice); no field id in any SDK version",
+    ),
+    // Issue 413: an eSender template's LEGACY CVD block. Every SDK defines
+    // `efbc:ApplicableLegalBasis` only under a `@listName` it enumerates
+    // (cvd-scope, ipi-scope, eed-scope); two sdk-1.13 CANs (OJ S 2025/112 and
+    // 2025/120) publish it with `listName="indicator"` — BT-717's pre-1.8 TYPE
+    // name in the attribute slot — saying `false`, beside a category-code
+    // default. The block still matches the alias-grafted LotResult branch on
+    // its `cvd-contract-type` code, and that branch has no ApplicableLegalBasis
+    // child, so the leaf held the notice whole. One of the two also publishes
+    // the conformant cvd-scope block (`true`) in the same lot: the legacy block
+    // is a template artefact, not a second answer, and its `false` says what
+    // its absence says — claimed whole, carrying nothing. A legacy block saying
+    // `true` is deliberately NOT covered: that would be a real claim, and it
+    // keeps quarantining loudly until one is seen and decided.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:StrategicProcurement[efbc:ApplicableLegalBasis/@listName='indicator'][efbc:ApplicableLegalBasis/text()='false']",
+        "legacy boolean CVD block — BT-717's pre-1.8 type name `indicator` in the listName slot, saying false (issue 413)",
+    ),
+];
 
 /// Content-bearing elements published TED notices carry that the SDK's field
 /// inventory does not describe at all — UBL elements the eForms schema permits

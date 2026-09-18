@@ -1568,6 +1568,44 @@ fn doe_sdk10_serializer_quirks_are_consumed() {
     assert!(!tr.values.is_empty(), "the tender-recipient notice parses to fields");
 }
 
+/// Issue 413: an eSender's LEGACY CVD block — `efbc:ApplicableLegalBasis` with
+/// `listName="indicator"` (BT-717's pre-1.8 TYPE name in the attribute slot)
+/// saying `false`. No SDK predicate admits it, and the alias-grafted LotResult
+/// branch that DOES match the block (on its `cvd-contract-type` category code)
+/// has no ApplicableLegalBasis child, so the leaf held both notices whole and
+/// lit the terminal ledger. The `indicator`/`false` block is an explicit ignore
+/// (`index::IGNORED`): it carries what its absence carries.
+#[test]
+fn a_legacy_false_cvd_block_is_ignored_and_the_conformant_one_beside_it_still_claims() {
+    // NO CAN (sdk-1.13, OJ S 2025/120): BOTH shapes in the one lot — the legacy
+    // `indicator`/`false` block and the conformant `cvd-scope`/`true` one. The
+    // conformant block is the lot's answer; the legacy one contributes nothing.
+    let both = parse_fixture("eforms/can-cvd-legacy-00412845-2025.xml");
+    let basis: Vec<_> = both.values.iter().filter(|v| v.field_id == "BT-717-Lot").collect();
+    assert_eq!(basis.len(), 1, "one CVD legal-basis value, from the conformant block: {basis:?}");
+    assert!(
+        matches!(&basis[0].value, NoticeValue::Code { code, list, .. } if code == "true" && list.as_deref() == Some("cvd-scope")),
+        "the conformant block's value stands: {:?}",
+        basis[0].value
+    );
+    assert!(
+        !both.values.iter().any(|v| matches!(&v.value, NoticeValue::Code { list, .. } if list.as_deref() == Some("indicator"))),
+        "nothing is claimed under the leaked type name"
+    );
+
+    // The other member (can-social, OJ S 2025/112): the legacy block ALONE. It
+    // parses, and the lot carries no CVD value at all — the block's `false` is
+    // what its absence says, and its category-code default goes with it.
+    let only = parse_fixture("eforms/can-cvd-legacy-00381774-2025.xml");
+    for field in ["BT-717-Lot", "BT-735-Lot", "BT-735-LotResult"] {
+        assert!(
+            !only.values.iter().any(|v| v.field_id == field),
+            "{field} is not claimed from a legacy-only block"
+        );
+    }
+    assert!(!only.values.is_empty(), "the rest of the notice is claimed as usual");
+}
+
 /// Issue 195: publishers mount SDK subtrees at sibling positions the inventory
 /// does not enumerate — the Clean Vehicles Directive statistics block
 /// forward-looking on a *Lot* (the SDK anchors `efac:ProcurementDetails` only
