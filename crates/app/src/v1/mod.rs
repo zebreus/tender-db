@@ -1028,7 +1028,7 @@ pub async fn read_page(
             filter,
             start,
             limit,
-            read::DEFAULT_SEED_WINDOW,
+            read::seed_window(limit),
             read::seed_windows(limit),
         )
         .await?;

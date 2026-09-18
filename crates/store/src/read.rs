@@ -1017,7 +1017,13 @@ fn version_predicates(
 /// role clause mirrors the EXISTS's own `%Buyer%` match, so the superset property
 /// is preserved exactly; `tender_version_parties_org_role (organization_id, role,
 /// tender_id)` serves the narrowed seed index-only. `winner`/`bidder` seeds need
-/// no extra clause — their tables are participation-bounded already.
+/// no extra clause — their tables hold only participants, so the org's slice IS
+/// its participation. What that bounds is the org's ROWS, not its tenders: org
+/// 357 holds 3.55M winner rows (one per lot result per version) over 3,734
+/// tenders, and DISTINCTing that slice per page was 1.25–3.4 s a page (issue
+/// 388). The seeded lots and tenders PAGES therefore walk the `(organization_id,
+/// tender_id)` index in windows of tenders (`lots_seeded_page`,
+/// `tenders_seeded_page`) and only the SSE snapshot still reads this seed whole.
 fn participation_seed(f: &Filter) -> Option<(&'static str, &'static str, i64)> {
     if let Some(org) = f.winner {
         Some(("tender_version_result_winners", "", org))
@@ -2037,7 +2043,7 @@ pub async fn tenders_page(
     // order, one window per step, instead of DISTINCTing the org's whole slice
     // per page. Tenders already page by id, so the cursor is unchanged.
     if seeded_tenders(filter) {
-        return tenders_seeded_page(conn, filter, after, limit, DEFAULT_SEED_WINDOW, seed_windows(limit)).await;
+        return tenders_seeded_page(conn, filter, after, limit, seed_window(limit), seed_windows(limit)).await;
     }
     if !reachable(conn, filter, Collection::Tenders).await? {
         return Ok(Banded { rows: Vec::new(), examined_to: None });
@@ -3069,10 +3075,21 @@ pub const DEFAULT_SEED_WINDOW: i64 = 64;
 /// prod 2026-09-18 12:47).
 pub const DEFAULT_SEED_WINDOWS_PER_PAGE: usize = 8;
 
+/// The window for a page of `limit` rows: the page size itself, between a floor
+/// of four tenders and [`DEFAULT_SEED_WINDOW`]. A page's cost is a window's —
+/// the window's tenders' lots are what the lots walk enumerates and sorts, and
+/// its members are what the tenders walk decorates — so a one-row page reads a
+/// four-tender window, not a sixty-four-tender one: `/v1/lots?bidder=357&limit=1`
+/// cost 0.92 s at the fixed window against 0.74 s for a hundred rows (prod
+/// 2026-09-18 13:02), which is the opposite of what a page size is for.
+pub fn seed_window(limit: i64) -> i64 {
+    limit.clamp(4, DEFAULT_SEED_WINDOW)
+}
+
 /// Windows a page of `limit` rows may read: the floor, or enough windows to fill
 /// the page from a seed that admits every tender, plus one for the row past it.
 pub fn seed_windows(limit: i64) -> usize {
-    DEFAULT_SEED_WINDOWS_PER_PAGE.max((limit.max(1) / DEFAULT_SEED_WINDOW) as usize + 2)
+    DEFAULT_SEED_WINDOWS_PER_PAGE.max((limit.max(1) / seed_window(limit)) as usize + 2)
 }
 
 /// Does this lots read take the seeded walk? The two org seeds whose covering

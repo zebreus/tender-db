@@ -11,14 +11,20 @@
 use store::read::{self, Filter, LotCursor, Scope};
 use store::turso::{self, Value};
 
-/// The schema through the store, then a raw connection for seeding and reading —
-/// the pattern the neighbouring read-path suites use.
+/// The schema through the store — with the deferred tender indexes built from
+/// the store's OWN recipe (`Db::build_tender_indexes`, the 225/111 list), so the
+/// plan probe below fails the day either covering index leaves that list — then
+/// a raw connection for seeding and reading, the pattern the neighbouring
+/// read-path suites use.
 async fn scratch(name: &str) -> (turso::Connection, String) {
     let path = format!("/tmp/tender-db-{name}-{}.db", std::process::id());
     for suffix in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{suffix}"));
     }
-    store::Db::open(&path).await.unwrap();
+    {
+        let db = store::Db::open(&path).await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+    }
     let db = turso::Builder::new_local(&path).build().await.unwrap();
     (db.connect().unwrap(), path)
 }
@@ -137,16 +143,6 @@ async fn seed(conn: &turso::Connection) {
         .await
         .unwrap();
     }
-    // The deferred covering indexes the walk's order comes from (the 225 recipe,
-    // built by the issue-111 builder on prod; created here by hand).
-    for (name, on) in [
-        ("tender_version_result_winners_org_tender", "tender_version_result_winners(organization_id, tender_id)"),
-        ("tender_version_bid_parties_org_tender", "tender_version_bid_parties(organization_id, tender_id)"),
-        ("tender_version_result_winners_org", "tender_version_result_winners(organization_id)"),
-        ("tender_version_bid_parties_org", "tender_version_bid_parties(organization_id)"),
-    ] {
-        conn.execute(&format!("CREATE INDEX IF NOT EXISTS {name} ON {on}"), ()).await.unwrap();
-    }
 }
 
 /// Walk the seeded page to the end, returning every page's `(tender, lot)` pairs
@@ -264,9 +260,16 @@ async fn the_seeded_walk_returns_the_stream_set_in_tender_order_once_and_termina
 /// enough windows to fill a big page from a seed that admits every tender.
 #[test]
 fn the_window_budget_can_fill_the_page_it_is_asked_for() {
-    assert_eq!(read::seed_windows(1), read::DEFAULT_SEED_WINDOWS_PER_PAGE);
-    assert_eq!(read::seed_windows(100), read::DEFAULT_SEED_WINDOWS_PER_PAGE);
-    assert!(read::seed_windows(1001) as i64 * read::DEFAULT_SEED_WINDOW > 1001, "a limit=1000 page can fill");
+    // The window follows the page size between its floor and its ceiling…
+    assert_eq!(read::seed_window(1), 4);
+    assert_eq!(read::seed_window(10), 10);
+    assert_eq!(read::seed_window(100), read::DEFAULT_SEED_WINDOW);
+    assert_eq!(read::seed_window(1000), read::DEFAULT_SEED_WINDOW);
+    // …and the budget is the floor, or enough windows to fill the page, at every size.
+    for limit in [1, 4, 10, 100, 101, 1000] {
+        assert!(read::seed_windows(limit) >= read::DEFAULT_SEED_WINDOWS_PER_PAGE);
+        assert!(read::seed_windows(limit) as i64 * read::seed_window(limit) > limit, "a limit={limit} page can fill");
+    }
 }
 
 /// The cursor grammar: round-trips, and is not the bare-id grammar.
