@@ -40,6 +40,7 @@ use crate::fetch::{civil_date, days_from_civil, Target};
 use serde_json::value::RawValue;
 use std::collections::HashMap;
 
+pub mod checklist;
 pub mod parse;
 pub use parse::parse_payload;
 

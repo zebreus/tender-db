@@ -337,3 +337,70 @@ async fn releases_under_one_ocid_from_two_buyers_fold_to_two_tenders_and_a_one_b
 
     let _ = std::fs::remove_dir_all(&archive);
 }
+
+/// Issue 386 unit 2b: ADR-0004's mapped-or-ignored checklist for `fts:ocds-1.1`,
+/// pinned against the corpus. Every path a fixture release publishes — the
+/// recorded pages and the cut members, the shapes this crosswalk was written
+/// from — must have a disposition in `fts::checklist`: MAPPED to a field id, or
+/// IGNORED with its reason. A path with neither is the silent drop this
+/// checklist exists to make loud: `serde` skips unknown keys without a trace,
+/// and that is how every FTS contract served `value: null` against a published
+/// figure until a consumer noticed.
+#[test]
+fn every_published_fts_path_is_mapped_or_ignored_on_record() {
+    use ingest::fts::checklist::{disposition, Disposition};
+    use std::collections::BTreeMap;
+
+    fn walk(v: &serde_json::Value, prefix: &str, paths: &mut BTreeMap<String, usize>) {
+        match v {
+            serde_json::Value::Object(map) => {
+                for (k, x) in map {
+                    let p = if prefix.is_empty() { k.clone() } else { format!("{prefix}.{k}") };
+                    *paths.entry(p.clone()).or_default() += 1;
+                    walk(x, &p, paths);
+                }
+            }
+            serde_json::Value::Array(items) => {
+                let p = format!("{prefix}[]");
+                for x in items {
+                    walk(x, &p, paths);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    let root = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/fts");
+    let mut paths: BTreeMap<String, usize> = BTreeMap::new();
+    let mut releases = 0;
+    for dir in ["pages", "members"] {
+        for entry in std::fs::read_dir(format!("{root}/{dir}")).expect("fixture dir") {
+            let path = entry.expect("entry").path();
+            if path.extension().and_then(|e| e.to_str()) != Some("json") {
+                continue;
+            }
+            let bytes = std::fs::read(&path).expect("read fixture");
+            // The unrepresentable-number member is not JSON a lenient parser accepts;
+            // the walk needs values, so a member serde refuses is skipped here (its
+            // paths are the same as its siblings').
+            let Ok(doc) = serde_json::from_slice::<serde_json::Value>(&bytes) else { continue };
+            for r in doc["releases"].as_array().into_iter().flatten() {
+                releases += 1;
+                walk(r, "", &mut paths);
+            }
+        }
+    }
+    assert!(releases >= 5, "the fixtures hold releases: {releases}");
+    assert!(paths.len() >= 150, "the census sees the publisher's shape: {} paths", paths.len());
+
+    let undecided: Vec<&String> = paths.keys().filter(|p| disposition(p).is_none()).collect();
+    assert!(
+        undecided.is_empty(),
+        "these published paths have no disposition in fts::checklist — map them or ignore them on record:\n  {}",
+        undecided.iter().map(|s| s.as_str()).collect::<Vec<_>>().join("\n  ")
+    );
+    // And the inventory is not vacuous: the value that issue 386 found dropped is on it, mapped.
+    assert!(matches!(disposition("contracts[].value.amount"), Some(Disposition::Mapped(_))));
+    let owed = paths.keys().filter(|p| matches!(disposition(p), Some(Disposition::Ignored(r)) if r.starts_with("owed"))).count();
+    eprintln!("fts checklist: {} published paths over {releases} releases, {owed} ignored-as-owed", paths.len());
+}
