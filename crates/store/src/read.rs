@@ -1946,6 +1946,93 @@ async fn with_country_seed(conn: &Connection, filter: &Filter) -> turso::Result<
 }
 
 /// The identity half of [`tenders`], built but not run.
+/// Issue 408, option (b): how many ids an isolated, unseeded id-ordered walk
+/// examines per page. A sparse value — a retired NUTS spelling above the seed cap,
+/// a `kind`/`source`/`currency` with fewer rows than a page — used to walk the
+/// whole PK (8.5M ids, 30 s, then the 503) to fill or to prove it could not; now it
+/// examines one band, returns what the band held, and hands back the band's end as
+/// the cursor. Measured on prod, the unbounded GR walk crossed ~280k ids/s, so a
+/// band of this size is ~2 s per page in the worst case and one page for any dense
+/// value (which fills before the band ends). Production keeps the default;
+/// `AppState.fallback_band` carries it so tests can shrink it to a handful of ids.
+pub const DEFAULT_FALLBACK_BAND: i64 = 500_000;
+
+/// A page from a read that MAY have been bounded (issue 408 (b)). `examined_to` is
+/// `Some(id)` when the walk stopped at a band end short of the table's last id with
+/// the page not yet full — every id up to and including it has been examined, so a
+/// caller resumes from it, never from the last row RETURNED (which would re-walk the
+/// band and could loop for ever on a value with no rows in it). `None` means the
+/// page is complete in the ordinary sense: full, or the walk reached the end.
+#[derive(Debug)]
+pub struct Banded<T> {
+    pub rows: Vec<T>,
+    pub examined_to: Option<i64>,
+}
+
+/// Does THIS read's fallback walk get bounded? Exactly the isolated reads that no
+/// seed drives: a publication seed, an org participation seed and an armed country
+/// seed all bound the walk by the seed's own rows, and a lot containment read is
+/// one tender's slice. Everything else that `walks()` is a PK walk with per-row
+/// `EXISTS` predicates — the shape a sparse value turns into a corpus pass.
+fn bounded_walk(collection: Collection, filter: &Filter) -> bool {
+    walks(collection, filter)
+        && filter.publication_id.is_none()
+        && participation_seed(filter).is_none()
+        && !filter.country_seed
+        && (!matches!(collection, Collection::Lots) || filter.tender.is_none())
+}
+
+/// The table's last id — a PK seek, never a scan — so a band end can be told from
+/// the end of the table.
+async fn max_id(conn: &Connection, table: &str) -> turso::Result<i64> {
+    let mut rows = conn.query(&format!("SELECT id FROM {table} ORDER BY id DESC LIMIT 1"), ()).await?;
+    Ok(match rows.next().await? {
+        Some(row) => int(&row, 0),
+        None => 0,
+    })
+}
+
+/// The cursor a bounded page hands back: the band's end when the page is not full
+/// and the band stopped short of the table's last id; `None` otherwise. Read only
+/// when it can matter, so a full page never pays the seek.
+async fn examined_to(
+    conn: &Connection,
+    table: &str,
+    band_end: Option<i64>,
+    got: i64,
+    limit: i64,
+) -> turso::Result<Option<i64>> {
+    let Some(end) = band_end else { return Ok(None) };
+    if got >= limit {
+        return Ok(None);
+    }
+    Ok((end < max_id(conn, table).await?).then_some(end))
+}
+
+/// The REST list's id-ordered Tender page with the fallback walk BOUNDED (issue
+/// 408 (b)). Same guard, same seed decision and same predicates as [`tenders`],
+/// plus one id band on the unseeded isolated shape; [`tenders`] itself stays
+/// unbounded because the SSE snapshot reads a short page as the end of the
+/// snapshot, and a bounded short page is not that.
+pub async fn tenders_page(
+    conn: &Connection,
+    filter: &Filter,
+    after: i64,
+    limit: i64,
+    band: i64,
+) -> turso::Result<Banded<TenderRow>> {
+    if !reachable(conn, filter, Collection::Tenders).await? {
+        return Ok(Banded { rows: Vec::new(), examined_to: None });
+    }
+    let filter = &with_country_seed(conn, filter).await?;
+    let band_end = bounded_walk(Collection::Tenders, filter).then(|| after.saturating_add(band.max(1)));
+    let q = tenders_page_query(filter, Scope::Page { after, limit }, band_end);
+    let mut rows = q.rows(conn, tender_row).await?;
+    retain_publication_companions(&mut rows, filter);
+    let examined_to = examined_to(conn, "tenders", band_end, rows.len() as i64, limit).await?;
+    Ok(Banded { rows, examined_to })
+}
+
 fn tenders_query(filter: &Filter, scope: Scope) -> Query {
     // The paged shape wraps like the ordered list (issue 273 step 1b): an
     // ids-only inner query walks/seeks with the predicates and LIMIT, and the
@@ -1955,7 +2042,7 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
     // and sort the ids, instead of walking the PK testing the range per row.
     // `Scope::At` stays inline: one row by primary key, nothing to bound.
     if matches!(scope, Scope::Page { .. }) {
-        return tenders_page_query(filter, scope);
+        return tenders_page_query(filter, scope, None);
     }
     let mut q = Query::default();
     // issue 223: an org reverse-lookup (winner/buyer/bidder) drives from the
@@ -2013,7 +2100,7 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
 /// The `Scope::Page` half of [`tenders_query`], wrapped: predicates and the id
 /// cursor bound an ids-only window; `tender_select_head` joins the page by
 /// primary key, so WHAT a row is still comes from the one shared string.
-fn tenders_page_query(filter: &Filter, scope: Scope) -> Query {
+fn tenders_page_query(filter: &Filter, scope: Scope, band_end: Option<i64>) -> Query {
     let Scope::Page { after, limit } = scope else { unreachable!("guarded by the caller") };
     let mut inner = Query::default();
     let (from, seed_param) = tender_from(filter);
@@ -2049,10 +2136,19 @@ fn tenders_page_query(filter: &Filter, scope: Scope) -> Query {
         }
     }
     version_predicates(&mut inner, filter, "t.id", "v.seq", Some("t.current_deadline"), "t.current_value_eur_cents");
-    inner.push(
-        " AND t.id > ? ORDER BY t.id LIMIT ?",
-        [Value::Integer(after), Value::Integer(limit)],
-    );
+    match band_end {
+        // Issue 408 (b): a bounded fallback walk examines one id band per page. The
+        // band is a second PK bound beside the cursor, so the walk it limits is the
+        // same walk, just told where to stop.
+        Some(end) => inner.push(
+            " AND t.id > ? AND t.id <= ? ORDER BY t.id LIMIT ?",
+            [Value::Integer(after), Value::Integer(end), Value::Integer(limit)],
+        ),
+        None => inner.push(
+            " AND t.id > ? ORDER BY t.id LIMIT ?",
+            [Value::Integer(after), Value::Integer(limit)],
+        ),
+    }
 
     let mut q = Query::default();
     q.push(
@@ -2444,19 +2540,51 @@ pub async fn lots_identity(
     } else {
         filter
     };
-    lots_query(filter, scope)
-        .rows(conn, |row| LotRow {
-            id: int(row, 0),
-            tender_id: int(row, 1),
-            lot_key: text(row, 2),
-            kind: text(row, 3),
-            seq: int(row, 4),
-            title: None,
-            value_cents: None,
-            currency: None,
-            deadline: None,
-        })
-        .await
+    lots_query(filter, scope).rows(conn, lot_identity_row).await
+}
+
+/// One identity-only lot row off the stream's column order.
+fn lot_identity_row(row: &turso::Row) -> LotRow {
+    LotRow {
+        id: int(row, 0),
+        tender_id: int(row, 1),
+        lot_key: text(row, 2),
+        kind: text(row, 3),
+        seq: int(row, 4),
+        title: None,
+        value_cents: None,
+        currency: None,
+        deadline: None,
+    }
+}
+
+/// The REST list's id-ordered Lot page with the fallback walk BOUNDED (issue 408
+/// (b)) — [`lots`] plus one id band on the unseeded isolated shape; see
+/// [`tenders_page`] for why the unbounded read stays.
+pub async fn lots_page(
+    conn: &Connection,
+    filter: &Filter,
+    after: i64,
+    limit: i64,
+    band: i64,
+) -> turso::Result<Banded<LotRow>> {
+    if !reachable(conn, filter, Collection::Lots).await? {
+        return Ok(Banded { rows: Vec::new(), examined_to: None });
+    }
+    let seeded;
+    let filter = if filter.tender.is_none() {
+        seeded = with_country_seed(conn, filter).await?;
+        &seeded
+    } else {
+        filter
+    };
+    let band_end = bounded_walk(Collection::Lots, filter).then(|| after.saturating_add(band.max(1)));
+    let mut rows = lots_query_banded(filter, Scope::Page { after, limit }, band_end)
+        .rows(conn, lot_identity_row)
+        .await?;
+    summarise(conn, &mut rows, filter.lang.as_deref()).await?;
+    let examined_to = examined_to(conn, "lots", band_end, rows.len() as i64, limit).await?;
+    Ok(Banded { rows, examined_to })
 }
 
 /// The PREVIOUS stream shape, kept so the equivalence test can compare the shipped
@@ -2711,6 +2839,11 @@ fn lot_seed_predicates(q: &mut Query, filter: &Filter) {
 }
 
 fn lots_query(filter: &Filter, scope: Scope) -> Query {
+    lots_query_banded(filter, scope, None)
+}
+
+/// [`lots_query`] with the issue-408 (b) band on its page arm.
+fn lots_query_banded(filter: &Filter, scope: Scope, band_end: Option<i64>) -> Query {
     let scoped = match scope {
         Scope::Page { .. } => filter.tender,
         Scope::At { .. } => None,
@@ -2766,12 +2899,17 @@ fn lots_query(filter: &Filter, scope: Scope) -> Query {
     }
     version_predicates(&mut q, &predicates, "l.tender_id", SEQ, None,
         "(SELECT tt.current_value_eur_cents FROM tenders tt WHERE tt.id = l.tender_id)");
-    match scope {
-        Scope::Page { after, limit } => q.push(
+    match (scope, band_end) {
+        // Issue 408 (b): see `tenders_page_query` — one id band per page.
+        (Scope::Page { after, limit }, Some(end)) => q.push(
+            " AND l.id > ? AND l.id <= ? ORDER BY l.id LIMIT ?",
+            [Value::Integer(after), Value::Integer(end), Value::Integer(limit)],
+        ),
+        (Scope::Page { after, limit }, None) => q.push(
             " AND l.id > ? ORDER BY l.id LIMIT ?",
             [Value::Integer(after), Value::Integer(limit)],
         ),
-        Scope::At { id, .. } => q.push(" AND l.id = ?", [Value::Integer(id)]),
+        (Scope::At { id, .. }, _) => q.push(" AND l.id = ?", [Value::Integer(id)]),
     }
     q
 }

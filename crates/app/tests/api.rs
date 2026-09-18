@@ -54,12 +54,14 @@ impl Server {
     /// test can ingest *while the server is serving it* — same file, same
     /// writer, same doorbell, which is exactly the production arrangement.
     async fn start(name: &str) -> Server {
-        Server::boot(name, None).await
+        Server::boot(name, None, None).await
     }
 
     /// As [`start`](Server::start), with the SSE snapshot page size shrunk so a
-    /// handful of fixture rows spans several pages (issue 55's paged snapshot).
-    async fn boot(name: &str, snapshot_page: Option<i64>) -> Server {
+    /// handful of fixture rows spans several pages (issue 55's paged snapshot),
+    /// and/or the id band of a bounded list walk shrunk to a few ids so the
+    /// bounded pages are driven through the handler (issue 408 (b)).
+    async fn boot(name: &str, snapshot_page: Option<i64>, fallback_band: Option<i64>) -> Server {
         let path = format!("/tmp/tender-db-api-{name}-{}.db", std::process::id());
         let _ = std::fs::remove_file(&path);
         let db = Arc::new(Db::open(&path).await.expect("open scratch db"));
@@ -80,6 +82,9 @@ impl Server {
         let mut state = v1::AppState::new(db.clone(), db.readers(4).expect("readers"));
         if let Some(page) = snapshot_page {
             state.snapshot_page = page;
+        }
+        if let Some(band) = fallback_band {
+            state.fallback_band = band;
         }
         let isolated = state.isolated.clone();
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.expect("bind");
@@ -2369,7 +2374,7 @@ async fn a_snapshot_larger_than_one_page_arrives_page_by_page_exactly_once() {
     // Page size 1 forces the snapshot through the keyset-paging path (issue
     // 55): each page takes its own pooled reader and yields before the next,
     // so nothing here may be lost, duplicated, or reordered by the paging.
-    let server = Server::boot("sse-paged", Some(1)).await;
+    let server = Server::boot("sse-paged", Some(1), None).await;
     server.ingest_chain().await;
     server.ingest(LATE).await;
 
@@ -2689,6 +2694,88 @@ async fn an_org_merge_membership_move_reaches_the_stream() {
 /// page for as long as the client stays connected. Saturating the isolated
 /// pool proves where each shape runs: the walk-shaped subscription is shed,
 /// the unfiltered one — main pool, untouched — still snapshots.
+/// Issue 408, option (b): a list read whose filter has to walk the id order is
+/// BOUNDED to one band of ids per page, and its cursor is the last id EXAMINED. The
+/// property that makes a short page safe is pinned through the real handler with
+/// the band shrunk to one id: every page carries at most `limit` items, successive
+/// cursors strictly increase (no range is examined twice), the walk terminates, and
+/// the concatenation is exactly the unbounded answer — nothing skipped, nothing
+/// repeated. `more` follows `next_cursor`, so a client's documented loop needs no
+/// new rule; a page can simply be empty while `more` is true.
+#[tokio::test]
+async fn a_bounded_list_walk_pages_without_overlap_and_reproduces_the_unbounded_answer() {
+    let server = Server::boot("bounded-walk", None, Some(1)).await;
+    server.ingest_chain().await;
+    // The reference: the SAME filtered read on a server with the production band,
+    // over the same chain — the unbounded answer the bounded walk must reproduce.
+    let reference = Server::start("bounded-walk-ref").await;
+    reference.ingest_chain().await;
+
+    // Each leg is a filter that ISOLATES on its collection and is driven by no seed
+    // — the walk this issue bounds. Tenders: `kind` is `t.kind`, which no index
+    // serves. Lots: `source` (index-served on tenders, a walk on lots — see
+    // `isolation_routed`); the lots `kind` leg is not usable here, see issue 415.
+    for (collection, id_key, filter) in [("tenders", "id", None), ("lots", "id", Some(format!("source={SOURCE}")))] {
+        let all = reference.get(&format!("/v1/{collection}?limit=1000")).await;
+        let items = all["items"].as_array().expect("items");
+        assert!(!items.is_empty(), "the chain produced {collection}");
+        let filter = match filter {
+            Some(f) => f,
+            None => format!("kind={}", items[0]["kind"].as_str().expect("kind")),
+        };
+        let max_id = items.iter().map(|i| i[id_key].as_i64().expect("id")).max().unwrap();
+        let unbounded = reference.get(&format!("/v1/{collection}?{filter}&limit=1000")).await;
+        assert_eq!(unbounded["more"], false, "the reference is one page");
+        let expected: Vec<i64> = unbounded["items"]
+            .as_array()
+            .expect("items")
+            .iter()
+            .map(|i| i[id_key].as_i64().expect("id"))
+            .collect();
+        assert!(!expected.is_empty(), "{collection}: ?{filter} matches something on the reference");
+
+        let mut walked: Vec<i64> = Vec::new();
+        let mut cursor: Option<String> = None;
+        let mut last_cursor: i64 = 0;
+        let mut pages = 0;
+        loop {
+            pages += 1;
+            assert!(pages <= max_id + 2, "{collection}: the walk must terminate, {pages} pages so far");
+            let url = match &cursor {
+                None => format!("/v1/{collection}?{filter}&limit=100"),
+                Some(c) => format!("/v1/{collection}?{filter}&limit=100&cursor={c}"),
+            };
+            let page = server.get(&url).await;
+            let page_items = page["items"].as_array().expect("items");
+            assert!(page_items.len() <= 100);
+            walked.extend(page_items.iter().map(|i| i[id_key].as_i64().expect("id")));
+            let more = page["more"].as_bool().expect("more");
+            match page["next_cursor"].as_str() {
+                Some(next) => {
+                    assert!(more, "{collection}: a cursor implies more");
+                    let next: i64 = next.parse().expect("integer cursor");
+                    assert!(next > last_cursor, "{collection}: cursors strictly increase ({last_cursor} -> {next})");
+                    assert!(
+                        page_items.iter().all(|i| i[id_key].as_i64().unwrap() <= next),
+                        "{collection}: no returned row sits beyond the cursor"
+                    );
+                    last_cursor = next;
+                    cursor = Some(next.to_string());
+                }
+                None => {
+                    assert!(!more, "{collection}: no cursor means no more");
+                    break;
+                }
+            }
+        }
+        assert_eq!(walked, expected, "{collection}: the bounded walk is the unbounded answer, in order");
+        // A band of one id examines exactly one id per page (the page limit never
+        // fills first), so the walk takes precisely `max_id` pages — one tender in the
+        // chain fixture is one page, its lots are several.
+        assert_eq!(pages, max_id, "{collection}: a band of one id is one page per id");
+    }
+}
+
 #[tokio::test]
 async fn a_walk_shaped_snapshot_pages_on_the_isolated_pool() {
     let server = Server::start("walk-routing").await;

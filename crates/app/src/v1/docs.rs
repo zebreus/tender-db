@@ -189,7 +189,11 @@ filtered, every list response names the filters it dropped in
 <em>every</em> notice with <code>"ignored_filters": ["country"]</code> in the
 envelope — not the German ones, and the field says so.</p>
 
-<p>Paginate by following <code>next_cursor</code> until <code>more</code> is false:</p>
+<p>Paginate by following <code>next_cursor</code> until <code>more</code> is false. A page
+can be short &mdash; even empty &mdash; while <code>more</code> is true: a filtered read that
+has to walk the id order examines one bounded band of ids per page, and its cursor is the last
+id <em>examined</em>, so following it never re-reads a range and always terminates. Page length
+is not an end-of-results signal; <code>more</code> is:</p>
 <pre><code>curl -s "https://tenders.zebreus.click/v1/tenders?country=DE&amp;status=open&amp;limit=50"
 curl -s "https://tenders.zebreus.click/v1/tenders?country=DE&amp;status=open&amp;limit=50&amp;cursor=14327"</code></pre>
 

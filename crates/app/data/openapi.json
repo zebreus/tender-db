@@ -881,7 +881,7 @@
       },
       "Page": {
         "type": "object",
-        "description": "The collection envelope. Paginate by following next_cursor until more is false.",
+        "description": "The collection envelope. Paginate by following next_cursor until more is false. A page can be short or empty while more is true: a filtered read that walks the id order is bounded to one band of ids per page and its cursor is the last id examined, so page length is never an end-of-results signal.",
         "properties": {
           "items": { "type": "array", "items": {} },
           "next_cursor": { "$ref": "#/components/schemas/Cursor" },

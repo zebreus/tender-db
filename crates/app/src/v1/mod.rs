@@ -85,6 +85,10 @@ pub struct AppState {
     /// spacing of its cancellation points (issue 55). Production keeps the
     /// default; tests shrink it to exercise multi-page snapshots.
     pub snapshot_page: i64,
+    /// Ids an isolated, unseeded id-ordered list walk examines per page (issue 408
+    /// (b)). Production keeps [`store::read::DEFAULT_FALLBACK_BAND`]; tests shrink
+    /// it to a handful of ids to drive the bounded pages through the handler.
+    pub fallback_band: i64,
     /// The job supervisor, when one runs beside this API (issue 65) — `/metrics`
     /// scrapes the running job's phase from it. `None` in tests and any embedding
     /// that serves the API without an ingestion worker; the gauges are then
@@ -124,6 +128,7 @@ impl AppState {
             sql,
             isolated,
             snapshot_page: sse::SNAPSHOT_PAGE,
+            fallback_band: store::read::DEFAULT_FALLBACK_BAND,
             jobs: None,
             streams: Arc::new(Mutex::new(HashMap::new())),
         }
@@ -995,6 +1000,31 @@ pub async fn read_items(
     })
 }
 
+/// The REST list's page (issue 408 (b)): [`read_items`] for the id-ordered page,
+/// with the fallback walk bounded on the two collections that can walk a PK with
+/// per-row predicates. The second half of the pair is the cursor the handler
+/// must hand back when the page came up short: the last id EXAMINED.
+pub async fn read_page(
+    collection: Collection,
+    conn: &store::turso::Connection,
+    filter: &Filter,
+    after: i64,
+    limit: i64,
+    band: i64,
+) -> store::turso::Result<(Vec<Item>, Option<i64>)> {
+    Ok(match collection {
+        Collection::Tenders => {
+            let page = read::tenders_page(conn, filter, after, limit, band).await?;
+            (page.rows.iter().map(|r| Item { id: r.id, json: json::tender(r) }).collect(), page.examined_to)
+        }
+        Collection::Lots => {
+            let page = read::lots_page(conn, filter, after, limit, band).await?;
+            (page.rows.iter().map(|r| Item { id: r.id, json: json::lot(r) }).collect(), page.examined_to)
+        }
+        other => (read_items(other, conn, filter, Scope::Page { after, limit }).await?, None),
+    })
+}
+
 /// Whether a matching entity exists at `scope` — the SSE diff's classification need
 /// (added/changed/removed is decided by presence on each side of a change), WITHOUT
 /// the display decoration the diff throws away unless `?include_data=true` (issue
@@ -1030,12 +1060,14 @@ async fn collection(
         return sse::subscribe(collection, state, headers, params, filter).await;
     }
     // One extra row answers "is there another page?" without a second query.
-    let scope = Scope::Page { after: params.after(), limit: limit + 1 };
+    let after = params.after();
     // A filter shape that CAN walk runs on the isolated runtime and pool, so a walk
     // nobody can cancel cannot hold one of the API's own readers (issue 120). The
     // routing is derived from the read layer's own predicates, never a list here.
-    let mut items = if store::read::walks(collection.into(), &filter) {
-        match state.isolated.read(collection, filter.clone(), scope).await {
+    // On that pool the walk is also BOUNDED (issue 408 (b)): one id band per page,
+    // so a sparse value answers in a bounded time instead of crossing the corpus.
+    let (mut items, examined_to) = if store::read::walks(collection.into(), &filter) {
+        match state.isolated.read_page(collection, filter.clone(), after, limit + 1, state.fallback_band).await {
             Ok(result) => result?,
             Err(isolate::Shed) => {
                 return Err(ApiError(
@@ -1046,10 +1078,20 @@ async fn collection(
         }
     } else {
         let reader = state.readers.get().await?;
-        read_items(collection, &reader, &filter, scope).await?
+        read_page(collection, &reader, &filter, after, limit + 1, state.fallback_band).await?
     };
-    let next = (items.len() as i64 > limit).then(|| items[limit as usize - 1].id.to_string());
+    let mut next = (items.len() as i64 > limit).then(|| items[limit as usize - 1].id.to_string());
     items.truncate(limit as usize);
+    // Issue 408 (b): a bounded walk that came up short hands back the last id it
+    // EXAMINED, never the last row it returned — the page may hold nothing at all,
+    // and a cursor at the last returned row would re-walk the same band for ever.
+    // `more` follows `next_cursor`, so the client's documented loop ("until `more`
+    // is false") carries it across the band with no new rule to learn.
+    if next.is_none()
+        && let Some(end) = examined_to
+    {
+        next = Some(end.to_string());
+    }
     // Name any filter the client sent that this collection does not apply, so an
     // unfiltered page never masquerades as a filtered one (issue 118). The honoured
     // set lives in the read layer next to the builders it describes.

@@ -80,7 +80,7 @@ use std::sync::Arc;
 
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 
-use crate::v1::{Collection, Item, read_items};
+use crate::v1::{Collection, Item, read_items, read_page};
 use store::read::{Filter, Scope};
 
 /// Worker threads on the isolated read runtime. **Must equal [`SLOTS`]** — see the
@@ -209,6 +209,32 @@ impl IsolatedReads {
             // Aborted because we stopped waiting, or a panic on the isolated runtime.
             // Either way this request has no answer; report it as shed rather than
             // inventing a database error.
+            Err(_) => Err(Shed),
+        }
+    }
+
+    /// [`Self::read`] for the REST list's id-ordered page with the fallback walk
+    /// bounded (issue 408 (b)): the same slot admission, permit-tracks-the-query
+    /// lifetime and shed semantics, over [`read_page`].
+    pub async fn read_page(
+        &self,
+        collection: Collection,
+        filter: Filter,
+        after: i64,
+        limit: i64,
+        band: i64,
+    ) -> Result<store::turso::Result<(Vec<Item>, Option<i64>)>, Shed> {
+        let permit: OwnedSemaphorePermit =
+            self.slots.clone().try_acquire_owned().map_err(|_| Shed)?;
+        let readers = self.readers.clone();
+        let handle = self.runtime.spawn(async move {
+            let _permit = permit;
+            let reader = readers.get().await?;
+            read_page(collection, &reader, &filter, after, limit, band).await
+        });
+        let _abandon = AbortOnDrop(handle.abort_handle());
+        match handle.await {
+            Ok(result) => Ok(result),
             Err(_) => Err(Shed),
         }
     }
