@@ -10,7 +10,7 @@
 //! runs it (the same feature `nix flake check`'s clippy gate uses).
 #![cfg(feature = "server")]
 
-use ingest::{eforms, profile, project};
+use ingest::{eforms, process, profile, project};
 use serde_json::Value;
 use std::sync::Arc;
 use std::time::Duration;
@@ -147,8 +147,14 @@ impl Server {
         let [profile::Record::Notice(n)] = &records[..] else {
             panic!("{relative}: expected one notice record");
         };
-        let parse = eforms::parse_payload(&n.profile, &bytes);
+        let parse = process::parse_payload(&n.profile, &bytes);
         assert!(matches!(parse, Parse::Parsed(_)), "{relative}: {parse:?}");
+        // The notice row's instants as the processor stamps them — with the
+        // offset and precision the source published (issue 367 unit 3).
+        let (published_at, dispatched_at) = match &parse {
+            Parse::Parsed(parsed) => project::notice_stamps(parsed),
+            _ => (None, None),
+        };
         self.db
             .record_notice(
                 &Notice {
@@ -160,8 +166,8 @@ impl Server {
                     fetch_id: self.fetch_id,
                     member_path: n.member_path.clone(),
                     ingested_at: 0,
-                    published_at: None,
-                    dispatched_at: None,
+                    published_at,
+                    dispatched_at,
                 },
                 &parse,
             )
@@ -544,8 +550,15 @@ async fn the_collections_serve_the_canonical_layer() {
     assert_eq!(tender["version"], 4, "the list shows the newest version");
     assert!(tender["title"].is_string());
     assert!(
-        tender["published_at"].as_str().is_some_and(|s| s.ends_with('Z')),
-        "timestamps are ISO 8601"
+        tender["published_at"].as_str().is_some_and(|s| {
+            // ISO 8601 in the published offset (issue 367 unit 3): a date-time
+            // carrying its offset, or a bare date for a date-only publication.
+            let b = s.as_bytes();
+            (b.len() == 10 && b[4] == b'-' && b[7] == b'-')
+                || (b.len() >= 20 && b[10] == b'T' && (s.ends_with('Z') || b[b.len() - 6] == b'+' || b[b.len() - 6] == b'-'))
+        }),
+        "timestamps are ISO 8601: {}",
+        tender["published_at"]
     );
     assert!(tender["lots"].as_i64().is_some_and(|n| n > 0));
 
@@ -1059,6 +1072,55 @@ async fn the_fold_maintains_the_current_deadline_column() {
     );
 }
 
+/// Issue 367 unit 3: a date-only publication is served as the date the source
+/// stated — not that civil day's local midnight shifted to UTC, which put the
+/// publication of 86.7% of DE-1.1 tenders a day BEFORE their own dispatch. The
+/// DÖE fixture publishes `RequestedPublicationDate 2026-07-16+02:00` beside
+/// `IssueDate 2026-07-16+02:00` / `IssueTime 16:21:42+02:00`. Every surface
+/// that serves the two instants renders them through the stored pair; a row
+/// stamped before the pair existed keeps the bare-instant rendering rather
+/// than a date guessed from a zero offset.
+#[tokio::test]
+async fn a_date_only_publication_is_served_as_a_date_and_never_before_its_dispatch() {
+    let server = Server::start("date_only_publication").await;
+    server.ingest("doe/eforms-de-2.1-can-15063f7d-0f02-42f6-960a-96e35c9cc374-01.xml").await;
+
+    let page = server.get("/v1/tenders").await;
+    let tender = &items(&page)[0];
+    assert_eq!(tender["published_at"], "2026-07-16", "the date the source stated, as a date");
+    assert_eq!(
+        tender["dispatched_at"], "2026-07-16T16:21:42+02:00",
+        "the dispatch keeps its time and its published offset"
+    );
+    let id = tender["id"].as_i64().expect("id");
+    let detail = server.get(&format!("/v1/tenders/{id}")).await;
+    assert_eq!(detail["published_at"], "2026-07-16");
+    assert_eq!(detail["versions"][0]["published_at"], "2026-07-16");
+    assert_eq!(detail["versions"][0]["dispatched_at"], "2026-07-16T16:21:42+02:00");
+    let notices = server.get("/v1/notices").await;
+    assert_eq!(items(&notices)[0]["published_at"], "2026-07-16");
+    assert_eq!(items(&notices)[0]["dispatched_at"], "2026-07-16T16:21:42+02:00");
+
+    // The standing corpus until `repair-notice-instants` runs: no pair stored.
+    // The rendering falls back to the UTC instant — the pre-unit-3 shape, with
+    // its inversion — never to a civil date computed from an offset of zero.
+    let raw = store::turso::Builder::new_local(&server.path).build().await.expect("raw");
+    raw.connect()
+        .expect("connect")
+        .execute(
+            "UPDATE notices SET published_offset = NULL, published_has_time = NULL,
+                                dispatched_offset = NULL, dispatched_has_time = NULL",
+            (),
+        )
+        .await
+        .expect("unstamp");
+    let page = server.get("/v1/tenders").await;
+    assert_eq!(items(&page)[0]["published_at"], "2026-07-15T22:00:00Z");
+    assert_eq!(items(&page)[0]["dispatched_at"], "2026-07-16T14:21:42Z");
+    let notices = server.get("/v1/notices").await;
+    assert_eq!(items(&notices)[0]["published_at"], "2026-07-15T22:00:00Z");
+}
+
 /// Issue 216: the published-ordered Tender list — `sort=published_at` serves the
 /// flagship "most recently published" query, newest first by default, paginating
 /// by a composite (published_at, id) keyset cursor; a published range implies the
@@ -1235,10 +1297,23 @@ async fn a_sorted_cursor_never_crosses_into_another_ordering() {
     // (published_at, id) — the same `tag` variable feeds parse and emission.
     let page = server.get("/v1/tenders?sort=published_at").await;
     let row = &items(&page)[0];
-    let epoch = chrono::DateTime::parse_from_rfc3339(row["published_at"].as_str().unwrap())
-        .expect("valid ISO 8601")
-        .timestamp();
-    let cursor = format!("p{}.{}", epoch, row["id"].as_i64().unwrap());
+    let id = row["id"].as_i64().unwrap();
+    // The cursor encodes the STORED instant. The served string cannot give it
+    // back for a date-only publication (issue 367 unit 3 serves the date the
+    // source stated, whose stored instant is that day's local midnight), so
+    // read the column the ordering rides.
+    let raw = store::turso::Builder::new_local(&server.path).build().await.expect("raw");
+    let mut rows = raw
+        .connect()
+        .expect("connect")
+        .query("SELECT current_published_at FROM tenders WHERE id = ?", (store::turso::Value::Integer(id),))
+        .await
+        .expect("query");
+    let epoch = match rows.next().await.expect("row").expect("one row").get_value(0).expect("col") {
+        store::turso::Value::Integer(v) => v,
+        other => panic!("current_published_at: {other:?}"),
+    };
+    let cursor = format!("p{epoch}.{id}");
 
     // Its own ordering accepts it — and positions PAST the row (empty page), so
     // the cursor was applied, not ignored. Every other read rejects it.

@@ -260,6 +260,14 @@ pub struct Stamp {
     pub has_time: bool,
 }
 
+impl Stamp {
+    /// An instant published with a time, in UTC — what a fixture or a caller
+    /// with no better information states.
+    pub fn utc(utc_seconds: i64) -> Self {
+        Stamp { utc_seconds, offset_minutes: 0, has_time: true }
+    }
+}
+
 /// A Tender in its current (or a specific) version — the `/v1/tenders` item.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TenderRow {
@@ -270,6 +278,12 @@ pub struct TenderRow {
     pub seq: i64,
     pub published_at: i64,
     pub dispatched_at: Option<i64>,
+    /// The two instants as the notice published them (issue 367 unit 3): `Some`
+    /// once the causing notice's row carries its offset/precision pair, which is
+    /// what lets the API serve a date-only publication as a date; `None` on a
+    /// row stamped before the pair existed, which renders the bare instant.
+    pub published: Option<Stamp>,
+    pub dispatched: Option<Stamp>,
     pub publication_id: String,
     pub notice_subtype: Option<String>,
     /// The version's original language (ADR-0013 D3), `None` where the era never said.
@@ -336,6 +350,12 @@ pub struct NoticeRow {
     pub ingested_at: i64,
     pub published_at: Option<i64>,
     pub dispatched_at: Option<i64>,
+    /// The two instants as the notice published them (issue 367 unit 3): `Some`
+    /// once the causing notice's row carries its offset/precision pair, which is
+    /// what lets the API serve a date-only publication as a date; `None` on a
+    /// row stamped before the pair existed, which renders the bare instant.
+    pub published: Option<Stamp>,
+    pub dispatched: Option<Stamp>,
     pub parse_state: String,
 }
 
@@ -396,6 +416,12 @@ pub struct VersionRow {
     pub seq: i64,
     pub published_at: i64,
     pub dispatched_at: Option<i64>,
+    /// The two instants as the notice published them (issue 367 unit 3): `Some`
+    /// once the causing notice's row carries its offset/precision pair, which is
+    /// what lets the API serve a date-only publication as a date; `None` on a
+    /// row stamped before the pair existed, which renders the bare instant.
+    pub published: Option<Stamp>,
+    pub dispatched: Option<Stamp>,
     pub publication_id: String,
     pub notice_subtype: Option<String>,
     pub caused_by_notice_id: i64,
@@ -1525,6 +1551,8 @@ fn tender_row(row: &turso::Row) -> TenderRow {
         cpv: split_codes(opt_text_of(row, 16)),
         country: split_codes(opt_text_of(row, 17)),
         original_lang: opt_text_of(row, 18),
+        published: stored_stamp(row, 5, 19),
+        dispatched: stored_stamp(row, 15, 21),
     }
 }
 
@@ -1795,7 +1823,14 @@ fn tender_select_head(from: &str, lang: Option<&str>) -> String {
                   WHERE c.tender_id = t.id AND c.seq = v.seq AND c.scheme = 'cpv'),
                 (SELECT group_concat(DISTINCT c.code) FROM tender_version_classifications c
                   WHERE c.tender_id = t.id AND c.seq = v.seq AND c.scheme = 'nuts'),
-                v.original_lang
+                v.original_lang,
+                -- How the causing notice published its two instants (issue 367
+                -- unit 3): four PK seeks on notices, so a list row can serve a
+                -- date-only publication as the date the source stated.
+                (SELECT n.published_offset FROM notices n WHERE n.id = v.caused_by_notice_id),
+                (SELECT n.published_has_time FROM notices n WHERE n.id = v.caused_by_notice_id),
+                (SELECT n.dispatched_offset FROM notices n WHERE n.id = v.caused_by_notice_id),
+                (SELECT n.dispatched_has_time FROM notices n WHERE n.id = v.caused_by_notice_id)
            FROM {from}
            JOIN tender_versions v ON v.tender_id = t.id AND v.seq = ",
         cents = elected("cents"),
@@ -2426,9 +2461,11 @@ pub async fn tender_detail(
 
     let mut rows = conn
         .query(
-            "SELECT seq, published_at, dispatched_at, publication_id, notice_subtype, caused_by_notice_id,
-                    original_lang
-               FROM tender_versions WHERE tender_id = ? ORDER BY seq",
+            "SELECT v.seq, v.published_at, v.dispatched_at, v.publication_id, v.notice_subtype,
+                    v.caused_by_notice_id, v.original_lang,
+                    n.published_offset, n.published_has_time, n.dispatched_offset, n.dispatched_has_time
+               FROM tender_versions v LEFT JOIN notices n ON n.id = v.caused_by_notice_id
+              WHERE v.tender_id = ? ORDER BY v.seq",
             (Value::Integer(id),),
         )
         .await?;
@@ -2442,6 +2479,8 @@ pub async fn tender_detail(
             notice_subtype: opt_text_of(&row, 4),
             caused_by_notice_id: int(&row, 5),
             original_lang: opt_text_of(&row, 6),
+            published: stored_stamp(&row, 1, 7),
+            dispatched: stored_stamp(&row, 2, 9),
         });
     }
 
@@ -3722,6 +3761,8 @@ pub async fn notices(
             parse_state: text(row, 8),
             published_at: opt_int_of(row, 9),
             dispatched_at: opt_int_of(row, 10),
+            published: stored_stamp(row, 9, 11),
+            dispatched: stored_stamp(row, 10, 13),
         })
         .await?;
     // A publication_id read seeks its own index and leaves `source`/`kind` out of
@@ -3760,7 +3801,8 @@ fn notices_query(filter: &Filter, scope: Scope) -> Query {
     let mut q = Query::default();
     q.push(
         "SELECT id, source, publication_id, content_hash, profile, declared_version,
-                member_path, ingested_at, parse_state, published_at, dispatched_at
+                member_path, ingested_at, parse_state, published_at, dispatched_at,
+                published_offset, published_has_time, dispatched_offset, dispatched_has_time
            FROM notices WHERE 1 = 1",
         [],
     );
@@ -4016,6 +4058,18 @@ fn stamp(row: &turso::Row, idx: usize) -> Option<Stamp> {
         utc_seconds: opt_int_of(row, idx)?,
         offset_minutes: opt_int_of(row, idx + 1).unwrap_or(0),
         has_time: opt_int_of(row, idx + 2).unwrap_or(0) != 0,
+    })
+}
+
+/// The instant at `utc_idx` with the pair the notice row stores at `pair_idx`
+/// (offset) and `pair_idx + 1` (has_time) — `None` unless all three are present,
+/// so a row stamped before issue 367 unit 3 renders as the bare UTC instant
+/// rather than as a civil date guessed from a zero offset.
+fn stored_stamp(row: &turso::Row, utc_idx: usize, pair_idx: usize) -> Option<Stamp> {
+    Some(Stamp {
+        utc_seconds: opt_int_of(row, utc_idx)?,
+        offset_minutes: opt_int_of(row, pair_idx)?,
+        has_time: opt_int_of(row, pair_idx + 1)? != 0,
     })
 }
 

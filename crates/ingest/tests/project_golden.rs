@@ -62,7 +62,7 @@ async fn ingest(db: &Db, fetch_id: i64, source: &str, relative: &str) {
     };
     let parse = eforms::parse_payload(&n.profile, &bytes);
     let (published_at, dispatched_at) = match &parse {
-        Parse::Parsed(parsed) => project::notice_instants(parsed),
+        Parse::Parsed(parsed) => project::notice_stamps(parsed),
         _ => panic!("{relative}: not parsed"),
     };
     db.record_notice(

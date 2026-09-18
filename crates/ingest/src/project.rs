@@ -6457,15 +6457,28 @@ pub fn original_lang(parsed: &Parsed) -> Option<String> {
 /// NULL, so the two projection call sites keep an explicit epoch fallback for
 /// the (vanishing) dateless notice — the fold has to order versions somehow.
 pub fn notice_instants(parsed: &Parsed) -> (Option<i64>, Option<i64>) {
-    let dispatched_at = DISPATCH_DATE_FIELDS.iter().find_map(|f| first_date(parsed, f));
-    let published_at =
-        PUBLICATION_DATE_FIELDS.iter().find_map(|f| first_date(parsed, f)).or(dispatched_at);
-    (published_at, dispatched_at)
+    let (published, dispatched) = notice_stamps(parsed);
+    (published.map(|s| s.utc_seconds), dispatched.map(|s| s.utc_seconds))
 }
 
-fn first_date(parsed: &Parsed, field_id: &str) -> Option<i64> {
+/// [`notice_instants`] with the offset and precision each instant was published
+/// in (issue 367 unit 3) — what the notice row stores beside the UTC seconds, so
+/// the API can render a date-only publication as the date the source stated
+/// rather than that civil day's local midnight shifted to UTC.
+pub fn notice_stamps(parsed: &Parsed) -> (Option<store::Stamp>, Option<store::Stamp>) {
+    let dispatched = DISPATCH_DATE_FIELDS.iter().find_map(|f| first_stamp(parsed, f));
+    let published =
+        PUBLICATION_DATE_FIELDS.iter().find_map(|f| first_stamp(parsed, f)).or(dispatched);
+    (published, dispatched)
+}
+
+fn first_stamp(parsed: &Parsed, field_id: &str) -> Option<store::Stamp> {
     parsed.values.iter().find(|v| v.field_id == field_id).and_then(|v| match &v.value {
-        NoticeValue::Date { utc_seconds, .. } => Some(*utc_seconds),
+        NoticeValue::Date { utc_seconds, offset_minutes, has_time } => Some(store::Stamp {
+            utc_seconds: *utc_seconds,
+            offset_minutes: *offset_minutes,
+            has_time: *has_time,
+        }),
         _ => None,
     })
 }

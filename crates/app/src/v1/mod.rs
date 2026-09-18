@@ -1147,8 +1147,12 @@ async fn collection(
         .into_response())
 }
 
-/// A client-supplied instant: unix seconds, or RFC 3339 (the format every
-/// timestamp in the responses uses). Anything else is a 400 naming the parameter.
+/// A client-supplied instant: unix seconds, RFC 3339, or a bare `YYYY-MM-DD`
+/// (the formats the responses themselves use — a date-only publication is
+/// served as a date since issue 367 unit 3, and what the API serves must paste
+/// back). A bare date is that day's midnight UTC: this API has no notion of the
+/// caller's zone, and the bound is documented so. Anything else is a 400 naming
+/// the parameter.
 fn parse_instant(value: Option<&str>, name: &str) -> Result<Option<i64>, ApiError> {
     let Some(raw) = value else { return Ok(None) };
     // `now`, the moving instant (issue 391 unit 1). The spec has advertised
@@ -1182,12 +1186,16 @@ fn parse_instant(value: Option<&str>, name: &str) -> Result<Option<i64>, ApiErro
     } else {
         raw
     };
-    match chrono::DateTime::parse_from_rfc3339(candidate) {
-        Ok(dt) => Ok(Some(dt.timestamp())),
-        Err(_) => Err(ApiError::bad_request(format!(
-            "{name} must be unix seconds, RFC 3339, or the literal `now`, not {raw:?}"
-        ))),
+    if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(candidate) {
+        return Ok(Some(dt.timestamp()));
     }
+    if let Ok(day) = chrono::NaiveDate::parse_from_str(candidate, "%Y-%m-%d") {
+        return Ok(Some(day.and_hms_opt(0, 0, 0).expect("midnight").and_utc().timestamp()));
+    }
+    Err(ApiError::bad_request(format!(
+        "{name} must be unix seconds, RFC 3339, a date (YYYY-MM-DD, midnight UTC), or the \
+         literal `now`, not {raw:?}"
+    )))
 }
 
 fn wants_events(headers: &HeaderMap) -> bool {

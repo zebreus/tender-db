@@ -155,8 +155,8 @@ fn island_notice(fetch_id: i64, i: u64) -> (Notice, Parse) {
             fetch_id,
             member_path: format!("{pub_id}.xml"),
             ingested_at: 0,
-            published_at: Some(1_700_000_000 + i as i64),
-            dispatched_at: Some(1_700_000_000 + i as i64),
+            published_at: Some(store::Stamp::utc(1_700_000_000 + i as i64)),
+            dispatched_at: Some(store::Stamp::utc(1_700_000_000 + i as i64)),
         },
         Parse::Parsed(Parsed { sections, values }),
     )

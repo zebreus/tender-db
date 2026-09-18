@@ -28,7 +28,10 @@
 //! notices).
 
 use crate::checkpoint::{CheckpointMode, checkpoint_on};
-use crate::{Db, Parsed, Section, ValueRow, int, opt_int, opt_int_of, opt_text, opt_text_of, t, text};
+use crate::{
+    Db, Parsed, Section, Stamp, ValueRow, int, opt_int, opt_int_of, opt_text, opt_text_of,
+    stamp_has_time, stamp_offset, stamp_utc, t, text,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use turso::{Connection, Statement, Value};
@@ -3926,9 +3929,16 @@ pub struct NoticeInstantFix {
     pub profile: String,
     pub from_published: Option<i64>,
     pub from_dispatched: Option<i64>,
-    pub to_published: Option<i64>,
-    pub to_dispatched: Option<i64>,
+    /// What the resolver states, with the offset and precision the row will
+    /// carry beside the UTC seconds (issue 367 unit 3).
+    pub to_published: Option<Stamp>,
+    pub to_dispatched: Option<Stamp>,
 }
+
+/// A row whose instants agree with the resolver and only wants its pair
+/// (issue 367 unit 3): `(id, published_at, dispatched_at, published, dispatched)`
+/// — the two UTC values guard the write, the two stamps are what it writes.
+type UnstampedRow = (i64, Option<i64>, Option<i64>, Option<Stamp>, Option<Stamp>);
 
 /// Issue 367: what re-deriving `notices.published_at` / `dispatched_at` from the
 /// stored parse would change. Dry by default.
@@ -3938,6 +3948,14 @@ pub struct NoticeInstantRepairReport {
     pub walked: u64,
     /// …whose stored pair already IS what the resolver says.
     pub agree: u64,
+    /// …whose stored instants agree with the resolver but whose offset/precision
+    /// pair (issue 367 unit 3) is missing or stale — every row stamped before
+    /// the pair's columns existed. Stamped as the walk goes in a wet run and
+    /// never planned: the instant itself does not change, so there is nothing
+    /// for a reviewer to weigh.
+    pub unstamped: u64,
+    /// The unstamped rows a wet run stamped.
+    pub stamped: u64,
     /// Planned rewrites.
     pub rows: u64,
     /// …of which the stored `published_at` is exactly 0 — the flattened
@@ -15161,7 +15179,7 @@ impl Db {
     pub async fn repair_notice_instants(
         &self,
         fields: &[&str],
-        resolve: fn(&Parsed) -> (Option<i64>, Option<i64>),
+        resolve: fn(&Parsed) -> (Option<Stamp>, Option<Stamp>),
         dry_run: bool,
         expect_rows: Option<u64>,
         stop: &(dyn Fn() -> bool + Sync),
@@ -15183,23 +15201,43 @@ impl Db {
         let mut after = 0i64;
         loop {
             if stop() {
-                return Ok(NoticeInstantRepairReport { stopped: true, ..Default::default() });
+                // A partial plan is never stored; the pairs already stamped are
+                // committed and idempotent, so their count is kept.
+                return Ok(NoticeInstantRepairReport {
+                    stopped: true,
+                    stamped: report.stamped,
+                    ..Default::default()
+                });
             }
-            let mut window: Vec<(i64, String, Option<i64>, Option<i64>)> = Vec::new();
+            // (id, profile, published_at, dispatched_at, and the two as stamps —
+            // `Some` only where the row carries the unit-3 pair).
+            let mut window: Vec<(i64, String, Option<i64>, Option<i64>, Option<Stamp>, Option<Stamp>)> =
+                Vec::new();
             {
                 let mut rows = reader
                     .query(
-                        "SELECT id, profile, published_at, dispatched_at FROM notices \
+                        "SELECT id, profile, published_at, dispatched_at, published_offset, \
+                                published_has_time, dispatched_offset, dispatched_has_time \
+                           FROM notices \
                           WHERE id > ? AND parse_state = 'parsed' ORDER BY id LIMIT ?",
                         (Value::Integer(after), Value::Integer(WINDOW)),
                     )
                     .await?;
                 while let Some(row) = rows.next().await? {
+                    let stored = |utc: usize, pair: usize| {
+                        Some(Stamp {
+                            utc_seconds: opt_int_of(&row, utc)?,
+                            offset_minutes: opt_int_of(&row, pair)?,
+                            has_time: opt_int_of(&row, pair + 1)? != 0,
+                        })
+                    };
                     window.push((
                         int(&row, 0),
                         text(&row, 1),
                         opt_int_of(&row, 2),
                         opt_int_of(&row, 3),
+                        stored(2, 4),
+                        stored(3, 6),
                     ));
                 }
             }
@@ -15239,15 +15277,25 @@ impl Db {
                 }
             }
 
-            for (id, profile, from_published, from_dispatched) in window {
+            let mut unstamped: Vec<UnstampedRow> = Vec::new();
+            for (id, profile, from_published, from_dispatched, from_pub, from_disp) in window {
                 let values = dates.remove(&id).unwrap_or_default();
                 let (to_published, to_dispatched) =
                     resolve(&Parsed { sections: Vec::new(), values });
-                if (to_published, to_dispatched) == (from_published, from_dispatched) {
-                    report.agree += 1;
+                let to_utc =
+                    (to_published.map(|s| s.utc_seconds), to_dispatched.map(|s| s.utc_seconds));
+                if to_utc == (from_published, from_dispatched) {
+                    if (to_published, to_dispatched) == (from_pub, from_disp) {
+                        report.agree += 1;
+                    } else {
+                        // Issue 367 unit 3: the instants are right, the pair is
+                        // not there (or not this) — stamped below, never planned.
+                        report.unstamped += 1;
+                        unstamped.push((id, from_published, from_dispatched, to_published, to_dispatched));
+                    }
                     continue;
                 }
-                match (from_published, to_published) {
+                match (from_published, to_utc.0) {
                     (Some(0), Some(_)) => report.epoch_published += 1,
                     (None, Some(_)) => report.null_published += 1,
                     (Some(_), None) => report.resolver_silent += 1,
@@ -15262,6 +15310,9 @@ impl Db {
                     to_published,
                     to_dispatched,
                 });
+            }
+            if !dry_run && !unstamped.is_empty() {
+                report.stamped += self.stamp_instant_pairs(&unstamped, stop).await?;
             }
         }
         report.rows = plan.len() as u64;
@@ -15314,12 +15365,18 @@ impl Db {
                         continue;
                     }
                     conn.execute(
-                        "UPDATE notices SET published_at = ?, dispatched_at = ? WHERE id = ?",
-                        (
-                            opt_int(f.to_published),
-                            opt_int(f.to_dispatched),
+                        "UPDATE notices SET published_at = ?, dispatched_at = ?, \
+                             published_offset = ?, published_has_time = ?, \
+                             dispatched_offset = ?, dispatched_has_time = ? WHERE id = ?",
+                        vec![
+                            stamp_utc(f.to_published),
+                            stamp_utc(f.to_dispatched),
+                            stamp_offset(f.to_published),
+                            stamp_has_time(f.to_published),
+                            stamp_offset(f.to_dispatched),
+                            stamp_has_time(f.to_dispatched),
                             Value::Integer(f.notice),
-                        ),
+                        ],
                     )
                     .await?;
                     applied += 1;
@@ -15344,6 +15401,65 @@ impl Db {
             }
         }
         Ok(report)
+    }
+
+    /// Issue 367 unit 3's streaming arm of [`Self::repair_notice_instants`]:
+    /// write the offset/precision pair onto rows whose instants already agree
+    /// with the resolver. Guarded per row on the instants it was read with, so
+    /// a re-parse in between keeps its own stamp; committed in slices with a
+    /// checkpoint between them, like the plan. Returns the rows stamped.
+    async fn stamp_instant_pairs(
+        &self,
+        rows: &[UnstampedRow],
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<u64> {
+        const SLICE: usize = 20_000;
+        let mut stamped = 0u64;
+        let conn = self.conn().await;
+        for slice in rows.chunks(SLICE) {
+            if stop() {
+                break;
+            }
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+            let result: turso::Result<u64> = async {
+                let mut n = 0u64;
+                for (id, published_at, dispatched_at, published, dispatched) in slice {
+                    n += conn
+                        .execute(
+                            "UPDATE notices SET published_offset = ?, published_has_time = ?, \
+                                 dispatched_offset = ?, dispatched_has_time = ? \
+                              WHERE id = ? AND published_at IS ? AND dispatched_at IS ?",
+                            vec![
+                                stamp_offset(*published),
+                                stamp_has_time(*published),
+                                stamp_offset(*dispatched),
+                                stamp_has_time(*dispatched),
+                                Value::Integer(*id),
+                                opt_int(*published_at),
+                                opt_int(*dispatched_at),
+                            ],
+                        )
+                        .await?;
+                }
+                Ok(n)
+            }
+            .await;
+            match result {
+                Ok(n) => {
+                    if let Err(e) = conn.execute("COMMIT", ()).await {
+                        let _ = conn.execute("ROLLBACK", ()).await;
+                        return Err(e);
+                    }
+                    stamped += n;
+                    let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
+                }
+                Err(e) => {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
+        }
+        Ok(stamped)
     }
 
     /// Issue 326: same identifier, two country codes one letter apart.

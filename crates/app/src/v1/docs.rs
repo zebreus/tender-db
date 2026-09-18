@@ -110,7 +110,7 @@ defined in the project's <code>CONTEXT.md</code>.</p>
 
 <h2 id="conventions">Conventions</h2>
 <ul>
-  <li><strong>JSON</strong> everywhere but SSE. Money is <code>{"cents": 1234, "currency": "EUR"}</code> (integer minor units — never a float). Timestamps are ISO 8601. A source that published a date only <em>should</em> yield a date only, but does not yet everywhere: the stored instant carries no date-only marker, so some date-only publications render with a time (a German portal date of 2026-09-05 serves as <code>2026-09-04T22:00:00Z</code>). Issue 367 carries the fix.</li>
+  <li><strong>JSON</strong> everywhere but SSE. Money is <code>{"cents": 1234, "currency": "EUR"}</code> (integer minor units — never a float). Timestamps are ISO 8601 in the offset the source published. A source that published a date only yields a date only: a German portal's 2026-09-05 serves as <code>2026-09-05</code>, not <code>2026-09-04T22:00:00Z</code> (issue 367 unit 3). Rows stamped before that offset/precision pair was stored render the UTC instant until <code>repair-notice-instants</code> fills them in.</li>
   <li>The change <strong>cursor is an opaque string</strong>. Compare cursors for equality and pass them back verbatim; do not parse or do arithmetic on them.</li>
   <li><strong>Auth</strong> (SQL + webhooks): <code>Authorization: Bearer tdb_…</code>. Create tokens on the <a href="/account">dashboard</a>.</li>
   <li><strong>Errors</strong> share one shape: <code>{"error": {"status": 404, "message": "no such tender"}}</code> with the matching HTTP status &mdash; <em>every</em> status, including a <code>405</code> for a wrong method on a path that exists (which carries an <code>Allow</code> header beside the envelope).</li>
@@ -161,7 +161,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
   <tr><td class="ep">publication_id</td><td>The official notice number a source prints on its notices (e.g. a TED OJS number) — exact match. On <code>/v1/notices</code> the notice itself; on <code>/v1/tenders</code> the tender it caused. See <a href="#lookups">lookups</a>.</td></tr>
   <tr><td class="ep">identifier</td><td>An Organization's official identifier <em>value</em> (e.g. a VAT number); pair with <code>kind</code> for the scheme. See <a href="#lookups">lookups</a>.</td></tr>
   <tr><td class="ep">name_prefix</td><td>Organization-name prefix, Unicode case-insensitive (<code>mü</code> matches <code>MÜLLER</code>); switches the list to name order. Must not be empty. See <a href="#lookups">lookups</a>.</td></tr>
-  <tr><td class="ep"><code>published_after</code><br><code>published_before</code></td><td>Bound Tenders by their current version's publication time. Unix seconds or RFC 3339; a single bound implies <code>sort=published_at</code>. See <a href="#ordering">ordering</a>.</td></tr>
+  <tr><td class="ep"><code>published_after</code><br><code>published_before</code></td><td>Bound Tenders by their current version's publication time. Unix seconds, RFC 3339 or a bare date (midnight UTC); a single bound implies <code>sort=published_at</code>. See <a href="#ordering">ordering</a>.</td></tr>
   <tr><td class="ep"><code>deadline_after</code><br><code>deadline_before</code></td><td>Bound Tenders by submission deadline (rows without one never match). A single bound implies <code>sort=deadline</code>.</td></tr>
   <tr><td class="ep">sort</td><td>Tenders only: <code>id</code> (default), <code>published_at</code> or <code>deadline</code>. See <a href="#ordering">ordering</a>.</td></tr>
   <tr><td class="ep">order</td><td><code>asc</code> | <code>desc</code>. Defaults per sort: <code>published_at</code> newest-first, <code>deadline</code> soonest-first, <code>id</code> ascending (its only direction).</td></tr>
@@ -218,8 +218,9 @@ domain time:</p>
 bound implies <code>sort=deadline</code>. Bounds on <em>both</em> columns need an
 explicit <code>sort</code> to pick the ordering, else <code>400</code>. Instants
 are unix seconds, RFC 3339 (the format the API itself serves; an unencoded
-<code>+01:00</code> offset pasted into a URL works), or the literal
-<code>now</code> &mdash; which is what makes
+<code>+01:00</code> offset pasted into a URL works), a bare <code>YYYY-MM-DD</code>
+(the form a date-only publication is served in; taken as that day's midnight UTC),
+or the literal <code>now</code> &mdash; which is what makes
 <code>?deadline_after=now&amp;sort=deadline&amp;order=asc</code> the
 &ldquo;closes soon&rdquo; query without the caller computing a timestamp that
 goes stale the moment it is saved. No other word is accepted;

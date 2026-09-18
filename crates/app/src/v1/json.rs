@@ -40,6 +40,26 @@ pub fn stamp(s: Option<Stamp>) -> Value {
     }
 }
 
+/// A publication or dispatch instant (issue 367 unit 3): in the offset and
+/// precision the source published it with once the notice row carries them —
+/// a date-only publication is then the date it stated, `2026-09-05` rather
+/// than `2026-09-04T22:00:00Z` — and the bare UTC instant on a row stamped
+/// before that pair existed (`repair-notice-instants` fills those in).
+fn published(stored: Option<Stamp>, utc_seconds: i64) -> Value {
+    match stored {
+        Some(s) => stamp(Some(s)),
+        None => instant(utc_seconds),
+    }
+}
+
+fn published_opt(stored: Option<Stamp>, utc_seconds: Option<i64>) -> Value {
+    match (stored, utc_seconds) {
+        (Some(s), _) => stamp(Some(s)),
+        (None, Some(utc)) => instant(utc),
+        (None, None) => Value::Null,
+    }
+}
+
 /// Money is always `{cents, currency}` — integer minor units plus the code, the
 /// representation the canonical layer stores and the only one that survives
 /// round-tripping.
@@ -63,8 +83,8 @@ pub fn tender(t: &TenderRow) -> Value {
         "kind": t.kind,
         "title": t.title,
         "version": t.seq,
-        "published_at": instant(t.published_at),
-        "dispatched_at": t.dispatched_at.map(instant).unwrap_or(Value::Null),
+        "published_at": published(t.published, t.published_at),
+        "dispatched_at": published_opt(t.dispatched, t.dispatched_at),
         "publication_id": t.publication_id,
         "notice_subtype": t.notice_subtype,
         "original_lang": t.original_lang,
@@ -116,8 +136,8 @@ pub fn notice(n: &NoticeRow) -> Value {
         "declared_version": n.declared_version,
         "member_path": n.member_path,
         "ingested_at": instant(n.ingested_at),
-        "published_at": n.published_at.map(instant).unwrap_or(Value::Null),
-        "dispatched_at": n.dispatched_at.map(instant).unwrap_or(Value::Null),
+        "published_at": published_opt(n.published, n.published_at),
+        "dispatched_at": published_opt(n.dispatched, n.dispatched_at),
         "parse_state": n.parse_state,
     })
 }
@@ -336,8 +356,8 @@ fn contract(c: &ContractRow) -> Value {
 fn version(v: &VersionRow) -> Value {
     json!({
         "seq": v.seq,
-        "published_at": instant(v.published_at),
-        "dispatched_at": v.dispatched_at.map(instant).unwrap_or(Value::Null),
+        "published_at": published(v.published, v.published_at),
+        "dispatched_at": published_opt(v.dispatched, v.dispatched_at),
         "publication_id": v.publication_id,
         "notice_subtype": v.notice_subtype,
         // ADR-0013 D3: the notice's own original language (ISO 639-2/T), the

@@ -6225,7 +6225,7 @@ impl Supervisor {
                     .db
                     .repair_notice_instants(
                         ingest::project::INSTANT_DATE_FIELDS,
-                        ingest::project::notice_instants,
+                        ingest::project::notice_stamps,
                         dry_run,
                         expect_rows,
                         &stop,
@@ -6250,17 +6250,27 @@ impl Supervisor {
                     "by_profile": r.by_profile.iter().map(|(profile, rows)| serde_json::json!({
                         "profile": profile, "rows": rows,
                     })).collect::<Vec<_>>(),
+                    "unstamped": r.unstamped,
+                    "stamped": r.stamped,
                     "applied": r.applied,
                     "skipped_moved": r.skipped_moved,
                     "stopped": r.stopped,
                     "plan_truncated": r.plan.len() > PLAN_CAP,
-                    "plan": r.plan.iter().take(PLAN_CAP).map(|f| serde_json::json!({
-                        "notice": f.notice,
-                        "profile": f.profile,
-                        "from": {"published_at": f.from_published,
-                                 "dispatched_at": f.from_dispatched},
-                        "to": {"published_at": f.to_published, "dispatched_at": f.to_dispatched},
-                    })).collect::<Vec<_>>(),
+                    "plan": r.plan.iter().take(PLAN_CAP).map(|f| {
+                        let stamp = |s: Option<store::Stamp>| s.map(|s| serde_json::json!({
+                            "utc_seconds": s.utc_seconds,
+                            "offset_minutes": s.offset_minutes,
+                            "has_time": s.has_time,
+                        }));
+                        serde_json::json!({
+                            "notice": f.notice,
+                            "profile": f.profile,
+                            "from": {"published_at": f.from_published,
+                                     "dispatched_at": f.from_dispatched},
+                            "to": {"published_at": stamp(f.to_published),
+                                   "dispatched_at": stamp(f.to_dispatched)},
+                        })
+                    }).collect::<Vec<_>>(),
                 })
                 .to_string();
                 self.db
@@ -6275,14 +6285,18 @@ impl Supervisor {
                     .join(", ");
                 Ok(format!(
                     "repair-notice-instants (issue 367, {}): {} parsed notice(s) walked, {} \
-                     already agree with the resolver. {} planned — {} stamped the epoch \
-                     (1970-01-01, the flattened not-found), {} NULL while the parse states a \
-                     date, {} whose parse states NO date and whose stored value is therefore \
-                     REMOVED. By profile: [{}]. The versions are untouched: they were never \
-                     wrong, and nothing is re-projected.{}",
+                     already agree with the resolver, {} agree on the instants but lack the \
+                     offset/precision pair (unit 3 — stamped as walked, no plan needed{}). \
+                     {} planned — {} stamped the epoch (1970-01-01, the flattened not-found), \
+                     {} NULL while the parse states a date, {} whose parse states NO date and \
+                     whose stored value is therefore REMOVED. By profile: [{}]. The versions \
+                     are untouched: they read the pair off their notice, and nothing is \
+                     re-projected.{}",
                     if dry_run { "DRY" } else { "WET" },
                     r.walked,
                     r.agree,
+                    r.unstamped,
+                    if dry_run { String::new() } else { format!("; {} stamped", r.stamped) },
                     r.rows,
                     r.epoch_published,
                     r.null_published,
@@ -13819,7 +13833,7 @@ mod tests {
                 fetch_id,
                 member_path: "m".into(),
                 ingested_at: 0,
-                published_at: Some(0),
+                published_at: Some(store::Stamp::utc(0)),
                 dispatched_at: None,
             },
             &store::Parse::Parsed(parsed),

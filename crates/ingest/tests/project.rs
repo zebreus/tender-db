@@ -82,7 +82,7 @@ async fn ingest_bytes(db: &Db, fetch_id: i64, source: &str, relative: &str, byte
     // Issue 367: both axes come straight from the resolver — `None` means the
     // payload states no date, and nothing here turns that into the epoch.
     let (published_at, dispatched_at) = match &parse {
-        Parse::Parsed(parsed) => project::notice_instants(parsed),
+        Parse::Parsed(parsed) => project::notice_stamps(parsed),
         _ => (None, None),
     };
     db.record_notice(
@@ -3648,7 +3648,7 @@ async fn record_key_only(db: &Db, fetch_id: i64, source: &str, pub_id: &str, pro
         fetch_id,
         member_path: pub_id.into(),
         ingested_at: 0,
-        published_at: Some(0),
+        published_at: Some(store::Stamp::utc(0)),
         dispatched_at: None,
     };
     db.record_notice(&notice, &Parse::Parsed(parsed)).await.expect("record synthetic");

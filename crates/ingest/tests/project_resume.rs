@@ -79,7 +79,7 @@ async fn record(db: &Db, fetch_id: i64, pub_id: &str, profile: &str, parsed: Par
             fetch_id,
             member_path: format!("{pub_id}.xml"),
             ingested_at: 0,
-            published_at: Some(0),
+            published_at: Some(store::Stamp::utc(0)),
             dispatched_at: None,
         },
         &Parse::Parsed(parsed),

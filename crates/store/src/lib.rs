@@ -54,7 +54,7 @@ pub use canonical::{
     TYPO_MOVE_MENTION_VETO,
 };
 pub use jobs::QueuedJobRow;
-pub use read::{Filter, Reader, Readers, Status};
+pub use read::{Filter, Reader, Readers, Stamp, Status};
 pub use webhooks::{Delivery, Endpoint};
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -152,6 +152,17 @@ const SCHEMA: &str = "
         -- the send date. Null until the payload is parsed (identity-only rows).
         published_at     INTEGER,
         dispatched_at    INTEGER,
+        -- How each instant was published (issue 367 unit 3): the offset the
+        -- source wrote it in and whether it wrote a time at all. `published_at`
+        -- is the UTC instant, and a date-only publication is that civil day's
+        -- LOCAL midnight — so without these two the API could only render it
+        -- shifted (a German portal's 2026-09-05 as 2026-09-04T22:00:00Z). NULL on
+        -- rows stamped before the columns existed; `repair-notice-instants`
+        -- fills them from the stored parse.
+        published_offset    INTEGER,
+        published_has_time  INTEGER,
+        dispatched_offset   INTEGER,
+        dispatched_has_time INTEGER,
         -- Field mapping state (ADR-0004): 'parsed' once the profile's parser
         -- consumed the payload exhaustively, 'quarantined' when it could not,
         -- 'pending' for profiles whose parser does not exist yet.
@@ -642,10 +653,16 @@ pub async fn state() -> Arc<Db> {
 /// answers "duplicate column name" and the statement is skipped. Anything
 /// beyond ADD COLUMN stays out of scope by policy — the canonical layer is
 /// rebuildable, and destructive changes recreate from the archive instead.
-const MIGRATIONS: [&str; 16] = [
+const MIGRATIONS: [&str; 20] = [
     "ALTER TABLE notices ADD COLUMN published_at INTEGER",
     "ALTER TABLE notices ADD COLUMN dispatched_at INTEGER",
     "ALTER TABLE tender_versions ADD COLUMN dispatched_at INTEGER",
+    // Issue 367 unit 3: the offset and precision each instant was published
+    // with. NULL on every pre-existing row until `repair-notice-instants` runs.
+    "ALTER TABLE notices ADD COLUMN published_offset INTEGER",
+    "ALTER TABLE notices ADD COLUMN published_has_time INTEGER",
+    "ALTER TABLE notices ADD COLUMN dispatched_offset INTEGER",
+    "ALTER TABLE notices ADD COLUMN dispatched_has_time INTEGER",
     // The resume cursor (issue 32). job_queue shipped in bad8dda (issue 21), so
     // the prod table predates this column — CREATE TABLE IF NOT EXISTS never adds
     // it, and recover()'s `SELECT … progress` would fail on the first boot of the
@@ -1680,19 +1697,23 @@ impl Db {
             self.clear_parsed(conn, stale, &keep).await?;
             conn.execute(
                 "UPDATE notices SET publication_id = ?, profile = ?, declared_version = ?,
-                     published_at = ?, dispatched_at = ?, projected = 0
+                     published_at = ?, dispatched_at = ?, published_offset = ?,
+                     published_has_time = ?, dispatched_offset = ?, dispatched_has_time = ?,
+                     projected = 0
                    WHERE id = ?",
-                (
-                    t(&n.publication_id),
-                    t(&n.profile),
-                    match &n.declared_version {
-                        Some(v) => t(v),
-                        None => Value::Null,
-                    },
-                    opt_int(n.published_at),
-                    opt_int(n.dispatched_at),
-                    Value::Integer(stale),
-                ),
+                {
+                    let mut p = vec![
+                        t(&n.publication_id),
+                        t(&n.profile),
+                        match &n.declared_version {
+                            Some(v) => t(v),
+                            None => Value::Null,
+                        },
+                    ];
+                    p.extend(instant_values(n));
+                    p.push(Value::Integer(stale));
+                    p
+                },
             )
             .await?;
             self.write_parse(conn, stale, n, parse).await?;
@@ -2425,11 +2446,11 @@ impl Db {
             // the next incremental projection takes unprojected parsed notices as
             // its change-set (issue 58). Without it the new parse rows would sit
             // there and every reader would keep seeing the old fold.
-            conn.execute(
-                "UPDATE notices SET parse_state = 'parsed', projected = 0,
-                     published_at = ?, dispatched_at = ? WHERE id = ?",
-                (opt_int(n.published_at), opt_int(n.dispatched_at), Value::Integer(id)),
-            )
+            conn.execute(STAMP_PARSED_SQL, {
+                let mut p = instant_values(n);
+                p.push(Value::Integer(id));
+                p
+            })
             .await?;
             if rekeyed {
                 // Issue 290: matched by bytes because the parser's `publication_id`
@@ -2512,11 +2533,11 @@ impl Db {
             Some((id, _)) => match parse {
                 Parse::Parsed(parsed) => {
                     self.insert_parsed(conn, id, parsed).await?;
-                    conn.execute(
-                        "UPDATE notices SET parse_state = 'parsed', projected = 0,
-                             published_at = ?, dispatched_at = ? WHERE id = ?",
-                        (opt_int(n.published_at), opt_int(n.dispatched_at), Value::Integer(id)),
-                    )
+                    conn.execute(STAMP_PARSED_SQL, {
+                        let mut p = instant_values(n);
+                        p.push(Value::Integer(id));
+                        p
+                    })
                     .await?;
                     // Zero here IS anomalous — the member came off the held
                     // list, so a ledger row must exist (issue 139's exact
@@ -3016,20 +3037,23 @@ impl Db {
         let changed = conn
             .execute(
                 "INSERT OR IGNORE INTO notices(source, publication_id, content_hash, profile,
-                     declared_version, fetch_id, member_path, ingested_at, published_at, dispatched_at)
-                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (
-                    t(&n.source),
-                    t(&n.publication_id),
-                    t(&n.content_hash),
-                    t(&n.profile),
-                    opt_text(n.declared_version.as_deref()),
-                    Value::Integer(n.fetch_id),
-                    t(&n.member_path),
-                    Value::Integer(n.ingested_at),
-                    opt_int(n.published_at),
-                    opt_int(n.dispatched_at),
-                ),
+                     declared_version, fetch_id, member_path, ingested_at, published_at, dispatched_at,
+                     published_offset, published_has_time, dispatched_offset, dispatched_has_time)
+                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                {
+                    let mut p = vec![
+                        t(&n.source),
+                        t(&n.publication_id),
+                        t(&n.content_hash),
+                        t(&n.profile),
+                        opt_text(n.declared_version.as_deref()),
+                        Value::Integer(n.fetch_id),
+                        t(&n.member_path),
+                        Value::Integer(n.ingested_at),
+                    ];
+                    p.extend(instant_values(n));
+                    p
+                },
             )
             .await?;
         Ok(changed > 0)
@@ -4315,11 +4339,12 @@ pub struct Notice {
     pub fetch_id: i64,
     pub member_path: String,
     pub ingested_at: i64,
-    /// The publication date resolved from the payload at process time (issue
-    /// 18), or `None` for an identity-only (unparsed) notice.
-    pub published_at: Option<i64>,
-    /// The dispatch date resolved from the payload, where the era records one.
-    pub dispatched_at: Option<i64>,
+    /// The publication instant resolved from the payload at process time (issue
+    /// 18), in the offset and precision the source published it (issue 367 unit
+    /// 3) — `None` for an identity-only (unparsed) notice.
+    pub published_at: Option<Stamp>,
+    /// The dispatch instant resolved from the payload, where the era records one.
+    pub dispatched_at: Option<Stamp>,
 }
 
 /// One repeatable-node instance of a notice — see `notice_sections`.
@@ -4538,6 +4563,41 @@ pub(crate) fn t(s: impl Into<String>) -> Value {
 pub(crate) fn opt_text(s: Option<&str>) -> Value {
     s.map_or(Value::Null, |s| Value::Text(s.into()))
 }
+
+/// The three columns an instant occupies (issue 367 unit 3): its UTC seconds,
+/// then the offset and precision it was published with. All three NULL for an
+/// absent instant; the last two NULL on a row stamped before they existed.
+pub(crate) fn stamp_utc(s: Option<Stamp>) -> Value {
+    opt_int(s.map(|s| s.utc_seconds))
+}
+
+pub(crate) fn stamp_offset(s: Option<Stamp>) -> Value {
+    opt_int(s.map(|s| s.offset_minutes))
+}
+
+pub(crate) fn stamp_has_time(s: Option<Stamp>) -> Value {
+    opt_int(s.map(|s| i64::from(s.has_time)))
+}
+
+/// A notice's six instant columns in the order every writer binds them:
+/// `published_at, dispatched_at, published_offset, published_has_time,
+/// dispatched_offset, dispatched_has_time`.
+fn instant_values(n: &Notice) -> Vec<Value> {
+    vec![
+        stamp_utc(n.published_at),
+        stamp_utc(n.dispatched_at),
+        stamp_offset(n.published_at),
+        stamp_has_time(n.published_at),
+        stamp_offset(n.dispatched_at),
+        stamp_has_time(n.dispatched_at),
+    ]
+}
+
+/// The stamp a re-parse or a reclaim writes once the parsed layer is in: the
+/// state flip, the projection debt, and the six instant columns.
+const STAMP_PARSED_SQL: &str = "UPDATE notices SET parse_state = 'parsed', projected = 0,
+     published_at = ?, dispatched_at = ?, published_offset = ?, published_has_time = ?,
+     dispatched_offset = ?, dispatched_has_time = ? WHERE id = ?";
 
 pub(crate) fn opt_int(i: Option<i64>) -> Value {
     i.map_or(Value::Null, Value::Integer)
@@ -5445,6 +5505,14 @@ tmpfs /data/ramcache tmpfs rw 0 0
         )
         .await
         .expect("the migrated columns must be writable");
+        // Issue 367 unit 3's four, on the same pre-existing table.
+        conn.execute(
+            "UPDATE notices SET published_offset = 60, published_has_time = 0,
+                                dispatched_offset = 0, dispatched_has_time = 1",
+            (),
+        )
+        .await
+        .expect("the instant offset/precision columns must be migrated in");
 
         let _ = std::fs::remove_file(&path);
     }
@@ -9219,7 +9287,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
         // ingest's wall-clock (999) and resolved instants (published 1_000_000).
         let mut fresh = held_notice();
         fresh.ingested_at = 999;
-        fresh.published_at = Some(1_000_000);
+        fresh.published_at = Some(Stamp::utc(1_000_000));
         assert_eq!(db.reclaim_notice(&fresh, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::Reclaimed);
 
         // Parsed in place: state flipped, value written, watermark cleared so the
@@ -9270,7 +9338,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
         // content hash) flagged by (fetch_id, member_path).
         let mut fresh = held_notice();
         fresh.ingested_at = 999;
-        fresh.published_at = Some(1_000_000);
+        fresh.published_at = Some(Stamp::utc(1_000_000));
         assert_eq!(db.reclaim_notice(&fresh, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::Reclaimed);
         assert_eq!(text_of(&db, "SELECT parse_state FROM notices WHERE publication_id='123-2001'").await.as_deref(), Some("parsed"));
         assert_eq!(int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE member_path='pkg/m1'").await, Some(999));
@@ -9349,7 +9417,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
         // NULL-notice_id ledger row reclaimed, or it reads outstanding forever.
         let mut fresh = held_notice();
         fresh.ingested_at = 999;
-        fresh.published_at = Some(1_000_000);
+        fresh.published_at = Some(Stamp::utc(1_000_000));
         assert_eq!(db.reclaim_notice(&fresh, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::Reclaimed);
         assert_eq!(text_of(&db, &format!("SELECT parse_state FROM notices WHERE id={id}")).await.as_deref(), Some("parsed"));
         assert_eq!(int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE notice_id IS NULL").await, Some(999));

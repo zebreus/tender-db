@@ -348,7 +348,7 @@ fn resolved_notice(
     parse: &store::Parse,
 ) -> store::Notice {
     let (published_at, dispatched_at) = match parse {
-        store::Parse::Parsed(parsed) => crate::project::notice_instants(parsed),
+        store::Parse::Parsed(parsed) => crate::project::notice_stamps(parsed),
         _ => (None, None),
     };
     store::Notice {
@@ -720,7 +720,34 @@ mod tests {
     fn instants(values: Vec<ValueRow>) -> (Option<i64>, Option<i64>) {
         let parse = store::Parse::Parsed(Parsed { sections: vec![], values });
         let n = resolved_notice("doe", 1, 1_784_490_077, record(), &parse);
-        (n.published_at, n.dispatched_at)
+        (n.published_at.map(|s| s.utc_seconds), n.dispatched_at.map(|s| s.utc_seconds))
+    }
+
+    /// Issue 367 unit 3: the row keeps the offset and precision the instant was
+    /// published with. A date-only +01:00 publication stays that date on the
+    /// row — before this it was flattened to its local midnight in UTC, and
+    /// served as the previous evening.
+    #[test]
+    fn the_instants_keep_their_published_offset_and_precision() {
+        let parse = store::Parse::Parsed(Parsed {
+            sections: vec![],
+            values: vec![ValueRow {
+                section_id: "PROCEDURE".into(),
+                field_id: "OPP-012-notice".into(),
+                ordinal: 0,
+                value: NoticeValue::Date {
+                    utc_seconds: 1_704_841_200,
+                    offset_minutes: 60,
+                    has_time: false,
+                },
+            }],
+        });
+        let n = resolved_notice("doe", 1, 1_784_490_077, record(), &parse);
+        assert_eq!(
+            n.published_at,
+            Some(store::Stamp { utc_seconds: 1_704_841_200, offset_minutes: 60, has_time: false })
+        );
+        assert_eq!(n.dispatched_at, None, "no dispatch field, no invented one");
     }
 
     /// Issue 367 (a): the processor resolves from the RAW parse, whose ids are

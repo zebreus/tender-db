@@ -134,7 +134,7 @@ async fn a_genuine_reclaim_flips_a_skipped_row_to_reclaimed() {
                 fetch_id,
                 member_path: "pkg/F3".into(),
                 ingested_at: 800,
-                published_at: Some(0),
+                published_at: Some(store::Stamp::utc(0)),
                 dispatched_at: None,
             },
             &Parse::Parsed(Parsed::default()),
