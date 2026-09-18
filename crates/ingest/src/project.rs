@@ -497,7 +497,7 @@ const UBL_PARSE_ONLY: &[(&str, &str)] = &[
 
 /// Sections that are Lots in the canonical sense — Parts and LotsGroups are
 /// Lots with a kind flag (CONTEXT.md).
-const LOT_KINDS: &[&str] = &["Lot", "LotsGroup", "Part"];
+use store::read::LOT_KINDS;
 
 /// The section a lots-group composition lives in, and the two fields naming its ends
 /// (issue 237). Named constants rather than literals in the reader because both ids are

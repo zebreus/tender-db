@@ -1216,9 +1216,13 @@ async fn reachable(conn: &Connection, filter: &Filter, collection: Collection) -
             // confined by the isolation of issue 120, and recorded rather than fixed.
             Isolated::Kind => match (&filter.kind, collection) {
                 (Some(kind), Collection::Tenders) => kind_reachable(conn, "tenders", kind).await?,
-                (Some(kind), Collection::Lots) => {
-                    kind_reachable(conn, "tender_version_lots", kind).await?
-                }
+                // Issue 415: the lots vocabulary is closed and known (`LOT_KINDS`), so
+                // membership IS the reachability answer — and the alternative was a bare
+                // scan of ~13.2M `tender_version_lots` rows for every absent spelling
+                // (measured 30.66 s cold on prod: the 503). A kind in the vocabulary is
+                // admitted even when no row carries it today (`Part` is rare); the
+                // bounded walk (issue 408 (b)) then answers it one band at a time.
+                (Some(kind), Collection::Lots) => LOT_KINDS.contains(&kind.as_str()),
                 // Unreachable: `isolation_routed` routes `kind` on Tenders and Lots only
                 // and `reachable` is called from nowhere else. Decline to short-circuit
                 // rather than probe a table whose `kind` column means something
@@ -1946,6 +1950,14 @@ async fn with_country_seed(conn: &Connection, filter: &Filter) -> turso::Result<
 }
 
 /// The identity half of [`tenders`], built but not run.
+/// The lot kinds the corpus serves — the eForms node kinds, capitalised, which the
+/// legacy eras are folded onto as well (`GLO` → `LotsGroup`). Measured 2026-09-18
+/// over an early, a legacy and a recent id range: nothing else occurs. Issue 415:
+/// the `/v1/lots?kind=` parameter is canonicalised onto this set at the API, and the
+/// absent-value guard answers membership here instead of scanning
+/// `tender_version_lots` for a spelling that could never be there.
+pub const LOT_KINDS: &[&str] = &["Lot", "LotsGroup", "Part"];
+
 /// Issue 408, option (b): how many ids an isolated, unseeded id-ordered walk
 /// examines per page. A sparse value — a retired NUTS spelling above the seed cap,
 /// a `kind`/`source`/`currency` with fewer rows than a page — used to walk the

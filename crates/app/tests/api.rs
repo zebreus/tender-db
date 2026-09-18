@@ -2694,6 +2694,43 @@ async fn an_org_merge_membership_move_reaches_the_stream() {
 /// page for as long as the client stays connected. Saturating the isolated
 /// pool proves where each shape runs: the walk-shaped subscription is shed,
 /// the unfiltered one — main pool, untouched — still snapshots.
+/// Issue 415: `/v1/lots?kind=` matches the stored vocabulary in any letter case —
+/// `Lot`, `LotsGroup`, `Part` are the eForms node kinds, capitalised, and the
+/// parameter used to be lowercased for every collection, so no spelling ever
+/// matched and the absent-value guard scanned 13M rows to say so. A spelling
+/// outside the vocabulary is a 400, never an empty page that claims the filter
+/// applied.
+#[tokio::test]
+async fn the_lots_kind_filter_matches_the_stored_vocabulary_in_any_case() {
+    let server = Server::start("lots-kind").await;
+    server.ingest_chain().await;
+
+    let all = server.get("/v1/lots?limit=1000").await;
+    let expected: Vec<i64> = all["items"]
+        .as_array()
+        .expect("items")
+        .iter()
+        .filter(|l| l["kind"] == "Lot")
+        .map(|l| l["id"].as_i64().expect("id"))
+        .collect();
+    assert!(!expected.is_empty(), "the chain produced lots of kind Lot");
+    for spelling in ["Lot", "lot", "LOT"] {
+        let page = server.get(&format!("/v1/lots?kind={spelling}&limit=1000")).await;
+        let ids: Vec<i64> = page["items"].as_array().expect("items").iter().map(|l| l["id"].as_i64().expect("id")).collect();
+        assert_eq!(ids, expected, "?kind={spelling} is the stored vocabulary's Lot");
+        assert_eq!(page["ignored_filters"].as_array().map(Vec::len), Some(0), "the filter applied");
+    }
+    // In the vocabulary but absent from this corpus: an honest empty page, not a 400.
+    let part = server.get("/v1/lots?kind=part&limit=10").await;
+    assert_eq!(part["items"].as_array().expect("items").len(), 0);
+    assert_eq!(part["more"], false);
+    // Outside it: a 400 that names the vocabulary.
+    assert_eq!(server.status("/v1/lots?kind=procedure&limit=10").await, 400);
+    assert_eq!(server.status("/v1/lots?kind=nonsense").await, 400);
+    // Tenders keep their own (lowercase) vocabulary untouched.
+    assert_eq!(server.status("/v1/tenders?kind=procedure&limit=1").await, 200);
+}
+
 /// Issue 408, option (b): a list read whose filter has to walk the id order is
 /// BOUNDED to one band of ids per page, and its cursor is the last id EXAMINED. The
 /// property that makes a short page safe is pinned through the real handler with
@@ -2714,8 +2751,13 @@ async fn a_bounded_list_walk_pages_without_overlap_and_reproduces_the_unbounded_
     // Each leg is a filter that ISOLATES on its collection and is driven by no seed
     // — the walk this issue bounds. Tenders: `kind` is `t.kind`, which no index
     // serves. Lots: `source` (index-served on tenders, a walk on lots — see
-    // `isolation_routed`); the lots `kind` leg is not usable here, see issue 415.
-    for (collection, id_key, filter) in [("tenders", "id", None), ("lots", "id", Some(format!("source={SOURCE}")))] {
+    // `isolation_routed`) and `kind` (issue 415: canonicalised, admitted by vocabulary).
+    for (collection, id_key, filter) in [
+        ("tenders", "id", None),
+        ("lots", "id", Some(format!("source={SOURCE}"))),
+        // Issue 415: the lots `kind` leg, admitted by vocabulary rather than by a scan.
+        ("lots", "id", Some("kind=Lot".to_owned())),
+    ] {
         let all = reference.get(&format!("/v1/{collection}?limit=1000")).await;
         let items = all["items"].as_array().expect("items");
         assert!(!items.is_empty(), "the chain produced {collection}");

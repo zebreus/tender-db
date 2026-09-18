@@ -1049,7 +1049,25 @@ async fn collection(
     headers: HeaderMap,
     params: Params,
 ) -> ApiResult {
-    let filter = params.filter(store::now_unix())?;
+    let mut filter = params.filter(store::now_unix())?;
+    // Issue 415: `kind` is lowercased by `Params::filter` for the lowercase-only
+    // vocabularies (organizations' identifier schemes, tender kinds), but lot kinds
+    // are the eForms node kinds and stored capitalised — `Lot`, `LotsGroup`, `Part` —
+    // so on this collection the parameter is canonicalised onto that set here,
+    // before either the page or the SSE branch reads it, and a spelling outside it is
+    // a 400 rather than an empty page that claims the filter applied.
+    if collection == Collection::Lots
+        && let Some(kind) = filter.kind.as_deref()
+    {
+        match store::read::LOT_KINDS.iter().find(|k| k.eq_ignore_ascii_case(kind)) {
+            Some(canonical) => filter.kind = Some((*canonical).to_owned()),
+            None => {
+                return Err(ApiError::bad_request(format!(
+                    "kind on /v1/lots must be one of Lot, LotsGroup or Part, not {kind:?}"
+                )));
+            }
+        }
+    }
     // Validated BEFORE the Accept branch (issue 390 unit 4), so whether `limit=0`
     // is a 400 does not depend on a request header. The stream arm does not use
     // `limit` — it pages by `sse::SNAPSHOT_PAGE` — but a parameter that is
