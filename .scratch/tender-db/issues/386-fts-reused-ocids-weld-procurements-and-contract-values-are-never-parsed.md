@@ -1,9 +1,16 @@
 # 386 — FTS: a publisher-reused ocid welds different buyers' procurements into one Tender, and no FTS contract value is ever parsed
 
-Status: ready-for-agent — **unit 1's key election is BUILT and gated 2026-09-18** (`2c2d0b0`, see the foot): an FTS ocid whose releases carry two or more distinct buyer sets splits per buyer at the plan's refused-key gate, pinned at the store and end to end; the standing FTS rows keep the welded shape until the fts profile is refolded — a production write the operating session's classifier refuses, so it waits for Lennart's go-ahead with the command at the foot. Unit 2a FIXED and gated 2026-09-16 (the contract's own published value, and the contract-less award's decision date). Unit 2b's ADR-0004 checklist is BUILT, gated (126/126) and DEPLOYED 2026-09-18 11:11 UTC at `8b895e1` (see the foot: `fts::checklist`, pinned by a census over every fixture release — 224 paths, all disposed, 35 owed); **the `BT-3202`/`OPT-315` linkage is BUILT, gated (127/127) and DEPLOYED 2026-09-18 15:03 UTC at `6a840ae` (see the foot; new FTS ingests carry it from the next daily tick, the standing rows wait for the gated re-parse)**; the periods' schema decision is the last open piece of unit 2b, named as `owed:` entries in that checklist rather than remembered. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — **unit 1's key election is BUILT and gated 2026-09-18** (`2c2d0b0`, see the foot): an FTS ocid whose releases carry two or more distinct buyer sets splits per buyer at the plan's refused-key gate, pinned at the store and end to end; the standing FTS rows keep the welded shape until the fts profile is refolded — a production write the operating session's classifier refuses, so it waits for Lennart's go-ahead with the command at the foot. Unit 2a FIXED and gated 2026-09-16 (the contract's own published value, and the contract-less award's decision date). Unit 2b's ADR-0004 checklist is BUILT, gated (126/126) and DEPLOYED 2026-09-18 11:11 UTC at `8b895e1` (see the foot: `fts::checklist`, pinned by a census over every fixture release — 224 paths, all disposed, 35 owed); **the `BT-3202`/`OPT-315` linkage is BUILT, gated (127/127) and DEPLOYED 2026-09-18 15:03 UTC at `6a840ae` (see the foot; new FTS ingests carry it from the next daily tick, the standing rows wait for the gated re-parse)**; **and the periods landed, gated (127/127) and DEPLOYED 2026-09-18 18:10 UTC at `846f856` (see the foot: no schema change — a lot publishing no period inherits its single-lot award's `contractPeriod`, else that award's contract's `period`, as the `BT-536/537-Lot` pair; only the `maxExtentDate` leaves stay `owed:`). Unit 2b is COMPLETE at the parse layer; every unit's standing rows wait for the gated FTS refold + re-parse.** Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (sources / fts profile) — unit 1 welds records that were never one procurement, unit 2 serves money and dates the source publishes as `null`
 Relates to: 342 (the FTS source; unit 2 complete, OPEN on the 2021-01 backfill and the docs — the parent of both units), 369 (the placeholder procedure-key gate and its unit-5 buyer grouping, which unit 1 extends), 377 (the same constant-key-publisher shape, decided NO GATE on TED for a class of 4 — and it says a platform-level cause reverses that), 34 (the original "every notice sharing the key collapses into one Tender"), 364 (the weld gauge `c0c2581` the FTS arm should feed), 255 (the award decision date's canonical homes, which unit 2's award-only releases never reach), ADR-0003 (merge only on a strong explicit cross-reference), ADR-0004 (the per-profile mapped-or-ignored checklist the `fts` module does not declare), ADR-0014 (contracts as one of the four money loci), CONTEXT.md:113-114, `docs/research/uk-fts.md` §4, `.scratch/tender-db/342-fts-plan.md` §3
 Blocked by: nothing
+
+## Verify
+
+    for p in 033117-2025 031078-2025; do curl -s --max-time 20 "https://tenders.zebreus.click/v1/tenders?publication_id=$p&limit=1" | python3 -c "import json,sys; print('$p', [t['id'] for t in json.load(sys.stdin)['items']])"; done
+
+- **done**: two DIFFERENT tender ids — unit 1's split reached the standing rows, i.e. the gated fts refold ran. Unit 2b's standing rows ride the gated FTS re-parse in the same go-ahead: `/v1/tenders/7956308` (028961-2025) then serves lot `1`'s `duration_start` 2025-05-19 in `dates`, contract 1's period.
+- **open**: the same id twice (read 2026-09-18 18:10 UTC at `846f856`: both `7954583`; 7956308's `dates` is `[]`)
 
 Two gaps in the same profile — the FTS parser and key election shipped with 342 unit 2 (`d7264c8`,
 HEAD `5c47984`) — both found in the June-2025 fold (7,243 notices, 6,239 tenders, tender ids
@@ -536,6 +543,48 @@ release carries no BT-3202). The checklist's `contracts[].awardID` entry reads t
 
 **Standing rows.** A parse-layer change: the FTS notices on prod carry it only after the same
 re-parse unit 2a already owes (the gated FTS reprocess at the foot of unit 2a's section, then a
-refold); nothing on prod changes at the deploy. The periods' schema decision is the last open piece
-of unit 2b.
+refold); nothing on prod changes at the deploy. The periods landed the same evening — next section.
 
+## Unit 2b — the periods landed 2026-09-18 (`846f856`, gate 127/127, deployed 18:10 UTC on an idle queue)
+
+**The schema decision, decided: no schema change.** The "collision" unit 2a's note feared — a
+contract's duration pushed under `BT-536/537-Lot` beside the lot's own — only exists when a lot
+publishes a period AND its award publishes a different one. So the rule never overrides a lot's
+own period, and the key still carries exactly one fact: the period that applies to that lot.
+`tender_version_contracts` stays without duration columns; the lot's period lands where an eForms
+`BT-536-Lot` lands, the fold's `DATES` table (`duration_start` / `duration_end` at the lot's scope).
+
+What `crates/ingest/src/fts/parse.rs` does now:
+
+- `Award.contract_period` and `Contract.period` are read (both were absent from the structs — unit
+  2's repro step 4).
+- `inherited_periods(awards, contracts)`: a lot that publishes no `contractPeriod` of its own takes
+  the period of the one award that names EXACTLY that lot — the award's own `contractPeriod` first,
+  else its contracts' `period` — and only when every candidate agrees. A multi-lot award's period is
+  the award's, not any one lot's: nothing. Two single-lot awards on one lot that disagree, or two
+  contracts of one award that disagree: nothing. A delta award (`{id, amendments}`) says nothing, as
+  it does everywhere else in the walk.
+- The lots loop consults that map only when the lot's own period is absent, and the quarantine
+  detail names the source (`award contractPeriod.startDate`, `contract period.endDate`) when a date
+  is unreadable.
+
+Pinned by `a_lot_without_a_period_inherits_its_single_lot_awards_or_that_awards_contracts` —
+083650-2026: lot `1` takes the award's 2026-09-18T00:00:00+01:00 → 2027-03-31T23:59:59+01:00 (a UK6
+with no `contracts[]` at all); 028961-2025: lot `1` takes contract 1's 2025-05-19Z → 2028-05-18T23:59:59Z,
+the award publishing none; 083563-2026: lot `1` keeps its own 2026-11-04 — and by
+`the_inherited_period_is_narrow`, one synthetic release carrying every refusal plus the case where
+an award and a contract agree. The checklist's `awards[].contractPeriod` and `contracts[].period`
+entries read the mapping; their `maxExtentDate` leaves join `tender.lots[].contractPeriod.maxExtentDate`
+as the one line still `owed:` (the maximum extension date has no destination — a schema question
+this unit does not answer, and the census over every fixture release stays all-disposed).
+
+**Not covered, on record.** An award naming two or more lots: its period reaches no lot. That is the
+publisher's job, and the UK4 shape does it — 083563-2026's five lots each carry their own. How many
+standing FTS lots are period-less today was not measured: they carry a period only after the gated
+re-parse, so the number would describe the re-parse's backlog, not the rule.
+
+**Standing rows.** A parse-layer change like the linkage: nothing on prod changes at the deploy
+(7956308's `dates` read `[]` at 18:10 UTC, as before); new FTS ingests carry the periods from the
+next daily tick; the standing FTS notices after the gated re-parse unit 2a's foot names, then the
+refold. Owed read: an FTS tender ingested after the 2026-09-19 07:35 tick whose lot serves
+`duration_start` in `dates`.
