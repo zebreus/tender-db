@@ -340,6 +340,11 @@ Concrete importer requirements:
 9. **Tolerate data-quality quirks without quarantine** where they are
    systematic: truncated CPVs, empty elements, `No ID`/`unused-id`
    placeholders — these are "legitimately dirty", not "unmapped".
+   **CPV representation is normalised at the fold, not tolerated** (issue 394
+   unit 2): the island's check-digit form (`45421146-9`), division-only codes
+   (`50`) and glued multi-code strings fold to the bare 8-digit code, one per
+   row, the spelling every other era publishes — named here so the next
+   dialect cannot arrive unnormalised without a decision.
 10. **Fetcher**: monthly/daily ZIPs as raw payloads; one file per notice
     *version*; both filename schemes (`uuid-NN.xml`, `numeric-N.xml`).
 

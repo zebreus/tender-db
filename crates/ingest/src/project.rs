@@ -3197,6 +3197,33 @@ impl NoticeState {
         for value in &parsed.values {
             let scope = scope_of(&sections, &value.section_id);
             let field_id = value.field_id.as_str();
+            // Issue 394 (unit 2): a classification value may be SEVERAL codes — the
+            // DÖE sdk-0.1 island glues them into one string — so it folds here, one
+            // fact per code, rather than through the one-fact match below. CPV goes
+            // through `normalize_cpv`; NUTS is stored as published.
+            if let NoticeValue::Classification { scheme, code } = &value.value {
+                if let Some(field) = canonical_name(CLASSIFICATIONS, field_id) {
+                    let codes = if scheme.eq_ignore_ascii_case("cpv") {
+                        normalize_cpv(code)
+                    } else {
+                        vec![code.clone()]
+                    };
+                    for code in codes {
+                        let fact = Fact::Classification { field: field.clone(), scheme: scheme.clone(), code };
+                        match &scope {
+                            Scope::Tender => {
+                                facts.insert(fact);
+                            }
+                            Scope::Lot(key) => {
+                                if let Some(lot) = lots.get_mut(key) {
+                                    lot.facts.insert(fact);
+                                }
+                            }
+                        }
+                    }
+                }
+                continue;
+            }
             let fact = match &value.value {
                 NoticeValue::Text { lang, value: v } => {
                     canonical_name(TEXTS, field_id)
@@ -3251,12 +3278,6 @@ impl NoticeState {
                         }
                     })
                 }
-                NoticeValue::Classification { scheme, code } => canonical_name(CLASSIFICATIONS, field_id)
-                    .map(|field| Fact::Classification {
-                        field,
-                        scheme: scheme.clone(),
-                        code: code.clone(),
-                    }),
                 NoticeValue::Date { utc_seconds, offset_minutes, has_time } => {
                     // Issue 385: an F14 corrigendum's new date means whatever the
                     // block's own `TED-SECTION` says it corrects. A coordinate
@@ -5119,6 +5140,56 @@ fn canonical_name(table: &[(&str, &str)], field_id: &str) -> Option<String> {
         .iter()
         .find(|(source, _)| *source == field_id || *source == stem(field_id))
         .map(|(_, name)| (*name).to_owned())
+}
+
+/// The canonical CPV spelling for `Fact::Classification.code` (issue 394, unit 2):
+/// the bare 8-digit code, one code per fact. Every era but DÖE's sdk-0.1 island
+/// publishes exactly that; the island publishes the publisher's own text — the
+/// check-digit form `45421146-9`, the division alone `50`, and several codes
+/// glued into one string (`45324000-4  45421146-9 45422000-1`) — and served
+/// verbatim that split one code across spellings inside one `scheme` (27–45 %
+/// of island rows) and hid a glued string's 2nd..nth codes from the prefix
+/// filter. Like [`normalize_lang`], this is the importer's boundary
+/// (CONTEXT.md), applied once where a parse-layer value becomes a fact, so
+/// every source funnels through one rule:
+///
+/// - a whitespace/comma-glued string is several codes, in published order,
+///   repeats collapsed (the publisher glues the same code twice);
+/// - `NNNNNNNN-C` drops its check digit — derivable from the eight digits, so
+///   nothing is lost;
+/// - a 2–7 digit code is right-padded with zeros: `50` → `50000000`, which is
+///   CPV's own spelling of division 50 (its codes are hierarchical with
+///   trailing zeros), so no precision is invented and the shape collapses;
+/// - anything else passes through unchanged — it fails visible, as an unknown
+///   language tag does, instead of being guessed at.
+pub fn normalize_cpv(code: &str) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    for token in code.split(|c: char| c.is_whitespace() || c == ',' || c == ';') {
+        if token.is_empty() {
+            continue;
+        }
+        let stem = match token.split_once('-') {
+            Some((stem, check))
+                if stem.len() == 8 && cpv_digits(stem) && check.len() == 1 && cpv_digits(check) =>
+            {
+                stem
+            }
+            _ => token,
+        };
+        let canonical = if (2..=7).contains(&stem.len()) && cpv_digits(stem) {
+            format!("{stem:0<8}")
+        } else {
+            stem.to_owned()
+        };
+        if !out.contains(&canonical) {
+            out.push(canonical);
+        }
+    }
+    out
+}
+
+fn cpv_digits(s: &str) -> bool {
+    !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit())
 }
 
 /// The canonical language vocabulary for `Fact::Text.lang` (issue 292): ISO
@@ -6994,6 +7065,113 @@ mod tests {
         );
     }
 
+    /// Issue 394 (unit 2): the CPV normaliser's four published shapes and its
+    /// pass-through — the bare code is untouched, the check digit goes, a
+    /// division pads to CPV's own 8-digit spelling, a glued string splits in
+    /// published order with repeats collapsed, and anything else fails visible.
+    #[test]
+    fn cpv_codes_normalise_to_one_bare_eight_digit_spelling() {
+        assert_eq!(normalize_cpv("45421146"), vec!["45421146"]);
+        assert_eq!(normalize_cpv("45421146-9"), vec!["45421146"]);
+        assert_eq!(normalize_cpv("50"), vec!["50000000"]);
+        assert_eq!(
+            normalize_cpv("45324000-4  45421146-9 45422000-1"),
+            vec!["45324000", "45421146", "45422000"],
+            "a glued string is its codes, in published order"
+        );
+        assert_eq!(normalize_cpv("45421100-5  45421110-8 45421100-5"), vec!["45421100", "45421110"], "a repeat collapses");
+        assert_eq!(normalize_cpv(" 09123000-7 "), vec!["09123000"], "a leading zero survives");
+        assert_eq!(normalize_cpv("45.42"), vec!["45.42"], "an unknown shape passes through, visibly");
+        assert!(normalize_cpv("   ").is_empty());
+    }
+
+    /// Issue 394 (unit 2): the sdk-0.1 shapes through the fold. One code serves
+    /// as one string at both scopes, a glued main code becomes three facts on
+    /// its lot, and a NUTS code is stored as published.
+    #[test]
+    fn the_sdk01_cpv_shapes_fold_to_one_spelling_and_a_glued_string_to_several_facts() {
+        let parsed = Parsed {
+            sections: vec![
+                store::Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None },
+                store::Section { id: "LOT-1".into(), kind: "Lot".into(), parent: Some("PROCEDURE".into()) },
+            ],
+            values: vec![
+                classification_value(
+                    "PROCEDURE",
+                    "SDK01-ProcurementProject-MainCommodityClassification-ItemClassificationCode",
+                    0,
+                    "cpv",
+                    "45421146-9",
+                ),
+                classification_value(
+                    "PROCEDURE",
+                    "SDK01-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode",
+                    1,
+                    "cpv",
+                    "45421146",
+                ),
+                classification_value(
+                    "PROCEDURE",
+                    "SDK01-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode",
+                    2,
+                    "cpv",
+                    "50",
+                ),
+                classification_value(
+                    "LOT-1",
+                    "SDK01-ProcurementProjectLot-ProcurementProject-MainCommodityClassification-ItemClassificationCode",
+                    3,
+                    "cpv",
+                    "45324000-4  45421146-9 45422000-1",
+                ),
+                classification_value(
+                    "LOT-1",
+                    "SDK01-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-CountrySubentityCode",
+                    4,
+                    "nuts",
+                    "DE21",
+                ),
+            ],
+        };
+        let notice = store::NoticeRef {
+            id: 26544162,
+            source: "doe".into(),
+            publication_id: "1542904".into(),
+            profile: "eforms:eforms-sdk-0.1".into(),
+        };
+        let state = NoticeState::read(&notice, &parsed);
+
+        fn codes<'a>(facts: impl IntoIterator<Item = &'a Fact>, want: &str) -> Vec<String> {
+            let mut out: Vec<String> = facts
+                .into_iter()
+                .filter_map(|f| match f {
+                    Fact::Classification { field, scheme, code } if field == want && scheme == "cpv" => {
+                        Some(code.clone())
+                    }
+                    _ => None,
+                })
+                .collect();
+            out.sort();
+            out
+        }
+        assert_eq!(codes(&state.facts, "main"), vec!["45421146"], "the check digit is gone at tender scope");
+        assert_eq!(
+            codes(&state.facts, "additional"),
+            vec!["45421146", "50000000"],
+            "bare and division codes, one spelling each"
+        );
+        let lot = state.lots.iter().find(|l| l.key == "LOT-1").expect("LOT-1 is a lot of the notice");
+        assert_eq!(
+            codes(&lot.facts, "main"),
+            vec!["45324000", "45421146", "45422000"],
+            "a glued string is three facts on its lot"
+        );
+        assert!(
+            lot.facts.iter().any(|f| matches!(f, Fact::Classification { scheme, code, .. } if scheme == "nuts" && code == "DE21")),
+            "NUTS is stored as published"
+        );
+    }
+
     /// ADR-0013 D4: `mentions()` keeps every LABELLED language variant of the
     /// party's name for the `organization_names` satellite — while the single
     /// designated `name` keeps its first-seen semantics untouched.
@@ -7042,6 +7220,15 @@ mod tests {
         };
         let m = &NoticeState::mentions(false, 8, &legacy)[0];
         assert_eq!((m.name.as_str(), m.variants.len()), ("Mairie de Paris", 0));
+    }
+
+    fn classification_value(section: &str, field: &str, ordinal: i64, scheme: &str, code: &str) -> store::ValueRow {
+        store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal,
+            value: store::NoticeValue::Classification { scheme: scheme.into(), code: code.into() },
+        }
     }
 
     fn text_value(

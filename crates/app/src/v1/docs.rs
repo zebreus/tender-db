@@ -699,6 +699,14 @@ rates and the quarantine resolution ledger.</p>
 
 <h3>Codes and identities</h3>
 <ul>
+  <li><strong>CPV codes are served as the bare 8-digit code, one code per row</strong>,
+  whatever the publisher wrote. Every source but D&Ouml;E's sdk-0.1 pilot era publishes
+  exactly that; that era also publishes the check-digit form (<code>45421146-9</code>),
+  the division alone (<code>50</code>), and several codes glued into one string. At the
+  fold the check digit is dropped (it is derivable from the eight digits), a division is
+  padded to CPV's own spelling of it (<code>50000000</code>), and a glued string becomes
+  one row per code &mdash; so <code>?cpv=</code> and a <code>GROUP BY code</code> see one
+  vocabulary. The archived notice keeps the published text.</li>
   <li>CPV-2003 and CPV-2008 classifications coexist (era-dependent); no cross-era
   mapping is applied. NUTS carries occasional pseudo-codes, and NUTS <em>vintages</em>
   coexist the same way CPV's do: a notice is coded in the revision current when it was
