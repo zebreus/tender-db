@@ -52,3 +52,21 @@ caller skipped twice. Two lessons for the rule, both now in `docs/agents/prod-bo
 join-bridged read is sized by its plan, not its range; and after ONE 408 the next read of any
 shape waits until the runtime answers `SELECT 1` again.
 
+## The plan, read locally 16:20 — `SCAN notice_codes`, and the `+` that fixes it
+
+`EXPLAIN QUERY PLAN` on a scratch database with the real schema (a throwaway probe, run once and
+deleted):
+
+| statement | turso's plan |
+| --- | --- |
+| as sent (`… AND c.field_id = 'TXT-NC' … GROUP BY c.code`) | **`SCAN notice_codes AS c`**, `SEARCH v USING INDEX tender_versions_notice (caused_by_notice_id=?)`, `SEARCH t USING INTEGER PRIMARY KEY`, sorters for GROUP BY and ORDER BY |
+| the same with `+c.field_id = 'TXT-NC'` | `SEARCH t USING INTEGER PRIMARY KEY (rowid=?)`, `SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)`, `SEARCH c USING INDEX sqlite_autoindex_notice_codes_1 (notice_id=?)` |
+| the join without the GROUP BY | still `SCAN notice_codes` — the equality on `field_id` alone steers it |
+
+So the range on `t.id` was never the driver: the planner took the equality on the unindexed
+`field_id` as its entry point and walked the largest table in the corpus, seeking versions per
+row — the fourth instance of the traps table's "steered by the last clause" shape, and the same
+cure (`+` on the column that must not drive). The two queries that pinned the runtime for 13.5
+minutes were each a full pass over `notice_codes`. The docs row now says exactly that, and this
+issue stays open on its own clause: a capped computation should not hold a request worker.
+
