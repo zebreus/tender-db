@@ -2256,14 +2256,12 @@ pub async fn tenders_seeded_page(
     for _ in 0..windows.max(1) {
         let mut q = Query::default();
         q.push(&window_sql, [Value::Integer(org), Value::Integer(from), Value::Integer(window)]);
-        let raw = q.rows(conn, |r| int(r, 0)).await?;
-        let Some(&last) = raw.last() else {
+        let candidates = q.rows(conn, |r| int(r, 0)).await?;
+        let Some(&last) = candidates.last() else {
             examined_to = None; // nothing past the cursor: the seed is exhausted
             break;
         };
-        let exhausted = (raw.len() as i64) < window;
-        let mut candidates = raw;
-        candidates.dedup();
+        let exhausted = (candidates.len() as i64) < window;
         let members = head_members(conn, table, role, org, &candidates).await?;
         if !members.is_empty() {
             let room = (want - rows.len()) as i64;
@@ -3053,13 +3051,14 @@ pub struct SeededPage {
     pub next: Option<LotCursor>,
 }
 
-/// Rows of the participation index one window of the seeded walk reads. In ROWS
-/// of the index, not tenders: a tender the org bid on across 135 versions has 135
-/// rows there, so a tender count would not bound the read. 256 rows is a few
-/// tenders for the deepest procurements and a couple of hundred for ordinary
-/// ones — either way one index range read, and the lots of those tenders are the
-/// only lots the page sorts.
-pub const DEFAULT_SEED_WINDOW: i64 = 256;
+/// Tenders one window of the seeded walk examines. The window statement groups
+/// the org's index rows by tender as it streams them (`GROUP BY tender_id …
+/// LIMIT`, served in index order with no temporary structure — the plan is
+/// pinned), so a window is a tender count whatever the org's row density: org
+/// 357 holds ~950 winner rows per tender, an ordinary org one or two, and both
+/// get 64 tenders per range read. The first cut counted ROWS (256) and paged the
+/// dense org 26 tenders at a time, 3.4 s each (prod, 2026-09-18 12:31).
+pub const DEFAULT_SEED_WINDOW: i64 = 64;
 
 /// Windows one page may read before handing back a short page with a cursor.
 /// The 408 (b) contract already says a page can be short while `more` is true;
@@ -3082,9 +3081,12 @@ pub fn seeded_lots(filter: &Filter) -> bool {
         )
 }
 
-/// The seed window's statement: the org's index rows from a tender on, in
+/// The seed window's statement: the org's DISTINCT tenders from a tender on, in
 /// tender order, `LIMIT`ed — one index range read that both the walk's order
-/// and its bound come from. Public so a test can read its plan.
+/// and its bound come from. `GROUP BY` rather than `DISTINCT` on purpose: turso
+/// serves the grouping off the index's own order and stops at the limit, where
+/// `DISTINCT` builds a hash table over every row past the cursor (both plans
+/// read 2026-09-18). Public so a test can read its plan.
 #[doc(hidden)]
 pub fn seeded_window_sql(filter: &Filter, inclusive: bool) -> Option<String> {
     let (table, extra, _) = participation_seed(filter)?;
@@ -3092,7 +3094,7 @@ pub fn seeded_window_sql(filter: &Filter, inclusive: bool) -> Option<String> {
     Some(format!(
         "SELECT tender_id FROM {table}
           WHERE organization_id = ? AND tender_id {op} ?{extra}
-          ORDER BY tender_id LIMIT ?"
+          GROUP BY tender_id ORDER BY tender_id LIMIT ?"
     ))
 }
 
@@ -3113,7 +3115,16 @@ fn without_seeded_org(filter: &Filter) -> Filter {
 
 /// Which of the candidate tenders the org holds AT THE HEAD VERSION, in the
 /// seed's role — the seed IS the predicate (issue 388's first unit), decided
-/// once per tender here rather than once per lot. One index seek per candidate.
+/// once per tender here rather than once per lot.
+///
+/// Driven from `tenders` by primary key, with the head as the row's own
+/// `current_seq` pointer (the one the whole tenders endpoint reads), so the
+/// participation probe is one seek per candidate: the winners PK
+/// `(tender_id, seq, …)` or `…_org_tender (organization_id, tender_id)`. The
+/// first cut drove from the participation table with `p.tender_id IN (…)` and a
+/// correlated `MAX(seq)`, and the planner bound ONLY `organization_id` — every
+/// call scanned the org's whole slice (3.55M rows for org 357's wins) with a
+/// subquery per row; that was `/v1/tenders?winner=357` at 3.4 s for 26 rows.
 async fn head_members(
     conn: &Connection,
     table: &str,
@@ -3128,12 +3139,14 @@ async fn head_members(
     let mut q = Query::default();
     q.push(
         &format!(
-            "SELECT DISTINCT p.tender_id FROM {table} p
-              WHERE p.organization_id = ? AND p.tender_id IN ({marks}){role}
-                AND p.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = p.tender_id)
-              ORDER BY p.tender_id"
+            "SELECT tt.id FROM tenders tt
+              WHERE tt.id IN ({marks})
+                AND EXISTS (SELECT 1 FROM {table} p
+                             WHERE p.organization_id = ? AND p.tender_id = tt.id
+                               AND p.seq = tt.current_seq{role})
+              ORDER BY tt.id"
         ),
-        std::iter::once(Value::Integer(org)).chain(candidates.iter().map(|&c| Value::Integer(c))),
+        candidates.iter().map(|&c| Value::Integer(c)).chain([Value::Integer(org)]),
     );
     q.rows(conn, |r| int(r, 0)).await
 }
@@ -3145,7 +3158,7 @@ async fn head_members(
 /// before `LIMIT` — `ORDER BY l.id` is an order no seed can serve — so a page of
 /// `?bidder=357` cost the org's 137k lots (3.7 s warm, 20 s cold, prod 2026-09-18)
 /// whatever `limit` said. This walk pages in `(tender_id, lot id)` order instead:
-/// one window of the org's index rows (`DEFAULT_SEED_WINDOW`, from the cursor's
+/// one window of the org's tenders (`DEFAULT_SEED_WINDOW`, from the cursor's
 /// tender on), membership decided at the head version once per tender, then
 /// those tenders' lots after the cursor, sorted — a sorter over one window's
 /// lots, not the org's. A window whose tenders carry no admitted lot costs one
@@ -3176,19 +3189,17 @@ pub async fn lots_seeded_page(
     let mut cursor = cursor;
     let mut next = None;
     for _ in 0..windows.max(1) {
-        // 1. One window of the org's index rows from the cursor's tender on, in
-        //    tender order — the same index range read whether the org holds ten
-        //    tenders or ten thousand.
+        // 1. One window of the org's tenders from the cursor's tender on, in
+        //    tender order — one index range read whether the org holds ten
+        //    tenders or ten thousand, and however many rows each carries.
         let mut q = Query::default();
         q.push(&window_sql, [Value::Integer(org), Value::Integer(cursor.tender_id), Value::Integer(window)]);
-        let raw = q.rows(conn, |r| int(r, 0)).await?;
-        let Some(&last) = raw.last() else {
+        let candidates = q.rows(conn, |r| int(r, 0)).await?;
+        let Some(&last) = candidates.last() else {
             next = None; // nothing at or past the cursor: the seed is exhausted
             break;
         };
-        let exhausted = (raw.len() as i64) < window;
-        let mut candidates = raw;
-        candidates.dedup(); // ordered, so adjacent equal ids are one tender
+        let exhausted = (candidates.len() as i64) < window;
         // 2. Membership at the head version, once per tender.
         let members = head_members(conn, table, role, org, &candidates).await?;
         // 3. The members' lots after the cursor, in (tender, lot) order — the

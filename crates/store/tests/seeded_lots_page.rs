@@ -26,8 +26,9 @@ async fn scratch(name: &str) -> (turso::Connection, String) {
 const ORG: i64 = 7;
 const OTHER: i64 = 8;
 
-/// Nine tenders. Versions per tender vary (1–3) so the seed window, which is in
-/// index ROWS, ends inside a tender more than once. Lot ids are handed out so that
+/// Nine tenders. Versions per tender vary (1–3) so the org's index rows per
+/// tender vary too and the window (in tenders) groups several rows into one
+/// candidate more than once. Lot ids are handed out so that
 /// `(tender, lot)` order is visibly NOT lot-id order: tender 5's lots get the
 /// lowest ids, tender 1's the next.
 ///
@@ -209,9 +210,9 @@ async fn the_seeded_walk_returns_the_stream_set_in_tender_order_once_and_termina
     assert_eq!(oracle(&conn, &bidder).await, expected_bidder);
 
     for (label, filter, expected) in [("winner", &winner, &expected_winner), ("bidder", &bidder, &expected_bidder)] {
-        // Tiny windows (2 index rows — less than one deep tender), one window per
-        // page, limit 2: most pages are short, several are empty, every cursor is
-        // a position the next page resumes from exactly.
+        // Tiny windows (2 tenders), one window per page, limit 2: most pages are
+        // short, several are empty, every cursor is a position the next page
+        // resumes from exactly.
         let (small, pages_small) = walk(&conn, filter, 2, 2, 1).await;
         assert_eq!(&small, expected, "{label}: tiny windows return the set in (tender, lot) order");
 

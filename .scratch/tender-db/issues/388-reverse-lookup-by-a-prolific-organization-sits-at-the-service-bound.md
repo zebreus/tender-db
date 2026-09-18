@@ -429,6 +429,28 @@ id-ordered stream's set (`read::tenders`, the oracle; a lotless winning tender I
 2-row windows and at the production window, routed through `tenders_page`, a guard-answered
 companion (`source=doe`) and a walk-answered one (`published_after` in 2033: short pages with a
 cursor, then the end); and the handler walk at `limit=1` over `/v1/tenders?winner=` beside the
-lots one. Owed live: `?bidder=357` and `?winner=357` at `limit=100`, page 1 and deep, against
-3.15 s / 1.25 s.
+lots one.
+
+**Deployed at `5be4c5c` 12:30 UTC and read at 12:31 — one number went the WRONG way, and the
+walk's first cut had two defects the fixture was too small to price.** `/v1/tenders?bidder=357`
+page 1: 0.73 s from 3.15 s, good; but `/v1/tenders?winner=357` page 1: **3.44 s from 1.25 s**,
+and both pages came back SHORT (25 and 26 rows at `limit=100`). Read off the plans, same
+afternoon:
+
+1. `head_members` drove from the participation table with `p.tender_id IN (…)` and a correlated
+   `MAX(seq)`, and turso bound ONLY `organization_id` — `SEARCH … USING INDEX …_org_tender
+   (organization_id=?)`, a hash table for DISTINCT, the subquery per row. Every call scanned the
+   org's whole slice: 3.55M rows for org 357's wins, eight times per page. Now it drives from
+   `tenders` by primary key with the row's own `current_seq` as the head, and the probe is one
+   seek per candidate (`SEARCH p USING INDEX sqlite_autoindex_…_1 (tender_id=? AND seq=?)` for
+   winners, `…_org_tender (organization_id=? AND tender_id=?)` for bids).
+2. The window counted index ROWS (256), and org 357 carries ~950 winner rows per tender, so
+   eight windows were ~26 tenders and the page was short by construction. The window is now in
+   TENDERS: `GROUP BY tender_id ORDER BY tender_id LIMIT 64` — turso serves the grouping off the
+   index's own order with no temporary structure and stops at the limit (`DISTINCT` builds a
+   hash table over every row past the cursor instead; both plans read). The plan probe test pins
+   the grouped statement.
+
+The lots walk gained both fixes too; its first-cut numbers above stood only because a page of
+100 lots spans a handful of org-357 tenders. Numbers after the second deploy below.
 
