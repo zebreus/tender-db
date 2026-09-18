@@ -1,6 +1,6 @@
 # 386 — FTS: a publisher-reused ocid welds different buyers' procurements into one Tender, and no FTS contract value is ever parsed
 
-Status: ready-for-agent — unit 2a FIXED and gated 2026-09-16 (the contract's own published value, and the contract-less award's decision date; see the section at the foot). Unit 1 (the ocid weld) and unit 2b (periods, `BT-3202`/`OPT-315`, the ADR-0004 checklist) are open. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — **unit 1's key election is BUILT and gated 2026-09-18** (`2c2d0b0`, see the foot): an FTS ocid whose releases carry two or more distinct buyer sets splits per buyer at the plan's refused-key gate, pinned at the store and end to end; the standing FTS rows keep the welded shape until the fts profile is refolded — a production write the operating session's classifier refuses, so it waits for Lennart's go-ahead with the command at the foot. Unit 2a FIXED and gated 2026-09-16 (the contract's own published value, and the contract-less award's decision date). Unit 2b (periods, `BT-3202`/`OPT-315`, the ADR-0004 checklist) is open. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (sources / fts profile) — unit 1 welds records that were never one procurement, unit 2 serves money and dates the source publishes as `null`
 Relates to: 342 (the FTS source; unit 2 complete, OPEN on the 2021-01 backfill and the docs — the parent of both units), 369 (the placeholder procedure-key gate and its unit-5 buyer grouping, which unit 1 extends), 377 (the same constant-key-publisher shape, decided NO GATE on TED for a class of 4 — and it says a platform-level cause reverses that), 34 (the original "every notice sharing the key collapses into one Tender"), 364 (the weld gauge `c0c2581` the FTS arm should feed), 255 (the award decision date's canonical homes, which unit 2's award-only releases never reach), ADR-0003 (merge only on a strong explicit cross-reference), ADR-0004 (the per-profile mapped-or-ignored checklist the `fts` module does not declare), ADR-0014 (contracts as one of the four money loci), CONTEXT.md:113-114, `docs/research/uk-fts.md` §4, `.scratch/tender-db/342-fts-plan.md` §3
 Blocked by: nothing
@@ -409,3 +409,58 @@ field.
 lot_results still without a decision date. Sizing that against source absence (the contract-bearing
 shapes genuinely publish no `awards[].date`, per the note in unit 2 above) is unit 2b's work, beside
 the periods and the `BT-3202`/`OPT-315` linkage.
+
+## Unit 1 BUILT 2026-09-18 — the register ocid splits per buyer; the refold waits for a go-ahead
+
+**The rule, and where it lives (`2c2d0b0`).** The `## Done when` offered two routes; the first is taken:
+issue 369 unit 5's refused-key pre-filter is extended to `source = 'fts'`. In `build_plan_groups`
+(`crates/store/src/canonical.rs`) a second arm fills `plan_refused_key` with every FTS `procedure_key`
+whose notices carry **two or more distinct buyer SETS** (`COUNT(DISTINCT buyer_key) >= 2`), and the
+existing `refused:` arm of the `group_key` election then splits the ocid per buyer — so the served
+`procedure_key` of each part reads `refused:<ocid>:<buyer key>`, exactly as 369 unit 5 already serves
+TED's placeholder keys. Nothing in the parser changed: `BT-04-notice` is still the ocid.
+
+Why 2 and not the placeholder gate's 3: that `>= 3` absorbs the org-layer duplicate floor measured on
+TED (two "buyers" that are one entity twice). `buyer_key` is parsed-side, and on FTS it is the
+publisher's own stable party id (`GB-PPON-…`) through the resolver's normaliser, so two distinct sets
+under one ocid are two buyers. A joint procurement lists its buyers in ONE release and repeats that
+set, so it stays one Tender; a single-buyer chain of any length (7954590's 123 versions) is untouched.
+The failure direction is CONTEXT.md's: a buyer that re-registers under a new id splits its own chain —
+never a weld. The arm reads a partial index `plan_notice_fts_key … WHERE source = 'fts'`, so it is an
+index read of the FTS rows rather than a walk of the 14M-row plan, and the index-free `group_key`
+UPDATE never touches it. The projection logs `refused-keys (fts): N ocid(s)` every run, zero included.
+
+**Tests, both directions.** Store: `an_fts_ocid_shared_by_two_buyers_splits_per_buyer_and_a_one_buyer_chain_stays_one`
+— a register with Anglian, Scottish Hydro ×2 and SSE → three Tenders with Scottish Hydro's two releases
+together; a buyer-less release of the split ocid stays an island; a five-release one-buyer chain keeps
+its ocid; a joint procurement repeating one two-buyer set keeps its ocid; a TED key with two buyer sets
+is untouched (the arm is FTS-only). End to end (`crates/ingest/tests/fts.rs`,
+`releases_under_one_ocid_from_two_buyers_fold_to_two_tenders_and_a_one_buyer_chain_to_one`): six
+synthetic UK6 releases through `process` and `project` — two buyers under one ocid become two Tenders,
+each carrying exactly one buyer organization, and a one-buyer chain becomes one Tender with three
+versions. Gate: full suite green.
+
+**The weld gauge counts the FTS arm.** `weld_fts` in the weekly DQ report — FTS Tenders carrying ≥ 2
+distinct buyer organizations, scoped through `tenders(source, id)` — with its own UNMEASURED line,
+because the register weld (2–30 buyers) sits below the corpus-wide bands and a top-40 listing never
+shows it. Expected reading after the refold: **0**; any non-zero is a recurrence ahead of the 2021→
+backfill (or a joint procurement, which the listing's `per-ver` separates). JSON: `weld_candidates.fts_multi_buyer`.
+
+**Departure recorded.** `342-fts-plan.md` §3b item 7: "one Tender per ocid" does not hold on the
+utilities register, and what replaces it.
+
+**Not done here, and why.** The buyers-differ SELECT over 7954583–7975000 (the reporter's 19 tenders /
+55 versions) was not re-run: it is a data-page read over an unindexed `mention_section_id` grouping
+and would 408; the gauge above is its standing form. The live acceptance (7954584 no longer serving
+Scottish Hydro's and SSE's contracts; `?publication_id=033117-2025` and `031078-2025` resolving to two
+tenders) needs the standing FTS rows re-grouped, which is a `refold` over profile `fts:ocds-1.1` —
+**a production write the operating session's classifier refuses**, so it waits with the other gated
+jobs. After the deploy, via `/root/aj.sh` on the box:
+
+1. **size it**: `refold` with `profiles: ["fts:ocds-1.1"]` and `expect: 1` — it aborts with
+   "N notices match, expected ~1 (nothing was written)"; N should be ~10,600 (job 2325's count);
+2. **the wet run**: the same body with `expect: N`; then a `project` (or the daily tick's).
+
+Then: `GET /v1/tenders?source=fts&publication_id=033117-2025` and `…=031078-2025` land on two different
+tenders; `GET /v1/tenders/7954584` (or whichever id Anglian's part keeps) lists only Anglian's 11
+contracts; the next weekly report's `weld_fts` reads 0. Record the before/after here.
