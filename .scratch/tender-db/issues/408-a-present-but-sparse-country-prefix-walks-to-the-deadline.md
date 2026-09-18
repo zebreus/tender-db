@@ -1,6 +1,6 @@
 # 408 — `?country=GR` walks to the 30 s deadline: the country seed's density cap measures history, and the walk it hands off to is ordered by id
 
-Status: ready-for-agent — **option (b) is BUILT and gated 2026-09-18** (`de36071`, see the foot): an isolated, unseeded id-ordered list walk examines one band of 500,000 ids per page and hands back the last id EXAMINED as the cursor, on tenders and lots, pinned at the store and through the handler; deploy pending, then the live probe. Was: **the 503 IS FIXED on prod 2026-09-17** (`301ee34`): `?country=GR` went from
+Status: **DONE 2026-09-18** — option (b) is DEPLOYED and VERIFIED at `6386ecc` (see the foot): an isolated, unseeded id-ordered list walk examines one band of 500,000 ids per page and hands back the last id EXAMINED as the cursor, on tenders and lots; the kuna walk that took 24.89 s to fill one page answers in 3.47 s with a short page, `more: true` and the cursor at the band end, and the dense values are unchanged. Unit 2 (enumerate the other retired spellings) is informational now and folds into 171's caveat line; unit 3 (the `/docs` caveat for `GR`/`EL` and `GB`/`UK`) is the one line still open, tracked under 171. Was: **option (b) BUILT and gated** (`de36071`). Was: **the 503 IS FIXED on prod 2026-09-17** (`301ee34`): `?country=GR` went from
 503-after-30.68 s to **200 in 5.29 s** with correct rows, by raising `COUNTRY_SEED_CAP` past GR's
 measured 87,026 entries. It is still ~7x slower than a dense country, and a retired spelling above the
 new cap would fail the same way — so **unit 1's decision, option (b), a bounded fallback walk, STANDS**
@@ -329,3 +329,25 @@ lowercased for every collection while lot kinds are stored `Lot`/`LotsGroup`/`Pa
 never matches, and the guard's lots `kind` probe is a bare scan of `tender_version_lots` that ran to
 the 30 s deadline on prod (`?kind=lot` → 503 in 30.66 s). That walk runs INSIDE `reachable()`, before
 the page query, so option (b) does not shorten it. Filed as 415 with the measurements.
+
+### Verified live 2026-09-18 09:14 UTC, rev `6386ecc` (gate 125/125 green, deployed 09:13 on an idle queue)
+
+Same requests, same idle box, one run each, before (`a52390b`, 09:05) and after:
+
+| request | before | after |
+| --- | --- | --- |
+| `/v1/tenders?currency=HRK&limit=50` (the retired kuna — dense in history, absent from the head: exactly the GR shape one filter over) | **200 in 24.89 s**, 50 items, `next_cursor` 5026154 — the walk crossed 5M ids to fill one page | **200 in 3.47 s**, 0 items, `more: true`, `next_cursor` **500000** — one band examined, the cursor at its end |
+| `/v1/tenders?currency=ISK&limit=50` | 200 in 2.56 s, 50 items | 200 in 1.04 s, 50 items, cursor 143210 (fills inside the first band: unchanged shape) |
+| `/v1/lots?currency=ISK&limit=50` | 200 in 3.91 s, 50 items | 200 in 3.42 s, 50 items (fills inside the band: unchanged) |
+| `/v1/tenders?country=GR&limit=2` | 200 in 5.29 s (09-17) | 200 in 1.36 s, 2 items (seeded, so not banded — the cap fix, not this one) |
+| `/v1/tenders?country=EL&limit=50` | 0.69–0.87 s | 200 in 0.87 s (dense, fills inside the band: unchanged) |
+
+Read the trade honestly: a client that wants 50 kuna tenders now pays ~10 bounded pages of ~3.5 s
+(the band is examined at ~144k ids/s here — the per-row amount `EXISTS` is dearer than the country
+probe's) instead of one 24.9 s request; a value that is absent from the head altogether pays the same
+per band and never a 503. What is bounded is the cost of ONE request on an unauthenticated surface,
+which was issue 219's concern and this issue's live defect; the total cost of a sparse walk is the
+same work, paid in instalments a client can stop. The dense values — the ordinary case — pay nothing.
+
+The `## Verify` line still reads the cap half (`GR` → 200 in 1.36 s); option (b)'s own verification is
+the HRK row above: a short page with `more: true` and `next_cursor` at a band boundary.
