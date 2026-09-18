@@ -130,6 +130,7 @@ pub fn parse(bytes: &[u8]) -> Result<Parsed, Rejected> {
     }
 
     // Lots BEFORE items, so an item's `relatedLot` has a section to hang on.
+    let inherited = inherited_periods(&release.awards, &release.contracts);
     for lot in &tender.lots {
         let Some(id) = lot.id.as_deref().filter(|s| !s.is_empty()) else { continue };
         w.section(id, "Lot", ROOT);
@@ -140,12 +141,18 @@ pub fn parse(bytes: &[u8]) -> Result<Parsed, Rejected> {
             w.text(id, "BT-24-Lot", &lang, d);
         }
         w.money(id, "BT-27-Lot", lot.value.as_ref())?;
-        if let Some(p) = &lot.contract_period {
+        // The lot's own period, else the one its award or that award's
+        // contract publishes for it (issue 386 unit 2b; `inherited_periods`).
+        let period = match &lot.contract_period {
+            Some(p) => Some((p, "lot contractPeriod")),
+            None => inherited.get(id).copied(),
+        };
+        if let Some((p, what)) = period {
             if let Some(s) = p.start_date.as_deref() {
-                w.push(id, "BT-536-Lot", instant(s, "lot contractPeriod.startDate")?);
+                w.push(id, "BT-536-Lot", instant(s, &format!("{what}.startDate"))?);
             }
             if let Some(e) = p.end_date.as_deref() {
-                w.push(id, "BT-537-Lot", instant(e, "lot contractPeriod.endDate")?);
+                w.push(id, "BT-537-Lot", instant(e, &format!("{what}.endDate"))?);
             }
         }
     }
@@ -639,7 +646,7 @@ struct Money {
     currency: Option<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 struct Period {
     start_date: Option<String>,
@@ -707,6 +714,10 @@ struct Award {
     value: Option<Money>,
     #[serde(default)]
     related_lots: Vec<String>,
+    /// The contract's duration, published on the AWARD by a UK6 (083650-2026
+    /// carries it here and nowhere else). Inherited by the one lot the award
+    /// names — see [`inherited_periods`].
+    contract_period: Option<Period>,
     #[serde(default)]
     suppliers: Vec<PartyRef>,
     #[serde(default)]
@@ -720,6 +731,59 @@ impl Award {
     fn is_delta(&self) -> bool {
         self.status.is_none() && self.value.is_none() && self.suppliers.is_empty()
     }
+}
+
+/// The period a lot inherits when it publishes none of its own (issue 386
+/// unit 2b). FTS puts a contract's duration on the award (083650-2026, a UK6
+/// whose lot carries no period) or on the contract (028961-2025), where eForms
+/// puts it on the lot as BT-536/537-Lot — so without this every FTS lot served
+/// `duration_start: null` while its notice published a duration.
+///
+/// The inheritance is narrow on purpose. Only an award that names exactly one
+/// lot says anything about THAT lot's duration; a multi-lot award's period is
+/// the award's, not any one lot's. The award's own `contractPeriod` beats its
+/// contracts' `period`. And candidates that disagree — two single-lot awards
+/// on the same lot, or two contracts of one award — leave the lot without a
+/// period rather than pick one. A lot's own period is never overridden: the
+/// walk consults this map only in its absence. The label beside each period
+/// names its source for the quarantine detail when a date is unreadable.
+fn inherited_periods<'a>(
+    awards: &'a [Award],
+    contracts: &'a [Contract],
+) -> HashMap<&'a str, (&'a Period, &'static str)> {
+    let mut candidates: HashMap<&str, Vec<(&Period, &'static str)>> = HashMap::new();
+    for award in awards {
+        let Some(aid) = award.id.as_deref().filter(|s| !s.is_empty()) else { continue };
+        if award.is_delta() {
+            continue;
+        }
+        let [lot] = award.related_lots.as_slice() else { continue };
+        let found = match &award.contract_period {
+            Some(p) => Some((p, "award contractPeriod")),
+            None => agreed(
+                contracts
+                    .iter()
+                    .filter(|c| c.award_id.as_deref() == Some(aid))
+                    .filter_map(|c| c.period.as_ref()),
+            )
+            .map(|p| (p, "contract period")),
+        };
+        if let Some(found) = found {
+            candidates.entry(lot.as_str()).or_default().push(found);
+        }
+    }
+    candidates
+        .into_iter()
+        .filter_map(|(lot, found)| {
+            agreed(found.iter().map(|(p, _)| *p)).map(|p| (lot, (p, found[0].1)))
+        })
+        .collect()
+}
+
+/// The one period a set of candidates agrees on, or none when they differ.
+fn agreed<'a>(mut periods: impl Iterator<Item = &'a Period>) -> Option<&'a Period> {
+    let first = periods.next()?;
+    periods.all(|p| p == first).then_some(first)
 }
 
 #[derive(Deserialize)]
@@ -738,6 +802,10 @@ struct Contract {
     /// it settles: 028961-2025 carries `awards[0].value = null` beside
     /// `contracts[0].value = 54393.6 GBP` (issue 386 unit 2).
     value: Option<Money>,
+    /// The contract's duration, when the publisher put it on the contract
+    /// rather than the award (028961-2025). Inherited by the one lot the
+    /// contract's award names — see [`inherited_periods`].
+    period: Option<Period>,
     #[serde(default)]
     documents: Vec<Document>,
 }
@@ -1144,5 +1212,77 @@ mod tests {
             panic!("the deadline must land")
         };
         assert_eq!((has_time, offset_minutes), (false, 60));
+    }
+
+    /// Issue 386 unit 2b: FTS publishes a contract's duration on the award
+    /// (083650-2026) or on the contract (028961-2025), never on the lot where
+    /// eForms' BT-536/537-Lot live — so every FTS lot served a null duration.
+    /// The one lot each award names inherits the period; a lot that publishes
+    /// its own (083563-2026) keeps it.
+    #[test]
+    fn a_lot_without_a_period_inherits_its_single_lot_awards_or_that_awards_contracts() {
+        // From the award's `contractPeriod` — a UK6 with no contracts[] at all.
+        let p = parsed("083650-2026");
+        assert_eq!(
+            one(&p, "1", "BT-536-Lot"),
+            Some(NoticeValue::Date { utc_seconds: 1_789_686_000, offset_minutes: 60, has_time: true }),
+            "2026-09-18T00:00:00+01:00, awards[0].contractPeriod.startDate"
+        );
+        assert_eq!(
+            one(&p, "1", "BT-537-Lot"),
+            Some(NoticeValue::Date { utc_seconds: 1_806_533_999, offset_minutes: 60, has_time: true }),
+            "2027-03-31T23:59:59+01:00"
+        );
+        // From the contract's `period`, the award publishing none.
+        let q = parsed("028961-2025");
+        assert_eq!(
+            one(&q, "1", "BT-536-Lot"),
+            Some(NoticeValue::Date { utc_seconds: 1_747_612_800, offset_minutes: 0, has_time: true }),
+            "2025-05-19T00:00:00Z, contracts[0].period.startDate"
+        );
+        assert_eq!(
+            one(&q, "1", "BT-537-Lot"),
+            Some(NoticeValue::Date { utc_seconds: 1_842_307_199, offset_minutes: 0, has_time: true }),
+            "2028-05-18T23:59:59Z"
+        );
+        // A lot with its own period keeps it.
+        let r = parsed("083563-2026");
+        assert_eq!(
+            one(&r, "1", "BT-536-Lot"),
+            Some(NoticeValue::Date { utc_seconds: 1_793_750_400, offset_minutes: 0, has_time: true }),
+            "2026-11-04T00:00:00+00:00, tender.lots[0].contractPeriod.startDate"
+        );
+    }
+
+    /// The inheritance's refusals, on one synthetic release: a lot's own period
+    /// is never overridden, a multi-lot award says nothing about any one lot,
+    /// two single-lot awards that disagree leave the lot bare, and an award and
+    /// a contract that agree fill it.
+    #[test]
+    fn the_inherited_period_is_narrow() {
+        let payload = br#"{"version":"1.1","releases":[{"ocid":"ocds-x-2",
+            "tender":{"lots":[{"id":"own","contractPeriod":{"startDate":"2026-01-01Z"}},
+                              {"id":"multi-a"},{"id":"multi-b"},{"id":"split"},{"id":"fed"}]},
+            "awards":[
+                {"id":"1","status":"active","relatedLots":["own"],"contractPeriod":{"startDate":"2030-01-01Z"}},
+                {"id":"2","status":"active","relatedLots":["multi-a","multi-b"],"contractPeriod":{"startDate":"2030-01-01Z"}},
+                {"id":"3","status":"active","relatedLots":["split"],"contractPeriod":{"startDate":"2030-01-01Z"}},
+                {"id":"4","status":"active","relatedLots":["split"],"contractPeriod":{"startDate":"2031-01-01Z"}},
+                {"id":"5","status":"active","relatedLots":["fed"],"contractPeriod":{"startDate":"2030-01-01Z"}},
+                {"id":"6","status":"active","relatedLots":["fed"]}],
+            "contracts":[{"id":"c6","awardID":"6","period":{"startDate":"2030-01-01Z"}}]}]}"#;
+        let p = match parse(payload) {
+            Ok(p) => p,
+            Err(Rejected { reason, detail }) => panic!("quarantined as {reason}: {detail}"),
+        };
+        let start = |lot: &str| match one(&p, lot, "BT-536-Lot") {
+            Some(NoticeValue::Date { utc_seconds, .. }) => Some(utc_seconds),
+            _ => None,
+        };
+        assert_eq!(start("own"), Some(1_767_225_600), "the lot's own 2026-01-01, not the award's 2030");
+        assert_eq!(start("multi-a"), None, "a two-lot award's period is nobody's");
+        assert_eq!(start("multi-b"), None);
+        assert_eq!(start("split"), None, "two awards on one lot disagree: nothing");
+        assert_eq!(start("fed"), Some(1_893_456_000), "an award and a contract that agree fill the lot");
     }
 }

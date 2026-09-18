@@ -86,7 +86,7 @@ pub const CHECKLIST: &[(&str, Disposition)] = &[
     ("tender.lots[].title", Mapped("BT-21-Lot")),
     ("tender.lots[].description", Mapped("BT-24-Lot")),
     ("tender.lots[].value", Mapped("BT-27-Lot")),
-    ("tender.lots[].contractPeriod", Mapped("BT-536-Lot / BT-537-Lot — start and end")),
+    ("tender.lots[].contractPeriod", Mapped("BT-536-Lot / BT-537-Lot — start and end; a lot publishing none inherits its single-lot award's (issue 386 unit 2b)")),
     ("tender.lots[].contractPeriod.maxExtentDate", Ignored("owed: the maximum extension date has no destination (issue 386 unit 2b's schema question)")),
     ("tender.lots[].status", Ignored("the lot's OCDS status (`active`/`complete`); the Tender's status is derived from its notices")),
     ("tender.lots[].awardCriteria", Ignored("award criteria are not folded for any source's lots")),
@@ -135,7 +135,8 @@ pub const CHECKLIST: &[(&str, Disposition)] = &[
     ("awards[].documents[].datePublished", Ignored("document metadata")),
     ("awards[].amendments", Ignored("a delta award (`{id, amendments}` only) emits nothing at all, rather than a phantom empty result")),
     ("awards[].aboveThreshold", Ignored("a UK-regime flag with no eForms counterpart")),
-    ("awards[].contractPeriod", Ignored("owed: `tender_version_contracts` has no duration columns, and BT-536/537 are a LOT destination the lot's own period already fills (issue 386 unit 2b's schema decision)")),
+    ("awards[].contractPeriod", Mapped("BT-536-Lot / BT-537-Lot on the one lot the award names, when that lot publishes no period of its own (issue 386 unit 2b; a multi-lot award's period is nobody's, and two awards that disagree fill nothing)")),
+    ("awards[].contractPeriod.maxExtentDate", Ignored("owed: the maximum extension date has no destination (issue 386 unit 2b's schema question)")),
     ("awards[].finalStatusDate", Ignored("when the award's status became final — no destination")),
     ("awards[].hasOptions", Ignored("owed: options are not folded for FTS")),
     ("awards[].options", Ignored("owed: options are not folded for FTS")),
@@ -157,7 +158,8 @@ pub const CHECKLIST: &[(&str, Disposition)] = &[
     ("contracts[].documents[].format", Ignored("document metadata")),
     ("contracts[].documents[].url", Ignored("document metadata")),
     ("contracts[].documents[].datePublished", Ignored("document metadata")),
-    ("contracts[].period", Ignored("owed: `tender_version_contracts` has no duration columns (issue 386 unit 2b's schema decision)")),
+    ("contracts[].period", Mapped("BT-536-Lot / BT-537-Lot on the one lot the contract's award names, when neither the lot nor the award publishes one (issue 386 unit 2b)")),
+    ("contracts[].period.maxExtentDate", Ignored("owed: the maximum extension date has no destination (issue 386 unit 2b's schema question)")),
     ("contracts[].status", Ignored("the contract's OCDS status — no destination")),
     ("contracts[].statusDetails", Ignored("prose beside `status`")),
     ("contracts[].title", Ignored("the contract's own title — no destination")),
@@ -211,6 +213,8 @@ mod tests {
         assert!(matches!(disposition("tender.documents[].url"), Some(Ignored(_))));
         assert!(matches!(disposition("tender.lots[].contractPeriod.startDate"), Some(Mapped(_))));
         assert!(matches!(disposition("tender.lots[].contractPeriod.maxExtentDate"), Some(Ignored(_))));
+        assert!(matches!(disposition("contracts[].period.startDate"), Some(Mapped(_))));
+        assert!(matches!(disposition("contracts[].period.maxExtentDate"), Some(Ignored(_))));
         // A prefix that is not a path boundary does not match: `id` must not cover `identifier`,
         // and `tender.lots` must not cover `tender.lotsGroup` — the `tender` container does.
         assert_eq!(disposition("identifier"), None);
