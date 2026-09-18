@@ -276,3 +276,51 @@ Under 2 minutes, no token:
 - `GET /v1/organizations/27128935` serves `Γ. Χριστοφιλόπουλος ΑΕ`, or 404s/redirects because the row merged into the canonical GR profile; `?winner=` on the surviving id still reaches tender 2247398.
 - The four literal prefix probes return no Greek-mojibake rows: `%C3%97` → 0, `%C3%90` → 0, `%C3%83` → 1 (the Spanish `Ã¿rgano`), `%C3%82` → 18 (the legitimate PT/FR/DK/RO/DE names); `name_prefix=%CE%93` (`Γ`) returns the recovered rows.
 - The same pass answers whether the Greek `TXT-OT` bodies of those records are mangled identically, and either fixes them or files what it found.
+
+## Unit 2 BUILT AND DEPLOYED 2026-09-18 (owner) — the legacy fold is live; eForms deliberately not folded
+
+Rev `ba9eb1f`, `ops/check.sh GATE-EXIT=0`, health green.
+
+`legacy_role` in `crates/ingest/src/project.rs` now folds every role-bearing r208/r209 element name the
+band measurement listed: the winner blocks (`ECONOMIC_OPERATOR_NAME_ADDRESS`, `NAME_ADDRESS_WINNER`,
+`DESCRIPTION_PROCUREMENT.ADDRESS_CONTRACTOR` → `winner`), both appeal bodies → `review-body`, both
+mediation blocks → `mediation-body`, both receipt addresses → `tender-receipt`, the info providers
+→ `further-information` / `specifications-provider` / `appeal-information`. Two decisions worth
+reading rather than assuming:
+
+- **`PURCHASING_ON_BEHALF_YES` → `purchasing-body`, NOT `buyer`.** It is buyer-shaped but it is not
+  this notice's buyer; folding it to `buyer` would move every buyer count and every key election
+  that rides on them (issue 369 unit 2).
+- **The three legislation bodies stay three roles** (`tax-` / `environmental-` /
+  `employment-legislation-information`). They are three different parties. The point is a name that
+  is ours and stable, not a name that is short.
+
+### eForms is NOT folded — and that reversed mid-unit, for a reason worth keeping
+
+The first cut folded `Procedure-Buyer` → `buyer`, `Tenderer` → `tenderer`, `Lot-ReviewOrg` →
+`review-body` as well, on the argument that ONE re-projection should serve every era. Five
+projection tests refused it, and one of them said why in its own assertion message:
+
+    the Tenderer role is Lot-scoped in both versions
+
+**The eForms suffix carries lot/procedure SCOPE that the canonical name does not.** Folding it would
+have silently destroyed a distinction the publisher makes and a test pins, to tidy a vocabulary. So
+`EFORMS_ROLE_MEANING` publishes what each suffix means without applying it — which is exactly the
+alternative this unit's own "Done when" allows — and a test holds the two halves consistent: every
+meaning it names must be a role the legacy fold actually produces. Where the scope should live is its
+own question (`tender_version_parties` already has a `lot` column, so probably "role canonical, scope
+in the column"), and it is a migration with its own acceptance, not a rider on this one.
+
+Both places a consumer meets the vocabulary now say this: `sql.rs`'s column note (which listed five
+spellings describing neither era) and `openapi.json`'s `parties[]` schema (which documented only
+`organization_id`).
+
+### Still open on unit 2
+
+- **The re-projection.** Standing rows carry the raw names until the legacy eras are re-folded;
+  only folds from `ba9eb1f` onward use the vocabulary. The "Done when" re-measure — r208 `winner`
+  and `review-body` non-zero in 5,200,000–5,203,000, `ECONOMIC_OPERATOR_NAME_ADDRESS` 0, tender
+  5216235 serving IQD Invesquia as `winner` — is unrun and cannot pass until then. Issue 364 unit 5
+  shows the shape (an r208 re-parse + full projection is routine).
+- Retiring or annotating the `LIKE '%uyer%'` and `role IN (...)` workarounds. With eForms left as
+  published they are still needed, so they stay — the column note now says why.
