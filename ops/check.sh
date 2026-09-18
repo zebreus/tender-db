@@ -68,7 +68,10 @@ prune_stale_test_binaries
 find /tmp -maxdepth 1 -name 'tender-db-*' -type f -mmin +120 -delete 2>/dev/null || true
 
 started=$(date +%s)
-for args in "test -p model" "test -p store" "test -p ingest" "test-app"; do
+# `test-app-all`, not `test-app` (issue 414): the `--lib` alias runs the 83 server-side
+# unit tests and NOTHING in crates/app/tests — accounts, admin, api, sql, webhooks never
+# ran in any gate, and tests/sql.rs sat red for twelve days behind "117 suites green".
+for args in "test -p model" "test -p store" "test -p ingest" "test-app-all"; do
     printf '\n\033[1m==> cargo %s\033[0m\n' "$args"
     # Unquoted on purpose: each entry is a small fixed argv, and `set -e` carries a
     # failure straight out of the loop.

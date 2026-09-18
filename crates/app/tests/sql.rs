@@ -393,18 +393,22 @@ async fn a_real_analytical_query_answers() {
     assert_eq!(total, 4);
 
     // The acceptance query: top buyers by awarded cents, scoped to a CPV range,
-    // over the canonical layer exactly as a client would write it.
+    // over the canonical layer exactly as a client would write it — in the form the
+    // surface documents since issue 239: the head version read off
+    // `tenders.current_seq`, never through the refused `v_tender_current` pointer
+    // view (this test carried the pre-239 shape and was red, unrun, for twelve days —
+    // issue 414).
     let response = server
         .sql(
             "SELECT o.name, SUM(a.cents) AS total_cents
-               FROM v_tender_current c
+               FROM tenders t
                JOIN tender_version_parties p
-                 ON p.tender_id = c.tender_id AND p.seq = c.seq AND p.role = 'buyer'
+                 ON p.tender_id = t.id AND p.seq = t.current_seq AND p.role = 'buyer'
                JOIN organizations o ON o.id = p.organization_id
                JOIN tender_version_amounts a
-                 ON a.tender_id = c.tender_id AND a.seq = c.seq
+                 ON a.tender_id = t.id AND a.seq = t.current_seq
                JOIN tender_version_classifications x
-                 ON x.tender_id = c.tender_id AND x.seq = c.seq AND x.scheme = 'cpv'
+                 ON x.tender_id = t.id AND x.seq = t.current_seq AND x.scheme = 'cpv'
               WHERE x.code LIKE '7%'
               GROUP BY o.id
               ORDER BY total_cents DESC
@@ -444,8 +448,15 @@ async fn the_analyst_views_answer() {
     let count = |v: &Value| v["rows"][0][0].as_i64().unwrap_or_else(|| panic!("no count in {v}"));
     let buyers: Value = server.sql("SELECT count(*) FROM v_tender_buyers").await.json().await.unwrap();
     assert!(count(&buyers) >= 1, "the chain has a buyer");
+    // A FILTERED read of a `v_*` view is refused since issue 239 (the view would be
+    // scanned whole); the documented form joins the satellite on the head version.
     let cpv: Value = server
-        .sql("SELECT count(*) FROM v_tender_classifications WHERE scheme = 'cpv'")
+        .sql(
+            "SELECT count(*) FROM tenders t
+               JOIN tender_version_classifications x
+                 ON x.tender_id = t.id AND x.seq = t.current_seq
+              WHERE x.scheme = 'cpv'",
+        )
         .await
         .json()
         .await

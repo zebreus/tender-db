@@ -10,10 +10,17 @@
 # which reads exactly like a pass. Nothing is wrong and nothing was checked. So the
 # app crate has an alias that always carries the feature, and it is the one to use:
 #
-#     cargo test-app                  # all 83 server-side unit tests
+#     cargo test-app                  # the 83 server-side UNIT tests (--lib), and only those
 #     cargo test-app health           # filtered, as usual
+#     cargo test-app-all              # unit tests AND crates/app/tests/* — what the gate runs
+#
+# `test-app` is `--lib`: it does not build crates/app/tests/{accounts,admin,api,sql,
+# webhooks}.rs, and for twelve days the gate ran only it — tests/sql.rs was red the
+# whole time (issue 414). `ops/check.sh` runs `test-app-all`; use `test-app` for the
+# quick inner loop, never as the verdict.
 #
 # `cargo test -p store` / `-p ingest` / `-p model` need no alias — those crates have
 # no feature gates and their plain invocations run everything.
 [alias]
 test-app = "test -p tender-db --features server --lib"
+test-app-all = "test -p tender-db --features server --tests"
