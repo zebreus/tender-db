@@ -294,3 +294,26 @@ order no seed can serve. Making it ∝ page means paging in an order the partici
 serve — (tender_id, lot id), with a compound opaque cursor for the org-seeded lots stream — which is
 a contract change for that one shape and wants its own decision. Not taken today; the numbers
 above are its input.
+
+## Comment — 2026-09-18: deployed `79c1bef`; the bidder page is 3.9 s from a 30 s 503, and the winners index is finally building
+
+Live on prod right after the deploy, `/v1/lots?<seed>&limit=5`:
+
+| request | before today | after the seed rewrite (`9d41dc8`) | now (`79c1bef`) |
+| --- | --- | --- | --- |
+| `bidder=357` | `503` 30.6 s | `503` 30.6 s | **`200` 3.9 s**, 5 items |
+| `winner=357` | `503` 30.5 s cold / — | `200` 22.5 s cold, 6.1 s warm | `200` 5.8 s (pre-seed still uncovered, see below) |
+| `buyer=357` / `winner=388` (controls) | 0.8 s / 0.5 s | same | 0.6 s / 0.4 s |
+
+And the boot did what the fixed cap lets it: `supervisor: 1 deferred index(es) missing
+(tender_version_result_winners_org_tender) — queueing a reindex AHEAD of 0 pending job(s)`, then
+the reindex RAN instead of refusing in 0 s — no `REFUSING` line, the exact `COUNT(*)` passed, and
+`CREATE INDEX` is sorting the winners table as this is written. When it lands, the winner pre-seed
+(`SELECT DISTINCT tender_id … WHERE organization_id = ?`) goes index-only and the ~3 s of per-row
+table lookups over org 357's 3.55M winner rows drop out of that 5.8 s; the number goes here.
+
+The gate bit once on the way, and it was CLAUDE.md's documented trap: the two extra queries in
+`too_large_to_build` grew the three index builders' futures, which the `Reindex` arm awaits inside
+`run_spec`'s one giant future, and `an_execute_without_an_expected_count_is_refused` — a test with no
+relation to any of this — overflowed its stack. Boxing the arm's body (`Box::pin(async move …)`) is
+the fix the note prescribes, and it held (117 suites, 0 overflows).

@@ -249,3 +249,16 @@ cost must scale with the page, which means driving from the seed and paging with
 than walking `lots` for an `ORDER BY` the seed cannot serve. The numbers above are recorded
 there. The `?winner=<rare>` docs row (`docs.rs:512`) stays as it is until that lands, because it
 is currently true for lots.
+
+## Comment — 2026-09-18 (later): the prolific case is answered — by 388's unit, deployed `79c1bef`
+
+`/v1/lots?bidder=357&limit=5`: **3.9 s, 200, 5 items** — from a 30.6 s 503 this morning.
+`?winner=357`: 5.8 s while the winners covering index builds (it was never built on prod; the
+row-cap estimator refused it at every boot — issue 388 has the mechanism), expected to drop by
+~3 s once the pre-seed is index-only. The cause was never the JOIN inversion this reopen named: the
+lots stream was seed-driven all along, and the cost was the per-LOT copy of a per-TENDER org
+predicate, seeking `bid_parties` by `(organization_id, tender_id)` for each of the org's 137k lots.
+The seed now decides membership at the head version and the per-lot copy is gone.
+
+Stays REOPENED until the winner number after the index is read and the `## Verify` line reads three
+`200`s in seconds; the docs row `?winner=<rare>` in `docs.rs:512` is retired with it.
