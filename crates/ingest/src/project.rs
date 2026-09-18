@@ -3199,13 +3199,28 @@ impl NoticeState {
             let field_id = value.field_id.as_str();
             let fact = match &value.value {
                 NoticeValue::Text { lang, value: v } => {
-                    canonical_name(TEXTS, field_id).map(|field| Fact::Text {
-                        field,
-                        // issue 292: one language vocabulary across eras, or the
-                        // read layer's 'ENG'-wins picks never fire for legacy tags.
-                        lang: normalize_lang(lang.as_deref()),
-                        value: v.clone(),
-                    })
+                    canonical_name(TEXTS, field_id)
+                        // Issue 343: an award block's TITLE — r209 `AWARD_CONTRACT/TITLE`,
+                        // r208 `AWARD_OF_CONTRACT/CONTRACT_TITLE` — is the CONTRACT's
+                        // title, the way eForms' BT-721 is, and BT-721 was never in
+                        // `TEXTS`. A `RES-n` section has no Lot ancestor, so `scope_of`
+                        // files its texts at tender scope, where the contract title
+                        // competed with II.1.1 and the smallest-value tie-break elected
+                        // it: tender 6751050 served "Acquisition d'autocars et leur
+                        // entretien" for "Marché public de fournitures …" (an upper
+                        // bound of 34 % of r209 award tenders carry the shape). The
+                        // lots keep their own titles from their Lot sections, so
+                        // nothing is lost by not filing this one anywhere.
+                        .filter(|field| {
+                            field != "title" || enclosing(&sections, &value.section_id, RESULT_KINDS).is_none()
+                        })
+                        .map(|field| Fact::Text {
+                            field,
+                            // issue 292: one language vocabulary across eras, or the
+                            // read layer's 'ENG'-wins picks never fire for legacy tags.
+                            lang: normalize_lang(lang.as_deref()),
+                            value: v.clone(),
+                        })
                 }
                 NoticeValue::Amount { cents, currency } => {
                     amount_target(field_id, &sections, &value.section_id, has_results).map(|field| {
@@ -6905,6 +6920,78 @@ mod tests {
         let by_id: HashMap<&str, &store::Section> =
             flat.iter().map(|s| (s.id.as_str(), s)).collect();
         assert!(nested_org_aliases(&by_id, &[ORGANIZATION_KIND]).is_empty());
+    }
+
+    /// Issue 343 (the reopened half): an award block's TITLE is the contract's,
+    /// not the Tender's. Tender 6751050 served RES-1's "Acquisition d'autocars et
+    /// leur entretien" as its title because a `RES-n` section files at tender
+    /// scope and the tie-break elects the smallest string. The procedure's own
+    /// II.1.1 title must be the ONLY tender-scope title; the lot keeps the title
+    /// its Lot section publishes; the award block's copy is filed nowhere.
+    #[test]
+    fn an_award_blocks_title_is_the_contracts_not_the_tenders() {
+        let parsed = Parsed {
+            sections: vec![
+                store::Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None },
+                store::Section { id: "LOT-1".into(), kind: "Lot".into(), parent: Some("PROCEDURE".into()) },
+                store::Section {
+                    id: "RES-1".into(),
+                    kind: "LotResult".into(),
+                    parent: Some("PROCEDURE".into()),
+                },
+            ],
+            values: vec![
+                text_value(
+                    "PROCEDURE",
+                    "TED-TITLE",
+                    0,
+                    Some("FR"),
+                    "Marché public de fournitures relatif à l'acquisition d'autocars",
+                ),
+                text_value("LOT-1", "TED-TITLE", 1, Some("FR"), "Acquisition d'autocars et leur entretien"),
+                // The award block restates the lot's title as the contract's — and sorts
+                // before the procedure's, which is exactly how it won the tie-break.
+                text_value("RES-1", "TED-TITLE", 2, Some("FR"), "Acquisition d'autocars et leur entretien"),
+                // A non-title text in the same block still folds: the rule is about
+                // the ONE field that competes for the Tender's identity.
+                text_value("RES-1", "TED-SHORT_DESCR", 3, Some("FR"), "Lot 1 : autocars"),
+            ],
+        };
+        let notice = store::NoticeRef {
+            id: 21658774,
+            source: "ted".into(),
+            publication_id: "201318-2021".into(),
+            profile: "ted-export-r209".into(),
+        };
+        let state = NoticeState::read(&notice, &parsed);
+
+        let tender_titles: Vec<&str> = state
+            .facts
+            .iter()
+            .filter_map(|f| match f {
+                Fact::Text { field, value, .. } if field == "title" => Some(value.as_str()),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(
+            tender_titles,
+            vec!["Marché public de fournitures relatif à l'acquisition d'autocars"],
+            "only the procedure's II.1.1 is a tender-scope title; the award block's contract title is not: {tender_titles:?}"
+        );
+        let lot = state.lots.iter().find(|l| l.key == "LOT-1").expect("LOT-1 is a lot of the notice");
+        let lot_titles: Vec<&str> = lot
+            .facts
+            .iter()
+            .filter_map(|f| match f {
+                Fact::Text { field, value, .. } if field == "title" => Some(value.as_str()),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(lot_titles, vec!["Acquisition d'autocars et leur entretien"], "the lot keeps its own title");
+        assert!(
+            state.facts.iter().any(|f| matches!(f, Fact::Text { field, value, .. } if field != "title" && value == "Lot 1 : autocars")),
+            "a non-title text in the award block still folds where it always did"
+        );
     }
 
     /// ADR-0013 D4: `mentions()` keeps every LABELLED language variant of the
