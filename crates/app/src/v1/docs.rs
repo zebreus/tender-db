@@ -553,7 +553,7 @@ milliseconds.</p>
   <tr><td>Ordered tender list</td><td class="ep">?sort=published_at, ?sort=deadline</td><td>2&ndash;13 ms</td><td>main</td></tr>
   <tr><td>Filter, common value</td><td class="ep">?country=DE, ?cpv=45</td><td>~40 ms</td><td>isolated</td></tr>
   <tr><td>Filter, absent value</td><td class="ep">?country=ZZ</td><td>&lt;1 ms*</td><td>isolated</td></tr>
-  <tr><td>Filter, sparse value</td><td class="ep">?buyer=&lt;rare&gt;, ?winner=&lt;rare&gt;, ?bidder=&lt;rare&gt;</td><td>walks &rarr; up to a full scan; 503 under load</td><td>isolated</td></tr>
+  <tr><td>Filter, org reverse-lookup</td><td class="ep">?buyer=&lt;org&gt;, ?winner=&lt;org&gt;, ?bidder=&lt;org&gt;</td><td>seed-driven on both collections: ~0.5 s for an ordinary org; a few seconds for the most prolific (a distributor over 334k lots: ~3&ndash;4 s warm, longer cold) &mdash; the cost is the org&rsquo;s lot count, not the page (issue 388)</td><td>isolated</td></tr>
   <tr><td>Change feed</td><td class="ep">GET /v1/changes?since=0</td><td>&lt;1 ms</td><td>main</td></tr>
   <tr><td>SQL (bounded)</td><td class="ep">POST /v1/sql (indexed SELECT)</td><td>~1 ms</td><td>isolated, 10 s cap</td></tr>
   <tr><td>Metadata</td><td class="ep">/v1, /docs, /v1/openapi.json, /health</td><td>&lt;1 ms</td><td>&mdash;</td></tr>
