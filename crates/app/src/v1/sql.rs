@@ -686,8 +686,17 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
     (
         "tender_version_parties",
         "role",
-        "Buyer roles appear as 'buyer' or 'Procedure-Buyer' (era-dependent — match with \
-         role LIKE '%uyer%'); results-layer roles are 'winner', 'tenderer', 'subcontractor'.",
+        "TWO vocabularies, deliberately (issue 393). The LEGACY eras fold onto \
+         canonical roles: 'buyer', 'purchasing-body', 'winner', 'review-body', \
+         'mediation-body', 'tender-receipt', 'further-information', \
+         'specifications-provider', 'appeal-information' and the three \
+         '*-legislation-information' bodies. eForms is served AS PUBLISHED \
+         ('Procedure-Buyer', 'Tenderer', 'Lot-ReviewOrg'), because the suffix \
+         carries lot/procedure SCOPE the canonical name would lose. So buyers are \
+         'buyer' OR 'Procedure-Buyer' — match with role LIKE '%uyer%' — and \
+         winners are 'winner' OR 'Tenderer'. Rows written before the issue-393 \
+         re-projection may still carry the raw legacy element name, e.g. \
+         'ECONOMIC_OPERATOR_NAME_ADDRESS' for a winner.",
     ),
     (
         "*",

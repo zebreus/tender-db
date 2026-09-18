@@ -5285,6 +5285,8 @@ fn amount_target(
 fn role_name(field_id: &str) -> Option<String> {
     for prefix in ["OPT-300-", "OPT-301-"] {
         if let Some(rest) = field_id.strip_prefix(prefix) {
+            // NOT folded onto the canonical names, and that is a decision, not
+            // an omission — see `eforms_role`'s note (issue 393 unit 2).
             return Some(rest.to_owned());
         }
     }
@@ -5373,17 +5375,99 @@ fn buyer_key(sdk01: bool, notice_id: i64, parsed: &Parsed) -> Option<String> {
     (!keys.is_empty()).then(|| keys.join("|"))
 }
 
-/// Fold a legacy address-block element name onto a canonical party role.
+/// Fold a legacy address-block element name onto a canonical party role
+/// (issue 393 unit 2).
+///
+/// The fallback returns the element name unchanged, and for years that fallback
+/// WAS the vocabulary: in `tender_id` 5,200,000–5,203,000 the r208 era served
+/// 22 distinct role strings over 24,772 rows, of which **6,309 were winners
+/// filed as `ECONOMIC_OPERATOR_NAME_ADDRESS`** while `winner` read 403 — every
+/// one of those 403 from the other profile. A consumer filtering on `winner`
+/// got zero r208 winners and an answer that looked honestly empty.
+///
+/// It had already misled this system's own instruments twice: issue 364's buyer
+/// gauge read 0 buyers and reported green until it was widened to
+/// `role IN ('buyer','Procedure-Buyer')`, and issue 225 shipped
+/// `role LIKE '%uyer%'` into the serving path for the same reason. Those are the
+/// per-consumer cost of an unfolded vocabulary.
+///
+/// Blocks that are genuinely distinct parties keep distinct roles — the three
+/// legislation-information bodies are three different bodies, and collapsing them
+/// to one name would lose what the publisher said. What changes is that the name
+/// is OURS and stable, not TED's element spelling.
 fn legacy_role(element: &str) -> String {
     match element {
         "ADDRESS_CONTRACTING_BODY"
         | "ADDRESS_CONTRACTING_BODY_ADDITIONAL"
         | "CA_CE_CONCESSIONAIRE_PROFILE" => "buyer".to_owned(),
-        "ADDRESS_CONTRACTOR" | "ADDRESS_WINNER" | "WINNER" => "winner".to_owned(),
-        "ADDRESS_REVIEW_BODY" | "ADDRESS_REVIEW_INFO" => "review-body".to_owned(),
+        // The authority purchasing on another's behalf is a buyer-shaped party but
+        // NOT this notice's buyer, and folding it to `buyer` would change every
+        // buyer count and every key election that rides on them (issue 369).
+        "PURCHASING_ON_BEHALF_YES" => "purchasing-body".to_owned(),
+        "ADDRESS_CONTRACTOR"
+        | "ADDRESS_WINNER"
+        | "WINNER"
+        | "ECONOMIC_OPERATOR_NAME_ADDRESS"
+        | "NAME_ADDRESS_WINNER"
+        | "DESCRIPTION_PROCUREMENT.ADDRESS_CONTRACTOR" => "winner".to_owned(),
+        "ADDRESS_REVIEW_BODY"
+        | "ADDRESS_REVIEW_INFO"
+        | "APPEAL_PROCEDURE_BODY_RESPONSIBLE"
+        | "RESPONSIBLE_FOR_APPEAL_PROCEDURES" => "review-body".to_owned(),
+        "MEDIATION_PROCEDURE_BODY_RESPONSIBLE" | "ADDRESS_MEDIATION_BODY" => {
+            "mediation-body".to_owned()
+        }
+        "TENDERS_REQUESTS_APPLICATIONS_MUST_BE_SENT_TO" | "ADDRESS_PARTICIPATION" => {
+            "tender-receipt".to_owned()
+        }
+        "FURTHER_INFORMATION" | "ADDRESS_FURTHER_INFO" => "further-information".to_owned(),
+        "SPECIFICATIONS_AND_ADDITIONAL_DOCUMENTS" => "specifications-provider".to_owned(),
+        "LODGING_INFORMATION_FOR_SERVICE" | "SERVICE_FROM_INFORMATION" => {
+            "appeal-information".to_owned()
+        }
+        "TAX_LEGISLATION" => "tax-legislation-information".to_owned(),
+        "ENVIRONMENTAL_PROTECTION_LEGISLATION" => {
+            "environmental-legislation-information".to_owned()
+        }
+        "EMPLOYMENT_PROTECTION_WORKING_CONDITIONS" => {
+            "employment-legislation-information".to_owned()
+        }
+        // Deliberately NOT folded: `TRANSLITERATED_ADDR` is issue 393 unit 1's
+        // subject (a TED-generated transliteration block that should not be a
+        // party at all), and `AWARD_AND_CONTRACT_VALUE` is a section wrapper whose
+        // party meaning nobody has established. An unfolded name still reaches
+        // issue 368's sieve, which is where a new one should show up.
         other => other.to_owned(),
     }
 }
+
+/// What an eForms `OPT-30x` role suffix MEANS in the canonical vocabulary — the
+/// published mapping, deliberately not applied (issue 393 unit 2).
+///
+/// The first cut of this unit folded eForms too, on the argument that one
+/// re-projection should serve every era. Five projection tests refused it, and
+/// one of them said why in its own assertion message: *"the Tenderer role is Lot-
+/// scoped in both versions"*. **The eForms suffix carries SCOPE — `Lot-ReviewOrg`
+/// against a procedure-level one — and the canonical name does not.** Folding it
+/// would have silently destroyed a distinction the publisher makes and a test
+/// pins, to tidy a vocabulary.
+///
+/// So the legacy fold ships and this does not. Where the scope belongs is its own
+/// question: `tender_version_parties` already has a `lot` column, so the answer is
+/// probably "role canonical, scope in the column it already has" — but that is a
+/// migration with its own acceptance, not a rider on this one. Issue 393 unit 2's
+/// acceptance allows exactly this: folded, **or** documented as a deliberate
+/// second vocabulary with the mapping published. This is the publication.
+#[cfg(test)]
+const EFORMS_ROLE_MEANING: &[(&str, &str)] = &[
+    ("Procedure-Buyer", "buyer"),
+    ("Procedure-SProvider", "service-provider"),
+    ("Tenderer", "tenderer"),
+    ("Lot-ReviewOrg", "review-body"),
+    ("Lot-TenderReceipt", "tender-receipt"),
+    ("Lot-AddInfo", "further-information"),
+    ("Lot-Mediator", "mediation-body"),
+];
 
 /// The legacy TED profiles (text / ted-export-r208 / ted-export-r209) chain by
 /// transitive OJS-number closure; eForms and DÖE key on their own identifiers.
@@ -7727,6 +7811,11 @@ mod tests {
         assert_eq!(upper.len(), 1);
     }
 
+    /// Roles come from the `OPT-300`/`OPT-301` organization-reference families.
+    /// The suffix is served AS PUBLISHED — issue 393 unit 2 folds the legacy
+    /// element names onto canonical roles and deliberately leaves this one alone,
+    /// because the suffix carries lot/procedure scope the canonical name would
+    /// lose. `EFORMS_ROLE_MEANING` publishes what each one means.
     #[test]
     fn roles_come_from_the_organization_reference_families() {
         assert_eq!(role_name("OPT-300-Procedure-Buyer").as_deref(), Some("Procedure-Buyer"));
@@ -8474,5 +8563,94 @@ mod tests {
         assert_eq!(carried.len(), 2);
         assert!(carried.contains(&text("title", "ENG", "Roof works, revised")));
         assert!(carried.contains(&text("description", "ENG", "unchanged")));
+    }
+
+    /// Issue 393 unit 2: the LEGACY party roles fold onto a canonical vocabulary.
+    ///
+    /// The number that made this worth doing: in `tender_id` 5,200,000–5,203,000
+    /// the r208 era served 6,309 winners under `ECONOMIC_OPERATOR_NAME_ADDRESS`
+    /// against 403 rows reading `winner`, all 403 from the other profile. A
+    /// consumer filtering on `winner` got zero r208 winners and no sign anything
+    /// was missing.
+    #[test]
+    fn the_legacy_party_roles_fold_onto_a_canonical_vocabulary() {
+        // The legacy element names, per era, onto one set.
+        for (element, want) in [
+            ("ECONOMIC_OPERATOR_NAME_ADDRESS", "winner"),
+            ("NAME_ADDRESS_WINNER", "winner"),
+            ("DESCRIPTION_PROCUREMENT.ADDRESS_CONTRACTOR", "winner"),
+            ("ADDRESS_WINNER", "winner"),
+            ("WINNER", "winner"),
+            ("APPEAL_PROCEDURE_BODY_RESPONSIBLE", "review-body"),
+            ("RESPONSIBLE_FOR_APPEAL_PROCEDURES", "review-body"),
+            ("ADDRESS_REVIEW_BODY", "review-body"),
+            ("MEDIATION_PROCEDURE_BODY_RESPONSIBLE", "mediation-body"),
+            ("ADDRESS_MEDIATION_BODY", "mediation-body"),
+            ("TENDERS_REQUESTS_APPLICATIONS_MUST_BE_SENT_TO", "tender-receipt"),
+            ("ADDRESS_PARTICIPATION", "tender-receipt"),
+            ("FURTHER_INFORMATION", "further-information"),
+            ("SPECIFICATIONS_AND_ADDITIONAL_DOCUMENTS", "specifications-provider"),
+            ("LODGING_INFORMATION_FOR_SERVICE", "appeal-information"),
+            ("SERVICE_FROM_INFORMATION", "appeal-information"),
+            ("ADDRESS_CONTRACTING_BODY", "buyer"),
+            ("PURCHASING_ON_BEHALF_YES", "purchasing-body"),
+        ] {
+            assert_eq!(legacy_role(element), want, "legacy {element}");
+            assert_eq!(
+                role_name(&format!("TED-{element}")).as_deref(),
+                Some(want),
+                "through role_name: TED-{element}"
+            );
+        }
+
+        // The three legislation bodies stay THREE roles. They are three different
+        // parties, and folding them together would lose what the publisher said —
+        // the point is that the name is ours and stable, not that it is short.
+        for (element, want) in [
+            ("TAX_LEGISLATION", "tax-legislation-information"),
+            ("ENVIRONMENTAL_PROTECTION_LEGISLATION", "environmental-legislation-information"),
+            ("EMPLOYMENT_PROTECTION_WORKING_CONDITIONS", "employment-legislation-information"),
+        ] {
+            assert_eq!(legacy_role(element), want);
+        }
+
+        // eForms is NOT folded, and that is the decision this unit took after five
+        // projection tests refused the fold — one of them saying why: the suffix
+        // carries lot/procedure SCOPE the canonical name does not. It is served as
+        // published, with its meaning documented rather than applied.
+        assert_eq!(role_name("OPT-300-Procedure-Buyer").as_deref(), Some("Procedure-Buyer"));
+        assert_eq!(role_name("OPT-301-Lot-ReviewOrg").as_deref(), Some("Lot-ReviewOrg"));
+
+        // The published mapping must stay honest: every meaning it names is a role
+        // the legacy fold actually produces, so the two halves describe ONE
+        // vocabulary even while only one of them is applied.
+        let canonical: std::collections::BTreeSet<String> = [
+            "ADDRESS_CONTRACTING_BODY",
+            "PURCHASING_ON_BEHALF_YES",
+            "ECONOMIC_OPERATOR_NAME_ADDRESS",
+            "APPEAL_PROCEDURE_BODY_RESPONSIBLE",
+            "MEDIATION_PROCEDURE_BODY_RESPONSIBLE",
+            "TENDERS_REQUESTS_APPLICATIONS_MUST_BE_SENT_TO",
+            "FURTHER_INFORMATION",
+            "SPECIFICATIONS_AND_ADDITIONAL_DOCUMENTS",
+            "LODGING_INFORMATION_FOR_SERVICE",
+        ]
+        .iter()
+        .map(|e| legacy_role(e))
+        .collect();
+        for (suffix, meaning) in EFORMS_ROLE_MEANING {
+            if ["tenderer", "service-provider"].contains(meaning) {
+                continue; // no legacy element produces these
+            }
+            assert!(
+                canonical.contains(*meaning),
+                "{suffix} claims to mean `{meaning}`, which the legacy fold never produces"
+            );
+        }
+
+        // Refused on purpose, and the fallback is still the element name so a new
+        // one reaches issue 368's sieve rather than being silently renamed.
+        assert_eq!(legacy_role("TRANSLITERATED_ADDR"), "TRANSLITERATED_ADDR");
+        assert_eq!(legacy_role("SOMETHING_TED_INVENTS_NEXT"), "SOMETHING_TED_INVENTS_NEXT");
     }
 }
