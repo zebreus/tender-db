@@ -1,6 +1,6 @@
 # 388 — a reverse lookup by a prolific bidder/winner org re-pays the org's whole participation set on every page: 2.3–4.7 s warm, 15–28 s cold, against a documented sub-25 ms contract
 
-Status: ready-for-agent — **the cursor is inside the seed: BUILT and gated 2026-09-18** (see the last comment): an organization-seeded lots read (`winner`/`bidder`) pages in `(tender, lot)` order off its covering index with a compound opaque cursor, so a page costs a page; the prod re-measurement of `?bidder=357` / `?winner=357` at `limit=100` page 1 and a deep page is owed after the deploy. Unit 1 (the two covering indexes) LANDED 2026-09-16; the winners index was actually built on prod 2026-09-18 (job 1478). Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — **the cursor is inside the seed: BUILT and gated 2026-09-18** (see the last comment): an organization-seeded lots read (`winner`/`bidder`) pages in `(tender, lot)` order off its covering index with a compound opaque cursor, so a page costs a page; DEPLOYED 2026-09-18 12:13 UTC at `c283dd8` and READ LIVE: `/v1/lots?bidder=357&limit=100` **0.62 s** (was 3.7 s warm / 20 s cold), `?winner=357` **0.89 s** (was 3.0 s), ten consecutive deep pages 0.52–0.75 s each, controls unmoved. The TENDERS shape of the same org (`/v1/tenders?bidder=357` 3.15 s) is the last open clause — the same O(org) DISTINCT, and the same windowed walk fixes it with NO cursor change (tenders already page by id). Unit 1 (the two covering indexes) LANDED 2026-09-16; the winners index was actually built on prod 2026-09-18 (job 1478). Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (read layer — the participation reverse-lookup seed; performance and availability)
 Relates to: 223 (RESOLVED "every `winner=`/`bidder=` lookup is sub-25 ms" — that is the contract this
 breaks, and its residual section states the premise that fails here: "an org's row count is bounded by
@@ -392,7 +392,22 @@ probe, the truncation, the examined-to cursor and the seeded arm — and returns
 next}`; the handler passes the raw cursor string in and the rendered cursor out, so no cursor
 grammar is parsed anywhere but beside the read that defines it (`Params::after` is gone).
 
-**Owed after the deploy — the `## Done when` numbers, on prod, warm, `limit=100`:** `?bidder=357`
-and `?winner=357` page 1, and a page deep in the walk (follow ten cursors), against today's 3.7 s /
-3.0 s; the controls (`buyer=357`, `winner=388`) unmoved. Recorded below when read.
+**Read live, 2026-09-18 12:14 UTC, rev `c283dd8`, warm, `limit=100`, network-inclusive:**
+
+| request | before (`79c1bef`, 09-18 morning) | now |
+| --- | --- | --- |
+| `/v1/lots?bidder=357` page 1 | 3.7–3.8 s warm, **20.6 s** cold | **0.62–0.74 s**, 100 items, cursor `2184:5723` |
+| `/v1/lots?winner=357` page 1 | 3.0 s warm, 5.8 s before the index | **0.89 s**, 100 items |
+| `/v1/lots?bidder=357` pages 2–10 (ten cursors followed) | — (each page cost the org) | **0.52–0.75 s each**, 100 items each |
+| `/v1/lots?buyer=357` / `?winner=388` (controls) | 0.6 s / 0.4 s | 0.53 s / 0.44 s |
+
+A page costs a page: the tenth page of the walk (`cursor=5285:14690`) is no dearer than the first,
+which is the clause this issue was filed on. The boot logged no deferred-index or REFUSING line.
+
+**Still open — the tenders shape.** `/v1/tenders?bidder=357&limit=100` read **3.15 s** and
+`?winner=357` 1.25 s in the same minute: `tender_from`'s seed is still `(SELECT DISTINCT tender_id
+FROM <table> WHERE organization_id = ?) hits JOIN tenders t … ORDER BY t.id LIMIT`, the org's whole
+index slice DISTINCTed per page. The `## Done when` asks under 1 s there too. The walk above fixes
+it with no contract change at all — tenders already page in `tender_id` order, so the window IS
+the page order and the cursor stays a bare id. Next unit.
 
