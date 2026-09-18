@@ -21,6 +21,15 @@ drift, 2003-vs-2008 — the open classification half is exactly this question on
 48 (country coding), 171 (`/docs` #caveats, where the GR/EL and GB/UK spellings belong)
 Blocked by: nothing
 
+## Verify
+
+    curl -s -o /dev/null -w '%{http_code} %{time_total}\n' --max-time 40 'https://tenders.zebreus.click/v1/tenders?country=GR&limit=2'
+
+- **done** (the 503, unit 1's live defect): `200 <n>` with n well under 30 — the retired spelling answers
+- **open**: `503 30.xx` — the walk runs to the deadline again (a cap regression, or a spelling above the new cap)
+- the structural half (option (b), the bounded fallback walk) is not this line's to verify: it reads done when a dense country and `GR` answer within the same order of magnitude
+- read 2026-09-18 at `71a15b1`: see the comment stream — 200 in 5.29 s on 2026-09-17, unchanged shape
+
 ## Observed
 
 Reported by an outside reader against rev `5841c9b`: `/v1/tenders?country=GR` stalls ~30 s and
