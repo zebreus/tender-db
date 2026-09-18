@@ -1,6 +1,6 @@
 # 343 — a version with several tender-level titles: the fold's `current_title` and the read-time pick break the tie differently
 
-Status: REOPENED — **the fold rule is BUILT 2026-09-18** (option 2: a `title` inside a RESULT-kind section is the contract's title and is filed nowhere, as eForms' BT-721 already is; the lot keeps its own from its Lot section) with a fold-level test that is red on the old code; deploy pending. Standing r209/r208 versions keep serving the award-block title until they are refolded, and that refold is the same permission class the classifier refused three times today — so the live acceptance (6751050 → "Marché public de fournitures …") waits on a go-ahead, not on code. Was: REOPENED 2026-09-15 — the deployed tie-break is deterministic but elects the WRONG string: award-block (RES-n) contract titles are still filed at tender scope on prod at `9e082fd`, so the ladder serves a contract title as the Tender title (incomplete fix, not a regression of `9f0bcea`).
+Status: REOPENED — **the fold rule is BUILT 2026-09-18** (option 2: a `title` inside a RESULT-kind section is the contract's title and is filed nowhere, as eForms' BT-721 already is; the lot keeps its own from its Lot section) with a fold-level test that is red on the old code; DEPLOYED `2df1a49` 2026-09-18, health green — new folds take the rule from here. Standing r209/r208 versions keep serving the award-block title until they are refolded, and that refold is the same permission class the classifier refused three times today — so the live acceptance (6751050 → "Marché public de fournitures …") waits on a go-ahead, not on code. Was: REOPENED 2026-09-15 — the deployed tie-break is deterministic but elects the WRONG string: award-block (RES-n) contract titles are still filed at tender scope on prod at `9e082fd`, so the ladder serves a contract title as the Tender title (incomplete fix, not a regression of `9f0bcea`).
 Previous status, kept as history: FIXED 2026-09-02, DEPLOYED 2026-09-03 (`9f0bcea`). Read side verified on prod; the materialised `current_title` of heads written by the pre-fix fold (612) keeps the old tie-break until refolded — see the probe note at the end.
 The mechanism was exact, not "scan order vs precedence": see "Why, exactly".
 Kind: consistency (read layer vs fold-time head column)
@@ -208,3 +208,13 @@ run: `refold-fields` over `TED-TITLE`/`TED-CONTRACT_TITLE` in `notice_texts` —
 every notice with a title, so it is the full corpus either way; a `project rebuild=false` after
 marking falls back to the full pass (~5.2 h). Same sequencing as 393 unit 2, and it can ride the
 same run.
+
+## Comment — 2026-09-18 (later): deployed `2df1a49`
+
+Health green at `2df1a49`; the gate ran 117 suites clean. Read right after: `/v1/tenders/6751050`
+still serves `Acquisition d'autocars et leur entretien` — as it must, since nothing has refolded its
+version. That is the `## Verify` line's open state, and it stays open until the r209/r208 refold
+runs; the code half of this issue is complete. Sequencing note for whoever runs the gated jobs: this
+rule changes the fold's OUTPUT for every award tender with a titled result block, so the full
+projection that 393 unit 2's `refold-fields` triggers (the FULL fallback past 500k un-projected)
+re-derives these titles too — one run closes both, and 6751050 is the read that proves it.

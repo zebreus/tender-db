@@ -333,3 +333,10 @@ count's I/O. The design that meets it is recorded above (page the org-seeded lot
 `(tender_id, lot id)` order with a compound opaque cursor, so the participation index serves the
 order and a page reads a page), and it is a contract decision for that one shape, taken separately.
 Issue 223 is closed on today's numbers; this issue stays open on that clause.
+
+## Comment — 2026-09-18 (boot check): the loop is closed
+
+The `2df1a49` boot (the first since job 1478 built the winners index) logged no "deferred index(es)
+missing" line and queued no reindex — the first boot since 2026-09-16 to do neither — and printed no
+`REFUSING` line for the indexes that exist. The estimator's two-day loop is over; `## Verify`-class
+read for it: `journalctl -u tender-db -b | grep -c REFUSING` → `0`.
