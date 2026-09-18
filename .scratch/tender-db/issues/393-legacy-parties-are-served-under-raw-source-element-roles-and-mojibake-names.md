@@ -324,3 +324,54 @@ spellings describing neither era) and `openapi.json`'s `parties[]` schema (which
   shows the shape (an r208 re-parse + full projection is routine).
 - Retiring or annotating the `LIKE '%uyer%'` and `role IN (...)` workarounds. With eForms left as
   published they are still needed, so they stay — the column note now says why.
+
+## Unit 3 — the population is MEASURED 2026-09-18: 1,150 organizations
+
+The filing said *"Not measured: the exact population (SQL was denied under the read policy); ~1–2k
+organizations a fair estimate."* Measured now, through `/v1/sql`, one bounded index-range seek per
+Greek capital letter over `organizations.name`.
+
+**The signature had to be built in two steps, and the first was wrong in an instructive way.** A
+leading byte in the 8859-7 capital range (`Á`…`Ù` under Windows-1252) is not enough — it also catches
+every legitimate `Örebro kommun`, `Ålborg`, `Österreich`: `Ö` alone reads 2,415 and `Å` 967. Mojibake
+is high-Latin-1 in EVERY position. But "character 2 is high" excludes exactly the class the filing's
+own examples are full of — `Ð. ÁìðáôæÞò`, `Ã. ×ñéóôïöéëüðïõëïò`, initial + dot — and read 897 with a
+per-letter bias against them (`Ð` 37 against the hand-verified 50). Character 4 catches the
+initial-dot form (after `X. ` the surname's first letter is high) while legitimate names keep ASCII
+there (`Öreb…`, `Århu…`, `Ânge…`).
+
+    leading char in [Á..Ù]  AND  (substr(name,2,1) >= 'À' OR substr(name,4,1) >= 'À')
+
+Validated per letter against the four probes this unit verified by hand at filing time:
+
+| letter | hand-verified (filing) | signature |
+| --- | --- | --- |
+| `×` Χ | 16 | 15 |
+| `Ð` Π | 50 | 48 |
+| `Ã` Γ | 78 | 76 |
+| `Â` Β | 26 | 24 |
+| `Ê` Κ | ~180 (167 strict + ~13 consortia) | 156 |
+
+Within 2 on every literal probe; the `Ê` gap is the `Êïéíïðñáîßá …` consortia and second-word
+lowercase forms, which the position test does not reach. **All 24 letters:**
+
+    Á 140  Â 24  Ã 76  Ä 107  Å 138  Æ 5  Ç 21  È 14  É 32  Ê 156  Ë 10  Ì 39
+    Í 35   Î 16  Ï 21  Ð 48   Ñ 3    Ó 135 Ô 48  Õ 9   Ö 51  × 15  Ø 6   Ù 1
+    ──────────────────────────────────────────────────────────────────────────
+    TOTAL 1,150
+
+A tight FLOOR (the signature demonstrably under-reads, never over-reads, against ground truth), with
+the caveat that `Ó` (Σ, 135) and `Ö` (Φ, 51) are the two letters where a legitimate Latin-1 name could
+satisfy it. Squarely inside the filing's 1–2k estimate.
+
+### What this is the input to
+
+The repair has two halves that want different tools. The **decoder** half — decode a declared-`_ISO_`
+member as ISO-8859-7 when its bytes are Greek, then re-parse the affected text-era members — is code
+with a fixture, and a single careful change. The **merge** half is not: each of the ~1,150 mangled
+provisional rows has to be matched to its canonical Greek twin (or found to have none), and
+`Γ. Χριστοφιλόπουλος ΑΕ` against the standing Greek profiles is a judgement call, one per row, of
+exactly the kind the reviewer+challenger verdict campaigns were built for (issue 362 campaign 2:
+170 groups, 139 verdicts, 65 merges applied through `org_merge_verdicts` and R2's dry/wet parity).
+That pipeline is built, tested, and idle. A campaign here would run AFTER the decoder half, over
+the re-decoded names, and its verdicts would go through the same tables and the same guards.
