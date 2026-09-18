@@ -1,0 +1,46 @@
+1.0/000001
+TI: GR-Salonica: isokinetic dynamometer
+PD: 19970828
+ND: 108345-1997
+OJ: 166/1997
+DR: 19970818
+DS: 19970814
+DT: 19971122
+HD: 2180
+TD: 7 - Contract award
+NC: 2 - Supply contract
+PR: 7 - Contract awards
+RP: 4 - European Communities
+AA: 3 - Local authorities
+TY: 8 - Not defined
+AC: 2 - The most economic tender
+PC: 33241300
+    33241310
+    33241320
+OC: 33204590
+PN: Instruments for measuring electrical quantities.
+    Ammeters.
+    Voltmeters.
+RC: GR122
+CY: GR
+OL: EL
+AU: ARISTOTELEIO PANEPISTIMIO THESSALONIKIS (APTH), GRAFEIO PROMITHEION,
+    KTIRIO DIOIKISIS
+TW: SALONICA
+RG: THESSALONIKI
+CC: 3446
+CT: Electrical counters, measuring, testing, regulating and control
+    instruments
+AB:  Goods, CPA reference number: CPV: 33204590.
+    Voltmeters, ammeters.
+CO: Supplier(s): Γ. Χριστοφιλόπουλος ΑΕ, Σόλωνος 6, Θεσσαλονίκη. Πάνος
+    Σκούτας ΑΕ, Τσιμισκή 17, Θεσσαλονίκη.
+TX:  1.  Awarding authority: Aristoteleio Panepistimio Thessalonikis (APTh),
+    Grafeio Promitheion, Ktirio Dioikisis, GR-540 06 Thessaloniki.
+     2. (a)  Award procedure: Open.
+     (b)
+     3.  Date of award: 4. 2. 1997.
+     4.  Award criteria: The most economic tender.
+     5.  Tenders received: 2.
+     6.  Supplier(s): Γ. Χριστοφιλόπουλος ΑΕ, Σόλωνος 6, GR-Θεσσαλονίκη.
+     7.  Goods supplied: Isokinetic dynamometer.

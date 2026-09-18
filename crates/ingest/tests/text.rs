@@ -402,6 +402,54 @@ fn iso_variant_is_superseded_when_the_package_ships_utf8() {
     assert!(matches!(profile::dispatch_with(iso, &bytes, &alone), Disposition::Records(_)));
 }
 
+/// Issue 393 unit 3: a declared-`_ISO_` member is one codepage per RECORD, not per
+/// era. The fixture is 108345-1997 as prod serves it, with the winner lines in
+/// real ISO-8859-7 bytes — the bytes the served mojibake `Ã. ×ñéóôïöéëüðïõëïò ÁÅ`
+/// round-trips to. Before this unit the suite could not fail on it: every fixture
+/// was ASCII or UTF8.
+#[test]
+fn a_greek_iso_record_is_decoded_as_iso_8859_7_by_its_own_declaration() {
+    let fixture = "1997-can-greek-iso-8859-7.txt";
+    let member = "EN_19970828_166_ISO_ORG.ZIP!EN_19970828_1997166_ISO_ORG";
+    let parsed = parse_one(fixture, member);
+    let names: Vec<&str> = parsed
+        .values
+        .iter()
+        .filter(|row| row.field_id == "TED-OFFICIALNAME")
+        .filter_map(|row| match &row.value {
+            NoticeValue::Text { value, .. } => Some(value.as_str()),
+            _ => None,
+        })
+        .collect();
+    assert!(names.contains(&"Γ. Χριστοφιλόπουλος ΑΕ"), "winner names: {names:?}");
+    let (_, co) = text_value(&parsed, "TXT-CO");
+    assert!(co.contains("Θεσσαλονίκη") && !co.contains('Ã'), "CO decoded as: {co}");
+
+    // The same bytes under a Latin declaration keep the Windows-1252 reading — the
+    // decision is the record's, not the bytes'. Flip only the two header lines.
+    let bytes = std::fs::read(format!("tests/fixtures/text/{fixture}")).unwrap();
+    let latin = replace_bytes(&replace_bytes(&bytes, b"OL: EL", b"OL: ES"), b"CY: GR", b"CY: ES");
+    let Disposition::Records(records) = profile::dispatch(member, &latin) else {
+        panic!("dispatch skipped the Latin twin");
+    };
+    let Record::Notice(n) = records.into_iter().next().expect("one record") else {
+        panic!("the Latin twin quarantined at dispatch");
+    };
+    let (start, end) = n.span.expect("text records carry their span");
+    match text::parse_payload(&n.member_path, &latin[start..end]) {
+        Parse::Parsed(p) => {
+            let (_, co) = text_value(&p, "TXT-CO");
+            assert!(co.contains("Ã. ×ñéóôïöéëüðïõëïò ÁÅ"), "Latin twin CO: {co}");
+        }
+        other => panic!("the Latin twin did not parse: {other:?}"),
+    }
+}
+
+fn replace_bytes(hay: &[u8], from: &[u8], to: &[u8]) -> Vec<u8> {
+    let at = hay.windows(from.len()).position(|w| w == from).expect("the header line is present");
+    [&hay[..at], to, &hay[at + from.len()..]].concat()
+}
+
 // -------------------------------------------------------------- completeness
 
 /// The era-scoped ADR-0002 harness: every inventory code has a rule, every
