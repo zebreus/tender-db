@@ -90,6 +90,7 @@ pub fn tender(t: &TenderRow) -> Value {
         "original_lang": t.original_lang,
         "value": money(t.value_cents, t.currency.as_deref()),
         "submission_deadline": stamp(t.deadline),
+        "submission_deadline_scope": t.deadline_scope.map(|s| s.as_str()),
         "lots": t.lots,
         // Echo the fields a client can filter on, so a list row shows why it
         // matched (issue 49): CPV codes and NUTS place codes of this version.
@@ -108,6 +109,7 @@ pub fn lot(l: &LotRow) -> Value {
         "version": l.seq,
         "value": money(l.value_cents, l.currency.as_deref()),
         "submission_deadline": stamp(l.deadline),
+        "submission_deadline_scope": l.deadline_scope.map(|s| s.as_str()),
     })
 }
 

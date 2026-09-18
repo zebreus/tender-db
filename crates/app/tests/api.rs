@@ -561,8 +561,23 @@ async fn the_collections_serve_the_canonical_layer() {
         tender["published_at"]
     );
     assert!(tender["lots"].as_i64().is_some_and(|n| n > 0));
+    // Issue 370 unit 4: the deadline's scope rides beside it, on tenders and lots.
+    let scope_of = |row: &Value| row["submission_deadline_scope"].as_str().map(str::to_owned);
+    assert!(
+        matches!(scope_of(tender).as_deref(), Some("lot" | "procedure")),
+        "a dated tender says which scope its deadline came from: {tender}"
+    );
+    assert_eq!(scope_of(tender).is_some(), tender["submission_deadline"].is_string());
 
-    assert!(!items(&server.get("/v1/lots").await).is_empty());
+    let lots_page = server.get("/v1/lots").await;
+    assert!(!items(&lots_page).is_empty());
+    for lot in items(&lots_page) {
+        assert_eq!(
+            scope_of(lot).is_some(),
+            lot["submission_deadline"].is_string(),
+            "the scope is present exactly when the deadline is: {lot}"
+        );
+    }
     assert!(!items(&server.get("/v1/organizations").await).is_empty());
     assert_eq!(items(&server.get("/v1/notices").await).len(), 4, "four Notices, one Tender");
 

@@ -268,6 +268,32 @@ impl Stamp {
     }
 }
 
+/// Which scope a row's served `submission_deadline` came from (issue 370 unit
+/// 4 — the provenance marker issue 389 unit 2 handed here, on Tenders and Lots
+/// together). On a Lot, `Procedure` means the lot published no deadline of its
+/// own and serves the procedure's; on a Tender, `Lot` means the elected deadline
+/// is a lot-level date — the head election takes the newest over both scopes,
+/// so a lot's date can be the tender's. `None` exactly when there is no deadline.
+///
+/// The OTHER axis of inheritance — whether the newest notice republished the
+/// date or the row carries it forward from an earlier version — is not on the
+/// row: the fold's fact tables carry no origin, and the detail's `dates` array
+/// is the nearest reading. That half stays with issue 370.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DeadlineScope {
+    Procedure,
+    Lot,
+}
+
+impl DeadlineScope {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Procedure => "procedure",
+            Self::Lot => "lot",
+        }
+    }
+}
+
 /// A Tender in its current (or a specific) version — the `/v1/tenders` item.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TenderRow {
@@ -292,6 +318,8 @@ pub struct TenderRow {
     pub value_cents: Option<i64>,
     pub currency: Option<String>,
     pub deadline: Option<Stamp>,
+    /// Which scope `deadline` came from; `None` exactly when `deadline` is (issue 370 unit 4).
+    pub deadline_scope: Option<DeadlineScope>,
     pub lots: i64,
     /// The version's CPV codes and NUTS (place) codes — echoed so a list row
     /// shows why it matched a `cpv`/`country` filter (issue 49).
@@ -317,11 +345,11 @@ pub struct LotRow {
     /// Inherited rather than lot-only because `?status=open` is decided by the
     /// union of both scopes (`version_predicates`' EXISTS carries no `lot_id`
     /// term — issue 275 pins that form), so a lot-only field returned rows
-    /// asserted to be open whose only visible deadline was `null`. Which scope a
-    /// served date came from is not on the row yet; the tender detail's `dates`
-    /// array names each date's `lot`, and a provenance marker for the rows
-    /// themselves is issue 370's open unit, to land on Tenders and Lots together.
+    /// asserted to be open whose only visible deadline was `null`. Which scope
+    /// the served date came from is `deadline_scope` (issue 370 unit 4).
     pub deadline: Option<Stamp>,
+    /// Which scope `deadline` came from; `None` exactly when `deadline` is (issue 370 unit 4).
+    pub deadline_scope: Option<DeadlineScope>,
 }
 
 /// A canonical Organization profile — the `/v1/organizations` item.
@@ -1547,6 +1575,7 @@ fn tender_row(row: &turso::Row) -> TenderRow {
         value_cents: opt_int_of(row, 9),
         currency: opt_text_of(row, 10),
         deadline: stamp(row, 11),
+        deadline_scope: deadline_scope(row, 11, 23),
         lots: int(row, 14),
         cpv: split_codes(opt_text_of(row, 16)),
         country: split_codes(opt_text_of(row, 17)),
@@ -1778,12 +1807,15 @@ fn tender_select_head(from: &str, lang: Option<&str>) -> String {
     //   fold already chose, by matching `eur_cents` against the head column.
     //   Zero drift by construction — if the election changes, this follows with
     //   no edit here.
+    // Newest first; among equal instants the procedure-scoped row, then the
+    // lowest lot — a TOTAL order, so the four columns and the scope below are
+    // read off ONE row rather than off whichever tied row each subquery met.
     let deadline = |column| {
         pick(
             "tender_version_dates",
             column,
             Some("submission_deadline"),
-            "s.utc_seconds DESC",
+            "s.utc_seconds DESC, (s.lot_id IS NULL) DESC, s.lot_id",
             &format!(
                 "s.utc_seconds - v.published_at <= {}",
                 crate::canonical::DEADLINE_HORIZON_SECS
@@ -1830,7 +1862,10 @@ fn tender_select_head(from: &str, lang: Option<&str>) -> String {
                 (SELECT n.published_offset FROM notices n WHERE n.id = v.caused_by_notice_id),
                 (SELECT n.published_has_time FROM notices n WHERE n.id = v.caused_by_notice_id),
                 (SELECT n.dispatched_offset FROM notices n WHERE n.id = v.caused_by_notice_id),
-                (SELECT n.dispatched_has_time FROM notices n WHERE n.id = v.caused_by_notice_id)
+                (SELECT n.dispatched_has_time FROM notices n WHERE n.id = v.caused_by_notice_id),
+                -- The elected deadline's lot_id: NULL for the procedure's own
+                -- date, a lot for a lot-level one (issue 370 unit 4's scope).
+                {scope}
            FROM {from}
            JOIN tender_versions v ON v.tender_id = t.id AND v.seq = ",
         cents = elected("cents"),
@@ -1838,6 +1873,7 @@ fn tender_select_head(from: &str, lang: Option<&str>) -> String {
         utc = deadline("utc_seconds"),
         offset = deadline("offset_minutes"),
         has_time = deadline("has_time"),
+        scope = deadline("lot_id"),
     )
 }
 
@@ -2723,6 +2759,7 @@ fn lot_identity_row(row: &turso::Row) -> LotRow {
         value_cents: None,
         currency: None,
         deadline: None,
+        deadline_scope: None,
     }
 }
 
@@ -2774,6 +2811,7 @@ pub async fn lots_previous_shape(conn: &Connection, filter: &Filter, scope: Scop
             value_cents: None,
             currency: None,
             deadline: None,
+            deadline_scope: None,
         })
         .await?;
     summarise(conn, &mut rows, filter.lang.as_deref()).await?;
@@ -3545,6 +3583,7 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
                     if best_deadline[i].is_none_or(|best| rank > best) {
                         best_deadline[i] = Some(rank);
                         rows[i].deadline = stamp(&row, 1);
+                        rows[i].deadline_scope = Some(DeadlineScope::Lot);
                     }
                 }
                 // Tender-scoped: it belongs to EVERY lot of this version, so it is
@@ -3565,6 +3604,7 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
                 // means exactly "this lot published no deadline of its own".
                 if row.tender_id == tender_id && row.seq == seq && best_deadline[i].is_none() {
                     row.deadline = Some(fallback);
+                    row.deadline_scope = Some(DeadlineScope::Procedure);
                 }
             }
         }
@@ -4065,6 +4105,13 @@ fn stamp(row: &turso::Row, idx: usize) -> Option<Stamp> {
 /// (offset) and `pair_idx + 1` (has_time) — `None` unless all three are present,
 /// so a row stamped before issue 367 unit 3 renders as the bare UTC instant
 /// rather than as a civil date guessed from a zero offset.
+/// The scope of the deadline `stamp(row, utc_idx)` serves: `None` without one,
+/// else by the elected row's `lot_id` at `lot_idx` (NULL = the procedure's).
+fn deadline_scope(row: &turso::Row, utc_idx: usize, lot_idx: usize) -> Option<DeadlineScope> {
+    opt_int_of(row, utc_idx)?;
+    Some(if opt_int_of(row, lot_idx).is_some() { DeadlineScope::Lot } else { DeadlineScope::Procedure })
+}
+
 fn stored_stamp(row: &turso::Row, utc_idx: usize, pair_idx: usize) -> Option<Stamp> {
     Some(Stamp {
         utc_seconds: opt_int_of(row, utc_idx)?,

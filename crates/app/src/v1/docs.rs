@@ -703,11 +703,14 @@ rates and the quarantine resolution ledger.</p>
   well as tenders, which is why the row shows it: a lot returned as open carries the
   deadline that opened it. A lot that publishes its OWN deadline keeps it even when the
   procedure's is later.
-  <strong>The row does not yet say which of the two it is.</strong> To tell them apart,
-  read <code>dates</code> on <a href="#detail">the tender detail</a>: each entry names its
-  <code>lot</code> (<code>null</code> for a procedure-scoped date). A per-field provenance
-  marker on the rows themselves is issue 370's open unit, and will land on Tenders and
-  Lots together rather than in two shapes.</li>
+  <strong><code>submission_deadline_scope</code> says which of the two it is</strong> &mdash;
+  <code>lot</code> or <code>procedure</code> &mdash; on Lots and on Tenders alike (issue 370
+  unit 4; on a Tender, <code>lot</code> means the elected deadline is a lot-level date, the head
+  election taking the newest over both scopes). What the row still cannot say is whether the
+  newest notice republished the date or the row carries it forward from an earlier version: the
+  fold's fact tables carry no origin, and <code>dates</code> on
+  <a href="#detail">the tender detail</a> (each entry naming its <code>lot</code>) is the
+  nearest reading.</li>
 </ul>
 
 <h3>Codes and identities</h3>

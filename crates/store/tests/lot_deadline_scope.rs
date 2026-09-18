@@ -15,7 +15,7 @@
 //! test asserts one without the other: what `status=open` returns AND what the
 //! returned rows say their deadline is.
 
-use store::read::{self, Filter, Scope, Status};
+use store::read::{self, DeadlineScope, Filter, Scope, Status};
 use store::turso::{self, Value};
 
 const TENDER: i64 = 1;
@@ -176,4 +176,66 @@ async fn a_lot_of_a_deadline_less_tender_still_has_none() {
         served(&conn, Some(Status::Open)).await.is_empty(),
         "no deadline anywhere is not open — the filter and the row agree on that too"
     );
+}
+
+/// Issue 370 unit 4, the half issue 389 handed over: the row SAYS which scope its
+/// deadline came from. On the lots, `procedure` for the two that inherit and `lot`
+/// for the one that published its own; on the tender, the elected deadline's own
+/// scope — the procedure's here, because it is the newest of the two.
+#[tokio::test]
+async fn the_row_says_which_scope_its_deadline_came_from() {
+    let conn = fixture("scope").await;
+    lot(&conn, 1, "LOT-1").await;
+    lot(&conn, 2, "LOT-2").await;
+    deadline(&conn, None, TENDER_DEADLINE, 0).await;
+    lot(&conn, 3, "LOT-3").await;
+    deadline(&conn, Some(3), LOT_DEADLINE, 120).await;
+
+    let filter = Filter { tender: Some(TENDER), now: NOW, ..Filter::default() };
+    let lots = read::lots(&conn, &filter, Scope::Page { after: 0, limit: 1000 }).await.unwrap();
+    let scopes: Vec<(String, Option<DeadlineScope>)> =
+        lots.into_iter().map(|r| (r.lot_key, r.deadline_scope)).collect();
+    assert_eq!(
+        scopes,
+        vec![
+            ("LOT-1".to_owned(), Some(DeadlineScope::Procedure)),
+            ("LOT-2".to_owned(), Some(DeadlineScope::Procedure)),
+            ("LOT-3".to_owned(), Some(DeadlineScope::Lot)),
+        ]
+    );
+
+    let tenders = read::tenders(&conn, &filter, Scope::Page { after: 0, limit: 10 }).await.unwrap();
+    assert_eq!(tenders.len(), 1);
+    assert_eq!(tenders[0].deadline.map(|d| d.utc_seconds), Some(TENDER_DEADLINE));
+    assert_eq!(tenders[0].deadline_scope, Some(DeadlineScope::Procedure));
+}
+
+/// The tender side of the same marker: when the newest deadline is a LOT's, the
+/// tender's elected deadline is that lot-level date and the row says `lot`.
+#[tokio::test]
+async fn a_tender_whose_newest_deadline_is_a_lots_says_lot() {
+    let conn = fixture("scope-lot").await;
+    lot(&conn, 1, "LOT-1").await;
+    deadline(&conn, None, LOT_DEADLINE, 0).await;
+    deadline(&conn, Some(1), TENDER_DEADLINE, 60).await;
+
+    let filter = Filter { tender: Some(TENDER), now: NOW, ..Filter::default() };
+    let tenders = read::tenders(&conn, &filter, Scope::Page { after: 0, limit: 10 }).await.unwrap();
+    assert_eq!(tenders[0].deadline.map(|d| (d.utc_seconds, d.offset_minutes)), Some((TENDER_DEADLINE, 60)));
+    assert_eq!(tenders[0].deadline_scope, Some(DeadlineScope::Lot));
+    // The lot itself published it: `lot`, not inherited.
+    let lots = read::lots(&conn, &filter, Scope::Page { after: 0, limit: 10 }).await.unwrap();
+    assert_eq!(lots[0].deadline_scope, Some(DeadlineScope::Lot));
+}
+
+/// No deadline anywhere: no scope either — the marker never outruns the date.
+#[tokio::test]
+async fn no_deadline_means_no_scope() {
+    let conn = fixture("scope-none").await;
+    lot(&conn, 1, "LOT-1").await;
+    let filter = Filter { tender: Some(TENDER), now: NOW, ..Filter::default() };
+    let lots = read::lots(&conn, &filter, Scope::Page { after: 0, limit: 10 }).await.unwrap();
+    assert_eq!((lots[0].deadline, lots[0].deadline_scope), (None, None));
+    let tenders = read::tenders(&conn, &filter, Scope::Page { after: 0, limit: 10 }).await.unwrap();
+    assert_eq!((tenders[0].deadline, tenders[0].deadline_scope), (None, None));
 }

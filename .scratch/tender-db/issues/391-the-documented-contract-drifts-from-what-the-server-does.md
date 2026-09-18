@@ -517,7 +517,7 @@ followed the behaviour.)
 
     B=https://tenders.zebreus.click; curl -s -o /dev/null -w '%{http_code} ' "$B/v1/tenders?deadline_after=now&sort=deadline&order=asc&limit=3"; curl -s "$B/v1/openapi.json" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['components']['schemas']['Tender']['properties']))"
 
-- **done**: `200 16`
+- **done**: `200 17` (`200 16` until issue 370 unit 4 added `submission_deadline_scope` on 2026-09-18)
 - **open**: `400 6`
 
 ## Comment — 2026-09-18: closed by the 412 sweep
