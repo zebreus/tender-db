@@ -1030,6 +1030,24 @@ fn participation_seed(f: &Filter) -> Option<(&'static str, &'static str, i64)> {
     }
 }
 
+/// The role clause the seeded org's PREDICATE carries (`version_predicates`,
+/// verbatim, unqualified so it reads on whichever alias it sits under). The lots
+/// seed (issue 388) decides membership by itself, so its head-version level must
+/// carry exactly this — while its DISTINCT pre-level carries only what
+/// `participation_seed` narrows by: the buyer role is covered there by
+/// `tender_version_parties_org_role`, but the bidder role is not, and
+/// `DISTINCT tender_id … AND role = 'tenderer'` cost a per-row table lookup for
+/// each of org 357's 194k bid rows (4.2 s against 2.1 s covered, prod 2026-09-18).
+fn participation_role(f: &Filter) -> &'static str {
+    if f.winner.is_some() {
+        ""
+    } else if f.bidder.is_some() {
+        " AND role = 'tenderer'"
+    } else {
+        " AND role LIKE '%Buyer%'"
+    }
+}
+
 /// The title pick's ORDER BY rank for an optional requested language
 /// (ADR-0013 D3). `lang` is inlined as a literal, which is safe ONLY because
 /// the guard here re-verifies the shape the API layer already validated —
@@ -2619,16 +2637,25 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
 /// decide membership, so results match the unseeded walk exactly.
 ///
 /// Three arms, mutually exclusive, the org seed outranking the country ones:
-/// * An org reverse-lookup (issue 223, the LOTS half): `l.tender_id IN (SELECT
-///   DISTINCT tender_id FROM <participation table> WHERE organization_id = ?)`,
-///   the `buyer` arm narrowed by role exactly as `participation_seed` says. This
-///   was the FROM clause's JOIN until 2026-09-18 — the very shape 275 measured
-///   inverting — because 223's fix was only ever measured on `/v1/tenders`, where
-///   the JOIN is on the outer table's own PK and does not invert. On lots it did:
-///   `?winner=357` and `?bidder=357` walked to the 30 s deadline (503) on prod
-///   2026-09-18 while the same seeds answered `/v1/tenders` in 0.4 s. Publication
-///   numbers are a tenders-only filter — `tender_from`'s exact-seed arm has no
-///   mirror here.
+/// * An org reverse-lookup (issues 223 and 388, the LOTS half): the org's
+///   tenders, DECIDED AT THE HEAD VERSION, as `l.tender_id IN (…)`. Two levels —
+///   the DISTINCT tenders off the `(organization_id)` index, then one
+///   `MAX(seq)` probe per TENDER — and that order is the whole cost story: the
+///   same probe written per participation ROW ran 8–10 s on prod for org 357's
+///   194k bid rows, and written per LOT (the predicate's own form, which
+///   `version_predicates` would add) it visited hundreds of index rows for
+///   each of the org's 137k–334k lots: `?bidder=357` walked to the 30 s
+///   deadline (503) on prod 2026-09-18 even after the seed had become an IN
+///   semi-join, while `?buyer=357` answered in 0.8 s off `(tender_id, seq)`.
+///   The org predicates never name the lot (they are per tender), so this seed
+///   IS the predicate, exactly — role clause included, at the head level only
+///   (`participation_role`) — and `lots_query` drops the per-lot copy for the
+///   seeded org. Measured on prod 2026-09-18 through `/v1/sql`: `?bidder=357`'s
+///   page 30.6 s → 4.8 s. The remaining cost is enumerating the org's lots and
+///   sorting them by id (~2–4 s warm for 334k, I/O-bound cold) plus, for
+///   winners, an UNCOVERED pre-seed until `tender_version_result_winners_org_tender`
+///   exists on prod — which only a page order the seed can serve, and that
+///   index, would remove.
 /// * A VIABLE sparse country (`country_seed`, issue 273 step 2's probe):
 ///   the case-variant UNION ALL enumeration off the classifications index.
 ///   Measured on prod: `?country=CY` 0.32s against 30s-class walks.
@@ -2646,12 +2673,19 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
 /// `cpv`+`status` (no cpv seed anywhere yet).
 fn lot_seed_predicates(q: &mut Query, filter: &Filter) {
     if let Some((table, extra, org)) = participation_seed(filter) {
+        let role = participation_role(filter);
         q.push(
             &format!(
-                " AND l.tender_id IN (SELECT DISTINCT tender_id FROM {table}
-                                       WHERE organization_id = ?{extra})"
+                " AND l.tender_id IN (SELECT s.tender_id
+                                        FROM (SELECT DISTINCT tender_id FROM {table}
+                                               WHERE organization_id = ?{extra}) s
+                                       WHERE EXISTS (SELECT 1 FROM {table} p
+                                                      WHERE p.tender_id = s.tender_id
+                                                        AND p.seq = (SELECT MAX(x.seq) FROM tender_versions x
+                                                                      WHERE x.tender_id = s.tender_id)
+                                                        AND p.organization_id = ?{role}))"
             ),
-            [Value::Integer(org)],
+            [Value::Integer(org), Value::Integer(org)],
         );
         return; // the org seed is the tighter one; the country arms stay out
     }
@@ -2719,7 +2753,18 @@ fn lots_query(filter: &Filter, scope: Scope) -> Query {
         q.push(" AND (SELECT tt.source FROM tenders tt WHERE tt.id = l.tender_id) = ?", [t(source)]);
     }
     lot_seed_predicates(&mut q, filter);
-    version_predicates(&mut q, filter, "l.tender_id", SEQ, None,
+    // Issue 388: the seeded org filter is decided by the seed, at the head
+    // version, exactly — so its per-lot EXISTS (which never named the lot and
+    // cost hundreds of index rows per lot on a prolific org) is not added again.
+    // Only the seeded one: a second org filter alongside it still decides per lot.
+    let mut predicates = filter.clone();
+    match participation_seed(filter) {
+        Some(("tender_version_result_winners", ..)) => predicates.winner = None,
+        Some(("tender_version_bid_parties", ..)) => predicates.bidder = None,
+        Some(("tender_version_parties", ..)) => predicates.buyer = None,
+        _ => {}
+    }
+    version_predicates(&mut q, &predicates, "l.tender_id", SEQ, None,
         "(SELECT tt.current_value_eur_cents FROM tenders tt WHERE tt.id = l.tender_id)");
     match scope {
         Scope::Page { after, limit } => q.push(

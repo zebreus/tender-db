@@ -54,24 +54,122 @@ fn an_org_reverse_lookup_seeds_the_lots_stream_as_an_in_semi_join() {
             "the JOIN form inverts on lots (issue 275's measurement) and must not come back: {sql}"
         );
         assert!(
-            sql.contains(&format!("l.tender_id IN (SELECT DISTINCT tender_id FROM {table}")),
-            "{table} must seed as an IN semi-join: {sql}"
+            sql.contains(&format!("FROM (SELECT DISTINCT tender_id FROM {table}")),
+            "{table} must seed as an IN semi-join over the org's distinct tenders: {sql}"
         );
+        // Issue 388: the seed decides at the HEAD version — one MAX(seq) per distinct
+        // tender, not per participation row — and it IS the predicate, so the per-lot
+        // copy is gone: the org id is bound exactly twice, both inside the seed.
+        assert!(
+            sql.contains("p.seq = (SELECT MAX(x.seq) FROM tender_versions x") && sql.contains("x.tender_id = s.tender_id"),
+            "the seed must decide at the head version, per tender: {sql}"
+        );
+        assert_eq!(
+            sql.matches("organization_id = ?").count(),
+            2,
+            "the org is bound in the seed's two levels and nowhere else — no per-lot copy: {sql}"
+        );
+        assert_eq!(params.iter().filter(|p| matches!(p, Value::Integer(357))).count(), 2, "{params:?}");
         assert_eq!(
             sql.contains("role LIKE '%Buyer%'"),
             role_narrowed,
-            "only the buyer seed narrows by role (issue 225): {sql}"
+            "only the buyer seed narrows by the buyer role (issue 225): {sql}"
         );
-        assert!(params.iter().any(|p| matches!(p, Value::Integer(357))), "the org id is bound: {params:?}");
+        if role_narrowed {
+            assert_eq!(sql.matches("role LIKE '%Buyer%'").count(), 2, "the buyer role sits in both levels — covered by _org_role in the pre-level: {sql}");
+        }
+        if table == "tender_version_bid_parties" {
+            // The pre-level stays covered (`_org_tender` carries no role — with it, 4.2 s
+            // against 2.1 s on prod); the head level carries the predicate's role.
+            assert_eq!(sql.matches("role = 'tenderer'").count(), 1, "the bidder role only at the head level: {sql}");
+            assert!(sql.contains("FROM tender_version_bid_parties\n                                               WHERE organization_id = ?) s"), "the bidder pre-level is bare: {sql}");
+        }
     }
     // The org seed outranks the country arms: one seed, not two.
     let both = Filter { winner: Some(357), country: Some("LU".into()), country_seed: true, ..base };
     let (sql, _) = lots_statement(&both, Scope::Page { after: 0, limit: 25 });
     assert_eq!(sql.matches("l.tender_id IN").count(), 1, "exactly one seed when an org is given: {sql}");
     assert!(
-        sql.contains("l.tender_id IN (SELECT DISTINCT tender_id FROM tender_version_result_winners"),
+        sql.contains("FROM (SELECT DISTINCT tender_id FROM tender_version_result_winners"),
         "and it is the org seed, not the country one (the country still filters, via the version predicate): {sql}"
     );
+}
+
+/// Issue 388: with the per-lot org predicate gone, the seed alone decides
+/// membership — so it must decide at the HEAD version, or a stale participation
+/// leaks. Tender 1's head names org 357 as winner and bidder; tender 2 did at its
+/// OLD version only; tender 3 names it only as a subcontractor (not a bidder).
+/// Exactly lot 1 may return, for both filters.
+#[tokio::test]
+async fn the_org_seed_decides_membership_at_the_head_version_exactly() {
+    let path = format!("/tmp/tender-db-lots-org-seed-{}.db", std::process::id());
+    for suffix in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{suffix}"));
+    }
+    let _db = store::Db::open(&path).await.expect("open");
+    let raw = turso::Builder::new_local(&path).build().await.expect("raw");
+    let conn = raw.connect().expect("connect");
+    let exec = |sql: String| {
+        let conn = conn.clone();
+        async move { conn.execute(&sql, ()).await.unwrap_or_else(|e| panic!("{sql}: {e}")) }
+    };
+    for id in [1, 2, 3] {
+        exec(format!(
+            "INSERT INTO tenders (id, source, kind, current_seq, current_published_at, created_at)
+             VALUES ({id}, 'ted', 'procedure', 2, 100, 0)"
+        ))
+        .await;
+        for seq in [1, 2] {
+            exec(format!(
+                "INSERT INTO tender_versions (tender_id, seq, published_at, publication_id, caused_by_notice_id)
+                 VALUES ({id}, {seq}, {}, 'pub-{id}-{seq}', {})",
+                90 + seq, id * 10 + seq
+            ))
+            .await;
+        }
+        exec(format!("INSERT INTO lots (id, tender_id, lot_key) VALUES ({id}, {id}, 'LOT-1')")).await;
+        for seq in [1, 2] {
+            exec(format!(
+                "INSERT INTO tender_version_lots (tender_id, seq, lot_id, kind) VALUES ({id}, {seq}, {id}, 'Lot')"
+            ))
+            .await;
+        }
+        exec(format!("INSERT INTO lot_results (id, tender_id, notice_id, result_key) VALUES ({id}, {id}, {id}, 'RES-1')")).await;
+        exec(format!("INSERT INTO bids (id, tender_id, notice_id, bid_key) VALUES ({id}, {id}, {id}, 'TEN-1')")).await;
+    }
+    // winners: tender 1 at head (seq 2), tender 2 at seq 1 only, tender 3 a different org.
+    for (tender, seq, org) in [(1, 2, 357), (2, 1, 357), (2, 2, 999), (3, 2, 999)] {
+        exec(format!(
+            "INSERT INTO tender_version_result_winners (tender_id, seq, lot_result_id, organization_id)
+             VALUES ({tender}, {seq}, {tender}, {org})"
+        ))
+        .await;
+    }
+    // bid parties: the same shape, plus tender 3 naming 357 as a SUBCONTRACTOR at head.
+    for (tender, seq, org, role) in
+        [(1, 2, 357, "tenderer"), (2, 1, 357, "tenderer"), (2, 2, 999, "tenderer"), (3, 2, 357, "subcontractor")]
+    {
+        exec(format!(
+            "INSERT INTO tender_version_bid_parties
+                 (tender_id, seq, bid_id, role, organization_id, mention_notice_id, mention_section_id)
+             VALUES ({tender}, {seq}, {tender}, '{role}', {org}, {tender}, 'ORG-1')"
+        ))
+        .await;
+    }
+    let reader = raw.connect().expect("reader");
+    for (name, filter) in [
+        ("winner", Filter { winner: Some(357), now: 1_000, ..Filter::default() }),
+        ("bidder", Filter { bidder: Some(357), now: 1_000, ..Filter::default() }),
+    ] {
+        let rows = store::read::lots(&reader, &filter, Scope::Page { after: 0, limit: 25 })
+            .await
+            .expect("seeded lots read");
+        let ids: Vec<i64> = rows.iter().map(|r| r.id).collect();
+        assert_eq!(ids, vec![1], "?{name}=357: only the tender whose HEAD names the org, in the predicate's role");
+    }
+    for suffix in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{suffix}"));
+    }
 }
 
 /// The superset trap, lots edition (the tenders twin lives in

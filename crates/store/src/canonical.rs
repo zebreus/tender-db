@@ -6730,7 +6730,7 @@ impl Db {
         // ISSUE 111 APPLIES: this function runs at a rebuild's end or via the `Reindex`
         // admin job, and at no other time. Deploying the code does not create them.
         for (name, cols) in Self::DEFERRED_ORG_INDEXES {
-            if let Some(rows) = Self::too_large_to_build(&conn, cols).await? {
+            if let Some(rows) = Self::too_large_to_build(&conn, name, cols).await? {
                 eprintln!(
                     "store: REFUSING to auto-build {name}: {cols} has ~{rows} rows, over the                      {} row cap — a bulk CREATE INDEX there would sort ~{} GB (issue 111).                      Build it index-first at a rebuild, or in a maintenance window.",
                     Self::MAX_AUTO_INDEX_ROWS,
@@ -6828,7 +6828,7 @@ impl Db {
     pub async fn build_notice_indexes(&self) -> turso::Result<()> {
         let conn = self.conn().await;
         for (name, cols) in Self::DEFERRED_NOTICE_INDEXES {
-            if let Some(rows) = Self::too_large_to_build(&conn, cols).await? {
+            if let Some(rows) = Self::too_large_to_build(&conn, name, cols).await? {
                 eprintln!(
                     "store: REFUSING to auto-build {name}: {cols} has ~{rows} rows, over the                      {} row cap — a bulk CREATE INDEX there would sort ~{} GB (issue 111).                      Build it index-first at a rebuild, or in a maintenance window.",
                     Self::MAX_AUTO_INDEX_ROWS,
@@ -6886,21 +6886,48 @@ impl Db {
     const MAX_AUTO_INDEX_ROWS: i64 = 240_000_000;
 
     /// Refuse to bulk-build an index over a table too large to sort within the memory
-    /// budget. Returns the offending row estimate, or `None` if the build may proceed.
+    /// budget. Returns the offending row count, or `None` if the build may proceed.
     ///
-    /// Uses `MAX(rowid)`, which is an O(1) index seek to the end rather than a
-    /// `COUNT(*)` scan — and an OVER-estimate once rows have been deleted, so it errs
-    /// toward refusing. Erring toward refusing is right: a refused index leaves a read
-    /// slow and says so, while an accepted one that does not fit takes the process
-    /// down mid-build, and turso has no way to interrupt a running statement.
-    async fn too_large_to_build(conn: &Connection, cols: &str) -> turso::Result<Option<i64>> {
+    /// Two bounds, cheap one first. `MAX(rowid)` is an O(1) index seek to the end and
+    /// an OVER-estimate once rows have been deleted — which used to be the whole
+    /// check, on the argument that erring toward refusing is safe (a refused index
+    /// leaves a read slow and says so; an accepted one that does not fit takes the
+    /// process down mid-build, and turso cannot interrupt a statement). It is safe,
+    /// and after a dozen full rebuilds it is also useless: every rebuild deletes and
+    /// re-inserts every satellite row, so rowids run far past the row count —
+    /// `tender_version_result_winners` read ~845M against a table that cannot exceed
+    /// `lot_results`' ~20M rows, and the covering index issue 388 shipped for it was
+    /// refused at every boot while its issue said "landed" (2026-09-18). So the cheap
+    /// bound decides only the easy case; past it, the exact `COUNT(*)` decides — a
+    /// table scan, but on the background reindex path and only for the tables whose
+    /// rowid space has outgrown the cap.
+    ///
+    /// An index that already exists is never refused: `CREATE INDEX IF NOT EXISTS` is
+    /// a no-op for it, so neither bound is worth taking — and the refusal line this
+    /// used to print for every existing large index at every boot was the noise that
+    /// hid the one real refusal.
+    async fn too_large_to_build(conn: &Connection, name: &str, cols: &str) -> turso::Result<Option<i64>> {
+        let mut present = conn
+            .query("SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?", [t(name)])
+            .await?;
+        if present.next().await?.is_some() {
+            return Ok(None);
+        }
         let Some(table) = cols.split('(').next().map(str::trim) else { return Ok(None) };
         let mut rows = conn.query(&format!("SELECT MAX(rowid) FROM {table}"), ()).await?;
-        let estimate = match rows.next().await? {
+        let bound = match rows.next().await? {
             Some(row) => opt_int_of(&row, 0).unwrap_or(0),
             None => 0,
         };
-        Ok((estimate > Self::MAX_AUTO_INDEX_ROWS).then_some(estimate))
+        if bound <= Self::MAX_AUTO_INDEX_ROWS {
+            return Ok(None);
+        }
+        let mut rows = conn.query(&format!("SELECT COUNT(*) FROM {table}"), ()).await?;
+        let count = match rows.next().await? {
+            Some(row) => opt_int_of(&row, 0).unwrap_or(0),
+            None => 0,
+        };
+        Ok((count > Self::MAX_AUTO_INDEX_ROWS).then_some(count))
     }
 
     /// Which deferred indexes are absent from this database.
@@ -7240,7 +7267,7 @@ impl Db {
     pub async fn build_tender_indexes(&self) -> turso::Result<()> {
         let conn = self.conn().await;
         for (name, cols) in Self::DEFERRED_TENDER_INDEXES {
-            if let Some(rows) = Self::too_large_to_build(&conn, cols).await? {
+            if let Some(rows) = Self::too_large_to_build(&conn, name, cols).await? {
                 eprintln!(
                     "store: REFUSING to auto-build {name}: {cols} has ~{rows} rows, over the \
                      {} row cap — a bulk CREATE INDEX there would sort ~{} GB (issue 111). \
@@ -21935,6 +21962,41 @@ mod tests {
         Fact, LotState, MinUnionFind, TenderVersion, head_deadline, head_title,
         head_value_eur_cents, sentinel_amount,
     };
+
+    /// Issue 388: `MAX(rowid)` is only the cheap bound. A table whose rowid space has
+    /// outgrown the cap through rebuilds but holds few rows must still get its index,
+    /// and an index that already exists must never be refused (or reported).
+    #[tokio::test]
+    async fn a_high_rowid_alone_does_not_refuse_an_index_build() {
+        let path = format!("/tmp/tender-db-index-cap-{}.db", std::process::id());
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+        let db = crate::Db::open(&path).await.unwrap();
+        let conn = db.conn().await;
+        conn.execute("CREATE TABLE probe_rows (id INTEGER PRIMARY KEY, v INTEGER)", ()).await.unwrap();
+        // One row, sitting past the cap in rowid space — the post-rebuild shape.
+        conn.execute(
+            &format!("INSERT INTO probe_rows (id, v) VALUES ({}, 1)", crate::Db::MAX_AUTO_INDEX_ROWS + 1),
+            (),
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            crate::Db::too_large_to_build(&conn, "probe_rows_v", "probe_rows(v)").await.unwrap(),
+            None,
+            "one row is buildable whatever its rowid"
+        );
+        conn.execute("CREATE INDEX probe_rows_v ON probe_rows(v)", ()).await.unwrap();
+        assert_eq!(
+            crate::Db::too_large_to_build(&conn, "probe_rows_v", "probe_rows(v)").await.unwrap(),
+            None,
+            "an existing index is never refused"
+        );
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
     use std::collections::{BTreeSet, HashMap, HashSet, VecDeque};
 
     fn text(field: &str, lang: Option<&str>, value: &str) -> Fact {
