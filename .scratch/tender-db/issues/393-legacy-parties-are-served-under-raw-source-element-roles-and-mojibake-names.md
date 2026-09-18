@@ -1,6 +1,6 @@
 # 393 — the legacy eras serve party identity in the source's own shape: a TED transliteration block becomes a party and a twin Organization, raw element names become the role vocabulary, and Greek text-era names are served as Windows-1252 mojibake
 
-Status: ready-for-agent — unit 2 BUILT AND DEPLOYED 2026-09-18 (rev `ba9eb1f`: the legacy party roles fold onto the canonical vocabulary in code; STANDING rows keep serving raw roles until the legacy eras are re-projected — the cohort is SIZED at 6,998,915 notices and the run is BLOCKED on a permission the classifier refused 2026-09-18; it needs an explicit go-ahead, see the unit-2 comment); unit 3 MEASURED 2026-09-18 (1,150 mojibake organizations; the decoder half is code, the merge half is a verdict campaign); unit 1 open. Was: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — unit 2 BUILT AND DEPLOYED 2026-09-18 (rev `ba9eb1f`: the legacy party roles fold onto the canonical vocabulary in code; STANDING rows keep serving raw roles until the legacy eras are re-projected — the cohort is SIZED at 6,998,915 notices and the run is BLOCKED on a permission the classifier refused 2026-09-18; it needs an explicit go-ahead, see the unit-2 comment); unit 3's DECODER HALF BUILT, GATED AND DEPLOYED 2026-09-18 (rev `c36de25`: a declared-ISO record whose own header says Greek decodes as ISO-8859-7; the ~1,150 standing mojibake rows stay until the ISO-only text era is re-parsed, and that re-parse — 132 packages, chunk recipe below — is the SAME permission class the classifier refused for unit 2's run); unit 1 open. Was: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (ingest — the legacy party/organization projection in `crates/ingest/src/project.rs` and `crates/ingest/src/r209/rules.rs`, plus the text-era decoder in `crates/ingest/src/text/mod.rs`; unit 2 is also a docs defect, in `openapi.json`, `/docs` and the `/v1/sql/schema` column note)
 Relates to: 259 (CLOSED — one legacy party opening TWO Organization sections, fixed for `WINNER`/`ADDRESS_WINNER` by an outermost-Organization alias; unit 1 is the same mechanism class for a tag the nesting fix cannot reach, and 259's "no fixture in the corpus exercises the tag" applies again), 368 (ready-for-agent — unmapped source vocabulary dropped silently; it records at line 527 that `role_name` accepts ANY `TED-` id, but only as its sieve caveat, and does not track the served vocabulary), 364 (unit 6 done — the legacy OJS weld; its line ~231 notes in passing that "the legacy party roles are mostly unmapped … raw TED field names" after its buyer gauge read a false green, and unit 5 shows an r208 re-parse + full projection is a routine operation), 234 (CLOSED — identifier-less mentions minting a provisional org each) and 351 (DONE — the country-less half, 5.76M rows folded under `p0`): both are the machinery unit 1's Latin twins and unit 3's mojibake names ride into the org layer, 349 / 350 (DONE — the genericness wall on fragmented **Greek** public bodies; units 1 and 3 both mint Greek profiles that can never meet their canonical twin, so they feed exactly that class), 11 (resolved — the text-era profile; its item 3 already records that "the ISO twin mangles non-Latin-1 scripts (Greek OT bodies)" and mitigates it only by preferring the UTF8 twin, which does not exist for the years in unit 3), 202 (RESOLVED — a corrupt UTF8 twin suppressing its readable ISO, per-day keying) and 181 (RESOLVED-VERIFIED — the CF re-dispatch): both send more members through the unconditional decoder unit 3 names, 304 (STAGE 1 CLOSED — text-era language editions; stage 2 acquisition would multiply the mangled rows), 293 (BACKLOG — text-era BODY extraction; the same decoder decides what those bodies say), 232 / 244 (the text-era buyer/winner campaigns whose sweeps unit 3's re-parse would ride), 225 (RESOLVED — shipped the `role LIKE '%uyer%'` workaround unit 2 would retire), 98 (RESOLVED — eForms-DE role aliases, the precedent for folding a dialect's role spellings), 300 (the org-matching design and its exemplar sheet — row 53 classifies Cyrillic/Latin transliteration pairs as legitimate separate rows, which is true of publisher-published spellings and NOT of unit 1's TED-generated block)
 
@@ -430,3 +430,64 @@ full above.
 **After it runs**, the unit's acceptance is the `## Verify` line below (tender 8414191 serving
 `winner` and `review-body` instead of the element names) plus the 364-style buyer gauge reading the
 same as before — the buyer rows must not move, since their role did not change.
+
+## Unit 3 — the DECODER HALF is built, gated and deployed 2026-09-18 (rev `c36de25`)
+
+**The rule, and where it lives.** `text/mod.rs` `decode_declared_iso`: a declared-`_ISO_` record
+is decoded under Windows-1252 first — the header lines are ASCII under every ISO-8859 part, so that
+pass reads them safely — and re-decoded as ISO-8859-7 when the record's own header says its
+original is Greek: `OL: EL`, or `CY: GR` on the early-1990s records that predate the `OL:` line
+(`OL:` outranks `CY:`). ASCII is identical under both codepages, so the English renderings and the
+header come out the same either way; only the bytes above 0x7F change meaning.
+
+**The decision for every other script, recorded so it is not mistaken for an omission:** nothing
+else moves. The Central-European (8859-2) and Cyrillic (8859-5) editions exist only from 2004 and
+2007, and from 2004 the package ships a UTF8 twin that supersedes the ISO member
+(`profile.rs`, `iso_variant_is_superseded_when_the_package_ships_utf8`) — so there is no ISO-only
+population for them to fix. And a Latin declaration keeps a Spanish `Ó` an `Ó` even though the
+same byte 0xD3 is `Σ` in Greek: the `Ã¿rgano` row the filing found under the `Ã` probe is exactly
+the row a byte-statistics heuristic would have broken, which is why the decision keys on the
+record's declaration and not on the bytes.
+
+**Fixture and tests.** `tests/fixtures/text/1997-can-greek-iso-8859-7.txt` is 108345-1997 as prod
+serves it (tender 2247398), rebuilt field for field with the `CO:` and `TX:` winner lines in real
+ISO-8859-7 bytes — the bytes the served `Ã. ×ñéóôïöéëüðïõëïò ÁÅ` round-trips to, so no archive read
+was needed. `a_greek_iso_record_is_decoded_as_iso_8859_7_by_its_own_declaration` (tests/text.rs)
+goes through `profile::dispatch` like the real path and asserts `TED-OFFICIALNAME` =
+`Γ. Χριστοφιλόπουλος ΑΕ`; run against the old decoder it fails with
+`winner names: ["Ã. ×ñéóôïöéëüðïõëïò ÁÅ"]` — the served string, verbatim. Its control flips only the
+two header lines to `OL: ES` / `CY: ES` and asserts the SAME bytes then read as the mojibake: the
+decision is the record's, not the bytes'. `an_iso_record_is_decoded_by_the_language_it_declares`
+(mod.rs) pins `OL:` over `CY:`, the country fallback, and the Spanish `Ó`. Gate `GATE-EXIT=0`, 117
+suites; deployed `c36de25`, health green, queue idle.
+
+**What is NOT fixed by the deploy: every standing row.** The decoder runs at parse time, and the
+~1,150 mojibake organizations (measured above) hang off parses that already exist. They move only
+when the ISO-only text era is re-parsed from the archive, and that is the stale-rows half:
+
+- **The population in packages**, one bounded metadata read: the ISO-only years are TED monthly
+  fetches **270–401** — 132 packages, `1993-01 … 2003-12` (the ids run backwards in time; 269 is
+  2004-01, the first year with a UTF8 twin). Nothing after 2003 needs re-parsing: its ISO member was
+  never the one ingested.
+- **The recipe is issue 364 unit 5's, verbatim**: `{"kind":"reparse","profiles":["text"],
+  "packages":10,"after":269,"reclaim_only":true}`, `after` carried from each run's continuation,
+  ~13 chunks, then ONE `project` — `reclaim_only` suppresses the per-chunk fold, and above 500,000
+  un-projected notices the fold is the full pass anyway (~5.2 h), so one at the end is the cheap
+  shape. `reparse` stamps tenders epoch-stale by PROFILE, so the text era's ~2M tenders are
+  re-derived by that fold whatever the chunking; that is the runbook's "not a one-package blast
+  radius", accepted.
+- **Only the Greek records change output.** Every other record in those 132 packages re-parses to
+  identical content (the hash is the same bytes), so the walk is mostly a no-op that costs wall
+  clock, not correctness. Read `unmatched` and `re-keyed` on each chunk (issue 290): this parser
+  change does not move `publication_id` derivation, so `re-keyed` must stay 0.
+- **After the fold**, the resolver mints or matches the Greek names (`name_norm` now Greek, tonos
+  folded by issue 346), the mojibake rows lose their last mention and fall to the orphan sweeps,
+  and the merge half — matching each recovered name to its canonical GR profile — is the
+  reviewer+challenger campaign over the recovered names, verdicts through `org_merge_verdicts`.
+  The four literal probes in `## Done when` are the acceptance; `27128935` either serves Greek or
+  redirects to the row that does.
+
+**Not enqueued.** A `reparse` writes the parsed layer of ~2.5M notices on prod; it is the same
+permission class the classifier refused twice today (unit 2's `refold-fields`, 404's wet repair),
+and it is not being attempted on that basis or routed around. The first chunk's command is above,
+ready to run verbatim on a go-ahead; the chunk table goes here as they run.
