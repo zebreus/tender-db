@@ -274,3 +274,10 @@ existing five with the pair asserted beside the instants. `process.rs`: the proc
 `api.rs`: the DÖE date-only tender on every surface plus the unstamped fallback; the cross-sort
 cursor test reads the stored epoch off the store (the served string no longer carries it); the
 ISO assertion accepts a bare date or an offset-bearing instant. Gate 127/127.
+
+**Read after the deploy (19:49–19:52 UTC, warm, network-inclusive) — the four notice seeks per
+list row cost nothing visible.** `/v1/tenders?limit=100` 0.91 s, `?limit=1000` 0.99 s,
+`?sort=published_at&limit=1000` 1.09 s, `?bidder=357&limit=100` 1.26 s (388's closing matrix:
+2.47–2.79 s), `?bidder=357&limit=1000` 3.66–3.88 s (388: 3.96–4.11 s), `?winner=357&limit=1000`
+2.09 s (388: 4.36 s), `?buyer=28&limit=1000` 0.49 s, `/v1/tenders/7954578` 0.45 s,
+`/v1/notices?limit=1000` 0.88 s. Every seeded shape reads at or under its 388 figure.

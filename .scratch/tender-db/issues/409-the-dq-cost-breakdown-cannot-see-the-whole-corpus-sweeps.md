@@ -1,6 +1,6 @@
 # 409 — the data-quality run's cost breakdown covers only the WINDOWED queries, so eleven whole-corpus sweeps (~10 % of the run) are unattributed
 
-Status: ready-for-agent — **units 1 and 2 DONE and gated 2026-09-17**, same day as filing: the
+Status: **DONE 2026-09-18** — the acceptance (job 1462: all 27 labels, `publication_days* 83s`) was the last open item and it landed 2026-09-17; the Status line had not caught up. `## Verify` reads the newest weekly cost line off the box. Was: ready-for-agent — **units 1 and 2 DONE and gated 2026-09-17**, same day as filing: the
 whole-corpus sweeps are timed into the same map, the line prints AFTER them (it was printed
 before, so it structurally could not include them), whole-corpus labels are marked `*`, and the
 line now states its total and NAMES any measured label it has no timing for. Awaiting only the
@@ -14,6 +14,13 @@ reason this stopped being tidy and became live), 246 (which added the whole-corp
 does not time), 92 / 122 / 117 (the sizing and indexing decisions this breakdown exists to feed),
 368 unit 4b (the same shape one report over: a diagnostic that ran and showed nobody anything)
 Blocked by: nothing
+
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click 'journalctl -u tender-db --since "-9d" --no-pager | grep "\[data-quality\] cost by query" | tail -1 | grep -oE "^[A-Za-z]{3} [0-9]{2} [0-9:]{8}|[0-9]+s total|publication_days\* [0-9]+s" | tr "\n" " "'
+
+- **done**: a date, the run's total and `publication_days* <n>s` — the newest weekly run's cost line states its total and times the whole-corpus sweeps (read 2026-09-18: `Sep 17 14:19:12 5371s total publication_days* 83s`)
+- **open**: no `publication_days*` fragment — the line dropped the whole-corpus sweeps again (the pre-409 shape), or no line in nine days (the weekly tick did not run)
 
 ## Observed
 
@@ -138,3 +145,10 @@ windowed sum) on the previous run. Measured directly here they are **728 s** (13
 was a subtraction that silently absorbed loop overhead into neither column, which is exactly the kind
 of inference this issue exists to replace. The conclusion it supported — that the window change was
 cheap — survives, and now rests on `83s` rather than on arithmetic.
+
+## Closed 2026-09-18
+
+The acceptance above — job 1462, all 27 labels in one ordering, the whole-corpus sweeps marked and
+`publication_days* 83s` finally a number — was the last item this issue waited for, and it landed
+2026-09-17. The Status line kept `ready-for-agent` past it. Nothing else is owed here; the next
+weekly run only refreshes the numbers, which the `## Verify` block reads.

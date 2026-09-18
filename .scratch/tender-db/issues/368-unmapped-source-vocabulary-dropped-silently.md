@@ -1,12 +1,19 @@
 # 368 — an unmapped field id or subtype is dropped with no diagnostic: 29,455 titleless r208 Tenders and whole eras of lot titles
 
-Status: ready-for-agent — **UNIT 2 DONE AND REFOLDED 2026-09-12: titleless tenders 30,285 → 16,126 (r208 29,763 → 15,604), the 6.0M lot band 100 → 7 untitled; the remaining 15,604 r208 tenders publish no title element of any spelling (unit 3, 'the other half', is the honest answer that none exists — sampled below). The diagnostics are honest per channel (aa9c080) and the probe is a 7-second call. Open: unit 3's write-up; issue 383's award-date refold.** Was: ready-for-agent — **UNIT 4b WAS INERT AND IS NOW FIXED 2026-09-10 (`c5d6e79`): the query ran every week and had NO render section, so the diagnostic showed nobody anything. See the last section, including the source-reading guard that now holds it.** Units 1-3 unblock on the next weekly run. Was: **UNIT ORDER REVISED 2026-09-08 by measurement: unit 4 (the unmapped-field diagnostic) goes FIRST.** Unit 1 as written would have mapped `TED-TI_TEXT` to `title`, which is the CPV category label in 23 languages, not the procurement's title — see "Unit 1, measured". Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
+Status: **DONE 2026-09-18** — the two items the Status line kept open were done — unit 3's write-up is the sampled section (the other half publishes no title element; `title` null beside the description is the honest state) and issue 383's award-date refold ran 2026-09-12. `## Verify` reads one r208 head of each kind. Was: ready-for-agent — **UNIT 2 DONE AND REFOLDED 2026-09-12: titleless tenders 30,285 → 16,126 (r208 29,763 → 15,604), the 6.0M lot band 100 → 7 untitled; the remaining 15,604 r208 tenders publish no title element of any spelling (unit 3, 'the other half', is the honest answer that none exists — sampled below). The diagnostics are honest per channel (aa9c080) and the probe is a 7-second call. Open: unit 3's write-up; issue 383's award-date refold.** Was: ready-for-agent — **UNIT 4b WAS INERT AND IS NOW FIXED 2026-09-10 (`c5d6e79`): the query ran every week and had NO render section, so the diagnostic showed nobody anything. See the last section, including the source-reading guard that now holds it.** Units 1-3 unblock on the next weekly run. Was: **UNIT ORDER REVISED 2026-09-08 by measurement: unit 4 (the unmapped-field diagnostic) goes FIRST.** Unit 1 as written would have mapped `TED-TI_TEXT` to `title`, which is the CPV category label in 23 languages, not the procurement's title — see "Unit 1, measured". Was: ready-for-agent (filed 2026-09-07 from the external review's verified findings)
 Kind: defect (projection destinations) — the recurring 18/85/177/231 shape, plus the
 standing detector none of them had
 Relates to: 85 (DE-1.x facts), 18 (sdk-0.1 instants), 177 (r208 values), 231 (sdk-0.1
 CPV/amounts), 41 (the vocab sweep tsv that already counted LOT_TITLE 427× across six
 packages), 109 (the factless-version probe that cannot see these), 343/291 (which title
 is picked, once one exists)
+
+## Verify
+
+    for id in 5000206 5000205; do curl -s --max-time 20 https://tenders.zebreus.click/v1/tenders/$id | python3 -c "import json,sys; d=json.load(sys.stdin); print($id, repr(d['title'])[:60], '| description:', any(t['field']=='description' for t in d['texts']))"; done
+
+- **done**: `5000206 "appel d'offre pour l'acquisition du bois d'origine ménagère "` then `5000205 None`, both with `description: True` — an r208 head whose form carries a title element serves it (unit 2), and one whose form carries none serves `null` beside its description rather than a title made up from it (unit 3) (read 2026-09-18)
+- **open**: `5000206 None` — the four r208 title spellings are no longer mapped (a refold under a projection that lost them), or `5000205 '<text>'` — a title fabricated from the description
 
 ## Observed
 
@@ -689,3 +696,10 @@ So the remaining 15,604 have a description and no title, because the form they w
 carries none. The honest state of the record is what the API now serves: `title` null, `description`
 filled. Deriving a title from the description's first line would be the fabrication this issue
 already refused for `TI_TEXT`. **Unit 3 closes as an answer.**
+
+## Closed 2026-09-18
+
+Unit 3 closed as an answer on 2026-09-12 (the section above), issue 383's award-date refold ran the
+same day, and unit 4b's weekly diagnostic has run since. The Status line kept the two as open items;
+nothing remains. The `## Verify` block pins both halves of the answer on one r208 band: the title
+that IS published is served, the title that is NOT is not invented.

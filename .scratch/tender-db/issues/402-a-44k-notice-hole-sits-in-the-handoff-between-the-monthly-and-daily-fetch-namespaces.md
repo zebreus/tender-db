@@ -1,6 +1,6 @@
 # 402 — ~44,600 TED notices are missing from 2026-06-30 to 2026-07-15, in the seam between the monthly and the daily fetch namespaces, and every guard on the board reads green over it
 
-Status: ready-for-agent — **HALF (a) IS DONE AND VERIFIED ON PROD 2026-09-17**: the twelve OJ S
+Status: **DONE 2026-09-18** — every unit was closed on 2026-09-17 (half (a) folded, unit B's detector, the namespace-aware funnel) and the Status line said so under an open label. `## Verify` reads the former hole through the head-column index: 38,897 tenders where there were none. Was: ready-for-agent — **HALF (a) IS DONE AND VERIFIED ON PROD 2026-09-17**: the twelve OJ S
 dailies 2026-00124…00135 are fetched, processed and folded (job 2352: **44,854 notices → 40,848
 tenders, 85,747 versions**, then job 2353 rebuilt the deferred indexes), and the window that served
 ZERO now serves on every day sampled. **Unit B's DETECTOR half is fixed and gated 2026-09-17** — the continuity window was the newest
@@ -12,6 +12,13 @@ the comments below for what was deliberately NOT changed and why. Was: found 202
 Kind: defect (coverage — the fetch plan's monthly→daily handoff, and the completeness verdict in `crates/app/src/coverage.rs` / `store::monthly_period_gaps`)
 Relates to: 395 (RESOLVED 2026-09-15 — it built `monthly_period_gaps` exactly to catch a fetch hole the ✓ was hiding, and it CANNOT see this one: its sequence test is monthly-only and interior-only by design, and this hole is at the boundary between two period namespaces, which is neither), 396 (RESOLVED-VERIFIED 2026-09-16 — its 2026 SURPLUS and this DEFICIT are in the same coverage cell and cancel: 2026 reads 118.74 % because the denominator is a 2026-07-17 snapshot while the held count runs to 2026-09-11, so ~44,600 missing notices are invisible under an over-100 % ratio), 15 (RESOLVED 2026-08-16 — the backfill that set the fetch plan, and where OJ S issue numbering is pinned), 33 (the funnel panel), 401 (filed the same hour — the same panel, a different way its cells mislead), 06 (the ground truth the coverage ratio divides by)
 Blocked by: nothing
+
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click 'echo "SELECT count(*) AS tenders FROM tenders WHERE current_published_at >= 1782777600 AND current_published_at < 1784160000" | /root/sq.sh'
+
+- **done**: tens of thousands — tenders whose head version was published 2026-06-30 … 2026-07-15, the window that served zero (read 2026-09-18: `38897`; a range on `tenders_current_published`, bounded, ~1 s)
+- **open**: `0` — the hole is back: a rebuild that dropped OJ S 2026-00124…00135, or a fetch plan that skipped the seam again
 
 ## The measurement
 
@@ -518,3 +525,10 @@ bought a measurement that can see the thing it was written to find.
 Corollary worth recording so nobody re-opens it: **`notices.published_at` does not need an index** on
 this evidence. The full scan is affordable at this cadence, and the index would have to be maintained
 on every ingest for the benefit of one weekly query.
+
+## Closed 2026-09-18
+
+The Status line already said "every unit of this issue is closed" (2026-09-17) and still carried
+`ready-for-agent`; this closes it. The `## Verify` read is the issue's own measurement turned
+around — the window that counted zero notices now counts 38,897 tenders by their head version's
+publication date, off the `(current_published_at, id)` index rather than a `notices` scan.
