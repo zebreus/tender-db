@@ -1,6 +1,6 @@
 # 393 — the legacy eras serve party identity in the source's own shape: a TED transliteration block becomes a party and a twin Organization, raw element names become the role vocabulary, and Greek text-era names are served as Windows-1252 mojibake
 
-Status: ready-for-agent — unit 2 BUILT AND DEPLOYED 2026-09-18 (rev `ba9eb1f`: the legacy party roles fold onto the canonical vocabulary in code; STANDING rows keep serving raw roles until the legacy eras are re-projected, and that re-projection is the next unit); unit 3 MEASURED 2026-09-18 (1,150 mojibake organizations; the decoder half is code, the merge half is a verdict campaign); unit 1 open. Was: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — unit 2 BUILT AND DEPLOYED 2026-09-18 (rev `ba9eb1f`: the legacy party roles fold onto the canonical vocabulary in code; STANDING rows keep serving raw roles until the legacy eras are re-projected — the cohort is SIZED at 6,998,915 notices and the run is BLOCKED on a permission the classifier refused 2026-09-18; it needs an explicit go-ahead, see the unit-2 comment); unit 3 MEASURED 2026-09-18 (1,150 mojibake organizations; the decoder half is code, the merge half is a verdict campaign); unit 1 open. Was: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (ingest — the legacy party/organization projection in `crates/ingest/src/project.rs` and `crates/ingest/src/r209/rules.rs`, plus the text-era decoder in `crates/ingest/src/text/mod.rs`; unit 2 is also a docs defect, in `openapi.json`, `/docs` and the `/v1/sql/schema` column note)
 Relates to: 259 (CLOSED — one legacy party opening TWO Organization sections, fixed for `WINNER`/`ADDRESS_WINNER` by an outermost-Organization alias; unit 1 is the same mechanism class for a tag the nesting fix cannot reach, and 259's "no fixture in the corpus exercises the tag" applies again), 368 (ready-for-agent — unmapped source vocabulary dropped silently; it records at line 527 that `role_name` accepts ANY `TED-` id, but only as its sieve caveat, and does not track the served vocabulary), 364 (unit 6 done — the legacy OJS weld; its line ~231 notes in passing that "the legacy party roles are mostly unmapped … raw TED field names" after its buyer gauge read a false green, and unit 5 shows an r208 re-parse + full projection is a routine operation), 234 (CLOSED — identifier-less mentions minting a provisional org each) and 351 (DONE — the country-less half, 5.76M rows folded under `p0`): both are the machinery unit 1's Latin twins and unit 3's mojibake names ride into the org layer, 349 / 350 (DONE — the genericness wall on fragmented **Greek** public bodies; units 1 and 3 both mint Greek profiles that can never meet their canonical twin, so they feed exactly that class), 11 (resolved — the text-era profile; its item 3 already records that "the ISO twin mangles non-Latin-1 scripts (Greek OT bodies)" and mitigates it only by preferring the UTF8 twin, which does not exist for the years in unit 3), 202 (RESOLVED — a corrupt UTF8 twin suppressing its readable ISO, per-day keying) and 181 (RESOLVED-VERIFIED — the CF re-dispatch): both send more members through the unconditional decoder unit 3 names, 304 (STAGE 1 CLOSED — text-era language editions; stage 2 acquisition would multiply the mangled rows), 293 (BACKLOG — text-era BODY extraction; the same decoder decides what those bodies say), 232 / 244 (the text-era buyer/winner campaigns whose sweeps unit 3's re-parse would ride), 225 (RESOLVED — shipped the `role LIKE '%uyer%'` workaround unit 2 would retire), 98 (RESOLVED — eForms-DE role aliases, the precedent for folding a dialect's role spellings), 300 (the org-matching design and its exemplar sheet — row 53 classifies Cyrillic/Latin transliteration pairs as legitimate separate rows, which is true of publisher-published spellings and NOT of unit 1's TED-generated block)
 
@@ -384,3 +384,49 @@ the re-decoded names, and its verdicts would go through the same tables and the 
 - **open**: the raw r208 element names serve as roles; read 2026-09-18 (rev `ba9eb1f`, folded in code, not yet re-projected): `['APPEAL_PROCEDURE_BODY_RESPONSIBLE', 'ECONOMIC_OPERATOR_NAME_ADDRESS', 'TRANSLITERATED_ADDR', 'buyer']`
 
 Unit 3's line, for when the decoder half lands: `curl -s https://tenders.zebreus.click/v1/organizations/9954048` — done: a Greek name; open: the Latin transliteration `Perifereia Attikis…` or the Windows-1252 mojibake.
+
+## Unit 2 — the re-projection is SIZED 2026-09-18 (6,998,915 notices) and BLOCKED on permission
+
+**Why a refold and not a full rebuild.** The role is read where the party's `ORG-n` reference lives:
+`NoticeValue::Id { is_ref: true }` rows in `notice_ids`, whose `field_id` is `TED-<element>` and goes
+through `role_name` → `legacy_role`. So the cohort is "every notice carrying one of the 23 element
+ids whose role changed", and `refold-fields` is the tool built for exactly that: it walks the
+carrier set, marks it `projected = 0`, and queues one `project` behind it. `tables: ["notice_ids"]`
+narrows the walk to the one channel the reference lives in.
+
+**Sized with the job's own dry run** — `expect: 1` makes it enumerate, report and write nothing
+(operations.md's SIZE FIRST rule). Job 1474, ~9 minutes over 46,132,978 `notice_ids` rows:
+
+    refold-fields aborted: 6998915 notices carry ["TED-PURCHASING_ON_BEHALF_YES", "TED-ADDRESS_CONTRACTOR",
+    "TED-ADDRESS_WINNER", "TED-WINNER", "TED-ECONOMIC_OPERATOR_NAME_ADDRESS", "TED-NAME_ADDRESS_WINNER",
+    "TED-DESCRIPTION_PROCUREMENT.ADDRESS_CONTRACTOR", "TED-ADDRESS_REVIEW_BODY", "TED-ADDRESS_REVIEW_INFO",
+    "TED-APPEAL_PROCEDURE_BODY_RESPONSIBLE", "TED-RESPONSIBLE_FOR_APPEAL_PROCEDURES",
+    "TED-MEDIATION_PROCEDURE_BODY_RESPONSIBLE", "TED-ADDRESS_MEDIATION_BODY",
+    "TED-TENDERS_REQUESTS_APPLICATIONS_MUST_BE_SENT_TO", "TED-ADDRESS_PARTICIPATION", "TED-FURTHER_INFORMATION",
+    "TED-ADDRESS_FURTHER_INFO", "TED-SPECIFICATIONS_AND_ADDITIONAL_DOCUMENTS", "TED-LODGING_INFORMATION_FOR_SERVICE",
+    "TED-SERVICE_FROM_INFORMATION", "TED-TAX_LEGISLATION", "TED-ENVIRONMENTAL_PROTECTION_LEGISLATION",
+    "TED-EMPLOYMENT_PROTECTION_WORKING_CONDITIONS"], expected ~1 — check the field ids (nothing was written)
+
+The buyer ids (`ADDRESS_CONTRACTING_BODY` and kin) are deliberately NOT in the list: they folded to
+`buyer` before this unit (issue 369 unit 2), so their carriers' rows are already right.
+
+**What the real run costs, and why.** 6,998,915 un-projected legacy notices is fourteen times the
+closure cap (`LEGACY_CLOSURE_CAP` = 500,000), so the trailing `project rebuild=false` will announce
+`INCREMENTAL → FULL fallback BEFORE identity pass` and re-project the whole corpus — the same path
+issue 364 unit 5 took (job 1917: 14,366,679 notices → 7,942,429 tenders in 18,812 s, ~5.2 h). Plus
+the mark itself, ~7M `UPDATE`s. Started at night with the queue idle it finishes mid-morning; the
+09:35 Berlin daily tick queues behind it on the single writer, which is how the queue is designed.
+Not a data risk: the tender layer is derived and the run is idempotent.
+
+**Blocked.** The real enqueue —
+
+    POST /admin/jobs {"kind":"refold-fields","profiles":[the 23 ids above],"tables":["notice_ids"],"expect":6998915}
+
+— was refused by the permission classifier ("Modify Shared Resources") at 04:03Z, the same class as
+issue 404's wet repair. It is not being routed around (no ssh-side enqueue, no CLI). The command is
+ready to run verbatim on a go-ahead; the field list is in the scratchpad as `393-fields.txt` and in
+full above.
+
+**After it runs**, the unit's acceptance is the `## Verify` line below (tender 8414191 serving
+`winner` and `review-body` instead of the element names) plus the 364-style buyer gauge reading the
+same as before — the buyer rows must not move, since their role did not change.
