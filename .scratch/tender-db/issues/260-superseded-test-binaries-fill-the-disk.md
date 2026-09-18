@@ -1,6 +1,6 @@
 # 260 — superseded test binaries fill the build disk, and the third symptom does not look like a disk problem
 
-Status: FIXED-BUT-RECURRING — the prune landed 2026-08-20 and still works; on 2026-09-10 four gate
+Status: FIXED-BUT-RECURRING — **the second cause has a rule now (2026-09-18):** the gate's prune also drops superseded hash variants of dependency archives over 100 MB (keep the newest per stem), which is what the 2026-09-10 recurrence and today's near-miss were made of (see the foot). The first cause (superseded test binaries) has been pruned since 2026-08-20.
 runs in one session filled the allowance anyway, in artifacts the prune does not cover. See the
 recurrence at the end, including the `df` reading that makes this look like plenty of free space.
 Was: FIXED 2026-08-20 (the prune; `ops/check.sh` now runs it before building). Filed anyway because
@@ -103,4 +103,21 @@ below a threshold; `--profile` sharing so gate runs reuse artifacts) each have a
 minutes, and one session hitting it is not enough evidence to pick one. What this entry buys is that
 the next `GATE-EXIT=101` with no failing test is diagnosed in a minute rather than debugged as a code
 error. Reopen with a rule if it happens twice more.
+
+## 2026-09-18 — the near-miss priced, and the rule the 09-10 entry asked for
+
+Five gates in one afternoon (issues 386/388/416) took the allowance from 5.3 GB free to **3.5 GB**
+with `target/` at 20 GB — the 09-10 shape, one or two gates from the link error. Sized before it
+bit: `target/debug/deps` held **nine hash variants each of `libturso_sync_sdk_kit` and
+`libturso_sdk_kit`** (200–300 MB apiece, mtimes 09-10 to 09-12, one profile/feature change per
+variant) and three of `libturso_core` — ~4.5 GB of archives the current build could not reference.
+Deleting all but the newest per stem freed 3.1 GB (3.5 → 6.6 GB) and the next gate did NOT rebuild
+turso: the newest was the live one.
+
+That is the rule the "reopen with a rule" line was waiting for, and it is the same shape as the
+test-binary prune: **`ops/check.sh` now keeps the newest hash variant of every dependency archive
+over 100 MB and removes the rest**, in the same prune step, before the build. The cost of being
+wrong (a stale variant cargo still wanted) is one crate's rebuild, never a wrong build; the cost of
+not having it is the 09-10 failure at the next profile change. `cargo clean` stays the recovery when
+the allowance is already gone.
 

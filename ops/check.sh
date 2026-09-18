@@ -56,6 +56,30 @@ for _, entries in groups.items():
         os.remove(path)
 if freed:
     print(f"==> pruned {freed / 2**30:.1f} GB of superseded test binaries")
+
+# Issue 260, the second thing that grows: superseded HASH VARIANTS of the largest
+# dependency archives. A profile or feature change gives every rlib a new hash and
+# leaves the old one behind — nine variants of the two turso archives (200–300 MB
+# each, 4.5 GB together) sat in deps/ on 2026-09-18 with 3.5 GB of allowance left.
+# Keep the newest of each stem above 100 MB; a stale one cargo still wanted costs a
+# rebuild of that crate, never a wrong build.
+lib = re.compile(r"^(lib.+)-[0-9a-f]{16}\.(a|rlib)$")
+archives = collections.defaultdict(list)
+for name in os.listdir(deps):
+    path = os.path.join(deps, name)
+    m = lib.match(name)
+    if m and os.path.isfile(path) and os.path.getsize(path) > 100_000_000:
+        archives[m.group(1)].append((os.path.getmtime(path), path))
+freed = 0
+for _, entries in archives.items():
+    if len(entries) < 2:
+        continue
+    entries.sort()
+    for _, path in entries[:-1]:
+        freed += os.path.getsize(path)
+        os.remove(path)
+if freed:
+    print(f"==> pruned {freed / 2**30:.1f} GB of superseded dependency archives")
 PRUNE
 }
 prune_stale_test_binaries
