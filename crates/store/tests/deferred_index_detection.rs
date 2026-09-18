@@ -160,24 +160,30 @@ async fn the_newest_list_covering_index_survives_a_rebuild_via_the_builder() {
 /// only protection against a future `changes`-sized index entering a deferred set is
 /// to decline the build — and a cap nobody has watched refuse is a cap that might not.
 ///
-/// Driven by `rowid`, not by inserting hundreds of millions of rows:
-/// `too_large_to_build` estimates with `MAX(rowid)` precisely so it costs an index
-/// seek instead of a scan, which also makes it testable with one row above the cap.
+/// Driven by lowering the cap, not by inserting hundreds of millions of rows. It used
+/// to be driven by parking one row at a rowid above the cap, because `MAX(rowid)` was
+/// the whole estimate — and that is exactly the estimate that refused a real index at
+/// every boot on prod for two days (issue 388: rebuilds inflate rowids an order of
+/// magnitude past the row count), so the cap now counts rows past its cheap bound and
+/// the test lowers the cap instead.
 #[tokio::test]
 async fn an_oversized_table_is_refused_not_built() {
     let (path, db) = open("oversize").await;
     let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
 
-    // One organization at a rowid above the cap (MAX_AUTO_INDEX_ROWS = 240M). MAX(rowid)
-    // is the estimate, so this is a 250-million-row table as far as the guard is concerned.
-    conn.execute(
-        "INSERT INTO organizations (id, country, identifier_kind, identifier, name, provisional, created_at)
-         VALUES (250000000, 'DE', 'vat', 'X', 'Org', 0, 1700000000)",
-        (),
-    )
-    .await
-    .unwrap();
-
+    // Two organizations against a cap of one: over by count, not by rowid.
+    for id in [1, 2] {
+        conn.execute(
+            &format!(
+                "INSERT INTO organizations (id, country, identifier_kind, identifier, name, provisional, created_at)
+                 VALUES ({id}, 'DE', 'vat', 'X{id}', 'Org {id}', 0, 1700000000)"
+            ),
+            (),
+        )
+        .await
+        .unwrap();
+    }
+    db.set_auto_index_row_cap_for_test(1);
     db.build_organization_indexes().await.unwrap();
 
     let missing = db.missing_deferred_indexes().await.unwrap();
@@ -188,12 +194,39 @@ async fn an_oversized_table_is_refused_not_built() {
          cannot interrupt a running statement. Reported missing: {missing:?}"
     );
     // And it must not be a blanket failure: the tender indexes are on empty tables
-    // and must still build.
+    // and must still build under the same cap.
     db.build_tender_indexes().await.unwrap();
     let after = db.missing_deferred_indexes().await.unwrap();
     assert!(
         !after.contains(&"tenders_source_id".to_owned()),
         "refusing one oversized table must not stop the others building"
+    );
+
+    clean(&path);
+}
+
+/// Issue 388: the rowid space is not the row count. Every full rebuild deletes and
+/// re-inserts every satellite row, so on prod `tender_version_result_winners` read
+/// ~845M by `MAX(rowid)` against a table that cannot exceed ~20M rows, and the
+/// covering index shipped for it was refused at every boot. One row parked past the
+/// cap must build — the cheap bound trips, the exact count decides.
+#[tokio::test]
+async fn a_rowid_past_the_cap_over_a_small_table_is_built() {
+    let (path, db) = open("highrowid").await;
+    let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+    conn.execute(
+        "INSERT INTO organizations (id, country, identifier_kind, identifier, name, provisional, created_at)
+         VALUES (250000000, 'DE', 'vat', 'X', 'Org', 0, 1700000000)",
+        (),
+    )
+    .await
+    .unwrap();
+
+    db.build_organization_indexes().await.unwrap();
+    let missing = db.missing_deferred_indexes().await.unwrap();
+    assert!(
+        !missing.contains(&"organizations_country_id".to_owned()),
+        "one row past the cap in rowid space is a one-row table and must get its index: {missing:?}"
     );
 
     clean(&path);

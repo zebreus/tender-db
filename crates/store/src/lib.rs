@@ -610,6 +610,9 @@ pub struct Db {
     /// transaction (issue 20). The writer (`conn`) is reserved for writes and
     /// schema; this is separate from the public API's own pool (`readers`).
     read_pool: Arc<Readers>,
+    /// The bulk index-build row cap in force — `MAX_AUTO_INDEX_ROWS` unless a test
+    /// lowered it to watch the refusal path (`set_auto_index_row_cap_for_test`).
+    auto_index_row_cap: std::sync::atomic::AtomicI64,
     /// The WAL read-gate (issue 63), shared by every reader pool and the gated
     /// bulk-load checkpoint. `None` unless `TENDER_WAL_READ_GATE` is set at open,
     /// so the default build is byte-for-byte the old behaviour.
@@ -995,6 +998,16 @@ pub struct RevealSlice {
 }
 
 impl Db {
+    /// Lower the bulk index-build cap so a test can watch the builder REFUSE with a
+    /// handful of rows — the refusal path used to be reachable by parking one row at
+    /// a high rowid, and stopped being when the cap started counting rows (issue 388).
+    pub fn set_auto_index_row_cap_for_test(&self, cap: i64) {
+        self.auto_index_row_cap.store(cap, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    pub(crate) fn auto_index_row_cap(&self) -> i64 {
+        self.auto_index_row_cap.load(std::sync::atomic::Ordering::Relaxed)
+    }
     pub async fn open(path: &str) -> turso::Result<Db> {
         Db::open_inner(path, std::env::var_os("TENDER_WAL_READ_GATE").is_some()).await
     }
@@ -1025,6 +1038,7 @@ impl Db {
         let wal_gate: read::WalGate = gate_on.then(|| Arc::new(tokio::sync::RwLock::new(())));
         let read_pool = Readers::open(database.clone(), READ_POOL, wal_gate.clone())?;
         Ok(Db {
+            auto_index_row_cap: std::sync::atomic::AtomicI64::new(Self::MAX_AUTO_INDEX_ROWS),
             database,
             conn: Mutex::new(conn),
             writer: WriterContention::default(),
