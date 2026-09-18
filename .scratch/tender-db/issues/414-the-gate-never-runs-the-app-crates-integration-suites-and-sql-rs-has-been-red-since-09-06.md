@@ -1,6 +1,6 @@
 # 414 — `ops/check.sh` never runs the app crate's five integration suites, and `tests/sql.rs` has been red since 2026-09-06 without a single gate noticing
 
-Status: ready-for-agent — found 2026-09-18 06:4xZ while adding a `/v1/sql/schema` assertion (issue 50): two tests in `crates/app/tests/sql.rs` fail on the committed tree, and the last green gate's log contains no `Running tests/sql.rs` line — nor `api.rs`, `admin.rs`, `accounts.rs`, `webhooks.rs`.
+Status: **DONE 2026-09-18** — the gate runs the app crate's five integration suites (`cargo test-app-all` = `--tests`; the first such gate: 124 suites green in 544 s, `Running tests/{accounts,admin,api,sql,webhooks}.rs` all present in its log), the two `sql` tests red since 2026-09-06 use the documented head-version join and pass (14/14), the alias comment tells the truth, and the audit put the exposure at exactly those two tests (api 59/0, accounts 4/0, admin 1/0, webhooks 5/0). Deployed with issue 50 at `ab077d9`. Was: ready-for-agent — found 2026-09-18 06:4xZ while adding a `/v1/sql/schema` assertion (issue 50): two tests in `crates/app/tests/sql.rs` fail on the committed tree, and the last green gate's log contains no `Running tests/sql.rs` line — nor `api.rs`, `admin.rs`, `accounts.rs`, `webhooks.rs`.
 Kind: operational (the test gate — `ops/check.sh`, `.cargo/config.toml`'s `test-app` alias) plus two test-side defects in `crates/app/tests/sql.rs`
 Relates to: 260 (the gate script and its pruning — the script this is about), 254 (the pipeline-exit-code trap the script was written against; this is its sibling: a gate that reports green over suites it never opened), 239 (the `v_tender_current` refusal that turned the sql suite red on 2026-09-06), 412 (a status nobody re-reads is a photograph — a suite nobody runs is the same thing), 117/390 (their API tests live in `api.rs`, which the gate does not run)
 Blocked by: nothing
@@ -94,3 +94,12 @@ server --tests` (unit tests AND every file under `crates/app/tests`), a new alia
 `test-app`, whose comment no longer calls the `--lib` run "all server-side tests". Cost: five
 more test binaries per gate, which the prune step handles by name, and ~2½ minutes of wall clock
 (the `api` suite is 119 s of it).
+
+## Comment — 2026-09-18 (closing): the first gate that opened every file
+
+`ops/check.sh` at `ab077d9`: `test -p model`, `test -p store`, `test -p ingest`, `test-app-all`.
+The gate log now lists all five app suites, the count went from 117 suites to 124, wall clock
+from ~7 to ~9 minutes, and `all suites green` was written on a run that had actually read
+`tests/sql.rs`. `## Verify` reads `1`. The lesson, for `docs/agents`: a suite the gate never
+opens is a status nobody re-reads — issue 412's photograph, one layer down — and "N suites green"
+is only a number until the log names the files.

@@ -1,6 +1,6 @@
 # 50 — SQL analyst surface: time format, schema noise, missing views
 
-Status: REOPENED — **the view-type clause is BUILT 2026-09-18**: `/v1/sql/schema` resolves every view column's type from the view's own SQL (through views, through a scalar subquery's single item; `COUNT(*)` is INTEGER; anything else an honest `null`), with a parser unit test and the schema integration test asserting `v_tenders.id` INTEGER and every integer key of every view; deploy pending — and the gate that would have caught the schema test is issue 414's, which never ran `tests/sql.rs`. Was: REOPENED 2026-09-15 — point 2's column-type clause was never fixed: all 105 columns of
+Status: **DONE 2026-09-18** — the reopened clause (point 2's view column types) is closed on prod at `ab077d9`: `/v1/sql/schema` serves `v_tenders.id` INTEGER, `published_at` INTEGER, `title` TEXT, `v_fetches.bytes` INTEGER, `v_organizations.mentions` INTEGER, `v_awards.awarded_cents` INTEGER — 103 of the 105 view columns resolved to their base column's declared type from the view's own SQL, the other two (`notice_withheld_fields.withheld_field` / `.reason_code`, expression columns) an honest `null`; TEXT-typed view columns went from 105 to 49, every one of them genuinely text. Was: REOPENED — **the view-type clause is BUILT 2026-09-18**: `/v1/sql/schema` resolves every view column's type from the view's own SQL (through views, through a scalar subquery's single item; `COUNT(*)` is INTEGER; anything else an honest `null`), with a parser unit test and the schema integration test asserting `v_tenders.id` INTEGER and every integer key of every view; deploy pending — and the gate that would have caught the schema test is issue 414's, which never ran `tests/sql.rs`. Was: REOPENED 2026-09-15 — point 2's column-type clause was never fixed: all 105 columns of
 all 13 views still publish `"type": "TEXT"` on prod rev `9e082fd` while the served values are
 integers. Incomplete fix, not a regression — the 2026-08-17 closure verified the other clauses.
 
@@ -222,3 +222,19 @@ integer key (`id`, `tender_id`, `notice_id`, `organization_id`, `lot_id`, `lot_r
 **Deploy pending**, and this is where issue 414 came from: `tests/sql.rs` turned out to have two
 tests red since 2026-09-06, which the gate never ran because its app step is `--lib` only. Those
 are fixed under 414; this rides the same deploy. `## Verify` below.
+
+## Verify
+
+    curl -s https://tenders.zebreus.click/v1/sql/schema | python3 -c "import sys,json; ts=json.load(sys.stdin)['tables']; v=[t for t in ts if t['name']=='v_tenders'][0]; print([(c['name'],c['type']) for c in v['columns'] if c['name'] in ('id','published_at','title')])"
+
+- **done**: `[('id', 'INTEGER'), ('published_at', 'INTEGER'), ('title', 'TEXT')]` (read 2026-09-18 at `ab077d9`)
+- **open**: `[('id', 'TEXT'), ('published_at', 'TEXT'), ('title', 'TEXT')]` — every view column `TEXT`, the PRAGMA's non-answer copied verbatim
+
+## Comment — 2026-09-18 (closing): live at `ab077d9`
+
+Read off the live schema after the deploy: the eight assertions the integration test makes hold
+on prod byte for byte; across all thirteen views, 105 columns, 103 carry a resolved type and two
+carry `null` — `notice_withheld_fields.withheld_field` and `.reason_code`, which are expressions
+the resolver deliberately does not guess at. Nothing on the schema surface reads `TEXT` for an
+integer any more. The deploy also carried issue 414's gate change, which is why this test could be
+trusted to have run.
