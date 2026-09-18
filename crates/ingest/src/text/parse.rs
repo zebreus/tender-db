@@ -945,6 +945,7 @@ pub fn parse(text: &str) -> Result<Parsed, Rejected> {
     claim_award_date(&mut emit);
     claim_tenders_received(&mut emit);
     home_authority_descriptors(&mut emit);
+    drop_nature_atoms(&mut emit);
     Ok(emit.parsed)
 }
 
@@ -1416,12 +1417,31 @@ const AUTHENTICITY_NOTE: &str = "only the original text is authentic";
 /// atom means this is not an annotation block — it is title text that happens to
 /// be parenthesised — and the title is returned untouched.
 ///
-/// The substantive atoms (`Supply contract`, `Open to US bidders`,
-/// `With participation by GATT countries`, …) are deliberately KEPT in the title
-/// for now. They are real facts and moving them to their own parse-layer fields
-/// is issue 397's unit 2; dropping them here to make the title tidier would
-/// destroy them, which is worse than the defect being fixed.
+/// The other atoms are handled by who owns the fact. The four NATURE atoms
+/// (`Supply contract`, …) are the label of the record's own `NC` code, which
+/// the fold serves as a `nature` classification (issue 397 unit 2, step 1), so
+/// [`drop_nature_atoms`] removes them once the whole record is in — and only
+/// when the record carries that code. `Open to US bidders` and `With
+/// participation by GATT countries` are regime flags no field carries yet, and
+/// they stay in the title until one does: dropping them would destroy a fact,
+/// which is worse than the defect being fixed.
 fn strip_authenticity_note(title: &str) -> String {
+    strip_annotations(title, &[AUTHENTICITY_NOTE])
+}
+
+/// The four nature atoms of the annotation vocabulary — each the label the text
+/// era prints beside its `NC` code (`NC: 2 - Supply contract`), re-published by
+/// the ~72-column wrapper into the title's trailing block.
+const NATURE_ATOMS: &[&str] = &["supply contract", "works contract", "service contract", "combined contract"];
+
+/// Rewrite a title's trailing annotation block without the atoms in `drop`,
+/// leaving every other atom in place (issue 397).
+///
+/// Conservative by construction: the trailing `(…)` is rewritten only when EVERY
+/// one of its ` - `-separated atoms is in [`TITLE_ANNOTATIONS`]. An unrecognised
+/// atom means this is not an annotation block — it is title text that happens to
+/// be parenthesised — and the title is returned untouched.
+fn strip_annotations(title: &str, drop: &[&str]) -> String {
     let trimmed = title.trim_end();
     let Some(open) = trimmed.rfind('(') else { return title.trim().to_owned() };
     if !trimmed.ends_with(')') {
@@ -1437,13 +1457,46 @@ fn strip_authenticity_note(title: &str) -> String {
     {
         return title.trim().to_owned();
     }
-    let kept: Vec<&str> =
-        atoms.into_iter().filter(|a| !a.eq_ignore_ascii_case(AUTHENTICITY_NOTE)).collect();
+    let kept: Vec<&str> = atoms
+        .into_iter()
+        .filter(|a| {
+            let a = a.to_lowercase();
+            !drop.contains(&a.as_str())
+        })
+        .collect();
     let head = trimmed[..open].trim_end();
     if kept.is_empty() {
         return head.to_owned();
     }
     format!("{head} ({})", kept.join(" - "))
+}
+
+/// Issue 397 unit 2, step 2: the nature atoms leave the title once the record is
+/// whole. They duplicate the record's own `NC` code — the era prints code and
+/// label together, the parser keeps the code as `TXT-NC`, the fold serves it as
+/// a `nature` classification — so the title loses nothing the notice does not
+/// still carry. Gated on the code being PRESENT on this record: a record without
+/// an `NC` line keeps its atom, because then the atom is the only copy. Runs
+/// after every header is flushed because `TI` precedes `NC` in the era's order.
+fn drop_nature_atoms(emit: &mut Emit) {
+    let coded = emit
+        .parsed
+        .values
+        .iter()
+        .any(|v| v.field_id == "TXT-NC" && matches!(&v.value, NoticeValue::Code { .. }));
+    if !coded {
+        return;
+    }
+    for v in emit.parsed.values.iter_mut() {
+        if v.field_id == "TXT-TI"
+            && let NoticeValue::Text { value, .. } = &mut v.value
+        {
+            let stripped = strip_annotations(value, NATURE_ATOMS);
+            if stripped != *value {
+                *value = stripped;
+            }
+        }
+    }
 }
 
 #[derive(Default)]
@@ -2968,6 +3021,49 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
         assert_eq!(case(""), "");
         // A title that is ONLY the note collapses to empty rather than to "()".
         assert_eq!(case("(Only the original text is authentic)"), "");
+    }
+
+    /// Issue 397 unit 2, step 2: the nature atoms leave the title when — and only
+    /// when — the record carries the `NC` code they duplicate. The regime flags
+    /// (`Open to US bidders`, GATT) stay either way, and a block the vocabulary
+    /// does not know is untouched as before.
+    #[test]
+    fn the_nature_atoms_leave_the_title_only_when_the_record_carries_the_code() {
+        // The rule alone.
+        assert_eq!(strip_annotations("F-Lyons: batteries (Supply contract)", NATURE_ATOMS), "F-Lyons: batteries");
+        assert_eq!(
+            strip_annotations("X: y (Supply contract - Open to US bidders)", NATURE_ATOMS),
+            "X: y (Open to US bidders)"
+        );
+        assert_eq!(
+            strip_annotations("X: y (works contract - With participation by GATT countries)", NATURE_ATOMS),
+            "X: y (With participation by GATT countries)"
+        );
+        assert_eq!(strip_annotations("X: personal computers (PCs)", NATURE_ATOMS), "X: personal computers (PCs)");
+
+        // The record: TI precedes NC in the era's order, so the drop is a post-pass.
+        let title_of = |p: &Parsed| {
+            p.values
+                .iter()
+                .find_map(|v| match (&v.field_id, &v.value) {
+                    (f, NoticeValue::Text { value, .. }) if f == "TXT-TI" => Some(value.clone()),
+                    _ => None,
+                })
+                .expect("a title")
+        };
+        let with_code = "1.0/000001\nND: 1-2001\nTI: F-Lyons: batteries (Supply contract - Only the original text is authentic)\nNC: 2 - Supply contract\nTX: Some prose.\n";
+        let p = parse(with_code).expect("parses");
+        assert_eq!(title_of(&p), "F-Lyons: batteries", "note and nature atom both gone; the code carries the nature");
+        assert!(
+            p.values.iter().any(|v| v.field_id == "TXT-NC" && matches!(&v.value, NoticeValue::Code { code, .. } if code == "2")),
+            "the NC code is on the record"
+        );
+        let without_code = "1.0/000001\nND: 1-2001\nTI: F-Lyons: batteries (Supply contract - Only the original text is authentic)\nTX: Some prose.\n";
+        let q = parse(without_code).expect("parses");
+        assert_eq!(title_of(&q), "F-Lyons: batteries (Supply contract)", "no code on the record: the atom is the only copy and stays");
+        let flags = "1.0/000001\nND: 1-2001\nTI: X: y (Supply contract - Open to US bidders)\nNC: 2 - Supply contract\nTX: Some prose.\n";
+        let r = parse(flags).expect("parses");
+        assert_eq!(title_of(&r), "X: y (Open to US bidders)", "the regime flag stays");
     }
 
     /// Issue 397: a wrapped heading is space-joined, and the `flatten` it goes

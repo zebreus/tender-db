@@ -1,6 +1,6 @@
 # 397 — text-era titles are served with the source's hard line break inside them, and in 1993–1994 with the OJ boilerplate footnote `(Only the original text is authentic)`
 
-Status: ready-for-agent — unit 1 RESOLVED-VERIFIED 2026-09-16 (rev `170c726`, era re-parsed by job 1386 and re-folded by job 1387; every `## Done when` count met, see the acceptance section at the foot). Unit 2's codelist is SETTLED 2026-09-18 from the era's own header (see the foot: `NC: 1 - Public works contract`, `2 - Supply contract`, `3 - Combined contract`, `4 - Service contract` — the title atoms are that label re-published by the wrapper, and the parser already stores the code as `TXT-NC`); the decision is recorded there too: nature becomes a cross-era classification first, and the atoms leave the title only once it exists. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — unit 2 is BUILT 2026-09-18 in two steps (see the foot): contract nature is a cross-era `nature` classification (step 1, DEPLOYED at `89d0646`), and the text era's nature atoms leave the title when the record carries the code they duplicate (step 2, gated 2026-09-18, deploy pending). What remains is the gated text-era re-parse and refold that both steps' standing rows wait on, and the live acceptance after the 2026-09-19 tick. Unit 1 RESOLVED-VERIFIED 2026-09-16 (rev `170c726`). Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (ingest — the text-era `TI` rule in `crates/ingest/src/text/rules.rs:104` and the newline join in `crates/ingest/src/text/parse.rs:1344`, served verbatim through `crates/ingest/src/project.rs:144`; the current value is pinned by `crates/ingest/tests/text.rs:209`)
 Relates to: 199 (RESOLVED 2026-08-15 — the SAME TED ~72-column wrapper, and it already classifies the wrapper's output as layout: "all but 4 are TED's own line-wrapper emitting a wrapped tail flush-left". It fixed only column-0 orphan lines in `unclaimed-content`; it never touches the newline that sits INSIDE `TI`'s own value, which is where this one lives), 368 (ready-for-agent — unmapped source vocabulary; it names `TXT-TI` twice, at lines 294 and 612, but only as a mapping question — "which element becomes the title", never what the title string contains), 343 (FIXED 2026-09-02, DEPLOYED 2026-09-03 — the fold-vs-read tie-break) and 292 (FIX DEPLOYED 2026-08-26 — the inert English pick) and 340 (CLOSED — the original-language leg): all three decide WHICH title is picked; this is the content of the one that wins, so none of them can catch it, 364 (unit 6 done 2026-09-13 — its units 5–6 re-parsed r208 and re-folded the text era, which is exactly the follow-on this fix needs and shows it is a routine operation), 11 (resolved — the text-era profile), 232 (the text-era buyer/value/winner campaign whose sweeps a text-era re-parse would ride), `docs/research/ted-legacy-mapping.md` §7, which is headed "Text era (1993–2010) — quick assessment only" and records no decision to preserve wraps in a title
 
@@ -380,6 +380,25 @@ other fold units — and since every era publishes a nature, that refold IS corp
 for Lennart's word with the other production writes rather than being queued from here.
 
 Step 2 (drop the four nature atoms from text-era titles) is unblocked by this and is the next unit.
+
+## Step 2 BUILT 2026-09-18 — the nature atoms leave the title, gated on the code they duplicate
+
+`text/parse.rs`: `strip_authenticity_note` is now `strip_annotations(title, drop)` with the same
+all-vocabulary guard (an unrecognised atom still means "title text, leave it"), and a post-pass
+`drop_nature_atoms` — after every header is flushed, because `TI` precedes `NC` in the era's order —
+removes the four nature atoms from `TXT-TI` **only when the record carries a `TXT-NC` code**. A
+record without an `NC` line keeps its atom: then the atom is the only copy, and the rule's whole
+justification is that the fact lives elsewhere. `Open to US bidders` and `With participation by
+GATT countries` stay until a regime flag exists to carry them (this issue does not build one).
+Pinned by `the_nature_atoms_leave_the_title_only_when_the_record_carries_the_code`: the rule on
+four blocks including the two flag mixes and the `(PCs)` refusal, then three whole records —
+with the code (note and atom both gone, the code on the record), without it (the atom stays),
+and a flag mix (the flag stays). The text suite's 29 tests pass beside it.
+
+**Standing rows.** A parse-layer change: the text era's titles change only at the re-parse this
+issue's unit 1 already needed (the 364 units 5–6 shape, gated), followed by a fold. Until then a
+text-era title carries `(Supply contract)` and its Tender carries no `nature` row — both honest
+about what was folded when.
 
 **Live acceptance, owed after the 2026-09-19 daily tick:** a tender folded from a notice ingested
 after the deploy serves a `{"scheme": "nature", …}` row in `classifications` (the eForms `BT-23`
