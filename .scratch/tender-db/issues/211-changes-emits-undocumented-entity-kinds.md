@@ -1,6 +1,6 @@
 # 211 — /v1/changes emits three undocumented entity kinds (lot_result, bid, contract), contradicting the schema and the "same events as SSE" promise
 
-Status: REOPENED 2026-09-15 — incomplete fix, not a regression: the Option-1 filter is live and correct
+Status: **DONE 2026-09-18** — the reopened half is closed on prod at `723e4e8`: the unfiltered `/v1/changes` collects `limit` PUBLIC events (one seek per public kind, merged by cursor), so the 2026-09-15 probe `since=605100027&limit=1` now answers `1 True 605100029` (was `0 True 605100028`), and a page that is not full certifies the feed head (`150 False 624967317 == GET /v1 cursor 624967317`), so reading to the end still lands on `GET /v1`'s cursor and the webhook slot still parks at head. Webhook batches read the same public feed, so a non-reset batch never carries `events: []`. See the 2026-09-18 comment. Was: REOPENED 2026-09-15 — incomplete fix, not a regression: the Option-1 filter is live and correct
 (no undocumented kind reaches the wire at serving rev `9e082fd`), but filtering post-fetch silently redefined
 `limit` on the unfiltered poll path — it bounds change-log ROWS scanned, not events, so pages come back short
 (158 of 1000) or empty with `more:true`, while the published contract still calls `limit` "Page size"; the
@@ -194,9 +194,56 @@ end — or make the unfiltered poll collect `limit` *public* events (loop the fe
 `entity_kind IN (tender,lot,organization)` into SQL, checking issue 70's turso planner caveat before relying on an `IN`
 over the `changes_entity_cursor` index).
 
+### 2026-09-18 — CLOSED on prod at `723e4e8`: `limit` counts public events; a page that is not full certifies the head
+
+**What changed (commit `723e4e8`, gate 124/124 green in 554 s, deployed 07:09 UTC on an idle queue).**
+
+- `read::changes_since_kinds(conn, cursor, limit, kinds)` — one index seek per public kind
+  (`entity_kind = ? AND cursor > ? ORDER BY cursor LIMIT ?`, the planner-clean shape `changes_since`
+  already uses for `entity=`), merged by cursor. Three small queries instead of one `IN (…)`, whose plan
+  over `changes_entity_cursor` issue 70 could not vouch for. Exact: every row returned is one of `kinds`,
+  and no row of those kinds between `cursor` and the last returned one is skipped.
+- The unfiltered `/v1/changes` reads `PUBLIC_CHANGE_KINDS` through it (`limit + 1` for `more`), so `limit`
+  means events with or without `entity`, and "Page size" in the contract is true again. The post-fetch
+  filter stays as the invariant's witness.
+- **Cursor rule.** A public-only page's last row is no longer the last row of the log — a stretch of
+  `lot_result` rows may sit behind it. A page that is NOT full has read every public row past `since`, so
+  it certifies the head read *before* the fetch (`last.max(head)`): "read to the end" still lands on the
+  cursor `GET /v1` reports (the cursor-spine test), and a caught-up client stops re-scanning the hidden
+  tail on every poll. A full page resumes from its last row, since rows between it and the head are unread.
+  Rows that land after the head snapshot carry cursors above it and are found by the next poll — nothing is
+  skipped. Same rule on the webhook sweeper: `read_batch` reads the public feed, and a partial (drained)
+  batch parks the slot on the head read before the batch, so the envelope's `cursor` and
+  `last_delivered_cursor` still equal the head (both webhook slot tests unchanged and green). A non-reset
+  batch can no longer carry `events: []`.
+- `/docs` #changes: a `more: false` page's `last_cursor` is the feed head, and `limit` counts events —
+  every page but the last is full.
+- Tests: `crates/store/tests/changes_kinds.rs` (interleaved hidden rows: `(0,3)` → cursors 2,4,6; `(6,10)`
+  → 7; a single kind; an unknown kind → empty; the raw log still 1..8); the kinds test walks the feed at
+  `limit=1` and must reproduce the whole public feed one event per page; the `more` test counts public
+  events; cursor-spine and both webhook slot tests keep asserting the head.
+
+**Live re-probe of the 2026-09-15 evidence (rev `723e4e8`).**
+
+```
+curl -s '…/v1/changes?since=605100027&limit=1'   | … (len(events), more, last_cursor)
+→ 1 True 605100029                     (was 0 True 605100028 — the judge's minimal case)
+curl -s '…/v1/changes?since=605099999&limit=11'  | …
+→ 11 True 605100023                    (was 0 True 605100010 — eleven consecutive lot_result rows)
+curl -s '…/v1/changes?since=605108400&limit=1000' | …
+→ 1000 True 605109517 (842 organization, 116 lot, 42 tender — the log has grown past the 09-15 head, so more:true is right)                  (was 158 False 605108675)
+tail page → last_cursor 624967317; GET /v1 cursor 624967317   (equal ⇒ read-to-the-end lands on the head)
+```
+
+Cost: one seek per public kind per page, each `LIMIT limit+1` over the `(entity_kind, cursor)` index — the
+shape the `entity=` path has always used, three times. Not in this closure: the OpenAPI description of
+`/v1/changes` gained no new sentence (its "Page size" and "loop until `more` is false" were the contract and
+are now true); the head-certification detail lives in `/docs` and the code.
+
 ## Verify
 
     curl -s 'https://tenders.zebreus.click/v1/changes?since=605100027&limit=1' | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d['events']), d['more'], d['last_cursor'])"
 
 - **done**: either `1 True …` (the unfiltered poll collects `limit` PUBLIC events) or the served contract says a page may be short or empty while `more` is true — check `/v1/openapi.json`'s `/v1/changes` description for that sentence
 - **open**: `0 True 605100028` — an empty page with `more: true`, and no sentence about it anywhere (read 2026-09-18)
+- read 2026-09-18 after the deploy: `1 True 605100029` → done
