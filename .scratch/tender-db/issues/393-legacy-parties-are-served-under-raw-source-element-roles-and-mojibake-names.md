@@ -1,6 +1,6 @@
 # 393 — the legacy eras serve party identity in the source's own shape: a TED transliteration block becomes a party and a twin Organization, raw element names become the role vocabulary, and Greek text-era names are served as Windows-1252 mojibake
 
-Status: ready-for-agent — unit 2 BUILT AND DEPLOYED 2026-09-18 (rev `ba9eb1f`: the legacy party roles fold onto the canonical vocabulary in code; STANDING rows keep serving raw roles until the legacy eras are re-projected — the cohort is SIZED at 6,998,915 notices and the run is BLOCKED on a permission the classifier refused 2026-09-18; it needs an explicit go-ahead, see the unit-2 comment); unit 3's DECODER HALF BUILT, GATED AND DEPLOYED 2026-09-18 (rev `c36de25`: a declared-ISO record whose own header says Greek decodes as ISO-8859-7; the ~1,150 standing mojibake rows stay until the ISO-only text era is re-parsed, and that re-parse — 132 packages, chunk recipe below — is the SAME permission class the classifier refused for unit 2's run); unit 1 open. Was: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — unit 2 BUILT AND DEPLOYED 2026-09-18 (rev `ba9eb1f`: the legacy party roles fold onto the canonical vocabulary in code; STANDING rows keep serving raw roles until the legacy eras are re-projected — the cohort is SIZED at 6,998,915 notices and the run is BLOCKED on a permission the classifier refused 2026-09-18; it needs an explicit go-ahead, see the unit-2 comment); unit 3's DECODER HALF BUILT, GATED AND DEPLOYED 2026-09-18 (rev `c36de25`: a declared-ISO record whose own header says Greek decodes as ISO-8859-7; the ~1,150 standing mojibake rows stay until the ISO-only text era is re-parsed, and that re-parse — 132 packages, chunk recipe below — is the SAME permission class the classifier refused for unit 2's run); **unit 1 BUILT, gated (127/127) and DEPLOYED 2026-09-18 20:52 UTC (rev `b4aea61`, see the foot: the `TRANSLITERATED_ADDR` block is claimed and dropped at the parse layer — option (a), with two real fixtures — so the standing twins and role rows fall to the same gated legacy re-projection unit 2 waits on)**. Was: needs-triage — filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (ingest — the legacy party/organization projection in `crates/ingest/src/project.rs` and `crates/ingest/src/r209/rules.rs`, plus the text-era decoder in `crates/ingest/src/text/mod.rs`; unit 2 is also a docs defect, in `openapi.json`, `/docs` and the `/v1/sql/schema` column note)
 Relates to: 259 (CLOSED — one legacy party opening TWO Organization sections, fixed for `WINNER`/`ADDRESS_WINNER` by an outermost-Organization alias; unit 1 is the same mechanism class for a tag the nesting fix cannot reach, and 259's "no fixture in the corpus exercises the tag" applies again), 368 (ready-for-agent — unmapped source vocabulary dropped silently; it records at line 527 that `role_name` accepts ANY `TED-` id, but only as its sieve caveat, and does not track the served vocabulary), 364 (unit 6 done — the legacy OJS weld; its line ~231 notes in passing that "the legacy party roles are mostly unmapped … raw TED field names" after its buyer gauge read a false green, and unit 5 shows an r208 re-parse + full projection is a routine operation), 234 (CLOSED — identifier-less mentions minting a provisional org each) and 351 (DONE — the country-less half, 5.76M rows folded under `p0`): both are the machinery unit 1's Latin twins and unit 3's mojibake names ride into the org layer, 349 / 350 (DONE — the genericness wall on fragmented **Greek** public bodies; units 1 and 3 both mint Greek profiles that can never meet their canonical twin, so they feed exactly that class), 11 (resolved — the text-era profile; its item 3 already records that "the ISO twin mangles non-Latin-1 scripts (Greek OT bodies)" and mitigates it only by preferring the UTF8 twin, which does not exist for the years in unit 3), 202 (RESOLVED — a corrupt UTF8 twin suppressing its readable ISO, per-day keying) and 181 (RESOLVED-VERIFIED — the CF re-dispatch): both send more members through the unconditional decoder unit 3 names, 304 (STAGE 1 CLOSED — text-era language editions; stage 2 acquisition would multiply the mangled rows), 293 (BACKLOG — text-era BODY extraction; the same decoder decides what those bodies say), 232 / 244 (the text-era buyer/winner campaigns whose sweeps unit 3's re-parse would ride), 225 (RESOLVED — shipped the `role LIKE '%uyer%'` workaround unit 2 would retire), 98 (RESOLVED — eForms-DE role aliases, the precedent for folding a dialect's role spellings), 300 (the org-matching design and its exemplar sheet — row 53 classifies Cyrillic/Latin transliteration pairs as legitimate separate rows, which is true of publisher-published spellings and NOT of unit 1's TED-generated block)
 
@@ -380,7 +380,7 @@ the re-decoded names, and its verdicts would go through the same tables and the 
 
     curl -s https://tenders.zebreus.click/v1/tenders/8414191 | python3 -c "import sys,json; print(sorted({p['role'] for p in json.load(sys.stdin)['parties']}))"
 
-- **done** (unit 2 re-projected): only canonical roles — `buyer`, `winner`, `review-body`, … — no raw element name (uppercase with underscores) in the set
+- **done** (units 1 and 2, after the re-projection): only canonical roles — `buyer`, `winner`, `review-body`, … — no raw element name (uppercase with underscores) in the set, and in particular no `TRANSLITERATED_ADDR` (unit 1: the block is no longer a party; read 2026-09-18 20:52 UTC at `b4aea61`, still listed — the standing row)
 - **open**: the raw r208 element names serve as roles; read 2026-09-18 (rev `ba9eb1f`, folded in code, not yet re-projected): `['APPEAL_PROCEDURE_BODY_RESPONSIBLE', 'ECONOMIC_OPERATOR_NAME_ADDRESS', 'TRANSLITERATED_ADDR', 'buyer']`
 
 Unit 3's line, for when the decoder half lands: `curl -s https://tenders.zebreus.click/v1/organizations/9954048` — done: a Greek name; open: the Latin transliteration `Perifereia Attikis…` or the Windows-1252 mojibake.
@@ -491,3 +491,38 @@ when the ISO-only text era is re-parsed from the archive, and that is the stale-
 permission class the classifier refused twice today (unit 2's `refold-fields`, 404's wet repair),
 and it is not being attempted on that basis or routed around. The first chunk's command is above,
 ready to run verbatim on a go-ahead; the chunk table goes here as they run.
+
+## Unit 1 — BUILT 2026-09-18 (`b4aea61`, gate 127/127, deployed 20:52 UTC on an idle queue): the transliteration block is claimed and dropped
+
+**The choice, recorded: option (a), an explicit `Rule::Ignore`.** `TRANSLATION_SECTION >
+TRANSLITERATIONS > TRANSLITERATED_ADDR` is TED's own Latin rendering of the contracting body's
+name and address on a non-Latin-script notice — the same party the `ADDRESS_CONTRACTING_BODY`
+block already names, in a second alphabet (the R2.0.9 shape even restates the `NATIONALID`). It is
+not a party, and it is not new information: the block beside it is the source. The alternative —
+attaching the Latin spelling to the buyer's mention as an alias — would be a resolver feature for
+the cross-script class issues 349/350 already own, not a fold of a party block; if that class ever
+wants a Latin key, the archive still holds the block. The reason sits in the rule list
+(`crates/ingest/src/r209/rules.rs`, the ADR-0004 posture: a dropped element says why), and
+`legacy_role`'s note now says the element never arrives.
+
+**Fixtures — the first real ones.** No committed fixture carried the block (259's gap again), so
+two were taken from the archive: `r208/f03-099900-2018.xml` (this unit's own exemplar, notice
+19740841: the Greek F03 whose `Perifereia Attikis …` twin the finding read on tender 8414191) and
+`r209/f06-208243-2017.xml` (notice 19292406, the Bulgarian F06 behind tender 8400023, whose block
+restates the NATIONALID so the twin used to fold back into the buyer's org and only the role row was
+spurious). Both sit under their era's exhaustive-consumption guard (11 and 12 fixtures now), each
+with a parser test — no `TED-TRANSLITERATED_ADDR` reference, no Organization section under the
+Latin spelling, the native contracting body still present — and one fold test over both: zero
+`TRANSLITERATED_ADDR` party rows, zero organizations named `Perifereia Attikis…` or
+`…Elektrorazpredelenie Yug…`, exactly one `buyer` row for Περιφέρεια Αττικής.
+
+**What this does and does not change on prod.** The legacy eras are not ingested daily, so the
+parse-layer change reaches the standing corpus only through the re-parse + re-projection that unit
+2 is already blocked on — the SAME gated run (6,998,915 notices) now closes units 1 and 2 together:
+after it, no `TRANSLITERATED_ADDR` role rows remain and the Latin twins lose their mentions. The
+twin ORGANIZATION rows themselves outlive that run as mention-less provisional rows (the fold
+rewrites mentions, not organizations); their fate is the mention-less-provisional sweep the org
+layer already runs, or a bounded count after the re-projection if it does not reach them — the
+Done-when's fourth and fifth bullets, deferred to that reading rather than pre-built against a
+population that the re-projection will first reshape. The two measured windows (2,075 and 3,188
+rows) are re-measured then.
