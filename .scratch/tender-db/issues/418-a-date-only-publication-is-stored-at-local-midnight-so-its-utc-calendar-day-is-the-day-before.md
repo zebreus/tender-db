@@ -1,6 +1,6 @@
 # 418 — a date-only publication is stored at its LOCAL midnight, so every UTC day boundary in the corpus (bounds, `/v1/sql` day and year grouping, the sort column) puts it on the day before
 
-Status: ready-for-agent — **unit 1 BUILT, gated (127/127) and DEPLOYED 2026-09-19 01:18 UTC at `ced082d`** (see the foot): a date-only publication/dispatch instant anchors at its civil day's UTC midnight at the resolver, the renderer prints the UTC date, and `repair-notice-instants` streams the standing rows' shift as a mechanical `shifted` class (unit 2's notice side). New ingests are right from the 07:35 UTC tick (owed read). **Unit 2b BUILT, gated (128/128) and DEPLOYED 2026-09-19 02:12 UTC at `507ca83`** (see the foot): `repair-version-instants` makes every version say what its repaired notice says and re-derives the head column, following only notices that carry the pair, so it cannot run ahead of the notice repair. **Open: the two gated wet runs** — `repair-notice-instants` wet, then `repair-version-instants` dry → wet, back to back (Lennart's go-ahead, dry first); until then the standing rows sit at local midnight and the Verify block reads its open state. Unit 3 (date-only DEADLINES) stays a named non-goal. Was: filed 2026-09-18 23:5x UTC by the hourly audit (step 3) from issue 367 unit 4's candidate, after a bounded measurement showed the class is not a corner: essentially EVERY publication date in the eForms/DÖE era is date-only with a positive offset (three windows below). The decision is TAKEN here — option (i), civil UTC midnight for the publication/dispatch axis — and the units are cut.
+Status: ready-for-agent — **unit 1 BUILT, gated (127/127) and DEPLOYED 2026-09-19 01:18 UTC at `ced082d`** (see the foot): a date-only publication/dispatch instant anchors at its civil day's UTC midnight at the resolver, the renderer prints the UTC date, and `repair-notice-instants` streams the standing rows' shift as a mechanical `shifted` class (unit 2's notice side). New ingests are right from the 07:35 UTC tick (owed read). **Unit 2b BUILT, gated (128/128) and DEPLOYED 2026-09-19 02:12 UTC at `507ca83`** (see the foot): `repair-version-instants` makes every version say what its repaired notice says and re-derives the head column, following only notices that carry the pair, so it cannot run ahead of the notice repair. **Open: the two gated wet runs** — `repair-notice-instants` wet, then `repair-version-instants` dry → wet, back to back (Lennart's go-ahead, dry first); until then the standing rows sit at local midnight and the Verify block reads its open state. **Unit 3 (date-only DEADLINES) is CLOSED as measured-moot 2026-09-19** — see the foot: submission deadlines are timed on 100 % of the eForms/DÖE rows in two 50k-notice windows, and the only date-only ones are legacy r208 rows at offset zero (1,249 of 21,227 in a 50k window), which already sit at their civil day's UTC midnight; no anchoring change is owed on that axis. Was: filed 2026-09-18 23:5x UTC by the hourly audit (step 3) from issue 367 unit 4's candidate, after a bounded measurement showed the class is not a corner: essentially EVERY publication date in the eForms/DÖE era is date-only with a positive offset (three windows below). The decision is TAKEN here — option (i), civil UTC midnight for the publication/dispatch axis — and the units are cut.
 Kind: defect (instants — the publication/dispatch axis's stored instant; the bare-date bound, `/v1/sql` day/year grouping and `tenders.current_published_at` all read the UTC day, which is the civil day minus one for a positive offset)
 Relates to: 367 (unit 3 rendered the civil DATE correctly by carrying the offset/precision pair; this is the instant beneath it, named there as the candidate unit 4 and re-scoped twice — this issue is that unit), 216 (`sort=published_at` and the published bounds ride `current_published_at`), 50 / 239 (`/v1/sql`, whose `strftime('%Y', published_at, 'unixepoch')` idiom is documented in `EPOCH_NOTE`), 386 (FTS: `uk_zone` supplies +00/+01 to date-only values, the same shape), ADR-0013 D3, CONTEXT.md:139 ("timestamps as UTC + original offset")
 Blocked by: nothing
@@ -194,3 +194,28 @@ report's `moved`; in the stoppable list (its test updated).
 re-measured with `published_at % 86400 = 0` as the civil-midnight signature, and the Verify block
 turning; unit 3 (date-only deadlines) stays a named non-goal. Owed read after the 07:35 UTC tick:
 a DÖE tender published on the 19th answering to `published_after=2026-09-19&published_before=2026-09-20`.
+
+## Unit 3 — MEASURED 2026-09-19 02:5x UTC and closed as moot: date-only deadlines do not carry an offset
+
+The question was whether a date-only `submission_deadline` (stored, like every date-only value,
+at the publisher's local midnight in UTC) needed the same civil-midnight anchoring — or an
+end-of-day one. Three bounded `notice_dates` windows, the deadline fields only,
+`(field, has_time, sign(offset), rows)`:
+
+| window | rows | timed | date-only |
+| --- | --- | --- | --- |
+| 26.20–26.25M (DÖE) | 19,023 | SDK01 …TenderSubmissionDeadlinePeriod-EndDate 18,923 + BT-131(d)-Lot 100, all `+` | **0** |
+| 27.30–27.35M (TED eForms) | 6,515 | BT-131(d)-Lot 6,052 `+` / 168 `0` / 4 `−`, BT-1311(d)-Lot 283 `+` / 7 `0` / 1 `−` | **0** |
+| 17.40–17.45M (legacy r208) | 21,227 | TED-RECEIPT_LIMIT_DATE 19,978, offset `0` | 1,249, offset `0` |
+
+So the class this unit would have moved — a date-only deadline with a non-zero offset — is
+**empty** in both eForms-era windows, and the legacy era's 1,249 date-only deadlines (5.9 % of
+its window) carry no offset at all: their local midnight IS the civil day's UTC midnight, the
+one instant every reading agrees on. There is nothing to anchor. The end-of-day question (is "by
+2026-09-19" the start or the end of that day?) survives only for those legacy rows, whose
+deadlines closed years ago and never meet `?status=open` or `deadline_after=now`; the row serves
+the date the source published, which is the honest answer, and `stamp()` keeps rendering it as
+a date. Closed as measured, not decided: the measurement says the decision has nobody to apply to.
+
+What this leaves on 418 is exactly the campaign: the two gated wet runs, then the extent
+re-measured and the Verify block turning.
