@@ -9612,16 +9612,7 @@ impl Supervisor {
                 store::jobs::rate_verdict(&walk, &history)
             };
             let rate = walk.members_per_second();
-            let clause = match &verdict {
-                store::jobs::RateVerdict::NotJudged => String::new(),
-                store::jobs::RateVerdict::Pending { have, need } => format!(", floor pending {have}/{need}"),
-                store::jobs::RateVerdict::Clear { floor, .. } => format!(", floor {floor:.1}"),
-                store::jobs::RateVerdict::Alarm { floor, median, history } => format!(
-                    " — RATE ALARM (issue 407): under floor {floor:.1} = median {median:.1} of the last \
-                     {history} writing walk(s) / {}",
-                    store::jobs::RATE_FLOOR_DIVISOR
-                ),
-            };
+            let clause = rate_clause(&verdict);
             eprintln!(
                 "[process] {} {} {}: {} members → {} notices ({} dup) in {:.1}s ({:.1} members/s{})",
                 source, kind, pkg.period, report.members, report.notices, report.duplicates, secs, rate, clause,
@@ -11046,6 +11037,23 @@ fn roll_reveal_wrap(prev_cursor: Option<&str>, sl: &store::RevealSlice, now: i64
 
 /// How many leading packages a resumed process job skips: the period-ordered
 /// prefix at or before the cursor (issue 32). `None` (a fresh job) skips nothing.
+/// Issue 407: the clause after `members/s` on the `[process]` line. Pure, and
+/// tested for all four shapes, because the ALARM arm fires only in an incident —
+/// it has never executed on prod — and its wording is what the operator reads.
+fn rate_clause(verdict: &store::jobs::RateVerdict) -> String {
+    use store::jobs::RateVerdict::{Alarm, Clear, NotJudged, Pending};
+    match verdict {
+        NotJudged => String::new(),
+        Pending { have, need } => format!(", floor pending {have}/{need}"),
+        Clear { floor, .. } => format!(", floor {floor:.1}"),
+        Alarm { floor, median, history } => format!(
+            " — RATE ALARM (issue 407): under floor {floor:.1} = median {median:.1} of the last \
+             {history} writing walk(s) / {}",
+            store::jobs::RATE_FLOOR_DIVISOR
+        ),
+    }
+}
+
 /// Issue 419: the packages still worth walking, and how many were dropped. A
 /// package is dropped only when its CURRENT fetch id equals the fetch id of its
 /// newest clean walk — a re-fetch (new id) walks again, and a period the ledger
@@ -13949,6 +13957,20 @@ mod tests {
         assert_eq!(resume_skip(&pkgs, Some("2004-07")), 2, "skip through the cursor (inclusive)");
         assert_eq!(resume_skip(&pkgs, Some("1992-99")), 0, "cursor before the first: skip none");
         assert_eq!(resume_skip(&pkgs, Some("2099-01")), 3, "cursor past the last: skip all");
+    }
+
+    /// Issue 407: the four shapes of the rate clause, exactly as the line prints
+    /// them — the ALARM one has no other way to be read before an incident.
+    #[test]
+    fn the_rate_clause_prints_its_four_shapes() {
+        use store::jobs::RateVerdict::{Alarm, Clear, NotJudged, Pending};
+        assert_eq!(rate_clause(&NotJudged), "");
+        assert_eq!(rate_clause(&Pending { have: 3, need: 5 }), ", floor pending 3/5");
+        assert_eq!(rate_clause(&Clear { floor: 8.77, median: 87.7, history: 11 }), ", floor 8.8");
+        assert_eq!(
+            rate_clause(&Alarm { floor: 8.77, median: 87.7, history: 11 }),
+            " — RATE ALARM (issue 407): under floor 8.8 = median 87.7 of the last 11 writing walk(s) / 10"
+        );
     }
 
     /// Issue 419: a package is dropped only when its current fetch id is the one
