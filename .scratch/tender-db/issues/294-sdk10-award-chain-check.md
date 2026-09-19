@@ -1,6 +1,6 @@
 # 294 — sdk-1.0 award-chain check (the sibling 188 left for its own pass)
 
-Status: DIAGNOSED-HONEST 2026-09-19 — publication reality, the same root as 188's sdk-0.1 verdict in its other shape: an sdk-1.0 (DÖE) award notice carries a freshly minted BT-04 that differs from its own contract notice's and publishes no prior-notice reference (BT-125 / OPP-090 absent, BT-01/BT-02 empty), so nothing in the payload links the pair. Two same-buyer pairs read through the API (see the foot); the panel and the report's section 2 name sdk-1.0 beside sdk-0.1 from the next deploy. No mapping fix is possible without a title-text heuristic, which ADR-0011 refuses. Was: BACKLOG (filed 2026-08-26; the deferral lives in 188's status line)
+Status: DIAGNOSED-HONEST 2026-09-19 — publication reality, the same root as 188's sdk-0.1 verdict in its other shape: an sdk-1.0 (DÖE) award notice carries a freshly minted BT-04 that differs from its own contract notice's and publishes no prior-notice reference (BT-125 / OPP-090 absent, BT-01/BT-02 empty), so nothing in the payload links the pair. Two same-buyer pairs read through the API (see the foot); the panel and the report's section 2 name sdk-1.0 beside sdk-0.1 — gated 128/128 and DEPLOYED 2026-09-19 09:07 UTC at `e25e219` (the report sentence prints on the next data-quality run, Sunday 09-20). No mapping fix is possible without a title-text heuristic, which ADR-0011 refuses. Was: BACKLOG (filed 2026-08-26; the deferral lives in 188's status line)
 Kind: diagnosis (eForms sdk-1.0 era)
 Relates to: 188 (sdk-0.1 verdicted publication reality), 264 (age-confound method).
 
@@ -17,7 +17,7 @@ row (like 188's) or a mapping fix + refold.
 
     ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh /admin/reports/data-quality" | python3 -c 'import sys,json; b=json.load(sys.stdin)["body"]; s=b[b.find("== 2."):b.find("== 3.")]; print([l.strip() for l in s.split("\n") if "sdk-1.0" in l])'
 
-- **done**: the row is EXPLAINED — the verdict at the foot of this record (publication reality, two same-buyer pairs) and the panel/report sentence naming sdk-1.0 beside sdk-0.1 (deployed with the 2026-09-19 bundle); `linked` stays ~0.3 % by construction
+- **done**: the row is EXPLAINED — the verdict at the foot of this record (publication reality, two same-buyer pairs) and the panel/report sentence naming sdk-1.0 beside sdk-0.1 (deployed 2026-09-19 09:07 UTC at `e25e219`); `linked` stays ~0.3 % by construction
 - **open**: `['eforms-sdk-1.0  713  711  0.3%']` unexplained (read 2026-09-19: 713 awards, 711 unchained)
 
 ## DIAGNOSED 2026-09-19 — two same-buyer pairs, read through the public API, name the mechanism
