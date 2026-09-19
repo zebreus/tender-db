@@ -22,3 +22,10 @@ is running/progressing (the case the check exists for).
 
 Acceptance: /health/deep stays 200 while a backfill job is actively
 progressing; still flips 503 when ingestion is genuinely stalled/stale.
+
+## Verify
+
+    curl -s --max-time 30 https://tenders.zebreus.click/health/deep | python3 -c 'import sys,json; d=json.load(sys.stdin)["checks"]["ingest_freshness"]; print(d["ok"], d["age_secs"], d["threshold_secs"])'
+
+- **done** (dormant holds): `True <age> 93600` with no multi-day single job running (read 2026-09-19: `True 83464 93600`)
+- **open** (reopen): `False …` WHILE a multi-day single job is mid-flight — the false alarm this issue describes, back for a job that never records a completion

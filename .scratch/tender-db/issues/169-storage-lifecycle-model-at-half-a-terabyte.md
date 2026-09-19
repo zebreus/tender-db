@@ -84,6 +84,13 @@ while writing the fresh weekly reflink — the classifier-blocked manual rm
 was never needed; the service's own retention did it. /data free 549G ->
 713G. Standing state: 2 snapshots (08-28 + 08-30), serving DB 490G.
 
+## Verify
+
+    curl -s --max-time 30 https://tenders.zebreus.click/health/deep | python3 -c 'import sys,json; d=json.load(sys.stdin)["checks"]["disk"]; print(d["used_fraction"], d["free_bytes"]//2**30, "GiB free")'
+
+- **done** (headroom): `used_fraction` under 0.9 — read 2026-09-19: `0.688 517 GiB free` (after item 3's 224 GiB reclaim)
+- **open**: at or over 0.9 — the next item of the lifecycle model is due, not a cleanup
+
 ## Re-measured 2026-09-01 — the downgrade basis is gone
 
 | | 2026-08-15 (the downgrade) | 2026-09-01 | change |

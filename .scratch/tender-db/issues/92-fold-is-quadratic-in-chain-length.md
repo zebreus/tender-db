@@ -11,6 +11,13 @@ Kind: performance (latent) / robustness
 Blocked by: —
 Relates to: 91 (where this was investigated and ruled out), 85, ADR-0001 (byte-identity), ADR-0003
 
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh /admin/reports/data-quality" | python3 -c 'import sys,json; b=json.load(sys.stdin)["body"]; s=b[b.find("== 9."):]; print(s.split("\n")[1].strip())'
+
+- **done** (deferral holds): `longest chain: N (flag threshold 4,000; …)` with N under 4,000 — read 2026-09-19: `longest chain: 1,876`
+- **open** (reopen): N at or over 4,000 — the O(chain²) fold is within reach of a chain that would hurt
+
 ## The defect
 
 `fold(chain)` in `crates/ingest/src/project.rs` rebuilds each version by **cloning the previous

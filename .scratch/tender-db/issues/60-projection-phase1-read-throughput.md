@@ -39,6 +39,13 @@ Directions to investigate (reproduce-first, measure MB/s):
 Acceptance: full-corpus Phase-1 read throughput materially higher (target a
 few×), measured; projection output unchanged (equivalence tests still pass).
 
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh '/admin/jobs?limit=200'" | python3 -c 'import sys,json; n=lambda s: int(s.split(" ")[0]) if s and s.split(" ")[0].isdigit() else 0; r=[j for j in json.load(sys.stdin)["recent"] if j["kind"]=="project" and n(j.get("counts") or "") >= 10000000]; print("job %d: %d min" % (r[0]["job_id"], (r[0]["finished_at"]-r[0]["started_at"])//60) if r else "no whole-corpus project in the last 200 jobs")'
+
+- **done** (absorbed holds): the newest whole-corpus projection completes in hours — `job 1387: 215 min` read 2026-09-19 (14.45M notices)
+- **open** (reopen with fresh numbers): a whole-corpus projection crawling for a day again — re-measure Phase-1 then, never from this record's 30 MB/s
+
 ## RESOLUTION 2 (2026-07-24): superlinear plan-build inserts (12.4M scale)
 
 Surfaced on the live 12.4M-notice run (rev 8f0dc74): Phase-1's per-500k interval

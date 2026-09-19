@@ -23,3 +23,10 @@ turns out to be bounded turso page cache, document that and close.
 
 Acceptance: RSS growth explained — either bounded/benign (documented) or
 a retention bug fixed so RSS plateaus across the backfill.
+
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click 'grep VmRSS /proc/$(systemctl show -p MainPID --value tender-db)/status'
+
+- **done** (dormant holds): steady-state RSS under a couple of GB — `VmRSS:  525632 kB` read 2026-09-19 after a night that ran two corpus-wide dry walks
+- **open** (reopen): RSS climbing monotonically across a multi-day single job, the 2026-07 backfill shape

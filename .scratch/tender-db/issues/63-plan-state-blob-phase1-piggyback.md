@@ -3,6 +3,13 @@
 Status: PARKED BY MEASUREMENT 2026-09-03 — the pre-pass is 8% of a full fold now (see the last section); was: scoped (proj-fix, 2026-07-29) — smaller than the design's ~1-2 day estimate; the
 serialization machinery already exists. Concrete implementation plan below.
 
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh '/admin/jobs?limit=200'" | python3 -c 'import sys,json; n=lambda s: int(s.split(" ")[0]) if s and s.split(" ")[0].isdigit() else 0; r=[j for j in json.load(sys.stdin)["recent"] if j["kind"]=="project" and n(j.get("counts") or "") >= 10000000]; print("job %d: %d min" % (r[0]["job_id"], (r[0]["finished_at"]-r[0]["started_at"])//60) if r else "no whole-corpus project in the last 200 jobs")'
+
+- **done** (parked holds): a whole-corpus fold near four hours — `job 1387: 215 min` read 2026-09-19; the pre-pass was 8 % of job 612's wall and the blob would not buy a meaningful share
+- **open** (reopen): a whole-corpus fold well past eight hours with the pre-pass back at its 08-01 shape (402 min alone, pre-94)
+
 ## Concrete implementation plan (proj-fix — grounded in the current code)
 
 KEY FINDING: the blob machinery is ALREADY BUILT, so this is NOT a from-scratch

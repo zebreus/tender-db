@@ -15,3 +15,10 @@ completion facts on the results graph), then it is the standard additive playboo
 (new tables + projection legs + refold of the carrying eras). Measure the carrying
 population first — if E5/REV volume is tiny, a thinner "facts on the version"
 representation may beat new entity tables.
+
+## Verify
+
+    curl -s --max-time 20 https://tenders.zebreus.click/v1/tenders/7954578 | python3 -c 'import sys,json; print([k for k in json.load(sys.stdin) if k in ("reviews","completions")])'
+
+- **done**: `['reviews']` and/or `['completions']` on the canonical surface — the entities exist
+- **open**: `[]` (read 2026-09-19) — reviews and E5 completions stay notice-layer-only

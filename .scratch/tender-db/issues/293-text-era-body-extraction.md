@@ -15,3 +15,10 @@ When picked up: start with A18 (verify the field-code semantics against TED's ow
 documentation/archive), then extract the highest-value body fields the 244
 campaign's machinery already proved reachable (sectioned-form slicing). Scope it
 per-field like 244's slices, not as one big-bang parser.
+
+## Verify
+
+    curl -s --max-time 20 https://tenders.zebreus.click/v1/notices/17424/content | python3 -c 'import sys,json; d=json.load(sys.stdin); print(len({v.get("field_id") for s in d["sections"] for v in s["values"] if str(v.get("field_id")).startswith("TXT-TX")}))'
+
+- **done**: more than one `TXT-TX…` field id — the OT body is sliced into per-field facts (the 244 machinery), not one blob
+- **open**: `1` (read 2026-09-19) — the body is one untagged `TXT-TX` blob beside the header fields

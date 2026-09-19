@@ -8,6 +8,13 @@ Blocked by: —
 Relates to: 91 (read amplification — the I/O-bound sibling; this is its opposite), 90 (observability),
 94 (the pre-pass whose scoped-read speedup this gates), 62
 
+## Verify
+
+    grep -c 'stage(&format!' crates/ingest/src/project.rs
+
+- **done**: this record's foot names the stage that eats the CPU-bound stretch — the chase (a scoped six-figure `ParsedFold` on a scratch DB under the issue-90 stage timings) has been run; no command can print that, the foot is the evidence
+- **open**: a positive count — the per-stage timing instrument of `project_incremental_chunked_phase2` is in the tree and ready (read 2026-09-19: `6`), the chase not yet run; `0` would mean the instrument itself is gone
+
 ## The unexplained observation
 
 During the first eForms-DE 1.x incremental refold attempt, the `Phase2::ParsedFold` path ran for

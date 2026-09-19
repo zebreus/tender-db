@@ -5,6 +5,13 @@ Kind: observability / dashboard panel
 Relates to: ADR-0002 (all business terms, no omissions), the completeness harness in
 crates/ingest/tests/eforms.rs, issue 40 (ledger pattern for making claims inspectable)
 
+## Verify
+
+    curl -s --max-time 20 https://tenders.zebreus.click/api/dashboard | python3 -c 'import sys,json; d=json.load(sys.stdin); print([k for k in d if "bt" in k.lower() or "field" in k.lower()])'
+
+- **done**: a key naming per-field (per-BT) coverage on the dashboard payload — the panel exists
+- **open**: `[]` (read 2026-09-19) — no per-BT coverage panel; the claim stays enforced at build time only
+
 ## What
 
 The "every business term is represented" claim is currently enforced by the build-time

@@ -13,3 +13,10 @@ positives — the 168 false-merge method), then EITHER extend the identity fold
 with the new edge class + scoped refold, or record a measured "not worth it".
 A missed link splits (recoverable); a wrong merge corrupts — keep 236's
 strong-reference bar.
+
+## Verify
+
+    grep -c 'BT-125' crates/ingest/src/project.rs
+
+- **done**: a positive count — the buyer-side previous-publication reference is an identity edge class in the fold (scoped refold recorded here), OR this record's foot carries the measured "not worth it"
+- **open**: `0` (read 2026-09-19) — the buyer-side previous-planning reference (BT-125) is unmeasured and unbuilt, as ADR-0011 left it; the only reference edge in the fold is OPP-090 (`PREVIOUS_NOTICE_FIELD`, the award → contract-notice class 236 built)

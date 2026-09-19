@@ -9,6 +9,13 @@ Blocks: —
 Priority: medium — no live incident, but it is the reason every DoS-shaped read defect so far has had to
 be fixed one query at a time.
 
+## Verify
+
+    curl -s --max-time 10 https://tenders.zebreus.click/metrics | grep -E '^tender_db_(request_deadline_hits_total|sql_pinned_computations) '
+
+- **done** (position holds): both `0` (read 2026-09-19) — no request cut by the whole-request deadline since open, no pinned SQL computation
+- **open** (reopen, trigger a): a nonzero deadline-hits count that persists across hourly check-ins, i.e. live stalls the layered defences did not absorb
+
 ## The gap
 
 **The public API has 8 reader connections, and nothing can stop a query once it starts.** Those two

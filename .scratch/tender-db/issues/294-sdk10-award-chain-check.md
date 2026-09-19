@@ -12,3 +12,10 @@ that is the same publication reality or a mapping gap on our side.
 Method exists: 264's within-era sampling (compare linkage against what the raw
 XML actually publishes on a bounded sample). Outcome: either a panel explanation
 row (like 188's) or a mapping fix + refold.
+
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh /admin/reports/data-quality" | python3 -c 'import sys,json; b=json.load(sys.stdin)["body"]; s=b[b.find("== 2."):b.find("== 3.")]; print([l.strip() for l in s.split("\n") if "sdk-1.0" in l])'
+
+- **done**: the row is EXPLAINED — either `linked` far above 0.3 % after a mapping fix and refold, or a verdict on this record (188's shape: publication reality, with the bounded-sample method of 264)
+- **open**: `['eforms-sdk-1.0  713  711  0.3%']` unexplained (read 2026-09-19: 713 awards, 711 unchained)
