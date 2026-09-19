@@ -2507,10 +2507,20 @@ async fn a_ted_eforms_notice_stores_publication_and_dispatch_separately() {
     ingest(&db, fetch_id, "eforms/can-29-00495054-2026.xml").await;
     project::project(&db, false).await.expect("project");
 
-    let opp012 =
-        scalar(&db, "SELECT utc_seconds FROM notice_dates WHERE field_id = 'OPP-012-notice'").await;
-    let bt05 =
-        scalar(&db, "SELECT utc_seconds FROM notice_dates WHERE field_id = 'BT-05(a)-notice'").await;
+    // The stored instants as the resolver anchors them: a date-only value at its
+    // civil day's UTC midnight (issue 418), a timed one exactly as published.
+    let opp012 = scalar(
+        &db,
+        "SELECT utc_seconds + CASE WHEN has_time = 0 THEN offset_minutes * 60 ELSE 0 END
+           FROM notice_dates WHERE field_id = 'OPP-012-notice'",
+    )
+    .await;
+    let bt05 = scalar(
+        &db,
+        "SELECT utc_seconds + CASE WHEN has_time = 0 THEN offset_minutes * 60 ELSE 0 END
+           FROM notice_dates WHERE field_id = 'BT-05(a)-notice'",
+    )
+    .await;
     assert!(opp012 > bt05, "the OJEU publication is after dispatch");
 
     assert_eq!(
@@ -2543,13 +2553,20 @@ async fn a_de1_notice_stores_its_real_instants_on_the_notice_row_too() {
 
     // The publisher's own two values, still under their DE-1.x ids in the
     // stored parse (the notice layer keeps the source's names on purpose).
+    // Anchored as the resolver anchors them (issue 418): the date-only requested
+    // date at its civil midnight, the timed issue instant as published.
     let requested = scalar(
         &db,
-        "SELECT utc_seconds FROM notice_dates WHERE field_id = 'DE1-RequestedPublicationDate'",
+        "SELECT utc_seconds + CASE WHEN has_time = 0 THEN offset_minutes * 60 ELSE 0 END
+           FROM notice_dates WHERE field_id = 'DE1-RequestedPublicationDate'",
     )
     .await;
-    let issued =
-        scalar(&db, "SELECT utc_seconds FROM notice_dates WHERE field_id = 'DE1-IssueDate'").await;
+    let issued = scalar(
+        &db,
+        "SELECT utc_seconds + CASE WHEN has_time = 0 THEN offset_minutes * 60 ELSE 0 END
+           FROM notice_dates WHERE field_id = 'DE1-IssueDate'",
+    )
+    .await;
     assert!(requested > issued, "the requested publication follows the issue date");
 
     assert_eq!(
@@ -4048,7 +4065,9 @@ async fn eforms_de_1x_path_shaped_fields_land_as_canonical_facts() {
     );
     assert_eq!(
         scalar(&db, "SELECT published_at FROM tender_versions").await,
-        1_700_000_000,
+        // The fixture's date-only +01:00 value sits at local midnight
+        // 1_700_000_000; the resolver anchors it at the civil midnight (issue 418).
+        1_700_003_600,
         "DE1-IssueDate resolves the instant (no publication stamp on a DÖE notice)"
     );
 
