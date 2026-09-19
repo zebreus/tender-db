@@ -10,7 +10,7 @@ Found by: the 2026-08-26 adversarial reclaim/quarantine review.
 
     grep -c 'issue 289' crates/store/src/lib.rs
 
-- **done**: a positive count — the family-aware verdict and its marker line (`… (issue 289)`) are in the reclaim arms, so a per-record stranding under a partially-resolved file prints the loud line with its marker instead of being silenced (the served rev is this tree; read 2026-09-19: `4`)
+- **done**: a positive count — the family-aware verdict and its marker line (`… (issue 289)`) are in the reclaim arms, so a per-record stranding under a partially-resolved file prints the loud line with its marker instead of being silenced (the served rev is this tree; read 2026-09-19: `5`)
 - **open**: `0` — the verdict is gone; a stranding inside a partially-resolved file is silent again
 
 ## The gap
