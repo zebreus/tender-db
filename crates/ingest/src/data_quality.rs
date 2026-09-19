@@ -2702,6 +2702,15 @@ pub fn render_text(report: &Report) -> String {
          65.6% linked among its oldest-minted Tenders vs 2.3% among the newest-minted. Compare an \
          era against its own last run, not against an older era."
     );
+    let _ = writeln!(
+        out,
+        "  DÖE sdk-0.1 and sdk-1.0 read near-100% unchained by PUBLICATION, not by a lost link (issues \
+         188, 294): sdk-0.1 awards publish an empty procedure identifier and no prior-notice reference; \
+         sdk-1.0 awards carry a freshly minted BT-04 that differs from their contract notice's and no \
+         reference either — two same-buyer pairs read 2026-09-19 (tenders 856887 ↔ 514054, 556576 ↔ \
+         137693, both V0171/V0135-2023 of Gesundheit Nord). Nothing in the payload links the pair; a \
+         title-text match is the only link and the identity fold refuses heuristics by design (ADR-0011)."
+    );
 
     let _ = writeln!(
         out,

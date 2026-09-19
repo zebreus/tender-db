@@ -1,6 +1,6 @@
 # 188 — eforms-sdk-0.1 awards are 98% unchained (136,941/139,684); sdk-1.0 is 99.9%: the issue-27 rule fires
 
-Status: DIAGNOSED-HONEST (2026-08-15 — sdk-0.1 98% is the true number, source publishes no folder key; panel now explains it. sdk-1.0 left for its own check)
+Status: DIAGNOSED-HONEST (2026-08-15 — sdk-0.1 98% is the true number, source publishes no folder key; panel now explains it. sdk-1.0 left for its own check — ANSWERED 2026-09-19 on issue 294: publication reality in its other shape, the award carries a freshly minted BT-04 and no reference)
 Kind: reference-resolution defect (pre-registered trigger)
 Blocked by: —
 Relates to: 27 (the >90%-at-full-data rule), 12 (DÖE source and the empirical sdk-0.1 profile), 34 (sdk01 ContractFolderID key), 100/101 (the DE-1.x winner gap — a different metric, do not conflate)

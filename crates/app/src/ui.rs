@@ -473,7 +473,11 @@ fn AwardLinkagePanel(rows: Vec<AwardLinkage>) -> Element {
                 "A high rate is only a defect where the source publishes a cross-reference to chain on. "
                 "The German platform (eforms-sdk-0.1) reads near-100% because ~85% of its award notices "
                 "publish an empty procedure identifier and carry no prior-notice reference at all — those "
-                "awards are genuinely standalone records, so their rate is the honest number, not a lost link."
+                "awards are genuinely standalone records, so their rate is the honest number, not a lost link. "
+                "The same platform's sdk-1.0 rows (0.3% linked) are the other shape of the same fact: the award "
+                "notice carries a freshly minted procedure identifier (BT-04) that differs from its contract "
+                "notice's, and no prior-notice reference, so nothing in the payload links the two — two "
+                "same-buyer pairs read 2026-09-19 (issue 294)."
             }
             if rows.is_empty() {
                 p { class: "muted", "No award Tenders yet." }
