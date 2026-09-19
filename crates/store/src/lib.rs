@@ -41,7 +41,7 @@ pub use canonical::{
     CountryCluster, CountryClusterReport, CountryTypoMove, CountryTypoRepairReport,
     DuplicateIdentity, GenericKeyProbe, ProvisionalEchoGroup, ProvisionalEchoReport, ProvisionalFoldArgs, ProvisionalFoldReport, EchoTier, NameVerdict, DuplicateIdentityReport,
     LabelFix, LabelRepairReport, RenormaliseRepairReport,
-    NoticeInstantFix, NoticeInstantRepairReport,
+    NoticeInstantFix, NoticeInstantRepairReport, VersionInstantRepairReport,
     GenericKeyShape, GenericStatisticReport,
     GenericWallReport, InflatedKey,
     GhostCensusReport, GhostNotice,

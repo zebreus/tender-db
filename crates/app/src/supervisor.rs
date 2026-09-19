@@ -440,6 +440,12 @@ enum Spec {
     /// 218,876 stamped 1970-01-01 and the 7,417-notice NULL prefix. Wet writes
     /// `notices`; no re-projection, the versions were never wrong.
     RepairNoticeInstants { dry_run: bool },
+    /// Issue 418 unit 2b: every `tender_versions` row follows its notice's
+    /// publication/dispatch instants (once the notice repair has anchored the
+    /// date-only ones at their civil midnight), and each touched tender's
+    /// `current_published_at` is re-derived. Wet writes `tender_versions` and
+    /// `tenders`; no re-projection, no change events.
+    RepairVersionInstants { dry_run: bool },
     /// Issue 325 step 4: re-parse the standing `kind = 'vat'` rows and write
     /// what the identifier parser now says. Wet writes `organizations`.
     RepairMintedCountries { dry_run: bool },
@@ -1596,6 +1602,20 @@ impl Supervisor {
                     .await,
                 ])
             }
+            // Issue 418 unit 2b, dry by default; the wet arm reads its moved count
+            // out of the stored dry report and aborts if the corpus has moved.
+            "repair-version-instants" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                Ok(vec![
+                    self.push(
+                        "repair-version-instants",
+                        if dry_run { "repair-version-instants dry-run" } else { "repair-version-instants" }
+                            .to_owned(),
+                        Spec::RepairVersionInstants { dry_run },
+                    )
+                    .await,
+                ])
+            }
             "repair-country-typos" => {
                 let dry_run = req.dry_run.unwrap_or(true);
                 Ok(vec![
@@ -2409,6 +2429,8 @@ const STOPPABLE_KINDS: &[&str] = &[
     // Issue 367: read between read windows AND between write slices, so a stop
     // leaves the committed prefix standing and a re-run re-plans the rest.
     "repair-notice-instants",
+    // Issue 418 unit 2b: read between read bands and between write slices.
+    "repair-version-instants",
     "repair-minted-countries",
 ];
 
@@ -6320,6 +6342,92 @@ impl Supervisor {
                             }
                         )
                     }
+                ))
+            })
+            .await,
+            Spec::RepairVersionInstants { dry_run } => Box::pin(async move {
+                let dry_run = *dry_run;
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    if dry_run { "counting" } else { "repairing" },
+                    None,
+                    None,
+                    "issue 418: moving each version's publication and dispatch instants onto \
+                     its notice's, and re-deriving the head column"
+                        .to_owned(),
+                );
+                let expect_moved = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("version-instant-repair")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "no stored version-instant-repair count — run the dry pass first"
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    if v["dry_run"] != serde_json::Value::Bool(true) {
+                        return Err("the stored version-instant-repair report is from a WET run, \
+                                    not a reviewed count — run the dry pass again"
+                            .to_owned());
+                    }
+                    Some(v["moved"].as_u64().ok_or_else(|| "report lacks moved")?)
+                };
+                let r = self
+                    .db
+                    .repair_version_instants(dry_run, expect_moved, &stop)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped && dry_run {
+                    return Ok(
+                        "repair-version-instants STOPPED by cancel — nothing counted".to_owned()
+                    );
+                }
+                let now = store::now_unix();
+                let body = serde_json::json!({
+                    "dry_run": dry_run,
+                    "walked": r.walked,
+                    "notice_unstamped": r.notice_unstamped,
+                    "agree": r.agree,
+                    "moved": r.moved,
+                    "applied": r.applied,
+                    "skipped_moved": r.skipped_moved,
+                    "heads_recomputed": r.heads_recomputed,
+                    "stopped": r.stopped,
+                })
+                .to_string();
+                self.db
+                    .put_report("version-instant-repair", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "repair-version-instants (issue 418 unit 2b, {}): {} version(s) walked, {} \
+                     already say what their notice says, {} follow their notice{}. {} sit \
+                     behind a notice that carries no pair yet — {}.{}",
+                    if dry_run { "DRY" } else { "WET" },
+                    r.walked,
+                    r.agree,
+                    r.moved,
+                    if dry_run {
+                        String::new()
+                    } else {
+                        format!(
+                            " — {} written, {} tender head column(s) re-derived, {} skipped \
+                             because the row moved under the walk",
+                            r.applied, r.heads_recomputed, r.skipped_moved
+                        )
+                    },
+                    r.notice_unstamped,
+                    if r.notice_unstamped == 0 {
+                        "the notice repair has covered the corpus"
+                    } else {
+                        "run repair-notice-instants (wet) first, then this again"
+                    },
+                    if r.stopped { " STOPPED by cancel — the committed prefix stands." } else { "" }
                 ))
             })
             .await,
@@ -11586,6 +11694,7 @@ mod tests {
                 "repair-label-prefixes",
                 "repair-renormalised-identifiers",
                 "repair-notice-instants",
+                "repair-version-instants",
                 "repair-minted-countries"
             ]
         );

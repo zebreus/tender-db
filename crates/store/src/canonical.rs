@@ -3935,6 +3935,33 @@ pub struct NoticeInstantFix {
     pub to_dispatched: Option<Stamp>,
 }
 
+/// Issue 418 unit 2b: what moving every `tender_versions` instant onto its
+/// notice's would change. Dry by default; no plan — see
+/// [`Db::repair_version_instants`].
+#[derive(Debug, Default, Clone)]
+pub struct VersionInstantRepairReport {
+    /// Versions walked.
+    pub walked: u64,
+    /// …whose notice carries no offset/precision pair yet: the notice repair has
+    /// not reached it, so there is nothing to follow. Skipped, and NOT counted
+    /// as agreement — a non-zero figure here says the notice repair has to run
+    /// (again) first.
+    pub notice_unstamped: u64,
+    /// …whose two instants already are the notice's.
+    pub agree: u64,
+    /// …that differ from the notice's and follow it (counted on the dry run,
+    /// written on the wet one).
+    pub moved: u64,
+    pub applied: u64,
+    /// Rows whose instants moved between the read and the write — a re-fold in
+    /// between owns its own values.
+    pub skipped_moved: u64,
+    /// Tenders whose `current_published_at` was re-derived from the head after a
+    /// write.
+    pub heads_recomputed: u64,
+    pub stopped: bool,
+}
+
 /// A row the streaming arm writes without a plan — `unstamped` (issue 367 unit
 /// 3) or `shifted` (issue 418): `(id, published_at, dispatched_at, published,
 /// dispatched)` — the two stored UTC values guard the write, the two stamps are
@@ -15490,6 +15517,227 @@ impl Db {
             }
         }
         Ok(stamped)
+    }
+
+    /// Issue 418 unit 2b: `tender_versions.published_at` / `dispatched_at` follow
+    /// their causing notice's instants, and `tenders.current_published_at` is
+    /// re-derived from the head version for every tender touched.
+    ///
+    /// The notice row is the source of truth on the instant axis — the processor
+    /// stamps it, `repair-notice-instants` re-derives it, and the projection
+    /// writes the version from the same resolver — so once the notice repair has
+    /// anchored date-only instants at their civil midnight (issue 418) and stamped
+    /// the pair, the standing versions are one mechanical step behind: they carry
+    /// the local-midnight instant the fold wrote when it ran. Refolding 14.5M
+    /// versions to move two columns would be hours; this walks them once, in
+    /// tender-id bands, and writes the two columns from the notice by primary-key
+    /// seek.
+    ///
+    /// **Follows only a notice that carries the pair.** A notice without
+    /// `published_offset` has not been through the repair, and its instant is the
+    /// same local midnight the version carries — following it writes nothing new,
+    /// and counting it as agreement would let this job report "done" AHEAD of the
+    /// notice repair. The order matters for a reader too: the list renderer
+    /// combines the VERSION's instant with the NOTICE's pair, so a stamped notice
+    /// beside an unmoved version renders a date-only publication a day early.
+    /// Run this immediately after the notice repair's wet run, never before it.
+    ///
+    /// **No plan, two passes.** The moved set is the whole eForms/DÖE era (~13M
+    /// versions): a per-row plan would not fit, and there is nothing in it for a
+    /// reviewer to weigh — every write is "the version says what its notice
+    /// says". So the dry run counts; the wet run counts again, checks that count
+    /// against the reviewed dry figure (the notice repair's tolerance), and only
+    /// then walks a second time writing, in slices, guarded per row on the
+    /// instants it was read with, re-deriving each touched tender's head column
+    /// in the same transaction. No change events: the civil date a stamped row
+    /// serves does not change, only the instant beneath it.
+    pub async fn repair_version_instants(
+        &self,
+        dry_run: bool,
+        expect_moved: Option<u64>,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<VersionInstantRepairReport> {
+        let mut report = self.walk_version_instants(false, stop).await?;
+        if dry_run || report.moved == 0 || report.stopped {
+            return Ok(report);
+        }
+        if let Some(expect) = expect_moved {
+            let tolerance = std::cmp::max(expect / 50, 5);
+            if report.moved.abs_diff(expect) > tolerance {
+                return Err(turso::Error::Error(format!(
+                    "version-instant repair ABORTED: the reviewed plan moved {expect} versions, \
+                     this run counts {} — beyond the max(2%, 5) tolerance. Re-run the dry pass \
+                     and review the new count.",
+                    report.moved
+                )));
+            }
+        }
+        let written = self.walk_version_instants(true, stop).await?;
+        report.applied = written.applied;
+        report.skipped_moved = written.skipped_moved;
+        report.heads_recomputed = written.heads_recomputed;
+        report.stopped = written.stopped;
+        Ok(report)
+    }
+
+    /// One pass of [`Self::repair_version_instants`]: count, and when `write`,
+    /// apply as the walk goes.
+    async fn walk_version_instants(
+        &self,
+        write: bool,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<VersionInstantRepairReport> {
+        /// Tender ids per read window — ~2 versions per tender on the corpus, so
+        /// a band of this many ids is the notice repair's 50k-row window.
+        const BAND: i64 = 25_000;
+        /// Notice-id seeks per statement.
+        const SEEK_CHUNK: usize = 500;
+        /// Rows per write transaction, the notice repair's slice.
+        const SLICE: usize = 20_000;
+
+        let mut report = VersionInstantRepairReport::default();
+        let reader = self.reader().await?;
+        let top = {
+            let mut rows = reader.query("SELECT COALESCE(MAX(id), 0) FROM tenders", ()).await?;
+            rows.next().await?.map_or(0, |r| int(&r, 0))
+        };
+        let mut after = 0i64;
+        while after < top {
+            if stop() {
+                report.stopped = true;
+                break;
+            }
+            let hi = after + BAND;
+            // (tender_id, seq, published_at, dispatched_at, notice_id)
+            let mut window: Vec<(i64, i64, i64, Option<i64>, i64)> = Vec::new();
+            {
+                let mut rows = reader
+                    .query(
+                        "SELECT tender_id, seq, published_at, dispatched_at, caused_by_notice_id \
+                           FROM tender_versions WHERE tender_id > ? AND tender_id <= ? \
+                          ORDER BY tender_id, seq",
+                        (Value::Integer(after), Value::Integer(hi)),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    window.push((int(&row, 0), int(&row, 1), int(&row, 2), opt_int_of(&row, 3), int(&row, 4)));
+                }
+            }
+            after = hi;
+            report.walked += window.len() as u64;
+            if window.is_empty() {
+                continue;
+            }
+            // The notices behind the window, by PK seek: (published_at,
+            // dispatched_at) for the rows that carry the pair.
+            let mut ids: Vec<i64> = window.iter().map(|w| w.4).collect();
+            ids.sort_unstable();
+            ids.dedup();
+            let mut notices: std::collections::HashMap<i64, (Option<i64>, Option<i64>)> =
+                std::collections::HashMap::with_capacity(ids.len());
+            for chunk in ids.chunks(SEEK_CHUNK) {
+                let sql = format!(
+                    "SELECT id, published_at, dispatched_at FROM notices \
+                      WHERE published_offset IS NOT NULL AND id IN ({})",
+                    placeholders(chunk.len())
+                );
+                let params: Vec<Value> = chunk.iter().map(|id| Value::Integer(*id)).collect();
+                let mut rows = reader.query(&sql, params).await?;
+                while let Some(row) = rows.next().await? {
+                    notices.insert(int(&row, 0), (opt_int_of(&row, 1), opt_int_of(&row, 2)));
+                }
+            }
+            // (tender_id, seq, from_published, from_dispatched, to_published, to_dispatched)
+            let mut moves: Vec<(i64, i64, i64, Option<i64>, i64, Option<i64>)> = Vec::new();
+            for (tender_id, seq, published_at, dispatched_at, notice_id) in window {
+                let Some(&(np, nd)) = notices.get(&notice_id) else {
+                    report.notice_unstamped += 1;
+                    continue;
+                };
+                // `tender_versions.published_at` is NOT NULL: a notice that resolves
+                // to no publication date keeps the version's epoch fallback.
+                let to_published = np.unwrap_or(0);
+                if to_published == published_at && nd == dispatched_at {
+                    report.agree += 1;
+                    continue;
+                }
+                report.moved += 1;
+                if write {
+                    moves.push((tender_id, seq, published_at, dispatched_at, to_published, nd));
+                }
+            }
+            if !write || moves.is_empty() {
+                continue;
+            }
+            let conn = self.conn().await;
+            for slice in moves.chunks(SLICE) {
+                if stop() {
+                    report.stopped = true;
+                    return Ok(report);
+                }
+                conn.execute("BEGIN IMMEDIATE", ()).await?;
+                let result: turso::Result<(u64, u64, u64)> = async {
+                    let mut applied = 0u64;
+                    let mut skipped = 0u64;
+                    let mut touched: Vec<i64> = Vec::with_capacity(slice.len());
+                    for (tender_id, seq, from_p, from_d, to_p, to_d) in slice {
+                        let n = conn
+                            .execute(
+                                "UPDATE tender_versions SET published_at = ?, dispatched_at = ? \
+                                  WHERE tender_id = ? AND seq = ? \
+                                    AND published_at IS ? AND dispatched_at IS ?",
+                                vec![
+                                    Value::Integer(*to_p),
+                                    opt_int(*to_d),
+                                    Value::Integer(*tender_id),
+                                    Value::Integer(*seq),
+                                    Value::Integer(*from_p),
+                                    opt_int(*from_d),
+                                ],
+                            )
+                            .await?;
+                        if n > 0 {
+                            applied += n;
+                            touched.push(*tender_id);
+                        } else {
+                            skipped += 1;
+                        }
+                    }
+                    touched.dedup();
+                    let mut heads = 0u64;
+                    for tender_id in touched {
+                        heads += conn
+                            .execute(
+                                "UPDATE tenders SET current_published_at = \
+                                   (SELECT v.published_at FROM tender_versions v \
+                                     WHERE v.tender_id = tenders.id AND v.seq = tenders.current_seq) \
+                                  WHERE id = ?",
+                                (Value::Integer(tender_id),),
+                            )
+                            .await?;
+                    }
+                    Ok((applied, skipped, heads))
+                }
+                .await;
+                match result {
+                    Ok((applied, skipped, heads)) => {
+                        if let Err(e) = conn.execute("COMMIT", ()).await {
+                            let _ = conn.execute("ROLLBACK", ()).await;
+                            return Err(e);
+                        }
+                        report.applied += applied;
+                        report.skipped_moved += skipped;
+                        report.heads_recomputed += heads;
+                        let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
+                    }
+                    Err(e) => {
+                        let _ = conn.execute("ROLLBACK", ()).await;
+                        return Err(e);
+                    }
+                }
+            }
+        }
+        Ok(report)
     }
 
     /// Issue 326: same identifier, two country codes one letter apart.
