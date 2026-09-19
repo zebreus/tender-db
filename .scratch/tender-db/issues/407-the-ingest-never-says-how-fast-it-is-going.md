@@ -1,6 +1,6 @@
 # 407 — the ingest logs nothing per package, so a 240× slowdown is invisible until someone counts rows by hand
 
-Status: ready-for-agent — unit 1 (the per-package rate line) LANDED 2026-09-16, see the foot. The calibrated guard on top of it is open, deliberately.
+Status: ready-for-agent — **the calibrated guard is BUILT, gated (128/128) and DEPLOYED 2026-09-19 05:07 UTC at `110d527`** (see the foot): the floor is the box's own history per (source, kind) — the median members/s of the previous writing walks over 10, the divisor calibrated against a week of real lines — and the `[process]` line and the job summary carry it. Owed: the 07:35 tick's lines print `floor pending 0/5`; the floor itself appears after five writing walks per (source, kind), about a week for the dailies, and the Verify block flips then. Unit 1 (the per-package rate line) LANDED 2026-09-16.
 Kind: defect (observability — `run_process` in `crates/app/src/supervisor.rs` logged nothing between "job started" and "job finished")
 Relates to: 404 (the regression that made the point: an unindexed twin lookup took a TED daily from 30 notices/s to 0.12), 406 (the stop lever the same incident showed was missing), 405 (the same class one layer up — the dashboard refresher was mute on success, and that silence cost a read the same day), 230 (the data-quality job's per-window timing line, which is the style this follows and which made ITS 88-minute run legible the same morning)
 Blocked by: nothing
@@ -10,7 +10,7 @@ Blocked by: nothing
     ssh -o BatchMode=yes root@zebreus.click "journalctl -u tender-db --since '-3 days' --no-pager | grep -F '[process]' | tail -1"
 
 - **done**: the line carries the floor it was checked against beside the rate — `… (716.0 members/s, floor N)` — or an ALARM clause when it is under it: the calibrated per-(source, kind) guard exists
-- **open**: `[process] fts daily 2026-09-17: 441 members → 439 notices (2 dup) in 0.6s (716.0 members/s)` — the rate alone; the guard waits for a few weeks of lines by design (read 2026-09-19)
+- **open**: `[process] fts daily 2026-09-17: 441 members → 439 notices (2 dup) in 0.6s (716.0 members/s)` — the rate alone (read 2026-09-19 04:5x, before the deploy); after it, `… members/s, floor pending n/5)` until five writing walks of that (source, kind) exist — the guard is in the build but has no floor yet
 
 ## What happened
 
@@ -73,3 +73,54 @@ to confirm it with.
 Worth noting the dedup rates differ by source by 3–8x (fts ~15k/s, doe ~4.7k/s, ted ~1.7k/s) and
 that is not yet explained. Probably member size and archive layout; not investigated, recorded so the
 next person reading these numbers knows the spread is expected rather than a finding.
+
+## The guard BUILT, gated (128/128) and DEPLOYED 2026-09-19 05:07 UTC (`110d527`) — the floor is measured, not guessed
+
+**The calibration came first, from the journal.** Eight days of `[process]` lines held eleven
+writing TED daily walks (2026-00124 to 00134 — 402's backfill — and 00180): 155.7, 79.3, 34.0,
+81.8, 156.3, 179.5, 136.2, 135.7, 87.7, 86.9, 75.2 members/s. Median 87.7, a **5.3× natural spread
+within ONE (source, kind)** — a cold archive read and a package of large members are both
+legitimately slower per member, exactly the objection the 09-16 comment raised against a picked
+number. The pure-dedup walks of the same packages ran at 1,565–2,226. Issue 404's regression ran
+at 0.12. So the shape of the guard follows from the data: compare a writing walk only with writing
+walks of its own (source, kind), take the median of the recent ones, and alarm at a ratio under it
+that clears the natural spread with room and still sits far above the defect. **Ten**: the slowest
+real walk (34.0) judged against the other ten gets floor 11.2 and clears by 3×; 0.12 is 90× under.
+
+**What landed (`110d527`).**
+
+- `package_rates` (`jobs::SCHEMA`, notice layer, survives every rebuild): one row per walk —
+  source, kind, period, members, notices, duplicates, seconds, walked_at — the journal line kept
+  where the guard can read it. A few dozen rows a day.
+- `store::jobs`: `PackageRate`, `record_package_rate`, `recent_writing_rates(source, kind, 30)`
+  (notices > 0, members ≥ 100, newest first), and the pure `rate_verdict(walk, history)` →
+  `NotJudged | Pending {have, need: 5} | Clear {floor, median, history} | Alarm {…}` with
+  `floor = median / RATE_FLOOR_DIVISOR (10)`. The four constants carry their reasons and the
+  calibration in their doc comments.
+- `run_process`: judge BEFORE recording (a walk is never its own baseline); a stopped walk is
+  neither judged nor recorded; a pure-dedup walk is recorded and never judged; a walk under 100
+  members is neither judged nor in any history (fixed cost, not throughput — `doe daily 2026-07-27:
+  93 members … in 0.0s`). The line reads `(136.4 members/s, floor 8.8)`, `(…, floor pending 3/5)`,
+  or `(… — RATE ALARM (issue 407): under floor 8.8 = median 87.7 of the last 11 writing walk(s) /
+  10)`; an alarm is repeated in the job summary as `; N RATE ALARM(S) (issue 407, ted daily): …`,
+  because the journal scrolls and the summary is what `/admin/jobs` keeps (the
+  `org-merge-health` shape).
+- Tests (`crates/store/tests/package_rates.rs`, 4): the history filter and order; the calibration
+  fixture — every one of the eleven real walks judged against the other ten clears, 404's 0.12
+  alarms; pending under five, dedup and tiny walks never judged (a collapsed dedup walk included:
+  the guard is for the write path); the even-count median and "at the floor is clear".
+- `docs/operations.md`: "Reading a `process` job's `[process]` lines (issue 407)".
+
+**What was NOT done, and why.** The table starts empty, so every (source, kind) prints
+`floor pending n/5` until five writing walks have run — about a week for the three dailies, longer
+for monthlies, which walk only on backfills. Seeding it from the journal's historical lines would
+give TED daily a floor today, but that is a production write from outside the ingest path and the
+operating session's classifier refuses that class (not routed around); a week of pending is the
+honest alternative and costs nothing but a week. The guard also says nothing about a walk that is
+SLOW IN ABSOLUTE TERMS but consistent with its history — that is by design: the 09-16 comment's
+point was that "slow" has no meaning without the (source, kind) it is slow for.
+
+**Acceptance, owed.** The 07:35 tick's three writing walks print `floor pending 0/5` (proof the
+table and the path work on prod); the Verify block flips to `floor N` once five writing walks of
+one (source, kind) exist, ~2026-09-26. The first `RATE ALARM` line, whenever it comes, closes the
+issue's second `## Done when` item in the only way it can be closed.
