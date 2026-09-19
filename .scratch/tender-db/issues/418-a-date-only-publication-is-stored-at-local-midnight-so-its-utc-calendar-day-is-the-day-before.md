@@ -295,7 +295,7 @@ the gated wet campaign runs; nothing about today's tick moves them.
 packages are by fetch day, publication dates by the source; 197 + 74 of its 1,046 notices sit in
 these two windows.)
 
-## 2026-09-19 09:5x — the wet run's rate cannot be recovered, so its wall time is stated as unknown
+## 2026-09-19 09:5x — the wet run's rate could not be recovered then (superseded at 12:15, next section)
 
 For the go/no-go: job 799 (367's wet, 226,293 rows, 2026-09-07) is neither in the persisted job log
 (`GET /admin/jobs` keeps 200 rows, back to queue id 1297) nor in the journal (the repair prints no
@@ -305,3 +305,19 @@ is stoppable between rows and every row is guarded by its pre-image, so a stoppe
 consistent corpus and a re-run walks on (`agree` for what it already stamped). The operational
 shape is therefore: start it in an evening window, read its `[repair]` progress after ten minutes,
 and stop it before 07:00 UTC if it would cross the tick — nothing is lost by stopping.
+
+## 2026-09-19 12:15 — job 799 recovered through the deeper job log; the campaign's wall time is bounded
+
+`GET /admin/jobs?limit=` now serves 2,000 rows (`0e4436f`, deployed 12:13 at `44d57de`), and job
+799 is in them: `repair-notice-instants (issue 367, WET)`, 2026-09-07 20:58:07 → 21:02:20, **233 s**
+for 14,346,064 notices walked and **226,293 rows written** (the dry run before it, job 798, took
+471 s for the same walk with no writes). So the whole wet pass — walk plus 226k guarded UPDATEs —
+cost less than the dry walk alone; the per-row write cost is bounded above by 233 s / 226,293 ≈
+1.0 ms and is certainly far lower, since most of the 233 s is the walk.
+
+For the 418 campaign's 14,513,100 guarded UPDATEs that gives a **ceiling of ~4 h** (every row at the
+1 ms upper bound, plus the 8-minute walk) and a plausible **~30–60 min** (writes at the rate the
+226k rows suggest once the walk is subtracted). Either way it fits an evening window — start after
+20:00 UTC, and it is stoppable between rows with every row guarded, so a run that threatens the
+07:35 tick is stopped, not raced. The version pass after it re-counts in ~34 s and writes in 20k
+slices. The go/no-go stands as stated at the head of this record; this section only prices it.
