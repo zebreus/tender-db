@@ -159,6 +159,43 @@ out=$(TENDER_ADMIN_URL="http://127.0.0.1:$port" TENDER_ADMIN_SECRET_FILE="$work/
       bash "$here/tender-db-jobwatch.sh" 2>&1); rc=$?
 check "a missing operator secret warns" 1 "no operator secret" "$out" "$rc"
 
+# --- the snapshot's quiescence gate (issue 420): wait, then skip ---------------
+# The reflink itself needs XFS and is not exercised here; TENDER_SNAP_DRY=1 stops
+# the script right after the gate, which is the part that lost 2026-09-13's
+# snapshot by skipping while the weekly data-quality run was still going.
+set_current() {
+    python3 - "$work/state.json" "$1" <<'PY'
+import json, sys
+path, cur = sys.argv[1], sys.argv[2]
+d = json.load(open(path))
+d["current"] = {"id": int(cur), "kind": "data-quality"} if cur else None
+json.dump(d, open(path, "w"))
+PY
+}
+run_snapshot() {
+    TENDER_ADMIN_URL="http://127.0.0.1:$port" TENDER_ADMIN_SECRET_FILE="$work/secret" \
+    TENDER_SNAP_DRY=1 TENDER_SNAP_POLL_SECS=1 env "$@" bash "$here/tender-db-snapshot.sh" 2>&1
+}
+
+write_state 3 1
+set_current ""
+out=$(run_snapshot); rc=$?
+check "an idle queue snapshots at once (no wait)" 0 "dry run: would snapshot" "$out" "$rc"
+if grep -q "waiting:" <<<"$out"; then echo "FAIL idle queue must not wait: $out"; failures=$((failures + 1)); fi
+
+set_current 1341
+out=$(run_snapshot TENDER_SNAP_WAIT_MIN=0); rc=$?
+check "a running job past the wait budget skips loudly" 0 "skipped snapshot: job 1341 still running" "$out" "$rc"
+if grep -q "dry run" <<<"$out"; then echo "FAIL a skip must not snapshot: $out"; failures=$((failures + 1)); fi
+
+set_current 1341
+( sleep 2; set_current "" ) &
+helper=$!
+out=$(run_snapshot TENDER_SNAP_WAIT_MIN=30); rc=$?
+check "a running job is waited out, then the snapshot proceeds" 0 "queue idle after" "$out" "$rc"
+check "…and the wait ends in a snapshot, not a skip" 0 "dry run: would snapshot" "$out" "$rc"
+wait "$helper" 2>/dev/null || true
+
 echo
 if [ "$failures" -eq 0 ]; then
     echo "all watchdog tests passed"

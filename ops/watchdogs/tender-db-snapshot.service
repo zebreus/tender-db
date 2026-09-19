@@ -3,4 +3,6 @@ Description=Weekly tender-db DB snapshot (reflink, issue 269)
 
 [Service]
 Type=oneshot
+# The gate may wait up to 150 min for the queue (issue 420); the reflink itself is ~3 min.
+TimeoutStartSec=4h
 ExecStart=/usr/local/bin/tender-db-snapshot.sh
