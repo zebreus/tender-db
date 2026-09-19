@@ -389,6 +389,24 @@ The two issue-364 lines are two different gates and read differently:
 `unknown kind` non-zero on either line is a vocabulary gap in the code, not a
 corpus fact — look at it before reading the split as right.
 
+### Reading a `process` job's `[process]` lines (issue 407)
+
+Every package walk prints one journal line when it completes:
+
+    [process] ted daily 2026-00180: 3424 members → 3424 notices (0 dup) in 25.1s (136.4 members/s, floor 8.8)
+
+Two regimes, an order of magnitude apart, and never compared with each other: a **pure-dedup walk**
+(`0 notices`, every member already held) runs at 1,700–15,000 members/s; a **writing walk** at
+34–680. The clause after the rate is the guard: `floor N` is the median members/s of the last 30
+writing walks of the same (source, kind) on this box divided by 10 (`store::jobs::RATE_FLOOR_DIVISOR`,
+calibrated 2026-09-19 against a week of real lines whose natural spread was 5.3×; issue 404's
+regression ran at 0.12), `floor pending n/5` means the history is still too short to have one, and
+`— RATE ALARM (issue 407): under floor …` is the collapse. An alarm is repeated in the job's summary
+(`; N RATE ALARM(S) (issue 407, ted daily): 2026-00180 at 0.1 members/s under floor 8.8`), because the
+journal scrolls and the summary is what `/admin/jobs` keeps. Walks under 100 members are recorded
+but never judged (fixed cost, not throughput); a stopped walk is neither. The rows live in
+`package_rates` (notice layer, survives every rebuild).
+
 ### Sizing a `reparse`, because packages are the wrong unit (measured 2026-09-10)
 
 `reparse` takes `profiles` and an optional `packages` cap, and the cap tempts you to think in

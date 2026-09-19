@@ -50,6 +50,24 @@ pub const SCHEMA: &str = "
         -- for kinds that have no per-package progress.
         progress TEXT
     ) STRICT;
+
+    -- One row per package walk (issue 407). The `[process]` journal line is the
+    -- measurement; this is the same line kept where the guard on top of it can
+    -- read it, so the floor a walk is judged against is THIS box's own history
+    -- for the same (source, kind) — calibrated against real walks, never a
+    -- guessed number (see `RATE_FLOOR_DIVISOR`). A few dozen rows a day, never
+    -- read on the serving path, and never reset with the tender layer.
+    CREATE TABLE IF NOT EXISTS package_rates (
+        source     TEXT    NOT NULL,
+        kind       TEXT    NOT NULL,   -- 'daily' | 'monthly' | …
+        period     TEXT    NOT NULL,   -- the package (e.g. '2026-00180')
+        members    INTEGER NOT NULL,
+        notices    INTEGER NOT NULL,   -- 0 = a pure-dedup walk, a different regime
+        duplicates INTEGER NOT NULL,
+        seconds    REAL    NOT NULL,   -- wall time of the walk
+        walked_at  INTEGER NOT NULL    -- unix seconds, when the walk finished
+    ) STRICT;
+    CREATE INDEX IF NOT EXISTS package_rates_walks ON package_rates(source, kind, walked_at);
 ";
 
 /// One outstanding job as persisted in `job_queue`. `spec` is the app's opaque
@@ -194,6 +212,161 @@ impl Db {
         )
         .await?;
         Ok(())
+    }
+}
+
+
+// ------------------------------------------------------------ package rates (407)
+
+/// One package walk as the `[process]` line reports it (issue 407).
+#[derive(Debug, Clone, PartialEq)]
+pub struct PackageRate {
+    pub source: String,
+    pub kind: String,
+    pub period: String,
+    pub members: u64,
+    pub notices: u64,
+    pub duplicates: u64,
+    /// Wall time of the walk.
+    pub seconds: f64,
+    /// Unix seconds, when the walk finished.
+    pub walked_at: i64,
+}
+
+impl PackageRate {
+    /// members/s. A walk that took no measurable time reads as 0.0 — such a walk
+    /// is never judged (it is below `RATE_MIN_MEMBERS` in practice).
+    pub fn members_per_second(&self) -> f64 {
+        if self.seconds > 0.0 { self.members as f64 / self.seconds } else { 0.0 }
+    }
+
+    /// A walk that inserted notices. A pure-dedup walk (every member already
+    /// held) runs an order of magnitude faster — 1,700–15,000 members/s against
+    /// 34–680 on 2026-09-17 — and says nothing about the write path issue 404's
+    /// regression sat in, so the two regimes are never compared.
+    pub fn is_writing(&self) -> bool {
+        self.notices > 0
+    }
+}
+
+/// How many previous writing walks of the same (source, kind) the floor is taken
+/// over. Thirty is about six weeks of dailies: long enough to hold a cold-archive
+/// week without tilting the median, short enough that a genuine step change in
+/// the ingest re-calibrates the floor within a couple of months.
+pub const RATE_HISTORY_WINDOW: usize = 30;
+
+/// Below this many previous writing walks there is no floor: the line says
+/// `floor pending n/5` and nothing alarms. Five is the smallest history whose
+/// median is not one walk.
+pub const RATE_FLOOR_MIN_HISTORY: usize = 5;
+
+/// The floor is the history's median divided by this. CALIBRATED 2026-09-19
+/// against the eleven writing TED daily walks in the journal (2026-00124 to
+/// 00134 and 00180, rev 7726bcb–507ca83): 34.0 to 179.5 members/s, median 87.7,
+/// a 5.3× natural spread within ONE (source, kind) — a cold archive read and a
+/// package of large members are both legitimately slower per member. Ten clears
+/// that spread twice over (the slowest real walk, 34.0, sits 3.9× above the floor
+/// the other ten give it) and sits 100× above the 0.12 members/s of issue 404's
+/// regression, the defect this guard exists to name the morning it happens.
+pub const RATE_FLOOR_DIVISOR: f64 = 10.0;
+
+/// A walk smaller than this is not judged and not part of any history: under a
+/// hundred members the wall time is fixed cost (opening the archive, the first
+/// statement), not throughput — `doe daily 2026-07-27: 93 members … in 0.0s`.
+pub const RATE_MIN_MEMBERS: u64 = 100;
+
+/// What the guard says about one walk (issue 407).
+#[derive(Debug, Clone, PartialEq)]
+pub enum RateVerdict {
+    /// A pure-dedup walk, or one under `RATE_MIN_MEMBERS`: no floor applies.
+    NotJudged,
+    /// A writing walk with too little history to have a floor yet.
+    Pending { have: usize, need: usize },
+    /// At or above the floor.
+    Clear { floor: f64, median: f64, history: usize },
+    /// Under the floor — the rate collapsed relative to this box's own history.
+    Alarm { floor: f64, median: f64, history: usize },
+}
+
+/// Median of a non-empty slice (the mean of the middle two for an even count).
+fn median(values: &[f64]) -> f64 {
+    let mut sorted = values.to_vec();
+    sorted.sort_by(|a, b| a.partial_cmp(b).expect("finite rates"));
+    let n = sorted.len();
+    if n % 2 == 1 { sorted[n / 2] } else { (sorted[n / 2 - 1] + sorted[n / 2]) / 2.0 }
+}
+
+/// Judge one walk against the members/s of the PREVIOUS writing walks of its
+/// (source, kind) — `history` as `Db::recent_writing_rates` returns it, which
+/// must not include the walk itself (a walk is never its own baseline: judge,
+/// then record).
+pub fn rate_verdict(walk: &PackageRate, history: &[f64]) -> RateVerdict {
+    if !walk.is_writing() || walk.members < RATE_MIN_MEMBERS {
+        return RateVerdict::NotJudged;
+    }
+    if history.len() < RATE_FLOOR_MIN_HISTORY {
+        return RateVerdict::Pending { have: history.len(), need: RATE_FLOOR_MIN_HISTORY };
+    }
+    let median = median(history);
+    let floor = median / RATE_FLOOR_DIVISOR;
+    if walk.members_per_second() < floor {
+        RateVerdict::Alarm { floor, median, history: history.len() }
+    } else {
+        RateVerdict::Clear { floor, median, history: history.len() }
+    }
+}
+
+impl Db {
+    /// Keep one walk's line (issue 407). A write, on the writer like every other
+    /// mutation; best-effort at the call site — a lost row costs one walk of
+    /// history, never correctness.
+    pub async fn record_package_rate(&self, walk: &PackageRate) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute(
+            "INSERT INTO package_rates(source, kind, period, members, notices, duplicates, seconds, walked_at) \
+             VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                t(&walk.source),
+                t(&walk.kind),
+                t(&walk.period),
+                Value::Integer(walk.members as i64),
+                Value::Integer(walk.notices as i64),
+                Value::Integer(walk.duplicates as i64),
+                Value::Real(walk.seconds),
+                Value::Integer(walk.walked_at),
+            ),
+        )
+        .await?;
+        Ok(())
+    }
+
+    /// members/s of the last `limit` WRITING walks of (source, kind) that were
+    /// large enough to judge (`RATE_MIN_MEMBERS`), newest first — the history
+    /// `rate_verdict` takes. Pure-dedup walks are a different regime and are
+    /// left out (see `PackageRate::is_writing`).
+    pub async fn recent_writing_rates(&self, source: &str, kind: &str, limit: usize) -> turso::Result<Vec<f64>> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT members, seconds FROM package_rates \
+                 WHERE source = ? AND kind = ? AND notices > 0 AND members >= ? AND seconds > 0 \
+                 ORDER BY walked_at DESC LIMIT ?",
+                (t(source), t(kind), Value::Integer(RATE_MIN_MEMBERS as i64), Value::Integer(limit as i64)),
+            )
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            let members = opt_int_of(&row, 0).unwrap_or(0) as f64;
+            let seconds = match row.get_value(1) {
+                Ok(Value::Real(r)) => r,
+                Ok(Value::Integer(i)) => i as f64,
+                _ => 0.0,
+            };
+            if seconds > 0.0 {
+                out.push(members / seconds);
+            }
+        }
+        Ok(out)
     }
 }
 

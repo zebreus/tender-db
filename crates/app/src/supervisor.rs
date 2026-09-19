@@ -9464,6 +9464,8 @@ impl Supervisor {
         }
 
         let mut total = process::Report::default();
+        // Walks under their calibrated floor (issue 407), named again in the summary.
+        let mut rate_alarms: Vec<String> = Vec::new();
         for (i, pkg) in packages.iter().enumerate() {
             self.update(|p| {
                 p.package = Some(pkg.period.clone());
@@ -9538,23 +9540,64 @@ impl Supervisor {
             // `members_done` out of /admin/jobs by hand and comparing it against a
             // job summary from the morning before.
             //
-            // No threshold, deliberately: the floor that would have caught today is
-            // easy to pick and easy to get wrong, and this codebase's habit is to
-            // calibrate a threshold against measurement rather than guess one
-            // (PUBLICATION_GAP_MIN_DAYS says so in as many words). These lines ARE
-            // that measurement; a guard belongs on top of a few weeks of them.
+            // The guard on top of the line (407's second half) carries no guessed
+            // number: the floor is this box's OWN history for the same (source,
+            // kind) — the median members/s of the previous writing walks over
+            // `RATE_FLOOR_DIVISOR`, calibrated against a week of real lines (see the
+            // constant). Judge BEFORE recording, so a walk is never its own
+            // baseline; a stopped walk is neither judged nor recorded, its counts
+            // being those of a partial walk. Pure-dedup walks are recorded (they
+            // are the other regime's history) and never judged.
             let secs = started.elapsed().as_secs_f64();
+            let walk = store::jobs::PackageRate {
+                source: source.to_owned(),
+                kind: kind.to_owned(),
+                period: pkg.period.clone(),
+                members: report.members,
+                notices: report.notices,
+                duplicates: report.duplicates,
+                seconds: secs,
+                walked_at: store::now_unix(),
+            };
+            let verdict = if report.cancelled {
+                store::jobs::RateVerdict::NotJudged
+            } else {
+                let history = match self
+                    .db
+                    .recent_writing_rates(source, kind, store::jobs::RATE_HISTORY_WINDOW)
+                    .await
+                {
+                    Ok(history) => history,
+                    Err(e) => {
+                        eprintln!("supervisor: job {job_id} read rate history for {source} {kind}: {e}");
+                        Vec::new()
+                    }
+                };
+                store::jobs::rate_verdict(&walk, &history)
+            };
+            let rate = walk.members_per_second();
+            let clause = match &verdict {
+                store::jobs::RateVerdict::NotJudged => String::new(),
+                store::jobs::RateVerdict::Pending { have, need } => format!(", floor pending {have}/{need}"),
+                store::jobs::RateVerdict::Clear { floor, .. } => format!(", floor {floor:.1}"),
+                store::jobs::RateVerdict::Alarm { floor, median, history } => format!(
+                    " — RATE ALARM (issue 407): under floor {floor:.1} = median {median:.1} of the last \
+                     {history} writing walk(s) / {}",
+                    store::jobs::RATE_FLOOR_DIVISOR
+                ),
+            };
             eprintln!(
-                "[process] {} {} {}: {} members → {} notices ({} dup) in {:.1}s ({:.1} members/s)",
-                source,
-                kind,
-                pkg.period,
-                report.members,
-                report.notices,
-                report.duplicates,
-                secs,
-                if secs > 0.0 { report.members as f64 / secs } else { 0.0 },
+                "[process] {} {} {}: {} members → {} notices ({} dup) in {:.1}s ({:.1} members/s{})",
+                source, kind, pkg.period, report.members, report.notices, report.duplicates, secs, rate, clause,
             );
+            if let store::jobs::RateVerdict::Alarm { floor, .. } = verdict {
+                rate_alarms.push(format!("{} at {:.1} members/s under floor {:.1}", pkg.period, rate, floor));
+            }
+            if !report.cancelled {
+                if let Err(e) = self.db.record_package_rate(&walk).await {
+                    eprintln!("supervisor: job {job_id} record package rate {}: {e}", pkg.period);
+                }
+            }
             match self.db.checkpoint(store::CheckpointMode::Truncate).await {
                 Ok(c) if c.busy => eprintln!(
                     "supervisor: job {job_id} checkpoint after {} busy (reader pinned), wal {} MB",
@@ -9590,8 +9633,21 @@ impl Supervisor {
         } else {
             ""
         };
+        // Issue 407: a walk under its calibrated floor is named here too — the
+        // journal line scrolls, the summary is what /admin/jobs keeps.
+        let rate_alarm = if rate_alarms.is_empty() {
+            String::new()
+        } else {
+            format!(
+                "; {} RATE ALARM(S) (issue 407, {} {}): {} — read the [process] lines",
+                rate_alarms.len(),
+                source,
+                kind,
+                rate_alarms.join(", ")
+            )
+        };
         Ok(format!(
-            "{} members → {} notices ({} parsed, {} quarantined, {} unrecognised, {} dup{}){}",
+            "{} members → {} notices ({} parsed, {} quarantined, {} unrecognised, {} dup{}){}{}",
             total.members,
             total.notices,
             total.parsed,
@@ -9599,7 +9655,8 @@ impl Supervisor {
             total.quarantined,
             total.duplicates,
             identity,
-            stopped
+            stopped,
+            rate_alarm
         ))
     }
 
