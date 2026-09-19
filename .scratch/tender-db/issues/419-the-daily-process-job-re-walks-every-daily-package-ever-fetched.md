@@ -1,6 +1,6 @@
 # 419 — the daily process job re-walks every daily package ever fetched, and nothing retires one
 
-Status: ready-for-agent — filed 2026-09-19 09:5x UTC by the hourly audit (step 3) from the 07:35 tick's `[process]` lines (issue 407's line made it visible: 71 DÖE/FTS re-walks around two writing walks). Measured, mechanism read, fix cut below; the build follows in the same session.
+Status: ready-for-agent — **BUILT, gated (128/128) and DEPLOYED 2026-09-19 10:06 UTC at `3bee0b5`** (see the foot): the clean-walk watermark is live on the box; the migration added the three ledger columns silently (health green, no journal error). Acceptance is a calendar: a package becomes clean only once a post-deploy walk records it with its fetch id, so Sunday's tick records DÖE/FTS and they skip from Monday, TED records on Monday and skips from Tuesday 09-22, when the Verify block flips. Was: filed 2026-09-19 09:5x UTC by the hourly audit (step 3) from the 07:35 tick's `[process]` lines (issue 407's line made it visible: 71 DÖE/FTS re-walks around two writing walks).
 Kind: cost (operability — a linearly growing, unbounded walk inside the morning window, every day)
 Relates to: 407 (the line that showed it, and the `package_rates` ledger the fix extends), 222/403 (the morning window this walk sits in), 32 (per-package resume — a different question: a walk interrupted mid-job), 77/79 (reprocess efficiency — the quarantine reclaim, not the daily walk), 404 (the accidental re-key a daily re-walk performed mid-campaign; under the fix that path closes and `reparse` is the deliberate one), 342 (the FTS comment that states the property the fix must keep).
 Blocked by: nothing
@@ -87,3 +87,31 @@ held changes — a clean package yields nothing today either; the fix stops payi
 - `docs/operations.md`'s process paragraph (407's) says what "clean" means and that `period=` forces
   a walk.
 - The Verify block flips on the first weekday tick after the deploy.
+
+## BUILT, gated (128/128) and DEPLOYED 2026-09-19 10:06 UTC (`3bee0b5`) — the same session that filed it
+
+Exactly the fix at the head of this record, on 407's ledger: `package_rates` gains `fetch_id`,
+`skipped`, `quarantined` (SCHEMA for fresh databases, three `ALTER TABLE … ADD COLUMN` in
+MIGRATIONS for the prod table created on 09-19 — the runner tolerates "duplicate column", the deploy
+applied them without a line); `PackageRate::is_clean` (fetch id known, nothing skipped, nothing
+quarantined); `Db::clean_walks(source, kind)` reduces the ledger newest-wins to `{period: fetch_id}`;
+`run_process` with `period: None` drops every package whose current fetch id equals its clean-walk id
+before the loop, prints `[process] ted daily: N package(s) skipped as clean …` and appends
+`; skipped N clean package(s) at their current fetch (issue 419)` to the summary (the empty-walk
+summary says it too). An explicit period walks regardless. A failed ledger read walks everything and
+says so. Test `a_clean_walk_at_the_current_fetch_retires_the_package_until_it_is_refetched_or_dirty`
+pins the six cases: clean at the current fetch (retired), a later walk with a skipped member (not
+retired), a quarantined member (not), a re-fetch walked clean (retired at the NEW id only), a
+pre-column row (never), dirty-then-clean (newest wins), and no leak across kinds.
+
+**The acceptance calendar.** Today's rows (the 07:35 tick, pre-deploy) carry NULL fetch ids and never
+count. Sunday 07:35: DÖE and FTS walk everything once more and record clean rows with fetch ids.
+Monday: DÖE/FTS skip their ~75 clean packages; TED (weekday-only) walks all 58 and records. Tuesday
+09-22: TED skips — the Verify block reads `~25 s; … skipped 58 clean package(s)`. Expected steady
+state: TED's weekday walk is the one new package (and the refetched current day), ~25 s instead of
+127 and growing; DÖE ~4 s instead of 15.
+
+**Not done, deliberately.** No roll-up of dailies into monthlies (a fetch-side question; the walk no
+longer pays for the redundancy, so the archive-side one can wait for a disk reason), and the
+conservative rule keeps walking a package with quarantined members — if 77/79's reclaim is ever made
+the only path for those, `is_clean` drops that clause and the ledger already carries the count.

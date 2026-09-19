@@ -294,3 +294,14 @@ the gated wet campaign runs; nothing about today's tick moves them.
 (The package `doe daily 2026-09-18` evidently carries notices published on 09-17 as well as 09-18 —
 packages are by fetch day, publication dates by the source; 197 + 74 of its 1,046 notices sit in
 these two windows.)
+
+## 2026-09-19 09:5x — the wet run's rate cannot be recovered, so its wall time is stated as unknown
+
+For the go/no-go: job 799 (367's wet, 226,293 rows, 2026-09-07) is neither in the persisted job log
+(`GET /admin/jobs` keeps 200 rows, back to queue id 1297) nor in the journal (the repair prints no
+line). So no measured UPDATE rate exists on this box. What IS known: the dry pass reads the whole
+parse layer in 8 min 13 s; the wet pass adds one guarded UPDATE per row — 14.5M of them; the job
+is stoppable between rows and every row is guarded by its pre-image, so a stopped run leaves a
+consistent corpus and a re-run walks on (`agree` for what it already stamped). The operational
+shape is therefore: start it in an evening window, read its `[repair]` progress after ten minutes,
+and stop it before 07:00 UTC if it would cross the tick — nothing is lost by stopping.
