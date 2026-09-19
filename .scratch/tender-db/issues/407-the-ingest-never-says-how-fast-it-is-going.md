@@ -1,6 +1,6 @@
 # 407 — the ingest logs nothing per package, so a 240× slowdown is invisible until someone counts rows by hand
 
-Status: ready-for-agent — **the calibrated guard is BUILT, gated (128/128) and DEPLOYED 2026-09-19 05:07 UTC at `110d527`** (see the foot): the floor is the box's own history per (source, kind) — the median members/s of the previous writing walks over 10, the divisor calibrated against a week of real lines — and the `[process]` line and the job summary carry it. Owed: the 07:35 tick's lines print `floor pending 0/5`; the floor itself appears after five writing walks per (source, kind), about a week for the dailies, and the Verify block flips then. Unit 1 (the per-package rate line) LANDED 2026-09-16.
+Status: ready-for-agent — **the calibrated guard is BUILT, gated (128/128) and DEPLOYED 2026-09-19 05:07 UTC at `110d527`** (see the foot): the floor is the box's own history per (source, kind) — the median members/s of the previous writing walks over 10, the divisor calibrated against a week of real lines — and the `[process]` line and the job summary carry it. **LIVE 2026-09-19 07:35 UTC:** the tick's two writing walks printed `doe daily 2026-09-18: 1046 members → 1046 notices (0 dup) in 4.1s (252.9 members/s, floor pending 0/5)` and `fts daily 2026-09-18: 483 members → 482 notices (1 dup) in 0.7s (701.4 members/s, floor pending 0/5)`, the 71 pure-dedup re-walks the plain rate — the table, the judge and the clause work on prod. The floor itself appears after five writing walks per (source, kind), about a week for the dailies; the Verify block flips then. Unit 1 (the per-package rate line) LANDED 2026-09-16.
 Kind: defect (observability — `run_process` in `crates/app/src/supervisor.rs` logged nothing between "job started" and "job finished")
 Relates to: 404 (the regression that made the point: an unindexed twin lookup took a TED daily from 30 notices/s to 0.12), 406 (the stop lever the same incident showed was missing), 405 (the same class one layer up — the dashboard refresher was mute on success, and that silence cost a read the same day), 230 (the data-quality job's per-window timing line, which is the style this follows and which made ITS 88-minute run legible the same morning)
 Blocked by: nothing
@@ -10,7 +10,7 @@ Blocked by: nothing
     ssh -o BatchMode=yes root@zebreus.click "journalctl -u tender-db --since '-3 days' --no-pager | grep -F '[process]' | tail -1"
 
 - **done**: the line carries the floor it was checked against beside the rate — `… (716.0 members/s, floor N)` — or an ALARM clause when it is under it: the calibrated per-(source, kind) guard exists
-- **open**: `[process] fts daily 2026-09-17: 441 members → 439 notices (2 dup) in 0.6s (716.0 members/s)` — the rate alone (read 2026-09-19 04:5x, before the deploy); after it, `… members/s, floor pending n/5)` until five writing walks of that (source, kind) exist — the guard is in the build but has no floor yet
+- **open**: `… (701.4 members/s, floor pending 0/5)` (read 2026-09-19 07:48, the first tick after the deploy) — the guard runs but has no floor until five writing walks of that (source, kind) exist; before the deploy the line carried the rate alone
 
 ## What happened
 
@@ -124,3 +124,16 @@ point was that "slow" has no meaning without the (source, kind) it is slow for.
 table and the path work on prod); the Verify block flips to `floor N` once five writing walks of
 one (source, kind) exist, ~2026-09-26. The first `RATE ALARM` line, whenever it comes, closes the
 issue's second `## Done when` item in the only way it can be closed.
+
+## LIVE 2026-09-19 07:35 UTC — the first tick after the deploy, read at 07:48
+
+    doe daily 2026-09-18: 1046 members → 1046 notices (0 dup) in 4.1s (252.9 members/s, floor pending 0/5)
+    fts daily 2026-09-18: 483 members → 482 notices (1 dup) in 0.7s (701.4 members/s, floor pending 0/5)
+
+Both writing walks were judged and found history-less, exactly the designed first reading; the 71
+pure-dedup re-walks around them (DÖE walks every daily package since 07-17 each morning, 48,161
+members for 1,046 new notices) printed the plain rate and were recorded, not judged. No TED walk
+today: the scheduler skips TED on weekends by design (`enqueue_daily(weekday)`), so TED's five
+writing walks accrue Monday to Friday. Saturday's job summaries carry no alarm clause. The
+acceptance this record owed is met; what remains is the calendar — `floor N` on the dailies from
+about 2026-09-26, and the first `RATE ALARM` whenever a walk earns one.

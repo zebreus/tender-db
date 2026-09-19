@@ -588,3 +588,13 @@ re-parse, so the number would describe the re-parse's backlog, not the rule.
 next daily tick; the standing FTS notices after the gated re-parse unit 2a's foot names, then the
 refold. Owed read: an FTS tender ingested after the 2026-09-19 07:35 tick whose lot serves
 `duration_start` in `dates`.
+
+## Live read 2026-09-19 07:48 UTC — periods flow on a fresh FTS ingest
+
+The 07:35 tick ingested `fts daily 2026-09-18` (482 notices). The newest FTS tender **8576017**
+(`published_at` `2026-09-18T20:02:23+01:00`, one lot) serves in `dates`: `duration_start` lot 1
+`2027-01-18T00:00:00+00:00`, `duration_end` lot 1 `2027-11-17T23:59:59+00:00`, beside
+`submission_deadline` and `additional_information_deadline` at procedure scope. Unit 2b's period
+route is live on the daily path (whether this lot's period was its own `contractPeriod` or the
+inherited one, the read does not say — the parser tests pin both). The standing FTS rows still
+wait for the gated re-parse; the Verify block reads its open state until then.
