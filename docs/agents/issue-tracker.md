@@ -10,6 +10,7 @@ Issues and specs (you may know a spec as a PRD) for this repo live as markdown f
 - Triage state is recorded as a `Status:` line near the top of each issue file (see `triage-labels.md` for the role strings)
 - Comments and conversation history append to the bottom of the file under a `## Comments` heading
 - Every issue carries a `## Verify` block — one free-to-run command and what it prints in BOTH states (see below); `ops/board-verify.sh` runs them over the open issues
+- A job is cited by its QUEUE id — the number `POST /admin/jobs` answers in `enqueued`, and `job_id` on a `GET /admin/jobs` recent row. The recent row's `id` is the log row, a second counter (2,396 beside `job_id` 1,487 on 2026-09-19); a record that says "job 2320" read that column, and the two spaces do not cross-reference
 
 ## When a skill says "publish to the issue tracker"
 
