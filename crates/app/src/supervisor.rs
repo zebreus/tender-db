@@ -9471,15 +9471,7 @@ impl Supervisor {
         // everything, as before this existed, and says so.
         let (packages, clean_skipped): (Vec<store::Package>, usize) = if period.is_none() {
             match self.db.clean_walks(source, kind).await {
-                Ok(clean) => {
-                    let kept: Vec<store::Package> = all[skipped..]
-                        .iter()
-                        .filter(|p| clean.get(&p.period) != Some(&p.fetch_id))
-                        .cloned()
-                        .collect();
-                    let dropped = all.len() - skipped - kept.len();
-                    (kept, dropped)
-                }
+                Ok(clean) => drop_clean_walks(&all[skipped..], &clean),
                 Err(e) => {
                     eprintln!("supervisor: job {job_id} read clean walks for {source} {kind}: {e} — walking every package");
                     (all[skipped..].to_vec(), 0)
@@ -11054,6 +11046,24 @@ fn roll_reveal_wrap(prev_cursor: Option<&str>, sl: &store::RevealSlice, now: i64
 
 /// How many leading packages a resumed process job skips: the period-ordered
 /// prefix at or before the cursor (issue 32). `None` (a fresh job) skips nothing.
+/// Issue 419: the packages still worth walking, and how many were dropped. A
+/// package is dropped only when its CURRENT fetch id equals the fetch id of its
+/// newest clean walk — a re-fetch (new id) walks again, and a period the ledger
+/// has never seen clean is kept. Pure, so the comparison that decides whether a
+/// morning walk touches one package or sixty is pinned by a test.
+fn drop_clean_walks(
+    packages: &[store::Package],
+    clean: &std::collections::HashMap<String, i64>,
+) -> (Vec<store::Package>, usize) {
+    let kept: Vec<store::Package> = packages
+        .iter()
+        .filter(|p| clean.get(&p.period) != Some(&p.fetch_id))
+        .cloned()
+        .collect();
+    let dropped = packages.len() - kept.len();
+    (kept, dropped)
+}
+
 fn resume_skip(packages: &[store::Package], resume_after: Option<&str>) -> usize {
     resume_after.map_or(0, |cursor| {
         packages.iter().take_while(|pkg| pkg.period.as_str() <= cursor).count()
@@ -13939,6 +13949,31 @@ mod tests {
         assert_eq!(resume_skip(&pkgs, Some("2004-07")), 2, "skip through the cursor (inclusive)");
         assert_eq!(resume_skip(&pkgs, Some("1992-99")), 0, "cursor before the first: skip none");
         assert_eq!(resume_skip(&pkgs, Some("2099-01")), 3, "cursor past the last: skip all");
+    }
+
+    /// Issue 419: a package is dropped only when its current fetch id is the one
+    /// its newest clean walk saw; a re-fetched package (new id) and a period the
+    /// ledger never saw clean are kept, and the count says how many went.
+    #[test]
+    fn clean_walks_drop_only_the_package_at_its_clean_fetch_id() {
+        let pkg = |period: &str, fetch_id: i64| store::Package { fetch_id, period: period.to_owned(), path: "x".into() };
+        let all = vec![pkg("2026-00180", 41), pkg("2026-00181", 52), pkg("2026-00182", 60), pkg("2026-00183", 70)];
+        let clean: std::collections::HashMap<String, i64> = [
+            ("2026-00180".to_owned(), 41), // clean at the current fetch → dropped
+            ("2026-00181".to_owned(), 51), // clean at an OLDER fetch: re-fetched since → kept
+            ("2026-00199".to_owned(), 9),  // a period not in the walk: irrelevant
+        ]
+        .into_iter()
+        .collect();
+        let (kept, dropped) = drop_clean_walks(&all, &clean);
+        assert_eq!(dropped, 1);
+        assert_eq!(
+            kept.iter().map(|p| p.period.as_str()).collect::<Vec<_>>(),
+            ["2026-00181", "2026-00182", "2026-00183"],
+            "the re-fetched package and the never-clean ones stay, in order"
+        );
+        let (kept, dropped) = drop_clean_walks(&all, &std::collections::HashMap::new());
+        assert_eq!((kept.len(), dropped), (4, 0), "an empty ledger drops nothing");
     }
 
     /// Issue 32: a process job restored from the durable queue carries its resume
