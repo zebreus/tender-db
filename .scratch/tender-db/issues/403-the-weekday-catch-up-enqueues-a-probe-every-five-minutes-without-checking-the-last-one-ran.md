@@ -5,6 +5,13 @@ Kind: defect (operations — `Supervisor::spawn_scheduler`'s weekday catch-up lo
 Relates to: 222 (built this loop — "keep re-probing on a short interval until it does (or the morning window closes)", correct when the queue is free and unexamined when it is not), 245 (`catch_up_missed_tick`, the STARTUP catch-up, which already does the check this loop is missing: `self.queue.lock()…any(|j| j.kind == "probe")`), 247 (the serialized queue and `push_front`, whose doc is the precedent that a job which makes the queue slow is worth treating specially), 252 (which job kinds read the stop flag)
 Blocked by: nothing
 
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click "journalctl -u tender-db --since '-7 days' --no-pager | grep -c 'catch-up'"
+
+- **done**: a positive count on a weekday morning whose TED package was late, with that morning's 5-minute polls never showing more than one queued `probe | ted daily (catch-up)` — the conjunction the 2026-09-17 comment describes, observed passively
+- **open**: `0` — no late package in the window, so the loop never started and there was nothing to observe; the gate is in the running build regardless (read 2026-09-19)
+
 ## The mechanism
 
 `spawn_scheduler`, the weekday arm:

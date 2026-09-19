@@ -5,6 +5,13 @@ Kind: defect (observability — `run_process` in `crates/app/src/supervisor.rs` 
 Relates to: 404 (the regression that made the point: an unindexed twin lookup took a TED daily from 30 notices/s to 0.12), 406 (the stop lever the same incident showed was missing), 405 (the same class one layer up — the dashboard refresher was mute on success, and that silence cost a read the same day), 230 (the data-quality job's per-window timing line, which is the style this follows and which made ITS 88-minute run legible the same morning)
 Blocked by: nothing
 
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click "journalctl -u tender-db --since '-3 days' --no-pager | grep -F '[process]' | tail -1"
+
+- **done**: the line carries the floor it was checked against beside the rate — `… (716.0 members/s, floor N)` — or an ALARM clause when it is under it: the calibrated per-(source, kind) guard exists
+- **open**: `[process] fts daily 2026-09-17: 441 members → 439 notices (2 dup) in 0.6s (716.0 members/s)` — the rate alone; the guard waits for a few weeks of lines by design (read 2026-09-19)
+
 ## What happened
 
 `process ted daily 2026-00135` ran for over two hours at 7.5 members/minute. The same job shape did

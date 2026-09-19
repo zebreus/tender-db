@@ -17,6 +17,13 @@ times in this direction already (292 lang tags, 172/ADR-0014 currency, 319 count
 daily ingest (9 of 1,395 DÖE notices in the 2026-09-13 tick), unit 2 is a fixed historical island that
 grows only with new sdk-0.1 publication.
 
+## Verify
+
+    curl -s --max-time 20 https://tenders.zebreus.click/v1/tenders/1723219 | python3 -c "import sys,json; print(sorted({c['code'] for c in json.load(sys.stdin)['classifications'] if c['scheme']=='cpv'}))"
+
+- **done**: `['09000000', '09123000']` — the bare 8-digit spelling on the standing sdk-0.1 rows, i.e. the gated island refold (the three steps at the foot) ran and the fold followed
+- **open**: `['09000000-3', '09123000-7']` — the dashed shape as published; the normaliser is in the build but the standing rows were folded before it (read 2026-09-19 at `507ca83`)
+
 ## Unit 1 — 7,158 DÖE notices are keyed on TED's placeholder publication id
 
 ### Observed (verified 2026-09-14 on prod)

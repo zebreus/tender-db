@@ -4,6 +4,13 @@ Status: ready-for-agent — unit 2 is BUILT 2026-09-18 in two steps (see the foo
 Kind: defect (ingest — the text-era `TI` rule in `crates/ingest/src/text/rules.rs:104` and the newline join in `crates/ingest/src/text/parse.rs:1344`, served verbatim through `crates/ingest/src/project.rs:144`; the current value is pinned by `crates/ingest/tests/text.rs:209`)
 Relates to: 199 (RESOLVED 2026-08-15 — the SAME TED ~72-column wrapper, and it already classifies the wrapper's output as layout: "all but 4 are TED's own line-wrapper emitting a wrapped tail flush-left". It fixed only column-0 orphan lines in `unclaimed-content`; it never touches the newline that sits INSIDE `TI`'s own value, which is where this one lives), 368 (ready-for-agent — unmapped source vocabulary; it names `TXT-TI` twice, at lines 294 and 612, but only as a mapping question — "which element becomes the title", never what the title string contains), 343 (FIXED 2026-09-02, DEPLOYED 2026-09-03 — the fold-vs-read tie-break) and 292 (FIX DEPLOYED 2026-08-26 — the inert English pick) and 340 (CLOSED — the original-language leg): all three decide WHICH title is picked; this is the content of the one that wins, so none of them can catch it, 364 (unit 6 done 2026-09-13 — its units 5–6 re-parsed r208 and re-folded the text era, which is exactly the follow-on this fix needs and shows it is a routine operation), 11 (resolved — the text-era profile), 232 (the text-era buyer/value/winner campaign whose sweeps a text-era re-parse would ride), `docs/research/ted-legacy-mapping.md` §7, which is headed "Text era (1993–2010) — quick assessment only" and records no decision to preserve wraps in a title
 
+## Verify
+
+    curl -s --max-time 20 https://tenders.zebreus.click/v1/tenders/8040731 | python3 -c "import sys,json; d=json.load(sys.stdin); print(repr(d['title']), sorted({c['scheme'] for c in d['classifications']}))"
+
+- **done**: `'F-Lyons: batteries' ['cc', 'nature']` — the atom left the title and the fact it duplicated is a `nature` row, i.e. the gated text-era re-parse and refold reached the standing rows
+- **open**: `'F-Lyons: batteries (Supply contract)' ['cc']` — unit 1's flatten reached the row (the authenticity note is gone); step 2's atom drop and step 1's classification have not (read 2026-09-19 at `507ca83`)
+
 ## Observed (verified 2026-09-14 on prod)
 
 ```
