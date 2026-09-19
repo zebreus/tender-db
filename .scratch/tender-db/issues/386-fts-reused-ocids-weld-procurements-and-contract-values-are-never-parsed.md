@@ -1,25 +1,16 @@
 # 386 — FTS: a publisher-reused ocid welds different buyers' procurements into one Tender, and no FTS contract value is ever parsed
 
-Status: ready-for-agent — **unit 1's key election is BUILT and gated 2026-09-18** (`2c2d0b0`, see the foot): an FTS ocid whose releases carry two or more distinct buyer sets splits per buyer at the plan's refused-key gate, pinned at the store and end to end; the standing FTS rows keep the welded shape until the fts profile is refolded — a production write the operating session's classifier refuses, so it waits for Lennart's go-ahead with the command at the foot. Unit 2a FIXED and gated 2026-09-16 (the contract's own published value, and the contract-less award's decision date). Unit 2b's ADR-0004 checklist is BUILT, gated (126/126) and DEPLOYED 2026-09-18 11:11 UTC at `8b895e1` (see the foot: `fts::checklist`, pinned by a census over every fixture release — 224 paths, all disposed, 35 owed); **the `BT-3202`/`OPT-315` linkage is BUILT, gated (127/127) and DEPLOYED 2026-09-18 15:03 UTC at `6a840ae` (see the foot; new FTS ingests carry it from the next daily tick, the standing rows wait for the gated re-parse)**; **and the periods landed, gated (127/127) and DEPLOYED 2026-09-18 18:10 UTC at `846f856` (see the foot: no schema change — a lot publishing no period inherits its single-lot award's `contractPeriod`, else that award's contract's `period`, as the `BT-536/537-Lot` pair; only the `maxExtentDate` leaves stay `owed:`). Unit 2b is COMPLETE at the parse layer; every unit's standing rows wait for the gated FTS refold + re-parse.** Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — **unit 1 REACHES THE STANDING ROWS INCREMENTALLY, seen 2026-09-19** (see the foot): a fresh release on welded ocid `ocds-h6vhtk-02874b` (088654-2026, a third buyer) made the 07:35 fold re-plan the group under the per-buyer election — the weld 7954583 was retired (404) and three per-buyer tenders minted (8576018, 8576019, 8576022), so the old Verify probe flipped with no refold; the Verify now reads the corpus-wide weld gauge, and the gated refold remains owed for the welded ocids no fresh release touches. **Unit 1's key election is BUILT and gated 2026-09-18** (`2c2d0b0`, see the foot): an FTS ocid whose releases carry two or more distinct buyer sets splits per buyer at the plan's refused-key gate, pinned at the store and end to end; the standing FTS rows keep the welded shape until the fts profile is refolded — a production write the operating session's classifier refuses, so it waits for Lennart's go-ahead with the command at the foot. Unit 2a FIXED and gated 2026-09-16 (the contract's own published value, and the contract-less award's decision date). Unit 2b's ADR-0004 checklist is BUILT, gated (126/126) and DEPLOYED 2026-09-18 11:11 UTC at `8b895e1` (see the foot: `fts::checklist`, pinned by a census over every fixture release — 224 paths, all disposed, 35 owed); **the `BT-3202`/`OPT-315` linkage is BUILT, gated (127/127) and DEPLOYED 2026-09-18 15:03 UTC at `6a840ae` (see the foot; new FTS ingests carry it from the next daily tick, the standing rows wait for the gated re-parse)**; **and the periods landed, gated (127/127) and DEPLOYED 2026-09-18 18:10 UTC at `846f856` (see the foot: no schema change — a lot publishing no period inherits its single-lot award's `contractPeriod`, else that award's contract's `period`, as the `BT-536/537-Lot` pair; only the `maxExtentDate` leaves stay `owed:`). Unit 2b is COMPLETE at the parse layer; every unit's standing rows wait for the gated FTS refold + re-parse.** Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (sources / fts profile) — unit 1 welds records that were never one procurement, unit 2 serves money and dates the source publishes as `null`
 Relates to: 342 (the FTS source; unit 2 complete, OPEN on the 2021-01 backfill and the docs — the parent of both units), 369 (the placeholder procedure-key gate and its unit-5 buyer grouping, which unit 1 extends), 377 (the same constant-key-publisher shape, decided NO GATE on TED for a class of 4 — and it says a platform-level cause reverses that), 34 (the original "every notice sharing the key collapses into one Tender"), 364 (the weld gauge `c0c2581` the FTS arm should feed), 255 (the award decision date's canonical homes, which unit 2's award-only releases never reach), ADR-0003 (merge only on a strong explicit cross-reference), ADR-0004 (the per-profile mapped-or-ignored checklist the `fts` module does not declare), ADR-0014 (contracts as one of the four money loci), CONTEXT.md:113-114, `docs/research/uk-fts.md` §4, `.scratch/tender-db/342-fts-plan.md` §3
 Blocked by: nothing
 
 ## Verify
 
-    for p in 033117-2025 031078-2025; do curl -s --max-time 20 "https://tenders.zebreus.click/v1/tenders?publication_id=$p&limit=1" | python3 -c "import json,sys; print('$p', [t['id'] for t in json.load(sys.stdin)['items']])"; done
+    ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh /admin/reports/data-quality" | python3 -c "import sys,json; d=json.load(sys.stdin); b=d['body']; l=[x.strip() for x in b.split(chr(10)) if 'FTS Tenders with >= 2 distinct buyers' in x]; print(d['computed_at'], l[0][:80] if l else 'no FTS weld line — the stored report predates unit 1')"
 
-- **done**: two DIFFERENT tender ids — unit 1's split reached the standing rows, i.e. the gated fts refold ran. Unit 2b's standing rows ride the gated FTS re-parse in the same go-ahead: `/v1/tenders/7956308` (028961-2025) then serves lot `1`'s `duration_start` 2025-05-19 in `dates`, contract 1's period.
-- **open**: the same id twice (read 2026-09-18 18:10 UTC at `846f856`: both `7954583`; 7956308's `dates` is `[]`)
-
-Two gaps in the same profile — the FTS parser and key election shipped with 342 unit 2 (`d7264c8`,
-HEAD `5c47984`) — both found in the June-2025 fold (7,243 notices, 6,239 tenders, tender ids
-7954583–7975000, the only FTS data on the box). They travel together for three reasons: each makes a
-served FTS tender diverge in SHAPE from a TED tender carrying the same facts, so a consumer cannot
-compare sources; both land on the same served record (`/v1/tenders/7954584` has another buyer's
-contracts AND every one of its 18 contract values is `null`); and both get much more expensive after
-plan step 11's 69-month backfill — unit 1 folds 100+ further releases per reused ocid into the
-already-wrong tender, unit 2 costs a full FTS reparse to fix afterwards.
+- **done**: `FTS Tenders with >= 2 distinct buyers: 0 — expected 0 …` on a report computed after the gated `fts:ocds-1.1` refold (or after every welded ocid has been touched by a fresh release — the incremental path, see the foot). Unit 2b's standing rows ride the gated FTS re-parse in the same go-ahead: `/v1/tenders/7956308` (028961-2025) then serves lot `1`'s `duration_start` 2025-05-19 in `dates`, contract 1's period.
+- **open**: a non-zero count — the standing welds (first reading on the 2026-09-20 weekly run; the stored report of 09-17, `1789647552`, predates the line and prints the fallback). The old probe (`?publication_id=033117-2025` / `031078-2025` resolving to one id) flipped on 2026-09-19 by the incremental path and no longer measures the refold.
 
 ## Unit 1 — a reused ocid welds different buyers' procurements
 
@@ -598,3 +589,30 @@ The 07:35 tick ingested `fts daily 2026-09-18` (482 notices). The newest FTS ten
 route is live on the daily path (whether this lot's period was its own `contractPeriod` or the
 inherited one, the read does not say — the parser tests pin both). The standing FTS rows still
 wait for the gated re-parse; the Verify block reads its open state until then.
+
+## 2026-09-19 10:5x — unit 1 reached a standing weld through the daily fold, and the Verify was reading the wrong thing
+
+The board sweep's Verify run printed `033117-2025 [8576019]` and `031078-2025 [8576022]` — two
+different ids, the "done" reading — with no refold run. What happened: the 07:35 tick's FTS package
+carried release **088654-2026** (published 2026-09-18 12:30, buyer GBCOH02366682, a THIRD buyer on
+ocid `ocds-h6vhtk-02874b`). The incremental fold re-plans a touched group, and under unit 1's
+election the group split per buyer: the welded tender **7954583** was retired (now 404) and three
+tenders minted — **8576018** (088654-2026, key `refused:ocds-h6vhtk-02874b:GB:national:GBCOH02366682`),
+**8576019** (033117-2025, Affinity Water, `…:GB:national:GBCOH02546950`) and **8576022** (031078-2025,
+Dŵr Cymru, `…:n2:GB:dwr cymru cyfyngedig`). Job 1495: `1528 notices → 1483 tenders, 2145 versions`
+— the 617 versions beyond the day's notices are the re-folded members of touched groups.
+
+Two consequences, both recorded here:
+
+1. **The standing welds self-heal as fresh releases touch them** — the utilities register keeps
+   publishing awards under its long-lived ocids, so the most active welds regroup on their own. The
+   gated refold is still the only path for the welds nothing touches, and the weekly `weld_fts`
+   gauge (`FTS Tenders with >= 2 distinct buyers`, JSON `weld_candidates.fts_multi_buyer`) is the
+   count that says how many remain — the Verify block reads it now.
+2. **Tender ids are not stable across a regroup** (issue 93's retire-and-mint), and the change feed
+   carries the retirement; a consumer holding 7954583 must follow the feed. Nothing new — stated
+   because this is the first time a fresh release, not a campaign, did it on the FTS arm.
+
+No twin was minted: the old notices moved (7954583 has no versions and answers 404), each new
+tender holds exactly its buyer's releases, and the keys are the `refused:` per-buyer form unit 1
+specified.
