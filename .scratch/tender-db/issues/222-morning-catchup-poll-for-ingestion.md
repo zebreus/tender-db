@@ -1,6 +1,6 @@
 # 222 — ingest fires once at 09:35; a bounded morning catch-up poll would never miss a late TED day and fetch the moment it's final
 
-Status: IMPLEMENTED & DEPLOYED 2026-08-16 (serving rev `e9cf997`) — awaiting first live weekday morning.
+Status: RESOLVED-VERIFIED 2026-09-19 (board sweep) — every weekday since 08-17 has run the daily probe/process/project at 07:35 UTC on the recent job log, and the catch-up loop itself was seen live on 2026-09-16 (issue 403: four `ted daily (catch-up)` probes queued through a morning whose queue a re-parse campaign held — the loop polling as designed; the over-enqueue it exposed is 403's, fixed there). Was: IMPLEMENTED & DEPLOYED 2026-08-16 (serving rev `e9cf997`) — awaiting first live weekday morning.
 Lennart said "it's your project, you decide", so I built it. Chose the lowest-risk shape (design choice #1
 below → the read-only watermark variant): the 09:35 tick and `enqueue_daily` are UNCHANGED, and a
 purely-additive weekday catch-up runs after the tick — give the tick's probe time to land TED's package,
@@ -25,6 +25,13 @@ Kind: operability / ingestion responsiveness + resilience
 Blocked by: — (design decision only)
 Relates to: 16 (the in-process supervisor/scheduler), 69 (walk-forward probe so a missed tick catches up),
 docs/research/ted-access-channels.md (the upstream cadence this is bounded by)
+
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh '/admin/jobs?limit=60'" | python3 -c "import sys,json,time; r=[j for j in json.load(sys.stdin)['recent'] if j['kind']=='probe' and j['params']=='ted daily (probe)']; print(time.strftime('%a %H:%M', time.gmtime(r[0]['started_at'])) if r else 'no probe row')"
+
+- **done**: the newest TED daily probe ran at `07:35` UTC on the last weekday (read 2026-09-19: `Fri 07:35`) — the tick fires; a late package shows as `(catch-up)` rows after it
+- **open**: `no probe row`, or a weekday morning with no 07:35 probe — the scheduler did not fire
 
 ## Today
 

@@ -1,12 +1,19 @@
 # 115 — tender_detail's per-lot correlated subqueries blow up on many-lot Tenders
 
-Status: landed on main (merge `3485e3d`, 2026-08-08) — prod verification pending the deploy. Original note: fixed on branch `issue115-set-based-lot-summary` (`2751ce3`, off the deployed `1830d50`) —
+Status: RESOLVED-VERIFIED 2026-09-19 (board sweep) — `GET /v1/tenders/7161565` (2,604 lots, the issue's own probe) serves in **0.62–0.69 s** on two consecutive hits against **248.8 s** on 2026-08-03: the regime the tail of this record says a single clock can tell apart. The scaling-ratio protocol was not run; a 380× change on the named probe is not a quiet-box artefact. Was: landed on main (merge `3485e3d`, 2026-08-08) — prod verification pending the deploy. Original note: fixed on branch `issue115-set-based-lot-summary` (`2751ce3`, off the deployed `1830d50`) —
 awaiting an on-box timing before it ships. Pre-existing perf defect, surfaced 2026-08-03 during the
 lots-scan latency fix (diagnosed while deploying `1830d50`). NOT caused by that fix; older.
 Kind: performance
 Blocked by: —
 Blocks: the bounded-seek/truncation fix (issue 116) — must land first, so the honest answer is cheap.
 (NOT because returning all lots "makes this worse": the cap bounds the answer, not the work — measured.)
+
+## Verify
+
+    curl -s -o /dev/null -w '%{time_total}s\n' --max-time 120 https://tenders.zebreus.click/v1/tenders/7161565
+
+- **done**: under two seconds — the set-based lot summary serves the 2,604-lot tender (read 2026-09-19: `0.686611s`, `0.616098s`)
+- **open**: tens to hundreds of seconds — the per-lot correlated subqueries are back (2026-08-03: `248.8s`)
 
 ## Observation (measured, live prod, 2026-08-03)
 

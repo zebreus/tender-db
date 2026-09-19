@@ -1,10 +1,17 @@
 # 289 — the "reclaim stamped NO ledger rows" tripwire is suppressed for any per-record stranding inside a partially-resolved member file
 
-Status: RESOLVED-IN-CODE 2026-08-26 (owner) — built exactly per the pre-verified sketch: `member_family_still_held` (the family clause with inverted resolution filter) + a shared `log_zero_stamp` verdict at both alarm sites: no resolved family row → the original loud line; partially resolved with held residue → the same grep-able prefix with a distinguishing '(partially-resolved file — held siblings remain, issue 289)' marker; fully resolved → silent (181/196/200 stay benign). Test `a_zero_stamp_under_a_partially_resolved_file_is_not_silenced` pins the stranded shape (old gate true = suppression proven, new probe true = marker fires — observed live on stderr) and the fully-resolved quiet case. Full gate green (66 suites). DEPLOYED (rev ae31cbd, /health green). RESOLVED-DEPLOYED. (2026-08-26, owner — adversarial reclaim review; not yet re-verified line-by-line by the owner)
+Status: RESOLVED-DEPLOYED (board sweep 2026-09-19) — `member_family_still_held` and the shared `log_zero_stamp` verdict are in the served tree (`110d527`); the tripwire has stayed quiet since (the hourly check reads 0 `reclaim stamped NO ledger rows` lines in every 24 h window). Was: RESOLVED-IN-CODE 2026-08-26 (owner) — built exactly per the pre-verified sketch: `member_family_still_held` (the family clause with inverted resolution filter) + a shared `log_zero_stamp` verdict at both alarm sites: no resolved family row → the original loud line; partially resolved with held residue → the same grep-able prefix with a distinguishing '(partially-resolved file — held siblings remain, issue 289)' marker; fully resolved → silent (181/196/200 stay benign). Test `a_zero_stamp_under_a_partially_resolved_file_is_not_silenced` pins the stranded shape (old gate true = suppression proven, new probe true = marker fires — observed live on stderr) and the fully-resolved quiet case. Full gate green (66 suites). DEPLOYED (rev ae31cbd, /health green). RESOLVED-DEPLOYED. (2026-08-26, owner — adversarial reclaim review; not yet re-verified line-by-line by the owner)
 Kind: observability (the monitoring signal this bug family is caught by)
 Severity: LOW (no data corruption; degrades the standing OPERATE check)
 Relates to: 139 (the address-miss class the tripwire exists to catch), 288 (same review)
 Found by: the 2026-08-26 adversarial reclaim/quarantine review.
+
+## Verify
+
+    grep -c 'partially-resolved file' crates/store/src/lib.rs
+
+- **done**: a positive count — the distinguishing marker exists, so a per-record stranding under a partially-resolved file prints the loud line with its marker instead of being silenced (the served rev is this tree)
+- **open**: `0` — the marker is gone; a stranding inside a partially-resolved file is silent again
 
 ## The gap
 

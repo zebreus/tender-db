@@ -1,11 +1,18 @@
 # 99 — the incremental fold SKIPS projection-logic changes: chain identity is not a content key
 
-Status: landed on main (merge `3485e3d`, 2026-08-08) — projection_epoch column + stale-epoch forced rewrite; epoch is lazily upgraded per touched Tender. Originally: DESIGN — recommendation ready, awaiting team-lead's go. **Blocks 98, the 2,185 issue-85 shells,
+Status: RESOLVED-DEPLOYED (board sweep 2026-09-19) — `projection_epoch` and the stale-epoch forced rewrite are in the served tree (`110d527`), and the mechanism has run at scale: the 23-profile epoch refold (job 402, recorded on 305) re-projected the corpus through it. Was: landed on main (merge `3485e3d`, 2026-08-08) — projection_epoch column + stale-epoch forced rewrite; epoch is lazily upgraded per touched Tender. Originally: DESIGN — recommendation ready, awaiting team-lead's go. **Blocks 98, the 2,185 issue-85 shells,
 and every future projection-logic change (86/48/88).**
 Kind: correctness (fold invalidation)
 Blocked by: —
 Relates to: 85 (the 2,185 factless shells this explains), 98 (which would be a total no-op without it),
 58 (the incremental fold), 63, 91/94 (the fold speedups this makes deliverable)
+
+## Verify
+
+    grep -c 'projection_epoch' crates/store/src/canonical.rs
+
+- **done**: a positive count — the epoch column and the stale-epoch rewrite are in the fold (the served rev is this tree)
+- **open**: `0` — the mechanism is gone from the fold
 
 ## The defect
 
