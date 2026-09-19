@@ -40,7 +40,13 @@ const RECENT_RUNS: i64 = 20;
 /// comment had already measured the same trap ("those 20 rows covered 18.9
 /// hours"). Bounded, because this is a reader-pool query an operator can
 /// aim at a 12.6M-row corpus.
-const JOB_LOG_MAX: i64 = 200;
+///
+/// 2,000, not 200 (2026-09-19): the log is never pruned and a row is ~300
+/// bytes, so the deepest page is ~600 KB off the reader pool — and 200 rows
+/// reached back only to queue id 1297 (twelve days) when issue 418 needed job
+/// 799's counts line (2026-09-07) to price a 14.5M-row campaign, and found
+/// it unreachable. Two thousand covers about two months of this box's jobs.
+const JOB_LOG_MAX: i64 = 2_000;
 
 /// How far back the startup catch-up reads the job log for this morning's probe
 /// (issue 245). Much deeper than [`RECENT_RUNS`] on purpose: a maintenance-heavy
