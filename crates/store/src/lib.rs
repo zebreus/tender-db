@@ -653,7 +653,7 @@ pub async fn state() -> Arc<Db> {
 /// answers "duplicate column name" and the statement is skipped. Anything
 /// beyond ADD COLUMN stays out of scope by policy — the canonical layer is
 /// rebuildable, and destructive changes recreate from the archive instead.
-const MIGRATIONS: [&str; 20] = [
+const MIGRATIONS: [&str; 23] = [
     "ALTER TABLE notices ADD COLUMN published_at INTEGER",
     "ALTER TABLE notices ADD COLUMN dispatched_at INTEGER",
     "ALTER TABLE tender_versions ADD COLUMN dispatched_at INTEGER",
@@ -710,6 +710,12 @@ const MIGRATIONS: [&str; 20] = [
     // …and the statistics satellite (issue 372 unit 4). Same reading: NULL until
     // re-folded. Added WITH its SCHEMA column this time, not a firing later.
     "ALTER TABLE tender_version_result_stats ADD COLUMN quality TEXT",
+    // Issue 419: the clean-walk watermark on the package_rates ledger (407). The
+    // prod table was created on 2026-09-19 without them; rows from that day read
+    // NULL and never count as clean.
+    "ALTER TABLE package_rates ADD COLUMN fetch_id INTEGER",
+    "ALTER TABLE package_rates ADD COLUMN skipped INTEGER",
+    "ALTER TABLE package_rates ADD COLUMN quarantined INTEGER",
 ];
 
 async fn migrate(conn: &Connection) -> turso::Result<()> {

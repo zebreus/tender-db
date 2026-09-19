@@ -26,7 +26,18 @@ fn walk(period: &str, members: u64, notices: u64, seconds: f64, walked_at: i64) 
         duplicates: members - notices,
         seconds,
         walked_at,
+        fetch_id: Some(1),
+        skipped: 0,
+        quarantined: 0,
     }
+}
+
+fn walk_at(period: &str, fetch_id: Option<i64>, skipped: u64, quarantined: u64, walked_at: i64) -> PackageRate {
+    let mut w = walk(period, 1000, 0, 1.0, walked_at);
+    w.fetch_id = fetch_id;
+    w.skipped = skipped;
+    w.quarantined = quarantined;
+    w
 }
 
 /// The eleven writing TED daily walks the divisor was calibrated against
@@ -123,5 +134,43 @@ fn the_threshold_is_the_even_count_median_over_the_divisor_and_at_the_floor_is_c
             assert_eq!(n, 6);
         }
         other => panic!("just under the floor alarms, got {other:?}"),
+    }
+}
+
+
+#[tokio::test]
+async fn a_clean_walk_at_the_current_fetch_retires_the_package_until_it_is_refetched_or_dirty() {
+    let (db, path) = open("clean").await;
+    // A: clean at fetch 10 → retired at 10.
+    db.record_package_rate(&walk_at("A", Some(10), 0, 0, 100)).await.expect("A");
+    // B: clean once, then a walk that declined a member → not retired (the FTS property).
+    db.record_package_rate(&walk_at("B", Some(20), 0, 0, 100)).await.expect("B1");
+    db.record_package_rate(&walk_at("B", Some(20), 3, 0, 200)).await.expect("B2");
+    // C: a quarantined member keeps it walking until reprocess empties it.
+    db.record_package_rate(&walk_at("C", Some(30), 0, 1, 100)).await.expect("C");
+    // D: re-fetched (a new fetch id) and walked clean again → retired at the NEW id only.
+    db.record_package_rate(&walk_at("D", Some(40), 0, 0, 100)).await.expect("D1");
+    db.record_package_rate(&walk_at("D", Some(41), 0, 0, 200)).await.expect("D2");
+    // E: a row from before the columns existed (no fetch id) never counts.
+    db.record_package_rate(&walk_at("E", None, 0, 0, 100)).await.expect("E");
+    // F: dirty first, clean later → the newest walk decides.
+    db.record_package_rate(&walk_at("F", Some(60), 2, 0, 100)).await.expect("F1");
+    db.record_package_rate(&walk_at("F", Some(60), 0, 0, 200)).await.expect("F2");
+    // Another kind's clean walk never leaks into this one.
+    let mut m = walk_at("2026-08", Some(70), 0, 0, 100);
+    m.kind = "monthly".into();
+    db.record_package_rate(&m).await.expect("monthly");
+
+    let clean = db.clean_walks("ted", "daily").await.expect("clean walks");
+    let mut got: Vec<(String, i64)> = clean.into_iter().collect();
+    got.sort();
+    assert_eq!(got, vec![("A".into(), 10), ("D".into(), 41), ("F".into(), 60)]);
+    assert!(walk_at("x", Some(1), 0, 0, 0).is_clean());
+    assert!(!walk_at("x", None, 0, 0, 0).is_clean(), "no fetch id, never clean");
+    assert!(!walk_at("x", Some(1), 1, 0, 0).is_clean());
+    assert!(!walk_at("x", Some(1), 0, 1, 0).is_clean());
+    drop(db);
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
     }
 }

@@ -407,6 +407,15 @@ journal scrolls and the summary is what `/admin/jobs` keeps. Walks under 100 mem
 but never judged (fixed cost, not throughput); a stopped walk is neither. The rows live in
 `package_rates` (notice layer, survives every rebuild).
 
+The same ledger carries the **clean-walk watermark** (issue 419): a walk that declined nothing and
+quarantined nothing is CLEAN, and a package whose newest walk was clean at its current fetch id cannot
+yield anything on another walk. The tick's `… daily (all)` and `… monthly (all)` jobs skip those —
+the summary says `; skipped N clean package(s) at their current fetch` — so the morning walk touches
+the new package instead of every daily ever fetched (58 TED dailies, 127 s, on 2026-09-18). A
+re-fetched package (TED's finality-window refetch) walks again; a package with policy-skipped members
+keeps walking until an arm claims them; one with quarantined members until `reprocess` empties it.
+`period=<one>` walks that package regardless.
+
 ### Sizing a `reparse`, because packages are the wrong unit (measured 2026-09-10)
 
 `reparse` takes `profiles` and an optional `packages` cap, and the cap tempts you to think in

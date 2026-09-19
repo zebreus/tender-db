@@ -8,6 +8,7 @@
 
 use crate::{Db, Value, int, opt_int_of, opt_text_of, t, text};
 use model::ingestion::JobRun;
+use std::collections::HashMap;
 
 pub const SCHEMA: &str = "
     CREATE TABLE IF NOT EXISTS job_log (
@@ -65,7 +66,14 @@ pub const SCHEMA: &str = "
         notices    INTEGER NOT NULL,   -- 0 = a pure-dedup walk, a different regime
         duplicates INTEGER NOT NULL,
         seconds    REAL    NOT NULL,   -- wall time of the walk
-        walked_at  INTEGER NOT NULL    -- unix seconds, when the walk finished
+        walked_at  INTEGER NOT NULL,   -- unix seconds, when the walk finished
+        -- Issue 419: which file version the walk saw, and whether it was CLEAN —
+        -- nothing declined by policy, nothing quarantined — so the same fetch id
+        -- cannot yield anything on a later walk. NULL on rows written before the
+        -- columns existed; those never count as clean.
+        fetch_id    INTEGER,
+        skipped     INTEGER,
+        quarantined INTEGER
     ) STRICT;
     CREATE INDEX IF NOT EXISTS package_rates_walks ON package_rates(source, kind, walked_at);
 ";
@@ -231,6 +239,14 @@ pub struct PackageRate {
     pub seconds: f64,
     /// Unix seconds, when the walk finished.
     pub walked_at: i64,
+    /// The fetch row the walk read (issue 419). `None` only on rows recorded
+    /// before the column existed.
+    pub fetch_id: Option<i64>,
+    /// Members the dispatcher declined by policy — retried by every walk until an
+    /// arm claims them (the FTS-dark-days property).
+    pub skipped: u64,
+    /// Members quarantined whole — reclaimed by `reprocess`, re-inserted by a walk.
+    pub quarantined: u64,
 }
 
 impl PackageRate {
@@ -246,6 +262,13 @@ impl PackageRate {
     /// regression sat in, so the two regimes are never compared.
     pub fn is_writing(&self) -> bool {
         self.notices > 0
+    }
+
+    /// A walk that recorded or de-duplicated EVERY member (issue 419): nothing
+    /// declined, nothing quarantined, and the fetch id known. Such a walk cannot
+    /// yield anything on a later walk of the same fetch row.
+    pub fn is_clean(&self) -> bool {
+        self.fetch_id.is_some() && self.skipped == 0 && self.quarantined == 0
     }
 }
 
@@ -323,9 +346,10 @@ impl Db {
     pub async fn record_package_rate(&self, walk: &PackageRate) -> turso::Result<()> {
         let conn = self.conn().await;
         conn.execute(
-            "INSERT INTO package_rates(source, kind, period, members, notices, duplicates, seconds, walked_at) \
-             VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
-            (
+            "INSERT INTO package_rates(source, kind, period, members, notices, duplicates, seconds, walked_at, \
+                                       fetch_id, skipped, quarantined) \
+             VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            vec![
                 t(&walk.source),
                 t(&walk.kind),
                 t(&walk.period),
@@ -334,7 +358,10 @@ impl Db {
                 Value::Integer(walk.duplicates as i64),
                 Value::Real(walk.seconds),
                 Value::Integer(walk.walked_at),
-            ),
+                walk.fetch_id.map(Value::Integer).unwrap_or(Value::Null),
+                Value::Integer(walk.skipped as i64),
+                Value::Integer(walk.quarantined as i64),
+            ],
         )
         .await?;
         Ok(())
@@ -367,6 +394,30 @@ impl Db {
             }
         }
         Ok(out)
+    }
+
+    /// Issue 419: the packages of (source, kind) whose NEWEST recorded walk was
+    /// clean, keyed by period, with the fetch id that walk saw. A package whose
+    /// current fetch row still carries that id cannot yield anything on another
+    /// walk, so the tick's `(all)` walk skips it. Rows without a fetch id (written
+    /// before the column existed) never count, and a later dirty walk clears the
+    /// mark. The ledger is a few dozen rows a day; reduced in memory, newest wins.
+    pub async fn clean_walks(&self, source: &str, kind: &str) -> turso::Result<HashMap<String, i64>> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT period, fetch_id, skipped, quarantined FROM package_rates \
+                 WHERE source = ? AND kind = ? ORDER BY walked_at",
+                (t(source), t(kind)),
+            )
+            .await?;
+        let mut newest: HashMap<String, Option<i64>> = HashMap::new();
+        while let Some(row) = rows.next().await? {
+            let fetch_id = opt_int_of(&row, 1);
+            let clean = fetch_id.is_some() && opt_int_of(&row, 2) == Some(0) && opt_int_of(&row, 3) == Some(0);
+            newest.insert(text(&row, 0), if clean { fetch_id } else { None });
+        }
+        Ok(newest.into_iter().filter_map(|(period, f)| f.map(|f| (period, f))).collect())
     }
 }
 

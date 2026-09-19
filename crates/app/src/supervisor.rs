@@ -9454,13 +9454,48 @@ impl Supervisor {
         // last member committed; the partial one that was interrupted has a period
         // > the cursor, so it re-runs and dedups.
         let skipped = resume_skip(&all, resume_after);
-        let packages = &all[skipped..];
+        // Issue 419: a package whose newest recorded walk was CLEAN (nothing
+        // declined, nothing quarantined) at its current fetch id cannot yield
+        // anything on another walk, so the tick's `(all)` walk drops it here.
+        // Only for `period: None` — an explicit period is the operator's lever to
+        // walk one package regardless. A re-fetched package lands a new fetch id
+        // and walks again; one with skipped members keeps walking until an arm
+        // claims them (the FTS-dark-days property); one with quarantined members
+        // keeps walking until `reprocess` empties it. A failed ledger read walks
+        // everything, as before this existed, and says so.
+        let (packages, clean_skipped): (Vec<store::Package>, usize) = if period.is_none() {
+            match self.db.clean_walks(source, kind).await {
+                Ok(clean) => {
+                    let kept: Vec<store::Package> = all[skipped..]
+                        .iter()
+                        .filter(|p| clean.get(&p.period) != Some(&p.fetch_id))
+                        .cloned()
+                        .collect();
+                    let dropped = all.len() - skipped - kept.len();
+                    (kept, dropped)
+                }
+                Err(e) => {
+                    eprintln!("supervisor: job {job_id} read clean walks for {source} {kind}: {e} — walking every package");
+                    (all[skipped..].to_vec(), 0)
+                }
+            }
+        } else {
+            (all[skipped..].to_vec(), 0)
+        };
+        if clean_skipped > 0 {
+            eprintln!("[process] {source} {kind}: {clean_skipped} package(s) skipped as clean at their current fetch (issue 419)");
+        }
+        let packages = &packages[..];
         self.update(|p| p.packages_total = packages.len() as u64);
         if let Some(cursor) = resume_after {
             eprintln!("supervisor: job {job_id} resumes after {cursor} ({skipped} package(s) already done)");
         }
         if packages.is_empty() {
-            return Ok("no packages to process".into());
+            return Ok(if clean_skipped > 0 {
+                format!("no packages to process; skipped {clean_skipped} clean package(s) at their current fetch (issue 419)")
+            } else {
+                "no packages to process".into()
+            });
         }
 
         let mut total = process::Report::default();
@@ -9558,6 +9593,9 @@ impl Supervisor {
                 duplicates: report.duplicates,
                 seconds: secs,
                 walked_at: store::now_unix(),
+                fetch_id: Some(pkg.fetch_id),
+                skipped: report.skipped,
+                quarantined: report.quarantined,
             };
             let verdict = if report.cancelled {
                 store::jobs::RateVerdict::NotJudged
@@ -9646,8 +9684,16 @@ impl Supervisor {
                 rate_alarms.join(", ")
             )
         };
+        // Issue 419: the shrink is a number in the summary, so a morning walk that
+        // touched one package instead of sixty reads as the designed case, not as
+        // a fetch that missed fifty-nine.
+        let clean_note = if clean_skipped > 0 {
+            format!("; skipped {clean_skipped} clean package(s) at their current fetch (issue 419)")
+        } else {
+            String::new()
+        };
         Ok(format!(
-            "{} members → {} notices ({} parsed, {} quarantined, {} unrecognised, {} dup{}){}{}",
+            "{} members → {} notices ({} parsed, {} quarantined, {} unrecognised, {} dup{}){}{}{}",
             total.members,
             total.notices,
             total.parsed,
@@ -9656,7 +9702,8 @@ impl Supervisor {
             total.duplicates,
             identity,
             stopped,
-            rate_alarm
+            rate_alarm,
+            clean_note
         ))
     }
 
