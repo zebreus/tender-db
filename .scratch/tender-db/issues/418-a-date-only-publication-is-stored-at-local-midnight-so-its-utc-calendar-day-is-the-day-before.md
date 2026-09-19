@@ -1,6 +1,6 @@
 # 418 — a date-only publication is stored at its LOCAL midnight, so every UTC day boundary in the corpus (bounds, `/v1/sql` day and year grouping, the sort column) puts it on the day before
 
-Status: ready-for-agent — **unit 1 BUILT, gated (127/127) and DEPLOYED 2026-09-19 01:18 UTC at `ced082d`** (see the foot): a date-only publication/dispatch instant anchors at its civil day's UTC midnight at the resolver, the renderer prints the UTC date, and `repair-notice-instants` streams the standing rows' shift as a mechanical `shifted` class (unit 2's notice side). New ingests are right from the 07:35 UTC tick (owed read). **Unit 2b BUILT, gated (128/128) and DEPLOYED 2026-09-19 02:12 UTC at `507ca83`** (see the foot): `repair-version-instants` makes every version say what its repaired notice says and re-derives the head column, following only notices that carry the pair, so it cannot run ahead of the notice repair. **Open: the two gated wet runs** — `repair-notice-instants` wet, then `repair-version-instants` dry → wet, back to back (Lennart's go-ahead, dry first); until then the standing rows sit at local midnight and the Verify block reads its open state. **Unit 3 (date-only DEADLINES) is CLOSED as measured-moot 2026-09-19** — see the foot: submission deadlines are timed on 100 % of the eForms/DÖE rows in two 50k-notice windows, and the only date-only ones are legacy r208 rows at offset zero (1,249 of 21,227 in a 50k window), which already sit at their civil day's UTC midnight; no anchoring change is owed on that axis. Was: filed 2026-09-18 23:5x UTC by the hourly audit (step 3) from issue 367 unit 4's candidate, after a bounded measurement showed the class is not a corner: essentially EVERY publication date in the eForms/DÖE era is date-only with a positive offset (three windows below). The decision is TAKEN here — option (i), civil UTC midnight for the publication/dispatch axis — and the units are cut.
+Status: ready-for-agent — **DRY PASSES RUN 2026-09-19 03:49–03:59 UTC (queue ids 1488/1489, see the foot): 2,949,915 `shifted` + 11,563,185 `unstamped` parsed notices, 0 planned, 8 min; the version pass counts all 14,513,100 versions as `notice_unstamped` in 34 s, as designed. The wet campaign stays gated on Lennart's go-ahead.** **Unit 1 BUILT, gated (127/127) and DEPLOYED 2026-09-19 01:18 UTC at `ced082d`** (see the foot): a date-only publication/dispatch instant anchors at its civil day's UTC midnight at the resolver, the renderer prints the UTC date, and `repair-notice-instants` streams the standing rows' shift as a mechanical `shifted` class (unit 2's notice side). New ingests are right from the 07:35 UTC tick (owed read). **Unit 2b BUILT, gated (128/128) and DEPLOYED 2026-09-19 02:12 UTC at `507ca83`** (see the foot): `repair-version-instants` makes every version say what its repaired notice says and re-derives the head column, following only notices that carry the pair, so it cannot run ahead of the notice repair. **Open: the two gated wet runs** — `repair-notice-instants` wet, then `repair-version-instants` dry → wet, back to back (Lennart's go-ahead, dry first); until then the standing rows sit at local midnight and the Verify block reads its open state. **Unit 3 (date-only DEADLINES) is CLOSED as measured-moot 2026-09-19** — see the foot: submission deadlines are timed on 100 % of the eForms/DÖE rows in two 50k-notice windows, and the only date-only ones are legacy r208 rows at offset zero (1,249 of 21,227 in a 50k window), which already sit at their civil day's UTC midnight; no anchoring change is owed on that axis. Was: filed 2026-09-18 23:5x UTC by the hourly audit (step 3) from issue 367 unit 4's candidate, after a bounded measurement showed the class is not a corner: essentially EVERY publication date in the eForms/DÖE era is date-only with a positive offset (three windows below). The decision is TAKEN here — option (i), civil UTC midnight for the publication/dispatch axis — and the units are cut.
 Kind: defect (instants — the publication/dispatch axis's stored instant; the bare-date bound, `/v1/sql` day/year grouping and `tenders.current_published_at` all read the UTC day, which is the civil day minus one for a positive offset)
 Relates to: 367 (unit 3 rendered the civil DATE correctly by carrying the offset/precision pair; this is the instant beneath it, named there as the candidate unit 4 and re-scoped twice — this issue is that unit), 216 (`sort=published_at` and the published bounds ride `current_published_at`), 50 / 239 (`/v1/sql`, whose `strftime('%Y', published_at, 'unixepoch')` idiom is documented in `EPOCH_NOTE`), 386 (FTS: `uk_zone` supplies +00/+01 to date-only values, the same shape), ADR-0013 D3, CONTEXT.md:139 ("timestamps as UTC + original offset")
 Blocked by: nothing
@@ -136,7 +136,7 @@ stored instant that is the local-midnight form of the resolver's civil one (`to 
 60`, `has_time = false`) as `shifted`: mechanical like `unstamped` (the civil day is unchanged,
 only its anchor moves), streamed with the pair as the walk goes, never planned, counted on its own
 line. The streaming statement writes all six instant columns, guarded per row on the instants it
-was read with. A dry run on the corpus will report ~13M `shifted` (the eForms/DÖE era) beside the
+was read with. A dry run on the corpus will report ~13M `shifted` (the eForms/DÖE era; MEASURED 2,949,915 on 2026-09-19 — the prediction counted eras that publish no offset, see the dry passes at the foot) beside the
 `unstamped` legacy rows and a plan of ~0. **Unit 2b, before any wet run:** the version side —
 `tender_versions.published_at` / `dispatched_at` follow their notice by `caused_by_notice_id`,
 then `tenders.current_published_at` re-derived from the head — is not built yet; a wet notice-side
@@ -175,7 +175,7 @@ the VERSION's instant with the NOTICE's pair, so a stamped notice beside an unmo
 a date-only publication a day early. **Campaign order, both gated (Lennart's go-ahead, dry first):
 `repair-notice-instants` wet → `repair-version-instants` dry → wet, back to back.**
 
-**No plan, two passes.** The moved set is the whole eForms/DÖE era (~13M versions, the dry run
+**No plan, two passes.** The moved set is the whole eForms/DÖE era (~13M versions — measured 2026-09-19: the shifted notices are 2,949,915, so expect that order of versions; the dry run
 will say); a per-row plan would not fit and holds nothing for a reviewer — every write is "the
 version says what its notice says". So the dry run counts; the wet run counts again, aborts if
 the count is outside the notice repair's max(2 %, 5) tolerance of the reviewed dry figure, then
@@ -219,3 +219,57 @@ a date. Closed as measured, not decided: the measurement says the decision has n
 
 What this leaves on 418 is exactly the campaign: the two gated wet runs, then the extent
 re-measured and the Verify block turning.
+
+## Dry passes RUN 2026-09-19 03:49–03:59 UTC — the campaign is sized, nothing written
+
+Both dry runs at the foot's campaign order, queue idle, well before the 07:35 tick (cite the QUEUE
+id — `job_id` on a `GET /admin/jobs` recent row; the log rows are 2397/2398).
+
+**`repair-notice-instants` DRY, queue id 1488** — 03:49:25 → 03:57:38, **8 min 13 s** for the whole
+corpus. Stored as report `notice-instant-repair`, `computed_at` 1789790258:
+
+| class | notices | what the wet run does with them |
+|---|---:|---|
+| walked (`parse_state = parsed`) | 14,513,100 | |
+| `unstamped` — instants agree, pair missing (367 unit 3) | 11,563,185 | writes the four pair columns, instants untouched |
+| `shifted` — date-only instant at local midnight (418) | 2,949,915 | writes all six columns: civil UTC midnight + pair |
+| `agree` — instants agree AND pair present | 0 | nothing (none is stamped yet) |
+| planned (`epoch_published` / `null_published` / `resolver_silent`) | 0 | no plan, no gate to pass |
+
+So the wet run is a **14.5M-row mechanical UPDATE campaign**, streamed as walked, guarded per row
+(`WHERE id = ? AND published_at IS ? AND dispatched_at IS ?`), no plan and therefore no
+`expect_rows` tolerance to review. Its wall time is not the dry run's: the dry pass reads the parse
+layer and writes nothing, the wet pass adds one guarded UPDATE per row (367's job 799 wrote 226k rows
+at a rate this record does not hold — it will be read off the wet run's own summary).
+
+**The ~13M prediction was wrong by 4.4×, and the reason is worth keeping.** `shifted` requires
+`has_time = false` AND a non-zero offset. Only the eForms era publishes a date with the publisher's
+offset: the DQ report's era table (section 1, versions) has eforms-de 457,683 + eforms-sdk 2,359,403 =
+2,817,086, which is the shifted class to within the notice/version difference. TED_EXPORT r2.0.9
+(4,490,549), r2.0.8 (2,699,213), the text era (3,786,955) and the DÖE sdk-0.1 island (676,287, literal
+`Z`) publish a bare date, offset zero, so their local midnight IS the civil UTC midnight and they are
+`unstamped`, not `shifted`. The moved set is the eForms era, ~2.95M notices, and the version pass
+should count `moved` of that order once the notices carry their pair.
+
+**`repair-version-instants` DRY, queue id 1489** — 03:58:56 → 03:59:30, **34 s** (bands of 25,000
+tender ids, notices by PK seek). Stored as report `version-instant-repair`, `computed_at` 1789790370:
+`walked` 14,513,100, `notice_unstamped` 14,513,100, `agree` 0, `moved` 0, `heads_recomputed` 0. That
+is the designed answer before the notice repair: the job follows only notices that carry the pair
+(`published_offset IS NOT NULL`), so it cannot move a version ahead of its notice, and its summary
+says so in words ("run repair-notice-instants (wet) first, then this again"). The timing is the useful
+number: a full count pass is half a minute, so the wet run's first (count) pass and its gate on the
+reviewed dry `moved` figure cost nothing to repeat.
+
+**What the campaign now looks like, in order, all gated on Lennart's go-ahead:**
+
+1. `repair-notice-instants` **wet** — 14.5M rows, every one mechanical; the per-row guard makes it
+   restartable and the daily tick may run beside it (the tick's new notices resolve with the pair
+   already, and a row the tick rewrites fails the guard and is simply skipped, `skipped_moved`).
+2. `repair-version-instants` **dry** — expect `moved` ≈ the versions behind the 2,949,915 shifted
+   notices, the rest `agree`; `notice_unstamped` 0.
+3. `repair-version-instants` **wet** — counts again, gates on the stored dry `moved` within
+   max(2 %, 5), writes in 20k slices, re-derives `current_published_at` per touched tender.
+
+After 1 the Verify block above still reads its open state (the versions serve the window); after 3
+it reads done. 7954578 (367's probe) stops inverting after step 1 alone — the tender's own
+`published_at` is rendered from the notice pair.
