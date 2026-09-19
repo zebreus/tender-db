@@ -23,14 +23,15 @@ fn fields() -> Vec<&'static str> {
     PUBLICATION.iter().chain(DISPATCH).copied().collect()
 }
 
-/// A stand-in with `ingest::project::notice_instants`' exact contract: the first
+/// A stand-in with `ingest::project::notice_stamps`' exact contract: the first
 /// publication field the parse carries, falling back to dispatch; `None` on
-/// either axis when the parse states nothing.
+/// either axis when the parse states nothing; a date-only value anchored at its
+/// civil day's UTC midnight (issue 418 — the stored value is local midnight).
 fn resolve(parsed: &Parsed) -> (Option<Stamp>, Option<Stamp>) {
     let first = |field: &str| {
         parsed.values.iter().find(|v| v.field_id == field).and_then(|v| match &v.value {
             NoticeValue::Date { utc_seconds, offset_minutes, has_time } => Some(Stamp {
-                utc_seconds: *utc_seconds,
+                utc_seconds: if *has_time { *utc_seconds } else { *utc_seconds + *offset_minutes * 60 },
                 offset_minutes: *offset_minutes,
                 has_time: *has_time,
             }),
@@ -89,19 +90,33 @@ async fn notice(
     .unwrap();
 }
 
+/// A TIMED date at +01:00 — exact, so the resolver hands it back unchanged.
 async fn date(conn: &turso::Connection, notice_id: i64, field: &str, utc: i64) {
     conn.execute(
         "INSERT INTO notice_dates (notice_id, section_id, field_id, ordinal,
                                    utc_seconds, offset_minutes, has_time)
-         VALUES (?, 'PROCEDURE', ?, 0, ?, 60, 0)",
+         VALUES (?, 'PROCEDURE', ?, 0, ?, 60, 1)",
         (Value::Integer(notice_id), Value::Text(field.into()), Value::Integer(utc)),
     )
     .await
     .unwrap();
 }
 
+/// A DATE-ONLY value at +01:00, stored as the parse layer stores it: the local
+/// midnight in UTC. The resolver anchors it one hour later, at the civil midnight.
+async fn date_only(conn: &turso::Connection, notice_id: i64, field: &str, local_midnight_utc: i64) {
+    conn.execute(
+        "INSERT INTO notice_dates (notice_id, section_id, field_id, ordinal,
+                                   utc_seconds, offset_minutes, has_time)
+         VALUES (?, 'PROCEDURE', ?, 0, ?, 60, 0)",
+        (Value::Integer(notice_id), Value::Text(field.into()), Value::Integer(local_midnight_utc)),
+    )
+    .await
+    .unwrap();
+}
+
 /// The same row WITH the unit-3 pair the `date` helper's values carry (+01:00,
-/// date only) — a row stamped since the pair's columns existed.
+/// timed) — a row stamped since the pair's columns existed.
 async fn stamped_notice(
     conn: &turso::Connection,
     id: i64,
@@ -112,9 +127,9 @@ async fn stamped_notice(
     notice(conn, id, profile, "parsed", published, dispatched).await;
     conn.execute(
         "UPDATE notices SET published_offset = CASE WHEN published_at IS NULL THEN NULL ELSE 60 END,
-                            published_has_time = CASE WHEN published_at IS NULL THEN NULL ELSE 0 END,
+                            published_has_time = CASE WHEN published_at IS NULL THEN NULL ELSE 1 END,
                             dispatched_offset = CASE WHEN dispatched_at IS NULL THEN NULL ELSE 60 END,
-                            dispatched_has_time = CASE WHEN dispatched_at IS NULL THEN NULL ELSE 0 END
+                            dispatched_has_time = CASE WHEN dispatched_at IS NULL THEN NULL ELSE 1 END
           WHERE id = ?",
         (Value::Integer(id),),
     )
@@ -190,7 +205,7 @@ async fn the_epoch_stamp_is_replaced_by_the_date_the_parse_states() {
     assert_eq!(p.by_profile, vec![("eforms:eforms-de-1.1".to_owned(), 1)]);
     let f = &p.plan[0];
     assert_eq!((f.from_published, f.from_dispatched), (Some(0), None));
-    let at = |utc| Some(Stamp { utc_seconds: utc, offset_minutes: 60, has_time: false });
+    let at = |utc| Some(Stamp { utc_seconds: utc, offset_minutes: 60, has_time: true });
     assert_eq!((f.to_published, f.to_dispatched), (at(1_704_841_200), at(1_704_841_285)));
     assert_eq!(p.applied, 0, "a dry run writes nothing");
     assert_eq!(stored(&conn, 1).await, (Some(0), None));
@@ -201,7 +216,7 @@ async fn the_epoch_stamp_is_replaced_by_the_date_the_parse_states() {
     // …and the pair rides along with the instants (issue 367 unit 3).
     assert_eq!(
         stored_pairs(&conn, 1).await,
-        ((Some(1_704_841_200), Some((60, false))), (Some(1_704_841_285), Some((60, false))))
+        ((Some(1_704_841_200), Some((60, true))), (Some(1_704_841_285), Some((60, true))))
     );
 
     // Idempotent: the repaired row now agrees with the resolver.
@@ -330,9 +345,9 @@ async fn a_row_with_the_right_instants_and_no_pair_is_stamped_without_a_plan() {
     assert_eq!((w.stamped, w.applied, w.rows), (2, 0, 0));
     assert_eq!(
         stored_pairs(&conn, 1).await,
-        ((Some(200), Some((60, false))), (Some(100), Some((60, false))))
+        ((Some(200), Some((60, true))), (Some(100), Some((60, true))))
     );
-    assert_eq!(stored_pairs(&conn, 2).await, ((Some(300), Some((60, false))), (None, None)));
+    assert_eq!(stored_pairs(&conn, 2).await, ((Some(300), Some((60, true))), (None, None)));
 
     let again = plan(&db).await;
     assert_eq!((again.agree, again.unstamped, again.rows), (2, 0, 0));
@@ -357,7 +372,7 @@ async fn a_row_whose_instant_moved_is_planned_not_stamped() {
     assert_eq!(stored_pairs(&conn, 1).await, ((Some(250), None), (None, None)), "a dry run writes nothing");
     let w = db.repair_notice_instants(&fields(), resolve, false, Some(1), &never).await.unwrap();
     assert_eq!((w.unstamped, w.stamped, w.rows, w.applied), (0, 0, 1, 1));
-    assert_eq!(stored_pairs(&conn, 1).await, ((Some(200), Some((60, false))), (None, None)));
+    assert_eq!(stored_pairs(&conn, 1).await, ((Some(200), Some((60, true))), (None, None)));
 }
 
 /// The write path stores the pair the processor resolved (issue 367 unit 3):
@@ -391,4 +406,33 @@ async fn a_recorded_notice_keeps_the_offset_and_precision_of_its_instants() {
         stored_pairs(&conn, id).await,
         ((Some(1_704_841_200), Some((60, false))), (Some(1_704_841_285), Some((60, true))))
     );
+}
+
+/// Issue 418: a date-only instant stored at the publisher's local midnight —
+/// every eForms/DÖE row stamped before 2026-09-19 — moves to its civil day's UTC
+/// midnight as a MECHANICAL class: counted as `shifted` on the dry run, written
+/// as walked on the wet run, never planned, and the next walk agrees. Specimen
+/// 26244735's values: 2024-01-10+01:00 stored as 1_704_841_200 (09 Jan 23:00Z),
+/// anchored at 1_704_844_800 (10 Jan 00:00Z); its timed dispatch is untouched.
+#[tokio::test]
+async fn a_local_midnight_date_only_instant_is_shifted_to_its_civil_midnight_without_a_plan() {
+    let (db, conn) = open("test-instants-shifted").await;
+    notice(&conn, 1, "eforms:eforms-de-1.1", "parsed", Some(1_704_841_200), Some(1_704_841_285)).await;
+    date_only(&conn, 1, "DE1-RequestedPublicationDate", 1_704_841_200).await;
+    date(&conn, 1, "DE1-IssueDate", 1_704_841_285).await;
+
+    let p = plan(&db).await;
+    assert_eq!((p.walked, p.agree, p.unstamped, p.shifted, p.rows), (1, 0, 0, 1, 0));
+    assert!(p.plan.is_empty(), "the shift is not a plan item");
+    assert_eq!(stored(&conn, 1).await, (Some(1_704_841_200), Some(1_704_841_285)), "a dry run writes nothing");
+
+    let w = db.repair_notice_instants(&fields(), resolve, false, Some(0), &never).await.unwrap();
+    assert_eq!((w.shifted, w.stamped, w.rows), (1, 1, 0));
+    assert_eq!(
+        stored_pairs(&conn, 1).await,
+        ((Some(1_704_844_800), Some((60, false))), (Some(1_704_841_285), Some((60, true))))
+    );
+
+    let again = plan(&db).await;
+    assert_eq!((again.agree, again.shifted, again.unstamped, again.rows), (1, 0, 0, 0));
 }

@@ -3935,9 +3935,10 @@ pub struct NoticeInstantFix {
     pub to_dispatched: Option<Stamp>,
 }
 
-/// A row whose instants agree with the resolver and only wants its pair
-/// (issue 367 unit 3): `(id, published_at, dispatched_at, published, dispatched)`
-/// — the two UTC values guard the write, the two stamps are what it writes.
+/// A row the streaming arm writes without a plan — `unstamped` (issue 367 unit
+/// 3) or `shifted` (issue 418): `(id, published_at, dispatched_at, published,
+/// dispatched)` — the two stored UTC values guard the write, the two stamps are
+/// what it writes.
 type UnstampedRow = (i64, Option<i64>, Option<i64>, Option<Stamp>, Option<Stamp>);
 
 /// Issue 367: what re-deriving `notices.published_at` / `dispatched_at` from the
@@ -3954,7 +3955,12 @@ pub struct NoticeInstantRepairReport {
     /// never planned: the instant itself does not change, so there is nothing
     /// for a reviewer to weigh.
     pub unstamped: u64,
-    /// The unstamped rows a wet run stamped.
+    /// …whose stored date-only instant is the local-midnight form of the
+    /// resolver's civil-midnight one (issue 418) — the whole eForms/DÖE era
+    /// stamped before 2026-09-19. Mechanical like `unstamped` (the civil day is
+    /// unchanged, only its anchor moves), so streamed, never planned.
+    pub shifted: u64,
+    /// The `unstamped` and `shifted` rows a wet run wrote.
     pub stamped: u64,
     /// Planned rewrites.
     pub rows: u64,
@@ -15284,13 +15290,32 @@ impl Db {
                     resolve(&Parsed { sections: Vec::new(), values });
                 let to_utc =
                     (to_published.map(|s| s.utc_seconds), to_dispatched.map(|s| s.utc_seconds));
-                if to_utc == (from_published, from_dispatched) {
-                    if (to_published, to_dispatched) == (from_pub, from_disp) {
+                // A stored axis is MECHANICALLY reconcilable when it equals the
+                // resolver's instant (issue 367 unit 3: only the pair is missing
+                // or stale) or is the local-midnight form of the resolver's
+                // civil-midnight date-only instant (issue 418: `to = from +
+                // offset × 60`, `has_time = false`). `Some(shifted)` says which;
+                // `None` is a real disagreement for the plan below.
+                let mechanical = |from: Option<i64>, to: Option<Stamp>| match (from, to) {
+                    (None, None) => Some(false),
+                    (Some(f), Some(t)) if f == t.utc_seconds => Some(false),
+                    (Some(f), Some(t)) if !t.has_time && t.utc_seconds == f + t.offset_minutes * 60 => {
+                        Some(true)
+                    }
+                    _ => None,
+                };
+                if let (Some(shift_p), Some(shift_d)) =
+                    (mechanical(from_published, to_published), mechanical(from_dispatched, to_dispatched))
+                {
+                    if !shift_p && !shift_d && (to_published, to_dispatched) == (from_pub, from_disp) {
                         report.agree += 1;
                     } else {
-                        // Issue 367 unit 3: the instants are right, the pair is
-                        // not there (or not this) — stamped below, never planned.
-                        report.unstamped += 1;
+                        // Streamed below, never planned: nothing a reviewer could weigh.
+                        if shift_p || shift_d {
+                            report.shifted += 1;
+                        } else {
+                            report.unstamped += 1;
+                        }
                         unstamped.push((id, from_published, from_dispatched, to_published, to_dispatched));
                     }
                     continue;
@@ -15403,11 +15428,13 @@ impl Db {
         Ok(report)
     }
 
-    /// Issue 367 unit 3's streaming arm of [`Self::repair_notice_instants`]:
-    /// write the offset/precision pair onto rows whose instants already agree
-    /// with the resolver. Guarded per row on the instants it was read with, so
-    /// a re-parse in between keeps its own stamp; committed in slices with a
-    /// checkpoint between them, like the plan. Returns the rows stamped.
+    /// The streaming arm of [`Self::repair_notice_instants`] for the mechanical
+    /// classes — `unstamped` (issue 367 unit 3: the pair is missing) and
+    /// `shifted` (issue 418: the date-only instant moves to its civil midnight).
+    /// Writes the six instant columns, guarded per row on the instants it was
+    /// read with, so a re-parse in between keeps its own stamp; committed in
+    /// slices with a checkpoint between them, like the plan. Returns the rows
+    /// written.
     async fn stamp_instant_pairs(
         &self,
         rows: &[UnstampedRow],
@@ -15426,10 +15453,13 @@ impl Db {
                 for (id, published_at, dispatched_at, published, dispatched) in slice {
                     n += conn
                         .execute(
-                            "UPDATE notices SET published_offset = ?, published_has_time = ?, \
+                            "UPDATE notices SET published_at = ?, dispatched_at = ?, \
+                                 published_offset = ?, published_has_time = ?, \
                                  dispatched_offset = ?, dispatched_has_time = ? \
                               WHERE id = ? AND published_at IS ? AND dispatched_at IS ?",
                             vec![
+                                stamp_utc(*published),
+                                stamp_utc(*dispatched),
                                 stamp_offset(*published),
                                 stamp_has_time(*published),
                                 stamp_offset(*dispatched),

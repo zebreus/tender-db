@@ -743,11 +743,44 @@ mod tests {
             }],
         });
         let n = resolved_notice("doe", 1, 1_784_490_077, record(), &parse);
+        // Issue 418: the parse layer's local midnight (09 Jan 23:00Z for
+        // 2024-01-10+01:00) anchors at the civil day's UTC midnight, offset kept.
         assert_eq!(
             n.published_at,
-            Some(store::Stamp { utc_seconds: 1_704_841_200, offset_minutes: 60, has_time: false })
+            Some(store::Stamp { utc_seconds: 1_704_844_800, offset_minutes: 60, has_time: false })
         );
         assert_eq!(n.dispatched_at, None, "no dispatch field, no invented one");
+    }
+
+    /// Issue 418: the civil-midnight rule on every offset sign, and not on a
+    /// timed instant. 2024-01-10 as a date: +02:00 stores 09 Jan 22:00Z, +00:00
+    /// stores 10 Jan 00:00Z, −05:00 stores 10 Jan 05:00Z — all three anchor at
+    /// 10 Jan 00:00Z. A timed 10 Jan 00:00:00+02:00 is 09 Jan 22:00Z and stays.
+    #[test]
+    fn a_date_only_publication_anchors_at_its_civil_midnight_on_every_offset() {
+        let stamp = |utc: i64, offset: i64, has_time: bool| {
+            let parse = store::Parse::Parsed(Parsed {
+                sections: vec![],
+                values: vec![ValueRow {
+                    section_id: "PROCEDURE".into(),
+                    field_id: "OPP-012-notice".into(),
+                    ordinal: 0,
+                    value: NoticeValue::Date { utc_seconds: utc, offset_minutes: offset, has_time },
+                }],
+            });
+            resolved_notice("ted", 1, 1_784_490_077, record(), &parse).published_at.unwrap()
+        };
+        const CIVIL_MIDNIGHT: i64 = 1_704_844_800;
+        for (local_midnight, offset) in [
+            (CIVIL_MIDNIGHT - 2 * 3600, 120),
+            (CIVIL_MIDNIGHT, 0),
+            (CIVIL_MIDNIGHT + 5 * 3600, -300),
+        ] {
+            let s = stamp(local_midnight, offset, false);
+            assert_eq!((s.utc_seconds, s.offset_minutes, s.has_time), (CIVIL_MIDNIGHT, offset, false));
+        }
+        let timed = stamp(CIVIL_MIDNIGHT - 2 * 3600, 120, true);
+        assert_eq!(timed.utc_seconds, CIVIL_MIDNIGHT - 2 * 3600, "a timed instant is exact and untouched");
     }
 
     /// Issue 367 (a): the processor resolves from the RAW parse, whose ids are
@@ -763,7 +796,10 @@ mod tests {
                 date("DE1-RequestedPublicationDate", 1_704_841_200),
                 date("DE1-IssueDate", 1_704_841_285),
             ]),
-            (Some(1_704_841_200), Some(1_704_841_285)),
+            // The helper's values are date-only at +01:00, so each anchors one
+            // hour later, at its civil midnight (issue 418) — still the dates the
+            // payload states, never the epoch.
+            (Some(1_704_844_800), Some(1_704_844_885)),
             "2024-01-10 +01:00 — the dates the payload states, not the epoch"
         );
     }

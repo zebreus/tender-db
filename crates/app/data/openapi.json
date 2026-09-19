@@ -902,7 +902,7 @@
           "title": { "type": "string", "nullable": true },
           "cpv": { "type": "array", "items": { "type": "string" } },
           "country": { "type": "array", "items": { "type": "string" }, "description": "NUTS place codes." },
-          "published_at": { "type": "string", "nullable": true, "description": "ISO 8601 in the offset the source published; a source that published a date only yields a date only (`2026-09-05`). A row stamped before that pair was stored (issue 367 unit 3) renders the UTC instant until `repair-notice-instants` fills it." },
+          "published_at": { "type": "string", "nullable": true, "description": "ISO 8601 in the offset the source published; a source that published a date only yields a date only (`2026-09-05`), and its instant is that civil day's UTC midnight, so a bare-date bound finds it (issue 418). A row stamped before that pair was stored (issue 367 unit 3) renders the UTC instant until `repair-notice-instants` fills it." },
           "kind": { "type": "string", "description": "What this row IS: `procedure` for a procurement, or a non-procedure publication kind." },
           "version": { "type": "integer", "description": "The current version's sequence number in this Tender's chain (ADR-0001)." },
           "publication_id": { "type": "string", "nullable": true, "description": "Publication number of the notice that caused the current version, e.g. `00710890-2023`." },

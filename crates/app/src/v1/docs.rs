@@ -694,6 +694,12 @@ rates and the quarantine resolution ledger.</p>
   deadline the newest notice is silent about is carried forward from an earlier
   one. After an award notice, <code>deadline &lt; published_at</code> is the
   EXPECTED shape, not noise and not data loss (issue 370).</li>
+  <li>A date-only <code>published_at</code> / <code>dispatched_at</code> is stored at its
+  <strong>civil day's UTC midnight</strong> (issue 418), so <code>published_after=YYYY-MM-DD</code>
+  finds it and a <code>/v1/sql</code> day or year grouping names the day the source stated. The
+  parse layer keeps every date-only value at the publisher's local midnight (that is what
+  <code>dates</code> on the detail shows), and rows stamped before 2026-09-19 sit there too &mdash;
+  the day before, in UTC &mdash; until <code>repair-notice-instants</code> moves them.</li>
   <li>A Lot's <code>submission_deadline</code> is <strong>the lot's own if it published
   one, otherwise the procedure's</strong> (issue 389). The legacy form generations
   publish ONE procedure-level deadline for the whole notice &mdash; the r209 era's

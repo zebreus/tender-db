@@ -6251,6 +6251,7 @@ impl Supervisor {
                         "profile": profile, "rows": rows,
                     })).collect::<Vec<_>>(),
                     "unstamped": r.unstamped,
+                    "shifted": r.shifted,
                     "stamped": r.stamped,
                     "applied": r.applied,
                     "skipped_moved": r.skipped_moved,
@@ -6286,7 +6287,9 @@ impl Supervisor {
                 Ok(format!(
                     "repair-notice-instants (issue 367, {}): {} parsed notice(s) walked, {} \
                      already agree with the resolver, {} agree on the instants but lack the \
-                     offset/precision pair (unit 3 — stamped as walked, no plan needed{}). \
+                     offset/precision pair (unit 3) and {} carry a date-only instant at local \
+                     midnight that moves to its civil midnight (issue 418) — both mechanical, \
+                     written as walked, no plan needed{}. \
                      {} planned — {} stamped the epoch (1970-01-01, the flattened not-found), \
                      {} NULL while the parse states a date, {} whose parse states NO date and \
                      whose stored value is therefore REMOVED. By profile: [{}]. The versions \
@@ -6296,7 +6299,8 @@ impl Supervisor {
                     r.walked,
                     r.agree,
                     r.unstamped,
-                    if dry_run { String::new() } else { format!("; {} stamped", r.stamped) },
+                    r.shifted,
+                    if dry_run { String::new() } else { format!("; {} written", r.stamped) },
                     r.rows,
                     r.epoch_published,
                     r.null_published,

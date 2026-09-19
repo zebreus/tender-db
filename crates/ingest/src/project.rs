@@ -6471,7 +6471,26 @@ pub fn notice_stamps(parsed: &Parsed) -> (Option<store::Stamp>, Option<store::St
     let dispatched = DISPATCH_DATE_FIELDS.iter().find_map(|f| first_stamp(parsed, f));
     let published =
         PUBLICATION_DATE_FIELDS.iter().find_map(|f| first_stamp(parsed, f)).or(dispatched);
-    (published, dispatched)
+    (published.map(civil_day), dispatched.map(civil_day))
+}
+
+/// Issue 418: a date-only publication or dispatch instant anchors at its civil
+/// day's UTC MIDNIGHT. The parse layer stores every date-only value as the
+/// publisher's local midnight re-expressed in UTC (`local midnight − offset`,
+/// the faithful instant for that midnight); for a calendar day that puts
+/// `2026-09-05+02:00` at 2026-09-04T22:00:00Z, and every UTC day boundary — the
+/// bare-date bound, `/v1/sql`'s `strftime`, the `sort=published_at` column —
+/// read it a day early, on ~92 % of the eForms/DÖE era. Adding the offset back
+/// is exactly the civil day's 00:00Z; the offset stays beside it for the
+/// renderer. Timed instants are exact and untouched, and so is the parse layer:
+/// `tender_version_dates` keeps what the source said, and a date-only DEADLINE
+/// is a different question (418 unit 3).
+fn civil_day(s: store::Stamp) -> store::Stamp {
+    if s.has_time {
+        s
+    } else {
+        store::Stamp { utc_seconds: s.utc_seconds + s.offset_minutes * 60, ..s }
+    }
 }
 
 fn first_stamp(parsed: &Parsed, field_id: &str) -> Option<store::Stamp> {

@@ -722,7 +722,10 @@ const EPOCH_NOTE: &str = "Unix epoch seconds — NOT ISO (the REST API returns \
     ISO). Format with the FORMAT FIRST and 'unixepoch' after the column: \
     strftime('%Y', published_at, 'unixepoch'). The reversed order returns NULL for \
     every row without erroring — measured on prod, one NULL bucket holding all \
-    7,924,659 Tenders (issue 239).";
+    7,924,659 Tenders (issue 239). A date-only publication is stored at its civil \
+    day's UTC midnight (issue 418), so grouping by day or year names the day the \
+    source stated; rows stamped before 2026-09-19 sit at the publisher's local \
+    midnight — the day before, in UTC — until repair-notice-instants moves them.";
 
 /// One-line descriptions for the tables/views worth explaining in
 /// `/v1/sql/schema` (issue 50); the rest are self-describing.

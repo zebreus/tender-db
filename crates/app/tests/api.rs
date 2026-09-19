@@ -1116,9 +1116,24 @@ async fn a_date_only_publication_is_served_as_a_date_and_never_before_its_dispat
     assert_eq!(items(&notices)[0]["published_at"], "2026-07-16");
     assert_eq!(items(&notices)[0]["dispatched_at"], "2026-07-16T16:21:42+02:00");
 
+    // Issue 418: the instant beneath the date is the civil day's UTC midnight,
+    // so a bare-date window finds the tender on the day the API serves for it —
+    // and not on the day before, where its local midnight used to put it.
+    assert_eq!(
+        items(&server.get("/v1/tenders?published_after=2026-07-16&published_before=2026-07-17").await).len(),
+        1,
+        "published on the 16th, found by the 16th"
+    );
+    assert!(
+        items(&server.get("/v1/tenders?published_after=2026-07-15&published_before=2026-07-16").await).is_empty(),
+        "and not by the 15th"
+    );
+
     // The standing corpus until `repair-notice-instants` runs: no pair stored.
-    // The rendering falls back to the UTC instant — the pre-unit-3 shape, with
-    // its inversion — never to a civil date computed from an offset of zero.
+    // The rendering falls back to the UTC instant — never to a civil date
+    // computed from an offset of zero. (The instant itself is the civil
+    // midnight for a row stamped since issue 418; older rows sit at local
+    // midnight, the pre-418 shape, until the same repair moves them.)
     let raw = store::turso::Builder::new_local(&server.path).build().await.expect("raw");
     raw.connect()
         .expect("connect")
@@ -1130,10 +1145,10 @@ async fn a_date_only_publication_is_served_as_a_date_and_never_before_its_dispat
         .await
         .expect("unstamp");
     let page = server.get("/v1/tenders").await;
-    assert_eq!(items(&page)[0]["published_at"], "2026-07-15T22:00:00Z");
+    assert_eq!(items(&page)[0]["published_at"], "2026-07-16T00:00:00Z");
     assert_eq!(items(&page)[0]["dispatched_at"], "2026-07-16T14:21:42Z");
     let notices = server.get("/v1/notices").await;
-    assert_eq!(items(&notices)[0]["published_at"], "2026-07-15T22:00:00Z");
+    assert_eq!(items(&notices)[0]["published_at"], "2026-07-16T00:00:00Z");
 }
 
 /// Issue 216: the published-ordered Tender list — `sort=published_at` serves the

@@ -47,6 +47,7 @@ pub fn stamp(s: Option<Stamp>) -> Value {
 /// before that pair existed (`repair-notice-instants` fills those in).
 fn published(stored: Option<Stamp>, utc_seconds: i64) -> Value {
     match stored {
+        Some(s) if !s.has_time => civil_date(s.utc_seconds),
         Some(s) => stamp(Some(s)),
         None => instant(utc_seconds),
     }
@@ -54,9 +55,22 @@ fn published(stored: Option<Stamp>, utc_seconds: i64) -> Value {
 
 fn published_opt(stored: Option<Stamp>, utc_seconds: Option<i64>) -> Value {
     match (stored, utc_seconds) {
+        (Some(s), _) if !s.has_time => civil_date(s.utc_seconds),
         (Some(s), _) => stamp(Some(s)),
         (None, Some(utc)) => instant(utc),
         (None, None) => Value::Null,
+    }
+}
+
+/// A date-only publication or dispatch instant is its civil day's UTC midnight
+/// (issue 418; `ingest::project::civil_day`), so the date to print is the UTC
+/// date — not the local one `stamp` would derive, which for a negative offset
+/// is the day before. Deadlines keep `stamp`: their date-only values still sit
+/// at local midnight (418 unit 3).
+fn civil_date(utc_seconds: i64) -> Value {
+    match DateTime::from_timestamp(utc_seconds, 0) {
+        Some(dt) => json!(dt.date_naive().to_string()),
+        None => Value::Null,
     }
 }
 
