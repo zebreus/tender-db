@@ -1,6 +1,6 @@
 # 418 — a date-only publication is stored at its LOCAL midnight, so every UTC day boundary in the corpus (bounds, `/v1/sql` day and year grouping, the sort column) puts it on the day before
 
-Status: ready-for-agent — **unit 1 BUILT, gated (127/127) and DEPLOYED 2026-09-19 01:18 UTC at `ced082d`** (see the foot): a date-only publication/dispatch instant anchors at its civil day's UTC midnight at the resolver, the renderer prints the UTC date, and `repair-notice-instants` streams the standing rows' shift as a mechanical `shifted` class (unit 2's notice side). New ingests are right from the 07:35 UTC tick (owed read). **Open: unit 2b** — the version side of the repair (`tender_versions.published_at`/`dispatched_at` and `tenders.current_published_at` follow their notice), which must exist before the wet run so the notice/version agreement holds on the standing rows; then the gated wet run itself (Lennart's go-ahead, dry first). Unit 3 (date-only DEADLINES) stays a named non-goal. Was: filed 2026-09-18 23:5x UTC by the hourly audit (step 3) from issue 367 unit 4's candidate, after a bounded measurement showed the class is not a corner: essentially EVERY publication date in the eForms/DÖE era is date-only with a positive offset (three windows below). The decision is TAKEN here — option (i), civil UTC midnight for the publication/dispatch axis — and the units are cut.
+Status: ready-for-agent — **unit 1 BUILT, gated (127/127) and DEPLOYED 2026-09-19 01:18 UTC at `ced082d`** (see the foot): a date-only publication/dispatch instant anchors at its civil day's UTC midnight at the resolver, the renderer prints the UTC date, and `repair-notice-instants` streams the standing rows' shift as a mechanical `shifted` class (unit 2's notice side). New ingests are right from the 07:35 UTC tick (owed read). **Unit 2b BUILT, gated (128/128) and DEPLOYED 2026-09-19 02:12 UTC at `507ca83`** (see the foot): `repair-version-instants` makes every version say what its repaired notice says and re-derives the head column, following only notices that carry the pair, so it cannot run ahead of the notice repair. **Open: the two gated wet runs** — `repair-notice-instants` wet, then `repair-version-instants` dry → wet, back to back (Lennart's go-ahead, dry first); until then the standing rows sit at local midnight and the Verify block reads its open state. Unit 3 (date-only DEADLINES) stays a named non-goal. Was: filed 2026-09-18 23:5x UTC by the hourly audit (step 3) from issue 367 unit 4's candidate, after a bounded measurement showed the class is not a corner: essentially EVERY publication date in the eForms/DÖE era is date-only with a positive offset (three windows below). The decision is TAKEN here — option (i), civil UTC midnight for the publication/dispatch axis — and the units are cut.
 Kind: defect (instants — the publication/dispatch axis's stored instant; the bare-date bound, `/v1/sql` day/year grouping and `tenders.current_published_at` all read the UTC day, which is the civil day minus one for a positive offset)
 Relates to: 367 (unit 3 rendered the civil DATE correctly by carrying the offset/precision pair; this is the instant beneath it, named there as the candidate unit 4 and re-scoped twice — this issue is that unit), 216 (`sort=published_at` and the published bounds ride `current_published_at`), 50 / 239 (`/v1/sql`, whose `strftime('%Y', published_at, 'unixepoch')` idiom is documented in `EPOCH_NOTE`), 386 (FTS: `uk_zone` supplies +00/+01 to date-only values, the same shape), ADR-0013 D3, CONTEXT.md:139 ("timestamps as UTC + original offset")
 Blocked by: nothing
@@ -157,3 +157,40 @@ unstamped fallback at `2026-07-16T00:00:00Z`. Docs, the OpenAPI `published_at` d
 `/v1/sql` epoch note say the rule and the standing-row caveat.
 
 **Read after the deploy (01:18 UTC):** the Verify block still reads `2026-09-05 0 items` / `2026-09-04 45 items` and 7954578 still serves `2026-09-04T22:00:00Z` — the standing rows are unchanged by design (no pair, local midnight) until the gated repair; the first rows under the rule arrive with the 07:35 UTC daily tick, when a DÖE tender published on the 19th must answer to `published_after=2026-09-19&published_before=2026-09-20` — the owed read.
+
+## Unit 2b BUILT 2026-09-19 (`507ca83`, gate 128/128, deployed 02:12 UTC on an idle queue) — `repair-version-instants`
+
+**What it does.** Walks `tender_versions` in bands of 25,000 tender ids, reads each version's
+causing notice by primary-key seek (500 ids per statement), and makes the version's
+`published_at` / `dispatched_at` say what the notice says, then re-derives
+`tenders.current_published_at` from the head version for every tender it touched — in the same
+transaction, sliced at 20k rows with a checkpoint between slices, each write guarded on the two
+instants the row was read with.
+
+**It follows only a notice that carries the pair** (`published_offset IS NOT NULL`), i.e. one the
+notice repair has been through. A version behind an unrepaired notice is counted as
+`notice_unstamped` — never as agreement — so the job cannot report "done" ahead of the notice
+repair, and its summary says which to run. The order is not cosmetic: the list renderer combines
+the VERSION's instant with the NOTICE's pair, so a stamped notice beside an unmoved version renders
+a date-only publication a day early. **Campaign order, both gated (Lennart's go-ahead, dry first):
+`repair-notice-instants` wet → `repair-version-instants` dry → wet, back to back.**
+
+**No plan, two passes.** The moved set is the whole eForms/DÖE era (~13M versions, the dry run
+will say); a per-row plan would not fit and holds nothing for a reviewer — every write is "the
+version says what its notice says". So the dry run counts; the wet run counts again, aborts if
+the count is outside the notice repair's max(2 %, 5) tolerance of the reviewed dry figure, then
+walks a second time writing. Stoppable between bands and between slices; the committed prefix
+stands and a re-run finds the rest. No change events: the civil date a stamped row serves does
+not change, only the instant beneath it (and `sort=published_at`'s order among civil days,
+which is what the change is for).
+
+**Tests** (`version_instant_repair.rs`): the campaign shape — a repaired notice's version is
+moved and its tender's head column follows, an unrepaired notice's version is skipped and counted,
+an agreeing version is left alone, a second run finds nothing; the wet gate's abort; a stop.
+Supervisor: the `repair-version-instants` admin kind, dry by default, wet gated on the stored dry
+report's `moved`; in the stoppable list (its test updated).
+
+**Open on this issue after unit 2b:** the two gated wet runs (unit 2 proper), then the extent
+re-measured with `published_at % 86400 = 0` as the civil-midnight signature, and the Verify block
+turning; unit 3 (date-only deadlines) stays a named non-goal. Owed read after the 07:35 UTC tick:
+a DÖE tender published on the 19th answering to `published_after=2026-09-19&published_before=2026-09-20`.
