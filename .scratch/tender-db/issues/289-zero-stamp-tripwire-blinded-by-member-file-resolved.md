@@ -8,10 +8,10 @@ Found by: the 2026-08-26 adversarial reclaim/quarantine review.
 
 ## Verify
 
-    grep -c 'partially-resolved file' crates/store/src/lib.rs
+    grep -c 'issue 289' crates/store/src/lib.rs
 
-- **done**: a positive count — the distinguishing marker exists, so a per-record stranding under a partially-resolved file prints the loud line with its marker instead of being silenced (the served rev is this tree)
-- **open**: `0` — the marker is gone; a stranding inside a partially-resolved file is silent again
+- **done**: a positive count — the family-aware verdict and its marker line (`… (issue 289)`) are in the reclaim arms, so a per-record stranding under a partially-resolved file prints the loud line with its marker instead of being silenced (the served rev is this tree; read 2026-09-19: `4`)
+- **open**: `0` — the verdict is gone; a stranding inside a partially-resolved file is silent again
 
 ## The gap
 

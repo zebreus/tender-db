@@ -1,6 +1,6 @@
 # 305 — whole-corpus refold ergonomics: mislabeled identity pass + predictable fallback
 
-Status: RESOLVED in code (both halves), pending deploy on the next window.
+Status: RESOLVED-DEPLOYED (board sweep 2026-09-19) — both halves are in the served tree (`110d527`): `Progress::Identity` names the identity pass (half 1) and `unprojected_legacy_notice_count` gates the pre-check that skips it for whole-corpus-shaped deltas (half 2). Was: RESOLVED in code (both halves), pending deploy on the next window.
 Half 1 (Identity phase label) landed in commit 668a399's batch (Progress::Identity).
 Half 2 landed 2026-08-27 ~22:0x: `unprojected_legacy_notice_count` (store) +
 a pre-check in `project_incremental_chunked_observed` that goes straight to the
@@ -36,3 +36,10 @@ Observed on job 402 (the 23-profile epoch refold's `project rebuild=false`):
 
 The fallback itself worked exactly as issue 58 v2 designed (11,003,672 > cap →
 full re-projection); WAL stayed bounded (~650 MB, truncating each chunk).
+
+## Verify
+
+    grep -c 'unprojected_legacy_notice_count' crates/store/src/canonical.rs
+
+- **done**: a positive count — the pre-check's upper bound exists in the fold (the served rev is this tree); on the next whole-corpus refold the job record shows no 98-minute `identity` pass before the full path
+- **open**: `0` — the pre-check is gone and a whole-corpus refold pays the identity pass again

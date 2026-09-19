@@ -1,11 +1,18 @@
 # 339 — a bucketed fold shows the last pre-pass count until its first whole bucket lands
 
-Status: DEPLOYED 2026-09-03 (`9f0bcea`), verification pending the next bucketed fold — was: DIAGNOSED 2026-09-02 (corrected the same day — the first filing blamed the
+Status: DEPLOYED-UNVERIFIED (board sweep 2026-09-19) — `9f0bcea` is an ancestor of the served `110d527` and the tick is pinned by `the_prepass_reports_its_sweep_as_progress`; five whole-corpus folds have run since (jobs 1325, 1354, 1359, 1384, 1387, 2026-09-12..16) but none was read at its barrier, and the phase record is not journaled, so the live observation is still owed: read `/admin/jobs` in the first minutes of the next whole-corpus fold. Was: DEPLOYED 2026-09-03 (`9f0bcea`), verification pending the next bucketed fold — was: DIAGNOSED 2026-09-02 (corrected the same day — the first filing blamed the
 plan build; the journal's stage timings named the real stage). Fix in progress.
 Kind: operability / instrument honesty
 Relates to: 65 (Progress → phase record), 90 (the fold heartbeat), 262 (the same
 gap on the plan build, fixed), 304 (the campaign whose fold surfaced it), 42/53
 (why a growing WAL during a silent stage must be tellable from a runaway)
+
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh /admin/jobs" | python3 -c "import sys,json; c=json.load(sys.stdin).get('current') or {}; p=c.get('phase') or {}; print(c.get('kind'), p.get('name'), p.get('done'), p.get('total'))"
+
+- **done**: in the first minutes of a whole-corpus `project`, `project folding 0 <total>` — the phase is named `folding` with a total before the first bucket lands (the barrier tick)
+- **open**: `project pre-pass <n> None` through the whole first bucket — the pre-fix reading (job 612's shape); `None None None None` means no job is running and the read must wait for the next whole-corpus fold
 
 ## Observed (job 608, 2026-09-02, CEST)
 
