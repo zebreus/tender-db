@@ -389,3 +389,15 @@ free — it read 73.9 % at 01:10 this morning. A restart (the deploy) left `df` 
 descriptors in 15 of 15 readings and `df` unchanged at 61 %; the disk-census the same morning read
 1005.2 GiB used (60.6 %), file 614.3 GiB allocated 0.15 % over, 0 unlinked-but-open, and a
 two-point rate of −31.5 GiB/day against last Sunday (the r208 refold and the reflink trim between).
+
+## 2026-09-19 12:0x — where 146 GB went in six days, and why the ring did not rotate (issue 420)
+
+Free space 701 GB at the 09-13 census → 555 GB today (df), the database +13 GB (659.6 → 672.7 GB
+apparent). The rest is the snapshot ring: `/data/db/snapshots` holds 09-03 and 09-06, each 648.5 GB
+apparent and 649 GB ALLOCATED — the whole-corpus folds of 09-12..16 diverged both into full copies
+(live file: 0 shared extents). The 09-13 weekly snapshot was skipped because the weekly data-quality
+run (03:10 Berlin, 166 min that day) was still running at 05:23 — a scheduling collision, filed and
+fixed as issue 420 (the gate now waits for the queue). The price this record already stated on
+08-28 holds and is now measured twice: a held reflink snapshot costs full size across any
+whole-corpus rewrite, and a ring that fails to rotate keeps paying it. The disk census's
+`bytes_per_day` (-33.9 GB/day on 09-13) is the reclaim's artefact, not a trend, as its own caveat says.
