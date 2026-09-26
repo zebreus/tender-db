@@ -1,6 +1,6 @@
 # 407 — the ingest logs nothing per package, so a 240× slowdown is invisible until someone counts rows by hand
 
-Status: ready-for-agent — **the calibrated guard is BUILT, gated (128/128) and DEPLOYED 2026-09-19 05:07 UTC at `110d527`** (see the foot): the floor is the box's own history per (source, kind) — the median members/s of the previous writing walks over 10, the divisor calibrated against a week of real lines — and the `[process]` line and the job summary carry it. **LIVE 2026-09-19 07:35 UTC:** the tick's two writing walks printed `doe daily 2026-09-18: 1046 members → 1046 notices (0 dup) in 4.1s (252.9 members/s, floor pending 0/5)` and `fts daily 2026-09-18: 483 members → 482 notices (1 dup) in 0.7s (701.4 members/s, floor pending 0/5)`, the 71 pure-dedup re-walks the plain rate — the table, the judge and the clause work on prod. The floor itself appears after five writing walks per (source, kind), about a week for the dailies; the Verify block flips then. Unit 1 (the per-package rate line) LANDED 2026-09-16.
+Status: **DONE 2026-09-26** — the floor exists on prod and the `## Verify` block reads done: after five writing walks per (source, kind) the `[process]` line carries the calibrated floor beside the rate — DÖE `floor 29.3` on 2026-09-25 and `29.8` on 09-26 (302.5 and 269.2 members/s), FTS `floor 70.1` on 09-26 (645.9 members/s); TED reads `floor pending 4/5` on Friday 09-25 (weekday-only, its fifth walk is Monday 09-28). No ALARM clause fired in the week; the summaries carry none. Read by the owner firing of 2026-09-26 08:1x UTC. Was: ready-for-agent — **the calibrated guard is BUILT, gated (128/128) and DEPLOYED 2026-09-19 05:07 UTC at `110d527`** (see the foot): the floor is the box's own history per (source, kind) — the median members/s of the previous writing walks over 10, the divisor calibrated against a week of real lines — and the `[process]` line and the job summary carry it. **LIVE 2026-09-19 07:35 UTC:** the tick's two writing walks printed `doe daily 2026-09-18: 1046 members → 1046 notices (0 dup) in 4.1s (252.9 members/s, floor pending 0/5)` and `fts daily 2026-09-18: 483 members → 482 notices (1 dup) in 0.7s (701.4 members/s, floor pending 0/5)`, the 71 pure-dedup re-walks the plain rate — the table, the judge and the clause work on prod. The floor itself appears after five writing walks per (source, kind), about a week for the dailies; the Verify block flips then. Unit 1 (the per-package rate line) LANDED 2026-09-16.
 Kind: defect (observability — `run_process` in `crates/app/src/supervisor.rs` logged nothing between "job started" and "job finished")
 Relates to: 404 (the regression that made the point: an unindexed twin lookup took a TED daily from 30 notices/s to 0.12), 406 (the stop lever the same incident showed was missing), 405 (the same class one layer up — the dashboard refresher was mute on success, and that silence cost a read the same day), 230 (the data-quality job's per-window timing line, which is the style this follows and which made ITS 88-minute run legible the same morning)
 Blocked by: nothing
@@ -137,3 +137,20 @@ today: the scheduler skips TED on weekends by design (`enqueue_daily(weekday)`),
 writing walks accrue Monday to Friday. Saturday's job summaries carry no alarm clause. The
 acceptance this record owed is met; what remains is the calendar — `floor N` on the dailies from
 about 2026-09-26, and the first `RATE ALARM` whenever a walk earns one.
+
+## 2026-09-26 08:1x — the floor arrived on schedule; closed on the Verify reading
+
+The week's writing-walk lines, newest first (Berlin stamps):
+
+    Sep 26 09:35:54 [process] fts daily 2026-09-25: 436 members → 432 notices (4 dup) in 0.7s (645.9 members/s, floor 70.1)
+    Sep 26 09:35:04 [process] doe daily 2026-09-25: 1094 members → 1094 notices (0 dup) in 4.1s (269.2 members/s, floor 29.8)
+    Sep 25 09:35:37 [process] doe daily 2026-09-24: 1121 members → 1121 notices (0 dup) in 3.7s (302.5 members/s, floor 29.3)
+    Sep 25 09:35:33 [process] ted daily 2026-00186: 3444 members → 3444 notices (0 dup) in 30.6s (112.6 members/s, floor pending 4/5)
+
+DÖE's floor is the trailing median (≈293 members/s) over the divisor 10; FTS's ≈701/10. Both sit an
+order of magnitude under the rates the walks actually run at, which is the calibration the divisor was
+chosen for: a walk has to be ten times slower than its own history before it is called out. TED reaches
+its fifth writing walk on Monday 09-28 (it has no weekend walks) and will print its floor from Tuesday.
+With 419 live the daily kinds now record one writing walk a day and no pure-dedup re-walks, so the
+median is built from single-package walks from here on — the population the floor was meant to judge.
+Nothing else is owed; the first `RATE ALARM` line, whenever a walk earns it, is 254/407's signal to read.
