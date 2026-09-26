@@ -306,3 +306,68 @@ async fn a_lot_is_never_open_on_a_deadline_beyond_the_horizon() {
     assert_eq!(served(&conn, None).await, vec![("LOT-1".to_owned(), Some(TENDER_DEADLINE))]);
     assert_eq!(served(&conn, Some(Status::Open)).await, vec![("LOT-1".to_owned(), Some(TENDER_DEADLINE))]);
 }
+
+/// Issue 424: a lot is open by ITS OWN effective deadline — its lot-scoped date if
+/// it published one, otherwise the procedure's — never by a SIBLING lot's. On prod
+/// 2026-09-26 tender 81134's lot 219239 (no deadline of its own, no procedure
+/// deadline) was returned by `status=open` because its sibling 13415907 published
+/// a future lot-scoped date, and lots 187173/187174 were open while serving their
+/// own PAST date. The filter's EXISTS carried no lot term; the row was already
+/// right. Both query shapes are pinned: the tender-containment read (`served`) and
+/// the stream (`streamed`, no `tender` filter), which build the predicate apart.
+#[tokio::test]
+async fn a_lot_is_open_by_its_own_deadline_never_a_siblings() {
+    async fn streamed(conn: &turso::Connection, status: Status) -> Vec<String> {
+        let filter = Filter { status: Some(status), now: NOW, ..Filter::default() };
+        read::lots(conn, &filter, Scope::Page { after: 0, limit: 1000 })
+            .await
+            .unwrap()
+            .into_iter()
+            .map(|r| r.lot_key)
+            .collect()
+    }
+    let past = NOW - 86_400;
+
+    // 81134's shape: one lot publishes a future date, its sibling publishes none,
+    // and the procedure publishes none.
+    let conn = fixture("sibling").await;
+    lot(&conn, 1, "LOT-0000").await;
+    lot(&conn, 2, "LOT-0001").await;
+    deadline(&conn, Some(1), TENDER_DEADLINE, 0).await;
+    assert_eq!(
+        served(&conn, None).await,
+        vec![("LOT-0000".to_owned(), Some(TENDER_DEADLINE)), ("LOT-0001".to_owned(), None)]
+    );
+    let open = vec![("LOT-0000".to_owned(), Some(TENDER_DEADLINE))];
+    assert_eq!(served(&conn, Some(Status::Open)).await, open, "a sibling's date opens nothing");
+    assert_eq!(served(&conn, Some(Status::Closed)).await, vec![("LOT-0001".to_owned(), None)]);
+    assert_eq!(streamed(&conn, Status::Open).await, vec!["LOT-0000".to_owned()], "the stream shape agrees");
+    assert_eq!(streamed(&conn, Status::Closed).await, vec!["LOT-0001".to_owned()]);
+
+    // 187173's shape: a lot's OWN past date beside a later procedure date. The row
+    // keeps the lot's own (389), so the lot is closed; its undated sibling inherits
+    // the procedure's and is open.
+    let conn = fixture("own-past").await;
+    lot(&conn, 1, "LOT-1").await;
+    lot(&conn, 2, "LOT-2").await;
+    deadline(&conn, Some(1), past, 0).await;
+    deadline(&conn, None, TENDER_DEADLINE, 0).await;
+    assert_eq!(
+        served(&conn, None).await,
+        vec![("LOT-1".to_owned(), Some(past)), ("LOT-2".to_owned(), Some(TENDER_DEADLINE))]
+    );
+    assert_eq!(served(&conn, Some(Status::Open)).await, vec![("LOT-2".to_owned(), Some(TENDER_DEADLINE))]);
+    assert_eq!(served(&conn, Some(Status::Closed)).await, vec![("LOT-1".to_owned(), Some(past))]);
+    assert_eq!(streamed(&conn, Status::Open).await, vec!["LOT-2".to_owned()]);
+    assert_eq!(streamed(&conn, Status::Closed).await, vec!["LOT-1".to_owned()]);
+
+    // A lot's own date REFUSED by the window (pre-1990) is not "its own": the lot
+    // falls back to the procedure's, exactly as the row does (issue 171).
+    let conn = fixture("own-refused").await;
+    lot(&conn, 1, "LOT-1").await;
+    deadline(&conn, Some(1), 0, 0).await;
+    deadline(&conn, None, TENDER_DEADLINE, 0).await;
+    assert_eq!(served(&conn, None).await, vec![("LOT-1".to_owned(), Some(TENDER_DEADLINE))]);
+    assert_eq!(served(&conn, Some(Status::Open)).await, vec![("LOT-1".to_owned(), Some(TENDER_DEADLINE))]);
+    assert_eq!(streamed(&conn, Status::Open).await, vec!["LOT-1".to_owned()]);
+}

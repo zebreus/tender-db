@@ -715,7 +715,8 @@ rates and the quarantine resolution ledger.</p>
   bidder submits by. It is also the one <code>?status=open</code> evaluates, for lots as
   well as tenders, which is why the row shows it: a lot returned as open carries the
   deadline that opened it. A lot that publishes its OWN deadline keeps it even when the
-  procedure's is later.
+  procedure's is later &mdash; and <code>status</code> reads that same date, so such a lot is
+  closed once its own passes, and no lot is ever opened by a SIBLING lot's deadline (issue 424).
   <strong><code>submission_deadline_scope</code> says which of the two it is</strong> &mdash;
   <code>lot</code> or <code>procedure</code> &mdash; on Lots and on Tenders alike (issue 370
   unit 4; on a Tender, <code>lot</code> means the elected deadline is a lot-level date, the head

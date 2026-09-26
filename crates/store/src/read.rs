@@ -926,6 +926,16 @@ pub fn isolation_routed(collection: Collection, f: &Filter) -> Vec<Isolated> {
     candidates.into_iter().filter(|(_, set)| *set).map(|(which, _)| which).collect()
 }
 
+/// How `status` is decided for the collection a [`version_predicates`] caller reads.
+#[derive(Clone, Copy)]
+enum StatusBy<'a> {
+    /// Tenders: the fold-maintained head column (`t.current_deadline`, issue 273).
+    Head(&'a str),
+    /// Lots: per LOT, from the version's date rows, by the rule the lot ROW is
+    /// served by (issue 424) — the expression names the lot's id.
+    Lot(&'a str),
+}
+
 /// The version-scoped filters, emitted against caller-supplied expressions for the
 /// Tender id and the version `seq`.
 ///
@@ -935,22 +945,22 @@ pub fn isolation_routed(collection: Collection, f: &Filter) -> Vec<Isolated> {
 /// `l.tender_id` with `seq` recomputed. Writing them twice is the paraphrase hazard
 /// that blocked issue 112's B1 — one edit to a predicate would silently apply to one
 /// shape and not the other.
-/// `deadline_col`: the head deadline column when the builder's FROM serves one
-/// (`Some("t.current_deadline")` for the Tenders shapes). `status` then becomes a
+/// `status_by`: [`StatusBy::Head`] names the head deadline column when the builder's
+/// FROM serves one (`"t.current_deadline"` for the Tenders shapes). `status` then becomes a
 /// RANGE predicate on that indexed column instead of a per-row EXISTS — the fix
 /// for issue 273's walk DoS (`status=open&country=LU` walked all ~7.9M rows to
 /// the 30s bound; the range bounds the scan to the open head, 0.13s validated on
 /// prod). Provably equivalent: the projection's head UPDATE writes
 /// `MAX(head submission_deadline)` into `current_deadline` (`head_deadline`,
 /// canonical.rs), and MAX(d) > now ⟺ EXISTS(d > now); a Tender with no deadline
-/// gets NULL, which both forms read as Closed. Lots builders pass `None` — no
-/// head column there — and keep the EXISTS.
+/// gets NULL, which both forms read as Closed. Lots builders pass [`StatusBy::Lot`] —
+/// no head column there — and keep an EXISTS, decided per lot (issue 424).
 fn version_predicates(
     q: &mut Query,
     f: &Filter,
     tid: &str,
     seq: &str,
-    deadline_col: Option<&str>,
+    status_by: StatusBy<'_>,
     value_col: &str,
 ) {
     if let Some(country) = &f.country {
@@ -1000,30 +1010,52 @@ fn version_predicates(
         // "Open" is a submission deadline still in the future. A Tender that
         // never published one (award notices) is therefore Closed, which is the
         // useful reading: it cannot be bid on.
-        if let Some(col) = deadline_col {
-            match status {
+        match status_by {
+            StatusBy::Head(col) => match status {
                 Status::Open => q.push(&format!(" AND {col} > ?"), [Value::Integer(f.now)]),
                 Status::Closed => q.push(
                     &format!(" AND ({col} IS NULL OR {col} <= ?)"),
                     [Value::Integer(f.now)],
                 ),
-            }
-        } else {
-            // Issue 422: the lots have no head column, so the election's horizon
-            // is applied here, or a lot is `open` on the year-3005 typo its own
-            // tender refuses (366). The publication is one PK seek, evaluated only
-            // for a date already past `now`. No floor term: a pre-1990 date is
-            // never `> now`, so it could not change the answer.
-            let exists = format!("EXISTS (SELECT 1 FROM tender_version_dates d
-                                   WHERE d.tender_id = {tid} AND d.seq = {seq}
-                                     AND d.field = 'submission_deadline' AND d.utc_seconds > ?
-                                     AND d.utc_seconds - (SELECT pv.published_at FROM tender_versions pv
-                                                           WHERE pv.tender_id = {tid} AND pv.seq = {seq})
-                                         <= {})",
-                crate::canonical::DEADLINE_HORIZON_SECS);
-            match status {
-                Status::Open => q.push(&format!(" AND {exists}"), [Value::Integer(f.now)]),
-                Status::Closed => q.push(&format!(" AND NOT {exists}"), [Value::Integer(f.now)]),
+            },
+            StatusBy::Lot(lot) => {
+                // Open iff the lot's EFFECTIVE deadline is in the future, which is
+                // exactly what the lot row serves (`summarise`, issue 389): its own
+                // lot-scoped deadline if it published an admitted one, otherwise
+                // the procedure's. Issue 424: this EXISTS used to carry no lot term
+                // at all, so tender 81134's lot 219239 (no deadline of its own, no
+                // procedure deadline) was returned as open on its SIBLING's date.
+                //
+                // "Admitted" is the election's window (issues 171 and 422): the
+                // horizon on every row, and the floor on the own-row test, which —
+                // unlike the outer `> now` row — can be any date. The publication
+                // is one PK seek. A strict subset of the old per-tender answer, so
+                // the open-head seed (`t.current_deadline > now`) is still a
+                // candidate SUPERSET of it.
+                let published = format!(
+                    "(SELECT pv.published_at FROM tender_versions pv
+                       WHERE pv.tender_id = {tid} AND pv.seq = {seq})"
+                );
+                let horizon = crate::canonical::DEADLINE_HORIZON_SECS;
+                let floor = crate::canonical::DEADLINE_FLOOR_SECS;
+                let exists = format!(
+                    "EXISTS (SELECT 1 FROM tender_version_dates d
+                              WHERE d.tender_id = {tid} AND d.seq = {seq}
+                                AND d.field = 'submission_deadline' AND d.utc_seconds > ?
+                                AND d.utc_seconds - {published} <= {horizon}
+                                AND (d.lot_id = {lot}
+                                     OR (d.lot_id IS NULL
+                                         AND NOT EXISTS (SELECT 1 FROM tender_version_dates o
+                                                          WHERE o.tender_id = {tid} AND o.seq = {seq}
+                                                            AND o.field = 'submission_deadline'
+                                                            AND o.lot_id = {lot}
+                                                            AND o.utc_seconds >= {floor}
+                                                            AND o.utc_seconds - {published} <= {horizon}))))"
+                );
+                match status {
+                    Status::Open => q.push(&format!(" AND {exists}"), [Value::Integer(f.now)]),
+                    Status::Closed => q.push(&format!(" AND NOT {exists}"), [Value::Integer(f.now)]),
+                }
             }
         }
     }
@@ -1733,7 +1765,7 @@ fn tenders_ordered_query(
             inner.push(" AND t.kind = ?", [t(kind)]);
         }
     }
-    version_predicates(&mut inner, filter, "t.id", "v.seq", Some("t.current_deadline"), "t.current_value_eur_cents");
+    version_predicates(&mut inner, filter, "t.id", "v.seq", StatusBy::Head("t.current_deadline"), "t.current_value_eur_cents");
     if let Some((value, id)) = cursor {
         let (outer, tie) = if desc { ("<=", "<") } else { (">=", ">") };
         inner.push(
@@ -2192,7 +2224,7 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
             q.push(" AND t.current_deadline < ?", [Value::Integer(before)]);
         }
     }
-    version_predicates(&mut q, filter, "t.id", "v.seq", Some("t.current_deadline"), "t.current_value_eur_cents");
+    version_predicates(&mut q, filter, "t.id", "v.seq", StatusBy::Head("t.current_deadline"), "t.current_value_eur_cents");
     match scope {
         Scope::Page { after, limit } => q.push(
             " AND t.id > ? ORDER BY t.id LIMIT ?",
@@ -2263,7 +2295,7 @@ fn tender_page_predicates(inner: &mut Query, filter: &Filter) {
             inner.push(" AND t.current_deadline < ?", [Value::Integer(before)]);
         }
     }
-    version_predicates(inner, filter, "t.id", "v.seq", Some("t.current_deadline"), "t.current_value_eur_cents");
+    version_predicates(inner, filter, "t.id", "v.seq", StatusBy::Head("t.current_deadline"), "t.current_value_eur_cents");
 }
 
 /// The satellite SELECT list joined back onto the ≤limit page rows the inner
@@ -2936,7 +2968,7 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
     {
         q.push(" AND l.tender_id = ?", [Value::Integer(tender)]);
     }
-    version_predicates(&mut q, filter, "t.id", "v.seq", None, "t.current_value_eur_cents");
+    version_predicates(&mut q, filter, "t.id", "v.seq", StatusBy::Lot("l.id"), "t.current_value_eur_cents");
     match scope {
         Scope::Page { after, limit } => q.push(
             " AND l.id > ? ORDER BY l.id LIMIT ?",
@@ -3117,7 +3149,7 @@ fn lots_stream_head(filter: &Filter) -> Query {
 /// rows per lot on a prolific org) is not added again. Only the seeded one: a
 /// second org filter alongside it still decides per lot.
 fn lots_stream_predicates(q: &mut Query, filter: &Filter) {
-    version_predicates(q, &without_seeded_org(filter), "l.tender_id", LOT_SEQ, None,
+    version_predicates(q, &without_seeded_org(filter), "l.tender_id", LOT_SEQ, StatusBy::Lot("l.id"),
         "(SELECT tt.current_value_eur_cents FROM tenders tt WHERE tt.id = l.tender_id)");
 }
 

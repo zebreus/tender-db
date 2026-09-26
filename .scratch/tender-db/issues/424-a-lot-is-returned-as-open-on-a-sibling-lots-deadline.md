@@ -1,7 +1,9 @@
 # 424 — a lot is returned as `open` on a SIBLING lot's deadline, and its row shows no deadline or a past one
 
-Status: ready-for-agent — filed 2026-09-26 15:1x UTC from issue 423's post-deploy paging read. Measured on
-prod; the mechanism is in the code; the decision (below) is mine to take when this is picked up.
+Status: ready-for-agent — **BUILT 2026-09-26 16:1x UTC** (see the foot): decision taken as leaned — the lots
+`status` EXISTS is per lot, by the row's own rule; mutation-checked tests on both query shapes; gate,
+deploy and the before/after latency read follow. Was: filed 2026-09-26 15:1x UTC from issue 423's
+post-deploy paging read.
 Kind: public API contract (the docs promise the opposite of what a row shows)
 Relates to: 389 (fixed the PROCEDURE-scoped half: a lot inherits the procedure's deadline), 275 (pins the
 lots `status` EXISTS with no `lot_id` term, on 273's tender-level equivalence), 370 (the
@@ -44,3 +46,28 @@ Cost to measure: the `status=open` lots shapes in 423's table, before/after.
 - **open**: both 219239 and 13415907 are listed (read 2026-09-26)
 
 A public read, free. (Tender 81134 holds both lots.)
+
+## BUILT 2026-09-26 — `status` on a lot reads the date the lot row serves
+
+- **`version_predicates` takes a `StatusBy`** instead of `deadline_col: Option<&str>`: `Head(col)` for the
+  four tenders callers (unchanged range predicate on `t.current_deadline`), `Lot(lot_id_expr)` for the two
+  lots callers (the tender-containment read and the stream, both `l.id`). The `None`-means-lots convention
+  is gone, so a lots caller cannot forget to name the lot.
+- **The lots EXISTS** is now: a deadline row of the version, `> now`, inside the horizon, AND (`d.lot_id =
+  l.id` OR (`d.lot_id IS NULL` AND the lot has no ADMITTED own deadline — floor and horizon, any date)).
+  That is `summarise`'s rule exactly: own admitted date if any, else the procedure's. A lot's own
+  pre-1990 typo is not "its own" (171), so the lot falls back to the procedure's, as the row does.
+- **Subset of the old per-tender answer**, so the open-head seed (issues 275/423) stays a candidate
+  superset and needs no change.
+- **Tests** (`lot_deadline_scope.rs::a_lot_is_open_by_its_own_deadline_never_a_siblings`), both query
+  shapes (`served` = containment, `streamed` = stream): tender 81134's shape (a sibling's future date opens
+  nothing; the undated lot is closed), 187173's shape (a lot's own PAST date beside a later procedure date
+  → closed; its undated sibling inherits and is open), and a refused own date (falls back to the
+  procedure's). **Mutation-checked**: collapsing the lot term to `1 = 1` (the old per-tender form) fails the
+  test. The existing 389/422 pair tests pass unchanged.
+- `/docs#caveats` Dates: `status` reads the same date as the row; no lot is opened by a sibling's.
+
+**Baseline before deploy** (2026-09-26 16:0x UTC, rev `69f2a0e`, two reads each): `status=open&cpv=45&limit=100`
+1.20 / 1.14 s, `status=open&limit=100` 1.69 / 1.67 s, `status=open&country=DE&limit=100` 0.96 / 0.93 s,
+`status=closed&limit=100` 0.57 / 0.55 s, `status=closed&cpv=45&limit=100` 0.61 / 0.69 s,
+`status=open&tender=81134` 0.45 / 0.41 s.
