@@ -104,15 +104,23 @@ and the runbook's kill-the-service drill is not being run against the serving bo
 outage, or a planned maintenance restart, is the drill: its firing should push. The Verify block below
 reads the routine's existence and cadence.
 
+**First run, read 2026-09-26 12:03 UTC.** The hand-fired session (`cse_01GFnBXP1dwyjBdeWVEcNoB2`) was
+created at 11:50:28, its container took ~12 minutes to start, and its request reached nginx at 12:02:33
+(`200`, 608 bytes); the session went idle at 12:02:36 having done exactly that (266 output tokens, ~$0.20 a run,
+so ~$150 a month at hourly — accepted, per the standing "token cost is not a constraint"). Two consequences:
+an alert lands up to ~15 minutes after the :50 firing, and a minute window cannot identify the routine's hits.
+So the prompt now sets `-A 'tender-db-uptime-routine/1'`, and the Verify block counts that User-Agent. (The
+operating session's own curls come from the same `160.79.106.x` range, so neither address nor minute tells
+them apart.)
+
 ## Verify
 
-    ssh -o BatchMode=yes root@zebreus.click "grep -hE '\"GET /health/deep ' /var/log/nginx/access.log | grep -E ':[0-9]{2}:5[0-2]:[0-9]{2} ' | awk '{print substr(\$4,2,14)}' | sort | uniq -c | tail -4"
+    ssh -o BatchMode=yes root@zebreus.click "grep -h 'tender-db-uptime-routine' /var/log/nginx/access.log | awk '{print substr(\$4,2,14), \$9}' | uniq -c | tail -4"
 
-- **done**: a `/health/deep` hit in the :50–:52 minute band of each recent hour — the routine fires at :50 and its
-  session reaches the probe within a minute or two
-- **open**: hours with no hit in that band — the routine is gone, disabled, or its sessions cannot reach the
-  service (read 2026-09-26 before creation: no such cadence)
+- **done**: one line per recent hour, each `… 200` — the routine fires hourly, reaches the service from outside,
+  and gets a healthy answer
+- **open**: no lines, or gaps of more than an hour — the routine is gone, disabled, or its sessions cannot reach
+  the service (read 2026-09-26 12:03 UTC: none yet — the only run so far predates the User-Agent; the first
+  scheduled firing is 12:50)
 
-The minute band, not the source address, identifies the routine: the operating session's own curls come
-from the same cloud address range (`160.79.106.x`), so an IP filter cannot tell them apart. A log read on
-the box, free per `prod-box-reads.md`. The routine itself is listed by `list_triggers`.
+A log read on the box, free per `prod-box-reads.md`. The routine itself is listed by `list_triggers`.
