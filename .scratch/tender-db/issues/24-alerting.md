@@ -1,6 +1,6 @@
 # 24 — Alerting: know when production breaks without looking
 
-Status: PARTIALLY RESOLVED / EXTERNAL HALF NEEDS LENNART (verified 2026-08-16, owner sweep). On-box detection is in place: /health/deep (real DB check 213, ingest-kind freshness 226, disk, canonical-layer presence 133) plus the restored hourly disk/job watchdogs (224, repo-durable). The EXTERNAL half is verifiably absent: nginx access logs show the only /health callers are the deploy script's own curls — no uptime-service UA, no regular cadence. A box-side watchdog cannot report its own box's death, so an external pinger (UptimeRobot-class, hitting /health/deep, notifying Lennart's phone/email) is the missing piece — an account action only Lennart can take, same class as issue 23's backup destination. Flag both together when he surfaces.
+Status: ready-for-agent — **the external half is BUILT 2026-09-26 11:50 UTC** (see the foot): routine `trig_01F8LUCUBSxHB3uBx5DyTZkp` "tender-db external uptime check (issue 24)" fires hourly at :50 into a fresh cloud session, curls `https://tenders.zebreus.click/health/deep` from off the box, and ends with a `TENDER-DB DOWN` message (push + email to the account owner) on anything but HTTP 200 with `ok: true`. The 07-21 decision named this routine, but it was never created: on 2026-09-26 the only routine on the account was the hourly ownership check-in and every `/health/deep` hit in the day's nginx log was the operating session's own curl. Open: the failure path's push is unexercised (no outage since), and the kill-the-service drill stays unrun on a serving box. Was: PARTIALLY RESOLVED / EXTERNAL HALF NEEDS LENNART (verified 2026-08-16, owner sweep). On-box detection is in place: /health/deep (real DB check 213, ingest-kind freshness 226, disk, canonical-layer presence 133) plus the restored hourly disk/job watchdogs (224, repo-durable). The EXTERNAL half is verifiably absent: nginx access logs show the only /health callers are the deploy script's own curls — no uptime-service UA, no regular cadence. A box-side watchdog cannot report its own box's death, so an external pinger (UptimeRobot-class, hitting /health/deep, notifying Lennart's phone/email) is the missing piece — an account action only Lennart can take, same class as issue 23's backup destination. Flag both together when he surfaces.
 Current monitoring is tmux loggers writing files on the box — nobody is
 notified if the service dies, /health goes red, disk fills, or the daily
 continuous-mode jobs stop landing. The /v1 view-staleness 500s went
@@ -79,3 +79,36 @@ Decision: the off-box check runs as a Claude scheduled cloud routine
 (curls https://tenders.zebreus.click/health/deep, notifies Lennart on
 non-200) — off the VPS as required, no new accounts. Set up by the lead;
 the in-app /health/deep half is deployed (bad8dda).
+
+### 2026-09-26 — the off-box check exists now
+
+**What was missing.** The 2026-07-21 decision above chose a Claude scheduled cloud routine as the pinger
+and said it was "set up by the lead". It was not there on 2026-09-26: `list_triggers` returned one routine
+(the hourly ownership check-in, which runs *in* this operating session and reads health over ssh on the
+box), and the day's nginx log held eight `/health` callers, seven `curl/8.5.0` from the operating
+session's own checks and one crawler. Nothing outside the box was watching.
+
+**What was built.** Routine `trig_01F8LUCUBSxHB3uBx5DyTZkp`, "tender-db external uptime check (issue
+24)": cron `50 * * * *` (the server anchored the hourly `0 * * * *` to the creation minute), a FRESH
+session per firing (so it does not depend on the operating session being alive), notifications push +
+email. Its prompt is read-only — one `curl -sS --max-time 30 --retry 2 --retry-delay 20
+--retry-all-errors https://tenders.zebreus.click/health/deep`, then a verdict: `tender-db healthy, rev
+…` when HTTP 200 and `ok: true`, otherwise a message starting `TENDER-DB DOWN` with the status or curl
+error, the time, and every failing check's detail from the body. The retries mean a single dropped
+request is not an alert; a 503 (a check failing), a timeout, a TLS or connection error, or `ok: false`
+is. It holds no connectors and needs none. Fired once by hand at creation (session
+`cse_01GFnBXP1dwyjBdeWVEcNoB2`) to verify the healthy path from outside.
+
+**Still open.** The failure path's delivery (does a `TENDER-DB DOWN` run actually push?) is unexercised,
+and the runbook's kill-the-service drill is not being run against the serving box for it. The first real
+outage, or a planned maintenance restart, is the drill: its firing should push. The Verify block below
+reads the routine's existence and cadence.
+
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click "grep -hE '\"GET /health/deep ' /var/log/nginx/access.log | grep -v '^127\.0\.0\.1' | awk '{print substr(\$4,2,14)}' | sort | uniq -c | tail -4"
+
+- **done**: one or more off-box `/health/deep` hits in each recent hour (the routine fires at :50) — the external check is running
+- **open**: no hourly cadence of off-box hits — the routine is gone, disabled, or its sessions cannot reach the service (read 2026-09-26 before creation: the only hits were the operating session's own)
+
+A log read on the box, free per `prod-box-reads.md`. The routine itself is listed by `list_triggers`.
