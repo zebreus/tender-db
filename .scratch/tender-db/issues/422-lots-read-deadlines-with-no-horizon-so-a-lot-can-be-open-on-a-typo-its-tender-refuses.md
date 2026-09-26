@@ -1,8 +1,9 @@
 # 422 — `/v1/lots` reads deadlines with no horizon, so a lot can be open on a typo its tender refuses
 
-Status: ready-for-agent — **BUILT 2026-09-26 14:0x UTC** (see the foot): decision taken — the horizon
-applies to BOTH the lot row and the lots `status` EXISTS; tests red-then-green by mutation; gate, deploy
-and the before/after latency read follow. Was: filed 2026-09-26 from issue 171's rule-12 unit.
+Status: **DONE 2026-09-26** — deployed at `756d867` 14:06 UTC (gate 129/129, health 200, 0 error lines),
+the `## Verify` block reads done (`3`), and the lots `status` shapes read no slower than before (foot).
+Was: BUILT 14:0x UTC — decision: the horizon applies to BOTH the lot row and the lots `status` EXISTS.
+Was: filed 2026-09-26 from issue 171's rule-12 unit.
 Kind: API consistency (the lots status filter and row disagree with the tender election)
 Relates to: 366 (the horizon), 375 (one election, no second transcription), 389 (the lots
 status ≡ row pairing), 171 (the floor, which the lots row now applies)
@@ -79,3 +80,9 @@ adds a MAX seek + PK seek per future-dated deadline row. Baseline before deploy 
 two reads each): `status=open&limit=100` 2.3 / 2.0 s, `status=open&country=DE&limit=100` 5.8 (cold) /
 0.9 s, `status=closed&limit=100` 0.57 / 0.58 s, `status=open&tender=8436333` 0.64 / 0.50 s. The
 `status=open&cpv=45&limit=100` 503 is pre-existing and is issue 423's, not this change's.
+
+**After deploy (14:06 UTC, `756d867`, two reads each)**: `status=open&limit=100` 1.99 / 1.89 s (was 2.3 /
+2.0), `status=open&country=DE&limit=100` 1.09 / 0.98 s (was 5.8 cold / 0.9), `status=closed&limit=100`
+0.53 / 0.58 s (was 0.57 / 0.58), `status=open&tender=8436333` 0.44 / 0.42 s (was 0.64 / 0.50). The extra
+seek is not measurable on these shapes. Verify: `grep -c DEADLINE_HORIZON_SECS crates/store/src/read.rs`
+→ `3`.
