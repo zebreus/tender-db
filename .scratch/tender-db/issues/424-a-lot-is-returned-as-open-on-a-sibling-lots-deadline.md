@@ -1,9 +1,10 @@
 # 424 — a lot is returned as `open` on a SIBLING lot's deadline, and its row shows no deadline or a past one
 
-Status: ready-for-agent — **BUILT 2026-09-26 16:1x UTC** (see the foot): decision taken as leaned — the lots
-`status` EXISTS is per lot, by the row's own rule; mutation-checked tests on both query shapes; gate,
-deploy and the before/after latency read follow. Was: filed 2026-09-26 15:1x UTC from issue 423's
-post-deploy paging read.
+Status: **DONE 2026-09-26** — per-lot `status` deployed at `83187a5` (16:03 UTC), its bare-`status=open`
+seed follow-up at `91968c9` (16:31 UTC); the `## Verify` block reads done (tender 81134 lists only
+13415907), three pages of `/v1/lots?status=open` show only future deadlines, and every lots `status` shape
+is at or below its pre-424 time (foot). Was: BUILT 16:1x UTC. Was: filed 2026-09-26 15:1x UTC from issue
+423's post-deploy paging read.
 Kind: public API contract (the docs promise the opposite of what a row shows)
 Relates to: 389 (fixed the PROCEDURE-scoped half: a lot inherits the procedure's deadline), 275 (pins the
 lots `status` EXISTS with no `lot_id` term, on 273's tender-level equivalence), 370 (the
@@ -89,3 +90,9 @@ The first gate for this follow-up went **red** (101): `lots_filter_fixture.rs` i
 fixture now stamps the column through its real writer (`backfill_current_deadline`, which transcribes the
 election) — prod's fold writes it on every head, and `/v1/tenders?status=` has depended on it since 273.
 Second gate green, 130/130.
+
+**Final read (16:3x UTC, `91968c9`)**: `status=open&limit=100` 0.97 / 0.95 s (1.69 s before 424, 2.45 s at
+`83187a5`), `status=open&cpv=45&limit=100` 0.99 s, `status=open&country=DE&limit=100` 0.94 s,
+`status=closed&limit=100` 0.53 s, `status=open&tender=81134` 0.45 s. Paging three pages of bare
+`status=open`: ids ascending, no overlap, 0.8 s each, and **no returned lot serves a null or past
+deadline** — before 424, 3 of 300 did. 0 error lines since the restart.
