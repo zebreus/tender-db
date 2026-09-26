@@ -2,8 +2,9 @@
 
 Status: two of three deliverables DONE (study 2026-08-09; public caveats doc 2026-08-23 — /docs
 #caveats); the third is mapped rule by rule (2026-09-26, foot) and rule 12's deadline half is
-BUILT; remaining: rules 11 (currency validity) and 17 (NUTS pseudo-codes) at ingestion, and the
-corpus-total queries (snapshot-gated, §4 list)
+BUILT and DEPLOYED (`16933e7`, 13:2x UTC; Verify reads done); remaining: rules 11 (currency
+validity) and 17 (NUTS pseudo-codes) at ingestion, the five standing `current_deadline` columns
+(one `backfill-deadlines` run), and the corpus-total queries (snapshot-gated, §4 list)
 Role: run-driver
 
 The research profiled structure and identifiers exhaustively, content values
@@ -84,6 +85,18 @@ a production write, run when the environment permits admin jobs.
 
 **Filed**: 422 — the lots path applies the floor but not the horizon, and its `status` EXISTS
 neither, so a lot can be open on a year-3005 typo its tender refuses.
+
+**Deployed 2026-09-26 at `16933e7`** (gate 129/129, health 200, 0 error lines since restart). The
+Verify block below reads done: tender 5671586 and its three lots serve `submission_deadline: null`,
+1466977 likewise. **What the deploy cannot fix by itself**: the five stored `current_deadline`
+columns still hold the typos, so `sort=deadline&order=asc` still lists 8210860 and 5671586 FIRST —
+now serving `null` beside the sort position, which contradicts the docs' "only tenders that have a
+deadline appear". One `backfill-deadlines` run corrects all five (full-corpus walk, batched,
+idempotent — there is no id-scoped form). It is a `POST /admin/jobs` write, the class this
+environment's classifier refuses for this session; it waits with the other queued writes (413,
+404, 418, 393/394/386/397/343 refolds, 411) until that permission exists. Deliberately NOT patched
+around in the read path: adding the floor to the `current_deadline` scans would be a fourth
+transcription of the election, to cover five stale rows the column's own writer fixes.
 
 ## Verify
 
