@@ -150,6 +150,22 @@ async fn seed(path: &str) -> store::turso::Connection {
     )
     .await
     .unwrap();
+
+    // Stamp `tenders.current_deadline` too, through its REAL writer. Since issue 424
+    // bare `status=open` on the lots drives from the open head (`t.current_deadline >
+    // now`, the same column `/v1/tenders?status=` has read since 273), so a fixture
+    // that leaves the column NULL describes a database prod can never be in — the
+    // fold writes it on every head. `backfill_current_deadline` transcribes the
+    // election (floor + horizon), and every date here is inside that window.
+    let db = store::Db::open(path).await.unwrap();
+    let mut after = 0;
+    loop {
+        let (rows, next) = db.backfill_current_deadline(1_000, after).await.unwrap();
+        if rows == 0 {
+            break;
+        }
+        after = next;
+    }
     conn
 }
 

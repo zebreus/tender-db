@@ -3036,8 +3036,8 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
 /// * A VIABLE sparse country (`country_seed`, issue 273 step 2's probe):
 ///   the case-variant UNION ALL enumeration off the classifications index.
 ///   Measured on prod: `?country=CY` 0.32s against 30s-class walks.
-/// * `status=open` with an over-cap country and/or a `cpv` prefix: drive from
-///   the open head — `t.current_deadline > now` is EXACTLY status-open (273's
+/// * `status=open` — alone, with an over-cap country and/or a `cpv` prefix: drive
+///   from the open head — `t.current_deadline > now` is EXACTLY status-open (273's
 ///   proven equivalence, `tenders_current_deadline`-indexed, 39,871 tenders on
 ///   2026-09-26; since issue 422 the lots EXISTS carries the same horizon, so
 ///   the two agree on a typo too), with each prefix tested per TENDER at
@@ -3049,10 +3049,12 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
 ///   `current_deadline` are the same head pointers the whole tenders endpoint
 ///   reads; the per-lot predicates still re-decide.)
 ///
-/// Not seeded (issues 275 and 423): bare `status=open` (fills from the dense
-/// walk, ~2s for 100 on 2026-09-26 — a seed would enumerate every open tender's
-/// lots and sort them, no better for a value this dense), and an over-cap
-/// country or a cpv without status (1.7s / 0.8s).
+///   Bare `status=open` is seeded too since issue 424 made the lots `status`
+///   EXISTS per lot: the dense walk then paid that term on every lot (1.69 s →
+///   2.45 s for 100 on prod), while the seeded page returned the same 101 rows
+///   in ~0.6 s net against ~2 s (measured through `/v1/sql`, 2026-09-26).
+///
+/// Not seeded: an over-cap country or a cpv without status (1.7s / 0.8s).
 fn lot_seed_predicates(q: &mut Query, filter: &Filter) {
     if let Some((table, extra, org)) = participation_seed(filter) {
         let role = participation_role(filter);
@@ -3078,12 +3080,11 @@ fn lot_seed_predicates(q: &mut Query, filter: &Filter) {
                 q.push(&format!(" AND l.tender_id IN {hits}"), params);
             }
         }
-        // The open head, for an over-cap country (issue 275) and for a cpv prefix
-        // (issue 423). Each prefix is tested per TENDER at `t.current_seq`, so
-        // only matching open tenders' lots are ever enumerated.
-        (country, false)
-            if filter.status == Some(Status::Open) && (country.is_some() || filter.cpv.is_some()) =>
-        {
+        // The open head, for an over-cap country (issue 275), a cpv prefix (issue
+        // 423) and bare `status=open` (issue 424). Each prefix is tested per
+        // TENDER at `t.current_seq`, so only matching open tenders' lots are ever
+        // enumerated.
+        (country, false) if filter.status == Some(Status::Open) => {
             let mut sql = String::from(
                 " AND l.tender_id IN (SELECT t.id FROM tenders t
                        WHERE t.current_deadline > ?",

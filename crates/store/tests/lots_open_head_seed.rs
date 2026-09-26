@@ -45,14 +45,20 @@ fn a_cpv_prefix_with_status_open_drives_the_lots_stream_from_the_open_head() {
     assert_eq!(sql.matches("l.tender_id IN (SELECT t.id FROM tenders t").count(), 1, "one seed: {sql}");
     assert!(sql.contains("c.scheme = 'nuts'") && sql.contains("c.scheme = 'cpv'"), "{sql}");
 
-    // What stays unseeded, deliberately: bare status (dense), cpv without status.
-    for (label, filter) in [
-        ("bare status=open", open(None, None)),
-        ("cpv without status", Filter { cpv: Some("45".into()), now: NOW, ..Filter::default() }),
-    ] {
-        let (sql, _) = lots_statement(&filter, Scope::Page { after: 0, limit: 25 });
-        assert!(!sql.contains("l.tender_id IN"), "{label} stays unseeded: {sql}");
-    }
+    // Bare status=open drives from the open head too (issue 424: once the lots
+    // `status` EXISTS was per lot, the dense walk cost more than the seed).
+    let (sql, _) = lots_statement(&open(None, None), Scope::Page { after: 0, limit: 25 });
+    assert!(
+        sql.contains("l.tender_id IN (SELECT t.id FROM tenders t") && !sql.contains("c.scheme = 'cpv' AND c.code LIKE ?))"),
+        "bare status=open: the open head alone, no prefix test in the seed: {sql}"
+    );
+
+    // What stays unseeded, deliberately: a cpv without status.
+    let (sql, _) = lots_statement(
+        &Filter { cpv: Some("45".into()), now: NOW, ..Filter::default() },
+        Scope::Page { after: 0, limit: 25 },
+    );
+    assert!(!sql.contains("l.tender_id IN"), "cpv without status stays unseeded: {sql}");
 }
 
 /// The superset trap, cpv edition: the seed reads the tender's HEAD cpv and the

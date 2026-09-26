@@ -26,10 +26,11 @@ fn a_viable_country_drives_the_lots_stream_from_the_classifications_seed() {
         sql.contains("l.tender_id IN (SELECT t.id FROM tenders t") && sql.contains("t.current_deadline > ?"),
         "over-cap country with status=open must drive from the open head: {sql}"
     );
-    // no country at all: no seed of either kind.
+    // no country at all: no country seed — bare status=open drives from the open
+    // head alone (issue 424; pinned in lots_open_head_seed.rs).
     let bare = Filter { status: Some(Status::Open), now: 1_756_000_000, ..Filter::default() };
     let (sql, _) = lots_statement(&bare, Scope::Page { after: 0, limit: 25 });
-    assert!(!sql.contains("l.tender_id IN"), "bare status stays unseeded (fills from the dense walk): {sql}");
+    assert!(!sql.contains("c.scheme = 'nuts'"), "no country, no nuts test in any seed: {sql}");
 }
 
 /// Issue 223, the LOTS half: an org reverse-lookup (winner/bidder/buyer) seeds

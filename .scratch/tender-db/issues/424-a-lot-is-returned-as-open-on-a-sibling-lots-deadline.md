@@ -71,3 +71,21 @@ A public read, free. (Tender 81134 holds both lots.)
 1.20 / 1.14 s, `status=open&limit=100` 1.69 / 1.67 s, `status=open&country=DE&limit=100` 0.96 / 0.93 s,
 `status=closed&limit=100` 0.57 / 0.55 s, `status=closed&cpv=45&limit=100` 0.61 / 0.69 s,
 `status=open&tender=81134` 0.45 / 0.41 s.
+
+**Deployed `83187a5` 16:03 UTC** (gate 130/130, health 200, 0 error lines). Verify reads **done**: tender
+81134's `status=open` lots list only 13415907. After-deploy latency (two reads each): open+cpv45 1.23 /
+1.08 s, open+DE 1.02 / 0.93 s, closed 0.55 / 0.55 s, closed+cpv45 0.64 / 0.63 s, by tender 0.46 / 0.40 s —
+all at baseline — but **bare `status=open&limit=100` rose 1.69 → 2.45 s**: the dense unseeded walk now pays
+the per-lot term on every lot it crosses.
+
+**Follow-up, same issue: seed bare `status=open` from the open head too.** Measured through `/v1/sql`
+(one band, 101 rows, the new per-lot predicate, alternating twice): unseeded 3.56 / 3.53 s incl. ssh,
+open-head seeded (39,871 tenders) 2.21 / 1.92 s — the same rows 322..33,222, ~1.5 s faster. The per-lot
+term changed the arithmetic 423 recorded ("a seed would enumerate every open tender's lots, no better for
+a value this dense"): it is better now. The arm's condition drops its prefix requirement; the tests that
+pinned bare status as unseeded now pin it as seeded (`lots_open_head_seed.rs`, `lots_country_seed.rs`).
+The first gate for this follow-up went **red** (101): `lots_filter_fixture.rs` inserts `tenders` rows without
+`current_deadline`, so the open-head seed saw no open tender and `status=Open` selected 0 of 240 lots. The
+fixture now stamps the column through its real writer (`backfill_current_deadline`, which transcribes the
+election) — prod's fold writes it on every head, and `/v1/tenders?status=` has depended on it since 273.
+Second gate green, 130/130.
