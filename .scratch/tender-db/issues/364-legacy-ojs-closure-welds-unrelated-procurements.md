@@ -1,6 +1,6 @@
 # 364 — the legacy OJS closure is an unbounded transitive closure over unguarded edges: 2,983 versions and 127 buyers in one Tender
 
-Status: UNIT 6 DONE 2026-09-13 (owner) — the target-type gate is deployed (`b9800a2`) and the full pass under it (job 2268) dissolved the residual weld: 4228069 went from 88 versions to the PIN alone, its 35 text-era citers are 35 tenders, 501,696 edges refused by the cited notice's own type, `unknown kind` 0 on both lines, 8,505,541 tenders. Open: read the weld gauge's ≥50 band on the 2026-09-20 report against this pass.
+Status: **DONE 2026-09-26** — the last open item is read: the weld gauge's ≥50 band on the 2026-09-20 weekly report (job 1501) is **1,289**, the same 1,289 the post-pass 09-17 report printed, against 1,326 before unit 6's pass — 37 Tenders left the band and none came back; 4228069 is no longer listed, and the top-40 listing is identical on the two post-pass reports (the ≥3/≥5/≥10 bands moved by the week's ingest only). Unit 6's `A`/`M` decision stays unsized until the r2.0.9 split matters. Was: UNIT 6 DONE 2026-09-13 (owner) — the target-type gate is deployed (`b9800a2`) and the full pass under it (job 2268) dissolved the residual weld: 4228069 went from 88 versions to the PIN alone, its 35 text-era citers are 35 tenders, 501,696 edges refused by the cited notice's own type, `unknown kind` 0 on both lines, 8,505,541 tenders. Open: read the weld gauge's ≥50 band on the 2026-09-20 report against this pass.
 Kind: defect (identity / grouping) — correctness, the CONTEXT.md:112-113 invariant
 Relates to: 92 (records chain 3,282 only as a fold-performance cost, not as a correctness
 signal), ADR-0011 (the eForms edge's three guards, which this edge has none of), ADR-0003
@@ -997,3 +997,22 @@ vocabularies (declared kinds, TD codes) cover everything the corpus published.
 **Remaining on this issue:** the weld gauge's ≥50 band on the 2026-09-20 weekly report, read
 against this pass; and unit 6's `A`/`M` (with-call-for-competition) decision can be sized in
 the r2.0.9 era if the split ever matters. Nothing else is open.
+
+## 2026-09-26 — the weld gauge after the pass: 1,289 on two consecutive reports; closed
+
+| report | computed | ≥3 | ≥5 | ≥10 | ≥50 |
+|---|---|---|---|---|---|
+| 2026-09-06 census (pre-pass, unit 3) | — | 102,840 | 32,497 | 13,297 | **1,326** |
+| job 1462 (2026-09-17, first after job 2268) | 1789647552 | 76,663 | 27,901 | 12,282 | **1,289** |
+| job 1501 (2026-09-20, the scheduled Sunday run) | 1789872693 | 76,707 | 27,927 | 12,295 | **1,289** |
+
+The ≥50 band lost 37 Tenders to the pass and held at 1,289 across the next weekly run — the pass did
+not undo itself and the daily tick is not re-welding (the lower bands grew by 44 / 26 / 13, the week's
+new joint procurements). The ≥3 band's drop from 102,840 to 76,663 between the census and the first
+report is the same pass seen from below: the closure no longer chains text-era citers onto prior
+information they only referenced. The per-ver column on the listing is unchanged: the top entries are
+the concentrated shape (331647 at 505 buyers in one version, 7940336 at 135 per version) — joint
+procurements, which the gauge lists and this issue never claimed. 4228069 (`ojs:2010-001662`, 88
+versions before) is absent from the top 40 on both reports, consistent with the exhibit read on 09-13.
+Nothing remains open; the `A`/`M` (with-call-for-competition) sizing is a question for the r2.0.9 era
+if anyone needs the split, not a deliverable here.
