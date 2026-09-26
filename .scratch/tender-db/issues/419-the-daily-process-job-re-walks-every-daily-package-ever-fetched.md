@@ -1,6 +1,6 @@
 # 419 — the daily process job re-walks every daily package ever fetched, and nothing retires one
 
-Status: ready-for-agent — **BUILT, gated (128/128) and DEPLOYED 2026-09-19 10:06 UTC at `3bee0b5`** (see the foot): the clean-walk watermark is live on the box; the migration added the three ledger columns silently (health green, no journal error). Acceptance is a calendar: a package becomes clean only once a post-deploy walk records it with its fetch id, so Sunday's tick records DÖE/FTS and they skip from Monday, TED records on Monday and skips from Tuesday 09-22, when the Verify block flips. Was: filed 2026-09-19 09:5x UTC by the hourly audit (step 3) from the 07:35 tick's `[process]` lines (issue 407's line made it visible: 71 DÖE/FTS re-walks around two writing walks).
+Status: **DONE 2026-09-26** — the acceptance calendar landed and the `## Verify` block reads done: the newest weekday TED process (job 1551, Friday 2026-09-25 07:35) took **30 s** for `3444 members → 3444 notices (3444 parsed, 0 quarantined, 0 unrecognised, 0 dup); skipped 62 clean package(s) at their current fetch` — the one new daily plus the refetched current day, against 127 s / 197,146 members / 193,672 dup on 09-18. DÖE 3–4 s (skipped 66, then 67), FTS 0–1 s (skipped 17, then 18); the skip count grows by one per fetched day, as designed. Read by the hourly owner firing of 2026-09-26 08:0x UTC after a week of unread check-ins. Was: ready-for-agent — **BUILT, gated (128/128) and DEPLOYED 2026-09-19 10:06 UTC at `3bee0b5`** (see the foot): the clean-walk watermark is live on the box; the migration added the three ledger columns silently (health green, no journal error). Acceptance is a calendar: a package becomes clean only once a post-deploy walk records it with its fetch id, so Sunday's tick records DÖE/FTS and they skip from Monday, TED records on Monday and skips from Tuesday 09-22, when the Verify block flips. Was: filed 2026-09-19 09:5x UTC by the hourly audit (step 3) from the 07:35 tick's `[process]` lines (issue 407's line made it visible: 71 DÖE/FTS re-walks around two writing walks).
 Kind: cost (operability — a linearly growing, unbounded walk inside the morning window, every day)
 Relates to: 407 (the line that showed it, and the `package_rates` ledger the fix extends), 222/403 (the morning window this walk sits in), 32 (per-package resume — a different question: a walk interrupted mid-job), 77/79 (reprocess efficiency — the quarantine reclaim, not the daily walk), 404 (the accidental re-key a daily re-walk performed mid-campaign; under the fix that path closes and `reparse` is the deliberate one), 342 (the FTS comment that states the property the fix must keep).
 Blocked by: nothing
@@ -115,3 +115,19 @@ state: TED's weekday walk is the one new package (and the refetched current day)
 longer pays for the redundancy, so the archive-side one can wait for a disk reason), and the
 conservative rule keeps walking a package with quarantined members — if 77/79's reclaim is ever made
 the only path for those, `is_clean` drops that clause and the ledger already carries the count.
+
+## 2026-09-26 08:0x — the calendar landed; closed on the Verify reading
+
+Every step of the acceptance calendar happened as written. Sunday 09-20's tick walked DÖE and FTS once
+more and recorded clean rows with fetch ids; from Monday they skipped (DÖE `skipped 66 clean package(s)`,
+FTS `skipped 17`); TED recorded on Monday and skipped from Tuesday. The Friday 09-25 reading, the one the
+Verify block quotes: TED **30 s**, `3444 members → 3444 notices … 0 dup`, `skipped 62 clean package(s)`
+(62, not the 58 the calendar estimated — four more weekday dailies were fetched between the estimate and
+the reading, and each becomes clean the day after its first walk). DÖE 3 s / 4 s, FTS 0 s / 1 s on 09-25
+and 09-26. No package was un-retired in the week (no `skipped`/`quarantined` member on any daily walk),
+so the watermark has not yet exercised its dirty path in production; the store test pins it.
+
+The `[process]` line's floor clause (407) reads `floor pending` for the daily kinds — with only the one
+new package walked per day, the trailing median is now built from single-package walks, which is the
+shape 407's floor was calibrated to judge. Nothing further to build; the two deliberate non-goals at the
+foot stand.

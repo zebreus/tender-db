@@ -88,7 +88,7 @@ was never needed; the service's own retention did it. /data free 549G ->
 
     curl -s --max-time 30 https://tenders.zebreus.click/health/deep | python3 -c 'import sys,json; d=json.load(sys.stdin)["checks"]["disk"]; print(d["used_fraction"], d["free_bytes"]//2**30, "GiB free")'
 
-- **done** (headroom): `used_fraction` under 0.9 — read 2026-09-19: `0.688 517 GiB free` (after item 3's 224 GiB reclaim)
+- **done** (headroom): `used_fraction` under 0.9 — read 2026-09-26: `0.499 830 GiB free` (after 420's Sunday rotation pruned the 09-06 copy; 09-19 read `0.688 517 GiB free`)
 - **open**: at or over 0.9 — the next item of the lifecycle model is due, not a cleanup
 
 ## Re-measured 2026-09-01 — the downgrade basis is gone
@@ -401,3 +401,16 @@ fixed as issue 420 (the gate now waits for the queue). The price this record alr
 08-28 holds and is now measured twice: a held reflink snapshot costs full size across any
 whole-corpus rewrite, and a ring that fails to rotate keeps paying it. The disk census's
 `bytes_per_day` (-33.9 GB/day on 09-13) is the reclaim's artefact, not a trend, as its own caveat says.
+
+## 2026-09-26 08:0x — the ring rotated (issue 420): 300 GiB back, and what a held snapshot really costs
+
+`/health/deep` reads `used_fraction 0.499, 830 GiB free`; `df` 828 GiB used of 1.7 TiB. The 09-20 05:23 CEST
+snapshot rotation under 420's gate pruned the 09-06 copy and released ~300 GiB (531 GiB free at the 09-20 01:10
+census → 831 GiB today), not the ~600 the 09-19 entry above expected. The correction to this record's cost model:
+"649 GB ALLOCATED" for the 09-06 copy was `du`'s allocated size, which counts extents a reflink copy still shares
+with the live file — so "fully diverged" was overstated; the copy's PRIVATE extents were ~300 GiB. Today's
+composition: `/data/archive` 180 GiB + live DB 629 GiB (674,860,470,272 bytes) + the two-snapshot ring's private
+extents ~19 GiB = 828 GiB. The lifecycle model's line stands with a sharper number: a held reflink snapshot costs
+whatever pages the live file rewrites while it is held (a whole-corpus fold makes that ~300 GiB in a week; daily
+ticks make it a few GiB a day), and `df` after a prune is the only honest measure of it. Next weekly census (09-27
+01:10 UTC) is the first to carry the rotation.

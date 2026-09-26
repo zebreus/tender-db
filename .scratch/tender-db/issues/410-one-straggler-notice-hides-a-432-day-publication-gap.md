@@ -1,6 +1,6 @@
 # 410 — the continuity check tests the days IMMEDIATELY adjacent to a stretch, so one straggler notice hides a 432-day publication gap
 
-Status: needs-info — waiting on the scheduled Sunday 2026-09-20 `data-quality` run (the weekly tick), the first run since the fix deployed at `7726bcb`. Checked 2026-09-18 01:5xZ: the newest stored report is still job 1462 (computed 2026-09-17 12:19Z, rev `301ee34`, pre-fix) and its section 14 still lists the four `doe` holiday rows and two `ted` ones beside `fts`. Nothing to do until that run lands; then `## Verify` below decides. Was: ready-for-agent — **FIX SHIPPED AND DEPLOYED 2026-09-17** (`7726bcb`), red-checked; the
+Status: **DONE 2026-09-26** — the scheduled Sunday 2026-09-20 `data-quality` run (job 1501, computed_at `1789872693` = 2026-09-20 02:51Z, the first stored report since the fix at `7726bcb`) lists only `fts` in section 14 — the 433-day FTS stretch — and every DÖE and TED holiday row is gone. `## Verify` read 2026-09-26 08:0x UTC: `1789872693` then `['fts']`, the done reading. Was: needs-info — waiting on the scheduled Sunday 2026-09-20 `data-quality` run (the weekly tick), the first run since the fix deployed at `7726bcb`. Checked 2026-09-18 01:5xZ: the newest stored report is still job 1462 (computed 2026-09-17 12:19Z, rev `301ee34`, pre-fix) and its section 14 still lists the four `doe` holiday rows and two `ted` ones beside `fts`. Nothing to do until that run lands; then `## Verify` below decides. Was: ready-for-agent — **FIX SHIPPED AND DEPLOYED 2026-09-17** (`7726bcb`), red-checked; the
 live re-run is the only thing outstanding and is deliberately deferred to a non-colliding window
 (see the comment at the foot). Was: filed 2026-09-17, measured end to end on prod. `fts` has a **432-day silent
 stretch inside the continuity window** and section 14 reported `none`. The mechanism is exact and
@@ -236,3 +236,11 @@ this issue's acceptance comment already read. Section 14 as served today, unchan
 Not re-running it by hand: a `data-quality` run holds the writer for ~90 minutes, and the box has a
 legacy re-projection queued for issue 393 unit 2 tonight. The weekly tick's Sunday run is the signal;
 Status moved to `needs-info` against it, with the check above.
+
+## Comment — 2026-09-26: the Sunday run landed; the Verify block reads done
+
+Job 1501 (`data-quality (weekly)`, 2026-09-20 01:10–02:51 UTC, 6068 s, 24 eras over 35 windows, 0 labels
+unmeasured) is the newest stored report, `computed_at 1789872693`. Its section 14 as served today carries one
+row, `fts` — the 433-day stretch that is a real publication gap on the FTS arm and is expected to stay listed —
+and none of the four DÖE holiday rows (2025-04-17, 2025-12-23, 2026-04-02, 2026-05-13) or the two TED ones that
+job 1462's pre-fix report printed. That is exactly the acceptance this issue parked against on 09-18. Closed.
