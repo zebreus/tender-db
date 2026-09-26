@@ -123,4 +123,9 @@ them apart.)
   the service (read 2026-09-26 12:03 UTC: none yet — the only run so far predates the User-Agent; the first
   scheduled firing is 12:50)
 
+Read 2026-09-26 13:09 UTC: `1 26/Sep/2026:15 200` — the 12:50 firing's check landed at 13:08:44 UTC
+(15:08 box-local), HTTP 200 from 160.79.106.139 with `tender-db-uptime-routine/1`. Scheduled fire → check
+takes ~18 minutes (container start), so each hour's line appears around :08–:10 UTC. One hour of the
+done-state; the next reading that shows two consecutive hours closes the "fires on schedule" half.
+
 A log read on the box, free per `prod-box-reads.md`. The routine itself is listed by `list_triggers`.
