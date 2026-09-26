@@ -685,7 +685,13 @@ rates and the quarantine resolution ledger.</p>
 <h3>Dates</h3>
 <ul>
   <li>Placeholder instants occur at ~55 per 100k dates: year-0000, 1899-12-31
-  (spreadsheet epoch), year-2100 &mdash; published values, kept.</li>
+  (spreadsheet epoch), year-2100 &mdash; published values, kept. A Tender's
+  headline <code>submission_deadline</code> (and <code>status</code>,
+  <code>sort=deadline</code>, <code>deadline_after</code>/<code>_before</code>)
+  ignores a deadline before 1990-01-01 or more than ten years past the notice's
+  publication: a year-0016 or <code>1970-01-01</code> deadline is a typo or an
+  epoch default, not a date; a Lot's <code>submission_deadline</code> ignores the same
+  pre-1990 dates. The published row stays in the version's dates.</li>
   <li>Deadlines <em>before</em> the publication date are a stable 0.2&ndash;0.3%
   source background WITHIN ONE NOTICE &mdash; that is where the measurement was
   taken. At ROW level the comparison means something different and the rate is

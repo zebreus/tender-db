@@ -3581,7 +3581,8 @@ impl Db {
     /// Returns `(rows, watermark)`; `rows == 0` means the walk is complete.
     ///
     /// The `MAX` excludes deadlines beyond `DEADLINE_HORIZON_SECS` past the
-    /// version's publication, which is what `head_deadline` does in memory.
+    /// version's publication and before `DEADLINE_FLOOR_SECS` (issue 171), which
+    /// is what `head_deadline` does in memory.
     ///
     /// **That filter was missing until issue 375**, and its absence was a live
     /// corpus regression rather than an untidiness: `head_deadline` grew the
@@ -3628,8 +3629,10 @@ impl Db {
                      (SELECT MAX(d.utc_seconds) FROM tender_version_dates d
                        WHERE d.tender_id = tenders.id AND d.seq = tenders.current_seq
                          AND d.field = 'submission_deadline'
+                         AND d.utc_seconds >= {}
                          AND d.utc_seconds - tenders.current_published_at <= {})
                   WHERE id > ? AND id <= ?",
+                crate::canonical::DEADLINE_FLOOR_SECS,
                 crate::canonical::DEADLINE_HORIZON_SECS
             ),
             (Value::Integer(after), Value::Integer(watermark)),

@@ -8,6 +8,13 @@
 
 use store::turso::{self, Value};
 
+/// Every instant in this file is an OFFSET from this real 2005 instant: the
+/// helpers add it on the way in and take it off on the way out. The literals
+/// (5000, 7000, "published at 100") predate issue 171's floor and read as
+/// seconds after 1970, which the election now refuses as epoch-zero junk —
+/// shifting the base keeps what each case means instead of rewriting them all.
+const BASE: i64 = 1_118_000_000;
+
 async fn open(name: &str) -> (store::Db, turso::Connection) {
     let path = format!("/tmp/tender-db-dlbf-{name}-{}.db", std::process::id());
     for s in ["", "-wal", "-shm"] {
@@ -23,8 +30,13 @@ async fn open(name: &str) -> (store::Db, turso::Connection) {
 async fn tender(conn: &turso::Connection, id: i64, current_seq: i64) {
     conn.execute(
         "INSERT INTO tenders (id, source, procedure_key, kind, current_seq, current_published_at, created_at)
-         VALUES (?, 'ted', ?, 'procedure', ?, 100, 0)",
-        (Value::Integer(id), Value::Text(format!("pk-{id}")), Value::Integer(current_seq)),
+         VALUES (?, 'ted', ?, 'procedure', ?, ?, 0)",
+        (
+            Value::Integer(id),
+            Value::Text(format!("pk-{id}")),
+            Value::Integer(current_seq),
+            Value::Integer(BASE + 100),
+        ),
     )
     .await
     .unwrap();
@@ -38,7 +50,7 @@ async fn date(conn: &turso::Connection, tender: i64, seq: i64, lot: Option<i64>,
             Value::Integer(tender),
             Value::Integer(seq),
             lot.map(Value::Integer).unwrap_or(Value::Null),
-            Value::Integer(utc),
+            Value::Integer(BASE + utc),
         ),
     )
     .await
@@ -51,7 +63,7 @@ async fn stamped(conn: &turso::Connection, id: i64) -> Option<i64> {
         .await
         .unwrap();
     let row = rows.next().await.unwrap().unwrap();
-    row.get_value(0).unwrap().as_integer().copied()
+    row.get_value(0).unwrap().as_integer().map(|utc| utc - BASE)
 }
 
 #[tokio::test]
@@ -110,7 +122,7 @@ async fn the_backfill_stamps_head_deadlines_in_batches() {
 /// Issue 375: a deadline BEYOND the horizon must not be stamped.
 ///
 /// The test above cannot catch this and never could: its dates sit at 5000/7000
-/// seconds against `current_published_at = 100`, comfortably inside ten years,
+/// seconds against `current_published_at = BASE + 100`, comfortably inside ten years,
 /// so the filtered and unfiltered rules agree on every input it has. That is the
 /// general shape worth remembering — **a test pinning agreement between two
 /// implementations only pins it where they were already going to agree**, and
@@ -124,7 +136,7 @@ async fn the_backfill_stamps_head_deadlines_in_batches() {
 async fn the_backfill_refuses_a_deadline_beyond_the_horizon() {
     let (db, conn) = open("horizon").await;
 
-    // `tender()` publishes at 100, so the horizon ends at 100 + ten years.
+    // `tender()` publishes at BASE + 100, so the horizon ends ten years past that.
     let horizon = store::canonical::DEADLINE_HORIZON_SECS;
     let plausible = 100 + 30 * 86_400;
     let millennium = 100 + horizon + 86_400;
@@ -167,4 +179,38 @@ async fn the_backfill_refuses_a_deadline_beyond_the_horizon() {
         Some(100 + horizon),
         "the horizon is inclusive, the same way head_deadline compares it"
     );
+}
+
+/// Issue 171: the backfill refuses a deadline before `DEADLINE_FLOOR_SECS`, as
+/// `head_deadline` does — the 375 lesson applied before it can recur. The
+/// tenders publish in 2005 (BASE), so the floor, not the horizon, is the only
+/// thing that can refuse. Offsets below are from BASE, like everything here.
+#[tokio::test]
+async fn the_backfill_refuses_a_deadline_before_the_floor() {
+    let (db, conn) = open("floor").await;
+    let floor = store::canonical::DEADLINE_FLOOR_SECS - BASE;
+    let epoch_zero = -BASE;
+    let plausible = 100 + 30 * 86_400;
+
+    // 1: epoch zero beside a real date; 2: epoch zero alone; 3: exactly ON it.
+    for id in 1..=3 {
+        tender(&conn, id, 1).await;
+    }
+    date(&conn, 1, 1, None, epoch_zero).await;
+    date(&conn, 1, 1, None, plausible).await;
+    date(&conn, 2, 1, None, epoch_zero).await;
+    date(&conn, 3, 1, None, floor).await;
+
+    let mut after = 0;
+    loop {
+        let (rows, next) = db.backfill_current_deadline(10, after).await.unwrap();
+        if rows == 0 {
+            break;
+        }
+        after = next;
+    }
+
+    assert_eq!(stamped(&conn, 1).await, Some(plausible), "the real date wins");
+    assert_eq!(stamped(&conn, 2).await, None, "1970-01-01 alone is no deadline");
+    assert_eq!(stamped(&conn, 3).await, Some(floor), "the floor is inclusive, as head_deadline has it");
 }

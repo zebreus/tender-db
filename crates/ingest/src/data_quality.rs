@@ -778,8 +778,9 @@ const SENTINEL_DATE_HORIZON_SECS: i64 = 10 * 365 * 86_400;
 
 /// The near edge: 1990-01-01. TED's own record starts in the 1990s, so an earlier date
 /// is a placeholder, an epoch-zero default or a century typo rather than a procurement
-/// date.
-const SENTINEL_DATE_FLOOR: i64 = 631_152_000;
+/// date. Since issue 171 the head-deadline election refuses below the same instant, so
+/// this is the store's constant rather than a copy of it.
+const SENTINEL_DATE_FLOOR: i64 = store::canonical::DEADLINE_FLOOR_SECS;
 
 /// Published amounts that REPEAT inside the implausible tail (issue 366).
 ///

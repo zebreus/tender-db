@@ -1305,7 +1305,12 @@ pub fn head_deadline(head: &TenderVersion) -> Option<i64> {
         // `status=open&sort=deadline&order=desc`. A deadline a thousand years out
         // is not a late deadline, it is a typo, so the horizon excludes it and the
         // real date wins.
-        .filter(|d| *d - head.published_at <= DEADLINE_HORIZON_SECS)
+        //
+        // Issue 171 (rule 12): the same unarguable class on the near side. MAX
+        // already lets any real sibling beat a year-0016 typo, so what the floor
+        // changes is the tender whose ONLY deadline is one — five on prod
+        // (2026-09-26), sorting FIRST on `sort=deadline&order=asc`.
+        .filter(|d| *d >= DEADLINE_FLOOR_SECS && *d - head.published_at <= DEADLINE_HORIZON_SECS)
         .max()
 }
 
@@ -1429,6 +1434,26 @@ pub const IMPLAUSIBLE_EUR_CENTS: i64 = 10_000_000_000_000;
 /// within one year — and it is set there so the rule only ever catches the
 /// unarguable, like tender 3323836's year-3005 sibling.
 pub const DEADLINE_HORIZON_SECS: i64 = 10 * 365 * 86_400;
+
+/// The earliest instant a submission deadline may name before it is read as a
+/// placeholder rather than a date (issue 171, the research profile's rule 12):
+/// 1990-01-01 UTC. TED's own record starts in the 1990s, and the five head
+/// deadlines below it on prod (2026-09-26) were a two-digit year stored as
+/// year 0016 and 0025, year 0007 in a 2008 notice, 0206 for 2016, and the
+/// epoch zero `1970-01-01` in a 2024 notice. The band just above it is real:
+/// 1991–92 deadlines restated by 1993 award notices.
+///
+/// **Absolute, not relative to publication like the horizon**, and that is
+/// deliberate. A head version is a union of its notices (`/docs#caveats`,
+/// issue 370): the newest notice sets `published_at` while a deadline it is
+/// silent about is carried forward from an earlier one. So a genuine 2008
+/// deadline can sit on a head published in 2023 by a contract modification,
+/// and a "ten years before publication" rule would delete it. Nothing genuine
+/// sits before 1990.
+///
+/// The weekly data-quality run's sentinel-date detector reads this same
+/// constant as its floor, so it lists exactly what the election refuses.
+pub const DEADLINE_FLOOR_SECS: i64 = 631_152_000;
 
 /// A published amount that is a placeholder rather than a figure, and so must
 /// never be elected as a Tender's headline value (issue 366, measured on prod

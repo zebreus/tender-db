@@ -1798,9 +1798,10 @@ fn tender_select_head(from: &str, lang: Option<&str>) -> String {
     // taste — this issue and 343 are both "two places computed one election and
     // disagreed", so a second implementation is the thing to avoid:
     //
-    // - The deadline horizon is one arithmetic comparison against one constant,
-    //   so it transcribes faithfully and the constant itself is interpolated
-    //   from `canonical` rather than retyped.
+    // - The deadline window is two comparisons against two constants (the
+    //   horizon, and issue 171's floor), so it transcribes faithfully and the
+    //   constants themselves are interpolated from `canonical` rather than
+    //   retyped.
     // - The amount rule is a DIGIT WALK (`sentinel_amount`) plus a ceiling, and
     //   transcribing that into SQL would be exactly the second implementation.
     //   So the amount pick does not re-derive anything: it looks up the row the
@@ -1817,7 +1818,8 @@ fn tender_select_head(from: &str, lang: Option<&str>) -> String {
             Some("submission_deadline"),
             "s.utc_seconds DESC, (s.lot_id IS NULL) DESC, s.lot_id",
             &format!(
-                "s.utc_seconds - v.published_at <= {}",
+                "s.utc_seconds >= {} AND s.utc_seconds - v.published_at <= {}",
+                crate::canonical::DEADLINE_FLOOR_SECS,
                 crate::canonical::DEADLINE_HORIZON_SECS
             ),
         )
@@ -3575,6 +3577,15 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
             )
             .await?;
         while let Some(row) = got.next().await? {
+            // Issue 171: the head election's floor, so a lot does not serve the
+            // year-0016 or `1970-01-01` its tender no longer does (lot 6556410,
+            // 3509049 on 2026-09-26). The floor alone, not the horizon: a pre-1990
+            // date is never `> now`, so this changes no `status` answer, whereas
+            // the horizon WOULD split display from the lots `status` EXISTS,
+            // which carries no horizon (issue 422).
+            if opt_int_of(&row, 1).is_some_and(|utc| utc < crate::canonical::DEADLINE_FLOOR_SECS) {
+                continue;
+            }
             match opt_int_of(&row, 0) {
                 // Lot-scoped: this lot's own date, latest wins — unchanged.
                 Some(lot_id) => {

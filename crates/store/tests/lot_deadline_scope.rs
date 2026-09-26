@@ -239,3 +239,33 @@ async fn no_deadline_means_no_scope() {
     let tenders = read::tenders(&conn, &filter, Scope::Page { after: 0, limit: 10 }).await.unwrap();
     assert_eq!((tenders[0].deadline, tenders[0].deadline_scope), (None, None));
 }
+
+/// Issue 171: a lot does not serve a deadline its tender's election refuses. Prod
+/// on 2026-09-26: lot 6556410 served `0016-06-09` (a two-digit year) and lot
+/// 3509049 `1970-01-01`. The procedure's typo must not be inherited either, and a
+/// lot's own typo must not beat an inheritable real date — the fallback applies
+/// only to a lot left with nothing of its own.
+#[tokio::test]
+async fn a_lot_never_serves_a_deadline_below_the_floor() {
+    let conn = fixture("floor").await;
+    let year_16 = -61_648_419_600;
+    assert!(year_16 < store::canonical::DEADLINE_FLOOR_SECS);
+    lot(&conn, 1, "LOT-1").await;
+    lot(&conn, 2, "LOT-2").await;
+    // LOT-1 publishes only a typo of its own; the procedure publishes a real date.
+    deadline(&conn, Some(1), year_16, 0).await;
+    deadline(&conn, None, TENDER_DEADLINE, 0).await;
+
+    assert_eq!(
+        served(&conn, None).await,
+        vec![("LOT-1".to_owned(), Some(TENDER_DEADLINE)), ("LOT-2".to_owned(), Some(TENDER_DEADLINE))],
+        "a refused own deadline leaves the lot with none of its own, so it inherits"
+    );
+
+    // The procedure's ONLY deadline is epoch zero: nothing to serve, nothing open.
+    let conn = fixture("floor-alone").await;
+    lot(&conn, 1, "LOT-1").await;
+    deadline(&conn, None, 0, 60).await;
+    assert_eq!(served(&conn, None).await, vec![("LOT-1".to_owned(), None)]);
+    assert!(served(&conn, Some(Status::Open)).await.is_empty(), "and it opens nothing");
+}

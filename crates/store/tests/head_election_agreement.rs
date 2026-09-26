@@ -19,7 +19,7 @@
 //! expectations are read back off the stored head columns. Revert either side
 //! and these fail.
 
-use store::canonical::{DEADLINE_HORIZON_SECS, Fact, TenderProjection, TenderVersion};
+use store::canonical::{DEADLINE_FLOOR_SECS, DEADLINE_HORIZON_SECS, Fact, TenderProjection, TenderVersion};
 use store::read::{self, Filter, Scope};
 use store::turso::{self, Value};
 
@@ -172,6 +172,55 @@ async fn a_tender_whose_only_amount_is_refused_serves_no_value() {
     assert_eq!(row.currency, None, "and no currency comes with a value that is not there");
 }
 
+/// Issue 171 (rule 12): the near side of the same window. Prod served five head
+/// deadlines before 1990 on 2026-09-26 — 5671586's year 0016 (a two-digit
+/// year), 1466977's `1970-01-01` in a 2024 notice — and every one of them was
+/// its tender's ONLY deadline, so MAX had nothing better to pick and they sorted
+/// first on `sort=deadline&order=asc`. Both shapes are pinned: the typo beside a
+/// real date (MAX already coped; the floor must not break it) and the typo
+/// alone, which must read as no deadline on the fold's column AND on the row.
+#[tokio::test]
+async fn a_deadline_before_the_floor_is_refused_by_the_fold_and_the_row_alike() {
+    let (db, conn) = open("floor").await;
+
+    // Year 0016 — what a two-digit `16` becomes when parsed as a full year.
+    let year_16 = -61_648_419_600;
+    let epoch_zero = 0;
+    let plausible = PUBLISHED_AT + 10 * 86_400;
+    assert!(year_16 < DEADLINE_FLOOR_SECS && epoch_zero < DEADLINE_FLOOR_SECS);
+
+    db.apply_tenders(
+        &[
+            projection(1, vec![deadline(year_16), deadline(plausible)]),
+            projection(2, vec![deadline(epoch_zero)]),
+            // Exactly ON the floor is admitted: the boundary is where two
+            // transcriptions of one rule drift apart.
+            projection(3, vec![deadline(DEADLINE_FLOOR_SECS)]),
+        ],
+        PUBLISHED_AT,
+        false,
+    )
+    .await
+    .unwrap();
+
+    assert_eq!(head(&conn, 1).await.1, Some(plausible), "the real date still wins");
+    assert_eq!(head(&conn, 2).await.1, None, "an epoch-zero-only tender has no deadline");
+    assert_eq!(head(&conn, 3).await.1, Some(DEADLINE_FLOOR_SECS), "the floor is inclusive");
+
+    let rows = read::tenders(&conn, &Filter::default(), Scope::Page { after: 0, limit: 10 })
+        .await
+        .unwrap();
+    assert_eq!(rows.len(), 3);
+    for row in rows {
+        assert_eq!(
+            row.deadline.as_ref().map(|d| d.utc_seconds),
+            head(&conn, row.id).await.1,
+            "tender {}: the row must serve the deadline the fold elected",
+            row.id
+        );
+    }
+}
+
 /// The horizon in the SQL is interpolated from the constant, not retyped, and
 /// the amount pick reuses the fold's elected value instead of re-deriving it.
 /// Both are the anti-drift property this issue exists for: a literal or a
@@ -188,6 +237,10 @@ fn the_read_layer_reuses_the_election_rather_than_repeating_it() {
     assert!(
         sql.contains(&format!("<= {DEADLINE_HORIZON_SECS}")),
         "the horizon must come from DEADLINE_HORIZON_SECS: {sql}"
+    );
+    assert!(
+        sql.contains(&format!("s.utc_seconds >= {DEADLINE_FLOOR_SECS}")),
+        "the floor must come from DEADLINE_FLOOR_SECS: {sql}"
     );
     assert!(
         sql.contains("s.eur_cents = t.current_value_eur_cents"),
