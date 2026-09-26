@@ -128,4 +128,17 @@ Read 2026-09-26 13:09 UTC: `1 26/Sep/2026:15 200` — the 12:50 firing's check l
 takes ~18 minutes (container start), so each hour's line appears around :08–:10 UTC. One hour of the
 done-state; the next reading that shows two consecutive hours closes the "fires on schedule" half.
 
+**First miss, read 2026-09-26 14:49 UTC — the watcher fails SILENT when its own infrastructure fails.** The
+13:50 firing never reached the box: `get_trigger` shows `last_run` `ROUTINE_RUN_STATUS_PENDING` an hour on,
+and its session (`cse_016ddwkSjK98ZjsReE3y3wG9`) reads `failed` — **"Cloud container never started"**. No
+`TENDER-DB DOWN` could be sent, because the alert is written BY the run; a run that never starts says
+nothing, which is indistinguishable from "healthy" to the owner. So one hour of 2026-09-26 had no external
+check at all, and the only thing that noticed is this operating session reading the nginx log.
+
+Standing mitigation (now part of every hourly firing's OPERATE step): read the Verify line above and, on
+a gap, `get_trigger` + `get_session` on the missing run — so the watcher's own misses are recorded here.
+Decision rule, taken now: if misses exceed **one per day** over the next 48 h, add a twin routine at `:20`
+(an hour then needs two independent container failures to go dark); at one or fewer, the single routine
+plus this session's read is proportionate. Twin cost is 24 more short cloud runs a day for a curl.
+
 A log read on the box, free per `prod-box-reads.md`. The routine itself is listed by `list_triggers`.
