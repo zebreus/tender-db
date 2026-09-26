@@ -172,17 +172,59 @@ pub const LINKAGE_SQL: &str = "SELECT n.profile, \
 /// it — the first full run reported `0` award notices against `139,961` with
 /// results, a state that cannot exist. A hardcoded vocabulary in a query that
 /// claims to span eras is exactly the trap issue 174 named.
-pub const SECTIONS_CAN_SQL: &str = "SELECT n.profile, COUNT(*) AS can_notices \
-       FROM tender_versions tv JOIN notices n ON n.id = tv.caused_by_notice_id \
-      WHERE EXISTS(SELECT 1 FROM notice_sections s \
-                    WHERE s.notice_id = tv.caused_by_notice_id \
-                      AND s.kind IN ('LotResult', 'TenderResult')) \
-      GROUP BY n.profile";
+pub fn sections_can_sql() -> String {
+    sections_can_template("")
+}
+
+fn sections_can_template(win: &str) -> String {
+    format!(
+        "SELECT n.profile, COUNT(*) AS can_notices \
+           FROM tender_versions tv JOIN notices n ON n.id = tv.caused_by_notice_id \
+          WHERE {win}({probe}) \
+          GROUP BY n.profile",
+        probe = result_section_probe("tv.caused_by_notice_id"),
+    )
+}
+
+/// The section kinds a parsed result lands under: `LotResult` for every era that
+/// synthesises one per award block, `TenderResult` for the DÖE sdk-0.1 island
+/// (`project.rs` `SDK01_RESULT_KIND`). Both, always — see the note on
+/// [`sections_can_sql`] for the run that read 0 against 139,961 with one of them.
+pub const RESULT_SECTION_KINDS: [&str; 2] = ["LotResult", "TenderResult"];
+
+/// "This notice parsed a result section", as SQL over `notice_sections`, for the
+/// notice-id expression `notice`.
+///
+/// **One point seek per kind, not one probe with `kind IN (…)`** (issue 243). The
+/// `IN` form seeks `notice_sections` by its primary key's `notice_id` prefix and
+/// walks every section of the notice filtering on `kind` — turso's plan reads
+/// `SEARCH s USING INDEX sqlite_autoindex_notice_sections_1 (notice_id=?)`. An
+/// eForms notice carries ~57 sections per version (lots, organisations, results,
+/// parts), so the walk made this probe the cost of the two queries that carry
+/// it: on the 2026-09-20 weekly run `sections_can` was 1,173 s and `awards`
+/// 1,880 s of 6,057 s, and the five eForms-dense windows cost ten times the
+/// text-era ones. Two equality probes seek `notice_sections_kind_notice
+/// (kind=? AND notice_id=?)` — measured on prod, 10k eForms tenders: `awards`
+/// 9.9 s → 2.3 s, `sections_can` 2.6 s → 1.8 s (and >10 s → 2.4 s on 25k),
+/// identical rows. The planner's choice is pinned by
+/// `the_result_section_probe_seeks_kind_then_notice` in `tests/data_quality.rs`.
+fn result_section_probe(notice: &str) -> String {
+    RESULT_SECTION_KINDS
+        .iter()
+        .map(|kind| {
+            format!(
+                "EXISTS(SELECT 1 FROM notice_sections s \
+                        WHERE s.kind = '{kind}' AND s.notice_id = {notice})"
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(" OR ")
+}
 
 /// Results materialisation per era, numerator: award-notice versions whose own
 /// notice actually produced a canonical `lot_results` row.
 ///
-/// Version-driven, matching [`SECTIONS_CAN_SQL`]'s unit — and that is a FIX, not a
+/// Version-driven, matching [`sections_can_sql`]'s unit — and that is a FIX, not a
 /// windowing convenience (issue 230). The previous form drove from `lot_results`
 /// and counted `COUNT(DISTINCT lr.notice_id)`, so the denominator counted versions
 /// while the numerator counted notices: a notice causing two versions contributed
@@ -486,9 +528,7 @@ fn awards_template(win: &str) -> String {
                                       WHERE lr.tender_id = tv.tender_id \
                                         AND lr.notice_id = tv.caused_by_notice_id) \
                          THEN 1 ELSE 0 END) AS with_results, \
-                SUM(CASE WHEN NOT EXISTS(SELECT 1 FROM notice_sections s \
-                                          WHERE s.notice_id = tv.caused_by_notice_id \
-                                            AND s.kind IN ('LotResult', 'TenderResult')) \
+                SUM(CASE WHEN NOT ({result_section}) \
                          THEN 1 ELSE 0 END) AS no_award_content, \
                 SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_result_winners w \
                                       WHERE w.tender_id = tv.tender_id AND w.seq = tv.seq) \
@@ -504,6 +544,7 @@ fn awards_template(win: &str) -> String {
           WHERE {win}({award}) \
           GROUP BY n.profile",
         award = award_predicate(),
+        result_section = result_section_probe("tv.caused_by_notice_id"),
     )
 }
 
@@ -1485,7 +1526,7 @@ pub fn queries() -> Vec<(String, String)> {
     out.push(("doc_types".to_owned(), doc_type_sql()));
     // The section→row invariant, under its own name (issue 235): worth keeping,
     // just not a density.
-    out.push(("sections_can".to_owned(), SECTIONS_CAN_SQL.to_owned()));
+    out.push(("sections_can".to_owned(), sections_can_sql()));
     out.push(("sections_with".to_owned(), SECTIONS_WITH_SQL.to_owned()));
     out.push(("merge".to_owned(), MERGE_SQL.to_owned()));
     // The VAT basis of what the projection wrote (issue 251).
@@ -1587,7 +1628,8 @@ pub fn windowed_queries() -> Vec<WindowedQuery> {
     });
     out.push(WindowedQuery {
         label: "sections_can".to_owned(),
-        template: SECTIONS_CAN_SQL.replace("WHERE EXISTS(", "WHERE {window} AND EXISTS("),
+        // Built by the same template as the catalog form, like `awards` below.
+        template: sections_can_template("{window} AND "),
         column: "tv.tender_id".to_owned(),
     });
     out.push(WindowedQuery {
@@ -5406,9 +5448,19 @@ mod tests {
     /// notices against 139,961 with results and rendered it as `—`.
     #[test]
     fn the_section_invariant_spans_both_result_kinds_and_a_contradiction_is_named() {
+        let sql = sections_can_sql();
+        for kind in ["LotResult", "TenderResult"] {
+            assert!(
+                sql.contains(&format!("s.kind = '{kind}'")),
+                "sdk-0.1 names its results `TenderResult` (project.rs SDK01_RESULT_KIND), \
+                 legacy eras `LotResult` — both must be probed, each by equality so the \
+                 (kind, notice_id) index serves it (issue 243): {sql}"
+            );
+        }
         assert!(
-            SECTIONS_CAN_SQL.contains("s.kind IN ('LotResult', 'TenderResult')"),
-            "sdk-0.1 names its results `TenderResult` (project.rs SDK01_RESULT_KIND): {SECTIONS_CAN_SQL}"
+            !sql.contains("kind IN ("),
+            "an `IN` on kind walks the notice's sections by the primary-key prefix — \
+             the shape issue 243 measured at 1,173 s a week: {sql}"
         );
 
         let raw = Raw::from_labelled(vec![

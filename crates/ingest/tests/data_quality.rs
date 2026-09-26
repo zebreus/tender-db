@@ -603,3 +603,39 @@ async fn the_continuity_window_is_publication_time_not_ingest_order() {
          bracket, so the 28-day blackout reports as no gap at all — {blind:?}"
     );
 }
+
+
+/// Issue 243: the result-section probe must be two point seeks on
+/// `notice_sections(kind, notice_id)`, never a walk of the notice's sections by
+/// the primary key's `notice_id` prefix. An eForms notice carries ~57 sections
+/// per version, and that walk made `sections_can` (1,173 s) and `awards`
+/// (1,880 s) the two most expensive queries of the 6,057 s weekly run on
+/// 2026-09-20. turso's own planner is the authority on which shape it picks,
+/// so the plan is pinned here the way the store pins its re-queue seeks
+/// (`the_requeue_statements_seek_notices_by_rowid`).
+#[tokio::test]
+async fn the_result_section_probe_seeks_kind_then_notice() {
+    let (db, _fetch_id, path) = scratch("plans243").await;
+    db.ensure_unprojected_index().await.expect("prod's partial index");
+    let queries = data_quality::windowed_queries();
+    let probed: Vec<_> =
+        queries.iter().filter(|q| q.label == "sections_can" || q.label == "awards").collect();
+    assert_eq!(probed.len(), 2, "both carriers of the probe are windowed");
+    for q in probed {
+        let sql = q.sql(0, 250_001);
+        let rows = db.measure_rows(&format!("EXPLAIN QUERY PLAN {sql}")).await.expect("plan");
+        let plan = rows.iter().map(|r| format!("{r:?}")).collect::<Vec<_>>().join("\n");
+        assert!(
+            plan.contains("notice_sections_kind_notice (kind=? AND notice_id=?"),
+            "{}: the result-section probe must seek (kind, notice_id); plan:\n{plan}",
+            q.label
+        );
+        assert!(
+            !plan.contains("sqlite_autoindex_notice_sections_1 (notice_id=?"),
+            "{}: the probe walks the notice's sections by the primary-key prefix again \
+             (issue 243's 10× windows); plan:\n{plan}",
+            q.label
+        );
+    }
+    let _ = std::fs::remove_file(&path);
+}

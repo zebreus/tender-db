@@ -1,6 +1,6 @@
 # 243 — the data-quality pass went from 40 minutes to ~4 hours, and it holds the job queue the whole time
 
-Status: the award merge is DONE in code 2026-08-19 (one `awards` query replacing three); the
+Status: ready-for-agent — **the result-section probe is REWRITTEN as two point seeks, gated (129/129) 2026-09-26** (see the last section): `kind IN (…) AND notice_id = ?` planned as a walk of every section of the notice by the primary key's `notice_id` prefix, and the eForms windows (tender ids ≤ 1.25M, 57 sections per version) were paying ten times the text era for it in `sections_can` (1,173 s) and `awards` (1,880 s) of the 6,057 s run; on prod slices the two-seek form is 4–6× faster with identical rows, and turso's plan is pinned by a test. Deploying on the idle Saturday queue; **the Sunday 2026-09-27 01:10 UTC weekly run is the measurement** — read its `cost by query` line. Next candidates (covering indexes for `title`/`buyer`/`cpv`, a single code read for `awards`+`doc_types`) are sized at the foot, none built. Was: the award merge is DONE in code 2026-08-19 (one `awards` query replacing three); the
 `sections_can`/`sections_with` pair is the remaining candidate. Runtime figure corrected to 92.8 min.
 Kind: cost regression in a scheduled job (correct numbers, impractical runtime)
 Blocked by: — (the fix wants the per-label cost breakdown this very run will print)
@@ -194,3 +194,75 @@ consequences worth having on the record:
 Next, if it is worth it: `sections_can` (900 s) and `sections_with` (28 s) are the same shape for section
 3b. That pair is worth more than the remainder of this one, and the same A/B-first discipline applies —
 run both forms against prod on one window and compare row for row before touching the plumbing.
+
+
+---
+
+## 2026-09-26 — the remaining half, measured: the cost is one probe's shape, and it is in the eForms windows
+
+A month of the run's own `cost by query` lines (08-20 … 09-20, 23 runs) keeps the same ranking:
+`awards` 1,500–3,900 s, `sections_can` 700–1,600 s, `title` 600–980 s, `doc_types` 300–1,900 s
+(cache-dependent), everything else under 250 s. The 2026-09-20 weekly run (job 1501): **6,057 s**;
+`awards` 1,880, `sections_can` 1,173, `title` 963, `doc_types` 348, `cpv` 235 — the top three are
+66 % of the run.
+
+**Where the time goes is a window shape, not a query shape.** The per-window log line says windows
+1–5 (`tender_id` ≤ 1.25M) take 360–520 s each, windows 6–17 take 40–65 s, 18–34 take 80–230 s:
+the first five windows are 43 % of the windowed time. A bounded count per window says it is not
+row count — windows 1–5 hold ~580k versions each, window 34 holds 498k and runs in 228 s, window
+18 holds 399k and runs in 80 s. It is the ERA: tender ids 1..1.25M are the daily-ingested eForms
+corpus (minted first, before the legacy backfills took the higher ids), and an eForms version
+carries **75 `notice_codes` rows and 57 `notice_sections` rows** against 5 / 4 for sdk-0.1 and
+11 / 2 for the text era (5k-tender slices, bounded reads). Every per-notice probe that walks a
+prefix pays ten times there. (The 08-19 A/B above called window 1,840,000–2,100,000 "text era" —
+right for that window, and the reason the merge's 30 % was measured on the cheap shape.)
+
+**turso's plans, from a scratch DB with the real schema** (the prod-box-reads pattern; `/v1/sql`
+refuses `EXPLAIN`): the codes probe already seeks all three key columns —
+`notice_codes_1 (notice_id=? AND section_id=? AND field_id=?)` — so the award predicate is tight.
+The result-section probe does NOT: `kind IN ('LotResult', 'TenderResult') AND notice_id = ?` plans
+as `SEARCH s USING INDEX sqlite_autoindex_notice_sections_1 (notice_id=?)` — the primary key's
+prefix, walking every section of the notice and filtering on `kind`; `notice_sections_kind_notice
+(kind, notice_id)` is never used. That probe sits in `sections_can` (every version) and in
+`awards`' `no_award_content` column (every award version). The field probes (`title`, `cpv`,
+`buyer`) seek `(tender_id, seq)` and then read each satellite row to test `field`/`scheme`/`role`
+— 13 rows per eForms version for `title`.
+
+**A/B on prod, bounded slices, rows compared for equality:**
+
+| slice | query | as written | two point seeks on `(kind, notice_id)` |
+|---|---|---|---|
+| 0..25,001 (eForms, 58k versions) | `sections_can` | **>10 s (capped)** | 2.40 s |
+| 0..10,001 (eForms, 23k versions) | `awards` | 9.93 s | **2.34 s** |
+| 0..10,001 | `sections_can` | 2.64 s | 1.79 s |
+| 0..8,001 | `sections_can` | 0.81 s | 0.13 s |
+| 4,250,001..4,275,001 (text, 38k versions) | `sections_can` | 0.96 s | 0.23 s |
+| 0..10,001 | `doc_types` (unchanged) | 2.35 s | — |
+| 0..25,001 | `title` / `buyer` / `cpv` / `value` as written | 4.23 / 1.54 / 1.10 / 0.28 s | — |
+| 0..25,001 | bare versions→notices scan (the floor) | 0.17 s | — |
+
+Identical rows in every pair. The floor scan is 0.17 s on the same slice, so the probes are the
+whole cost and the scan-sharing merge this record once planned would buy nothing by itself.
+
+**Built (this firing):** `result_section_probe()` — one `EXISTS` per kind in
+`RESULT_SECTION_KINDS`, each an equality on `kind` and `notice_id` — shared by `sections_can_sql()`
+(now a template like `awards`, windowed by the same builder) and `awards_template`'s
+`no_award_content`. The planner's choice is pinned by
+`the_result_section_probe_seeks_kind_then_notice` (`tests/data_quality.rs`, turso's `EXPLAIN
+QUERY PLAN` on a scratch DB with prod's schema) and the vocabulary test now asserts the equality
+form. The stale "~10 minute" / "36-minute" comments in `supervisor.rs` (step 5 above) say ~100
+minutes and point at the cost line. Expected: `sections_can` ~1,173 → ~300 s, `awards` ~1,880 →
+~600–900 s (its sections walk ran only on award rows, but on eForms rows they are most rows);
+the run's total from ~6,050 s to ~4,000 s. **The Sunday 2026-09-27 01:10 UTC run is the
+measurement** — read its `cost by query` line against the table at the top of this section.
+
+**Next, in order of value, none built yet:** (1) `title` 963 s, `buyer` 194 s, `cpv` 235 s — a
+covering index per satellite, `(tender_id, seq, field)` on `tender_version_texts` and the like,
+turns the 13-row walk into a first-match seek; that is a migration on the largest satellites
+(a long writer hold, a production write — gated with the other jobs), so it is a decision for
+Lennart with the 09-27 cost line in hand. (2) `doc_types` 348 s + the award predicate probe the
+same `(notice_id, 'PROCEDURE', field_id)` key up to three times per version (`award`, `unknown`,
+`any`); one scalar read of the code per marker could serve all three, but that changes how the
+section-3 denominator is evaluated and wants its own parity A/B. (3) `sections_can` and `awards`
+still compute the (now cheap) sections probe twice for award rows; folding `sections_can` into the
+awards pass is the 08-19 merge's shape and is worth ~100 s at most after this unit.

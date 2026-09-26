@@ -1264,8 +1264,10 @@ impl Supervisor {
             // full-corpus scale, and they are far too expensive for the
             // dashboard's 60s cadence. As a job they are queue-serialized, run on
             // the reader pool, carry a phase record, and land in the job log.
-            // The measurement is a ~10 minute full-corpus pass that holds the
-            // queue (jobs are serialized), so it asks to be meant: `dry_run`
+            // The measurement is a full-corpus pass of ~100 minutes (6,057 s on
+            // 2026-09-20; the number moves whenever a query is added, and the run's
+            // own `cost by query` line is where it is read — issue 243) that holds
+            // the queue (jobs are serialized), so it asks to be meant: `dry_run`
             // defaults to TRUE and a dry run only reports what it would do. Same
             // safe-default convention as `mark-skipped-siblings` — a forgotten
             // flag must mean the harmless thing.
@@ -10615,7 +10617,7 @@ impl Supervisor {
         {
             {
                     // Never stack two: if last week's run is still waiting behind
-                    // something long, a second one would double a 36-minute job for
+                    // something long, a second one would double a ~100-minute job for
                     // one report that gets overwritten anyway.
                     if self.already_pending("data-quality") {
                         eprintln!("[schedule] data-quality already queued or running, skipping this week");
@@ -12500,7 +12502,7 @@ mod tests {
 
     /// Issue 230: the weekly measurement's slot is a claim about the calendar, so
     /// the calendar arithmetic is checked. A tick that silently landed on the wrong
-    /// weekday would queue a 36-minute job into a busy morning.
+    /// weekday would queue a ~100-minute job into a busy morning.
     #[test]
     fn the_weekly_report_tick_lands_on_its_named_weekday() {
         // 2026-08-16 is a Sunday, the 18th a Tuesday.
