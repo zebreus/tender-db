@@ -1,6 +1,6 @@
 # 421 — the public SQL guidance recommends a satellite join that turso plans backwards, and it times out over any range
 
-Status: ready-for-agent — filed 2026-09-26 10:5x UTC from issue 243's check of whether a covering
+Status: ready-for-agent — **BUILT 2026-09-26** (see the foot): the six view descriptions, the refusal message they feed and the `/v1/sql` overview now recommend `tenders t CROSS JOIN tender_version_… x`, pinned by a plan test; the prod-read guide carries the fifth trap row. Gate, deploy and the live Verify follow. Was: ready-for-agent — filed 2026-09-26 10:5x UTC from issue 243's check of whether a covering
 index would help the public SQL surface. Measured on prod, reproducible, cause identified; the
 guidance fix and a guard hint are unbuilt.
 Kind: public API correctness of guidance (a documented query shape that cannot complete)
@@ -50,6 +50,38 @@ tender_version_texts AS x`), and adding `(tender_id, seq, field|scheme)` indexes
   already names causes; this would be one more).
 - The 20,001..22,000 pair above re-measured live: both under 1 s.
 - `docs/agents/prod-box-reads.md`'s planner-trap table gains this as its fifth row.
+
+## 2026-09-26 11:xx — which joins fail, measured; the guidance fix built
+
+Every tenders-to-version-table join over the same 2,000 Tenders (20,001..22,000), plain `JOIN`
+against `CROSS JOIN`:
+
+| version table | plain JOIN | CROSS JOIN |
+|---|---|---|
+| `tender_versions` | 0.08 s | 0.04 s |
+| `tender_version_parties` (`role LIKE '%uyer%'`) | **>10 s (408)** | 0.06 s |
+| `tender_version_classifications` (`scheme = 'cpv'`) | **>10 s (408)** | 0.04 s |
+| `tender_version_texts` (`field = 'title'`) | **>10 s (408)** | 0.08 s |
+| `tender_version_amounts` | 0.09 s | 0.03 s |
+| `tender_version_dates` | 0.10 s | 0.04 s |
+| `tender_version_lot_results` | 0.08 s | 0.03 s |
+| `tender_version_result_winners` | 0.05 s | 0.03 s |
+
+The failures are exactly the joins that filter a column of the version table. A point read
+(`t.id = 25808`) is fine either way (0.03–0.04 s). CROSS JOIN is never slower, so the guidance
+recommends it for every tenders-to-version-table join rather than listing which ones need it.
+
+**Built:** `sql.rs`'s descriptions for `v_tenders`, `v_tender_buyers`, `v_awards`,
+`v_tender_classifications`, `v_tender_amounts` and `v_tender_dates` now show the CROSS JOIN form
+and say why; the refusal message quotes that text, so a refused view read names it too; the
+`/v1/sql` overview gains one paragraph with the example and the measured cost. Test
+`the_recommended_version_joins_drive_from_tenders_and_seek` asserts every one of those notes says
+CROSS JOIN, and reads turso's `EXPLAIN QUERY PLAN` on the real schema (deferred indexes built) for
+seven version tables: `SEARCH t USING INTEGER PRIMARY KEY` first, then the version table sought by
+`(tender_id, seq)`, and never a `SCAN` of it or the `(scheme, code)` index. Two existing refusal
+tests pinned the old wording and now assert the new. `docs/agents/prod-box-reads.md`'s planner
+table has the fifth row. The optional 408 hint is not built: the guidance fix reaches the reader
+before the query is written, and the refusal already carries it for views.
 
 ## Verify
 

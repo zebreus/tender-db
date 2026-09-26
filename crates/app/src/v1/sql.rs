@@ -752,8 +752,11 @@ const TABLE_NOTES: &[(&str, &str)] = &[
     ("v_tenders", "Current version of each Tender (one row per Tender). NOT FILTERABLE: a \
       WHERE on a view is applied AFTER the whole view is built, so even `WHERE id = ?` scans \
       the corpus and exceeds the time limit (issue 239, measured). Use it for small unfiltered \
-      peeks; for anything filtered, join `tenders` to `tender_versions` on \
-      `(tender_id, seq = current_seq)` — 17ms for the same point read."),
+      peeks; for anything filtered, read `tenders t CROSS JOIN tender_versions v ON \
+      v.tender_id = t.id AND v.seq = t.current_seq` — 17ms for the same point read. \
+      CROSS JOIN, not JOIN, for every tenders-to-version-table join (issue 421): turso \
+      otherwise drives from the version table whenever the query filters one of its \
+      columns, and a range of Tenders then exceeds the time limit."),
     ("tender_version_lot_group_members", "Which lots each LotsGroup contains, per version \
       (issue 237). eForms gives a Bid ONE lot reference, to a Lot or to a LotsGroup, so a bid \
       covering several lots names the GROUP — join through here to attribute it to member lots. \
@@ -781,16 +784,23 @@ const TABLE_NOTES: &[(&str, &str)] = &[
     ("tender_version_classifications", "CPV and NUTS codes of a Tender version (see scheme)."),
     // Analyst convenience views (issue 50).
     ("v_tender_buyers", "Buyers of each current Tender (one row per buyer party). NOT \
-      FILTERABLE (issue 239); join `tenders` to `tender_version_parties` on `(tender_id, \
-      seq = current_seq)` with `role LIKE '%uyer%'`, then `organizations`."),
+      FILTERABLE (issue 239); read `tenders t CROSS JOIN tender_version_parties p ON \
+      p.tender_id = t.id AND p.seq = t.current_seq AND p.role LIKE '%uyer%'`, then \
+      `organizations`. CROSS JOIN, not JOIN: with a plain JOIN turso scans the parties table \
+      first and a range of 2,000 Tenders exceeds the time limit (issue 421; 0.06 s this way)."),
     ("v_awards", "Current award decisions with their winner and a representative buyer — \
       keeps v_lot_results' one-row-per-winner grain (does not multiply by buyer count). \
-      NOT FILTERABLE (issue 239); join `lot_results` to `tender_version_lot_results` and \
-      `tender_version_result_winners` on `(tender_id, seq = tenders.current_seq)`, and \
-      `tender_version_parties` (role LIKE '%uyer%') for the buyer."),
+      NOT FILTERABLE (issue 239); read `tenders t CROSS JOIN tender_version_lot_results s \
+      ON s.tender_id = t.id AND s.seq = t.current_seq`, then `tender_version_result_winners` \
+      and `lot_results` on the same `(tender_id, seq)`, and `tender_version_parties` \
+      (role LIKE '%uyer%') for the buyer — tenders first, CROSS JOIN, for the reason \
+      v_tender_buyers gives (issue 421)."),
     ("v_tender_classifications", "CPV and NUTS codes of each current Tender (see scheme). \
-      NOT FILTERABLE (issue 239); join `tenders` to `tender_version_classifications` on \
-      `(tender_id, seq = current_seq)`."),
+      NOT FILTERABLE (issue 239); read `tenders t CROSS JOIN tender_version_classifications c \
+      ON c.tender_id = t.id AND c.seq = t.current_seq AND c.scheme = 'cpv'`. CROSS JOIN, not \
+      JOIN: with a plain JOIN turso walks every CPV row in the corpus through the (scheme, \
+      code) index before looking at your Tender range (issue 421: >10 s for 2,000 Tenders, \
+      0.04 s this way). To find Tenders BY code, filter `c.code` and let that index drive."),
     (
         "v_tender_amounts",
         "Money amounts of each current Tender (field, cents, currency, tax_basis, \
@@ -798,12 +808,14 @@ const TABLE_NOTES: &[(&str, &str)] = &[
          NULL is most of the corpus, so a total over mixed rows is not comparable (issue \
          251). eur_cents is the derived EUR at publication date (ADR-0014), NULL where no \
          official rate resolves or the row predates the backfill refold. NOT FILTERABLE \
-         (issue 239); join `tenders` to `tender_version_amounts` on `(tender_id, seq = \
-         current_seq)`.",
+         (issue 239); read `tenders t CROSS JOIN tender_version_amounts a ON a.tender_id = \
+         t.id AND a.seq = t.current_seq` — tenders first, CROSS JOIN, for the reason \
+         v_tender_classifications gives (issue 421).",
     ),
     ("v_tender_dates", "Dates of each current Tender (utc_seconds epoch + offset_minutes). \
-      NOT FILTERABLE (issue 239); join `tenders` to `tender_version_dates` on `(tender_id, \
-      seq = current_seq)`."),
+      NOT FILTERABLE (issue 239); read `tenders t CROSS JOIN tender_version_dates d ON \
+      d.tender_id = t.id AND d.seq = t.current_seq` — tenders first, CROSS JOIN, for the \
+      reason v_tender_classifications gives (issue 421)."),
     ("v_tender_notices", "The notices that caused each Tender version — the ADR-0001 chain, \
       across all versions. NOT FILTERABLE (issue 239); join `tender_versions` to `notices` \
       on `caused_by_notice_id`."),
@@ -997,6 +1009,13 @@ const SCHEMA_NOTES: &[&str] = &[
      instead. Unfiltered, unjoined reads (`… FROM v_tenders LIMIT 5`, \
      `SELECT source, COUNT(*) FROM v_tenders GROUP BY source`) are \
      accepted. v_fetches is small and exempt.",
+    "Join the version tables to `tenders` with CROSS JOIN, tenders first: \
+     `FROM tenders t CROSS JOIN tender_version_classifications c ON \
+     c.tender_id = t.id AND c.seq = t.current_seq`. turso takes CROSS JOIN \
+     as the join order; with a plain JOIN it drives from the version table \
+     whenever the query filters one of its columns (scheme, field, role), \
+     and a range of Tenders then reads the whole table — measured >10 s for \
+     2,000 Tenders against 0.04–0.08 s (issue 421).",
     "Turso SQL dialect gaps: no WITH RECURSIVE; window functions are \
      partial (row_number and aggregate OVER work; rank/lead/lag and \
      custom frames do not).",
@@ -2257,6 +2276,70 @@ mod tests {
         assert!(table_note("v_fetches").unwrap().contains("exempt"));
     }
 
+    /// Issue 421: the guidance for reading a version table recommends a join order
+    /// turso honours, and that order seeks. A plain `JOIN` with a predicate on the
+    /// version table's own column (`scheme`, `field`, `role`) makes turso drive from
+    /// the version table — through `(scheme, code)` for classifications, a full
+    /// scan for texts and parties — and a range of 2,000 Tenders exceeded the 10 s
+    /// limit on prod. `CROSS JOIN` fixes the order: `tenders` by rowid range, then
+    /// each version table by its `(tender_id, seq)` index. Pinned on the real
+    /// schema (deferred indexes built, as on prod), so a turso upgrade that stops
+    /// honouring the order is caught by the gate rather than by an analyst.
+    #[tokio::test]
+    async fn the_recommended_version_joins_drive_from_tenders_and_seek() {
+        for view in [
+            "v_tenders",
+            "v_tender_buyers",
+            "v_awards",
+            "v_tender_classifications",
+            "v_tender_amounts",
+            "v_tender_dates",
+        ] {
+            let note = table_note(view).expect("described");
+            assert!(note.contains("CROSS JOIN"), "{view} must recommend the CROSS JOIN form: {note}");
+        }
+
+        let path = format!("/tmp/tender-db-421-plans-{}.db", std::process::id());
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+        let db = store::Db::open(&path).await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        let range = "WHERE t.id > 20000 AND t.id <= 22000";
+        for (table, alias, pred) in [
+            ("tender_version_classifications", "c", " AND c.scheme = 'cpv'"),
+            ("tender_version_texts", "x", " AND x.field = 'title' AND x.lot_id IS NULL"),
+            ("tender_version_parties", "p", " AND p.role LIKE '%uyer%'"),
+            ("tender_version_amounts", "a", ""),
+            ("tender_version_dates", "d", ""),
+            ("tender_version_lot_results", "s", ""),
+            ("tender_versions", "v", ""),
+        ] {
+            let sql = format!(
+                "SELECT t.id FROM tenders t CROSS JOIN {table} {alias} \
+                   ON {alias}.tender_id = t.id AND {alias}.seq = t.current_seq{pred} {range}"
+            );
+            let rows = db.measure_rows(&format!("EXPLAIN QUERY PLAN {sql}")).await.unwrap();
+            let plan: Vec<String> = rows.iter().map(|r| format!("{r:?}")).collect();
+            let first = plan.iter().position(|l| l.contains("SEARCH t USING INTEGER PRIMARY KEY"));
+            let second = plan
+                .iter()
+                .position(|l| l.contains(&format!("SEARCH {alias} USING INDEX")) && l.contains("tender_id=? AND seq=?"));
+            assert!(
+                matches!((first, second), (Some(f), Some(s)) if f < s),
+                "{table}: tenders must drive by rowid range and the version table must be sought by \
+                 (tender_id, seq); plan:\n{}",
+                plan.join("\n")
+            );
+            assert!(
+                !plan.iter().any(|l| l.contains(&format!("SCAN {table}")) || l.contains("_code (scheme=?)")),
+                "{table}: the version table drives again (issue 421); plan:\n{}",
+                plan.join("\n")
+            );
+        }
+        let _ = std::fs::remove_file(&path);
+    }
+
     #[test]
     fn accepts_a_plain_select() {
         assert!(classify("SELECT 1").is_ok());
@@ -2280,7 +2363,10 @@ mod tests {
         // The measured shapes.
         let e = err("SELECT id, title FROM v_tenders WHERE id = 93601");
         assert!(e.starts_with("v_tenders is NOT FILTERABLE"), "{e}");
-        assert!(e.contains("join `tenders` to `tender_versions`"), "the view's own guidance: {e}");
+        assert!(
+            e.contains("tenders t CROSS JOIN tender_versions v"),
+            "the view's own guidance, in the join order turso honours (issue 421): {e}"
+        );
         assert!(err("SELECT COUNT(*) FROM v_tenders WHERE id < 5000").contains("v_tenders"));
         assert!(err("SELECT id FROM v_lots WHERE tender_id = 42").contains("v_lots"));
         assert!(err("SELECT id, mentions FROM v_organizations WHERE id = 42").contains("v_organizations"));
@@ -2319,7 +2405,7 @@ mod tests {
         assert!(e.starts_with("v_lots is NOT FILTERABLE and this query joins it"), "{e}");
         let e = err("SELECT t.id, a.winner_name FROM tenders t JOIN v_awards a ON a.tender_id = t.id WHERE t.id = 93601");
         assert!(e.starts_with("v_awards is NOT FILTERABLE and this query filters it"), "{e}");
-        assert!(e.contains("join `lot_results`"), "{e}");
+        assert!(e.contains("`lot_results`") && e.contains("CROSS JOIN tender_version_lot_results"), "{e}");
         assert!(err("SELECT * FROM v_tenders t JOIN tender_versions v ON v.tender_id = t.id LIMIT 5").contains("joins it"));
         assert!(err("SELECT * FROM tenders t JOIN v_tender_current c ON c.tender_id = t.id WHERE t.id = 5").contains("v_tender_current"));
         // A CTE named after one view but reading another names the view it
