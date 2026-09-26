@@ -4716,6 +4716,7 @@ dependencies = [
  "tar",
  "tokio",
  "tower_governor",
+ "tracing",
  "turso_parser",
  "url",
  "wasm-bindgen",

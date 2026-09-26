@@ -65,6 +65,9 @@ tar = { workspace = true }
 hmac = { workspace = true }
 sha2 = { workspace = true }
 base64 = { workspace = true }
+# Issue 428: the suites' statement capture (tests/support/plan_capture.rs) hooks
+# turso's own `Preparing:` debug event. Already in the tree via turso_core.
+tracing = "0.1"
 
 [features]
 default = []

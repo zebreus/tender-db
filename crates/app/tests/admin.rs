@@ -9,6 +9,9 @@
 //! Server-only, like the API test: `cargo test --features tender-db/server`.
 #![cfg(feature = "server")]
 
+#[path = "support/plan_capture.rs"]
+mod plan_capture;
+
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
@@ -57,6 +60,7 @@ impl Harness {
         let member = std::fs::read(FIXTURE).unwrap_or_else(|e| panic!("read {FIXTURE}: {e}"));
         write_package(&dir.join("ted/daily/2026-00136.tar.gz"), &member);
 
+        plan_capture::install();
         let db = Arc::new(Db::open(dir.join("test.db").to_str().unwrap()).await.unwrap());
         db.record_fetch(&store::Fetch {
             source: "ted".into(),

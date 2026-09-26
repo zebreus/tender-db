@@ -8,6 +8,9 @@
 //! endpoint.
 #![cfg(feature = "server")]
 
+#[path = "support/plan_capture.rs"]
+mod plan_capture;
+
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as B64;
 use hmac::{Hmac, Mac};
@@ -103,6 +106,7 @@ impl Fixture {
     async fn start(name: &str) -> Fixture {
         let path = format!("/tmp/tender-db-whi-{name}-{}.db", std::process::id());
         let _ = std::fs::remove_file(&path);
+        plan_capture::install();
         let db = Arc::new(Db::open(&path).await.expect("open"));
         db.record_fetch(&store::Fetch {
             source: SOURCE.into(),
