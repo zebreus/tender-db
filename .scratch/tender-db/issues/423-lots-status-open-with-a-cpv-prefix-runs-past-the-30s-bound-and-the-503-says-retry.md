@@ -1,7 +1,9 @@
 # 423 — `/v1/lots?status=open&cpv=` runs past the 30 s bound, and the 503 tells the caller to retry it
 
-Status: ready-for-agent — filed 2026-09-26 14:0x UTC by the hourly audit (step 3), measured on prod, the
-routing traced in code (read-only). The fix direction is named below; it is mine to take.
+Status: ready-for-agent — **BUILT 2026-09-26 15:1x UTC** (see the foot): the open-head seed now fires for a
+cpv prefix with `status=open` (fix 1), the 30 s message no longer claims a stall or invites a retry (fix 2),
+the 275 pointer is corrected (fix 3); measured on prod through `/v1/sql` before building; gate, deploy and
+the live Verify follow. Was: filed 2026-09-26 14:0x UTC by the hourly audit (step 3).
 Kind: public API latency (a documented filter pair that cannot complete) + a misleading error message
 Relates to: 275 (the open-head seed that fixed status+country — the code's pointer to "275's residuals"
 for cpv+status is broken: 275 never mentions cpv), 408 (the 500k-id band this shape does get), 273
@@ -64,3 +66,40 @@ every caller of an expensive filtered read gets "too many expensive filtered rea
 
 A public read, free — but it holds an isolation slot for its full duration while open, so run it once,
 not in a loop.
+
+## BUILT 2026-09-26 — measured first, then the seed
+
+**Measured on prod through `/v1/sql` (bounded, one at a time, ~1.5 s of each figure is ssh):**
+
+| statement (lots page, 101 rows, `now` = run time) | result |
+|---|---|
+| seed alone: open tenders with head cpv `45%` | **8,647** (of 39,871 open), ~1 s |
+| unseeded, one 500k-id band, cpv `45` | **>10 s (408)** |
+| seeded (open-head IN before the head EXISTS), cpv `45` | full page 101 rows, ids 322..191,361, 2.3 s |
+| seeded (seed after the head EXISTS — the shipped order), cpv `45` | same 101 rows, 3.5 s (first, colder) |
+| unseeded, one band, cpv `72` | **>10 s (408)** |
+| seeded, one band, cpv `72` | 70 rows, 2.1 s |
+
+**Decisions.**
+- **Seed cpv, not bare `status=open`.** The seed is the existing 275 arm generalised: `status=open` AND
+  (an over-cap country OR a cpv prefix) → `l.tender_id IN (SELECT t.id FROM tenders t WHERE
+  t.current_deadline > ? [AND nuts EXISTS] [AND cpv EXISTS])`, each prefix tested per tender at
+  `t.current_seq`. Bare `status=open` stays unseeded: it fills from the dense walk (~2 s for 100) and a
+  seed would enumerate every open tender's lots to sort them — no better for a value that dense.
+- **Exactness.** `t.current_deadline > now` is 273's proven status-open equivalence; since issue 422
+  the lots `status` EXISTS carries the same horizon as the election, so seed and predicate agree on a
+  typo too. The per-lot predicates still decide membership (pinned: seeded and seed-stripped statements
+  return the same lots on a fixture with a head that moved off cpv 45, a closed tender, and a
+  horizon-typo tender).
+- **Seed placement left as is** (after the head EXISTS, like the org and country seeds). The one-shot
+  measurement favoured seed-first by ~1 s but the pair was not cache-controlled, and moving it changes
+  every seeded lots shape — a separate measurement if it is ever worth it.
+- **The message** (`deadline_with`): now says the request was still being served, that the service
+  cannot tell a slow filter from a stall, that the work may continue after the answer, and to narrow the
+  filters or retry later — never "not your request; safe to retry". The unit test pins both phrases OUT.
+  `REQUEST_DEADLINE`'s doc no longer claims the bound only fires on an outage.
+
+**Tests**: `crates/store/tests/lots_open_head_seed.rs` — the statement (cpv seed present, per-tender at
+the head, one seed carrying both prefixes, bare status and cpv-without-status unseeded) and the superset
+trap (seeded = seed-stripped answer). **Mutation-checked**: narrowing the arm back to country-only fails
+both tests.

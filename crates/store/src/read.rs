@@ -3004,18 +3004,23 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
 /// * A VIABLE sparse country (`country_seed`, issue 273 step 2's probe):
 ///   the case-variant UNION ALL enumeration off the classifications index.
 ///   Measured on prod: `?country=CY` 0.32s against 30s-class walks.
-/// * An over-cap country WITH `status=open`: drive from the open head —
-///   `t.current_deadline > now` is EXACTLY status-open (273's proven
-///   equivalence, `tenders_current_deadline`-indexed, ~38k tenders), with the
-///   country prefix tested per TENDER at `t.current_seq` so only matching
-///   tenders' lots are ever enumerated. Measured on prod:
-///   `?status=open&country=LU` 0.48s against the 30.5s→503 walk this fixes.
-///   (`current_seq`/`current_deadline` are the same head pointers the whole
-///   tenders endpoint reads; the per-lot predicates still re-decide.)
+/// * `status=open` with an over-cap country and/or a `cpv` prefix: drive from
+///   the open head — `t.current_deadline > now` is EXACTLY status-open (273's
+///   proven equivalence, `tenders_current_deadline`-indexed, 39,871 tenders on
+///   2026-09-26; since issue 422 the lots EXISTS carries the same horizon, so
+///   the two agree on a typo too), with each prefix tested per TENDER at
+///   `t.current_seq` so only matching tenders' lots are ever enumerated.
+///   Measured on prod: `?status=open&country=LU` 0.48s against the 30.5s→503
+///   walk it fixed (issue 275); `?status=open&cpv=45&limit=100` from a 30 s 503
+///   to a full page in ~1–2 s, and `cpv=72` over one 500k-id band from >10 s
+///   to 0.6 s (issue 423 — the seed is 8,647 tenders for `45`). (`current_seq`/
+///   `current_deadline` are the same head pointers the whole tenders endpoint
+///   reads; the per-lot predicates still re-decide.)
 ///
-/// Not seeded (recorded in issue 275's residuals): bare `status=open` (fills
-/// from the dense walk, 1.1s), over-cap country without status (1.7s), and
-/// `cpv`+`status` (no cpv seed anywhere yet).
+/// Not seeded (issues 275 and 423): bare `status=open` (fills from the dense
+/// walk, ~2s for 100 on 2026-09-26 — a seed would enumerate every open tender's
+/// lots and sort them, no better for a value this dense), and an over-cap
+/// country or a cpv without status (1.7s / 0.8s).
 fn lot_seed_predicates(q: &mut Query, filter: &Filter) {
     if let Some((table, extra, org)) = participation_seed(filter) {
         let role = participation_role(filter);
@@ -3041,15 +3046,29 @@ fn lot_seed_predicates(q: &mut Query, filter: &Filter) {
                 q.push(&format!(" AND l.tender_id IN {hits}"), params);
             }
         }
-        (Some(country), false) if filter.status == Some(Status::Open) => {
-            q.push(
+        // The open head, for an over-cap country (issue 275) and for a cpv prefix
+        // (issue 423). Each prefix is tested per TENDER at `t.current_seq`, so
+        // only matching open tenders' lots are ever enumerated.
+        (country, false)
+            if filter.status == Some(Status::Open) && (country.is_some() || filter.cpv.is_some()) =>
+        {
+            let mut sql = String::from(
                 " AND l.tender_id IN (SELECT t.id FROM tenders t
-                       WHERE t.current_deadline > ?
-                         AND EXISTS (SELECT 1 FROM tender_version_classifications c
-                                      WHERE c.tender_id = t.id AND c.seq = t.current_seq
-                                        AND c.scheme = 'nuts' AND c.code LIKE ?))",
-                vec![Value::Integer(filter.now), t(format!("{country}%"))],
+                       WHERE t.current_deadline > ?",
             );
+            let mut params = vec![Value::Integer(filter.now)];
+            for (scheme, prefix) in [("nuts", country.as_ref()), ("cpv", filter.cpv.as_ref())] {
+                if let Some(prefix) = prefix {
+                    sql.push_str(&format!(
+                        " AND EXISTS (SELECT 1 FROM tender_version_classifications c
+                                       WHERE c.tender_id = t.id AND c.seq = t.current_seq
+                                         AND c.scheme = '{scheme}' AND c.code LIKE ?)"
+                    ));
+                    params.push(t(format!("{prefix}%")));
+                }
+            }
+            sql.push(')');
+            q.push(&sql, params);
         }
         _ => {}
     }

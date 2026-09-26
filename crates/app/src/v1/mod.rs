@@ -506,8 +506,11 @@ async fn method_not_allowed() -> ApiError {
 
 /// The whole-request bound on `/v1` (issue 241, gap 2). Sized far above the
 /// slowest legitimate non-stream response — `/v1/sql`'s in-handler cap is 10 s
-/// — so it can only fire on a request that is already an outage, never on a
-/// slow success. The edge does NOT provide this bound: the nginx vhost sets
+/// — on the premise that it fires only on a request that is already an outage.
+/// That premise does not hold for the list endpoints: a filter combination no
+/// seed bounds can simply still be computing at 30 s (issue 423 —
+/// `/v1/lots?status=open&cpv=45&limit=100`), which is why the message below does
+/// not claim a stall. The edge does NOT provide this bound: the nginx vhost sets
 /// `proxy_read_timeout 24h` (for SSE) in the one location block that covers
 /// everything, so a hung request would otherwise hang the caller for a day.
 const REQUEST_DEADLINE: Duration = Duration::from_secs(30);
@@ -539,9 +542,18 @@ async fn deadline_with(
             DEADLINE_HITS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             ApiError(
                 StatusCode::SERVICE_UNAVAILABLE,
+                // Issue 423: this layer cannot tell a stalled internal wait from a
+                // request whose own query is slow, and it cannot stop that query
+                // (turso has no interrupt) — the work keeps an isolation slot after
+                // this answer. So it says neither "not your request" nor "safe to
+                // retry": an immediate retry of a slow shape stacks another copy.
                 format!(
-                    "no response within the {}s service bound — a stalled internal \
-                     wait, not your request; safe to retry",
+                    "no response within the {}s service bound — the request was still \
+                     being served: either a filter combination this service cannot answer \
+                     quickly, or a stalled internal wait (the service cannot tell which). \
+                     The work may continue after this answer, so repeating the same request \
+                     at once adds load rather than an answer; narrow the filters (a country, \
+                     a date bound, a tender) or retry later",
                     deadline.as_secs()
                 ),
             )
@@ -1871,6 +1883,14 @@ mod deadline_tests {
         assert!(
             json["error"]["message"].as_str().is_some_and(|m| m.contains("service bound")),
             "the 503 must say WHY: {json}"
+        );
+        // Issue 423: the layer cannot tell a stall from a slow query, and a slow
+        // query keeps running after this answer — so it must not invite a retry.
+        assert!(
+            json["error"]["message"]
+                .as_str()
+                .is_some_and(|m| !m.contains("safe to retry") && !m.contains("not your request")),
+            "the 503 must not claim a stall it cannot know, nor invite the retry that stacks work: {json}"
         );
         assert!(
             DEADLINE_HITS.load(std::sync::atomic::Ordering::Relaxed) > before,
