@@ -269,3 +269,40 @@ async fn a_lot_never_serves_a_deadline_below_the_floor() {
     assert_eq!(served(&conn, None).await, vec![("LOT-1".to_owned(), None)]);
     assert!(served(&conn, Some(Status::Open)).await.is_empty(), "and it opens nothing");
 }
+
+/// Issue 422: the other edge of the election's window. A deadline more than ten
+/// years past its version's publication is refused by the tender head (issue 366:
+/// tender 3323836's year 3005), and the lots path must agree on BOTH halves of the
+/// pair this file pins — the row does not serve it, AND `status=open` does not
+/// return the lot on it. Before this, the lots EXISTS had no horizon, so a lot was
+/// open on a date its own tender called a typo.
+#[tokio::test]
+async fn a_lot_is_never_open_on_a_deadline_beyond_the_horizon() {
+    // The fixture's version publishes at 1_700_000_000 (2023-11).
+    let millennium = 1_700_000_000 + store::canonical::DEADLINE_HORIZON_SECS + 86_400;
+    assert!(millennium > NOW, "a typo that would read as open without the horizon");
+
+    // The procedure's ONLY deadline is the typo: no deadline, and not open.
+    let conn = fixture("horizon-alone").await;
+    lot(&conn, 1, "LOT-1").await;
+    deadline(&conn, None, millennium, 0).await;
+    assert_eq!(served(&conn, None).await, vec![("LOT-1".to_owned(), None)]);
+    assert!(
+        served(&conn, Some(Status::Open)).await.is_empty(),
+        "the filter must refuse the date the row refuses"
+    );
+    assert_eq!(
+        served(&conn, Some(Status::Closed)).await,
+        vec![("LOT-1".to_owned(), None)],
+        "and so the lot is closed — NOT EXISTS is the same predicate negated"
+    );
+
+    // A lot's own typo beside a real procedure date: the lot inherits the real
+    // one, and it is open by it.
+    let conn = fixture("horizon-own").await;
+    lot(&conn, 1, "LOT-1").await;
+    deadline(&conn, Some(1), millennium, 0).await;
+    deadline(&conn, None, TENDER_DEADLINE, 0).await;
+    assert_eq!(served(&conn, None).await, vec![("LOT-1".to_owned(), Some(TENDER_DEADLINE))]);
+    assert_eq!(served(&conn, Some(Status::Open)).await, vec![("LOT-1".to_owned(), Some(TENDER_DEADLINE))]);
+}

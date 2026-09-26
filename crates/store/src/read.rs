@@ -1009,9 +1009,18 @@ fn version_predicates(
                 ),
             }
         } else {
+            // Issue 422: the lots have no head column, so the election's horizon
+            // is applied here, or a lot is `open` on the year-3005 typo its own
+            // tender refuses (366). The publication is one PK seek, evaluated only
+            // for a date already past `now`. No floor term: a pre-1990 date is
+            // never `> now`, so it could not change the answer.
             let exists = format!("EXISTS (SELECT 1 FROM tender_version_dates d
                                    WHERE d.tender_id = {tid} AND d.seq = {seq}
-                                     AND d.field = 'submission_deadline' AND d.utc_seconds > ?)");
+                                     AND d.field = 'submission_deadline' AND d.utc_seconds > ?
+                                     AND d.utc_seconds - (SELECT pv.published_at FROM tender_versions pv
+                                                           WHERE pv.tender_id = {tid} AND pv.seq = {seq})
+                                         <= {})",
+                crate::canonical::DEADLINE_HORIZON_SECS);
             match status {
                 Status::Open => q.push(&format!(" AND {exists}"), [Value::Integer(f.now)]),
                 Status::Closed => q.push(&format!(" AND NOT {exists}"), [Value::Integer(f.now)]),
@@ -3443,17 +3452,18 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
 
         // ADR-0013 D3's third leg: the version's original language, one PK seek,
         // so the in-memory rank below can honour it exactly as the SQL
-        // `title_rank` does.
-        let original: Option<String> = {
+        // `title_rank` does. The same seek brings the publication the deadline
+        // horizon is measured from (issue 422).
+        let (original, published_at): (Option<String>, Option<i64>) = {
             let mut got = conn
                 .query(
-                    "SELECT original_lang FROM tender_versions WHERE tender_id = ? AND seq = ?",
+                    "SELECT original_lang, published_at FROM tender_versions WHERE tender_id = ? AND seq = ?",
                     key.clone(),
                 )
                 .await?;
             match got.next().await? {
-                Some(row) => opt_text_of(&row, 0),
-                None => None,
+                Some(row) => (opt_text_of(&row, 0), opt_int_of(&row, 1)),
+                None => (None, None),
             }
         };
 
@@ -3577,13 +3587,16 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
             )
             .await?;
         while let Some(row) = got.next().await? {
-            // Issue 171: the head election's floor, so a lot does not serve the
-            // year-0016 or `1970-01-01` its tender no longer does (lot 6556410,
-            // 3509049 on 2026-09-26). The floor alone, not the horizon: a pre-1990
-            // date is never `> now`, so this changes no `status` answer, whereas
-            // the horizon WOULD split display from the lots `status` EXISTS,
-            // which carries no horizon (issue 422).
-            if opt_int_of(&row, 1).is_some_and(|utc| utc < crate::canonical::DEADLINE_FLOOR_SECS) {
+            // The head election's window, so a lot does not serve a date its
+            // tender refuses: the floor (issue 171 — lot 6556410's year 0016,
+            // 3509049's `1970-01-01` on 2026-09-26) and the horizon (issue 422 —
+            // the year-3005 class of 366). The lots `status` EXISTS applies the
+            // same horizon, so a lot this skips is not returned as open either.
+            if opt_int_of(&row, 1).is_some_and(|utc| {
+                utc < crate::canonical::DEADLINE_FLOOR_SECS
+                    || published_at
+                        .is_some_and(|p| utc - p > crate::canonical::DEADLINE_HORIZON_SECS)
+            }) {
                 continue;
             }
             match opt_int_of(&row, 0) {
