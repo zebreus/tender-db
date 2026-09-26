@@ -65,6 +65,16 @@ pub(crate) const TOKEN_PREFIX: &str = "tdb_";
 
 /// An account, as everything outside this module sees it. The password hash
 /// never leaves.
+/// What [`Db::create_user_capped`] did.
+#[derive(Debug)]
+pub enum CreateUser {
+    Created(User),
+    /// The username is already registered.
+    Taken,
+    /// The daily signup cap is reached.
+    AtCap,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct User {
     pub id: i64,
@@ -166,6 +176,63 @@ impl Db {
         }
         user_row(&conn, "SELECT id, username, created_at FROM users WHERE username = ?", t(username))
             .await
+    }
+
+    /// Accounts created after `since` (unix seconds): the count the daily signup
+    /// cap reads before paying for a password hash (see [`Db::create_user_capped`]).
+    /// `users` is small and never walked by anything hot, so no index is kept for it.
+    pub async fn users_created_since(&self, since: i64) -> turso::Result<i64> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query("SELECT COUNT(*) FROM users WHERE created_at > ?", [Value::Integer(since)])
+            .await?;
+        Ok(match rows.next().await? {
+            Some(row) => row.get_value(0)?.as_integer().copied().unwrap_or(0),
+            None => 0,
+        })
+    }
+
+    /// [`Db::create_user`] under a global cap: refused when `max` accounts were
+    /// already created after `since`. Signups are open to anyone and every account
+    /// carries its own `/v1/sql` quota, so the cap is what bounds how many quotas
+    /// one person can hold (the owner's decision, 2026-09-26: a global daily cap
+    /// rather than a per-IP one, since an address is a weak identity behind NAT).
+    ///
+    /// The count and the insert are ONE statement, and writes are serialized, so two
+    /// simultaneous signups cannot both take the last slot — a check followed by an
+    /// insert could let both through.
+    pub async fn create_user_capped(
+        &self,
+        username: &str,
+        password_hash: &str,
+        now: i64,
+        since: i64,
+        max: i64,
+    ) -> turso::Result<CreateUser> {
+        let conn = self.conn().await;
+        let changed = conn
+            .execute(
+                "INSERT OR IGNORE INTO users(username, password_hash, created_at)
+                 SELECT ?, ?, ?
+                  WHERE (SELECT COUNT(*) FROM users WHERE created_at > ?) < ?",
+                (t(username), t(password_hash), Value::Integer(now), Value::Integer(since), Value::Integer(max)),
+            )
+            .await?;
+        if changed > 0 {
+            return Ok(
+                match user_row(&conn, "SELECT id, username, created_at FROM users WHERE username = ?", t(username))
+                    .await?
+                {
+                    Some(user) => CreateUser::Created(user),
+                    None => CreateUser::Taken,
+                },
+            );
+        }
+        // Nothing inserted: the UNIQUE username or the cap. The name decides which.
+        let taken = user_row(&conn, "SELECT id, username, created_at FROM users WHERE username = ?", t(username))
+            .await?
+            .is_some();
+        Ok(if taken { CreateUser::Taken } else { CreateUser::AtCap })
     }
 
     pub async fn user(&self, id: i64) -> turso::Result<Option<User>> {

@@ -18,7 +18,7 @@ pub mod webhooks;
 /// their own pin on the engine — the store owns which Turso this is.
 pub use turso;
 
-pub use accounts::{TokenRecord, User};
+pub use accounts::{CreateUser, TokenRecord, User};
 pub use checkpoint::{Checkpointed, CheckpointMode};
 pub use canonical::{
     Applied, BidParty, BidState, Change, ContractState, Fact, Identifier, LayerPresence, LayerState,

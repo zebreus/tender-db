@@ -165,3 +165,52 @@ async fn the_dashboard_measures_an_empty_database_honestly() {
     assert!(!counts.is_empty());
     assert!(counts.iter().all(|c| c.value == 0));
 }
+
+/// The service-wide daily signup cap (the owner's decision, 2026-09-26): at most
+/// `SIGNUPS_PER_DAY` new accounts in any rolling day, for everyone together — not
+/// per IP, which is a weak identity behind NAT. Signup is open and every account
+/// carries its own `/v1/sql` quota, so this is what bounds how many quotas one
+/// person can hold.
+#[tokio::test(flavor = "multi_thread")]
+async fn signups_are_capped_per_day_across_the_service() {
+    let server = Server::start("signup-cap").await;
+    let db = &server.db;
+    let now = store::now_unix();
+
+    // Accounts older than the window do not count: fill the cap's worth of
+    // yesterday's signups straight through the store, then register a full day's.
+    for i in 0..accounts::SIGNUPS_PER_DAY {
+        let old = now - accounts::SIGNUP_WINDOW_SECS - 60;
+        db.create_user(&format!("old{i}"), "x", old).await.expect("seed").expect("fresh name");
+    }
+    for i in 0..accounts::SIGNUPS_PER_DAY {
+        accounts::register(db, &format!("user{i}"), "correct horse battery")
+            .await
+            .unwrap_or_else(|e| panic!("signup {i} is inside the cap: {e}"));
+    }
+
+    // The next one is refused, and says why — not "username taken", not a 500.
+    let refused = accounts::register(db, "one-too-many", "correct horse battery").await;
+    assert!(
+        matches!(refused, Err(accounts::AuthError::SignupsClosed)),
+        "the {}th signup of the day must be refused by the cap: {refused:?}",
+        accounts::SIGNUPS_PER_DAY + 1
+    );
+    assert!(db.user_credentials("one-too-many").await.expect("lookup").is_none(), "and nothing was created");
+
+    // At the cap the cap answers first, even for a taken name: it is read before
+    // anything else costs work (the argon2 hash above all). Below the cap a taken
+    // name reads as taken — `register_login_token_revoke` pins that.
+    assert!(matches!(
+        accounts::register(db, "user0", "correct horse battery").await,
+        Err(accounts::AuthError::SignupsClosed)
+    ));
+
+    // The atomic guard alone (the path two simultaneous signups race through): with
+    // the day already full, the store refuses the insert itself.
+    let since = now - accounts::SIGNUP_WINDOW_SECS;
+    match db.create_user_capped("racer", "x", now, since, accounts::SIGNUPS_PER_DAY).await.expect("insert") {
+        store::CreateUser::AtCap => {}
+        other => panic!("the capped insert must refuse at the cap: {other:?}"),
+    }
+}

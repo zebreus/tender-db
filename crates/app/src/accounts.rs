@@ -30,6 +30,8 @@ pub enum AuthError {
     Invalid(String),
     /// Not signed in, or signed in as someone the database no longer has.
     NotSignedIn,
+    /// The service-wide daily signup cap ([`SIGNUPS_PER_DAY`]) is reached.
+    SignupsClosed,
     Db(String),
 }
 
@@ -40,6 +42,11 @@ impl std::fmt::Display for AuthError {
             AuthError::InvalidCredentials => f.write_str("wrong username or password"),
             AuthError::Invalid(why) => f.write_str(why),
             AuthError::NotSignedIn => f.write_str("sign in first"),
+            AuthError::SignupsClosed => write!(
+                f,
+                "new accounts are limited to {SIGNUPS_PER_DAY} per day across the whole service, \
+                 and today's are taken; please try again tomorrow"
+            ),
             AuthError::Db(e) => write!(f, "database error: {e}"),
         }
     }
@@ -54,6 +61,16 @@ impl From<store::turso::Error> for AuthError {
 }
 
 type Result<T> = std::result::Result<T, AuthError>;
+
+/// New accounts per rolling day, across the whole service (the owner's decision,
+/// 2026-09-26). Signup is open and each account carries its own `/v1/sql` quota
+/// (2 concurrent, 300/h), so without a cap one person could hold as many quotas as
+/// they cared to create. Global rather than per IP: an address is a weak identity
+/// behind NAT and trivially rotated. A legitimate user refused by it waits a day.
+pub const SIGNUPS_PER_DAY: i64 = 5;
+
+/// The rolling window [`SIGNUPS_PER_DAY`] counts over.
+pub const SIGNUP_WINDOW_SECS: i64 = 86_400;
 
 // ------------------------------------------------------------------ policies
 
@@ -154,13 +171,25 @@ pub async fn register(db: &Db, username: &str, password: &str) -> Result<(Accoun
     check_username(username)?;
     check_password(password)?;
 
+    // The daily cap, checked BEFORE the argon2 hash: at the cap a signup costs one
+    // COUNT instead of a deliberately expensive hash, so the cap is not itself a way
+    // to burn CPU. The insert re-checks it atomically (`create_user_capped`); this
+    // early read only saves the hash.
+    let now = store::now_unix();
+    let since = now - SIGNUP_WINDOW_SECS;
+    if db.users_created_since(since).await? >= SIGNUPS_PER_DAY {
+        return Err(AuthError::SignupsClosed);
+    }
+
     let owned = password.to_owned();
     let phc = blocking(move || hash_password(&owned))
         .await?
         .map_err(|e| AuthError::Db(format!("hashing failed: {e}")))?;
 
-    let Some(user) = db.create_user(username, &phc, store::now_unix()).await? else {
-        return Err(AuthError::Taken);
+    let user = match db.create_user_capped(username, &phc, now, since, SIGNUPS_PER_DAY).await? {
+        store::CreateUser::Created(user) => user,
+        store::CreateUser::Taken => return Err(AuthError::Taken),
+        store::CreateUser::AtCap => return Err(AuthError::SignupsClosed),
     };
     let session = start_session(db, user.id).await?;
     Ok((account(user), session))
