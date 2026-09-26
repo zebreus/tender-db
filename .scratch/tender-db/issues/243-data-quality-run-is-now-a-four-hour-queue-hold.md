@@ -1,6 +1,6 @@
 # 243 — the data-quality pass went from 40 minutes to ~4 hours, and it holds the job queue the whole time
 
-Status: ready-for-agent — **the result-section probe is REWRITTEN as two point seeks, gated (129/129) 2026-09-26** (see the last section): `kind IN (…) AND notice_id = ?` planned as a walk of every section of the notice by the primary key's `notice_id` prefix, and the eForms windows (tender ids ≤ 1.25M, 57 sections per version) were paying ten times the text era for it in `sections_can` (1,173 s) and `awards` (1,880 s) of the 6,057 s run; on prod slices the two-seek form is 4–6× faster with identical rows, and turso's plan is pinned by a test. Deploying on the idle Saturday queue; **the Sunday 2026-09-27 01:10 UTC weekly run is the measurement** — read its `cost by query` line. Next candidates (covering indexes for `title`/`buyer`/`cpv`, a single code read for `awards`+`doc_types`) are sized at the foot, none built. Was: the award merge is DONE in code 2026-08-19 (one `awards` query replacing three); the
+Status: ready-for-agent — **the result-section probe is REWRITTEN as two point seeks, gated (129/129) 2026-09-26** (see the last section): `kind IN (…) AND notice_id = ?` planned as a walk of every section of the notice by the primary key's `notice_id` prefix, and the eForms windows (tender ids ≤ 1.25M, 57 sections per version) were paying ten times the text era for it in `sections_can` (1,173 s) and `awards` (1,880 s) of the 6,057 s run; on prod slices the two-seek form is 4–6× faster with identical rows, and turso's plan is pinned by a test. **DEPLOYED 2026-09-26 09:29 UTC at `def770a`** (health green, no error lines, queue idle); **the Sunday 2026-09-27 01:10 UTC weekly run is the measurement** — read its `cost by query` line. Next candidates (covering indexes for `title`/`buyer`/`cpv`, a single code read for `awards`+`doc_types`) are sized at the foot, none built. Was: the award merge is DONE in code 2026-08-19 (one `awards` query replacing three); the
 `sections_can`/`sections_with` pair is the remaining candidate. Runtime figure corrected to 92.8 min.
 Kind: cost regression in a scheduled job (correct numbers, impractical runtime)
 Blocked by: — (the fix wants the per-label cost breakdown this very run will print)
@@ -244,7 +244,7 @@ prefix, walking every section of the notice and filtering on `kind`; `notice_sec
 Identical rows in every pair. The floor scan is 0.17 s on the same slice, so the probes are the
 whole cost and the scan-sharing merge this record once planned would buy nothing by itself.
 
-**Built (this firing):** `result_section_probe()` — one `EXISTS` per kind in
+**Built, gated (129/129) and deployed 2026-09-26 09:29 UTC at `def770a` (this firing):** `result_section_probe()` — one `EXISTS` per kind in
 `RESULT_SECTION_KINDS`, each an equality on `kind` and `notice_id` — shared by `sections_can_sql()`
 (now a template like `awards`, windowed by the same builder) and `awards_template`'s
 `no_award_content`. The planner's choice is pinned by
