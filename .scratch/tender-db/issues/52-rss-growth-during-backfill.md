@@ -26,7 +26,22 @@ a retention bug fixed so RSS plateaus across the backfill.
 
 ## Verify
 
-    ssh -o BatchMode=yes root@zebreus.click 'grep VmRSS /proc/$(systemctl show -p MainPID --value tender-db)/status'
+    ssh -o BatchMode=yes root@zebreus.click 'grep -E "VmRSS|VmHWM" /proc/$(systemctl show -p MainPID --value tender-db)/status | tr -s " " | paste -sd " "; ps -o etimes= -p $(systemctl show -p MainPID --value tender-db)'
 
-- **done** (dormant holds): steady-state RSS under a couple of GB — `VmRSS:  525632 kB` read 2026-09-19 after a night that ran two corpus-wide dry walks
-- **open** (reopen): RSS climbing monotonically across a multi-day single job, the 2026-07 backfill shape
+- **done** (dormant holds): resident set a few GB at most between the weekly chains and the peak (`VmHWM`) not climbing week over week — read 2026-09-26: `VmRSS: 4050972 kB VmHWM: 25203364 kB`, 583,141 s up (one weekly data-quality + org-merge chain in the window); 09-19 read `VmRSS: 525632 kB` two hours after a restart
+- **open** (reopen): RSS climbing monotonically across a multi-day single job, the 2026-07 backfill shape — or the `VmHWM` peak growing from one weekly chain to the next on the same corpus, which would say a job holds more each week rather than the same working set
+
+## 2026-09-26 08:2x — a week of uptime: 4 GB resident, 25 GB peak, box at 62 GB
+
+Read by the owner sweep after seven days without a restart (the 09-19 deploy of `135a469` was the last):
+`VmRSS 4,050,972 kB`, `VmHWM 25,203,364 kB`, `VmSwap 0`, 77 threads; `free -g` says 62 GB total, 49 GB
+available, 42 GB in page cache. The 09-19 reading of 0.5 GB was two hours after a restart; this one sits
+behind the Sunday chain (data-quality 6068 s, then build-org-match-keys over 6.6M rows, org-merge-health,
+scan-org-match-keys over 4.2M keys), which is where the 25 GB peak almost certainly comes from — those
+jobs hold whole-key maps in memory by design (issue 300's stage 4), and the queue runs them one at a
+time. The 4 GB that stays is the allocator keeping arenas after the peak plus turso's page cache, not
+the monotonic climb-inside-one-job this issue was filed on, so DORMANT holds. Two numbers to keep
+reading, now both in the Verify line: if `VmHWM` is higher next Sunday on the same corpus, a job holds
+more each week; if `VmRSS` keeps stepping up between chains, the arenas are not being reused. Neither
+needs anything today on a box with 49 GB to spare. Not filing a separate issue — the weekly sweep of
+this Verify block is the watch.
