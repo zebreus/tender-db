@@ -1,6 +1,6 @@
 # 421 — the public SQL guidance recommends a satellite join that turso plans backwards, and it times out over any range
 
-Status: ready-for-agent — **BUILT 2026-09-26** (see the foot): the six view descriptions, the refusal message they feed and the `/v1/sql` overview now recommend `tenders t CROSS JOIN tender_version_… x`, pinned by a plan test; the prod-read guide carries the fifth trap row. Gate, deploy and the live Verify follow. Was: ready-for-agent — filed 2026-09-26 10:5x UTC from issue 243's check of whether a covering
+Status: **DONE 2026-09-26** — deployed at `e7e7358` 11:0x UTC (health green, no error lines) and the `## Verify` block reads done: the live `/v1/sql/schema` names the CROSS JOIN form (15 mentions across the six view notes and the overview), and the plain-JOIN line still reads 408, which is turso's behaviour and the reason the guidance changed. The plan test pins the order in the gate. Was: ready-for-agent — **BUILT 2026-09-26** (see the foot): the six view descriptions, the refusal message they feed and the `/v1/sql` overview now recommend `tenders t CROSS JOIN tender_version_… x`, pinned by a plan test; the prod-read guide carries the fifth trap row. Gate, deploy and the live Verify follow. Was: ready-for-agent — filed 2026-09-26 10:5x UTC from issue 243's check of whether a covering
 index would help the public SQL surface. Measured on prod, reproducible, cause identified; the
 guidance fix and a guard hint are unbuilt.
 Kind: public API correctness of guidance (a documented query shape that cannot complete)
