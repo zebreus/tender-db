@@ -259,8 +259,8 @@ measurement** — read its `cost by query` line against the table at the top of 
 **Next, in order of value, none built yet:** (1) `title` 963 s, `buyer` 194 s, `cpv` 235 s — a
 covering index per satellite, `(tender_id, seq, field)` on `tender_version_texts` and the like,
 turns the 13-row walk into a first-match seek; that is a migration on the largest satellites
-(a long writer hold, a production write — gated with the other jobs), so it is a decision for
-Lennart with the 09-27 cost line in hand. (2) `doc_types` 348 s + the award predicate probe the
+(a long writer hold) — **decided against 2026-09-26, see "the covering indexes" below and the
+public-SQL measurement after it**; the owner decides these, nobody else. (2) `doc_types` 348 s + the award predicate probe the
 same `(notice_id, 'PROCEDURE', field_id)` key up to three times per version (`award`, `unknown`,
 `any`); one scalar read of the code per marker could serve all three, but that changes how the
 section-3 denominator is evaluated and wants its own parity A/B. (3) `sections_can` and `awards`
@@ -300,6 +300,29 @@ reason appears to want the run shorter.
 (item 2 in the list above) needs no schema change. Measured in the same pass: in two 200k-notice
 ranges (eForms + text, eForms + DÖE) no notice carries more than one code under any marker field, so
 a single scalar read of the code per marker can serve the award, unknown and any-marker tests at once.
+
+## 2026-09-26 10:5x — would the covering indexes help the public API? Measured: no
+
+The API accepts arbitrary SQL, so the index was re-checked against what users can run, not only the
+weekly job.
+
+- **The `v_*` views never reach it.** Every view is refused when filtered (turso does not push a
+  filter into a view, issue 239), and `v_tenders.title` reads the denormalised `current_title`.
+- **The REST reads that touch these tables are already fast.** On the largest lot tender in the
+  eForms range (25808: 2,428 lots, 17,000 text rows in its current version), the lot-title read is
+  0.05 s; `/v1/tenders/25808` 1.95 s, `/v1/lots?tender=25808&limit=100` 1.10 s,
+  `/v1/tenders?cpv=45&limit=100` 0.70 s end to end.
+- **The base-table joins users are told to write DO time out — but not for want of this index.**
+  "Current CPV codes of 2,000 tenders" and "their titles", written as the view descriptions
+  recommend (`tenders JOIN tender_version_… ON (tender_id, seq = current_seq)`), both hit the 10 s
+  cap. Forcing tenders to drive (`CROSS JOIN`) makes them **0.04 s and 0.08 s** on the existing
+  `(tender_id, seq)` index. turso's planner drives the join from the satellite instead: the CPV form
+  seeks `tender_version_classifications_code (scheme=?)` over every CPV row in the corpus, and the
+  title form scans `tender_version_texts`. On a scratch DB with prod's schema the wider indexes do
+  not change either plan. Filed as issue 421: the public guidance recommends a join that times out.
+
+So the covering indexes would buy the weekly job at most ~15 minutes and nothing for API users; the
+decision not to build them stands.
 
 ## Verify
 
