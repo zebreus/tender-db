@@ -267,6 +267,40 @@ section-3 denominator is evaluated and wants its own parity A/B. (3) `sections_c
 still compute the (now cheap) sections probe twice for award rows; folding `sections_can` into the
 awards pass is the 08-19 merge's shape and is worth ~100 s at most after this unit.
 
+## 2026-09-26 10:xx — the covering indexes for `title`/`cpv`: built, measured, NOT shipped
+
+Built and tested locally, then reverted before commit; the evidence is recorded so the decision can be
+taken on numbers.
+
+**turso takes the seek.** On a scratch DB with prod's schema plus
+`tender_version_texts(tender_id, seq, field)` and `tender_version_classifications(tender_id, seq,
+scheme)`, the plans move from `…_version (tender_id=? AND seq=?)` to `…_version_field (tender_id=? AND
+seq=? AND field=?)` and `…_version_scheme (… AND scheme=?)`. A test pinning that passed (9/9 in the
+suite). It does NOT help `buyer` or `deadline`: their predicates are `role LIKE '%uyer%'` and `field
+LIKE '%deadline%'`, which no index column can seek, and turso kept the two-column prefix there.
+
+**Why it is not shipped: the classifications index could never be built by the machinery that would
+own it.** Sizing by rowid density (seven 1M-rowid bounded samples per table):
+
+| table | MAX(rowid) | sampled density | est. rows | vs the 240M auto-build cap |
+|---|---|---|---|---|
+| `tender_version_texts` | 893,774,602 | 0.239 | ~213M | under — would build, ~10 GB sort RSS at 48 B/row, writer held for the build |
+| `tender_version_classifications` | 800,887,679 | 0.347 | ~278M | **over — `build_tender_indexes` refuses it** |
+
+A deferred index the builder refuses stays missing, so every boot's `ensure_deferred_indexes` would
+queue a reindex, and each reindex runs `too_large_to_build`'s `COUNT(*)` over an 800M-rowid table and
+refuses again. Putting it in the schema batch instead is the multi-hour blocking boot issues 82/83/111
+removed. So `cpv` stays on the two-column seek. `title` alone would save at most ~900 s a week against
+a ~10 GB, writer-holding one-time build, a permanent extra index on the largest satellite that every
+fold maintains, and a rebuild path that drops and re-sorts it. For a Sunday-night diagnostic that is
+not worth it; it stays unbuilt unless the 09-27 line shows `title` is now the dominant cost and a
+reason appears to want the run shorter.
+
+**Cheaper next step if the 09-27 line still reads high:** the `doc_types` / award-predicate code probe
+(item 2 in the list above) needs no schema change. Measured in the same pass: in two 200k-notice
+ranges (eForms + text, eForms + DÖE) no notice carries more than one code under any marker field, so
+a single scalar read of the code per marker can serve the award, unknown and any-marker tests at once.
+
 ## Verify
 
     ssh -o BatchMode=yes root@zebreus.click "journalctl -u tender-db --since '-8 days' --no-pager | grep -F '[data-quality] cost by query' | tail -1 | cut -c1-400"
