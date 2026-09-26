@@ -106,9 +106,13 @@ reads the routine's existence and cadence.
 
 ## Verify
 
-    ssh -o BatchMode=yes root@zebreus.click "grep -hE '\"GET /health/deep ' /var/log/nginx/access.log | grep -v '^127\.0\.0\.1' | awk '{print substr(\$4,2,14)}' | sort | uniq -c | tail -4"
+    ssh -o BatchMode=yes root@zebreus.click "grep -hE '\"GET /health/deep ' /var/log/nginx/access.log | grep -E ':[0-9]{2}:5[0-2]:[0-9]{2} ' | awk '{print substr(\$4,2,14)}' | sort | uniq -c | tail -4"
 
-- **done**: one or more off-box `/health/deep` hits in each recent hour (the routine fires at :50) — the external check is running
-- **open**: no hourly cadence of off-box hits — the routine is gone, disabled, or its sessions cannot reach the service (read 2026-09-26 before creation: the only hits were the operating session's own)
+- **done**: a `/health/deep` hit in the :50–:52 minute band of each recent hour — the routine fires at :50 and its
+  session reaches the probe within a minute or two
+- **open**: hours with no hit in that band — the routine is gone, disabled, or its sessions cannot reach the
+  service (read 2026-09-26 before creation: no such cadence)
 
-A log read on the box, free per `prod-box-reads.md`. The routine itself is listed by `list_triggers`.
+The minute band, not the source address, identifies the routine: the operating session's own curls come
+from the same cloud address range (`160.79.106.x`), so an IP filter cannot tell them apart. A log read on
+the box, free per `prod-box-reads.md`. The routine itself is listed by `list_triggers`.
