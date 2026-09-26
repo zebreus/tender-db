@@ -266,3 +266,12 @@ same `(notice_id, 'PROCEDURE', field_id)` key up to three times per version (`aw
 section-3 denominator is evaluated and wants its own parity A/B. (3) `sections_can` and `awards`
 still compute the (now cheap) sections probe twice for award rows; folding `sections_can` into the
 awards pass is the 08-19 merge's shape and is worth ~100 s at most after this unit.
+
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click "journalctl -u tender-db --since '-8 days' --no-pager | grep -F '[data-quality] cost by query' | tail -1 | cut -c1-400"
+
+- **done**: a line newer than 2026-09-20 with `sections_can` under ~400 s and the total under ~4,500 s — the two-seek probe reached the weekly run (first chance: Sunday 2026-09-27 01:10 UTC, on `def770a` or later)
+- **open**: `Sep 20 04:51:33 … (6057s total …): awards 1880s, sections_can 1173s, title 963s …` — the last run before the rewrite (read 2026-09-26); a newer line with `sections_can` still over ~1,000 s means the planner did not take the seek on prod and the pinned plan is wrong about the box
+
+A journal read, free per `prod-box-reads.md`.
