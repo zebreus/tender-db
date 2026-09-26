@@ -1,9 +1,9 @@
 # 423 — `/v1/lots?status=open&cpv=` runs past the 30 s bound, and the 503 tells the caller to retry it
 
-Status: ready-for-agent — **BUILT 2026-09-26 15:1x UTC** (see the foot): the open-head seed now fires for a
-cpv prefix with `status=open` (fix 1), the 30 s message no longer claims a stall or invites a retry (fix 2),
-the 275 pointer is corrected (fix 3); measured on prod through `/v1/sql` before building; gate, deploy and
-the live Verify follow. Was: filed 2026-09-26 14:0x UTC by the hourly audit (step 3).
+Status: **DONE 2026-09-26** — deployed at `69f2a0e` 15:08 UTC (gate 130/130, health 200, 0 error lines);
+the `## Verify` block reads done (`200 1.21` / `200 1.15`), paging verified (foot). Was: BUILT 15:0x UTC —
+the open-head seed fires for a cpv prefix with `status=open`, the 30 s message no longer claims a stall or
+invites a retry, the 275 pointer is corrected. Was: filed 2026-09-26 14:0x UTC by the hourly audit.
 Kind: public API latency (a documented filter pair that cannot complete) + a misleading error message
 Relates to: 275 (the open-head seed that fixed status+country — the code's pointer to "275's residuals"
 for cpv+status is broken: 275 never mentions cpv), 408 (the 500k-id band this shape does get), 273
@@ -103,3 +103,20 @@ not in a loop.
 the head, one seed carrying both prefixes, bare status and cpv-without-status unseeded) and the superset
 trap (seeded = seed-stripped answer). **Mutation-checked**: narrowing the arm back to country-only fails
 both tests.
+
+**After deploy (15:08 UTC, `69f2a0e`)** — `/v1/lots?…`:
+
+| shape | before | after |
+|---|---|---|
+| `status=open&cpv=45&limit=100` | 503, 30.4 / 30.6 s | **200, 1.21 / 1.15 s** |
+| `status=open&cpv=72&limit=10` | 200, 14.4 s | **200, 0.79 s** |
+| `status=open&cpv=45&limit=10` | 200, 2.6–3.8 s | 200, 0.82 s |
+| `status=open&country=DE&cpv=45&limit=10` | 200, 1.19 s | 200, 0.89 s |
+| `status=open&limit=100` (unseeded, unchanged) | 200, 2.0 s | 200, 1.73 s |
+| `status=open&country=DE&limit=100` | 200, 1.0 s | 200, 0.92 s |
+| `status=closed&cpv=45&limit=100` | 200, 0.70 s | 200, 0.64 s |
+
+Paging through the seeded stream, three pages of `status=open&cpv=45&limit=100`: ids strictly ascending,
+no overlap across pages, 0.9–1.2 s each. The walk surfaced a pre-existing contract gap, filed as **424**:
+the lots `status` EXISTS decides per TENDER (no `lot_id` term), so a lot is returned as open on a SIBLING
+lot's future deadline while its own row serves `null` (lot 219239) or its own past date (187173/187174).
