@@ -8,9 +8,6 @@
 //! concurrency limit rejects, and a genuine analytical query answers.
 #![cfg(feature = "server")]
 
-#[path = "support/plan_capture.rs"]
-mod plan_capture;
-
 use ingest::{eforms, profile, project};
 use serde_json::Value;
 use std::sync::Arc;
@@ -59,7 +56,7 @@ impl Server {
     async fn start_with_sql_timeout(name: &str, sql_timeout: Duration) -> Server {
         let path = format!("/tmp/tender-db-sql-{name}-{}.db", std::process::id());
         let _ = std::fs::remove_file(&path);
-        plan_capture::install();
+        tender_db::plan_capture::install_from_env();
         let db = Arc::new(Db::open(&path).await.expect("open scratch db"));
         db.record_fetch(&store::Fetch {
             source: SOURCE.into(),

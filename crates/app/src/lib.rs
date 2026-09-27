@@ -15,6 +15,8 @@ pub mod coverage;
 #[cfg(feature = "server")]
 pub mod ledger;
 #[cfg(feature = "server")]
+pub mod plan_capture;
+#[cfg(feature = "server")]
 #[cfg(feature = "server")]
 pub mod supervisor;
 #[cfg(feature = "server")]

@@ -1,7 +1,8 @@
 # 429 — ANALYZE the read-path tables weekly (minus `organizations`), as issue 428 decided
 
 Status: ready-for-agent — filed 2026-09-27 01:00 UTC from issue 428's measurement. Mine; the decision is taken
-(428 § Decision), this is the build.
+(428 § Decision), this is the build. Step 0's capture is BUILT (2026-09-27); enabled on prod with the deploy —
+the diff waits for a week of capture and the 2026-10-04 snapshot.
 Kind: query planning / operations
 Relates to: 428 (the evidence — read it first), 421 (the trap class this fixes), 256 (`ANALYZE plan_*`, the
 existing precedent), 112 / 114 / 122 (plan gates whose precondition is "no stats"), 62 / 111 (deferred indexes —
@@ -9,6 +10,13 @@ why the resolver cannot take an `INDEXED BY`)
 
 ## What to build
 
+0. **FIRST — the statements 428 did not see.** 428's capture was the app suites, which never run the
+   supervisor's weekly jobs (data-quality, censuses, org merges). Build `tender_db::plan_capture` (the suites'
+   hook, promoted into the server behind `TENDER_PLAN_CAPTURE=<file>`, capped at 20,000 distinct statements),
+   deploy it, enable it with a drop-in for one full week so a Sunday tick and a weekday tick both run under it,
+   then plan every captured statement on two copies of the next weekly snapshot (base vs the chosen subset) with
+   `plan-probe`, time what differs, and only then schedule the job. If a job's statement regresses, it gets the
+   same treatment `organizations` got (exclude the table) or a statement fix, decided from the numbers.
 1. **The set, as a constant with its reasons.** `ANALYZE_TABLES` in the store: `tenders lots tender_versions
    organization_names organization_mentions tender_version_dates tender_version_classifications
    tender_version_parties tender_version_texts tender_version_amounts tender_version_lots tender_version_bids

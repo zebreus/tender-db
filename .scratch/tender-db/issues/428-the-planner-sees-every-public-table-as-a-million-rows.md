@@ -109,6 +109,13 @@ With **all** tables the 74 split into:
 None of the hand-tuned list/seed plans (issues 223, 388, 408, 423, 424 — the lots/tenders pages, seeds, windowed
 walks) changed under any stats set.
 
+**Coverage limit, found after the decision (2026-09-27 01:0x UTC), and not waved away:** the capture is the
+four app suites (api, sql, admin, webhooks). They drive every API read path and the fold, but NOT the
+supervisor's weekly jobs — the data-quality run (6,068 s last Sunday, issue 243), the censuses, the org merges.
+Those statements were never planned against stats here, so the decision below is taken for the read path and
+gated, for the jobs, on issue 429's step 0: a week of PRODUCTION statement capture, diffed on the next snapshot
+before the job is scheduled.
+
 ### 3. What it changes for `/v1/sql` (`traps.sql`, `timed.sql`)
 
 | shape | no stats | with stats |

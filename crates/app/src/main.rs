@@ -40,6 +40,12 @@ const READERS: usize = 8;
 #[cfg(feature = "server")]
 fn main() {
     dioxus::server::serve(|| async {
+        // Issues 428/429: opt-in capture of every statement this process prepares
+        // (TENDER_PLAN_CAPTURE=<file>); a no-op when unset. Before the DB opens, so
+        // the open's own statements are in it too.
+        if tender_db::plan_capture::install_from_env() {
+            eprintln!("[plan-capture] recording distinct prepared statements (TENDER_PLAN_CAPTURE)");
+        }
         let db = store::state().await;
         let api = tender_db::v1::AppState::new(db.clone(), db.readers(READERS)?);
 

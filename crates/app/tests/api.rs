@@ -10,9 +10,6 @@
 //! runs it (the same feature `nix flake check`'s clippy gate uses).
 #![cfg(feature = "server")]
 
-#[path = "support/plan_capture.rs"]
-mod plan_capture;
-
 use ingest::{eforms, process, profile, project};
 use serde_json::Value;
 use std::sync::Arc;
@@ -67,7 +64,7 @@ impl Server {
     async fn boot(name: &str, snapshot_page: Option<i64>, fallback_band: Option<i64>) -> Server {
         let path = format!("/tmp/tender-db-api-{name}-{}.db", std::process::id());
         let _ = std::fs::remove_file(&path);
-        plan_capture::install();
+        tender_db::plan_capture::install_from_env();
         let db = Arc::new(Db::open(&path).await.expect("open scratch db"));
         db.record_fetch(&store::Fetch {
             source: SOURCE.into(),
