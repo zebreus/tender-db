@@ -1,6 +1,6 @@
 # 441 — deleting one organization mention scans all ~78M party rows: turso's FK proof uses only an index of the FK's exact shape, and the party tables' index is one column short
 
-Status: ready-for-agent — DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `9dedf49`; gate GATE-EXIT=0); the auto-Reindex (job 1597) builds both `_mention_key` indexes AHEAD of the resumed 1596. Was: BUILT 2026-09-27 (gate pending at filing); deploys with the 434–440 bundle; the deploy's
+Status: RESOLVED-VERIFIED 2026-09-27 14:51 UTC — the Verify below reads ~16 µs per notice (was ~2 s) and the re-parse at ~143 notices/s (was ~1.3). Was: DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `9dedf49`; gate GATE-EXIT=0); the auto-Reindex (job 1597) builds both `_mention_key` indexes AHEAD of the resumed 1596. Was: BUILT 2026-09-27 (gate pending at filing); deploys with the 434–440 bundle; the deploy's
 auto-Reindex builds the two new indexes AHEAD of the resumed job 1596. Filed 2026-09-27 from the hourly OPERATE step:
 job 1596 (the r209/r208 re-parse for 393/397) stalled at fetch 28.
 mine to take.
@@ -11,7 +11,7 @@ one-column `tender_version_parties_mention` for the re-parse's party DELETE), 35
 proof, bracketed off rather than explained), 393 (unit 1 drops `TRANSLITERATED_ADDR` sections — the re-parse that hit
 this), 434 (the fold now refreshes stale mentions instead of relying on the keep-set)
 
-## Observed (2026-09-27 ~15:50 UTC, prod)
+## Observed (2026-09-27 ~13:50 UTC, prod)
 
 Job 1596 (`reparse ted-export-r209,ted-export-r208`) sat at package 4/163, fetch 28 (`2024-02.tar`), for over an
 hour: `members_done` moved 64 in 50 s (~1.3 notices/s). The job thread was pinned at 100 % CPU and reading ~100 MB/s
@@ -70,4 +70,8 @@ Read it twice, 60 s apart, while a re-parse that drops mentioned sections runs (
 
 - **done**: seconds per re-parsed notice attributable to `organization_mentions` well under 0.1 (was ~2), and
   `/admin/jobs` shows 1596 advancing packages at minutes each, not hours
-- **open**: ~2.0 s per notice (read 2026-09-27 15:52 UTC: +18 notices, +36.2 s in 30 s)
+- **was open**: ~2.0 s per notice (read 2026-09-27 13:52 UTC: +18 notices, +36.2 s in 30 s)
+- **read 2026-09-27 14:50–14:51 UTC** (rev `9dedf49`, after reindex job 1597; 1596 at fetch 29): +8,697 notices in
+  61 s, `organization_mentions` +0.141 s over them (**~16 µs per notice**); the whole clear phase +17.2 s (~2 ms per
+  notice, the value-table deletes). **done.** Fetch 28, the package that sat an hour at 1,408 of its members,
+  re-ran whole (3,057 notices) in the first minutes after the restart.
