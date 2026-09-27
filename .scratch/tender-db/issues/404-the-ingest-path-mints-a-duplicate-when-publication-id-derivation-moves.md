@@ -841,3 +841,17 @@ The wet arm is deployed (`b6750d5`) and its plan is fresh (job 1470); the only s
 refused on 2026-09-17 as a destructive production write. It is not being routed around; it waits for
 an explicit go-ahead. After it runs: `tender_versions` must read 14,507,810 (from 14,508,091) and the
 line above must read `0 0`.
+
+## 2026-09-27 — the owner go-ahead covers the wet repair; its fresh dry is queued
+
+The permission hold above is lifted (owner, 2026-09-27: every previously-gated production write runs). The plan of
+job 1470 is ten days old and the corpus has been re-folded since (issue 394's island refold, issue 418's instant repair,
+and the queued text + XML re-parse fold), so the wet arm's set-for-set check needs a fresh plan anyway:
+
+- queue job **1598** `repair-member-twins` **dry**, behind the 393/397 chain (1595 text re-parse → 1596 XML re-parse →
+  1597 full fold) — it re-derives and stores the plan against the re-folded corpus;
+- then, on the next check-in after it: read its sets (expect 281, or the post-fold equivalent), take the
+  `SELECT COUNT(*) FROM tender_versions` baseline (the 09-17 one, 14,508,091, is stale), enqueue the wet
+  (`{"kind":"repair-member-twins","dry_run":false}`, which queues its own `project`), and read the Verify: `0 0`
+  twin sets/rows and `tender_versions` down by exactly the plan's row count.
+
