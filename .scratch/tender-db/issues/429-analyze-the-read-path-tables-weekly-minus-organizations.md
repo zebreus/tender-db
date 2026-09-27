@@ -1,8 +1,11 @@
 # 429 — ANALYZE the read-path tables weekly (minus `organizations`), as issue 428 decided
 
 Status: ready-for-agent — filed 2026-09-27 01:00 UTC from issue 428's measurement. Mine; the decision is taken
-(428 § Decision), this is the build. Step 0's capture is BUILT (2026-09-27); enabled on prod with the deploy —
-the diff waits for a week of capture and the 2026-10-04 snapshot.
+(428 § Decision), this is the build. Step 0's capture is LIVE on prod since 2026-09-27 03:12 UTC (`d7657a3`, drop-in
+`/etc/systemd/system/tender-db.service.d/plancapture.conf` → `/data/tmp/plan-capture-429.sql`; 83 statements in the
+first minute). The first deploy (`bba7804`, 02:44) recorded nothing — dioxus's logger took tracing's one global
+subscriber first; fixed by installing before `serve`. The diff waits for a week of capture (a weekday tick and the
+2026-10-04 Sunday jobs) and the 2026-10-04 snapshot; remove the drop-in after.
 Kind: query planning / operations
 Relates to: 428 (the evidence — read it first), 421 (the trap class this fixes), 256 (`ANALYZE plan_*`, the
 existing precedent), 112 / 114 / 122 (plan gates whose precondition is "no stats"), 62 / 111 (deferred indexes —
