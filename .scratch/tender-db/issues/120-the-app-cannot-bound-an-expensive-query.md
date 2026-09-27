@@ -1,11 +1,11 @@
 # 120 — the app has no defence against expensive-query saturation
 
-Status: ready-for-agent — **trigger (b) MET and ADOPTED 2026-09-27**: issue 425 paid the vendoring cost
-(`crates/vendor/turso` exposes `set_query_timeout` / `interrupt`), so "cancellation stops costing a fork" is
-true and the owner position below said to adopt it immediately. BUILT: both REST reader pools carry the engine's
-per-statement deadline (25 s, under the 30 s request bound) and an abandoned isolated walk is interrupted — see
-the last section. Open until live-verified on prod; then done. Was: open, POSITION RECORDED 2026-08-21 (owner) —
-the fork stays untaken.
+Status: done — **trigger (b) MET and ADOPTED 2026-09-27**, LIVE on prod since 05:39 UTC (`cbacee1`): both REST
+reader pools carry the engine's per-statement deadline (25 s, under the 30 s request bound), a read past it is
+stopped and answered 503, and an abandoned isolated walk is interrupted — see the last section. Issue 425 paid the
+vendoring cost (`crates/vendor/turso` exposes `set_query_timeout` / `interrupt`), so "cancellation stops costing a
+fork" is true and the owner position below said to adopt it immediately. The instrument for "users hit the
+limit" ships with issue 430. Was: open, POSITION RECORDED 2026-08-21 (owner) — the fork stays untaken.
 Kind: availability / architecture
 Blocked by: —
 Blocks: —
@@ -421,4 +421,23 @@ statement and an abandoned one nothing past its abandonment, so `SLOTS` is sized
 `arrival rate × 25 s`, a number that exists. What it does not: the isolation stays (the deadline bounds how
 long, the pool bounds who), and a walk under 25 s is still served in full, however slow. The instrument for
 "users are hitting the limit" is issue 430 (`/metrics` sees none of it yet).
+
+### Live (2026-09-27 05:39 UTC, `cbacee1`)
+
+Deployed with an idle queue; health 200 on `cbacee1`. Smoke on both pools, all 200: `/v1/tenders?limit=5`
+0.64 s (main), `?min_value=100000000` 0.63 s and `/v1/lots?country=LI` 0.49 s (isolated),
+`/v1/organizations?name_prefix=zzq&country=DE` 1.01 s (the full-DE-slice walk; 1.10 s warm before),
+`?name_prefix=stadt&country=DE` 0.98 s, `/v1/tenders/4291`, `/v1/changes`. The walk-shaped SSE snapshots — the one
+path whose paging changed (id bands) — match their pre-deploy baselines: `/v1/tenders?country=LI` 760 events,
+live in 0.95 s (1.21 s before), `/v1/lots?country=LI` 1466 events in 1.14 s (1.19 s). `/v1/sql` `SELECT 1` 200 (its
+own pool, untouched). Plan capture (issue 429) re-armed at the restart ("recording distinct prepared
+statements"), 380 statements.
+
+**Not live-exercised, and why:** prod has no REST shape left that runs 25 s — issues 117/273/408/423 removed them
+— so the stop path was not provoked on the serving box (doing so deliberately would mean finding a new slow
+shape, which is a defect report, not a probe). The abandon path was probed before the deploy and cannot
+discriminate either: the slowest warm isolated read found (`name_prefix=zzq&country=DE`, 1.1 s wall) spends ~0.4 s
+of CPU, nearly all of it in the first 0.3 s, so a client giving up at 0.3 s left 1–3 ticks burning afterwards
+even on the OLD rev. Both paths are carried by the e2e tests above (the abandon one mutation-checked) and by
+issue 430's counters from here on.
 
