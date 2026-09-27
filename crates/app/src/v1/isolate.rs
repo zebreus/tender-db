@@ -4,15 +4,17 @@
 //! **What stops a walk, and what does not.** A `tokio` timeout does not: measured on
 //! the deployed engine, cold and warm, a 0.5 s budget over a 3.5 s streaming read
 //! never fires, because `Statement::step` only yields on IO and a synchronous VFS
-//! blocks inside the poll. turso's OWN per-statement deadline does — it is checked
+//! blocks inside the poll. turso's `interrupt()` does — the flag it sets is checked
 //! before every VDBE instruction, so it stops a step that never yields
-//! (`crates/store/tests/query_timeout_probe.rs`: a series aggregate, a nested-loop
-//! join, a full sort and a GROUP BY all end in `Error::Interrupt` near the deadline,
-//! and the connection is usable after). The published SDK hid it; the vendored one
-//! (`crates/vendor/turso`, issue 425) passes it through, with `interrupt()`. So this
-//! pool's connections carry [`super::STATEMENT_DEADLINE`] (set in [`IsolatedReads::new`]),
-//! and a read the handler stops waiting for is interrupted, not left to run (see
-//! [`Abandon`]).
+//! (`crates/store/tests/interrupt_probe.rs`: a series aggregate, a nested-loop join, a
+//! full sort and a GROUP BY all end in `Error::Interrupt` promptly, and the connection
+//! is usable after). The published SDK hid it; the vendored one (`crates/vendor/turso`,
+//! issue 425) passes it through. So every read on this pool is bounded by
+//! [`super::STATEMENT_DEADLINE`] — a timer that interrupts it ([`super::stop`], issue
+//! 438; issue 120 first used turso's per-statement deadline, which read the clock
+//! before every instruction and slowed every read 1.7–2.9×) — and a read the handler
+//! stops waiting for is interrupted through the same registration, not left to run
+//! (see [`Abandon`]).
 //!
 //! **Why the isolation stays.** A request whose filter shape can walk
 //! ([`store::read::walks`]) is executed on a **dedicated runtime with its own reader
@@ -22,7 +24,7 @@
 //! the main API's readers keep serving. It is `/v1/sql`'s isolation (issue 17)
 //! applied to the public collections.
 //!
-//! **What it does not do.** It does not reduce the work below the deadline; a walk
+//! **What it does not do.** It does not reduce the work below the deadline; a read
 //! that fits under it is served in full, however slow. And it sheds rather than
 //! queues: the (N+1)th concurrent walk-capable request gets a 503, which is a
 //! deliberate trade for an unauthenticated endpoint.
@@ -35,8 +37,8 @@
 //! request. Every abandoned request cost its FULL runtime, so a retrying client
 //! accumulated load rather than replacing it (issue 120). Now an abandoned request
 //! costs nothing past the moment it is abandoned, and an admitted one at most the
-//! deadline per statement — so [`SLOTS`] is sized against `arrival rate × deadline`,
-//! a number that exists.
+//! deadline — so [`SLOTS`] is sized against `arrival rate × deadline`, a number that
+//! exists.
 //!
 //! **The confinement guarantee is unverified until measured on this endpoint.** That
 //! the burn really lands on these threads and not on the main API workers has never
@@ -46,13 +48,13 @@
 
 use std::future::Future;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 
+use crate::v1::stop::{Deadline, Held, Running};
 use crate::v1::{Collection, Item, PageOut, read_items, read_page};
 use store::read::{Filter, Scope};
-use store::turso::Connection;
 
 /// Worker threads on the isolated read runtime. **Must equal [`SLOTS`]** — see the
 /// assertion below.
@@ -77,9 +79,9 @@ const SLOTS: usize = 4;
 
 // Slots and threads must agree, and it is a correctness property rather than tuning.
 //
-// An admitted walk occupies a thread until its statement ends — naturally, or at the
-// engine deadline; nothing in between can take the thread back, because the step does
-// not yield. With more slots than threads, the surplus admitted requests wait on the
+// An admitted walk occupies a thread until its statement ends — naturally, or when the
+// deadline's interrupt lands; nothing else can take the thread back, because the step
+// does not yield. With more slots than threads, the surplus admitted requests wait on the
 // runtime behind walks nobody can pre-empt — which is precisely the queueing that
 // `try_acquire`-to-shed exists to prevent, relocated inside the sandbox where it is
 // harder to see. With more threads than slots the extra threads are simply idle.
@@ -100,52 +102,17 @@ pub const ISOLATED_THREAD_NAME: &str = "slow-read-exec";
 /// A walk-capable read could not be admitted: [`SLOTS`] are already in flight.
 pub struct Shed;
 
-/// The connection a spawned read is running on, published for exactly as long as the
-/// read holds it — so a handler that gives up interrupts THAT read, never one a later
-/// request borrowed the same pooled connection for.
-#[derive(Default)]
-struct Running(Mutex<Option<Connection>>);
-
-/// A borrowed isolated reader, registered in [`Running`] while it is held. It
-/// unregisters in `drop` BEFORE its fields drop — i.e. before the `Reader` hands the
-/// connection back to the pool — and under the same lock [`Abandon`] interrupts with,
-/// so an interrupt can only ever land on the read that registered it.
-pub struct Held {
-    running: Arc<Running>,
-    reader: store::Reader,
-}
-
-impl Held {
-    fn register(reader: store::Reader, running: Arc<Running>) -> Held {
-        *running.0.lock().unwrap_or_else(|p| p.into_inner()) = Some((*reader).clone());
-        Held { running, reader }
-    }
-}
-
-impl std::ops::Deref for Held {
-    type Target = Connection;
-
-    fn deref(&self) -> &Connection {
-        &self.reader
-    }
-}
-
-impl Drop for Held {
-    fn drop(&mut self) {
-        *self.running.0.lock().unwrap_or_else(|p| p.into_inner()) = None;
-    }
-}
-
 /// Fires when the handler stops waiting — a client disconnect, the whole-request
 /// deadline, or this future being dropped for any other reason. Before issue 120's
 /// REST half it could only `abort()` the task, which took effect at an await point a
 /// non-yielding walk never reaches, so an abandoned walk ran to its natural end with
 /// nobody waiting (~85 min once on prod). Now it first INTERRUPTS the statement the
-/// read is running (turso's `interrupt()`, safe from another thread), which fails the
+/// read is running (turso's `interrupt()`, safe from another thread, sent through the
+/// read's [`Running`] registration — the one the deadline timer uses), which fails the
 /// step with `Error::Interrupt` at its next instruction; the task then ends and its
 /// permit frees. Between two statements of one read nothing is running, the
 /// interrupt is ignored (turso's rule), and `abort()` cancels the task at its next
-/// await — or, if the next statement starts first, the engine deadline bounds it.
+/// await — or, if the next statement starts first, the read's deadline timer stops it.
 struct Abandon {
     task: tokio::task::AbortHandle,
     running: Arc<Running>,
@@ -155,8 +122,7 @@ struct Abandon {
 
 impl Drop for Abandon {
     fn drop(&mut self) {
-        if let Some(conn) = self.running.0.lock().unwrap_or_else(|p| p.into_inner()).as_ref() {
-            let _ = conn.interrupt();
+        if self.running.interrupt() {
             self.abandoned.fetch_add(1, Ordering::Relaxed);
         }
         self.task.abort();
@@ -166,6 +132,10 @@ impl Drop for Abandon {
 /// The isolated runtime, its pool and its slot count. Lives in `AppState`.
 pub struct IsolatedReads {
     readers: Arc<store::Readers>,
+    /// Every read's time limit, [`super::STATEMENT_DEADLINE`] (issue 438: a timer and
+    /// `interrupt()`, on the runtime `AppState` hands in — never this pool's own, whose
+    /// threads a walk can pin).
+    deadline: Arc<Deadline>,
     slots: Arc<Semaphore>,
     runtime: tokio::runtime::Handle,
     /// Reads refused because every slot was busy (issue 430).
@@ -175,11 +145,12 @@ pub struct IsolatedReads {
 }
 
 impl IsolatedReads {
-    pub fn new(db: &store::Db) -> store::turso::Result<IsolatedReads> {
-        let readers = db.readers(ISOLATED_READERS)?;
-        readers.bound_statements(super::STATEMENT_DEADLINE);
+    /// `timers` runs the deadline timers — a runtime no query runs on
+    /// ([`super::stop::spawn_deadline_runtime`]).
+    pub fn new(db: &store::Db, timers: tokio::runtime::Handle) -> store::turso::Result<IsolatedReads> {
         Ok(IsolatedReads {
-            readers,
+            readers: db.readers(ISOLATED_READERS)?,
+            deadline: Arc::new(Deadline::new(super::STATEMENT_DEADLINE, timers)),
             slots: Arc::new(Semaphore::new(SLOTS)),
             runtime: spawn_isolated_runtime(),
             shed: AtomicU64::new(0),
@@ -187,15 +158,16 @@ impl IsolatedReads {
         })
     }
 
-    /// Re-bound this pool's statements — how [`super::AppState::bound_statements`]
-    /// lets a test watch the deadline fire without a 25 s query.
-    pub fn bound_statements(&self, deadline: std::time::Duration) {
-        self.readers.bound_statements(deadline);
+    /// Change this pool's read limit for later reads — how a test watches the
+    /// deadline fire without a 25 s query ([`super::AppState::set_read_deadline`]).
+    pub fn set_read_deadline(&self, limit: std::time::Duration) {
+        self.deadline.set_limit(limit);
     }
 
-    /// This pool's statement deadline — see [`store::Readers::statement_deadline`].
-    pub fn statement_deadline(&self) -> Option<std::time::Duration> {
-        self.readers.statement_deadline()
+    /// The limit each read on this pool gets — [`super::STATEMENT_DEADLINE`] unless a
+    /// test changed it.
+    pub fn read_deadline(&self) -> std::time::Duration {
+        self.deadline.limit()
     }
 
     /// How many slots are free. `/metrics` reports the complement as
@@ -246,7 +218,7 @@ impl IsolatedReads {
     /// (measured before cancellation existed: ~2.77 cores still burning from clients
     /// that had exited minutes earlier). The permit tracks the QUERY, never the
     /// caller; what changed is that the query now ends when the caller does
-    /// ([`Abandon`]) or at the statement deadline, whichever is first.
+    /// ([`Abandon`]) or at the read deadline, whichever is first.
     pub async fn run<T, F, Fut>(&self, read: F) -> Result<store::turso::Result<T>, Shed>
     where
         T: Send + 'static,
@@ -258,11 +230,14 @@ impl IsolatedReads {
             return Err(Shed);
         };
         let readers = self.readers.clone();
+        let deadline = self.deadline.clone();
         let running = Arc::new(Running::default());
         let registered = running.clone();
         let handle = self.runtime.spawn(async move {
             let _permit = permit;
-            let reader = Held::register(readers.get().await?, registered);
+            // Registered for the deadline timer AND for `Abandon`: one slot, one way
+            // to stop the read, cleared before the reader goes back to the pool.
+            let reader = deadline.hold_in(readers.get().await?, registered);
             read(reader).await
         });
         let _abandon = Abandon { task: handle.abort_handle(), running, abandoned: self.abandoned.clone() };

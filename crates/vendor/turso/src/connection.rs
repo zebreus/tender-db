@@ -249,6 +249,13 @@ impl Connection {
     /// every VDBE instruction (`vdbe/mod.rs` `normal_step` → `maybe_request_interrupt`),
     /// so it stops a statement that never yields to the async runtime; the step
     /// then fails with [`Error::Interrupt`]. `Duration::ZERO` disables it.
+    ///
+    /// **Not on a serving connection (tender-db issue 438).** While a limit is set,
+    /// that check reads the monotonic clock before EVERY instruction: measured,
+    /// covering-index GROUP BYs 2.9x and scans 1.7-2.7x slower. The API stops its
+    /// reads with a timer and [`interrupt`](Connection::interrupt) instead
+    /// (`crates/app/src/v1/stop.rs`); the only caller left is the offline
+    /// `plan-probe mem` instrument.
     pub fn set_query_timeout(&self, duration: std::time::Duration) -> Result<()> {
         let conn = self.get_inner_connection()?;
         conn.set_query_timeout(duration);

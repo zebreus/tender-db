@@ -317,8 +317,9 @@ async fn a_long_query_is_dropped_at_the_time_limit() {
 /// A single non-yielding aggregate — the `COUNT(*)`/`GROUP BY` shape that
 /// computes in one poll with no row boundary — is capped at the time limit and
 /// answered 408, rather than running past 40 s with no timeout (issue 51). Since
-/// issue 425 it is the engine's own deadline that stops it; the handler-side
-/// backstop remains for what that check does not reach. A short cap keeps the test quick and
+/// issue 425 it is an interrupt at the limit that stops it (a timer and turso's
+/// `interrupt()` since issue 438); the handler-side backstop remains for what that
+/// check does not reach. A short cap keeps the test quick and
 /// the abandoned query brief; the aggregate far outlasts it on any machine.
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn a_non_yielding_aggregate_is_capped() {
@@ -339,12 +340,13 @@ async fn a_non_yielding_aggregate_is_capped() {
 }
 
 /// Issue 425 (superseding what issue 417 pinned here): a capped computation no
-/// longer runs on after its 408. Until the engine's own per-statement deadline was
-/// reachable, the two bombs below each kept computing on their own blocking thread —
-/// abandoned, counted, and the gauge read 2 (and on prod on 2026-09-18 two such
-/// computations denied the endpoint for 13.5 minutes). Now turso stops each one at
-/// the limit, so by the time its 408 is answered it has already ended: the gauge
-/// reads 0, nothing is left burning, and a cheap query answers at once.
+/// longer runs on after its 408. Until turso could be told to stop a statement, the
+/// two bombs below each kept computing on their own blocking thread — abandoned,
+/// counted, and the gauge read 2 (and on prod on 2026-09-18 two such computations
+/// denied the endpoint for 13.5 minutes). Now each one is interrupted at the limit
+/// (issue 438: a timer and `interrupt()`, no longer turso's per-statement deadline),
+/// so by the time its 408 is answered it has already ended: the gauge reads 0,
+/// nothing is left burning, and a cheap query answers at once.
 ///
 /// Sequential, not concurrent, so the per-token concurrency cap (two) never
 /// enters: each bomb's permit is released when its 408 is answered.
@@ -378,8 +380,8 @@ async fn a_capped_computation_is_stopped_not_abandoned() {
         .expect("the pinned gauge is served");
     assert_eq!(gauge, "tender_db_sql_pinned_computations 0", "the engine stopped both — none is abandoned");
 
-    // …and the endpoint answers a cheap query at once, on a connection that was
-    // interrupted a moment ago (the pool has one reader per slot).
+    // …and the endpoint answers a cheap query at once, right after two interrupts
+    // (on a fresh connection: since issue 438 an interrupted one is never lent again).
     let started = std::time::Instant::now();
     let response = server.sql("SELECT 1 AS ok").await;
     let status = response.status().as_u16();

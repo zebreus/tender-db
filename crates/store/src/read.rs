@@ -9,7 +9,6 @@
 
 use crate::{Change, int, max_cursor, opt_int_of, opt_text_of, t, text};
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use tokio::sync::{OwnedRwLockReadGuard, OwnedSemaphorePermit, RwLock, Semaphore};
 use turso::{Connection, Value};
@@ -32,14 +31,18 @@ const ENTITY_KINDS: [&str; 6] = ["tender", "lot", "organization", "lot_result", 
 /// parallelise with each other and with the writer under WAL; the semaphore
 /// bounds how many queries are in flight, and connections are reused so the
 /// per-connection pragmas are paid once.
+///
+/// A pool puts no time limit on its reads. Every job reads through one as is (the
+/// weekly data-quality windows run for minutes by design); the API bounds its own
+/// borrows with a timer that interrupts the read (`tender-db`'s `v1::stop`, issue
+/// 438). Issue 120 had put turso's per-statement deadline (`set_query_timeout`) on a
+/// pool here instead — and turso reads the clock before EVERY VDBE instruction while
+/// one is set, which made every read on a bounded pool 1.7–2.9× slower.
 pub struct Readers {
     database: turso::Database,
     idle: Mutex<Vec<Connection>>,
     permits: Arc<Semaphore>,
     gate: WalGate,
-    /// The engine's per-statement deadline for every borrow, in ms; 0 = none
-    /// (the default). See [`Readers::bound_statements`].
-    deadline_ms: AtomicU64,
 }
 
 impl Readers {
@@ -49,39 +52,7 @@ impl Readers {
             idle: Mutex::new(Vec::with_capacity(n)),
             permits: Arc::new(Semaphore::new(n)),
             gate,
-            deadline_ms: AtomicU64::new(0),
         }))
-    }
-
-    /// Stop any statement run on this pool's connections once it has run for
-    /// `deadline` (issue 120, the REST half of issue 425): turso checks the deadline
-    /// before every VDBE instruction, so it stops a walk that never yields to the
-    /// async runtime — which no `tokio` timeout can — and the step fails with
-    /// [`turso::Error::Interrupt`]. The connection is usable afterwards and goes back
-    /// to the pool as usual. The clock starts at a statement's first step, per
-    /// statement, not per borrow: a read of three statements may take up to three
-    /// deadlines in all.
-    ///
-    /// Only for pools whose every statement serves a caller that has a deadline of
-    /// its own — the `/v1` API's. Never on a pool a job reads through: the weekly
-    /// data-quality windows run for minutes BY DESIGN. Applied at every borrow, so a
-    /// later call takes effect on the next [`get`](Readers::get); a sub-millisecond
-    /// value is refused rather than silently meaning "no deadline" (turso reads 0 ms
-    /// as off).
-    pub fn bound_statements(&self, deadline: std::time::Duration) {
-        let ms = u64::try_from(deadline.as_millis()).unwrap_or(u64::MAX);
-        assert!(ms > 0, "a statement deadline under 1 ms would switch the engine's deadline OFF");
-        self.deadline_ms.store(ms, Ordering::Relaxed);
-    }
-
-    /// The deadline [`bound_statements`](Readers::bound_statements) set, if any —
-    /// so a test can pin which pools are bounded (the API's) and which are not
-    /// (every pool a job reads through).
-    pub fn statement_deadline(&self) -> Option<std::time::Duration> {
-        match self.deadline_ms.load(Ordering::Relaxed) {
-            0 => None,
-            ms => Some(std::time::Duration::from_millis(ms)),
-        }
     }
 
     /// Borrow a reader, waiting if all of them are busy.
@@ -110,11 +81,7 @@ impl Readers {
                 conn
             }
         };
-        let deadline = self.deadline_ms.load(Ordering::Relaxed);
-        if deadline > 0 {
-            conn.set_query_timeout(std::time::Duration::from_millis(deadline))?;
-        }
-        Ok(Reader { pool: self.clone(), conn: Some(conn), _permit: permit, _gate: gate })
+        Ok(Reader { pool: self.clone(), conn: Some(conn), discard: false, _permit: permit, _gate: gate })
     }
 }
 
@@ -122,11 +89,33 @@ impl Readers {
 pub struct Reader {
     pool: Arc<Readers>,
     conn: Option<Connection>,
+    /// Set by [`Reader::discard`]: the connection is dropped, not pooled, when the
+    /// borrow ends.
+    discard: bool,
     _permit: OwnedSemaphorePermit,
     /// The WAL-gate shared lease (issue 63), held for the borrow's lifetime so a
     /// gated checkpoint's exclusive acquire waits out this read. `None` when the
     /// gate is disabled. Dropped with the Reader, releasing the lease.
     _gate: Option<OwnedRwLockReadGuard<()>>,
+}
+
+impl Reader {
+    /// Keep this connection out of the pool when the borrow ends: it is dropped, and
+    /// the pool opens a fresh one on a later [`get`](Readers::get).
+    ///
+    /// For a connection whose engine state the borrower can no longer vouch for. The
+    /// caller today is the API's read deadline (issue 438, `tender-db`'s
+    /// `v1::stop::Held`): a connection that was sent `interrupt()` during its borrow
+    /// may carry turso's interrupt flag past the statement it was meant for — turso
+    /// checks "is a statement running" and sets the flag as two separate steps, so an
+    /// interrupt racing the statement's own end can leave the flag set with nothing
+    /// running, and the next statement on the connection (another request's) would
+    /// fail at its first instruction. There is no public way to clear the flag, so
+    /// such a connection is never lent again. Costs one connection open (the
+    /// pragmas, a cold page cache) per interrupted borrow.
+    pub fn discard(&mut self) {
+        self.discard = true;
+    }
 }
 
 impl std::ops::Deref for Reader {
@@ -152,11 +141,13 @@ impl Drop for Reader {
             // connection — dropping it releases the snapshot at once — and let the
             // pool open a fresh one on the next `get`. On the (unexpected) error
             // path, discard too, conservatively. A drained autocommit read holds
-            // no snapshot, so the common case returns to the pool as before.
+            // no snapshot, so the common case returns to the pool as before. A
+            // connection the borrower discarded ([`Reader::discard`], issue 438) is
+            // dropped the same way.
             //
             // A std mutex, not tokio's: the lock is held only for a push, and Drop
             // cannot await.
-            if conn.is_autocommit().unwrap_or(false) {
+            if !self.discard && conn.is_autocommit().unwrap_or(false) {
                 self.pool.idle.lock().expect("reader pool lock").push(conn);
             }
         }

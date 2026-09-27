@@ -6,6 +6,7 @@
 //! and the middleware.
 
 pub mod isolate;
+pub mod stop;
 pub mod auth;
 pub mod docs;
 pub mod health;
@@ -73,7 +74,9 @@ pub struct AppState {
     /// account lookups token authentication does, which also *write* (the
     /// `last_used_at` touch).
     pub db: Arc<store::Db>,
-    pub readers: Arc<store::Readers>,
+    /// The REST surface's main pool, every borrow bounded by [`STATEMENT_DEADLINE`]
+    /// (issue 120; a timer and `interrupt()` since issue 438 — see [`stop`]).
+    pub readers: Arc<stop::BoundedReaders>,
     /// The writer's change-cursor doorbell — SSE's only wake-up signal.
     pub cursor: watch::Receiver<i64>,
     /// The read-only SQL endpoint's dedicated pool and per-token limiters.
@@ -117,14 +120,19 @@ impl AppState {
             db.readers(sql::SQL_READERS).expect("sql reader pool"),
             sql_timeout,
         ));
+        // Where both REST pools' deadline timers run (issue 438): a thread no query
+        // ever occupies, so a timer fires even while every API and isolated thread is
+        // pinned inside a statement that never yields.
+        let timers = stop::spawn_deadline_runtime();
         // The isolated runtime and pool for reads whose filter shape can walk, so a
         // walk nobody can cancel never holds one of `readers` (issue 120).
         let isolated =
-            Arc::new(isolate::IsolatedReads::new(&db).expect("isolated read pool"));
-        // Every statement the REST surface runs is bounded by the engine (issue 120).
-        // The pool is the API's alone — `main` hands it nothing else — so bounding it
-        // here, rather than where it is opened, keeps tests on the production shape.
-        readers.bound_statements(STATEMENT_DEADLINE);
+            Arc::new(isolate::IsolatedReads::new(&db, timers.clone()).expect("isolated read pool"));
+        // Every read the REST surface runs is bounded (issue 120). The pool is the
+        // API's alone — `main` hands it nothing else — so bounding it here, rather than
+        // where it is opened, keeps tests on the production shape.
+        let readers =
+            Arc::new(stop::BoundedReaders::new(readers, stop::Deadline::new(STATEMENT_DEADLINE, timers)));
         AppState {
             db,
             readers,
@@ -138,12 +146,11 @@ impl AppState {
         }
     }
 
-    /// Re-bound both REST pools' statements — how a test watches
-    /// [`STATEMENT_DEADLINE`] fire without a 25 s query. Takes effect at each pool's
-    /// next borrow.
-    pub fn bound_statements(&self, deadline: Duration) {
-        self.readers.bound_statements(deadline);
-        self.isolated.bound_statements(deadline);
+    /// Change both REST pools' read limit — how a test watches [`STATEMENT_DEADLINE`]
+    /// fire without a 25 s query. Takes effect at each pool's next borrow.
+    pub fn set_read_deadline(&self, limit: Duration) {
+        self.readers.set_deadline(limit);
+        self.isolated.set_read_deadline(limit);
     }
 }
 
@@ -481,11 +488,13 @@ impl ApiError {
 impl From<store::turso::Error> for ApiError {
     fn from(e: store::turso::Error) -> ApiError {
         match e {
-            // The engine's statement deadline stopped the read (issue 120's REST half
-            // of 425): not a database fault, so not a 500. The work has ENDED — unlike
-            // the pre-deadline 30 s answer, nothing keeps running behind this one — so
-            // it can say so; what it cannot promise is that a retry of the same shape
-            // is any cheaper.
+            // The read deadline stopped the read (issue 120's REST half of 425; the
+            // timer's `interrupt()` since issue 438 — an abandon interrupt answers
+            // nobody, so an `Interrupt` that reaches a handler is the deadline's): not
+            // a database fault, so not a 500. The work has ENDED — unlike the
+            // pre-deadline 30 s answer, nothing keeps running behind this one — so it
+            // can say so; what it cannot promise is that a retry of the same shape is
+            // any cheaper.
             store::turso::Error::Interrupt(_) => {
                 STATEMENT_STOPS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                 ApiError(StatusCode::SERVICE_UNAVAILABLE, stopped_message())
@@ -545,23 +554,29 @@ async fn method_not_allowed() -> ApiError {
 /// That premise does not hold for the list endpoints: a filter combination no
 /// seed bounds can simply still be computing at 30 s (issue 423 —
 /// `/v1/lots?status=open&cpv=45&limit=100`), which is why the message below does
-/// not claim a stall. Since issue 120 a single statement is stopped earlier, at
-/// [`STATEMENT_DEADLINE`], so this layer is left with the waits and the reads of
-/// several statements that add up past it. The edge does NOT provide this bound: the nginx vhost sets
+/// not claim a stall. Since issue 120 a single read is stopped earlier, at
+/// [`STATEMENT_DEADLINE`], so this layer is left with the waits and the requests of
+/// several reads that add up past it. The edge does NOT provide this bound: the nginx vhost sets
 /// `proxy_read_timeout 24h` (for SSE) in the one location block that covers
 /// everything, so a hung request would otherwise hang the caller for a day.
 const REQUEST_DEADLINE: Duration = Duration::from_secs(30);
 
-/// The engine's per-statement deadline on the API's reader pools — the main pool
-/// and the isolated one (issue 120, the REST half of issue 425). turso checks it
-/// before every VDBE instruction, so it stops the non-yielding walk no `tokio`
-/// timeout can reach, and the handler answers 503 with [`stopped_message`].
+/// The longest one read may run on the API's reader pools — the main pool and the
+/// isolated one (issue 120, the REST half of issue 425) — counted from the moment the
+/// reader is borrowed. Enforced by [`stop`] (issue 438): a timer on a thread no query
+/// runs on calls turso's `interrupt()`, whose flag the engine checks before every VDBE
+/// instruction, so it stops the non-yielding walk no `tokio` timeout can reach, and
+/// the handler answers 503 with [`stopped_message`]. (Issue 120 first enforced it with
+/// turso's own per-statement deadline, which reads the CLOCK before every instruction
+/// and made every read on these pools 1.7–2.9× slower; it also bounded each statement
+/// rather than the read, so a read of three statements could run three of them.)
 ///
-/// BELOW [`REQUEST_DEADLINE`] on purpose: a single slow statement then ends in the
+/// BELOW [`REQUEST_DEADLINE`] on purpose: a single slow read then ends in the
 /// precise answer ("stopped") before the whole-request layer fires with its generic
 /// one, and with the margin the handler has to render it. Not on `/v1/sql` (its own
-/// 10 s limit) nor on any pool a job reads through (the weekly data-quality windows
-/// run for minutes by design) — [`store::Readers::bound_statements`] is per pool.
+/// 10 s limit, the same mechanism) nor on any pool a job reads through (the weekly
+/// data-quality windows run for minutes by design) — a `store::Readers` has no limit;
+/// only the API's borrows are bounded.
 pub const STATEMENT_DEADLINE: Duration = Duration::from_secs(25);
 
 const _: () = assert!(
@@ -574,12 +589,12 @@ const _: () = assert!(
 /// writer queue gauges: those say a stall is happening, this says one did).
 static DEADLINE_HITS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
-/// Reads the engine's [`STATEMENT_DEADLINE`] stopped and answered — a 503 on a list
-/// or detail, an `error` event on a stream — since open, never reset (issue 430).
-/// Since issue 120 a single slow statement is answered HERE at 25 s, before the
-/// whole-request layer, so [`DEADLINE_HITS`] no longer sees the common case: this is
-/// the count issue 120's reopen trigger ("users hitting the limit") reads. A read the
-/// caller had already abandoned is interrupted but answers nobody, so it is counted by
+/// Reads [`STATEMENT_DEADLINE`] stopped and answered — a 503 on a list or detail, an
+/// `error` event on a stream — since open, never reset (issue 430). Since issue 120 a
+/// single slow read is answered HERE at 25 s, before the whole-request layer, so
+/// [`DEADLINE_HITS`] no longer sees the common case: this is the count issue 120's
+/// reopen trigger ("users hitting the limit") reads. A read the caller had already
+/// abandoned is interrupted but answers nobody, so it is counted by
 /// `IsolatedReads::abandoned_total` instead.
 pub(crate) static STATEMENT_STOPS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
@@ -608,9 +623,9 @@ async fn deadline_with(
                 // Issue 423: this layer cannot tell a stalled internal wait from a
                 // request whose own read is slow, so it says neither "not your
                 // request" nor "safe to retry". Since issue 120 it CAN say the work
-                // ends: a single statement stops at STATEMENT_DEADLINE (below this
-                // bound), and a read still running here — several statements, or a
-                // wait — is dropped with this answer, the isolated one interrupted.
+                // ends: a single read stops at STATEMENT_DEADLINE (below this bound),
+                // and a request still running here — several reads, or a wait — is
+                // dropped with this answer, the isolated read interrupted.
                 format!(
                     "no response within the {}s service bound — the request was still \
                      being served: either a filter combination this service cannot answer \

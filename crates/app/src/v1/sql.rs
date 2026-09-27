@@ -52,15 +52,19 @@
 //!    left half-done to poison the connection either way.
 //!
 //!    **Issue 425 (2026-09-27) closed the gap this paragraph used to end on.** turso
-//!    DOES have a per-statement deadline — checked before every VDBE instruction, so
-//!    it needs no await point — and `interrupt()`; the published SDK kept both
-//!    private. The vendored SDK (`crates/vendor/turso`) passes `set_query_timeout`
-//!    through, and [`execute`] sets it to the endpoint's limit, so the WORK now stops
-//!    at the cap: measured on 3M rows, a non-yielding aggregate, a nested-loop join,
-//!    a full sort and a GROUP BY each ended within 0–71 ms of the deadline with the
-//!    connection reusable after (`store/tests/query_timeout_probe.rs`). The engine's
-//!    interrupt answers 408. The backstop, the per-query blocking thread and the
-//!    abandoned-computation cap (issue 417) all stay, for what the check does not
+//!    DOES have `interrupt()` — its flag is checked before every VDBE instruction, so
+//!    it needs no await point — and the published SDK kept it private; the vendored
+//!    SDK (`crates/vendor/turso`) passes it through. The WORK now stops at the cap: a
+//!    timer on this endpoint's runtime interrupts the query at the limit, counted
+//!    from the reader's borrow, and again every 50 ms until the query lets go of the
+//!    connection ([`super::stop`], the REST pools' mechanism too). Measured: a
+//!    non-yielding aggregate, a nested-loop join, a full sort and a GROUP BY all end
+//!    in `Interrupt` promptly and the connection works after
+//!    (`store/tests/interrupt_probe.rs`). The interrupt answers 408. (Issue 425 first
+//!    used turso's per-statement deadline, `set_query_timeout` — which reads the clock
+//!    before EVERY instruction and made every query here 1.7–2.9× slower; issue 438
+//!    replaced it.) The backstop, the per-query blocking thread and the
+//!    abandoned-computation cap (issue 417) all stay, for what the interrupt does not
 //!    reach: time spent waiting for a reader, and any single instruction that runs
 //!    long by itself.
 //! 5. **Result caps** while reading: 10 000 rows / 10 MB, then `truncated:true`.
@@ -195,9 +199,11 @@ const ALLOWED: [&str; 48] = [
 /// Worker threads on the isolated SQL runtime (issue 17): reader acquisition and
 /// the coordination around each query run here, never on the main
 /// API/SSE/dashboard runtime. The computation itself no longer runs on these
-/// (issue 417) — see [`SQL_BLOCKING_THREADS`] — so a computation the engine's
-/// deadline (issue 425) has not yet stopped runs on a blocking thread and never
-/// on one of these.
+/// (issue 417) — see [`SQL_BLOCKING_THREADS`] — so a computation the deadline's
+/// interrupt (issue 425) has not yet stopped runs on a blocking thread and never
+/// on one of these. Which is also why the deadline timers run HERE (issue 438): a
+/// worker of this runtime is never pinned inside a statement, so a timer fires on
+/// time.
 const SQL_RUNTIME_THREADS: usize = 2;
 
 /// Abandoned computations the endpoint carries before it refuses new queries
@@ -207,7 +213,7 @@ const SQL_RUNTIME_THREADS: usize = 2;
 /// many such threads may be burning before the next query is told so. Measured
 /// need: two of them held the whole endpoint for 13.5 minutes on 2026-09-18
 /// when every computation shared the two workers above. Since issue 425 the
-/// engine's own deadline ends a computation at the limit, so abandonment needs one
+/// deadline's interrupt ends a computation at the limit, so abandonment needs one
 /// its per-instruction check does not reach; the cap stays as the backstop.
 const ABANDONED_CAP: usize = 4;
 
@@ -252,6 +258,9 @@ fn spawn_sql_runtime() -> tokio::runtime::Handle {
 /// limiters. Lives inside [`AppState`].
 pub struct SqlState {
     readers: Arc<store::Readers>,
+    /// Every query's time limit (`timeout`), enforced by a timer on `runtime` that
+    /// interrupts it (issue 425, by that mechanism since issue 438).
+    deadline: Arc<super::stop::Deadline>,
     /// 300/h per user id.
     rate: DefaultKeyedRateLimiter<i64>,
     /// 2 concurrent per user id — one semaphore per user, created on first use.
@@ -264,7 +273,7 @@ pub struct SqlState {
     ///
     /// Counted rather than gated by a semaphore, and the difference is the point: a
     /// turso aggregate that never yields is not stopped by dropping its future — only
-    /// the engine's own deadline (issue 425) stops it — so it can keep computing
+    /// the deadline's interrupt (issue 425) stops it — so it can keep computing
     /// after the client has gone and after `AbortOnDrop` has fired. A semaphore permit released on abort would
     /// therefore report capacity that does not exist. This count is decremented by a
     /// guard INSIDE the computation, whose drop cannot run until the computation
@@ -285,11 +294,13 @@ impl SqlState {
     /// seam a test uses to observe the 408 cap without running a 10 s query.
     pub fn with_timeout(readers: Arc<store::Readers>, timeout: Duration) -> SqlState {
         let quota = Quota::per_hour(NonZeroU32::new(PER_HOUR).expect("PER_HOUR is non-zero"));
+        let runtime = spawn_sql_runtime();
         SqlState {
             readers,
+            deadline: Arc::new(super::stop::Deadline::new(timeout, runtime.clone())),
             rate: RateLimiter::keyed(quota),
             concurrency: Mutex::new(HashMap::new()),
-            runtime: spawn_sql_runtime(),
+            runtime,
             timeout,
             in_flight: Arc::new(AtomicUsize::new(0)),
             pinned: Arc::new(Pinned::default()),
@@ -382,6 +393,7 @@ async fn run(
     // reader is borrowed and the in-task timeout applied *there*, so even a query
     // that pins its worker thread cannot touch the main API/SSE runtime.
     let readers = sql_state.readers.clone();
+    let deadline = sql_state.deadline.clone();
     let timeout = sql_state.timeout;
     // Whether the task ever got a reader. The backstop below cannot otherwise tell
     // "waited for a reader" from "ran too long", and it used to report both as the
@@ -414,7 +426,14 @@ async fn run(
         // died at the backstop).
         started_in_task.store(true, Ordering::Release);
         let waited = Instant::now();
-        let reader = readers.get().await.map_err(Executed::Db)?;
+        // The query's clock starts at the borrow (issue 438): from here a timer on
+        // this runtime interrupts it at `timeout`, and every 50 ms after while it still
+        // holds the connection. `reader` moves into the blocking closure below, which
+        // outlives this task if the handler gives up, so the timer keeps bounding an
+        // abandoned computation too; its `Drop` disarms the timer BEFORE the
+        // connection goes back to the pool, so an interrupt never reaches the next
+        // query on it.
+        let reader = deadline.hold(readers.get().await.map_err(Executed::Db)?);
         acquired_in_task.store(true, Ordering::Release);
         // Acquisition is not free on a 441 GB file — a cold borrow measured ~7 s,
         // most of the 10 s budget — so a slow one is worth seeing in the log before
@@ -425,11 +444,12 @@ async fn run(
         }
         // Issue 417: the computation runs on its OWN blocking thread, not on one
         // of the runtime's workers. turso computes a non-yielding aggregate inside
-        // one poll, where only the engine's own deadline (issue 425) reaches it;
+        // one poll, where only an interrupt (issue 425) reaches it;
         // before either, such a computation
         // kept its worker after the request was gone, and two of them denied the
         // whole endpoint for 13.5 minutes. On a blocking thread the same
-        // computation still runs to completion — but the workers stay free, the
+        // computation runs until the interrupt lands (or, for the one instruction
+        // it cannot reach, to completion) — but the workers stay free, the
         // next query gets its own thread, and the abandoned one is counted
         // (`Running`, moved in here) and capped at admission.
         //
@@ -442,16 +462,20 @@ async fn run(
                 .enable_all()
                 .build()
                 .map_err(|e| Executed::Runtime(format!("query runtime: {e}")))?;
-            runtime.block_on(async {
-                match tokio::time::timeout(timeout, execute(&reader, &sql, timeout)).await {
+            let outcome = runtime.block_on(async {
+                match tokio::time::timeout(timeout, execute(&reader, &sql)).await {
                     Ok(Ok(result)) => Ok(result),
-                    // The engine's deadline stopped it (issue 425): the query ran
+                    // The deadline's interrupt stopped it (issue 425): the query ran
                     // past the limit — a 408, not the caller's SQL being wrong.
                     Ok(Err(store::turso::Error::Interrupt(_))) => Err(Executed::Timeout),
                     Ok(Err(e)) => Err(Executed::Db(e)),
                     Err(_) => Err(Executed::Timeout),
                 }
-            })
+            });
+            // The statement is over: disarm the deadline and hand the connection
+            // back NOW, not whenever the closure's captures happen to drop.
+            drop(reader);
+            outcome
         })
         .await;
         match worked {
@@ -1129,6 +1153,13 @@ async fn schema(State(state): State<AppState>) -> Result<Response, ApiError> {
         // (408 — see the note on the views below) and the third joined two views, and
         // one taught the reversed `strftime` order that silently yields NULL. Shipping
         // an example nobody executed is how that survived (issue 239).
+        //
+        // The timings are from 2026-08-31, without turso's per-statement deadline.
+        // For the hours issue 425's `set_query_timeout` was live (2026-09-27) they did
+        // not hold: its per-instruction clock read made scans and GROUP BYs 1.7–2.9×
+        // slower locally (estimated 1.4–2× on the box), which put the first example's
+        // 3.3 s within reach of the 10 s limit. Issue 438 took it off the endpoint, so
+        // these are the numbers again.
         "examples": [
             // 3.3s on 7.9M Tenders.
             "SELECT source, count(*) FROM tenders GROUP BY source",
@@ -1293,7 +1324,7 @@ const ALLOWED_TVF: [&str; 1] = ["generate_series"];
 /// endpoint, the SSE streams, webhooks and any running ingest job at once. The
 /// sorter, hash join, DISTINCT and ephemeral structures are NOT here: they allocate
 /// fallibly (`try_reserve` → a graceful query error) and spill to `/data/tmp`, so
-/// they cap at the connection's `cache_size` and are safe. Neither the per-statement
+/// they cap at the connection's `cache_size` and are safe. Neither the query's
 /// deadline (issue 425 — it bounds time, and one instruction can allocate a lot) nor
 /// any turso budget (there is none for these) can bound this class; only refusing it
 /// up front does.
@@ -1803,14 +1834,11 @@ struct QueryResult {
 }
 
 /// Run the (already-classified) SELECT, applying `query_only` defensively and
-/// stopping at the row/byte caps — and at `limit`, by the engine itself.
-async fn execute(conn: &store::turso::Connection, sql: &str, limit: Duration) -> store::turso::Result<QueryResult> {
-    // Issue 425: the engine's own per-statement deadline, checked before every VDBE
-    // instruction — it stops the work, not just the wait (measured: a non-yielding
-    // aggregate, a nested-loop join, a full sort and a GROUP BY over 3M rows all
-    // ended within 0–71 ms of a 300 ms deadline, connection reusable after). Set
-    // every time, like `query_only`, so the guarantee lives where user SQL runs.
-    conn.set_query_timeout(limit)?;
+/// stopping at the row/byte caps. The time limit is not set here: the borrow `conn`
+/// comes from carries it (issue 438 — a timer that interrupts the connection, see
+/// [`run`]); turso's own per-statement deadline, which this used to set, reads the
+/// clock before every VDBE instruction and made every query 1.7–2.9× slower.
+async fn execute(conn: &store::turso::Connection, sql: &str) -> store::turso::Result<QueryResult> {
     // Set defensively every time: the pool is dedicated, but this keeps the
     // guarantee local to the one place user SQL is run.
     let mut pragma = conn.query("PRAGMA query_only = 1", ()).await?;
@@ -1830,8 +1858,8 @@ async fn execute(conn: &store::turso::Connection, sql: &str, limit: Duration) ->
         // so without this an expensive query would neither let the 10 s
         // `timeout` fire nor release its worker thread. Yielding at each row
         // boundary gives both a chance. (A single non-streaming aggregate has no
-        // row boundary; the engine's own deadline, set in this function, is what
-        // stops it — issue 425.)
+        // row boundary; the deadline's interrupt is what stops it — issues 425,
+        // 438.)
         tokio::task::yield_now().await;
         if out.len() >= MAX_ROWS || bytes >= MAX_BYTES {
             // We already pulled one more row than fits — that is the evidence

@@ -41,6 +41,9 @@ struct Server {
     fetch_id: i64,
     path: String,
     isolated: Arc<v1::isolate::IsolatedReads>,
+    /// The router's main pool — the same one it serves from (issue 438's tests borrow
+    /// through it to watch its deadline).
+    readers: Arc<v1::stop::BoundedReaders>,
 }
 
 impl Drop for Server {
@@ -88,6 +91,7 @@ impl Server {
             state.fallback_band = band;
         }
         let isolated = state.isolated.clone();
+        let readers = state.readers.clone();
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.expect("bind");
         let port = listener.local_addr().expect("addr").port();
         tokio::spawn(async move {
@@ -101,6 +105,7 @@ impl Server {
             fetch_id,
             path,
             isolated,
+            readers,
         }
     }
 
@@ -2942,27 +2947,28 @@ async fn a_bounded_list_walk_pages_without_overlap_and_reproduces_the_unbounded_
 }
 
 /// Issue 120 (the REST half of 425): the production shape. Both of the REST surface's
-/// pools carry the engine's statement deadline, set where `AppState` is built, and a
-/// pool opened beside them — every job's reads, the weekly data-quality windows that
-/// run for minutes by design — carries none.
+/// pools carry the read deadline, set where `AppState` is built. A pool opened beside
+/// them — every job's reads, the weekly data-quality windows that run for minutes by
+/// design — carries none: since issue 438 a `store::Readers` has no limit to carry
+/// (the API bounds its own borrows, `v1::stop`), so that half is structural now.
 #[tokio::test]
 async fn the_rest_pools_carry_the_statement_deadline_and_a_job_pool_does_not() {
     let path = format!("/tmp/tender-db-api-deadline-shape-{}.db", std::process::id());
     let _ = std::fs::remove_file(&path);
     let db = Arc::new(Db::open(&path).await.expect("open scratch db"));
     let state = v1::AppState::new(db.clone(), db.readers(2).expect("readers"));
-    assert_eq!(state.readers.statement_deadline(), Some(v1::STATEMENT_DEADLINE), "the main pool");
-    assert_eq!(state.isolated.statement_deadline(), Some(v1::STATEMENT_DEADLINE), "the isolated pool");
-    assert_eq!(db.readers(1).expect("pool").statement_deadline(), None, "a job's pool");
+    assert_eq!(state.readers.deadline(), v1::STATEMENT_DEADLINE, "the main pool");
+    assert_eq!(state.isolated.read_deadline(), v1::STATEMENT_DEADLINE, "the isolated pool");
     drop(state);
     drop(db);
     let _ = std::fs::remove_file(&path);
 }
 
-/// Issue 120: a walk that runs past the engine's statement deadline is STOPPED — the
-/// list answers 503 saying so (not a 500, not a hang to the 30 s bound), its isolated
-/// slot is back, and the same request under the production deadline is answered in
-/// full on the same pool.
+/// Issue 120: a walk that runs past the read deadline is STOPPED — the list answers
+/// 503 saying so (not a 500, not a hang to the 30 s bound), its isolated slot is back,
+/// and the same request under the production deadline is answered in full on the same
+/// pool. Since issue 438 the stop is the deadline timer's `interrupt()`, and it is
+/// still counted as a statement-deadline stop on `/metrics`.
 #[tokio::test(flavor = "multi_thread")]
 async fn a_walk_past_the_statement_deadline_is_stopped_with_a_503() {
     let server = Server::start("statement-deadline").await;
@@ -2991,7 +2997,7 @@ async fn a_walk_past_the_statement_deadline_is_stopped_with_a_503() {
     let metrics = async || server.http.get(format!("{}/metrics", server.base)).send().await.unwrap().text().await.unwrap();
     let stops_before = stops(&metrics().await);
 
-    server.isolated.bound_statements(Duration::from_millis(1));
+    server.isolated.set_read_deadline(Duration::from_millis(1));
     let (status, body) = server.get_with_status("/v1/tenders?min_value=1").await;
     assert_eq!(status, 503, "a stopped walk is a 503, never a 500: {body}");
     let message = body["error"]["message"].as_str().unwrap_or_default();
@@ -3004,7 +3010,7 @@ async fn a_walk_past_the_statement_deadline_is_stopped_with_a_503() {
     assert!(stops(&after) > stops_before, "the stop must be counted on /metrics:\n{after}");
     assert!(after.contains("tender_db_isolated_slots_busy 0\n"), "no slot is still held:\n{after}");
 
-    server.isolated.bound_statements(v1::STATEMENT_DEADLINE);
+    server.isolated.set_read_deadline(v1::STATEMENT_DEADLINE);
     let (status, body) = server.get_with_status("/v1/tenders?min_value=1").await;
     assert_eq!(status, 200, "under the production deadline the same walk is answered: {body}");
 }
@@ -3040,7 +3046,8 @@ async fn an_abandoned_walk_is_interrupted_and_its_slot_freed() {
         started.elapsed()
     );
 
-    // The interrupted connection went back to the pool and serves the next read.
+    // The pool serves the next read after an interrupt (on a fresh connection: since
+    // issue 438 one that was interrupted is never lent again — `v1::stop`).
     let answer = server
         .isolated
         .run(|reader| async move {
@@ -3050,6 +3057,87 @@ async fn an_abandoned_walk_is_interrupted_and_its_slot_freed() {
         })
         .await;
     assert!(matches!(answer, Ok(Ok(1))), "the pool serves the next read after an interrupt");
+}
+
+/// Issue 438: a read that finishes shortly before its deadline leaves its pooled
+/// connection clean — the deadline timer is disarmed before the connection goes back,
+/// so no interrupt ever reaches the next read on it. The second read holds a statement
+/// OPEN (paused between rows, where an interrupt is taken — store's
+/// `interrupt_probe.rs`) across the instant the first read's deadline would have fired
+/// and ~30 timer ticks after it; a stray interrupt from the first read would fail its
+/// next step. No timing is measured, only margins: the first read ends ~750 ms early.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_read_finishing_just_before_its_deadline_leaves_its_connection_clean() {
+    const DEADLINE: Duration = Duration::from_millis(1500);
+    let server = Server::start("deadline-clean").await;
+    // Hold a statement open for `pause` after its first row, then drain it.
+    async fn hold_then_drain(conn: &store::turso::Connection, pause: Duration) -> store::turso::Result<i64> {
+        let mut rows = conn.query("SELECT value FROM generate_series(1, 3)", ()).await?;
+        let mut n = i64::from(rows.next().await?.is_some());
+        tokio::time::sleep(pause).await;
+        while rows.next().await?.is_some() {
+            n += 1;
+        }
+        Ok(n)
+    }
+
+    server.isolated.set_read_deadline(DEADLINE);
+    let first = server.isolated.run(|reader| async move { hold_then_drain(&reader, DEADLINE / 2).await }).await;
+    // The next read gets a limit it cannot reach, so only a leftover of the first
+    // read's timer could stop it. Sequential reads on this pool reuse the connection
+    // the last one returned (the idle list is a stack).
+    server.isolated.set_read_deadline(v1::STATEMENT_DEADLINE);
+    let second = server.isolated.run(|reader| async move { hold_then_drain(&reader, DEADLINE * 2).await }).await;
+
+    let show = |r: &Result<store::turso::Result<i64>, v1::isolate::Shed>| match r {
+        Ok(Ok(n)) => format!("{n} rows"),
+        Ok(Err(e)) => format!("error {e:?}"),
+        Err(_) => "shed".to_owned(),
+    };
+    assert!(matches!(first, Ok(Ok(3))), "precondition: the first read finishes under its deadline — got {}", show(&first));
+    assert!(
+        matches!(second, Ok(Ok(3))),
+        "the next read on the connection must run to its end, untouched by the first read's deadline — got {}",
+        show(&second)
+    );
+}
+
+/// Issue 438: the MAIN pool's reads are bounded too, and by a timer that does not need
+/// the reading thread to yield. This test runs on a current-thread runtime and the
+/// statement below never yields inside its step, so the runtime's one thread is pinned
+/// for the whole computation: a deadline timer on the calling runtime could only fire
+/// after the statement ended by itself (49M iterations — many seconds), and the
+/// `Interrupt` inside the slack proves the timer ran elsewhere. The next borrow works.
+#[tokio::test]
+async fn a_main_pool_read_that_never_yields_is_stopped_at_its_deadline() {
+    const DEADLINE: Duration = Duration::from_millis(300);
+    let server = Server::start("main-pool-deadline").await;
+    server.readers.set_deadline(DEADLINE);
+    let started = std::time::Instant::now();
+    let stopped = async {
+        let reader = server.readers.get().await?;
+        let mut rows = reader
+            .query("SELECT COUNT(*) FROM generate_series(1, 7000) a, generate_series(1, 7000) b", ())
+            .await?;
+        while rows.next().await?.is_some() {}
+        Ok::<(), store::turso::Error>(())
+    }
+    .await;
+    let took = started.elapsed();
+    server.readers.set_deadline(v1::STATEMENT_DEADLINE);
+    let after = async {
+        let reader = server.readers.get().await?;
+        let mut rows = reader.query("SELECT 1", ()).await?;
+        rows.next().await?.expect("one row").get::<i64>(0)
+    }
+    .await;
+
+    assert!(
+        matches!(stopped, Err(store::turso::Error::Interrupt(_))),
+        "the main pool's deadline must stop the statement — got {stopped:?} after {took:?}"
+    );
+    assert!(took < DEADLINE + Duration::from_secs(5), "stopped, but {took:?} is far past the {DEADLINE:?} deadline");
+    assert!(matches!(after, Ok(1)), "the pool serves the next read — got {after:?}");
 }
 
 #[tokio::test]

@@ -5,7 +5,9 @@ Status: ready-for-agent — **the /v1/sql half is DONE and LIVE 2026-09-27 04:37
 `tender_db_sql_pinned_computations 0`, `tender_db_sql_in_flight 0`, `SELECT 1` → 200 — the work stopped with the
 answer (before, that query would have computed for hours as an abandoned computation). Measured first: every offender
 stops within 0–71 ms of the deadline. Step 3 (REST walks) BUILT and LIVE 2026-09-27 05:39 UTC (`cbacee1`) under issue 120 (both REST pools
-carry a 25 s engine deadline; an abandoned isolated walk is interrupted). Open: step 4 (upstream ask) — DRAFTED
+carry a 25 s engine deadline; an abandoned isolated walk is interrupted). **2026-09-27 regression, issue 438: the engine
+deadline read the clock before every instruction (every bounded read 1.4–2× slower); REPLACED by a timer +
+`interrupt()` (BUILT, not yet deployed) — see the last section.** Open: step 4 (upstream ask) — DRAFTED
 below; 0.8.0-pre.13 (read 2026-09-27) still exposes only `busy_timeout`. Re-check at 0.8.0 stable, where the
 vendored patch must be re-applied (or dropped) anyway. Was: filed
 2026-09-26 21:xx UTC from the owner's review of how user SQL is isolated (asked by Lennart).
@@ -56,11 +58,12 @@ shorter.
 
 ## Verify
 
-    grep -c 'set_query_timeout' crates/app/src/v1/sql.rs
+    grep -c 'deadline.hold(' crates/app/src/v1/sql.rs
 
-- **done**: 1 or more — the endpoint sets the engine's own deadline (and the measurement is recorded here) — **DONE:
-  `execute` calls `conn.set_query_timeout(limit)` (read 2026-09-27; live-verified on prod the same day)**
-- **open**: 0 (read 2026-09-26)
+- **done**: 1 — the endpoint bounds each query's borrow with the timer that interrupts it (issue 438's mechanism,
+  which replaced `set_query_timeout`)
+- **open**: 0 (read 2026-09-27 at `13520aa`, where `execute` still set the engine deadline — the check was
+  `grep -c 'set_query_timeout'` until issue 438; it read 1 = done from 2026-09-27 04:37 UTC)
 
 A source read, free.
 
@@ -116,4 +119,40 @@ patch's `VENDORED.md` points here. Text:
 > time, with the connection usable afterwards; before, an abandoned query once ran for ~85 minutes with nobody
 > waiting. Would you accept a PR adding
 > `Connection::set_query_timeout(&self, Duration) -> Result<()>` and `Connection::interrupt(&self) -> Result<()>`?
+>
+> One engine-side note on the deadline itself: while a query timeout is set, `maybe_request_interrupt` evaluates
+> `io.current_time_monotonic() >= deadline` before EVERY VDBE instruction (a `clock_gettime` per call). Changing
+> nothing but the timeout (0 vs 600 s) made a covering-index GROUP BY 2.9× slower, scans 1.7–2.7× and sorter
+> GROUP BYs 1.7–2.1×, so we could not keep it on and stop queries with a timer and `interrupt()` instead. Reading
+> the clock every N steps (the way the progress handler counts `vm_steps`) would keep the deadline's precision to
+> within N instructions at a fraction of the cost.
 
+(Added 2026-09-27 by issue 438: the last paragraph. `interrupt()` alone now covers our use; `set_query_timeout`
+stays in the ask because a cheap engine deadline would be simpler than our timer.)
+
+## 2026-09-27 — regression: the engine deadline read the clock per instruction
+
+Filed and fixed as **issue 438**. `set_query_timeout` makes turso 0.7.2 evaluate `io.current_time_monotonic() >=
+deadline` before EVERY VDBE instruction (`turso_core` `vdbe/mod.rs` ~1515–1530 `maybe_request_interrupt`, called from
+`normal_step` ~1721; `io/clock.rs` ~13–17 is a `clock_gettime` per call). A local A/B changing nothing but
+`set_query_timeout(0)` vs 600 s: covering-index GROUP BY **2.9×** slower, scans **1.7–2.7×**, sorter group-by
+**1.7–2.1×**. Estimated ~1.4–2× on the box. This endpoint set it on every query (`execute`), so every `/v1/sql` query
+since `063d9dd` paid it, fast ones included. The 0–71 ms stopping precision measured above was real. The cost was
+never measured, because the probe only timed stops.
+
+**What replaced it** (BUILT 2026-09-27, not yet deployed; issue 438 carries the detail):
+
+- `execute` no longer sets a deadline. `run` bounds the reader's borrow with `v1::stop::Deadline::hold`: a timer
+  task on this endpoint's own runtime (issue 417 left its workers free) interrupts the connection at the limit,
+  counted from the borrow, and again every 50 ms while the query still holds the connection.
+- The `Held` guard moves into the blocking closure, so an abandoned computation is still stopped at the limit, and it
+  is dropped the moment the statement returns. It disarms under the lock the interrupts are sent under, BEFORE the
+  reader goes back to the pool.
+- A connection that was sent an interrupt is discarded, not pooled (`store::Reader::discard`). turso's `interrupt()`
+  is check-then-set, so an interrupt racing the statement's end could leave the flag set for the next query.
+- `Error::Interrupt` still answers 408. `a_capped_computation_is_stopped_not_abandoned` still reads a pinned gauge of 0.
+- The measurement file is now `crates/store/tests/interrupt_probe.rs`. `interrupt()` from another thread stops the
+  same four shapes 0.301 / 0.301 / 0.301 / 0.317 s after a 300 ms interrupt, and the connection works after.
+- The vendored `set_query_timeout` pass-through stays, with a warning, for its one remaining caller (`plan-probe mem`,
+  offline). Step 4's draft above gained the clock-read paragraph, and `crates/vendor/turso/VENDORED.md` says the same.
+- The Verify above now checks for the timer (`deadline.hold(`) rather than `set_query_timeout`.

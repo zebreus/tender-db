@@ -29,6 +29,7 @@
 //! served either and gets a `reset` event instead, which means "re-snapshot"
 //! (Firestore's expired-token semantics).
 
+use super::stop::BoundedReaders;
 use super::{
     ApiError, ApiResult, AppState, Collection, Params, StreamSlot, json, read_items, read_matches,
     read_page,
@@ -40,8 +41,8 @@ use futures_core::Stream;
 use std::convert::Infallible;
 use std::sync::Arc;
 use std::time::Duration;
+use store::Change;
 use store::read::{self, Filter, Scope};
-use store::{Change, Readers};
 use tokio::sync::watch;
 
 /// Idle comment interval. Proxies and NATs drop quiet connections; 15 s is
@@ -90,7 +91,7 @@ pub async fn subscribe(
         state.snapshot_page.max(1),
         // Issue 120: the isolated snapshot pages walk one id band at a time, as the
         // REST list does (issue 408 (b)), so no page of a healthy snapshot runs
-        // into the engine's statement deadline. Clamped for the same reason as the
+        // into the read deadline. Clamped for the same reason as the
         // page size: 0 would examine nothing and never advance.
         state.fallback_band.max(1),
         slot,
@@ -143,7 +144,7 @@ fn resume_cursor(headers: &HeaderMap, params: &Params) -> Option<Resume> {
 #[allow(clippy::too_many_arguments)]
 fn events(
     collection: Collection,
-    readers: Arc<Readers>,
+    readers: Arc<BoundedReaders>,
     isolated: Arc<super::isolate::IsolatedReads>,
     filter: Filter,
     resume: Option<Resume>,
@@ -187,7 +188,7 @@ fn events(
                 // 120, as the REST list does since 408 (b)) and may come back
                 // short or empty with `next` at the last id examined — so a sparse
                 // walk-shaped snapshot advances in bounded steps instead of one
-                // page running into the engine's statement deadline.
+                // page running into the read deadline.
                 let mut next: Option<String> = Some(String::new());
                 while let Some(after) = next.take() {
                     // A filter shape that CAN walk pages on the isolated
@@ -289,7 +290,7 @@ enum Started {
 /// Step 2's decision: where this subscription starts. One pooled read, no
 /// transaction — the heavy part (the snapshot itself) happens lazily in the
 /// stream so it can be cancelled and never buffers more than a page.
-async fn start(readers: &Arc<Readers>, resume: Option<Resume>) -> Result<Started, store::turso::Error> {
+async fn start(readers: &Arc<BoundedReaders>, resume: Option<Resume>) -> Result<Started, store::turso::Error> {
     let reader = readers.get().await?;
     let generation = read::feed_generation(&reader).await?;
 
@@ -370,7 +371,7 @@ struct Batch {
 /// *filtered* added/changed/removed feed.
 async fn diff(
     collection: Collection,
-    readers: &Arc<Readers>,
+    readers: &Arc<BoundedReaders>,
     filter: &Filter,
     cursor: i64,
     generation: i64,
@@ -388,6 +389,12 @@ async fn diff(
 
     let mut events = Vec::new();
     for change in &rows {
+        // One borrow classifies up to DIFF_BATCH changes; each change is its own read
+        // against the deadline (issue 438), as each statement was under the engine's
+        // per-statement deadline this replaced — so a catching-up subscriber's batch
+        // of cheap probes is never cut as a whole, while any ONE change still stops
+        // at STATEMENT_DEADLINE.
+        reader.restart_clock();
         // A seq-carrying row probes its own version. A seq-LESS `changed` is an
         // in-place rewrite of EXISTING versions (issue 287: the org-merge
         // repoints party/winner rows, moving what the org-role filters return) —
@@ -542,8 +549,8 @@ pub fn change_event(change: &Change) -> serde_json::Value {
     })
 }
 
-/// A failed read as an `error` event. A read the statement deadline stopped says
-/// so in the list's own words (issue 120) rather than turso's bare "interrupted".
+/// A failed read as an `error` event. A read the read deadline stopped says so in
+/// the list's own words (issue 120) rather than turso's bare "interrupted".
 fn read_error_event(e: &store::turso::Error) -> Event {
     match e {
         store::turso::Error::Interrupt(_) => {

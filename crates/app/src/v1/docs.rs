@@ -441,7 +441,7 @@ against a view that cannot answer it at all.</p>
   <li><strong>Time columns are epoch seconds in SQL</strong>, not ISO — unlike the REST responses above. <code>WHERE published_at LIKE '2012%'</code> matches nothing. Put the FORMAT FIRST: <code>strftime('%Y', published_at, 'unixepoch')</code>. The reversed order, <code>strftime(published_at,'unixepoch')</code>, returns <code>NULL</code> for every row and raises no error — so it silently collapses a histogram into one empty bucket. Each timestamp column is flagged in <a href="/v1/sql/schema">the schema</a>, which also carries per-table notes, enum vocabularies and worked examples.</li>
   <li><strong>Coverage:</strong> the canonical layer holds the full imported history — 7.9M Tenders, 1993 to today (1993 alone has 49k). An earlier version of this page warned that only 2026 forward was projected; that backfill has long since completed.</li>
   <li>Result caps: 10 000 rows / 10 MB — a capped response carries <code>"truncated": true</code>.</li>
-  <li>Limits per token: 2 concurrent queries, 300 per hour, 10 s per query. Over-limit is <code>429</code> with <code>Retry-After</code>; any query past the time limit — a slow scan or a heavy aggregate alike — is <code>408</code>. The engine stops the query at the limit — its own per-statement deadline (issue 425), so an over-limit query does not keep running after its <code>408</code>. A <code>503</code> is different and means the query never ran: the backend had no capacity, so retry it unchanged rather than rewriting it.</li>
+  <li>Limits per token: 2 concurrent queries, 300 per hour, 10 s per query. Over-limit is <code>429</code> with <code>Retry-After</code>; any query past the time limit — a slow scan or a heavy aggregate alike — is <code>408</code>. The query is interrupted at the limit (issue 425), so an over-limit query does not keep running after its <code>408</code>. A <code>503</code> is different and means the query never ran: the backend had no capacity, so retry it unchanged rather than rewriting it.</li>
   <li>Dialect gaps (Turso): no <code>WITH RECURSIVE</code>; window functions are partial (<code>row_number</code> and aggregate <code>OVER</code> work; <code>rank</code>/<code>lead</code>/<code>lag</code> and custom frames do not). A dialect or column error comes back as <code>400</code> with the engine's message.</li>
 </ul>
 <p>Response: <code>{"columns": [ … ], "rows": [[ … ]], "row_count": N, "truncated": false}</code>.</p>
@@ -581,7 +581,7 @@ milliseconds.</p>
 <h3>Why the shape looks like this</h3>
 <ul>
   <li>Everything reachable by id or a small page is <strong>index-served</strong>, so it is sub-millisecond to tens of milliseconds regardless of corpus size. The organization list is the heaviest &ldquo;fast&rdquo; read because it counts each row's mentions.</li>
-  <li>Filterable collection reads run on a <strong>separate isolated reader pool</strong>. A filter on a common value fills its page quickly; a filter on a <em>selective</em> value can walk the whole corpus, so it is kept off the main pool &mdash; it may be slow or return <code>503</code> under contention, but it <strong>never slows point lookups, indexed lists, or other clients</strong>. No read runs longer than 25 s: one that would is stopped there by the engine and answered <code>503</code> saying so &mdash; narrow the filters rather than repeating it, since the same request costs as much again (issue 120). (Measured: main-pool reads stayed under 18 ms while a walking filter ran.) A <code>name_prefix</code> search paired with <code>country</code>/<code>kind</code> is one of these walking shapes; alone it is index-served and fast.</li>
+  <li>Filterable collection reads run on a <strong>separate isolated reader pool</strong>. A filter on a common value fills its page quickly; a filter on a <em>selective</em> value can walk the whole corpus, so it is kept off the main pool &mdash; it may be slow or return <code>503</code> under contention, but it <strong>never slows point lookups, indexed lists, or other clients</strong>. No read runs longer than 25 s: one that would is interrupted there and answered <code>503</code> saying so &mdash; narrow the filters rather than repeating it, since the same request costs as much again (issue 120). (Measured: main-pool reads stayed under 18 ms while a walking filter ran.) A <code>name_prefix</code> search paired with <code>country</code>/<code>kind</code> is one of these walking shapes; alone it is index-served and fast.</li>
   <li>For a fast, predictable read, filter on a value you expect to be common, keep <code>limit</code> modest, and paginate with the returned <code>next_cursor</code>. Ascending id is the default order everywhere (a stable keyset order for pagination), except the organization-seeded lots stream (<code>winner</code>/<code>bidder</code>), which pages in (tender, lot) order off its participation index; the tender <a href="#ordering">sorts</a> and the org <a href="#lookups">name search</a> ride their own indexes, so they are equally page-cheap at any depth.</li>
   <li><code>/v1/sql</code> is bounded by design: one <code>SELECT</code>, a 10-second cap, and its own runtime, so an expensive query returns <code>408</code> instead of degrading the REST surface.</li>
   <li>Rate limit: ~10 requests/second sustained, burst 50, per client &mdash; page within that.</li>
@@ -832,11 +832,11 @@ mod tests {
             PAGE.contains("NAME-scoped"),
             "/docs must say what identity a provisional row has, not just that it lacks an identifier"
         );
-        // Issue 425: the engine's deadline now stops the work at the limit, so the
-        // old caveat ("the engine offers no interrupt") would be false on both surfaces.
+        // Issue 425: the work is now interrupted at the limit, so the old caveat
+        // ("the engine offers no interrupt") would be false on both surfaces.
         for (surface, text) in [("/docs", PAGE), ("/v1/openapi.json", SPEC)] {
             assert!(!text.contains("no interrupt"), "{surface} must not claim the engine cannot stop a query");
-            assert!(text.contains("issue 425"), "{surface}'s 408 must say the engine stops the query at the limit");
+            assert!(text.contains("issue 425"), "{surface}'s 408 must say the query is stopped at the limit");
         }
     }
 }

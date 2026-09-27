@@ -2,7 +2,10 @@
 
 Status: done — **trigger (b) MET and ADOPTED 2026-09-27**, LIVE on prod since 05:39 UTC (`cbacee1`): both REST
 reader pools carry the engine's per-statement deadline (25 s, under the 30 s request bound), a read past it is
-stopped and answered 503, and an abandoned isolated walk is interrupted — see the last section. Issue 425 paid the
+stopped and answered 503, and an abandoned isolated walk is interrupted — see "Adopted". **Same-day regression
+(issue 438): that deadline read the clock before every VDBE instruction, slowing every REST read 1.4–2×. It was
+replaced by a timer + `interrupt()` with the same 25 s guarantee per read (BUILT, not yet deployed) — see the last
+section.** Issue 425 paid the
 vendoring cost (`crates/vendor/turso` exposes `set_query_timeout` / `interrupt`), so "cancellation stops costing a
 fork" is true and the owner position below said to adopt it immediately. The instrument for "users hit the
 limit" ships with issue 430. Was: open, POSITION RECORDED 2026-08-21 (owner) — the fork stays untaken.
@@ -444,3 +447,39 @@ of CPU, nearly all of it in the first 0.3 s, so a client giving up at 0.3 s left
 even on the OLD rev. Both paths are carried by the e2e tests above (the abandon one mutation-checked) and by
 issue 430's counters from here on.
 
+## 2026-09-27 — regression: the engine deadline read the clock per instruction
+
+Filed and fixed as **issue 438**. `Readers::bound_statements` set turso's `set_query_timeout` on every borrow from
+both REST pools, and while a timeout is set turso 0.7.2 evaluates `io.current_time_monotonic() >= deadline` before
+EVERY VDBE instruction (`turso_core` `vdbe/mod.rs` ~1515–1530 `maybe_request_interrupt`, called ~1721; a
+`clock_gettime` per call). A local A/B changing nothing but the timeout (0 vs 600 s): covering-index GROUP BY
+**2.9×** slower, scans **1.7–2.7×**, sorter group-by **1.7–2.1×**. Estimated ~1.4–2× on the box. So from `cbacee1`
+every REST read paid it, most of all the main pool's point lookups and indexed lists, which never come near 25 s.
+The "six representative reads 0.41–0.83 s" in the Verify above were taken under it.
+
+**What replaced it** (BUILT 2026-09-27, not yet deployed; `crates/app/src/v1/stop.rs`):
+
+- `store::Readers` has no deadline at all. `bound_statements`, `statement_deadline` and `deadline_ms` are deleted. A
+  job's pool is now unbounded by construction rather than by not being configured.
+- `AppState::readers` is a `stop::BoundedReaders` and `IsolatedReads` holds a `stop::Deadline`, both at
+  `STATEMENT_DEADLINE`. Every borrow registers its connection in a `Running` slot. A timer interrupts the connection
+  at 25 s, counted from the borrow, and again every 50 ms while the read still holds it.
+- The timers run on a dedicated `read-deadline` runtime that runs no query, so they fire even while every API and
+  isolated thread is pinned inside a non-yielding step. That was the property the engine deadline had, and the test
+  below pins it.
+- **One interrupt mechanism.** `Abandon` interrupts through the same `Running` slot (`Running::interrupt`), still
+  counted in `abandoned_total`. An `Interrupt` that reaches a handler is the deadline's, so it is still a 503 "was
+  stopped" and a `STATEMENT_STOPS` increment on `/metrics` (issue 430).
+- The slot is cleared under its lock BEFORE the reader returns to the pool. A connection that was sent an interrupt
+  is discarded, not pooled (`store::Reader::discard`), because turso's `interrupt()` is check-then-set and could
+  leave the flag set for the next borrower.
+- **Per read, not per statement.** The clock covers the whole borrow, as the 503 ("the most this service spends on
+  one read") and `/docs` ("No read runs longer than 25 s") always said. A read of several statements can no longer
+  run several deadlines. The SSE diff restarts the clock per change, because one borrow classifies up to 500
+  independent changes.
+- Tests: `the_rest_pools_carry_the_statement_deadline_and_a_job_pool_does_not` now reads `readers.deadline()` /
+  `isolated.read_deadline()`, and its job-pool half is structural. `a_walk_past_the_statement_deadline_is_stopped_with_a_503`
+  and `an_abandoned_walk_is_interrupted_and_its_slot_freed` pass unchanged in meaning. New:
+  `a_main_pool_read_that_never_yields_is_stopped_at_its_deadline` (current-thread runtime; mutation-checked, the
+  statement ran 13.1 s to completion with the timer on the calling runtime) and
+  `a_read_finishing_just_before_its_deadline_leaves_its_connection_clean` (mutation-checked).
