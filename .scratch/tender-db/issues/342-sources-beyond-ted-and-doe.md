@@ -326,3 +326,15 @@ To close: parent the statistic section on the LotResult its `relatedLot` names (
 instead of at ROOT, deserialize `relatedLot` on `Statistic`, map the OCDS measure names onto the
 documented received-submission-type vocabulary (and give the value measures their own non-count slot),
 with the p002 page fixture as the regression test — before the 319k-release backfill writes it at scale.
+
+## Audit note (2026-09-27, hourly check-in) — the backfill gap now shows in the DQ report, as expected
+
+The weekly data-quality report's section 14 (publication-day continuity, issue 402/410) flags an FTS silent stretch
+**2025-07-01 → 2026-09-06 (432 days)**, brackets 329 before / 492 after, 1 day inside. Confirmed via bounded
+`/v1/sql` that this is exactly this issue's open backfill, NOT data loss: FTS holds 14,235 notices in only two
+months — **2025-06 (7,243, unit 2's reparsed sample) and 2026-09 (6,992, live daily ticks since the source went
+live)** — nothing between. So the continuity detector is working correctly, and the 432-day stretch is the
+un-backfilled 2025-07 → 2026-08 region. It will re-fire every weekly run until the 2021-01 backfill lands; an
+operator reading section 14 should treat the FTS row as this known gap, not a new hole. The backfill, when run,
+needs 2025-07 onward (not just 2021-01 → 2025-06) to close it.
+
