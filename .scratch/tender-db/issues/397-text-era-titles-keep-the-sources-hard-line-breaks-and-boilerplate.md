@@ -420,3 +420,22 @@ newest TED row, 09-18) serves `['cpv', 'nature', 'nuts']` with `nature = works`.
 cross-era classification reaches the served surface on the daily path (the eForms BT-23 route).
 The text-era standing rows still wait for the gated re-parse and refold — the Verify block reads
 its open state (8040731 keeps `(Supply contract)` and no `nature` row) until then.
+
+## 2026-09-27 — the re-parse chain is QUEUED (owner go-ahead)
+
+Queued 10:31 UTC behind issue 418's version repair, in one chain so the corpus pays ONE full fold:
+
+| queue job | body |
+|---|---|
+| 1595 | `{"kind":"reparse","profiles":["text"],"reclaim_only":true}` — the whole text era (~215 packages, ~2 h on job 1386's rate): 397 step 2's nature atoms and 393 unit 3's ISO-8859-7 decode |
+| 1596 | `{"kind":"reparse","profiles":["ted-export-r209","ted-export-r208"],"reclaim_only":true}` — the XML era (~12 h on jobs 609/611's rate): 393 unit 1's `TRANSLITERATED_ADDR` drop |
+| 1597 | `{"kind":"project"}` — ~11M notices at `projected = 0`, far over the 500,000 closure cap, so the FULL fallback: every era re-derived (393 unit 2's roles, 397's `nature` rows for every era, the re-parsed titles and names) |
+
+**Why the XML era is re-parsed and not just refolded (393 unit 1).** `legacy_role` passes an unknown element through
+verbatim (`legacy_role("TRANSLITERATED_ADDR") == "TRANSLITERATED_ADDR"`, pinned in `project.rs`), and the parse rows the
+fold reads still carry `TED-TRANSLITERATED_ADDR` references until the r208/r209 packages are re-parsed under unit 1's
+`Rule::Ignore`. A refold alone (the 6,998,915-notice `refold-fields` sized on 09-18) would re-derive unit 2's roles but
+keep every transliteration twin. The re-parse puts the XML era at `projected = 0` itself, so that refold is not run.
+
+**Issue 432 is deliberately NOT deployed until 1597 finishes**: its corrected org key would make this fold mint a
+fresh twin for every old-key stock row it re-resolves.
