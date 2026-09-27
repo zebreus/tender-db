@@ -23,7 +23,8 @@
 //! **There is deliberately no timeout here, and adding one would make this worse.**
 //! [`IsolatedReads::read`] wraps nothing in a time limit, so an admitted request waits
 //! the full walk — measured at 168.8 s on the rig with nothing firing under it. That
-//! looks like an omission and is not. Because turso cannot be interrupted, a timeout
+//! looks like an omission and is not. Because these walks set no engine deadline
+//! (issue 425 reached turso's per-statement deadline for /v1/sql only), a timeout
 //! would free the CLIENT while the query kept burning its thread *and holding its
 //! permit* (the permit lives in the spawned task — see [`IsolatedReads::read`]). The
 //! caller would get a 504 and retry; the slot would still be held, so the retry sheds

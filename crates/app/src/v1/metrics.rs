@@ -71,7 +71,7 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
     header(
         &mut out,
         "tender_db_sql_pinned_computations",
-        "/v1/sql computations abandoned by their request and still running (cannot be interrupted).",
+        "/v1/sql computations abandoned by their request and still running past the engine deadline (issue 425: normally 0).",
     );
     sample(&mut out, "tender_db_sql_pinned_computations", &[], pinned as f64);
     header(

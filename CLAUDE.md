@@ -12,6 +12,12 @@ Run the suites through `ops/check.sh`, not raw `cargo test`. The script prunes t
 superseded test binaries and builds with debuginfo off (issue 260) — raw `cargo test`
 skips both and fills this container's disk in a session (measured three times on
 2026-08-20 and again on 2026-08-23; the recovery each time was `cargo clean`, ~28 GiB).
+It fills even THROUGH the gate when a change re-hashes a low crate: the 2026-09-27
+`[patch.crates-io] turso` (issue 425) gave `turso` and everything above it (store,
+ingest, app) a second artifact family mid-run, and `cargo test -p ingest` died with
+`No space left on device` after store's suites had passed — GATE-EXIT=101 with no
+FAILED line. The prune only runs at the gate's start. After a dependency/patch
+change, `cargo clean` first (23.5 GiB freed that day) and gate from clean (~35 min).
 For a single focused test mid-iteration, plain `cargo test -p <crate> <name>` is fine —
 just run `ops/check.sh` before committing so the pruning happens and the truncation
 traps its header documents don't eat a failure.

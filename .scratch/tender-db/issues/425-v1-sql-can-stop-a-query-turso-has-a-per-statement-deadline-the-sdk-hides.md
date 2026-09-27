@@ -1,9 +1,11 @@
 # 425 — `/v1/sql` could stop a query: turso 0.7.2 has a per-statement deadline and `interrupt()`, and the SDK hides both
 
-Status: ready-for-agent — **MEASURED AND BUILT 2026-09-27** (gated; deploy pending): the engine's deadline stops
-every offender within 0–71 ms of the limit and the connection is reusable after; `/v1/sql` now sets it. Steps 3
-(REST walks, issue 120) and 4 (upstream ask) remain. Was: filed 2026-09-26 21:xx UTC from the owner's review of how
-user SQL is isolated (asked by Lennart).
+Status: ready-for-agent — **the /v1/sql half is DONE and LIVE 2026-09-27 04:37 UTC** (`063d9dd`): on prod,
+`SELECT COUNT(*) FROM generate_series(1, 100000000000)` answered **408 at 10.02 s** and two seconds later
+`tender_db_sql_pinned_computations 0`, `tender_db_sql_in_flight 0`, `SELECT 1` → 200 — the work stopped with the
+answer (before, that query would have computed for hours as an abandoned computation). Measured first: every offender
+stops within 0–71 ms of the deadline. Open: step 3 (REST walks, issue 120) and step 4 (upstream ask). Was: filed
+2026-09-26 21:xx UTC from the owner's review of how user SQL is isolated (asked by Lennart).
 Kind: operations / safety — the largest gap in `/v1/sql`'s isolation
 Relates to: 17 (the isolated runtime), 51 (the in-task timeout that bounds nothing), 120 (REST walks —
 "a backstop is only worth having once cancellation exists"), 238, 417 (abandoned computations counted and
@@ -53,7 +55,8 @@ shorter.
 
     grep -c 'set_query_timeout' crates/app/src/v1/sql.rs
 
-- **done**: 1 or more — the endpoint sets the engine's own deadline (and the measurement is recorded here)
+- **done**: 1 or more — the endpoint sets the engine's own deadline (and the measurement is recorded here) — **DONE:
+  `execute` calls `conn.set_query_timeout(limit)` (read 2026-09-27; live-verified on prod the same day)**
 - **open**: 0 (read 2026-09-26)
 
 A source read, free.
