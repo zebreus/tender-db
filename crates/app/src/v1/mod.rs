@@ -544,7 +544,8 @@ async fn deadline_with(
                 StatusCode::SERVICE_UNAVAILABLE,
                 // Issue 423: this layer cannot tell a stalled internal wait from a
                 // request whose own query is slow, and it cannot stop that query
-                // (turso has no interrupt) — the work keeps an isolation slot after
+                // (the REST walks set no engine deadline — issue 120; /v1/sql does,
+                // issue 425) — the work keeps an isolation slot after
                 // this answer. So it says neither "not your request" nor "safe to
                 // retry": an immediate retry of a slow shape stacks another copy.
                 format!(

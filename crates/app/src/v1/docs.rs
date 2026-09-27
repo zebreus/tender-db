@@ -440,7 +440,7 @@ against a view that cannot answer it at all.</p>
   <li><strong>Time columns are epoch seconds in SQL</strong>, not ISO — unlike the REST responses above. <code>WHERE published_at LIKE '2012%'</code> matches nothing. Put the FORMAT FIRST: <code>strftime('%Y', published_at, 'unixepoch')</code>. The reversed order, <code>strftime(published_at,'unixepoch')</code>, returns <code>NULL</code> for every row and raises no error — so it silently collapses a histogram into one empty bucket. Each timestamp column is flagged in <a href="/v1/sql/schema">the schema</a>, which also carries per-table notes, enum vocabularies and worked examples.</li>
   <li><strong>Coverage:</strong> the canonical layer holds the full imported history — 7.9M Tenders, 1993 to today (1993 alone has 49k). An earlier version of this page warned that only 2026 forward was projected; that backfill has long since completed.</li>
   <li>Result caps: 10 000 rows / 10 MB — a capped response carries <code>"truncated": true</code>.</li>
-  <li>Limits per token: 2 concurrent queries, 300 per hour, 10 s per query. Over-limit is <code>429</code> with <code>Retry-After</code>; any query past the time limit — a slow scan or a heavy aggregate alike — is <code>408</code>. The ANSWER is abandoned, but the work is not always: the engine offers no interrupt, so a non-yielding aggregate keeps its slot until it finishes, and while it does, further queries can meet a <code>503</code> (issue 238). A <code>503</code> is different and means the query never ran: the backend had no capacity, so retry it unchanged rather than rewriting it.</li>
+  <li>Limits per token: 2 concurrent queries, 300 per hour, 10 s per query. Over-limit is <code>429</code> with <code>Retry-After</code>; any query past the time limit — a slow scan or a heavy aggregate alike — is <code>408</code>. The engine stops the query at the limit — its own per-statement deadline (issue 425), so an over-limit query does not keep running after its <code>408</code>. A <code>503</code> is different and means the query never ran: the backend had no capacity, so retry it unchanged rather than rewriting it.</li>
   <li>Dialect gaps (Turso): no <code>WITH RECURSIVE</code>; window functions are partial (<code>row_number</code> and aggregate <code>OVER</code> work; <code>rank</code>/<code>lead</code>/<code>lag</code> and custom frames do not). A dialect or column error comes back as <code>400</code> with the engine's message.</li>
 </ul>
 <p>Response: <code>{"columns": [ … ], "rows": [[ … ]], "row_count": N, "truncated": false}</code>.</p>
@@ -831,9 +831,11 @@ mod tests {
             PAGE.contains("NAME-scoped"),
             "/docs must say what identity a provisional row has, not just that it lacks an identifier"
         );
-        assert!(
-            SPEC.contains("no interrupt"),
-            "the spec's 408 must say the answer is abandoned but the work may not be"
-        );
+        // Issue 425: the engine's deadline now stops the work at the limit, so the
+        // old caveat ("the engine offers no interrupt") would be false on both surfaces.
+        for (surface, text) in [("/docs", PAGE), ("/v1/openapi.json", SPEC)] {
+            assert!(!text.contains("no interrupt"), "{surface} must not claim the engine cannot stop a query");
+            assert!(text.contains("issue 425"), "{surface}'s 408 must say the engine stops the query at the limit");
+        }
     }
 }

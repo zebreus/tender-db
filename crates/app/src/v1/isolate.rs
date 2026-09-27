@@ -187,7 +187,8 @@ impl IsolatedReads {
         // query does — which is the load-bearing detail, not a stylistic one.
         //
         // `AbortOnDrop` below fires when this handler stops waiting (client disconnect,
-        // or an outer timeout). It does NOT stop the query: turso has no interrupt and
+        // or an outer timeout). It does NOT stop the query: the REST walks set no engine
+        // deadline (issue 425 wired one for /v1/sql only; issue 120 is the REST half) and
         // `step` does not yield on a cache-resident scan, so `abort` only takes effect
         // at an await point the task will not reach until the query returns. The task's
         // future therefore cannot be dropped mid-query, so `_permit` cannot be released

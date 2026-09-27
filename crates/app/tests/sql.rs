@@ -315,9 +315,10 @@ async fn a_long_query_is_dropped_at_the_time_limit() {
 }
 
 /// A single non-yielding aggregate — the `COUNT(*)`/`GROUP BY` shape that
-/// computes in one uninterruptible poll with no row boundary — is capped at the
-/// time limit by the handler-side backstop and answered 408, rather than running
-/// past 40 s with no timeout (issue 51). A short cap keeps the test quick and
+/// computes in one poll with no row boundary — is capped at the time limit and
+/// answered 408, rather than running past 40 s with no timeout (issue 51). Since
+/// issue 425 it is the engine's own deadline that stops it; the handler-side
+/// backstop remains for what that check does not reach. A short cap keeps the test quick and
 /// the abandoned query brief; the aggregate far outlasts it on any machine.
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn a_non_yielding_aggregate_is_capped() {
@@ -337,25 +338,31 @@ async fn a_non_yielding_aggregate_is_capped() {
     assert_eq!(body["error"]["status"].as_i64(), Some(408));
 }
 
-/// Issue 417: a capped computation no longer holds one of the runtime's workers.
-/// Two non-yielding aggregates run past the cap (each 408), and each keeps
-/// computing on its own blocking thread — abandoned, counted, and visible on
-/// `/metrics` — while a third, cheap query still answers 200 at once. Before
-/// this, the two pinned both workers and the third was `503 saturated` for as
-/// long as they ran (13.5 minutes, measured on prod on 2026-09-18).
+/// Issue 425 (superseding what issue 417 pinned here): a capped computation no
+/// longer runs on after its 408. Until the engine's own per-statement deadline was
+/// reachable, the two bombs below each kept computing on their own blocking thread —
+/// abandoned, counted, and the gauge read 2 (and on prod on 2026-09-18 two such
+/// computations denied the endpoint for 13.5 minutes). Now turso stops each one at
+/// the limit, so by the time its 408 is answered it has already ended: the gauge
+/// reads 0, nothing is left burning, and a cheap query answers at once.
 ///
 /// Sequential, not concurrent, so the per-token concurrency cap (two) never
-/// enters: each bomb's permit is released when its 408 is answered, and the
-/// computation it abandoned is what stays behind.
+/// enters: each bomb's permit is released when its 408 is answered.
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-async fn an_abandoned_computation_keeps_no_worker_and_is_counted() {
+async fn a_capped_computation_is_stopped_not_abandoned() {
     let server = Server::start_with_sql_timeout("abandoned", Duration::from_millis(300)).await;
     let bomb = "SELECT COUNT(*) FROM generate_series(1, 7000) a, generate_series(1, 7000) b";
     for n in 1..=2 {
-        let status = server.sql(bomb).await.status().as_u16();
+        let started = std::time::Instant::now();
+        let response = server.sql(bomb).await;
+        let status = response.status().as_u16();
         assert_eq!(status, 408, "bomb {n} runs past the cap");
+        assert!(started.elapsed() < Duration::from_secs(5), "bomb {n} answers at the cap: {:?}", started.elapsed());
+        let body: Value = response.json().await.unwrap();
+        let message = body["error"]["message"].as_str().unwrap_or_default().to_owned();
+        assert!(message.contains("time limit"), "the engine's interrupt reads as the time limit, not a SQL error: {message}");
     }
-    // Both computations are still running for nobody. The gauge says so…
+    // Nothing was left running for nobody.
     let metrics = server
         .http
         .get(format!("{}/metrics", server.base))
@@ -369,19 +376,15 @@ async fn an_abandoned_computation_keeps_no_worker_and_is_counted() {
         .lines()
         .find(|l| l.starts_with("tender_db_sql_pinned_computations "))
         .expect("the pinned gauge is served");
-    assert_eq!(gauge, "tender_db_sql_pinned_computations 2", "both abandoned computations are counted");
-    let since = metrics
-        .lines()
-        .find(|l| l.starts_with("tender_db_sql_pinned_since_seconds "))
-        .expect("the since gauge is served");
-    assert!(!since.ends_with(" 0"), "and the oldest abandonment has a timestamp: {since}");
+    assert_eq!(gauge, "tender_db_sql_pinned_computations 0", "the engine stopped both — none is abandoned");
 
-    // …and the endpoint still answers a cheap query at once — the whole point.
+    // …and the endpoint answers a cheap query at once, on a connection that was
+    // interrupted a moment ago (the pool has one reader per slot).
     let started = std::time::Instant::now();
     let response = server.sql("SELECT 1 AS ok").await;
     let status = response.status().as_u16();
     let elapsed = started.elapsed();
-    assert_eq!(status, 200, "a query after two abandoned computations still runs");
+    assert_eq!(status, 200, "a query after two stopped computations runs");
     assert!(elapsed < Duration::from_secs(2), "and runs promptly: {elapsed:?}");
     let body: Value = response.json().await.unwrap();
     assert_eq!(body["rows"][0][0].as_i64(), Some(1));

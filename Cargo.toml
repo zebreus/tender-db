@@ -10,6 +10,8 @@ members = [
     "crates/ingest",
     "crates/app",
 ]
+# The vendored turso SDK (issue 425) is a patched dependency, not ours to test.
+exclude = ["crates/vendor/turso"]
 
 [workspace.package]
 version = "0.1.0"
@@ -139,3 +141,8 @@ strip = true
 # CARGO_PROFILE_DEV_DEBUG=2 cargo build -p <crate>.
 [profile.dev]
 debug = "line-tables-only" 
+
+# Issue 425: the turso SDK with `Connection::{set_query_timeout, interrupt}` passed
+# through to the engine, which already implements both. See crates/vendor/turso/VENDORED.md.
+[patch.crates-io]
+turso = { path = "crates/vendor/turso" }

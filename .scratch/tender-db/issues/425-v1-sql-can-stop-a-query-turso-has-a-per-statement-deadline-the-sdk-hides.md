@@ -1,8 +1,9 @@
 # 425 — `/v1/sql` could stop a query: turso 0.7.2 has a per-statement deadline and `interrupt()`, and the SDK hides both
 
-Status: ready-for-agent — filed 2026-09-26 21:xx UTC from the owner's review of how user SQL is isolated
-(asked by Lennart). Read from the pinned 0.7.2 sources; nothing measured yet — the measurement is the
-first step, and this project has been wrong about a turso timeout before (sql.rs module doc, issue 51).
+Status: ready-for-agent — **MEASURED AND BUILT 2026-09-27** (gated; deploy pending): the engine's deadline stops
+every offender within 0–71 ms of the limit and the connection is reusable after; `/v1/sql` now sets it. Steps 3
+(REST walks, issue 120) and 4 (upstream ask) remain. Was: filed 2026-09-26 21:xx UTC from the owner's review of how
+user SQL is isolated (asked by Lennart).
 Kind: operations / safety — the largest gap in `/v1/sql`'s isolation
 Relates to: 17 (the isolated runtime), 51 (the in-task timeout that bounds nothing), 120 (REST walks —
 "a backstop is only worth having once cancellation exists"), 238, 417 (abandoned computations counted and
@@ -56,3 +57,33 @@ shorter.
 - **open**: 0 (read 2026-09-26)
 
 A source read, free.
+
+## Measured (2026-09-27, `crates/store/tests/query_timeout_probe.rs`)
+
+The SDK route: `crates/vendor/turso` is the crates.io `turso` 0.7.2 with two pass-through methods
+(`Connection::set_query_timeout`, `Connection::interrupt`) onto `turso_sdk_kit`'s, wired by
+`[patch.crates-io]` (see its `VENDORED.md`); `turso_core` and the SDK kit stay the registry 0.7.2. A 300 ms
+deadline, each shape then `SELECT … WHERE id <= 10` on the same connection:
+
+| shape | 200k rows, debug | 3M rows, release | error | connection after |
+| --- | --- | --- | --- | --- |
+| `count(*) FROM generate_series(1, 1e11)` (issue 51's non-yielding aggregate) | 0.301 s | 0.300 s | `Interrupt` | usable |
+| nested-loop join `big a, big b` | 0.301 s | 0.300 s | `Interrupt` | usable |
+| full sort `ORDER BY expr LIMIT 1` | 0.301 s | 0.300 s | `Interrupt` | usable |
+| `GROUP BY expr` over every row | 0.301 s | **0.371 s** (the worst overshoot, 71 ms) | `Interrupt` | usable |
+| `WITH RECURSIVE` unbounded | — | — | refused at parse: turso 0.7.2 has no recursive CTEs | — |
+
+So the per-instruction granularity costs at most tens of milliseconds on these shapes — the "one sorter
+instruction does a lot of work" worry did not materialise at 3M rows.
+
+## Built (2026-09-27)
+
+- `v1/sql.rs` `execute` sets `conn.set_query_timeout(limit)` on every query (the endpoint's limit, 10 s in
+  production), beside `query_only`; `Error::Interrupt` answers **408**, not 400.
+- The backstop, the per-query blocking thread and `ABANDONED_CAP` all stay — for the time spent waiting on a reader
+  and any single instruction the check does not reach.
+- `tests/sql.rs`: `an_abandoned_computation_keeps_no_worker_and_is_counted` (issue 417: gauge = 2 after two bombs)
+  became `a_capped_computation_is_stopped_not_abandoned`: two 49M-iteration bombs each answer 408 at the cap, the
+  pinned gauge reads **0**, and `SELECT 1` answers at once.
+- `/docs` and `openapi.json`'s 408 no longer say "the engine offers no interrupt"; the docs test pins that on both
+  surfaces. `isolate.rs` / `mod.rs` comments now say the REST walks set no engine deadline (issue 120).
