@@ -415,6 +415,11 @@ enum Spec {
     /// into one per name, wall-gated. Deletes org rows: dry_run defaults
     /// TRUE and a wet run requires the stored dry plan.
     FoldProvisionalEchoes { dry_run: bool, max_groups: Option<u64> },
+    /// Issue 432: re-derive `name_norm` for identifier-less rows under
+    /// `store::org_name_norm` and fold the same-country twins the corrected
+    /// key reveals (ledger rule `p1`). Deletes org rows: dry_run defaults TRUE
+    /// and a wet run requires the stored dry plan.
+    RepairProvisionalNameNorm { dry_run: bool, max_groups: Option<u64> },
     /// Issue 330: organization names carrying a line break, and whether the
     /// notice published it that way. Read-only measurement.
     NamePollutionCensus,
@@ -1735,6 +1740,27 @@ impl Supervisor {
                     .await,
                 ])
             }
+            // Issue 432, dry by default; the wet arm reads its group and row
+            // counts out of the stored dry plan and aborts if the corpus has
+            // moved (the echo fold's parity). `max_groups` caps the folds and
+            // defers the bulk re-key — the T4 ladder's capped first wet run.
+            "repair-provisional-name-norm" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let max_groups = req.max_groups;
+                let params = match (dry_run, max_groups) {
+                    (true, _) => "repair-provisional-name-norm dry-run".to_owned(),
+                    (false, Some(n)) => format!("repair-provisional-name-norm max_groups={n}"),
+                    (false, None) => "repair-provisional-name-norm".to_owned(),
+                };
+                Ok(vec![
+                    self.push(
+                        "repair-provisional-name-norm",
+                        params,
+                        Spec::RepairProvisionalNameNorm { dry_run, max_groups },
+                    )
+                    .await,
+                ])
+            }
             "country-typo-census" => Ok(vec![
                 self.push(
                     "country-typo-census",
@@ -2440,6 +2466,9 @@ const STOPPABLE_KINDS: &[&str] = &[
     // Issue 418 unit 2b: read between read bands and between write slices.
     "repair-version-instants",
     "repair-minted-countries",
+    // Issue 432: read between read windows, between fold transactions and
+    // between rewrite slices; a stop before the first fold stores no plan.
+    "repair-provisional-name-norm",
 ];
 
 /// Issue 300 decision 5: a key shared by more organizations than this is a
@@ -7644,6 +7673,142 @@ impl Supervisor {
                     r.tender_changes
                 ))
             }).await,
+            Spec::RepairProvisionalNameNorm { dry_run, max_groups } => Box::pin(async move {
+                let dry_run = *dry_run;
+                // A wet run REQUIRES the recorded dry plan — the echo fold's
+                // contract: nothing folds un-previewed, and a corpus that moved
+                // under the plan aborts before the first write.
+                let (expect_groups, expect_rows) = if dry_run {
+                    (None, None)
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("provisional-name-norm-plan")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "no stored provisional-name-norm-plan — run the dry run first".to_owned()
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    let field = |k: &str| {
+                        v[k].as_u64()
+                            .ok_or_else(|| format!("provisional-name-norm-plan lacks {k}"))
+                    };
+                    (Some(field("groups")?), Some(field("rows")?))
+                };
+                let phase = if dry_run { "planning" } else { "repairing" };
+                self.set_phase(
+                    phase,
+                    None,
+                    None,
+                    "issue 432: re-deriving the provisional reuse key".to_owned(),
+                );
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase(phase, Some(done), None, detail.to_owned());
+                };
+                // Boxed on top of the arm's own Box::pin: this store future
+                // nests the repair, its wet half and the shared fold loop, and
+                // held inline it made this arm's (unresumed, O0) state big
+                // enough to overflow `an_execute_without_an_expected_count_is_refused`
+                // — CLAUDE.md's run_spec trap, which the outer box alone did
+                // not clear.
+                let r = Box::pin(self.db.repair_provisional_name_norm(store::ProvisionalNameNormArgs {
+                    dry_run,
+                    max_groups: *max_groups,
+                    expect_groups,
+                    expect_rows,
+                    job_id: Some(job_id as i64),
+                    stop: &stop,
+                    progress: &progress,
+                }))
+                .await
+                .map_err(|e| e.to_string())?;
+                // The echo fold's re-record rule: a dry run records its plan, a
+                // wet run the residual (so a capped or stopped run continues
+                // under parity) — but a stop before anything was written
+                // computed a partial plan and must not clobber a reviewed one.
+                let wrote = r.merged_groups > 0 || r.rewritten > 0 || r.verdicts_moved > 0;
+                if !(r.stopped && !wrote) {
+                    let now = store::now_unix();
+                    let plan = serde_json::json!({
+                        "groups": r.groups - r.merged_groups,
+                        "rows": r.residual_rows,
+                        "rows_walked": r.rows_walked,
+                        "renormalised": r.renormalised,
+                        "renormalised_country_less": r.renormalised_country_less,
+                        "emptied": r.emptied,
+                        "group_rows": r.group_rows,
+                        "standing_twins": r.standing_twins,
+                        "fold_rows": r.fold_rows,
+                        "verdicts_rekeyed": r.verdicts_rekeyed - r.verdicts_moved,
+                        "verdict_conflicts": r.verdict_conflicts.iter().map(|(from, to)| serde_json::json!({
+                            "from": from, "to": to,
+                        })).collect::<Vec<_>>(),
+                        "merged_this_run": r.merged_groups,
+                        "rewritten_this_run": r.rewritten,
+                        "residual_of_wet_run": !dry_run,
+                        "listing_truncated": r.listing_truncated,
+                        "listing": r.listing.iter().map(|(key, country, name, rows, keep)| serde_json::json!({
+                            "name_norm": key, "country": country, "name": name, "rows": rows, "keep_id": keep,
+                        })).collect::<Vec<_>>(),
+                        "sample": r.sample.iter().map(|(id, name, from, to)| serde_json::json!({
+                            "id": id, "name": name, "from": from, "to": to,
+                        })).collect::<Vec<_>>(),
+                    })
+                    .to_string();
+                    self.db
+                        .put_report("provisional-name-norm-plan", &plan, now)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                }
+                if r.stopped && !wrote {
+                    return Ok(
+                        "repair-provisional-name-norm STOPPED before the first write: nothing was \
+                         written, and the previously recorded plan was left untouched"
+                            .to_owned(),
+                    );
+                }
+                Ok(format!(
+                    "repair-provisional-name-norm (issue 432){}: {} identifier-less rows walked, {} \
+                     keyed off org_name_norm ({} country-less — re-keyed, never folded here; {} to \
+                     the empty key); {} same-country collision groups over {} rows ({} already on \
+                     the corrected key), a fold removes {}; {} verdict key(s) to re-key ({} moved), \
+                     {} left standing on a conflict. Folded {} groups under rule p1 ({} rows removed, {} \
+                     mentions, {} parties, {} bid-parties, {} winners repointed, {} winner dups \
+                     deleted, {} tenders touched); {} name_norm rewritten{}; residual {} rows{}",
+                    if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
+                    r.rows_walked,
+                    r.renormalised,
+                    r.renormalised_country_less,
+                    r.emptied,
+                    r.groups,
+                    r.group_rows,
+                    r.standing_twins,
+                    r.fold_rows,
+                    r.verdicts_rekeyed,
+                    r.verdicts_moved,
+                    r.verdict_conflicts.len(),
+                    r.merged_groups,
+                    r.removed,
+                    r.mentions,
+                    r.parties,
+                    r.bid_parties,
+                    r.winners,
+                    r.winner_dups,
+                    r.tender_changes,
+                    r.rewritten,
+                    if !dry_run && max_groups.is_some() {
+                        " (capped run: the bulk re-key waits for an uncapped one)"
+                    } else {
+                        ""
+                    },
+                    r.residual_rows,
+                    if r.stopped { " — STOPPED; the residual plan was re-recorded" } else { "" },
+                ))
+            }).await,
             Spec::ProvisionalEchoCensus { cap } => Box::pin(async move {
                 let cap = *cap;
                 let job_id = job.id;
@@ -11825,7 +11990,8 @@ mod tests {
                 "repair-renormalised-identifiers",
                 "repair-notice-instants",
                 "repair-version-instants",
-                "repair-minted-countries"
+                "repair-minted-countries",
+                "repair-provisional-name-norm"
             ]
         );
     }

@@ -1912,6 +1912,34 @@ pub fn register_jurisdiction(code: &str) -> &str {
     }
 }
 
+/// Issue 432: `organizations.name_norm`, the key issue 234's provisional
+/// reuse probes on as `(name_norm, country)`. Unicode lowercase, whitespace
+/// trimmed and every internal run collapsed to one space, then trailing `.`,
+/// `,` and `;` stripped together with any whitespace before them, repeatedly —
+/// so `"x ."`, `"x."` and `"x ,"` all key as `"x"`.
+///
+/// Lower-casing alone was the key until this issue, and one publisher's
+/// trailing space or ` .` minted a second row for one buyer (FTS:
+/// `'procurement for housing '` beside `'procurement for housing'`,
+/// `'scotrail trains limited .'` beside `'scotrail trains limited'`). That is
+/// spelling noise, and nothing more is folded here ON PURPOSE: no legal-form
+/// stripping, no transliteration, no accent folding. Those are N2
+/// `match_norm`'s job (ingest), which sits behind issue 351's genericness wall
+/// precisely because an aggressive key over-merges; this key reuses WITHOUT a
+/// wall, so it must stay at spelling. `ACME Ltd.` and `ACME Ltd` are one key;
+/// `ACME Ltd` and `ACME` are two.
+///
+/// A name that is ALL trailing punctuation keeps its trimmed, collapsed form
+/// rather than stripping to nothing: `"."` stays `"."`, the key it has always
+/// had, instead of silently joining the nameless class (which the reuse arm
+/// never merges). A blank name stays empty.
+pub fn org_name_norm(name: &str) -> String {
+    let collapsed = name.to_lowercase().split_whitespace().collect::<Vec<_>>().join(" ");
+    let stripped =
+        collapsed.trim_end_matches(|c: char| matches!(c, '.' | ',' | ';') || c.is_whitespace());
+    if stripped.is_empty() { collapsed } else { stripped.to_owned() }
+}
+
 /// What one org repoint moved — shared by the issue-234 merge and the
 /// issue-259 repair.
 #[derive(Debug, Default, Clone)]
@@ -2263,7 +2291,7 @@ pub struct R3MergeReport {
 /// Issue 351 unit 4: one name-level verdict as uploaded.
 #[derive(Debug, Clone)]
 pub struct NameVerdict {
-    /// The bare lower-case name (the 234 reuse key).
+    /// The 234 reuse key, [`org_name_norm`] of the name (issue 432).
     pub name_norm: String,
     /// `single` | `generic` | `platform` | `non-name` | `unclear`.
     pub verdict: String,
@@ -3368,6 +3396,98 @@ pub struct ProvisionalFoldArgs<'a> {
     pub job_id: Option<i64>,
     pub stop: &'a (dyn Fn() -> bool + Sync),
     pub progress: &'a (dyn Fn(u64, &str) + Sync),
+}
+
+/// What differs between the callers of the shared provisional fold loop
+/// (`Db::fold_provisional_plan`): the echo fold (issue 351, rule `p0`) and the
+/// name-norm repair (issue 432, rule `p1`).
+struct ProvisionalFoldRule<'a> {
+    /// Written to `org_merge_log.rule`, so the ledger says which fold it was.
+    rule: &'static str,
+    /// Rewrite the keep's `name_norm` to the group key inside the fold's
+    /// transaction. The echo fold's key IS every member's stored `name_norm`;
+    /// the repair's key is what the members are being corrected TO.
+    rekey_keep: bool,
+    /// Always run the full repoint. The echo fold skips it for a loser with no
+    /// tender rows (a per-statement saving it measured); a country-scoped
+    /// buyer twin carries tender rows almost always, so the saving is nil and
+    /// the full path is the one that also carries `organization_names`.
+    full_repoint: bool,
+    job_id: Option<i64>,
+    stop: &'a (dyn Fn() -> bool + Sync),
+    progress: &'a (dyn Fn(u64, &str) + Sync),
+}
+
+/// Issue 432: the arguments of [`Db::repair_provisional_name_norm`].
+pub struct ProvisionalNameNormArgs<'a> {
+    pub dry_run: bool,
+    /// Fold at most this many collision groups (the capped first prod run).
+    /// A capped run folds only: the bulk `name_norm` rewrite waits for an
+    /// uncapped one, so the first wet run's blast radius is the cap.
+    pub max_groups: Option<u64>,
+    /// The T4 parity guard, from the stored dry plan: a wet run whose
+    /// recomputed collision groups or re-normalised rows diverge beyond
+    /// max(2%, 50) writes nothing.
+    pub expect_groups: Option<u64>,
+    pub expect_rows: Option<u64>,
+    pub job_id: Option<i64>,
+    pub stop: &'a (dyn Fn() -> bool + Sync),
+    pub progress: &'a (dyn Fn(u64, &str) + Sync),
+}
+
+/// Issue 432: what the provisional name-norm repair planned and did.
+#[derive(Debug, Default, Clone)]
+pub struct ProvisionalNameNormReport {
+    /// Identifier-less organization rows walked.
+    pub rows_walked: u64,
+    /// …whose stored `name_norm` is not `org_name_norm(name)`: the rows the
+    /// repair re-normalises.
+    pub renormalised: u64,
+    /// …of which country-less. Rewritten, never folded here: identical
+    /// country-less keys are issue 351's echo class, which folds behind the
+    /// wall (`fold-provisional-echoes`) — a corrected key simply joins it.
+    pub renormalised_country_less: u64,
+    /// …of which the corrected key is EMPTY (a blank-but-for-whitespace name):
+    /// the nameless class, which the reuse arm never merges.
+    pub emptied: u64,
+    /// `(key, country)` groups of two or more identifier-less rows once the
+    /// keys are corrected, each holding at least one re-normalised row.
+    pub groups: u64,
+    /// Rows in those groups, and how many of them already stood on the
+    /// corrected key (the twin a re-normalised row lands beside).
+    pub group_rows: u64,
+    pub standing_twins: u64,
+    /// Rows the fold removes: every group's rows but its keep.
+    pub fold_rows: u64,
+    /// The largest groups: (key, country, keep's name, rows, keep id), up to 200.
+    pub listing: Vec<(String, String, String, u64, i64)>,
+    pub listing_truncated: bool,
+    /// The first 100 re-normalised rows in id order: (id, name, from, to).
+    pub sample: Vec<(i64, String, Option<String>, String)>,
+    /// `org_name_verdicts` rows whose key re-normalises, and of those how many
+    /// cannot move because a verdict already stands on the corrected key —
+    /// left in place and listed, never overwritten: two reviewers' verdicts
+    /// on one name are a reviewer's call, not this job's.
+    pub verdicts_rekeyed: u64,
+    pub verdict_conflicts: Vec<(String, String)>,
+    /// Wet: verdict rows actually re-keyed (0 when the run stopped first).
+    pub verdicts_moved: u64,
+    /// Wet: `name_norm` rewritten outside the folds (the folds' keeps are
+    /// rewritten inside their own transactions and counted in `merged_groups`).
+    pub rewritten: u64,
+    pub merged_groups: u64,
+    pub removed: u64,
+    pub mentions: u64,
+    pub parties: u64,
+    pub bid_parties: u64,
+    pub winners: u64,
+    pub winner_dups: u64,
+    pub tender_changes: u64,
+    /// Re-normalised rows a re-plan would still find: `renormalised` less
+    /// those rewritten or folded away. What a stopped or capped wet run
+    /// leaves for the next one, and what its re-recorded plan says.
+    pub residual_rows: u64,
+    pub stopped: bool,
 }
 
 /// Issue 351 unit 3: what the provisional-echo fold planned and did.
@@ -9142,7 +9262,9 @@ impl Db {
                                 t(&id.kind),
                                 t(&id.value),
                                 t(&m.name),
-                                Value::Text(m.name.to_lowercase()),
+                                // Issue 432: one derivation for the column,
+                                // whichever arm mints the row.
+                                Value::Text(org_name_norm(&m.name)),
                                 Value::Integer(now),
                             ),
                         )
@@ -9183,7 +9305,12 @@ impl Db {
                 // country-less merge has no scope to err inside). The row STAYS
                 // `provisional = 1`, so a later identifier can still split or
                 // canonicalise it — the merge is a reuse policy, not a promotion.
-                let name_norm = m.name.to_lowercase();
+                //
+                // Issue 432: the key is `org_name_norm`, not bare lower-casing —
+                // a publisher's trailing space or ` .` (`'procurement for
+                // housing '`, `'scotrail trains limited .'`) minted a second
+                // row for one buyer. Spelling noise only; see the fn.
+                let name_norm = org_name_norm(&m.name);
                 // Issue 358: the org row's country is the register's
                 // jurisdiction even without an identifier — `SDIS de la
                 // Réunion` under `RE` and under `FR` is one provisional row,
@@ -17364,8 +17491,16 @@ impl Db {
             let mut q = conn.query("PRAGMA foreign_keys=OFF", ()).await?;
             while q.next().await?.is_some() {}
         }
+        let rule = ProvisionalFoldRule {
+            rule: "p0",
+            rekey_keep: false,
+            full_repoint: false,
+            job_id: args.job_id,
+            stop: args.stop,
+            progress: args.progress,
+        };
         let folded: turso::Result<()> = self
-            .fold_provisional_plan(&conn, &args, &mut report, &plan, cap, now)
+            .fold_provisional_plan(&conn, &rule, &mut report, &plan, cap, now)
             .await;
         {
             let mut q = conn.query("PRAGMA foreign_keys=ON", ()).await?;
@@ -17378,12 +17513,15 @@ impl Db {
         Ok(report)
     }
 
-    /// The wet loop of [`Db::fold_provisional_echoes`], on the writer with
-    /// foreign keys off; the caller restores them whatever this returns.
+    /// The wet loop of [`Db::fold_provisional_echoes`] — and, since issue 432,
+    /// of [`Db::repair_provisional_name_norm`] — on the writer with foreign
+    /// keys off; the caller restores them whatever this returns. Each plan
+    /// entry is `(group key, name, ids ascending)`; the lowest id is kept.
+    /// [`ProvisionalFoldRule`] carries what differs between the two callers.
     async fn fold_provisional_plan(
         &self,
         conn: &Connection,
-        args: &ProvisionalFoldArgs<'_>,
+        args: &ProvisionalFoldRule<'_>,
         report: &mut ProvisionalFoldReport,
         plan: &[(String, String, Vec<i64>)],
         cap: u64,
@@ -17416,6 +17554,19 @@ impl Db {
                         break;
                     }
                     let keep = ids[0];
+                    // Issue 432: the keep takes the group key IN the fold's
+                    // transaction. Rewritten apart from it, a stop between the
+                    // two leaves a keep already on the new key beside a twin
+                    // that is not, and the re-plan — which finds groups only
+                    // through rows still off their key — never sees the pair
+                    // again.
+                    if args.rekey_keep {
+                        conn.execute(
+                            "UPDATE organizations SET name_norm = ? WHERE id = ?",
+                            (t(norm), Value::Integer(keep)),
+                        )
+                        .await?;
+                    }
                     for &loser in &ids[1..] {
                         let mut trows = conn
                             .query(
@@ -17439,7 +17590,9 @@ impl Db {
                         // three party/winner UPDATEs and the winner-dup pass
                         // would each touch zero rows, so only the mention
                         // repoint runs. The full repoint stays for the rest.
-                        if has_tender_rows {
+                        // (`full_repoint` keeps it always: the shortcut skips
+                        // the loser's `organization_names` variants too.)
+                        if has_tender_rows || args.full_repoint {
                             let moved = repoint_org_references(conn, keep, loser).await?;
                             report.mentions += moved.mentions;
                             report.parties += moved.parties;
@@ -17457,10 +17610,11 @@ impl Db {
                         conn.execute("DELETE FROM organizations WHERE id = ?", (Value::Integer(loser),)).await?;
                         conn.execute(
                             "INSERT INTO org_merge_log(keep, loser, rule, evidence, job_id, at) \
-                             VALUES(?, ?, 'p0', ?, ?, ?)",
+                             VALUES(?, ?, ?, ?, ?, ?)",
                             (
                                 Value::Integer(keep),
                                 Value::Integer(loser),
+                                t(args.rule),
                                 Value::Text(format!(
                                     "{{\"name_norm\":\"{}\",\"keep_id\":\"{keep}\",\"loser_id\":\"{loser}\"}}",
                                     esc(norm)
@@ -17570,6 +17724,431 @@ impl Db {
         report.plan_groups += 1;
         report.plan_rows += ids.len() as u64 - 1;
         plan.push((norm, name, ids));
+        Ok(())
+    }
+
+    /// Issue 432: re-derive `name_norm` for the identifier-less organizations
+    /// whose stored key predates [`org_name_norm`], and fold the twins the
+    /// corrected key reveals. See [`ProvisionalNameNormReport`].
+    ///
+    /// Phase 1 walks the organizations PK, identifier-less rows only, and
+    /// computes each row's corrected key. A row whose stored key differs is
+    /// re-normalised; when it has a country and a non-empty key it is hashed on
+    /// `(key, country)`, and the resolver's own `(name_norm, country)` probe
+    /// finds the rows ALREADY on that key — the `'procurement for housing'`
+    /// beside the `'procurement for housing '`. Only 16 bytes a keyed row stay
+    /// in RAM, never a name: the class can run to millions (every `Ltd.`,
+    /// `S.A.`, `Sp. z o.o.` spelling re-keys).
+    ///
+    /// Phase 2 sorts the hashes into candidate groups and re-reads each
+    /// candidate's members to confirm it — exact key, same country, still
+    /// identifier-less — so a hash collision costs a read, never a merge.
+    ///
+    /// NO WALL, deliberately. Issue 234's mint-time reuse merges identical
+    /// `(name_norm, country)` provisional rows without one, and these groups are
+    /// exactly what that reuse would have made had the key been right when the
+    /// rows were minted; this fold only catches the stock up with the resolver.
+    /// The wall exists for N2's aggressive key and for the country-less class
+    /// (issue 351), and country-less rows are re-keyed here but never folded —
+    /// identical country-less keys are the echo fold's, behind the wall.
+    ///
+    /// Wet, after the parity guard: the groups fold through the echo fold's own
+    /// loop under ledger rule `p1` (keep = lowest id, still provisional, its key
+    /// rewritten in the same transaction); then `org_name_verdicts` is re-keyed;
+    /// then, on an uncapped run, every other re-normalised row's `name_norm` is
+    /// rewritten in slices with a checkpoint between. Folds FIRST: a stopped run
+    /// leaves every unfolded group's rows on their old keys, which is the only
+    /// place the re-plan looks. A bare re-key emits no change event —
+    /// `name_norm` is a derived column no read returns (the 217-B backfill's
+    /// precedent); the folds emit theirs.
+    pub async fn repair_provisional_name_norm(
+        &self,
+        args: ProvisionalNameNormArgs<'_>,
+    ) -> turso::Result<ProvisionalNameNormReport> {
+        use std::hash::{Hash, Hasher};
+        /// Identifier-less rows per read window (the name-pollution walk's size).
+        const WINDOW: i64 = 100_000;
+        /// Rows per rewrite transaction, a checkpoint between (issue 80: one
+        /// multi-million-row transaction grows the WAL by all of it).
+        const SLICE: usize = 20_000;
+        const LISTING: usize = 200;
+        const SAMPLE: usize = 100;
+        let hash = |key: &str, country: &str| -> u64 {
+            let mut h = std::collections::hash_map::DefaultHasher::new();
+            (key, country).hash(&mut h);
+            h.finish()
+        };
+        let mut report = ProvisionalNameNormReport::default();
+        let reader = self.reader().await?;
+
+        // Phase 1. `renorm` ascends by construction (the walk is by id), so
+        // membership is a binary search rather than a multi-million-entry set.
+        let mut renorm: Vec<i64> = Vec::new();
+        let mut keyed: Vec<(u64, i64)> = Vec::new();
+        let mut after = 0i64;
+        loop {
+            if (args.stop)() {
+                report.stopped = true;
+                return Ok(report);
+            }
+            let mut page: Vec<(i64, Option<String>, String, Option<String>)> = Vec::new();
+            {
+                let mut rows = reader
+                    .query(
+                        "SELECT id, country, name, name_norm FROM organizations \
+                          WHERE id > ? AND identifier IS NULL ORDER BY id LIMIT ?",
+                        (Value::Integer(after), Value::Integer(WINDOW)),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    page.push((int(&row, 0), opt_text_of(&row, 1), text(&row, 2), opt_text_of(&row, 3)));
+                }
+            }
+            let Some(&(last, ..)) = page.last() else { break };
+            after = last;
+            for (id, country, name, stored) in page {
+                report.rows_walked += 1;
+                let key = org_name_norm(&name);
+                if stored.as_deref() == Some(key.as_str()) {
+                    continue;
+                }
+                report.renormalised += 1;
+                renorm.push(id);
+                if key.is_empty() {
+                    report.emptied += 1;
+                }
+                if report.sample.len() < SAMPLE {
+                    report.sample.push((id, name, stored, key.clone()));
+                }
+                let Some(country) = country else {
+                    report.renormalised_country_less += 1;
+                    continue;
+                };
+                // The reuse arm never merges an empty key (the nameless class).
+                if key.is_empty() {
+                    continue;
+                }
+                let h = hash(&key, &country);
+                keyed.push((h, id));
+                let mut rows = reader
+                    .query(
+                        "SELECT id FROM organizations \
+                          WHERE name_norm = ? AND country = ? AND identifier IS NULL",
+                        (t(&key), t(&country)),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    keyed.push((h, int(&row, 0)));
+                }
+            }
+            (args.progress)(
+                report.rows_walked,
+                &format!(
+                    "planning: {} identifier-less rows walked, {} re-normalise",
+                    report.rows_walked, report.renormalised
+                ),
+            );
+        }
+
+        // Phase 2: candidate runs, then the confirming re-read.
+        keyed.sort_unstable();
+        keyed.dedup();
+        let mut runs: Vec<(u64, Vec<i64>)> = Vec::new();
+        for chunk in keyed.chunk_by(|a, b| a.0 == b.0) {
+            if chunk.len() >= 2 {
+                runs.push((chunk[0].0, chunk.iter().map(|&(_, id)| id).collect()));
+            }
+        }
+        drop(keyed);
+        let mut member_ids: Vec<i64> = runs.iter().flat_map(|(_, ids)| ids.iter().copied()).collect();
+        member_ids.sort_unstable();
+        member_ids.dedup();
+        // id -> (country, name, stored key), identifier-less rows only.
+        let mut members: std::collections::HashMap<i64, (Option<String>, String, Option<String>)> =
+            std::collections::HashMap::with_capacity(member_ids.len());
+        for chunk in member_ids.chunks(IN_CHUNK) {
+            if (args.stop)() {
+                report.stopped = true;
+                return Ok(report);
+            }
+            let sql = format!(
+                "SELECT id, country, name, name_norm FROM organizations \
+                  WHERE id IN ({}) AND identifier IS NULL",
+                placeholders(chunk.len())
+            );
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let mut rows = reader.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                members.insert(int(&row, 0), (opt_text_of(&row, 1), text(&row, 2), opt_text_of(&row, 3)));
+            }
+        }
+        drop(reader);
+        // (key, country, keep's name, ids ascending, re-normalised members).
+        let mut groups: Vec<(String, String, String, Vec<i64>, u64)> = Vec::new();
+        for (h, ids) in runs {
+            let mut by_key: std::collections::BTreeMap<(String, String), Vec<(i64, bool)>> = Default::default();
+            for id in ids {
+                let Some((Some(country), name, stored)) = members.get(&id) else { continue };
+                let key = org_name_norm(name);
+                // A collision-built run, or a probe hit that is itself
+                // re-keying elsewhere: that row belongs to its own run.
+                if key.is_empty() || hash(&key, country) != h {
+                    continue;
+                }
+                let moving = stored.as_deref() != Some(key.as_str());
+                by_key.entry((key, country.clone())).or_default().push((id, moving));
+            }
+            for ((key, country), mut rows) in by_key {
+                // Two rows already on one key with nothing re-keying are the
+                // 234 backfill's (`merge-provisional-orgs`), not a defect of
+                // the key this repairs.
+                if rows.len() < 2 || !rows.iter().any(|&(_, moving)| moving) {
+                    continue;
+                }
+                rows.sort_unstable();
+                let moving = rows.iter().filter(|&&(_, m)| m).count() as u64;
+                let keep_name = members.get(&rows[0].0).map(|m| m.1.clone()).unwrap_or_default();
+                report.groups += 1;
+                report.group_rows += rows.len() as u64;
+                report.standing_twins += rows.len() as u64 - moving;
+                groups.push((key, country, keep_name, rows.into_iter().map(|(id, _)| id).collect(), moving));
+            }
+        }
+        drop(members);
+        report.fold_rows = report.group_rows - report.groups;
+        // Deterministic fold order (the listing's too): largest first, then key.
+        groups.sort_by(|a, b| b.3.len().cmp(&a.3.len()).then_with(|| (&a.0, &a.1).cmp(&(&b.0, &b.1))));
+        for (key, country, name, ids, _) in groups.iter().take(LISTING) {
+            report.listing.push((key.clone(), country.clone(), name.clone(), ids.len() as u64, ids[0]));
+        }
+        report.listing_truncated = groups.len() > LISTING;
+
+        // The verdict table's keys, re-derived the same way. Small (reviewed
+        // names), so read whole.
+        let mut verdict_moves: Vec<(String, String)> = Vec::new();
+        {
+            let conn = self.reader().await?;
+            let mut keys: Vec<String> = Vec::new();
+            let mut rows = conn.query("SELECT name_norm FROM org_name_verdicts ORDER BY name_norm", ()).await?;
+            while let Some(row) = rows.next().await? {
+                keys.push(text(&row, 0));
+            }
+            let mut taken: std::collections::HashSet<String> = keys.iter().cloned().collect();
+            for old in keys {
+                let new = org_name_norm(&old);
+                if new == old || new.is_empty() {
+                    continue;
+                }
+                if taken.contains(&new) {
+                    report.verdict_conflicts.push((old, new));
+                } else {
+                    taken.insert(new.clone());
+                    verdict_moves.push((old, new));
+                }
+            }
+        }
+        report.verdicts_rekeyed = verdict_moves.len() as u64;
+
+        for (what, expect, got) in [
+            ("collision groups", args.expect_groups, report.groups),
+            ("re-normalised rows", args.expect_rows, report.renormalised),
+        ] {
+            if let Some(expect) = expect {
+                let tolerance = (expect / 50).max(50);
+                if got.abs_diff(expect) > tolerance {
+                    return Err(turso::Error::Error(format!(
+                        "p1 parity abort: the plan has {got} {what}, the dry run recorded {expect} \
+                         (tolerance {tolerance}) — nothing was written"
+                    )));
+                }
+            }
+        }
+        report.residual_rows = report.renormalised;
+        if args.dry_run {
+            return Ok(report);
+        }
+
+        let now = crate::now_unix();
+        let conn = self.conn().await;
+        // Foreign keys OFF around the folds, the echo fold's reason: every
+        // child moves off a loser before the loser goes, so the engine's
+        // per-delete proof buys nothing. Restored whatever happens.
+        {
+            let mut q = conn.query("PRAGMA foreign_keys=OFF", ()).await?;
+            while q.next().await?.is_some() {}
+        }
+        // Boxed: the wet half nests the shared fold loop's future, and the
+        // plan phase above is already a large state of its own.
+        let applied = Box::pin(self.apply_provisional_name_norm(
+            &conn,
+            &args,
+            &mut report,
+            &groups,
+            &renorm,
+            &verdict_moves,
+            now,
+            SLICE,
+        ))
+        .await;
+        {
+            let mut q = conn.query("PRAGMA foreign_keys=ON", ()).await?;
+            while q.next().await?.is_some() {}
+        }
+        applied?;
+        if report.removed > 0 {
+            self.publish_cursor(&conn).await?;
+        }
+        Ok(report)
+    }
+
+    /// The wet half of [`Db::repair_provisional_name_norm`]: fold, re-key the
+    /// verdicts, rewrite. On the writer, foreign keys off (the caller restores
+    /// them).
+    #[allow(clippy::too_many_arguments)]
+    async fn apply_provisional_name_norm(
+        &self,
+        conn: &Connection,
+        args: &ProvisionalNameNormArgs<'_>,
+        report: &mut ProvisionalNameNormReport,
+        groups: &[(String, String, String, Vec<i64>, u64)],
+        renorm: &[i64],
+        verdict_moves: &[(String, String)],
+        now: i64,
+        slice: usize,
+    ) -> turso::Result<()> {
+        let plan: Vec<(String, String, Vec<i64>)> =
+            groups.iter().map(|(key, _, name, ids, _)| (key.clone(), name.clone(), ids.clone())).collect();
+        let rule = ProvisionalFoldRule {
+            rule: "p1",
+            rekey_keep: true,
+            full_repoint: true,
+            job_id: args.job_id,
+            stop: args.stop,
+            progress: args.progress,
+        };
+        let mut fold = ProvisionalFoldReport { plan_groups: groups.len() as u64, ..Default::default() };
+        let folded = self
+            .fold_provisional_plan(conn, &rule, &mut fold, &plan, args.max_groups.unwrap_or(u64::MAX), now)
+            .await;
+        report.merged_groups = fold.merged_groups;
+        report.removed = fold.removed;
+        report.mentions = fold.mentions;
+        report.parties = fold.parties;
+        report.bid_parties = fold.bid_parties;
+        report.winners = fold.winners;
+        report.winner_dups = fold.winner_dups;
+        report.tender_changes = fold.tender_changes;
+        // The loop folds the plan in order and stops at a prefix, so the
+        // settled re-normalised rows are the first `merged_groups` groups'.
+        let settled: u64 = groups.iter().take(fold.merged_groups as usize).map(|g| g.4).sum();
+        report.residual_rows = report.renormalised - settled;
+        folded?;
+        if fold.stopped {
+            report.stopped = true;
+            return Ok(());
+        }
+
+        // The verdicts: one small transaction. The NOT EXISTS makes a key that
+        // appeared since the plan a no-op rather than a PK error.
+        if !verdict_moves.is_empty() {
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+            let moved: turso::Result<u64> = async {
+                let mut n = 0u64;
+                for (old, new) in verdict_moves {
+                    n += conn
+                        .execute(
+                            "UPDATE org_name_verdicts SET name_norm = ? WHERE name_norm = ? \
+                               AND NOT EXISTS (SELECT 1 FROM org_name_verdicts WHERE name_norm = ?)",
+                            (t(new), t(old), t(new)),
+                        )
+                        .await?;
+                }
+                Ok(n)
+            }
+            .await;
+            match moved {
+                Ok(n) => {
+                    if let Err(e) = conn.execute("COMMIT", ()).await {
+                        let _ = conn.execute("ROLLBACK", ()).await;
+                        return Err(e);
+                    }
+                    report.verdicts_moved = n;
+                }
+                Err(e) => {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
+        }
+
+        // The bulk rewrite, uncapped runs only. Every group member is left
+        // out: a folded group's keep was re-keyed in its fold and its losers
+        // are gone; an unfolded group's rows must stay on their old keys for
+        // the re-plan to find them.
+        if args.max_groups.is_some() {
+            return Ok(());
+        }
+        let mut in_group: Vec<i64> = groups.iter().flat_map(|g| g.3.iter().copied()).collect();
+        in_group.sort_unstable();
+        let pending: Vec<i64> = renorm.iter().copied().filter(|id| in_group.binary_search(id).is_err()).collect();
+        drop(in_group);
+        let total = pending.len() as u64;
+        for part in pending.chunks(slice) {
+            if (args.stop)() {
+                report.stopped = true;
+                return Ok(());
+            }
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+            let result: turso::Result<u64> = async {
+                let mut n = 0u64;
+                for chunk in part.chunks(IN_CHUNK) {
+                    // Re-read on the writer: the row as it stands now, not as
+                    // the plan saw it.
+                    let sql = format!(
+                        "SELECT id, name, name_norm FROM organizations \
+                          WHERE id IN ({}) AND identifier IS NULL",
+                        placeholders(chunk.len())
+                    );
+                    let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+                    let mut fixes: Vec<(i64, String)> = Vec::new();
+                    {
+                        let mut rows = conn.query(&sql, params).await?;
+                        while let Some(row) = rows.next().await? {
+                            let key = org_name_norm(&text(&row, 1));
+                            if opt_text_of(&row, 2).as_deref() != Some(key.as_str()) {
+                                fixes.push((int(&row, 0), key));
+                            }
+                        }
+                    }
+                    for (id, key) in fixes {
+                        n += conn
+                            .execute(
+                                "UPDATE organizations SET name_norm = ? WHERE id = ?",
+                                (t(key), Value::Integer(id)),
+                            )
+                            .await?;
+                    }
+                }
+                Ok(n)
+            }
+            .await;
+            match result {
+                Ok(n) => {
+                    if let Err(e) = conn.execute("COMMIT", ()).await {
+                        let _ = conn.execute("ROLLBACK", ()).await;
+                        return Err(e);
+                    }
+                    report.rewritten += n;
+                    report.residual_rows = report.residual_rows.saturating_sub(n);
+                    let _ = checkpoint_on(conn, CheckpointMode::Truncate).await;
+                }
+                Err(e) => {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
+            (args.progress)(report.rewritten, &format!("re-keying: {} of {total} rows rewritten", report.rewritten));
+        }
         Ok(())
     }
 
@@ -19911,10 +20490,12 @@ impl Db {
                             )
                             .await?;
                         while let Some(row) = rows.next().await? {
+                            // The re-resolve below's own key (issue 432), or
+                            // "one target by construction" stops being true.
                             cands.push((
                                 int(&row, 0),
                                 text(&row, 1),
-                                text(&row, 2).to_lowercase(),
+                                org_name_norm(&text(&row, 2)),
                                 opt_text_of(&row, 3),
                             ));
                         }
@@ -19996,7 +20577,9 @@ impl Db {
             let mut section_target: std::collections::HashMap<(i64, String), i64> =
                 std::collections::HashMap::new();
             for (notice, section, name, country) in &mentions {
-                let name_norm = name.to_lowercase();
+                // The resolver's reuse key (issue 432), so a re-resolved
+                // mention lands where a fresh fold would put it.
+                let name_norm = org_name_norm(name);
                 let target: i64 = if !name_norm.is_empty() && country.is_some() {
                     let c = country.clone().unwrap_or_default();
                     let mut rows = conn

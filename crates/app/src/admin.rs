@@ -427,7 +427,8 @@ struct NameVerdictIn {
 /// (issue 351 unit 4): `single` lets the provisional echo fold and the
 /// resolver's country-less reuse treat the name as one entity whatever the
 /// wall says; `generic`, `platform` and `non-name` refuse both; `unclear`
-/// is recorded and decides nothing. Keyed by the bare lower-case name.
+/// is recorded and decides nothing. Keyed by the 234 reuse key,
+/// `store::org_name_norm` (issue 432).
 async fn record_name_verdicts(
     State(sup): State<Arc<Supervisor>>,
     headers: HeaderMap,
@@ -456,7 +457,10 @@ async fn record_name_verdicts(
         .into_iter()
         .filter(|r| !r.name.trim().is_empty())
         .map(|r| store::NameVerdict {
-            name_norm: r.name.trim().to_lowercase(),
+            // The key the resolver and the echo fold look verdicts up by
+            // (issue 432) — a verdict posted as `Foo Ltd.` must reach the
+            // rows keyed `foo ltd`.
+            name_norm: store::org_name_norm(&r.name),
             verdict: r.verdict,
             rationale: r.rationale,
         })

@@ -5301,9 +5301,10 @@ pub fn normalize_lang(lang: Option<&str>) -> Option<String> {
 
 /// The matcher's N2 name key (issue 300 §2.3): Unicode lowercase, every
 /// non-alphanumeric character folded to a space, runs collapsed. This is
-/// deliberately NOT `organizations.name_norm` (the 234 reuse key, bare
-/// `to_lowercase`) — changing that would silently re-key the provisional
-/// probe. Folding through the alphanumeric filter subsumes the design's
+/// deliberately NOT `organizations.name_norm` (the 234 reuse key,
+/// `store::org_name_norm`: lowercase plus whitespace and trailing-punctuation
+/// noise only, issue 432) — changing that would silently re-key the
+/// provisional probe. Folding through the alphanumeric filter subsumes the design's
 /// punctuation/quote/dash/whitespace classes in one rule; NFKC is deferred
 /// until something measured demands it (fullwidth/ligature forms — the same
 /// nothing-measured-demands-it line the design draws for diacritics, which

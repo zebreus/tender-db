@@ -866,9 +866,12 @@ impl Params {
             published_before: parse_instant(self.published_before.as_deref(), "published_before")?,
             deadline_after: parse_instant(self.deadline_after.as_deref(), "deadline_after")?,
             deadline_before: parse_instant(self.deadline_before.as_deref(), "deadline_before")?,
-            // Unicode-lowercased HERE, once, so the store layer always sees the
-            // normalised form the name_norm column stores. An empty prefix would
-            // be an unbounded name-ordered dump of 24.6M orgs — refuse it.
+            // Normalised HERE, once, by the function the name_norm column is
+            // stored under (issue 432: lowercase, whitespace collapsed, trailing
+            // `.`/`,`/`;` dropped), so `ACME Ltd.` still finds the row now keyed
+            // `acme ltd` — a bare lowercase prefix would run past its end. An
+            // empty prefix would be an unbounded name-ordered dump of 24.6M
+            // orgs — refuse it.
             name_prefix: match self.name_prefix.as_deref().map(str::trim) {
                 None => None,
                 Some("") => {
@@ -876,7 +879,7 @@ impl Params {
                         "name_prefix must not be empty; pass at least one character",
                     ));
                 }
-                Some(p) => Some(p.to_lowercase()),
+                Some(p) => Some(store::org_name_norm(p)),
             },
             now,
         })

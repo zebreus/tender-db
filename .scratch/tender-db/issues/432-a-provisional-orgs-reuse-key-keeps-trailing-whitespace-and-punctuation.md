@@ -60,3 +60,57 @@ identifier-less GB rows are twins in that band. The corpus-wide count (`name_nor
 - **done**: `… disagree on the buyer: 0` on a report computed after the repair (the three twins merged)
 - **open**: `3` (tenders 7957971, 8579928, 8579929; read 2026-09-27 through `/v1/sql`; the stored weekly report predates
   the refined line)
+
+## Built (2026-09-27)
+
+Uncommitted, not deployed, not run on prod. Gate (`ops/check.sh`) not yet run; focused suites below are green.
+
+**The key.** `store::org_name_norm(name)` (`crates/store/src/canonical.rs`, beside `register_jurisdiction`): Unicode
+`to_lowercase`, whitespace trimmed and every internal run (tab, newline, NBSP included) collapsed to one space, then
+trailing `.`/`,`/`;` stripped together with the whitespace before them, repeatedly. Nothing else: no legal-form
+stripping, no transliteration, no accent folding. `ACME Ltd.` = `ACME Ltd`; `ACME Ltd` ≠ `ACME`. A name that is ALL
+trailing punctuation keeps its trimmed/collapsed form (`"."` stays `"."`, not `""`, so it does not silently join the
+nameless class); a blank or whitespace-only name keys `""` (so it is no longer reused per country — the nameless
+policy).
+
+**Where it is used** (every derivation of `organizations.name_norm`, and the keys that must agree with it): the
+identifier-bearing mint and the 234 reuse arm in `resolve_one_mention` (so the country-less 351 arm keys on it too),
+the placeholder dissolve's re-resolve AND its tier-3 "all mentions share one key" check, `backfill_org_name_norm`
+(217-B), and `POST /admin/name-verdicts` (the verdict key, was `trim().to_lowercase()`). Left as bare lowercase on
+purpose: `organization_names.name_norm` (the satellite; not a reuse key). **Review addition:** the `/v1`
+`name_prefix` is now normalised by `org_name_norm` too (`v1/mod.rs`). Left as bare lowercase, `ACME Ltd.` would stop
+finding the row re-keyed `acme ltd` — a prefix longer than the stored key. Stripping the prefix's trailing period only
+widens the match (`acme ltd` also prefixes `acme ltd. group` and `acme ltda`), which a prefix search already does
+for anyone who types no period. `/docs` says so; `organizations_can_be_searched_by_name_prefix` asserts a noisy spelling
+of a real name (`doubled  space  .`) finds it.
+
+**The repair.** `repair-provisional-name-norm` (dry default, stoppable, `max_groups` caps a wet run) →
+`Db::repair_provisional_name_norm`. Walks identifier-less rows by PK; a row whose stored key ≠ `org_name_norm(name)`
+is re-normalised; with a country and a non-empty key it is hashed on `(key, country)` and the resolver's own
+`(name_norm, country)` probe finds rows already on that key. Candidate groups are re-read and confirmed (exact key,
+same country, identifier-less), so a hash collision costs a read, never a merge. Groups fold through the echo
+fold's own loop (`fold_provisional_plan`, now parameterised by `ProvisionalFoldRule`) under ledger rule **`p1`**,
+keep = lowest id, still provisional, its key rewritten inside the fold's transaction; full repoint (mentions,
+parties, bid parties, winners + winner dups, `organization_names`). No wall (234's reuse merges these without one);
+country-less rows are re-keyed, never folded here — run `fold-provisional-echoes` after. `org_name_verdicts` keys
+are re-keyed; a key already taken is left standing and listed (`verdict_conflicts`). Then the bulk `name_norm`
+rewrite (uncapped runs only) in 20k-row slices with a TRUNCATE checkpoint between. Dry stores
+`provisional-name-norm-plan` (`groups`, `rows`, counts, top-200 listing, 100-row sample); wet aborts outside
+max(2%, 50) on either count and re-records the residual (the echo fold's rule).
+
+**Tests** (`crates/store/tests/provisional_name_norm.rs`, all ok):
+`the_key_folds_whitespace_and_trailing_punctuation_and_nothing_else`,
+`the_fts_spellings_of_one_identifierless_buyer_bind_one_row`,
+`the_repair_rekeys_the_stock_and_folds_the_same_country_twins`. Also green: store `provisional_echo_fold`,
+`placeholder_dissolve`, `resolver_prevention`, `org_name_search`, `provisional_echo_census`, `anchor_wall`, the
+store lib's org/name/mention/merge tests, all of `cargo test -p ingest`, and `cargo test -p tender-db --features
+server --lib` (147/147 — after boxing the store future inside the new arm: with only the arm's outer `Box::pin`,
+`an_execute_without_an_expected_count_is_refused` overflowed its stack, CLAUDE.md's run_spec trap).
+
+**Run order on prod — decided at review: AFTER the text-era and r208/r209 re-parses and their full fold** (issue
+393/397's campaign, queued 2026-09-27). That fold re-resolves the mentions of ~11M re-parsed notices; under the new key
+every `… Ltd.`-shaped name whose stock row still carries the old key would miss the probe and mint a fresh twin,
+turning a bounded repair into a corpus-scale one. So the chain runs on the old key, then this deploys, then dry →
+wet promptly: until the repair runs, a new mention of a buyer whose stock
+row still carries the old key misses the probe and mints ONE fresh row on the corrected key (then reuses it); the
+repair folds those too, but the dry/wet parity tolerates only max(2%, 50) of drift between the two runs.

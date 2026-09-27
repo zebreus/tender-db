@@ -22,7 +22,7 @@ pub use accounts::{CreateUser, TokenRecord, User};
 pub use checkpoint::{Checkpointed, CheckpointMode};
 pub use canonical::{
     Applied, BidParty, BidState, Change, ContractState, Fact, Identifier, LayerPresence, LayerState,
-    register_jurisdiction,
+    register_jurisdiction, org_name_norm,
     LotResultState, LotState, Mention, MentionResolver, NestedOrgRepair, NoticeRef, OrgDissolve, OrgMergeBatch, OrgNameBackfill,
     CaseApplyReport, CaseBacklogReport, CaseBacklogRow, CaseReview, CaseUnapplyReport,
     ClusterCase, ClusterPacket, CountryFoldReport, CountryMove, CountryVerdict,
@@ -40,6 +40,7 @@ pub use canonical::{
     R2MergeReport, R3MergeArgs, R3MergeReport, Round, TenderProjection, TenderVersion,
     CountryCluster, CountryClusterReport, CountryTypoMove, CountryTypoRepairReport,
     DuplicateIdentity, GenericKeyProbe, ProvisionalEchoGroup, ProvisionalEchoReport, ProvisionalFoldArgs, ProvisionalFoldReport, EchoTier, NameVerdict, DuplicateIdentityReport,
+    ProvisionalNameNormArgs, ProvisionalNameNormReport,
     LabelFix, LabelRepairReport, RenormaliseRepairReport,
     NoticeInstantFix, NoticeInstantRepairReport, VersionInstantRepairReport,
     GenericKeyShape, GenericStatisticReport,
@@ -3874,7 +3875,8 @@ impl Db {
     }
 
     /// One batch of the org `name_norm` backfill (issue 217-B): Unicode-lowercase
-    /// the next `batch` names past the watermark, in Rust — SQL `lower()` is
+    /// (since issue 432, [`org_name_norm`]: plus whitespace and trailing-punctuation
+    /// noise) the next `batch` names past the watermark, in Rust — SQL `lower()` is
     /// ASCII-only and would leave every umlauted name unfindable by the
     /// case-insensitive search the column exists for. Returns `(rows, watermark)`;
     /// `rows == 0` ends the walk. Rows already stamped are skipped, so re-runs and
@@ -3902,9 +3904,11 @@ impl Db {
         let count = pending.len() as i64;
         conn.execute("BEGIN", ()).await?;
         for (id, name) in pending {
+            // Issue 432: the column's one derivation, so a backfilled row
+            // keys exactly as a freshly minted one would.
             conn.execute(
                 "UPDATE organizations SET name_norm = ? WHERE id = ?",
-                (Value::Text(name.to_lowercase()), Value::Integer(id)),
+                (Value::Text(canonical::org_name_norm(&name)), Value::Integer(id)),
             )
             .await?;
         }

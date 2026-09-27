@@ -1464,6 +1464,14 @@ async fn organizations_can_be_searched_by_name_prefix() {
         }),
         "every hit actually carries the prefix"
     );
+    // Issue 432: the prefix is keyed like the stored name, so the whole name
+    // with a publisher's trailing ` .` and a doubled space still finds it.
+    let noisy = format!("{}  .", name.replacen(' ', "  ", 1));
+    let hit = server.get(&format!("/v1/organizations?name_prefix={}", urlenc(&noisy))).await;
+    assert!(
+        items(&hit).iter().any(|o| o["id"].as_i64() == Some(id)),
+        "`{noisy}` finds `{name}` — the prefix takes the stored key's normalisation"
+    );
 
     // Absent prefix → empty page; empty prefix → 400; bad cursor → 400.
     assert!(items(&server.get("/v1/organizations?name_prefix=zzzzzzz").await).is_empty());
