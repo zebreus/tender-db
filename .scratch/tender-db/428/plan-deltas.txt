@@ -1,0 +1,270 @@
+##### ALL TABLES ANALYZED: 387 of 461 app statements keep their plan, 74 change
+
+--- x7 (s0123, s0154, s0181, s0224, s0413, s0490…): UPDATE projection_state SET currency_presence_complete = 1 WHERE id = 0
+   - SEARCH projection_state USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN projection_state
+--- x1 (s0128): SELECT body, computed_at FROM reports WHERE kind = ?
+   - SEARCH reports USING INDEX sqlite_autoindex_reports_1 (kind=?)
+   + SCAN reports
+--- x1 (s0133): SELECT id, period, path FROM fetches WHERE id IN (SELECT MAX(id) FROM fetches WHERE source = ? AND kind = ? AND (? IS NULL OR period = ?) GROUP BY per
+   - SEARCH fetches USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN fetches
+--- x2 (s0134, s0149): SELECT period, fetch_id, skipped, quarantined FROM package_rates WHERE source = ? AND kind = ? ORDER BY walked_at
+   - SEARCH package_rates USING INDEX package_rates_walks (source=? AND kind=?)
+   + SCAN package_rates
+   + USE SORTER FOR ORDER BY
+--- x5 (s0183, s0264, s0266, s0268, s0316): SELECT notice_id, section_id, organization_id FROM organization_mentions WHERE notice_id IN (?)
+   - SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+   + SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+--- x3 (s0188, s0251, s0418): UPDATE legacy_adjacency SET watermark = MAX(watermark, ?) WHERE id = 0 AND watermark > 0
+   - SEARCH legacy_adjacency USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN legacy_adjacency
+--- x1 (s0239): SELECT id, source, publication_id, profile FROM notices WHERE parse_state = 'parsed' AND id > ? AND id <= ? ORDER BY id LIMIT ?
+   - SEARCH notices USING INDEX notices_parse_state (parse_state=?)
+   + SEARCH notices USING INTEGER PRIMARY KEY (rowid=?)
+--- x1 (s0249): SELECT id FROM organizations WHERE name_norm = ? AND country = ? AND identifier IS NULL LIMIT 1
+   - SEARCH organizations USING INDEX organizations_name_country (name_norm=? AND country=?)
+   + SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)
+--- x2 (s0281, s0325): SELECT generation FROM feed_generation WHERE id = 0
+   - SEARCH feed_generation USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN feed_generation
+--- x28 (s0282, s0295, s0306, s0309, s0315, s0319…): SELECT t.id, t.source, t.procedure_key, t.kind, v.seq, v.published_at, v.publication_id, v.notice_subtype, (SELECT s.value FROM tender_version_texts s
+   - SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   + SEARCH v USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+--- x1 (s0296): SELECT original_lang, published_at FROM tender_versions WHERE tender_id = ? AND seq = ?
+   - SEARCH tender_versions USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   + SEARCH tender_versions USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+--- x2 (s0362, s0363): SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq FROM tender_version_lots vl JOIN lots l ON l.id = vl.lot_id AND l.tender_id = vl.tender_id JOIN te
+   - SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   - SEARCH pv USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   - SEARCH pv USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   + SEARCH v USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+   + SEARCH pv USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+   + SEARCH pv USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+--- x2 (s0374, s0404): UPDATE tender_version_parties SET organization_id = ? WHERE organization_id = ?
+   - SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+   + SEARCH tender_version_parties USING INDEX tender_version_parties_org_role (organization_id=?)
+--- x1 (s0396): SELECT l.id, l.tender_id, l.lot_key, (SELECT vl.kind FROM tender_version_lots vl WHERE vl.tender_id = l.tender_id AND vl.seq = (SELECT MAX(x.seq) FROM
+   - SEARCH pv USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   - SEARCH pv USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   + SEARCH pv USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+   + SEARCH pv USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+--- x1 (s0407): SELECT t.id, t.source, t.procedure_key, t.kind, v.seq, v.published_at, v.publication_id, v.notice_subtype, (SELECT s.value FROM tender_version_texts s
+   - SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   - SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   + SEARCH v USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+   + SEARCH v USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+--- x1 (s0444): SELECT t.id FROM tenders t JOIN tender_versions v ON v.tender_id = t.id AND v.seq = t.current_seq LIMIT 5
+   - SCAN tender_versions AS v USING COVERING INDEX sqlite_autoindex_tender_versions_1
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN tenders AS t
+   + SEARCH v USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+--- x2 (s0458, s0465): SELECT * FROM v_tender_buyers LIMIT 5
+   - SCAN tender_version_parties AS p
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN tenders AS t
+   + SEARCH p USING INDEX tender_version_parties_version (tender_id=? AND seq=?)
+--- x1 (s0459): SELECT * FROM v_awards LIMIT 5
+   - SCAN c
+   - SCAN tender_version_parties AS p
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   - SCAN tender_version_parties AS p
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   + SEARCH c USING INDEX ephemeral_subquery_t3 (tender_id=? AND seq=?)
+   + SCAN tenders AS t
+   + SEARCH p USING INDEX tender_version_parties_version (tender_id=? AND seq=?)
+   + SCAN tenders AS t
+   + SEARCH p USING INDEX tender_version_parties_version (tender_id=? AND seq=?)
+--- x1 (s0460): SELECT * FROM v_tender_classifications LIMIT 5
+   - SCAN tender_version_classifications AS x
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN tenders AS t
+   + SEARCH x USING INDEX tender_version_classifications_version (tender_id=? AND seq=?)
+--- x1 (s0461): SELECT * FROM v_tender_amounts LIMIT 5
+   - SCAN tender_version_amounts AS a
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN tenders AS t
+   + SEARCH a USING INDEX tender_version_amounts_version (tender_id=? AND seq=?)
+--- x1 (s0462): SELECT * FROM v_tender_dates LIMIT 5
+   - SCAN tender_version_dates AS d
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN tenders AS t
+   + SEARCH d USING INDEX tender_version_dates_version (tender_id=? AND seq=?)
+--- x1 (s0466): SELECT count(*) FROM tenders t JOIN tender_version_classifications x ON x.tender_id = t.id AND x.seq = t.current_seq WHERE x.scheme = 'cpv'
+   - SEARCH x USING INDEX tender_version_classifications_code (scheme=?)
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN tenders AS t
+   + SEARCH x USING INDEX tender_version_classifications_version (tender_id=? AND seq=?)
+--- x5 (s0479, s0481, s0484, s0485, s0487): SELECT id, user_id, url, secret, created_at, disabled_at, last_delivered_cursor, failing_since, next_attempt_at, consecutive_failures, last_generation
+   - SEARCH webhook_endpoints USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN webhook_endpoints
+--- x1 (s0480): SELECT id, user_id, url, secret, created_at, disabled_at, last_delivered_cursor, failing_since, next_attempt_at, consecutive_failures, last_generation
+   - SEARCH webhook_endpoints USING INDEX webhook_endpoints_due (next_attempt_at<=?)
+   - USE SORTER FOR ORDER BY
+   + SCAN webhook_endpoints
+--- x1 (s0483): DELETE FROM webhook_delivery_log WHERE endpoint_id = ? AND id NOT IN ( SELECT id FROM webhook_delivery_log WHERE endpoint_id = ? ORDER BY id DESC LIMI
+   - SEARCH webhook_delivery_log USING INDEX webhook_delivery_log_endpoint (endpoint_id=?)
+   - SEARCH webhook_delivery_log USING INDEX webhook_delivery_log_endpoint (endpoint_id=?)
+   + SCAN webhook_delivery_log
+   + USE SORTER FOR ORDER BY
+   + SCAN webhook_delivery_log
+--- x1 (s0486): SELECT attempted_at, cursor_from, cursor_to, events, status, duration_ms, ok, error FROM webhook_delivery_log WHERE endpoint_id = ? ORDER BY id DESC L
+   - SEARCH webhook_delivery_log USING INDEX webhook_delivery_log_endpoint (endpoint_id=?)
+   + SCAN webhook_delivery_log
+   + USE SORTER FOR ORDER BY
+
+##### READ-PATH SUBSET: 411 of 461 app statements keep their plan, 50 change
+
+--- x5 (s0183, s0264, s0266, s0268, s0316): SELECT notice_id, section_id, organization_id FROM organization_mentions WHERE notice_id IN (?)
+   - SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+   + SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+--- x1 (s0239): SELECT id, source, publication_id, profile FROM notices WHERE parse_state = 'parsed' AND id > ? AND id <= ? ORDER BY id LIMIT ?
+   - SEARCH notices USING INDEX notices_parse_state (parse_state=?)
+   + SEARCH notices USING INTEGER PRIMARY KEY (rowid=?)
+--- x1 (s0249): SELECT id FROM organizations WHERE name_norm = ? AND country = ? AND identifier IS NULL LIMIT 1
+   - SEARCH organizations USING INDEX organizations_name_country (name_norm=? AND country=?)
+   + SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)
+--- x28 (s0282, s0295, s0306, s0309, s0315, s0319…): SELECT t.id, t.source, t.procedure_key, t.kind, v.seq, v.published_at, v.publication_id, v.notice_subtype, (SELECT s.value FROM tender_version_texts s
+   - SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   + SEARCH v USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+--- x1 (s0296): SELECT original_lang, published_at FROM tender_versions WHERE tender_id = ? AND seq = ?
+   - SEARCH tender_versions USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   + SEARCH tender_versions USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+--- x2 (s0362, s0363): SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq FROM tender_version_lots vl JOIN lots l ON l.id = vl.lot_id AND l.tender_id = vl.tender_id JOIN te
+   - SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   - SEARCH pv USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   - SEARCH pv USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   + SEARCH v USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+   + SEARCH pv USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+   + SEARCH pv USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+--- x2 (s0374, s0404): UPDATE tender_version_parties SET organization_id = ? WHERE organization_id = ?
+   - SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+   + SEARCH tender_version_parties USING INDEX tender_version_parties_org_role (organization_id=?)
+--- x1 (s0396): SELECT l.id, l.tender_id, l.lot_key, (SELECT vl.kind FROM tender_version_lots vl WHERE vl.tender_id = l.tender_id AND vl.seq = (SELECT MAX(x.seq) FROM
+   - SEARCH pv USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   - SEARCH pv USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   + SEARCH pv USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+   + SEARCH pv USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+--- x1 (s0407): SELECT t.id, t.source, t.procedure_key, t.kind, v.seq, v.published_at, v.publication_id, v.notice_subtype, (SELECT s.value FROM tender_version_texts s
+   - SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   - SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   + SEARCH v USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+   + SEARCH v USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+--- x1 (s0444): SELECT t.id FROM tenders t JOIN tender_versions v ON v.tender_id = t.id AND v.seq = t.current_seq LIMIT 5
+   - SCAN tender_versions AS v USING COVERING INDEX sqlite_autoindex_tender_versions_1
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN tenders AS t
+   + SEARCH v USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+--- x2 (s0458, s0465): SELECT * FROM v_tender_buyers LIMIT 5
+   - SCAN tender_version_parties AS p
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN tenders AS t
+   + SEARCH p USING INDEX tender_version_parties_version (tender_id=? AND seq=?)
+--- x1 (s0459): SELECT * FROM v_awards LIMIT 5
+   - SCAN c
+   - SCAN tender_version_parties AS p
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   - SCAN tender_version_parties AS p
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   + SEARCH c USING INDEX ephemeral_subquery_t3 (tender_id=? AND seq=?)
+   + SCAN tenders AS t
+   + SEARCH p USING INDEX tender_version_parties_version (tender_id=? AND seq=?)
+   + SCAN tenders AS t
+   + SEARCH p USING INDEX tender_version_parties_version (tender_id=? AND seq=?)
+--- x1 (s0460): SELECT * FROM v_tender_classifications LIMIT 5
+   - SCAN tender_version_classifications AS x
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN tenders AS t
+   + SEARCH x USING INDEX tender_version_classifications_version (tender_id=? AND seq=?)
+--- x1 (s0461): SELECT * FROM v_tender_amounts LIMIT 5
+   - SCAN tender_version_amounts AS a
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN tenders AS t
+   + SEARCH a USING INDEX tender_version_amounts_version (tender_id=? AND seq=?)
+--- x1 (s0462): SELECT * FROM v_tender_dates LIMIT 5
+   - SCAN tender_version_dates AS d
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN tenders AS t
+   + SEARCH d USING INDEX tender_version_dates_version (tender_id=? AND seq=?)
+--- x1 (s0466): SELECT count(*) FROM tenders t JOIN tender_version_classifications x ON x.tender_id = t.id AND x.seq = t.current_seq WHERE x.scheme = 'cpv'
+   - SEARCH x USING INDEX tender_version_classifications_code (scheme=?)
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN tenders AS t
+   + SEARCH x USING INDEX tender_version_classifications_version (tender_id=? AND seq=?)
+
+##### READ-PATH SUBSET MINUS organizations (THE DECISION): 412 of 461 app statements keep their plan, 49 change
+
+--- x5 (s0183, s0264, s0266, s0268, s0316): SELECT notice_id, section_id, organization_id FROM organization_mentions WHERE notice_id IN (?)
+   - SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+   + SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+--- x1 (s0239): SELECT id, source, publication_id, profile FROM notices WHERE parse_state = 'parsed' AND id > ? AND id <= ? ORDER BY id LIMIT ?
+   - SEARCH notices USING INDEX notices_parse_state (parse_state=?)
+   + SEARCH notices USING INTEGER PRIMARY KEY (rowid=?)
+--- x28 (s0282, s0295, s0306, s0309, s0315, s0319…): SELECT t.id, t.source, t.procedure_key, t.kind, v.seq, v.published_at, v.publication_id, v.notice_subtype, (SELECT s.value FROM tender_version_texts s
+   - SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   + SEARCH v USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+--- x1 (s0296): SELECT original_lang, published_at FROM tender_versions WHERE tender_id = ? AND seq = ?
+   - SEARCH tender_versions USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   + SEARCH tender_versions USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+--- x2 (s0362, s0363): SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq FROM tender_version_lots vl JOIN lots l ON l.id = vl.lot_id AND l.tender_id = vl.tender_id JOIN te
+   - SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   - SEARCH pv USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   - SEARCH pv USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   + SEARCH v USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+   + SEARCH pv USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+   + SEARCH pv USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+--- x2 (s0374, s0404): UPDATE tender_version_parties SET organization_id = ? WHERE organization_id = ?
+   - SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+   + SEARCH tender_version_parties USING INDEX tender_version_parties_org_role (organization_id=?)
+--- x1 (s0396): SELECT l.id, l.tender_id, l.lot_key, (SELECT vl.kind FROM tender_version_lots vl WHERE vl.tender_id = l.tender_id AND vl.seq = (SELECT MAX(x.seq) FROM
+   - SEARCH pv USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   - SEARCH pv USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   + SEARCH pv USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+   + SEARCH pv USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+--- x1 (s0407): SELECT t.id, t.source, t.procedure_key, t.kind, v.seq, v.published_at, v.publication_id, v.notice_subtype, (SELECT s.value FROM tender_version_texts s
+   - SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   - SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+   + SEARCH v USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+   + SEARCH v USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+--- x1 (s0444): SELECT t.id FROM tenders t JOIN tender_versions v ON v.tender_id = t.id AND v.seq = t.current_seq LIMIT 5
+   - SCAN tender_versions AS v USING COVERING INDEX sqlite_autoindex_tender_versions_1
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN tenders AS t
+   + SEARCH v USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)
+--- x2 (s0458, s0465): SELECT * FROM v_tender_buyers LIMIT 5
+   - SCAN tender_version_parties AS p
+   - SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN organizations AS o
+   + SEARCH p USING INDEX tender_version_parties_org_role (organization_id=?)
+--- x1 (s0459): SELECT * FROM v_awards LIMIT 5
+   - SCAN c
+   - SCAN tender_version_parties AS p
+   - SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+   - SCAN tender_version_parties AS p
+   - SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+   + SEARCH c USING INDEX ephemeral_subquery_t3 (tender_id=? AND seq=?)
+   + SCAN organizations AS o
+   + SEARCH p USING INDEX tender_version_parties_org_role (organization_id=?)
+   + SCAN organizations AS o
+   + SEARCH p USING INDEX tender_version_parties_org_role (organization_id=?)
+--- x1 (s0460): SELECT * FROM v_tender_classifications LIMIT 5
+   - SCAN tender_version_classifications AS x
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN tenders AS t
+   + SEARCH x USING INDEX tender_version_classifications_version (tender_id=? AND seq=?)
+--- x1 (s0461): SELECT * FROM v_tender_amounts LIMIT 5
+   - SCAN tender_version_amounts AS a
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN tenders AS t
+   + SEARCH a USING INDEX tender_version_amounts_version (tender_id=? AND seq=?)
+--- x1 (s0462): SELECT * FROM v_tender_dates LIMIT 5
+   - SCAN tender_version_dates AS d
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN tenders AS t
+   + SEARCH d USING INDEX tender_version_dates_version (tender_id=? AND seq=?)
+--- x1 (s0466): SELECT count(*) FROM tenders t JOIN tender_version_classifications x ON x.tender_id = t.id AND x.seq = t.current_seq WHERE x.scheme = 'cpv'
+   - SEARCH x USING INDEX tender_version_classifications_code (scheme=?)
+   - SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+   + SCAN tenders AS t
+   + SEARCH x USING INDEX tender_version_classifications_version (tender_id=? AND seq=?)
+

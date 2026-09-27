@@ -1,0 +1,119 @@
+START 2026-09-26T21:53:08Z
+total 1315968024
+drwxr-xr-x 2 root     root               56 Sep 27 00:00 .
+drwxr-xr-x 4 tenderdb tenderdb          115 Sep 26 23:52 ..
+-rw------- 1 root     root     672722055168 Sep 26 23:53 base.db
+-rw-r--r-- 1 root     root                0 Sep 27 00:00 base.db-wal
+-rw------- 1 root     root     672722055168 Sep 26 23:59 stats.db
+ANALYZE	tenders	32.3s
+ANALYZE	lots	12.0s
+ANALYZE	tender_versions	41.7s
+ANALYZE	organizations	51.6s
+ANALYZE	organization_names	3.2s
+ANALYZE	organization_mentions	81.5s
+ANALYZE	tender_version_dates	28.1s
+ANALYZE	tender_version_classifications	225.7s
+ANALYZE	tender_version_parties	241.8s
+ANALYZE	tender_version_texts	113.0s
+ANALYZE	tender_version_amounts	14.0s
+ANALYZE	tender_version_lots	30.8s
+ANALYZE	lot_results	20.2s
+ANALYZE	bids	8.5s
+ANALYZE	contracts	5.7s
+ANALYZE	tender_version_bids	57.2s
+ANALYZE	tender_version_bid_parties	155.2s
+ANALYZE	tender_version_contracts	42.4s
+ANALYZE	tender_version_lot_results	80.0s
+ANALYZE	tender_version_result_winners	189.7s
+ANALYZE	tender_version_result_stats	65.1s
+ANALYZE	tender_version_lot_group_members	0.0s
+ANALYZE-ERR	notice_withheld_fields	0.0s	Parse error: no such table or index: "notice_withheld_fields"
+ANALYZE	currency_rates	0.3s
+ANALYZE	quarantine	11.2s
+ANALYZE	notices	98.0s
+ANALYZE-TOTAL	1609.1s
+FIRST-DONE 2026-09-26T22:32:18Z rc=0
+ANALYZE	__turso_internal_seq___turso_internal_autoincrement_api_tokens	0.0s
+ANALYZE	__turso_internal_seq___turso_internal_autoincrement_bids	0.0s
+ANALYZE	__turso_internal_seq___turso_internal_autoincrement_changes	0.0s
+ANALYZE	__turso_internal_seq___turso_internal_autoincrement_contracts	0.0s
+ANALYZE	__turso_internal_seq___turso_internal_autoincrement_fetches	0.0s
+ANALYZE	__turso_internal_seq___turso_internal_autoincrement_job_log	0.0s
+ANALYZE	__turso_internal_seq___turso_internal_autoincrement_lot_results	0.0s
+ANALYZE	__turso_internal_seq___turso_internal_autoincrement_lots	0.0s
+ANALYZE	__turso_internal_seq___turso_internal_autoincrement_notices	0.0s
+ANALYZE	__turso_internal_seq___turso_internal_autoincrement_organizations	0.0s
+ANALYZE	__turso_internal_seq___turso_internal_autoincrement_quarantine	0.0s
+ANALYZE	__turso_internal_seq___turso_internal_autoincrement_tenders	0.0s
+ANALYZE	__turso_internal_seq___turso_internal_autoincrement_users	0.0s
+ANALYZE	__turso_internal_seq___turso_internal_autoincrement_webhook_delivery_log	0.0s
+ANALYZE	__turso_internal_seq___turso_internal_autoincrement_webhook_endpoints	0.0s
+ANALYZE	api_tokens	0.0s
+SKIP	bids	already in sqlite_stat1
+ANALYZE	changes	1151.9s
+SKIP	contracts	already in sqlite_stat1
+SKIP	currency_rates	already in sqlite_stat1
+ANALYZE	feed_generation	0.0s
+ANALYZE	fetches	0.0s
+ANALYZE	job_log	0.0s
+ANALYZE	job_queue	0.0s
+ANALYZE	layer_presence	0.0s
+ANALYZE	legacy_adjacency	0.0s
+ANALYZE	legacy_ojs_keys	17.3s
+SKIP	lot_results	already in sqlite_stat1
+SKIP	lots	already in sqlite_stat1
+ANALYZE	notice_amounts	85.5s
+ANALYZE	notice_classifications	426.3s
+ANALYZE	notice_codes	844.5s
+ANALYZE	notice_dates	168.8s
+ANALYZE	notice_ids	701.7s
+ANALYZE	notice_integers	392.8s
+ANALYZE	notice_numbers	81.9s
+ANALYZE	notice_sections	460.6s
+ANALYZE	notice_texts	2850.0s
+SKIP	notices	already in sqlite_stat1
+ANALYZE	org_candidate_edges	2.1s
+ANALYZE	org_case_reviews	0.0s
+ANALYZE	org_country_verdicts	0.0s
+SKIP	org_match_keys	already in sqlite_stat1
+ANALYZE	org_mention_rehoming	0.0s
+ANALYZE	org_merge_log	4.5s
+ANALYZE	org_merge_verdicts	0.0s
+ANALYZE	org_name_drops	0.0s
+ANALYZE	org_name_verdicts	0.1s
+SKIP	organization_mentions	already in sqlite_stat1
+SKIP	organization_names	already in sqlite_stat1
+SKIP	organizations	already in sqlite_stat1
+ANALYZE	package_rates	0.0s
+ANALYZE	plan_group_merge	0.0s
+SKIP	plan_notice	already in sqlite_stat1
+ANALYZE	plan_ojs_edge	0.0s
+ANALYZE	plan_ojs_node	0.0s
+SKIP	plan_prev_edge	already in sqlite_stat1
+ANALYZE	plan_refused_key	0.0s
+ANALYZE	projection_state	0.0s
+SKIP	quarantine	already in sqlite_stat1
+ANALYZE	report_history	0.0s
+ANALYZE	reports	0.0s
+ANALYZE	sessions	0.0s
+ANALYZE	tender_currency_presence	0.0s
+SKIP	tender_version_amounts	already in sqlite_stat1
+SKIP	tender_version_bid_parties	already in sqlite_stat1
+SKIP	tender_version_bids	already in sqlite_stat1
+SKIP	tender_version_classifications	already in sqlite_stat1
+SKIP	tender_version_contracts	already in sqlite_stat1
+SKIP	tender_version_dates	already in sqlite_stat1
+SKIP	tender_version_lot_group_members	already in sqlite_stat1
+SKIP	tender_version_lot_results	already in sqlite_stat1
+SKIP	tender_version_lots	already in sqlite_stat1
+SKIP	tender_version_parties	already in sqlite_stat1
+SKIP	tender_version_result_stats	already in sqlite_stat1
+SKIP	tender_version_result_winners	already in sqlite_stat1
+SKIP	tender_version_texts	already in sqlite_stat1
+SKIP	tender_versions	already in sqlite_stat1
+SKIP	tenders	already in sqlite_stat1
+ANALYZE	users	0.0s
+ANALYZE	webhook_delivery_log	0.0s
+ANALYZE	webhook_endpoints	0.0s
+ANALYZE-TOTAL	7188.0s
+ALL-DONE 2026-09-27T00:32:06Z rc=0

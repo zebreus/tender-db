@@ -10,6 +10,7 @@
 //! plan-probe stats   <db>                         dump sqlite_stat1
 //! plan-probe plan    <db> <statements>            EXPLAIN QUERY PLAN of every statement
 //! plan-probe run     <db> <statements> <name>     execute ONE statement, drain it, time it
+//! plan-probe exec    <db> <sql>                   one statement, writes allowed (a COPY only)
 //! ```
 //!
 //! The statements file is blocks headed `-- name: <name>`, optionally followed by
@@ -201,11 +202,18 @@ async fn run(db: &str, file: &str, name: &str) -> Result<(), String> {
         .ok_or_else(|| format!("{file}: no statement named {name}"))?;
     let started = Instant::now();
     let mut rows = conn.query(s.sql.trim(), s.params.clone()).await.map_err(|e| format!("{name}: {e}"))?;
+    // `PLAN_PROBE_PRINT=<n>` echoes the first n rows — for picking a realistic
+    // parameter (a skewed value) from the copy itself.
+    let print: u64 = std::env::var("PLAN_PROBE_PRINT").ok().and_then(|v| v.parse().ok()).unwrap_or(0);
     let mut n = 0u64;
     let mut first = None;
-    while rows.next().await.map_err(|e| format!("{name}: {e}"))?.is_some() {
+    while let Some(row) = rows.next().await.map_err(|e| format!("{name}: {e}"))? {
         if n == 0 {
             first = Some(started.elapsed().as_secs_f64());
+        }
+        if n < print {
+            let cols: Vec<String> = (0..row.column_count()).map(|i| format!("{:?}", row.get_value(i).ok())).collect();
+            emit(format!("ROW\t{name}\t{}", cols.join("\t")));
         }
         n += 1;
     }
@@ -217,6 +225,16 @@ async fn run(db: &str, file: &str, name: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// Execute one statement, writes allowed — for shaping a COPY's `sqlite_stat1`
+/// (e.g. keeping only a subset's rows) before re-planning. Never the serving DB.
+async fn exec(db: &str, sql: &str) -> Result<(), String> {
+    let conn = open(db).await?;
+    let started = Instant::now();
+    let n = conn.execute(sql, ()).await.map_err(|e| format!("{sql}: {e}"))?;
+    emit(format!("EXEC\tchanged={n}\tsecs={:.3}", started.elapsed().as_secs_f64()));
+    Ok(())
+}
+
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -225,7 +243,8 @@ async fn main() -> ExitCode {
         ["stats", db] => stats(db).await,
         ["plan", db, file] => plan(db, file).await,
         ["run", db, file, name] => run(db, file, name).await,
-        _ => Err("usage: plan-probe analyze <db> [--resume] [TABLE...] | stats <db> | plan <db> <file> | run <db> <file> <name>".into()),
+        ["exec", db, sql] => exec(db, sql).await,
+        _ => Err("usage: plan-probe analyze <db> [--resume] [TABLE...] | stats <db> | plan <db> <file> | run <db> <file> <name> | exec <db> <sql>".into()),
     };
     match result {
         Ok(()) => ExitCode::SUCCESS,
