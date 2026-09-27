@@ -88,3 +88,28 @@ So the tender-layer rows of the audit cost nothing today, and adding exact-shape
 amplification. They matter only if a bracket is removed, and that is the condition for the upstream request (step 4)
 rather than for indexes. What remains live is the `organizations` row (unit 1, built) and the merge-loop brackets it
 lets us delete (step 2, measure after unit 1 deploys).
+
+## Step 4 draft — the upstream request (drafted 2026-09-27, NOT posted; post from the owner's account)
+
+> **FK parent-key probe ignores a child index that leads with the FK columns**
+>
+> `translate/fkeys.rs` `emit_fk_parent_key_probe` (turso_core 0.7.2) looks for a child index with
+> `ix.columns.len() == child_cols.len()` and every column equal in order. An index that merely LEADS with the child
+> columns fails that test, including a composite PRIMARY KEY, and the probe falls back to `table_scan_match_any`: a
+> full scan of the child table per deleted (or re-keyed) parent row. SQLite uses any index whose leftmost columns
+> are the child key.
+>
+>     CREATE TABLE p (id INTEGER PRIMARY KEY);
+>     CREATE TABLE c (pid INTEGER NOT NULL REFERENCES p(id), lang TEXT NOT NULL, PRIMARY KEY (pid, lang));
+>     PRAGMA foreign_keys = ON;
+>     EXPLAIN DELETE FROM p WHERE id = 1;   -- OpenRead c + Rewind: the whole table, per row
+>
+> With `c` at 78M rows a single-row delete takes ~2 s. The function already has the pieces for a prefix match:
+> `index_scan_match_any` iterates "the index entries whose leading columns equal `probe_start`". Selecting an index
+> with `ix.columns.len() >= child_cols.len()` and a matching prefix, and taking the `index_scan_match_any` path
+> whenever the index is longer than the key, would serve these without a scan. Workaround today: a redundant index
+> of exactly the FK's columns.
+
+Evidence to attach: 441's and 442's `EXPLAIN` excerpts (the `Rewind` lines) and the prod timings (2.2 s per mention
+delete → 16 µs after the exact-shape index). The draft for issue 425's `interrupt()`/clock request sits in 425
+step 4. Post the two together.
