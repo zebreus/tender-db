@@ -10,6 +10,14 @@
       "Bash(./deploy.sh *)",
       "Bash(git push*)",
       "Bash(git push *)",
+      "Bash(git*)",
+      "Bash(git *)",
+      "Bash(timeout*)",
+      "Bash(timeout *)",
+      "Bash(bash -c*)",
+      "Bash(bash -c *)",
+      "Bash(sh -c*)",
+      "Bash(sh -c *)",
       "*"
     ]
   },
