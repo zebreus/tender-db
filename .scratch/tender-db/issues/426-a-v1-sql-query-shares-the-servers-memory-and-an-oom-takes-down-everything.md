@@ -119,3 +119,13 @@ the threat. (2) The deadline cannot reach a single-instruction allocation, so it
   is step 2, still to come.
 - **open**: `MemoryMax=infinity` (read 2026-09-26; still infinity 2026-09-27 — step 2 deferred on the anon measurement)
 
+## Audit (2026-09-27 06:5x UTC) — the gate broke no real query
+
+Checked the issue-429 statement capture on prod (`/data/tmp/plan-capture-429.sql`, 773 distinct statements since
+2026-09-27 03:12 UTC) for any banned-function use. The ONLY hit is one internal app statement —
+`(SELECT group_concat(DISTINCT c.code) FROM tender_version_classifications c …)`, the CPV-code list the tender JSON
+builder aggregates per row — which is the SERVER's own read and never passes through `classify` (the gate applies to
+`/v1/sql` user input only). No captured `/v1/sql` analyst query used any banned function. So layer 1 shed no real
+usage; and the one capability an analyst might want it for (CPV codes per tender) is already served as the `cpv`
+array on `/v1/tenders`, no `group_concat` needed.
+
