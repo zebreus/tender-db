@@ -165,3 +165,13 @@ its since, a changed reason starts over, a backwards clock never serves a negati
 
 So the boot pass took ~45 s on today's corpus, and for those 45 s a reader of the page could see a
 scan was RUNNING and for how long — the exact reading that was missing on 2026-09-16.
+
+## 2026-09-27: the heavy state reaches /metrics too (small fix, from the hourly audit)
+
+Found while cross-checking 433's count: after the 14:40 UTC deploy restart, with the r209/r208 re-parse holding the
+WAL, `/metrics` carried NO quarantine series at all for 70+ minutes. That is correct by design (the dashboard-cache
+sections are "omitted, not zeroed"). But the reason (`heavy: skipped, "a write-heavy job holds the WAL", 4253 s`) was
+only on the dashboard page, so a `/metrics` reader could not tell "not measured since the restart, and why" from "that
+gauge no longer exists". New always-present gauge `tender_db_dashboard_heavy_seconds{state,reason}` = seconds the
+state has held (`boot` on a fresh box, so it is in the api test's always-present list). The absent-until-measured
+rule for the sections themselves is unchanged.

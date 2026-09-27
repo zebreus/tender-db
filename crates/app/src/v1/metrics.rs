@@ -344,6 +344,23 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
     // its own cadence and gates (never by this scrape). Sections still `None`
     // (booting, or gated behind a heavy write) are omitted, not zeroed.
     let dash = crate::coverage::latest();
+    // Issue 405's heavy-section state, on the scrape too: the sections below are
+    // OMITTED while a write-heavy job holds the WAL, and without this a reader of
+    // /metrics cannot tell "not measured since the restart, and why" from a gauge
+    // that no longer exists (2026-09-27: every quarantine series absent for 70+
+    // minutes behind a re-parse, with the reason only on the dashboard page).
+    if let Some(h) = &dash.heavy {
+        header(
+            &mut out,
+            "tender_db_dashboard_heavy_seconds",
+            "How long the dashboard's heavy sections have held their state (boot, measuring, skipped with a reason, idle).",
+        );
+        let mut labels = vec![("state", h.state.as_str())];
+        if let Some(reason) = &h.reason {
+            labels.push(("reason", reason.as_str()));
+        }
+        sample(&mut out, "tender_db_dashboard_heavy_seconds", &labels, h.for_seconds as f64);
+    }
     if let Some(system) = &dash.system {
         header(
             &mut out,

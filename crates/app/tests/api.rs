@@ -435,6 +435,9 @@ async fn the_metrics_endpoint_exposes_prometheus_text() {
         "tender_db_isolated_shed_total",
         "tender_db_isolated_abandoned_total",
         "tender_db_statement_deadline_stops_total",
+        // The heavy sections' state is always known (`boot` on a fresh box), and it
+        // is what says why the dashboard-cache gauges below are absent.
+        "tender_db_dashboard_heavy_seconds",
     ] {
         assert!(body.contains(&format!("# TYPE {name} gauge\n")), "{name} declares its type:\n{body}");
         assert!(
