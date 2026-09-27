@@ -2272,9 +2272,10 @@ impl Db {
         // A mention references `(notice_id, section_id)`, so it has to go before its
         // section does — but a section the new parse re-creates under the same id does not
         // go anywhere, and neither does its mention. That distinction is worth a great deal:
-        // deleting one mention row costs ~2.2 s on prod (proving that no row of
-        // `tender_version_parties`' 78M references it is not index-served on the write
-        // path), while keeping it costs nothing. The text era re-creates every section id it
+        // deleting one mention row cost ~2.2 s on prod (proving that no row of
+        // `tender_version_parties`' 78M references it walked the table until issue 441
+        // gave the proof an index of the FK's exact shape; a seek since), while keeping
+        // it costs nothing. The text era re-creates every section id it
         // had — `PROCEDURE` and `ORG-1` — and merely ADDS the award sections, so an era
         // re-parse that used to be 2,300 hours of foreign-key proving becomes none at all.
         //
@@ -2412,9 +2413,11 @@ impl Db {
         // Defer the foreign-key checks to COMMIT (issue 247). Measured on prod: deleting
         // ONE mention row cost ~10 s, because `tender_version_parties` and
         // `tender_version_bid_parties` reference `organization_mentions`, and verifying
-        // that no child row does so is not served by an index here — all 78,033,566 party
-        // rows get walked, per notice. Reads of the same shape seek in 1 ms, so it is the
-        // enforcement path rather than a missing index.
+        // that no child row does so walked all 78,033,566 party rows, per notice. Issue
+        // 441 found why reads of the same shape seek and the proof did not: turso's FK
+        // probe uses only a child index whose columns EQUAL the FK's, and the party
+        // tables' index covered just `mention_notice_id` — the `_mention_key` indexes
+        // (`DEFERRED_TENDER_INDEXES`) now carry the whole key and the proof seeks.
         //
         // Deferring does not weaken anything: the constraints are still checked, once, at
         // COMMIT, where a violation still aborts the whole transaction. And this clear

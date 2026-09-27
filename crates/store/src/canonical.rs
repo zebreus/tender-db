@@ -7302,8 +7302,22 @@ impl Db {
         // that DELETE is a full scan of this table PER NOTICE — survivable for a
         // 31-notice cohort, fatal for the 218,876-notice one the re-parse exists to
         // serve. Leads with `mention_notice_id` because that is the whole predicate.
-        ("tender_version_parties_mention", "tender_version_parties(mention_notice_id)"),
-        ("tender_version_bid_parties_mention", "tender_version_bid_parties(mention_notice_id)"),
+        //
+        // Issue 441: and it is the FK's WHOLE child key, `(mention_notice_id,
+        // mention_section_id)`, because that is the only shape turso's foreign-key
+        // proof will use. Deleting a mention proves no party row still references it,
+        // and `turso_core` 0.7.2 (`translate/fkeys.rs` `emit_fk_parent_key_probe`)
+        // looks for a child index whose columns EQUAL the FK's — a one-column prefix
+        // does not count, so the proof fell back to `Rewind` over both party tables:
+        // ~2.2 s per deleted mention on prod's 78M rows, the cost issues 247/248
+        // measured and routed around without finding. Job 1596 (a re-parse dropping
+        // issue 393's `TRANSLITERATED_ADDR` mentions) crawled at ~1.3 notices a second
+        // on it. The prefix still serves the notice-wide DELETE. NEW names, because
+        // `missing_tender_indexes` compares names (see the issue-388 note below): the
+        // deploy's auto-Reindex builds these, and the narrow pair they replace is
+        // dropped by `RETIRED_TENDER_INDEXES` once they exist.
+        ("tender_version_parties_mention_key", "tender_version_parties(mention_notice_id, mention_section_id)"),
+        ("tender_version_bid_parties_mention_key", "tender_version_bid_parties(mention_notice_id, mention_section_id)"),
         // Issue 225: the buyer reverse-lookup's covering index. The seed
         // (`participation_seed`) narrows `tender_version_parties` by organization AND
         // buyer role; this index serves that whole shape index-only, so a ubiquitous
@@ -7568,11 +7582,24 @@ impl Db {
     /// 60/62). Runs for a fresh rebuild AND a resume — both do a from-scratch fold.
     pub async fn strip_tender_indexes(&self) -> turso::Result<()> {
         let conn = self.conn().await;
-        for (name, _) in Self::DEFERRED_TENDER_INDEXES {
+        let retired = Self::RETIRED_TENDER_INDEXES.iter().map(|(old, _)| *old);
+        for name in Self::DEFERRED_TENDER_INDEXES.iter().map(|(name, _)| *name).chain(retired) {
             conn.execute(&format!("DROP INDEX IF EXISTS {name}"), ()).await?;
         }
         Ok(())
     }
+
+    /// Deferred indexes a wider one under a new name replaced, each paired with its
+    /// replacement (issue 441). A box that built the old one keeps it until something
+    /// drops it — the list above is compared by name — and a kept one is not harmless:
+    /// every party write maintains it, and `strip_tender_indexes` would leave it live
+    /// through a rebuild's fold (the issue-60 write storm). Dropped by
+    /// [`Db::build_tender_indexes`] only once the replacement EXISTS, so no box is ever
+    /// without one, and by the strip before a rebuild.
+    const RETIRED_TENDER_INDEXES: [(&'static str, &'static str); 2] = [
+        ("tender_version_parties_mention", "tender_version_parties_mention_key"),
+        ("tender_version_bid_parties_mention", "tender_version_bid_parties_mention_key"),
+    ];
 
     /// Rebuild the deferred tender satellite indexes after the fold — one sorted
     /// build each, over the now-complete tables.
@@ -7590,6 +7617,15 @@ impl Db {
                 continue;
             }
             conn.execute(&format!("CREATE INDEX IF NOT EXISTS {name} ON {cols}"), ()).await?;
+        }
+        for (old, replacement) in Self::RETIRED_TENDER_INDEXES {
+            let mut present = conn
+                .query("SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?", [t(replacement)])
+                .await?;
+            if present.next().await?.is_some() {
+                drop(present);
+                conn.execute(&format!("DROP INDEX IF EXISTS {old}"), ()).await?;
+            }
         }
         Ok(())
     }
