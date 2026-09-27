@@ -1,7 +1,10 @@
 # 427 — open signup lets one person hold any number of `/v1/sql` quotas
 
-Status: ready-for-agent — **BUILT 2026-09-26 21:xx UTC** (the owner's decision with Lennart: a global daily
-cap, not per IP); gate, deploy and the live Verify follow.
+Status: done — BUILT 2026-09-26 (`8efa2f1`, mutation-checked test), and CONFIRMED DEPLOYED 2026-09-27 (an ancestor
+of the live rev `9ae5ddd`). The live Verify is deployed-rev-only BY DESIGN: registering the 6 accounts it would take
+to see the cap refuse the 6th would consume the whole service's 5/day budget and lock out real signups for 24h, so
+the behaviour rests on the gate test, not a prod exercise. Owner's decision with Lennart: a global daily cap, not
+per IP.
 Kind: abuse resistance
 Relates to: 425, 426 (the other two gaps in the same review), 06 (accounts)
 
@@ -36,5 +39,7 @@ it waits a day; the traffic today does not come near it.
 
     grep -c 'SIGNUPS_PER_DAY' crates/app/src/accounts.rs
 
-- **done**: 3 or more, and the deployed rev carries it
+- **done**: 3 or more, and the deployed rev carries it — `SIGNUPS_PER_DAY`/`SIGNUP_WINDOW_SECS`/`create_user_capped`
+  present, `8efa2f1` is an ancestor of the live `9ae5ddd` (confirmed 2026-09-27). Do NOT verify by registering
+  accounts on prod — that spends the global daily cap.
 - **open**: 0 (read 2026-09-26, before the build)
