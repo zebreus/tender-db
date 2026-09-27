@@ -91,3 +91,41 @@ async fn the_engine_deadline_stops_every_offender_and_the_connection_survives() 
         assert!(matches!(after, Ok(1)), "{label}: the connection must be usable after the interrupt — got {after:?}");
     }
 }
+
+/// Issue 120 (the REST half of 425): the bound is per POOL. A pool bounded with
+/// `Readers::bound_statements` stops a statement at the deadline and takes the
+/// connection back usable; a pool opened beside it on the same database — the shape
+/// every job's reads have (the weekly data-quality windows run for minutes by design)
+/// — carries no deadline and runs the same kind of statement past it to the end.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_bounded_pool_stops_its_statements_and_an_unbounded_one_does_not() {
+    const POOL_DEADLINE: Duration = Duration::from_millis(50);
+    let path = format!("/tmp/tender-db-bounded-pool-{}.db", std::process::id());
+    let _ = std::fs::remove_file(&path);
+    let db = store::Db::open(&path).await.expect("open");
+    let bounded = db.readers(1).expect("bounded pool");
+    bounded.bound_statements(POOL_DEADLINE);
+    let free = db.readers(1).expect("unbounded pool");
+    assert_eq!(bounded.statement_deadline(), Some(POOL_DEADLINE));
+    assert_eq!(free.statement_deadline(), None, "a pool is unbounded unless someone bounds it");
+
+    let reader = bounded.get().await.expect("reader");
+    let (stopped, took) = drain(&reader, "SELECT count(*) FROM generate_series(1, 100000000000)").await;
+    drop(reader);
+    // A pool of one hands the SAME connection back: it must still work.
+    let reader = bounded.get().await.expect("reader");
+    let (after, _) = drain(&reader, "SELECT 1").await;
+    drop(reader);
+
+    let reader = free.get().await.expect("reader");
+    let (finished, ran) = drain(&reader, "SELECT count(*) FROM generate_series(1, 5000000)").await;
+    drop(reader);
+    drop(db);
+    let _ = std::fs::remove_file(&path);
+
+    assert!(matches!(stopped, Err(turso::Error::Interrupt(_))), "the bounded pool must stop it — got {stopped:?} after {took:?}");
+    assert!(took < POOL_DEADLINE + SLACK, "stopped, but {took:?} is far past the {POOL_DEADLINE:?} deadline");
+    assert!(matches!(after, Ok(1)), "the stopped connection must come back from the pool usable — got {after:?}");
+    assert!(matches!(finished, Ok(1)), "the unbounded pool must run the statement to its end — got {finished:?}");
+    assert!(ran > POOL_DEADLINE, "precondition: the finite statement must outlast the deadline to prove anything — ran {ran:?}");
+}

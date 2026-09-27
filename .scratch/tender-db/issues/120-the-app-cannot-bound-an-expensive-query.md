@@ -1,8 +1,11 @@
 # 120 — the app has no defence against expensive-query saturation
 
-Status: open, POSITION RECORDED 2026-08-21 (owner) — the fork stays untaken for now; the layered
-bounds cover the blast radius and the trigger for revisiting is written at the bottom. Was: open —
-architectural gap, established 2026-08-03 while costing issue 117 Class B.
+Status: ready-for-agent — **trigger (b) MET and ADOPTED 2026-09-27**: issue 425 paid the vendoring cost
+(`crates/vendor/turso` exposes `set_query_timeout` / `interrupt`), so "cancellation stops costing a fork" is
+true and the owner position below said to adopt it immediately. BUILT: both REST reader pools carry the engine's
+per-statement deadline (25 s, under the 30 s request bound) and an abandoned isolated walk is interrupted — see
+the last section. Open until live-verified on prod; then done. Was: open, POSITION RECORDED 2026-08-21 (owner) —
+the fork stays untaken.
 Kind: availability / architecture
 Blocked by: —
 Blocks: —
@@ -376,3 +379,46 @@ cancellation stops costing a fork and should be adopted immediately.
   STABLE ships — an API-freeze point is where such a method would land.
 
 No change to the decision: the fork stays untaken.
+
+## Adopted (2026-09-27): the engine's deadline on the REST pools, and interrupt on abandon
+
+Trigger (b) is met in substance: 425 vendored the `turso` SDK with two pass-through methods, so the permanent
+obligation this position weighed is already paid, and the measurement it asked for exists
+(`crates/store/tests/query_timeout_probe.rs`: every offender shape stops within 0–71 ms of the deadline, the
+connection usable after). What was built:
+
+- **`store::Readers::bound_statements(deadline)`** — a per-POOL bound, applied to each connection at borrow
+  (`set_query_timeout`). Pools are unbounded unless someone bounds them, so every job's reads (the weekly
+  data-quality windows run for minutes by design), the webhook sweeper's, the coverage refresher's and
+  `/v1/sql`'s (its own 10 s per query) are untouched. Pinned by
+  `a_bounded_pool_stops_its_statements_and_an_unbounded_one_does_not` (store) and
+  `the_rest_pools_carry_the_statement_deadline_and_a_job_pool_does_not` (api).
+- **`v1::STATEMENT_DEADLINE = 25 s`** on BOTH REST pools — the main one (bounded in `AppState::new`, so tests run
+  the production shape) and the isolated one (`IsolatedReads::new`). Below `REQUEST_DEADLINE` (30 s) by a
+  compile-time assertion, so a single slow statement ends in the precise answer before the whole-request layer's
+  generic one. Every main-pool reader serves a request the 30 s layer already cuts, so the bound takes no answer
+  anyone was getting.
+- **`Error::Interrupt` → 503 "the query was stopped after 25s … narrow the filters"**, not a 500
+  (`ApiError::from`; the SSE `error` event says the same). The 30 s layer's message no longer claims the work
+  may continue: it ends with the answer. Pinned end to end by
+  `a_walk_past_the_statement_deadline_is_stopped_with_a_503` (100k tenders, `?min_value=1`, 1 ms deadline →
+  503 "was stopped", slot back; production deadline → 200).
+- **Interrupt on abandon.** `IsolatedReads::run` (the four walk-capable reads are now one generic path)
+  registers the connection a read is running on; `Abandon::drop` (client gone, 30 s layer) calls
+  `interrupt()` on it before `abort()`. It unregisters under the same lock BEFORE the reader returns to the
+  pool, so an interrupt can only land on the read that registered it. Pinned by
+  `an_abandoned_walk_is_interrupted_and_its_slot_freed` (a 1e11-row series, caller gives up at 300 ms, slot
+  back within 5 s under the 25 s deadline) — **mutation-checked**: with the `interrupt()` line removed the test
+  fails (slot still busy at 5.01 s).
+- **SSE walk-shaped snapshots page by id band** (`fallback_band`, as the REST list has since 408 (b)), so a
+  healthy sparse snapshot advances in ~2 s steps and never meets the deadline; before, one page was an
+  unbounded walk.
+- Docs: `/docs` says no read runs past 25 s; `openapi.json` gains the REST reads' 503 (`Unavailable`: shed /
+  stopped / 30 s bound — it was never documented) and `/v1/sql`'s 503 no longer says "cannot be interrupted".
+
+What this closes: "Nothing bounds DURATION" (2026-08-04) — an admitted walk now costs at most 25 s per
+statement and an abandoned one nothing past its abandonment, so `SLOTS` is sized against
+`arrival rate × 25 s`, a number that exists. What it does not: the isolation stays (the deadline bounds how
+long, the pool bounds who), and a walk under 25 s is still served in full, however slow. The instrument for
+"users are hitting the limit" is issue 430 (`/metrics` sees none of it yet).
+

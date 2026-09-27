@@ -106,7 +106,8 @@
             }
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
-          "429": { "$ref": "#/components/responses/RateLimited" }
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
         }
       }
     },
@@ -127,7 +128,8 @@
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "404": { "$ref": "#/components/responses/NotFound" },
-          "429": { "$ref": "#/components/responses/RateLimited" }
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
         }
       }
     },
@@ -171,7 +173,8 @@
             }
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
-          "429": { "$ref": "#/components/responses/RateLimited" }
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
         }
       }
     },
@@ -207,7 +210,8 @@
             }
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
-          "429": { "$ref": "#/components/responses/RateLimited" }
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
         }
       }
     },
@@ -225,7 +229,8 @@
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "404": { "$ref": "#/components/responses/NotFound" },
-          "429": { "$ref": "#/components/responses/RateLimited" }
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
         }
       }
     },
@@ -260,7 +265,8 @@
             }
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
-          "429": { "$ref": "#/components/responses/RateLimited" }
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
         }
       }
     },
@@ -278,7 +284,8 @@
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "404": { "$ref": "#/components/responses/NotFound" },
-          "429": { "$ref": "#/components/responses/RateLimited" }
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
         }
       }
     },
@@ -296,7 +303,8 @@
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "404": { "$ref": "#/components/responses/NotFound" },
-          "429": { "$ref": "#/components/responses/RateLimited" }
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
         }
       }
     },
@@ -339,7 +347,8 @@
             }
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
-          "429": { "$ref": "#/components/responses/RateLimited" }
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
         }
       }
     },
@@ -411,7 +420,7 @@
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "408": { "description": "The QUERY exceeded the per-query time limit. The engine stops the query at the limit with its own per-statement deadline (issue 425), so the server-side work ends with the answer. Make the query cheaper (narrow the range, add a LIMIT) before retrying — never retry it unchanged.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "503": { "description": "The BACKEND could not get to the query, so it was never run — either no reader connection came free, or every SQL worker thread is pinned by an earlier query that cannot be interrupted. Distinct from 408 on purpose: retry the same query unchanged rather than rewriting it. The message names which of the two it was.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+          "503": { "description": "The BACKEND could not get to the query, so it was never run — either no reader connection came free, or every SQL worker thread is busy with an earlier query that is still running (each stops at the time limit). Distinct from 408 on purpose: retry the same query unchanged rather than rewriting it. The message names which of the two it was.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
         }
       }
     },
@@ -844,6 +853,10 @@
       },
       "NotFound": {
         "description": "No such entity.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "Unavailable": {
+        "description": "The read was not answered, and the message says which of three causes it was. (1) Every isolated slot for expensive filtered reads was busy, so it was shed at once: retry shortly. (2) The read ran past the per-statement limit (25 s) and the engine stopped it (issue 120): this filter combination costs more than that here, so narrow the filters (a country, a date bound, a tender) rather than repeating it. (3) No response within the 30 s service bound. In every case the work ends with the answer; nothing keeps running behind it.",
         "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
       },
       "RateLimited": {

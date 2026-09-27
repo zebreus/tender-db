@@ -9,6 +9,7 @@
 
 use crate::{Change, int, max_cursor, opt_int_of, opt_text_of, t, text};
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use tokio::sync::{OwnedRwLockReadGuard, OwnedSemaphorePermit, RwLock, Semaphore};
 use turso::{Connection, Value};
@@ -36,6 +37,9 @@ pub struct Readers {
     idle: Mutex<Vec<Connection>>,
     permits: Arc<Semaphore>,
     gate: WalGate,
+    /// The engine's per-statement deadline for every borrow, in ms; 0 = none
+    /// (the default). See [`Readers::bound_statements`].
+    deadline_ms: AtomicU64,
 }
 
 impl Readers {
@@ -45,7 +49,39 @@ impl Readers {
             idle: Mutex::new(Vec::with_capacity(n)),
             permits: Arc::new(Semaphore::new(n)),
             gate,
+            deadline_ms: AtomicU64::new(0),
         }))
+    }
+
+    /// Stop any statement run on this pool's connections once it has run for
+    /// `deadline` (issue 120, the REST half of issue 425): turso checks the deadline
+    /// before every VDBE instruction, so it stops a walk that never yields to the
+    /// async runtime — which no `tokio` timeout can — and the step fails with
+    /// [`turso::Error::Interrupt`]. The connection is usable afterwards and goes back
+    /// to the pool as usual. The clock starts at a statement's first step, per
+    /// statement, not per borrow: a read of three statements may take up to three
+    /// deadlines in all.
+    ///
+    /// Only for pools whose every statement serves a caller that has a deadline of
+    /// its own — the `/v1` API's. Never on a pool a job reads through: the weekly
+    /// data-quality windows run for minutes BY DESIGN. Applied at every borrow, so a
+    /// later call takes effect on the next [`get`](Readers::get); a sub-millisecond
+    /// value is refused rather than silently meaning "no deadline" (turso reads 0 ms
+    /// as off).
+    pub fn bound_statements(&self, deadline: std::time::Duration) {
+        let ms = u64::try_from(deadline.as_millis()).unwrap_or(u64::MAX);
+        assert!(ms > 0, "a statement deadline under 1 ms would switch the engine's deadline OFF");
+        self.deadline_ms.store(ms, Ordering::Relaxed);
+    }
+
+    /// The deadline [`bound_statements`](Readers::bound_statements) set, if any —
+    /// so a test can pin which pools are bounded (the API's) and which are not
+    /// (every pool a job reads through).
+    pub fn statement_deadline(&self) -> Option<std::time::Duration> {
+        match self.deadline_ms.load(Ordering::Relaxed) {
+            0 => None,
+            ms => Some(std::time::Duration::from_millis(ms)),
+        }
     }
 
     /// Borrow a reader, waiting if all of them are busy.
@@ -74,6 +110,10 @@ impl Readers {
                 conn
             }
         };
+        let deadline = self.deadline_ms.load(Ordering::Relaxed);
+        if deadline > 0 {
+            conn.set_query_timeout(std::time::Duration::from_millis(deadline))?;
+        }
         Ok(Reader { pool: self.clone(), conn: Some(conn), _permit: permit, _gate: gate })
     }
 }

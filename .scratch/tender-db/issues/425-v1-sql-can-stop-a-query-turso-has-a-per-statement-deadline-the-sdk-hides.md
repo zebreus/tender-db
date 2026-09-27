@@ -4,7 +4,8 @@ Status: ready-for-agent — **the /v1/sql half is DONE and LIVE 2026-09-27 04:37
 `SELECT COUNT(*) FROM generate_series(1, 100000000000)` answered **408 at 10.02 s** and two seconds later
 `tender_db_sql_pinned_computations 0`, `tender_db_sql_in_flight 0`, `SELECT 1` → 200 — the work stopped with the
 answer (before, that query would have computed for hours as an abandoned computation). Measured first: every offender
-stops within 0–71 ms of the deadline. Open: step 3 (REST walks, issue 120) and step 4 (upstream ask). Was: filed
+stops within 0–71 ms of the deadline. Step 3 (REST walks) BUILT 2026-09-27 under issue 120 (both REST pools
+carry a 25 s engine deadline; an abandoned isolated walk is interrupted). Open: step 4 (upstream ask). Was: filed
 2026-09-26 21:xx UTC from the owner's review of how user SQL is isolated (asked by Lennart).
 Kind: operations / safety — the largest gap in `/v1/sql`'s isolation
 Relates to: 17 (the isolated runtime), 51 (the in-task timeout that bounds nothing), 120 (REST walks —
@@ -48,7 +49,7 @@ shorter.
    the 13.5-minute outage shape — goes away for everything the check reaches. Keep the backstop for what it
    does not.
 3. Then revisit 120: with real cancellation a REST walk can have a deadline without the accumulation
-   failure mode `isolate.rs` documents.
+   failure mode `isolate.rs` documents. **BUILT 2026-09-27 — recorded on issue 120 ("Adopted").**
 4. Upstream: ask turso to expose `set_query_timeout`/`interrupt` on `turso::Connection`, so the patch can go.
 
 ## Verify

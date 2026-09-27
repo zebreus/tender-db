@@ -2924,6 +2924,103 @@ async fn a_bounded_list_walk_pages_without_overlap_and_reproduces_the_unbounded_
     }
 }
 
+/// Issue 120 (the REST half of 425): the production shape. Both of the REST surface's
+/// pools carry the engine's statement deadline, set where `AppState` is built, and a
+/// pool opened beside them — every job's reads, the weekly data-quality windows that
+/// run for minutes by design — carries none.
+#[tokio::test]
+async fn the_rest_pools_carry_the_statement_deadline_and_a_job_pool_does_not() {
+    let path = format!("/tmp/tender-db-api-deadline-shape-{}.db", std::process::id());
+    let _ = std::fs::remove_file(&path);
+    let db = Arc::new(Db::open(&path).await.expect("open scratch db"));
+    let state = v1::AppState::new(db.clone(), db.readers(2).expect("readers"));
+    assert_eq!(state.readers.statement_deadline(), Some(v1::STATEMENT_DEADLINE), "the main pool");
+    assert_eq!(state.isolated.statement_deadline(), Some(v1::STATEMENT_DEADLINE), "the isolated pool");
+    assert_eq!(db.readers(1).expect("pool").statement_deadline(), None, "a job's pool");
+    drop(state);
+    drop(db);
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 120: a walk that runs past the engine's statement deadline is STOPPED — the
+/// list answers 503 saying so (not a 500, not a hang to the 30 s bound), its isolated
+/// slot is back, and the same request under the production deadline is answered in
+/// full on the same pool.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_walk_past_the_statement_deadline_is_stopped_with_a_503() {
+    let server = Server::start("statement-deadline").await;
+    server.ingest_chain().await;
+    // Enough tenders that the walk cannot finish inside 1 ms: `min_value` is a
+    // per-row predicate no seed serves (store::read::isolation_routed), none of these
+    // rows carries a value, so the page examines every one of them.
+    {
+        let db = store::turso::Builder::new_local(&server.path).build().await.expect("open");
+        let conn = db.connect().expect("connect");
+        conn.execute(
+            "INSERT INTO tenders (source, kind, created_at)
+             SELECT 'ted', 'procedure', 0 FROM generate_series(1, 100000)",
+            (),
+        )
+        .await
+        .expect("fill");
+    }
+    let free = server.isolated.available();
+
+    server.isolated.bound_statements(Duration::from_millis(1));
+    let (status, body) = server.get_with_status("/v1/tenders?min_value=1").await;
+    assert_eq!(status, 503, "a stopped walk is a 503, never a 500: {body}");
+    let message = body["error"]["message"].as_str().unwrap_or_default();
+    assert!(message.contains("was stopped"), "the 503 must say the work was stopped: {body}");
+    assert!(!message.contains("safe to retry"), "the same shape costs as much again: {body}");
+    assert_eq!(server.isolated.available(), free, "the stopped walk's slot is back");
+
+    server.isolated.bound_statements(v1::STATEMENT_DEADLINE);
+    let (status, body) = server.get_with_status("/v1/tenders?min_value=1").await;
+    assert_eq!(status, 200, "under the production deadline the same walk is answered: {body}");
+}
+
+/// Issue 120: a walk the handler stops waiting for is INTERRUPTED, not left to run.
+/// Before, `abort()` could only land at an await point a non-yielding walk never
+/// reaches, so an abandoned walk held its slot to its natural end (~85 min once on
+/// prod). The statement here would run for hours and the pool's deadline is the
+/// production 25 s, so a slot back within seconds can only be the interrupt.
+#[tokio::test(flavor = "multi_thread")]
+async fn an_abandoned_walk_is_interrupted_and_its_slot_freed() {
+    let server = Server::start("abandoned-walk").await;
+    let free = server.isolated.available();
+    let endless = server.isolated.run(|reader| async move {
+        let mut rows = reader.query("SELECT count(*) FROM generate_series(1, 100000000000)", ()).await?;
+        while rows.next().await?.is_some() {}
+        Ok(())
+    });
+    assert!(
+        tokio::time::timeout(Duration::from_millis(300), endless).await.is_err(),
+        "precondition: the statement must still be running when the caller gives up"
+    );
+
+    let started = std::time::Instant::now();
+    while server.isolated.available() < free && started.elapsed() < Duration::from_secs(5) {
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    assert_eq!(
+        server.isolated.available(),
+        free,
+        "the abandoned walk must be stopped and its slot freed well inside the 25 s deadline (waited {:?})",
+        started.elapsed()
+    );
+
+    // The interrupted connection went back to the pool and serves the next read.
+    let answer = server
+        .isolated
+        .run(|reader| async move {
+            let mut rows = reader.query("SELECT 1", ()).await?;
+            let row = rows.next().await?.expect("one row");
+            row.get::<i64>(0)
+        })
+        .await;
+    assert!(matches!(answer, Ok(Ok(1))), "the pool serves the next read after an interrupt");
+}
+
 #[tokio::test]
 async fn a_walk_shaped_snapshot_pages_on_the_isolated_pool() {
     let server = Server::start("walk-routing").await;

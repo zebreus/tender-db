@@ -121,6 +121,10 @@ impl AppState {
         // walk nobody can cancel never holds one of `readers` (issue 120).
         let isolated =
             Arc::new(isolate::IsolatedReads::new(&db).expect("isolated read pool"));
+        // Every statement the REST surface runs is bounded by the engine (issue 120).
+        // The pool is the API's alone — `main` hands it nothing else — so bounding it
+        // here, rather than where it is opened, keeps tests on the production shape.
+        readers.bound_statements(STATEMENT_DEADLINE);
         AppState {
             db,
             readers,
@@ -132,6 +136,14 @@ impl AppState {
             jobs: None,
             streams: Arc::new(Mutex::new(HashMap::new())),
         }
+    }
+
+    /// Re-bound both REST pools' statements — how a test watches
+    /// [`STATEMENT_DEADLINE`] fire without a 25 s query. Takes effect at each pool's
+    /// next borrow.
+    pub fn bound_statements(&self, deadline: Duration) {
+        self.readers.bound_statements(deadline);
+        self.isolated.bound_statements(deadline);
     }
 }
 
@@ -468,8 +480,28 @@ impl ApiError {
 
 impl From<store::turso::Error> for ApiError {
     fn from(e: store::turso::Error) -> ApiError {
-        ApiError(StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+        match e {
+            // The engine's statement deadline stopped the read (issue 120's REST half
+            // of 425): not a database fault, so not a 500. The work has ENDED — unlike
+            // the pre-deadline 30 s answer, nothing keeps running behind this one — so
+            // it can say so; what it cannot promise is that a retry of the same shape
+            // is any cheaper.
+            store::turso::Error::Interrupt(_) => ApiError(StatusCode::SERVICE_UNAVAILABLE, stopped_message()),
+            e => ApiError(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+        }
     }
+}
+
+/// The answer for a read the statement deadline stopped. Shared with the SSE error
+/// event, so a stream and a list say the same thing about the same shape.
+pub(crate) fn stopped_message() -> String {
+    format!(
+        "the query was stopped after {}s, the most this service spends on one read — this \
+         filter combination costs more than that here. Nothing keeps running after this \
+         answer, but the same request will cost as much again: narrow the filters (a country, \
+         a date bound, a tender)",
+        STATEMENT_DEADLINE.as_secs()
+    )
 }
 
 impl IntoResponse for ApiError {
@@ -510,10 +542,29 @@ async fn method_not_allowed() -> ApiError {
 /// That premise does not hold for the list endpoints: a filter combination no
 /// seed bounds can simply still be computing at 30 s (issue 423 —
 /// `/v1/lots?status=open&cpv=45&limit=100`), which is why the message below does
-/// not claim a stall. The edge does NOT provide this bound: the nginx vhost sets
+/// not claim a stall. Since issue 120 a single statement is stopped earlier, at
+/// [`STATEMENT_DEADLINE`], so this layer is left with the waits and the reads of
+/// several statements that add up past it. The edge does NOT provide this bound: the nginx vhost sets
 /// `proxy_read_timeout 24h` (for SSE) in the one location block that covers
 /// everything, so a hung request would otherwise hang the caller for a day.
 const REQUEST_DEADLINE: Duration = Duration::from_secs(30);
+
+/// The engine's per-statement deadline on the API's reader pools — the main pool
+/// and the isolated one (issue 120, the REST half of issue 425). turso checks it
+/// before every VDBE instruction, so it stops the non-yielding walk no `tokio`
+/// timeout can reach, and the handler answers 503 with [`stopped_message`].
+///
+/// BELOW [`REQUEST_DEADLINE`] on purpose: a single slow statement then ends in the
+/// precise answer ("stopped") before the whole-request layer fires with its generic
+/// one, and with the margin the handler has to render it. Not on `/v1/sql` (its own
+/// 10 s limit) nor on any pool a job reads through (the weekly data-quality windows
+/// run for minutes by design) — [`store::Readers::bound_statements`] is per pool.
+pub const STATEMENT_DEADLINE: Duration = Duration::from_secs(25);
+
+const _: () = assert!(
+    STATEMENT_DEADLINE.as_millis() < REQUEST_DEADLINE.as_millis(),
+    "a statement must be stopped before the whole-request bound answers for it"
+);
 
 /// Requests the deadline layer has cut, never reset — the after-the-fact
 /// witness that an unbounded wait happened (issue 241 gap 2's pair to the
@@ -543,18 +594,18 @@ async fn deadline_with(
             ApiError(
                 StatusCode::SERVICE_UNAVAILABLE,
                 // Issue 423: this layer cannot tell a stalled internal wait from a
-                // request whose own query is slow, and it cannot stop that query
-                // (the REST walks set no engine deadline — issue 120; /v1/sql does,
-                // issue 425) — the work keeps an isolation slot after
-                // this answer. So it says neither "not your request" nor "safe to
-                // retry": an immediate retry of a slow shape stacks another copy.
+                // request whose own read is slow, so it says neither "not your
+                // request" nor "safe to retry". Since issue 120 it CAN say the work
+                // ends: a single statement stops at STATEMENT_DEADLINE (below this
+                // bound), and a read still running here — several statements, or a
+                // wait — is dropped with this answer, the isolated one interrupted.
                 format!(
                     "no response within the {}s service bound — the request was still \
                      being served: either a filter combination this service cannot answer \
                      quickly, or a stalled internal wait (the service cannot tell which). \
-                     The work may continue after this answer, so repeating the same request \
-                     at once adds load rather than an answer; narrow the filters (a country, \
-                     a date bound, a tender) or retry later",
+                     Its work stops with this answer, but the same request will likely take \
+                     as long again: narrow the filters (a country, a date bound, a tender) \
+                     or retry later",
                     deadline.as_secs()
                 ),
             )
@@ -1885,8 +1936,8 @@ mod deadline_tests {
             json["error"]["message"].as_str().is_some_and(|m| m.contains("service bound")),
             "the 503 must say WHY: {json}"
         );
-        // Issue 423: the layer cannot tell a stall from a slow query, and a slow
-        // query keeps running after this answer — so it must not invite a retry.
+        // Issue 423: the layer cannot tell a stall from a slow query, and the same
+        // slow request costs as much again — so it must not invite a blind retry.
         assert!(
             json["error"]["message"]
                 .as_str()

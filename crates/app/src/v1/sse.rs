@@ -88,6 +88,11 @@ pub async fn subscribe(
         // UNLIMITED in SQLite — one page holding the whole collection, the
         // exact incident this page size exists to prevent.
         state.snapshot_page.max(1),
+        // Issue 120: the isolated snapshot pages walk one id band at a time, as the
+        // REST list does (issue 408 (b)), so no page of a healthy snapshot runs
+        // into the engine's statement deadline. Clamped for the same reason as the
+        // page size: 0 would examine nothing and never advance.
+        state.fallback_band.max(1),
         slot,
         doorbell,
     );
@@ -144,6 +149,7 @@ fn events(
     resume: Option<Resume>,
     include_data: bool,
     snapshot_page: i64,
+    band: i64,
     slot: StreamSlot,
     mut doorbell: watch::Receiver<i64>,
 ) -> impl Stream<Item = Result<Event, Infallible>> {
@@ -155,7 +161,7 @@ fn events(
         let started = match start(&readers, resume).await {
             Ok(started) => started,
             Err(e) => {
-                yield Ok(error_event(&e));
+                yield Ok(read_error_event(&e));
                 return;
             }
         };
@@ -175,9 +181,13 @@ fn events(
                 // windowed walk (issue 388) with that walk's own cursor grammar,
                 // and the snapshot ends when the read says there is no next
                 // page — never on page length, which a windowed page cannot
-                // promise. The band is left open (`i64::MAX`), so the unseeded
-                // walk reads as it always did: one unbounded id-ordered page
-                // after another, a short page being the last.
+                // promise. On the main pool the band is left open (`i64::MAX`):
+                // a shape that stays there cannot walk, so its pages fill. On the
+                // isolated pool each page examines at most one id band (issue
+                // 120, as the REST list does since 408 (b)) and may come back
+                // short or empty with `next` at the last id examined — so a sparse
+                // walk-shaped snapshot advances in bounded steps instead of one
+                // page running into the engine's statement deadline.
                 let mut next: Option<String> = Some(String::new());
                 while let Some(after) = next.take() {
                     // A filter shape that CAN walk pages on the isolated
@@ -188,7 +198,7 @@ fn events(
                     // snapshot failure: the client re-subscribes and
                     // re-snapshots under the isolated pool's own admission.
                     let result = if store::read::walks(collection.into(), &filter) {
-                        match isolated.read_page(collection, filter.clone(), after, snapshot_page, i64::MAX).await {
+                        match isolated.read_page(collection, filter.clone(), after, snapshot_page, band).await {
                             Ok(result) => result,
                             Err(super::isolate::Shed) => {
                                 let shed = "too many expensive filtered reads in flight; retry shortly";
@@ -205,7 +215,7 @@ fn events(
                     let page = match result {
                         Ok(page) => page,
                         Err(e) => {
-                            yield Ok(error_event(&e));
+                            yield Ok(read_error_event(&e));
                             return;
                         }
                     };
@@ -243,7 +253,7 @@ fn events(
                 let batch = match diff(collection, &readers, &filter, cursor, generation, include_data).await {
                     Ok(batch) => batch,
                     Err(e) => {
-                        yield Ok(error_event(&e));
+                        yield Ok(read_error_event(&e));
                         return;
                     }
                 };
@@ -530,6 +540,15 @@ pub fn change_event(change: &Change) -> serde_json::Value {
         "version": change.version_seq,
         "changed_at": json::instant(change.changed_at),
     })
+}
+
+/// A failed read as an `error` event. A read the statement deadline stopped says
+/// so in the list's own words (issue 120) rather than turso's bare "interrupted".
+fn read_error_event(e: &store::turso::Error) -> Event {
+    match e {
+        store::turso::Error::Interrupt(_) => error_event(&super::stopped_message()),
+        e => error_event(e),
+    }
 }
 
 fn error_event(e: &dyn std::fmt::Display) -> Event {
