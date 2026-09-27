@@ -545,3 +545,12 @@ keep every transliteration twin. The re-parse puts the XML era at `projected = 0
 
 **Issue 432 is deliberately NOT deployed until 1597 finishes**: its corrected org key would make this fold mint a
 fresh twin for every old-key stock row it re-resolves.
+
+### 2026-09-27 (later) — unit 3's standing names would NOT have moved: a re-parse keeps the mention
+
+Found verifying an outside review: a re-parse keeps an `organization_mentions` row whenever its section id survives
+(issue 248's keep-set) and the fold returns early for a recorded mention, so the Greek decode reaches the parse layer
+but never the ~1,150 standing mentions or their organizations — the "mojibake rows lose their last mention"
+expectation above was wrong. Units 1–2 are unaffected (a dropped transliteration section loses its mention; roles are
+re-derived). Fixed at the root as issue 434 (the fold refreshes a mention whose published facts changed); the queued
+full fold 1597 was cancelled so it runs once, after 434 deploys.

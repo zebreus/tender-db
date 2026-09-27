@@ -108,3 +108,11 @@ transcription of the election, to cover five stale rows the column's own writer 
   pre-deploy)
 
 A public read, free.
+
+### 2026-09-27 — the sort defect is re-reported; still three stale columns, fixed by the next full fold
+
+The fourth outside review saw `sort=deadline&order=asc` open with 8210860, 5671586, 5653434 serving `null`. Read by PK
+on prod: their `current_deadline` still holds -61915752000 / -61648419600 / -55653220800 (years 0007/0016/0206); the
+other two of the original five were corrected by later refolds. No code change: the full fold scheduled after
+tonight's XML re-parse re-elects every head column with the floor. Verify after it: the first rows of that sort serve
+a non-null 1990+ deadline.

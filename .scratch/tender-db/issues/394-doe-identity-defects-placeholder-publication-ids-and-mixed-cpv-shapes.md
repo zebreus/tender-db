@@ -546,3 +546,12 @@ tenders in the 2025-09 window was read through `/v1/notices/{id}/content` for ea
 refusing any code. Why the count moved is NOT verified: the fold re-planned the island's groups (596,577 islands; the
 window's row count moved 987 → 984), and a CPV-less notice leaving a CPV-carrying group would show exactly this. The
 before-IDs were not kept, so that reading is a likely cause, not a measured one.
+
+### 2026-09-27 — one residue outside the island: 42 DÖE eforms-sdk-1.0 tenders still serve glued codes
+
+Found verifying an outside review's "three CPV formats" claim (otherwise stale — measured before the island refold).
+Profile `eforms:eforms-sdk-1.0` (3,560 notices, all `doe`, 2023): its parse layer holds 76 newline-glued CPV values in
+72 notices, and 42 tenders still serve them (e.g. 795885, 1106759, 442420, 637359); `?cpv=79416200` misses 1106759.
+The normaliser splits them (`normalize_cpv` splits on whitespace); these tenders were last folded before it was
+deployed and sat outside the island refold's field-id cohort. The full fold scheduled after tonight's XML re-parse
+re-derives them — no separate job. Verify after it: `?cpv=79416200&source=doe&published_after=2023-02-21&published_before=2023-02-24` finds 1106759.

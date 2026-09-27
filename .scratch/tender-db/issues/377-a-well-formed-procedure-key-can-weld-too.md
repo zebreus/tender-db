@@ -259,3 +259,12 @@ What the re-finding does change is the **discoverability** reading, not the gate
 spread is what convicted 430681 here, and it is also what an outside reader noticed first — which
 supports section 12's `per-ver` column continuing to carry a country-spread signal (unit 3's
 conclusion) rather than any new refusal at the fold. No unit reopens.
+
+### 2026-09-27 — re-found a third time; the suggested denylist is rejected
+
+A fourth outside review (rev `6ddda76`) reported 430681 again (789 notices, 378 buyers, now 273M DKK) and recommended
+giving `5e001394-80da-44e1-8955-e9fe17674c90` "the same treatment the all-zero UUID got". That is a hard-coded
+denylist of one string — the bolt-on the owner rules out — and it would not catch the platform's next UUID. The
+decision stands. The one direction still open is a rule keyed on what the NOTICE DECLARES (a DPS or framework, BT-765 /
+BT-766) rather than on any buyer statistic; it needs a census of eForms keys with several disjoint buyer sets split
+by that declaration before anything is built. Record: `.scratch/tender-db/api-review-2026-09-27-fourth-pass.md`.
