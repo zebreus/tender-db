@@ -183,3 +183,11 @@ Recording the non-event rather than leaving the gap silent: three weekday mornin
 without the conjunction. If it has not occurred by the time something else needs the queue held on a
 weekday morning for its own reasons, that is the run to observe — piggy-backing on a hold someone
 else is already paying for, rather than manufacturing one.
+
+### 2026-09-27: the conjunction may arrive on its own on Monday 2026-09-28
+
+The r209/r208 re-parse (job 1596, ~10 of 159 packages done at 15:50 UTC), then the text and FTS re-parses (1598/1599)
+and two dry repairs, will very likely still hold the queue at Monday's 07:35 UTC weekday tick. That is the hold this
+issue said to piggy-back on: paid for by work that has to run anyway. If TED's package is late, the catch-up loop runs
+against a busy queue, which is exactly the observation owed. Read it then with the Verify above: the queued
+`ted daily (catch-up)` count over the morning.

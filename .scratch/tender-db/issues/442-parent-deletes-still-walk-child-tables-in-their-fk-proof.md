@@ -71,3 +71,20 @@ proof is a `Rewind` over the whole child table, per deleted parent row.
 - **done** (unit 1): the organization-delete test is green AND on prod the auto-Reindex line names
   `organization_names_org`, and 440's `repair-placeholder-orgs` wet reports its per-org time in ms, not seconds.
 - **open**: unit 1 built, not deployed (2026-09-27).
+
+## Unit 3 answered by reading the code (2026-09-27 15:5x UTC): no live path pays the tender-layer rows
+
+Every statement that deletes a tender-layer parent runs inside a foreign-key-off bracket:
+
+- `retire_tenders_chunked` (`DELETE FROM tenders` plus the satellites, `canonical.rs` `retire_chunk_tx`) is reached
+  only from `retire_absorbed_legacy_tenders` / `retire_regrouped_nonlegacy_tenders`
+  (`project_with_progress_phase2_stoppable`, under `project`'s issue-19 bracket or the incremental fallback into it)
+  and from `retire_regrouped_tenders_chunked` (the incremental apply, under `project_incremental_observed_stoppable`'s
+  bracket).
+- `apply_member_twin_repair` (404) brackets itself.
+- Nothing else deletes `tenders`, `tender_versions`, `lots`, `lot_results`, `bids` or `contracts` outside tests.
+
+So the tender-layer rows of the audit cost nothing today, and adding exact-shape indexes there would be pure write
+amplification. They matter only if a bracket is removed, and that is the condition for the upstream request (step 4)
+rather than for indexes. What remains live is the `organizations` row (unit 1, built) and the merge-loop brackets it
+lets us delete (step 2, measure after unit 1 deploys).
