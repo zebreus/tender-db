@@ -1,7 +1,8 @@
 # 430 — the isolated read pool and the new statement deadline are invisible in `/metrics`
 
-Status: ready-for-agent — BUILT 2026-09-27 05:40 UTC (the same morning, right behind 120's `cbacee1`): four series on
-`/metrics`, tests extended; deploy + live read pending. Filed 05:15 UTC from the hourly audit.
+Status: done — LIVE on prod 2026-09-27 05:53 UTC (`6ddda76`): the Verify below reads **4**, every series 0 on a quiet
+box (`isolated_slots_busy 0`, `isolated_shed_total 0`, `isolated_abandoned_total 0`,
+`statement_deadline_stops_total 0`). Filed 05:15 UTC from the hourly audit; built behind 120's `cbacee1`.
 Kind: observability
 Relates to: 120 (its reopen trigger (a) needs this instrument; its 2026-08-04 section: "none of this was
 visible"), 425, 241 (`tender_db_request_deadline_hits_total`, the pattern to copy), 417 (the `/v1/sql` gauges)
@@ -40,7 +41,7 @@ common case at all. Without a stop counter the trigger reads 0 whether or not us
     curl -s --max-time 10 https://tenders.zebreus.click/metrics | grep -cE '^tender_db_(isolated_slots_busy|isolated_shed_total|statement_deadline_stops_total|isolated_abandoned_total) '
 
 - **done**: 4
-- **open**: 0 (read 2026-09-27)
+- **open**: 0 (read 2026-09-27 05:15 UTC; **4** at 05:54 UTC after `6ddda76`)
 
 ## Built (2026-09-27)
 

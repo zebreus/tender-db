@@ -20,7 +20,7 @@ be fixed one query at a time.
   instrument, not the verdict: `statement_deadline_stops_total` climbing across hourly check-ins means users are
   hitting the 25 s limit — a slow shape to find and fix (the 117/273/423 class), not a reason to raise the limit.
 - **open**: the series absent — the serving rev predates issue 430 (`cbacee1` carries the deadline but not the
-  counters) (2026-09-27)
+  counters) (2026-09-27). **Read 05:54 UTC on `6ddda76`: all four present, all 0.**
 
 ## The gap
 

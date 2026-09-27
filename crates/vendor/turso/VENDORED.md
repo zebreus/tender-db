@@ -16,5 +16,6 @@ Wired in by `[patch.crates-io]` in the workspace `Cargo.toml` and excluded from 
 workspace members. It lives under `crates/` because the nix build's source fileset
 is `Cargo.toml`, `Cargo.lock` and `crates/` only.
 
-To drop it: upstream exposes both methods on `turso::Connection` (ask filed on
-issue 425), bump `turso`, delete this directory and the patch entry.
+To drop it: upstream exposes both methods on `turso::Connection` (the request is
+drafted on issue 425, step 4 — not yet posted), bump `turso`, delete this directory
+and the patch entry.

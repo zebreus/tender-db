@@ -5,7 +5,9 @@ Status: ready-for-agent — **the /v1/sql half is DONE and LIVE 2026-09-27 04:37
 `tender_db_sql_pinned_computations 0`, `tender_db_sql_in_flight 0`, `SELECT 1` → 200 — the work stopped with the
 answer (before, that query would have computed for hours as an abandoned computation). Measured first: every offender
 stops within 0–71 ms of the deadline. Step 3 (REST walks) BUILT and LIVE 2026-09-27 05:39 UTC (`cbacee1`) under issue 120 (both REST pools
-carry a 25 s engine deadline; an abandoned isolated walk is interrupted). Open: step 4 (upstream ask). Was: filed
+carry a 25 s engine deadline; an abandoned isolated walk is interrupted). Open: step 4 (upstream ask) — DRAFTED
+below; 0.8.0-pre.13 (read 2026-09-27) still exposes only `busy_timeout`. Re-check at 0.8.0 stable, where the
+vendored patch must be re-applied (or dropped) anyway. Was: filed
 2026-09-26 21:xx UTC from the owner's review of how user SQL is isolated (asked by Lennart).
 Kind: operations / safety — the largest gap in `/v1/sql`'s isolation
 Relates to: 17 (the isolated runtime), 51 (the in-task timeout that bounds nothing), 120 (REST walks —
@@ -91,3 +93,27 @@ instruction does a lot of work" worry did not materialise at 3M rows.
   pinned gauge reads **0**, and `SELECT 1` answers at once.
 - `/docs` and `openapi.json`'s 408 no longer say "the engine offers no interrupt"; the docs test pins that on both
   surfaces. `isolate.rs` / `mod.rs` comments now say the REST walks set no engine deadline (issue 120).
+
+## Step 4 — the upstream request, drafted (2026-09-27)
+
+Checked first: `turso` 0.8.0-pre.13's `src/connection.rs` has `pub fn busy_timeout` and nothing else of the kind,
+so the ask stands. Posting it is an outward-facing act on a third-party tracker, outside this session's GitHub
+scope (`zebreus/tender-db` only); it goes out with the 0.8.0-stable upgrade, whoever does that upgrade, and the
+patch's `VENDORED.md` points here. Text:
+
+> **`turso::Connection`: expose `set_query_timeout` and `interrupt`**
+>
+> `turso_core::Connection` has a per-statement deadline (`set_query_timeout`, checked before every VDBE
+> instruction in `normal_step`) and a thread-safe `interrupt()`, and `turso_sdk_kit::rsapi::TursoConnection`
+> passes both through — but the `turso` crate's `Connection` keeps its inner connection private and exposes
+> only `busy_timeout`, so a Rust application cannot stop a running statement. A `tokio` timeout cannot either:
+> `Statement::step` does not yield while the pages are cached, so the timer never gets polled.
+>
+> We serve a public read API over turso and needed both: a user-facing SQL endpoint with a 10 s limit and a
+> REST surface whose filtered reads can walk millions of rows. With the two methods patched into a vendored
+> 0.7.2 SDK (two three-line pass-throughs to `get_inner_connection()`), a 300 ms deadline stopped a
+> `generate_series` aggregate, a nested-loop join, a full `ORDER BY` and a `GROUP BY` within 0–71 ms, every
+> time, with the connection usable afterwards; before, an abandoned query once ran for ~85 minutes with nobody
+> waiting. Would you accept a PR adding
+> `Connection::set_query_timeout(&self, Duration) -> Result<()>` and `Connection::interrupt(&self) -> Result<()>`?
+
