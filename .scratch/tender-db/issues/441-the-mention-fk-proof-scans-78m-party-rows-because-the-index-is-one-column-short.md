@@ -1,6 +1,6 @@
 # 441 — deleting one organization mention scans all ~78M party rows: turso's FK proof uses only an index of the FK's exact shape, and the party tables' index is one column short
 
-Status: ready-for-agent — BUILT 2026-09-27 (gate pending at filing); deploys with the 434–440 bundle; the deploy's
+Status: ready-for-agent — DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `9dedf49`; gate GATE-EXIT=0); the auto-Reindex (job 1597) builds both `_mention_key` indexes AHEAD of the resumed 1596. Was: BUILT 2026-09-27 (gate pending at filing); deploys with the 434–440 bundle; the deploy's
 auto-Reindex builds the two new indexes AHEAD of the resumed job 1596. Filed 2026-09-27 from the hourly OPERATE step:
 job 1596 (the r209/r208 re-parse for 393/397) stalled at fetch 28.
 mine to take.

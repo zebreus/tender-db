@@ -1,6 +1,6 @@
 # 438 — the engine deadline read the clock before every instruction: every bounded read ran 1.4–2× slower
 
-Status: ready-for-agent — **BUILT 2026-09-27** (uncommitted, not deployed; see the foot): no serving connection sets
+Status: ready-for-agent — DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `d987aea`); the Verify's SQL timings are read once the re-parse/fold chain drains. Was: **BUILT 2026-09-27** (uncommitted, not deployed; see the foot): no serving connection sets
 turso's `set_query_timeout` any more. `/v1/sql` and both REST pools stop a read with a timer that calls
 `interrupt()` (`crates/app/src/v1/stop.rs`), one mechanism shared with the isolated pool's abandon path. Next: commit,
 deploy, then read the Verify. Was: filed 2026-09-27 from a read of the vendored turso 0.7.2 source and a local A/B,

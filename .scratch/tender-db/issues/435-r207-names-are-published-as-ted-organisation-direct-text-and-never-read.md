@@ -1,6 +1,6 @@
 # 435 — R2.0.7 names are published as `TED-ORGANISATION` direct text and never read — ~1.06M nameless mentions
 
-Status: ready-for-agent — **BUILT 2026-09-27** (see the foot): `TED-ORGANISATION` is a party name. Uncommitted, not
+Status: ready-for-agent — DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `94d2346`); reaches R2.0.7 mentions at the full fold via 434's refresh. Was: **BUILT 2026-09-27** (see the foot): `TED-ORGANISATION` is a party name. Uncommitted, not
 deployed. The standing mentions need issue 434's refresh AND a fold over the r208 era (the queued re-parse chain's
 1597, or a `refold` of `ted-export-r208` if 1597 has already run). Filed 2026-09-27.
 Kind: coverage (projection — `ORG_NAME_FIELDS` / `ORG_NAME_FIELD_IDS` in `crates/ingest/src/project.rs`)

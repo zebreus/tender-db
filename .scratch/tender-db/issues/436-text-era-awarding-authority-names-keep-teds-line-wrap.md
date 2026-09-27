@@ -1,6 +1,6 @@
 # 436 — text-era awarding-authority names keep TED's line wrap
 
-Status: ready-for-agent — **BUILT 2026-09-27** (see the foot): `AU` and `TW` are names now, space-joined like issue
+Status: ready-for-agent — DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `cef344b`); text re-parse queued as job 1598 (`reclaim_only`), folded by the one full fold. Was: **BUILT 2026-09-27** (see the foot): `AU` and `TW` are names now, space-joined like issue
 397's titles. Uncommitted, not deployed. The standing rows need the gated `text` re-parse and fold, and then issue
 434's mention refresh to reach `organizations.name`. Filed 2026-09-27.
 Kind: defect (ingest — the text-era `AU` rule in `crates/ingest/src/text/rules.rs` and the prose newline join in

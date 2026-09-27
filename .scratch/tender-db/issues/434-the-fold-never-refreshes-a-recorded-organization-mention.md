@@ -1,6 +1,6 @@
 # 434 — the fold never refreshes a recorded organization mention, so no parse fix reaches the org layer
 
-Status: ready-for-agent — **BUILT 2026-09-27** (see the foot): a recorded mention whose published facts changed is
+Status: ready-for-agent — DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `94d2346`); the refresh reaches the standing rows at the ONE full fold after the 1596/1598/1599 re-parses. Was: **BUILT 2026-09-27** (see the foot): a recorded mention whose published facts changed is
 re-resolved and rewritten in place. Uncommitted, not deployed. Filed 2026-09-27.
 Kind: defect (org layer — the mention resolver's idempotency preload in `crates/store/src/canonical.rs`
 `resolve_mentions` / `resolve_one_mention`)

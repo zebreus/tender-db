@@ -1,6 +1,6 @@
 # 440 — a TED/OJ S notice number is accepted as an organization identifier, and 425 org rows are keyed by one
 
-Status: ready-for-agent — BUILT 2026-09-27 (uncommitted, not deployed, see the foot): `idgate::condemns` now refuses the
+Status: ready-for-agent — DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `db8ed6d`); `repair-placeholder-orgs` DRY queued as job 1601 (after 432's dry, 1600); wet after 432's wet. Was: BUILT 2026-09-27 (uncommitted, not deployed, see the foot): `idgate::condemns` now refuses the
 OJ S publication number as a class. What remains is deploy → `repair-placeholder-orgs` dry → wet → `project`, then the
 Verify. Filed 2026-09-27 from a prod read of org 13782393.
 Kind: defect (org layer: identifier admission, `crates/ingest/src/idgate.rs`)

@@ -1,6 +1,6 @@
 # 439 — the resolver's triple preload binds to an arbitrary duplicate row
 
-Status: ready-for-agent — **BUILT 2026-09-27** (see the foot): the preload and both name probes bind the lowest id.
+Status: ready-for-agent — DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `94d2346`). Was: **BUILT 2026-09-27** (see the foot): the preload and both name probes bind the lowest id.
 Uncommitted, not deployed. **Open decision, deliberately not taken here: what the shared Bavarian VAT DE811335517
 identifies** (see Observed). Filed 2026-09-27.
 Kind: defect (org layer — `Db::mention_resolver`'s identity preload and `resolve_one_mention`'s name probes in

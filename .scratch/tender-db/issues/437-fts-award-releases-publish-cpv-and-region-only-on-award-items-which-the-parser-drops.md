@@ -1,6 +1,6 @@
 # 437 — FTS award releases publish CPV and region only on `awards[].items`, which the parser drops
 
-Status: ready-for-agent — **BUILT 2026-09-27** (see the foot): the walk reads every non-delta award's items the way
+Status: ready-for-agent — DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `cef344b`); FTS re-parse queued as job 1599 (`reclaim_only`), folded by the one full fold. Was: **BUILT 2026-09-27** (see the foot): the walk reads every non-delta award's items the way
 it reads the tender's, and the checklist maps the path. Uncommitted, not deployed. The standing rows need the gated
 `fts:ocds-1.1` re-parse and fold. Filed 2026-09-27.
 Kind: coverage (ingest — `crates/ingest/src/fts/parse.rs`'s item walk and `struct Award`, and the ADR-0004
