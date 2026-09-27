@@ -3251,6 +3251,112 @@ impl Supervisor {
         Ok(format!("probed {} day(s), {fetched} new", results.len()))
     }
 
+    /// The `project` job (incremental, rebuild, or an interrupted rebuild's
+    /// salvage), out of `run_spec`'s match for the stack's sake — see
+    /// [`Self::run_repair_member_twins`].
+    async fn run_project(&self, job: &Job, rebuild: bool, clear_changes: bool) -> Result<String, String> {
+        // Resume-from-plan salvage (issue 60) OUTRANKS the rebuild/
+        // incremental routing: if a full rebuild's Phase-2 was interrupted,
+        // finish it (re-run grouping + Phase-2 from the on-disk plan, SKIP
+        // Phase-1) whatever THIS recovered job's rebuild flag says —
+        // `project(_, true)` detects the complete plan and resumes. Without
+        // it a recovered `rebuild:false` job would route to
+        // `project_incremental`, see an all-unprojected corpus, and re-do the
+        // whole Phase-1, discarding the salvage.
+        //
+        // The signal is the durable `rebuild_in_progress` flag, NOT
+        // `plan_is_complete()`. A complete plan on disk is NOT proof of an
+        // interrupted rebuild: it is also the resting state of a FINISHED
+        // build (whose layer is fully applied) and of an interrupted
+        // rebuild=false full-fallback (over an intact layer). Keying the
+        // salvage on plan-completeness re-fired `reset_tender_layer` on every
+        // restart, nuking a good 6.96M-tender layer into a ~15h re-fold each
+        // time — a livelock. The flag is set only when a rebuild empties the
+        // layer and cleared with the plan on clean completion, so it is true
+        // exactly when there is an interrupted rebuild to finish.
+        let salvage = self.db.rebuild_in_progress().await.map_err(|e| e.to_string())?;
+
+        // One-time CDC baseline reset (issue 81): on a rebuild flagged
+        // `clear_changes`, DROP+recreate the feed FIRST so the rebuild
+        // re-emits ONE clean generation for the recovered baseline instead of
+        // appending onto the accumulated feed. Only on a rebuild path (never
+        // an incremental project). Idempotent on a salvage resume — the durable
+        // flag re-clears any partial generation the interrupted rebuild wrote.
+        if clear_changes && (salvage || rebuild) {
+            self.db.clear_changes().await.map_err(|e| e.to_string())?;
+        }
+
+        // Otherwise: the daily path is INCREMENTAL (issue 58) — re-derive
+        // only the Tenders touched since the last run; a `rebuild` does the
+        // full bounded-streaming projection (initial build / schema change)
+        // and resets the `projected` watermark.
+        let report = if salvage || rebuild {
+            // Observed (issue 65): the projection's Progress events feed
+            // the durable phase record, so /admin/jobs shows planning /
+            // pre-pass / folding instead of dead air for the multi-hour
+            // phases. The journal keeps its heartbeats — project_observed
+            // composes the stderr sink with this mapping, one stream.
+            project::project_observed_stoppable(
+                &self.db,
+                true,
+                |p| self.phase_from_progress(p),
+                &|| self.cancelled(job.id),
+            )
+            .await
+        } else {
+            // The incremental path earns the same durable phase record as
+            // the full one (issue 262): a re-parse-scale delta spends tens
+            // of minutes in the plan build, and `phase: None` for all of it
+            // is how a cancel was watched grope for a checkpoint for 17
+            // minutes. A daily-scale delta flashes through `planning` in a
+            // heartbeat — harmless. Stop threads through per plan-build
+            // chunk now, not only between fold batches (issues 256 + 262).
+            project::project_incremental_observed_stoppable(
+                &self.db,
+                |p| self.phase_from_progress(p),
+                &|| self.cancelled(job.id),
+            )
+            .await
+        }
+        .map_err(|e| e.to_string())?;
+        self.update(|p| p.notices = report.notices);
+        // The written/unchanged split (issue 108) rides in the durable
+        // counts line: a later G2 breach can then be read against what
+        // each fold actually did — "written 0 / unchanged N" points at
+        // the watermark over-claiming, a large `written` at the fold.
+        // A cancelled run's log row must SAY so (issue 256): its tallies
+        // are real, committed work — but a summary that looks complete is
+        // how a stopped fold gets mistaken for a finished one (the same
+        // rule the capped reparse follows, issue 244).
+        let cancelled = if report.stopped { "CANCELLED at a checkpoint — " } else { "" };
+        let wall = wall_suffix(&report.wall);
+        // Issue 434: how far a parse fix reached the org layer, on the
+        // durable row — silent when nothing was stale, like the wall.
+        let refreshed = if report.mentions_refreshed > 0 {
+            format!(
+                "; {} recorded mention(s) refreshed, {} re-bound to another organization (issue 434)",
+                report.mentions_refreshed, report.mentions_rebound
+            )
+        } else {
+            String::new()
+        };
+        let citations = format!(
+            "{}{}{}",
+            citation_suffix(&report.citations),
+            target_refusal_suffix(&report.target_refusals),
+            f14_target_suffix(&report.f14_targets)
+        );
+        Ok(format!(
+            "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged{wall}{refreshed}{citations}",
+            report.notices,
+            report.tenders,
+            report.islands,
+            report.applied.versions_written,
+            report.applied.tenders_written,
+            report.applied.tenders_unchanged
+        ))
+    }
+
     /// Issue 404's repair, as its own async fn rather than inline in
     /// `run_spec`'s match.
     ///
@@ -3527,97 +3633,11 @@ impl Supervisor {
                 )
                 .await
             }
+            // Its own fn, boxed: the fold's future grew with issue 434's mention
+            // refresh and overflowed `an_execute_without_an_expected_count_is_refused`
+            // inline — CLAUDE.md's run_spec note, and `run_repair_member_twins`' shape.
             Spec::Project { rebuild, clear_changes } => {
-                // Resume-from-plan salvage (issue 60) OUTRANKS the rebuild/
-                // incremental routing: if a full rebuild's Phase-2 was interrupted,
-                // finish it (re-run grouping + Phase-2 from the on-disk plan, SKIP
-                // Phase-1) whatever THIS recovered job's rebuild flag says —
-                // `project(_, true)` detects the complete plan and resumes. Without
-                // it a recovered `rebuild:false` job would route to
-                // `project_incremental`, see an all-unprojected corpus, and re-do the
-                // whole Phase-1, discarding the salvage.
-                //
-                // The signal is the durable `rebuild_in_progress` flag, NOT
-                // `plan_is_complete()`. A complete plan on disk is NOT proof of an
-                // interrupted rebuild: it is also the resting state of a FINISHED
-                // build (whose layer is fully applied) and of an interrupted
-                // rebuild=false full-fallback (over an intact layer). Keying the
-                // salvage on plan-completeness re-fired `reset_tender_layer` on every
-                // restart, nuking a good 6.96M-tender layer into a ~15h re-fold each
-                // time — a livelock. The flag is set only when a rebuild empties the
-                // layer and cleared with the plan on clean completion, so it is true
-                // exactly when there is an interrupted rebuild to finish.
-                let salvage = self.db.rebuild_in_progress().await.map_err(|e| e.to_string())?;
-
-                // One-time CDC baseline reset (issue 81): on a rebuild flagged
-                // `clear_changes`, DROP+recreate the feed FIRST so the rebuild
-                // re-emits ONE clean generation for the recovered baseline instead of
-                // appending onto the accumulated feed. Only on a rebuild path (never
-                // an incremental project). Idempotent on a salvage resume — the durable
-                // flag re-clears any partial generation the interrupted rebuild wrote.
-                if *clear_changes && (salvage || *rebuild) {
-                    self.db.clear_changes().await.map_err(|e| e.to_string())?;
-                }
-
-                // Otherwise: the daily path is INCREMENTAL (issue 58) — re-derive
-                // only the Tenders touched since the last run; a `rebuild` does the
-                // full bounded-streaming projection (initial build / schema change)
-                // and resets the `projected` watermark.
-                let report = if salvage || *rebuild {
-                    // Observed (issue 65): the projection's Progress events feed
-                    // the durable phase record, so /admin/jobs shows planning /
-                    // pre-pass / folding instead of dead air for the multi-hour
-                    // phases. The journal keeps its heartbeats — project_observed
-                    // composes the stderr sink with this mapping, one stream.
-                    project::project_observed_stoppable(
-                        &self.db,
-                        true,
-                        |p| self.phase_from_progress(p),
-                        &|| self.cancelled(job.id),
-                    )
-                    .await
-                } else {
-                    // The incremental path earns the same durable phase record as
-                    // the full one (issue 262): a re-parse-scale delta spends tens
-                    // of minutes in the plan build, and `phase: None` for all of it
-                    // is how a cancel was watched grope for a checkpoint for 17
-                    // minutes. A daily-scale delta flashes through `planning` in a
-                    // heartbeat — harmless. Stop threads through per plan-build
-                    // chunk now, not only between fold batches (issues 256 + 262).
-                    project::project_incremental_observed_stoppable(
-                        &self.db,
-                        |p| self.phase_from_progress(p),
-                        &|| self.cancelled(job.id),
-                    )
-                    .await
-                }
-                .map_err(|e| e.to_string())?;
-                self.update(|p| p.notices = report.notices);
-                // The written/unchanged split (issue 108) rides in the durable
-                // counts line: a later G2 breach can then be read against what
-                // each fold actually did — "written 0 / unchanged N" points at
-                // the watermark over-claiming, a large `written` at the fold.
-                // A cancelled run's log row must SAY so (issue 256): its tallies
-                // are real, committed work — but a summary that looks complete is
-                // how a stopped fold gets mistaken for a finished one (the same
-                // rule the capped reparse follows, issue 244).
-                let cancelled = if report.stopped { "CANCELLED at a checkpoint — " } else { "" };
-                let wall = wall_suffix(&report.wall);
-                let citations = format!(
-                    "{}{}{}",
-                    citation_suffix(&report.citations),
-                    target_refusal_suffix(&report.target_refusals),
-                    f14_target_suffix(&report.f14_targets)
-                );
-                Ok(format!(
-                    "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged{wall}{citations}",
-                    report.notices,
-                    report.tenders,
-                    report.islands,
-                    report.applied.versions_written,
-                    report.applied.tenders_written,
-                    report.applied.tenders_unchanged
-                ))
+                Box::pin(self.run_project(job, *rebuild, *clear_changes)).await
             }
             Spec::Reindex => {
                 // Both builders are CREATE INDEX IF NOT EXISTS loops — idempotent, so

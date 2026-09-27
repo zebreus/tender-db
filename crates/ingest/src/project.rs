@@ -70,6 +70,13 @@ pub struct Report {
     /// r3-merge-plan report. `errored` non-zero means the wall was
     /// unavailable and binds went through at the pre-318 bar.
     pub wall: store::WallCounts,
+    /// Issue 434: recorded mentions this run found STALE — the notice now
+    /// publishes a different name, country, raw identifier or scheme than the
+    /// row holds — and rewrote in place after re-resolving them, and of those
+    /// the ones that moved to another organization. The first fold after a
+    /// parse fix is where this says how far the fix reached the org layer.
+    pub mentions_refreshed: u64,
+    pub mentions_rebound: u64,
     /// Issue 364: what the legacy previous-publication kind gate admitted and
     /// refused this run, per declared kind. Counted where the plan is built, so
     /// it covers every notice the run planned — a full run's whole corpus, an
@@ -517,7 +524,17 @@ const RESULT_KINDS: &[&str] = &["LotResult", "LotTender", "TenderingParty", "Set
 /// Legacy Organization mention fields (inline address blocks — research §6):
 /// the party's name, its country, and its raw national id (normalised and
 /// plausibility-gated exactly like eForms BT-501).
-const ORG_NAME_FIELDS: &[&str] = &["TED-OFFICIALNAME", "TXT-AU"];
+///
+/// `TED-ORGANISATION` is the R2.0.7 spelling (issue 435): that grammar publishes
+/// the name as the element's DIRECT text, `<ORGANISATION>Translink</ORGANISATION>`,
+/// which the r209 walker's `TextGroup` rule stores under the element's own id,
+/// while R2.0.8+ wraps it (`<ORGANISATION><OFFICIALNAME>…`), leaves the direct
+/// text blank and so emits nothing under this id. Unread, it left ~1.06M
+/// mentions (2010-03 → 2011-09) nameless; the same shape also names R2.0.8
+/// `OTH_NOT`'s `ADDRESS_NOT_STRUCT` blocks and the 2008 INTERNAL_OJS buyers.
+/// No section carries both ids — pinned over every committed r208/r209 and
+/// internal-OJS fixture by `no_legacy_org_section_publishes_two_name_ids`.
+const ORG_NAME_FIELDS: &[&str] = &["TED-OFFICIALNAME", "TED-ORGANISATION", "TXT-AU"];
 const ORG_COUNTRY_FIELDS: &[&str] = &["TED-COUNTRY", "TED-ISO_COUNTRY", "TXT-CY"];
 const ORG_NATIONALID_FIELD: &str = "TED-NATIONALID";
 
@@ -706,6 +723,7 @@ const SDK01_PARTY_NAME_FIELDS: &[&str] =
 pub const ORG_NAME_FIELD_IDS: &[&str] = &[
     "BT-500-Organization-Company",
     "TED-OFFICIALNAME",
+    "TED-ORGANISATION", // R2.0.7's direct-text name (issue 435)
     "TXT-AU",
     "SDK01-ContractingParty-Party-PartyName-Name",
     "SDK01-TenderResult-WinningParty-Party-PartyName-Name",
@@ -1363,13 +1381,15 @@ pub async fn project_with_progress_phase2_stoppable(
              skipping Phase-1 and re-running grouping + Phase-2 (salvage)"
         );
     } else {
-        let (notices, mentions, stopped, citations, f14) =
+        let (notices, mentions, stopped, citations, f14, refresh) =
             build_plan(db, now, total, &mut on_progress, stop).await?;
         report.stopped = stopped;
         report.notices = notices;
         report.mentions = mentions;
         report.citations = citations;
         report.f14_targets = f14;
+        report.mentions_refreshed = refresh.refreshed;
+        report.mentions_rebound = refresh.rebound;
     }
     probe(db, "Phase-1 (build_plan)");
     if report.stopped {
@@ -1519,7 +1539,7 @@ async fn build_plan(
     total: u64,
     mut on_progress: impl FnMut(Progress),
     stop: &(dyn Fn() -> bool + Sync),
-) -> turso::Result<(u64, u64, bool, CitationGate, F14TargetGate)> {
+) -> turso::Result<(u64, u64, bool, CitationGate, F14TargetGate, store::MentionRefresh)> {
     const READ_CHUNK: i64 = 10_000;
     let t0 = std::time::Instant::now();
     db.reset_plan().await?;
@@ -1691,6 +1711,8 @@ async fn build_plan(
     if let Some(e) = plan_err {
         return Err(e);
     }
+    // Issue 434: read before `finish` consumes the resolver (the wall pattern).
+    let refresh = store::Db::mention_refresh(&resolver);
     db.finish_mention_resolver(resolver).await?;
     // issue 58 v2: this loop visited EVERY parsed notice, so the durable
     // adjacency rows insert_plan wrote are complete up to the newest planned
@@ -1702,11 +1724,14 @@ async fn build_plan(
         db.establish_legacy_adjacency(max_planned).await?;
     }
     eprintln!(
-        "[project] plan: {notices} notices, {mentions_total} mentions resolved in {:.1}s{}",
+        "[project] plan: {notices} notices, {mentions_total} mentions resolved \
+         ({} recorded mention(s) refreshed, {} re-bound — issue 434) in {:.1}s{}",
+        refresh.refreshed,
+        refresh.rebound,
         t0.elapsed().as_secs_f64(),
         if stopped { " — STOPPED at a checkpoint (issue 256)" } else { "" }
     );
-    Ok((notices, mentions_total, stopped, citations, f14))
+    Ok((notices, mentions_total, stopped, citations, f14, refresh))
 }
 
 /// Run only the interruptible PREFIX of a full rebuild — clear the canonical
@@ -1721,13 +1746,15 @@ pub async fn project_plan_only(db: &Db) -> turso::Result<Report> {
         db.clear_canonical().await?;
         db.strip_organization_indexes().await?;
         let total = db.parsed_notice_count().await?;
-        let (notices, mentions, _, citations, f14_targets) =
+        let (notices, mentions, _, citations, f14_targets, refresh) =
             build_plan(db, store::now_unix(), total, |_| {}, &|| false).await?;
         Ok::<Report, turso::Error>(Report {
             notices,
             mentions,
             citations,
             f14_targets,
+            mentions_refreshed: refresh.refreshed,
+            mentions_rebound: refresh.rebound,
             ..Default::default()
         })
     }
@@ -2284,6 +2311,9 @@ pub async fn project_incremental_chunked_observed(
         report.mentions += db.resolve_mentions(&mut resolver, &mentions, now).await?.len() as u64;
     }
     report.wall = store::Db::wall_counts(&resolver);
+    let refresh = store::Db::mention_refresh(&resolver);
+    report.mentions_refreshed = refresh.refreshed;
+    report.mentions_rebound = refresh.rebound;
     db.finish_mention_resolver(resolver).await?;
     if report.stopped {
         // A stopped pass 2 wrote a PARTIAL plan: clear it, and do NOT advance
@@ -2301,7 +2331,10 @@ pub async fn project_incremental_chunked_observed(
     if let Some(max) = all_ids.last() {
         db.advance_legacy_adjacency(*max).await?;
     }
-    stage(&format!("pass-2 plan build ({} mentions resolved)", report.mentions));
+    stage(&format!(
+        "pass-2 plan build ({} mentions resolved, {} recorded mention(s) refreshed, {} re-bound)",
+        report.mentions, report.mentions_refreshed, report.mentions_rebound
+    ));
 
     // Group the whole plan (same SQL as a full run — over the touched set only).
     report.target_refusals.add_refused(&db.build_plan_groups().await?);

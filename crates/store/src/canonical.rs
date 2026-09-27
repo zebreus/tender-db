@@ -5093,6 +5093,117 @@ pub struct MentionResolver {
     /// most repeated strings in the corpus, so without this the most common
     /// keys pay the most probes.
     generic_memo: std::collections::HashMap<String, bool>,
+    /// Issue 434: recorded mentions whose published facts no longer match the
+    /// parse, re-resolved and rewritten in place — and, of those, the ones the
+    /// re-resolve moved to ANOTHER organization. Counted because the first
+    /// fold after a parse fix is the only place anyone learns how far it
+    /// reached the org layer; a refresh that silently did nothing and one that
+    /// silently moved a million mentions would otherwise read the same.
+    mentions_refreshed: u64,
+    mentions_rebound: u64,
+    /// Tenders stamped epoch-stale because a mention of one of their notices
+    /// was re-bound, so this run's Phase 2 rewrites their party rows.
+    tenders_stamped: u64,
+}
+
+/// What the resolver's issue-434 refresh did this run: recorded mentions whose
+/// stored facts disagreed with the parse and were rewritten in place, how many
+/// of those the re-resolve moved to another organization, and how many Tenders
+/// that stamped stale so the fold rewrites their parties.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct MentionRefresh {
+    pub refreshed: u64,
+    pub rebound: u64,
+    pub tenders_stamped: u64,
+}
+
+/// Issue 434: a recorded mention as `organization_mentions` stores it — the
+/// idempotency preload's entry. It used to be the organization id alone, which
+/// is why no parse fix ever reached a standing mention: the resolver saw
+/// "recorded" and returned, whatever the notice now says. The published facts
+/// ride along so the resolver can tell "recorded and still true" (keep, no
+/// work) from "recorded but the parse has moved on" (re-resolve, rewrite).
+///
+/// Held per batch only (the preload is scoped to the batch's notices, issue
+/// 57), so four short strings per mention cost a few MB at most.
+struct RecordedMention {
+    /// The row's rowid, so a refresh rewrites it by a key every plan seeks
+    /// (issue 247 measured a WRITE statement that did not use the composite-PK
+    /// autoindex a SELECT with the same predicate did). `None` for a mention
+    /// recorded earlier in this same run, which the fallback UPDATE handles.
+    rowid: Option<i64>,
+    org_id: i64,
+    name: Option<String>,
+    country: Option<String>,
+    raw_identifier: Option<String>,
+    scheme: Option<String>,
+}
+
+impl RecordedMention {
+    fn of(m: &Mention, org_id: i64, rowid: Option<i64>) -> Self {
+        RecordedMention {
+            rowid,
+            org_id,
+            name: Some(m.name.clone()),
+            country: m.country.clone(),
+            raw_identifier: m.raw_identifier.clone(),
+            scheme: m.scheme.clone(),
+        }
+    }
+
+    /// Whether the stored row still says what `m` says — the four published
+    /// facts the table keeps, compared exactly (a re-decoded name or a newly
+    /// read country IS the change this exists to carry). A stored NULL name
+    /// and an empty one are the same fact: the resolver always writes the
+    /// string, but "no name" must never read as a change of name.
+    ///
+    /// Deliberately NOT compared: the organization the resolver would pick
+    /// today. Merges, rehomings, dissolves and case verdicts move recorded
+    /// mentions between organizations on purpose, and re-deciding every
+    /// unchanged mention would undo them all on the next fold.
+    fn publishes(&self, m: &Mention) -> bool {
+        self.name.as_deref().unwrap_or("") == m.name
+            && self.country == m.country
+            && self.raw_identifier == m.raw_identifier
+            && self.scheme == m.scheme
+    }
+}
+
+/// Issue 434: stamp the Tenders these notices caused epoch-stale, INSIDE the
+/// caller's open transaction — the resolver's, so the stamp commits with the
+/// mention rewrite that needs it. The same two statements as
+/// [`Db::stamp_stale_for_notices`] (the `tender_versions_notice` probe, then a
+/// PK update), minus its checkpoints, which cannot run inside a transaction.
+/// Returns the number of Tenders stamped.
+async fn stamp_tenders_of_notices_stale(
+    conn: &Connection,
+    mut notices: Vec<i64>,
+) -> turso::Result<u64> {
+    notices.sort_unstable();
+    notices.dedup();
+    let mut tenders: Vec<i64> = Vec::new();
+    for chunk in notices.chunks(IN_CHUNK) {
+        let sql = format!(
+            "SELECT tender_id FROM tender_versions WHERE caused_by_notice_id IN ({})",
+            placeholders(chunk.len())
+        );
+        let params: Vec<Value> = chunk.iter().map(|id| Value::Integer(*id)).collect();
+        let mut rows = conn.query(&sql, params).await?;
+        while let Some(row) = rows.next().await? {
+            tenders.push(int(&row, 0));
+        }
+    }
+    tenders.sort_unstable();
+    tenders.dedup();
+    for chunk in tenders.chunks(IN_CHUNK) {
+        let sql = format!(
+            "UPDATE tenders SET projection_epoch = 0 WHERE id IN ({})",
+            placeholders(chunk.len())
+        );
+        let params: Vec<Value> = chunk.iter().map(|id| Value::Integer(*id)).collect();
+        conn.execute(&sql, params).await?;
+    }
+    Ok(tenders.len() as u64)
 }
 
 /// The same-country E1 canonical key for an identifier, under the merge job's
@@ -8718,10 +8829,19 @@ impl Db {
         let mut canon_of: HashMap<(String, &'static str, String), i64> = HashMap::new();
         let mut poisoned: std::collections::HashSet<(String, &'static str, String)> =
             std::collections::HashSet::new();
+        // Issue 439: `ORDER BY id`, and the FIRST row per triple keeps it. The
+        // identity index is deliberately not unique (issue 62), so a triple
+        // can stand on several rows — prod's VAT DE811335517 on 8 — and with
+        // no order and a plain `insert` the binding row was whichever the scan
+        // produced LAST: new mentions of one registration landed on a row the
+        // planner chose, not one anybody could name. Lowest id is the keep rule
+        // the provisional folds already use (ledger `p1`, the echo fold). The
+        // scan is a rowid walk either way, so the order costs no sorter
+        // (pinned in the store's `mention_refresh` tests).
         let mut rows = conn
             .query(
                 "SELECT id, country, identifier_kind, identifier FROM organizations
-                  WHERE identifier IS NOT NULL",
+                  WHERE identifier IS NOT NULL ORDER BY id",
                 (),
             )
             .await?;
@@ -8740,7 +8860,7 @@ impl Db {
                     canon_of.insert(ck, id);
                 }
             }
-            org_of.insert((country, kind, value), id);
+            org_of.entry((country, kind, value)).or_insert(id);
         }
         // Issue 318, panel round 1: the wall's cost claim was "one indexed
         // seek", and that is true only in the STEADY state.
@@ -8817,6 +8937,9 @@ impl Db {
             minted_country_less_generic: 0,
             country_less_memo: std::collections::HashMap::new(),
             generic_memo: std::collections::HashMap::new(),
+            mentions_refreshed: 0,
+            mentions_rebound: 0,
+            tenders_stamped: 0,
         })
     }
 
@@ -8831,12 +8954,14 @@ impl Db {
     /// = ?` scanned the growing organizations table for *every* mention — O(n²),
     /// the projection's original bottleneck (44 min of a 54 min month at ~350k
     /// mentions). The `org_of` map (held across batches on the resolver) makes it
-    /// O(1). The idempotency map `(notice, section) → org` — which keeps an
-    /// already-recorded mention on its Organization on a re-projection — is
-    /// preloaded **for this batch's notices only** (not the whole corpus, which
-    /// at 7.5M+ notices is gigabytes; issue 57), because each notice is resolved
-    /// exactly once per run. Writes commit in [`WRITE_BATCH`]-sized transactions;
-    /// the change-feed doorbell rings once, from [`Db::finish_mention_resolver`].
+    /// O(1). The idempotency map `(notice, section) → recorded mention` — which
+    /// keeps an already-recorded mention on its Organization on a re-projection
+    /// while the notice still publishes the same facts, and refreshes it in place
+    /// when it no longer does (issue 434) — is preloaded **for this batch's
+    /// notices only** (not the whole corpus, which at 7.5M+ notices is gigabytes;
+    /// issue 57), because each notice is resolved exactly once per run. Writes
+    /// commit in [`WRITE_BATCH`]-sized transactions; the change-feed doorbell
+    /// rings once, from [`Db::finish_mention_resolver`].
     pub async fn resolve_mentions(
         &self,
         resolver: &mut MentionResolver,
@@ -8850,21 +8975,35 @@ impl Db {
         let conn = self.conn().await;
 
         // Idempotency preload, scoped to this batch's notices: an already-recorded
-        // (notice, section) keeps its Organization. Empty on `--rebuild`.
+        // (notice, section) keeps its Organization while its published facts are
+        // unchanged. Empty on `--rebuild`. Issue 434: the facts ride along (the
+        // row is read for `organization_id` anyway, which no index carries).
         let mut notice_ids: Vec<i64> = mentions.iter().map(|m| m.notice_id).collect();
         notice_ids.sort_unstable();
         notice_ids.dedup();
-        let mut mention_of: HashMap<(i64, String), i64> = HashMap::new();
+        let mut mention_of: HashMap<(i64, String), RecordedMention> = HashMap::new();
         for chunk in notice_ids.chunks(IN_CHUNK) {
             let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
             let sql = format!(
-                "SELECT notice_id, section_id, organization_id FROM organization_mentions
-                 WHERE notice_id IN ({})",
+                "SELECT notice_id, section_id, organization_id, rowid, name, country,
+                        raw_identifier, scheme
+                   FROM organization_mentions
+                  WHERE notice_id IN ({})",
                 placeholders(chunk.len())
             );
             let mut rows = conn.query(&sql, params).await?;
             while let Some(row) = rows.next().await? {
-                mention_of.insert((int(&row, 0), text(&row, 1)), int(&row, 2));
+                mention_of.insert(
+                    (int(&row, 0), text(&row, 1)),
+                    RecordedMention {
+                        org_id: int(&row, 2),
+                        rowid: Some(int(&row, 3)),
+                        name: opt_text_of(&row, 4),
+                        country: opt_text_of(&row, 5),
+                        raw_identifier: opt_text_of(&row, 6),
+                        scheme: opt_text_of(&row, 7),
+                    },
+                );
             }
             drop(rows);
         }
@@ -8873,19 +9012,45 @@ impl Db {
         for chunk in mentions.chunks(WRITE_BATCH) {
             conn.execute("BEGIN IMMEDIATE", ()).await?;
             let mut chunk_ids = Vec::with_capacity(chunk.len());
+            // Issue 434: the notices whose refreshed mention moved to another
+            // organization in this chunk — their Tenders are stamped stale below.
+            let mut rebound_notices: Vec<i64> = Vec::new();
             let mut error = None;
             for m in chunk {
                 // The maps are updated as we go, so a later mention in the same
                 // chunk reuses an Organization an earlier one just created.
+                let rebound_before = resolver.mentions_rebound;
                 match self.resolve_one_mention(&conn, m, now, resolver, &mut mention_of).await {
                     Ok((id, created)) => {
                         chunk_ids.push(id);
                         resolver.created_any |= created;
+                        if resolver.mentions_rebound > rebound_before {
+                            rebound_notices.push(m.notice_id);
+                        }
                     }
                     Err(e) => {
                         error = Some(e);
                         break;
                     }
+                }
+            }
+            // Issue 434: a re-bound mention must take its party rows with it, and
+            // the fold will not rewrite them on its own. Its early return keys on
+            // the chain of causing notices plus `projection_epoch`, and a refresh
+            // changes neither — so without this the mention would say one
+            // organization and the Tender's party, bid-party and winner rows
+            // another, for good (the next fold finds the mention equal and keeps
+            // it). The `reparse` job's profile stamp happens to cover its own
+            // cohort; a fold that refreshes WITHOUT one (a mapping fix reaching a
+            // full fallback fold, a `refold` of a different cohort) would not be.
+            // So the resolver stamps, here, in the SAME transaction as the
+            // rewrite: committed together or not at all, so a crash between
+            // cannot leave a refreshed mention whose Tender nothing will revisit.
+            // Phase 2 of this same run then rewrites those Tenders whole.
+            if error.is_none() && !rebound_notices.is_empty() {
+                match stamp_tenders_of_notices_stale(&conn, rebound_notices).await {
+                    Ok(stamped) => resolver.tenders_stamped += stamped,
+                    Err(e) => error = Some(e),
                 }
             }
             match error {
@@ -8927,7 +9092,27 @@ impl Db {
         }
     }
 
+    /// What the issue-434 refresh did this run — read before
+    /// [`Db::finish_mention_resolver`] consumes the resolver, the
+    /// [`Db::wall_counts`] pattern, so the count can ride the durable report.
+    pub fn mention_refresh(resolver: &MentionResolver) -> MentionRefresh {
+        MentionRefresh {
+            refreshed: resolver.mentions_refreshed,
+            rebound: resolver.mentions_rebound,
+            tenders_stamped: resolver.tenders_stamped,
+        }
+    }
+
     pub async fn finish_mention_resolver(&self, resolver: MentionResolver) -> turso::Result<()> {
+        if resolver.mentions_refreshed > 0 {
+            self.log_diag(&format!(
+                "[issue 434] {} recorded mention(s) refreshed in place (the parse now \
+                 publishes a different name/country/identifier/scheme), {} of them re-bound \
+                 to another organization; {} Tender(s) stamped stale so the fold rewrites \
+                 their parties",
+                resolver.mentions_refreshed, resolver.mentions_rebound, resolver.tenders_stamped
+            ));
+        }
         if resolver.anchor_reached > 0 || resolver.errored_generic > 0 {
             self.log_diag(&format!(
                 "[issue 318] genericness wall enabled={}: {} anchor bind(s) reached the \
@@ -8962,7 +9147,7 @@ impl Db {
         m: &Mention,
         now: i64,
         resolver: &mut MentionResolver,
-        mention_of: &mut std::collections::HashMap<(i64, String), i64>,
+        mention_of: &mut std::collections::HashMap<(i64, String), RecordedMention>,
     ) -> turso::Result<(i64, bool)> {
         let org_of = &mut resolver.org_of;
         let name_of = &mut resolver.name_of;
@@ -8980,9 +9165,21 @@ impl Db {
         // recoverable at the mint site.
         let wall_denials_before = 0u64;
 
-        if let Some(&org_id) = mention_of.get(&(m.notice_id, m.section_id.clone())) {
-            return Ok((org_id, false));
-        }
+        // Issue 434: a recorded mention is kept only while the notice still
+        // publishes what the row says. Issue 248's keep-set means a re-parse no
+        // longer deletes a mention whose section survives (deleting one costs
+        // ~2.2 s of FK proving on prod), and this used to return early for ANY
+        // recorded (notice, section) — so between the two, no parse fix ever
+        // reached a standing mention: R2.0.7's ~1.06M `TED-ORGANISATION` names
+        // (435), the text era's `TXT-CY` re-homed onto ORG-1, 393's Greek
+        // re-decode. A stale one takes the new-mention path below and its row is
+        // rewritten IN PLACE at the end — never DELETE + INSERT, which is that
+        // same 2.2 s per row.
+        let stale = match mention_of.get(&(m.notice_id, m.section_id.clone())) {
+            Some(recorded) if recorded.publishes(m) => return Ok((recorded.org_id, false)),
+            Some(recorded) => Some((recorded.rowid, recorded.org_id)),
+            None => None,
+        };
 
         let (org_id, created) = match &m.identifier {
             Some(id) => {
@@ -9324,11 +9521,17 @@ impl Db {
                     if let Some(&org_id) = name_of.get(&key) {
                         (org_id, false)
                     } else {
+                        // Issue 439: `ORDER BY id` — the lowest-id twin, the
+                        // triple preload's rule. A bare `LIMIT 1` returned
+                        // whichever row the chosen plan met first. The equality
+                        // on both `organizations_name_country` columns leaves
+                        // rowid order, so the index still serves it with no
+                        // sorter (pinned in the store's `mention_refresh` tests).
                         let mut rows = conn
                             .query(
                                 "SELECT id FROM organizations \
                                   WHERE name_norm = ? AND country = ? AND identifier IS NULL \
-                                  LIMIT 1",
+                                  ORDER BY id LIMIT 1",
                                 (Value::Text(name_norm.clone()), t(country)),
                             )
                             .await?;
@@ -9420,11 +9623,12 @@ impl Db {
                             resolver.reused_country_less += 1;
                             (org_id, false)
                         } else {
+                            // Issue 439: lowest id, as the country-scoped probe.
                             let mut rows = conn
                                 .query(
                                     "SELECT id FROM organizations \
                                       WHERE name_norm = ? AND country IS NULL \
-                                        AND identifier IS NULL LIMIT 1",
+                                        AND identifier IS NULL ORDER BY id LIMIT 1",
                                     (Value::Text(name_norm.clone()),),
                                 )
                                 .await?;
@@ -9479,27 +9683,88 @@ impl Db {
             resolver.generic_memo.insert(k, g);
         }
 
-        conn.execute(
-            "INSERT INTO organization_mentions(notice_id, section_id, organization_id, name,
-                 country, raw_identifier, scheme)
-             VALUES(?, ?, ?, ?, ?, ?, ?)",
-            (
-                Value::Integer(m.notice_id),
-                t(&m.section_id),
-                Value::Integer(org_id),
-                t(&m.name),
-                opt_text(m.country.as_deref()),
-                opt_text(m.raw_identifier.as_deref()),
-                opt_text(m.scheme.as_deref()),
-            ),
-        )
-        .await?;
+        let rowid = match stale {
+            None => {
+                conn.execute(
+                    "INSERT INTO organization_mentions(notice_id, section_id, organization_id, name,
+                         country, raw_identifier, scheme)
+                     VALUES(?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        Value::Integer(m.notice_id),
+                        t(&m.section_id),
+                        Value::Integer(org_id),
+                        t(&m.name),
+                        opt_text(m.country.as_deref()),
+                        opt_text(m.raw_identifier.as_deref()),
+                        opt_text(m.scheme.as_deref()),
+                    ),
+                )
+                .await?;
+                None
+            }
+            // Issue 434: the refresh, in place. Only non-key columns change, so
+            // no row of `tender_version_parties` / `_bid_parties` (which
+            // reference the mention's `(notice_id, section_id)`) has to be
+            // proven — the parent-side FK check fires on a changed PARENT KEY,
+            // and this one never changes. The party rows follow through the
+            // fold: Phase 2 binds sections via `mentions_by_ids`, which reads
+            // this row after the rewrite — but only for a Tender it actually
+            // rewrites, which is why a re-bind also stamps the notice's Tenders
+            // stale (`resolve_mentions`, same transaction).
+            Some((rowid, old_org)) => {
+                let facts = (
+                    Value::Integer(org_id),
+                    t(&m.name),
+                    opt_text(m.country.as_deref()),
+                    opt_text(m.raw_identifier.as_deref()),
+                    opt_text(m.scheme.as_deref()),
+                );
+                match rowid {
+                    Some(rowid) => {
+                        conn.execute(
+                            "UPDATE organization_mentions
+                                SET organization_id = ?, name = ?, country = ?,
+                                    raw_identifier = ?, scheme = ?
+                              WHERE rowid = ?",
+                            (facts.0, facts.1, facts.2, facts.3, facts.4, Value::Integer(rowid)),
+                        )
+                        .await?;
+                    }
+                    // Recorded earlier in this very run — a notice resolved twice
+                    // in one call, which no fold does; kept correct anyway.
+                    None => {
+                        conn.execute(
+                            "UPDATE organization_mentions
+                                SET organization_id = ?, name = ?, country = ?,
+                                    raw_identifier = ?, scheme = ?
+                              WHERE notice_id = ? AND section_id = ?",
+                            (
+                                facts.0,
+                                facts.1,
+                                facts.2,
+                                facts.3,
+                                facts.4,
+                                Value::Integer(m.notice_id),
+                                t(&m.section_id),
+                            ),
+                        )
+                        .await?;
+                    }
+                }
+                resolver.mentions_refreshed += 1;
+                if old_org != org_id {
+                    resolver.mentions_rebound += 1;
+                }
+                rowid
+            }
+        };
         // ADR-0013 D4: record the labelled language variants of the party's
         // name in the satellite. Latest variant per language wins (REPLACE) —
         // org names are current-state, not versioned. Deliberately only on
-        // this newly-recorded-mention path, so re-folds stay write-free here
-        // (the idempotency contract above); the standing corpus needs its own
-        // backfill walk, exactly like issue 259's mention-layer lesson.
+        // the newly-recorded and the refreshed (issue 434) paths, so an
+        // UNCHANGED re-fold stays write-free here (the idempotency contract
+        // above); the standing corpus needs its own backfill walk, exactly like
+        // issue 259's mention-layer lesson.
         for (lang, name) in &m.variants {
             conn.execute(
                 "INSERT OR REPLACE INTO organization_names(org_id, lang, name, name_norm)
@@ -9513,7 +9778,7 @@ impl Db {
             )
             .await?;
         }
-        mention_of.insert((m.notice_id, m.section_id.clone()), org_id);
+        mention_of.insert((m.notice_id, m.section_id.clone()), RecordedMention::of(m, org_id, rowid));
         if created {
             append_change(conn, "organization", org_id, None, "added", now).await?;
         }

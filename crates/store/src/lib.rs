@@ -23,7 +23,7 @@ pub use checkpoint::{Checkpointed, CheckpointMode};
 pub use canonical::{
     Applied, BidParty, BidState, Change, ContractState, Fact, Identifier, LayerPresence, LayerState,
     register_jurisdiction, org_name_norm,
-    LotResultState, LotState, Mention, MentionResolver, NestedOrgRepair, NoticeRef, OrgDissolve, OrgMergeBatch, OrgNameBackfill,
+    LotResultState, LotState, Mention, MentionRefresh, MentionResolver, NestedOrgRepair, NoticeRef, OrgDissolve, OrgMergeBatch, OrgNameBackfill,
     CaseApplyReport, CaseBacklogReport, CaseBacklogRow, CaseReview, CaseUnapplyReport,
     ClusterCase, ClusterPacket, CountryFoldReport, CountryMove, CountryVerdict,
     CountryVerdictReport, FusionCandidate, MergeVerdict,

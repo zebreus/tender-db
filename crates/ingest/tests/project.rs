@@ -4381,3 +4381,388 @@ async fn a_stamped_refold_rederives_winners_from_rewritten_mentions() {
 
     let _ = std::fs::remove_file(&path);
 }
+
+// ------------------- issues 434/435: a parse fix reaches a recorded mention
+
+/// One eForms-shaped notice whose buyer is the Organization section `ORG-0001`,
+/// named `name` in Germany and publishing no identifier — so its mention takes
+/// issue 234's `(name_norm, country)` path, the one a renamed party re-resolves
+/// through.
+fn one_buyer(fetch_id: i64, name: &str) -> (Notice, Parsed) {
+    let parsed = Parsed {
+        sections: vec![
+            Section { id: "PROCEDURE".into(), kind: "Procedure".into(), parent: None },
+            Section {
+                id: "ORG-0001".into(),
+                kind: "Organization".into(),
+                parent: Some("PROCEDURE".into()),
+            },
+        ],
+        values: vec![
+            ValueRow {
+                section_id: "PROCEDURE".into(),
+                field_id: "BT-04-notice".into(),
+                ordinal: 0,
+                value: NoticeValue::Id { scheme: None, value: "procedure-434".into(), is_ref: false },
+            },
+            ValueRow {
+                section_id: "ORG-0001".into(),
+                field_id: "BT-500-Organization-Company".into(),
+                ordinal: 0,
+                value: NoticeValue::Text { lang: Some("DEU".into()), value: name.into() },
+            },
+            ValueRow {
+                section_id: "ORG-0001".into(),
+                field_id: "BT-514-Organization-Company".into(),
+                ordinal: 0,
+                value: NoticeValue::Code { list: None, code: "DEU".into() },
+            },
+            ValueRow {
+                section_id: "PROCEDURE".into(),
+                field_id: "OPT-300-Procedure-Buyer".into(),
+                ordinal: 1,
+                value: NoticeValue::Id { scheme: None, value: "ORG-0001".into(), is_ref: true },
+            },
+        ],
+    };
+    let notice = Notice {
+        source: SOURCE.into(),
+        publication_id: "00000434-2026".into(),
+        content_hash: "hash-434".into(),
+        profile: "eforms:eforms-sdk-1.13".into(),
+        declared_version: None,
+        fetch_id,
+        member_path: "00000434-2026.xml".into(),
+        ingested_at: 0,
+        published_at: None,
+        dispatched_at: None,
+    };
+    (notice, parsed)
+}
+
+/// Which fold runs after the re-parse: the incremental delta (the daily path),
+/// or the FULL non-rebuild fold (`project_with_progress_phase2_stoppable` with
+/// `rebuild = false` → `build_plan`), which is how the queued re-parse chain's
+/// fold (1597) and every incremental → full fallback run.
+#[derive(Clone, Copy, Debug)]
+enum Refold {
+    Incremental,
+    Full,
+}
+
+/// Issue 434, the fold half. A re-parse keeps a mention whose section it
+/// re-creates (issue 248), and the resolver used to return early for any
+/// recorded mention — so a corrected name never reached the org layer, and the
+/// party row kept pointing at the organization minted from the old one. Now the
+/// refold sees the stale row, re-resolves it, rewrites it in place, and stamps
+/// the notice's Tender stale in the same transaction, so Phase 2 rewrites the
+/// party from the refreshed mention.
+///
+/// No `stamp_stale_*` call here, deliberately: the `reparse` JOB stamps its
+/// profile, but a fold that refreshes a mention without one — a mapping fix
+/// reaching a full fallback fold, a refold of another cohort — must still move
+/// the party, because nothing will revisit it afterwards (the next fold finds
+/// the mention equal and keeps it). RED on the old resolver: 0 refreshed, the
+/// mention still named `Stadtwerke Alt`; RED on the first cut of 434 (refresh
+/// without the stamp): the mention moved, the party row did not.
+async fn a_refreshed_mention_moves_its_party(refold: Refold) {
+    let (db, fetch_id, path) = scratch(&format!("434-refresh-{refold:?}")).await;
+    let (notice, parsed) = one_buyer(fetch_id, "Stadtwerke Alt");
+    db.record_notice(&notice, &Parse::Parsed(parsed)).await.expect("record");
+    project::project(&db, false).await.expect("first fold");
+    let old = scalar(&db, "SELECT organization_id FROM organization_mentions").await;
+    assert_eq!(
+        scalar(&db, &format!("SELECT COUNT(*) FROM tender_version_parties WHERE organization_id = {old}"))
+            .await,
+        1,
+        "premise: the buyer party row names the first organization"
+    );
+
+    // The parse is corrected under the SAME section id — the shape of every
+    // fix issue 434 names (R2.0.7's names, the text era's countries, the Greek
+    // re-decode): the mention survives the re-parse, its facts do not.
+    let (_, fixed) = one_buyer(fetch_id, "Stadtwerke Neu");
+    db.reparse_notice(&notice, &fixed).await.expect("reparse");
+    assert_eq!(
+        scalar(&db, "SELECT organization_id FROM organization_mentions").await,
+        old,
+        "premise: issue 248's keep-set left the mention standing"
+    );
+
+    let report = match refold {
+        Refold::Incremental => project::project_incremental(&db).await.expect("refold"),
+        Refold::Full => project::project(&db, false).await.expect("full refold"),
+    };
+    assert_eq!(report.mentions_refreshed, 1, "{refold:?}: the stale mention was refreshed");
+    assert_eq!(report.mentions_rebound, 1, "{refold:?}: …onto another organization");
+
+    let new = scalar(&db, "SELECT organization_id FROM organization_mentions").await;
+    assert_ne!(new, old);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM organization_mentions").await, 1, "in place");
+    assert_eq!(
+        query_text(&db, "SELECT name FROM organization_mentions").await.as_deref(),
+        Some("Stadtwerke Neu")
+    );
+    assert_eq!(
+        query_text(&db, &format!("SELECT name FROM organizations WHERE id = {new}")).await.as_deref(),
+        Some("Stadtwerke Neu")
+    );
+    // The party row follows the mention.
+    assert_eq!(
+        scalar(&db, &format!("SELECT COUNT(*) FROM tender_version_parties WHERE organization_id = {new}"))
+            .await,
+        1,
+        "{refold:?}: the buyer party row re-bound with its mention"
+    );
+    assert_eq!(
+        scalar(&db, &format!("SELECT COUNT(*) FROM tender_version_parties WHERE organization_id = {old}"))
+            .await,
+        0,
+        "{refold:?}: nothing still names the organization of the old spelling"
+    );
+    // The stamp was consumed: the rewritten Tender carries the current epoch
+    // again, so the next fold's early return is back in force.
+    assert_eq!(
+        scalar(
+            &db,
+            &format!(
+                "SELECT COUNT(*) FROM tenders WHERE projection_epoch <> {}",
+                store::canonical::PROJECTION_EPOCH
+            )
+        )
+        .await,
+        0
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+#[tokio::test]
+async fn a_refold_refreshes_a_recorded_mention_whose_published_name_changed() {
+    a_refreshed_mention_moves_its_party(Refold::Incremental).await;
+}
+
+#[tokio::test]
+async fn a_full_fold_refreshes_a_recorded_mention_and_moves_its_party() {
+    a_refreshed_mention_moves_its_party(Refold::Full).await;
+}
+
+/// Issue 434's cost contract: a refold over UNCHANGED facts is what every
+/// re-parse of a notice whose parties did not change looks like, and it must
+/// stay exactly as cheap as the early return was — no rewrite, no mint.
+#[tokio::test]
+async fn an_unchanged_refold_refreshes_no_mention_and_mints_no_organization() {
+    let (db, fetch_id, path) = scratch("434-unchanged").await;
+    let (notice, parsed) = one_buyer(fetch_id, "Stadtwerke Alt");
+    db.record_notice(&notice, &Parse::Parsed(parsed.clone())).await.expect("record");
+    project::project(&db, false).await.expect("first fold");
+    let org = scalar(&db, "SELECT organization_id FROM organization_mentions").await;
+    let orgs = scalar(&db, "SELECT COUNT(*) FROM organizations").await;
+
+    db.reparse_notice(&notice, &parsed).await.expect("reparse, same parse");
+    let report = project::project_incremental(&db).await.expect("refold");
+    assert_eq!(report.mentions, 1, "premise: the mention WAS re-resolved");
+    assert_eq!(report.mentions_refreshed, 0);
+    assert_eq!(report.mentions_rebound, 0);
+    assert_eq!(scalar(&db, "SELECT organization_id FROM organization_mentions").await, org);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM organizations").await, orgs, "nothing minted");
+    assert_eq!(
+        report.applied.tenders_written, 0,
+        "nothing re-bound, so nothing stamped: the Tender is verified unchanged, not rewritten"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// The fixture as a (notice, parse) pair, routed exactly as `ingest_bytes` does.
+fn fixture_notice(fetch_id: i64, relative: &str) -> (Notice, Parsed) {
+    let path = format!("tests/fixtures/{relative}");
+    let bytes = std::fs::read(&path).unwrap_or_else(|e| panic!("read {path}: {e}"));
+    let profile::Disposition::Records(records) = profile::dispatch(relative, &bytes) else {
+        panic!("{relative}: dispatch skipped a fixture");
+    };
+    let [profile::Record::Notice(n)] = &records[..] else {
+        panic!("{relative}: expected one notice record");
+    };
+    let Parse::Parsed(parsed) = process::parse_payload(&n.profile, &bytes) else {
+        panic!("{relative}: did not parse");
+    };
+    let (published_at, dispatched_at) = project::notice_stamps(&parsed);
+    let notice = Notice {
+        source: SOURCE.into(),
+        publication_id: n.publication_id.clone(),
+        content_hash: n.content_hash.clone(),
+        profile: n.profile.clone(),
+        declared_version: n.declared_version.clone(),
+        fetch_id,
+        member_path: n.member_path.clone(),
+        ingested_at: 0,
+        published_at,
+        dispatched_at,
+    };
+    (notice, parsed)
+}
+
+const R207: &str = "r208/f06-r207-070248-2010.xml";
+
+/// Issue 435: R2.0.7 (2010-03 → 2011-09) publishes a party's name as the
+/// `ORGANISATION` element's direct text, stored as `TED-ORGANISATION`, which the
+/// fold's name list never read — ~1.06M mentions and ~1.05M provisional
+/// organizations nameless on prod. The committed F06 carries 18 inline blocks:
+/// Translink as the buyer and 17 winners. RED before the mapping: 18 nameless.
+#[tokio::test]
+async fn the_r207_fixture_folds_every_organisation_block_with_its_name() {
+    let (db, fetch_id, path) = scratch("435-r207").await;
+    ingest(&db, fetch_id, R207).await;
+    project::project(&db, false).await.expect("project");
+
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM organization_mentions").await, 18);
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM organization_mentions WHERE name IS NULL OR name = ''").await,
+        0,
+        "every R2.0.7 ORGANISATION block names its mention"
+    );
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM organizations WHERE name = ''").await, 0);
+    for name in ["Translink", "Amtrain Midlands Ltd", "Interfleet Technology Ltd"] {
+        assert_eq!(
+            scalar(
+                &db,
+                &format!("SELECT COUNT(*) FROM organization_mentions WHERE name = '{name}' AND country = 'GB'")
+            )
+            .await,
+            1,
+            "{name}"
+        );
+    }
+    assert!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM tender_version_parties p JOIN organizations o ON o.id = p.organization_id
+              WHERE o.name = 'Translink'"
+        )
+        .await
+            >= 1,
+        "the buyer's party row names Translink"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issues 434 + 435 together, in the prod shape: the R2.0.7 stock was folded
+/// while `TED-ORGANISATION` was unread, so every mention stands nameless on a
+/// nameless provisional of its own (issue 234 never merges nameless ones) and
+/// every party row points there. That stock is reproduced faithfully — the
+/// fixture folded with its `TED-ORGANISATION` rows removed, which is exactly
+/// what the fold saw — and then the notice is re-parsed with them, as the
+/// queued r208 re-parse does. The refold must refresh all 18 and move the
+/// parties onto named organizations. RED on the old resolver: 0 refreshed and
+/// 18 mentions still nameless, whatever the mapping says.
+#[tokio::test]
+async fn a_refold_names_the_standing_r207_mentions_and_moves_their_parties() {
+    let (db, fetch_id, path) = scratch("434-r207-refold").await;
+    let (notice, parsed) = fixture_notice(fetch_id, R207);
+    let mut as_folded = parsed.clone();
+    as_folded.values.retain(|v| v.field_id != "TED-ORGANISATION");
+    db.record_notice(&notice, &Parse::Parsed(as_folded)).await.expect("record");
+    project::project(&db, false).await.expect("first fold");
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM organization_mentions WHERE name = ''").await,
+        18,
+        "premise: the stock as prod holds it — every mention nameless"
+    );
+    let nameless_parties = scalar(
+        &db,
+        "SELECT COUNT(*) FROM tender_version_parties p JOIN organizations o ON o.id = p.organization_id
+          WHERE o.name = ''",
+    )
+    .await;
+    assert!(nameless_parties >= 1, "premise: party rows point at nameless organizations");
+
+    db.reparse_notice(&notice, &parsed).await.expect("reparse");
+    let report = project::project_incremental(&db).await.expect("refold");
+    assert_eq!(report.mentions_refreshed, 18);
+    assert_eq!(report.mentions_rebound, 18, "each leaves its nameless provisional");
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM organization_mentions WHERE name IS NULL OR name = ''").await,
+        0
+    );
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM organization_mentions").await, 18, "in place");
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM tender_version_parties p JOIN organizations o ON o.id = p.organization_id
+              WHERE o.name = ''"
+        )
+        .await,
+        0,
+        "no party row still names a nameless organization"
+    );
+    // The nameless provisionals are left standing with no mention: reaping
+    // them is not the resolver's job (see issue 434's follow-up).
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM organizations o WHERE o.name = ''
+               AND NOT EXISTS (SELECT 1 FROM organization_mentions m WHERE m.organization_id = o.id)"
+        )
+        .await,
+        18
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 435's precondition for mapping `TED-ORGANISATION` as a NAME: no legacy
+/// Organization section may carry it beside `TED-OFFICIALNAME`, or the mention's
+/// first-seen head would depend on value order. R2.0.8+ wraps the name
+/// (`<ORGANISATION><OFFICIALNAME>…`), so the `TextGroup` rule's direct text is
+/// blank and nothing is emitted under the wrapper's id. Swept over every
+/// committed legacy fixture, and asserted to have seen both shapes, so the sweep
+/// cannot pass by reading nothing.
+#[test]
+fn no_legacy_org_section_publishes_two_name_ids() {
+    let mut direct = 0;
+    let mut wrapped = 0;
+    for dir in ["r208", "r209", "internal_ojs"] {
+        let mut files: Vec<_> = std::fs::read_dir(format!("tests/fixtures/{dir}"))
+            .unwrap()
+            .map(|e| e.unwrap().file_name().into_string().unwrap())
+            .collect();
+        files.sort();
+        for file in files {
+            let relative = format!("{dir}/{file}");
+            let bytes = std::fs::read(format!("tests/fixtures/{relative}")).unwrap();
+            // INTERNAL_OJS members dispatch by their package path.
+            let member = if dir == "internal_ojs" {
+                format!("20080502_2008085.tar.gz/{relative}")
+            } else {
+                relative.clone()
+            };
+            let profile::Disposition::Records(records) = profile::dispatch(&member, &bytes) else {
+                continue;
+            };
+            for record in &records {
+                let profile::Record::Notice(n) = record else { continue };
+                let Parse::Parsed(parsed) = process::parse_payload(&n.profile, &bytes) else {
+                    continue;
+                };
+                let mut by_section: std::collections::HashMap<&str, (bool, bool)> =
+                    std::collections::HashMap::new();
+                for v in &parsed.values {
+                    let slot = by_section.entry(v.section_id.as_str()).or_default();
+                    match v.field_id.as_str() {
+                        "TED-ORGANISATION" => slot.0 = true,
+                        "TED-OFFICIALNAME" => slot.1 = true,
+                        _ => {}
+                    }
+                }
+                for (section, (org, official)) in by_section {
+                    assert!(!(org && official), "{relative} {section}: both name ids");
+                    direct += usize::from(org);
+                    wrapped += usize::from(official);
+                }
+            }
+        }
+    }
+    assert!(direct > 0 && wrapped > 0, "the sweep saw both shapes ({direct} direct, {wrapped} wrapped)");
+}
