@@ -112,7 +112,10 @@ the threat. (2) The deadline cannot reach a single-instruction allocation, so it
 
     ssh -o BatchMode=yes root@zebreus.click "systemctl show tender-db -p MemoryMax"
 
-- **done**: step 1 live (the endpoint 400s the abort-class functions — see that issue's own Verify), and, when built,
-  a finite `MemoryMax`
+- **done**: step 1 LIVE on prod 2026-09-27 07:0x UTC (`9ae5ddd`) — `group_concat(id) FROM v_tenders`, `hex(zeroblob(1e9))`
+  and nested `replace(hex(zeroblob…))` each 400 naming the function; `count`/`max`/`min` over a base table,
+  `json_object` and `length` stay 200. (The two `v_tenders` aggregate 408s seen while checking are the view's own
+  7.9M-row materialisation cost, issue 239 — they parse and execute, so the gate admits them.) A finite `MemoryMax`
+  is step 2, still to come.
 - **open**: `MemoryMax=infinity` (read 2026-09-26; still infinity 2026-09-27 — step 2 deferred on the anon measurement)
 
