@@ -347,18 +347,44 @@ pub fn quarantine_class(reason: &str) -> QuarantineClass {
 pub enum TerminalPolicy {
     /// A static residue: outstanding above this baseline trips the wire.
     Fixed(i64),
-    /// Held-by-design garbage that keeps arriving with ingestion (the
-    /// astronomical-magnitude class): outstanding legitimately grows, so the
-    /// wire watches ARRIVAL rate elsewhere (the weekly report's section 5),
-    /// never the total.
+    /// Held-by-design junk that keeps arriving with ingestion — a published
+    /// value that does not convert in a STRICT field, which is strict by
+    /// type (every amount, every date but the eSender stamp), not by whether
+    /// the fold reads it (issue 433; the composition is on
+    /// [`quarantine_terminal_policy`]): outstanding legitimately grows, so
+    /// the wire watches ARRIVAL rate elsewhere (the weekly report's section
+    /// 5), never the total.
     AcceptedInflow,
 }
 
 /// The curated terminal ledger (issue 303), measured 2026-08-27 against the
 /// live table: `unrepresentable-value` at 300 and growing by design (~162
-/// arrivals/30d — ADR-0010's unrepresentable class, quarantined at ingestion);
-/// the EOCD-corrupt zip residue fixed at 8 (benign, issue-268 era); every
-/// other reason fully resolved (not-utf8's last residue closed as issue 302).
+/// arrivals/30d, quarantined at ingestion); the EOCD-corrupt zip residue
+/// fixed at 8 (benign, issue-268 era); every other reason fully resolved
+/// (not-utf8's last residue closed as issue 302).
+///
+/// `unrepresentable-value`'s composition, corrected by issue 433: 303 called
+/// it "the astronomical-magnitude class" (ADR-0010's "10^50 integers"), but
+/// measured on 2026-09-27 that class — BT-113 counts of 10^20–10^41 — was 44
+/// of 326 held rows. 264 more were junk in other integer/indicator fields (a
+/// template placeholder as a BT-44 prize rank, prose BT-171 ranks, `True`,
+/// `.00`, an amount typed into BT-58), 13 a zoneless BT-803 eSender stamp,
+/// and 5 "other" (BT-720-Tender, BT-145-Contract, BT-33-Procedure, a decimal
+/// BT-44) — the fold reads none but BT-720 and BT-145. Since issue 433 the
+/// eForms walk keeps the raw text for every integer, indicator and number
+/// and for the eSender stamp (BT-803, or its DE 1.x spelling) — the SOFT
+/// fields — and those notices import. What this reason holds from then on,
+/// and what keeps arriving, is junk in any eForms AMOUNT and in any DATE but
+/// that stamp, whether or not the fold reads the field: the fold-read ones
+/// (BT-720-Tender, BT-145-Contract, the keyed deadlines — a silently absent
+/// bid value or conclusion date would under-report or move served data) are
+/// why the class defaults to strict, and unread ones (BT-710-LotResult,
+/// BT-127-notice) stay strict with it. Also held: an amount with no
+/// `@currencyID`, FTS's own amount and date rejections (`fts/parse.rs`), and
+/// rows whose soft junk was masking a strict failure later in the walk (the
+/// walk stops at the first). That is still held by design (ADR-0004,
+/// ADR-0010), so the policy stays `AcceptedInflow`.
+///
 /// A reason not named here defaults to `Fixed(0)` DELIBERATELY — new reasons
 /// must either stay at zero or earn a ledger entry with an issue behind it.
 pub fn quarantine_terminal_policy(reason: &str) -> TerminalPolicy {

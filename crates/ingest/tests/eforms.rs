@@ -404,6 +404,13 @@ fn ted_transmission_stamp_is_claimed_on_older_minors() {
         *value(&parsed, "PROCEDURE", "BT-803(d)-notice"),
         NoticeValue::Date { utc_seconds: 1_685_608_200, offset_minutes: 120, has_time: true }
     );
+    // ...and the time emits nothing of its own. Issue 433 lets the time half
+    // keep its raw text ONLY when the soft pair fails to convert; a stamp that
+    // converts must not grow a text row beside its instant.
+    assert!(
+        values(&parsed, "PROCEDURE", "BT-803(t)-notice").is_empty(),
+        "a converting stamp's time is claimed by its date"
+    );
 }
 
 /// The negative control for the issue-141 carve-out: it claims exactly the
@@ -1020,6 +1027,14 @@ fn zoneless_gap_fill_deadline_reads_as_utc() {
 /// The negative control for the issue-144 offset relaxation: it covers exactly
 /// the `UBL-` (and `SDK01-`) gap-fill leaves — an SDK-declared date field
 /// without eForms' mandatory offset is still malformed and quarantines.
+///
+/// Issue 433 narrowed what "quarantines" covers without touching this case: a
+/// zoneless date still FAILS conversion on every SDK-declared field, but the
+/// walk now keeps the raw text for the fields `parse.rs` lists as unread
+/// (`SOFT_DATE_FIELDS`: the eSender stamp only, BT-803 or its eForms-DE 1.x
+/// spelling — `zoneless_esender_stamp_keeps_its_raw_text`). BT-131, a
+/// deadline the fold keys on, is not on that list, so this control stands as
+/// it was.
 #[test]
 fn zoneless_sdk_declared_date_still_quarantines() {
     let xml = r#"<?xml version="1.0"?>
@@ -1045,6 +1060,202 @@ fn zoneless_sdk_declared_date_still_quarantines() {
         }
         other => panic!("a zone-less SDK-declared date should quarantine, got {other:?}"),
     }
+}
+
+/// A committed real-notice fixture — a published TED or DÖE notice, not the
+/// SDK's fictitious `can-maximal-sdk17.xml` — with the FIRST occurrence of
+/// `from` replaced by `to`, run through the same dispatch + payload chain as
+/// [`ingest_fixture`]. Issue 433's shapes are measured on held production
+/// notices; mutating one element of a notice that otherwise parses whole
+/// isolates exactly that element's cost.
+fn ingest_mutated(relative: &str, from: &str, to: &str) -> Parse {
+    let path = format!("tests/fixtures/{relative}");
+    let xml = std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {path}: {e}"));
+    assert!(xml.contains(from), "{relative} no longer carries {from}");
+    let xml = xml.replacen(from, to, 1);
+    let Disposition::Records(records) = profile::dispatch(relative, xml.as_bytes()) else {
+        panic!("{relative}: dispatch skipped an eForms fixture");
+    };
+    let [Record::Notice(notice)] = &records[..] else {
+        panic!("{relative}: expected exactly one notice record");
+    };
+    eforms::parse_payload(&notice.profile, xml.as_bytes())
+}
+
+fn parsed_mutated(relative: &str, from: &str, to: &str) -> Parsed {
+    match ingest_mutated(relative, from, to) {
+        Parse::Parsed(parsed) => parsed,
+        other => panic!("{relative} with {to:?} for {from:?} must parse, got {other:?}"),
+    }
+}
+
+fn raw(text: &str) -> NoticeValue {
+    NoticeValue::Text { lang: None, value: text.into() }
+}
+
+/// A real sdk-1.10 CAN (two ranked tenders, five lots, two contracts) that
+/// carries every integer, indicator, amount and contract date issue 433's
+/// tests mutate.
+const CVD_CAN: &str = "eforms/can-cvd-lot-00054478-2025.xml";
+
+/// Issue 433 (a): the eSender template placeholder in an integer field — the
+/// shape of ~115 notices held whole in BT-44-Lot (prize rank; no committed
+/// fixture carries a Prize), and of BT-171-Tender's `prima`/`si` — no longer
+/// costs the notice. The raw text lands as a text row under the SAME field id
+/// and section, the typed integer is absent, and the rest of the notice
+/// (here: the same tender's value, the sibling tender's rank) imports.
+#[test]
+fn junk_in_an_integer_field_keeps_its_raw_text() {
+    let parsed = parsed_mutated(
+        CVD_CAN,
+        "<cbc:RankCode>1</cbc:RankCode>",
+        "<cbc:RankCode>_DEFAULT_VALUE_CHANGE_ME_</cbc:RankCode>",
+    );
+    assert_eq!(
+        values(&parsed, "TEN-0001", "BT-171-Tender"),
+        vec![&raw("_DEFAULT_VALUE_CHANGE_ME_")],
+        "raw kept under the same id; no Integer row beside it"
+    );
+    assert_eq!(*value(&parsed, "TEN-0002", "BT-171-Tender"), NoticeValue::Integer(1));
+    assert_eq!(
+        *value(&parsed, "TEN-0001", "BT-720-Tender"),
+        NoticeValue::Amount { cents: 2_340_000, currency: "EUR".into() }
+    );
+}
+
+/// Issue 433 (b): BT-113's astronomical maxima (10^20–10^41 measured) match
+/// the SDK's `^([0-9]+)$` and fail only on tender-db's i64. Same rule: the
+/// digits are kept verbatim as text, the typed count absent.
+#[test]
+fn an_astronomical_count_keeps_its_raw_text() {
+    let huge = format!("1{}", "0".repeat(40));
+    let parsed = parsed_mutated(
+        "eforms/cn-fa-expected-00586487-2024.xml",
+        "<cbc:MaximumOperatorQuantity>4</cbc:MaximumOperatorQuantity>",
+        &format!("<cbc:MaximumOperatorQuantity>{huge}</cbc:MaximumOperatorQuantity>"),
+    );
+    assert_eq!(values(&parsed, "LOT-0001", "BT-113-Lot"), vec![&raw(&huge)]);
+    assert_eq!(*value(&parsed, "LOT-0002", "BT-113-Lot"), NoticeValue::Integer(4));
+}
+
+/// Issue 433 (c): the two held shapes that were never junk convert exactly —
+/// `.00` (BT-686-LotResult's 16: an empty whole part over a zero fraction) and
+/// `True` (BT-661-Lot's 21: an indicator in another case). Pinned on a count
+/// (BT-58-Lot) and an indicator (BT-1711-Tender) this notice carries; each
+/// lands as the Integer alone, no raw text row beside it.
+#[test]
+fn lossless_integer_shapes_convert() {
+    let parsed = parsed_mutated(
+        CVD_CAN,
+        "<cbc:MaximumNumberNumeric>0</cbc:MaximumNumberNumeric>",
+        "<cbc:MaximumNumberNumeric>.00</cbc:MaximumNumberNumeric>",
+    );
+    assert_eq!(values(&parsed, "LOT-0001", "BT-58-Lot"), vec![&NoticeValue::Integer(0)]);
+
+    let parsed = parsed_mutated(
+        CVD_CAN,
+        "<efbc:TenderRankedIndicator>true</efbc:TenderRankedIndicator>",
+        "<efbc:TenderRankedIndicator>True</efbc:TenderRankedIndicator>",
+    );
+    assert_eq!(values(&parsed, "TEN-0001", "BT-1711-Tender"), vec![&NoticeValue::Integer(1)]);
+}
+
+/// Issue 433 (d), negative control: an AMOUNT stays strict. The fold sums bid
+/// values (BT-720) into contract and awarded values, so a silently absent one
+/// would under-report — junk there still quarantines the notice whole.
+#[test]
+fn junk_in_an_amount_still_quarantines() {
+    match ingest_mutated(
+        CVD_CAN,
+        r#"<cbc:PayableAmount currencyID="EUR">23400.00</cbc:PayableAmount>"#,
+        r#"<cbc:PayableAmount currencyID="EUR">siehe Anlage</cbc:PayableAmount>"#,
+    ) {
+        Parse::Quarantined { reason, detail } => {
+            assert_eq!(reason, "unrepresentable-value");
+            let detail = detail.unwrap_or_default();
+            assert!(detail.starts_with("BT-720-Tender: not a decimal amount"), "unexpected detail: {detail}");
+        }
+        other => panic!("junk in BT-720-Tender must quarantine, got {other:?}"),
+    }
+}
+
+/// Issue 433 (e), negative control: a date the fold reads stays strict — a
+/// zoneless BT-145-Contract (contract conclusion, served as
+/// `contracts[].concluded`) still quarantines. Only the listed unread dates
+/// are soft.
+#[test]
+fn zoneless_fold_read_date_still_quarantines() {
+    match ingest_mutated(
+        CVD_CAN,
+        "<cbc:IssueDate>2024-12-31+01:00</cbc:IssueDate>",
+        "<cbc:IssueDate>2024-12-31</cbc:IssueDate>",
+    ) {
+        Parse::Quarantined { reason, detail } => {
+            assert_eq!(reason, "unrepresentable-value");
+            let detail = detail.unwrap_or_default();
+            assert!(detail.starts_with("BT-145-Contract: no zone offset"), "unexpected detail: {detail}");
+        }
+        other => panic!("a zone-less BT-145-Contract must quarantine, got {other:?}"),
+    }
+}
+
+/// Issue 433 (f): the BT-803 eSender stamp is on `parse.rs`'s
+/// `SOFT_DATE_FIELDS` — read by nothing in the fold (the dispatch axis is
+/// BT-05(a)). 13 notices were held whole on a zoneless `2024-09-03` there;
+/// this real sdk-1.7 CAN is from the same week. A converting stamp is ONE
+/// instant under BT-803(d), its time claimed by the date. A zoneless one no
+/// longer converts, so BOTH halves keep their raw text under their own ids —
+/// no zone is guessed, and the clock is not silently dropped — and the
+/// notice imports.
+#[test]
+fn zoneless_esender_stamp_keeps_its_raw_text() {
+    const INLINE_ORG: &str = "eforms/can-inline-org-00530983-2024.xml";
+    let parsed = parse_fixture(INLINE_ORG);
+    assert!(matches!(value(&parsed, "PROCEDURE", "BT-803(d)-notice"), NoticeValue::Date { has_time: true, .. }));
+    assert!(
+        values(&parsed, "PROCEDURE", "BT-803(t)-notice").is_empty(),
+        "a converting stamp's time is claimed by its date, never kept raw beside it"
+    );
+
+    let parsed = parsed_mutated(
+        INLINE_ORG,
+        "<efbc:TransmissionDate>2024-09-02+00:00</efbc:TransmissionDate>",
+        "<efbc:TransmissionDate>2024-09-02</efbc:TransmissionDate>",
+    );
+    assert_eq!(values(&parsed, "PROCEDURE", "BT-803(d)-notice"), vec![&raw("2024-09-02")]);
+    assert_eq!(values(&parsed, "PROCEDURE", "BT-803(t)-notice"), vec![&raw("09:00:00+00:00")]);
+    // The real dispatch date (BT-05(a), cbc:IssueDate) is untouched.
+    assert!(matches!(value(&parsed, "PROCEDURE", "BT-05(a)-notice"), NoticeValue::Date { .. }));
+}
+
+/// Issue 433 (f), the eForms-DE 1.x spelling: that dialect's inventory
+/// (`fields-de-1.x.json`) declares the same `efbc:TransmissionDate`/`Time`
+/// pair as `DE1-TransmissionDate`/`DE1-TransmissionTime`, and `index.rs`
+/// grafts the BT-803 ids gap-only — so on a DE 1.x notice the stamp keeps
+/// the DE1 ids, which `SOFT_DATE_FIELDS` lists too. The committed DE 1.x
+/// notice carries no stamp, so the pair is inserted where eSenders write it,
+/// first under the root `efext:EformsExtension`.
+#[test]
+fn zoneless_de1_esender_stamp_keeps_its_raw_text() {
+    const DE1_CAN: &str = "doe/eforms-de-1.2-can-799811c4.xml";
+    const ROOT_EXTENSION: &str = "<efext:EformsExtension><efac:ContractModification>";
+    let with_stamp = |date: &str| {
+        format!(
+            "<efext:EformsExtension><efbc:TransmissionDate>{date}</efbc:TransmissionDate>\
+             <efbc:TransmissionTime>10:15:00+02:00</efbc:TransmissionTime><efac:ContractModification>"
+        )
+    };
+
+    // Converting: one instant under the DE1 id — which proves the inventory
+    // names the element as listed — and no row for the claimed time half.
+    let parsed = parsed_mutated(DE1_CAN, ROOT_EXTENSION, &with_stamp("2024-09-03+02:00"));
+    assert!(matches!(value(&parsed, "PROCEDURE", "DE1-TransmissionDate"), NoticeValue::Date { has_time: true, .. }));
+    assert!(values(&parsed, "PROCEDURE", "DE1-TransmissionTime").is_empty());
+
+    // Zoneless: raw text for both halves, and the notice imports.
+    let parsed = parsed_mutated(DE1_CAN, ROOT_EXTENSION, &with_stamp("2024-09-03"));
+    assert_eq!(values(&parsed, "PROCEDURE", "DE1-TransmissionDate"), vec![&raw("2024-09-03")]);
+    assert_eq!(values(&parsed, "PROCEDURE", "DE1-TransmissionTime"), vec![&raw("10:15:00+02:00")]);
 }
 
 /// Issue 144, cause J: Austrian vemap notices publish

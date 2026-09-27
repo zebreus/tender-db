@@ -76,3 +76,29 @@ What survives of the original decision: genuinely unrepresentable garbage (the "
 308 drained the rest (4,898 of 5,196 reclaimed, fold of 3,740 tenders, 2026-08-22); the ledger
 carries the resolution row ("Sub-cent amount precision", issue 268, deploy `845ed54`), and issue
 267's `over_1e12` tripwire watches for this class escaping the gate.
+
+**Corrected 2026-09-27 (issue 433): the 298 were not one "10^50" class.** The label came from
+268's reading of the `detail` strings, not from a measurement. Measured on the grown population
+(326 held on 2026-09-27), the astronomical class, BT-113-Lot counts of 10^20–10^41, was 44 rows.
+The other 282 were:
+
+- 264 rows of junk in other integer or indicator fields: the template placeholder
+  `_DEFAULT_VALUE_CHANGE_ME_` as a BT-44 prize rank, prose BT-171 ranks, `True`/`False`, `.00`,
+  and amounts typed into BT-58.
+- 13 zoneless BT-803(d) eSender stamps.
+- 5 other rows (BT-720-Tender, BT-145-Contract, BT-33-Procedure, a decimal BT-44).
+
+Issue 433 makes every integer, indicator and number field, and the unread eSender stamp (BT-803,
+or `DE1-TransmissionDate`/`Time` on eForms-DE 1.x), SOFT in the eForms walk. A value that does
+not convert keeps its raw text as a text row under the same field id, and the notice imports
+(ted-legacy-mapping.md §8.2, the rule the r209 and text-era parsers already follow). `.00` and
+case-variant booleans now convert exactly. The class is by type, so one soft field is read by
+the fold: a junk BT-759-LotResult (received submissions) now drops that block's statistics row
+instead of holding the notice.
+
+"Holds forever" therefore now covers junk in any amount field, and in any date field except that
+stamp, whether or not the fold reads it. The fold-read ones (BT-720-Tender, BT-145-Contract, the
+keyed deadlines) are why the class stays strict: a silently absent bid value or conclusion date
+would under-report or move served data. Unread ones such as BT-710-LotResult and BT-127-notice
+stay strict with them. Also still held: an amount with no `@currencyID`, and FTS's own amount and
+date rejections. The ledger carries issue 433's row.

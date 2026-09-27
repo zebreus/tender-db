@@ -1,8 +1,17 @@
 //! Lexical forms → the notice-parsed layer's typed representations.
 //!
 //! Every conversion here is exact or it fails: a value tender-db cannot
-//! represent without losing information quarantines the notice (ADR-0004)
-//! rather than being rounded, truncated or coerced.
+//! represent without losing information is never rounded, truncated or
+//! coerced silently — the scoped, documented exceptions say so where they
+//! live ([`cents`]' sub-cent rounding, issue 268; [`timestamp_for`]'s zoneless
+//! readings). What a failure COSTS is not decided here but by the walk
+//! (`parse.rs`, issue 433): a STRICT field — every amount, and every date
+//! but the few unread ones `parse.rs` lists (the eSender stamp) —
+//! quarantines the notice whole (ADR-0004), whether or not the fold reads
+//! it; a SOFT field — every integer/indicator and number, and those listed
+//! dates — keeps the element's raw text as a text row under the same field
+//! id, the typed value absent: "raw kept, typed absent", the rule the r209
+//! and text-era parsers already follow (ted-legacy-mapping.md §8.2).
 
 use store::NoticeValue as Value;
 
@@ -48,16 +57,24 @@ pub fn convert(
                 .map_err(|e| Error(format!("{}: {e}", field.id)))?,
         },
         Decision::Integers => Value::Integer(match text {
-            "true" => 1,
-            "false" => 0,
+            // xs:boolean spells these lowercase, but `True`/`False` (BT-661-Lot,
+            // 21 held notices, issue 433) name the same bit — reading them in
+            // any case loses nothing.
+            _ if text.eq_ignore_ascii_case("true") => 1,
+            _ if text.eq_ignore_ascii_case("false") => 0,
             // Counts are published as decimals often enough (`0.0`); accept
             // them when the fraction is zero, which loses nothing.
-            _ => text
-                .split_once('.')
-                .filter(|(_, fraction)| fraction.bytes().all(|b| b == b'0'))
-                .map_or(text, |(whole, _)| whole)
-                .parse()
-                .map_err(|_| Error(format!("{}: not an integer: {text}", field.id)))?,
+            _ => match text.split_once('.') {
+                // `.00` (BT-686-LotResult, 16 held notices, issue 433): an
+                // empty whole part is a valid xs:decimal worth its fraction,
+                // exactly as `cents` reads it (issue 144, cause G) — only a
+                // bare `.` has no digits at all.
+                Some(("", fraction)) if !fraction.is_empty() && fraction.bytes().all(|b| b == b'0') => "0",
+                Some((whole, fraction)) if fraction.bytes().all(|b| b == b'0') => whole,
+                _ => text,
+            }
+            .parse()
+            .map_err(|_| Error(format!("{}: not an integer: {text}", field.id)))?,
         }),
         Decision::Numbers => Value::Number {
             value: text.parse().map_err(|_| Error(format!("{}: not a number: {text}", field.id)))?,
@@ -130,12 +147,15 @@ pub fn cents(text: &str) -> Result<i64, String> {
 /// insisting on the SDK's offset discipline for it is inconsistent — the
 /// publishers who put a deadline in an undeclared element also omit the
 /// offset (`2025-09-09` in UBL-TenderValidityDeadline). Every SDK-declared
-/// field stays strict — an offsetless date is malformed and quarantines —
+/// field stays strict — an offsetless date is malformed and fails here —
 /// with ONE exception: `OPT-999`, the DUMMY `cac:TenderResult/cbc:AwardDate`
 /// that UBL 2.3 forces onto every CAN and the SDK models only to swallow.
 /// It is not award data (the real award date is `efbc:AwardDate` in the
 /// result extension), so a zoneless dummy must not fail the member
-/// (issue 195: a 2025 eSender writes `2025-05-21` there).
+/// (issue 195: a 2025 eSender writes `2025-05-21` there). The conversion
+/// stays strict for the BT-803 eSender stamp too; what its failure costs is
+/// the walk's decision, and since issue 433 that is its raw text kept, not
+/// the notice (`parse.rs`, `SOFT_DATE_FIELDS`) — no zone is invented for it.
 pub fn timestamp_for(field: &FieldInfo, date: &str, time: Option<&str>) -> Result<Value, String> {
     let date = offset_or_utc(field, date);
     let time = time.map(|t| offset_or_utc(field, t));
@@ -251,6 +271,54 @@ mod tests {
         assert!(cents("1e6").is_err());
         assert!(cents("").is_err());
         assert!(cents(".").is_err());
+    }
+
+    /// The integer/indicator arm (issue 433): the two lossless widenings —
+    /// case-insensitive booleans and an empty whole part over a zero
+    /// fraction — convert; everything that would lose information still
+    /// FAILS here. Whether that failure quarantines or keeps the raw text is
+    /// the walk's call (`parse.rs`), not this function's.
+    #[test]
+    fn integers_are_exact_or_fail() {
+        let field = FieldInfo {
+            id: "BT-686-LotResult".into(),
+            decision: Decision::Integers,
+            kind: "integer".into(),
+            code_list: None,
+        };
+        let int = |text: &str| convert(&field, text, |_| None);
+        for (text, want) in [
+            ("7", 7),
+            ("0.0", 0),
+            ("12.000", 12),
+            // Issue 433's two lossless widenings.
+            (".00", 0),
+            (".0", 0),
+            ("true", 1),
+            ("True", 1),
+            ("TRUE", 1),
+            ("false", 0),
+            ("False", 0),
+            ("FALSE", 0),
+        ] {
+            assert_eq!(int(text), Ok(Some(Value::Integer(want))), "{text}");
+        }
+        for text in [
+            "_DEFAULT_VALUE_CHANGE_ME_",
+            "erster Preis",
+            "1°",
+            "902269.04",
+            ".05",
+            ".",
+            "9999999999999999999",
+            "10000000000000000000000000000000000000000",
+        ] {
+            assert_eq!(
+                int(text),
+                Err(Error(format!("BT-686-LotResult: not an integer: {text}"))),
+                "{text} must fail, not be coerced"
+            );
+        }
     }
 
     #[test]

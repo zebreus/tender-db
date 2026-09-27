@@ -1,6 +1,6 @@
 # 433 — `unrepresentable-value` holds 326 whole notices, and only ~44 are the "astronomical" class the terminal ledger names: the rest are junk in minor integer fields
 
-Status: ready-for-agent — filed 2026-09-27 from the hourly audit (step 3). A decision is the next step, and it is
+Status: ready-for-agent — **DECIDED (option c) and BUILT 2026-09-27** (see the foot): the eForms walk keeps a failed integer/indicator/number value, and the eSender transmission stamp, as raw text under its own field id ("raw kept, typed absent", the r209/text-era rule); every amount and every other date stays strict. The deploy waits for the 393/397 re-parse fold (with 432), then the per-pattern reprocess reclaims the held rows. Was: ready-for-agent — filed 2026-09-27 from the hourly audit (step 3).
 mine to take.
 Kind: coverage (ingest: the eForms value parser's integer arm, `crates/ingest/src/eforms/value.rs:60`) and ledger
 accuracy (`crates/model/src/dashboard.rs` `quarantine_terminal_policy`)
@@ -66,3 +66,55 @@ Measure the fold's use of each field first: a field the fold never reads is the 
 - **done**: the non-astronomical remainder is either reclaimed (under (a)/(c): near 0) or every shape carries a ledger
   row naming its decision (under (b)), and the terminal-policy comment matches the measured composition
 - **open**: `282` (read 2026-09-27: 326 held, 44 of them BT-113)
+
+## Decided and BUILT 2026-09-27 — option (c), sharpened by a read-only research fan-out
+
+**The research that settled it** (5 lenses, each adversarially verified; kept in the session scratchpad):
+
+- The fold reads NONE of BT-44, BT-113, BT-171, BT-661, BT-58, BT-686, BT-33 or BT-803(d). The main fold loop has no
+  Integer or Number arm, and the only eForms integer/number it reads is BT-759 (received submissions,
+  `project.rs` `read_results`). Of the "other" five, BT-720-Tender (bid value, summed into contract and awarded
+  values) and BT-145-Contract (conclusion date) ARE read.
+- eForms was the outlier: the r209 and text-era parsers already turn a bad integer, amount, number or date into a
+  text row under the same field id ("raw kept, typed absent"), citing ted-legacy-mapping.md §8.2 — "Quarantine is
+  for unconsumed structure, not low-quality values" — which ADR-0004's amendment points to. No ADR forbade it; the
+  earlier "hold" rulings were taken at n=1 (144 H) or on the unmeasured "10^50 class" premise (268, ADR-0010's note).
+- BT-803(d) fails in the DATE path (`split_offset`), not the integer arm. It is the eSender TransmissionDate, not the
+  dispatch date (BT-05(a)); issue 418's resolver never reads it. Because the walk reaches it first, each such hold
+  may hide a later failure: the 13 are an upper bound on what the stamp alone reclaims.
+
+**The rule** (`crates/ingest/src/eforms/parse.rs` `soft()` / `SOFT_DATE_FIELDS` / `keep_raw`):
+
+- **SOFT**: every `Integers` (integers and indicators) and `Numbers` field, plus the exact ids `BT-803(d)-notice`,
+  `BT-803(t)-notice`, `DE1-TransmissionDate` and `DE1-TransmissionTime` (the DE 1.x spelling of the same stamp,
+  added at review). A value that does not convert keeps its trimmed raw text as a text row under the same field
+  id and ordinal sequence, and the notice imports. No zone is guessed for the stamp. The time half of a soft pair
+  keeps its own raw text.
+- **One fold-read soft field, by decision**: BT-759-LotResult. Junk there drops that result block's statistics row
+  (the fold emits a statistic only as a kind+count pair) instead of holding the notice. Statistics are served per
+  block and never summed, so absent reads as "not published".
+- **STRICT**, by type, whether or not the fold reads the field: every `Amounts` field (a silently absent BT-720 would
+  under-report a summed contract value) and every other `Dates` field.
+- `value.rs`: exact widenings only — `.00` → 0, case-insensitive `True`/`False` → 1/0.
+
+**Tests** (real published fixtures, mutated in the test; mutation-checked): `junk_in_an_integer_field_keeps_its_raw_text`
+(BT-171 `_DEFAULT_VALUE_CHANGE_ME_`), `an_astronomical_count_keeps_its_raw_text` (BT-113 10^40),
+`lossless_integer_shapes_convert`, `junk_in_an_amount_still_quarantines` (BT-720), `zoneless_fold_read_date_still_quarantines`
+(BT-145), `zoneless_esender_stamp_keeps_its_raw_text`, `zoneless_de1_esender_stamp_keeps_its_raw_text`, the converting-pair
+negative in `ted_transmission_stamp_is_claimed_on_older_minors`, and the unit tests
+`soft_is_every_count_and_only_the_listed_dates` / `integers_are_exact_or_fail`.
+
+**Ledger and docs**: three `issue 433` rows (`%not an integer%`, `BT-803(%`, `%not a number%`, `resolved: null`); the
+terminal-policy comment (`dashboard.rs`) and ADR-0010's note now state the measured composition.
+
+**After deploy (with 432, after the 393/397 fold): the reclaim, one reprocess per pattern — never reason-wide** (a
+reason-wide job re-stamps `first_reason` on the strict rows that stay held and drops them from the weekly arrival
+rate):
+
+    {"kind":"reprocess","reason":"unrepresentable-value","detail_like":"%not an integer%"}
+    {"kind":"reprocess","reason":"unrepresentable-value","detail_like":"%not a number%"}
+    {"kind":"reprocess","reason":"unrepresentable-value","detail_like":"BT-803(%"}
+
+Then read the Verify (282 → near 0) and the held residue's details (a reclaimed row that fails a strict field later in
+the walk rewrites its detail and stays held — expected, and it names a new cause).
+
