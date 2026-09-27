@@ -26,8 +26,9 @@ use std::io::Write;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, Once};
 use tracing::field::{Field, Visit};
-use tracing::span::{Attributes, Id, Record};
-use tracing::{Event, Level, Metadata, Subscriber};
+use tracing::{Event, Level, Subscriber};
+use tracing_subscriber::layer::{Context, SubscriberExt};
+use tracing_subscriber::{EnvFilter, Layer, Registry};
 
 /// Distinct statements recorded before the capture stops (and says so once).
 pub const MAX_STATEMENTS: usize = 20_000;
@@ -55,16 +56,8 @@ impl Visit for Message {
     }
 }
 
-impl Subscriber for Capture {
-    fn enabled(&self, meta: &Metadata<'_>) -> bool {
-        meta.is_event() && *meta.level() == Level::DEBUG && meta.target() == "turso_core::connection"
-    }
-    fn new_span(&self, _: &Attributes<'_>) -> Id {
-        Id::from_u64(1)
-    }
-    fn record(&self, _: &Id, _: &Record<'_>) {}
-    fn record_follows_from(&self, _: &Id, _: &Id) {}
-    fn event(&self, event: &Event<'_>) {
+impl<S: Subscriber> Layer<S> for Capture {
+    fn on_event(&self, event: &Event<'_>, _: Context<'_, S>) {
         let mut message = Message(None);
         event.record(&mut message);
         let Some(sql) = message.0.as_deref().and_then(|m| m.strip_prefix("Preparing: ")) else {
@@ -87,12 +80,20 @@ impl Subscriber for Capture {
         let n = state.seen.len();
         let _ = writeln!(state.file, "-- name: {}.{n}\n{sql}\n", std::process::id());
     }
-    fn enter(&self, _: &Id) {}
-    fn exit(&self, _: &Id) {}
 }
 
 /// Install the capture if `TENDER_PLAN_CAPTURE` names a file; otherwise do
-/// nothing. Idempotent. Returns whether it is installed, so the caller can log it.
+/// nothing, and the process keeps whatever logger it would have had. Idempotent.
+/// Returns whether it is installed, so the caller can log it.
+///
+/// MUST run before anything else sets the global subscriber: tracing has exactly
+/// one, and `dioxus::server::serve` installs its fmt logger first thing — the first
+/// deploy of this (bba7804, 2026-09-27) called it inside the serve closure, lost
+/// that race, and recorded nothing. So the capture brings the logger with it: a
+/// registry with the same fmt layer dioxus-logger would build (INFO in release,
+/// DEBUG in debug, `RUST_LOG` honoured, `hyper_util` at warn) beside the capture
+/// layer, each with its own filter — dioxus then sees a subscriber is set and
+/// skips its own, and no log line is lost for the week the capture runs.
 pub fn install_from_env() -> bool {
     static ONCE: Once = Once::new();
     static INSTALLED: AtomicBool = AtomicBool::new(false);
@@ -112,9 +113,23 @@ pub fn install_from_env() -> bool {
                 return;
             }
         };
-        let state = State { seen: HashSet::new(), file, full: false };
-        if tracing::subscriber::set_global_default(Capture { out: Mutex::new(state) }).is_ok() {
-            INSTALLED.store(true, Ordering::Release);
+        let level = if cfg!(debug_assertions) { Level::DEBUG } else { Level::INFO };
+        let mut logs = EnvFilter::builder().with_default_directive(level.into()).from_env_lossy();
+        if let Ok(quiet) = "hyper_util=warn".parse() {
+            logs = logs.add_directive(quiet);
+        }
+        // Only turso's prepare event reaches the capture; every other callsite it
+        // leaves disabled.
+        let prepares = tracing_subscriber::filter::filter_fn(|meta| {
+            meta.is_event() && *meta.level() == Level::DEBUG && meta.target() == "turso_core::connection"
+        });
+        let capture = Capture { out: Mutex::new(State { seen: HashSet::new(), file, full: false }) };
+        let subscriber = Registry::default()
+            .with(tracing_subscriber::fmt::layer().with_filter(logs))
+            .with(capture.with_filter(prepares));
+        match tracing::subscriber::set_global_default(subscriber) {
+            Ok(()) => INSTALLED.store(true, Ordering::Release),
+            Err(e) => eprintln!("[plan-capture] a global subscriber is already set ({e}) — capture off"),
         }
     });
     INSTALLED.load(Ordering::Acquire)

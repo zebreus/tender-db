@@ -4717,6 +4717,7 @@ dependencies = [
  "tokio",
  "tower_governor",
  "tracing",
+ "tracing-subscriber",
  "turso_parser",
  "url",
  "wasm-bindgen",

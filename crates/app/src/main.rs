@@ -39,13 +39,15 @@ const READERS: usize = 8;
 /// (docs/research/api-layer.md §1).
 #[cfg(feature = "server")]
 fn main() {
+    // Issues 428/429: opt-in capture of every statement this process prepares
+    // (TENDER_PLAN_CAPTURE=<file>); a no-op when unset. BEFORE `serve`, which
+    // installs dioxus's own global logger first thing — inside the closure the
+    // capture lost that race and recorded nothing (the bba7804 deploy). It brings
+    // an equivalent logger with it, so dioxus then skips its own.
+    if tender_db::plan_capture::install_from_env() {
+        eprintln!("[plan-capture] recording distinct prepared statements (TENDER_PLAN_CAPTURE)");
+    }
     dioxus::server::serve(|| async {
-        // Issues 428/429: opt-in capture of every statement this process prepares
-        // (TENDER_PLAN_CAPTURE=<file>); a no-op when unset. Before the DB opens, so
-        // the open's own statements are in it too.
-        if tender_db::plan_capture::install_from_env() {
-            eprintln!("[plan-capture] recording distinct prepared statements (TENDER_PLAN_CAPTURE)");
-        }
         let db = store::state().await;
         let api = tender_db::v1::AppState::new(db.clone(), db.readers(READERS)?);
 

@@ -48,6 +48,7 @@ fs4 = { version = "0.13", default-features = false, optional = true }
 # Statement capture (issues 428/429, `plan_capture`): a subscriber for turso's own
 # `Preparing:` debug event, installed only when TENDER_PLAN_CAPTURE is set.
 tracing = { version = "0.1", optional = true }
+tracing-subscriber = { version = "0.3", optional = true, default-features = false, features = ["registry", "std", "fmt", "env-filter"] }
 
 [dev-dependencies]
 # The API integration test boots the real router over a fixture-ingested
@@ -95,4 +96,5 @@ server = [
     "dep:url",
     "dep:fs4",
     "dep:tracing",
+    "dep:tracing-subscriber",
 ]
