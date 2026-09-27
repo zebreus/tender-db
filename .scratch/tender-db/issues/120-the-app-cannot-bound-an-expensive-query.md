@@ -14,10 +14,13 @@ be fixed one query at a time.
 
 ## Verify
 
-    curl -s --max-time 10 https://tenders.zebreus.click/metrics | grep -E '^tender_db_(request_deadline_hits_total|sql_pinned_computations) '
+    curl -s --max-time 10 https://tenders.zebreus.click/metrics | grep -E '^tender_db_(statement_deadline_stops_total|isolated_abandoned_total|isolated_shed_total|request_deadline_hits_total) '
 
-- **done** (position holds): both `0` (read 2026-09-19) — no request cut by the whole-request deadline since open, no pinned SQL computation
-- **open** (reopen, trigger a): a nonzero deadline-hits count that persists across hourly check-ins, i.e. live stalls the layered defences did not absorb
+- **done** (the deadline is live and counted, issue 430): the four series present. Their VALUES are the reopen
+  instrument, not the verdict: `statement_deadline_stops_total` climbing across hourly check-ins means users are
+  hitting the 25 s limit — a slow shape to find and fix (the 117/273/423 class), not a reason to raise the limit.
+- **open**: the series absent — the serving rev predates issue 430 (`cbacee1` carries the deadline but not the
+  counters) (2026-09-27)
 
 ## The gap
 

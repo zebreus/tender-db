@@ -83,6 +83,35 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
     header(&mut out, "tender_db_sql_in_flight", "/v1/sql computations occupying a thread, live or abandoned.");
     sample(&mut out, "tender_db_sql_in_flight", &[], state.sql.in_flight() as f64);
 
+    // Issue 430: the REST walks' isolation and the engine deadline issue 120 put on
+    // them. Before, the pool's occupancy and its sheds were visible only as 503s in
+    // a log, and a stopped statement not at all.
+    header(&mut out, "tender_db_isolated_slots_busy", "Isolated read slots held by a running walk-capable read.");
+    sample(&mut out, "tender_db_isolated_slots_busy", &[], state.isolated.busy() as f64);
+    header(
+        &mut out,
+        "tender_db_isolated_shed_total",
+        "Walk-capable reads refused since open because every isolated slot was busy.",
+    );
+    sample(&mut out, "tender_db_isolated_shed_total", &[], state.isolated.shed_total() as f64);
+    header(
+        &mut out,
+        "tender_db_isolated_abandoned_total",
+        "Isolated reads whose caller gave up while they ran, since open; each was interrupted (issue 120).",
+    );
+    sample(&mut out, "tender_db_isolated_abandoned_total", &[], state.isolated.abandoned_total() as f64);
+    header(
+        &mut out,
+        "tender_db_statement_deadline_stops_total",
+        "REST reads stopped by the engine's per-statement deadline and answered 503, since open (issue 120).",
+    );
+    sample(
+        &mut out,
+        "tender_db_statement_deadline_stops_total",
+        &[],
+        super::STATEMENT_STOPS.load(std::sync::atomic::Ordering::Relaxed) as f64,
+    );
+
     let writer = state.db.writer_stats();
     header(&mut out, "tender_db_writer_queue_depth", "Callers blocked waiting for the writer.");
     sample(&mut out, "tender_db_writer_queue_depth", &[], writer.depth as f64);

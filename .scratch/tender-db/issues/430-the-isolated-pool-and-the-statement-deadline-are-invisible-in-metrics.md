@@ -1,7 +1,7 @@
 # 430 — the isolated read pool and the new statement deadline are invisible in `/metrics`
 
-Status: ready-for-agent — filed 2026-09-27 05:15 UTC from the hourly audit, while issue 120's engine deadline
-was gating. Mine; next unit after 120 deploys.
+Status: ready-for-agent — BUILT 2026-09-27 05:40 UTC (the same morning, right behind 120's `cbacee1`): four series on
+`/metrics`, tests extended; deploy + live read pending. Filed 05:15 UTC from the hourly audit.
 Kind: observability
 Relates to: 120 (its reopen trigger (a) needs this instrument; its 2026-08-04 section: "none of this was
 visible"), 425, 241 (`tender_db_request_deadline_hits_total`, the pattern to copy), 417 (the `/v1/sql` gauges)
@@ -27,15 +27,31 @@ common case at all. Without a stop counter the trigger reads 0 whether or not us
 ## What to build
 
 1. `tender_db_isolated_slots_busy` gauge (`SLOTS - available()`), `tender_db_isolated_shed_total` counter.
-2. `tender_db_statement_deadline_stops_total{pool="main"|"isolated"}`: counted where `Error::Interrupt` becomes
-   the 503 (`ApiError::from`) — label by pool needs the call sites, or one unlabelled counter is enough to start.
-3. `tender_db_isolated_interrupts_total`: `Abandon::drop` found a registered connection and interrupted it.
+2. `tender_db_statement_deadline_stops_total`: counted where `Error::Interrupt` becomes the 503 (`ApiError::from`)
+   or the SSE `error` event. One unlabelled counter to start (decided: a pool label needs every call site to carry
+   one, and the question the trigger asks — "does anyone hit the limit" — does not need it).
+3. `tender_db_isolated_abandoned_total` (renamed from `interrupts_total`: it counts a caller giving up while its read
+   still held a connection; the interrupt is what happens to each): `Abandon::drop` found a registered connection.
 4. `/metrics` test asserting the four series are present (absent-vs-zero rule: they are always measured, so zero).
 5. Point issue 120's `## Verify` at the stop counter.
 
 ## Verify
 
-    curl -s --max-time 10 https://tenders.zebreus.click/metrics | grep -cE '^tender_db_(isolated_slots_busy|isolated_shed_total|statement_deadline_stops_total|isolated_interrupts_total)'
+    curl -s --max-time 10 https://tenders.zebreus.click/metrics | grep -cE '^tender_db_(isolated_slots_busy|isolated_shed_total|statement_deadline_stops_total|isolated_abandoned_total) '
 
 - **done**: 4
 - **open**: 0 (read 2026-09-27)
+
+## Built (2026-09-27)
+
+- `IsolatedReads::{busy, shed_total, abandoned_total}`: per-instance counters (a test's `AppState` does not
+  share a process-wide count with its neighbours); the shed counts only the `try_acquire` refusal, not a
+  JoinError.
+- `v1::STATEMENT_STOPS`, process-wide beside `DEADLINE_HITS`, bumped in `ApiError::from(Interrupt)` and the
+  SSE `read_error_event`. An interrupt nobody is waiting for (the abandon path) answers nobody and is counted by
+  `abandoned_total` instead — the two never double-count one read.
+- Tests: `the_metrics_endpoint_exposes_prometheus_text` lists the four as always present (zero is a real count);
+  `a_walk_past_the_statement_deadline_is_stopped_with_a_503` reads the stop counter off `/metrics` before and after
+  (strictly greater — the counter is process-wide) and `slots_busy 0`; `an_abandoned_walk_is_interrupted_and_its_slot_freed`
+  asserts `abandoned_total() == 1`.
+

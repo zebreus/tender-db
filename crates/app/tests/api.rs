@@ -421,7 +421,16 @@ async fn the_metrics_endpoint_exposes_prometheus_text() {
     let body = response.text().await.expect("body");
 
     // The always-available O(1) gauges, each with its exposition headers.
-    for name in ["tender_db_change_cursor", "tender_db_sse_streams"] {
+    for name in [
+        "tender_db_change_cursor",
+        "tender_db_sse_streams",
+        // Issue 430: the REST walks' isolation and the engine deadline (issue 120)
+        // are always measured, so they are always present — zero is a real count.
+        "tender_db_isolated_slots_busy",
+        "tender_db_isolated_shed_total",
+        "tender_db_isolated_abandoned_total",
+        "tender_db_statement_deadline_stops_total",
+    ] {
         assert!(body.contains(&format!("# TYPE {name} gauge\n")), "{name} declares its type:\n{body}");
         assert!(
             body.lines().any(|l| l.starts_with(name) && l.split(' ').count() == 2),
@@ -2965,6 +2974,14 @@ async fn a_walk_past_the_statement_deadline_is_stopped_with_a_503() {
         .expect("fill");
     }
     let free = server.isolated.available();
+    let stops = |body: &str| -> u64 {
+        body.lines()
+            .find_map(|l| l.strip_prefix("tender_db_statement_deadline_stops_total "))
+            .and_then(|v| v.parse::<f64>().ok())
+            .expect("the stop counter is always present") as u64
+    };
+    let metrics = async || server.http.get(format!("{}/metrics", server.base)).send().await.unwrap().text().await.unwrap();
+    let stops_before = stops(&metrics().await);
 
     server.isolated.bound_statements(Duration::from_millis(1));
     let (status, body) = server.get_with_status("/v1/tenders?min_value=1").await;
@@ -2973,6 +2990,11 @@ async fn a_walk_past_the_statement_deadline_is_stopped_with_a_503() {
     assert!(message.contains("was stopped"), "the 503 must say the work was stopped: {body}");
     assert!(!message.contains("safe to retry"), "the same shape costs as much again: {body}");
     assert_eq!(server.isolated.available(), free, "the stopped walk's slot is back");
+    // Issue 430: the stop is counted where an operator can see it. The counter is
+    // process-wide and other tests run beside this one, so it is "at least one more".
+    let after = metrics().await;
+    assert!(stops(&after) > stops_before, "the stop must be counted on /metrics:\n{after}");
+    assert!(after.contains("tender_db_isolated_slots_busy 0\n"), "no slot is still held:\n{after}");
 
     server.isolated.bound_statements(v1::STATEMENT_DEADLINE);
     let (status, body) = server.get_with_status("/v1/tenders?min_value=1").await;
@@ -2997,6 +3019,7 @@ async fn an_abandoned_walk_is_interrupted_and_its_slot_freed() {
         tokio::time::timeout(Duration::from_millis(300), endless).await.is_err(),
         "precondition: the statement must still be running when the caller gives up"
     );
+    assert_eq!(server.isolated.abandoned_total(), 1, "the abandonment is counted (issue 430)");
 
     let started = std::time::Instant::now();
     while server.isolated.available() < free && started.elapsed() < Duration::from_secs(5) {

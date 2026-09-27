@@ -45,6 +45,7 @@
 //! `/proc/<pid>/task/*/stat` deltas can attribute CPU to them and settle it.
 
 use std::future::Future;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
@@ -148,12 +149,15 @@ impl Drop for Held {
 struct Abandon {
     task: tokio::task::AbortHandle,
     running: Arc<Running>,
+    /// [`IsolatedReads::abandoned_total`]'s counter (issue 430).
+    abandoned: Arc<AtomicU64>,
 }
 
 impl Drop for Abandon {
     fn drop(&mut self) {
         if let Some(conn) = self.running.0.lock().unwrap_or_else(|p| p.into_inner()).as_ref() {
             let _ = conn.interrupt();
+            self.abandoned.fetch_add(1, Ordering::Relaxed);
         }
         self.task.abort();
     }
@@ -164,6 +168,10 @@ pub struct IsolatedReads {
     readers: Arc<store::Readers>,
     slots: Arc<Semaphore>,
     runtime: tokio::runtime::Handle,
+    /// Reads refused because every slot was busy (issue 430).
+    shed: AtomicU64,
+    /// Reads whose caller gave up while they were still running (issue 430).
+    abandoned: Arc<AtomicU64>,
 }
 
 impl IsolatedReads {
@@ -174,6 +182,8 @@ impl IsolatedReads {
             readers,
             slots: Arc::new(Semaphore::new(SLOTS)),
             runtime: spawn_isolated_runtime(),
+            shed: AtomicU64::new(0),
+            abandoned: Arc::new(AtomicU64::new(0)),
         })
     }
 
@@ -188,10 +198,29 @@ impl IsolatedReads {
         self.readers.statement_deadline()
     }
 
-    /// How many slots are free — for the readiness/debug surface, so the shed rate is
-    /// observable rather than inferred from 503s in a log.
+    /// How many slots are free. `/metrics` reports the complement as
+    /// `tender_db_isolated_slots_busy` (issue 430), so occupancy is observable rather
+    /// than inferred from 503s in a log.
     pub fn available(&self) -> usize {
         self.slots.available_permits()
+    }
+
+    /// Slots held right now — by a running read, or by a test.
+    pub fn busy(&self) -> usize {
+        SLOTS.saturating_sub(self.available())
+    }
+
+    /// Walk-capable reads refused since open because every slot was busy — the 503
+    /// "too many expensive filtered reads in flight".
+    pub fn shed_total(&self) -> u64 {
+        self.shed.load(Ordering::Relaxed)
+    }
+
+    /// Reads whose caller stopped waiting (client gone, the 30 s layer) while the read
+    /// was still running, since open. Each was interrupted rather than left to run —
+    /// before issue 120 every one of them ran to its natural end with nobody waiting.
+    pub fn abandoned_total(&self) -> u64 {
+        self.abandoned.load(Ordering::Relaxed)
     }
 
     /// Take and hold `n` slots — how a test saturates the pool to prove routing
@@ -224,8 +253,10 @@ impl IsolatedReads {
         F: FnOnce(Held) -> Fut + Send + 'static,
         Fut: Future<Output = store::turso::Result<T>> + Send + 'static,
     {
-        let permit: OwnedSemaphorePermit =
-            self.slots.clone().try_acquire_owned().map_err(|_| Shed)?;
+        let Ok(permit) = self.slots.clone().try_acquire_owned() else {
+            self.shed.fetch_add(1, Ordering::Relaxed);
+            return Err(Shed);
+        };
         let readers = self.readers.clone();
         let running = Arc::new(Running::default());
         let registered = running.clone();
@@ -234,7 +265,7 @@ impl IsolatedReads {
             let reader = Held::register(readers.get().await?, registered);
             read(reader).await
         });
-        let _abandon = Abandon { task: handle.abort_handle(), running };
+        let _abandon = Abandon { task: handle.abort_handle(), running, abandoned: self.abandoned.clone() };
         match handle.await {
             Ok(result) => Ok(result),
             // Aborted because we stopped waiting, or a panic on the isolated runtime.

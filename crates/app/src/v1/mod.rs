@@ -486,7 +486,10 @@ impl From<store::turso::Error> for ApiError {
             // the pre-deadline 30 s answer, nothing keeps running behind this one — so
             // it can say so; what it cannot promise is that a retry of the same shape
             // is any cheaper.
-            store::turso::Error::Interrupt(_) => ApiError(StatusCode::SERVICE_UNAVAILABLE, stopped_message()),
+            store::turso::Error::Interrupt(_) => {
+                STATEMENT_STOPS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                ApiError(StatusCode::SERVICE_UNAVAILABLE, stopped_message())
+            }
             e => ApiError(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
         }
     }
@@ -570,6 +573,15 @@ const _: () = assert!(
 /// witness that an unbounded wait happened (issue 241 gap 2's pair to the
 /// writer queue gauges: those say a stall is happening, this says one did).
 static DEADLINE_HITS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// Reads the engine's [`STATEMENT_DEADLINE`] stopped and answered — a 503 on a list
+/// or detail, an `error` event on a stream — since open, never reset (issue 430).
+/// Since issue 120 a single slow statement is answered HERE at 25 s, before the
+/// whole-request layer, so [`DEADLINE_HITS`] no longer sees the common case: this is
+/// the count issue 120's reopen trigger ("users hitting the limit") reads. A read the
+/// caller had already abandoned is interrupted but answers nobody, so it is counted by
+/// `IsolatedReads::abandoned_total` instead.
+pub(crate) static STATEMENT_STOPS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
 /// The `/v1` whole-request deadline (issue 241, gap 2): every non-stream
 /// request must end in a STATUS CODE, never in silence. Issue 240's outage was

@@ -546,7 +546,10 @@ pub fn change_event(change: &Change) -> serde_json::Value {
 /// so in the list's own words (issue 120) rather than turso's bare "interrupted".
 fn read_error_event(e: &store::turso::Error) -> Event {
     match e {
-        store::turso::Error::Interrupt(_) => error_event(&super::stopped_message()),
+        store::turso::Error::Interrupt(_) => {
+            super::STATEMENT_STOPS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            error_event(&super::stopped_message())
+        }
         e => error_event(e),
     }
 }
