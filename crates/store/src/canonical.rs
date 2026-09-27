@@ -7058,8 +7058,16 @@ impl Db {
     /// `organizations_identity` is deliberately absent: it is built only when the
     /// table lacks the inline UNIQUE, so a database that HAS the inline constraint
     /// legitimately lacks the index and must not be reported as missing.
-    const DEFERRED_ORG_INDEXES: [(&'static str, &'static str); 7] = [
+    const DEFERRED_ORG_INDEXES: [(&'static str, &'static str); 8] = [
         ("organization_mentions_org", "organization_mentions(organization_id)"),
+        // Issue 442: the FK proof of an organization DELETE. `organization_names`
+        // references `organizations(id)` by `org_id`, and its PRIMARY KEY
+        // `(org_id, lang)` leads with that column — but `turso_core` 0.7.2 serves an FK
+        // probe only from a child index whose columns EQUAL the FK's (issue 441), so
+        // every org delete walked the whole table (~78M rowids on prod). Merge losers
+        // and `dissolve_condemned` pay it per row; issue 352 measured ~0.4 s a loser
+        // and bracketed the merge loops off instead. Looks redundant with the PK; is not.
+        ("organization_names_org", "organization_names(org_id)"),
         // Issue 247: the re-parse's clear deletes a notice's mentions, and that single
         // statement was 99.6% of a re-parse's writer time — 153 ms per notice, measured
         // by `tender_db_reparse_clear_statement_seconds_total` on prod, against

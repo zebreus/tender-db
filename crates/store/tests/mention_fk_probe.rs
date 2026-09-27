@@ -133,3 +133,24 @@ async fn the_narrow_mention_indexes_are_retired_once_replaced() {
         "the strip drops the retired index with the deferred ones: {names:?}"
     );
 }
+
+/// Issue 442, the same trap one table over: an organization DELETE (a merge loser, a
+/// condemned placeholder) proves no `organization_names` row still names it, and the
+/// table's `(org_id, lang)` primary key is a prefix, not the FK's exact shape.
+#[tokio::test]
+async fn an_organization_delete_proves_its_foreign_keys_by_index() {
+    let (db, path) = open("orgs").await;
+    db.build_organization_indexes().await.unwrap();
+    db.build_tender_indexes().await.unwrap();
+    let conn = writer_like(&path).await;
+    let ops = program(&conn, "DELETE FROM organizations WHERE id = 1").await;
+    assert!(
+        ops.iter().any(|(op, c)| op == "OpenRead" && c.contains("=organization_names_org,")),
+        "the probe into organization_names opens its org_id index: {ops:#?}"
+    );
+    assert!(
+        !ops.iter().any(|(op, _)| op == "Rewind"),
+        "no child table is walked to prove one organization unreferenced: {ops:#?}"
+    );
+    assert!(ops.iter().any(|(op, _)| op == "FkCounter"), "enforcement is compiled, not off: {ops:#?}");
+}
