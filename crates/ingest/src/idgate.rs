@@ -95,6 +95,20 @@ pub struct GateCensus {
     /// [`GateCensus::short_vat`] already applies to a short VAT tail. Five
     /// digits and up stay in; they are real short registry numbers.
     pub bare_four_digit: bool,
+    /// A TED / OJ S publication number — `2018/S 025-054890`, stored compact as
+    /// `2018S025054890`. CONDEMNING (issue 440); see [`ojs_notice_number`].
+    ///
+    /// The number identifies a NOTICE, never an organization, in any country
+    /// or register — so this is a category rule, like [`GateCensus::routing_scope`],
+    /// and not a fusion-rate rule. Measured on prod 2026-09-27: 425 org rows
+    /// are keyed by the shape (403 with a three-digit issue number, 22 with a
+    /// two-digit one — mostly the r208 era's unpadded spelling) across 18
+    /// country codes, and
+    /// **425 of 425** resolve to a TED notice in this corpus carrying exactly
+    /// that publication number. Worst row: org 13782393, keyed by the number
+    /// of DB Netz AG's "Knoten Lindau Kabeltiefbau" contract notice, holding
+    /// 30 distinct names over 129 mentions.
+    pub notice_number: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -145,6 +159,9 @@ pub fn census(country: Option<&str>, kind: Option<&str>, value: &str) -> GateCen
         && value.bytes().all(|b| b.is_ascii_digit())
         && !out.sequence
         && !out.lexicon;
+    // Issue 440: kind- and country-blind on purpose — a notice number is not
+    // an organization's identifier under ANY register.
+    out.notice_number = ojs_notice_number(value);
     // Scheme resolution is census-only: vat keys resolve by their own
     // prefix, national keys by (country, shape). Never used for merging.
     // Issue 358: a national key under a regional code resolves in the
@@ -213,6 +230,59 @@ pub fn phone_shaped(value: &str) -> bool {
     (9..=12).contains(&rest.len()) && rest.starts_with('0') && rest.bytes().all(|b| b.is_ascii_digit())
 }
 
+/// A TED / OJ S publication number in the identifier slot (issue 440): the
+/// number of a NOTICE in the Supplement to the Official Journal, which says
+/// nothing about which organization published or received it.
+///
+/// The published spelling is `YYYY/S III-NNNNNN` — year, the literal `S`, the
+/// OJ S issue number, and the six-digit notice serial — written with or
+/// without spaces around the slash and dash, and with a lowercase `s` by some
+/// publishers. The legacy r208 era printed the issue number UNPADDED
+/// (`2011/S 79-130403` on prod, `2010/S 66-098284` in the r208 fixtures). The normaliser
+/// keeps ASCII alphanumerics and upper-cases them, so every spelling reaches
+/// the gate as `YYYYS` followed by 7–9 digits: an issue number of one to three
+/// digits, then the zero-padded six-digit serial. This predicate applies the
+/// same compaction itself, so it answers the same for the published string
+/// and the stored key.
+///
+/// Deliberately exact, matching the WHOLE value:
+///
+/// - Ten or more digits after the `S` cannot be a well-formed number (the
+///   issue number never exceeds three digits, the serial is always six), so
+///   `2011S0213347880` and `2018S0736162207` — one row each, measured — stay
+///   out. Six or fewer is a buyer's own file reference (`2024S076079`, the
+///   Tribunal administratif de Bordeaux, is `2024S076-079`) and stays out.
+/// - A number glued to another number or to text
+///   (`2011S175287091UND2011S183298253`, `2023S0270776402023S053156199`,
+///   `2012S19030620FASSADENARBEITEN`) — four rows on prod — is NOT matched:
+///   reaching those means guessing at what else the value contains, the same
+///   reason the routing rule leaves `LEITID` alone.
+/// - TED's other spelling of the same event, the publication id
+///   `NNNNNN-YYYY` (`054890-2018`), is NOT a rule and cannot be one: it is
+///   exactly the Swedish organisationsnummer's shape. A bounded prod sample
+///   (four 20k-notice windows, 2011–2024) found 51 NATIONALID/BT-501 values
+///   containing that shape and 48 were NOT TED ids — 43 Swedish orgnrs and
+///   Icelandic kennitölur (Boden Taxi AB's `556364-2023`, Árborg's
+///   `650598-2029`) and 5 of a Thüringen agency's own `16900621-1000-50` —
+///   against 3 German rows that really held one. After
+///   normalisation the dash is gone and the value is ten bare digits, the
+///   shape of a PL NIP, an SE orgnr and a BE KBO number alike.
+pub fn ojs_notice_number(value: &str) -> bool {
+    let compact: Vec<u8> = value
+        .bytes()
+        .filter(u8::is_ascii_alphanumeric)
+        .map(|b| b.to_ascii_uppercase())
+        .collect();
+    let [y0, y1, y2, y3, b'S', rest @ ..] = compact.as_slice() else { return false };
+    // A year of TED's era, not any four digits: a register number that merely
+    // has an `S` in fifth place does not qualify.
+    matches!((y0, y1), (b'1', b'9') | (b'2', b'0'))
+        && y2.is_ascii_digit()
+        && y3.is_ascii_digit()
+        && (7..=9).contains(&rest.len())
+        && rest.iter().all(u8::is_ascii_digit)
+}
+
 /// The generic-name cap: a corroboration name carried by MORE than this many
 /// orgs is generic, and agreement on it is agreement nobody chose to make.
 ///
@@ -256,8 +326,9 @@ pub fn hard_scheme(scheme: &str) -> bool {
 /// The Stage-1 gate flip's verdict: does this identifier lose merge-key
 /// status (⇒ the mention goes provisional)? TRUE for the measured
 /// false-merge classes only: the placeholder lexicon, suspicious digit
-/// runs, short VAT stubs, PHONE NUMBERS (issue 365 unit 1), and a
-/// HARD-scheme checksum failure. Letter-run and hex/compound classes
+/// runs, short VAT stubs, PHONE NUMBERS (issue 365 unit 1), bare four-digit
+/// numbers and routing/reporting ids (units 2-3), TED NOTICE NUMBERS (issue
+/// 440), and a HARD-scheme checksum failure. Letter-run and hex/compound classes
 /// deliberately stay census-only — the letter-run composition is not fully
 /// sampled (issue 365 unit 3 owes that read) and the compound class is
 /// RECOVERABLE (Stage 2's canonical_key splits it at match time; rejecting
@@ -297,6 +368,24 @@ pub fn hard_scheme(scheme: &str) -> bool {
 /// holds exactly one org row, so rows-per-distinct-value — the measure that
 /// correctly spared the hex class in issue 312 — reads 1.0 and looks clean.
 /// Names per VALUE is what exposes it.
+///
+/// **The other admissible argument is CATEGORY, and it needs the class to be
+/// PROVEN to name something other than a party.** `routing_scope` leaned on
+/// it (an invoice route cannot be 43 organizations); `notice_number` (issue
+/// 440: a TED publication number) rests on it. Measured by the per-value
+/// standard, the notice-number class runs above the baseline but not by much:
+/// 425 values, 8.5 % spanning ≥2 names, worst 30 (over every mention, where
+/// the baseline was read over `notice_id > 30000000`). What settles it is that
+/// **425 of 425** values resolve to a real TED notice with exactly that
+/// publication number. The value is known to identify a notice, so it cannot
+/// identify an organization, whatever its fusion rate. Looking foreign to a
+/// register is NOT that proof: a platform GUID (issue 312) looks just as
+/// unlike one, and it turned out to be a per-organization record key that was
+/// doing the linking.
+///
+/// | class | values | >=2 names | worst |
+/// | --- | --- | --- | --- |
+/// | `notice_number` (condemned) | 425 | 8.5 % | 30 |
 pub fn condemns(country: Option<&str>, kind: &str, value: &str) -> bool {
     let c = census(country, Some(kind), value);
     c.lexicon
@@ -305,6 +394,7 @@ pub fn condemns(country: Option<&str>, kind: &str, value: &str) -> bool {
         || c.phone
         || c.bare_four_digit
         || c.routing_scope
+        || c.notice_number
         || (c.checksum == Checksum::Fail && hard_scheme(c.scheme))
 }
 
@@ -1301,6 +1391,111 @@ mod tests {
         for v in ["84771", "52830", "HRB1234"] {
             assert!(!condemns(None, "national", v), "{v} keeps its merge-key status");
         }
+    }
+
+    /// Real registrants of every length and shape this module's tests already
+    /// pin — the checksum table's live PASS specimens, the labelled ids issue
+    /// 365 unit 3 protects, the high-volume key, the platform GUIDs — plus the
+    /// issue-440 negatives that sit closest to the notice-number shape. One
+    /// table, so the notice-number rule is tested against everything the other
+    /// rules were.
+    const REAL_REGISTRANTS: &[(Option<&str>, &str, &str)] = &[
+        (Some("CZ"), "national", "00006947"),
+        (Some("FI"), "national", "01003158"),
+        (Some("PT"), "national", "506605949"),
+        (Some("PL"), "national", "5262239325"),
+        (Some("FR"), "national", "180014045"),
+        (Some("FR"), "national", "18001404501577"),
+        (Some("FR"), "national", "18001404502245"),
+        (Some("FR"), "national", "35600000049837"),
+        (Some("FR"), "national", "00000219740248"),
+        (Some("BE"), "national", "0308357753"),
+        (None, "vat", "DE136695976"),
+        (Some("HR"), "national", "69435151530"),
+        (Some("PL"), "national", "000331501"),
+        (Some("NO"), "national", "974760673"),
+        (Some("SE"), "national", "2021005448"),
+        (Some("IT"), "national", "06363391001"),
+        (Some("GR"), "national", "094019245"),
+        (None, "vat", "SE202100544801"),
+        (None, "vat", "FR79180014045"),
+        (Some("DK"), "national", "CVRNR29189498"),
+        (Some("DK"), "national", "SIRET78467169500087"),
+        (Some("DK"), "national", "HANDELSREGISTERHRB93017"),
+        (Some("DE"), "national", "0204994DOEVD83"),
+        (Some("DE"), "national", "DA23095600854B59BC39FE71D8AF0A7C"),
+        (Some("PL"), "national", "NIP5262239325REGON010828091"),
+        // Issue 440's own: TED's `NNNNNN-YYYY` publication-id shape is the
+        // Swedish orgnr's and the Icelandic kennitala's, so it is NOT a rule —
+        // live rows (Boden Taxi AB, Karolinska Institutet, Árborg).
+        (Some("SE"), "national", "556364-2023"),
+        (Some("SE"), "national", "5563642023"),
+        (Some("SE"), "national", "202100-2973"),
+        (Some("IS"), "national", "650598-2029"),
+    ];
+
+    /// Issue 440: a TED / OJ S publication number identifies a NOTICE, never an
+    /// organization, in any country or register. 425 org rows on prod were
+    /// keyed by one (org 13782393, `2018/S 025-054890`, holds Deutsche Bahn AG,
+    /// DB Netz AG and 27 contract-modification titles), and all 425 values
+    /// resolve to a real TED notice with exactly that number.
+    #[test]
+    fn an_ojs_notice_number_is_never_an_organization_identifier() {
+        for v in [
+            "2018/S 025-054890",   // org 13782393's published NATIONALID
+            "2018S025054890",      // …and its stored key
+            "2018/s 025-054890",   // lowercase S
+            "2018 / S 025 - 054890",
+            "2018/S025-054890",
+            "2018/S 025 - 054890",
+            "2011/S 79-130403",    // r208's unpadded issue number (org 1479442)
+            "2011S79130403",
+            "2010/S 66-098284",    // the fixtures' spelling
+            "2010/S 1-000123",     // a one-digit issue: 7 digits after the S
+            "2025S056090000",      // an eForms BT-501, published compact (org 23174070)
+            "1999/S 245-123456",
+        ] {
+            assert!(ojs_notice_number(v), "{v} is an OJ S number");
+            // Country- and kind-blind: no register anywhere issues these.
+            for country in [None, Some("DE"), Some("FR"), Some("PL"), Some("SE"), Some("TZ")] {
+                assert!(condemns(country, "national", v), "{v} under {country:?} must not key");
+            }
+        }
+
+        // End to end through the live normaliser: the published NATIONALID of
+        // the exhibit no longer becomes an identifier at all, so the mention
+        // takes the provisional path.
+        assert_eq!(crate::project::normalise_identifier("2018/S 025-054890", Some("DE")), None);
+        assert_eq!(crate::project::normalise_identifier("2011/S 79-130403", Some("GB")), None);
+
+        // Near misses stay identifiers — each is a live prod row or a shape the
+        // doc names: too many digits for a well-formed number, a buyer's own
+        // `…S…` file reference, two numbers glued together, a year that is not
+        // TED's, a digit where the S belongs, the S elsewhere.
+        for v in [
+            "2011S0213347880",
+            "2018S0736162207",
+            "2024S076079",
+            "2024S076-079",
+            "2026SG340201",
+            "2014SER26",
+            "2011S175287091UND2011S183298253",
+            "2023S0270776402023S053156199",
+            "2012S19030620FASSADENARBEITEN",
+            "3018S025054890",
+            "2018502505489",
+            "20185025054890",
+            "S2018025054890",
+        ] {
+            assert!(!ojs_notice_number(v), "{v} is not a well-formed OJ S number");
+        }
+        for &(country, kind, v) in REAL_REGISTRANTS {
+            assert!(!ojs_notice_number(v), "{v} is a real registrant, not a notice");
+            assert!(!condemns(country, kind, v), "{v} ({country:?}, {kind}) must keep merge-key status");
+        }
+        let normalised = crate::project::normalise_identifier("556364-2023", Some("SE"))
+            .expect("a Swedish orgnr is an identifier");
+        assert_eq!(normalised.value, "5563642023");
     }
 }
 
