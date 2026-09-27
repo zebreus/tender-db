@@ -32,11 +32,13 @@ why the resolver cannot take an `INDEXED BY`)
    `organizations` it finds, so a stray manual `ANALYZE` cannot re-introduce the regression.
 3. **Schedule**: weekly in the quiet window, after the Sunday data-quality run and clear of the snapshot job
    (issue 420's overlap rule) — the same mechanism the data-quality run uses. About 26 min of writer time.
-4. **Stats reach the running readers.** turso loads `sqlite_stat1` at schema (re)parse (`connection.rs`
-   `ReparsePhase::RefreshStats`; `stats.rs` `refresh_analyze_stats`). `sqlite_stat1` already exists (the three
-   internal tables), so a later ANALYZE changes no schema and the pooled reader connections may keep the old
-   stats until restart. MEASURE first (a two-connection test: ANALYZE on one, EXPLAIN on the other); then either
-   rely on it, reopen the readers after the job, or state "effective at the next restart" in the job summary.
+4. **Stats reach the running readers — MEASURED 2026-09-27, they do not on their own.**
+   `crates/store/tests/analyze_stats_pickup.rs`: on one `turso::Database`, a reader opened before an ANALYZE
+   keeps planning with the statistics it loaded at open (`SEARCH t USING INDEX t_k`), while the analyzing
+   connection and any new connection plan with the fresh ones (`SCAN u` + PK seek) — the server would run two
+   plans for one query until its next restart (and a revert, `DELETE FROM sqlite_stat1`, would likewise wait for
+   one). A throwaway schema change (`CREATE TABLE …; DROP TABLE …`) makes the same reader reparse at its next
+   statement and pick the new statistics up; the test pins both halves. So the job ENDS with that bump.
 5. **A plan test that pins the decision** (store): a scratch DB with a skewed `name_norm` distribution, the
    job's ANALYZE run on it, then assert (a) no `sqlite_stat1` row for `organizations`; (b) the resolver
    statement still seeks `organizations_name_country`; (c) the 421 plain-JOIN shape drives from `tenders`.
