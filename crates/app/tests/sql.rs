@@ -742,3 +742,52 @@ async fn the_dialect_canary_shapes_all_run() {
         );
     }
 }
+
+/// Issue 426: two classes of function let a single `/v1/sql` query grow the engine's
+/// memory without bound and ABORT the whole server (measured: 2.7 GiB from
+/// `json_group_array` over one text column inside the 10 s deadline, 6.3 GiB from a
+/// single row through nested `replace`/`hex`/`zeroblob`). The deadline bounds time,
+/// not bytes; these structures never spill. So `classify` refuses them up front. This
+/// pins the refusal end to end, including when the call hides in a subquery, a CASE
+/// arm, or an aggregate's argument.
+#[tokio::test(flavor = "multi_thread")]
+async fn memory_amplifying_functions_are_refused() {
+    let server = Server::start("mem-amplifiers").await;
+    server.ingest_chain().await;
+
+    for query in [
+        // Accumulating aggregates — one unbounded value, no spill.
+        "SELECT group_concat(title) FROM v_tenders",
+        "SELECT json_group_array(title) FROM v_tenders",
+        "SELECT json_group_object(id, title) FROM v_tenders",
+        "SELECT string_agg(title, ',') FROM v_tenders",
+        // Byte-amplifying scalars, including the composed forms the measurement used.
+        "SELECT hex(zeroblob(1000000000))",
+        "SELECT replace(hex(zeroblob(1000000)), '0', hex(zeroblob(1000)))",
+        "SELECT randomblob(1000000000)",
+        "SELECT repeat('x', 1000000000)",
+        "SELECT printf('%.*c', 1000000000, 'x')",
+        "SELECT quote(zeroblob(1000000000))",
+        // Hidden: nested in a subquery, a CASE arm, and inside a count() argument.
+        "SELECT (SELECT group_concat(title) FROM v_tenders)",
+        "SELECT CASE WHEN 1 THEN hex(zeroblob(1000000000)) END",
+        "SELECT count(*) FROM v_tenders WHERE title = replace(title, 'a', hex(zeroblob(1000000)))",
+    ] {
+        let resp = server.sql(query).await;
+        let status = resp.status().as_u16();
+        let body = resp.text().await.unwrap_or_default();
+        assert_eq!(status, 400, "must refuse the memory amplifier: {query:?} (body {body})");
+        assert!(body.contains("not allowed here"), "the 400 must name the reason: {query:?} → {body}");
+    }
+
+    // The bounded aggregates and scalar json builders the docs teach stay allowed —
+    // this is a refusal of specific unbounded functions, not of aggregation.
+    for ok in [
+        "SELECT count(*), max(title), min(id) FROM v_tenders",
+        "SELECT source, count(*) FROM v_tenders GROUP BY source",
+        "SELECT json_object('id', id, 'title', title) FROM v_tenders LIMIT 5",
+        "SELECT length(title) FROM v_tenders LIMIT 5",
+    ] {
+        assert_eq!(server.sql(ok).await.status(), 200, "must still allow: {ok:?}");
+    }
+}

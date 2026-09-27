@@ -11,6 +11,7 @@
 //! plan-probe plan    <db> <statements>            EXPLAIN QUERY PLAN of every statement
 //! plan-probe run     <db> <statements> <name>     execute ONE statement, drain it, time it
 //! plan-probe exec    <db> <sql>                   one statement, writes allowed (a COPY only)
+//! plan-probe mem     <db> <deadline_ms> <sql>     issue 426: peak memory of ONE statement
 //! ```
 //!
 //! The statements file is blocks headed `-- name: <name>`, optionally followed by
@@ -225,6 +226,104 @@ async fn run(db: &str, file: &str, name: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// Issue 426: how much memory can ONE `/v1/sql` statement take before the engine's
+/// deadline stops it? Opens the file the way a `/v1/sql` reader is set up — `query_only`,
+/// a page cache of `PLAN_PROBE_CACHE_KIB` (the endpoint's readers get the store's
+/// `cache_size`, 128 MiB unless `TENDER_CACHE_KIB` says otherwise), the per-statement
+/// deadline (issue 425) — drains the result the way the endpoint does (it stops reading
+/// at its 10,000-row cap), and reports the process's peak RSS. One statement per
+/// process, so the high-water mark (`VmHWM`) is this statement's. A sampler thread
+/// records the RSS timeline and the bytes held in temporary files (a spilled sorter or
+/// a temp table lives in an unlinked file the fd table still shows), so memory the
+/// engine moved to disk is counted too — issue 337 is what a temp file can cost.
+async fn mem(db: &str, deadline_ms: &str, sql: &str) -> Result<(), String> {
+    let deadline = std::time::Duration::from_millis(deadline_ms.parse().map_err(|e| format!("deadline_ms: {e}"))?);
+    let conn = open(db).await?;
+    let cache_kib: u64 = std::env::var("PLAN_PROBE_CACHE_KIB").ok().and_then(|v| v.parse().ok()).unwrap_or(131_072);
+    strings(&conn, &format!("PRAGMA cache_size = -{cache_kib}")).await?;
+    conn.execute("PRAGMA query_only = 1", ()).await.map_err(|e| format!("query_only: {e}"))?;
+    conn.set_query_timeout(deadline).map_err(|e| format!("set_query_timeout: {e}"))?;
+
+    let db_path = std::fs::canonicalize(db).map_err(|e| format!("{db}: {e}"))?;
+    let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let sampler = {
+        let stop = stop.clone();
+        std::thread::spawn(move || {
+            let (mut peak_temp, mut timeline) = (0u64, Vec::new());
+            let started = Instant::now();
+            while !stop.load(std::sync::atomic::Ordering::Relaxed) {
+                peak_temp = peak_temp.max(temp_bytes(&db_path));
+                if timeline.last().is_none_or(|(t, _): &(f64, u64)| started.elapsed().as_secs_f64() - t >= 1.0) {
+                    timeline.push((started.elapsed().as_secs_f64(), status_kib("VmRSS")));
+                }
+                std::thread::sleep(std::time::Duration::from_millis(50));
+            }
+            (peak_temp, timeline)
+        })
+    };
+    let hwm_before = status_kib("VmHWM");
+    let started = Instant::now();
+    let outcome: Result<u64, turso::Error> = async {
+        let mut rows = conn.query(sql, ()).await?;
+        let mut n = 0u64;
+        while rows.next().await?.is_some() {
+            n += 1;
+            if n >= 10_000 {
+                break;
+            }
+        }
+        Ok(n)
+    }
+    .await;
+    let secs = started.elapsed().as_secs_f64();
+    let hwm_after = status_kib("VmHWM");
+    stop.store(true, std::sync::atomic::Ordering::Relaxed);
+    let (peak_temp, timeline) = sampler.join().map_err(|_| "sampler panicked".to_owned())?;
+    let outcome = match outcome {
+        Ok(n) => format!("rows={n}"),
+        Err(turso::Error::Interrupt(_)) => "STOPPED".to_owned(),
+        Err(e) => format!("error={e}"),
+    };
+    let timeline: Vec<String> = timeline.iter().map(|(t, kib)| format!("{t:.0}s:{}M", kib / 1024)).collect();
+    emit(format!(
+        "MEM\t{outcome}\tsecs={secs:.3}\tpeak_rss_mib={}\tbaseline_mib={}\tgrowth_mib={}\tpeak_temp_mib={}\trss={}",
+        hwm_after / 1024,
+        hwm_before / 1024,
+        hwm_after.saturating_sub(hwm_before) / 1024,
+        peak_temp / (1024 * 1024),
+        timeline.join(",")
+    ));
+    Ok(())
+}
+
+/// A `/proc/self/status` field in KiB (0 where it cannot be read — non-Linux).
+fn status_kib(field: &str) -> u64 {
+    std::fs::read_to_string("/proc/self/status")
+        .ok()
+        .and_then(|s| {
+            s.lines()
+                .find_map(|l| l.strip_prefix(field)?.strip_prefix(':').map(str::trim).map(str::to_owned))
+        })
+        .and_then(|v| v.split_whitespace().next()?.parse().ok())
+        .unwrap_or(0)
+}
+
+/// Bytes in the regular files this process holds open other than the database, its
+/// WAL and its shm — i.e. the engine's temporary files, unlinked or not.
+fn temp_bytes(db: &std::path::Path) -> u64 {
+    let Ok(fds) = std::fs::read_dir("/proc/self/fd") else { return 0 };
+    let db = db.to_string_lossy().into_owned();
+    fds.flatten()
+        .filter_map(|fd| {
+            let target = std::fs::read_link(fd.path()).ok()?.to_string_lossy().into_owned();
+            if !target.starts_with('/') || target.starts_with(&db) || target.starts_with("/dev/") || target.starts_with("/proc/") {
+                return None;
+            }
+            std::fs::metadata(fd.path()).ok().filter(|m| m.is_file()).map(|m| m.len())
+        })
+        .sum()
+}
+
 /// Execute one statement, writes allowed — for shaping a COPY's `sqlite_stat1`
 /// (e.g. keeping only a subset's rows) before re-planning. Never the serving DB.
 async fn exec(db: &str, sql: &str) -> Result<(), String> {
@@ -244,7 +343,8 @@ async fn main() -> ExitCode {
         ["plan", db, file] => plan(db, file).await,
         ["run", db, file, name] => run(db, file, name).await,
         ["exec", db, sql] => exec(db, sql).await,
-        _ => Err("usage: plan-probe analyze <db> [--resume] [TABLE...] | stats <db> | plan <db> <file> | run <db> <file> <name> | exec <db> <sql>".into()),
+        ["mem", db, deadline_ms, sql] => mem(db, deadline_ms, sql).await,
+        _ => Err("usage: plan-probe analyze <db> [--resume] [TABLE...] | stats <db> | plan <db> <file> | run <db> <file> <name> | exec <db> <sql> | mem <db> <deadline_ms> <sql>".into()),
     };
     match result {
         Ok(()) => ExitCode::SUCCESS,

@@ -1185,6 +1185,13 @@ fn classify(sql: &str) -> Result<(), ApiError> {
             "the {name} table is not in the queryable public surface"
         )));
     }
+    if let Some(name) = banned_function(&select) {
+        // Issue 426: this function can grow the engine's memory without bound and
+        // abort the whole server. It is refused up front rather than run.
+        return Err(bad(format!(
+            "the {name}() function is not allowed here: it can build a result larger than              this endpoint's memory bound. Aggregate with count/sum/avg/min/max and page              with LIMIT instead"
+        )));
+    }
     if let Some(hit) = filtered_view(&select) {
         return Err(bad(filtered_view_message(&hit)));
     }
@@ -1280,6 +1287,56 @@ fn unfilterable_view(name: &str) -> bool {
 /// TVF — is denied until proven safe and added here.
 const ALLOWED_TVF: [&str; 1] = ["generate_series"];
 
+/// Functions refused up front (issue 426), lowercased. Two measured classes take
+/// the whole server down rather than failing one query: they allocate through the
+/// engine's INFALLIBLE global allocator, so on failure the process ABORTS — every
+/// endpoint, the SSE streams, webhooks and any running ingest job at once. The
+/// sorter, hash join, DISTINCT and ephemeral structures are NOT here: they allocate
+/// fallibly (`try_reserve` → a graceful query error) and spill to `/data/tmp`, so
+/// they cap at the connection's `cache_size` and are safe. Neither the per-statement
+/// deadline (issue 425 — it bounds time, and one instruction can allocate a lot) nor
+/// any turso budget (there is none for these) can bound this class; only refusing it
+/// up front does.
+///
+///   * **Unbounded accumulating aggregates** build ONE value with no spill path,
+///     grown by infallible `String::push_str` / `Vec::push` — measured 2.7 GiB from
+///     `json_group_array` over one text column inside the 10 s deadline, and a
+///     process abort when fed amplified rows.
+///   * **Byte-amplifying scalar functions** return far more than they read from a
+///     numeric argument — measured 6.3 GiB from a single row through nested
+///     `replace`/`hex`/`zeroblob`.
+///
+/// This is a DENY-list of the measured abort class, not a claim of completeness (a
+/// new amplifier could be missed — issue 45's lesson). It is layer 1 of issue 426's
+/// fix; the durable bound is the out-of-process `/v1/sql` worker (issue 431). The
+/// table and TVF surfaces stay POSITIVE allow-lists; this refuses named functions
+/// that have no bounded use on an unauthenticated endpoint. The cost is small: the
+/// 10 MB result cap already truncates any legitimate aggregate's OUTPUT, so what is
+/// lost is only building a huge value the caller could not receive anyway.
+const BANNED_FUNCTIONS: [&str; 19] = [
+    // Accumulators (aggregate, no GROUP BY needed to blow up — one skewed group does).
+    "group_concat",
+    "string_agg",
+    "json_group_array",
+    "json_group_object",
+    "jsonb_group_array",
+    "jsonb_group_object",
+    "array_agg",
+    "median",
+    "mode",
+    "percentile",
+    "percentile_cont",
+    // Byte-amplifying scalars.
+    "zeroblob",
+    "randomblob",
+    "replace",
+    "repeat",
+    "hex",
+    "quote",
+    "printf",
+    "format",
+];
+
 /// The base tables an executed SELECT would read, each tagged with whether a CTE
 /// of that name was visible where it appeared, plus the table-valued functions.
 ///
@@ -1298,6 +1355,11 @@ struct Tables {
     /// against [`ALLOWED_TVF`]. A CTE cannot define a callable, so a TVF name can
     /// never resolve to one, and scope does not enter into it.
     tvfs: Vec<String>,
+    /// Every function called anywhere in the SELECT, lowercased — checked against
+    /// [`BANNED_FUNCTIONS`] (issue 426). Collected in [`walk_expr`] at every
+    /// `FunctionCall`/`FunctionCallStar`, so a call nested in a subquery, a CASE arm
+    /// or an aggregate's argument is seen too.
+    functions: Vec<String>,
     /// Every FROM-source reference that reads an unfilterable view, in walk
     /// order, resolved at its own scope by [`walk_table`]: `(physical view,
     /// the CTE it came through)`. Issue 239's raw material; a SELECT's FROM
@@ -1379,6 +1441,21 @@ fn disallowed_table(select: &turso_parser::ast::Select) -> Option<String> {
         .find(|(name, covered)| !covered && !ALLOWED.contains(&name.as_str()))
         .map(|(name, _)| name.clone())
         .or_else(|| tables.tvfs.iter().find(|name| !ALLOWED_TVF.contains(&name.as_str())).cloned())
+}
+
+/// The first [`BANNED_FUNCTIONS`] call in the SELECT, if any (issue 426). Its own
+/// walk, matching [`disallowed_table`]'s shape; scope does not enter into it (a CTE
+/// cannot define a function, so a name always resolves to the builtin).
+fn banned_function(select: &turso_parser::ast::Select) -> Option<String> {
+    let mut tables = Tables::default();
+    let empty = std::collections::HashSet::new();
+    let no_views = std::collections::HashMap::new();
+    walk_select(
+        select,
+        &Scope { names: &empty, view_ctes: &no_views, parent: None },
+        &mut tables,
+    );
+    tables.functions.into_iter().find(|name| BANNED_FUNCTIONS.contains(&name.as_str()))
 }
 
 fn norm(name: &turso_parser::ast::Name) -> String {
@@ -1633,7 +1710,8 @@ fn walk_expr(e: &turso_parser::ast::Expr, scope: &Scope, t: &mut Tables) {
         Collate(x, _) => walk_expr(x, scope, t),
         Exists(s) => walk_subquery(s, scope, t),
         FieldAccess { base, .. } => walk_expr(base, scope, t),
-        FunctionCall { args, order_by, within_group, filter_over, .. } => {
+        FunctionCall { name, args, order_by, within_group, filter_over, .. } => {
+            t.functions.push(norm(name));
             for a in args {
                 walk_expr(a, scope, t);
             }
@@ -1642,7 +1720,10 @@ fn walk_expr(e: &turso_parser::ast::Expr, scope: &Scope, t: &mut Tables) {
             }
             walk_function_tail(filter_over, scope, t);
         }
-        FunctionCallStar { filter_over, .. } => walk_function_tail(filter_over, scope, t),
+        FunctionCallStar { name, filter_over } => {
+            t.functions.push(norm(name));
+            walk_function_tail(filter_over, scope, t);
+        }
         InList { lhs, rhs, .. } => {
             walk_expr(lhs, scope, t);
             for e in rhs {
