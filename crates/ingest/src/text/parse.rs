@@ -1344,22 +1344,32 @@ fn flush(emit: &mut Emit, field: Option<Field>) -> Result<(), Rejected> {
             }
             let text = lines.join("\n");
             if !text.is_empty() {
-                // `AU` is the awarding authority's NAME — one clean line in every
-                // vintage the fixtures cover (1993, 1995, 2000, 2005, 2008) — so it
-                // becomes an Organization rather than a text row on the root.
+                // `TX` is the English body, and from 2004 it carries the award
+                // block the era publishes no section for (issue 244). The prose
+                // is emitted whole either way — the winners are derived from it,
+                // not moved out of it.
+                if field.code == "TX" {
+                    for name in awarded_names(&text) {
+                        emit.award(name);
+                    }
+                }
+                emit.text(&id, lang, text);
+            }
+        }
+        Rule::Name => {
+            // Issue 436: one name, space-joined — the wrapper's break is never
+            // content in a name (the heading unwrap, without a title's annotation
+            // vocabulary).
+            let text = flatten(&field.lines.join(" "));
+            if !text.is_empty() {
+                // `AU` is the awarding authority's name, and it becomes an
+                // Organization rather than a text row on the root. It is NOT one
+                // clean line in every vintage: 108345-1997 wraps it, and so did
+                // ~1,000 of every 6–7k text-era organizations on prod.
                 if field.code == "AU" {
                     emit.authority(text);
                 } else {
-                    // `TX` is the English body, and from 2004 it carries the award
-                    // block the era publishes no section for (issue 244). The prose
-                    // is emitted whole either way — the winners are derived from it,
-                    // not moved out of it.
-                    if field.code == "TX" {
-                        for name in awarded_names(&text) {
-                            emit.award(name);
-                        }
-                    }
-                    emit.text(&id, lang, text);
+                    emit.text(&id, None, text);
                 }
             }
         }
@@ -1602,8 +1612,8 @@ impl Emit {
             is_ref: true,
         });
         // `TED-OFFICIALNAME`, not the era's own `TXT-CO`, for two reasons that both
-        // matter: `ORG_NAME_FIELDS` in the projection reads only `TED-OFFICIALNAME`
-        // and `TXT-AU`, so a name filed anywhere else leaves the organization
+        // matter: `ORG_NAME_FIELDS` in the projection reads only `TED-OFFICIALNAME`,
+        // `TED-ORGANISATION` and `TXT-AU`, so a name filed anywhere else leaves the organization
         // NAMELESS; and `TXT-CO` already exists on the root when the era publishes its
         // `CO:` line, so reusing it would make one field id mean two different things
         // in one notice. The buyer's `TXT-AU` has neither problem — it is in that list
@@ -1969,6 +1979,35 @@ mod tests {
         let p = parse("1.0/000001\nND: 2-2008\nCY: DE\nTW: BONN\n").expect("parses");
         assert_eq!(homes(&p, "TXT-CY"), vec!["PROCEDURE"]);
         assert_eq!(homes(&p, "TXT-TW"), vec!["PROCEDURE"]);
+    }
+
+    /// Issue 436: a NAME the wrapper broke is one line again — the authority (`AU`)
+    /// and its town (`TW`) — joined with one space, runs collapsed: the unwrap issue
+    /// 397 gave titles. The two `AU` breaks are the shapes measured on prod. A break after
+    /// a hyphen keeps the text as published, `RECHNER- UND`, space included: that is
+    /// a German suspended compound ("Rechner- und Netzwerktechnologie"), and gluing
+    /// it would invent a word. The contractor list `CO` is a LIST, one supplier per
+    /// line, so it stays prose and keeps its lines.
+    #[test]
+    fn a_wrapped_name_rejoins_on_one_line() {
+        let only = |p: &Parsed, field: &str| -> String {
+            let found: Vec<&NoticeValue> =
+                p.values.iter().filter(|v| v.field_id == field).map(|v| &v.value).collect();
+            assert_eq!(found.len(), 1, "one {field}: {found:?}");
+            value_text(found[0]).clone()
+        };
+        let record = "1.0/000001\nND: 1-2005\n\
+            AU: UNIVERSITAET BEISPIELSTADT, ZENTRUM FUER\n    RECHNER- UND \n    NETZWERKTECHNOLOGIE\n\
+            TW: GARCHING BEI\n    MUENCHEN\n\
+            CO: Name and address of successful supplier: \n    Acme Ltd.\n    Beta GmbH.\n";
+        let p = parse(record).expect("parses");
+        assert_eq!(only(&p, "TXT-AU"), "UNIVERSITAET BEISPIELSTADT, ZENTRUM FUER RECHNER- UND NETZWERKTECHNOLOGIE");
+        assert_eq!(only(&p, "TXT-TW"), "GARCHING BEI MUENCHEN");
+        assert_eq!(only(&p, "TXT-CO"), "Name and address of successful supplier:\nAcme Ltd.\nBeta GmbH.");
+
+        let p = parse("1.0/000001\nND: 2-2005\nAU: MINISTERE DE LA DEFENSE,  SOUS-DIRECTION DE LA\n    COMMUNICATION\n")
+            .expect("parses");
+        assert_eq!(only(&p, "TXT-AU"), "MINISTERE DE LA DEFENSE, SOUS-DIRECTION DE LA COMMUNICATION");
     }
 
     /// The scan must stay linear in the body, and must refuse a value with no boundary

@@ -23,7 +23,7 @@
 //! cosmetic: it is what lets a UK notice fold into the same `Tender` shape as
 //! a TED one without the projection learning a dialect.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use serde::Deserialize;
 use serde_json::value::RawValue;
@@ -156,31 +156,25 @@ pub fn parse(bytes: &[u8]) -> Result<Parsed, Rejected> {
             }
         }
     }
+    // The items: the tender's, then every non-delta award's (issue 437). A UK5/UK6/
+    // UK7 award release publishes NO `tender.items` — its CPV and delivery region
+    // sit on `awards[].items[]` and nowhere else — so a walk of the tender alone
+    // served those releases with neither. The tender's come first and are emitted
+    // as they always were; an award item states only what is new at its scope.
+    let mut stated = HashSet::new();
     for item in &tender.items {
-        // An item's classifications and delivery place belong to its lot when
-        // it names one; otherwise they are procedure-wide.
-        let scope = item
-            .related_lot
-            .as_deref()
-            .filter(|l| w.has_section(l))
-            .unwrap_or(ROOT)
-            .to_owned();
-        let suffix = if scope == ROOT { "Procedure" } else { "Lot" };
-        let mut cpvs = item.classification.iter().chain(item.additional_classifications.iter());
-        if let Some(first) = cpvs.next() {
-            w.classification(&scope, &format!("BT-262-{suffix}"), first);
-        }
-        for extra in cpvs {
-            w.classification(&scope, &format!("BT-263-{suffix}"), extra);
-        }
-        for addr in &item.delivery_addresses {
-            if let Some(region) = addr.region.as_deref().filter(|r| !r.is_empty()) {
-                w.push(
-                    &scope,
-                    &format!("BT-5071-{suffix}"),
-                    NoticeValue::Classification { scheme: "nuts".into(), code: region.to_owned() },
-                );
-            }
+        w.item(item, None, &mut stated, false);
+    }
+    for award in release.awards.iter().filter(|a| !a.is_delta()) {
+        // The one lot the award names, for an item that names none — the
+        // narrowness `inherited_periods` applies: a multi-lot award's item is the
+        // procedure's, not any one lot's.
+        let only_lot = match award.related_lots.as_slice() {
+            [lot] => Some(lot.as_str()),
+            _ => None,
+        };
+        for item in &award.items {
+            w.item(item, only_lot, &mut stated, true);
         }
     }
 
@@ -441,6 +435,57 @@ impl Walk {
         // FTS writes the scheme as `CPV`; the corpus stores it lowercase.
         let scheme = c.scheme.as_deref().unwrap_or("CPV").to_ascii_lowercase();
         self.push(section, field, NoticeValue::Classification { scheme, code: code.to_owned() });
+    }
+
+    /// One item's classifications and delivery places, on its scope.
+    ///
+    /// The scope is the lot the item names when that lot has a section, else
+    /// `award_lot` — the one lot an award item's award names — else the procedure.
+    /// An item naming a lot is never moved to its award's: the item said which.
+    /// The first classification is BT-262 and the rest BT-263, per item.
+    ///
+    /// `stated` holds every (scope, scheme, code) emitted so far. A tender item
+    /// only records into it, so a release without award items walks exactly as it
+    /// always did. An award item (`restating`) skips what is already there, in
+    /// EITHER role: an award's items commonly restate the tender's, and the fold's
+    /// fact set keys on the role, so a code the tender made additional and the
+    /// award made main would otherwise be served twice.
+    fn item(
+        &mut self,
+        item: &Item,
+        award_lot: Option<&str>,
+        stated: &mut HashSet<(String, String, String)>,
+        restating: bool,
+    ) {
+        let scope = match item.related_lot.as_deref() {
+            Some(lot) => Some(lot),
+            None => award_lot,
+        }
+        .filter(|l| self.has_section(l))
+        .unwrap_or(ROOT)
+        .to_owned();
+        let suffix = if scope == ROOT { "Procedure" } else { "Lot" };
+        let cpvs = item.classification.iter().chain(item.additional_classifications.iter());
+        for (n, c) in cpvs.enumerate() {
+            let Some(code) = c.id.as_deref().filter(|s| !s.is_empty()) else { continue };
+            let scheme = c.scheme.as_deref().unwrap_or("CPV").to_ascii_lowercase();
+            if !stated.insert((scope.clone(), scheme, code.to_owned())) && restating {
+                continue;
+            }
+            let field = if n == 0 { "BT-262" } else { "BT-263" };
+            self.classification(&scope, &format!("{field}-{suffix}"), c);
+        }
+        for addr in &item.delivery_addresses {
+            let Some(region) = addr.region.as_deref().filter(|r| !r.is_empty()) else { continue };
+            if !stated.insert((scope.clone(), "nuts".to_owned(), region.to_owned())) && restating {
+                continue;
+            }
+            self.push(
+                &scope,
+                &format!("BT-5071-{suffix}"),
+                NoticeValue::Classification { scheme: "nuts".into(), code: region.to_owned() },
+            );
+        }
     }
 
     /// An OCDS `value` object → an `Amount` plus the tax basis it is quoted on.
@@ -722,6 +767,11 @@ struct Award {
     suppliers: Vec<PartyRef>,
     #[serde(default)]
     documents: Vec<Document>,
+    /// What was awarded — and, on a UK5/UK6/UK7, the ONLY place the release
+    /// publishes its CPV and delivery region: 028961-2025 and 083650-2026 carry
+    /// no `tender.items` and one item here (issue 437). Walked like the tender's.
+    #[serde(default)]
+    items: Vec<Item>,
 }
 
 impl Award {
@@ -1252,6 +1302,85 @@ mod tests {
             Some(NoticeValue::Date { utc_seconds: 1_793_750_400, offset_minutes: 0, has_time: true }),
             "2026-11-04T00:00:00+00:00, tender.lots[0].contractPeriod.startDate"
         );
+    }
+
+    /// Issue 437: a UK6/UK7 award release publishes NO `tender.items` — its CPV and
+    /// delivery region sit on `awards[].items[]` and nowhere else, and the walk read
+    /// only the tender's items, so the release served neither. 028961-2025 (UK7) and
+    /// 083650-2026 (UK6) each carry one award item naming lot `1`.
+    #[test]
+    fn an_award_releases_items_carry_its_cpv_and_delivery_region() {
+        let cpv = |code: &str| NoticeValue::Classification { scheme: "cpv".into(), code: code.into() };
+        let nuts = |code: &str| NoticeValue::Classification { scheme: "nuts".into(), code: code.into() };
+
+        let p = parsed("028961-2025");
+        assert_eq!(one(&p, "1", "BT-262-Lot"), Some(cpv("48000000")), "Software package and information systems");
+        assert_eq!(one(&p, "1", "BT-5071-Lot"), Some(nuts("UK")));
+        let q = parsed("083650-2026");
+        assert_eq!(one(&q, "1", "BT-262-Lot"), Some(cpv("80500000")), "Training services");
+        assert_eq!(one(&q, "1", "BT-5071-Lot"), Some(nuts("UKK15")));
+        // Exactly what the item says, on the lot it names: one code, one region.
+        for r in [&p, &q] {
+            assert_eq!(all(r, "BT-262-Lot").len(), 1);
+            assert!(all(r, "BT-263-Lot").is_empty());
+            assert_eq!(all(r, "BT-5071-Lot").len(), 1);
+            assert!(all(r, "BT-262-Procedure").is_empty() && all(r, "BT-5071-Procedure").is_empty());
+        }
+    }
+
+    /// Issue 437's scoping and restatement rules, on one synthetic release. An award
+    /// item lands where a tender item would — its own `relatedLot` — and, naming
+    /// none, on the one lot its award names (a multi-lot award's item is the
+    /// procedure's; the `inherited_periods` narrowness). A code or region already
+    /// stated at that scope is not stated again, in either role, so an award that
+    /// restates the tender's items adds nothing. A delta award's items are nobody's.
+    #[test]
+    fn award_items_scope_like_tender_items_and_restate_nothing() {
+        let payload = br#"{"version":"1.1","releases":[{"ocid":"ocds-x-3",
+            "tender":{"lots":[{"id":"L1"},{"id":"L2"},{"id":"L3"}],
+                      "items":[{"id":"1","relatedLot":"L1",
+                                "additionalClassifications":[{"scheme":"CPV","id":"48000000"},{"scheme":"CPV","id":"72000000"}],
+                                "deliveryAddresses":[{"region":"UKK15"}]}]},
+            "awards":[
+                {"id":"1","status":"active","relatedLots":["L1"],
+                 "items":[{"id":"1","relatedLot":"L1",
+                           "additionalClassifications":[{"scheme":"CPV","id":"48000000"},{"scheme":"CPV","id":"72000000"}],
+                           "deliveryAddresses":[{"region":"UKK15"}]}]},
+                {"id":"2","status":"active","relatedLots":["L1"],
+                 "items":[{"id":"1","relatedLot":"L1",
+                           "additionalClassifications":[{"scheme":"CPV","id":"72000000"},{"scheme":"CPV","id":"30200000"}]}]},
+                {"id":"3","status":"active","relatedLots":["L2"],
+                 "items":[{"id":"1","additionalClassifications":[{"scheme":"CPV","id":"80500000"}],
+                           "deliveryAddresses":[{"region":"UKI5"}]}]},
+                {"id":"4","status":"active","relatedLots":["L2","L3"],
+                 "items":[{"id":"1","additionalClassifications":[{"scheme":"CPV","id":"45000000"}]}]},
+                {"id":"5","items":[{"id":"1","relatedLot":"L3",
+                                    "additionalClassifications":[{"scheme":"CPV","id":"90000000"}]}]}]}]}"#;
+        let p = match parse(payload) {
+            Ok(p) => p,
+            Err(Rejected { reason, detail }) => panic!("quarantined as {reason}: {detail}"),
+        };
+        let codes = |section: &str, field: &str| -> Vec<String> {
+            p.values
+                .iter()
+                .filter(|v| v.section_id == section && v.field_id == field)
+                .map(|v| match &v.value {
+                    NoticeValue::Classification { code, .. } => code.clone(),
+                    other => panic!("{field} is not a classification: {other:?}"),
+                })
+                .collect()
+        };
+        // L1: the tender's two codes and region once each; award 2's new code joins
+        // in the role its own item gives it, and its restated code is dropped.
+        assert_eq!(codes("L1", "BT-262-Lot"), ["48000000"]);
+        assert_eq!(codes("L1", "BT-263-Lot"), ["72000000", "30200000"]);
+        assert_eq!(codes("L1", "BT-5071-Lot"), ["UKK15"]);
+        // L2: award 3's item names no lot; its award names exactly L2.
+        assert_eq!(codes("L2", "BT-262-Lot"), ["80500000"]);
+        assert_eq!(codes("L2", "BT-5071-Lot"), ["UKI5"]);
+        // Award 4 spans L2 and L3, so its lot-less item is procedure-wide.
+        assert_eq!(codes(ROOT, "BT-262-Procedure"), ["45000000"]);
+        assert!(codes("L3", "BT-262-Lot").is_empty(), "award 5 is a delta: its item says nothing");
     }
 
     /// The inheritance's refusals, on one synthetic release: a lot's own period

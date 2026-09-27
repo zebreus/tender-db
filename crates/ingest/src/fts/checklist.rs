@@ -140,7 +140,17 @@ pub const CHECKLIST: &[(&str, Disposition)] = &[
     ("awards[].finalStatusDate", Ignored("when the award's status became final — no destination")),
     ("awards[].hasOptions", Ignored("owed: options are not folded for FTS")),
     ("awards[].options", Ignored("owed: options are not folded for FTS")),
-    ("awards[].items", Ignored("the award's items restate the tender's; classifications and places are read there")),
+    // Issue 437: this was Ignored as "the award's items restate the tender's" — a
+    // false premise. A UK5/UK6/UK7 publishes NO `tender.items` (028961-2025,
+    // 083650-2026), so its CPV and region were on this path and nowhere else.
+    ("awards[].items", Mapped("classifications and delivery places, walked like `tender.items` after them for every non-delta award; a code or region the release already stated at that scope is not stated again (issue 437)")),
+    ("awards[].items[].id", Ignored("the item id; items are not modelled, their classifications and places are")),
+    ("awards[].items[].relatedLot", Mapped("the scope of the item's classifications and delivery places; naming none, the one lot its award names (a multi-lot award's item is procedure-wide)")),
+    ("awards[].items[].additionalClassifications", Mapped("BT-262-{Procedure|Lot} for the first, BT-263-{Procedure|Lot} for the rest, as on `tender.items`")),
+    ("awards[].items[].additionalClassifications[].description", Ignored("the code's label")),
+    ("awards[].items[].deliveryAddresses", Mapped("BT-5071-{Procedure|Lot} from `region` (a NUTS code)")),
+    ("awards[].items[].deliveryAddresses[].country", Ignored("the region's country; the NUTS code implies it")),
+    ("awards[].items[].deliveryAddresses[].countryName", Ignored("the label of `country`")),
     ("awards[].mainProcurementCategory", Ignored("owed: the nature (BT-23) is not folded for FTS")),
     ("awards[].milestones", Ignored("award milestones — outside the canonical model")),
     ("awards[].title", Ignored("the award's own title — no destination; the lot and procedure titles are the served ones")),
@@ -215,6 +225,10 @@ mod tests {
         assert!(matches!(disposition("tender.lots[].contractPeriod.maxExtentDate"), Some(Ignored(_))));
         assert!(matches!(disposition("contracts[].period.startDate"), Some(Mapped(_))));
         assert!(matches!(disposition("contracts[].period.maxExtentDate"), Some(Ignored(_))));
+        // Issue 437: the award's items are read, leaf for leaf like the tender's.
+        assert!(matches!(disposition("awards[].items[].additionalClassifications[].id"), Some(Mapped(_))));
+        assert!(matches!(disposition("awards[].items[].deliveryAddresses[].region"), Some(Mapped(_))));
+        assert!(matches!(disposition("awards[].items[].deliveryAddresses[].countryName"), Some(Ignored(_))));
         // A prefix that is not a path boundary does not match: `id` must not cover `identifier`,
         // and `tender.lots` must not cover `tender.lotsGroup` — the `tender` container does.
         assert_eq!(disposition("identifier"), None);

@@ -20,8 +20,8 @@ pub enum Rule {
     /// The head line and each continuation line is one value of its own.
     PerLine(Type),
     /// Head + continuation lines are one prose value, newline-joined; the
-    /// language tag is `Some("EN")` for English renderings, `None` for names
-    /// and original-language bodies (see the module doc on `OT`).
+    /// language tag is `Some("EN")` for English renderings, `None` for
+    /// original-language bodies (see the module doc on `OT`).
     Prose(Option<&'static str>),
     /// Head + continuation lines are ONE LINE, space-joined — a heading that
     /// TED's ~72-column wrapper happened to break (issue 397).
@@ -38,6 +38,24 @@ pub enum Rule {
     /// A `TX`/`AB` body keeps [`Prose`](Rule::Prose): there the line structure is
     /// the document's own and paragraph breaks mean something.
     Heading(Option<&'static str>),
+    /// Head + continuation lines are ONE NAME, space-joined — the
+    /// [`Heading`](Rule::Heading) unwrap, for a name TED's wrapper broke (issue
+    /// 436). No language tag, and no annotation block to strip: that vocabulary is
+    /// a title's.
+    ///
+    /// `AU` used to be `Prose`, so the break reached `organizations.name`: about
+    /// 1,000 of every 6–7k organizations in the text era's id band carried a literal
+    /// newline (`…SOUS-DIRECTION DE LA\nCOMMUNICATION…`,
+    /// `RECHNER- UND \nNETZWERKTECHNOLOGIE`). A hyphen before the break stays as
+    /// published, space included — `RECHNER- UND` is a suspended compound, and
+    /// gluing it would invent a word.
+    ///
+    /// Two neighbours keep [`Prose`](Rule::Prose). The contractor list `CO`:
+    /// 154-2005 publishes one supplier per line, so there the break separates
+    /// values (108345-1997's wrapped sentence cannot be told from that list by
+    /// shape). And `IA`, a URL or e-mail: a wrap inside an address wants no
+    /// separator at all, which neither join gives, and no fixture wraps one.
+    Name,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -68,7 +86,7 @@ pub enum Type {
     Line(Option<&'static str>),
 }
 
-use Rule::{Heading, PerLine, Prose, Scalar};
+use Rule::{Heading, Name, PerLine, Prose, Scalar};
 
 /// Every decided field code. Kept sorted; the completeness tests hold this
 /// bijective with the vendored inventory.
@@ -76,7 +94,9 @@ const FIELDS: &[(&str, Rule)] = &[
     ("AA", Scalar(Type::Code)),
     ("AB", Prose(Some("EN"))),
     ("AC", Scalar(Type::Code)),
-    ("AU", Prose(None)),
+    // Issue 436: a NAME, not prose — the authority's one name, wrapped at ~72
+    // columns like a title. See `Rule::Name`.
+    ("AU", Name),
     ("CC", PerLine(Type::Product)),
     ("CO", Prose(None)),
     ("CT", PerLine(Type::Line(Some("EN")))),
@@ -119,7 +139,8 @@ const FIELDS: &[(&str, Rule)] = &[
     // Issue 397: a HEADING, not prose — TED's wrapper breaks it at ~72 columns
     // and the break is never content. See `Rule::Heading`.
     ("TI", Heading(Some("EN"))),
-    ("TW", Prose(None)),
+    // The authority's town: one name, like `AU` (issue 436).
+    ("TW", Name),
     ("TX", Prose(Some("EN"))),
     ("TY", Scalar(Type::Code)),
 ];

@@ -445,6 +445,26 @@ fn a_greek_iso_record_is_decoded_as_iso_8859_7_by_its_own_declaration() {
     }
 }
 
+/// Issue 436: `AU` is ONE name, and TED's ~72-column wrapper breaking it is not
+/// content. 108345-1997 publishes its authority over two lines —
+/// `…GRAFEIO PROMITHEION,` / `KTIRIO DIOIKISIS` — and the name kept the break as a
+/// literal `\n`, which is how ~1,000 of every 6–7k text-era organizations came to
+/// carry one. The unwrap is the one issue 397 gave titles: one space, runs collapsed.
+#[test]
+fn a_wrapped_awarding_authority_name_is_one_line() {
+    let rec = parse_one(
+        "1997-can-greek-iso-8859-7.txt",
+        "EN_19970828_166_ISO_ORG.ZIP!EN_19970828_1997166_ISO_ORG",
+    );
+    let (lang, au) = text_value(&rec, "TXT-AU");
+    assert_eq!(lang, None, "a name carries no language tag");
+    assert_eq!(
+        au,
+        "ARISTOTELEIO PANEPISTIMIO THESSALONIKIS (APTH), GRAFEIO PROMITHEION, KTIRIO DIOIKISIS"
+    );
+    assert!(!au.contains('\n'), "the wrapper's break is not part of the name: {au:?}");
+}
+
 fn replace_bytes(hay: &[u8], from: &[u8], to: &[u8]) -> Vec<u8> {
     let at = hay.windows(from.len()).position(|w| w == from).expect("the header line is present");
     [&hay[..at], to, &hay[at + from.len()..]].concat()
