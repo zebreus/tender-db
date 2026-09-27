@@ -639,3 +639,71 @@ async fn the_result_section_probe_seeks_kind_then_notice() {
     }
     let _ = std::fs::remove_file(&path);
 }
+
+/// Issue 386 unit 1: the FTS weld gauge counts versions that DISAGREE on the
+/// buyer, not Tenders with several buyers. After the 2026-09-27 FTS re-fold the
+/// first form read 949, of which 946 were frameworks naming the same 18 or 140
+/// buyers in every version — joint procurements the per-buyer split rightly keeps
+/// together — so its "expected 0" could never be met. Driven on hand-built rows
+/// (foreign keys off: the gauge reads `tenders` and `tender_version_parties` only),
+/// with the old count executed beside it so the difference is on record.
+#[tokio::test]
+async fn the_fts_weld_gauge_counts_disagreeing_versions_not_joint_procurements() {
+    let (db, _, path) = scratch("weld-fts").await;
+    db.set_foreign_keys(false).await.expect("fk off");
+    // (tender id, source, [(seq, organization id)]) — role alternates between the
+    // two buyer vocabularies, which the gauge must treat alike.
+    let tenders: [(i64, &str, &[(i64, i64)]); 5] = [
+        // Joint procurement: the same two buyers in both versions. NOT a weld.
+        (1, "fts", &[(1, 11), (1, 12), (2, 11), (2, 12)]),
+        // A weld: one buyer per version, a different one each time.
+        (2, "fts", &[(1, 21), (2, 22)]),
+        // A later version ADDS a buyer: its widest version holds the union. NOT a weld.
+        (3, "fts", &[(1, 31), (1, 32), (2, 31), (2, 32), (2, 33)]),
+        // The same disagreement on TED is out of scope for the FTS arm.
+        (4, "ted", &[(1, 41), (2, 42)]),
+        // One version, one buyer.
+        (5, "fts", &[(1, 51)]),
+    ];
+    for (id, source, parties) in tenders {
+        db.execute_for_test(&format!(
+            "INSERT INTO tenders (id, source, kind, created_at) VALUES ({id}, '{source}', 'procedure', 0)"
+        ))
+        .await
+        .expect("tender");
+        for (i, (seq, org)) in parties.iter().enumerate() {
+            let role = if i % 2 == 0 { "buyer" } else { "Procedure-Buyer" };
+            db.execute_for_test(&format!(
+                "INSERT INTO tender_version_parties \
+                   (tender_id, seq, lot_id, role, organization_id, mention_notice_id, mention_section_id) \
+                 VALUES ({id}, {seq}, NULL, '{role}', {org}, 0, 's{id}-{i}')"
+            ))
+            .await
+            .expect("party");
+        }
+    }
+    // A review body alone on tender 5's second version: to a role-blind count that
+    // is a version disagreeing with the first (buyer 51 vs org 99) — a false weld.
+    db.execute_for_test(
+        "INSERT INTO tender_version_parties \
+           (tender_id, seq, lot_id, role, organization_id, mention_notice_id, mention_section_id) \
+         VALUES (5, 2, NULL, 'Lot-ReviewOrg', 99, 0, 'review')",
+    )
+    .await
+    .expect("reviewer");
+
+    let count = |rows: data_quality::Rows| rows[0][0].as_i64().expect("a count");
+    assert_eq!(
+        count(rows(&db, &data_quality::weld_fts_sql()).await),
+        1,
+        "only tender 2 — its versions disagree on the buyer"
+    );
+    // The first form, for the record: it also counted the joint procurement and the
+    // amendment, which is how 946 frameworks filled a line that expects zero.
+    let naive = "SELECT COUNT(*) FROM (SELECT p.tender_id \
+       FROM tenders t JOIN tender_version_parties p ON p.tender_id = t.id \
+      WHERE t.source = 'fts' AND p.role IN ('buyer', 'Procedure-Buyer') \
+      GROUP BY p.tender_id HAVING COUNT(DISTINCT p.organization_id) >= 2)";
+    assert_eq!(count(rows(&db, naive).await), 3, "the old gauge's reading on the same rows");
+    let _ = std::fs::remove_file(&path);
+}

@@ -1,6 +1,6 @@
 # 413 — two sdk-1.13 notices hold as `unclaimed-content` on a `StrategicProcurement` block the parser already knows, and the quarantine terminal ledger has been lit by them since the June-2025 backfill
 
-Status: ready-for-agent — **the ignore rule is DEPLOYED 2026-09-18 07:41 UTC (`d813915`)**; the shape is read and recorded below (NOT a Part-scheme lot — a legacy `listName="indicator"`/false CVD block), the fixtures and test are in, the ledger entry is in with `resolved: null`. What remains is the two rows' reprocess — a production write the operating session's classifier refuses, so it waits for Lennart's go-ahead like the other gated jobs (the exact command is in the 2026-09-18 comment); until it runs, `/metrics` still reads `tender_db_quarantine_reason_members{reason="unclaimed-content"} 2 tender_db_quarantine_terminal_exceeded 1`. Was: ready-for-agent — found 2026-09-18 02:5xZ by the hourly audit (step 3): `/metrics` reads `tender_db_quarantine_terminal_exceeded 1`, and the one reason over its policy is `unclaimed-content` at 2 rows against `Fixed(0)`.
+Status: done — **the two rows are reprocessed and serve (2026-09-27 08:5x UTC, queue jobs 1583/1584, owner go-ahead): `tender_db_quarantine_terminal_exceeded` reads 0 and the `unclaimed-content` reason line is gone** (see the foot). The ignore rule was DEPLOYED 2026-09-18 07:41 UTC (`d813915`); the ledger entry is marked resolved 2026-09-27. Was: ready-for-agent — **the ignore rule is DEPLOYED 2026-09-18 07:41 UTC (`d813915`)**; the shape is read and recorded below (NOT a Part-scheme lot — a legacy `listName="indicator"`/false CVD block), the fixtures and test are in, the ledger entry is in with `resolved: null`. What remains is the two rows' reprocess — a production write the operating session's classifier refuses, so it waits for Lennart's go-ahead like the other gated jobs (the exact command is in the 2026-09-18 comment); until it runs, `/metrics` still reads `tender_db_quarantine_reason_members{reason="unclaimed-content"} 2 tender_db_quarantine_terminal_exceeded 1`. Was: ready-for-agent — found 2026-09-18 02:5xZ by the hourly audit (step 3): `/metrics` reads `tender_db_quarantine_terminal_exceeded 1`, and the one reason over its policy is `unclaimed-content` at 2 rows against `Fixed(0)`.
 Kind: defect (ingest — the eForms element mounts in `crates/ingest/src/eforms/index.rs`; plus two held rows to reprocess) — and an operational one: the terminal ledger's alarm is now permanently on for two rows, which is how an alarm stops meaning anything.
 Relates to: 195 (RESOLVED 2026-08-14 — drained `unclaimed-content` to ZERO and installed the mount for exactly this block under a `Lot`-scheme lot; these two are the first rows of the reason since), 303 (the terminal ledger: `quarantine_terminal_policy` defaults an unnamed reason to `Fixed(0)` DELIBERATELY, so a new hold of a drained class is an alarm, not noise), 402 (the OJ S daily backfill of 2025-06 that brought both members in on 2026-09-15 16:54Z), 268 (`unrepresentable-value` is `AcceptedInflow` — the 326 held under it today are the accepted class and are NOT this issue)
 Blocked by: nothing
@@ -123,7 +123,7 @@ Then the ledger entry's `resolved` flips from `null` to the date (a one-line com
     curl -s https://tenders.zebreus.click/metrics | grep -E '^tender_db_quarantine_(reason_members\{reason="unclaimed-content"\}|terminal_exceeded) '
 
 - **done**: only `tender_db_quarantine_terminal_exceeded 0` — the reason line is gone (0 rows are not listed) and no reason is over its policy
-- **open**: `tender_db_quarantine_reason_members{reason="unclaimed-content"} 2` then `tender_db_quarantine_terminal_exceeded 1` (read 2026-09-18)
+- **open**: `tender_db_quarantine_reason_members{reason="unclaimed-content"} 2` then `tender_db_quarantine_terminal_exceeded 1` (read 2026-09-18; **done** read 2026-09-27 09:2x UTC after jobs 1583/1584)
 
 ## Done when
 
@@ -137,3 +137,19 @@ Then the ledger entry's `resolved` flips from `null` to the date (a one-line com
   `eforms:eforms-sdk-1.13` — a production write, so it waits with the other gated jobs if the
   classifier refuses it) and serve.
 - `tender_db_quarantine_terminal_exceeded` reads `0`, and stays a signal.
+
+## 2026-09-27 — the two rows reprocessed; the terminal ledger is dark again
+
+Run on the owner's go-ahead (the classifier gate the 09-18 comment waited on no longer applies):
+
+    /root/aj.sh /admin/jobs '{"kind":"reprocess","reason":"unclaimed-content","profiles":["eforms:eforms-sdk-1.13"]}'
+
+- queue job **1583** `reprocess unclaimed-content [eforms:eforms-sdk-1.13]` — `1 package(s): 2 reclaimed, 0 still held,
+  0 already parsed, 0 skipped by dispatch policy`
+- queue job **1584** `project rebuild=false` — `2 notices → 2 tenders (0 islands), 2 versions; 2 tenders written`
+
+`/metrics` after the dashboard cache's next refresh (it reads the 60 s cache, so the first read lagged):
+`tender_db_quarantine_terminal_exceeded 0` and no `unclaimed-content` reason line — the Verify's done state. The
+quarantine ledger entry for this issue (`crates/app/data/quarantine-ledger.json`) now carries `"resolved": "2026-09-27"`.
+Every `## Done when` bullet is met: the shape is read (legacy `listName="indicator"` CVD block), the element is an
+explicit ignore with its reason, the two rows serve, and the alarm is back to 0 so it is a signal again.

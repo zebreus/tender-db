@@ -381,6 +381,6 @@
   "detail_like": "%StrategicProcurement/%ApplicableLegalBasis",
   "diagnosis": "Two sdk-1.13 CANs from the 2025-06 OJ S backfill (issue 402; S 2025/112 and 2025/120, first seen 2026-09-15) publish efbc:ApplicableLegalBasis with listName=indicator - BT-717's pre-1.8 TYPE name in the attribute slot - saying false, beside a cvd-contract-type category default; one also publishes the conformant cvd-scope block (true) in the same lot. The SDK defines the leaf only under cvd-scope/ipi-scope/eed-scope, and the alias-grafted LotResult branch that matched the block on its category code has no ApplicableLegalBasis child, so the leaf held each notice whole and the terminal ledger (Fixed(0) for a drained class) lit. Explicit ignore (index::IGNORED) of the indicator/false block only: its false says what its absence says, and a legacy block saying true keeps quarantining until one is seen. The fold reads neither BT-717 nor BT-735, so the canonical layer is unchanged either way. Resolved when the two rows are reprocessed.",
   "fix": "issue 413",
-  "resolved": null
+  "resolved": "2026-09-27"
  }
 ]

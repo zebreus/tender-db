@@ -1075,19 +1075,39 @@ pub fn weld_bands_sql() -> String {
 /// Issue 386 unit 1: the FTS arm of the weld detector. On Find a Tender a
 /// Tender is keyed on the ocid, and the utilities register publishes many
 /// buyers' awards under ONE ocid — a weld of 2–30 buyers, far below
-/// [`WELD_MIN_BUYERS`] and invisible in a corpus-wide top-40 listing. So this
-/// counts the FTS Tenders carrying two or more distinct buyer organizations
-/// across their versions: with the per-buyer key election in place the honest
-/// reading is ZERO, and any non-zero is a recurrence (or a joint procurement,
-/// which the listing's `per-ver` column separates) — the tripwire for the
-/// 2021→ backfill. Scoped through `tenders(source, id)`, so it is an index read
-/// over ~8k tenders, not a corpus pass.
+/// [`WELD_MIN_BUYERS`] and invisible in a corpus-wide top-40 listing.
+///
+/// **What a weld looks like here: versions that DISAGREE on the buyer.** The
+/// per-buyer key election splits an ocid whose releases carry different buyer
+/// sets, so a Tender whose buyers across all versions outnumber its widest
+/// single version is one the split missed. The first form of this gauge counted
+/// every FTS Tender with two or more buyers, and after the 2026-09-27 FTS
+/// re-fold it read **949 of which 946 carried their buyers inside ONE version**:
+/// NI health-trust and Scottish housing frameworks naming 18 or 140 buyers per
+/// release, the same set in every version. Those are joint procurements, served
+/// correctly, and a gauge whose "expected 0" is ~950 by construction is an alarm
+/// that never goes out. The same re-fold left **3** Tenders whose versions
+/// disagree, each a single buyer per version resolved into two organization rows
+/// — so a non-zero here is a missed split or one buyer duplicated across
+/// versions by the resolver, both worth a look. A later version that ADDS a buyer
+/// to an earlier set is not counted (its widest version already holds the union).
+///
+/// Scoped through `tenders(source, id)` and prefiltered to Tenders with two or
+/// more buyers, so it is an index read over the FTS slice, not a corpus pass.
 pub fn weld_fts_sql() -> String {
-    "SELECT COUNT(*) FROM (SELECT p.tender_id \
-       FROM tenders t JOIN tender_version_parties p ON p.tender_id = t.id \
-      WHERE t.source = 'fts' AND p.role IN ('buyer', 'Procedure-Buyer') \
-      GROUP BY p.tender_id \
-     HAVING COUNT(DISTINCT p.organization_id) >= 2)"
+    "SELECT COUNT(*) FROM \
+       (SELECT p.tender_id, COUNT(DISTINCT p.organization_id) AS total \
+          FROM tenders t JOIN tender_version_parties p ON p.tender_id = t.id \
+         WHERE t.source = 'fts' AND p.role IN ('buyer', 'Procedure-Buyer') \
+         GROUP BY p.tender_id \
+        HAVING COUNT(DISTINCT p.organization_id) >= 2) a \
+     JOIN (SELECT tender_id, MAX(c) AS widest \
+             FROM (SELECT p.tender_id, p.seq, COUNT(DISTINCT p.organization_id) AS c \
+                     FROM tenders t JOIN tender_version_parties p ON p.tender_id = t.id \
+                    WHERE t.source = 'fts' AND p.role IN ('buyer', 'Procedure-Buyer') \
+                    GROUP BY p.tender_id, p.seq) \
+            GROUP BY tender_id) b ON b.tender_id = a.tender_id \
+    WHERE a.total > b.widest"
         .to_owned()
 }
 
@@ -2296,7 +2316,7 @@ pub struct Raw {
     /// `[currency, cents, hits, tenders]` per repeated implausible amount (issue 366).
     pub weld_candidates: Rows,
     pub weld_bands: Rows,
-    /// Issue 386 unit 1: one row, one count — FTS Tenders with >= 2 distinct buyers.
+    /// Issue 386 unit 1: one row, one count — FTS Tenders whose versions disagree on the buyer.
     pub weld_fts: Rows,
     pub sentinel_amounts: Rows,
     /// `[currency, cents, hits, tenders]` per repeated amount at the bottom of the
@@ -3227,16 +3247,18 @@ pub fn render_text(report: &Report) -> String {
             Some(n) => {
                 let _ = writeln!(
                     out,
-                    "  FTS Tenders with >= 2 distinct buyers: {} — expected 0 under the per-buyer \
-                     ocid split (issue 386); any non-zero is a recurrence or a joint procurement",
+                    "  FTS Tenders whose versions disagree on the buyer: {} — expected 0 under the \
+                     per-buyer ocid split (issue 386); a non-zero is a missed split or one buyer the \
+                     resolver split across versions (joint procurements naming several buyers in \
+                     every version are not counted)",
                     group(n)
                 );
             }
             None => {
                 let _ = writeln!(
                     out,
-                    "  FTS Tenders with >= 2 distinct buyers: UNMEASURED — issue 386's query did \
-                     not run, which is not 'none found'"
+                    "  FTS Tenders whose versions disagree on the buyer: UNMEASURED — issue 386's \
+                     query did not run, which is not 'none found'"
                 );
             }
         }
