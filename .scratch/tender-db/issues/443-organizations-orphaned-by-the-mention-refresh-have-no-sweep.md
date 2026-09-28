@@ -1,7 +1,6 @@
 # 443 — organizations left with no mention by 434's refresh have no sweep: they stay listed, searchable and counted
 
-Status: ready-for-agent — **SWEPT AND VERIFIED 2026-09-28** (see the foot): 1,768,353 orphans deleted, and a fresh dry run reads 0. Left: step 3 (wire it after folds that re-bind), reading the 30 non-provisional orphans, and one small follow-up commit (see the foot). Was: BUILT 2026-09-28, deployed `d5bf157`. It
-394 refold fold) IS step 1's measurement. Was: filed 2026-09-28 from the first fold with 434's refresh (job 1610, stopped in planning
+Status: ready-for-agent — **SWEPT AND VERIFIED 2026-09-28** (see the foot): 1,768,353 orphans deleted, and a fresh dry run reads 0. Left: step 3 (wire it after folds that re-bind), reading the 30 non-provisional orphans, and one small follow-up commit (see the foot). Was: BUILT 2026-09-28, deployed `d5bf157`. Was: filed 2026-09-28 from the first fold with 434's refresh (job 1610, stopped in planning
 after re-binding 4,649,867 mentions, and job 1616, the full fold now running). Measure-first: size the orphaned
 cohort after 1616 lands, then build.
 mine to take.
