@@ -1,6 +1,6 @@
 # 443 — organizations left with no mention by 434's refresh have no sweep: they stay listed, searchable and counted
 
-Status: ready-for-agent — **SWEPT AND VERIFIED 2026-09-28** (see the foot): 1,768,353 orphans deleted, and a fresh dry run reads 0. Left: step 3 (wire it after folds that re-bind), reading the 30 non-provisional orphans, and one small follow-up commit (see the foot). Was: BUILT 2026-09-28, deployed `d5bf157`. Was: filed 2026-09-28 from the first fold with 434's refresh (job 1610, stopped in planning
+Status: ready-for-agent — **SWEPT AND VERIFIED 2026-09-28** (see the foot): 1,768,353 orphans deleted, and a fresh dry run reads 0. Left: step 3 (wire it after folds that re-bind), and reading step 4 (see the foot). Was: BUILT 2026-09-28, deployed `d5bf157`. Was: filed 2026-09-28 from the first fold with 434's refresh (job 1610, stopped in planning
 after re-binding 4,649,867 mentions, and job 1616, the full fold now running). Measure-first: size the orphaned
 cohort after 1616 lands, then build.
 mine to take.
@@ -112,10 +112,10 @@ was seen in these windows.
     orphans. Wire it after the incremental fold or on the weekly tick.
   - **The 30 non-provisional orphans.** Read them: identifier-bearing rows whose mentions all moved, or rows a case
     review stripped (the `org_case_reviews` cohort). The sweep never touches them.
-  - **A small follow-up is built locally, not committed.** The job summary and phase detail say "non-provisional"
-    instead of "identifier-bearing". `the_orphan_sweep_counts_plans_and_sweeps_real_orphans` runs the dry→wet cycle
-    on 30 seeded rows in the supervisor. Its gate ran, but its result could not be read this session, so it waits
-    for the next gate run.
+  - **The small follow-up is COMMITTED 2026-09-28 (gate GATE-EXIT=0, 784 s)**; it deploys with the next bundle. The
+    job summary and phase detail say "non-provisional" instead of "identifier-bearing", and
+    `the_orphan_sweep_counts_plans_and_sweeps_real_orphans` runs the dry→wet cycle on 30 seeded rows in the
+    supervisor.
 
 ## The 30 non-provisional orphans, read 2026-09-28 ~19:00 UTC (8 bounded `/v1/sql` windows of 4M ids, ≤ 0.2 s each)
 

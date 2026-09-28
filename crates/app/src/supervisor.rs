@@ -3389,7 +3389,7 @@ impl Supervisor {
         }
         let summary = format!(
             "{} organizations walked; {} provisional rows with no recorded mention ({} nameless, \
-             {} country-less, {} named) and {} identifier-bearing ones (counted, never touched); \
+             {} country-less, {} named) and {} non-provisional ones (counted, never touched); \
              kept: {} still named by a party, bid-party or winner row, {} by a review table",
             count.scanned,
             count.nameless + count.countryless + count.named,
@@ -3469,7 +3469,7 @@ impl Supervisor {
                 None,
                 format!(
                     "{} {} ({} nameless, {} country-less, {} named); kept {} referenced, {} under \
-                     review; {} identifier-bearing orphans",
+                     review; {} non-provisional orphans",
                     total.swept,
                     if dry_run { "to sweep" } else { "swept" },
                     total.nameless,
@@ -14301,6 +14301,82 @@ mod tests {
         sup.run_spec(&job(Spec::MarkSkippedSiblings { dry_run: true, expect: None, expect_gaps: None }))
             .await
             .expect("a dry run needs no expectation");
+    }
+
+    /// Issue 443 (review follow-up): the dry-then-wet cycle on real rows, not the
+    /// empty database the parity test uses — the plan's `swept`, the wet run's
+    /// count against it, and the residual it re-records.
+    #[tokio::test]
+    async fn the_orphan_sweep_counts_plans_and_sweeps_real_orphans() {
+        let path = format!("/tmp/tender-db-sup-sweep-{}-{}.db", std::process::id(), store::now_unix());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        db.build_organization_indexes().await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        {
+            // Fixture rows through a raw connection with foreign keys off (the
+            // party row points at a version that does not exist).
+            let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+            conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+            for id in 1..=30 {
+                conn.execute(
+                    &format!(
+                        "INSERT INTO organizations (id, country, name, name_norm, provisional, created_at) \
+                         VALUES ({id}, 'DE', 'Org {id}', 'org {id}', 1, 0)"
+                    ),
+                    (),
+                )
+                .await
+                .unwrap();
+            }
+            // 1-5 mentioned, 6 still named by a party row: 24 orphans to sweep.
+            for id in 1..=5 {
+                conn.execute(
+                    &format!(
+                        "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name) \
+                         VALUES ({id}, 'ORG-1', {id}, 'Org {id}')"
+                    ),
+                    (),
+                )
+                .await
+                .unwrap();
+            }
+            conn.execute(
+                "INSERT INTO tender_version_parties (tender_id, seq, role, organization_id, mention_notice_id, mention_section_id) \
+                 VALUES (1, 1, 'buyer', 6, 99, 'ORG-1')",
+                (),
+            )
+            .await
+            .unwrap();
+        }
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let plan = |body: &str| serde_json::from_str::<serde_json::Value>(body).unwrap();
+
+        let dry = sup.run_spec(&job(Spec::SweepOrphanOrgs { dry_run: true })).await.unwrap();
+        assert!(dry.contains("24 to sweep") && dry.contains("kept: 1 still named"), "{dry}");
+        let (body, _) = db.latest_report("orphan-org-sweep-plan").await.unwrap().unwrap();
+        assert_eq!(plan(&body)["swept"], 24, "{body}");
+
+        let wet = sup.run_spec(&job(Spec::SweepOrphanOrgs { dry_run: false })).await.unwrap();
+        assert!(wet.contains("swept 24 of the 24 counted"), "{wet}");
+        let (body, _) = db.latest_report("orphan-org-sweep-plan").await.unwrap().unwrap();
+        let v = plan(&body);
+        assert_eq!((v["swept"].as_u64(), v["swept_this_run"].as_u64()), (Some(0), Some(24)), "{body}");
+        assert_eq!(
+            db.scalar("SELECT COUNT(*) FROM organizations").await.unwrap(),
+            Some(store::turso::Value::Integer(6)),
+            "the five mentioned rows and the party-named one stay"
+        );
+        assert_eq!(
+            db.scalar("SELECT COUNT(*) FROM org_sweep_log").await.unwrap(),
+            Some(store::turso::Value::Integer(24)),
+            "each swept row left its pre-image"
+        );
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
     }
 
     /// Issue 443: the orphan sweep deletes only under a reviewed plan. Wet
