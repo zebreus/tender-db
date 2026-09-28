@@ -1,6 +1,7 @@
 # 443 — organizations left with no mention by 434's refresh have no sweep: they stay listed, searchable and counted
 
-Status: ready-for-agent — filed 2026-09-28 from the first fold with 434's refresh (job 1610, stopped in planning
+Status: ready-for-agent — the sweep is BUILT 2026-09-28 (see "Built" below): gated (GATE-EXIT=0), committed, deploying. It
+deploys with the next bundle after job 1617, and the dry run IS step 1's measurement. Was: filed 2026-09-28 from the first fold with 434's refresh (job 1610, stopped in planning
 after re-binding 4,649,867 mentions, and job 1616, the full fold now running). Measure-first: size the orphaned
 cohort after 1616 lands, then build.
 mine to take.
@@ -42,3 +43,52 @@ After the sweep: the provisional orphan count reads 0 (from step 1's measurement
 `/v1/organizations?name=` no longer returns a mention-less provisional row for a sampled rebound name.
 
 - **open**: unmeasured (filed 2026-09-28; the cohort is still being created by job 1616)
+
+## Sampled 2026-09-28 ~17:10 UTC (after 1616, during 1617; three bounded `/v1/sql` windows)
+
+| org id window | rows | provisional | no mention |
+| --- | --- | --- | --- |
+| 1,000,001–1,020,000 | 20,000 | 20,000 | **19,785** |
+| 12,000,001–12,020,000 | 2,464 | 1,974 | 4 |
+| 25,000,001–25,020,000 | 6,439 | 6,439 | 2,358 |
+
+The first 2,000 rows of the first window: 1,969 orphans, all nameless, 84 of them country-less, all minted the same
+second (`created_at` 1786785861, 2026-08-15), and none named by a party, bid-party or winner row. These are the R2.0.7
+nameless provisionals (435) whose mentions 434/439 re-bound to named rows, as predicted. No identifier-bearing orphan
+was seen in these windows.
+
+## Built (2026-09-28): `sweep-orphan-orgs`, dry by default
+
+- `Db::sweep_orphan_orgs_batch(batch, after, dry_run, job_id)` (`canonical.rs`) walks `organizations` in id
+  windows. One range read of `organization_mentions_org` per window says which ids are still mentioned. A
+  provisional orphan then takes three seeks (party, bid-party and winner `(organization_id)` indexes); if any hits,
+  it is `referenced` and kept for the fold to move. An orphan named by a review table is `protected` and kept, since
+  those tables carry no FK. The review tables are case reviews, re-homing case and target, country verdicts,
+  merge-verdict members and name drops, and the keep-set is read on the writer inside every window, so a verdict
+  POSTed mid-run is honoured from the next window on. Non-provisional orphans are counted under `identified` and
+  never touched.
+- Wet, in one transaction per window with foreign keys ON: the row's pre-image goes into the new `org_sweep_log`
+  first (name, name_norm, country, created_at, and every variant as JSON `[[lang, name, name_norm], …]`,
+  job_id). Then its `organization_names` rows go, then the row, and `organization removed` is published. This
+  keeps step 2's ledger rule in its own table: `org_merge_log` needs a keeper, and an orphan has none. 442's
+  `organization_names_org` makes the delete's proof a seek. A row something still references fails the window
+  rather than being orphaned, and so does a row that is no longer provisional (the ROLLBACK restores its variants).
+- It refuses to start while any of its five indexes (`organization_mentions_org`, `organization_names_org` and the
+  three party-table `_org`) is missing. All five are deferred, so an unfinished rebuild would otherwise turn every
+  window into table walks.
+- Parity (432's shape): every run counts first. Dry stores `orphan-org-sweep-plan`. Wet refuses without that plan
+  and aborts before writing if its count is outside max(2%, 50) of the plan's `swept`. It then re-records the
+  residual after every window that deleted, so a wet run that is stopped, fails or is cut by a restart resumes
+  under the same parity. A stop before the first delete leaves the reviewed plan untouched. It is stoppable between
+  windows and is a heavy-write kind.
+- Tests:
+  - `crates/store/tests/orphan_org_sweep.rs`: every keep arm (all six review sources), dry writing nothing,
+    windows of 3 across every boundary, FK on before and after, the pre-image rows exact, a second run finding
+    nothing, and a verdict recorded between windows protecting its org.
+  - `the_orphan_sweep_reads_by_index`: no `Rewind` in any read, and the mention range ends at the window.
+  - `the_orphan_sweep_deletes_only_under_a_matching_dry_plan`: a missing index → refused; no plan → refused; a moved
+    count → aborted with the plan untouched; a matching plan → runs and re-records.
+- Reviewed before commit by a four-lens adversarial workflow (correctness, transactions, performance, contract).
+  Its surviving points are all in the list above. Not taken: prepared statements for the per-candidate seeks (a nit;
+  the reviewer's estimate is minutes over the whole walk).
+- Step 3 (wiring it after folds) waits for the first wet run's timing.

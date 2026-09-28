@@ -619,6 +619,22 @@ pub(crate) const SCHEMA: &str = "
         PRIMARY KEY (org_id, lang, dropped_at)
     ) STRICT;
 
+    -- Issue 443: the pre-image of every organization the orphan sweep deleted
+    -- (a provisional row no mention, derived party row or review named any
+    -- more). The row is restorable from here alone, name variants included —
+    -- org_name_drops' rule: removing real data has to be undoable. No FK: the
+    -- id is gone from `organizations`, and ids are never reused.
+    CREATE TABLE IF NOT EXISTS org_sweep_log (
+        org_id     INTEGER NOT NULL PRIMARY KEY,
+        name       TEXT    NOT NULL,
+        name_norm  TEXT,
+        country    TEXT,
+        created_at INTEGER NOT NULL,
+        names      TEXT    NOT NULL,  -- JSON [[lang, name, name_norm], ...]
+        swept_at   INTEGER NOT NULL,
+        job_id     INTEGER
+    ) STRICT;
+
     CREATE TABLE IF NOT EXISTS org_match_keys (
         org_id   INTEGER NOT NULL,
         key_kind TEXT    NOT NULL CHECK (key_kind IN ('n2','n3','n3s')),
@@ -2084,6 +2100,51 @@ pub struct OrgDissolve {
     /// the stamped tenders' full chains (the pair's requeue half).
     pub refold_notices: u64,
     pub tender_changes: u64,
+}
+
+/// One window of the issue-443 orphan sweep. Totals are summed across windows
+/// by the job.
+#[derive(Debug, Default, Clone)]
+pub struct OrphanOrgSweep {
+    /// Organization rows the window visited, provisional or not.
+    pub scanned: u64,
+    /// Identifier-less (provisional) rows with no recorded mention, split by
+    /// what the row still says: no name at all, a name but no country, both.
+    pub nameless: u64,
+    pub countryless: u64,
+    pub named: u64,
+    /// Non-provisional rows with no recorded mention — identifier-bearing,
+    /// or promoted once and since stripped by a review. Counted and never
+    /// touched: an identifier row's mentions re-resolve to itself, so a count
+    /// here is a finding to read, not sweep scope.
+    pub identified: u64,
+    /// Provisional orphans a party, bid-party or winner row still names —
+    /// derived rows the fold has not moved yet. Kept; the sweep after the
+    /// next fold of their tenders takes them.
+    pub referenced: u64,
+    /// Provisional orphans a review table names (case reviews, re-homing,
+    /// country and merge verdicts, name drops). Kept: they are a verdict's
+    /// referent, and those tables carry no FK to say so.
+    pub protected: u64,
+    /// Provisional orphans deleted (dry run: that would be).
+    pub swept: u64,
+    /// Their `organization_names` rows, deleted with them.
+    pub names: u64,
+}
+
+impl OrphanOrgSweep {
+    /// Sum one window into a walk's totals.
+    pub fn add(&mut self, w: &Self) {
+        self.scanned += w.scanned;
+        self.nameless += w.nameless;
+        self.countryless += w.countryless;
+        self.named += w.named;
+        self.identified += w.identified;
+        self.referenced += w.referenced;
+        self.protected += w.protected;
+        self.swept += w.swept;
+        self.names += w.names;
+    }
 }
 
 /// Inputs to the issue-300 Stage-2 R2 merge — the ingest-side rules injected
@@ -21066,6 +21127,252 @@ impl Db {
         Ok(())
     }
 
+    /// Every organization id a review or verdict table names — the issue-443
+    /// sweep's keep-set. Those tables carry no FK on purpose (a reviewed org
+    /// may later be merged away), so nothing but this read stops the sweep
+    /// deleting a verdict's referent. All are hand-review sized.
+    pub async fn org_ids_under_review(&self) -> turso::Result<std::collections::HashSet<i64>> {
+        let conn = self.reader().await?;
+        Self::review_keep_set(&conn).await
+    }
+
+    /// [`Self::org_ids_under_review`] on a given connection: the sweep reads
+    /// it on the writer, inside the window, so a verdict POSTed while a long
+    /// wet run is under way (the POST writes through the same writer) is seen
+    /// by the next window rather than by the next run.
+    async fn review_keep_set(conn: &Connection) -> turso::Result<std::collections::HashSet<i64>> {
+        let mut ids = std::collections::HashSet::new();
+        for sql in [
+            "SELECT case_org_id FROM org_case_reviews",
+            "SELECT case_org_id FROM org_mention_rehoming",
+            "SELECT target_org_id FROM org_mention_rehoming WHERE target_org_id IS NOT NULL",
+            "SELECT org_id FROM org_country_verdicts",
+            "SELECT org_id FROM org_name_drops",
+        ] {
+            let mut rows = conn.query(sql, ()).await?;
+            while let Some(row) = rows.next().await? {
+                ids.insert(int(&row, 0));
+            }
+        }
+        // A merge verdict names its group as the JSON array of member ids,
+        // read the way the R2 planner reads it (`merge_verdict_for`).
+        let mut rows = conn.query("SELECT members FROM org_merge_verdicts", ()).await?;
+        while let Some(row) = rows.next().await? {
+            ids.extend(
+                text(&row, 0)
+                    .trim_matches(|c| c == '[' || c == ']')
+                    .split(',')
+                    .filter_map(|x| x.trim().parse::<i64>().ok()),
+            );
+        }
+        Ok(ids)
+    }
+
+    /// Which of the indexes the issue-443 sweep depends on are absent. Every
+    /// read of the sweep and its foreign-key proof are single-column seeks on
+    /// these, and all of them are deferred: a rebuild strips them and only a
+    /// finished fold or `reindex` puts them back. Without one, a window's read
+    /// or an org delete's proof walks a table of 10⁷–10⁸ rows, so the job
+    /// refuses to start instead.
+    pub async fn orphan_sweep_missing_indexes(&self) -> turso::Result<Vec<&'static str>> {
+        let conn = self.reader().await?;
+        let mut present = std::collections::HashSet::new();
+        let mut rows = conn.query("SELECT name FROM sqlite_master WHERE type = 'index'", ()).await?;
+        while let Some(row) = rows.next().await? {
+            present.insert(text(&row, 0));
+        }
+        Ok(ORPHAN_SWEEP_INDEXES.into_iter().filter(|n| !present.contains(*n)).collect())
+    }
+
+    /// One window of the issue-443 orphan sweep: organizations no recorded
+    /// mention points at any more. Issue 434's refresh re-binds a mention in
+    /// place and leaves the row it left; every other org delete is
+    /// merge-shaped, so without this nothing ever removes an unreferenced row
+    /// and it stays listed, searchable and counted.
+    ///
+    /// Only PROVISIONAL rows are deleted, and only when no party, bid-party or
+    /// winner row names them either (derived rows the fold has not moved yet —
+    /// counted as `referenced` and left) and no review table does
+    /// ([`Self::org_ids_under_review`], read inside the window on the writer —
+    /// `protected`). Non-provisional orphans are counted under `identified`,
+    /// never touched. A deleted row takes its `organization_names`
+    /// rows with it, leaves its pre-image in `org_sweep_log` and publishes an
+    /// `organization removed` change. Foreign keys stay ON: issue 442's `organization_names_org`
+    /// makes the delete's proof a seek, and a row something still references
+    /// fails the batch rather than being orphaned.
+    ///
+    /// The window is `id > after`, `batch` rows in id order; the mention check
+    /// is one range read of `organization_mentions_org` per window, not a
+    /// probe per id. Returns the window's counts and the watermark. `dry_run`
+    /// counts and writes nothing.
+    pub async fn sweep_orphan_orgs_batch(
+        &self,
+        batch: i64,
+        after: i64,
+        dry_run: bool,
+        job_id: Option<i64>,
+    ) -> turso::Result<(OrphanOrgSweep, i64)> {
+        let conn = self.conn().await;
+        let mut report = OrphanOrgSweep::default();
+        // (id, provisional, nameless, country-less)
+        let mut window: Vec<(i64, bool, bool, bool)> = Vec::new();
+        {
+            let mut rows = conn
+                .query(
+                    "SELECT id, provisional, name, country FROM organizations \
+                      WHERE id > ? ORDER BY id LIMIT ?",
+                    (Value::Integer(after), Value::Integer(batch)),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                window.push((
+                    int(&row, 0),
+                    int(&row, 1) != 0,
+                    text(&row, 2).trim().is_empty(),
+                    opt_text_of(&row, 3).is_none(),
+                ));
+            }
+        }
+        let (Some(&(first, ..)), Some(&(last, ..))) = (window.first(), window.last()) else {
+            return Ok((report, after));
+        };
+        report.scanned = window.len() as u64;
+        let mut mentioned: std::collections::HashSet<i64> = std::collections::HashSet::new();
+        {
+            let mut rows = conn
+                .query(ORPHAN_SWEEP_MENTIONED_SQL, (Value::Integer(first), Value::Integer(last)))
+                .await?;
+            while let Some(row) = rows.next().await? {
+                mentioned.insert(int(&row, 0));
+            }
+        }
+        let mut doomed: Vec<i64> = Vec::new();
+        let mut keep: Option<std::collections::HashSet<i64>> = None;
+        for &(id, provisional, nameless, countryless) in &window {
+            if mentioned.contains(&id) {
+                continue;
+            }
+            if !provisional {
+                report.identified += 1;
+                continue;
+            }
+            if nameless {
+                report.nameless += 1;
+            } else if countryless {
+                report.countryless += 1;
+            } else {
+                report.named += 1;
+            }
+            if keep.is_none() {
+                keep = Some(Self::review_keep_set(&conn).await?);
+            }
+            if keep.as_ref().is_some_and(|k| k.contains(&id)) {
+                report.protected += 1;
+                continue;
+            }
+            let mut referenced = false;
+            for sql in ORPHAN_SWEEP_REFERENCE_SQL {
+                let mut rows = conn.query(sql, (Value::Integer(id),)).await?;
+                if rows.next().await?.is_some() {
+                    referenced = true;
+                    break;
+                }
+            }
+            if referenced {
+                report.referenced += 1;
+            } else {
+                doomed.push(id);
+            }
+        }
+        report.swept = doomed.len() as u64;
+        if doomed.is_empty() {
+            return Ok((report, last));
+        }
+        if dry_run {
+            for chunk in doomed.chunks(IN_CHUNK) {
+                let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+                let sql = format!(
+                    "SELECT COUNT(*) FROM organization_names WHERE org_id IN ({})",
+                    placeholders(chunk.len())
+                );
+                let mut rows = conn.query(&sql, params).await?;
+                if let Some(row) = rows.next().await? {
+                    report.names += int(&row, 0) as u64;
+                }
+            }
+            return Ok((report, last));
+        }
+        let now = crate::now_unix();
+        // A wet window counts what it actually deleted.
+        report.swept = 0;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        if let Err(e) = Self::sweep_orphans_tx(&conn, &doomed, now, job_id, &mut report).await {
+            // The single shared writer connection must never be left with an
+            // open transaction (CONTEXT.md's discipline).
+            let _ = conn.execute("ROLLBACK", ()).await;
+            return Err(e);
+        }
+        if let Err(e) = conn.execute("COMMIT", ()).await {
+            let _ = conn.execute("ROLLBACK", ()).await;
+            return Err(e);
+        }
+        self.publish_cursor(&conn).await?;
+        Ok((report, last))
+    }
+
+    /// The write half of [`Self::sweep_orphan_orgs_batch`], separated so the
+    /// caller can ROLLBACK on any error.
+    async fn sweep_orphans_tx(
+        conn: &Connection,
+        doomed: &[i64],
+        now: i64,
+        job_id: Option<i64>,
+        report: &mut OrphanOrgSweep,
+    ) -> turso::Result<()> {
+        for &id in doomed {
+            // The pre-image first, variants and all, in the same transaction as
+            // the deletes it records.
+            let logged = conn
+                .execute(
+                    "INSERT INTO org_sweep_log \
+                         (org_id, name, name_norm, country, created_at, names, swept_at, job_id) \
+                     SELECT o.id, o.name, o.name_norm, o.country, o.created_at, \
+                            COALESCE((SELECT json_group_array(json_array(n.lang, n.name, n.name_norm)) \
+                                        FROM organization_names n WHERE n.org_id = o.id), '[]'), \
+                            ?, ? \
+                       FROM organizations o WHERE o.id = ? AND o.provisional = 1",
+                    (Value::Integer(now), opt_int(job_id), Value::Integer(id)),
+                )
+                .await?;
+            if logged != 1 {
+                return Err(turso::Error::Error(format!(
+                    "orphan sweep: org {id} is no longer a provisional row — window rolled back"
+                )));
+            }
+            report.names += conn
+                .execute("DELETE FROM organization_names WHERE org_id = ?", (Value::Integer(id),))
+                .await?;
+            // `provisional = 1` again here, the belt under the window read. The
+            // writer is held from that read to here, so it cannot trip; if it
+            // ever does, the window fails whole and its ROLLBACK restores the
+            // variants deleted just above.
+            let deleted = conn
+                .execute(
+                    "DELETE FROM organizations WHERE id = ? AND provisional = 1",
+                    (Value::Integer(id),),
+                )
+                .await?;
+            if deleted != 1 {
+                return Err(turso::Error::Error(format!(
+                    "orphan sweep: org {id} is no longer a provisional row — window rolled back"
+                )));
+            }
+            report.swept += 1;
+            append_change(conn, "organization", id, None, "removed", now).await?;
+        }
+        Ok(())
+    }
+
     /// The Stage-3 rescue pool: every identifier-bearing org with NO country
     /// — `(id, kind, identifier, name)`. Small by measurement (4,816 rows,
     /// 2026-08-29), so one unbatched read.
@@ -23307,6 +23614,31 @@ fn json_field(body: &str, key: &str) -> Option<String> {
 /// `IN (…)` read of a batch's ids never overflows a single statement.
 const IN_CHUNK: usize = 512;
 
+/// The issue-443 sweep's mention check: which ids of one org-id window any
+/// recorded mention still points at. One range read of
+/// `organization_mentions_org` (pinned by `the_orphan_sweep_reads_by_index`).
+const ORPHAN_SWEEP_MENTIONED_SQL: &str =
+    "SELECT organization_id FROM organization_mentions WHERE organization_id >= ? AND organization_id <= ?";
+
+/// The indexes behind every read of the issue-443 sweep and behind its org
+/// delete's foreign-key proof (turso proves a child only through an index of
+/// the FK's exact shape — issue 442).
+const ORPHAN_SWEEP_INDEXES: [&str; 5] = [
+    "organization_mentions_org",
+    "organization_names_org",
+    "tender_version_parties_org",
+    "tender_version_bid_parties_org",
+    "tender_version_result_winners_org",
+];
+
+/// The derived rows that still name an org the mentions have left: a seek per
+/// candidate on each table's `(organization_id)` index.
+const ORPHAN_SWEEP_REFERENCE_SQL: [&str; 3] = [
+    "SELECT 1 FROM tender_version_parties WHERE organization_id = ? LIMIT 1",
+    "SELECT 1 FROM tender_version_bid_parties WHERE organization_id = ? LIMIT 1",
+    "SELECT 1 FROM tender_version_result_winners WHERE organization_id = ? LIMIT 1",
+];
+
 /// One index page of the Stage-4 candidate-edge scan (issue 300 §7):
 /// ~40 B/row ⇒ ~8 MB in RAM per page, well inside the read-side
 /// WINDOW=500_000 precedent above.
@@ -23360,6 +23692,50 @@ mod tests {
             None,
             "an existing index is never refused"
         );
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
+
+    /// Issue 443: the orphan sweep walks every organization on prod (~48M
+    /// mentions behind them), so each of its reads must be an index range or
+    /// seek — a `Rewind` here is a whole-table walk per window or per
+    /// candidate. Read off the compiled program, not a timing.
+    #[tokio::test]
+    async fn the_orphan_sweep_reads_by_index() {
+        let path = format!("/tmp/tender-db-orphan-sweep-plan-{}.db", std::process::id());
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+        let db = crate::Db::open(&path).await.unwrap();
+        db.build_organization_indexes().await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        let conn = db.conn().await;
+        let mut statements = vec![(super::ORPHAN_SWEEP_MENTIONED_SQL, "organization_mentions_org")];
+        statements.extend(super::ORPHAN_SWEEP_REFERENCE_SQL.iter().map(|sql| (*sql, "")));
+        for (sql, index) in statements {
+            let mut rows = conn.query(&format!("EXPLAIN {sql}"), ()).await.unwrap();
+            let mut ops: Vec<(String, String)> = Vec::new();
+            while let Some(r) = rows.next().await.unwrap() {
+                let text = |i| r.get_value(i).ok().and_then(|v| v.as_text().cloned()).unwrap_or_default();
+                ops.push((text(1), text(7)));
+            }
+            assert!(!ops.iter().any(|(op, _)| op == "Rewind"), "{sql} walks a table: {ops:#?}");
+            assert!(ops.iter().any(|(op, _)| op.starts_with("Seek")), "{sql} seeks: {ops:#?}");
+            if !index.is_empty() {
+                assert!(
+                    ops.iter().any(|(op, c)| op == "OpenRead" && c.contains(&format!("={index},"))),
+                    "{sql} reads {index}: {ops:#?}"
+                );
+                // …and stops at the window's upper id, rather than reading the
+                // index to its end from every window's lower one.
+                assert!(
+                    ops.iter().any(|(op, _)| op == "IdxGT" || op == "IdxGE"),
+                    "{sql} ends its range with an index comparison: {ops:#?}"
+                );
+            }
+        }
+        drop(conn);
         for suffix in ["", "-wal", "-shm"] {
             let _ = std::fs::remove_file(format!("{path}{suffix}"));
         }

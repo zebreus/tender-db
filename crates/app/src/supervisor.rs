@@ -485,6 +485,12 @@ enum Spec {
     /// recorded mention through the post-234 provisional path. `dry_run`
     /// counts and writes nothing (the default, like every org-mutating job).
     RepairPlaceholderOrgs { dry_run: bool },
+    /// Issue 443: delete the provisional organizations no recorded mention,
+    /// derived party row or review table names any more — the rows issue
+    /// 434's mention refresh leaves behind. Dry (the default) stores
+    /// `orphan-org-sweep-plan`; wet requires that plan and aborts before the
+    /// first write if its own count has moved outside max(2%, 50).
+    SweepOrphanOrgs { dry_run: bool },
     /// Re-queue a profile cohort for the incremental fold (issue 85): clear its
     /// `projected` watermark so the trailing `project rebuild=false` re-derives just
     /// those Tenders. For a cohort the projection MIS-READ (unmapped field ids) —
@@ -1871,6 +1877,16 @@ impl Supervisor {
                     .await,
                 ])
             }
+            // Issue 443: deletes org rows and emits change events, so dry by
+            // default; the wet arm checks itself against the stored dry plan.
+            "sweep-orphan-orgs" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let params =
+                    if dry_run { "sweep-orphan-orgs dry-run" } else { "sweep-orphan-orgs" }.to_owned();
+                Ok(vec![
+                    self.push("sweep-orphan-orgs", params, Spec::SweepOrphanOrgs { dry_run }).await,
+                ])
+            }
             // Issue 259 landing: repair the stale nested-org mention layer.
             // Deletes org rows and emits change events, so it asks to be meant:
             // `dry_run` defaults to TRUE (the data-quality convention — a
@@ -2424,6 +2440,29 @@ fn f14_target_suffix(t: &ingest::project::F14TargetGate) -> String {
     )
 }
 
+/// Issue 443: the stored dry plan of `sweep-orphan-orgs`, and after a wet
+/// window the residual it leaves.
+const ORPHAN_SWEEP_PLAN: &str = "orphan-org-sweep-plan";
+
+/// The plan body: `counted`'s classes, and `swept` = what is left to sweep —
+/// the count less `swept_this_run`, which is 0 for a dry run.
+fn orphan_sweep_plan(counted: &store::OrphanOrgSweep, swept_this_run: u64, dry_run: bool) -> String {
+    serde_json::json!({
+        "scanned": counted.scanned,
+        "swept": counted.swept.saturating_sub(swept_this_run),
+        "names": counted.names,
+        "nameless": counted.nameless,
+        "countryless": counted.countryless,
+        "named": counted.named,
+        "identified": counted.identified,
+        "referenced": counted.referenced,
+        "protected": counted.protected,
+        "residual_of_wet_run": !dry_run,
+        "swept_this_run": swept_this_run,
+    })
+    .to_string()
+}
+
 const STOPPABLE_KINDS: &[&str] = &[
     "process",
     "reparse",
@@ -2478,6 +2517,9 @@ const STOPPABLE_KINDS: &[&str] = &[
     // Issue 432: read between read windows, between fold transactions and
     // between rewrite slices; a stop before the first fold stores no plan.
     "repair-provisional-name-norm",
+    // Issue 443: read between windows of both walks; a stop while counting
+    // stores no plan, a stop while sweeping re-records the residual.
+    "sweep-orphan-orgs",
 ];
 
 /// Issue 300 decision 5: a key shared by more organizations than this is a
@@ -3299,6 +3341,163 @@ impl Supervisor {
         Ok(format!("probed {} day(s), {fetched} new", results.len()))
     }
 
+    /// Issue 443's `sweep-orphan-orgs`, out of `run_spec`'s match for the
+    /// stack's sake — see [`Self::run_repair_member_twins`]. Refuses to start
+    /// while an index the sweep reads by is missing. Every run then counts
+    /// first. Dry stores the count as `orphan-org-sweep-plan`; wet holds it
+    /// against that stored plan and aborts before the first write outside
+    /// max(2%, 50) — issue 432's parity — then deletes window by window,
+    /// re-recording the residual after every window that deleted, so a wet
+    /// run stopped, failed or cut by a restart resumes under the same parity.
+    async fn run_sweep_orphan_orgs(&self, job: &Job, dry_run: bool) -> Result<String, String> {
+        let missing = self.db.orphan_sweep_missing_indexes().await.map_err(|e| e.to_string())?;
+        if !missing.is_empty() {
+            return Err(format!(
+                "sweep-orphan-orgs refused: missing {} (nothing was read or written) — without \
+                 them every window walks a whole table; run `reindex` first",
+                missing.join(", ")
+            ));
+        }
+        let planned = if dry_run {
+            None
+        } else {
+            let (body, _) = self
+                .db
+                .latest_report(ORPHAN_SWEEP_PLAN)
+                .await
+                .map_err(|e| e.to_string())?
+                .ok_or_else(|| format!("no stored {ORPHAN_SWEEP_PLAN} — run sweep-orphan-orgs dry first"))?;
+            let v: serde_json::Value = serde_json::from_str(&body).map_err(|e| e.to_string())?;
+            Some(v["swept"].as_u64().ok_or_else(|| format!("{ORPHAN_SWEEP_PLAN} lacks swept"))?)
+        };
+        let (count, stopped) = self.sweep_orphan_walk(job.id, None).await?;
+        if stopped {
+            return Ok("sweep-orphan-orgs STOPPED while counting: nothing was written and the \
+                       stored plan was left untouched"
+                .to_owned());
+        }
+        if let Some(planned) = planned {
+            let slack = (planned / 50).max(50);
+            if count.swept.abs_diff(planned) > slack {
+                return Err(format!(
+                    "sweep-orphan-orgs aborted: {} orphans to sweep now, the stored plan says \
+                     {planned} (slack {slack}); nothing was written — run it dry again and read \
+                     the new plan",
+                    count.swept
+                ));
+            }
+        }
+        let summary = format!(
+            "{} organizations walked; {} provisional rows with no recorded mention ({} nameless, \
+             {} country-less, {} named) and {} identifier-bearing ones (counted, never touched); \
+             kept: {} still named by a party, bid-party or winner row, {} by a review table",
+            count.scanned,
+            count.nameless + count.countryless + count.named,
+            count.nameless,
+            count.countryless,
+            count.named,
+            count.identified,
+            count.referenced,
+            count.protected,
+        );
+        if dry_run {
+            self.db
+                .put_report(ORPHAN_SWEEP_PLAN, &orphan_sweep_plan(&count, 0, true), store::now_unix())
+                .await
+                .map_err(|e| e.to_string())?;
+            return Ok(format!(
+                "sweep-orphan-orgs (issue 443) DRY RUN — plan recorded, nothing written: {summary}; \
+                 {} to sweep, with {} name variants",
+                count.swept, count.names
+            ));
+        }
+        let (done, stopped) = self.sweep_orphan_walk(job.id, Some(&count)).await?;
+        if done.swept == 0 && !stopped {
+            // No window deleted, so none re-recorded: the residual is the count.
+            // A STOP before the first delete leaves the reviewed plan alone
+            // (issue 432's rule).
+            self.db
+                .put_report(ORPHAN_SWEEP_PLAN, &orphan_sweep_plan(&count, 0, false), store::now_unix())
+                .await
+                .map_err(|e| e.to_string())?;
+        }
+        Ok(format!(
+            "sweep-orphan-orgs (issue 443): {summary}; swept {} of the {} counted, with {} name \
+             variants (each published as an organization removed){}",
+            done.swept,
+            count.swept,
+            done.names,
+            match (stopped, done.swept) {
+                (false, _) => "",
+                (true, 0) => " — STOPPED before the first delete; the stored plan was left untouched",
+                (true, _) => " — STOPPED; the residual plan was re-recorded",
+            }
+        ))
+    }
+
+    /// One whole walk of [`store::Db::sweep_orphan_orgs_batch`], summed, with
+    /// the stop flag read before every window. `counted` makes it the wet walk:
+    /// each window that deleted re-records the residual plan (the count less
+    /// what this run has swept) before the next begins. Returns the totals and
+    /// whether it was stopped.
+    async fn sweep_orphan_walk(
+        &self,
+        job_id: u64,
+        counted: Option<&store::OrphanOrgSweep>,
+    ) -> Result<(store::OrphanOrgSweep, bool), String> {
+        let dry_run = counted.is_none();
+        let phase = if dry_run { "counting" } else { "sweeping" };
+        let mut total = store::OrphanOrgSweep::default();
+        let mut after = 0i64;
+        loop {
+            if self.cancelled(job_id) {
+                return Ok((total, true));
+            }
+            let (window, next) = self
+                .db
+                .sweep_orphan_orgs_batch(BACKFILL_BATCH, after, dry_run, Some(job_id as i64))
+                .await
+                .map_err(|e| e.to_string())?;
+            if window.scanned == 0 {
+                return Ok((total, false));
+            }
+            after = next;
+            total.add(&window);
+            self.set_phase(
+                phase,
+                Some(total.scanned),
+                None,
+                format!(
+                    "{} {} ({} nameless, {} country-less, {} named); kept {} referenced, {} under \
+                     review; {} identifier-bearing orphans",
+                    total.swept,
+                    if dry_run { "to sweep" } else { "swept" },
+                    total.nameless,
+                    total.countryless,
+                    total.named,
+                    total.referenced,
+                    total.protected,
+                    total.identified
+                ),
+            );
+            if let Some(counted) = counted
+                && window.swept > 0
+            {
+                self.db
+                    .put_report(
+                        ORPHAN_SWEEP_PLAN,
+                        &orphan_sweep_plan(counted, total.swept, false),
+                        store::now_unix(),
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                    eprintln!("supervisor: checkpoint after orphan sweep batch: {e}");
+                }
+            }
+        }
+    }
+
     /// The `project` job (incremental, rebuild, or an interrupted rebuild's
     /// salvage), out of `run_spec`'s match for the stack's sake — see
     /// [`Self::run_repair_member_twins`].
@@ -3687,6 +3886,7 @@ impl Supervisor {
             Spec::Project { rebuild, clear_changes } => {
                 Box::pin(self.run_project(job, *rebuild, *clear_changes)).await
             }
+            Spec::SweepOrphanOrgs { dry_run } => Box::pin(self.run_sweep_orphan_orgs(job, *dry_run)).await,
             Spec::Reindex => {
                 // Both builders are CREATE INDEX IF NOT EXISTS loops — idempotent, so
                 // this rebuilds only the missing deferred indexes without touching the
@@ -11224,6 +11424,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "rederive-eur"
             | "repair-nested-orgs"
             | "repair-placeholder-orgs"
+            | "sweep-orphan-orgs"
             | "match-org-identifiers"
             | "build-org-match-keys"
             | "scan-org-match-keys"
@@ -12059,7 +12260,11 @@ mod tests {
                 "repair-notice-instants",
                 "repair-version-instants",
                 "repair-minted-countries",
-                "repair-provisional-name-norm"
+                "repair-provisional-name-norm",
+                // Issue 443: `sweep_orphan_walk` reads the flag before every
+                // window of both walks; a stop while counting stores no plan, a
+                // stop while sweeping re-records the residual.
+                "sweep-orphan-orgs"
             ]
         );
     }
@@ -14096,6 +14301,49 @@ mod tests {
         sup.run_spec(&job(Spec::MarkSkippedSiblings { dry_run: true, expect: None, expect_gaps: None }))
             .await
             .expect("a dry run needs no expectation");
+    }
+
+    /// Issue 443: the orphan sweep deletes only under a reviewed plan. Wet
+    /// with no stored plan is refused; wet against a plan its own count has
+    /// moved away from aborts before writing, naming both numbers; wet under
+    /// a matching plan runs and re-records the residual.
+    #[tokio::test]
+    async fn the_orphan_sweep_deletes_only_under_a_matching_dry_plan() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let wet = || job(Spec::SweepOrphanOrgs { dry_run: false });
+
+        // A fresh database lacks the deferred `organization_names_org` (a
+        // rebuild's end or `reindex` builds it): refused before any walk,
+        // because the org delete's FK proof would scan without it (issue 442).
+        let err = sup.run_spec(&job(Spec::SweepOrphanOrgs { dry_run: true })).await.expect_err("an index is missing");
+        assert!(err.contains("organization_names_org") && err.contains("reindex"), "{err}");
+        assert!(db.latest_report("orphan-org-sweep-plan").await.unwrap().is_none(), "nothing stored");
+        db.build_organization_indexes().await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+
+        let err = sup.run_spec(&wet()).await.expect_err("no plan, no sweep");
+        assert!(err.contains("run sweep-orphan-orgs dry first"), "{err}");
+
+        let dry = sup.run_spec(&job(Spec::SweepOrphanOrgs { dry_run: true })).await.unwrap();
+        assert!(dry.contains("DRY RUN") && dry.contains("0 to sweep"), "{dry}");
+        let (plan, _) = db.latest_report("orphan-org-sweep-plan").await.unwrap().expect("the dry run stores its plan");
+        assert!(plan.contains(r#""swept":0"#), "{plan}");
+
+        db.put_report("orphan-org-sweep-plan", r#"{"swept":1000}"#, store::now_unix()).await.unwrap();
+        let err = sup.run_spec(&wet()).await.expect_err("a moved count aborts");
+        assert!(
+            err.contains("0 orphans to sweep now") && err.contains("plan says 1000") && err.contains("nothing was written"),
+            "{err}"
+        );
+        let (plan, _) = db.latest_report("orphan-org-sweep-plan").await.unwrap().unwrap();
+        assert_eq!(plan, r#"{"swept":1000}"#, "an aborted run leaves the plan alone");
+
+        db.put_report("orphan-org-sweep-plan", r#"{"swept":40}"#, store::now_unix()).await.unwrap();
+        let done = sup.run_spec(&wet()).await.expect("inside the 50-row floor of the slack");
+        assert!(done.contains("swept 0 of the 0 counted"), "{done}");
+        let (plan, _) = db.latest_report("orphan-org-sweep-plan").await.unwrap().unwrap();
+        assert!(plan.contains(r#""residual_of_wet_run":true"#) && plan.contains(r#""swept":0"#), "{plan}");
     }
 
     /// The refold-fields count gate, and the sizing trick the runbook documents on
