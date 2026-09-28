@@ -1,7 +1,7 @@
 # 443 — organizations left with no mention by 434's refresh have no sweep: they stay listed, searchable and counted
 
-Status: ready-for-agent — the sweep is BUILT 2026-09-28 (see "Built" below): gated (GATE-EXIT=0), committed, deploying. It
-deploys with the next bundle after job 1617, and the dry run IS step 1's measurement. Was: filed 2026-09-28 from the first fold with 434's refresh (job 1610, stopped in planning
+Status: ready-for-agent — the sweep is BUILT 2026-09-28 (see "Built" below): gated (GATE-EXIT=0), committed `d5bf157`, DEPLOYED 2026-09-28 18:00 UTC. The dry run (job 1624, queued behind the
+394 refold fold) IS step 1's measurement. Was: filed 2026-09-28 from the first fold with 434's refresh (job 1610, stopped in planning
 after re-binding 4,649,867 mentions, and job 1616, the full fold now running). Measure-first: size the orphaned
 cohort after 1616 lands, then build.
 mine to take.

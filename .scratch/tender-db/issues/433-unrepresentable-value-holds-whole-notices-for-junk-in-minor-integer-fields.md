@@ -1,6 +1,6 @@
 # 433 — `unrepresentable-value` holds 326 whole notices, and only ~44 are the "astronomical" class the terminal ledger names: the rest are junk in minor integer fields
 
-Status: ready-for-agent — **DECIDED (option c) and BUILT 2026-09-27** (see the foot): the eForms walk keeps a failed integer/indicator/number value, and the eSender transmission stamp, as raw text under its own field id ("raw kept, typed absent", the r209/text-era rule); every amount and every other date stays strict. The deploy waits for the 393/397 re-parse fold (with 432), then the per-pattern reprocess reclaims the held rows. Was: ready-for-agent — filed 2026-09-27 from the hourly audit (step 3).
+Status: ready-for-agent — **Verify read done 2026-09-28 (282 → 3, the three held on purpose; see the Verify block)**; the reclaimed notices fold in job 1622. Was: **DECIDED (option c) and BUILT 2026-09-27** (see the foot): the eForms walk keeps a failed integer/indicator/number value, and the eSender transmission stamp, as raw text under its own field id ("raw kept, typed absent", the r209/text-era rule); every amount and every other date stays strict. The deploy waits for the 393/397 re-parse fold (with 432), then the per-pattern reprocess reclaims the held rows. Was: ready-for-agent — filed 2026-09-27 from the hourly audit (step 3).
 mine to take.
 Kind: coverage (ingest: the eForms value parser's integer arm, `crates/ingest/src/eforms/value.rs:60`) and ledger
 accuracy (`crates/model/src/dashboard.rs` `quarantine_terminal_policy`)
@@ -66,6 +66,12 @@ Measure the fold's use of each field first: a field the fold never reads is the 
 - **done**: the non-astronomical remainder is either reclaimed (under (a)/(c): near 0) or every shape carries a ledger
   row naming its decision (under (b)), and the terminal-policy comment matches the measured composition
 - **open**: `282` (read 2026-09-27: 326 held, 44 of them BT-113)
+- **read 2026-09-28 ~18:25 UTC**: **3**, after the three reprocess jobs ran on rev `da917b4` with `reclaim_only`.
+  Job 1618 (`%not an integer%`) reclaimed 310 across 61 packages (0 still held), job 1619 (`%not a number%`) found no
+  held packages left, and job 1620 (`BT-803(%`) reclaimed 13 across 6. The 3 left are shapes the rule holds on
+  purpose, because the fold reads those fields: 4088754 and 4311463 carry `BT-720-Tender` 74654684654465480000
+  (astronomical), and 3355452 carries `BT-145-Contract` "2024-04-12" with no zone offset. **done** for the count; the
+  reclaimed notices are folded by the `project` queued behind 394's refold (job 1622).
 
 ## Decided and BUILT 2026-09-27 — option (c), sharpened by a read-only research fan-out
 
