@@ -1,6 +1,6 @@
 # 443 — organizations left with no mention by 434's refresh have no sweep: they stay listed, searchable and counted
 
-Status: ready-for-agent — the sweep is BUILT 2026-09-28 (see "Built" below): gated (GATE-EXIT=0), committed `d5bf157`, DEPLOYED 2026-09-28 18:00 UTC. The dry run (job 1624, queued behind the
+Status: ready-for-agent — **SWEPT AND VERIFIED 2026-09-28** (see the foot): 1,768,353 orphans deleted, and a fresh dry run reads 0. Left: step 3 (wire it after folds that re-bind), reading the 30 non-provisional orphans, and one small follow-up commit (see the foot). Was: BUILT 2026-09-28, deployed `d5bf157`. It
 394 refold fold) IS step 1's measurement. Was: filed 2026-09-28 from the first fold with 434's refresh (job 1610, stopped in planning
 after re-binding 4,649,867 mentions, and job 1616, the full fold now running). Measure-first: size the orphaned
 cohort after 1616 lands, then build.
@@ -92,3 +92,25 @@ was seen in these windows.
   Its surviving points are all in the list above. Not taken: prepared statements for the per-candidate seeks (a nit;
   the reviewer's estimate is minutes over the whole walk).
 - Step 3 (wiring it after folds) waits for the first wet run's timing.
+
+## Ran 2026-09-28 (rev `d5bf157`)
+
+- **Dry, job 1624 (79 s):** 7,367,032 organizations walked; **1,768,353** provisional rows with no recorded
+  mention: 1,119,072 nameless, 638,629 country-less and 10,652 named. 30 non-provisional; 0 referenced; 0 under
+  review; 588 name variants. So 24 % of the table was orphaned. The 434/439 re-binds emptied the R2.0.7 nameless
+  class (435's ~1.05M estimate) and the text-era country-less class (393's `TXT-CY`).
+- **Wet, job 1628 (348 s for both walks):** swept **1,768,353 of the 1,768,353 counted**, with 588 name variants,
+  each published as `organization removed` and each leaving a pre-image in `org_sweep_log`. Health was green through
+  it and the journal clean.
+- `SELECT COUNT(*) FROM organizations`: 7,367,032 before, **5,598,679** after — exactly the swept count.
+- **Verify, dry job 1629 (9 s):** 5,598,679 walked, **0** provisional orphans. **done.**
+- Still open:
+  - **Step 3.** Nothing runs the sweep by itself yet. Each fold that re-binds (`mentions_rebound > 0`) makes more
+    orphans. Wire it after the incremental fold or on the weekly tick.
+  - **The 30 non-provisional orphans.** Read them: identifier-bearing rows whose mentions all moved, or rows a case
+    review stripped (the `org_case_reviews` cohort). The sweep never touches them.
+  - **A small follow-up is built locally, not committed.** The job summary and phase detail say "non-provisional"
+    instead of "identifier-bearing". `the_orphan_sweep_counts_plans_and_sweeps_real_orphans` runs the dry→wet cycle
+    on 30 seeded rows in the supervisor. Its gate ran, but its result could not be read this session, so it waits
+    for the next gate run.
+
