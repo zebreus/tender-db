@@ -611,3 +611,7 @@ Fix: `enqueue` records a give-up in `Supervisor::unpersisted`, and the worker ca
 each pop, at a job boundary where the writer is free. It writes the rows for the job about to start and for every job
 still queued, and forgets ids that were cancelled meanwhile. With nothing pending it is a no-op with no store access.
 Test: `a_job_whose_persist_gave_up_is_written_at_the_next_job_boundary`.
+
+DEPLOYED 2026-09-28 18:00 UTC in `d5bf157` (commit `87eef0f`). Verify at the next writer-contended enqueue: a
+`persist queued job … gave up` journal line followed by the job's row in `/admin/jobs` `queued` after a restart. It
+has not been observed live yet.
