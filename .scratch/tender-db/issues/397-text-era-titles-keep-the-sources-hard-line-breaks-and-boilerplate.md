@@ -439,3 +439,11 @@ keep every transliteration twin. The re-parse puts the XML era at `projected = 0
 
 **Issue 432 is deliberately NOT deployed until 1597 finishes**: its corrected org key would make this fold mint a
 fresh twin for every old-key stock row it re-resolves.
+
+### 2026-09-28: the r209/r208 re-parse ran (job 1596), the fold is next
+
+`re-parsed 7189183 notices across 159 packages (7357756 members walked, 0 unmatched, 0 re-keyed, 0 now failing and
+left untouched); stamped 3856088 tender(s) epoch-stale`. It finished 03:44 UTC after 13.7 h, most of it after issue
+441's index fix; the first ~70 min crawled at ~1.3 notices/s on the mention FK proof. The standing rows change at the
+ONE full fold that follows the text (1598) and FTS (1599) re-parses and the 432/440 repairs. The Verify is read after
+that fold.
