@@ -654,7 +654,7 @@ pub async fn state() -> Arc<Db> {
 /// answers "duplicate column name" and the statement is skipped. Anything
 /// beyond ADD COLUMN stays out of scope by policy — the canonical layer is
 /// rebuildable, and destructive changes recreate from the archive instead.
-const MIGRATIONS: [&str; 23] = [
+const MIGRATIONS: [&str; 26] = [
     "ALTER TABLE notices ADD COLUMN published_at INTEGER",
     "ALTER TABLE notices ADD COLUMN dispatched_at INTEGER",
     "ALTER TABLE tender_versions ADD COLUMN dispatched_at INTEGER",
@@ -717,6 +717,12 @@ const MIGRATIONS: [&str; 23] = [
     "ALTER TABLE package_rates ADD COLUMN fetch_id INTEGER",
     "ALTER TABLE package_rates ADD COLUMN skipped INTEGER",
     "ALTER TABLE package_rates ADD COLUMN quarantined INTEGER",
+    // Issue 443 step 4: the orphan sweep's pre-image keeps the identity now that
+    // it deletes non-provisional rows too. The rows logged before read NULL, and
+    // every one of them was a provisional, identifier-less row.
+    "ALTER TABLE org_sweep_log ADD COLUMN identifier_kind TEXT",
+    "ALTER TABLE org_sweep_log ADD COLUMN identifier TEXT",
+    "ALTER TABLE org_sweep_log ADD COLUMN provisional INTEGER",
 ];
 
 async fn migrate(conn: &Connection) -> turso::Result<()> {

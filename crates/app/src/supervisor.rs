@@ -485,8 +485,8 @@ enum Spec {
     /// recorded mention through the post-234 provisional path. `dry_run`
     /// counts and writes nothing (the default, like every org-mutating job).
     RepairPlaceholderOrgs { dry_run: bool },
-    /// Issue 443: delete the provisional organizations no recorded mention,
-    /// derived party row or review table names any more — the rows issue
+    /// Issue 443: delete the organizations no recorded mention, derived
+    /// party row or review table names any more — the rows issue
     /// 434's mention refresh leaves behind. Dry (the default) stores
     /// `orphan-org-sweep-plan`; wet requires that plan and aborts before the
     /// first write if its own count has moved outside max(2%, 50).
@@ -3418,9 +3418,9 @@ impl Supervisor {
             }
         }
         let summary = format!(
-            "{} organizations walked; {} provisional rows with no recorded mention ({} nameless, \
-             {} country-less, {} named) and {} non-provisional ones (counted, never touched); \
-             kept: {} still named by a party, bid-party or winner row, {} by a review table",
+            "{} organizations walked; {} rows with no recorded mention ({} nameless, {} country-less, \
+             {} named; {} of them non-provisional); kept: {} still named by a party, bid-party or \
+             winner row, {} by a review table",
             count.scanned,
             count.nameless + count.countryless + count.named,
             count.nameless,
@@ -3512,7 +3512,7 @@ impl Supervisor {
                 None,
                 format!(
                     "{} {} ({} nameless, {} country-less, {} named); kept {} referenced, {} under \
-                     review; {} non-provisional orphans",
+                     review; {} of the orphans non-provisional",
                     total.swept,
                     if dry_run { "to sweep" } else { "swept" },
                     total.nameless,

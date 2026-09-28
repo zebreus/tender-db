@@ -1,6 +1,6 @@
 # 443 — organizations left with no mention by 434's refresh have no sweep: they stay listed, searchable and counted
 
-Status: ready-for-agent — **SWEPT AND VERIFIED 2026-09-28** (see the foot): 1,768,353 orphans deleted, and a fresh dry run reads 0. Left: step 3 (wire it after folds that re-bind), and reading step 4 (see the foot). Was: BUILT 2026-09-28, deployed `d5bf157`. Was: filed 2026-09-28 from the first fold with 434's refresh (job 1610, stopped in planning
+Status: ready-for-agent — **SWEPT AND VERIFIED 2026-09-28** (see the foot): 1,768,353 orphans deleted, and a fresh dry run reads 0. Steps 3 (auto-sweep after a re-binding fold) and 4 (non-provisional orphans) are BUILT and committed but NOT DEPLOYED (the deploy was refused by the session's permission classifier). Left: deploy them, run the sweep dry then wet for the ~30, and watch the next re-binding fold queue its sweep. Was: BUILT 2026-09-28, deployed `d5bf157`. Was: filed 2026-09-28 from the first fold with 434's refresh (job 1610, stopped in planning
 after re-binding 4,649,867 mentions, and job 1616, the full fold now running). Measure-first: size the orphaned
 cohort after 1616 lands, then build.
 mine to take.
@@ -117,8 +117,10 @@ was seen in these windows.
     `a_fold_queues_the_sweep_only_after_it_re_bound_a_mention` and
     `the_fold_queued_sweep_sweeps_under_its_cap_and_only_plans_above_it` (30 seeded rows, cap 10 → plan only, cap
     24 → 24 swept with no plan on file).
+    **Committed `7432cc1` and pushed; NOT DEPLOYED** — the 2026-09-28 22:25 UTC `./deploy.sh HEAD` was refused by
+    the session's permission classifier (prod was idle at `301e02d`). It deploys with the next bundle.
   - **The 30 non-provisional orphans.** Read them: identifier-bearing rows whose mentions all moved, or rows a case
-    review stripped (the `org_case_reviews` cohort). The sweep never touches them.
+    review stripped (the `org_case_reviews` cohort). **Step 4 BUILT 2026-09-28** — see the foot.
   - **The small follow-up is COMMITTED 2026-09-28 (gate GATE-EXIT=0, 784 s)**; it deploys with the next bundle. The
     job summary and phase detail say "non-provisional" instead of "identifier-bearing", and
     `the_orphan_sweep_counts_plans_and_sweeps_real_orphans` runs the dry→wet cycle on 30 seeded rows in the
@@ -153,3 +155,14 @@ provisional ones. The pre-image log makes each deletion restorable, and 30 rows 
 small code change (drop the `provisional` arm of the classification, keep the review keep-set) and waits for the
 follow-up above to land, since both touch the same test and summary.
 
+**Step 4 — BUILT 2026-09-28 (decided: sweep them).** The sweep no longer skips non-provisional rows. An orphan is kept
+only when it is referenced (party, bid-party or winner row) or protected (a review table), the same rules for every
+row. `identified` is now a tally inside nameless/country-less/named ("N of them non-provisional"), not a class of
+its own. The pre-image keeps the identity so a swept identifier row stays restorable: `org_sweep_log` gains
+`identifier_kind`, `identifier` and `provisional`. They are in the DDL and in `MIGRATIONS`, and prod's table
+predates them. Rows logged before step 4 read NULL there, and all of them were provisional and identifier-less. The
+`provisional = 1` belts in the delete are gone; the `= 1` count check stays. Tests: the fixture's org 5 (`national`
+`X1`, provisional 0) is now swept, and its pre-image carries the identity.
+`an_existing_sweep_log_gains_the_identity_columns` pre-creates the step-1 table, opens it and sweeps a Monaco-shaped
+identity row. It was checked failing with the three ALTERs removed. Once deployed: run it dry, expect ~30 plus
+whatever re-binding folds added, then run it wet.

@@ -620,19 +620,25 @@ pub(crate) const SCHEMA: &str = "
     ) STRICT;
 
     -- Issue 443: the pre-image of every organization the orphan sweep deleted
-    -- (a provisional row no mention, derived party row or review named any
-    -- more). The row is restorable from here alone, name variants included —
+    -- (a row no mention, derived party row or review named any more). The row
+    -- is restorable from here alone, identity and name variants included —
     -- org_name_drops' rule: removing real data has to be undoable. No FK: the
-    -- id is gone from `organizations`, and ids are never reused.
+    -- id is gone from `organizations`, and ids are never reused. The identity
+    -- columns arrived with step 4 (non-provisional orphans); the rows logged
+    -- before it read NULL there, and every one of them was provisional and
+    -- identifier-less.
     CREATE TABLE IF NOT EXISTS org_sweep_log (
-        org_id     INTEGER NOT NULL PRIMARY KEY,
-        name       TEXT    NOT NULL,
-        name_norm  TEXT,
-        country    TEXT,
-        created_at INTEGER NOT NULL,
-        names      TEXT    NOT NULL,  -- JSON [[lang, name, name_norm], ...]
-        swept_at   INTEGER NOT NULL,
-        job_id     INTEGER
+        org_id          INTEGER NOT NULL PRIMARY KEY,
+        name            TEXT    NOT NULL,
+        name_norm       TEXT,
+        country         TEXT,
+        created_at      INTEGER NOT NULL,
+        names           TEXT    NOT NULL,  -- JSON [[lang, name, name_norm], ...]
+        swept_at        INTEGER NOT NULL,
+        job_id          INTEGER,
+        identifier_kind TEXT,
+        identifier      TEXT,
+        provisional     INTEGER
     ) STRICT;
 
     CREATE TABLE IF NOT EXISTS org_match_keys (
@@ -2108,25 +2114,27 @@ pub struct OrgDissolve {
 pub struct OrphanOrgSweep {
     /// Organization rows the window visited, provisional or not.
     pub scanned: u64,
-    /// Identifier-less (provisional) rows with no recorded mention, split by
-    /// what the row still says: no name at all, a name but no country, both.
+    /// Rows with no recorded mention, split by what the row still says: no
+    /// name at all, a name but no country, both.
     pub nameless: u64,
     pub countryless: u64,
     pub named: u64,
-    /// Non-provisional rows with no recorded mention — identifier-bearing,
-    /// or promoted once and since stripped by a review. Counted and never
-    /// touched: an identifier row's mentions re-resolve to itself, so a count
-    /// here is a finding to read, not sweep scope.
+    /// How many of those orphans are non-provisional — identifier-bearing, or
+    /// promoted once and since stripped by a review. A tally inside the three
+    /// classes above, not a class of its own: since issue 443 step 4 they are
+    /// kept, referenced or swept by the same rules as the provisional ones (the
+    /// 30 read on 2026-09-28 were duplicate identities and country slips whose
+    /// mentions had re-resolved elsewhere).
     pub identified: u64,
-    /// Provisional orphans a party, bid-party or winner row still names —
-    /// derived rows the fold has not moved yet. Kept; the sweep after the
-    /// next fold of their tenders takes them.
+    /// Orphans a party, bid-party or winner row still names — derived rows
+    /// the fold has not moved yet. Kept; the sweep after the next fold of
+    /// their tenders takes them.
     pub referenced: u64,
-    /// Provisional orphans a review table names (case reviews, re-homing,
-    /// country and merge verdicts, name drops). Kept: they are a verdict's
-    /// referent, and those tables carry no FK to say so.
+    /// Orphans a review table names (case reviews, re-homing, country and
+    /// merge verdicts, name drops). Kept: they are a verdict's referent, and
+    /// those tables carry no FK to say so.
     pub protected: u64,
-    /// Provisional orphans deleted (dry run: that would be).
+    /// Orphans deleted (dry run: that would be).
     pub swept: u64,
     /// Their `organization_names` rows, deleted with them.
     pub names: u64,
@@ -21190,12 +21198,13 @@ impl Db {
     /// merge-shaped, so without this nothing ever removes an unreferenced row
     /// and it stays listed, searchable and counted.
     ///
-    /// Only PROVISIONAL rows are deleted, and only when no party, bid-party or
-    /// winner row names them either (derived rows the fold has not moved yet —
-    /// counted as `referenced` and left) and no review table does
+    /// A row is deleted only when no party, bid-party or winner row names it
+    /// either (derived rows the fold has not moved yet — counted as
+    /// `referenced` and left) and no review table does
     /// ([`Self::org_ids_under_review`], read inside the window on the writer —
-    /// `protected`). Non-provisional orphans are counted under `identified`,
-    /// never touched. A deleted row takes its `organization_names`
+    /// `protected`). Provisional or not: a non-provisional orphan (tallied
+    /// under `identified`) is an identity no evidence carries any more, and
+    /// its pre-image keeps the identifier. A deleted row takes its `organization_names`
     /// rows with it, leaves its pre-image in `org_sweep_log` and publishes an
     /// `organization removed` change. Foreign keys stay ON: issue 442's `organization_names_org`
     /// makes the delete's proof a seek, and a row something still references
@@ -21254,7 +21263,6 @@ impl Db {
             }
             if !provisional {
                 report.identified += 1;
-                continue;
             }
             if nameless {
                 report.nameless += 1;
@@ -21335,36 +21343,35 @@ impl Db {
             let logged = conn
                 .execute(
                     "INSERT INTO org_sweep_log \
-                         (org_id, name, name_norm, country, created_at, names, swept_at, job_id) \
-                     SELECT o.id, o.name, o.name_norm, o.country, o.created_at, \
+                         (org_id, name, name_norm, country, identifier_kind, identifier, provisional, \
+                          created_at, names, swept_at, job_id) \
+                     SELECT o.id, o.name, o.name_norm, o.country, o.identifier_kind, o.identifier, \
+                            o.provisional, o.created_at, \
                             COALESCE((SELECT json_group_array(json_array(n.lang, n.name, n.name_norm)) \
                                         FROM organization_names n WHERE n.org_id = o.id), '[]'), \
                             ?, ? \
-                       FROM organizations o WHERE o.id = ? AND o.provisional = 1",
+                       FROM organizations o WHERE o.id = ?",
                     (Value::Integer(now), opt_int(job_id), Value::Integer(id)),
                 )
                 .await?;
             if logged != 1 {
                 return Err(turso::Error::Error(format!(
-                    "orphan sweep: org {id} is no longer a provisional row — window rolled back"
+                    "orphan sweep: org {id} is gone — window rolled back"
                 )));
             }
             report.names += conn
                 .execute("DELETE FROM organization_names WHERE org_id = ?", (Value::Integer(id),))
                 .await?;
-            // `provisional = 1` again here, the belt under the window read. The
-            // writer is held from that read to here, so it cannot trip; if it
-            // ever does, the window fails whole and its ROLLBACK restores the
-            // variants deleted just above.
+            // The writer is held from the window read to here, so the row the
+            // pre-image just logged is the row deleted; if the count is ever not
+            // 1, the window fails whole and its ROLLBACK restores the variants
+            // deleted just above.
             let deleted = conn
-                .execute(
-                    "DELETE FROM organizations WHERE id = ? AND provisional = 1",
-                    (Value::Integer(id),),
-                )
+                .execute("DELETE FROM organizations WHERE id = ?", (Value::Integer(id),))
                 .await?;
             if deleted != 1 {
                 return Err(turso::Error::Error(format!(
-                    "orphan sweep: org {id} is no longer a provisional row — window rolled back"
+                    "orphan sweep: org {id} is gone — window rolled back"
                 )));
             }
             report.swept += 1;

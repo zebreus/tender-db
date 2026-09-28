@@ -1,12 +1,14 @@
 //! Issue 443: organizations no recorded mention points at any more. Issue 434's
 //! refresh re-binds a mention in place and leaves the row it left, and every other
 //! org delete is merge-shaped, so nothing removed an unreferenced row.
-//! `sweep_orphan_orgs_batch` deletes a PROVISIONAL row with no mention, no
-//! party / bid-party / winner row and no review-table entry, with its name
-//! variants, publishing `organization removed`, under foreign keys ON. What is
-//! pinned: each keep arm (mentioned, identifier-bearing, referenced, under
-//! review), the dry run writing nothing, the windows' watermark, and a second
-//! run finding nothing.
+//! `sweep_orphan_orgs_batch` deletes a row with no mention, no party /
+//! bid-party / winner row and no review-table entry, provisional or not (step
+//! 4), with its name variants, publishing `organization removed`, under foreign
+//! keys ON. What is pinned: each keep arm (mentioned, referenced, under review),
+//! the identifier-bearing orphan swept with its identity in the pre-image, the
+//! dry run writing nothing, the windows' watermark, a second run finding
+//! nothing, and the pre-image table's step-4 columns reaching an existing
+//! database.
 
 use store::turso::Value;
 
@@ -28,7 +30,7 @@ async fn seed(name: &str) -> store::Db {
         (2, "", Some("FR"), 1),      // nameless orphan — swept
         (3, "Beta", None, 1),        // country-less orphan — swept
         (4, "Gamma", Some("DE"), 1), // named orphan — swept
-        (5, "Ident", Some("DE"), 0), // identifier-bearing orphan — counted, stays
+        (5, "Ident", Some("DE"), 0), // identifier-bearing orphan — swept (step 4)
         (6, "Delta", Some("DE"), 1), // a party row still names it — stays
         (7, "Eps", Some("DE"), 1),   // under a case review — stays
         (8, "Zeta", Some("DE"), 1),  // a merge verdict's member — stays
@@ -123,11 +125,11 @@ async fn a_dry_run_counts_every_class_and_writes_nothing() {
     let before = count(&db, "SELECT COUNT(*) FROM changes").await;
     let r = sweep(&db, 4, true).await;
     assert_eq!(r.scanned, 15);
-    assert_eq!((r.nameless, r.countryless, r.named), (1, 1, 11), "2 / 3 / 4,6..15: {r:?}");
-    assert_eq!(r.identified, 1, "{r:?}");
+    assert_eq!((r.nameless, r.countryless, r.named), (1, 1, 12), "2 / 3 / 4..15: {r:?}");
+    assert_eq!(r.identified, 1, "5, tallied inside `named`: {r:?}");
     assert_eq!(r.referenced, 3, "party, winner and bid-party: {r:?}");
     assert_eq!(r.protected, 6, "case review, merge verdict, re-homing case and target, country verdict, name drop: {r:?}");
-    assert_eq!(r.swept, 4, "2, 3, 4 and 11: {r:?}");
+    assert_eq!(r.swept, 5, "2, 3, 4, 5 and 11: {r:?}");
     assert_eq!(r.names, 2, "org 4's two variants: {r:?}");
     assert_eq!(count(&db, "SELECT COUNT(*) FROM organizations").await, 15, "nothing deleted");
     assert_eq!(count(&db, "SELECT COUNT(*) FROM organization_names").await, 3);
@@ -136,12 +138,12 @@ async fn a_dry_run_counts_every_class_and_writes_nothing() {
 }
 
 #[tokio::test]
-async fn a_wet_run_deletes_the_unreferenced_provisional_orphans_with_foreign_keys_on() {
+async fn a_wet_run_deletes_the_unreferenced_orphans_with_foreign_keys_on() {
     let db = seed("wet").await;
     assert!(db.foreign_keys_enabled().await.unwrap(), "the writer enforces foreign keys");
     // A window of 3 puts orphans on both sides of every boundary.
     let r = sweep(&db, 3, false).await;
-    assert_eq!(r.swept, 4, "{r:?}");
+    assert_eq!(r.swept, 5, "{r:?}");
     assert_eq!(r.names, 2, "{r:?}");
     let mut left = Vec::new();
     for id in 1..=15 {
@@ -149,7 +151,7 @@ async fn a_wet_run_deletes_the_unreferenced_provisional_orphans_with_foreign_key
             left.push(id);
         }
     }
-    assert_eq!(left, vec![1, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15], "only the four unreferenced provisional orphans went");
+    assert_eq!(left, vec![1, 6, 7, 8, 9, 10, 12, 13, 14, 15], "only the five unreferenced orphans went");
     assert_eq!(
         count(&db, "SELECT COUNT(*) FROM organization_names WHERE org_id = 4").await,
         0,
@@ -160,26 +162,37 @@ async fn a_wet_run_deletes_the_unreferenced_provisional_orphans_with_foreign_key
         count(
             &db,
             "SELECT COUNT(*) FROM changes WHERE entity_kind = 'organization' AND op = 'removed' \
-              AND entity_id IN (2, 3, 4, 11)"
+              AND entity_id IN (2, 3, 4, 5, 11)"
         )
         .await,
-        4,
+        5,
         "each deletion is published"
     );
     assert!(db.foreign_keys_enabled().await.unwrap(), "and enforcement is still on after");
 
     // Each swept row is restorable from its pre-image, variants included.
-    assert_eq!(count(&db, "SELECT COUNT(*) FROM org_sweep_log").await, 4);
+    assert_eq!(count(&db, "SELECT COUNT(*) FROM org_sweep_log").await, 5);
     assert_eq!(
         count(
             &db,
             "SELECT COUNT(*) FROM org_sweep_log WHERE org_id = 4 AND name = 'Gamma' AND name_norm = 'gamma' \
-               AND country = 'DE' AND created_at = 0 AND job_id = 7 \
+               AND country = 'DE' AND created_at = 0 AND job_id = 7 AND provisional = 1 \
+               AND identifier_kind IS NULL AND identifier IS NULL \
                AND names = '[[\"DEU\",\"Gamma\",\"gamma\"],[\"ENG\",\"Gamma\",\"gamma\"]]'"
         )
         .await,
         1,
         "org 4's row and both variants"
+    );
+    assert_eq!(
+        count(
+            &db,
+            "SELECT COUNT(*) FROM org_sweep_log WHERE org_id = 5 AND name = 'Ident' AND country = 'DE' \
+               AND identifier_kind = 'national' AND identifier = 'X1' AND provisional = 0"
+        )
+        .await,
+        1,
+        "the identifier-bearing row keeps its identity in the pre-image"
     );
     assert_eq!(
         count(&db, "SELECT COUNT(*) FROM org_sweep_log WHERE org_id = 3 AND country IS NULL AND names = '[]'").await,
@@ -189,7 +202,7 @@ async fn a_wet_run_deletes_the_unreferenced_provisional_orphans_with_foreign_key
 
     let again = sweep(&db, 3, false).await;
     assert_eq!(again.swept, 0, "a second run finds nothing: {again:?}");
-    assert_eq!(again.referenced + again.protected + again.identified, 10, "{again:?}");
+    assert_eq!((again.referenced, again.protected, again.identified), (3, 6, 0), "{again:?}");
 }
 
 /// The keep-set is read inside each window on the writer, not once per run: a
@@ -221,3 +234,58 @@ async fn a_verdict_recorded_mid_run_protects_its_org_from_the_next_window() {
     assert_eq!(count(&db, "SELECT COUNT(*) FROM organizations WHERE id = 4").await, 1, "org 4 stays");
 }
 
+/// Step 4 added the identity columns to `org_sweep_log`, which prod created
+/// without them on 2026-09-28 — the issue-372 trap (a fresh test database gets
+/// the column from `CREATE TABLE`, an existing one only from `MIGRATIONS`).
+/// Pre-create the step-1 shape, open, and write a step-4 pre-image.
+#[tokio::test]
+async fn an_existing_sweep_log_gains_the_identity_columns() {
+    let path = format!("/tmp/tender-db-orphan-sweep-migrate-{}.db", std::process::id());
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    {
+        let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+        conn.execute(
+            "CREATE TABLE org_sweep_log (
+                 org_id INTEGER NOT NULL PRIMARY KEY, name TEXT NOT NULL, name_norm TEXT,
+                 country TEXT, created_at INTEGER NOT NULL, names TEXT NOT NULL,
+                 swept_at INTEGER NOT NULL, job_id INTEGER
+             ) STRICT",
+            (),
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            "INSERT INTO org_sweep_log VALUES (1, 'Old', 'old', NULL, 0, '[]', 0, NULL)",
+            (),
+        )
+        .await
+        .unwrap();
+    }
+    let db = store::Db::open(&path).await.unwrap();
+    assert_eq!(
+        count(&db, "SELECT COUNT(*) FROM org_sweep_log WHERE org_id = 1 AND provisional IS NULL AND identifier IS NULL")
+            .await,
+        1,
+        "the step-1 table survived the open (its row is there), so only the ALTERs added the columns; \
+         a row logged before step 4 reads NULL"
+    );
+    db.build_organization_indexes().await.unwrap();
+    db.build_tender_indexes().await.unwrap();
+    let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+    conn.execute(
+        "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at) \
+         VALUES (9, 'MC', 'national', 'RCI77S01656', 'Monaco Digital', 'monaco digital', 0, 0)",
+        (),
+    )
+    .await
+    .unwrap();
+    let (w, _) = db.sweep_orphan_orgs_batch(10, 0, false, None).await.unwrap();
+    assert_eq!((w.swept, w.identified), (1, 1), "{w:?}");
+    assert_eq!(
+        count(&db, "SELECT COUNT(*) FROM org_sweep_log WHERE org_id = 9 AND identifier = 'RCI77S01656' AND provisional = 0")
+            .await,
+        1
+    );
+}
