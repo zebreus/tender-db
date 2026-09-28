@@ -113,3 +113,28 @@ was seen in these windows.
     on 30 seeded rows in the supervisor. Its gate ran, but its result could not be read this session, so it waits
     for the next gate run.
 
+## The 30 non-provisional orphans, read 2026-09-28 ~19:00 UTC (8 bounded `/v1/sql` windows of 4M ids, ≤ 0.2 s each)
+
+All 30 were minted at the same second (`created_at` 1786785861, the 2026-08-15 rebuild). None is a review-table
+row. They are identity rows whose mentions re-resolved to another row under the live key rules:
+
+- 5 BG rows with 13-digit BULSTAT branch codes (`1310631880291`, `1752013040134`, …).
+- 5 ES rows (`B18298679`, `74725508A`, `B21917828`, …).
+- 20 rows from outside the EU or with odd keys. Examples: `UK`/vat `UKCOMPANYREGISTER02231841`, `SE`/vat
+  `SECPCUIN0023763` (Pakistan), `LI`/vat `LIBRO3137FOLIO0435994NO109809`, the Danish embassies in BF and ML sharing
+  `43271911`, and QA, EG, MC, SM, LB, PG, PF, HK, AZ, GE, TZ, ZA, CI, AE.
+
+Two traced through the public API:
+
+- **Monaco Digital SAM** (23506939, `MC`/national `RCI77S01656`, 0 mentions). Row 18370494 has the IDENTICAL
+  identity and holds the 4 mentions. The orphan is a duplicate the merge arms never folded (name gate), now empty.
+- **Sarner International Ltd** (23375495, `UK`/vat `UKCOMPANYREGISTER02231841`, 0 mentions). Its mentions now sit
+  on 31516324: the same raw identifier under country **`CD`** (national, 2 mentions), beside an `NL` identity row
+  and a `GB` provisional one. A UK company keyed under the Democratic Republic of the Congo is its own defect, not
+  this issue's. It is a lead for the country layer (a notice publishing `CD`, or a crosswalk mapping), not yet traced.
+
+**Step 4 (decide):** extend the sweep to non-provisional orphans. They have no evidence and no party rows, like the
+provisional ones. The pre-image log makes each deletion restorable, and 30 rows is a trivial blast radius. It is a
+small code change (drop the `provisional` arm of the classification, keep the review keep-set) and waits for the
+follow-up above to land, since both touch the same test and summary.
+
