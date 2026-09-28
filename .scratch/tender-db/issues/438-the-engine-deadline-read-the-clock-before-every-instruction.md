@@ -1,6 +1,6 @@
 # 438 — the engine deadline read the clock before every instruction: every bounded read ran 1.4–2× slower
 
-Status: ready-for-agent — DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `d987aea`); the Verify's SQL timings are read once the re-parse/fold chain drains. Was: **BUILT 2026-09-27** (uncommitted, not deployed; see the foot): no serving connection sets
+Status: done — **VERIFIED 2026-09-28 18:5x UTC on an idle box** (see the Verify block: source count 0, the `/v1/sql/schema` example 0.73 s / 0.62 s where it was 3.3 s). Was: ready-for-agent — DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `d987aea`); the Verify's SQL timings are read once the re-parse/fold chain drains. Was: **BUILT 2026-09-27** (uncommitted, not deployed; see the foot): no serving connection sets
 turso's `set_query_timeout` any more. `/v1/sql` and both REST pools stop a read with a timer that calls
 `interrupt()` (`crates/app/src/v1/stop.rs`), one mechanism shared with the isolated pool's abandon path. Next: commit,
 deploy, then read the Verify. Was: filed 2026-09-27 from a read of the vendored turso 0.7.2 source and a local A/B,
@@ -68,6 +68,10 @@ Delete the engine deadline and stop queries with a timer and `interrupt()`:
 - **done**: `0`. No serving code sets turso's deadline. (The vendored SDK keeps the pass-through for the offline
   `plan-probe mem`, which lives under `crates/ingest`, outside this count.)
 - **open**: `3` (read 2026-09-27 at `13520aa`: `sql.rs` `execute`, `read.rs` `Readers::get`, the store probe test)
+- **read 2026-09-28 ~18:55 UTC** (tree at `ed4147a`, box at rev `d5bf157`, job queue idle): **`0`. done.** The timing
+  the Status line waited for: `/v1/sql/schema`'s first example, `SELECT source, count(*) FROM tenders GROUP BY source`,
+  took **0.73 s** cold and **0.62 s** warm end to end through `/v1/sql`. It was 3.3 s on 2026-08-31 and within reach of
+  the 10 s limit while the engine deadline was set. It returns doe 677,420, fts 12,319, ted 7,867,185.
 
 A source read, free. It does not prove the deploy. After deploying, `/v1` `source` names the rev.
 
