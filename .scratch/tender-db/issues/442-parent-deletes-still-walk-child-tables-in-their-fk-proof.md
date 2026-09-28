@@ -1,6 +1,6 @@
 # 442 — issue 441's trap is schema-wide: 11 parent tables' DELETEs walk child tables in their FK proof, because turso uses only an exact-shape child index
 
-Status: ready-for-agent — unit 1 DEPLOYED and VERIFIED 2026-09-28 (see the foot); steps 2–4 remain. Was: unit 1 BUILT 2026-09-27 (the `organizations` delete, see below): gated, committed and
+Status: ready-for-agent — **step 2 BUILT 2026-09-28** (see the foot; committed, not deployed: deploys are refused by the session's permission classifier). Step 4 remains (post from the owner's account). Was: unit 1 DEPLOYED and VERIFIED 2026-09-28 (see the foot); steps 2–4 remain. Was: unit 1 BUILT 2026-09-27 (the `organizations` delete, see below): gated, committed and
 not deployed. It deploys with the next bundle, and the auto-Reindex builds it. Filed 2026-09-27 from the hourly
 AUDIT step, generalising issue 441. The remaining units are measure-first (see "What to decide").
 mine to take.
@@ -116,3 +116,41 @@ lets us delete (step 2, measure after unit 1 deploys).
 Evidence to attach: 441's and 442's `EXPLAIN` excerpts (the `Rewind` lines) and the prod timings (2.2 s per mention
 delete → 16 µs after the exact-shape index). The draft for issue 425's `interrupt()`/clock request sits in 425
 step 4. Post the two together.
+
+## Step 2 — BUILT 2026-09-28: the merge loops' foreign-keys-off brackets are deleted
+
+- **Measurement.** Step 2 asked for one R2 dry→wet with the bracket removed. The prod number already exists from
+  another path: 443's wet sweep (job 1628) deleted 1,768,353 organizations with foreign keys ON through the same five
+  exact-shape child indexes, in 348 s for both walks (~0.2 ms a delete, walk included). 440's FK-on dissolve (job
+  1615) repointed and deleted 425 organizations in under a minute. That is the ms scale step 2 set as the bar.
+- **Deleted:** the `PRAGMA foreign_keys=OFF/ON` brackets and their `looped`/`folded`/`applied` wrappers in
+  `match_org_identifiers_r2` (R2 and E0), `match_org_null_country_r3`, `fold_provisional_echoes` (p0) and
+  `repair_provisional_name_norm` (p1). No merge path turns enforcement off any more. The projection's issue-19
+  bracket and 404's twin repair are not org deletes and keep theirs (unit 3).
+- **Found and fixed on the way: the p0 fold orphaned `organization_names` rows.** For a loser with no tender rows it
+  took a mention-only shortcut (`full_repoint: false`), so the loser's name variants were never moved and the
+  `DELETE FROM organizations` left them pointing at a deleted id. The bracket hid it; with foreign keys ON the delete
+  would have been refused. The shortcut and the `full_repoint` flag are deleted, so every loser takes
+  `repoint_org_references` (all five child tables). The statements it skipped are seeks on the party tables'
+  `(organization_id)` indexes. Those indexes predate the shortcut (a review read `b4a18a2`), so the ~0.5 s its
+  first slice measured was most likely the unindexed `organization_names` FK walk that unit 1 fixed. Test: `a_loser_without_tender_rows_hands_its_name_variants_to_the_keep`
+  (`provisional_echo_fold.rs`), checked failing on the old code (2 orphaned variants). The rows past p0 runs left on
+  prod are issue 444.
+- **Guard:** `Supervisor::refuse_without_org_fk_indexes` (shared with the sweep; store side
+  `org_fk_missing_indexes` over `ORG_FK_INDEXES`). Each wet merge arm calls it after its own refusals, boxed for the
+  run_spec stack, and refuses while any of the five indexes is missing. All five are deferred, so a rebuild strips
+  them. Test: `a_wet_merge_refuses_without_the_org_fk_indexes`.
+- **Verify once deployed:** the next wet R2/E0/p0 run reports its per-loser time in ms, and journalctl shows no
+  `FOREIGN KEY constraint failed` from a merge job.
+- **Adversarial review (one read-only agent, 2026-09-28): no defect.** It confirmed from turso_core 0.7.2:
+  - A child UPDATE re-checks only the foreign key whose columns change (`fkeys.rs` `child_key_changed`), so latent
+    violations elsewhere in a repointed row are not re-checked.
+  - Repointing `organization_mentions.organization_id` triggers no parent-key probe, because `(notice_id,
+    section_id)` is untouched.
+  - No table references `tender_version_result_winners` or `organization_names`.
+  - No key is DEFERRABLE, and 0.7.2 has no `defer_foreign_keys` pragma.
+  - `PRAGMA foreign_keys` just sets a connection flag, so the deleted comments' claim that it is "a no-op inside a
+    transaction" was wrong too.
+  - Its doc-comment findings are fixed.
+- **Also from that review, not fixed here:** lib.rs's re-parse comments (~1689, ~2429) say foreign keys are
+  "checked once at COMMIT". turso checks them immediately. Filed for the next firing (445).

@@ -2896,8 +2896,8 @@ pub(crate) const COUNTRY_TYPO_JOIN_SQL: &str =
 pub const REPORT_HISTORY_DEPTH: usize = 10;
 
 /// Issue 354: both carrier counts JOIN `organizations`, so a key row whose
-/// org was merged away (the merge loops run with foreign keys off and the
-/// table declares none, so nothing cascades) stops counting the moment the
+/// org was merged away (the table declares no foreign key, so nothing
+/// cascades) stops counting the moment the
 /// row is gone rather than at the next weekly rebuild. Measured 2026-09-05:
 /// 8,618 names sat over the wall on stale keys alone. Still bounded: the
 /// `(key_kind, key, org_id)` index seek stops after `LIMIT` LIVE carriers,
@@ -3477,11 +3477,6 @@ struct ProvisionalFoldRule<'a> {
     /// transaction. The echo fold's key IS every member's stored `name_norm`;
     /// the repair's key is what the members are being corrected TO.
     rekey_keep: bool,
-    /// Always run the full repoint. The echo fold skips it for a loser with no
-    /// tender rows (a per-statement saving it measured); a country-scoped
-    /// buyer twin carries tender rows almost always, so the saving is nil and
-    /// the full path is the one that also carries `organization_names`.
-    full_repoint: bool,
     job_id: Option<i64>,
     stop: &'a (dyn Fn() -> bool + Sync),
     progress: &'a (dyn Fn(u64, &str) + Sync),
@@ -11096,18 +11091,12 @@ impl Db {
 
         let cap = args.max_groups.unwrap_or(u64::MAX);
         let mut touched: BTreeSet<i64> = BTreeSet::new();
-        // Issue 352: foreign-key enforcement OFF around the wet loop, the
-        // 351 fold's bracket and the projection's issue-19 precedent. Every
-        // loser is stripped of its references BEFORE its row is deleted, so
-        // the engine's per-delete proof that no child row still points at it
-        // — measured at ~0.4 s a row on the write path — buys nothing.
-        // Restored ON whatever the loop returns; the pragma is a no-op inside
-        // a transaction, which is why it sits outside the per-txn loop.
-        {
-            let mut q = conn.query("PRAGMA foreign_keys=OFF", ()).await?;
-            while q.next().await?.is_some() {}
-        }
-        let looped: turso::Result<()> = async {
+        // Foreign keys stay ON (issue 442 step 2 retired issue 352's OFF
+        // bracket): every loser is stripped of its references before its row
+        // is deleted, and the delete proves its five child tables clear through
+        // their exact-shape `(organization_id)` indexes — a seek each, where the
+        // ~0.4 s a row that motivated the bracket was a table walk. The
+        // supervisor refuses a wet run while any of those indexes is missing.
         for txn in plan.chunks(MERGE_TXN_GROUPS) {
             if (args.stop)() {
                 report.stopped = true;
@@ -11259,14 +11248,6 @@ impl Db {
             }
             let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
         }
-        Ok(())
-        }
-        .await;
-        {
-            let mut q = conn.query("PRAGMA foreign_keys=ON", ()).await?;
-            while q.next().await?.is_some() {}
-        }
-        looped?;
         report.tender_changes = touched.len() as u64;
         if report.removed > 0 {
             self.publish_cursor(&conn).await?;
@@ -13823,18 +13804,12 @@ impl Db {
 
         let cap = args.max_groups.unwrap_or(u64::MAX);
         let mut touched: BTreeSet<i64> = BTreeSet::new();
-        // Issue 352: foreign-key enforcement OFF around the wet loop, the
-        // 351 fold's bracket and the projection's issue-19 precedent. Every
-        // loser is stripped of its references BEFORE its row is deleted, so
-        // the engine's per-delete proof that no child row still points at it
-        // — measured at ~0.4 s a row on the write path — buys nothing.
-        // Restored ON whatever the loop returns; the pragma is a no-op inside
-        // a transaction, which is why it sits outside the per-txn loop.
-        {
-            let mut q = conn.query("PRAGMA foreign_keys=OFF", ()).await?;
-            while q.next().await?.is_some() {}
-        }
-        let looped: turso::Result<()> = async {
+        // Foreign keys stay ON (issue 442 step 2 retired issue 352's OFF
+        // bracket): every loser is stripped of its references before its row
+        // is deleted, and the delete proves its five child tables clear through
+        // their exact-shape `(organization_id)` indexes — a seek each, where the
+        // ~0.4 s a row that motivated the bracket was a table walk. The
+        // supervisor refuses a wet run while any of those indexes is missing.
         for txn in plan.chunks(MERGE_TXN_GROUPS) {
             if (args.stop)() {
                 report.stopped = true;
@@ -13948,14 +13923,6 @@ impl Db {
             }
             let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
         }
-        Ok(())
-        }
-        .await;
-        {
-            let mut q = conn.query("PRAGMA foreign_keys=ON", ()).await?;
-            while q.next().await?.is_some() {}
-        }
-        looped?;
         report.tender_changes = touched.len() as u64;
         if report.removed > 0 {
             self.publish_cursor(&conn).await?;
@@ -17856,35 +17823,18 @@ impl Db {
         let cap = args.max_groups.unwrap_or(u64::MAX);
         let now = crate::now_unix();
         let conn = self.conn().await;
-        // Foreign-key enforcement OFF for the wet phase, the projection's
-        // issue-19 precedent. The first wet slice measured ~0.45 s per deleted
-        // org row on NVMe with every read indexed and instant: the cost is
-        // the engine PROVING, on the write path, that no row of five child
-        // tables still references the parent (the same finding lib.rs records
-        // for mention deletes). This loop moves every child off the loser
-        // BEFORE deleting it, so the graph is self-consistent by construction
-        // and the proof buys nothing. Restored ON whatever happens below; the
-        // pragma is a no-op inside a transaction, so it brackets the loop.
-        {
-            let mut q = conn.query("PRAGMA foreign_keys=OFF", ()).await?;
-            while q.next().await?.is_some() {}
-        }
+        // Foreign keys stay ON (issue 442 step 2). The ~0.45 s per deleted
+        // org row the first wet slice measured was the engine proving five
+        // child tables clear of the parent by walking them; with their
+        // exact-shape `(organization_id)` indexes each proof is a seek.
         let rule = ProvisionalFoldRule {
             rule: "p0",
             rekey_keep: false,
-            full_repoint: false,
             job_id: args.job_id,
             stop: args.stop,
             progress: args.progress,
         };
-        let folded: turso::Result<()> = self
-            .fold_provisional_plan(&conn, &rule, &mut report, &plan, cap, now)
-            .await;
-        {
-            let mut q = conn.query("PRAGMA foreign_keys=ON", ()).await?;
-            while q.next().await?.is_some() {}
-        }
-        folded?;
+        self.fold_provisional_plan(&conn, &rule, &mut report, &plan, cap, now).await?;
         if report.removed > 0 {
             self.publish_cursor(&conn).await?;
         }
@@ -17892,8 +17842,8 @@ impl Db {
     }
 
     /// The wet loop of [`Db::fold_provisional_echoes`] — and, since issue 432,
-    /// of [`Db::repair_provisional_name_norm`] — on the writer with foreign
-    /// keys off; the caller restores them whatever this returns. Each plan
+    /// of [`Db::repair_provisional_name_norm`] — on the writer, foreign keys
+    /// ON (issue 442 step 2). Each plan
     /// entry is `(group key, name, ids ascending)`; the lowest id is kept.
     /// [`ProvisionalFoldRule`] carries what differs between the two callers.
     async fn fold_provisional_plan(
@@ -17954,37 +17904,23 @@ impl Db {
                                 (Value::Integer(loser), Value::Integer(loser), Value::Integer(loser)),
                             )
                             .await?;
-                        let mut has_tender_rows = false;
                         while let Some(row) = trows.next().await? {
-                            has_tender_rows = true;
                             txn_touched.insert(int(&row, 0));
                         }
                         drop(trows);
-                        // The first wet slice measured ~0.5 s per group, most
-                        // of it fixed per-statement cost — and a country-less
-                        // provisional loser holds one mention and, almost
-                        // always, no tender rows at all. The tender probe
-                        // above already knows: when it found nothing, the
-                        // three party/winner UPDATEs and the winner-dup pass
-                        // would each touch zero rows, so only the mention
-                        // repoint runs. The full repoint stays for the rest.
-                        // (`full_repoint` keeps it always: the shortcut skips
-                        // the loser's `organization_names` variants too.)
-                        if has_tender_rows || args.full_repoint {
-                            let moved = repoint_org_references(conn, keep, loser).await?;
-                            report.mentions += moved.mentions;
-                            report.parties += moved.parties;
-                            report.bid_parties += moved.bid_parties;
-                            report.winners += moved.winners;
-                            report.winner_dups += moved.winner_dups;
-                        } else {
-                            report.mentions += conn
-                                .execute(
-                                    "UPDATE organization_mentions SET organization_id = ? WHERE organization_id = ?",
-                                    (Value::Integer(keep), Value::Integer(loser)),
-                                )
-                                .await?;
-                        }
+                        // Every loser takes the full repoint (issue 442): the
+                        // mention-only shortcut this loop once took for a loser
+                        // with no tender rows left its `organization_names`
+                        // variants behind, pointing at the deleted row — hidden
+                        // by the foreign-keys-off bracket, refused with it gone.
+                        // The statements it skipped are seeks on the party
+                        // tables' `(organization_id)` indexes.
+                        let moved = repoint_org_references(conn, keep, loser).await?;
+                        report.mentions += moved.mentions;
+                        report.parties += moved.parties;
+                        report.bid_parties += moved.bid_parties;
+                        report.winners += moved.winners;
+                        report.winner_dups += moved.winner_dups;
                         conn.execute("DELETE FROM organizations WHERE id = ?", (Value::Integer(loser),)).await?;
                         conn.execute(
                             "INSERT INTO org_merge_log(keep, loser, rule, evidence, job_id, at) \
@@ -18348,16 +18284,10 @@ impl Db {
 
         let now = crate::now_unix();
         let conn = self.conn().await;
-        // Foreign keys OFF around the folds, the echo fold's reason: every
-        // child moves off a loser before the loser goes, so the engine's
-        // per-delete proof buys nothing. Restored whatever happens.
-        {
-            let mut q = conn.query("PRAGMA foreign_keys=OFF", ()).await?;
-            while q.next().await?.is_some() {}
-        }
+        // Foreign keys stay ON (issue 442 step 2), as in the echo fold.
         // Boxed: the wet half nests the shared fold loop's future, and the
         // plan phase above is already a large state of its own.
-        let applied = Box::pin(self.apply_provisional_name_norm(
+        Box::pin(self.apply_provisional_name_norm(
             &conn,
             &args,
             &mut report,
@@ -18367,12 +18297,7 @@ impl Db {
             now,
             SLICE,
         ))
-        .await;
-        {
-            let mut q = conn.query("PRAGMA foreign_keys=ON", ()).await?;
-            while q.next().await?.is_some() {}
-        }
-        applied?;
+        .await?;
         if report.removed > 0 {
             self.publish_cursor(&conn).await?;
         }
@@ -18380,8 +18305,7 @@ impl Db {
     }
 
     /// The wet half of [`Db::repair_provisional_name_norm`]: fold, re-key the
-    /// verdicts, rewrite. On the writer, foreign keys off (the caller restores
-    /// them).
+    /// verdicts, rewrite. On the writer, foreign keys ON (issue 442 step 2).
     #[allow(clippy::too_many_arguments)]
     async fn apply_provisional_name_norm(
         &self,
@@ -18399,7 +18323,6 @@ impl Db {
         let rule = ProvisionalFoldRule {
             rule: "p1",
             rekey_keep: true,
-            full_repoint: true,
             job_id: args.job_id,
             stop: args.stop,
             progress: args.progress,
@@ -21176,20 +21099,21 @@ impl Db {
         Ok(ids)
     }
 
-    /// Which of the indexes the issue-443 sweep depends on are absent. Every
-    /// read of the sweep and its foreign-key proof are single-column seeks on
-    /// these, and all of them are deferred: a rebuild strips them and only a
-    /// finished fold or `reindex` puts them back. Without one, a window's read
-    /// or an org delete's proof walks a table of 10⁷–10⁸ rows, so the job
-    /// refuses to start instead.
-    pub async fn orphan_sweep_missing_indexes(&self) -> turso::Result<Vec<&'static str>> {
+    /// Which of the indexes an organization delete's foreign-key proof needs
+    /// are absent ([`ORG_FK_INDEXES`]). The issue-443 sweep's reads are seeks on
+    /// the same five. All are deferred: a rebuild strips them and only a
+    /// finished fold or `reindex` puts them back. Without one, every org
+    /// delete (the sweep, and since issue 442 step 2 the merge loops, with
+    /// foreign keys ON) walks a table of 10⁷–10⁸ rows, so those jobs refuse to
+    /// start instead.
+    pub async fn org_fk_missing_indexes(&self) -> turso::Result<Vec<&'static str>> {
         let conn = self.reader().await?;
         let mut present = std::collections::HashSet::new();
         let mut rows = conn.query("SELECT name FROM sqlite_master WHERE type = 'index'", ()).await?;
         while let Some(row) = rows.next().await? {
             present.insert(text(&row, 0));
         }
-        Ok(ORPHAN_SWEEP_INDEXES.into_iter().filter(|n| !present.contains(*n)).collect())
+        Ok(ORG_FK_INDEXES.into_iter().filter(|n| !present.contains(*n)).collect())
     }
 
     /// One window of the issue-443 orphan sweep: organizations no recorded
@@ -22381,8 +22305,9 @@ impl Db {
     ///
     /// ## Foreign keys off, deliberately
     ///
-    /// Same bracket the R2/E0/R3 merge loop uses (issue 352) and for the same
-    /// reason. Deleting a notice's `organization_mentions` while
+    /// The projection's issue-19 bracket. (The R2/E0/R3 merge loops once
+    /// carried one too — issue 352 — until issue 442 step 2 found their org
+    /// deletes proven by index and deleted it.) Deleting a notice's `organization_mentions` while
     /// `tender_version_parties` still references them is a real dangling window —
     /// it closes when the fold rewrites those versions, or, for the emptied
     /// Tenders, when `retire_chunk_tx` deletes their party rows in this same
@@ -23627,10 +23552,10 @@ const IN_CHUNK: usize = 512;
 const ORPHAN_SWEEP_MENTIONED_SQL: &str =
     "SELECT organization_id FROM organization_mentions WHERE organization_id >= ? AND organization_id <= ?";
 
-/// The indexes behind every read of the issue-443 sweep and behind its org
-/// delete's foreign-key proof (turso proves a child only through an index of
-/// the FK's exact shape — issue 442).
-const ORPHAN_SWEEP_INDEXES: [&str; 5] = [
+/// The exact-shape child indexes behind an `organizations` delete's
+/// foreign-key proof — turso proves a child only through an index of the FK's
+/// exact shape (issue 442) — and behind every read of the issue-443 sweep.
+const ORG_FK_INDEXES: [&str; 5] = [
     "organization_mentions_org",
     "organization_names_org",
     "tender_version_parties_org",

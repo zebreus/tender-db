@@ -134,7 +134,7 @@ async fn the_e0_fold_merges_agreeing_distinctive_names_and_denies_the_rest() {
 
     let wet = db.match_org_identifiers_r2(args(false, Some(1))).await.expect("wet");
 
-    assert!(db.foreign_keys_enabled().await.unwrap(), "issue 352: and after it — the loop's OFF is bracketed");
+    assert!(db.foreign_keys_enabled().await.unwrap(), "and after it: the wet loop never turns them off (issue 442 retired 352's bracket)");
     assert_eq!(wet.merged_groups, 1);
     assert_eq!(wet.removed, 1);
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 61").await, 0, "the provisional twin lost");

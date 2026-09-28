@@ -201,7 +201,7 @@ async fn identical_null_country_provisionals_fold_under_the_wall_and_stand_over_
     assert!(db.foreign_keys_enabled().await.unwrap(), "the writer enforces foreign keys before the fold");
     let wet = db.fold_provisional_echoes(args(false, Some(3), &never, &quiet)).await.unwrap();
     assert_eq!((wet.merged_groups, wet.removed, wet.mentions), (3, 62, 2), "two mentions moved off 101 and 104");
-    assert!(db.foreign_keys_enabled().await.unwrap(), "and again after it: the wet loop's OFF is bracketed");
+    assert!(db.foreign_keys_enabled().await.unwrap(), "and again after it: the wet loop never turns them off (issue 442)");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'stadt big' AND country IS NULL").await, 1);
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'stadt big' AND country = 'DE'").await, 2, "the identified rows are not the fold's");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'tribunal verdict'").await, 1);
@@ -222,4 +222,41 @@ async fn identical_null_country_provisionals_fold_under_the_wall_and_stand_over_
     // Idempotent: the class is now one row per admitted name, nothing to plan.
     let again = db.fold_provisional_echoes(args(true, None, &never, &quiet)).await.unwrap();
     assert_eq!((again.plan_groups, again.over_wall), (0, 3));
+}
+
+/// Issue 442 step 2: the fold deletes with foreign keys ON, and a loser with no
+/// tender rows takes the full repoint, so its `organization_names` variants
+/// move to the keep. The mention-only shortcut the loop used to take for such
+/// a loser left them pointing at the deleted row, and the foreign-keys-off
+/// bracket hid it.
+#[tokio::test]
+async fn a_loser_without_tender_rows_hands_its_name_variants_to_the_keep() {
+    let (db, conn) = open("echo-fold-names").await;
+    org(&conn, 10, None, "Stadt Names").await;
+    org(&conn, 11, None, "Stadt Names").await;
+    mention(&conn, 1, 10, "Stadt Names").await;
+    mention(&conn, 2, 11, "Stadt Names").await;
+    for (id, lang, name) in [(10, "DEU", "Stadt Names"), (11, "DEU", "Stadt Names"), (11, "FRA", "Ville Names")] {
+        conn.execute(
+            "INSERT INTO organization_names (org_id, lang, name, name_norm) VALUES (?, ?, ?, lower(?))",
+            (Value::Integer(id), Value::Text(lang.into()), Value::Text(name.into()), Value::Text(name.into())),
+        )
+        .await
+        .unwrap();
+    }
+    let never = || false;
+    let quiet = |_: u64, _: &str| {};
+    let dry = db.fold_provisional_echoes(args(true, None, &never, &quiet)).await.unwrap();
+    assert_eq!(dry.plan_groups, 1, "{dry:?}");
+    assert!(db.foreign_keys_enabled().await.unwrap());
+    let wet = db.fold_provisional_echoes(args(false, Some(1), &never, &quiet)).await.unwrap();
+    assert_eq!((wet.removed, wet.mentions, wet.parties), (1, 1, 0), "no tender rows anywhere: {wet:?}");
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM organization_names n WHERE NOT EXISTS (SELECT 1 FROM organizations o WHERE o.id = n.org_id)").await,
+        0,
+        "no variant points at the deleted row"
+    );
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organization_names").await, 2, "the keep's DEU wins its collision");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organization_names WHERE lang = 'FRA'").await, 1, "the loser's FRA variant moved");
+    assert!(db.foreign_keys_enabled().await.unwrap());
 }

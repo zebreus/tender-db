@@ -3370,6 +3370,24 @@ impl Supervisor {
         Ok(format!("probed {} day(s), {fetched} new", results.len()))
     }
 
+    /// Issue 442: refuse a job that deletes organizations while any of the
+    /// exact-shape child indexes their foreign-key proof needs is missing. The
+    /// sweep and, since step 2 retired issue 352's foreign-keys-off bracket, the
+    /// wet merge loops delete with enforcement ON; without an index each delete
+    /// walks a table of 10⁷–10⁸ rows while holding the writer. All five are
+    /// deferred (a rebuild strips them until a finished fold or `reindex`).
+    async fn refuse_without_org_fk_indexes(&self, kind: &str) -> Result<(), String> {
+        let missing = self.db.org_fk_missing_indexes().await.map_err(|e| e.to_string())?;
+        if missing.is_empty() {
+            return Ok(());
+        }
+        Err(format!(
+            "{kind} refused: missing {} (nothing was written) — without them every \
+             organization delete walks a whole table; run `reindex` first",
+            missing.join(", ")
+        ))
+    }
+
     /// Issue 443's `sweep-orphan-orgs`, out of `run_spec`'s match for the
     /// stack's sake — see [`Self::run_repair_member_twins`]. Refuses to start
     /// while an index the sweep reads by is missing. Every run then counts
@@ -3380,14 +3398,8 @@ impl Supervisor {
     /// run stopped, failed or cut by a restart resumes under the same parity.
     async fn run_sweep_orphan_orgs(&self, job: &Job, mode: SweepMode) -> Result<String, String> {
         let dry_run = mode == SweepMode::Dry;
-        let missing = self.db.orphan_sweep_missing_indexes().await.map_err(|e| e.to_string())?;
-        if !missing.is_empty() {
-            return Err(format!(
-                "sweep-orphan-orgs refused: missing {} (nothing was read or written) — without \
-                 them every window walks a whole table; run `reindex` first",
-                missing.join(", ")
-            ));
-        }
+        // Its reads are seeks on the same indexes its deletes' proofs need.
+        self.refuse_without_org_fk_indexes("sweep-orphan-orgs").await?;
         let planned = if mode != SweepMode::Wet {
             None
         } else {
@@ -5186,6 +5198,10 @@ impl Supervisor {
                             .ok_or_else(|| "r2-merge-plan lacks plan_groups".to_owned())?,
                     )
                 };
+                // Issue 442: the wet loop deletes organizations with foreign keys ON.
+                if !dry_run {
+                    Box::pin(self.refuse_without_org_fk_indexes("match-org-identifiers r2")).await?;
+                }
                 self.set_phase(
                     if dry_run { "planning" } else { "merging" },
                     None,
@@ -5378,6 +5394,10 @@ impl Supervisor {
                             .ok_or_else(|| "e0-merge-plan lacks plan_groups".to_owned())?,
                     )
                 };
+                // Issue 442: the wet loop deletes organizations with foreign keys ON.
+                if !dry_run {
+                    Box::pin(self.refuse_without_org_fk_indexes("match-org-identifiers e0")).await?;
+                }
                 self.set_phase(
                     if dry_run { "planning" } else { "merging" },
                     None,
@@ -5612,6 +5632,10 @@ impl Supervisor {
                             .ok_or_else(|| "r3-merge-plan lacks plan_groups".to_owned())?,
                     )
                 };
+                // Issue 442: the wet loop deletes organizations with foreign keys ON.
+                if !dry_run {
+                    Box::pin(self.refuse_without_org_fk_indexes("match-org-identifiers r3")).await?;
+                }
                 self.set_phase(
                     if dry_run { "planning" } else { "merging" },
                     None,
@@ -7908,6 +7932,10 @@ impl Supervisor {
                             .ok_or_else(|| "provisional-echo-plan lacks plan_groups".to_owned())?,
                     )
                 };
+                // Issue 442: the wet loop deletes organizations with foreign keys ON.
+                if !dry_run {
+                    Box::pin(self.refuse_without_org_fk_indexes("fold-provisional-echoes")).await?;
+                }
                 self.set_phase(
                     if dry_run { "planning" } else { "folding" },
                     None,
@@ -8032,6 +8060,10 @@ impl Supervisor {
                     (Some(field("groups")?), Some(field("rows")?))
                 };
                 let phase = if dry_run { "planning" } else { "repairing" };
+                // Issue 442: the wet loop deletes organizations with foreign keys ON.
+                if !dry_run {
+                    Box::pin(self.refuse_without_org_fk_indexes("repair-provisional-name-norm")).await?;
+                }
                 self.set_phase(
                     phase,
                     None,
@@ -14450,6 +14482,35 @@ mod tests {
             Some(store::turso::Value::Integer(24)),
             "each swept row left its pre-image"
         );
+        remove_db(&path);
+    }
+
+    /// Issue 442 step 2: with issue 352's foreign-keys-off bracket gone, a wet
+    /// merge proves every loser delete through the five exact-shape child
+    /// indexes, so it refuses while any is missing and names them. A fresh
+    /// database lacks the deferred `organization_names_org`; the party index is
+    /// created at open but a rebuild strips it, so it is dropped here. The fold
+    /// arm reaches the guard after its plan check; the guard passes once built.
+    #[tokio::test]
+    async fn a_wet_merge_refuses_without_the_org_fk_indexes() {
+        let path = format!("/tmp/tender-db-sup-fkidx-{}-{}.db", std::process::id(), store::now_unix());
+        remove_db(&path);
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+        conn.execute("DROP INDEX tender_version_parties_org", ()).await.unwrap();
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        db.put_report("provisional-echo-plan", r#"{"plan_groups":0}"#, store::now_unix()).await.unwrap();
+        let err = sup
+            .run_spec(&job(Spec::FoldProvisionalEchoes { dry_run: false, max_groups: None }))
+            .await
+            .expect_err("two of the five are missing");
+        assert!(
+            err.starts_with("fold-provisional-echoes refused: missing organization_names_org, tender_version_parties_org"),
+            "{err}"
+        );
+        db.build_organization_indexes().await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        sup.refuse_without_org_fk_indexes("fold-provisional-echoes").await.expect("all five built");
         remove_db(&path);
     }
 
