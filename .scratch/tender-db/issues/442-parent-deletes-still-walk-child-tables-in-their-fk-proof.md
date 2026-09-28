@@ -1,6 +1,6 @@
 # 442 — issue 441's trap is schema-wide: 11 parent tables' DELETEs walk child tables in their FK proof, because turso uses only an exact-shape child index
 
-Status: ready-for-agent — unit 1 BUILT 2026-09-27 (the `organizations` delete, see below): gated, committed and
+Status: ready-for-agent — unit 1 DEPLOYED and VERIFIED 2026-09-28 (see the foot); steps 2–4 remain. Was: unit 1 BUILT 2026-09-27 (the `organizations` delete, see below): gated, committed and
 not deployed. It deploys with the next bundle, and the auto-Reindex builds it. Filed 2026-09-27 from the hourly
 AUDIT step, generalising issue 441. The remaining units are measure-first (see "What to decide").
 mine to take.
@@ -70,7 +70,10 @@ proof is a `Rewind` over the whole child table, per deleted parent row.
 
 - **done** (unit 1): the organization-delete test is green AND on prod the auto-Reindex line names
   `organization_names_org`, and 440's `repair-placeholder-orgs` wet reports its per-org time in ms, not seconds.
-- **open**: unit 1 built, not deployed (2026-09-27).
+- **was open**: unit 1 built, not deployed (2026-09-27).
+- **read 2026-09-28**: the auto-Reindex after the 06:05 UTC deploy built `organization_names_org` (job 1598, 22 s; the
+  table is smaller than its 78M rowid bound). 440's wet dissolve (job 1615) deleted all 425 condemned organizations
+  in under a minute (queued 07:56, done 07:57 UTC): ms per org, not seconds. **Unit 1 done.**
 
 ## Unit 3 answered by reading the code (2026-09-27 15:5x UTC): no live path pays the tender-layer rows
 
