@@ -114,3 +114,22 @@ turning a bounded repair into a corpus-scale one. So the chain runs on the old k
 wet promptly: until the repair runs, a new mention of a buyer whose stock
 row still carries the old key misses the probe and mints ONE fresh row on the corrected key (then reuses it); the
 repair folds those too, but the dry/wet parity tolerates only max(2%, 50) of drift between the two runs.
+
+## 2026-09-28: the repair ran (dry 1601 → re-dry 1612 → wet 1613), ahead of the full fold
+
+The run-order note above assumed the chain would fold on the OLD key and this would deploy after. It deployed with
+the 434–440 bundle instead (`9dedf49`), so the fold that began at the 07:35 tick (1610) was resolving mentions on
+the NEW key against ~464k stock rows still on the old one. The owner cancelled it in planning (see 434's 2026-09-28
+note: 505,116 orgs minted by then) and ran this repair first.
+
+- **Dry 1601 (07:04):** 5,714,068 identifier-less rows walked, 464,327 off the corrected key (208,028
+  country-less), 34,503 collision groups over 75,051 rows, a fold removes 40,548; 5,664 verdict keys to re-key, 937
+  on a conflict.
+- **Re-dry 1612 (after 1610's partial planning):** 6,219,184 walked. The same 464,327 are off-key, which confirms
+  the new mints sit on the corrected key. Groups 42,547 over 91,410 rows, fold removes 48,863: about 8.3k of the
+  505k new rows were twins of old-key stock.
+- **Wet 1613:** folded 42,547 groups under `p1`, **48,863 rows removed**, 394,404 mentions / 53,136 parties / 3,704
+  bid-parties / 268,084 winners repointed, 162 winner dups deleted, 81,356 tenders touched; 5,664 verdict keys
+  moved (937 left standing on a conflict); 413,126 `name_norm` rewritten; **residual 0**.
+
+The Verify (the refined weld gauge's 3 FTS Tenders) is read after the full fold (job 1616) and the next weekly report.

@@ -153,3 +153,20 @@ re-bound, no nameless mention or party left, the 18 nameless provisionals left m
 `a_stamped_refold_rederives_winners_from_rewritten_mentions`, whose repointed binding survives because its facts are
 unchanged), `project_incremental` 25/25, `project_equivalence`, `project_golden`, `project_resume` 3/3,
 `project_fold_source` 5/5, `data_quality` 9/9, `fts` 4/4; `cargo check -p tender-db --features server` clean.
+
+## 2026-09-28: the first fold with the refresh, measured, and stopped on purpose
+
+The weekday tick's fold (job 1610, `rebuild=false` on ~11M unprojected re-parsed notices, so the full path) got
+through planning 4,130,000 of 14,544,390 notices, then was CANCELLED at a checkpoint by the owner. Its line so far:
+**4,681,427 recorded mentions refreshed, 4,649,867 re-bound to another organization**. It also minted **505,116**
+provisional organizations (`id > 30976778`: all provisional, 23,185 country-less, 11 nameless). The expected
+drivers are the text-era `TXT-CY` country that never reached a stored mention, 435's R2.0.7 names and 436's joined
+AU names. The planning order puts the text era first, so that is where the volume shows.
+
+**Why stopped:** 432's new reuse key was already live (deployed with this bundle at `9dedf49`), and ~464k stock
+identifier-less rows still carry the old key. Every re-resolution that should land on one of them misses the probe
+and mints a twin on the corrected key, the corpus-scale case 432's run-order note warns about. The rest of the fold
+would have multiplied it. New order: 432 dry (re-planned on the changed layer) → 432 wet, which folds the minted
+same-country twins into their stock rows under `p1` → 440 dry → wet → the full fold → the mention-less org sweep
+this issue already names as unbuilt (the country-less stock rows the text-era re-binds leave behind are its biggest
+cohort).

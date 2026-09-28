@@ -1,6 +1,6 @@
 # 440 — a TED/OJ S notice number is accepted as an organization identifier, and 425 org rows are keyed by one
 
-Status: ready-for-agent — DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `db8ed6d`); `repair-placeholder-orgs` DRY queued as job 1601 (after 432's dry, 1600); wet after 432's wet. Was: BUILT 2026-09-27 (uncommitted, not deployed, see the foot): `idgate::condemns` now refuses the
+Status: RESOLVED-VERIFIED 2026-09-28 08:3x UTC — the wet dissolve (job 1615) ran and the Verify below reads 0. Was: DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `db8ed6d`); `repair-placeholder-orgs` DRY queued as job 1601 (after 432's dry, 1600); wet after 432's wet. Was: BUILT 2026-09-27 (uncommitted, not deployed, see the foot): `idgate::condemns` now refuses the
 OJ S publication number as a class. What remains is deploy → `repair-placeholder-orgs` dry → wet → `project`, then the
 Verify. Filed 2026-09-27 from a prod read of org 13782393.
 Kind: defect (org layer: identifier admission, `crates/ingest/src/idgate.rs`)
@@ -179,7 +179,8 @@ The plan was read locally with `plan-probe`: `SCAN generate_series AS y` / `SEAR
 organizations_identifier_id (identifier>=? AND identifier<?)`, one range seek per year. It takes 1.7 s on prod.
 
 - **done**: `"rows":[[0]]`, read after the wet dissolve
-- **open**: `"rows":[[425]]` (read 2026-09-27)
+- **was open**: `"rows":[[425]]` (read 2026-09-27)
+- **read 2026-09-28 08:3x UTC, after job 1615**: `"rows":[[0]]`. **done.**
 
 ## Built (2026-09-27)
 
@@ -210,3 +211,14 @@ not run (disk budget); the focused runs below are green.
   - the E0/R2/R3 merge arms receive `condemns` injected (`supervisor.rs` ~4867/5059/5294), so they skip the class too
   - the one-shot 325/328/345 re-normalisation repairs return `None` for the class, the same way they already do for
     every earlier condemned class
+
+## 2026-09-28: dry, re-dry, wet
+
+- Dry job 1602 (07:04 UTC): 425 condemned, 425 dissolved, 0 skipped, 1,008 mentions re-resolved (141 fresh / 867
+  reused), 191 party rows, 1 bid-party, 19 winner rows, 36 tenders touched. That matches the reconcile expectation
+  exactly: the class, and nothing else.
+- Re-dry job 1614, after 434's refresh had moved the org layer (see 434's 2026-09-28 note): identical, except the
+  split (102 / 906).
+- **Wet job 1615:** 425 dissolved, 1,008 mentions re-resolved (81 fresh / 927 reused), 191 party rows, 1 bid-party,
+  19 winners, 36 tenders touched. It runs ahead of the full fold (job 1616), which re-derives those Tenders, and
+  `backfill-org-name-variants` (1617) follows it.
