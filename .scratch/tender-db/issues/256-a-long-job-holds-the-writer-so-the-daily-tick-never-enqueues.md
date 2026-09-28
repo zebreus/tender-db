@@ -598,3 +598,16 @@ hidden hours, and the one that somehow still does can be cancelled at a checkpoi
 route. Remaining before this issue closes: deploy `0852a1a`+`b0d59f1` (the stop checkpoint + the org
 merge, post-refold per issue 234's sequencing), confirm `/admin/jobs/<id>/cancel` on a live project
 job answers `Stopping`, and let one daily tick pass clean.
+
+## 2026-09-28: the "a restart before it runs will lose it" caveat bit, so it is closed
+
+Four jobs enqueued on 2026-09-27 14:41 UTC while a reindex held the writer: the text and FTS re-parses and 432's and
+440's dry repairs (1598–1601). All four logged `persist queued job … gave up after 30s` and lived in memory only. The
+2026-09-28 06:05 UTC deploy restart dropped all of them, including 1598, which was RUNNING (the re-parse was
+re-queued from its last known fetch, 301; 1599–1602 now). Nothing retried the persist, and nothing but the journal
+said the jobs were not durable.
+
+Fix: `enqueue` records a give-up in `Supervisor::unpersisted`, and the worker calls `persist_stragglers` right after
+each pop, at a job boundary where the writer is free. It writes the rows for the job about to start and for every job
+still queued, and forgets ids that were cancelled meanwhile. With nothing pending it is a no-op with no store access.
+Test: `a_job_whose_persist_gave_up_is_written_at_the_next_job_boundary`.

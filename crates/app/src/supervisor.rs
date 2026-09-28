@@ -136,6 +136,11 @@ pub struct Supervisor {
     doe_base: String,
     fts_base: String,
     queue: Mutex<VecDeque<Job>>,
+    /// Queued jobs whose durable row was never written: the persist gave up behind a
+    /// long job's writer (issue 256), so a restart would drop them. The worker writes
+    /// them at the next job boundary, when the writer is free ([`Self::persist_stragglers`]).
+    /// 2026-09-28: a deploy restart lost four such jobs, the running one included.
+    unpersisted: Mutex<std::collections::BTreeSet<u64>>,
     wake: Notify,
     next_id: AtomicU64,
     current: RwLock<Option<JobProgress>>,
@@ -1062,6 +1067,7 @@ impl Supervisor {
             doe_base: doe::BASE.to_owned(),
             fts_base: fts::BASE.to_owned(),
             queue: Mutex::new(VecDeque::new()),
+            unpersisted: Mutex::new(std::collections::BTreeSet::new()),
             wake: Notify::new(),
             next_id: AtomicU64::new(1),
             current: RwLock::new(None),
@@ -1152,13 +1158,16 @@ impl Supervisor {
         // job, because the in-memory push below only happens after the persist returns
         // (issue 256). Honouring the best-effort contract stated above means giving up on
         // the row rather than on the job.
-        Self::persist_queued(
+        let durable = Self::persist_queued(
             id,
             kind,
             Self::PERSIST_TIMEOUT,
             self.db.enqueue_job(id as i64, kind, &params, &spec_json),
         )
         .await;
+        if !durable {
+            self.unpersisted.lock().expect("unpersisted lock").insert(id);
+        }
         let job = Job { id, kind: kind.to_owned(), params, spec, resume_after: None };
         {
             let mut queue = self.queue.lock().expect("queue lock");
@@ -2666,6 +2675,44 @@ impl Supervisor {
         self.queue.lock().expect("queue lock").pop_front()
     }
 
+    /// Write the durable rows an earlier persist gave up on (issue 256), for the job
+    /// about to start and every job still queued. Called at a job boundary, where the
+    /// writer is free, so the retry does not wait behind the job that caused the give-up.
+    /// A row that still cannot be written stays in the set for the next boundary. An id
+    /// no longer queued (cancelled) is forgotten. A no-op, with no store access, when
+    /// every persist landed.
+    async fn persist_stragglers(&self, next: &Job) {
+        let pending: Vec<u64> = self.unpersisted.lock().expect("unpersisted lock").iter().copied().collect();
+        if pending.is_empty() {
+            return;
+        }
+        let jobs: Vec<Job> = {
+            let queue = self.queue.lock().expect("queue lock");
+            std::iter::once(next)
+                .chain(queue.iter())
+                .filter(|j| pending.contains(&j.id))
+                .cloned()
+                .collect()
+        };
+        let mut settled: Vec<u64> = pending.iter().copied().filter(|id| !jobs.iter().any(|j| j.id == *id)).collect();
+        for job in &jobs {
+            let spec_json = serde_json::to_string(&job.spec).expect("job spec serializes");
+            let persist = self.db.enqueue_job(job.id as i64, &job.kind, &job.params, &spec_json);
+            if Self::persist_queued(job.id, &job.kind, Self::PERSIST_TIMEOUT, persist).await {
+                eprintln!(
+                    "supervisor: job {} ({}) written to the durable queue at a job boundary, \
+                     after its enqueue-time persist gave up (issue 256)",
+                    job.id, job.kind
+                );
+                settled.push(job.id);
+            }
+        }
+        let mut set = self.unpersisted.lock().expect("unpersisted lock");
+        for id in settled {
+            set.remove(&id);
+        }
+    }
+
     /// Rebuild the in-memory queue from the durable one at startup, before the
     /// worker or scheduler run (issue 21). Rows come back oldest-id first, so the
     /// job that was running when the process died — its row never removed — lands
@@ -2976,6 +3023,7 @@ impl Supervisor {
             loop {
                 match self.pop() {
                     Some(job) => {
+                        self.persist_stragglers(&job).await;
                         let sup = self.clone();
                         let handle = self.worker_runtime.spawn(async move { sup.execute(job).await });
                         if let Err(e) = handle.await {
@@ -13836,6 +13884,38 @@ mod tests {
                 want.id
             );
         }
+    }
+
+    /// Issue 256's caveat, closed: a job whose enqueue-time persist gave up is written to
+    /// the durable queue at the next job boundary, so a restart no longer drops it. On
+    /// 2026-09-28 a deploy restart lost four such jobs, the one running included.
+    #[tokio::test]
+    async fn a_job_whose_persist_gave_up_is_written_at_the_next_job_boundary() {
+        let db = scratch().await;
+        let sup = Arc::new(Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new()));
+        let project = |id: u64| Job {
+            id,
+            kind: "project".into(),
+            params: "rebuild=false".into(),
+            spec: Spec::Project { rebuild: false, clear_changes: false },
+            resume_after: None,
+        };
+        // The give-up, as `enqueue` records it: queued in memory, no durable row. 40 is
+        // the job the worker just popped, 41 still waits, 99 was cancelled meanwhile.
+        let next = project(40);
+        sup.queue.lock().unwrap().push_back(project(41));
+        sup.unpersisted.lock().unwrap().extend([40, 41, 99]);
+        assert!(db.pending_jobs().await.unwrap().is_empty(), "no durable rows yet");
+
+        sup.persist_stragglers(&next).await;
+
+        let ids: Vec<i64> = db.pending_jobs().await.unwrap().iter().map(|r| r.id).collect();
+        assert_eq!(ids, vec![40, 41], "the popped job and the queued one are durable now");
+        assert!(sup.unpersisted.lock().unwrap().is_empty(), "written and cancelled ids both leave the set");
+
+        // The next boundary finds nothing to do: no second INSERT for a row that exists.
+        sup.persist_stragglers(&next).await;
+        assert_eq!(db.pending_jobs().await.unwrap().len(), 2);
     }
 
     /// Issue 256: a queue persist that cannot get the writer must not take the job with
