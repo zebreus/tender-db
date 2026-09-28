@@ -103,6 +103,10 @@ was seen in these windows.
   it and the journal clean.
 - `SELECT COUNT(*) FROM organizations`: 7,367,032 before, **5,598,679** after — exactly the swept count.
 - **Verify, dry job 1629 (9 s):** 5,598,679 walked, **0** provisional orphans. **done.**
+- **Verify, second line (read ~19:00 UTC):** `/v1/organizations?name_prefix=` for three names whose mentions were
+  re-bound (`sarner`, `monaco digital`, `qatar airways`) serves 15 rows. Every provisional row among them has
+  `mentions` ≥ 1, and the only `mentions: 0` rows are the identifier-bearing ones the sweep leaves on purpose
+  (23375495, 23506939, 23386361 — see the 30 below). **done.**
 - Still open:
   - **Step 3.** Nothing runs the sweep by itself yet. Each fold that re-binds (`mentions_rebound > 0`) makes more
     orphans. Wire it after the incremental fold or on the weekly tick.
