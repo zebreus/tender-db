@@ -130,8 +130,12 @@ Two traced through the public API:
   identity and holds the 4 mentions. The orphan is a duplicate the merge arms never folded (name gate), now empty.
 - **Sarner International Ltd** (23375495, `UK`/vat `UKCOMPANYREGISTER02231841`, 0 mentions). Its mentions now sit
   on 31516324: the same raw identifier under country **`CD`** (national, 2 mentions), beside an `NL` identity row
-  and a `GB` provisional one. A UK company keyed under the Democratic Republic of the Congo is its own defect, not
-  this issue's. It is a lead for the country layer (a notice publishing `CD`, or a crosswalk mapping), not yet traced.
+  and a `GB` provisional one. A UK company keyed under the Democratic Republic of the Congo — **traced: source reality, not a parse defect.**
+  The notices publish it. Notice 25253580 (00735989-2025, eForms) has `BT-514-Organization-Company` `COD` on
+  ORG-0004, and every other party there is `DEU`. The two BG rows under `CD` (31502459, 31503822) come from r209
+  notices whose `TED-COUNTRY` on that one ORG section is `CD` beside `BG` everywhere else, e.g. 19581268
+  (496753-2017) ORG-2. A publisher's country slip is the wrong-country class issues 355/357's verdict-gated
+  country moves handle. No new issue.
 
 **Step 4 (decide):** extend the sweep to non-provisional orphans. They have no evidence and no party rows, like the
 provisional ones. The pre-image log makes each deletion restorable, and 30 rows is a trivial blast radius. It is a
