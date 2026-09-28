@@ -1,6 +1,6 @@
 # 436 — text-era awarding-authority names keep TED's line wrap
 
-Status: ready-for-agent — DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `cef344b`); text re-parse queued as job 1598 (`reclaim_only`), folded by the one full fold. Was: **BUILT 2026-09-27** (see the foot): `AU` and `TW` are names now, space-joined like issue
+Status: RESOLVED-VERIFIED 2026-09-28 — verified after the text re-parse (1598/1599), 434's refresh and the full fold (1616). Was: DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `cef344b`); text re-parse queued as job 1598 (`reclaim_only`), folded by the one full fold. Was: **BUILT 2026-09-27** (see the foot): `AU` and `TW` are names now, space-joined like issue
 397's titles. Uncommitted, not deployed. The standing rows need the gated `text` re-parse and fold, and then issue
 434's mention refresh to reach `organizations.name`. Filed 2026-09-27.
 Kind: defect (ingest — the text-era `AU` rule in `crates/ingest/src/text/rules.rs` and the prose newline join in
@@ -109,3 +109,7 @@ Also green: issue 397's `a_wrapped_heading_rejoins_before_its_annotation_is_read
 under the old parse and the flattened one land on the same key once 432 is live. Without 432, the new parse's
 mention for an identifier-less authority keys `'…de la communication'` against a stock row `'…de la\ncommunication'`
 and mints a twin. Run 432's repair after the text re-parse, which is the order 432 already records.
+
+## Verify read 2026-09-28
+
+`['ARISTOTELEIO PANEPISTIMIO THESSALONIKIS (APTH), GRAFEIO PROMITHEION, KTIRIO DIOIKISIS']` on tender 2247398 (read 2026-09-28 16:0x UTC): one line. **done.**

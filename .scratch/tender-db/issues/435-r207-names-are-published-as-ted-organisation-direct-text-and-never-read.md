@@ -1,6 +1,6 @@
 # 435 — R2.0.7 names are published as `TED-ORGANISATION` direct text and never read — ~1.06M nameless mentions
 
-Status: ready-for-agent — DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `94d2346`); reaches R2.0.7 mentions at the full fold via 434's refresh. Was: **BUILT 2026-09-27** (see the foot): `TED-ORGANISATION` is a party name. Uncommitted, not
+Status: RESOLVED-VERIFIED 2026-09-28 — verified after 434's refresh and the full fold (jobs 1610 + 1616). Was: DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `94d2346`); reaches R2.0.7 mentions at the full fold via 434's refresh. Was: **BUILT 2026-09-27** (see the foot): `TED-ORGANISATION` is a party name. Uncommitted, not
 deployed. The standing mentions need issue 434's refresh AND a fold over the r208 era (the queued re-parse chain's
 1597, or a `refold` of `ted-export-r208` if 1597 has already run). Filed 2026-09-27.
 Kind: coverage (projection — `ORG_NAME_FIELDS` / `ORG_NAME_FIELD_IDS` in `crates/ingest/src/project.rs`)
@@ -83,3 +83,7 @@ another agent's edit, so it was left alone.
 `the_r207_fixture_folds_every_organisation_block_with_its_name` fails with 18 nameless mentions, and
 `a_refold_names_the_standing_r207_mentions_and_moves_their_parties` refreshes 0 of 18. The sweep passes on both, as a
 property of the parse layer should. Green: all three, and the full ingest `project` suite (72/72).
+
+## Verify read 2026-09-28
+
+window notice_id 4352478..4362478 (R2.0.7.S03.E01): 41,178 R2.0.7 mentions, **591 nameless (1.4%)**, down from every one of them. Sample: notice 4352545 `ORG-3`/`ORG-4`/`ORG-5` carry only `TED-COUNTRY`, so the source publishes no name there; the remainder is publisher reality. The two folds' lines read 4,681,427 + 1,116,872 mentions refreshed (the ~1M R2.0.7 cohort inside that, with the text-era country moves). **done.**

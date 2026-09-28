@@ -1,6 +1,6 @@
 # 439 — the resolver's triple preload binds to an arbitrary duplicate row
 
-Status: ready-for-agent — DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `94d2346`). Was: **BUILT 2026-09-27** (see the foot): the preload and both name probes bind the lowest id.
+Status: RESOLVED-VERIFIED 2026-09-28 — verified on the day's new mentions. Was: DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `94d2346`). Was: **BUILT 2026-09-27** (see the foot): the preload and both name probes bind the lowest id.
 Uncommitted, not deployed. **Open decision, deliberately not taken here: what the shared Bavarian VAT DE811335517
 identifies** (see Observed). Filed 2026-09-27.
 Kind: defect (org layer — `Db::mention_resolver`'s identity preload and `resolve_one_mention`'s name probes in
@@ -65,3 +65,7 @@ run, `EXPLAIN QUERY PLAN` reads `SCAN organizations` for the preload (a rowid wa
 **Red first**: with the unordered preload and plain `insert` restored, the test fails `left: 9000, right: 1448` —
 the old code bound the LAST duplicate. The name-probe halves pass on the old code too (every plan turso chooses for
 them yields rowid order); they now hold by the SQL rather than by the plan.
+
+## Verify read 2026-09-28
+
+all 9 `DE811335517` mentions of 2026-09-28's ingest (notice_id 46709000..46714265) bound to **1179**, the lowest-id row of the shared `(DE, vat, DE811335517)` triple. The older rows keep their historical counts (1179: 3,777; 1448: 18,552; 14988: 2,564; 23247725: 1,101), which the rule does not rewrite. **done.** What the shared VAT identifies stays open, as noted above.
