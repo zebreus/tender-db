@@ -1,6 +1,6 @@
 # 434 — the fold never refreshes a recorded organization mention, so no parse fix reaches the org layer
 
-Status: ready-for-agent — DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `94d2346`); the refresh reaches the standing rows at the ONE full fold after the 1596/1598/1599 re-parses. Was: **BUILT 2026-09-27** (see the foot): a recorded mention whose published facts changed is
+Status: RESOLVED-VERIFIED 2026-09-28 23:5x UTC — the Verify reads 20 (was 2,332), and all 20 are country-less by publication (see the Verify block). Was: ready-for-agent — DEPLOYED 2026-09-27 14:40 UTC (rev `9dedf49`, commit `94d2346`); the refresh reaches the standing rows at the ONE full fold after the 1596/1598/1599 re-parses. Was: **BUILT 2026-09-27** (see the foot): a recorded mention whose published facts changed is
 re-resolved and rewritten in place. Uncommitted, not deployed. Filed 2026-09-27.
 Kind: defect (org layer — the mention resolver's idempotency preload in `crates/store/src/canonical.rs`
 `resolve_mentions` / `resolve_one_mention`)
@@ -79,6 +79,13 @@ After the first fold that runs with this deployed, the job line carries
 
 - **done**: `0` once the text era's mentions are refolded (they re-bind to the DE-scoped row)
 - **open**: `2332` (2026-09-27)
+- **read 2026-09-28 23:5x UTC: `20`, and that is done.** Every remaining mention is a section that publishes no
+  country. 18 are text-era award winners (`ORG-2`/`ORG-3`/`ORG-4` under `RES-n`, carrying only `TED-OFFICIALNAME`).
+  Notice 2302891 (64471-2004) is an example: TRENITALIA awards to "Deutsche Bahn AG", and the winner block has no
+  country line. The other 2 are internal-OJS 140014-2008 `ORG-2`/`ORG-3`, also without a country. A country-less
+  mention binds to the country-less row by design (351/234). The `0` above assumed every one would carry
+  `TXT-CY`, but only the authority block (`ORG-1`) does. The 2,312 that did carry it re-bound, through 434's refresh
+  in fold 1616 and 393's text re-parse. **done.**
 
 **Run order.** The re-parse chain queued 2026-09-27 (1595 text, 1596 r208/r209, 1597 one full fold) is where this
 pays off: 1597 re-resolves every re-parsed notice's mentions, and with this deployed it refreshes them. If 1597 has
