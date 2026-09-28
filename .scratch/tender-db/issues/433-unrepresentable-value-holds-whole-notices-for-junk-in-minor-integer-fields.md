@@ -66,7 +66,7 @@ Measure the fold's use of each field first: a field the fold never reads is the 
 - **done**: the non-astronomical remainder is either reclaimed (under (a)/(c): near 0) or every shape carries a ledger
   row naming its decision (under (b)), and the terminal-policy comment matches the measured composition
 - **open**: `282` (read 2026-09-27: 326 held, 44 of them BT-113)
-- **read 2026-09-28 ~18:25 UTC**: **3**, after the three reprocess jobs ran on rev `da917b4` with `reclaim_only`.
+- **read 2026-09-28 ~17:58 UTC**: **3**, after the three reprocess jobs ran on rev `da917b4` with `reclaim_only`.
   Job 1618 (`%not an integer%`) reclaimed 310 across 61 packages (0 still held), job 1619 (`%not a number%`) found no
   held packages left, and job 1620 (`BT-803(%`) reclaimed 13 across 6. The 3 left are shapes the rule holds on
   purpose, because the fold reads those fields: 4088754 and 4311463 carry `BT-720-Tender` 74654684654465480000

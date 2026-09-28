@@ -855,3 +855,14 @@ and the queued text + XML re-parse fold), so the wet arm's set-for-set check nee
   (`{"kind":"repair-member-twins","dry_run":false}`, which queues its own `project`), and read the Verify: `0 0`
   twin sets/rows and `tender_versions` down by exactly the plan's row count.
 
+## 2026-09-28 — fresh dry read, baseline taken, wet queued
+
+- Job 1623 (dry, rev `d5bf157`, after the full fold 1616 and the 394 refold fold 1622) planned **281 twin sets**:
+  keep the oldest row of each and drop 281 twins, all of which caused a Tender version (0 never folded). 278 sets
+  fold into one Tender and 3 span more than one. 32 head pointers move, and 3 Tenders are left with no version, which
+  the wet arm retires. This is the same 281 as the corpus-wide measurement of 2026-09-17.
+- Baseline 18:02 UTC: `SELECT COUNT(*) FROM tender_versions` → **14,544,713**. After the repair and its fold it must
+  read **14,544,432** (281 fewer), unless a daily tick lands between the two reads (check `/admin/jobs` recent).
+- Queued: job **1625** `repair-member-twins` wet, with its own `project` **1626**, behind the orphan sweep's dry run
+  (1624).
+

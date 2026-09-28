@@ -564,3 +564,6 @@ re-derives them — no separate job. Verify after it: `?cpv=79416200&source=doe&
   cohort and stamps its tenders epoch-stale (the issue-179 pair), then `project rebuild=false`:
   `{"kind":"refold","profiles":["eforms:eforms-sdk-1.0"],"expect":3560}`. It is queued behind job 1617 with the
   post-fold chain.
+- **read 2026-09-28 ~18:00 UTC**: **done**. Job 1621 re-queued 3,560 notices and stamped 3,029 tenders epoch-stale,
+  and job 1622's fold wrote 3,282 tenders. The Verify query now returns `[1106759, 1270295]`, and 1106759 serves
+  `['79340000', '79341400', '79416200']`, split.
