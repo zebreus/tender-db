@@ -1,6 +1,6 @@
 # 444 — past p0 echo folds left the losers' `organization_names` variants pointing at deleted organizations
 
-Status: ready-for-agent — filed 2026-09-28 from issue 442 step 2. Mine to take. Size unknown on prod: measure first.
+Status: done — MEASURED 2026-09-28 23:5x UTC: **0** orphaned variants on prod (see the foot), so there is nothing to repair. The cause is fixed in `6ced450` (442 step 2). Was: ready-for-agent — filed 2026-09-28 from issue 442 step 2; size unknown, measure first.
 Kind: data integrity (organization layer), small
 Relates to: 442 (step 2 found and fixed the cause), 351 (the p0 fold), 353 (its campaign, ~5.7M provisional rows
 deleted with foreign keys off), 443 (the sweep's pre-image log is the restore-shape precedent), 354 (stale satellite
@@ -38,3 +38,26 @@ provisional orphans, so millions of p0 losers suggest thousands of rows, not mil
 ## Verify
 
     dry repair job: orphaned variants = 0
+
+## Measured 2026-09-28 23:5x UTC: 0 — nothing to repair
+
+`organization_names` is on the public `/v1/sql` surface. Its PK leads on `org_id`, so an id-windowed anti-join is a
+range seek plus a PK lookup per row: bounded (500k ids took 0.08 s).
+
+    SELECT COUNT(*), SUM(CASE WHEN NOT EXISTS (SELECT 1 FROM organizations o WHERE o.id = n.org_id) THEN 1 ELSE 0 END)
+      FROM organization_names n WHERE n.org_id > :lo AND n.org_id <= :lo + 5000000
+
+| org_id window | variant rows | orphaned |
+|---|---|---|
+| 0–5M | 1,025,748 | 0 |
+| 5–10M | 933,297 | 0 |
+| 10–15M | 705,276 | 0 |
+| 15–20M | 566,096 | 0 |
+| 20–25M | 970,757 | 0 |
+| 25–30M | 1,262 | 0 |
+| 30–35M (max org id 31,533,411) | 254,948 | 0 |
+| **total** | **4,457,384** | **0** |
+
+The shortcut's defect was real (`a_loser_without_tender_rows_hands_its_name_variants_to_the_keep` fails on the old
+code), but it never fired on prod. The likely reason is that p0's losers carried no variants when the campaign ran: 443's
+sweep found 588 variants over 1.77M provisional rows. Steps 1–3 above are not needed. **Closed.**
