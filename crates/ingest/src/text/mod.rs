@@ -93,14 +93,20 @@ fn decode_declared_iso(bytes: &[u8]) -> String {
     }
 }
 
-/// `OL:` names the original language(s); Greek is `EL`. A record that predates
-/// the line is Greek when its `CY:` is `GR`. Both are header lines at column 0 —
-/// a body line is indented — so the scan cannot be fooled by prose.
+/// `OL:` names the original language(s); Greek is `EL`, but the 1999 editions
+/// write the COUNTRY code there — `OL: GR` beside `CY: GR` on all 21 Greek
+/// records of issue 1999/075 — and a record may list several languages
+/// separated by `;` (`OL: FR;NL`). `GR` names no other language, so both
+/// spellings count. A record that predates the line is Greek when its `CY:` is
+/// `GR`. Both are header lines at column 0 — a body line is indented — so the
+/// scan cannot be fooled by prose.
 fn declares_greek(text: &str) -> bool {
     let mut country_gr = false;
     for line in text.lines() {
         if let Some(langs) = line.strip_prefix("OL:") {
-            return langs.split_whitespace().any(|l| l.eq_ignore_ascii_case("EL"));
+            return langs
+                .split(|c: char| c.is_whitespace() || c == ';' || c == ',')
+                .any(|l| l.eq_ignore_ascii_case("EL") || l.eq_ignore_ascii_case("GR"));
         }
         if let Some(country) = line.strip_prefix("CY:") {
             country_gr = country.trim().eq_ignore_ascii_case("GR");
@@ -155,6 +161,13 @@ mod tests {
         let by_country = |cy: &[u8]| [b"CY: " as &[u8], cy, b"\nCO: ", name, b"\n"].concat();
         assert!(decode_declared_iso(&by_country(b"GR")).contains("Χριστοφιλόπουλος"));
         assert!(decode_declared_iso(&by_country(b"ES")).contains("×ñéóôïöéëüðïõëïò"));
+        // The 1999 editions put the country code in the language slot: `OL: GR`
+        // (read off 19990417_1999075's ISO member, all 21 Greek records) — the
+        // shape that left 61+ mojibake organizations standing after the first re-parse.
+        assert!(decode_declared_iso(&record(b"OL: GR\n")).contains("CO: Γ. Χριστοφιλόπουλος ΑΕ"));
+        // A multi-language line is `;`-separated (`OL: FR;NL` in the same member).
+        assert!(decode_declared_iso(&record(b"OL: EN;EL\n")).contains("Χριστοφιλόπουλος"));
+        assert!(decode_declared_iso(&record(b"OL: FR;NL\n")).contains("×ñéóôïöéëüðïõëïò"));
     }
 
     #[test]

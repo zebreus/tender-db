@@ -578,3 +578,20 @@ that fold.
   (so the decoder rule does not fire), or a member outside the ISO-only re-parse. The next step is to read one
   mention's notice and its `TXT-OL`/`TXT-CY`.
 - Every mention-less mojibake row is an orphan for issue 443's sweep.
+
+### Unit 3 residual, found and fixed 2026-09-28 ~20:30 UTC: 1999 records write `OL: GR`
+
+- The 7 mojibake rows with mentions were a floor. Scanning every Greek-initial prefix through
+  `/v1/organizations?name_prefix=` (a cp1252 → 8859-7 round trip with ≥ 60 % Greek letters) finds **61 organizations
+  / 73 mentions**. Seven prefixes hit the 200-row page cap under legitimate Latin names, so it is still a floor.
+  Their notices are all text era: 71 from 1999-04 … 1999-11 and 2 from 1995-12.
+- Three of those notices store `TXT-OL` = **`GR`** and `TXT-CY` = `GR`. The raw ISO member of 19990417_1999075,
+  read from the box's archive, has `OL: GR` on all 21 Greek records (and `OL: FR;NL` on a bilingual one).
+  `declares_greek` accepted only `EL` in the `OL:` slot and returned at that line, so the `CY: GR` fallback never
+  ran: the decoder never fired for the 1999 editions.
+- **Fix** (`crates/ingest/src/text/mod.rs`): the `OL:` slot accepts `EL` or `GR` and splits on whitespace, `;` and
+  `,`. The test pins `OL: GR`, `OL: EN;EL`, and `OL: FR;NL` (Latin, unchanged). Gate GATE-EXIT=0.
+- **Re-parse, targeted** (not the 132-package ISO era): fetch ids 318–329 (1999-12 … 1999-01, ids run backwards
+  from 269 = 2004-01) and 366 (1995-12), then one incremental `project`. After it: re-run the prefix scan (expect
+  ~0), then `sweep-orphan-orgs` dry/wet for the mojibake rows the re-bind empties.
+
