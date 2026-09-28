@@ -116,3 +116,7 @@ on prod: their `current_deadline` still holds -61915752000 / -61648419600 / -556
 other two of the original five were corrected by later refolds. No code change: the full fold scheduled after
 tonight's XML re-parse re-elects every head column with the floor. Verify after it: the first rows of that sort serve
 a non-null 1990+ deadline.
+
+- **read 2026-09-28 ~17:20 UTC** (after full fold 1616): `sort=deadline&order=asc&limit=5` opens with 1848046
+  (1991-04-08), 2147892 (1991-11-08), 1974163 (1991-11-19), 7969971 (1992-03-25), 7968507 (1992-04-01), all non-null
+  and 1990+. 8210860, 5671586 and 5653434 each serve `"submission_deadline":null`. **done** for the sort defect.

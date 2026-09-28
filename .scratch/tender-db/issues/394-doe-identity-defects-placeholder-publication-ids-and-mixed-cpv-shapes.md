@@ -555,3 +555,12 @@ Profile `eforms:eforms-sdk-1.0` (3,560 notices, all `doe`, 2023): its parse laye
 The normaliser splits them (`normalize_cpv` splits on whitespace); these tenders were last folded before it was
 deployed and sat outside the island refold's field-id cohort. The full fold scheduled after tonight's XML re-parse
 re-derives them — no separate job. Verify after it: `?cpv=79416200&source=doe&published_after=2023-02-21&published_before=2023-02-24` finds 1106759.
+
+- **read 2026-09-28 ~17:25 UTC** (after full fold 1616): **still open, and the prediction above was wrong.** The
+  query returns only 1270295, and `/v1/tenders/1106759` still serves `['79340000', '79341400\n79416200']`. Job 1616
+  was `project rebuild=false`, which folds only unprojected notices (the re-parsed eras). The DÖE `eforms-sdk-1.0`
+  notices were not re-parsed, so their tenders were never re-folded ("1,666,573 verified unchanged" covers other
+  rows; these were not even in the delta). The fix is a separate job: `refold` by profile, which re-queues the
+  cohort and stamps its tenders epoch-stale (the issue-179 pair), then `project rebuild=false`:
+  `{"kind":"refold","profiles":["eforms:eforms-sdk-1.0"],"expect":3560}`. It is queued behind job 1617 with the
+  post-fold chain.
