@@ -594,4 +594,12 @@ that fold.
 - **Re-parse, targeted** (not the 132-package ISO era): fetch ids 318–329 (1999-12 … 1999-01, ids run backwards
   from 269 = 2004-01) and 366 (1995-12), then one incremental `project`. After it: re-run the prefix scan (expect
   ~0), then `sweep-orphan-orgs` dry/wet for the mojibake rows the re-bind empties.
+- **Deployed and re-parsed 2026-09-28 ~21:10–21:30 UTC** (rev `49afbe5`):
+  - Job 1630 re-parsed 173,642 notices across 12 packages (fetch 318–329 = 1999), and job 1631 re-parsed 11,288
+    across 1 (fetch 366 = 1995-12). Both read 0 unmatched, 0 re-keyed and 0 now failing.
+  - Each stamped the text profile's 2,830,901 tenders epoch-stale (the documented profile-wide superset).
+  - Their fold, job 1632, runs incrementally on a 188,197-key legacy closure (215,371 notices, 172,251 tenders), then
+    the orphan sweep's dry run (1633).
+  - Verify after them: the Greek-initial prefix scan reads ~0 mojibake rows with mentions, and the sweep takes the
+    emptied ones.
 
