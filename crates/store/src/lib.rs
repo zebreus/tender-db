@@ -1686,17 +1686,9 @@ impl Db {
             // alone. The bytes are the same bytes; which package first carried
             // them is provenance, and ADR-0004 makes the archive the record.
             //
-            // FK checks are deferred for the same measured reason as in
-            // `reparse_notice` (issue 247): `clear_parsed` deletes
-            // `organization_mentions`, which `tender_version_parties` references
-            // with no index serving the proof, at ~10 s per row. They are still
-            // checked, once, at COMMIT.
-            if let Err(e) = conn.execute("PRAGMA defer_foreign_keys = ON", ()).await {
-                eprintln!(
-                    "[store] adopting a moved identity: defer_foreign_keys unavailable ({e}); \
-                     FK checks stay immediate"
-                );
-            }
+            // Foreign keys are checked per statement here, as everywhere (issue
+            // 445: turso 0.7.2 has no `defer_foreign_keys`). The mention deletes'
+            // proof is a seek since issue 441's exact-shape party indexes.
             let Some(minted) = self.notice_id(conn, n).await? else {
                 return Ok(Recorded::Duplicate);
             };
@@ -2287,7 +2279,8 @@ impl Db {
         //
         // Read the ids first, then delete each survivor-to-be by its FULL primary key: a
         // prefix `WHERE notice_id = ?` cost 10.2 s where the full key costs 2.2 s, and
-        // neither the single-column index nor `defer_foreign_keys` moved the prefix form.
+        // neither the single-column index nor `defer_foreign_keys` moved the prefix form
+        // (the pragma never did anything: turso 0.7.2 ignores it, issue 445).
         let sections: Vec<String> = {
             let mut rows = conn
                 .query("SELECT section_id FROM organization_mentions WHERE notice_id = ?", (Value::Integer(id),))
@@ -2416,26 +2409,15 @@ impl Db {
     pub async fn reparse_notice(&self, n: &Notice, parsed: &Parsed) -> turso::Result<Reparsed> {
         let conn = self.conn().await;
         conn.execute("BEGIN IMMEDIATE", ()).await?;
-        // Defer the foreign-key checks to COMMIT (issue 247). Measured on prod: deleting
-        // ONE mention row cost ~10 s, because `tender_version_parties` and
-        // `tender_version_bid_parties` reference `organization_mentions`, and verifying
-        // that no child row does so walked all 78,033,566 party rows, per notice. Issue
-        // 441 found why reads of the same shape seek and the proof did not: turso's FK
-        // probe uses only a child index whose columns EQUAL the FK's, and the party
-        // tables' index covered just `mention_notice_id` — the `_mention_key` indexes
-        // (`DEFERRED_TENDER_INDEXES`) now carry the whole key and the proof seeks.
-        //
-        // Deferring does not weaken anything: the constraints are still checked, once, at
-        // COMMIT, where a violation still aborts the whole transaction. And this clear
-        // deletes the children BEFORE their parents anyway, so nothing is ever actually
-        // in violation — only the proving of it was expensive.
-        //
-        // Best-effort: an engine without the pragma must not turn a re-parse into an
-        // error, so the failure is logged once and the transaction proceeds with immediate
-        // checks (correct, just slow).
-        if let Err(e) = conn.execute("PRAGMA defer_foreign_keys = ON", ()).await {
-            eprintln!("[store] re-parse: defer_foreign_keys unavailable ({e}); FK checks stay immediate");
-        }
+        // Foreign keys are checked per statement (issue 445). Issue 247 tried to defer
+        // them to COMMIT with `PRAGMA defer_foreign_keys`, but turso 0.7.2 has no such
+        // pragma and ignores it silently, so deleting ONE mention row went on costing
+        // ~10 s: `tender_version_parties` and `tender_version_bid_parties` reference
+        // `organization_mentions`, and the proof walked all 78,033,566 party rows. Issue
+        // 441 found why: turso's FK probe uses only a child index whose columns EQUAL
+        // the FK's. The `_mention_key` indexes (`DEFERRED_TENDER_INDEXES`) now carry the
+        // whole key, and the proof seeks. This clear deletes the children before their
+        // parents, so no statement is ever in violation.
         let result = async {
             // Timed per phase (issue 247): the same statements are milliseconds through
             // the reader pool, so if a re-parse crawls the cost has to be attributed on

@@ -154,3 +154,26 @@ async fn an_organization_delete_proves_its_foreign_keys_by_index() {
     );
     assert!(ops.iter().any(|(op, _)| op == "FkCounter"), "enforcement is compiled, not off: {ops:#?}");
 }
+
+/// Issue 445: turso 0.7.2 checks a foreign key at the STATEMENT, inside a
+/// transaction too, and `PRAGMA defer_foreign_keys` changes nothing. It is not
+/// one of turso's pragmas, and an unknown pragma is silently ignored (SQLite's
+/// rule). The re-parse set it for years believing its checks moved to COMMIT.
+/// If a turso upgrade starts honouring it, this fails and the per-statement
+/// reasoning in `reparse_notice` needs a fresh look.
+#[tokio::test]
+async fn foreign_keys_are_checked_per_statement_and_the_defer_pragma_is_ignored() {
+    let (_db, path) = open("per-statement").await;
+    let conn = writer_like(&path).await;
+    conn.execute("PRAGMA defer_foreign_keys = ON", ()).await.expect("an unknown pragma is not an error");
+    conn.execute("BEGIN IMMEDIATE", ()).await.unwrap();
+    let err = conn
+        .execute(
+            "INSERT INTO organization_names (org_id, lang, name, name_norm) VALUES (424242, 'DEU', 'x', 'x')",
+            (),
+        )
+        .await
+        .expect_err("the insert itself names a missing parent");
+    assert!(err.to_string().to_uppercase().contains("FOREIGN KEY"), "{err}");
+    conn.execute("ROLLBACK", ()).await.unwrap();
+}
