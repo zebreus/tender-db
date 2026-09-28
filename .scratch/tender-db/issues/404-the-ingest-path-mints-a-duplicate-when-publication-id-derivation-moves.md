@@ -1,6 +1,6 @@
 # 404 — the ordinary INGEST path has no identity-shift fallback, so a derivation change makes `process` MINT a duplicate notice instead of matching the one it already holds
 
-Status: ready-for-agent — **THE SIZE IS MEASURED CORPUS-WIDE 2026-09-17** (job 1466, 3 s over 14.5M rows): the corpus holds **exactly 281** members under two identities, all `doe`, all this cohort — 281 was not a floor after all. The mint is fixed (and its own fix was broken and re-fixed, issue 411). Only the repair of the 281 standing pairs remains, and every input it needs is now written down. Was: found 2026-09-16 09:40Z while verifying issue 394's re-key acceptance. **Self-inflicted and confirmed to the row**: my own 394 unit 1 guard, deployed 07:00Z, caused it, and the evidence is two notices holding the same bytes under two keys. At least **281** duplicate rows exist now and the count grows with every DÖE daily until this is fixed.
+Status: done — **REPAIRED AND VERIFIED 2026-09-28** (see the foot: job 1625 wet, 1626 fold; `tender_versions` fell by exactly 281, the placeholder cohort reads 0, the twin census reads 0). Was: ready-for-agent — **THE SIZE IS MEASURED CORPUS-WIDE 2026-09-17** (job 1466, 3 s over 14.5M rows): the corpus holds **exactly 281** members under two identities, all `doe`, all this cohort — 281 was not a floor after all. The mint is fixed (and its own fix was broken and re-fixed, issue 411). Only the repair of the 281 standing pairs remains, and every input it needs is now written down. Was: found 2026-09-16 09:40Z while verifying issue 394's re-key acceptance. **Self-inflicted and confirmed to the row**: my own 394 unit 1 guard, deployed 07:00Z, caused it, and the evidence is two notices holding the same bytes under two keys. At least **281** duplicate rows exist now and the count grows with every DÖE daily until this is fixed.
 Kind: defect (ingest — the mint/match decision in the `process` path, `crates/ingest/src/process.rs` + `store::Db`'s notice insert; NOT the re-parse path, which was given the fallback by issue 290 and behaved correctly here)
 Relates to: 290 (RESOLVED 2026-09-16 — it gave `reparse_notice` a `(source, content_hash)` fallback and made a derivation shift loud; this is the SAME hazard on the sibling path, which nobody looked at because 290 was scoped to the re-parse), 394 (the derivation change that triggered it, and whose acceptance this blocks — the placeholder cohort cannot reach 0 by re-parsing), 278 (the ghost-tender cleanup — the precedent for draining rows that projected before being found redundant), 21 (durable job rows and recovery, which is why the two jobs could overlap at all), ADR-0004 (the archive is the record; both rows point at the same archived member, so nothing is lost — what is wrong is that the corpus holds it twice)
 Blocked by: nothing
@@ -865,4 +865,13 @@ and the queued text + XML re-parse fold), so the wet arm's set-for-set check nee
   read **14,544,432** (281 fewer), unless a daily tick lands between the two reads (check `/admin/jobs` recent).
 - Queued: job **1625** `repair-member-twins` wet, with its own `project` **1626**, behind the orphan sweep's dry run
   (1624).
+- **Ran and verified 2026-09-28 18:0x–18:14 UTC.** Job 1625 (wet, 4 s) resolved all 281 sets: 281 notices deleted,
+  281 survivors re-keyed and re-queued, 3 Tenders retired. Rows removed: notice_amounts 237, notice_classifications
+  2,642, notice_codes 10,813, notice_dates 2,057, notice_ids 7,226, notice_integers 1,764, notice_numbers 582,
+  notice_sections 7,784, notice_texts 10,787, notices 281 and organization_mentions 685. Its fold, job 1626 (6 s),
+  folded 281 notices into 274 tenders.
+  - `SELECT COUNT(*) FROM tender_versions` → **14,544,432**: exactly 281 below the 14,544,713 baseline.
+  - `publication_id = '00000000-1900'` → **0** notices (issue 394's acceptance).
+  - `member-twin-census` (job 1627) → 14,544,579 rows walked; **0** payloads under two or more publication_ids, 0
+    notice rows. The Verify's `0 0` reads **done**.
 
