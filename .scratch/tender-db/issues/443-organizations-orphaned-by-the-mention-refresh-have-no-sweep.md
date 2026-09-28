@@ -108,8 +108,15 @@ was seen in these windows.
   `mentions` ≥ 1, and the only `mentions: 0` rows are the identifier-bearing ones the sweep leaves on purpose
   (23375495, 23506939, 23386361 — see the 30 below). **done.**
 - Still open:
-  - **Step 3.** Nothing runs the sweep by itself yet. Each fold that re-binds (`mentions_rebound > 0`) makes more
-    orphans. Wire it after the incremental fold or on the weekly tick.
+  - **Step 3 — BUILT 2026-09-28.** Evidence: the fold after the 1999 re-parse (1632) re-bound 164 mentions and
+    left 129 orphans. Now `run_project` queues `Spec::SweepOrphanOrgsAuto { cap: 10_000 }` whenever
+    `sweep_after_fold(stopped, mentions_rebound)` holds (not stopped, re-bound > 0), once (`already_pending`). That
+    run counts; its own count is the plan. At or under the cap it sweeps in the same job, with the same pre-image
+    log, keep-set and residual. Above the cap, an era-scale fold like 1616's 943,695 re-binds, it records the plan,
+    writes nothing and says so, leaving the wet run to a person. Tests:
+    `a_fold_queues_the_sweep_only_after_it_re_bound_a_mention` and
+    `the_fold_queued_sweep_sweeps_under_its_cap_and_only_plans_above_it` (30 seeded rows, cap 10 → plan only, cap
+    24 → 24 swept with no plan on file).
   - **The 30 non-provisional orphans.** Read them: identifier-bearing rows whose mentions all moved, or rows a case
     review stripped (the `org_case_reviews` cohort). The sweep never touches them.
   - **The small follow-up is COMMITTED 2026-09-28 (gate GATE-EXIT=0, 784 s)**; it deploys with the next bundle. The

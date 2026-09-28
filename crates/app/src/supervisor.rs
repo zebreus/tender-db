@@ -491,6 +491,11 @@ enum Spec {
     /// `orphan-org-sweep-plan`; wet requires that plan and aborts before the
     /// first write if its own count has moved outside max(2%, 50).
     SweepOrphanOrgs { dry_run: bool },
+    /// Issue 443 step 3: the sweep a fold queues after it re-bound mentions
+    /// (every re-bind can empty the row it left). It counts, then sweeps in
+    /// the same job when the count is at most `cap`; above it (an era-scale
+    /// fold) it records the plan and writes nothing, for a sweep by hand.
+    SweepOrphanOrgsAuto { cap: u64 },
     /// Re-queue a profile cohort for the incremental fold (issue 85): clear its
     /// `projected` watermark so the trailing `project rebuild=false` re-derives just
     /// those Tenders. For a cohort the projection MIS-READ (unmapped field ids) —
@@ -2444,6 +2449,30 @@ fn f14_target_suffix(t: &ingest::project::F14TargetGate) -> String {
 /// window the residual it leaves.
 const ORPHAN_SWEEP_PLAN: &str = "orphan-org-sweep-plan";
 
+/// Issue 443 step 3: the most orphans the sweep a fold queues deletes on its
+/// own count. A daily fold re-binds tens to hundreds of mentions; a fold over a
+/// re-parsed era re-binds hundreds of thousands (job 1616: 943,695), and that
+/// sweep waits for a person to read its plan.
+const AUTO_SWEEP_CAP: u64 = 10_000;
+
+/// How a `sweep-orphan-orgs` run treats its count.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum SweepMode {
+    /// Count and record the plan; write nothing.
+    Dry,
+    /// Hold the count against the stored plan (issue 432's parity), then sweep.
+    Wet,
+    /// Queued by a fold: its own count is the plan, swept when at most `cap`.
+    Auto { cap: u64 },
+}
+
+/// Issue 443 step 3: whether a finished fold queues the orphan sweep. A re-bind
+/// is the only way a fold empties an organization, and a stopped fold's tallies
+/// are a prefix its re-run will finish (and queue from).
+fn sweep_after_fold(stopped: bool, mentions_rebound: u64) -> bool {
+    !stopped && mentions_rebound > 0
+}
+
 /// The plan body: `counted`'s classes, and `swept` = what is left to sweep —
 /// the count less `swept_this_run`, which is 0 for a dry run.
 fn orphan_sweep_plan(counted: &store::OrphanOrgSweep, swept_this_run: u64, dry_run: bool) -> String {
@@ -3349,7 +3378,8 @@ impl Supervisor {
     /// max(2%, 50) — issue 432's parity — then deletes window by window,
     /// re-recording the residual after every window that deleted, so a wet
     /// run stopped, failed or cut by a restart resumes under the same parity.
-    async fn run_sweep_orphan_orgs(&self, job: &Job, dry_run: bool) -> Result<String, String> {
+    async fn run_sweep_orphan_orgs(&self, job: &Job, mode: SweepMode) -> Result<String, String> {
+        let dry_run = mode == SweepMode::Dry;
         let missing = self.db.orphan_sweep_missing_indexes().await.map_err(|e| e.to_string())?;
         if !missing.is_empty() {
             return Err(format!(
@@ -3358,7 +3388,7 @@ impl Supervisor {
                 missing.join(", ")
             ));
         }
-        let planned = if dry_run {
+        let planned = if mode != SweepMode::Wet {
             None
         } else {
             let (body, _) = self
@@ -3400,11 +3430,23 @@ impl Supervisor {
             count.referenced,
             count.protected,
         );
-        if dry_run {
+        let over_cap = match mode {
+            SweepMode::Auto { cap } => (count.swept > cap).then_some(cap),
+            _ => None,
+        };
+        if dry_run || over_cap.is_some() {
             self.db
                 .put_report(ORPHAN_SWEEP_PLAN, &orphan_sweep_plan(&count, 0, true), store::now_unix())
                 .await
                 .map_err(|e| e.to_string())?;
+            if let Some(cap) = over_cap {
+                return Ok(format!(
+                    "sweep-orphan-orgs (issue 443) AUTO after a re-binding fold — {} to sweep is \
+                     over the auto cap of {cap}: plan recorded, nothing written; read it and run \
+                     sweep-orphan-orgs wet. {summary}",
+                    count.swept
+                ));
+            }
             return Ok(format!(
                 "sweep-orphan-orgs (issue 443) DRY RUN — plan recorded, nothing written: {summary}; \
                  {} to sweep, with {} name variants",
@@ -3422,8 +3464,9 @@ impl Supervisor {
                 .map_err(|e| e.to_string())?;
         }
         Ok(format!(
-            "sweep-orphan-orgs (issue 443): {summary}; swept {} of the {} counted, with {} name \
+            "sweep-orphan-orgs (issue 443){}: {summary}; swept {} of the {} counted, with {} name \
              variants (each published as an organization removed){}",
+            if matches!(mode, SweepMode::Auto { .. }) { " AUTO after a re-binding fold" } else { "" },
             done.swept,
             count.swept,
             done.names,
@@ -3593,8 +3636,25 @@ impl Supervisor {
             target_refusal_suffix(&report.target_refusals),
             f14_target_suffix(&report.f14_targets)
         );
+        // Issue 443 step 3: a re-bind can leave the row it left with no mention
+        // at all, so a fold that re-bound anything queues the sweep behind it —
+        // once: a sweep already queued or running covers this fold's orphans.
+        let sweep = if sweep_after_fold(report.stopped, report.mentions_rebound)
+            && !self.already_pending("sweep-orphan-orgs")
+        {
+            let id = self
+                .push(
+                    "sweep-orphan-orgs",
+                    format!("sweep-orphan-orgs auto (after a fold re-bound {})", report.mentions_rebound),
+                    Spec::SweepOrphanOrgsAuto { cap: AUTO_SWEEP_CAP },
+                )
+                .await;
+            format!("; queued sweep-orphan-orgs (auto) as job {id}")
+        } else {
+            String::new()
+        };
         Ok(format!(
-            "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged{wall}{refreshed}{citations}",
+            "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged{wall}{refreshed}{sweep}{citations}",
             report.notices,
             report.tenders,
             report.islands,
@@ -3886,7 +3946,13 @@ impl Supervisor {
             Spec::Project { rebuild, clear_changes } => {
                 Box::pin(self.run_project(job, *rebuild, *clear_changes)).await
             }
-            Spec::SweepOrphanOrgs { dry_run } => Box::pin(self.run_sweep_orphan_orgs(job, *dry_run)).await,
+            Spec::SweepOrphanOrgs { dry_run } => {
+                let mode = if *dry_run { SweepMode::Dry } else { SweepMode::Wet };
+                Box::pin(self.run_sweep_orphan_orgs(job, mode)).await
+            }
+            Spec::SweepOrphanOrgsAuto { cap } => {
+                Box::pin(self.run_sweep_orphan_orgs(job, SweepMode::Auto { cap: *cap })).await
+            }
             Spec::Reindex => {
                 // Both builders are CREATE INDEX IF NOT EXISTS loops — idempotent, so
                 // this rebuilds only the missing deferred indexes without touching the
@@ -14303,54 +14369,64 @@ mod tests {
             .expect("a dry run needs no expectation");
     }
 
-    /// Issue 443 (review follow-up): the dry-then-wet cycle on real rows, not the
-    /// empty database the parity test uses — the plan's `swept`, the wet run's
-    /// count against it, and the residual it re-records.
-    #[tokio::test]
-    async fn the_orphan_sweep_counts_plans_and_sweeps_real_orphans() {
-        let path = format!("/tmp/tender-db-sup-sweep-{}-{}.db", std::process::id(), store::now_unix());
+    /// Issue 443: 30 provisional rows, 1-5 mentioned and 6 still named by a
+    /// party row, so 24 are orphans the sweep takes. Fixture rows go through a
+    /// raw connection with foreign keys off (the party row points at a version
+    /// that does not exist); the sweep itself runs on the writer.
+    async fn seed_orphan_fixture(name: &str) -> (Arc<store::Db>, String) {
+        let path = format!("/tmp/tender-db-sup-sweep-{name}-{}-{}.db", std::process::id(), store::now_unix());
         for s in ["", "-wal", "-shm"] {
             let _ = std::fs::remove_file(format!("{path}{s}"));
         }
         let db = Arc::new(store::Db::open(&path).await.unwrap());
         db.build_organization_indexes().await.unwrap();
         db.build_tender_indexes().await.unwrap();
-        {
-            // Fixture rows through a raw connection with foreign keys off (the
-            // party row points at a version that does not exist).
-            let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
-            conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
-            for id in 1..=30 {
-                conn.execute(
-                    &format!(
-                        "INSERT INTO organizations (id, country, name, name_norm, provisional, created_at) \
-                         VALUES ({id}, 'DE', 'Org {id}', 'org {id}', 1, 0)"
-                    ),
-                    (),
-                )
-                .await
-                .unwrap();
-            }
-            // 1-5 mentioned, 6 still named by a party row: 24 orphans to sweep.
-            for id in 1..=5 {
-                conn.execute(
-                    &format!(
-                        "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name) \
-                         VALUES ({id}, 'ORG-1', {id}, 'Org {id}')"
-                    ),
-                    (),
-                )
-                .await
-                .unwrap();
-            }
+        let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+        conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+        for id in 1..=30 {
             conn.execute(
-                "INSERT INTO tender_version_parties (tender_id, seq, role, organization_id, mention_notice_id, mention_section_id) \
-                 VALUES (1, 1, 'buyer', 6, 99, 'ORG-1')",
+                &format!(
+                    "INSERT INTO organizations (id, country, name, name_norm, provisional, created_at) \
+                     VALUES ({id}, 'DE', 'Org {id}', 'org {id}', 1, 0)"
+                ),
                 (),
             )
             .await
             .unwrap();
         }
+        for id in 1..=5 {
+            conn.execute(
+                &format!(
+                    "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name) \
+                     VALUES ({id}, 'ORG-1', {id}, 'Org {id}')"
+                ),
+                (),
+            )
+            .await
+            .unwrap();
+        }
+        conn.execute(
+            "INSERT INTO tender_version_parties (tender_id, seq, role, organization_id, mention_notice_id, mention_section_id) \
+             VALUES (1, 1, 'buyer', 6, 99, 'ORG-1')",
+            (),
+        )
+        .await
+        .unwrap();
+        (db, path)
+    }
+
+    fn remove_db(path: &str) {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
+    /// Issue 443 (review follow-up): the dry-then-wet cycle on real rows, not the
+    /// empty database the parity test uses — the plan's `swept`, the wet run's
+    /// count against it, and the residual it re-records.
+    #[tokio::test]
+    async fn the_orphan_sweep_counts_plans_and_sweeps_real_orphans() {
+        let (db, path) = seed_orphan_fixture("cycle").await;
         let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
         let plan = |body: &str| serde_json::from_str::<serde_json::Value>(body).unwrap();
 
@@ -14374,9 +14450,46 @@ mod tests {
             Some(store::turso::Value::Integer(24)),
             "each swept row left its pre-image"
         );
-        for s in ["", "-wal", "-shm"] {
-            let _ = std::fs::remove_file(format!("{path}{s}"));
-        }
+        remove_db(&path);
+    }
+
+    /// Issue 443 step 3: a fold queues the sweep only when it re-bound a mention
+    /// — the one way a fold empties an organization — and not when it stopped.
+    #[test]
+    fn a_fold_queues_the_sweep_only_after_it_re_bound_a_mention() {
+        assert!(sweep_after_fold(false, 164), "job 1632's shape");
+        assert!(!sweep_after_fold(false, 0), "a quiet daily fold queues nothing");
+        assert!(!sweep_after_fold(true, 164), "a stopped fold's re-run queues it");
+    }
+
+    /// Issue 443 step 3: the fold-queued sweep needs no stored plan — its own
+    /// count is the plan — sweeps at or under its cap, and above it records the
+    /// plan and writes nothing, for a person to read.
+    #[tokio::test]
+    async fn the_fold_queued_sweep_sweeps_under_its_cap_and_only_plans_above_it() {
+        let count = |db: Arc<store::Db>| async move {
+            match db.scalar("SELECT COUNT(*) FROM organizations").await.unwrap() {
+                Some(store::turso::Value::Integer(n)) => n,
+                other => panic!("{other:?}"),
+            }
+        };
+
+        let (db, path) = seed_orphan_fixture("auto-over").await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let over = sup.run_spec(&job(Spec::SweepOrphanOrgsAuto { cap: 10 })).await.unwrap();
+        assert!(over.contains("24 to sweep is over the auto cap of 10") && over.contains("nothing written"), "{over}");
+        assert_eq!(count(db.clone()).await, 30, "nothing deleted above the cap");
+        let (body, _) = db.latest_report("orphan-org-sweep-plan").await.unwrap().expect("the plan is recorded");
+        assert!(body.contains(r#""swept":24"#), "{body}");
+        remove_db(&path);
+
+        let (db, path) = seed_orphan_fixture("auto-under").await;
+        assert!(db.latest_report("orphan-org-sweep-plan").await.unwrap().is_none(), "no plan on file");
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let under = sup.run_spec(&job(Spec::SweepOrphanOrgsAuto { cap: 24 })).await.unwrap();
+        assert!(under.contains("AUTO after a re-binding fold") && under.contains("swept 24 of the 24 counted"), "{under}");
+        assert_eq!(count(db.clone()).await, 6, "the mentioned and party-named rows stay");
+        remove_db(&path);
     }
 
     /// Issue 443: the orphan sweep deletes only under a reviewed plan. Wet
