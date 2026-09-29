@@ -142,3 +142,13 @@ Decision rule, taken now: if misses exceed **one per day** over the next 48 h, a
 plus this session's read is proportionate. Twin cost is 24 more short cloud runs a day for a curl.
 
 A log read on the box, free per `prod-box-reads.md`. The routine itself is listed by `list_triggers`.
+
+**Audit 2026-09-29 ~02:5x UTC (owner): the external check is live and reaching the service.**
+- The routine `trig_01F8LUCUBSxHB3uBx5DyTZkp` last ran `SUCCEEDED` (fired 01:50:26 UTC).
+- The box's nginx log carries its user agent `tender-db-uptime-routine/1` on `GET /health/deep`, always **HTTP 200**:
+  4 hits in `access.log`, 21 in `.1`, 29 in `.2`+`.3`. The newest is 02:07:45 UTC, the 01:50 firing's request.
+- **Detection latency is ~80 min worst case, not 60.** Each firing's request lands 17–19 min after its :50 trigger (a
+  fresh cloud session starting up), so an outage that begins just after a check is noticed about 60 + 19 min later.
+  That is acceptable for this service; recorded so nobody reads the cron as the bound.
+- Still unexercised: the failure path's push. The only real test is an outage. A drill on the serving box would be
+  one, so it waits for a real incident or a staging host.
