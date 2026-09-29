@@ -1,0 +1,470 @@
+{"version":"1.1","extensions":[
+    "https://standard.open-contracting.org/profiles/eu/latest/en/extension.json",
+    "https://raw.githubusercontent.com/open-contracting-extensions/ocds_amendment_rationale_classifications_extension/master/extension.json",
+    "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+    "https://raw.githubusercontent.com/open-contracting-extensions/ocds_contract_completion_extension/master/extension.json",
+    "https://raw.githubusercontent.com/open-contracting-extensions/ocds_documentation_extension/master/extension.json",
+    "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json",
+    "https://raw.githubusercontent.com/open-contracting-extensions/ocds_suitability_extension/master/extension.json",
+    "https://raw.githubusercontent.com/portaledcahn/ocds_Links_extension/main/extension.json",
+    "https://raw.githubusercontent.com/cabinetoffice/ocds_uk_extension/main/extension.json"
+],"publisher":{
+    "name": "Cabinet Office",
+    "scheme": "GB-GOR",
+    "uid": "D2",
+    "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+},"license":"http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/","publicationPolicy":"https://www.gov.uk/government/publications/open-contracting","releases":[{
+    "ocid": "ocds-h6vhtk-02874c",
+    "id": "052408-2025",
+    "date": "2025-08-29T12:02:06+01:00",
+    "tag": [
+        "award",
+        "contract"
+    ],
+    "initiationType": "tender",
+    "tender": {
+        "id": "PRO004269",
+        "legalBasis": {
+            "id": "32014L0025",
+            "scheme": "CELEX"
+        },
+        "title": "Goods-Framework-Supply and Delivery of Strategic Process Chemicals",
+        "status": "complete",
+        "classification": {
+            "scheme": "CPV",
+            "id": "24311521",
+            "description": "Caustic soda"
+        },
+        "mainProcurementCategory": "goods",
+        "description": "Supply and Delivery of Strategic Process Chemicals requirements",
+        "lots": [
+            {
+                "id": "1 - Caustic Soda",
+                "title": "Goods-Framework-Supply and Delivery of Strategic Process Chemicals",
+                "description": "Supply and Delivery of Strategic Process Chemicals - supply of caustic soda. Additional information: Supply and Delivery of Strategic Process Chemicals - supply of caustic soda.",
+                "hasOptions": true,
+                "options": {
+                    "description": "The initial period of the agreement shall be for 5 years from commencement with an additional period of up to 3 years (total maximum 8 years) by way of discretionary 1+1+1 year extensions. (as per the procurement documentation / final form of agreement)"
+                },
+                "status": "cancelled"
+            },
+            {
+                "id": "2: Phosphoric Acid",
+                "title": "Goods-Framework-Supply and Delivery of Strategic Process Chemicals",
+                "description": "Supply and Delivery of Phosphoric Acid",
+                "hasOptions": true,
+                "options": {
+                    "description": "The initial period of the agreement shall be for 5 years from commencement with an additional period of up to 3 years (total maximum 8 years) by way of discretionary 1+1+1 year extensions. (as per the procurement documentation / final form of agreement)"
+                },
+                "status": "cancelled"
+            },
+            {
+                "id": "3: Multiple Strategic Process Chemicals",
+                "title": "Goods-Framework-Supply and Delivery of Strategic Process Chemicals",
+                "description": "Supply and Delivery of the following Strategic Process Chemicals: Sodium Hypochlorite (Bulk and Packaged), Sulphuric Acid (Bulk and Packaged), Chlorine Drums, Ammonium Sulphate, Adblue, Ferric Sulphate (Packaged), Sodium Thiosulphate, Miscellaneous chemicals,",
+                "hasOptions": true,
+                "options": {
+                    "description": "The initial period of the agreement shall be for 5 years from commencement with an additional period of up to 3 years (total maximum 8 years) by way of discretionary 1+1+1 year extensions. (as per the procurement documentation / final form of agreement)"
+                },
+                "status": "cancelled"
+            },
+            {
+                "id": "4: Hydrogen Peroxide",
+                "title": "Goods-Framework-Supply and Delivery of Strategic Process Chemicals",
+                "description": "Supply and Delivery of Hydrogen Peroxide",
+                "hasOptions": true,
+                "options": {
+                    "description": "The initial period of the agreement shall be for 5 years from commencement with an additional period of up to 3 years (total maximum 8 years) by way of discretionary 1+1+1 year extensions. (as per the procurement documentation / final form of agreement)"
+                },
+                "status": "cancelled"
+            }
+        ],
+        "items": [
+            {
+                "id": "1 - Caustic Soda",
+                "additionalClassifications": [
+                    {
+                        "scheme": "CPV",
+                        "id": "24311521",
+                        "description": "Caustic soda"
+                    }
+                ],
+                "deliveryAddresses": [
+                    {
+                        "region": "UKD"
+                    }
+                ],
+                "relatedLot": "1 - Caustic Soda"
+            },
+            {
+                "id": "2: Phosphoric Acid",
+                "additionalClassifications": [
+                    {
+                        "scheme": "CPV",
+                        "id": "24311420",
+                        "description": "Phosphoric acid"
+                    }
+                ],
+                "deliveryAddresses": [
+                    {
+                        "region": "UKD"
+                    }
+                ],
+                "relatedLot": "2: Phosphoric Acid"
+            },
+            {
+                "id": "3: Multiple Strategic Process Chemicals",
+                "additionalClassifications": [
+                    {
+                        "scheme": "CPV",
+                        "id": "24312220",
+                        "description": "Sodium hypochlorite"
+                    },
+                    {
+                        "scheme": "CPV",
+                        "id": "24311411",
+                        "description": "Sulphuric acid"
+                    },
+                    {
+                        "scheme": "CPV",
+                        "id": "24311900",
+                        "description": "Chlorine"
+                    },
+                    {
+                        "scheme": "CPV",
+                        "id": "24413300",
+                        "description": "Ammonium sulphate"
+                    },
+                    {
+                        "scheme": "CPV",
+                        "id": "24957000",
+                        "description": "Chemical additives"
+                    },
+                    {
+                        "scheme": "CPV",
+                        "id": "24313122",
+                        "description": "Ferric sulphate"
+                    },
+                    {
+                        "scheme": "CPV",
+                        "id": "24313121",
+                        "description": "Sodium thiosulphate"
+                    }
+                ],
+                "deliveryAddresses": [
+                    {
+                        "region": "UKD"
+                    }
+                ],
+                "relatedLot": "3: Multiple Strategic Process Chemicals"
+            },
+            {
+                "id": "4: Hydrogen Peroxide",
+                "additionalClassifications": [
+                    {
+                        "scheme": "CPV",
+                        "id": "24315300",
+                        "description": "Hydrogen peroxide"
+                    }
+                ],
+                "deliveryAddresses": [
+                    {
+                        "region": "UKD"
+                    }
+                ],
+                "relatedLot": "4: Hydrogen Peroxide"
+            }
+        ],
+        "procurementMethod": "selective",
+        "procurementMethodDetails": "Negotiated procedure with prior call for competition",
+        "techniques": {
+            "hasFrameworkAgreement": true
+        }
+    },
+    "awards": [
+        {
+            "id": "052408-2025-1-1",
+            "title": "Goods-Framework-Supply and Delivery of Strategic Process Chemicals",
+            "status": "active",
+            "suppliers": [
+                {
+                    "id": "GB-FTS-80924",
+                    "name": "Brenntag UK Limited "
+                }
+            ]
+        },
+        {
+            "id": "052408-2025-2-2",
+            "title": "Goods-Framework-Supply and Delivery of Strategic Process Chemicals",
+            "status": "active",
+            "suppliers": [
+                {
+                    "id": "GB-FTS-159244",
+                    "name": "Airedale Chemical Company Ltd"
+                }
+            ]
+        },
+        {
+            "id": "052408-2025-3-3",
+            "title": "Goods-Framework-Supply and Delivery of Strategic Process Chemicals",
+            "status": "active",
+            "suppliers": [
+                {
+                    "id": "GB-FTS-159245",
+                    "name": "Industrial Chemicals Ltd"
+                }
+            ]
+        },
+        {
+            "id": "052408-2025-1-4",
+            "title": "Goods-Framework-Supply and Delivery of Strategic Process Chemicals",
+            "status": "active",
+            "suppliers": [
+                {
+                    "id": "GB-FTS-159244",
+                    "name": "Airedale Chemical Company Ltd"
+                }
+            ]
+        },
+        {
+            "id": "052408-2025-1-5",
+            "title": "Goods-Framework-Supply and Delivery of Strategic Process Chemicals",
+            "status": "active",
+            "suppliers": [
+                {
+                    "id": "GB-FTS-80924",
+                    "name": "Brenntag UK Limited "
+                }
+            ]
+        },
+        {
+            "id": "052408-2025-1-6",
+            "title": "Goods-Framework-Supply and Delivery of Strategic Process Chemicals",
+            "status": "active",
+            "suppliers": [
+                {
+                    "id": "GB-FTS-159244",
+                    "name": "Airedale Chemical Company Ltd"
+                }
+            ]
+        }
+    ],
+    "parties": [
+        {
+            "name": "United Utilities Water Limited",
+            "id": "GB-FTS-4736",
+            "identifier": {
+                "legalName": "United Utilities Water Limited",
+                "id": "02366678"
+            },
+            "address": {
+                "streetAddress": "Lingley Mere Business Park",
+                "locality": "Warrington",
+                "region": "UKD",
+                "postalCode": "WA5 3LP",
+                "countryName": "United Kingdom"
+            },
+            "contactPoint": {
+                "name": "Rachel Barker -Jones",
+                "telephone": "+44 1925678021",
+                "email": "rachel.barker-jones@uuplc.co.uk"
+            },
+            "roles": [
+                "buyer"
+            ],
+            "details": {
+                "url": "https://www.unitedutilities.com",
+                "buyerProfile": "https://uk.eu-supply.com/ctm/Company/CompanyInformation/Index/43984",
+                "classifications": [
+                    {
+                        "scheme": "TED_CE_ACTIVITY",
+                        "id": "WATER",
+                        "description": "Water"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Brenntag UK Limited ",
+            "id": "GB-FTS-80924",
+            "identifier": {
+                "legalName": "Brenntag UK Limited "
+            },
+            "address": {
+                "locality": "Leeds",
+                "region": "UKD",
+                "countryName": "United Kingdom"
+            },
+            "roles": [
+                "supplier"
+            ],
+            "details": {
+                "scale": "large"
+            }
+        },
+        {
+            "name": "Airedale Chemical Company Ltd",
+            "id": "GB-FTS-159244",
+            "identifier": {
+                "legalName": "Airedale Chemical Company Ltd"
+            },
+            "address": {
+                "locality": "Keighley",
+                "region": "UKD",
+                "countryName": "United Kingdom"
+            },
+            "roles": [
+                "supplier"
+            ],
+            "details": {
+                "scale": "large"
+            }
+        },
+        {
+            "name": "Industrial Chemicals Ltd",
+            "id": "GB-FTS-159245",
+            "identifier": {
+                "legalName": "Industrial Chemicals Ltd"
+            },
+            "address": {
+                "locality": "Brentwood",
+                "region": "UKD",
+                "countryName": "United Kingdom"
+            },
+            "roles": [
+                "supplier"
+            ],
+            "details": {
+                "scale": "large"
+            }
+        },
+        {
+            "name": "High Court of England & Wales",
+            "id": "GB-FTS-4737",
+            "identifier": {
+                "legalName": "High Court of England & Wales"
+            },
+            "address": {
+                "streetAddress": "City of Westminster",
+                "locality": "London",
+                "countryName": "United Kingdom"
+            },
+            "roles": [
+                "reviewBody"
+            ]
+        }
+    ],
+    "buyer": {
+        "id": "GB-FTS-4736",
+        "name": "United Utilities Water Limited"
+    },
+    "contracts": [
+        {
+            "id": "052408-2025-1-1",
+            "awardID": "052408-2025-1-1",
+            "title": "Goods-Framework-Supply and Delivery of Strategic Process Chemicals",
+            "status": "active",
+            "dateSigned": "2025-08-22T00:00:00+01:00"
+        },
+        {
+            "id": "052408-2025-2-2",
+            "awardID": "052408-2025-2-2",
+            "title": "Goods-Framework-Supply and Delivery of Strategic Process Chemicals",
+            "status": "active",
+            "dateSigned": "2025-08-22T00:00:00+01:00"
+        },
+        {
+            "id": "052408-2025-3-3",
+            "awardID": "052408-2025-3-3",
+            "title": "Goods-Framework-Supply and Delivery of Strategic Process Chemicals",
+            "status": "active",
+            "dateSigned": "2025-08-22T00:00:00+01:00"
+        },
+        {
+            "id": "052408-2025-1-4",
+            "awardID": "052408-2025-1-4",
+            "title": "Goods-Framework-Supply and Delivery of Strategic Process Chemicals",
+            "status": "active",
+            "dateSigned": "2025-08-22T00:00:00+01:00"
+        },
+        {
+            "id": "052408-2025-1-5",
+            "awardID": "052408-2025-1-5",
+            "title": "Goods-Framework-Supply and Delivery of Strategic Process Chemicals",
+            "status": "active",
+            "dateSigned": "2025-08-22T00:00:00+01:00"
+        },
+        {
+            "id": "052408-2025-1-6",
+            "awardID": "052408-2025-1-6",
+            "title": "Goods-Framework-Supply and Delivery of Strategic Process Chemicals",
+            "status": "active",
+            "dateSigned": "2025-08-22T00:00:00+01:00"
+        }
+    ],
+    "bids": {
+        "statistics": [
+            {
+                "id": "464",
+                "measure": "bids",
+                "value": 4
+            },
+            {
+                "id": "466",
+                "measure": "bids",
+                "value": 4
+            },
+            {
+                "id": "468",
+                "measure": "bids",
+                "value": 4
+            },
+            {
+                "id": "470",
+                "measure": "bids",
+                "value": 2
+            },
+            {
+                "id": "472",
+                "measure": "bids",
+                "value": 1
+            },
+            {
+                "id": "474",
+                "measure": "bids",
+                "value": 1
+            },
+            {
+                "id": "465",
+                "measure": "electronicBids",
+                "value": 4
+            },
+            {
+                "id": "467",
+                "measure": "electronicBids",
+                "value": 4
+            },
+            {
+                "id": "469",
+                "measure": "electronicBids",
+                "value": 4
+            },
+            {
+                "id": "471",
+                "measure": "electronicBids",
+                "value": 2
+            },
+            {
+                "id": "473",
+                "measure": "electronicBids",
+                "value": 1
+            },
+            {
+                "id": "475",
+                "measure": "electronicBids",
+                "value": 1
+            }
+        ]
+    },
+    "language": "en"
+}]}

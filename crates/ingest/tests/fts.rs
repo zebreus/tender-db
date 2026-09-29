@@ -344,15 +344,19 @@ async fn releases_under_one_ocid_from_two_buyers_fold_to_two_tenders_and_a_one_b
 /// (128 of the 205 on tenders 7954610–7954620).
 #[tokio::test]
 async fn bid_statistics_fold_onto_their_lots_result_and_mint_no_result_of_their_own() {
-    let members: [(&str, &[u8]); 2] = [
+    let members: [(&str, &[u8]); 4] = [
         // Counts and both value measures on lot 1, plus a procedure-level pair.
         ("029615-2025.json", include_bytes!("fixtures/fts/members/029615-2025.json")),
         // Five awards on one lot, and three final-stage measures with no eForms code.
         ("029664-2025.json", include_bytes!("fixtures/fts/members/029664-2025.json")),
+        // Two awards on one lot, each repeating the lot's figures: served once.
+        ("083468-2026.json", include_bytes!("fixtures/fts/members/083468-2026.json")),
+        // Six lot-less awards whose per-award counts disagree: served nowhere.
+        ("052408-2025.json", include_bytes!("fixtures/fts/members/052408-2025.json")),
     ];
     let (archive, db) = fixture_of("fts-342-stats", &members).await;
     let r = run(&db, &archive).await;
-    assert_eq!((r.parsed, r.parse_quarantined), (2, 0), "{r:?}");
+    assert_eq!((r.parsed, r.parse_quarantined), (4, 0), "{r:?}");
     project::project(&db, false).await.expect("project");
 
     assert_eq!(
@@ -360,8 +364,9 @@ async fn bid_statistics_fold_onto_their_lots_result_and_mint_no_result_of_their_
         0,
         "a statistic is never a result"
     );
-    // 029615's one result and 029664's five: one row per award result, nothing else.
-    assert_eq!(cell_i64(&db, "SELECT COUNT(*) FROM lot_results").await, 6);
+    // One row per award result, nothing else: 029615's one, 029664's five,
+    // 083468's two, 052408's six.
+    assert_eq!(cell_i64(&db, "SELECT COUNT(*) FROM lot_results").await, 14);
     // One cell, rows in key order: the store has no multi-row test reader, and a
     // joined string compares the whole set at once.
     assert_eq!(
@@ -371,8 +376,13 @@ async fn bid_statistics_fold_onto_their_lots_result_and_mint_no_result_of_their_
         )
         .await
         .as_deref(),
-        // 029664's `tenders` count appears once, under its lot's first result, not once per award.
-        Some("RES-029615-2025-1-1:t-esubm:6 RES-029615-2025-1-1:t-sme:6 RES-029615-2025-1-1:tenders:6 RES-1-1:tenders:8")
+        // 029664's `tenders` count appears once, under its lot's first result, not
+        // once per award. 083468 repeats `bids:2` per award and still writes ONE
+        // row. 052408's disagreeing per-award counts write none.
+        Some(
+            "RES-029615-2025-1-1:t-esubm:6 RES-029615-2025-1-1:t-sme:6 RES-029615-2025-1-1:tenders:6 \
+             RES-083468-2026-1-1:tenders:2 RES-1-1:tenders:8"
+        )
     );
 
     let _ = std::fs::remove_dir_all(&archive);

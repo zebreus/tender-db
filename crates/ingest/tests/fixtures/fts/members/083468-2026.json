@@ -1,0 +1,314 @@
+{"version":"1.1","extensions":[
+    "https://standard.open-contracting.org/profiles/eu/latest/en/extension.json",
+    "https://raw.githubusercontent.com/open-contracting-extensions/ocds_amendment_rationale_classifications_extension/master/extension.json",
+    "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+    "https://raw.githubusercontent.com/open-contracting-extensions/ocds_contract_completion_extension/master/extension.json",
+    "https://raw.githubusercontent.com/open-contracting-extensions/ocds_documentation_extension/master/extension.json",
+    "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json",
+    "https://raw.githubusercontent.com/open-contracting-extensions/ocds_suitability_extension/master/extension.json",
+    "https://raw.githubusercontent.com/portaledcahn/ocds_Links_extension/main/extension.json",
+    "https://raw.githubusercontent.com/cabinetoffice/ocds_uk_extension/main/extension.json"
+],"publisher":{
+    "name": "Cabinet Office",
+    "scheme": "GB-GOR",
+    "uid": "D2",
+    "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+},"license":"http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/","publicationPolicy":"https://www.gov.uk/government/publications/open-contracting","releases":[{
+    "ocid": "ocds-h6vhtk-059c19",
+    "id": "083468-2026",
+    "date": "2026-09-03T13:24:32+01:00",
+    "tag": [
+        "award",
+        "contract"
+    ],
+    "initiationType": "tender",
+    "tender": {
+        "id": "F/102/MHWS/25/SB",
+        "legalBasis": {
+            "id": "32014L0024",
+            "scheme": "CELEX"
+        },
+        "title": "National Framework Agreement for the provision of Mental Health and Wellbeing Services",
+        "status": "complete",
+        "classification": {
+            "scheme": "CPV",
+            "id": "85100000",
+            "description": "Health services"
+        },
+        "mainProcurementCategory": "services",
+        "description": "This is a Provider Selection Regime (PSR) intention to award notice.\nThe overall aim of the Framework Agreement is to provide Mental Health and Wellbeing services for young people, adults or both.\nThe Framework intends to cover a range of services that fall within the scope of Mental Health and Wellbeing services, delivered either virtually or in person.\nThis is a Framework under The Health Care Services (Provider Selection Regime) Regulations 2023 and The Health Services (Provider Selection Regime) (Wales) Regulations 2025 In accordance with Regulation 17 of The Health Care Services\n(Provider Selection Regime) Regulations 2023 and Regulation 17 of The Health Services (Provider Selection Regime) (Wales) Regulations 2025, the Framework will be open to applications from new potential Providers during the Term of the Framework. \nPreviously appointed Providers are NOT obliged to re-apply.\nFurther 'Intention to Award' notices will be published as and when new Providers are appointed.",
+        "lots": [
+            {
+                "id": "1",
+                "description": "The awarding of this framework agreement is subject to the Health Care Services (Provider Selection Regime) Regulations 2023. \nFor the avoidance of doubt, the provisions of the Public Contracts Regulations 2015 and The Procurement Regulations 2024 do not apply to this award. \nThe standstill period begins on the day after the publication of this notice. Representations by providers must be made to the relevant authority by midnight at the end of 18th June 2026 to info@coch-cps.co.uk\nFramework agreements have not yet been formally concluded; this notice serves as an intention to establish the framework agreements under the PSR.\nThe award decision makers were two Senior Commercial Procurement Specialists, the Commercial Procurement Manager and the Director of Commercial Procurement Services.\nThe Key Criteria were:\n• Social Value 10%\n• Value - Commercial Questionnaire 10%\n• Quality and Innovation 30%\n• Integration, collaboration, and service sustainability 30%\n• Improving access, reducing health inequalities, and facilitating choice 20%\nThe framework will be available to all Relevant Authorities (and any future successors to these organisations). \"Relevant Authority\" is defined in section 12ZB(7) of the National Health Service Act 2006 and in section 10A(9) of the National Health Service (Wales) Act\n2006.\nThe overall aim of the Framework Agreement is to provide Mental Health and Wellbeing services for young people, adults or both. \nThe Framework intends to cover a range of services that fall within the scope of Mental Health and Wellbeing services, delivered either virtually or in person.\nIn accordance with Regulation 17 of The Health Care Services (Provider Selection Regime) Regulations 2023 and Regulation 17 of The Health Services (Provider Selection Regime) (Wales) Regulations 2025, new Providers may be added to this Framework\nduring the Term of the Framework. Award of a Framework Agreement does not guarantee or imply any commitment to award a Call-off Contract by any Relevant Authority.\nPreviously appointed Providers are NOT obliged to re-apply.",
+                "awardCriteria": {
+                    "criteria": [
+                        {
+                            "name": "Value",
+                            "type": "cost",
+                            "description": "10"
+                        },
+                        {
+                            "name": "Social Value",
+                            "type": "cost",
+                            "description": "10"
+                        },
+                        {
+                            "name": "Technical",
+                            "type": "cost",
+                            "description": "80"
+                        }
+                    ]
+                },
+                "hasOptions": false,
+                "status": "cancelled"
+            }
+        ],
+        "items": [
+            {
+                "id": "1",
+                "additionalClassifications": [
+                    {
+                        "scheme": "CPV",
+                        "id": "85100000",
+                        "description": "Health services"
+                    }
+                ],
+                "deliveryAddresses": [
+                    {
+                        "region": "UKC"
+                    },
+                    {
+                        "region": "UKD"
+                    },
+                    {
+                        "region": "UKE"
+                    },
+                    {
+                        "region": "UKF"
+                    },
+                    {
+                        "region": "UKG"
+                    },
+                    {
+                        "region": "UKH"
+                    },
+                    {
+                        "region": "UKI"
+                    },
+                    {
+                        "region": "UKJ"
+                    },
+                    {
+                        "region": "UKK"
+                    },
+                    {
+                        "region": "UKL"
+                    }
+                ],
+                "relatedLot": "1"
+            }
+        ],
+        "procurementMethod": "open",
+        "procurementMethodDetails": "Open procedure",
+        "coveredBy": [
+            "GPA"
+        ]
+    },
+    "awards": [
+        {
+            "id": "083468-2026-1",
+            "relatedLots": [
+                "1"
+            ],
+            "status": "active",
+            "suppliers": [
+                {
+                    "id": "GB-COH-16622568",
+                    "name": "Mind Balance Center Ltd"
+                }
+            ]
+        },
+        {
+            "id": "083468-2026-2",
+            "relatedLots": [
+                "1"
+            ],
+            "status": "active",
+            "suppliers": [
+                {
+                    "id": "GB-COH-15482425",
+                    "name": "OASIS HOMECARE LIMITED"
+                }
+            ]
+        }
+    ],
+    "parties": [
+        {
+            "name": "COUNTESS OF CHESTER HOSPITAL NHS FOUNDATION TRUST",
+            "id": "GB-COH-RJR",
+            "identifier": {
+                "legalName": "COUNTESS OF CHESTER HOSPITAL NHS FOUNDATION TRUST",
+                "id": "RJR",
+                "scheme": "GB-COH"
+            },
+            "address": {
+                "streetAddress": "Liverpool Road",
+                "locality": "Chester",
+                "region": "UKD63",
+                "postalCode": "CH21UL",
+                "countryName": "United Kingdom"
+            },
+            "contactPoint": {
+                "email": "info@coch-cps.co.uk"
+            },
+            "roles": [
+                "buyer"
+            ],
+            "details": {
+                "url": "http://www.coch-cps.co.uk/",
+                "classifications": [
+                    {
+                        "scheme": "TED_CA_TYPE",
+                        "id": "BODY_PUBLIC",
+                        "description": "Body governed by public law"
+                    },
+                    {
+                        "scheme": "COFOG",
+                        "id": "07",
+                        "description": "Health"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Mind Balance Center Ltd",
+            "id": "GB-COH-16622568",
+            "identifier": {
+                "legalName": "Mind Balance Center Ltd",
+                "id": "16622568",
+                "scheme": "GB-COH"
+            },
+            "address": {
+                "locality": "Liverpool",
+                "region": "UKD72",
+                "countryName": "United Kingdom"
+            },
+            "roles": [
+                "supplier"
+            ],
+            "details": {
+                "scale": "sme"
+            }
+        },
+        {
+            "name": "OASIS HOMECARE LIMITED",
+            "id": "GB-COH-15482425",
+            "identifier": {
+                "legalName": "OASIS HOMECARE LIMITED",
+                "id": "15482425",
+                "scheme": "GB-COH"
+            },
+            "address": {
+                "locality": "Huddersfield",
+                "region": "UKE4",
+                "countryName": "United Kingdom"
+            },
+            "roles": [
+                "supplier"
+            ],
+            "details": {
+                "scale": "large"
+            }
+        },
+        {
+            "name": "Countess of Chester Hospital NHS Foundation Trust",
+            "id": "GB-FTS-15222",
+            "identifier": {
+                "legalName": "Countess of Chester Hospital NHS Foundation Trust"
+            },
+            "address": {
+                "locality": "Chester",
+                "countryName": "United Kingdom"
+            },
+            "roles": [
+                "reviewBody"
+            ]
+        }
+    ],
+    "buyer": {
+        "id": "GB-COH-RJR",
+        "name": "COUNTESS OF CHESTER HOSPITAL NHS FOUNDATION TRUST"
+    },
+    "contracts": [
+        {
+            "id": "083468-2026-1",
+            "awardID": "083468-2026-1",
+            "status": "active",
+            "dateSigned": "2026-09-02T00:00:00+01:00"
+        },
+        {
+            "id": "083468-2026-2",
+            "awardID": "083468-2026-2",
+            "status": "active",
+            "dateSigned": "2026-09-02T00:00:00+01:00"
+        }
+    ],
+    "bids": {
+        "statistics": [
+            {
+                "id": "69",
+                "measure": "bids",
+                "relatedLot": "1",
+                "value": 2
+            },
+            {
+                "id": "72",
+                "measure": "bids",
+                "relatedLot": "1",
+                "value": 2
+            },
+            {
+                "id": "67",
+                "measure": "lowestValidBidValue",
+                "relatedLot": "1",
+                "value": 0.01,
+                "currency": "GBP"
+            },
+            {
+                "id": "70",
+                "measure": "lowestValidBidValue",
+                "relatedLot": "1",
+                "value": 0.01,
+                "currency": "GBP"
+            },
+            {
+                "id": "68",
+                "measure": "highestValidBidValue",
+                "relatedLot": "1",
+                "value": 135000000,
+                "currency": "GBP"
+            },
+            {
+                "id": "71",
+                "measure": "highestValidBidValue",
+                "relatedLot": "1",
+                "value": 135000000,
+                "currency": "GBP"
+            },
+            {
+                "id": "65",
+                "measure": "lowestValidBidValue",
+                "value": 0.01,
+                "currency": "GBP"
+            },
+            {
+                "id": "66",
+                "measure": "highestValidBidValue",
+                "value": 135000000,
+                "currency": "GBP"
+            }
+        ]
+    },
+    "language": "en"
+}]}

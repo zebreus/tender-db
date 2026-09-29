@@ -416,6 +416,42 @@ Tests:
   processes and projects both members. It asserts zero `STAT-%` rows in `lot_results`, 6 real results, and the
   statistics rows under `RES-029615-2025-1-1` and `RES-1-1`.
 
+### Pre-deploy adversarial review (2026-09-29): one real defect, fixed before any deploy
+
+A three-lens review ran before `54a00be` shipped: fold semantics and rollout, the parser against real data, and the
+446 terms. Each candidate finding got an independent refuter. One major finding survived.
+
+**FTS publishes a lot's statistics once PER AWARD, not once per lot.** `54a00be` hung every set under the lot's first
+result. That wrote N rows for one result, and where the sets disagreed the served map kept whichever row came last:
+
+- 083468-2026 (in the recorded p3 page): two awards on lot 1, `bids:2` twice, so two identical rows.
+- 007621-2025: 19 framework awards, `bids:19` sixteen times, so sixteen identical rows under one result. A `SUM(count)`
+  over the SQL surface would be inflated.
+- 052408-2025: six lot-less awards with `bids` 4,4,4,2,1,1. `/v1` served `tenders:1` on the first result, and the
+  other five served nothing.
+
+The statistics carry no award reference; the ids interleave per award, but nothing says which award a set is for. So
+the fix groups by (lot, measure):
+
+- Agreeing repeats: the first-published statistic hangs under the result, and the rest stay at ROOT.
+- Disagreeing repeats: the whole group stays at ROOT, parsed but not served. A guessed per-award attribution would put
+  a wrong count on a result, which is worse than none.
+
+New fixtures `083468-2026.json` and `052408-2025.json` are members rebuilt in `fts::member_bytes`' field order from
+the `ocdsReleasePackages/{id}` endpoint. Two new parser tests cover them, and the fold test now expects exactly one
+`tenders:2` row for 083468 and none for 052408.
+
+The rest of the review came back clean:
+
+- The re-parse replaces the parsed layer whatever the content hash, and `stamp_stale_for_profiles` plus
+  `sweep_orphaned_entities` delete the standing `STAT-` `lot_results` rows. No epoch bump is needed.
+- A survey of 1,797 real statistics found `relatedLot` and `currency` always strings, and no exponent values.
+- Two 446 findings: one refuted, and one minor about the docs test (below).
+
+The disagreeing per-award shape is left UNSERVED on purpose. If a later measurement shows the per-award order is
+reliable (e.g. stat ids consecutive per award in award order across a large sample), a pairing rule could attribute
+them; that is its own unit.
+
 ## Verify
 
 After the deploy, the `fts:ocds-1.1` re-parse and the refold:

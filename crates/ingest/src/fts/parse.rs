@@ -376,18 +376,37 @@ pub fn parse(bytes: &[u8]) -> Result<Parsed, Rejected> {
     // block does, so it now sits in a `ReceivedSubmissions` section under the
     // FIRST result for its `relatedLot`. A statistic with no `relatedLot` goes
     // under the lot-less result, and the fold's `enclosing()` walks up from
-    // there. One block per lot, never one per award: a lot with five awards
-    // (029664-2025) gets its counts once. With no such result, the section stays
-    // at ROOT. The parsed layer keeps it, no result encloses it, and the fold
-    // invents none.
+    // there. With no such result, the section stays at ROOT. The parsed layer
+    // keeps it, no result encloses it, and the fold invents none.
+    //
+    // ONE BLOCK PER (lot, measure), whatever the publisher repeats. FTS publishes
+    // a lot's statistics either once (029664-2025: five awards, one `bids`) or
+    // once PER AWARD. When the repeats agree (083468-2026: two awards, `bids:2`
+    // twice; 007621-2025: `bids:19` sixteen times), only the first-published
+    // one hangs under the result, so the fold does not write the same row again
+    // for every repeat. When they disagree (052408-2025: six lot-less awards
+    // with `bids` 4,4,4,2,1,1), nothing says which award each belongs to, so the
+    // whole group stays at ROOT. A wrong count on a result is worse than none,
+    // and the fold would otherwise keep whichever row came last.
     if let Some(bids) = &release.bids {
+        let key = |s: &Statistic| (s.related_lot.clone(), s.measure.clone());
+        let mut groups: HashMap<(Option<String>, Option<String>), Vec<&Statistic>> = HashMap::new();
+        for stat in bids.statistics.iter().filter(|s| s.id.as_deref().is_some_and(|id| !id.is_empty())) {
+            groups.entry(key(stat)).or_default().push(stat);
+        }
         for stat in &bids.statistics {
             let Some(sid) = stat.id.as_deref().filter(|s| !s.is_empty()) else { continue };
             let section = format!("STAT-{sid}");
-            let parent = results
-                .iter()
-                .find(|(_, lot)| lot.as_deref() == stat.related_lot.as_deref())
-                .map_or(ROOT, |(rid, _)| rid.as_str());
+            let group = &groups[&key(stat)];
+            let agreed = group.iter().all(|s| s.same_figure(group[0]));
+            let parent = if agreed && std::ptr::eq(group[0], stat) {
+                results
+                    .iter()
+                    .find(|(_, lot)| lot.as_deref() == stat.related_lot.as_deref())
+                    .map_or(ROOT, |(rid, _)| rid.as_str())
+            } else {
+                ROOT
+            };
             w.section(&section, "ReceivedSubmissions", parent);
             match stat.measure.as_deref().and_then(measure) {
                 Some(Measure::Count(code)) => {
@@ -947,6 +966,16 @@ struct Statistic {
     currency: Option<String>,
 }
 
+impl Statistic {
+    /// The same figure: the same literal value in the same currency. Compared
+    /// as published text, so `4` and `4.0` count as different. That is the
+    /// cautious side, since a disagreeing group is never served.
+    fn same_figure(&self, other: &Statistic) -> bool {
+        let text = |s: &Statistic| s.value.as_ref().map(|v| v.get().trim().to_owned());
+        text(self) == text(other) && self.currency == other.currency
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1037,6 +1066,39 @@ mod tests {
         }
     }
 
+    /// Issue 342 review: FTS repeats a lot's statistics once per award. Repeats
+    /// that AGREE (083468-2026, two awards on lot 1, `bids:2` twice) hang ONE
+    /// block under the result, and the copies stay at ROOT.
+    #[test]
+    fn statistics_repeated_per_award_hang_once_when_they_agree() {
+        let p = parsed("083468-2026");
+        let res = "RES-083468-2026-1-1";
+        let under = |id: &str| section_of(&p, id).parent.clone();
+        assert_eq!(under("STAT-69").as_deref(), Some(res), "the first `bids` is the lot's");
+        assert_eq!(under("STAT-72").as_deref(), Some(ROOT), "its identical repeat is not");
+        assert_eq!(under("STAT-67").as_deref(), Some(res));
+        assert_eq!(under("STAT-70").as_deref(), Some(ROOT));
+        let enclosed: Vec<&str> = p
+            .sections
+            .iter()
+            .filter(|s| s.kind == "ReceivedSubmissions" && s.parent.as_deref() != Some(ROOT))
+            .map(|s| s.id.as_str())
+            .collect();
+        assert_eq!(enclosed, vec!["STAT-69", "STAT-67", "STAT-68"], "one block per measure on lot 1");
+    }
+
+    /// And repeats that DISAGREE are not attributed at all: 052408-2025 has six
+    /// lot-less awards and `bids` 4,4,4,2,1,1, with nothing saying which award
+    /// each count belongs to. Every one stays at ROOT, parsed but unserved.
+    #[test]
+    fn statistics_repeated_per_award_that_disagree_are_attributed_to_no_result() {
+        let p = parsed("052408-2025");
+        let stats: Vec<&Section> = p.sections.iter().filter(|s| s.kind == "ReceivedSubmissions").collect();
+        assert_eq!(stats.len(), 12, "every statistic is kept in the parsed layer");
+        assert!(stats.iter().all(|s| s.parent.as_deref() == Some(ROOT)), "none is guessed onto a result");
+        assert_eq!(all(&p, "BT-759-LotResult").len(), 12, "the counts themselves are not dropped");
+    }
+
     /// Every fixture parses. This is the cheap standing guard: the UK extension
     /// has moved four times in a year, and the first symptom of the fifth move
     /// is a fixture that stops parsing.
@@ -1044,7 +1106,7 @@ mod tests {
     fn every_fts_fixture_parses() {
         for name in
             ["083563-2026", "083645-2026", "083650-2026", "083685-2026", "_noid-2026-09-03-p001-000",
-             "029615-2025", "029664-2025"]
+             "029615-2025", "029664-2025", "052408-2025", "083468-2026"]
         {
             let p = parsed(name);
             assert!(
