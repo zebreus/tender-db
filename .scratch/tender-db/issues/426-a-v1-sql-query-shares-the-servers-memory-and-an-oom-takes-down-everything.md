@@ -133,3 +133,20 @@ array on `/v1/tenders`, no `group_concat` needed.
 multiprocess-WAL backend it needs jams a process with `Busy` once one transaction passes 262,144 WAL frames (1 GiB),
 and the server's deferred `CREATE INDEX` builds cross that. The layer-1 in-process gate is the standing protection;
 431 has the soak and the revisit trigger.
+
+## 2026-09-29 — step 2's measurement started: the anon share, sampled through the next heavy jobs
+
+`MemoryPeak` cannot answer it: since the 06:10 UTC restart the unit peaked at 42.3 GB, but that counts page cache.
+At 11:00 UTC the cgroup held 36.4 GB `file` and 2.4 GB `anon` (`tender_db_rss_bytes` 2.42 GB), and the peak
+straddled today's three merge runs (R2 1650, E0 1651, the 9,728-group p0 fold 1652). cgroup v2 keeps no anon
+peak, so a transient unit on the box samples it:
+
+    systemctl status tender-anon-sampler        # RuntimeMaxSec=30h, started 2026-09-29 11:00 UTC
+    tail /root/anon-samples.log                 # <epoch> anon <bytes> file <bytes> <memory.current>
+
+It covers tomorrow's daily process/project tick. The next firing takes `max(anon)` from the log and joins it with
+`/admin/jobs` start/finish times. It then sets `MemoryMax` well above the largest legitimate anon peak plus the
+page cache the unit needs, and `MemoryHigh` below it, in `nix/module.nix`'s serviceConfig. The margin exists for
+host protection only (the decision above): the kernel reclaims the cgroup's cache before it OOMs, so a limit near
+the box's 62 GB caps cache rather than killing a fold.
+
