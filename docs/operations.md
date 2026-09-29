@@ -193,7 +193,9 @@ Two ways jobs start:
 - **Scheduler** — at 09:35 Europe/Berlin it enqueues the daily pipeline: on
   Mon–Fri a TED probe forward + re-fetch of the current day (the 09:30 CET
   finality window) and a `process`; every day a DÖE completed-day fetch (T+1,
-  yesterday's date) + `process`; then one `project` that folds whatever landed.
+  yesterday's date) + `process`; every day an FTS probe for the previous UK
+  civil day (`fts daily (probe)`: a paged walk with a 2 h overlap, ~12 s between
+  pages) + `process fts daily (all)`; then one `project` that folds whatever landed.
   (The trailing `snapshot` job was removed with the backup feature,
   2026-08-06.) No operator action needed. Confirm a run fired by looking for a
   `probe` job (and the trailing
@@ -300,6 +302,14 @@ curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/41
 curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
   -d '{"kind":"backfill","source":"doe","range":["2024-01","2024-12"]}' $BASE/admin/jobs
 
+# Backfill FTS (issue 342). With no range: every month from 2021-01. Each monthly
+# walks one 1-day window per civil day through the paged API and is rate-limited
+# (a month is ~150 paced requests). A throttled month FAILS and keeps its staged
+# pages under fts/monthly/<YYYY-MM>.pages/, so re-enqueueing it resumes, it does
+# not restart. Read job_log for `throttled` errors and re-enqueue those months.
+curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
+  -d '{"kind":"backfill","source":"fts","range":["2025-07","2026-08"]}' $BASE/admin/jobs
+
 # Re-fold every notice carrying a section of a KIND (issue 237) — the cheap cohort:
 # notice_sections_kind is indexed, so this is an index read, unlike refold-fields.
 curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
@@ -353,7 +363,9 @@ Defaults: `source` `ted`, `package_kind` `daily`.
 re-downloads a known package (finality re-check). `project` with `rebuild:true`
 drops and re-derives the whole canonical layer. `backfill` needs a `source`; for
 `ted` it also needs a monthly `range` (`["2024-01","2024-12"]`), for `doe` the
-range is optional (defaults to the whole 2022-12→now archive). A backfill fans
+range is optional (defaults to the whole 2022-12→now archive), and for `fts`
+it is optional too (defaults to 2021-01→the current month; unlike DÖE, the
+current month is not force-refetched, because the daily probe covers it). A backfill fans
 into one `fetch` per month, then one whole-source `process`, then one `project`,
 so progress and cancellation stay per-package. Jobs run **one at a time** in
 enqueue order — the writer is single anyway — so a fetch → process → project
@@ -659,7 +671,7 @@ disk:
   the DB (issue 61/213).
 - **ingest_freshness** — unhealthy when no job has succeeded in **26 h**
   (`INGEST_STALE_SECS`). The scheduler lands a successful run at least daily
-  (TED Mon–Fri, DÖE + projection every day), and 26 h carries a Friday success
+  (TED Mon–Fri, DÖE + FTS + projection every day), and 26 h carries a Friday success
   across the weekend. A box that has *never* run a job (fresh deploy, scheduler
   not yet fired) is reported healthy-but-unmeasured, not alarmed.
 - **last_job** — unhealthy when the newest finished run in `job_log` has
@@ -829,7 +841,10 @@ Two filesystems, watched separately:
   It carries both the raw archive and the database, because the parsed DB alone
   will not fit the 75 GB root disk (text satellites dominate — pilot-sizing.md).
   - `/data/archive/<source>/…` — raw fetched packages, immutable, append-only.
-    TED under `ted/{daily,monthly}/`, DÖE under `doe/{daily,monthly}/`.
+    TED under `ted/{daily,monthly}/`, DÖE under `doe/{daily,monthly}/`, FTS
+    under `fts/{daily,monthly}/`. The FTS zips are assembled by the fetcher,
+    one member per release. A `<period>.pages/` directory beside one is the
+    staging of an unfinished walk and is removed once its zip lands.
   - `/data/db/tender-db.db` (+ `-wal`) — the Turso database. The raw archive is
     the large static tenant (~178 GB and barely moving between backfills); the DB
     plus its WAL is what grows during a load.

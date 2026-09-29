@@ -13,7 +13,7 @@ analysis.
 A **Tender** is a public procurement opportunity, independent of which **Source**
 published it. It is derived from one or more **Notices** — the immutable
 publication events at a Source (TED, the German Datenservice Öffentlicher
-Einkauf, …). A Tender has **Lots** (separately-awarded subdivisions); **Bids**
+Einkauf, the UK's Find a Tender Service). A Tender has **Lots** (separately-awarded subdivisions); **Bids**
 are the offers Organizations place on Lots (never called "tender" here, despite
 eForms' own naming). See [CONTEXT.md](CONTEXT.md) for the full domain language.
 

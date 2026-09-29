@@ -120,6 +120,22 @@ resolves 0.7.0 final; bump to `=0.7.0`. Pending TODOs: checkpoint+copy backup
 numbers, load-then-index comparison, crash-loop results, implications/open
 questions.
 
+**uk-fts.md** (2026-09-07, adversarially re-checked; issue 342 unit 1) —
+Source #3: the UK Find a Tender Service. Establishes: OCDS 1.1 release
+packages from one unauthenticated, documented, paged API. There is no bulk
+package, and the rate limit is variable and opaque (429s at every cadence
+tried in the first session). Licence: Open Government Licence v3.0 on every
+package. The condition is its attribution statement, and the rights end
+automatically without it (served since issue 446). History starts
+2021-01-02. Pre-2021 UK notices are in TED, and the two sources have no
+notice-level overlap. About 5 MB a day (436 releases on 2026-09-03), and
+319,742 releases in 2021–2025. Releases are deltas under one `ocid` per process. Identifiers:
+PPON (Procurement Act) and Companies House. ~95 % of pre-2025 parties carry
+no identifier, which is why the crosswalk has a GB arm. Contracts Finder
+duplicates FTS for 2021–2025 with no machine link and is left for a later
+unit. Built as unit 2: the `fts:ocds-1.1` profile, measured on prod on
+2025-06 (7,243/7,243 parsed, 0 quarantined → 6,239 tenders).
+
 ---
 
 ## 2. Consolidated open-item register

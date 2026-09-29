@@ -105,6 +105,19 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
   source-agnostic. service.bund.de was deep-dived and REJECTED as a Source —
   "do not ingest — not now, and probably not later either"
   (docs/research/service-bund-de.md §9, decision C22).
+- The UK's Find a Tender Service (FTS) is the third Source (issue 342, live
+  since 2026-09-07). It holds UK above-threshold notices from 2021-01, after
+  the UK left TED; UK notices before that are in TED. The data is OCDS 1.1
+  JSON from an unauthenticated, paged API under the Open Government Licence
+  v3.0 (docs/research/uk-fts.md). There is no bulk package, so the fetcher
+  assembles one zip per day or month, with one member per release.
+- Each Source's reuse terms are served with its data (issue 446): TED's
+  attribution plus a note that the data has been transformed, and FTS's OGL
+  statement "Contains public sector information licensed under the Open
+  Government Licence v3.0." FTS's rights end automatically if that statement
+  is missing. DÖE is CC0 and is credited anyway. The terms are on
+  `/docs#data-sources` and `/v1`'s `data_sources`, and the dashboard footer
+  links them.
 - TED history spans three format eras (tagged text 1993–2010, TED_EXPORT XML
   2011–2024, eForms 2023→, mixed per-file during the transition); importers
   dispatch a mapping profile per file (text / r208 / r209 / eforms, plus
@@ -114,7 +127,8 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
   a Tender, never wrongly merges); chains break at the eForms boundary. See
   docs/research/ted-access-channels.md and ted-legacy-mapping.md.
 - Near-real-time comes from TED alone (daily package by 09:30 CET Mon–Fri);
-  oeffentlichevergabe.de is strictly T+1 and serves as a daily reconcile.
+  oeffentlichevergabe.de is strictly T+1 and serves as a daily reconcile, and
+  so is FTS: each tick fetches the previous UK civil day, with a 2 h overlap.
 - No geographic focus, and not even locked to public procurement long-term;
   TED-primary is a bootstrapping choice because its data structures are well
   documented.

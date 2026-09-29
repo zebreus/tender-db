@@ -38,8 +38,8 @@ XML unless asked.
   log, quarantine. One writer connection behind a mutex (ROLLBACK after any
   abandoned write future — turso 0.7.0 poisons the tx otherwise), N reader
   connections; pragmas per connection (foreign_keys=ON is OFF by default).
-- `ingest` — fetchers (TED, DÖE) + era/profile parsers + projection. Owns
-  the completeness checklists.
+- `ingest` — fetchers (TED, DÖE, FTS) + era/profile parsers + projection.
+  Owns the completeness checklists.
 - `app` (`tender-db`) — Dioxus fullstack binary: public axum API under
   `/v1`, SSE, SQL endpoint, webhooks delivery, dashboard (server functions
   under `/api`), and the importer scheduler.
@@ -47,13 +47,20 @@ XML unless asked.
 ## Notice identity and profiles
 
 A Notice is keyed by (source, publication_id, content_hash) — TED publication
-number / DÖE uuid+version; declared versions (BT-757) are advisory
-(ted-empirical-checks.md). Every notice file is dispatched to a mapping
+number / DÖE uuid+version / FTS release id (`083685-2026`, the FTS notice
+number); declared versions (BT-757) are advisory (ted-empirical-checks.md).
+An FTS release carries its procedure's OCDS `ocid` as the procedure key
+(BT-04), so the releases of one process fold into one Tender. The exception
+is an ocid whose releases name two or more different buyer sets: it splits
+per buyer (issue 386). Every notice file is dispatched to a mapping
 profile by its root element + CustomizationID:
 
 `text` | `ted-export-r208` (incl. R2.0.7, defence) | `ted-export-r209` |
 `eforms` (per (SDK-version, national-profile) sub-profiles incl. eforms-de
-and the DÖE sdk-0.1 empirical inventory).
+and the DÖE sdk-0.1 empirical inventory) | `fts:ocds-<version>` (a JSON
+member, dispatched on its package's OCDS `version`; `fts:ocds-1.1` today). The
+FTS parser emits eForms field ids, so the fold does not change; its
+mapped-or-ignored checklist is `ingest::fts::checklist`.
 
 Each profile = a parser producing (mapped fields, explicit ignore hits) with
 XML handled by roxmltree, matching namespace-URI + local name. Anything
@@ -130,7 +137,14 @@ explicit `reset` event. Poll endpoint and webhooks consume the same log
 - `/data/archive/<source>/...` — fetched packages exactly as downloaded,
   named by source convention, with a `fetches` registry table (url, sha256,
   fetched_at, path). Idempotency by hash; TED daily packages re-fetched if
-  the hash changes before 09:30 CET finality.
+  the hash changes before 09:30 CET finality. **FTS is the exception**: its
+  API serves pages, not packages. The fetcher stages the pages under
+  `fts/<kind>/<period>.pages/`, where a throttled walk resumes. It then
+  writes `fts/<kind>/<period>.zip` with one byte-deterministic member per
+  release: the page header's stable fields around that one release. The
+  pages are deleted once the zip lands. So an FTS member is a
+  re-serialisation, not the bytes as served. `fetches.url` records the first
+  window's URL.
 - `/data/db/tender-db.db` — the Turso file (TENDER_DB env).
 - Backups: none for now (accepted risk; everything rebuildable). The
   checkpoint+copy runbook lives in docs/research/turso-scale.md when needed.

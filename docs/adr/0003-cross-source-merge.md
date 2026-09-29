@@ -21,6 +21,14 @@ and TED publish the same procedure under identical notice and procedure UUIDs,
 so for our chosen Sources the strong cross-reference is exact UUID equality —
 no heuristics needed.
 
+Verified (2026-09-07, docs/research/uk-fts.md §3): TED and the UK's Find a
+Tender Service share no notices. Procedures started on TED before 2021 had to
+finish on TED, and FTS holds nothing dated before 2021-01-02, so no TED↔FTS
+merge exists to make. The two meet only at organization level: the same UK
+buyers and suppliers, which the mention resolver keys on identifier, not
+notice. An FTS Tender's procedure key is its OCDS `ocid`, which no TED notice
+carries, so an FTS Tender is single-source.
+
 Precedence (decided 2026-07-19; folding order signed off 2026-07-21 by the
 project owner under transferred product authority): per field class —
 publication-identity fields from TED (OJS gazette ids); German national content
