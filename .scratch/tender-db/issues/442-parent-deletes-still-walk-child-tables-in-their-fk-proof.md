@@ -154,6 +154,16 @@ step 4. Post the two together.
   Each wet plan matched its dry run exactly (1647 → 551, 1648 → 12, 1649 → 9,728 / 17,139).
   `journalctl -u tender-db --since -90min | grep -c 'FOREIGN KEY constraint failed'` = **0**, and no
   `reclaim stamped NO ledger rows`. Step 2 is done.
+- **Change-feed audit of the same runs (2026-09-29 11:5x UTC).** I paged `/v1/changes` from cursor 673088407 to
+  673167860: 79,453 events in 80 pages, 10:50:03 → 10:54:13 UTC. That window holds E0 1651 and p0 1652; R2 1650
+  had finished before the start cursor. Every count matches a job summary exactly:
+  - `organization removed` 17,160 = 21 + 17,139 rows removed;
+  - `organization changed` 9,740 = 12 + 9,728 keeps, one per group;
+  - `tender changed` 52,553 = 198 + 52,355 tenders touched.
+
+  The only slack: those 52,553 tender events name 37,480 distinct tenders. A tender touched by several groups (or
+  by both jobs) is published once per touch. Consumers key on id, so nothing is wrong, but about 15k of the events
+  are redundant. Not worth a unit of its own unless feed volume becomes a problem.
 - **Adversarial review (one read-only agent, 2026-09-28): no defect.** It confirmed from turso_core 0.7.2:
   - A child UPDATE re-checks only the foreign key whose columns change (`fkeys.rs` `child_key_changed`), so latent
     violations elsewhere in a repointed row are not re-checked.
