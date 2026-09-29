@@ -743,3 +743,87 @@ async fn the_repeated_id_listing_names_a_placeholder_cohort_and_nothing_else() {
     drop(conn);
     let _ = std::fs::remove_file(&path);
 }
+
+/// Issue 394 (c): the CPV spelling census counts each shape through the real SQL,
+/// leaves bare codes and other schemes alone, and reads ONLY the `(scheme, code)`
+/// index — a covering scan, so the weekly pass is one index walk with no table fetch
+/// per row. The plan is turso's to choose, so it is pinned here (issue 243's rule).
+#[tokio::test]
+async fn the_cpv_shape_census_counts_each_shape_and_reads_only_its_index() {
+    let (db, _fetch_id, path) = scratch("cpv-shapes").await;
+    db.build_tender_indexes().await.expect("tender indexes");
+    let raw = turso::Builder::new_local(&path).build().await.expect("raw open");
+    let conn = raw.connect().expect("connect");
+    let seeded = [
+        ("cpv", "45000000"),
+        ("cpv", "09123000"),
+        ("cpv", "45421146-9"),
+        ("cpv", "09123000-7"),
+        ("cpv", "45324000-4  45421146-9"),
+        ("cpv", "50"),
+        ("cpv", "4542"),
+        ("cpv", "45.42"),
+        ("cpv", "123456789"),
+        ("nuts", "DE300"),
+        ("nuts", "DE3"),
+    ];
+    for (i, (scheme, code)) in seeded.iter().enumerate() {
+        conn.execute(
+            &format!(
+                "INSERT INTO tender_version_classifications (tender_id, seq, field, scheme, code) \
+                 VALUES ({}, 1, 'main', '{scheme}', '{code}')",
+                i + 1
+            ),
+            (),
+        )
+        .await
+        .expect("seed");
+    }
+
+    let mut listed = rows(&db, data_quality::CPV_SHAPES_SQL).await;
+    listed.sort_by(|a, b| a[0].as_str().cmp(&b[0].as_str()));
+    assert_eq!(
+        listed,
+        vec![
+            vec![json!("check-digit"), json!(2), json!("09123000-7")],
+            vec![json!("division"), json!(2), json!("4542")],
+            vec![json!("glued"), json!(1), json!("45324000-4  45421146-9")],
+            vec![json!("other"), json!(2), json!("123456789")],
+        ],
+        "the two bare codes and both NUTS rows are not listed"
+    );
+
+    let plan = db
+        .measure_rows(&format!("EXPLAIN QUERY PLAN {}", data_quality::CPV_SHAPES_SQL))
+        .await
+        .expect("plan");
+    let plan = plan.iter().map(|r| format!("{r:?}")).collect::<Vec<_>>().join("\n");
+    let code = db
+        .measure_rows(&format!("EXPLAIN {}", data_quality::CPV_SHAPES_SQL))
+        .await
+        .expect("bytecode");
+    assert!(
+        plan.contains("USING INDEX tender_version_classifications_code (scheme=?)"),
+        "the census must seek the cpv range of the (scheme, code) index; plan:\n{plan}"
+    );
+    // turso's plan text never says COVERING for a SEARCH, so the bytecode is the
+    // witness: one read cursor, on the index, and no seek into the table by rowid.
+    let opcodes: Vec<String> =
+        code.iter().filter_map(|r| r.get(1).and_then(|v| v.as_text()).cloned()).collect();
+    let code = code.iter().map(|r| format!("{r:?}")).collect::<Vec<_>>().join("\n");
+    assert_eq!(opcodes.iter().filter(|o| *o == "OpenRead").count(), 1, "one read cursor:\n{code}");
+    assert!(code.contains("index=tender_version_classifications_code"), "{code}");
+    for seek in ["SeekRowid", "DeferredSeek", "IdxRowId"] {
+        assert!(!opcodes.iter().any(|o| o == seek), "a table fetch ({seek}) per row:\n{code}");
+    }
+
+    let report = measure(&db, "http://x").await;
+    assert_eq!(report.cpv_shapes.len(), 4, "{:?}", report.cpv_shapes);
+    let text = data_quality::render_text(&report);
+    assert!(text.contains("== 15. CPV spellings") && text.contains("45324000-4  45421146-9"), "{text}");
+
+    drop(conn);
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}

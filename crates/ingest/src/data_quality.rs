@@ -1522,6 +1522,39 @@ pub fn repeated_ids_sql() -> String {
     )
 }
 
+/// CPV spellings the fold did not canonicalise, per shape (issue 394 c).
+///
+/// `project::normalize_cpv` writes one bare 8-digit code per fact, and a shape it does
+/// not know passes through "visibly". This query is where it becomes visible. The
+/// shapes follow the normaliser's own rules:
+///
+/// - `check-digit` (`NNNNNNNN-C`), `glued` (a space, comma or semicolon inside) and
+///   `division` (2–7 digits) are what the normaliser rewrites. A row in one of them was
+///   folded before it (2026-09-18) and no refold has reached it since.
+/// - `other` is the pass-through: a shape nobody has decided a rule for. A tab-glued
+///   string lands here too, because the GLOB class holds only the three separators.
+///
+/// It reads only `scheme` and `code`, so it is one walk of the `cpv` range of the
+/// `(scheme, code)` index with no table fetch: a covering scan, pinned by
+/// `the_cpv_shape_census_counts_each_shape_and_reads_only_its_index`. There is no era
+/// column for the same reason, because naming a row's profile costs a table fetch per
+/// row. The example code finds its carriers in one indexed seek instead
+/// (`WHERE scheme = 'cpv' AND code = ?`).
+pub const CPV_SHAPES_SQL: &str = "\
+    SELECT CASE \
+             WHEN code GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9]' THEN 'check-digit' \
+             WHEN code GLOB '*[ ,;]*' THEN 'glued' \
+             WHEN length(code) BETWEEN 2 AND 7 AND code NOT GLOB '*[^0-9]*' THEN 'division' \
+             ELSE 'other' \
+           END AS shape, \
+           COUNT(*) AS n, \
+           MIN(code) AS example \
+      FROM tender_version_classifications \
+     WHERE scheme = 'cpv' \
+       AND code NOT GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]' \
+     GROUP BY shape \
+     ORDER BY n DESC";
+
 pub fn whole_corpus_queries() -> Vec<(String, String)> {
     vec![
         ("fresh_holds".to_owned(), fresh_holds_sql()),
@@ -1566,6 +1599,9 @@ pub fn whole_corpus_queries() -> Vec<(String, String)> {
         // Issue 394 (b): the identity-string recurrence detector. Whole-corpus for the
         // same HAVING reason as the sentinel sweeps.
         ("repeated_ids".to_owned(), repeated_ids_sql()),
+        // Issue 394 (c): the CPV spelling census. Whole-corpus because it walks the
+        // `(scheme, code)` index, which the tender-id windows have nothing to bind to.
+        ("cpv_shapes".to_owned(), CPV_SHAPES_SQL.to_owned()),
     ]
 }
 
@@ -1979,6 +2015,16 @@ pub struct SentinelRow {
     pub tenders: u64,
 }
 
+/// One CPV spelling class the fold did not canonicalise (issue 394 c).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CpvShapeRow {
+    /// `check-digit`, `glued`, `division` or `other` — see [`CPV_SHAPES_SQL`].
+    pub shape: String,
+    pub rows: u64,
+    /// The smallest code of the class, to seek its carriers by.
+    pub example: String,
+}
+
 /// One publication id carried by many distinct notices of a source (issue 394 b).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RepeatedIdRow {
@@ -2293,6 +2339,9 @@ pub struct Report {
     /// than a hypothetical.
     pub publication_days_seen: usize,
     pub publication_sources: usize,
+    /// Issue 394 (c): CPV rows whose code is not one bare 8-digit string, per shape.
+    /// Empty is the healthy state; UNMEASURED is told apart via [`Report::unmeasured`].
+    pub cpv_shapes: Vec<CpvShapeRow>,
     /// The longest version chain in the corpus (`MAX(tenders.current_seq)`) —
     /// the fold-cost tripwire (issue 92). 0 when unmeasured or the layer is
     /// empty; the render distinguishes the two via [`Report::unmeasured`].
@@ -2390,6 +2439,8 @@ pub struct Raw {
     /// `(source, day, notices)` at the corpus head, ordered — the raw material
     /// [`publication_gaps`] folds (issue 402).
     pub publication_days: Rows,
+    /// `[shape, rows, example]` per non-canonical CPV class (issue 394 c).
+    pub cpv_shapes: Rows,
     /// Labels whose query never ran (issue 230), in the order collected.
     pub unmeasured: Vec<String>,
 }
@@ -2450,6 +2501,7 @@ impl Raw {
             withheld_markers: take("withheld_markers", &mut unmeasured)?,
             unmapped_fields: take("unmapped_fields", &mut unmeasured)?,
             publication_days: take("publication_days", &mut unmeasured)?,
+            cpv_shapes: take("cpv_shapes", &mut unmeasured)?,
             unmeasured,
         })
     }
@@ -2740,6 +2792,11 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
                 })
                 .collect()
         },
+        cpv_shapes: raw
+            .cpv_shapes
+            .iter()
+            .map(|r| CpvShapeRow { shape: as_str(r.first()), rows: as_u64(r.get(1)), example: as_str(r.get(2)) })
+            .collect(),
         unmeasured: raw.unmeasured.clone(),
     }
 }
@@ -3554,6 +3611,34 @@ pub fn render_text(report: &Report) -> String {
              report already pay."
         );
     }
+    // Issue 394 (c): the vocabulary census for CPV. Section 1 counts whether a version
+    // HAS a CPV code; nothing counted how the code is SPELLED, which is how the DÖE
+    // sdk-0.1 island served `45421146-9`, `50` and glued strings for months while its
+    // presence read 93.8 %.
+    let _ = writeln!(
+        out,
+        "\n== 15. CPV spellings (codes that are not one bare 8-digit string — issue 394) =="
+    );
+    if report.unmeasured.iter().any(|l| l == "cpv_shapes") {
+        let _ = writeln!(out, "  UNMEASURED — the `cpv_shapes` query did not run.");
+    } else if report.cpv_shapes.is_empty() {
+        let _ = writeln!(
+            out,
+            "  none — every CPV row holds one bare 8-digit code, the spelling the fold writes."
+        );
+    } else {
+        let _ = writeln!(out, "  {:<14}{:>12}  {}", "shape", "rows", "example");
+        for r in &report.cpv_shapes {
+            let _ = writeln!(out, "  {:<14}{:>12}  {}", r.shape, group(r.rows), r.example);
+        }
+        let _ = writeln!(
+            out,
+            "  `check-digit`, `glued` and `division` are shapes `project::normalize_cpv` rewrites, so \
+             their rows were folded before it and no refold has reached them: refold their notices. \
+             `other` is a shape the normaliser passes through unchanged; decide its rule there. Find \
+             a class's carriers with one indexed seek: `WHERE scheme = 'cpv' AND code = '<example>'`."
+        );
+    }
     out
 }
 
@@ -3929,6 +4014,13 @@ pub fn render_json(report: &Report) -> String {
                 "after": r.after,
             }))
             .collect::<Vec<_>>(),
+        // Issue 394 (c). Present even when empty, like the publication gaps: an absent
+        // key and a clean vocabulary must not look the same.
+        "cpv_shapes": report
+            .cpv_shapes
+            .iter()
+            .map(|r| json!({ "shape": r.shape, "rows": r.rows, "example": r.example }))
+            .collect::<Vec<_>>(),
         "amount_vat_basis": amount_basis,
         "content_presence": presence,
         "amount_plausibility": plausibility,
@@ -4178,6 +4270,7 @@ mod tests {
             publication_gaps: Vec::new(),
             publication_days_seen: 0,
             publication_sources: 0,
+            cpv_shapes: Vec::new(),
             completeness: vec![CompletenessRow {
                 profile: "eforms:eforms-sdk-1.13".into(),
                 versions: 1_000,
@@ -5256,6 +5349,48 @@ mod tests {
         assert!(blind.unmeasured.iter().any(|l| l == "repeated_ids"));
     }
 
+    /// Issue 394 (c): section 15 reads three ways — the shapes found, `none`, and
+    /// UNMEASURED — in text and in JSON, and a found class names its example.
+    #[test]
+    fn the_cpv_shape_census_renders_found_none_and_unmeasured() {
+        let mut found = sentinel_scaffold();
+        put(
+            &mut found,
+            "cpv_shapes",
+            Some(vec![
+                vec![json!("check-digit"), json!(12_345), json!("03000000-1")],
+                vec![json!("other"), json!(3), json!("45.42")],
+            ]),
+        );
+        let report = assemble("x", &Raw::from_labelled(found).expect("raw"));
+        assert_eq!(
+            report.cpv_shapes,
+            vec![
+                CpvShapeRow { shape: "check-digit".into(), rows: 12_345, example: "03000000-1".into() },
+                CpvShapeRow { shape: "other".into(), rows: 3, example: "45.42".into() },
+            ]
+        );
+        let text = render_text(&report);
+        assert!(text.contains("== 15. CPV spellings"), "{text}");
+        assert!(text.contains("check-digit") && text.contains("12,345") && text.contains("03000000-1"), "{text}");
+        assert!(text.contains("refold their notices"), "{text}");
+        let v: Value = serde_json::from_str(&render_json(&report)).expect("json");
+        assert_eq!(v["cpv_shapes"][0]["shape"], "check-digit");
+        assert_eq!(v["cpv_shapes"][0]["rows"], 12_345);
+        assert_eq!(v["cpv_shapes"][1]["example"], "45.42");
+
+        let none = assemble("x", &Raw::from_labelled(sentinel_scaffold()).expect("raw"));
+        assert!(render_text(&none).contains("none — every CPV row holds one bare 8-digit code"));
+        let v: Value = serde_json::from_str(&render_json(&none)).expect("json");
+        assert_eq!(v["cpv_shapes"], json!([]), "the key is present when empty");
+
+        let mut blind = sentinel_scaffold();
+        put(&mut blind, "cpv_shapes", None);
+        let blind = assemble("x", &Raw::from_labelled(blind).expect("raw"));
+        assert!(render_text(&blind).contains("UNMEASURED — the `cpv_shapes` query did not run."));
+        assert!(blind.unmeasured.iter().any(|l| l == "cpv_shapes"));
+    }
+
     /// Section 14 renders, and says the two things a reader needs: the bracketing
     /// counts and that the threshold is calibrated rather than picked.
     #[test]
@@ -5480,6 +5615,8 @@ mod tests {
                 "publication_days",
                 // Issue 394 (b): the identity-string recurrence detector.
                 "repeated_ids",
+                // Issue 394 (c): the CPV spelling census.
+                "cpv_shapes",
             ]
         );
     }
@@ -5683,6 +5820,7 @@ mod tests {
             ("unmapped_fields".to_owned(), Some(vec![])),
             ("publication_days".to_owned(), Some(vec![])),
             ("repeated_ids".to_owned(), Some(vec![])),
+            ("cpv_shapes".to_owned(), Some(vec![])),
         ])
         .expect("labelled");
         let text = render_text(&assemble("http://x", &raw));
@@ -6133,6 +6271,7 @@ mod tests {
             ("unmapped_fields".to_owned(), Some(vec![])),
             ("publication_days".to_owned(), Some(vec![])),
             ("repeated_ids".to_owned(), Some(vec![])),
+            ("cpv_shapes".to_owned(), Some(vec![])),
         ];
         let raw = Raw::from_labelled(results).expect("labelled");
         let report = assemble("http://x", &raw);

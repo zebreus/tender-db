@@ -1,6 +1,6 @@
 # 394 — DÖE serves two publisher strings as its own keys: 7,158 notices keyed on TED's placeholder publication id `00000000-1900`, and sdk-0.1 CPV codes in four shapes under one `scheme`
 
-Status: ready-for-agent — units 1 and 2 DONE. Unit 1's live acceptance was read 2026-09-29 (foot): 0 notices and 0 tenders answer `00000000-1900`. That read found 270 stale version rows the 404 repair had left, cleared them with refold 1653/1654, and fixed the repair so it cannot leave them again (deployed `68896c0`). (b), the recurrence detector, is BUILT 2026-09-29 (foot; it reads on the next Sunday data-quality run). Left: (c) the classification-shape SQL census.
+Status: ready-for-agent — units 1 and 2 DONE. Unit 1's live acceptance was read 2026-09-29 (foot): 0 notices and 0 tenders answer `00000000-1900`. That read found 270 stale version rows the 404 repair had left, cleared them with refold 1653/1654, and fixed the repair so it cannot leave them again (deployed `68896c0`). (b), the recurrence detector, is BUILT and deployed 2026-09-29 (`2fd43f0`). (c), the CPV shape census, is BUILT 2026-09-29 as data-quality section 15 (foot). Both read on the next Sunday data-quality run, and that reading closes the issue.
 Was status (before 2026-09-29): ready-for-agent — **unit 2 DONE 2026-09-27: the sdk-0.1 island refold RAN (queue jobs 1588 size / 1590 wet / 1591 fold, owner go-ahead) and every unit-2 acceptance line reads met** (see the foot: dashed 0, glued 0, only2 0 in both windows; 1723219 bare; 1431255 main `50000000`; `?cpv=45421146` finds 1542904). What remains on this issue is unit 1's last 281 rows, which issue 404 owns. Was: ready-for-agent — unit 1's GUARD built and gated 2026-09-16 (the election refuses the all-zero placeholder; blast radius re-measured corpus-wide as exactly one value, 7,177 rows, all `doe`). The re-key RAN and reached **6,896 of 7,177**; the last 281 are blocked on **issue 404** (the ingest path minted twins for them mid-campaign) and will be resolved there as a duplicate cleanup, not by another re-parse — every DÖE package is walked and the count is stable across two consecutive runs. **Unit 2's normaliser is BUILT and gated 2026-09-18** (see the foot): CPV folds to the bare 8-digit code, one per fact — check digit dropped, division padded, glued strings split — with the 2-digit decision recorded (pad); the island's refold and its sizing probe are production writes the operating session's classifier refuses, so they wait for Lennart's go-ahead with the exact commands at the foot. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (ingest → fold boundary, source `doe`) — unit 1 is the publication-id election in `crates/ingest/src/profile.rs`, unit 2 is the unnormalised classification code from `crates/ingest/src/eforms/value.rs` through `crates/ingest/src/project.rs`; both land on a served identity/vocabulary field and on the documented filter over it
 Relates to: 12 (RESOLVED — the DÖE source, eForms-DE + sdk-0.1 profiles, the parent of both units), 217 (RESOLVED & VERIFIED 2026-08-16/17 — it shipped `publication_id=` on `/v1/notices` and `/v1/tenders` as "the keys real consumers hold"; unit 1 is 7,158 rows where that key is a placeholder shared by the whole cohort), 290 (ANALYSIS, open — "a parser change that shifts `publication_id` derivation makes `reparse_notice` silently no-op (counted as benign `unmatched`)", filed at LOW confidence it ever bites: unit 1's re-key is exactly the case that makes it bite, and it must be checked before the re-key, not after), 369 (DONE — a published BT-04 taken verbatim as the Tender group key, gated by `is_placeholder_key`; unit 1 is the same placeholder-as-key shape one field over), 366 (DONE — its unit-6 sentinel discovery sweep is DQ report section 10, but it sweeps AMOUNTS, so an all-zero identity STRING is invisible to it; its unit 3 is also the precedent against a second, display-side implementation of a fold rule, which unit 2's "done when" keeps), 365 (DONE — "any ≥4-character alphanumeric string containing a digit becomes an Organization merge key": the same any-string-is-a-key class on the org layer), 364 (the legacy OJS closure weld and its weld gauge `c0c2581` — the only broad board hit near DÖE publication identity, and unrelated to this cohort), 29 (VERIFIED on prod 2026-08-18 — the sdk-0.1 projection gap; it split the residual value/CPV out to 231), 231 (CLOSED 2026-08-27 — closed the sdk-0.1 CPV half on PRESENCE only, 93.8 % from 0.0 %, and never looked at representation; unit 2 is precisely what a presence measure cannot see), 172 (CURRENCY half CLOSED as ADR-0014, CLASSIFICATION half OPEN — and that half is codelist VINTAGE drift, 2003-vs-2008 meanings, explicitly not string shape; its closed half's answer, an alias map at the fold, is the pattern unit 2 wants), 292 (FIX DEPLOYED 2026-08-26 — `normalize_lang` at the fold boundary, the precedent in terms: "each new source adds a dialect unless a normalization layer exists"), 319 (org layer DONE 2026-08-30 — the country column held alpha-3 codes and free text; same normalise-at-the-boundary shape), 171 (its `/docs` #caveats deliverable, shipped 2026-08-23, today naming only CPV-2003/2008 coexistence — where unit 2's division-level-code caveat belongs), 118 (RESOLVED — `ignored_filters`; note `cpv` DOES narrow tenders and lots, so unit 2's glued rows are not an ignored filter, they are a filter that runs and misses), ADR-0003, ADR-0004 (the per-profile mapped-or-ignored checklist), ADR-0014 (the alias-map precedent), CONTEXT.md (TED owns publication identity), `docs/research/eforms-de-profile.md` §2
@@ -20,10 +20,14 @@ grows only with new sdk-0.1 publication.
 
 ## Verify
 
-    curl -s --max-time 20 https://tenders.zebreus.click/v1/tenders/1723219 | python3 -c "import sys,json; print(sorted({c['code'] for c in json.load(sys.stdin)['classifications'] if c['scheme']=='cpv'}))"
+    ssh -o BatchMode=yes root@zebreus.click "tender-admin raw GET /admin/reports/data-quality </dev/null" | python3 -c "import sys,json; b=json.load(sys.stdin)['body']; i=b.find('== 15.'); j=b.find('publication ids carried by'); print(b[i:i+140].replace(chr(10),' | ') if i>=0 else 'no section 15 yet'); print(b[j:j+160].replace(chr(10),' | ') if j>=0 else 'no repeated-id listing yet')"
 
-- **done**: `['09000000', '09123000']` — the bare 8-digit spelling on the standing sdk-0.1 rows, i.e. the gated island refold (the three steps at the foot) ran and the fold followed
-- **open**: `['09000000-3', '09123000-7']` — the dashed shape as published; the normaliser is in the build but the standing rows were folded before it (read 2026-09-19 at `507ca83`); **done** read 2026-09-27 09:55 UTC after job 1591: `['09000000', '09123000']`
+- **done** (units b and c, the last open ones): section 15 reads `none — every CPV row holds one bare 8-digit code`,
+  and the repeated-id listing reads `none — every publication id stands for fewer than 10 notices`. Then close the
+  issue. Anything listed instead is a finding to work (a refold for the first three CPV classes; a guard for an id).
+- **open**: `no section 15 yet` / `no repeated-id listing yet`: the stored report predates the build (read 2026-09-29
+  14:2x UTC, report of 2026-09-27). The unit-2 verify this replaced read `['09000000', '09123000']` on tender
+  1723219 on 2026-09-27, after job 1591.
 
 ## Unit 1 — 7,158 DÖE notices are keyed on TED's placeholder publication id
 
@@ -625,4 +629,33 @@ one source** (`data_quality::repeated_ids_sql`, label `repeated_ids`, JSON
 
 **Expected first reading** (Sunday's run): `none`. The placeholder cohort is gone (unit 1 above). Anything listed is
 a new stand-in to trace to its profile.
+
+## 2026-09-29 — (c) BUILT: the CPV shape census is data-quality section 15
+
+The one-off census has no permitted on-box path. `prod-box-reads.md` gives a corpus-scale scan of the version
+layer none, and the 400-id bounded try hit the 10 s cap on 09-16. The app reading its own database is outside that
+rule, so the census became a standing section of the weekly report instead of a one-off.
+
+- **Query** (`data_quality::CPV_SHAPES_SQL`, label `cpv_shapes`, JSON `cpv_shapes`): CPV rows whose code is not
+  one bare 8-digit string, grouped into the normaliser's own classes, with the row count and the smallest code of
+  each class:
+  - `check-digit`, `glued` and `division` are shapes `normalize_cpv` rewrites, so a row in one of them predates it and
+    was never refolded;
+  - `other` is its pass-through, the "fails visible" class that until now had nothing looking at it.
+- **Cost:** one walk of the `cpv` range of the `(scheme, code)` index, with no table fetch. The test pins this on the
+  bytecode, because turso's plan text never prints COVERING for a SEARCH: one `OpenRead`, on the index, and no
+  `SeekRowid`/`DeferredSeek`/`IdxRowId`. The GLOB filter runs before the sorter, so the sorter holds only
+  non-canonical rows. There is no era column: naming a row's profile costs a table fetch per row, and the example
+  code finds its carriers with one indexed seek.
+- **Render:** a table and the pointer (refold for the first three classes, decide a rule for `other`), `none`, or
+  `UNMEASURED`. The three readings stay distinct in text and JSON, and the key is present when empty.
+- **Tests:**
+  - `the_cpv_shape_census_renders_found_none_and_unmeasured` (unit);
+  - `the_cpv_shape_census_counts_each_shape_and_reads_only_its_index` (integration, real SQL on a scratch
+    database). Two bare codes and two NUTS rows are not listed. Counted: check-digit 2, division 2 (example `4542`),
+    glued 1, other 2 (example `123456789`).
+
+**Expected first reading** (Sunday): `none`. Unit 2's refold covered the sdk-0.1 island, and every other era
+publishes bare codes. A `division` or `check-digit` row would mean a version the refold missed. An `other` row is a
+spelling nobody has a rule for yet.
 
