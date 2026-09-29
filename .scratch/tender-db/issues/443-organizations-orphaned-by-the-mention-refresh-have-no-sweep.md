@@ -178,3 +178,9 @@ whatever re-binding folds added, then run it wet.
   reads 200. **done.**
 - `org_sweep_log` is not on the public `/v1/sql` surface, so the identity pre-image cannot be read from outside. It is
   pinned by `an_existing_sweep_log_gains_the_identity_columns` and the fixture's `national`/`X1` pre-image.
+
+**Step 3 live, negative half verified 2026-09-29 07:4x UTC:** the first daily fold on `92ebde0` (job 1645: 3,883
+notices → 3,764 tenders written) carries no `recorded mention(s) refreshed` clause, so it re-bound 0 mentions and
+correctly queued no sweep (the queue went straight to reveal-recheck 1646). **Still owed:** the positive half, where
+a fold that re-binds ≥ 1 mention queues `sweep-orphan-orgs auto (after a fold re-bound N)`. Read the job list after
+the next fold whose summary carries the refresh clause.
