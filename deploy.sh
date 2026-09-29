@@ -118,12 +118,15 @@ elif [ "$have_remote" != "$want_remote" ]; then
     git remote set-url vps "$want_remote"
 fi
 
-say "Pushing $REF to $VPS:$REMOTE_REPO"
+say "Pushing $REF ($(git rev-parse --short "$REV")) to $VPS:$REMOTE_REPO"
 # `push.negotiate` off: the box's bare repo over the ssh tunnel speaks protocol
 # v1, so the v2 negotiation git tries first fails ("--negotiate-only requires
 # protocol v2 … the remote end hung up") and git proceeds anyway — a wasted
 # round trip and three alarming lines in every deploy log for nothing.
-git -c push.negotiate=false push vps "$REF:main"
+# The PINNED sha, not "$REF": a ref like HEAD is re-read here, twenty minutes
+# after REV was taken, so a commit made while the gate ran would reach the
+# box's main while the build below still checks out REV (found reading it, 2026-09-29).
+git -c push.negotiate=false push vps "$REV:refs/heads/main"
 
 say "Building $REV on the VPS (this can take a while on a cold store)"
 $SSH "$VPS" bash -euo pipefail -s <<EOF
