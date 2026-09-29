@@ -235,3 +235,8 @@ The run itself can be read with `get_session`; delivery can only be confirmed on
   user who last modified the cron. The cron is now `9,24,39,54`, committed through the GitHub API as the owner
   (`65252dd`, author Zebreus). **Keep later edits of the workflow file on that path, the API, and not a session push,
   or the schedule may be orphaned again.** Verify at the next firing: runs at :09/:24/:39/:54 with `event: schedule`.
+- **Read 2026-09-29 19:50 UTC: still 0 `schedule` runs.** That is about 28 slots in 7 h, and 12 of them came after the
+  owner-authored edit. The workflow reads `active` and `workflow_dispatch` works. Next, if still empty around 22:00:
+  create the workflow as a NEW file (`uptime-check.yml`) through the API as the owner, and delete the old one the same
+  way. A fresh file splits "this file's registration is stuck" from "schedules do not run in this repository at all".
+  The second would leave only the Actions settings, which this session cannot read, and would be for Lennart.
