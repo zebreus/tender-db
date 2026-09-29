@@ -1,6 +1,6 @@
 # 446 — the served data carries no reuse terms: FTS's OGL statement and TED's attribution are missing
 
-Status: in-progress — filed and built 2026-09-29 (hourly check-in, while writing issue 342's step-12 docs).
+Status: done — DEPLOYED and VERIFIED 2026-09-29 22:42 UTC (rev `40867f2`; built in `5d5f597`, docs test hardened in `29ab1fc` after the pre-deploy review).
 Kind: compliance (licence conditions on the data we republish), small
 Relates to: 342 (FTS, the source whose licence ends without the statement), docs/research/SUMMARY.md D11 (the
 decision this completes), docs/research/uk-fts.md §1, docs/research/ted-access-channels.md §7,
@@ -49,3 +49,15 @@ curl -s https://tenders.zebreus.click/docs | grep -c 'Contains public sector inf
 ```
 
 Expect three entries (ted, doe, fts) and a count ≥ 1.
+
+## 2026-09-29 — verified live
+
+- `/v1` → `data_sources`: `ted` ("Source: TED, https://ted.europa.eu, © European Union…"), `doe`, `fts` ("Contains public
+  sector information licensed under the Open Government Licence v3.0.").
+- `/docs` carries the OGL statement (grep count 1).
+- The dashboard footer links `/docs#data-sources` ("Data sources &#38; reuse terms (TED, oeffentlichevergabe.de, Find a
+  Tender)").
+
+The pre-deploy review found the docs test's publisher-link assertion vacuous for TED and DÖE, because their urls also
+occur in their own attribution text, and found that name and licence were never compared. `29ab1fc` now checks each
+source's own row, split into terms and statement.

@@ -1,6 +1,6 @@
 # 342 — sources beyond TED and DÖE ("international"): nothing exists, the entry contract does
 
-Status: ready-for-agent — unit 2 COMPLETE (measured on prod 2026-09-08: 2025-06 7,243/7,243 parsed, 0 quarantined → 6,239 tenders). Plan step 12 (docs) DONE 2026-09-29 (`18d59a2`). The `bids.statistics` fix is BUILT 2026-09-29 (see the foot). Next: deploy it, re-parse `fts:ocds-1.1` and refold, then read the Verify below, then the backfill (2021-01 → current, which covers the 2025-07 → 2026-08 gap). Plan: `.scratch/tender-db/342-fts-plan.md`.
+Status: ready-for-agent — unit 2 COMPLETE. Docs (step 12) DONE (`18d59a2`). `bids.statistics` fix DEPLOYED and VERIFIED 2026-09-29 (`54a00be` + `83ee914`; reparse job 1663, project 1664): phantom STAT- results 14,870 → 0. NEXT: the backfill, in chunks that leave the daily tick room (see the foot). Plan: `.scratch/tender-db/342-fts-plan.md`.
 issues for that"). No non-TED/DÖE source has ever been researched for onboarding;
 the first step is a market choice, which is Lennart's.
 Kind: capability (sources) — the product-breadth half of "full internationalization"
@@ -463,3 +463,24 @@ printf '%s' "SELECT kind, COUNT(*) FROM tender_version_result_stats WHERE tender
 
 Expect 0 phantom results, down from 128 of the 205 on tenders 7954610–7954620. Expect eForms codes (`tenders`,
 `t-sme`, `t-esubm`, …), never an OCDS measure name such as `bids` or `smeBids`.
+
+## 2026-09-29 22:5x UTC — statistics fix deployed and verified
+
+Deployed at rev `40867f2`, with the per-award dedup `83ee914` that the pre-deploy review forced.
+
+- Reparse job 1663: `re-parsed 14647 notices across 23 packages … 0 now failing`. Project job 1664: 12,663 tenders
+  written.
+- Verify, before → after:
+  - FTS `lot_results` with `result_key LIKE 'STAT-%'`: **14,870 → 0**.
+  - `tender_version_result_stats` kinds on tenders 7954610–7954620: before, OCDS measure names (`bids` 112,
+    `electronicBids` 103, `lowestValidBidValue` 9 served as a count…). After, eForms codes only: `tenders` 52,
+    `t-esubm` 49, `t-sme` 3, `t-oth-eea` 3, `t-no-eea` 3. The value measures no longer appear as counts.
+
+### Backfill: chunked, because the queue is serial
+
+A backfill fans out into one `fetch` per month, and jobs run one at a time in enqueue order. At about 30 minutes a
+month (~150 paced requests at 12 s), the whole 2021-01 → 2026-08 range would sit in front of the 09:35 daily tick for
+~35 h. That would starve TED's daily and trip `/health/deep`'s 26 h freshness check. So it goes in chunks of up to 8
+months, each enqueued on an idle queue with at least 4 h before the next tick. Order: 2025-07 → 2026-08 first (the
+gap data-quality section 14 flags), then 2021-01 → 2025-05. `/data` is at 73%, already above the 70% backfill guard,
+but the whole FTS backfill is ~1.2 GB of archive plus its rows, under 1% of the volume.

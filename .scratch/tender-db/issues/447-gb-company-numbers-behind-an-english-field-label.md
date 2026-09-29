@@ -1,6 +1,6 @@
 # 447 — GB company numbers published behind an English field label (`COMPANYNO…`, `COMPANYNUMBER…`) split organizations from their bare twins
 
-Status: in-progress — filed 2026-09-29 (hourly check-in audit, from issue 342's "filed as noticed" `COMPANY…` note).
+Status: done — DEPLOYED 2026-09-29 22:42 UTC (rev `40867f2`), repaired (job 1666) and folded (R2 job 1669). Verify read: 109 → 13.
 Built the same day; next is to deploy, run `repair-label-prefixes` dry then wet, then an R2 fold, and read the Verify.
 Kind: data quality (organization identity), small
 Relates to: 328/359/363/374 (the label-prefix class and its vocabulary), 342 (where the `COMPANY…` rows were first
@@ -60,3 +60,24 @@ printf '%s' "SELECT COUNT(*) FROM organizations WHERE country = 'GB' AND identif
 
 Today: 109. Expect 13 afterwards, the rows whose remainder is not pure digits: composites such as
 `COMPANYNO04302179HCALH4336`, and mutual-society numbers such as `COMPANYNO26971R`.
+
+## 2026-09-29 — run and verified
+
+- `repair-label-prefixes` dry (job 1665) planned 150 rows, 52 landing on an identity that already stands. Wet (1666)
+  applied 150, with 0 left standing as published. The 150 are more than the GB-only 121: the same English labels sit on
+  45 non-GB rows, all company-register numbers under their own country and all pure digits:
+  - IE: 16, CRO numbers;
+  - DK: 13, CVR, including two `COMPANYNO…`/`COMPANYREGISTRATIONNO…` pairs of one CVR;
+  - SE: 1, an organisation number;
+  - NZ: 1.
+- R2 dry (1667) planned 35 merges, all read by hand. 34 are one entity: a Danish name beside its English form, or case,
+  punctuation and legal-form variants (Civica UK, Aareon UK, HS2, Novogene UK/Europe, Selwood Housing…). **One is not**:
+  DK `39314878` would join Energinet Elsystemansvar A/S with Energinet Eltransmission A/S, which are sister companies.
+  The second row carries the first one's CVR (published as `COMPANYREGNO39314878`). A `keep` verdict, cohort
+  `447-label-strip-2026-09-29`, was recorded via `POST /admin/merge-verdicts`. Its rationale names Eltransmission's own
+  CVR as 39314959, which is from memory and not checked against the register. The keep holds on the entity
+  difference alone.
+- The R2 re-plan (1668) had 34 groups and verdict-keep 193. The wet run (1669) merged 34 groups, removing 38 org rows
+  and touching 61 tenders. Project job 1670 followed.
+- Verify: the `COMPANYNO<digit>`/`COMPANYNUMBER<digit>` GB range reads **13** (was 109): exactly the composites and
+  mutual-society numbers. `01628868` (Civica UK) is one organization.
