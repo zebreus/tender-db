@@ -1,6 +1,7 @@
 # 429 — ANALYZE the read-path tables weekly (minus `organizations`), as issue 428 decided
 
-Status: ready-for-agent — filed 2026-09-27 01:00 UTC from issue 428's measurement. Mine; the decision is taken
+Status: ready-for-agent — steps 1, 2 and 5 BUILT 2026-09-29 (below): `store::ANALYZE_TABLES`, the `analyze` job, and the plan test. Deploys unscheduled. Step 3 (the weekly schedule) and step 6 wait on step 0's capture diff, which needs the 2026-10-04 Sunday jobs and that day's snapshot.
+Was status (before 2026-09-29): ready-for-agent — filed 2026-09-27 01:00 UTC from issue 428's measurement. Mine; the decision is taken
 (428 § Decision), this is the build. Step 0's capture is LIVE on prod since 2026-09-27 03:12 UTC (`d7657a3`, drop-in
 `/etc/systemd/system/tender-db.service.d/plancapture.conf` → `/data/tmp/plan-capture-429.sql`; 83 statements in the
 first minute). The first deploy (`bba7804`, 02:44) recorded nothing — dioxus's logger took tracing's one global
@@ -57,3 +58,27 @@ why the resolver cannot take an `INDEXED BY`)
 - **done**: 27 (the 24 + `org_match_keys`, `plan_prev_edge`, `plan_notice`) and no `organizations` row
 - **open**: 3 (only the internal tables) — or the query is refused (`sqlite_stat1` is not in the public surface;
   read it through the admin job's summary instead) (2026-09-27)
+
+## Steps 1, 2 and 5 — BUILT 2026-09-29 (unscheduled)
+
+- **Step 1**: `crates/store/src/analyze.rs` holds `ANALYZE_TABLES` (the 24), and its doc comment gives the three
+  exclusions with 428's numbers. `Db::analyze_table` refuses any table outside the list. `Db::finish_analyze` deletes
+  every `sqlite_stat1` row for `organizations`, one per index (a stray `ANALYZE organizations` on the scratch schema
+  wrote 6, not 1). It then runs the `CREATE`/`DROP TABLE` bump, so pooled readers re-plan.
+- **Step 2**: the job kind `analyze` (`Spec::Analyze`, boxed arm `run_analyze`) runs one statement per table, with
+  the writer released between tables and a phase line naming the table in flight. It is stoppable between tables
+  (`STOPPABLE_KINDS`), and it runs `finish_analyze` even when stopped. The summary lists every table's seconds and
+  the number of organizations rows removed. Test: `the_analyze_job_covers_its_tables_and_strips_organizations_statistics`.
+- **Step 5**: `crates/store/tests/analyze_job.rs` seeds 3,000 orgs (half named `stadt`) and 10,000 Tenders with
+  three classifications each, plants stray organizations statistics, runs the job's two calls and asserts:
+  (a) no `organizations` row survives and every analyzed table is in the list;
+  (b) the resolver's reuse lookup still seeks `organizations_name_country`;
+  (c) 421's plain JOIN drives from `tenders` and seeks the version table by `(tender_id, seq)`.
+  (c) discriminates: before the ANALYZE, the same statement drove from
+  `tender_version_classifications_code (scheme=?)`, 421's trap. Refusal of `organizations` and `notice_texts` is
+  asserted too.
+- `docs/operations.md` carries the job's row and marks it unscheduled.
+
+Next: deploy it with the next bundle (running it by hand is allowed but not planned). After 2026-10-04, diff step 0's
+capture on two copies of that day's snapshot, then schedule it (step 3) and update the gates (step 6).
+

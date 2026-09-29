@@ -7,6 +7,7 @@
 //! serialises access.
 
 pub mod accounts;
+pub mod analyze;
 pub mod canonical;
 pub mod checkpoint;
 pub mod jobs;
@@ -19,6 +20,7 @@ pub mod webhooks;
 pub use turso;
 
 pub use accounts::{CreateUser, TokenRecord, User};
+pub use analyze::ANALYZE_TABLES;
 pub use checkpoint::{Checkpointed, CheckpointMode};
 pub use canonical::{
     Applied, BidParty, BidState, Change, ContractState, Fact, Identifier, LayerPresence, LayerState,

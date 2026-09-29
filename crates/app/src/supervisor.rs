@@ -277,6 +277,10 @@ enum Spec {
     /// dropping the tenders list to a full scan. Idempotent (`CREATE INDEX IF NOT
     /// EXISTS` loops), so it builds only what's missing. A unit variant → durable.
     Reindex,
+    /// `ANALYZE` the read-path tables in [`store::ANALYZE_TABLES`] (issue 429,
+    /// from 428's measurement), then drop any `organizations` statistics and
+    /// make the pooled readers pick the new ones up. A unit variant → durable.
+    Analyze,
     /// Rebuild the `fetches` registry from the on-disk archive (issue 23 / the DR
     /// premise finding): after a DB loss with the archive intact, this is what
     /// lets `process` run with zero re-downloads. Idempotent — known periods are
@@ -1231,6 +1235,9 @@ impl Supervisor {
             // Rebuild any missing deferred indexes on the existing layer, no re-fold
             // (issues 82/83). Safe to fire repeatedly (idempotent).
             "reindex" => Ok(vec![self.push("reindex", "reindex".into(), Spec::Reindex).await]),
+            // Statistics for the read-path tables (issue 429). Safe to fire any
+            // time the queue is quiet: it holds the writer one table at a time.
+            "analyze" => Ok(vec![self.push("analyze", "analyze".into(), Spec::Analyze).await]),
             // Rebuild the fetches registry from the on-disk archive (issue 23):
             // idempotent, hash-only-what's-missing, so safe to fire any time.
             "register-archive" => Ok(vec![
@@ -2549,6 +2556,8 @@ const STOPPABLE_KINDS: &[&str] = &[
     // Issue 443: read between windows of both walks; a stop while counting
     // stores no plan, a stop while sweeping re-records the residual.
     "sweep-orphan-orgs",
+    // Issue 429: read between tables; a stop still refreshes the readers.
+    "analyze",
 ];
 
 /// Issue 300 decision 5: a key shared by more organizations than this is a
@@ -3388,6 +3397,37 @@ impl Supervisor {
         ))
     }
 
+    /// Issue 429's `analyze`: one `ANALYZE` per table in [`store::ANALYZE_TABLES`],
+    /// each its own statement, so the writer is released between tables and a
+    /// stop costs at most the table in flight. It always ends with
+    /// [`store::Db::finish_analyze`], even when stopped: the tables already
+    /// analyzed must reach the pooled readers, and no `organizations` statistics
+    /// may survive. The summary carries every table's seconds.
+    async fn run_analyze(&self, job: &Job) -> Result<String, String> {
+        let total = store::ANALYZE_TABLES.len();
+        let mut timings = Vec::with_capacity(total);
+        let mut spent = 0.0;
+        let mut stopped = false;
+        for (i, table) in store::ANALYZE_TABLES.iter().enumerate() {
+            if self.cancelled(job.id) {
+                stopped = true;
+                break;
+            }
+            self.set_phase("analyzing", Some(i as u64), Some(total as u64), format!("ANALYZE {table}"));
+            let secs = self.db.analyze_table(table).await?;
+            spent += secs;
+            timings.push(format!("{table} {secs:.1}s"));
+        }
+        let removed = self.db.finish_analyze().await?;
+        Ok(format!(
+            "analyze (issue 429){}: {} of {total} tables in {spent:.0}s ({}); organizations statistics \
+             rows removed: {removed}; pooled readers refreshed",
+            if stopped { " STOPPED" } else { "" },
+            timings.len(),
+            timings.join(", ")
+        ))
+    }
+
     /// Issue 443's `sweep-orphan-orgs`, out of `run_spec`'s match for the
     /// stack's sake — see [`Self::run_repair_member_twins`]. Refuses to start
     /// while an index the sweep reads by is missing. Every run then counts
@@ -3965,6 +4005,7 @@ impl Supervisor {
             Spec::SweepOrphanOrgsAuto { cap } => {
                 Box::pin(self.run_sweep_orphan_orgs(job, SweepMode::Auto { cap: *cap })).await
             }
+            Spec::Analyze => Box::pin(self.run_analyze(job)).await,
             Spec::Reindex => {
                 // Both builders are CREATE INDEX IF NOT EXISTS loops — idempotent, so
                 // this rebuilds only the missing deferred indexes without touching the
@@ -12362,7 +12403,11 @@ mod tests {
                 // Issue 443: `sweep_orphan_walk` reads the flag before every
                 // window of both walks; a stop while counting stores no plan, a
                 // stop while sweeping re-records the residual.
-                "sweep-orphan-orgs"
+                "sweep-orphan-orgs",
+                // Issue 429: `run_analyze` reads the flag before every table, and a
+                // stopped run still drops `organizations` statistics and refreshes
+                // the readers.
+                "analyze"
             ]
         );
     }
@@ -14511,6 +14556,35 @@ mod tests {
         db.build_organization_indexes().await.unwrap();
         db.build_tender_indexes().await.unwrap();
         sup.refuse_without_org_fk_indexes("fold-provisional-echoes").await.expect("all five built");
+        remove_db(&path);
+    }
+
+    /// Issue 429: the `analyze` arm runs every listed table, removes the
+    /// `organizations` statistics a stray manual ANALYZE left, and says so.
+    #[tokio::test]
+    async fn the_analyze_job_covers_its_tables_and_strips_organizations_statistics() {
+        let path = format!("/tmp/tender-db-sup-analyze-{}-{}.db", std::process::id(), store::now_unix());
+        remove_db(&path);
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+        conn.execute(
+            "INSERT INTO organizations (name, name_norm, country, provisional, created_at) \
+             VALUES ('a', 'a', 'DE', 1, 0), ('b', 'b', 'DE', 1, 0)",
+            (),
+        )
+        .await
+        .unwrap();
+        conn.execute("ANALYZE organizations", ()).await.unwrap();
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let summary = sup.run_spec(&job(Spec::Analyze)).await.expect("analyze runs");
+        assert!(summary.starts_with("analyze (issue 429): 24 of 24 tables"), "{summary}");
+        assert!(summary.contains("tender_version_parties "), "every table's seconds: {summary}");
+        assert!(!summary.contains("rows removed: 0"), "the stray rows are counted: {summary}");
+        let left = db
+            .measure_rows("SELECT COUNT(*) FROM sqlite_stat1 WHERE tbl = 'organizations'")
+            .await
+            .unwrap();
+        assert_eq!(left, vec![vec![store::turso::Value::Integer(0)]]);
         remove_db(&path);
     }
 
