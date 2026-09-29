@@ -1,0 +1,653 @@
+{"version":"1.1","extensions":[
+        "https://standard.open-contracting.org/profiles/eu/latest/en/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_amendment_rationale_classifications_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_contract_completion_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_documentation_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_suitability_extension/master/extension.json",
+        "https://raw.githubusercontent.com/portaledcahn/ocds_Links_extension/main/extension.json",
+        "https://raw.githubusercontent.com/cabinetoffice/ocds_uk_extension/main/extension.json"
+    ],"publisher":{
+        "name": "Cabinet Office",
+        "scheme": "GB-GOR",
+        "uid": "D2",
+        "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+    },"license":"http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/","publicationPolicy":"https://www.gov.uk/government/publications/open-contracting","releases":[{
+            "id": "029664-2025",
+            "tag": [
+                "award",
+                "contract"
+            ],
+            "date": "2025-06-03T22:01:02+01:00",
+            "initiationType": "tender",
+            "ocid": "ocds-h6vhtk-04e9fb",
+            "parties": [
+                {
+                    "name": "DEPARTMENT OF ENVIRONMENT, FOOD AND RURAL AFFAIRS",
+                    "id": "GB-PPON-PNBD-3289-CDGX",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PNBD-3289-CDGX"
+                    },
+                    "address": {
+                        "streetAddress": "Seacole Building, 2 Marsham Street",
+                        "locality": "London",
+                        "postalCode": "SW1P 4DF",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKI32"
+                    },
+                    "contactPoint": {
+                        "email": "procurement@defra.gov.uk",
+                        "telephone": "03459335577"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "url": "https://defra-family.force.com/s/Welcome",
+                        "classifications": [
+                            {
+                                "scheme": "UK_CA_TYPE",
+                                "id": "publicAuthorityCentralGovernment",
+                                "description": "Public authority - central government"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Ricardo-AEA Limited",
+                    "id": "GB-COH-08229264",
+                    "identifier": {
+                        "scheme": "GB-COH",
+                        "id": "08229264"
+                    },
+                    "address": {
+                        "streetAddress": "he Gemini Building, Harwell",
+                        "locality": "Oxfordshire",
+                        "postalCode": "OX11 0QR",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKJ14"
+                    },
+                    "contactPoint": {
+                        "email": "salessupportteam.ee@ricardo.com"
+                    },
+                    "roles": [
+                        "supplier"
+                    ],
+                    "details": {
+                        "url": "https://www.ricardo.com/en",
+                        "scale": "large",
+                        "vcse": false,
+                        "publicServiceMissionOrganization": false,
+                        "shelteredWorkshop": false
+                    }
+                },
+                {
+                    "name": "PA Consulting Services Ltd",
+                    "id": "GB-COH-00414220",
+                    "identifier": {
+                        "scheme": "GB-COH",
+                        "id": "00414220"
+                    },
+                    "address": {
+                        "streetAddress": "10 Bressenden Place",
+                        "locality": "London",
+                        "postalCode": "SW1E 5DN",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKI32"
+                    },
+                    "contactPoint": {
+                        "email": "lia.shaw@paconsulting.com"
+                    },
+                    "roles": [
+                        "supplier"
+                    ],
+                    "details": {
+                        "url": "http://www.paconsulting.com",
+                        "scale": "large",
+                        "vcse": false,
+                        "publicServiceMissionOrganization": false,
+                        "shelteredWorkshop": false
+                    }
+                },
+                {
+                    "name": "SLR Consulting Limited",
+                    "id": "GB-COH-03880506",
+                    "identifier": {
+                        "scheme": "GB-COH",
+                        "id": "03880506"
+                    },
+                    "address": {
+                        "streetAddress": "1 Bartholomew Lane",
+                        "locality": "London",
+                        "postalCode": "EC2N 2AX",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKI31"
+                    },
+                    "contactPoint": {
+                        "email": "bidsupport@slrconsulting.com"
+                    },
+                    "roles": [
+                        "supplier"
+                    ],
+                    "details": {
+                        "url": "http://www.slrconsulting.com",
+                        "scale": "large",
+                        "vcse": false,
+                        "publicServiceMissionOrganization": false,
+                        "shelteredWorkshop": false
+                    }
+                },
+                {
+                    "name": "Eunomia Research & Consulting Ltd",
+                    "id": "GB-COH-04150627",
+                    "identifier": {
+                        "scheme": "GB-COH",
+                        "id": "04150627"
+                    },
+                    "address": {
+                        "streetAddress": "37 Queen Square, Bristol",
+                        "locality": "Bristol",
+                        "postalCode": "BS1 4QS",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKK11"
+                    },
+                    "contactPoint": {
+                        "email": "tenders@eunomia.co.uk"
+                    },
+                    "roles": [
+                        "supplier"
+                    ],
+                    "details": {
+                        "url": "http://www.eunomia.co.uk",
+                        "scale": "large",
+                        "vcse": false
+                    }
+                },
+                {
+                    "name": "Waste and Resources Action Programme (WRAP)",
+                    "id": "GB-CHC-1159512",
+                    "identifier": {
+                        "scheme": "GB-CHC",
+                        "id": "1159512"
+                    },
+                    "address": {
+                        "streetAddress": "2nd Floor, Blenheim Court, George Street, Banbury, Oxon",
+                        "locality": "Oxon",
+                        "postalCode": "OX16 5BH",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKJ14"
+                    },
+                    "contactPoint": {
+                        "email": "keith.james@wrap.org.uk"
+                    },
+                    "roles": [
+                        "supplier"
+                    ],
+                    "details": {
+                        "scale": "large",
+                        "vcse": false
+                    }
+                }
+            ],
+            "buyer": {
+                "id": "GB-PPON-PNBD-3289-CDGX",
+                "name": "DEPARTMENT OF ENVIRONMENT, FOOD AND RURAL AFFAIRS"
+            },
+            "tender": {
+                "id": "C28307",
+                "legalBasis": {
+                    "id": "2023/54",
+                    "scheme": "UKPGA",
+                    "uri": "https://www.legislation.gov.uk/ukpga/2023/54/contents"
+                },
+                "title": "pEPR Efficiency & Effectiveness (E&E) LA Improvement Action Process (IAP) Pilot Scheme",
+                "description": "This Requirement is for the delivery of an Improvement Action Process (IAP) pilot for a named local authority (LA), using the IAP framework provided by the Scheme Administrator (SA) of Packaging Extended Producer Responsibility (pEPR). The IAs will be evidenced. The LA will agree with the IAs. The identified actions will be agreed with the SA and taken through the governance approval of the LA. The IAP will have milestones, delivery plans with timelines and KPIs. Throughout the requirement, the SA will be provided with updates and discussion on findings at agreed key points in the process, followed by a summary report of findings and resolutions to arising issues during the requirement. The report will clearly outline and provide detail on the findings in carrying out the requirement. The report will be produced in both PDF and HTML formats with editable documents for SA use.",
+                "status": "complete",
+                "procurementMethod": "open",
+                "procurementMethodDetails": "Open procedure",
+                "lots": [
+                    {
+                        "id": "1",
+                        "status": "complete"
+                    }
+                ]
+            },
+            "bids": {
+                "statistics": [
+                    {
+                        "id": "1",
+                        "measure": "bids",
+                        "value": 8,
+                        "relatedLot": "1"
+                    },
+                    {
+                        "id": "2",
+                        "measure": "finalStageBids",
+                        "value": 8,
+                        "relatedLot": "1"
+                    },
+                    {
+                        "id": "3",
+                        "measure": "smeFinalStageBids",
+                        "value": 3,
+                        "relatedLot": "1"
+                    },
+                    {
+                        "id": "4",
+                        "measure": "vcseFinalStageBids",
+                        "value": 0,
+                        "relatedLot": "1"
+                    }
+                ]
+            },
+            "awards": [
+                {
+                    "id": "1",
+                    "title": "pEPR Efficiency & Effectiveness (E&E) LA Improvement Action Process (IAP) Pilot",
+                    "status": "pending",
+                    "date": "2025-06-03T00:00:00+01:00",
+                    "value": {
+                        "amountGross": 151552.80,
+                        "amount": 126294.00,
+                        "currency": "GBP"
+                    },
+                    "mainProcurementCategory": "services",
+                    "aboveThreshold": true,
+                    "suppliers": [
+                        {
+                            "id": "GB-COH-08229264",
+                            "name": "Ricardo-AEA Limited"
+                        }
+                    ],
+                    "items": [
+                        {
+                            "id": "1",
+                            "additionalClassifications": [
+                                {
+                                    "scheme": "CPV",
+                                    "id": "90711400",
+                                    "description": "Environmental Impact Assessment (EIA) services other than for construction"
+                                },
+                                {
+                                    "scheme": "CPV",
+                                    "id": "90713000",
+                                    "description": "Environmental issues consultancy services"
+                                }
+                            ],
+                            "deliveryAddresses": [
+                                {
+                                    "region": "UK",
+                                    "country": "GB",
+                                    "countryName": "United Kingdom"
+                                }
+                            ],
+                            "relatedLot": "1"
+                        }
+                    ],
+                    "standstillPeriod": {
+                        "endDate": "2025-06-12T23:59:59+01:00"
+                    },
+                    "contractPeriod": {
+                        "startDate": "2025-06-16T00:00:00+01:00",
+                        "endDate": "2025-12-01T23:59:59Z"
+                    },
+                    "relatedLots": [
+                        "1"
+                    ],
+                    "subcontracting": {
+                        "subcontracts": [
+                            {
+                                "id": "1",
+                                "mainContractors": [
+                                    {
+                                        "id": "GB-COH-08229264",
+                                        "name": "Ricardo-AEA Limited"
+                                    }
+                                ],
+                                "description": "ompany Name: Ricardo Investments Ltd Address: Shoreham Technical Centre, Old Shoreham Road, Shoreham-by-Sea, West Sussux, BN43 5FG Registration No: 02251330 Duns No: 39-944-9172 VAT No: 212836524"
+                            }
+                        ]
+                    },
+                    "documents": [
+                        {
+                            "id": "029664-2025",
+                            "documentType": "awardNotice",
+                            "noticeType": "UK6",
+                            "description": "Contract award notice on Find a Tender",
+                            "url": "https://www.find-tender.service.gov.uk/Notice/029664-2025",
+                            "datePublished": "2025-06-03T22:01:02+01:00",
+                            "format": "text/html"
+                        }
+                    ],
+                    "assessmentSummariesDateSent": "2025-06-03T00:00:00+01:00",
+                    "milestones": [
+                        {
+                            "id": "1",
+                            "type": "futureSignatureDate",
+                            "dueDate": "2025-06-13T23:59:59+01:00",
+                            "status": "scheduled"
+                        }
+                    ]
+                },
+                {
+                    "id": "2",
+                    "title": "pEPR Efficiency & Effectiveness (E&E) LA Improvement Action Process (IAP) Pilot",
+                    "status": "pending",
+                    "date": "2025-06-03T00:00:00+01:00",
+                    "value": {
+                        "amountGross": 150240.00,
+                        "amount": 125200.00,
+                        "currency": "GBP"
+                    },
+                    "mainProcurementCategory": "services",
+                    "aboveThreshold": true,
+                    "suppliers": [
+                        {
+                            "id": "GB-COH-00414220",
+                            "name": "PA Consulting Services Ltd"
+                        }
+                    ],
+                    "items": [
+                        {
+                            "id": "1",
+                            "additionalClassifications": [
+                                {
+                                    "scheme": "CPV",
+                                    "id": "90711400",
+                                    "description": "Environmental Impact Assessment (EIA) services other than for construction"
+                                },
+                                {
+                                    "scheme": "CPV",
+                                    "id": "90713000",
+                                    "description": "Environmental issues consultancy services"
+                                }
+                            ],
+                            "deliveryAddresses": [
+                                {
+                                    "region": "UK",
+                                    "country": "GB",
+                                    "countryName": "United Kingdom"
+                                }
+                            ],
+                            "relatedLot": "1"
+                        }
+                    ],
+                    "standstillPeriod": {
+                        "endDate": "2025-06-12T23:59:59+01:00"
+                    },
+                    "contractPeriod": {
+                        "startDate": "2025-06-16T00:00:00+01:00",
+                        "endDate": "2025-12-01T23:59:59Z"
+                    },
+                    "relatedLots": [
+                        "1"
+                    ],
+                    "subcontracting": {
+                        "subcontracts": [
+                            {
+                                "id": "1",
+                                "mainContractors": [
+                                    {
+                                        "id": "GB-COH-00414220",
+                                        "name": "PA Consulting Services Ltd"
+                                    }
+                                ],
+                                "description": "Name: PA Holdings Limited Legal Form: Private Limited Company"
+                            }
+                        ]
+                    },
+                    "documents": [
+                        {
+                            "id": "029664-2025",
+                            "documentType": "awardNotice",
+                            "noticeType": "UK6",
+                            "description": "Contract award notice on Find a Tender",
+                            "url": "https://www.find-tender.service.gov.uk/Notice/029664-2025",
+                            "datePublished": "2025-06-03T22:01:02+01:00",
+                            "format": "text/html"
+                        }
+                    ],
+                    "assessmentSummariesDateSent": "2025-06-03T00:00:00+01:00",
+                    "milestones": [
+                        {
+                            "id": "1",
+                            "type": "futureSignatureDate",
+                            "dueDate": "2025-06-13T23:59:59+01:00",
+                            "status": "scheduled"
+                        }
+                    ]
+                },
+                {
+                    "id": "3",
+                    "title": "pEPR Efficiency & Effectiveness (E&E) LA Improvement Action Process (IAP) Pilot",
+                    "status": "pending",
+                    "date": "2025-06-03T00:00:00+01:00",
+                    "value": {
+                        "amountGross": 155025.60,
+                        "amount": 129188.00,
+                        "currency": "GBP"
+                    },
+                    "mainProcurementCategory": "services",
+                    "aboveThreshold": true,
+                    "suppliers": [
+                        {
+                            "id": "GB-COH-03880506",
+                            "name": "SLR Consulting Limited"
+                        }
+                    ],
+                    "items": [
+                        {
+                            "id": "1",
+                            "additionalClassifications": [
+                                {
+                                    "scheme": "CPV",
+                                    "id": "90711400",
+                                    "description": "Environmental Impact Assessment (EIA) services other than for construction"
+                                },
+                                {
+                                    "scheme": "CPV",
+                                    "id": "90713000",
+                                    "description": "Environmental issues consultancy services"
+                                }
+                            ],
+                            "deliveryAddresses": [
+                                {
+                                    "region": "UK",
+                                    "country": "GB",
+                                    "countryName": "United Kingdom"
+                                }
+                            ],
+                            "relatedLot": "1"
+                        }
+                    ],
+                    "standstillPeriod": {
+                        "endDate": "2025-06-12T23:59:59+01:00"
+                    },
+                    "contractPeriod": {
+                        "startDate": "2025-06-16T00:00:00+01:00",
+                        "endDate": "2025-12-01T23:59:59Z"
+                    },
+                    "relatedLots": [
+                        "1"
+                    ],
+                    "subcontracting": {
+                        "subcontracts": [
+                            {
+                                "id": "1",
+                                "mainContractors": [
+                                    {
+                                        "id": "GB-COH-03880506",
+                                        "name": "SLR Consulting Limited"
+                                    }
+                                ],
+                                "description": "N/A"
+                            }
+                        ]
+                    },
+                    "documents": [
+                        {
+                            "id": "029664-2025",
+                            "documentType": "awardNotice",
+                            "noticeType": "UK6",
+                            "description": "Contract award notice on Find a Tender",
+                            "url": "https://www.find-tender.service.gov.uk/Notice/029664-2025",
+                            "datePublished": "2025-06-03T22:01:02+01:00",
+                            "format": "text/html"
+                        }
+                    ],
+                    "assessmentSummariesDateSent": "2025-06-03T00:00:00+01:00",
+                    "milestones": [
+                        {
+                            "id": "1",
+                            "type": "futureSignatureDate",
+                            "dueDate": "2025-06-13T23:59:59+01:00",
+                            "status": "scheduled"
+                        }
+                    ]
+                },
+                {
+                    "id": "4",
+                    "title": "pEPR Efficiency & Effectiveness (E&E) LA Improvement Action Process (IAP) Pilot",
+                    "status": "active",
+                    "date": "2025-06-03T00:00:00+01:00",
+                    "value": {
+                        "amountGross": 118959.60,
+                        "amount": 99133.00,
+                        "currency": "GBP"
+                    },
+                    "mainProcurementCategory": "services",
+                    "aboveThreshold": false,
+                    "suppliers": [
+                        {
+                            "id": "GB-CHC-1159512",
+                            "name": "Waste and Resources Action Programme (WRAP)"
+                        }
+                    ],
+                    "items": [
+                        {
+                            "id": "1",
+                            "additionalClassifications": [
+                                {
+                                    "scheme": "CPV",
+                                    "id": "90711400",
+                                    "description": "Environmental Impact Assessment (EIA) services other than for construction"
+                                },
+                                {
+                                    "scheme": "CPV",
+                                    "id": "90713000",
+                                    "description": "Environmental issues consultancy services"
+                                }
+                            ],
+                            "relatedLot": "1"
+                        }
+                    ],
+                    "contractPeriod": {
+                        "startDate": "2025-06-16T00:00:00+01:00",
+                        "endDate": "2025-12-01T23:59:59Z"
+                    },
+                    "relatedLots": [
+                        "1"
+                    ],
+                    "documents": [
+                        {
+                            "id": "029664-2025",
+                            "documentType": "awardNotice",
+                            "noticeType": "UK6",
+                            "description": "Contract award notice on Find a Tender",
+                            "url": "https://www.find-tender.service.gov.uk/Notice/029664-2025",
+                            "datePublished": "2025-06-03T22:01:02+01:00",
+                            "format": "text/html"
+                        }
+                    ],
+                    "assessmentSummariesDateSent": "2025-06-03T00:00:00+01:00",
+                    "milestones": [
+                        {
+                            "id": "1",
+                            "type": "futureSignatureDate",
+                            "dueDate": "2025-06-13T23:59:59+01:00",
+                            "status": "scheduled"
+                        }
+                    ]
+                },
+                {
+                    "id": "5",
+                    "title": "pEPR Efficiency & Effectiveness (E&E) LA Improvement Action Process (IAP) Pilot",
+                    "status": "active",
+                    "date": "2025-06-03T00:00:00+01:00",
+                    "value": {
+                        "amountGross": 104368.80,
+                        "amount": 86974.00,
+                        "currency": "GBP"
+                    },
+                    "mainProcurementCategory": "services",
+                    "aboveThreshold": false,
+                    "suppliers": [
+                        {
+                            "id": "GB-COH-04150627",
+                            "name": "Eunomia Research & Consulting Ltd"
+                        }
+                    ],
+                    "items": [
+                        {
+                            "id": "1",
+                            "additionalClassifications": [
+                                {
+                                    "scheme": "CPV",
+                                    "id": "90711400",
+                                    "description": "Environmental Impact Assessment (EIA) services other than for construction"
+                                },
+                                {
+                                    "scheme": "CPV",
+                                    "id": "90713000",
+                                    "description": "Environmental issues consultancy services"
+                                }
+                            ],
+                            "deliveryAddresses": [
+                                {
+                                    "region": "UK",
+                                    "country": "GB",
+                                    "countryName": "United Kingdom"
+                                }
+                            ],
+                            "relatedLot": "1"
+                        }
+                    ],
+                    "contractPeriod": {
+                        "startDate": "2025-06-16T00:00:00+01:00",
+                        "endDate": "2025-12-01T23:59:59Z"
+                    },
+                    "relatedLots": [
+                        "1"
+                    ],
+                    "documents": [
+                        {
+                            "id": "029664-2025",
+                            "documentType": "awardNotice",
+                            "noticeType": "UK6",
+                            "description": "Contract award notice on Find a Tender",
+                            "url": "https://www.find-tender.service.gov.uk/Notice/029664-2025",
+                            "datePublished": "2025-06-03T22:01:02+01:00",
+                            "format": "text/html"
+                        }
+                    ],
+                    "assessmentSummariesDateSent": "2025-06-03T00:00:00+01:00",
+                    "milestones": [
+                        {
+                            "id": "1",
+                            "type": "futureSignatureDate",
+                            "dueDate": "2025-06-13T23:59:59+01:00",
+                            "status": "scheduled"
+                        }
+                    ]
+                }
+            ],
+            "language": "en"
+        }]}

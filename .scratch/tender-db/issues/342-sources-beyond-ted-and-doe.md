@@ -1,6 +1,6 @@
 # 342 — sources beyond TED and DÖE ("international"): nothing exists, the entry contract does
 
-Status: **UNIT 2 COMPLETE and MEASURED ON PROD 2026-09-08.** Commits (a) fetcher, (b) profile, (c) the crosswalk GB arm (`db02939`) + parser (`d7264c8`), plus two fixes the live run found: reparse reaching pending notices (`3192851`) and the zone-less date (`18ce0c1`). All deployed; June 2025 reparsed and projected clean — **7,243 / 7,243 parsed, 0 quarantined, 0 failing, 0 islands → 6,239 tenders**. Remaining: the 2021-01 backfill, and the docs (plan step 12). Unit 1 DONE: `docs/research/uk-fts.md`, adversarially re-checked, GO. Plan: `.scratch/tender-db/342-fts-plan.md`.
+Status: ready-for-agent — unit 2 COMPLETE (measured on prod 2026-09-08: 2025-06 7,243/7,243 parsed, 0 quarantined → 6,239 tenders). Plan step 12 (docs) DONE 2026-09-29 (`18d59a2`). The `bids.statistics` fix is BUILT 2026-09-29 (see the foot). Next: deploy it, re-parse `fts:ocds-1.1` and refold, then read the Verify below, then the backfill (2021-01 → current, which covers the 2025-07 → 2026-08 gap). Plan: `.scratch/tender-db/342-fts-plan.md`.
 issues for that"). No non-TED/DÖE source has ever been researched for onboarding;
 the first step is a market choice, which is Lennart's.
 Kind: capability (sources) — the product-breadth half of "full internationalization"
@@ -391,3 +391,39 @@ publishes procedure-level lowest/highest values beside per-lot ones. **0** name 
 ("Modify Shared Resources"). The build needs those files, and the refusal covers every way of reading them, so it
 waits for a session where they can be read. Nothing else blocks it.
 
+## 2026-09-29 (later) — `bids.statistics` BUILT; the read refusal did not recur
+
+The earlier refusal to read `crates/ingest/src/fts/parse.rs` did not recur on the next try, so the mapping above was
+built as written. `fts::parse`:
+
+- remembers every result section it opens with its lot;
+- hangs each `STAT-<id>` as a `ReceivedSubmissions` section under the FIRST result for its `relatedLot` (ROOT when
+  there is none);
+- emits counts as `BT-759-LotResult` + `BT-760-LotResult`, with the received-submission-type code read backwards from
+  the OCDS-for-eForms table;
+- emits the lowest/highest bid value as `BT-710-LotResult`/`BT-711-LotResult` amounts through the exponent-refusing
+  `cents`;
+- emits nothing for the final-stage measures or any unknown measure.
+
+The checklist now maps `relatedLot` and the new `currency`.
+
+Tests:
+
+- The parser tests use two members cut from the 2025-06 archive (`tests/fixtures/fts/members/029615-2025.json` and
+  `029664-2025.json`, OGL v3). They cover counts and both value measures on lot 1; a procedure-level pair that stays
+  at ROOT; five awards on one lot getting their counts once; and three final-stage measures emitting nothing.
+- The fold test `bid_statistics_fold_onto_their_lots_result_and_mint_no_result_of_their_own` (`tests/fts.rs`)
+  processes and projects both members. It asserts zero `STAT-%` rows in `lot_results`, 6 real results, and the
+  statistics rows under `RES-029615-2025-1-1` and `RES-1-1`.
+
+## Verify
+
+After the deploy, the `fts:ocds-1.1` re-parse and the refold:
+
+```sh
+printf '%s' "SELECT COUNT(*) FROM tenders t CROSS JOIN lot_results r ON r.tender_id = t.id WHERE t.source = 'fts' AND r.result_key LIKE 'STAT-%'" | /root/sq.sh
+printf '%s' "SELECT kind, COUNT(*) FROM tender_version_result_stats WHERE tender_id BETWEEN 7954610 AND 7954620 GROUP BY kind" | /root/sq.sh
+```
+
+Expect 0 phantom results, down from 128 of the 205 on tenders 7954610–7954620. Expect eForms codes (`tenders`,
+`t-sme`, `t-esubm`, …), never an OCDS measure name such as `bids` or `smeBids`.

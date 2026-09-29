@@ -338,6 +338,46 @@ async fn releases_under_one_ocid_from_two_buyers_fold_to_two_tenders_and_a_one_b
     let _ = std::fs::remove_dir_all(&archive);
 }
 
+/// Issue 342 (the 2026-09-15 finding), at the fold: bid statistics reach
+/// `tender_version_result_stats` under the lot's real result, and not one becomes
+/// a `lot_results` row. Before the fix every `STAT-<id>` was a phantom result
+/// (128 of the 205 on tenders 7954610–7954620).
+#[tokio::test]
+async fn bid_statistics_fold_onto_their_lots_result_and_mint_no_result_of_their_own() {
+    let members: [(&str, &[u8]); 2] = [
+        // Counts and both value measures on lot 1, plus a procedure-level pair.
+        ("029615-2025.json", include_bytes!("fixtures/fts/members/029615-2025.json")),
+        // Five awards on one lot, and three final-stage measures with no eForms code.
+        ("029664-2025.json", include_bytes!("fixtures/fts/members/029664-2025.json")),
+    ];
+    let (archive, db) = fixture_of("fts-342-stats", &members).await;
+    let r = run(&db, &archive).await;
+    assert_eq!((r.parsed, r.parse_quarantined), (2, 0), "{r:?}");
+    project::project(&db, false).await.expect("project");
+
+    assert_eq!(
+        cell_i64(&db, "SELECT COUNT(*) FROM lot_results WHERE result_key LIKE 'STAT-%'").await,
+        0,
+        "a statistic is never a result"
+    );
+    // 029615's one result and 029664's five: one row per award result, nothing else.
+    assert_eq!(cell_i64(&db, "SELECT COUNT(*) FROM lot_results").await, 6);
+    // One cell, rows in key order: the store has no multi-row test reader, and a
+    // joined string compares the whole set at once.
+    assert_eq!(
+        cell_text(
+            &db,
+            "SELECT group_concat(line, ' ') FROM (SELECT r.result_key || ':' || s.kind || ':' || s.count AS line                FROM tender_version_result_stats s JOIN lot_results r ON r.id = s.lot_result_id                JOIN tenders t ON t.id = s.tender_id AND t.current_seq = s.seq               ORDER BY r.result_key, s.kind)",
+        )
+        .await
+        .as_deref(),
+        // 029664's `tenders` count appears once, under its lot's first result, not once per award.
+        Some("RES-029615-2025-1-1:t-esubm:6 RES-029615-2025-1-1:t-sme:6 RES-029615-2025-1-1:tenders:6 RES-1-1:tenders:8")
+    );
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
 /// Issue 386 unit 2b: ADR-0004's mapped-or-ignored checklist for `fts:ocds-1.1`,
 /// pinned against the corpus. Every path a fixture release publishes — the
 /// recorded pages and the cut members, the shapes this crosswalk was written

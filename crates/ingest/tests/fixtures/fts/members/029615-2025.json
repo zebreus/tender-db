@@ -1,0 +1,208 @@
+{"version":"1.1","extensions":[
+        "https://standard.open-contracting.org/profiles/eu/latest/en/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_amendment_rationale_classifications_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_contract_completion_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_documentation_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_suitability_extension/master/extension.json",
+        "https://raw.githubusercontent.com/portaledcahn/ocds_Links_extension/main/extension.json",
+        "https://raw.githubusercontent.com/cabinetoffice/ocds_uk_extension/main/extension.json"
+    ],"publisher":{
+        "name": "Cabinet Office",
+        "scheme": "GB-GOR",
+        "uid": "D2",
+        "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+    },"license":"http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/","publicationPolicy":"https://www.gov.uk/government/publications/open-contracting","releases":[{
+            "ocid": "ocds-h6vhtk-04dd22",
+            "id": "029615-2025",
+            "date": "2025-06-03T16:28:47+01:00",
+            "tag": [
+                "award",
+                "contract"
+            ],
+            "initiationType": "tender",
+            "tender": {
+                "id": "001186",
+                "legalBasis": {
+                    "id": "32014L0024",
+                    "scheme": "CELEX"
+                },
+                "title": "Autism Support Services",
+                "status": "complete",
+                "classification": {
+                    "scheme": "CPV",
+                    "id": "85000000",
+                    "description": "Health and social work services"
+                },
+                "mainProcurementCategory": "services",
+                "description": "This contract is for the provision of an Autism Support Service to people aged 16+ across County Durham.\nThe service will target people with a diagnosis of autism, or are on the waiting list for a diagnosis, but who do not meet the eligibility criteria to access social care services.",
+                "lots": [
+                    {
+                        "id": "1",
+                        "description": "This contract is for the provision of an Autism Support Service to people aged 16+.\nThe service will target people with a diagnosis of autism, or are on the waiting list for a diagnosis, but who do not meet the eligibility criteria to access social care services.\nThis procurement is issued under an Open Tender process in line with Public Contracts Regulation 2015, under Regulation 74 of the Public Contracts Regulations 2015 for contracts for social and other specific services (Light Touch Regime). Additional information: The proposed 36month contract is to be let with an option to extend for a further 2 periods of 24 months each from the actual end date subject to Commissioner and Budget approval.\nThe service will be commissioned by Durham County Council and is joint funded by Durham County Council and the Integrated Care Board. The Council's intention is that the full service, as detailed in the service specification, will continue for the initial contract period i.e. end date of 31/5/2028 however the Council is unable to confirm at the point of tender the full budget as the budget from the Integrated Care Board has only been made available until the 31/3/2026. The Council will liaise with the successful provider with regards to this should budget be reduced."
+                    }
+                ],
+                "items": [
+                    {
+                        "id": "1",
+                        "deliveryAddresses": [
+                            {
+                                "region": "UKC14"
+                            }
+                        ],
+                        "relatedLot": "1"
+                    }
+                ],
+                "procurementMethod": "open",
+                "procurementMethodDetails": "Open procedure"
+            },
+            "awards": [
+                {
+                    "id": "029615-2025-1",
+                    "relatedLots": [
+                        "1"
+                    ],
+                    "status": "active",
+                    "suppliers": [
+                        {
+                            "id": "GB-CHC-1109792",
+                            "name": "Daisy Chain Project Teeside"
+                        }
+                    ]
+                }
+            ],
+            "parties": [
+                {
+                    "name": "Durham County Council",
+                    "id": "GB-FTS-141319",
+                    "identifier": {
+                        "legalName": "Durham County Council",
+                        "noIdentifierRationale": "notOnAnyRegister"
+                    },
+                    "address": {
+                        "streetAddress": "Corten House, Dunholme Close",
+                        "locality": "Durham",
+                        "region": "UKC14",
+                        "postalCode": "DH15WB",
+                        "countryName": "United Kingdom"
+                    },
+                    "contactPoint": {
+                        "name": "Donna Iley",
+                        "email": "donna.iley@durham.gov.uk"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "url": "http://www.durham.gov.uk",
+                        "buyerProfile": "http://www.open-uk.org",
+                        "classifications": [
+                            {
+                                "scheme": "TED_CA_TYPE",
+                                "id": "REGIONAL_AUTHORITY",
+                                "description": "Regional or local authority"
+                            },
+                            {
+                                "scheme": "COFOG",
+                                "id": "01",
+                                "description": "General public services"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Daisy Chain Project Teeside",
+                    "id": "GB-CHC-1109792",
+                    "identifier": {
+                        "legalName": "Daisy Chain Project Teeside",
+                        "id": "1109792",
+                        "scheme": "GB-CHC"
+                    },
+                    "address": {
+                        "locality": "Stockton on Tees",
+                        "region": "UKC11",
+                        "countryName": "United Kingdom"
+                    },
+                    "roles": [
+                        "supplier"
+                    ]
+                },
+                {
+                    "name": "The High Court of England & Wales",
+                    "id": "GB-FTS-118212",
+                    "identifier": {
+                        "legalName": "The High Court of England & Wales"
+                    },
+                    "address": {
+                        "streetAddress": "Strand",
+                        "locality": "London",
+                        "postalCode": "WC2A 2LL",
+                        "countryName": "United Kingdom"
+                    },
+                    "roles": [
+                        "reviewBody"
+                    ]
+                }
+            ],
+            "buyer": {
+                "id": "GB-FTS-141319",
+                "name": "Durham County Council"
+            },
+            "contracts": [
+                {
+                    "id": "029615-2025-1",
+                    "awardID": "029615-2025-1",
+                    "status": "active"
+                }
+            ],
+            "bids": {
+                "statistics": [
+                    {
+                        "id": "5",
+                        "measure": "bids",
+                        "relatedLot": "1",
+                        "value": 6
+                    },
+                    {
+                        "id": "6",
+                        "measure": "smeBids",
+                        "relatedLot": "1",
+                        "value": 6
+                    },
+                    {
+                        "id": "7",
+                        "measure": "electronicBids",
+                        "relatedLot": "1",
+                        "value": 6
+                    },
+                    {
+                        "id": "3",
+                        "measure": "lowestValidBidValue",
+                        "relatedLot": "1",
+                        "value": 286084,
+                        "currency": "GBP"
+                    },
+                    {
+                        "id": "4",
+                        "measure": "highestValidBidValue",
+                        "relatedLot": "1",
+                        "value": 858252,
+                        "currency": "GBP"
+                    },
+                    {
+                        "id": "1",
+                        "measure": "lowestValidBidValue",
+                        "value": 270559,
+                        "currency": "GBP"
+                    },
+                    {
+                        "id": "2",
+                        "measure": "highestValidBidValue",
+                        "value": 858252,
+                        "currency": "GBP"
+                    }
+                ]
+            },
+            "language": "en"
+        }]}

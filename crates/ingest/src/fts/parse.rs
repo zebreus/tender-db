@@ -232,6 +232,10 @@ pub fn parse(bytes: &[u8]) -> Result<Parsed, Rejected> {
     // The results graph. A UK15 dynamic-market modification publishes dozens of
     // `{id, amendments}` skeletons that say nothing about who won what — those
     // emit nothing at all rather than a phantom empty result.
+    //
+    // Every result section opened here, with its lot, in the order it opened —
+    // the bid statistics below hang under the first one for their lot.
+    let mut results: Vec<(String, Option<String>)> = Vec::new();
     for award in &release.awards {
         let Some(aid) = award.id.as_deref().filter(|s| !s.is_empty()) else { continue };
         if award.is_delta() {
@@ -250,6 +254,7 @@ pub fn parse(bytes: &[u8]) -> Result<Parsed, Rejected> {
                 None => format!("RES-{aid}"),
             };
             w.section(&rid, "LotResult", ROOT);
+            results.push((rid.clone(), lot.map(str::to_owned)));
             // The contracts this award settled (issue 386 unit 2b): OPT-315 on
             // the result names each `CON-<id>` whose `awardID` is this award, so
             // the fold reaches a contract from its result — and, through the
@@ -363,18 +368,48 @@ pub fn parse(bytes: &[u8]) -> Result<Parsed, Rejected> {
         }
     }
 
+    // The bid statistics (issue 342, the 2026-09-15 finding). Each one used to
+    // open a `LotResult` section of its own, so the fold served every statistic
+    // as a phantom award result with no decision: `STAT-<id>` rows in
+    // `lot_results`, 128 of the 205 on tenders 7954610–7954620. A statistic
+    // describes the result for its lot, as eForms' ReceivedSubmissionsStatistics
+    // block does, so it now sits in a `ReceivedSubmissions` section under the
+    // FIRST result for its `relatedLot`. A statistic with no `relatedLot` goes
+    // under the lot-less result, and the fold's `enclosing()` walks up from
+    // there. One block per lot, never one per award: a lot with five awards
+    // (029664-2025) gets its counts once. With no such result, the section stays
+    // at ROOT. The parsed layer keeps it, no result encloses it, and the fold
+    // invents none.
     if let Some(bids) = &release.bids {
         for stat in &bids.statistics {
             let Some(sid) = stat.id.as_deref().filter(|s| !s.is_empty()) else { continue };
             let section = format!("STAT-{sid}");
-            w.section(&section, "LotResult", ROOT);
-            if let Some(raw) = &stat.value
-                && let Some(n) = number(raw)
-            {
-                w.push(&section, "BT-759", NoticeValue::Number { value: n, unit: None });
-            }
-            if let Some(measure) = stat.measure.as_deref() {
-                w.push(&section, "BT-760", NoticeValue::Code { list: None, code: measure.to_owned() });
+            let parent = results
+                .iter()
+                .find(|(_, lot)| lot.as_deref() == stat.related_lot.as_deref())
+                .map_or(ROOT, |(rid, _)| rid.as_str());
+            w.section(&section, "ReceivedSubmissions", parent);
+            match stat.measure.as_deref().and_then(measure) {
+                Some(Measure::Count(code)) => {
+                    if let Some(raw) = &stat.value
+                        && let Some(n) = number(raw)
+                    {
+                        w.push(&section, "BT-759-LotResult", NoticeValue::Number { value: n, unit: None });
+                    }
+                    w.push(&section, "BT-760-LotResult", NoticeValue::Code { list: None, code: code.to_owned() });
+                }
+                // Money, not a count: the same exactness rule as every amount here,
+                // and no currency means no amount, as in `Walk::money`.
+                Some(Measure::Value(field)) => {
+                    if let (Some(raw), Some(currency)) =
+                        (&stat.value, stat.currency.as_deref().filter(|c| !c.is_empty()))
+                    {
+                        let cents = cents(raw)
+                            .map_err(|detail| Rejected { reason: "unrepresentable-value", detail })?;
+                        w.push(&section, field, NoticeValue::Amount { cents, currency: currency.to_owned() });
+                    }
+                }
+                None => {}
             }
         }
     }
@@ -597,6 +632,40 @@ fn cents(raw: &RawValue) -> Result<i64, String> {
 /// money and carry no exactness promise.
 fn number(raw: &RawValue) -> Option<f64> {
     raw.get().trim().parse::<f64>().ok().filter(|n| n.is_finite())
+}
+
+/// What an OCDS `bids.statistics[].measure` is in eForms terms.
+enum Measure {
+    /// A count: BT-759 with this BT-760 received-submission-type code.
+    Count(&'static str),
+    /// A bid value: this field, as an amount.
+    Value(&'static str),
+}
+
+/// The counts are the OCDS-for-eForms profile's received-submission-type table
+/// read backwards
+/// (standard.open-contracting.org/profiles/eforms/latest/en/codelists/received-submission-type/),
+/// and the two value measures are that profile's BT-710/BT-711. The Procurement
+/// Act's `finalStageBids`, `smeFinalStageBids` and `vcseFinalStageBids` have no
+/// eForms code. Like any measure a publisher invents, they map to nothing
+/// rather than being guessed into one (fts::checklist says so).
+fn measure(name: &str) -> Option<Measure> {
+    Some(match name {
+        "bids" => Measure::Count("tenders"),
+        "requests" => Measure::Count("part-req"),
+        "electronicBids" => Measure::Count("t-esubm"),
+        "smeBids" => Measure::Count("t-sme"),
+        "microBids" => Measure::Count("t-micro"),
+        "smallBids" => Measure::Count("t-small"),
+        "mediumBids" => Measure::Count("t-med"),
+        "foreignBidsFromEU" => Measure::Count("t-oth-eea"),
+        "foreignBidsFromNonEU" => Measure::Count("t-no-eea"),
+        "disqualifiedBids" => Measure::Count("t-verif-inad"),
+        "tendersAbnormallyLow" => Measure::Count("t-verif-inad-low"),
+        "lowestValidBidValue" => Measure::Value("BT-710-LotResult"),
+        "highestValidBidValue" => Measure::Value("BT-711-LotResult"),
+        _ => return None,
+    })
 }
 
 // -------------------------------------------------------------------- shapes
@@ -872,6 +941,10 @@ struct Statistic {
     id: Option<String>,
     measure: Option<String>,
     value: Option<Box<RawValue>>,
+    /// The lot the statistic is about; its result is where the block hangs.
+    related_lot: Option<String>,
+    /// Set on the two value measures only.
+    currency: Option<String>,
 }
 
 #[cfg(test)]
@@ -908,13 +981,70 @@ mod tests {
         }
     }
 
+    fn section_of<'a>(p: &'a Parsed, id: &str) -> &'a Section {
+        p.sections.iter().find(|s| s.id == id).unwrap_or_else(|| panic!("no section {id}"))
+    }
+
+    /// Issue 342 (the 2026-09-15 finding): a statistic is a block under its lot's
+    /// result, in eForms vocabulary, never a result of its own. 029615-2025 has
+    /// counts and both value measures on lot 1. It also has a procedure-level
+    /// lowest/highest pair that no result can take, which stays at ROOT.
+    #[test]
+    fn bid_statistics_hang_under_their_lots_result_in_eforms_vocabulary() {
+        let p = parsed("029615-2025");
+        let res = "RES-029615-2025-1-1";
+        assert!(
+            p.sections.iter().all(|s| s.kind != "LotResult" || !s.id.starts_with("STAT-")),
+            "no statistic opens a result of its own"
+        );
+        for (stat, code, count) in [("STAT-5", "tenders", 6.0), ("STAT-6", "t-sme", 6.0), ("STAT-7", "t-esubm", 6.0)] {
+            let s = section_of(&p, stat);
+            assert_eq!((s.kind.as_str(), s.parent.as_deref()), ("ReceivedSubmissions", Some(res)), "{stat}");
+            assert_eq!(
+                one(&p, stat, "BT-760-LotResult"),
+                Some(NoticeValue::Code { list: None, code: code.into() }),
+                "{stat}"
+            );
+            assert_eq!(one(&p, stat, "BT-759-LotResult"), Some(NoticeValue::Number { value: count, unit: None }));
+        }
+        // Money, exactly, in the currency the statistic names — not a count.
+        let gbp = |cents| Some(NoticeValue::Amount { cents, currency: "GBP".into() });
+        assert_eq!(one(&p, "STAT-3", "BT-710-LotResult"), gbp(28_608_400));
+        assert_eq!(one(&p, "STAT-4", "BT-711-LotResult"), gbp(85_825_200));
+        assert_eq!(one(&p, "STAT-3", "BT-759-LotResult"), None, "a value is not a count");
+        assert_eq!(section_of(&p, "STAT-3").parent.as_deref(), Some(res));
+        // No relatedLot and no lot-less result: kept, at ROOT, where no result encloses it.
+        assert_eq!(section_of(&p, "STAT-1").parent.as_deref(), Some(ROOT));
+        assert_eq!(one(&p, "STAT-1", "BT-710-LotResult"), gbp(27_055_900));
+        assert_eq!(one(&p, "STAT-2", "BT-711-LotResult"), gbp(85_825_200));
+        // The bare pre-fix ids are gone.
+        assert!(all(&p, "BT-759").is_empty() && all(&p, "BT-760").is_empty());
+    }
+
+    /// 029664-2025: five awards on ONE lot. The lot's counts are published once
+    /// and hang under the first result, not five times over. The three Procurement
+    /// Act final-stage measures have no eForms code and emit nothing.
+    #[test]
+    fn a_lot_with_five_awards_gets_its_statistics_once_and_unmapped_measures_emit_nothing() {
+        let p = parsed("029664-2025");
+        for stat in ["STAT-1", "STAT-2", "STAT-3", "STAT-4"] {
+            assert_eq!(section_of(&p, stat).parent.as_deref(), Some("RES-1-1"), "{stat}");
+        }
+        assert_eq!(all(&p, "BT-760-LotResult"), vec![NoticeValue::Code { list: None, code: "tenders".into() }]);
+        assert_eq!(all(&p, "BT-759-LotResult"), vec![NoticeValue::Number { value: 8.0, unit: None }]);
+        for stat in ["STAT-2", "STAT-3", "STAT-4"] {
+            assert!(p.values.iter().all(|v| v.section_id != stat), "{stat} is a final-stage measure: unmapped");
+        }
+    }
+
     /// Every fixture parses. This is the cheap standing guard: the UK extension
     /// has moved four times in a year, and the first symptom of the fifth move
     /// is a fixture that stops parsing.
     #[test]
     fn every_fts_fixture_parses() {
         for name in
-            ["083563-2026", "083645-2026", "083650-2026", "083685-2026", "_noid-2026-09-03-p001-000"]
+            ["083563-2026", "083645-2026", "083650-2026", "083685-2026", "_noid-2026-09-03-p001-000",
+             "029615-2025", "029664-2025"]
         {
             let p = parsed(name);
             assert!(

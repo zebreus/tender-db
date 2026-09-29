@@ -189,11 +189,12 @@ pub const CHECKLIST: &[(&str, Disposition)] = &[
     ("planning.milestones", Ignored("planning milestones (a future notice's expected date) — outside the canonical model")),
     // ------------------------------------------------------------------- bids
     ("bids", Mapped("bid statistics — see the leaves")),
-    ("bids.statistics", Mapped("one LotResult-kind section per statistic (`STAT-<id>`)")),
+    ("bids.statistics", Mapped("one `ReceivedSubmissions` section per statistic (`STAT-<id>`), under the first LotResult for its lot — never a result of its own (issue 342)")),
     ("bids.statistics[].id", Mapped("the statistic's section id")),
-    ("bids.statistics[].measure", Mapped("BT-760 — the statistic's kind")),
-    ("bids.statistics[].value", Mapped("BT-759 — the count")),
-    ("bids.statistics[].relatedLot", Ignored("owed: the statistic's lot; STAT sections are Tender-scoped today")),
+    ("bids.statistics[].measure", Mapped("BT-760-LotResult by the OCDS-for-eForms received-submission-type table, or BT-710/BT-711-LotResult for the lowest/highest bid value; the Procurement Act's final-stage measures have no eForms code and emit nothing")),
+    ("bids.statistics[].value", Mapped("BT-759-LotResult (a count), or the BT-710/BT-711 amount")),
+    ("bids.statistics[].relatedLot", Mapped("which result the statistic hangs under (ROOT when none is for its lot)")),
+    ("bids.statistics[].currency", Mapped("the BT-710/BT-711 amount's currency")),
 ];
 
 /// The disposition of one published path, by the longest entry that names it
