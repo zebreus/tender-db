@@ -338,3 +338,56 @@ un-backfilled 2025-07 → 2026-08 region. It will re-fire every weekly run until
 operator reading section 14 should treat the FTS row as this known gap, not a new hole. The backfill, when run,
 needs 2025-07 onward (not just 2021-01 → 2025-06) to close it.
 
+## 2026-09-29 — `bids.statistics`: the mapping settled against the publisher and the OCDS-for-eForms profile (build not yet done)
+
+The 09-15 finding is still unfixed. This is the design the fix needs, measured today, so the build is mechanical.
+
+**What FTS publishes.** A live sample: 342 releases from 2025-06-03 (4 API pages) plus the record of
+`ocds-h6vhtk-031314` (tender 7954611). 74 of them carry statistics, 301 statistics in all.
+
+| measure | n | carries | eForms target |
+| --- | --- | --- | --- |
+| `bids` | 105 | count | BT-759 + BT-760 `tenders` |
+| `electronicBids` | 36 | count | BT-760 `t-esubm` |
+| `smeBids` | 34 | count | BT-760 `t-sme` |
+| `foreignBidsFromEU` | 29 | count | BT-760 `t-oth-eea` |
+| `foreignBidsFromNonEU` | 29 | count | BT-760 `t-no-eea` |
+| `lowestValidBidValue` | 22 | amount **+ `currency`** (GBP) | **BT-710-LotResult** (Tender Value Lowest), money — not a count |
+| `highestValidBidValue` | 22 | amount + `currency` | **BT-711-LotResult** (Tender Value Highest), money |
+| `finalStageBids`, `smeFinalStageBids`, `vcseFinalStageBids` | 8 each | count | **none** — UK Procurement Act 2023 measures with no eForms code |
+
+The count mapping is the inverse of the OCDS-for-eForms profile's own received-submission-type table
+(https://standard.open-contracting.org/profiles/eforms/latest/en/codelists/received-submission-type/, read today).
+Its other rows are `requests`→`part-req`, `mediumBids`→`t-med`, `microBids`→`t-micro`, `smallBids`→`t-small`,
+`disqualifiedBids`→`t-verif-inad` and `tendersAbnormallyLow`→`t-verif-inad-low`; `t-no-verif` has no OCDS code. The
+same profile maps BT-710/BT-711 to `lowestValidBidValue`/`highestValidBidValue`, with the currency and the lot's
+`relatedLot` (mapping page, "BT-710-LotResult"). The fold reads neither BT-710 nor BT-711 for eForms today, and FTS
+should match that: parsed layer only.
+
+**Where each statistic belongs.** 289 of 301 name a `relatedLot` whose lot has an award result in the same release.
+10 carry no `relatedLot` but sit in a release whose award is lot-less (`RES-{aid}`). 2 carry neither: 029615-2025
+publishes procedure-level lowest/highest values beside per-lot ones. **0** name a lot with no result. So:
+
+1. Deserialize `relatedLot` and `currency` on `Statistic`.
+2. Parent each `STAT-{id}` on the FIRST `RES-` section whose lot equals the statistic's `relatedLot` (None matches
+   the lot-less result). Use a child section whose kind is not in the fold's `RESULT_KINDS`, so `enclosing()` walks
+   up to the result the way it does for eForms' ReceivedSubmissionsStatistics blocks. One block per lot, never one
+   per award: a lot with five awards (029664-2025) gets its counts once.
+3. With no matching result, keep the section parented at ROOT with the same non-result kind. The parsed layer
+   stays lossless, and the fold ignores it instead of inventing a decision-less result.
+4. Counts become `BT-759-LotResult` + `BT-760-LotResult` with the mapped code. Today they are the bare
+   `BT-759`/`BT-760` ids, unlike every other result field this parser emits. The fold and the unmapped-field sieve
+   match by stem, so this is consistency, not a defect. The two value measures become
+   `BT-710-LotResult`/`BT-711-LotResult` `Amount`s through the exponent-refusing `cents`. The final-stage measures
+   and any unknown measure emit nothing, and the checklist says why (same policy as the award-status arm: unmapped,
+   not guessed).
+5. Regression test: the p002 page fixture (`bids`/`smeBids` on lot 1), plus a member fixture cut from 029615-2025
+   (value measures with currency, procedure-level stats, several awards on one lot).
+6. After deploy: re-parse `fts:ocds-1.1` and refold. The `STAT-` rows leave `lot_results`, and the phantom-row count
+   on tenders 7954610–7954620 (128 of 205 today) goes to 0.
+
+**Why it is not built yet.** In this session the auto-mode classifier refused plain reads of
+`crates/ingest/src/fts/parse.rs` and `crates/ingest/src/fts/checklist.rs`, and a grep of `crates/ingest/src/process.rs`
+("Modify Shared Resources"). The build needs those files, and the refusal covers every way of reading them, so it
+waits for a session where they can be read. Nothing else blocks it.
+
