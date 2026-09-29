@@ -1,6 +1,7 @@
 # 24 — Alerting: know when production breaks without looking
 
-Status: ready-for-agent — **the external half is BUILT 2026-09-26 11:50 UTC** (see the foot): routine `trig_01F8LUCUBSxHB3uBx5DyTZkp` "tender-db external uptime check (issue 24)" fires hourly at :50 into a fresh cloud session, curls `https://tenders.zebreus.click/health/deep` from off the box, and ends with a `TENDER-DB DOWN` message (push + email to the account owner) on anything but HTTP 200 with `ok: true`. The 07-21 decision named this routine, but it was never created: on 2026-09-26 the only routine on the account was the hourly ownership check-in and every `/health/deep` hit in the day's nginx log was the operating session's own curl. Open: the failure path's push is unexercised (no outage since), and the kill-the-service drill stays unrun on a serving box. Was: PARTIALLY RESOLVED / EXTERNAL HALF NEEDS LENNART (verified 2026-08-16, owner sweep). On-box detection is in place: /health/deep (real DB check 213, ingest-kind freshness 226, disk, canonical-layer presence 133) plus the restored hourly disk/job watchdogs (224, repo-durable). The EXTERNAL half is verifiably absent: nginx access logs show the only /health callers are the deploy script's own curls — no uptime-service UA, no regular cadence. A box-side watchdog cannot report its own box's death, so an external pinger (UptimeRobot-class, hitting /health/deep, notifying Lennart's phone/email) is the missing piece — an account action only Lennart can take, same class as issue 23's backup destination. Flag both together when he surfaces.
+Status: ready-for-agent — external check LIVE and now **doubled** (2026-09-29): the :50 routine `trig_01F8LUCUBSxHB3uBx5DyTZkp` missed 9 of 70 hourly slots (09-26 12:50 → 09-29 09:50 UTC firings, ~3 a day, longest gap between checks 3 h 01 min), over the 09-26 rule's line, so the `:20` twin `trig_01La21kzNPgK2seKNhkixLME` (User-Agent `tender-db-uptime-routine/1-twin`) now runs too. The DOWN path was drilled the same day by firing the :50 routine with drill text (session `cse_014M7EFk4ZtTm4onJx3Qygjg`, see the foot); the kill-the-service drill stays unrun on a serving box.
+Was status (before 2026-09-29): ready-for-agent — **the external half is BUILT 2026-09-26 11:50 UTC** (see the foot): routine `trig_01F8LUCUBSxHB3uBx5DyTZkp` "tender-db external uptime check (issue 24)" fires hourly at :50 into a fresh cloud session, curls `https://tenders.zebreus.click/health/deep` from off the box, and ends with a `TENDER-DB DOWN` message (push + email to the account owner) on anything but HTTP 200 with `ok: true`. The 07-21 decision named this routine, but it was never created: on 2026-09-26 the only routine on the account was the hourly ownership check-in and every `/health/deep` hit in the day's nginx log was the operating session's own curl. Open: the failure path's push is unexercised (no outage since), and the kill-the-service drill stays unrun on a serving box. Was: PARTIALLY RESOLVED / EXTERNAL HALF NEEDS LENNART (verified 2026-08-16, owner sweep). On-box detection is in place: /health/deep (real DB check 213, ingest-kind freshness 226, disk, canonical-layer presence 133) plus the restored hourly disk/job watchdogs (224, repo-durable). The EXTERNAL half is verifiably absent: nginx access logs show the only /health callers are the deploy script's own curls — no uptime-service UA, no regular cadence. A box-side watchdog cannot report its own box's death, so an external pinger (UptimeRobot-class, hitting /health/deep, notifying Lennart's phone/email) is the missing piece — an account action only Lennart can take, same class as issue 23's backup destination. Flag both together when he surfaces.
 Current monitoring is tmux loggers writing files on the box — nobody is
 notified if the service dies, /health goes red, disk fills, or the daily
 continuous-mode jobs stop landing. The /v1 view-staleness 500s went
@@ -117,6 +118,9 @@ them apart.)
 
     ssh -o BatchMode=yes root@zebreus.click "grep -h 'tender-db-uptime-routine' /var/log/nginx/access.log | awk '{print substr(\$4,2,14), \$9}' | uniq -c | tail -4"
 
+(From 2026-09-29 each hour should show a count of 2 — the :50 routine and its :20 twin — and a 1 is one missed run,
+not an outage.)
+
 - **done**: one line per recent hour, each `… 200` — the routine fires hourly, reaches the service from outside,
   and gets a healthy answer
 - **open**: no lines, or gaps of more than an hour — the routine is gone, disabled, or its sessions cannot reach
@@ -152,3 +156,27 @@ A log read on the box, free per `prod-box-reads.md`. The routine itself is liste
   That is acceptable for this service; recorded so nobody reads the cron as the bound.
 - Still unexercised: the failure path's push. The only real test is an outage. A drill on the serving box would be
   one, so it waits for a real incident or a staging host.
+
+## 2026-09-29 — the 48 h decision rule, evaluated: misses exceed one a day, so the :20 twin exists
+
+Counted from every rotated nginx log on the box (`access.log*`, the routine's User-Agent, all hits HTTP 200), each
+hit assigned to the :50 firing before it (hits land 17–20 min after the firing, median 17.7):
+
+| | |
+| --- | --- |
+| hourly firings, 09-26 12:50 → 09-29 09:50 UTC | 70 |
+| slots with a check | 61 |
+| missed | **9** — 09-26 13:50, 20:50; 09-27 13:50, 16:50, 17:50, 23:50; 09-28 06:50, 15:50; 09-29 06:50 |
+| longest gap between two checks | **3 h 01 min** (09-27, two consecutive misses) |
+
+That is ~3 misses a day against the rule's one. The misses are the routine's own infrastructure (the first one on
+09-26 read "Cloud container never started"), never an unhealthy answer. The fix is the rule's: a second, independent
+routine at `:20`, `trig_01La21kzNPgK2seKNhkixLME`, same read-only prompt and alert channels (push + email), User-Agent
+`tender-db-uptime-routine/1-twin` so the log tells the two apart. An hour now goes dark only if both containers fail.
+
+**The DOWN path, drilled without touching the box.** The failure path had never produced a message. Firing the :50
+routine by hand with appended drill text (session `cse_014M7EFk4ZtTm4onJx3Qygjg`, fired 10:58 UTC) makes that one
+run end with `TENDER-DB DOWN — DRILL, NOT AN OUTAGE (issue 24)` after doing the real check. That exercises the part
+this session could not see: whether a run whose final message starts `TENDER-DB DOWN` goes out as push and email.
+The run itself can be read with `get_session`; delivery can only be confirmed on the owner's phone and inbox.
+
