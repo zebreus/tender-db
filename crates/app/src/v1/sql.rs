@@ -858,6 +858,14 @@ const TABLE_NOTES: &[(&str, &str)] = &[
     ("v_fetches", "Path-free fetch provenance: which source package/period a notice came from. \
       Small (one row per fetched package), so a filtered read is fine — the one v_* view \
       exempt from the issue-239 refusal."),
+    ("notice_withheld_fields", "Fields a notice marked withheld (BT-195…BT-198): one row per \
+      withholding block — `section_id` is the section whose field is withheld, \
+      `withheld_field` its field-identifier code (e.g. `win-nam`), `reason_code`/`reason_text` \
+      why, `publish_after` when it may be published. NOT FILTERABLE, like every `v_*` view — a \
+      WHERE is applied after the view is built, so a filtered query reads every withheld block \
+      in the corpus (issue 239); read `notice_sections` (kind = 'FieldsPrivacy', by \
+      notice_id) with `notice_codes`, `notice_texts` and `notice_dates` on (notice_id, \
+      section_id) instead."),
 ];
 
 /// Column notes and small enum vocabularies. Table `"*"` matches a column of
@@ -1299,12 +1307,14 @@ fn filtered_view_message(hit: &FilteredView) -> String {
     format!("{} is NOT FILTERABLE and this query {} it{via}: {guidance}", hit.view, hit.how)
 }
 
-/// Is `name` a `v_*` analyst view that turso cannot filter? The allow-list is
+/// Is `name` an allow-listed view that turso cannot filter? The allow-list is
 /// the authority on what is readable; this only asks whether a readable name
-/// is in the class. `v_fetches` is the documented exemption (see
-/// [`filtered_view`]).
+/// is in the class: every `v_*` analyst view, and `notice_withheld_fields`, the
+/// one view outside the prefix (the property is turso's, not the prefix's —
+/// keying on `v_` alone let a filter on it through to the time limit, issue
+/// 239). `v_fetches` is the documented exemption (see [`filtered_view`]).
 fn unfilterable_view(name: &str) -> bool {
-    name.starts_with("v_") && name != "v_fetches"
+    (name.starts_with("v_") && name != "v_fetches") || name == "notice_withheld_fields"
 }
 
 /// Table-valued functions allowed as a `FROM` source. Deny-by-default, the same
@@ -2412,6 +2422,37 @@ mod tests {
     /// each version table by its `(tender_id, seq)` index. Pinned on the real
     /// schema (deferred indexes built, as on prod), so a turso upgrade that stops
     /// honouring the order is caught by the gate rather than by an analyst.
+    /// Issue 239: the refusal follows what the SCHEMA declares a view, not a name
+    /// prefix. Keyed on `v_` alone, it let `notice_withheld_fields` — allow-listed,
+    /// a view, no prefix — through to the time limit. Any view added to the
+    /// allow-list later lands here too.
+    #[tokio::test]
+    async fn every_allow_listed_view_is_refused_when_filtered() {
+        let path = format!("/tmp/tender-db-239-views-{}.db", std::process::id());
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+        let db = store::Db::open(&path).await.unwrap();
+        let views: Vec<String> = db
+            .measure_rows("SELECT name FROM sqlite_schema WHERE type = 'view' ORDER BY name")
+            .await
+            .unwrap()
+            .into_iter()
+            .filter_map(|row| match row.into_iter().next() {
+                Some(store::turso::Value::Text(name)) => Some(name),
+                _ => None,
+            })
+            .filter(|name| ALLOWED.contains(&name.as_str()))
+            .collect();
+        assert!(views.iter().any(|v| v == "notice_withheld_fields"), "the schema's views: {views:?}");
+        for view in &views {
+            assert_eq!(unfilterable_view(view), view != "v_fetches", "{view}");
+        }
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
+
     #[tokio::test]
     async fn the_recommended_version_joins_drive_from_tenders_and_seek() {
         for view in [

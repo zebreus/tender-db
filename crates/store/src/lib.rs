@@ -402,12 +402,23 @@ const SCHEMA: &str = "
     -- may be suppressed, the notice then carrying only which field, why, and
     -- until when. Those live in their own FieldsPrivacy sections, so the
     -- satellite is a view over them, not a fourth copy of the data.
+    --
+    -- One row per FieldsPrivacy section, every column a per-section seek. It
+    -- was a LEFT JOIN to notice_codes under GROUP BY (notice_id, section_id):
+    -- the same rows, but the grouping sorts the whole cohort before the first
+    -- row, so even an unfiltered `LIMIT 1` exceeded /v1/sql's time limit
+    -- (issue 239). A filter still cannot reach inside the view — /v1/sql
+    -- refuses one up front, as for every `v_*` view.
     DROP VIEW IF EXISTS notice_withheld_fields;
     CREATE VIEW notice_withheld_fields AS
     SELECT s.notice_id,
            s.parent_section_id AS section_id,
-           MAX(CASE WHEN c.field_id LIKE 'BT-195%' THEN c.code END) AS withheld_field,
-           MAX(CASE WHEN c.field_id LIKE 'BT-197%' THEN c.code END) AS reason_code,
+           (SELECT MAX(c.code) FROM notice_codes c
+             WHERE c.notice_id = s.notice_id AND c.section_id = s.section_id
+               AND c.field_id LIKE 'BT-195%') AS withheld_field,
+           (SELECT MAX(c.code) FROM notice_codes c
+             WHERE c.notice_id = s.notice_id AND c.section_id = s.section_id
+               AND c.field_id LIKE 'BT-197%') AS reason_code,
            (SELECT t.value FROM notice_texts t
              WHERE t.notice_id = s.notice_id AND t.section_id = s.section_id
                AND t.field_id LIKE 'BT-196%' LIMIT 1) AS reason_text,
@@ -415,9 +426,7 @@ const SCHEMA: &str = "
              WHERE d.notice_id = s.notice_id AND d.section_id = s.section_id
                AND d.field_id LIKE 'BT-198%' LIMIT 1) AS publish_after
       FROM notice_sections s
-      LEFT JOIN notice_codes c ON c.notice_id = s.notice_id AND c.section_id = s.section_id
-     WHERE s.kind = 'FieldsPrivacy'
-     GROUP BY s.notice_id, s.section_id;
+     WHERE s.kind = 'FieldsPrivacy';
 
     -- The live-layer presence marker (issue 133 / task #38). One row per table
     -- the standing gate's `present_*` checks cover, carrying the only fact that
