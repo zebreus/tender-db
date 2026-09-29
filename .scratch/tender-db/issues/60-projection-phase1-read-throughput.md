@@ -133,3 +133,10 @@ wall-clock before/after on a large scratch DB; expect amplification →~1x and a
 multi-× speedup. Ship this with the next projection deploy (batch with issue 59)
 so it lands without a separate restart. Watch memory: a 512MiB–2GiB cache adds
 to RSS — fits the 8GB box, and issue 59 freed the plan from RAM so there's room.
+
+**Read 2026-09-29 (board-verify): `job 1616: 442 min` — not a reopen.** 1616 is an INCREMENTAL projection
+(`rebuild=false`) after the full XML re-parse 1596. It rewrote 6,890,186 of 8,556,759 tenders (1,666,573 verified
+unchanged) and also did issue 434's 1,116,872 mention refreshes (943,695 re-bound). That is a different workload
+from the rebuild the 215-minute baseline (job 1387) measured. The Verify's filter picks any projection over ≥10M
+notices, which an incremental over the whole corpus also is. Read the job's `params` and `tenders written` before
+comparing minutes. A reopen needs a like-for-like rebuild past eight hours.

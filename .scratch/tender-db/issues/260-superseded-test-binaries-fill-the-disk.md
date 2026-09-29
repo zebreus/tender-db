@@ -148,8 +148,16 @@ minutes apart. The kits are built as several crate types (`.a`, `.so` and `.rlib
 newest `.a`/`.rlib` over 100 MB per stem. So a live family is deleted at every gate start and rebuilt. Separately,
 the `.so` cdylibs (58–116 MB each) match no prune pattern, so every variant stays: ten were on disk on 09-29.
 
-- **Not fixed yet.** Before changing the rule, find out which gate step builds which family (a `-v` build of
-  `cargo test -p store` versus `cargo test-app-all` shows the flags). Then either unify the two families, so one
+- **What the fingerprints say** (`target/debug/.fingerprint/turso_sdk_kit-*/lib-turso_sdk_kit.json`, read
+  2026-09-29): every variant has the same features (`default, encryption, fts, pure-rust-crypto`). Two profile hashes
+  appear:
+  - `7635…`, which is `[profile.dev] debug = "line-tables-only"`, the RAW `cargo test` build;
+  - `8378…`, the gate's `CARGO_PROFILE_*_DEBUG=0`.
+  Gate-built variants of one profile still carry different metadata hashes from step to step, which points at
+  feature unification. `cargo test -p store` resolves the dependency graph on its own, while `cargo test -p
+  tender-db --features server` unifies a larger one, so the kit's dependencies differ and so does its hash.
+- **Not fixed yet.** Confirm the unification reading first: a `-v --no-run` build of `cargo test -p store` versus
+  `cargo test-app-all` shows each unit's `-C metadata` and its dependency list. Then either unify the two families, so one
   build serves both steps, or keep the newest per (stem, crate type, family) instead of per stem.
 - A fix is worth one to two minutes of every gate, plus about 1 GB of `.so` that nothing removes today.
 

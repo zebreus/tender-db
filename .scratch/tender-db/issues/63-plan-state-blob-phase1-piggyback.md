@@ -389,3 +389,10 @@ byte-identity risk does not buy a meaningful fraction of the wall any more.
 **Parked by measurement**; the wall is the apply (issue 67, whose own gate this
 run now meets) and the plan build (192). Revisit only if a pre-pass shape returns
 to the 08-01 numbers (402 min, pre-94).
+
+**Read 2026-09-29 (board-verify): `job 1616: 442 min` — not a reopen.** 1616 is an INCREMENTAL projection
+(`rebuild=false`) after the full XML re-parse 1596. It rewrote 6,890,186 of 8,556,759 tenders (1,666,573 verified
+unchanged) and also did issue 434's 1,116,872 mention refreshes (943,695 re-bound). That is a different workload
+from the rebuild the 215-minute baseline (job 1387) measured. The Verify's filter picks any projection over ≥10M
+notices, which an incremental over the whole corpus also is. Read the job's `params` and `tenders written` before
+comparing minutes. A reopen needs a like-for-like rebuild past eight hours.
