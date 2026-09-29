@@ -243,3 +243,19 @@ The run itself can be read with `get_session`; delivery can only be confirmed on
 - **2026-09-29 20:50 UTC: re-created as `uptime-check.yml`** (owner, API, `cecccdd`). The old `uptime.yml` was removed
   the same way (`f8703ed`). Same check, same cron `9,24,39,54`, `name: uptime-check`, and the same concurrency group,
   so the two could never double-report.
+
+## 2026-09-29 22:5x UTC — the job works; only the schedule trigger is missing
+
+- **A manual `workflow_dispatch` run works end to end.** Run 36641802397 (sha `96f2f0f`) was queued at 22:49:20 and
+  completed in 7 s with `conclusion: success` on every step: `GET /health/deep`, then "Open, keep, or close the uptime
+  issue". So Actions is enabled, the runner picks up jobs, the token can manage issues, and the script is right.
+- The default branch is `main` (repo metadata), which is where `uptime-check.yml` lives. So "schedules only fire from
+  the default branch" is not the cause.
+- Still ZERO `event=schedule` runs, 2 h after the file was created at 20:50 UTC: eight `9,24,39,54` slots missed.
+- What remains is GitHub's own scheduler not picking up a newly registered cron. The 2026-09-2x attempts on the old
+  file were: waiting, a cron change, an owner-authored edit, and recreating the file as owner. The dispatch is new
+  evidence that everything but the trigger works.
+- Next firing: `list_workflow_runs uptime-check.yml` filtered to `event=schedule`. If there is still nothing by
+  2026-09-30 12:00 UTC (15 h, ~60 slots), the remaining lever is the repo's Actions settings page, which only the owner
+  can see. That would be a message to Lennart as a genuine blocker.
+
