@@ -329,6 +329,17 @@ async fn the_service_root_and_health_answer() {
     // AGPL §13: a network user must be offered the running version's source.
     assert!(root["source_offer"].as_str().is_some_and(|s| s.starts_with("https://")));
     assert_eq!(server.status("/_source").await, 200);
+    // Issue 446: the data's reuse terms, one entry per archived source, each with
+    // the statement its licence asks for — FTS's is the OGL's own wording.
+    let sources = root["data_sources"].as_array().expect("/v1 lists data_sources");
+    let named: Vec<&str> = sources.iter().filter_map(|s| s["source"].as_str()).collect();
+    assert_eq!(named, ingest::fetch::SOURCES, "one entry per archived source, in registry order");
+    let fts = sources.iter().find(|s| s["source"] == "fts").expect("fts terms");
+    assert_eq!(
+        fts["attribution"],
+        "Contains public sector information licensed under the Open Government Licence v3.0."
+    );
+    assert!(sources.iter().all(|s| s["license_url"].as_str().is_some_and(|u| u.starts_with("https://"))));
 }
 
 /// `/health/deep`'s verdict is exactly the conjunction of its per-check verdicts,

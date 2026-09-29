@@ -57,6 +57,54 @@ pub fn rev() -> &'static str {
 /// `/_source` route answers with this revision and how to obtain it.
 const SOURCE_OFFER: &str = "https://tenders.zebreus.click/_source";
 
+/// One publication source's reuse terms, as `/v1`, `/docs` and the dashboard
+/// footer serve them (issue 446). Every source the fetch registry archives
+/// (`ingest::fetch::SOURCES`) needs one: FTS's Open Government Licence ends the
+/// grant automatically if its attribution statement is missing, and TED's reuse
+/// policy asks for the source and a note that the data was changed.
+pub struct DataSource {
+    /// The `source` value notices and fetches carry.
+    pub source: &'static str,
+    pub name: &'static str,
+    pub url: &'static str,
+    pub license: &'static str,
+    pub license_url: &'static str,
+    /// The statement the licence asks a re-user to show, verbatim.
+    pub attribution: &'static str,
+}
+
+/// The reuse terms of every source (issue 446), in `ingest::fetch::SOURCES`
+/// order. `/docs` repeats each `attribution` and `license_url` word for word;
+/// `docs::tests` holds both lists to that.
+pub const DATA_SOURCES: &[DataSource] = &[
+    DataSource {
+        source: "ted",
+        name: "TED (Tenders Electronic Daily), Publications Office of the European Union",
+        url: "https://ted.europa.eu",
+        license: "Free reuse under Commission Decision 2011/833/EU",
+        license_url: "https://ted.europa.eu/en/legal-notice",
+        attribution: "Source: TED, https://ted.europa.eu, © European Union. \
+            tender-db has transformed the data (parsed, normalised and merged into Tenders).",
+    },
+    DataSource {
+        source: "doe",
+        name: "oeffentlichevergabe.de (Datenservice Öffentlicher Einkauf)",
+        url: "https://oeffentlichevergabe.de",
+        license: "CC0 1.0",
+        license_url: "https://creativecommons.org/publicdomain/zero/1.0/",
+        attribution: "Source: Datenservice Öffentlicher Einkauf, https://oeffentlichevergabe.de (CC0 1.0). \
+            Responsibility for a notice's content stays with the authority that published it.",
+    },
+    DataSource {
+        source: "fts",
+        name: "Find a Tender Service (UK), Cabinet Office",
+        url: "https://www.find-tender.service.gov.uk",
+        license: "Open Government Licence v3.0",
+        license_url: "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+        attribution: "Contains public sector information licensed under the Open Government Licence v3.0.",
+    },
+];
+
 /// Anonymous SSE is capped per client (CONTEXT.md: ~5 streams/IP).
 const MAX_STREAMS_PER_CLIENT: usize = 5;
 
@@ -1829,6 +1877,19 @@ async fn root(State(state): State<AppState>) -> ApiResult {
         "source": rev(),
         "source_offer": SOURCE_OFFER,
         "license": "AGPL-3.0-or-later",
+        // Issue 446: the data's own reuse terms, per source. The code's licence
+        // above is not the data's.
+        "data_sources": DATA_SOURCES
+            .iter()
+            .map(|s| json!({
+                "source": s.source,
+                "name": s.name,
+                "url": s.url,
+                "license": s.license,
+                "license_url": s.license_url,
+                "attribution": s.attribution,
+            }))
+            .collect::<Vec<_>>(),
         "docs": "/docs",
         "openapi": "/v1/openapi.json",
         "cursor": json::cursor(read::latest_cursor(&reader).await?),

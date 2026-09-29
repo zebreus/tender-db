@@ -757,6 +757,12 @@ pub struct Registered {
     pub unrecognised: i64,
 }
 
+/// Every publication source the fetch registry archives. The served data's reuse
+/// terms are owed per source, and `tender_db::v1::DATA_SOURCES` carries one
+/// attribution for each of these; its test fails when a source is added here
+/// without one (issue 446).
+pub const SOURCES: [&str; 3] = ["ted", "doe", "fts"];
+
 /// Rebuild the `fetches` registry from the on-disk archive (issue 23 / the DR
 /// premise's load-bearing finding): a lost DB forced a full ~180 GB re-download
 /// even with `/data/archive` intact, because `fetch()` decides idempotency from
@@ -775,7 +781,7 @@ pub struct Registered {
 /// without hashing — re-runs are cheap and never overwrite real provenance.
 pub async fn register_archive(db: &store::Db, archive_root: &Path) -> Result<Registered, Error> {
     let mut summary = Registered::default();
-    for source in ["ted", "doe", "fts"] {
+    for source in SOURCES {
         for kind in ["daily", "monthly"] {
             let dir = archive_root.join(source).join(kind);
             let entries = match std::fs::read_dir(&dir) {

@@ -1437,12 +1437,16 @@ fn Nav() -> Element {
 }
 
 /// AGPL §13: a user interacting with this server over a network must be offered
-/// the source of the exact version running. `/_source` is that offer.
+/// the source of the exact version running. `/_source` is that offer. The data's
+/// own reuse terms are linked beside it (issue 446): FTS's Open Government
+/// Licence is satisfied by "including or linking to" its attribution statement.
 #[component]
 fn Footer() -> Element {
     rsx! {
         footer {
             a { href: "/docs", "API docs" }
+            " · "
+            a { href: "/docs#data-sources", "Data sources & reuse terms (TED, oeffentlichevergabe.de, Find a Tender)" }
             " · "
             a { href: "/_source", "Source (AGPL-3.0-or-later)" }
             " · "

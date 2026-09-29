@@ -105,6 +105,7 @@ defined in the project's <code>CONTEXT.md</code>.</p>
   <a href="#accounts">Accounts &amp; tokens</a><br>
   <a href="#performance">Performance</a><br>
   <a href="#caveats">Data caveats</a><br>
+  <a href="#data-sources">Data sources &amp; reuse terms</a><br>
   <a href="#meta">Service &amp; licence</a><br>
 </nav></div>
 
@@ -759,6 +760,18 @@ faithfully represent is held in quarantine &mdash; whole, diagnosed, and disclos
 the dashboard &mdash; rather than partially parsed. Current outstanding holds are a
 few hundred members out of 2.4M ever held, each with a documented verdict.</p>
 
+<h2 id="data-sources">Data sources &amp; reuse terms</h2>
+<p>Every notice comes from one of three official publishers, and each publisher's
+terms travel with its data. Every notice and Tender says which one in its
+<code>source</code> field; <a href="/v1">/v1</a> lists the same terms as
+<code>data_sources</code>. If you republish data from this API, carry the
+statement of each source you use.</p>
+<table>
+  <tr><td class="ep">ted</td><td><a href="https://ted.europa.eu">TED (Tenders Electronic Daily)</a>, Publications Office of the European Union. Free reuse under Commission Decision 2011/833/EU (<a href="https://ted.europa.eu/en/legal-notice">https://ted.europa.eu/en/legal-notice</a>).<br>Source: TED, https://ted.europa.eu, © European Union. tender-db has transformed the data (parsed, normalised and merged into Tenders).</td></tr>
+  <tr><td class="ep">doe</td><td><a href="https://oeffentlichevergabe.de">oeffentlichevergabe.de</a> (Datenservice Öffentlicher Einkauf). CC0 1.0 (<a href="https://creativecommons.org/publicdomain/zero/1.0/">https://creativecommons.org/publicdomain/zero/1.0/</a>): no attribution is required, and it is credited anyway.<br>Source: Datenservice Öffentlicher Einkauf, https://oeffentlichevergabe.de (CC0 1.0). Responsibility for a notice's content stays with the authority that published it.</td></tr>
+  <tr><td class="ep">fts</td><td><a href="https://www.find-tender.service.gov.uk">Find a Tender Service</a> (UK), Cabinet Office. Open Government Licence v3.0 (<a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/">https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/</a>).<br>Contains public sector information licensed under the Open Government Licence v3.0.</td></tr>
+</table>
+
 <h2 id="meta">Service &amp; licence</h2>
 <table>
   <tr><td class="ep"><span class="method">GET</span>/v1</td><td>Service info: version, revision, current cursor, endpoint list, source offer.</td></tr>
@@ -778,7 +791,8 @@ running server offers the source of its exact revision at
 
 <footer>
   tender-db · <a href="/">Dashboard</a> · <a href="/v1">Service info</a> ·
-  <a href="/_source">Source (AGPL-3.0-or-later)</a>
+  <a href="/_source">Source (AGPL-3.0-or-later)</a> ·
+  <a href="#data-sources">Data sources &amp; reuse terms</a>
 </footer>
 </div>
 </body>
@@ -788,7 +802,34 @@ running server offers the source of its exact revision at
 #[cfg(test)]
 mod tests {
     use super::PAGE;
+    use crate::v1::DATA_SOURCES;
     use crate::v1::openapi::SPEC;
+
+    /// Issue 446: every source the fetch registry archives has its reuse terms
+    /// on `/docs`, word for word as `/v1` serves them. A new source added to
+    /// `ingest::fetch::SOURCES` without terms fails here, before its data is
+    /// served without the statement its licence asks for.
+    #[test]
+    fn every_archived_source_carries_its_reuse_terms_on_the_docs() {
+        for source in ingest::fetch::SOURCES {
+            let terms = DATA_SOURCES
+                .iter()
+                .find(|s| s.source == source)
+                .unwrap_or_else(|| panic!("source {source:?} is archived but has no DataSource entry"));
+            assert!(
+                PAGE.contains(terms.attribution),
+                "/docs must carry {source}'s attribution verbatim: {:?}",
+                terms.attribution
+            );
+            assert!(PAGE.contains(terms.license_url), "/docs must link {source}'s licence");
+            assert!(PAGE.contains(terms.url), "/docs must link {source}'s publisher");
+        }
+        assert_eq!(
+            DATA_SOURCES.len(),
+            ingest::fetch::SOURCES.len(),
+            "a DataSource names a source the registry does not archive"
+        );
+    }
 
     /// Issue 370: retired claims must not survive on ANY served surface.
     ///

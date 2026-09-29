@@ -29,7 +29,7 @@
       "get": {
         "tags": ["service"],
         "summary": "Service info",
-        "description": "Version, deployed revision, current change cursor, feed generation, endpoint list and the AGPL source offer.",
+        "description": "Version, deployed revision, current change cursor, feed generation, endpoint list, the AGPL source offer and each data source's reuse terms.",
         "operationId": "serviceInfo",
         "responses": {
           "200": {
@@ -43,7 +43,22 @@
                     "version": { "type": "string" },
                     "source": { "type": "string", "description": "Deployed git revision." },
                     "source_offer": { "type": "string" },
-                    "license": { "type": "string", "example": "AGPL-3.0-or-later" },
+                    "license": { "type": "string", "example": "AGPL-3.0-or-later", "description": "The licence of tender-db's code. The data's reuse terms are in data_sources." },
+                    "data_sources": {
+                      "type": "array",
+                      "description": "The reuse terms of each publication source, with the attribution statement its licence asks a re-user to carry (issue 446).",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "source": { "type": "string", "example": "fts", "description": "The value notices and Tenders carry in `source`." },
+                          "name": { "type": "string" },
+                          "url": { "type": "string" },
+                          "license": { "type": "string", "example": "Open Government Licence v3.0" },
+                          "license_url": { "type": "string" },
+                          "attribution": { "type": "string", "example": "Contains public sector information licensed under the Open Government Licence v3.0." }
+                        }
+                      }
+                    },
                     "docs": { "type": "string", "example": "/docs" },
                     "openapi": { "type": "string", "example": "/v1/openapi.json" },
                     "cursor": { "$ref": "#/components/schemas/Cursor" },
