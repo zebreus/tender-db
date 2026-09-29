@@ -67,7 +67,12 @@ proof is a `Rewind` over the whole child table, per deleted parent row.
 
 ## Verify
 
-    cargo test -p store --test mention_fk_probe
+    grep -c 'tender-db issue 442 step 4' .scratch/tender-db/upstream-turso-requests.md; sed -n 3p .scratch/tender-db/upstream-turso-requests.md | cut -c1-40
+
+- **done** (step 4, the last open unit): `1` and a Status line that names the posted upstream issue's URL
+- **open**: `1` and `Status: READY TO POST, not posted.` (read 2026-09-29). Changed 2026-09-29: the old verify was
+  `cargo test -p store --test mention_fk_probe` — unit 1's test, which the gate runs, and a build rather than a read
+  (board-verify ran it beside a deploy's gate, and it kept compiling turso after its 60 s timeout).
 
 - **done** (unit 1): the organization-delete test is green AND on prod the auto-Reindex line names
   `organization_names_org`, and 440's `repair-placeholder-orgs` wet reports its per-org time in ms, not seconds.

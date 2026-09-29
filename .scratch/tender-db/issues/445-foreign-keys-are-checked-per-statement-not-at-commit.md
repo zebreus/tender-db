@@ -27,7 +27,12 @@ transaction, expecting COMMIT to judge it, and gets a failure mid-transaction in
 
 ## Verify
 
-    cargo test -p store <the new test name>
+    grep -rn 'execute("PRAGMA defer_foreign_keys' crates/store/src/ | wc -l; grep -c 'fn foreign_keys_are_checked_per_statement_and_the_defer_pragma_is_ignored' crates/store/tests/mention_fk_probe.rs
+
+- **done**: `0` then `1` — no source statement sets the pragma turso ignores, and the pinning test exists (the gate
+  runs it) (read 2026-09-29)
+- **open**: a non-zero first count — someone set the no-op pragma again and is reasoning from it. Changed 2026-09-29:
+  the old verify was a placeholder `cargo test` line, a build rather than a read.
 
 ## Done 2026-09-28
 

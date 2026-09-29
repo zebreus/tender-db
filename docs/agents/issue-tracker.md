@@ -121,6 +121,12 @@ The rules that make it a check rather than a story:
 - **Free to run.** No token, no data pages, no box load: a public `curl`, a bounded read per
   `prod-box-reads.md`, or a `grep` over a served document. A verify that needs permission will not
   be run, and then it is not a check.
+- **No build.** A `cargo` command is not a read: it compiles in the shared working tree outside
+  `ops/check.sh`'s flags, and next to a running gate it waits for the build lock and then builds a
+  second artifact family (2026-09-29: 442's `cargo test` verify was seen compiling turso beside a deploy's
+  gate, with 5 GB of the container's disk left).
+  A test belongs to the gate; the verify reads what the test's fix did on prod. `ops/board-verify.sh`
+  refuses a verify that starts with `cargo`.
 - **A multi-unit issue verifies its LAST open unit**, and says which; the closed units' lines can
   stay in the body as prose.
 

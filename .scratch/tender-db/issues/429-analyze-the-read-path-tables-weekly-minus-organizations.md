@@ -53,11 +53,13 @@ why the resolver cannot take an `INDEXED BY`)
 
 ## Verify
 
-    ssh -o BatchMode=yes root@zebreus.click "echo 'SELECT COUNT(DISTINCT tbl) FROM sqlite_stat1' | /root/sq.sh"
+    ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh '/admin/jobs?limit=200'" | python3 -c "import sys,json; r=[j for j in json.load(sys.stdin)['recent'] if j['kind']=='analyze']; print(*([r[0]['job_id'], r[0]['outcome'], (r[0]['counts'] or '')[:200]] if r else ['no analyze job yet']))"
 
-- **done**: 27 (the 24 + `org_match_keys`, `plan_prev_edge`, `plan_notice`) and no `organizations` row
-- **open**: 3 (only the internal tables) — or the query is refused (`sqlite_stat1` is not in the public surface;
-  read it through the admin job's summary instead) (2026-09-27)
+- **done**: `<job> ok analyze (issue 429): 24 of 24 tables in …; organizations statistics rows removed: …` — the
+  job ran on prod, every table, no stop (step 3's first scheduled run)
+- **open**: `no analyze job yet` (read 2026-09-29 13:5x UTC: built, deployed, not scheduled). Changed 2026-09-29: the
+  old verify read `sqlite_stat1` through `/v1/sql`, which refuses it (not in the public surface), so it could never
+  print its done line.
 
 ## Steps 1, 2 and 5 — BUILT 2026-09-29 (unscheduled)
 
