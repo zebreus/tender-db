@@ -1,6 +1,6 @@
 # 445 — the re-parse comments say foreign keys are checked at COMMIT; turso checks them per statement
 
-Status: done — BUILT 2026-09-28 (see the foot; gate below). Was: ready-for-agent — filed 2026-09-28 from issue 442 step
+Status: done — BUILT 2026-09-28, DEPLOYED 2026-09-29 06:10 UTC (rev `92ebde0`; no behaviour change by construction). Was: ready-for-agent — filed 2026-09-28 from issue 442 step
 2's adversarial review.
 Kind: code correctness (comments that mislead the next change), small
 Relates to: 442 (the review that found it), 441 (the mention FK proof), 352 (a bracket justified by a similar

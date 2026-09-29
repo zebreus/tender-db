@@ -1,6 +1,6 @@
 # 443 — organizations left with no mention by 434's refresh have no sweep: they stay listed, searchable and counted
 
-Status: ready-for-agent — **SWEPT AND VERIFIED 2026-09-28** (see the foot): 1,768,353 orphans deleted, and a fresh dry run reads 0. Steps 3 (auto-sweep after a re-binding fold) and 4 (non-provisional orphans) are BUILT and committed but NOT DEPLOYED (the deploy was refused by the session's permission classifier). Left: deploy them, run the sweep dry then wet for the ~30, and watch the next re-binding fold queue its sweep. Was: BUILT 2026-09-28, deployed `d5bf157`. Was: filed 2026-09-28 from the first fold with 434's refresh (job 1610, stopped in planning
+Status: ready-for-agent — **SWEPT AND VERIFIED 2026-09-28** (see the foot): 1,768,353 orphans deleted, and a fresh dry run reads 0. Steps 3 and 4 DEPLOYED 2026-09-29 06:10 UTC (rev `92ebde0`, after Lennart cleared the deploy). Step 4 has run and is VERIFIED (21 non-provisional orphans swept; see the foot). Left: step 3's live check, where the next fold that re-binds a mention should queue `sweep-orphan-orgs auto` by itself (the 07:35 UTC daily fold is the first chance). Was: BUILT 2026-09-28, deployed `d5bf157`. Was: filed 2026-09-28 from the first fold with 434's refresh (job 1610, stopped in planning
 after re-binding 4,649,867 mentions, and job 1616, the full fold now running). Measure-first: size the orphaned
 cohort after 1616 lands, then build.
 mine to take.
@@ -166,3 +166,15 @@ predates them. Rows logged before step 4 read NULL there, and all of them were p
 `an_existing_sweep_log_gains_the_identity_columns` pre-creates the step-1 table, opens it and sweeps a Monaco-shaped
 identity row. It was checked failing with the three ALTERs removed. Once deployed: run it dry, expect ~30 plus
 whatever re-binding folds added, then run it wet.
+
+**Step 4 run on prod, 2026-09-29 06:1x UTC (rev `92ebde0`):**
+- **Dry, job 1635:** 5,598,666 walked. 30 rows have no recorded mention, all named and all non-provisional. 9 are kept
+  because a review table names them (the earlier read checked only `org_case_reviews`; the keep-set also reads merge
+  and country verdicts, re-homing and name drops). **21 to sweep, with 22 name variants.**
+- **Wet, job 1636:** **swept 21 of the 21 counted**, 22 variants, each published as `organization removed`, with
+  foreign keys ON.
+- **Verify, dry job 1637:** 5,598,645 walked (−21). 9 orphans remain, all kept by a review table. **0 to sweep.**
+  Monaco Digital's duplicate 23506939 and Sarner's UK row 23375495 now read 404. Monaco's surviving twin 18370494
+  reads 200. **done.**
+- `org_sweep_log` is not on the public `/v1/sql` surface, so the identity pre-image cannot be read from outside. It is
+  pinned by `an_existing_sweep_log_gains_the_identity_columns` and the fixture's `national`/`X1` pre-image.

@@ -1,6 +1,6 @@
 # 442 — issue 441's trap is schema-wide: 11 parent tables' DELETEs walk child tables in their FK proof, because turso uses only an exact-shape child index
 
-Status: ready-for-agent — **step 2 BUILT 2026-09-28** (see the foot; committed, not deployed: deploys are refused by the session's permission classifier). Step 4 remains (post from the owner's account). Was: unit 1 DEPLOYED and VERIFIED 2026-09-28 (see the foot); steps 2–4 remain. Was: unit 1 BUILT 2026-09-27 (the `organizations` delete, see below): gated, committed and
+Status: ready-for-agent — **step 2 DEPLOYED 2026-09-29 06:10 UTC** (rev `92ebde0`). Its Verify waits for the next wet R2/E0/p0 run: per-loser time in ms, and no `FOREIGN KEY constraint failed` in the journal. Step 4 remains (post from the owner's account). Was: unit 1 DEPLOYED and VERIFIED 2026-09-28 (see the foot); steps 2–4 remain. Was: unit 1 BUILT 2026-09-27 (the `organizations` delete, see below): gated, committed and
 not deployed. It deploys with the next bundle, and the auto-Reindex builds it. Filed 2026-09-27 from the hourly
 AUDIT step, generalising issue 441. The remaining units are measure-first (see "What to decide").
 mine to take.
