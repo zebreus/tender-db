@@ -806,23 +806,45 @@ mod tests {
     use crate::v1::openapi::SPEC;
 
     /// Issue 446: every source the fetch registry archives has its reuse terms
-    /// on `/docs`, word for word as `/v1` serves them. A new source added to
+    /// on `/docs`, field for field as `/v1` serves them. A new source added to
     /// `ingest::fetch::SOURCES` without terms fails here, before its data is
     /// served without the statement its licence asks for.
+    ///
+    /// Each check reads the source's OWN table row, split at `<br>` into the
+    /// terms and the statement. A page-wide `contains` could not fail: TED's
+    /// and DÖE's urls also occur inside their own attribution text, so deleting
+    /// the publisher link left the check green (the pre-deploy review).
     #[test]
     fn every_archived_source_carries_its_reuse_terms_on_the_docs() {
+        fn text(html: &str) -> String {
+            let mut out = String::new();
+            let mut in_tag = false;
+            for c in html.chars() {
+                match c {
+                    '<' => in_tag = true,
+                    '>' => in_tag = false,
+                    _ if !in_tag => out.push(c),
+                    _ => {}
+                }
+            }
+            out
+        }
         for source in ingest::fetch::SOURCES {
             let terms = DATA_SOURCES
                 .iter()
                 .find(|s| s.source == source)
                 .unwrap_or_else(|| panic!("source {source:?} is archived but has no DataSource entry"));
-            assert!(
-                PAGE.contains(terms.attribution),
-                "/docs must carry {source}'s attribution verbatim: {:?}",
-                terms.attribution
-            );
-            assert!(PAGE.contains(terms.license_url), "/docs must link {source}'s licence");
-            assert!(PAGE.contains(terms.url), "/docs must link {source}'s publisher");
+            let start = PAGE
+                .find(&format!("<td class=\"ep\">{source}</td>"))
+                .unwrap_or_else(|| panic!("/docs has no data-sources row for {source}"));
+            let row = &PAGE[start..start + PAGE[start..].find("</tr>").expect("row end")];
+            let (terms_html, statement) = row.split_once("<br>").expect("terms<br>statement");
+            assert_eq!(statement, format!("{}</td>", terms.attribution), "/docs must carry {source}'s statement verbatim");
+            assert!(terms_html.contains(&format!("href=\"{}\"", terms.url)), "/docs must link {source}'s publisher");
+            assert!(terms_html.contains(&format!("href=\"{}\"", terms.license_url)), "/docs must link {source}'s licence");
+            let terms_text = text(terms_html);
+            assert!(terms_text.contains(terms.name), "/docs must name {source} as /v1 does: {:?}", terms.name);
+            assert!(terms_text.contains(terms.license), "/docs must name {source}'s licence as /v1 does");
         }
         assert_eq!(
             DATA_SOURCES.len(),
