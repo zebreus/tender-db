@@ -129,3 +129,7 @@ builder aggregates per row — which is the SERVER's own read and never passes t
 usage; and the one capability an analyst might want it for (CPV codes per tender) is already served as the `cpv`
 array on `/v1/tenders`, no `group_concat` needed.
 
+**2026-09-29: step 3 (the out-of-process worker, issue 431) is closed as not viable on turso 0.7.2.** The
+multiprocess-WAL backend it needs jams a process with `Busy` once one transaction passes 262,144 WAL frames (1 GiB),
+and the server's deferred `CREATE INDEX` builds cross that. The layer-1 in-process gate is the standing protection;
+431 has the soak and the revisit trigger.
