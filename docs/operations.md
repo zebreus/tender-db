@@ -778,7 +778,7 @@ cloud container never starts sends nothing, and that happened on 4 of 6 runs on
 2026-09-29. So a **second, independent watcher** now runs in this repository,
 `.github/workflows/uptime.yml` — the GitHub Actions option above. It became
 possible once the repository was published to GitHub (public), and it needs no
-account or secret. It curls `/health/deep` at :07/:22/:37/:52 with about a minute
+account or secret. It curls `/health/deep` at :08/:23/:38/:53 with about a minute
 of retries (User-Agent `tender-db-uptime-gha/1`). On DOWN it opens one
 `uptime`-labelled issue that mentions the owner, and it closes that issue on
 recovery. A manual run with `drill: true` exercises the issue path (a

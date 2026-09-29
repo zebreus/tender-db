@@ -204,7 +204,7 @@ The run itself can be read with `get_session`; delivery can only be confirmed on
   repository is public on GitHub (`zebreus/tender-db`, created 2026-08-08). The 07-21 "no GitHub publish for now"
   was about publishing, which has since happened. The workflow needs no new account or secret, and the owner
   removes it by deleting the file.
-  - It runs on GitHub's scheduler at :07/:22/:37/:52, a different platform from the routines.
+  - It runs on GitHub's scheduler at :08/:23/:38/:53 (:07/:22/:37/:52 until 2026-09-29 15:3x, see the foot), a different platform from the routines.
   - It curls `/health/deep` with three retries 20 s apart (User-Agent `tender-db-uptime-gha/1`).
   - DOWN opens one `uptime`-labelled issue whose body mentions the owner (GitHub notifies by email), with the
     failing checks and the run link. A later healthy run closes it with the recovery time. The run's actor is
@@ -221,3 +221,10 @@ The run itself can be read with `get_session`; delivery can only be confirmed on
   is public and not a fork, and the file's cron is valid. GitHub documents that scheduled runs of a newly added
   workflow can start late under load. Re-read at the next firing. If there is still none by 2026-09-29 18:00 UTC,
   push a no-op edit of the cron line: a schedule registers on a push that changes it.
+- **2026-09-29 ~15:30 UTC: the cron moved to `8,23,38,53`, to re-register the schedule.** Still no `schedule` run at
+  15:05, 2 h 13 min and nine slots after the push, with the workflow `active` in the API. That is past GitHub's
+  documented load delay, so the schedule most likely never registered. A push that CHANGES the cron line
+  re-registers it; the minute shift is that change. Verify at the next firing: `list_workflow_runs uptime.yml
+  event=schedule` should list runs at :08/:23/:38/:53. If it is still empty, look at the repository's Actions
+  settings (a disabled schedule, an account-level policy) rather than wait. Do not move the trigger onto the box:
+  a watcher the box itself fires goes silent exactly when the box is down.
