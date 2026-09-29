@@ -1,6 +1,7 @@
 # 24 — Alerting: know when production breaks without looking
 
-Status: ready-for-agent — external check LIVE and now **doubled** (2026-09-29): the :50 routine `trig_01F8LUCUBSxHB3uBx5DyTZkp` missed 9 of 70 hourly slots (09-26 12:50 → 09-29 09:50 UTC firings, ~3 a day, longest gap between checks 3 h 01 min), over the 09-26 rule's line, so the `:20` twin `trig_01La21kzNPgK2seKNhkixLME` (User-Agent `tender-db-uptime-routine/1-twin`) now runs too. The DOWN path was drilled the same day by firing the :50 routine with drill text (session `cse_014M7EFk4ZtTm4onJx3Qygjg`, see the foot); the kill-the-service drill stays unrun on a serving box.
+Status: ready-for-agent — a THIRD, independent watcher is live since 2026-09-29 12:52 UTC: `.github/workflows/uptime.yml` (GitHub Actions, every 15 min, opens an `uptime` issue mentioning the owner on DOWN, closes it on recovery; drill run 36571026751 opened and closed issue #2). It exists because the cloud routines' containers failed on 4 of 6 runs that day. What stays open: the routines' own push/email delivery (unconfirmable from here) and the kill-the-service drill on a serving box.
+Was status (before 2026-09-29 13:00): ready-for-agent — external check LIVE and now **doubled** (2026-09-29): the :50 routine `trig_01F8LUCUBSxHB3uBx5DyTZkp` missed 9 of 70 hourly slots (09-26 12:50 → 09-29 09:50 UTC firings, ~3 a day, longest gap between checks 3 h 01 min), over the 09-26 rule's line, so the `:20` twin `trig_01La21kzNPgK2seKNhkixLME` (User-Agent `tender-db-uptime-routine/1-twin`) now runs too. The DOWN path was drilled the same day by firing the :50 routine with drill text (session `cse_014M7EFk4ZtTm4onJx3Qygjg`, see the foot); the kill-the-service drill stays unrun on a serving box.
 Was status (before 2026-09-29): ready-for-agent — **the external half is BUILT 2026-09-26 11:50 UTC** (see the foot): routine `trig_01F8LUCUBSxHB3uBx5DyTZkp` "tender-db external uptime check (issue 24)" fires hourly at :50 into a fresh cloud session, curls `https://tenders.zebreus.click/health/deep` from off the box, and ends with a `TENDER-DB DOWN` message (push + email to the account owner) on anything but HTTP 200 with `ok: true`. The 07-21 decision named this routine, but it was never created: on 2026-09-26 the only routine on the account was the hourly ownership check-in and every `/health/deep` hit in the day's nginx log was the operating session's own curl. Open: the failure path's push is unexercised (no outage since), and the kill-the-service drill stays unrun on a serving box. Was: PARTIALLY RESOLVED / EXTERNAL HALF NEEDS LENNART (verified 2026-08-16, owner sweep). On-box detection is in place: /health/deep (real DB check 213, ingest-kind freshness 226, disk, canonical-layer presence 133) plus the restored hourly disk/job watchdogs (224, repo-durable). The EXTERNAL half is verifiably absent: nginx access logs show the only /health callers are the deploy script's own curls — no uptime-service UA, no regular cadence. A box-side watchdog cannot report its own box's death, so an external pinger (UptimeRobot-class, hitting /health/deep, notifying Lennart's phone/email) is the missing piece — an account action only Lennart can take, same class as issue 23's backup destination. Flag both together when he surfaces.
 Current monitoring is tmux loggers writing files on the box — nobody is
 notified if the service dies, /health goes red, disk fills, or the daily
@@ -190,4 +191,28 @@ The run itself can be read with `get_session`; delivery can only be confirmed on
   `TENDER-DB DOWN — DRILL, NOT AN OUTAGE (issue 24)`.
 - Still unconfirmed: whether that message arrived as a push and an email. This session cannot see the owner's phone
   or inbox. If it did not arrive, the failure path is broken and a real outage would be silent too.
+
+## 2026-09-29 12:5x UTC — the routines keep failing to start; a GitHub Actions watcher added
+
+- **Read at 12:49 UTC.** The :50 routine's 11:50 run (`cse_01TiVjaukir255HyGgLYfj8j`) and the twin's 12:20 run
+  (`cse_01KM7XVkriADRgAUnsYAVbo7`) both ended **"Cloud container never started"**. So did the 10:50 run and the
+  first drill. That is 4 of the 6 routine sessions today, all on the platform side and none from an unhealthy
+  answer. Without them the box went 11:48 → 12:5x with no external check, and doubling the routines does not help
+  when both share the failure.
+- **Added**: `.github/workflows/uptime.yml`, commit `f9cf205`. This is Option B from 2026-07-21 above ("a
+  scheduled GitHub Actions curl … *if* the repo is later published to GitHub"). The precondition now holds: the
+  repository is public on GitHub (`zebreus/tender-db`, created 2026-08-08). The 07-21 "no GitHub publish for now"
+  was about publishing, which has since happened. The workflow needs no new account or secret, and the owner
+  removes it by deleting the file.
+  - It runs on GitHub's scheduler at :07/:22/:37/:52, a different platform from the routines.
+  - It curls `/health/deep` with three retries 20 s apart (User-Agent `tender-db-uptime-gha/1`).
+  - DOWN opens one `uptime`-labelled issue whose body mentions the owner (GitHub notifies by email), with the
+    failing checks and the run link. A later healthy run closes it with the recovery time. The run's actor is
+    `zebreus`, so GitHub's own "scheduled workflow failed" email also goes to the owner.
+- **Drilled** with `workflow_dispatch drill=true`, run 36571026751, 19 s: the real check answered HTTP 200, the
+  forced-DOWN path created and closed **issue #2** "UPTIME DRILL — not an outage (issue 24)". The issue path works
+  end to end with the repository's own token.
+- **Verify** (added to the block above): the workflow's scheduled runs are listed and green, e.g.
+  `mcp__github__actions_list list_workflow_runs uptime.yml` shows `event: schedule`, `conclusion: success` for runs
+  after 13:07 UTC.
 

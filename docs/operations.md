@@ -772,6 +772,19 @@ aimed at. Acceptable for a single-operator, rebuildable dataset; tighten the
 interval if that ever stops being true. The routine is configured outside this
 repo, so nothing in the deploy ships it — it is an operator-owned schedule.
 
+**As it stands (2026-09-29, issue 24).** Two routines run hourly at `:50` and
+`:20` (User-Agents `tender-db-uptime-routine/1` and `…/1-twin`). A routine whose
+cloud container never starts sends nothing, and that happened on 4 of 6 runs on
+2026-09-29. So a **second, independent watcher** now runs in this repository,
+`.github/workflows/uptime.yml` — the GitHub Actions option above. It became
+possible once the repository was published to GitHub (public), and it needs no
+account or secret. It curls `/health/deep` at :07/:22/:37/:52 with about a minute
+of retries (User-Agent `tender-db-uptime-gha/1`). On DOWN it opens one
+`uptime`-labelled issue that mentions the owner, and it closes that issue on
+recovery. A manual run with `drill: true` exercises the issue path (a
+"UPTIME DRILL" issue, no mention, closed by the same run). To remove it, delete
+the file.
+
 ### Test procedure
 
 - **Freshness / job / disk logic** is unit-tested against crafted signals
