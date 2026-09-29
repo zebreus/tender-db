@@ -1,6 +1,7 @@
 # 239 — counting 5,000 ids of `v_tenders` takes over 10 seconds
 
-Status: FILTERED AND JOINED VIEW READS REFUSED UP FRONT — DEPLOYED `12bffae` 2026-09-06 12:0x UTC and verified live (below); upstream re-probed at 0.8.0-pre.8, still no pushdown; was CAUSE RE-CONFIRMED under turso 0.7.2 (2026-08-23, plan-level tripwire landed); was CAUSE FOUND 2026-08-18 — turso pushes no predicate into ANY view, so the whole `v_*` analyst
+Status: done — 2026-09-29. The last open piece (the 2026-09-15 comment: `notice_withheld_fields`, the one allow-listed view outside the `v_` prefix, escaped the refusal, and its GROUP BY made even an unfiltered `LIMIT 1` hit the time limit) is fixed in `2aae46c`, deployed and verified live (below). The underlying cause — turso pushes no predicate into a view — is upstream's; every view read is now either unfiltered-and-streaming or refused up front with base-table guidance.
+Was status (before 2026-09-29): FILTERED AND JOINED VIEW READS REFUSED UP FRONT — DEPLOYED `12bffae` 2026-09-06 12:0x UTC and verified live (below); upstream re-probed at 0.8.0-pre.8, still no pushdown; was CAUSE RE-CONFIRMED under turso 0.7.2 (2026-08-23, plan-level tripwire landed); was CAUSE FOUND 2026-08-18 — turso pushes no predicate into ANY view, so the whole `v_*` analyst
 surface is unusable for filtered queries (a single-table view is 1000x slower than its table). The
 `current_title` denormalisation shipped and helps unfiltered reads, but is NOT the fix
 Kind: read-path cost (the headline analyst view is not usable for aggregates)
@@ -449,3 +450,25 @@ and refuse it up front, or drop it from `ALLOWED`, or rewrite it without the cor
 `GROUP BY` (on the `(kind, notice_id)` index, or fold-maintained as a table, which is this
 issue's standing "materialise" direction) — and strengthen `every_allowlisted_table_is_queryable`
 so it asserts a `LIMIT 1` peek actually answers instead of only classifying.
+
+## 2026-09-29 — `notice_withheld_fields`: streams, and is refused when filtered (`2aae46c`)
+
+- **The view** was a LEFT JOIN to `notice_codes` under `GROUP BY (notice_id, section_id)`: the grouping sorts the
+  whole FieldsPrivacy cohort before its first row. It is now one row per FieldsPrivacy section with a per-section
+  scalar subquery for each column, `MAX` kept, so the rows are the same and there is no sorter.
+  `crates/store/tests/withheld_fields_view.rs` pins row identity against the old form verbatim (every column
+  present, two identifier codes, a block with no codes, a non-withholding section). It also checks EXPLAIN: the old
+  form carries `Sorter` opcodes and the view carries none.
+- **The refusal** keyed on the `v_` prefix. `unfilterable_view` now names `notice_withheld_fields` too; its table
+  note carries NOT FILTERABLE and the base-table read. `every_allow_listed_view_is_refused_when_filtered` walks the
+  schema's actual views, so the next allow-listed view without the prefix fails the gate rather than production.
+
+## Verify
+
+    echo "SELECT * FROM notice_withheld_fields LIMIT 3" | ssh -o BatchMode=yes root@zebreus.click /root/sq.sh | head -c 120
+    echo "SELECT * FROM notice_withheld_fields WHERE notice_id = 1" | ssh -o BatchMode=yes root@zebreus.click /root/sq.sh | head -c 120
+
+- **done**: the first returns rows (read 2026-09-29 11:5x UTC on rev `2aae46c`: 3 rows in 0.12 s, notice 98's
+  `not-val`/`ten-val-low` blocks); the second is a 400 `notice_withheld_fields is NOT FILTERABLE …`
+- **open**: the first times out (408), or the second runs
+
