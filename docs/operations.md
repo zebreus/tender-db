@@ -778,12 +778,15 @@ cloud container never starts sends nothing, and that happened on 4 of 6 runs on
 2026-09-29. So a **second, independent watcher** now runs in this repository,
 `.github/workflows/uptime.yml` — the GitHub Actions option above. It became
 possible once the repository was published to GitHub (public), and it needs no
-account or secret. It curls `/health/deep` at :08/:23/:38/:53 with about a minute
+account or secret. It curls `/health/deep` at :09/:24/:39/:54 with about a minute
 of retries (User-Agent `tender-db-uptime-gha/1`). On DOWN it opens one
 `uptime`-labelled issue that mentions the owner, and it closes that issue on
 recovery. A manual run with `drill: true` exercises the issue path (a
 "UPTIME DRILL" issue, no mention, closed by the same run). To remove it, delete
-the file.
+the file. Change its cron through GitHub, in the web editor or the API as the owner, and
+not with a session push. GitHub attributes a schedule to whoever last changed the cron
+line, and while the session's push identity held it, no scheduled run fired in 16 slots
+(issue 24).
 
 ### Test procedure
 

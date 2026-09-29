@@ -204,7 +204,7 @@ The run itself can be read with `get_session`; delivery can only be confirmed on
   repository is public on GitHub (`zebreus/tender-db`, created 2026-08-08). The 07-21 "no GitHub publish for now"
   was about publishing, which has since happened. The workflow needs no new account or secret, and the owner
   removes it by deleting the file.
-  - It runs on GitHub's scheduler at :08/:23/:38/:53 (:07/:22/:37/:52 until 2026-09-29 15:3x, see the foot), a different platform from the routines.
+  - It runs on GitHub's scheduler at :09/:24/:39/:54 (earlier minutes until 2026-09-29 16:51, see the foot), a different platform from the routines.
   - It curls `/health/deep` with three retries 20 s apart (User-Agent `tender-db-uptime-gha/1`).
   - DOWN opens one `uptime`-labelled issue whose body mentions the owner (GitHub notifies by email), with the
     failing checks and the run link. A later healthy run closes it with the recovery time. The run's actor is
@@ -228,3 +228,9 @@ The run itself can be read with `get_session`; delivery can only be confirmed on
   event=schedule` should list runs at :08/:23/:38/:53. If it is still empty, look at the repository's Actions
   settings (a disabled schedule, an account-level policy) rather than wait. Do not move the trigger onto the box:
   a watcher the box itself fires goes silent exactly when the box is down.
+- **2026-09-29 16:51 UTC: still no `schedule` run after 16 slots**, 5 of them after the minute shift. So the
+  re-registration theory was not enough. Every edit of the cron line so far came from the operating session's push
+  identity (`Claude <noreply@anthropic.com>` through the session's git credentials), and GitHub ties a schedule to the
+  user who last modified the cron. The cron is now `9,24,39,54`, committed through the GitHub API as the owner
+  (`65252dd`, author Zebreus). **Keep later edits of the workflow file on that path, the API, and not a session push,
+  or the schedule may be orphaned again.** Verify at the next firing: runs at :09/:24/:39/:54 with `event: schedule`.
