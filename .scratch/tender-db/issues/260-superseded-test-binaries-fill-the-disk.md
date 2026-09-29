@@ -139,7 +139,7 @@ next gate's start.
 - **Not fixed**: the tests themselves still leak. Each would need a drop guard that removes the `-wal`/`-shm` too.
   The sweep makes that a tidiness question rather than a disk one.
 
-## 2026-09-29 — the archive prune churned the turso kits on every gate (fixed: one gate invocation; the `.so` half stays open)
+## 2026-09-29 — the archive prune churned the turso kits on every gate (fixed: one gate invocation; `.so` cdylibs pruned too)
 
 Nearly every gate log of the last weeks reads `pruned 0.8 GB of superseded dependency archives` and then
 `Compiling turso_sdk_kit … turso_sync_sdk_kit … turso`, even with no dependency change. `target/debug/deps` shows
@@ -176,3 +176,7 @@ the `.so` cdylibs (58–116 MB each) match no prune pattern, so every variant st
   build serves both steps, or keep the newest per (stem, crate type, family) instead of per stem.
 - A fix is worth one to two minutes of every gate, plus about 1 GB of `.so` that nothing removes today.
 
+- **`.so` half fixed (2026-09-29 evening).** The prune also takes `.so` cdylibs from 50 MB up, keeping the newest per
+  (stem, extension). A kit's `.a` and `.so` from ONE build share a hash, so a stem-only key would have deleted one
+  of a live pair. A dry run over the unified family lists each kit's `.a` and `.so` as their own singleton groups,
+  with 0 to prune. The next gate is green (GATE-EXIT=0) and pruned no dependency archive.

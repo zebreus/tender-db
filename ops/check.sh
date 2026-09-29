@@ -63,13 +63,19 @@ if freed:
 # each, 4.5 GB together) sat in deps/ on 2026-09-18 with 3.5 GB of allowance left.
 # Keep the newest of each stem above 100 MB; a stale one cargo still wanted costs a
 # rebuild of that crate, never a wrong build.
-lib = re.compile(r"^(lib.+)-[0-9a-f]{16}\.(a|rlib)$")
+#
+# The turso kits' cdylibs (`.so`, 58-116 MB) matched no pattern and stayed forever: ten
+# variants on 2026-09-29. They are pruned the same way from 50 MB up. The key is
+# (stem, extension), because one build of a kit writes `.a`, `.so` and `.rlib` under ONE
+# hash: keyed by stem alone, the newest of that live pair would delete the other.
+lib = re.compile(r"^(lib.+)-[0-9a-f]{16}\.(a|rlib|so)$")
 archives = collections.defaultdict(list)
 for name in os.listdir(deps):
     path = os.path.join(deps, name)
     m = lib.match(name)
-    if m and os.path.isfile(path) and os.path.getsize(path) > 100_000_000:
-        archives[m.group(1)].append((os.path.getmtime(path), path))
+    floor = 50_000_000 if m and m.group(2) == "so" else 100_000_000
+    if m and os.path.isfile(path) and os.path.getsize(path) > floor:
+        archives[(m.group(1), m.group(2))].append((os.path.getmtime(path), path))
 freed = 0
 for _, entries in archives.items():
     if len(entries) < 2:
