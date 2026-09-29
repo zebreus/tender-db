@@ -522,18 +522,37 @@ mod cluster_filters {
 /// (Ramboll, Siemens, Kerava, Rauma…). The bare `Y` abbreviation (`Y 0123456-7`
 /// → `Y01234567`, 266 rows) is NOT a table entry: a one-letter prefix would
 /// match every Y-led word, so it is a shape rule in [`label_prefix_stripped`].
+///
+/// **The English company-number labels (issue 447).** Read off the `GB` national
+/// rows on 2026-09-29: 181 carry `COMPANYNO…`, `COMPANYNUMBER…`,
+/// `COMPANYREGISTRATIONNUMBER…` and relatives, mostly UK housing associations
+/// from TED's UK years. 121 strip to pure digits, and 38 of those have a bare
+/// twin already standing (`COMPANYNO01628868` beside `01628868`, Civica UK).
+/// ONLY company-number labels are listed. `REGISTEREDCHARITYNUMBER…` names a
+/// different register, and stripping it would file a charity number as a bare
+/// national id that reads like a company number, so it keeps its label.
+/// Composites (`COMPANYNO03574882HCANOLH4209…`) and the `IP`/`OC`/`RC`-led
+/// remainders are left as published by the caller's `recognisable` guard.
 const LABEL_PREFIXES: &[&str] = &[
     "UMSATZSTEUERIDENTIFIKATIONSNUMMERGEM27AUMSATZSTEUERGESETZ",
     "UMSATZSTEUERIDENTIFIKATIONSNUMMERGEM27AUSTG",
     "UMSATZSTEUERIDENTIFIKATIONSNUMMER",
     "UMSATZSTEUERIDENTIFIKATIONSNR",
+    "COMPANYLIMITEDBYGUARANTEENO",
+    "COMPANYREGISTRATIONNUMBER",
+    "COMPANYLIMITEDBYSHARESNO",
     "USTIDENTIFIKATIONSNUMMER",
     "UMSATZSTEUERIDENTNUMMER",
+    "REGISTEREDCOMPANYNUMBER",
     "HANDELSREGISTERNUMMER",
+    "COMPANYREGISTRATIONNO",
     // Issue 374: the German "registration number" label, 31 prod rows.
     "REGISTRIERUNGSNUMMER",
     "UMSATZSTEUERIDENTNR",
+    "COMPANYREGISTRATION",
+    "REGISTEREDCOMPANYNO",
     "UMSATZSTEUERGESETZ",
+    "COMPANYHOUSENUMBER",
     "HANDELSREGISTERNR",
     "UMSATZSTEUERIDNR",
     "HANDELSREGISTER",
@@ -541,12 +560,15 @@ const LABEL_PREFIXES: &[&str] = &[
     "UMSATZSTEUERNR",
     "USTIDENTNUMMER",
     "CODICEFISCALE",
+    "COMPANYNUMBER",
     "STEUERNUMMER",
+    "COMPANYREGNO",
     "USTIDNUMMER",
     "PARTITAIVA",
     "USTIDENTNR",
     "USTIDNRUID",
     "BUSINESSID",
+    "COMPANYNO",
     "NUMERNIP",
     "NIPNUMER",
     "FONUMMER",
@@ -676,6 +698,19 @@ mod label_prefixes {
             // …and the bare `Y` abbreviation, by shape.
             ("Y01274855", "01274855"),
             ("Y1274855", "1274855"),
+            // Issue 447 — the English company-number labels, prod values from
+            // the GB national rows (Civica, Coastline Housing, Clapham Park…).
+            ("COMPANYNO01628868", "01628868"),
+            ("COMPANYNUMBER03990481", "03990481"),
+            ("COMPANYREGISTRATIONNUMBER04302220", "04302220"),
+            ("COMPANYREGISTRATIONNO04370758", "04370758"),
+            ("COMPANYREGISTRATION04370758", "04370758"),
+            ("COMPANYREGNO04370758", "04370758"),
+            ("COMPANYHOUSENUMBER4625160", "4625160"),
+            ("REGISTEREDCOMPANYNUMBER04370758", "04370758"),
+            ("REGISTEREDCOMPANYNO04370758", "04370758"),
+            ("COMPANYLIMITEDBYSHARESNO05623548", "05623548"),
+            ("COMPANYLIMITEDBYGUARANTEENO05300630", "05300630"),
         ] {
             assert_eq!(label_prefix_stripped(raw), Some(want), "{raw}");
         }
@@ -692,6 +727,8 @@ mod label_prefixes {
         assert_eq!(label_prefix_stripped("CIF"), None);
         assert_eq!(label_prefix_stripped("YTUNNUS"), None);
         assert_eq!(label_prefix_stripped("Y"), None);
+        assert_eq!(label_prefix_stripped("COMPANYNO"), None);
+        assert_eq!(label_prefix_stripped("COMPANYNUMBER"), None);
     }
 
     /// Issue 363: the bare `Y` is a shape, not a word — only `Y` + 7–8 digits

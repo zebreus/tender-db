@@ -8650,6 +8650,37 @@ mod tests {
     /// `recognisable` guard, because `HRB93017` is neither pure digits nor a
     /// Spanish CIF. So the two forms were separate live merge keys and the same
     /// company published both ways got two org rows.
+    /// Issue 447: a UK company number published behind its English field name
+    /// resolves to the bare number, which is the key its twin already stands
+    /// under. Charity labels and composites keep what the publisher wrote: the
+    /// guard admits a remainder only when it is pure digits.
+    #[test]
+    fn an_english_company_number_label_strips_to_the_bare_number_and_nothing_else_does() {
+        for (raw, bare) in [
+            ("COMPANYNO01628868", "01628868"),
+            ("COMPANYNUMBER03990481", "03990481"),
+            ("COMPANYREGISTRATIONNUMBER04302220", "04302220"),
+        ] {
+            let labelled = normalise_identifier(raw, Some("GB"));
+            assert_eq!(labelled.as_ref().map(|i| i.value.as_str()), Some(bare), "{raw}");
+            assert_eq!(labelled, normalise_identifier(bare, Some("GB")), "{raw} and {bare} are one identifier");
+        }
+        // Left as published: a composite of two registers; a non-digit remainder
+        // (an Industrial & Provident society number); a charity-register label,
+        // which is not in the vocabulary at all.
+        for keep in [
+            "COMPANYNO03574882HCANOLH4209CHARITYCOMMISSIONNO1074574",
+            "COMPANYNOIP28137R",
+            "REGISTEREDCHARITYNUMBER1065510",
+        ] {
+            assert_eq!(
+                normalise_identifier(keep, Some("GB")).map(|i| i.value),
+                Some(keep.to_owned()),
+                "{keep} keeps what the publisher wrote"
+            );
+        }
+    }
+
     #[test]
     fn the_handelsregister_strip_reunites_the_labelled_and_bare_forms() {
         assert_eq!(
