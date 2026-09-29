@@ -18,9 +18,13 @@ ingest, app) a second artifact family mid-run, and `cargo test -p ingest` died w
 `No space left on device` after store's suites had passed — GATE-EXIT=101 with no
 FAILED line. The prune only runs at the gate's start. After a dependency/patch
 change, `cargo clean` first (23.5 GiB freed that day) and gate from clean (~35 min).
-For a single focused test mid-iteration, plain `cargo test -p <crate> <name>` is fine —
-just run `ops/check.sh` before committing so the pruning happens and the truncation
-traps its header documents don't eat a failure.
+For a single focused test mid-iteration, run it with the gate's flags:
+`CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 cargo test -p <crate> <name>`.
+A PLAIN `cargo test` builds with debuginfo, which is a second hash family of every crate,
+turso included, and the gate's prune keeps only the NEWEST archive per stem. On 2026-09-29
+the gate after one plain `--lib` run pruned 1.9 GB of dependency archives where the gates
+before it pruned 0.8 GB. Then run `ops/check.sh` before committing, so the pruning happens
+and the truncation traps its header documents don't eat a failure.
 
 **`cargo check -p tender-db` DOES NOT COMPILE `crates/app/src/supervisor.rs`.**
 `lib.rs` gates that module (and `admin`, `coverage`, `ledger`, `v1`, `webhooks`)

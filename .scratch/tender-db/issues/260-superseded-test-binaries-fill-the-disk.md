@@ -139,3 +139,17 @@ next gate's start.
 - **Not fixed**: the tests themselves still leak. Each would need a drop guard that removes the `-wal`/`-shm` too.
   The sweep makes that a tidiness question rather than a disk one.
 
+## 2026-09-29 — OPEN follow-up: the archive prune churns the turso kits on every gate
+
+Nearly every gate log of the last weeks reads `pruned 0.8 GB of superseded dependency archives` and then
+`Compiling turso_sdk_kit … turso_sync_sdk_kit … turso`, even with no dependency change. `target/debug/deps` shows
+the reason. Each gate builds TWO families of each kit, one about 60 MB and one about 110 MB as `.so`, one to two
+minutes apart. The kits are built as several crate types (`.a`, `.so` and `.rlib`), and the prune keeps only the
+newest `.a`/`.rlib` over 100 MB per stem. So a live family is deleted at every gate start and rebuilt. Separately,
+the `.so` cdylibs (58–116 MB each) match no prune pattern, so every variant stays: ten were on disk on 09-29.
+
+- **Not fixed yet.** Before changing the rule, find out which gate step builds which family (a `-v` build of
+  `cargo test -p store` versus `cargo test-app-all` shows the flags). Then either unify the two families, so one
+  build serves both steps, or keep the newest per (stem, crate type, family) instead of per stem.
+- A fix is worth one to two minutes of every gate, plus about 1 GB of `.so` that nothing removes today.
+
