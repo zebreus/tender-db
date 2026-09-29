@@ -1,6 +1,7 @@
 # 137 — the quarantine is 72% already reclaimed; the 1.2M target is really 71,707
 
-Status: **measured 2026-08-05**, all three checks run under team-lead's word. Answers Lennart's
+Status: **DONE 2026-09-29** — every recommendation executed: 84's skipped marker and mark-skipped-siblings ran, the dashboard/metrics report the still-held three-way split, unknown-customization reclaimed (terminal policy Fixed(0) for every reason but unrepresentable-value). Was: measured 2026-08-05, all three checks run under team-lead's word.
+Was status (before 2026-09-29): **measured 2026-08-05**, all three checks run under team-lead's word. Answers Lennart's
 "is `unknown-customization` the next major push?" question.
 Owner: sdk-vendor
 Relates to: 84/#29 (the DTD population, which this puts in context), 74 (which already added the SDKs)

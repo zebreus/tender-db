@@ -1,6 +1,7 @@
 # 130 — a check downstream of a guard cannot validate that guard
 
-Status: RECORDED — a verification hazard, not a defect. No code is wrong; the risk is in how a green is
+Status: DONE 2026-09-29 — recorded knowledge, no work left. The hazard is documented where the misreading happens (the 'WHAT A GREEN DOES NOT MEAN' header in standing_gate.sh, the assert_heads_match doc in canonical.rs). Its only live signal, a failed project job, is alarmed by tender-db-jobwatch (outcome != ok within 26 h). The per-check prevented/detected annotation is declined. Was: RECORDED — a verification hazard, not a defect.
+Was status (before 2026-09-29): RECORDED — a verification hazard, not a defect. No code is wrong; the risk is in how a green is
 read. One small practice proposed at the end.
 Kind: verification discipline
 Owner: proj-fix (first instance is mine)

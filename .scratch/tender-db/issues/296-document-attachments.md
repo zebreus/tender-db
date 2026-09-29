@@ -1,6 +1,7 @@
 # 296 — tender document/PDF attachments (metadata-only today)
 
-Status: BACKLOG (filed 2026-08-26; CONTEXT.md "Metadata only: the PDF/document
+Status: wontfix 2026-09-29 — a spec non-goal (spec.md 'Explicit non-goals', CONTEXT.md 'Metadata only'); reopening means amending CONTEXT.md/spec with a recorded demand, starting from link-liveness metadata. Was: BACKLOG.
+Was status (before 2026-09-29): BACKLOG (filed 2026-08-26; CONTEXT.md "Metadata only: the PDF/document
 attachments of tenders are out of scope for now"; spec non-goal)
 Kind: capability (out-of-scope-by-decision; revisit trigger = user demand)
 

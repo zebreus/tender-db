@@ -1,6 +1,7 @@
 # 297 — buyer-side previous-publication references as an identity edge (measure, then decide)
 
-Status: BACKLOG (filed 2026-08-26; ADR-0011 line 85: "Same warrant on its face,
+Status: wontfix 2026-09-29 — BT-125(i)-Lot points at a previous PLANNING notice (a PIN), and the fold deliberately never chains through planning notices (OPP-090 is its only reference edge); nothing measured asks for a buyer-side previous-publication edge. Reopen if a consumer needs PIN→CN lineage on the Tender surface.
+Was status (before 2026-09-29): BACKLOG (filed 2026-08-26; ADR-0011 line 85: "Same warrant on its face,
 unmeasured, and therefore out of scope")
 Kind: identity/grouping (ADR-0011 successor)
 Relates to: ADR-0011 / issue 236 (the OPP-090 edge that WAS built).

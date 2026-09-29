@@ -1,6 +1,7 @@
 # 344 — the eForms-DE 1.x and DÖE sdk-0.1 parsers drop `cbc:NoticeLanguageCode`, so their versions have no `original_lang`
 
-Status: DE 1.x DONE 2026-09-03 (`1e895b5` deployed 11:14 UTC, backfill 633 stamped every DE 1.x version in 78 s) / sdk-0.1 DECIDED 2026-09-07 (owner): no profile default — issue CLOSED (see the bottom). Was: ready-for-agent (filed 2026-09-03 from the 340 close-out read)
+Status: done — DE 1.x fixed (1e895b5, backfill job 633); sdk-0.1 decided 2026-09-07: no profile default (the notices carry no NoticeLanguageCode and 93% already get original_lang elsewhere). Nothing left.
+Was status (before 2026-09-29): DE 1.x DONE 2026-09-03 (`1e895b5` deployed 11:14 UTC, backfill 633 stamped every DE 1.x version in 78 s) / sdk-0.1 DECIDED 2026-09-07 (owner): no profile default — issue CLOSED (see the bottom). Was: ready-for-agent (filed 2026-09-03 from the 340 close-out read)
 Kind: parse gap (era inventory) → data quality (ADR-0013 D3's third leg)
 Relates to: 340 (the leg and its backfill), 88 (the UBL-* graft), 251 (era-scoped re-parse machinery)
 

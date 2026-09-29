@@ -1,6 +1,7 @@
 # 238 — /v1/sql answers "your query exceeded the 10s limit" when the truth is "no reader was free"
 
-Status: message half FIXED (`7809efe`, corrected `f1cc6d4`) and fast-shed FIXED (`f771443`), both
+Status: DONE 2026-09-29 — the message half (f1cc6d4) and the fast shed are live, and the admission-control remainder is superseded. Issue 417 (a blocking thread per query, ABANDONED_CAP 4) and issues 425/438 (timer + interrupt() at the 10 s limit, live at 9dedf49, verified 2026-09-28) bound any costly query to about 10 s of one thread, which was the outage the plan check was meant to prevent. Was: message half FIXED and fast-shed FIXED, remaining: admission control.
+Was status (before 2026-09-29): message half FIXED (`7809efe`, corrected `f1cc6d4`) and fast-shed FIXED (`f771443`), both
 deployed and verified on prod. Remaining: admission control, so a huge scan is not admitted at all
 Kind: misleading diagnostic (the error names the wrong cause) + cold-connection cost
 Blocked by: —

@@ -1,6 +1,7 @@
 # 119 — the snapshot ring has silent cadence gaps, and nothing asserts freshness
 
-Status: REWRITTEN 2026-08-04 — original premise FALSIFIED (see below). Folded into 107;
+Status: DONE 2026-09-29 — superseded: the daily-pipeline snapshot whose cadence this tracked is gone; snapshots come from the weekly reflink timer (269), which runs separately from ingest, and 420 (DONE 2026-09-26) fixed its skip-under-load gap. Consumer-side refusal is 107's W1 witness. Was: REWRITTEN 2026-08-04 — kept open for the cadence half.
+Was status (before 2026-09-29): REWRITTEN 2026-08-04 — original premise FALSIFIED (see below). Folded into 107;
 the gate (#28 `standing_gate.sh`) is the fix for the assertion half. Kept open for the
 cadence half.
 Kind: verification (input freshness is unasserted)

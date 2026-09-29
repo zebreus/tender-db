@@ -1,6 +1,7 @@
 # 140 — eForms SDK 1.3 is a DEFECT, not reprocess residue (#39 entry finding)
 
-Status: **measured 2026-08-06**, bounded `/v1/sql` reads under team-lead's per-read word.
+Status: **DONE 2026-09-29** — acted on. Diagnosed as issues 141 and 142 (sdk-1.3: BT-803, OPT-060 pre-1.7, bare ProcessJustification, ExecutionRequirementCode ambiguity) and 143/144 (Group A's tail, attempted-and-failed), all fixed. The unknown-customization bucket measured 0 on 2026-08-14 (issue 201; issue 71 RESOLVED). Was: **measured 2026-08-06**, bounded `/v1/sql` reads under team-lead's per-read word.
+Was status (before 2026-09-29): **measured 2026-08-06**, bounded `/v1/sql` reads under team-lead's per-read word.
 Owner: sdk-vendor (finding) → proj-fix (the defect itself)
 Relates to: 137 (the sizing that surfaced it), 39 (the reprocess this gates), 74 (which vendored 1.3)
 

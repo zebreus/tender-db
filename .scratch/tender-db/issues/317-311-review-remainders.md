@@ -1,6 +1,7 @@
 # 317 — The 311 campaign's unfinished halves: re-homing, escalations, the medium band
 
-Status: Unit B DONE. Unit C's cheap half DONE (93d8704); its medium band is
+Status: **DONE 2026-09-29** — Units A/B/C built and run; 321/322/323 closed. The 93 parked re-homing verdicts, the ~106 medium-band and 20 escalated case verdicts stay parked by policy (apply bar not lowered; minting for 64 mentions not worth a write path) and remain listed by the rehoming-packet and case-escalations reports. Was: Unit B DONE … What remains of Unit A is 93 parked verdicts, issue 322's rename repair, and issue 323's slow write.
+Was status (before 2026-09-29): Unit B DONE. Unit C's cheap half DONE (93d8704); its medium band is
 still parked. Unit A's machinery, packet and REVIEW CAMPAIGN all DONE
 (2026-08-30): 416 mentions re-homed, folded, and the packet reads EMPTY.
 What remains of Unit A is 93 parked verdicts, issue 322's rename repair, and

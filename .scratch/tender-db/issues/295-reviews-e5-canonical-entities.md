@@ -1,6 +1,7 @@
 # 295 — Reviews (REV) and E5 contract-completion as canonical entities
 
-Status: BACKLOG (filed 2026-08-26; deferral recorded in CONTEXT.md + spec non-goals)
+Status: wontfix 2026-09-29 — v1 non-goal by spec (spec.md non-goals, CONTEXT.md 'Reviews stay notice-layer-only in v1'); review and E5 content stays served at the notice layer (/v1/notices/{id}/content). Reopen when a consumer asks for review/completion facts on the Tender surface or v2 scope opens.
+Was status (before 2026-09-29): BACKLOG (filed 2026-08-26; deferral recorded in CONTEXT.md + spec non-goals)
 Kind: capability (data model widening)
 Relates to: 291 (same "before more portals?" class — but unlike language/currency,
 this is purely additive and can land any time).

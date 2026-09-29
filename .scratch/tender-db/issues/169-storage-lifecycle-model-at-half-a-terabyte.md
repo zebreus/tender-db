@@ -1,6 +1,7 @@
 # 169 — storage lifecycle model at 0.5 TB and beyond
 
-Status: open — ITEM 3 CLOSED 2026-09-06 15:0x UTC: the 220 GiB allocated-over-apparent gap on the live DB file was leftover copy-on-write preallocation (reflink ring + XFS's default 128 KiB COW extent hint); reclaimed live with `xfs_spaceman -c "prealloc -s -m 100g" /data` (2 min 27 s, no outage, **+224,365 MiB free: 641,692 → 866,057**) and prevented with `cowextsize 4096` on the file; details at the bottom. Was: URGENCY RESTORED 2026-09-01. The 2026-08-15 downgrade rested on
+Status: **DONE 2026-09-29** — lifecycle model delivered (docs/research/storage-lifecycle-2026-08.md + the cost lines below); standing instruments: weekly disk-census (trend, days_to_full, over-allocation + deleted-open alarms), diskwatch at 80 %, /health/deep at 90 %; Verify 2026-09-26 0.499 / 830 GiB free. Decided: C17 superseded-generation prune and the 2 TB grow both trigger at /data ≥ 85 % (diskwatch's 80 % line is the reopen signal); item 1's per-table attribution dropped — no decision depends on it. Was: open — ITEM 3 CLOSED 2026-09-06 …
+Was status (before 2026-09-29): open — ITEM 3 CLOSED 2026-09-06 15:0x UTC: the 220 GiB allocated-over-apparent gap on the live DB file was leftover copy-on-write preallocation (reflink ring + XFS's default 128 KiB COW extent hint); reclaimed live with `xfs_spaceman -c "prealloc -s -m 100g" /data` (2 min 27 s, no outage, **+224,365 MiB free: 641,692 → 866,057**) and prevented with `cowextsize 4096` on the file; details at the bottom. Was: URGENCY RESTORED 2026-09-01. The 2026-08-15 downgrade rested on
 "/data at 39%, 1.1T free"; it is now 58% / 709G. That basis is void. Warning
 threshold lowered 90% -> 80% as an interim measure (applied to prod today). See
 "Re-measured 2026-09-01".

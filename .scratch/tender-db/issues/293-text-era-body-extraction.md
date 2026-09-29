@@ -1,6 +1,7 @@
 # 293 — text-era BODY extraction (the header-only profile's other half)
 
-Status: BACKLOG (filed 2026-08-26 on Lennart's request — capture every deferral)
+Status: wontfix 2026-09-29 — spec v1 non-goal; the TXT-TX prose is served whole as `description` and 244 already derives the award facts from it. Reopen when a consumer needs a specific text-era body field (start with A18). Was: BACKLOG (filed 2026-08-26 …)
+Was status (before 2026-09-29): BACKLOG (filed 2026-08-26 on Lennart's request — capture every deferral)
 Kind: capability (TED text era 1993-2010)
 Relates to: 244 (the campaign that extracted awards/money from the same era), 232, 291.
 

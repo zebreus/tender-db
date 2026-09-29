@@ -1,5 +1,7 @@
 # Issue 300 Stage 4 — implementation plan (workflow-drafted, adversarially attacked)
 
+Status: **DONE 2026-09-29** — units 1–5 deployed fbc741e (job 479 acceptance: 1,498,485 edges, alarm clear); the edge store is consumed (314 closed; 355/357 packets). Unit 6 (E4 stripped keys) declined: optional per this plan, no consumer or review campaign asks for e4-stripped edges, and the Organschaft shape is handled through 329's DE-VAT arm and merge verdicts; a future need files its own issue. Was: STATUS: plan of record WITH the amendments below
+
 Produced 2026-08-29 by the stage4-implementation-plan workflow (2 codebase
 mappers -> planner -> 2 attackers, ~700k tokens). STATUS: plan of record
 WITH the amendments below — the builder works units + amendments together;

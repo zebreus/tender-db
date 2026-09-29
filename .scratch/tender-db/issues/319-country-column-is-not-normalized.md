@@ -1,6 +1,7 @@
 # 319 — The organization country column holds alpha-3 codes and free text
 
-Status: org layer DONE 2026-08-30 (405406a, wet run verified on prod);
+Status: DONE 2026-09-29 — org layer folded (1408/1409) and re-measured 0-to-fold by 48; the 162-row residue is deliberate (48); VU/GY taken per case by 357; mention spellings are canonical at mint and refreshed on refold by 434. Was: org layer DONE 2026-08-30; mention layer measured and NOT fixed; the VU/GY class is upstream and open.
+Was status (before 2026-09-29): org layer DONE 2026-08-30 (405406a, wet run verified on prod);
 mention layer measured and NOT fixed; the VU/GY class is upstream and open
 Kind: data quality / API correctness (organization layer)
 Relates to: 300 (R2 keys on country), 314 (the edge census surfaced it), 230

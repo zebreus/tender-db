@@ -1,6 +1,7 @@
 # 136 — the ≥€10k negative-money residue: source-published, NOT a delta fault (#37 unblocked)
 
-Status: **measured 2026-08-05**, 5 of 7 queries returned. Issue 134's hypothesis **falsified**.
+Status: DONE 2026-09-29 — measurement complete for its purpose: 134's delta hypothesis falsified; negatives are refused from head columns (`sentinel_amount`, 366), rated per era in weekly DQ §8, and disclosed in /docs#caveats. Q5/Q6 not re-run (superseded by §8). Was: measured 2026-08-05, 5 of 7 queries returned.
+Was status (before 2026-09-29): **measured 2026-08-05**, 5 of 7 queries returned. Issue 134's hypothesis **falsified**.
 Owner: sdk-vendor (measurement) → proj-fix (#37 re-spec)
 Relates to: 134 (the delta hypothesis, falsified here), 131 (its account DOES apply, contrary to
 my own prior reasoning), 36 (the ~72k parent population), 37 (unblocked), 121 (the probe)

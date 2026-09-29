@@ -1,6 +1,7 @@
 # 70 — changes-feed turso-scan wedges (oldest_cursor, entity-filtered changes, filtered lists)
 
-Status: F1+F2 fixed (this branch); F3 MEASURED 2026-08-25 (owner) — the "measure
+Status: DONE 2026-09-29 — F1 (oldest_cursor O(1) from max_cursor, pinned by oldest_cursor_is_o1_for_the_append_only_log) and F2 (changes_entity_cursor index + ENTITY_KINDS guard) are live. F3 was measured 2026-08-25 and its two DoS scans fixed as issue 275 (verified at 0fe1d64). The residual filtered-list tail is deadline-bound since issue 120 (25 s timer + interrupt on the REST pools). Was: F1+F2 fixed (this branch); F3 MEASURED 2026-08-25.
+Was status (before 2026-09-29): F1+F2 fixed (this branch); F3 MEASURED 2026-08-25 (owner) — the "measure
 which filters actually scan at prod scale first" step is done. Code audit over
 lots/organizations/notices + serial worst-case probes on prod. Verdict: the two
 DoS-class scans were BOTH on `/v1/lots` (`status=open&country=<sparse>` 30.7s→503,

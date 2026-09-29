@@ -1,6 +1,7 @@
 # 131 — the `cents < 0` rows: the fold cannot introduce them, and the parser makes them on purpose
 
-Status: ANALYSIS — the parse-vs-fold half of task #33 (sdk-vendor owns the distribution half). Code-path
+Status: **DONE 2026-09-29** — parse-vs-fold settled: P4 held 17,738/17,738 against the chain's parse layer (issue 132); run_light 3.7 re-specified to `cents < 0 AND field <> 'result_value'` (canonical-verify/run_light.sh:105); the rate form is DQ section 8 (134); residual negatives classified as the SDK -1.00 withheld marker (372) and revenue-side contracts (376). Was: ANALYSIS — the parse-vs-fold half of task #33 …
+Was status (before 2026-09-29): ANALYSIS — the parse-vs-fold half of task #33 (sdk-vendor owns the distribution half). Code-path
 determination, no prod contact. **Carries four predictions their snapshot data can falsify, including one
 that would make this my bug.**
 Kind: data-quality / verification

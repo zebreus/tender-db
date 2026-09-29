@@ -1,6 +1,7 @@
 # 198 — dashboard: per-BT coverage report (stored values by field id)
 
-Status: backlog (Lennart 2026-08-14: "idk if we need that, but if you want it create an issue")
+Status: wontfix 2026-09-29 — the all-BT claim is enforced at build time and by DQ section 13; a per-BT count needs full scans of every value table (no field_id index), hours per week, for a panel no consumer asked for. Reopen trigger: an audit that needs per-BT counts, served as a one-off job against the weekly snapshot, not a dashboard panel. Was: backlog.
+Was status (before 2026-09-29): backlog (Lennart 2026-08-14: "idk if we need that, but if you want it create an issue")
 Kind: observability / dashboard panel
 Relates to: ADR-0002 (all business terms, no omissions), the completeness harness in
 crates/ingest/tests/eforms.rs, issue 40 (ledger pattern for making claims inspectable)

@@ -1,6 +1,7 @@
 # 79 — reprocess: skip decompressing inner archives with no held members (sparse-in-huge only)
 
-Status: filed, DO NOT BUILD yet — only if the DE 1.x reprocess drags (team-lead will signal)
+Status: wontfix 2026-09-29 — the DE 1.x reclaim this was parked against finished 2026-08-14 (issue 71) without it, and 77's parse-only-held covers the dense buckets; reopen only if a targeted reprocess of a sparse bucket inside large packages is measured dragging (hours per package set). Was: filed, DO NOT BUILD yet — only if the DE 1.x reprocess drags (team-lead will signal)
+Was status (before 2026-09-29): filed, DO NOT BUILD yet — only if the DE 1.x reprocess drags (team-lead will signal)
 Kind: performance
 Relates to: 77 (parse-only-held), 76 (reprocess mechanism)
 

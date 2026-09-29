@@ -1,6 +1,7 @@
 # 134 — the negative-amount invariant is a RATIO, not a magnitude
 
-Status: RATE-FORM LIVE / row-level re-spec remains with the 33/37 line
+Status: **DONE 2026-09-29** — the ratio form ships as the weekly DQ's per-era negative rate (section 8, `amount_plausibility_template`) plus the sentinel sweep (section 10); the row-level R invariant is declined: 131/132/136 found the residue source-published, run_light 3.7 is already the result_value allow-list, and no check or report would consume a per-row ratio. Was: RATE-FORM LIVE / row-level re-spec remains with the 33/37 line
+Was status (before 2026-09-29): RATE-FORM LIVE / row-level re-spec remains with the 33/37 line
 (owner sweep 2026-08-28). The scale-free RATE this issue argued for ships in
 the weekly DQ: section 8 measures the negative-amount rate per era every
 Sunday (data_quality.rs cites 131/132/134/136 — "a parser fabricating

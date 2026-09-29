@@ -1,6 +1,7 @@
 # 121 — a standing structural gate, the empty-layer hole it closed, and two corrections it forced
 
-Status: phase 0 landed; **phase 1 MEASURED AND PASSED 2026-08-04** — confinement proven **for a warm
+Status: **DONE 2026-09-29** — superseded. The prenuke it existed to retire was deleted 2026-08-06 (HANDOVER-2026-08-07). Detecting an emptied live layer lives in the app (issue 133: layer_presence, wipe_guard_pre/post, PRESENCE_TABLES in canonical.rs). FKs are ON on every connection, so the orphan classes are enforced at write time. The snapshot-side timer (design/daily-verify-integration.md) will not be wired, and the cold-cache measurement is void. Was: phase 0 landed; phase 1 MEASURED AND PASSED 2026-08-04 …
+Was status (before 2026-09-29): phase 0 landed; **phase 1 MEASURED AND PASSED 2026-08-04** — confinement proven **for a warm
 cache** (see the scope limit below; the cold/refilling case is unmeasured), Tier B/C released against
 it. Companion tooling: `snapwatch.sh` (live on the box), `thread_cpu.sh`,
 `activity.sh` (shared sustained-activity primitive), `negative_amount_triage.sql`, `tierA_with_triage.sh`

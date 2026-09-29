@@ -1,6 +1,7 @@
 # 232 — the text era projects titles but almost no buyers, values or winners (3.79M versions)
 
-Status: buyer FIXED in code 2026-08-18 (`0074b61`) and riding the 244 redo sweep (section 1 buyer 0.5%→63.0% mid-sweep); CY/TW follow-on LANDED 2026-08-22 (rides the NEXT era pass); `value` closed as
+Status: **DONE 2026-09-29** — buyer 100.0% for the text era (run #335). CY/TW homing (f6d7f76) reached the corpus via the 1595 text re-parse and the 1616 fold (434's Verify: 2,332 → 20 country-less mentions, all without a country in the source). `value` is NOT-A-BUG (no amount field in the era's 36 codes). `winner` is owned by 244 (CAMPAIGN COMPLETE, winners named 100.0% where a result materialised). Was: buyer FIXED in code 2026-08-18 (`0074b61`) … `winner` open, blocked on a `CO` archive study
+Was status (before 2026-09-29): buyer FIXED in code 2026-08-18 (`0074b61`) and riding the 244 redo sweep (section 1 buyer 0.5%→63.0% mid-sweep); CY/TW follow-on LANDED 2026-08-22 (rides the NEXT era pass); `value` closed as
 NOT-A-BUG (the era publishes no amount field); `winner` open, blocked on a `CO` archive study
 Kind: projection mapping gap, largest single era by volume
 Blocked by: —

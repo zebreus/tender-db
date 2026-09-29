@@ -1,6 +1,7 @@
 # 92 — `fold()` is O(chain² × state): latent, harmless today, fatal on a long chain
 
-Status: open — LATENT, INSTRUMENTED, DEFER CONFIRMED BY MEASUREMENT (step 2 answered
+Status: wontfix 2026-09-29 — deferred by policy against the weekly DQ section-9 tripwire (`longest_chain` ≥ 4,000 prints a FLAG that names this issue; read 1,876 on 2026-09-19, down from 3,282); reopen when it flags, and the fix is option (2) (shared/Arc `rounds`) behind the four byte-identity gates. Was: open — LATENT, INSTRUMENTED, DEFER CONFIRMED BY MEASUREMENT
+Was status (before 2026-09-29): open — LATENT, INSTRUMENTED, DEFER CONFIRMED BY MEASUREMENT (step 2 answered
 2026-08-28 from the epoch refold's real execution — see the bottom section). The worst real
 chain (3,282 versions, tender 5785085) folded inside a 50k-version chunk that took 488s vs a
 52s median — minutes, not the fatal zone; absolute worst chunk anywhere in the corpus was

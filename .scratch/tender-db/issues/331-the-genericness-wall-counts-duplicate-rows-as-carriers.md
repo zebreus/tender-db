@@ -1,6 +1,7 @@
 # 331 — The genericness wall counts duplicate org rows as separate carriers
 
-Status: MEASURED 2026-09-01 (job 570, `7543612`, 3 s).
+Status: **DONE 2026-09-29** — measured (job 570): 59 falsely-generic keys, all within 3 carriers of the cap; decided no change to the wall. The wall's statistic was later reworked on its own evidence by 349 (echo tier), 351 (name verdicts) and 354 (carrier counts join organizations); 332 closed negative. Was: MEASURED 2026-09-01 (job 570, `7543612`, 3 s). Not inert: 59 keys …
+Was status (before 2026-09-29): MEASURED 2026-09-01 (job 570, `7543612`, 3 s).
 **Not inert: 59 keys are provably falsely generic today.** Small, and all within
 3 carriers of the wall. But the run surfaced a LARGER finding that this issue did
 not ask about and should not absorb — filed separately as issue 332.

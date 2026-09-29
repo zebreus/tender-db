@@ -1,6 +1,7 @@
 # 172 — classification vocabularies and currency drift across 30 years
 
-Status: CURRENCY HALF CLOSED 2026-08-27 (C10 decided as ADR-0014; the pre-refold
+Status: **DONE 2026-09-29** — currency half closed as ADR-0014 (2026-08-27); classification half decided: CPV/NUTS vintages served as published with no cross-era mapping, disclosed in /docs #caveats 'Codes and identities'. Reopen if a cross-era CPV/NUTS rollup is built or marketed. Was: CURRENCY HALF CLOSED 2026-08-27 … CLASSIFICATION half still open, conditional.
+Was status (before 2026-09-29): CURRENCY HALF CLOSED 2026-08-27 (C10 decided as ADR-0014; the pre-refold
 validation pass ran — see below). CLASSIFICATION half (NUTS/CPV drift) still open,
 conditional: before promoting cross-era analytics.
 Role: run-driver

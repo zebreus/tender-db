@@ -1,6 +1,7 @@
 # 167 — capacity/abuse model for the public surface
 
-Status: research half DONE 2026-08-24 (on-box campaign, capacity-measured-2026-08.md); the FIX work is issue 273, then a rate-limit change
+Status: **DONE 2026-09-29** — campaign E1–E4 complete (docs/research/capacity-measured-2026-08.md); 273 RESOLVED 2026-08-25; 168 DONE 2026-08-25; the post-273 budget decided no rate-limit change (walk-pool shed is the admission control). Was: research half DONE 2026-08-24 … the FIX work is issue 273, then a rate-limit change
+Was status (before 2026-09-29): research half DONE 2026-08-24 (on-box campaign, capacity-measured-2026-08.md); the FIX work is issue 273, then a rate-limit change
 Role: run-driver (measurement campaign needs team-lead's word per prod-box-reads)
 
 Eleven issues (17, 25, 55, 61, 70, 89, 115, 117, 120, 121, 122, 163) fixed

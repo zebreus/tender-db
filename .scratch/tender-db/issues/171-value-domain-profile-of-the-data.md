@@ -1,6 +1,7 @@
 # 171 — value-domain profile of the data itself
 
-Status: two of three deliverables DONE (study 2026-08-09; public caveats doc 2026-08-23 — /docs
+Status: DONE 2026-09-29 — study (2026-08-09), /docs#caveats (2026-08-23), rules 8/9/12/14/16 enforced and 10/13 reported; rule 12's sort defect cleared by full fold 1616 (read 2026-09-28). Rules 11/17 declined (store-as-published per ADR-0004; non-ISO codes convert to nothing and are refused as filters; no region aggregate exists; both disclosed in /docs#caveats); rule 15 and the §4 totals declined as superseded by the weekly DQ and org-merge-health reports. Was: two of three deliverables DONE …
+Was status (before 2026-09-29): two of three deliverables DONE (study 2026-08-09; public caveats doc 2026-08-23 — /docs
 #caveats); the third is mapped rule by rule (2026-09-26, foot) and rule 12's deadline half is
 BUILT and DEPLOYED (`16933e7`, 13:2x UTC; Verify reads done); remaining: rules 11 (currency
 validity) and 17 (NUTS pseudo-codes) at ingestion, the five standing `current_deadline` columns

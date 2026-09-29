@@ -1,6 +1,7 @@
 # 443 — organizations left with no mention by 434's refresh have no sweep: they stay listed, searchable and counted
 
-Status: ready-for-agent — **SWEPT AND VERIFIED 2026-09-28** (see the foot): 1,768,353 orphans deleted, and a fresh dry run reads 0. Steps 3 and 4 DEPLOYED 2026-09-29 06:10 UTC (rev `92ebde0`, after Lennart cleared the deploy). Step 4 has run and is VERIFIED (21 non-provisional orphans swept; see the foot). Left: step 3's live check, where the next fold that re-binds a mention should queue `sweep-orphan-orgs auto` by itself (the 07:35 UTC daily fold is the first chance). Was: BUILT 2026-09-28, deployed `d5bf157`. Was: filed 2026-09-28 from the first fold with 434's refresh (job 1610, stopped in planning
+Status: needs-info — swept and verified (1628 wet, 1629 → 0), step 4 done (1636 wet, 1637 → 0 to sweep), step 3 deployed at 92ebde0 with its negative half verified (daily fold 1645 re-bound 0 and queued nothing). Signal: the first fold whose summary carries `recorded mention(s) refreshed` (the next re-parse's fold) must also carry `queued sweep-orphan-orgs (auto) as job N`, and that job must end ok. Was: ready-for-agent — **SWEPT AND VERIFIED 2026-09-28** …
+Was status (before 2026-09-29): ready-for-agent — **SWEPT AND VERIFIED 2026-09-28** (see the foot): 1,768,353 orphans deleted, and a fresh dry run reads 0. Steps 3 and 4 DEPLOYED 2026-09-29 06:10 UTC (rev `92ebde0`, after Lennart cleared the deploy). Step 4 has run and is VERIFIED (21 non-provisional orphans swept; see the foot). Left: step 3's live check, where the next fold that re-binds a mention should queue `sweep-orphan-orgs auto` by itself (the 07:35 UTC daily fold is the first chance). Was: BUILT 2026-09-28, deployed `d5bf157`. Was: filed 2026-09-28 from the first fold with 434's refresh (job 1610, stopped in planning
 after re-binding 4,649,867 mentions, and job 1616, the full fold now running). Measure-first: size the orphaned
 cohort after 1616 lands, then build.
 mine to take.
@@ -38,10 +39,14 @@ mentions en masse. 434 estimated ~1.05M nameless R2.0.7 provisionals alone.
 
 ## Verify
 
-After the sweep: the provisional orphan count reads 0 (from step 1's measurement, re-run), and
-`/v1/organizations?name=` no longer returns a mention-less provisional row for a sampled rebound name.
+Step 3's positive half. The first fold that re-binds a mention must queue the auto sweep, and that sweep must end ok:
 
-- **open**: unmeasured (filed 2026-09-28; the cohort is still being created by job 1616)
+    ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh '/admin/jobs?limit=60'" | python3 -c "import sys,json; r=[j for j in json.load(sys.stdin)['recent'] if j['kind']=='sweep-orphan-orgs' and 'auto' in (j.get('params') or '')]; print([(j['job_id'], j['outcome'], (j.get('counts') or '')[:120]) for j in r] or 'no auto sweep yet')"
+
+- **done**: a `sweep-orphan-orgs auto (after a fold re-bound N)` row with outcome `ok`. Then close the issue.
+- **open**: `no auto sweep yet` (read 2026-09-29 ~10:0x UTC; daily fold 1645 re-bound 0 and correctly queued none)
+- **was, and read done**: the provisional orphan count reads 0 (dry job 1629 on 2026-09-28; dry job 1637 on 2026-09-29
+  reads 0 to sweep, the 9 left are kept by review tables)
 
 ## Sampled 2026-09-28 ~17:10 UTC (after 1616, during 1617; three bounded `/v1/sql` windows)
 

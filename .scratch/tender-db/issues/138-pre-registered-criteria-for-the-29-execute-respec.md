@@ -1,6 +1,7 @@
 # 138 — pre-registered verification criteria for the #29 execute re-spec
 
-Status: **written before the re-spec exists**, deliberately. Owner: sdk-vendor (verification).
+Status: DONE 2026-09-29 — all six pre-registered criteria met: #29 executed 2026-08-05 (592,856 skipped_at, none reprocessed_at by its own marker, assert_29_execute.sh), ledger rows split (186), the 154 tracked separately and resolved through the guard 2026-08-13 (194), remainder 1,905 = 1,898 (139) + 7 originals. Was: written before the re-spec exists.
+Was status (before 2026-09-29): **written before the re-spec exists**, deliberately. Owner: sdk-vendor (verification).
 Relates to: 84/#29 (the population), 137 (the sizing), 136 (the precedent for pre-registering)
 
 ## Why this is written first

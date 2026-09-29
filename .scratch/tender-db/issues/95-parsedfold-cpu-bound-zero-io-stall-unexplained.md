@@ -1,6 +1,7 @@
 # 95 — ParsedFold's 5h07m CPU-bound zero-I/O stretch is unexplained
 
-Status: open — known-unknown parked 2026-08-02 after the issue-85 re-fold was routed AWAY from this
+Status: wontfix 2026-09-29 — ParsedFold only takes deltas under INCREMENTAL_BUCKET_THRESHOLD (100k); the stall regime is six-figure and the scoped-read pre-pass it gated is not wanted (94's f4ce4e1 already bounds the bucketed sweep to the plan's id range). Reopen if the threshold is raised or a scoped-read pre-pass is proposed. Was: open — known-unknown parked 2026-08-02 …
+Was status (before 2026-09-29): open — known-unknown parked 2026-08-02 after the issue-85 re-fold was routed AWAY from this
 path. NOT on the live path (the 90/91 routing fix sends incremental Phase-2 to Buckets), so it blocks
 nothing operationally — but it gates the scoped-read optimisation and is an open hole in the model.
 Kind: performance (investigation) — known-unknown
