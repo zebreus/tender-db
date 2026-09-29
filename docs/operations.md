@@ -775,8 +775,10 @@ repo, so nothing in the deploy ships it — it is an operator-owned schedule.
 **As it stands (2026-09-29, issue 24).** Two routines run hourly at `:50` and
 `:20` (User-Agents `tender-db-uptime-routine/1` and `…/1-twin`). A routine whose
 cloud container never starts sends nothing, and that happened on 4 of 6 runs on
-2026-09-29. So a **second, independent watcher** now runs in this repository,
-`.github/workflows/uptime.yml` — the GitHub Actions option above. It became
+2026-09-29. So a **second, independent watcher** is set up in this repository,
+`.github/workflows/uptime.yml` — the GitHub Actions option above. **Its schedule had not
+fired once by 2026-09-29 17:50 UTC** (the manual drill works; see issue 24), so until
+`event=schedule` runs appear it watches nothing. It became
 possible once the repository was published to GitHub (public), and it needs no
 account or secret. It curls `/health/deep` at :09/:24/:39/:54 with about a minute
 of retries (User-Agent `tender-db-uptime-gha/1`). On DOWN it opens one
