@@ -18,13 +18,18 @@ ingest, app) a second artifact family mid-run, and `cargo test -p ingest` died w
 `No space left on device` after store's suites had passed — GATE-EXIT=101 with no
 FAILED line. The prune only runs at the gate's start. After a dependency/patch
 change, `cargo clean` first (23.5 GiB freed that day) and gate from clean (~35 min).
-For a single focused test mid-iteration, run it with the gate's flags:
-`CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 cargo test -p <crate> <name>`.
-A PLAIN `cargo test` builds with debuginfo, which is a second hash family of every crate,
-turso included, and the gate's prune keeps only the NEWEST archive per stem. On 2026-09-29
-the gate after one plain `--lib` run pruned 1.9 GB of dependency archives where the gates
-before it pruned 0.8 GB. Then run `ops/check.sh` before committing, so the pruning happens
-and the truncation traps its header documents don't eat a failure.
+For a single focused test mid-iteration, run it with the gate's flags AND the gate's package set:
+`CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 cargo test -p model -p store -p ingest -p tender-db --features tender-db/server <name>`
+(0 crates compiled after a gate, well under a second to start). Both halves matter.
+- A PLAIN `cargo test` builds with debuginfo, which is a second hash family of every crate,
+  turso included, and the gate's prune keeps only the NEWEST archive per stem. The gate after
+  one plain `--lib` run pruned 1.9 GB of archives where the gates before it pruned 0.8 GB.
+- A `-p <crate>` alone resolves features for that crate only: 41 crates under turso resolve
+  differently for store, ingest and the server-featured app (issue 260). That is a second
+  family again, and a unified experiment beside the old families filled the disk on
+  2026-09-29.
+Then run `ops/check.sh` before committing, so the pruning happens and the truncation traps
+its header documents don't eat a failure.
 
 **`cargo check -p tender-db` DOES NOT COMPILE `crates/app/src/supervisor.rs`.**
 `lib.rs` gates that module (and `admin`, `coverage`, `ledger`, `v1`, `webhooks`)
