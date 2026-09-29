@@ -11971,7 +11971,8 @@ fn twin_wet_summary(o: &store::canonical::TwinRepairOutcome) -> String {
         .join(", ");
     format!(
         "repair-member-twins (issue 404, WET): {} set(s) resolved — {} notice(s) deleted, {} \
-         survivor(s) re-keyed and {} re-queued, {} Tender(s) retired. Rows removed: [{}]. NOTHING \
+         survivor(s) re-keyed and {} re-queued, {} Tender(s) stamped epoch-stale for the re-key, {} \
+         Tender(s) retired. Rows removed: [{}]. NOTHING \
          in `tender_versions` was touched, and that is deliberate: the fold shrinks each chain, and \
          only `delete_version` takes a version's satellites with it — deleting the row here would \
          make the chain-compare see an UNCHANGED chain and leak them. A `project rebuild=false` is \
@@ -11981,6 +11982,7 @@ fn twin_wet_summary(o: &store::canonical::TwinRepairOutcome) -> String {
         o.notices_deleted,
         o.survivors_rekeyed,
         o.survivors_requeued,
+        o.tenders_stamped,
         o.tenders_retired,
         if deleted.is_empty() { "none".to_owned() } else { deleted },
         o.notices_deleted,

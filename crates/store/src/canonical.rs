@@ -4456,6 +4456,9 @@ pub struct TwinRepairOutcome {
     pub survivors_rekeyed: usize,
     pub survivors_requeued: usize,
     pub tenders_retired: usize,
+    /// Tenders of re-keyed survivors stamped epoch-stale, so the fold rewrites
+    /// their version rows' copy of the notice's `publication_id` (issue 394).
+    pub tenders_stamped: u64,
     /// Rows removed per table, so the summary can be read against the plan
     /// rather than trusted.
     pub rows_deleted: std::collections::BTreeMap<String, u64>,
@@ -22416,6 +22419,25 @@ impl Db {
             }
             out.survivors_requeued += 1;
         }
+        // `projected = 0` is not enough for a RE-KEYED survivor. The fold's state
+        // key is the chain of causing notice ids (`apply_tender_tx`), and a
+        // survivor whose Tender lost no member keeps that chain exactly — so the
+        // fold ends at "verified unchanged" and the version row keeps the key the
+        // notice just gave up. On prod, 270 versions still served
+        // `00000000-1900` a day after this repair ran (issue 394, found
+        // 2026-09-29, cleared by `refold-notices`). Stamp those Tenders
+        // epoch-stale, as `refold-notices` does, so the fold rewrites them.
+        let rekeyed: Vec<i64> =
+            plan.plan.iter().filter(|r| r.keep_key != r.elect).map(|r| r.keep).collect();
+        for part in rekeyed.chunks(IN_CHUNK) {
+            let sql = format!(
+                "UPDATE tenders SET projection_epoch = 0 WHERE id IN \
+                 (SELECT tender_id FROM tender_versions WHERE caused_by_notice_id IN ({}))",
+                placeholders(part.len())
+            );
+            let params: Vec<Value> = part.iter().map(|&i| Value::Integer(i)).collect();
+            out.tenders_stamped += conn.execute(&sql, params).await?;
+        }
         if !plan.tenders_emptied.is_empty() {
             Box::pin(self.retire_chunk_tx(conn, &plan.tenders_emptied, now)).await?;
             out.tenders_retired = plan.tenders_emptied.len();
@@ -24769,6 +24791,8 @@ mod tests {
                    VALUES(201, 'doe', 21, 'procedure', 0, 1)").await;
         seed(&db, "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, publication_id)
                    VALUES(201, 1, 21, 0, 'x')").await;
+        // Folded at the current logic, so a stale stamp below is the repair's doing.
+        seed(&db, &format!("UPDATE tenders SET projection_epoch = {}", crate::canonical::PROJECTION_EPOCH)).await;
 
         let quiet = |_: u64, _: &str| {};
         let never = || false;
@@ -24823,8 +24847,18 @@ mod tests {
             1,
             "retirement is an event, not a silent disappearance"
         );
-        // The long-lived island Tender, whose notice survived, is untouched.
+        // The long-lived island Tender, whose notice survived, is kept.
         assert_eq!(count(&db, "SELECT COUNT(*) FROM tenders WHERE id = 200").await, 1);
+        // Issue 394's residue: Tender 200 lost no member, so its causing chain is
+        // still [11] and the fold would call it unchanged, leaving its version on
+        // the placeholder key. The repair stamps it (and 100) epoch-stale so the
+        // fold rewrites both.
+        assert_eq!(out.tenders_stamped, 2);
+        assert_eq!(
+            count(&db, "SELECT COUNT(*) FROM tenders WHERE id IN (100, 200) AND projection_epoch = 0").await,
+            2,
+            "both re-keyed survivors' Tenders are epoch-stale"
+        );
 
         let _ = std::fs::remove_file(&path);
     }

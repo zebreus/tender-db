@@ -1,6 +1,7 @@
 # 394 — DÖE serves two publisher strings as its own keys: 7,158 notices keyed on TED's placeholder publication id `00000000-1900`, and sdk-0.1 CPV codes in four shapes under one `scheme`
 
-Status: ready-for-agent — **unit 2 DONE 2026-09-27: the sdk-0.1 island refold RAN (queue jobs 1588 size / 1590 wet / 1591 fold, owner go-ahead) and every unit-2 acceptance line reads met** (see the foot: dashed 0, glued 0, only2 0 in both windows; 1723219 bare; 1431255 main `50000000`; `?cpv=45421146` finds 1542904). What remains on this issue is unit 1's last 281 rows, which issue 404 owns. Was: ready-for-agent — unit 1's GUARD built and gated 2026-09-16 (the election refuses the all-zero placeholder; blast radius re-measured corpus-wide as exactly one value, 7,177 rows, all `doe`). The re-key RAN and reached **6,896 of 7,177**; the last 281 are blocked on **issue 404** (the ingest path minted twins for them mid-campaign) and will be resolved there as a duplicate cleanup, not by another re-parse — every DÖE package is walked and the count is stable across two consecutive runs. **Unit 2's normaliser is BUILT and gated 2026-09-18** (see the foot): CPV folds to the bare 8-digit code, one per fact — check digit dropped, division padded, glued strings split — with the 2-digit decision recorded (pad); the island's refold and its sizing probe are production writes the operating session's classifier refuses, so they wait for Lennart's go-ahead with the exact commands at the foot. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
+Status: ready-for-agent — units 1 and 2 DONE. Unit 1's live acceptance was read 2026-09-29 (foot): 0 notices and 0 tenders answer `00000000-1900`. That read found 270 stale version rows the 404 repair had left, cleared them with refold 1653/1654, and fixed the repair so it cannot leave them again (gated, deploying with the next bundle). Left: (b) the DQ report's repeated-identity-string sweep, the recurrence detector; (c) the classification-shape SQL census.
+Was status (before 2026-09-29): ready-for-agent — **unit 2 DONE 2026-09-27: the sdk-0.1 island refold RAN (queue jobs 1588 size / 1590 wet / 1591 fold, owner go-ahead) and every unit-2 acceptance line reads met** (see the foot: dashed 0, glued 0, only2 0 in both windows; 1723219 bare; 1431255 main `50000000`; `?cpv=45421146` finds 1542904). What remains on this issue is unit 1's last 281 rows, which issue 404 owns. Was: ready-for-agent — unit 1's GUARD built and gated 2026-09-16 (the election refuses the all-zero placeholder; blast radius re-measured corpus-wide as exactly one value, 7,177 rows, all `doe`). The re-key RAN and reached **6,896 of 7,177**; the last 281 are blocked on **issue 404** (the ingest path minted twins for them mid-campaign) and will be resolved there as a duplicate cleanup, not by another re-parse — every DÖE package is walked and the count is stable across two consecutive runs. **Unit 2's normaliser is BUILT and gated 2026-09-18** (see the foot): CPV folds to the bare 8-digit code, one per fact — check digit dropped, division padded, glued strings split — with the 2-digit decision recorded (pad); the island's refold and its sizing probe are production writes the operating session's classifier refuses, so they wait for Lennart's go-ahead with the exact commands at the foot. Filed 2026-09-15 by the API/data-quality review fan-out (32 lenses, every finding independently reproduced and adversarially judged)
 Kind: defect (ingest → fold boundary, source `doe`) — unit 1 is the publication-id election in `crates/ingest/src/profile.rs`, unit 2 is the unnormalised classification code from `crates/ingest/src/eforms/value.rs` through `crates/ingest/src/project.rs`; both land on a served identity/vocabulary field and on the documented filter over it
 Relates to: 12 (RESOLVED — the DÖE source, eForms-DE + sdk-0.1 profiles, the parent of both units), 217 (RESOLVED & VERIFIED 2026-08-16/17 — it shipped `publication_id=` on `/v1/notices` and `/v1/tenders` as "the keys real consumers hold"; unit 1 is 7,158 rows where that key is a placeholder shared by the whole cohort), 290 (ANALYSIS, open — "a parser change that shifts `publication_id` derivation makes `reparse_notice` silently no-op (counted as benign `unmatched`)", filed at LOW confidence it ever bites: unit 1's re-key is exactly the case that makes it bite, and it must be checked before the re-key, not after), 369 (DONE — a published BT-04 taken verbatim as the Tender group key, gated by `is_placeholder_key`; unit 1 is the same placeholder-as-key shape one field over), 366 (DONE — its unit-6 sentinel discovery sweep is DQ report section 10, but it sweeps AMOUNTS, so an all-zero identity STRING is invisible to it; its unit 3 is also the precedent against a second, display-side implementation of a fold rule, which unit 2's "done when" keeps), 365 (DONE — "any ≥4-character alphanumeric string containing a digit becomes an Organization merge key": the same any-string-is-a-key class on the org layer), 364 (the legacy OJS closure weld and its weld gauge `c0c2581` — the only broad board hit near DÖE publication identity, and unrelated to this cohort), 29 (VERIFIED on prod 2026-08-18 — the sdk-0.1 projection gap; it split the residual value/CPV out to 231), 231 (CLOSED 2026-08-27 — closed the sdk-0.1 CPV half on PRESENCE only, 93.8 % from 0.0 %, and never looked at representation; unit 2 is precisely what a presence measure cannot see), 172 (CURRENCY half CLOSED as ADR-0014, CLASSIFICATION half OPEN — and that half is codelist VINTAGE drift, 2003-vs-2008 meanings, explicitly not string shape; its closed half's answer, an alias map at the fold, is the pattern unit 2 wants), 292 (FIX DEPLOYED 2026-08-26 — `normalize_lang` at the fold boundary, the precedent in terms: "each new source adds a dialect unless a normalization layer exists"), 319 (org layer DONE 2026-08-30 — the country column held alpha-3 codes and free text; same normalise-at-the-boundary shape), 171 (its `/docs` #caveats deliverable, shipped 2026-08-23, today naming only CPV-2003/2008 coexistence — where unit 2's division-level-code caveat belongs), 118 (RESOLVED — `ignored_filters`; note `cpv` DOES narrow tenders and lots, so unit 2's glued rows are not an ignored filter, they are a filter that runs and misses), ADR-0003, ADR-0004 (the per-profile mapped-or-ignored checklist), ADR-0014 (the alias-map precedent), CONTEXT.md (TED owns publication identity), `docs/research/eforms-de-profile.md` §2
 Blocked by: nothing
@@ -567,3 +568,39 @@ re-derives them — no separate job. Verify after it: `?cpv=79416200&source=doe&
 - **read 2026-09-28 ~18:00 UTC**: **done**. Job 1621 re-queued 3,560 notices and stamped 3,029 tenders epoch-stale,
   and job 1622's fold wrote 3,282 tenders. The Verify query now returns `[1106759, 1270295]`, and 1106759 serves
   `['79340000', '79341400', '79416200']`, split.
+
+## 2026-09-29 — unit 1's live acceptance, and the 270 versions the 404 repair left behind
+
+Public reads on rev `17a6efc`:
+
+| read | result |
+| --- | --- |
+| `/v1/notices?publication_id=00000000-1900` | **0** |
+| `/v1/notices/26447665` | `publication_id` `a4406a20-3edd-4ddc-921e-fcd05fc6fd5c-01` (the stem) |
+| `/v1/tenders/1499198` | serves the stem; `?publication_id=a4406a20-…-01` finds it |
+| tenders 316 / 391 | TED ids (`00517500-2024`, `00772873-2024`); their DÖE versions carry stems |
+| `/v1/tenders?publication_id=00000000-1900` | **200 items, `more:true`** — before the repair below |
+
+**The finding.** 270 `tender_versions` rows across 266 Tenders still carried `00000000-1900`, though every causing
+notice (all 270 `doe`) already carried its stem. Tender 5057's v1, caused by notice 27718427, is an example. They
+are the 404 repair's survivors: `apply_member_twin_repair` re-keys a survivor and sets `projected = 0`. But the
+fold's state key is the chain of causing notice ids (`apply_tender_tx`). A survivor whose Tender lost no member
+keeps that chain, so the fold ends "verified unchanged" and the version row keeps its copy of the old key. The
+re-parse campaigns never hit this because each was followed by a refold, which stamps Tenders epoch-stale.
+
+**Cleared**: `refold-notices` over the 270 (job 1653: re-queued 270, stamped 266), then `project` 1654 (266 tenders
+written, 0 verified unchanged, 7 s). After it: 0 versions and 0 tenders answer `00000000-1900`, and tender 5057's
+v1 reads `828e76c3-…-01`.
+
+**Fixed at the source**: the repair now stamps its re-keyed survivors' Tenders epoch-stale inside its own
+transaction. `TwinRepairOutcome.tenders_stamped` is reported in the job summary. The wet test asserts both Tenders
+(100, and the island 200 whose chain did not change) are stamped, and it fails with the stamp removed (0 vs 2).
+
+## Verify (unit 1)
+
+    curl -s "https://tenders.zebreus.click/v1/tenders?publication_id=00000000-1900&limit=5" | python3 -c "import json,sys; d=json.load(sys.stdin); print(len(d['items']), d.get('more'))"
+    curl -s "https://tenders.zebreus.click/v1/notices?publication_id=00000000-1900&limit=5" | python3 -c "import json,sys; d=json.load(sys.stdin); print(len(d.get('items', [])))"
+
+- **done**: `0 False` and `0` (read 2026-09-29 after job 1654)
+- **open**: any item
+
