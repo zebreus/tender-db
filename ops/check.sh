@@ -91,7 +91,46 @@ prune_stale_test_binaries
 # hours cannot belong to a live run (the whole gate takes minutes), so it is leak.
 find /tmp -maxdepth 1 -name 'tender-db-*' -type f -mmin +120 -delete 2>/dev/null || true
 
+# The two-hour rule alone let a SESSION's runs pile up: on 2026-09-29 /tmp held 6,573
+# scratch files (4.2 GB) from seven gates, ~0.6 GB per run — about 230 tests leave their
+# .db and its 2.6 MB -wal every time, not only the panicking ones. So the gate also sweeps
+# its own run on the way out, pass or fail: every tender-db-* file written since it
+# started that no process holds open (read from /proc). A test still running elsewhere
+# holds its database open and is left alone.
+sweep_run_scratch() {
+    python3 - "$1" <<'SWEEP' || true
+import glob, os, sys
+since = float(sys.argv[1])
+held = set()
+for fd in glob.glob('/proc/[0-9]*/fd/*'):
+    try:
+        held.add(os.readlink(fd))
+    except OSError:
+        pass
+freed = count = 0
+for path in glob.glob('/tmp/tender-db-*'):
+    try:
+        st = os.stat(path)
+    except OSError:
+        continue
+    if not os.path.isfile(path) or st.st_mtime < since:
+        continue
+    base = path[:-4] if path.endswith(('-wal', '-shm')) else path
+    if {base, base + '-wal', base + '-shm'} & held:
+        continue
+    try:
+        os.remove(path)
+    except OSError:
+        continue
+    freed += st.st_size
+    count += 1
+if count:
+    print(f"==> swept {count} test scratch files ({freed / 2**30:.2f} GB) this run left in /tmp")
+SWEEP
+}
+
 started=$(date +%s)
+trap 'sweep_run_scratch "$started"' EXIT
 # `test-app-all`, not `test-app` (issue 414): the `--lib` alias runs the 83 server-side
 # unit tests and NOTHING in crates/app/tests — accounts, admin, api, sql, webhooks never
 # ran in any gate, and tests/sql.rs sat red for twelve days behind "117 suites green".

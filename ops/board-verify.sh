@@ -31,8 +31,8 @@ for p in sorted(glob.glob('.scratch/*/issues/*.md')):
     print(f'\n[{num}] {st[:110]}\n  $ {cmd[:220]}')
     # A build is not a free read (docs/agents/issue-tracker.md): `cargo` here compiles in the
     # shared tree outside ops/check.sh's flags. On 2026-09-29 442's `cargo test` verify ran
-    # beside a deploy's gate, waited on the build lock past the timeout, and kept compiling
-    # turso under its own flags (a second artifact family on a disk with 5 GB left).
+    # beside a deploy's gate, waited on the build lock past the timeout, and was still
+    # compiling turso's sync kit under its own flags after bash was killed.
     if re.match(r'(\S+=\S+\s+)*cargo\b', cmd):
         out = '(not run: a cargo command is a build, not a check — the gate runs the tests; give this issue a read)'
     else:

@@ -121,3 +121,21 @@ wrong (a stale variant cargo still wanted) is one crate's rebuild, never a wrong
 not having it is the 09-10 failure at the next profile change. `cargo clean` stays the recovery when
 the allowance is already gone.
 
+## 2026-09-29 — the third cause: every gate run leaves ~0.6 GB of test databases in /tmp
+
+The container had 3.3 GB free after a deploy's gate. `/tmp` held **6,573 `tender-db-*` files, 4.2 GB**, from the
+seven gates run since 11:16 UTC. The two-hour rule above never saw them: each file was younger than two hours at the
+next gate's start.
+
+- It is not only panicking tests. About 230 tests leave their `.db` (4 KB) and its `-wal` (2.6 MB, up to 11 MB) on
+  EVERY run. Examples: every `orphan-sweep-*`, `test-typo-*`, `dupid-*` and `cluster-*` scratch, and `sup-*` (644
+  files, 473 MB).
+- **Fix** (`ops/check.sh`, `sweep_run_scratch`): the gate sweeps its own run on the way out, pass or fail, via an
+  EXIT trap. It removes every `/tmp/tender-db-*` file written since the gate started that no process holds open,
+  read from `/proc/*/fd`. A test still running elsewhere holds its database open, so it is left alone. The two-hour
+  rule stays for runs that were killed before their trap.
+- Exercised on a held and an unheld pair: the held pair survived, the unheld pair went, and the held pair went once
+  closed. One manual sweep with the same guard removed 6,523 files, 4.14 GB; the disk went from 3.3 GB to 7.5 GB free.
+- **Not fixed**: the tests themselves still leak. Each would need a drop guard that removes the `-wal`/`-shm` too.
+  The sweep makes that a tidiness question rather than a disk one.
+
