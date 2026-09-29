@@ -180,3 +180,14 @@ run end with `TENDER-DB DOWN — DRILL, NOT AN OUTAGE (issue 24)` after doing th
 this session could not see: whether a run whose final message starts `TENDER-DB DOWN` goes out as push and email.
 The run itself can be read with `get_session`; delivery can only be confirmed on the owner's phone and inbox.
 
+**Read 2026-09-29 11:5x UTC — both new pieces ran.**
+- The `:20` twin's first check reached the box at **11:38:04 UTC** (`tender-db-uptime-routine/1-twin`, HTTP 200).
+- The first drill (`cse_014M7EFk4ZtTm4onJx3Qygjg`, fired 10:58) never ran: **"Cloud container never started"** —
+  the same infrastructure failure behind the missed hourly checks, and it would have been silent without this read.
+- A second drill (`cse_01WMCR5pHpXGhNcPoNM8JcqF`, fired 11:31) started. It curled `/health/deep` at 11:48:48 and
+  11:48:55 UTC (HTTP 200 both) and went idle at 11:48:57, marked review-ready, with notify tags
+  `routine_notify_push` + `routine_notify_email`. By its instruction its final message begins
+  `TENDER-DB DOWN — DRILL, NOT AN OUTAGE (issue 24)`.
+- Still unconfirmed: whether that message arrived as a push and an email. This session cannot see the owner's phone
+  or inbox. If it did not arrive, the failure path is broken and a real outage would be silent too.
+
