@@ -216,3 +216,8 @@ The run itself can be read with `get_session`; delivery can only be confirmed on
   `mcp__github__actions_list list_workflow_runs uptime.yml` shows `event: schedule`, `conclusion: success` for runs
   after 13:07 UTC.
 
+- **Read 2026-09-29 ~14:25 UTC: no `schedule` run yet**, ~95 minutes and six cron slots after the push. Only the
+  12:52 `workflow_dispatch` drill is listed. It is not a configuration block: the default branch is `main`, the repo
+  is public and not a fork, and the file's cron is valid. GitHub documents that scheduled runs of a newly added
+  workflow can start late under load. Re-read at the next firing. If there is still none by 2026-09-29 18:00 UTC,
+  push a no-op edit of the cron line: a schedule registers on a push that changes it.
