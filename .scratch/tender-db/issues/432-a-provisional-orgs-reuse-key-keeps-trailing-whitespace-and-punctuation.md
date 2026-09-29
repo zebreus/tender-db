@@ -1,6 +1,7 @@
 # 432 — a provisional organization's reuse key keeps trailing whitespace and punctuation, so one identifier-less buyer mints two rows
 
-Status: ready-for-agent — filed 2026-09-27 from issue 386's close-out: the three FTS Tenders the refined weld gauge
+Status: done — 2026-09-29. Fix `0797820` deployed (ancestor of prod `92ebde0`); `repair-provisional-name-norm` wet 1613 folded 42,547 groups / 48,863 rows (residual 0); the country-less half folded by `fold-provisional-echoes` wet 1652 (9,728 groups / 17,139 rows, after dry 1649 planned the same). The three tenders now carry ONE buyer organization across both versions each (bounded `/v1/sql`, below). The weekly DQ line re-reads on the next Sunday run.
+Was status (before 2026-09-29): ready-for-agent — filed 2026-09-27 from issue 386's close-out: the three FTS Tenders the refined weld gauge
 still counts are this defect, not welds.
 Kind: defect (org layer — the provisional reuse key in `crates/store/src/canonical.rs`)
 Relates to: 386 (the FTS weld gauge reads 3 because of this and should read 0 once it is fixed), 234 (the
@@ -60,6 +61,11 @@ identifier-less GB rows are twins in that band. The corpus-wide count (`name_nor
 - **done**: `… disagree on the buyer: 0` on a report computed after the repair (the three twins merged)
 - **open**: `3` (tenders 7957971, 8579928, 8579929; read 2026-09-27 through `/v1/sql`; the stored weekly report predates
   the refined line)
+- **read 2026-09-29 11:2x UTC, after wet 1613 and 1652**, the gauge's three tenders directly (bounded `/v1/sql`):
+  `SELECT tender_id, COUNT(DISTINCT seq), COUNT(DISTINCT organization_id) FROM tender_version_parties WHERE tender_id
+  IN (7957971, 8579928, 8579929) AND role LIKE '%Buyer' GROUP BY tender_id` → `[7957971,2,1]`, `[8579928,2,1]`,
+  `[8579929,2,1]`: two versions, one buyer each (ScotRail Trains Limited 30914231; Procurement for Housing 1880052).
+  **Done** on the rows; the report line itself is recomputed with the Sunday data-quality run.
 
 ## Built (2026-09-27)
 

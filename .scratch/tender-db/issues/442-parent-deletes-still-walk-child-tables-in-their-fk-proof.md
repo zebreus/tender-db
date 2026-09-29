@@ -1,6 +1,7 @@
 # 442 — issue 441's trap is schema-wide: 11 parent tables' DELETEs walk child tables in their FK proof, because turso uses only an exact-shape child index
 
-Status: ready-for-agent — **step 2 DEPLOYED 2026-09-29 06:10 UTC** (rev `92ebde0`). Its Verify waits for the next wet R2/E0/p0 run: per-loser time in ms, and no `FOREIGN KEY constraint failed` in the journal. Step 4 remains (post from the owner's account). Was: unit 1 DEPLOYED and VERIFIED 2026-09-28 (see the foot); steps 2–4 remain. Was: unit 1 BUILT 2026-09-27 (the `organizations` delete, see below): gated, committed and
+Status: ready-for-agent — **step 2 VERIFIED on prod 2026-09-29** (wet R2 1650, E0 1651, p0 1652, all foreign keys ON: ms per loser, 0 `FOREIGN KEY constraint failed`). What remains is step 4, the upstream request: the text is ready in `.scratch/tender-db/upstream-turso-requests.md`, and this session has no GitHub access to tursodatabase/turso to post it.
+Was status (before 2026-09-29): ready-for-agent — **step 2 DEPLOYED 2026-09-29 06:10 UTC** (rev `92ebde0`). Its Verify waits for the next wet R2/E0/p0 run: per-loser time in ms, and no `FOREIGN KEY constraint failed` in the journal. Step 4 remains (post from the owner's account). Was: unit 1 DEPLOYED and VERIFIED 2026-09-28 (see the foot); steps 2–4 remain. Was: unit 1 BUILT 2026-09-27 (the `organizations` delete, see below): gated, committed and
 not deployed. It deploys with the next bundle, and the auto-Reindex builds it. Filed 2026-09-27 from the hourly
 AUDIT step, generalising issue 441. The remaining units are measure-first (see "What to decide").
 mine to take.
@@ -142,6 +143,17 @@ step 4. Post the two together.
   them. Test: `a_wet_merge_refuses_without_the_org_fk_indexes`.
 - **Verify once deployed:** the next wet R2/E0/p0 run reports its per-loser time in ms, and journalctl shows no
   `FOREIGN KEY constraint failed` from a merge job.
+- **Verified on prod 2026-09-29 (rev `92ebde0`), all three merge paths with foreign keys ON:**
+
+  | job | path | plan | removed | wall time | per loser |
+  | --- | --- | --- | --- | --- | --- |
+  | 1650 | R2 wet | 551 groups | 741 org rows (10,135 mentions, 29,516 parties, 1,642 bid-parties, 2,311 winners repointed; 6,486 tenders touched) | 8 s | ~11 ms |
+  | 1651 | E0 wet | 12 groups | 21 org rows | 2 s | — |
+  | 1652 | p0 wet (`fold-provisional-echoes`) | 9,728 groups | 17,139 org rows (90,011 mentions, 93,273 parties, 90,221 winners; 52,355 tenders) | 243 s, of which ~200 s is the planning walk (dry 1649 took 203 s) | ~2.5 ms |
+
+  Each wet plan matched its dry run exactly (1647 → 551, 1648 → 12, 1649 → 9,728 / 17,139).
+  `journalctl -u tender-db --since -90min | grep -c 'FOREIGN KEY constraint failed'` = **0**, and no
+  `reclaim stamped NO ledger rows`. Step 2 is done.
 - **Adversarial review (one read-only agent, 2026-09-28): no defect.** It confirmed from turso_core 0.7.2:
   - A child UPDATE re-checks only the foreign key whose columns change (`fkeys.rs` `child_key_changed`), so latent
     violations elsewhere in a repointed row are not re-checked.
