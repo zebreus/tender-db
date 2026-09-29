@@ -1,6 +1,7 @@
 # 96 — incremental apply: per-bucket time is highly variable, and the page cache collapses as the layer fills
 
-Status: proposed — **the original "~13%/bucket monotonic degradation" claim is RETRACTED, see Correction below**
+Status: wontfix 2026-09-29 — measured on fold 1616's phase-2 heartbeats: throughput tracks CONTENT, not table fill. Leaf rows/s held at 40k–60k across the whole 8.56M-tender apply, and versions/s ROSE late (500 → 906/s) as the leaf rows per version fell (119 → 44). Route (b) (strip the deferred indexes during big folds) is not justified.
+Was status (before 2026-09-29): proposed — **the original "~13%/bucket monotonic degradation" claim is RETRACTED, see Correction below**
 Kind: performance / scaling risk
 Design owner: proj-fix
 Relates to: 62 + 82 (deferred tender indexes — the existing mitigation, rebuild-only), 64 (reset index thrash), 67 (fold apply statement reduction), 94 (bucketed pre-pass stripe imbalance), 76 (quarantine reprocess mechanism)
@@ -152,3 +153,22 @@ incremental fold's line and the job row's phase detail. The next big fold reads
 its per-heartbeat leaf-row rate directly; a falling leaf-rows/s at constant
 leaf-rows/version is fill, a constant leaf-rows/s at rising leaf-rows/version is
 content. No behaviour change; the byte-identity suites gate it like any fold edit.
+
+## Measured 2026-09-29 — fold 1616's phase-2 heartbeats (79 samples, 13:37 → 17:17 UTC, 2026-09-28)
+
+| segment start | tenders/s | versions/s | leaf rows/s | leaf rows / version |
+|---|---|---|---|---|
+| +0 min | 349 | 678 | 54,442 | 80.3 |
+| +11 min | 251 | 500 | 59,670 | 119.4 |
+| +28 min | 262 | 551 | 60,688 | 110.1 |
+| +43 min | 290 | 615 | 56,862 | 92.4 |
+| +56 min | 301 | 627 | 55,722 | 88.9 |
+| +70 min | 325 | 671 | 47,839 | 71.2 |
+| +82 min | 403 | 785 | 40,360 | 51.4 |
+| +93 min → end | 562 | 906 | 39,655 | 43.7 |
+
+If fill (index depth as the tender layer grows) drove the slowdown, leaf rows/s would fall steadily while leaf rows
+per version stayed flat. Instead, versions/s and tenders/s follow the content: the heaviest versions (up to 119 leaf
+rows each) come early and slow the apply, and the light tail speeds it up. The ~30 % dip in leaf rows/s late is small
+beside the 2.7× swing in content. **wontfix**: route (b) would add an index strip/rebuild of the largest tables for no
+measured gain.

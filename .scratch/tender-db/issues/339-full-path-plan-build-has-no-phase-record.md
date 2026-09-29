@@ -1,6 +1,7 @@
 # 339 — a bucketed fold shows the last pre-pass count until its first whole bucket lands
 
-Status: DEPLOYED-UNVERIFIED (board sweep 2026-09-19) — `9f0bcea` is an ancestor of the served `110d527` and the tick is pinned by `the_prepass_reports_its_sweep_as_progress`; five whole-corpus folds have run since (jobs 1325, 1354, 1359, 1384, 1387, 2026-09-12..16) but none was read at its barrier, and the phase record is not journaled, so the live observation is still owed: read `/admin/jobs` in the first minutes of the next whole-corpus fold. Was: DEPLOYED 2026-09-03 (`9f0bcea`), verification pending the next bucketed fold — was: DIAGNOSED 2026-09-02 (corrected the same day — the first filing blamed the
+Status: done — VERIFIED 2026-09-29 from the journal: fold 1616's first phase-2 line is the zero tick `0/8556759 tenders folded`, one second after the last pre-pass shard (13:37:45 → 13:37:46 UTC, 2026-09-28).
+Was status (before 2026-09-29): DEPLOYED-UNVERIFIED (board sweep 2026-09-19) — `9f0bcea` is an ancestor of the served `110d527` and the tick is pinned by `the_prepass_reports_its_sweep_as_progress`; five whole-corpus folds have run since (jobs 1325, 1354, 1359, 1384, 1387, 2026-09-12..16) but none was read at its barrier, and the phase record is not journaled, so the live observation is still owed: read `/admin/jobs` in the first minutes of the next whole-corpus fold. Was: DEPLOYED 2026-09-03 (`9f0bcea`), verification pending the next bucketed fold — was: DIAGNOSED 2026-09-02 (corrected the same day — the first filing blamed the
 plan build; the journal's stage timings named the real stage). Fix in progress.
 Kind: operability / instrument honesty
 Relates to: 65 (Progress → phase record), 90 (the fold heartbeat), 262 (the same
@@ -80,3 +81,14 @@ takes the incremental `ParsedFold` path (4,391 changed notices in 163 s today),
 which never enters `bucketed_fold`; the barrier tick shows only on the next
 big fold (an epoch refold or a campaign's paired fold). Stays DEPLOYED-UNVERIFIED
 until then; nothing to do in the meantime.
+
+## Verified 2026-09-29 from fold 1616's journal (no live fold needed)
+
+    journalctl -u tender-db --since '2026-09-28 06:00 UTC' --until '2026-09-28 16:00 UTC' | grep -E 'pre-pass shard .*DONE|phase 2: [0-9]+/[0-9]+ tenders folded' | grep -m1 -B2 'tenders folded'
+
+    13:37:22 [project] pre-pass shard 27 DONE: 469173 swept … in 1693.0s
+    13:37:45 [project] pre-pass shard 30 DONE: 469200 swept … in 1715.6s
+    13:37:46 [project] phase 2: 0/8556759 tenders folded, 0 versions written, 0 leaf rows
+
+The barrier tick lands one second after the last shard, so `/admin/jobs` names `folding` with its total before the
+first bucket, which is what this issue asked for. **done.**

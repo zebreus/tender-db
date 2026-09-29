@@ -1,6 +1,7 @@
 # 403 — the weekday catch-up pushes a probe every 5 minutes for 3 hours without checking whether the previous one has RUN, so a busy queue collects up to 36 identical no-op jobs
 
-Status: ready-for-agent — found 2026-09-16 08:50Z by the hourly audit (step 3), on a live queue holding **4 identical `ted daily (catch-up)` probes**. The mechanism is in the code and does not depend on the observation; the observation is what prompted reading it.
+Status: done — 2026-09-29: the coalescing fix (b790f09, `catch_up_probe_pending()`) is deployed in 92ebde0 and pinned by unit tests. No late TED package has triggered the catch-up loop since 09-22 (journal shows no catch-up lines), so the live observation is deferred to the next occurrence. Reopen if a weekday queue ever again holds two `ted daily (catch-up)` probes.
+Was status (before 2026-09-29): ready-for-agent — found 2026-09-16 08:50Z by the hourly audit (step 3), on a live queue holding **4 identical `ted daily (catch-up)` probes**. The mechanism is in the code and does not depend on the observation; the observation is what prompted reading it.
 Kind: defect (operations — `Supervisor::spawn_scheduler`'s weekday catch-up loop, `crates/app/src/supervisor.rs`). Nothing is lost and no data is wrong: the cost is queue time taken from whatever long job is running, and a catch-up that cannot do the thing it is retrying for.
 Relates to: 222 (built this loop — "keep re-probing on a short interval until it does (or the morning window closes)", correct when the queue is free and unexamined when it is not), 245 (`catch_up_missed_tick`, the STARTUP catch-up, which already does the check this loop is missing: `self.queue.lock()…any(|j| j.kind == "probe")`), 247 (the serialized queue and `push_front`, whose doc is the precedent that a job which makes the queue slow is worth treating specially), 252 (which job kinds read the stop flag)
 Blocked by: nothing
@@ -191,3 +192,10 @@ and two dry repairs, will very likely still hold the queue at Monday's 07:35 UTC
 issue said to piggy-back on: paid for by work that has to run anyway. If TED's package is late, the catch-up loop runs
 against a busy queue, which is exactly the observation owed. Read it then with the Verify above: the queued
 `ted daily (catch-up)` count over the morning.
+
+## Closed 2026-09-29 on the deployed, tested predicate
+
+`journalctl -u tender-db --since '2026-09-22 00:00 UTC' | grep -i catch-up` prints nothing: every weekday package has
+been on time, so the loop never ran. The fix is in the running binary (92ebde0 ⊇ b790f09), and its unit tests pin the
+coalescing. A board item waiting on a coincidence is not work, so the reopen trigger above stands in for the live
+read.

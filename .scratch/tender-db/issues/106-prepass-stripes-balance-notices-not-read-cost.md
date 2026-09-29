@@ -1,6 +1,7 @@
 # 106 — count-balanced stripes cannot parallelise a CONCENTRATED cohort: 94 is necessary but insufficient for the reprocess
 
-Status: proposed — re-measured 2026-09-03 on a CORPUS-WIDE fold (the uniform case, not the concentrated one this issue is about): 31 count-balanced stripes reached 20.1× of 31 (65% of capacity), see "Re-measured 2026-09-03". Work-stealing remains the fix for a concentrated cohort; the uniform case does not need it.
+Status: wontfix 2026-09-29 — measured: the pre-pass balances shards to ~65 % utilisation on BOTH shapes (concentrated fold 1591: 32,262 worker-s, slowest shard 1,587 s vs 1,040 s mean; full fold 1616: 34,779 worker-s, slowest 1,716 s vs 1,122 s mean). Work-stealing would save ~9–10 min per whole-corpus-sized fold (2–4 % of 1616's ~7 h), and such folds happen only after re-parse campaigns. Reopen if a concentrated fold's barrier idle exceeds ~30 min.
+Was status (before 2026-09-29): proposed — re-measured 2026-09-03 on a CORPUS-WIDE fold (the uniform case, not the concentrated one this issue is about): 31 count-balanced stripes reached 20.1× of 31 (65% of capacity), see "Re-measured 2026-09-03". Work-stealing remains the fix for a concentrated cohort; the uniform case does not need it.
 Kind: performance / **blocker for the quarantine reprocess at scale**
 Design owner: proj-fix
 Relates to: 94 (balanced stripes — necessary, and working; this is what it does *not* solve), 66 (the sharded pre-pass), 96 (apply-side variability), 76 (quarantine reprocess — the work this blocks)
@@ -258,3 +259,14 @@ against the hours the bucketed fold takes afterwards. So for the corpus-wide fol
 this is not worth building; the case that still is — a cohort concentrated in one
 stripe, the reprocess shape — has not recurred since 08-02 and stays the reason
 this issue exists.
+
+## Measured 2026-09-29 (journal reads of folds 1591 and 1616)
+
+| fold | shards | worker-seconds | slowest shard | mean shard | utilisation | work-stealing saves |
+|---|---|---|---|---|---|---|
+| 1591 (DÖE sdk-0.1 island, 628k tenders, concentrated) | 31 | 32,262 | 1,587 s | 1,040 s | 65.6 % | ~9 min |
+| 1616 (whole corpus, 8.56M tenders, uniform) | 31 | 34,779 | 1,716 s | 1,122 s | 65.4 % | ~10 min |
+
+Both shapes show the same imbalance, so a concentrated cohort is not worse than a uniform one; the stripes are
+count-balanced and read cost varies within both. The saving is minutes per rare fold, so the shared-range-queue rework
+of the pre-pass spawn is not worth its risk in the fold's core path. **wontfix** with the reopen rule above.
