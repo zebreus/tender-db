@@ -139,7 +139,7 @@ next gate's start.
 - **Not fixed**: the tests themselves still leak. Each would need a drop guard that removes the `-wal`/`-shm` too.
   The sweep makes that a tidiness question rather than a disk one.
 
-## 2026-09-29 — OPEN follow-up: the archive prune churns the turso kits on every gate
+## 2026-09-29 — the archive prune churned the turso kits on every gate (fixed: one gate invocation; the `.so` half stays open)
 
 Nearly every gate log of the last weeks reads `pruned 0.8 GB of superseded dependency archives` and then
 `Compiling turso_sdk_kit … turso_sync_sdk_kit … turso`, even with no dependency change. `target/debug/deps` shows
@@ -156,8 +156,23 @@ the `.so` cdylibs (58–116 MB each) match no prune pattern, so every variant st
   Gate-built variants of one profile still carry different metadata hashes from step to step, which points at
   feature unification. `cargo test -p store` resolves the dependency graph on its own, while `cargo test -p
   tender-db --features server` unifies a larger one, so the kit's dependencies differ and so does its hash.
-- **Not fixed yet.** Confirm the unification reading first: a `-v --no-run` build of `cargo test -p store` versus
-  `cargo test-app-all` shows each unit's `-C metadata` and its dependency list. Then either unify the two families, so one
+- **Confirmed** with `cargo tree -e normal --format '{p} {f}'` per gate step (no build needed): 41 of the 291
+  crates under `turso_sdk_kit` resolve DIFFERENT features for `-p store`, `-p ingest` and `-p tender-db --features
+  server`. Examples: `futures-core` `alloc,std` versus `alloc,default,std`; `futures-util` gains
+  `channel,io,sink` in the app step; `getrandom` 0.3 gains `wasm_js` in the app step. So each step builds its own kit
+  family, and so do store and ingest themselves, since the app step rebuilds them under its own resolution.
+  `resolver.feature-unification = "workspace"` would fix it at the source, but cargo 1.94 ignores it without
+  `-Zfeature-unification`.
+- **Fix (2026-09-29): the gate runs ONE invocation**, `cargo test -p model -p store -p ingest -p tender-db --features
+  tender-db/server`, which resolves once. The app's integration suites still run: plain `cargo test` covers lib,
+  bins, `tests/` and doctests. There are no live doctests anywhere: model, store and ingest run 0, and the app has 1,
+  ignored.
+- **The transition needs `cargo clean`.** A first try built the unified family BESIDE the three old ones and filled the
+  disk: 35 MB free, exit 101. The 830 files (7.65 GB) it had written were removed, and the tree was cleaned (18.1 GiB)
+  before the first unified gate, as this file already prescribes after a re-hash.
+- **First unified gate, from clean (2026-09-29 ~16:0x UTC): GATE-EXIT=0, 140 suites (139 plus the app's doctest
+  suite), 867 s.** The four-invocation gate took about 35 minutes from clean and 757–1,019 s incrementally today. The
+  scratch sweep took 946 files (0.61 GB), and the build directory holds one family. Then either unify the two families, so one
   build serves both steps, or keep the newest per (stem, crate type, family) instead of per stem.
 - A fix is worth one to two minutes of every gate, plus about 1 GB of `.so` that nothing removes today.
 

@@ -131,16 +131,18 @@ SWEEP
 
 started=$(date +%s)
 trap 'sweep_run_scratch "$started"' EXIT
-# `test-app-all`, not `test-app` (issue 414): the `--lib` alias runs the 83 server-side
-# unit tests and NOTHING in crates/app/tests — accounts, admin, api, sql, webhooks never
-# ran in any gate, and tests/sql.rs sat red for twelve days behind "117 suites green".
-for args in "test -p model" "test -p store" "test -p ingest" "test-app-all"; do
-    printf '\n\033[1m==> cargo %s\033[0m\n' "$args"
-    # Unquoted on purpose: each entry is a small fixed argv, and `set -e` carries a
-    # failure straight out of the loop.
-    # shellcheck disable=SC2086
-    cargo $args
-done
+# ONE cargo invocation over all four packages (issue 260, 2026-09-29). It used to be four
+# (`test -p model`, `-p store`, `-p ingest`, `test-app-all`), and cargo resolves features
+# per invocation: 41 of the 291 crates under turso_sdk_kit resolved differently for
+# `-p store`, `-p ingest` and `-p tender-db --features server` (futures-core/-util,
+# getrandom's `wasm_js`, …). Each step therefore built its own family of the turso kits,
+# store and ingest, and the keep-newest prune above deleted the others at every start:
+# 0.8 GB pruned and the kits recompiled on every gate. One invocation resolves once.
+# The app's integration suites still run: plain `cargo test -p tender-db` runs lib, bins,
+# tests/ and doctests, which is what issue 414's `test-app-all` (`--tests`) was for
+# (`--lib` ran NOTHING in crates/app/tests, and tests/sql.rs sat red for twelve days).
+printf '\n\033[1m==> cargo test -p model -p store -p ingest -p tender-db --features tender-db/server\033[0m\n'
+cargo test -p model -p store -p ingest -p tender-db --features tender-db/server
 elapsed=$(( $(date +%s) - started ))
 
 # The marker the deploy gate reads. Only written for a CLEAN tree: a green run over a
