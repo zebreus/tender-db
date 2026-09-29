@@ -1487,6 +1487,41 @@ pub fn publication_days_sql_at(now: i64) -> String {
     )
 }
 
+/// Distinct notices one `(source, publication_id)` must carry before the repeated-id
+/// listing names it (issue 394 b). A notice id normally has ONE content, and at most a
+/// handful when a publisher re-issues the same notice with changed bytes; the
+/// placeholder this detector exists for, DÖE's `00000000-1900`, carried 7,158. Ten
+/// is far below that and far above an ordinary re-issue chain.
+pub const REPEATED_ID_MIN_NOTICES: u64 = 10;
+
+/// Rows the repeated-id listing shows, most-carried first.
+pub const REPEATED_ID_LISTING_CAP: u64 = 20;
+
+/// Publication ids carried by many DISTINCT notices of one source (issue 394 b) — the
+/// recurrence detector for the placeholder class.
+///
+/// `(source, publication_id, content_hash)` is the notice identity and a UNIQUE
+/// index, so the rows under one `(source, publication_id)` are distinct contents by
+/// construction and `COUNT(*)` is that count. A parser that elects a publisher's
+/// stand-in value as the id — DÖE's eForms-DE placeholder `00000000-1900`, 7,158
+/// notices before issue 394 re-keyed them — shows up here as one id with thousands of
+/// contents, where every honest id has one or two. Nothing else in the report looks
+/// at identity strings, which is why that cohort grew for weeks unseen.
+///
+/// Whole-corpus, like the sentinel sweeps, because a `HAVING` over a group cannot be
+/// windowed. The GROUP BY follows the unique index's leading columns, so the pass
+/// streams the index with no sorter; only the groups that pass `HAVING` are ranked.
+pub fn repeated_ids_sql() -> String {
+    format!(
+        "SELECT source, publication_id, COUNT(*) AS notices \
+           FROM notices \
+          GROUP BY source, publication_id \
+         HAVING COUNT(*) >= {REPEATED_ID_MIN_NOTICES} \
+          ORDER BY notices DESC \
+          LIMIT {REPEATED_ID_LISTING_CAP}"
+    )
+}
+
 pub fn whole_corpus_queries() -> Vec<(String, String)> {
     vec![
         ("fresh_holds".to_owned(), fresh_holds_sql()),
@@ -1528,6 +1563,9 @@ pub fn whole_corpus_queries() -> Vec<(String, String)> {
         // tender-id windowing machinery has nothing to bind to — and its own id
         // window bounds the cost.
         ("publication_days".to_owned(), publication_days_sql()),
+        // Issue 394 (b): the identity-string recurrence detector. Whole-corpus for the
+        // same HAVING reason as the sentinel sweeps.
+        ("repeated_ids".to_owned(), repeated_ids_sql()),
     ]
 }
 
@@ -1941,6 +1979,15 @@ pub struct SentinelRow {
     pub tenders: u64,
 }
 
+/// One publication id carried by many distinct notices of a source (issue 394 b).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct RepeatedIdRow {
+    pub source: String,
+    pub publication_id: String,
+    /// Distinct notices (= distinct contents) under this id.
+    pub notices: u64,
+}
+
 /// One currency's low-end residue, as the share of its own rows that sits at or
 /// below the ceiling WITHOUT being a value the election already refuses
 /// (issue 381).
@@ -2209,6 +2256,9 @@ pub struct Report {
     /// Issue 386 unit 1: FTS Tenders carrying >= 2 distinct buyer organizations —
     /// `None` when the query did not run, which a detector must never render as 0.
     pub weld_fts: Option<u64>,
+    /// Issue 394 (b): publication ids carried by [`REPEATED_ID_MIN_NOTICES`] or more
+    /// distinct notices of one source, most-carried first.
+    pub repeated_ids: Vec<RepeatedIdRow>,
     pub sentinel_amounts: Vec<SentinelRow>,
     /// Published amounts repeating at the BOTTOM of the range (issue 380), which
     /// [`sentinel_amounts`](Self::sentinel_amounts) does not reach.
@@ -2318,6 +2368,8 @@ pub struct Raw {
     pub weld_bands: Rows,
     /// Issue 386 unit 1: one row, one count — FTS Tenders whose versions disagree on the buyer.
     pub weld_fts: Rows,
+    /// `[source, publication_id, notices]` per over-carried id (issue 394 b).
+    pub repeated_ids: Rows,
     pub sentinel_amounts: Rows,
     /// `[currency, cents, hits, tenders]` per repeated amount at the bottom of the
     /// range (issue 380).
@@ -2390,6 +2442,7 @@ impl Raw {
             weld_candidates: take("weld_candidates", &mut unmeasured)?,
             weld_bands: take("weld_bands", &mut unmeasured)?,
             weld_fts: take("weld_fts", &mut unmeasured)?,
+            repeated_ids: take("repeated_ids", &mut unmeasured)?,
             sentinel_amounts: take("sentinel_amounts", &mut unmeasured)?,
             sentinel_amounts_low: take("sentinel_amounts_low", &mut unmeasured)?,
             sentinel_low_rate: take("sentinel_low_rate", &mut unmeasured)?,
@@ -2585,6 +2638,15 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
             .map(|r| (0..WELD_BANDS.len()).map(|i| as_u64(r.get(i))).collect())
             .unwrap_or_default(),
         weld_fts: raw.weld_fts.first().map(|r| as_u64(r.get(0))),
+        repeated_ids: raw
+            .repeated_ids
+            .iter()
+            .map(|r| RepeatedIdRow {
+                source: as_str(r.get(0)),
+                publication_id: as_str(r.get(1)),
+                notices: as_u64(r.get(2)),
+            })
+            .collect(),
         sentinel_amounts: sentinel(&raw.sentinel_amounts),
         sentinel_amounts_low: sentinel(&raw.sentinel_amounts_low),
         sentinel_low_rate: raw
@@ -3180,6 +3242,35 @@ pub fn render_text(report: &Report) -> String {
         group(16_000),
         group(15_529),
     );
+    // Issue 394 (b): the same discovery idea pointed at IDENTITY strings. A publisher
+    // stand-in elected as the publication id makes one id carry thousands of notices;
+    // nothing else in this report reads identity strings, which is how DÖE's
+    // `00000000-1900` reached 7,158 notices unseen.
+    let _ = writeln!(
+        out,
+        "  -- publication ids carried by {} or more distinct notices of one source (issue 394) --",
+        REPEATED_ID_MIN_NOTICES
+    );
+    if report.unmeasured.iter().any(|l| l == "repeated_ids") {
+        let _ = writeln!(out, "  UNMEASURED — the `repeated_ids` query did not run.");
+    } else if report.repeated_ids.is_empty() {
+        let _ = writeln!(
+            out,
+            "  none — every publication id stands for fewer than {} notices of its source.",
+            REPEATED_ID_MIN_NOTICES
+        );
+    } else {
+        let _ = writeln!(out, "  {:<8}{:<44}{:>10}", "source", "publication_id", "notices");
+        for r in &report.repeated_ids {
+            let _ = writeln!(out, "  {:<8}{:<44}{:>10}", r.source, r.publication_id, group(r.notices));
+        }
+        let _ = writeln!(
+            out,
+            "  An honest id carries one notice, a few when the publisher re-issues it. An id \
+             here is most likely a stand-in the parser ELECTED as the id; find where the \
+             profile reads it and refuse the value there (issue 394's guard is the model)."
+        );
+    }
     let _ = writeln!(
         out,
         "\n== 11. Withheld-marker amounts (`-1.00` rows and their declared share — issue 372) =="
@@ -3867,6 +3958,20 @@ pub fn render_json(report: &Report) -> String {
             }))
             .collect::<Vec<Value>>(),
         "repeated_implausible": {
+            // Issue 394 (b): identity strings, beside the value sentinels.
+            "publication_ids": {
+                "min_notices": REPEATED_ID_MIN_NOTICES,
+                "listing_cap": REPEATED_ID_LISTING_CAP,
+                "listing": report
+                    .repeated_ids
+                    .iter()
+                    .map(|r| json!({
+                        "source": r.source,
+                        "publication_id": r.publication_id,
+                        "notices": r.notices,
+                    }))
+                    .collect::<Vec<Value>>(),
+            },
             "min_repeats": SENTINEL_MIN_REPEATS,
             "date_min_repeats": SENTINEL_DATE_MIN_REPEATS,
             "listing_cap": SENTINEL_LISTING_CAP,
@@ -4118,6 +4223,7 @@ mod tests {
             weld_candidates: vec![],
             weld_bands: vec![],
             weld_fts: None,
+            repeated_ids: vec![],
             sentinel_amounts: vec![],
             sentinel_amounts_low: vec![],
             sentinel_low_rate: vec![],
@@ -5111,6 +5217,45 @@ mod tests {
         assert!(civil_days("2026-07").is_none());
     }
 
+    /// Issue 394 (b): the repeated-id listing reads three ways, and the JSON carries
+    /// the listing with its thresholds — a machine consumer must be able to tell
+    /// "measured, none" from "did not run" exactly as the text can.
+    #[test]
+    fn the_repeated_id_listing_renders_found_none_and_unmeasured() {
+        let mut found = sentinel_scaffold();
+        put(
+            &mut found,
+            "repeated_ids",
+            Some(vec![vec![json!("doe"), json!("00000000-1900"), json!(7158)]]),
+        );
+        let report = assemble("x", &Raw::from_labelled(found).expect("raw"));
+        assert_eq!(
+            report.repeated_ids,
+            vec![RepeatedIdRow {
+                source: "doe".into(),
+                publication_id: "00000000-1900".into(),
+                notices: 7158,
+            }]
+        );
+        let text = render_text(&report);
+        assert!(text.contains("publication ids carried by 10 or more distinct notices"), "{text}");
+        assert!(text.contains("00000000-1900") && text.contains("7,158"), "{text}");
+        let v: Value = serde_json::from_str(&render_json(&report)).expect("json");
+        let ids = &v["repeated_implausible"]["publication_ids"];
+        assert_eq!(ids["min_notices"], REPEATED_ID_MIN_NOTICES);
+        assert_eq!(ids["listing"][0]["publication_id"], "00000000-1900");
+        assert_eq!(ids["listing"][0]["notices"], 7158);
+
+        let none = assemble("x", &Raw::from_labelled(sentinel_scaffold()).expect("raw"));
+        assert!(render_text(&none).contains("none — every publication id stands for fewer than 10"));
+
+        let mut blind = sentinel_scaffold();
+        put(&mut blind, "repeated_ids", None);
+        let blind = assemble("x", &Raw::from_labelled(blind).expect("raw"));
+        assert!(render_text(&blind).contains("UNMEASURED — the `repeated_ids` query did not run."));
+        assert!(blind.unmeasured.iter().any(|l| l == "repeated_ids"));
+    }
+
     /// Section 14 renders, and says the two things a reader needs: the bracketing
     /// counts and that the threshold is calibrated rather than picked.
     #[test]
@@ -5333,6 +5478,8 @@ mod tests {
                 "weld_fts",
                 "unmapped_fields",
                 "publication_days",
+                // Issue 394 (b): the identity-string recurrence detector.
+                "repeated_ids",
             ]
         );
     }
@@ -5535,6 +5682,7 @@ mod tests {
             ("weld_fts".to_owned(), Some(vec![])),
             ("unmapped_fields".to_owned(), Some(vec![])),
             ("publication_days".to_owned(), Some(vec![])),
+            ("repeated_ids".to_owned(), Some(vec![])),
         ])
         .expect("labelled");
         let text = render_text(&assemble("http://x", &raw));
@@ -5984,6 +6132,7 @@ mod tests {
             ("weld_fts".to_owned(), Some(vec![vec![json!(0)]])),
             ("unmapped_fields".to_owned(), Some(vec![])),
             ("publication_days".to_owned(), Some(vec![])),
+            ("repeated_ids".to_owned(), Some(vec![])),
         ];
         let raw = Raw::from_labelled(results).expect("labelled");
         let report = assemble("http://x", &raw);

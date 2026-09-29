@@ -707,3 +707,39 @@ async fn the_fts_weld_gauge_counts_disagreeing_versions_not_joint_procurements()
     assert_eq!(count(rows(&db, naive).await), 3, "the old gauge's reading on the same rows");
     let _ = std::fs::remove_file(&path);
 }
+
+/// Issue 394 (b): the identity-string recurrence detector finds a placeholder
+/// cohort through the real SQL and names nothing else. Twelve DÖE notices elected
+/// `00000000-1900` (the shape the parser produced for 7,158 before the guard);
+/// an honest id re-issued once carries two contents and must stay off the list.
+#[tokio::test]
+async fn the_repeated_id_listing_names_a_placeholder_cohort_and_nothing_else() {
+    let (db, fetch_id, path) = scratch("repeated-ids").await;
+    let raw = turso::Builder::new_local(&path).build().await.expect("raw open");
+    let conn = raw.connect().expect("connect");
+    let insert = |key: &str, i: usize| {
+        format!(
+            "INSERT INTO notices (source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at)
+             VALUES ('doe', '{key}', 'h-{key}-{i}', 'eforms', {fetch_id}, 'm-{key}-{i}.xml', 0)"
+        )
+    };
+    for i in 0..12 {
+        conn.execute(&insert("00000000-1900", i), ()).await.expect("placeholder");
+    }
+    for i in 0..2 {
+        conn.execute(&insert("a4406a20-3edd-4ddc-921e-fcd05fc6fd5c-01", i), ()).await.expect("re-issue");
+    }
+
+    let listed = rows(&db, &data_quality::repeated_ids_sql()).await;
+    assert_eq!(listed, vec![vec![json!("doe"), json!("00000000-1900"), json!(12)]]);
+
+    let report = measure(&db, "http://x").await;
+    assert_eq!(report.repeated_ids.len(), 1);
+    assert_eq!(report.repeated_ids[0].notices, 12);
+    let text = data_quality::render_text(&report);
+    assert!(text.contains("00000000-1900"), "{text}");
+    assert!(!text.contains("fcd05fc6fd5c"), "an ordinary re-issue is not listed: {text}");
+
+    drop(conn);
+    let _ = std::fs::remove_file(&path);
+}
