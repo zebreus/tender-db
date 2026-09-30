@@ -1,6 +1,7 @@
 # 450 — an FTS fetch job cannot be cancelled, so a misbehaving API holds the single job runner until a deploy
 
-Status: ready-for-agent — BUILT 2026-09-30 (`94fcbae`, gated green; two review tweaks after it: the stop is read after the page pause, and one comment's edge case is corrected). A two-lens adversarial review (resume correctness; the cancel contract) found no defect. Deploys with 448 unit 1 when the box queue is idle; the Verify's live half waits for a month that is re-fetched anyway.
+Status: needs-info — DEPLOYED 2026-09-30 ~02:27 UTC (rev `7f24c30`, health green, 0 error lines). The first half of the Verify reads done. The live half, a cancel on a running FTS fetch, needs a month that is re-fetched anyway; the next such month is any throttled month of the backfill (342).
+Was status: ready-for-agent — BUILT 2026-09-30 (`94fcbae`, gated green; two review tweaks after it: the stop is read after the page pause, and one comment's edge case is corrected). A two-lens adversarial review (resume correctness; the cancel contract) found no defect. Deploys with 448 unit 1 when the box queue is idle; the Verify's live half waits for a month that is re-fetched anyway.
 Was status: ready-for-agent — filed 2026-09-30 02:0x UTC from issue 449's "Not fixed here", which named the follow-up
 and did not file it.
 Kind: operations (job control)

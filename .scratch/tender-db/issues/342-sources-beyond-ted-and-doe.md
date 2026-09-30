@@ -484,3 +484,17 @@ month (~150 paced requests at 12 s), the whole 2021-01 → 2026-08 range would s
 months, each enqueued on an idle queue with at least 4 h before the next tick. Order: 2025-07 → 2026-08 first (the
 gap data-quality section 14 flags), then 2021-01 → 2025-05. `/data` is at 73%, already above the 70% backfill guard,
 but the whole FTS backfill is ~1.2 GB of archive plus its rows, under 1% of the volume.
+
+### 2026-09-30 — chunk 1 (2025-07 → 2026-02) landed
+
+Jobs 1671–1680, 2026-09-29 22:47 → 2026-09-30 ~02:25 UTC. Every monthly fetch ended `ok`. 2025-12 hit a stuck
+paging cursor on the 10th, which was fixed and verified under issue 449.
+
+- Process 1679: `75243 members → 68000 notices (68000 parsed, 0 quarantined, 0 unrecognised, 7243 dup)`. The
+  duplicates are releases the store already held from earlier FTS fetches. A monthly zip carries each release id
+  once, so they are not the day windows' overlap.
+- Project 1680: `68000 notices → 49431 tenders (0 islands), 68937 versions; 49431 tenders written`.
+- Monthly zip member counts: 2025-09 8,429 · 2025-10 9,104 · 2025-11 7,984 · 2025-12 8,260.
+
+Next chunk: 2026-03 → 2026-08, enqueued on the idle queue after the 448/450 deploy. It is six months, ~2.5 h, and
+ends well before the 07:35 UTC tick.

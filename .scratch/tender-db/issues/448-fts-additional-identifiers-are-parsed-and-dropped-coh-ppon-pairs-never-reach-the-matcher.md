@@ -1,6 +1,7 @@
 # 448 — FTS `additionalIdentifiers` are parsed and then dropped: the Companies House ↔ PPON pairing never reaches the matcher, and 161 suppliers stand as two organizations
 
-Status: ready-for-agent — UNIT 1 BUILT 2026-09-30 (the dry-only planner: `match-org-identifiers` rule `altid`, report `altid-merge-plan`; wet refused until unit 2). Gated green, 20 store tests + 4 crosswalk + 2 supervisor. Next: deploy when the queue is idle, run `{"kind":"match-org-identifiers","rule":"altid"}`, and read the plan against the 161. Design: `.scratch/tender-db/448-altid-design.md`. Filed 2026-09-30 00:0x UTC, as the follow-up `342-fts-plan.md` §5 risk 3 promised and never filed.
+Status: ready-for-agent — UNIT 1 DEPLOYED and RUN 2026-09-30 (rev `7f24c30`, dry job 1681, 3 s): 1,992 split pairs, plan 1,575. The dry run found a precision hole: corroboration through satellite names is CIRCULAR, because a witness notice's own party name is recorded as a satellite of the org its first identifier binds. It plans at least one false merge, Amentum Clean Energy (COH 01120437) ← an `Altrad Babcock Limited` PPON org. Next: unit 1b corroborates on names from mentions OUTSIDE the pair's witness notices, then re-run the dry plan. Units 2–4 as designed after that.
+Was status (until 2026-09-30 02:5x): ready-for-agent — UNIT 1 BUILT 2026-09-30 (the dry-only planner: `match-org-identifiers` rule `altid`, report `altid-merge-plan`; wet refused until unit 2). Gated green, 20 store tests + 4 crosswalk + 2 supervisor. Next: deploy when the queue is idle, run `{"kind":"match-org-identifiers","rule":"altid"}`, and read the plan against the 161. Design: `.scratch/tender-db/448-altid-design.md`. Filed 2026-09-30 00:0x UTC, as the follow-up `342-fts-plan.md` §5 risk 3 promised and never filed.
 
 ## What is wrong
 
@@ -78,3 +79,72 @@ Open doubts, carried to the dry run's reading:
 - harvest cost after the full backfill is unmeasured;
 - a party section with no mention is counted as `unfolded_sections`;
 - a HIGH merge verdict overriding a conflict flag has no test yet.
+
+## 2026-09-30 02:3x UTC — unit 1 on prod: dry job 1681
+
+Deployed at `7f24c30` (with 450), queue idle after backfill chunk 1. `{"kind":"match-org-identifiers","rule":"altid"}`
+ran in **3 s** over **82,647** FTS notices (14,647 before the backfill chunk):
+
+    10470 company-number/PPON pairs keyed (10725 literal; unpaired: 186 padded, 3 condemned, 66 malformed,
+    25 non-GB; 0 ambiguous parties); owners: 0 already one, 4 multi-target, 29 no company-number org,
+    8445 no PPON org, 0 neither, 1992 two distinct GB orgs; denied: 0 gate, 7 consortium, 12 legal-form,
+    0 evidence-wall, 0 loser-incoherent, 0 verdict-keep, 341 uncorroborated-overlap, 38 uncorroborated-disjoint,
+    0 generic; 19 conflicts; plan 1575 pairs
+
+Report `altid-merge-plan` (a copy is at `/root/altid-plan-1681.json` on the box). The plan listing is capped at 500 of
+1,575. The denied (398) and conflict (19) listings are complete.
+
+**both_distinct 1,992 against the issue's 161.** The corpus grew 5.6× (82,647 against 14,647 notices), and the
+planner keys owners canonically. In the listings, 45% (plan) to 67% (denied) of the company-number orgs carry the
+FTS spelling `GBCOH…`; the rest carry the bare TED number. The hand count matched literals and so could see only one
+of the two spellings. Both effects point the same way, and no count is off in a way that suggests a bug.
+
+**0 ambiguous parties, checked.** The pre-backfill "COH→COH 89" were repeats. Bounded `/v1/sql` over notice ids
+46.70M–46.79M found 156 party sections listing `GB-COH` more than once, and 0 listing two DIFFERENT numbers.
+
+**Recall: the strict name key costs real matches.** Of the 341 `uncorroborated-overlap` pairs, 13 differ only by dotted
+initials or punctuation ("Cardinal Health U.K. 432 Limited" / "Cardinal Health UK 432 Limited"). About 105 more differ
+only by a legal-form suffix, mostly one-sided ("Carnall Farrar Ltd" / "Carnall Farrar"). These are approximate counts
+from a Python re-normalisation, not the arm's own key. The other 223 differ in words: typos, renames, `t/a` trading
+names, and sister or parent companies ("Northumbrian Water Group Limited" / "Northumbrian Water Ltd").
+
+**Precision: the satellite leg of corroboration is circular.** Of the 500 listed plan pairs, 390 have equal head
+names (under a rough normalisation), 21 differ only by legal form, and **89 are corroborated only through a satellite
+name**. That 89 mixes three kinds:
+- true renames, where the company number is one legal entity: Aggregate Industries UK → Holcim UK, Hanson Quarry
+  Products Europe → Heidelberg Materials UK, Atkins → AtkinsRéalis UK, Engie Services → Equans Services,
+  Magnox → Nuclear Restoration Services, Doosan Babcock → Altrad Babcock;
+- publisher errors: Hinduja Global Solutions ↔ Student Loans Company, Fujitsu Services ↔ FCA,
+  University of Greenwich ↔ London and South East University Group, Pertemps ↔ Stepping Up Leadership CIC;
+- the proven case, checked on Companies House. COH 01120437 is **Amentum Clean Energy Limited** (formerly Amec
+  Foster Wheeler Nuclear UK Limited), and COH 00839354 is **Altrad Babcock Limited** (formerly Doosan Babcock). The
+  plan pairs 01120437 with PPON PBDC-7744-BTPG, whose org is named "Altrad Babcock Limited". It has 4 witnesses, all
+  listing the company number first.
+
+The mechanism: when a party lists the COH first, the fold binds its mention to the COH org and records the party's
+name as that org's satellite. That name is the witness's own statement, and it then "corroborates" the pair it came
+with. A wrong company number beside the right name and PPON (the Amentum case) passes every gate.
+
+### Unit 1b — decided: corroborate on names from outside the pair's witness notices
+
+For each side, read the org's mentions `(notice_id, name)` through `organization_mentions_org`. That is the same
+per-org read the evidence wall already does, now with the name column. Drop mentions whose notice is one of the
+pair's witnesses.
+- If both sides keep at least one name, corroboration needs an altid-name-key match between the two NON-witness name
+  sets.
+- A side left with no non-witness mention is an org made only of those witness mentions. For that side only, its
+  witness names stand in. Merging such an org moves only the mentions the witnesses themselves put there, which is
+  no worse than today.
+- A pair that the old rule corroborated and the new rule does not is listed as `witness-only`. It is denied and
+  verdict-overridable like the other judgment gates, so true renames reach review with the Companies House history
+  as their evidence.
+
+Recall folds, in `altid_name_key` (the design's open question 3, answered by the counts above):
+- (a) dotted initials fold (`U.K.` → `uk`, `E.P.` → `ep`) before `n3_key`;
+- (b) a trailing `t/a …` or `trading as …` clause is dropped;
+- (c) a name with NO legal-form token matches the same name with one. Both-sided different forms stay apart, because
+  `gb_legal_family` already vetoes `plc`/`ltd`. `uk`, `group` and `holdings` are still kept.
+
+Verify for 1b: re-run the dry plan. Amentum ← Altrad (01120437~PBDCBTPG) must list as `witness-only`, and the
+Doosan → Altrad Babcock pair (00839354) must still plan or list as `witness-only`, never as a merge through a false
+name. Record the class counts, then read a fresh 50-pair sample of the new plan.
