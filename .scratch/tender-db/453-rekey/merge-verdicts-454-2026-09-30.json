@@ -1,0 +1,113 @@
+{
+ "cohort": "454-rekey-names-2026-09-30",
+ "verdicts": [
+  {
+   "country": "GB",
+   "scheme": "GB:rekey",
+   "key": "07720853~07720852",
+   "members": [
+    15500364,
+    31544513
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[454 review 2026-09-30, register + skeptic lenses agree] register: The register shows 07720852, now TASK FORCE DISTRIBUTION LIMITED, was called TASKFORCE DISTRIBUTION LIMITED from 28 Jul 2011 to 10 May 2012. So 'Taskforce Distribution Ltd' is a former name of the same company, differing only by a space. Searching for 'taskforce distribution' finds no other company with that name. The wrong number 07720853 is the next number along (A&M NORWAY LIMITED). | skeptic: The register shows 07720852 TASK FORCE DISTRIBUTION LIMITED (Active, Plymouth) with the previous name TASKFORCE DISTRIBUTION LIMITED (28 Jul 2011 - 10 May 2012), which is exactly the org's name. So the two names are the same company before and after a rename. The wrong number 07720853 (A&M NORWAY LIMITED) is an off-by-one typo. The target correctly carries GBCOH07720852. A register search for 'Taskforce Distribution' turns up no other matching company."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:rekey",
+   "key": "10059883~08130468",
+   "members": [
+    15915050,
+    16211817
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[454 review 2026-09-30, register + skeptic lenses agree] register: 08130468 is SHERBORNE AREA SCHOOLS' TRUST (The Gryphon School, Sherborne, Dorset; formerly THE GRYPHON SCHOOL). 'Sherbourne' is a misspelling of Sherborne: searching for 'sherbourne area schools' finds no Sherbourne-spelled trust, only this one. The target 'Sherborne Area Schools Trust' is the registered name without the apostrophe. The wrong number 10059883 (MIDDLE EAST PARTNERSHIP LIMITED) is unrelated. | skeptic: 'Sherbourne' is a misspelling of 'Sherborne'. 08130468 is SHERBORNE AREA SCHOOLS' TRUST (Active, The Gryphon School, Sherborne, Dorset; academy trust with SIC 85200/85310; previously THE GRYPHON SCHOOL). A register search for 'Sherbourne Area Schools Trust' returns only 08130468, so no separate entity uses the other spelling. The target 'Sherborne Area Schools Trust' carries 08130468 and matches apart from the apostrophe. The wrong number 10059883 (MIDDLE EAST PARTNERSHIP LIMITED) is unrelated."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:rekey",
+   "key": "11022108~01102208",
+   "members": [
+    16654305,
+    30915108
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[454 review 2026-09-30, register + skeptic lenses agree] register: The register for 01102208 (MSI REPRODUCTIVE CHOICES, Active, incorporated 1973) lists MARIE STOPES INTERNATIONAL as its name from 12 Aug 1991 to 15 Nov 2020, and before that MARIE STOPES INTERNATIONAL LIMITED. No other company in a register search has ever carried that name. So 'Marie stopes International' is the pre-2020 name of the same legal entity the target 'MSI Reproductive Choices' names. The wrong number 11022108 is a digit-shuffle of 01102208 and belongs to SLIMOT LIMITED, an unrelated software firm dissolved in 2021. | skeptic: The register shows company 01102208, now MSI REPRODUCTIVE CHOICES (Active), was named exactly MARIE STOPES INTERNATIONAL from 12 Aug 1991 to 15 Nov 2020. It then became MSI REPRODUCTIVE CHOICES LTD and later MSI REPRODUCTIVE CHOICES. A search for 'Marie Stopes' turns up no other live company of that name. The only related hits are a dissolved Bangladesh clinic society and OPTIONS CONSULTANCY SERVICES (formerly Marie Stopes Consultancy Ltd), neither of which carries this name. So the name difference is a rename, and the target (GBCOH01102208) is the same legal entity."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:rekey",
+   "key": "13485692~07956897",
+   "members": [
+    9816603,
+    31579911
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[454 review 2026-09-30, register + skeptic lenses agree] register: The register for 07956897 (ELEVATE EVERYWHERE LTD, Active, incorporated 20 Feb 2012) lists SILVER ENERGY MANAGEMENT SOLUTIONS LIMITED as its name from 20 Feb 2012 to 20 Mar 2023. The company was renamed, so it is the same legal entity. A register search finds no other company that has ever carried that name. The wrong number 13485692 is SPLENDIDO ESTATES LTD, an unrelated estate agency. | skeptic: The overview for 07956897, ELEVATE EVERYWHERE LTD (Active, incorporated 20 Feb 2012), lists SILVER ENERGY MANAGEMENT SOLUTIONS LIMITED as its only previous name, held from 20 Feb 2012 to 20 Mar 2023. A search for 'Silver Energy Management' finds only this company under that name, so the two orgs are one company before and after a rename."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:rekey",
+   "key": "15308001~FC035527",
+   "members": [
+    16866599,
+    23708671
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[454 review 2026-09-30, register + skeptic lenses agree] register: FC035527 is SONY EUROPE B.V., an Active overseas company registered in the Netherlands (KVK71682147). 'Sony Europe B.V.' and 'Sony Europe BV' differ only by the dots in the legal form, so the two orgs are the same entity. BR020612 and OE029601 are the same company's UK establishment and overseas-entity records. SONY EUROPE LIMITED (02422874 and 15698470) is a separate company, but neither name here refers to it. The wrong number 15308001 is T F AUTOGATES AND CAMERAS LIMITED, an unrelated firm dissolved in 2025. | skeptic: FC035527 is SONY EUROPE B.V. (Active overseas company, Dutch KVK71682147, Hoofddorp). 'Sony Europe B.V.' and 'Sony Europe BV' differ only in the punctuation of the legal-form suffix. BR020612 (UK establishment) and OE029601 (overseas entity) are other registrations of the same Dutch entity, not separate companies. The separate UK SONY EUROPE LIMITED companies (02422874, closed/converted; 15698470, new) have different names and legal forms, so they do not undercut this match. The target's identifier belongs to it."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:rekey",
+   "key": "GBCOH00077361~02296559",
+   "members": [
+    14863797,
+    31541672
+   ],
+   "action": "keep",
+   "confidence": "medium",
+   "rationale": "[454 review 2026-09-30, register + skeptic lenses agree] register: The register cannot show which company the bare brand 'B Braun' means. The claimed number 00077361 was never issued (the register returns 404), and the org has a single mention, 'B Braun', with no longer or corroborating name. B. BRAUN MEDICAL LIMITED 02296559 is the main UK trading company. But a search for 'B Braun' also returns sister companies at the same Sheffield address: B. BRAUN AVITUM UK LIMITED 04153656 (dialysis), B BRAUN HEALTHCARE LIMITED 02403376, the B BRAUN STERILOG companies, and B BRAUN MEDICAL (N.I.) LIMITED. The group's German parent is another possibility. Issue 452's own reviewer and challenger rated the 02296559 correction as only probable, 'medium', for this reason. Sameness is likely but not shown, so under the rubric this is keep. (The 448 case with head 'B Braun' passed only because that org also carried 'B. Braun Medical Limited'; this org has no such name.) | skeptic: The target (B. BRAUN MEDICAL LIMITED, 02296559, Active) is correctly keyed, but the bare name 'B Braun' is a group brand and cannot be tied to that one company. The register shows several B. Braun UK companies at the same Sheffield address: B. BRAUN AVITUM UK LIMITED 04153656, B BRAUN HEALTHCARE LIMITED 02403376, B BRAUN STERILOG LIMITED 01472814 (itself formerly named B. BRAUN MEDICAL LIMITED), B BRAUN STERILOG (YORKSHIRE) 00036822 and B BRAUN MEDICAL (N.I.) LIMITED. There is also the German parent, B. Braun Melsungen AG. The org's original number, 00077361, returns 404 on the register, so nothing there points to the Medical Ltd entity. The org is plausibly B. Braun Medical Ltd, but it could be a sister company or the parent, so under the skeptic default this is keep."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:rekey",
+   "key": "GBCOH07393785~07392785",
+   "members": [
+    31544041,
+    31544053
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[454 review 2026-09-30, register + skeptic lenses agree] register: 07392785 is BLUE STEP SOLUTIONS LIMITED (Active since 2010, Blisworth), the exact name of target 31544053. The register has no separate 'BLUESTEP SOLUTIONS LIMITED' (only Bluestep Ltd and Bluestep Consulting Ltd, which differ). 'Bluestep' vs 'Blue Step' is a spacing variant. The wrong number 07393785 (a dissolved dormant company in Kingsbury) is one digit off 07392785, which confirms a keying typo of this company's number. | skeptic: The only difference is spacing: 'Bluestep' vs 'BLUE STEP SOLUTIONS LIMITED' (07392785, Active, Blisworth). The wrong number 07393785 is one digit off the right one, and it belongs to UNIVEST LLC LTD, which is dissolved, was incorporated a day later (1 Oct 2010) and is unrelated, so this is a typo. A register search for 'Bluestep Solutions' finds no separate BLUESTEP SOLUTIONS company, only BLUESTEP LIMITED and BLUESTEP CONSULTING LTD, neither called Solutions. The target's name matches the register name exactly."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:rekey",
+   "key": "GBCOHO2O84294~02084294",
+   "members": [
+    12511322,
+    31571774
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[454 review 2026-09-30, register + skeptic lenses agree] register: 02084294 is PSL PRINT MANAGEMENT LTD, active, formerly PRINT SEARCH LANCASHIRE LIMITED. The register has no 'PSI Print Management' company. The org's own wrong identifier, GBCOHO2O84294, is 02084294 with the letter O typed for zero. 'PSI' for 'PSL' is the same kind of typing or OCR slip (I for L). The target, PSL Print Management Ltd, matches the register name exactly. One entity. | skeptic: The wrong value GBCOHO2O84294 is 02084294 with the letter O typed for 0, so the source quoted the right number. 02084294 is PSL PRINT MANAGEMENT LTD (Active, Preston, printing; formerly Print Search Lancashire Ltd), which is the target's name and number. 'PSI' is an I/L misreading of 'PSL'. A search finds no 'PSI Print Management' company on the register."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:rekey",
+   "key": "GBCOHOO688424~00688424",
+   "members": [
+    10733656,
+    31573452
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[454 review 2026-09-30, register + skeptic lenses agree] register: Company 00688424 is now ATKINSR\u00c9ALIS UK LIMITED and was named ATKINS LIMITED from 1 Jun 2004 to 12 Oct 2023 (W S Atkins (Services) Ltd before that). The target 'Atkins Limited' is this company's former name, and 'Atkins Realis' is its current name without the accent and the 'UK Limited' ending. About 20 registered companies carry the AtkinsR\u00e9alis name, so the brand alone would not decide it. The org's own wrong identifier does: GBCOHOO688424 is 00688424 with the letter O typed for zero. That points to this exact company, a rename rather than a sister company. | skeptic: The wrong value GBCOHOO688424 is 00688424 with the letter O typed for 0, so the source quoted this exact company. The register shows 00688424 was named ATKINS LIMITED from 2004 to 12 Oct 2023 and is now ATKINSR\u00c9ALIS UK LIMITED (Active). The target 'Atkins Limited' is therefore this company under its previous name. There are about 20 other AtkinsR\u00e9alis companies, including the nearby-numbered AtkinsR\u00e9alis KINS Holdings 00688415, but the source's own digits point to 00688424, not to one of them."
+  }
+ ]
+}

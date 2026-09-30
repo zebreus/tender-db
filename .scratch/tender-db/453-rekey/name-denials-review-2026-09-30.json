@@ -1,0 +1,338 @@
+[
+ {
+  "org": 16558214,
+  "name": "Costa Coffee",
+  "target_org": 31587959,
+  "target_name": "COSTA LIMITED",
+  "wrong": "01270685",
+  "right": "01270695",
+  "decision": "unsettled",
+  "register": {
+   "org": 16558214,
+   "action": "merge",
+   "confidence": "high",
+   "reason": "01270695 is COSTA LIMITED. Its only previous name is C. B. COSTA BROS. COFFEE CO. LIMITED (1976-1997), and its SIC codes are 10832 (coffee production) and 56101 (licensed restaurants), so it is the company that runs the Costa Coffee brand. The wrong number 01270685 is not on the register and is one digit off 01270695, so the source meant Costa Limited. The only company actually called COSTA COFFEE LIMITED (05552073) is a dormant Kent company run by private individuals, not the brand owner. Costa Coffee is Costa Limited's trading name, so the two orgs are the same entity."
+  },
+  "skeptic": {
+   "org": 16558214,
+   "action": "merge",
+   "confidence": "medium",
+   "reason": "Wrong number 01270685 returns 404 on the register. It is a one-digit typo of 01270695, COSTA LIMITED: Active, previously C. B. COSTA BROS. COFFEE CO. LIMITED (1976-1997), SIC 10832 coffee production and 56101 licensed restaurants, registered office at Loudwater, High Wycombe. That is the operating company behind the Costa Coffee brand. I checked for a separate entity with this name. The only 'COSTA COFFEE LIMITED' (05552073) is a dormant company in Rainham, Kent, run by private individuals and unrelated to the Costa group. ROADCHEF COSTA COFFEE LIMITED (03126587) is a franchise vehicle, and nothing ties this org to it. The target COSTA LIMITED correctly carries GBCOH01270695. Not high because the register does not list 'Costa Coffee' as a name of 01270695: the brand link rests on the typo'd number plus the previous name."
+  }
+ },
+ {
+  "org": 15500364,
+  "name": "Taskforce Distribution Ltd",
+  "target_org": 31544513,
+  "target_name": "TASK FORCE DISTRIBUTION LIMITED",
+  "wrong": "07720853",
+  "right": "07720852",
+  "decision": "merge",
+  "register": {
+   "org": 15500364,
+   "action": "merge",
+   "confidence": "high",
+   "reason": "The register shows 07720852, now TASK FORCE DISTRIBUTION LIMITED, was called TASKFORCE DISTRIBUTION LIMITED from 28 Jul 2011 to 10 May 2012. So 'Taskforce Distribution Ltd' is a former name of the same company, differing only by a space. Searching for 'taskforce distribution' finds no other company with that name. The wrong number 07720853 is the next number along (A&M NORWAY LIMITED)."
+  },
+  "skeptic": {
+   "org": 15500364,
+   "action": "merge",
+   "confidence": "high",
+   "reason": "The register shows 07720852 TASK FORCE DISTRIBUTION LIMITED (Active, Plymouth) with the previous name TASKFORCE DISTRIBUTION LIMITED (28 Jul 2011 - 10 May 2012), which is exactly the org's name. So the two names are the same company before and after a rename. The wrong number 07720853 (A&M NORWAY LIMITED) is an off-by-one typo. The target correctly carries GBCOH07720852. A register search for 'Taskforce Distribution' turns up no other matching company."
+  }
+ },
+ {
+  "org": 8700311,
+  "name": "Northern Education Associates Ltd",
+  "target_org": 16035518,
+  "target_name": "Northern Education",
+  "wrong": "09579337",
+  "right": "03964217",
+  "decision": "unsettled",
+  "register": {
+   "org": 8700311,
+   "action": "merge",
+   "confidence": "medium",
+   "reason": "'Northern Education Associates Ltd' matches the registered name of 03964217 exactly (NORTHERN EDUCATION ASSOCIATES LIMITED, Newcastle, educational support services, Walton family directors, dissolved 2024 after a members' voluntary liquidation). The target's name 'Northern Education' is a shortened form of that name, and the target carries the same number, 03964217. Nothing on the register ties 03964217 to any other name, since it has no previous names. There are risks, which is why confidence is medium. The Waltons also ran a sister company, 09882379, called NORTHERN EDUCATION PARTNERSHIP LIMITED only from Nov 2015 to Apr 2016, and NORTHERN EDUCATION TRUST (07189647) is a separate academy trust. So the register cannot prove the target record means this company rather than a sister company carrying the wrong number. Still, the number the target carries points to this company."
+  },
+  "skeptic": {
+   "org": 8700311,
+   "action": "merge",
+   "confidence": "medium",
+   "reason": "The org's name matches the register exactly: 03964217 is NORTHERN EDUCATION ASSOCIATES LIMITED (Newcastle upon Tyne, SIC 85600 educational support services, dissolved 28 May 2024, no previous names). The wrong number 09579337 (BC ASSOCIATES (NORTHERN) LIMITED) is an unrelated mismatch. The target 'Northern Education' is a strict prefix of that name and carries 03964217 itself, so its own source tied it to this company. I looked for other entities it could be. NORTHERN EDUCATION TRUST (07189647) and NORTHERN EDUCATION LIMITED (16338771, London, incorporated 2025) exist, but neither holds this number, and nothing suggests the target was keyed from them. Not high because the register does not record 'Northern Education' as a trading name, so the target's identity rests on its self-carried number."
+  }
+ },
+ {
+  "org": 16211817,
+  "name": "Sherbourne Area Schools Trust",
+  "target_org": 15915050,
+  "target_name": "Sherborne Area Schools Trust",
+  "wrong": "10059883",
+  "right": "08130468",
+  "decision": "merge",
+  "register": {
+   "org": 16211817,
+   "action": "merge",
+   "confidence": "high",
+   "reason": "08130468 is SHERBORNE AREA SCHOOLS' TRUST (The Gryphon School, Sherborne, Dorset; formerly THE GRYPHON SCHOOL). 'Sherbourne' is a misspelling of Sherborne: searching for 'sherbourne area schools' finds no Sherbourne-spelled trust, only this one. The target 'Sherborne Area Schools Trust' is the registered name without the apostrophe. The wrong number 10059883 (MIDDLE EAST PARTNERSHIP LIMITED) is unrelated."
+  },
+  "skeptic": {
+   "org": 16211817,
+   "action": "merge",
+   "confidence": "high",
+   "reason": "'Sherbourne' is a misspelling of 'Sherborne'. 08130468 is SHERBORNE AREA SCHOOLS' TRUST (Active, The Gryphon School, Sherborne, Dorset; academy trust with SIC 85200/85310; previously THE GRYPHON SCHOOL). A register search for 'Sherbourne Area Schools Trust' returns only 08130468, so no separate entity uses the other spelling. The target 'Sherborne Area Schools Trust' carries 08130468 and matches apart from the apostrophe. The wrong number 10059883 (MIDDLE EAST PARTNERSHIP LIMITED) is unrelated."
+  }
+ },
+ {
+  "org": 16654305,
+  "name": "Marie stopes International",
+  "target_org": 30915108,
+  "target_name": "MSI Reproductive Choices",
+  "wrong": "11022108",
+  "right": "01102208",
+  "decision": "merge",
+  "register": {
+   "org": 16654305,
+   "action": "merge",
+   "confidence": "high",
+   "reason": "The register for 01102208 (MSI REPRODUCTIVE CHOICES, Active, incorporated 1973) lists MARIE STOPES INTERNATIONAL as its name from 12 Aug 1991 to 15 Nov 2020, and before that MARIE STOPES INTERNATIONAL LIMITED. No other company in a register search has ever carried that name. So 'Marie stopes International' is the pre-2020 name of the same legal entity the target 'MSI Reproductive Choices' names. The wrong number 11022108 is a digit-shuffle of 01102208 and belongs to SLIMOT LIMITED, an unrelated software firm dissolved in 2021."
+  },
+  "skeptic": {
+   "org": 16654305,
+   "action": "merge",
+   "confidence": "high",
+   "reason": "The register shows company 01102208, now MSI REPRODUCTIVE CHOICES (Active), was named exactly MARIE STOPES INTERNATIONAL from 12 Aug 1991 to 15 Nov 2020. It then became MSI REPRODUCTIVE CHOICES LTD and later MSI REPRODUCTIVE CHOICES. A search for 'Marie Stopes' turns up no other live company of that name. The only related hits are a dissolved Bangladesh clinic society and OPTIONS CONSULTANCY SERVICES (formerly Marie Stopes Consultancy Ltd), neither of which carries this name. So the name difference is a rename, and the target (GBCOH01102208) is the same legal entity."
+  }
+ },
+ {
+  "org": 9816603,
+  "name": "Silver Energy Management Solutions Limited",
+  "target_org": 31579911,
+  "target_name": "ELEVATE EVERYWHERE LTD",
+  "wrong": "13485692",
+  "right": "07956897",
+  "decision": "merge",
+  "register": {
+   "org": 9816603,
+   "action": "merge",
+   "confidence": "high",
+   "reason": "The register for 07956897 (ELEVATE EVERYWHERE LTD, Active, incorporated 20 Feb 2012) lists SILVER ENERGY MANAGEMENT SOLUTIONS LIMITED as its name from 20 Feb 2012 to 20 Mar 2023. The company was renamed, so it is the same legal entity. A register search finds no other company that has ever carried that name. The wrong number 13485692 is SPLENDIDO ESTATES LTD, an unrelated estate agency."
+  },
+  "skeptic": {
+   "org": 9816603,
+   "action": "merge",
+   "confidence": "high",
+   "reason": "The overview for 07956897, ELEVATE EVERYWHERE LTD (Active, incorporated 20 Feb 2012), lists SILVER ENERGY MANAGEMENT SOLUTIONS LIMITED as its only previous name, held from 20 Feb 2012 to 20 Mar 2023. A search for 'Silver Energy Management' finds only this company under that name, so the two orgs are one company before and after a rename."
+  }
+ },
+ {
+  "org": 23708671,
+  "name": "Sony Europe B.V.",
+  "target_org": 16866599,
+  "target_name": "Sony Europe BV",
+  "wrong": "15308001",
+  "right": "FC035527",
+  "decision": "merge",
+  "register": {
+   "org": 23708671,
+   "action": "merge",
+   "confidence": "high",
+   "reason": "FC035527 is SONY EUROPE B.V., an Active overseas company registered in the Netherlands (KVK71682147). 'Sony Europe B.V.' and 'Sony Europe BV' differ only by the dots in the legal form, so the two orgs are the same entity. BR020612 and OE029601 are the same company's UK establishment and overseas-entity records. SONY EUROPE LIMITED (02422874 and 15698470) is a separate company, but neither name here refers to it. The wrong number 15308001 is T F AUTOGATES AND CAMERAS LIMITED, an unrelated firm dissolved in 2025."
+  },
+  "skeptic": {
+   "org": 23708671,
+   "action": "merge",
+   "confidence": "high",
+   "reason": "FC035527 is SONY EUROPE B.V. (Active overseas company, Dutch KVK71682147, Hoofddorp). 'Sony Europe B.V.' and 'Sony Europe BV' differ only in the punctuation of the legal-form suffix. BR020612 (UK establishment) and OE029601 (overseas entity) are other registrations of the same Dutch entity, not separate companies. The separate UK SONY EUROPE LIMITED companies (02422874, closed/converted; 15698470, new) have different names and legal forms, so they do not undercut this match. The target's identifier belongs to it."
+  }
+ },
+ {
+  "org": 31541672,
+  "name": "B Braun",
+  "target_org": 14863797,
+  "target_name": "B Braun Medical Ltd",
+  "wrong": "GBCOH00077361",
+  "right": "02296559",
+  "decision": "keep",
+  "register": {
+   "org": 31541672,
+   "action": "keep",
+   "confidence": "medium",
+   "reason": "The register cannot show which company the bare brand 'B Braun' means. The claimed number 00077361 was never issued (the register returns 404), and the org has a single mention, 'B Braun', with no longer or corroborating name. B. BRAUN MEDICAL LIMITED 02296559 is the main UK trading company. But a search for 'B Braun' also returns sister companies at the same Sheffield address: B. BRAUN AVITUM UK LIMITED 04153656 (dialysis), B BRAUN HEALTHCARE LIMITED 02403376, the B BRAUN STERILOG companies, and B BRAUN MEDICAL (N.I.) LIMITED. The group's German parent is another possibility. Issue 452's own reviewer and challenger rated the 02296559 correction as only probable, 'medium', for this reason. Sameness is likely but not shown, so under the rubric this is keep. (The 448 case with head 'B Braun' passed only because that org also carried 'B. Braun Medical Limited'; this org has no such name.)"
+  },
+  "skeptic": {
+   "org": 31541672,
+   "action": "keep",
+   "confidence": "medium",
+   "reason": "The target (B. BRAUN MEDICAL LIMITED, 02296559, Active) is correctly keyed, but the bare name 'B Braun' is a group brand and cannot be tied to that one company. The register shows several B. Braun UK companies at the same Sheffield address: B. BRAUN AVITUM UK LIMITED 04153656, B BRAUN HEALTHCARE LIMITED 02403376, B BRAUN STERILOG LIMITED 01472814 (itself formerly named B. BRAUN MEDICAL LIMITED), B BRAUN STERILOG (YORKSHIRE) 00036822 and B BRAUN MEDICAL (N.I.) LIMITED. There is also the German parent, B. Braun Melsungen AG. The org's original number, 00077361, returns 404 on the register, so nothing there points to the Medical Ltd entity. The org is plausibly B. Braun Medical Ltd, but it could be a sister company or the parent, so under the skeptic default this is keep."
+  }
+ },
+ {
+  "org": 31578000,
+  "name": "CGi (UK) Ltd",
+  "target_org": 15233718,
+  "target_name": "CGI IT UK Ltd",
+  "wrong": "GBCOH00947962",
+  "right": "00947968",
+  "decision": "unsettled",
+  "register": {
+   "org": 31578000,
+   "action": "merge",
+   "confidence": "medium",
+   "reason": "00947968 is CGI IT UK LIMITED (Active; formerly Logica UK / LogicaCMG UK / Logica Ltd), the CGI group's UK operating company and the exact name of target 15233718. The stored wrong number 00947962 (Avery Dennison Materials U.K. Ltd, incorporated the same day, 13 Feb 1969) is one digit off 00947968, so whoever published it meant CGI IT UK's number. No live 'CGI (UK) LIMITED' is on the register. The only exact-form match is C.G.I. (UK) LIMITED, a name 04164606 held from 2001 to 2011. That company later became Pyroguard Ltd, a dormant fire-glass company dissolved in 2025, and it has no link to either number. 'CGi (UK) Ltd' reads as a loose brand rendering of CGI IT UK Ltd, but the register does not list that name for 00947968, so this is not high confidence."
+  },
+  "skeptic": {
+   "org": 31578000,
+   "action": "merge",
+   "confidence": "medium",
+   "reason": "The wrong number 00947962 (AVERY DENNISON MATERIALS U.K. LIMITED, incorporated 13 Feb 1969, the same day as 00947968) is the right number with the last digit mistyped. So whoever keyed the notice meant CGI IT UK LIMITED 00947968, CGI's UK operating company (formerly Logica UK), and 'CGi (UK) Ltd' is a loose rendering of that name. The skeptic check found one real counter-lead: 'C.G.I. (UK) LIMITED' was the registered name of an unrelated fire-glass company from 2001 to 2011 (04164606, now PYROGUARD LTD, dormant and dissolved 11 Feb 2025). But that company dropped the name 15 years ago, and nothing points to it except the name, while the number points plainly at CGI IT UK. Not high, because 'CGi (UK)' is neither a current nor a previous name of 00947968."
+  }
+ },
+ {
+  "org": 31556925,
+  "name": "Symology UK Ltd",
+  "target_org": 31578940,
+  "target_name": "Symology Limited",
+  "wrong": "GBCOH06472865",
+  "right": "01760502",
+  "decision": "unsettled",
+  "register": {
+   "org": 31556925,
+   "action": "merge",
+   "confidence": "high",
+   "reason": "The register has only two Symology entities: SYMOLOGY LIMITED 01760502 (Active since 1983, software development, Dunstable) and Symology Trustees LLP. No 'Symology UK Ltd' exists now or as a previous name. The wrong number 06472865 is SYNOLOGY UK LIMITED, a computer wholesaler in Milton Keynes, which points to an N/M name-search mix-up. 'Symology UK Ltd' is an informal variant of Symology Limited, the company target 31578940 already holds."
+  },
+  "skeptic": {
+   "org": 31556925,
+   "action": "keep",
+   "confidence": "medium",
+   "reason": "There is no company named 'Symology UK' on the register, now or in the past. SYMOLOGY LIMITED 01760502 has no previous names and no 'UK' form. The notice's own number 06472865 is exactly SYNOLOGY UK LIMITED (Milton Keynes, computer wholesale), and 'Symology UK Ltd' is that exact register name with one keyboard-adjacent letter swapped (m for n). So two signals point to Synology UK (the ' UK Ltd' form and the exact number) and one points to Symology (the spelling). Symology is the likelier public-sector supplier, but the register cannot settle which firm the notice meant. Merging would attach a possible NAS-hardware contract to a highways-software company, so keep until the notice's subject is checked."
+  }
+ },
+ {
+  "org": 31578253,
+  "name": "Haringey GP Group Limited",
+  "target_org": 31542495,
+  "target_name": "North Central London Training Hub",
+  "wrong": "GBCOH07393447",
+  "right": "10180486",
+  "decision": "unsettled",
+  "register": {
+   "org": 31578253,
+   "action": "keep",
+   "confidence": "high",
+   "reason": "10180486 is HARINGEY GP GROUP LTD (Active; formerly FEDERATED4HEALTH LTD., 2016-2022), a Haringey GP federation, and 'Haringey GP Group Limited' matches it exactly. The target is 'North Central London Training Hub', which is not a current or previous name of 10180486 and has no registered company of that name. It is a five-borough NHS training programme, at most a function hosted by some legal entity, not the company itself. If the target is keyed right it is a hosted programme or division; if not, it is mis-keyed. Keep either way. The wrong number 07393447 (Go Invoice Ltd, dissolved) is unrelated."
+  },
+  "skeptic": {
+   "org": 31578253,
+   "action": "merge",
+   "confidence": "medium",
+   "reason": "'Haringey GP Group Limited' is exactly HARINGEY GP GROUP LTD 10180486 (formerly FEDERATED4HEALTH LTD., GP practice SIC). The wrong number 07393447 is GO INVOICE LIMITED, dissolved and unrelated. The target's head name is 'North Central London Training Hub', which is not a registered company; it looks like an NHS programme the federation hosts, so on its own it would read as a division. But in the 452 census the target org's mentions already include 'Haringey GP Group Limited' (2) and 'Haringey GP Federation' (1) under 10180486, and its number was judged its own (right-number). So the target already holds this company's mentions, and merging joins this lone mention to them. Not high: the register cannot prove that the training-hub mentions belong to this company."
+  }
+ },
+ {
+  "org": 31544041,
+  "name": "Bluestep Solutions Limited",
+  "target_org": 31544053,
+  "target_name": "BLUE STEP SOLUTIONS LIMITED",
+  "wrong": "GBCOH07393785",
+  "right": "07392785",
+  "decision": "merge",
+  "register": {
+   "org": 31544041,
+   "action": "merge",
+   "confidence": "high",
+   "reason": "07392785 is BLUE STEP SOLUTIONS LIMITED (Active since 2010, Blisworth), the exact name of target 31544053. The register has no separate 'BLUESTEP SOLUTIONS LIMITED' (only Bluestep Ltd and Bluestep Consulting Ltd, which differ). 'Bluestep' vs 'Blue Step' is a spacing variant. The wrong number 07393785 (a dissolved dormant company in Kingsbury) is one digit off 07392785, which confirms a keying typo of this company's number."
+  },
+  "skeptic": {
+   "org": 31544041,
+   "action": "merge",
+   "confidence": "high",
+   "reason": "The only difference is spacing: 'Bluestep' vs 'BLUE STEP SOLUTIONS LIMITED' (07392785, Active, Blisworth). The wrong number 07393785 is one digit off the right one, and it belongs to UNIVEST LLC LTD, which is dissolved, was incorporated a day later (1 Oct 2010) and is unrelated, so this is a typo. A register search for 'Bluestep Solutions' finds no separate BLUESTEP SOLUTIONS company, only BLUESTEP LIMITED and BLUESTEP CONSULTING LTD, neither called Solutions. The target's name matches the register name exactly."
+  }
+ },
+ {
+  "org": 31560491,
+  "name": "Ford Trustford Ltd",
+  "target_org": 19144603,
+  "target_name": "Ford Retail Ltd",
+  "wrong": "GBCOH08585569",
+  "right": "00191596",
+  "decision": "unsettled",
+  "register": {
+   "org": 31560491,
+   "action": "merge",
+   "confidence": "medium",
+   "reason": "00191596 is FORD RETAIL LIMITED, active since 1923 (previously Polar Motor Company Ltd until 2007), a Ford motor retailer in Colchester. The register has no TrustFord company other than the wrong number, 08585569 TRUST FORD LTD. That is a dormant company at a London E6 formation-agent address, formerly BLUE DIAMOND TRAVEL LTD, dissolved in 2024 and unrelated to Ford. The register records no trading names, and the pages read of Ford Retail's 2025 filed accounts (strategic report pp.3-4 and directors' report p.15) do not print 'TrustFord'. TrustFord is publicly the trading name of Ford Retail Ltd, which is the dealer company; Ford Retail Group Ltd (00950395) is only its intermediate holding company. So 'Ford Trustford Ltd' is Ford Retail Ltd trading as TrustFord, but the trading-name link does not come from the register itself, hence medium."
+  },
+  "skeptic": {
+   "org": 31560491,
+   "action": "merge",
+   "confidence": "medium",
+   "reason": "The wrong number 08585569 belongs to TRUST FORD LTD. That is an unrelated dormant company in East London, first registered as Blue Diamond Travel Ltd and dissolved in April 2024, so it was a name-lookup mis-key. 00191596 is FORD RETAIL LIMITED (Active, Colchester, sells and repairs new cars), and TrustFord is its trading name. No TrustFord-named company other than 08585569 is on the register. The parent FORD RETAIL GROUP LIMITED (00950395) also exists, but the dealership operator is 00191596, which is the target's own number. Medium, not high, because the register does not list trading names, so the TrustFord link rests on outside knowledge."
+  }
+ },
+ {
+  "org": 31552649,
+  "name": "VW Commercial Vehicles UK",
+  "target_org": 31538916,
+  "target_name": "Volkswagen Group UK Ltd",
+  "wrong": "GBCOH13071920",
+  "right": "00514809",
+  "decision": "unsettled",
+  "register": {
+   "org": 31552649,
+   "action": "merge",
+   "confidence": "medium",
+   "reason": "00514809 is VOLKSWAGEN GROUP UNITED KINGDOM LIMITED, active (formerly V.A.G. (UK) Ltd and Volkswagen (G.B.) Ltd). Searches find no separately registered 'Volkswagen Commercial Vehicles' UK company. The wrong number, 13071920 VW COMMERCIALS LIMITED, is an unrelated Bristol company that existed from 2020 to 2022. The company's own 2025 accounts on the register say its principal activity is importing and distributing Volkswagen Group cars, vans and parts, and they count the vans sold (35,839 in 2025) as the Company's own. So VW Commercial Vehicles UK is a brand or division inside this company, not a separate subsidiary. The target, Volkswagen Group UK Ltd, is correctly keyed. The brand name itself is not printed in the register, hence medium."
+  },
+  "skeptic": {
+   "org": 31552649,
+   "action": "merge",
+   "confidence": "medium",
+   "reason": "The wrong number 13071920 belongs to VW COMMERCIALS LIMITED, a small Bristol firm dissolved in 2022 that has nothing to do with VW Group, so it was a mis-key. Searches for 'volkswagen commercial vehicles (uk)' and 'volkswagen vans' find no separately registered VW commercial-vehicle company. The group's UK companies at Yeomans Drive are finance, insurance and trustee companies, none of them a vans company. Volkswagen Commercial Vehicles UK is a brand division of VOLKSWAGEN GROUP UNITED KINGDOM LIMITED (00514809, Active), so it is the same legal entity as the target, whose GBCOH00514809 is the same number. Medium because the register does not list brand or trading names."
+  }
+ },
+ {
+  "org": 31571774,
+  "name": "PSI PRINT MANAGEMENT LIMITED",
+  "target_org": 12511322,
+  "target_name": "PSL Print Management Ltd",
+  "wrong": "GBCOHO2O84294",
+  "right": "02084294",
+  "decision": "merge",
+  "register": {
+   "org": 31571774,
+   "action": "merge",
+   "confidence": "high",
+   "reason": "02084294 is PSL PRINT MANAGEMENT LTD, active, formerly PRINT SEARCH LANCASHIRE LIMITED. The register has no 'PSI Print Management' company. The org's own wrong identifier, GBCOHO2O84294, is 02084294 with the letter O typed for zero. 'PSI' for 'PSL' is the same kind of typing or OCR slip (I for L). The target, PSL Print Management Ltd, matches the register name exactly. One entity."
+  },
+  "skeptic": {
+   "org": 31571774,
+   "action": "merge",
+   "confidence": "high",
+   "reason": "The wrong value GBCOHO2O84294 is 02084294 with the letter O typed for 0, so the source quoted the right number. 02084294 is PSL PRINT MANAGEMENT LTD (Active, Preston, printing; formerly Print Search Lancashire Ltd), which is the target's name and number. 'PSI' is an I/L misreading of 'PSL'. A search finds no 'PSI Print Management' company on the register."
+  }
+ },
+ {
+  "org": 31573452,
+  "name": "Atkins Realis",
+  "target_org": 10733656,
+  "target_name": "Atkins Limited",
+  "wrong": "GBCOHOO688424",
+  "right": "00688424",
+  "decision": "merge",
+  "register": {
+   "org": 31573452,
+   "action": "merge",
+   "confidence": "high",
+   "reason": "Company 00688424 is now ATKINSR\u00c9ALIS UK LIMITED and was named ATKINS LIMITED from 1 Jun 2004 to 12 Oct 2023 (W S Atkins (Services) Ltd before that). The target 'Atkins Limited' is this company's former name, and 'Atkins Realis' is its current name without the accent and the 'UK Limited' ending. About 20 registered companies carry the AtkinsR\u00e9alis name, so the brand alone would not decide it. The org's own wrong identifier does: GBCOHOO688424 is 00688424 with the letter O typed for zero. That points to this exact company, a rename rather than a sister company."
+  },
+  "skeptic": {
+   "org": 31573452,
+   "action": "merge",
+   "confidence": "high",
+   "reason": "The wrong value GBCOHOO688424 is 00688424 with the letter O typed for 0, so the source quoted this exact company. The register shows 00688424 was named ATKINS LIMITED from 2004 to 12 Oct 2023 and is now ATKINSR\u00c9ALIS UK LIMITED (Active). The target 'Atkins Limited' is therefore this company under its previous name. There are about 20 other AtkinsR\u00e9alis companies, including the nearby-numbered AtkinsR\u00e9alis KINS Holdings 00688415, but the source's own digits point to 00688424, not to one of them."
+  }
+ }
+]

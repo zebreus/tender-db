@@ -1,6 +1,7 @@
 # 454 — 16 re-keys the name gate denies are mostly one entity, and nothing lets a reviewer admit them
 
-Status: ready-for-agent — filed 2026-09-30 17:0x UTC from issue 453's first dry plan (job 1726). NEXT: read the 16 against
+Status: ready-for-agent — option 1 BUILT (`fee8c61`, gated green) and the 16 REVIEWED 2026-09-30 17:5x UTC: 8 merge + 1 keep verdicts POSTed (cohort `454-rekey-names-2026-09-30`, recorded 9); 7 unsettled stay denied with reasons below. NEXT: deploy `fee8c61` when the queue is idle (after FTS chunk 4 and rekey re-plan 1738), re-plan, and the 8 admitted merges ride issue 453's wet run.
+Was status: ready-for-agent — filed 2026-09-30 17:0x UTC from issue 453's first dry plan (job 1726). NEXT: read the 16 against
 the register (453's `ch_check.py` does it), then choose between a reviewer override in the rekey arm (the 362 shape)
 and leaving them withheld.
 Kind: data quality (identifiers)
@@ -60,3 +61,27 @@ Two shapes the gate should arguably see on its own:
 - **open**: `16`
 - **done**: every remaining `names` denial has a recorded reason (a `keep` verdict, or a line here saying why it is a
   different entity).
+
+## 2026-09-30 17:4x–17:5x UTC — option 1 built; the 16 reviewed
+
+**Built** (`fee8c61`). The rekey arm reads `org_merge_verdicts` under (`GB`, `GB:rekey`, `<wrong literal>~<right
+number>`).
+- A HIGH `merge` whose members are exactly the two org ids admits past the name gate only. It is counted
+  `admitted_verdict` and stamped applied by the merge.
+- It never admits past a withheld target, a flagged destination, the consortium veto or the legal-form veto. The
+  test proves Delta plc stays denied against Delta Ltd.
+- A `keep` denies the pair (`verdict-keep`, counted `denied_verdict`).
+
+The test is `a_reviewer_verdict_admits_past_the_name_gate_or_keeps_a_pair_apart`.
+
+**Reviewed** (workflow, 8 agents: a register lens and a refuting skeptic per batch of 4; full reasons in
+`453-rekey/name-denials-review-2026-09-30.json`). A pair is admitted only when both lenses say `merge` at high:
+
+| decision | pairs |
+|---|---|
+| **merge (8)** | Taskforce → TASK FORCE DISTRIBUTION (the register's own former name, 2011–12); Sherbourne → SHERBORNE AREA SCHOOLS' TRUST (a misspelling); Marie Stopes International → MSI Reproductive Choices (its name 1991–2020); Silver Energy Management Solutions → ELEVATE EVERYWHERE LTD (a rename); Sony Europe B.V. → Sony Europe BV (FC035527); Bluestep → BLUE STEP SOLUTIONS; PSI → PSL Print Management (`O2O84294`, O for 0); Atkins Realis → Atkins Limited / ATKINSRÉALIS UK LIMITED (`OO688424`) |
+| **keep (1)** | B Braun → B. Braun Medical Ltd. Both lenses: the bare "B Braun" may be the group or another B. Braun company. Posted as a medium `keep`. |
+| unsettled (7), left denied | Costa Coffee → COSTA LIMITED (register high / skeptic medium: the brand link rests on the typo); Northern Education Associates (both medium: the target "Northern Education" carries the number but may be a sister company); CGI (UK) → CGI IT UK (both medium); Symology UK → Symology Limited (register merge / skeptic keep: SYNOLOGY UK is a real separate company); Haringey GP Group → "North Central London Training Hub" (register keep: the target org is a training hub hosted by the GP group, and its number may not be its own); Ford Trustford → Ford Retail (both medium: TrustFord is a trading name, but "Ford Trustford Ltd" is not a registered name); VW Commercial Vehicles UK → Volkswagen Group UK (both medium: a division, not a company) |
+
+The 9 verdicts were POSTed as cohort `454-rekey-names-2026-09-30` (recorded 9). They act from the first rekey plan
+under `fee8c61`.
