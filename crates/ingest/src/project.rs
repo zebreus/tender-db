@@ -77,6 +77,10 @@ pub struct Report {
     /// parse fix is where this says how far the fix reached the org layer.
     pub mentions_refreshed: u64,
     pub mentions_rebound: u64,
+    /// Issue 448 unit 3: what the resolver's altid alias did — PPON-first
+    /// mentions asked, bound to the company-number org, refused. Durable for
+    /// the reason `wall` is; `armed: false` when no resolver was opened.
+    pub alias: store::AltIdAliasCounts,
     /// Issue 364: what the legacy previous-publication kind gate admitted and
     /// refused this run, per declared kind. Counted where the plan is built, so
     /// it covers every notice the run planned — a full run's whole corpus, an
@@ -1381,8 +1385,9 @@ pub async fn project_with_progress_phase2_stoppable(
              skipping Phase-1 and re-running grouping + Phase-2 (salvage)"
         );
     } else {
-        let (notices, mentions, stopped, citations, f14, refresh) =
+        let (notices, mentions, stopped, citations, f14, refresh, alias) =
             build_plan(db, now, total, &mut on_progress, stop).await?;
+        report.alias = alias;
         report.stopped = stopped;
         report.notices = notices;
         report.mentions = mentions;
@@ -1520,6 +1525,22 @@ pub async fn project_with_progress_phase2_stoppable(
     Ok(report)
 }
 
+/// Issue 448 unit 3: the rules the fold arms the resolver's altid alias with —
+/// the SAME `crosswalk` fns the altid arm (`match-org-identifiers` rule `altid`)
+/// takes, so the bind that replays a merge reads identifiers and names exactly
+/// as the merge did.
+fn altid_alias_rules() -> store::AltIdAliasRules {
+    store::AltIdAliasRules {
+        mention_key: crate::crosswalk::mention_key,
+        consortium: crate::crosswalk::consortium_name,
+        legal_family: crate::crosswalk::gb_legal_family,
+        name_key: crate::crosswalk::altid_name_key,
+        names_agree: crate::crosswalk::altid_keys_agree,
+        trim: crate::crosswalk::altid_trim,
+        norm: crate::project::match_norm,
+    }
+}
+
 /// Phase 1 of the projection: stream the notice-parsed layer in id-ordered chunks
 /// (issue 19) and, per notice, do the two things that need the whole corpus but
 /// only a notice at a time — resolve its Organization mentions (in id order, so
@@ -1539,11 +1560,15 @@ async fn build_plan(
     total: u64,
     mut on_progress: impl FnMut(Progress),
     stop: &(dyn Fn() -> bool + Sync),
-) -> turso::Result<(u64, u64, bool, CitationGate, F14TargetGate, store::MentionRefresh)> {
+) -> turso::Result<(u64, u64, bool, CitationGate, F14TargetGate, store::MentionRefresh, store::AltIdAliasCounts)> {
     const READ_CHUNK: i64 = 10_000;
     let t0 = std::time::Instant::now();
     db.reset_plan().await?;
     let mut resolver = db.mention_resolver(Some(crate::crosswalk::canonical_key_flat), Some(crate::crosswalk::consortium_name), Some(crate::idgate::checksum_anchors), Some(crate::project::match_norm), Some(crate::crosswalk::legal_form_family), Some(crate::idgate::hard_scheme), crate::idgate::STOPLIST_CAP).await?;
+    // Issue 448 unit 3: the altid alias — a PPON-first mention of a supplier the
+    // altid arm folded binds to its company-number org instead of re-minting the
+    // PPON org the merge deleted. Armed on the fold's resolvers only.
+    db.arm_altid_alias(&mut resolver, altid_alias_rules()).await?;
     // The SWEEP half — the sequential parsed-layer read plus the pure-CPU
     // identity/mention extraction — runs on a prepare thread one chunk ahead of
     // the WRITER half (issue 175: phase 1 was measured pinned on one core while
@@ -1713,6 +1738,7 @@ async fn build_plan(
     }
     // Issue 434: read before `finish` consumes the resolver (the wall pattern).
     let refresh = store::Db::mention_refresh(&resolver);
+    let alias = store::Db::altid_alias_counts(&resolver);
     db.finish_mention_resolver(resolver).await?;
     // issue 58 v2: this loop visited EVERY parsed notice, so the durable
     // adjacency rows insert_plan wrote are complete up to the newest planned
@@ -1731,7 +1757,7 @@ async fn build_plan(
         t0.elapsed().as_secs_f64(),
         if stopped { " — STOPPED at a checkpoint (issue 256)" } else { "" }
     );
-    Ok((notices, mentions_total, stopped, citations, f14, refresh))
+    Ok((notices, mentions_total, stopped, citations, f14, refresh, alias))
 }
 
 /// Run only the interruptible PREFIX of a full rebuild — clear the canonical
@@ -1746,7 +1772,7 @@ pub async fn project_plan_only(db: &Db) -> turso::Result<Report> {
         db.clear_canonical().await?;
         db.strip_organization_indexes().await?;
         let total = db.parsed_notice_count().await?;
-        let (notices, mentions, _, citations, f14_targets, refresh) =
+        let (notices, mentions, _, citations, f14_targets, refresh, alias) =
             build_plan(db, store::now_unix(), total, |_| {}, &|| false).await?;
         Ok::<Report, turso::Error>(Report {
             notices,
@@ -1755,6 +1781,7 @@ pub async fn project_plan_only(db: &Db) -> turso::Result<Report> {
             f14_targets,
             mentions_refreshed: refresh.refreshed,
             mentions_rebound: refresh.rebound,
+            alias,
             ..Default::default()
         })
     }
@@ -2278,6 +2305,10 @@ pub async fn project_incremental_chunked_observed(
     // `mentions_by_ids`), in global id order so org ids match a whole-delta pass.
     db.reset_plan().await?;
     let mut resolver = db.mention_resolver(Some(crate::crosswalk::canonical_key_flat), Some(crate::crosswalk::consortium_name), Some(crate::idgate::checksum_anchors), Some(crate::project::match_norm), Some(crate::crosswalk::legal_form_family), Some(crate::idgate::hard_scheme), crate::idgate::STOPLIST_CAP).await?;
+    // Issue 448 unit 3: the altid alias — a PPON-first mention of a supplier the
+    // altid arm folded binds to its company-number org instead of re-minting the
+    // PPON org the merge deleted. Armed on the fold's resolvers only.
+    db.arm_altid_alias(&mut resolver, altid_alias_rules()).await?;
     let mut report = Report::default();
     let mut planned = 0u64;
     for chunk in all_ids.chunks(chunk_size) {
@@ -2311,6 +2342,7 @@ pub async fn project_incremental_chunked_observed(
         report.mentions += db.resolve_mentions(&mut resolver, &mentions, now).await?.len() as u64;
     }
     report.wall = store::Db::wall_counts(&resolver);
+    report.alias = store::Db::altid_alias_counts(&resolver);
     let refresh = store::Db::mention_refresh(&resolver);
     report.mentions_refreshed = refresh.refreshed;
     report.mentions_rebound = refresh.rebound;

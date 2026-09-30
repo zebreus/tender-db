@@ -454,3 +454,148 @@ fn every_published_fts_path_is_mapped_or_ignored_on_record() {
     let owed = paths.keys().filter(|p| matches!(disposition(p), Some(Disposition::Ignored(r)) if r.starts_with("owed"))).count();
     eprintln!("fts checklist: {} published paths over {releases} releases, {owed} ignored-as-owed", paths.len());
 }
+
+/// One synthetic FTS release whose buyer party publishes `ids` — the first as
+/// its `identifier`, the rest as `additionalIdentifiers` — the Procurement Act
+/// shape issue 448 is about (a Companies House number with the PPON beside it).
+fn party_release(ocid: &str, id: &str, day: u32, ids: &[(&str, &str)], name: &str) -> Vec<u8> {
+    let ident = |(scheme, value): &(&str, &str)| serde_json::json!({"scheme": scheme, "id": value});
+    let party_id = format!("{}-{}", ids[0].0, ids[0].1);
+    let pkg = serde_json::json!({
+        "version": "1.1",
+        "publisher": {"name": "Find a Tender (test)"},
+        "releases": [{
+            "ocid": ocid,
+            "id": id,
+            "date": format!("2026-09-{day:02}T10:00:00+01:00"),
+            "tag": ["award"],
+            "language": "en",
+            "initiationType": "tender",
+            "buyer": {"id": party_id, "name": name},
+            "parties": [{
+                "id": party_id,
+                "name": name,
+                "identifier": ident(&ids[0]),
+                "additionalIdentifiers": ids[1..].iter().map(ident).collect::<Vec<_>>(),
+                "address": {"country": "GB"},
+                "roles": ["buyer"]
+            }],
+            "tender": {
+                "id": format!("{id}-t"),
+                "title": "Widgets",
+                "legalBasis": {"scheme": "CELEX", "id": "32014L0025"},
+                "documents": [{"id": format!("{id}-d"), "documentType": "awardNotice", "noticeType": "UK6"}]
+            }
+        }]
+    });
+    serde_json::to_vec(&pkg).unwrap()
+}
+
+/// Issue 448 unit 3, end to end through the real rules and the real fold: the
+/// altid arm merges a supplier published company-number-first on one notice and
+/// PPON-first on another, and the fold's alias then keeps it one organization —
+/// on the next day's incremental fold, and across a bare rebuild that re-mints
+/// and renumbers every org (the alias is keyed by identity; `org_merge_log`
+/// survives the rebuild).
+///
+/// Without the alias both folds would re-mint the PPON org the merge deleted.
+#[tokio::test]
+async fn a_supplier_the_altid_arm_merged_stays_one_org_through_the_next_fold_and_a_rebuild() {
+    const COH: &str = "GBCOH03914810";
+    const PPON: &str = "GBPPONPHDQ2359NZMP";
+    let both = party_release(
+        "ocds-t-alt-1",
+        "910001-2026",
+        1,
+        &[("GB-COH", "03914810"), ("GB-PPON", "PHDQ-2359-NZMP")],
+        "Acme Widgets Ltd",
+    );
+    let ppon_first =
+        party_release("ocds-t-alt-2", "910002-2026", 2, &[("GB-PPON", "PHDQ-2359-NZMP")], "Acme Widgets Limited");
+    let members: [(&str, &[u8]); 2] = [("910001-2026.json", &both), ("910002-2026.json", &ppon_first)];
+    let (archive, db) = fixture_of("fts-448-alias", &members).await;
+    assert_eq!(run(&db, &archive).await.parsed, 2);
+    project::project(&db, false).await.expect("first fold");
+    async fn org_count(db: &store::Db) -> i64 {
+        cell_i64(db, &format!("SELECT COUNT(*) FROM organizations WHERE identifier IN ('{COH}', '{PPON}')")).await
+    }
+    async fn bound_to(db: &store::Db, publication: &str) -> i64 {
+        cell_i64(
+            db,
+            &format!(
+                "SELECT m.organization_id FROM organization_mentions m JOIN notices n ON n.id = m.notice_id \
+                  WHERE n.publication_id = '{publication}'"
+            ),
+        )
+        .await
+    }
+    assert_eq!(org_count(&db).await, 2, "the split: one supplier, two orgs");
+
+    // The altid arm through the production rules: dry, then wet over its plan.
+    let args = |dry_run: bool, expect_pairs: Option<Vec<String>>| store::AltIdMergeArgs {
+        pair_key: ingest::crosswalk::altid_pair_key,
+        key: ingest::crosswalk::canonical_key_flat,
+        mention_key: ingest::crosswalk::mention_key,
+        condemns: ingest::idgate::condemns,
+        consortium: ingest::crosswalk::consortium_name,
+        legal_family: ingest::crosswalk::gb_legal_family,
+        name_key: ingest::crosswalk::altid_name_key,
+        names_agree: ingest::crosswalk::altid_keys_agree,
+        trim: ingest::crosswalk::altid_trim,
+        norm: ingest::project::match_norm,
+        stoplist_cap: ingest::idgate::STOPLIST_CAP,
+        plan_listing_cap: store::ALTID_PLAN_LISTING_CAP,
+        dry_run,
+        max_pairs: None,
+        expect_pairs,
+        known_deferred: Vec::new(),
+        job_id: None,
+        stop: &|| false,
+    };
+    let dry = db.match_org_altid_pairs(args(true, None)).await.expect("dry plan");
+    assert_eq!(dry.pairs, vec!["03914810~PHDQ2359NZMP".to_owned()], "{dry:#?}");
+    let wet = db.match_org_altid_pairs(args(false, Some(dry.pairs.clone()))).await.expect("wet run");
+    assert_eq!(wet.merged_pairs, 1, "{wet:#?}");
+    assert_eq!(org_count(&db).await, 1);
+    let keep = cell_i64(&db, &format!("SELECT id FROM organizations WHERE identifier = '{COH}'")).await;
+
+    // The next day: another PPON-first notice, through the incremental fold.
+    let next = party_release("ocds-t-alt-3", "910003-2026", 3, &[("GB-PPON", "PHDQ-2359-NZMP")], "ACME WIDGETS LTD");
+    let zip = archive.join("fts/daily/2026-09-04.zip");
+    {
+        let mut w = zip::ZipWriter::new(std::fs::File::create(&zip).unwrap());
+        w.start_file("910003-2026.json", zip::write::SimpleFileOptions::default()).unwrap();
+        w.write_all(&next).unwrap();
+        w.finish().unwrap().flush().unwrap();
+    }
+    db.record_fetch(&store::Fetch {
+        source: "fts".into(),
+        kind: "daily".into(),
+        period: "2026-09-04".into(),
+        url: "https://x".into(),
+        sha256: ingest::sha256_hex(&std::fs::read(&zip).unwrap()),
+        bytes: std::fs::metadata(&zip).unwrap().len() as i64,
+        fetched_at: 2,
+        path: "fts/daily/2026-09-04.zip".into(),
+    })
+    .await
+    .unwrap();
+    assert_eq!(run(&db, &archive).await.parsed, 1);
+    let r = project::project(&db, false).await.expect("next fold");
+    assert!(r.alias.armed, "the fold arms the alias");
+    assert_eq!((r.alias.aliases, r.alias.asked, r.alias.bound, r.alias.refused), (1, 1, 1, 0), "{:?}", r.alias);
+    assert_eq!(org_count(&db).await, 1, "no PPON org re-minted");
+    assert_eq!(bound_to(&db, "910003-2026").await, keep, "the PPON-first mention is on the company-number org");
+
+    // A bare rebuild re-mints every org in notice order: the company-number-first
+    // notice mints the org, and both PPON-first mentions bind to it by key.
+    let r = project::project(&db, true).await.expect("rebuild");
+    assert_eq!((r.alias.asked, r.alias.bound), (2, 2), "{:?}", r.alias);
+    assert_eq!(org_count(&db).await, 1, "still one supplier after the rebuild");
+    let keep = cell_i64(&db, &format!("SELECT id FROM organizations WHERE identifier = '{COH}'")).await;
+    for publication in ["910001-2026", "910002-2026", "910003-2026"] {
+        assert_eq!(bound_to(&db, publication).await, keep, "{publication}");
+    }
+
+    let _ = std::fs::remove_dir_all(&archive);
+}

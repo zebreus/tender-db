@@ -2371,6 +2371,34 @@ fn wall_suffix(w: &store::WallCounts) -> String {
     }
 }
 
+/// Issue 448 unit 3: what the resolver's altid alias did this fold, as the suffix
+/// on the durable job row — the `wall_suffix` pattern. Silent when nothing was
+/// asked (the armed-and-idle line is in the diag log, `[issue 448]`, every fold):
+/// most folds meet no PPON-first mention of a merged supplier. A bind the generic
+/// wall could not check is named, because those went through leniently.
+fn alias_suffix(a: &store::AltIdAliasCounts) -> String {
+    if a.asked == 0 {
+        return String::new();
+    }
+    let unwalled = if a.bound_unwalled > 0 {
+        format!(" ({} with the generic wall unable to answer)", a.bound_unwalled)
+    } else {
+        String::new()
+    };
+    format!(
+        "; issue-448 alias asked {} bound {}{unwalled} refused {} (poisoned {}, no owner {}, \
+         veto {}, names {}, generic {})",
+        a.asked,
+        a.bound,
+        a.refused,
+        a.refused_poisoned,
+        a.refused_no_owner,
+        a.refused_veto,
+        a.refused_names,
+        a.refused_generic
+    )
+}
+
 /// Issue 364: what the legacy previous-publication kind gate did this run, as the
 /// suffix that rides the DURABLE job row — the `wall_suffix` pattern, and for the
 /// same reason (this runtime's stderr does not reach journald, issues 61/63).
@@ -3692,6 +3720,8 @@ impl Supervisor {
         // rule the capped reparse follows, issue 244).
         let cancelled = if report.stopped { "CANCELLED at a checkpoint — " } else { "" };
         let wall = wall_suffix(&report.wall);
+        // Issue 448 unit 3: the altid alias, silent when it was asked nothing.
+        let alias = alias_suffix(&report.alias);
         // Issue 434: how far a parse fix reached the org layer, on the
         // durable row — silent when nothing was stale, like the wall.
         let refreshed = if report.mentions_refreshed > 0 {
@@ -3726,7 +3756,7 @@ impl Supervisor {
             String::new()
         };
         Ok(format!(
-            "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged{wall}{refreshed}{sweep}{citations}",
+            "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged{wall}{alias}{refreshed}{sweep}{citations}",
             report.notices,
             report.tenders,
             report.islands,
@@ -5946,6 +5976,9 @@ impl Supervisor {
                         trim: ingest::crosswalk::altid_trim,
                         norm: ingest::project::match_norm,
                         stoplist_cap: SCAN_STOPLIST_CAP,
+                        // Every planned pair listed, so the reviewer reads what a
+                        // wet run would merge (issue 448's campaign prerequisite).
+                        plan_listing_cap: store::ALTID_PLAN_LISTING_CAP,
                         dry_run,
                         max_pairs: *max_groups,
                         expect_pairs,
@@ -14451,6 +14484,33 @@ mod tests {
         // through at the pre-318 bar.
         let errored = store::WallCounts { resolved: true, enabled: true, errored: 2, ..Default::default() };
         assert!(wall_suffix(&errored).contains("PROBE(S) ERRORED"), "{}", wall_suffix(&errored));
+    }
+
+    /// Issue 448 unit 3: the alias rides the project job's durable row only when
+    /// it was asked something — every fold arms it, and most meet no PPON-first
+    /// mention of a merged supplier. When it was, the row carries the three
+    /// counts and the refusal causes, and a bind the generic wall could not
+    /// check is named.
+    #[test]
+    fn the_alias_suffix_speaks_only_when_asked() {
+        assert_eq!(alias_suffix(&store::AltIdAliasCounts::default()), "", "no resolver opened");
+        let idle = store::AltIdAliasCounts { armed: true, aliases: 12, ..Default::default() };
+        assert_eq!(alias_suffix(&idle), "", "armed and idle is the diag log's line, not the row's");
+        let fired = store::AltIdAliasCounts {
+            armed: true,
+            aliases: 12,
+            asked: 5,
+            bound: 3,
+            refused: 2,
+            refused_names: 1,
+            refused_no_owner: 1,
+            ..Default::default()
+        };
+        let s = alias_suffix(&fired);
+        assert!(s.contains("issue-448 alias asked 5 bound 3 refused 2"), "{s}");
+        assert!(s.contains("no owner 1") && s.contains("names 1") && !s.contains("unable"), "{s}");
+        let lenient = store::AltIdAliasCounts { asked: 1, bound: 1, bound_unwalled: 1, ..fired };
+        assert!(alias_suffix(&lenient).contains("1 with the generic wall unable to answer"));
     }
 
     /// Issue 364: the citation suffix has to say what a bare total cannot.

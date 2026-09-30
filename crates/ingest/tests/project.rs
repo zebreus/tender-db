@@ -1153,7 +1153,17 @@ async fn reprocessing_and_reprojecting_a_package_changes_nothing() {
 #[tokio::test]
 async fn an_empty_notice_layer_projects_to_nothing() {
     let (db, _, path) = scratch("empty").await;
-    assert_eq!(project::project(&db, false).await.expect("project"), project::Report::default());
+    let report = project::project(&db, false).await.expect("project");
+    // Issue 448 unit 3: this path opens its resolver over the (empty) plan, and
+    // the fold arms the altid alias on it, so `armed` is TRUE here and says so
+    // — with nothing to alias and nothing asked. Every count stays zero.
+    assert_eq!(
+        report.alias,
+        store::AltIdAliasCounts { armed: true, ..Default::default() },
+        "armed, idle: {:?}",
+        report.alias
+    );
+    assert_eq!(project::Report { alias: Default::default(), ..report }, project::Report::default());
     let _ = std::fs::remove_file(&path);
 }
 

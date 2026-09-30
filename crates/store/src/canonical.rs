@@ -2395,6 +2395,12 @@ pub struct AltIdMergeArgs<'a> {
     pub norm: fn(&str) -> String,
     /// The generic-name cap (`STOPLIST_CAP`), the one the scan and R3 read.
     pub stoplist_cap: usize,
+    /// How many planned pairs the report's `plan` listing carries —
+    /// [`ALTID_PLAN_LISTING_CAP`] in production, so a reviewer reads every
+    /// pair a wet run would merge. Injectable so a test can show the cut is
+    /// honest (`plan_listing_truncated`) without building 20,000 pairs. The
+    /// denied and conflict listings keep [`R2_PLAN_LISTING_CAP`].
+    pub plan_listing_cap: usize,
     /// `true` plans and writes nothing. `false` (unit 2) re-plans live under the
     /// writer, holds the live plan against [`Self::expect_pairs`], and merges.
     pub dry_run: bool,
@@ -2698,6 +2704,187 @@ struct AltIdDenied {
     coh_org: i64,
     ppon_org: i64,
     listing: AltIdListing,
+}
+
+/// Issue 448 unit 3 (the campaign's prerequisite): how many planned pairs the
+/// `altid-merge-plan` report LISTS. A wet run merges every reviewed pair in
+/// `pairs`, so the reviewer has to be able to read every one of them — R2's
+/// 500 ([`R2_PLAN_LISTING_CAP`]) hid 1,075 of dry job 1681's 1,575. Set far
+/// above any realistic plan (the post-backfill estimate is a few thousand
+/// pairs, each a few hundred bytes of report) so it never binds in practice,
+/// while `plan_listing_truncated` stays honest if it ever does. The denied
+/// and conflict listings keep R2's cap, as do R2, E0 and R3.
+pub const ALTID_PLAN_LISTING_CAP: usize = 20_000;
+
+/// Issue 448 unit 3: names keyed for altid corroboration — `name_key` of each,
+/// mapped to the name it came from. A name that keys to nothing is dropped,
+/// and of two names with one key the LAST given stands (the planner's map
+/// since unit 1b). One definition for the planner's corroboration and the
+/// resolver alias ([`Db::arm_altid_alias`]), so prevention and repair read
+/// names the same way.
+fn altid_keyed<'n>(
+    names: impl IntoIterator<Item = &'n String>,
+    name_key: fn(&str) -> String,
+) -> std::collections::BTreeMap<String, String> {
+    names.into_iter().map(|n| (name_key(n), n.clone())).filter(|(key, _)| !key.is_empty()).collect()
+}
+
+/// Issue 448: every pair of names, one from each side, whose altid keys
+/// agree (`names_agree`: equal, or equal but for a legal form one side
+/// omits), in key order.
+fn altid_agreeing(
+    a: &std::collections::BTreeMap<String, String>,
+    b: &std::collections::BTreeMap<String, String>,
+    names_agree: fn(&str, &str) -> bool,
+) -> Vec<(String, String)> {
+    a.iter()
+        .flat_map(|(ak, an)| {
+            b.iter()
+                .filter(move |(bk, _)| names_agree(ak, bk))
+                .map(move |(_, bn)| (an.clone(), bn.clone()))
+        })
+        .collect()
+}
+
+/// What the altid name corroboration found between two keyed name sets.
+enum AltIdNames {
+    /// Both sides carry GB legal forms and share none (`Acme plc` beside
+    /// `Acme Ltd`), so a formless name agreeing with both cannot bridge them —
+    /// unit 1b's `form-conflict`.
+    FormConflict,
+    /// No pair of names agrees.
+    Uncorroborated,
+    /// The agreeing `(a-name, b-name)` pairs, in key order. The generic wall
+    /// reads them next; ONE pair whose two names are both under the cap is
+    /// enough.
+    Corroborated(Vec<(String, String)>),
+}
+
+/// Issue 448 unit 3: the ONE pure corroboration predicate, shared by the
+/// altid planner (`match_org_altid_pairs`, over each org's witness-free
+/// names) and the resolver alias (a PPON-first mention's names against the
+/// company-number org's), so a merge and the bind that replays it can never
+/// read agreement differently. The form check comes first, then agreement —
+/// the planner's order since unit 1b. What each caller feeds it, and the
+/// generic wall after it, stay the caller's: the planner reads the pool, the
+/// resolver its own writer connection and memo.
+fn altid_corroborates(
+    a: &std::collections::BTreeMap<String, String>,
+    b: &std::collections::BTreeMap<String, String>,
+    names_agree: fn(&str, &str) -> bool,
+    legal_family: fn(&str) -> Option<&'static str>,
+) -> AltIdNames {
+    let forms = |m: &std::collections::BTreeMap<String, String>| -> BTreeSet<&'static str> {
+        m.values().filter_map(|n| legal_family(n)).collect()
+    };
+    let (af, bf) = (forms(a), forms(b));
+    if !af.is_empty() && !bf.is_empty() && af.is_disjoint(&bf) {
+        return AltIdNames::FormConflict;
+    }
+    let agreeing = altid_agreeing(a, b, names_agree);
+    if agreeing.is_empty() {
+        AltIdNames::Uncorroborated
+    } else {
+        AltIdNames::Corroborated(agreeing)
+    }
+}
+
+/// Issue 448: the N2 key the generic wall counts for one corroborating name —
+/// the words the agreement read (`trim` cuts what `name_key` cuts), N2-keyed.
+fn altid_wall_key(name: &str, trim: fn(&str) -> String, norm: fn(&str) -> String) -> String {
+    norm(&trim(name))
+}
+
+/// Issue 448 unit 3: the rules the resolver alias ([`Db::arm_altid_alias`])
+/// reads, injected like every other piece of identifier and name knowledge
+/// (store never depends on ingest). The production fold passes the same
+/// `ingest::crosswalk` fns the altid arm takes in [`AltIdMergeArgs`], so the
+/// bind that replays a merge judges names exactly as the merge did.
+#[derive(Clone, Copy)]
+pub struct AltIdAliasRules {
+    /// `crosswalk::mention_key` — the mention's raw identifier keyed the way
+    /// the resolver keys it. The alias is asked only when this is an E1
+    /// `GB:ppon` key.
+    pub mention_key: fn(Option<&str>, &str) -> Option<(&'static str, String, bool)>,
+    /// `crosswalk::consortium_name`, over the mention's names and the owner's.
+    pub consortium: fn(&str) -> bool,
+    /// `crosswalk::gb_legal_family` — head against head, and the form check
+    /// across every name the agreement reads.
+    pub legal_family: fn(&str) -> Option<&'static str>,
+    /// `crosswalk::altid_name_key`.
+    pub name_key: fn(&str) -> String,
+    /// `crosswalk::altid_keys_agree`.
+    pub names_agree: fn(&str, &str) -> bool,
+    /// `crosswalk::altid_trim` — what the generic wall trims, as the arm does.
+    pub trim: fn(&str) -> String,
+    /// `project::match_norm` — the generic wall's N2 key.
+    pub norm: fn(&str) -> String,
+}
+
+/// What the issue-448 resolver alias did over one resolver's life — the
+/// [`WallCounts`] pattern: read before [`Db::finish_mention_resolver`]
+/// consumes the resolver, logged there as `[issue 448]`, and carried on the
+/// fold's durable report.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct AltIdAliasCounts {
+    /// [`Db::arm_altid_alias`] ran on this resolver. False on an unarmed one
+    /// (every store-level caller) and on a fold that opened no resolver, so a
+    /// zero below can be told from "not armed".
+    pub armed: bool,
+    /// `e2-altid` ledger rows read at arming.
+    pub ledger_rows: u64,
+    /// PPON keys aliased to one company number.
+    pub aliases: u64,
+    /// Ledger pairs a `keep` verdict under (`GB`, `GB:altid`, `<coh>~<ppon>`)
+    /// dropped.
+    pub kept: u64,
+    /// PPON keys the ledger merged into two or more company numbers: never
+    /// aliased.
+    pub poisoned: u64,
+    /// Mentions whose E1 `GB:ppon` key missed the exact and the canonical
+    /// lookups and has an alias entry (mapped or poisoned).
+    pub asked: u64,
+    /// …bound to the company-number org's current owner.
+    pub bound: u64,
+    /// …of those, bound while the generic wall could not answer (disabled
+    /// for the run, or its probe errored): lenient, the resolver's rule for
+    /// the anchor bind, and counted because a silent lenient run is how a
+    /// prevention stops preventing.
+    pub bound_unwalled: u64,
+    /// …refused, and minted or bound exactly as without the alias:
+    /// `asked == bound + refused`.
+    pub refused: u64,
+    /// Refusals by cause: the PPON is poisoned (in the ledger, or several
+    /// standing orgs own it or the company number)…
+    pub refused_poisoned: u64,
+    /// …no standing org owns the company number…
+    pub refused_no_owner: u64,
+    /// …a consortium name on either side, or GB legal forms differing head
+    /// against head…
+    pub refused_veto: u64,
+    /// …the names conflict in form or do not agree…
+    pub refused_names: u64,
+    /// …every agreeing name is generic.
+    pub refused_generic: u64,
+}
+
+/// The armed alias a [`MentionResolver`] carries: identity to identity
+/// (`GB:ppon` key → `GB:coh` key), never org ids, so it survives the
+/// renumbering of a bare rebuild while `org_merge_log` persists.
+struct AltIdAlias {
+    rules: AltIdAliasRules,
+    alias_of: std::collections::HashMap<String, String>,
+    poisoned: std::collections::HashSet<String>,
+    counts: AltIdAliasCounts,
+}
+
+/// Why the alias refused one mention — each maps to one refusal counter.
+enum AltIdRefusal {
+    Poisoned,
+    NoOwner,
+    Veto,
+    Names,
+    Generic,
 }
 
 /// JSON string escaping by hand (store carries no serde) — the merge-log
@@ -5542,6 +5729,10 @@ pub struct MentionResolver {
     /// Tenders stamped epoch-stale because a mention of one of their notices
     /// was re-bound, so this run's Phase 2 rewrites their party rows.
     tenders_stamped: u64,
+    /// Issue 448 unit 3: the PPON → company-number alias, `None` until
+    /// [`Db::arm_altid_alias`] arms it. `None` is the byte-identical pre-448
+    /// resolver, which every caller but the fold keeps.
+    altid: Option<AltIdAlias>,
 }
 
 /// What the resolver's issue-434 refresh did this run: recorded mentions whose
@@ -9385,7 +9576,272 @@ impl Db {
             mentions_refreshed: 0,
             mentions_rebound: 0,
             tenders_stamped: 0,
+            altid: None,
         })
+    }
+
+    /// Issue 448 unit 3, the PREVENTION half of the altid arm: arm `resolver`
+    /// with the PPON → company-number alias the `e2-altid` merges recorded.
+    ///
+    /// Without it, the fold re-mints every supplier the altid arm folded: the
+    /// merge deletes the PPON org, the next PPON-first mention finds neither
+    /// an exact nor a canonical owner of its PPON, and mints the org again.
+    /// Armed, such a mention binds to the org that now owns the company
+    /// number the ledger paired it with — at the arm's own name bar, never
+    /// looser (see `resolve_one_mention`).
+    ///
+    /// A separate call after [`Self::mention_resolver`], not a new argument
+    /// to it: the fold's two call sites arm it, and every other caller keeps
+    /// the byte-identical unarmed resolver (design 2's arming shape).
+    ///
+    /// The preload, one small read each:
+    /// - `org_merge_log WHERE rule = 'e2-altid'`, the merges' `coh` and
+    ///   `ppon` keys. Identity to identity, never org ids, so the alias
+    ///   survives a bare rebuild's renumbering (the rebuild keeps the log);
+    /// - the `keep` verdicts under (`GB`, `GB:altid`): a pair a reviewer
+    ///   kept apart — after its merge, as the marker of an unwind — is
+    ///   dropped;
+    /// - of what is left, a PPON the ledger merged into two company numbers
+    ///   is poisoned and never aliased: the arm would not pick a side, so
+    ///   neither does the fold.
+    ///
+    /// Logged `[issue 448]` whatever it found, so "armed with nothing to
+    /// alias" reads differently from "never armed".
+    pub async fn arm_altid_alias(
+        &self,
+        resolver: &mut MentionResolver,
+        rules: AltIdAliasRules,
+    ) -> turso::Result<()> {
+        use std::collections::{BTreeSet, HashMap, HashSet};
+        let conn = self.conn().await;
+        // A scan of the ledger: `rule` carries no index, and the log is small
+        // (tens of thousands of rows over every merge rule), read once per
+        // fold. The JSON fields are flat by construction (`altid_wet`).
+        let mut rows = conn
+            .query(
+                "SELECT json_extract(evidence, '$.coh'), json_extract(evidence, '$.ppon') \
+                   FROM org_merge_log WHERE rule = 'e2-altid'",
+                (),
+            )
+            .await?;
+        let mut ledger: Vec<(String, String)> = Vec::new();
+        while let Some(row) = rows.next().await? {
+            if let (Some(coh), Some(ppon)) = (opt_text_of(&row, 0), opt_text_of(&row, 1))
+                && !coh.is_empty()
+                && !ppon.is_empty()
+            {
+                ledger.push((coh, ppon));
+            }
+        }
+        drop(rows);
+        // The primary key's (country, scheme) prefix: a range, not a scan.
+        let mut rows = conn
+            .query(
+                "SELECT key FROM org_merge_verdicts \
+                  WHERE country = 'GB' AND scheme = 'GB:altid' AND action = 'keep'",
+                (),
+            )
+            .await?;
+        let mut kept_keys: HashSet<String> = HashSet::new();
+        while let Some(row) = rows.next().await? {
+            kept_keys.insert(text(&row, 0));
+        }
+        drop(rows);
+        let mut counts = AltIdAliasCounts {
+            armed: true,
+            ledger_rows: ledger.len() as u64,
+            ..AltIdAliasCounts::default()
+        };
+        let mut targets: HashMap<String, BTreeSet<String>> = HashMap::new();
+        for (coh, ppon) in ledger {
+            if kept_keys.contains(&format!("{coh}~{ppon}")) {
+                counts.kept += 1;
+                continue;
+            }
+            targets.entry(ppon).or_default().insert(coh);
+        }
+        let mut alias_of: HashMap<String, String> = HashMap::new();
+        let mut poisoned: HashSet<String> = HashSet::new();
+        for (ppon, cohs) in targets {
+            if cohs.len() == 1 {
+                alias_of.insert(ppon, cohs.into_iter().next().unwrap_or_default());
+            } else {
+                poisoned.insert(ppon);
+            }
+        }
+        counts.aliases = alias_of.len() as u64;
+        counts.poisoned = poisoned.len() as u64;
+        self.log_diag(&format!(
+            "[issue 448] resolver alias ARMED for this run: {} PPON key(s) aliased to a company \
+             number from {} e2-altid ledger row(s); {} pair(s) dropped by a keep verdict, {} \
+             PPON(s) poisoned (merged into two company numbers, never aliased)",
+            counts.aliases, counts.ledger_rows, counts.kept, counts.poisoned
+        ));
+        resolver.altid = Some(AltIdAlias { rules, alias_of, poisoned, counts });
+        Ok(())
+    }
+
+    /// What the issue-448 alias did over this resolver's life — read before
+    /// [`Db::finish_mention_resolver`] consumes it, the [`Db::wall_counts`]
+    /// pattern. All zero, `armed: false`, on an unarmed resolver.
+    pub fn altid_alias_counts(resolver: &MentionResolver) -> AltIdAliasCounts {
+        resolver.altid.as_ref().map(|a| a.counts).unwrap_or_default()
+    }
+
+    /// Issue 448 unit 3: the alias's bind, asked by `resolve_one_mention` only
+    /// once the exact triple AND the canonical key have both missed — for a
+    /// mention whose raw identifier keys to an E1 `GB:ppon` key the armed
+    /// alias knows. `Some(org)` binds; `None` (a refusal, or nothing to ask)
+    /// leaves the mention to mint or bind exactly as it would unarmed.
+    ///
+    /// The bar is the altid arm's own, never looser (prevention must never be
+    /// more aggressive than the verified merge — the issue-310 rule):
+    /// - the PPON is not poisoned in the ledger, and neither it nor the
+    ///   company number has several standing owners in the resolver's map;
+    /// - the company number has a standing owner — found through the SAME
+    ///   canonical map the resolver binds by, so a renumbered org is found by
+    ///   its key;
+    /// - no consortium name among the mention's names (head and variants) or
+    ///   the owner's (head and satellites), and the GB legal forms agree head
+    ///   against head;
+    /// - [`altid_corroborates`], the planner's predicate: no form conflict
+    ///   and one agreeing name pair;
+    /// - the generic wall on that pair through the resolver's memo, lenient
+    ///   and counted when the wall is disabled for the run or its probe
+    ///   errors (the anchor bind's rule; the arm itself refuses to plan
+    ///   without a readable key store, but ingestion has no "refuse").
+    ///
+    /// Owner names ride the WRITER connection, the anchor path's rule: the
+    /// owner may have been minted earlier in this batch's open transaction.
+    #[allow(clippy::too_many_arguments)]
+    async fn altid_alias_bind(
+        &self,
+        conn: &Connection,
+        m: &Mention,
+        alias: &mut AltIdAlias,
+        canon_of: &std::collections::HashMap<(String, &'static str, String), i64>,
+        resolver_poisoned: &std::collections::HashSet<(String, &'static str, String)>,
+        memo: &mut std::collections::HashMap<String, bool>,
+        wall: bool,
+        stoplist_cap: usize,
+    ) -> turso::Result<Option<i64>> {
+        let rules = alias.rules;
+        // The planner harvests GB parties only, and the ledger holds GB keys.
+        if m.country.as_deref().map(register_jurisdiction) != Some("GB") {
+            return Ok(None);
+        }
+        let Some(raw) = m.raw_identifier.as_deref() else { return Ok(None) };
+        let Some(("GB:ppon", ppon, true)) = (rules.mention_key)(m.country.as_deref(), raw) else {
+            return Ok(None);
+        };
+        let target = alias.alias_of.get(&ppon).cloned();
+        if target.is_none() && !alias.poisoned.contains(&ppon) {
+            // Nothing the ledger merged: not a question for the alias.
+            return Ok(None);
+        }
+        alias.counts.asked += 1;
+        let verdict: Result<(i64, bool), AltIdRefusal> = 'bar: {
+            let Some(coh) = target else { break 'bar Err(AltIdRefusal::Poisoned) };
+            let ppon_key = ("GB".to_owned(), "GB:ppon", ppon.clone());
+            let coh_key = ("GB".to_owned(), "GB:coh", coh);
+            if resolver_poisoned.contains(&ppon_key) || resolver_poisoned.contains(&coh_key) {
+                break 'bar Err(AltIdRefusal::Poisoned);
+            }
+            let Some(&owner) = canon_of.get(&coh_key) else { break 'bar Err(AltIdRefusal::NoOwner) };
+            let mut mention_names: Vec<String> = vec![m.name.clone()];
+            mention_names.extend(m.variants.iter().map(|(_, v)| v.clone()));
+            let mut owner_names: Vec<String> = Vec::new();
+            let mut rows = conn
+                .query(
+                    "SELECT name FROM organizations WHERE id = ? \
+                     UNION ALL \
+                     SELECT name FROM organization_names WHERE org_id = ?",
+                    (Value::Integer(owner), Value::Integer(owner)),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                owner_names.push(text(&row, 0));
+            }
+            drop(rows);
+            if mention_names.iter().chain(owner_names.iter()).any(|n| (rules.consortium)(n)) {
+                break 'bar Err(AltIdRefusal::Veto);
+            }
+            // Head against head: UNION ALL keeps branch order, so the owner's
+            // designated name comes first.
+            if let (Some(a), Some(b)) = (
+                (rules.legal_family)(&m.name),
+                owner_names.first().and_then(|n| (rules.legal_family)(n)),
+            ) && a != b
+            {
+                break 'bar Err(AltIdRefusal::Veto);
+            }
+            let corroborating = match altid_corroborates(
+                &altid_keyed(&mention_names, rules.name_key),
+                &altid_keyed(&owner_names, rules.name_key),
+                rules.names_agree,
+                rules.legal_family,
+            ) {
+                AltIdNames::Corroborated(pairs) => pairs,
+                AltIdNames::FormConflict | AltIdNames::Uncorroborated => {
+                    break 'bar Err(AltIdRefusal::Names);
+                }
+            };
+            if !wall {
+                break 'bar Ok((owner, true));
+            }
+            let mut unwalled = false;
+            for (a, b) in &corroborating {
+                let mut over = false;
+                for n in [a.as_str(), b.as_str()] {
+                    let k2 = altid_wall_key(n, rules.trim, rules.norm);
+                    let g = match memo.get(&k2) {
+                        Some(&g) => g,
+                        None => match self.name_key_is_generic_on(conn, "n2", &k2, stoplist_cap).await {
+                            Ok(g) => {
+                                memo.insert(k2, g);
+                                g
+                            }
+                            // An unavailable wall must not stop ingestion:
+                            // lenient, as an unseen key is, and counted.
+                            Err(e) => {
+                                self.log_diag(&format!(
+                                    "[issue 448] alias genericness probe failed, binding \
+                                     leniently: {e}"
+                                ));
+                                unwalled = true;
+                                false
+                            }
+                        },
+                    };
+                    over |= g;
+                }
+                if !over {
+                    break 'bar Ok((owner, unwalled));
+                }
+            }
+            Err(AltIdRefusal::Generic)
+        };
+        let c = &mut alias.counts;
+        match verdict {
+            Ok((owner, unwalled)) => {
+                c.bound += 1;
+                if unwalled {
+                    c.bound_unwalled += 1;
+                }
+                Ok(Some(owner))
+            }
+            Err(why) => {
+                c.refused += 1;
+                *match why {
+                    AltIdRefusal::Poisoned => &mut c.refused_poisoned,
+                    AltIdRefusal::NoOwner => &mut c.refused_no_owner,
+                    AltIdRefusal::Veto => &mut c.refused_veto,
+                    AltIdRefusal::Names => &mut c.refused_names,
+                    AltIdRefusal::Generic => &mut c.refused_generic,
+                } += 1;
+                Ok(None)
+            }
+        }
     }
 
     /// Resolve one bounded batch of mentions onto canonical Organizations,
@@ -9577,6 +10033,26 @@ impl Db {
                 "[issue 351] country-less provisionals: {} mention(s) reused a standing \
                  (name, NULL) row, {} minted because the name is over the wall",
                 resolver.reused_country_less, resolver.minted_country_less_generic
+            ));
+        }
+        // Issue 448: whenever the alias was armed, zeros included — "armed and
+        // nothing asked" and "never armed" must not read alike.
+        if let Some(a) = &resolver.altid {
+            let c = &a.counts;
+            self.log_diag(&format!(
+                "[issue 448] resolver alias: {} PPON-first mention(s) asked, {} bound to the \
+                 company-number org ({} with the generic wall unable to answer), {} refused \
+                 ({} poisoned, {} no owner, {} consortium/legal-form veto, {} names disagree, {} \
+                 generic) and minted or bound as without the alias",
+                c.asked,
+                c.bound,
+                c.bound_unwalled,
+                c.refused,
+                c.refused_poisoned,
+                c.refused_no_owner,
+                c.refused_veto,
+                c.refused_names,
+                c.refused_generic
             ));
         }
         if resolver.created_any {
@@ -9883,6 +10359,27 @@ impl Db {
                     // repeat re-earn the full bar. The merge job arbitrates
                     // what is left, which is what it is for.
                     let wall_denied = denied_generic > wall_denials_before;
+                    // Issue 448 unit 3: the altid alias, asked only once the
+                    // exact triple AND the canonical key have both missed
+                    // (the anchor path is country-less, the alias GB-only, so
+                    // the two never both apply). `None` on an unarmed
+                    // resolver, which is therefore byte-identical.
+                    let alias_hit = match (&mut resolver.altid, canon_hit, anchor_hit) {
+                        (Some(alias), None, None) => {
+                            self.altid_alias_bind(
+                                conn,
+                                m,
+                                alias,
+                                &resolver.canon_of,
+                                &resolver.poisoned,
+                                &mut resolver.generic_memo,
+                                resolver.hard_scheme.is_some(),
+                                resolver.stoplist_cap,
+                            )
+                            .await?
+                        }
+                        _ => None,
+                    };
                     if let Some(org_id) = canon_hit.or(anchor_hit) {
                         // Register the raw triple on CANON binds only, so
                         // repeats of that representation stay one map probe.
@@ -9893,6 +10390,14 @@ impl Db {
                         if canon_hit.is_some() {
                             org_of.insert(key, org_id);
                         }
+                        (org_id, false)
+                    } else if let Some(org_id) = alias_hit {
+                        // Issue 448: never cached, in `org_of` or `canon_of`
+                        // (the issue-318 rule). The bind is name-conditional
+                        // like the anchor bind, so every repeat of this PPON
+                        // re-earns the bar with its own name; and claiming the
+                        // PPON key for the company-number org would bind later
+                        // mentions name-blind.
                         (org_id, false)
                     } else {
                         conn.execute(
@@ -14653,15 +15158,20 @@ impl Db {
             Ok(out)
         }
 
-        // A capped listing: the publication ids are read only for what fits.
+        // A capped listing: the publication ids are read only for what fits —
+        // one primary-key seek of `notices` per witness, at most three per pair
+        // (~6k seeks for a plan of ~2k pairs). The plan listing's cap is
+        // `AltIdMergeArgs::plan_listing_cap` (every planned pair, unit 3's
+        // campaign prerequisite); the denied and conflict listings keep R2's.
         async fn push_listing(
             conn: &Connection,
             list: &mut Vec<AltIdListing>,
             truncated: &mut bool,
+            cap: usize,
             mut listing: AltIdListing,
             pair: &Pair,
         ) -> turso::Result<()> {
-            if list.len() >= R2_PLAN_LISTING_CAP {
+            if list.len() >= cap {
                 *truncated = true;
                 return Ok(());
             }
@@ -14861,6 +15371,7 @@ impl Db {
                     conn,
                     &mut report.denied_listing,
                     &mut report.denied_listing_truncated,
+                    R2_PLAN_LISTING_CAP,
                     listing,
                     pair,
                 )
@@ -14882,6 +15393,7 @@ impl Db {
                         conn,
                         &mut report.denied_listing,
                         &mut report.denied_listing_truncated,
+                        R2_PLAN_LISTING_CAP,
                         listing,
                         pair,
                     )
@@ -14926,6 +15438,7 @@ impl Db {
                         conn,
                         &mut report.conflict_listing,
                         &mut report.conflict_listing_truncated,
+                        R2_PLAN_LISTING_CAP,
                         listing,
                         pair,
                     )
@@ -14955,90 +15468,85 @@ impl Db {
                 // the merge neither makes nor hides (the review's case, weighed
                 // 2026-09-30). A side with no mention at all falls back to its
                 // designated names: no witness party's name reached it.
-                let keyed = |ns: &mut dyn Iterator<Item = &String>| -> BTreeMap<String, String> {
-                    ns.map(|n| ((args.name_key)(n), n.clone()))
-                        .filter(|(key, _)| !key.is_empty())
-                        .collect()
-                };
+                // The pure predicate is ONE fn, `altid_corroborates`, shared
+                // with the resolver alias (unit 3): what it is fed stays here.
                 let side = |org: i64, designated: &[String]| -> BTreeMap<String, String> {
                     let rows = &mention_names[&org];
                     // Decided on ROWS, not keyed names: an org with a mention
                     // outside the witnesses is not made of them, even when that
                     // mention's name is blank or keys to nothing.
                     if rows.iter().any(|(n, _)| !pair.witnesses.contains_key(n)) {
-                        keyed(&mut rows.iter().filter(|(n, _)| !pair.witnesses.contains_key(n)).map(|(_, name)| name))
+                        altid_keyed(
+                            rows.iter().filter(|(n, _)| !pair.witnesses.contains_key(n)).map(|(_, name)| name),
+                            args.name_key,
+                        )
                     } else if !rows.is_empty() {
-                        keyed(&mut rows.iter().map(|(_, name)| name))
+                        altid_keyed(rows.iter().map(|(_, name)| name), args.name_key)
                     } else {
-                        keyed(&mut designated.iter())
+                        altid_keyed(designated.iter(), args.name_key)
                     }
-                };
-                let agreeing = |a: &BTreeMap<String, String>, b: &BTreeMap<String, String>| -> Vec<(String, String)> {
-                    a.iter()
-                        .flat_map(|(ak, an)| {
-                            b.iter()
-                                .filter(move |(bk, _)| (args.names_agree)(ak, bk))
-                                .map(move |(_, bn)| (an.clone(), bn.clone()))
-                        })
-                        .collect()
                 };
                 let (cs, ps) = (side(c.id, c_names), side(p.id, p_names));
                 // Legal forms across every name the agreement reads: GB forms on
                 // both sides and none shared is a plc beside a Ltd, whichever
                 // names the heads carry. A formless name would otherwise agree
-                // with both (`Acme` / `Acme plc`, `Acme` / `Acme Ltd`).
-                let forms = |m: &BTreeMap<String, String>| -> BTreeSet<&'static str> {
-                    m.values().filter_map(|n| (args.legal_family)(n)).collect()
-                };
-                let (cf, pf) = (forms(&cs), forms(&ps));
-                if !cf.is_empty() && !pf.is_empty() && cf.is_disjoint(&pf) {
-                    report.denied_form_conflict += 1;
-                    listing.gate = "form-conflict".to_owned();
-                    keep_denied(&mut denied, !args.dry_run, c.id, p.id, &listing);
-                    push_listing(
-                        conn,
-                        &mut report.denied_listing,
-                        &mut report.denied_listing_truncated,
-                        listing,
-                        pair,
-                    )
-                    .await?;
-                    continue;
-                }
-                let corroborating = agreeing(&cs, &ps);
-                if corroborating.is_empty() {
-                    // Listed, never merged. The class sorts the review queue. When
-                    // the designated names (head and satellites) DO agree, only a
-                    // witness's own name joined the two: `witness-only`, where a
-                    // rename (the company number is one legal entity) sits beside
-                    // a publisher's wrong number, and the register's name history
-                    // tells them apart. Otherwise names sharing a core token (the
-                    // Energinet shape, a sister company) are `overlap`, names
-                    // sharing none (a probable publisher error) `disjoint`.
-                    // `name_cores_disjoint` never admits here.
-                    let (dc, dp) = (keyed(&mut c_names.iter()), keyed(&mut p_names.iter()));
-                    listing.gate = if !agreeing(&dc, &dp).is_empty() {
-                        report.denied_witness_only += 1;
-                        "witness-only"
-                    } else if dc.keys().all(|a| dp.keys().all(|b| name_cores_disjoint(&[a.clone(), b.clone()]))) {
-                        report.uncorroborated_disjoint += 1;
-                        "uncorroborated-disjoint"
-                    } else {
-                        report.uncorroborated_overlap += 1;
-                        "uncorroborated-overlap"
+                // with both (`Acme` / `Acme plc`, `Acme` / `Acme Ltd`). Then ONE
+                // pair of agreeing altid name keys (`names_agree`: equal, or
+                // equal but for a legal form one side omits). Strict otherwise —
+                // `Acme UK Ltd` is not `Acme Ltd`, and `Acme plc` is not either.
+                let corroborating = match altid_corroborates(&cs, &ps, args.names_agree, args.legal_family) {
+                    AltIdNames::Corroborated(pairs) => pairs,
+                    AltIdNames::FormConflict => {
+                        report.denied_form_conflict += 1;
+                        listing.gate = "form-conflict".to_owned();
+                        keep_denied(&mut denied, !args.dry_run, c.id, p.id, &listing);
+                        push_listing(
+                            conn,
+                            &mut report.denied_listing,
+                            &mut report.denied_listing_truncated,
+                            R2_PLAN_LISTING_CAP,
+                            listing,
+                            pair,
+                        )
+                        .await?;
+                        continue;
                     }
-                    .to_owned();
-                    keep_denied(&mut denied, !args.dry_run, c.id, p.id, &listing);
-                    push_listing(
-                        conn,
-                        &mut report.denied_listing,
-                        &mut report.denied_listing_truncated,
-                        listing,
-                        pair,
-                    )
-                    .await?;
-                    continue;
-                }
+                    AltIdNames::Uncorroborated => {
+                        // Listed, never merged. The class sorts the review queue. When
+                        // the designated names (head and satellites) DO agree, only a
+                        // witness's own name joined the two: `witness-only`, where a
+                        // rename (the company number is one legal entity) sits beside
+                        // a publisher's wrong number, and the register's name history
+                        // tells them apart. Otherwise names sharing a core token (the
+                        // Energinet shape, a sister company) are `overlap`, names
+                        // sharing none (a probable publisher error) `disjoint`.
+                        // `name_cores_disjoint` never admits here.
+                        let (dc, dp) =
+                            (altid_keyed(c_names.iter(), args.name_key), altid_keyed(p_names.iter(), args.name_key));
+                        listing.gate = if !altid_agreeing(&dc, &dp, args.names_agree).is_empty() {
+                            report.denied_witness_only += 1;
+                            "witness-only"
+                        } else if dc.keys().all(|a| dp.keys().all(|b| name_cores_disjoint(&[a.clone(), b.clone()]))) {
+                            report.uncorroborated_disjoint += 1;
+                            "uncorroborated-disjoint"
+                        } else {
+                            report.uncorroborated_overlap += 1;
+                            "uncorroborated-overlap"
+                        }
+                        .to_owned();
+                        keep_denied(&mut denied, !args.dry_run, c.id, p.id, &listing);
+                        push_listing(
+                            conn,
+                            &mut report.denied_listing,
+                            &mut report.denied_listing_truncated,
+                            R2_PLAN_LISTING_CAP,
+                            listing,
+                            pair,
+                        )
+                        .await?;
+                        continue;
+                    }
+                };
                 // The generic-name wall on the corroborating names' N2 keys — the
                 // cap the E3 scan and R3 read, and none of R3's hard-scheme
                 // exemption: neither GB series is a hard scheme, and the pair is
@@ -15048,7 +15556,7 @@ impl Db {
                 for (a, b) in &corroborating {
                     let mut over = false;
                     for n in [a.as_str(), b.as_str()] {
-                        let k2 = (args.norm)(&(args.trim)(n));
+                        let k2 = altid_wall_key(n, args.trim, args.norm);
                         let g = match generic.get(&k2) {
                             Some(g) => *g,
                             None => {
@@ -15073,6 +15581,7 @@ impl Db {
                         conn,
                         &mut report.denied_listing,
                         &mut report.denied_listing_truncated,
+                        R2_PLAN_LISTING_CAP,
                         listing,
                         pair,
                     )
@@ -15133,6 +15642,7 @@ impl Db {
                 conn,
                 &mut report.plan_listing,
                 &mut report.plan_listing_truncated,
+                args.plan_listing_cap,
                 listing,
                 pair,
             )

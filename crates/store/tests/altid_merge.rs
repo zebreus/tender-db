@@ -159,6 +159,7 @@ fn args<'a>(stoplist_cap: usize) -> store::AltIdMergeArgs<'a> {
         trim,
         norm,
         stoplist_cap,
+        plan_listing_cap: store::ALTID_PLAN_LISTING_CAP,
         dry_run: true,
         max_pairs: None,
         expect_pairs: None,
@@ -1360,4 +1361,311 @@ async fn a_continuation_does_not_recount_pairs_an_earlier_run_deferred() {
         .await
         .expect("the continuation proceeds");
     assert_eq!((r.merged_pairs, r.deferred_unreviewed), (1, 6), "{r:#?}");
+}
+
+// ---- Unit 3: the resolver alias, and the campaign's full plan listing.
+
+/// The alias's rules, the same miniatures the arm takes above.
+fn alias_rules() -> store::AltIdAliasRules {
+    store::AltIdAliasRules { mention_key, consortium, legal_family, name_key, names_agree, trim, norm }
+}
+
+/// A PPON-first mention as the fold hands it to the resolver: the party's
+/// FIRST identifier as published, and normalised (the org identifier a mint
+/// would store), under GB.
+fn ppon_first(notice: i64, literal: &str, name: &str) -> store::Mention {
+    store::Mention {
+        notice_id: notice,
+        section_id: "ORG-N".into(),
+        name: name.into(),
+        country: Some("GB".into()),
+        raw_identifier: Some(literal.into()),
+        scheme: Some("GB-PPON".into()),
+        identifier: Some(store::Identifier {
+            country: Some("GB".into()),
+            kind: "national".into(),
+            value: minted(literal),
+        }),
+        variants: Vec::new(),
+    }
+}
+
+impl Bed {
+    /// The issue's shape, then the wet run over its plan: the PPON org is gone,
+    /// its mentions are on the company-number org, and the ledger holds the
+    /// `e2-altid` row the alias replays.
+    async fn merge_all(&self) -> store::AltIdMergeReport {
+        let dry = self.plan().await;
+        let r = self.wet(&dry.pairs).await;
+        assert_eq!(r.merged_pairs, dry.plan_pairs, "{r:#?}");
+        r
+    }
+
+    /// FTS notices the fold has not reached: one party section each, no mention.
+    async fn fresh(&self, notices: &[i64]) {
+        for &n in notices {
+            self.notice(n, "fts:ocds-1.1").await;
+            self.conn
+                .execute(
+                    "INSERT INTO notice_sections (notice_id, section_id, kind, parent_section_id)
+                     VALUES (?, 'ORG-N', 'Organization', 'PROCEDURE')",
+                    (Value::Integer(n),),
+                )
+                .await
+                .unwrap();
+        }
+    }
+
+    /// One fold's resolver over `mentions`, the fold's shape in small (the
+    /// canonical key and the consortium veto; no anchors), armed with the alias
+    /// or not, the wall injected or not.
+    async fn resolve_with(
+        &self,
+        armed: bool,
+        hard_scheme: Option<fn(&str) -> bool>,
+        cap: usize,
+        mentions: &[store::Mention],
+    ) -> (Vec<i64>, store::AltIdAliasCounts) {
+        let mut resolver = self
+            .db
+            .mention_resolver(Some(key), Some(consortium), None, Some(norm), None, hard_scheme, cap)
+            .await
+            .unwrap();
+        if armed {
+            self.db.arm_altid_alias(&mut resolver, alias_rules()).await.unwrap();
+        }
+        let ids = self.db.resolve_mentions(&mut resolver, mentions, 1).await.unwrap();
+        let counts = store::Db::altid_alias_counts(&resolver);
+        self.db.finish_mention_resolver(resolver).await.unwrap();
+        (ids, counts)
+    }
+
+    async fn resolve(&self, armed: bool, mentions: &[store::Mention]) -> (Vec<i64>, store::AltIdAliasCounts) {
+        self.resolve_with(armed, None, 20, mentions).await
+    }
+}
+
+/// The alias's reason to exist. After the merge the PPON org is gone, so a new
+/// PPON-first mention misses the exact triple AND the canonical key — and the
+/// unarmed fold mints the PPON org again. Armed, it binds to the company-number
+/// org, mints nothing, and records the mention there.
+///
+/// Never cached (issue 318's rule): the next mention of the same PPON in the
+/// SAME batch is asked again, and its own name — a different company — is
+/// refused and mints, as it would unarmed. Had the first bind claimed the
+/// PPON's triple, the second would have ridden it onto the company-number org
+/// without a name check.
+#[tokio::test]
+async fn an_armed_resolver_binds_a_ppon_first_mention_to_the_company_number_org_after_a_merge() {
+    let b = bed("alias-bind").await;
+    b.split(100, (2, COH_A, "Acme Widgets Ltd"), (1, PPON_P, "ACME WIDGETS LTD")).await;
+    b.merge_all().await;
+    b.fresh(&[300, 301]).await;
+    let orgs = b.count("SELECT COUNT(*) FROM organizations").await;
+
+    let (ids, c) = b
+        .resolve(true, &[ppon_first(300, PPON_P, "Acme Widgets Limited"), ppon_first(301, PPON_P, "Zenith Holdings Ltd")])
+        .await;
+    assert_eq!(ids[0], 2, "the PPON-first mention binds to the company-number org");
+    assert_ne!(ids[1], 2, "the same PPON under another company's name is refused");
+    assert_eq!(b.count("SELECT organization_id FROM organization_mentions WHERE notice_id = 300").await, 2);
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, orgs + 1, "only the refused mention minted");
+    assert_eq!(
+        c,
+        store::AltIdAliasCounts {
+            armed: true,
+            ledger_rows: 1,
+            aliases: 1,
+            asked: 2,
+            bound: 1,
+            // No wall injected: the bind is lenient, and says so.
+            bound_unwalled: 1,
+            refused: 1,
+            refused_names: 1,
+            ..Default::default()
+        }
+    );
+}
+
+/// Unarmed, the resolver is the pre-448 one: the same mention after the same
+/// merge mints the PPON org again, and the alias reports nothing at all.
+#[tokio::test]
+async fn an_unarmed_resolver_mints_as_before() {
+    let b = bed("alias-unarmed").await;
+    b.split(100, (2, COH_A, "Acme Widgets Ltd"), (1, PPON_P, "ACME WIDGETS LTD")).await;
+    b.merge_all().await;
+    b.fresh(&[300]).await;
+    let orgs = b.count("SELECT COUNT(*) FROM organizations").await;
+    let (ids, c) = b.resolve(false, &[ppon_first(300, PPON_P, "Acme Widgets Limited")]).await;
+    assert_ne!(ids[0], 2);
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, orgs + 1, "the re-mint the alias prevents");
+    assert_eq!(
+        b.text(&format!("SELECT identifier FROM organizations WHERE id = {}", ids[0])).await,
+        minted(PPON_P)
+    );
+    assert_eq!(c, store::AltIdAliasCounts::default(), "not armed, and says so");
+}
+
+/// A reviewer's `keep` over the pair — posted after the merge, as the marker of
+/// an unwind — drops it from the alias: the PPON is not asked about, and mints.
+#[tokio::test]
+async fn a_keep_verdict_disables_the_alias() {
+    let b = bed("alias-keep").await;
+    b.split(100, (2, COH_A, "Acme Widgets Ltd"), (1, PPON_P, "ACME WIDGETS LTD")).await;
+    b.merge_all().await;
+    b.verdict(COH_A, PPON_P, vec![1, 2], "keep", "high").await;
+    b.fresh(&[300]).await;
+    let (ids, c) = b.resolve(true, &[ppon_first(300, PPON_P, "Acme Widgets Limited")]).await;
+    assert_ne!(ids[0], 2);
+    assert_eq!((c.ledger_rows, c.kept, c.aliases, c.asked, c.bound), (1, 1, 0, 0, 0), "{c:?}");
+}
+
+/// A PPON the ledger merged into two company numbers is poisoned: the arm never
+/// picks a side of a contradiction, so neither does the fold. Asked, refused,
+/// and minted.
+#[tokio::test]
+async fn a_ppon_merged_into_two_company_numbers_never_aliases() {
+    let b = bed("alias-poison").await;
+    b.split(100, (2, COH_A, "Acme Widgets Ltd"), (1, PPON_P, "ACME WIDGETS LTD")).await;
+    b.merge_all().await;
+    // A second e2-altid merge of the same PPON into another company number.
+    b.org(3, COH_B, "Acme Widgets Ltd").await;
+    b.conn
+        .execute(
+            "INSERT INTO org_merge_log (keep, loser, rule, evidence, job_id, at) VALUES (3, 4, 'e2-altid', ?, 78, 1)",
+            (Value::Text(format!("{{\"scheme\":\"GB:altid\",\"coh\":\"{}\",\"ppon\":\"{}\"}}", k(COH_B), k(PPON_P))),),
+        )
+        .await
+        .unwrap();
+    b.fresh(&[300]).await;
+    let (ids, c) = b.resolve(true, &[ppon_first(300, PPON_P, "Acme Widgets Limited")]).await;
+    assert!(ids[0] != 2 && ids[0] != 3, "neither company-number org takes it");
+    assert_eq!((c.ledger_rows, c.poisoned, c.aliases), (2, 1, 0), "{c:?}");
+    assert_eq!((c.asked, c.refused, c.refused_poisoned, c.bound), (1, 1, 1, 0), "{c:?}");
+}
+
+/// The bind is the arm's bar, never looser. Four merged suppliers, and a
+/// PPON-first mention of each whose names fail it:
+/// - another company's name;
+/// - a plc beside the owner's Ltd (GB legal forms, head against head);
+/// - a consortium name;
+/// - a formless head whose variant is a plc, beside the owner's Ltd: the form
+///   check reads every name, so a formless name cannot bridge them.
+/// Each is refused, and each mints exactly as it would unarmed.
+#[tokio::test]
+async fn a_name_that_fails_corroboration_refuses_and_mints() {
+    let b = bed("alias-names").await;
+    b.split(100, (1, COH_A, "Acme Widgets Ltd"), (2, PPON_P, "Acme Widgets Ltd")).await;
+    b.split(200, (3, COH_B, "Northgate Ltd"), (4, PPON_Q, "Northgate Ltd")).await;
+    b.split(300, (5, COH_C, "Beta Services Ltd"), (6, PPON_R, "Beta Services Ltd")).await;
+    b.split(400, (7, COH_D, "Gamma Works Ltd"), (8, PPON_S, "Gamma Works Ltd")).await;
+    assert_eq!(b.merge_all().await.merged_pairs, 4);
+    b.fresh(&[500, 501, 502, 503]).await;
+    let mut formless = ppon_first(503, PPON_S, "Gamma Works");
+    formless.variants = vec![("ENG".into(), "Gamma Works plc".into())];
+    let orgs = b.count("SELECT COUNT(*) FROM organizations").await;
+    let (ids, c) = b
+        .resolve(
+            true,
+            &[
+                ppon_first(500, PPON_P, "Zenith Ltd"),
+                ppon_first(501, PPON_Q, "Northgate plc"),
+                ppon_first(502, PPON_R, "Beta Services Consortium Ltd"),
+                formless,
+            ],
+        )
+        .await;
+    assert!(ids.iter().all(|id| ![1, 3, 5, 7].contains(id)), "{ids:?}");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, orgs + 4);
+    assert_eq!((c.asked, c.bound, c.refused), (4, 0, 4), "{c:?}");
+    assert_eq!((c.refused_names, c.refused_veto), (2, 2), "{c:?}");
+}
+
+/// Identity to identity: the alias maps the PPON key to the company-number KEY,
+/// not to an org id, so it finds the company-number org however it was
+/// renumbered — a bare rebuild re-mints every org, and keeps `org_merge_log`.
+#[tokio::test]
+async fn the_alias_survives_the_company_number_orgs_renumbering() {
+    let b = bed("alias-renumber").await;
+    b.split(100, (2, COH_A, "Acme Widgets Ltd"), (1, PPON_P, "ACME WIDGETS LTD")).await;
+    b.merge_all().await;
+    // The rebuild's shape: the org layer re-minted under new ids; the ledger
+    // still names keep 2 / loser 1, which no longer exist.
+    b.conn.execute("DELETE FROM organization_mentions", ()).await.unwrap();
+    b.conn.execute("DELETE FROM organization_names", ()).await.unwrap();
+    b.conn.execute("DELETE FROM organizations", ()).await.unwrap();
+    b.org(50, COH_A, "Acme Widgets Limited").await;
+    b.fresh(&[300]).await;
+    let (ids, c) = b.resolve(true, &[ppon_first(300, PPON_P, "ACME WIDGETS LTD")]).await;
+    assert_eq!(ids[0], 50, "found by its key, not by the id the ledger recorded");
+    assert_eq!((c.asked, c.bound), (1, 1));
+    // And with no standing owner of the company number at all, it is refused.
+    b.conn.execute("DELETE FROM organization_mentions", ()).await.unwrap();
+    b.conn.execute("DELETE FROM organizations", ()).await.unwrap();
+    b.fresh(&[301]).await;
+    let (_, c) = b.resolve(true, &[ppon_first(301, PPON_P, "ACME WIDGETS LTD")]).await;
+    assert_eq!((c.asked, c.refused_no_owner), (1, 1), "{c:?}");
+}
+
+/// The generic wall, through the resolver's own availability rule. Armed (the
+/// key index present, no build in flight), a corroborating name more orgs than
+/// the cap carry is refused, and a specific one binds with the wall answering.
+#[tokio::test]
+async fn the_alias_holds_the_generic_wall_when_it_is_armed() {
+    let b = bed("alias-wall").await;
+    b.split(100, (1, COH_A, "Acme Ltd"), (2, PPON_P, "Acme Ltd")).await;
+    b.split(200, (3, COH_B, "Northgate Ltd"), (4, PPON_Q, "Northgate Ltd")).await;
+    assert_eq!(b.merge_all().await.merged_pairs, 2);
+    // Three live carriers of `acme ltd`, over a cap of two.
+    b.org_in(9, "GB", "GBCOH00000009", "Acme Ltd").await;
+    b.org_in(10, "GB", "GBCOH00000010", "Acme Ltd").await;
+    for org in [1i64, 9, 10] {
+        b.conn
+            .execute(
+                "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'acme ltd')",
+                (Value::Integer(org),),
+            )
+            .await
+            .unwrap();
+    }
+    b.conn
+        .execute("CREATE INDEX IF NOT EXISTS org_match_keys_kk ON org_match_keys(key_kind, key, org_id)", ())
+        .await
+        .unwrap();
+    b.fresh(&[300, 301]).await;
+    let (ids, c) = b
+        .resolve_with(
+            true,
+            Some(|_: &str| false),
+            2,
+            &[ppon_first(300, PPON_P, "Acme Ltd"), ppon_first(301, PPON_Q, "Northgate Limited")],
+        )
+        .await;
+    assert_ne!(ids[0], 1, "generic: refused, and minted");
+    assert_eq!(ids[1], 3, "specific: bound");
+    assert_eq!((c.asked, c.bound, c.bound_unwalled, c.refused_generic), (2, 1, 0, 1), "{c:?}");
+}
+
+/// The campaign's prerequisite: the `plan` listing carries every planned pair a
+/// wet run would merge, up to its own cap — far above R2's 500 in production —
+/// with the witnesses' publication ids, and the cut stays honest when it binds.
+/// The denied and conflict listings keep R2's cap.
+#[tokio::test]
+async fn the_plan_listing_carries_every_planned_pair_up_to_its_own_cap() {
+    assert!(store::ALTID_PLAN_LISTING_CAP >= 20_000, "well above any realistic plan");
+    assert_eq!(store::R2_PLAN_LISTING_CAP, 500, "R2's, E0's and R3's listings are untouched");
+    let b = bed("listing-cap").await;
+    b.split(100, (1, COH_A, "Acme Ltd"), (2, PPON_P, "Acme Ltd")).await;
+    b.split(200, (3, COH_B, "Northgate Ltd"), (4, PPON_Q, "Northgate Ltd")).await;
+    b.split(300, (5, COH_C, "Beta Ltd"), (6, PPON_R, "Beta Ltd")).await;
+    let full = b.plan().await;
+    assert_eq!((full.plan_pairs, full.plan_listing.len(), full.plan_listing_truncated), (3, 3, false));
+    assert!(full.plan_listing.iter().all(|l| l.witness_publications.len() == 1), "{:#?}", full.plan_listing);
+    let cut = b
+        .db
+        .match_org_altid_pairs(store::AltIdMergeArgs { plan_listing_cap: 2, ..args(20) })
+        .await
+        .unwrap();
+    assert_eq!((cut.plan_pairs, cut.pairs.len(), cut.plan_listing.len()), (3, 3, 2));
+    assert!(cut.plan_listing_truncated, "a cut listing says so");
 }
