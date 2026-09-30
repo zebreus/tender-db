@@ -1,6 +1,7 @@
 # 448 — FTS `additionalIdentifiers` are parsed and then dropped: the Companies House ↔ PPON pairing never reaches the matcher, and 161 suppliers stand as two organizations
 
-Status: ready-for-agent — UNITS 1b and 2 BUILT, reviewed and gated 2026-09-30 (`e4c39b3`, `7b6d52e`; unit 2 `2d55856` + review fixes `2998b0a`; all pushed, deploy pending the box's idle window ~05:30 UTC). NO WET RUN until unit 3 (the resolver alias) is deployed too. Next: deploy, dry re-run and the 1b Verify; then unit 3; then the unit-4 campaign (which first needs the full plan listing — see unit 2's notes).
+Status: ready-for-agent — UNITS 1b, 2, 3 and 3b DEPLOYED 2026-09-30 (`60a0191`, `636475c`, `ba1b159`). Dry job 1691: plan 4,373 pairs (23 co-occurring), 101 witness-only, 326 uncorroborated, 49 conflicts; the full listing carries each side's witness-free names. The 1b Verify's Amentum expectation was WRONG: that pair is true (see 05:1x below). NEXT: unit 4, the review campaign over the full listing with Companies House register names, then a capped wet run.
+Was status (until 2026-09-30 06:1x): ready-for-agent — UNITS 1b and 2 BUILT, reviewed and gated 2026-09-30 (`e4c39b3`, `7b6d52e`; unit 2 `2d55856` + review fixes `2998b0a`; all pushed, deploy pending the box's idle window ~05:30 UTC). NO WET RUN until unit 3 (the resolver alias) is deployed too. Next: deploy, dry re-run and the 1b Verify; then unit 3; then the unit-4 campaign (which first needs the full plan listing — see unit 2's notes).
 Was status (until 2026-09-30 04:3x): ready-for-agent — UNIT 1b BUILT and gated 2026-09-30 (`e4c39b3` + review fixes `7b6d52e`, both pushed, not yet deployed). Corroboration now ignores the pair's own witness names; new gates `witness-only` and `form-conflict`; three recall folds. Next: deploy when the box queue is idle (backfill chunk 2 runs until ~05:00 UTC), re-run `{"kind":"match-org-identifiers","rule":"altid"}`, and read the Verify for 1b below. Then units 2–4.
 Was status (until 2026-09-30 03:0x): ready-for-agent — UNIT 1 DEPLOYED and RUN 2026-09-30 (rev `7f24c30`, dry job 1681, 3 s): 1,992 split pairs, plan 1,575. The dry run found a precision hole: corroboration through satellite names is CIRCULAR, because a witness notice's own party name is recorded as a satellite of the org its first identifier binds. It plans at least one false merge, Amentum Clean Energy (COH 01120437) ← an `Altrad Babcock Limited` PPON org. Next: unit 1b corroborates on names from mentions OUTSIDE the pair's witness notices, then re-run the dry plan. Units 2–4 as designed after that.
 Was status (until 2026-09-30 02:5x): ready-for-agent — UNIT 1 BUILT 2026-09-30 (the dry-only planner: `match-org-identifiers` rule `altid`, report `altid-merge-plan`; wet refused until unit 2). Gated green, 20 store tests + 4 crosswalk + 2 supervisor. Next: deploy when the queue is idle, run `{"kind":"match-org-identifiers","rule":"altid"}`, and read the plan against the 161. Design: `.scratch/tender-db/448-altid-design.md`. Filed 2026-09-30 00:0x UTC, as the follow-up `342-fts-plan.md` §5 risk 3 promised and never filed.
@@ -233,3 +234,112 @@ stored-plan contract, transactions, edges and readers. Their fixes are in `2998b
   re-plan, and it merges only live ∩ stored. Re-run the dry plan after every deploy that changes the gates anyway.
 - Only `docs/operations.md` enforces "no wet run before unit 3". An early run is not destructive, but the fold would
   re-mint the merged PPON orgs.
+
+## 2026-09-30 05:1x–05:5x UTC — deployed (`60a0191`); the 1b Verify read on dry job 1690
+
+**Counts** (dry job 1690, 8 s, 145,568 FTS notices after backfill chunks 1–2):
+- 17,254 company-number/PPON pairs keyed (17,622 literal). Unpaired: 267 padded, 5 condemned, 96 malformed, 46 non-GB.
+  0 ambiguous parties.
+- Owners: 0 already one, 7 multi-target, 35 no company-number org, 12,328 no PPON org (the PPON never led a party),
+  0 neither, **4,884 two distinct GB orgs**.
+- Denied: 0 gate, 16 consortium, 17 legal-form, 0 evidence-wall, 0 loser-incoherent, 0 verdict-keep,
+  254 uncorroborated-overlap, 72 uncorroborated-disjoint, **101 witness-only**, 0 form-conflict, 2 generic.
+  49 conflicts.
+- **Plan: 4,373 pairs** (1,575 at unit 1, before the backfill and 1b).
+
+**The Verify's Amentum expectation was wrong, and planning the pair is right.** Unit 1 read PBDC-7744-BTPG as Altrad
+Babcock's PPON because its org is HEADED "Altrad Babcock Limited". The backfill shows otherwise:
+- UKAEA's notice 46740078 lists both suppliers, each with its own pair: Amentum Clean Energy = COH 01120437 + PPON
+  PBDC-7744-BTPG, and Altrad Babcock = COH 00839354 + PPON **PBDJ-7746-PBLD**.
+- The PPON org PBDC-7744-BTPG carries 14 mentions. 11 name Amentum Clean Energy; 3 name Altrad Babcock. The 3 come from
+  UK Industrial Fusion Solutions notices (46761121, 46848741, 46848786), which list Amentum by its company number AND
+  "Altrad Babcock Limited" under Amentum's PPON as a second party: a publisher's mislabel. The first-seen election
+  made that stray the head.
+- Altrad Babcock's real PPON org (PBDJ-7746-PBLD) carries 8 mentions, all "Altrad Babcock Limited".
+- So 01120437~PBDC7744BTPG corroborates on witness-free names (Amentum ↔ Amentum), and 1b plans it correctly. The 3
+  mislabelled mentions move with the merge; they are the publisher's fault on either org.
+
+Doosan → Altrad Babcock (00839354~PBDJ7746PBLD) lists **`witness-only`**, as the Verify allowed: its company-number org's
+only witness-free name is "Doosan Babcock Ltd" (a TED mention, the pre-rename name). It is a true rename and goes to
+review.
+
+The circularity 1b fixes is still real. The synthetic test keeps the shape, with its doc corrected.
+
+**The 50-pair read.** Of the 500 listed plan pairs (the deployed listing cap), 406 have equal head names under a rough
+norm, and 94 differ. Every one of the six most suspicious-looking heads is one entity by its witness-free mention names:
+
+| pair | heads | mention names |
+|---|---|---|
+| 00968498~PHXX6931VYBP | Northgate Public Services ↔ Gravitas Recruitment Group | both mostly NEC Software Solutions UK (Northgate's rename); the PPON org also holds 1 Gravitas and 1 Cadcorp stray |
+| 00986729~PPJL2485DZGH | University of Greenwich ↔ London and South East University Group | Greenwich 22 + LSEUG 2 / LSEUG 12 + Greenwich 2: the consortium publishes under Greenwich's numbers |
+| 01007314~PWYW9582JTRT | Busch (UK) ↔ Vacuum Furnace Engineering | "Busch (UK) Ltd trading as Vacuum Furnace Engineering" |
+| 00115834~PXRT4831MJVW | Communicare247 ↔ Legrand Electric | Legrand Electric 22 + Communicare247 (its brand) 6 / Legrand Electric |
+| 00062537~PYXP9254JYBJ | Bunzl Retail & Healthcare t/a Care Shop ↔ Mediq Healthcare UK | Mediq Healthcare UK on both sides (5 of 6, 17 of 17) |
+| 00454264~PPLG5515HRRP | MWUK ↔ Mi Hub | MI HUB LIMITED 7 + MWUK 2 / Mi Hub 2 (rename) |
+
+The rest of the 94: renames (Actavis → Accord UK, Johnston Sweepers → Bucher Municipal, Engie → Equans, Hanson →
+Heidelberg Materials, Interserve Construction → Tilbury Douglas, MORI → Ipsos, Atkins → AtkinsRéalis), trading names,
+typos (Envionmental, Infrastrucutre, Metler-Toledo), dotted initials and bracketed numbers.
+
+**What that says about the listing.** A head name is a first-seen election, and a stray mention can set it. The listing
+showed only heads, so each of these pairs cost a /v1/sql read to judge. Unit 3b puts the reviewer's evidence in the
+listing:
+- each side's witness-free names;
+- the name pair that cleared the wall;
+- the notices where both orgs appear as distinct parties (the UKIFS shape), counted in `plan_cooccurring`. This is
+  measured before any gate reads it: a true pair beside a mislabelling publisher shows it too.
+
+## 2026-09-30 — unit 3 built, reviewed, DEPLOYED (`5b52135` + review fixes `636475c`, live 05:43 UTC)
+
+**The resolver alias.** `Db::arm_altid_alias` arms the fold's mention resolver at both fold call sites; every other
+caller is unarmed and byte-identical to before.
+- The preload reads the `e2-altid` ledger rows as PPON key → company-number key. It maps identity to identity, so the
+  alias survives a rebuild's renumbering.
+- A pair under a `keep` verdict is dropped. A PPON merged into two company numbers is poisoned.
+- A GB mention whose raw identifier keys to an aliased PPON is aliased only after the triple and the canonical key
+  both miss. It then binds to the org that owns the company number, at the arm's own bar: a standing owner, the
+  consortium veto, the legal forms head against head, the shared name predicate (`altid_corroborates`) and the
+  generic wall.
+- A bind is never cached (issue 318). A refused mention mints exactly as it would unarmed.
+- Counters go to the diag log (`[issue 448]`) and to the `project` counts line (when anything was asked).
+
+**The full plan listing.** `ALTID_PLAN_LISTING_CAP` = 20,000, so a reviewer sees every pair a wet run would merge.
+The denied and conflict listings keep 500.
+
+**Review, two findings, both fixed in `636475c`:**
+- The preload scanned `org_merge_log` on every fold. The ledger is NOT small: p0 alone wrote 5.76M rows (issue 351).
+  It now seeks the partial index `org_merge_log_e2_altid` (built once at the first open, which health confirmed at the
+  deploy). The harvest plan guard pins it (`ALTID_ALIAS_LEDGER_SQL`).
+- `bound_unwalled` leaked across corroborating pairs: a probe failure on a pair that did not clear marked the pair
+  that did. The flag is now per pair.
+
+Verify for unit 3: the next fold's `project` counts line and the diag log show the alias ARMED with 0 aliases (no
+`e2-altid` merge exists yet), and asked/bound/refused all 0. The first non-zero read comes after the first wet run.
+
+## 2026-09-30 — unit 3b built, reviewed, DEPLOYED (`ba1b159`, live 06:0x UTC): the reviewer's evidence in the listing
+
+Every two-org listing (plan, denied, conflicts) now carries:
+- `coh_names` / `ppon_names`: the witness-free names each side's corroboration read, the first 8 in key order, with
+  `coh_name_keys` / `ppon_name_keys` as the totals;
+- `corroborated_by`: the name pair that cleared the wall (planned pairs);
+- `cooccurring` / `cooccur_publications`: notices OTHER than the pair's witnesses where both orgs are distinct parties.
+
+`plan_cooccurring` counts the planned pairs that co-occur; it gates nothing.
+
+The review ran two lenses (equivalence of the moved corroboration code; honesty of the evidence). Its four findings are
+fixed in the same commit:
+- the stored `plan_cooccurring` counts the STORED plan (the residual after a wet run);
+- a witness notice never counts as a co-occurrence (the same supplier listed twice);
+- name totals ride beside the capped lists;
+- co-occurrence publication ids are read in `push_listing`, only for listed pairs.
+
+**Dry job 1691** (on `ba1b159`, 4 s): the same counts as 1690, and plan 4,373 with **23 co-occurring**. The full
+listing is 4,373 entries, not truncated (4.4 MB). The Amentum pair now reads:
+- `coh_names` 5: Amec Foster Wheeler Nuclear UK, AMEC Nuclear UK, Amentum Clean Energy, Jacobs Clean Energy, Wood
+  Nuclear;
+- `ppon_names` 2: Altrad Babcock Ltd (the stray), AMENTUM CLEAN ENERGY LIMITED;
+- `corroborated_by`: (Amentum Clean Energy Ltd, AMENTUM CLEAN ENERGY LIMITED);
+- `cooccurring` 2: 072223-2025 and 074827-2026, the UKIFS mislabel.
+
+Next, unit 4: the campaign over the full listing, with Companies House register names joined in (fetched from the
+public company pages for all 4,872 company numbers in the plan, denied and conflict sets).
