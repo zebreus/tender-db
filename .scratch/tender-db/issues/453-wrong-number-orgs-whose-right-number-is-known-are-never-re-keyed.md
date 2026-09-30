@@ -1,6 +1,7 @@
 # 453 — 182 wrong-number organizations have a reviewer-found right number that nothing acts on
 
-Status: ready-for-agent — ARM DEPLOYED 2026-09-30 16:5x UTC (`e156b88`); first dry plan (job 1726): 100 merge + 58 move, 16 name-denied (→ issue 454). REVIEWED against the Companies House register (below): 156 execute, 2 held and their verdicts corrected (Cochlear → 03874867, Montel → 08949189, cohort `453-rekey-review-2026-09-30`). NEXT: re-plan job 1738 (queued behind FTS chunk 4, jobs 1728–1737); diff its keys against the reviewed 156 + the two corrections, then the wet run, then the Verify. The flagged-by-number refinement (`19ea011`) deploys after the wet run.
+Status: blocked — the WET RUN WAITS ON LENNART'S GO-AHEAD. The session's permission classifier refused the production write on 2026-09-30 ~19:0x UTC, as with 448's wet run. Everything before it is done: `1389820` deployed (454's override and the flagged-by-number refinement), and dry plan job 1739 holds 113 merge + 54 move = **167 re-keys, every one reviewed** (below). To run once given: `{"kind":"match-org-identifiers","rule":"rekey","dry_run":false}` (it holds against 1739's stored keys), then the Verify.
+Was status: ready-for-agent — ARM DEPLOYED 2026-09-30 16:5x UTC (`e156b88`); first dry plan (job 1726): 100 merge + 58 move, 16 name-denied (→ issue 454). REVIEWED against the Companies House register (below): 156 execute, 2 held and their verdicts corrected (Cochlear → 03874867, Montel → 08949189, cohort `453-rekey-review-2026-09-30`). NEXT: re-plan job 1738 (queued behind FTS chunk 4, jobs 1728–1737); diff its keys against the reviewed 156 + the two corrections, then the wet run, then the Verify. The flagged-by-number refinement (`19ea011`) deploys after the wet run.
 Was status: ready-for-agent — SIZED 2026-09-30 15:0x UTC: of the 182, **119** have a standing GB org carrying the right number (shape 1, merge into it) and **63** have none (shape 2, re-key in place). No existing arm executes either: case reviews only strip, merge verdicts need a shared key group. NEXT: the arm (design below), dry-first.
 Was status: ready-for-agent — filed 2026-09-30 from issue 452. Next: for each of the 182, look up whether the right number
 already has its own org (a bounded id/identifier lookup), then size the three shapes below before building anything.
@@ -132,3 +133,27 @@ wrong number in all 158 rows; its digest is `register-digest-2026-09-30.txt` and
   - Hogan Lovells (renamed 2026-06-30);
   - right numbers that are dissolved or in liquidation but name the only company of that name (Oculus, Roalco);
   - Seaham Care (FC031512).
+
+## 2026-09-30 18:4x–19:0x UTC — deployed, re-planned, every key accounted for; the wet run waits on the owner
+
+- **Deploy.** `1389820` went live after FTS chunk 4 and the old-code re-plan (job 1738) drained the queue: health
+  green, 0 error lines.
+- **Dry plan, job 1739** (`453-rekey/rekey-plan-2-2026-09-30.json`). Of the 182 verdicts: 6 are not high, 2 are
+  unkeyed, 1 is kept by the B Braun `keep` verdict, 6 are still denied on names (the 7 unsettled, less Haringey,
+  below), and 8 were admitted by 454's merge verdicts. **Plan: 113 merge + 54 move = 167.**
+- **Diff against the reviewed plan.** 154 keys are unchanged. The 13 that are new:
+  - 8 are the 454-admitted merges.
+  - 2 are the corrected verdicts. Cochlear merges into "Cochlear Europe Limited" on 03874867. Montel merges into
+    "MONTEL CIVIL ENGINEERING LIMITED" on 08949189. Both right numbers already have an org, so these are merges, not
+    moves.
+  - 3 changed shape because chunk 4 minted orgs on the right numbers:
+    - **Aleyah House:** a move became a merge into "Aleyah House".
+    - **Belfast City Airport Ltd:** a move became a merge into "BELFAST CITY AIRPORT LIMITED" (NI016363).
+    - **Haringey GP Group Limited → org 31542495:** its head name is "North Central London Training Hub". The 454
+      review had left this pair unsettled; it now passes the name gate on its own. A bounded `/v1/sql` read shows why.
+      31542495's mentions under GB-COH-10180486 are "Haringey GP Group Ltd" (2), "Haringey GP Group Limited" (2),
+      "Haringey GP Federation" (1) and "North Central London Training Hub" (2). So the org carrying Haringey GP
+      Group's real number IS the GP group; the training hub is only its first-seen head name. The merge is right.
+- **Wet run: refused by the session's permission classifier.** It is a production write: 113 merges (orgs deleted,
+  references repointed, ledger rule `rekey`) and 54 identifier moves. It waits for Lennart's explicit go-ahead, like
+  448's wet run.
