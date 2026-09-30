@@ -1,6 +1,6 @@
 # 448 — FTS `additionalIdentifiers` are parsed and then dropped: the Companies House ↔ PPON pairing never reaches the matcher, and 161 suppliers stand as two organizations
 
-Status: ready-for-agent — DESIGN SETTLED 2026-09-30 (`.scratch/tender-db/448-altid-design.md`: E2, a new gated `match-org-identifiers` rule `altid`, strict GB name-key equality, conflict and evidence walls, the company-number org survives). Next: unit 1, the dry-only planner (`altid-merge-plan`), which re-measures the 161 by canonical-key owners before anything merges. Filed 2026-09-30 00:0x UTC (hourly check-in), as the follow-up `342-fts-plan.md` §5 risk 3 promised and never filed.
+Status: ready-for-agent — UNIT 1 BUILT 2026-09-30 (the dry-only planner: `match-org-identifiers` rule `altid`, report `altid-merge-plan`; wet refused until unit 2). Gated green, 20 store tests + 4 crosswalk + 2 supervisor. Next: deploy when the queue is idle, run `{"kind":"match-org-identifiers","rule":"altid"}`, and read the plan against the 161. Design: `.scratch/tender-db/448-altid-design.md`. Filed 2026-09-30 00:0x UTC, as the follow-up `342-fts-plan.md` §5 risk 3 promised and never filed.
 
 ## What is wrong
 
@@ -52,3 +52,29 @@ mentions under a non-GB country.
 
 Re-run the split count above (the COH→PPON pairs whose two ids stand as different GB orgs). Today: **161**. Expect 0,
 apart from pairs a reviewer keeps apart by verdict, which are listed.
+
+## 2026-09-30 — unit 1 built (dry planner)
+
+Built by a delegated build agent against the settled design, then reviewed and gated here (GATE-EXIT=0, 670 s).
+
+Pieces:
+- `crosswalk::{mention_key, altid_pair_key, altid_name_key, gb_legal_family}`;
+- `Db::match_org_altid_pairs`: harvest, bipartite graph and conflicts, owners, five structural gates, verdict
+  consult, judgment gates, listings. A wet call errors before reading anything, and the planner reads through the
+  store's internal pool, not the writer;
+- a boxed supervisor arm with R3's `org_match_keys` refusals;
+- one ops row.
+
+Deviations the agent made, each argued from code or EXPLAIN evidence:
+1. The harvest collects FTS notice ids in one range read per profile. turso seeks `notices_profile` on `profile` only,
+   so a keyset walk would re-read the cohort every window. It then does a per-notice PK-range read of `notice_ids`.
+2. `already_one` is reachable only as "one side has no org, and the other org's mentions carry its key".
+3. The evidence wall follows R2/R3 semantics: disjoint same-scheme key sets on both sides.
+4. The store tests use miniature injected rules, per the r3_merge.rs convention. The supervisor test plans a real FTS
+   pair through the production functions.
+
+Open doubts, carried to the dry run's reading:
+- the wall does not deny a COH org carrying a stray second company number when the PPON org carries none;
+- harvest cost after the full backfill is unmeasured;
+- a party section with no mention is counted as `unfolded_sections`;
+- a HIGH merge verdict overriding a conflict flag has no test yet.

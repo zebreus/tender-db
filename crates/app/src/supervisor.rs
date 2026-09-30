@@ -375,6 +375,10 @@ enum Spec {
     /// merged through the R2 denial stack plus the agree-distinctive name rule.
     MatchOrgIdentifiersE0 { dry_run: bool, max_groups: Option<u64> },
     MatchOrgIdentifiersR3 { dry_run: bool, max_groups: Option<u64> },
+    /// Issue 448: the altid rule — the Companies House ↔ PPON pairs FTS parties
+    /// publish in `additionalIdentifiers`, gated as E2 evidence. Unit 1 is the
+    /// dry planner only; a wet run is refused until unit 2 builds one.
+    MatchOrgIdentifiersAltId { dry_run: bool, max_groups: Option<u64> },
     ApplyCaseReviews { dry_run: bool },
     /// Issue 312: the symmetric UNDO for `ApplyCaseReviews` — restore the
     /// identifiers whose pre-image value is a platform GUID, which the
@@ -1035,9 +1039,10 @@ pub struct JobRequest {
     /// the whole plan.
     pub max_groups: Option<u64>,
     /// `match-org-identifiers` only: which merge rule to run — `r2` (the
-    /// Stage-2 same-country canonical-key merge, the default) or `r3` (the
-    /// Stage-3 NULL-country checksum-anchor rescue). Anything else is
-    /// rejected at enqueue.
+    /// Stage-2 same-country canonical-key merge, the default), `r3` (the
+    /// Stage-3 NULL-country checksum-anchor rescue), `e0` (issue 329's exact
+    /// triples) or `altid` (issue 448's company-number/PPON pairs, dry only
+    /// until its unit 2). Anything else is rejected at enqueue.
     pub rule: Option<String>,
     /// `scan-org-match-keys` wet runs only: write at most this many edges —
     /// the design's capped first prod run (issue 300 Stage 4). The census
@@ -1427,9 +1432,10 @@ impl Supervisor {
                     "r2" => Spec::MatchOrgIdentifiersR2 { dry_run, max_groups },
                     "r3" => Spec::MatchOrgIdentifiersR3 { dry_run, max_groups },
                     "e0" => Spec::MatchOrgIdentifiersE0 { dry_run, max_groups },
+                    "altid" => Spec::MatchOrgIdentifiersAltId { dry_run, max_groups },
                     other => {
                         return Err(format!(
-                            "match-org-identifiers: unknown rule '{other}' (r2, r3 or e0)"
+                            "match-org-identifiers: unknown rule '{other}' (r2, r3, e0 or altid)"
                         ));
                     }
                 };
@@ -5806,6 +5812,230 @@ impl Supervisor {
                     }
                 ))
             }
+            Spec::MatchOrgIdentifiersAltId { dry_run, .. } => Box::pin(async move {
+                // Issue 448: the altid rule — the Companies House ↔ PPON pairing
+                // FTS parties publish in `additionalIdentifiers`, planned as E2
+                // evidence under R3-grade gates (`.scratch/tender-db/448-altid-design.md`).
+                // Unit 1 is the DRY planner; the wet path is unit 2 and is refused
+                // below. Boxed like E0: run_spec is one future over every arm, and
+                // an unboxed arm this size is what overflowed the stack of
+                // `an_execute_without_an_expected_count_is_refused` (CLAUDE.md).
+                let dry_run = *dry_run;
+                // R3's refusals, for R3's reason: the corroboration consults the
+                // generic-name wall, which reads `org_match_keys`. Mid-build (no
+                // covering index, a half-written keyspace) and epoch drift refuse
+                // BOTH ways — a dry plan is what the wet run will trust; an EMPTY
+                // satellite refuses only a wet run, and the plan says the wall was
+                // blind.
+                let (watermark, epoch) =
+                    self.db.org_match_keys_state().await.map_err(|e| e.to_string())?;
+                let keys = self.db.org_match_keys_count().await.map_err(|e| e.to_string())?;
+                let rebuild = "run a WET build first: \
+                               {\"kind\":\"build-org-match-keys\",\"dry_run\":false} \
+                               — the default is DRY and stores nothing";
+                if watermark != 0 {
+                    return Err(format!(
+                        "match-org-identifiers altid REFUSED: a key build is in flight \
+                         (watermark {watermark}); its covering index does not exist yet, \
+                         so the generic-name probe would full-scan {keys} rows per pair \
+                         and read a half-built keyspace"
+                    ));
+                }
+                if keys > 0 && epoch != ingest::crosswalk::NAME_KEY_EPOCH {
+                    return Err(format!(
+                        "match-org-identifiers altid REFUSED: org_match_keys carries keys epoch \
+                         {epoch:?}, this binary's is {:?} — the generic-name wall would \
+                         answer about a superseded keyspace; {rebuild}",
+                        ingest::crosswalk::NAME_KEY_EPOCH
+                    ));
+                }
+                if !dry_run && keys == 0 {
+                    return Err(format!(
+                        "match-org-identifiers altid REFUSED: org_match_keys is empty, so the \
+                         generic-name wall cannot see anything — {rebuild}"
+                    ));
+                }
+                if !dry_run {
+                    return Err(
+                        "match-org-identifiers altid REFUSED: the wet path is issue 448 unit 2 \
+                         and is not built — only the dry planner exists (it records \
+                         altid-merge-plan); nothing was written"
+                            .to_owned(),
+                    );
+                }
+                self.set_phase(
+                    "planning",
+                    None,
+                    None,
+                    "harvesting the FTS company-number/PPON pairs".to_owned(),
+                );
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                let r = self
+                    .db
+                    .match_org_altid_pairs(store::AltIdMergeArgs {
+                        pair_key: ingest::crosswalk::altid_pair_key,
+                        key: ingest::crosswalk::canonical_key_flat,
+                        mention_key: ingest::crosswalk::mention_key,
+                        condemns: ingest::idgate::condemns,
+                        consortium: ingest::crosswalk::consortium_name,
+                        legal_family: ingest::crosswalk::gb_legal_family,
+                        name_key: ingest::crosswalk::altid_name_key,
+                        norm: ingest::project::match_norm,
+                        stoplist_cap: SCAN_STOPLIST_CAP,
+                        dry_run,
+                        stop: &stop,
+                    })
+                    .await
+                    .map_err(|e| e.to_string())?;
+                // A stopped plan is partial, and a partial plan recorded as the
+                // plan is what a wet run would later hold itself to: record nothing.
+                if r.stopped {
+                    return Ok("match-org-identifiers altid STOPPED during planning: nothing was \
+                               written, and the previously recorded plan was left untouched"
+                        .to_owned());
+                }
+                let listing = |ls: &[store::AltIdListing]| {
+                    ls.iter()
+                        .map(|l| {
+                            serde_json::json!({
+                                "country": "GB", "scheme": "GB:altid", "key": l.key(),
+                                "gate": l.gate, "keep": l.keep,
+                                "members": l.members.iter().map(|(id, kind, literal, name)| {
+                                    serde_json::json!({
+                                        "org_id": id, "kind": kind,
+                                        "identifier": literal, "name": name,
+                                    })
+                                }).collect::<Vec<_>>(),
+                                "coh_literal": l.coh_literal, "ppon_literal": l.ppon_literal,
+                                "witnesses": l.witnesses,
+                                "witness_publications": l.witness_publications,
+                                "coh_partners": l.coh_partners, "ppon_partners": l.ppon_partners,
+                                "first_coh": l.first_coh, "first_ppon": l.first_ppon,
+                            })
+                        })
+                        .collect::<Vec<_>>()
+                };
+                // Three `json!` objects merged into one: a single literal this
+                // wide overruns the macro's recursion limit.
+                let mut plan = serde_json::json!({
+                    "plan_pairs": r.plan_pairs,
+                    // The harvest.
+                    "fts_notices": r.fts_notices,
+                    "party_sections": r.party_sections,
+                    "unfolded_sections": r.unfolded_sections,
+                    "ambiguous_parties": r.ambiguous_parties,
+                    "literal_pairs": r.literal_pairs,
+                    "non_gb_pairs": r.non_gb_pairs,
+                    "pad_side": r.pad_side,
+                    "condemned": r.condemned,
+                    "unkeyed_value": r.unkeyed_value,
+                    "unkeyed_scheme": r.unkeyed_scheme,
+                    "pairs_seen": r.pairs_seen,
+                    // The owners.
+                    "scanned": r.scanned,
+                    "owners": r.owners,
+                    "already_one": r.already_one,
+                    "multi_target": r.multi_target,
+                    "no_target_coh": r.no_target_coh,
+                    "no_target_ppon": r.no_target_ppon,
+                    "no_target_both": r.no_target_both,
+                    "both_distinct": r.both_distinct,
+                });
+                let gates = serde_json::json!({
+                    // Structural gates.
+                    "denied_gate": r.denied_gate,
+                    "denied_consortium": r.denied_consortium,
+                    "denied_legal_form": r.denied_legal_form,
+                    "denied_evidence_wall": r.denied_evidence_wall,
+                    "denied_loser_incoherent": r.denied_loser_incoherent,
+                    // Verdicts.
+                    "denied_verdict": r.denied_verdict,
+                    "admitted_verdict": r.admitted_verdict,
+                    "verdict_stale": r.verdict_stale,
+                    // Judgment gates.
+                    "conflicts": r.conflicts,
+                    "conflict_ppon_multi_coh": r.conflict_ppon_multi_coh,
+                    "conflict_coh_multi_ppon": r.conflict_coh_multi_ppon,
+                    "party_ambiguous": r.party_ambiguous,
+                    "uncorroborated_overlap": r.uncorroborated_overlap,
+                    "uncorroborated_disjoint": r.uncorroborated_disjoint,
+                    "denied_generic": r.denied_generic,
+                    "denied_pairs": r.denied_pairs(),
+                    // The R3 panel's catch: a blind wall's zero is not a readable one.
+                    "generic_wall_readable": keys > 0,
+                    "residual_of_wet_run": false,
+                    "mentions": r.mentions, "parties": r.parties,
+                    "bid_parties": r.bid_parties, "winners": r.winners,
+                });
+                let listings = serde_json::json!({
+                    // The planned keys, sorted and uncapped: the set a wet run
+                    // (unit 2) holds its live plan against.
+                    "pairs": r.pairs,
+                    "plan_listing_truncated": r.plan_listing_truncated,
+                    "plan": listing(&r.plan_listing),
+                    "denied_listing_truncated": r.denied_listing_truncated,
+                    "denied": listing(&r.denied_listing),
+                    "conflict_listing_truncated": r.conflict_listing_truncated,
+                    "conflict_listing": listing(&r.conflict_listing),
+                    "no_target_sample": listing(&r.no_target_sample),
+                });
+                if let Some(all) = plan.as_object_mut() {
+                    for part in [gates, listings] {
+                        if let serde_json::Value::Object(fields) = part {
+                            all.extend(fields);
+                        }
+                    }
+                }
+                self.db
+                    .put_report("altid-merge-plan", &plan.to_string(), store::now_unix())
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "match-org-identifiers altid (issue 448) DRY RUN — plan recorded, nothing \
+                     written: {} FTS notices, {} company-number/PPON pairs keyed ({} literal; \
+                     unpaired: {} padded, {} condemned, {} malformed, {} non-GB; {} ambiguous \
+                     parties); owners: {} already one, {} multi-target, {} no company-number \
+                     org, {} no PPON org, {} neither, {} two distinct GB orgs; denied: {} gate, \
+                     {} consortium, {} legal-form, {} evidence-wall, {} loser-incoherent, {} \
+                     verdict-keep, {} uncorroborated-overlap, {} uncorroborated-disjoint, {} \
+                     generic; {} conflicts; {} verdict-admitted, {} verdicts stale; plan {} \
+                     pairs{}",
+                    r.fts_notices,
+                    r.pairs_seen,
+                    r.literal_pairs,
+                    r.pad_side,
+                    r.condemned,
+                    r.unkeyed_value,
+                    r.non_gb_pairs,
+                    r.ambiguous_parties,
+                    r.already_one,
+                    r.multi_target,
+                    r.no_target_coh,
+                    r.no_target_ppon,
+                    r.no_target_both,
+                    r.both_distinct,
+                    r.denied_gate,
+                    r.denied_consortium,
+                    r.denied_legal_form,
+                    r.denied_evidence_wall,
+                    r.denied_loser_incoherent,
+                    r.denied_verdict,
+                    r.uncorroborated_overlap,
+                    r.uncorroborated_disjoint,
+                    r.denied_generic,
+                    r.conflicts,
+                    r.admitted_verdict,
+                    r.verdict_stale,
+                    r.plan_pairs,
+                    if keys == 0 {
+                        " — NOTE: org_match_keys is EMPTY, so the generic-name wall saw \
+                         nothing and denied nothing"
+                    } else {
+                        ""
+                    }
+                ))
+            }).await,
             Spec::FoldOrgCountries { dry_run } => {
                 let dry_run = *dry_run;
                 let job_id = job.id;
@@ -13019,6 +13249,111 @@ mod tests {
         .unwrap();
         let err = sup.run_spec(&job(7, true)).await.expect_err("dry refuses stale semantics");
         assert!(err.contains("keys epoch"), "{err}");
+    }
+
+    /// Issue 448 unit 1: the altid rule is a planner. A wet run is refused —
+    /// on a fresh box by r3's empty-satellite guard, and past every guard by the
+    /// unit-2 refusal itself — and records nothing, not even a plan. The dry run
+    /// then plans one real FTS pair through the PRODUCTION rules (the store's
+    /// own tests inject miniatures, so this is where a swapped argument in the
+    /// wiring would show) and records `altid-merge-plan`.
+    #[tokio::test]
+    async fn an_altid_wet_run_is_refused_until_unit_2() {
+        let path = format!(
+            "/tmp/tender-db-sup-altid-{}-{}.db",
+            std::process::id(),
+            store::now_unix()
+        );
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+        conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+        // One supplier split the issue's way, as the parser and the fold leave
+        // it: company number and PPON on one FTS party (its mention bound to the
+        // company-number org), and PPON-first on another notice (bound to the
+        // PPON org). The org identifiers are what the resolver mints.
+        for sql in [
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at) \
+             VALUES (1, 'GB', 'national', 'GBCOH03914810', 'Acme Widgets Ltd', 'acme widgets ltd', 0, 0)",
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at) \
+             VALUES (2, 'GB', 'national', 'GBPPONPHDQ2359NZMP', 'ACME WIDGETS LIMITED', 'acme widgets limited', 0, 0)",
+            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at) \
+             VALUES (10, 'fts', 'ocds-a', 'h', 'fts:ocds-1.1', 1, 'a', 0)",
+            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at) \
+             VALUES (11, 'fts', 'ocds-b', 'h', 'fts:ocds-1.1', 1, 'b', 0)",
+            "INSERT INTO notice_ids (notice_id, section_id, field_id, ordinal, scheme, value, is_ref) \
+             VALUES (10, 'ORG-A', 'BT-501-Organization-Company', 0, 'GB-COH', 'GB-COH-03914810', 0)",
+            "INSERT INTO notice_ids (notice_id, section_id, field_id, ordinal, scheme, value, is_ref) \
+             VALUES (10, 'ORG-A', 'BT-501-Organization-Company', 1, 'GB-PPON', 'GB-PPON-PHDQ-2359-NZMP', 0)",
+            "INSERT INTO notice_ids (notice_id, section_id, field_id, ordinal, scheme, value, is_ref) \
+             VALUES (11, 'ORG-B', 'BT-501-Organization-Company', 0, 'GB-PPON', 'GB-PPON-PHDQ-2359-NZMP', 0)",
+            "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier, scheme) \
+             VALUES (10, 'ORG-A', 1, 'Acme Widgets Ltd', 'GB', 'GB-COH-03914810', 'GB-COH')",
+            "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier, scheme) \
+             VALUES (11, 'ORG-B', 2, 'ACME WIDGETS LIMITED', 'GB', 'GB-PPON-PHDQ-2359-NZMP', 'GB-PPON')",
+        ] {
+            conn.execute(sql, ()).await.unwrap();
+        }
+        let sup = Supervisor::new(db, "archive".into(), reqwest::Client::new());
+        let job = |id: u64, dry: bool| Job {
+            id,
+            kind: "match-org-identifiers".into(),
+            params: String::new(),
+            spec: Spec::MatchOrgIdentifiersAltId { dry_run: dry, max_groups: None },
+            resume_after: None,
+        };
+        // 1. A fresh box: r3's empty-satellite guard refuses the wet run first.
+        let err = sup.run_spec(&job(1, false)).await.expect_err("wet refused");
+        assert!(err.contains("org_match_keys is empty"), "{err}");
+        // 2. Past every guard — a built satellite at this binary's epoch — the
+        //    wet run is still refused: its path is unit 2.
+        conn.execute("INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (9, 'n2', 'unrelated')", ())
+            .await
+            .unwrap();
+        conn.execute(
+            "UPDATE projection_state SET org_match_keys_epoch = ? WHERE id = 0",
+            (store::turso::Value::Text(ingest::crosswalk::NAME_KEY_EPOCH.to_owned()),),
+        )
+        .await
+        .unwrap();
+        let err = sup.run_spec(&job(2, false)).await.expect_err("wet refused");
+        assert!(err.contains("448 unit 2") && err.contains("nothing was written"), "{err}");
+        assert!(
+            sup.db().latest_report("altid-merge-plan").await.unwrap().is_none(),
+            "a refused run records no plan"
+        );
+        // 3. The dry run plans the pair through the real rules.
+        let msg = sup.run_spec(&job(3, true)).await.expect("dry plans");
+        assert!(msg.contains("DRY RUN") && msg.contains("plan 1 pairs"), "{msg}");
+        let (body, _) = sup.db().latest_report("altid-merge-plan").await.unwrap().expect("recorded");
+        let v: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(v["pairs"], serde_json::json!(["03914810~PHDQ2359NZMP"]), "{body}");
+        assert_eq!(v["both_distinct"], 1, "{body}");
+        assert_eq!(v["plan"][0]["keep"], 1, "the company-number org survives: {body}");
+        assert_eq!(v["plan"][0]["witness_publications"], serde_json::json!(["ocds-a"]), "{body}");
+        assert_eq!(v["generic_wall_readable"], true, "{body}");
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
+    /// Issue 448: `altid` is a rule of `match-org-identifiers`, dry unless told
+    /// otherwise, and the refusal an operator meets for a mistyped rule names it.
+    #[tokio::test]
+    async fn the_unknown_rule_message_lists_altid() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        let mut typo = req("match-org-identifiers");
+        typo.rule = Some("alt-id".into());
+        let err = sup.enqueue_request(&typo).await.expect_err("an unknown rule is refused");
+        assert!(err.contains("altid"), "the message must list the rule: {err}");
+        let mut altid = req("match-org-identifiers");
+        altid.rule = Some("altid".into());
+        sup.enqueue_request(&altid).await.expect("altid enqueues");
+        let queued = sup.queued();
+        assert_eq!(queued.len(), 1);
+        assert_eq!(queued[0].params, "match-org-identifiers altid dry-run");
     }
 
     /// Issue 173 (D4): the rehash probe enqueues with its sample cap, defaulting

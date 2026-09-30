@@ -51,6 +51,8 @@ pub use canonical::{
     NameAttribution, NameAttributionReport,
     AddressStrip, NamePollutionReport, PollutedName,
     MintedCountryFix, MintedCountryReport,
+    AltIdListing, AltIdMergeArgs, AltIdMergeReport, ALTID_NEXT_PROFILE_SQL, ALTID_PARTY_IDS_SQL,
+    ALTID_PARTY_MENTIONS_SQL, ALTID_PROFILE_NOTICES_SQL,
     EDGE_VOLUME_CEILING, LUHN_FAMILY, MIN_CLUSTER_IDENTIFIER, R2_PLAN_LISTING_CAP,
     REPORT_HISTORY_DEPTH,
     SCAN_KEY_WINDOW,

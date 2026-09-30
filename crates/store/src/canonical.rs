@@ -2355,6 +2355,232 @@ pub struct R3MergeReport {
     pub stopped: bool,
 }
 
+/// Inputs to the issue-448 altid planner: the Companies House ↔ PPON pairs FTS
+/// parties publish in `additionalIdentifiers`. The ingest-side rules arrive as
+/// plain fns, the R2/R3 pattern — store owns the walk, ingest owns identifier and
+/// name knowledge, and store never depends on ingest.
+pub struct AltIdMergeArgs<'a> {
+    /// `crosswalk::altid_pair_key`: one BT-501 row `(notice_ids.scheme, value,
+    /// party country)` to `(scheme, key, is_e1)`. Keys only `GB-COH` and
+    /// `GB-PPON` rows, each into its own series.
+    pub pair_key: fn(&str, &str, Option<&str>) -> Option<(&'static str, String, bool)>,
+    /// `crosswalk::canonical_key_flat` — keys the standing orgs (the owner map).
+    pub key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>,
+    /// `crosswalk::mention_key` — a mention's raw identifier keyed the way the
+    /// resolver keys it, for the evidence wall. NOT the R2/R3 two-letter-lead
+    /// inference, which reads every FTS raw as a VAT and keys none of them.
+    pub mention_key: fn(Option<&str>, &str) -> Option<(&'static str, String, bool)>,
+    /// The v2 gate.
+    pub condemns: fn(Option<&str>, &str, &str) -> bool,
+    /// Consortium/groupement name detection, over every name of both orgs.
+    pub consortium: fn(&str) -> bool,
+    /// `crosswalk::gb_legal_family` — Ltd, plc or LLP, head against head.
+    pub legal_family: fn(&str) -> Option<&'static str>,
+    /// `crosswalk::altid_name_key` — the positive corroboration key.
+    pub name_key: fn(&str) -> String,
+    /// `project::match_norm` — the N2 key whose carriers the generic-name wall
+    /// counts.
+    pub norm: fn(&str) -> String,
+    /// The generic-name cap (`STOPLIST_CAP`), the one the scan and R3 read.
+    pub stoplist_cap: usize,
+    /// Unit 1 plans only: `false` is refused before anything is read.
+    pub dry_run: bool,
+    /// Cooperative stop, polled between notices and between pairs.
+    pub stop: &'a (dyn Fn() -> bool + Sync),
+}
+
+/// One altid pair as the dry plan lists it: R2's listing shape (`country`,
+/// `scheme`, `key`, `members`) plus what a reviewer needs to judge a publisher's
+/// statement, so a listed pair round-trips into `POST /admin/merge-verdicts`
+/// under `("GB", "GB:altid", key())` with `members` as listed.
+#[derive(Debug, Clone, Default)]
+pub struct AltIdListing {
+    /// The company-number key (`GB:coh`) and the PPON key (`GB:ppon`).
+    pub coh: String,
+    pub ppon: String,
+    /// Where the pair landed: `plan`, the gate that denied it, the conflict flags
+    /// joined by `+`, or the no-target class.
+    pub gate: String,
+    /// The literals as first published (lowest notice id).
+    pub coh_literal: String,
+    pub ppon_literal: String,
+    /// The org a merge would keep — always the company-number org — when both
+    /// sides stand.
+    pub keep: Option<i64>,
+    /// The standing owners, ascending id: (org_id, kind, identifier, head name).
+    pub members: Vec<(i64, String, String, String)>,
+    /// Distinct notices publishing the pair, and the first three's publication ids.
+    pub witnesses: u64,
+    pub witness_publications: Vec<String>,
+    /// Distinct partners of each side across the whole graph, owned or not.
+    pub coh_partners: u64,
+    pub ppon_partners: u64,
+    /// Witness notices where that side came at ordinal 0. "First", not
+    /// "primary": the parser skips a primary identifier that has no scheme
+    /// (`fts/parse.rs`), and an additional one then takes ordinal 0.
+    pub first_coh: u64,
+    pub first_ppon: u64,
+}
+
+impl AltIdListing {
+    /// The verdict key, `<coh>~<ppon>`.
+    pub fn key(&self) -> String {
+        format!("{}~{}", self.coh, self.ppon)
+    }
+}
+
+/// What the issue-448 altid planner found. Every both-distinct pair lands in
+/// exactly one of the plan, a denial, or the conflicts:
+/// `both_distinct == plan_pairs + denied_pairs() + conflicts`.
+#[derive(Debug, Default, Clone)]
+pub struct AltIdMergeReport {
+    // ---- The harvest.
+    /// FTS notices walked (every `fts:%` profile).
+    pub fts_notices: u64,
+    /// Party sections carrying at least one BT-501 row.
+    pub party_sections: u64,
+    /// …of which the fold has recorded no mention yet (the notice is not
+    /// projected), so the party's country is unknown: skipped, picked up by the
+    /// run after the fold.
+    pub unfolded_sections: u64,
+    /// GB parties naming more than one company number or more than one PPON —
+    /// every key they name is tainted (`party_ambiguous`).
+    pub ambiguous_parties: u64,
+    /// Distinct (company number, PPON) LITERAL pairs on GB parties the fold has
+    /// reached, keyed or not, in either order — the issue's 3,295 counted
+    /// primary→additional only.
+    pub literal_pairs: u64,
+    /// Distinct literal pairs on a party whose country is not GB: skipped.
+    pub non_gb_pairs: u64,
+    /// Distinct literal pairs whose company number keys only by a pad (6-7
+    /// digits, E2): counted, never paired.
+    pub pad_side: u64,
+    /// Distinct literal pairs with a side the v2 gate condemns.
+    pub condemned: u64,
+    /// Distinct literal pairs with a side that keys nothing in its series.
+    pub unkeyed_value: u64,
+    /// BT-501 rows on GB parties under a scheme this arm does not key (CHC,
+    /// NHS, UKPRN, MPR, SC…), by scheme.
+    pub unkeyed_scheme: std::collections::BTreeMap<String, u64>,
+    /// Distinct keyed (company number, PPON) pairs — the graph's edges.
+    pub pairs_seen: u64,
+    // ---- The owners.
+    /// Identifier-bearing org rows walked.
+    pub scanned: u64,
+    /// GB rows owning a graph key.
+    pub owners: u64,
+    /// One org already serves both keys: one side stands and its org's
+    /// mentions carry the other side (the state a merge leaves — the loser's
+    /// mentions move to the survivor), or, not reachable through
+    /// `organizations.identifier` (one key per row), one row owns both.
+    pub already_one: u64,
+    /// A key two or more standing rows hold — a family R2 declined; this arm
+    /// never picks a side of it.
+    pub multi_target: u64,
+    pub no_target_coh: u64,
+    pub no_target_ppon: u64,
+    pub no_target_both: u64,
+    /// Both keys stand, as two different GB orgs — the issue's split count.
+    pub both_distinct: u64,
+    // ---- Structural gates: no verdict overrides these.
+    pub denied_gate: u64,
+    pub denied_consortium: u64,
+    pub denied_legal_form: u64,
+    pub denied_evidence_wall: u64,
+    pub denied_loser_incoherent: u64,
+    // ---- The reviewer's verdict (`GB`, `GB:altid`, `<coh>~<ppon>`).
+    pub denied_verdict: u64,
+    pub admitted_verdict: u64,
+    pub verdict_stale: u64,
+    // ---- Judgment gates.
+    /// Pairs denied by a conflict flag, and how often each flag was carried
+    /// among them (a pair can carry several).
+    pub conflicts: u64,
+    pub conflict_ppon_multi_coh: u64,
+    pub conflict_coh_multi_ppon: u64,
+    pub party_ambiguous: u64,
+    /// No equal altid name key across both orgs' names, split by whether any
+    /// core name token is shared (`overlap`, the review shape) or none is
+    /// (`disjoint`, a probable publisher error).
+    pub uncorroborated_overlap: u64,
+    pub uncorroborated_disjoint: u64,
+    /// Every corroborating name is generic (over the stoplist cap).
+    pub denied_generic: u64,
+    // ---- The plan.
+    pub plan_pairs: u64,
+    /// The planned `<coh>~<ppon>` keys, sorted and UNCAPPED — the set a wet run
+    /// will hold its live plan against.
+    pub pairs: Vec<String>,
+    /// What the plan's merges would move off the PPON orgs.
+    pub mentions: u64,
+    pub parties: u64,
+    pub bid_parties: u64,
+    pub winners: u64,
+    pub plan_listing: Vec<AltIdListing>,
+    pub plan_listing_truncated: bool,
+    pub denied_listing: Vec<AltIdListing>,
+    pub denied_listing_truncated: bool,
+    pub conflict_listing: Vec<AltIdListing>,
+    pub conflict_listing_truncated: bool,
+    /// Up to `ALTID_NO_TARGET_SAMPLE` (50) pairs per no-target class.
+    pub no_target_sample: Vec<AltIdListing>,
+    /// The cooperative stop fired; the counts are partial.
+    pub stopped: bool,
+}
+
+impl AltIdMergeReport {
+    /// Every both-distinct pair a gate or a `keep` verdict denied.
+    pub fn denied_pairs(&self) -> u64 {
+        self.denied_gate
+            + self.denied_consortium
+            + self.denied_legal_form
+            + self.denied_evidence_wall
+            + self.denied_loser_incoherent
+            + self.denied_verdict
+            + self.uncorroborated_overlap
+            + self.uncorroborated_disjoint
+            + self.denied_generic
+    }
+}
+
+/// Issue 448: how many pairs of each no-target class the altid plan lists — a
+/// sample to read the class by, not the class (the counts are whole).
+const ALTID_NO_TARGET_SAMPLE: usize = 50;
+
+/// Issue 448, the altid harvest's reads — one constant each, so the plan guard
+/// (`the_harvest_seeks_notices_profile_and_the_notice_ids_pk`) EXPLAINs exactly
+/// what runs.
+///
+/// The next FTS profile after a bound: one seek into `notices_profile` per
+/// distinct profile (`fts:ocds-1.1`, …), never a DISTINCT over every FTS row.
+pub const ALTID_NEXT_PROFILE_SQL: &str =
+    "SELECT profile FROM notices WHERE profile > ? AND profile < 'fts;' ORDER BY profile LIMIT 1";
+
+/// One profile's notice ids, in ONE range read of `notices_profile`. Not a
+/// keyset walk (`profile = ? AND id > ? … LIMIT n`): turso seeks that index on
+/// the profile alone and FILTERS the rowid — EXPLAIN on 2026-09-30 showed
+/// `SeekGE` on `[profile]` then an `IdxRowId`/`Le` test per entry — so every
+/// window would re-read the profile from its first row, the issue-274 finding
+/// (reveal_cursor_probe.rs) again. The ids are 8 bytes each; a few MB for the
+/// whole FTS corpus.
+pub const ALTID_PROFILE_NOTICES_SQL: &str = "SELECT id FROM notices WHERE profile = ?";
+
+/// One notice's party identifiers: a RANGE of the `notice_ids` primary key
+/// (`notice_id = ?`, `section_id` in `['ORG-', 'ORG.')`), so the notice's lot,
+/// result and contract rows are never read. One notice per statement on
+/// purpose: under `notice_id IN (…)` turso seeks each id but only FILTERS the
+/// section range, reading every id row of the notice.
+pub const ALTID_PARTY_IDS_SQL: &str = "SELECT section_id, ordinal, scheme, value FROM notice_ids \
+     WHERE notice_id = ? AND section_id >= 'ORG-' AND section_id < 'ORG.' \
+       AND field_id = 'BT-501-Organization-Company'";
+
+/// One notice's party mentions over the same sections: the party's country as
+/// the fold canonicalised it. The fold records one mention per Organization
+/// section, so a party with identifier rows and no mention sits on a notice the
+/// fold has not reached yet.
+pub const ALTID_PARTY_MENTIONS_SQL: &str = "SELECT section_id, country FROM organization_mentions \
+     WHERE notice_id = ? AND section_id >= 'ORG-' AND section_id < 'ORG.'";
+
 /// One issue-311 per-case review verdict, as the admin surface hands it to
 /// the store (the app crate owns the serde shape; store stays serde-free).
 /// Issue 351 unit 4: one name-level verdict as uploaded.
@@ -13930,6 +14156,745 @@ impl Db {
         if report.removed > 0 {
             self.publish_cursor(&conn).await?;
         }
+        Ok(report)
+    }
+
+    /// Issue 448 unit 1: the DRY planner of the `altid` rule. An FTS party
+    /// publishes its primary `identifier` and, since the Procurement Act,
+    /// `additionalIdentifiers` — typically a Companies House number with the
+    /// supplier's PPON beside it. The parser keeps every one (BT-501 rows at
+    /// ordinal 0, 1, …); the fold reads only the first. So one supplier
+    /// published company-number-first on one notice and PPON-first on another
+    /// stands as two organizations (161 on prod, 2026-09-30). This plans their
+    /// reunion and writes NOTHING; the wet path is unit 2 and is refused here.
+    ///
+    /// The tier is E2 (`.scratch/tender-db/448-altid-design.md`): the pairing
+    /// is a publisher's STATEMENT — issue 447 read publishers writing a sister
+    /// company's number — so it never becomes a key (no canonical key, no R2
+    /// group, no resolver bind), and a pair merges only through these gates.
+    ///
+    /// 1. HARVEST, re-derived from the immutable notice layer every run: every
+    ///    FTS notice, its parties' BT-501 rows, each party's country off its
+    ///    mention. A party naming more than one company number or more than
+    ///    one PPON is ambiguous and taints every key it names.
+    /// 2. GRAPH: every keyed (company number, PPON) pair, owned or not, with
+    ///    its distinct-notice witnesses and each side's distinct partners.
+    /// 3. OWNERS: the GB org rows whose identifier keys to a graph key. A pair
+    ///    is `already_one`, `multi_target` (a key several rows hold — a family
+    ///    R2 declined, never picked from here), `no_target_*`, or
+    ///    `both_distinct`.
+    /// 4. STRUCTURAL gates, which no verdict overrides: the v2 gate on both
+    ///    literals, the consortium veto on every name of both orgs, the GB
+    ///    legal-form veto head against head, the mention-evidence wall, and a
+    ///    PPON org whose mentions carry another GB key.
+    /// 5. VERDICT (`GB`, `GB:altid`, `<coh>~<ppon>`): `keep` denies; a HIGH,
+    ///    unapplied `merge` whose members are exactly the live pair skips 6.
+    /// 6. JUDGMENT: the conflict flags; then positive corroboration — one
+    ///    altid name key equal across both orgs' heads and satellites; then the
+    ///    generic-name wall on the corroborating names.
+    ///
+    /// Survivor: always the company-number org; the PPON org is the loser.
+    pub async fn match_org_altid_pairs(
+        &self,
+        args: AltIdMergeArgs<'_>,
+    ) -> turso::Result<AltIdMergeReport> {
+        use std::collections::{BTreeMap, HashMap, HashSet};
+        if !args.dry_run {
+            return Err(turso::Error::Error(
+                "altid wet path not built (448 unit 2) — nothing was read or written".into(),
+            ));
+        }
+        let mut report = AltIdMergeReport::default();
+        // Read-only from end to end, so a pooled reader rather than the writer:
+        // a planning pass over the FTS corpus must not hold up the fold.
+        let conn = self.reader().await?;
+
+        // ---- 1. HARVEST.
+        let mut notices: Vec<i64> = Vec::new();
+        {
+            let mut after = "fts:".to_owned();
+            loop {
+                let mut rows = conn.query(ALTID_NEXT_PROFILE_SQL, (t(after.as_str()),)).await?;
+                let Some(row) = rows.next().await? else { break };
+                let profile = text(&row, 0);
+                drop(rows);
+                let mut rows =
+                    conn.query(ALTID_PROFILE_NOTICES_SQL, (t(profile.as_str()),)).await?;
+                while let Some(row) = rows.next().await? {
+                    notices.push(int(&row, 0));
+                }
+                after = profile;
+            }
+        }
+        notices.sort_unstable();
+        report.fts_notices = notices.len() as u64;
+
+        /// One side of a party's pairing, as the injected key classed it.
+        enum Side {
+            E1(String),
+            Pad,
+            Condemned,
+            Unkeyed,
+        }
+        struct Pair {
+            coh_literal: String,
+            ppon_literal: String,
+            /// Witness notice → (company number at ordinal 0, PPON at ordinal 0).
+            witnesses: BTreeMap<i64, (bool, bool)>,
+        }
+        let mut graph: BTreeMap<(String, String), Pair> = BTreeMap::new();
+        let mut tainted: HashSet<(&'static str, String)> = HashSet::new();
+        let mut literal_pairs: HashSet<(String, String)> = HashSet::new();
+        let mut non_gb: HashSet<(String, String)> = HashSet::new();
+        let mut padded: HashSet<(String, String)> = HashSet::new();
+        let mut condemned: HashSet<(String, String)> = HashSet::new();
+        let mut unkeyed: HashSet<(String, String)> = HashSet::new();
+        // Prepared once and re-bound per notice: two statements per FTS notice,
+        // and no re-prepare of either.
+        let mut ids_stmt = conn.prepare(ALTID_PARTY_IDS_SQL).await?;
+        let mut mentions_stmt = conn.prepare(ALTID_PARTY_MENTIONS_SQL).await?;
+        for (i, &notice) in notices.iter().enumerate() {
+            if i % IN_CHUNK == 0 && (args.stop)() {
+                report.stopped = true;
+                return Ok(report);
+            }
+            let mut sections: BTreeMap<String, Vec<(i64, Option<String>, String)>> =
+                BTreeMap::new();
+            let mut rows = ids_stmt.query((Value::Integer(notice),)).await?;
+            while let Some(row) = rows.next().await? {
+                sections.entry(text(&row, 0)).or_default().push((
+                    int(&row, 1),
+                    opt_text_of(&row, 2),
+                    text(&row, 3),
+                ));
+            }
+            drop(rows);
+            if sections.is_empty() {
+                continue;
+            }
+            let mut country_of: HashMap<String, Option<String>> = HashMap::new();
+            let mut rows = mentions_stmt.query((Value::Integer(notice),)).await?;
+            while let Some(row) = rows.next().await? {
+                country_of.insert(text(&row, 0), opt_text_of(&row, 1));
+            }
+            drop(rows);
+            for (section, ids) in sections {
+                report.party_sections += 1;
+                let Some(country) = country_of.get(&section) else {
+                    report.unfolded_sections += 1;
+                    continue;
+                };
+                let gb = country.as_deref().map(register_jurisdiction) == Some("GB");
+                let mut coh: Vec<(i64, String, Side)> = Vec::new();
+                let mut ppon: Vec<(i64, String, Side)> = Vec::new();
+                for (ordinal, scheme, value) in ids {
+                    // The publisher's scheme decides the side. Every other
+                    // register is counted and left alone — `altid_pair_key`
+                    // refuses it too, and an 8-digit charity number must never
+                    // reach the GB arm's bare-GB strip as a company number.
+                    let series = match scheme.as_deref() {
+                        Some("GB-COH") => "GB:coh",
+                        Some("GB-PPON") => "GB:ppon",
+                        other => {
+                            if gb {
+                                *report
+                                    .unkeyed_scheme
+                                    .entry(other.unwrap_or("(none)").to_owned())
+                                    .or_default() += 1;
+                            }
+                            continue;
+                        }
+                    };
+                    let side = if !gb {
+                        Side::Unkeyed
+                    } else {
+                        let scheme = scheme.as_deref().unwrap_or("");
+                        match (args.pair_key)(scheme, &value, country.as_deref()) {
+                            Some((s, k, true)) if s == series => Side::E1(k),
+                            Some((s, _, false)) if s == series => Side::Pad,
+                            _ => {
+                                // The normaliser inside the pair key applies the
+                                // v2 gate and returns nothing for a condemned
+                                // value. The gate is asked again here — on the
+                                // uppercase alphanumerics, as the national value
+                                // every well-formed FTS form normalises to —
+                                // only to say WHICH of the two a no-key row is.
+                                let norm: String = value
+                                    .chars()
+                                    .filter(char::is_ascii_alphanumeric)
+                                    .map(|c| c.to_ascii_uppercase())
+                                    .collect();
+                                if (args.condemns)(Some("GB"), "national", &norm) {
+                                    Side::Condemned
+                                } else {
+                                    Side::Unkeyed
+                                }
+                            }
+                        }
+                    };
+                    if series == "GB:coh" {
+                        coh.push((ordinal, value, side));
+                    } else {
+                        ppon.push((ordinal, value, side));
+                    }
+                }
+                if !gb {
+                    for (_, c, _) in &coh {
+                        for (_, p, _) in &ppon {
+                            non_gb.insert((c.clone(), p.clone()));
+                        }
+                    }
+                    continue;
+                }
+                let e1 = |v: &[(i64, String, Side)]| -> BTreeSet<String> {
+                    v.iter()
+                        .filter_map(|(_, _, s)| match s {
+                            Side::E1(k) => Some(k.clone()),
+                            _ => None,
+                        })
+                        .collect()
+                };
+                let (e1_coh, e1_ppon) = (e1(&coh), e1(&ppon));
+                if e1_coh.len() > 1 || e1_ppon.len() > 1 {
+                    report.ambiguous_parties += 1;
+                    tainted.extend(e1_coh.into_iter().map(|k| ("GB:coh", k)));
+                    tainted.extend(e1_ppon.into_iter().map(|k| ("GB:ppon", k)));
+                }
+                for (co, cl, cs) in &coh {
+                    for (po, pl, ps) in &ppon {
+                        let lit = (cl.clone(), pl.clone());
+                        literal_pairs.insert(lit.clone());
+                        match (cs, ps) {
+                            (Side::E1(ck), Side::E1(pk)) => {
+                                let pair =
+                                    graph.entry((ck.clone(), pk.clone())).or_insert_with(|| Pair {
+                                        coh_literal: cl.clone(),
+                                        ppon_literal: pl.clone(),
+                                        witnesses: BTreeMap::new(),
+                                    });
+                                let w = pair.witnesses.entry(notice).or_insert((false, false));
+                                w.0 |= *co == 0;
+                                w.1 |= *po == 0;
+                            }
+                            (Side::Condemned, _) | (_, Side::Condemned) => {
+                                condemned.insert(lit);
+                            }
+                            (Side::Unkeyed, _) | (_, Side::Unkeyed) => {
+                                unkeyed.insert(lit);
+                            }
+                            // What remains is a padded company number: a PPON
+                            // has no pad form.
+                            _ => {
+                                padded.insert(lit);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        drop(ids_stmt);
+        drop(mentions_stmt);
+        report.literal_pairs = literal_pairs.len() as u64;
+        report.non_gb_pairs = non_gb.len() as u64;
+        report.pad_side = padded.len() as u64;
+        report.condemned = condemned.len() as u64;
+        report.unkeyed_value = unkeyed.len() as u64;
+        report.pairs_seen = graph.len() as u64;
+
+        // ---- 2. GRAPH: distinct partners per key, over every pair.
+        let mut coh_partners: HashMap<&str, u64> = HashMap::new();
+        let mut ppon_partners: HashMap<&str, u64> = HashMap::new();
+        for (c, p) in graph.keys() {
+            *coh_partners.entry(c.as_str()).or_default() += 1;
+            *ppon_partners.entry(p.as_str()).or_default() += 1;
+        }
+
+        // ---- 3. OWNERS: the R2 preload's walk, kept to the graph's keys.
+        struct Owner {
+            id: i64,
+            country: String,
+            kind: String,
+            literal: String,
+        }
+        let mut owners: HashMap<(&'static str, String), Vec<Owner>> = HashMap::new();
+        {
+            let mut after = 0i64;
+            loop {
+                if (args.stop)() {
+                    report.stopped = true;
+                    return Ok(report);
+                }
+                let mut rows = conn
+                    .query(
+                        "SELECT id, country, identifier_kind, identifier \
+                           FROM organizations WHERE id > ? AND identifier IS NOT NULL \
+                          ORDER BY id LIMIT 20000",
+                        (Value::Integer(after),),
+                    )
+                    .await?;
+                let mut any = false;
+                while let Some(row) = rows.next().await? {
+                    any = true;
+                    let id = int(&row, 0);
+                    after = id;
+                    report.scanned += 1;
+                    let Some(country) = opt_text_of(&row, 1) else { continue };
+                    if register_jurisdiction(&country) != "GB" {
+                        continue;
+                    }
+                    let kind = opt_text_of(&row, 2).unwrap_or_else(|| "national".into());
+                    let literal = text(&row, 3);
+                    let Some((scheme, key, true)) = (args.key)(Some(&country), &kind, &literal)
+                    else {
+                        continue;
+                    };
+                    let wanted = match scheme {
+                        "GB:coh" => coh_partners.contains_key(key.as_str()),
+                        "GB:ppon" => ppon_partners.contains_key(key.as_str()),
+                        _ => false,
+                    };
+                    if !wanted {
+                        continue;
+                    }
+                    report.owners += 1;
+                    owners
+                        .entry((scheme, key))
+                        .or_default()
+                        .push(Owner { id, country, kind, literal });
+                }
+                if !any {
+                    break;
+                }
+            }
+        }
+
+        // One org's mention evidence, keyed through `mention_key` — the raw
+        // identifier under the mention's country, else the org's. Every tier is
+        // admitted: a deny is the safe direction (the R2 wall's catch (b)).
+        async fn mention_keys(
+            conn: &Connection,
+            org: i64,
+            org_country: &str,
+            mention_key: fn(Option<&str>, &str) -> Option<(&'static str, String, bool)>,
+        ) -> turso::Result<Vec<(&'static str, String)>> {
+            let mut out = Vec::new();
+            let mut rows = conn
+                .query(
+                    "SELECT country, raw_identifier FROM organization_mentions \
+                      WHERE organization_id = ? AND raw_identifier IS NOT NULL",
+                    (Value::Integer(org),),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                let mcountry = opt_text_of(&row, 0);
+                let raw = text(&row, 1);
+                if let Some((scheme, key, _)) =
+                    mention_key(Some(mcountry.as_deref().unwrap_or(org_country)), &raw)
+                {
+                    out.push((scheme, key));
+                }
+            }
+            Ok(out)
+        }
+        // Up to three witnesses' publication ids, for the listings.
+        async fn witness_publications(
+            conn: &Connection,
+            pair: &Pair,
+        ) -> turso::Result<Vec<String>> {
+            let mut out = Vec::new();
+            for notice in pair.witnesses.keys().take(3) {
+                let mut rows = conn
+                    .query(
+                        "SELECT publication_id FROM notices WHERE id = ?",
+                        (Value::Integer(*notice),),
+                    )
+                    .await?;
+                if let Some(row) = rows.next().await? {
+                    out.push(text(&row, 0));
+                }
+            }
+            Ok(out)
+        }
+
+        // A capped listing: the publication ids are read only for what fits.
+        async fn push_listing(
+            conn: &Connection,
+            list: &mut Vec<AltIdListing>,
+            truncated: &mut bool,
+            mut listing: AltIdListing,
+            pair: &Pair,
+        ) -> turso::Result<()> {
+            if list.len() >= R2_PLAN_LISTING_CAP {
+                *truncated = true;
+                return Ok(());
+            }
+            listing.witness_publications = witness_publications(conn, pair).await?;
+            list.push(listing);
+            Ok(())
+        }
+
+        let mut evidence: HashMap<i64, Vec<(&'static str, String)>> = HashMap::new();
+        let mut names: HashMap<i64, Vec<String>> = HashMap::new();
+        let mut generic: HashMap<String, bool> = HashMap::new();
+        let mut sampled: HashMap<&'static str, usize> = HashMap::new();
+        for ((coh, ppon), pair) in &graph {
+            if (args.stop)() {
+                report.stopped = true;
+                return Ok(report);
+            }
+            let cp = coh_partners.get(coh.as_str()).copied().unwrap_or(0);
+            let pp = ppon_partners.get(ppon.as_str()).copied().unwrap_or(0);
+            let mut listing = AltIdListing {
+                coh: coh.clone(),
+                ppon: ppon.clone(),
+                coh_literal: pair.coh_literal.clone(),
+                ppon_literal: pair.ppon_literal.clone(),
+                witnesses: pair.witnesses.len() as u64,
+                coh_partners: cp,
+                ppon_partners: pp,
+                first_coh: pair.witnesses.values().filter(|w| w.0).count() as u64,
+                first_ppon: pair.witnesses.values().filter(|w| w.1).count() as u64,
+                ..AltIdListing::default()
+            };
+            let co = owners.get(&("GB:coh", coh.clone()));
+            let po = owners.get(&("GB:ppon", ppon.clone()));
+            if co.is_some_and(|v| v.len() > 1) || po.is_some_and(|v| v.len() > 1) {
+                report.multi_target += 1;
+                continue;
+            }
+            let (c, p) = (co.and_then(|v| v.first()), po.and_then(|v| v.first()));
+            let (c, p) = match (c, p) {
+                (Some(c), Some(p)) if c.id != p.id => (c, p),
+                // One row owning both keys: not reachable while the owner map
+                // reads `organizations.identifier`, one key per row. Kept so the
+                // classification stays total if an owner source ever changes.
+                (Some(_), Some(_)) => {
+                    report.already_one += 1;
+                    continue;
+                }
+                (Some(one), None) | (None, Some(one)) => {
+                    // One side stands and the other does not. That is ALREADY
+                    // one org when the standing org's mentions carry the missing
+                    // side — the state a merge leaves (the loser's mentions move
+                    // to the survivor), and the one the unit-3 alias will leave.
+                    // Otherwise the missing side simply never stood.
+                    let (missing, class) = if c.is_some() {
+                        (("GB:ppon", ppon.as_str()), "no-target-ppon")
+                    } else {
+                        (("GB:coh", coh.as_str()), "no-target-coh")
+                    };
+                    if !evidence.contains_key(&one.id) {
+                        let keys =
+                            mention_keys(&conn, one.id, &one.country, args.mention_key).await?;
+                        evidence.insert(one.id, keys);
+                    }
+                    if evidence[&one.id].iter().any(|(s, k)| *s == missing.0 && k == missing.1) {
+                        report.already_one += 1;
+                        continue;
+                    }
+                    if c.is_some() {
+                        report.no_target_ppon += 1;
+                    } else {
+                        report.no_target_coh += 1;
+                    }
+                    let n = sampled.entry(class).or_default();
+                    if *n < ALTID_NO_TARGET_SAMPLE {
+                        *n += 1;
+                        if !names.contains_key(&one.id) {
+                            names.insert(one.id, self.org_all_names(one.id).await?);
+                        }
+                        listing.gate = class.to_owned();
+                        listing.members = vec![(
+                            one.id,
+                            one.kind.clone(),
+                            one.literal.clone(),
+                            names[&one.id].first().cloned().unwrap_or_default(),
+                        )];
+                        listing.witness_publications = witness_publications(&conn, pair).await?;
+                        report.no_target_sample.push(listing);
+                    }
+                    continue;
+                }
+                (None, None) => {
+                    report.no_target_both += 1;
+                    let n = sampled.entry("no-target-both").or_default();
+                    if *n < ALTID_NO_TARGET_SAMPLE {
+                        *n += 1;
+                        listing.gate = "no-target-both".to_owned();
+                        listing.witness_publications = witness_publications(&conn, pair).await?;
+                        report.no_target_sample.push(listing);
+                    }
+                    continue;
+                }
+            };
+            report.both_distinct += 1;
+            for o in [c, p] {
+                if !names.contains_key(&o.id) {
+                    names.insert(o.id, self.org_all_names(o.id).await?);
+                }
+                if !evidence.contains_key(&o.id) {
+                    let keys = mention_keys(&conn, o.id, &o.country, args.mention_key).await?;
+                    evidence.insert(o.id, keys);
+                }
+            }
+            let (c_names, p_names) = (&names[&c.id], &names[&p.id]);
+            listing.keep = Some(c.id);
+            let mut members = vec![
+                (c.id, c.kind.clone(), c.literal.clone(), c_names.first().cloned().unwrap_or_default()),
+                (p.id, p.kind.clone(), p.literal.clone(), p_names.first().cloned().unwrap_or_default()),
+            ];
+            members.sort_by_key(|m| m.0);
+            listing.members = members;
+
+            // ---- 4. STRUCTURAL gates.
+            let structural: Option<&'static str> = 'gates: {
+                if (args.condemns)(Some(&c.country), &c.kind, &c.literal)
+                    || (args.condemns)(Some(&p.country), &p.kind, &p.literal)
+                {
+                    report.denied_gate += 1;
+                    break 'gates Some("gate");
+                }
+                if c_names.iter().chain(p_names.iter()).any(|n| (args.consortium)(n)) {
+                    report.denied_consortium += 1;
+                    break 'gates Some("consortium");
+                }
+                // Head against head: a satellite can corroborate across a form
+                // conflict (R3's verification-round catch), so the veto reads the
+                // designated names only. `Acme plc` beside `Acme Ltd` is the
+                // parent/subsidiary shape a publisher writes by mistake.
+                if let (Some(a), Some(b)) = (
+                    c_names.first().and_then(|n| (args.legal_family)(n)),
+                    p_names.first().and_then(|n| (args.legal_family)(n)),
+                ) && a != b
+                {
+                    report.denied_legal_form += 1;
+                    break 'gates Some("legal-form");
+                }
+                // The mention-evidence wall, R2/R3's rule with BOTH pair keys
+                // stripped (they are the statement under test, never evidence
+                // for or against it): two non-empty, disjoint key sets in one
+                // scheme are two registrations.
+                let strip = |keys: &[(&'static str, String)]| {
+                    let mut out: HashMap<&'static str, BTreeSet<String>> = HashMap::new();
+                    for (s, k) in keys {
+                        if (*s == "GB:coh" && k == coh) || (*s == "GB:ppon" && k == ppon) {
+                            continue;
+                        }
+                        out.entry(*s).or_default().insert(k.clone());
+                    }
+                    out
+                };
+                let (ck, pk) = (strip(&evidence[&c.id]), strip(&evidence[&p.id]));
+                if ck.iter().any(|(s, a)| {
+                    pk.get(s).is_some_and(|b| !a.is_empty() && !b.is_empty() && a.is_disjoint(b))
+                }) {
+                    report.denied_evidence_wall += 1;
+                    break 'gates Some("evidence-wall");
+                }
+                // The PPON org is the loser; if its own mentions name another GB
+                // registration it is already more than one supplier, and folding
+                // it would carry that fusion into the company-number org.
+                if pk.keys().any(|s| s.starts_with("GB:")) {
+                    report.denied_loser_incoherent += 1;
+                    break 'gates Some("loser-incoherent");
+                }
+                None
+            };
+            if let Some(gate) = structural {
+                listing.gate = gate.to_owned();
+                push_listing(
+                    &conn,
+                    &mut report.denied_listing,
+                    &mut report.denied_listing_truncated,
+                    listing,
+                    pair,
+                )
+                .await?;
+                continue;
+            }
+
+            // ---- 5. VERDICT: the reviewer's word on exactly this pair.
+            let live = vec![c.id.min(p.id), c.id.max(p.id)];
+            let mut admitted = false;
+            let verdict = self.merge_verdict_for("GB", "GB:altid", &format!("{coh}~{ppon}")).await?;
+            if let Some(v) = verdict {
+                if v.action == "keep" {
+                    report.denied_verdict += 1;
+                    listing.gate = "verdict-keep".to_owned();
+                    push_listing(
+                        &conn,
+                        &mut report.denied_listing,
+                        &mut report.denied_listing_truncated,
+                        listing,
+                        pair,
+                    )
+                    .await?;
+                    continue;
+                }
+                if v.confidence == "high" && !v.applied && v.members == live {
+                    admitted = true;
+                    report.admitted_verdict += 1;
+                } else {
+                    report.verdict_stale += 1;
+                }
+            }
+
+            // ---- 6. JUDGMENT, which a HIGH merge verdict stands in for.
+            if !admitted {
+                // The conflict flags: a PPON beside two company numbers, a company
+                // number beside two PPONs, or a key an ambiguous party named. One
+                // of the statements is wrong and the arm cannot say which.
+                let mut flags: Vec<&'static str> = Vec::new();
+                if pp > 1 {
+                    flags.push("ppon-multi-coh");
+                    report.conflict_ppon_multi_coh += 1;
+                }
+                if cp > 1 {
+                    flags.push("coh-multi-ppon");
+                    report.conflict_coh_multi_ppon += 1;
+                }
+                if tainted.contains(&("GB:coh", coh.clone()))
+                    || tainted.contains(&("GB:ppon", ppon.clone()))
+                {
+                    flags.push("party-ambiguous");
+                    report.party_ambiguous += 1;
+                }
+                if !flags.is_empty() {
+                    report.conflicts += 1;
+                    listing.gate = flags.join("+");
+                    push_listing(
+                        &conn,
+                        &mut report.conflict_listing,
+                        &mut report.conflict_listing_truncated,
+                        listing,
+                        pair,
+                    )
+                    .await?;
+                    continue;
+                }
+                // Positive corroboration: ONE altid name key equal across both
+                // orgs' heads and satellites. Strict on purpose — `Acme UK Ltd` is
+                // not `Acme Ltd`, and `Acme plc` is not either.
+                let keyed = |ns: &[String]| -> Vec<(String, String)> {
+                    ns.iter()
+                        .map(|n| ((args.name_key)(n), n.clone()))
+                        .filter(|(key, _)| !key.is_empty())
+                        .collect()
+                };
+                let (ck, pk) = (keyed(c_names), keyed(p_names));
+                let corroborating: Vec<(&str, &str)> = ck
+                    .iter()
+                    .flat_map(|(a, an)| {
+                        pk.iter()
+                            .filter(move |(b, _)| a == b)
+                            .map(move |(_, bn)| (an.as_str(), bn.as_str()))
+                    })
+                    .collect();
+                if corroborating.is_empty() {
+                    // Listed, never merged. The sub-class only sorts the review
+                    // queue: names sharing a core token (the Energinet shape, a
+                    // sister company) from names sharing none (a probable
+                    // publisher error). `name_cores_disjoint` never admits here.
+                    let disjoint = ck.iter().all(|(a, _)| {
+                        pk.iter().all(|(b, _)| name_cores_disjoint(&[a.clone(), b.clone()]))
+                    });
+                    listing.gate = if disjoint {
+                        report.uncorroborated_disjoint += 1;
+                        "uncorroborated-disjoint"
+                    } else {
+                        report.uncorroborated_overlap += 1;
+                        "uncorroborated-overlap"
+                    }
+                    .to_owned();
+                    push_listing(
+                        &conn,
+                        &mut report.denied_listing,
+                        &mut report.denied_listing_truncated,
+                        listing,
+                        pair,
+                    )
+                    .await?;
+                    continue;
+                }
+                // The generic-name wall on the corroborating names' N2 keys — the
+                // cap the E3 scan and R3 read, and none of R3's hard-scheme
+                // exemption: neither GB series is a hard scheme, and the pair is
+                // a publisher's statement, not arithmetic. One corroborating pair
+                // whose two names are both under the cap is enough.
+                let mut clear = false;
+                for (a, b) in corroborating {
+                    let mut over = false;
+                    for n in [a, b] {
+                        let k2 = (args.norm)(n);
+                        let g = match generic.get(&k2) {
+                            Some(g) => *g,
+                            None => {
+                                let g = self.name_key_is_generic("n2", &k2, args.stoplist_cap).await?;
+                                generic.insert(k2, g);
+                                g
+                            }
+                        };
+                        over |= g;
+                    }
+                    if !over {
+                        clear = true;
+                        break;
+                    }
+                }
+                if !clear {
+                    report.denied_generic += 1;
+                    listing.gate = "generic".to_owned();
+                    push_listing(
+                        &conn,
+                        &mut report.denied_listing,
+                        &mut report.denied_listing_truncated,
+                        listing,
+                        pair,
+                    )
+                    .await?;
+                    continue;
+                }
+            }
+
+            // ---- The plan: the PPON org folds into the company-number org.
+            report.plan_pairs += 1;
+            report.pairs.push(format!("{coh}~{ppon}"));
+            // Blast-radius preview (the Stage-1 lesson): what the merge would
+            // move off the loser.
+            for (sql, slot) in [
+                (
+                    "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = ?",
+                    &mut report.mentions,
+                ),
+                (
+                    "SELECT COUNT(*) FROM tender_version_parties WHERE organization_id = ?",
+                    &mut report.parties,
+                ),
+                (
+                    "SELECT COUNT(*) FROM tender_version_bid_parties WHERE organization_id = ?",
+                    &mut report.bid_parties,
+                ),
+                (
+                    "SELECT COUNT(*) FROM tender_version_result_winners WHERE organization_id = ?",
+                    &mut report.winners,
+                ),
+            ] {
+                let mut rows = conn.query(sql, (Value::Integer(p.id),)).await?;
+                if let Some(row) = rows.next().await? {
+                    *slot += int(&row, 0).max(0) as u64;
+                }
+            }
+            listing.gate = "plan".to_owned();
+            push_listing(
+                &conn,
+                &mut report.plan_listing,
+                &mut report.plan_listing_truncated,
+                listing,
+                pair,
+            )
+            .await?;
+        }
+        report.pairs.sort();
         Ok(report)
     }
 

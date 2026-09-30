@@ -987,3 +987,182 @@ mod e0 {
         assert_eq!(e0_key_flat(Some("DE"), "national", "--"), None);
     }
 }
+
+/// Issue 448: a mention's raw identifier keyed the way the resolver keys it —
+/// [`crate::project::normalise_identifier`] under the mention's country (the v2
+/// gate included: a condemned value keys nothing), then [`canonical_key_flat`]
+/// on the kind the normaliser decided. The altid arm's evidence wall reads every
+/// mention of both orgs through this, and [`altid_pair_key`] is built on it.
+///
+/// The R2/R3 walls infer the kind from the raw string instead — two leading
+/// letters are VAT-shaped — which sends every FTS raw (`GB-COH-…`, `GB-PPON-…`)
+/// to kind `vat`, and the GB arm keys no VAT: through that rule a wall is blind
+/// to exactly the values the altid arm is about. The normaliser tells a GB VAT
+/// (nine digits after the prefix) from `GBCOH…` by the letter run after the
+/// country code.
+pub fn mention_key(country: Option<&str>, raw: &str) -> Option<(&'static str, String, bool)> {
+    let id = crate::project::normalise_identifier(raw, country)?;
+    canonical_key_flat(id.country.as_deref(), &id.kind, &id.value)
+}
+
+/// Issue 448: one side of the Companies House ↔ PPON pairing an FTS party
+/// publishes — ONE `BT-501-Organization-Company` row `(notice_ids.scheme,
+/// notice_ids.value, the party's country)` in the flat `(scheme, key, is_e1)`
+/// shape, or `None`.
+///
+/// The pairing itself is E2 evidence, never a key (the GB arm's contract in
+/// [`canonical_key`]); this names its two ends so the altid arm can build the
+/// graph. It keys ONLY a row whose published scheme is exactly `GB-COH` or
+/// `GB-PPON`, and only into that scheme's own series. The value alone cannot
+/// say which register it is: the GB arm strips a bare `GB` and keys any
+/// 8-digit remainder as a company number, so a charity, UKPRN or NHS code
+/// published under its own scheme would otherwise arrive as somebody's
+/// Companies House number.
+///
+/// A 6-7 digit company number comes back padded at `is_e1 = false` (the CZ/BE
+/// pad precedent); the arm counts it and never pairs it.
+pub fn altid_pair_key(
+    scheme: &str,
+    value: &str,
+    country: Option<&str>,
+) -> Option<(&'static str, String, bool)> {
+    let series = match scheme {
+        "GB-COH" => "GB:coh",
+        "GB-PPON" => "GB:ppon",
+        _ => return None,
+    };
+    mention_key(country, value).filter(|(s, _, _)| *s == series)
+}
+
+/// Issue 448: the altid arm's corroboration key — [`n3_key`], then the GB legal
+/// forms folded to `§` markers (`ltd`/`limited` → `§ltd`, `plc` → `§plc`,
+/// `llp` → `§llp`, `lp` → `§lp`, `cic` → `§cic`), then `the` and `and`
+/// dropped. Two orgs corroborate a company-number/PPON pair only when some name
+/// of each yields the SAME key.
+///
+/// Deliberately strict, and deliberately here rather than in the shared tables.
+/// `uk`, `group` and `holdings` stay: `Acme UK Ltd` and `Acme Holdings plc`
+/// are the sister and parent companies a publisher writes by mistake (issue
+/// 447), and a core-token rule that drops two-letter tokens reads `Acme UK Ltd`
+/// as `Acme Ltd`. The forms stay as markers, so `Acme plc` never equals `Acme
+/// Ltd`. And none of it touches `family_token`, the store's `NAME_STOP_TOKENS` or
+/// [`NAME_KEY_EPOCH`]: teaching those GB forms would change R2's name gate and
+/// every N3 key in every country, where this fold is for this arm alone.
+pub fn altid_name_key(name: &str) -> String {
+    n3_key(name)
+        .split(' ')
+        .filter(|t| !t.is_empty() && !matches!(*t, "the" | "and"))
+        .map(|t| match t {
+            "ltd" | "limited" => "§ltd",
+            "plc" => "§plc",
+            "llp" => "§llp",
+            "lp" => "§lp",
+            "cic" => "§cic",
+            other => other,
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+/// Issue 448: the GB legal-form family a name carries — `ltd` (Ltd or
+/// Limited), `plc` or `llp` — for the altid arm's head-against-head veto.
+/// [`legal_form_family`] knows no GB form, so it never vetoes `Acme plc`
+/// against `Acme Ltd`; this does. The LAST family token wins, because an
+/// English name puts its form at the end and may start with a form word
+/// (`Limited Editions plc`).
+pub fn gb_legal_family(name: &str) -> Option<&'static str> {
+    crate::project::match_norm(name)
+        .split(' ')
+        .filter_map(|t| match t {
+            "ltd" | "limited" => Some("ltd"),
+            "plc" => Some("plc"),
+            "llp" => Some("llp"),
+            _ => None,
+        })
+        .last()
+}
+
+#[cfg(test)]
+mod altid {
+    use super::{altid_name_key, altid_pair_key, canonical_key_flat, gb_legal_family, mention_key, n3_key};
+
+    /// The FTS literal forms, as `fts/parse.rs` stores them (`<scheme>-<id>`).
+    #[test]
+    fn altid_pair_key_reads_the_fts_literal_forms() {
+        let gb = Some("GB");
+        assert_eq!(
+            altid_pair_key("GB-COH", "GB-COH-03914810", gb),
+            Some(("GB:coh", "03914810".to_owned(), true))
+        );
+        assert_eq!(
+            altid_pair_key("GB-COH", "GB-COH-SC305103", gb),
+            Some(("GB:coh", "SC305103".to_owned(), true))
+        );
+        assert_eq!(
+            altid_pair_key("GB-PPON", "GB-PPON-PHDQ-2359-NZMP", gb),
+            Some(("GB:ppon", "PHDQ2359NZMP".to_owned(), true))
+        );
+        // A lost leading zero pads, at E2: counted by the arm, never paired.
+        assert_eq!(
+            altid_pair_key("GB-COH", "GB-COH-3914810", gb),
+            Some(("GB:coh", "03914810".to_owned(), false))
+        );
+        // The hole the scheme check closes: the GB arm keys a bare 8-digit value
+        // as a company number…
+        assert!(canonical_key_flat(gb, "national", "12345678").is_some());
+        // …so another register's number, digits only or prefixed, keys nothing.
+        for scheme in ["GB-CHC", "GB-SC", "GB-UKPRN", "GB-NHS"] {
+            assert_eq!(altid_pair_key(scheme, "12345678", gb), None, "{scheme}");
+            assert_eq!(altid_pair_key(scheme, &format!("{scheme}-12345678"), gb), None, "{scheme}");
+        }
+        // A GB VAT under the company-number scheme is not a company number, and
+        // a side keys only into its own series.
+        assert_eq!(altid_pair_key("GB-COH", "GB553298332", gb), None);
+        assert_eq!(altid_pair_key("GB-COH", "GB-PPON-PHDQ-2359-NZMP", gb), None);
+        assert_eq!(altid_pair_key("GB-PPON", "GB-COH-03914810", gb), None);
+    }
+
+    /// The wall's key sees the FTS raws the two-letter-lead rule cannot.
+    #[test]
+    fn mention_key_reads_the_fts_raws_a_vat_lead_rule_cannot() {
+        let gb = Some("GB");
+        assert_eq!(mention_key(gb, "GB-COH-03914810"), Some(("GB:coh", "03914810".to_owned(), true)));
+        assert_eq!(
+            mention_key(gb, "GB-PPON-PHDQ-2359-NZMP"),
+            Some(("GB:ppon", "PHDQ2359NZMP".to_owned(), true))
+        );
+        // The R2/R3 wall's inference: a two-letter lead is VAT, and GB keys no VAT.
+        assert_eq!(canonical_key_flat(gb, "vat", "GB-COH-03914810"), None);
+        assert_eq!(mention_key(gb, "GB553298332"), None, "a real GB VAT stays unkeyed");
+    }
+
+    #[test]
+    fn altid_name_key_folds_ltd_and_limited_but_keeps_plc_llp_and_uk() {
+        assert_eq!(altid_name_key("Acme Widgets Ltd"), "acme widgets §ltd");
+        assert_eq!(altid_name_key("ACME WIDGETS LIMITED"), altid_name_key("Acme Widgets Ltd."));
+        assert_eq!(altid_name_key("The Acme Widgets Limited"), altid_name_key("Acme Widgets Ltd"));
+        assert_eq!(altid_name_key("Smith and Jones Ltd"), altid_name_key("Smith & Jones Limited"));
+        assert_eq!(altid_name_key("Acme PLC"), "acme §plc");
+        assert_eq!(altid_name_key("Acme LLP"), "acme §llp");
+        assert_eq!(altid_name_key("Acme Housing CIC"), "acme housing §cic");
+        assert_ne!(altid_name_key("Acme plc"), altid_name_key("Acme Ltd"), "a parent is not its subsidiary");
+        assert_ne!(altid_name_key("Acme LLP"), altid_name_key("Acme Ltd"));
+        assert_ne!(altid_name_key("Acme UK Ltd"), altid_name_key("Acme Ltd"), "uk names a sister company");
+        assert_ne!(altid_name_key("Acme Group Ltd"), altid_name_key("Acme Ltd"));
+        assert_ne!(altid_name_key("Acme Holdings Ltd"), altid_name_key("Acme Ltd"));
+        // N3 still runs underneath: a formless or non-GB name keys as N3 does.
+        assert_eq!(altid_name_key("Siemens GmbH"), n3_key("Siemens GmbH"));
+    }
+
+    #[test]
+    fn gb_legal_family_separates_ltd_plc_llp() {
+        assert_eq!(gb_legal_family("Acme Ltd"), Some("ltd"));
+        assert_eq!(gb_legal_family("ACME LIMITED"), Some("ltd"));
+        assert_eq!(gb_legal_family("Acme Holdings PLC"), Some("plc"));
+        assert_eq!(gb_legal_family("Acme LLP"), Some("llp"));
+        assert_eq!(gb_legal_family("Acme Group"), None);
+        assert_ne!(gb_legal_family("Acme plc"), gb_legal_family("Acme Ltd"));
+        assert_ne!(gb_legal_family("Acme LLP"), gb_legal_family("Acme Limited"));
+        assert_eq!(gb_legal_family("Limited Editions plc"), Some("plc"), "the last form wins");
+    }
+}
