@@ -162,23 +162,35 @@ Over the 30,857 company-number orgs, **~1.2% carry a wrong number and ~0.3% a re
 - A `correct_identifier` is recorded, never applied automatically. Re-keying an org is a merge-shaped change (the right
   number may already have its own org), so it goes through the merge arms with its own review.
 
-## 2026-09-30 ~15:xx UTC — the action unit, built
+## 2026-09-30 14:xx UTC — the action unit, built, reviewed, rebuilt (`aca3570`, `e1dc081`)
 
-Built as designed above. The code decisions the design left open:
+Built as designed above, then put through a 3-dimension adversarial review (12 agents; 9 findings, which verified down to 6 real
+defects, all in the first commit). The shipped design, `e1dc081`:
 
-- **Liveness is a join, not a stamp.** A verdict acts only while `organizations.identifier` still equals the literal
-  the reviewer checked. A re-keyed or merged-away org reads as unreviewed, with nothing to clean up.
+- **Keyed by the identity triple, not the org id.** A verdict is stored under the (identifier, kind, country) the named
+  org carries when it is POSTed; `org_id` stays as provenance. It applies to whichever org carries that exact triple.
+  Review catch: a from-archive rebuild re-mints org ids from 1, and id-keyed verdicts would silently stop applying. The
+  triple is what the resolver binds by, so the re-minted org carries it again. A verdict naming an org that no longer
+  carries the number is skipped (`stale` in the POST answer). A re-keyed or merged-away org reads as unreviewed.
 - **R2/E0/R3 and the altid arm leave a withheld org out of the preload** (member-scoped, like the consortium veto). The
-  remainder of its key group still merges, so the number's rightful owner is not held hostage. The altid pair then
-  counts under "no company-number org". Each summary says how many rows it withheld.
-- **The resolver's canonical map skips a withheld org**: it neither claims the key nor poisons it, so another spelling
-  of the number binds to the rightful owner if one stands, and mints otherwise. **The exact triple still binds.** The
-  byte-identical literal is the org's own published evidence, almost always the same publisher repeating its own
-  typo. Refusing it would need a name-keyed destination (option 3 above). Revisit only if a mention on a withheld
-  org shows up under a foreign name.
+  rest of its key group still merges, and every arm still has its name gate. Each summary counts `withheld`.
+- **The resolver GUARDS the key instead of dropping the org.** The first cut left the withheld org out of the
+  canonical map, and review showed two harms:
+  - another spelling of the number (`GBCOH02202746` after `02202746`) minted an UNFLAGGED twin under the same wrong
+    number, which the altid arm could then own;
+  - a key the withheld org shared with the number's real owner stopped being poisoned, so the wrong publisher's
+    mentions bound to that owner name-blind.
+
+  Now a key with any withheld owner leaves the canonical map. Another spelling binds only to the one owner (withheld
+  or not) whose names match the mention's names; otherwise it mints, and the mint joins the key's owners instead of
+  claiming it. The anchor path and the altid alias find no owner there. **The exact triple still binds**: the
+  byte-identical literal is the org's own published evidence. The fold log carries the counts (`[issue 452]` lines).
+- **Change feed:** a POST that moves an org's served `identifier_status` appends `organization changed` for every org
+  carrying the triple, then rings the cursor.
 - **The first table above:** 8 of its 15 numbers are posted `wrong` (02202746, 02905600, 36389580, 11268329, 11386208,
   13322491, NI069696, SC895484). The other 7 (11747311, 00314578, 15700897, SC332092, 04958135, 06099813, 03252690)
   are RIGHT for their company-number org, whose head matches the register. There the fault was the FTS party pairing
   a related entity's PPON with that number, and issue 448's keep verdicts hold those pairs apart.
-- The body is `452-census/identifier-verdicts-2026-09-30.json` (`verdict_post.py`). All 685 orgs are live and carry
-  the reviewed number (an id lookup at 14:4x UTC). Unclear and disputed verdicts (35) are not posted.
+- The body is `452-census/identifier-verdicts-2026-09-30.json` (`verdict_post.py`): 371 wrong, 102 related, 212 right.
+  All 685 orgs were live and carried the reviewed number (an id lookup at 14:0x UTC). Unclear and disputed verdicts (35)
+  are not posted.
