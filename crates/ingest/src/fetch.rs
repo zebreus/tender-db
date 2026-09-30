@@ -357,13 +357,14 @@ pub async fn fetch_fts(
         // pages are named apart and overwritten in place, so a redo is idempotent.
         let mut stuck = false;
         while let Some(url) = next {
-            // The stop checkpoint (issue 450), read before every request. The
-            // cursor already names this request, so a re-run asks it first.
-            if stop() {
-                return Ok(Outcome::Stopped);
-            }
             if requests > 0 {
                 tokio::time::sleep(page_pause).await;
+            }
+            // The stop checkpoint (issue 450), read right before every request,
+            // after the pause, so a cancel that lands during the pause costs no
+            // request. The cursor already names this one, so a re-run asks it first.
+            if stop() {
+                return Ok(Outcome::Stopped);
             }
             requests += 1;
             let bytes = get_bytes(client, &url).await?;
@@ -391,12 +392,15 @@ pub async fn fetch_fts(
             for (hour, first) in hours.into_iter().enumerate() {
                 let (mut hour_page, mut hour_next) = (0usize, Some(first));
                 while let Some(url) = hour_next {
+                    tokio::time::sleep(page_pause).await;
                     // A stop here redoes the whole hourly walk on the re-run: the
-                    // cursor still names the stuck URL (see above).
+                    // cursor still names the stuck URL (see above). The one
+                    // exception is a window that tripped `MAX_WINDOW_PAGES` on its
+                    // LAST page: its cursor holds no `next`, so the re-run finds
+                    // the paged walk complete and lands the day from those pages.
                     if stop() {
                         return Ok(Outcome::Stopped);
                     }
-                    tokio::time::sleep(page_pause).await;
                     requests += 1;
                     let bytes = get_bytes(client, &url).await?;
                     let (count, links_next) =

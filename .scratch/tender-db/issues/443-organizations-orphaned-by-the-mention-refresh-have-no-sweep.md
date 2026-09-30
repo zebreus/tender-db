@@ -1,6 +1,6 @@
 # 443 — organizations left with no mention by 434's refresh have no sweep: they stay listed, searchable and counted
 
-Status: needs-info — swept and verified (1628 wet, 1629 → 0), step 4 done (1636 wet, 1637 → 0 to sweep), step 3 deployed at 92ebde0 with its negative half verified (daily fold 1645 re-bound 0 and queued nothing). Signal: the first fold whose summary carries `recorded mention(s) refreshed` (the next re-parse's fold) must also carry `queued sweep-orphan-orgs (auto) as job N`, and that job must end ok. Was: ready-for-agent — **SWEPT AND VERIFIED 2026-09-28** …
+Status: needs-info — swept and verified (1628 wet, 1629 → 0), step 4 done (1636 wet, 1637 → 0 to sweep), step 3 deployed at 92ebde0 with its negative half verified (daily fold 1645 re-bound 0 and queued nothing). Signal: the first fold whose summary carries `recorded mention(s) refreshed` must also carry `queued sweep-orphan-orgs (auto) as job N`, and that job must end ok. Was: ready-for-agent — **SWEPT AND VERIFIED 2026-09-28** …
 Was status (before 2026-09-29): ready-for-agent — **SWEPT AND VERIFIED 2026-09-28** (see the foot): 1,768,353 orphans deleted, and a fresh dry run reads 0. Steps 3 and 4 DEPLOYED 2026-09-29 06:10 UTC (rev `92ebde0`, after Lennart cleared the deploy). Step 4 has run and is VERIFIED (21 non-provisional orphans swept; see the foot). Left: step 3's live check, where the next fold that re-binds a mention should queue `sweep-orphan-orgs auto` by itself (the 07:35 UTC daily fold is the first chance). Was: BUILT 2026-09-28, deployed `d5bf157`. Was: filed 2026-09-28 from the first fold with 434's refresh (job 1610, stopped in planning
 after re-binding 4,649,867 mentions, and job 1616, the full fold now running). Measure-first: size the orphaned
 cohort after 1616 lands, then build.
@@ -189,3 +189,9 @@ notices → 3,764 tenders written) carries no `recorded mention(s) refreshed` cl
 correctly queued no sweep (the queue went straight to reveal-recheck 1646). **Still owed:** the positive half, where
 a fold that re-binds ≥ 1 mention queues `sweep-orphan-orgs auto (after a fold re-bound N)`. Read the job list after
 the next fold whose summary carries the refresh clause.
+
+**2026-09-30 02:1x UTC — a re-parse fold is not enough by itself.** Job 1664 folded the 14,647 notices of the FTS
+re-parse 1663 (bids.statistics, issue 342) and its summary carries no refresh clause, so no sweep was queued, as it
+should be. That re-parse changed statistics, not any party's name or identifier, so no recorded mention went stale.
+The signal therefore needs a re-parse whose parser change moves a party's recorded name or identifier (448 unit 2's
+FTS additional-identifier capture is the next one in view). Status unchanged.

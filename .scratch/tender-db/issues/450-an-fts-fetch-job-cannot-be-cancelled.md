@@ -1,6 +1,7 @@
 # 450 — an FTS fetch job cannot be cancelled, so a misbehaving API holds the single job runner until a deploy
 
-Status: ready-for-agent — filed 2026-09-30 02:0x UTC from issue 449's "Not fixed here", which named the follow-up
+Status: ready-for-agent — BUILT 2026-09-30 (`94fcbae`, gated green; two review tweaks after it: the stop is read after the page pause, and one comment's edge case is corrected). A two-lens adversarial review (resume correctness; the cancel contract) found no defect. Deploys with 448 unit 1 when the box queue is idle; the Verify's live half waits for a month that is re-fetched anyway.
+Was status: ready-for-agent — filed 2026-09-30 02:0x UTC from issue 449's "Not fixed here", which named the follow-up
 and did not file it.
 Kind: operations (job control)
 Relates to: 449 (the stuck cursor that needed a `FORCE_BUSY=1` deploy to stop), 252 (the honest-cancel contract:
@@ -42,3 +43,21 @@ has the same single exit: a deploy.
   row then ends `ok` with `CANCELLED at a checkpoint`, and re-enqueueing the month resumes from its staged pages.
   (Run this only on a month that would be re-fetched anyway.)
 - **open**: `cancel` on a running FTS fetch answers 409.
+
+## Built 2026-09-30
+
+- `fetch_fts(…, stop, on_progress)` reads `stop()` right before every request, after the page pause, in both loops.
+  `Outcome::Stopped` returns before anything lands. Staging and the cursor are exactly as a crash would leave them.
+- `Supervisor::run_fetch_fts` passes `|| self.cancelled(job_id)`. The `Fetch` arm answers
+  `CANCELLED at a checkpoint — fts monthly <M>: nothing landed; …`. That is an `ok` row, and the durable row is
+  dropped like any concluded job's, so a restart does not re-run it.
+- `stoppable(kind, params)` answers for `cancel`. A TED/DÖE fetch and the FTS daily probe (kind `probe`) still get 409.
+- Tests:
+  - `a_stopped_fts_walk_lands_nothing_and_the_next_fetch_resumes_it` (ingest): one page, then the stop. Nothing
+    registered, the cursor names page 2, and the re-run asks page 2 only and lands every release;
+  - `a_running_fts_fetch_can_be_cancelled_and_a_single_download_cannot` (supervisor): the params of both enqueue paths,
+    plus cancel on ted/doe/fts fetches.
+- Review notes, not defects:
+  - re-enqueueing a stopped *refetch* of a registered month as a plain fetch answers `Unchanged` and leaves the
+    staging in place, the same as after a crash or a throttle error; re-enqueue it with `refetch: true`;
+  - `TENDER_DROP_JOBS` plus a restart was the other existing exit, besides a deploy.
