@@ -86,8 +86,16 @@ fn norm(name: &str) -> String {
         .join(" ")
 }
 
+/// `crosswalk::altid_trim` in small: a trading-as clause is cut.
+fn trim(name: &str) -> String {
+    match name.to_ascii_lowercase().find(" t/a ") {
+        Some(at) => name[..at].to_owned(),
+        None => name.to_owned(),
+    }
+}
+
 fn name_key(name: &str) -> String {
-    norm(name)
+    norm(&trim(name))
         .split(' ')
         .filter(|t| !t.is_empty() && *t != "the" && *t != "and")
         .map(|t| match t {
@@ -145,6 +153,7 @@ fn args(stoplist_cap: usize) -> store::AltIdMergeArgs<'static> {
         legal_family,
         name_key,
         names_agree,
+        trim,
         norm,
         stoplist_cap,
         dry_run: true,
@@ -520,6 +529,69 @@ async fn an_org_made_only_of_witness_mentions_corroborates_with_its_own_names() 
     b.split(100, (1, COH_A, "Carnall Farrar Ltd"), (2, PPON_P, "Carnall Farrar")).await;
     let r = b.plan().await;
     assert_eq!((r.plan_pairs, r.denied_witness_only, r.uncorroborated_overlap), (1, 0, 0), "{r:#?}");
+}
+
+/// The review's case against unit 1b's first cut: an outside mention with NO
+/// name still means the org is not made of the witnesses, so their name stays
+/// out. Deciding on keyed names instead let a blank or unkeyable name bring the
+/// circular witness name back.
+#[tokio::test]
+async fn a_nameless_outside_mention_still_keeps_the_witness_name_out() {
+    let b = bed("nameless-outside").await;
+    b.org(1, COH_A, "Amec Foster Wheeler Nuclear UK Limited").await;
+    b.org(2, PPON_P, "Altrad Babcock Limited").await;
+    b.notice(90, "fts:ocds-1.1").await;
+    b.party_named(90, "H", Some(1), "GB", &[COH_A], "").await;
+    b.notice(100, "fts:ocds-1.1").await;
+    b.party_named(100, "W", Some(1), "GB", &[COH_A, PPON_P], "Altrad Babcock Limited").await;
+    b.satellite(1, "ENG", "Altrad Babcock Limited").await;
+    b.notice(101, "fts:ocds-1.1").await;
+    b.party(101, "P", Some(2), "GB", &[PPON_P]).await;
+    let r = b.plan().await;
+    assert_eq!((r.denied_witness_only, r.plan_pairs), (1, 0), "{r:#?}");
+}
+
+/// A formless name agrees with `Acme plc` and with `Acme Ltd`, so it could
+/// bridge a parent's company number to a subsidiary's PPON that the
+/// head-against-head veto never sees (the PPON org's head is formless).
+/// Every name the agreement reads is checked: plc on one side, Ltd on the
+/// other, nothing shared.
+#[tokio::test]
+async fn a_formless_name_never_bridges_a_plc_and_a_ltd() {
+    let b = bed("form-bridge").await;
+    b.org(1, COH_A, "Acme plc").await;
+    b.org(2, PPON_P, "Acme").await;
+    b.notice(90, "fts:ocds-1.1").await;
+    b.party(90, "H", Some(1), "GB", &[COH_A]).await;
+    b.notice(100, "fts:ocds-1.1").await;
+    b.party_named(100, "W", Some(1), "GB", &[COH_A, PPON_P], "Acme Ltd").await;
+    b.notice(101, "fts:ocds-1.1").await;
+    b.party(101, "P", Some(2), "GB", &[PPON_P]).await;
+    b.notice(102, "fts:ocds-1.1").await;
+    b.party_named(102, "P2", Some(2), "GB", &[PPON_P], "Acme Ltd").await;
+    let r = b.plan().await;
+    assert_eq!((r.denied_form_conflict, r.plan_pairs, r.denied_legal_form), (1, 0, 0), "{r:#?}");
+    assert_eq!(r.denied_listing[0].gate, "form-conflict");
+}
+
+/// The generic wall reads the words the agreement read. A trading-as clause
+/// is cut before keying, so it is cut before the wall too: otherwise the
+/// clause's extra words make a generic name look unique.
+#[tokio::test]
+async fn a_trading_as_clause_does_not_carry_a_generic_name_past_the_wall() {
+    let b = bed("ta-wall").await;
+    b.split(100, (1, COH_A, "Acme"), (2, PPON_P, "Acme t/a Acme Scaffolding")).await;
+    // The wall counts carriers that still stand as orgs.
+    b.org_in(7, "GB", "GBCOH00000007", "Acme").await;
+    b.org_in(8, "GB", "GBCOH00000008", "Acme").await;
+    for org in [1i64, 7, 8] {
+        b.conn
+            .execute("INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'acme')", (Value::Integer(org),))
+            .await
+            .unwrap();
+    }
+    let r = b.plan_capped(2).await;
+    assert_eq!((r.denied_generic, r.plan_pairs), (1, 0), "{r:#?}");
 }
 
 /// One PPON beside two company numbers: one of the statements is wrong and the

@@ -1052,7 +1052,9 @@ pub fn altid_pair_key(
 /// Three folds the first dry plan on prod asked for (unit 1b, dry job 1681's
 /// denied listing), none of which loosens the words:
 /// - a run of single letters is ONE initialism, so `U.K.`, `U K` and `UK` key
-///   alike (`JEOL (U.K.) Limited` / `JEOL (UK) Ltd`, `E.P.BARRUS` / `E P Barrus`);
+///   alike (`JEOL (U.K.) Limited` / `JEOL (UK) Ltd`, `E.P.BARRUS` / `E P Barrus`).
+///   An `&` or `and` ends the run: `J & M Smith Ltd` is not `JM Smith Ltd`, and
+///   Companies House registers them apart;
 /// - `co` is `company` (`Mulalley & Co. Limited` / `Mulalley and Company Ltd`);
 /// - a trading-as clause names the brand, not the registered entity, and a
 ///   parenthetical after the legal form is an annotation (`… Ltd (BDP)`,
@@ -1060,7 +1062,15 @@ pub fn altid_pair_key(
 pub fn altid_name_key(name: &str) -> String {
     let mut out: Vec<String> = Vec::new();
     let mut initials = String::new();
-    for t in n3_key(&altid_trim(name)).split(' ').filter(|t| !t.is_empty() && !matches!(*t, "the" | "and")) {
+    // `match_norm` deletes `&`; spelled out, it still ends an initialism below.
+    let spelled = altid_trim(name).replace('&', " and ");
+    for t in n3_key(&spelled).split(' ').filter(|t| !t.is_empty() && *t != "the") {
+        if t == "and" {
+            if !initials.is_empty() {
+                out.push(std::mem::take(&mut initials));
+            }
+            continue;
+        }
         let mut chars = t.chars();
         if let (Some(c), None) = (chars.next(), chars.next())
             && c.is_alphabetic()
@@ -1119,10 +1129,13 @@ pub fn altid_trim(name: &str) -> String {
 }
 
 /// Issue 448 unit 1b: whether two [`altid_name_key`] outputs name one entity —
-/// equal, or equal but for a legal form only ONE of them carries (`Carnall
+/// equal, or equal but for a GB legal form only ONE of them carries (`Carnall
 /// Farrar Ltd` / `Carnall Farrar`, 105 of dry job 1681's 341 overlap denials).
 /// Two DIFFERENT forms stay apart (`Acme plc` / `Acme Ltd`), and the words must
-/// match exactly, so `Acme` never agrees with `Acme UK Ltd`.
+/// match exactly, so `Acme` never agrees with `Acme UK Ltd`. Only the five GB
+/// markers this key adds are a form here: [`n3_key`]'s own `§` families (`§ag`,
+/// `§gmbh`, `§spa`…) are words, so `Siemens Healthineers AG` never agrees with a
+/// formless `Siemens Healthineers`, and `Acme Spa` is not `Acme`.
 pub fn altid_keys_agree(a: &str, b: &str) -> bool {
     if a == b {
         return true;
@@ -1130,7 +1143,7 @@ pub fn altid_keys_agree(a: &str, b: &str) -> bool {
     let strip = |key: &str| {
         let mut tokens: Vec<&str> = key.split(' ').collect();
         let mut formed = false;
-        while tokens.last().is_some_and(|t| t.starts_with('§')) {
+        while tokens.last().is_some_and(|t| matches!(*t, "§ltd" | "§plc" | "§llp" | "§lp" | "§cic")) {
             tokens.pop();
             formed = true;
         }
@@ -1267,6 +1280,20 @@ mod altid {
         assert!(!agree("Northumbrian Water Group Limited", "Northumbrian Water Ltd"));
         assert!(!agree("Ltd", "Limited Editions"), "a bare form is no name");
         assert!(!altid_keys_agree("§ltd", ""), "nothing left once the form is gone");
+        // Only the GB markers are forms: n3's own families are words here.
+        assert!(!agree("Siemens Healthineers AG", "Siemens Healthineers"), "a German AG is not a formless UK name");
+        assert!(!agree("Acme Spa", "Acme"));
+        assert!(agree("Acme Spa Ltd", "Acme Spa"), "the same name with and without Ltd");
+    }
+
+    /// The review's case: `&` and `and` end an initialism, so two registrable
+    /// names stay apart, while dotted and spaced initials still join.
+    #[test]
+    fn an_ampersand_ends_an_initialism() {
+        assert_eq!(altid_name_key("J & M Smith Ltd"), altid_name_key("J and M Smith Limited"));
+        assert_ne!(altid_name_key("J & M Smith Ltd"), altid_name_key("JM Smith Ltd"));
+        assert_eq!(altid_name_key("J.M. Smith Ltd"), altid_name_key("JM Smith Ltd"));
+        assert_eq!(altid_name_key("Smith & Jones Ltd"), "smith jones §ltd");
     }
 
     #[test]

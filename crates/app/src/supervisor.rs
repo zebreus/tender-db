@@ -5901,6 +5901,7 @@ impl Supervisor {
                         legal_family: ingest::crosswalk::gb_legal_family,
                         name_key: ingest::crosswalk::altid_name_key,
                         names_agree: ingest::crosswalk::altid_keys_agree,
+                        trim: ingest::crosswalk::altid_trim,
                         norm: ingest::project::match_norm,
                         stoplist_cap: SCAN_STOPLIST_CAP,
                         dry_run,
@@ -5981,6 +5982,7 @@ impl Supervisor {
                     "uncorroborated_overlap": r.uncorroborated_overlap,
                     "uncorroborated_disjoint": r.uncorroborated_disjoint,
                     "denied_witness_only": r.denied_witness_only,
+                    "denied_form_conflict": r.denied_form_conflict,
                     "denied_generic": r.denied_generic,
                     "denied_pairs": r.denied_pairs(),
                     // The R3 panel's catch: a blind wall's zero is not a readable one.
@@ -6020,7 +6022,7 @@ impl Supervisor {
                      org, {} no PPON org, {} neither, {} two distinct GB orgs; denied: {} gate, \
                      {} consortium, {} legal-form, {} evidence-wall, {} loser-incoherent, {} \
                      verdict-keep, {} uncorroborated-overlap, {} uncorroborated-disjoint, {} \
-                     witness-only, {} generic; {} conflicts; {} verdict-admitted, {} verdicts stale; plan {} \
+                     witness-only, {} form-conflict, {} generic; {} conflicts; {} verdict-admitted, {} verdicts stale; plan {} \
                      pairs{}",
                     r.fts_notices,
                     r.pairs_seen,
@@ -6045,6 +6047,7 @@ impl Supervisor {
                     r.uncorroborated_overlap,
                     r.uncorroborated_disjoint,
                     r.denied_witness_only,
+                    r.denied_form_conflict,
                     r.denied_generic,
                     r.conflicts,
                     r.admitted_verdict,

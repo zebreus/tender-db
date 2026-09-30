@@ -2381,6 +2381,10 @@ pub struct AltIdMergeArgs<'a> {
     /// `crosswalk::altid_keys_agree` — whether two `name_key` outputs name one
     /// entity: equal, or equal but for a legal form one side omits.
     pub names_agree: fn(&str, &str) -> bool,
+    /// `crosswalk::altid_trim` — what `name_key` cuts before keying (a
+    /// trading-as clause, a parenthetical after the legal form). The generic
+    /// wall reads the SAME words the agreement did, so it trims too.
+    pub trim: fn(&str) -> String,
     /// `project::match_norm` — the N2 key whose carriers the generic-name wall
     /// counts.
     pub norm: fn(&str) -> String,
@@ -2514,6 +2518,11 @@ pub struct AltIdMergeReport {
     /// OTHER notice do not. A witness's party name is the statement under test,
     /// so this is listed for review, never merged.
     pub denied_witness_only: u64,
+    /// The names corroboration reads carry GB legal forms on both sides and no
+    /// form in common (`Acme plc` beside `Acme Ltd`), so a formless name that
+    /// agrees with both cannot bridge them. The head-against-head veto sees only
+    /// the two designated names; this sees every name the agreement used.
+    pub denied_form_conflict: u64,
     // ---- The plan.
     pub plan_pairs: u64,
     /// The planned `<coh>~<ppon>` keys, sorted and UNCAPPED — the set a wet run
@@ -2549,6 +2558,7 @@ impl AltIdMergeReport {
             + self.uncorroborated_disjoint
             + self.denied_generic
             + self.denied_witness_only
+            + self.denied_form_conflict
     }
 }
 
@@ -14499,9 +14509,10 @@ impl Db {
                 )
                 .await?;
             while let Some(row) = rows.next().await? {
-                if let Some(name) = opt_text_of(&row, 1).filter(|n| !n.trim().is_empty()) {
-                    names.push((int(&row, 0), name));
-                }
+                // Nameless mentions are kept (as ""): the witness fallback asks
+                // whether the org has ANY mention outside the witnesses, and a
+                // nameless one is still one. `keyed` drops the empty name.
+                names.push((int(&row, 0), opt_text_of(&row, 1).unwrap_or_default()));
                 let Some(raw) = opt_text_of(&row, 3) else { continue };
                 let mcountry = opt_text_of(&row, 2);
                 if let Some((scheme, key, _)) =
@@ -14807,8 +14818,14 @@ impl Db {
                 // company number, and that name became the COH org's satellite
                 // (dry job 1681). A side with NO mention outside the witnesses is
                 // an org made of them alone, so its witness names stand in:
-                // merging it moves only what the witnesses put there. A side with
-                // no mention at all falls back to its designated names.
+                // merging it moves only what the witnesses put there. That holds
+                // on the company-number side too, where the merge moves the PPON
+                // org's history onto it: both orgs are then the one party the
+                // names agree on, and the number that org carries is the one the
+                // witnesses already gave it — a wrong number is a standing fault
+                // the merge neither makes nor hides (the review's case, weighed
+                // 2026-09-30). A side with no mention at all falls back to its
+                // designated names: no witness party's name reached it.
                 let keyed = |ns: &mut dyn Iterator<Item = &String>| -> BTreeMap<String, String> {
                     ns.map(|n| ((args.name_key)(n), n.clone()))
                         .filter(|(key, _)| !key.is_empty())
@@ -14816,11 +14833,11 @@ impl Db {
                 };
                 let side = |org: i64, designated: &[String]| -> BTreeMap<String, String> {
                     let rows = &mention_names[&org];
-                    let outside = keyed(
-                        &mut rows.iter().filter(|(n, _)| !pair.witnesses.contains_key(n)).map(|(_, name)| name),
-                    );
-                    if !outside.is_empty() {
-                        outside
+                    // Decided on ROWS, not keyed names: an org with a mention
+                    // outside the witnesses is not made of them, even when that
+                    // mention's name is blank or keys to nothing.
+                    if rows.iter().any(|(n, _)| !pair.witnesses.contains_key(n)) {
+                        keyed(&mut rows.iter().filter(|(n, _)| !pair.witnesses.contains_key(n)).map(|(_, name)| name))
                     } else if !rows.is_empty() {
                         keyed(&mut rows.iter().map(|(_, name)| name))
                     } else {
@@ -14836,7 +14853,29 @@ impl Db {
                         })
                         .collect()
                 };
-                let corroborating = agreeing(&side(c.id, c_names), &side(p.id, p_names));
+                let (cs, ps) = (side(c.id, c_names), side(p.id, p_names));
+                // Legal forms across every name the agreement reads: GB forms on
+                // both sides and none shared is a plc beside a Ltd, whichever
+                // names the heads carry. A formless name would otherwise agree
+                // with both (`Acme` / `Acme plc`, `Acme` / `Acme Ltd`).
+                let forms = |m: &BTreeMap<String, String>| -> BTreeSet<&'static str> {
+                    m.values().filter_map(|n| (args.legal_family)(n)).collect()
+                };
+                let (cf, pf) = (forms(&cs), forms(&ps));
+                if !cf.is_empty() && !pf.is_empty() && cf.is_disjoint(&pf) {
+                    report.denied_form_conflict += 1;
+                    listing.gate = "form-conflict".to_owned();
+                    push_listing(
+                        &conn,
+                        &mut report.denied_listing,
+                        &mut report.denied_listing_truncated,
+                        listing,
+                        pair,
+                    )
+                    .await?;
+                    continue;
+                }
+                let corroborating = agreeing(&cs, &ps);
                 if corroborating.is_empty() {
                     // Listed, never merged. The class sorts the review queue. When
                     // the designated names (head and satellites) DO agree, only a
@@ -14878,7 +14917,7 @@ impl Db {
                 for (a, b) in &corroborating {
                     let mut over = false;
                     for n in [a.as_str(), b.as_str()] {
-                        let k2 = (args.norm)(n);
+                        let k2 = (args.norm)(&(args.trim)(n));
                         let g = match generic.get(&k2) {
                             Some(g) => *g,
                             None => {
