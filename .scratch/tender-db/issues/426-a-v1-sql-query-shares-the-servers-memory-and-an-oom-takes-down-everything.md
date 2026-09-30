@@ -1,6 +1,7 @@
 # 426 — a `/v1/sql` query shares the server's memory and process, so an out-of-memory query takes down everything
 
-Status: needs-info — step 2 (the unit's `MemoryMax`/`MemoryHigh`) waits on the anon sampler, which ends 2026-09-30 ~17:00 UTC after today's 07:35 UTC daily tick. Read at 01:5x UTC: max anon 3.85 GiB (2026-09-29 22:17 UTC, during the 40867f2 FTS re-parse/fold/R2 run), 3,550 samples. Then set both in `nix/module.nix`, deploy, and read the Verify. The AST gate (step 1) is live; worker isolation is 431 (not viable on turso 0.7.2).
+Status: ready-for-agent — step 2's measurement is DONE (2026-09-30 16:4x UTC, below): the largest legitimate anon peak was 22.5 GB, in a TED daily incremental fold (job 1714), and full rebuilds peak at ~20.8 GB RSS. Proposed limits MemoryHigh=54G / MemoryMax=58G. Prod runs the hand-installed Ubuntu unit, NOT `nix/module.nix`, so they go in a `memory.conf` drop-in that `deploy.sh` writes beside `rev.conf`. Writing that production unit change was refused by the session's permission classifier ("modify shared resources") on 2026-09-30, so it needs Lennart's explicit word before anyone applies it. NEXT, once given: the deploy.sh hunk below, deploy, then the Verify.
+Was status: needs-info — step 2 (the unit's `MemoryMax`/`MemoryHigh`) waits on the anon sampler, which ends 2026-09-30 ~17:00 UTC after today's 07:35 UTC daily tick. Read at 01:5x UTC: max anon 3.85 GiB (2026-09-29 22:17 UTC, during the 40867f2 FTS re-parse/fold/R2 run), 3,550 samples. Then set both in `nix/module.nix`, deploy, and read the Verify. The AST gate (step 1) is live; worker isolation is 431 (not viable on turso 0.7.2).
 Was status (until 2026-09-30): DIAGNOSED-DECIDED 2026-09-27 — measured (below) and cross-checked by a 4-agent read-only workflow (turso-memory / reach / box / adversarial critic). Decision taken (owner): a layered fix; the first buildable piece is the in-process AST gate on the measured ABORT class. The worker-process isolation is real but gated on turso's experimental multi-process WAL + an ADR-0005 amendment, so it is a separate multi-day item (filed as 431).
 Filed 2026-09-26 21:xx UTC from the owner's review of how user SQL is isolated (asked by Lennart). Not observed; a
 structural gap.
@@ -153,3 +154,39 @@ the box's 62 GB caps cache rather than killing a fold.
 (4,560,769,024 B at 1790744966, 05:09 UTC), during FTS `project` job 1689 (46,607 tenders written). The earlier max was
 3.85 GiB. The largest legitimate anon peak so far is a full FTS project over the backfilled months, not a /v1/sql
 query.
+
+## 2026-09-30 16:4x UTC — the measurement: 22.5 GB anon, from a TED daily fold, not a /v1/sql query
+
+The sampler (`/root/anon-samples.log`, 7,094 samples, 2026-09-29 11:00 → 2026-09-30 ~17:00 UTC) peaked at
+**22,532,550,656 B anon at 1790755950 (08:12:30 UTC)**. That is five times the 4.25 GiB read at 06:2x.
+
+It is job 1714, the TED daily `project`. Its phase 2 (`ParsedFold over 13863 planned notices`) ran 08:11:18 →
+08:13:49 UTC; the journal is in CEST, so 10:11 → 10:13. The samples show the shape:
+- ~5 GB before the fold;
+- 10.8 GB at 08:12:00 and 21.0 GB at 08:12:15, flat at ~22 GB through 08:13:45;
+- 0.6 GB at 08:14:00, after the fold's one batch was applied and freed.
+
+The pid did not change, so nothing restarted. The fold held the whole plan in one batch: `APPLY_NOTICE_BATCH` is
+50,000 notices and the plan had 13,863.
+
+That is in line with the fold's known working set, not a leak. The full rebuilds' own `VmHWM` lines read 19.9–20.8
+GB (`WAL after end-of-run index builds … peak RSS 20766 MB`, 2026-09-28; 20,517 MB on 2026-09-16). A daily delta's
+touched expansion (1,768 touched Tenders → 13,863 notices) is dominated by long-running procedures with many
+versions, so its batch weighs about what a 50k-notice rebuild batch does. The FTS fold of 62,921 notices (job 1689)
+peaked at 4.25 GB; FTS states are small.
+
+**Limits, with ~2.5× headroom over the 22.5 GB:**
+
+    MemoryHigh=54G   # above it the kernel reclaims the service's own page cache first
+    MemoryMax=58G    # the hard stop: ~4 GiB left for the kernel, sshd and journald on the 62 GiB box
+
+**Where they go.** `systemctl cat tender-db` on the box shows `/etc/systemd/system/tender-db.service`, a
+hand-installed Ubuntu unit (ADR-0006) that mirrors the module's hardening. `nix/module.nix` does not run there. The
+repo-owned place is a drop-in `deploy.sh` writes on every deploy, next to `rev.conf`:
+
+    printf '[Service]\nMemoryHigh=54G\nMemoryMax=58G\n' > /etc/systemd/system/tender-db.service.d/memory.conf
+
+(before its `systemctl daemon-reload`). Applying it was refused by the session's permission classifier as a
+change to a shared production resource. The change is small and reversible (delete the drop-in and daemon-reload),
+but it caps a production service, so it waits for Lennart's explicit word. The anon sampler's unit was still active at
+16:36 UTC and ends at its `RuntimeMaxSec` (~17:00 UTC); the log stays in `/root/anon-samples.log`.
