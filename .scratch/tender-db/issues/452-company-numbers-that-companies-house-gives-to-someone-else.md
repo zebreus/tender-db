@@ -1,6 +1,7 @@
 # 452 — organizations carry company numbers that Companies House gives to another company, a dissolved shell, or no one
 
-Status: ready-for-agent — CENSUS DONE 2026-09-30 13:0x UTC: 371 org identifiers are wrong company numbers (reviewer + challenger), 102 are a related company's, 182 of the wrong ones have the right number found (`452-census/verdicts-2026-09-30.json`). NEXT: the action unit, an identifier-verdict table that withholds a wrong number from matching and flags it on the API (design below).
+Status: ready-for-agent — ACTION UNIT BUILT 2026-09-30 ~15:xx UTC (gated, 142 suites): `org_identifier_verdicts`, POST `/admin/identifier-verdicts`, a live `wrong` number withheld from R2/E0/R3, the altid owners and the resolver's canonical bind, and `identifier_status` on `/v1/organizations`. NEXT: deploy, POST the 685 verdicts (`452-census/identifier-verdicts-2026-09-30.json`: 371 wrong, 102 related, 212 right), run the Verify.
+Was status: ready-for-agent — CENSUS DONE 2026-09-30 13:0x UTC: 371 org identifiers are wrong company numbers (reviewer + challenger), 102 are a related company's, 182 of the wrong ones have the right number found (`452-census/verdicts-2026-09-30.json`). NEXT: the action unit, an identifier-verdict table that withholds a wrong number from matching and flags it on the API (design below).
 Was status: ready-for-agent — filed 2026-09-30 from issue 448's review campaign. Next: size the class across every GB
 company number the corpus holds, then decide what a wrong number does to the org (hold it back from matching, flag
 it on the API, or both).
@@ -160,3 +161,24 @@ Over the 30,857 company-number orgs, **~1.2% carry a wrong number and ~0.3% a re
   - a `related` number is flagged, not withheld.
 - A `correct_identifier` is recorded, never applied automatically. Re-keying an org is a merge-shaped change (the right
   number may already have its own org), so it goes through the merge arms with its own review.
+
+## 2026-09-30 ~15:xx UTC — the action unit, built
+
+Built as designed above. The code decisions the design left open:
+
+- **Liveness is a join, not a stamp.** A verdict acts only while `organizations.identifier` still equals the literal
+  the reviewer checked. A re-keyed or merged-away org reads as unreviewed, with nothing to clean up.
+- **R2/E0/R3 and the altid arm leave a withheld org out of the preload** (member-scoped, like the consortium veto). The
+  remainder of its key group still merges, so the number's rightful owner is not held hostage. The altid pair then
+  counts under "no company-number org". Each summary says how many rows it withheld.
+- **The resolver's canonical map skips a withheld org**: it neither claims the key nor poisons it, so another spelling
+  of the number binds to the rightful owner if one stands, and mints otherwise. **The exact triple still binds.** The
+  byte-identical literal is the org's own published evidence, almost always the same publisher repeating its own
+  typo. Refusing it would need a name-keyed destination (option 3 above). Revisit only if a mention on a withheld
+  org shows up under a foreign name.
+- **The first table above:** 8 of its 15 numbers are posted `wrong` (02202746, 02905600, 36389580, 11268329, 11386208,
+  13322491, NI069696, SC895484). The other 7 (11747311, 00314578, 15700897, SC332092, 04958135, 06099813, 03252690)
+  are RIGHT for their company-number org, whose head matches the register. There the fault was the FTS party pairing
+  a related entity's PPON with that number, and issue 448's keep verdicts hold those pairs apart.
+- The body is `452-census/identifier-verdicts-2026-09-30.json` (`verdict_post.py`). All 685 orgs are live and carry
+  the reviewed number (an id lookup at 14:4x UTC). Unclear and disputed verdicts (35) are not posted.
