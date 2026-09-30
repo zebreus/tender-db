@@ -1,9 +1,7 @@
 # 426 — a `/v1/sql` query shares the server's memory and process, so an out-of-memory query takes down everything
 
-Status: DIAGNOSED-DECIDED 2026-09-27 — measured (below) and cross-checked by a 4-agent read-only workflow
-(turso-memory / reach / box / adversarial critic). Decision taken (owner): a layered fix; the first buildable
-piece is the in-process AST gate on the measured ABORT class. The worker-process isolation is real but gated on
-turso's experimental multi-process WAL + an ADR-0005 amendment, so it is a separate multi-day item (filed as 431).
+Status: needs-info — step 2 (the unit's `MemoryMax`/`MemoryHigh`) waits on the anon sampler, which ends 2026-09-30 ~17:00 UTC after today's 07:35 UTC daily tick. Read at 01:5x UTC: max anon 3.85 GiB (2026-09-29 22:17 UTC, during the 40867f2 FTS re-parse/fold/R2 run), 3,550 samples. Then set both in `nix/module.nix`, deploy, and read the Verify. The AST gate (step 1) is live; worker isolation is 431 (not viable on turso 0.7.2).
+Was status (until 2026-09-30): DIAGNOSED-DECIDED 2026-09-27 — measured (below) and cross-checked by a 4-agent read-only workflow (turso-memory / reach / box / adversarial critic). Decision taken (owner): a layered fix; the first buildable piece is the in-process AST gate on the measured ABORT class. The worker-process isolation is real but gated on turso's experimental multi-process WAL + an ADR-0005 amendment, so it is a separate multi-day item (filed as 431).
 Filed 2026-09-26 21:xx UTC from the owner's review of how user SQL is isolated (asked by Lennart). Not observed; a
 structural gap.
 Kind: operations / safety
