@@ -148,7 +148,7 @@ async fn main() -> ExitCode {
             let result = if target.source == "fts" {
                 // Paged and self-assembled: page progress on stderr, since a
                 // month is ~150 paced requests.
-                fetch::fetch_fts(db, client, archive, &target, refetch, page_pause, |day, pages, releases| {
+                fetch::fetch_fts(db, client, archive, &target, refetch, page_pause, || false, |day, pages, releases| {
                     eprintln!("  {day}: page {pages}, {releases} releases so far");
                 })
                 .await

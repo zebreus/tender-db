@@ -314,7 +314,7 @@ async fn fts_window_follows_links_next_into_one_zip() {
 
     let mut progress = Vec::new();
     let started = std::time::Instant::now();
-    let outcome = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, |day, pages, releases| {
+    let outcome = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, || false, |day, pages, releases| {
         progress.push((day.to_owned(), pages, releases));
     })
     .await
@@ -366,12 +366,12 @@ async fn fts_window_follows_links_next_into_one_zip() {
     assert!(!archive.join("fts/daily/2026-09-03.zip.part").exists());
 
     // Known period, no refetch: no HTTP at all.
-    let again = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, |_, _, _| {}).await.unwrap();
+    let again = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, || false, |_, _, _| {}).await.unwrap();
     assert_eq!(again, Outcome::Unchanged);
     assert_eq!(hits.lock().unwrap().get(""), Some(&1));
 
     // Refetch of unchanged pages: re-walked, re-assembled, hashes equal — one row.
-    let refetched = fetch_fts(&db, &client, &archive, &t, true, Duration::ZERO, |_, _, _| {}).await.unwrap();
+    let refetched = fetch_fts(&db, &client, &archive, &t, true, Duration::ZERO, || false, |_, _, _| {}).await.unwrap();
     assert_eq!(refetched, Outcome::Unchanged, "a deterministic zip never versions itself");
     assert_eq!(hits.lock().unwrap().get(""), Some(&2));
     assert_eq!(db.latest_fetch("fts", "daily", "2026-09-03").await.unwrap().unwrap(), row);
@@ -407,7 +407,7 @@ async fn fts_window_resumes_from_staged_pages() {
     )
     .unwrap();
 
-    let outcome = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, |_, _, _| {}).await.unwrap();
+    let outcome = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, || false, |_, _, _| {}).await.unwrap();
     assert_eq!(outcome, Outcome::Fetched);
     {
         let hits = hits.lock().unwrap();
@@ -419,6 +419,55 @@ async fn fts_window_resumes_from_staged_pages() {
     assert_eq!(names, FTS_IDS.iter().map(|id| format!("{id}.json")).collect::<Vec<_>>());
     assert!(!staging.exists());
     assert!(db.latest_fetch("fts", "daily", "2026-09-03").await.unwrap().is_some());
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// The stop checkpoint (issue 450). A cancel read between two requests ends the
+/// walk with `Outcome::Stopped`: nothing lands or registers, page 1 and the
+/// cursor stay staged, and fetching the same target again resumes at page 2
+/// without asking page 1 again. Before, a running FTS fetch could not be
+/// cancelled at all, and job 1676's stuck cursor held the job runner until a
+/// deploy (issue 449).
+#[tokio::test]
+async fn a_stopped_fts_walk_lands_nothing_and_the_next_fetch_resumes_it() {
+    let (base, hits) = fts_server(vec![fixture_page(FTS_P1), fixture_page(FTS_P2)], (0, 0)).await;
+    let archive = temp_dir("fts-stopped");
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    let client = reqwest::Client::new();
+    let t = fts::day(&base, (2026, 9, 3));
+
+    // Asked once per request: let the first through, stop before the second.
+    let asked = std::sync::atomic::AtomicUsize::new(0);
+    let stop = || asked.fetch_add(1, Ordering::SeqCst) >= 1;
+    let mut progress = Vec::new();
+    let outcome = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, stop, |_, pages, releases| {
+        progress.push((pages, releases));
+    })
+    .await
+    .unwrap();
+    assert_eq!(outcome, Outcome::Stopped);
+    assert_eq!(progress, [(1, 5)], "one page walked before the stop");
+    assert_eq!(hits.lock().unwrap().get("p2"), None, "the stop came before page 2 was asked");
+    let staging = archive.join("fts/daily/2026-09-03.pages");
+    assert!(staging.join("2026-09-03-p001.json").exists(), "page 1 stays staged");
+    let cursor: Value = serde_json::from_slice(&std::fs::read(staging.join("cursor.json")).unwrap()).unwrap();
+    assert_eq!(cursor["page"], 1);
+    assert!(cursor["next"].as_str().unwrap().ends_with("cursor=p2"), "{cursor}");
+    assert!(!archive.join("fts/daily/2026-09-03.zip").exists(), "nothing lands");
+    assert!(db.latest_fetch("fts", "daily", "2026-09-03").await.unwrap().is_none(), "nothing registers");
+
+    let outcome = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, || false, |_, _, _| {}).await.unwrap();
+    assert_eq!(outcome, Outcome::Fetched);
+    {
+        let hits = hits.lock().unwrap();
+        assert_eq!(hits.get(""), Some(&1), "page 1 was staged: never asked again");
+        assert_eq!(hits.get("p2"), Some(&1));
+    }
+    let names: Vec<String> =
+        zip_members(&archive.join("fts/daily/2026-09-03.zip")).into_iter().map(|(n, _)| n).collect();
+    assert_eq!(names, FTS_IDS.iter().map(|id| format!("{id}.json")).collect::<Vec<_>>());
+    assert!(!staging.exists());
 
     let _ = std::fs::remove_dir_all(&archive);
 }
@@ -438,7 +487,7 @@ async fn fts_gives_up_after_five_throttled_attempts_with_staging_intact() {
     let client = reqwest::Client::new();
     let t = fts::day(&base, (2026, 9, 3));
 
-    let err = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, |_, _, _| {}).await.unwrap_err();
+    let err = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, || false, |_, _, _| {}).await.unwrap_err();
     assert!(matches!(err, ingest::fetch::Error::Throttled { .. }), "{err}");
     assert_eq!(hits.lock().unwrap().get("p2"), Some(&5), "five attempts, then it stops");
 
@@ -465,7 +514,7 @@ async fn a_release_without_an_id_is_archived_rather_than_failing_the_day() {
     let client = reqwest::Client::new();
     let t = fts::day(&base, (2026, 9, 3));
 
-    let outcome = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, |_, _, _| {}).await.unwrap();
+    let outcome = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, || false, |_, _, _| {}).await.unwrap();
     assert_eq!(outcome, Outcome::Fetched, "the day lands despite the defective release");
     let names: Vec<String> =
         zip_members(&archive.join("fts/daily/2026-09-03.zip")).into_iter().map(|(n, _)| n).collect();
@@ -492,7 +541,7 @@ async fn a_refetch_discards_staging_older_than_the_registered_package() {
     let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
     let client = reqwest::Client::new();
     let t = fts::day(&base, (2026, 9, 3));
-    fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, |_, _, _| {}).await.unwrap();
+    fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, || false, |_, _, _| {}).await.unwrap();
     let registered = db.latest_fetch("fts", "daily", "2026-09-03").await.unwrap().unwrap();
 
     // Debris: a cursor claiming the day is done, stamped BEFORE the landing.
@@ -508,7 +557,7 @@ async fn a_refetch_discards_staging_older_than_the_registered_package() {
         .set_modified(stale).unwrap();
 
     let before = hits.lock().unwrap().values().sum::<usize>();
-    let outcome = fetch_fts(&db, &client, &archive, &t, true, Duration::ZERO, |_, _, _| {}).await.unwrap();
+    let outcome = fetch_fts(&db, &client, &archive, &t, true, Duration::ZERO, || false, |_, _, _| {}).await.unwrap();
     assert_eq!(hits.lock().unwrap().values().sum::<usize>(), before + 1, "the day was re-walked");
     assert_eq!(outcome, Outcome::Unchanged, "same bytes, so no new version");
     assert!(!staging.exists(), "staging cleaned up after the landing");
@@ -526,7 +575,7 @@ async fn the_walk_forward_is_capped_per_tick_and_resumes_next_tick() {
     let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
     let client = reqwest::Client::new();
     // One registered day sets the watermark; the end is 50 days later.
-    fetch_fts(&db, &client, &archive, &fts::day(&base, (2026, 1, 1)), false, Duration::ZERO, |_, _, _| {})
+    fetch_fts(&db, &client, &archive, &fts::day(&base, (2026, 1, 1)), false, Duration::ZERO, || false, |_, _, _| {})
         .await
         .unwrap();
 
@@ -557,7 +606,7 @@ async fn fts_malformed_page_fails_with_staging_intact() {
     let client = reqwest::Client::new();
     let t = fts::day(&base, (2026, 9, 3));
 
-    let err = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, |_, _, _| {}).await.unwrap_err();
+    let err = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, || false, |_, _, _| {}).await.unwrap_err();
     assert!(matches!(err, ingest::fetch::Error::Malformed(_)), "{err}");
     let staging = archive.join("fts/daily/2026-09-03.pages");
     assert!(staging.join("2026-09-03-p001.json").exists(), "page 1 stays staged");
@@ -631,7 +680,7 @@ async fn a_stuck_paging_cursor_falls_back_to_hourly_windows_instead_of_looping()
     let target = fts::day(&base, (2025, 12, 10));
     let outcome = tokio::time::timeout(
         Duration::from_secs(30),
-        fetch_fts(&db, &client, &archive, &target, false, Duration::ZERO, |_, _, _| {}),
+        fetch_fts(&db, &client, &archive, &target, false, Duration::ZERO, || false, |_, _, _| {}),
     )
     .await
     .expect("a stuck cursor must not loop")
@@ -799,7 +848,7 @@ async fn fts_monthly_walks_every_civil_day_into_one_zip() {
     let t = fts::monthly(&base, (2021, 2));
 
     let mut days_seen = Vec::new();
-    let outcome = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, |day, _, _| {
+    let outcome = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, || false, |day, _, _| {
         days_seen.push(day.to_owned());
     })
     .await

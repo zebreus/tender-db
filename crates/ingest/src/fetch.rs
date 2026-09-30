@@ -34,6 +34,10 @@ pub enum Outcome {
     /// The server refused the period as out of range (400) — e.g. DÖE
     /// rejecting today/future days or months before its 2022-12 archive start.
     Rejected,
+    /// A cancel stopped a paged walk between two requests (issue 450). Nothing
+    /// landed; the staged pages and the cursor stay exactly as a crash would
+    /// leave them, so fetching the same target again resumes where it stopped.
+    Stopped,
 }
 
 #[derive(Debug)]
@@ -291,6 +295,7 @@ pub async fn fetch_fts(
     target: &Target,
     refetch: bool,
     page_pause: std::time::Duration,
+    stop: impl Fn() -> bool,
     mut on_progress: impl FnMut(&str, usize, usize),
 ) -> Result<Outcome, Error> {
     let base = match crate::fts::base_of(&target.url) {
@@ -352,6 +357,11 @@ pub async fn fetch_fts(
         // pages are named apart and overwritten in place, so a redo is idempotent.
         let mut stuck = false;
         while let Some(url) = next {
+            // The stop checkpoint (issue 450), read before every request. The
+            // cursor already names this request, so a re-run asks it first.
+            if stop() {
+                return Ok(Outcome::Stopped);
+            }
             if requests > 0 {
                 tokio::time::sleep(page_pause).await;
             }
@@ -381,6 +391,11 @@ pub async fn fetch_fts(
             for (hour, first) in hours.into_iter().enumerate() {
                 let (mut hour_page, mut hour_next) = (0usize, Some(first));
                 while let Some(url) = hour_next {
+                    // A stop here redoes the whole hourly walk on the re-run: the
+                    // cursor still names the stuck URL (see above).
+                    if stop() {
+                        return Ok(Outcome::Stopped);
+                    }
                     tokio::time::sleep(page_pause).await;
                     requests += 1;
                     let bytes = get_bytes(client, &url).await?;
@@ -460,7 +475,8 @@ pub async fn probe_fts_daily(
             tokio::time::sleep(page_pause).await;
         }
         let target = crate::fts::day(base, day);
-        let outcome = fetch_fts(db, client, archive_root, &target, false, page_pause, |_, _, _| {}).await?;
+        let outcome =
+            fetch_fts(db, client, archive_root, &target, false, page_pause, || false, |_, _, _| {}).await?;
         on_day(&target.period, &outcome);
         out.push((target.period.clone(), outcome));
         day = next_civil_day(day);

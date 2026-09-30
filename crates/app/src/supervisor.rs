@@ -2505,6 +2505,15 @@ fn orphan_sweep_plan(counted: &store::OrphanOrgSweep, swept_this_run: u64, dry_r
     .to_string()
 }
 
+/// Whether a running job reads the stop flag: every kind in [`STOPPABLE_KINDS`], and an
+/// FTS `fetch` (issue 450). `fetch` is not a stoppable KIND because only the FTS walk
+/// has a checkpoint: it is a paced walk of the paged API, read before every request,
+/// while a TED or DÖE fetch is one download with nothing between to check a flag at.
+/// Both enqueue paths name an FTS fetch `fts <kind> <period>`, and a test pins that.
+fn stoppable(kind: &str, params: &str) -> bool {
+    STOPPABLE_KINDS.contains(&kind) || (kind == "fetch" && params.starts_with("fts "))
+}
+
 const STOPPABLE_KINDS: &[&str] = &[
     "process",
     "reparse",
@@ -2656,7 +2665,7 @@ impl Supervisor {
         let Some(running) = self.current_progress().filter(|p| p.id == id) else {
             return Cancelled::Unknown;
         };
-        if !STOPPABLE_KINDS.contains(&running.kind.as_str()) {
+        if !stoppable(&running.kind, &running.params) {
             eprintln!(
                 "supervisor: job {id} is running as kind {} — nothing in its loop reads the \
                  stop flag, so it cannot be cancelled (issue 252)",
@@ -3192,6 +3201,7 @@ impl Supervisor {
     /// `an_execute_without_an_expected_count_is_refused` (CLAUDE.md's trap).
     async fn run_fetch_fts(
         &self,
+        job_id: u64,
         target: &fetch::Target,
         period: &str,
         refetch: bool,
@@ -3203,6 +3213,8 @@ impl Supervisor {
             target,
             refetch,
             std::time::Duration::from_secs(fts::PAGE_PAUSE_SECS),
+            // Read before every request (issue 450); see `stoppable`.
+            || self.cancelled(job_id),
             |day, pages, releases| {
                 self.update(|p| {
                     p.package = Some(format!("{period} · {day} p{pages} ({releases} releases)"));
@@ -3850,11 +3862,18 @@ impl Supervisor {
                 let outcome = if target.source == "fts" {
                     // Paged and self-assembled (issue 342); boxed twice over — see
                     // `run_fetch_fts` for why the walk stays off this frame.
-                    Box::pin(self.run_fetch_fts(&target, period, *refetch)).await
+                    Box::pin(self.run_fetch_fts(job.id, &target, period, *refetch)).await
                 } else {
                     Box::pin(self.run_fetch(&target, *refetch)).await
                 }
                 .map_err(|e| e.to_string())?;
+                if outcome == fetch::Outcome::Stopped {
+                    return Ok(format!(
+                        "CANCELLED at a checkpoint — {} {} {period}: nothing landed; the staged pages \
+                         and cursor are kept, so fetching it again resumes where it stopped",
+                        target.source, target.kind
+                    ));
+                }
                 self.update(|p| p.packages_done = 1);
                 Ok(format!("{outcome:?}"))
             }
@@ -12851,6 +12870,81 @@ mod tests {
             .unwrap();
         assert_eq!(ids.len(), 1);
         assert_eq!(sup.queued().last().unwrap().params, "fts daily 2026-09-03");
+    }
+
+    /// Issue 450: a running FTS fetch can be cancelled, because its paged walk reads the
+    /// flag before every request; a TED or DÖE fetch is one download, and cancel still
+    /// answers 409 for it rather than promise a stop nothing would read. `stoppable`
+    /// tells them apart by the params, so the params both FTS enqueue paths produce
+    /// are pinned here.
+    #[tokio::test]
+    async fn a_running_fts_fetch_can_be_cancelled_and_a_single_download_cannot() {
+        let sup = Arc::new(Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new()));
+        sup.enqueue_request(&JobRequest {
+            kind: "backfill".into(),
+            source: Some("fts".into()),
+            range: Some(["2025-06".into(), "2025-06".into()]),
+            ..Default::default()
+        })
+        .await
+        .unwrap();
+        sup.enqueue_request(&JobRequest {
+            kind: "fetch".into(),
+            source: Some("fts".into()),
+            package_kind: Some("daily".into()),
+            period: Some("2026-09-03".into()),
+            ..Default::default()
+        })
+        .await
+        .unwrap();
+        sup.enqueue_request(&JobRequest {
+            kind: "fetch".into(),
+            source: Some("ted".into()),
+            period: Some("2026-00136".into()),
+            ..Default::default()
+        })
+        .await
+        .unwrap();
+        let fetches: Vec<(String, bool)> = sup
+            .queued()
+            .iter()
+            .filter(|j| j.kind == "fetch")
+            .map(|j| (j.params.clone(), stoppable(&j.kind, &j.params)))
+            .collect();
+        assert_eq!(
+            fetches,
+            [
+                ("fts monthly 2025-06".to_owned(), true),
+                ("fts daily 2026-09-03".to_owned(), true),
+                ("ted daily 2026-00136".to_owned(), false),
+            ]
+        );
+
+        let running = |params: &str| {
+            Some(JobProgress {
+                id: 7,
+                kind: "fetch".to_owned(),
+                params: params.to_owned(),
+                started_at: 0,
+                package: None,
+                packages_done: 0,
+                packages_total: 0,
+                members_done: 0,
+                members_total: 0,
+                notices: 0,
+                duplicates: 0,
+                phase: None,
+            })
+        };
+        sup.set_current(running("ted daily 2026-00136"));
+        assert_eq!(sup.cancel(7).await, Cancelled::Unstoppable("fetch".to_owned()));
+        assert!(!sup.cancelled(7));
+        sup.set_current(running("doe monthly 2024-01"));
+        assert_eq!(sup.cancel(7).await, Cancelled::Unstoppable("fetch".to_owned()));
+        assert!(!sup.cancelled(7));
+        sup.set_current(running("fts monthly 2026-01"));
+        assert!(matches!(sup.cancel(7).await, Cancelled::Stopping { .. }));
+        assert!(sup.cancelled(7), "the flag the walk reads is set");
     }
 
     /// The EU DST rule: CET in winter, CEST in summer, switching on the last

@@ -293,7 +293,9 @@ curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/41
 #                             case-review-backlog, fold-org-countries,
 #                             fusion-census, rehoming-packet,
 #                             satellite-orphans, drop-orphan-satellites,
-#                             anchor-wall-census, xb-packet
+#                             anchor-wall-census, xb-packet, … — plus an FTS
+#                             `fetch` (issue 450: `stoppable` in supervisor.rs).
+#                             A TED/DÖE fetch is one download and answers 409.
 #   404                       no such job
 # A cancelled data-quality run stores NOTHING: a half-measured report would read like a
 # whole-corpus one, so the previous report stands.
@@ -309,7 +311,9 @@ curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' 
 # not restart. Read job_log for `throttled` errors and re-enqueue those months.
 # The API's paging cursor can stick (issue 449: every `links.next` names the page just
 # fetched). The fetcher then re-walks that day hour by hour; if even one hour sticks, the job
-# fails with staging intact. A fetch job has no stop checkpoint: `/cancel` answers 409.
+# fails with staging intact. A running FTS fetch can be cancelled (issue 450): the walk reads the
+# flag before every request, ends `CANCELLED at a checkpoint` with nothing landed, and keeps
+# its staged pages and cursor, so re-enqueueing the same month resumes where it stopped.
 curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
   -d '{"kind":"backfill","source":"fts","range":["2025-07","2026-08"]}' $BASE/admin/jobs
 
