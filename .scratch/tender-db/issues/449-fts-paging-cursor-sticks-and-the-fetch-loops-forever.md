@@ -1,8 +1,6 @@
 # 449 — the FTS API's paging cursor can stick; the fetcher followed it forever and blocked the job runner
 
-Status: DEPLOYED 2026-09-30 ~02:0x UTC (rev `d429b8b`, `FORCE_BUSY=1` over the looping job, as the fix). Observed live: job 1676 resumed at the stuck URL (page 164), tripped the guard, and began the hourly walk. `2025-12-10-h00…` pages are landing in staging. Close once 1676 ends `ok` and the Verify is read.
-the only way to stop the looping job, because fetch jobs have no stop checkpoint (`POST /admin/jobs/1676/cancel`
-answered 409 "no stop checkpoint").
+Status: DONE 2026-09-30. Deployed ~01:10 UTC (rev `d429b8b`, with `FORCE_BUSY=1` over the looping job, the only way to stop it, since fetch jobs have no stop checkpoint and `POST /admin/jobs/1676/cancel` answered 409). Job 1676 resumed at the stuck URL (page 164), tripped the guard, walked 2025-12-10 hour by hour and ended `ok` at 01:32 UTC. Verified below.
 Kind: operations / ingestion correctness (FTS), urgent: it blocks the single job runner in front of the 07:35 UTC tick
 Relates to: 342 (the FTS fetcher, the backfill in chunks), 252/250 (the cancel checkpoints fetch lacks)
 
@@ -44,3 +42,11 @@ if a stuck API ever needs a manual stop again.
 
 After deploy: job 1676 ends `ok`, then `fetch fts monthly 2026-01` starts. `unzip -l /data/archive/fts/monthly/2025-12.zip`
 has a plausible December count, compared with the neighbouring months' zips and the research §7 daily counts.
+
+### Verified 2026-09-30 01:40 UTC
+
+Job 1676 (`fetch fts monthly 2025-12`) ended `ok` 01:32 UTC; `fetch fts monthly 2026-01` (1677) started at once.
+Archive member counts, `unzip -l` on the box: 2025-09 8,429 · 2025-10 9,104 · 2025-11 7,984 · **2025-12 8,260** (19 MB),
+so December sits inside its neighbours' band (a Christmas-shortened month, slightly under October/November).
+992 of December's members are `081xxx-2025` notices, the id range the stuck day published under, so the hourly walk
+recovered the day rather than skipping it. The staging directory was removed after assembly, as for a clean month.
