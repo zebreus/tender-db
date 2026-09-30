@@ -1,6 +1,7 @@
 # 450 — an FTS fetch job cannot be cancelled, so a misbehaving API holds the single job runner until a deploy
 
-Status: needs-info — DEPLOYED 2026-09-30 ~02:27 UTC (rev `7f24c30`, health green, 0 error lines). The first half of the Verify reads done. The live half, a cancel on a running FTS fetch, needs a month that is re-fetched anyway; the next such month is any throttled month of the backfill (342).
+Status: needs-info — LIVE CANCEL VERIFIED 2026-09-30 16:59 UTC (job 1727, rev `e156b88`): `cancel` answered `{"state":"stopping"}` and the job ended `ok`, `CANCELLED at a checkpoint`, 36 s in. The last clause, "re-enqueueing the month resumes from its staged pages", reads off chunk 4's 2024-12 fetch (job 1735); close on that.
+Was status: needs-info — DEPLOYED 2026-09-30 ~02:27 UTC (rev `7f24c30`, health green, 0 error lines). The first half of the Verify reads done. The live half, a cancel on a running FTS fetch, needs a month that is re-fetched anyway; the next such month is any throttled month of the backfill (342).
 Was status: ready-for-agent — BUILT 2026-09-30 (`94fcbae`, gated green; two review tweaks after it: the stop is read after the page pause, and one comment's edge case is corrected). A two-lens adversarial review (resume correctness; the cancel contract) found no defect. Deploys with 448 unit 1 when the box queue is idle; the Verify's live half waits for a month that is re-fetched anyway.
 Was status: ready-for-agent — filed 2026-09-30 02:0x UTC from issue 449's "Not fixed here", which named the follow-up
 and did not file it.
@@ -62,3 +63,16 @@ has the same single exit: a deploy.
   - re-enqueueing a stopped *refetch* of a registered month as a plain fetch answers `Unchanged` and leaves the
     staging in place, the same as after a crash or a throttle error; re-enqueue it with `refetch: true`;
   - `TENDER_DROP_JOBS` plus a restart was the other existing exit, besides a deploy.
+
+## 2026-09-30 16:59 UTC — the live half, on prod
+
+2024-12 is a month backfill chunk 4 fetches anyway. It was fetched alone first (job 1727,
+`{"kind":"fetch","source":"fts","package_kind":"monthly","period":"2024-12"}`), then cancelled once the walk
+passed its first page. The job read `2024-12 · 2024-12-02 p2 (182 releases)`.
+
+- `POST /admin/jobs/1727/cancel` returned
+  `{"cancelled":1727,"kind":"fetch","state":"stopping","in_flight":null,…}`. Before the fix it was a 409.
+- The job row: `ok | CANCELLED at a checkpoint — fts monthly 2024-12: nothing landed; the staged pages and cursor
+  are kept, so fetching it again resumes where it stopped`, 36 s after it started.
+- Chunk 4 (`backfill` 2024-05 → 2024-12, jobs 1728–1737) re-fetches 2024-12 as job 1735. Its progress line should
+  start past `2024-12-02 p2`, not at `2024-12-01 p1`. That reading closes the Verify.
