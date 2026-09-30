@@ -1,6 +1,7 @@
 # 342 — sources beyond TED and DÖE ("international"): nothing exists, the entry contract does
 
-Status: ready-for-agent — backfill chunks 1–3 landed (FTS now 2025-01 → today; chunk 3 = jobs 1719–1725, ok 16:11 UTC 2026-09-30). NEXT: chunk 4 (2024-05 → 2024-12) on the next idle queue after the 453 deploy, then 2021-01 → 2024-04 in ≤8-month chunks on idle queues ≥4 h before the 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
+Status: ready-for-agent — backfill chunk 4 (2024-05 → 2024-12) ENQUEUED 2026-09-30 17:00 UTC (jobs 1728–1737) after the 453 deploy; chunks 1–3 landed (FTS 2025-01 → today). NEXT: read 1737, then 2021-01 → 2024-04 in ≤8-month chunks on idle queues ≥4 h before the 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
+Was status: ready-for-agent — backfill chunks 1–3 landed (FTS now 2025-01 → today; chunk 3 = jobs 1719–1725, ok 16:11 UTC 2026-09-30). NEXT: chunk 4 (2024-05 → 2024-12) on the next idle queue after the 453 deploy, then 2021-01 → 2024-04 in ≤8-month chunks on idle queues ≥4 h before the 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
 Was status: ready-for-agent — backfill CHUNK 3 (2025-01 → 2025-05) ENQUEUED 2026-09-30 14:5x UTC (jobs 1719–1725); chunks 1–2 landed (FTS now 2025-06 → today). NEXT: read 1725, then 2021-01 → 2024-12 in ≤8-month chunks on idle queues ≥4 h before the 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
 Was status: ready-for-agent — unit 2 COMPLETE. Docs (step 12) DONE (`18d59a2`). `bids.statistics` fix DEPLOYED and VERIFIED 2026-09-29 (`54a00be` + `83ee914`; reparse job 1663, project 1664): phantom STAT- results 14,870 → 0. NEXT: the backfill, in chunks that leave the daily tick room (see the foot). Plan: `.scratch/tender-db/342-fts-plan.md`.
 issues for that"). No non-TED/DÖE source has ever been researched for onboarding;
@@ -536,3 +537,9 @@ ends well before the 07:35 UTC tick.
   carried for a merged pair.
 - Five months took ~70 min end to end, so an 8-month chunk is ~2 h. Chunk 4 (2024-05 → 2024-12) waits for the
   issue-453 deploy (queued behind the gate running now) so the deploy does not wait on it.
+
+### 2026-09-30 17:00 UTC — chunk 4 enqueued
+
+`{"kind":"backfill","source":"fts","range":["2024-05","2024-12"]}` → jobs 1728–1737 (eight monthly fetches, then
+process 1736 and project 1737). `/data` was at 74% (448 GB free). The 2024-12 fetch (job 1735) resumes from the pages
+issue 450's live cancel check (job 1727) left staged.
