@@ -6021,6 +6021,12 @@ impl Supervisor {
                                 "witness_publications": l.witness_publications,
                                 "coh_partners": l.coh_partners, "ppon_partners": l.ppon_partners,
                                 "first_coh": l.first_coh, "first_ppon": l.first_ppon,
+                                // Unit 3b: what a reviewer reads the pair by.
+                                "coh_names": l.coh_names, "ppon_names": l.ppon_names,
+                                "coh_name_keys": l.coh_name_keys, "ppon_name_keys": l.ppon_name_keys,
+                                "corroborated_by": l.corroborated_by,
+                                "cooccurring": l.cooccurring,
+                                "cooccur_publications": l.cooccur_publications,
                             })
                         })
                         .collect::<Vec<_>>()
@@ -6069,6 +6075,14 @@ impl Supervisor {
                     "no_target_both": r.no_target_both,
                     "both_distinct": r.both_distinct,
                 });
+                // Over the plan this report stores, like `plan_pairs`: after a
+                // wet run that is the residual, so the live plan's count would
+                // sit beside a plan it no longer describes (unit 3b review).
+                let plan_cooccurring = if dry_run {
+                    r.plan_cooccurring as usize
+                } else {
+                    plan_listing.iter().filter(|l| l.cooccurring > 0).count()
+                };
                 let gates = serde_json::json!({
                     // Structural gates.
                     "denied_gate": r.denied_gate,
@@ -6091,6 +6105,7 @@ impl Supervisor {
                     "denied_form_conflict": r.denied_form_conflict,
                     "denied_generic": r.denied_generic,
                     "denied_pairs": r.denied_pairs(),
+                    "plan_cooccurring": plan_cooccurring,
                     // The R3 panel's catch: a blind wall's zero is not a readable one.
                     "generic_wall_readable": keys > 0,
                     "residual_of_wet_run": !dry_run,
@@ -6146,7 +6161,7 @@ impl Supervisor {
                      {} consortium, {} legal-form, {} evidence-wall, {} loser-incoherent, {} \
                      verdict-keep, {} uncorroborated-overlap, {} uncorroborated-disjoint, {} \
                      witness-only, {} form-conflict, {} generic; {} conflicts; {} verdict-admitted, {} verdicts stale; plan {} \
-                     pairs{}",
+                     pairs ({} with both orgs as distinct parties of one notice){}",
                     r.fts_notices,
                     r.pairs_seen,
                     r.literal_pairs,
@@ -6176,6 +6191,7 @@ impl Supervisor {
                     r.admitted_verdict,
                     r.verdict_stale,
                     r.plan_pairs,
+                    r.plan_cooccurring,
                     if keys == 0 {
                         " — NOTE: org_match_keys is EMPTY, so the generic-name wall saw \
                          nothing and denied nothing"
@@ -13638,6 +13654,11 @@ mod tests {
         assert_eq!(v["both_distinct"], 1, "{body}");
         assert_eq!(v["plan"][0]["keep"], 1, "the company-number org survives: {body}");
         assert_eq!(v["plan"][0]["witness_publications"], serde_json::json!(["ocds-a"]), "{body}");
+        // Unit 3b: the reviewer's evidence rides the listing.
+        assert!(v["plan"][0]["corroborated_by"].as_array().is_some_and(|p| p.len() == 2), "{body}");
+        assert!(v["plan"][0]["coh_names"].as_array().is_some_and(|n| !n.is_empty()), "{body}");
+        assert_eq!((v["plan"][0]["cooccurring"].clone(), v["plan_cooccurring"].clone()), (0.into(), 0.into()), "{body}");
+        assert!(msg.contains("plan 1 pairs (0 with both orgs as distinct parties"), "{msg}");
         assert_eq!(v["generic_wall_readable"], true, "{body}");
         assert_eq!(v["residual_of_wet_run"], false, "{body}");
         assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM organizations").await, 2, "dry wrote nothing");

@@ -541,13 +541,15 @@ async fn an_overlapping_sister_name_lists_as_overlap_not_merge() {
     assert_eq!(gate_of(COH_B), "uncorroborated-disjoint");
 }
 
-/// Unit 1b, the shape dry job 1681 planned on prod: witnesses publish Altrad
-/// Babcock's name and PPON beside AMENTUM's company number, company number
-/// first. The fold binds those mentions to the company-number org and records
-/// the witness name as its satellite, so its designated names "agree" with the
-/// PPON org's. Every name either org carries from ANY OTHER notice disagrees,
-/// so the pair lists as `witness-only`, never as a merge. A reviewer's HIGH
-/// merge verdict still admits it, which is the path a real rename takes.
+/// Unit 1b: witnesses publish another supplier's name beside a company number,
+/// company number first. The fold binds those mentions to the company-number
+/// org and records the witness name as its satellite, so its designated names
+/// "agree" with the PPON org's. Every name either org carries from ANY OTHER
+/// notice disagrees, so the pair lists as `witness-only`, never as a merge. A
+/// reviewer's HIGH merge verdict still admits it, which is the path a real
+/// rename takes. (Unit 1 read this shape into dry job 1681's Amentum pair. The
+/// backfill showed that pair TRUE — PBDC-7744-BTPG is Amentum's own PPON, and
+/// the Altrad name was a publisher's mislabel — but the circularity is real.)
 #[tokio::test]
 async fn a_name_only_the_witnesses_recorded_never_corroborates() {
     let b = bed("witness-only").await;
@@ -568,10 +570,57 @@ async fn a_name_only_the_witnesses_recorded_never_corroborates() {
     assert_eq!((r.denied_witness_only, r.plan_pairs, r.uncorroborated_overlap), (1, 0, 0), "{r:#?}");
     assert_eq!(r.denied_listing[0].gate, "witness-only");
     assert_eq!(r.denied_listing[0].keep, Some(1));
+    // Unit 3b: the reviewer sees the names that disagree, and nothing cleared.
+    assert_eq!(r.denied_listing[0].coh_names, vec!["Amec Foster Wheeler Nuclear UK Limited".to_owned()]);
+    assert_eq!(r.denied_listing[0].ppon_names, vec!["Altrad Babcock Limited".to_owned()]);
+    assert_eq!(r.denied_listing[0].corroborated_by, None);
 
     b.verdict(COH_A, PPON_P, vec![1, 2], "merge", "high").await;
     let r = b.plan().await;
     assert_eq!((r.admitted_verdict, r.plan_pairs, r.denied_witness_only), (1, 1, 0));
+}
+
+/// Unit 3b, the prod shape the backfill showed (2026-09-30): Amentum's PPON
+/// org is headed `Altrad Babcock Limited` because one publisher listed Altrad
+/// Babcock under Amentum's PPON, as a SECOND party beside Amentum itself. The
+/// listing carries what a reviewer reads that by: each side's witness-free
+/// names (the stray among them), the names that cleared, and the notice where
+/// both orgs are distinct parties. The co-occurrence is counted, never gated.
+#[tokio::test]
+async fn a_listing_carries_the_names_a_reviewer_reads_and_the_cooccurring_notices() {
+    let b = bed("reviewer-evidence").await;
+    b.org(1, COH_A, "Amentum Clean Energy Limited").await;
+    b.org(2, PPON_P, "Altrad Babcock Limited").await;
+    for n in [90, 100, 101, 102] {
+        b.notice(n, "fts:ocds-1.1").await;
+    }
+    b.party(90, "H", Some(1), "GB", &[COH_A]).await;
+    b.party(100, "W", Some(1), "GB", &[COH_A, PPON_P]).await;
+    b.party_named(101, "P", Some(2), "GB", &[PPON_P], "Amentum Clean Energy Ltd").await;
+    // The mislabel: Amentum by its number, and Altrad Babcock by Amentum's PPON.
+    b.party(102, "A", Some(1), "GB", &[COH_A]).await;
+    b.party(102, "B", Some(2), "GB", &[PPON_P]).await;
+
+    let r = b.plan().await;
+    assert_eq!((r.plan_pairs, r.plan_cooccurring), (1, 1), "{r:#?}");
+    let l = &r.plan_listing[0];
+    assert_eq!(l.coh_names, vec!["Amentum Clean Energy Limited".to_owned()]);
+    assert_eq!(l.ppon_names, vec!["Altrad Babcock Limited".to_owned(), "Amentum Clean Energy Ltd".to_owned()]);
+    assert_eq!(
+        l.corroborated_by,
+        Some(("Amentum Clean Energy Limited".to_owned(), "Amentum Clean Energy Ltd".to_owned()))
+    );
+    assert_eq!((l.coh_name_keys, l.ppon_name_keys), (1, 2));
+    assert_eq!((l.cooccurring, l.cooccur_publications.clone()), (1, vec!["pub-102".to_owned()]));
+    assert_eq!(l.witness_publications, vec!["pub-100".to_owned()]);
+
+    // The review's case: the witness notice ALSO lists the supplier under its
+    // PPON alone, as a second party bound to the PPON org. The notice asserts
+    // the pair, so that is one supplier listed twice, not two parties.
+    b.party(100, "W2", Some(2), "GB", &[PPON_P]).await;
+    let r = b.plan().await;
+    assert_eq!((r.plan_pairs, r.plan_cooccurring), (1, 1), "{r:#?}");
+    assert_eq!(r.plan_listing[0].cooccur_publications, vec!["pub-102".to_owned()]);
 }
 
 /// The other side of unit 1b's rule: an org made of the witness mentions ALONE

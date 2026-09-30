@@ -2463,6 +2463,32 @@ pub struct AltIdListing {
     /// (`fts/parse.rs`), and an additional one then takes ordinal 0.
     pub first_coh: u64,
     pub first_ppon: u64,
+    // ---- Unit 3b: what a reviewer reads a pair by. Empty when the pair never
+    // reached two standing orgs.
+    /// The names each side's corroboration reads (its mentions outside the
+    /// pair's witnesses, or the fallbacks), one per altid name key, the first
+    /// `ALTID_LISTING_NAMES` in key order; `*_name_keys` says how many there
+    /// are. A head name can be a stray: the PPON org of Amentum Clean Energy
+    /// was headed `Altrad Babcock Limited` by three mislabelled mentions among
+    /// fourteen (2026-09-30).
+    pub coh_names: Vec<String>,
+    pub ppon_names: Vec<String>,
+    pub coh_name_keys: u64,
+    pub ppon_name_keys: u64,
+    /// The (company-number side, PPON side) names whose agreement cleared the
+    /// generic wall, whether or not the capped lists show them. `None` for a
+    /// denied pair and a verdict-admitted one.
+    pub corroborated_by: Option<(String, String)>,
+    /// Notices, the pair's own witnesses excepted, where BOTH orgs carry a
+    /// mention: two distinct parties of one notice. A wrong pair shows it; so
+    /// does a true pair beside a publisher that gave one supplier the other's
+    /// identifier. A witness is left out because it asserts the pair: a second
+    /// party there under the PPON alone is the same supplier listed twice.
+    /// Counted, never gated; the first three's notice ids, and their
+    /// publication ids for a listed pair.
+    pub cooccurring: u64,
+    pub cooccur_notices: Vec<i64>,
+    pub cooccur_publications: Vec<String>,
 }
 
 impl AltIdListing {
@@ -2561,6 +2587,10 @@ pub struct AltIdMergeReport {
     pub denied_form_conflict: u64,
     // ---- The plan.
     pub plan_pairs: u64,
+    /// Unit 3b: planned pairs whose two orgs are distinct parties of at least
+    /// one notice (`AltIdListing::cooccurring`), measured before any gate
+    /// reads it.
+    pub plan_cooccurring: u64,
     /// The planned `<coh>~<ppon>` keys, sorted and UNCAPPED — the set a wet run
     /// will hold its live plan against. On a wet run, the LIVE plan.
     pub pairs: Vec<String>,
@@ -2639,6 +2669,9 @@ impl AltIdMergeReport {
 /// Issue 448: how many pairs of each no-target class the altid plan lists — a
 /// sample to read the class by, not the class (the counts are whole).
 const ALTID_NO_TARGET_SAMPLE: usize = 50;
+
+/// Issue 448 unit 3b: the names per side an altid listing carries.
+pub const ALTID_LISTING_NAMES: usize = 8;
 
 /// Issue 448, the altid harvest's reads — one constant each, so the plan guard
 /// (`the_harvest_seeks_notices_profile_and_the_notice_ids_pk`) EXPLAINs exactly
@@ -15148,18 +15181,15 @@ impl Db {
             }
             Ok((keys, names))
         }
-        // Up to three witnesses' publication ids, for the listings.
-        async fn witness_publications(
+        // Up to three notices' publication ids, for the listings.
+        async fn publications(
             conn: &Connection,
-            pair: &Pair,
+            notices: impl Iterator<Item = i64>,
         ) -> turso::Result<Vec<String>> {
             let mut out = Vec::new();
-            for notice in pair.witnesses.keys().take(3) {
+            for notice in notices.take(3) {
                 let mut rows = conn
-                    .query(
-                        "SELECT publication_id FROM notices WHERE id = ?",
-                        (Value::Integer(*notice),),
-                    )
+                    .query("SELECT publication_id FROM notices WHERE id = ?", (Value::Integer(notice),))
                     .await?;
                 if let Some(row) = rows.next().await? {
                     out.push(text(&row, 0));
@@ -15167,9 +15197,13 @@ impl Db {
             }
             Ok(out)
         }
+        async fn witness_publications(conn: &Connection, pair: &Pair) -> turso::Result<Vec<String>> {
+            publications(conn, pair.witnesses.keys().copied()).await
+        }
 
         // A capped listing: the publication ids are read only for what fits —
-        // one primary-key seek of `notices` per witness, at most three per pair
+        // one primary-key seek of `notices` per witness or co-occurring
+        // notice, at most three of each per pair
         // (~6k seeks for a plan of ~2k pairs). The plan listing's cap is
         // `AltIdMergeArgs::plan_listing_cap` (every planned pair, unit 3's
         // campaign prerequisite); the denied and conflict listings keep R2's.
@@ -15186,6 +15220,7 @@ impl Db {
                 return Ok(());
             }
             listing.witness_publications = witness_publications(conn, pair).await?;
+            listing.cooccur_publications = publications(conn, listing.cooccur_notices.iter().copied()).await?;
             list.push(listing);
             Ok(())
         }
@@ -15313,6 +15348,48 @@ impl Db {
             }
             let (c_names, p_names) = (&names[&c.id], &names[&p.id]);
             listing.keep = Some(c.id);
+            // The names corroboration reads (unit 1b). A witness's party name is
+            // the statement under test: the fold records it on the org the
+            // party's FIRST identifier binds, so reading it back as agreement is
+            // circular. So each side reads the names of its mentions OUTSIDE the
+            // pair's witness notices. A side with no such mention is an org made
+            // of the witnesses alone, so its witness names stand in: merging it
+            // moves only what the witnesses put there. That holds on the
+            // company-number side too, where the merge moves the PPON org's
+            // history onto it: both orgs are then the one party the names agree
+            // on, and a wrong number on that org is a standing fault the merge
+            // neither makes nor hides (the review's case, weighed 2026-09-30). A
+            // side with no mention at all falls back to its designated names.
+            let side = |org: i64, designated: &[String]| -> BTreeMap<String, String> {
+                let rows = &mention_names[&org];
+                // Decided on ROWS, not keyed names: an org with a mention
+                // outside the witnesses is not made of them, even when that
+                // mention's name is blank or keys to nothing.
+                if rows.iter().any(|(n, _)| !pair.witnesses.contains_key(n)) {
+                    altid_keyed(
+                        rows.iter().filter(|(n, _)| !pair.witnesses.contains_key(n)).map(|(_, name)| name),
+                        args.name_key,
+                    )
+                } else if !rows.is_empty() {
+                    altid_keyed(rows.iter().map(|(_, name)| name), args.name_key)
+                } else {
+                    altid_keyed(designated.iter(), args.name_key)
+                }
+            };
+            let (cs, ps) = (side(c.id, c_names), side(p.id, p_names));
+            listing.coh_names = cs.values().take(ALTID_LISTING_NAMES).cloned().collect();
+            listing.ppon_names = ps.values().take(ALTID_LISTING_NAMES).cloned().collect();
+            (listing.coh_name_keys, listing.ppon_name_keys) = (cs.len() as u64, ps.len() as u64);
+            // Both orgs as distinct parties of one notice, read off the mention
+            // rows already in hand; the pair's own witnesses are not counted.
+            let c_notices: HashSet<i64> = mention_names[&c.id].iter().map(|(n, _)| *n).collect();
+            let shared: BTreeSet<i64> = mention_names[&p.id]
+                .iter()
+                .map(|(n, _)| *n)
+                .filter(|n| c_notices.contains(n) && !pair.witnesses.contains_key(n))
+                .collect();
+            listing.cooccurring = shared.len() as u64;
+            listing.cooccur_notices = shared.iter().take(3).copied().collect();
             let mut members = vec![
                 (c.id, c.kind.clone(), c.literal.clone(), c_names.first().cloned().unwrap_or_default()),
                 (p.id, p.kind.clone(), p.literal.clone(), p_names.first().cloned().unwrap_or_default()),
@@ -15455,48 +15532,11 @@ impl Db {
                     .await?;
                     continue;
                 }
-                // Positive corroboration: ONE pair of agreeing altid name keys
-                // (`names_agree`: equal, or equal but for a legal form one side
-                // omits). Strict otherwise — `Acme UK Ltd` is not `Acme Ltd`, and
-                // `Acme plc` is not either.
+                // Positive corroboration over the names `side` read above (the
+                // witness-free ones). The pure predicate is ONE fn,
+                // `altid_corroborates`, shared with the resolver alias (unit 3):
+                // what it is fed stays here.
                 //
-                // The names come from each org's mentions OUTSIDE this pair's
-                // witness notices (unit 1b). A witness's party name is the
-                // statement under test: the fold records it on the org the
-                // party's FIRST identifier binds, so reading it back as agreement
-                // is circular. On prod that planned Amentum Clean Energy (COH
-                // 01120437) <- an `Altrad Babcock Limited` PPON org: four
-                // witnesses wrote Altrad Babcock's name and PPON beside Amentum's
-                // company number, and that name became the COH org's satellite
-                // (dry job 1681). A side with NO mention outside the witnesses is
-                // an org made of them alone, so its witness names stand in:
-                // merging it moves only what the witnesses put there. That holds
-                // on the company-number side too, where the merge moves the PPON
-                // org's history onto it: both orgs are then the one party the
-                // names agree on, and the number that org carries is the one the
-                // witnesses already gave it — a wrong number is a standing fault
-                // the merge neither makes nor hides (the review's case, weighed
-                // 2026-09-30). A side with no mention at all falls back to its
-                // designated names: no witness party's name reached it.
-                // The pure predicate is ONE fn, `altid_corroborates`, shared
-                // with the resolver alias (unit 3): what it is fed stays here.
-                let side = |org: i64, designated: &[String]| -> BTreeMap<String, String> {
-                    let rows = &mention_names[&org];
-                    // Decided on ROWS, not keyed names: an org with a mention
-                    // outside the witnesses is not made of them, even when that
-                    // mention's name is blank or keys to nothing.
-                    if rows.iter().any(|(n, _)| !pair.witnesses.contains_key(n)) {
-                        altid_keyed(
-                            rows.iter().filter(|(n, _)| !pair.witnesses.contains_key(n)).map(|(_, name)| name),
-                            args.name_key,
-                        )
-                    } else if !rows.is_empty() {
-                        altid_keyed(rows.iter().map(|(_, name)| name), args.name_key)
-                    } else {
-                        altid_keyed(designated.iter(), args.name_key)
-                    }
-                };
-                let (cs, ps) = (side(c.id, c_names), side(p.id, p_names));
                 // Legal forms across every name the agreement reads: GB forms on
                 // both sides and none shared is a plc beside a Ltd, whichever
                 // names the heads carry. A formless name would otherwise agree
@@ -15580,6 +15620,7 @@ impl Db {
                     if !over {
                         clear = true;
                         corroborated_by = (args.name_key)(a);
+                        listing.corroborated_by = Some((a.clone(), b.clone()));
                         break;
                     }
                 }
@@ -15602,6 +15643,9 @@ impl Db {
 
             // ---- The plan: the PPON org folds into the company-number org.
             report.plan_pairs += 1;
+            if listing.cooccurring > 0 {
+                report.plan_cooccurring += 1;
+            }
             report.pairs.push(format!("{coh}~{ppon}"));
             if !args.dry_run {
                 planned.push(AltIdPlanned {
