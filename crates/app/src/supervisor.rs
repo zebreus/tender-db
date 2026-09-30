@@ -11434,13 +11434,17 @@ impl Supervisor {
                 return;
             }
         };
-        let probe_queued =
-            self.queue.lock().expect("queue lock").iter().any(|j| j.kind == "probe");
-        if !tick_needs_catch_up(tick, now, &runs, probe_queued) {
-            return;
-        }
         let weekday = weekday_of(day);
         let weekday = weekday != 0 && weekday != 6;
+        let probe_queued = self
+            .queue
+            .lock()
+            .expect("queue lock")
+            .iter()
+            .any(|j| j.kind == "probe" && (!weekday || j.params.starts_with("ted ")));
+        if !tick_needs_catch_up(tick, now, &runs, probe_queued, weekday) {
+            return;
+        }
         println!(
             "[scheduler] the 09:35 Berlin tick passed unserved {}s ago — running today's daily now (issue 245)",
             now - tick
@@ -12210,13 +12214,23 @@ fn berlin_tick_on(day: i64, hour: i64, minute: i64) -> i64 {
 /// Deliberately keyed on `probe` rather than on any daily job: `project` is pushed by
 /// every maintenance refold too (the same conflation that made `ingest_freshness`
 /// lie), and `process` succeeds trivially when there is nothing to process.
-fn tick_needs_catch_up(tick: i64, now: i64, runs: &[JobRun], probe_queued: bool) -> bool {
+///
+/// On a weekday it is TED's probe that serves the tick (issue 451): the DÖE and FTS
+/// probes of the same tick succeed on their own, so "any probe ok" read a morning
+/// whose TED probe failed (2026-09-30, a WAF challenge) as served, and a restart
+/// inside the catch-up window then dropped TED's day until the next tick. A weekend
+/// tick pushes no TED probe, so any probe serves it. The caller filters
+/// `probe_queued` the same way.
+fn tick_needs_catch_up(tick: i64, now: i64, runs: &[JobRun], probe_queued: bool, weekday: bool) -> bool {
     if tick > now || probe_queued {
         return false;
     }
-    !runs
-        .iter()
-        .any(|r| r.kind == "probe" && r.outcome == "ok" && r.finished_at >= tick)
+    !runs.iter().any(|r| {
+        r.kind == "probe"
+            && r.outcome == "ok"
+            && r.finished_at >= tick
+            && (!weekday || r.params.starts_with("ted "))
+    })
 }
 
 /// Berlin's UTC offset in seconds at `unix`: +1h CET, +2h CEST. EU rule: summer
@@ -13198,23 +13212,32 @@ mod tests {
         let now = tick + 4 * 3_600; // startup at 13:35 Berlin, four hours late
 
         // Nothing since the tick — the deploy that restarted the box ate it.
-        assert!(tick_needs_catch_up(tick, now, &[run("project", "ok", now - 60)], false));
+        assert!(tick_needs_catch_up(tick, now, &[run("project", "ok", now - 60)], false, false));
 
         // A probe that succeeded after the tick means the daily ran: stay quiet.
-        assert!(!tick_needs_catch_up(tick, now, &[run("probe", "ok", tick + 30)], false));
+        assert!(!tick_needs_catch_up(tick, now, &[run("probe", "ok", tick + 30)], false, false));
 
         // A probe that succeeded BEFORE the tick is yesterday's, and does not serve today.
-        assert!(tick_needs_catch_up(tick, now, &[run("probe", "ok", tick - 100)], false));
+        assert!(tick_needs_catch_up(tick, now, &[run("probe", "ok", tick - 100)], false, false));
 
         // A probe still in the queue after a restart will run on its own — the durable
         // rows survive; only the catch-up LOOP is lost. Do not double up.
-        assert!(!tick_needs_catch_up(tick, now, &[], true));
+        assert!(!tick_needs_catch_up(tick, now, &[], true, false));
 
         // Before the tick, there is nothing to catch up; the loop will serve it.
-        assert!(!tick_needs_catch_up(tick, tick - 1, &[], false));
+        assert!(!tick_needs_catch_up(tick, tick - 1, &[], false, false));
 
         // A FAILED probe is not a served tick — the pipeline did not get its data.
-        assert!(tick_needs_catch_up(tick, now, &[run("probe", "error", tick + 30)], false));
+        assert!(tick_needs_catch_up(tick, now, &[run("probe", "error", tick + 30)], false, false));
+
+        // Issue 451, the 2026-09-30 morning: on a weekday the DÖE and FTS probes
+        // succeeded and TED's failed. That tick is NOT served; TED's own probe
+        // (the tick's or a catch-up's) serves it, and a weekend needs no TED.
+        let probe = |params: &str, outcome: &str| JobRun { params: params.into(), ..run("probe", outcome, tick + 30) };
+        let morning = [probe("ted daily (probe)", "error"), probe("doe daily (probe)", "ok"), probe("fts daily (probe)", "ok")];
+        assert!(tick_needs_catch_up(tick, now, &morning, false, true));
+        assert!(!tick_needs_catch_up(tick, now, &morning, false, false));
+        assert!(!tick_needs_catch_up(tick, now, &[probe("ted daily (catch-up)", "ok")], false, true));
     }
 
     async fn scratch() -> Arc<store::Db> {
