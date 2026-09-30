@@ -48,6 +48,7 @@ pub fn router(supervisor: Arc<Supervisor>) -> Router {
         .route("/admin/rehoming", post(record_rehoming))
         .route("/admin/country-verdicts", post(record_country_verdicts))
         .route("/admin/merge-verdicts", post(record_merge_verdicts))
+        .route("/admin/identifier-verdicts", post(record_identifier_verdicts))
         .with_state(supervisor)
 }
 
@@ -156,7 +157,8 @@ async fn record_rehoming(
 
 #[derive(serde::Deserialize)]
 struct CaseReviewsParams {
-    /// `case` (org_case_reviews, default) | `rehoming` | `name` | `country`.
+    /// `case` (org_case_reviews, default) | `rehoming` | `name` | `country` |
+    /// `merge` | `identifier`.
     table: Option<String>,
     cohort: Option<String>,
     /// Rows to return (default 500, at most 5,000), newest first.
@@ -404,6 +406,98 @@ async fn record_merge_verdicts(
         .collect();
     match sup.db().record_merge_verdicts(&req.cohort, &verdicts, store::now_unix()).await {
         Ok(n) => (StatusCode::OK, axum::Json(json!({ "recorded": n, "cohort": req.cohort })))
+            .into_response(),
+        Err(e) => error(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()),
+    }
+}
+
+/// The issue-452 identifier-verdict upload shape.
+#[derive(serde::Deserialize)]
+struct IdentifierVerdictsBody {
+    cohort: String,
+    verdicts: Vec<IdentifierVerdictIn>,
+}
+
+#[derive(serde::Deserialize)]
+struct IdentifierVerdictIn {
+    org_id: i64,
+    /// The literal the reviewer checked, exactly as the org row carries it.
+    identifier: String,
+    verdict: String,
+    #[serde(default)]
+    correct_identifier: Option<String>,
+    rationale: String,
+    confidence: String,
+}
+
+/// `POST /admin/identifier-verdicts` — record one cohort's per-identifier
+/// verdicts (issue 452): whether the registration number an organization is
+/// keyed by is its own. Recording is the whole action: from the next planner
+/// run or fold on, a `wrong` number is withheld from identifier matching, and
+/// `/v1/organizations` flags `wrong` and `related`. The answer says how many
+/// verdicts name an org that still carries the checked number (`live`).
+async fn record_identifier_verdicts(
+    State(sup): State<Arc<Supervisor>>,
+    headers: HeaderMap,
+    body: Result<axum::Json<IdentifierVerdictsBody>, axum::extract::rejection::JsonRejection>,
+) -> Response {
+    if let Some(response) = deny(&headers) {
+        return response;
+    }
+    let req = match body {
+        Ok(axum::Json(b)) => b,
+        Err(e) => return error(StatusCode::BAD_REQUEST, &e.to_string()),
+    };
+    if req.cohort.is_empty() || req.verdicts.is_empty() {
+        return error(StatusCode::BAD_REQUEST, "cohort and verdicts are required");
+    }
+    if req.verdicts.len() > 5_000 {
+        return error(StatusCode::BAD_REQUEST, "at most 5,000 verdicts per upload");
+    }
+    for v in &req.verdicts {
+        let name = format!("org {} / {:?}", v.org_id, v.identifier);
+        if v.identifier.is_empty() || v.identifier.len() > 64 {
+            return error(
+                StatusCode::BAD_REQUEST,
+                &format!("{name}: an identifier of at most 64 chars is required"),
+            );
+        }
+        if !matches!(v.verdict.as_str(), "wrong" | "related" | "right") {
+            return error(StatusCode::BAD_REQUEST, &format!("{name}: verdict must be wrong|related|right"));
+        }
+        if !matches!(v.confidence.as_str(), "high" | "medium" | "low") {
+            return error(
+                StatusCode::BAD_REQUEST,
+                &format!("{name}: confidence must be high|medium|low"),
+            );
+        }
+        if v.correct_identifier.as_ref().is_some_and(|c| c.is_empty() || c.len() > 64) {
+            return error(
+                StatusCode::BAD_REQUEST,
+                &format!("{name}: correct_identifier must be 1 to 64 chars when given"),
+            );
+        }
+        if v.rationale.len() > 4_000 {
+            return error(StatusCode::BAD_REQUEST, &format!("{name}: rationale over 4,000 chars"));
+        }
+    }
+    let verdicts: Vec<store::IdentifierVerdict> = req
+        .verdicts
+        .into_iter()
+        .map(|v| store::IdentifierVerdict {
+            org_id: v.org_id,
+            identifier: v.identifier,
+            verdict: v.verdict,
+            correct_identifier: v.correct_identifier,
+            rationale: v.rationale,
+            confidence: v.confidence,
+        })
+        .collect();
+    match sup.db().record_identifier_verdicts(&req.cohort, &verdicts, store::now_unix()).await {
+        Ok(r) => (
+            StatusCode::OK,
+            axum::Json(json!({ "recorded": r.recorded, "live": r.live, "cohort": req.cohort })),
+        )
             .into_response(),
         Err(e) => error(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()),
     }

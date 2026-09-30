@@ -139,6 +139,15 @@ pub fn organization(o: &OrganizationRow) -> Value {
         // name and country land on one row and it may hold many (234, 351, 370).
         "provisional": o.provisional,
         "mentions": o.mentions,
+        // Issue 452: a review against the register found `identifier` is not
+        // this organization's own — another company's number, a dissolved
+        // stranger's, one never issued (`register_mismatch`), or a parent's or
+        // subsidiary's (`related_entity`). Null: no review found a problem,
+        // which is not the same as checked.
+        "identifier_status": o.identifier_verdict.as_deref().map(|v| match v {
+            "wrong" => "register_mismatch",
+            _ => "related_entity",
+        }),
     })
 }
 

@@ -596,6 +596,33 @@ pub(crate) const SCHEMA: &str = "
         PRIMARY KEY (country, scheme, key, cohort)
     ) STRICT;
 
+    -- Issue 452: per-IDENTIFIER verdicts — whether a registration number an
+    -- organization is keyed by is its own (checked against the register). The
+    -- row keeps its identity; what a verdict changes is what the number is
+    -- TRUSTED for. A `wrong` number (another company's, a dissolved stranger's,
+    -- one never issued) is withheld from every identifier-based match: the
+    -- R2/E0/R3 groups, the altid arm's owners, and the resolver's canonical
+    -- bind, which would otherwise hand a DIFFERENT representation of that
+    -- number to this org. `wrong` and `related` (a parent's, a subsidiary's)
+    -- are flagged on `/v1/organizations` as `identifier_status`. A verdict
+    -- stands only while the org still carries `identifier`: a re-keyed or
+    -- merged-away org reads as unreviewed, so the check is a join, never a
+    -- stamp. One standing verdict per (org, identifier); a re-POST replaces
+    -- it. `correct_identifier` is the number the reviewer found — recorded,
+    -- never applied: re-keying an org is a merge-shaped change (the right
+    -- number may already have its own org) and goes through the merge arms.
+    CREATE TABLE IF NOT EXISTS org_identifier_verdicts (
+        org_id             INTEGER NOT NULL,
+        identifier         TEXT    NOT NULL,
+        cohort             TEXT    NOT NULL,
+        verdict            TEXT    NOT NULL CHECK (verdict IN ('wrong','related','right')),
+        correct_identifier TEXT,
+        rationale          TEXT    NOT NULL,
+        confidence         TEXT    NOT NULL CHECK (confidence IN ('high','medium','low')),
+        reviewed_at        INTEGER NOT NULL,
+        PRIMARY KEY (org_id, identifier)
+    ) STRICT;
+
     -- Issue 300 §2.3 (Stage 4): REBUILDABLE scratch satellite — name keys
     -- for the E3/E4 candidate scans. Not an entity table: no change events,
     -- no FK (org ids may dangle after merges — org_merge_log precedent),
@@ -2203,6 +2230,10 @@ pub struct R2MergeArgs<'a> {
 pub struct R2MergeReport {
     /// Identifier-bearing org rows preloaded.
     pub scanned: u64,
+    /// Issue 452: rows left out of every group because their identifier
+    /// carries a `wrong` verdict — the number is not the org's, so it is no
+    /// evidence of identity with anyone else who publishes it.
+    pub withheld: u64,
     /// Rows carrying a same-country E1 canonical key.
     pub keyed: u64,
     /// Key groups with >=2 members before denials.
@@ -2318,6 +2349,10 @@ pub struct R3MergeArgs<'a> {
 pub struct R3MergeReport {
     /// NULL-country identifier-bearing rows considered.
     pub pool: u64,
+    /// Issue 452: rows (pool or target) whose identifier carries a `wrong`
+    /// verdict, left out on both sides — neither rescued onto an owner by that
+    /// number nor an owner of it.
+    pub withheld: u64,
     /// Skipped: letter-bearing values (the register-prefix alternative).
     pub register_prefixed: u64,
     /// Skipped: zero or several checksum anchors (the EBSCO class).
@@ -2536,6 +2571,10 @@ pub struct AltIdMergeReport {
     // ---- The owners.
     /// Identifier-bearing org rows walked.
     pub scanned: u64,
+    /// Issue 452: GB rows whose identifier carries a `wrong` verdict, never
+    /// an owner — a pair keyed on that number finds no org behind it, so the
+    /// PPON org carrying the RIGHT identity is not folded into it.
+    pub withheld: u64,
     /// GB rows owning a graph key.
     pub owners: u64,
     /// One org already serves both keys: one side stands and its org's
@@ -3044,6 +3083,53 @@ pub struct MergeVerdict {
     pub action: String,
     pub rationale: String,
     pub confidence: String,
+}
+
+/// One reviewer's verdict on the registration number an organization is keyed
+/// by (issue 452): `wrong` (someone else's, or no one's), `related` (a parent
+/// or subsidiary's), or `right`. `identifier` is the literal the reviewer
+/// checked, exactly as `organizations.identifier` holds it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IdentifierVerdict {
+    pub org_id: i64,
+    pub identifier: String,
+    pub verdict: String,
+    /// The number the reviewer found for the organization, if any. Recorded
+    /// only; nothing re-keys an org from it.
+    pub correct_identifier: Option<String>,
+    pub rationale: String,
+    pub confidence: String,
+}
+
+/// What `POST /admin/identifier-verdicts` recorded: every row, and how many of
+/// them name an org that still carries the identifier the reviewer checked —
+/// the ones the matchers and the API act on.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct IdentifierVerdictReport {
+    pub recorded: u64,
+    pub live: u64,
+}
+
+/// The org ids whose CURRENT identifier carries a `wrong` verdict (issue 452):
+/// the set every identifier-based matcher leaves out. The join is the
+/// liveness rule — a verdict on a number the org no longer carries is inert.
+/// Hand-review sized (hundreds), so one read per planner run or resolver open.
+async fn withheld_identifier_orgs(
+    conn: &Connection,
+) -> turso::Result<std::collections::HashSet<i64>> {
+    let mut rows = conn
+        .query(
+            "SELECT v.org_id FROM org_identifier_verdicts v \
+               JOIN organizations o ON o.id = v.org_id AND o.identifier = v.identifier \
+              WHERE v.verdict = 'wrong'",
+            (),
+        )
+        .await?;
+    let mut out = std::collections::HashSet::new();
+    while let Some(row) = rows.next().await? {
+        out.insert(int(&row, 0));
+    }
+    Ok(out)
 }
 
 /// A stored merge verdict as the R2 planner reads it.
@@ -9517,6 +9603,13 @@ impl Db {
         // the provisional folds already use (ledger `p1`, the echo fold). The
         // scan is a rowid walk either way, so the order costs no sorter
         // (pinned in the store's `mention_refresh` tests).
+        // Issue 452: an org whose number a reviewer found to be someone else's
+        // stays out of the canonical map entirely — it neither claims the key
+        // nor poisons it — so a DIFFERENT representation of that number binds
+        // to the number's rightful owner if one stands, else mints. The exact
+        // triple below still binds: the byte-identical literal is the org's own
+        // published evidence, overwhelmingly the same publisher repeating it.
+        let withheld = withheld_identifier_orgs(&conn).await?;
         let mut rows = conn
             .query(
                 "SELECT id, country, identifier_kind, identifier FROM organizations
@@ -9529,8 +9622,8 @@ impl Db {
             let country = opt_text_of(&row, 1);
             let kind = text(&row, 2);
             let value = text(&row, 3);
-            if let Some(ck) =
-                resolver_canon_key(canon_key, country.as_deref(), &kind, &value)
+            if !withheld.contains(&id)
+                && let Some(ck) = resolver_canon_key(canon_key, country.as_deref(), &kind, &value)
                 && !poisoned.contains(&ck)
             {
                 if canon_of.remove(&ck).is_some() {
@@ -9541,6 +9634,13 @@ impl Db {
             }
             org_of.entry((country, kind, value)).or_insert(id);
         }
+        drop(rows);
+        // Logged whatever it found (the issue-318 rule), so a fold's log says
+        // whether the verdicts were in force for it.
+        self.log_diag(&format!(
+            "[issue 452] {} org(s) withheld from the canonical bind by a wrong-number verdict",
+            withheld.len()
+        ));
         // Issue 318, panel round 1: the wall's cost claim was "one indexed
         // seek", and that is true only in the STEADY state.
         // `org_match_keys_kk` is created by `finish_org_match_keys` at the END
@@ -11500,6 +11600,7 @@ impl Db {
         }
         let mut groups: std::collections::HashMap<(String, &'static str, String), Vec<Member>> =
             std::collections::HashMap::new();
+        let withheld = withheld_identifier_orgs(&conn).await?;
         {
             let mut after = 0i64;
             loop {
@@ -11521,6 +11622,10 @@ impl Db {
                     let id = int(&row, 0);
                     after = id;
                     report.scanned += 1;
+                    if withheld.contains(&id) {
+                        report.withheld += 1;
+                        continue;
+                    }
                     let country = opt_text_of(&row, 1);
                     let kind = opt_text_of(&row, 2).unwrap_or_else(|| "national".into());
                     let literal = text(&row, 3);
@@ -14340,6 +14445,7 @@ impl Db {
         }
         let mut canon: std::collections::HashMap<(&'static str, String), Vec<Target>> =
             std::collections::HashMap::new();
+        let withheld = withheld_identifier_orgs(&conn).await?;
         {
             let mut after = 0i64;
             loop {
@@ -14361,6 +14467,10 @@ impl Db {
                     any = true;
                     let id = int(&row, 0);
                     after = id;
+                    if withheld.contains(&id) {
+                        report.withheld += 1;
+                        continue;
+                    }
                     let Some(country) = opt_text_of(&row, 1) else { continue };
                     let kind = opt_text_of(&row, 2).unwrap_or_else(|| "national".into());
                     let literal = text(&row, 3);
@@ -14451,6 +14561,10 @@ impl Db {
             if (args.stop)() {
                 report.stopped = true;
                 return Ok(report);
+            }
+            if withheld.contains(id) {
+                report.withheld += 1;
+                continue;
             }
             if value.bytes().any(|b| b.is_ascii_alphabetic()) {
                 report.register_prefixed += 1;
@@ -15094,6 +15208,7 @@ impl Db {
             literal: String,
         }
         let mut owners: HashMap<(&'static str, String), Vec<Owner>> = HashMap::new();
+        let withheld = withheld_identifier_orgs(conn).await?;
         {
             let mut after = 0i64;
             loop {
@@ -15131,6 +15246,10 @@ impl Db {
                         _ => false,
                     };
                     if !wanted {
+                        continue;
+                    }
+                    if withheld.contains(&id) {
+                        report.withheld += 1;
                         continue;
                     }
                     report.owners += 1;
@@ -16954,6 +17073,87 @@ impl Db {
         }))
     }
 
+    /// Record one cohort's per-identifier verdicts (issue 452). Upsert on
+    /// (org, identifier): a re-review replaces the standing verdict, whatever
+    /// cohort it came from. Every row is recorded, including one whose org has
+    /// since been merged away or re-keyed; the report's `live` says how many
+    /// the matchers and the API will act on (see [`withheld_identifier_orgs`]).
+    pub async fn record_identifier_verdicts(
+        &self,
+        cohort: &str,
+        verdicts: &[IdentifierVerdict],
+        now: i64,
+    ) -> turso::Result<IdentifierVerdictReport> {
+        for v in verdicts {
+            let name = format!("org {} / {:?}", v.org_id, v.identifier);
+            if v.identifier.is_empty() {
+                return Err(turso::Error::Error(format!("{name}: identifier is required")));
+            }
+            if !matches!(v.verdict.as_str(), "wrong" | "related" | "right") {
+                return Err(turso::Error::Error(format!(
+                    "{name}: verdict must be wrong|related|right, got {:?}",
+                    v.verdict
+                )));
+            }
+            if !matches!(v.confidence.as_str(), "high" | "medium" | "low") {
+                return Err(turso::Error::Error(format!(
+                    "{name}: confidence must be high|medium|low"
+                )));
+            }
+        }
+        let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result: turso::Result<IdentifierVerdictReport> = async {
+            let mut report = IdentifierVerdictReport::default();
+            for v in verdicts {
+                conn.execute(
+                    "INSERT INTO org_identifier_verdicts \
+                       (org_id, identifier, cohort, verdict, correct_identifier, rationale, \
+                        confidence, reviewed_at) \
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?) \
+                     ON CONFLICT(org_id, identifier) DO UPDATE SET \
+                        cohort = excluded.cohort, verdict = excluded.verdict, \
+                        correct_identifier = excluded.correct_identifier, \
+                        rationale = excluded.rationale, confidence = excluded.confidence, \
+                        reviewed_at = excluded.reviewed_at",
+                    (
+                        Value::Integer(v.org_id),
+                        t(&v.identifier),
+                        t(cohort),
+                        t(&v.verdict),
+                        opt_text(v.correct_identifier.as_deref()),
+                        t(&v.rationale),
+                        t(&v.confidence),
+                        Value::Integer(now),
+                    ),
+                )
+                .await?;
+                report.recorded += 1;
+                let mut rows = conn
+                    .query(
+                        "SELECT 1 FROM organizations WHERE id = ? AND identifier = ?",
+                        (Value::Integer(v.org_id), t(&v.identifier)),
+                    )
+                    .await?;
+                if rows.next().await?.is_some() {
+                    report.live += 1;
+                }
+            }
+            Ok(report)
+        }
+        .await;
+        match result {
+            Ok(report) => {
+                conn.execute("COMMIT", ()).await?;
+                Ok(report)
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                Err(e)
+            }
+        }
+    }
+
     /// Issue 356: read one verdict store back — the four review tables are
     /// written through `POST /admin/*` and read by nothing but their apply
     /// jobs, and `/v1/sql` is a positive allow-list they are not on. Bounded
@@ -16996,9 +17196,15 @@ impl Db {
                   "confidence", "reviewed_at", "applied_at", "applied_action", "job_id"],
                 "reviewed_at DESC, country, scheme, key",
             ),
+            "identifier" => (
+                "org_identifier_verdicts",
+                &["org_id", "identifier", "cohort", "verdict", "correct_identifier",
+                  "rationale", "confidence", "reviewed_at"],
+                "reviewed_at DESC, org_id",
+            ),
             other => {
                 return Err(turso::Error::Error(format!(
-                    "no verdict store named {other:?} (case|rehoming|name|country|merge)"
+                    "no verdict store named {other:?} (case|rehoming|name|country|merge|identifier)"
                 )))
             }
         };
@@ -23203,6 +23409,7 @@ impl Db {
             "SELECT target_org_id FROM org_mention_rehoming WHERE target_org_id IS NOT NULL",
             "SELECT org_id FROM org_country_verdicts",
             "SELECT org_id FROM org_name_drops",
+            "SELECT org_id FROM org_identifier_verdicts",
         ] {
             let mut rows = conn.query(sql, ()).await?;
             while let Some(row) = rows.next().await? {

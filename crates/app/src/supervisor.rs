@@ -5347,7 +5347,7 @@ impl Supervisor {
                     let now = store::now_unix();
                     let plan = serde_json::json!({
                         "plan_groups": r.plan_groups - r.merged_groups,
-                        "scanned": r.scanned, "keyed": r.keyed, "groups": r.groups,
+                        "scanned": r.scanned, "withheld": r.withheld, "keyed": r.keyed, "groups": r.groups,
                         "denied_cap": r.denied_cap, "denied_gate": r.denied_gate,
                         "denied_consortium": r.denied_consortium,
                         "consortium_excluded": r.consortium_excluded,
@@ -5436,14 +5436,16 @@ impl Supervisor {
                     });
                 }
                 Ok(format!(
-                    "match-org-identifiers r2 (issue 300 Stage 2){}: {} orgs scanned, \
-                     {} E1-keyed, {} groups >=2; denied: {} cap, {} gate, {} consortium \
+                    "match-org-identifiers r2 (issue 300 Stage 2){}: {} orgs scanned \
+                     ({} withheld by a wrong-number verdict), {} E1-keyed, {} groups >=2; \
+                     denied: {} cap, {} gate, {} consortium \
                      ({} members excluded member-scoped), \
                      {} legal-form, {} vat-group-wall, {} names, {} verdict-keep, {} verdict-merge; plan {} groups; merged {} groups \
                      ({} org rows removed, {} mentions, {} parties, {} bid-parties, \
                      {} winners repointed, {} winner dups deleted, {} tenders touched)",
                     if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
                     r.scanned,
+                    r.withheld,
                     r.keyed,
                     r.groups,
                     r.denied_cap,
@@ -5543,7 +5545,7 @@ impl Supervisor {
                     let now = store::now_unix();
                     let plan = serde_json::json!({
                         "plan_groups": r.plan_groups - r.merged_groups,
-                        "scanned": r.scanned, "keyed": r.keyed, "groups": r.groups,
+                        "scanned": r.scanned, "withheld": r.withheld, "keyed": r.keyed, "groups": r.groups,
                         "denied_cap": r.denied_cap, "denied_gate": r.denied_gate,
                         "denied_consortium": r.denied_consortium,
                         "consortium_excluded": r.consortium_excluded,
@@ -5619,8 +5621,9 @@ impl Supervisor {
                     });
                 }
                 Ok(format!(
-                    "match-org-identifiers e0 (issue 329 E0){}: {} orgs scanned, \
-                     {} E0-grouped, {} groups >=2; denied: {} cap, {} gate, {} consortium \
+                    "match-org-identifiers e0 (issue 329 E0){}: {} orgs scanned \
+                     ({} withheld by a wrong-number verdict), {} E0-grouped, {} groups >=2; \
+                     denied: {} cap, {} gate, {} consortium \
                      ({} members excluded member-scoped), \
                      {} legal-form, {} vat-group-wall, {} names ({} echo admitted), {} verdict-keep, \
                      {} verdict-merge; plan {} groups; merged {} groups \
@@ -5628,6 +5631,7 @@ impl Supervisor {
                      {} winners repointed, {} winner dups deleted, {} tenders touched)",
                     if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
                     r.scanned,
+                    r.withheld,
                     r.keyed,
                     r.groups,
                     r.denied_cap,
@@ -5777,6 +5781,7 @@ impl Supervisor {
                     let plan = serde_json::json!({
                         "plan_groups": r.plan_groups - r.merged_groups,
                         "pool": r.pool,
+                        "withheld": r.withheld,
                         "register_prefixed": r.register_prefixed,
                         "unanchored": r.unanchored,
                         "no_target": r.no_target,
@@ -5827,7 +5832,7 @@ impl Supervisor {
                 }
                 Ok(format!(
                     "match-org-identifiers r3 (issue 300 Stage 3){}: pool {}; skipped: \
-                     {} register-prefixed, {} unanchored/ambiguous, {} no-target, \
+                     {} withheld by a wrong-number verdict (pool or target), {} register-prefixed, {} unanchored/ambiguous, {} no-target, \
                      {} multi-target, {} uncorroborated; denied: {} generic-name \
                      ({} generic but hard-anchored), {} gate, {} consortium, \
                      {} legal-form, {} vat-group-wall, {} co-anchor-cap; plan {} \
@@ -5836,6 +5841,7 @@ impl Supervisor {
                      {} winners repointed, {} winner dups deleted, {} tenders touched){}",
                     if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
                     r.pool,
+                    r.withheld,
                     r.register_prefixed,
                     r.unanchored,
                     r.no_target,
@@ -6069,6 +6075,7 @@ impl Supervisor {
                     "pairs_seen": r.pairs_seen,
                     // The owners.
                     "scanned": r.scanned,
+                    "withheld": r.withheld,
                     "owners": r.owners,
                     "already_one": r.already_one,
                     "multi_target": r.multi_target,
@@ -6158,8 +6165,8 @@ impl Supervisor {
                 let summary = format!(
                     "{} FTS notices, {} company-number/PPON pairs keyed ({} literal; \
                      unpaired: {} padded, {} condemned, {} malformed, {} non-GB; {} ambiguous \
-                     parties); owners: {} already one, {} multi-target, {} no company-number \
-                     org, {} no PPON org, {} neither, {} two distinct GB orgs; denied: {} gate, \
+                     parties); owners: {} withheld by a wrong-number verdict, {} already one, \
+                     {} multi-target, {} no company-number org, {} no PPON org, {} neither, {} two distinct GB orgs; denied: {} gate, \
                      {} consortium, {} legal-form, {} evidence-wall, {} loser-incoherent, {} \
                      verdict-keep, {} uncorroborated-overlap, {} uncorroborated-disjoint, {} \
                      witness-only, {} form-conflict, {} generic; {} conflicts; {} verdict-admitted, {} verdicts stale; plan {} \
@@ -6172,6 +6179,7 @@ impl Supervisor {
                     r.unkeyed_value,
                     r.non_gb_pairs,
                     r.ambiguous_parties,
+                    r.withheld,
                     r.already_one,
                     r.multi_target,
                     r.no_target_coh,

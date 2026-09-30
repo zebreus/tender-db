@@ -574,7 +574,8 @@ sends it and reads a body from stdin.
 | `GET /admin/name-key?name=` | the genericness wall, probed for one name (issue 348) |
 | `GET /admin/unmapped-fields?profile=` | what one profile publishes at its own head that the projection does not read on that table's channel (issue 368); `window` ids back from its newest notice, `show` rows |
 | `POST /admin/case-reviews`, `/admin/rehoming`, `/admin/name-verdicts`, `/admin/country-verdicts`, `/admin/merge-verdicts` | record one cohort's verdicts into the five review stores (`org_case_reviews`, `org_mention_rehoming`, `org_name_verdicts`, `org_country_verdicts`, `org_merge_verdicts`); recording only — the apply jobs (or the R2 arm, for merge verdicts) execute the HIGH subset |
-| `GET /admin/case-reviews?table=case\|rehoming\|name\|country\|merge&cohort=&limit=` | read a verdict store back, newest first, bounded (issue 356; the stores are not on the `/v1/sql` allow-list) |
+| `POST /admin/identifier-verdicts` | record one cohort's per-identifier verdicts into `org_identifier_verdicts` (issue 452): `{org_id, identifier, verdict: wrong\|related\|right, correct_identifier?, rationale, confidence}`. Recording is the action: from the next planner run or fold, a `wrong` number is left out of the R2/E0/R3 groups, the altid arm's owners and the resolver's canonical bind (its exact triple still binds), and `/v1/organizations` serves `identifier_status` (`register_mismatch` for `wrong`, `related_entity` for `related`). A verdict stands only while the org still carries that identifier; the answer's `live` counts those. `correct_identifier` is recorded, never applied |
+| `GET /admin/case-reviews?table=case\|rehoming\|name\|country\|merge\|identifier&cohort=&limit=` | read a verdict store back, newest first, bounded (issue 356; the stores are not on the `/v1/sql` allow-list) |
 
 Two refusals an operator will meet, both deliberate:
 

@@ -393,6 +393,10 @@ pub struct OrganizationRow {
     pub identifier: Option<String>,
     pub provisional: bool,
     pub mentions: i64,
+    /// Issue 452: a reviewer's finding against the register about `identifier`
+    /// — `wrong` (another company's number, or one never issued) or `related`
+    /// (a parent's or subsidiary's). `None` when no review found a problem.
+    pub identifier_verdict: Option<String>,
 }
 
 /// A Notice identity row — the `/v1/notices` item. The parsed payload lives in
@@ -3762,6 +3766,7 @@ pub async fn organizations(
         identifier: opt_text_of(row, 4),
         provisional: int(row, 5) != 0,
         mentions: int(row, 6),
+        identifier_verdict: opt_text_of(row, 7),
     })
     .await
 }
@@ -3786,7 +3791,10 @@ fn organizations_query(filter: &Filter, scope: Scope) -> Query {
     let mut q = Query::default();
     q.push(
         "SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional,
-                (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id)
+                (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id),
+                (SELECT v.verdict FROM org_identifier_verdicts v
+                  WHERE v.org_id = o.id AND v.identifier = o.identifier
+                    AND v.verdict IN ('wrong', 'related'))
            FROM organizations o WHERE 1 = 1",
         [],
     );
@@ -3842,7 +3850,10 @@ pub async fn organizations_by_name(
     let mut q = Query::default();
     q.push(
         "SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional,
-                (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id)
+                (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id),
+                (SELECT v.verdict FROM org_identifier_verdicts v
+                  WHERE v.org_id = o.id AND v.identifier = o.identifier
+                    AND v.verdict IN ('wrong', 'related'))
            FROM organizations o WHERE o.name_norm >= ?",
         [t(prefix)],
     );
@@ -3881,6 +3892,7 @@ pub async fn organizations_by_name(
         identifier: opt_text_of(row, 4),
         provisional: int(row, 5) != 0,
         mentions: int(row, 6),
+        identifier_verdict: opt_text_of(row, 7),
     })
     .await
 }

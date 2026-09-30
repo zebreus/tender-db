@@ -1723,3 +1723,69 @@ async fn the_plan_listing_carries_every_planned_pair_up_to_its_own_cap() {
     assert_eq!((cut.plan_pairs, cut.pairs.len(), cut.plan_listing.len()), (3, 3, 2));
     assert!(cut.plan_listing_truncated, "a cut listing says so");
 }
+
+// ---- Issue 452: a wrong-number verdict withholds the company number.
+
+impl Bed {
+    /// Record one issue-452 identifier verdict on `org`'s `identifier`.
+    async fn identifier_verdict(&self, org: i64, identifier: &str, verdict: &str) -> store::IdentifierVerdictReport {
+        self.db
+            .record_identifier_verdicts(
+                "452-test",
+                &[store::IdentifierVerdict {
+                    org_id: org,
+                    identifier: identifier.into(),
+                    verdict: verdict.into(),
+                    correct_identifier: None,
+                    rationale: "fixture".into(),
+                    confidence: "high".into(),
+                }],
+                0,
+            )
+            .await
+            .unwrap()
+    }
+}
+
+/// The 448 campaign's Harvey Nash shape: the company-number org is keyed by a
+/// transposed number, so folding the PPON org (which carries the RIGHT identity)
+/// into it would put a correct supplier under someone else's number. A `wrong`
+/// verdict on that number takes the org out of the owner walk: the pair finds no
+/// company-number org and is never planned. A verdict on a number the org does
+/// not carry is inert, and a `related` verdict flags without withholding.
+#[tokio::test]
+async fn a_wrong_number_verdict_keeps_the_company_number_org_from_owning_its_pair() {
+    let b = bed("withheld-owner").await;
+    b.split(100, (2, COH_A, "Harvey Nash Ltd"), (1, PPON_P, "HARVEY NASH LTD")).await;
+    assert_eq!(b.plan().await.plan_pairs, 1, "the control: planned");
+
+    let stale = b.identifier_verdict(2, "GBCOH99999999", "wrong").await;
+    assert_eq!((stale.recorded, stale.live), (1, 0), "not the number org 2 carries");
+    let r = b.plan().await;
+    assert_eq!((r.plan_pairs, r.withheld), (1, 0), "a verdict on another number changes nothing");
+
+    let live = b.identifier_verdict(2, &minted(COH_A), "wrong").await;
+    assert_eq!((live.recorded, live.live), (1, 1));
+    let r = b.plan().await;
+    assert_eq!((r.withheld, r.owners, r.both_distinct, r.no_target_coh), (1, 1, 0, 1), "{r:#?}");
+    assert_eq!(r.plan_pairs, 0, "no org owns the withheld number, so nothing folds into it");
+
+    b.identifier_verdict(2, &minted(COH_A), "related").await;
+    let r = b.plan().await;
+    assert_eq!((r.plan_pairs, r.withheld), (1, 0), "a re-review replaces the verdict; related only flags");
+}
+
+/// The alias finds the company-number org through the resolver's canonical map,
+/// and a withheld org is not in it: after a merge, a wrong-number verdict on the
+/// survivor stops the alias handing it new PPON-first mentions.
+#[tokio::test]
+async fn the_alias_never_binds_to_a_withheld_company_number_org() {
+    let b = bed("withheld-alias").await;
+    b.split(100, (2, COH_A, "Acme Widgets Ltd"), (1, PPON_P, "ACME WIDGETS LTD")).await;
+    b.merge_all().await;
+    b.identifier_verdict(2, &minted(COH_A), "wrong").await;
+    b.fresh(&[300]).await;
+    let (ids, c) = b.resolve(true, &[ppon_first(300, PPON_P, "Acme Widgets Limited")]).await;
+    assert_ne!(ids[0], 2, "refused: the number is not trusted to name an owner");
+    assert_eq!((c.asked, c.bound, c.refused, c.refused_no_owner), (1, 0, 1, 1), "{c:?}");
+}

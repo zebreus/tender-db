@@ -470,3 +470,33 @@ async fn a_generic_corroborating_name_denies_unless_the_anchor_hard_checksums() 
     // standing holders 4242/4243 this test added for the wall to count).
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 34);
 }
+
+/// Issue 452: a wrong-number verdict takes a row out of R3 on either side. As a
+/// TARGET a withheld row owns nothing: Renault's number withheld leaves 109 with
+/// no target, and the SK family's second row withheld leaves one standing owner,
+/// so the country-less Duo One is rescued onto it — the rightful owner, no longer
+/// shadowed by a row keyed by someone else's number. As a CANDIDATE a withheld
+/// row is never rescued.
+#[tokio::test]
+async fn a_wrong_number_verdict_takes_a_row_out_of_r3_on_either_side() {
+    let wrong = |org_id: i64, identifier: &str| store::IdentifierVerdict {
+        org_id,
+        identifier: identifier.into(),
+        verdict: "wrong".into(),
+        correct_identifier: None,
+        rationale: "fixture".into(),
+        confidence: "high".into(),
+    };
+
+    let (db, _conn) = seed("test-r3-withheld-target.db").await;
+    db.record_identifier_verdicts("452", &[wrong(13, "SK2021005448"), wrong(15, "732829320")], 0).await.unwrap();
+    let dry = db.match_org_null_country_r3(args(true, None)).await.expect("dry");
+    assert_eq!(dry.withheld, 2);
+    assert_eq!((dry.no_target, dry.multi_target), (2, 0), "{dry:#?}");
+    assert_eq!(dry.plan_groups, 1, "Duo One is planned where Renault was");
+
+    let (db, _conn) = seed("test-r3-withheld-candidate.db").await;
+    db.record_identifier_verdicts("452", &[wrong(109, "732829320")], 0).await.unwrap();
+    let dry = db.match_org_null_country_r3(args(true, None)).await.expect("dry");
+    assert_eq!((dry.withheld, dry.no_target, dry.plan_groups), (1, 1, 0), "{dry:#?}");
+}
