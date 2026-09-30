@@ -265,7 +265,7 @@ Tender plus its satellites: <code>lots</code> count and <code>lot_details</code>
 <code>texts</code>, <code>amounts</code>, <code>dates</code>,
 <code>classifications</code> (schemes <code>cpv</code>, <code>nuts</code> and <code>nature</code>
 &mdash; the contract nature, <code>works</code>/<code>supplies</code>/<code>services</code>, in one
-vocabulary across eras), <code>parties</code>, <code>lot_results</code>
+vocabulary across eras, plus <code>combined</code> where a pre-eForms notice published it), <code>parties</code>, <code>lot_results</code>
 (award decisions, accumulating across framework/DPS rounds), <code>bids</code>,
 <code>contracts</code>, and <code>versions</code> — each version naming the
 <code>caused_by_notice_id</code> that produced it (the ADR-0001 traceability

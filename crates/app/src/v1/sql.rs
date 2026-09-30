@@ -138,7 +138,7 @@ const ALLOWED: [&str; 48] = [
     // Analyst convenience views (issue 50) — the common questions, one view away.
     "v_tender_buyers",         // buyers of each current Tender
     "v_awards",                // current award decisions with winner + buyer
-    "v_tender_classifications", // current CPV/NUTS codes
+    "v_tender_classifications", // current CPV/NUTS/nature codes
     "v_tender_amounts",        // current money amounts
     "v_tender_dates",          // current dates (epoch seconds + offset)
     "v_tender_notices",        // the notices that caused each Tender version
@@ -831,7 +831,7 @@ const TABLE_NOTES: &[(&str, &str)] = &[
       and `lot_results` on the same `(tender_id, seq)`, and `tender_version_parties` \
       (role LIKE '%uyer%') for the buyer — tenders first, CROSS JOIN, for the reason \
       v_tender_buyers gives (issue 421)."),
-    ("v_tender_classifications", "CPV and NUTS codes of each current Tender (see scheme). \
+    ("v_tender_classifications", "CPV, NUTS and nature codes of each current Tender (see scheme). \
       NOT FILTERABLE (issue 239); read `tenders t CROSS JOIN tender_version_classifications c \
       ON c.tender_id = t.id AND c.seq = t.current_seq AND c.scheme = 'cpv'`. CROSS JOIN, not \
       JOIN: with a plain JOIN turso walks every CPV row in the corpus through the (scheme, \
@@ -867,6 +867,16 @@ const TABLE_NOTES: &[(&str, &str)] = &[
       notice_id) with `notice_codes`, `notice_texts` and `notice_dates` on (notice_id, \
       section_id) instead."),
 ];
+
+/// The three classification vocabularies (issue 397 added `nature`; the note said
+/// "cpv, nuts" until an agent's schema read caught it). Shared by the satellite and
+/// its current-version view, since the note lookup is exact by table name.
+const CLASSIFICATION_SCHEME_NOTE: &str = "One of: cpv (WHAT is bought, the EU Common \
+    Procurement Vocabulary), nuts (WHERE it is performed, the EU region code) and nature (the \
+    contract nature since issue 397: works, supplies, services, or combined, which only the \
+    pre-eForms eras publish). Filter on scheme explicitly: scheme <> 'cpv' is NOT the NUTS codes.";
+const CLASSIFICATION_FIELD_NOTE: &str = "main / additional (cpv), place (nuts), nature (nature) \
+    \u{2014} which published field the code came from.";
 
 /// Column notes and small enum vocabularies. Table `"*"` matches a column of
 /// that name in any table (the epoch columns recur widely). Open or
@@ -916,7 +926,10 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
         "Derived EUR at the version's publication date (ADR-0014) for awarded_cents — same \
          contract as eur_cents: beside the published value, NULL where no rate resolves.",
     ),
-    ("tender_version_classifications", "scheme", "One of: cpv, nuts."),
+    ("tender_version_classifications", "scheme", CLASSIFICATION_SCHEME_NOTE),
+    ("tender_version_classifications", "field", CLASSIFICATION_FIELD_NOTE),
+    ("v_tender_classifications", "scheme", CLASSIFICATION_SCHEME_NOTE),
+    ("v_tender_classifications", "field", CLASSIFICATION_FIELD_NOTE),
     (
         "tender_version_parties",
         "role",
