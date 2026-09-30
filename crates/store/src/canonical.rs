@@ -472,6 +472,11 @@ pub(crate) const SCHEMA: &str = "
         at       INTEGER NOT NULL, -- unix seconds
         PRIMARY KEY (loser, at)
     ) STRICT;
+    -- Issue 448 unit 3: the resolver alias reads the e2-altid merges at every
+    -- fold. The ledger holds millions of rows of other rules (p0 alone wrote
+    -- 5.76M), so the read is a seek through this partial index, which holds
+    -- only the e2-altid rows. Built once when a store first opens with it.
+    CREATE INDEX IF NOT EXISTS org_merge_log_e2_altid ON org_merge_log(rule) WHERE rule = 'e2-altid';
 
     -- Issue 311: per-case AI review verdicts — the auditable record of the
     -- review loop (Lennart's direction: rule-undetectable data errors get
@@ -2639,6 +2644,11 @@ const ALTID_NO_TARGET_SAMPLE: usize = 50;
 /// (`the_harvest_seeks_notices_profile_and_the_notice_ids_pk`) EXPLAINs exactly
 /// what runs.
 ///
+/// Unit 3: the alias preload's ledger read — through the partial index
+/// `org_merge_log_e2_altid`, pinned by the same plan guard.
+pub const ALTID_ALIAS_LEDGER_SQL: &str = "SELECT json_extract(evidence, '$.coh'), json_extract(evidence, '$.ppon') \
+     FROM org_merge_log WHERE rule = 'e2-altid'";
+
 /// The next FTS profile after a bound: one seek into `notices_profile` per
 /// distinct profile (`fts:ocds-1.1`, …), never a DISTINCT over every FTS row.
 pub const ALTID_NEXT_PROFILE_SQL: &str =
@@ -9614,16 +9624,13 @@ impl Db {
     ) -> turso::Result<()> {
         use std::collections::{BTreeSet, HashMap, HashSet};
         let conn = self.conn().await;
-        // A scan of the ledger: `rule` carries no index, and the log is small
-        // (tens of thousands of rows over every merge rule), read once per
-        // fold. The JSON fields are flat by construction (`altid_wet`).
-        let mut rows = conn
-            .query(
-                "SELECT json_extract(evidence, '$.coh'), json_extract(evidence, '$.ppon') \
-                   FROM org_merge_log WHERE rule = 'e2-altid'",
-                (),
-            )
-            .await?;
+        // A seek through the partial index `org_merge_log_e2_altid`, never a
+        // scan: the ledger is NOT small — the p0 fold alone wrote one row per
+        // loser, 5.76M of them (issue 351) — and this runs at every fold on
+        // the writer (unit 3 review). The plan guard
+        // `the_harvest_seeks_notices_profile_and_the_notice_ids_pk` pins it. The JSON fields
+        // are flat by construction (`altid_wet`).
+        let mut rows = conn.query(ALTID_ALIAS_LEDGER_SQL, ()).await?;
         let mut ledger: Vec<(String, String)> = Vec::new();
         while let Some(row) = rows.next().await? {
             if let (Some(coh), Some(ppon)) = (opt_text_of(&row, 0), opt_text_of(&row, 1))
@@ -9789,8 +9796,11 @@ impl Db {
             if !wall {
                 break 'bar Ok((owner, true));
             }
-            let mut unwalled = false;
             for (a, b) in &corroborating {
+                // Per pair (unit 3 review): the bind rests on the ONE pair
+                // that clears, so only that pair's probes say whether the wall
+                // answered for it.
+                let mut unwalled = false;
                 let mut over = false;
                 for n in [a.as_str(), b.as_str()] {
                     let k2 = altid_wall_key(n, rules.trim, rules.norm);

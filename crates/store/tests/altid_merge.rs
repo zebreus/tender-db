@@ -938,7 +938,8 @@ async fn the_dry_run_writes_nothing() {
 
 /// The harvest reads one range of `notices_profile` per FTS profile and one
 /// primary-key range of `notice_ids` per notice — the party sections only,
-/// never the lot, result or contract rows. Asserted on the plans, not a clock.
+/// never the lot, result or contract rows; the alias preload reads the e2-altid
+/// ledger rows through their partial index. Asserted on the plans, not a clock.
 #[tokio::test]
 async fn the_harvest_seeks_notices_profile_and_the_notice_ids_pk() {
     let b = bed("plans").await;
@@ -969,6 +970,10 @@ async fn the_harvest_seeks_notices_profile_and_the_notice_ids_pk() {
     );
     let mentions = plan(store::ALTID_PARTY_MENTIONS_SQL, vec![Value::Integer(1)]).await;
     assert!(mentions.contains("SEARCH organization_mentions") && !mentions.contains("SCAN"), "{mentions}");
+    // The alias preload runs on every fold: a seek through the partial index
+    // over the e2-altid rows, never a walk of the whole merge ledger.
+    let ledger = plan(store::ALTID_ALIAS_LEDGER_SQL, vec![]).await;
+    assert!(ledger.contains("org_merge_log_e2_altid") && !ledger.contains("SCAN org_merge_log\n"), "{ledger}");
 }
 
 // ---- Unit 2: the wet run.
