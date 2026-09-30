@@ -55,3 +55,29 @@ the wrong company.
 
 A report or census counts GB company-number orgs by register class. Every (a)/(b)/(c) row is either withheld from
 matching or flagged, and the ten numbers above read that way.
+
+## 2026-09-30 08:5x UTC — sized
+
+GB `national` org rows: 58,938. Of those, the company-number-shaped ones:
+
+| shape | orgs |
+|---|---|
+| `GBCOH…` (minted from an FTS/TED `GB-COH-…` literal) | 23,805 |
+| 8 digits | 7,402 |
+| two letters + 6 digits (SC/NI/OC/SO/NC…) | 1,265 |
+
+The rest are other shapes: 16,955 `GBPPON…`, and ~9.5k 13–14-digit and other literals (not company numbers; out of
+scope here).
+
+So ~32.5k orgs carry a company number. 4,872 distinct numbers are already checked
+(`.scratch/tender-db/448-campaign/companies-house-2026-09-30.json`: 4 are 404s, and the class rows above come from
+them).
+
+**How to check the rest.** Not 32k page fetches against the public site (~7 h at a polite rate). Use Companies House's
+free bulk product instead ("Free Company Data Product": a monthly CSV of every live company, with current and
+previous names, one download of ~0.5 GB). A number missing from it is dissolved or never issued. The page fetch covers
+only those, for the dissolved name. Offline plan:
+1. download the snapshot to the box's `/data/archive/companies-house/`;
+2. join it against the company-number orgs and their names (a read of `organizations` + `organization_names`: a
+   snapshot job, not the serving DB);
+3. classify (a)–(d) as above.

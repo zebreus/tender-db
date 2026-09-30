@@ -397,3 +397,13 @@ job 1717 the ledger holds 50 `e2-altid` rows. The next fold should read "50 PPON
 **Audit, co-occurrence (23 → 25 planned pairs):** nearly all are one supplier listed twice in a notice (a tenderer
 section by company number, a supplier section by PPON). The suspect ones (Southern Water's PPON carrying a fire
 authority's name) went through the campaign. Co-occurrence stays a displayed signal, never a gate.
+
+**Legal-form admits, analysed (08:5x UTC): no override yet.** A HIGH verdict could be made to skip the head-against-head
+legal-form veto, but that alone would not hold:
+- after the merge the verdict is stamped applied, so the next plan judges the pair by the gates again;
+- the resolver alias vetoes a later PPON-first mention the same way. The survivor's stale `plc` head sits beside the
+  supplier's new `Ltd` name, so the mention would mint a new PPON org, and the pair would split and be re-denied.
+
+The root is the head name: a first-seen election that goes stale after a re-registration (3M UK plc → Ltd, Axis
+Europe plc → Ltd). The fix belongs in head election (or in a legal-form check that reads the register's current form),
+not in a verdict carve-out. The 10 pairs stay denied, with open `e2-altid` edges, until then.
