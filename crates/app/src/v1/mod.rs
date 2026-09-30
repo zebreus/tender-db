@@ -597,7 +597,7 @@ async fn method_not_allowed() -> ApiError {
 }
 
 /// The whole-request bound on `/v1` (issue 241, gap 2). Sized far above the
-/// slowest legitimate non-stream response — `/v1/sql`'s in-handler cap is 10 s
+/// slowest legitimate non-stream response — `/v1/sql`'s in-handler cap is 15 s
 /// — on the premise that it fires only on a request that is already an outage.
 /// That premise does not hold for the list endpoints: a filter combination no
 /// seed bounds can simply still be computing at 30 s (issue 423 —
@@ -622,7 +622,7 @@ const REQUEST_DEADLINE: Duration = Duration::from_secs(30);
 /// BELOW [`REQUEST_DEADLINE`] on purpose: a single slow read then ends in the
 /// precise answer ("stopped") before the whole-request layer fires with its generic
 /// one, and with the margin the handler has to render it. Not on `/v1/sql` (its own
-/// 10 s limit, the same mechanism) nor on any pool a job reads through (the weekly
+/// 15 s limit, the same mechanism) nor on any pool a job reads through (the weekly
 /// data-quality windows run for minutes by design) — a `store::Readers` has no limit;
 /// only the API's borrows are bounded.
 pub const STATEMENT_DEADLINE: Duration = Duration::from_secs(25);

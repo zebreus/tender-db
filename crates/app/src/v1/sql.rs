@@ -25,7 +25,7 @@
 //!    denied by default because it is simply not in [`ALLOWED`].
 //! 3. **`query_only=1` connection** from a pool dedicated to this endpoint, so
 //!    a long analytical scan never starves the REST readers.
-//! 4. **Timeout, one layer that works** (10 s). The in-task
+//! 4. **Timeout, one layer that works** (15 s). The in-task
 //!    `tokio::time::timeout` on the isolated runtime **does not bound anything**,
 //!    and this comment used to say otherwise. It claimed turso yields at every row
 //!    boundary, so a long *streaming* query is dropped between rows and its
@@ -68,7 +68,7 @@
 //!    reach: time spent waiting for a reader, and any single instruction that runs
 //!    long by itself.
 //! 5. **Result caps** while reading: 10 000 rows / 10 MB, then `truncated:true`.
-//! 6. **Per-token limits**: 2 concurrent (semaphore) + 300/h (governor).
+//! 6. **Per-token limits**: 4 concurrent (semaphore) + 960/h (governor).
 //!
 //! The body is capped at 64 KB and the SQL travels in it, never in the URL, so
 //! queries stay out of access logs.
@@ -90,14 +90,21 @@ use std::time::{Duration, Instant};
 use tokio::sync::Semaphore;
 
 /// Dedicated `query_only` reader connections for this endpoint. Separate from
-/// the REST pool so a 10 s query here cannot queue behind the live API.
-pub const SQL_READERS: usize = 4;
+/// the REST pool so a 15 s query here cannot queue behind the live API.
+///
+/// This, not the per-token cap, is the endpoint's memory bound: at most this many
+/// statements run at once, whoever holds the tokens. 6 (raised from 4 on
+/// 2026-09-30 with the per-token cap, Lennart's call) so one token at its
+/// [`MAX_CONCURRENT`] cannot hold every reader, while the worst admitted shape
+/// (issue 426: accumulating aggregates at 1.4-2.7 GiB within 10 s, ~1.5x that
+/// in 15 s) times six stays well inside the box beside a daily fold's 22.5 GB.
+pub const SQL_READERS: usize = 6;
 
 /// Longest a single query may run before it is dropped (a streaming query,
 /// between rows) or the handler stops waiting and answers 408 (a non-yielding
 /// aggregate). The value the server runs; [`SqlState::with_timeout`] lets a test
 /// watch the cap fire without a 10 s query.
-pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
+pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(15);
 
 /// Extra margin the handler-side backstop waits beyond the in-task timeout, so a
 /// streaming query always reports through the in-task path (a clean drop between
@@ -116,9 +123,11 @@ const MAX_BYTES: usize = 10 * 1024 * 1024;
 /// Request body cap: SQL only, so generous-but-bounded.
 const MAX_BODY: usize = 64 * 1024;
 
-/// Per-token quotas (CONTEXT.md's opening posture).
-const MAX_CONCURRENT: usize = 2;
-const PER_HOUR: u32 = 300;
+/// Per-token quotas. Opened at 2 concurrent / 300 per hour (CONTEXT.md's opening
+/// posture); raised to 4 / 960 on 2026-09-30 (Lennart: agents doing analysis were
+/// throttled by it). `pub` so the concurrency test reads the cap it pins.
+pub const MAX_CONCURRENT: usize = 4;
+pub const PER_HOUR: u32 = 960;
 
 /// The public-surface allow-list: the only tables and views `/v1/sql` may read.
 /// Compared lowercased. Denied by default — anything not enumerated here (a new
@@ -261,9 +270,9 @@ pub struct SqlState {
     /// Every query's time limit (`timeout`), enforced by a timer on `runtime` that
     /// interrupts it (issue 425, by that mechanism since issue 438).
     deadline: Arc<super::stop::Deadline>,
-    /// 300/h per user id.
+    /// [`PER_HOUR`] per user id.
     rate: DefaultKeyedRateLimiter<i64>,
-    /// 2 concurrent per user id — one semaphore per user, created on first use.
+    /// [`MAX_CONCURRENT`] per user id — one semaphore per user, created on first use.
     concurrency: Mutex<HashMap<i64, Arc<Semaphore>>>,
     /// The isolated runtime queries execute on (issue 17).
     runtime: tokio::runtime::Handle,

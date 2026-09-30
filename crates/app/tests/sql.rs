@@ -79,7 +79,7 @@ impl Server {
         let token = accounts::create_token(&db, account.id, "cli").await.expect("token").token;
 
         let state =
-            v1::AppState::with_sql_timeout(db.clone(), db.readers(4).expect("readers"), sql_timeout);
+            v1::AppState::with_sql_timeout(db.clone(), db.readers(v1::sql::SQL_READERS).expect("readers"), sql_timeout);
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.expect("bind");
         let port = listener.local_addr().expect("addr").port();
         tokio::spawn(async move {
@@ -296,14 +296,14 @@ async fn results_are_capped_and_flagged() {
 /// (a per-row aggregate) rather than one giant aggregate: turso only yields to
 /// tokio at row boundaries, so a query that never emits a row cannot be dropped
 /// by `tokio::time::timeout` (a documented engine limit — see the endpoint's
-/// module docs). A per-row cost keeps the total well past 10 s on any machine
+/// module docs). A per-row cost keeps the total well past 15 s on any machine
 /// while giving the watchdog a row boundary to fire on.
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn a_long_query_is_dropped_at_the_time_limit() {
     let server = Server::start("timeout").await;
     // The subquery's range depends on the outer row, so it cannot be hoisted to
     // a constant — it is recomputed for each of the 2000 rows, and the whole
-    // thing far outlasts 10 s while yielding a row boundary to fire on.
+    // thing far outlasts 15 s while yielding a row boundary to fire on.
     let slow = "SELECT a.value, \
                   (SELECT COUNT(*) FROM generate_series(a.value, a.value + 20000000)) \
                 FROM generate_series(1, 2000) a";
@@ -311,7 +311,7 @@ async fn a_long_query_is_dropped_at_the_time_limit() {
     let status = server.sql(slow).await.status().as_u16();
     let elapsed = started.elapsed();
     assert_eq!(status, 408, "a query past the limit should be a timeout");
-    assert!(elapsed < Duration::from_secs(30), "it should stop near the 10s limit, not run on: {elapsed:?}");
+    assert!(elapsed < Duration::from_secs(30), "it should stop near the 15s limit, not run on: {elapsed:?}");
 }
 
 /// A single non-yielding aggregate — the `COUNT(*)`/`GROUP BY` shape that
@@ -348,7 +348,7 @@ async fn a_non_yielding_aggregate_is_capped() {
 /// so by the time its 408 is answered it has already ended: the gauge reads 0,
 /// nothing is left burning, and a cheap query answers at once.
 ///
-/// Sequential, not concurrent, so the per-token concurrency cap (two) never
+/// Sequential, not concurrent, so the per-token concurrency cap never
 /// enters: each bomb's permit is released when its 408 is answered.
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn a_capped_computation_is_stopped_not_abandoned() {
@@ -392,12 +392,13 @@ async fn a_capped_computation_is_stopped_not_abandoned() {
     assert_eq!(body["rows"][0][0].as_i64(), Some(1));
 }
 
-/// A third simultaneous query is refused rather than queued. The two running
-/// queries hold both permits when the third arrives, so it is rejected
+/// One query past the per-token cap is refused rather than queued. The running
+/// queries hold every permit when the extra one arrives, so it is rejected
 /// immediately — the permit check happens before any work starts, so this holds
-/// regardless of how fast the queries themselves are.
+/// regardless of how fast the queries themselves are. Reads the cap
+/// ([`v1::sql::MAX_CONCURRENT`], 4 since 2026-09-30) rather than restating it.
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-async fn a_third_concurrent_query_is_rejected() {
+async fn a_query_past_the_concurrency_cap_is_rejected() {
     let server = Arc::new(Server::start("concurrency").await);
 
     // A streaming query with real per-row work (a correlated subquery keeps the
@@ -407,7 +408,7 @@ async fn a_third_concurrent_query_is_rejected() {
                   (SELECT COUNT(*) FROM generate_series(a.value * 1000000, a.value * 1000000 + 5000000)) \
                 FROM generate_series(1, 30) a";
     let mut handles = Vec::new();
-    for _ in 0..3 {
+    for _ in 0..=v1::sql::MAX_CONCURRENT {
         let server = server.clone();
         handles.push(tokio::spawn(async move { server.sql(busy).await.status().as_u16() }));
     }
@@ -416,7 +417,7 @@ async fn a_third_concurrent_query_is_rejected() {
         statuses.push(handle.await.expect("join"));
     }
     statuses.sort_unstable();
-    // Exactly one is turned away for concurrency; the other two are admitted —
+    // Exactly one is turned away for concurrency; the others are admitted —
     // whether they then finish (200) or hit the time limit (408) is not what
     // this test is about, only that the third could not get a permit.
     assert_eq!(
@@ -426,7 +427,7 @@ async fn a_third_concurrent_query_is_rejected() {
     );
     assert!(
         statuses.iter().filter(|s| **s != 429).all(|s| *s == 200 || *s == 408),
-        "the two admitted queries ran: {statuses:?}"
+        "the admitted queries ran: {statuses:?}"
     );
 }
 
@@ -669,7 +670,7 @@ async fn sql_execution_does_not_starve_the_api() {
 
     // A finite but heavy cross-join count: ~tens of millions of rows aggregated
     // in one poll, no row boundary to yield on — it pins a worker thread for a
-    // few seconds. Two of them take both of this user's concurrency permits.
+    // few seconds. Two of them take two of this user's concurrency permits.
     let bomb = "SELECT COUNT(*) FROM generate_series(1, 7000) a, generate_series(1, 7000) b";
     let mut running = Vec::new();
     for _ in 0..2 {

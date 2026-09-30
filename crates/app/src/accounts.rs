@@ -64,7 +64,7 @@ type Result<T> = std::result::Result<T, AuthError>;
 
 /// New accounts per rolling day, across the whole service (the owner's decision,
 /// 2026-09-26). Signup is open and each account carries its own `/v1/sql` quota
-/// (2 concurrent, 300/h), so without a cap one person could hold as many quotas as
+/// (4 concurrent, 960/h), so without a cap one person could hold as many quotas as
 /// they cared to create. Global rather than per IP: an address is a weak identity
 /// behind NAT and trivially rotated. A legitimate user refused by it waits a day.
 pub const SIGNUPS_PER_DAY: i64 = 5;

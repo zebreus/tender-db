@@ -403,7 +403,7 @@
       "post": {
         "tags": ["sql"],
         "summary": "Run one read-only SELECT",
-        "description": "The SQL travels as the raw request body (never in the URL). Exactly one statement, a bare SELECT — no writes, PRAGMA, ATTACH, EXPLAIN or multi-statement bodies. The queryable surface is a positive allow-list (see GET /v1/sql/schema). Time columns are epoch seconds here, unlike REST's ISO 8601. Caps: 10 000 rows / 10 MB per result (`truncated: true` when hit); per token 2 concurrent, 300/hour, 10 s per query (408 when exceeded).",
+        "description": "The SQL travels as the raw request body (never in the URL). Exactly one statement, a bare SELECT — no writes, PRAGMA, ATTACH, EXPLAIN or multi-statement bodies. The queryable surface is a positive allow-list (see GET /v1/sql/schema). Time columns are epoch seconds here, unlike REST's ISO 8601. Caps: 10 000 rows / 10 MB per result (`truncated: true` when hit); per token 4 concurrent, 960/hour, 15 s per query (408 when exceeded).",
         "operationId": "runSql",
         "security": [{ "bearerAuth": [] }],
         "requestBody": {

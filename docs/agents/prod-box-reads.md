@@ -18,7 +18,7 @@ unfollowable rule gets reasoned past under pressure. The replacement, decided ra
 
 - **Bounded data-page reads** (an indexed seek, a single-table aggregate — the shape the 84-remainder
   attribution ran) go **through `/v1/sql` against the serving DB**, on the team lead's word per read,
-  in a low-traffic window. The endpoint's own bounds are load-bearing: one bare SELECT, 10 s cap,
+  in a low-traffic window. The endpoint's own bounds are load-bearing: one bare SELECT, 15 s cap (10 s until 2026-09-30),
   allow-listed tables, the Class B shed. Never retry a 408 — the cap bounds your wait, not the work;
   turso cannot interrupt a statement, so each retry stacks another uninterruptible scan.
 - **Heavy/unbounded data-page reads** (corpus-scale scans, characterisation runs) have **no compliant

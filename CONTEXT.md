@@ -85,7 +85,7 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
   indefinitely but cursors may expire (documented reset path). Webhook
   secrets are stored plaintext (one-box threat model); delivery is https-only
   to public addresses (dev-mode escape hatch). Opening rate posture is
-  generous (≈10 rps/IP, SQL 2 concurrent + 300/h per token). Lost password =
+  generous (≈10 rps/IP, SQL 4 concurrent + 960/h per token). Lost password =
   lost account (no email exists by design). (All resolved 2026-07-19.)
 - Metadata only: the PDF/document attachments of tenders are out of scope for
   now.
