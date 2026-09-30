@@ -1,6 +1,7 @@
 # 448 — FTS `additionalIdentifiers` are parsed and then dropped: the Companies House ↔ PPON pairing never reaches the matcher, and 161 suppliers stand as two organizations
 
-Status: ready-for-agent — UNIT 1 DEPLOYED and RUN 2026-09-30 (rev `7f24c30`, dry job 1681, 3 s): 1,992 split pairs, plan 1,575. The dry run found a precision hole: corroboration through satellite names is CIRCULAR, because a witness notice's own party name is recorded as a satellite of the org its first identifier binds. It plans at least one false merge, Amentum Clean Energy (COH 01120437) ← an `Altrad Babcock Limited` PPON org. Next: unit 1b corroborates on names from mentions OUTSIDE the pair's witness notices, then re-run the dry plan. Units 2–4 as designed after that.
+Status: ready-for-agent — UNIT 1b BUILT and gated 2026-09-30 (`e4c39b3` + review fixes `7b6d52e`, both pushed, not yet deployed). Corroboration now ignores the pair's own witness names; new gates `witness-only` and `form-conflict`; three recall folds. Next: deploy when the box queue is idle (backfill chunk 2 runs until ~05:00 UTC), re-run `{"kind":"match-org-identifiers","rule":"altid"}`, and read the Verify for 1b below. Then units 2–4.
+Was status (until 2026-09-30 03:0x): ready-for-agent — UNIT 1 DEPLOYED and RUN 2026-09-30 (rev `7f24c30`, dry job 1681, 3 s): 1,992 split pairs, plan 1,575. The dry run found a precision hole: corroboration through satellite names is CIRCULAR, because a witness notice's own party name is recorded as a satellite of the org its first identifier binds. It plans at least one false merge, Amentum Clean Energy (COH 01120437) ← an `Altrad Babcock Limited` PPON org. Next: unit 1b corroborates on names from mentions OUTSIDE the pair's witness notices, then re-run the dry plan. Units 2–4 as designed after that.
 Was status (until 2026-09-30 02:5x): ready-for-agent — UNIT 1 BUILT 2026-09-30 (the dry-only planner: `match-org-identifiers` rule `altid`, report `altid-merge-plan`; wet refused until unit 2). Gated green, 20 store tests + 4 crosswalk + 2 supervisor. Next: deploy when the queue is idle, run `{"kind":"match-org-identifiers","rule":"altid"}`, and read the plan against the 161. Design: `.scratch/tender-db/448-altid-design.md`. Filed 2026-09-30 00:0x UTC, as the follow-up `342-fts-plan.md` §5 risk 3 promised and never filed.
 
 ## What is wrong
@@ -148,3 +149,44 @@ Recall folds, in `altid_name_key` (the design's open question 3, answered by the
 Verify for 1b: re-run the dry plan. Amentum ← Altrad (01120437~PBDCBTPG) must list as `witness-only`, and the
 Doosan → Altrad Babcock pair (00839354) must still plan or list as `witness-only`, never as a merge through a false
 name. Record the class counts, then read a fresh 50-pair sample of the new plan.
+
+### Unit 1b — built 2026-09-30 (`e4c39b3`, then `7b6d52e` after the review)
+
+- `mention_rows` reads each org's mentions once, returning the keyed raws (the evidence wall) and every
+  `(notice_id, name)` row, nameless rows included.
+- `side(org)` picks the names for corroboration:
+  - the names of mention ROWS outside the pair's witness notices;
+  - if the org has no such row, its witness names;
+  - if it has no mention at all, its designated names.
+- `names_agree` (`crosswalk::altid_keys_agree`) returns true when two keys are equal, or equal but for a GB legal form
+  (`§ltd §plc §llp §lp §cic`) that only one side carries.
+- Denied classes, both verdict-overridable, both listed:
+  - `witness-only`: the designated names agree and the witness-free ones do not;
+  - `form-conflict`: the names on each side carry GB forms, and no form is shared. A formless name can no longer
+    bridge a plc and a Ltd.
+- The generic wall reads `match_norm(altid_trim(name))`, the same words the agreement read.
+- `altid_name_key`:
+  - a run of single letters is one initialism, and `&`/`and` ends the run;
+  - `co` is keyed as `company`;
+  - `altid_trim` cuts a trading-as clause and a parenthetical after the legal form.
+- Tests:
+  - store (25): `a_name_only_the_witnesses_recorded_never_corroborates` (the Amentum shape, then its HIGH-verdict
+    admission), `an_org_made_only_of_witness_mentions_corroborates_with_its_own_names`,
+    `a_nameless_outside_mention_still_keeps_the_witness_name_out`, `a_formless_name_never_bridges_a_plc_and_a_ltd`,
+    `a_trading_as_clause_does_not_carry_a_generic_name_past_the_wall`;
+  - crosswalk (7), including `an_ampersand_ends_an_initialism` and the GB-only strip.
+
+**Review, three lenses (circularity, name key, accounting).** Six findings; five are fixed in `7b6d52e`:
+- n3's `§` families were stripped as legal forms (`Siemens Healthineers AG` agreed with `Siemens Healthineers`);
+- the generic wall read the untrimmed name;
+- `&` did not end an initialism;
+- the fallback was decided on keyed names rather than rows;
+- the org-level plc/Ltd bridge.
+
+One is **kept by decision**: a company-number org made only of witness mentions still corroborates with its witness
+names. Both orgs are then the one party the names agree on. If that number is wrong, it is a fault the witnesses
+already put on that org, and the merge neither creates nor hides it. The reasoning is in the code comment. The
+residual stays the unit-4 campaign's to watch: `first_coh`-only pairs whose company-number org has no other history.
+
+Verify for 1b, after the deploy: the dry plan lists 01120437~PBDC7744BTPG as `witness-only` or `form-conflict`, never
+`plan`. Record every class count, then read a fresh sample of 50 plan pairs.
