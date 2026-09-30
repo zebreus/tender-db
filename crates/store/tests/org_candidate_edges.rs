@@ -948,3 +948,72 @@ async fn the_packet_separates_a_contradicted_country_from_an_unprobed_one() {
          shape, and the pair is the whole reason `country_probed` exists"
     );
 }
+
+/// Issue 448: an `e2-altid` row is a publisher's company-number/PPON statement
+/// (usually one the altid arm's gates DENIED), not name equality. Bridging two
+/// E3 components through it must leave the census's E3 figures — components,
+/// the orgs they touch, the cross-border cohort — and the xb packet's cohort
+/// exactly as they were. The e2 rows are counted apart, the merged ones too.
+#[tokio::test]
+async fn an_e2_altid_edge_bridging_two_e3_components_leaves_the_e3_census_unchanged() {
+    let (db, conn) = open("test-org-edge-e2-bridge.db").await;
+    // Two same-name cross-border components: {1 DK, 2 NO} and {3 SE, 4 FI}.
+    for (id, cc) in [(1i64, "DK"), (2, "NO"), (3, "SE"), (4, "FI")] {
+        org(&conn, id, "Mercell Holding ASA", Some(&format!("M{id}"))).await;
+        conn.execute(
+            "UPDATE organizations SET country = ? WHERE id = ?",
+            (Value::Text(cc.into()), Value::Integer(id)),
+        )
+        .await
+        .unwrap();
+    }
+    let edge = |a: i64, b: i64, rule: &'static str, tier: &'static str, state: &'static str| {
+        let conn = &conn;
+        async move {
+            conn.execute(
+                "INSERT INTO org_candidate_edges (org_a, org_b, rule, tier, score, evidence, first_seen, last_seen, state, job_id)
+                 VALUES (?, ?, ?, ?, 1.0, '{}', 1, 1, ?, NULL)",
+                (
+                    Value::Integer(a),
+                    Value::Integer(b),
+                    Value::Text(rule.into()),
+                    Value::Text(tier.into()),
+                    Value::Text(state.into()),
+                ),
+            )
+            .await
+            .unwrap();
+        }
+    };
+    edge(1, 2, "e3-name", "E3", "open").await;
+    edge(3, 4, "e3-name", "E3", "open").await;
+    let never = || false;
+    let before = db.census_org_candidate_edges(1, census_norm, &never).await.unwrap();
+    assert_eq!((before.components, before.max_component, before.orgs_touched), (2, 2, 4));
+    assert_eq!((before.canonical_cross_border_components, before.xb_same_name), (2, 2));
+    let packet = db.xb_same_name_packet(census_norm, packet_anchors, packet_vocabulary, 600, 3, &never).await.unwrap();
+    assert_eq!(packet.cohort, 2);
+
+    // The bridges: an open altid statement between the components, and a
+    // merged one across them the other way.
+    edge(2, 3, "e2-altid", "E2", "open").await;
+    edge(1, 4, "e2-altid", "E2", "merged").await;
+    let after = db.census_org_candidate_edges(1, census_norm, &never).await.unwrap();
+    assert_eq!(
+        (after.edges, after.e3_name, after.e3_xlang, after.e2_altid, after.e2_altid_merged, after.other_rules),
+        (4, 2, 0, 2, 1, 0),
+        "every row counted, the e2 ones apart"
+    );
+    assert_eq!(
+        (after.components, after.max_component, after.orgs_touched, after.dangling_orgs),
+        (before.components, before.max_component, before.orgs_touched, before.dangling_orgs),
+        "the E2 rows join nothing"
+    );
+    assert_eq!(
+        (after.canonical_cross_border_components, after.xb_same_name, after.size_buckets.clone()),
+        (before.canonical_cross_border_components, before.xb_same_name, before.size_buckets.clone())
+    );
+    let packet = db.xb_same_name_packet(census_norm, packet_anchors, packet_vocabulary, 600, 3, &never).await.unwrap();
+    assert_eq!(packet.cohort, 2, "the packet unions the census's edges, E3 only");
+    assert!(packet.cases.iter().all(|c| c.size == 2), "no case of four through the bridge");
+}

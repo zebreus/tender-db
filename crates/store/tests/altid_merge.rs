@@ -1,14 +1,15 @@
-//! Issue 448 unit 1: `match_org_altid_pairs`, the DRY planner of the `altid`
-//! rule — the Companies House ↔ PPON pairing FTS parties publish in
-//! `additionalIdentifiers`, which the fold drops.
+//! Issue 448: `match_org_altid_pairs`, the `altid` rule — the Companies House ↔
+//! PPON pairing FTS parties publish in `additionalIdentifiers`, which the fold
+//! drops. Unit 1 is its DRY planner; unit 2 its WET run (set parity against the
+//! stored plan, merges of the reviewed pairs, `e2-altid` edges for the denied).
 //!
 //! The injected rules are test-local miniatures in the production fn-pointer
 //! SHAPE (the r3_merge.rs convention: store cannot depend on ingest). So these
-//! tests pin the store's harvest, graph, owner map and gate order; the REAL rule
-//! content — `altid_pair_key`, `mention_key`, `altid_name_key`,
-//! `gb_legal_family` — is pinned by `ingest::crosswalk`'s own tests, and the
-//! production wiring end to end by the supervisor's
-//! `an_altid_wet_run_is_refused_until_unit_2`, whose dry step plans a real FTS
+//! tests pin the store's harvest, graph, owner map, gate order and merge
+//! machinery; the REAL rule content — `altid_pair_key`, `mention_key`,
+//! `altid_name_key`, `gb_legal_family` — is pinned by `ingest::crosswalk`'s own
+//! tests, and the production wiring end to end by the supervisor's
+//! `an_altid_wet_run_merges_the_stored_plan`, which plans and merges a real FTS
 //! pair through the real fns.
 //!
 //! Fixtures are built the way the parser and the fold leave them: a notice
@@ -17,6 +18,8 @@
 //! publisher's scheme (`GB-COH-03914810` under `GB-COH`), and the fold's one
 //! mention per party, bound to the org its FIRST identifier keys to and
 //! carrying that identifier as `raw_identifier`.
+
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use store::turso::{Connection, Value};
 
@@ -143,7 +146,7 @@ fn consortium(name: &str) -> bool {
     norm(name).split(' ').any(|t| t == "consortium")
 }
 
-fn args(stoplist_cap: usize) -> store::AltIdMergeArgs<'static> {
+fn args<'a>(stoplist_cap: usize) -> store::AltIdMergeArgs<'a> {
     store::AltIdMergeArgs {
         pair_key,
         key,
@@ -157,8 +160,21 @@ fn args(stoplist_cap: usize) -> store::AltIdMergeArgs<'static> {
         norm,
         stoplist_cap,
         dry_run: true,
+        max_pairs: None,
+        expect_pairs: None,
+        job_id: Some(77),
         stop: &|| false,
     }
+}
+
+/// A wet run held against `expect` (the stored plan's `pairs`).
+fn wet_args<'a>(expect: &[String]) -> store::AltIdMergeArgs<'a> {
+    store::AltIdMergeArgs { dry_run: false, expect_pairs: Some(expect.to_vec()), ..args(20) }
+}
+
+/// A pair's stored-plan key, from the literals.
+fn pk(coh: &str, ppon: &str) -> String {
+    format!("{}~{}", k(coh), k(ppon))
 }
 
 // ---- The literals: five company numbers, four PPONs.
@@ -368,6 +384,43 @@ impl Bed {
 
     async fn plan(&self) -> store::AltIdMergeReport {
         self.plan_capped(20).await
+    }
+
+    /// A wet run held against `expect`, checked for the same accounting as a
+    /// plan.
+    async fn wet(&self, expect: &[String]) -> store::AltIdMergeReport {
+        let r = self.db.match_org_altid_pairs(wet_args(expect)).await.expect("wet run");
+        assert_eq!(
+            r.both_distinct,
+            r.plan_pairs + r.denied_pairs() + r.conflicts,
+            "every both-distinct pair lands in exactly one place: {r:#?}"
+        );
+        r
+    }
+
+    /// The row counts a write would move, table by table.
+    async fn snapshot(&self) -> Vec<(&'static str, i64)> {
+        let mut out = Vec::new();
+        for t in [
+            "organizations",
+            "organization_mentions",
+            "organization_names",
+            "org_merge_log",
+            "org_candidate_edges",
+            "changes",
+        ] {
+            out.push((t, self.count(&format!("SELECT COUNT(*) FROM {t}")).await));
+        }
+        out
+    }
+
+    async fn text(&self, sql: &str) -> String {
+        let mut rows = self.conn.query(sql, ()).await.unwrap();
+        let row = rows.next().await.unwrap().unwrap();
+        match row.get_value(0).unwrap() {
+            Value::Text(s) => s,
+            other => panic!("text: {other:?}"),
+        }
     }
 
     async fn plan_capped(&self, cap: usize) -> store::AltIdMergeReport {
@@ -862,27 +915,23 @@ async fn a_verdict_for_another_member_set_is_stale() {
     assert_eq!((r.uncorroborated_disjoint, r.plan_pairs), (2, 0));
 }
 
-/// Unit 1 is a planner: nothing it does writes, and a wet run is refused before
-/// anything is read.
+/// The dry plan writes nothing — not even the denied pair's edge, which only a
+/// wet run records — and a wet run WITHOUT the stored plan's pairs is refused
+/// before anything is read: it could only merge unreviewed pairs.
 #[tokio::test]
 async fn the_dry_run_writes_nothing() {
     let b = bed("dry").await;
     b.split(100, (1, COH_A, "Acme Ltd"), (2, PPON_P, "ACME LTD")).await;
     b.split(200, (3, COH_B, "Northgate plc"), (4, PPON_Q, "Northgate Ltd")).await;
-    let tables = ["organizations", "organization_mentions", "org_merge_log", "org_candidate_edges", "changes"];
-    let mut before = Vec::new();
-    for t in tables {
-        before.push(b.count(&format!("SELECT COUNT(*) FROM {t}")).await);
-    }
+    let before = b.snapshot().await;
     let r = b.plan().await;
-    assert_eq!(r.plan_pairs, 1);
+    assert_eq!((r.plan_pairs, r.denied_legal_form), (1, 1));
+    assert_eq!((r.merged_pairs, r.removed, r.edges_written), (0, 0, 0));
     let mut wet = args(20);
     wet.dry_run = false;
-    let err = b.db.match_org_altid_pairs(wet).await.expect_err("no wet path yet");
-    assert!(err.to_string().contains("448 unit 2"), "{err}");
-    for (t, n) in tables.iter().zip(before) {
-        assert_eq!(b.count(&format!("SELECT COUNT(*) FROM {t}")).await, n, "{t}");
-    }
+    let err = b.db.match_org_altid_pairs(wet).await.expect_err("no stored plan, no wet run");
+    assert!(err.to_string().contains("no expected pair set") && err.to_string().contains("nothing was"), "{err}");
+    assert_eq!(b.snapshot().await, before);
 }
 
 /// The harvest reads one range of `notices_profile` per FTS profile and one
@@ -918,4 +967,342 @@ async fn the_harvest_seeks_notices_profile_and_the_notice_ids_pk() {
     );
     let mentions = plan(store::ALTID_PARTY_MENTIONS_SQL, vec![Value::Integer(1)]).await;
     assert!(mentions.contains("SEARCH organization_mentions") && !mentions.contains("SCAN"), "{mentions}");
+}
+
+// ---- Unit 2: the wet run.
+
+/// The issue's shape, merged: the PPON org — here the LOWER id — folds into the
+/// company-number org. Its mention, party, bid-party and winner rows and its
+/// name variants move; a winner row the survivor already holds collapses to
+/// one; the loser row is gone; the ledger names the rule and the statement; the
+/// change feed hears the removal, the survivor and the touched tender. A re-run
+/// finds the pair already one.
+#[tokio::test]
+async fn a_wet_run_merges_the_reviewed_pair_into_the_company_number_org() {
+    let b = bed("wet").await;
+    b.split(100, (2, COH_A, "Acme Widgets Ltd"), (1, PPON_P, "ACME WIDGETS LTD")).await;
+    b.satellite(1, "CYM", "Acme Widgets Cyf").await;
+    for sql in [
+        "INSERT INTO tender_version_parties (tender_id, seq, role, organization_id, mention_notice_id, mention_section_id)
+         VALUES (7, 1, 'winner', 1, 101, 'ORG-P100')",
+        "INSERT INTO tender_version_bid_parties (tender_id, seq, bid_id, role, organization_id, mention_notice_id, mention_section_id)
+         VALUES (7, 1, 70, 'tenderer', 1, 101, 'ORG-P100')",
+        // One award both orgs hold (a doubled winner), one only the loser holds.
+        "INSERT INTO tender_version_result_winners (tender_id, seq, lot_result_id, organization_id) VALUES (7, 1, 70, 1)",
+        "INSERT INTO tender_version_result_winners (tender_id, seq, lot_result_id, organization_id) VALUES (7, 1, 70, 2)",
+        "INSERT INTO tender_version_result_winners (tender_id, seq, lot_result_id, organization_id) VALUES (7, 1, 71, 1)",
+    ] {
+        b.conn.execute(sql, ()).await.unwrap();
+    }
+    let dry = b.plan().await;
+    assert_eq!(dry.pairs, vec![pk(COH_A, PPON_P)]);
+
+    let r = b.wet(&dry.pairs).await;
+    assert_eq!((r.plan_pairs, r.expected_pairs, r.deferred_unreviewed, r.expected_not_live), (1, 1, 0, 0));
+    assert_eq!((r.merged_pairs, r.removed, r.tender_changes), (1, 1, 1));
+    assert_eq!(
+        (r.mentions, r.parties, r.bid_parties, r.winners, r.winner_dups),
+        (1, 1, 1, 1, 1),
+        "what was actually repointed, the doubled award collapsed"
+    );
+    assert!(r.residual_pairs.is_empty() && r.deferred_pairs.is_empty() && !r.stopped);
+    assert!(r.plan_listing.iter().all(|l| l.keep == Some(2)));
+
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id = 1").await, 0, "the loser row is gone");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id = 2").await, 1, "the company-number org survives");
+    for table in ["organization_mentions", "tender_version_parties", "tender_version_bid_parties", "organization_names"] {
+        let col = if table == "organization_names" { "org_id" } else { "organization_id" };
+        assert_eq!(b.count(&format!("SELECT COUNT(*) FROM {table} WHERE {col} = 1")).await, 0, "{table}");
+    }
+    assert_eq!(b.count("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 2").await, 2);
+    assert_eq!(b.count("SELECT organization_id FROM organization_mentions WHERE notice_id = 101").await, 2);
+    assert_eq!(b.count("SELECT COUNT(*) FROM organization_names WHERE org_id = 2 AND lang = 'CYM'").await, 1);
+    assert_eq!(
+        b.count("SELECT COUNT(*) FROM tender_version_result_winners WHERE organization_id = 2").await,
+        2,
+        "lot results 70 (once) and 71"
+    );
+
+    // The ledger: one flat, json_extract-readable row a targeted unwind can find.
+    assert_eq!(
+        b.count("SELECT COUNT(*) FROM org_merge_log WHERE rule = 'e2-altid' AND keep = 2 AND loser = 1 AND job_id = 77").await,
+        1
+    );
+    let evidence = b.text("SELECT evidence FROM org_merge_log WHERE loser = 1").await;
+    for (field, value) in [
+        ("scheme", "GB:altid".to_owned()),
+        ("coh", k(COH_A)),
+        ("ppon", k(PPON_P)),
+        ("coh_literal", COH_A.to_owned()),
+        ("ppon_literal", PPON_P.to_owned()),
+        ("keep_id", minted(COH_A)),
+        ("loser_id", minted(PPON_P)),
+        ("verdict", "none".to_owned()),
+        ("name_key", "acme widgets §ltd".to_owned()),
+    ] {
+        assert!(evidence.contains(&format!("\"{field}\":\"{value}\"")), "{field} in {evidence}");
+    }
+    assert!(evidence.contains("\"witnesses\":1") && evidence.contains("\"witness_notices\":[100]"), "{evidence}");
+    assert_eq!(
+        b.count(&format!(
+            "SELECT COUNT(*) FROM org_merge_log WHERE json_extract(evidence, '$.ppon') = '{}' \
+               AND json_extract(evidence, '$.witness_notices[0]') = 100",
+            k(PPON_P)
+        ))
+        .await,
+        1,
+        "the evidence parses as JSON"
+    );
+    // The change feed.
+    for (kind, id, op) in [("organization", 1, "removed"), ("organization", 2, "changed"), ("tender", 7, "changed")] {
+        assert_eq!(
+            b.count(&format!(
+                "SELECT COUNT(*) FROM changes WHERE entity_kind = '{kind}' AND entity_id = {id} AND op = '{op}'"
+            ))
+            .await,
+            1,
+            "{kind} {id} {op}"
+        );
+    }
+
+    // Restart safety: the survivor's mentions carry the PPON now, so the pair
+    // is already one, and the (empty) residual holds nothing to merge.
+    let again = b.wet(&r.residual_pairs).await;
+    assert_eq!((again.already_one, again.both_distinct, again.plan_pairs, again.merged_pairs), (1, 0, 0, 0));
+}
+
+/// Only reviewed pairs merge. A pair the live plan carries and the stored plan
+/// does not — planned since the dry run — is deferred and counted, its orgs
+/// untouched, and it never enters the residual: the next DRY plan puts it up
+/// for review.
+#[tokio::test]
+async fn a_live_pair_the_stored_plan_lacks_is_deferred_never_merged() {
+    let b = bed("deferred").await;
+    b.split(100, (1, COH_A, "Acme Ltd"), (2, PPON_P, "Acme Ltd")).await;
+    b.split(200, (3, COH_B, "Northgate Ltd"), (4, PPON_Q, "Northgate Ltd")).await;
+    assert_eq!(b.plan().await.plan_pairs, 2);
+    let r = b.wet(&[pk(COH_A, PPON_P)]).await;
+    assert_eq!((r.plan_pairs, r.merged_pairs, r.deferred_unreviewed), (2, 1, 1));
+    assert_eq!(r.deferred_pairs, vec![pk(COH_B, PPON_Q)]);
+    assert!(r.residual_pairs.is_empty(), "a deferred pair is never carried as reviewed");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id IN (3, 4)").await, 2);
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id = 2").await, 0);
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log").await, 1);
+}
+
+/// Set parity: the live plan and the stored plan may differ by at most
+/// max(2% of the stored set, 5) pairs, counted as a symmetric difference.
+/// Over it, the run aborts before any write and names both counts; at it, the
+/// run goes ahead and merges only the reviewed pair it still plans.
+#[tokio::test]
+async fn a_wet_run_whose_live_plan_drifted_past_tolerance_aborts_before_any_write() {
+    let b = bed("drift").await;
+    b.split(100, (1, COH_A, "Acme Ltd"), (2, PPON_P, "Acme Ltd")).await;
+    let fake = |n: usize| -> Vec<String> { (0..n).map(|i| format!("0000000{i}~FAKE{i:08}")).collect() };
+    let before = b.snapshot().await;
+    // Six stored pairs gone from the live plan, one live pair not stored: 7 > 5.
+    let err = b.db.match_org_altid_pairs(wet_args(&fake(6))).await.expect_err("drift aborts");
+    let msg = err.to_string();
+    assert!(
+        msg.contains("live plan has 1 pairs, the stored plan 6") && msg.contains("7 differ"),
+        "{msg}"
+    );
+    assert!(msg.contains("nothing was written"), "{msg}");
+    assert_eq!(b.snapshot().await, before, "an abort writes nothing");
+
+    // Five stale stored pairs and the live one: a drift of exactly 5 passes.
+    let mut expect = fake(5);
+    expect.push(pk(COH_A, PPON_P));
+    expect.sort();
+    let r = b.wet(&expect).await;
+    assert_eq!((r.expected_pairs, r.expected_not_live, r.deferred_unreviewed, r.merged_pairs), (6, 5, 0, 1));
+    assert!(r.residual_pairs.is_empty(), "a stored pair the live plan lost is not carried either");
+}
+
+/// A HIGH merge verdict that admitted a pair (here past an uncorroborated name)
+/// is stamped applied in the merge's own transaction, and the ledger says the
+/// verdict carried it. Stamped, it cannot admit anything again.
+#[tokio::test]
+async fn a_high_admitting_verdict_is_stamped_applied_by_the_merge() {
+    let b = bed("stamp").await;
+    b.split(100, (1, COH_A, "Acme Ltd"), (2, PPON_P, "Zenith Ltd")).await;
+    b.verdict(COH_A, PPON_P, vec![1, 2], "merge", "high").await;
+    let dry = b.plan().await;
+    assert_eq!((dry.admitted_verdict, dry.plan_pairs), (1, 1));
+    let r = b.wet(&dry.pairs).await;
+    assert_eq!(r.merged_pairs, 1);
+    assert_eq!(
+        b.count(&format!(
+            "SELECT COUNT(*) FROM org_merge_verdicts WHERE scheme = 'GB:altid' AND key = '{}' \
+               AND applied_at IS NOT NULL AND job_id = 77 AND applied_action = 'merged 1 row(s) into 1'",
+            pk(COH_A, PPON_P)
+        ))
+        .await,
+        1
+    );
+    let evidence = b.text("SELECT evidence FROM org_merge_log WHERE loser = 2").await;
+    assert!(evidence.contains("\"verdict\":\"admitted\"") && evidence.contains("\"name_key\":\"\""), "{evidence}");
+}
+
+/// The pairs a gate denied become open `e2-altid` edges, tier E2, scored by
+/// their witnesses and carrying the gate as `status` — the record of what was
+/// NOT merged. An earlier run's edge for a pair merged now turns `merged`
+/// instead of going away; nothing else is touched, and a re-run refreshes an
+/// edge without resetting its `first_seen` or its state. Nothing is deleted.
+#[tokio::test]
+async fn denied_pairs_get_open_e2_edges_and_nothing_is_deleted() {
+    let b = bed("edges").await;
+    b.split(100, (1, COH_A, "Acme Ltd"), (2, PPON_P, "Acme Ltd")).await;
+    b.split(200, (3, COH_B, "Northgate Ltd"), (4, PPON_Q, "Zenith Ltd")).await;
+    for (a, bb, rule, tier) in [(50i64, 51i64, "e3-name", "E3"), (1, 2, "e2-altid", "E2")] {
+        b.conn
+            .execute(
+                "INSERT INTO org_candidate_edges (org_a, org_b, rule, tier, score, evidence, first_seen, last_seen, job_id)
+                 VALUES (?, ?, ?, ?, 1.0, '{}', 1, 1, NULL)",
+                (Value::Integer(a), Value::Integer(bb), Value::Text(rule.into()), Value::Text(tier.into())),
+            )
+            .await
+            .unwrap();
+    }
+    let dry = b.plan().await;
+    assert_eq!((dry.plan_pairs, dry.uncorroborated_disjoint), (1, 1));
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_candidate_edges").await, 2, "the dry plan writes no edge");
+
+    let r = b.wet(&dry.pairs).await;
+    assert_eq!((r.merged_pairs, r.edges_written, r.edges_merged), (1, 1, 1));
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_candidate_edges").await, 3);
+    assert_eq!(b.text("SELECT state FROM org_candidate_edges WHERE org_a = 1 AND org_b = 2").await, "merged");
+    assert_eq!(b.text("SELECT state FROM org_candidate_edges WHERE org_a = 50 AND org_b = 51").await, "open");
+    assert_eq!(
+        b.count(
+            "SELECT COUNT(*) FROM org_candidate_edges WHERE org_a = 3 AND org_b = 4 AND rule = 'e2-altid' \
+               AND tier = 'E2' AND state = 'open' AND score = 1.0 AND job_id = 77"
+        )
+        .await,
+        1
+    );
+    let evidence = b.text("SELECT evidence FROM org_candidate_edges WHERE org_a = 3 AND org_b = 4").await;
+    for (field, value) in [
+        ("status", "uncorroborated-disjoint".to_owned()),
+        ("coh", k(COH_B)),
+        ("ppon", k(PPON_Q)),
+        ("coh_literal", COH_B.to_owned()),
+        ("ppon_literal", PPON_Q.to_owned()),
+    ] {
+        assert!(evidence.contains(&format!("\"{field}\":\"{value}\"")), "{field} in {evidence}");
+    }
+    for field in ["\"coh_org\":3", "\"ppon_org\":4", "\"witnesses\":1", "\"coh_partners\":1", "\"first_coh\":1", "\"first_ppon\":0"] {
+        assert!(evidence.contains(field), "{field} in {evidence}");
+    }
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations WHERE id IN (3, 4)").await, 2, "a denied pair's orgs stand");
+
+    // A re-run refreshes the denied pair's edge in place.
+    b.conn.execute("UPDATE org_candidate_edges SET first_seen = 5 WHERE org_a = 3", ()).await.unwrap();
+    let again = b.wet(&r.residual_pairs).await;
+    assert_eq!((again.merged_pairs, again.edges_written), (0, 1));
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_candidate_edges").await, 3, "an upsert, never a second row");
+    assert_eq!(b.count("SELECT first_seen FROM org_candidate_edges WHERE org_a = 3").await, 5);
+    assert_eq!(b.text("SELECT state FROM org_candidate_edges WHERE org_a = 1 AND org_b = 2").await, "merged");
+}
+
+/// The stop is polled between merge transactions (50 pairs each), so a stopped
+/// run stands on a committed prefix: whole pairs merged, the rest untouched,
+/// the residual naming exactly the reviewed pairs still to go, and no edge
+/// written. The continuation, held against that residual, finishes the job.
+#[tokio::test]
+async fn a_stop_between_transactions_leaves_the_committed_prefix() {
+    let b = bed("stop").await;
+    let n = 51i64;
+    for i in 0..n {
+        b.split(
+            1000 + 2 * i,
+            (1000 + i, &format!("GB-COH-{:08}", 20_000_000 + i), &format!("Supplier {i} Ltd")),
+            (2000 + i, &format!("GB-PPON-PAAA-{i:04}-ZZZZ"), &format!("Supplier {i} Ltd")),
+        )
+        .await;
+    }
+    // The planning polls, counted on the dry run: the wet run polls the same
+    // ones before its first transaction.
+    let calls = AtomicUsize::new(0);
+    let counting = || {
+        calls.fetch_add(1, Ordering::SeqCst);
+        false
+    };
+    let dry = b.db.match_org_altid_pairs(store::AltIdMergeArgs { stop: &counting, ..args(20) }).await.unwrap();
+    assert_eq!(dry.plan_pairs, 51);
+    let planning = calls.load(Ordering::SeqCst);
+    // Let the first transaction's check pass and stop at the second's.
+    let wet_calls = AtomicUsize::new(0);
+    let stop = || wet_calls.fetch_add(1, Ordering::SeqCst) > planning;
+    let r = b
+        .db
+        .match_org_altid_pairs(store::AltIdMergeArgs { stop: &stop, ..wet_args(&dry.pairs) })
+        .await
+        .unwrap();
+    assert!(r.stopped);
+    assert_eq!((r.merged_pairs, r.removed, r.edges_written), (50, 50, 0));
+    assert_eq!(r.residual_pairs, vec![dry.pairs[50].clone()], "the one reviewed pair still to go");
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, 2 * n - 50);
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log").await, 50);
+    assert_eq!(
+        b.count(
+            "SELECT COUNT(*) FROM organization_mentions m \
+              WHERE NOT EXISTS (SELECT 1 FROM organizations o WHERE o.id = m.organization_id)"
+        )
+        .await,
+        0,
+        "no mention points at a deleted org"
+    );
+    assert_eq!(b.count("SELECT COUNT(*) FROM changes WHERE op = 'removed'").await, 50);
+    assert_eq!(b.count("SELECT COUNT(*) FROM changes WHERE op = 'changed'").await, 50);
+
+    let rest = b.wet(&r.residual_pairs).await;
+    assert_eq!((rest.already_one, rest.merged_pairs, rest.deferred_unreviewed), (50, 1, 0));
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, n);
+}
+
+/// The job's `max_groups` caps the merges; the capped run's residual is the
+/// reviewed rest, in the stored plan's order, and a continuation under it
+/// passes parity.
+#[tokio::test]
+async fn a_capped_wet_run_merges_a_prefix_and_its_residual_continues() {
+    let b = bed("capped").await;
+    b.split(100, (1, COH_A, "Acme Ltd"), (2, PPON_P, "Acme Ltd")).await;
+    b.split(200, (3, COH_B, "Northgate Ltd"), (4, PPON_Q, "Northgate Ltd")).await;
+    b.split(300, (5, COH_C, "Southgate Ltd"), (6, PPON_R, "Southgate Ltd")).await;
+    let dry = b.plan().await;
+    assert_eq!(dry.plan_pairs, 3);
+    let r = b
+        .db
+        .match_org_altid_pairs(store::AltIdMergeArgs { max_pairs: Some(1), ..wet_args(&dry.pairs) })
+        .await
+        .unwrap();
+    assert_eq!((r.merged_pairs, r.stopped), (1, false));
+    assert_eq!(r.residual_pairs, dry.pairs[1..].to_vec());
+    assert_eq!(b.count("SELECT COUNT(*) FROM org_merge_log").await, 1);
+    let rest = b.wet(&r.residual_pairs).await;
+    assert_eq!((rest.merged_pairs, rest.deferred_unreviewed), (2, 0));
+    assert_eq!(b.count("SELECT COUNT(*) FROM organizations").await, 3);
+}
+
+/// One PPON beside two company numbers is a conflict, and only a verdict can
+/// plan either pair. Two HIGH verdicts that admit BOTH would fold one PPON org
+/// into two company-number orgs; the arm never picks a side, so neither merges
+/// and both stay in the residual for the reviewer to settle.
+#[tokio::test]
+async fn two_admitting_verdicts_over_one_ppon_merge_neither() {
+    let b = bed("contradictory").await;
+    b.split(100, (1, COH_A, "Acme Ltd"), (2, PPON_P, "Acme Ltd")).await;
+    b.org(3, COH_B, "Acme Ltd").await;
+    b.notice(300, "fts:ocds-1.1").await;
+    b.party(300, "B", Some(3), "GB", &[COH_B, PPON_P]).await;
+    b.verdict(COH_A, PPON_P, vec![1, 2], "merge", "high").await;
+    b.verdict(COH_B, PPON_P, vec![2, 3], "merge", "high").await;
+    let dry = b.plan().await;
+    assert_eq!((dry.admitted_verdict, dry.plan_pairs), (2, 2));
+    let before = b.snapshot().await;
+    let r = b.wet(&dry.pairs).await;
+    assert_eq!((r.contradictory, r.merged_pairs, r.edges_written), (2, 0, 0));
+    assert_eq!(r.residual_pairs, dry.pairs);
+    assert_eq!(b.snapshot().await, before, "nothing merged, nothing denied");
 }

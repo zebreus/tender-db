@@ -654,11 +654,16 @@ pub(crate) const SCHEMA: &str = "
     -- review-gated path. No FK on org ids (merged-away losers may be
     -- referenced). No index beyond the PK: expected 1e5-1e6 rows, and the
     -- PK serves org_a-prefix probes.
+    -- Issue 448: rule 'e2-altid', tier 'E2' — a company-number/PPON pair an FTS
+    -- party published whose two orgs the altid arm's gates DENIED (evidence
+    -- carries the gate as `status`). Written after each wet altid run, never
+    -- deleted; state='merged' once a later run merges the pair. The readers
+    -- (edge census, xb packet) join components over 'e3-*' rows ONLY.
     CREATE TABLE IF NOT EXISTS org_candidate_edges (
         org_a      INTEGER NOT NULL,           -- lower org id (CHECK below)
         org_b      INTEGER NOT NULL,
-        rule       TEXT    NOT NULL,           -- 'e3-name' | 'e3-xlang' | 'e4-stripped'
-        tier       TEXT    NOT NULL,           -- 'E3' | 'E4'
+        rule       TEXT    NOT NULL,           -- 'e3-name' | 'e3-xlang' | 'e4-stripped' | 'e2-altid'
+        tier       TEXT    NOT NULL,           -- 'E3' | 'E4' | 'E2'
         score      REAL    NOT NULL,           -- ordinal per rule, not probabilistic
         evidence   TEXT    NOT NULL,           -- JSON, hand-built (merge-log esc style)
         first_seen INTEGER NOT NULL,
@@ -2390,9 +2395,22 @@ pub struct AltIdMergeArgs<'a> {
     pub norm: fn(&str) -> String,
     /// The generic-name cap (`STOPLIST_CAP`), the one the scan and R3 read.
     pub stoplist_cap: usize,
-    /// Unit 1 plans only: `false` is refused before anything is read.
+    /// `true` plans and writes nothing. `false` (unit 2) re-plans live under the
+    /// writer, holds the live plan against [`Self::expect_pairs`], and merges.
     pub dry_run: bool,
-    /// Cooperative stop, polled between notices and between pairs.
+    /// Wet runs only: merge at most this many pairs (the job's `max_groups`, the
+    /// design's capped first wet run). `None` merges every reviewed pair.
+    pub max_pairs: Option<u64>,
+    /// Wet runs only: the stored dry plan's `pairs` — the reviewed set. A wet
+    /// run without it is refused before anything is read. Only live ∩ expected
+    /// pairs merge; a live pair the set lacks is `deferred_unreviewed`; and a
+    /// symmetric difference over max(2% of the set, 5) aborts before any write.
+    pub expect_pairs: Option<Vec<String>>,
+    /// Recorded into `org_merge_log`, `org_merge_verdicts` and
+    /// `org_candidate_edges` rows.
+    pub job_id: Option<i64>,
+    /// Cooperative stop, polled between notices and between pairs, and on a
+    /// wet run between merge transactions (never inside one).
     pub stop: &'a (dyn Fn() -> bool + Sync),
 }
 
@@ -2526,13 +2544,45 @@ pub struct AltIdMergeReport {
     // ---- The plan.
     pub plan_pairs: u64,
     /// The planned `<coh>~<ppon>` keys, sorted and UNCAPPED — the set a wet run
-    /// will hold its live plan against.
+    /// will hold its live plan against. On a wet run, the LIVE plan.
     pub pairs: Vec<String>,
-    /// What the plan's merges would move off the PPON orgs.
+    /// Dry: what the plan's merges would move off the PPON orgs. Wet: what the
+    /// committed merges actually repointed.
     pub mentions: u64,
     pub parties: u64,
     pub bid_parties: u64,
     pub winners: u64,
+    // ---- The wet run (unit 2); all zero or empty on a dry run.
+    /// The stored plan's pair count, the set the live plan was held against.
+    pub expected_pairs: u64,
+    /// Live planned pairs the stored plan does not carry: planned since the
+    /// reviewed dry run, so never merged by this run. Listed in
+    /// [`Self::deferred_pairs`]; the next dry plan puts them up for review.
+    pub deferred_unreviewed: u64,
+    pub deferred_pairs: Vec<String>,
+    /// Stored plan pairs the live plan no longer carries — merged since, now
+    /// denied, or an org gone. Part of the parity drift, never merged.
+    pub expected_not_live: u64,
+    /// Live ∩ expected pairs left unmerged because their PPON org is the loser
+    /// of ANOTHER such pair too — two admitting verdicts over one PPON, which
+    /// only verdicts can plan (the conflict flag denies it otherwise). The arm
+    /// never picks a side, so neither merges.
+    pub contradictory: u64,
+    /// Pairs merged (≤ live ∩ expected under a cap or a stop).
+    pub merged_pairs: u64,
+    /// PPON org rows deleted.
+    pub removed: u64,
+    pub winner_dups: u64,
+    pub tender_changes: u64,
+    /// The live ∩ expected pairs this run did not merge (a cap, a stop, a
+    /// contradiction), sorted: what the supervisor re-records as the plan's
+    /// `pairs`, so a continuation holds itself to REVIEWED pairs only — a
+    /// deferred pair never enters it.
+    pub residual_pairs: Vec<String>,
+    /// Open `e2-altid` edges upserted for the two-org pairs a gate denied.
+    pub edges_written: u64,
+    /// `e2-altid` edges whose pair this run merged, moved to `state='merged'`.
+    pub edges_merged: u64,
     pub plan_listing: Vec<AltIdListing>,
     pub plan_listing_truncated: bool,
     pub denied_listing: Vec<AltIdListing>,
@@ -2541,7 +2591,9 @@ pub struct AltIdMergeReport {
     pub conflict_listing_truncated: bool,
     /// Up to `ALTID_NO_TARGET_SAMPLE` (50) pairs per no-target class.
     pub no_target_sample: Vec<AltIdListing>,
-    /// The cooperative stop fired; the counts are partial.
+    /// The cooperative stop fired; the counts are partial. On a wet run the
+    /// merge counts cover the committed transactions only, and no edge is
+    /// written after a stop (the next run writes them).
     pub stopped: bool,
 }
 
@@ -2599,6 +2651,57 @@ pub const ALTID_PARTY_IDS_SQL: &str = "SELECT section_id, ordinal, scheme, value
 /// fold has not reached yet.
 pub const ALTID_PARTY_MENTIONS_SQL: &str = "SELECT section_id, country FROM organization_mentions \
      WHERE notice_id = ? AND section_id >= 'ORG-' AND section_id < 'ORG.'";
+
+/// Issue 448 unit 2: pairs per merge transaction — R2's `MERGE_TXN_GROUPS`.
+const ALTID_MERGE_TXN_PAIRS: usize = 50;
+
+/// One planned pair as the wet run merges it: the PPON org folds into the
+/// company-number org.
+struct AltIdPlanned {
+    /// `<coh>~<ppon>`, the stored plan's key.
+    key: String,
+    coh: String,
+    ppon: String,
+    keep: i64,
+    loser: i64,
+    /// The two orgs' stored identifiers (R2's `keep_id` / `loser_id`).
+    keep_literal: String,
+    loser_literal: String,
+    /// The FTS literals as first published.
+    coh_literal: String,
+    ppon_literal: String,
+    witnesses: u64,
+    /// The first three witness notice ids, so one bad publisher statement's
+    /// merges can be found and unwound.
+    witness_notices: Vec<i64>,
+    /// The altid key of the corroborating company-number-side name; empty
+    /// when a verdict stood in for corroboration.
+    name_key: String,
+    /// The cohort of the HIGH merge verdict that admitted the pair, stamped
+    /// applied in the merge's transaction.
+    verdict_cohort: Option<String>,
+}
+
+/// One two-org pair a gate denied, kept for its `e2-altid` edge.
+struct AltIdDenied {
+    coh_org: i64,
+    ppon_org: i64,
+    listing: AltIdListing,
+}
+
+/// JSON string escaping by hand (store carries no serde) — the merge-log
+/// discipline: escape the two characters JSON cares about and drop control
+/// characters.
+fn altid_json_esc(s: &str) -> String {
+    s.chars()
+        .filter(|c| !c.is_control())
+        .flat_map(|c| match c {
+            '\\' => vec!['\\', '\\'],
+            '"' => vec!['\\', '"'],
+            c => vec![c],
+        })
+        .collect()
+}
 
 /// One issue-311 per-case review verdict, as the admin surface hands it to
 /// the store (the app crate owns the serde shape; store stays serde-free).
@@ -4856,10 +4959,22 @@ pub struct CaseUnapplyReport {
 /// cohort.
 #[derive(Debug, Default, Clone)]
 pub struct EdgeCensusReport {
+    /// Every edge row, whatever its rule.
     pub edges: u64,
     pub e3_name: u64,
     pub e3_xlang: u64,
-    /// Distinct org ids appearing on either side of an edge.
+    /// Issue 448: the altid arm's `e2-altid` rows — a publisher's company-number
+    /// / PPON statement a gate denied (or, `e2_altid_merged` of them, a pair
+    /// merged since). Counted apart and NEVER joined into components: an E2
+    /// statement is not name equality, and bridging two E3 components through
+    /// it would change the review cases the E3 campaign counts.
+    pub e2_altid: u64,
+    pub e2_altid_merged: u64,
+    /// Rows under a rule this census does not know (not `e3-*`, not
+    /// `e2-altid`): counted, never joined.
+    pub other_rules: u64,
+    /// Distinct org ids appearing on either side of an `e3-*` edge. This and
+    /// every component figure below read the E3 edges ONLY.
     pub orgs_touched: u64,
     /// Endpoints whose org row is gone — merged away since the scan wrote
     /// the edge (the store carries no FK by design).
@@ -6659,13 +6774,7 @@ impl Db {
         let mut report = OrgEdgeScanReport { bounds_ok: true, ..Default::default() };
         report.exemplar_org = args.exemplar_org;
 
-        struct Edge {
-            a: i64,
-            b: i64,
-            rule: &'static str,
-            score: f64,
-            evidence: String,
-        }
+        type Edge = CandidateEdge;
         let mut edges: Vec<Edge> = Vec::new();
         let mut emitted: std::collections::HashSet<(i64, i64, &'static str)> =
             std::collections::HashSet::new();
@@ -7084,41 +7193,10 @@ impl Db {
                 break;
             }
             conn.execute("BEGIN IMMEDIATE", ()).await?;
-            let result: turso::Result<()> = async {
-                for e in batch {
-                    // Single-row upsert, the put_report construct: preserves
-                    // first_seen and state by leaving them out of the SET
-                    // list — a re-scan refreshes evidence, it never resets
-                    // a review decision.
-                    conn.execute(
-                        "INSERT INTO org_candidate_edges \
-                             (org_a, org_b, rule, tier, score, evidence, \
-                              first_seen, last_seen, state, job_id) \
-                         VALUES (?, ?, ?, 'E3', ?, ?, ?, ?, 'open', ?) \
-                         ON CONFLICT(org_a, org_b, rule) DO UPDATE SET \
-                             last_seen = excluded.last_seen, \
-                             evidence = excluded.evidence, \
-                             score = excluded.score, \
-                             job_id = excluded.job_id",
-                        (
-                            Value::Integer(e.a),
-                            Value::Integer(e.b),
-                            t(e.rule),
-                            Value::Real(e.score),
-                            t(&e.evidence),
-                            Value::Integer(now),
-                            Value::Integer(now),
-                            match args.job_id {
-                                Some(j) => Value::Integer(j),
-                                None => Value::Null,
-                            },
-                        ),
-                    )
-                    .await?;
-                }
-                Ok(())
-            }
-            .await;
+            // Single-row upserts, the put_report construct: preserves
+            // first_seen and state — a re-scan refreshes evidence, it never
+            // resets a review decision.
+            let result = write_candidate_edges(&conn, batch, "E3", now, args.job_id).await;
             match result {
                 Ok(()) => {
                     if let Err(e) = conn.execute("COMMIT", ()).await {
@@ -14184,8 +14262,11 @@ impl Db {
     /// supplier's PPON beside it. The parser keeps every one (BT-501 rows at
     /// ordinal 0, 1, …); the fold reads only the first. So one supplier
     /// published company-number-first on one notice and PPON-first on another
-    /// stands as two organizations (161 on prod, 2026-09-30). This plans their
-    /// reunion and writes NOTHING; the wet path is unit 2 and is refused here.
+    /// stands as two organizations (161 on prod, 2026-09-30). A dry run plans
+    /// their reunion and writes NOTHING. A wet run (unit 2) re-plans the same
+    /// way under the writer, then merges the reviewed pairs in
+    /// [`Self::altid_wet`]: it needs the stored plan's `pairs`
+    /// ([`AltIdMergeArgs::expect_pairs`]) and is refused without them.
     ///
     /// The tier is E2 (`.scratch/tender-db/448-altid-design.md`): the pairing
     /// is a publisher's STATEMENT — issue 447 read publishers writing a sister
@@ -14218,15 +14299,33 @@ impl Db {
         args: AltIdMergeArgs<'_>,
     ) -> turso::Result<AltIdMergeReport> {
         use std::collections::{BTreeMap, HashMap, HashSet};
-        if !args.dry_run {
+        if !args.dry_run && args.expect_pairs.is_none() {
             return Err(turso::Error::Error(
-                "altid wet path not built (448 unit 2) — nothing was read or written".into(),
+                "altid wet run refused: no expected pair set (the stored altid-merge-plan's \
+                 `pairs`) — a wet run merges only reviewed pairs; nothing was read or written"
+                    .into(),
             ));
         }
         let mut report = AltIdMergeReport::default();
-        // Read-only from end to end, so a pooled reader rather than the writer:
-        // a planning pass over the FTS corpus must not hold up the fold.
-        let conn = self.reader().await?;
+        // A dry plan is read-only from end to end, so a pooled reader rather
+        // than the writer: a planning pass over the FTS corpus must not hold up
+        // the fold. A wet run plans under the WRITER and keeps it to the last
+        // merge — R2's shape — so no write lands between the plan the gates
+        // judged and the merges that act on it. The helpers the plan calls
+        // (`org_all_names`, `merge_verdict_for`, `name_key_is_generic`) read
+        // through the pool, never the writer, so holding it cannot deadlock.
+        let reader;
+        let writer;
+        let conn: &Connection = if args.dry_run {
+            reader = self.reader().await?;
+            &reader
+        } else {
+            writer = self.conn().await;
+            &writer
+        };
+        // Wet only: what the merge and the edge writer need of each pair.
+        let mut planned: Vec<AltIdPlanned> = Vec::new();
+        let mut denied: Vec<AltIdDenied> = Vec::new();
 
         // ---- 1. HARVEST.
         let mut notices: Vec<i64> = Vec::new();
@@ -14559,6 +14658,19 @@ impl Db {
             list.push(listing);
             Ok(())
         }
+        // Wet only: a denied two-org pair, kept whole (the listings are capped)
+        // for its `e2-altid` edge.
+        fn keep_denied(
+            denied: &mut Vec<AltIdDenied>,
+            wet: bool,
+            coh_org: i64,
+            ppon_org: i64,
+            listing: &AltIdListing,
+        ) {
+            if wet {
+                denied.push(AltIdDenied { coh_org, ppon_org, listing: listing.clone() });
+            }
+        }
 
         let mut evidence: HashMap<i64, Vec<(&'static str, String)>> = HashMap::new();
         let mut mention_names: HashMap<i64, Vec<(i64, String)>> = HashMap::new();
@@ -14614,7 +14726,7 @@ impl Db {
                     if !evidence.contains_key(&one.id) {
                         // Both caches fill together: a later pair reads the names.
                         let (keys, named) =
-                            mention_rows(&conn, one.id, &one.country, args.mention_key).await?;
+                            mention_rows(conn, one.id, &one.country, args.mention_key).await?;
                         evidence.insert(one.id, keys);
                         mention_names.insert(one.id, named);
                     }
@@ -14640,7 +14752,7 @@ impl Db {
                             one.literal.clone(),
                             names[&one.id].first().cloned().unwrap_or_default(),
                         )];
-                        listing.witness_publications = witness_publications(&conn, pair).await?;
+                        listing.witness_publications = witness_publications(conn, pair).await?;
                         report.no_target_sample.push(listing);
                     }
                     continue;
@@ -14651,7 +14763,7 @@ impl Db {
                     if *n < ALTID_NO_TARGET_SAMPLE {
                         *n += 1;
                         listing.gate = "no-target-both".to_owned();
-                        listing.witness_publications = witness_publications(&conn, pair).await?;
+                        listing.witness_publications = witness_publications(conn, pair).await?;
                         report.no_target_sample.push(listing);
                     }
                     continue;
@@ -14663,7 +14775,7 @@ impl Db {
                     names.insert(o.id, self.org_all_names(o.id).await?);
                 }
                 if !evidence.contains_key(&o.id) {
-                    let (keys, named) = mention_rows(&conn, o.id, &o.country, args.mention_key).await?;
+                    let (keys, named) = mention_rows(conn, o.id, &o.country, args.mention_key).await?;
                     evidence.insert(o.id, keys);
                     mention_names.insert(o.id, named);
                 }
@@ -14733,8 +14845,9 @@ impl Db {
             };
             if let Some(gate) = structural {
                 listing.gate = gate.to_owned();
+                keep_denied(&mut denied, !args.dry_run, c.id, p.id, &listing);
                 push_listing(
-                    &conn,
+                    conn,
                     &mut report.denied_listing,
                     &mut report.denied_listing_truncated,
                     listing,
@@ -14747,13 +14860,15 @@ impl Db {
             // ---- 5. VERDICT: the reviewer's word on exactly this pair.
             let live = vec![c.id.min(p.id), c.id.max(p.id)];
             let mut admitted = false;
+            let mut admitted_cohort: Option<String> = None;
             let verdict = self.merge_verdict_for("GB", "GB:altid", &format!("{coh}~{ppon}")).await?;
             if let Some(v) = verdict {
                 if v.action == "keep" {
                     report.denied_verdict += 1;
                     listing.gate = "verdict-keep".to_owned();
+                    keep_denied(&mut denied, !args.dry_run, c.id, p.id, &listing);
                     push_listing(
-                        &conn,
+                        conn,
                         &mut report.denied_listing,
                         &mut report.denied_listing_truncated,
                         listing,
@@ -14764,6 +14879,7 @@ impl Db {
                 }
                 if v.confidence == "high" && !v.applied && v.members == live {
                     admitted = true;
+                    admitted_cohort = Some(v.cohort);
                     report.admitted_verdict += 1;
                 } else {
                     report.verdict_stale += 1;
@@ -14771,6 +14887,7 @@ impl Db {
             }
 
             // ---- 6. JUDGMENT, which a HIGH merge verdict stands in for.
+            let mut corroborated_by = String::new();
             if !admitted {
                 // The conflict flags: a PPON beside two company numbers, a company
                 // number beside two PPONs, or a key an ambiguous party named. One
@@ -14793,8 +14910,9 @@ impl Db {
                 if !flags.is_empty() {
                     report.conflicts += 1;
                     listing.gate = flags.join("+");
+                    keep_denied(&mut denied, !args.dry_run, c.id, p.id, &listing);
                     push_listing(
-                        &conn,
+                        conn,
                         &mut report.conflict_listing,
                         &mut report.conflict_listing_truncated,
                         listing,
@@ -14865,8 +14983,9 @@ impl Db {
                 if !cf.is_empty() && !pf.is_empty() && cf.is_disjoint(&pf) {
                     report.denied_form_conflict += 1;
                     listing.gate = "form-conflict".to_owned();
+                    keep_denied(&mut denied, !args.dry_run, c.id, p.id, &listing);
                     push_listing(
-                        &conn,
+                        conn,
                         &mut report.denied_listing,
                         &mut report.denied_listing_truncated,
                         listing,
@@ -14898,8 +15017,9 @@ impl Db {
                         "uncorroborated-overlap"
                     }
                     .to_owned();
+                    keep_denied(&mut denied, !args.dry_run, c.id, p.id, &listing);
                     push_listing(
-                        &conn,
+                        conn,
                         &mut report.denied_listing,
                         &mut report.denied_listing_truncated,
                         listing,
@@ -14930,14 +15050,16 @@ impl Db {
                     }
                     if !over {
                         clear = true;
+                        corroborated_by = (args.name_key)(a);
                         break;
                     }
                 }
                 if !clear {
                     report.denied_generic += 1;
                     listing.gate = "generic".to_owned();
+                    keep_denied(&mut denied, !args.dry_run, c.id, p.id, &listing);
                     push_listing(
-                        &conn,
+                        conn,
                         &mut report.denied_listing,
                         &mut report.denied_listing_truncated,
                         listing,
@@ -14951,34 +15073,53 @@ impl Db {
             // ---- The plan: the PPON org folds into the company-number org.
             report.plan_pairs += 1;
             report.pairs.push(format!("{coh}~{ppon}"));
+            if !args.dry_run {
+                planned.push(AltIdPlanned {
+                    key: format!("{coh}~{ppon}"),
+                    coh: coh.clone(),
+                    ppon: ppon.clone(),
+                    keep: c.id,
+                    loser: p.id,
+                    keep_literal: c.literal.clone(),
+                    loser_literal: p.literal.clone(),
+                    coh_literal: pair.coh_literal.clone(),
+                    ppon_literal: pair.ppon_literal.clone(),
+                    witnesses: pair.witnesses.len() as u64,
+                    witness_notices: pair.witnesses.keys().take(3).copied().collect(),
+                    name_key: corroborated_by,
+                    verdict_cohort: admitted_cohort,
+                });
+            }
             // Blast-radius preview (the Stage-1 lesson): what the merge would
-            // move off the loser.
-            for (sql, slot) in [
-                (
-                    "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = ?",
-                    &mut report.mentions,
-                ),
-                (
-                    "SELECT COUNT(*) FROM tender_version_parties WHERE organization_id = ?",
-                    &mut report.parties,
-                ),
-                (
-                    "SELECT COUNT(*) FROM tender_version_bid_parties WHERE organization_id = ?",
-                    &mut report.bid_parties,
-                ),
-                (
-                    "SELECT COUNT(*) FROM tender_version_result_winners WHERE organization_id = ?",
-                    &mut report.winners,
-                ),
-            ] {
-                let mut rows = conn.query(sql, (Value::Integer(p.id),)).await?;
-                if let Some(row) = rows.next().await? {
-                    *slot += int(&row, 0).max(0) as u64;
+            // move off the loser. A wet run counts what it actually moves instead.
+            if args.dry_run {
+                for (sql, slot) in [
+                    (
+                        "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = ?",
+                        &mut report.mentions,
+                    ),
+                    (
+                        "SELECT COUNT(*) FROM tender_version_parties WHERE organization_id = ?",
+                        &mut report.parties,
+                    ),
+                    (
+                        "SELECT COUNT(*) FROM tender_version_bid_parties WHERE organization_id = ?",
+                        &mut report.bid_parties,
+                    ),
+                    (
+                        "SELECT COUNT(*) FROM tender_version_result_winners WHERE organization_id = ?",
+                        &mut report.winners,
+                    ),
+                ] {
+                    let mut rows = conn.query(sql, (Value::Integer(p.id),)).await?;
+                    if let Some(row) = rows.next().await? {
+                        *slot += int(&row, 0).max(0) as u64;
+                    }
                 }
             }
             listing.gate = "plan".to_owned();
             push_listing(
-                &conn,
+                conn,
                 &mut report.plan_listing,
                 &mut report.plan_listing_truncated,
                 listing,
@@ -14987,7 +15128,291 @@ impl Db {
             .await?;
         }
         report.pairs.sort();
+        if args.dry_run {
+            return Ok(report);
+        }
+        self.altid_wet(conn, &args, &mut report, planned, denied).await?;
         Ok(report)
+    }
+
+    /// Issue 448 unit 2: the altid WET run, on the writer the live re-plan was
+    /// made under ([`Self::match_org_altid_pairs`] holds it end to end).
+    ///
+    /// 1. SET PARITY against the stored plan's `pairs`: a symmetric difference
+    ///    over max(2% of the stored set, 5) aborts before any write. R2's count
+    ///    tolerance of max(2%, 50) would be ~31% slack on a plan of ~161.
+    /// 2. Only live ∩ expected merges, in sorted key order; a live pair the
+    ///    stored plan lacks was never reviewed and is `deferred_unreviewed`.
+    /// 3. `ALTID_MERGE_TXN_PAIRS` pairs per `BEGIN IMMEDIATE`, foreign keys ON
+    ///    (issue 442 step 2; the supervisor refuses while an org FK index is
+    ///    missing): repoint the PPON org's references onto the company-number
+    ///    org, delete it, log `e2-altid`, the change events, the verdict stamp
+    ///    and the edge's `merged`; then COMMIT, a TRUNCATE checkpoint, and the
+    ///    doorbell. The stop is polled between transactions, so a stopped run
+    ///    stands on a committed prefix.
+    /// 4. Open `e2-altid`/`E2` edges for the two-org pairs a gate denied — the
+    ///    record of what was NOT merged, never deleted.
+    async fn altid_wet(
+        &self,
+        conn: &Connection,
+        args: &AltIdMergeArgs<'_>,
+        report: &mut AltIdMergeReport,
+        mut planned: Vec<AltIdPlanned>,
+        denied: Vec<AltIdDenied>,
+    ) -> turso::Result<()> {
+        use std::collections::{HashMap, HashSet};
+        let expect: BTreeSet<&str> =
+            args.expect_pairs.as_deref().unwrap_or(&[]).iter().map(String::as_str).collect();
+        let live: BTreeSet<&str> = report.pairs.iter().map(String::as_str).collect();
+        let deferred: Vec<String> = live.difference(&expect).map(|k| (*k).to_owned()).collect();
+        let gone = expect.difference(&live).count() as u64;
+        let drift = deferred.len() as u64 + gone;
+        let tolerance = (expect.len() as u64 / 50).max(5);
+        if drift > tolerance {
+            return Err(turso::Error::Error(format!(
+                "altid parity abort: the live plan has {} pairs, the stored plan {} — {drift} \
+                 differ ({} planned since the dry run, {gone} no longer planned), over the \
+                 max(2%, 5) tolerance of {tolerance}; nothing was written. Re-run the dry plan \
+                 and review it",
+                live.len(),
+                expect.len(),
+                deferred.len()
+            )));
+        }
+        report.expected_pairs = expect.len() as u64;
+        report.deferred_unreviewed = deferred.len() as u64;
+        report.deferred_pairs = deferred;
+        report.expected_not_live = gone;
+
+        // Live ∩ expected, in the stored plan's (string) order: a capped run and
+        // its continuation cover a stable prefix. The graph's (coh, ppon) tuple
+        // order is NOT that order (`AB~X` sorts after `ABC~Y`).
+        planned.retain(|p| expect.contains(p.key.as_str()));
+        planned.sort_by(|a, b| a.key.cmp(&b.key));
+        // A PPON org two reviewed pairs would fold into two company-number orgs:
+        // only two admitting verdicts can plan that (the conflict flag denies it
+        // otherwise), and the arm never picks a side, so neither merges.
+        let mut loser_uses: HashMap<i64, usize> = HashMap::new();
+        for p in &planned {
+            *loser_uses.entry(p.loser).or_default() += 1;
+        }
+        let (merge, contradictory): (Vec<AltIdPlanned>, Vec<AltIdPlanned>) =
+            planned.into_iter().partition(|p| loser_uses[&p.loser] == 1);
+        report.contradictory = contradictory.len() as u64;
+
+        let now = crate::now_unix();
+        let job = || match args.job_id {
+            Some(j) => Value::Integer(j),
+            None => Value::Null,
+        };
+        let cap = args.max_pairs.unwrap_or(u64::MAX);
+        let mut touched: BTreeSet<i64> = BTreeSet::new();
+        for txn in merge.chunks(ALTID_MERGE_TXN_PAIRS) {
+            if (args.stop)() {
+                report.stopped = true;
+                break;
+            }
+            if report.merged_pairs >= cap {
+                break;
+            }
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+            let mut txn_touched: BTreeSet<i64> = BTreeSet::new();
+            let result: turso::Result<()> = async {
+                for p in txn {
+                    if report.merged_pairs >= cap {
+                        break;
+                    }
+                    let mut trows = conn
+                        .query(
+                            "SELECT tender_id FROM tender_version_parties WHERE organization_id = ? \
+                       UNION SELECT tender_id FROM tender_version_bid_parties WHERE organization_id = ? \
+                       UNION SELECT tender_id FROM tender_version_result_winners WHERE organization_id = ?",
+                            (
+                                Value::Integer(p.loser),
+                                Value::Integer(p.loser),
+                                Value::Integer(p.loser),
+                            ),
+                        )
+                        .await?;
+                    while let Some(row) = trows.next().await? {
+                        txn_touched.insert(int(&row, 0));
+                    }
+                    drop(trows);
+                    let moved = repoint_org_references(conn, p.keep, p.loser).await?;
+                    report.mentions += moved.mentions;
+                    report.parties += moved.parties;
+                    report.bid_parties += moved.bid_parties;
+                    report.winners += moved.winners;
+                    report.winner_dups += moved.winner_dups;
+                    conn.execute("DELETE FROM organizations WHERE id = ?", (Value::Integer(p.loser),))
+                        .await?;
+                    // Flat, json_extract-readable evidence. The witness notices
+                    // make one bad publisher statement's merges findable, and
+                    // the keys are what the resolver alias (unit 3) replays.
+                    let evidence = format!(
+                        "{{\"scheme\":\"GB:altid\",\"coh\":\"{}\",\"ppon\":\"{}\",\
+                         \"coh_literal\":\"{}\",\"ppon_literal\":\"{}\",\
+                         \"keep_id\":\"{}\",\"loser_id\":\"{}\",\"name_key\":\"{}\",\
+                         \"witnesses\":{},\"witness_notices\":[{}],\"verdict\":\"{}\"}}",
+                        altid_json_esc(&p.coh),
+                        altid_json_esc(&p.ppon),
+                        altid_json_esc(&p.coh_literal),
+                        altid_json_esc(&p.ppon_literal),
+                        altid_json_esc(&p.keep_literal),
+                        altid_json_esc(&p.loser_literal),
+                        altid_json_esc(&p.name_key),
+                        p.witnesses,
+                        p.witness_notices.iter().map(i64::to_string).collect::<Vec<_>>().join(","),
+                        if p.verdict_cohort.is_some() { "admitted" } else { "none" },
+                    );
+                    conn.execute(
+                        "INSERT INTO org_merge_log(keep, loser, rule, evidence, job_id, at) \
+                         VALUES(?, ?, 'e2-altid', ?, ?, ?)",
+                        (
+                            Value::Integer(p.keep),
+                            Value::Integer(p.loser),
+                            Value::Text(evidence),
+                            job(),
+                            Value::Integer(now),
+                        ),
+                    )
+                    .await?;
+                    append_change(conn, "organization", p.loser, None, "removed", now).await?;
+                    append_change(conn, "organization", p.keep, None, "changed", now).await?;
+                    report.removed += 1;
+                    report.merged_pairs += 1;
+                    // Issue 362's stamp: the verdict that admitted this pair
+                    // records the merge it caused, in the same transaction.
+                    if let Some(cohort) = &p.verdict_cohort {
+                        conn.execute(
+                            "UPDATE org_merge_verdicts SET applied_at = ?, applied_action = ?, \
+                             job_id = ? WHERE country = 'GB' AND scheme = 'GB:altid' AND key = ? \
+                             AND cohort = ?",
+                            (
+                                Value::Integer(now),
+                                Value::Text(format!("merged 1 row(s) into {}", p.keep)),
+                                job(),
+                                t(&p.key),
+                                t(cohort),
+                            ),
+                        )
+                        .await?;
+                    }
+                    // An earlier run's denial edge for this pair: the pair is
+                    // merged now, and the edge says so rather than going away.
+                    report.edges_merged += conn
+                        .execute(
+                            "UPDATE org_candidate_edges SET state = 'merged' \
+                              WHERE org_a = ? AND org_b = ? AND rule = 'e2-altid'",
+                            (
+                                Value::Integer(p.keep.min(p.loser)),
+                                Value::Integer(p.keep.max(p.loser)),
+                            ),
+                        )
+                        .await?;
+                }
+                for &tid in &txn_touched {
+                    append_change(conn, "tender", tid, None, "changed", now).await?;
+                }
+                Ok(())
+            }
+            .await;
+            match result {
+                Ok(()) => {
+                    // R2's discipline: a failed COMMIT must not leave the shared
+                    // writer inside an open transaction, and committed earlier
+                    // chunks still owe subscribers their doorbell.
+                    if let Err(e) = conn.execute("COMMIT", ()).await {
+                        let _ = conn.execute("ROLLBACK", ()).await;
+                        if report.removed > 0 {
+                            let _ = self.publish_cursor(conn).await;
+                        }
+                        return Err(e);
+                    }
+                    touched.extend(txn_touched);
+                }
+                Err(e) => {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    if report.removed > 0 {
+                        let _ = self.publish_cursor(conn).await;
+                    }
+                    return Err(e);
+                }
+            }
+            let _ = checkpoint_on(conn, CheckpointMode::Truncate).await;
+            // The doorbell per committed transaction (the design's order), so a
+            // subscriber hears a long run's merges as they land; R2's single
+            // after-the-loop ring below stays the guarantee.
+            let _ = self.publish_cursor(conn).await;
+        }
+        report.tender_changes = touched.len() as u64;
+        let done = report.merged_pairs as usize;
+        let mut residual: Vec<String> =
+            merge[done..].iter().chain(contradictory.iter()).map(|p| p.key.clone()).collect();
+        residual.sort();
+        report.residual_pairs = residual;
+        if report.removed > 0 {
+            self.publish_cursor(conn).await?;
+        }
+        if report.stopped {
+            return Ok(());
+        }
+
+        // ---- The denied two-org pairs, as open e2-altid edges. A pair whose
+        // PPON org this run just folded (a conflict beside a verdict-admitted
+        // merge) no longer joins two orgs, so it gets none. Evidence only: no
+        // change events, no cursor (the Stage-4 decision 6). One batch at prod
+        // scale (398 denied pairs in dry job 1681), so the stop is not polled.
+        let folded: HashSet<i64> = merge[..done].iter().map(|p| p.loser).collect();
+        let rows: Vec<CandidateEdge> = denied
+            .iter()
+            .filter(|d| !folded.contains(&d.ppon_org))
+            .map(|d| {
+                let l = &d.listing;
+                CandidateEdge {
+                    a: d.coh_org.min(d.ppon_org),
+                    b: d.coh_org.max(d.ppon_org),
+                    rule: "e2-altid",
+                    score: l.witnesses as f64,
+                    evidence: format!(
+                        "{{\"coh\":\"{}\",\"ppon\":\"{}\",\"coh_literal\":\"{}\",\
+                         \"ppon_literal\":\"{}\",\"coh_org\":{},\"ppon_org\":{},\
+                         \"status\":\"{}\",\"witnesses\":{},\"coh_partners\":{},\
+                         \"ppon_partners\":{},\"first_coh\":{},\"first_ppon\":{}}}",
+                        altid_json_esc(&l.coh),
+                        altid_json_esc(&l.ppon),
+                        altid_json_esc(&l.coh_literal),
+                        altid_json_esc(&l.ppon_literal),
+                        d.coh_org,
+                        d.ppon_org,
+                        altid_json_esc(&l.gate),
+                        l.witnesses,
+                        l.coh_partners,
+                        l.ppon_partners,
+                        l.first_coh,
+                        l.first_ppon,
+                    ),
+                }
+            })
+            .collect();
+        for batch in rows.chunks(EDGE_WRITE_BATCH) {
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+            match write_candidate_edges(conn, batch, "E2", now, args.job_id).await {
+                Ok(()) => {
+                    if let Err(e) = conn.execute("COMMIT", ()).await {
+                        let _ = conn.execute("ROLLBACK", ()).await;
+                        return Err(e);
+                    }
+                }
+                Err(e) => {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
+            report.edges_written += batch.len() as u64;
+            let _ = checkpoint_on(conn, CheckpointMode::Truncate).await;
+        }
+        Ok(())
     }
 
     /// Issue 351 unit 4: record one cohort's name-level verdicts, one row
@@ -16559,7 +16984,12 @@ impl Db {
             while let Some(row) = rows.next().await? {
                 let (a, b, rule) = (int(&row, 0), int(&row, 1), text(&row, 2));
                 page += 1;
-                edges.push((a, b));
+                // Issue 448: the census's components are E3-only, and this
+                // packet selects the census's class, so it unions the same
+                // edges — an `e2-altid` statement never joins a case.
+                if rule.starts_with("e3-") {
+                    edges.push((a, b));
+                }
                 (last_a, last_b, last_rule) = (a, b, rule);
             }
             if page == 0 {
@@ -20745,6 +21175,7 @@ impl Db {
         let mut report = EdgeCensusReport::default();
         let mut uf = MinUnionFind::default();
         let mut edges: Vec<(i64, i64)> = Vec::new();
+        let mut altid: Vec<(i64, i64)> = Vec::new();
         let (mut last_a, mut last_b, mut last_rule) = (0i64, 0i64, String::new());
         loop {
             if stop() {
@@ -20764,15 +21195,53 @@ impl Db {
                 let (a, b, rule) = (int(&row, 0), int(&row, 1), text(&row, 2));
                 report.edges += 1;
                 page += 1;
-                match rule.as_str() {
-                    "e3-xlang" => report.e3_xlang += 1,
-                    _ => report.e3_name += 1,
+                // Issue 448: only E3 name equality joins a component. An
+                // `e2-altid` row is a publisher's identifier statement — often
+                // one a gate DENIED — and the census's cases are the E3
+                // campaign's; it is counted apart and never unioned.
+                let e3 = match rule.as_str() {
+                    "e3-xlang" => {
+                        report.e3_xlang += 1;
+                        true
+                    }
+                    "e2-altid" => {
+                        report.e2_altid += 1;
+                        altid.push((a, b));
+                        false
+                    }
+                    r if r.starts_with("e3-") => {
+                        report.e3_name += 1;
+                        true
+                    }
+                    _ => {
+                        report.other_rules += 1;
+                        false
+                    }
+                };
+                if e3 {
+                    edges.push((a, b));
                 }
-                edges.push((a, b));
                 (last_a, last_b, last_rule) = (a, b, rule);
             }
             if page == 0 {
                 break;
+            }
+        }
+        // The merged share of the e2 rows: a primary-key seek each, so the walk
+        // above stays on the PK's covering index (a `state` column there would
+        // cost a table lookup per E3 row, 1.5M of them, to count a few hundred).
+        for &(a, b) in &altid {
+            let mut rows = reader
+                .query(
+                    "SELECT state FROM org_candidate_edges \
+                      WHERE org_a = ? AND org_b = ? AND rule = 'e2-altid'",
+                    (Value::Integer(a), Value::Integer(b)),
+                )
+                .await?;
+            if let Some(row) = rows.next().await?
+                && text(&row, 0) == "merged"
+            {
+                report.e2_altid_merged += 1;
             }
         }
 
@@ -24665,6 +25134,65 @@ pub const EDGE_VOLUME_CEILING: u64 = 3_000_000;
 /// Edge upserts per write transaction: small rows + indexed-PK maintenance
 /// at 10^5-10^6 total sits inside the NODE_WRITE_BATCH band.
 const EDGE_WRITE_BATCH: usize = 10_000;
+
+/// One `org_candidate_edges` row as its writers build it: the Stage-4 E3 scan
+/// and, since issue 448 unit 2, the altid arm's denied pairs.
+struct CandidateEdge {
+    /// `a < b`, the table's CHECK.
+    a: i64,
+    b: i64,
+    rule: &'static str,
+    score: f64,
+    /// Flat JSON, hand-built.
+    evidence: String,
+}
+
+/// The candidate-edge upsert, one single-row statement per edge, inside the
+/// CALLER's transaction (each caller batches, stops and checkpoints its own
+/// way). Extracted from `scan_org_match_keys` for issue 448 with the tier as a
+/// BOUND parameter — the scan passes `E3`, the altid arm `E2`.
+///
+/// The `put_report` construct: `first_seen` and `state` are left out of the
+/// SET list, so a re-scan refreshes evidence and never resets a review
+/// decision (or an altid edge's `merged`). It never deletes a row — tripwire 6
+/// reads a shrinking table as an alarm.
+async fn write_candidate_edges(
+    conn: &Connection,
+    rows: &[CandidateEdge],
+    tier: &str,
+    now: i64,
+    job_id: Option<i64>,
+) -> turso::Result<()> {
+    for e in rows {
+        conn.execute(
+            "INSERT INTO org_candidate_edges \
+                 (org_a, org_b, rule, tier, score, evidence, \
+                  first_seen, last_seen, state, job_id) \
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?) \
+             ON CONFLICT(org_a, org_b, rule) DO UPDATE SET \
+                 last_seen = excluded.last_seen, \
+                 evidence = excluded.evidence, \
+                 score = excluded.score, \
+                 job_id = excluded.job_id",
+            (
+                Value::Integer(e.a),
+                Value::Integer(e.b),
+                t(e.rule),
+                t(tier),
+                Value::Real(e.score),
+                t(&e.evidence),
+                Value::Integer(now),
+                Value::Integer(now),
+                match job_id {
+                    Some(j) => Value::Integer(j),
+                    None => Value::Null,
+                },
+            ),
+        )
+        .await?;
+    }
+    Ok(())
+}
 
 #[cfg(test)]
 mod tests {

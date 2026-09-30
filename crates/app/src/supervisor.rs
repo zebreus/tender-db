@@ -376,8 +376,9 @@ enum Spec {
     MatchOrgIdentifiersE0 { dry_run: bool, max_groups: Option<u64> },
     MatchOrgIdentifiersR3 { dry_run: bool, max_groups: Option<u64> },
     /// Issue 448: the altid rule — the Companies House ↔ PPON pairs FTS parties
-    /// publish in `additionalIdentifiers`, gated as E2 evidence. Unit 1 is the
-    /// dry planner only; a wet run is refused until unit 2 builds one.
+    /// publish in `additionalIdentifiers`, gated as E2 evidence. Dry plans and
+    /// records `altid-merge-plan`; wet (unit 2) merges only that stored plan's
+    /// reviewed `pairs`, at most `max_groups` of them.
     MatchOrgIdentifiersAltId { dry_run: bool, max_groups: Option<u64> },
     ApplyCaseReviews { dry_run: bool },
     /// Issue 312: the symmetric UNDO for `ApplyCaseReviews` — restore the
@@ -1041,8 +1042,9 @@ pub struct JobRequest {
     /// `match-org-identifiers` only: which merge rule to run — `r2` (the
     /// Stage-2 same-country canonical-key merge, the default), `r3` (the
     /// Stage-3 NULL-country checksum-anchor rescue), `e0` (issue 329's exact
-    /// triples) or `altid` (issue 448's company-number/PPON pairs, dry only
-    /// until its unit 2). Anything else is rejected at enqueue.
+    /// triples) or `altid` (issue 448's company-number/PPON pairs; a wet run
+    /// merges only the stored dry plan's reviewed pairs). Anything else is
+    /// rejected at enqueue.
     pub rule: Option<String>,
     /// `scan-org-match-keys` wet runs only: write at most this many edges —
     /// the design's capped first prod run (issue 300 Stage 4). The census
@@ -5831,13 +5833,14 @@ impl Supervisor {
                     }
                 ))
             }
-            Spec::MatchOrgIdentifiersAltId { dry_run, .. } => Box::pin(async move {
+            Spec::MatchOrgIdentifiersAltId { dry_run, max_groups } => Box::pin(async move {
                 // Issue 448: the altid rule — the Companies House ↔ PPON pairing
                 // FTS parties publish in `additionalIdentifiers`, planned as E2
                 // evidence under R3-grade gates (`.scratch/tender-db/448-altid-design.md`).
-                // Unit 1 is the DRY planner; the wet path is unit 2 and is refused
-                // below. Boxed like E0: run_spec is one future over every arm, and
-                // an unboxed arm this size is what overflowed the stack of
+                // Unit 1 is the DRY planner; unit 2 the wet run, which merges only
+                // the stored plan's reviewed `pairs`. Boxed like E0: run_spec is
+                // one future over every arm, and an unboxed arm this size is what
+                // overflowed the stack of
                 // `an_execute_without_an_expected_count_is_refused` (CLAUDE.md).
                 let dry_run = *dry_run;
                 // R3's refusals, for R3's reason: the corroboration consults the
@@ -5874,16 +5877,46 @@ impl Supervisor {
                          generic-name wall cannot see anything — {rebuild}"
                     ));
                 }
+                // A wet run REQUIRES the recorded dry plan: its `pairs` are the
+                // reviewed set, the only pairs a wet run merges and the set its
+                // live re-plan is held against (max(2%, 5) symmetric drift aborts
+                // before any write).
+                let expect_pairs = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("altid-merge-plan")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "match-org-identifiers altid REFUSED: no stored altid-merge-plan — \
+                             run the dry plan first \
+                             ({\"kind\":\"match-org-identifiers\",\"rule\":\"altid\"}) and review \
+                             it; nothing was written"
+                                .to_owned()
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    let pairs = v["pairs"]
+                        .as_array()
+                        .ok_or_else(|| "altid-merge-plan lacks pairs".to_owned())?
+                        .iter()
+                        .map(|p| {
+                            p.as_str()
+                                .map(str::to_owned)
+                                .ok_or_else(|| "altid-merge-plan pairs holds a non-string".to_owned())
+                        })
+                        .collect::<Result<Vec<String>, String>>()?;
+                    Some(pairs)
+                };
+                // Issue 442: the wet loop deletes organizations with foreign keys ON.
                 if !dry_run {
-                    return Err(
-                        "match-org-identifiers altid REFUSED: the wet path is issue 448 unit 2 \
-                         and is not built — only the dry planner exists (it records \
-                         altid-merge-plan); nothing was written"
-                            .to_owned(),
-                    );
+                    Box::pin(self.refuse_without_org_fk_indexes("match-org-identifiers altid"))
+                        .await?;
                 }
                 self.set_phase(
-                    "planning",
+                    if dry_run { "planning" } else { "merging" },
                     None,
                     None,
                     "harvesting the FTS company-number/PPON pairs".to_owned(),
@@ -5905,16 +5938,28 @@ impl Supervisor {
                         norm: ingest::project::match_norm,
                         stoplist_cap: SCAN_STOPLIST_CAP,
                         dry_run,
+                        max_pairs: *max_groups,
+                        expect_pairs,
+                        job_id: Some(job_id as i64),
                         stop: &stop,
                     })
                     .await
                     .map_err(|e| e.to_string())?;
                 // A stopped plan is partial, and a partial plan recorded as the
                 // plan is what a wet run would later hold itself to: record nothing.
-                if r.stopped {
-                    return Ok("match-org-identifiers altid STOPPED during planning: nothing was \
-                               written, and the previously recorded plan was left untouched"
-                        .to_owned());
+                // R2's guard for a wet run: a stop before the first committed
+                // merge (in planning, or between planning and the first
+                // transaction) wrote nothing and leaves the reviewed plan standing.
+                if r.stopped && r.merged_pairs == 0 {
+                    return Ok(if dry_run {
+                        "match-org-identifiers altid STOPPED during planning: nothing was \
+                         written, and the previously recorded plan was left untouched"
+                            .to_owned()
+                    } else {
+                        "match-org-identifiers altid STOPPED before the first merge: nothing \
+                         was written, and the previously recorded plan was left untouched"
+                            .to_owned()
+                    });
                 }
                 let listing = |ls: &[store::AltIdListing]| {
                     ls.iter()
@@ -5937,10 +5982,28 @@ impl Supervisor {
                         })
                         .collect::<Vec<_>>()
                 };
+                // A wet run re-records the RESIDUAL (R2's rule): the reviewed
+                // pairs it did not merge — a cap, a stop, a contradiction — so a
+                // continuation holds itself to reviewed pairs only. A deferred
+                // (unreviewed) pair never enters it; the next dry plan lists it.
+                let (pairs, plan_listing): (&[String], Vec<store::AltIdListing>) = if dry_run {
+                    (&r.pairs, r.plan_listing.clone())
+                } else {
+                    let keep: std::collections::HashSet<&str> =
+                        r.residual_pairs.iter().map(String::as_str).collect();
+                    (
+                        &r.residual_pairs,
+                        r.plan_listing
+                            .iter()
+                            .filter(|l| keep.contains(l.key().as_str()))
+                            .cloned()
+                            .collect(),
+                    )
+                };
                 // Three `json!` objects merged into one: a single literal this
                 // wide overruns the macro's recursion limit.
                 let mut plan = serde_json::json!({
-                    "plan_pairs": r.plan_pairs,
+                    "plan_pairs": pairs.len(),
                     // The harvest.
                     "fts_notices": r.fts_notices,
                     "party_sections": r.party_sections,
@@ -5987,16 +6050,33 @@ impl Supervisor {
                     "denied_pairs": r.denied_pairs(),
                     // The R3 panel's catch: a blind wall's zero is not a readable one.
                     "generic_wall_readable": keys > 0,
-                    "residual_of_wet_run": false,
+                    "residual_of_wet_run": !dry_run,
+                    // Dry: what the plan would move. Wet: what was repointed.
                     "mentions": r.mentions, "parties": r.parties,
                     "bid_parties": r.bid_parties, "winners": r.winners,
                 });
+                let wet = serde_json::json!({
+                    // Unit 2's wet run; zero on a dry plan.
+                    "live_plan_pairs": r.plan_pairs,
+                    "expected_pairs": r.expected_pairs,
+                    "deferred_unreviewed": r.deferred_unreviewed,
+                    "deferred_pairs": r.deferred_pairs,
+                    "expected_not_live": r.expected_not_live,
+                    "contradictory": r.contradictory,
+                    "merged_this_run": r.merged_pairs,
+                    "removed": r.removed,
+                    "winner_dups": r.winner_dups,
+                    "tender_changes": r.tender_changes,
+                    "edges_written": r.edges_written,
+                    "edges_merged": r.edges_merged,
+                    "stopped": r.stopped,
+                });
                 let listings = serde_json::json!({
                     // The planned keys, sorted and uncapped: the set a wet run
-                    // (unit 2) holds its live plan against.
-                    "pairs": r.pairs,
+                    // holds its live plan against (after a wet run, the residual).
+                    "pairs": pairs,
                     "plan_listing_truncated": r.plan_listing_truncated,
-                    "plan": listing(&r.plan_listing),
+                    "plan": listing(&plan_listing),
                     "denied_listing_truncated": r.denied_listing_truncated,
                     "denied": listing(&r.denied_listing),
                     "conflict_listing_truncated": r.conflict_listing_truncated,
@@ -6004,7 +6084,7 @@ impl Supervisor {
                     "no_target_sample": listing(&r.no_target_sample),
                 });
                 if let Some(all) = plan.as_object_mut() {
-                    for part in [gates, listings] {
+                    for part in [gates, wet, listings] {
                         if let serde_json::Value::Object(fields) = part {
                             all.extend(fields);
                         }
@@ -6014,9 +6094,8 @@ impl Supervisor {
                     .put_report("altid-merge-plan", &plan.to_string(), store::now_unix())
                     .await
                     .map_err(|e| e.to_string())?;
-                Ok(format!(
-                    "match-org-identifiers altid (issue 448) DRY RUN — plan recorded, nothing \
-                     written: {} FTS notices, {} company-number/PPON pairs keyed ({} literal; \
+                let summary = format!(
+                    "{} FTS notices, {} company-number/PPON pairs keyed ({} literal; \
                      unpaired: {} padded, {} condemned, {} malformed, {} non-GB; {} ambiguous \
                      parties); owners: {} already one, {} multi-target, {} no company-number \
                      org, {} no PPON org, {} neither, {} two distinct GB orgs; denied: {} gate, \
@@ -6059,7 +6138,45 @@ impl Supervisor {
                     } else {
                         ""
                     }
-                ))
+                );
+                if dry_run {
+                    return Ok(format!(
+                        "match-org-identifiers altid (issue 448) DRY RUN — plan recorded, nothing \
+                         written: {summary}"
+                    ));
+                }
+                let merged = format!(
+                    "merged {} of {} reviewed live pairs ({} org rows removed, {} mentions, {} \
+                     parties, {} bid-parties, {} winners repointed, {} winner dups deleted, {} \
+                     tenders touched); held against {} stored pairs: {} deferred as unreviewed, \
+                     {} no longer planned, {} contradictory; {} e2-altid edges written for denied \
+                     pairs, {} marked merged; residual plan {} pairs re-recorded",
+                    r.merged_pairs,
+                    r.plan_pairs - r.deferred_unreviewed,
+                    r.removed,
+                    r.mentions,
+                    r.parties,
+                    r.bid_parties,
+                    r.winners,
+                    r.winner_dups,
+                    r.tender_changes,
+                    r.expected_pairs,
+                    r.deferred_unreviewed,
+                    r.expected_not_live,
+                    r.contradictory,
+                    r.edges_written,
+                    r.edges_merged,
+                    r.residual_pairs.len(),
+                );
+                Ok(if r.stopped {
+                    format!(
+                        "match-org-identifiers altid (issue 448) STOPPED at a checkpoint: {merged}; \
+                         no edges were written, so a re-run continues under parity. Live plan: \
+                         {summary}"
+                    )
+                } else {
+                    format!("match-org-identifiers altid (issue 448) WET: {merged}. Live plan: {summary}")
+                })
             }).await,
             Spec::FoldOrgCountries { dry_run } => {
                 let dry_run = *dry_run;
@@ -8953,6 +9070,9 @@ impl Supervisor {
                 let now = store::now_unix();
                 let body = serde_json::json!({
                     "edges": r.edges, "e3_name": r.e3_name, "e3_xlang": r.e3_xlang,
+                    // Issue 448: counted apart, never joined into a component.
+                    "e2_altid": r.e2_altid, "e2_altid_merged": r.e2_altid_merged,
+                    "other_rules": r.other_rules,
                     "orgs_touched": r.orgs_touched, "dangling_orgs": r.dangling_orgs,
                     "components": r.components,
                     "size_buckets": r.size_buckets.iter().map(|(k, v)| {
@@ -8990,14 +9110,19 @@ impl Supervisor {
                 .to_string();
                 self.db.put_report("org-edge-census", &body, now).await.map_err(|e| e.to_string())?;
                 Ok(format!(
-                    "org-edge-census (issue 314): {} edges ({} e3-name + {} e3-xlang) over \
-                     {} orgs ({} dangling); {} components, max {}; {} canonical-only, \
+                    "org-edge-census (issue 314): {} edges ({} e3-name + {} e3-xlang; {} \
+                     e2-altid, {} of them merged, and {} under other rules, counted apart and \
+                     never joined) — the E3 edges touch {} orgs ({} dangling); {} components, \
+                     max {}; {} canonical-only, \
                      {} mixed, {} provisional-only; {} span >1 KNOWN country, \
                      {} hold a country-less member; COHORT (canonical-only AND \
                      cross-border): {}",
                     r.edges,
                     r.e3_name,
                     r.e3_xlang,
+                    r.e2_altid,
+                    r.e2_altid_merged,
+                    r.other_rules,
                     r.orgs_touched,
                     r.dangling_orgs,
                     r.components,
@@ -13351,29 +13476,23 @@ mod tests {
         assert!(err.contains("keys epoch"), "{err}");
     }
 
-    /// Issue 448 unit 1: the altid rule is a planner. A wet run is refused —
-    /// on a fresh box by r3's empty-satellite guard, and past every guard by the
-    /// unit-2 refusal itself — and records nothing, not even a plan. The dry run
-    /// then plans one real FTS pair through the PRODUCTION rules (the store's
-    /// own tests inject miniatures, so this is where a swapped argument in the
-    /// wiring would show) and records `altid-merge-plan`.
-    #[tokio::test]
-    async fn an_altid_wet_run_is_refused_until_unit_2() {
+    /// Issue 448: one supplier split the issue's way, as the parser and the fold
+    /// leave it — company number and PPON on one FTS party (its mention bound to
+    /// the company-number org), and PPON-first on another notice (bound to the
+    /// PPON org). The org identifiers are what the resolver mints. The altid
+    /// arm's tests run it through the PRODUCTION rules (the store's own tests
+    /// inject miniatures, so this is where a swapped argument in the wiring
+    /// would show).
+    async fn altid_fixture(name: &str) -> (Arc<store::Db>, store::turso::Connection, String) {
         let path = format!(
-            "/tmp/tender-db-sup-altid-{}-{}.db",
+            "/tmp/tender-db-sup-altid-{name}-{}-{}.db",
             std::process::id(),
             store::now_unix()
         );
-        for s in ["", "-wal", "-shm"] {
-            let _ = std::fs::remove_file(format!("{path}{s}"));
-        }
+        remove_db(&path);
         let db = Arc::new(store::Db::open(&path).await.unwrap());
         let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
         conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
-        // One supplier split the issue's way, as the parser and the fold leave
-        // it: company number and PPON on one FTS party (its mention bound to the
-        // company-number org), and PPON-first on another notice (bound to the
-        // PPON org). The org identifiers are what the resolver mints.
         for sql in [
             "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at) \
              VALUES (1, 'GB', 'national', 'GBCOH03914810', 'Acme Widgets Ltd', 'acme widgets ltd', 0, 0)",
@@ -13396,19 +13515,21 @@ mod tests {
         ] {
             conn.execute(sql, ()).await.unwrap();
         }
-        let sup = Supervisor::new(db, "archive".into(), reqwest::Client::new());
-        let job = |id: u64, dry: bool| Job {
+        (db, conn, path)
+    }
+
+    fn altid_job(id: u64, dry: bool) -> Job {
+        Job {
             id,
             kind: "match-org-identifiers".into(),
             params: String::new(),
             spec: Spec::MatchOrgIdentifiersAltId { dry_run: dry, max_groups: None },
             resume_after: None,
-        };
-        // 1. A fresh box: r3's empty-satellite guard refuses the wet run first.
-        let err = sup.run_spec(&job(1, false)).await.expect_err("wet refused");
-        assert!(err.contains("org_match_keys is empty"), "{err}");
-        // 2. Past every guard — a built satellite at this binary's epoch — the
-        //    wet run is still refused: its path is unit 2.
+        }
+    }
+
+    /// A built `org_match_keys` at this binary's epoch: past r3's refusals.
+    async fn altid_satellite(conn: &store::turso::Connection) {
         conn.execute("INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (9, 'n2', 'unrelated')", ())
             .await
             .unwrap();
@@ -13418,14 +13539,54 @@ mod tests {
         )
         .await
         .unwrap();
-        let err = sup.run_spec(&job(2, false)).await.expect_err("wet refused");
-        assert!(err.contains("448 unit 2") && err.contains("nothing was written"), "{err}");
+    }
+
+    async fn altid_count(conn: &store::turso::Connection, sql: &str) -> i64 {
+        let mut rows = conn.query(sql, ()).await.unwrap();
+        let row = rows.next().await.unwrap().unwrap();
+        match row.get_value(0).unwrap() {
+            store::turso::Value::Integer(n) => n,
+            other => panic!("count: {other:?}"),
+        }
+    }
+
+    /// Issue 448 unit 2: a wet altid run merges only the REVIEWED pairs, so it
+    /// needs the stored dry plan. On a fresh box r3's empty-satellite guard
+    /// refuses first; past every key guard, the missing plan does — and the
+    /// refused run writes nothing, not even a plan.
+    #[tokio::test]
+    async fn an_altid_wet_run_without_a_stored_plan_is_refused() {
+        let (db, conn, path) = altid_fixture("noplan").await;
+        let sup = Supervisor::new(db, "archive".into(), reqwest::Client::new());
+        let err = sup.run_spec(&altid_job(1, false)).await.expect_err("wet refused");
+        assert!(err.contains("org_match_keys is empty"), "{err}");
+        altid_satellite(&conn).await;
+        let err = sup.run_spec(&altid_job(2, false)).await.expect_err("wet refused");
+        assert!(
+            err.contains("no stored altid-merge-plan") && err.contains("nothing was written"),
+            "{err}"
+        );
         assert!(
             sup.db().latest_report("altid-merge-plan").await.unwrap().is_none(),
             "a refused run records no plan"
         );
-        // 3. The dry run plans the pair through the real rules.
-        let msg = sup.run_spec(&job(3, true)).await.expect("dry plans");
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM organizations").await, 2);
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM org_merge_log").await, 0);
+        remove_db(&path);
+    }
+
+    /// Issue 448 unit 2, end to end through the production rules: the dry run
+    /// plans the pair and records it; the wet run refuses while an org FK index
+    /// is missing (issue 442), then merges exactly the stored pair — the PPON
+    /// org folds into the company-number org — and re-records the residual. A
+    /// second wet run finds the pair already one and merges nothing.
+    #[tokio::test]
+    async fn an_altid_wet_run_merges_the_stored_plan() {
+        let (db, conn, path) = altid_fixture("wet").await;
+        altid_satellite(&conn).await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        // 1. The dry run plans the pair through the real rules.
+        let msg = sup.run_spec(&altid_job(3, true)).await.expect("dry plans");
         assert!(msg.contains("DRY RUN") && msg.contains("plan 1 pairs"), "{msg}");
         let (body, _) = sup.db().latest_report("altid-merge-plan").await.unwrap().expect("recorded");
         let v: serde_json::Value = serde_json::from_str(&body).unwrap();
@@ -13434,9 +13595,48 @@ mod tests {
         assert_eq!(v["plan"][0]["keep"], 1, "the company-number org survives: {body}");
         assert_eq!(v["plan"][0]["witness_publications"], serde_json::json!(["ocds-a"]), "{body}");
         assert_eq!(v["generic_wall_readable"], true, "{body}");
-        for s in ["", "-wal", "-shm"] {
-            let _ = std::fs::remove_file(format!("{path}{s}"));
-        }
+        assert_eq!(v["residual_of_wet_run"], false, "{body}");
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM organizations").await, 2, "dry wrote nothing");
+
+        // 2. A fresh database lacks the deferred org FK indexes: refused.
+        let err = sup.run_spec(&altid_job(4, false)).await.expect_err("indexes missing");
+        assert!(err.starts_with("match-org-identifiers altid refused: missing"), "{err}");
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM organizations").await, 2);
+
+        // 3. With them, the wet run merges the stored pair.
+        db.build_organization_indexes().await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        let msg = sup.run_spec(&altid_job(5, false)).await.expect("wet merges");
+        assert!(msg.contains("WET: merged 1 of 1 reviewed live pairs"), "{msg}");
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 2").await, 0);
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 1").await, 1);
+        assert_eq!(
+            altid_count(&conn, "SELECT organization_id FROM organization_mentions WHERE notice_id = 11").await,
+            1,
+            "the PPON-first mention moved to the company-number org"
+        );
+        assert_eq!(
+            altid_count(
+                &conn,
+                "SELECT COUNT(*) FROM org_merge_log WHERE rule = 'e2-altid' AND keep = 1 AND loser = 2 \
+                   AND json_extract(evidence, '$.coh') = '03914810' \
+                   AND json_extract(evidence, '$.ppon') = 'PHDQ2359NZMP' AND job_id = 5"
+            )
+            .await,
+            1
+        );
+        let (body, _) = sup.db().latest_report("altid-merge-plan").await.unwrap().expect("residual");
+        let v: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(v["residual_of_wet_run"], true, "{body}");
+        assert_eq!(v["pairs"], serde_json::json!([]), "nothing reviewed is left: {body}");
+        assert_eq!((v["plan_pairs"].as_u64(), v["merged_this_run"].as_u64()), (Some(0), Some(1)), "{body}");
+        assert_eq!(v["mentions"], 1, "what the merge actually moved: {body}");
+
+        // 4. Restart safety: the pair is one org now, and the residual is empty.
+        let msg = sup.run_spec(&altid_job(6, false)).await.expect("re-run");
+        assert!(msg.contains("merged 0 of 0"), "{msg}");
+        assert_eq!(altid_count(&conn, "SELECT COUNT(*) FROM organizations").await, 1);
+        remove_db(&path);
     }
 
     /// Issue 448: `altid` is a rule of `match-org-identifiers`, dry unless told
