@@ -1,0 +1,4474 @@
+{
+ "planned": 158,
+ "supported": 136,
+ "rows": [
+  {
+   "key": "GB/national/00190287>move:SC190287",
+   "shape": "move",
+   "org": 11999378,
+   "name": "ScottisPower Energy Retail Ltd",
+   "target": null,
+   "right_register": {
+    "number": "SC190287",
+    "name": "SCOTTISHPOWER ENERGY RETAIL LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "00190287",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 0.5,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/00413907>merge:OC310335",
+   "shape": "merge",
+   "org": 12266064,
+   "name": "CMS Cameron McKenna Nabarro Olswang LLP",
+   "target": {
+    "identifier": "OC310335",
+    "name": "CMS Cameron McKenna Nabarro Olswang LLP",
+    "org": 15645445
+   },
+   "right_register": {
+    "number": "OC310335",
+    "name": "CMS CAMERON MCKENNA NABARRO OLSWANG LLP",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "00413907",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/00640611>merge:OC309255",
+   "shape": "merge",
+   "org": 13170228,
+   "name": "Robinson Low Francis LLP",
+   "target": {
+    "identifier": "OC309255",
+    "name": "Robinson Low Francis LLP (RLF)",
+    "org": 10820462
+   },
+   "right_register": {
+    "number": "OC309255",
+    "name": "MGAC LLP",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "00640611",
+    "name": "DEV REALISATIONS (2019) LIMITED",
+    "status": "Liquidation",
+    "http": 200
+   },
+   "score_right": 0.0,
+   "score_wrong": 0.0,
+   "score_target": 0.0,
+   "supported": false
+  },
+  {
+   "key": "GB/national/00779813>merge:00770813",
+   "shape": "merge",
+   "org": 14146107,
+   "name": "Personnel Hygiene Services Ltd",
+   "target": {
+    "identifier": "00770813",
+    "name": "Personnel Hygiene Services Ltd T/A PHS Group",
+    "org": 15624693
+   },
+   "right_register": {
+    "number": "00770813",
+    "name": "PERSONNEL HYGIENE SERVICES LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "00779813",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 0.5,
+   "supported": true
+  },
+  {
+   "key": "GB/national/01006142>merge:01003142",
+   "shape": "merge",
+   "org": 22654958,
+   "name": "Rolls-Royce Plc",
+   "target": {
+    "identifier": "01003142",
+    "name": "Rolls-Royce Plc",
+    "org": 17148236
+   },
+   "right_register": {
+    "number": "01003142",
+    "name": "ROLLS-ROYCE PLC",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "01006142",
+    "name": "BLUE DIAMOND SERVICES LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/01254540>merge:02154540",
+   "shape": "merge",
+   "org": 6769661,
+   "name": "Post Office Limited",
+   "target": {
+    "identifier": "02154540",
+    "name": "Post Office Limited",
+    "org": 2620538
+   },
+   "right_register": {
+    "number": "02154540",
+    "name": "POST OFFICE LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "01254540",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/01458628>merge:04158628",
+   "shape": "merge",
+   "org": 11516306,
+   "name": "Gasway Services Limited",
+   "target": {
+    "identifier": "04158628",
+    "name": "Gasway Services Limited",
+    "org": 8879818
+   },
+   "right_register": {
+    "number": "04158628",
+    "name": "GASWAY SERVICES LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "01458628",
+    "name": "RUSS BERRIE (HOLDINGS) LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/02202746>merge:GBCOH02202476",
+   "shape": "merge",
+   "org": 16469211,
+   "name": "Harvey Nash Ltd",
+   "target": {
+    "identifier": "GBCOH02202476",
+    "name": "Harvey Nash Ltd",
+    "org": 31543644
+   },
+   "right_register": {
+    "number": "02202476",
+    "name": "HARVEY NASH LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "02202746",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/02459755>merge:00227590",
+   "shape": "merge",
+   "org": 12595898,
+   "name": "The Financial Times Ltd",
+   "target": {
+    "identifier": "00227590",
+    "name": "Financial Times LTd",
+    "org": 16521928
+   },
+   "right_register": {
+    "number": "00227590",
+    "name": "FINANCIAL TIMES LIMITED(THE)",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "02459755",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/02605139>merge:02605138",
+   "shape": "merge",
+   "org": 16150156,
+   "name": "Savills (UK) Ltd",
+   "target": {
+    "identifier": "02605138",
+    "name": "Savills (UK) Ltd",
+    "org": 12206965
+   },
+   "right_register": {
+    "number": "02605138",
+    "name": "SAVILLS (UK) LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "02605139",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/02791975>merge:03998714",
+   "shape": "merge",
+   "org": 9729494,
+   "name": "Fixatex Limited",
+   "target": {
+    "identifier": "03998714",
+    "name": "Fixatex Limited",
+    "org": 18010487
+   },
+   "right_register": {
+    "number": "03998714",
+    "name": "FIXATEX LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "02791975",
+    "name": "ELECHECK (E.S.T.) LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/03116801>merge:01125402",
+   "shape": "merge",
+   "org": 14449014,
+   "name": "Leco Instruments UK Ltd",
+   "target": {
+    "identifier": "01125402",
+    "name": "LECO Instruments (UK) Ltd.",
+    "org": 18668127
+   },
+   "right_register": {
+    "number": "01125402",
+    "name": "LECO INSTRUMENTS (U.K.) LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "03116801",
+    "name": "ELEMENT MATERIALS TECHNOLOGY LABORATORY INSTRUMENTATION UK LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 0.5,
+   "score_wrong": 0.0,
+   "score_target": 0.5,
+   "supported": true
+  },
+  {
+   "key": "GB/national/03448509>move:03348509",
+   "shape": "move",
+   "org": 9894657,
+   "name": "Rufus Leonard Limited",
+   "target": null,
+   "right_register": {
+    "number": "03348509",
+    "name": "RUFUS LEONARD LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "03448509",
+    "name": "ADVANCE AUTO CENTRE LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/04020746>move:05454595",
+   "shape": "move",
+   "org": 14622692,
+   "name": "Jute Trading Ltd",
+   "target": null,
+   "right_register": {
+    "number": "05454595",
+    "name": "JUTE TRADING LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "04020746",
+    "name": "APEX PRINT & PROMOTION LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/04534389>move:04531389",
+   "shape": "move",
+   "org": 12457016,
+   "name": "Bayrose Ltd",
+   "target": null,
+   "right_register": {
+    "number": "04531389",
+    "name": "BAYROSE LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "04534389",
+    "name": "LAMBDA ACCOUNTS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/04563613>merge:OC305127",
+   "shape": "merge",
+   "org": 16569995,
+   "name": "BDO LLP",
+   "target": {
+    "identifier": "OC305127",
+    "name": "BDO LLP",
+    "org": 12015043
+   },
+   "right_register": {
+    "number": "OC305127",
+    "name": "BDO LLP",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "04563613",
+    "name": "ALEX HOUSE LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/04989052>move:01989052",
+   "shape": "move",
+   "org": 17237476,
+   "name": "Bank View Hire Ltd",
+   "target": null,
+   "right_register": {
+    "number": "01989052",
+    "name": "BANK VIEW HIRE LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "04989052",
+    "name": "HOME CARE HAIR & BEAUTY LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/05369180>merge:GBCOH05369108",
+   "shape": "merge",
+   "org": 12336530,
+   "name": "Firmus Energy (Supply) Limited",
+   "target": {
+    "identifier": "GBCOH05369108",
+    "name": "FIRMUS ENERGY (SUPPLY) LIMITED",
+    "org": 31547550
+   },
+   "right_register": {
+    "number": "05369108",
+    "name": "FIRMUS ENERGY (SUPPLY) LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "05369180",
+    "name": "INTENSE PAINT AND DESIGN WINDOW SYSTEMS LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/05622600>merge:06013500",
+   "shape": "merge",
+   "org": 17082775,
+   "name": "Ashdale Engineering UK Ltd",
+   "target": {
+    "identifier": "06013500",
+    "name": "Ashdale Engineering UK Ltd",
+    "org": 13272838
+   },
+   "right_register": {
+    "number": "06013500",
+    "name": "ASHDALE ENGINEERING UK LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "05622600",
+    "name": "BUREAU VERITAS UK HOLDINGS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/05837803>merge:SC115530",
+   "shape": "merge",
+   "org": 17333545,
+   "name": "RSK Environment Ltd",
+   "target": {
+    "identifier": "SC115530",
+    "name": "RSK Environment Ltd",
+    "org": 10888303
+   },
+   "right_register": {
+    "number": "SC115530",
+    "name": "RSK ENVIRONMENT LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "05837803",
+    "name": "RSK LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.5,
+   "score_target": 1.0,
+   "supported": false
+  },
+  {
+   "key": "GB/national/05924741>move:05974241",
+   "shape": "move",
+   "org": 21287757,
+   "name": "Blue Mountain Airconditioning Limited",
+   "target": null,
+   "right_register": {
+    "number": "05974241",
+    "name": "BLUE MOUNTAIN AIR CONDITIONING LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "05924741",
+    "name": "CONTINENTAL DELIVERIES DIRECT LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 0.4,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": false
+  },
+  {
+   "key": "GB/national/06278226>move:06278228",
+   "shape": "move",
+   "org": 11314816,
+   "name": "C&C Training Ltd",
+   "target": null,
+   "right_register": {
+    "number": "06278228",
+    "name": "C&C TRAINING LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "06278226",
+    "name": "CONSULTANTS AT HART LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/06915233>merge:07062722",
+   "shape": "merge",
+   "org": 23642325,
+   "name": "Imagemakers Design & Consultancy Ltd",
+   "target": {
+    "identifier": "07062722",
+    "name": "Imagemakers Design & Consultancy Ltd",
+    "org": 23611947
+   },
+   "right_register": {
+    "number": "07062722",
+    "name": "IMAGEMAKERS DESIGN AND CONSULTANCY LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "06915233",
+    "name": "YOUR CLAIMS (UK) LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/07074202>merge:OC305127",
+   "shape": "merge",
+   "org": 15759810,
+   "name": "BDO LLP",
+   "target": {
+    "identifier": "OC305127",
+    "name": "BDO LLP",
+    "org": 12015043
+   },
+   "right_register": {
+    "number": "OC305127",
+    "name": "BDO LLP",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "07074202",
+    "name": "MONITOR CONSULTANCY LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/07288208>move:07288205",
+   "shape": "move",
+   "org": 22953695,
+   "name": "BRAINBOX LTD",
+   "target": null,
+   "right_register": {
+    "number": "07288205",
+    "name": "BRAINBOX LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "07288208",
+    "name": "STEP2708 LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/07329005>merge:07320590",
+   "shape": "merge",
+   "org": 13778438,
+   "name": "City West Support Services Ltd",
+   "target": {
+    "identifier": "07320590",
+    "name": "City West Support Services",
+    "org": 8724053
+   },
+   "right_register": {
+    "number": "07320590",
+    "name": "CITY WEST SUPPORT SERVICES LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "07329005",
+    "name": "DISASTER RECOVERY DOCTOR LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/07923661>merge:GBCOH03157805",
+   "shape": "merge",
+   "org": 12315546,
+   "name": "Penny Lane Builders Limited",
+   "target": {
+    "identifier": "GBCOH03157805",
+    "name": "PENNY LANE BUILDERS LIMITED",
+    "org": 30929929
+   },
+   "right_register": {
+    "number": "03157805",
+    "name": "PENNY LANE BUILDERS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "07923661",
+    "name": "COMERA POWER LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/07952979>merge:05494158",
+   "shape": "merge",
+   "org": 15688066,
+   "name": "DJS Research Ltd",
+   "target": {
+    "identifier": "05494158",
+    "name": "DJS Research Ltd",
+    "org": 9837076
+   },
+   "right_register": {
+    "number": "05494158",
+    "name": "DJS RESEARCH LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "07952979",
+    "name": "DJS (UK) LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.5,
+   "score_target": 1.0,
+   "supported": false
+  },
+  {
+   "key": "GB/national/07964771>merge:07964711",
+   "shape": "merge",
+   "org": 13819773,
+   "name": "Cell Therapy Catapult Ltd",
+   "target": {
+    "identifier": "07964711",
+    "name": "Cell & Gene Therapy Ltd",
+    "org": 9526005
+   },
+   "right_register": {
+    "number": "07964711",
+    "name": "CELL THERAPY CATAPULT LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "07964771",
+    "name": "ZIPEE LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 0.5,
+   "supported": true
+  },
+  {
+   "key": "GB/national/08672590>move:08672390",
+   "shape": "move",
+   "org": 23359213,
+   "name": "Mach Machine Tools Limited",
+   "target": null,
+   "right_register": {
+    "number": "08672390",
+    "name": "MACH MACHINE TOOLS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "08672590",
+    "name": "JODWELL LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/09044840>move:09044858",
+   "shape": "move",
+   "org": 16340106,
+   "name": "Goshen Multiservices Ltd",
+   "target": null,
+   "right_register": {
+    "number": "09044858",
+    "name": "GOSHEN MULTISERVICES (UNIVERSAL SUPPORT SERVICES GROUP) LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "09044840",
+    "name": "LOOKRICH LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 0.4,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": false
+  },
+  {
+   "key": "GB/national/09050111>move:00950111",
+   "shape": "move",
+   "org": 13171870,
+   "name": "Technical Control Systems Limited",
+   "target": null,
+   "right_register": {
+    "number": "00950111",
+    "name": "TECHNICAL CONTROL SYSTEMS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "09050111",
+    "name": "BADGER BLACK UK LTD.",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/09470688>merge:10486936",
+   "shape": "merge",
+   "org": 13576189,
+   "name": "RSK ADAS Ltd",
+   "target": {
+    "identifier": "10486936",
+    "name": "RSK ADAS Ltd",
+    "org": 15129706
+   },
+   "right_register": {
+    "number": "10486936",
+    "name": "RSK ADAS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "09470688",
+    "name": "RSK AGENCIES LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.33,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/09972459>move:09973459",
+   "shape": "move",
+   "org": 12334819,
+   "name": "Gas Works (Hull) Limited",
+   "target": null,
+   "right_register": {
+    "number": "09973459",
+    "name": "GAS WORKS (HULL) LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "09972459",
+    "name": "KRISSK LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/10008330>move:03084746",
+   "shape": "move",
+   "org": 14487707,
+   "name": "Landau Ltd",
+   "target": null,
+   "right_register": {
+    "number": "03084746",
+    "name": "LANDAU LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "10008330",
+    "name": "ECOSYS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/10013021>move:07262428",
+   "shape": "move",
+   "org": 14080558,
+   "name": "Paragon Customer Communications Ltd",
+   "target": null,
+   "right_register": {
+    "number": "07262428",
+    "name": "PARAGON CUSTOMER COMMUNICATIONS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "10013021",
+    "name": "DJW COTTON CONSULTING LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/10313218>move:03365607",
+   "shape": "move",
+   "org": 12342117,
+   "name": "Mainstream Fleet Ltd T/A C&S Motor Group",
+   "target": null,
+   "right_register": {
+    "number": "03365607",
+    "name": "MAINSTREAM FLEET LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "10313218",
+    "name": "C & S MOTORS LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 0.29,
+   "score_wrong": 0.25,
+   "score_target": null,
+   "supported": false
+  },
+  {
+   "key": "GB/national/10328878>merge:01328878",
+   "shape": "merge",
+   "org": 8997529,
+   "name": "Roalco Limited",
+   "target": {
+    "identifier": "01328878",
+    "name": "Roalco Limited",
+    "org": 8920433
+   },
+   "right_register": {
+    "number": "01328878",
+    "name": "ROALCO LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "10328878",
+    "name": "JS CASE MANAGEMENT LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/10785539>merge:10795539",
+   "shape": "merge",
+   "org": 10127526,
+   "name": "Border to Coast Pensions Partnership Limited",
+   "target": {
+    "identifier": "10795539",
+    "name": "Border to Coast Pensions Partnership Limited",
+    "org": 10403805
+   },
+   "right_register": {
+    "number": "10795539",
+    "name": "BORDER TO COAST PENSIONS PARTNERSHIP LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "10785539",
+    "name": "LEAP COLLECTIVE LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/11070552>merge:GBCOH09119129",
+   "shape": "merge",
+   "org": 16654278,
+   "name": "Real Imaging Ltd",
+   "target": {
+    "identifier": "GBCOH09119129",
+    "name": "REAL IMAGING LTD",
+    "org": 31588431
+   },
+   "right_register": {
+    "number": "09119129",
+    "name": "REAL IMAGING LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "11070552",
+    "name": "FNL GLOBAL LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/11136410>merge:GBCOH06738960",
+   "shape": "merge",
+   "org": 16713545,
+   "name": "Rydal Communications Ltd",
+   "target": {
+    "identifier": "GBCOH06738960",
+    "name": "Rydal Communications limited",
+    "org": 31552828
+   },
+   "right_register": {
+    "number": "06738960",
+    "name": "RYDAL COMMUNICATIONS LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "11136410",
+    "name": "POWERPLUS GROUP (PPG) LTD",
+    "status": "Liquidation",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/11925889>move:11905889",
+   "shape": "move",
+   "org": 16440433,
+   "name": "L N J Construction Services Ltd",
+   "target": null,
+   "right_register": {
+    "number": "11905889",
+    "name": "LNJ CONSTRUCTION SERVICES LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "11925889",
+    "name": "DICKER HALT LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 0.33,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": false
+  },
+  {
+   "key": "GB/national/11952574>move:05515274",
+   "shape": "move",
+   "org": 17562020,
+   "name": "Spirit Medical Ltd",
+   "target": null,
+   "right_register": {
+    "number": "05515274",
+    "name": "SPIRIT MEDICAL LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "11952574",
+    "name": "CARELIDE UK LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/12304051>merge:06998952",
+   "shape": "merge",
+   "org": 11518254,
+   "name": "Atamis Ltd",
+   "target": {
+    "identifier": "06998952",
+    "name": "Atamis Ltd",
+    "org": 14424653
+   },
+   "right_register": {
+    "number": "06998952",
+    "name": "ATAMIS LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "12304051",
+    "name": "VISION POINT RESOURCES LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/12501617>move:04338786",
+   "shape": "move",
+   "org": 11678031,
+   "name": "Weedfree on Track Ltd",
+   "target": null,
+   "right_register": {
+    "number": "04338786",
+    "name": "WEEDFREE ON TRACK LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "12501617",
+    "name": "RASSAU AND TAFARNAUBACH INDUSTRIAL ESTATES BUSINESS IMPROVEMENT DISTRICT LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/13048064>move:03048064",
+   "shape": "move",
+   "org": 13164827,
+   "name": "Added Security Technology Ltd",
+   "target": null,
+   "right_register": {
+    "number": "03048064",
+    "name": "ADDED SECURITY TECHNOLOGY LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "13048064",
+    "name": "UNISON HOUSE LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/14002237>merge:01402237",
+   "shape": "merge",
+   "org": 15242246,
+   "name": "Stena Line Ltd",
+   "target": {
+    "identifier": "01402237",
+    "name": "Stena Line Ltd",
+    "org": 14271533
+   },
+   "right_register": {
+    "number": "01402237",
+    "name": "STENA LINE LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "14002237",
+    "name": "WAVE HAND SURGERY LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/15072704>merge:01507274",
+   "shape": "merge",
+   "org": 15014969,
+   "name": "Marsh Ltd",
+   "target": {
+    "identifier": "01507274",
+    "name": "Marsh Limited",
+    "org": 16348141
+   },
+   "right_register": {
+    "number": "01507274",
+    "name": "MARSH LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "15072704",
+    "name": "RMD LILY LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/15517085>merge:03104505",
+   "shape": "merge",
+   "org": 14766047,
+   "name": "Pharmacosmos UK Ltd",
+   "target": {
+    "identifier": "03104505",
+    "name": "Pharmacosmos UK Ltd.",
+    "org": 10338631
+   },
+   "right_register": {
+    "number": "03104505",
+    "name": "PHARMACOSMOS UK LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "15517085",
+    "name": "KOBYHOMES LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/17161281>merge:00227590",
+   "shape": "merge",
+   "org": 12595897,
+   "name": "The Financial Times Ltd",
+   "target": {
+    "identifier": "00227590",
+    "name": "Financial Times LTd",
+    "org": 16521928
+   },
+   "right_register": {
+    "number": "00227590",
+    "name": "FINANCIAL TIMES LIMITED(THE)",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "17161281",
+    "name": "GREEN ORCHID HEALTHCARE SERVICES LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/20802334>move:02802334",
+   "shape": "move",
+   "org": 10705447,
+   "name": "Cochlear Europe Ltd",
+   "target": null,
+   "right_register": {
+    "number": "02802334",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "wrong_register": {
+    "number": "20802334",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 0.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": false
+  },
+  {
+   "key": "GB/national/23437608>merge:02343760",
+   "shape": "merge",
+   "org": 15719577,
+   "name": "Access UK Ltd",
+   "target": {
+    "identifier": "02343760",
+    "name": "Access UK Ltd",
+    "org": 23361983
+   },
+   "right_register": {
+    "number": "02343760",
+    "name": "ACCESS UK LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "23437608",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH00113413>merge:GBCOH01134139",
+   "shape": "merge",
+   "org": 31588105,
+   "name": "Aerzen Machines Ltd",
+   "target": {
+    "identifier": "GBCOH01134139",
+    "name": "AERZEN MACHINES LIMITED",
+    "org": 31572749
+   },
+   "right_register": {
+    "number": "01134139",
+    "name": "AERZEN MACHINES LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "00113413",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH01283240>merge:02183240",
+   "shape": "merge",
+   "org": 31536053,
+   "name": "Trustmarque Solutions Ltd",
+   "target": {
+    "identifier": "02183240",
+    "name": "Trustmarque Solutions Ltd",
+    "org": 15445620
+   },
+   "right_register": {
+    "number": "02183240",
+    "name": "TRUSTMARQUE SOLUTIONS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "01283240",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH01513016>merge:01846493",
+   "shape": "merge",
+   "org": 31568106,
+   "name": "AECOM Limited",
+   "target": {
+    "identifier": "01846493",
+    "name": "Aecom Ltd",
+    "org": 9520549
+   },
+   "right_register": {
+    "number": "01846493",
+    "name": "AECOM LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "01513016",
+    "name": "GSF (LONDON) LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH01712722>merge:GBCOH01712772",
+   "shape": "merge",
+   "org": 31580430,
+   "name": "Wessex Archaeology Ltd",
+   "target": {
+    "identifier": "GBCOH01712772",
+    "name": "WESSEX ARCHAEOLOGY LIMITED",
+    "org": 31562206
+   },
+   "right_register": {
+    "number": "01712772",
+    "name": "WESSEX ARCHAEOLOGY LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "01712722",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH02065138>merge:02605138",
+   "shape": "merge",
+   "org": 31575739,
+   "name": "Savills UK",
+   "target": {
+    "identifier": "02605138",
+    "name": "Savills (UK) Ltd",
+    "org": 12206965
+   },
+   "right_register": {
+    "number": "02605138",
+    "name": "SAVILLS (UK) LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "02065138",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH02408326>merge:GBCOH05355195",
+   "shape": "merge",
+   "org": 31582949,
+   "name": "Just Teachers",
+   "target": {
+    "identifier": "GBCOH05355195",
+    "name": "Just Teachers Limited",
+    "org": 30953736
+   },
+   "right_register": {
+    "number": "05355195",
+    "name": "JUST TEACHERS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "02408326",
+    "name": "INTERACTION RECRUITMENT PLC",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH02509188>move:GBCOH16230009",
+   "shape": "move",
+   "org": 31563211,
+   "name": "Dugard CNC Limited",
+   "target": null,
+   "right_register": {
+    "number": "16230009",
+    "name": "DUGARD CNC LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "02509188",
+    "name": "HUGGARD",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH02621537>move:GBCOH02625137",
+   "shape": "move",
+   "org": 31555756,
+   "name": "WDR Ltd (CORRECT COMPANY REG 02625137)",
+   "target": null,
+   "right_register": {
+    "number": "02625137",
+    "name": "WDR LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "02621537",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 0.25,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": false
+  },
+  {
+   "key": "GB/national/GBCOH02928020>move:GBCOH05120043",
+   "shape": "move",
+   "org": 31553642,
+   "name": "Begbies Traynor Group plc",
+   "target": null,
+   "right_register": {
+    "number": "05120043",
+    "name": "BTG CONSULTING PLC",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "02928020",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 0.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": false
+  },
+  {
+   "key": "GB/national/GBCOH02976136>merge:GBCOH11875450",
+   "shape": "merge",
+   "org": 31560288,
+   "name": "Reed Talent Solutions Ltd",
+   "target": {
+    "identifier": "GBCOH11875450",
+    "name": "Reed Talent Solutions (Consultancy +)",
+    "org": 30914585
+   },
+   "right_register": {
+    "number": "11875450",
+    "name": "REED TALENT SOLUTIONS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "02976136",
+    "name": "CONSULTANCY UK LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 0.75,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH03262531>merge:GBCOH02362531",
+   "shape": "merge",
+   "org": 31580433,
+   "name": "Cotswold Archaeology",
+   "target": {
+    "identifier": "GBCOH02362531",
+    "name": "COTSWOLD ARCHAEOLOGY LIMITED",
+    "org": 31537076
+   },
+   "right_register": {
+    "number": "02362531",
+    "name": "COTSWOLD ARCHAEOLOGY LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "03262531",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH03293859>move:GBCOH03203859",
+   "shape": "move",
+   "org": 31545321,
+   "name": "Nominet UK",
+   "target": null,
+   "right_register": {
+    "number": "03203859",
+    "name": "NOMINET UK",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "03293859",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH04106190>merge:02360025",
+   "shape": "merge",
+   "org": 31566883,
+   "name": "ECE Architecture Ltd",
+   "target": {
+    "identifier": "02360025",
+    "name": "ECE Architecture Limited",
+    "org": 21959551
+   },
+   "right_register": {
+    "number": "02360025",
+    "name": "ECE ARCHITECTURE LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "04106190",
+    "name": "WORCESTERSHIRE METAL GROUP LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH04173398>move:GBCOH08004712",
+   "shape": "move",
+   "org": 30918036,
+   "name": "Amthal Fire & Security Ltd",
+   "target": null,
+   "right_register": {
+    "number": "08004712",
+    "name": "AMTHAL FIRE & SECURITY LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "04173398",
+    "name": "TRENTON DATA LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH04342597>merge:GBCOH04345297",
+   "shape": "merge",
+   "org": 31537939,
+   "name": "Castle Owen Construction and Property Consultants Ltd",
+   "target": {
+    "identifier": "GBCOH04345297",
+    "name": "CASTLE OWEN CONSTRUCTION AND PROPERTY CONSULTANTS LIMITED",
+    "org": 30917533
+   },
+   "right_register": {
+    "number": "04345297",
+    "name": "CASTLE OWEN CONSTRUCTION AND PROPERTY CONSULTANTS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "04342597",
+    "name": "WHIZZBANG TV LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH04671490>merge:04671940",
+   "shape": "merge",
+   "org": 31575200,
+   "name": "EVISA SOLUTIONS LIMITED T/A MALIKSHAW",
+   "target": {
+    "identifier": "04671940",
+    "name": "Evisa Solutions Ltd",
+    "org": 16170915
+   },
+   "right_register": {
+    "number": "04671940",
+    "name": "EVISA SOLUTIONS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "04671490",
+    "name": "THE BEAUTY LOUNGE (DELPH) LTD.",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 0.4,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": false
+  },
+  {
+   "key": "GB/national/GBCOH04801081>merge:GBCOH00980790",
+   "shape": "merge",
+   "org": 31559675,
+   "name": "CO-OP WHOLESALE LIMITED",
+   "target": {
+    "identifier": "GBCOH00980790",
+    "name": "CO-OP WHOLESALE LIMITED",
+    "org": 31559480
+   },
+   "right_register": {
+    "number": "00980790",
+    "name": "CO-OP WHOLESALE LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "04801081",
+    "name": "COOP WHOLESALE LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.33,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH05191708>merge:GBCOH09151708",
+   "shape": "merge",
+   "org": 30929451,
+   "name": "Moon Rise 24 HR Recruitment",
+   "target": {
+    "identifier": "GBCOH09151708",
+    "name": "MOON RISE 24 HR RECRUITMENT LTD",
+    "org": 31538931
+   },
+   "right_register": {
+    "number": "09151708",
+    "name": "MOON RISE 24 HR RECRUITMENT LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "05191708",
+    "name": "DOMINO INDUSTRIAL PIPEWORK LIMITED",
+    "status": "Liquidation",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH05363563>move:GBCOH05363653",
+   "shape": "move",
+   "org": 31554021,
+   "name": "On Track Education Services Limited",
+   "target": null,
+   "right_register": {
+    "number": "05363653",
+    "name": "ON TRACK EDUCATION SERVICES LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "05363563",
+    "name": "NFP COMMERCIAL SOLUTIONS LIMITED",
+    "status": "Liquidation",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH05374534>merge:GBCOH03843793",
+   "shape": "merge",
+   "org": 31553992,
+   "name": "Specialist Development Contracts Ltd",
+   "target": {
+    "identifier": "GBCOH03843793",
+    "name": "SPECIALIST DEVELOPMENT CONTRACTS LTD",
+    "org": 31571155
+   },
+   "right_register": {
+    "number": "03843793",
+    "name": "SPECIALIST DEVELOPMENT CONTRACTS LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "05374534",
+    "name": "SEDGLEY GLASS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH05724865>merge:04557701",
+   "shape": "merge",
+   "org": 31572377,
+   "name": "Cross Keys Homes",
+   "target": {
+    "identifier": "04557701",
+    "name": "Cross Keys Homes Limited",
+    "org": 15692685
+   },
+   "right_register": {
+    "number": "04557701",
+    "name": "CROSS KEYS HOMES LIMITED",
+    "status": "Converted / Closed",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "05724865",
+    "name": "B2 STUDIOS LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH06363913>merge:03602082",
+   "shape": "merge",
+   "org": 31552056,
+   "name": "Allwag Promotions Limited",
+   "target": {
+    "identifier": "03602082",
+    "name": "Allwag Promotions Ltd",
+    "org": 13640179
+   },
+   "right_register": {
+    "number": "03602082",
+    "name": "ALLWAG PROMOTIONS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "06363913",
+    "name": "ALWAHY LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH06548448>merge:03945920",
+   "shape": "merge",
+   "org": 31577849,
+   "name": "Pennington Choices Ltd",
+   "target": {
+    "identifier": "03945920",
+    "name": "Pennington Choices Limited",
+    "org": 15743686
+   },
+   "right_register": {
+    "number": "03945920",
+    "name": "PENNINGTON CHOICES LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "06548448",
+    "name": "NUMUS SOFTWARE LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH06603033>merge:06603066",
+   "shape": "merge",
+   "org": 31566979,
+   "name": "Preventx Limited",
+   "target": {
+    "identifier": "06603066",
+    "name": "Preventx Limited",
+    "org": 10556177
+   },
+   "right_register": {
+    "number": "06603066",
+    "name": "PREVENTX LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "06603033",
+    "name": "GOD TYPSNITT I SVERIGE LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH07105397>merge:GBCOH07105367",
+   "shape": "merge",
+   "org": 30914135,
+   "name": "Misco Technologies Limited",
+   "target": {
+    "identifier": "GBCOH07105367",
+    "name": "MISCO TECHNOLOGIES LIMITED",
+    "org": 30917818
+   },
+   "right_register": {
+    "number": "07105367",
+    "name": "MISCO TECHNOLOGIES LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "07105397",
+    "name": "CUBUS OBJEKT- UND WOHNDESIGN LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH07218896>merge:SC112019",
+   "shape": "merge",
+   "org": 31561170,
+   "name": "MTI Technology Limited",
+   "target": {
+    "identifier": "SC112019",
+    "name": "MTI Technology Ltd",
+    "org": 13270714
+   },
+   "right_register": {
+    "number": "SC112019",
+    "name": "MTI TECHNOLOGY LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "07218896",
+    "name": "MELLIFLUOUS 2 LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH07790798>merge:GBCOH07790198",
+   "shape": "merge",
+   "org": 31571891,
+   "name": "Arbor Education Partners Limited",
+   "target": {
+    "identifier": "GBCOH07790198",
+    "name": "ARBOR EDUCATION PARTNERS LIMITED",
+    "org": 31556272
+   },
+   "right_register": {
+    "number": "07790198",
+    "name": "ARBOR EDUCATION PARTNERS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "07790798",
+    "name": "GCS (2011) LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH08034563>merge:04793945",
+   "shape": "merge",
+   "org": 31575892,
+   "name": "ICS Operations Limited trading as Xyla",
+   "target": {
+    "identifier": "04793945",
+    "name": "ICS Operations Ltd",
+    "org": 13569973
+   },
+   "right_register": {
+    "number": "04793945",
+    "name": "ICS OPERATIONS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "08034563",
+    "name": "GR ORCHARD LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 0.4,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": false
+  },
+  {
+   "key": "GB/national/GBCOH08248194>move:GBCOH08248195",
+   "shape": "move",
+   "org": 31540147,
+   "name": "ALLIANCE FOR COHESION AND RACIAL EQUALITYLIMITED",
+   "target": null,
+   "right_register": {
+    "number": "08248195",
+    "name": "ALLIANCE FOR COHESION AND RACIAL EQUALITY LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "08248194",
+    "name": "MELLOR CONSTRUCTION LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 0.67,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH08320405>merge:06228910",
+   "shape": "merge",
+   "org": 31555064,
+   "name": "Mediscan Diagnostic Services",
+   "target": {
+    "identifier": "06228910",
+    "name": "Mediscan Diagnostic Services Limited",
+    "org": 11686151
+   },
+   "right_register": {
+    "number": "06228910",
+    "name": "MEDISCAN DIAGNOSTIC SERVICES LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "08320405",
+    "name": "HARLEY HEALTH VILLAGE LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH089491S9>move:GBCOH08949159",
+   "shape": "move",
+   "org": 31565559,
+   "name": "MONTEL CIVIL ENGINEERING LIMITED",
+   "target": null,
+   "right_register": {
+    "number": "08949159",
+    "name": "NEW ASSET ALLIANCE LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "089491S9",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 0.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": false
+  },
+  {
+   "key": "GB/national/GBCOH09318107>move:GBCOH09318197",
+   "shape": "move",
+   "org": 30917397,
+   "name": "Northern Community Pathways Ltd",
+   "target": null,
+   "right_register": {
+    "number": "09318197",
+    "name": "NORTHERN COMMUNITY PATHWAYS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "09318107",
+    "name": "MIROMORE LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH09389042>merge:GBCOH06194579",
+   "shape": "merge",
+   "org": 30976571,
+   "name": "ECMS Services Limited",
+   "target": {
+    "identifier": "GBCOH06194579",
+    "name": "ECMS SERVICES LTD",
+    "org": 31556461
+   },
+   "right_register": {
+    "number": "06194579",
+    "name": "ECMS SERVICES LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "09389042",
+    "name": "LDN PROJECT SERVICES LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.25,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH09710751>move:GBCOH03414863",
+   "shape": "move",
+   "org": 31545204,
+   "name": "Oculus Building Consultancy",
+   "target": null,
+   "right_register": {
+    "number": "03414863",
+    "name": "OCULUS BUILDING CONSULTANCY LIMITED",
+    "status": "Liquidation",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "09710751",
+    "name": "VOPULUS LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH0C353214>merge:OC353214",
+   "shape": "merge",
+   "org": 31557561,
+   "name": "Kennedys Law LLP",
+   "target": {
+    "identifier": "OC353214",
+    "name": "Kennedys Law LLP",
+    "org": 11722584
+   },
+   "right_register": {
+    "number": "OC353214",
+    "name": "KENNEDYS LAW LLP",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "0C353214",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH0C415849>merge:GBCOHOC415849",
+   "shape": "merge",
+   "org": 31541682,
+   "name": "Medac Pharma LLP",
+   "target": {
+    "identifier": "GBCOHOC415849",
+    "name": "Medac Pharma LLP",
+    "org": 31579812
+   },
+   "right_register": {
+    "number": "OC415849",
+    "name": "MEDAC PHARMA LLP",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "0C415849",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH10039541>move:GBCOH02159182",
+   "shape": "move",
+   "org": 31540066,
+   "name": "UCC Coffee UK Ltd",
+   "target": null,
+   "right_register": {
+    "number": "02159182",
+    "name": "UCC COFFEE UK LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "10039541",
+    "name": "JERKAN INDUSTRIAL LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH10138652>move:GBCOH10138562",
+   "shape": "move",
+   "org": 31560066,
+   "name": "Southend Care Ltd",
+   "target": null,
+   "right_register": {
+    "number": "10138562",
+    "name": "SOUTHEND CARE LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "10138652",
+    "name": "TRIPLE-S CONSTRUCTION LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH10175024>merge:GBCOH10170524",
+   "shape": "merge",
+   "org": 31536381,
+   "name": "ADVANCE MEDICAL TRANSPORT SERVICES LIMITED",
+   "target": {
+    "identifier": "GBCOH10170524",
+    "name": "ADVANCE MEDICAL TRANSPORT SERVICES LIMITED",
+    "org": 31536380
+   },
+   "right_register": {
+    "number": "10170524",
+    "name": "ADVANCE MEDICAL TRANSPORT SERVICES LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "10175024",
+    "name": "TDM (CHESTER) LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH10254173>merge:OC326178",
+   "shape": "merge",
+   "org": 31583489,
+   "name": "Pellings LLP",
+   "target": {
+    "identifier": "OC326178",
+    "name": "Pellings LLP",
+    "org": 10842347
+   },
+   "right_register": {
+    "number": "OC326178",
+    "name": "PELLINGS LLP",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "10254173",
+    "name": "PERISCOPE LANDSCAPE & ARCHITECTURE LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH10417508>merge:GBCOH09142184",
+   "shape": "merge",
+   "org": 31588474,
+   "name": "KBH Building Services Ltd",
+   "target": {
+    "identifier": "GBCOH09142184",
+    "name": "KBH BUILDING SERVICES LIMITED",
+    "org": 31541737
+   },
+   "right_register": {
+    "number": "09142184",
+    "name": "KBH BUILDING SERVICES LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "10417508",
+    "name": "RAYMOND GEORGE CONSULTANCY LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH10449939>move:GBCOH10649939",
+   "shape": "move",
+   "org": 31536916,
+   "name": "Smart Trax ltd",
+   "target": null,
+   "right_register": {
+    "number": "10649939",
+    "name": "SMART TRAX LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "10449939",
+    "name": "URBAN ESTATE LETTINGS LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH10548502>move:GBCOH03971971",
+   "shape": "move",
+   "org": 31574335,
+   "name": "Kromatek Limited",
+   "target": null,
+   "right_register": {
+    "number": "03971971",
+    "name": "KROMATEK LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "10548502",
+    "name": "UK LIFE TEST LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH10719179>merge:GBCOH01719179",
+   "shape": "merge",
+   "org": 31558167,
+   "name": "J Freeley Ltd",
+   "target": {
+    "identifier": "GBCOH01719179",
+    "name": "J. FREELEY LIMITED",
+    "org": 31542246
+   },
+   "right_register": {
+    "number": "01719179",
+    "name": "J. FREELEY LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "10719179",
+    "name": "RJ TRANSPORTATION LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH11154651>merge:OC395916",
+   "shape": "merge",
+   "org": 31583490,
+   "name": "Pollard Thomas Edwards",
+   "target": {
+    "identifier": "OC395916",
+    "name": "Pollard Thomas Edwards LLP",
+    "org": 15715147
+   },
+   "right_register": {
+    "number": "OC395916",
+    "name": "POLLARD THOMAS EDWARDS LLP",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "11154651",
+    "name": "POROBAN LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH11386208>move:GBCOH11386206",
+   "shape": "move",
+   "org": 31562935,
+   "name": "LIMMS CARE SERVICES LTD",
+   "target": null,
+   "right_register": {
+    "number": "11386206",
+    "name": "LIMMS CARE SERVICES LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "11386208",
+    "name": "LEGACY FINANCE GROUP LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH11426180>move:GBCOH14985480",
+   "shape": "move",
+   "org": 31557218,
+   "name": "Infinite Care Network Ltd",
+   "target": null,
+   "right_register": {
+    "number": "14985480",
+    "name": "INFINITE CARE NETWORK LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "11426180",
+    "name": "INFINITY HEALTH GROUP LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH11465733>merge:GBCOH11465799",
+   "shape": "merge",
+   "org": 31537183,
+   "name": "International Healthcare Recruitment LTD",
+   "target": {
+    "identifier": "GBCOH11465799",
+    "name": "International Healthcare Recruitment Ltd",
+    "org": 31537184
+   },
+   "right_register": {
+    "number": "11465799",
+    "name": "SANCTUS CARE GROUP LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "11465733",
+    "name": "JADAR CONSULTANCY LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 0.0,
+   "score_wrong": 0.0,
+   "score_target": 0.0,
+   "supported": false
+  },
+  {
+   "key": "GB/national/GBCOH11848185>merge:GBCOH11548185",
+   "shape": "merge",
+   "org": 31577435,
+   "name": "Greyfriars Project Management Ltd",
+   "target": {
+    "identifier": "GBCOH11548185",
+    "name": "GREYFRIARS PROJECT MANAGEMENT LIMITED",
+    "org": 30973178
+   },
+   "right_register": {
+    "number": "11548185",
+    "name": "GREYFRIARS PROJECT MANAGEMENT LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "11848185",
+    "name": "GUODOU TEA BEVERAGE LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH11863592>merge:OC375867",
+   "shape": "merge",
+   "org": 31583492,
+   "name": "Weston Williamson + Partners LLP",
+   "target": {
+    "identifier": "OC375867",
+    "name": "Weston Williamson + Partners",
+    "org": 15242474
+   },
+   "right_register": {
+    "number": "OC375867",
+    "name": "WESTONWILLIAMSON+PARTNERS LLP",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "11863592",
+    "name": "WONKY ARCHITECTURE LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 0.25,
+   "score_wrong": 0.0,
+   "score_target": 0.25,
+   "supported": false
+  },
+  {
+   "key": "GB/national/GBCOH12158713>move:GBCOH10970876",
+   "shape": "move",
+   "org": 31583493,
+   "name": "Squared Architects Ltd",
+   "target": null,
+   "right_register": {
+    "number": "10970876",
+    "name": "SQUARED ARCHITECTS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "12158713",
+    "name": "STARKI LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH12599988>move:GBCOH12599987",
+   "shape": "move",
+   "org": 30914951,
+   "name": "Cuckoo Care Ltd",
+   "target": null,
+   "right_register": {
+    "number": "12599987",
+    "name": "CUCKOO CARE LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "12599988",
+    "name": "NEXUS FASHION LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH12742499>merge:06031628",
+   "shape": "merge",
+   "org": 31570462,
+   "name": "Aspire Technology Solutions Ltd",
+   "target": {
+    "identifier": "06031628",
+    "name": "Aspire Technology Solutions Ltd",
+    "org": 12471268
+   },
+   "right_register": {
+    "number": "06031628",
+    "name": "ASPIRE TECHNOLOGY SOLUTIONS LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "12742499",
+    "name": "AVP ESTATES LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH13322491>merge:01332249",
+   "shape": "merge",
+   "org": 31550460,
+   "name": "Tunstall Healthcare (UK) Limited",
+   "target": {
+    "identifier": "01332249",
+    "name": "Tunstall Healthcare (UK) Ltd",
+    "org": 16402383
+   },
+   "right_register": {
+    "number": "01332249",
+    "name": "TUNSTALL HEALTHCARE (UK) LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "13322491",
+    "name": "CS CLIFTON LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH13460285>merge:GBCOH13460282",
+   "shape": "merge",
+   "org": 31549928,
+   "name": "Firntec Ltd",
+   "target": {
+    "identifier": "GBCOH13460282",
+    "name": "Firntec Ltd",
+    "org": 30967546
+   },
+   "right_register": {
+    "number": "13460282",
+    "name": "FIRNTEC LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "13460285",
+    "name": "HJALP TILL LIV LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH13534915>move:GBCOH13639415",
+   "shape": "move",
+   "org": 30917401,
+   "name": "Aleyah House",
+   "target": null,
+   "right_register": {
+    "number": "13639415",
+    "name": "ALEYAH HOUSE LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "13534915",
+    "name": "FIND MY TRAINER LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH13613243>move:GBCOH02965414",
+   "shape": "move",
+   "org": 31583495,
+   "name": "SimpsonHaugh Architects Limited",
+   "target": null,
+   "right_register": {
+    "number": "02965414",
+    "name": "SIMPSONHAUGH ARCHITECTS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "13613243",
+    "name": "SINGH FUDGE LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH13727368>move:GBCOH13727638",
+   "shape": "move",
+   "org": 31589533,
+   "name": "Pineapple Recruitment Ltd",
+   "target": null,
+   "right_register": {
+    "number": "13727638",
+    "name": "PINEAPPLE RECRUITMENT LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "13727368",
+    "name": "HAIRCUTZ MOBILE LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH13759045>merge:GBCOH08486936",
+   "shape": "merge",
+   "org": 31587688,
+   "name": "GP Primary Choice Ltd",
+   "target": {
+    "identifier": "GBCOH08486936",
+    "name": "GP Primary Choice Ltd",
+    "org": 31566551
+   },
+   "right_register": {
+    "number": "08486936",
+    "name": "GP PRIMARY CHOICE LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "13759045",
+    "name": "BISHOP OAK LIMITED",
+    "status": "Liquidation",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH13879913>merge:GBCOH13879931",
+   "shape": "merge",
+   "org": 31550640,
+   "name": "ANGEL CARE STAFFING LTD T/A WeCare Angels",
+   "target": {
+    "identifier": "GBCOH13879931",
+    "name": "Angel Care Staffing Ltd",
+    "org": 31534665
+   },
+   "right_register": {
+    "number": "13879931",
+    "name": "ANGEL CARE STAFFING LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "13879913",
+    "name": "LOU LETTINGS LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 0.43,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": false
+  },
+  {
+   "key": "GB/national/GBCOH14052307>merge:GBCOH14052037",
+   "shape": "merge",
+   "org": 31560597,
+   "name": "Elite Care Professionals Limited",
+   "target": {
+    "identifier": "GBCOH14052037",
+    "name": "Elite Care Professionals Limited",
+    "org": 31560587
+   },
+   "right_register": {
+    "number": "14052037",
+    "name": "ELITE CARE PROFESSIONALS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "14052307",
+    "name": "WHITTINGHAM ST GEORGE MANAGEMENT LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH14205537>merge:GBCOH03094139",
+   "shape": "merge",
+   "org": 31583497,
+   "name": "McBains Limited",
+   "target": {
+    "identifier": "GBCOH03094139",
+    "name": "MCBAINS LTD",
+    "org": 30976206
+   },
+   "right_register": {
+    "number": "03094139",
+    "name": "MCBAINS LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "14205537",
+    "name": "METASHAPE ARCHITECTS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH14704569>merge:03770815",
+   "shape": "merge",
+   "org": 31570725,
+   "name": "Perk UK Limited (Click Travel)",
+   "target": {
+    "identifier": "03770815",
+    "name": "Click Travel Limited",
+    "org": 12023084
+   },
+   "right_register": {
+    "number": "03770815",
+    "name": "PERK UK LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "14704569",
+    "name": "CLICKTRAVEL LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 0.33,
+   "score_wrong": 0.0,
+   "score_target": 0.0,
+   "supported": false
+  },
+  {
+   "key": "GB/national/GBCOH14754163>move:GBCOH02471929",
+   "shape": "move",
+   "org": 31583499,
+   "name": "Nugent Vallis Brierley Limited",
+   "target": null,
+   "right_register": {
+    "number": "02471929",
+    "name": "NUGENT VALLIS BRIERLEY LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "14754163",
+    "name": "OFFICE S&M ARCHITECTS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH15269574>merge:GBCOH03851779",
+   "shape": "merge",
+   "org": 31559982,
+   "name": "BWS SECURITY SYSTEMS LTD",
+   "target": {
+    "identifier": "GBCOH03851779",
+    "name": "BWS SECURITY SYSTEMS LIMITED",
+    "org": 31550190
+   },
+   "right_register": {
+    "number": "03851779",
+    "name": "BWS SECURITY SYSTEMS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "15269574",
+    "name": "BWS GROUP LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.33,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH15901959>merge:GBCOH04099786",
+   "shape": "merge",
+   "org": 31583057,
+   "name": "Keystage Teacher Supply Limited",
+   "target": {
+    "identifier": "GBCOH04099786",
+    "name": "KEYSTAGE TEACHER SUPPLY LIMITED",
+    "org": 30953732
+   },
+   "right_register": {
+    "number": "04099786",
+    "name": "KEYSTAGE TEACHER SUPPLY LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "15901959",
+    "name": "KEY TEACHERS LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH16764560>move:GBCOH16764650",
+   "shape": "move",
+   "org": 31556782,
+   "name": "Sincerity Housing Ltd",
+   "target": null,
+   "right_register": {
+    "number": "16764650",
+    "name": "SINCERITY HOUSING LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "16764560",
+    "name": "PATCHIK LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOHFC031513>merge:GBCOHFC031512",
+   "shape": "merge",
+   "org": 31538543,
+   "name": "Seaham Care Limited",
+   "target": {
+    "identifier": "GBCOHFC031512",
+    "name": "Seaham Care Limited",
+    "org": 31538542
+   },
+   "right_register": {
+    "number": "FC031512",
+    "name": "SEAHAM CARE LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "FC031513",
+    "name": "ANGELO, GORDON NETHERLANDS B.V.",
+    "status": "Converted / Closed",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOHNI069696>move:GBCOHNI069636",
+   "shape": "move",
+   "org": 31570583,
+   "name": "Stephen w moore Ltd",
+   "target": null,
+   "right_register": {
+    "number": "NI069636",
+    "name": "STEPHEN W MOORE LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "NI069696",
+    "name": "6 CLIFTONVILLE AVENUE MANAGEMENT COMPANY LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOHO1089026>merge:GBCOH01089026",
+   "shape": "merge",
+   "org": 31554631,
+   "name": "St Annes",
+   "target": {
+    "identifier": "GBCOH01089026",
+    "name": "ST ANNE'S COMMUNITY SERVICES",
+    "org": 31545503
+   },
+   "right_register": {
+    "number": "01089026",
+    "name": "ST ANNE'S COMMUNITY SERVICES",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "O1089026",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 0.17,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": false
+  },
+  {
+   "key": "GB/national/GBCOHO3465737>merge:GBCOH03465737",
+   "shape": "merge",
+   "org": 31574618,
+   "name": "Compass Care Homes",
+   "target": {
+    "identifier": "GBCOH03465737",
+    "name": "Compass Care Homes Ltd",
+    "org": 31538050
+   },
+   "right_register": {
+    "number": "03465737",
+    "name": "COMPASS CARE HOMES LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "O3465737",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOHO3796191>merge:GBCOH03796191",
+   "shape": "merge",
+   "org": 31554632,
+   "name": "Choices",
+   "target": {
+    "identifier": "GBCOH03796191",
+    "name": "CHOICES HOMECARE (YORKSHIRE) LIMITED",
+    "org": 31574582
+   },
+   "right_register": {
+    "number": "03796191",
+    "name": "CHOICES HOMECARE (YORKSHIRE) LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "O3796191",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 0.33,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": false
+  },
+  {
+   "key": "GB/national/GBCOHO7006470>merge:GBCOH07006470",
+   "shape": "merge",
+   "org": 31554633,
+   "name": "Assist Homecare",
+   "target": {
+    "identifier": "GBCOH07006470",
+    "name": "Assist Homecare",
+    "org": 30926681
+   },
+   "right_register": {
+    "number": "07006470",
+    "name": "ASSIST HOME CARE LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "O7006470",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 0.25,
+   "score_wrong": 0.0,
+   "score_target": 0.25,
+   "supported": false
+  },
+  {
+   "key": "GB/national/GBCOHO8555192>merge:GBCOH08555192",
+   "shape": "merge",
+   "org": 31554634,
+   "name": "Our TLC",
+   "target": {
+    "identifier": "GBCOH08555192",
+    "name": "Our TLC Limited",
+    "org": 30926682
+   },
+   "right_register": {
+    "number": "08555192",
+    "name": "OUR TLC LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "O8555192",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOHO8824873>merge:GBCOH08824873",
+   "shape": "merge",
+   "org": 31543340,
+   "name": "Solutions In Service",
+   "target": {
+    "identifier": "GBCOH08824873",
+    "name": "Solutions in Service Ltd (SIS)",
+    "org": 31598319
+   },
+   "right_register": {
+    "number": "08824873",
+    "name": "SOLUTIONS IN SERVICE LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "O8824873",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 0.75,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOHO9623872>merge:GBCOH09623872",
+   "shape": "merge",
+   "org": 31574619,
+   "name": "Connections Care",
+   "target": {
+    "identifier": "GBCOH09623872",
+    "name": "Connections Care Ltd",
+    "org": 31552660
+   },
+   "right_register": {
+    "number": "09623872",
+    "name": "CONNECTIONS CARE LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "O9623872",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOHO9737154>merge:GBCOH09737154",
+   "shape": "merge",
+   "org": 31554635,
+   "name": "Care Angels (Batley)",
+   "target": {
+    "identifier": "GBCOH09737154",
+    "name": "Care Angels Batley Ltd",
+    "org": 30926683
+   },
+   "right_register": {
+    "number": "09737154",
+    "name": "CARE ANGELS (BATLEY) LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "O9737154",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOHOC247576>merge:GBCOHOC427576",
+   "shape": "merge",
+   "org": 31567217,
+   "name": "Cheshire Orthopaedic Group LLP",
+   "target": {
+    "identifier": "GBCOHOC427576",
+    "name": "Cheshire Orthopaedic Group LLP",
+    "org": 30915873
+   },
+   "right_register": {
+    "number": "OC427576",
+    "name": "CHESHIRE ORTHOPAEDIC GROUP LLP",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "OC247576",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOHR7637830>merge:GBCOHRC000664",
+   "shape": "merge",
+   "org": 31538331,
+   "name": "University of Nottingham",
+   "target": {
+    "identifier": "GBCOHRC000664",
+    "name": "UNIVERSITY OF NOTTINGHAM (THE)",
+    "org": 30929397
+   },
+   "right_register": {
+    "number": "RC000664",
+    "name": "UNIVERSITY OF NOTTINGHAM (THE)",
+    "status": null,
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "R7637830",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOHSC390755>move:GBCOH05989754",
+   "shape": "move",
+   "org": 31534702,
+   "name": "BRIDGING GAPS LTD / TRADING AS BRIDGING GAPS FOSTERING AGENCY",
+   "target": null,
+   "right_register": {
+    "number": "05989754",
+    "name": "BRIDGING GAPS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "SC390755",
+    "name": "KITCHEN MONSTERS LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 0.33,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": false
+  },
+  {
+   "key": "GB/national/GBCOHSC895484>move:GBCOH00895484",
+   "shape": "move",
+   "org": 31562256,
+   "name": "Holyhead Marine Services Ltd",
+   "target": null,
+   "right_register": {
+    "number": "00895484",
+    "name": "HOLYHEAD MARINE SERVICES LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "SC895484",
+    "name": "KULSHI ENTERPRISE LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOHSCO28565>merge:GBCOHSC028565",
+   "shape": "merge",
+   "org": 31577591,
+   "name": "RJ McLeod (Contractors) Ltd",
+   "target": {
+    "identifier": "GBCOHSC028565",
+    "name": "R.J. McLeod (Contractors) Limited",
+    "org": 31538075
+   },
+   "right_register": {
+    "number": "SC028565",
+    "name": "R.J. MCLEOD (CONTRACTORS) LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "SCO28565",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 0.4,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": false
+  },
+  {
+   "key": "GB/national/GBCOHX338EBHC>move:GBCOH08929481",
+   "shape": "move",
+   "org": 31569355,
+   "name": "Sports Coaching Specialists Ltd",
+   "target": null,
+   "right_register": {
+    "number": "08929481",
+    "name": "SPORTS COACHING SPECIALISTS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "X338EBHC",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/NI064646>merge:GBCOHNI064545",
+   "shape": "merge",
+   "org": 17438264,
+   "name": "Adman Civil Projects Ltd",
+   "target": {
+    "identifier": "GBCOHNI064545",
+    "name": "Adman Civil Projects Limited",
+    "org": 31541845
+   },
+   "right_register": {
+    "number": "NI064545",
+    "name": "ADMAN CIVIL PROJECTS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "NI064646",
+    "name": "MILLQUARTER CONTRACTS LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/NI601363>move:NI016363",
+   "shape": "move",
+   "org": 15197157,
+   "name": "Belfast City Airport Ltd",
+   "target": null,
+   "right_register": {
+    "number": "NI016363",
+    "name": "BELFAST CITY AIRPORT LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "NI601363",
+    "name": "F & F CONTRACTS (NI) LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/OC323693>merge:OC323639",
+   "shape": "merge",
+   "org": 15588700,
+   "name": "Hogan Lovells International LLP",
+   "target": {
+    "identifier": "OC323639",
+    "name": "Hogan Lovells International LLP",
+    "org": 23441707
+   },
+   "right_register": {
+    "number": "OC323639",
+    "name": "HOGAN LOVELLS CADWALADER INTERNATIONAL LLP",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "OC323693",
+    "name": "INTO UNIVERSITY OF EXETER LLP",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 0.75,
+   "score_wrong": 0.0,
+   "score_target": 0.75,
+   "supported": true
+  },
+  {
+   "key": "GB/national/OC358843>merge:OC368843",
+   "shape": "merge",
+   "org": 12923410,
+   "name": "Arcadis LLP",
+   "target": {
+    "identifier": "OC368843",
+    "name": "Arcadis LLP",
+    "org": 9000691
+   },
+   "right_register": {
+    "number": "OC368843",
+    "name": "ARCADIS LLP",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "OC358843",
+    "name": "JSL-LPL LLP",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/OC389449>merge:OC389499",
+   "shape": "merge",
+   "org": 9686461,
+   "name": "RSM Risk Assurance Services LLP",
+   "target": {
+    "identifier": "OC389499",
+    "name": "RSM Risk Assurance Services LLP",
+    "org": 15129655
+   },
+   "right_register": {
+    "number": "OC389499",
+    "name": "RSM UK RISK ASSURANCE SERVICES LLP",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "OC389449",
+    "name": "TARGA GLOBAL SALES LLP",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/OC398281>merge:GBCOHOC368281",
+   "shape": "merge",
+   "org": 20098150,
+   "name": "Richard Utting Associates LLP",
+   "target": {
+    "identifier": "GBCOHOC368281",
+    "name": "RICHARD UTTING ASSOCIATES LLP",
+    "org": 31541413
+   },
+   "right_register": {
+    "number": "OC368281",
+    "name": "RICHARD UTTING ASSOCIATES LLP",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "OC398281",
+    "name": "SONTEX LOGISTICS LLP",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/OC419713>move:OC419743",
+   "shape": "move",
+   "org": 15261000,
+   "name": "The Transcription Agency LLP",
+   "target": null,
+   "right_register": {
+    "number": "OC419743",
+    "name": "THE TRANSCRIPTION AGENCY LLP",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "OC419713",
+    "name": "UNITY ENERGY VENTURES LLP",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/OC420287>merge:OC420278",
+   "shape": "merge",
+   "org": 15364769,
+   "name": "Bailey Partnership (Consultants) LLP",
+   "target": {
+    "identifier": "OC420278",
+    "name": "Bailey Partnership LLP",
+    "org": 13045011
+   },
+   "right_register": {
+    "number": "OC420278",
+    "name": "BAILEY PARTNERSHIP (CONSULTANTS) LLP",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "OC420287",
+    "name": "DEV 360 INVESTMENT COMPANY LLP",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 0.67,
+   "supported": true
+  },
+  {
+   "key": "GB/national/RC000191>merge:RC000391",
+   "shape": "merge",
+   "org": 11062541,
+   "name": "The Open University",
+   "target": {
+    "identifier": "RC000391",
+    "name": "The Open University",
+    "org": 10094073
+   },
+   "right_register": {
+    "number": "RC000391",
+    "name": "OPEN UNIVERSITY(THE)",
+    "status": null,
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "RC000191",
+    "name": "FRIEND OF CLERGY SOCIETY",
+    "status": null,
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/RC100797>merge:RC000797",
+   "shape": "merge",
+   "org": 14452756,
+   "name": "University of Manchester",
+   "target": {
+    "identifier": "RC000797",
+    "name": "The University of Manchester",
+    "org": 9003768
+   },
+   "right_register": {
+    "number": "RC000797",
+    "name": "THE UNIVERSITY OF MANCHESTER",
+    "status": null,
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "RC100797",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/SC005117>merge:GBCOH00552847",
+   "shape": "merge",
+   "org": 19819787,
+   "name": "Leonard Cheshire Disability",
+   "target": {
+    "identifier": "GBCOH00552847",
+    "name": "Leonard Cheshire Disability",
+    "org": 30933068
+   },
+   "right_register": {
+    "number": "00552847",
+    "name": "LEONARD CHESHIRE DISABILITY",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "SC005117",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/SC009055>move:SP001686",
+   "shape": "move",
+   "org": 10615775,
+   "name": "Govan Housing Association LImited",
+   "target": null,
+   "right_register": {
+    "number": "SP001686",
+    "name": "GOVAN HOUSING ASSOCIATION LIMITED",
+    "status": null,
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "SC009055",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/SC015263>merge:GBCOHRC000670",
+   "shape": "merge",
+   "org": 23460038,
+   "name": "University of Strathclyde",
+   "target": {
+    "identifier": "GBCOHRC000670",
+    "name": "The University of Strathclyde",
+    "org": 31572764
+   },
+   "right_register": {
+    "number": "RC000670",
+    "name": "UNIVERSITY OF STRATHCLYDE",
+    "status": null,
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "SC015263",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/SC017167>move:RC000449",
+   "shape": "move",
+   "org": 11832278,
+   "name": "Royal Blind Asylum and School (\u201cRoyal Blind\u201d)",
+   "target": null,
+   "right_register": {
+    "number": "RC000449",
+    "name": "ROYAL BLIND",
+    "status": null,
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "SC017167",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 0.5,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/SC019969>move:SC157602",
+   "shape": "move",
+   "org": 11832266,
+   "name": "Rossie Young People's Trust",
+   "target": null,
+   "right_register": {
+    "number": "SC157602",
+    "name": "ROSSIE YOUNG PEOPLE'S TRUST",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "SC019969",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/SC044798>move:CS001441",
+   "shape": "move",
+   "org": 13589215,
+   "name": "Montrose Playhouse Project SCIO",
+   "target": null,
+   "right_register": {
+    "number": "CS001441",
+    "name": "MONTROSE PLAYHOUSE PROJECT SCIO",
+    "status": null,
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "SC044798",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/SC044825>move:CS001453",
+   "shape": "move",
+   "org": 9116109,
+   "name": "LAR Housing Trust",
+   "target": null,
+   "right_register": {
+    "number": "CS001453",
+    "name": "LAR HOUSING TRUST",
+    "status": null,
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "SC044825",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/SC083027>move:SC083026",
+   "shape": "move",
+   "org": 16331788,
+   "name": "The Royal Bank of Scotland",
+   "target": null,
+   "right_register": {
+    "number": "SC083026",
+    "name": "THE ROYAL BANK OF SCOTLAND PUBLIC LIMITED COMPANY",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "SC083027",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 0.8,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/SC134579>merge:GBCOHSC134759",
+   "shape": "merge",
+   "org": 17260229,
+   "name": "Clydeport Operations Ltd",
+   "target": {
+    "identifier": "GBCOHSC134759",
+    "name": "CLYDEPORT OPERATIONS LIMITED",
+    "org": 31537129
+   },
+   "right_register": {
+    "number": "SC134759",
+    "name": "CLYDEPORT OPERATIONS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "SC134579",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/SC186775>merge:SC186755",
+   "shape": "merge",
+   "org": 15079477,
+   "name": "Sports Labs Ltd",
+   "target": {
+    "identifier": "SC186755",
+    "name": "Sports Labs",
+    "org": 23237328
+   },
+   "right_register": {
+    "number": "SC186755",
+    "name": "SPORTS LABS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "SC186775",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/SC351082>move:SC351092",
+   "shape": "move",
+   "org": 22386457,
+   "name": "The Paul Hogarth Company",
+   "target": null,
+   "right_register": {
+    "number": "SC351092",
+    "name": "THE PAUL HOGARTH COMPANY LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "SC351082",
+    "name": "INDIAN SCENE LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/SC530544>move:SC530344",
+   "shape": "move",
+   "org": 12861115,
+   "name": "Ewing Somerville Partnership (Scotland) Ltd",
+   "target": null,
+   "right_register": {
+    "number": "SC530344",
+    "name": "EWING SOMERVILLE PARTNERSHIP (SCOTLAND) LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "SC530544",
+    "name": "KINMOR LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  },
+  {
+   "key": "GB/national/SO204959>move:SO304959",
+   "shape": "move",
+   "org": 17282440,
+   "name": "Genoa Black Ventures LLP",
+   "target": null,
+   "right_register": {
+    "number": "SO304959",
+    "name": "GENOA BLACK VENTURES LLP",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "SO204959",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": null,
+   "supported": true
+  }
+ ],
+ "denied": [
+  {
+   "key": "GB/national/01270685",
+   "shape": "names",
+   "org": 16558214,
+   "name": "Costa Coffee",
+   "target": {
+    "identifier": "GBCOH01270695",
+    "name": "COSTA LIMITED",
+    "org": 31587959
+   },
+   "right_register": {
+    "number": "01270695",
+    "name": "COSTA LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "01270685",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 0.5,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/07720853",
+   "shape": "names",
+   "org": 15500364,
+   "name": "Taskforce Distribution Ltd",
+   "target": {
+    "identifier": "GBCOH07720852",
+    "name": "TASK FORCE DISTRIBUTION LIMITED",
+    "org": 31544513
+   },
+   "right_register": {
+    "number": "07720852",
+    "name": "TASK FORCE DISTRIBUTION LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "07720853",
+    "name": "A&M NORWAY LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 0.25,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": false
+  },
+  {
+   "key": "GB/national/09579337",
+   "shape": "names",
+   "org": 8700311,
+   "name": "Northern Education Associates Ltd",
+   "target": {
+    "identifier": "03964217",
+    "name": "Northern Education",
+    "org": 16035518
+   },
+   "right_register": {
+    "number": "03964217",
+    "name": "NORTHERN EDUCATION ASSOCIATES LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "09579337",
+    "name": "BC ASSOCIATES (NORTHERN) LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.5,
+   "score_target": 0.67,
+   "supported": false
+  },
+  {
+   "key": "GB/national/10059883",
+   "shape": "names",
+   "org": 16211817,
+   "name": "Sherbourne Area Schools Trust",
+   "target": {
+    "identifier": "08130468",
+    "name": "Sherborne Area Schools Trust",
+    "org": 15915050
+   },
+   "right_register": {
+    "number": "08130468",
+    "name": "SHERBORNE AREA SCHOOLS' TRUST",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "10059883",
+    "name": "MIDDLE EAST PARTNERSHIP LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 0.6,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/11022108",
+   "shape": "names",
+   "org": 16654305,
+   "name": "Marie stopes International",
+   "target": {
+    "identifier": "GBCOH01102208",
+    "name": "MSI Reproductive Choices",
+    "org": 30915108
+   },
+   "right_register": {
+    "number": "01102208",
+    "name": "MSI REPRODUCTIVE CHOICES",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "11022108",
+    "name": "SLIMOT LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 0.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": false
+  },
+  {
+   "key": "GB/national/13485692",
+   "shape": "names",
+   "org": 9816603,
+   "name": "Silver Energy Management Solutions Limited",
+   "target": {
+    "identifier": "GBCOH07956897",
+    "name": "ELEVATE EVERYWHERE LTD",
+    "org": 31579911
+   },
+   "right_register": {
+    "number": "07956897",
+    "name": "ELEVATE EVERYWHERE LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "13485692",
+    "name": "SPLENDIDO ESTATES LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 0.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": false
+  },
+  {
+   "key": "GB/national/15308001",
+   "shape": "names",
+   "org": 23708671,
+   "name": "Sony Europe B.V.",
+   "target": {
+    "identifier": "FC035527",
+    "name": "Sony Europe BV",
+    "org": 16866599
+   },
+   "right_register": {
+    "number": "FC035527",
+    "name": "SONY EUROPE B.V.",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "15308001",
+    "name": "T F AUTOGATES AND CAMERAS LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 0.4,
+   "supported": false
+  },
+  {
+   "key": "GB/national/GBCOH00077361",
+   "shape": "names",
+   "org": 31541672,
+   "name": "B Braun",
+   "target": {
+    "identifier": "02296559",
+    "name": "B Braun Medical Ltd",
+    "org": 14863797
+   },
+   "right_register": {
+    "number": "02296559",
+    "name": "B. BRAUN MEDICAL LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "00077361",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 0.67,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH00947962",
+   "shape": "names",
+   "org": 31578000,
+   "name": "CGi (UK) Ltd",
+   "target": {
+    "identifier": "00947968",
+    "name": "CGI IT UK Ltd",
+    "org": 15233718
+   },
+   "right_register": {
+    "number": "00947968",
+    "name": "CGI IT UK LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "00947962",
+    "name": "AVERY DENNISON MATERIALS U.K. LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 0.5,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH06472865",
+   "shape": "names",
+   "org": 31556925,
+   "name": "Symology UK Ltd",
+   "target": {
+    "identifier": "GBCOH01760502",
+    "name": "Symology Limited",
+    "org": 31578940
+   },
+   "right_register": {
+    "number": "01760502",
+    "name": "SYMOLOGY LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "06472865",
+    "name": "SYNOLOGY UK LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOH07393447",
+   "shape": "names",
+   "org": 31578253,
+   "name": "Haringey GP Group Limited",
+   "target": {
+    "identifier": "GBCOH10180486",
+    "name": "North Central London Training Hub",
+    "org": 31542495
+   },
+   "right_register": {
+    "number": "10180486",
+    "name": "HARINGEY GP GROUP LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "07393447",
+    "name": "GO INVOICE LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 1.0,
+   "score_wrong": 0.0,
+   "score_target": 0.0,
+   "supported": false
+  },
+  {
+   "key": "GB/national/GBCOH07393785",
+   "shape": "names",
+   "org": 31544041,
+   "name": "Bluestep Solutions Limited",
+   "target": {
+    "identifier": "GBCOH07392785",
+    "name": "BLUE STEP SOLUTIONS LIMITED",
+    "org": 31544053
+   },
+   "right_register": {
+    "number": "07392785",
+    "name": "BLUE STEP SOLUTIONS LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "07393785",
+    "name": "UNIVEST LLC LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 0.25,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": false
+  },
+  {
+   "key": "GB/national/GBCOH08585569",
+   "shape": "names",
+   "org": 31560491,
+   "name": "Ford Trustford Ltd",
+   "target": {
+    "identifier": "00191596",
+    "name": "Ford Retail Ltd",
+    "org": 19144603
+   },
+   "right_register": {
+    "number": "00191596",
+    "name": "FORD RETAIL LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "08585569",
+    "name": "TRUST FORD LTD",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 0.33,
+   "score_wrong": 0.33,
+   "score_target": 1.0,
+   "supported": false
+  },
+  {
+   "key": "GB/national/GBCOH13071920",
+   "shape": "names",
+   "org": 31552649,
+   "name": "VW Commercial Vehicles UK",
+   "target": {
+    "identifier": "GBCOH00514809",
+    "name": "Volkswagen Group UK Ltd",
+    "org": 31538916
+   },
+   "right_register": {
+    "number": "00514809",
+    "name": "VOLKSWAGEN GROUP UNITED KINGDOM LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "13071920",
+    "name": "VW COMMERCIALS LIMITED",
+    "status": "Dissolved",
+    "http": 200
+   },
+   "score_right": 0.0,
+   "score_wrong": 0.25,
+   "score_target": 0.33,
+   "supported": false
+  },
+  {
+   "key": "GB/national/GBCOHO2O84294",
+   "shape": "names",
+   "org": 31571774,
+   "name": "PSI PRINT MANAGEMENT LIMITED",
+   "target": {
+    "identifier": "02084294",
+    "name": "PSL Print Management Ltd",
+    "org": 12511322
+   },
+   "right_register": {
+    "number": "02084294",
+    "name": "PSL PRINT MANAGEMENT LTD",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "O2O84294",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 0.5,
+   "score_wrong": 0.0,
+   "score_target": 1.0,
+   "supported": true
+  },
+  {
+   "key": "GB/national/GBCOHOO688424",
+   "shape": "names",
+   "org": 31573452,
+   "name": "Atkins Realis",
+   "target": {
+    "identifier": "00688424",
+    "name": "Atkins Limited",
+    "org": 10733656
+   },
+   "right_register": {
+    "number": "00688424",
+    "name": "ATKINSR\u00c9ALIS UK LIMITED",
+    "status": "Active",
+    "http": 200
+   },
+   "wrong_register": {
+    "number": "OO688424",
+    "name": null,
+    "status": null,
+    "http": 404
+   },
+   "score_right": 0.0,
+   "score_wrong": 0.0,
+   "score_target": 0.0,
+   "supported": false
+  }
+ ]
+}

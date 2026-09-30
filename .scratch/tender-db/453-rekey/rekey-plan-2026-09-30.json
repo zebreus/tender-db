@@ -1,0 +1,2390 @@
+{
+ "denied": [
+  {
+   "key": "GB/national/01270685",
+   "name": "Costa Coffee",
+   "new_literal": "GBCOH01270695",
+   "org": 16558214,
+   "right": "01270695",
+   "shape": "names",
+   "target": {
+    "identifier": "GBCOH01270695",
+    "name": "COSTA LIMITED",
+    "org": 31587959
+   },
+   "wrong": "01270685"
+  },
+  {
+   "key": "GB/national/07720853",
+   "name": "Taskforce Distribution Ltd",
+   "new_literal": "GBCOH07720852",
+   "org": 15500364,
+   "right": "07720852",
+   "shape": "names",
+   "target": {
+    "identifier": "GBCOH07720852",
+    "name": "TASK FORCE DISTRIBUTION LIMITED",
+    "org": 31544513
+   },
+   "wrong": "07720853"
+  },
+  {
+   "key": "GB/national/09579337",
+   "name": "Northern Education Associates Ltd",
+   "new_literal": "03964217",
+   "org": 8700311,
+   "right": "03964217",
+   "shape": "names",
+   "target": {
+    "identifier": "03964217",
+    "name": "Northern Education",
+    "org": 16035518
+   },
+   "wrong": "09579337"
+  },
+  {
+   "key": "GB/national/10059883",
+   "name": "Sherbourne Area Schools Trust",
+   "new_literal": "08130468",
+   "org": 16211817,
+   "right": "08130468",
+   "shape": "names",
+   "target": {
+    "identifier": "08130468",
+    "name": "Sherborne Area Schools Trust",
+    "org": 15915050
+   },
+   "wrong": "10059883"
+  },
+  {
+   "key": "GB/national/11022108",
+   "name": "Marie stopes International",
+   "new_literal": "GBCOH01102208",
+   "org": 16654305,
+   "right": "01102208",
+   "shape": "names",
+   "target": {
+    "identifier": "GBCOH01102208",
+    "name": "MSI Reproductive Choices",
+    "org": 30915108
+   },
+   "wrong": "11022108"
+  },
+  {
+   "key": "GB/national/13485692",
+   "name": "Silver Energy Management Solutions Limited",
+   "new_literal": "GBCOH07956897",
+   "org": 9816603,
+   "right": "07956897",
+   "shape": "names",
+   "target": {
+    "identifier": "GBCOH07956897",
+    "name": "ELEVATE EVERYWHERE LTD",
+    "org": 31579911
+   },
+   "wrong": "13485692"
+  },
+  {
+   "key": "GB/national/15308001",
+   "name": "Sony Europe B.V.",
+   "new_literal": "FC035527",
+   "org": 23708671,
+   "right": "FC035527",
+   "shape": "names",
+   "target": {
+    "identifier": "FC035527",
+    "name": "Sony Europe BV",
+    "org": 16866599
+   },
+   "wrong": "15308001"
+  },
+  {
+   "key": "GB/national/GBCOH00077361",
+   "name": "B Braun",
+   "new_literal": "02296559",
+   "org": 31541672,
+   "right": "02296559",
+   "shape": "names",
+   "target": {
+    "identifier": "02296559",
+    "name": "B Braun Medical Ltd",
+    "org": 14863797
+   },
+   "wrong": "GBCOH00077361"
+  },
+  {
+   "key": "GB/national/GBCOH00947962",
+   "name": "CGi (UK) Ltd",
+   "new_literal": "00947968",
+   "org": 31578000,
+   "right": "00947968",
+   "shape": "names",
+   "target": {
+    "identifier": "00947968",
+    "name": "CGI IT UK Ltd",
+    "org": 15233718
+   },
+   "wrong": "GBCOH00947962"
+  },
+  {
+   "key": "GB/national/GBCOH06472865",
+   "name": "Symology UK Ltd",
+   "new_literal": "GBCOH01760502",
+   "org": 31556925,
+   "right": "01760502",
+   "shape": "names",
+   "target": {
+    "identifier": "GBCOH01760502",
+    "name": "Symology Limited",
+    "org": 31578940
+   },
+   "wrong": "GBCOH06472865"
+  },
+  {
+   "key": "GB/national/GBCOH07393447",
+   "name": "Haringey GP Group Limited",
+   "new_literal": "GBCOH10180486",
+   "org": 31578253,
+   "right": "10180486",
+   "shape": "names",
+   "target": {
+    "identifier": "GBCOH10180486",
+    "name": "North Central London Training Hub",
+    "org": 31542495
+   },
+   "wrong": "GBCOH07393447"
+  },
+  {
+   "key": "GB/national/GBCOH07393785",
+   "name": "Bluestep Solutions Limited",
+   "new_literal": "GBCOH07392785",
+   "org": 31544041,
+   "right": "07392785",
+   "shape": "names",
+   "target": {
+    "identifier": "GBCOH07392785",
+    "name": "BLUE STEP SOLUTIONS LIMITED",
+    "org": 31544053
+   },
+   "wrong": "GBCOH07393785"
+  },
+  {
+   "key": "GB/national/GBCOH08585569",
+   "name": "Ford Trustford Ltd",
+   "new_literal": "00191596",
+   "org": 31560491,
+   "right": "00191596",
+   "shape": "names",
+   "target": {
+    "identifier": "00191596",
+    "name": "Ford Retail Ltd",
+    "org": 19144603
+   },
+   "wrong": "GBCOH08585569"
+  },
+  {
+   "key": "GB/national/GBCOH13071920",
+   "name": "VW Commercial Vehicles UK",
+   "new_literal": "GBCOH00514809",
+   "org": 31552649,
+   "right": "00514809",
+   "shape": "names",
+   "target": {
+    "identifier": "GBCOH00514809",
+    "name": "Volkswagen Group UK Ltd",
+    "org": 31538916
+   },
+   "wrong": "GBCOH13071920"
+  },
+  {
+   "key": "GB/national/GBCOHO2O84294",
+   "name": "PSI PRINT MANAGEMENT LIMITED",
+   "new_literal": "02084294",
+   "org": 31571774,
+   "right": "02084294",
+   "shape": "names",
+   "target": {
+    "identifier": "02084294",
+    "name": "PSL Print Management Ltd",
+    "org": 12511322
+   },
+   "wrong": "GBCOHO2O84294"
+  },
+  {
+   "key": "GB/national/GBCOHOO688424",
+   "name": "Atkins Realis",
+   "new_literal": "00688424",
+   "org": 31573452,
+   "right": "00688424",
+   "shape": "names",
+   "target": {
+    "identifier": "00688424",
+    "name": "Atkins Limited",
+    "org": 10733656
+   },
+   "wrong": "GBCOHOO688424"
+  }
+ ],
+ "denied_consortium": 0,
+ "denied_legal_form": 0,
+ "denied_names": 16,
+ "destination_verdict": 0,
+ "gone": 0,
+ "keys": [
+  "GB/national/00190287>move:SC190287",
+  "GB/national/00413907>merge:OC310335",
+  "GB/national/00640611>merge:OC309255",
+  "GB/national/00779813>merge:00770813",
+  "GB/national/01006142>merge:01003142",
+  "GB/national/01254540>merge:02154540",
+  "GB/national/01458628>merge:04158628",
+  "GB/national/02202746>merge:GBCOH02202476",
+  "GB/national/02459755>merge:00227590",
+  "GB/national/02605139>merge:02605138",
+  "GB/national/02791975>merge:03998714",
+  "GB/national/03116801>merge:01125402",
+  "GB/national/03448509>move:03348509",
+  "GB/national/04020746>move:05454595",
+  "GB/national/04534389>move:04531389",
+  "GB/national/04563613>merge:OC305127",
+  "GB/national/04989052>move:01989052",
+  "GB/national/05369180>merge:GBCOH05369108",
+  "GB/national/05622600>merge:06013500",
+  "GB/national/05837803>merge:SC115530",
+  "GB/national/05924741>move:05974241",
+  "GB/national/06278226>move:06278228",
+  "GB/national/06915233>merge:07062722",
+  "GB/national/07074202>merge:OC305127",
+  "GB/national/07288208>move:07288205",
+  "GB/national/07329005>merge:07320590",
+  "GB/national/07923661>merge:GBCOH03157805",
+  "GB/national/07952979>merge:05494158",
+  "GB/national/07964771>merge:07964711",
+  "GB/national/08672590>move:08672390",
+  "GB/national/09044840>move:09044858",
+  "GB/national/09050111>move:00950111",
+  "GB/national/09470688>merge:10486936",
+  "GB/national/09972459>move:09973459",
+  "GB/national/10008330>move:03084746",
+  "GB/national/10013021>move:07262428",
+  "GB/national/10313218>move:03365607",
+  "GB/national/10328878>merge:01328878",
+  "GB/national/10785539>merge:10795539",
+  "GB/national/11070552>merge:GBCOH09119129",
+  "GB/national/11136410>merge:GBCOH06738960",
+  "GB/national/11925889>move:11905889",
+  "GB/national/11952574>move:05515274",
+  "GB/national/12304051>merge:06998952",
+  "GB/national/12501617>move:04338786",
+  "GB/national/13048064>move:03048064",
+  "GB/national/14002237>merge:01402237",
+  "GB/national/15072704>merge:01507274",
+  "GB/national/15517085>merge:03104505",
+  "GB/national/17161281>merge:00227590",
+  "GB/national/20802334>move:02802334",
+  "GB/national/23437608>merge:02343760",
+  "GB/national/GBCOH00113413>merge:GBCOH01134139",
+  "GB/national/GBCOH01283240>merge:02183240",
+  "GB/national/GBCOH01513016>merge:01846493",
+  "GB/national/GBCOH01712722>merge:GBCOH01712772",
+  "GB/national/GBCOH02065138>merge:02605138",
+  "GB/national/GBCOH02408326>merge:GBCOH05355195",
+  "GB/national/GBCOH02509188>move:GBCOH16230009",
+  "GB/national/GBCOH02621537>move:GBCOH02625137",
+  "GB/national/GBCOH02928020>move:GBCOH05120043",
+  "GB/national/GBCOH02976136>merge:GBCOH11875450",
+  "GB/national/GBCOH03262531>merge:GBCOH02362531",
+  "GB/national/GBCOH03293859>move:GBCOH03203859",
+  "GB/national/GBCOH04106190>merge:02360025",
+  "GB/national/GBCOH04173398>move:GBCOH08004712",
+  "GB/national/GBCOH04342597>merge:GBCOH04345297",
+  "GB/national/GBCOH04671490>merge:04671940",
+  "GB/national/GBCOH04801081>merge:GBCOH00980790",
+  "GB/national/GBCOH05191708>merge:GBCOH09151708",
+  "GB/national/GBCOH05363563>move:GBCOH05363653",
+  "GB/national/GBCOH05374534>merge:GBCOH03843793",
+  "GB/national/GBCOH05724865>merge:04557701",
+  "GB/national/GBCOH06363913>merge:03602082",
+  "GB/national/GBCOH06548448>merge:03945920",
+  "GB/national/GBCOH06603033>merge:06603066",
+  "GB/national/GBCOH07105397>merge:GBCOH07105367",
+  "GB/national/GBCOH07218896>merge:SC112019",
+  "GB/national/GBCOH07790798>merge:GBCOH07790198",
+  "GB/national/GBCOH08034563>merge:04793945",
+  "GB/national/GBCOH08248194>move:GBCOH08248195",
+  "GB/national/GBCOH08320405>merge:06228910",
+  "GB/national/GBCOH089491S9>move:GBCOH08949159",
+  "GB/national/GBCOH09318107>move:GBCOH09318197",
+  "GB/national/GBCOH09389042>merge:GBCOH06194579",
+  "GB/national/GBCOH09710751>move:GBCOH03414863",
+  "GB/national/GBCOH0C353214>merge:OC353214",
+  "GB/national/GBCOH0C415849>merge:GBCOHOC415849",
+  "GB/national/GBCOH10039541>move:GBCOH02159182",
+  "GB/national/GBCOH10138652>move:GBCOH10138562",
+  "GB/national/GBCOH10175024>merge:GBCOH10170524",
+  "GB/national/GBCOH10254173>merge:OC326178",
+  "GB/national/GBCOH10417508>merge:GBCOH09142184",
+  "GB/national/GBCOH10449939>move:GBCOH10649939",
+  "GB/national/GBCOH10548502>move:GBCOH03971971",
+  "GB/national/GBCOH10719179>merge:GBCOH01719179",
+  "GB/national/GBCOH11154651>merge:OC395916",
+  "GB/national/GBCOH11386208>move:GBCOH11386206",
+  "GB/national/GBCOH11426180>move:GBCOH14985480",
+  "GB/national/GBCOH11465733>merge:GBCOH11465799",
+  "GB/national/GBCOH11848185>merge:GBCOH11548185",
+  "GB/national/GBCOH11863592>merge:OC375867",
+  "GB/national/GBCOH12158713>move:GBCOH10970876",
+  "GB/national/GBCOH12599988>move:GBCOH12599987",
+  "GB/national/GBCOH12742499>merge:06031628",
+  "GB/national/GBCOH13322491>merge:01332249",
+  "GB/national/GBCOH13460285>merge:GBCOH13460282",
+  "GB/national/GBCOH13534915>move:GBCOH13639415",
+  "GB/national/GBCOH13613243>move:GBCOH02965414",
+  "GB/national/GBCOH13727368>move:GBCOH13727638",
+  "GB/national/GBCOH13759045>merge:GBCOH08486936",
+  "GB/national/GBCOH13879913>merge:GBCOH13879931",
+  "GB/national/GBCOH14052307>merge:GBCOH14052037",
+  "GB/national/GBCOH14205537>merge:GBCOH03094139",
+  "GB/national/GBCOH14704569>merge:03770815",
+  "GB/national/GBCOH14754163>move:GBCOH02471929",
+  "GB/national/GBCOH15269574>merge:GBCOH03851779",
+  "GB/national/GBCOH15901959>merge:GBCOH04099786",
+  "GB/national/GBCOH16764560>move:GBCOH16764650",
+  "GB/national/GBCOHFC031513>merge:GBCOHFC031512",
+  "GB/national/GBCOHNI069696>move:GBCOHNI069636",
+  "GB/national/GBCOHO1089026>merge:GBCOH01089026",
+  "GB/national/GBCOHO3465737>merge:GBCOH03465737",
+  "GB/national/GBCOHO3796191>merge:GBCOH03796191",
+  "GB/national/GBCOHO7006470>merge:GBCOH07006470",
+  "GB/national/GBCOHO8555192>merge:GBCOH08555192",
+  "GB/national/GBCOHO8824873>merge:GBCOH08824873",
+  "GB/national/GBCOHO9623872>merge:GBCOH09623872",
+  "GB/national/GBCOHO9737154>merge:GBCOH09737154",
+  "GB/national/GBCOHOC247576>merge:GBCOHOC427576",
+  "GB/national/GBCOHR7637830>merge:GBCOHRC000664",
+  "GB/national/GBCOHSC390755>move:GBCOH05989754",
+  "GB/national/GBCOHSC895484>move:GBCOH00895484",
+  "GB/national/GBCOHSCO28565>merge:GBCOHSC028565",
+  "GB/national/GBCOHX338EBHC>move:GBCOH08929481",
+  "GB/national/NI064646>merge:GBCOHNI064545",
+  "GB/national/NI601363>move:NI016363",
+  "GB/national/OC323693>merge:OC323639",
+  "GB/national/OC358843>merge:OC368843",
+  "GB/national/OC389449>merge:OC389499",
+  "GB/national/OC398281>merge:GBCOHOC368281",
+  "GB/national/OC419713>move:OC419743",
+  "GB/national/OC420287>merge:OC420278",
+  "GB/national/RC000191>merge:RC000391",
+  "GB/national/RC100797>merge:RC000797",
+  "GB/national/SC005117>merge:GBCOH00552847",
+  "GB/national/SC009055>move:SP001686",
+  "GB/national/SC015263>merge:GBCOHRC000670",
+  "GB/national/SC017167>move:RC000449",
+  "GB/national/SC019969>move:SC157602",
+  "GB/national/SC044798>move:CS001441",
+  "GB/national/SC044825>move:CS001453",
+  "GB/national/SC083027>move:SC083026",
+  "GB/national/SC134579>merge:GBCOHSC134759",
+  "GB/national/SC186775>merge:SC186755",
+  "GB/national/SC351082>move:SC351092",
+  "GB/national/SC530544>move:SC530344",
+  "GB/national/SO204959>move:SO304959"
+ ],
+ "live_plan_merge": 100,
+ "live_plan_move": 58,
+ "merged_this_run": 0,
+ "moved_this_run": 0,
+ "multi_target": 0,
+ "not_high": 6,
+ "pending_move": 0,
+ "plan": [
+  {
+   "key": "GB/national/00190287>move:SC190287",
+   "name": "ScottisPower Energy Retail Ltd",
+   "new_literal": "SC190287",
+   "org": 11999378,
+   "right": "SC190287",
+   "shape": "move",
+   "target": null,
+   "wrong": "00190287"
+  },
+  {
+   "key": "GB/national/00413907>merge:OC310335",
+   "name": "CMS Cameron McKenna Nabarro Olswang LLP",
+   "new_literal": "OC310335",
+   "org": 12266064,
+   "right": "OC310335",
+   "shape": "merge",
+   "target": {
+    "identifier": "OC310335",
+    "name": "CMS Cameron McKenna Nabarro Olswang LLP",
+    "org": 15645445
+   },
+   "wrong": "00413907"
+  },
+  {
+   "key": "GB/national/00640611>merge:OC309255",
+   "name": "Robinson Low Francis LLP",
+   "new_literal": "OC309255",
+   "org": 13170228,
+   "right": "OC309255",
+   "shape": "merge",
+   "target": {
+    "identifier": "OC309255",
+    "name": "Robinson Low Francis LLP (RLF)",
+    "org": 10820462
+   },
+   "wrong": "00640611"
+  },
+  {
+   "key": "GB/national/00779813>merge:00770813",
+   "name": "Personnel Hygiene Services Ltd",
+   "new_literal": "00770813",
+   "org": 14146107,
+   "right": "00770813",
+   "shape": "merge",
+   "target": {
+    "identifier": "00770813",
+    "name": "Personnel Hygiene Services Ltd T/A PHS Group",
+    "org": 15624693
+   },
+   "wrong": "00779813"
+  },
+  {
+   "key": "GB/national/01006142>merge:01003142",
+   "name": "Rolls-Royce Plc",
+   "new_literal": "01003142",
+   "org": 22654958,
+   "right": "01003142",
+   "shape": "merge",
+   "target": {
+    "identifier": "01003142",
+    "name": "Rolls-Royce Plc",
+    "org": 17148236
+   },
+   "wrong": "01006142"
+  },
+  {
+   "key": "GB/national/01254540>merge:02154540",
+   "name": "Post Office Limited",
+   "new_literal": "02154540",
+   "org": 6769661,
+   "right": "02154540",
+   "shape": "merge",
+   "target": {
+    "identifier": "02154540",
+    "name": "Post Office Limited",
+    "org": 2620538
+   },
+   "wrong": "01254540"
+  },
+  {
+   "key": "GB/national/01458628>merge:04158628",
+   "name": "Gasway Services Limited",
+   "new_literal": "04158628",
+   "org": 11516306,
+   "right": "04158628",
+   "shape": "merge",
+   "target": {
+    "identifier": "04158628",
+    "name": "Gasway Services Limited",
+    "org": 8879818
+   },
+   "wrong": "01458628"
+  },
+  {
+   "key": "GB/national/02202746>merge:GBCOH02202476",
+   "name": "Harvey Nash Ltd",
+   "new_literal": "GBCOH02202476",
+   "org": 16469211,
+   "right": "02202476",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH02202476",
+    "name": "Harvey Nash Ltd",
+    "org": 31543644
+   },
+   "wrong": "02202746"
+  },
+  {
+   "key": "GB/national/02459755>merge:00227590",
+   "name": "The Financial Times Ltd",
+   "new_literal": "00227590",
+   "org": 12595898,
+   "right": "00227590",
+   "shape": "merge",
+   "target": {
+    "identifier": "00227590",
+    "name": "Financial Times LTd",
+    "org": 16521928
+   },
+   "wrong": "02459755"
+  },
+  {
+   "key": "GB/national/02605139>merge:02605138",
+   "name": "Savills (UK) Ltd",
+   "new_literal": "02605138",
+   "org": 16150156,
+   "right": "02605138",
+   "shape": "merge",
+   "target": {
+    "identifier": "02605138",
+    "name": "Savills (UK) Ltd",
+    "org": 12206965
+   },
+   "wrong": "02605139"
+  },
+  {
+   "key": "GB/national/02791975>merge:03998714",
+   "name": "Fixatex Limited",
+   "new_literal": "03998714",
+   "org": 9729494,
+   "right": "03998714",
+   "shape": "merge",
+   "target": {
+    "identifier": "03998714",
+    "name": "Fixatex Limited",
+    "org": 18010487
+   },
+   "wrong": "02791975"
+  },
+  {
+   "key": "GB/national/03116801>merge:01125402",
+   "name": "Leco Instruments UK Ltd",
+   "new_literal": "01125402",
+   "org": 14449014,
+   "right": "01125402",
+   "shape": "merge",
+   "target": {
+    "identifier": "01125402",
+    "name": "LECO Instruments (UK) Ltd.",
+    "org": 18668127
+   },
+   "wrong": "03116801"
+  },
+  {
+   "key": "GB/national/03448509>move:03348509",
+   "name": "Rufus Leonard Limited",
+   "new_literal": "03348509",
+   "org": 9894657,
+   "right": "03348509",
+   "shape": "move",
+   "target": null,
+   "wrong": "03448509"
+  },
+  {
+   "key": "GB/national/04020746>move:05454595",
+   "name": "Jute Trading Ltd",
+   "new_literal": "05454595",
+   "org": 14622692,
+   "right": "05454595",
+   "shape": "move",
+   "target": null,
+   "wrong": "04020746"
+  },
+  {
+   "key": "GB/national/04534389>move:04531389",
+   "name": "Bayrose Ltd",
+   "new_literal": "04531389",
+   "org": 12457016,
+   "right": "04531389",
+   "shape": "move",
+   "target": null,
+   "wrong": "04534389"
+  },
+  {
+   "key": "GB/national/04563613>merge:OC305127",
+   "name": "BDO LLP",
+   "new_literal": "OC305127",
+   "org": 16569995,
+   "right": "OC305127",
+   "shape": "merge",
+   "target": {
+    "identifier": "OC305127",
+    "name": "BDO LLP",
+    "org": 12015043
+   },
+   "wrong": "04563613"
+  },
+  {
+   "key": "GB/national/04989052>move:01989052",
+   "name": "Bank View Hire Ltd",
+   "new_literal": "01989052",
+   "org": 17237476,
+   "right": "01989052",
+   "shape": "move",
+   "target": null,
+   "wrong": "04989052"
+  },
+  {
+   "key": "GB/national/05369180>merge:GBCOH05369108",
+   "name": "Firmus Energy (Supply) Limited",
+   "new_literal": "GBCOH05369108",
+   "org": 12336530,
+   "right": "05369108",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH05369108",
+    "name": "FIRMUS ENERGY (SUPPLY) LIMITED",
+    "org": 31547550
+   },
+   "wrong": "05369180"
+  },
+  {
+   "key": "GB/national/05622600>merge:06013500",
+   "name": "Ashdale Engineering UK Ltd",
+   "new_literal": "06013500",
+   "org": 17082775,
+   "right": "06013500",
+   "shape": "merge",
+   "target": {
+    "identifier": "06013500",
+    "name": "Ashdale Engineering UK Ltd",
+    "org": 13272838
+   },
+   "wrong": "05622600"
+  },
+  {
+   "key": "GB/national/05837803>merge:SC115530",
+   "name": "RSK Environment Ltd",
+   "new_literal": "SC115530",
+   "org": 17333545,
+   "right": "SC115530",
+   "shape": "merge",
+   "target": {
+    "identifier": "SC115530",
+    "name": "RSK Environment Ltd",
+    "org": 10888303
+   },
+   "wrong": "05837803"
+  },
+  {
+   "key": "GB/national/05924741>move:05974241",
+   "name": "Blue Mountain Airconditioning Limited",
+   "new_literal": "05974241",
+   "org": 21287757,
+   "right": "05974241",
+   "shape": "move",
+   "target": null,
+   "wrong": "05924741"
+  },
+  {
+   "key": "GB/national/06278226>move:06278228",
+   "name": "C&C Training Ltd",
+   "new_literal": "06278228",
+   "org": 11314816,
+   "right": "06278228",
+   "shape": "move",
+   "target": null,
+   "wrong": "06278226"
+  },
+  {
+   "key": "GB/national/06915233>merge:07062722",
+   "name": "Imagemakers Design & Consultancy Ltd",
+   "new_literal": "07062722",
+   "org": 23642325,
+   "right": "07062722",
+   "shape": "merge",
+   "target": {
+    "identifier": "07062722",
+    "name": "Imagemakers Design & Consultancy Ltd",
+    "org": 23611947
+   },
+   "wrong": "06915233"
+  },
+  {
+   "key": "GB/national/07074202>merge:OC305127",
+   "name": "BDO LLP",
+   "new_literal": "OC305127",
+   "org": 15759810,
+   "right": "OC305127",
+   "shape": "merge",
+   "target": {
+    "identifier": "OC305127",
+    "name": "BDO LLP",
+    "org": 12015043
+   },
+   "wrong": "07074202"
+  },
+  {
+   "key": "GB/national/07288208>move:07288205",
+   "name": "BRAINBOX LTD",
+   "new_literal": "07288205",
+   "org": 22953695,
+   "right": "07288205",
+   "shape": "move",
+   "target": null,
+   "wrong": "07288208"
+  },
+  {
+   "key": "GB/national/07329005>merge:07320590",
+   "name": "City West Support Services Ltd",
+   "new_literal": "07320590",
+   "org": 13778438,
+   "right": "07320590",
+   "shape": "merge",
+   "target": {
+    "identifier": "07320590",
+    "name": "City West Support Services",
+    "org": 8724053
+   },
+   "wrong": "07329005"
+  },
+  {
+   "key": "GB/national/07923661>merge:GBCOH03157805",
+   "name": "Penny Lane Builders Limited",
+   "new_literal": "GBCOH03157805",
+   "org": 12315546,
+   "right": "03157805",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH03157805",
+    "name": "PENNY LANE BUILDERS LIMITED",
+    "org": 30929929
+   },
+   "wrong": "07923661"
+  },
+  {
+   "key": "GB/national/07952979>merge:05494158",
+   "name": "DJS Research Ltd",
+   "new_literal": "05494158",
+   "org": 15688066,
+   "right": "05494158",
+   "shape": "merge",
+   "target": {
+    "identifier": "05494158",
+    "name": "DJS Research Ltd",
+    "org": 9837076
+   },
+   "wrong": "07952979"
+  },
+  {
+   "key": "GB/national/07964771>merge:07964711",
+   "name": "Cell Therapy Catapult Ltd",
+   "new_literal": "07964711",
+   "org": 13819773,
+   "right": "07964711",
+   "shape": "merge",
+   "target": {
+    "identifier": "07964711",
+    "name": "Cell & Gene Therapy Ltd",
+    "org": 9526005
+   },
+   "wrong": "07964771"
+  },
+  {
+   "key": "GB/national/08672590>move:08672390",
+   "name": "Mach Machine Tools Limited",
+   "new_literal": "08672390",
+   "org": 23359213,
+   "right": "08672390",
+   "shape": "move",
+   "target": null,
+   "wrong": "08672590"
+  },
+  {
+   "key": "GB/national/09044840>move:09044858",
+   "name": "Goshen Multiservices Ltd",
+   "new_literal": "09044858",
+   "org": 16340106,
+   "right": "09044858",
+   "shape": "move",
+   "target": null,
+   "wrong": "09044840"
+  },
+  {
+   "key": "GB/national/09050111>move:00950111",
+   "name": "Technical Control Systems Limited",
+   "new_literal": "00950111",
+   "org": 13171870,
+   "right": "00950111",
+   "shape": "move",
+   "target": null,
+   "wrong": "09050111"
+  },
+  {
+   "key": "GB/national/09470688>merge:10486936",
+   "name": "RSK ADAS Ltd",
+   "new_literal": "10486936",
+   "org": 13576189,
+   "right": "10486936",
+   "shape": "merge",
+   "target": {
+    "identifier": "10486936",
+    "name": "RSK ADAS Ltd",
+    "org": 15129706
+   },
+   "wrong": "09470688"
+  },
+  {
+   "key": "GB/national/09972459>move:09973459",
+   "name": "Gas Works (Hull) Limited",
+   "new_literal": "09973459",
+   "org": 12334819,
+   "right": "09973459",
+   "shape": "move",
+   "target": null,
+   "wrong": "09972459"
+  },
+  {
+   "key": "GB/national/10008330>move:03084746",
+   "name": "Landau Ltd",
+   "new_literal": "03084746",
+   "org": 14487707,
+   "right": "03084746",
+   "shape": "move",
+   "target": null,
+   "wrong": "10008330"
+  },
+  {
+   "key": "GB/national/10013021>move:07262428",
+   "name": "Paragon Customer Communications Ltd",
+   "new_literal": "07262428",
+   "org": 14080558,
+   "right": "07262428",
+   "shape": "move",
+   "target": null,
+   "wrong": "10013021"
+  },
+  {
+   "key": "GB/national/10313218>move:03365607",
+   "name": "Mainstream Fleet Ltd T/A C&S Motor Group",
+   "new_literal": "03365607",
+   "org": 12342117,
+   "right": "03365607",
+   "shape": "move",
+   "target": null,
+   "wrong": "10313218"
+  },
+  {
+   "key": "GB/national/10328878>merge:01328878",
+   "name": "Roalco Limited",
+   "new_literal": "01328878",
+   "org": 8997529,
+   "right": "01328878",
+   "shape": "merge",
+   "target": {
+    "identifier": "01328878",
+    "name": "Roalco Limited",
+    "org": 8920433
+   },
+   "wrong": "10328878"
+  },
+  {
+   "key": "GB/national/10785539>merge:10795539",
+   "name": "Border to Coast Pensions Partnership Limited",
+   "new_literal": "10795539",
+   "org": 10127526,
+   "right": "10795539",
+   "shape": "merge",
+   "target": {
+    "identifier": "10795539",
+    "name": "Border to Coast Pensions Partnership Limited",
+    "org": 10403805
+   },
+   "wrong": "10785539"
+  },
+  {
+   "key": "GB/national/11070552>merge:GBCOH09119129",
+   "name": "Real Imaging Ltd",
+   "new_literal": "GBCOH09119129",
+   "org": 16654278,
+   "right": "09119129",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH09119129",
+    "name": "REAL IMAGING LTD",
+    "org": 31588431
+   },
+   "wrong": "11070552"
+  },
+  {
+   "key": "GB/national/11136410>merge:GBCOH06738960",
+   "name": "Rydal Communications Ltd",
+   "new_literal": "GBCOH06738960",
+   "org": 16713545,
+   "right": "06738960",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH06738960",
+    "name": "Rydal Communications limited",
+    "org": 31552828
+   },
+   "wrong": "11136410"
+  },
+  {
+   "key": "GB/national/11925889>move:11905889",
+   "name": "L N J Construction Services Ltd",
+   "new_literal": "11905889",
+   "org": 16440433,
+   "right": "11905889",
+   "shape": "move",
+   "target": null,
+   "wrong": "11925889"
+  },
+  {
+   "key": "GB/national/11952574>move:05515274",
+   "name": "Spirit Medical Ltd",
+   "new_literal": "05515274",
+   "org": 17562020,
+   "right": "05515274",
+   "shape": "move",
+   "target": null,
+   "wrong": "11952574"
+  },
+  {
+   "key": "GB/national/12304051>merge:06998952",
+   "name": "Atamis Ltd",
+   "new_literal": "06998952",
+   "org": 11518254,
+   "right": "06998952",
+   "shape": "merge",
+   "target": {
+    "identifier": "06998952",
+    "name": "Atamis Ltd",
+    "org": 14424653
+   },
+   "wrong": "12304051"
+  },
+  {
+   "key": "GB/national/12501617>move:04338786",
+   "name": "Weedfree on Track Ltd",
+   "new_literal": "04338786",
+   "org": 11678031,
+   "right": "04338786",
+   "shape": "move",
+   "target": null,
+   "wrong": "12501617"
+  },
+  {
+   "key": "GB/national/13048064>move:03048064",
+   "name": "Added Security Technology Ltd",
+   "new_literal": "03048064",
+   "org": 13164827,
+   "right": "03048064",
+   "shape": "move",
+   "target": null,
+   "wrong": "13048064"
+  },
+  {
+   "key": "GB/national/14002237>merge:01402237",
+   "name": "Stena Line Ltd",
+   "new_literal": "01402237",
+   "org": 15242246,
+   "right": "01402237",
+   "shape": "merge",
+   "target": {
+    "identifier": "01402237",
+    "name": "Stena Line Ltd",
+    "org": 14271533
+   },
+   "wrong": "14002237"
+  },
+  {
+   "key": "GB/national/15072704>merge:01507274",
+   "name": "Marsh Ltd",
+   "new_literal": "01507274",
+   "org": 15014969,
+   "right": "01507274",
+   "shape": "merge",
+   "target": {
+    "identifier": "01507274",
+    "name": "Marsh Limited",
+    "org": 16348141
+   },
+   "wrong": "15072704"
+  },
+  {
+   "key": "GB/national/15517085>merge:03104505",
+   "name": "Pharmacosmos UK Ltd",
+   "new_literal": "03104505",
+   "org": 14766047,
+   "right": "03104505",
+   "shape": "merge",
+   "target": {
+    "identifier": "03104505",
+    "name": "Pharmacosmos UK Ltd.",
+    "org": 10338631
+   },
+   "wrong": "15517085"
+  },
+  {
+   "key": "GB/national/17161281>merge:00227590",
+   "name": "The Financial Times Ltd",
+   "new_literal": "00227590",
+   "org": 12595897,
+   "right": "00227590",
+   "shape": "merge",
+   "target": {
+    "identifier": "00227590",
+    "name": "Financial Times LTd",
+    "org": 16521928
+   },
+   "wrong": "17161281"
+  },
+  {
+   "key": "GB/national/20802334>move:02802334",
+   "name": "Cochlear Europe Ltd",
+   "new_literal": "02802334",
+   "org": 10705447,
+   "right": "02802334",
+   "shape": "move",
+   "target": null,
+   "wrong": "20802334"
+  },
+  {
+   "key": "GB/national/23437608>merge:02343760",
+   "name": "Access UK Ltd",
+   "new_literal": "02343760",
+   "org": 15719577,
+   "right": "02343760",
+   "shape": "merge",
+   "target": {
+    "identifier": "02343760",
+    "name": "Access UK Ltd",
+    "org": 23361983
+   },
+   "wrong": "23437608"
+  },
+  {
+   "key": "GB/national/GBCOH00113413>merge:GBCOH01134139",
+   "name": "Aerzen Machines Ltd",
+   "new_literal": "GBCOH01134139",
+   "org": 31588105,
+   "right": "01134139",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH01134139",
+    "name": "AERZEN MACHINES LIMITED",
+    "org": 31572749
+   },
+   "wrong": "GBCOH00113413"
+  },
+  {
+   "key": "GB/national/GBCOH01283240>merge:02183240",
+   "name": "Trustmarque Solutions Ltd",
+   "new_literal": "02183240",
+   "org": 31536053,
+   "right": "02183240",
+   "shape": "merge",
+   "target": {
+    "identifier": "02183240",
+    "name": "Trustmarque Solutions Ltd",
+    "org": 15445620
+   },
+   "wrong": "GBCOH01283240"
+  },
+  {
+   "key": "GB/national/GBCOH01513016>merge:01846493",
+   "name": "AECOM Limited",
+   "new_literal": "01846493",
+   "org": 31568106,
+   "right": "01846493",
+   "shape": "merge",
+   "target": {
+    "identifier": "01846493",
+    "name": "Aecom Ltd",
+    "org": 9520549
+   },
+   "wrong": "GBCOH01513016"
+  },
+  {
+   "key": "GB/national/GBCOH01712722>merge:GBCOH01712772",
+   "name": "Wessex Archaeology Ltd",
+   "new_literal": "GBCOH01712772",
+   "org": 31580430,
+   "right": "01712772",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH01712772",
+    "name": "WESSEX ARCHAEOLOGY LIMITED",
+    "org": 31562206
+   },
+   "wrong": "GBCOH01712722"
+  },
+  {
+   "key": "GB/national/GBCOH02065138>merge:02605138",
+   "name": "Savills UK",
+   "new_literal": "02605138",
+   "org": 31575739,
+   "right": "02605138",
+   "shape": "merge",
+   "target": {
+    "identifier": "02605138",
+    "name": "Savills (UK) Ltd",
+    "org": 12206965
+   },
+   "wrong": "GBCOH02065138"
+  },
+  {
+   "key": "GB/national/GBCOH02408326>merge:GBCOH05355195",
+   "name": "Just Teachers",
+   "new_literal": "GBCOH05355195",
+   "org": 31582949,
+   "right": "05355195",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH05355195",
+    "name": "Just Teachers Limited",
+    "org": 30953736
+   },
+   "wrong": "GBCOH02408326"
+  },
+  {
+   "key": "GB/national/GBCOH02509188>move:GBCOH16230009",
+   "name": "Dugard CNC Limited",
+   "new_literal": "GBCOH16230009",
+   "org": 31563211,
+   "right": "16230009",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH02509188"
+  },
+  {
+   "key": "GB/national/GBCOH02621537>move:GBCOH02625137",
+   "name": "WDR Ltd (CORRECT COMPANY REG 02625137)",
+   "new_literal": "GBCOH02625137",
+   "org": 31555756,
+   "right": "02625137",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH02621537"
+  },
+  {
+   "key": "GB/national/GBCOH02928020>move:GBCOH05120043",
+   "name": "Begbies Traynor Group plc",
+   "new_literal": "GBCOH05120043",
+   "org": 31553642,
+   "right": "05120043",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH02928020"
+  },
+  {
+   "key": "GB/national/GBCOH02976136>merge:GBCOH11875450",
+   "name": "Reed Talent Solutions Ltd",
+   "new_literal": "GBCOH11875450",
+   "org": 31560288,
+   "right": "11875450",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH11875450",
+    "name": "Reed Talent Solutions (Consultancy +)",
+    "org": 30914585
+   },
+   "wrong": "GBCOH02976136"
+  },
+  {
+   "key": "GB/national/GBCOH03262531>merge:GBCOH02362531",
+   "name": "Cotswold Archaeology",
+   "new_literal": "GBCOH02362531",
+   "org": 31580433,
+   "right": "02362531",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH02362531",
+    "name": "COTSWOLD ARCHAEOLOGY LIMITED",
+    "org": 31537076
+   },
+   "wrong": "GBCOH03262531"
+  },
+  {
+   "key": "GB/national/GBCOH03293859>move:GBCOH03203859",
+   "name": "Nominet UK",
+   "new_literal": "GBCOH03203859",
+   "org": 31545321,
+   "right": "03203859",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH03293859"
+  },
+  {
+   "key": "GB/national/GBCOH04106190>merge:02360025",
+   "name": "ECE Architecture Ltd",
+   "new_literal": "02360025",
+   "org": 31566883,
+   "right": "02360025",
+   "shape": "merge",
+   "target": {
+    "identifier": "02360025",
+    "name": "ECE Architecture Limited",
+    "org": 21959551
+   },
+   "wrong": "GBCOH04106190"
+  },
+  {
+   "key": "GB/national/GBCOH04173398>move:GBCOH08004712",
+   "name": "Amthal Fire & Security Ltd",
+   "new_literal": "GBCOH08004712",
+   "org": 30918036,
+   "right": "08004712",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH04173398"
+  },
+  {
+   "key": "GB/national/GBCOH04342597>merge:GBCOH04345297",
+   "name": "Castle Owen Construction and Property Consultants Ltd",
+   "new_literal": "GBCOH04345297",
+   "org": 31537939,
+   "right": "04345297",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH04345297",
+    "name": "CASTLE OWEN CONSTRUCTION AND PROPERTY CONSULTANTS LIMITED",
+    "org": 30917533
+   },
+   "wrong": "GBCOH04342597"
+  },
+  {
+   "key": "GB/national/GBCOH04671490>merge:04671940",
+   "name": "EVISA SOLUTIONS LIMITED T/A MALIKSHAW",
+   "new_literal": "04671940",
+   "org": 31575200,
+   "right": "04671940",
+   "shape": "merge",
+   "target": {
+    "identifier": "04671940",
+    "name": "Evisa Solutions Ltd",
+    "org": 16170915
+   },
+   "wrong": "GBCOH04671490"
+  },
+  {
+   "key": "GB/national/GBCOH04801081>merge:GBCOH00980790",
+   "name": "CO-OP WHOLESALE LIMITED",
+   "new_literal": "GBCOH00980790",
+   "org": 31559675,
+   "right": "00980790",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH00980790",
+    "name": "CO-OP WHOLESALE LIMITED",
+    "org": 31559480
+   },
+   "wrong": "GBCOH04801081"
+  },
+  {
+   "key": "GB/national/GBCOH05191708>merge:GBCOH09151708",
+   "name": "Moon Rise 24 HR Recruitment",
+   "new_literal": "GBCOH09151708",
+   "org": 30929451,
+   "right": "09151708",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH09151708",
+    "name": "MOON RISE 24 HR RECRUITMENT LTD",
+    "org": 31538931
+   },
+   "wrong": "GBCOH05191708"
+  },
+  {
+   "key": "GB/national/GBCOH05363563>move:GBCOH05363653",
+   "name": "On Track Education Services Limited",
+   "new_literal": "GBCOH05363653",
+   "org": 31554021,
+   "right": "05363653",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH05363563"
+  },
+  {
+   "key": "GB/national/GBCOH05374534>merge:GBCOH03843793",
+   "name": "Specialist Development Contracts Ltd",
+   "new_literal": "GBCOH03843793",
+   "org": 31553992,
+   "right": "03843793",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH03843793",
+    "name": "SPECIALIST DEVELOPMENT CONTRACTS LTD",
+    "org": 31571155
+   },
+   "wrong": "GBCOH05374534"
+  },
+  {
+   "key": "GB/national/GBCOH05724865>merge:04557701",
+   "name": "Cross Keys Homes",
+   "new_literal": "04557701",
+   "org": 31572377,
+   "right": "04557701",
+   "shape": "merge",
+   "target": {
+    "identifier": "04557701",
+    "name": "Cross Keys Homes Limited",
+    "org": 15692685
+   },
+   "wrong": "GBCOH05724865"
+  },
+  {
+   "key": "GB/national/GBCOH06363913>merge:03602082",
+   "name": "Allwag Promotions Limited",
+   "new_literal": "03602082",
+   "org": 31552056,
+   "right": "03602082",
+   "shape": "merge",
+   "target": {
+    "identifier": "03602082",
+    "name": "Allwag Promotions Ltd",
+    "org": 13640179
+   },
+   "wrong": "GBCOH06363913"
+  },
+  {
+   "key": "GB/national/GBCOH06548448>merge:03945920",
+   "name": "Pennington Choices Ltd",
+   "new_literal": "03945920",
+   "org": 31577849,
+   "right": "03945920",
+   "shape": "merge",
+   "target": {
+    "identifier": "03945920",
+    "name": "Pennington Choices Limited",
+    "org": 15743686
+   },
+   "wrong": "GBCOH06548448"
+  },
+  {
+   "key": "GB/national/GBCOH06603033>merge:06603066",
+   "name": "Preventx Limited",
+   "new_literal": "06603066",
+   "org": 31566979,
+   "right": "06603066",
+   "shape": "merge",
+   "target": {
+    "identifier": "06603066",
+    "name": "Preventx Limited",
+    "org": 10556177
+   },
+   "wrong": "GBCOH06603033"
+  },
+  {
+   "key": "GB/national/GBCOH07105397>merge:GBCOH07105367",
+   "name": "Misco Technologies Limited",
+   "new_literal": "GBCOH07105367",
+   "org": 30914135,
+   "right": "07105367",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH07105367",
+    "name": "MISCO TECHNOLOGIES LIMITED",
+    "org": 30917818
+   },
+   "wrong": "GBCOH07105397"
+  },
+  {
+   "key": "GB/national/GBCOH07218896>merge:SC112019",
+   "name": "MTI Technology Limited",
+   "new_literal": "SC112019",
+   "org": 31561170,
+   "right": "SC112019",
+   "shape": "merge",
+   "target": {
+    "identifier": "SC112019",
+    "name": "MTI Technology Ltd",
+    "org": 13270714
+   },
+   "wrong": "GBCOH07218896"
+  },
+  {
+   "key": "GB/national/GBCOH07790798>merge:GBCOH07790198",
+   "name": "Arbor Education Partners Limited",
+   "new_literal": "GBCOH07790198",
+   "org": 31571891,
+   "right": "07790198",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH07790198",
+    "name": "ARBOR EDUCATION PARTNERS LIMITED",
+    "org": 31556272
+   },
+   "wrong": "GBCOH07790798"
+  },
+  {
+   "key": "GB/national/GBCOH08034563>merge:04793945",
+   "name": "ICS Operations Limited trading as Xyla",
+   "new_literal": "04793945",
+   "org": 31575892,
+   "right": "04793945",
+   "shape": "merge",
+   "target": {
+    "identifier": "04793945",
+    "name": "ICS Operations Ltd",
+    "org": 13569973
+   },
+   "wrong": "GBCOH08034563"
+  },
+  {
+   "key": "GB/national/GBCOH08248194>move:GBCOH08248195",
+   "name": "ALLIANCE FOR COHESION AND RACIAL EQUALITYLIMITED",
+   "new_literal": "GBCOH08248195",
+   "org": 31540147,
+   "right": "08248195",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH08248194"
+  },
+  {
+   "key": "GB/national/GBCOH08320405>merge:06228910",
+   "name": "Mediscan Diagnostic Services",
+   "new_literal": "06228910",
+   "org": 31555064,
+   "right": "06228910",
+   "shape": "merge",
+   "target": {
+    "identifier": "06228910",
+    "name": "Mediscan Diagnostic Services Limited",
+    "org": 11686151
+   },
+   "wrong": "GBCOH08320405"
+  },
+  {
+   "key": "GB/national/GBCOH089491S9>move:GBCOH08949159",
+   "name": "MONTEL CIVIL ENGINEERING LIMITED",
+   "new_literal": "GBCOH08949159",
+   "org": 31565559,
+   "right": "08949159",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH089491S9"
+  },
+  {
+   "key": "GB/national/GBCOH09318107>move:GBCOH09318197",
+   "name": "Northern Community Pathways Ltd",
+   "new_literal": "GBCOH09318197",
+   "org": 30917397,
+   "right": "09318197",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH09318107"
+  },
+  {
+   "key": "GB/national/GBCOH09389042>merge:GBCOH06194579",
+   "name": "ECMS Services Limited",
+   "new_literal": "GBCOH06194579",
+   "org": 30976571,
+   "right": "06194579",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH06194579",
+    "name": "ECMS SERVICES LTD",
+    "org": 31556461
+   },
+   "wrong": "GBCOH09389042"
+  },
+  {
+   "key": "GB/national/GBCOH09710751>move:GBCOH03414863",
+   "name": "Oculus Building Consultancy",
+   "new_literal": "GBCOH03414863",
+   "org": 31545204,
+   "right": "03414863",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH09710751"
+  },
+  {
+   "key": "GB/national/GBCOH0C353214>merge:OC353214",
+   "name": "Kennedys Law LLP",
+   "new_literal": "OC353214",
+   "org": 31557561,
+   "right": "OC353214",
+   "shape": "merge",
+   "target": {
+    "identifier": "OC353214",
+    "name": "Kennedys Law LLP",
+    "org": 11722584
+   },
+   "wrong": "GBCOH0C353214"
+  },
+  {
+   "key": "GB/national/GBCOH0C415849>merge:GBCOHOC415849",
+   "name": "Medac Pharma LLP",
+   "new_literal": "GBCOHOC415849",
+   "org": 31541682,
+   "right": "OC415849",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOHOC415849",
+    "name": "Medac Pharma LLP",
+    "org": 31579812
+   },
+   "wrong": "GBCOH0C415849"
+  },
+  {
+   "key": "GB/national/GBCOH10039541>move:GBCOH02159182",
+   "name": "UCC Coffee UK Ltd",
+   "new_literal": "GBCOH02159182",
+   "org": 31540066,
+   "right": "02159182",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH10039541"
+  },
+  {
+   "key": "GB/national/GBCOH10138652>move:GBCOH10138562",
+   "name": "Southend Care Ltd",
+   "new_literal": "GBCOH10138562",
+   "org": 31560066,
+   "right": "10138562",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH10138652"
+  },
+  {
+   "key": "GB/national/GBCOH10175024>merge:GBCOH10170524",
+   "name": "ADVANCE MEDICAL TRANSPORT SERVICES LIMITED",
+   "new_literal": "GBCOH10170524",
+   "org": 31536381,
+   "right": "10170524",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH10170524",
+    "name": "ADVANCE MEDICAL TRANSPORT SERVICES LIMITED",
+    "org": 31536380
+   },
+   "wrong": "GBCOH10175024"
+  },
+  {
+   "key": "GB/national/GBCOH10254173>merge:OC326178",
+   "name": "Pellings LLP",
+   "new_literal": "OC326178",
+   "org": 31583489,
+   "right": "OC326178",
+   "shape": "merge",
+   "target": {
+    "identifier": "OC326178",
+    "name": "Pellings LLP",
+    "org": 10842347
+   },
+   "wrong": "GBCOH10254173"
+  },
+  {
+   "key": "GB/national/GBCOH10417508>merge:GBCOH09142184",
+   "name": "KBH Building Services Ltd",
+   "new_literal": "GBCOH09142184",
+   "org": 31588474,
+   "right": "09142184",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH09142184",
+    "name": "KBH BUILDING SERVICES LIMITED",
+    "org": 31541737
+   },
+   "wrong": "GBCOH10417508"
+  },
+  {
+   "key": "GB/national/GBCOH10449939>move:GBCOH10649939",
+   "name": "Smart Trax ltd",
+   "new_literal": "GBCOH10649939",
+   "org": 31536916,
+   "right": "10649939",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH10449939"
+  },
+  {
+   "key": "GB/national/GBCOH10548502>move:GBCOH03971971",
+   "name": "Kromatek Limited",
+   "new_literal": "GBCOH03971971",
+   "org": 31574335,
+   "right": "03971971",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH10548502"
+  },
+  {
+   "key": "GB/national/GBCOH10719179>merge:GBCOH01719179",
+   "name": "J Freeley Ltd",
+   "new_literal": "GBCOH01719179",
+   "org": 31558167,
+   "right": "01719179",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH01719179",
+    "name": "J. FREELEY LIMITED",
+    "org": 31542246
+   },
+   "wrong": "GBCOH10719179"
+  },
+  {
+   "key": "GB/national/GBCOH11154651>merge:OC395916",
+   "name": "Pollard Thomas Edwards",
+   "new_literal": "OC395916",
+   "org": 31583490,
+   "right": "OC395916",
+   "shape": "merge",
+   "target": {
+    "identifier": "OC395916",
+    "name": "Pollard Thomas Edwards LLP",
+    "org": 15715147
+   },
+   "wrong": "GBCOH11154651"
+  },
+  {
+   "key": "GB/national/GBCOH11386208>move:GBCOH11386206",
+   "name": "LIMMS CARE SERVICES LTD",
+   "new_literal": "GBCOH11386206",
+   "org": 31562935,
+   "right": "11386206",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH11386208"
+  },
+  {
+   "key": "GB/national/GBCOH11426180>move:GBCOH14985480",
+   "name": "Infinite Care Network Ltd",
+   "new_literal": "GBCOH14985480",
+   "org": 31557218,
+   "right": "14985480",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH11426180"
+  },
+  {
+   "key": "GB/national/GBCOH11465733>merge:GBCOH11465799",
+   "name": "International Healthcare Recruitment LTD",
+   "new_literal": "GBCOH11465799",
+   "org": 31537183,
+   "right": "11465799",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH11465799",
+    "name": "International Healthcare Recruitment Ltd",
+    "org": 31537184
+   },
+   "wrong": "GBCOH11465733"
+  },
+  {
+   "key": "GB/national/GBCOH11848185>merge:GBCOH11548185",
+   "name": "Greyfriars Project Management Ltd",
+   "new_literal": "GBCOH11548185",
+   "org": 31577435,
+   "right": "11548185",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH11548185",
+    "name": "GREYFRIARS PROJECT MANAGEMENT LIMITED",
+    "org": 30973178
+   },
+   "wrong": "GBCOH11848185"
+  },
+  {
+   "key": "GB/national/GBCOH11863592>merge:OC375867",
+   "name": "Weston Williamson + Partners LLP",
+   "new_literal": "OC375867",
+   "org": 31583492,
+   "right": "OC375867",
+   "shape": "merge",
+   "target": {
+    "identifier": "OC375867",
+    "name": "Weston Williamson + Partners",
+    "org": 15242474
+   },
+   "wrong": "GBCOH11863592"
+  },
+  {
+   "key": "GB/national/GBCOH12158713>move:GBCOH10970876",
+   "name": "Squared Architects Ltd",
+   "new_literal": "GBCOH10970876",
+   "org": 31583493,
+   "right": "10970876",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH12158713"
+  },
+  {
+   "key": "GB/national/GBCOH12599988>move:GBCOH12599987",
+   "name": "Cuckoo Care Ltd",
+   "new_literal": "GBCOH12599987",
+   "org": 30914951,
+   "right": "12599987",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH12599988"
+  },
+  {
+   "key": "GB/national/GBCOH12742499>merge:06031628",
+   "name": "Aspire Technology Solutions Ltd",
+   "new_literal": "06031628",
+   "org": 31570462,
+   "right": "06031628",
+   "shape": "merge",
+   "target": {
+    "identifier": "06031628",
+    "name": "Aspire Technology Solutions Ltd",
+    "org": 12471268
+   },
+   "wrong": "GBCOH12742499"
+  },
+  {
+   "key": "GB/national/GBCOH13322491>merge:01332249",
+   "name": "Tunstall Healthcare (UK) Limited",
+   "new_literal": "01332249",
+   "org": 31550460,
+   "right": "01332249",
+   "shape": "merge",
+   "target": {
+    "identifier": "01332249",
+    "name": "Tunstall Healthcare (UK) Ltd",
+    "org": 16402383
+   },
+   "wrong": "GBCOH13322491"
+  },
+  {
+   "key": "GB/national/GBCOH13460285>merge:GBCOH13460282",
+   "name": "Firntec Ltd",
+   "new_literal": "GBCOH13460282",
+   "org": 31549928,
+   "right": "13460282",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH13460282",
+    "name": "Firntec Ltd",
+    "org": 30967546
+   },
+   "wrong": "GBCOH13460285"
+  },
+  {
+   "key": "GB/national/GBCOH13534915>move:GBCOH13639415",
+   "name": "Aleyah House",
+   "new_literal": "GBCOH13639415",
+   "org": 30917401,
+   "right": "13639415",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH13534915"
+  },
+  {
+   "key": "GB/national/GBCOH13613243>move:GBCOH02965414",
+   "name": "SimpsonHaugh Architects Limited",
+   "new_literal": "GBCOH02965414",
+   "org": 31583495,
+   "right": "02965414",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH13613243"
+  },
+  {
+   "key": "GB/national/GBCOH13727368>move:GBCOH13727638",
+   "name": "Pineapple Recruitment Ltd",
+   "new_literal": "GBCOH13727638",
+   "org": 31589533,
+   "right": "13727638",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH13727368"
+  },
+  {
+   "key": "GB/national/GBCOH13759045>merge:GBCOH08486936",
+   "name": "GP Primary Choice Ltd",
+   "new_literal": "GBCOH08486936",
+   "org": 31587688,
+   "right": "08486936",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH08486936",
+    "name": "GP Primary Choice Ltd",
+    "org": 31566551
+   },
+   "wrong": "GBCOH13759045"
+  },
+  {
+   "key": "GB/national/GBCOH13879913>merge:GBCOH13879931",
+   "name": "ANGEL CARE STAFFING LTD T/A WeCare Angels",
+   "new_literal": "GBCOH13879931",
+   "org": 31550640,
+   "right": "13879931",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH13879931",
+    "name": "Angel Care Staffing Ltd",
+    "org": 31534665
+   },
+   "wrong": "GBCOH13879913"
+  },
+  {
+   "key": "GB/national/GBCOH14052307>merge:GBCOH14052037",
+   "name": "Elite Care Professionals Limited",
+   "new_literal": "GBCOH14052037",
+   "org": 31560597,
+   "right": "14052037",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH14052037",
+    "name": "Elite Care Professionals Limited",
+    "org": 31560587
+   },
+   "wrong": "GBCOH14052307"
+  },
+  {
+   "key": "GB/national/GBCOH14205537>merge:GBCOH03094139",
+   "name": "McBains Limited",
+   "new_literal": "GBCOH03094139",
+   "org": 31583497,
+   "right": "03094139",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH03094139",
+    "name": "MCBAINS LTD",
+    "org": 30976206
+   },
+   "wrong": "GBCOH14205537"
+  },
+  {
+   "key": "GB/national/GBCOH14704569>merge:03770815",
+   "name": "Perk UK Limited (Click Travel)",
+   "new_literal": "03770815",
+   "org": 31570725,
+   "right": "03770815",
+   "shape": "merge",
+   "target": {
+    "identifier": "03770815",
+    "name": "Click Travel Limited",
+    "org": 12023084
+   },
+   "wrong": "GBCOH14704569"
+  },
+  {
+   "key": "GB/national/GBCOH14754163>move:GBCOH02471929",
+   "name": "Nugent Vallis Brierley Limited",
+   "new_literal": "GBCOH02471929",
+   "org": 31583499,
+   "right": "02471929",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH14754163"
+  },
+  {
+   "key": "GB/national/GBCOH15269574>merge:GBCOH03851779",
+   "name": "BWS SECURITY SYSTEMS LTD",
+   "new_literal": "GBCOH03851779",
+   "org": 31559982,
+   "right": "03851779",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH03851779",
+    "name": "BWS SECURITY SYSTEMS LIMITED",
+    "org": 31550190
+   },
+   "wrong": "GBCOH15269574"
+  },
+  {
+   "key": "GB/national/GBCOH15901959>merge:GBCOH04099786",
+   "name": "Keystage Teacher Supply Limited",
+   "new_literal": "GBCOH04099786",
+   "org": 31583057,
+   "right": "04099786",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH04099786",
+    "name": "KEYSTAGE TEACHER SUPPLY LIMITED",
+    "org": 30953732
+   },
+   "wrong": "GBCOH15901959"
+  },
+  {
+   "key": "GB/national/GBCOH16764560>move:GBCOH16764650",
+   "name": "Sincerity Housing Ltd",
+   "new_literal": "GBCOH16764650",
+   "org": 31556782,
+   "right": "16764650",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOH16764560"
+  },
+  {
+   "key": "GB/national/GBCOHFC031513>merge:GBCOHFC031512",
+   "name": "Seaham Care Limited",
+   "new_literal": "GBCOHFC031512",
+   "org": 31538543,
+   "right": "FC031512",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOHFC031512",
+    "name": "Seaham Care Limited",
+    "org": 31538542
+   },
+   "wrong": "GBCOHFC031513"
+  },
+  {
+   "key": "GB/national/GBCOHNI069696>move:GBCOHNI069636",
+   "name": "Stephen w moore Ltd",
+   "new_literal": "GBCOHNI069636",
+   "org": 31570583,
+   "right": "NI069636",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOHNI069696"
+  },
+  {
+   "key": "GB/national/GBCOHO1089026>merge:GBCOH01089026",
+   "name": "St Annes",
+   "new_literal": "GBCOH01089026",
+   "org": 31554631,
+   "right": "01089026",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH01089026",
+    "name": "ST ANNE'S COMMUNITY SERVICES",
+    "org": 31545503
+   },
+   "wrong": "GBCOHO1089026"
+  },
+  {
+   "key": "GB/national/GBCOHO3465737>merge:GBCOH03465737",
+   "name": "Compass Care Homes",
+   "new_literal": "GBCOH03465737",
+   "org": 31574618,
+   "right": "03465737",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH03465737",
+    "name": "Compass Care Homes Ltd",
+    "org": 31538050
+   },
+   "wrong": "GBCOHO3465737"
+  },
+  {
+   "key": "GB/national/GBCOHO3796191>merge:GBCOH03796191",
+   "name": "Choices",
+   "new_literal": "GBCOH03796191",
+   "org": 31554632,
+   "right": "03796191",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH03796191",
+    "name": "CHOICES HOMECARE (YORKSHIRE) LIMITED",
+    "org": 31574582
+   },
+   "wrong": "GBCOHO3796191"
+  },
+  {
+   "key": "GB/national/GBCOHO7006470>merge:GBCOH07006470",
+   "name": "Assist Homecare",
+   "new_literal": "GBCOH07006470",
+   "org": 31554633,
+   "right": "07006470",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH07006470",
+    "name": "Assist Homecare",
+    "org": 30926681
+   },
+   "wrong": "GBCOHO7006470"
+  },
+  {
+   "key": "GB/national/GBCOHO8555192>merge:GBCOH08555192",
+   "name": "Our TLC",
+   "new_literal": "GBCOH08555192",
+   "org": 31554634,
+   "right": "08555192",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH08555192",
+    "name": "Our TLC Limited",
+    "org": 30926682
+   },
+   "wrong": "GBCOHO8555192"
+  },
+  {
+   "key": "GB/national/GBCOHO8824873>merge:GBCOH08824873",
+   "name": "Solutions In Service",
+   "new_literal": "GBCOH08824873",
+   "org": 31543340,
+   "right": "08824873",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH08824873",
+    "name": "Solutions in Service Ltd (SIS)",
+    "org": 31598319
+   },
+   "wrong": "GBCOHO8824873"
+  },
+  {
+   "key": "GB/national/GBCOHO9623872>merge:GBCOH09623872",
+   "name": "Connections Care",
+   "new_literal": "GBCOH09623872",
+   "org": 31574619,
+   "right": "09623872",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH09623872",
+    "name": "Connections Care Ltd",
+    "org": 31552660
+   },
+   "wrong": "GBCOHO9623872"
+  },
+  {
+   "key": "GB/national/GBCOHO9737154>merge:GBCOH09737154",
+   "name": "Care Angels (Batley)",
+   "new_literal": "GBCOH09737154",
+   "org": 31554635,
+   "right": "09737154",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH09737154",
+    "name": "Care Angels Batley Ltd",
+    "org": 30926683
+   },
+   "wrong": "GBCOHO9737154"
+  },
+  {
+   "key": "GB/national/GBCOHOC247576>merge:GBCOHOC427576",
+   "name": "Cheshire Orthopaedic Group LLP",
+   "new_literal": "GBCOHOC427576",
+   "org": 31567217,
+   "right": "OC427576",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOHOC427576",
+    "name": "Cheshire Orthopaedic Group LLP",
+    "org": 30915873
+   },
+   "wrong": "GBCOHOC247576"
+  },
+  {
+   "key": "GB/national/GBCOHR7637830>merge:GBCOHRC000664",
+   "name": "University of Nottingham",
+   "new_literal": "GBCOHRC000664",
+   "org": 31538331,
+   "right": "RC000664",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOHRC000664",
+    "name": "UNIVERSITY OF NOTTINGHAM (THE)",
+    "org": 30929397
+   },
+   "wrong": "GBCOHR7637830"
+  },
+  {
+   "key": "GB/national/GBCOHSC390755>move:GBCOH05989754",
+   "name": "BRIDGING GAPS LTD / TRADING AS BRIDGING GAPS FOSTERING AGENCY",
+   "new_literal": "GBCOH05989754",
+   "org": 31534702,
+   "right": "05989754",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOHSC390755"
+  },
+  {
+   "key": "GB/national/GBCOHSC895484>move:GBCOH00895484",
+   "name": "Holyhead Marine Services Ltd",
+   "new_literal": "GBCOH00895484",
+   "org": 31562256,
+   "right": "00895484",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOHSC895484"
+  },
+  {
+   "key": "GB/national/GBCOHSCO28565>merge:GBCOHSC028565",
+   "name": "RJ McLeod (Contractors) Ltd",
+   "new_literal": "GBCOHSC028565",
+   "org": 31577591,
+   "right": "SC028565",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOHSC028565",
+    "name": "R.J. McLeod (Contractors) Limited",
+    "org": 31538075
+   },
+   "wrong": "GBCOHSCO28565"
+  },
+  {
+   "key": "GB/national/GBCOHX338EBHC>move:GBCOH08929481",
+   "name": "Sports Coaching Specialists Ltd",
+   "new_literal": "GBCOH08929481",
+   "org": 31569355,
+   "right": "08929481",
+   "shape": "move",
+   "target": null,
+   "wrong": "GBCOHX338EBHC"
+  },
+  {
+   "key": "GB/national/NI064646>merge:GBCOHNI064545",
+   "name": "Adman Civil Projects Ltd",
+   "new_literal": "GBCOHNI064545",
+   "org": 17438264,
+   "right": "NI064545",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOHNI064545",
+    "name": "Adman Civil Projects Limited",
+    "org": 31541845
+   },
+   "wrong": "NI064646"
+  },
+  {
+   "key": "GB/national/NI601363>move:NI016363",
+   "name": "Belfast City Airport Ltd",
+   "new_literal": "NI016363",
+   "org": 15197157,
+   "right": "NI016363",
+   "shape": "move",
+   "target": null,
+   "wrong": "NI601363"
+  },
+  {
+   "key": "GB/national/OC323693>merge:OC323639",
+   "name": "Hogan Lovells International LLP",
+   "new_literal": "OC323639",
+   "org": 15588700,
+   "right": "OC323639",
+   "shape": "merge",
+   "target": {
+    "identifier": "OC323639",
+    "name": "Hogan Lovells International LLP",
+    "org": 23441707
+   },
+   "wrong": "OC323693"
+  },
+  {
+   "key": "GB/national/OC358843>merge:OC368843",
+   "name": "Arcadis LLP",
+   "new_literal": "OC368843",
+   "org": 12923410,
+   "right": "OC368843",
+   "shape": "merge",
+   "target": {
+    "identifier": "OC368843",
+    "name": "Arcadis LLP",
+    "org": 9000691
+   },
+   "wrong": "OC358843"
+  },
+  {
+   "key": "GB/national/OC389449>merge:OC389499",
+   "name": "RSM Risk Assurance Services LLP",
+   "new_literal": "OC389499",
+   "org": 9686461,
+   "right": "OC389499",
+   "shape": "merge",
+   "target": {
+    "identifier": "OC389499",
+    "name": "RSM Risk Assurance Services LLP",
+    "org": 15129655
+   },
+   "wrong": "OC389449"
+  },
+  {
+   "key": "GB/national/OC398281>merge:GBCOHOC368281",
+   "name": "Richard Utting Associates LLP",
+   "new_literal": "GBCOHOC368281",
+   "org": 20098150,
+   "right": "OC368281",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOHOC368281",
+    "name": "RICHARD UTTING ASSOCIATES LLP",
+    "org": 31541413
+   },
+   "wrong": "OC398281"
+  },
+  {
+   "key": "GB/national/OC419713>move:OC419743",
+   "name": "The Transcription Agency LLP",
+   "new_literal": "OC419743",
+   "org": 15261000,
+   "right": "OC419743",
+   "shape": "move",
+   "target": null,
+   "wrong": "OC419713"
+  },
+  {
+   "key": "GB/national/OC420287>merge:OC420278",
+   "name": "Bailey Partnership (Consultants) LLP",
+   "new_literal": "OC420278",
+   "org": 15364769,
+   "right": "OC420278",
+   "shape": "merge",
+   "target": {
+    "identifier": "OC420278",
+    "name": "Bailey Partnership LLP",
+    "org": 13045011
+   },
+   "wrong": "OC420287"
+  },
+  {
+   "key": "GB/national/RC000191>merge:RC000391",
+   "name": "The Open University",
+   "new_literal": "RC000391",
+   "org": 11062541,
+   "right": "RC000391",
+   "shape": "merge",
+   "target": {
+    "identifier": "RC000391",
+    "name": "The Open University",
+    "org": 10094073
+   },
+   "wrong": "RC000191"
+  },
+  {
+   "key": "GB/national/RC100797>merge:RC000797",
+   "name": "University of Manchester",
+   "new_literal": "RC000797",
+   "org": 14452756,
+   "right": "RC000797",
+   "shape": "merge",
+   "target": {
+    "identifier": "RC000797",
+    "name": "The University of Manchester",
+    "org": 9003768
+   },
+   "wrong": "RC100797"
+  },
+  {
+   "key": "GB/national/SC005117>merge:GBCOH00552847",
+   "name": "Leonard Cheshire Disability",
+   "new_literal": "GBCOH00552847",
+   "org": 19819787,
+   "right": "00552847",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH00552847",
+    "name": "Leonard Cheshire Disability",
+    "org": 30933068
+   },
+   "wrong": "SC005117"
+  },
+  {
+   "key": "GB/national/SC009055>move:SP001686",
+   "name": "Govan Housing Association LImited",
+   "new_literal": "SP001686",
+   "org": 10615775,
+   "right": "SP001686",
+   "shape": "move",
+   "target": null,
+   "wrong": "SC009055"
+  },
+  {
+   "key": "GB/national/SC015263>merge:GBCOHRC000670",
+   "name": "University of Strathclyde",
+   "new_literal": "GBCOHRC000670",
+   "org": 23460038,
+   "right": "RC000670",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOHRC000670",
+    "name": "The University of Strathclyde",
+    "org": 31572764
+   },
+   "wrong": "SC015263"
+  },
+  {
+   "key": "GB/national/SC017167>move:RC000449",
+   "name": "Royal Blind Asylum and School (\u201cRoyal Blind\u201d)",
+   "new_literal": "RC000449",
+   "org": 11832278,
+   "right": "RC000449",
+   "shape": "move",
+   "target": null,
+   "wrong": "SC017167"
+  },
+  {
+   "key": "GB/national/SC019969>move:SC157602",
+   "name": "Rossie Young People's Trust",
+   "new_literal": "SC157602",
+   "org": 11832266,
+   "right": "SC157602",
+   "shape": "move",
+   "target": null,
+   "wrong": "SC019969"
+  },
+  {
+   "key": "GB/national/SC044798>move:CS001441",
+   "name": "Montrose Playhouse Project SCIO",
+   "new_literal": "CS001441",
+   "org": 13589215,
+   "right": "CS001441",
+   "shape": "move",
+   "target": null,
+   "wrong": "SC044798"
+  },
+  {
+   "key": "GB/national/SC044825>move:CS001453",
+   "name": "LAR Housing Trust",
+   "new_literal": "CS001453",
+   "org": 9116109,
+   "right": "CS001453",
+   "shape": "move",
+   "target": null,
+   "wrong": "SC044825"
+  },
+  {
+   "key": "GB/national/SC083027>move:SC083026",
+   "name": "The Royal Bank of Scotland",
+   "new_literal": "SC083026",
+   "org": 16331788,
+   "right": "SC083026",
+   "shape": "move",
+   "target": null,
+   "wrong": "SC083027"
+  },
+  {
+   "key": "GB/national/SC134579>merge:GBCOHSC134759",
+   "name": "Clydeport Operations Ltd",
+   "new_literal": "GBCOHSC134759",
+   "org": 17260229,
+   "right": "SC134759",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOHSC134759",
+    "name": "CLYDEPORT OPERATIONS LIMITED",
+    "org": 31537129
+   },
+   "wrong": "SC134579"
+  },
+  {
+   "key": "GB/national/SC186775>merge:SC186755",
+   "name": "Sports Labs Ltd",
+   "new_literal": "SC186755",
+   "org": 15079477,
+   "right": "SC186755",
+   "shape": "merge",
+   "target": {
+    "identifier": "SC186755",
+    "name": "Sports Labs",
+    "org": 23237328
+   },
+   "wrong": "SC186775"
+  },
+  {
+   "key": "GB/national/SC351082>move:SC351092",
+   "name": "The Paul Hogarth Company",
+   "new_literal": "SC351092",
+   "org": 22386457,
+   "right": "SC351092",
+   "shape": "move",
+   "target": null,
+   "wrong": "SC351082"
+  },
+  {
+   "key": "GB/national/SC530544>move:SC530344",
+   "name": "Ewing Somerville Partnership (Scotland) Ltd",
+   "new_literal": "SC530344",
+   "org": 12861115,
+   "right": "SC530344",
+   "shape": "move",
+   "target": null,
+   "wrong": "SC530544"
+  },
+  {
+   "key": "GB/national/SO204959>move:SO304959",
+   "name": "Genoa Black Ventures LLP",
+   "new_literal": "SO304959",
+   "org": 17282440,
+   "right": "SO304959",
+   "shape": "move",
+   "target": null,
+   "wrong": "SO204959"
+  }
+ ],
+ "plan_merge": 100,
+ "plan_move": 58,
+ "residual_of_wet_run": false,
+ "same_key": 0,
+ "several": 0,
+ "unkeyed": 2,
+ "verdicts": 182,
+ "withheld_target": 0
+}
