@@ -10461,13 +10461,13 @@ impl Db {
                 c.refused_generic
             ));
         }
-        if resolver.guarded_bound > 0 || resolver.guarded_refused > 0 {
-            self.log_diag(&format!(
-                "[issue 452] guarded canonical keys: {} mention(s) bound to the owner their name \
-                 matched, {} matched no owner (or several) and minted",
-                resolver.guarded_bound, resolver.guarded_refused
-            ));
-        }
+        // Zeros included (the issue-318 rule): a fold's log says the guard was
+        // asked nothing, rather than leaving that to a missing line.
+        self.log_diag(&format!(
+            "[issue 452] guarded canonical keys: {} mention(s) bound to the owner their name \
+             matched, {} matched no owner (or several) and minted",
+            resolver.guarded_bound, resolver.guarded_refused
+        ));
         if resolver.created_any {
             let conn = self.conn().await;
             self.publish_cursor(&conn).await?;
@@ -17673,11 +17673,12 @@ impl Db {
             }
         }
 
-        // ---- 3. Classify. Two reads first: every triple a verdict flags (a
+        // ---- 3. Classify. Two reads first: every NUMBER a verdict flags (a
         // destination under one is refused), and, per right number with no
         // owner, the candidates that would move onto it (only the smallest
-        // key moves).
-        let mut flagged: HashSet<(String, String, String)> = HashSet::new();
+        // key moves). A flag is per canonical key, not per spelling: a verdict
+        // on `GBCOH…` flags the bare number a move would write too.
+        let mut flagged: HashSet<(&'static str, String)> = HashSet::new();
         let mut rows = conn
             .query(
                 "SELECT identifier, identifier_kind, country FROM org_identifier_verdicts \
@@ -17686,7 +17687,11 @@ impl Db {
             )
             .await?;
         while let Some(row) = rows.next().await? {
-            flagged.insert((text(&row, 0), text(&row, 1), text(&row, 2)));
+            let (identifier, kind, country) = (text(&row, 0), text(&row, 1), text(&row, 2));
+            let c = (!country.is_empty()).then_some(country.as_str());
+            if let Some((scheme, key, true)) = (args.key)(c, &kind, &identifier) {
+                flagged.insert((scheme, key));
+            }
         }
         drop(rows);
         let mut mover: HashMap<(&'static str, String), String> = HashMap::new();
@@ -17694,7 +17699,9 @@ impl Db {
             let owned = owners
                 .get(&c.right_key)
                 .is_some_and(|v| v.iter().any(|(id, _)| *id != c.org));
-            if !owned {
+            // A flagged number moves nobody, so it elects no mover either:
+            // every candidate naming it lists `destination-verdict`.
+            if !owned && !flagged.contains(&c.right_key) {
                 let m = mover.entry(c.right_key.clone()).or_insert_with(|| c.key.clone());
                 if c.key < *m {
                     *m = c.key.clone();
@@ -17725,8 +17732,7 @@ impl Db {
                 target: None,
                 new_literal: String::new(),
             };
-            let flags =
-                |literal: &str| flagged.contains(&(literal.to_owned(), c.kind.clone(), c.country.clone()));
+            let flagged_destination = flagged.contains(&c.right_key);
             match found[..] {
                 [] => {
                     listing.new_literal = if c.wrong.starts_with("GBCOH") {
@@ -17734,13 +17740,13 @@ impl Db {
                     } else {
                         right.clone()
                     };
-                    if mover.get(&c.right_key) != Some(&c.key) {
-                        report.pending_move += 1;
-                        listing.shape = "pending-move".into();
-                        report.denied.push(listing);
-                    } else if flags(&listing.new_literal) {
+                    if flagged_destination {
                         report.destination_verdict += 1;
                         listing.shape = "destination-verdict".into();
+                        report.denied.push(listing);
+                    } else if mover.get(&c.right_key) != Some(&c.key) {
+                        report.pending_move += 1;
+                        listing.shape = "pending-move".into();
                         report.denied.push(listing);
                     } else {
                         listing.shape = "move".into();
@@ -17760,7 +17766,7 @@ impl Db {
                     let denial = if withheld.contains(target) {
                         report.withheld_target += 1;
                         Some("withheld-target")
-                    } else if flags(literal) {
+                    } else if flagged_destination {
                         report.destination_verdict += 1;
                         Some("destination-verdict")
                     } else if names.iter().chain(&target_names).any(|n| (args.consortium)(n)) {

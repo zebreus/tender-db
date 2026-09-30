@@ -414,7 +414,8 @@ async fn one_right_number_moves_once_and_the_rest_merge_into_it() {
 
 /// A destination some verdict flags is not a place to put an entity: neither a
 /// right-number owner under a `related` verdict (merge), nor a right number a
-/// `wrong` verdict names while nothing carries it (move).
+/// `wrong` verdict names while nothing carries it (move) — in ANY spelling: a
+/// verdict on `GBCOH71717179` flags the bare `71717179` a move would write.
 #[tokio::test]
 async fn a_destination_under_a_verdict_is_refused() {
     let orgs: &[(i64, &str, &str)] = &[
@@ -422,6 +423,8 @@ async fn a_destination_under_a_verdict_is_refused() {
         (2, "41414141", "Iota Ltd"),
         (3, "61616161", "Lambda Ltd"),
         (4, "61616169", "Lambda Ltd"),
+        (5, "71717171", "Mu Ltd"),
+        (6, "GBCOH71717179", "Mu Ltd"),
     ];
     let mut related = verdict(2, "41414141", None, "high");
     related.verdict = "related".into();
@@ -433,17 +436,22 @@ async fn a_destination_under_a_verdict_is_refused() {
             related,
             verdict(3, "61616161", Some("61616169"), "high"),
             verdict(4, "61616169", None, "high"),
+            verdict(5, "71717171", Some("71717179"), "high"),
+            verdict(6, "GBCOH71717179", None, "high"),
         ],
     )
     .await;
-    // The org the second verdict flagged is gone; its number stays flagged.
-    conn.execute("DELETE FROM organizations WHERE id = 4", ()).await.unwrap();
+    // The orgs the flagging verdicts named are gone; their numbers stay flagged.
+    conn.execute("DELETE FROM organizations WHERE id IN (4, 6)", ()).await.unwrap();
 
     let dry = db.match_org_rekey(args(true, None, None)).await.unwrap();
-    assert_eq!((dry.plan_merge, dry.plan_move, dry.destination_verdict), (0, 0, 2), "{:#?}", dry.denied);
+    assert_eq!((dry.plan_merge, dry.plan_move, dry.destination_verdict), (0, 0, 3), "{:#?}", dry.denied);
     let mut shapes: Vec<(i64, &str)> = dry.denied.iter().map(|l| (l.org, l.shape.as_str())).collect();
     shapes.sort();
-    assert_eq!(shapes, vec![(1, "destination-verdict"), (3, "destination-verdict")]);
+    assert_eq!(
+        shapes,
+        vec![(1, "destination-verdict"), (3, "destination-verdict"), (5, "destination-verdict")]
+    );
     assert!(dry.denied.iter().all(|l| !l.key.contains('>')), "a denied key is the bare wrong triple");
 }
 
