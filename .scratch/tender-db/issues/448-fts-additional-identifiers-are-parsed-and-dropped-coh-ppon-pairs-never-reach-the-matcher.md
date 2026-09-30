@@ -1,6 +1,7 @@
 # 448 — FTS `additionalIdentifiers` are parsed and then dropped: the Companies House ↔ PPON pairing never reaches the matcher, and 161 suppliers stand as two organizations
 
-Status: ready-for-agent — UNIT 1b BUILT and gated 2026-09-30 (`e4c39b3` + review fixes `7b6d52e`, both pushed, not yet deployed). Corroboration now ignores the pair's own witness names; new gates `witness-only` and `form-conflict`; three recall folds. Next: deploy when the box queue is idle (backfill chunk 2 runs until ~05:00 UTC), re-run `{"kind":"match-org-identifiers","rule":"altid"}`, and read the Verify for 1b below. Then units 2–4.
+Status: ready-for-agent — UNITS 1b and 2 BUILT, reviewed and gated 2026-09-30 (`e4c39b3`, `7b6d52e`; unit 2 `2d55856` + review fixes `2998b0a`; all pushed, deploy pending the box's idle window ~05:30 UTC). NO WET RUN until unit 3 (the resolver alias) is deployed too. Next: deploy, dry re-run and the 1b Verify; then unit 3; then the unit-4 campaign (which first needs the full plan listing — see unit 2's notes).
+Was status (until 2026-09-30 04:3x): ready-for-agent — UNIT 1b BUILT and gated 2026-09-30 (`e4c39b3` + review fixes `7b6d52e`, both pushed, not yet deployed). Corroboration now ignores the pair's own witness names; new gates `witness-only` and `form-conflict`; three recall folds. Next: deploy when the box queue is idle (backfill chunk 2 runs until ~05:00 UTC), re-run `{"kind":"match-org-identifiers","rule":"altid"}`, and read the Verify for 1b below. Then units 2–4.
 Was status (until 2026-09-30 03:0x): ready-for-agent — UNIT 1 DEPLOYED and RUN 2026-09-30 (rev `7f24c30`, dry job 1681, 3 s): 1,992 split pairs, plan 1,575. The dry run found a precision hole: corroboration through satellite names is CIRCULAR, because a witness notice's own party name is recorded as a satellite of the org its first identifier binds. It plans at least one false merge, Amentum Clean Energy (COH 01120437) ← an `Altrad Babcock Limited` PPON org. Next: unit 1b corroborates on names from mentions OUTSIDE the pair's witness notices, then re-run the dry plan. Units 2–4 as designed after that.
 Was status (until 2026-09-30 02:5x): ready-for-agent — UNIT 1 BUILT 2026-09-30 (the dry-only planner: `match-org-identifiers` rule `altid`, report `altid-merge-plan`; wet refused until unit 2). Gated green, 20 store tests + 4 crosswalk + 2 supervisor. Next: deploy when the queue is idle, run `{"kind":"match-org-identifiers","rule":"altid"}`, and read the plan against the 161. Design: `.scratch/tender-db/448-altid-design.md`. Filed 2026-09-30 00:0x UTC, as the follow-up `342-fts-plan.md` §5 risk 3 promised and never filed.
 
@@ -190,3 +191,45 @@ residual stays the unit-4 campaign's to watch: `first_coh`-only pairs whose comp
 
 Verify for 1b, after the deploy: the dry plan lists 01120437~PBDC7744BTPG as `witness-only` or `form-conflict`, never
 `plan`. Record every class count, then read a fresh sample of 50 plan pairs.
+
+## 2026-09-30 — unit 2 built (the wet path), reviewed, fixed
+
+Built by a delegated agent (`2d55856`, gate 141 suites green). Four review lenses followed: merge correctness, the
+stored-plan contract, transactions, edges and readers. Their fixes are in `2998b0a`, gated green.
+
+**What a wet run does** (`{"kind":"match-org-identifiers","rule":"altid","dry_run":false}`):
+- The supervisor reads the latest `altid-merge-plan` and refuses if there is none. It applies R3's `org_match_keys`
+  refusals and refuses without the org FK indexes.
+- The store re-plans under the writer. It aborts before any write when the live and stored sets differ by more than
+  max(2%, 5), counted as a symmetric difference.
+- It merges live ∩ stored in sorted key order, 50 pairs per `BEGIN IMMEDIATE` with foreign keys ON:
+  `repoint_org_references` (keep = the company-number org), delete the PPON org, an `org_merge_log` row `e2-altid`
+  with flat evidence, change events, the admitting verdict stamped, and the pair's `e2-altid` edge set to `merged`.
+  Each transaction ends with COMMIT, a TRUNCATE checkpoint and a cursor publish.
+- Live pairs the stored set lacks are `deferred_unreviewed` and never merge.
+- A PPON org that two live pairs claim merges in neither pair (`contradictory`).
+- The stop is polled between transactions. The residual is re-recorded as the new plan (`residual_of_wet_run`).
+- Denied two-org pairs then become open `e2-altid`/`E2` candidate edges. Edges are never deleted.
+- `write_candidate_edges` is extracted from `scan_org_match_keys` with the tier as a parameter. The census and the xb
+  packet read `e3-*` rules only, and e2 edges are counted apart.
+
+**Review findings fixed in `2998b0a`:**
+- **Contested PPON across the stored set** (medium; three lenses reported it independently). The claim count ran
+  after the cut to reviewed pairs. A HIGH verdict posted after the dry run, on a deferred pair, therefore did not stop
+  the reviewed pair from folding the shared PPON org. It is now counted over the whole live plan. Test:
+  `a_later_admitting_verdict_on_a_deferred_pair_still_contests_the_ppon_org`.
+- **Edge-phase failure after the merges committed** (low). It lost the residual record and locked the next wet run out
+  on parity. The edge phase and the closing publish are now reported (`edges_error`), not raised.
+- **Known-deferred pairs re-counted as drift** on a continuation, whose tolerance is smaller (low). The supervisor now
+  passes a residual's `deferred_pairs` as `known_deferred`. Test:
+  `a_continuation_does_not_recount_pairs_an_earlier_run_deferred`.
+
+**Carried to unit 4, not defects:**
+- The plan LISTING is capped at 500 (`R2_PLAN_LISTING_CAP`), while `pairs` is uncapped (1,575 in dry job 1681). A
+  reviewer cannot read the pairs past the cap, but a wet run would merge them. **Before any wet run, the campaign
+  needs every planned pair's members and witnesses.** Either a paged listing, or a cap raised for this report only.
+  It is unit 4's first step.
+- A stale plan recorded before unit 1b's gate changes still passes parity only to the extent it matches the live
+  re-plan, and it merges only live ∩ stored. Re-run the dry plan after every deploy that changes the gates anyway.
+- Only `docs/operations.md` enforces "no wet run before unit 3". An early run is not destructive, but the fold would
+  re-mint the merged PPON orgs.
