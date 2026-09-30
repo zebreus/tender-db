@@ -1,6 +1,7 @@
 # 452 — organizations carry company numbers that Companies House gives to another company, a dissolved shell, or no one
 
-Status: ready-for-agent — ACTION UNIT BUILT 2026-09-30 ~15:xx UTC (gated, 142 suites): `org_identifier_verdicts`, POST `/admin/identifier-verdicts`, a live `wrong` number withheld from R2/E0/R3, the altid owners and the resolver's canonical bind, and `identifier_status` on `/v1/organizations`. NEXT: deploy, POST the 685 verdicts (`452-census/identifier-verdicts-2026-09-30.json`: 371 wrong, 102 related, 212 right), run the Verify.
+Status: done — DEPLOYED 2026-09-30 ~15:2x UTC (`e1dc081`, health green) and VERIFIED: 685 verdicts POSTed (cohort `452-census-2026-09-30`: recorded 685, stale 0, 473 served statuses changed = 371 wrong + 102 related); `/v1/organizations/16469211` (Harvey Nash, 02202746) serves `register_mismatch`, 13777708 `related_entity`, a `right` org null; the altid dry run (job 1718) withholds 30 owner rows. Follow-ups: issue 453 (re-key the 182 with a known right number), the 35 unclear/disputed.
+Was status: ready-for-agent — ACTION UNIT BUILT 2026-09-30 ~15:xx UTC (gated, 142 suites): `org_identifier_verdicts`, POST `/admin/identifier-verdicts`, a live `wrong` number withheld from R2/E0/R3, the altid owners and the resolver's canonical bind, and `identifier_status` on `/v1/organizations`. NEXT: deploy, POST the 685 verdicts (`452-census/identifier-verdicts-2026-09-30.json`: 371 wrong, 102 related, 212 right), run the Verify.
 Was status: ready-for-agent — CENSUS DONE 2026-09-30 13:0x UTC: 371 org identifiers are wrong company numbers (reviewer + challenger), 102 are a related company's, 182 of the wrong ones have the right number found (`452-census/verdicts-2026-09-30.json`). NEXT: the action unit, an identifier-verdict table that withholds a wrong number from matching and flags it on the API (design below).
 Was status: ready-for-agent — filed 2026-09-30 from issue 448's review campaign. Next: size the class across every GB
 company number the corpus holds, then decide what a wrong number does to the org (hold it back from matching, flag
@@ -55,8 +56,11 @@ the wrong company.
 
 ## Verify
 
-A report or census counts GB company-number orgs by register class. Every (a)/(b)/(c) row is either withheld from
-matching or flagged, and the ten numbers above read that way.
+    /root/aj.sh "/admin/case-reviews?table=identifier&cohort=452-census-2026-09-30&limit=5000" | python3 -c "import json,sys,collections; d=json.load(sys.stdin); print(len(d['rows']), dict(collections.Counter(r['verdict'] for r in d['rows'])))"
+    curl -s https://tenders.zebreus.click/v1/organizations/16469211 | grep -o '"identifier_status":"[a-z_]*"'
+
+- **done**: `685 {'wrong': 371, 'related': 102, 'right': 212}` (key order may differ) and `"identifier_status":"register_mismatch"`.
+- **open**: fewer rows, or Harvey Nash's org without the flag.
 
 ## 2026-09-30 08:5x UTC — sized
 
@@ -194,3 +198,16 @@ defects, all in the first commit). The shipped design, `e1dc081`:
 - The body is `452-census/identifier-verdicts-2026-09-30.json` (`verdict_post.py`): 371 wrong, 102 related, 212 right.
   All 685 orgs were live and carried the reviewed number (an id lookup at 14:0x UTC). Unclear and disputed verdicts (35)
   are not posted.
+
+## 2026-09-30 ~15:2x UTC — deployed, posted, verified
+
+- `e1dc081` deployed (health green, no warning lines). `POST /admin/identifier-verdicts` with the 685-verdict body answered
+  `{"recorded":685,"stale":0,"changed":473}`: every reviewed org still carried its number, and 473 served statuses moved
+  (the 371 wrong plus 102 related; the 212 right serve null, as before).
+- Live: `/v1/organizations/16469211` (Harvey Nash Ltd, 02202746) → `"identifier_status":"register_mismatch"`;
+  13777708 (William Cook Rail, 00053475) → `"related_entity"`; 11666834 (a `right`) → `null`.
+- Altid dry run, job 1718, against 1716 before the verdicts:
+  - "30 withheld by a wrong-number verdict" among the owners;
+  - no company-number org 35 → 46, verdict-keep 29 → 21 (8 pairs a keep verdict held now have no trusted owner at all);
+  - plan 4,604 → 4,603. One planned pair's company-number org carries a wrong number, so it is no longer merged.
+- The resolver's `[issue 452]` lines appear at the next fold's resolver open.
