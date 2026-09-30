@@ -118,11 +118,12 @@ async fn count(conn: &Connection, sql: &str) -> i64 {
     n
 }
 
-/// Validation refuses the whole upload; an upsert replaces the standing verdict
-/// whatever cohort it came from; `live` counts the verdicts whose org still
-/// carries the checked number; and the readback lists the store.
+/// Validation refuses the whole upload; a verdict naming an org that no longer
+/// carries the checked number is skipped as stale; an upsert replaces the
+/// standing verdict whatever cohort it came from; the served status moving is a
+/// change event; and the readback lists the store, keyed by the triple.
 #[tokio::test]
-async fn verdicts_are_validated_replaced_on_re_review_and_counted_live() {
+async fn verdicts_are_validated_keyed_by_the_triple_and_replaced_on_re_review() {
     let (db, conn) =
         bed("test-identifier-verdicts-record.db", &[(1, "GB", "national", "02202746", "Harvey Nash Ltd")], 0).await;
 
@@ -137,23 +138,34 @@ async fn verdicts_are_validated_replaced_on_re_review_and_counted_live() {
             "c1",
             &[
                 IdentifierVerdict { correct_identifier: Some("02202476".into()), ..verdict(1, "02202746", "wrong") },
-                // An org that is gone (merged away): recorded, not live.
+                // An org that is gone (merged away): nothing to key it by.
                 verdict(99, "01234567", "wrong"),
             ],
             10,
         )
         .await
         .unwrap();
-    assert_eq!((r.recorded, r.live), (2, 1));
+    assert_eq!((r.recorded, r.stale, r.changed), (1, 1, 1));
+    let events = "SELECT COUNT(*) FROM changes WHERE entity_kind = 'organization' AND entity_id = 1 AND op = 'changed'";
+    assert_eq!(count(&conn, events).await, 1, "the served identifier_status moved: one event");
 
+    let same = db.record_identifier_verdicts("c1b", &[verdict(1, "02202746", "wrong")], 15).await.unwrap();
+    assert_eq!(same.changed, 0, "re-recording what is served is no change");
     let again = db.record_identifier_verdicts("c2", &[verdict(1, "02202746", "related")], 20).await.unwrap();
-    assert_eq!((again.recorded, again.live), (1, 1));
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_identifier_verdicts").await, 2, "one row per (org, identifier)");
+    assert_eq!((again.recorded, again.stale, again.changed), (1, 0, 1));
+    assert_eq!(count(&conn, events).await, 2);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_identifier_verdicts").await, 1, "one row per triple");
     let (cols, rows) = db.verdict_rows("identifier", Some("c2"), 10).await.unwrap();
-    assert_eq!(cols[..4], ["org_id", "identifier", "cohort", "verdict"]);
+    assert_eq!(cols[..6], ["identifier", "identifier_kind", "country", "org_id", "cohort", "verdict"]);
     assert_eq!(rows.len(), 1);
-    assert_eq!(rows[0][3], Value::Text("related".into()), "the re-review replaced the verdict");
-    assert_eq!(rows[0][4], Value::Null, "and its correct_identifier with it");
+    assert_eq!(rows[0][..4], [
+        Value::Text("02202746".into()),
+        Value::Text("national".into()),
+        Value::Text("GB".into()),
+        Value::Integer(1),
+    ]);
+    assert_eq!(rows[0][5], Value::Text("related".into()), "the re-review replaced the verdict");
+    assert_eq!(rows[0][6], Value::Null, "and its correct_identifier with it");
 }
 
 /// R2 and a wrong number. Group 01003158: two rows of one supplier plus a
@@ -211,50 +223,69 @@ fn mention(notice: i64, name: &str, kind: &str, value: &str) -> Mention {
 }
 
 async fn resolve(db: &store::Db, mentions: &[Mention]) -> Vec<i64> {
-    let mut resolver = db.mention_resolver(Some(key), Some(consortium), None, None, None, None, 0).await.unwrap();
+    let norm: fn(&str) -> String = |n| n.to_lowercase();
+    let mut resolver =
+        db.mention_resolver(Some(key), Some(consortium), None, Some(norm), None, None, 0).await.unwrap();
     let ids = db.resolve_mentions(&mut resolver, mentions, 0).await.unwrap();
     db.finish_mention_resolver(resolver).await.unwrap();
     ids
 }
 
-/// The resolver's canonical bind. Key 01003158 stands on two rows — a council
-/// under a wrong number and the supplier it belongs to — so it is poisoned and a
-/// third spelling mints. With the council's number withheld, the supplier owns
-/// the key and the third spelling binds to it; the council's exact literal
-/// still binds to the council. Key 20445111 has one owner, withheld: a
-/// different spelling of it no longer binds there and mints. (Two stores: a
-/// mint in the unreviewed half would itself become a second owner of the key.)
+/// The resolver's canonical bind. Unreviewed, key 01003158 stands on two rows
+/// — a council under a wrong number and the supplier the number belongs to —
+/// so it is poisoned and a third spelling mints; key 20445111 has one owner and
+/// binds name-blind. With the council's and Digimune's numbers withheld, both
+/// keys are GUARDED: a different spelling binds only to the owner its name
+/// matches. So the supplier's own spelling finds the supplier, the council's
+/// publisher's spelling finds the council (neither a twin under the wrong
+/// number nor the supplier), and a stranger mints once — then is found again by
+/// name. The council's exact literal still binds to it. (Two stores: a mint in
+/// the unreviewed half would itself become an owner of the key.)
 #[tokio::test]
-async fn the_canonical_bind_skips_a_withheld_org_and_finds_the_rightful_owner() {
+async fn a_guarded_key_binds_only_to_the_owner_whose_name_matches() {
     let orgs = [
         (1, "FI", "vat", "FI01003158", "Cheltenham Borough Council"),
         (2, "FI", "national", "01003158", "Telinekataja Oy"),
         (3, "FI", "national", "20445111", "Digimune Ltd"),
     ];
-    let third_spellings =
-        [mention(1, "Telinekataja", "national", "0100315-8"), mention(2, "Silver Energy", "vat", "FI-20445111")];
-
     let (db, _conn) = bed("test-identifier-verdicts-resolver-before.db", &orgs, 2).await;
-    let unreviewed = resolve(&db, &third_spellings).await;
+    let unreviewed = resolve(
+        &db,
+        &[mention(1, "TELINEKATAJA OY", "national", "0100315-8"), mention(2, "Silver Energy", "vat", "FI-20445111")],
+    )
+    .await;
     assert!(unreviewed[0] > 3, "two owners poison the key: the third spelling mints");
-    assert_eq!(unreviewed[1], 3, "one owner: the other spelling binds to it");
+    assert_eq!(unreviewed[1], 3, "one owner: another company's spelling binds to it name-blind");
 
-    let (db, conn) = bed("test-identifier-verdicts-resolver-after.db", &orgs, 3).await;
+    let (db, conn) = bed("test-identifier-verdicts-resolver-after.db", &orgs, 7).await;
     db.record_identifier_verdicts("452", &[verdict(1, "FI01003158", "wrong"), verdict(3, "20445111", "wrong")], 0)
         .await
         .unwrap();
-    let mut mentions = third_spellings.to_vec();
-    mentions.push(mention(3, "Cheltenham Borough Council", "vat", "FI01003158"));
-    let ids = resolve(&db, &mentions).await;
-    assert_eq!(ids[0], 2, "the rightful owner takes the key");
-    assert!(ids[1] > 3, "the withheld org is no owner: a fresh mint");
-    assert_eq!(ids[2], 1, "the exact literal still binds to the org that published it");
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 4);
+    let ids = resolve(
+        &db,
+        &[
+            mention(1, "TELINEKATAJA OY", "national", "0100315-8"),
+            mention(2, "Cheltenham Borough Council", "national", "010031-58"),
+            mention(3, "Silver Energy", "vat", "FI-20445111"),
+            mention(4, "SILVER ENERGY", "national", "2044-5111"),
+            mention(5, "Nobody Ltd", "national", "01-003158"),
+            mention(6, "Cheltenham Borough Council", "vat", "FI01003158"),
+        ],
+    )
+    .await;
+    assert_eq!(ids[0], 2, "the supplier's spelling finds the supplier");
+    assert_eq!(ids[1], 1, "the council's publisher finds the council: no twin, not the supplier");
+    assert!(ids[2] > 3, "a stranger on the withheld number mints…");
+    assert_eq!(ids[3], ids[2], "…and joins the key's owners, so its next spelling finds it by name");
+    assert!(ids[4] > 3 && ids[4] != ids[2], "a name no owner carries mints");
+    assert_eq!(ids[5], 1, "the exact literal still binds to the org that published it");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 5);
 }
 
 /// `/v1/organizations` reads the verdict beside the row: `wrong` and `related`
 /// are served, `right` and no verdict are not, and a verdict on a number the org
-/// no longer carries is not either.
+/// no longer carries is not either. A rebuild re-mints org ids; the verdict is
+/// keyed by the triple, so the re-minted org carries it again.
 #[tokio::test]
 async fn the_org_read_carries_the_verdict_only_while_the_org_carries_the_number() {
     let (db, conn) = bed(
@@ -289,4 +320,16 @@ async fn the_org_read_carries_the_verdict_only_while_the_org_carries_the_number(
     conn.execute("UPDATE organizations SET identifier = '02202476' WHERE id = 1", ()).await.unwrap();
     let page = read::organizations(&conn, &Filter::default(), Scope::At { id: 1, seq: 0 }).await.unwrap();
     assert_eq!(served(page), vec![(1, None)], "re-keyed: the verdict was about the old number");
+
+    // A rebuild's renumbering: Southern Gas Networks re-minted as org 50.
+    conn.execute("DELETE FROM organizations WHERE id = 2", ()).await.unwrap();
+    conn.execute(
+        "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+         VALUES (50, 'GB', 'national', '04958135', 'Southern Gas Networks plc', 'southern gas networks plc', 0, 0)",
+        (),
+    )
+    .await
+    .unwrap();
+    let page = read::organizations(&conn, &Filter::default(), Scope::At { id: 50, seq: 0 }).await.unwrap();
+    assert_eq!(served(page), vec![(50, Some("related".into()))], "the triple carries the verdict to the new id");
 }

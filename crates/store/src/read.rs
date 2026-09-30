@@ -393,9 +393,10 @@ pub struct OrganizationRow {
     pub identifier: Option<String>,
     pub provisional: bool,
     pub mentions: i64,
-    /// Issue 452: a reviewer's finding against the register about `identifier`
-    /// — `wrong` (another company's number, or one never issued) or `related`
-    /// (a parent's or subsidiary's). `None` when no review found a problem.
+    /// Issue 452: a reviewer's finding against the register about the identity
+    /// triple this row carries — `wrong` (another company's number, or one never
+    /// issued) or `related` (a parent's or subsidiary's). `None` when no review
+    /// found a problem.
     pub identifier_verdict: Option<String>,
 }
 
@@ -3793,7 +3794,9 @@ fn organizations_query(filter: &Filter, scope: Scope) -> Query {
         "SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional,
                 (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id),
                 (SELECT v.verdict FROM org_identifier_verdicts v
-                  WHERE v.org_id = o.id AND v.identifier = o.identifier
+                  WHERE v.identifier = o.identifier
+                    AND v.identifier_kind = COALESCE(o.identifier_kind, '')
+                    AND v.country = COALESCE(o.country, '')
                     AND v.verdict IN ('wrong', 'related'))
            FROM organizations o WHERE 1 = 1",
         [],
@@ -3852,7 +3855,9 @@ pub async fn organizations_by_name(
         "SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional,
                 (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id),
                 (SELECT v.verdict FROM org_identifier_verdicts v
-                  WHERE v.org_id = o.id AND v.identifier = o.identifier
+                  WHERE v.identifier = o.identifier
+                    AND v.identifier_kind = COALESCE(o.identifier_kind, '')
+                    AND v.country = COALESCE(o.country, '')
                     AND v.verdict IN ('wrong', 'related'))
            FROM organizations o WHERE o.name_norm >= ?",
         [t(prefix)],

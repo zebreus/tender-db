@@ -434,8 +434,9 @@ struct IdentifierVerdictIn {
 /// verdicts (issue 452): whether the registration number an organization is
 /// keyed by is its own. Recording is the whole action: from the next planner
 /// run or fold on, a `wrong` number is withheld from identifier matching, and
-/// `/v1/organizations` flags `wrong` and `related`. The answer says how many
-/// verdicts name an org that still carries the checked number (`live`).
+/// `/v1/organizations` flags `wrong` and `related`. A verdict is keyed by the
+/// identity triple the named org carries now; one naming an org that no longer
+/// carries the checked number is skipped and counted `stale`.
 async fn record_identifier_verdicts(
     State(sup): State<Arc<Supervisor>>,
     headers: HeaderMap,
@@ -496,7 +497,9 @@ async fn record_identifier_verdicts(
     match sup.db().record_identifier_verdicts(&req.cohort, &verdicts, store::now_unix()).await {
         Ok(r) => (
             StatusCode::OK,
-            axum::Json(json!({ "recorded": r.recorded, "live": r.live, "cohort": req.cohort })),
+            axum::Json(json!({
+                "recorded": r.recorded, "stale": r.stale, "changed": r.changed, "cohort": req.cohort,
+            })),
         )
             .into_response(),
         Err(e) => error(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()),

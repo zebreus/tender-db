@@ -1760,12 +1760,12 @@ async fn a_wrong_number_verdict_keeps_the_company_number_org_from_owning_its_pai
     assert_eq!(b.plan().await.plan_pairs, 1, "the control: planned");
 
     let stale = b.identifier_verdict(2, "GBCOH99999999", "wrong").await;
-    assert_eq!((stale.recorded, stale.live), (1, 0), "not the number org 2 carries");
+    assert_eq!((stale.recorded, stale.stale), (0, 1), "not the number org 2 carries");
     let r = b.plan().await;
     assert_eq!((r.plan_pairs, r.withheld), (1, 0), "a verdict on another number changes nothing");
 
     let live = b.identifier_verdict(2, &minted(COH_A), "wrong").await;
-    assert_eq!((live.recorded, live.live), (1, 1));
+    assert_eq!((live.recorded, live.stale), (1, 0));
     let r = b.plan().await;
     assert_eq!((r.withheld, r.owners, r.both_distinct, r.no_target_coh), (1, 1, 0, 1), "{r:#?}");
     assert_eq!(r.plan_pairs, 0, "no org owns the withheld number, so nothing folds into it");

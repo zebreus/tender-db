@@ -994,7 +994,7 @@
           "identifier_kind": { "type": "string", "nullable": true, "description": "Which register the identifier belongs to — `national`, `vat`, `eu`, …. Matched case-insensitively by ?kind=." },
           "mentions": { "type": "integer", "description": "How many notice mentions resolve to this organization — a proxy for how well-attested the identity is." },
           "provisional": { "type": "boolean", "description": "True when minted from a name alone with no identifier to bind it: a placeholder a later publication may merge away." },
-          "identifier_status": { "type": "string", "nullable": true, "enum": ["register_mismatch", "related_entity"], "description": "Set when a review against the official register found `identifier` is not this organization's own: `register_mismatch` — another company's number, a dissolved stranger's, or one never issued (such a number is not used to match this organization with others); `related_entity` — a parent's or subsidiary's. Null when no review found a problem, which is not the same as checked." }
+          "identifier_status": { "type": "string", "nullable": true, "enum": ["register_mismatch", "related_entity", null], "description": "Set when a review against the official register found `identifier` is not this organization's own: `register_mismatch` — another company's number, a dissolved stranger's, or one never issued (such a number never merges this organization with another, and another spelling of it reaches this organization only under a matching name; a notice publishing exactly that number still resolves here); `related_entity` — a parent's or subsidiary's. Null when no review found a problem, which is not the same as checked." }
         },
         "additionalProperties": true
       },

@@ -755,8 +755,10 @@ rates and the quarantine resolution ledger.</p>
   kind you are looking at. An identifier is what a notice published, and a
   publisher can mistype it: where a check against the official register found the
   number belongs to another company (or to none), the organization carries
-  <code>identifier_status: "register_mismatch"</code> and that number is not used to
-  match it with anyone else; a parent's or subsidiary's number reads
+  <code>identifier_status: "register_mismatch"</code>. That number then never merges it
+  with another organization, and another spelling of the number reaches it only under
+  a matching name; a notice publishing exactly that number still resolves to it. A
+  parent's or subsidiary's number reads
   <code>"related_entity"</code>. Null means no review found a problem, not that the
   number was checked.</li>
 </ul>
