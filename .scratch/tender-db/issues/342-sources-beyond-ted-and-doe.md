@@ -1,6 +1,7 @@
 # 342 — sources beyond TED and DÖE ("international"): nothing exists, the entry contract does
 
-Status: ready-for-agent — backfill chunk 4 (2024-05 → 2024-12) ENQUEUED 2026-09-30 17:00 UTC (jobs 1728–1737) after the 453 deploy; chunks 1–3 landed (FTS 2025-01 → today). NEXT: read 1737, then 2021-01 → 2024-04 in ≤8-month chunks on idle queues ≥4 h before the 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
+Status: ready-for-agent — chunk 4 (2024-05 → 2024-12) LANDED (jobs 1728–1737: 24,400 notices → 20,098 tenders); chunk 5 (2023-09 → 2024-04) ENQUEUED 2026-09-30 19:0x UTC as jobs 1740–1749. NEXT: read 1749, then 2021-01 → 2023-08 in ≤8-month chunks on idle queues ≥4 h before the 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
+Was status: ready-for-agent — backfill chunk 4 (2024-05 → 2024-12) ENQUEUED 2026-09-30 17:00 UTC (jobs 1728–1737) after the 453 deploy; chunks 1–3 landed (FTS 2025-01 → today). NEXT: read 1737, then 2021-01 → 2024-04 in ≤8-month chunks on idle queues ≥4 h before the 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
 Was status: ready-for-agent — backfill chunks 1–3 landed (FTS now 2025-01 → today; chunk 3 = jobs 1719–1725, ok 16:11 UTC 2026-09-30). NEXT: chunk 4 (2024-05 → 2024-12) on the next idle queue after the 453 deploy, then 2021-01 → 2024-04 in ≤8-month chunks on idle queues ≥4 h before the 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
 Was status: ready-for-agent — backfill CHUNK 3 (2025-01 → 2025-05) ENQUEUED 2026-09-30 14:5x UTC (jobs 1719–1725); chunks 1–2 landed (FTS now 2025-06 → today). NEXT: read 1725, then 2021-01 → 2024-12 in ≤8-month chunks on idle queues ≥4 h before the 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
 Was status: ready-for-agent — unit 2 COMPLETE. Docs (step 12) DONE (`18d59a2`). `bids.statistics` fix DEPLOYED and VERIFIED 2026-09-29 (`54a00be` + `83ee914`; reparse job 1663, project 1664): phantom STAT- results 14,870 → 0. NEXT: the backfill, in chunks that leave the daily tick room (see the foot). Plan: `.scratch/tender-db/342-fts-plan.md`.
@@ -543,3 +544,11 @@ ends well before the 07:35 UTC tick.
 `{"kind":"backfill","source":"fts","range":["2024-05","2024-12"]}` → jobs 1728–1737 (eight monthly fetches, then
 process 1736 and project 1737). `/data` was at 74% (448 GB free). The 2024-12 fetch (job 1735) resumes from the pages
 issue 450's live cancel check (job 1727) left staged.
+
+### 2026-09-30 19:0x UTC — chunk 4 landed, chunk 5 enqueued
+
+- **Chunk 4, jobs 1728–1737.** Every fetch was `ok`. The 2024-12 fetch (1735) is the month issue 450's live cancel
+  stopped first.
+- **Process 1736:** `24400 members → 24400 notices (24400 parsed, 0 quarantined)`.
+- **Project 1737:** `20098 tenders written`.
+- **Chunk 5, 2023-09 → 2024-04:** jobs 1740–1749. `/data` was at 74% (447 GB free).
