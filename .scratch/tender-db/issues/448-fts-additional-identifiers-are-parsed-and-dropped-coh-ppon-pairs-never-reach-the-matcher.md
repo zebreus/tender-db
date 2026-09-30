@@ -1,6 +1,7 @@
 # 448 — FTS `additionalIdentifiers` are parsed and then dropped: the Companies House ↔ PPON pairing never reaches the matcher, and 161 suppliers stand as two organizations
 
-Status: ready-for-agent — UNITS 1b, 2, 3 and 3b DEPLOYED 2026-09-30 (`60a0191`, `636475c`, `ba1b159`). Dry job 1691: plan 4,373 pairs (23 co-occurring), 101 witness-only, 326 uncorroborated, 49 conflicts; the full listing carries each side's witness-free names. The 1b Verify's Amentum expectation was WRONG: that pair is true (see 05:1x below). NEXT: unit 4, the review campaign over the full listing with Companies House register names, then a capped wet run.
+Status: ready-for-agent — UNIT 4 campaign DONE and verdicts POSTED (336, cohort `altid-2026-09-30`); capped wet run 1717 merged 50 pairs, verified. NEXT: the full wet run over the 4,604-pair residual, which waits for the owner's go-ahead (the session's permission classifier refused it as a bulk production write), then a fold and the alias counters. Follow-ups: issue 452 (wrong company numbers), a verdict override for legal-form re-registrations.
+Was status (until 2026-09-30 09:0x): ready-for-agent — UNITS 1b, 2, 3 and 3b DEPLOYED 2026-09-30 (`60a0191`, `636475c`, `ba1b159`). Dry job 1691: plan 4,373 pairs (23 co-occurring), 101 witness-only, 326 uncorroborated, 49 conflicts; the full listing carries each side's witness-free names. The 1b Verify's Amentum expectation was WRONG: that pair is true (see 05:1x below). NEXT: unit 4, the review campaign over the full listing with Companies House register names, then a capped wet run.
 Was status (until 2026-09-30 06:1x): ready-for-agent — UNITS 1b and 2 BUILT, reviewed and gated 2026-09-30 (`e4c39b3`, `7b6d52e`; unit 2 `2d55856` + review fixes `2998b0a`; all pushed, deploy pending the box's idle window ~05:30 UTC). NO WET RUN until unit 3 (the resolver alias) is deployed too. Next: deploy, dry re-run and the 1b Verify; then unit 3; then the unit-4 campaign (which first needs the full plan listing — see unit 2's notes).
 Was status (until 2026-09-30 04:3x): ready-for-agent — UNIT 1b BUILT and gated 2026-09-30 (`e4c39b3` + review fixes `7b6d52e`, both pushed, not yet deployed). Corroboration now ignores the pair's own witness names; new gates `witness-only` and `form-conflict`; three recall folds. Next: deploy when the box queue is idle (backfill chunk 2 runs until ~05:00 UTC), re-run `{"kind":"match-org-identifiers","rule":"altid"}`, and read the Verify for 1b below. Then units 2–4.
 Was status (until 2026-09-30 03:0x): ready-for-agent — UNIT 1 DEPLOYED and RUN 2026-09-30 (rev `7f24c30`, dry job 1681, 3 s): 1,992 split pairs, plan 1,575. The dry run found a precision hole: corroboration through satellite names is CIRCULAR, because a witness notice's own party name is recorded as a satellite of the org its first identifier binds. It plans at least one false merge, Amentum Clean Energy (COH 01120437) ← an `Altrad Babcock Limited` PPON org. Next: unit 1b corroborates on names from mentions OUTSIDE the pair's witness notices, then re-run the dry plan. Units 2–4 as designed after that.
@@ -343,3 +344,56 @@ listing is 4,373 entries, not truncated (4.4 MB). The Amentum pair now reads:
 
 Next, unit 4: the campaign over the full listing, with Companies House register names joined in (fetched from the
 public company pages for all 4,872 company numbers in the plan, denied and conflict sets).
+
+## 2026-09-30 06:4x–09:0x UTC — unit 4: the review campaign, the verdicts, and a capped wet run
+
+**Register first.** Companies House's public page was fetched for every one of the 4,872 company numbers in dry job
+1691's plan, denied and conflict sets: 4,868 answered, 4 do not exist. A planned pair is REGISTER-CONFIRMED when every
+witness-free PPON-side name is a register name (current or previous, by core), a company-number-side name is one too,
+and the two orgs never co-occur outside the witnesses.
+- 4,032 of 4,373 planned pairs confirmed.
+- A blind sample of 40 of them, read by a reviewer: 40 merge (38 high). The split holds.
+
+**The campaign** (`.scratch/tender-db/448-campaign/`: `rubric.md`, `cases-1691.json`, `results-2026-09-30.json`) ran
+43 agents: 21 reviewer batches of 40, a challenger on every verdict that would act, and the blind sample. Reviewers
+checked the register (and officers/PSC pages) where a case was unclear. It read 836 cases.
+- **Planned pairs (341):** 312 merge. 29 are HELD with a `keep` verdict: 16 high (challenger agreed), 13 low (disputed,
+  or needs more evidence; re-post as `merge` in the same cohort to release one). The held are wrong company numbers
+  (nonexistent, transposed digits, a dissolved or dormant shell, a council under a marketing company's number; filed as
+  **issue 452**), parent vs subsidiary (SGN, Group 1/Barons, Concur NL), and PPON orgs whose names split between the
+  company and an unrelated one (D3 office group, CRS Communications, Big Yellow).
+- **Denied and conflict pairs (495):** 307 ADMITTED by a HIGH `merge` verdict with the challenger agreeing:
+  143 uncorroborated-overlap, 96 witness-only, 30 disjoint, 27 conflicts, 10 legal-form, 1 generic. They are renames
+  the register's previous names prove, acronyms, spacing, and trading names.
+- POSTed as cohort `altid-2026-09-30`: 336 verdicts (307 merge/high, 16 keep/high, 13 keep/low)
+  (`verdicts-altid-2026-09-30.json`).
+
+**Dry job 1716** (after the verdicts and today's daily): plan **4,654**, with 29 verdict-keep and 297 verdict-admitted.
+The 10 legal-form admits did NOT apply: the head-against-head legal-form veto is structural and no verdict overrides it
+(by design). They are mostly re-registrations the register proves (3M UK plc → Ltd, Axis Europe plc → Ltd, SCC plc);
+whether a HIGH verdict should override that veto for a re-registration is an open question for a later unit. The plan
+held 14 pairs the campaign never saw (today's FTS daily). All 14 are register-confirmed by the same rule
+(`delta-new-1716.json`). So every pair of the stored plan was reviewed or register-confirmed.
+
+**Capped wet job 1717** (`max_groups` 50, 4 s):
+- merged 50 pairs: 50 org rows removed; 198 mentions, 253 parties, 9,046 bid-parties and 9,076 winners repointed;
+  101 tenders touched;
+- 0 deferred, 0 contradictory;
+- 247 `e2-altid` edges written for the denied pairs;
+- residual 4,604 re-recorded.
+
+Verified with /v1/sql: the 50 PPON orgs are gone, the 50 company-number orgs stand, 0 mentions remain on the losers,
+and the keepers now hold the 198 PPON-keyed mentions.
+
+**The full wet run (the 4,604-pair residual) is NOT run.** The session's permission classifier refused it as a bulk
+production write, and it waits for the owner's go-ahead. Nothing drifts meanwhile:
+- the residual is recorded and the verdicts are stored;
+- `{"kind":"match-org-identifiers","rule":"altid","dry_run":false}` resumes it under parity;
+- if new FTS days land first, re-run the dry plan and register-check the delta the way 1716's 14 were checked.
+
+**Unit 3 Verify, read:** the diag log shows the alias ARMED on today's folds (1699, 1714) with 0 aliases, 0 asked. After
+job 1717 the ledger holds 50 `e2-altid` rows. The next fold should read "50 PPON key(s) aliased".
+
+**Audit, co-occurrence (23 → 25 planned pairs):** nearly all are one supplier listed twice in a notice (a tenderer
+section by company number, a supplier section by PPON). The suspect ones (Southern Water's PPON carrying a fire
+authority's name) went through the campaign. Co-occurrence stays a displayed signal, never a gate.
