@@ -1,12 +1,6 @@
 # 448 — FTS `additionalIdentifiers` are parsed and then dropped: the Companies House ↔ PPON pairing never reaches the matcher, and 161 suppliers stand as two organizations
 
-Status: ready-for-agent — filed 2026-09-30 00:0x UTC (hourly check-in). This is the follow-up that
-`.scratch/tender-db/342-fts-plan.md` §5 risk 3 promised ("follow-up issue for an `e2-fts-altid` writer") and that was
-never filed. The next step is a design decision (below), then the build.
-Kind: data quality (organization identity), FTS
-Relates to: 342 (FTS unit 2; the GB crosswalk arm's comment at `crates/ingest/src/crosswalk.rs` ~343 names this pairing
-"E2 evidence for R3"), 300 (identity tiers E0–E4), 360 (`org_candidate_edges`, E3/E4 scans), 447 (the same week's
-identity fix)
+Status: ready-for-agent — DESIGN SETTLED 2026-09-30 (`.scratch/tender-db/448-altid-design.md`: E2, a new gated `match-org-identifiers` rule `altid`, strict GB name-key equality, conflict and evidence walls, the company-number org survives). Next: unit 1, the dry-only planner (`altid-merge-plan`), which re-measures the 161 by canonical-key owners before anything merges. Filed 2026-09-30 00:0x UTC (hourly check-in), as the follow-up `342-fts-plan.md` §5 risk 3 promised and never filed.
 
 ## What is wrong
 
