@@ -30,11 +30,15 @@ For each `wrong` verdict with a `correct_identifier` C:
 
 ## Verify
 
-    /root/aj.sh "/admin/case-reviews?table=identifier&cohort=452-census-2026-09-30&limit=5000" | python3 -c "import json,sys; d=json.load(sys.stdin); print(sum(1 for r in d['rows'] if r['verdict']=='wrong' and r['correct_identifier']))"
+    /root/aj.sh "/admin/case-reviews?table=identifier&limit=5000" | python3 -c "import json,sys; d=json.load(sys.stdin); print(sum(1 for r in d['rows'] if r['verdict']=='wrong' and r['correct_identifier'] and not r['applied_at']))"
 
-- **open**: `182` (every one still carries its wrong number with a known right one beside it).
-- **done**: the count of verdicts whose org still carries the wrong number while a right one is known reaches 0, or
-  each remaining one has a recorded shape-3 reason.
+(Corrected 2026-09-30 by the hourly audit. The first form filtered on the 452 cohort and counted applied verdicts
+too, so it could never reach its "done" state: a re-key stamps `applied_at` but keeps the row. It also missed the two
+verdicts the plan review re-POSTed under cohort `453-rekey-review-2026-09-30`.)
+
+- **open**: `182` (every one still carries its wrong number with a known right one beside it). Read 17:5x UTC: 182.
+- **done**: the unapplied count equals the recorded residue: 6 not high, 2 unkeyed, 7 name-denials the 454 review left
+  unsettled, and 1 `keep` (B Braun). That is 16 with a reason each, and so reads 16.
 
 ## 2026-09-30 15:0x UTC — sized
 
