@@ -78,6 +78,50 @@ async fn fetch_is_idempotent_and_versions_changed_content() {
     let _ = std::fs::remove_dir_all(&archive);
 }
 
+/// Issue 451: `/pkg` behind a WAF shaped like TED's CloudFront since
+/// 2026-09-30 — a 202 with an empty body and `x-amzn-waf-action: challenge`
+/// for any User-Agent that is not Mozilla-compatible.
+async fn waf_server() -> String {
+    let app = axum::Router::new().route(
+        "/pkg",
+        get(|headers: axum::http::HeaderMap| async move {
+            let ua = headers.get("user-agent").and_then(|v| v.to_str().ok()).unwrap_or("");
+            if ua.starts_with("Mozilla/5.0") {
+                (StatusCode::OK, b"package-one".to_vec()).into_response()
+            } else {
+                (StatusCode::ACCEPTED, [("x-amzn-waf-action", "challenge")], Vec::<u8>::new()).into_response()
+            }
+        }),
+    );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    format!("http://{addr}")
+}
+
+/// Issue 451: a client with no User-Agent (reqwest's default) is challenged,
+/// and the job says so by name, registering nothing; the fetch client's
+/// crawler-convention User-Agent gets the package.
+#[tokio::test]
+async fn a_waf_challenge_is_named_and_the_crawler_user_agent_passes_it() {
+    let base = waf_server().await;
+    let archive = temp_dir("waf");
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    let t = target(&base);
+
+    let err = fetch(&db, &reqwest::Client::new(), &archive, &t, false).await.expect_err("challenged");
+    assert!(matches!(err, ingest::fetch::Error::Challenged { .. }), "{err}");
+    assert!(err.to_string().contains("x-amzn-waf-action: challenge"), "{err}");
+    assert!(db.latest_fetch("ted", "daily", "2026-00137").await.unwrap().is_none());
+
+    assert!(ingest::fetch::USER_AGENT.starts_with("Mozilla/5.0 (compatible; tender-db/"));
+    let client = reqwest::Client::builder().user_agent(ingest::fetch::USER_AGENT).build().unwrap();
+    assert_eq!(fetch(&db, &client, &archive, &t, false).await.unwrap(), Outcome::Fetched);
+    assert_eq!(std::fs::read(archive.join("ted/daily/2026-00137.tar.gz")).unwrap(), b"package-one");
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
 #[tokio::test]
 async fn missing_package_reports_not_found() {
     let (base, _content) = fixture_server().await;

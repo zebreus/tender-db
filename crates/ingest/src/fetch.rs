@@ -64,6 +64,30 @@ pub enum Error {
     /// retried — the bytes are what they are — and the job fails with its
     /// staging intact for a person to look at.
     Malformed(String),
+    /// Issue 451: an edge WAF answered instead of the origin. TED's CloudFront
+    /// returns 202 with an empty body and `x-amzn-waf-action: challenge` to a
+    /// client it takes for an unidentified bot (since 2026-09-30, for any
+    /// request without a Mozilla-compatible User-Agent). Not retried: the
+    /// same request gets the same challenge.
+    Challenged { status: reqwest::StatusCode, action: String },
+}
+
+/// Issue 451: the User-Agent every source fetch sends, in the crawler
+/// convention (`Mozilla/5.0 (compatible; <bot>/<version>; +<url>)`). It names
+/// the tool and where to find it, so a source can still tell these requests
+/// apart and refuse them; reqwest sends no User-Agent at all by default, which
+/// TED's WAF answers with a challenge. FTS, DÖE and the ECB accept it too
+/// (checked 2026-09-30).
+pub const USER_AGENT: &str =
+    concat!("Mozilla/5.0 (compatible; tender-db/", env!("CARGO_PKG_VERSION"), "; +https://tenders.zebreus.click)");
+
+/// Issue 451: the refusal an edge WAF put in the origin's place, if this
+/// response is one. A WAF header on a 200/206 is not a refusal.
+fn waf_refusal(status: reqwest::StatusCode, headers: &reqwest::header::HeaderMap) -> Option<Error> {
+    let action = headers.get("x-amzn-waf-action")?;
+    (status != reqwest::StatusCode::OK && status != reqwest::StatusCode::PARTIAL_CONTENT).then(|| {
+        Error::Challenged { status, action: action.to_str().unwrap_or("?").to_owned() }
+    })
 }
 
 impl std::fmt::Display for Error {
@@ -79,6 +103,11 @@ impl std::fmt::Display for Error {
             Error::Db(e) => write!(f, "db: {e}"),
             Error::Unsupported(what) => write!(f, "unsupported: {what}"),
             Error::Malformed(what) => write!(f, "malformed response: {what}"),
+            Error::Challenged { status, action } => write!(
+                f,
+                "refused by the source's bot challenge ({status}, x-amzn-waf-action: {action}): \
+                 the request's User-Agent was not accepted (issue 451)"
+            ),
         }
     }
 }
@@ -689,6 +718,9 @@ pub(crate) async fn get_bytes(client: &reqwest::Client, url: &str) -> Result<Vec
 
 async fn get_once(client: &reqwest::Client, url: &str) -> Result<Vec<u8>, Error> {
     let resp = client.get(url).send().await?;
+    if let Some(refused) = waf_refusal(resp.status(), resp.headers()) {
+        return Err(refused);
+    }
     classify_status(resp.status(), || retry_after_secs(resp.headers()))?;
     Ok(resp.bytes().await?.to_vec())
 }
@@ -792,6 +824,9 @@ async fn download_once(
         req = req.header(reqwest::header::RANGE, format!("bytes={resume_from}-"));
     }
     let mut resp = req.send().await?;
+    if let Some(refused) = waf_refusal(resp.status(), resp.headers()) {
+        return Err(refused);
+    }
 
     let append = classify_status(resp.status(), || retry_after_secs(resp.headers()))?;
 

@@ -136,7 +136,10 @@ async fn main() -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .user_agent(fetch::USER_AGENT)
+        .build()
+        .expect("static fetch-client config cannot fail to build");
 
     let mut failures = 0u32;
     let run = |target: fetch::Target, refetch: bool| {

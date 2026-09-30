@@ -1074,6 +1074,8 @@ impl Supervisor {
     /// on each successful read, so it caps only idle gaps, never total transfer.
     fn fetch_client() -> reqwest::Client {
         reqwest::Client::builder()
+            // Issue 451: TED's WAF challenges a request with no User-Agent.
+            .user_agent(ingest::fetch::USER_AGENT)
             .connect_timeout(std::time::Duration::from_secs(30))
             .read_timeout(std::time::Duration::from_secs(120))
             .build()
