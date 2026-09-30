@@ -1,0 +1,21 @@
+{
+ "cohort": "453-rekey-review-2026-09-30",
+ "verdicts": [
+  {
+   "org_id": 10705447,
+   "identifier": "20802334",
+   "verdict": "wrong",
+   "correct_identifier": "03874867",
+   "confidence": "high",
+   "rationale": "[453 plan review 2026-09-30, 2 adjudicators + critic agree] The 452 reviewer's right number 02802334 is not on the Companies House register (404), nor is the published 20802334. The register's COCHLEAR EUROPE LIMITED is 03874867 (Active, incorporated 10 Nov 1999, 6 Dashwood Lang Road, Addlestone; only previous name FEWAGER LIMITED for its first month). Corrects the 452 census verdict's correct_identifier."
+  },
+  {
+   "org_id": 31565559,
+   "identifier": "GBCOH089491S9",
+   "verdict": "wrong",
+   "correct_identifier": "08949189",
+   "confidence": "high",
+   "rationale": "[453 plan review 2026-09-30, 2 adjudicators + critic agree] The published 089491S9 carries an S for an 8, not a 5: the 452 reviewer's 08949159 is NEW ASSET ALLIANCE LTD, an unrelated Mildenhall consultancy with no previous names and no shared officers. The register's MONTEL CIVIL ENGINEERING LIMITED is 08949189 (incorporated 20 Mar 2014, Worcester). Corrects the 452 census verdict's correct_identifier."
+  }
+ ]
+}

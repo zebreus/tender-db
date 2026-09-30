@@ -1,0 +1,200 @@
+{
+ "judged": [
+  {
+   "org": 13170228,
+   "key": "GB/national/00640611>merge:OC309255",
+   "name": "Robinson Low Francis LLP",
+   "votes": [
+    {
+     "org": 13170228,
+     "decision": "execute",
+     "same_entity": "yes",
+     "reason": "OC309255 is the Robinson Low Francis LLP legal entity. It was incorporated as ROBINSON LOW FRANCIS LLP on 14 Sep 2004, kept that name until 26 Jan 2023, and was then renamed MGAC LLP. The rename came after MGAC took over as designated member in Oct 2021, but the LLP stayed the same legal entity. It is still Active. The wrong number, 00640611, belongs to an unrelated Lincoln property developer founded in 1959: formerly Simons of Lincoln / Simons Developments Ltd, now DEV REALISATIONS (2019) LIMITED and in liquidation. A Companies House name search for 'Robinson Low Francis' returns only OC309255, matched on its previous name. The merge target, org 10820462 'Robinson Low Francis LLP (RLF)', already carries OC309255, so merging org 13170228 into it is correct.",
+     "evidence": [
+      "/company/OC309255 overview: current name MGAC LLP, LLP, Active, incorporated 14 September 2004; previous names: ROBINSON LOW FRANCIS LLP 14 Sep 2004 - 26 Jan 2023",
+      "/company/OC309255/officers: designated members since 11 Oct 2021 are MARK G. ANDERSON CONSULTANTS, INC. (DC, USA) and MGAC UK HOLDINGS LTD (13550760); members from the founding date (e.g. BARKER, Steven Gerald, appointed 14 Sep 2004) resigned later, so it is one continuous LLP that was acquired and renamed",
+      "/company/00640611 overview: DEV REALISATIONS (2019) LIMITED, Private limited, Liquidation, incorporated 28 October 1959, SIC 41100; previous names SIMONS DEVELOPMENTS LIMITED, SIMONS ESTATES LIMITED, SIMONS PROPERTY LIMITED, SIMONS PROPERTY GROUP LIMITED, SIMONS OF LINCOLN (HOLDINGS) LIMITED; no Robinson Low Francis name in its history",
+      "/search/companies?q=Robinson+Low+Francis: the only match is MGAC LLP (OC309255) under 'Matching previous names: ROBINSON LOW FRANCIS LLP'; the other results are unrelated Robinson/Lowe/Francis companies",
+      "Merge target org 10820462 is named 'Robinson Low Francis LLP (RLF)' and carries OC309255, so it is the same entity as org 13170228"
+     ]
+    },
+    {
+     "org": 13170228,
+     "decision": "execute",
+     "same_entity": "yes",
+     "reason": "OC309255 is the same legal entity as Robinson Low Francis LLP. It was renamed MGAC LLP on 26 Jan 2023 and is not a sister, parent or unrelated firm. The register overview shows the LLP was incorporated on 14 Sep 2004 and lists 'ROBINSON LOW FRANCIS LLP' as its previous name from 14 Sep 2004 to 26 Jan 2023. The filing history shows a CERTNM change-of-name certificate issued on 26/01/23, preceded by an LLNM01 notice. That makes it a rename of one LLP, not a new vehicle. The rename fits the officers page: in Oct 2021 the MGAC entities (Mark G. Anderson Consultants Inc. and MGAC UK Holdings Ltd 13550760) became designated members, the same day the RLF-era members resigned. So MGAC acquired the firm and later renamed it, while the registration number stayed the same. RLF Corporate Limited (07264862) was once a corporate member, but it is a separate company with a different name, so it does not compete for this identity. An exact-name search for 'Robinson Low Francis' finds only one register entity that has ever carried that name, OC309255. The wrong number 00640611 is DEV REALISATIONS (2019) LIMITED, formerly the Simons group, which is unrelated. The merge target (org 10820462, 'Robinson Low Francis LLP (RLF)') already holds OC309255, so merging into it is correct.",
+     "evidence": [
+      "https://find-and-update.company-information.service.gov.uk/company/OC309255 -> MGAC LLP, Active, LLP, incorporated 14 September 2004; Previous company names: ROBINSON LOW FRANCIS LLP 14 Sep 2004 - 26 Jan 2023",
+      "https://find-and-update.company-information.service.gov.uk/company/OC309255/filing-history -> 26 Jan 2023 CERTNM 'Company name changed robinson low francis LLP certificate issued on 26/01/23'; LLNM01 Change of name notice",
+      "https://find-and-update.company-information.service.gov.uk/company/OC309255/officers -> founding RLF members appointed 14 Sep 2004 (Barker, Duncan, Harris, Anderson P.R.); MARK G. ANDERSON CONSULTANTS, INC. and MGAC UK HOLDINGS LTD (13550760) appointed designated members 11 Oct 2021, the same date the RLF-era designated members resigned; RLF CORPORATE LIMITED 07264862 was a former corporate member (a separate entity)",
+      "https://find-and-update.company-information.service.gov.uk/search/companies?q=%22Robinson+Low+Francis%22 -> the only entity matching the name is MGAC LLP 'Matching previous names: ROBINSON LOW FRANCIS LLP' OC309255; no other Robinson Low Francis company or LLP",
+      "https://find-and-update.company-information.service.gov.uk/company/00640611 -> DEV REALISATIONS (2019) LIMITED, in liquidation, formerly Simons Developments / Simons of Lincoln (Holdings); unrelated to RLF, which confirms 00640611 is the wrong number"
+     ]
+    }
+   ],
+   "execute": true
+  },
+  {
+   "org": 10705447,
+   "key": "GB/national/20802334>move:02802334",
+   "name": "Cochlear Europe Ltd",
+   "votes": [
+    {
+     "org": 10705447,
+     "decision": "hold",
+     "same_entity": "no",
+     "reason": "The proposed \"right\" number 02802334 is not on the Companies House register: its overview page returned 404 twice. The current \"wrong\" number 20802334 also returns 404. A move onto a number the register does not have cannot be right. Searching the register for \"Cochlear Europe\" finds the entity the org's name denotes: COCHLEAR EUROPE LIMITED, company number 03874867. It is Active, a private limited company incorporated on 10 November 1999, with its registered office at 6 Dashwood Lang Road, Bourne Business Park, Addlestone, Surrey, KT15 2HJ. Its only previous name is FEWAGER LIMITED (10 Nov 1999 to 10 Dec 1999). That history does not connect it to 02802334. Hold this move. The org's correct number appears to be 03874867, not 02802334.",
+     "evidence": [
+      "GET /company/02802334 -> HTTP 404 (page title 'Page not found'), confirmed twice",
+      "GET /company/20802334 -> HTTP 404",
+      "Search q='Cochlear Europe' -> /company/03874867 COCHLEAR EUROPE LIMITED, incorporated 10 November 1999, 6 Dashwood Lang Road, Bourne Business Park, Addlestone, Surrey, KT15 2HJ",
+      "GET /company/03874867 -> 200: name COCHLEAR EUROPE LIMITED, status Active, private limited company, incorporated 10 November 1999, SIC 86900; previous name FEWAGER LIMITED (10 Nov 1999 - 10 Dec 1999)",
+      "Related Cochlear entities in search (not matches): 02702930 COCHLEAR (UK) LIMITED dissolved 18 Feb 2025; 04781208 COCHLEAR RESEARCH AND DEVELOPMENT LIMITED (formerly COCHLEAR ACOUSTICS LIMITED)"
+     ]
+    },
+    {
+     "org": 10705447,
+     "decision": "hold",
+     "same_entity": "no",
+     "reason": "The proposed right number, 02802334, has no company on the register. /company/02802334 returns HTTP 404 (\"Page not found\"), and so does the wrong number, 20802334. A move onto a number that does not exist cannot be correct. A register search for \"Cochlear Europe\" shows that the entity named is COCHLEAR EUROPE LIMITED, company number 03874867. It is Active, a private limited company incorporated on 10 November 1999, with its registered office at 6 Dashwood Lang Road, Bourne Business Park, Addlestone, KT15 2HJ. Its only previous name is FEWAGER LIMITED (10 Nov 1999 to 10 Dec 1999). The reviewer's \"right\" number is wrong as well. The re-key should target 03874867 instead of 02802334.",
+     "evidence": [
+      "GET /company/02802334 -> HTTP 404, title 'Page not found' (proposed right number does not exist)",
+      "GET /company/20802334 -> HTTP 404 (current wrong number also does not exist)",
+      "search?q=Cochlear+Europe -> /company/03874867 COCHLEAR EUROPE LIMITED, incorporated 10 November 1999, 6 Dashwood Lang Road, Bourne Business Park, Addlestone, Surrey, KT15 2HJ",
+      "GET /company/03874867 -> 200: COCHLEAR EUROPE LIMITED, status Active, Private limited Company, SIC 86900, previous name FEWAGER LIMITED (10 Nov 1999 - 10 Dec 1999)",
+      "Other Cochlear companies at the same address (not the named entity): COCHLEAR RESEARCH AND DEVELOPMENT LIMITED 04781208, COCHLEAR (UK) LIMITED 02702930 (dissolved 18 Feb 2025)"
+     ]
+    }
+   ],
+   "execute": false
+  },
+  {
+   "org": 31553642,
+   "key": "GB/national/GBCOH02928020>move:GBCOH05120043",
+   "name": "Begbies Traynor Group plc",
+   "votes": [
+    {
+     "org": 31553642,
+     "decision": "execute",
+     "same_entity": "yes",
+     "reason": "On the register, company 05120043 was named BEGBIES TRAYNOR GROUP PLC from its incorporation on 5 May 2004 until 4 Feb 2026, when it was renamed BTG CONSULTING PLC. It is still Active and is the same legal entity as the org 'Begbies Traynor Group plc'. The only change is the name, so the number stayed the same. The wrong number 02928020 returns 404 on the register, so no company exists under it. The name search for 'Begbies Traynor Group' also points to 05120043 as the company that held that name as a previous name. The other search hits are subsidiaries and LLPs with different names and numbers (for example BTG Begbies Traynor Limited 03032280). Moving the org onto 05120043 is correct.",
+     "evidence": [
+      "GET /company/05120043 -> 200: current name BTG CONSULTING PLC, status Active, Public limited Company, incorporated 5 May 2004, registered office 340 Deansgate, Manchester M3 4LY, SIC 70100 Activities of head offices",
+      "/company/05120043 Previous company names: BEGBIES TRAYNOR GROUP PLC, 05 May 2004 - 04 Feb 2026 (exact match to org name)",
+      "/company/05120043/officers: 20 officers, current directors include TRAYNOR, Richard William, and also FRY Mark Robert, MAY John Michael, TAYLOR Edward Nicholas, STUPPLES Mark, DONALD Mandy; secretary HUMPHREY John Ashton (appointed 2009). This is the continuity you would expect from the Begbies Traynor group parent",
+      "GET /company/02928020 -> 404: no company on the register under the wrong number",
+      "search?q=Begbies Traynor Group: the top result is BTG CONSULTING PLC 05120043, listed with matching previous name BEGBIES TRAYNOR GROUP PLC. The other results are differently named group entities (BTG BEGBIES TRAYNOR LIMITED 03032280, BTG CONSULTING INTERNATIONAL LIMITED 05797849, and several LLPs), none of which was ever named Begbies Traynor Group plc"
+     ]
+    },
+    {
+     "org": 31553642,
+     "decision": "execute",
+     "same_entity": "yes",
+     "reason": "Companies House lists \"BEGBIES TRAYNOR GROUP PLC\" as the previous name of 05120043, from 5 May 2004 to 4 Feb 2026. It changed its name to BTG CONSULTING PLC by certificate of change of name (CERTNM + CONNOT, 04/02/26), so it is the same legal entity under a new name. I checked for a sister company, a new holding company or a scheme-inserted top company that took over the old name, and found none. No company on the register currently carries \"Begbies Traynor Group plc\", and 05120043 is the only entity that ever did. The related entities (BTG Begbies Traynor Limited 03032280, the Begbies Traynor LLPs, BTG Consulting International 05797849) are subsidiaries with their own names, and none was ever called \"Group plc\". The wrong number 02928020 returns 404 on the register.",
+     "evidence": [
+      "/company/05120043 overview: current name BTG CONSULTING PLC, Active, Public limited Company, incorporated 5 May 2004, 340 Deansgate Manchester M3 4LY, SIC 70100 Activities of head offices; Previous company names: BEGBIES TRAYNOR GROUP PLC 05 May 2004 - 04 Feb 2026",
+      "/company/05120043/filing-history: 04 Feb 2026 CERTNM 'Company name changed begbies traynor group PLC certificate issued on 04/02/26' with CONNOT change of name notice; 10 Oct 2025 AA group of companies' accounts to 30 April 2025 (a listed group parent)",
+      "/company/05120043/officers: Richard William TRAYNOR, director appointed 5 May 2004 (the founder, a director since incorporation); John Humphrey secretary since 2009; board unchanged across the rename",
+      "search 'Begbies Traynor Group' / 'BEGBIES TRAYNOR' / quoted 'BEGBIES TRAYNOR GROUP PLC': no company currently named Begbies Traynor Group plc; 05120043 is the only hit whose previous name matches 'BEGBIES TRAYNOR GROUP PLC'; other hits are the group's subsidiaries and LLPs (03032280, OC307989, OC309058, OC306540, OC412043, 05797849), all renamed BTG ... in the same rebrand, plus unrelated Traynor firms",
+      "/company/02928020 returns HTTP 404 (the wrong number is not on the register)"
+     ]
+    }
+   ],
+   "execute": true
+  },
+  {
+   "org": 31565559,
+   "key": "GB/national/GBCOH089491S9>move:GBCOH08949159",
+   "name": "MONTEL CIVIL ENGINEERING LIMITED",
+   "votes": [
+    {
+     "org": 31565559,
+     "decision": "hold",
+     "same_entity": "no",
+     "reason": "The proposed \"right\" number, 08949159, belongs to NEW ASSET ALLIANCE LTD. That is an active management consultancy (SIC 70229) in Mildenhall. Its register page lists no previous company names, and its officers (Agridhiotis, Johnston) have no link to Montel. The stored value 089491S9 is an OCR-style error in which the \"S\" stands for \"8\", not \"5\". The register search for MONTEL CIVIL ENGINEERING LIMITED returns company 08949189. That company is active, incorporated on 20 March 2014, works in civil engineering (SIC 42990) and is based at Shire Business Park, Worcester. Both companies share the same incorporation date and have neighbouring numbers, which is how the wrong guess looked plausible. Moving org 31565559 to 08949159 would attach it to an unrelated legal entity. The correct number is 08949189, so the move key should be GBCOH08949189. Check first whether an existing org already holds that number, because if one does this should be a merge instead.",
+     "evidence": [
+      "GET /company/08949159 -> 200: name NEW ASSET ALLIANCE LTD, status Active, private limited company, incorporated 20 March 2014, registered office Suite A, 82 James Carter Road, Mildenhall IP28 7DE, SIC 70229 (management consultancy); the page has no 'Previous company names' section",
+      "GET /company/08949159/officers -> 2 officers: AGRIDHIOTIS, Vasilios (active director, appointed 20 March 2014) and JOHNSTON, Emma (resigned 8 December 2017); no link to Montel",
+      "GET /company/089491S9 -> 404 (not a valid number)",
+      "GET /search/companies?q=MONTEL CIVIL ENGINEERING -> first result: MONTEL CIVIL ENGINEERING LIMITED 08949189, incorporated 20 March 2014, Suite A & B, Unit 1 Wainwright Road, Shire Business Park, Worcester WR4 9FA",
+      "GET /company/08949189 -> 200: MONTEL CIVIL ENGINEERING LIMITED, Active, incorporated 20 March 2014, SIC 42990 (construction of other civil engineering projects)",
+      "GET /company/08949189/officers -> directors KIRKLAND, Jonathan Edward and ROGERSON, Duncan Fraser, among others; addresses in Worcester and Henwick Mill, a civil engineering operation",
+      "The stored 089491S9 has 'S' in place of '8' (08949189); the planned 08949159 read 'S' as '5' and landed on the neighbouring, unrelated company incorporated the same day"
+     ]
+    },
+    {
+     "org": 31565559,
+     "decision": "hold",
+     "same_entity": "no",
+     "reason": "The proposed number 08949159 belongs to NEW ASSET ALLIANCE LTD, a management consultancy in Mildenhall. It has never been MONTEL CIVIL ENGINEERING LIMITED: its register page lists no previous company names, and it shares no officers with Montel, so it is an unrelated company. The register shows MONTEL CIVIL ENGINEERING LIMITED is company 08949189 (active, civil engineering, Worcester WR4 9FA). The damaged number 089491S9 has its 'S' in the seventh position, and that position should read '8', not '5'. The reviewer read it as '5' and landed on the wrong company. Do not move the org to 08949159. The correct move is to GBCOH08949189.",
+     "evidence": [
+      "GET /company/08949159 -> 200: current name NEW ASSET ALLIANCE LTD, Active, incorporated 20 March 2014, SIC 70229 management consultancy, registered office Suite A, 82 James Carter Road, Mildenhall IP28 7DE; page has no 'Previous company names' section",
+      "GET /company/08949159/officers -> AGRIDHIOTIS, Vasilios (active director since 20 Mar 2014), JOHNSTON, Emma (resigned 2017); none of these are Montel officers",
+      "GET /search/companies?q=MONTEL+CIVIL+ENGINEERING -> top hit 'MONTEL CIVIL ENGINEERING LIMITED 08949189 - Incorporated on 20 March 2014, Suite A & B, Unit 1 Wainwright Road, Shire Business Park, Worcester WR4 9FA'",
+      "GET /company/08949189 -> 200: MONTEL CIVIL ENGINEERING LIMITED, Active, SIC 42990 construction of other civil engineering projects",
+      "GET /company/08949189/officers -> KIRKLAND, Jonathan Edward; ROGERSON, Duncan Fraser; SMALLWOOD, Gary Kingsley; EDWARDS, Jonathan: no overlap with 08949159's officers",
+      "The damaged number 089491S9 has 'S' in the seventh position. Read as '5' it gives 08949159 (wrong company); read as '8' it gives 08949189 (Montel). Both companies were incorporated the same day, so their numbers were issued close together; they are not related"
+     ]
+    }
+   ],
+   "execute": false
+  },
+  {
+   "org": 31537183,
+   "key": "GB/national/GBCOH11465733>merge:GBCOH11465799",
+   "name": "International Healthcare Recruitment LTD",
+   "votes": [
+    {
+     "org": 31537183,
+     "decision": "execute",
+     "same_entity": "yes",
+     "reason": "The register shows 11465799 as the same legal entity the org's name denotes. Its current name is SANCTUS CARE GROUP LIMITED, but from incorporation on 16 Jul 2018 until 27 Aug 2025 it was named INTERNATIONAL HEALTHCARE RECRUITMENT LIMITED. It is a healthcare company (SIC 86102/86900) and is still Active. The wrong number, 11465733, is JADAR CONSULTANCY LIMITED, a Swindon management consultancy with no previous names. It was incorporated the same day with a number only a few digits away, so it looks like a transcription slip. A name search finds only one other company that ever carried this exact name: 06878201, dissolved in 2010, so it cannot plausibly be this supplier. The merge target, org 31537184 (\"International Healthcare Recruitment Ltd\", GBCOH11465799), is the correct entity, so the merge is sound.",
+     "evidence": [
+      "/company/11465799 (HTTP 200): current name SANCTUS CARE GROUP LIMITED, Active, incorporated 16 July 2018, SIC 86102 Medical nursing home activities and 86900 Other human health activities, registered office 24a Unimix House, Abbey Road, London NW10 7TR",
+      "/company/11465799 Previous company names: INTERNATIONAL HEALTHCARE RECRUITMENT LIMITED, 16 Jul 2018 - 27 Aug 2025",
+      "/company/11465799/officers: director Shirhan Mohammed HASSAN appointed 16 July 2018 and still active, so the same control runs through the rename; Kandasamy SURESHKUMAR appointed 4 Aug 2025, around the time of the rename",
+      "/company/11465733 (HTTP 200): JADAR CONSULTANCY LIMITED, Active, incorporated 16 July 2018, SIC 70229 management consultancy, 17 Cloche Way, Swindon SN2 7JL; no 'Previous company names' section at all",
+      "/company/11465733/officers: Roberts family directors at a Swindon address, with no link to healthcare recruitment",
+      "search?q=International Healthcare Recruitment: the only exact-name matches are 11465799, found through its previous name, and 06878201, which was dissolved on 24 August 2010; the rest are differently named companies such as Kate Cowhig International Healthcare Recruitment and Fenwick Healthcare International Recruitment",
+      "Merge target org 31537184 already carries GBCOH11465799 under the name 'International Healthcare Recruitment Ltd', which matches the register's previous name"
+     ]
+    },
+    {
+     "org": 31537183,
+     "decision": "execute",
+     "same_entity": "yes",
+     "reason": "Company 11465799 is the same legal entity as \"International Healthcare Recruitment Ltd\", just renamed. It was incorporated on 16 Jul 2018 as INTERNATIONAL HEALTHCARE RECRUITMENT LIMITED and changed its name to SANCTUS CARE GROUP LIMITED by resolution on 21 Aug 2025 (certificate dated 27 Aug 2025). I looked for a sister company, parent or unrelated firm with this name and found none. The only other company with the exact name is 06878201, which was set up in 2009 and dissolved in August 2010, too early for this supplier. The wrong number 11465733 (JADAR CONSULTANCY LIMITED, Swindon, a management consultancy) was registered on the same day as 11465799 and differs only in the last two digits, which looks like a typo for 11465799. A change of control in Aug 2025 (new owner Your Venture Group Ltd, one new director) does not change the company number or legal entity. The merge target org 31537184 already carries GBCOH11465799 under the same name, so merging into it is correct.",
+     "evidence": [
+      "/company/11465799 overview: current name SANCTUS CARE GROUP LIMITED, Active, incorporated 16 July 2018, SIC 86102/86900. Previous company names: INTERNATIONAL HEALTHCARE RECRUITMENT LIMITED, 16 Jul 2018 - 27 Aug 2025",
+      "/company/11465799/filing-history: 27 Aug 2025 CERTNM 'Company name changed international healthcare recruitment LIMITED, certificate issued on 27/08/25', NM01 change of name by resolution, RES15 resolution on 2025-08-21",
+      "/company/11465799/officers: HASSAN, Shirhan Mohammed has been a director since incorporation (16 Jul 2018). Sureshkumar was appointed on 4 Aug 2025 and Your Venture Group Ltd became the person with significant control on 4 Aug 2025. Ownership changed; the entity did not",
+      "/company/11465733: JADAR CONSULTANCY LIMITED, 17 Cloche Way, Swindon, SIC 70229 management consultancy, Roberts family directors. Unrelated to healthcare recruitment; incorporated the same day as 11465799, consistent with a digit typo",
+      "search?q=International Healthcare Recruitment: the only exact-name matches are 11465799 (as a previous name) and 06878201 (incorporated 15 Apr 2009, dissolved 24 Aug 2010, no SIC filed). No other live company carries the name",
+      "Merge target org 31537184 already carries identifier GBCOH11465799 with name 'International Healthcare Recruitment Ltd'"
+     ]
+    }
+   ],
+   "execute": true
+  }
+ ],
+ "critic": {
+  "suspicious": [
+   {
+    "org": 31572377,
+    "key": "GB/national/GBCOH05724865>merge:04557701",
+    "why": "Cross Keys Homes (row 72, auto-supported). The right number 04557701 is marked 'Converted / Closed' on the register. It closed on 17 Oct 2017, and the filing history shows 'RES13 Convert to rs' and 'Forms b and z convert to rs'. Today the organisation is CROSS KEYS HOMES LIMITED, registered society RS007643 (FCA mutuals register). This org (id 31572377, so a recent FTS-era record) and the merge target 15692685 are both the current housing association, so executing would pin a live supplier onto a number that closed in 2017. Hold and re-plan onto RS007643, and re-key target 15692685 the same way. The two orgs are the same organisation, so a merge between them is fine; the problem is the identifier."
+   },
+   {
+    "org": 31565559,
+    "key": "GB/national/GBCOH089491S9>move:GBCOH08949159",
+    "why": "MONTEL CIVIL ENGINEERING LIMITED (row 82, not supported). The planned number 08949159 is NEW ASSET ALLIANCE LTD, a Mildenhall management consultancy with no previous names, so it is a different entity. The published '089491S9' has an 'S' that stands for '8', not '5'. The register search shows MONTEL CIVIL ENGINEERING LIMITED is 08949189, incorporated 20 Mar 2014, Worcester. Hold; the real number is 08949189."
+   },
+   {
+    "org": 10705447,
+    "key": "GB/national/20802334>move:02802334",
+    "why": "Cochlear Europe Ltd (row 50, not supported). The planned number 02802334 returns 404 on the register, so no entity exists there. The register search shows COCHLEAR EUROPE LIMITED is 03874867, incorporated 10 Nov 1999, Addlestone. Hold; the real number is 03874867."
+   }
+  ],
+  "notes": "I fetched the register overview (name, status, incorporation date, previous names) for every right and wrong number in all 158 rows. For suspect rows I also read officers, persons with significant control, filing history and name searches. The per-row digest is at /tmp/claude-0/-home-user-tender-db/db778034-a398-5c0e-a02f-5fafe44df5b4/scratchpad/ch/batch.txt.\n\nOf the 136 auto-supported rows, only Cross Keys Homes (row 72) should be held. In the others the right number carries the org's name now or carried it before, and the wrong number is a digit typo, an O/0 or SC/00 mix-up, a charity number (OSCR SC0xxxxx for rows 145 and 147\u2013151, which move to CS/RC numbers), or an unrelated company.\n\nRows I checked and kept as execute:\n- **Dugard CNC (row 58):** 16230009 was incorporated in Feb 2025 as Forward CNC Machines and renamed Dugard CNC on 7 Jul 2025. The old DUGARD LTD 04201197, at the same address, was dormant and dissolved on 22 Jul 2025. The org's name only exists after Jul 2025, so the right number fits. It would be wrong only if the org also has notices from before 2025.\n- **CO-OP WHOLESALE (row 68):** 00980790 was NISA RETAIL LIMITED until 27 Mar 2025. The similarly named wrong company, COOP WHOLESALE LTD 04801081, was dissolved in 2012, so it cannot be the supplier on FTS-era records.\n- **Royal Bank of Scotland (row 152):** SC083026 was Adam & Company until 29 Apr 2018. The old RBS plc is SC090312, now NatWest Markets. The published SC083027 sits next to SC083026, so the post-2018 bank was meant.\n- **Spirit Medical (row 42):** the wrong number, CARELIDE UK 11952574, used Spirit Medical's Little Eaton address from 2019 to 2023. The two belong to different groups (Spirit Medical Holdings vs Carelide/Aguettant), and the org name means Spirit Medical 05515274.\n- **Cell Therapy Catapult (row 28):** the merge target is named 'Cell & Gene Therapy Ltd'. That is also the exact name of an unrelated company, 09415326, and a separate CELL AND GENE THERAPY CATAPULT 10016023 exists. The target already carries 07964711, the Catapult's trading company, so I see the merge as correct.\n- **Hogan Lovells (row 137):** renamed from HOGAN LOVELLS INTERNATIONAL LLP on 30 Jun 2026; same entity.\n- **Right numbers in liquidation or dissolved:** Oculus Building Consultancy (row 85, 03414863) is in liquidation and Roalco (row 37, 01328878) was dissolved in 2022. Each is the only company of that name, so the number is still the entity.\n- **Seaham Care (row 119):** FC031512 is the UK establishment of an Isle of Man company, which also appears on the overseas entities register as OE027628.\n\nMost of the unsupported rows are safe to execute because the register shows the same entity:\n- **Renamed after the org's name:** Robinson Low Francis LLP is OC309255, renamed MGAC LLP on 26 Jan 2023. Begbies Traynor Group plc is 05120043, renamed BTG CONSULTING PLC on 4 Feb 2026. International Healthcare Recruitment is 11465799, renamed SANCTUS CARE GROUP on 27 Aug 2025. Perk UK is 03770815, which was CLICK TRAVEL LTD until 2022.\n- **Same entity under a previous name:** Weston Williamson (OC375867) and Goshen (09044858).\n- **Trading names or typos:** Blue Mountain, LNJ, Evisa, ICS/Xyla, Angel Care, RJ McLeod, St Annes, Choices, Assist Homecare, WDR, Mainstream Fleet, DJS Research and RSK Environment all look like one entity.\n- **Bridging Gaps (row 131):** 05989754 shares its Slough address with the dissolved BRIDGING GAPS FOSTERING AGENCY LTD 12613367 (dissolved Oct 2022), so it plausibly fits.\n\nThe two unsupported rows to hold are Montel and Cochlear, listed above with their real numbers."
+ }
+}

@@ -1,0 +1,474 @@
+0 [11999378] ScottisPower Energy Retail Ltd sup=True
+   R SC190287 SCOTTISHPOWER ENERGY RETAIL LIMITED Active inc=14 October 1998  type=Private limited Company prev=[SCOTTISHPOWER ENERGY SUPPLY LIMITED 14 Dec 1998 - 11 May 2001 RANDOTTE (NO. 464) LIMITED 14 Oct 1998 - 14 Dec 1998]
+   W 00190287 None None inc=None  prev=[]
+1 [12266064] CMS Cameron McKenna Nabarro Olswang LLP sup=True
+   R OC310335 CMS CAMERON MCKENNA NABARRO OLSWANG LLP Active inc=2 December 2004  type=Limited liability partnership prev=[CMS CAMERON MCKENNA LLP 02 Dec 2004 - 02 May 2017]
+   W 00413907 None None inc=None  prev=[]
+2 [13170228] Robinson Low Francis LLP sup=False
+   R OC309255 MGAC LLP Active inc=14 September 2004  type=Limited liability partnership prev=[ROBINSON LOW FRANCIS LLP 14 Sep 2004 - 26 Jan 2023]
+   W 00640611 DEV REALISATIONS (2019) LIMITED Liquidation inc=28 October 1959  prev=[SIMONS DEVELOPMENTS LIMITED 08 Jul 2004 - 15 Jun 2020 SIMONS ESTATES LIMITED 05 Jun 2000 - 08 Jul 2004 SIMONS PROPERTY LIMITED 26 Mar 1990 - 05 Jun 2000 SIMONS PROPERTY GROUP LIMITED 31 Oct 1988 - 26 Mar 1990 SIMONS OF LINCOLN (HOLDINGS) LIMITED 28 Oct 1959 - 31 Oct 1988]
+3 [14146107] Personnel Hygiene Services Ltd sup=True
+   R 00770813 PERSONNEL HYGIENE SERVICES LIMITED Active inc=14 August 1963  type=Private limited Company prev=[]
+   W 00779813 None None inc=None  prev=[]
+4 [22654958] Rolls-Royce Plc sup=True
+   R 01003142 ROLLS-ROYCE PLC Active inc=23 February 1971  type=Public limited Company prev=[ROLLS-ROYCE LIMITED 21 Mar 1977 - 01 May 1986 ROLLS-ROYCE (1971) LIMITED 23 Feb 1971 - 21 Mar 1977]
+   W 01006142 BLUE DIAMOND SERVICES LIMITED Dissolved inc=29 March 1971 Dissolved on 4 July 2016 prev=[]
+5 [6769661] Post Office Limited sup=True
+   R 02154540 POST OFFICE LIMITED Active inc=13 August 1987  type=Private limited Company prev=[POST OFFICE COUNTERS LTD 13 Aug 1987 - 01 Oct 2001]
+   W 01254540 None None inc=None  prev=[]
+6 [11516306] Gasway Services Limited sup=True
+   R 04158628 GASWAY SERVICES LIMITED Active inc=12 February 2001  type=Private limited Company prev=[]
+   W 01458628 RUSS BERRIE (HOLDINGS) LIMITED Dissolved inc=2 November 1979 Dissolved on 2 April 2013 prev=[RUSS BERRIE (U.K.) LIMITED 31 Dec 1980 - 31 Dec 1981 KORMET LIMITED 02 Nov 1979 - 31 Dec 1980]
+7 [16469211] Harvey Nash Ltd sup=True
+   R 02202476 HARVEY NASH LIMITED Active inc=3 December 1987  type=Private limited Company prev=[HARVEY NASH PLC 17 Jul 1992 - 02 Jan 2019 HARVEY NASH CO LTD 20 Jan 1988 - 17 Jul 1992 HARVEY NASH CO LTD 20 Jan 1988 - 17 Jul 1992 EMPSON LIMITED 03 Dec 1987 - 20 Jan 1988]
+   W 02202746 None None inc=None  prev=[]
+8 [12595898] The Financial Times Ltd sup=True
+   R 00227590 FINANCIAL TIMES LIMITED(THE) Active inc=26 January 1928  type=Private limited Company prev=[]
+   W 02459755 None None inc=None  prev=[]
+9 [16150156] Savills (UK) Ltd sup=True
+   R 02605138 SAVILLS (UK) LIMITED Active inc=25 April 1991  type=Private limited Company prev=[SAVILLS (L&P) LIMITED 29 Dec 2004 - 31 Dec 2012 FPDSAVILLS LIMITED 01 Jan 1998 - 29 Dec 2004 SAVILLS LAND & PROPERTY LIMITED 04 Mar 1996 - 01 Jan 1998 SAVILLS AGRICULTURAL & RESIDENTIAL LIMITED 31 Jul 1991 - 04 Mar 1996 HAPPYROUND LIMITED 25 Apr 1991 - 31 Jul 1991]
+   W 02605139 None None inc=None  prev=[]
+10 [9729494] Fixatex Limited sup=True
+   R 03998714 FIXATEX LIMITED Active inc=22 May 2000  type=Private limited Company prev=[]
+   W 02791975 ELECHECK (E.S.T.) LIMITED Dissolved inc=19 February 1993 Dissolved on 24 March 2021 prev=[]
+11 [14449014] Leco Instruments UK Ltd sup=True
+   R 01125402 LECO INSTRUMENTS (U.K.) LIMITED Active inc=30 July 1973  type=Private limited Company prev=[]
+   W 03116801 ELEMENT MATERIALS TECHNOLOGY LABORATORY INSTRUMENTATION UK LIMITED Active inc=20 October 1995  prev=[ANATUNE LIMITED 20 Oct 1995 - 01 Sep 2022]
+12 [9894657] Rufus Leonard Limited sup=True
+   R 03348509 RUFUS LEONARD LIMITED Active inc=10 April 1997  type=Private limited Company prev=[R.L. DESIGN LIMITED 29 Apr 1998 - 08 Sep 2003 FARRINGDON DESIGN LIMITED 10 Apr 1997 - 29 Apr 1998]
+   W 03448509 ADVANCE AUTO CENTRE LIMITED Active inc=13 October 1997  prev=[AVIK LIMITED 13 Oct 1997 - 06 Nov 1997]
+13 [14622692] Jute Trading Ltd sup=True
+   R 05454595 JUTE TRADING LTD Active inc=17 May 2005  type=Private limited Company prev=[]
+   W 04020746 APEX PRINT & PROMOTION LIMITED Active inc=23 June 2000  prev=[PROMOTION SOURCING LIMITED 23 Jun 2000 - 07 Mar 2003]
+14 [12457016] Bayrose Ltd sup=True
+   R 04531389 BAYROSE LIMITED Active inc=10 September 2002  type=Private limited Company prev=[]
+   W 04534389 LAMBDA ACCOUNTS LIMITED Active inc=13 September 2002  prev=[]
+15 [16569995] BDO LLP sup=True
+   R OC305127 BDO LLP Active inc=18 July 2003  type=Limited liability partnership prev=[BDO STOY HAYWARD LLP 18 Jul 2003 - 05 Oct 2009]
+   W 04563613 ALEX HOUSE LIMITED Active inc=15 October 2002  prev=[]
+16 [17237476] Bank View Hire Ltd sup=True
+   R 01989052 BANK VIEW HIRE LIMITED Active inc=13 February 1986  type=Private limited Company prev=[]
+   W 04989052 HOME CARE HAIR & BEAUTY LIMITED Active inc=9 December 2003  prev=[]
+17 [12336530] Firmus Energy (Supply) Limited sup=True
+   R 05369108 FIRMUS ENERGY (SUPPLY) LIMITED Active inc=18 February 2005  type=Private limited Company prev=[BGE (NI) SUPPLY LIMITED 17 Mar 2005 - 04 May 2006 OFFICEMILE LIMITED 18 Feb 2005 - 17 Mar 2005]
+   W 05369180 INTENSE PAINT AND DESIGN WINDOW SYSTEMS LIMITED Dissolved inc=18 February 2005 Dissolved on 1 October 2013 prev=[WINDOW WORX NORTHANTS LIMITED 18 Feb 2005 - 24 Mar 2011]
+18 [17082775] Ashdale Engineering UK Ltd sup=True
+   R 06013500 ASHDALE ENGINEERING UK LTD Active inc=29 November 2006  type=Private limited Company prev=[]
+   W 05622600 BUREAU VERITAS UK HOLDINGS LIMITED Active inc=15 November 2005  prev=[BUREAU VERITAS UK LIMITED 13 Mar 2006 - 16 Jun 2006 3472ND SINGLE MEMBER SHELF TRADING COMPANY LIMITED 15 Nov 2005 - 13 Mar 2006]
+19 [17333545] RSK Environment Ltd sup=False
+   R SC115530 RSK ENVIRONMENT LIMITED Active inc=11 January 1989  type=Private limited Company prev=[RSK ENSR ENVIRONMENT LIMITED 03 Apr 2003 - 22 Jan 2007 R.S.K. ENVIRONMENT LIMITED 18 May 1989 - 03 Apr 2003 TAMAS LIMITED 11 Jan 1989 - 18 May 1989]
+   W 05837803 RSK LIMITED Dissolved inc=6 June 2006 Dissolved on 11 August 2026 prev=[]
+20 [21287757] Blue Mountain Airconditioning Limited sup=False
+   R 05974241 BLUE MOUNTAIN AIR CONDITIONING LTD Active inc=23 October 2006  type=Private limited Company prev=[]
+   W 05924741 CONTINENTAL DELIVERIES DIRECT LIMITED Active inc=5 September 2006  prev=[]
+21 [11314816] C&C Training Ltd sup=True
+   R 06278228 C&C TRAINING LIMITED Active inc=13 June 2007  type=Private limited Company prev=[]
+   W 06278226 CONSULTANTS AT HART LTD Active inc=13 June 2007  prev=[]
+22 [23642325] Imagemakers Design & Consultancy Ltd sup=True
+   R 07062722 IMAGEMAKERS DESIGN AND CONSULTANCY LIMITED Active inc=31 October 2009  type=Private limited Company prev=[]
+   W 06915233 YOUR CLAIMS (UK) LTD Dissolved inc=26 May 2009 Dissolved on 11 January 2011 prev=[]
+23 [15759810] BDO LLP sup=True
+   R OC305127 BDO LLP Active inc=18 July 2003  type=Limited liability partnership prev=[BDO STOY HAYWARD LLP 18 Jul 2003 - 05 Oct 2009]
+   W 07074202 MONITOR CONSULTANCY LTD Dissolved inc=12 November 2009 Dissolved on 25 April 2017 prev=[]
+24 [22953695] BRAINBOX LTD sup=True
+   R 07288205 BRAINBOX LTD Active inc=17 June 2010  type=Private limited Company prev=[ROGUE RESOLUTIONS LIMITED 17 Jun 2010 - 01 Apr 2019]
+   W 07288208 STEP2708 LTD Dissolved inc=17 June 2010 Dissolved on 31 January 2012 prev=[]
+25 [13778438] City West Support Services Ltd sup=True
+   R 07320590 CITY WEST SUPPORT SERVICES LIMITED Active inc=20 July 2010  type=Private limited Company prev=[]
+   W 07329005 DISASTER RECOVERY DOCTOR LTD Dissolved inc=28 July 2010 Dissolved on 9 October 2012 prev=[]
+26 [12315546] Penny Lane Builders Limited sup=True
+   R 03157805 PENNY LANE BUILDERS LIMITED Active inc=12 February 1996  type=Private limited Company prev=[]
+   W 07923661 COMERA POWER LIMITED Active inc=25 January 2012  prev=[PERFECT GREEN SOLAR LIMITED 02 Aug 2013 - 26 Mar 2019 PG MARITIME SERVICES LTD 25 Jan 2012 - 02 Aug 2013]
+27 [15688066] DJS Research Ltd sup=False
+   R 05494158 DJS RESEARCH LIMITED Active inc=29 June 2005  type=Private limited Company prev=[]
+   W 07952979 DJS (UK) LIMITED Dissolved inc=16 February 2012 Dissolved on 3 March 2025 prev=[JUDANWOOD LIMITED 16 Feb 2012 - 27 Mar 2012]
+28 [13819773] Cell Therapy Catapult Ltd sup=True
+   R 07964711 CELL THERAPY CATAPULT LIMITED Active inc=24 February 2012  type=Private company limited by guarantee without share capital prev=[]
+   W 07964771 ZIPEE LIMITED Dissolved inc=24 February 2012 Dissolved on 22 July 2014 prev=[]
+29 [23359213] Mach Machine Tools Limited sup=True
+   R 08672390 MACH MACHINE TOOLS LIMITED Active inc=2 September 2013  type=Private limited Company prev=[]
+   W 08672590 JODWELL LIMITED Dissolved inc=2 September 2013 Dissolved on 23 August 2016 prev=[]
+30 [16340106] Goshen Multiservices Ltd sup=False
+   R 09044858 GOSHEN MULTISERVICES (UNIVERSAL SUPPORT SERVICES GROUP) LTD Active inc=16 May 2014  type=Private limited Company prev=[GOSHEN MULTI-SERVICES LTD 27 Apr 2020 - 07 Apr 2025 GOSHEN MULTI-SERVICES GROUP (E20 RESOURCE) LIMITED 12 Feb 2018 - 27 Apr 2020 E20 RESOURCE SPECIALIST LTD 17 Dec 2015 - 12 Feb 2018 ISOH LTD 30 Sep 2014 - 17 Dec 2015 ISOH CLEAN LIMITED 16 May 2014 - 30 Sep 2014]
+   W 09044840 LOOKRICH LTD Active inc=16 May 2014  prev=[]
+31 [13171870] Technical Control Systems Limited sup=True
+   R 00950111 TECHNICAL CONTROL SYSTEMS LIMITED Active inc=17 March 1969  type=Private limited Company prev=[]
+   W 09050111 BADGER BLACK UK LTD. Active inc=21 May 2014  prev=[TRY-TECH GADGETS LTD. 21 May 2014 - 09 Sep 2015]
+32 [13576189] RSK ADAS Ltd sup=True
+   R 10486936 RSK ADAS LIMITED Active inc=18 November 2016  type=Private limited Company prev=[]
+   W 09470688 RSK AGENCIES LTD Dissolved inc=4 March 2015 Dissolved on 12 July 2016 prev=[]
+33 [12334819] Gas Works (Hull) Limited sup=True
+   R 09973459 GAS WORKS (HULL) LIMITED Active inc=27 January 2016  type=Private limited Company prev=[]
+   W 09972459 KRISSK LIMITED Dissolved inc=27 January 2016 Dissolved on 7 November 2023 prev=[]
+34 [14487707] Landau Ltd sup=True
+   R 03084746 LANDAU LIMITED Active inc=27 July 1995  type=Private company limited by guarantee without share capital prev=[LANDAU CONSULTANTS LIMITED 27 Jul 1995 - 08 Jun 2004]
+   W 10008330 ECOSYS LIMITED Active inc=16 February 2016  prev=[]
+35 [14080558] Paragon Customer Communications Ltd sup=True
+   R 07262428 PARAGON CUSTOMER COMMUNICATIONS LIMITED Active inc=24 May 2010  type=Private limited Company prev=[DST OUTPUT LIMITED 22 Jun 2012 - 05 May 2017 INNOVATIVE OUTPUT SOLUTIONS LIMITED 07 Jun 2010 - 22 Jun 2012 OUTPUT TECHNOLOGIES LIMITED 24 May 2010 - 07 Jun 2010]
+   W 10013021 DJW COTTON CONSULTING LIMITED Active inc=18 February 2016  prev=[]
+36 [12342117] Mainstream Fleet Ltd T/A C&S Motor Group sup=False
+   R 03365607 MAINSTREAM FLEET LIMITED Active inc=6 May 1997  type=Private limited Company prev=[MAINSTREAM HAULAGE LIMITED 06 May 1997 - 03 Oct 1997]
+   W 10313218 C & S MOTORS LTD Dissolved inc=4 August 2016 Dissolved on 15 October 2019 prev=[]
+37 [8997529] Roalco Limited sup=True
+   R 01328878 ROALCO LIMITED Dissolved inc=6 September 1977 Dissolved on 26 October 2022 type=Private limited Company prev=[]
+   W 10328878 JS CASE MANAGEMENT LIMITED Dissolved inc=15 August 2016 Dissolved on 23 January 2018 prev=[]
+38 [10127526] Border to Coast Pensions Partnership Limited sup=True
+   R 10795539 BORDER TO COAST PENSIONS PARTNERSHIP LIMITED Active inc=31 May 2017  type=Private limited Company prev=[]
+   W 10785539 LEAP COLLECTIVE LIMITED Dissolved inc=23 May 2017 Dissolved on 9 July 2019 prev=[]
+39 [16654278] Real Imaging Ltd sup=True
+   R 09119129 REAL IMAGING LTD Active inc=7 July 2014  type=Private limited Company prev=[]
+   W 11070552 FNL GLOBAL LTD Dissolved inc=17 November 2017 Dissolved on 13 August 2019 prev=[]
+40 [16713545] Rydal Communications Ltd sup=True
+   R 06738960 RYDAL COMMUNICATIONS LTD Active inc=3 November 2008  type=Private limited Company prev=[]
+   W 11136410 POWERPLUS GROUP (PPG) LTD Liquidation inc=8 January 2018  prev=[POWERPLUS ELECTRICAL LIMITED 08 Jan 2018 - 11 Oct 2019]
+41 [16440433] L N J Construction Services Ltd sup=False
+   R 11905889 LNJ CONSTRUCTION SERVICES LTD Active inc=26 March 2019  type=Private limited Company prev=[]
+   W 11925889 DICKER HALT LTD Dissolved inc=4 April 2019 Dissolved on 19 January 2021 prev=[]
+42 [17562020] Spirit Medical Ltd sup=True
+   R 05515274 SPIRIT MEDICAL LIMITED Active inc=21 July 2005  type=Private limited Company prev=[EDGER 512 LIMITED 21 Jul 2005 - 05 Aug 2005]
+   W 11952574 CARELIDE UK LIMITED Active inc=17 April 2019  prev=[]
+43 [11518254] Atamis Ltd sup=True
+   R 06998952 ATAMIS LTD Active inc=24 August 2009  type=Private limited Company prev=[]
+   W 12304051 VISION POINT RESOURCES LTD Dissolved inc=7 November 2019 Dissolved on 15 April 2025 prev=[]
+44 [11678031] Weedfree on Track Ltd sup=True
+   R 04338786 WEEDFREE ON TRACK LIMITED Active inc=12 December 2001  type=Private limited Company prev=[]
+   W 12501617 RASSAU AND TAFARNAUBACH INDUSTRIAL ESTATES BUSINESS IMPROVEMENT DISTRICT LTD Dissolved inc=6 March 2020 Dissolved on 21 June 2022 prev=[]
+45 [13164827] Added Security Technology Ltd sup=True
+   R 03048064 ADDED SECURITY TECHNOLOGY LIMITED Active inc=20 April 1995  type=Private limited Company prev=[]
+   W 13048064 UNISON HOUSE LIMITED Dissolved inc=27 November 2020 Dissolved on 13 December 2022 prev=[]
+46 [15242246] Stena Line Ltd sup=True
+   R 01402237 STENA LINE LIMITED Active inc=28 November 1978  type=Private limited Company prev=[STENA SEALINK LIMITED 16 Nov 1992 - 06 Nov 1995 SEALINK STENA LINE LIMITED 11 Nov 1991 - 16 Nov 1992 SEALINK U.K. LIMITED 28 Nov 1978 - 11 Nov 1991]
+   W 14002237 WAVE HAND SURGERY LTD Active inc=25 March 2022  prev=[]
+47 [15014969] Marsh Ltd sup=True
+   R 01507274 MARSH LIMITED Active inc=11 July 1980  type=Private limited Company prev=[J&H MARSH & MCLENNAN LTD. 01 Oct 1997 - 01 Jul 1999 C.T. BOWRING & CO. LIMITED 31 Dec 1982 - 01 Oct 1997 MARCLEN LIMITED 11 Jul 1980 - 31 Dec 1982]
+   W 15072704 RMD LILY LIMITED Dissolved inc=15 August 2023 Dissolved on 21 January 2025 prev=[]
+48 [14766047] Pharmacosmos UK Ltd sup=True
+   R 03104505 PHARMACOSMOS UK LIMITED Active inc=20 September 1995  type=Private limited Company prev=[VITALINE PHARMACEUTICALS (UK) LIMITED 10 Oct 1995 - 01 Aug 2011 SPOTLEASE LIMITED 20 Sep 1995 - 10 Oct 1995]
+   W 15517085 KOBYHOMES LTD Dissolved inc=23 February 2024 Dissolved on 7 April 2026 prev=[]
+49 [12595897] The Financial Times Ltd sup=True
+   R 00227590 FINANCIAL TIMES LIMITED(THE) Active inc=26 January 1928  type=Private limited Company prev=[]
+   W 17161281 GREEN ORCHID HEALTHCARE SERVICES LIMITED Active inc=16 April 2026  prev=[]
+50 [10705447] Cochlear Europe Ltd sup=False
+   R 02802334 None None inc=None  type=None prev=[]
+   W 20802334 None None inc=None  prev=[]
+51 [15719577] Access UK Ltd sup=True
+   R 02343760 ACCESS UK LTD Active inc=6 February 1989  type=Private limited Company prev=[ACCESS ACCOUNTING LIMITED 06 Feb 1989 - 01 Jul 2009]
+   W 23437608 None None inc=None  prev=[]
+52 [31588105] Aerzen Machines Ltd sup=True
+   R 01134139 AERZEN MACHINES LIMITED Active inc=13 September 1973  type=Private limited Company prev=[]
+   W 00113413 None None inc=None  prev=[]
+53 [31536053] Trustmarque Solutions Ltd sup=True
+   R 02183240 TRUSTMARQUE SOLUTIONS LIMITED Active inc=26 October 1987  type=Private limited Company prev=[INTERNET SOFTWARE CORPORATION LIMITED 25 Nov 1999 - 24 Jul 2001 INFOBANK SOFTWARE CORPORATION PLC 09 Jun 1997 - 25 Nov 1999 SOFTWARE CORPORATION PLC 07 Jun 1994 - 09 Jun 1997 THE SOFTWARE CORPORATION LIMITED 29 Dec 1987 - 07 Jun 1994 ROTHMEL LIMITED 26 Oct 1987 - 29 Dec 1987]
+   W 01283240 None None inc=None  prev=[]
+54 [31568106] AECOM Limited sup=True
+   R 01846493 AECOM LIMITED Active inc=6 September 1984  type=Private limited Company prev=[FABER MAUNSELL LIMITED 07 Mar 2005 - 28 Apr 2009 FABERMAUNSELL LIMITED 04 Mar 2002 - 07 Mar 2005 MAUNSELL LIMITED 22 Jan 2002 - 04 Mar 2002 FABERMAUNSELL LIMITED 16 Jan 2002 - 22 Jan 2002 MAUNSELL LIMITED 01 Jul 1997 - 16 Jan 2002 G. MAUNSELL & PARTNERS LIMITED 06 Sep 1984 - 01 Jul 1997]
+   W 01513016 GSF (LONDON) LTD Active inc=18 August 1980  prev=[LONDON INDEPENDENT OFFICE CLEANING LIMITED 10 Mar 1982 - 07 Jan 2005 INDEPENDENT LIMITED 18 Aug 1980 - 10 Mar 1982]
+55 [31580430] Wessex Archaeology Ltd sup=True
+   R 01712772 WESSEX ARCHAEOLOGY LIMITED Active inc=6 April 1983  type=Private company limited by guarantee without share capital prev=[TRUST FOR WESSEX ARCHAEOLOGY 06 Apr 1983 - 16 Feb 2005]
+   W 01712722 None None inc=None  prev=[]
+56 [31575739] Savills UK sup=True
+   R 02605138 SAVILLS (UK) LIMITED Active inc=25 April 1991  type=Private limited Company prev=[SAVILLS (L&P) LIMITED 29 Dec 2004 - 31 Dec 2012 FPDSAVILLS LIMITED 01 Jan 1998 - 29 Dec 2004 SAVILLS LAND & PROPERTY LIMITED 04 Mar 1996 - 01 Jan 1998 SAVILLS AGRICULTURAL & RESIDENTIAL LIMITED 31 Jul 1991 - 04 Mar 1996 HAPPYROUND LIMITED 25 Apr 1991 - 31 Jul 1991]
+   W 02065138 None None inc=None  prev=[]
+57 [31582949] Just Teachers sup=True
+   R 05355195 JUST TEACHERS LIMITED Active inc=7 February 2005  type=Private limited Company prev=[]
+   W 02408326 INTERACTION RECRUITMENT PLC Active inc=26 July 1989  prev=[INTERACTION RECRUITMENT LIMITED 15 Jul 2005 - 07 Sep 2005 INTERACTION RECRUITMENT PLC 01 Aug 2002 - 15 Jul 2005 SPECIALIST RECRUITMENT GROUP PLC 13 Apr 1995 - 01 Aug 2002 UKUS LIMITED 13 Sep 1989 - 13 Apr 1995 BOOSTRANGE LIMITED 26 Jul 1989 - 13 Sep 1989]
+58 [31563211] Dugard CNC Limited sup=True
+   R 16230009 DUGARD CNC LIMITED Active inc=5 February 2025  type=Private limited Company prev=[FORWARD CNC MACHINES LIMITED 05 Feb 2025 - 07 Jul 2025]
+   W 02509188 HUGGARD Active inc=6 June 1990  prev=[HUGGARD (CARING FOR HOMELESS) 20 Aug 2007 - 28 Nov 2007 CARDIFF ACTION FOR SINGLE HOMELESS 06 Jun 1990 - 20 Aug 2007]
+59 [31555756] WDR Ltd (CORRECT COMPANY REG 02625137) sup=False
+   R 02625137 WDR LIMITED Active inc=28 June 1991  type=Private limited Company prev=[WDR TRAINING AND CONSULTANCY SERVICES LIMITED 13 Aug 1992 - 31 Jan 2001 MBS 86 LIMITED 28 Jun 1991 - 13 Aug 1992]
+   W 02621537 None None inc=None  prev=[]
+60 [31553642] Begbies Traynor Group plc sup=False
+   R 05120043 BTG CONSULTING PLC Active inc=5 May 2004  type=Public limited Company prev=[BEGBIES TRAYNOR GROUP PLC 05 May 2004 - 04 Feb 2026]
+   W 02928020 None None inc=None  prev=[]
+61 [31560288] Reed Talent Solutions Ltd sup=True
+   R 11875450 REED TALENT SOLUTIONS LIMITED Active inc=11 March 2019  type=Private limited Company prev=[]
+   W 02976136 CONSULTANCY UK LIMITED Active inc=7 October 1994  prev=[]
+62 [31580433] Cotswold Archaeology sup=True
+   R 02362531 COTSWOLD ARCHAEOLOGY LIMITED Active inc=17 March 1989  type=Private company limited by guarantee without share capital prev=[COTSWOLD ARCHAEOLOGICAL TRUST LIMITED 17 Mar 1989 - 02 Aug 2011]
+   W 03262531 None None inc=None  prev=[]
+63 [31545321] Nominet UK sup=True
+   R 03203859 NOMINET UK Active inc=24 May 1996  type=Private Limited Company by guarantee without share capital use of 'Limited' exemption prev=[]
+   W 03293859 None None inc=None  prev=[]
+64 [31566883] ECE Architecture Ltd sup=True
+   R 02360025 ECE ARCHITECTURE LIMITED Active inc=10 March 1989  type=Private limited Company prev=[MICHAEL COOK ASSOCIATES LIMITED 02 Aug 1991 - 01 Jul 2011 PALMLIVE LIMITED 10 Mar 1989 - 02 Aug 1991]
+   W 04106190 WORCESTERSHIRE METAL GROUP LIMITED Dissolved inc=10 November 2000 Dissolved on 23 December 2014 prev=[]
+65 [30918036] Amthal Fire & Security Ltd sup=True
+   R 08004712 AMTHAL FIRE & SECURITY LIMITED Active inc=23 March 2012  type=Private limited Company prev=[]
+   W 04173398 TRENTON DATA LTD Dissolved inc=6 March 2001 Dissolved on 1 November 2011 prev=[]
+66 [31537939] Castle Owen Construction and Property Consultants Ltd sup=True
+   R 04345297 CASTLE OWEN CONSTRUCTION AND PROPERTY CONSULTANTS LIMITED Active inc=24 December 2001  type=Private limited Company prev=[BOND BRYAN BUILDING SURVEYING LIMITED 24 Dec 2001 - 24 Mar 2016]
+   W 04342597 WHIZZBANG TV LIMITED Active inc=19 December 2001  prev=[]
+67 [31575200] EVISA SOLUTIONS LIMITED T/A MALIKSHAW sup=False
+   R 04671940 EVISA SOLUTIONS LIMITED Active inc=20 February 2003  type=Private limited Company prev=[AIMWILLOW LTD 20 Feb 2003 - 15 Apr 2003]
+   W 04671490 THE BEAUTY LOUNGE (DELPH) LTD. Dissolved inc=19 February 2003 Dissolved on 26 January 2010 prev=[THE BRONZING ROOM LTD 19 Feb 2003 - 06 Dec 2004]
+68 [31559675] CO-OP WHOLESALE LIMITED sup=True
+   R 00980790 CO-OP WHOLESALE LIMITED Active inc=29 May 1970  type=Private limited Company prev=[NISA RETAIL LIMITED 08 Oct 2012 - 27 Mar 2025 NISA-TODAY'S (HOLDINGS) LIMITED 18 Nov 1992 - 08 Oct 2012 NISA-TODAY'S LIMITED 17 Nov 1989 - 18 Nov 1992 NISA LIMITED 31 Dec 1979 - 17 Nov 1989 NORTHERN INDEPENDENT SUPERMARKETS ASSOCIATION (WHOLESALE) LIMITED 29 May 1970 - 31 Dec 1979]
+   W 04801081 COOP WHOLESALE LTD Dissolved inc=17 June 2003 Dissolved on 6 March 2012 prev=[DARIA LTD 17 Jun 2003 - 28 Jan 2008]
+69 [30929451] Moon Rise 24 HR Recruitment sup=True
+   R 09151708 MOON RISE 24 HR RECRUITMENT LTD Active inc=29 July 2014  type=Private limited Company prev=[]
+   W 05191708 DOMINO INDUSTRIAL PIPEWORK LIMITED Liquidation inc=28 July 2004  prev=[]
+70 [31554021] On Track Education Services Limited sup=True
+   R 05363653 ON TRACK EDUCATION SERVICES LIMITED Active inc=14 February 2005  type=Private company limited by guarantee without share capital prev=[]
+   W 05363563 NFP COMMERCIAL SOLUTIONS LIMITED Liquidation inc=14 February 2005  prev=[LINKFIELD CORPORATE SOLUTIONS LIMITED 14 Feb 2005 - 25 Jan 2021]
+71 [31553992] Specialist Development Contracts Ltd sup=True
+   R 03843793 SPECIALIST DEVELOPMENT CONTRACTS LTD Active inc=14 September 1999  type=Private limited Company prev=[]
+   W 05374534 SEDGLEY GLASS LIMITED Active inc=24 February 2005  prev=[]
+72 [31572377] Cross Keys Homes sup=True
+   R 04557701 CROSS KEYS HOMES LIMITED Converted / Closed inc=9 October 2002 Closed on 17 October 2017 type=Converted/closed company prev=[]
+   W 05724865 B2 STUDIOS LIMITED Dissolved inc=28 February 2006 Dissolved on 22 June 2010 prev=[]
+73 [31552056] Allwag Promotions Limited sup=True
+   R 03602082 ALLWAG PROMOTIONS LIMITED Active inc=22 July 1998  type=Private limited Company prev=[]
+   W 06363913 ALWAHY LTD Dissolved inc=7 September 2007 Dissolved on 15 October 2013 prev=[]
+74 [31577849] Pennington Choices Ltd sup=True
+   R 03945920 PENNINGTON CHOICES LIMITED Active inc=13 March 2000  type=Private limited Company prev=[PENNINGTON CONSULTING LTD 14 Feb 2005 - 15 May 2008 PENNINGTON FMCS LIMITED 13 Mar 2000 - 14 Feb 2005]
+   W 06548448 NUMUS SOFTWARE LTD Dissolved inc=29 March 2008 Dissolved on 16 April 2013 prev=[]
+75 [31566979] Preventx Limited sup=True
+   R 06603066 PREVENTX LIMITED Active inc=27 May 2008  type=Private limited Company prev=[]
+   W 06603033 GOD TYPSNITT I SVERIGE LTD Dissolved inc=27 May 2008 Dissolved on 11 January 2011 prev=[FONTSHOP SWEDEN LTD 27 May 2008 - 04 Jun 2010]
+76 [30914135] Misco Technologies Limited sup=True
+   R 07105367 MISCO TECHNOLOGIES LIMITED Active inc=15 December 2009  type=Private limited Company prev=[UK COMPUTER GROUP LIMITED 03 Jun 2019 - 14 Oct 2020 UK COMPUTER SUPPLIES LIMITED 15 Dec 2009 - 03 Jun 2019]
+   W 07105397 CUBUS OBJEKT- UND WOHNDESIGN LIMITED Dissolved inc=15 December 2009 Dissolved on 3 April 2012 prev=[]
+77 [31561170] MTI Technology Limited sup=True
+   R SC112019 MTI TECHNOLOGY LIMITED Active inc=29 June 1988  type=Private limited Company prev=[MICRO TECHNOLOGY UK LIMITED 30 Sep 1988 - 01 Apr 1993 PACIFIC SHELF 201 LIMITED 29 Jun 1988 - 30 Sep 1988]
+   W 07218896 MELLIFLUOUS 2 LIMITED Dissolved inc=9 April 2010 Dissolved on 22 November 2011 prev=[]
+78 [31571891] Arbor Education Partners Limited sup=True
+   R 07790198 ARBOR EDUCATION PARTNERS LIMITED Active inc=28 September 2011  type=Private limited Company prev=[L&P 243 LIMITED 28 Sep 2011 - 07 Oct 2011]
+   W 07790798 GCS (2011) LIMITED Dissolved inc=28 September 2011 Dissolved on 7 August 2012 prev=[]
+79 [31575892] ICS Operations Limited trading as Xyla sup=False
+   R 04793945 ICS OPERATIONS LIMITED Active inc=10 June 2003  type=Private limited Company prev=[SWIM SPECIALIST RECRUITMENT LIMITED 10 Jun 2003 - 13 Dec 2017]
+   W 08034563 GR ORCHARD LTD Dissolved inc=17 April 2012 Dissolved on 26 November 2013 prev=[]
+80 [31540147] ALLIANCE FOR COHESION AND RACIAL EQUALITYLIMITED sup=True
+   R 08248195 ALLIANCE FOR COHESION AND RACIAL EQUALITY LTD Active inc=10 October 2012  type=Private company limited by guarantee without share capital prev=[]
+   W 08248194 MELLOR CONSTRUCTION LIMITED Dissolved inc=10 October 2012 Dissolved on 3 April 2018 prev=[]
+81 [31555064] Mediscan Diagnostic Services sup=True
+   R 06228910 MEDISCAN DIAGNOSTIC SERVICES LTD Active inc=27 April 2007  type=Private limited Company prev=[RAD TEC (LONDON) LTD 27 Apr 2007 - 25 Jan 2012]
+   W 08320405 HARLEY HEALTH VILLAGE LTD Active inc=6 December 2012  prev=[]
+82 [31565559] MONTEL CIVIL ENGINEERING LIMITED sup=False
+   R 08949159 NEW ASSET ALLIANCE LTD Active inc=20 March 2014  type=Private limited Company prev=[]
+   W 089491S9 None None inc=None  prev=[]
+83 [30917397] Northern Community Pathways Ltd sup=True
+   R 09318197 NORTHERN COMMUNITY PATHWAYS LIMITED Active inc=19 November 2014  type=Private limited Company prev=[]
+   W 09318107 MIROMORE LIMITED Active inc=19 November 2014  prev=[]
+84 [30976571] ECMS Services Limited sup=True
+   R 06194579 ECMS SERVICES LTD Active inc=30 March 2007  type=Private limited Company prev=[EXECUTIVE CLEANING AND MAINTENANCE SERVICES LTD 30 Mar 2007 - 24 Jul 2019]
+   W 09389042 LDN PROJECT SERVICES LTD Active inc=14 January 2015  prev=[]
+85 [31545204] Oculus Building Consultancy sup=True
+   R 03414863 OCULUS BUILDING CONSULTANCY LIMITED Liquidation inc=5 August 1997  type=Private limited Company prev=[REXON DAY BUILDING CONTROL LIMITED 05 Aug 1997 - 06 Aug 2008]
+   W 09710751 VOPULUS LTD Active inc=30 July 2015  prev=[CHECK MY GUEST IN LIMITED 30 Jul 2015 - 22 Aug 2016]
+86 [31557561] Kennedys Law LLP sup=True
+   R OC353214 KENNEDYS LAW LLP Active inc=15 March 2010  type=Limited liability partnership prev=[]
+   W 0C353214 None None inc=None  prev=[]
+87 [31541682] Medac Pharma LLP sup=True
+   R OC415849 MEDAC PHARMA LLP Active inc=9 February 2017  type=Limited liability partnership prev=[]
+   W 0C415849 None None inc=None  prev=[]
+88 [31540066] UCC Coffee UK Ltd sup=True
+   R 02159182 UCC COFFEE UK LIMITED Active inc=28 August 1987  type=Private limited Company prev=[FIRST CHOICE COFFEE LTD. 06 Feb 1998 - 03 Sep 2013 FIRST CHOICE (BEVERAGE SERVICES) LIMITED 23 Oct 1987 - 06 Feb 1998 FIRSTCHOICE (BEVERAGE SERVICES) LIMITED 02 Oct 1987 - 23 Oct 1987 PASTJEWEL LIMITED 28 Aug 1987 - 02 Oct 1987]
+   W 10039541 JERKAN INDUSTRIAL LIMITED Dissolved inc=3 March 2016 Dissolved on 24 July 2018 prev=[]
+89 [31560066] Southend Care Ltd sup=True
+   R 10138562 SOUTHEND CARE LTD Active inc=21 April 2016  type=Private limited Company prev=[]
+   W 10138652 TRIPLE-S CONSTRUCTION LTD Active inc=21 April 2016  prev=[]
+90 [31536381] ADVANCE MEDICAL TRANSPORT SERVICES LIMITED sup=True
+   R 10170524 ADVANCE MEDICAL TRANSPORT SERVICES LIMITED Active inc=9 May 2016  type=Private limited Company prev=[]
+   W 10175024 TDM (CHESTER) LIMITED Dissolved inc=11 May 2016 Dissolved on 26 November 2019 prev=[]
+91 [31583489] Pellings LLP sup=True
+   R OC326178 PELLINGS LLP Active inc=21 February 2007  type=Limited liability partnership prev=[]
+   W 10254173 PERISCOPE LANDSCAPE & ARCHITECTURE LTD Active inc=28 June 2016  prev=[]
+92 [31588474] KBH Building Services Ltd sup=True
+   R 09142184 KBH BUILDING SERVICES LIMITED Active inc=22 July 2014  type=Private limited Company prev=[]
+   W 10417508 RAYMOND GEORGE CONSULTANCY LIMITED Active inc=10 October 2016  prev=[]
+93 [31536916] Smart Trax ltd sup=True
+   R 10649939 SMART TRAX LIMITED Active inc=3 March 2017  type=Private limited Company prev=[]
+   W 10449939 URBAN ESTATE LETTINGS LIMITED Dissolved inc=27 October 2016 Dissolved on 16 December 2025 prev=[]
+94 [31574335] Kromatek Limited sup=True
+   R 03971971 KROMATEK LIMITED Active inc=13 April 2000  type=Private limited Company prev=[LABMAX LIMITED 13 Apr 2000 - 17 Nov 2003]
+   W 10548502 UK LIFE TEST LIMITED Dissolved inc=5 January 2017 Dissolved on 12 June 2018 prev=[]
+95 [31558167] J Freeley Ltd sup=True
+   R 01719179 J. FREELEY LIMITED Active inc=28 April 1983  type=Private limited Company prev=[]
+   W 10719179 RJ TRANSPORTATION LIMITED Dissolved inc=10 April 2017 Dissolved on 28 May 2019 prev=[]
+96 [31583490] Pollard Thomas Edwards sup=True
+   R OC395916 POLLARD THOMAS EDWARDS LLP Active inc=15 October 2014  type=Limited liability partnership prev=[PTE (UK) LLP 15 Oct 2014 - 28 Nov 2014]
+   W 11154651 POROBAN LIMITED Active inc=17 January 2018  prev=[]
+97 [31562935] LIMMS CARE SERVICES LTD sup=True
+   R 11386206 LIMMS CARE SERVICES LTD Active inc=29 May 2018  type=Private limited Company prev=[]
+   W 11386208 LEGACY FINANCE GROUP LIMITED Dissolved inc=29 May 2018 Dissolved on 13 October 2020 prev=[]
+98 [31557218] Infinite Care Network Ltd sup=True
+   R 14985480 INFINITE CARE NETWORK LTD Active inc=6 July 2023  type=Private limited Company prev=[]
+   W 11426180 INFINITY HEALTH GROUP LTD Active inc=21 June 2018  prev=[]
+99 [31537183] International Healthcare Recruitment LTD sup=False
+   R 11465799 SANCTUS CARE GROUP LIMITED Active inc=16 July 2018  type=Private limited Company prev=[INTERNATIONAL HEALTHCARE RECRUITMENT LIMITED 16 Jul 2018 - 27 Aug 2025]
+   W 11465733 JADAR CONSULTANCY LIMITED Active inc=16 July 2018  prev=[]
+100 [31577435] Greyfriars Project Management Ltd sup=True
+   R 11548185 GREYFRIARS PROJECT MANAGEMENT LIMITED Active inc=3 September 2018  type=Private limited Company prev=[]
+   W 11848185 GUODOU TEA BEVERAGE LTD Dissolved inc=26 February 2019 Dissolved on 7 December 2021 prev=[]
+101 [31583492] Weston Williamson + Partners LLP sup=False
+   R OC375867 WESTONWILLIAMSON+PARTNERS LLP Active inc=7 June 2012  type=Limited liability partnership prev=[WESTON WILLIAMSON AND PARTNERS LLP 07 Jun 2012 - 11 Jan 2013]
+   W 11863592 WONKY ARCHITECTURE LTD Active inc=6 March 2019  prev=[]
+102 [31583493] Squared Architects Ltd sup=True
+   R 10970876 SQUARED ARCHITECTS LIMITED Active inc=19 September 2017  type=Private limited Company prev=[]
+   W 12158713 STARKI LIMITED Active inc=15 August 2019  prev=[]
+103 [30914951] Cuckoo Care Ltd sup=True
+   R 12599987 CUCKOO CARE LTD Active inc=13 May 2020  type=Private company limited by guarantee without share capital prev=[]
+   W 12599988 NEXUS FASHION LIMITED Active inc=13 May 2020  prev=[]
+104 [31570462] Aspire Technology Solutions Ltd sup=True
+   R 06031628 ASPIRE TECHNOLOGY SOLUTIONS LTD Active inc=18 December 2006  type=Private limited Company prev=[]
+   W 12742499 AVP ESTATES LTD Active inc=14 July 2020  prev=[]
+105 [31550460] Tunstall Healthcare (UK) Limited sup=True
+   R 01332249 TUNSTALL HEALTHCARE (UK) LIMITED Active inc=30 September 1977  type=Private limited Company prev=[TUNSTALL TELECOM LIMITED 31 Dec 1981 - 20 Aug 2008 TUNSTALL BYERS & CO. LIMITED 30 Sep 1977 - 31 Dec 1981]
+   W 13322491 CS CLIFTON LIMITED Dissolved inc=8 April 2021 Dissolved on 21 February 2023 prev=[]
+106 [31549928] Firntec Ltd sup=True
+   R 13460282 FIRNTEC LTD Active inc=16 June 2021  type=Private limited Company prev=[]
+   W 13460285 HJALP TILL LIV LIMITED Dissolved inc=16 June 2021 Dissolved on 20 December 2022 prev=[]
+107 [30917401] Aleyah House sup=True
+   R 13639415 ALEYAH HOUSE LTD Active inc=23 September 2021  type=Private limited Company prev=[]
+   W 13534915 FIND MY TRAINER LIMITED Dissolved inc=28 July 2021 Dissolved on 31 January 2023 prev=[]
+108 [31583495] SimpsonHaugh Architects Limited sup=True
+   R 02965414 SIMPSONHAUGH ARCHITECTS LIMITED Active inc=6 September 1994  type=Private limited Company prev=[SIMPSON HAUGH ARCHITECTS LIMITED 30 Aug 2014 - 09 Apr 2015 IAN SIMPSON ARCHITECTS LIMITED 06 Sep 1994 - 30 Aug 2014]
+   W 13613243 SINGH FUDGE LIMITED Active inc=10 September 2021  prev=[]
+109 [31589533] Pineapple Recruitment Ltd sup=True
+   R 13727638 PINEAPPLE RECRUITMENT LTD Active inc=8 November 2021  type=Private limited Company prev=[]
+   W 13727368 HAIRCUTZ MOBILE LIMITED Dissolved inc=6 November 2021 Dissolved on 9 May 2023 prev=[]
+110 [31587688] GP Primary Choice Ltd sup=True
+   R 08486936 GP PRIMARY CHOICE LIMITED Active inc=12 April 2013  type=Private limited Company prev=[]
+   W 13759045 BISHOP OAK LIMITED Liquidation inc=22 November 2021  prev=[]
+111 [31550640] ANGEL CARE STAFFING LTD T/A WeCare Angels sup=False
+   R 13879931 ANGEL CARE STAFFING LTD Active inc=28 January 2022  type=Private limited Company prev=[]
+   W 13879913 LOU LETTINGS LTD Active inc=28 January 2022  prev=[]
+112 [31560597] Elite Care Professionals Limited sup=True
+   R 14052037 ELITE CARE PROFESSIONALS LIMITED Active inc=19 April 2022  type=Private limited Company prev=[]
+   W 14052307 WHITTINGHAM ST GEORGE MANAGEMENT LTD Dissolved inc=19 April 2022 Dissolved on 13 August 2025 prev=[]
+113 [31583497] McBains Limited sup=True
+   R 03094139 MCBAINS LTD Active inc=23 August 1995  type=Private limited Company prev=[MCBAINS COOPER CONSULTING LIMITED 04 Jul 2000 - 31 Oct 2017 MCBAINS COOPER HOLDINGS LIMITED 29 Jul 1997 - 04 Jul 2000 DEALSPEEDY LIMITED 23 Aug 1995 - 29 Jul 1997]
+   W 14205537 METASHAPE ARCHITECTS LIMITED Active inc=30 June 2022  prev=[]
+114 [31570725] Perk UK Limited (Click Travel) sup=False
+   R 03770815 PERK UK LTD Active inc=14 May 1999  type=Private limited Company prev=[TRAVELPERK UK IRL LIMITED 22 Aug 2022 - 04 Nov 2025 CLICK TRAVEL LTD 08 Aug 2007 - 22 Aug 2022 MISSMARPLE LIMITED 01 Nov 2001 - 08 Aug 2007 MISSMARPLE.CO.UK LTD 08 Mar 2000 - 01 Nov 2001 BEENO.COM LIMITED 10 Dec 1999 - 08 Mar 2000 URBANATION LIMITED 14 May 1999 - 10 Dec 1999]
+   W 14704569 CLICKTRAVEL LIMITED Dissolved inc=3 March 2023 Dissolved on 18 February 2025 prev=[]
+115 [31583499] Nugent Vallis Brierley Limited sup=True
+   R 02471929 NUGENT VALLIS BRIERLEY LIMITED Active inc=20 February 1990  type=Private limited Company prev=[]
+   W 14754163 OFFICE S&M ARCHITECTS LIMITED Active inc=24 March 2023  prev=[]
+116 [31559982] BWS SECURITY SYSTEMS LTD sup=True
+   R 03851779 BWS SECURITY SYSTEMS LIMITED Active inc=1 October 1999  type=Private limited Company prev=[]
+   W 15269574 BWS GROUP LTD Dissolved inc=8 November 2023 Dissolved on 15 April 2025 prev=[]
+117 [31583057] Keystage Teacher Supply Limited sup=True
+   R 04099786 KEYSTAGE TEACHER SUPPLY LIMITED Active inc=31 October 2000  type=Private limited Company prev=[]
+   W 15901959 KEY TEACHERS LTD Active inc=16 August 2024  prev=[]
+118 [31556782] Sincerity Housing Ltd sup=True
+   R 16764650 SINCERITY HOUSING LTD Active inc=6 October 2025  type=Private limited Company prev=[]
+   W 16764560 PATCHIK LTD Active inc=6 October 2025  prev=[]
+119 [31538543] Seaham Care Limited sup=True
+   R FC031512 SEAHAM CARE LIMITED Active inc=None  type=Overseas company First UK establishment opened on 1 September 2013 prev=[]
+   W FC031513 ANGELO, GORDON NETHERLANDS B.V. Converted / Closed inc=None Closed on 20 April 2022 prev=[]
+120 [31570583] Stephen w moore Ltd sup=True
+   R NI069636 STEPHEN W MOORE LIMITED Active inc=17 June 2008  type=Private limited Company prev=[]
+   W NI069696 6 CLIFTONVILLE AVENUE MANAGEMENT COMPANY LIMITED Dissolved inc=20 June 2008 Dissolved on 27 August 2010 prev=[]
+121 [31554631] St Annes sup=False
+   R 01089026 ST ANNE'S COMMUNITY SERVICES Active inc=29 December 1972  type=Private company limited by guarantee without share capital prev=[ST. ANNE'S SHELTER AND HOUSING ACTION 18 Mar 1985 - 22 Jun 2004 ST. ANNE'S SHELTER AND HOUSING ACTION LIMITED 29 Dec 1972 - 18 Mar 1985]
+   W O1089026 None None inc=None  prev=[]
+122 [31574618] Compass Care Homes sup=True
+   R 03465737 COMPASS CARE HOMES LIMITED Active inc=14 November 1997  type=Private limited Company prev=[]
+   W O3465737 None None inc=None  prev=[]
+123 [31554632] Choices sup=False
+   R 03796191 CHOICES HOMECARE (YORKSHIRE) LIMITED Active inc=25 June 1999  type=Private limited Company prev=[CHOICES HOME CARE LIMITED 30 Jul 1999 - 03 Jun 2024 QUARTOFOLD LIMITED 25 Jun 1999 - 30 Jul 1999]
+   W O3796191 None None inc=None  prev=[]
+124 [31554633] Assist Homecare sup=False
+   R 07006470 ASSIST HOME CARE LTD Active inc=2 September 2009  type=Private limited Company prev=[]
+   W O7006470 None None inc=None  prev=[]
+125 [31554634] Our TLC sup=True
+   R 08555192 OUR TLC LIMITED Active inc=4 June 2013  type=Private limited Company prev=[DOMINICA SOLUTIONS LIMITED 04 Jun 2013 - 04 Jun 2013]
+   W O8555192 None None inc=None  prev=[]
+126 [31543340] Solutions In Service sup=True
+   R 08824873 SOLUTIONS IN SERVICE LTD Active inc=23 December 2013  type=Private limited Company prev=[]
+   W O8824873 None None inc=None  prev=[]
+127 [31574619] Connections Care sup=True
+   R 09623872 CONNECTIONS CARE LIMITED Active inc=4 June 2015  type=Private limited Company prev=[]
+   W O9623872 None None inc=None  prev=[]
+128 [31554635] Care Angels (Batley) sup=True
+   R 09737154 CARE ANGELS (BATLEY) LTD Active inc=18 August 2015  type=Private limited Company prev=[]
+   W O9737154 None None inc=None  prev=[]
+129 [31567217] Cheshire Orthopaedic Group LLP sup=True
+   R OC427576 CHESHIRE ORTHOPAEDIC GROUP LLP Active inc=5 June 2019  type=Limited liability partnership prev=[]
+   W OC247576 None None inc=None  prev=[]
+130 [31538331] University of Nottingham sup=True
+   R RC000664 UNIVERSITY OF NOTTINGHAM (THE) None inc=None  type=None prev=[]
+   W R7637830 None None inc=None  prev=[]
+131 [31534702] BRIDGING GAPS LTD / TRADING AS BRIDGING GAPS FOSTERING AGENCY sup=False
+   R 05989754 BRIDGING GAPS LIMITED Active inc=6 November 2006  type=Private company limited by guarantee without share capital prev=[]
+   W SC390755 KITCHEN MONSTERS LTD Dissolved inc=23 December 2010 Dissolved on 5 April 2016 prev=[]
+132 [31562256] Holyhead Marine Services Ltd sup=True
+   R 00895484 HOLYHEAD MARINE SERVICES LIMITED Active inc=6 January 1967  type=Private limited Company prev=[HOLYHEAD MARINE LIMITED 12 Feb 1987 - 06 Sep 1990 HOLYHEAD SALVAGE COMPANY LIMITED 06 Jan 1967 - 12 Feb 1987]
+   W SC895484 KULSHI ENTERPRISE LTD Active inc=9 July 2026  prev=[]
+133 [31577591] RJ McLeod (Contractors) Ltd sup=False
+   R SC028565 R.J. MCLEOD (CONTRACTORS) LIMITED Active inc=18 October 1951  type=Private limited Company prev=[]
+   W SCO28565 None None inc=None  prev=[]
+134 [31569355] Sports Coaching Specialists Ltd sup=True
+   R 08929481 SPORTS COACHING SPECIALISTS LIMITED Active inc=10 March 2014  type=Private limited Company prev=[]
+   W X338EBHC None None inc=None  prev=[]
+135 [17438264] Adman Civil Projects Ltd sup=True
+   R NI064545 ADMAN CIVIL PROJECTS LIMITED Active inc=8 May 2007  type=Private limited Company prev=[]
+   W NI064646 MILLQUARTER CONTRACTS LTD Dissolved inc=11 May 2007 Dissolved on 21 May 2010 prev=[]
+136 [15197157] Belfast City Airport Ltd sup=True
+   R NI016363 BELFAST CITY AIRPORT LIMITED Active inc=10 January 1983  type=Private limited Company prev=[BELFAST HARBOUR AIRPORT SERVICES LIMITED 10 Jan 1983 - 26 Nov 1992]
+   W NI601363 F & F CONTRACTS (NI) LTD Dissolved inc=19 November 2009 Dissolved on 31 October 2014 prev=[STRADUFF TRANSPORT LTD 19 Nov 2009 - 08 Feb 2010]
+137 [15588700] Hogan Lovells International LLP sup=True
+   R OC323639 HOGAN LOVELLS CADWALADER INTERNATIONAL LLP Active inc=2 November 2006  type=Limited liability partnership prev=[HOGAN LOVELLS INTERNATIONAL LLP 30 Apr 2010 - 30 Jun 2026 LOVELLS LLP 02 Nov 2006 - 30 Apr 2010]
+   W OC323693 INTO UNIVERSITY OF EXETER LLP Active inc=6 November 2006  prev=[ISC VENTURE LLP 06 Nov 2006 - 07 Dec 2006]
+138 [12923410] Arcadis LLP sup=True
+   R OC368843 ARCADIS LLP Active inc=12 October 2011  type=Limited liability partnership prev=[EC HARRIS LLP 09 Nov 2011 - 18 Sep 2015 NOILLIB LLP 12 Oct 2011 - 09 Nov 2011]
+   W OC358843 JSL-LPL LLP Active inc=20 October 2010  prev=[]
+139 [9686461] RSM Risk Assurance Services LLP sup=True
+   R OC389499 RSM UK RISK ASSURANCE SERVICES LLP Active inc=27 November 2013  type=Limited liability partnership prev=[RSM RISK ASSURANCE SERVICES LLP 26 Oct 2015 - 01 Nov 2021 BAKER TILLY RISK ADVISORY SERVICES LLP 27 Nov 2013 - 26 Oct 2015]
+   W OC389449 TARGA GLOBAL SALES LLP Dissolved inc=26 November 2013 Dissolved on 7 April 2015 prev=[]
+140 [20098150] Richard Utting Associates LLP sup=True
+   R OC368281 RICHARD UTTING ASSOCIATES LLP Active inc=22 September 2011  type=Limited liability partnership prev=[]
+   W OC398281 SONTEX LOGISTICS LLP Dissolved inc=12 February 2015 Dissolved on 23 July 2019 prev=[]
+141 [15261000] The Transcription Agency LLP sup=True
+   R OC419743 THE TRANSCRIPTION AGENCY LLP Active inc=1 November 2017  type=Limited liability partnership prev=[]
+   W OC419713 UNITY ENERGY VENTURES LLP Dissolved inc=31 October 2017 Dissolved on 27 September 2022 prev=[]
+142 [15364769] Bailey Partnership (Consultants) LLP sup=True
+   R OC420278 BAILEY PARTNERSHIP (CONSULTANTS) LLP Active inc=8 December 2017  type=Limited liability partnership prev=[]
+   W OC420287 DEV 360 INVESTMENT COMPANY LLP Dissolved inc=12 December 2017 Dissolved on 16 March 2021 prev=[]
+143 [11062541] The Open University sup=True
+   R RC000391 OPEN UNIVERSITY(THE) None inc=None  type=None prev=[]
+   W RC000191 FRIEND OF CLERGY SOCIETY None inc=None  prev=[]
+144 [14452756] University of Manchester sup=True
+   R RC000797 THE UNIVERSITY OF MANCHESTER None inc=None  type=None prev=[]
+   W RC100797 None None inc=None  prev=[]
+145 [19819787] Leonard Cheshire Disability sup=True
+   R 00552847 LEONARD CHESHIRE DISABILITY Active inc=3 August 1955  type=Private company limited by guarantee without share capital prev=[LEONARD CHESHIRE FOUNDATION(THE) 31 Dec 1976 - 01 Oct 2007 CHESHIRE FOUNDATION HOMES FOR THE SICK. (THE) 03 Aug 1955 - 31 Dec 1976]
+   W SC005117 None None inc=None  prev=[]
+146 [10615775] Govan Housing Association LImited sup=True
+   R SP001686 GOVAN HOUSING ASSOCIATION LIMITED None inc=None  type=Registered society prev=[]
+   W SC009055 None None inc=None  prev=[]
+147 [23460038] University of Strathclyde sup=True
+   R RC000670 UNIVERSITY OF STRATHCLYDE None inc=None  type=None prev=[]
+   W SC015263 None None inc=None  prev=[]
+148 [11832278] Royal Blind Asylum and School (“Royal Blind”) sup=True
+   R RC000449 ROYAL BLIND None inc=None  type=None prev=[]
+   W SC017167 None None inc=None  prev=[]
+149 [11832266] Rossie Young People's Trust sup=True
+   R SC157602 ROSSIE YOUNG PEOPLE'S TRUST Active inc=24 April 1995  type=Private Limited Company by guarantee without share capital use of 'Limited' exemption prev=[]
+   W SC019969 None None inc=None  prev=[]
+150 [13589215] Montrose Playhouse Project SCIO sup=True
+   R CS001441 MONTROSE PLAYHOUSE PROJECT SCIO None inc=None  type=Scottish charitable incorporated organisation Charity number SC044798 prev=[]
+   W SC044798 None None inc=None  prev=[]
+151 [9116109] LAR Housing Trust sup=True
+   R CS001453 LAR HOUSING TRUST None inc=None  type=Scottish charitable incorporated organisation Charity number SC044825 prev=[]
+   W SC044825 None None inc=None  prev=[]
+152 [16331788] The Royal Bank of Scotland sup=True
+   R SC083026 THE ROYAL BANK OF SCOTLAND PUBLIC LIMITED COMPANY Active inc=9 May 1983  type=Public limited Company prev=[ADAM & COMPANY PUBLIC LIMITED COMPANY 09 May 1983 - 29 Apr 2018]
+   W SC083027 None None inc=None  prev=[]
+153 [17260229] Clydeport Operations Ltd sup=True
+   R SC134759 CLYDEPORT OPERATIONS LIMITED Active inc=25 October 1991  type=Private limited Company prev=[CLYDEPORT LIMITED 25 Oct 1991 - 22 Nov 1994]
+   W SC134579 None None inc=None  prev=[]
+154 [15079477] Sports Labs Ltd sup=True
+   R SC186755 SPORTS LABS LIMITED Active inc=15 June 1998  type=Private limited Company prev=[]
+   W SC186775 None None inc=None  prev=[]
+155 [22386457] The Paul Hogarth Company sup=True
+   R SC351092 THE PAUL HOGARTH COMPANY LIMITED Active inc=10 November 2008  type=Private limited Company prev=[]
+   W SC351082 INDIAN SCENE LIMITED Dissolved inc=10 November 2008 Dissolved on 15 May 2018 prev=[]
+156 [12861115] Ewing Somerville Partnership (Scotland) Ltd sup=True
+   R SC530344 EWING SOMERVILLE PARTNERSHIP (SCOTLAND) LIMITED Active inc=22 March 2016  type=Private limited Company prev=[]
+   W SC530544 KINMOR LTD Active inc=23 March 2016  prev=[CAPITAL TREE SERVICES LTD 23 Mar 2016 - 26 Aug 2026]
+157 [17282440] Genoa Black Ventures LLP sup=True
+   R SO304959 GENOA BLACK VENTURES LLP Active inc=9 July 2014  type=Limited liability partnership prev=[]
+   W SO204959 None None inc=None  prev=[]
