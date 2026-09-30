@@ -3238,6 +3238,13 @@ pub struct RekeyReport {
     pub denied_consortium: u64,
     pub denied_legal_form: u64,
     pub denied_names: u64,
+    /// Issue 454: merges a reviewer's `keep` verdict denied, and the ones a
+    /// HIGH `merge` verdict naming exactly the pair admitted past the NAME gate
+    /// (never past a withheld target, a flagged destination, the consortium or
+    /// the legal-form veto). Keyed (`GB`, `GB:rekey`, `<wrong literal>~<right
+    /// number>`), members the two org ids ascending.
+    pub denied_verdict: u64,
+    pub admitted_verdict: u64,
     pub plan_merge: u64,
     pub plan_move: u64,
     pub plan: Vec<RekeyListing>,
@@ -17763,12 +17770,25 @@ impl Db {
                         target_names.first().cloned().unwrap_or_default(),
                     ));
                     listing.new_literal = literal.clone();
+                    // Issue 454: a reviewer's verdict on this exact pair.
+                    let verdict = self
+                        .merge_verdict_for(&c.country, "GB:rekey", &format!("{}~{}", c.wrong, right))
+                        .await?;
+                    let mut pair = vec![c.org, *target];
+                    pair.sort_unstable();
+                    let keep_verdict = verdict.as_ref().is_some_and(|v| v.action == "keep");
+                    let admits = verdict.as_ref().is_some_and(|v| {
+                        v.action == "merge" && v.confidence == "high" && v.members == pair
+                    });
                     let denial = if withheld.contains(target) {
                         report.withheld_target += 1;
                         Some("withheld-target")
                     } else if flagged_destination {
                         report.destination_verdict += 1;
                         Some("destination-verdict")
+                    } else if keep_verdict {
+                        report.denied_verdict += 1;
+                        Some("verdict-keep")
                     } else if names.iter().chain(&target_names).any(|n| (args.consortium)(n)) {
                         report.denied_consortium += 1;
                         Some("consortium")
@@ -17784,8 +17804,13 @@ impl Db {
                         !ka.is_empty()
                             && target_names.iter().any(|b| (args.names_agree)(&ka, &(args.name_key)(b)))
                     }) {
-                        report.denied_names += 1;
-                        Some("names")
+                        if admits {
+                            report.admitted_verdict += 1;
+                            None
+                        } else {
+                            report.denied_names += 1;
+                            Some("names")
+                        }
                     } else {
                         None
                     };
@@ -17909,6 +17934,21 @@ impl Db {
                         .await?;
                         append_change(conn, "organization", l.org, None, "removed", now).await?;
                         append_change(conn, "organization", *keep, None, "changed", now).await?;
+                        // Issue 454: a reviewer's merge verdict on this pair
+                        // records the merge it allowed (none: nothing to stamp).
+                        conn.execute(
+                            "UPDATE org_merge_verdicts SET applied_at = ?, applied_action = ?, \
+                             job_id = ? WHERE country = ? AND scheme = 'GB:rekey' AND key = ? \
+                             AND action = 'merge' AND applied_at IS NULL",
+                            (
+                                Value::Integer(now),
+                                Value::Text(format!("merged 1 row(s) into {keep}")),
+                                job.clone(),
+                                t(&country),
+                                Value::Text(format!("{}~{}", l.wrong, l.right)),
+                            ),
+                        )
+                        .await?;
                         report.merged += 1;
                     } else {
                         let n = conn

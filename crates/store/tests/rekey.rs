@@ -324,6 +324,65 @@ async fn an_unreviewed_key_is_deferred_not_executed() {
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 16);
 }
 
+fn merge_verdict(key: &str, members: Vec<i64>, action: &str) -> store::MergeVerdict {
+    store::MergeVerdict {
+        country: "GB".into(),
+        scheme: "GB:rekey".into(),
+        key: key.into(),
+        members,
+        action: action.into(),
+        rationale: "fixture".into(),
+        confidence: "high".into(),
+    }
+}
+
+/// Issue 454: the name gate denies a pair whose names the altid key cannot
+/// equate (a rename, a spacing variant). A reviewer's HIGH `merge` verdict on
+/// exactly that pair admits it past the NAME gate and is stamped by the merge,
+/// but never past the legal-form veto (Delta plc against Delta Ltd stays
+/// denied); a `keep` verdict denies a pair the gates would have planned.
+#[tokio::test]
+async fn a_reviewer_verdict_admits_past_the_name_gate_or_keeps_a_pair_apart() {
+    let (db, conn) = bed("test-rekey-verdict.db").await;
+    db.record_merge_verdicts(
+        "454",
+        &[
+            merge_verdict("02202746~02202476", vec![6, 7], "merge"),
+            merge_verdict("05837803~SC115530", vec![4, 5], "keep"),
+            merge_verdict("55555555~66666666", vec![13, 14], "merge"),
+        ],
+        0,
+    )
+    .await
+    .unwrap();
+    let dry = db.match_org_rekey(args(true, None, None)).await.unwrap();
+    assert_eq!(
+        (dry.admitted_verdict, dry.denied_verdict, dry.denied_names, dry.denied_legal_form),
+        (1, 1, 0, 1),
+        "{:#?}",
+        dry.denied
+    );
+    assert!(dry.keys.contains(&"GB/national/02202746>merge:02202476".to_owned()));
+    let rsk = dry.denied.iter().find(|l| l.org == 4).unwrap();
+    assert_eq!(rsk.shape, "verdict-keep");
+    let wet = db.match_org_rekey(args(false, Some(dry.keys), None)).await.unwrap();
+    assert_eq!(wet.merged, 2, "Rolls-Royce by the gates, Harvey Nash by the verdict");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 6").await, 0);
+    assert_eq!(
+        count(
+            &conn,
+            "SELECT COUNT(*) FROM org_merge_verdicts WHERE key = '02202746~02202476' AND applied_at IS NOT NULL"
+        )
+        .await,
+        1
+    );
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM org_merge_verdicts WHERE applied_at IS NOT NULL").await,
+        1,
+        "only the verdict that admitted a merge is stamped"
+    );
+}
+
 fn mention(notice: i64, name: &str, value: &str) -> Mention {
     Mention {
         notice_id: notice,

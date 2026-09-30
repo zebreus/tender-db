@@ -5979,6 +5979,7 @@ impl Supervisor {
                     "destination_verdict": r.destination_verdict,
                     "denied_consortium": r.denied_consortium,
                     "denied_legal_form": r.denied_legal_form, "denied_names": r.denied_names,
+                    "denied_verdict": r.denied_verdict, "admitted_verdict": r.admitted_verdict,
                     "plan_merge": recorded.iter().filter(|l| l.shape == "merge").count(),
                     "plan_move": recorded.iter().filter(|l| l.shape == "move").count(),
                     "live_plan_merge": r.plan_merge, "live_plan_move": r.plan_move,
@@ -5994,8 +5995,9 @@ impl Supervisor {
                 let head = format!(
                     "{} wrong-number verdicts with a right number ({} not high, {} gone, {} \
                      several carriers, {} unkeyed, {} same key); denied: {} multi-target, {} \
-                     withheld target, {} pending move, {} destination verdict, {} consortium, \
-                     {} legal-form, {} names; plan {} merge + {} move",
+                     withheld target, {} pending move, {} destination verdict, {} keep verdict, \
+                     {} consortium, {} legal-form, {} names ({} admitted by a merge verdict); plan \
+                     {} merge + {} move",
                     r.verdicts,
                     r.not_high,
                     r.gone,
@@ -6006,9 +6008,11 @@ impl Supervisor {
                     r.withheld_target,
                     r.pending_move,
                     r.destination_verdict,
+                    r.denied_verdict,
                     r.denied_consortium,
                     r.denied_legal_form,
                     r.denied_names,
+                    r.admitted_verdict,
                     r.plan_merge,
                     r.plan_move,
                 );
