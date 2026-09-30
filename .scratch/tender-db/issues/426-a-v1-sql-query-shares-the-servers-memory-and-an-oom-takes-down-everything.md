@@ -148,3 +148,8 @@ page cache the unit needs, and `MemoryHigh` below it, in `nix/module.nix`'s serv
 host protection only (the decision above): the kernel reclaims the cgroup's cache before it OOMs, so a limit near
 the box's 62 GB caps cache rather than killing a fold.
 
+
+**2026-09-30 06:2x UTC read (the window is still open until ~17:00):** 4,628 samples. The max anon is now **4.25 GiB**
+(4,560,769,024 B at 1790744966, 05:09 UTC), during FTS `project` job 1689 (46,607 tenders written). The earlier max was
+3.85 GiB. The largest legitimate anon peak so far is a full FTS project over the backfilled months, not a /v1/sql
+query.
