@@ -616,9 +616,11 @@ pub(crate) const SCHEMA: &str = "
     -- as unreviewed. `org_id` is the row the reviewer read, provenance only.
     -- `country`/`identifier_kind` hold '' where the org row holds NULL. A
     -- re-POST replaces the standing verdict. `correct_identifier` is the
-    -- number the reviewer found — recorded, never applied: re-keying an org
-    -- is a merge-shaped change (the right number may already have its own
-    -- org) and goes through the merge arms.
+    -- number the reviewer found. Recording never applies it; the issue-453
+    -- `rekey` arm does, for a HIGH `wrong` verdict: it merges the org into
+    -- the right number's standing owner or moves it onto the right number,
+    -- and stamps `applied_at`/`applied_literal`/`job_id` here (a re-POST
+    -- keeps those stamps: they record what was done, not what was said).
     CREATE TABLE IF NOT EXISTS org_identifier_verdicts (
         identifier         TEXT    NOT NULL,
         identifier_kind    TEXT    NOT NULL,
@@ -3184,8 +3186,15 @@ pub struct RekeyArgs<'a> {
 /// One planned or denied re-key (issue 453).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RekeyListing {
-    /// `<country>/<kind>/<wrong literal>` — the plan key a wet run holds to.
+    /// The plan key a wet run holds to. A planned re-key's key pins what was
+    /// reviewed: `<country>/<kind>/<wrong>><shape>:<new literal>`, so a
+    /// re-POSTed right number, or a target that changed, is a different key
+    /// (deferred, never executed unreviewed). A denied one is
+    /// `<country>/<kind>/<wrong>`.
     pub key: String,
+    /// The wrong triple's country (`''` for none) and kind.
+    pub country: String,
+    pub kind: String,
     /// `merge` (into `target`), `move` (onto `new_literal`), or the denial.
     pub shape: String,
     pub org: i64,
@@ -3219,6 +3228,13 @@ pub struct RekeyReport {
     pub multi_target: u64,
     /// The right number's one owner carries a `wrong` verdict itself.
     pub withheld_target: u64,
+    /// No owner, and another candidate moves onto the same right number in
+    /// this plan (the smallest key moves; these merge into it next run —
+    /// two moves would mint one number twice).
+    pub pending_move: u64,
+    /// The destination triple carries a `wrong` or `related` verdict of its
+    /// own: re-keying there would land the entity under a flagged number.
+    pub destination_verdict: u64,
     pub denied_consortium: u64,
     pub denied_legal_form: u64,
     pub denied_names: u64,
@@ -6014,6 +6030,33 @@ pub struct MentionResolver {
     /// matched, and the ones that matched none (or several) and minted.
     guarded_bound: u64,
     guarded_refused: u64,
+    /// Issue 453: each re-keyed wrong triple → the literal its entity carries
+    /// since (`applied_literal`). Resolved through `org_of` when a mention's
+    /// exact triple misses, not only at open: in a rebuild the table starts
+    /// empty and the entity's row is minted during the fold.
+    rekeyed: RekeyedLiterals,
+}
+
+/// Issue 453's alias map: wrong triple → the literal the entity carries now.
+type RekeyedLiterals = std::collections::HashMap<(Option<String>, String, String), String>;
+
+/// The org a re-keyed wrong triple reaches: follow `applied_literal` through
+/// the map until a literal some org carries (a later re-key of the target
+/// makes a chain), at most 8 hops.
+fn rekey_target(
+    org_of: &std::collections::HashMap<(Option<String>, String, String), i64>,
+    rekeyed: &RekeyedLiterals,
+    triple: &(Option<String>, String, String),
+) -> Option<i64> {
+    let mut literal = rekeyed.get(triple)?.clone();
+    for _ in 0..8 {
+        let next = (triple.0.clone(), triple.1.clone(), literal);
+        if let Some(&org) = org_of.get(&next) {
+            return Some(org);
+        }
+        literal = rekeyed.get(&next)?.clone();
+    }
+    None
 }
 
 /// What the resolver's issue-434 refresh did this run: recorded mentions whose
@@ -9816,7 +9859,7 @@ impl Db {
         // to the wrong-number org before; any other spelling of the wrong
         // number is GUARDED with that org among its owners, so it reaches it
         // only by name (the number may be someone else's real one).
-        let mut applied = Vec::new();
+        let mut rekeyed: RekeyedLiterals = HashMap::new();
         let mut rows = conn
             .query(
                 "SELECT identifier, identifier_kind, country, applied_literal \
@@ -9825,15 +9868,19 @@ impl Db {
             )
             .await?;
         while let Some(row) = rows.next().await? {
-            applied.push((text(&row, 0), text(&row, 1), text(&row, 2), text(&row, 3)));
+            let country = text(&row, 2);
+            rekeyed.insert(
+                ((!country.is_empty()).then_some(country), text(&row, 1), text(&row, 0)),
+                text(&row, 3),
+            );
         }
         drop(rows);
         let mut aliased = 0usize;
-        for (wrong, kind, country, literal) in applied {
-            let c = (!country.is_empty()).then_some(country);
-            let Some(&target) = org_of.get(&(c.clone(), kind.clone(), literal)) else { continue };
+        for triple in rekeyed.keys() {
+            let Some(target) = rekey_target(&org_of, &rekeyed, triple) else { continue };
             aliased += 1;
-            if let Some(ck) = resolver_canon_key(canon_key, c.as_deref(), &kind, &wrong)
+            let (c, kind, wrong) = triple;
+            if let Some(ck) = resolver_canon_key(canon_key, c.as_deref(), kind, wrong)
                 && !poisoned.contains(&ck)
             {
                 let mut owners = guarded.remove(&ck).unwrap_or_default();
@@ -9843,7 +9890,7 @@ impl Db {
                 owners.dedup();
                 guarded.insert(ck, owners);
             }
-            org_of.entry((c, kind, wrong)).or_insert(target);
+            org_of.entry(triple.clone()).or_insert(target);
         }
         // Logged whatever it found (the issue-318 rule), so a fold's log says
         // whether the verdicts were in force for it.
@@ -9915,6 +9962,7 @@ impl Db {
             guarded,
             guarded_bound: 0,
             guarded_refused: 0,
+            rekeyed,
             canon_key,
             consortium,
             anchors,
@@ -10471,6 +10519,11 @@ impl Db {
             Some(id) => {
                 let key = (id.country.clone(), id.kind.clone(), id.value.clone());
                 if let Some(&org_id) = org_of.get(&key) {
+                    (org_id, false)
+                } else if let Some(org_id) = rekey_target(org_of, &resolver.rekeyed, &key) {
+                    // Issue 453: a re-keyed wrong literal whose entity was not
+                    // standing at open (a rebuild) or came in through a chain.
+                    org_of.insert(key, org_id);
                     (org_id, false)
                 } else {
                     // Stage-2 prevention (issue 300): an EQUIVALENT
@@ -17510,8 +17563,9 @@ impl Db {
         // ---- 1. The verdicts, and the org each one names.
         struct Cand {
             key: String,
+            country: String,
+            kind: String,
             wrong: String,
-            right: String,
             org: i64,
             right_key: (&'static str, String),
         }
@@ -17554,6 +17608,9 @@ impl Db {
                 .filter(char::is_ascii_alphanumeric)
                 .map(|c| c.to_ascii_uppercase())
                 .collect();
+            // From here on the right number is its canonical body (`rk`), never
+            // the reviewer's text: `GB-COH-08004712` must not become
+            // `GBCOHGBCOH08004712` on a move.
             let c = (country != "").then_some(country.as_str());
             let (Some((rs, rk, true)), "GB") = ((args.key)(c, &kind, &right), country.as_str()) else {
                 report.unkeyed += 1;
@@ -17567,8 +17624,9 @@ impl Db {
             }
             cands.push(Cand {
                 key: format!("{country}/{kind}/{wrong}"),
+                country,
+                kind,
                 wrong,
-                right,
                 org,
                 right_key: (rs, rk),
             });
@@ -17615,7 +17673,34 @@ impl Db {
             }
         }
 
-        // ---- 3. Classify.
+        // ---- 3. Classify. Two reads first: every triple a verdict flags (a
+        // destination under one is refused), and, per right number with no
+        // owner, the candidates that would move onto it (only the smallest
+        // key moves).
+        let mut flagged: HashSet<(String, String, String)> = HashSet::new();
+        let mut rows = conn
+            .query(
+                "SELECT identifier, identifier_kind, country FROM org_identifier_verdicts \
+                  WHERE verdict IN ('wrong', 'related')",
+                (),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            flagged.insert((text(&row, 0), text(&row, 1), text(&row, 2)));
+        }
+        drop(rows);
+        let mut mover: HashMap<(&'static str, String), String> = HashMap::new();
+        for c in &cands {
+            let owned = owners
+                .get(&c.right_key)
+                .is_some_and(|v| v.iter().any(|(id, _)| *id != c.org));
+            if !owned {
+                let m = mover.entry(c.right_key.clone()).or_insert_with(|| c.key.clone());
+                if c.key < *m {
+                    *m = c.key.clone();
+                }
+            }
+        }
         struct Planned {
             listing: RekeyListing,
         }
@@ -17627,26 +17712,42 @@ impl Db {
                 .get(&c.right_key)
                 .map(|v| v.iter().filter(|(id, _)| *id != c.org).collect())
                 .unwrap_or_default();
+            let right = c.right_key.1.clone();
             let mut listing = RekeyListing {
                 key: c.key.clone(),
+                country: c.country.clone(),
+                kind: c.kind.clone(),
                 shape: String::new(),
                 org: c.org,
                 org_name: head.clone(),
                 wrong: c.wrong.clone(),
-                right: c.right.clone(),
+                right: right.clone(),
                 target: None,
                 new_literal: String::new(),
             };
+            let flags =
+                |literal: &str| flagged.contains(&(literal.to_owned(), c.kind.clone(), c.country.clone()));
             match found[..] {
                 [] => {
-                    listing.shape = "move".into();
                     listing.new_literal = if c.wrong.starts_with("GBCOH") {
-                        format!("GBCOH{}", c.right)
+                        format!("GBCOH{right}")
                     } else {
-                        c.right.clone()
+                        right.clone()
                     };
-                    report.plan_move += 1;
-                    planned.push(Planned { listing });
+                    if mover.get(&c.right_key) != Some(&c.key) {
+                        report.pending_move += 1;
+                        listing.shape = "pending-move".into();
+                        report.denied.push(listing);
+                    } else if flags(&listing.new_literal) {
+                        report.destination_verdict += 1;
+                        listing.shape = "destination-verdict".into();
+                        report.denied.push(listing);
+                    } else {
+                        listing.shape = "move".into();
+                        listing.key = format!("{}>move:{}", c.key, listing.new_literal);
+                        report.plan_move += 1;
+                        planned.push(Planned { listing });
+                    }
                 }
                 [(target, literal)] => {
                     let target_names = self.org_all_names(*target).await?;
@@ -17659,6 +17760,9 @@ impl Db {
                     let denial = if withheld.contains(target) {
                         report.withheld_target += 1;
                         Some("withheld-target")
+                    } else if flags(literal) {
+                        report.destination_verdict += 1;
+                        Some("destination-verdict")
                     } else if names.iter().chain(&target_names).any(|n| (args.consortium)(n)) {
                         report.denied_consortium += 1;
                         Some("consortium")
@@ -17686,6 +17790,7 @@ impl Db {
                         }
                         None => {
                             listing.shape = "merge".into();
+                            listing.key = format!("{}>merge:{}", c.key, listing.new_literal);
                             report.plan_merge += 1;
                             planned.push(Planned { listing });
                         }
@@ -17753,10 +17858,7 @@ impl Db {
                     if report.merged + report.moved >= cap {
                         break;
                     }
-                    let (country, kind) = {
-                        let mut parts = l.key.splitn(3, '/');
-                        (parts.next().unwrap_or("").to_owned(), parts.next().unwrap_or("").to_owned())
-                    };
+                    let (country, kind) = (l.country.clone(), l.kind.clone());
                     if let Some((keep, _, _)) = &l.target {
                         let mut trows = conn
                             .query(

@@ -126,14 +126,37 @@ fn verdict(org: i64, identifier: &str, correct: Option<&str>, confidence: &str) 
     }
 }
 
+fn verdicts() -> Vec<IdentifierVerdict> {
+    vec![
+        verdict(1, "01006142", Some("01003142"), "high"),
+        verdict(3, "GBCOH04173398", Some("08004712"), "high"),
+        verdict(4, "05837803", Some("SC115530"), "high"),
+        verdict(6, "02202746", Some("02202476"), "high"),
+        verdict(8, "11111111", Some("22222222"), "high"),
+        verdict(11, "33333333", Some("33333339"), "medium"),
+        verdict(12, "44444444", Some("GB44444444"), "high"),
+        verdict(13, "55555555", Some("66666666"), "high"),
+        verdict(15, "77777777", Some("88888888"), "high"),
+        verdict(16, "88888888", None, "high"),
+    ]
+}
+
 async fn bed(path: &str) -> (store::Db, Connection) {
+    bed_with(path, ORGS, &verdicts()).await
+}
+
+async fn bed_with(
+    path: &str,
+    orgs: &[(i64, &str, &str)],
+    verdicts: &[IdentifierVerdict],
+) -> (store::Db, Connection) {
     for s in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
     let db = store::Db::open(path).await.unwrap();
     let conn = store::turso::Builder::new_local(path).build().await.unwrap().connect().unwrap();
     conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
-    for (id, identifier, name) in ORGS {
+    for (id, identifier, name) in orgs {
         conn.execute(
             "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
              VALUES (?, 'GB', 'national', ?, ?, ?, 0, 0)",
@@ -159,12 +182,12 @@ async fn bed(path: &str) -> (store::Db, Connection) {
         .await
         .unwrap();
     }
-    // Notice 1 already names Rolls-Royce under the wrong number: the merge must
-    // carry it to org 2, and its party row with it.
+    // Notice 1 already names org 1 under its wrong number: a merge must carry
+    // it to the right number's org, and its party row with it.
     conn.execute(
         "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier)
-         VALUES (1, 'S-1', 1, 'Rolls-Royce plc', 'GB', '01006142')",
-        (),
+         VALUES (1, 'S-1', 1, ?, 'GB', ?)",
+        (Value::Text(orgs[0].2.into()), Value::Text(orgs[0].1.into())),
     )
     .await
     .unwrap();
@@ -175,24 +198,8 @@ async fn bed(path: &str) -> (store::Db, Connection) {
     )
     .await
     .unwrap();
-    db.record_identifier_verdicts(
-        "452",
-        &[
-            verdict(1, "01006142", Some("01003142"), "high"),
-            verdict(3, "GBCOH04173398", Some("08004712"), "high"),
-            verdict(4, "05837803", Some("SC115530"), "high"),
-            verdict(6, "02202746", Some("02202476"), "high"),
-            verdict(8, "11111111", Some("22222222"), "high"),
-            verdict(11, "33333333", Some("33333339"), "medium"),
-            verdict(12, "44444444", Some("GB44444444"), "high"),
-            verdict(13, "55555555", Some("66666666"), "high"),
-            verdict(15, "77777777", Some("88888888"), "high"),
-            verdict(16, "88888888", None, "high"),
-        ],
-        0,
-    )
-    .await
-    .unwrap();
+    let r = db.record_identifier_verdicts("452", verdicts, 0).await.unwrap();
+    assert_eq!(r.stale, 0);
     (db, conn)
 }
 
@@ -236,9 +243,15 @@ async fn the_arm_plans_every_class_and_executes_the_reviewed_plan() {
         dry.denied
     );
     assert_eq!((dry.plan_merge, dry.plan_move), (2, 1));
+    // A planned key pins what was reviewed: the shape and what the entity will
+    // carry, so a re-POSTed right number or a changed target is another key.
     assert_eq!(
         dry.keys,
-        vec!["GB/national/01006142", "GB/national/05837803", "GB/national/GBCOH04173398"]
+        vec![
+            "GB/national/01006142>merge:01003142",
+            "GB/national/05837803>merge:GBCOHSC115530",
+            "GB/national/GBCOH04173398>move:GBCOH08004712",
+        ]
     );
     let rsk = dry.plan.iter().find(|l| l.org == 4).unwrap();
     assert_eq!((rsk.shape.as_str(), rsk.target.as_ref().map(|t| t.0)), ("merge", Some(5)));
@@ -251,7 +264,10 @@ async fn the_arm_plans_every_class_and_executes_the_reviewed_plan() {
     // Capped at one: the first key only, and the residual names the rest.
     let first = db.match_org_rekey(args(false, Some(dry.keys.clone()), Some(1))).await.unwrap();
     assert_eq!((first.merged, first.moved), (1, 0));
-    assert_eq!(first.residual, vec!["GB/national/05837803", "GB/national/GBCOH04173398"]);
+    assert_eq!(
+        first.residual,
+        vec!["GB/national/05837803>merge:GBCOHSC115530", "GB/national/GBCOH04173398>move:GBCOH08004712"]
+    );
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 1").await, 0);
     assert_eq!(count(&conn, "SELECT organization_id FROM organization_mentions WHERE notice_id = 1").await, 2);
     assert_eq!(count(&conn, "SELECT organization_id FROM tender_version_parties WHERE tender_id = 9").await, 2);
@@ -354,4 +370,128 @@ async fn the_resolver_aliases_a_re_keyed_wrong_number_to_its_entity() {
     assert!(ids[2] > 16, "a stranger under that number mints");
     assert_eq!(ids[3], 3, "the moved org's old literal finds it");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, orgs + 1);
+}
+
+/// Two owner-less wrong numbers naming ONE right number: moving both would mint
+/// two carriers of it (a family the next R2 declines). Only the smallest key
+/// moves; the other waits, and the next plan merges it into the moved org. A
+/// reviewer's `GB-COH-` spelling of the right number never doubles the prefix.
+#[tokio::test]
+async fn one_right_number_moves_once_and_the_rest_merge_into_it() {
+    let orgs: &[(i64, &str, &str)] = &[(1, "GBCOH09999991", "Zeta Ltd"), (2, "GBCOH09999992", "Zeta Limited")];
+    let (db, conn) = bed_with(
+        "test-rekey-pending.db",
+        orgs,
+        &[
+            verdict(1, "GBCOH09999991", Some("GB-COH-09999999"), "high"),
+            verdict(2, "GBCOH09999992", Some("09999999"), "high"),
+        ],
+    )
+    .await;
+
+    let dry = db.match_org_rekey(args(true, None, None)).await.unwrap();
+    assert_eq!((dry.plan_move, dry.pending_move, dry.plan_merge), (1, 1, 0), "{:#?}", dry.denied);
+    assert_eq!(dry.keys, vec!["GB/national/GBCOH09999991>move:GBCOH09999999"]);
+    assert_eq!(dry.denied[0].shape, "pending-move");
+    let wet = db.match_org_rekey(args(false, Some(dry.keys), None)).await.unwrap();
+    assert_eq!((wet.moved, wet.merged), (1, 0));
+    assert_eq!(
+        text(&conn, "SELECT identifier FROM organizations WHERE id = 1").await.as_deref(),
+        Some("GBCOH09999999")
+    );
+
+    let next = db.match_org_rekey(args(true, None, None)).await.unwrap();
+    assert_eq!((next.plan_move, next.pending_move, next.plan_merge, next.gone), (0, 0, 1, 1));
+    assert_eq!(next.keys, vec!["GB/national/GBCOH09999992>merge:GBCOH09999999"]);
+    let wet = db.match_org_rekey(args(false, Some(next.keys), None)).await.unwrap();
+    assert_eq!((wet.moved, wet.merged), (0, 1));
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 1);
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM org_merge_log WHERE rule = 'rekey' AND keep = 1 AND loser = 2").await,
+        1
+    );
+}
+
+/// A destination some verdict flags is not a place to put an entity: neither a
+/// right-number owner under a `related` verdict (merge), nor a right number a
+/// `wrong` verdict names while nothing carries it (move).
+#[tokio::test]
+async fn a_destination_under_a_verdict_is_refused() {
+    let orgs: &[(i64, &str, &str)] = &[
+        (1, "41414149", "Iota Ltd"),
+        (2, "41414141", "Iota Ltd"),
+        (3, "61616161", "Lambda Ltd"),
+        (4, "61616169", "Lambda Ltd"),
+    ];
+    let mut related = verdict(2, "41414141", None, "high");
+    related.verdict = "related".into();
+    let (db, conn) = bed_with(
+        "test-rekey-destination.db",
+        orgs,
+        &[
+            verdict(1, "41414149", Some("41414141"), "high"),
+            related,
+            verdict(3, "61616161", Some("61616169"), "high"),
+            verdict(4, "61616169", None, "high"),
+        ],
+    )
+    .await;
+    // The org the second verdict flagged is gone; its number stays flagged.
+    conn.execute("DELETE FROM organizations WHERE id = 4", ()).await.unwrap();
+
+    let dry = db.match_org_rekey(args(true, None, None)).await.unwrap();
+    assert_eq!((dry.plan_merge, dry.plan_move, dry.destination_verdict), (0, 0, 2), "{:#?}", dry.denied);
+    let mut shapes: Vec<(i64, &str)> = dry.denied.iter().map(|l| (l.org, l.shape.as_str())).collect();
+    shapes.sort();
+    assert_eq!(shapes, vec![(1, "destination-verdict"), (3, "destination-verdict")]);
+    assert!(dry.denied.iter().all(|l| !l.key.contains('>')), "a denied key is the bare wrong triple");
+}
+
+/// The alias follows a CHAIN (a moved org's new number found wrong in its turn
+/// and moved again) and resolves at bind time: in a rebuild the entity's row
+/// does not stand when the resolver opens; it is minted by the fold, and the
+/// wrong literal's later mention must reach that row, not mint another.
+#[tokio::test]
+async fn the_alias_follows_a_chain_and_binds_to_a_row_minted_during_the_fold() {
+    let orgs: &[(i64, &str, &str)] = &[(1, "50505050", "Kappa Ltd")];
+    let (db, conn) =
+        bed_with("test-rekey-chain.db", orgs, &[verdict(1, "50505050", Some("50505051"), "high")]).await;
+    let move_once = || async {
+        let dry = db.match_org_rekey(args(true, None, None)).await.unwrap();
+        assert_eq!(dry.plan_move, 1, "{:#?}", dry.denied);
+        let wet = db.match_org_rekey(args(false, Some(dry.keys), None)).await.unwrap();
+        assert_eq!(wet.moved, 1);
+    };
+    move_once().await;
+    // The moved-onto number is found wrong in its turn.
+    let r = db
+        .record_identifier_verdicts("452b", &[verdict(1, "50505051", Some("50505052"), "high")], 0)
+        .await
+        .unwrap();
+    assert_eq!(r.recorded, 1);
+    move_once().await;
+    assert_eq!(text(&conn, "SELECT identifier FROM organizations WHERE id = 1").await.as_deref(), Some("50505052"));
+
+    let resolve = |ms: Vec<Mention>| {
+        let db = &db;
+        async move {
+            let mut resolver =
+                db.mention_resolver(Some(key), Some(consortium), None, Some(norm), None, None, 0).await.unwrap();
+            let ids = db.resolve_mentions(&mut resolver, &ms, 0).await.unwrap();
+            db.finish_mention_resolver(resolver).await.unwrap();
+            ids
+        }
+    };
+    let ids = resolve(vec![mention(2, "Kappa Ltd", "50505050"), mention(3, "Kappa Ltd", "50505051")]).await;
+    assert_eq!(ids, vec![1, 1], "both earlier numbers reach the entity through the chain");
+
+    // A rebuild's shape: the entity's row is not standing when the resolver
+    // opens. The fold mints it under the right number, and a later mention of
+    // the first wrong number binds to that row.
+    conn.execute("DELETE FROM organization_mentions", ()).await.unwrap();
+    conn.execute("DELETE FROM tender_version_parties", ()).await.unwrap();
+    conn.execute("DELETE FROM organizations", ()).await.unwrap();
+    let ids = resolve(vec![mention(4, "Kappa Ltd", "50505052"), mention(5, "Kappa Ltd", "50505050")]).await;
+    assert_eq!(ids[1], ids[0], "the wrong number binds to the row the fold minted");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 1);
 }

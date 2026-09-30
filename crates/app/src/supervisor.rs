@@ -5964,18 +5964,26 @@ impl Supervisor {
                 // parity against exactly that.
                 let keys: Vec<String> = if dry_run { r.keys.clone() } else { r.residual.clone() };
                 let kept: std::collections::HashSet<&str> = keys.iter().map(String::as_str).collect();
+                // The recorded counts describe the recorded keys: on a wet run
+                // that is the residual, so a reader of the stored plan never
+                // sees a merge/move count the keys beside it do not hold.
+                let recorded: Vec<&store::RekeyListing> =
+                    r.plan.iter().filter(|l| kept.contains(l.key.as_str())).collect();
                 let plan = serde_json::json!({
                     "keys": keys,
                     "residual_of_wet_run": !dry_run,
                     "verdicts": r.verdicts, "not_high": r.not_high, "gone": r.gone,
                     "several": r.several, "unkeyed": r.unkeyed, "same_key": r.same_key,
                     "multi_target": r.multi_target, "withheld_target": r.withheld_target,
+                    "pending_move": r.pending_move,
+                    "destination_verdict": r.destination_verdict,
                     "denied_consortium": r.denied_consortium,
                     "denied_legal_form": r.denied_legal_form, "denied_names": r.denied_names,
-                    "plan_merge": r.plan_merge, "plan_move": r.plan_move,
+                    "plan_merge": recorded.iter().filter(|l| l.shape == "merge").count(),
+                    "plan_move": recorded.iter().filter(|l| l.shape == "move").count(),
+                    "live_plan_merge": r.plan_merge, "live_plan_move": r.plan_move,
                     "merged_this_run": r.merged, "moved_this_run": r.moved,
-                    "plan": r.plan.iter().filter(|l| kept.contains(l.key.as_str())).map(listing)
-                        .collect::<Vec<_>>(),
+                    "plan": recorded.into_iter().map(listing).collect::<Vec<_>>(),
                     "denied": r.denied.iter().map(listing).collect::<Vec<_>>(),
                 })
                 .to_string();
@@ -5986,7 +5994,8 @@ impl Supervisor {
                 let head = format!(
                     "{} wrong-number verdicts with a right number ({} not high, {} gone, {} \
                      several carriers, {} unkeyed, {} same key); denied: {} multi-target, {} \
-                     withheld target, {} consortium, {} legal-form, {} names; plan {} merge + {} move",
+                     withheld target, {} pending move, {} destination verdict, {} consortium, \
+                     {} legal-form, {} names; plan {} merge + {} move",
                     r.verdicts,
                     r.not_high,
                     r.gone,
@@ -5995,6 +6004,8 @@ impl Supervisor {
                     r.same_key,
                     r.multi_target,
                     r.withheld_target,
+                    r.pending_move,
+                    r.destination_verdict,
                     r.denied_consortium,
                     r.denied_legal_form,
                     r.denied_names,

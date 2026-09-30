@@ -1,6 +1,7 @@
 # 342 — sources beyond TED and DÖE ("international"): nothing exists, the entry contract does
 
-Status: ready-for-agent — backfill CHUNK 3 (2025-01 → 2025-05) ENQUEUED 2026-09-30 14:5x UTC (jobs 1719–1725); chunks 1–2 landed (FTS now 2025-06 → today). NEXT: read 1725, then 2021-01 → 2024-12 in ≤8-month chunks on idle queues ≥4 h before the 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
+Status: ready-for-agent — backfill chunks 1–3 landed (FTS now 2025-01 → today; chunk 3 = jobs 1719–1725, ok 16:11 UTC 2026-09-30). NEXT: chunk 4 (2024-05 → 2024-12) on the next idle queue after the 453 deploy, then 2021-01 → 2024-04 in ≤8-month chunks on idle queues ≥4 h before the 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
+Was status: ready-for-agent — backfill CHUNK 3 (2025-01 → 2025-05) ENQUEUED 2026-09-30 14:5x UTC (jobs 1719–1725); chunks 1–2 landed (FTS now 2025-06 → today). NEXT: read 1725, then 2021-01 → 2024-12 in ≤8-month chunks on idle queues ≥4 h before the 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
 Was status: ready-for-agent — unit 2 COMPLETE. Docs (step 12) DONE (`18d59a2`). `bids.statistics` fix DEPLOYED and VERIFIED 2026-09-29 (`54a00be` + `83ee914`; reparse job 1663, project 1664): phantom STAT- results 14,870 → 0. NEXT: the backfill, in chunks that leave the daily tick room (see the foot). Plan: `.scratch/tender-db/342-fts-plan.md`.
 issues for that"). No non-TED/DÖE source has ever been researched for onboarding;
 the first step is a market choice, which is Lennart's.
@@ -524,3 +525,14 @@ ends well before the 07:35 UTC tick.
   before the wet one. It never makes it unsafe, and the wet run waits on the owner's go-ahead anyway.
 - Chunk 3: `{"kind":"backfill","source":"fts","range":["2025-01","2025-05"]}` → jobs 1719–1725 (five monthly
   fetches, process, project), enqueued 14:5x UTC on an idle queue, ~2.5 h. `/data` 74% (448 GB free).
+
+### 2026-09-30 16:3x UTC — chunk 3 (2025-01 → 2025-05) landed
+
+- Jobs 1719–1723 fetched 2025-01 … 2025-05, every one `ok` (15:01 → 16:08 UTC, ~13 min a month).
+- Process 1724: `27415 members → 27415 notices (27415 parsed, 0 quarantined, 0 unrecognised, 0 dup); skipped 15
+  clean package(s) at their current fetch (issue 419)`.
+- Project 1725: `27415 notices → 22762 tenders (0 islands), 39509 versions; 22762 tenders written`, and
+  `issue-448 alias asked 1 bound 1 refused 0` — the altid alias bound the one PPON-first mention the new months
+  carried for a merged pair.
+- Five months took ~70 min end to end, so an 8-month chunk is ~2 h. Chunk 4 (2024-05 → 2024-12) waits for the
+  issue-453 deploy (queued behind the gate running now) so the deploy does not wait on it.
