@@ -1,6 +1,7 @@
 # 342 — sources beyond TED and DÖE ("international"): nothing exists, the entry contract does
 
-Status: ready-for-agent — unit 2 COMPLETE. Docs (step 12) DONE (`18d59a2`). `bids.statistics` fix DEPLOYED and VERIFIED 2026-09-29 (`54a00be` + `83ee914`; reparse job 1663, project 1664): phantom STAT- results 14,870 → 0. NEXT: the backfill, in chunks that leave the daily tick room (see the foot). Plan: `.scratch/tender-db/342-fts-plan.md`.
+Status: ready-for-agent — backfill CHUNK 3 (2025-01 → 2025-05) ENQUEUED 2026-09-30 14:5x UTC (jobs 1719–1725); chunks 1–2 landed (FTS now 2025-06 → today). NEXT: read 1725, then 2021-01 → 2024-12 in ≤8-month chunks on idle queues ≥4 h before the 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
+Was status: ready-for-agent — unit 2 COMPLETE. Docs (step 12) DONE (`18d59a2`). `bids.statistics` fix DEPLOYED and VERIFIED 2026-09-29 (`54a00be` + `83ee914`; reparse job 1663, project 1664): phantom STAT- results 14,870 → 0. NEXT: the backfill, in chunks that leave the daily tick room (see the foot). Plan: `.scratch/tender-db/342-fts-plan.md`.
 issues for that"). No non-TED/DÖE source has ever been researched for onboarding;
 the first step is a market choice, which is Lennart's.
 Kind: capability (sources) — the product-breadth half of "full internationalization"
@@ -510,3 +511,16 @@ ends well before the 07:35 UTC tick.
   23–43%. That is expected while the corpus starts at 2025-06: an award whose tender release predates the backfill has
   nothing to chain to. **Re-read after the full 2021 → backfill.** If it is still above ~50% then, look at how FTS
   releases of one ocid key into one tender (issue 386's election).
+
+### 2026-09-30 — chunk 2 (2026-03 → 2026-08) landed; the hold on the rest lifted; chunk 3 enqueued
+
+- Chunk 2 was jobs 1682–1689, every fetch `ok`. Process 1688: `62921 members → 62921 notices (62921 parsed, 0
+  quarantined)`; project 1689: `46607 tenders written`. FTS notices by publication month now run 2025-06 → 2026-09,
+  7.2k–11.6k a month.
+- The rest (2021-01 → 2025-05) had been held behind issue 448's full altid wet run, on the reasoning that new FTS data
+  would move its plan. That was the wrong way round. The wet run merges only the pairs in its stored, reviewed plan,
+  and a pair the backfill adds is deferred as unreviewed. A stored pair the backfill changes (a new partner turns it
+  into a conflict) is exactly the pair that should be re-planned. So at worst the backfill costs a fresh dry run
+  before the wet one. It never makes it unsafe, and the wet run waits on the owner's go-ahead anyway.
+- Chunk 3: `{"kind":"backfill","source":"fts","range":["2025-01","2025-05"]}` → jobs 1719–1725 (five monthly
+  fetches, process, project), enqueued 14:5x UTC on an idle queue, ~2.5 h. `/data` 74% (448 GB free).
