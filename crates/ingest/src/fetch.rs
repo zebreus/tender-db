@@ -339,6 +339,18 @@ pub async fn fetch_fts(
             (0, Some(window.url.clone()))
         };
         let mut releases = 0usize;
+        // A STUCK CURSOR (issue 449). On 2025-12-10 every `links.next` the API
+        // sent was the URL just fetched, with the same 100 releases behind it.
+        // Following it looped for good: 70+ identical pages, and a fetch job
+        // has no stop checkpoint, so it held the single job runner in front of
+        // the daily tick. Two signs mark a stuck window. `links.next` names
+        // the URL we just fetched, or the window passes `MAX_WINDOW_PAGES`,
+        // which also catches a cursor that moves while its content does not.
+        // Either way the window is re-walked hour by hour below. The cursor
+        // keeps the stuck URL as `next`, so a restart mid-fallback asks it
+        // again, sees it stuck again, and redoes the hourly walk. The hourly
+        // pages are named apart and overwritten in place, so a redo is idempotent.
+        let mut stuck = false;
         while let Some(url) = next {
             if requests > 0 {
                 tokio::time::sleep(page_pause).await;
@@ -350,12 +362,45 @@ pub async fn fetch_fts(
             page += 1;
             releases += count;
             write_atomic(&staging.join(format!("{day}-p{page:03}.json")), &bytes)?;
+            stuck = links_next.as_deref() == Some(url.as_str()) || page as usize > crate::fts::MAX_WINDOW_PAGES;
             next = links_next;
             cursor.day.clone_from(&day);
             cursor.page = page;
             cursor.next.clone_from(&next);
             write_cursor(&cursor_path, &cursor)?;
             on_progress(&day, page as usize, releases);
+            if stuck {
+                break;
+            }
+        }
+        if stuck {
+            // `h<NN>` sorts before `p<NNN>`, so in `assemble_fts_zip` (first
+            // occurrence of an id wins) the hourly copy of a release wins over
+            // the stale copies the stuck walk staged.
+            let hours = crate::fts::hour_urls(base, window.day, crate::fts::overlap_of(target));
+            for (hour, first) in hours.into_iter().enumerate() {
+                let (mut hour_page, mut hour_next) = (0usize, Some(first));
+                while let Some(url) = hour_next {
+                    tokio::time::sleep(page_pause).await;
+                    requests += 1;
+                    let bytes = get_bytes(client, &url).await?;
+                    let (count, links_next) =
+                        page_summary(&bytes).map_err(|what| Error::Malformed(format!("{url}: {what}")))?;
+                    hour_page += 1;
+                    releases += count;
+                    write_atomic(&staging.join(format!("{day}-h{hour:02}-p{hour_page:03}.json")), &bytes)?;
+                    // Stuck inside ONE hour, there is nothing smaller left to cut
+                    // to. Fail with staging intact: a loud failed month is
+                    // re-enqueued by hand, and a silently truncated one is not.
+                    if links_next.as_deref() == Some(url.as_str()) || hour_page > crate::fts::MAX_HOUR_PAGES {
+                        return Err(Error::Malformed(format!(
+                            "{url}: the paging cursor is stuck even within one hour (issue 449)"
+                        )));
+                    }
+                    hour_next = links_next;
+                    on_progress(&day, page as usize + hour_page, releases);
+                }
+            }
         }
         cursor.done.push(day);
         cursor.day.clear();

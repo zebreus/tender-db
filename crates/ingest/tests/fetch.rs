@@ -573,6 +573,81 @@ async fn fts_malformed_page_fails_with_staging_intact() {
 /// Serves one page per requested window, keyed by the `updatedTo` civil day:
 /// the releases in `days` for that day (an absent day answers `releases: []`,
 /// the real API's empty window). Records the `updatedFrom` seen per day.
+/// Issue 449: a window whose cursor sticks, so `links.next` names the URL just
+/// fetched, forever, is re-walked hour by hour instead of looping. Every release
+/// of the day lands, the stuck walk stops after ONE repeated page, and the month
+/// completes. The server here answers the whole-day window with a page that
+/// points back at itself, the prod shape of 2025-12-10, and answers each
+/// hour-long window with that hour's own releases.
+#[tokio::test]
+async fn a_stuck_paging_cursor_falls_back_to_hourly_windows_instead_of_looping() {
+    let hits: Hits = Arc::new(Mutex::new(HashMap::new()));
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base = format!("http://{}/api/1.0", listener.local_addr().unwrap());
+    let app = axum::Router::new().route("/api/1.0/ocdsReleasePackages", {
+        let (base, hits) = (base.clone(), hits.clone());
+        get(move |axum::extract::RawQuery(raw): axum::extract::RawQuery, Query(q): Query<HashMap<String, String>>| {
+            let (base, hits) = (base.clone(), hits.clone());
+            async move {
+                let from = q.get("updatedFrom").cloned().unwrap_or_default();
+                let to = q.get("updatedTo").cloned().unwrap_or_default();
+                let key = format!("{from}..{to}");
+                *hits.lock().unwrap().entry(key).or_default() += 1;
+                // An hourly sub-window starts and ends in the same hour; the
+                // day window (which reaches 2 h into the 9th) does not.
+                let whole_day = from.get(..13) != to.get(..13);
+                let (releases, links) = if whole_day {
+                    // The stuck shape: the first 100-release page, whose next is itself.
+                    let this = format!("{base}/ocdsReleasePackages?{}", raw.unwrap_or_default());
+                    (vec![release("000002-2025", "late"), release("000001-2025", "early")], json!({ "next": this }))
+                } else if from.starts_with("2025-12-10T03") {
+                    (vec![release("000001-2025", "early")], json!({}))
+                } else if from.starts_with("2025-12-10T21") {
+                    (vec![release("000002-2025", "late"), release("000003-2025", "beyond the first page")], json!({}))
+                } else {
+                    (vec![], json!({}))
+                };
+                let mut page = json!({
+                    "uri": "http://fts/x", "version": "1.1", "extensions": [], "publishedDate": "",
+                    "publisher": { "name": "Cabinet Office", "scheme": "GB-GOR", "uid": "D2" },
+                    "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+                    "publicationPolicy": "https://www.gov.uk/government/publications/open-contracting",
+                    "releases": releases,
+                });
+                if links.get("next").is_some() {
+                    page["links"] = links;
+                }
+                (StatusCode::OK, page.to_string()).into_response()
+            }
+        })
+    });
+    tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+
+    let archive = std::env::temp_dir().join(format!("tender-db-fts-stuck-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&archive);
+    std::fs::create_dir_all(&archive).unwrap();
+    let db = store::Db::open(archive.join("t.db").to_str().unwrap()).await.unwrap();
+    let client = reqwest::Client::new();
+    let target = fts::day(&base, (2025, 12, 10));
+    let outcome = tokio::time::timeout(
+        Duration::from_secs(30),
+        fetch_fts(&db, &client, &archive, &target, false, Duration::ZERO, |_, _, _| {}),
+    )
+    .await
+    .expect("a stuck cursor must not loop")
+    .expect("the day lands");
+    assert!(matches!(outcome, ingest::fetch::Outcome::Fetched), "{outcome:?}");
+    let zip = archive.join(&target.rel_path);
+    let ids: Vec<String> = zip_members(&zip).into_iter().map(|(name, _)| name).collect();
+    assert_eq!(ids, vec!["000001-2025.json", "000002-2025.json", "000003-2025.json"], "every release of the day, once");
+    // The stuck walk stopped at the first repeated page, and every one of the
+    // window's 26 hours (2 h of overlap + 24) was asked exactly once.
+    let hits = hits.lock().unwrap();
+    assert_eq!(hits.get("2025-12-09T22:00:00..2025-12-10T23:59:59"), Some(&1), "{hits:?}");
+    assert_eq!(hits.values().filter(|n| **n == 1).count(), 27, "{hits:?}");
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
 /// Returns the API base, as [`fts_server`] does.
 async fn fts_day_server(days: HashMap<String, Vec<Value>>) -> (String, Hits) {
     let days = Arc::new(days);

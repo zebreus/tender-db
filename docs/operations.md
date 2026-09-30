@@ -307,6 +307,9 @@ curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' 
 # (a month is ~150 paced requests). A throttled month FAILS and keeps its staged
 # pages under fts/monthly/<YYYY-MM>.pages/, so re-enqueueing it resumes, it does
 # not restart. Read job_log for `throttled` errors and re-enqueue those months.
+# The API's paging cursor can stick (issue 449: every `links.next` names the page just
+# fetched). The fetcher then re-walks that day hour by hour; if even one hour sticks, the job
+# fails with staging intact. A fetch job has no stop checkpoint: `/cancel` answers 409.
 curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
   -d '{"kind":"backfill","source":"fts","range":["2025-07","2026-08"]}' $BASE/admin/jobs
 

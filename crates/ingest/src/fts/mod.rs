@@ -104,6 +104,49 @@ pub fn window_url(base: &str, day: (u16, u8, u8), overlap_secs: i64) -> String {
     )
 }
 
+/// Most pages one window may take before its cursor is presumed stuck (issue
+/// 449). A real FTS day is 4–6 pages, and the busiest day measured in the
+/// research (§7) is under 10. Hitting this bound is not an error: the window is
+/// re-walked hour by hour ([`hour_urls`]), so a genuinely huge day is still
+/// fetched whole, only slower.
+pub const MAX_WINDOW_PAGES: usize = 50;
+
+/// Most pages one hour-long sub-window may take. An hour of FTS is well under
+/// one page, so reaching this, or a cursor that sticks inside an hour, fails the
+/// job with its staging intact rather than looping or truncating.
+pub const MAX_HOUR_PAGES: usize = 20;
+
+/// The window of `day` cut into one-hour request windows, oldest first, covering
+/// exactly the span [`window_url`] covers (`overlap_secs` before the civil day,
+/// through 23:59:59). This is the fallback when a window's paging cursor sticks
+/// (issue 449): on 2025-12-10 the API answered every `links.next` with the same
+/// cursor and the same 100 releases, so the whole-day walk would never end. An
+/// hour holds far fewer than a page's 100 releases, so an hourly walk needs no
+/// cursor at all.
+pub fn hour_urls(base: &str, day: (u16, u8, u8), overlap_secs: i64) -> Vec<String> {
+    let (y, m, d) = day;
+    let end = days_from_civil(y, m, d) * 86_400 + 86_400;
+    let mut from = days_from_civil(y, m, d) * 86_400 - overlap_secs;
+    let mut out = Vec::new();
+    while from < end {
+        let (fy, fm, fd) = civil_date(from);
+        let h = from.rem_euclid(86_400) / 3_600;
+        out.push(format!(
+            "{base}/ocdsReleasePackages?limit={PAGE_LIMIT}\
+             &updatedFrom={fy:04}-{fm:02}-{fd:02}T{h:02}:00:00\
+             &updatedTo={fy:04}-{fm:02}-{fd:02}T{h:02}:59:59"
+        ));
+        from += 3_600;
+    }
+    out
+}
+
+/// The overlap a target's windows carry: the daily poll reaches back
+/// [`OVERLAP_SECS`], a monthly day does not ([`windows`]).
+pub fn overlap_of(target: &Target) -> i64 {
+    if target.kind == "daily" { OVERLAP_SECS } else { 0 }
+}
+
 /// The base URL a window URL was built on — the inverse of [`window_url`], so
 /// the fetcher can re-derive a target's windows from its registry identity.
 pub fn base_of(url: &str) -> Option<&str> {
@@ -311,6 +354,21 @@ impl<'a> Page<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn hour_urls_cover_exactly_the_window_span() {
+        let monthly_day = hour_urls(BASE, (2025, 12, 10), 0);
+        assert_eq!(monthly_day.len(), 24);
+        assert!(monthly_day[0].ends_with("&updatedFrom=2025-12-10T00:00:00&updatedTo=2025-12-10T00:59:59"));
+        assert!(monthly_day[23].ends_with("&updatedFrom=2025-12-10T23:00:00&updatedTo=2025-12-10T23:59:59"));
+        // The daily window's 2 h overlap reaches into the previous day, across a
+        // month and a year boundary, exactly as `window_url` does.
+        let daily = hour_urls(BASE, (2026, 1, 1), OVERLAP_SECS);
+        assert_eq!(daily.len(), 26);
+        assert!(daily[0].ends_with("&updatedFrom=2025-12-31T22:00:00&updatedTo=2025-12-31T22:59:59"));
+        assert!(daily[2].ends_with("&updatedFrom=2026-01-01T00:00:00&updatedTo=2026-01-01T00:59:59"));
+        assert!(daily.iter().all(|u| u.starts_with(BASE) && u.contains("limit=100")));
+    }
 
     #[test]
     fn urls_match_documented_patterns() {
