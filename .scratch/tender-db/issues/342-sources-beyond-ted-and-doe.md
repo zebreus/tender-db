@@ -498,3 +498,15 @@ paging cursor on the 10th, which was fixed and verified under issue 449.
 
 Next chunk: 2026-03 → 2026-08, enqueued on the idle queue after the 448/450 deploy. It is six months, ~2.5 h, and
 ends well before the 07:35 UTC tick.
+
+### Audit 2026-09-30 03:1x UTC — dashboard FTS figures against the DB
+
+- `processed_notices` 82,647 on the pipeline panel equals `SELECT COUNT(*) FROM notices WHERE profile = 'fts:ocds-1.1'`,
+  and the coverage cells split it into 2025: 57,273 and 2026: 25,374.
+- The panel says `fetch_complete: true, missing_periods: []`, while the monthlies stopped at 2026-03 and the dailies
+  begin 2026-09-07. This is the monthly→daily handoff blind spot `coverage.rs` documents (issue 402). Issue 402's
+  weekly publication-day check groups by source, so it covers FTS. Chunk 2 closes this hole today anyway.
+- Award linkage for `fts:ocds-1.1`: 32,873 of 43,067 award tenders (76%) are single-notice. The TED eForms eras run
+  23–43%. That is expected while the corpus starts at 2025-06: an award whose tender release predates the backfill has
+  nothing to chain to. **Re-read after the full 2021 → backfill.** If it is still above ~50% then, look at how FTS
+  releases of one ocid key into one tender (issue 386's election).
