@@ -2378,6 +2378,9 @@ pub struct AltIdMergeArgs<'a> {
     pub legal_family: fn(&str) -> Option<&'static str>,
     /// `crosswalk::altid_name_key` — the positive corroboration key.
     pub name_key: fn(&str) -> String,
+    /// `crosswalk::altid_keys_agree` — whether two `name_key` outputs name one
+    /// entity: equal, or equal but for a legal form one side omits.
+    pub names_agree: fn(&str, &str) -> bool,
     /// `project::match_norm` — the N2 key whose carriers the generic-name wall
     /// counts.
     pub norm: fn(&str) -> String,
@@ -2506,6 +2509,11 @@ pub struct AltIdMergeReport {
     pub uncorroborated_disjoint: u64,
     /// Every corroborating name is generic (over the stoplist cap).
     pub denied_generic: u64,
+    /// Corroborated only by a name the pair's own witness notices recorded
+    /// (unit 1b): the orgs' designated names agree, their names from every
+    /// OTHER notice do not. A witness's party name is the statement under test,
+    /// so this is listed for review, never merged.
+    pub denied_witness_only: u64,
     // ---- The plan.
     pub plan_pairs: u64,
     /// The planned `<coh>~<ppon>` keys, sorted and UNCAPPED — the set a wet run
@@ -2540,6 +2548,7 @@ impl AltIdMergeReport {
             + self.uncorroborated_overlap
             + self.uncorroborated_disjoint
             + self.denied_generic
+            + self.denied_witness_only
     }
 }
 
@@ -14471,30 +14480,37 @@ impl Db {
         // One org's mention evidence, keyed through `mention_key` — the raw
         // identifier under the mention's country, else the org's. Every tier is
         // admitted: a deny is the safe direction (the R2 wall's catch (b)).
-        async fn mention_keys(
+        // One read of an org's mentions through `organization_mentions_org`:
+        // their keyed raws (the evidence wall) and their names with the notice
+        // each came from (unit 1b's witness-free corroboration).
+        #[allow(clippy::type_complexity)]
+        async fn mention_rows(
             conn: &Connection,
             org: i64,
             org_country: &str,
             mention_key: fn(Option<&str>, &str) -> Option<(&'static str, String, bool)>,
-        ) -> turso::Result<Vec<(&'static str, String)>> {
-            let mut out = Vec::new();
+        ) -> turso::Result<(Vec<(&'static str, String)>, Vec<(i64, String)>)> {
+            let (mut keys, mut names) = (Vec::new(), Vec::new());
             let mut rows = conn
                 .query(
-                    "SELECT country, raw_identifier FROM organization_mentions \
-                      WHERE organization_id = ? AND raw_identifier IS NOT NULL",
+                    "SELECT notice_id, name, country, raw_identifier FROM organization_mentions \
+                      WHERE organization_id = ?",
                     (Value::Integer(org),),
                 )
                 .await?;
             while let Some(row) = rows.next().await? {
-                let mcountry = opt_text_of(&row, 0);
-                let raw = text(&row, 1);
+                if let Some(name) = opt_text_of(&row, 1).filter(|n| !n.trim().is_empty()) {
+                    names.push((int(&row, 0), name));
+                }
+                let Some(raw) = opt_text_of(&row, 3) else { continue };
+                let mcountry = opt_text_of(&row, 2);
                 if let Some((scheme, key, _)) =
                     mention_key(Some(mcountry.as_deref().unwrap_or(org_country)), &raw)
                 {
-                    out.push((scheme, key));
+                    keys.push((scheme, key));
                 }
             }
-            Ok(out)
+            Ok((keys, names))
         }
         // Up to three witnesses' publication ids, for the listings.
         async fn witness_publications(
@@ -14534,6 +14550,7 @@ impl Db {
         }
 
         let mut evidence: HashMap<i64, Vec<(&'static str, String)>> = HashMap::new();
+        let mut mention_names: HashMap<i64, Vec<(i64, String)>> = HashMap::new();
         let mut names: HashMap<i64, Vec<String>> = HashMap::new();
         let mut generic: HashMap<String, bool> = HashMap::new();
         let mut sampled: HashMap<&'static str, usize> = HashMap::new();
@@ -14584,9 +14601,11 @@ impl Db {
                         (("GB:coh", coh.as_str()), "no-target-coh")
                     };
                     if !evidence.contains_key(&one.id) {
-                        let keys =
-                            mention_keys(&conn, one.id, &one.country, args.mention_key).await?;
+                        // Both caches fill together: a later pair reads the names.
+                        let (keys, named) =
+                            mention_rows(&conn, one.id, &one.country, args.mention_key).await?;
                         evidence.insert(one.id, keys);
+                        mention_names.insert(one.id, named);
                     }
                     if evidence[&one.id].iter().any(|(s, k)| *s == missing.0 && k == missing.1) {
                         report.already_one += 1;
@@ -14633,8 +14652,9 @@ impl Db {
                     names.insert(o.id, self.org_all_names(o.id).await?);
                 }
                 if !evidence.contains_key(&o.id) {
-                    let keys = mention_keys(&conn, o.id, &o.country, args.mention_key).await?;
+                    let (keys, named) = mention_rows(&conn, o.id, &o.country, args.mention_key).await?;
                     evidence.insert(o.id, keys);
+                    mention_names.insert(o.id, named);
                 }
             }
             let (c_names, p_names) = (&names[&c.id], &names[&p.id]);
@@ -14772,33 +14792,66 @@ impl Db {
                     .await?;
                     continue;
                 }
-                // Positive corroboration: ONE altid name key equal across both
-                // orgs' heads and satellites. Strict on purpose — `Acme UK Ltd` is
-                // not `Acme Ltd`, and `Acme plc` is not either.
-                let keyed = |ns: &[String]| -> Vec<(String, String)> {
-                    ns.iter()
-                        .map(|n| ((args.name_key)(n), n.clone()))
+                // Positive corroboration: ONE pair of agreeing altid name keys
+                // (`names_agree`: equal, or equal but for a legal form one side
+                // omits). Strict otherwise — `Acme UK Ltd` is not `Acme Ltd`, and
+                // `Acme plc` is not either.
+                //
+                // The names come from each org's mentions OUTSIDE this pair's
+                // witness notices (unit 1b). A witness's party name is the
+                // statement under test: the fold records it on the org the
+                // party's FIRST identifier binds, so reading it back as agreement
+                // is circular. On prod that planned Amentum Clean Energy (COH
+                // 01120437) <- an `Altrad Babcock Limited` PPON org: four
+                // witnesses wrote Altrad Babcock's name and PPON beside Amentum's
+                // company number, and that name became the COH org's satellite
+                // (dry job 1681). A side with NO mention outside the witnesses is
+                // an org made of them alone, so its witness names stand in:
+                // merging it moves only what the witnesses put there. A side with
+                // no mention at all falls back to its designated names.
+                let keyed = |ns: &mut dyn Iterator<Item = &String>| -> BTreeMap<String, String> {
+                    ns.map(|n| ((args.name_key)(n), n.clone()))
                         .filter(|(key, _)| !key.is_empty())
                         .collect()
                 };
-                let (ck, pk) = (keyed(c_names), keyed(p_names));
-                let corroborating: Vec<(&str, &str)> = ck
-                    .iter()
-                    .flat_map(|(a, an)| {
-                        pk.iter()
-                            .filter(move |(b, _)| a == b)
-                            .map(move |(_, bn)| (an.as_str(), bn.as_str()))
-                    })
-                    .collect();
+                let side = |org: i64, designated: &[String]| -> BTreeMap<String, String> {
+                    let rows = &mention_names[&org];
+                    let outside = keyed(
+                        &mut rows.iter().filter(|(n, _)| !pair.witnesses.contains_key(n)).map(|(_, name)| name),
+                    );
+                    if !outside.is_empty() {
+                        outside
+                    } else if !rows.is_empty() {
+                        keyed(&mut rows.iter().map(|(_, name)| name))
+                    } else {
+                        keyed(&mut designated.iter())
+                    }
+                };
+                let agreeing = |a: &BTreeMap<String, String>, b: &BTreeMap<String, String>| -> Vec<(String, String)> {
+                    a.iter()
+                        .flat_map(|(ak, an)| {
+                            b.iter()
+                                .filter(move |(bk, _)| (args.names_agree)(ak, bk))
+                                .map(move |(_, bn)| (an.clone(), bn.clone()))
+                        })
+                        .collect()
+                };
+                let corroborating = agreeing(&side(c.id, c_names), &side(p.id, p_names));
                 if corroborating.is_empty() {
-                    // Listed, never merged. The sub-class only sorts the review
-                    // queue: names sharing a core token (the Energinet shape, a
-                    // sister company) from names sharing none (a probable
-                    // publisher error). `name_cores_disjoint` never admits here.
-                    let disjoint = ck.iter().all(|(a, _)| {
-                        pk.iter().all(|(b, _)| name_cores_disjoint(&[a.clone(), b.clone()]))
-                    });
-                    listing.gate = if disjoint {
+                    // Listed, never merged. The class sorts the review queue. When
+                    // the designated names (head and satellites) DO agree, only a
+                    // witness's own name joined the two: `witness-only`, where a
+                    // rename (the company number is one legal entity) sits beside
+                    // a publisher's wrong number, and the register's name history
+                    // tells them apart. Otherwise names sharing a core token (the
+                    // Energinet shape, a sister company) are `overlap`, names
+                    // sharing none (a probable publisher error) `disjoint`.
+                    // `name_cores_disjoint` never admits here.
+                    let (dc, dp) = (keyed(&mut c_names.iter()), keyed(&mut p_names.iter()));
+                    listing.gate = if !agreeing(&dc, &dp).is_empty() {
+                        report.denied_witness_only += 1;
+                        "witness-only"
+                    } else if dc.keys().all(|a| dp.keys().all(|b| name_cores_disjoint(&[a.clone(), b.clone()]))) {
                         report.uncorroborated_disjoint += 1;
                         "uncorroborated-disjoint"
                     } else {
@@ -14822,9 +14875,9 @@ impl Db {
                 // a publisher's statement, not arithmetic. One corroborating pair
                 // whose two names are both under the cap is enough.
                 let mut clear = false;
-                for (a, b) in corroborating {
+                for (a, b) in &corroborating {
                     let mut over = false;
-                    for n in [a, b] {
+                    for n in [a.as_str(), b.as_str()] {
                         let k2 = (args.norm)(n);
                         let g = match generic.get(&k2) {
                             Some(g) => *g,

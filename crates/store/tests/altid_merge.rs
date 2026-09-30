@@ -100,6 +100,25 @@ fn name_key(name: &str) -> String {
         .join(" ")
 }
 
+/// `crosswalk::altid_keys_agree` in small: equal, or equal but for a legal form
+/// only one side carries.
+fn names_agree(a: &str, b: &str) -> bool {
+    if a == b {
+        return true;
+    }
+    let strip = |key: &str| {
+        let mut tokens: Vec<&str> = key.split(' ').collect();
+        let mut formed = false;
+        while tokens.last().is_some_and(|t| t.starts_with('§')) {
+            tokens.pop();
+            formed = true;
+        }
+        (tokens.join(" "), formed)
+    };
+    let ((a, a_formed), (b, b_formed)) = (strip(a), strip(b));
+    a_formed != b_formed && !a.is_empty() && a == b
+}
+
 fn legal_family(name: &str) -> Option<&'static str> {
     norm(name)
         .split(' ')
@@ -125,6 +144,7 @@ fn args(stoplist_cap: usize) -> store::AltIdMergeArgs<'static> {
         consortium,
         legal_family,
         name_key,
+        names_agree,
         norm,
         stoplist_cap,
         dry_run: true,
@@ -228,8 +248,41 @@ impl Bed {
 
     /// One FTS party on `notice`: its section, its BT-501 rows in order, and —
     /// when `bound_to` is given — the fold's mention, bound to that org and
-    /// carrying the FIRST identifier, under `country`.
+    /// carrying the FIRST identifier, under `country`. The party publishes the
+    /// bound org's head name, the way the fold elected it.
     async fn party(&self, notice: i64, party: &str, bound_to: Option<i64>, country: &str, ids: &[&str]) {
+        let name = match bound_to {
+            Some(org) => self.head(org).await,
+            None => "x".to_owned(),
+        };
+        self.party_named(notice, party, bound_to, country, ids, &name).await;
+    }
+
+    async fn head(&self, org: i64) -> String {
+        let mut rows = self
+            .conn
+            .query("SELECT name FROM organizations WHERE id = ?", (Value::Integer(org),))
+            .await
+            .unwrap();
+        match rows.next().await.unwrap() {
+            Some(row) => match row.get_value(0).unwrap() {
+                Value::Text(name) => name,
+                _ => "x".to_owned(),
+            },
+            None => "x".to_owned(),
+        }
+    }
+
+    /// [`Self::party`] publishing `name`, whatever the bound org is called.
+    async fn party_named(
+        &self,
+        notice: i64,
+        party: &str,
+        bound_to: Option<i64>,
+        country: &str,
+        ids: &[&str],
+        name: &str,
+    ) {
         let section = format!("ORG-{party}");
         self.conn
             .execute(
@@ -258,19 +311,20 @@ impl Bed {
                 .unwrap();
         }
         if let Some(org) = bound_to {
-            self.mention(notice, &section, org, country, ids.first().copied()).await;
+            self.mention(notice, &section, org, country, ids.first().copied(), name).await;
         }
     }
 
-    async fn mention(&self, notice: i64, section: &str, org: i64, country: &str, raw: Option<&str>) {
+    async fn mention(&self, notice: i64, section: &str, org: i64, country: &str, raw: Option<&str>, name: &str) {
         self.conn
             .execute(
                 "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier, scheme)
-                 VALUES (?, ?, ?, 'x', ?, ?, NULL)",
+                 VALUES (?, ?, ?, ?, ?, ?, NULL)",
                 (
                     Value::Integer(notice),
                     Value::Text(section.into()),
                     Value::Integer(org),
+                    Value::Text(name.into()),
                     Value::Text(country.into()),
                     raw.map_or(Value::Null, |r| Value::Text(r.into())),
                 ),
@@ -421,6 +475,51 @@ async fn an_overlapping_sister_name_lists_as_overlap_not_merge() {
     };
     assert_eq!(gate_of(COH_A), "uncorroborated-overlap");
     assert_eq!(gate_of(COH_B), "uncorroborated-disjoint");
+}
+
+/// Unit 1b, the shape dry job 1681 planned on prod: witnesses publish Altrad
+/// Babcock's name and PPON beside AMENTUM's company number, company number
+/// first. The fold binds those mentions to the company-number org and records
+/// the witness name as its satellite, so its designated names "agree" with the
+/// PPON org's. Every name either org carries from ANY OTHER notice disagrees,
+/// so the pair lists as `witness-only`, never as a merge. A reviewer's HIGH
+/// merge verdict still admits it, which is the path a real rename takes.
+#[tokio::test]
+async fn a_name_only_the_witnesses_recorded_never_corroborates() {
+    let b = bed("witness-only").await;
+    b.org(1, COH_A, "Amec Foster Wheeler Nuclear UK Limited").await;
+    b.org(2, PPON_P, "Altrad Babcock Limited").await;
+    // Amentum's own history under its company number.
+    b.notice(90, "fts:ocds-1.1").await;
+    b.party(90, "H", Some(1), "GB", &[COH_A]).await;
+    // The witness: Altrad Babcock's name, Amentum's number first, then the PPON.
+    b.notice(100, "fts:ocds-1.1").await;
+    b.party_named(100, "W", Some(1), "GB", &[COH_A, PPON_P], "Altrad Babcock Limited").await;
+    b.satellite(1, "ENG", "Altrad Babcock Limited").await;
+    // Altrad Babcock's own PPON-first history.
+    b.notice(101, "fts:ocds-1.1").await;
+    b.party(101, "P", Some(2), "GB", &[PPON_P]).await;
+
+    let r = b.plan().await;
+    assert_eq!((r.denied_witness_only, r.plan_pairs, r.uncorroborated_overlap), (1, 0, 0), "{r:#?}");
+    assert_eq!(r.denied_listing[0].gate, "witness-only");
+    assert_eq!(r.denied_listing[0].keep, Some(1));
+
+    b.verdict(COH_A, PPON_P, vec![1, 2], "merge", "high").await;
+    let r = b.plan().await;
+    assert_eq!((r.admitted_verdict, r.plan_pairs, r.denied_witness_only), (1, 1, 0));
+}
+
+/// The other side of unit 1b's rule: an org made of the witness mentions ALONE
+/// (the company-number org was minted by the very notices that pair it) lets
+/// those names stand in, and they agree with the PPON org's own history. And a
+/// legal form only one side publishes is no disagreement.
+#[tokio::test]
+async fn an_org_made_only_of_witness_mentions_corroborates_with_its_own_names() {
+    let b = bed("witness-made").await;
+    b.split(100, (1, COH_A, "Carnall Farrar Ltd"), (2, PPON_P, "Carnall Farrar")).await;
+    let r = b.plan().await;
+    assert_eq!((r.plan_pairs, r.denied_witness_only, r.uncorroborated_overlap), (1, 0, 0), "{r:#?}");
 }
 
 /// One PPON beside two company numbers: one of the statements is wrong and the

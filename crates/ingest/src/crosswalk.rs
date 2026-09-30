@@ -1038,7 +1038,7 @@ pub fn altid_pair_key(
 /// forms folded to `§` markers (`ltd`/`limited` → `§ltd`, `plc` → `§plc`,
 /// `llp` → `§llp`, `lp` → `§lp`, `cic` → `§cic`), then `the` and `and`
 /// dropped. Two orgs corroborate a company-number/PPON pair only when some name
-/// of each yields the SAME key.
+/// of each yields keys that [`altid_keys_agree`].
 ///
 /// Deliberately strict, and deliberately here rather than in the shared tables.
 /// `uk`, `group` and `holdings` stay: `Acme UK Ltd` and `Acme Holdings plc`
@@ -1048,20 +1048,96 @@ pub fn altid_pair_key(
 /// Ltd`. And none of it touches `family_token`, the store's `NAME_STOP_TOKENS` or
 /// [`NAME_KEY_EPOCH`]: teaching those GB forms would change R2's name gate and
 /// every N3 key in every country, where this fold is for this arm alone.
+///
+/// Three folds the first dry plan on prod asked for (unit 1b, dry job 1681's
+/// denied listing), none of which loosens the words:
+/// - a run of single letters is ONE initialism, so `U.K.`, `U K` and `UK` key
+///   alike (`JEOL (U.K.) Limited` / `JEOL (UK) Ltd`, `E.P.BARRUS` / `E P Barrus`);
+/// - `co` is `company` (`Mulalley & Co. Limited` / `Mulalley and Company Ltd`);
+/// - a trading-as clause names the brand, not the registered entity, and a
+///   parenthetical after the legal form is an annotation (`… Ltd (BDP)`,
+///   `… LIMITED (01659837)`), so both are cut before keying ([`altid_trim`]).
 pub fn altid_name_key(name: &str) -> String {
-    n3_key(name)
-        .split(' ')
-        .filter(|t| !t.is_empty() && !matches!(*t, "the" | "and"))
-        .map(|t| match t {
-            "ltd" | "limited" => "§ltd",
-            "plc" => "§plc",
-            "llp" => "§llp",
-            "lp" => "§lp",
-            "cic" => "§cic",
-            other => other,
-        })
-        .collect::<Vec<_>>()
-        .join(" ")
+    let mut out: Vec<String> = Vec::new();
+    let mut initials = String::new();
+    for t in n3_key(&altid_trim(name)).split(' ').filter(|t| !t.is_empty() && !matches!(*t, "the" | "and")) {
+        let mut chars = t.chars();
+        if let (Some(c), None) = (chars.next(), chars.next())
+            && c.is_alphabetic()
+        {
+            initials.push(c);
+            continue;
+        }
+        if !initials.is_empty() {
+            out.push(std::mem::take(&mut initials));
+        }
+        out.push(
+            match t {
+                "ltd" | "limited" => "§ltd",
+                "plc" => "§plc",
+                "llp" => "§llp",
+                "lp" => "§lp",
+                "cic" => "§cic",
+                "co" => "company",
+                other => other,
+            }
+            .to_owned(),
+        );
+    }
+    if !initials.is_empty() {
+        out.push(initials);
+    }
+    out.join(" ")
+}
+
+/// Issue 448 unit 1b: what [`altid_name_key`] cuts before keying. A trading-as
+/// clause (` t/a `, `(t/a `, ` trading as `, `(trading as `) and everything after
+/// it; then a trailing parenthetical that follows a GB legal form. A
+/// parenthetical INSIDE the name (`JEOL (UK) Ltd`, `PBS Construction (NE) Ltd`)
+/// is part of it and stays.
+pub fn altid_trim(name: &str) -> String {
+    let find = |hay: &str, needle: &str| {
+        hay.as_bytes().windows(needle.len()).position(|w| w.eq_ignore_ascii_case(needle.as_bytes()))
+    };
+    let mut cut = name.len();
+    for marker in [" t/a ", "(t/a ", " trading as ", "(trading as "] {
+        if let Some(at) = find(name, marker) {
+            cut = cut.min(at);
+        }
+    }
+    let mut kept = name[..cut].trim_end();
+    if kept.ends_with(')')
+        && let Some(open) = kept.rfind('(')
+    {
+        let before = kept[..open].trim_end().trim_end_matches(['.', ',']);
+        let lower = before.to_ascii_lowercase();
+        if [" ltd", " limited", " plc", " llp"].iter().any(|form| lower.ends_with(form)) {
+            kept = before;
+        }
+    }
+    kept.to_owned()
+}
+
+/// Issue 448 unit 1b: whether two [`altid_name_key`] outputs name one entity —
+/// equal, or equal but for a legal form only ONE of them carries (`Carnall
+/// Farrar Ltd` / `Carnall Farrar`, 105 of dry job 1681's 341 overlap denials).
+/// Two DIFFERENT forms stay apart (`Acme plc` / `Acme Ltd`), and the words must
+/// match exactly, so `Acme` never agrees with `Acme UK Ltd`.
+pub fn altid_keys_agree(a: &str, b: &str) -> bool {
+    if a == b {
+        return true;
+    }
+    let strip = |key: &str| {
+        let mut tokens: Vec<&str> = key.split(' ').collect();
+        let mut formed = false;
+        while tokens.last().is_some_and(|t| t.starts_with('§')) {
+            tokens.pop();
+            formed = true;
+        }
+        (tokens.join(" "), formed)
+    };
+    let ((a, a_formed), (b, b_formed)) = (strip(a), strip(b));
+    a_formed != b_formed && !a.is_empty() && a == b
 }
 
 /// Issue 448: the GB legal-form family a name carries — `ltd` (Ltd or
@@ -1084,7 +1160,10 @@ pub fn gb_legal_family(name: &str) -> Option<&'static str> {
 
 #[cfg(test)]
 mod altid {
-    use super::{altid_name_key, altid_pair_key, canonical_key_flat, gb_legal_family, mention_key, n3_key};
+    use super::{
+        altid_keys_agree, altid_name_key, altid_pair_key, altid_trim, canonical_key_flat, gb_legal_family,
+        mention_key, n3_key,
+    };
 
     /// The FTS literal forms, as `fts/parse.rs` stores them (`<scheme>-<id>`).
     #[test]
@@ -1152,6 +1231,42 @@ mod altid {
         assert_ne!(altid_name_key("Acme Holdings Ltd"), altid_name_key("Acme Ltd"));
         // N3 still runs underneath: a formless or non-GB name keys as N3 does.
         assert_eq!(altid_name_key("Siemens GmbH"), n3_key("Siemens GmbH"));
+    }
+
+    /// Unit 1b's folds, each from a pair dry job 1681 denied on prod.
+    #[test]
+    fn altid_name_key_folds_initials_co_and_trading_as_clauses() {
+        let same = |a: &str, b: &str| assert_eq!(altid_name_key(a), altid_name_key(b), "{a} / {b}");
+        same("JEOL (U.K.) Limited", "JEOL (UK) Ltd");
+        same("Cardinal Health U.K. 432 Limited", "Cardinal Health UK 432 Limited");
+        same("E.P.BARRUS LIMITED", "E P Barrus Ltd");
+        same("C.R. REYNOLDS LIMITED", "CR Reynolds Limited");
+        same("MULALLEY & CO. LIMITED", "Mulalley and Company Ltd");
+        same("Fenax Developments Ltd t/a FDL Contractors", "FENAX DEVELOPMENTS LIMITED");
+        same("Quality Education Solutions Ltd T/A QES", "QUALITY EDUCATION SOLUTIONS LIMITED");
+        same("Tremco CPG StructureCare Services Limited; (trading as StructureCare)", "TREMCO CPG STRUCTURECARE SERVICES LIMITED");
+        same("Building Design Partnership Ltd (BDP)", "Building Design Partnership Limited");
+        same("ISS MEDICLEAN LIMITED (01659837)", "ISS Mediclean Limited");
+        assert_eq!(altid_name_key("Acme U.K. Ltd"), "acme uk §ltd");
+        // A lone initial stays a word of its own, and the words still decide.
+        assert_eq!(altid_name_key("A Purkiss Ltd"), "a purkiss §ltd");
+        assert_ne!(altid_name_key("Acme U.K. Ltd"), altid_name_key("Acme Ltd"), "uk still names a sister");
+        // A parenthetical INSIDE the name is part of it.
+        assert_ne!(altid_name_key("PBS Construction (NE) Ltd"), altid_name_key("PBS Construction Ltd"));
+        assert_eq!(altid_trim("PBS Construction (NE) Ltd"), "PBS Construction (NE) Ltd");
+    }
+
+    #[test]
+    fn altid_keys_agree_across_a_legal_form_only_one_side_carries() {
+        let agree = |a: &str, b: &str| altid_keys_agree(&altid_name_key(a), &altid_name_key(b));
+        assert!(agree("Carnall Farrar Ltd", "Carnall Farrar"));
+        assert!(agree("Clear Skies Software", "CLEAR SKIES SOFTWARE LIMITED"));
+        assert!(agree("Acme Widgets Ltd", "ACME WIDGETS LIMITED"), "equal keys agree");
+        assert!(!agree("Acme plc", "Acme Ltd"), "two different forms never agree");
+        assert!(!agree("Acme", "Acme UK Ltd"), "the words must match exactly");
+        assert!(!agree("Northumbrian Water Group Limited", "Northumbrian Water Ltd"));
+        assert!(!agree("Ltd", "Limited Editions"), "a bare form is no name");
+        assert!(!altid_keys_agree("§ltd", ""), "nothing left once the form is gone");
     }
 
     #[test]
