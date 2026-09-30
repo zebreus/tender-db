@@ -81,3 +81,44 @@ only those, for the dissolved name. Offline plan:
 2. join it against the company-number orgs and their names (a read of `organizations` + `organization_names`: a
    snapshot job, not the serving DB);
 3. classify (a)–(d) as above.
+
+## 2026-09-30 09:5x UTC — census against the register snapshot (read-only)
+
+Method: Companies House `BasicCompanyDataAsOneFile-2026-09-01.zip` (5,689,368 live companies, each with up to 10 previous
+names). It was downloaded to the session scratchpad, not the box. The 58,938 GB `national` orgs were paged out of
+/v1/sql by identifier (30 bounded pages, 2.8 s; `.scratch/tender-db/452-census/page_orgs.sh`). 30,857 carry a
+company-number shape (`GBCOH…`, 8 digits, 2 letters + 6 digits), 30,844 distinct numbers. Each org's HEAD name was
+compared with the register's current and previous names, using the 448 campaign's matcher.
+
+| class | orgs |
+|---|---|
+| head matches the live register (current or previous name) | **28,545** (92.5%) |
+| live company, head matches none of its names | 1,303 |
+| number absent from the live register (dissolved, or never issued) | 1,009 |
+
+The 1,303 split further:
+- 819 share a distinctive token with a register name: trading names, brands, variants ("Maven Public Sector" / Aon UK);
+- 125 are glued-word or accent variants (Hand2Hold / HAND 2 HOLD, Acumé / ACUME);
+- **354** share nothing (`452-census/live-name-disjoint-candidates.json`). A read of samples finds real wrong numbers:
+  - Cheltenham Borough Council under DIGIMUNE LTD;
+  - Silver Energy Management under SPLENDIDO ESTATES;
+  - Paragon Customer Communications under DJW COTTON CONSULTING;
+  - Coastal Recycling under DEEP MOOR LF.
+
+  It also finds parent-for-unit shapes (Pinehill hospital under Ramsay Health Care; HealthTrust Europe under HCA
+  International) and a few trading names (thebigword under Link Up Mitaka).
+
+The 1,009 absent numbers (`absent-from-live-register-2026-09-01.json`), from a register-page sample of 40:
+- 17 dissolved with a matching name, i.e. a right number for a company that has since closed;
+- **11 never issued** (404). Among them: typos (`0C415849` for OC415849), non-company numbers (a Dutch registration,
+  an NHS trust code, `NP509120`), and garbage (`X338EBHC`);
+- **8 dissolved under an unrelated name**;
+- 4 open, converted or closed with a matching name.
+
+**Estimate:** about 280 never-issued and about 200 dissolved-unrelated among the 1,009, plus most of the 354
+live-disjoint. That is roughly **500–700 wrong company numbers across 30.9k orgs (~2%)**. The rest are right, or are
+trading-name and parent/unit judgements.
+
+Next unit: settle the ~350 live-disjoint and the ~480 absent-suspect exactly, with the 448 campaign's reviewer +
+challenger shape (register pages for the absent ones). Then build the action (withhold from matching + API flag) as a
+verdict table keyed by org and number, the way `org_merge_verdicts` is keyed by group.
