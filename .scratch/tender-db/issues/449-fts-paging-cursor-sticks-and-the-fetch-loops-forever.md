@@ -1,6 +1,6 @@
 # 449 — the FTS API's paging cursor can stick; the fetcher followed it forever and blocked the job runner
 
-Status: in-progress — found and built 2026-09-30 01:0x UTC (hourly check-in). Deploying: the deploy's restart is also
+Status: DEPLOYED 2026-09-30 ~02:0x UTC (rev `d429b8b`, `FORCE_BUSY=1` over the looping job, as the fix). Observed live: job 1676 resumed at the stuck URL (page 164), tripped the guard, and began the hourly walk. `2025-12-10-h00…` pages are landing in staging. Close once 1676 ends `ok` and the Verify is read.
 the only way to stop the looping job, because fetch jobs have no stop checkpoint (`POST /admin/jobs/1676/cancel`
 answered 409 "no stop checkpoint").
 Kind: operations / ingestion correctness (FTS), urgent: it blocks the single job runner in front of the 07:35 UTC tick
