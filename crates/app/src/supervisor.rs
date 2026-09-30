@@ -380,6 +380,11 @@ enum Spec {
     /// records `altid-merge-plan`; wet (unit 2) merges only that stored plan's
     /// reviewed `pairs`, at most `max_groups` of them.
     MatchOrgIdentifiersAltId { dry_run: bool, max_groups: Option<u64> },
+    /// Issue 453: re-key the orgs a reviewer found under a wrong company
+    /// number whose right one is known — merge into the right number's org, or
+    /// move onto the right number. Dry plans and records `rekey-plan`; wet
+    /// executes only that plan's `keys`, at most `max_groups` of them.
+    MatchOrgIdentifiersRekey { dry_run: bool, max_groups: Option<u64> },
     ApplyCaseReviews { dry_run: bool },
     /// Issue 312: the symmetric UNDO for `ApplyCaseReviews` — restore the
     /// identifiers whose pre-image value is a platform GUID, which the
@@ -1437,9 +1442,10 @@ impl Supervisor {
                     "r3" => Spec::MatchOrgIdentifiersR3 { dry_run, max_groups },
                     "e0" => Spec::MatchOrgIdentifiersE0 { dry_run, max_groups },
                     "altid" => Spec::MatchOrgIdentifiersAltId { dry_run, max_groups },
+                    "rekey" => Spec::MatchOrgIdentifiersRekey { dry_run, max_groups },
                     other => {
                         return Err(format!(
-                            "match-org-identifiers: unknown rule '{other}' (r2, r3, e0 or altid)"
+                            "match-org-identifiers: unknown rule '{other}' (r2, r3, e0, altid or rekey)"
                         ));
                     }
                 };
@@ -5871,6 +5877,154 @@ impl Supervisor {
                     }
                 ))
             }
+            Spec::MatchOrgIdentifiersRekey { dry_run, max_groups } => Box::pin(async move {
+                // Issue 453: the re-key arm. It reads no name-key satellite (its
+                // gates are the altid arm's name agreement over two known orgs),
+                // so none of the altid arm's org_match_keys refusals apply. A wet
+                // run REQUIRES the recorded dry plan: its `keys` are the reviewed
+                // set, and the live re-plan is held against them.
+                let dry_run = *dry_run;
+                let expect = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("rekey-plan")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "match-org-identifiers rekey REFUSED: no stored rekey-plan — run the \
+                             dry plan first ({\"kind\":\"match-org-identifiers\",\"rule\":\"rekey\"}) \
+                             and review it; nothing was written"
+                                .to_owned()
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    Some(
+                        v["keys"]
+                            .as_array()
+                            .ok_or_else(|| "rekey-plan lacks keys".to_owned())?
+                            .iter()
+                            .map(|k| {
+                                k.as_str()
+                                    .map(str::to_owned)
+                                    .ok_or_else(|| "rekey-plan keys holds a non-string".to_owned())
+                            })
+                            .collect::<Result<Vec<String>, String>>()?,
+                    )
+                };
+                // Issue 442: the wet loop deletes organizations with foreign keys ON.
+                if !dry_run {
+                    Box::pin(self.refuse_without_org_fk_indexes("match-org-identifiers rekey"))
+                        .await?;
+                }
+                self.set_phase(
+                    if dry_run { "planning" } else { "re-keying" },
+                    None,
+                    None,
+                    "reading the wrong-number verdicts and the right numbers' owners".to_owned(),
+                );
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                let r = self
+                    .db
+                    .match_org_rekey(store::RekeyArgs {
+                        key: ingest::crosswalk::canonical_key_flat,
+                        consortium: ingest::crosswalk::consortium_name,
+                        legal_family: ingest::crosswalk::gb_legal_family,
+                        name_key: ingest::crosswalk::altid_name_key,
+                        names_agree: ingest::crosswalk::altid_keys_agree,
+                        dry_run,
+                        max_rekeys: *max_groups,
+                        expect,
+                        job_id: Some(job_id as i64),
+                        stop: &stop,
+                    })
+                    .await
+                    .map_err(|e| e.to_string())?;
+                // A stop before anything was written leaves the recorded plan
+                // alone: a partial plan recorded as THE plan is what a wet run
+                // would later hold itself to.
+                if r.stopped && r.merged + r.moved == 0 {
+                    return Ok("match-org-identifiers rekey STOPPED before the first re-key: \
+                               nothing was written, and the recorded plan was left untouched"
+                        .to_owned());
+                }
+                let listing = |l: &store::RekeyListing| {
+                    serde_json::json!({
+                        "key": l.key, "shape": l.shape, "org": l.org, "name": l.org_name,
+                        "wrong": l.wrong, "right": l.right, "new_literal": l.new_literal,
+                        "target": l.target.as_ref().map(|(id, literal, name)| serde_json::json!({
+                            "org": id, "identifier": literal, "name": name,
+                        })),
+                    })
+                };
+                // A dry run records its whole plan; a wet run re-records the
+                // RESIDUAL (what a cap or a stop left), so a continuation holds
+                // parity against exactly that.
+                let keys: Vec<String> = if dry_run { r.keys.clone() } else { r.residual.clone() };
+                let kept: std::collections::HashSet<&str> = keys.iter().map(String::as_str).collect();
+                let plan = serde_json::json!({
+                    "keys": keys,
+                    "residual_of_wet_run": !dry_run,
+                    "verdicts": r.verdicts, "not_high": r.not_high, "gone": r.gone,
+                    "several": r.several, "unkeyed": r.unkeyed, "same_key": r.same_key,
+                    "multi_target": r.multi_target, "withheld_target": r.withheld_target,
+                    "denied_consortium": r.denied_consortium,
+                    "denied_legal_form": r.denied_legal_form, "denied_names": r.denied_names,
+                    "plan_merge": r.plan_merge, "plan_move": r.plan_move,
+                    "merged_this_run": r.merged, "moved_this_run": r.moved,
+                    "plan": r.plan.iter().filter(|l| kept.contains(l.key.as_str())).map(listing)
+                        .collect::<Vec<_>>(),
+                    "denied": r.denied.iter().map(listing).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("rekey-plan", &plan, store::now_unix())
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let head = format!(
+                    "{} wrong-number verdicts with a right number ({} not high, {} gone, {} \
+                     several carriers, {} unkeyed, {} same key); denied: {} multi-target, {} \
+                     withheld target, {} consortium, {} legal-form, {} names; plan {} merge + {} move",
+                    r.verdicts,
+                    r.not_high,
+                    r.gone,
+                    r.several,
+                    r.unkeyed,
+                    r.same_key,
+                    r.multi_target,
+                    r.withheld_target,
+                    r.denied_consortium,
+                    r.denied_legal_form,
+                    r.denied_names,
+                    r.plan_merge,
+                    r.plan_move,
+                );
+                Ok(if dry_run {
+                    format!("match-org-identifiers rekey (issue 453) DRY RUN — plan recorded, nothing written: {head}")
+                } else {
+                    format!(
+                        "match-org-identifiers rekey (issue 453){}: held against {} stored keys \
+                         ({} planned since, {} no longer planned); merged {} ({} mentions, {} \
+                         parties, {} bid-parties, {} winners repointed, {} winner dups deleted, {} \
+                         tenders touched), moved {}; residual {} re-recorded. Live plan: {head}",
+                        if r.stopped { " STOPPED at a checkpoint" } else { " WET" },
+                        r.expected,
+                        r.deferred_unreviewed,
+                        r.expected_not_live,
+                        r.merged,
+                        r.mentions,
+                        r.parties,
+                        r.bid_parties,
+                        r.winners,
+                        r.winner_dups,
+                        r.tender_changes,
+                        r.moved,
+                        r.residual.len(),
+                    )
+                })
+            }).await,
             Spec::MatchOrgIdentifiersAltId { dry_run, max_groups } => Box::pin(async move {
                 // Issue 448: the altid rule — the Companies House ↔ PPON pairing
                 // FTS parties publish in `additionalIdentifiers`, planned as E2

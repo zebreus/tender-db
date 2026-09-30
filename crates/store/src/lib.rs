@@ -29,6 +29,7 @@ pub use canonical::{
     CaseApplyReport, CaseBacklogReport, CaseBacklogRow, CaseReview, CaseUnapplyReport,
     ClusterCase, ClusterPacket, CountryFoldReport, CountryMove, CountryVerdict,
     CountryVerdictReport, FusionCandidate, IdentifierVerdict, IdentifierVerdictReport, MergeVerdict,
+    RekeyArgs, RekeyListing, RekeyReport,
     FusionReport, RehomingReport, RehomingVerdict,
     RehomingCase, RehomingGroup, RehomingMention, RehomingPacket, RehomingParked, RehomingTarget,
     OrphanSatellite, SatelliteOrphanReport,
@@ -669,7 +670,7 @@ pub async fn state() -> Arc<Db> {
 /// answers "duplicate column name" and the statement is skipped. Anything
 /// beyond ADD COLUMN stays out of scope by policy — the canonical layer is
 /// rebuildable, and destructive changes recreate from the archive instead.
-const MIGRATIONS: [&str; 26] = [
+const MIGRATIONS: [&str; 29] = [
     "ALTER TABLE notices ADD COLUMN published_at INTEGER",
     "ALTER TABLE notices ADD COLUMN dispatched_at INTEGER",
     "ALTER TABLE tender_versions ADD COLUMN dispatched_at INTEGER",
@@ -738,6 +739,12 @@ const MIGRATIONS: [&str; 26] = [
     "ALTER TABLE org_sweep_log ADD COLUMN identifier_kind TEXT",
     "ALTER TABLE org_sweep_log ADD COLUMN identifier TEXT",
     "ALTER TABLE org_sweep_log ADD COLUMN provisional INTEGER",
+    // Issue 453: the re-key arm's stamp on an identifier verdict. The table went
+    // live on 2026-09-30 (issue 452) without them; its rows read NULL, i.e. not
+    // re-keyed, which is true of every one of them.
+    "ALTER TABLE org_identifier_verdicts ADD COLUMN applied_at INTEGER",
+    "ALTER TABLE org_identifier_verdicts ADD COLUMN applied_literal TEXT",
+    "ALTER TABLE org_identifier_verdicts ADD COLUMN job_id INTEGER",
 ];
 
 async fn migrate(conn: &Connection) -> turso::Result<()> {

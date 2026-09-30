@@ -630,6 +630,13 @@ pub(crate) const SCHEMA: &str = "
         rationale          TEXT    NOT NULL,
         confidence         TEXT    NOT NULL CHECK (confidence IN ('high','medium','low')),
         reviewed_at        INTEGER NOT NULL,
+        -- Issue 453: the re-key arm's stamp. `applied_literal` is the
+        -- identifier the entity carries since — the right-number org it was
+        -- merged into, or its own row moved onto the right number — and the
+        -- resolver aliases the wrong triple to it. A re-POST never touches it.
+        applied_at         INTEGER,
+        applied_literal    TEXT,
+        job_id             INTEGER,
         PRIMARY KEY (identifier, identifier_kind, country)
     ) STRICT;
 
@@ -3144,6 +3151,101 @@ async fn orgs_with_triple(
     }
     Ok(out)
 }
+
+/// Issue 453: the re-key arm's injected rules — the altid arm's, for the same
+/// question (are these two orgs one GB company?).
+pub struct RekeyArgs<'a> {
+    /// `crosswalk::canonical_key_flat` — keys the right number and every
+    /// standing org, so any spelling of the right number finds its owner.
+    pub key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>,
+    /// Consortium/groupement name detection, over every name of both orgs.
+    pub consortium: fn(&str) -> bool,
+    /// `crosswalk::gb_legal_family` — Ltd, plc or LLP, head against head.
+    pub legal_family: fn(&str) -> Option<&'static str>,
+    /// `crosswalk::altid_name_key` and `altid_keys_agree`: one agreeing name
+    /// pair across the two orgs' heads and satellites admits a merge.
+    pub name_key: fn(&str) -> String,
+    pub names_agree: fn(&str, &str) -> bool,
+    /// `true` plans and writes nothing. `false` re-plans under the writer,
+    /// holds the plan against [`Self::expect`], and executes.
+    pub dry_run: bool,
+    /// Wet runs only: at most this many re-keys.
+    pub max_rekeys: Option<u64>,
+    /// Wet runs only: the stored dry plan's `keys` — the reviewed set. Only
+    /// live ∩ expected execute; a symmetric difference over max(2%, 5) aborts
+    /// before any write.
+    pub expect: Option<Vec<String>>,
+    /// Recorded into the ledger and the verdict's stamp.
+    pub job_id: Option<i64>,
+    /// Cooperative stop, polled between re-keys (never inside a transaction).
+    pub stop: &'a (dyn Fn() -> bool + Sync),
+}
+
+/// One planned or denied re-key (issue 453).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RekeyListing {
+    /// `<country>/<kind>/<wrong literal>` — the plan key a wet run holds to.
+    pub key: String,
+    /// `merge` (into `target`), `move` (onto `new_literal`), or the denial.
+    pub shape: String,
+    pub org: i64,
+    pub org_name: String,
+    pub wrong: String,
+    /// The reviewer's right number, upper-case alphanumerics.
+    pub right: String,
+    /// The right number's standing owner: (id, identifier, head name).
+    pub target: Option<(i64, String, String)>,
+    /// What the entity carries afterwards: the target's identifier on a merge,
+    /// the wrong literal's spelling of the right number on a move.
+    pub new_literal: String,
+}
+
+/// What the issue-453 re-key arm found and did.
+#[derive(Debug, Default, Clone)]
+pub struct RekeyReport {
+    /// `wrong` verdicts that name a right number.
+    pub verdicts: u64,
+    /// Not `high` confidence: never executed.
+    pub not_high: u64,
+    /// No org carries the wrong triple any more (re-keyed already, or merged).
+    pub gone: u64,
+    /// Several orgs carry it: E0's family, not this arm's to pick from.
+    pub several: u64,
+    /// The right number keys to nothing, or outside GB (the spelling rule
+    /// below is the GB one).
+    pub unkeyed: u64,
+    /// The right number keys where the wrong one does: a spelling, not a number.
+    pub same_key: u64,
+    pub multi_target: u64,
+    /// The right number's one owner carries a `wrong` verdict itself.
+    pub withheld_target: u64,
+    pub denied_consortium: u64,
+    pub denied_legal_form: u64,
+    pub denied_names: u64,
+    pub plan_merge: u64,
+    pub plan_move: u64,
+    pub plan: Vec<RekeyListing>,
+    pub denied: Vec<RekeyListing>,
+    /// The plan's keys, sorted — what a dry run records for the wet one.
+    pub keys: Vec<String>,
+    // ---- Wet.
+    pub expected: u64,
+    pub deferred_unreviewed: u64,
+    pub expected_not_live: u64,
+    pub merged: u64,
+    pub moved: u64,
+    pub mentions: u64,
+    pub parties: u64,
+    pub bid_parties: u64,
+    pub winners: u64,
+    pub winner_dups: u64,
+    pub tender_changes: u64,
+    /// Keys the run did not reach (cap or stop), for the recorded residual.
+    pub residual: Vec<String>,
+    pub stopped: bool,
+}
+
+const REKEY_TXN: usize = 50;
 
 /// The org ids carrying a triple with a `wrong` verdict (issue 452): the set
 /// every identifier-based matcher leaves out. Hand-review sized (hundreds), so
@@ -9706,11 +9808,48 @@ impl Db {
             owners.sort_unstable();
             guarded.insert(ck, owners);
         }
+        // Issue 453: a wrong number the re-key arm has acted on. Its org now
+        // carries the right number (moved), or is gone into the org that does
+        // (merged), so nothing carries the wrong literal — and without this the
+        // publisher's next use of it would mint a fresh row under it. The exact
+        // literal binds to the org carrying the stamped right one, as it bound
+        // to the wrong-number org before; any other spelling of the wrong
+        // number is GUARDED with that org among its owners, so it reaches it
+        // only by name (the number may be someone else's real one).
+        let mut applied = Vec::new();
+        let mut rows = conn
+            .query(
+                "SELECT identifier, identifier_kind, country, applied_literal \
+                   FROM org_identifier_verdicts WHERE applied_literal IS NOT NULL",
+                (),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            applied.push((text(&row, 0), text(&row, 1), text(&row, 2), text(&row, 3)));
+        }
+        drop(rows);
+        let mut aliased = 0usize;
+        for (wrong, kind, country, literal) in applied {
+            let c = (!country.is_empty()).then_some(country);
+            let Some(&target) = org_of.get(&(c.clone(), kind.clone(), literal)) else { continue };
+            aliased += 1;
+            if let Some(ck) = resolver_canon_key(canon_key, c.as_deref(), &kind, &wrong)
+                && !poisoned.contains(&ck)
+            {
+                let mut owners = guarded.remove(&ck).unwrap_or_default();
+                owners.extend(canon_of.remove(&ck));
+                owners.push(target);
+                owners.sort_unstable();
+                owners.dedup();
+                guarded.insert(ck, owners);
+            }
+            org_of.entry((c, kind, wrong)).or_insert(target);
+        }
         // Logged whatever it found (the issue-318 rule), so a fold's log says
         // whether the verdicts were in force for it.
         self.log_diag(&format!(
             "[issue 452] {} org(s) withheld by a wrong-number verdict; {} canonical key(s) bind \
-             only on a name match",
+             only on a name match; {aliased} re-keyed wrong number(s) aliased to their org (issue 453)",
             withheld.len(),
             guarded.len()
         ));
@@ -17332,6 +17471,400 @@ impl Db {
         }
     }
 
+    /// Issue 453: re-key the organizations a reviewer found under a wrong
+    /// company number whose right number is known (`wrong` verdicts with a
+    /// `correct_identifier`, `high` only). Two shapes:
+    /// - **merge** — one standing org already carries the right number (any
+    ///   spelling, through the canonical key): the wrong-number org folds into
+    ///   it, the R2/altid merge body, ledger rule `rekey`. Gated like the altid
+    ///   arm: no consortium name on either side, GB legal forms agree head
+    ///   against head, and one agreeing name pair. Several owners, or an owner
+    ///   itself under a `wrong` verdict, is not this arm's to pick from;
+    /// - **move** — nothing carries it: the org's identifier becomes the right
+    ///   number, in the spelling its wrong literal had (`GBCOH…` or bare).
+    ///
+    /// Either way the verdict row is stamped with the literal the entity carries
+    /// since, and the resolver aliases the wrong number to it (see
+    /// [`Db::mention_resolver`]). A dry run plans and writes nothing; a wet run
+    /// re-plans under the writer and executes only the stored plan's keys.
+    pub async fn match_org_rekey(&self, args: RekeyArgs<'_>) -> turso::Result<RekeyReport> {
+        use std::collections::{HashMap, HashSet};
+        if !args.dry_run && args.expect.is_none() {
+            return Err(turso::Error::Error(
+                "rekey wet run refused: no expected key set (the stored rekey-plan's `keys`); \
+                 nothing was read or written"
+                    .into(),
+            ));
+        }
+        let mut report = RekeyReport::default();
+        let reader;
+        let writer;
+        let conn: &Connection = if args.dry_run {
+            reader = self.reader().await?;
+            &reader
+        } else {
+            writer = self.conn().await;
+            &writer
+        };
+
+        // ---- 1. The verdicts, and the org each one names.
+        struct Cand {
+            key: String,
+            wrong: String,
+            right: String,
+            org: i64,
+            right_key: (&'static str, String),
+        }
+        let mut rows = conn
+            .query(
+                "SELECT identifier, identifier_kind, country, confidence, correct_identifier \
+                   FROM org_identifier_verdicts \
+                  WHERE verdict = 'wrong' AND correct_identifier IS NOT NULL \
+                  ORDER BY identifier, identifier_kind, country",
+                (),
+            )
+            .await?;
+        let mut raw = Vec::new();
+        while let Some(row) = rows.next().await? {
+            raw.push((text(&row, 0), text(&row, 1), text(&row, 2), text(&row, 3), text(&row, 4)));
+        }
+        drop(rows);
+        let withheld = withheld_identifier_orgs(conn).await?;
+        let mut cands: Vec<Cand> = Vec::new();
+        for (wrong, kind, country, confidence, correct) in raw {
+            report.verdicts += 1;
+            if confidence != "high" {
+                report.not_high += 1;
+                continue;
+            }
+            let carriers = orgs_with_triple(conn, &wrong, &kind, &country).await?;
+            let org = match carriers[..] {
+                [] => {
+                    report.gone += 1;
+                    continue;
+                }
+                [org] => org,
+                _ => {
+                    report.several += 1;
+                    continue;
+                }
+            };
+            let right: String = correct
+                .chars()
+                .filter(char::is_ascii_alphanumeric)
+                .map(|c| c.to_ascii_uppercase())
+                .collect();
+            let c = (country != "").then_some(country.as_str());
+            let (Some((rs, rk, true)), "GB") = ((args.key)(c, &kind, &right), country.as_str()) else {
+                report.unkeyed += 1;
+                continue;
+            };
+            if let Some((ws, wk, _)) = (args.key)(c, &kind, &wrong)
+                && (ws, wk.as_str()) == (rs, rk.as_str())
+            {
+                report.same_key += 1;
+                continue;
+            }
+            cands.push(Cand {
+                key: format!("{country}/{kind}/{wrong}"),
+                wrong,
+                right,
+                org,
+                right_key: (rs, rk),
+            });
+        }
+
+        // ---- 2. OWNERS of the right numbers: the R2 preload's walk, kept to
+        // the wanted keys, so every spelling of a right number is found.
+        let wanted: HashSet<(&'static str, String)> = cands.iter().map(|c| c.right_key.clone()).collect();
+        let mut owners: HashMap<(&'static str, String), Vec<(i64, String)>> = HashMap::new();
+        if !wanted.is_empty() {
+            let mut after = 0i64;
+            loop {
+                if (args.stop)() {
+                    report.stopped = true;
+                    return Ok(report);
+                }
+                let mut rows = conn
+                    .query(
+                        "SELECT id, country, identifier_kind, identifier \
+                           FROM organizations WHERE id > ? AND identifier IS NOT NULL \
+                          ORDER BY id LIMIT 20000",
+                        (Value::Integer(after),),
+                    )
+                    .await?;
+                let mut any = false;
+                while let Some(row) = rows.next().await? {
+                    any = true;
+                    let id = int(&row, 0);
+                    after = id;
+                    let country = opt_text_of(&row, 1);
+                    let kind = opt_text_of(&row, 2).unwrap_or_else(|| "national".into());
+                    let literal = text(&row, 3);
+                    if let Some((scheme, key, true)) = (args.key)(country.as_deref(), &kind, &literal)
+                    {
+                        let k = (scheme, key);
+                        if wanted.contains(&k) {
+                            owners.entry(k).or_default().push((id, literal));
+                        }
+                    }
+                }
+                if !any {
+                    break;
+                }
+            }
+        }
+
+        // ---- 3. Classify.
+        struct Planned {
+            listing: RekeyListing,
+        }
+        let mut planned: Vec<Planned> = Vec::new();
+        for c in cands {
+            let names = self.org_all_names(c.org).await?;
+            let head = names.first().cloned().unwrap_or_default();
+            let found: Vec<&(i64, String)> = owners
+                .get(&c.right_key)
+                .map(|v| v.iter().filter(|(id, _)| *id != c.org).collect())
+                .unwrap_or_default();
+            let mut listing = RekeyListing {
+                key: c.key.clone(),
+                shape: String::new(),
+                org: c.org,
+                org_name: head.clone(),
+                wrong: c.wrong.clone(),
+                right: c.right.clone(),
+                target: None,
+                new_literal: String::new(),
+            };
+            match found[..] {
+                [] => {
+                    listing.shape = "move".into();
+                    listing.new_literal = if c.wrong.starts_with("GBCOH") {
+                        format!("GBCOH{}", c.right)
+                    } else {
+                        c.right.clone()
+                    };
+                    report.plan_move += 1;
+                    planned.push(Planned { listing });
+                }
+                [(target, literal)] => {
+                    let target_names = self.org_all_names(*target).await?;
+                    listing.target = Some((
+                        *target,
+                        literal.clone(),
+                        target_names.first().cloned().unwrap_or_default(),
+                    ));
+                    listing.new_literal = literal.clone();
+                    let denial = if withheld.contains(target) {
+                        report.withheld_target += 1;
+                        Some("withheld-target")
+                    } else if names.iter().chain(&target_names).any(|n| (args.consortium)(n)) {
+                        report.denied_consortium += 1;
+                        Some("consortium")
+                    } else if let (Some(a), Some(b)) = (
+                        names.first().and_then(|n| (args.legal_family)(n)),
+                        target_names.first().and_then(|n| (args.legal_family)(n)),
+                    ) && a != b
+                    {
+                        report.denied_legal_form += 1;
+                        Some("legal-form")
+                    } else if !names.iter().any(|a| {
+                        let ka = (args.name_key)(a);
+                        !ka.is_empty()
+                            && target_names.iter().any(|b| (args.names_agree)(&ka, &(args.name_key)(b)))
+                    }) {
+                        report.denied_names += 1;
+                        Some("names")
+                    } else {
+                        None
+                    };
+                    match denial {
+                        Some(why) => {
+                            listing.shape = why.into();
+                            report.denied.push(listing);
+                        }
+                        None => {
+                            listing.shape = "merge".into();
+                            report.plan_merge += 1;
+                            planned.push(Planned { listing });
+                        }
+                    }
+                }
+                _ => {
+                    report.multi_target += 1;
+                    listing.shape = "multi-target".into();
+                    report.denied.push(listing);
+                }
+            }
+        }
+        planned.sort_by(|a, b| a.listing.key.cmp(&b.listing.key));
+        report.keys = planned.iter().map(|p| p.listing.key.clone()).collect();
+        report.plan = planned.iter().map(|p| p.listing.clone()).collect();
+        if args.dry_run {
+            return Ok(report);
+        }
+
+        // ---- 4. WET: the stored plan's keys only, parity first.
+        let expect: BTreeSet<&str> =
+            args.expect.as_deref().unwrap_or(&[]).iter().map(String::as_str).collect();
+        let live: BTreeSet<&str> = report.keys.iter().map(String::as_str).collect();
+        let unforeseen = live.difference(&expect).count() as u64;
+        let gone = expect.difference(&live).count() as u64;
+        let tolerance = (expect.len() as u64 / 50).max(5);
+        if unforeseen + gone > tolerance {
+            return Err(turso::Error::Error(format!(
+                "rekey parity abort: the live plan has {} re-keys, the stored plan {} — {} differ \
+                 ({unforeseen} planned since the dry run, {gone} no longer planned), over the \
+                 max(2%, 5) tolerance of {tolerance}; nothing was written. Re-run the dry plan \
+                 and review it",
+                live.len(),
+                expect.len(),
+                unforeseen + gone,
+            )));
+        }
+        report.expected = expect.len() as u64;
+        report.deferred_unreviewed = unforeseen;
+        report.expected_not_live = gone;
+        let todo: Vec<RekeyListing> = report
+            .plan
+            .iter()
+            .filter(|l| expect.contains(l.key.as_str()))
+            .cloned()
+            .collect();
+        let now = crate::now_unix();
+        let job = opt_int(args.job_id);
+        let cap = args.max_rekeys.unwrap_or(u64::MAX);
+        let mut touched: BTreeSet<i64> = BTreeSet::new();
+        let mut done = 0usize;
+        for txn in todo.chunks(REKEY_TXN) {
+            if (args.stop)() {
+                report.stopped = true;
+                break;
+            }
+            if report.merged + report.moved >= cap {
+                break;
+            }
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+            let mut txn_touched: BTreeSet<i64> = BTreeSet::new();
+            let mut txn_done = 0usize;
+            let result: turso::Result<()> = async {
+                for l in txn {
+                    if report.merged + report.moved >= cap {
+                        break;
+                    }
+                    let (country, kind) = {
+                        let mut parts = l.key.splitn(3, '/');
+                        (parts.next().unwrap_or("").to_owned(), parts.next().unwrap_or("").to_owned())
+                    };
+                    if let Some((keep, _, _)) = &l.target {
+                        let mut trows = conn
+                            .query(
+                                "SELECT tender_id FROM tender_version_parties WHERE organization_id = ? \
+                           UNION SELECT tender_id FROM tender_version_bid_parties WHERE organization_id = ? \
+                           UNION SELECT tender_id FROM tender_version_result_winners WHERE organization_id = ?",
+                                (Value::Integer(l.org), Value::Integer(l.org), Value::Integer(l.org)),
+                            )
+                            .await?;
+                        while let Some(row) = trows.next().await? {
+                            txn_touched.insert(int(&row, 0));
+                        }
+                        drop(trows);
+                        let moved = repoint_org_references(conn, *keep, l.org).await?;
+                        report.mentions += moved.mentions;
+                        report.parties += moved.parties;
+                        report.bid_parties += moved.bid_parties;
+                        report.winners += moved.winners;
+                        report.winner_dups += moved.winner_dups;
+                        conn.execute("DELETE FROM organizations WHERE id = ?", (Value::Integer(l.org),))
+                            .await?;
+                        let evidence = format!(
+                            "{{\"scheme\":\"GB:rekey\",\"country\":\"{}\",\"kind\":\"{}\",\
+                             \"wrong\":\"{}\",\"right\":\"{}\",\"keep_id\":\"{}\"}}",
+                            altid_json_esc(&country),
+                            altid_json_esc(&kind),
+                            altid_json_esc(&l.wrong),
+                            altid_json_esc(&l.right),
+                            altid_json_esc(&l.new_literal),
+                        );
+                        conn.execute(
+                            "INSERT INTO org_merge_log(keep, loser, rule, evidence, job_id, at) \
+                             VALUES(?, ?, 'rekey', ?, ?, ?)",
+                            (
+                                Value::Integer(*keep),
+                                Value::Integer(l.org),
+                                Value::Text(evidence),
+                                job.clone(),
+                                Value::Integer(now),
+                            ),
+                        )
+                        .await?;
+                        append_change(conn, "organization", l.org, None, "removed", now).await?;
+                        append_change(conn, "organization", *keep, None, "changed", now).await?;
+                        report.merged += 1;
+                    } else {
+                        let n = conn
+                            .execute(
+                                "UPDATE organizations SET identifier = ? WHERE id = ? AND identifier = ?",
+                                (t(&l.new_literal), Value::Integer(l.org), t(&l.wrong)),
+                            )
+                            .await?;
+                        if n == 0 {
+                            txn_done += 1;
+                            continue;
+                        }
+                        append_change(conn, "organization", l.org, None, "changed", now).await?;
+                        report.moved += 1;
+                    }
+                    conn.execute(
+                        "UPDATE org_identifier_verdicts SET applied_at = ?, applied_literal = ?, \
+                                job_id = ? \
+                          WHERE identifier = ? AND identifier_kind = ? AND country = ?",
+                        (
+                            Value::Integer(now),
+                            t(&l.new_literal),
+                            job.clone(),
+                            t(&l.wrong),
+                            t(&kind),
+                            t(&country),
+                        ),
+                    )
+                    .await?;
+                    txn_done += 1;
+                }
+                for &tid in &txn_touched {
+                    append_change(conn, "tender", tid, None, "changed", now).await?;
+                }
+                Ok(())
+            }
+            .await;
+            match result {
+                Ok(()) => {
+                    if let Err(e) = conn.execute("COMMIT", ()).await {
+                        let _ = conn.execute("ROLLBACK", ()).await;
+                        if report.merged + report.moved > 0 {
+                            let _ = self.publish_cursor(conn).await;
+                        }
+                        return Err(e);
+                    }
+                    touched.extend(txn_touched);
+                    done += txn_done;
+                }
+                Err(e) => {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    if report.merged + report.moved > 0 {
+                        let _ = self.publish_cursor(conn).await;
+                    }
+                    return Err(e);
+                }
+            }
+            let _ = self.publish_cursor(conn).await;
+        }
+        report.tender_changes = touched.len() as u64;
+        report.residual = todo[done.min(todo.len())..].iter().map(|l| l.key.clone()).collect();
+        Ok(report)
+    }
+
     /// Issue 356: read one verdict store back — the four review tables are
     /// written through `POST /admin/*` and read by nothing but their apply
     /// jobs, and `/v1/sql` is a positive allow-list they are not on. Bounded
@@ -17377,7 +17910,8 @@ impl Db {
             "identifier" => (
                 "org_identifier_verdicts",
                 &["identifier", "identifier_kind", "country", "org_id", "cohort", "verdict",
-                  "correct_identifier", "rationale", "confidence", "reviewed_at"],
+                  "correct_identifier", "rationale", "confidence", "reviewed_at", "applied_at",
+                  "applied_literal", "job_id"],
                 "reviewed_at DESC, identifier",
             ),
             other => {
