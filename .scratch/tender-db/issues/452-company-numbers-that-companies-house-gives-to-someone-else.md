@@ -1,6 +1,7 @@
 # 452 — organizations carry company numbers that Companies House gives to another company, a dissolved shell, or no one
 
-Status: ready-for-agent — filed 2026-09-30 from issue 448's review campaign. Next: size the class across every GB
+Status: ready-for-agent — CENSUS DONE 2026-09-30 13:0x UTC: 371 org identifiers are wrong company numbers (reviewer + challenger), 102 are a related company's, 182 of the wrong ones have the right number found (`452-census/verdicts-2026-09-30.json`). NEXT: the action unit, an identifier-verdict table that withholds a wrong number from matching and flags it on the API (design below).
+Was status: ready-for-agent — filed 2026-09-30 from issue 448's review campaign. Next: size the class across every GB
 company number the corpus holds, then decide what a wrong number does to the org (hold it back from matching, flag
 it on the API, or both).
 Kind: data quality (identifiers)
@@ -122,3 +123,40 @@ trading-name and parent/unit judgements.
 Next unit: settle the ~350 live-disjoint and the ~480 absent-suspect exactly, with the 448 campaign's reviewer +
 challenger shape (register pages for the absent ones). Then build the action (withhold from matching + API flag) as a
 verdict table keyed by org and number, the way `org_merge_verdicts` is keyed by group.
+
+## 2026-09-30 11:0x–13:0x UTC — the 720 cases settled (36 agents, reviewer + challenger)
+
+Cases: the 354 live-name-disjoint, the 204 orgs whose number was never issued (404 on the register page), and the 162
+whose number is a dissolved company with a name matching none of the org's names. The other 643 absent numbers are
+dissolved companies with a MATCHING name: right numbers, since closed.
+- Evidence per case: the org's head, its mention names with counts (/v1/sql), and the register entry (live snapshot or
+  page).
+- `rubric.md` and `cases-2026-09-30.json` are committed, with the verdicts in `verdicts-2026-09-30.json`. The challenger
+  read every wrong-number and related-company verdict.
+
+| settled | live-mismatch | never-issued | dissolved-mismatch | total |
+|---|---|---|---|---|
+| **wrong-number** (challenger agreed) | 77 | 204 | 90 | **371** |
+| related-company (challenger agreed) | 77 | – | 25 | 102 |
+| right-number (trading name, rename, spacing) | 175 | – | 37 | 212 |
+| unclear, or disputed by the challenger | 25 | – | 10 | 35 |
+
+- The reviewers found the right number for **182 of the 371** wrong ones. Most are one-digit typos or transpositions
+  (Rolls-Royce under 01006142 for 01003142; Gasway 01458628 for 04158628) or another company's number (Fixatex under
+  Elecheck).
+- Related-company is mostly a subsidiary or sister company's number (Mitie Security under a Mitie business-services
+  company; NFU Mutual under a dissolved NFU Mutual agency).
+
+Over the 30,857 company-number orgs, **~1.2% carry a wrong number and ~0.3% a related company's**.
+
+## Design for the action unit (next)
+
+- `org_identifier_verdicts` (org_id, identifier, verdict `wrong|related|right`, correct_identifier, cohort, rationale,
+  confidence), with POST `/admin/identifier-verdicts`. It mirrors `org_merge_verdicts`.
+- The org keeps its identity row; what changes is what the number is TRUSTED for:
+  - a `wrong` number is withheld from every identifier-based match (R2/E0/R3 keys, the altid arm, the resolver's
+    exact-triple and canonical binds for NEW mentions of that literal) and flagged on the API
+    (`identifier_status: "register_mismatch"`);
+  - a `related` number is flagged, not withheld.
+- A `correct_identifier` is recorded, never applied automatically. Re-keying an org is a merge-shaped change (the right
+  number may already have its own org), so it goes through the merge arms with its own review.
