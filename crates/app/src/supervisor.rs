@@ -5881,6 +5881,7 @@ impl Supervisor {
                 // reviewed set, the only pairs a wet run merges and the set its
                 // live re-plan is held against (max(2%, 5) symmetric drift aborts
                 // before any write).
+                let mut known_deferred: Vec<String> = Vec::new();
                 let expect_pairs = if dry_run {
                     None
                 } else {
@@ -5908,6 +5909,14 @@ impl Supervisor {
                                 .ok_or_else(|| "altid-merge-plan pairs holds a non-string".to_owned())
                         })
                         .collect::<Result<Vec<String>, String>>()?;
+                    // A residual's deferred pairs were deferred ONCE already; the
+                    // continuation must not count them as drift again.
+                    if v["residual_of_wet_run"].as_bool() == Some(true) {
+                        known_deferred = v["deferred_pairs"]
+                            .as_array()
+                            .map(|a| a.iter().filter_map(|p| p.as_str().map(str::to_owned)).collect())
+                            .unwrap_or_default();
+                    }
                     Some(pairs)
                 };
                 // Issue 442: the wet loop deletes organizations with foreign keys ON.
@@ -5940,6 +5949,7 @@ impl Supervisor {
                         dry_run,
                         max_pairs: *max_groups,
                         expect_pairs,
+                        known_deferred,
                         job_id: Some(job_id as i64),
                         stop: &stop,
                     })
@@ -6069,6 +6079,7 @@ impl Supervisor {
                     "tender_changes": r.tender_changes,
                     "edges_written": r.edges_written,
                     "edges_merged": r.edges_merged,
+                    "edges_error": r.edges_error,
                     "stopped": r.stopped,
                 });
                 let listings = serde_json::json!({

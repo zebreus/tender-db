@@ -2406,6 +2406,13 @@ pub struct AltIdMergeArgs<'a> {
     /// pairs merge; a live pair the set lacks is `deferred_unreviewed`; and a
     /// symmetric difference over max(2% of the set, 5) aborts before any write.
     pub expect_pairs: Option<Vec<String>>,
+    /// Wet runs only: pairs a PREVIOUS wet run already deferred as unreviewed
+    /// (the stored residual's `deferred_pairs`). They are still never merged,
+    /// but they are not drift again: a capped or stopped continuation holds
+    /// its live plan against the residual, whose tolerance is smaller than the
+    /// first run's, and re-counting the same deferred pairs would abort it with
+    /// nothing changed (unit 2 review).
+    pub known_deferred: Vec<String>,
     /// Recorded into `org_merge_log`, `org_merge_verdicts` and
     /// `org_candidate_edges` rows.
     pub job_id: Option<i64>,
@@ -2583,6 +2590,10 @@ pub struct AltIdMergeReport {
     pub edges_written: u64,
     /// `e2-altid` edges whose pair this run merged, moved to `state='merged'`.
     pub edges_merged: u64,
+    /// The edge phase failed AFTER the merges committed. It is reported, not
+    /// raised: raising would drop the residual the supervisor records and lock
+    /// the next wet run out on parity over merges that are already done.
+    pub edges_error: Option<String>,
     pub plan_listing: Vec<AltIdListing>,
     pub plan_listing_truncated: bool,
     pub denied_listing: Vec<AltIdListing>,
@@ -15165,18 +15176,19 @@ impl Db {
             args.expect_pairs.as_deref().unwrap_or(&[]).iter().map(String::as_str).collect();
         let live: BTreeSet<&str> = report.pairs.iter().map(String::as_str).collect();
         let deferred: Vec<String> = live.difference(&expect).map(|k| (*k).to_owned()).collect();
+        let known: BTreeSet<&str> = args.known_deferred.iter().map(String::as_str).collect();
+        let unforeseen = deferred.iter().filter(|k| !known.contains(k.as_str())).count() as u64;
         let gone = expect.difference(&live).count() as u64;
-        let drift = deferred.len() as u64 + gone;
+        let drift = unforeseen + gone;
         let tolerance = (expect.len() as u64 / 50).max(5);
         if drift > tolerance {
             return Err(turso::Error::Error(format!(
                 "altid parity abort: the live plan has {} pairs, the stored plan {} — {drift} \
-                 differ ({} planned since the dry run, {gone} no longer planned), over the \
-                 max(2%, 5) tolerance of {tolerance}; nothing was written. Re-run the dry plan \
-                 and review it",
+                 differ ({unforeseen} planned since the dry run, {gone} no longer planned), over \
+                 the max(2%, 5) tolerance of {tolerance}; nothing was written. Re-run the dry \
+                 plan and review it",
                 live.len(),
                 expect.len(),
-                deferred.len()
             )));
         }
         report.expected_pairs = expect.len() as u64;
@@ -15184,18 +15196,22 @@ impl Db {
         report.deferred_pairs = deferred;
         report.expected_not_live = gone;
 
+        // A PPON org two LIVE pairs would fold into two company-number orgs:
+        // only two admitting verdicts can plan that (the conflict flag denies it
+        // otherwise), and the arm never picks a side, so neither merges. Counted
+        // over the whole live plan BEFORE it is cut to the reviewed set: a verdict
+        // posted after the dry run plans a pair the stored set lacks, and it
+        // still contests the PPON org (unit 2 review — the reviewed pair would
+        // otherwise fold the org and the later verdict go silently stale).
+        let mut loser_uses: HashMap<i64, usize> = HashMap::new();
+        for p in &planned {
+            *loser_uses.entry(p.loser).or_default() += 1;
+        }
         // Live ∩ expected, in the stored plan's (string) order: a capped run and
         // its continuation cover a stable prefix. The graph's (coh, ppon) tuple
         // order is NOT that order (`AB~X` sorts after `ABC~Y`).
         planned.retain(|p| expect.contains(p.key.as_str()));
         planned.sort_by(|a, b| a.key.cmp(&b.key));
-        // A PPON org two reviewed pairs would fold into two company-number orgs:
-        // only two admitting verdicts can plan that (the conflict flag denies it
-        // otherwise), and the arm never picks a side, so neither merges.
-        let mut loser_uses: HashMap<i64, usize> = HashMap::new();
-        for p in &planned {
-            *loser_uses.entry(p.loser).or_default() += 1;
-        }
         let (merge, contradictory): (Vec<AltIdPlanned>, Vec<AltIdPlanned>) =
             planned.into_iter().partition(|p| loser_uses[&p.loser] == 1);
         report.contradictory = contradictory.len() as u64;
@@ -15352,7 +15368,10 @@ impl Db {
         residual.sort();
         report.residual_pairs = residual;
         if report.removed > 0 {
-            self.publish_cursor(conn).await?;
+            // Every committed transaction already rang; this is R2's closing
+            // ring, and a failure here must not cost the residual (see
+            // `edges_error`).
+            let _ = self.publish_cursor(conn).await;
         }
         if report.stopped {
             return Ok(());
@@ -15395,19 +15414,31 @@ impl Db {
                 }
             })
             .collect();
+        // The merges are committed. An edge failure from here on is REPORTED,
+        // never raised: raising would make the supervisor skip the residual,
+        // and the next wet run would then abort on parity over merges already
+        // done, with the deferred list lost (unit 2 review).
         for batch in rows.chunks(EDGE_WRITE_BATCH) {
-            conn.execute("BEGIN IMMEDIATE", ()).await?;
-            match write_candidate_edges(conn, batch, "E2", now, args.job_id).await {
-                Ok(()) => {
-                    if let Err(e) = conn.execute("COMMIT", ()).await {
+            let written: turso::Result<()> = async {
+                conn.execute("BEGIN IMMEDIATE", ()).await?;
+                match write_candidate_edges(conn, batch, "E2", now, args.job_id).await {
+                    Ok(()) => {
+                        if let Err(e) = conn.execute("COMMIT", ()).await {
+                            let _ = conn.execute("ROLLBACK", ()).await;
+                            return Err(e);
+                        }
+                        Ok(())
+                    }
+                    Err(e) => {
                         let _ = conn.execute("ROLLBACK", ()).await;
-                        return Err(e);
+                        Err(e)
                     }
                 }
-                Err(e) => {
-                    let _ = conn.execute("ROLLBACK", ()).await;
-                    return Err(e);
-                }
+            }
+            .await;
+            if let Err(e) = written {
+                report.edges_error = Some(e.to_string());
+                break;
             }
             report.edges_written += batch.len() as u64;
             let _ = checkpoint_on(conn, CheckpointMode::Truncate).await;

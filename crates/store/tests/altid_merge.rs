@@ -162,6 +162,7 @@ fn args<'a>(stoplist_cap: usize) -> store::AltIdMergeArgs<'a> {
         dry_run: true,
         max_pairs: None,
         expect_pairs: None,
+        known_deferred: Vec::new(),
         job_id: Some(77),
         stop: &|| false,
     }
@@ -1305,4 +1306,58 @@ async fn two_admitting_verdicts_over_one_ppon_merge_neither() {
     assert_eq!((r.contradictory, r.merged_pairs, r.edges_written), (2, 0, 0));
     assert_eq!(r.residual_pairs, dry.pairs);
     assert_eq!(b.snapshot().await, before, "nothing merged, nothing denied");
+}
+
+/// The review's case: a HIGH verdict posted AFTER the dry run plans a second
+/// pair on the same PPON org. That pair is not in the stored set, so it is
+/// deferred, but it still contests the org: the reviewed pair must not fold it
+/// into its own company-number org and leave the later verdict silently stale.
+#[tokio::test]
+async fn a_later_admitting_verdict_on_a_deferred_pair_still_contests_the_ppon_org() {
+    let b = bed("contested-deferred").await;
+    b.split(100, (1, COH_A, "Acme Ltd"), (2, PPON_P, "Acme Ltd")).await;
+    b.org(3, COH_B, "Acme Ltd").await;
+    b.notice(300, "fts:ocds-1.1").await;
+    b.party(300, "B", Some(3), "GB", &[COH_B, PPON_P]).await;
+    b.verdict(COH_A, PPON_P, vec![1, 2], "merge", "high").await;
+    let dry = b.plan().await;
+    assert_eq!(dry.pairs, vec![pk(COH_A, PPON_P)], "B~P is a conflict at dry time");
+    b.verdict(COH_B, PPON_P, vec![2, 3], "merge", "high").await;
+    let before = b.snapshot().await;
+    let r = b.wet(&dry.pairs).await;
+    assert_eq!((r.deferred_unreviewed, r.contradictory, r.merged_pairs), (1, 1, 0), "{r:#?}");
+    assert_eq!(r.residual_pairs, dry.pairs);
+    assert_eq!(b.snapshot().await, before, "the contested org stays where it is");
+}
+
+/// A capped or stopped continuation holds its live plan against the residual,
+/// whose tolerance is smaller than the first run's. Pairs the earlier run
+/// already deferred are not drift a second time: without `known_deferred`, six
+/// of them abort a one-pair residual; with it, the reviewed pair merges and the
+/// six stay deferred.
+#[tokio::test]
+async fn a_continuation_does_not_recount_pairs_an_earlier_run_deferred() {
+    let b = bed("known-deferred").await;
+    let mut keys = Vec::new();
+    for i in 0..7i64 {
+        let coh = format!("GB-COH-1000000{i}");
+        let ppon = format!("GB-PPON-PAAA-000{i}-AAAA");
+        let name = format!("Firm{i} Ltd");
+        b.split(100 + 10 * i, (10 + 2 * i, &coh, &name), (11 + 2 * i, &ppon, &name)).await;
+        keys.push(pk(&coh, &ppon));
+    }
+    let dry = b.plan().await;
+    assert_eq!(dry.plan_pairs, 7);
+    let residual = vec![keys[0].clone()];
+    let earlier: Vec<String> = keys[1..].to_vec();
+    let before = b.snapshot().await;
+    let err = b.db.match_org_altid_pairs(wet_args(&residual)).await.expect_err("six unforeseen pairs");
+    assert!(err.to_string().contains("parity abort"), "{err}");
+    assert_eq!(b.snapshot().await, before);
+    let r = b
+        .db
+        .match_org_altid_pairs(store::AltIdMergeArgs { known_deferred: earlier, ..wet_args(&residual) })
+        .await
+        .expect("the continuation proceeds");
+    assert_eq!((r.merged_pairs, r.deferred_unreviewed), (1, 6), "{r:#?}");
 }
