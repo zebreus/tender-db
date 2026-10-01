@@ -442,3 +442,23 @@ not in a verdict carve-out. The 10 pairs stay denied, with open `e2-altid` edges
     the next small review: a HIGH `merge` verdict admits a true pair on the next wet run.
 - **Alias.** Jobs 1717 and 1765 between them merged 50 + 4,652 pairs. The next fold, the 07:35 UTC daily project,
   should report PPON keys aliased in the `[store]` diag line. That is unit 3's live Verify.
+
+## 2026-10-01 08:xx UTC — the 26 new gate-denials reviewed: 21 admitted
+
+The 26 gate-denied pairs that are new since the campaign (`448-campaign/cases-1766.json`, with register entries)
+went through two independent full readers. A register lens and a skeptic lens each read all 26 (workflow
+`wf_5720cc5a-6d7`, `448-campaign/residue-review-1766.json`). A pair is admitted only when BOTH say merge/high.
+- **21 admitted.** They were posted as merge/high verdicts, cohort `altid-residue-2026-10-01`, recorded 21
+  (`448-campaign/verdicts-altid-residue-2026-10-01.json`). They are register-proven renames (Synectics Security →
+  Ocular Integration, Fluidigm UK → Standard BioTools, Falck Nutec → RelyOn Nutec, FirstBus (South) → First Bus
+  Holdings), owner-brand prefixes (Tradebe Inutec), `t/a` clauses (GTS Enterprise t/a Worldnet Shipping), acronyms
+  (ACE Advice = Academy Consultancy Expert Advice; ACE = Academies for Character & Excellence) and abbreviations
+  (1st Coverall Co).
+- **5 held, with no verdict, so the gate keeps denying them:**
+  - 3 the skeptic reads as two companies: British Gas Trading (03078711) vs Centrica Business Solutions,
+    Vermeg Solutions SA vs Vermeg Systems Ltd, and Pure Data Solutions (06239970) vs its parent Tieva.
+  - 2 at medium only. Outdo Media: the register lens was medium. IPD Ltd: an LLP named Integrated Project
+    Delivery also exists.
+- **Next.** Dry plan job 1786 is queued behind FTS chunk 7, so it will see chunk 7's new pairs as well. Diff it
+  against everything reviewed or confirmed, register-check the delta with the campaign rule, then run the wet
+  pass. The 21 admits merge then.

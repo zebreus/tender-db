@@ -1,0 +1,257 @@
+{
+ "cohort": "altid-residue-2026-10-01",
+ "verdicts": [
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "02786348~PVVD2816QWWL",
+   "members": [
+    30967436,
+    31588213
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was witness-only] register: The PPON name RELYON NUTEC UK LIMITED is exactly the register's current name for 02786348 (previously Falck Nutec Ltd). The coh-side 'RelyOn Nutec' is the same brand. | skeptic: The PPON's only name, 'RELYON NUTEC UK LIMITED', is exactly the register's current name (previously Falck Nutec Ltd). The witness 074407-2026 lists it with both identifiers at the registered Haverton Hill address; RelyOn Digital is the only other RelyOn Nutec-family company and has a different name."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "03037895~PNQV3365VGML",
+   "members": [
+    31585378,
+    31594507
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was witness-only] register: The PPON name INTEGRATED MEDICAL SOLUTIONS LIMITED is exactly the register's current name for 03037895 (previously IMS Integrated Medical Solutions Limited). The coh-side 'IMS Maxims' is that company's product brand. | skeptic: The PPON name 'INTEGRATED MEDICAL SOLUTIONS LIMITED' is the register's exact current name, and the coh side's 'IMS Maxims' is that company's trading brand. Witness 008375-2025 (Homerton) lists INTEGRATED MEDICAL SOLUTIONS LIMITED with both identifiers at an 'IMS Maxims' Milton Keynes address."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "03261587~PNDV6241LJZW",
+   "members": [
+    31550703,
+    31564842
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was witness-only] register: The PPON name FIRST BUS HOLDINGS LIMITED is exactly the register's current name for 03261587. The coh-side 'FirstBus (South) Ltd' is a register previous name (FIRSTBUS (SOUTH) LIMITED). | skeptic: The PPON's name 'FIRST BUS HOLDINGS LIMITED' is the register's exact current name, and the coh side's 'FirstBus (South) Ltd' is one of its previous names. Witness 018779-2026 lists First Bus Holdings Limited with 03261587 and this PPON; no First Bus sister company's name appears on the PPON side."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "03484910~PYVR7165HZXM",
+   "members": [
+    31549208,
+    31597396
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was uncorroborated-overlap] register: The PPON name opens with the register's exact current name, HUTCHISON PORTS (UK) LIMITED (03484910, held since 1998; 03057136 only bore it 1996-98), followed by an 'as agent for' clause describing the principals. The witness 066575-2025 lists HPUK as buyer with 03484910 + PYVR-7165-HZXM at the Felixstowe registered office. | skeptic: The PPON name opens with the register's exact name, 'Hutchison Ports (UK) Ltd as agent for' the Felixstowe, Harwich and Thamesport operators, so the PPON's legal person is the agent, 03484910. Witness 066575-2025 lists HUTCHISON PORTS (UK) LIMITED at Tomline House with both identifiers. The only other holder of that name was 03057136, and only from 1996 to 1998."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "04146587~PJJZ2813RHQP",
+   "members": [
+    31548037,
+    31556059
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was witness-only] register: '1st Coverall Co Ltd' is a plain abbreviation of the register name 1ST COVERALL COMPANY LIMITED (04146587). The sister companies 1st Coverall Holdings and Properties carry different names, so they do not match. | skeptic: '1st Coverall Co Ltd' is the register's 1ST COVERALL COMPANY LIMITED with 'Company' abbreviated. Its sisters at the same Chatham address are named Holdings and Properties, so neither fits the PPON name."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "04361196~PJDC8132HJQR",
+   "members": [
+    30918080,
+    31598108
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was uncorroborated-overlap] register: The PPON name 'GTS ENTERPRISES T/A WORLDNET SHIPPING' names the register company GTS ENTERPRISE LIMITED (04361196; plural-s variant) as the legal entity and Worldnet Shipping as its trading name, and the related WN Shipping UK Ltd (formerly Worldnet-Shipping UK) sits at the same Ashford address. The witness 017710-2025 (APHA) gives GTS ENTERPRISE LIMITED + 04361196 + PJDC-8132-HJQR at Ashford TW15 3QN. | skeptic: The PPON name 'GTS ENTERPRISES T/A WORLDNET SHIPPING' names GTS Enterprise as the legal person and Worldnet Shipping as its trading style. Witness 017710-2025 (APHA) lists GTS ENTERPRISE LIMITED at The Annex, Stanwell Road, Ashford with both identifiers. The sister WN Shipping UK Ltd at that address dropped the Worldnet-Shipping name in 2013, and no company named GTS Enterprises is registered."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "04433890~PYGQ1869TWYZ",
+   "members": [
+    31551110,
+    31590356
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was uncorroborated-overlap] register: The register has no 'Tradebe Inutec Limited'. INUTEC LIMITED (04433890) sits at Tradebe's Atlas House, Marlow address, so the PPON name is the register name with the owner's brand prefixed. The witness 071429-2025 (Nuclear Restoration Services) gives INUTEC LIMITED + 04433890 + PYGQ-1869-TWYZ at Marlow. | skeptic: 'Tradebe Inutec Limited' is INUTEC LIMITED with its owner's brand in front. Companies House has no company of that name, and Inutec Limited sits at Tradebe's Atlas House, Marlow office. Witness 071429-2025 (Nuclear Restoration Services) lists INUTEC LIMITED at that address with this PPON."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "05831231~PYHV1585RQYH",
+   "members": [
+    30969367,
+    31551163
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was witness-only] register: The PPON name OCULAR INTEGRATION LIMITED is exactly the register's current name for 05831231. The coh-side 'Synectics Security Limited' is a register previous name. | skeptic: The PPON's name 'OCULAR INTEGRATION LIMITED' is the register's exact current name, and the coh side's 'Synectics Security Limited' is one of its previous names. Three witnesses from different buyers list Ocular Integration Limited at the Chilwell address with both identifiers."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "05969256~PMPV1431CPBW",
+   "members": [
+    15267245,
+    31596590
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was witness-only] register: The PPON name UNIVERSITY OF WINCHESTER is exactly the register's current name for 05969256, across 38 witnesses. The coh-side 'ARCA University of Winchester' is a unit the university publishes under its own number. | skeptic: The PPON name 'UNIVERSITY OF WINCHESTER' is the register's exact name, and witness 045418-2025 lists the University as buyer with 05969256 and this PPON; there are 38 witnesses in all. The coh side's 'ARCA University of Winchester' is a university unit published under the university's own number."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "06612614~PZJZ6446MNBQ",
+   "members": [
+    15881220,
+    31599401
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was witness-only] register: 'Standard BioTools' is the register name STANDARD BIOTOOLS UK LIMITED (06612614, renamed from Fluidigm UK Limited) without its suffix, and the coh-side 'Fluidigm UK Ltd' is that previous name. Both witnesses (Univ. of Birmingham 076380-2026; GSTT 020700-2025, which itself names 'Standard BioTools') carry 06612614 + PZJZ-6446-MNBQ at the registered EC4A 1JP office. | skeptic: 'Standard BioTools' is a short form of the register's current name STANDARD BIOTOOLS UK LIMITED, and the coh side's 'Fluidigm UK Ltd' is its previous name. Both witnesses (020700-2025 and 076380-2026) list this PPON with 06612614 at the UK company's 12 New Fetter Lane registered office, which rules out the US parent."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "07014675~PNGD5937JHTD",
+   "members": [
+    31542839,
+    31548663
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was witness-only] register: The PPON name DAMS FURNITURE LIMITED is exactly the register's current name for 07014675. The coh-side names are the same brand plus one consortium string. | skeptic: The PPON's name 'DAMS FURNITURE LIMITED' is the register's exact name, and witness 053191-2025 lists it at Gores Road, Knowsley with both identifiers. The coh side's 'Dams Furniture Limited, Gores Furniture Limited' is a joint label and does not touch the PPON side."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "07559200~PJRX1357JTDN",
+   "members": [
+    30919380,
+    31590447
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was witness-only] register: The PPON name 'Back to Work Training Limited' is exactly the register's current name for 07559200. The coh-side 'Back 2 Work Complete Training' variants are its previous name (BACK 2 WORK COMPLETE TRAINING LIMITED). | skeptic: The PPON's name 'Back to Work Training Limited' is the register's current name, and the coh side's 'Back 2 Work Complete Training Limited' variants are its previous name. Witness 087879-2026 lists it with both identifiers."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "10098444~PYNM4868XBBN",
+   "members": [
+    31537314,
+    31559422
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was witness-only] register: 'Academies for Character & Excellence' is a form variant (& for and, no 'The') of the register name THE ACADEMIES FOR CHARACTER AND EXCELLENCE (10098444). The coh-side 'ACE (Academies for Character & Excellence)' is its acronym. | skeptic: 'Academies for Character & Excellence' is the register's THE ACADEMIES FOR CHARACTER AND EXCELLENCE with 'the' dropped and '&' for 'and'. Witness 049947-2025 lists the trust as buyer with 10098444 and this PPON; there are 10 witnesses."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "10166467~PYHH5632MHZH",
+   "members": [
+    17781281,
+    31594292
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was witness-only] register: The PPON name 'Celtic Sea Power Limited' is exactly the register's current name for 10166467, and no other Celtic Sea Power company exists. The coh-side 'Wave Hub Development Services Limited' is the register previous name, so this is a plain rename (5 witnesses). | skeptic: The PPON's name 'Celtic Sea Power Limited' is the register's current name, and the coh side's 'Wave Hub Development Services Limited' is this number's previous name. That is a rename of one company, with 5 witnesses."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "10555909~PWWT6798CMTV",
+   "members": [
+    31537532,
+    31555660
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was witness-only] register: The PPON name 'TRP TRADING COMPANY LIMITED' is the register's current name for 10555909, with the register's double space collapsed. The coh-side 'The Royal Parks (TRP Trading Company Ltd)' names the same company. | skeptic: The PPON's name 'TRP TRADING COMPANY LIMITED' is the register's exact name, and witness 041923-2025 lists it as buyer (Serpentine Lido concession) at The Old Police House, Hyde Park with both identifiers. 'The Royal Parks' on the coh side is the parent charity's label, and it does not appear on the PPON side."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "10743542~PCDH1123JTQM",
+   "members": [
+    31569808,
+    31590467
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was uncorroborated-disjoint] register: 'Doctors Training Limited' is a spacing variant of the register name DOCTORSTRAINING LIMITED (10743542). A register search finds no other live company of that name (the only other, EMS Support Ltd formerly Doctorstraining, was dissolved in 2022). | skeptic: 'Doctors Training Limited' differs from the register's DOCTORSTRAINING LIMITED by one space only. The register's same-name rules would block another company with that name, and the only past 'Doctorstraining' (07395803) was dissolved in 2022."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "11258001~PHPR3762LPLP",
+   "members": [
+    30929661,
+    31550606
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was witness-only] register: The PPON name 'Calderdale and Huddersfield Solutions Limited' is the register's current name for 11258001 (Ltd/Limited form variant). The coh-side 'Calderdale & Huddersfield NHS Foundation Trust' is a stray (the parent trust), not a PPON-side name. | skeptic: The PPON's name 'Calderdale and Huddersfield Solutions Limited' is the register's exact name, and witness 071340-2025 lists CHS Ltd as buyer at the Huddersfield Royal Infirmary HQ with both identifiers. The coh side's 'Calderdale & Huddersfield NHS Foundation Trust' is the parent trust attached by a publisher, a stray, and it does not change whose PPON this is."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "11949489~PMZZ8974QPMN",
+   "members": [
+    31585242,
+    31590121
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was witness-only] register: The PPON name ID-WARE UK LTD is exactly the register's current name for 11949489. The coh-side 'Cipher10 Ltd' variants are the register previous name CIPHER10 LTD. | skeptic: The PPON's name 'ID-WARE UK LTD' is the register's exact current name, and the coh side's 'Cipher10 Ltd' is its previous name. ID-Ware UK is the only ID-Ware company on the register."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "12873828~PBBX5711VBGM",
+   "members": [
+    30919325,
+    31594974
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was uncorroborated-overlap] register: The PPON name ACADEMY CONSULTANCY EXPERT ADVICE LTD is exactly the register's current name for 12873828, across 41 witnesses. The coh-side 'ACE Advice Limited' is its acronym form. | skeptic: The PPON's name 'ACADEMY CONSULTANCY EXPERT ADVICE LTD' is the register's exact name, and the coh side's 'ACE Advice' is its acronym. Witness 086475-2026 lists 'ACE ADVICE LTD' at the registered 20 Wenlock Road address with both identifiers, there are 41 witnesses, and no separate ACE Advice company is registered."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "13313134~PPNG8676JXDV",
+   "members": [
+    31570638,
+    31588195
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was witness-only] register: The PPON name 'NMC SPORTS LTD (trading as) Active Future Durham' is the register name NMC SPORTS LTD (13313134) plus a trading name. The coh side's 'A Hill Sport t/a Active Future Durham' is a stray on the other side. | skeptic: The PPON name 'NMC SPORTS LTD (trading as) Active Future Durham' names the register's NMC SPORTS LTD as the legal person, and witness 033281-2026 (Durham) lists it at Muirfield Close, Consett with both identifiers. Active Future Durham CIC (16250409) is a sister at the same address, but the PPON's name is NMC Sports, and 'A Hill Sport' (a dissolved Leicester company) is a coh-side stray."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:altid",
+   "key": "NI045638~PWGZ5777ZYWW",
+   "members": [
+    31597331,
+    31599907
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[448 residue review 2026-10-01, register + skeptic lenses both merge/high; gate was uncorroborated-overlap] register: 'Pentagon Solutions Ltd' is the register name PENTAGON SOLUTIONS (NI) LIMITED without the (NI). The register's only other live 'Pentagon Solutions Ltd' (08341748) is a Lincolnshire motor-repair firm. The witness 015797-2025 (FCDO Services, software licences) gives PENTAGON SOLUTIONS (NI) LIMITED + NI045638 + PWGZ-5777-ZYWW at the Belfast registered office. | skeptic: Witness 015797-2025 (FCDO Services, software licences) lists PENTAGON SOLUTIONS (NI) LIMITED at the registered Belfast Airport Road West address with NI045638 and this PPON, and 'Pentagon Solutions Ltd' is that name without '(NI)'. The only other registered 'Pentagon Solutions Ltd' (08341748) is a motor vehicle repairer in Mablethorpe, which is not a credible owner of this PPON."
+  }
+ ]
+}
