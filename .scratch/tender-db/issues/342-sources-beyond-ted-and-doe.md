@@ -1,6 +1,7 @@
 # 342 — sources beyond TED and DÖE ("international"): nothing exists, the entry contract does
 
-Status: ready-for-agent — BACKFILL RUN COMPLETE 2026-10-01 13:4x UTC: chunk 9 (2021-01 → 2021-08, jobs 1800–1809) landed, so FTS spans 2021-01 → today (314,156 releases held; altid dry 1810 plans 0). The step-11 acceptance check FAILS: each year holds 90–98 % of its notice ids, and 14,093 ids that the API serves by id are missing. That is issue 477, which owns the top-up. NEXT here: plan step 12 (the docs), then set the Contracts Finder and E2-edge follow-ups. Plan: `.scratch/tender-db/342-fts-plan.md`.
+Status: **DONE 2026-10-01** — unit 2 (FTS) is complete. It is live since 2026-09-07, backfilled 2021-01 → today, documented (step 12, `18d59a2`), and its organization identity is paired (the E2 follow-up became 448). Two open threads have their own issues: completeness (14,093 ids the cursor walk lost) is **477**, now topping up with the cursorless walker, and the UK below-threshold source is **480** (Contracts Finder).
+Was status: ready-for-agent — BACKFILL RUN COMPLETE 2026-10-01 13:4x UTC: chunk 9 (2021-01 → 2021-08, jobs 1800–1809) landed, so FTS spans 2021-01 → today (314,156 releases held; altid dry 1810 plans 0). The step-11 acceptance check FAILS: each year holds 90–98 % of its notice ids, and 14,093 ids that the API serves by id are missing. That is issue 477, which owns the top-up. NEXT here: plan step 12 (the docs), then set the Contracts Finder and E2-edge follow-ups. Plan: `.scratch/tender-db/342-fts-plan.md`.
 Was status: ready-for-agent — chunk 9, the LAST (2021-01 → 2021-08), ENQUEUED 2026-10-01 11:51 UTC as jobs 1800–1809, right after the 458 deploy (FULL sync; its project measures that cost). Chunks 1–8 landed. NEXT: read 1809, re-run the 448 altid dry plan, then plan step 11's acceptance check and the backfill Verify. Plan: `.scratch/tender-db/342-fts-plan.md`.
 Was status: ready-for-agent — chunk 8 (2021-09 → 2022-04) LANDED (jobs 1789–1798: 21,258 notices → 18,196 tenders; altid dry 1799 plans 0). NEXT: the last chunk, 2021-01 → 2021-08, enqueued right after issue 458's deploy (FULL sync), so it also measures that cost; then the Verify for the whole backfill. Plan: `.scratch/tender-db/342-fts-plan.md`.
 Was status: ready-for-agent — chunk 7 (2022-05 → 2022-12) LANDED (jobs 1776–1785: 24,570 notices → 21,319 tenders); chunk 8 (2021-09 → 2022-04) ENQUEUED 2026-10-01 10:1x UTC as jobs 1789–1798. NEXT: read 1798, re-run the 448 altid dry plan, then the last chunk 2021-01 → 2021-08, started ≥4 h before a 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
@@ -465,15 +466,11 @@ them; that is its own unit.
 
 ## Verify
 
-After the deploy, the `fts:ocds-1.1` re-parse and the refold:
+    curl -s https://tenders.zebreus.click/api/dashboard | python3 -c "import json,sys; p=[x for x in json.load(sys.stdin)['pipeline'] if x['source']=='fts'][0]; print(p['fetched_from'], p['fetched_to'], p['processed_notices'] > 300000)"
 
-```sh
-printf '%s' "SELECT COUNT(*) FROM tenders t CROSS JOIN lot_results r ON r.tender_id = t.id WHERE t.source = 'fts' AND r.result_key LIKE 'STAT-%'" | /root/sq.sh
-printf '%s' "SELECT kind, COUNT(*) FROM tender_version_result_stats WHERE tender_id BETWEEN 7954610 AND 7954620 GROUP BY kind" | /root/sq.sh
-```
-
-Expect 0 phantom results, down from 128 of the 205 on tenders 7954610–7954620. Expect eForms codes (`tenders`,
-`t-sme`, `t-esubm`, …), never an OCDS measure name such as `bids` or `smeBids`.
+- **open** (before the backfill, 2026-09-30): `2025-06 …` or later.
+- **done** (2026-10-01): `2021-01 <yesterday> True`. Completeness against the issued ids is 477's Verify, not this
+  one. The old Verify (the `bids.statistics` phantom count, closed 2026-09-29) is in the section below.
 
 ## 2026-09-29 22:5x UTC — statistics fix deployed and verified
 
@@ -631,3 +628,12 @@ compared against 1798 (97 s) and 1785 (123 s) on 458.
   them, while the dashboard reports `fetch_complete: true`. Issue 477 owns the root cause and the top-up.
 - Audit, same read: the dashboard's FTS `processed_notices` (293,063 before chunk 9) equals the sum of the process
   jobs' parsed counts, and its per-year coverage sums to the same figure.
+
+## RESOLVED-VERIFIED 2026-10-01 22:0x UTC
+
+- Unit 1 (research), unit 2 (fetcher, profile, parser, crosswalk GB arm), plan step 11 (the backfill, chunks 1–9)
+  and plan step 12 (the docs, `18d59a2`) are done.
+- The E2 follow-up from plan §5 risk 3 is issue 448: the e2-altid arm merged 4,738 COH↔PPON pairs.
+- Step 11's acceptance check found the cursor defect. Issue 477 owns the top-up, which by 22:00 UTC had recovered
+  2021 (924 → 20 missing) and was working through 2022.
+- Contracts Finder is issue 480.

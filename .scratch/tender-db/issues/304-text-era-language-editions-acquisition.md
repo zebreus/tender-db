@@ -561,3 +561,12 @@ unit 1 teaches the text-era fetcher the per-language edition names for one year
 (2005, the `{LG}_…_ISO_ORG.ZIP` shape) and measures bytes, parse rate and the fraction
 of notices whose `OL:` original is not EN; unit 2 extends to the era on that
 measurement, one year per firing, dry-first. Ready-for-agent.
+
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click 'ls /data/archive/ted'
+
+- **open** (2026-10-01): `daily` and `monthly` only. The text era is held as the EN monthly packages
+  (`monthly/2005-01.tar` …), and no language edition has been fetched.
+- **done** (unit 1): a third entry holding the 2005 language-edition packages, with unit 1's measurements recorded
+  here (bytes, parse rate, the share of notices whose `OL:` original is not EN).
