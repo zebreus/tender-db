@@ -176,3 +176,12 @@ distinct release), so a byte-identical repeat still collapses, and a different r
   finish before 07:35 UTC, because the queue is FIFO and the tick queues behind them.
 - **Chunk 2021:** jobs 1815 (2021-05 first, a month proven short), 1816–1826 (the other months), process 1827, project
   1828.
+
+### 2026-10-01 17:5x UTC — the new walker recovers 2021-05 exactly
+
+- Jobs 1815 (2021-05, 1,025 s), 1816 (2021-01, 694 s), 1817 (2021-02, 682 s) and 1818 (2021-03, 1,083 s) ran ok.
+  Each answered `NewVersion`, because the assembled bytes changed.
+- The Verify count, by year: 2021 went from **924 to 752**. The difference, 172, is exactly 2021-05's missing ids,
+  and 2021-01..03 added nothing; the investigation found those months complete. The total is now **13,921** (from
+  14,093). The count reads the union of every archived package, old and new.
+- About 12–18 min per 2021 month, in line with the ~82-request estimate at the 12 s pace.
