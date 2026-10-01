@@ -305,7 +305,7 @@ async fn the_triple_preload_and_the_name_probes_bind_the_lowest_id_among_duplica
         ),
         (
             "SELECT id FROM organizations \
-              WHERE name_norm = 'gemeinde muster' AND country IS NULL \
+              WHERE name_norm = 'gemeinde muster' AND +country IS NULL \
                 AND +identifier IS NULL ORDER BY id LIMIT 1",
             "the country-less name probe",
         ),
@@ -332,7 +332,7 @@ async fn the_triple_preload_and_the_name_probes_bind_the_lowest_id_among_duplica
     assert_eq!(
         int(
             &db,
-            "SELECT id FROM organizations WHERE name_norm = 'gemeinde muster' AND country IS NULL \
+            "SELECT id FROM organizations WHERE name_norm = 'gemeinde muster' AND +country IS NULL \
                AND +identifier IS NULL ORDER BY id LIMIT 1"
         )
         .await,

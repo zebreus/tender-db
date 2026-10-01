@@ -6599,7 +6599,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
     /// The `identifier IS NULL` statements issue 457 R3 pins, each as the constant
     /// the code runs, with the access its plan must show and parameters to plan it
     /// with. Shared by the plan gate and the equivalence test below.
-    fn r3_statements() -> [(&'static str, &'static str, &'static str, Vec<Value>); 3] {
+    fn r3_statements() -> [(&'static str, &'static str, &'static str, Vec<Value>); 4] {
         [
             (
                 "org-merge scan",
@@ -6617,12 +6617,24 @@ tmpfs /data/ramcache tmpfs rw 0 0
             (
                 "country-less name probe",
                 crate::canonical::ORG_COUNTRYLESS_NAME_PROBE_SQL,
-                // `organizations_name_norm_id` on 0.7.2; `organizations_name_country`
-                // seeking `country IS NULL` too would do as well.
+                // `organizations_name_norm_id` on 0.7.2; with `+country` the
+                // `(name_norm, country IS NULL)` seek is given up (R3 review).
                 "(name_norm=?",
                 vec![t("stadt muster")],
             ),
+            (
+                "provisional echo walk",
+                crate::canonical::ORG_PROVISIONAL_ECHO_WALK_SQL,
+                "SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=?)",
+                vec![t(""), t(""), Value::Integer(0)],
+            ),
         ]
+    }
+
+    /// An R3 statement as it was written before the pins: `+identifier` and
+    /// `+country` back to the bare columns.
+    fn r3_unpinned(sql: &str) -> String {
+        sql.replace("+identifier IS NULL", "identifier IS NULL").replace("+country IS NULL", "country IS NULL")
     }
 
     /// What is wrong with one R3 statement's plan: driven from the identifier
@@ -6633,6 +6645,9 @@ tmpfs /data/ramcache tmpfs rw 0 0
         let mut faults = Vec::new();
         if plan.contains("organizations_identifier_id") {
             faults.push("driven from organizations_identifier_id");
+        }
+        if plan.contains("organizations_country_id") {
+            faults.push("driven from organizations_country_id");
         }
         if up.contains("SORTER") || up.contains("TEMP B-TREE") {
             faults.push("a sorter runs");
@@ -6660,9 +6675,11 @@ tmpfs /data/ramcache tmpfs rw 0 0
     /// 0.7.2 never seeks on IS NULL, so it cannot show the flip: the form is pinned in
     /// the text, and the plan each statement must keep is asserted for either engine.
     /// The checks are shown to bite: the unpinned statement with the identifier index
-    /// forced (`INDEXED BY`) must fail them. `country IS NULL` stays bare on purpose —
-    /// `(name_norm, country IS NULL)` is a legitimate seek on
-    /// `organizations_name_country`, and the equivalence test below checks its rows.
+    /// forced (`INDEXED BY`) must fail them. The R3 review added the provisional echo
+    /// walk (census and fold share it) and `+country IS NULL` wherever `country IS
+    /// NULL` appears: `organizations_country_id (country, id)` is the same id-ordered
+    /// seek over the country-less rows, so with that index forced the checks must
+    /// fail too.
     /// The deferred indexes are built, as on prod; `organizations` carries no
     /// statistics there (issue 429), and none here.
     #[tokio::test]
@@ -6691,27 +6708,39 @@ tmpfs /data/ramcache tmpfs rw 0 0
                 "{label}: `identifier IS NULL` must be written `+identifier IS NULL`, or turso \
                  0.8.x may seek it on organizations_identifier_id:\n{sql}"
             );
+            // R3 review: a bare `country IS NULL` is the same seek on
+            // `organizations_country_id (country, id)`.
+            assert!(
+                !sql.replace("+country IS NULL", "").contains("country IS NULL"),
+                "{label}: `country IS NULL` must be written `+country IS NULL`, or turso \
+                 0.8.x may seek it on organizations_country_id:\n{sql}"
+            );
             let plan = plan_of(sql, params.clone()).await;
             println!("PLAN {label}:\n{plan}");
             let faults = r3_plan_faults(&plan, drives);
             assert!(faults.is_empty(), "{label}: {faults:?} — plan was:\n{plan}");
 
-            let forced = sql.replace("+identifier IS NULL", "identifier IS NULL").replacen(
-                "FROM organizations",
-                "FROM organizations INDEXED BY organizations_identifier_id",
-                1,
-            );
-            let plan = plan_of(&forced, params).await;
-            let faults = r3_plan_faults(&plan, drives);
-            // The sort is asserted on the merge scan only: `(identifier, id)` can never
-            // order by `(name_norm, country)`, but a 0.8.x `identifier IS NULL` seek
-            // does serve the other two's `ORDER BY id`.
-            assert!(
-                faults.contains(&"driven from organizations_identifier_id")
-                    && (label != "org-merge scan" || faults.contains(&"a sorter runs")),
-                "{label}: the checks must catch the identifier-index plan; they found \
-                 {faults:?} in:\n{plan}"
-            );
+            let bare = r3_unpinned(sql);
+            let mut indexes = vec!["organizations_identifier_id"];
+            if bare != sql.replace("+identifier IS NULL", "identifier IS NULL") {
+                indexes.push("organizations_country_id");
+            }
+            for index in indexes {
+                let forced =
+                    bare.replacen("FROM organizations", &format!("FROM organizations INDEXED BY {index}"), 1);
+                let plan = plan_of(&forced, params.clone()).await;
+                let faults = r3_plan_faults(&plan, drives);
+                // The sort is asserted on the name-ordered walks only: `(identifier, id)`
+                // and `(country, id)` can never order by `name_norm`, but a 0.8.x IS NULL
+                // seek on either does serve the other two's `ORDER BY id`.
+                let name_ordered = matches!(label, "org-merge scan" | "provisional echo walk");
+                assert!(
+                    faults.iter().any(|f| f.ends_with(index))
+                        && (!name_ordered || faults.contains(&"a sorter runs")),
+                    "{label}: the checks must catch the {index} plan; they found \
+                     {faults:?} in:\n{plan}"
+                );
+            }
         }
         drop(conn);
         drop(db);
@@ -6723,9 +6752,10 @@ tmpfs /data/ramcache tmpfs rw 0 0
     /// Issue 457 R3, the other half: the `+identifier` pin returns exactly the rows the
     /// IS NULL seeks it prevents would. Each statement runs over one seeded table as
     /// pinned, as it was written before the pin (the planner's choice), and before the
-    /// pin with the index FORCED — `INDEXED BY organizations_identifier_id` for all three
-    /// (the `(identifier, id)` seek) and `organizations_name_country` for the probe (the
-    /// `(name_norm, country IS NULL)` seek). Under turso 0.8.x the forced forms run its
+    /// pin with the index FORCED — `INDEXED BY organizations_identifier_id` for all four
+    /// (the `(identifier, id)` seek), `organizations_country_id` for the probe and the
+    /// echo walk (the `(country, id)` seek), and `organizations_name_country` for the
+    /// probe (the `(name_norm, country IS NULL)` seek). Under turso 0.8.x the forced forms run its
     /// NULL-matching seek code; under 0.7.2 they walk the index and filter. Every form
     /// must equal a Rust filter over a full read. The seed crosses NULL, `''` and a value
     /// in each tested column (`i % 3`, `% 4`, `% 5`: all 60 combinations, four times),
@@ -6782,7 +6812,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
         let opt = |v: &Option<String>| v.clone().map_or(Value::Null, Value::Text);
 
         let forms = |sql: &str, forced: &[&str]| -> Vec<(String, String)> {
-            let bare = sql.replace("+identifier IS NULL", "identifier IS NULL");
+            let bare = r3_unpinned(sql);
             let mut out = vec![("pinned".to_owned(), sql.to_owned()), ("unpinned".to_owned(), bare.clone())];
             for index in forced {
                 let sql = bare.replacen("FROM organizations", &format!("FROM organizations INDEXED BY {index}"), 1);
@@ -6807,7 +6837,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
             }
             plan
         };
-        let [merge, window, probe] = r3_statements().map(|(_, sql, ..)| sql);
+        let [merge, window, probe, echo] = r3_statements().map(|(_, sql, ..)| sql);
         // A forced form proves nothing unless the engine honoured the INDEXED BY.
         let forced = |what: &str, form: &str, plan: &str| {
             if let Some(index) = form.strip_prefix("unpinned INDEXED BY ") {
@@ -6883,7 +6913,10 @@ tmpfs /data/ramcache tmpfs rw 0 0
                 .map(|o| vec![Value::Integer(o.0)])
                 .take(1)
                 .collect();
-            for (form, sql) in forms(probe, &["organizations_identifier_id", "organizations_name_country"]) {
+            for (form, sql) in forms(
+                probe,
+                &["organizations_identifier_id", "organizations_country_id", "organizations_name_country"],
+            ) {
                 let got = run(&sql, vec![t(name)]).await;
                 let plan = explain(&sql, vec![t(name)]).await;
                 forced("probe", &form, &plan);
@@ -6899,6 +6932,38 @@ tmpfs /data/ramcache tmpfs rw 0 0
             .filter(|n| identless().any(|o| o.2.is_none() && o.4.as_deref() == Some(**n)))
             .count();
         assert_eq!(hits, 4, "every seeded name has an identifier-less, country-less row");
+
+        // The provisional echo walk (R3 review), paged by its `(name_norm, id)` keyset
+        // the way the census and the fold page it — a short LIMIT, so pages split
+        // groups. `(name_norm, id)` is total: the walk must match exactly.
+        let mut want: Vec<(String, i64, String)> = identless()
+            .filter(|o| o.2.is_none() && o.4.as_deref().is_some_and(|n| !n.is_empty()))
+            .map(|o| (o.4.clone().unwrap(), o.0, o.3.clone()))
+            .collect();
+        want.sort();
+        // (identifier NULL) x (country NULL) x (alpha, beta, gamma) x 4; `delta` has none.
+        assert_eq!(want.len(), 12);
+        let expected: Vec<Vec<Value>> =
+            want.into_iter().map(|(n, id, name)| vec![Value::Text(n), Value::Integer(id), Value::Text(name)]).collect();
+        for (form, sql) in forms(echo, &["organizations_identifier_id", "organizations_country_id"]) {
+            let sql = sql.replace("LIMIT 20000", "LIMIT 5");
+            assert!(sql.contains("LIMIT 5"), "the echo walk's page size moved: {sql}");
+            let mut walked: Vec<Vec<Value>> = Vec::new();
+            let (mut last_norm, mut last_id) = (String::new(), 0i64);
+            loop {
+                let page = run(&sql, vec![t(last_norm.clone()), t(last_norm.clone()), Value::Integer(last_id)]).await;
+                let Some(last) = page.last() else { break };
+                let (Value::Text(n), Value::Integer(id)) = (&last[0], &last[1]) else {
+                    panic!("an echo-walk row is (name_norm, id, name): {last:?}")
+                };
+                (last_norm, last_id) = (n.clone(), *id);
+                walked.extend(page);
+            }
+            let plan = explain(&sql, vec![t(""), t(""), Value::Integer(0)]).await;
+            forced("echo walk", &form, &plan);
+            println!("PLAN echo walk {form}: {plan}");
+            assert_eq!(walked, expected, "echo walk {form}\nplan: {plan}");
+        }
 
         drop(conn);
         drop(db);

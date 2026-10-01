@@ -1272,7 +1272,7 @@ pub(crate) const PREV_EDGE_JOIN_SQL: &str = "SELECT a.group_key, a.published_at,
 /// seek key, and `organizations_identifier_id (identifier, id)` would then drive
 /// this walk over every identifier-less row with a TEMP B-TREE sort of all of
 /// them (~24.6M on prod) per batch. Unary plus hides the column from the planner
-/// and leaves its value, NULL included, as it is; the same pin holds the two
+/// and leaves its value, NULL included, as it is; the same pin holds the three
 /// statements below. Gated in `the_is_null_statements_never_drive_from_the_identifier_index`.
 pub(crate) const ORG_MERGE_SCAN_SQL: &str = "SELECT id, name_norm, country FROM organizations \
   WHERE +identifier IS NULL AND country IS NOT NULL AND name_norm > ? \
@@ -1288,14 +1288,39 @@ pub(crate) const ORG_IDENTLESS_WINDOW_SQL: &str = "SELECT id, country, name, nam
 
 /// The resolver's country-less name probe (issue 351's reuse; issue 439's
 /// lowest id): the provisional row an identifier-less, country-less mention
-/// reuses, or none, and it mints. `+identifier` (issue 457 R3, see
-/// [`ORG_MERGE_SCAN_SQL`]): the identifier seek serves `ORDER BY id LIMIT 1`
-/// with no sorter, so under turso 0.8.x it could beat the name seek and walk
-/// every identifier-less row on a miss — the probe's common case. `country IS
-/// NULL` stays bare: `(name_norm, country IS NULL)` on
-/// `organizations_name_country` is a seek worth having.
+/// reuses, or none, and it mints. `+identifier` and `+country` (issue 457 R3, see
+/// [`ORG_MERGE_SCAN_SQL`]): an `IS NULL` seek on `organizations_identifier_id
+/// (identifier, id)` or `organizations_country_id (country, id)` serves `ORDER BY
+/// id LIMIT 1` with no sorter, so under turso 0.8.x either could beat the name
+/// seek and walk every identifier-less (or country-less) row on a miss — the
+/// probe's common case. Pinning `country` gives up the `(name_norm, country IS
+/// NULL)` seek on `organizations_name_country` 0.8.x could offer; what is left is
+/// the `name_norm = ?` seek on `organizations_name_norm_id` in id order, the plan
+/// 0.7.2 runs today, bounded by one name's rows.
 pub(crate) const ORG_COUNTRYLESS_NAME_PROBE_SQL: &str = "SELECT id FROM organizations \
-  WHERE name_norm = ? AND country IS NULL AND +identifier IS NULL ORDER BY id LIMIT 1";
+  WHERE name_norm = ? AND +country IS NULL AND +identifier IS NULL ORDER BY id LIMIT 1";
+
+/// One keyset page of the issue-351 provisional echo walk, shared by
+/// [`Db::provisional_echo_census`] and [`Db::fold_provisional_echoes`]: the
+/// identifier-less, country-less provisional rows in `(name_norm, id)` order,
+/// so a group arrives contiguous. Params: `(last_norm, last_norm, last_id)`.
+/// `+country` and `+identifier` (issue 457 R3 review, see [`ORG_MERGE_SCAN_SQL`]):
+/// an `IS NULL` seek on `organizations_country_id` or `organizations_identifier_id`
+/// is in id order, never `name_norm` order, so under turso 0.8.x it would mean a
+/// sort of every matching row (~24.6M identifier-less on prod) per 20000-row page.
+/// The walk's driver is `organizations_name_norm_id (name_norm, id)`.
+///
+/// The keyset is written `name_norm >= ? AND (name_norm > ? OR id > ?)`, the same
+/// rows as `name_norm > ? OR (name_norm = ? AND id > ?)`, so the range is a seek
+/// key. Written as the bare OR, turso 0.7.2 planned it as a MULTI-INDEX OR over
+/// `organizations_name_country` and `organizations_name_norm_id` with `USE SORTER
+/// FOR ORDER BY` — every row past the cursor sorted, per page (found by the plan
+/// gate the R3 review asked for).
+pub(crate) const ORG_PROVISIONAL_ECHO_WALK_SQL: &str = "SELECT name_norm, id, name FROM organizations \
+  WHERE provisional = 1 AND +country IS NULL AND +identifier IS NULL \
+    AND name_norm IS NOT NULL AND name_norm <> '' \
+    AND name_norm >= ? AND (name_norm > ? OR id > ?) \
+  ORDER BY name_norm, id LIMIT 20000";
 
 /// `notice_id`-range width for the batched keyed/island `group_key` UPDATE. A
 /// single whole-corpus UPDATE writes a WAL frame PER ROW (turso has no truncate
@@ -21584,14 +21609,7 @@ impl Db {
                 return Ok(ProvisionalEchoReport { stopped: true, ..Default::default() });
             }
             let mut rows = reader
-                .query(
-                    "SELECT name_norm, id, name FROM organizations \
-                      WHERE provisional = 1 AND country IS NULL AND identifier IS NULL \
-                        AND name_norm IS NOT NULL AND name_norm <> '' \
-                        AND (name_norm > ? OR (name_norm = ? AND id > ?)) \
-                      ORDER BY name_norm, id LIMIT 20000",
-                    (t(&last_norm), t(&last_norm), Value::Integer(last_id)),
-                )
+                .query(ORG_PROVISIONAL_ECHO_WALK_SQL, (t(&last_norm), t(&last_norm), Value::Integer(last_id)))
                 .await?;
             let mut page = 0u64;
             while let Some(row) = rows.next().await? {
@@ -21717,14 +21735,7 @@ impl Db {
                 return Ok(report);
             }
             let mut rows = reader
-                .query(
-                    "SELECT name_norm, id, name FROM organizations \
-                      WHERE provisional = 1 AND country IS NULL AND identifier IS NULL \
-                        AND name_norm IS NOT NULL AND name_norm <> '' \
-                        AND (name_norm > ? OR (name_norm = ? AND id > ?)) \
-                      ORDER BY name_norm, id LIMIT 20000",
-                    (t(&last_norm), t(&last_norm), Value::Integer(last_id)),
-                )
+                .query(ORG_PROVISIONAL_ECHO_WALK_SQL, (t(&last_norm), t(&last_norm), Value::Integer(last_id)))
                 .await?;
             let mut page: Vec<(String, i64, String)> = Vec::new();
             while let Some(row) = rows.next().await? {
