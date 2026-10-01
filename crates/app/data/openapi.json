@@ -840,7 +840,7 @@
       "identifier": {
         "name": "identifier",
         "in": "query",
-        "description": "Exact-match an Organization's official identifier value (e.g. a VAT number) on /v1/organizations. Pair with `kind` to pin the scheme when a value is reused across schemes. Index-served (organizations_identifier_id), so present and absent values are both fast.",
+        "description": "Exact-match an Organization's official identifier value (e.g. a VAT number) on /v1/organizations, as stored (normalised: upper-case letters and digits). Also matches an identifier a merge folded into an organization (its `merged_identifiers`, issue 460); the page then names those organizations in `resolved_filters.identifier`. Pair with `kind` to pin the scheme of the identifier that matched when a value is reused across schemes. Index-served (organizations_identifier_id and the merged identifiers' primary key), so present and absent values are both fast.",
         "schema": { "type": "string" }
       },
       "limit": {
@@ -926,12 +926,18 @@
           },
           "resolved_filters": {
             "type": "object",
-            "description": "Present only when an organization-id filter (`buyer`, `winner`, `bidder`) named an organization that a merge folded into another: the page is filtered by the surviving organization, and each rewritten filter is named here as `{\"asked\": <the id sent>, \"merged_into\": <the survivor>}` (issue 455). Store the survivor's id. An id that never was an organization is not rewritten and answers an empty page.",
+            "description": "Present only when the page answers through a merge. An organization-id filter (`buyer`, `winner`, `bidder`) that named an organization a merge folded into another is applied to the survivor and named here as `{\"asked\": <the id sent>, \"merged_into\": <the survivor>}` (issue 455); store the survivor's id, and note that an id that never was an organization is not rewritten and answers an empty page. On /v1/organizations, `identifier` matches an identifier a merge folded into an organization too, and the organizations the page reached that way are named as `{\"identifier\": {\"asked\": \"<the value sent>\", \"merged_into\": [<ids>]}}` — an array, because one identifier can answer several organizations (issue 460). A match on an organization's own identifier is not named.",
             "additionalProperties": {
               "type": "object",
               "properties": {
-                "asked": { "type": "integer", "format": "int64" },
-                "merged_into": { "type": "integer", "format": "int64" }
+                "asked": { "oneOf": [ { "type": "integer", "format": "int64" }, { "type": "string" } ], "description": "The value sent: an organization id, or (for `identifier`) the identifier." },
+                "merged_into": {
+                  "oneOf": [
+                    { "type": "integer", "format": "int64" },
+                    { "type": "array", "items": { "type": "integer", "format": "int64" } }
+                  ],
+                  "description": "The survivor's id; for `identifier`, the ids of the organizations reached through a merged identifier."
+                }
               }
             }
           }
@@ -1010,7 +1016,19 @@
           "identifier_kind": { "type": "string", "nullable": true, "description": "Which register the identifier belongs to — `national`, `vat`, `eu`, …. Matched case-insensitively by ?kind=." },
           "mentions": { "type": "integer", "description": "How many notice mentions resolve to this organization — a proxy for how well-attested the identity is." },
           "provisional": { "type": "boolean", "description": "True when minted from a name alone with no identifier to bind it: a placeholder a later publication may merge away." },
-          "identifier_status": { "type": "string", "nullable": true, "enum": ["register_mismatch", "related_entity", null], "description": "Set when a review against the official register found `identifier` is not this organization's own: `register_mismatch` — another company's number, a dissolved stranger's, or one never issued (such a number never merges this organization with another, and another spelling of it reaches this organization only under a matching name; a notice publishing exactly that number still resolves here); `related_entity` — a parent's or subsidiary's. Null when no review found a problem, which is not the same as checked." }
+          "identifier_status": { "type": "string", "nullable": true, "enum": ["register_mismatch", "related_entity", null], "description": "Set when a review against the official register found `identifier` is not this organization's own: `register_mismatch` — another company's number, a dissolved stranger's, or one never issued (such a number never merges this organization with another, and another spelling of it reaches this organization only under a matching name; a notice publishing exactly that number still resolves here); `related_entity` — a parent's or subsidiary's. Null when no review found a problem, which is not the same as checked." },
+          "merged_identifiers": {
+            "type": "array",
+            "description": "The identifiers merges folded into this organization (issue 460) — a PPON whose organization was merged into this company-number one, another spelling of one register key. `?identifier=` finds this organization by each of them. Empty when no merge left one; a merge that re-keyed a wrong number (another company's) never adds it.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "identifier": { "type": "string" },
+                "identifier_kind": { "type": "string", "nullable": true },
+                "country": { "type": "string", "nullable": true }
+              }
+            }
+          }
         },
         "additionalProperties": true
       },

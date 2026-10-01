@@ -148,6 +148,15 @@ pub fn organization(o: &OrganizationRow) -> Value {
             "wrong" => "register_mismatch",
             _ => "related_entity",
         }),
+        // Issue 460: the identifiers merges folded into this organization — a
+        // PPON beside its company number, another spelling of one key. The
+        // organization answers `?identifier=` for each of them. Empty when no
+        // merge left one.
+        "merged_identifiers": o.merged_identifiers.iter().map(|m| json!({
+            "identifier": m.identifier,
+            "identifier_kind": m.identifier_kind,
+            "country": m.country,
+        })).collect::<Vec<_>>(),
     })
 }
 

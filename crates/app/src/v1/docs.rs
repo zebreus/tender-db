@@ -144,7 +144,11 @@ and a <code>buyer</code>, <code>winner</code> or <code>bidder</code> filter on i
 to the survivor, with the page naming the rewrite in
 <code>"resolved_filters": {"winner": {"asked": …, "merged_into": …}}</code>, present only
 when something was rewritten. Store the survivor's id. Chains of merges are followed up to
-8 hops.</p>
+8 hops. The merged-away organization's identifier keeps working too: the survivor lists
+it in <code>merged_identifiers</code>, <code>?identifier=</code> finds the survivor by it,
+and the page names the merge as
+<code>"resolved_filters": {"identifier": {"asked": "…", "merged_into": [&lt;id&gt;, …]}}</code>
+(see <a href="#lookups">lookups</a>).</p>
 <p>Tender rows echo the <code>cpv</code> (CPV codes) and <code>country</code>
 (NUTS place codes) they carry, so you can see why a row matched a
 <code>cpv</code>/<code>country</code> filter.</p>
@@ -260,7 +264,7 @@ a company name — resolve directly, without knowing any internal id:</p>
 </table>
 <ul>
   <li><code>publication_id</code> is an exact match on the number the source printed on the notice; pair with <code>source=</code> if the same number could exist in two sources. An unknown number is an empty page, not a <code>404</code>. The same number on <code>/v1/tenders</code> resolves the <em>tender</em> it caused — through any of its versions, so a corrigendum's number still finds the procedure. From the notice, <code>/v1/notices/{id}/content</code> gives its parsed payload and a tender detail's <code>versions[].caused_by_notice_id</code> links back the other way.</li>
-  <li><code>identifier</code> matches the official identifier <em>value</em>; <code>kind</code> names its scheme. This is the front door to participation history: resolve the identifier to a canonical org id, then ask <code>/v1/tenders?buyer=</code>, <code>?winner=</code> or <code>?bidder=</code> with it. An identifier can resolve to MORE THAN ONE canonical org — the identity index is deliberately not unique, and a shared VAT (an Organschaft) or an unfolded duplicate both occur — so take every id the lookup returns rather than the first (issue 329).</li>
+  <li><code>identifier</code> matches the official identifier <em>value</em>; <code>kind</code> names its scheme. This is the front door to participation history: resolve the identifier to a canonical org id, then ask <code>/v1/tenders?buyer=</code>, <code>?winner=</code> or <code>?bidder=</code> with it. An identifier can resolve to MORE THAN ONE canonical org — the identity index is deliberately not unique, and a shared VAT (an Organschaft) or an unfolded duplicate both occur — so take every id the lookup returns rather than the first (issue 329). It also finds an identifier a merge folded into an organization — a PPON whose organization was merged into the company-number one, another spelling of one register key: the survivor lists those in <code>merged_identifiers</code>, and a page that reached an organization that way says so in <code>"resolved_filters": {"identifier": {"asked": "GBPPONPWYP8439MZWY", "merged_into": [5718658]}}</code> (an array, for the same reason). With <code>kind</code>, the kind of the identifier that matched is what must agree. The value is matched as stored (normalised: upper-case letters and digits, no separators), so <code>GB-PPON-PWYP-8439-MZWY</code> is asked as <code>GBPPONPWYP8439MZWY</code>.</li>
   <li><code>name_prefix</code> is a prefix match on the organization's name, case-insensitive across the whole of Unicode (<code>müller</code>, <code>MÜLLER</code> and <code>Müller</code> all match); runs of whitespace and a trailing <code>.</code>, <code>,</code> or <code>;</code> do not matter (<code>ACME Ltd.</code> finds <code>ACME Ltd</code>), and switches the response to <strong>name order</strong> (id order otherwise breaks name-ordered pagination). It composes with <code>country=</code>/<code>kind=</code>; an empty prefix is <code>400</code>.</li>
 </ul>
 <pre><code># VAT → canonical org → everything they ever bid on

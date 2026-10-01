@@ -478,6 +478,28 @@ pub(crate) const SCHEMA: &str = "
     -- only the e2-altid rows. Built once when a store first opens with it.
     CREATE INDEX IF NOT EXISTS org_merge_log_e2_altid ON org_merge_log(rule) WHERE rule = 'e2-altid';
 
+    -- Issue 460: the identifiers a merge folded into an organization. The
+    -- identity index is ONE column on `organizations`, and every merge deletes
+    -- the loser's row, so before this table a loser's identifier (a PPON beside
+    -- a company number, another spelling of one key) left the index with it and
+    -- `?identifier=` answered a certified-empty page. `repoint_org_references`
+    -- writes the loser's own identifier here (never a `rekey` loser's: that
+    -- number is another company's, 452/453) and repoints the loser's carried
+    -- rows, so a chain A→B→C keeps A's identifier on C. `org_id` is the LIVE
+    -- holder; `(identifier, loser)` keys a row, `organization_merged_identifiers_org`
+    -- serves the detail's list. No FK (the org_merge_log precedent): a holder a
+    -- later repair deletes leaves a row that matches no live org.
+    CREATE TABLE IF NOT EXISTS organization_merged_identifiers (
+        identifier      TEXT    NOT NULL,
+        identifier_kind TEXT,
+        country         TEXT,
+        org_id          INTEGER NOT NULL,
+        loser           INTEGER NOT NULL,
+        rule            TEXT    NOT NULL,
+        PRIMARY KEY (identifier, loser)
+    ) STRICT;
+    CREATE INDEX IF NOT EXISTS organization_merged_identifiers_org ON organization_merged_identifiers(org_id);
+
     -- Issue 311: per-case AI review verdicts — the auditable record of the
     -- review loop (Lennart's direction: rule-undetectable data errors get
     -- individual agent review). Verdicts land via POST /admin/case-reviews;
@@ -2029,18 +2051,30 @@ struct RepointCounts {
     winner_dups: u64,
 }
 
+/// Issue 460: the merge rule whose loser's identifier must NOT become a lookup
+/// key for the survivor. A `rekey` loser carries another company's number
+/// (452/453); a lookup by it answering this organization is exactly the wrong
+/// binding the re-key undid.
+const REKEY_RULE: &str = "rekey";
+
 /// Repoint every reference from `loser` to `keep`: mentions, parties, bid
 /// parties, and winners — deleting first any winner row whose
 /// (tender, seq, lot_result) already stands on `keep`, so the PK survives and
 /// a doubled award collapses to one row. Deleting the loser org row and the
 /// change events stay with the caller — the merge and the repair group them
 /// differently.
+///
+/// Issue 460: and the loser's identifiers, which the caller's DELETE would
+/// otherwise take out of the identity index. `rule` names the merge (the
+/// `org_merge_log.rule` where the caller writes one).
 async fn repoint_org_references(
     conn: &Connection,
     keep: i64,
     loser: i64,
+    rule: &str,
 ) -> turso::Result<RepointCounts> {
     let mut counts = RepointCounts::default();
+    repoint_merged_identifiers(conn, keep, loser, rule).await?;
     counts.mentions = conn
         .execute(
             "UPDATE organization_mentions SET organization_id = ? WHERE organization_id = ?",
@@ -2094,6 +2128,234 @@ async fn repoint_org_references(
     )
     .await?;
     Ok(counts)
+}
+
+/// Issue 460, run at EVERY merge (p0 alone folded 5.76M rows): drop the loser's
+/// carried identifier that equals the survivor's own — a seek on
+/// `organization_merged_identifiers_org`, pinned by the plan guard
+/// (`the_identifier_lookup_seeks_in_both_org_builders`).
+pub(crate) const MERGED_CARRY_DROP_SQL: &str = "DELETE FROM organization_merged_identifiers \
+     WHERE org_id = ? AND identifier = ? AND COALESCE(identifier_kind, '') = ?";
+
+/// Issue 460: move the loser's carried identifiers to the survivor — the same
+/// seek, at every merge.
+pub(crate) const MERGED_CARRY_SQL: &str =
+    "UPDATE organization_merged_identifiers SET org_id = ? WHERE org_id = ?";
+
+/// Issue 460: keep the loser's identifiers findable on the survivor. Runs
+/// BEFORE the caller deletes the loser's row, while its identity triple can
+/// still be read:
+/// - the identifiers earlier merges folded into the loser move to `keep`, so a
+///   chain A→B→C carries A's identifier to C — except one that equals `keep`'s
+///   own (identifier, kind), which `keep` answers by itself;
+/// - the loser's own identifier is written for `keep`, unless it is NULL, equal
+///   to `keep`'s, or the merge is a [`REKEY_RULE`] (another company's number).
+///
+/// Country and kind are the loser's own; where the loser stated none (an R3
+/// rescue of a country-less row), the survivor's, which is what the merge
+/// decided the identifier is. A loser merged again after a restore replaces its
+/// row (`(identifier, loser)` is the key), so the newest merge holds it.
+async fn repoint_merged_identifiers(
+    conn: &Connection,
+    keep: i64,
+    loser: i64,
+    rule: &str,
+) -> turso::Result<()> {
+    let triple = async |id: i64| -> turso::Result<Option<(Option<String>, Option<String>, Option<String>)>> {
+        let mut rows = conn
+            .query(
+                "SELECT identifier, identifier_kind, country FROM organizations WHERE id = ?",
+                (Value::Integer(id),),
+            )
+            .await?;
+        Ok(match rows.next().await? {
+            Some(row) => Some((opt_text_of(&row, 0), opt_text_of(&row, 1), opt_text_of(&row, 2))),
+            None => None,
+        })
+    };
+    let (keep_identifier, keep_kind, keep_country) = triple(keep).await?.unwrap_or_default();
+    if let Some(identifier) = &keep_identifier {
+        conn.execute(
+            MERGED_CARRY_DROP_SQL,
+            (
+                Value::Integer(loser),
+                t(identifier),
+                t(keep_kind.as_deref().unwrap_or_default()),
+            ),
+        )
+        .await?;
+    }
+    conn.execute(MERGED_CARRY_SQL, (Value::Integer(keep), Value::Integer(loser))).await?;
+    if rule == REKEY_RULE {
+        return Ok(());
+    }
+    let Some((Some(identifier), kind, country)) = triple(loser).await? else { return Ok(()) };
+    if keep_identifier.as_deref() == Some(identifier.as_str()) && kind == keep_kind {
+        return Ok(());
+    }
+    conn.execute(
+        "INSERT OR REPLACE INTO organization_merged_identifiers \
+             (identifier, identifier_kind, country, org_id, loser, rule) \
+         VALUES (?, ?, ?, ?, ?, ?)",
+        (
+            t(&identifier),
+            opt_text(kind.or(keep_kind).as_deref()),
+            opt_text(country.or(keep_country).as_deref()),
+            Value::Integer(keep),
+            Value::Integer(loser),
+            t(rule),
+        ),
+    )
+    .await?;
+    Ok(())
+}
+
+/// Issue 460 unit 3: the ledger rules whose evidence names the loser's
+/// identifier literal under `$.loser_id`, in the order the backfill reads them.
+/// `e2-altid` (448) stores the PPON org's `organizations.identifier`; `r2`, `e0`
+/// and `r3` the loser member's literal (`e0` merges identical triples, so its
+/// rows count as the survivor's own and write nothing — read to show it). Not
+/// read: `p0`/`p1` (that key is the numeric org id), `rekey` (a wrong number,
+/// 452/453) and every rule that writes no ledger row.
+pub const MERGED_IDENTIFIER_BACKFILL_RULES: [&str; 4] = ["e2-altid", "r2", "e0", "r3"];
+
+/// The backfill's `e2-altid` read: a seek through the partial index
+/// `org_merge_log_e2_altid`, never the whole ledger. No `ORDER BY`: a rowid
+/// order is one the planner could serve by walking the table; the caller sorts.
+pub const MERGED_BACKFILL_ALTID_SQL: &str =
+    "SELECT rowid, keep, loser, rule, json_extract(evidence, '$.loser_id'), at \
+     FROM org_merge_log WHERE rule = 'e2-altid'";
+
+/// The backfill's walk for the other rules: one rowid window of the whole
+/// ledger (5.76M `p0` rows on prod, so a job, never `/v1/sql`). The evidence is
+/// parsed only on the rows of a rule the backfill reads.
+pub const MERGED_BACKFILL_WINDOW_SQL: &str =
+    "SELECT rowid, keep, loser, rule, \
+            CASE WHEN rule IN ('r2', 'e0', 'r3') THEN json_extract(evidence, '$.loser_id') END, at \
+     FROM org_merge_log WHERE rowid > ? ORDER BY rowid LIMIT ?";
+
+/// Ledger rows per window of [`MERGED_BACKFILL_WINDOW_SQL`] — the job's
+/// [`MergedIdentifierBackfillArgs::window`].
+pub const MERGED_BACKFILL_WINDOW: i64 = 50_000;
+
+/// One ledger row as the backfill reads it: `(rowid, keep, loser, rule,
+/// $.loser_id, at)`.
+type MergedLedgerRow = (i64, i64, i64, String, Option<String>, i64);
+
+/// Where a ledger row's keep lives now, for the backfill.
+enum MergedSurvivor {
+    Live(i64),
+    Unresolved,
+    OutOfTime,
+}
+
+/// Follows the keep of a merge made at `at` to the live organization it is
+/// now — [`crate::read::resolve_org`]'s walk (the newest merge per loser, one
+/// `(loser, at)` seek a hop, cycle-guarded, `MERGE_HOPS` at most) with time
+/// checked at every step: each hop must be merged no earlier than the merge it
+/// continues, and the live row must have been minted no later than the merge
+/// that named it. A ledger id after a from-archive rebuild (org ids re-minted
+/// from 1) fails one of the two, so the backfill never attaches a literal to an
+/// unrelated organization.
+async fn merged_survivor(conn: &Connection, keep: i64, at: i64) -> turso::Result<MergedSurvivor> {
+    let (mut id, mut when) = (keep, at);
+    let mut seen = vec![keep];
+    for _ in 0..=crate::read::MERGE_HOPS {
+        let mut rows =
+            conn.query("SELECT created_at FROM organizations WHERE id = ?", (Value::Integer(id),)).await?;
+        if let Some(row) = rows.next().await? {
+            return Ok(if int(&row, 0) <= when { MergedSurvivor::Live(id) } else { MergedSurvivor::OutOfTime });
+        }
+        drop(rows);
+        let mut rows =
+            conn.query("SELECT keep, at FROM org_merge_log WHERE loser = ?", (Value::Integer(id),)).await?;
+        let mut newest: Option<(i64, i64)> = None;
+        while let Some(row) = rows.next().await? {
+            let (next, next_at) = (int(&row, 0), int(&row, 1));
+            if newest.is_none_or(|(_, w)| next_at > w) {
+                newest = Some((next, next_at));
+            }
+        }
+        let Some((next, next_at)) = newest else { return Ok(MergedSurvivor::Unresolved) };
+        if next_at < when {
+            return Ok(MergedSurvivor::OutOfTime);
+        }
+        if seen.contains(&next) {
+            return Ok(MergedSurvivor::Unresolved);
+        }
+        seen.push(next);
+        (id, when) = (next, next_at);
+    }
+    Ok(MergedSurvivor::Unresolved)
+}
+
+/// Inputs to [`Db::backfill_merged_identifiers`].
+pub struct MergedIdentifierBackfillArgs<'a> {
+    /// The kind (`national`, `vat`, …) the normaliser gives the literal under
+    /// the survivor's country — `ingest::project::normalise_identifier`. The
+    /// ledger names no kind, and an `r2` group can join a VAT spelling to a
+    /// register number, so the survivor's own kind would mislabel it. `None`
+    /// (the normaliser refuses the literal) takes the survivor's kind, counted.
+    pub kind_of: fn(Option<&str>, &str) -> Option<String>,
+    /// `true` counts and writes nothing.
+    pub dry_run: bool,
+    /// Ledger rows per window of the whole-ledger walk:
+    /// [`MERGED_BACKFILL_WINDOW`] in the job, a handful in a test that walks
+    /// several windows.
+    pub window: i64,
+    /// Cooperative stop, polled between windows (never inside a transaction).
+    pub stop: &'a (dyn Fn() -> bool + Sync),
+}
+
+/// What the backfill found for one ledger rule.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct MergedIdentifierRuleCounts {
+    /// Ledger rows of this rule read.
+    pub rows: u64,
+    /// Merged identifiers written (dry run: that would be).
+    pub written: u64,
+    /// A row for `(identifier, loser)` already stands — written by the merge
+    /// itself (every merge since issue 460 writes one) or by an earlier run.
+    pub present: u64,
+    /// The literal is today's survivor's own identifier: nothing was lost.
+    pub same_as_survivor: u64,
+    /// The evidence carries no `$.loser_id`.
+    pub no_literal: u64,
+    /// The keep resolves to no live organization within `MERGE_HOPS`.
+    pub unresolved: u64,
+    /// The chain from the keep contradicts time: a hop merged before the merge
+    /// it continues, or a live row minted after the merge that names it. Ledger
+    /// ids outlive a from-archive rebuild that re-mints org ids from 1, and then
+    /// they name unrelated rows; such a row is refused, never attached.
+    pub out_of_time: u64,
+    /// The loser is a live organization again; its identifier is its own.
+    pub loser_live: u64,
+    /// Written rows whose kind the normaliser could not give, so the
+    /// survivor's was taken.
+    pub kind_from_survivor: u64,
+}
+
+/// What [`Db::backfill_merged_identifiers`] read and wrote.
+#[derive(Debug, Default, Clone)]
+pub struct MergedIdentifierBackfill {
+    pub dry_run: bool,
+    /// Every ledger row the whole-ledger walk read, all rules.
+    pub ledger_rows: u64,
+    /// Survivors whose row gained a merged identifier, each published as
+    /// `organization changed` (dry run: that would be).
+    pub organizations_changed: u64,
+    /// Per rule of [`MERGED_IDENTIFIER_BACKFILL_RULES`], in that order.
+    pub rules: Vec<(String, MergedIdentifierRuleCounts)>,
+    /// A cancel ended the run between windows; what was committed stands and a
+    /// re-run counts it as `present`.
+    pub stopped: bool,
+}
+
+impl MergedIdentifierBackfill {
+    fn counts(&mut self, rule: &str) -> &mut MergedIdentifierRuleCounts {
+        let at = self.rules.iter().position(|(r, _)| r == rule).expect("a backfill rule");
+        &mut self.rules[at].1
+    }
 }
 
 /// One window of the issue-307 satellite backfill. Totals are summed across
@@ -7860,6 +8122,11 @@ impl Db {
         // with the layer it describes; the campaign's own record survives in
         // `reports`, which is not id-addressed.
         conn.execute("DELETE FROM org_name_drops", ()).await?;
+        // Issue 460: the merged identifiers name their holder by org id too, and
+        // a renumbered id would make a lookup answer an unrelated organization.
+        // The rebuild re-mints every org from its mentions, so the merges these
+        // rows describe are undone with them.
+        conn.execute("DELETE FROM organization_merged_identifiers", ()).await?;
         conn.execute("DROP TABLE IF EXISTS organization_names", ()).await?;
         conn.execute("DROP TABLE IF EXISTS organization_mentions", ()).await?;
         conn.execute("DROP TABLE IF EXISTS organizations", ()).await?;
@@ -11841,7 +12108,7 @@ impl Db {
                         touched.insert(int(&row, 0));
                     }
                 }
-                let moved = repoint_org_references(&conn, *keep, loser).await?;
+                let moved = repoint_org_references(&conn, *keep, loser, "provisional-merge").await?;
                 report.mentions += moved.mentions;
                 report.parties += moved.parties;
                 report.bid_parties += moved.bid_parties;
@@ -11875,6 +12142,230 @@ impl Db {
         // write publishes — retirement's `publish_cursor` after-COMMIT pattern.
         self.publish_cursor(&conn).await?;
         Ok(report)
+    }
+
+    /// Issue 460 unit 3: give the identifiers merges folded away BEFORE
+    /// `organization_merged_identifiers` existed a place on today's survivor.
+    ///
+    /// Reads the ledger per rule of [`MERGED_IDENTIFIER_BACKFILL_RULES`]:
+    /// `e2-altid` through its partial index, then one rowid walk of the whole
+    /// ledger for `r2`/`e0`/`r3`. Each row's `$.loser_id` is the loser's literal;
+    /// its keep is followed through the ledger to the live survivor
+    /// (`resolve_org`'s walk with time checked at every hop, so a ledger id a
+    /// rebuild re-minted is refused as `out_of_time`), whose country the row takes (an altid pair is two GB register
+    /// values, an `r2` group is one country, an `r3` loser had none) with the
+    /// kind [`MergedIdentifierBackfillArgs::kind_of`] gives the literal there.
+    /// A row already standing for `(identifier, loser)` is left as it is: the
+    /// merge that wrote it read the loser's own row. Idempotent; each window
+    /// writes in one transaction, and a stop between windows keeps what was
+    /// committed.
+    pub async fn backfill_merged_identifiers(
+        &self,
+        args: MergedIdentifierBackfillArgs<'_>,
+    ) -> turso::Result<MergedIdentifierBackfill> {
+        let mut report = MergedIdentifierBackfill {
+            dry_run: args.dry_run,
+            rules: MERGED_IDENTIFIER_BACKFILL_RULES
+                .iter()
+                .map(|r| ((*r).to_owned(), MergedIdentifierRuleCounts::default()))
+                .collect(),
+            ..Default::default()
+        };
+        let read = |row: &turso::Row| -> MergedLedgerRow {
+            (int(row, 0), int(row, 1), int(row, 2), text(row, 3), opt_text_of(row, 4), int(row, 5))
+        };
+        // Pairs this run counted as written, so a dry run counts a loser the
+        // ledger names twice once, as a wet run would.
+        let mut seen: std::collections::HashSet<(String, i64)> = std::collections::HashSet::new();
+        // Survivors already published as `organization changed` this run: one
+        // event each, however many windows write for them.
+        let mut published: BTreeSet<i64> = BTreeSet::new();
+
+        let mut altid: Vec<MergedLedgerRow> = Vec::new();
+        {
+            let conn = self.reader().await?;
+            let mut rows = conn.query(MERGED_BACKFILL_ALTID_SQL, ()).await?;
+            while let Some(row) = rows.next().await? {
+                altid.push(read(&row));
+            }
+        }
+        altid.sort_unstable_by_key(|r| r.0);
+        if (args.stop)() {
+            report.stopped = true;
+            return Ok(report);
+        }
+        self.backfill_merged_window(&args, &altid, &mut seen, &mut published, &mut report).await?;
+
+        let mut after = 0i64;
+        loop {
+            if (args.stop)() {
+                report.stopped = true;
+                break;
+            }
+            let mut window: Vec<MergedLedgerRow> = Vec::new();
+            {
+                let conn = self.reader().await?;
+                let mut rows = conn
+                    .query(
+                        MERGED_BACKFILL_WINDOW_SQL,
+                        (Value::Integer(after), Value::Integer(args.window.max(1))),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    window.push(read(&row));
+                }
+            }
+            let Some(last) = window.last() else { break };
+            after = last.0;
+            report.ledger_rows += window.len() as u64;
+            let full = window.len() as i64 == args.window.max(1);
+            window.retain(|r| r.3 != "e2-altid" && MERGED_IDENTIFIER_BACKFILL_RULES.contains(&r.3.as_str()));
+            self.backfill_merged_window(&args, &window, &mut seen, &mut published, &mut report).await?;
+            if !full {
+                break;
+            }
+        }
+        report.organizations_changed = published.len() as u64;
+        Ok(report)
+    }
+
+    /// One window of [`Self::backfill_merged_identifiers`]: resolve, classify
+    /// and (wet) write in ONE transaction on the writer, so the survivor a row
+    /// is written for is the survivor at commit.
+    async fn backfill_merged_window(
+        &self,
+        args: &MergedIdentifierBackfillArgs<'_>,
+        window: &[MergedLedgerRow],
+        seen: &mut std::collections::HashSet<(String, i64)>,
+        published: &mut BTreeSet<i64>,
+        report: &mut MergedIdentifierBackfill,
+    ) -> turso::Result<()> {
+        if window.is_empty() {
+            return Ok(());
+        }
+        let conn = self.conn().await;
+        if !args.dry_run {
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+        }
+        // Survivors whose served row gains a merged identifier: each is an
+        // `organization changed`, so a `?identifier=` subscriber re-evaluates it.
+        let mut touched: BTreeSet<i64> = BTreeSet::new();
+        let result: turso::Result<()> = async {
+            for (_, keep, loser, rule, literal, at) in window {
+                let counts = report.counts(rule);
+                counts.rows += 1;
+                let Some(literal) = literal.as_deref().filter(|l| !l.is_empty()) else {
+                    counts.no_literal += 1;
+                    continue;
+                };
+                let survivor = match merged_survivor(&conn, *keep, *at).await? {
+                    MergedSurvivor::Live(id) => id,
+                    MergedSurvivor::Unresolved => {
+                        counts.unresolved += 1;
+                        continue;
+                    }
+                    MergedSurvivor::OutOfTime => {
+                        counts.out_of_time += 1;
+                        continue;
+                    }
+                };
+                let loser_live = conn
+                    .query("SELECT 1 FROM organizations WHERE id = ?", (Value::Integer(*loser),))
+                    .await?
+                    .next()
+                    .await?
+                    .is_some();
+                if loser_live {
+                    counts.loser_live += 1;
+                    continue;
+                }
+                let mut rows = conn
+                    .query(
+                        "SELECT identifier, identifier_kind, country FROM organizations WHERE id = ?",
+                        (Value::Integer(survivor),),
+                    )
+                    .await?;
+                let Some(row) = rows.next().await? else {
+                    counts.unresolved += 1;
+                    continue;
+                };
+                let (keep_identifier, keep_kind, keep_country) =
+                    (opt_text_of(&row, 0), opt_text_of(&row, 1), opt_text_of(&row, 2));
+                drop(rows);
+                if keep_identifier.as_deref() == Some(literal) {
+                    counts.same_as_survivor += 1;
+                    continue;
+                }
+                let standing = conn
+                    .query(
+                        "SELECT 1 FROM organization_merged_identifiers WHERE identifier = ? AND loser = ?",
+                        (t(literal), Value::Integer(*loser)),
+                    )
+                    .await?
+                    .next()
+                    .await?
+                    .is_some();
+                if standing || !seen.insert((literal.to_owned(), *loser)) {
+                    counts.present += 1;
+                    continue;
+                }
+                let kind = match (args.kind_of)(keep_country.as_deref(), literal) {
+                    Some(kind) => Some(kind),
+                    None => {
+                        counts.kind_from_survivor += 1;
+                        keep_kind
+                    }
+                };
+                counts.written += 1;
+                touched.insert(survivor);
+                if !args.dry_run {
+                    conn.execute(
+                        "INSERT INTO organization_merged_identifiers \
+                             (identifier, identifier_kind, country, org_id, loser, rule) \
+                         VALUES (?, ?, ?, ?, ?, ?)",
+                        (
+                            t(literal),
+                            opt_text(kind.as_deref()),
+                            opt_text(keep_country.as_deref()),
+                            Value::Integer(survivor),
+                            Value::Integer(*loser),
+                            t(rule.as_str()),
+                        ),
+                    )
+                    .await?;
+                }
+            }
+            touched.retain(|org| !published.contains(org));
+            if !args.dry_run {
+                let now = crate::now_unix();
+                for &org in &touched {
+                    append_change(&conn, "organization", org, None, "changed", now).await?;
+                }
+            }
+            Ok(())
+        }
+        .await;
+        if args.dry_run {
+            published.extend(&touched);
+            return result;
+        }
+        match result {
+            Ok(()) => {
+                if let Err(e) = conn.execute("COMMIT", ()).await {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+                if !touched.is_empty() {
+                    published.extend(&touched);
+                    self.publish_cursor(&conn).await?;
+                }
+                Ok(())
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                Err(e)
+            }
+        }
     }
 
     /// How many org rows are in the merge walk's scope — the progress total for
@@ -12478,7 +12969,7 @@ impl Db {
                             txn_touched.insert(int(&row, 0));
                         }
                         drop(trows);
-                        let moved = repoint_org_references(&conn, keep, m.id).await?;
+                        let moved = repoint_org_references(&conn, keep, m.id, args.rule).await?;
                         report.mentions += moved.mentions;
                         report.parties += moved.parties;
                         report.bid_parties += moved.bid_parties;
@@ -15188,7 +15679,7 @@ impl Db {
                         txn_touched.insert(int(&row, 0));
                     }
                     drop(trows);
-                    let moved = repoint_org_references(&conn, c.keep, c.id).await?;
+                    let moved = repoint_org_references(&conn, c.keep, c.id, "r3").await?;
                     report.mentions += moved.mentions;
                     report.parties += moved.parties;
                     report.bid_parties += moved.bid_parties;
@@ -16282,7 +16773,7 @@ impl Db {
                         txn_touched.insert(int(&row, 0));
                     }
                     drop(trows);
-                    let moved = repoint_org_references(conn, p.keep, p.loser).await?;
+                    let moved = repoint_org_references(conn, p.keep, p.loser, "e2-altid").await?;
                     report.mentions += moved.mentions;
                     report.parties += moved.parties;
                     report.bid_parties += moved.bid_parties;
@@ -17911,7 +18402,7 @@ impl Db {
                             txn_touched.insert(int(&row, 0));
                         }
                         drop(trows);
-                        let moved = repoint_org_references(conn, *keep, l.org).await?;
+                        let moved = repoint_org_references(conn, *keep, l.org, REKEY_RULE).await?;
                         report.mentions += moved.mentions;
                         report.parties += moved.parties;
                         report.bid_parties += moved.bid_parties;
@@ -21074,7 +21565,7 @@ impl Db {
                         // by the foreign-keys-off bracket, refused with it gone.
                         // The statements it skipped are seeks on the party
                         // tables' `(organization_id)` indexes.
-                        let moved = repoint_org_references(conn, keep, loser).await?;
+                        let moved = repoint_org_references(conn, keep, loser, args.rule).await?;
                         report.mentions += moved.mentions;
                         report.parties += moved.parties;
                         report.bid_parties += moved.bid_parties;
@@ -23269,7 +23760,7 @@ impl Db {
                 report.repaired += 1;
                 continue;
             }
-            let moved = repoint_org_references(conn, keep, loser).await?;
+            let moved = repoint_org_references(conn, keep, loser, "nested-repair").await?;
             report.winner_dups += moved.winner_dups;
             conn.execute("DELETE FROM organizations WHERE id = ?", (Value::Integer(loser),))
                 .await?;

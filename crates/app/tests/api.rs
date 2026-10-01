@@ -2408,6 +2408,78 @@ async fn a_merged_away_org_id_redirects_and_filters_by_its_survivor() {
     assert!(notices.get("resolved_filters").is_none(), "{notices}");
 }
 
+/// Issue 460: an identifier a merge folded into an organization finds it. The
+/// list page answers the survivor and names the merge it followed in
+/// `resolved_filters.identifier` (an array: one identifier can answer several
+/// organizations), the detail and the list row both serve `merged_identifiers`,
+/// and a lookup by the survivor's own identifier stays silent.
+#[tokio::test]
+async fn a_merged_away_identifier_answers_its_survivor_with_resolved_filters() {
+    let server = Server::start("merged_identifier").await;
+    server.ingest_chain().await;
+
+    // A real organization is the survivor. It carries a company number of its
+    // own, and the merge that folded a PPON org into it left the PPON behind —
+    // exactly what `repoint_org_references` writes at a merge.
+    let orgs = items(&server.get("/v1/organizations?limit=2").await).clone();
+    assert!(orgs.len() >= 2, "the chain has organizations");
+    let keep = orgs[0]["id"].as_i64().expect("org id");
+    let other = orgs[1]["id"].as_i64().expect("org id");
+    let raw = store::turso::Builder::new_local(&server.path).build().await.expect("raw");
+    let conn = raw.connect().expect("connect");
+    conn.execute(
+        "UPDATE organizations SET identifier = '01002607', identifier_kind = 'national', country = 'GB',
+                name = 'Sellafield Ltd', name_norm = 'sellafield ltd' WHERE id = ?",
+        (store::turso::Value::Integer(keep),),
+    )
+    .await
+    .expect("survivor identity");
+    conn.execute(
+        "INSERT INTO organization_merged_identifiers (identifier, identifier_kind, country, org_id, loser, rule)
+         VALUES ('GBPPONPWYP8439MZWY', 'national', 'GB', ?, 88001, 'e2-altid')",
+        (store::turso::Value::Integer(keep),),
+    )
+    .await
+    .expect("merged identifier");
+    let ids = |page: &Value| items(page).iter().map(|o| o["id"].as_i64().unwrap()).collect::<Vec<_>>();
+    let ppon = serde_json::json!({ "identifier": "GBPPONPWYP8439MZWY", "identifier_kind": "national", "country": "GB" });
+
+    // The merged PPON: the survivor, and the page says it followed a merge.
+    let page = server.get("/v1/organizations?identifier=GBPPONPWYP8439MZWY").await;
+    assert_eq!(ids(&page), vec![keep], "{page}");
+    assert_eq!(
+        page["resolved_filters"],
+        serde_json::json!({ "identifier": { "asked": "GBPPONPWYP8439MZWY", "merged_into": [keep] } }),
+        "{page}"
+    );
+    assert_eq!(page["ignored_filters"], serde_json::json!([]));
+    assert_eq!(items(&page)[0]["merged_identifiers"], serde_json::json!([ppon]), "the list row names it");
+    // `kind` constrains the merged identifier's kind, in any casing.
+    let national = server.get("/v1/organizations?identifier=GBPPONPWYP8439MZWY&kind=NATIONAL").await;
+    assert_eq!(ids(&national), vec![keep]);
+    assert_eq!(national["resolved_filters"]["identifier"]["merged_into"], serde_json::json!([keep]));
+    let vat = server.get("/v1/organizations?identifier=GBPPONPWYP8439MZWY&kind=vat").await;
+    assert!(ids(&vat).is_empty() && vat.get("resolved_filters").is_none(), "{vat}");
+    // The name-ordered search answers the same, in the same shape.
+    let named = server.get("/v1/organizations?identifier=GBPPONPWYP8439MZWY&name_prefix=sella").await;
+    assert_eq!(ids(&named), vec![keep]);
+    assert_eq!(named["resolved_filters"]["identifier"]["merged_into"], serde_json::json!([keep]), "{named}");
+
+    // The detail serves what it carries; an organization nothing merged into, nothing.
+    let detail = server.get(&format!("/v1/organizations/{keep}")).await;
+    assert_eq!(detail["merged_identifiers"], serde_json::json!([ppon]));
+    assert_eq!(server.get(&format!("/v1/organizations/{other}")).await["merged_identifiers"], serde_json::json!([]));
+
+    // The survivor's own identifier is a direct match: no resolved_filters.
+    let own = server.get("/v1/organizations?identifier=01002607").await;
+    assert_eq!(ids(&own), vec![keep]);
+    assert!(own.get("resolved_filters").is_none(), "{own}");
+    // A collection that does not honour `identifier` names it ignored, never resolved.
+    let tenders = server.get("/v1/tenders?identifier=GBPPONPWYP8439MZWY&limit=1").await;
+    assert!(tenders.get("resolved_filters").is_none(), "{tenders}");
+    assert!(tenders["ignored_filters"].as_array().unwrap().iter().any(|f| f == "identifier"));
+}
+
 /// Issue 49: an unknown or mistyped query param is a 400, so an analyst never
 /// mistakes "everything matched" for "my typo'd filter matched".
 #[tokio::test]

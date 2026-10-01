@@ -1316,17 +1316,23 @@ async fn collection(
     // set lives in the read layer next to the builders it describes.
     let ignored: Vec<&str> =
         params.provided_filters().into_iter().filter(|p| !honoured.contains(p)).collect();
-    let mut page = json::page(items.into_iter().map(|i| i.json).collect(), next, &ignored);
+    let items: Vec<Value> = items.into_iter().map(|i| i.json).collect();
+    // Issue 460: an identifier a merge folded into an organization finds it; name
+    // the organizations the page reached that way.
+    let followed = if honoured.contains(&"identifier") { identifier_resolution(&items, &filter) } else { None };
+    let mut page = json::page(items, next, &ignored);
     // Issue 455: say which org ids were followed to their survivor, so a page that
     // answers for a different id than the one sent is never silent about it. Only
     // present when something was rewritten.
-    if !resolved.is_empty() {
-        page["resolved_filters"] = Value::Object(
-            resolved
-                .iter()
-                .map(|(name, asked, keep)| ((*name).to_owned(), json!({ "asked": asked, "merged_into": keep })))
-                .collect(),
-        );
+    let mut resolved_filters: serde_json::Map<String, Value> = resolved
+        .iter()
+        .map(|(name, asked, keep)| ((*name).to_owned(), json!({ "asked": asked, "merged_into": keep })))
+        .collect();
+    if let Some(identifier) = followed {
+        resolved_filters.insert("identifier".to_owned(), identifier);
+    }
+    if !resolved_filters.is_empty() {
+        page["resolved_filters"] = Value::Object(resolved_filters);
     }
     Ok(axum::Json(page).into_response())
 }
@@ -1599,7 +1605,7 @@ async fn organizations_by_name(
     // tracked on issue 217.
     let companioned = filter.country.is_some() || filter.kind.is_some();
     let mut rows = if companioned {
-        match state.isolated.read_org_named(filter, prefix, cursor, limit + 1).await {
+        match state.isolated.read_org_named(filter.clone(), prefix, cursor, limit + 1).await {
             Ok(result) => result?,
             Err(isolate::Shed) => {
                 return Err(ApiError(
@@ -1621,7 +1627,33 @@ async fn organizations_by_name(
     let ignored: Vec<&str> =
         params.provided_filters().into_iter().filter(|f| !honoured.contains(f)).collect();
     let items: Vec<serde_json::Value> = rows.iter().map(json::organization).collect();
-    Ok(axum::Json(json::page(items, next, &ignored)).into_response())
+    let followed = identifier_resolution(&items, &filter);
+    let mut page = json::page(items, next, &ignored);
+    // Issue 460: the name-ordered search says so too, in the same shape.
+    if let Some(identifier) = followed {
+        page["resolved_filters"] = json!({ "identifier": identifier });
+    }
+    Ok(axum::Json(page).into_response())
+}
+
+/// Issue 460: `?identifier=` also finds an organization through an identifier a
+/// merge folded into it (`merged_identifiers`). Name each item the page reached
+/// that way — one whose own `identifier` is not the value asked (or, with
+/// `kind`, not of that kind) — as `{"asked": …, "merged_into": [ids]}`: an
+/// array, because one identifier can answer several organizations (issue 329).
+/// `None` when every item matched its own identifier, so the field is present
+/// only when a merge was followed.
+fn identifier_resolution(items: &[Value], filter: &Filter) -> Option<Value> {
+    let asked = filter.identifier.as_deref()?;
+    let merged_into: Vec<i64> = items
+        .iter()
+        .filter(|item| {
+            item["identifier"].as_str() != Some(asked)
+                || filter.kind.as_deref().is_some_and(|kind| item["identifier_kind"].as_str() != Some(kind))
+        })
+        .filter_map(|item| item["id"].as_i64())
+        .collect();
+    (!merged_into.is_empty()).then(|| json!({ "asked": asked, "merged_into": merged_into }))
 }
 
 /// `sort`/`order` are a /v1/tenders capability (issue 216). The other collections

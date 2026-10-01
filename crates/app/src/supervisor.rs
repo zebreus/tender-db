@@ -505,6 +505,13 @@ enum Spec {
     /// `orphan-org-sweep-plan`; wet requires that plan and aborts before the
     /// first write if its own count has moved outside max(2%, 50).
     SweepOrphanOrgs { dry_run: bool },
+    /// Issue 460 unit 3: give the identifiers merges folded away before
+    /// `organization_merged_identifiers` existed a place on today's survivor,
+    /// from the ledger's `$.loser_id` (`e2-altid` through its partial index,
+    /// then `r2`/`e0`/`r3` in one rowid walk). Writes that lookup table and an
+    /// `organization changed` per survivor it wrote for. Dry (the default)
+    /// counts per rule and writes nothing; both store `merged-identifier-backfill`.
+    BackfillMergedIdentifiers { dry_run: bool },
     /// Issue 443 step 3: the sweep a fold queues after it re-bound mentions
     /// (every re-bind can empty the row it left). It counts, then sweeps in
     /// the same job when the count is at most `cap`; above it (an era-scale
@@ -1915,6 +1922,26 @@ impl Supervisor {
                     self.push("sweep-orphan-orgs", params, Spec::SweepOrphanOrgs { dry_run }).await,
                 ])
             }
+            // Issue 460 unit 3: the one-shot merged-identifier backfill. It writes a
+            // lookup table (and an `organization changed` per survivor it served
+            // more), so it asks to be meant: a forgotten flag means the dry count.
+            "backfill-merged-identifiers" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let params = if dry_run {
+                    "backfill-merged-identifiers dry-run"
+                } else {
+                    "backfill-merged-identifiers"
+                }
+                .to_owned();
+                Ok(vec![
+                    self.push(
+                        "backfill-merged-identifiers",
+                        params,
+                        Spec::BackfillMergedIdentifiers { dry_run },
+                    )
+                    .await,
+                ])
+            }
             // Issue 259 landing: repair the stale nested-org mention layer.
             // Deletes org rows and emits change events, so it asks to be meant:
             // `dry_run` defaults to TRUE (the data-quality convention — a
@@ -2582,6 +2609,78 @@ fn orphan_sweep_plan(counted: &store::OrphanOrgSweep, swept_this_run: u64, dry_r
     .to_string()
 }
 
+/// Issue 460: the report `backfill-merged-identifiers` stores.
+const MERGED_IDENTIFIER_BACKFILL_REPORT: &str = "merged-identifier-backfill";
+
+/// Issue 460: the kind the live normaliser gives a ledger literal under its
+/// survivor's country. The ledger names no kind, and an `r2` group can join a
+/// VAT spelling to a register number, so the survivor's own kind would
+/// mislabel the loser's literal.
+fn merged_identifier_kind(country: Option<&str>, literal: &str) -> Option<String> {
+    ingest::project::normalise_identifier(literal, country).map(|id| id.kind)
+}
+
+/// The stored `merged-identifier-backfill` body: per-rule counts keyed by rule.
+fn merged_identifier_backfill_body(r: &store::MergedIdentifierBackfill) -> String {
+    let rules: serde_json::Map<String, serde_json::Value> = r
+        .rules
+        .iter()
+        .map(|(rule, c)| {
+            (
+                rule.clone(),
+                serde_json::json!({
+                    "rows": c.rows,
+                    "written": c.written,
+                    "present": c.present,
+                    "same_as_survivor": c.same_as_survivor,
+                    "no_literal": c.no_literal,
+                    "unresolved": c.unresolved,
+                    "out_of_time": c.out_of_time,
+                    "loser_live": c.loser_live,
+                    "kind_from_survivor": c.kind_from_survivor,
+                }),
+            )
+        })
+        .collect();
+    serde_json::json!({
+        "dry_run": r.dry_run,
+        "ledger_rows": r.ledger_rows,
+        "written": r.rules.iter().map(|(_, c)| c.written).sum::<u64>(),
+        "organizations_changed": r.organizations_changed,
+        "rules": rules,
+    })
+    .to_string()
+}
+
+/// One line per rule for the job's summary.
+fn merged_identifier_backfill_summary(r: &store::MergedIdentifierBackfill) -> String {
+    let rules: Vec<String> = r
+        .rules
+        .iter()
+        .map(|(rule, c)| {
+            format!(
+                "{rule}: {} rows, {} written, {} present, {} same as survivor, {} no literal, \
+                 {} unresolved, {} out of time, {} loser live, {} kind from survivor",
+                c.rows,
+                c.written,
+                c.present,
+                c.same_as_survivor,
+                c.no_literal,
+                c.unresolved,
+                c.out_of_time,
+                c.loser_live,
+                c.kind_from_survivor
+            )
+        })
+        .collect();
+    format!(
+        "{} ledger rows walked, {} survivors changed; {}",
+        r.ledger_rows,
+        r.organizations_changed,
+        rules.join("; ")
+    )
+}
+
 /// Whether a running job reads the stop flag: every kind in [`STOPPABLE_KINDS`], an
 /// FTS `fetch` (issue 450), and the FTS daily `probe` (issue 477 review). Neither
 /// `fetch` nor `probe` is a stoppable KIND because only the FTS walk has a
@@ -2653,6 +2752,8 @@ const STOPPABLE_KINDS: &[&str] = &[
     // Issue 443: read between windows of both walks; a stop while counting
     // stores no plan, a stop while sweeping re-records the residual.
     "sweep-orphan-orgs",
+    // Issue 460: read between ledger windows; a stopped run stores no report.
+    "backfill-merged-identifiers",
     // Issue 429: read between tables; a stop still refreshes the readers.
     "analyze",
 ];
@@ -3827,6 +3928,50 @@ impl Supervisor {
         ))
     }
 
+    /// Issue 460 unit 3's `backfill-merged-identifiers`, out of `run_spec`'s
+    /// match for the stack's sake (see [`Self::run_repair_member_twins`]). Reads
+    /// the merge ledger per rule, writes (wet) the merged identifiers today's
+    /// survivors lack, and stores the per-rule counts as
+    /// `merged-identifier-backfill` — only for a run that finished: a stopped
+    /// dry count is a prefix that would read as the whole, and a stopped wet
+    /// run's committed windows are what a re-run counts as `present`.
+    async fn run_backfill_merged_identifiers(&self, job: &Job, dry_run: bool) -> Result<String, String> {
+        let job_id = job.id;
+        let stop = || self.cancelled(job_id);
+        self.set_phase(
+            if dry_run { "counting" } else { "writing" },
+            None,
+            None,
+            "reading the merge ledger: e2-altid, then r2/e0/r3".to_owned(),
+        );
+        let r = self
+            .db
+            .backfill_merged_identifiers(store::MergedIdentifierBackfillArgs {
+                kind_of: merged_identifier_kind,
+                dry_run,
+                window: store::MERGED_BACKFILL_WINDOW,
+                stop: &stop,
+            })
+            .await
+            .map_err(|e| e.to_string())?;
+        let summary = merged_identifier_backfill_summary(&r);
+        if r.stopped {
+            return Ok(format!(
+                "backfill-merged-identifiers STOPPED by cancel — {}; no report stored{}",
+                summary,
+                if dry_run { "" } else { " (the committed windows stand; a re-run counts them as present)" }
+            ));
+        }
+        self.db
+            .put_report(MERGED_IDENTIFIER_BACKFILL_REPORT, &merged_identifier_backfill_body(&r), store::now_unix())
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(format!(
+            "backfill-merged-identifiers (issue 460){}: {summary}",
+            if dry_run { " DRY RUN — counted, nothing written" } else { "" }
+        ))
+    }
+
     /// Issue 404's repair, as its own async fn rather than inline in
     /// `run_spec`'s match.
     ///
@@ -4122,6 +4267,9 @@ impl Supervisor {
             }
             Spec::SweepOrphanOrgsAuto { cap } => {
                 Box::pin(self.run_sweep_orphan_orgs(job, SweepMode::Auto { cap: *cap })).await
+            }
+            Spec::BackfillMergedIdentifiers { dry_run } => {
+                Box::pin(self.run_backfill_merged_identifiers(job, *dry_run)).await
             }
             Spec::Analyze => Box::pin(self.run_analyze(job)).await,
             Spec::Reindex => {
@@ -13093,6 +13241,9 @@ mod tests {
                 // window of both walks; a stop while counting stores no plan, a
                 // stop while sweeping re-records the residual.
                 "sweep-orphan-orgs",
+                // Issue 460: `backfill_merged_identifiers` reads the flag before
+                // every ledger window; a stopped run stores no report.
+                "backfill-merged-identifiers",
                 // Issue 429: `run_analyze` reads the flag before every table, and a
                 // stopped run still drops `organizations` statistics and refreshes
                 // the readers.
@@ -13781,6 +13932,75 @@ mod tests {
                 (5, "1A0".to_owned()),
             ]
         );
+    }
+
+    /// Issue 460 unit 3: the job wiring around `Db::backfill_merged_identifiers`,
+    /// with the REAL normaliser classifying the ledger literal. Dry counts per
+    /// rule and stores the report, writing nothing; wet writes Sellafield's PPON
+    /// for its survivor as the `national` identifier it is.
+    #[tokio::test]
+    async fn the_merged_identifier_backfill_job_counts_dry_and_writes_wet() {
+        let path = format!("/tmp/tender-db-sup-460-{}-{}.db", std::process::id(), store::now_unix());
+        let _ = std::fs::remove_file(&path);
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        let raw = store::turso::Builder::new_local(&path).build().await.unwrap();
+        let conn = raw.connect().unwrap();
+        conn.execute(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (5718658, 'GB', 'national', '01002607', 'Sellafield Ltd', 'sellafield ltd', 0, 0)",
+            (),
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            "INSERT INTO org_merge_log (keep, loser, rule, evidence, job_id, at)
+             VALUES (5718658, 31627746, 'e2-altid', '{\"scheme\":\"GB:altid\",\"loser_id\":\"GBPPONPWYP8439MZWY\"}', 1787, 1),
+                    (5718658, 99, 'p0', '{\"loser_id\":\"99\"}', NULL, 2)",
+            (),
+        )
+        .await
+        .unwrap();
+        let sup = Supervisor::new(db, "archive".into(), reqwest::Client::new());
+        let job = |id: u64, dry: bool| Job {
+            id,
+            kind: "backfill-merged-identifiers".into(),
+            params: String::new(),
+            spec: Spec::BackfillMergedIdentifiers { dry_run: dry },
+            resume_after: None,
+        };
+        let merged = async || -> Vec<(String, String, String, i64)> {
+            let mut rows = conn
+                .query("SELECT identifier, identifier_kind, country, org_id FROM organization_merged_identifiers", ())
+                .await
+                .unwrap();
+            let mut out = Vec::new();
+            while let Some(row) = rows.next().await.unwrap() {
+                let text = |i: usize| row.get_value(i).unwrap().as_text().cloned().unwrap_or_default();
+                out.push((text(0), text(1), text(2), *row.get_value(3).unwrap().as_integer().unwrap()));
+            }
+            out
+        };
+
+        let msg = sup.run_spec(&job(1, true)).await.expect("dry");
+        assert!(msg.contains("DRY RUN") && msg.contains("e2-altid: 1 rows, 1 written"), "{msg}");
+        let (body, _) = sup.db().latest_report(MERGED_IDENTIFIER_BACKFILL_REPORT).await.unwrap().expect("report");
+        let v: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!((v["dry_run"].as_bool(), v["ledger_rows"].as_u64(), v["written"].as_u64()), (Some(true), Some(2), Some(1)), "{body}");
+        assert_eq!(v["rules"]["e2-altid"]["written"], 1, "{body}");
+        assert_eq!(v["rules"]["r2"]["rows"], 0, "{body}");
+        assert!(v["rules"].get("p0").is_none(), "a p0 loser_id is an org id, never read: {body}");
+        assert!(merged().await.is_empty(), "dry wrote nothing");
+
+        let msg = sup.run_spec(&job(2, false)).await.expect("wet");
+        assert!(!msg.contains("DRY RUN"), "{msg}");
+        assert_eq!(
+            merged().await,
+            vec![("GBPPONPWYP8439MZWY".into(), "national".into(), "GB".into(), 5_718_658)],
+            "the PPON lands on its survivor, classified by the live normaliser"
+        );
+        let (body, _) = sup.db().latest_report(MERGED_IDENTIFIER_BACKFILL_REPORT).await.unwrap().expect("report");
+        assert!(body.contains("\"dry_run\":false"), "{body}");
+        let _ = std::fs::remove_file(&path);
     }
 
     /// Issue 316: r3's corroboration consults the generic-name wall, so the

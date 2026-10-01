@@ -30,6 +30,8 @@ pub use canonical::{
     ClusterCase, ClusterPacket, CountryFoldReport, CountryMove, CountryVerdict,
     CountryVerdictReport, FusionCandidate, IdentifierVerdict, IdentifierVerdictReport, MergeVerdict,
     RekeyArgs, RekeyListing, RekeyReport,
+    MergedIdentifierBackfill, MergedIdentifierBackfillArgs, MergedIdentifierRuleCounts,
+    MERGED_BACKFILL_ALTID_SQL, MERGED_BACKFILL_WINDOW, MERGED_BACKFILL_WINDOW_SQL, MERGED_IDENTIFIER_BACKFILL_RULES,
     FusionReport, RehomingReport, RehomingVerdict,
     RehomingCase, RehomingGroup, RehomingMention, RehomingPacket, RehomingParked, RehomingTarget,
     OrphanSatellite, SatelliteOrphanReport,
@@ -7651,6 +7653,118 @@ tmpfs /data/ramcache tmpfs rw 0 0
             );
         }
         let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 460: `?identifier=` reads two places in BOTH org builders — the org's
+    /// own identifier and the identifiers merges folded into it — and each
+    /// statement must seek. One SQL statement for both walks (the `EXISTS` form)
+    /// or drops the keyset cursor (the `IN` form's MULTI-INDEX OR sorts every
+    /// match; `read::organizations` has the EXPLAIN), so the merged table is
+    /// seeked first and its holders read by primary key (the pinned leg, its
+    /// companions `+`-wrapped so no index steers it off the rowid). Read locally, per docs/agents/prod-box-reads.md:
+    /// `Db::open`'s real schema plus the deferred org indexes prod carries.
+    #[tokio::test]
+    async fn the_identifier_lookup_seeks_in_both_org_builders() {
+        use super::read::{self, Collection, Filter, Scope};
+        let path = format!("/tmp/tender-db-460-eqp-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        db.build_organization_indexes().await.unwrap();
+        let conn = db.reader().await.unwrap();
+        let plan_of = async |sql: &str, params: Vec<Value>| -> String {
+            let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {sql}"), params).await.unwrap();
+            let mut plan = String::new();
+            while let Some(row) = rows.next().await.unwrap() {
+                plan.push_str(&text(&row, 3));
+                plan.push('\n');
+            }
+            assert!(!plan.is_empty(), "no plan came back for: {sql}");
+            plan
+        };
+        // No statement may scan a table; every correlated subquery seeks its index.
+        let seeks = |label: &str, plan: &str, must: &[&str]| {
+            for line in plan.lines() {
+                assert!(!line.trim_start().starts_with("SCAN "), "{label}: a table scan — plan was:\n{plan}");
+            }
+            for needle in must {
+                assert!(plan.contains(needle), "{label}: expected `{needle}` — plan was:\n{plan}");
+            }
+            println!("PLAN {label}:\n{plan}");
+        };
+        let subqueries = ["organization_mentions_org", "organization_merged_identifiers_org"];
+
+        let ident = Filter { identifier: Some("GBPPONPWYP8439MZWY".into()), ..Filter::default() };
+        let companions = [
+            ("identifier", ident.clone()),
+            ("identifier+kind", Filter { kind: Some("national".into()), ..ident.clone() }),
+            ("identifier+country", Filter { country: Some("GB".into()), ..ident.clone() }),
+        ];
+        for (label, filter) in &companions {
+            assert!(!read::walks(Collection::Organizations, filter), "{label}: `identifier=` stays on the main pool");
+            for after in [0i64, 49_377] {
+                let (sql, params) = read::organizations_statement(filter, Scope::Page { after, limit: 1000 });
+                let plan = plan_of(&sql, params).await;
+                seeks(&format!("id-ordered {label} after={after}"), &plan, &["organizations_identifier_id"]);
+                for needle in subqueries {
+                    assert!(plan.contains(needle), "{label}: the {needle} subquery must seek:\n{plan}");
+                }
+            }
+            let (sql, params) = read::organizations_statement(filter, Scope::At { id: 7, seq: 0 });
+            seeks(&format!("id-ordered {label} at"), &plan_of(&sql, params).await, &[]);
+            for cursor in [None, Some(("sellafield ltd".to_owned(), 42i64))] {
+                let (sql, params) = read::organizations_by_name_statement(filter, "sellafield", cursor.as_ref(), 101);
+                let plan = plan_of(&sql, params).await;
+                seeks(&format!("name-ordered {label} cursor={}", cursor.is_some()), &plan, &["organizations_identifier_id"]);
+            }
+        }
+
+        // The merged table's half: the primary-key seek, then one rowid read per
+        // holder whatever companions ride along.
+        let plan = plan_of(read::MERGED_IDENTIFIER_HOLDERS_SQL, vec![t("GBPPONPWYP8439MZWY")]).await;
+        seeks("merged holders", &plan, &["organization_merged_identifiers", "identifier="]);
+        let all = Filter {
+            country: Some("GB".into()),
+            name_prefix: Some("sellafield".into()),
+            ..ident.clone()
+        };
+        for prefix in [None, Some("sellafield")] {
+            let (sql, params) = read::organization_pinned_statement(&all, prefix, 5_718_658);
+            let plan = plan_of(&sql, params).await;
+            seeks(&format!("pinned prefix={prefix:?}"), &plan, &["INTEGER PRIMARY KEY"]);
+            for needle in subqueries {
+                assert!(plan.contains(needle), "pinned: the {needle} subquery must seek:\n{plan}");
+            }
+        }
+
+        // The two statements every merge now runs (p0 alone folded 5.76M rows):
+        // seeks on the holder index, never a walk of the table.
+        let plan = plan_of(
+            crate::canonical::MERGED_CARRY_DROP_SQL,
+            vec![Value::Integer(1), t("X"), t("national")],
+        )
+        .await;
+        seeks("carry drop", &plan, &["organization_merged_identifiers"]);
+        assert!(plan.contains("org_id=") || plan.contains("identifier="), "carry drop must seek:\n{plan}");
+        let plan = plan_of(crate::canonical::MERGED_CARRY_SQL, vec![Value::Integer(2), Value::Integer(1)]).await;
+        seeks("carry", &plan, &["organization_merged_identifiers_org"]);
+
+        // The backfill's two ledger reads: the partial index, and a rowid window.
+        let plan = plan_of(crate::canonical::MERGED_BACKFILL_ALTID_SQL, vec![]).await;
+        seeks("backfill altid", &plan, &["org_merge_log_e2_altid"]);
+        let plan = plan_of(
+            crate::canonical::MERGED_BACKFILL_WINDOW_SQL,
+            vec![Value::Integer(0), Value::Integer(50_000)],
+        )
+        .await;
+        seeks("backfill window", &plan, &["INTEGER PRIMARY KEY"]);
+
+        drop(conn);
+        drop(db);
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
     }
 
     /// A tender-scoped lots read returns the Tender's COMPLETE set, and still honours

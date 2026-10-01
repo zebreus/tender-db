@@ -398,6 +398,20 @@ pub struct OrganizationRow {
     /// issued) or `related` (a parent's or subsidiary's). `None` when no review
     /// found a problem.
     pub identifier_verdict: Option<String>,
+    /// Issue 460: the identifiers merges folded into this organization (a PPON
+    /// beside its company number, another spelling of one key), in identifier
+    /// order. `?identifier=` finds the organization by any of them. Empty when
+    /// no merge left one.
+    pub merged_identifiers: Vec<MergedIdentifier>,
+}
+
+/// One identifier a merge folded into an organization (issue 460): the
+/// loser's identity triple as the merge read it.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct MergedIdentifier {
+    pub identifier: String,
+    pub identifier_kind: Option<String>,
+    pub country: Option<String>,
 }
 
 /// A Notice identity row — the `/v1/notices` item. The parsed payload lives in
@@ -3750,26 +3764,184 @@ const TENDER_LOTS_CAP: i64 = 20_000;
 
 // ------------------------------------------------------------- organizations
 
+/// The organization row's columns, ONE list for both builders and the issue-460
+/// merged leg, so all three read the same row. Column 8 is the merged-identifier
+/// list: one seek on `organization_merged_identifiers_org` per row (the shape of
+/// the mention count beside it), each entry's fields joined by `char(31)` and
+/// the entries by `char(30)` — characters no stored identifier carries (the
+/// normaliser keeps ASCII alphanumerics). Column 9, `name_norm`, is the
+/// name-ordered search's sort key.
+const ORG_COLUMNS: &str = "SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional,
+                (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id),
+                (SELECT v.verdict FROM org_identifier_verdicts v
+                  WHERE v.identifier = o.identifier
+                    AND v.identifier_kind = COALESCE(o.identifier_kind, '')
+                    AND v.country = COALESCE(o.country, '')
+                    AND v.verdict IN ('wrong', 'related')),
+                (SELECT group_concat(mi.identifier || char(31) || COALESCE(mi.identifier_kind, '')
+                                     || char(31) || COALESCE(mi.country, ''), char(30))
+                   FROM organization_merged_identifiers mi WHERE mi.org_id = o.id),
+                o.name_norm";
+
+/// One [`ORG_COLUMNS`] row, with its `name_norm` beside it for the name order.
+fn organization_row(row: &turso::Row) -> (Option<String>, OrganizationRow) {
+    (
+        opt_text_of(row, 9),
+        OrganizationRow {
+            id: int(row, 0),
+            name: text(row, 1),
+            country: opt_text_of(row, 2),
+            identifier_kind: opt_text_of(row, 3),
+            identifier: opt_text_of(row, 4),
+            provisional: int(row, 5) != 0,
+            mentions: int(row, 6),
+            identifier_verdict: opt_text_of(row, 7),
+            merged_identifiers: merged_identifiers_of(opt_text_of(row, 8)),
+        },
+    )
+}
+
+/// Column 8 of [`ORG_COLUMNS`], split back into its entries, in identifier
+/// order and without repeats (two losers can fold one value into one org).
+fn merged_identifiers_of(concat: Option<String>) -> Vec<MergedIdentifier> {
+    let nonempty = |s: Option<&str>| s.filter(|s| !s.is_empty()).map(str::to_owned);
+    let mut out: Vec<MergedIdentifier> = concat
+        .as_deref()
+        .unwrap_or_default()
+        .split('\u{1e}')
+        .filter(|entry| !entry.is_empty())
+        .map(|entry| {
+            let mut fields = entry.split('\u{1f}');
+            MergedIdentifier {
+                identifier: fields.next().unwrap_or_default().to_owned(),
+                identifier_kind: nonempty(fields.next()),
+                country: nonempty(fields.next()),
+            }
+        })
+        .collect();
+    out.sort();
+    out.dedup();
+    out
+}
+
+/// Issue 460: the live holders of `identifier` among the identifiers merges
+/// folded away — one seek on `organization_merged_identifiers`' `(identifier,
+/// loser)` primary key. `kind` constrains the MATCHED identifier's kind, the
+/// merged row's, as `o.identifier_kind` does for an org's own identifier.
+pub const MERGED_IDENTIFIER_HOLDERS_SQL: &str =
+    "SELECT org_id, identifier_kind FROM organization_merged_identifiers WHERE identifier = ?";
+
+/// The organizations an `identifier` was folded into by a merge (issue 460),
+/// filtered by `kind` when given — sorted, without repeats. A holder a later
+/// repair deleted is still listed; the builders' pinned read finds no row for
+/// it, so it answers nothing.
+pub async fn merged_identifier_holders(
+    conn: &Connection,
+    identifier: &str,
+    kind: Option<&str>,
+) -> turso::Result<Vec<i64>> {
+    let mut rows = conn.query(MERGED_IDENTIFIER_HOLDERS_SQL, (t(identifier),)).await?;
+    let mut out = Vec::new();
+    while let Some(row) = rows.next().await? {
+        if kind.is_none_or(|k| opt_text_of(&row, 1).as_deref() == Some(k)) {
+            out.push(int(&row, 0));
+        }
+    }
+    out.sort_unstable();
+    out.dedup();
+    Ok(out)
+}
+
+/// Issue 460's merged leg: one organization by primary key, with the companion
+/// filters beside it. Every companion column is taken out of the planner's
+/// index choice with a unary `+` (the issue-323 trap: a range or an equality on
+/// an indexed column can steer turso off the rowid), so the read is ONE rowid
+/// seek whatever rides along. `identifier` and `kind` are not applied: the
+/// merged row matched them. `buyer` is the caller's (it is the id itself).
+fn organization_pinned_query(filter: &Filter, prefix: Option<&str>, id: i64) -> Query {
+    let mut q = Query::default();
+    q.push(ORG_COLUMNS, []);
+    q.push(" FROM organizations o WHERE o.id = ?", [Value::Integer(id)]);
+    if let Some(country) = &filter.country {
+        q.push(" AND +o.country = ?", [t(country)]);
+    }
+    if let Some(prefix) = prefix {
+        q.push(" AND +o.name_norm >= ?", [t(prefix)]);
+        if let Some(hi) = successor(prefix) {
+            q.push(" AND +o.name_norm < ?", [t(&hi)]);
+        }
+    }
+    q
+}
+
+/// The pinned leg's statement for one holder, without running it — the plan
+/// guard's seam (`the_identifier_lookup_seeks_in_both_org_builders`).
+#[cfg(test)]
+pub(crate) fn organization_pinned_statement(filter: &Filter, prefix: Option<&str>, id: i64) -> (String, Vec<Value>) {
+    let q = organization_pinned_query(filter, prefix, id);
+    (q.sql, q.params)
+}
+
+/// Issue 460: the organizations `?identifier=` reaches through a merge — each
+/// holder [`merged_identifier_holders`] names that `admit` lets through and the
+/// direct leg did not already return, read through the pinned leg. `admit`
+/// decides scope (cursor, `buyer`, the name cursor) on the holder's id and
+/// `name_norm`. Two statements per holder at most, and a merged-away identifier
+/// has one holder unless several orgs absorbed the same value (issue 329).
+async fn merged_leg(
+    conn: &Connection,
+    filter: &Filter,
+    prefix: Option<&str>,
+    have: &[(Option<String>, OrganizationRow)],
+    admit: impl Fn(i64, Option<&str>) -> bool,
+) -> turso::Result<Vec<(Option<String>, OrganizationRow)>> {
+    let Some(identifier) = &filter.identifier else { return Ok(Vec::new()) };
+    let mut out = Vec::new();
+    for holder in merged_identifier_holders(conn, identifier, filter.kind.as_deref()).await? {
+        if filter.buyer.is_some_and(|b| b != holder) || have.iter().any(|(_, r)| r.id == holder) {
+            continue;
+        }
+        for (norm, row) in organization_pinned_query(filter, prefix, holder).rows(conn, organization_row).await? {
+            if admit(row.id, norm.as_deref()) {
+                out.push((norm, row));
+            }
+        }
+    }
+    Ok(out)
+}
+
 /// Canonical Organization profiles. Only `country` and `kind` (the identifier
 /// kind) narrow them — the value/CPV/status predicates are Tender-shaped and
 /// have no meaning here.
+///
+/// `identifier` matches an org's own identifier (the seek on
+/// `organizations_identifier_id`) OR one a merge folded into it (issue 460):
+/// the merged table is seeked first and its holders read by primary key, then
+/// the two legs are unioned here in id order — the `resolve_org` shape. One SQL
+/// statement does worse, read locally with EXPLAIN on 2026-10-01: the `EXISTS`
+/// form walks `organizations` by rowid, and the `o.id IN (SELECT …)` form is a
+/// MULTI-INDEX OR that seeks both but leaves the `(identifier, id)` cursor
+/// unused and sorts every org carrying the value before `LIMIT`. The union
+/// keeps the direct leg's keyset seek exactly as it was.
 pub async fn organizations(
     conn: &Connection,
     filter: &Filter,
     scope: Scope,
 ) -> turso::Result<Vec<OrganizationRow>> {
-    let q = organizations_query(filter, scope);
-    q.rows(conn, |row| OrganizationRow {
-        id: int(row, 0),
-        name: text(row, 1),
-        country: opt_text_of(row, 2),
-        identifier_kind: opt_text_of(row, 3),
-        identifier: opt_text_of(row, 4),
-        provisional: int(row, 5) != 0,
-        mentions: int(row, 6),
-        identifier_verdict: opt_text_of(row, 7),
+    let mut rows = organizations_query(filter, scope).rows(conn, organization_row).await?;
+    let merged = merged_leg(conn, filter, filter.name_prefix.as_deref(), &rows, |id, _| match scope {
+        Scope::Page { after, .. } => id > after,
+        Scope::At { id: at, .. } => id == at,
     })
-    .await
+    .await?;
+    if !merged.is_empty() {
+        rows.extend(merged);
+        rows.sort_by_key(|(_, r)| r.id);
+        if let Scope::Page { limit, .. } = scope {
+            rows.truncate(usize::try_from(limit).unwrap_or(0));
+        }
+    }
+    Ok(rows.into_iter().map(|(_, r)| r).collect())
 }
 
 /// The statement [`organizations`] builds, without running it — the seam 112's plan gate
@@ -3790,17 +3962,8 @@ pub(crate) fn organizations_statement(filter: &Filter, scope: Scope) -> (String,
 /// The identity half of [`organizations`], built but not run.
 fn organizations_query(filter: &Filter, scope: Scope) -> Query {
     let mut q = Query::default();
-    q.push(
-        "SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional,
-                (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id),
-                (SELECT v.verdict FROM org_identifier_verdicts v
-                  WHERE v.identifier = o.identifier
-                    AND v.identifier_kind = COALESCE(o.identifier_kind, '')
-                    AND v.country = COALESCE(o.country, '')
-                    AND v.verdict IN ('wrong', 'related'))
-           FROM organizations o WHERE 1 = 1",
-        [],
-    );
+    q.push(ORG_COLUMNS, []);
+    q.push(" FROM organizations o WHERE 1 = 1", []);
     if let Some(country) = &filter.country {
         q.push(" AND o.country = ?", [t(country)]);
     }
@@ -3810,7 +3973,9 @@ fn organizations_query(filter: &Filter, scope: Scope) -> Query {
     // The official identifier value (issue 217), served by `organizations_identifier_id
     // (identifier, id)` so `WHERE identifier=? AND id>? ORDER BY id LIMIT` seeks and the
     // cursor rides the same index — present OR absent, both O(log n), no sorter. Pair
-    // with `kind` above to pin the scheme; alone it returns every scheme's match.
+    // with `kind` above to pin the scheme; alone it returns every scheme's match. The
+    // identifiers a merge folded into an org are the other leg (issue 460), unioned by
+    // [`organizations`].
     if let Some(identifier) = &filter.identifier {
         q.push(" AND o.identifier = ?", [t(identifier)]);
     }
@@ -3843,6 +4008,10 @@ fn organizations_query(filter: &Filter, scope: Scope) -> Query {
 /// the probe measured the plain-index seek at 3.3 ms where every NOCASE shape
 /// scanned). `country`/`kind` filter per row within the prefix slice. The cursor
 /// is the last row's `(name_norm, id)`, applied bounded-OR.
+///
+/// `identifier` also matches an identifier a merge folded into an org (issue
+/// 460), through the same merged leg as [`organizations`], merged here in
+/// `(name_norm, id)` order — so the two builders answer one set.
 pub async fn organizations_by_name(
     conn: &Connection,
     filter: &Filter,
@@ -3850,18 +4019,43 @@ pub async fn organizations_by_name(
     cursor: Option<(String, i64)>,
     limit: i64,
 ) -> turso::Result<Vec<OrganizationRow>> {
+    let q = organizations_by_name_query(filter, prefix, cursor.as_ref(), limit);
+    let mut rows = q.rows(conn, organization_row).await?;
+    let merged = merged_leg(conn, filter, Some(prefix), &rows, |id, norm| {
+        cursor.as_ref().is_none_or(|(c_norm, c_id)| (norm.unwrap_or_default(), id) > (c_norm.as_str(), *c_id))
+    })
+    .await?;
+    if !merged.is_empty() {
+        rows.extend(merged);
+        rows.sort_by(|(a_norm, a), (b_norm, b)| (a_norm, a.id).cmp(&(b_norm, b.id)));
+        rows.truncate(usize::try_from(limit).unwrap_or(0));
+    }
+    Ok(rows.into_iter().map(|(_, r)| r).collect())
+}
+
+/// The statement [`organizations_by_name`] builds, without running it — the plan
+/// guard's seam (issue 460).
+#[cfg(test)]
+pub(crate) fn organizations_by_name_statement(
+    filter: &Filter,
+    prefix: &str,
+    cursor: Option<&(String, i64)>,
+    limit: i64,
+) -> (String, Vec<Value>) {
+    let q = organizations_by_name_query(filter, prefix, cursor, limit);
+    (q.sql, q.params)
+}
+
+/// The direct half of [`organizations_by_name`], built but not run.
+fn organizations_by_name_query(
+    filter: &Filter,
+    prefix: &str,
+    cursor: Option<&(String, i64)>,
+    limit: i64,
+) -> Query {
     let mut q = Query::default();
-    q.push(
-        "SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional,
-                (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id),
-                (SELECT v.verdict FROM org_identifier_verdicts v
-                  WHERE v.identifier = o.identifier
-                    AND v.identifier_kind = COALESCE(o.identifier_kind, '')
-                    AND v.country = COALESCE(o.country, '')
-                    AND v.verdict IN ('wrong', 'related'))
-           FROM organizations o WHERE o.name_norm >= ?",
-        [t(prefix)],
-    );
+    q.push(ORG_COLUMNS, []);
+    q.push(" FROM organizations o WHERE o.name_norm >= ?", [t(prefix)]);
     if let Some(hi) = successor(prefix) {
         q.push(" AND o.name_norm < ?", [t(&hi)]);
     }
@@ -3885,21 +4079,11 @@ pub async fn organizations_by_name(
     if let Some((norm, id)) = cursor {
         q.push(
             " AND o.name_norm >= ? AND (o.name_norm > ? OR o.id > ?)",
-            [t(&norm), t(&norm), Value::Integer(id)],
+            [t(norm), t(norm), Value::Integer(*id)],
         );
     }
     q.push(" ORDER BY o.name_norm, o.id LIMIT ?", [Value::Integer(limit)]);
-    q.rows(conn, |row| OrganizationRow {
-        id: int(row, 0),
-        name: text(row, 1),
-        country: opt_text_of(row, 2),
-        identifier_kind: opt_text_of(row, 3),
-        identifier: opt_text_of(row, 4),
-        provisional: int(row, 5) != 0,
-        mentions: int(row, 6),
-        identifier_verdict: opt_text_of(row, 7),
-    })
-    .await
+    q
 }
 
 // ------------------------------------------------------------------- notices
