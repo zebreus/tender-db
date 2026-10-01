@@ -1,0 +1,171 @@
+{
+ "admitted_verdict": 0,
+ "denied": [
+  {
+   "key": "GB/national/01270685",
+   "name": "Costa Coffee",
+   "new_literal": "GBCOH01270695",
+   "org": 16558214,
+   "right": "01270695",
+   "shape": "names",
+   "target": {
+    "identifier": "GBCOH01270695",
+    "name": "COSTA LIMITED",
+    "org": 31587959
+   },
+   "wrong": "01270685"
+  },
+  {
+   "key": "GB/national/09579337",
+   "name": "Northern Education Associates Ltd",
+   "new_literal": "03964217",
+   "org": 8700311,
+   "right": "03964217",
+   "shape": "names",
+   "target": {
+    "identifier": "03964217",
+    "name": "Northern Education",
+    "org": 16035518
+   },
+   "wrong": "09579337"
+  },
+  {
+   "key": "GB/national/GBCOH00077361",
+   "name": "B Braun",
+   "new_literal": "02296559",
+   "org": 31541672,
+   "right": "02296559",
+   "shape": "verdict-keep",
+   "target": {
+    "identifier": "02296559",
+    "name": "B Braun Medical Ltd",
+    "org": 14863797
+   },
+   "wrong": "GBCOH00077361"
+  },
+  {
+   "key": "GB/national/GBCOH00947962",
+   "name": "CGi (UK) Ltd",
+   "new_literal": "00947968",
+   "org": 31578000,
+   "right": "00947968",
+   "shape": "names",
+   "target": {
+    "identifier": "00947968",
+    "name": "CGI IT UK Ltd",
+    "org": 15233718
+   },
+   "wrong": "GBCOH00947962"
+  },
+  {
+   "key": "GB/national/GBCOH06472865",
+   "name": "Symology UK Ltd",
+   "new_literal": "GBCOH01760502",
+   "org": 31556925,
+   "right": "01760502",
+   "shape": "names",
+   "target": {
+    "identifier": "GBCOH01760502",
+    "name": "Symology Limited",
+    "org": 31578940
+   },
+   "wrong": "GBCOH06472865"
+  },
+  {
+   "key": "GB/national/GBCOH08585569",
+   "name": "Ford Trustford Ltd",
+   "new_literal": "00191596",
+   "org": 31560491,
+   "right": "00191596",
+   "shape": "names",
+   "target": {
+    "identifier": "00191596",
+    "name": "Ford Retail Ltd",
+    "org": 19144603
+   },
+   "wrong": "GBCOH08585569"
+  },
+  {
+   "key": "GB/national/GBCOH13071920",
+   "name": "VW Commercial Vehicles UK",
+   "new_literal": "GBCOH00514809",
+   "org": 31552649,
+   "right": "00514809",
+   "shape": "names",
+   "target": {
+    "identifier": "GBCOH00514809",
+    "name": "Volkswagen Group UK Ltd",
+    "org": 31538916
+   },
+   "wrong": "GBCOH13071920"
+  },
+  {
+   "key": "GB/national/GBCOH14704569",
+   "name": "Perk UK Limited (Click Travel)",
+   "new_literal": "03770815",
+   "org": 31570725,
+   "right": "03770815",
+   "shape": "names",
+   "target": {
+    "identifier": "03770815",
+    "name": "Click Travel Limited",
+    "org": 12023084
+   },
+   "wrong": "GBCOH14704569"
+  },
+  {
+   "key": "GB/national/GBCOHO1089026",
+   "name": "St Annes",
+   "new_literal": "GBCOH01089026",
+   "org": 31554631,
+   "right": "01089026",
+   "shape": "names",
+   "target": {
+    "identifier": "GBCOH01089026",
+    "name": "ST ANNE'S COMMUNITY SERVICES",
+    "org": 31545503
+   },
+   "wrong": "GBCOHO1089026"
+  }
+ ],
+ "denied_consortium": 0,
+ "denied_legal_form": 0,
+ "denied_names": 8,
+ "denied_verdict": 1,
+ "destination_verdict": 0,
+ "gone": 164,
+ "keys": [
+  "GB/national/13048064>merge:GBCOH03048064"
+ ],
+ "live_plan_merge": 1,
+ "live_plan_move": 0,
+ "merged_this_run": 0,
+ "moved_this_run": 0,
+ "multi_target": 0,
+ "not_high": 6,
+ "pending_move": 0,
+ "plan": [
+  {
+   "key": "GB/national/13048064>merge:GBCOH03048064",
+   "name": "Added Security Technology Ltd",
+   "new_literal": "GBCOH03048064",
+   "org": 13164827,
+   "right": "03048064",
+   "shape": "merge",
+   "target": {
+    "identifier": "GBCOH03048064",
+    "name": "ADDED SECURITY TECHNOLOGY LIMITED",
+    "org": 31622141
+   },
+   "wrong": "13048064"
+  }
+ ],
+ "plan_merge": 1,
+ "plan_move": 0,
+ "residual_of_wet_run": false,
+ "same_key": 0,
+ "several": 0,
+ "unkeyed": 2,
+ "verdicts": 182,
+ "withheld_target": 0
+}

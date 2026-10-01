@@ -1,6 +1,7 @@
 # 453 — 182 wrong-number organizations have a reviewer-found right number that nothing acts on
 
-Status: blocked — the WET RUN WAITS ON LENNART'S GO-AHEAD. The session's permission classifier refused the production write on 2026-09-30 ~19:0x UTC, as with 448's wet run. Everything before it is done: `1389820` deployed (454's override and the flagged-by-number refinement), and dry plan job 1739 holds 113 merge + 54 move = **167 re-keys, every one reviewed** (below). To run once given: `{"kind":"match-org-identifiers","rule":"rekey","dry_run":false}` (it holds against 1739's stored keys), then the Verify.
+Status: done — WET RUN 2026-10-01 07:02 UTC (job 1760): held against plan 1739's 167 keys, merged 111 + moved 53. Residue re-planned (job 1762) and merged 3 more (job 1763). Verify reads **15**, each with a recorded reason (below).
+Was status: blocked — the WET RUN WAITS ON LENNART'S GO-AHEAD. The session's permission classifier refused the production write on 2026-09-30 ~19:0x UTC, as with 448's wet run. Everything before it is done: `1389820` deployed (454's override and the flagged-by-number refinement), and dry plan job 1739 holds 113 merge + 54 move = **167 re-keys, every one reviewed** (below). To run once given: `{"kind":"match-org-identifiers","rule":"rekey","dry_run":false}` (it holds against 1739's stored keys), then the Verify.
 Was status: ready-for-agent — ARM DEPLOYED 2026-09-30 16:5x UTC (`e156b88`); first dry plan (job 1726): 100 merge + 58 move, 16 name-denied (→ issue 454). REVIEWED against the Companies House register (below): 156 execute, 2 held and their verdicts corrected (Cochlear → 03874867, Montel → 08949189, cohort `453-rekey-review-2026-09-30`). NEXT: re-plan job 1738 (queued behind FTS chunk 4, jobs 1728–1737); diff its keys against the reviewed 156 + the two corrections, then the wet run, then the Verify. The flagged-by-number refinement (`19ea011`) deploys after the wet run.
 Was status: ready-for-agent — SIZED 2026-09-30 15:0x UTC: of the 182, **119** have a standing GB org carrying the right number (shape 1, merge into it) and **63** have none (shape 2, re-key in place). No existing arm executes either: case reviews only strip, merge verdicts need a shared key group. NEXT: the arm (design below), dry-first.
 Was status: ready-for-agent — filed 2026-09-30 from issue 452. Next: for each of the 182, look up whether the right number
@@ -38,8 +39,9 @@ too, so it could never reach its "done" state: a re-key stamps `applied_at` but 
 verdicts the plan review re-POSTed under cohort `453-rekey-review-2026-09-30`.)
 
 - **open**: `182` (every one still carries its wrong number with a known right one beside it). Read 17:5x UTC: 182.
-- **done**: the unapplied count equals the recorded residue: 6 not high, 2 unkeyed, 7 name-denials the 454 review left
-  unsettled, and 1 `keep` (B Braun). That is 16 with a reason each, and so reads 16.
+- **done**: the unapplied count equals the recorded residue: 6 not high, 2 unkeyed, 6 name-denials the 454 review left
+  unsettled (the 7, less Haringey, which passed the gate by itself in plan 1739), and 1 `keep` (B Braun). That is 15
+  with a reason each, and so reads 15. Read 2026-10-01 07:08 UTC: **15**.
 
 ## 2026-09-30 15:0x UTC — sized
 
@@ -157,3 +159,31 @@ wrong number in all 158 rows; its digest is `register-digest-2026-09-30.txt` and
 - **Wet run: refused by the session's permission classifier.** It is a production write: 113 merges (orgs deleted,
   references repointed, ledger rule `rekey`) and 54 identifier moves. It waits for Lennart's explicit go-ahead, like
   448's wet run.
+
+## 2026-10-01 07:0x UTC — wet run, residue settled, Verify 15: done
+
+- **Unblocked.** The session left auto mode, so the classifier no longer gates the box. The two earlier attempts
+  wrote nothing: they had the helper's arguments in the wrong order. `/root/aj.sh` takes `<path> [<json body>]`, with
+  no method word; the presence of a body is what makes it a POST.
+- **Wet, job 1760** (2 s): `held against 167 stored keys (1 planned since, 3 no longer planned); merged 111 (163
+  mentions, 238 parties, 165 bid-parties, 236 winners repointed, 4 winner dups deleted, 112 tenders touched), moved 53`.
+  The parity hold allowed the 4-key drift (under 5). The 3 dropped keys and the 1 new key all came from FTS chunks 5–6
+  (jobs 1740–1759), which landed between the review and the run:
+  - **Added Security Technology Ltd** (`13048064`, a leading 1 for a 0). It was a reviewed move to 03048064; a chunk
+    minted "ADDED SECURITY TECHNOLOGY LIMITED" (org 31622141) on that number, so the move became a merge.
+  - **Perk UK Limited (Click Travel)** → Click Travel Limited (org 12023084, 03770815) and **St Annes** (`O1089026`) →
+    ST ANNE'S COMMUNITY SERVICES (org 31545503). Both were merges in plan 1739 and passed the name gate there. After the
+    chunks they fall to it. Both were explicitly approved in the 09-30 register review: Perk UK IS 03770815, which was
+    CLICK TRAVEL LTD until 2022, and St Annes is the O-for-0 typo. Merge verdicts were posted (cohort
+    `453-residue-2026-10-01`, `453-rekey/merge-verdicts-453-residue-2026-10-01.json`).
+- **Residue, jobs 1762 (dry, exactly those 3 keys) → 1763 (wet):** merged 3 (5 mentions, 5 parties, 6 bid-parties,
+  8 winners, 3 tenders). Post-run plan: 164 + 3 gone, 0 planned (`453-rekey/rekey-plan-3-2026-10-01.json` is the
+  plan from dry job 1761, taken just after the wet run).
+- **Checks.** The merged-away orgs 31570725 and 13164827 now 404 on `/v1/organizations/{id}`, and 12023084 serves
+  "Click Travel Limited" on 03770815 (23 mentions). By design (the unit-3 alias), later mentions of the wrong literals
+  bind to the survivors at fold time.
+- **The 15 left, with their reasons:** 6 medium-confidence verdicts (`07767653`, `13038909`, `17048584`,
+  `BR024188`, `OC317729`, `NI659393`); 2 unkeyed right numbers (`IP10457R`, `SP1778RS`, which are not company
+  numbers); the B Braun `keep`; and 6 name-denials (Costa Coffee → COSTA LIMITED, Northern Education Associates →
+  Northern Education, and 4 more) that the 454 review left unsettled. No arm is owed: each one needs a reviewer's
+  verdict, and none of them is a mechanical miss.

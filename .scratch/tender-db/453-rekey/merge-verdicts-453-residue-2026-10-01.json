@@ -1,0 +1,29 @@
+{
+ "cohort": "453-residue-2026-10-01",
+ "verdicts": [
+  {
+   "country": "GB",
+   "scheme": "GB:rekey",
+   "key": "GBCOH14704569~03770815",
+   "members": [
+    12023084,
+    31570725
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[453 residue 2026-10-01; reviewed in the 2026-09-30 register pass as part of plan 1739] Perk UK is 03770815 (PERK UK LTD, Active), which was CLICK TRAVEL LTD until 2022. The org 'Perk UK Limited (Click Travel)' is that company. The published 14704569 is CLICKTRAVEL LIMITED (Dissolved), a different shell. The target org 12023084 'Click Travel Limited' carries 03770815. Same entity: merge. In plan 1739 this key passed the name gate; it is denied now only because the gate's name inputs changed after FTS chunks 5-6."
+  },
+  {
+   "country": "GB",
+   "scheme": "GB:rekey",
+   "key": "GBCOHO1089026~01089026",
+   "members": [
+    31545503,
+    31554631
+   ],
+   "action": "merge",
+   "confidence": "high",
+   "rationale": "[453 residue 2026-10-01; reviewed in the 2026-09-30 register pass as part of plan 1739] The published 'O1089026' has a letter O for a zero (the register 404s it). 01089026 is ST ANNE'S COMMUNITY SERVICES (Active), and the target org 31545503 carries it under that name. 'St Annes' is that charity's short name. Same entity: merge. In plan 1739 this key passed the name gate; it is denied now only because the gate's name inputs changed after FTS chunks 5-6."
+  }
+ ]
+}
