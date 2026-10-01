@@ -1,16 +1,7 @@
 # 425 — `/v1/sql` could stop a query: turso 0.7.2 has a per-statement deadline and `interrupt()`, and the SDK hides both
 
-Status: ready-for-agent — **the /v1/sql half is DONE and LIVE 2026-09-27 04:37 UTC** (`063d9dd`): on prod,
-`SELECT COUNT(*) FROM generate_series(1, 100000000000)` answered **408 at 10.02 s** and two seconds later
-`tender_db_sql_pinned_computations 0`, `tender_db_sql_in_flight 0`, `SELECT 1` → 200 — the work stopped with the
-answer (before, that query would have computed for hours as an abandoned computation). Measured first: every offender
-stops within 0–71 ms of the deadline. Step 3 (REST walks) BUILT and LIVE 2026-09-27 05:39 UTC (`cbacee1`) under issue 120 (both REST pools
-carry a 25 s engine deadline; an abandoned isolated walk is interrupted). **2026-09-27 regression, issue 438: the engine
-deadline read the clock before every instruction (every bounded read 1.4–2× slower); REPLACED by a timer +
-`interrupt()` (`d987aea`, deployed 2026-09-27 14:40 UTC at `9dedf49`, VERIFIED 2026-09-28 under issue 438) — see the last section.** Open: step 4 (upstream ask) — DRAFTED
-below; 0.8.0-pre.13 (read 2026-09-27) still exposes only `busy_timeout`. Re-check at 0.8.0 stable, where the
-vendored patch must be re-applied (or dropped) anyway. Was: filed
-2026-09-26 21:xx UTC from the owner's review of how user SQL is isolated (asked by Lennart).
+Status: ready-for-agent — the /v1/sql half, the REST walks and the 438 regression fix are DONE and LIVE (2026-09-27/28; history below). Open: step 4, the upstream ask. **Re-checked 2026-10-01 at turso 0.8.1 stable (published 2026-09-29):** the engine now checks interrupts every 256 instructions (438's root, fixed upstream), but the SDK still exposes neither `interrupt()` nor `set_query_timeout`, so the vendored pass-through stays and must be re-vendored at the bump. The bump is issue 457.
+Was status: ready-for-agent — **the /v1/sql half is DONE and LIVE 2026-09-27 04:37 UTC** (`063d9dd`): on prod, `SELECT COUNT(*) FROM generate_series(1, 100000000000)` answered **408 at 10.02 s** and two seconds later `tender_db_sql_pinned_computations 0`, `tender_db_sql_in_flight 0`, `SELECT 1` → 200 — the work stopped with the answer (before, that query would have computed for hours as an abandoned computation). Measured first: every offender stops within 0–71 ms of the deadline. Step 3 (REST walks) BUILT and LIVE 2026-09-27 05:39 UTC (`cbacee1`) under issue 120 (both REST pools carry a 25 s engine deadline; an abandoned isolated walk is interrupted). **2026-09-27 regression, issue 438: the engine deadline read the clock before every instruction (every bounded read 1.4–2× slower); REPLACED by a timer + `interrupt()` (`d987aea`, deployed 2026-09-27 14:40 UTC at `9dedf49`, VERIFIED 2026-09-28 under issue 438) — see the last section.** Open: step 4 (upstream ask) — DRAFTED below; 0.8.0-pre.13 (read 2026-09-27) still exposes only `busy_timeout`. Re-check at 0.8.0 stable, where the vendored patch must be re-applied (or dropped) anyway. Was: filed 2026-09-26 21:xx UTC from the owner's review of how user SQL is isolated (asked by Lennart).
 Kind: operations / safety — the largest gap in `/v1/sql`'s isolation
 Relates to: 17 (the isolated runtime), 51 (the in-task timeout that bounds nothing), 120 (REST walks —
 "a backstop is only worth having once cancellation exists"), 238, 417 (abandoned computations counted and
