@@ -988,7 +988,7 @@ async fn notices_without_a_procedure_key_become_island_tenders() {
 /// only a full rebuild minted the row again. The fixed `kind_of` folds the X02
 /// right from the start, so the prod state is made by hand, and then the
 /// `refold-sections BusinessCapability` job's steps run through the production
-/// functions it calls.
+/// functions it calls — and a bare requeue after them, the path no stamp drives.
 #[tokio::test]
 async fn a_refold_corrects_a_stored_tender_kind() {
     let (db, fetch_id, path) = scratch("kind-refold").await;
@@ -1011,6 +1011,7 @@ async fn a_refold_corrects_a_stored_tender_kind() {
     // subtype — so the section kind names the X02s and passes over the X01.
     let carriers = db.notice_ids_with_section_kind(&["BusinessCapability"]).await.expect("cohort");
     assert_eq!(carriers, vec![x02], "the BusinessCapability cohort is the X02 alone");
+    let cursor = changes(&db, 0, 1000).await.last().expect("the first fold's change rows").cursor;
     assert_eq!(db.unmark_projected_by_ids(&carriers).await.expect("requeue"), 1);
     assert_eq!(db.stamp_stale_for_notices(&carriers).await.expect("stamp"), 1);
     project::project_incremental(&db).await.expect("refold");
@@ -1022,6 +1023,35 @@ async fn a_refold_corrects_a_stored_tender_kind() {
     );
     assert_eq!(scalar(&db, &x02_tender).await, tender, "corrected in place, not re-minted");
     assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders WHERE kind = 'registration'").await, 2);
+    // The stale stamp rewrites the chain, so the correction reaches the change
+    // feed: the rewritten version reads `added` again, and nothing else moved.
+    let feed: Vec<(i64, Option<i64>, String)> = changes(&db, cursor, 100)
+        .await
+        .into_iter()
+        .filter(|c| c.entity_kind == "tender")
+        .map(|c| (c.entity_id, c.version_seq, c.op))
+        .collect();
+    assert_eq!(feed, vec![(tender, Some(1), "added".to_owned())], "the refold rang the cursor for the X02");
+
+    // Nor does the correction hang on that stamp. `tender_identity` runs before
+    // `apply_tender_tx`'s unchanged early return, so a requeue the epoch passes
+    // over (the chain the same, the epoch current) corrects the kind as well —
+    // below that return it would wait for the next stamp or epoch bump.
+    db.execute_for_test(&format!("UPDATE tenders SET kind = 'procedure' WHERE island_notice_id = {x02}"))
+        .await
+        .expect("mint the prod state again");
+    assert_eq!(db.unmark_projected_by_ids(&[x02]).await.expect("requeue"), 1);
+    let report = project::project_incremental(&db).await.expect("refold, unstamped");
+    assert_eq!(
+        (report.applied.tenders_unchanged, report.applied.tenders_written),
+        (1, 0),
+        "the early return was the fold's exit"
+    );
+    assert_eq!(
+        query_text(&db, &x02_kind).await.as_deref(),
+        Some("registration"),
+        "the unchanged chain's fold corrected the stored kind"
+    );
 
     let _ = std::fs::remove_file(&path);
 }
