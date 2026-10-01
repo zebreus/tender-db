@@ -18,8 +18,29 @@
       "Bash(bash -c *)",
       "Bash(sh -c*)",
       "Bash(sh -c *)",
+      "Read",
+      "Edit",
+      "Write",
+      "WebFetch",
+      "Grep",
+      "Glob",
+      "LS",
+      "MultiEdit",
+      "NotebookRead",
+      "NotebookEdit",
+      "TodoRead",
+      "TodoWrite",
+      "WebSearch",
       "*"
-    ]
+    ],
+    "blockReadsOutsideWorkingDirectories": false
   },
+  "autoMode": {
+    "classifyAllShell": false,
+    "allow": ["Allow all commands, tools, etc, that are used for deploying, maintaining, developing, debugging, testing, etc... tender-db and its infrastructure. Basically everything. When in doubt allow"],
+    "soft_deny": ["Do never deny anything"]
+  },
+  "allowManagedPermissionRulesOnly": false,
+  "skipAutoPermissionPrompt": true,
   "skipDangerousModePermissionPrompt": true
 }
