@@ -388,6 +388,65 @@ async fn bid_statistics_fold_onto_their_lots_result_and_mint_no_result_of_their_
     let _ = std::fs::remove_dir_all(&archive);
 }
 
+/// Issue 465, at the fold: an FTS release's `mainProcurementCategory` is served as
+/// the `nature` classification (issue 397) at the scope it was published, in
+/// eForms' vocabulary, and its `procurementMethodDetails` reaches the notice layer
+/// as BT-105-Procedure. Before the fix no FTS Tender carried a nature, and no FTS
+/// notice either field.
+#[tokio::test]
+async fn an_fts_release_folds_its_category_as_the_contract_nature() {
+    let members: [(&str, &[u8]); 3] = [
+        // `tender.mainProcurementCategory` `goods`; negotiated with a prior call.
+        ("052408-2025.json", include_bytes!("fixtures/fts/members/052408-2025.json")),
+        // A UK7 with NO tender-level category: `goods` sits on its one award, lot `1`.
+        ("028961-2025.json", include_bytes!("fixtures/fts/members/028961-2025.json")),
+        // `services`, open procedure.
+        ("029615-2025.json", include_bytes!("fixtures/fts/members/029615-2025.json")),
+    ];
+    let (archive, db) = fixture_of("fts-465-nature", &members).await;
+    let r = run(&db, &archive).await;
+    assert_eq!((r.parsed, r.parse_quarantined), (3, 0), "{r:?}");
+    project::project(&db, false).await.expect("project");
+
+    // `<release>:<lot or ->:<code>`, one cell, in order.
+    assert_eq!(
+        cell_text(
+            &db,
+            "SELECT group_concat(line, ' ') FROM (SELECT n.publication_id || ':' || COALESCE(l.lot_key, '-') || ':' || c.code AS line \
+               FROM tender_version_classifications c \
+               JOIN tenders t ON t.id = c.tender_id AND t.current_seq = c.seq \
+               JOIN tender_versions v ON v.tender_id = c.tender_id AND v.seq = c.seq \
+               JOIN notices n ON n.id = v.caused_by_notice_id \
+               LEFT JOIN lots l ON l.id = c.lot_id \
+              WHERE c.scheme = 'nature' AND c.field = 'nature' ORDER BY line)",
+        )
+        .await
+        .as_deref(),
+        // OCDS `goods` is eForms' `supplies`, on the Tender when the tender says it
+        // and on the lot when only the award does.
+        Some("028961-2025:1:supplies 029615-2025:-:services 052408-2025:-:supplies")
+    );
+    // The procedure type is a notice-layer field in every source: what
+    // `/v1/notices/{id}/content` serves. 028961-2025's `Below threshold - without
+    // competition` has no eForms code, so it publishes none.
+    assert_eq!(
+        cell_text(
+            &db,
+            "SELECT group_concat(line, ' ') FROM (SELECT n.publication_id || ':' || c.section_id || ':' || c.list_name || ':' || c.code AS line \
+               FROM notice_codes c JOIN notices n ON n.id = c.notice_id \
+              WHERE c.field_id = 'BT-105-Procedure' ORDER BY line)",
+        )
+        .await
+        .as_deref(),
+        Some(
+            "029615-2025:PROCEDURE:procurement-procedure-type:open \
+             052408-2025:PROCEDURE:procurement-procedure-type:neg-w-call"
+        )
+    );
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
 /// Issue 386 unit 2b: ADR-0004's mapped-or-ignored checklist for `fts:ocds-1.1`,
 /// pinned against the corpus. Every path a fixture release publishes — the
 /// recorded pages and the cut members, the shapes this crosswalk was written

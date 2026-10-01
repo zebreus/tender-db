@@ -128,6 +128,17 @@ pub fn parse(bytes: &[u8]) -> Result<Parsed, Rejected> {
     if let Some(c) = &tender.classification {
         w.classification(ROOT, "BT-262-Procedure", c);
     }
+    // The procedure type (issue 465), off the publisher's own label through a
+    // closed table — never off `procurementMethod`, whose `selective` is restricted,
+    // competitive-with-negotiation and competitive dialogue alike. A label the
+    // table does not know emits nothing: a miss costs coverage, never a wrong code.
+    if let Some(code) = tender.procurement_method_details.as_deref().and_then(procedure_type) {
+        w.push(
+            ROOT,
+            "BT-105-Procedure",
+            NoticeValue::Code { list: Some("procurement-procedure-type".into()), code: code.into() },
+        );
+    }
 
     // Lots BEFORE items, so an item's `relatedLot` has a section to hang on.
     let inherited = inherited_periods(&release.awards, &release.contracts);
@@ -161,7 +172,14 @@ pub fn parse(bytes: &[u8]) -> Result<Parsed, Rejected> {
     // sit on `awards[].items[]` and nowhere else — so a walk of the tender alone
     // served those releases with neither. The tender's come first and are emitted
     // as they always were; an award item states only what is new at its scope.
+    //
+    // The contract nature (issue 465) follows the same walk and the same rule. Some
+    // award releases publish `mainProcurementCategory` on the award alone
+    // (028961-2025, 029664-2025), so it is the tender's on the procedure, then each
+    // award's on the one lot it names (a multi-lot or lot-less award's on the
+    // procedure).
     let mut stated = HashSet::new();
+    w.nature(tender.main_procurement_category.as_deref(), None, &mut stated);
     for item in &tender.items {
         w.item(item, None, &mut stated, false);
     }
@@ -173,6 +191,7 @@ pub fn parse(bytes: &[u8]) -> Result<Parsed, Rejected> {
             [lot] => Some(lot.as_str()),
             _ => None,
         };
+        w.nature(award.main_procurement_category.as_deref(), only_lot, &mut stated);
         for item in &award.items {
             w.item(item, only_lot, &mut stated, true);
         }
@@ -491,6 +510,38 @@ impl Walk {
         self.push(section, field, NoticeValue::Classification { scheme, code: code.to_owned() });
     }
 
+    /// The section a value about `lot` lands on, and the field-id suffix that goes
+    /// with it: the lot when it has a section, else the procedure.
+    fn scope(&self, lot: Option<&str>) -> (String, &'static str) {
+        match lot.filter(|l| self.has_section(l)) {
+            Some(lot) => (lot.to_owned(), "Lot"),
+            None => (ROOT.to_owned(), "Procedure"),
+        }
+    }
+
+    /// An OCDS `mainProcurementCategory` as the contract nature, BT-23 (issue
+    /// 465), on `lot`'s scope. It is translated here, at the profile boundary,
+    /// the way `awards[].status` becomes BT-142 codes, so the fold's
+    /// `contract_nature` stays in eForms' one vocabulary. A nature already in
+    /// `stated` at that scope is not stated again: issue 437's rule for award items.
+    fn nature(
+        &mut self,
+        category: Option<&str>,
+        lot: Option<&str>,
+        stated: &mut HashSet<(String, String, String)>,
+    ) {
+        let Some(code) = category.and_then(contract_nature) else { return };
+        let (scope, suffix) = self.scope(lot);
+        if !stated.insert((scope.clone(), "nature".to_owned(), code.to_owned())) {
+            return;
+        }
+        self.push(
+            &scope,
+            &format!("BT-23-{suffix}"),
+            NoticeValue::Code { list: Some("contract-nature".into()), code: code.into() },
+        );
+    }
+
     /// One item's classifications and delivery places, on its scope.
     ///
     /// The scope is the lot the item names when that lot has a section, else
@@ -511,14 +562,7 @@ impl Walk {
         stated: &mut HashSet<(String, String, String)>,
         restating: bool,
     ) {
-        let scope = match item.related_lot.as_deref() {
-            Some(lot) => Some(lot),
-            None => award_lot,
-        }
-        .filter(|l| self.has_section(l))
-        .unwrap_or(ROOT)
-        .to_owned();
-        let suffix = if scope == ROOT { "Procedure" } else { "Lot" };
+        let (scope, suffix) = self.scope(item.related_lot.as_deref().or(award_lot));
         let cpvs = item.classification.iter().chain(item.additional_classifications.iter());
         for (n, c) in cpvs.enumerate() {
             let Some(code) = c.id.as_deref().filter(|s| !s.is_empty()) else { continue };
@@ -687,6 +731,49 @@ fn measure(name: &str) -> Option<Measure> {
     })
 }
 
+/// OCDS's procurement-category codelist → eForms' contract-nature one (BT-23).
+/// OCDS says `goods` where eForms says `supplies`; the other two are spelled
+/// alike, and anything else is unmapped rather than guessed (issue 465).
+fn contract_nature(category: &str) -> Option<&'static str> {
+    Some(match category.trim() {
+        "goods" => "supplies",
+        "works" => "works",
+        "services" => "services",
+        _ => return None,
+    })
+}
+
+/// `tender.procurementMethodDetails` → eForms' procurement-procedure-type code
+/// (BT-105, issue 465). A closed table of the labels FTS publishes, measured on
+/// the fixtures, the 2026-09-03 recorded pages and the public API's 2023-06-01
+/// page. Its codes are the EU-era procedures and their Procurement Act namesake,
+/// the open procedure. `neg-w-call` is both the utilities' negotiated procedure
+/// with a call and the public sector's competitive procedure with negotiation: on
+/// notice type 16, a 2014/24 contract notice, the SDK holds `neg-w-call` to that
+/// procedure's minimum of three candidates. `Negotiated without publication of a
+/// contract notice` (published under 2009/81, 2014/24 and 2014/25) is a
+/// negotiated procedure without a call, like the PCR's own label for it.
+///
+/// No eForms code: the Procurement Act's `Competitive flexible procedure` and
+/// `Direct award`, `Award under framework`, and the below-threshold routes
+/// (`Below threshold - open competition`, `- limited competition`, `- without
+/// competition`, `- award under framework`, `- unknown`). `oth-single` and
+/// `oth-mult` would assert a stage count the label does not state, so these emit
+/// nothing — the rule `awards[].status` and the final-stage bid measures follow.
+fn procedure_type(details: &str) -> Option<&'static str> {
+    Some(match details.trim() {
+        "Open procedure" => "open",
+        "Restricted procedure" => "restricted",
+        "Negotiated procedure with prior call for competition" | "Competitive procedure with negotiation" => {
+            "neg-w-call"
+        }
+        "Competitive dialogue" => "comp-dial",
+        "Award procedure without prior publication of a call for competition"
+        | "Negotiated without publication of a contract notice" => "neg-wo-call",
+        _ => return None,
+    })
+}
+
 // -------------------------------------------------------------------- shapes
 
 #[derive(Deserialize, Default)]
@@ -745,6 +832,11 @@ struct Tender {
     tender_period: Option<Period>,
     enquiry_period: Option<Period>,
     classification: Option<Classification>,
+    /// `goods` / `works` / `services`: the contract nature, BT-23 (issue 465).
+    main_procurement_category: Option<String>,
+    /// The publisher's label for the procedure — the one place its type is
+    /// stated precisely enough for BT-105 (issue 465; [`procedure_type`]).
+    procurement_method_details: Option<String>,
     #[serde(default)]
     items: Vec<Item>,
     #[serde(default)]
@@ -860,6 +952,9 @@ struct Award {
     /// no `tender.items` and one item here (issue 437). Walked like the tender's.
     #[serde(default)]
     items: Vec<Item>,
+    /// The contract nature, which 028961-2025 and 029664-2025 publish here and
+    /// not on the tender (issue 465). Scoped like the award's items.
+    main_procurement_category: Option<String>,
 }
 
 impl Award {
@@ -1573,6 +1668,107 @@ mod tests {
         // Award 4 spans L2 and L3, so its lot-less item is procedure-wide.
         assert_eq!(codes(ROOT, "BT-262-Procedure"), ["45000000"]);
         assert!(codes("L3", "BT-262-Lot").is_empty(), "award 5 is a delta: its item says nothing");
+    }
+
+    /// Issue 465: `mainProcurementCategory` is the contract nature (BT-23), in
+    /// eForms' vocabulary — OCDS `goods` is eForms `supplies` — so the fold's
+    /// `contract_nature` reads FTS like any eForms notice. The tender's is the
+    /// procedure's. Some award releases publish it only on the award (028961-2025,
+    /// 029664-2025), and there it is the one lot's the award names.
+    #[test]
+    fn the_main_procurement_category_is_the_contract_nature_where_it_was_published() {
+        let nature = |code: &str| NoticeValue::Code { list: Some("contract-nature".into()), code: code.into() };
+        let p = parsed("052408-2025");
+        assert_eq!(all(&p, "BT-23-Procedure"), vec![nature("supplies")], "the tender's `goods`");
+        assert!(all(&p, "BT-23-Lot").is_empty(), "its six awards name no category");
+        let q = parsed("028961-2025");
+        assert_eq!(one(&q, "1", "BT-23-Lot"), Some(nature("supplies")), "the UK7's award, on lot 1");
+        assert!(all(&q, "BT-23-Procedure").is_empty(), "the tender names none");
+        // Five awards on lot 1, each saying `services`: one statement, not five.
+        assert_eq!(all(&parsed("029664-2025"), "BT-23-Lot"), vec![nature("services")]);
+        assert_eq!(all(&parsed("029615-2025"), "BT-23-Procedure"), vec![nature("services")]);
+        assert_eq!(all(&parsed("083645-2026"), "BT-23-Procedure"), vec![nature("supplies")], "a UK2 planning notice");
+        for name in ["083685-2026", "_noid-2026-09-03-p001-000"] {
+            let p = parsed(name);
+            assert!(all(&p, "BT-23-Procedure").is_empty() && all(&p, "BT-23-Lot").is_empty(), "{name} names no category");
+        }
+    }
+
+    /// Issue 465's scoping, on one synthetic release, by issue 437's rule for award
+    /// items: an award's nature lands on the one lot it names, a multi-lot or
+    /// lot-less award's on the procedure, and a nature already stated at that scope
+    /// is not stated again. A category outside OCDS's three is not guessed at.
+    #[test]
+    fn an_awards_nature_scopes_like_its_items_and_restates_nothing() {
+        let payload = br#"{"version":"1.1","releases":[{"ocid":"ocds-x-4",
+            "tender":{"mainProcurementCategory":"services","lots":[{"id":"L1"},{"id":"L2"},{"id":"L3"}]},
+            "awards":[
+                {"id":"1","status":"active","relatedLots":["L1"],"mainProcurementCategory":"goods"},
+                {"id":"2","status":"active","relatedLots":["L1"],"mainProcurementCategory":"goods"},
+                {"id":"3","status":"active","relatedLots":["L2","L3"],"mainProcurementCategory":"works"},
+                {"id":"4","status":"active","mainProcurementCategory":"services"},
+                {"id":"5","status":"active","relatedLots":["L3"],"mainProcurementCategory":"consultingServices"}]}]}"#;
+        let p = match parse(payload) {
+            Ok(p) => p,
+            Err(Rejected { reason, detail }) => panic!("quarantined as {reason}: {detail}"),
+        };
+        let codes = |section: &str, field: &str| -> Vec<String> {
+            p.values
+                .iter()
+                .filter(|v| v.section_id == section && v.field_id == field)
+                .map(|v| match &v.value {
+                    NoticeValue::Code { list, code } if list.as_deref() == Some("contract-nature") => code.clone(),
+                    other => panic!("{field} is not a contract-nature code: {other:?}"),
+                })
+                .collect()
+        };
+        // The tender's `services`, then award 3's `works` (two lots: the procedure's);
+        // lot-less award 4's `services` is already stated there.
+        assert_eq!(codes(ROOT, "BT-23-Procedure"), ["services", "works"]);
+        assert_eq!(codes("L1", "BT-23-Lot"), ["supplies"], "awards 1 and 2 say it once between them");
+        assert!(codes("L2", "BT-23-Lot").is_empty());
+        assert!(codes("L3", "BT-23-Lot").is_empty(), "`consultingServices` is no eForms nature");
+    }
+
+    /// Issue 465: the procedure type is read off `procurementMethodDetails` through
+    /// a closed table. A label with no eForms code, or one the table does not know,
+    /// emits nothing, and `procurementMethod` alone never decides it: `open` is also
+    /// the first stage of a competitive flexible procedure.
+    #[test]
+    fn the_procedure_type_is_a_closed_table_of_the_published_labels() {
+        for (label, code) in [
+            ("Open procedure", "open"),
+            ("Restricted procedure", "restricted"),
+            ("Negotiated procedure with prior call for competition", "neg-w-call"),
+            ("Competitive procedure with negotiation", "neg-w-call"),
+            ("Competitive dialogue", "comp-dial"),
+            ("Award procedure without prior publication of a call for competition", "neg-wo-call"),
+            ("Negotiated without publication of a contract notice", "neg-wo-call"),
+        ] {
+            assert_eq!(procedure_type(label), Some(code), "{label}");
+        }
+        for label in [
+            "Competitive flexible procedure",
+            "Direct award",
+            "Award under framework",
+            "Below threshold - open competition",
+            "Below threshold - without competition",
+            "Below threshold - unknown",
+        ] {
+            assert_eq!(procedure_type(label), None, "{label} has no eForms code");
+        }
+        assert_eq!(procedure_type("Open procedure (accelerated)"), None, "an unknown label");
+
+        let code = |p: &Parsed| all(p, "BT-105-Procedure");
+        let typed = |c: &str| vec![NoticeValue::Code { list: Some("procurement-procedure-type".into()), code: c.into() }];
+        assert_eq!(code(&parsed("052408-2025")), typed("neg-w-call"));
+        assert_eq!(code(&parsed("083563-2026")), typed("open"));
+        assert!(code(&parsed("028961-2025")).is_empty(), "Below threshold - without competition");
+        assert!(code(&parsed("083645-2026")).is_empty(), "a planning notice states no procedure");
+        let payload = br#"{"version":"1.1","releases":[{"ocid":"ocds-x-5",
+            "tender":{"procurementMethod":"open","mainProcurementCategory":"works"}}]}"#;
+        let Ok(p) = parse(payload) else { panic!("a bare method parses") };
+        assert!(code(&p).is_empty(), "`procurementMethod` alone is no procedure type");
     }
 
     /// The inheritance's refusals, on one synthetic release: a lot's own period
