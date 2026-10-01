@@ -11535,14 +11535,14 @@ impl Db {
             let mut rows = match (&p.procedure_key, p.island_notice_id) {
                 (Some(key), _) => {
                     conn.query(
-                        "SELECT id, source, projection_epoch FROM tenders WHERE procedure_key = ?",
+                        "SELECT id, source, projection_epoch, kind FROM tenders WHERE procedure_key = ?",
                         (t(key),),
                     )
                     .await?
                 }
                 (None, Some(notice_id)) => {
                     conn.query(
-                        "SELECT id, source, projection_epoch FROM tenders
+                        "SELECT id, source, projection_epoch, kind FROM tenders
                           WHERE source = ? AND island_notice_id = ?",
                         (t(&p.source), Value::Integer(notice_id)),
                     )
@@ -11556,6 +11556,14 @@ impl Db {
                 // the primary Source flips to TED (ADR-0003); keep the label current.
                 if text(&row, 1) != p.source {
                     conn.execute("UPDATE tenders SET source = ? WHERE id = ?", (t(&p.source), Value::Integer(id)))
+                        .await?;
+                }
+                // The kind too (issue 462): it is derived from the notices like
+                // everything else, so a fold that derives a different one corrects
+                // it. Written only at insert, it took a full rebuild to move — the
+                // X02 BRINs minted as procedures stayed procedures through a refold.
+                if text(&row, 3) != p.kind {
+                    conn.execute("UPDATE tenders SET kind = ? WHERE id = ?", (t(&p.kind), Value::Integer(id)))
                         .await?;
                 }
                 return Ok((id, false, int(&row, 2)));

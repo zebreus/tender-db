@@ -969,8 +969,12 @@ const ORG_NAME_FIELD: &str = "BT-500-Organization-Company";
 const ORG_IDENTIFIER_FIELD: &str = "BT-501-Organization-Company";
 const ORG_COUNTRY_FIELD: &str = "BT-514-Organization-Company";
 /// Business Registration Information Notices carry no procurement procedure;
-/// CONTEXT.md makes them minimal Tenders of their own kind.
-const REGISTRATION_SUBTYPE: &str = "X01";
+/// CONTEXT.md makes them minimal Tenders of their own kind. The class is the
+/// SDK's, not one literal: every vendored EU SDK makes `OPP-100-Business` (Notice
+/// Purpose) mandatory for exactly these subtypes, and keying on X01 alone minted
+/// every X02 as an empty procedure (issue 462). The test
+/// `registration_subtypes_are_the_sdks_brin_class` holds the list to the SDK.
+const REGISTRATION_SUBTYPES: &[&str] = &["X01", "X02"];
 
 /// Run the projection over every parsed notice. With `rebuild`, the canonical
 /// layer's content is dropped first and re-derived from scratch — the change
@@ -3680,7 +3684,7 @@ impl NoticeState {
 /// procurement procedure.
 fn kind_of(subtype: Option<&str>) -> &'static str {
     match subtype {
-        Some(REGISTRATION_SUBTYPE) => "registration",
+        Some(s) if REGISTRATION_SUBTYPES.contains(&s) => "registration",
         _ => "procedure",
     }
 }
@@ -9168,5 +9172,61 @@ mod tests {
         // one reaches issue 368's sieve rather than being silently renamed.
         assert_eq!(legacy_role("TRANSLITERATED_ADDR"), "TRANSLITERATED_ADDR");
         assert_eq!(legacy_role("SOMETHING_TED_INVENTS_NEXT"), "SOMETHING_TED_INVENTS_NEXT");
+    }
+
+    /// Issue 462: [`REGISTRATION_SUBTYPES`] is the SDK's BRIN class, read from
+    /// every inventory tender-db parses under. `OPP-100-Business` (Notice
+    /// Purpose) is the BRIN's defining field, mandatory for exactly the BRIN
+    /// subtypes — X01 and X02 in all fourteen EU minors. The literal `"X01"` this
+    /// replaced minted every X02 as an empty procedure; a future SDK that adds a
+    /// BRIN subtype fails here instead of doing that again.
+    #[test]
+    fn registration_subtypes_are_the_sdks_brin_class() {
+        // Only the path to the constraint: the inventories are ~30 MB together,
+        // and a typed skim skips the rest without building it.
+        #[derive(serde::Deserialize)]
+        struct Inventory {
+            fields: Vec<Field>,
+        }
+        #[derive(serde::Deserialize)]
+        struct Field {
+            id: String,
+            mandatory: Option<Mandatory>,
+        }
+        #[derive(serde::Deserialize)]
+        struct Mandatory {
+            #[serde(default)]
+            constraints: Vec<Constraint>,
+        }
+        #[derive(serde::Deserialize)]
+        struct Constraint {
+            #[serde(rename = "noticeTypes", default)]
+            notice_types: Vec<String>,
+            value: bool,
+        }
+
+        let class: BTreeSet<&str> = REGISTRATION_SUBTYPES.iter().copied().collect();
+        let mut eu_minors = 0;
+        for (key, json) in crate::eforms::sdk::ACCEPTED {
+            let inventory: Inventory = serde_json::from_str(json).expect(key);
+            let brin: BTreeSet<&str> = inventory
+                .fields
+                .iter()
+                .filter(|f| f.id == "OPP-100-Business")
+                .flat_map(|f| f.mandatory.iter().flat_map(|m| &m.constraints))
+                .filter(|c| c.value)
+                .flat_map(|c| c.notice_types.iter().map(String::as_str))
+                .collect();
+            if key.starts_with("eforms-sdk-1.") {
+                eu_minors += 1;
+                assert_eq!(brin, class, "{key}: the BRIN class moved — update REGISTRATION_SUBTYPES");
+            } else if !brin.is_empty() {
+                // The national and empirical inventories may not name the class
+                // at all (eForms-DE 2.1 drops the constraint, sdk-0.1 and DE 1.x
+                // have no such field); where one does, it must agree.
+                assert_eq!(brin, class, "{key} names a different BRIN class");
+            }
+        }
+        assert!(eu_minors >= 14, "the fourteen vendored EU minors were read, not skipped");
     }
 }

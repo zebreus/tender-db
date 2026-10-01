@@ -931,12 +931,13 @@ async fn the_change_log_reads_added_then_changed() {
 
 /// A notice that publishes no procedure key is still a Tender — a single-notice
 /// island (CONTEXT.md), never dropped and never guessed into someone else's
-/// procedure. The BRIN and the PIN in the corpus are both real instances.
+/// procedure. The two BRINs and the PIN in the corpus are all real instances.
 #[tokio::test]
 async fn notices_without_a_procedure_key_become_island_tenders() {
     let (db, fetch_id, path) = scratch("island").await;
     for fixture in [
         "eforms/brin-x01-00497689-2026.xml",
+        "eforms/brin-eu-00568126-2023.xml",
         "eforms/pin-4-00496860-2026.xml",
         "eforms/cn-16-00494343-2026.xml",
     ] {
@@ -944,15 +945,27 @@ async fn notices_without_a_procedure_key_become_island_tenders() {
     }
     let report = project::project(&db, false).await.expect("project");
 
-    assert_eq!(report.tenders, 3, "three notices, three unrelated Tenders");
-    assert_eq!(report.islands, 2, "the BRIN and the PIN carry no BT-04");
+    assert_eq!(report.tenders, 4, "four notices, four unrelated Tenders");
+    assert_eq!(report.islands, 3, "the two BRINs and the PIN carry no BT-04");
     assert_eq!(
         scalar(&db, "SELECT COUNT(*) FROM tenders WHERE island_notice_id IS NOT NULL").await,
-        2
+        3
     );
     // A business registration notice is a Tender of its own kind, not a
-    // procurement procedure.
-    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders WHERE kind = 'registration'").await, 1);
+    // procurement procedure — both BRIN subtypes, the EEIG X01 and the
+    // European-company X02 (issue 462: the X02 was minted as a procedure).
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders WHERE kind = 'registration'").await, 2);
+    assert_eq!(
+        query_text(
+            &db,
+            "SELECT t.kind FROM tenders t JOIN notices n ON n.id = t.island_notice_id
+              WHERE n.publication_id = '00568126-2023'"
+        )
+        .await
+        .as_deref(),
+        Some("registration"),
+        "the X02 is a registration"
+    );
     // Every island has exactly one version — that is what makes it an island.
     assert_eq!(
         scalar(
@@ -963,6 +976,52 @@ async fn notices_without_a_procedure_key_become_island_tenders() {
         .await,
         0
     );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 462: an incremental refold corrects a Tender's stored kind, and the
+/// scoped cohort that carries the correction to prod is the X02s alone.
+///
+/// `tenders.kind` used to be written only when the row was minted, so the X02
+/// BRINs prod folded as procedures stayed procedures through every refold —
+/// only a full rebuild minted the row again. The fixed `kind_of` folds the X02
+/// right from the start, so the prod state is made by hand, and then the
+/// `refold-sections BusinessCapability` job's steps run through the production
+/// functions it calls.
+#[tokio::test]
+async fn a_refold_corrects_a_stored_tender_kind() {
+    let (db, fetch_id, path) = scratch("kind-refold").await;
+    ingest(&db, fetch_id, "eforms/brin-x01-00497689-2026.xml").await;
+    ingest(&db, fetch_id, "eforms/brin-eu-00568126-2023.xml").await;
+    project::project(&db, false).await.expect("project");
+    let x02 = scalar(&db, "SELECT id FROM notices WHERE publication_id = '00568126-2023'").await;
+    let x02_kind = format!("SELECT kind FROM tenders WHERE island_notice_id = {x02}");
+    assert_eq!(query_text(&db, &x02_kind).await.as_deref(), Some("registration"));
+    let x02_tender = format!("SELECT id FROM tenders WHERE island_notice_id = {x02}");
+    let tender = scalar(&db, &x02_tender).await;
+
+    // Prod's state: the X02's Tender minted as a procedure before the fix.
+    db.execute_for_test(&format!("UPDATE tenders SET kind = 'procedure' WHERE island_notice_id = {x02}"))
+        .await
+        .expect("mint the prod state");
+
+    // The job's cohort. `OPP-105-Business` (sector of activity) hangs under
+    // `ND-BusinessCapability` and is mandatory for X02, forbidden for every other
+    // subtype — so the section kind names the X02s and passes over the X01.
+    let carriers = db.notice_ids_with_section_kind(&["BusinessCapability"]).await.expect("cohort");
+    assert_eq!(carriers, vec![x02], "the BusinessCapability cohort is the X02 alone");
+    assert_eq!(db.unmark_projected_by_ids(&carriers).await.expect("requeue"), 1);
+    assert_eq!(db.stamp_stale_for_notices(&carriers).await.expect("stamp"), 1);
+    project::project_incremental(&db).await.expect("refold");
+
+    assert_eq!(
+        query_text(&db, &x02_kind).await.as_deref(),
+        Some("registration"),
+        "the incremental fold corrected the stored kind"
+    );
+    assert_eq!(scalar(&db, &x02_tender).await, tender, "corrected in place, not re-minted");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders WHERE kind = 'registration'").await, 2);
 
     let _ = std::fs::remove_file(&path);
 }
