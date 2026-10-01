@@ -141,5 +141,10 @@ these.
    `topup.py` skips 43 inverted runs (196 ids, whose days are covered by other runs today) and that the daily-era
    refetch will likely recover nothing. Regenerate the list after unit 1, with both fixed.
 
-Side finding for its own issue: `assemble_fts_zip` keeps the first release per id (`fetch.rs:626`), and 11 ids carry
-two releases under different ocids.
+**In unit 1, not its own issue: one id, two releases.** `assemble_fts_zip` keys members by the notice id and keeps
+the first (`fetch.rs:626`). 11 ids carry two different releases under different ocids, for example `038018-2025`
+(a `tenderUpdate` on the old procurement and an `award,contract` on the new one, same date). Across packages both
+are kept. Read 2026-10-01 via `/v1/sql`: `038018-2025` is notices 46727125 (fetch 645) and 46878074 (fetch 666), and
+`086149-2026` is 31499804 and 46804978. Inside ONE package the second is dropped without trace. The rewritten
+assembler keys a member by id plus a short hash of the release (`<id>.json`, then `<id>~<hash8>.json` for a second
+distinct release), so a byte-identical repeat still collapses, and a different release is kept.
