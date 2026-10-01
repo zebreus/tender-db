@@ -1,6 +1,7 @@
 # 477 — FTS holds 90–98 % of each year's notices, the missing ones are on the API, and the dashboard reports the source complete
 
-Status: ready-for-agent — filed 2026-10-01 13:5x UTC from the 342 close-out audit. The first unit is the root cause:
+Status: ready-for-agent — ROOT CAUSE PROVEN 2026-10-01 (workflow `wf_4e12a01b-ca9`: three probes, a synthesis, and a challenger who confirmed the cause): the FTS API's `links.next` cursor continues on a hidden per-release key that is not in notice-id order, so page 2 and later silently drop rows, and the dropped page comes back short with no next link. The 2026-09-01..06 seam was never fetched (1,745 ids), and some post-Act ids were never published. NEXT: unit 1, the walk. Never follow `links.next`; split any window whose cursorless page is full, never into a one-second window (the API answers 400). Fix the seam start too. Design and evidence: `.scratch/tender-db/477-fts/`.
+Was status: ready-for-agent — filed 2026-10-01 13:5x UTC from the 342 close-out audit. The first unit is the root cause:
 why does the `updatedFrom`/`updatedTo` window walk skip notices that the API serves by id? Diff one day's API listing
 against its archived members.
 Kind: completeness (a source silently short, under a "complete" claim)
@@ -72,3 +73,73 @@ would have caught it. 319,742 is exactly the sum of the highest ids 2021 → 202
 - **open** (2026-10-01 13:5x UTC): `14093`, the missing ids across 2021–2026.
 - **done:** a number near 0. A residue is fine only where each remaining id is shown absent from the API by id (a
   withdrawn notice), with the list recorded here.
+
+## 2026-10-01 14:5x UTC — root cause proven (workflow `wf_4e12a01b-ca9`)
+
+Full reports: `.scratch/tender-db/477-fts/probes-2026-10-01.md`, `root-cause-and-fix-2026-10-01.md` and
+`challenge-2026-10-01.md`. The API pages they rest on are saved on the box under `/root/477/`, each directory with a
+`requests.log`.
+
+**The cause: the API's paging cursor.** A window's listing is sorted by notice id, newest first. `links.next`
+continues on a hidden per-release key instead. The next page is the newest `limit` rows among those whose key is at
+or below the cursor, and the cursor is the key of the first row not served. The keys are not in id order, so at every
+page boundary rows are silently lost, and some are repeated. A page that lost rows comes back short with no
+`links.next`, exactly like a real last page. The fetcher stored every row it was served, but it was not served
+these.
+- **2021-05-07:** the cursor walk served 103 ids, and the archive holds those 103. The same day asked as 24 hourly
+  windows without a cursor returns 152 contiguous ids, 009911–010062, so 49 were lost on page 2 (cursor 261858: 3
+  rows, no next).
+- **2024-01-12:** 124 rows, 111 distinct, and the archive holds those 111. The hourly walk returns 156 contiguous
+  ids, so 45 were lost (page 2, cursor 652327: 24 rows, 13 of them repeats of page 1).
+- **2026-02-25:** page 2 (cursor 523941) has 100 rows and no repeats, but four ids are missing. A cursorless 14:30–14:59
+  window returns all four.
+- **Issue 449's stuck cursor is the same defect** (2025-12-10 replayed: page 2 repeats page 1, and its next is its
+  own URL).
+- **A page asked for without a cursor was correct in every test** (all 48 hourly first pages, the day first pages
+  and the new windows). So a cursorless page holding fewer than `limit` rows is a complete window.
+- **The window selects on a hidden publication timestamp, not the release `date`.** 009921, dated 2021-07-27, is
+  listed in 2021-05-07 09:00. Both window ends include their boundary second. A window with `from == to` answers
+  400 `'updatedTo' must be later than 'updatedFrom'`.
+
+**The 14,093, split** (the parts add up exactly):
+
+| part | ids | cause |
+|---|---|---|
+| 2021-01 → 2025-02-23, contiguous runs on days that needed a page 2 | 10,102 | cursor loss (proven on two days) |
+| 2025-02-24 → 2026-08 | 2,188 | mixed: cursor loss, plus ids never published (of 13 checked by id, 7 present and 6 absent) |
+| 082421–084165-2026, 2026-09-01..06 | 1,745 | **never fetched**: the monthly backfill ends at 2026-08 and the first daily is 09-07. With no daily on record, `probe_fts_daily` fetches only `end` (`fetch.rs:489-492`) |
+| daily packages 2026-09-07..30 | 58 | 19 of 19 checked are absent from the API (never published) |
+
+**Why "complete".** `fetch_complete` checks only that the monthly periods are contiguous (`coverage.rs:661-664`), and
+`published` is filled for TED only (`:624`). The API pages carry no total.
+
+## Decision (owner, 2026-10-01): the fix
+
+1. **The walk** (`fts/mod.rs`, `fetch.rs`). Never follow `links.next`, and delete the cursor and its machinery:
+   `PageCursor`, `CURSOR_FILE`, the hourly fallback `hour_urls`, `MAX_*_PAGES`. A window is a span of wall-clock
+   seconds:
+   - A span whose cursorless page is short (`< limit`, no next) is complete.
+   - A full page splits the span in two, and each half is fetched again.
+   - A split never produces a one-second span, because the API answers 400. If a two-second span is still full, it
+     fails loud with its staging intact (`Error::Malformed`).
+   - The staged span pages are the resume state.
+   - The day's first URL stays byte-identical, so registry URLs do not change.
+   - The autumn DST hour is left to a test that pins the behaviour rather than to a guess, given the challenger's
+     point that the server is probably Java and resolves the ambiguous hour to the earlier offset.
+   - A monthly target whose last UK day has not ended is refused.
+2. **The seam.** `probe_fts_daily` starts the day after the later of the newest daily and the end of the newest
+   monthly period. A default FTS backfill runs through the previous UK month.
+3. **The invariant.** The per-window part is built into the walk: no leaf window lands without a short page. The
+   per-year part compares the ids held with the highest id issued, minus the ids recorded as absent
+   (`absent_publications`, filled by an `audit-fts-ids` job that asks the API by id). It feeds FTS's coverage
+   `published` and `fetch_complete`, so the dashboard has a denominator. Unit 3 is designed after unit 1 lands; the
+   challenger's point that an id's day cannot always be located from its neighbours is open there.
+4. **Top-up.** It runs after unit 1 is deployed; the old walker would lose the same rows again. Re-walk the
+   affected days (both neighbour days of each run): ~790 daily fetch jobs, ~8,800 requests, ~29 h at the 12 s
+   pace, in chunks of 80–100 outside the 07:35 UTC chain. Then process, project, the id audit and 448's altid
+   re-plan. The job list is generated at `/root/477/synth/topup-jobs.jsonl`. The challenger found that
+   `topup.py` skips 43 inverted runs (196 ids, whose days are covered by other runs today) and that the daily-era
+   refetch will likely recover nothing. Regenerate the list after unit 1, with both fixed.
+
+Side finding for its own issue: `assemble_fts_zip` keeps the first release per id (`fetch.rs:626`), and 11 ids carry
+two releases under different ocids.
