@@ -15808,6 +15808,118 @@ mod tests {
             .expect("a dry run needs no expectation");
     }
 
+    /// The stack a thread needs to poll `run_spec` once (issue 467): the measured
+    /// ~496 KiB in the gate's profile, plus headroom.
+    const RUN_SPEC_POLL_FRAME_BUDGET: usize = 520 * 1024;
+
+    /// Poll `make()`'s future ONCE on a fresh thread whose whole stack is `stack`
+    /// bytes, and drop it. An async fn's poll function allocates its frame on entry,
+    /// so a frame over the budget aborts with `thread '<the name below>' has
+    /// overflowed its stack` — a SIGABRT that names the future and its budget, where
+    /// the unrelated test it would otherwise kill names nothing.
+    fn poll_once_within<F: std::future::Future>(name: &str, stack: usize, make: impl FnOnce() -> F + Send) {
+        let rt = tokio::runtime::Handle::current();
+        std::thread::scope(|s| {
+            std::thread::Builder::new()
+                .name(format!("issue 467: {name}'s poll frame is over its {stack}-byte stack budget"))
+                .stack_size(stack)
+                .spawn_scoped(s, || {
+                    let _rt = rt.enter();
+                    let mut f = std::pin::pin!(make());
+                    let _ = f.as_mut().poll(&mut std::task::Context::from_waker(std::task::Waker::noop()));
+                })
+                .expect("spawn the gauge thread")
+                .join()
+                .expect("the gauged poll panicked");
+        });
+    }
+
+    /// Issue 467's tripwire: the size of every future `run_spec` builds on the
+    /// caller's stack, against a named budget.
+    ///
+    /// An async fn compiles to ONE state machine, as large as its largest arm, and
+    /// `Box::pin(f)` constructs `f` on the stack before moving it to the heap — so
+    /// each future boxed at a call site in `run_spec` is on the stack once too. A
+    /// test that awaits `run_spec` on a test thread's stack aborts with `stack
+    /// overflow` (SIGABRT) when any of them grows far enough, and the messenger has
+    /// always been `an_execute_without_an_expected_count_is_refused`, which names
+    /// nothing. This test names the future that grew, at the commit that grew it.
+    ///
+    /// The futures are built and never polled: `size_of_val` reads the type, and
+    /// one async fn has one future type, so any argument gives the same number.
+    /// Budgets are the measurement in the gate's profile (debuginfo off, O0) plus
+    /// headroom. Over a budget: box the deep awaits inside the named fn, or split
+    /// the arm that grew into its own fn boxed at its call site — do not just
+    /// raise the number.
+    #[tokio::test]
+    async fn run_spec_futures_stay_inside_their_size_budgets() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let j = job(Spec::Analyze);
+        let target = build_target("https://ted", "https://doe", "https://fts", "ted", "daily", "2026-00137").unwrap();
+        let stop = || false;
+        let progress = |_: u64, _: &str| {};
+        let mut over = Vec::new();
+        let mut gauge = |name: &str, size: usize, budget: usize| {
+            eprintln!("future size: {name} = {size} bytes (budget {budget})");
+            if size > budget {
+                over.push(format!("{name}: {size} bytes, budget {budget}"));
+            }
+        };
+        // The dispatch itself: every arm not boxed at its call site lives in it.
+        gauge("run_spec", std::mem::size_of_val(&sup.run_spec(&j)), 9_000);
+        // Each future `run_spec` boxes at its call site.
+        gauge("run_fetch", std::mem::size_of_val(&sup.run_fetch(&target, false)), 64);
+        gauge("run_fetch_fts", std::mem::size_of_val(&sup.run_fetch_fts(1, &target, "p", false)), 128);
+        gauge("run_rehash_probe", std::mem::size_of_val(&sup.run_rehash_probe(1)), 1_024);
+        gauge("run_probe_fts", std::mem::size_of_val(&sup.run_probe_fts(1)), 64);
+        gauge("run_project", std::mem::size_of_val(&sup.run_project(&j, false, false)), 9_000);
+        gauge("run_sweep_orphan_orgs", std::mem::size_of_val(&sup.run_sweep_orphan_orgs(&j, SweepMode::Dry)), 2_048);
+        gauge(
+            "run_backfill_merged_identifiers",
+            std::mem::size_of_val(&sup.run_backfill_merged_identifiers(&j, true)),
+            2_304,
+        );
+        gauge("run_analyze", std::mem::size_of_val(&sup.run_analyze(&j)), 512);
+        gauge("run_repair_member_twins", std::mem::size_of_val(&sup.run_repair_member_twins(&j, true)), 1_024);
+        gauge(
+            "refuse_without_org_fk_indexes",
+            std::mem::size_of_val(&sup.refuse_without_org_fk_indexes("k")),
+            768,
+        );
+        gauge(
+            "store::repair_provisional_name_norm",
+            std::mem::size_of_val(&db.repair_provisional_name_norm(store::ProvisionalNameNormArgs {
+                dry_run: true,
+                max_groups: None,
+                expect_groups: None,
+                expect_rows: None,
+                job_id: None,
+                stop: &stop,
+                progress: &progress,
+            })),
+            1_792,
+        );
+        // The POLL frames. `size_of_val` is the future's state; what overflowed a
+        // test is the frame of its poll function, which at O0 gives every local of
+        // every arm its own slot. Measured 2026-10-01 (gate flags) as the smallest
+        // thread stack that polls the future once: run_spec ~496 KiB.
+        let refused = job(Spec::Fetch {
+            source: "no-such-source".into(),
+            package_kind: "daily".into(),
+            period: "x".into(),
+            refetch: false,
+        });
+        poll_once_within("run_spec", RUN_SPEC_POLL_FRAME_BUDGET, || sup.run_spec(&refused));
+        assert!(
+            over.is_empty(),
+            "issue 467: future(s) over their stack budget — {}. Each is built on the caller's \
+             stack before any Box::pin moves it; box the deep awaits inside it, or move the \
+             arm that grew into its own fn boxed at its call site (see run_spec's doc)",
+            over.join("; ")
+        );
+    }
+
     /// Issue 443: 30 provisional rows, 1-5 mentioned and 6 still named by a
     /// party row, so 24 are orphans the sweep takes. Fixture rows go through a
     /// raw connection with foreign keys off (the party row points at a version
