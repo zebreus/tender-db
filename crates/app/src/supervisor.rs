@@ -4106,36 +4106,145 @@ impl Supervisor {
             })
     }
 
-    /// Run one job: a single async `match` over every `Spec` arm.
+    /// Run one job: a dispatch from each `Spec` variant to the family fn that runs it.
     ///
-    /// **Adding or growing an arm can blow the stack of a test you never touched.**
-    /// Every arm's locals live in this ONE future, so the future is as large as its
-    /// largest arm, and a test that awaits it on a normal thread stack aborts with
-    /// `stack overflow` (SIGABRT). The messenger has been
-    /// `an_execute_without_an_expected_count_is_refused` each time (2026-09-01, issue
-    /// 404, issue 432), with no relation to the change, so it reads as a mystery
-    /// regression. Issue 404's "stack lesson" cost four wrong guesses; what it found:
+    /// **Why a dispatch, not one match (issue 467).** An async fn is one state machine,
+    /// and at O0 its poll frame gives every local of every arm its own slot. When this
+    /// fn was a single 85-arm match its poll frame needed ~496 KiB, and any arm's
+    /// growth spent the stack of every test that awaits it: six times since 2026-09-01
+    /// the messenger was `an_execute_without_an_expected_count_is_refused` (SIGABRT,
+    /// `stack overflow`), a test with no relation to the change. Each family fn now
+    /// holds only its own arms' locals, and `off_frame` builds and boxes its future
+    /// outside this frame, so a call costs this small frame plus ONE family's.
     ///
-    /// 1. **Box a big arm** — `Box::pin(async move { … }).await` — so its frame goes
-    ///    on the heap. Necessary, not sufficient: `Box::pin` constructs the frame on
-    ///    the stack BEFORE it moves it, so a boxed arm must also be SMALL. Moving the
-    ///    body into its own `async fn` does NOT make it small by itself — that fn's
-    ///    future is as large as the inline block it replaced, and 404's extraction
-    ///    still overflowed. It helps only once that fn's deep awaits are boxed
-    ///    (point 2); `run_repair_member_twins` is the pattern for both together.
-    /// 2. **Box the deep awaits too.** An async fn's future CONTAINS the futures it
+    /// **Adding an arm.** Put it in the family it shares the most with, or, if it is
+    /// big or shares nothing, in its own async fn reached through `off_frame` here,
+    /// and add that fn to `run_spec_futures_stay_inside_their_size_budgets`. That
+    /// test holds every family's future size and poll frame to a named budget, so a
+    /// fn that grows fails under its own name. Inside a fn, the stack lesson of issue
+    /// 404 still holds:
+    ///
+    /// 1. **Box the deep awaits.** An async fn's future CONTAINS the futures it
     ///    awaits, so an unboxed `self.db.…(…).await` that nests three calls down
-    ///    brings that whole composed frame into the arm and out into this match.
-    ///    Boxing only the arm did not stop 404's (`plan_member_twin_repair` →
-    ///    `member_twin_census` → `record_twin_candidate`) or 432's (the store future
-    ///    inside the new arm) overflow.
-    /// 3. **Find the culprit by isolating, not by guessing**: replace the suspect
-    ///    arm's body with `Err(...)`. If the test passes, that arm is it; then box its
-    ///    awaits one at a time.
+    ///    brings that whole composed frame into the arm. Boxing only the arm did not
+    ///    stop 404's (`plan_member_twin_repair` → `member_twin_census` →
+    ///    `record_twin_candidate`) or 432's (the store future inside the new arm)
+    ///    overflow; `run_repair_member_twins` is the pattern.
+    /// 2. **`Box::pin` constructs before it moves**, so a boxed future must also be
+    ///    small; `off_frame` keeps that construction out of an async fn's frame.
+    /// 3. **Find the culprit by isolating, not by guessing**: the tripwire names the
+    ///    fn; inside it, replace the suspect arm's body with `Err(...)` and re-measure.
     ///
     /// This module compiles only with `--features server`; a check or test without it
     /// never builds this function (CLAUDE.md, Testing).
     async fn run_spec(&self, job: &Job) -> Result<String, String> {
+        match &job.spec {
+            // Its own fn, boxed: the fold's future grew with issue 434's mention
+            // refresh and overflowed `an_execute_without_an_expected_count_is_refused`
+            // inline — CLAUDE.md's run_spec note, and `run_repair_member_twins`' shape.
+            Spec::Project { rebuild, clear_changes } => {
+                off_frame(|| self.run_project(job, *rebuild, *clear_changes)).await
+            }
+            Spec::SweepOrphanOrgs { dry_run } => {
+                let mode = if *dry_run { SweepMode::Dry } else { SweepMode::Wet };
+                off_frame(|| self.run_sweep_orphan_orgs(job, mode)).await
+            }
+            Spec::SweepOrphanOrgsAuto { cap } => {
+                off_frame(|| self.run_sweep_orphan_orgs(job, SweepMode::Auto { cap: *cap })).await
+            }
+            Spec::BackfillMergedIdentifiers { dry_run } => {
+                off_frame(|| self.run_backfill_merged_identifiers(job, *dry_run)).await
+            }
+            Spec::Analyze => off_frame(|| self.run_analyze(job)).await,
+            Spec::RepairMemberTwins { dry_run } => {
+                off_frame(|| self.run_repair_member_twins(job, *dry_run)).await
+            }
+            Spec::Fetch { .. }
+            | Spec::ProbeTed { .. }
+            | Spec::RehashProbe { .. }
+            | Spec::RevealRecheck
+            | Spec::ProbeDoe
+            | Spec::ProbeFts
+            | Spec::Process { .. }
+            | Spec::DataQuality { .. }
+            | Spec::Reparse { .. }
+            | Spec::Reprocess { .. }
+            | Spec::MarkSkippedSiblings { .. }
+            | Spec::RepairSweptSiblings { .. } => off_frame(|| self.run_ingest_spec(job)).await,
+            Spec::Reindex
+            | Spec::RegisterArchive
+            | Spec::ClearRebuildFlag
+            | Spec::Refold { .. }
+            | Spec::RefoldSections { .. }
+            | Spec::RefoldDeniedSchemes { .. }
+            | Spec::RefoldNotices { .. }
+            | Spec::RefoldFields { .. } => off_frame(|| self.run_maintenance_spec(job)).await,
+            Spec::BackfillOrgNames
+            | Spec::BackfillLegacyAdjacency
+            | Spec::BackfillDeadlines
+            | Spec::BackfillTitles
+            | Spec::BackfillOriginalLang
+            | Spec::BackfillValues
+            | Spec::BackfillCurrencies
+            | Spec::RederiveEur
+            | Spec::BackfillOrgNameVariants
+            | Spec::FetchRates
+            | Spec::FetchRatesEcu => off_frame(|| self.run_backfill_spec(job)).await,
+            Spec::RepairNestedOrgs { .. }
+            | Spec::RepairPlaceholderOrgs { .. }
+            | Spec::RepairMintedCountries { .. }
+            | Spec::RepairNoticeInstants { .. }
+            | Spec::RepairVersionInstants { .. }
+            | Spec::RepairRenormalisedIdentifiers { .. }
+            | Spec::RepairLabelPrefixes { .. }
+            | Spec::RepairCountryTypos { .. } => off_frame(|| self.run_repair_spec(job)).await,
+            Spec::DropOrphanSatellites { .. }
+            | Spec::RestoreDroppedSatellites { .. }
+            | Spec::FoldProvisionalEchoes { .. }
+            | Spec::RepairProvisionalNameNorm { .. }
+            | Spec::MergeProvisionalOrgs { .. } => off_frame(|| self.run_provisional_spec(job)).await,
+            Spec::OrgMergeHealth => off_frame(|| self.run_org_merge_health_spec(job)).await,
+            Spec::MatchOrgIdentifiersR2 { .. }
+            | Spec::MatchOrgIdentifiersE0 { .. }
+            | Spec::MatchOrgIdentifiersR3 { .. }
+            | Spec::MatchOrgIdentifiersRekey { .. }
+            | Spec::MatchOrgIdentifiersAltId { .. } => off_frame(|| self.run_match_identifiers_spec(job)).await,
+            Spec::FoldOrgCountries { .. }
+            | Spec::ApplyCountryVerdicts { .. }
+            | Spec::ApplyRehoming { .. }
+            | Spec::RehomingPacket
+            | Spec::XbPacket
+            | Spec::CountryClusterPacket { .. } => off_frame(|| self.run_country_spec(job)).await,
+            Spec::R2Census
+            | Spec::R3Census
+            | Spec::FusionCensus
+            | Spec::OrgEdgeCensus => off_frame(|| self.run_identity_census_spec(job)).await,
+            Spec::CountryClusterCensus
+            | Spec::DiskCensus
+            | Spec::NameAttributionProbe
+            | Spec::GenericStatisticCensus
+            | Spec::GenericWallCensus
+            | Spec::NamePollutionCensus
+            | Spec::ProvisionalEchoCensus { .. }
+            | Spec::DuplicateIdentityCensus
+            | Spec::CountryTypoCensus
+            | Spec::AnchorWallCensus
+            | Spec::SatelliteOrphans
+            | Spec::CaseReviewBacklog
+            | Spec::RegistryContiguity
+            | Spec::MemberTwinCensus
+            | Spec::GhostCensus => off_frame(|| self.run_census_spec(job)).await,
+            Spec::ApplyCaseReviews { .. }
+            | Spec::UnapplyCaseReviews { .. }
+            | Spec::BuildOrgMatchKeys { .. }
+            | Spec::ScanOrgMatchKeys { .. } => off_frame(|| self.run_match_key_spec(job)).await,
+        }
+    }
+
+    /// `run_spec`'s family of fetching, probing, parsing and processing packages, and the
+    /// held-sibling bookkeeping. Issue 467: one family per fn, reached through `off_frame`, so
+    /// its poll frame holds only these arms' locals.
+    async fn run_ingest_spec(&self, job: &Job) -> Result<String, String> {
         match &job.spec {
             Spec::Fetch { source, package_kind, period, refetch } => {
                 let target =
@@ -4302,23 +4411,136 @@ impl Supervisor {
                 )
                 .await
             }
-            // Its own fn, boxed: the fold's future grew with issue 434's mention
-            // refresh and overflowed `an_execute_without_an_expected_count_is_refused`
-            // inline — CLAUDE.md's run_spec note, and `run_repair_member_twins`' shape.
-            Spec::Project { rebuild, clear_changes } => {
-                Box::pin(self.run_project(job, *rebuild, *clear_changes)).await
+            Spec::MarkSkippedSiblings { dry_run, expect, expect_gaps } => {
+                // Count first, always — in dry-run it IS the answer, and in a real
+                // run it is the gate that must agree before anything is written.
+                let found = self.db.count_skipped_siblings().await.map_err(|e| e.to_string())? as u64;
+                if let Some(expect) = expect {
+                    if found != *expect {
+                        return Err(format!(
+                            "mark-skipped-siblings aborted: {found} rows match, expected exactly \
+                             {expect} (nothing was written). A SHORTFALL is a finding, not a \
+                             predicate to widen: the missing rows are held siblings whose English \
+                             original did not parse — held-but-unextracted, and they must stay \
+                             outstanding until something reads them."
+                        ));
+                    }
+                }
+                // The dry-run reports BOTH numbers, because the first alone cannot
+                // explain itself. `gaps` is the set the guard declines — held
+                // siblings whose English original is missing or unparsed. Expected
+                // 0; a non-zero answer is a data-loss finding to investigate, and
+                // the run should stop rather than proceed on a population that no
+                // longer matches what was verified.
+                let (no_original, unparsed) =
+                    self.db.count_skipped_sibling_gaps().await.map_err(|e| e.to_string())?;
+                let gaps = no_original + unparsed;
+                if *dry_run {
+                    return Ok(format!(
+                        "dry run: {found} rows would be marked skipped-by-policy; \
+                         {gaps} in scope REJECTED by the sibling guard \
+                         ({no_original} with NO English original at all — a fetch/ingest \
+                         gap; {unparsed} whose original is held but did not parse — a \
+                         parse failure). These are held-but-unextracted, not lost: we \
+                         have the bytes and failed to read them. Two separate \
+                         investigations, and never a predicate to widen — an execute \
+                         must name this count in `expect_gaps` rather than pass it"
+                    ));
+                }
+                // BOTH halves of the go criterion are enforced HERE, not only in the
+                // process that reads the dry-run. `found == expect` and the gap
+                // check are independent: the scope can hold exactly the expected
+                // number of markable rows AND a rejected set beside them, so a
+                // matching count is not evidence about the gaps. Leaving this to the
+                // operator would make half the criterion a promise rather than a
+                // guarantee — and the promise would be kept by whoever remembered to
+                // read the second number.
+                //
+                // An execute with no `expect` at all is refused outright. `None`
+                // used to mean "skip the count check", which made the strictest
+                // reading of a missing argument the most destructive one — the same
+                // inversion `dry_run` already defends against. A run that writes
+                // ~593k rows must state what it expects to write.
+                if !dry_run && expect.is_none() {
+                    return Err(
+                        "mark-skipped-siblings aborted: an execute requires an explicit `expect` \
+                         (nothing was written). A run that writes hundreds of thousands of rows \
+                         must name the population it believes it is writing, so the count can \
+                         disagree with it."
+                            .to_owned(),
+                    );
+                }
+                // The gap criterion. `expect_gaps` is NOT an override: it re-aims the
+                // guard rather than disarming it. Omitted, the rejected set must be
+                // empty — the original rule, unchanged. Supplied, the set must be
+                // EXACTLY that size, so this still refuses a population that has
+                // shifted by one row since it was investigated.
+                //
+                // The distinction matters because the guard's whole value is that it
+                // rejected 154 and passed 592,856 — discrimination, not mere firing.
+                // A flag that let the run proceed regardless of the gap count would
+                // make the reject arm unreachable, and a guard that cannot fail is
+                // not a guard; the fastest way to turn a red gate green is to move
+                // the bar rather than the data. This keeps the bar, and requires an
+                // operator to state the number they have already looked at.
+                let allowed_gaps = expect_gaps.unwrap_or(0);
+                if gaps != allowed_gaps as i64 {
+                    return Err(format!(
+                        "mark-skipped-siblings aborted: the sibling guard rejects {gaps} in-scope \
+                         rows, expected exactly {allowed_gaps} (nothing was written) — \
+                         {no_original} have NO English original at all (a fetch/ingest gap) and \
+                         {unparsed} have one that is held but did not parse (a parse failure). \
+                         Two different investigations. Both must stay outstanding: they are \
+                         held-but-unextracted, not lost, and this is never a predicate to widen."
+                    ));
+                }
+                let mut marked = 0i64;
+                loop {
+                    let batch = self
+                        .db
+                        .mark_skipped_siblings(MARK_BATCH, store::now_unix(), "internal-ojs-non-english")
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    if batch == 0 {
+                        break;
+                    }
+                    marked += batch;
+                    self.update(|p| p.members_done = marked as u64);
+                    // Bound the WAL between batches, exactly as run_process and the
+                    // reclaim do: turso writes a frame per row and cannot checkpoint
+                    // mid-statement.
+                    if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                        eprintln!("supervisor: checkpoint after mark batch: {e}");
+                    }
+                }
+                Ok(format!(
+                    "marked {marked} rows skipped-by-policy (reversible: skipped_reason = \
+                     'internal-ojs-non-english')"
+                ))
             }
-            Spec::SweepOrphanOrgs { dry_run } => {
-                let mode = if *dry_run { SweepMode::Dry } else { SweepMode::Wet };
-                Box::pin(self.run_sweep_orphan_orgs(job, mode)).await
+            Spec::RepairSweptSiblings { dry_run } => {
+                let swept = self.db.count_swept_siblings().await.map_err(|e| e.to_string())?;
+                if *dry_run {
+                    return Ok(format!(
+                        "dry run: {swept} skipped sibling row(s) are REJECTED by the \
+                         parsed-original guard and would be restored to outstanding"
+                    ));
+                }
+                let restored = self.db.repair_swept_siblings().await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "restored {restored} guard-rejected sibling row(s) to outstanding \
+                     (found {swept} before the write)"
+                ))
             }
-            Spec::SweepOrphanOrgsAuto { cap } => {
-                Box::pin(self.run_sweep_orphan_orgs(job, SweepMode::Auto { cap: *cap })).await
-            }
-            Spec::BackfillMergedIdentifiers { dry_run } => {
-                Box::pin(self.run_backfill_merged_identifiers(job, *dry_run)).await
-            }
-            Spec::Analyze => Box::pin(self.run_analyze(job)).await,
+            _ => Err(misrouted(job, "run_ingest_spec")),
+        }
+    }
+
+    /// `run_spec`'s family of index builds, the archive register, the rebuild flag and the
+    /// refolds. Issue 467: one family per fn, reached through `off_frame`, so its poll frame
+    /// holds only these arms' locals.
+    async fn run_maintenance_spec(&self, job: &Job) -> Result<String, String> {
+        match &job.spec {
             Spec::Reindex => {
                 // Both builders are CREATE INDEX IF NOT EXISTS loops — idempotent, so
                 // this rebuilds only the missing deferred indexes without touching the
@@ -4357,6 +4579,234 @@ impl Supervisor {
                     done.registered, done.existing, done.unrecognised
                 ))
             }
+            Spec::ClearRebuildFlag => {
+                let was_set = self.db.rebuild_in_progress().await.map_err(|e| e.to_string())?;
+                if !was_set {
+                    return Ok("rebuild_in_progress was already clear — nothing to do".to_owned());
+                }
+                // The flag is only STALE over an intact layer. An EMPTY tenders table
+                // with the flag set is a rebuild genuinely mid-flight (reset_tender_layer
+                // has run, the fold has not finished) — clearing there would discard a
+                // real salvage and force a full re-fold. O(1): existence, not a count.
+                let intact = self
+                    .db
+                    .scalar("SELECT 1 FROM tenders LIMIT 1")
+                    .await
+                    .map_err(|e| e.to_string())?
+                    .is_some();
+                if !intact {
+                    return Err("refusing to clear rebuild_in_progress: the tenders table is EMPTY, \
+                                so a rebuild is genuinely mid-flight and its salvage would be lost \
+                                — let it finish (nothing was written)"
+                        .to_owned());
+                }
+                self.db.clear_plan().await.map_err(|e| e.to_string())?;
+                Ok("stale rebuild_in_progress CLEARED (plan retired) — projections route \
+                    incremental again"
+                    .to_owned())
+            }
+            Spec::Refold { profiles, expect } => {
+                let refs: Vec<&str> = profiles.iter().map(String::as_str).collect();
+                // Count BEFORE writing: a mistyped profile string matching a far larger
+                // set would otherwise re-queue that set silently, and the trailing
+                // projection would fold it. Abort while nothing has been written yet.
+                self.set_phase("counting", None, None, format!("projected notices under {:?}", profiles));
+                let found = self
+                    .db
+                    .projected_notice_count_for_profiles(&refs)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if let Some(expect) = expect {
+                    let slack = expect / 4;
+                    if found.abs_diff(*expect) > slack {
+                        return Err(format!(
+                            "refold aborted: {} notices match {:?}, expected ~{expect} — \
+                             check the profile strings (nothing was written)",
+                            found, profiles
+                        ));
+                    }
+                }
+                self.set_phase("re-queueing", Some(0), Some(found), "notices un-marked".into());
+                let requeued =
+                    self.db.unmark_projected_for_profiles(&refs).await.map_err(|e| e.to_string())?;
+                // issue 179: the requeue alone leaves each Tender's chain identical,
+                // and an unchanged chain with a current epoch early-returns — the
+                // mapping fix would never land. Stamp the cohort's tenders
+                // epoch-stale so exactly THEY rewrite; the global PROJECTION_EPOCH
+                // stays put, so nobody else does. Unconditional (not gated on
+                // requeued > 0) so a job re-run after a crash heals both halves.
+                self.set_phase(
+                    "stamping",
+                    Some(requeued as u64),
+                    Some(found),
+                    "notices re-queued; their tenders now stamped epoch-stale".into(),
+                );
+                let stamped =
+                    self.db.stamp_stale_for_profiles(&refs).await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "re-queued {requeued} notices, stamped {stamped} tenders epoch-stale \
+                     for the incremental fold"
+                ))
+            }
+            Spec::RefoldSections { kinds } => {
+                let refs: Vec<&str> = kinds.iter().map(String::as_str).collect();
+                let carriers =
+                    self.db.notice_ids_with_section_kind(&refs).await.map_err(|e| e.to_string())?;
+                if carriers.is_empty() {
+                    // Not an error: a kind no notice carries is a legitimate answer, and
+                    // saying so beats re-queueing nothing while reporting success.
+                    return Ok(format!("no parsed notice carries a {:?} section", kinds));
+                }
+                self.set_phase("re-folding", None, None, format!("{} carriers", carriers.len()));
+                let requeued =
+                    self.db.unmark_projected_by_ids(&carriers).await.map_err(|e| e.to_string())?;
+                // The issue-179 pair: the requeue alone leaves each chain identical and an
+                // unchanged chain with a current epoch early-returns, so the mapping fix
+                // would never land.
+                let stamped =
+                    self.db.stamp_stale_for_notices(&carriers).await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "{} notice(s) carry a {:?} section: re-queued {requeued}, stamped {stamped} \
+                     tender(s) epoch-stale for the incremental fold",
+                    carriers.len(),
+                    kinds
+                ))
+            }
+            Spec::RefoldDeniedSchemes { dry_run, schemes } => Box::pin(async move {
+                // Walk `notice_id` in fixed strides rather than counting matches:
+                // `organization_mentions.scheme` has no index, so a match-filling
+                // window would scan an unbounded stretch when hits are sparse,
+                // while a stride costs the same per call at any hit rate.
+                const STRIDE: i64 = 250_000;
+                let borrowed: Vec<&str> = schemes.iter().map(String::as_str).collect();
+                let max_id = self.db.max_notice_id().await.map_err(|e| e.to_string())?;
+                let (mut requeued, mut stamped, mut notices, mut windows) = (0u64, 0u64, 0u64, 0u64);
+                let mut after = 0i64;
+                // No stop-flag check on purpose. The readers are enumerated in a
+                // const above (issue 252) precisely so an unregistered kind is
+                // REFUSED cancellation rather than told "asked it to stop" and
+                // then ignored. This walk is ~one pass of the mentions table in
+                // fixed strides — minutes, not the grinding fold that rule was
+                // written for — so refusal is the honest answer, and registering
+                // it would claim a responsiveness it does not have.
+                while after < max_id {
+                    let through = (after + STRIDE).min(max_id);
+                    let ids = self
+                        .db
+                        .notices_with_denied_scheme(&borrowed, after, through)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    notices += ids.len() as u64;
+                    windows += 1;
+                    if !*dry_run && !ids.is_empty() {
+                        requeued += self
+                            .db
+                            .unmark_projected_by_ids(&ids)
+                            .await
+                            .map_err(|e| e.to_string())?;
+                        stamped += self
+                            .db
+                            .stamp_stale_for_notices(&ids)
+                            .await
+                            .map_err(|e| e.to_string())?;
+                    }
+                    after = through;
+                }
+                Ok(format!(
+                    "refold-denied-schemes (issue 365 u6){}: {}, \
+                     {notices} notice(s) carry one over {windows} window(s); \
+                     re-queued {requeued}, stamped {stamped} tender(s) epoch-stale",
+                    if *dry_run { " DRY RUN — nothing written" } else { "" },
+                    schemes.join(","),
+                ))
+            })
+            .await,
+            Spec::RefoldNotices { notices } => {
+                let requeued =
+                    self.db.unmark_projected_by_ids(notices).await.map_err(|e| e.to_string())?;
+                let stamped =
+                    self.db.stamp_stale_for_notices(notices).await.map_err(|e| e.to_string())?;
+                // Report all three numbers, because their DIFFERENCES are the
+                // finding. Fewer re-queued than asked means some ids were unparsed,
+                // already re-queued, or simply do not exist — a typo'd id would
+                // otherwise vanish into a job that says "ok". Fewer stamped than
+                // re-queued means notices that never reached a Tender.
+                Ok(format!(
+                    "{} notice(s) named: re-queued {requeued}, stamped {stamped} tender(s)                      epoch-stale for the incremental fold",
+                    notices.len()
+                ))
+            }
+            Spec::RefoldFields { fields, expect, tables } => {
+                let refs: Vec<&str> = fields.iter().map(String::as_str).collect();
+                let table_refs: Option<Vec<&str>> =
+                    tables.as_ref().map(|t| t.iter().map(String::as_str).collect());
+                // Enumerate BEFORE writing (the sweep is the expensive step and is
+                // read-only), then gate on `expect` exactly like `refold`: a
+                // mistyped field id matching a far larger carrier set must abort
+                // while nothing has been written.
+                //
+                // Phased, because the sweep is a full walk of notice_texts and
+                // notice_amounts (46 min for 31.7 M notices on 2026-09-12) and the
+                // job view showed `phase: null` for all of it — an operator could not
+                // tell the read-only sweep from the re-queue that follows, and the
+                // cancel answer (issue 382) had nothing to name as in flight.
+                self.set_phase(
+                    "sweeping",
+                    None,
+                    None,
+                    format!(
+                        "carriers of {} field id(s): a full walk of {}, read-only (the [store] \
+                         field sweep lines in the journal count it)",
+                        refs.len(),
+                        match &table_refs {
+                            Some(t) => t.join(" + "),
+                            None => "every notice value table".to_owned(),
+                        }
+                    ),
+                );
+                let carriers = self
+                    .db
+                    .notice_ids_carrying_fields(&refs, table_refs.as_deref())
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let found = carriers.len() as u64;
+                if let Some(expect) = expect {
+                    let slack = expect / 4;
+                    if found.abs_diff(*expect) > slack {
+                        return Err(format!(
+                            "refold-fields aborted: {found} notices carry {fields:?}, expected \
+                             ~{expect} — check the field ids (nothing was written)"
+                        ));
+                    }
+                }
+                self.set_phase("re-queueing", Some(0), Some(found), "carriers un-marked".into());
+                let requeued =
+                    self.db.unmark_projected_by_ids(&carriers).await.map_err(|e| e.to_string())?;
+                // Same issue-179 pair as `refold`: requeue + scoped stale-stamp,
+                // both idempotent so a crashed job heals on re-run.
+                self.set_phase(
+                    "stamping",
+                    Some(requeued as u64),
+                    Some(found),
+                    "carriers re-queued; their tenders now stamped epoch-stale".into(),
+                );
+                let stamped =
+                    self.db.stamp_stale_for_notices(&carriers).await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "{found} carriers of {} field id(s): re-queued {requeued} notices, \
+                     stamped {stamped} tenders epoch-stale for the incremental fold",
+                    refs.len()
+                ))
+            }
+            _ => Err(misrouted(job, "run_maintenance_spec")),
+        }
+    }
+
+    /// `run_spec`'s family of the column backfills and the exchange-rate fetches. Issue 467:
+    /// one family per fn, reached through `off_frame`, so its poll frame holds only these arms'
+    /// locals.
+    async fn run_backfill_spec(&self, job: &Job) -> Result<String, String> {
+        match &job.spec {
             Spec::BackfillOrgNames => {
                 // The deadline backfill's shape (issue 42: bounded batches,
                 // TRUNCATE checkpoints), over organizations.
@@ -4671,6 +5121,183 @@ impl Supervisor {
                     totals.notices, totals.mentions, totals.written
                 ))
             }
+            Spec::FetchRates => {
+                // The ZIP, not the bare CSV: the bare
+                // `eurofxref-hist.csv` URL serves a frozen defective artifact
+                // (2010-02-12 rates plus one garbage row the CDN has pinned for
+                // sixteen years) while the zip at the same path carries the
+                // real live series. Issue 306.
+                const URL: &str = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.zip";
+                let period = store::rates::civil_date(store::now_unix());
+                let target = fetch::Target {
+                    source: "ecb",
+                    kind: "rates",
+                    period: period.clone(),
+                    url: URL.to_owned(),
+                    rel_path: format!("rates/eurofxref-hist-{period}.zip"),
+                };
+                // refetch=true: a same-day re-run re-downloads and lands as
+                // Unchanged when the content hash matches — the registry and the
+                // archived file are the durable record either way (ADR-0004).
+                let outcome = fetch::fetch(&self.db, &self.http, &self.archive, &target, true)
+                    .await
+                    .map_err(|e| format!("rates fetch: {e:?}"))?;
+                let row = self
+                    .db
+                    .latest_fetch("ecb", "rates", &period)
+                    .await
+                    .map_err(|e| e.to_string())?
+                    .ok_or_else(|| format!("rates fetch {outcome:?} but no registry row"))?;
+                let csv = package::zip_single_text(&self.archive.join(&row.path))
+                    .map_err(|e| format!("read archived rates zip {}: {e}", row.path))?;
+                let rows = store::rates::parse_ecb_history_csv(&csv);
+                if rows.is_empty() {
+                    return Err(format!(
+                        "rates csv parsed to ZERO rows ({} bytes) — format drift? nothing written",
+                        row.bytes
+                    ));
+                }
+                // The issue-306 tripwire: a live daily series whose newest row
+                // is stale means the SOURCE is defective — refuse before any
+                // write, so this failure mode is a red job, not silent NULLs.
+                store::rates::assert_fresh(&rows, &period, 10)?;
+                let seeded =
+                    self.db.seed_irrevocable_euro_rates().await.map_err(|e| e.to_string())?;
+                let total = rows.len();
+                let mut upserted = 0u64;
+                for (i, chunk) in rows.chunks(50_000).enumerate() {
+                    upserted +=
+                        self.db.upsert_currency_rates(chunk).await.map_err(|e| e.to_string())?;
+                    self.set_phase(
+                        "loading",
+                        Some(upserted),
+                        Some(total as u64),
+                        format!("chunk {} upserted", i + 1),
+                    );
+                    if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                        eprintln!("supervisor: checkpoint after rates chunk: {e}");
+                    }
+                }
+                // REPLACE can only overwrite, never remove: a poisoned stored
+                // row on a date the real file doesn't have (the garbage Sunday
+                // 2010-02-14 row) would survive every re-fetch. The file is the
+                // authority for its own source — delete what it disowns.
+                let removed = self
+                    .db
+                    .reconcile_currency_dates("ecb", &rows)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                // The running process folds with an in-memory snapshot — refresh
+                // it so the NEXT projection uses what was just loaded.
+                let cached = self.db.reload_rates_lookup().await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "rates: {upserted} daily rows upserted from {period} ({:?}, {} bytes) + \
+                     {seeded} irrevocable conversion rates seeded; {removed} stale rows \
+                     reconciled away; {cached} rows cached",
+                    outcome, row.bytes
+                ))
+            }
+            Spec::FetchRatesEcu => {
+                // Eurostat splits the official daily ECU series in two: the
+                // former euro-area national currencies (DEM/FRF/ITL/… — the
+                // ones pre-1999 tenders actually publish in) live in
+                // `ert_h_eur_d`, everything else (GBP/DKK/USD/SEK/…) in
+                // `ert_bil_eur_d`. Both verified 2026-08-27: daily back to
+                // 1974, OBS_VALUE = national units per 1 ECU (DEM closes
+                // 1998-12-31 on the irrevocable 1.95583 exactly), CC BY 4.0,
+                // no key. `endPeriod` caps at 1998-12-31 in the URL, and the
+                // loader re-filters below, because from 1999 the ECB series is
+                // the authority and the two must not overlap.
+                const BASE: &str = "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data";
+                const RANGE: &str = "format=SDMX-CSV&startPeriod=1993-01-01&endPeriod=1998-12-31";
+                let datasets =
+                    [("ert_h_eur_d", "rates-ecu-h"), ("ert_bil_eur_d", "rates-ecu-bil")];
+                let mut upserted = 0u64;
+                let mut summary = Vec::new();
+                let mut all_rows = Vec::new();
+                for (dataset, kind) in datasets {
+                    let target = fetch::Target {
+                        source: "eurostat",
+                        kind,
+                        period: "1993-1998".to_owned(),
+                        url: format!("{BASE}/{dataset}?{RANGE}"),
+                        rel_path: format!("rates/ecu-{dataset}-1993-1998.csv"),
+                    };
+                    let outcome = fetch::fetch(&self.db, &self.http, &self.archive, &target, true)
+                        .await
+                        .map_err(|e| format!("{dataset} fetch: {e:?}"))?;
+                    let row = self
+                        .db
+                        .latest_fetch("eurostat", kind, "1993-1998")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| format!("{dataset} fetch {outcome:?} but no registry row"))?;
+                    let csv = std::fs::read_to_string(self.archive.join(&row.path))
+                        .map_err(|e| format!("read archived {dataset} csv {}: {e}", row.path))?;
+                    let rows: Vec<_> = store::rates::parse_eurostat_sdmx_csv(&csv)
+                        .into_iter()
+                        .filter(|(_, date, _, _)| date.as_str() < "1999-01-01")
+                        .collect();
+                    if rows.is_empty() {
+                        return Err(format!(
+                            "{dataset} parsed to ZERO rows ({} bytes) — format drift? nothing \
+                             written",
+                            row.bytes
+                        ));
+                    }
+                    // The issue-306 guard, closed-series form: this series ENDS
+                    // 1998-12-31 (the euro replaced the ECU), so freshness means
+                    // coverage reaches December 1998, not today. A file stopping
+                    // earlier is truncated/defective — refuse before writing.
+                    let newest = store::rates::newest_date(&rows).unwrap_or("").to_owned();
+                    if newest.as_str() < "1998-12-01" {
+                        return Err(format!(
+                            "{dataset} coverage ends {newest} — the closed ECU series must \
+                             reach 1998-12; truncated or defective file, nothing written \
+                             (issue 306)"
+                        ));
+                    }
+                    let total = rows.len();
+                    for (i, chunk) in rows.chunks(50_000).enumerate() {
+                        upserted +=
+                            self.db.upsert_currency_rates(chunk).await.map_err(|e| e.to_string())?;
+                        self.set_phase(
+                            "loading",
+                            Some(upserted),
+                            None,
+                            format!("{dataset} chunk {} upserted", i + 1),
+                        );
+                        if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                            eprintln!("supervisor: checkpoint after ecu rates chunk: {e}");
+                        }
+                    }
+                    summary.push(format!("{dataset}: {total} rows ({:?}, {} bytes)", outcome, row.bytes));
+                    all_rows.extend(rows);
+                }
+                // Reconcile against the UNION of both datasets — they share the
+                // 'eurostat-ecu' source tag, so either file alone would disown
+                // the other's dates (issue 306's REPLACE-can't-delete lesson).
+                let removed = self
+                    .db
+                    .reconcile_currency_dates("eurostat-ecu", &all_rows)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let cached = self.db.reload_rates_lookup().await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "ecu rates 1993-1998: {upserted} rows upserted — {}; {removed} stale rows \
+                     reconciled away; {cached} rows cached",
+                    summary.join("; ")
+                ))
+            }
+            _ => Err(misrouted(job, "run_backfill_spec")),
+        }
+    }
+
+    /// `run_spec`'s family of the dry/wet repairs of organisation rows, instants, identifiers
+    /// and countries. Issue 467: one family per fn, reached through `off_frame`, so its poll
+    /// frame holds only these arms' locals.
+    async fn run_repair_spec(&self, job: &Job) -> Result<String, String> {
+        match &job.spec {
             Spec::RepairNestedOrgs { dry_run } => {
                 let dry_run = *dry_run;
                 let mut totals = store::NestedOrgRepair::default();
@@ -4792,6 +5419,1196 @@ impl Supervisor {
                     totals.tender_changes
                 ))
             }
+            Spec::RepairMintedCountries { dry_run } => {
+                let dry_run = *dry_run;
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    if dry_run { "planning" } else { "repairing" },
+                    None,
+                    None,
+                    "issue 325: re-parsing the standing vat rows".to_owned(),
+                );
+                // The T4 ladder: a wet run executes the plan a person read.
+                let expect_rows = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("minted-country-repair")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "no stored minted-country-repair plan — run the dry pass first"
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    if v["dry_run"] != serde_json::Value::Bool(true) {
+                        return Err("the stored minted-country-repair report is from a WET \
+                                    run, not a reviewed plan — run the dry pass again"
+                            .to_owned());
+                    }
+                    Some(
+                        v["rows"]
+                            .as_u64()
+                            .ok_or_else(|| "minted-country-repair plan lacks rows")?,
+                    )
+                };
+                let r = self
+                    .db
+                    .repair_minted_countries(
+                        |value, country| {
+                            ingest::project::normalise_identifier(value, country)
+                                .map(|id| (id.kind, id.country))
+                        },
+                        dry_run,
+                        expect_rows,
+                        &stop,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped && dry_run {
+                    return Ok("repair-minted-countries STOPPED by cancel — nothing planned"
+                        .to_owned());
+                }
+                let now = store::now_unix();
+                // The plan is the review artifact AND the record of what a wet
+                // run did, so it is stored either way — capped for the report,
+                // counted in full above it.
+                const PLAN_CAP: usize = 400;
+                let body = serde_json::json!({
+                    "dry_run": dry_run,
+                    "walked": r.walked,
+                    "rows": r.rows,
+                    "ambiguous": r.ambiguous,
+                    "no_mention_country": r.no_mention_country,
+                    "now_refused": r.now_refused,
+                    "collisions": r.collisions,
+                    "applied": r.applied,
+                    "skipped_moved": r.skipped_moved,
+                    "stopped": r.stopped,
+                    "plan_truncated": r.plan.len() > PLAN_CAP,
+                    "plan": r.plan.iter().take(PLAN_CAP).map(|f| serde_json::json!({
+                        "org": f.org,
+                        "identifier": f.identifier,
+                        "from": {"kind": f.from_kind, "country": f.from_country},
+                        "to": {"kind": f.to_kind, "country": f.to_country},
+                        "mention_country": f.mention_country,
+                        "mentions": f.mentions,
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("minted-country-repair", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "repair-minted-countries (issue 325 step 4, {}): {} kind='vat' row(s) \
+                     re-parsed. {} disagree with what the parser now says and are planned; \
+                     {} left alone because their own mentions name more than one country, \
+                     {} because no mention names an alpha-2 country at all, and {} because \
+                     the value is now refused outright (counted, never stripped — issue \
+                     312). {} planned target(s) would leave one (country, kind, identifier) \
+                     held by more than one row: that is the R2 merge arm's work and reaching \
+                     it is the point, not a blocker.{}",
+                    if dry_run { "DRY" } else { "WET" },
+                    r.walked,
+                    r.rows,
+                    r.ambiguous,
+                    r.no_mention_country,
+                    r.now_refused,
+                    r.collisions,
+                    if dry_run {
+                        String::new()
+                    } else {
+                        format!(
+                            " APPLIED {}, skipped {} whose row moved under the plan.{}",
+                            r.applied,
+                            r.skipped_moved,
+                            if r.stopped { " STOPPED by cancel — the committed prefix stands." } else { "" }
+                        )
+                    }
+                ))
+            }
+            // Boxed for the reason CLAUDE.md gives: `run_spec` is one 60-plus-arm
+            // async match, so every arm's locals share ONE future's frame, and a
+            // fat arm has aborted an unrelated test with a stack overflow.
+            Spec::RepairNoticeInstants { dry_run } => Box::pin(async move {
+                let dry_run = *dry_run;
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    if dry_run { "planning" } else { "repairing" },
+                    None,
+                    None,
+                    "issue 367: re-deriving each parsed notice's publication and dispatch \
+                     instants from its own stored parse"
+                        .to_owned(),
+                );
+                let expect_rows = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("notice-instant-repair")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "no stored notice-instant-repair plan — run the dry pass first"
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    if v["dry_run"] != serde_json::Value::Bool(true) {
+                        return Err("the stored notice-instant-repair report is from a WET run, \
+                                    not a reviewed plan — run the dry pass again"
+                            .to_owned());
+                    }
+                    Some(v["rows"].as_u64().ok_or_else(|| "plan lacks rows")?)
+                };
+                let r = self
+                    .db
+                    .repair_notice_instants(
+                        ingest::project::INSTANT_DATE_FIELDS,
+                        ingest::project::notice_stamps,
+                        dry_run,
+                        expect_rows,
+                        &stop,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped && dry_run {
+                    return Ok(
+                        "repair-notice-instants STOPPED by cancel — nothing planned".to_owned()
+                    );
+                }
+                let now = store::now_unix();
+                const PLAN_CAP: usize = 400;
+                let body = serde_json::json!({
+                    "dry_run": dry_run,
+                    "walked": r.walked,
+                    "agree": r.agree,
+                    "rows": r.rows,
+                    "epoch_published": r.epoch_published,
+                    "null_published": r.null_published,
+                    "resolver_silent": r.resolver_silent,
+                    "by_profile": r.by_profile.iter().map(|(profile, rows)| serde_json::json!({
+                        "profile": profile, "rows": rows,
+                    })).collect::<Vec<_>>(),
+                    "unstamped": r.unstamped,
+                    "shifted": r.shifted,
+                    "stamped": r.stamped,
+                    "applied": r.applied,
+                    "skipped_moved": r.skipped_moved,
+                    "stopped": r.stopped,
+                    "plan_truncated": r.plan.len() > PLAN_CAP,
+                    "plan": r.plan.iter().take(PLAN_CAP).map(|f| {
+                        let stamp = |s: Option<store::Stamp>| s.map(|s| serde_json::json!({
+                            "utc_seconds": s.utc_seconds,
+                            "offset_minutes": s.offset_minutes,
+                            "has_time": s.has_time,
+                        }));
+                        serde_json::json!({
+                            "notice": f.notice,
+                            "profile": f.profile,
+                            "from": {"published_at": f.from_published,
+                                     "dispatched_at": f.from_dispatched},
+                            "to": {"published_at": stamp(f.to_published),
+                                   "dispatched_at": stamp(f.to_dispatched)},
+                        })
+                    }).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("notice-instant-repair", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let profiles = r
+                    .by_profile
+                    .iter()
+                    .map(|(p, n)| format!("{p} {n}"))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                Ok(format!(
+                    "repair-notice-instants (issue 367, {}): {} parsed notice(s) walked, {} \
+                     already agree with the resolver, {} agree on the instants but lack the \
+                     offset/precision pair (unit 3) and {} carry a date-only instant at local \
+                     midnight that moves to its civil midnight (issue 418) — both mechanical, \
+                     written as walked, no plan needed{}. \
+                     {} planned — {} stamped the epoch (1970-01-01, the flattened not-found), \
+                     {} NULL while the parse states a date, {} whose parse states NO date and \
+                     whose stored value is therefore REMOVED. By profile: [{}]. The versions \
+                     are untouched: they read the pair off their notice, and nothing is \
+                     re-projected.{}",
+                    if dry_run { "DRY" } else { "WET" },
+                    r.walked,
+                    r.agree,
+                    r.unstamped,
+                    r.shifted,
+                    if dry_run { String::new() } else { format!("; {} written", r.stamped) },
+                    r.rows,
+                    r.epoch_published,
+                    r.null_published,
+                    r.resolver_silent,
+                    if profiles.is_empty() { "none".to_owned() } else { profiles },
+                    if dry_run {
+                        String::new()
+                    } else {
+                        format!(
+                            " APPLIED {}, skipped {} whose row moved under the plan.{}",
+                            r.applied,
+                            r.skipped_moved,
+                            if r.stopped {
+                                " STOPPED by cancel — the committed prefix stands."
+                            } else {
+                                ""
+                            }
+                        )
+                    }
+                ))
+            })
+            .await,
+            Spec::RepairVersionInstants { dry_run } => Box::pin(async move {
+                let dry_run = *dry_run;
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    if dry_run { "counting" } else { "repairing" },
+                    None,
+                    None,
+                    "issue 418: moving each version's publication and dispatch instants onto \
+                     its notice's, and re-deriving the head column"
+                        .to_owned(),
+                );
+                let expect_moved = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("version-instant-repair")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "no stored version-instant-repair count — run the dry pass first"
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    if v["dry_run"] != serde_json::Value::Bool(true) {
+                        return Err("the stored version-instant-repair report is from a WET run, \
+                                    not a reviewed count — run the dry pass again"
+                            .to_owned());
+                    }
+                    Some(v["moved"].as_u64().ok_or_else(|| "report lacks moved")?)
+                };
+                let r = self
+                    .db
+                    .repair_version_instants(dry_run, expect_moved, &stop)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped && dry_run {
+                    return Ok(
+                        "repair-version-instants STOPPED by cancel — nothing counted".to_owned()
+                    );
+                }
+                let now = store::now_unix();
+                let body = serde_json::json!({
+                    "dry_run": dry_run,
+                    "walked": r.walked,
+                    "notice_unstamped": r.notice_unstamped,
+                    "agree": r.agree,
+                    "moved": r.moved,
+                    "applied": r.applied,
+                    "skipped_moved": r.skipped_moved,
+                    "heads_recomputed": r.heads_recomputed,
+                    "stopped": r.stopped,
+                })
+                .to_string();
+                self.db
+                    .put_report("version-instant-repair", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "repair-version-instants (issue 418 unit 2b, {}): {} version(s) walked, {} \
+                     already say what their notice says, {} follow their notice{}. {} sit \
+                     behind a notice that carries no pair yet — {}.{}",
+                    if dry_run { "DRY" } else { "WET" },
+                    r.walked,
+                    r.agree,
+                    r.moved,
+                    if dry_run {
+                        String::new()
+                    } else {
+                        format!(
+                            " — {} written, {} tender head column(s) re-derived, {} skipped \
+                             because the row moved under the walk",
+                            r.applied, r.heads_recomputed, r.skipped_moved
+                        )
+                    },
+                    r.notice_unstamped,
+                    if r.notice_unstamped == 0 {
+                        "the notice repair has covered the corpus"
+                    } else {
+                        "run repair-notice-instants (wet) first, then this again"
+                    },
+                    if r.stopped { " STOPPED by cancel — the committed prefix stands." } else { "" }
+                ))
+            })
+            .await,
+            Spec::RepairRenormalisedIdentifiers { dry_run } => Box::pin(async move {
+                let dry_run = *dry_run;
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    if dry_run { "planning" } else { "repairing" },
+                    None,
+                    None,
+                    "issue 345: re-parsing published identifier strings through the live normaliser"
+                        .to_owned(),
+                );
+                let expect_rows = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("renormalise-repair")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| "no stored renormalise-repair plan — run the dry pass first")?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    if v["dry_run"] != serde_json::Value::Bool(true) {
+                        return Err("the stored renormalise-repair report is from a WET run, not a \
+                                    reviewed plan — run the dry pass again"
+                            .to_owned());
+                    }
+                    Some(v["rows"].as_u64().ok_or_else(|| "plan lacks rows")?)
+                };
+                let r = self
+                    .db
+                    .repair_renormalised_identifiers(
+                        |value, country| {
+                            ingest::project::normalise_identifier_before_folds(value, country)
+                                .map(|id| (id.kind, id.country, id.value))
+                        },
+                        |value, country| {
+                            ingest::project::normalise_identifier(value, country)
+                                .map(|id| (id.kind, id.country, id.value))
+                        },
+                        dry_run,
+                        expect_rows,
+                        &stop,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped && dry_run {
+                    return Ok("repair-renormalised-identifiers STOPPED by cancel — nothing planned"
+                        .to_owned());
+                }
+                let now = store::now_unix();
+                const PLAN_CAP: usize = 400;
+                let body = serde_json::json!({
+                    "dry_run": dry_run,
+                    "walked": r.walked,
+                    "witnessed": r.witnessed,
+                    "unexplained": r.unexplained,
+                    "now_refused": r.now_refused,
+                    "already_clean": r.already_clean,
+                    "rows": r.rows,
+                    "reunions": r.reunions,
+                    "applied": r.applied,
+                    "skipped_moved": r.skipped_moved,
+                    "stopped": r.stopped,
+                    "plan_truncated": r.plan.len() > PLAN_CAP,
+                    "plan": r.plan.iter().take(PLAN_CAP).map(|f| serde_json::json!({
+                        "org": f.org,
+                        "from": {"identifier": f.from_identifier, "kind": f.from_kind,
+                                 "country": f.from_country},
+                        "to": {"identifier": f.to_identifier, "kind": f.to_kind,
+                               "country": f.to_country},
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("renormalise-repair", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "repair-renormalised-identifiers (issue 345, {}): {} identifier-bearing row(s) \
+                     walked, {} witnessed by a published string the pre-fold rules reproduce, {} \
+                     unexplained (merged-in mentions only) and left standing. {} planned; {} \
+                     witnesses the live gate now refuses (left standing); {} already agree with \
+                     the live re-parse. {} planned row(s) land on an identity that ALREADY \
+                     stands — R2 folds those whose scheme has a cross-walk arm.{}",
+                    if dry_run { "DRY" } else { "WET" },
+                    r.walked,
+                    r.witnessed,
+                    r.unexplained,
+                    r.rows,
+                    r.now_refused,
+                    r.already_clean,
+                    r.reunions,
+                    if dry_run {
+                        String::new()
+                    } else {
+                        format!(" Applied {} ({} skipped: moved since the plan).", r.applied, r.skipped_moved)
+                    },
+                ))
+            })
+            .await,
+            Spec::RepairLabelPrefixes { dry_run } => {
+                let dry_run = *dry_run;
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    if dry_run { "planning" } else { "repairing" },
+                    None,
+                    None,
+                    "issue 328: stripping publisher labels off identifiers".to_owned(),
+                );
+                let expect_rows = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("label-prefix-repair")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "no stored label-prefix-repair plan — run the dry pass first"
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    if v["dry_run"] != serde_json::Value::Bool(true) {
+                        return Err("the stored label-prefix-repair report is from a WET run, \
+                                    not a reviewed plan — run the dry pass again"
+                            .to_owned());
+                    }
+                    Some(v["rows"].as_u64().ok_or_else(|| "plan lacks rows")?)
+                };
+                let r = self
+                    .db
+                    .repair_label_prefixes(
+                        ingest::countries::label_prefix_stripped,
+                        |value, country| {
+                            ingest::project::normalise_identifier(value, country)
+                                .map(|id| (id.kind, id.country, id.value))
+                        },
+                        dry_run,
+                        expect_rows,
+                        &stop,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped && dry_run {
+                    return Ok("repair-label-prefixes STOPPED by cancel — nothing planned"
+                        .to_owned());
+                }
+                let now = store::now_unix();
+                const PLAN_CAP: usize = 400;
+                let body = serde_json::json!({
+                    "dry_run": dry_run,
+                    "labelled": r.labelled,
+                    "now_refused": r.now_refused,
+                    "already_clean": r.already_clean,
+                    "rows": r.rows,
+                    "reunions": r.reunions,
+                    "applied": r.applied,
+                    "skipped_moved": r.skipped_moved,
+                    "stopped": r.stopped,
+                    "plan_truncated": r.plan.len() > PLAN_CAP,
+                    "plan": r.plan.iter().take(PLAN_CAP).map(|f| serde_json::json!({
+                        "org": f.org,
+                        "from": {"identifier": f.from_identifier, "kind": f.from_kind,
+                                 "country": f.from_country},
+                        "to": {"identifier": f.to_identifier, "kind": f.to_kind,
+                               "country": f.to_country},
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("label-prefix-repair", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "repair-label-prefixes (issue 328, {}): {} row(s) carry a publisher label. \
+                     {} planned; {} left standing as published because the remainder \
+                     classified as nothing (a bare field name, or a value the gate refuses), \
+                     and {} already agree with the re-parse. {} planned row(s) land on an \
+                     identity that ALREADY stands. NOTE: for the German class that is NOT a \
+                     merge R2 will perform — `crosswalk::canonical_key` has no DE arm at all \
+                     (\"court-scoped registers\", a pinned negative), so those rows become \
+                     visible exact duplicates rather than folded ones.{} The published string \
+                     is untouched either way: it stays in \
+                     organization_mentions.raw_identifier.",
+                    if dry_run { "DRY" } else { "WET" },
+                    r.labelled,
+                    r.rows,
+                    r.now_refused,
+                    r.already_clean,
+                    r.reunions,
+                    if dry_run {
+                        String::new()
+                    } else {
+                        format!(
+                            " APPLIED {}, skipped {} whose row moved under the plan.{}",
+                            r.applied,
+                            r.skipped_moved,
+                            if r.stopped { " STOPPED by cancel — the committed prefix stands." } else { "" }
+                        )
+                    }
+                ))
+            }
+            Spec::RepairCountryTypos { dry_run } => {
+                let dry_run = *dry_run;
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    if dry_run { "planning" } else { "repairing" },
+                    None,
+                    None,
+                    "issue 326: moving rows a decisive anchor names".to_owned(),
+                );
+                let expect_rows = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("country-typo-repair")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "no stored country-typo-repair plan — run the dry pass first"
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    if v["dry_run"] != serde_json::Value::Bool(true) {
+                        return Err("the stored country-typo-repair report is from a WET run, \
+                                    not a reviewed plan — run the dry pass again"
+                            .to_owned());
+                    }
+                    Some(v["rows"].as_u64().ok_or_else(|| "plan lacks rows")?)
+                };
+                let r = self
+                    .db
+                    .repair_country_typos(
+                        ingest::idgate::census_anchors,
+                        ingest::idgate::census_vocabulary,
+                        ingest::countries::one_letter_apart,
+                        ingest::countries::is_operational_footprint,
+                        dry_run,
+                        expect_rows,
+                        &stop,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped && dry_run {
+                    return Ok("repair-country-typos STOPPED by cancel — nothing planned"
+                        .to_owned());
+                }
+                let now = store::now_unix();
+                const PLAN_CAP: usize = 400;
+                let body = serde_json::json!({
+                    "dry_run": dry_run,
+                    "clusters_considered": r.clusters_considered,
+                    "decisive": r.decisive,
+                    "left_unmoved": r.left_unmoved,
+                    "rows": r.rows,
+                    "from_asked_and_refused": r.from_asked_and_refused,
+                    "from_never_asked": r.from_never_asked,
+                    "refused_row_has_standing": r.refused_row_has_standing,
+                    "refused_luhn_only": r.refused_luhn_only,
+                    "applied": r.applied,
+                    "skipped_moved": r.skipped_moved,
+                    "stopped": r.stopped,
+                    "plan_truncated": r.moves.len() > PLAN_CAP,
+                    "plan": r.moves.iter().take(PLAN_CAP).map(|m| serde_json::json!({
+                        "identifier": m.identifier,
+                        "from": m.from, "to": m.to,
+                        "mentions": m.mentions,
+                        "codes": m.codes,
+                        "names": m.names,
+                        "from_asked_and_refused": m.from_asked_and_refused,
+                        "by_scheme": m.by_scheme,
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("country-typo-repair", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "repair-country-typos (issue 326 step 2, {}): {} cluster(s) walked, {} \
+                     decisive (the evidence names exactly one of the cluster's own codes). \
+                     {} row(s) planned to move; {} left alone because their code is NOT one \
+                     letter from the survivor — they share the identifier and nothing more, \
+                     and a checksum elsewhere is no reason to rewrite a published country. \
+                     Of the planned moves {} abandon a country that WAS tested and refused \
+                     the value, and {} abandon one no scheme covers at this shape — the \
+                     second half rests on the survivor's anchor alone and is where the dry \
+                     run's false positives were found. REFUSED: {} row(s) carry {} mentions \
+                     or more under their own country — real standing, so probably a real \
+                     registration and not a slip — and {} cluster(s) are named only by a bare \
+                     Luhn, which carries no country information at all.{} \
+                     EVERY move lands on an identity the survivor already holds, ON PURPOSE: \
+                     run match-org-identifiers --r2 afterwards to fold them.",
+                    if dry_run { "DRY" } else { "WET" },
+                    r.clusters_considered,
+                    r.decisive,
+                    r.rows,
+                    r.left_unmoved,
+                    r.from_asked_and_refused,
+                    r.from_never_asked,
+                    r.refused_row_has_standing,
+                    store::TYPO_MOVE_MENTION_VETO,
+                    r.refused_luhn_only,
+                    if dry_run {
+                        String::new()
+                    } else {
+                        format!(
+                            " APPLIED {}, skipped {} whose row moved under the plan.{}",
+                            r.applied,
+                            r.skipped_moved,
+                            if r.stopped { " STOPPED by cancel — the committed prefix stands." } else { "" }
+                        )
+                    }
+                ))
+            }
+            _ => Err(misrouted(job, "run_repair_spec")),
+        }
+    }
+
+    /// `run_spec`'s family of the provisional-organisation folds and merges, and the
+    /// orphan-satellite drop and restore. Issue 467: one family per fn, reached through
+    /// `off_frame`, so its poll frame holds only these arms' locals.
+    async fn run_provisional_spec(&self, job: &Job) -> Result<String, String> {
+        match &job.spec {
+            Spec::DropOrphanSatellites { dry_run } => {
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                let dry_run = *dry_run;
+                self.set_phase(
+                    if dry_run { "planning" } else { "dropping" },
+                    None,
+                    None,
+                    "issue 321: orphaned name variants on re-homing origins".to_owned(),
+                );
+                // The wet arm reads the plan the dry arm recorded and compares
+                // it as tuples. No plan on record is not a reason to guess:
+                // a wet run without one is refused, because the parity check
+                // is half of what makes this safe.
+                let plan: Option<Vec<(i64, String, String, Option<i64>)>> = if dry_run {
+                    None
+                } else {
+                    let stored = self
+                        .db
+                        .latest_report("drop-orphan-satellites")
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    // A refusal is a FAILED job, not a green one. Both of
+                    // these mean "I would not do the thing you asked", and a
+                    // run that renders green in /admin/jobs while having
+                    // written nothing is how an operator concludes the
+                    // campaign is done.
+                    let Some((body, _)) = stored else {
+                        eprintln!(
+                            "[drop-orphan-satellites] REFUSED: no dry plan on record"
+                        );
+                        return Err("drop-orphan-satellites --wet REFUSED: no dry plan on \
+                                    record. Run the dry pass first — the tuple parity between \
+                                    plan and run is half of what makes this safe."
+                            .to_owned());
+                    };
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    Some(
+                        v["rows"]
+                            .as_array()
+                            .map(|a| a.as_slice())
+                            .unwrap_or_default()
+                            .iter()
+                            .filter_map(|r| {
+                                Some((
+                                    r["org"].as_i64()?,
+                                    r["lang"].as_str()?.to_owned(),
+                                    r["key"].as_str()?.to_owned(),
+                                    // The destination the plan was reviewed
+                                    // against. The dry report already carries
+                                    // it; leaving it out of the tuple let a
+                                    // plan pass parity while pointing
+                                    // somewhere else entirely.
+                                    r["target"].as_i64(),
+                                ))
+                            })
+                            .collect(),
+                    )
+                };
+                let now = store::now_unix();
+                let r = self
+                    .db
+                    .drop_orphan_satellites(
+                        ingest::project::match_norm,
+                        dry_run,
+                        plan.as_deref(),
+                        Some(job_id as i64),
+                        now,
+                        &stop,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok(
+                        "drop-orphan-satellites STOPPED by cancel — nothing written".to_owned()
+                    );
+                }
+                if r.no_plan {
+                    eprintln!("[drop-orphan-satellites] REFUSED: no plan reached the store");
+                    return Err("drop-orphan-satellites --wet REFUSED by the store: no dry \
+                                plan was supplied. The tuple parity between plan and run is \
+                                half of what makes this safe."
+                        .to_owned());
+                }
+                if r.drifted {
+                    eprintln!(
+                        "[drop-orphan-satellites] REFUSED: plan drift, {} added / {} gone",
+                        r.plan_added.len(),
+                        r.plan_removed.len()
+                    );
+                    return Err(format!(
+                        "drop-orphan-satellites --wet REFUSED: the plan drifted. {} tuple(s) \
+                         appeared since the dry run and {} went away — first added {:?}, first \
+                         gone {:?}. Re-run the dry pass and read it before the wet one; a \
+                         count would not have shown this.",
+                        r.plan_added.len(),
+                        r.plan_removed.len(),
+                        r.plan_added.first(),
+                        r.plan_removed.first(),
+                    ));
+                }
+                if dry_run {
+                    let body = serde_json::json!({
+                        "candidates": r.candidates,
+                        "rows": r.rows.iter().map(|o| serde_json::json!({
+                            "org": o.org, "org_name": o.org_name, "lang": o.lang,
+                            "name": o.name, "key": o.key,
+                            "target": o.target, "target_name": o.target_name,
+                        })).collect::<Vec<_>>(),
+                    })
+                    .to_string();
+                    self.db
+                        .put_report("drop-orphan-satellites", &body, now)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    return Ok(format!(
+                        "drop-orphan-satellites DRY (issue 321): {} variant(s) would be \
+                         dropped — each unsupported by any mention on its org, not that \
+                         org's own head name, and already standing on a row the org \
+                         re-homed to. Plan recorded; the wet arm compares against it as \
+                         (org, lang, key, destination) tuples — the destination is in the \
+                         tuple because an origin's verdicts can name several, and a plan \
+                         reviewed against one must not run against another.",
+                        r.candidates
+                    ));
+                }
+                if r.cancelled {
+                    return Ok(format!(
+                        "drop-orphan-satellites WET CANCELLED PART-WAY (issue 321): {} of {} \
+                         candidate(s) were dropped and are COMMITTED, each with its pre-image \
+                         in org_name_drops; {} skipped on the re-check; the rest were never \
+                         attempted. This is a PARTIAL run — re-run the dry pass to see what \
+                         is left, or restore-dropped-satellites with job {} to undo it.",
+                        r.dropped, r.candidates, r.skipped_recheck, job_id
+                    ));
+                }
+                Ok(format!(
+                    "drop-orphan-satellites WET (issue 321): {} candidate(s) matched the \
+                     recorded plan exactly; dropped {}, skipped {} on the in-transaction \
+                     re-check. Pre-images in org_name_drops — restore-dropped-satellites \
+                     puts every one back. {} org_match_keys row(s) still carry a dropped \
+                     key; the next build-org-match-keys clears them.",
+                    r.candidates, r.dropped, r.skipped_recheck, r.stale_keys
+                ))
+            }
+            Spec::RestoreDroppedSatellites { dry_run, only_job } => {
+                let (dry_run, only_job) = (*dry_run, *only_job);
+                let now = store::now_unix();
+                let r = self
+                    .db
+                    .restore_dropped_satellites(dry_run, only_job, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "restore-dropped-satellites {} (issue 321{}): {} outstanding pre-image(s), \
+                     {} {}; {} left alone because something has since written that (org, lang), \
+                     {} superseded by a newer drop on the same slot, {} whose org no longer \
+                     exists. A restore never clobbers newer truth and never lets one \
+                     unrestorable row take the rest of the pass with it.",
+                    if dry_run { "DRY" } else { "WET" },
+                    match only_job {
+                        Some(j) => format!(", bounded to drop job {j}"),
+                        None => String::new(),
+                    },
+                    r.outstanding,
+                    if dry_run { r.rows.len() as u64 } else { r.restored },
+                    if dry_run { "would be restored" } else { "restored" },
+                    r.occupied,
+                    r.superseded,
+                    r.orphaned
+                ))
+            }
+            Spec::FoldProvisionalEchoes { dry_run, max_groups } => Box::pin(async move {
+                let dry_run = *dry_run;
+                // A wet run REQUIRES the recorded dry plan: the T4 parity
+                // input, and the ladder's guarantee that nothing folds
+                // un-previewed.
+                let expect_groups = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("provisional-echo-plan")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "no stored provisional-echo-plan — run the dry run first".to_owned()
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    Some(
+                        v["plan_groups"]
+                            .as_u64()
+                            .ok_or_else(|| "provisional-echo-plan lacks plan_groups".to_owned())?,
+                    )
+                };
+                // Issue 442: the wet loop deletes organizations with foreign keys ON.
+                if !dry_run {
+                    Box::pin(self.refuse_without_org_fk_indexes("fold-provisional-echoes")).await?;
+                }
+                self.set_phase(
+                    if dry_run { "planning" } else { "folding" },
+                    None,
+                    None,
+                    "issue 351: walking the provisional echo class".to_owned(),
+                );
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase(if dry_run { "planning" } else { "folding" }, Some(done), None, detail.to_owned());
+                };
+                let r = self
+                    .db
+                    .fold_provisional_echoes(store::ProvisionalFoldArgs {
+                        n2: ingest::project::match_norm,
+                        stoplist_cap: SCAN_STOPLIST_CAP,
+                        dry_run,
+                        max_groups: *max_groups,
+                        expect_groups,
+                        job_id: Some(job_id as i64),
+                        stop: &stop,
+                        progress: &progress,
+                    })
+                    .await
+                    .map_err(|e| e.to_string())?;
+                // A dry run records its plan; a wet run re-records the
+                // residual so a capped or stopped run continues under parity
+                // (the E0 arm's rule) — except a stop during planning, which
+                // computed nothing and must not clobber a reviewed plan.
+                // (Job 670's catch: a stop DURING planning can carry a partial
+                // plan_groups > 0 — the pages walked so far — so the guard is
+                // "nothing merged", which is true of every stop before the
+                // first committed transaction, not "nothing planned".)
+                if !(r.stopped && r.merged_groups == 0) {
+                    let now = store::now_unix();
+                    let plan = serde_json::json!({
+                        "plan_groups": r.plan_groups - r.merged_groups,
+                        "rows_walked": r.rows_walked, "groups": r.groups,
+                        "over_wall": r.over_wall, "plan_rows": r.plan_rows,
+                        "tiers": r.tiers,
+                        "over_wall_shapes": r.over_wall_shapes,
+                        "over_wall_shape_rows": r.over_wall_shape_rows,
+                        "over_wall_sample": r.over_wall_sample.iter().map(|(norm, name, rows, shape)| serde_json::json!({
+                            "name_norm": norm, "name": name, "rows": rows, "shape": shape,
+                        })).collect::<Vec<_>>(),
+                        "merged_this_run": r.merged_groups,
+                        "residual_of_wet_run": !dry_run,
+                        "listing_truncated": r.listing_truncated,
+                        "listing": r.listing.iter().map(|(norm, name, rows, keep)| serde_json::json!({
+                            "name_norm": norm, "name": name, "rows": rows, "keep_id": keep,
+                        })).collect::<Vec<_>>(),
+                    })
+                    .to_string();
+                    self.db
+                        .put_report("provisional-echo-plan", &plan, now)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                }
+                if r.stopped {
+                    // Mirrors the re-record guard: nothing merged, nothing re-recorded.
+                    return Ok(if r.merged_groups == 0 {
+                        format!(
+                            "fold-provisional-echoes STOPPED before the first fold: nothing was \
+                             written ({} plan groups seen so far), and the previously recorded \
+                             plan was left untouched",
+                            r.plan_groups
+                        )
+                    } else {
+                        format!(
+                            "fold-provisional-echoes STOPPED: {} of {} plan groups folded before the \
+                             stop; the residual plan was re-recorded",
+                            r.merged_groups, r.plan_groups
+                        )
+                    });
+                }
+                Ok(format!(
+                    "fold-provisional-echoes (issue 351){}: {} rows walked, {} names in more than one \
+                     row, {} left standing (tiers {:?}; over-wall shapes {:?}, rows {:?}); plan {} groups / {} rows; folded {} groups \
+                     ({} rows removed, {} mentions, {} parties, {} bid-parties, {} winners repointed, \
+                     {} winner dups deleted, {} tenders touched)",
+                    if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
+                    r.rows_walked,
+                    r.groups,
+                    r.over_wall,
+                    r.tiers,
+                    r.over_wall_shapes,
+                    r.over_wall_shape_rows,
+                    r.plan_groups,
+                    r.plan_rows,
+                    r.merged_groups,
+                    r.removed,
+                    r.mentions,
+                    r.parties,
+                    r.bid_parties,
+                    r.winners,
+                    r.winner_dups,
+                    r.tender_changes
+                ))
+            }).await,
+            Spec::RepairProvisionalNameNorm { dry_run, max_groups } => Box::pin(async move {
+                let dry_run = *dry_run;
+                // A wet run REQUIRES the recorded dry plan — the echo fold's
+                // contract: nothing folds un-previewed, and a corpus that moved
+                // under the plan aborts before the first write.
+                let (expect_groups, expect_rows) = if dry_run {
+                    (None, None)
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("provisional-name-norm-plan")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "no stored provisional-name-norm-plan — run the dry run first".to_owned()
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    let field = |k: &str| {
+                        v[k].as_u64()
+                            .ok_or_else(|| format!("provisional-name-norm-plan lacks {k}"))
+                    };
+                    (Some(field("groups")?), Some(field("rows")?))
+                };
+                let phase = if dry_run { "planning" } else { "repairing" };
+                // Issue 442: the wet loop deletes organizations with foreign keys ON.
+                if !dry_run {
+                    Box::pin(self.refuse_without_org_fk_indexes("repair-provisional-name-norm")).await?;
+                }
+                self.set_phase(
+                    phase,
+                    None,
+                    None,
+                    "issue 432: re-deriving the provisional reuse key".to_owned(),
+                );
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase(phase, Some(done), None, detail.to_owned());
+                };
+                // Boxed on top of the arm's own Box::pin: this store future
+                // nests the repair, its wet half and the shared fold loop, and
+                // held inline it made this arm's (unresumed, O0) state big
+                // enough to overflow `an_execute_without_an_expected_count_is_refused`
+                // — CLAUDE.md's run_spec trap, which the outer box alone did
+                // not clear.
+                let r = Box::pin(self.db.repair_provisional_name_norm(store::ProvisionalNameNormArgs {
+                    dry_run,
+                    max_groups: *max_groups,
+                    expect_groups,
+                    expect_rows,
+                    job_id: Some(job_id as i64),
+                    stop: &stop,
+                    progress: &progress,
+                }))
+                .await
+                .map_err(|e| e.to_string())?;
+                // The echo fold's re-record rule: a dry run records its plan, a
+                // wet run the residual (so a capped or stopped run continues
+                // under parity) — but a stop before anything was written
+                // computed a partial plan and must not clobber a reviewed one.
+                let wrote = r.merged_groups > 0 || r.rewritten > 0 || r.verdicts_moved > 0;
+                if !(r.stopped && !wrote) {
+                    let now = store::now_unix();
+                    let plan = serde_json::json!({
+                        "groups": r.groups - r.merged_groups,
+                        "rows": r.residual_rows,
+                        "rows_walked": r.rows_walked,
+                        "renormalised": r.renormalised,
+                        "renormalised_country_less": r.renormalised_country_less,
+                        "emptied": r.emptied,
+                        "group_rows": r.group_rows,
+                        "standing_twins": r.standing_twins,
+                        "fold_rows": r.fold_rows,
+                        "verdicts_rekeyed": r.verdicts_rekeyed - r.verdicts_moved,
+                        "verdict_conflicts": r.verdict_conflicts.iter().map(|(from, to)| serde_json::json!({
+                            "from": from, "to": to,
+                        })).collect::<Vec<_>>(),
+                        "merged_this_run": r.merged_groups,
+                        "rewritten_this_run": r.rewritten,
+                        "residual_of_wet_run": !dry_run,
+                        "listing_truncated": r.listing_truncated,
+                        "listing": r.listing.iter().map(|(key, country, name, rows, keep)| serde_json::json!({
+                            "name_norm": key, "country": country, "name": name, "rows": rows, "keep_id": keep,
+                        })).collect::<Vec<_>>(),
+                        "sample": r.sample.iter().map(|(id, name, from, to)| serde_json::json!({
+                            "id": id, "name": name, "from": from, "to": to,
+                        })).collect::<Vec<_>>(),
+                    })
+                    .to_string();
+                    self.db
+                        .put_report("provisional-name-norm-plan", &plan, now)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                }
+                if r.stopped && !wrote {
+                    return Ok(
+                        "repair-provisional-name-norm STOPPED before the first write: nothing was \
+                         written, and the previously recorded plan was left untouched"
+                            .to_owned(),
+                    );
+                }
+                Ok(format!(
+                    "repair-provisional-name-norm (issue 432){}: {} identifier-less rows walked, {} \
+                     keyed off org_name_norm ({} country-less — re-keyed, never folded here; {} to \
+                     the empty key); {} same-country collision groups over {} rows ({} already on \
+                     the corrected key), a fold removes {}; {} verdict key(s) to re-key ({} moved), \
+                     {} left standing on a conflict. Folded {} groups under rule p1 ({} rows removed, {} \
+                     mentions, {} parties, {} bid-parties, {} winners repointed, {} winner dups \
+                     deleted, {} tenders touched); {} name_norm rewritten{}; residual {} rows{}",
+                    if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
+                    r.rows_walked,
+                    r.renormalised,
+                    r.renormalised_country_less,
+                    r.emptied,
+                    r.groups,
+                    r.group_rows,
+                    r.standing_twins,
+                    r.fold_rows,
+                    r.verdicts_rekeyed,
+                    r.verdicts_moved,
+                    r.verdict_conflicts.len(),
+                    r.merged_groups,
+                    r.removed,
+                    r.mentions,
+                    r.parties,
+                    r.bid_parties,
+                    r.winners,
+                    r.winner_dups,
+                    r.tender_changes,
+                    r.rewritten,
+                    if !dry_run && max_groups.is_some() {
+                        " (capped run: the bulk re-key waits for an uncapped one)"
+                    } else {
+                        ""
+                    },
+                    r.residual_rows,
+                    if r.stopped { " — STOPPED; the residual plan was re-recorded" } else { "" },
+                ))
+            }).await,
+            Spec::MergeProvisionalOrgs { dry_run } => {
+                // The scan is one ordered pass over `organizations_name_country`;
+                // without that index (deferred, issues 62/111 — `reindex` builds it)
+                // every batch would sort the whole org table instead. Refuse with
+                // the remedy rather than grind.
+                let indexed = self
+                    .db
+                    .has_index("organizations_name_country")
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if !indexed {
+                    return Err("merge-provisional-orgs needs the organizations_name_country \
+                                index — run a `reindex` job first"
+                        .into());
+                }
+                let total = self.db.org_merge_scope_count().await.map_err(|e| e.to_string())? as u64;
+                let mut totals = store::OrgMergeBatch::default();
+                let mut scanned = 0u64;
+                let mut cursor = String::new();
+                let mut stopped = false;
+                loop {
+                    // A stop is honoured between batches: each batch is its own
+                    // committed transaction and merged groups leave the scan's
+                    // scope, so a restart from `''` redoes nothing (issue 252's
+                    // bar: the flag must be READ, and the log must say so).
+                    if self.cancelled(job.id) {
+                        stopped = true;
+                        break;
+                    }
+                    let b = self
+                        .db
+                        .merge_provisional_organizations_batch(ORG_MERGE_BATCH, &cursor, *dry_run)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    scanned += b.scanned;
+                    totals.groups += b.groups;
+                    totals.removed += b.removed;
+                    totals.mentions += b.mentions;
+                    totals.parties += b.parties;
+                    totals.bid_parties += b.bid_parties;
+                    totals.winners += b.winners;
+                    totals.winner_dups += b.winner_dups;
+                    totals.tender_changes += b.tender_changes;
+                    cursor = b.cursor.clone();
+                    self.update(|p| p.members_done = totals.removed);
+                    self.set_phase(
+                        "merging",
+                        Some(scanned),
+                        Some(total),
+                        format!(
+                            "cursor \"{}\"; {} group(s) collapsed, {} org(s) removed",
+                            cursor, totals.groups, totals.removed
+                        ),
+                    );
+                    if !dry_run {
+                        if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                            eprintln!("supervisor: checkpoint after org-merge batch: {e}");
+                        }
+                    }
+                    if b.done {
+                        break;
+                    }
+                }
+                let cancelled = if stopped { "CANCELLED at a checkpoint — " } else { "" };
+                let mode = if *dry_run { "org-merge dry run: would collapse" } else { "org merge: collapsed" };
+                Ok(format!(
+                    "{cancelled}{mode} {} duplicate group(s): {} provisional org(s) removed; \
+                     {} mention(s), {} party row(s), {} bid-party row(s), {} winner row(s) \
+                     repointed, {} duplicate winner row(s) dropped, {} tender change event(s)",
+                    totals.groups,
+                    totals.removed,
+                    totals.mentions,
+                    totals.parties,
+                    totals.bid_parties,
+                    totals.winners,
+                    totals.winner_dups,
+                    totals.tender_changes
+                ))
+            }
+            _ => Err(misrouted(job, "run_provisional_spec")),
+        }
+    }
+
+    /// `run_spec`'s family of `OrgMergeHealth` alone: at 400-plus lines it is a family of its
+    /// own. Issue 467: one family per fn, reached through `off_frame`, so its poll frame holds
+    /// only these arms' locals.
+    async fn run_org_merge_health_spec(&self, job: &Job) -> Result<String, String> {
+        match &job.spec {
             Spec::OrgMergeHealth => {
                 // Issue 300 Stage 0. Read-only: no transactions, no events, no
                 // checkpoints — the walk is ~58 batches over the 1.16M
@@ -5198,332 +7015,15 @@ impl Supervisor {
                     }
                 ))
             }
-            Spec::R2Census => {
-                // Issue 300 Stage 2, the opening census. Read-only preview of
-                // the R2 same-country merge: canonical keys over the whole
-                // identifier-bearing org layer, grouped in RAM (the B-ID
-                // block, §4.1) — measured BEFORE any merge code exists, the
-                // same discipline that sized Stage 1. Rides the org-merge-
-                // health walk; a stopped run stores nothing (issue 230's
-                // zero-lie bar).
-                use std::collections::HashMap;
-                #[derive(Default)]
-                struct Group {
-                    // E1 members as (org_id, is_vat_kind).
-                    e1: Vec<(i64, bool)>,
-                    // Pad-derived attachments (E2): counted, never merged.
-                    e2: u64,
-                }
-                let mut watermark = 0i64;
-                let mut scanned = 0u64;
-                let (mut keyed_e1, mut keyed_e2, mut unkeyed) = (0u64, 0u64, 0u64);
-                let (mut es_ute, mut cz699) = (0u64, 0u64);
-                let (mut null_country_keyed, mut prefix_contradictions) = (0u64, 0u64);
-                let mut groups: HashMap<(String, &'static str, String), Group> = HashMap::new();
-                loop {
-                    if self.cancelled(job.id) {
-                        return Ok("r2-census stopped by cancel — no report stored".to_owned());
-                    }
-                    let (rows, next) = self
-                        .db
-                        .org_merge_health_batch(ingest::project::match_norm, BACKFILL_BATCH, watermark)
-                        .await
-                        .map_err(|e| e.to_string())?;
-                    if rows.is_empty() {
-                        break;
-                    }
-                    for r in &rows {
-                        scanned += 1;
-                        let kind = r.kind.clone().unwrap_or_else(|| "national".into());
-                        let is_vat = kind == "vat";
-                        // Denial-class counters (the key fn returns None for
-                        // these; the census names them so the report shows
-                        // the walls working, not silent gaps).
-                        let norm: String = r
-                            .identifier
-                            .chars()
-                            .filter(char::is_ascii_alphanumeric)
-                            .map(|c| c.to_ascii_uppercase())
-                            .collect();
-                        if is_vat && norm.starts_with("CZ699") {
-                            cz699 += 1;
-                        }
-                        let es_body = if is_vat {
-                            norm.strip_prefix("ES")
-                        } else if r.country.as_deref() == Some("ES") {
-                            Some(norm.as_str())
-                        } else {
-                            None
-                        };
-                        if es_body.is_some_and(|b| b.starts_with('U')) {
-                            es_ute += 1;
-                        }
-                        let Some(k) = ingest::crosswalk::canonical_key(
-                            r.country.as_deref(),
-                            &kind,
-                            &r.identifier,
-                        ) else {
-                            unkeyed += 1;
-                            continue;
-                        };
-                        // R2 is SAME-COUNTRY: a NULL-country row's key is
-                        // Stage-3 (R3) material — counted, not grouped. A row
-                        // whose country contradicts its VAT prefix is an
-                        // anomaly — counted, not grouped (GR/EL fold applied).
-                        let Some(country) = r.country.as_deref() else {
-                            null_country_keyed += 1;
-                            continue;
-                        };
-                        let country = if country == "EL" { "GR" } else { country };
-                        if is_vat && !k.scheme.starts_with(country) {
-                            prefix_contradictions += 1;
-                            continue;
-                        }
-                        let g = groups
-                            .entry((country.to_owned(), k.scheme, k.key))
-                            .or_default();
-                        match k.tier {
-                            ingest::crosswalk::Tier::E1 => {
-                                keyed_e1 += 1;
-                                g.e1.push((r.org_id, is_vat));
-                            }
-                            ingest::crosswalk::Tier::E2 => {
-                                keyed_e2 += 1;
-                                g.e2 += 1;
-                            }
-                        }
-                    }
-                    watermark = next;
-                    self.set_phase(
-                        "censusing",
-                        Some(scanned),
-                        None,
-                        format!("{keyed_e1} E1-keyed, {} key groups", groups.len()),
-                    );
-                }
-                // Per-scheme tallies over the E1 groups.
-                #[derive(Default)]
-                struct SchemeStat {
-                    groups_ge2: u64,
-                    orgs_in_groups: u64,
-                    mixed_kind: u64,
-                    over_cap: u64,
-                    max_group: u64,
-                }
-                const GROUP_CAP: usize = 8;
-                let mut per_scheme: HashMap<&'static str, SchemeStat> = HashMap::new();
-                let (mut e2_attached, mut e2_orphan_keys) = (0u64, 0u64);
-                let mut sample: Vec<(&(String, &'static str, String), usize)> = Vec::new();
-                for (key, g) in &groups {
-                    if g.e2 > 0 {
-                        if g.e1.is_empty() {
-                            e2_orphan_keys += 1;
-                        } else {
-                            e2_attached += g.e2;
-                        }
-                    }
-                    if g.e1.len() < 2 {
-                        continue;
-                    }
-                    let s = per_scheme.entry(key.1).or_default();
-                    s.groups_ge2 += 1;
-                    s.orgs_in_groups += g.e1.len() as u64;
-                    s.max_group = s.max_group.max(g.e1.len() as u64);
-                    if g.e1.iter().any(|m| m.1) && g.e1.iter().any(|m| !m.1) {
-                        s.mixed_kind += 1;
-                    }
-                    if g.e1.len() > GROUP_CAP {
-                        s.over_cap += 1;
-                    }
-                    sample.push((key, g.e1.len()));
-                }
-                // The largest 30 groups become the report's inspection sample
-                // (the precision review's raw material).
-                sample.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(b.0)));
-                sample.truncate(30);
-                let sample_ids: Vec<i64> = sample
-                    .iter()
-                    .flat_map(|(k, _)| groups[*k].e1.iter().map(|m| m.0))
-                    .collect();
-                let meta =
-                    self.db.org_health_meta(&sample_ids).await.map_err(|e| e.to_string())?;
-                let by_id: HashMap<i64, _> = meta.into_iter().map(|m| (m.0, m)).collect();
-                let mut scheme_rows: Vec<(&str, SchemeStat)> = per_scheme.into_iter().collect();
-                scheme_rows.sort_by(|a, b| b.1.groups_ge2.cmp(&a.1.groups_ge2));
-                let (total_groups, total_orgs, total_mixed, total_over_cap) =
-                    scheme_rows.iter().fold((0u64, 0u64, 0u64, 0u64), |acc, (_, s)| {
-                        (
-                            acc.0 + s.groups_ge2,
-                            acc.1 + s.orgs_in_groups,
-                            acc.2 + s.mixed_kind,
-                            acc.3 + s.over_cap,
-                        )
-                    });
-                let now = store::now_unix();
-                let report = serde_json::json!({
-                    "scanned": scanned,
-                    "keyed_e1": keyed_e1, "keyed_e2": keyed_e2, "unkeyed": unkeyed,
-                    "groups_ge2": total_groups, "orgs_in_groups": total_orgs,
-                    "mixed_kind_groups": total_mixed, "over_cap_groups": total_over_cap,
-                    "e2_attached": e2_attached, "e2_orphan_keys": e2_orphan_keys,
-                    "null_country_keyed": null_country_keyed,
-                    "prefix_contradictions": prefix_contradictions,
-                    "denials": { "es_ute": es_ute, "cz699": cz699 },
-                    "group_cap": GROUP_CAP,
-                    "schemes": scheme_rows.iter().map(|(k, s)| serde_json::json!({
-                        "scheme": k, "groups_ge2": s.groups_ge2,
-                        "orgs_in_groups": s.orgs_in_groups, "mixed_kind": s.mixed_kind,
-                        "over_cap": s.over_cap, "max_group": s.max_group,
-                    })).collect::<Vec<_>>(),
-                    "sample": sample.iter().map(|(key, n)| serde_json::json!({
-                        "country": key.0, "scheme": key.1, "key": key.2, "size": n,
-                        "members": groups[*key].e1.iter().map(|(id, is_vat)| {
-                            let m = by_id.get(id);
-                            serde_json::json!({
-                                "org_id": id, "vat_kind": is_vat,
-                                "identifier": m.and_then(|m| m.3.clone()),
-                                "name": m.map(|m| m.4.clone()),
-                            })
-                        }).collect::<Vec<_>>(),
-                    })).collect::<Vec<_>>(),
-                })
-                .to_string();
-                self.db.put_report("r2-census", &report, now).await.map_err(|e| e.to_string())?;
-                Ok(format!(
-                    "r2-census (issue 300 Stage 2): {scanned} identifier-bearing orgs, \
-                     {keyed_e1} E1-keyed / {keyed_e2} E2 (pad) / {unkeyed} no key; \
-                     {total_groups} same-country groups >=2 holding {total_orgs} orgs \
-                     ({total_mixed} mixed vat+national, {total_over_cap} over cap {GROUP_CAP}); \
-                     {e2_attached} pad rows attach to keyed groups, {e2_orphan_keys} pad-only \
-                     keys; {null_country_keyed} NULL-country keyed (R3 pool), \
-                     {prefix_contradictions} country/prefix contradictions; denials: \
-                     {es_ute} ES-UTE, {cz699} CZ699"
-                ))
-            }
-            Spec::R3Census => {
-                // Issue 300 Stage 3 opening census, read-only: classify the
-                // NULL-country identifier pool by checksum anchoring, standing
-                // target existence, and cross-language name corroboration —
-                // the exact conditions the R3 merge will demand, measured
-                // before the merge exists (the campaign's standing pattern).
-                self.set_phase("censusing", None, None, "preloading canonical keys".to_owned());
-                // Standing (country-ful) orgs' E1 canonical keys — the
-                // rescue's target map.
-                let mut canon: std::collections::HashMap<(&'static str, String), Vec<i64>> =
-                    std::collections::HashMap::new();
-                let mut watermark = 0i64;
-                loop {
-                    if self.cancelled(job.id) {
-                        return Ok("r3-census stopped by cancel — no report stored".to_owned());
-                    }
-                    let (rows, next) = self
-                        .db
-                        .org_merge_health_batch(ingest::project::match_norm, BACKFILL_BATCH, watermark)
-                        .await
-                        .map_err(|e| e.to_string())?;
-                    if rows.is_empty() {
-                        break;
-                    }
-                    for r in &rows {
-                        let kind = r.kind.clone().unwrap_or_else(|| "national".into());
-                        if r.country.is_none() {
-                            continue;
-                        }
-                        if let Some((scheme, key, true)) = ingest::crosswalk::canonical_key_flat(
-                            r.country.as_deref(),
-                            &kind,
-                            &r.identifier,
-                        ) {
-                            canon.entry((scheme, key)).or_default().push(r.org_id);
-                        }
-                    }
-                    watermark = next;
-                }
-                let pool = self.db.null_country_ident_orgs().await.map_err(|e| e.to_string())?;
-                let total = pool.len() as u64;
-                let (mut anchored_corr, mut anchored_uncorr, mut anchored_no_target) =
-                    (0u64, 0u64, 0u64);
-                let (mut unanchored_none, mut unanchored_multi, mut register_prefixed) =
-                    (0u64, 0u64, 0u64);
-                let mut samples: Vec<serde_json::Value> = Vec::new();
-                for (id, _kind, value, name) in &pool {
-                    if self.cancelled(job.id) {
-                        return Ok("r3-census stopped by cancel — no report stored".to_owned());
-                    }
-                    if value.bytes().any(|b| b.is_ascii_alphabetic()) {
-                        register_prefixed += 1;
-                        continue;
-                    }
-                    let anchors = ingest::idgate::checksum_anchors(value);
-                    // The DK|SI marker is ambiguity-by-construction, never an
-                    // anchor of its own.
-                    let real: Vec<_> =
-                        anchors.iter().filter(|(s, _)| !s.contains('|')).collect();
-                    let ambiguous = anchors.len() > real.len() || real.len() > 1;
-                    match (real.len(), ambiguous) {
-                        (0, _) => unanchored_none += 1,
-                        (_, true) => unanchored_multi += 1,
-                        (1, false) => {
-                            let (scheme, key) = real[0];
-                            let Some(targets) = canon.get(&(scheme, key.clone())) else {
-                                anchored_no_target += 1;
-                                continue;
-                            };
-                            // Cross-language N2 corroboration against every
-                            // target name (head + satellite).
-                            let n2 = ingest::project::match_norm(name);
-                            let mut corroborated = false;
-                            'targets: for &t in targets {
-                                for tn in
-                                    self.db.org_all_names(t).await.map_err(|e| e.to_string())?
-                                {
-                                    if !n2.is_empty()
-                                        && ingest::project::match_norm(&tn) == n2
-                                    {
-                                        corroborated = true;
-                                        break 'targets;
-                                    }
-                                }
-                            }
-                            if corroborated {
-                                anchored_corr += 1;
-                                if samples.len() < 40 {
-                                    samples.push(serde_json::json!({
-                                        "org_id": id, "identifier": value, "name": name,
-                                        "scheme": scheme, "key": key,
-                                        "targets": targets,
-                                    }));
-                                }
-                            } else {
-                                anchored_uncorr += 1;
-                            }
-                        }
-                        _ => unreachable!("covered above"),
-                    }
-                }
-                let now = store::now_unix();
-                let report = serde_json::json!({
-                    "pool": total,
-                    "anchored_corroborated": anchored_corr,
-                    "anchored_uncorroborated": anchored_uncorr,
-                    "anchored_no_target": anchored_no_target,
-                    "unanchored_none": unanchored_none,
-                    "unanchored_multi": unanchored_multi,
-                    "register_prefixed": register_prefixed,
-                    "sample": samples,
-                })
-                .to_string();
-                self.db.put_report("r3-census", &report, now).await.map_err(|e| e.to_string())?;
-                Ok(format!(
-                    "r3-census (issue 300 Stage 3): {total} NULL-country identifier orgs — \
-                     {anchored_corr} anchored+corroborated (R3 merge candidates), \
-                     {anchored_uncorr} anchored without name corroboration (edges), \
-                     {anchored_no_target} anchored with no standing target, \
-                     {unanchored_multi} multi-scheme ambiguous (EBSCO class), \
-                     {unanchored_none} unanchored, {register_prefixed} register-prefixed \
-                     (the separate R3 alternative)"
-                ))
-            }
+            _ => Err(misrouted(job, "run_org_merge_health_spec")),
+        }
+    }
+
+    /// `run_spec`'s family of the `match-org-identifiers` merges (r2, e0, r3, rekey, altid).
+    /// Issue 467: one family per fn, reached through `off_frame`, so its poll frame holds only
+    /// these arms' locals.
+    async fn run_match_identifiers_spec(&self, job: &Job) -> Result<String, String> {
+        match &job.spec {
             Spec::MatchOrgIdentifiersR2 { dry_run, max_groups } => {
                 let dry_run = *dry_run;
                 // The ingest-side rules, handed across as plain fns (the
@@ -6668,6 +8168,15 @@ impl Supervisor {
                     format!("match-org-identifiers altid (issue 448) WET: {merged}. Live plan: {summary}")
                 })
             }).await,
+            _ => Err(misrouted(job, "run_match_identifiers_spec")),
+        }
+    }
+
+    /// `run_spec`'s family of the country folds and verdicts, the rehoming, and their review
+    /// packets. Issue 467: one family per fn, reached through `off_frame`, so its poll frame
+    /// holds only these arms' locals.
+    async fn run_country_spec(&self, job: &Job) -> Result<String, String> {
+        match &job.spec {
             Spec::FoldOrgCountries { dry_run } => {
                 let dry_run = *dry_run;
                 let job_id = job.id;
@@ -6936,47 +8445,6 @@ impl Supervisor {
                     r.missing_target
                 ))
             }
-            Spec::FusionCensus => {
-                let job_id = job.id;
-                let stop = || self.cancelled(job_id);
-                self.set_phase("censusing", None, None, "reading reviewed rows' mentions".to_owned());
-                let r = self
-                    .db
-                    .fusion_candidates(ingest::project::match_norm, 120, &stop)
-                    .await
-                    .map_err(|e| e.to_string())?;
-                if r.stopped {
-                    return Ok("fusion-census STOPPED by cancel — no report stored".to_owned());
-                }
-                let now = store::now_unix();
-                let body = serde_json::json!({
-                    "cases": r.cases, "with_mentions": r.with_mentions,
-                    "fused": r.fused, "off_name_mentions": r.off_name_mentions,
-                    "truncated": r.truncated,
-                    "candidates": r.candidates.iter().map(|c| serde_json::json!({
-                        "org": c.org, "cohort": c.cohort, "name": c.name,
-                        "mentions": c.mentions, "off_name": c.off_name,
-                        "groups": c.groups.iter().map(|(n, k)| {
-                            serde_json::json!({ "name": n, "mentions": k })
-                        }).collect::<Vec<_>>(),
-                    })).collect::<Vec<_>>(),
-                })
-                .to_string();
-                self.db
-                    .put_report("fusion-candidates", &body, now)
-                    .await
-                    .map_err(|e| e.to_string())?;
-                Ok(format!(
-                    "fusion-census (issue 317 Unit A): {} applied case rows, {} with \
-                     mentions; {} hold at least one mention naming somebody ELSE, over \
-                     {} such mentions{}",
-                    r.cases,
-                    r.with_mentions,
-                    r.fused,
-                    r.off_name_mentions,
-                    if r.truncated { " (candidate list TRUNCATED at the cap)" } else { "" }
-                ))
-            }
             Spec::RehomingPacket => {
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
@@ -7150,179 +8618,6 @@ impl Supervisor {
                     if r.truncated { "; CASE LIST TRUNCATED at the cap" } else { "" }
                 ))
             }
-            Spec::DropOrphanSatellites { dry_run } => {
-                let job_id = job.id;
-                let stop = || self.cancelled(job_id);
-                let dry_run = *dry_run;
-                self.set_phase(
-                    if dry_run { "planning" } else { "dropping" },
-                    None,
-                    None,
-                    "issue 321: orphaned name variants on re-homing origins".to_owned(),
-                );
-                // The wet arm reads the plan the dry arm recorded and compares
-                // it as tuples. No plan on record is not a reason to guess:
-                // a wet run without one is refused, because the parity check
-                // is half of what makes this safe.
-                let plan: Option<Vec<(i64, String, String, Option<i64>)>> = if dry_run {
-                    None
-                } else {
-                    let stored = self
-                        .db
-                        .latest_report("drop-orphan-satellites")
-                        .await
-                        .map_err(|e| e.to_string())?;
-                    // A refusal is a FAILED job, not a green one. Both of
-                    // these mean "I would not do the thing you asked", and a
-                    // run that renders green in /admin/jobs while having
-                    // written nothing is how an operator concludes the
-                    // campaign is done.
-                    let Some((body, _)) = stored else {
-                        eprintln!(
-                            "[drop-orphan-satellites] REFUSED: no dry plan on record"
-                        );
-                        return Err("drop-orphan-satellites --wet REFUSED: no dry plan on \
-                                    record. Run the dry pass first — the tuple parity between \
-                                    plan and run is half of what makes this safe."
-                            .to_owned());
-                    };
-                    let v: serde_json::Value =
-                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
-                    Some(
-                        v["rows"]
-                            .as_array()
-                            .map(|a| a.as_slice())
-                            .unwrap_or_default()
-                            .iter()
-                            .filter_map(|r| {
-                                Some((
-                                    r["org"].as_i64()?,
-                                    r["lang"].as_str()?.to_owned(),
-                                    r["key"].as_str()?.to_owned(),
-                                    // The destination the plan was reviewed
-                                    // against. The dry report already carries
-                                    // it; leaving it out of the tuple let a
-                                    // plan pass parity while pointing
-                                    // somewhere else entirely.
-                                    r["target"].as_i64(),
-                                ))
-                            })
-                            .collect(),
-                    )
-                };
-                let now = store::now_unix();
-                let r = self
-                    .db
-                    .drop_orphan_satellites(
-                        ingest::project::match_norm,
-                        dry_run,
-                        plan.as_deref(),
-                        Some(job_id as i64),
-                        now,
-                        &stop,
-                    )
-                    .await
-                    .map_err(|e| e.to_string())?;
-                if r.stopped {
-                    return Ok(
-                        "drop-orphan-satellites STOPPED by cancel — nothing written".to_owned()
-                    );
-                }
-                if r.no_plan {
-                    eprintln!("[drop-orphan-satellites] REFUSED: no plan reached the store");
-                    return Err("drop-orphan-satellites --wet REFUSED by the store: no dry \
-                                plan was supplied. The tuple parity between plan and run is \
-                                half of what makes this safe."
-                        .to_owned());
-                }
-                if r.drifted {
-                    eprintln!(
-                        "[drop-orphan-satellites] REFUSED: plan drift, {} added / {} gone",
-                        r.plan_added.len(),
-                        r.plan_removed.len()
-                    );
-                    return Err(format!(
-                        "drop-orphan-satellites --wet REFUSED: the plan drifted. {} tuple(s) \
-                         appeared since the dry run and {} went away — first added {:?}, first \
-                         gone {:?}. Re-run the dry pass and read it before the wet one; a \
-                         count would not have shown this.",
-                        r.plan_added.len(),
-                        r.plan_removed.len(),
-                        r.plan_added.first(),
-                        r.plan_removed.first(),
-                    ));
-                }
-                if dry_run {
-                    let body = serde_json::json!({
-                        "candidates": r.candidates,
-                        "rows": r.rows.iter().map(|o| serde_json::json!({
-                            "org": o.org, "org_name": o.org_name, "lang": o.lang,
-                            "name": o.name, "key": o.key,
-                            "target": o.target, "target_name": o.target_name,
-                        })).collect::<Vec<_>>(),
-                    })
-                    .to_string();
-                    self.db
-                        .put_report("drop-orphan-satellites", &body, now)
-                        .await
-                        .map_err(|e| e.to_string())?;
-                    return Ok(format!(
-                        "drop-orphan-satellites DRY (issue 321): {} variant(s) would be \
-                         dropped — each unsupported by any mention on its org, not that \
-                         org's own head name, and already standing on a row the org \
-                         re-homed to. Plan recorded; the wet arm compares against it as \
-                         (org, lang, key, destination) tuples — the destination is in the \
-                         tuple because an origin's verdicts can name several, and a plan \
-                         reviewed against one must not run against another.",
-                        r.candidates
-                    ));
-                }
-                if r.cancelled {
-                    return Ok(format!(
-                        "drop-orphan-satellites WET CANCELLED PART-WAY (issue 321): {} of {} \
-                         candidate(s) were dropped and are COMMITTED, each with its pre-image \
-                         in org_name_drops; {} skipped on the re-check; the rest were never \
-                         attempted. This is a PARTIAL run — re-run the dry pass to see what \
-                         is left, or restore-dropped-satellites with job {} to undo it.",
-                        r.dropped, r.candidates, r.skipped_recheck, job_id
-                    ));
-                }
-                Ok(format!(
-                    "drop-orphan-satellites WET (issue 321): {} candidate(s) matched the \
-                     recorded plan exactly; dropped {}, skipped {} on the in-transaction \
-                     re-check. Pre-images in org_name_drops — restore-dropped-satellites \
-                     puts every one back. {} org_match_keys row(s) still carry a dropped \
-                     key; the next build-org-match-keys clears them.",
-                    r.candidates, r.dropped, r.skipped_recheck, r.stale_keys
-                ))
-            }
-            Spec::RestoreDroppedSatellites { dry_run, only_job } => {
-                let (dry_run, only_job) = (*dry_run, *only_job);
-                let now = store::now_unix();
-                let r = self
-                    .db
-                    .restore_dropped_satellites(dry_run, only_job, now)
-                    .await
-                    .map_err(|e| e.to_string())?;
-                Ok(format!(
-                    "restore-dropped-satellites {} (issue 321{}): {} outstanding pre-image(s), \
-                     {} {}; {} left alone because something has since written that (org, lang), \
-                     {} superseded by a newer drop on the same slot, {} whose org no longer \
-                     exists. A restore never clobbers newer truth and never lets one \
-                     unrestorable row take the rest of the pass with it.",
-                    if dry_run { "DRY" } else { "WET" },
-                    match only_job {
-                        Some(j) => format!(", bounded to drop job {j}"),
-                        None => String::new(),
-                    },
-                    r.outstanding,
-                    if dry_run { r.rows.len() as u64 } else { r.restored },
-                    if dry_run { "would be restored" } else { "restored" },
-                    r.occupied,
-                    r.superseded,
-                    r.orphaned
-                ))
-            }
             Spec::XbPacket => {
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
@@ -7393,659 +8688,6 @@ impl Supervisor {
                     p.cohort,
                     p.cases.len(),
                     if p.truncated { " (CAPPED)" } else { "" }
-                ))
-            }
-            Spec::RepairMintedCountries { dry_run } => {
-                let dry_run = *dry_run;
-                let job_id = job.id;
-                let stop = || self.cancelled(job_id);
-                self.set_phase(
-                    if dry_run { "planning" } else { "repairing" },
-                    None,
-                    None,
-                    "issue 325: re-parsing the standing vat rows".to_owned(),
-                );
-                // The T4 ladder: a wet run executes the plan a person read.
-                let expect_rows = if dry_run {
-                    None
-                } else {
-                    let (body, _) = self
-                        .db
-                        .latest_report("minted-country-repair")
-                        .await
-                        .map_err(|e| e.to_string())?
-                        .ok_or_else(|| {
-                            "no stored minted-country-repair plan — run the dry pass first"
-                        })?;
-                    let v: serde_json::Value =
-                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
-                    if v["dry_run"] != serde_json::Value::Bool(true) {
-                        return Err("the stored minted-country-repair report is from a WET \
-                                    run, not a reviewed plan — run the dry pass again"
-                            .to_owned());
-                    }
-                    Some(
-                        v["rows"]
-                            .as_u64()
-                            .ok_or_else(|| "minted-country-repair plan lacks rows")?,
-                    )
-                };
-                let r = self
-                    .db
-                    .repair_minted_countries(
-                        |value, country| {
-                            ingest::project::normalise_identifier(value, country)
-                                .map(|id| (id.kind, id.country))
-                        },
-                        dry_run,
-                        expect_rows,
-                        &stop,
-                    )
-                    .await
-                    .map_err(|e| e.to_string())?;
-                if r.stopped && dry_run {
-                    return Ok("repair-minted-countries STOPPED by cancel — nothing planned"
-                        .to_owned());
-                }
-                let now = store::now_unix();
-                // The plan is the review artifact AND the record of what a wet
-                // run did, so it is stored either way — capped for the report,
-                // counted in full above it.
-                const PLAN_CAP: usize = 400;
-                let body = serde_json::json!({
-                    "dry_run": dry_run,
-                    "walked": r.walked,
-                    "rows": r.rows,
-                    "ambiguous": r.ambiguous,
-                    "no_mention_country": r.no_mention_country,
-                    "now_refused": r.now_refused,
-                    "collisions": r.collisions,
-                    "applied": r.applied,
-                    "skipped_moved": r.skipped_moved,
-                    "stopped": r.stopped,
-                    "plan_truncated": r.plan.len() > PLAN_CAP,
-                    "plan": r.plan.iter().take(PLAN_CAP).map(|f| serde_json::json!({
-                        "org": f.org,
-                        "identifier": f.identifier,
-                        "from": {"kind": f.from_kind, "country": f.from_country},
-                        "to": {"kind": f.to_kind, "country": f.to_country},
-                        "mention_country": f.mention_country,
-                        "mentions": f.mentions,
-                    })).collect::<Vec<_>>(),
-                })
-                .to_string();
-                self.db
-                    .put_report("minted-country-repair", &body, now)
-                    .await
-                    .map_err(|e| e.to_string())?;
-                Ok(format!(
-                    "repair-minted-countries (issue 325 step 4, {}): {} kind='vat' row(s) \
-                     re-parsed. {} disagree with what the parser now says and are planned; \
-                     {} left alone because their own mentions name more than one country, \
-                     {} because no mention names an alpha-2 country at all, and {} because \
-                     the value is now refused outright (counted, never stripped — issue \
-                     312). {} planned target(s) would leave one (country, kind, identifier) \
-                     held by more than one row: that is the R2 merge arm's work and reaching \
-                     it is the point, not a blocker.{}",
-                    if dry_run { "DRY" } else { "WET" },
-                    r.walked,
-                    r.rows,
-                    r.ambiguous,
-                    r.no_mention_country,
-                    r.now_refused,
-                    r.collisions,
-                    if dry_run {
-                        String::new()
-                    } else {
-                        format!(
-                            " APPLIED {}, skipped {} whose row moved under the plan.{}",
-                            r.applied,
-                            r.skipped_moved,
-                            if r.stopped { " STOPPED by cancel — the committed prefix stands." } else { "" }
-                        )
-                    }
-                ))
-            }
-            // Boxed for the reason CLAUDE.md gives: `run_spec` is one 60-plus-arm
-            // async match, so every arm's locals share ONE future's frame, and a
-            // fat arm has aborted an unrelated test with a stack overflow.
-            Spec::RepairNoticeInstants { dry_run } => Box::pin(async move {
-                let dry_run = *dry_run;
-                let job_id = job.id;
-                let stop = || self.cancelled(job_id);
-                self.set_phase(
-                    if dry_run { "planning" } else { "repairing" },
-                    None,
-                    None,
-                    "issue 367: re-deriving each parsed notice's publication and dispatch \
-                     instants from its own stored parse"
-                        .to_owned(),
-                );
-                let expect_rows = if dry_run {
-                    None
-                } else {
-                    let (body, _) = self
-                        .db
-                        .latest_report("notice-instant-repair")
-                        .await
-                        .map_err(|e| e.to_string())?
-                        .ok_or_else(|| {
-                            "no stored notice-instant-repair plan — run the dry pass first"
-                        })?;
-                    let v: serde_json::Value =
-                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
-                    if v["dry_run"] != serde_json::Value::Bool(true) {
-                        return Err("the stored notice-instant-repair report is from a WET run, \
-                                    not a reviewed plan — run the dry pass again"
-                            .to_owned());
-                    }
-                    Some(v["rows"].as_u64().ok_or_else(|| "plan lacks rows")?)
-                };
-                let r = self
-                    .db
-                    .repair_notice_instants(
-                        ingest::project::INSTANT_DATE_FIELDS,
-                        ingest::project::notice_stamps,
-                        dry_run,
-                        expect_rows,
-                        &stop,
-                    )
-                    .await
-                    .map_err(|e| e.to_string())?;
-                if r.stopped && dry_run {
-                    return Ok(
-                        "repair-notice-instants STOPPED by cancel — nothing planned".to_owned()
-                    );
-                }
-                let now = store::now_unix();
-                const PLAN_CAP: usize = 400;
-                let body = serde_json::json!({
-                    "dry_run": dry_run,
-                    "walked": r.walked,
-                    "agree": r.agree,
-                    "rows": r.rows,
-                    "epoch_published": r.epoch_published,
-                    "null_published": r.null_published,
-                    "resolver_silent": r.resolver_silent,
-                    "by_profile": r.by_profile.iter().map(|(profile, rows)| serde_json::json!({
-                        "profile": profile, "rows": rows,
-                    })).collect::<Vec<_>>(),
-                    "unstamped": r.unstamped,
-                    "shifted": r.shifted,
-                    "stamped": r.stamped,
-                    "applied": r.applied,
-                    "skipped_moved": r.skipped_moved,
-                    "stopped": r.stopped,
-                    "plan_truncated": r.plan.len() > PLAN_CAP,
-                    "plan": r.plan.iter().take(PLAN_CAP).map(|f| {
-                        let stamp = |s: Option<store::Stamp>| s.map(|s| serde_json::json!({
-                            "utc_seconds": s.utc_seconds,
-                            "offset_minutes": s.offset_minutes,
-                            "has_time": s.has_time,
-                        }));
-                        serde_json::json!({
-                            "notice": f.notice,
-                            "profile": f.profile,
-                            "from": {"published_at": f.from_published,
-                                     "dispatched_at": f.from_dispatched},
-                            "to": {"published_at": stamp(f.to_published),
-                                   "dispatched_at": stamp(f.to_dispatched)},
-                        })
-                    }).collect::<Vec<_>>(),
-                })
-                .to_string();
-                self.db
-                    .put_report("notice-instant-repair", &body, now)
-                    .await
-                    .map_err(|e| e.to_string())?;
-                let profiles = r
-                    .by_profile
-                    .iter()
-                    .map(|(p, n)| format!("{p} {n}"))
-                    .collect::<Vec<_>>()
-                    .join(", ");
-                Ok(format!(
-                    "repair-notice-instants (issue 367, {}): {} parsed notice(s) walked, {} \
-                     already agree with the resolver, {} agree on the instants but lack the \
-                     offset/precision pair (unit 3) and {} carry a date-only instant at local \
-                     midnight that moves to its civil midnight (issue 418) — both mechanical, \
-                     written as walked, no plan needed{}. \
-                     {} planned — {} stamped the epoch (1970-01-01, the flattened not-found), \
-                     {} NULL while the parse states a date, {} whose parse states NO date and \
-                     whose stored value is therefore REMOVED. By profile: [{}]. The versions \
-                     are untouched: they read the pair off their notice, and nothing is \
-                     re-projected.{}",
-                    if dry_run { "DRY" } else { "WET" },
-                    r.walked,
-                    r.agree,
-                    r.unstamped,
-                    r.shifted,
-                    if dry_run { String::new() } else { format!("; {} written", r.stamped) },
-                    r.rows,
-                    r.epoch_published,
-                    r.null_published,
-                    r.resolver_silent,
-                    if profiles.is_empty() { "none".to_owned() } else { profiles },
-                    if dry_run {
-                        String::new()
-                    } else {
-                        format!(
-                            " APPLIED {}, skipped {} whose row moved under the plan.{}",
-                            r.applied,
-                            r.skipped_moved,
-                            if r.stopped {
-                                " STOPPED by cancel — the committed prefix stands."
-                            } else {
-                                ""
-                            }
-                        )
-                    }
-                ))
-            })
-            .await,
-            Spec::RepairVersionInstants { dry_run } => Box::pin(async move {
-                let dry_run = *dry_run;
-                let job_id = job.id;
-                let stop = || self.cancelled(job_id);
-                self.set_phase(
-                    if dry_run { "counting" } else { "repairing" },
-                    None,
-                    None,
-                    "issue 418: moving each version's publication and dispatch instants onto \
-                     its notice's, and re-deriving the head column"
-                        .to_owned(),
-                );
-                let expect_moved = if dry_run {
-                    None
-                } else {
-                    let (body, _) = self
-                        .db
-                        .latest_report("version-instant-repair")
-                        .await
-                        .map_err(|e| e.to_string())?
-                        .ok_or_else(|| {
-                            "no stored version-instant-repair count — run the dry pass first"
-                        })?;
-                    let v: serde_json::Value =
-                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
-                    if v["dry_run"] != serde_json::Value::Bool(true) {
-                        return Err("the stored version-instant-repair report is from a WET run, \
-                                    not a reviewed count — run the dry pass again"
-                            .to_owned());
-                    }
-                    Some(v["moved"].as_u64().ok_or_else(|| "report lacks moved")?)
-                };
-                let r = self
-                    .db
-                    .repair_version_instants(dry_run, expect_moved, &stop)
-                    .await
-                    .map_err(|e| e.to_string())?;
-                if r.stopped && dry_run {
-                    return Ok(
-                        "repair-version-instants STOPPED by cancel — nothing counted".to_owned()
-                    );
-                }
-                let now = store::now_unix();
-                let body = serde_json::json!({
-                    "dry_run": dry_run,
-                    "walked": r.walked,
-                    "notice_unstamped": r.notice_unstamped,
-                    "agree": r.agree,
-                    "moved": r.moved,
-                    "applied": r.applied,
-                    "skipped_moved": r.skipped_moved,
-                    "heads_recomputed": r.heads_recomputed,
-                    "stopped": r.stopped,
-                })
-                .to_string();
-                self.db
-                    .put_report("version-instant-repair", &body, now)
-                    .await
-                    .map_err(|e| e.to_string())?;
-                Ok(format!(
-                    "repair-version-instants (issue 418 unit 2b, {}): {} version(s) walked, {} \
-                     already say what their notice says, {} follow their notice{}. {} sit \
-                     behind a notice that carries no pair yet — {}.{}",
-                    if dry_run { "DRY" } else { "WET" },
-                    r.walked,
-                    r.agree,
-                    r.moved,
-                    if dry_run {
-                        String::new()
-                    } else {
-                        format!(
-                            " — {} written, {} tender head column(s) re-derived, {} skipped \
-                             because the row moved under the walk",
-                            r.applied, r.heads_recomputed, r.skipped_moved
-                        )
-                    },
-                    r.notice_unstamped,
-                    if r.notice_unstamped == 0 {
-                        "the notice repair has covered the corpus"
-                    } else {
-                        "run repair-notice-instants (wet) first, then this again"
-                    },
-                    if r.stopped { " STOPPED by cancel — the committed prefix stands." } else { "" }
-                ))
-            })
-            .await,
-            Spec::RepairRenormalisedIdentifiers { dry_run } => Box::pin(async move {
-                let dry_run = *dry_run;
-                let job_id = job.id;
-                let stop = || self.cancelled(job_id);
-                self.set_phase(
-                    if dry_run { "planning" } else { "repairing" },
-                    None,
-                    None,
-                    "issue 345: re-parsing published identifier strings through the live normaliser"
-                        .to_owned(),
-                );
-                let expect_rows = if dry_run {
-                    None
-                } else {
-                    let (body, _) = self
-                        .db
-                        .latest_report("renormalise-repair")
-                        .await
-                        .map_err(|e| e.to_string())?
-                        .ok_or_else(|| "no stored renormalise-repair plan — run the dry pass first")?;
-                    let v: serde_json::Value =
-                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
-                    if v["dry_run"] != serde_json::Value::Bool(true) {
-                        return Err("the stored renormalise-repair report is from a WET run, not a \
-                                    reviewed plan — run the dry pass again"
-                            .to_owned());
-                    }
-                    Some(v["rows"].as_u64().ok_or_else(|| "plan lacks rows")?)
-                };
-                let r = self
-                    .db
-                    .repair_renormalised_identifiers(
-                        |value, country| {
-                            ingest::project::normalise_identifier_before_folds(value, country)
-                                .map(|id| (id.kind, id.country, id.value))
-                        },
-                        |value, country| {
-                            ingest::project::normalise_identifier(value, country)
-                                .map(|id| (id.kind, id.country, id.value))
-                        },
-                        dry_run,
-                        expect_rows,
-                        &stop,
-                    )
-                    .await
-                    .map_err(|e| e.to_string())?;
-                if r.stopped && dry_run {
-                    return Ok("repair-renormalised-identifiers STOPPED by cancel — nothing planned"
-                        .to_owned());
-                }
-                let now = store::now_unix();
-                const PLAN_CAP: usize = 400;
-                let body = serde_json::json!({
-                    "dry_run": dry_run,
-                    "walked": r.walked,
-                    "witnessed": r.witnessed,
-                    "unexplained": r.unexplained,
-                    "now_refused": r.now_refused,
-                    "already_clean": r.already_clean,
-                    "rows": r.rows,
-                    "reunions": r.reunions,
-                    "applied": r.applied,
-                    "skipped_moved": r.skipped_moved,
-                    "stopped": r.stopped,
-                    "plan_truncated": r.plan.len() > PLAN_CAP,
-                    "plan": r.plan.iter().take(PLAN_CAP).map(|f| serde_json::json!({
-                        "org": f.org,
-                        "from": {"identifier": f.from_identifier, "kind": f.from_kind,
-                                 "country": f.from_country},
-                        "to": {"identifier": f.to_identifier, "kind": f.to_kind,
-                               "country": f.to_country},
-                    })).collect::<Vec<_>>(),
-                })
-                .to_string();
-                self.db
-                    .put_report("renormalise-repair", &body, now)
-                    .await
-                    .map_err(|e| e.to_string())?;
-                Ok(format!(
-                    "repair-renormalised-identifiers (issue 345, {}): {} identifier-bearing row(s) \
-                     walked, {} witnessed by a published string the pre-fold rules reproduce, {} \
-                     unexplained (merged-in mentions only) and left standing. {} planned; {} \
-                     witnesses the live gate now refuses (left standing); {} already agree with \
-                     the live re-parse. {} planned row(s) land on an identity that ALREADY \
-                     stands — R2 folds those whose scheme has a cross-walk arm.{}",
-                    if dry_run { "DRY" } else { "WET" },
-                    r.walked,
-                    r.witnessed,
-                    r.unexplained,
-                    r.rows,
-                    r.now_refused,
-                    r.already_clean,
-                    r.reunions,
-                    if dry_run {
-                        String::new()
-                    } else {
-                        format!(" Applied {} ({} skipped: moved since the plan).", r.applied, r.skipped_moved)
-                    },
-                ))
-            })
-            .await,
-            Spec::RepairLabelPrefixes { dry_run } => {
-                let dry_run = *dry_run;
-                let job_id = job.id;
-                let stop = || self.cancelled(job_id);
-                self.set_phase(
-                    if dry_run { "planning" } else { "repairing" },
-                    None,
-                    None,
-                    "issue 328: stripping publisher labels off identifiers".to_owned(),
-                );
-                let expect_rows = if dry_run {
-                    None
-                } else {
-                    let (body, _) = self
-                        .db
-                        .latest_report("label-prefix-repair")
-                        .await
-                        .map_err(|e| e.to_string())?
-                        .ok_or_else(|| {
-                            "no stored label-prefix-repair plan — run the dry pass first"
-                        })?;
-                    let v: serde_json::Value =
-                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
-                    if v["dry_run"] != serde_json::Value::Bool(true) {
-                        return Err("the stored label-prefix-repair report is from a WET run, \
-                                    not a reviewed plan — run the dry pass again"
-                            .to_owned());
-                    }
-                    Some(v["rows"].as_u64().ok_or_else(|| "plan lacks rows")?)
-                };
-                let r = self
-                    .db
-                    .repair_label_prefixes(
-                        ingest::countries::label_prefix_stripped,
-                        |value, country| {
-                            ingest::project::normalise_identifier(value, country)
-                                .map(|id| (id.kind, id.country, id.value))
-                        },
-                        dry_run,
-                        expect_rows,
-                        &stop,
-                    )
-                    .await
-                    .map_err(|e| e.to_string())?;
-                if r.stopped && dry_run {
-                    return Ok("repair-label-prefixes STOPPED by cancel — nothing planned"
-                        .to_owned());
-                }
-                let now = store::now_unix();
-                const PLAN_CAP: usize = 400;
-                let body = serde_json::json!({
-                    "dry_run": dry_run,
-                    "labelled": r.labelled,
-                    "now_refused": r.now_refused,
-                    "already_clean": r.already_clean,
-                    "rows": r.rows,
-                    "reunions": r.reunions,
-                    "applied": r.applied,
-                    "skipped_moved": r.skipped_moved,
-                    "stopped": r.stopped,
-                    "plan_truncated": r.plan.len() > PLAN_CAP,
-                    "plan": r.plan.iter().take(PLAN_CAP).map(|f| serde_json::json!({
-                        "org": f.org,
-                        "from": {"identifier": f.from_identifier, "kind": f.from_kind,
-                                 "country": f.from_country},
-                        "to": {"identifier": f.to_identifier, "kind": f.to_kind,
-                               "country": f.to_country},
-                    })).collect::<Vec<_>>(),
-                })
-                .to_string();
-                self.db
-                    .put_report("label-prefix-repair", &body, now)
-                    .await
-                    .map_err(|e| e.to_string())?;
-                Ok(format!(
-                    "repair-label-prefixes (issue 328, {}): {} row(s) carry a publisher label. \
-                     {} planned; {} left standing as published because the remainder \
-                     classified as nothing (a bare field name, or a value the gate refuses), \
-                     and {} already agree with the re-parse. {} planned row(s) land on an \
-                     identity that ALREADY stands. NOTE: for the German class that is NOT a \
-                     merge R2 will perform — `crosswalk::canonical_key` has no DE arm at all \
-                     (\"court-scoped registers\", a pinned negative), so those rows become \
-                     visible exact duplicates rather than folded ones.{} The published string \
-                     is untouched either way: it stays in \
-                     organization_mentions.raw_identifier.",
-                    if dry_run { "DRY" } else { "WET" },
-                    r.labelled,
-                    r.rows,
-                    r.now_refused,
-                    r.already_clean,
-                    r.reunions,
-                    if dry_run {
-                        String::new()
-                    } else {
-                        format!(
-                            " APPLIED {}, skipped {} whose row moved under the plan.{}",
-                            r.applied,
-                            r.skipped_moved,
-                            if r.stopped { " STOPPED by cancel — the committed prefix stands." } else { "" }
-                        )
-                    }
-                ))
-            }
-            Spec::RepairCountryTypos { dry_run } => {
-                let dry_run = *dry_run;
-                let job_id = job.id;
-                let stop = || self.cancelled(job_id);
-                self.set_phase(
-                    if dry_run { "planning" } else { "repairing" },
-                    None,
-                    None,
-                    "issue 326: moving rows a decisive anchor names".to_owned(),
-                );
-                let expect_rows = if dry_run {
-                    None
-                } else {
-                    let (body, _) = self
-                        .db
-                        .latest_report("country-typo-repair")
-                        .await
-                        .map_err(|e| e.to_string())?
-                        .ok_or_else(|| {
-                            "no stored country-typo-repair plan — run the dry pass first"
-                        })?;
-                    let v: serde_json::Value =
-                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
-                    if v["dry_run"] != serde_json::Value::Bool(true) {
-                        return Err("the stored country-typo-repair report is from a WET run, \
-                                    not a reviewed plan — run the dry pass again"
-                            .to_owned());
-                    }
-                    Some(v["rows"].as_u64().ok_or_else(|| "plan lacks rows")?)
-                };
-                let r = self
-                    .db
-                    .repair_country_typos(
-                        ingest::idgate::census_anchors,
-                        ingest::idgate::census_vocabulary,
-                        ingest::countries::one_letter_apart,
-                        ingest::countries::is_operational_footprint,
-                        dry_run,
-                        expect_rows,
-                        &stop,
-                    )
-                    .await
-                    .map_err(|e| e.to_string())?;
-                if r.stopped && dry_run {
-                    return Ok("repair-country-typos STOPPED by cancel — nothing planned"
-                        .to_owned());
-                }
-                let now = store::now_unix();
-                const PLAN_CAP: usize = 400;
-                let body = serde_json::json!({
-                    "dry_run": dry_run,
-                    "clusters_considered": r.clusters_considered,
-                    "decisive": r.decisive,
-                    "left_unmoved": r.left_unmoved,
-                    "rows": r.rows,
-                    "from_asked_and_refused": r.from_asked_and_refused,
-                    "from_never_asked": r.from_never_asked,
-                    "refused_row_has_standing": r.refused_row_has_standing,
-                    "refused_luhn_only": r.refused_luhn_only,
-                    "applied": r.applied,
-                    "skipped_moved": r.skipped_moved,
-                    "stopped": r.stopped,
-                    "plan_truncated": r.moves.len() > PLAN_CAP,
-                    "plan": r.moves.iter().take(PLAN_CAP).map(|m| serde_json::json!({
-                        "identifier": m.identifier,
-                        "from": m.from, "to": m.to,
-                        "mentions": m.mentions,
-                        "codes": m.codes,
-                        "names": m.names,
-                        "from_asked_and_refused": m.from_asked_and_refused,
-                        "by_scheme": m.by_scheme,
-                    })).collect::<Vec<_>>(),
-                })
-                .to_string();
-                self.db
-                    .put_report("country-typo-repair", &body, now)
-                    .await
-                    .map_err(|e| e.to_string())?;
-                Ok(format!(
-                    "repair-country-typos (issue 326 step 2, {}): {} cluster(s) walked, {} \
-                     decisive (the evidence names exactly one of the cluster's own codes). \
-                     {} row(s) planned to move; {} left alone because their code is NOT one \
-                     letter from the survivor — they share the identifier and nothing more, \
-                     and a checksum elsewhere is no reason to rewrite a published country. \
-                     Of the planned moves {} abandon a country that WAS tested and refused \
-                     the value, and {} abandon one no scheme covers at this shape — the \
-                     second half rests on the survivor's anchor alone and is where the dry \
-                     run's false positives were found. REFUSED: {} row(s) carry {} mentions \
-                     or more under their own country — real standing, so probably a real \
-                     registration and not a slip — and {} cluster(s) are named only by a bare \
-                     Luhn, which carries no country information at all.{} \
-                     EVERY move lands on an identity the survivor already holds, ON PURPOSE: \
-                     run match-org-identifiers --r2 afterwards to fold them.",
-                    if dry_run { "DRY" } else { "WET" },
-                    r.clusters_considered,
-                    r.decisive,
-                    r.rows,
-                    r.left_unmoved,
-                    r.from_asked_and_refused,
-                    r.from_never_asked,
-                    r.refused_row_has_standing,
-                    store::TYPO_MOVE_MENTION_VETO,
-                    r.refused_luhn_only,
-                    if dry_run {
-                        String::new()
-                    } else {
-                        format!(
-                            " APPLIED {}, skipped {} whose row moved under the plan.{}",
-                            r.applied,
-                            r.skipped_moved,
-                            if r.stopped { " STOPPED by cancel — the committed prefix stands." } else { "" }
-                        )
-                    }
                 ))
             }
             Spec::CountryClusterPacket { cases_cap } => {
@@ -8121,6 +8763,472 @@ impl Supervisor {
                 })
                 .await
             }
+            _ => Err(misrouted(job, "run_country_spec")),
+        }
+    }
+
+    /// `run_spec`'s family of the merge-rule censuses (r2, r3, fusion) and the org-edge census.
+    /// Issue 467: one family per fn, reached through `off_frame`, so its poll frame holds only
+    /// these arms' locals.
+    async fn run_identity_census_spec(&self, job: &Job) -> Result<String, String> {
+        match &job.spec {
+            Spec::R2Census => {
+                // Issue 300 Stage 2, the opening census. Read-only preview of
+                // the R2 same-country merge: canonical keys over the whole
+                // identifier-bearing org layer, grouped in RAM (the B-ID
+                // block, §4.1) — measured BEFORE any merge code exists, the
+                // same discipline that sized Stage 1. Rides the org-merge-
+                // health walk; a stopped run stores nothing (issue 230's
+                // zero-lie bar).
+                use std::collections::HashMap;
+                #[derive(Default)]
+                struct Group {
+                    // E1 members as (org_id, is_vat_kind).
+                    e1: Vec<(i64, bool)>,
+                    // Pad-derived attachments (E2): counted, never merged.
+                    e2: u64,
+                }
+                let mut watermark = 0i64;
+                let mut scanned = 0u64;
+                let (mut keyed_e1, mut keyed_e2, mut unkeyed) = (0u64, 0u64, 0u64);
+                let (mut es_ute, mut cz699) = (0u64, 0u64);
+                let (mut null_country_keyed, mut prefix_contradictions) = (0u64, 0u64);
+                let mut groups: HashMap<(String, &'static str, String), Group> = HashMap::new();
+                loop {
+                    if self.cancelled(job.id) {
+                        return Ok("r2-census stopped by cancel — no report stored".to_owned());
+                    }
+                    let (rows, next) = self
+                        .db
+                        .org_merge_health_batch(ingest::project::match_norm, BACKFILL_BATCH, watermark)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    if rows.is_empty() {
+                        break;
+                    }
+                    for r in &rows {
+                        scanned += 1;
+                        let kind = r.kind.clone().unwrap_or_else(|| "national".into());
+                        let is_vat = kind == "vat";
+                        // Denial-class counters (the key fn returns None for
+                        // these; the census names them so the report shows
+                        // the walls working, not silent gaps).
+                        let norm: String = r
+                            .identifier
+                            .chars()
+                            .filter(char::is_ascii_alphanumeric)
+                            .map(|c| c.to_ascii_uppercase())
+                            .collect();
+                        if is_vat && norm.starts_with("CZ699") {
+                            cz699 += 1;
+                        }
+                        let es_body = if is_vat {
+                            norm.strip_prefix("ES")
+                        } else if r.country.as_deref() == Some("ES") {
+                            Some(norm.as_str())
+                        } else {
+                            None
+                        };
+                        if es_body.is_some_and(|b| b.starts_with('U')) {
+                            es_ute += 1;
+                        }
+                        let Some(k) = ingest::crosswalk::canonical_key(
+                            r.country.as_deref(),
+                            &kind,
+                            &r.identifier,
+                        ) else {
+                            unkeyed += 1;
+                            continue;
+                        };
+                        // R2 is SAME-COUNTRY: a NULL-country row's key is
+                        // Stage-3 (R3) material — counted, not grouped. A row
+                        // whose country contradicts its VAT prefix is an
+                        // anomaly — counted, not grouped (GR/EL fold applied).
+                        let Some(country) = r.country.as_deref() else {
+                            null_country_keyed += 1;
+                            continue;
+                        };
+                        let country = if country == "EL" { "GR" } else { country };
+                        if is_vat && !k.scheme.starts_with(country) {
+                            prefix_contradictions += 1;
+                            continue;
+                        }
+                        let g = groups
+                            .entry((country.to_owned(), k.scheme, k.key))
+                            .or_default();
+                        match k.tier {
+                            ingest::crosswalk::Tier::E1 => {
+                                keyed_e1 += 1;
+                                g.e1.push((r.org_id, is_vat));
+                            }
+                            ingest::crosswalk::Tier::E2 => {
+                                keyed_e2 += 1;
+                                g.e2 += 1;
+                            }
+                        }
+                    }
+                    watermark = next;
+                    self.set_phase(
+                        "censusing",
+                        Some(scanned),
+                        None,
+                        format!("{keyed_e1} E1-keyed, {} key groups", groups.len()),
+                    );
+                }
+                // Per-scheme tallies over the E1 groups.
+                #[derive(Default)]
+                struct SchemeStat {
+                    groups_ge2: u64,
+                    orgs_in_groups: u64,
+                    mixed_kind: u64,
+                    over_cap: u64,
+                    max_group: u64,
+                }
+                const GROUP_CAP: usize = 8;
+                let mut per_scheme: HashMap<&'static str, SchemeStat> = HashMap::new();
+                let (mut e2_attached, mut e2_orphan_keys) = (0u64, 0u64);
+                let mut sample: Vec<(&(String, &'static str, String), usize)> = Vec::new();
+                for (key, g) in &groups {
+                    if g.e2 > 0 {
+                        if g.e1.is_empty() {
+                            e2_orphan_keys += 1;
+                        } else {
+                            e2_attached += g.e2;
+                        }
+                    }
+                    if g.e1.len() < 2 {
+                        continue;
+                    }
+                    let s = per_scheme.entry(key.1).or_default();
+                    s.groups_ge2 += 1;
+                    s.orgs_in_groups += g.e1.len() as u64;
+                    s.max_group = s.max_group.max(g.e1.len() as u64);
+                    if g.e1.iter().any(|m| m.1) && g.e1.iter().any(|m| !m.1) {
+                        s.mixed_kind += 1;
+                    }
+                    if g.e1.len() > GROUP_CAP {
+                        s.over_cap += 1;
+                    }
+                    sample.push((key, g.e1.len()));
+                }
+                // The largest 30 groups become the report's inspection sample
+                // (the precision review's raw material).
+                sample.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(b.0)));
+                sample.truncate(30);
+                let sample_ids: Vec<i64> = sample
+                    .iter()
+                    .flat_map(|(k, _)| groups[*k].e1.iter().map(|m| m.0))
+                    .collect();
+                let meta =
+                    self.db.org_health_meta(&sample_ids).await.map_err(|e| e.to_string())?;
+                let by_id: HashMap<i64, _> = meta.into_iter().map(|m| (m.0, m)).collect();
+                let mut scheme_rows: Vec<(&str, SchemeStat)> = per_scheme.into_iter().collect();
+                scheme_rows.sort_by(|a, b| b.1.groups_ge2.cmp(&a.1.groups_ge2));
+                let (total_groups, total_orgs, total_mixed, total_over_cap) =
+                    scheme_rows.iter().fold((0u64, 0u64, 0u64, 0u64), |acc, (_, s)| {
+                        (
+                            acc.0 + s.groups_ge2,
+                            acc.1 + s.orgs_in_groups,
+                            acc.2 + s.mixed_kind,
+                            acc.3 + s.over_cap,
+                        )
+                    });
+                let now = store::now_unix();
+                let report = serde_json::json!({
+                    "scanned": scanned,
+                    "keyed_e1": keyed_e1, "keyed_e2": keyed_e2, "unkeyed": unkeyed,
+                    "groups_ge2": total_groups, "orgs_in_groups": total_orgs,
+                    "mixed_kind_groups": total_mixed, "over_cap_groups": total_over_cap,
+                    "e2_attached": e2_attached, "e2_orphan_keys": e2_orphan_keys,
+                    "null_country_keyed": null_country_keyed,
+                    "prefix_contradictions": prefix_contradictions,
+                    "denials": { "es_ute": es_ute, "cz699": cz699 },
+                    "group_cap": GROUP_CAP,
+                    "schemes": scheme_rows.iter().map(|(k, s)| serde_json::json!({
+                        "scheme": k, "groups_ge2": s.groups_ge2,
+                        "orgs_in_groups": s.orgs_in_groups, "mixed_kind": s.mixed_kind,
+                        "over_cap": s.over_cap, "max_group": s.max_group,
+                    })).collect::<Vec<_>>(),
+                    "sample": sample.iter().map(|(key, n)| serde_json::json!({
+                        "country": key.0, "scheme": key.1, "key": key.2, "size": n,
+                        "members": groups[*key].e1.iter().map(|(id, is_vat)| {
+                            let m = by_id.get(id);
+                            serde_json::json!({
+                                "org_id": id, "vat_kind": is_vat,
+                                "identifier": m.and_then(|m| m.3.clone()),
+                                "name": m.map(|m| m.4.clone()),
+                            })
+                        }).collect::<Vec<_>>(),
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db.put_report("r2-census", &report, now).await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "r2-census (issue 300 Stage 2): {scanned} identifier-bearing orgs, \
+                     {keyed_e1} E1-keyed / {keyed_e2} E2 (pad) / {unkeyed} no key; \
+                     {total_groups} same-country groups >=2 holding {total_orgs} orgs \
+                     ({total_mixed} mixed vat+national, {total_over_cap} over cap {GROUP_CAP}); \
+                     {e2_attached} pad rows attach to keyed groups, {e2_orphan_keys} pad-only \
+                     keys; {null_country_keyed} NULL-country keyed (R3 pool), \
+                     {prefix_contradictions} country/prefix contradictions; denials: \
+                     {es_ute} ES-UTE, {cz699} CZ699"
+                ))
+            }
+            Spec::R3Census => {
+                // Issue 300 Stage 3 opening census, read-only: classify the
+                // NULL-country identifier pool by checksum anchoring, standing
+                // target existence, and cross-language name corroboration —
+                // the exact conditions the R3 merge will demand, measured
+                // before the merge exists (the campaign's standing pattern).
+                self.set_phase("censusing", None, None, "preloading canonical keys".to_owned());
+                // Standing (country-ful) orgs' E1 canonical keys — the
+                // rescue's target map.
+                let mut canon: std::collections::HashMap<(&'static str, String), Vec<i64>> =
+                    std::collections::HashMap::new();
+                let mut watermark = 0i64;
+                loop {
+                    if self.cancelled(job.id) {
+                        return Ok("r3-census stopped by cancel — no report stored".to_owned());
+                    }
+                    let (rows, next) = self
+                        .db
+                        .org_merge_health_batch(ingest::project::match_norm, BACKFILL_BATCH, watermark)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    if rows.is_empty() {
+                        break;
+                    }
+                    for r in &rows {
+                        let kind = r.kind.clone().unwrap_or_else(|| "national".into());
+                        if r.country.is_none() {
+                            continue;
+                        }
+                        if let Some((scheme, key, true)) = ingest::crosswalk::canonical_key_flat(
+                            r.country.as_deref(),
+                            &kind,
+                            &r.identifier,
+                        ) {
+                            canon.entry((scheme, key)).or_default().push(r.org_id);
+                        }
+                    }
+                    watermark = next;
+                }
+                let pool = self.db.null_country_ident_orgs().await.map_err(|e| e.to_string())?;
+                let total = pool.len() as u64;
+                let (mut anchored_corr, mut anchored_uncorr, mut anchored_no_target) =
+                    (0u64, 0u64, 0u64);
+                let (mut unanchored_none, mut unanchored_multi, mut register_prefixed) =
+                    (0u64, 0u64, 0u64);
+                let mut samples: Vec<serde_json::Value> = Vec::new();
+                for (id, _kind, value, name) in &pool {
+                    if self.cancelled(job.id) {
+                        return Ok("r3-census stopped by cancel — no report stored".to_owned());
+                    }
+                    if value.bytes().any(|b| b.is_ascii_alphabetic()) {
+                        register_prefixed += 1;
+                        continue;
+                    }
+                    let anchors = ingest::idgate::checksum_anchors(value);
+                    // The DK|SI marker is ambiguity-by-construction, never an
+                    // anchor of its own.
+                    let real: Vec<_> =
+                        anchors.iter().filter(|(s, _)| !s.contains('|')).collect();
+                    let ambiguous = anchors.len() > real.len() || real.len() > 1;
+                    match (real.len(), ambiguous) {
+                        (0, _) => unanchored_none += 1,
+                        (_, true) => unanchored_multi += 1,
+                        (1, false) => {
+                            let (scheme, key) = real[0];
+                            let Some(targets) = canon.get(&(scheme, key.clone())) else {
+                                anchored_no_target += 1;
+                                continue;
+                            };
+                            // Cross-language N2 corroboration against every
+                            // target name (head + satellite).
+                            let n2 = ingest::project::match_norm(name);
+                            let mut corroborated = false;
+                            'targets: for &t in targets {
+                                for tn in
+                                    self.db.org_all_names(t).await.map_err(|e| e.to_string())?
+                                {
+                                    if !n2.is_empty()
+                                        && ingest::project::match_norm(&tn) == n2
+                                    {
+                                        corroborated = true;
+                                        break 'targets;
+                                    }
+                                }
+                            }
+                            if corroborated {
+                                anchored_corr += 1;
+                                if samples.len() < 40 {
+                                    samples.push(serde_json::json!({
+                                        "org_id": id, "identifier": value, "name": name,
+                                        "scheme": scheme, "key": key,
+                                        "targets": targets,
+                                    }));
+                                }
+                            } else {
+                                anchored_uncorr += 1;
+                            }
+                        }
+                        _ => unreachable!("covered above"),
+                    }
+                }
+                let now = store::now_unix();
+                let report = serde_json::json!({
+                    "pool": total,
+                    "anchored_corroborated": anchored_corr,
+                    "anchored_uncorroborated": anchored_uncorr,
+                    "anchored_no_target": anchored_no_target,
+                    "unanchored_none": unanchored_none,
+                    "unanchored_multi": unanchored_multi,
+                    "register_prefixed": register_prefixed,
+                    "sample": samples,
+                })
+                .to_string();
+                self.db.put_report("r3-census", &report, now).await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "r3-census (issue 300 Stage 3): {total} NULL-country identifier orgs — \
+                     {anchored_corr} anchored+corroborated (R3 merge candidates), \
+                     {anchored_uncorr} anchored without name corroboration (edges), \
+                     {anchored_no_target} anchored with no standing target, \
+                     {unanchored_multi} multi-scheme ambiguous (EBSCO class), \
+                     {unanchored_none} unanchored, {register_prefixed} register-prefixed \
+                     (the separate R3 alternative)"
+                ))
+            }
+            Spec::FusionCensus => {
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase("censusing", None, None, "reading reviewed rows' mentions".to_owned());
+                let r = self
+                    .db
+                    .fusion_candidates(ingest::project::match_norm, 120, &stop)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("fusion-census STOPPED by cancel — no report stored".to_owned());
+                }
+                let now = store::now_unix();
+                let body = serde_json::json!({
+                    "cases": r.cases, "with_mentions": r.with_mentions,
+                    "fused": r.fused, "off_name_mentions": r.off_name_mentions,
+                    "truncated": r.truncated,
+                    "candidates": r.candidates.iter().map(|c| serde_json::json!({
+                        "org": c.org, "cohort": c.cohort, "name": c.name,
+                        "mentions": c.mentions, "off_name": c.off_name,
+                        "groups": c.groups.iter().map(|(n, k)| {
+                            serde_json::json!({ "name": n, "mentions": k })
+                        }).collect::<Vec<_>>(),
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("fusion-candidates", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "fusion-census (issue 317 Unit A): {} applied case rows, {} with \
+                     mentions; {} hold at least one mention naming somebody ELSE, over \
+                     {} such mentions{}",
+                    r.cases,
+                    r.with_mentions,
+                    r.fused,
+                    r.off_name_mentions,
+                    if r.truncated { " (candidate list TRUNCATED at the cap)" } else { "" }
+                ))
+            }
+            Spec::OrgEdgeCensus => {
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase("censusing", None, None, "walking the candidate-edge store".to_owned());
+                // Sample every 500th component, capped at 40 in-store.
+                let r = self
+                    .db
+                    .census_org_candidate_edges(500, ingest::project::match_norm, &stop)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("org-edge-census STOPPED by cancel — no report stored".to_owned());
+                }
+                let now = store::now_unix();
+                let body = serde_json::json!({
+                    "edges": r.edges, "e3_name": r.e3_name, "e3_xlang": r.e3_xlang,
+                    // Issue 448: counted apart, never joined into a component.
+                    "e2_altid": r.e2_altid, "e2_altid_merged": r.e2_altid_merged,
+                    "other_rules": r.other_rules,
+                    "orgs_touched": r.orgs_touched, "dangling_orgs": r.dangling_orgs,
+                    "components": r.components,
+                    "size_buckets": r.size_buckets.iter().map(|(k, v)| {
+                        serde_json::json!({ "size": k, "components": v })
+                    }).collect::<Vec<_>>(),
+                    "max_component": r.max_component,
+                    "canonical_only_components": r.canonical_only_components,
+                    "mixed_components": r.mixed_components,
+                    "provisional_only_components": r.provisional_only_components,
+                    "multi_country_components": r.multi_country_components,
+                    "null_country_components": r.null_country_components,
+                    "canonical_cross_border_components": r.canonical_cross_border_components,
+                    "xb_same_name": r.xb_same_name,
+                    "xb_diff_name": r.xb_diff_name,
+                    "xb_with_intra": r.xb_with_intra,
+                    "xb_class_sample": r.xb_class_sample.iter()
+                        .map(|(c, root, size, ms)| serde_json::json!({
+                            "class": c, "root": root, "size": size, "members": ms,
+                        }))
+                        .collect::<Vec<_>>(),
+                    "canonical_cross_border_pairs": r.canonical_cross_border_pairs.iter().map(|(k, v)| {
+                        serde_json::json!({ "pair": k, "components": v })
+                    }).collect::<Vec<_>>(),
+                    "canonical_cross_border_sample": r.canonical_cross_border_sample.iter()
+                        .map(|(root, size, members)| {
+                            serde_json::json!({ "root": root, "size": size, "members": members })
+                        }).collect::<Vec<_>>(),
+                    "country_pairs": r.country_pairs.iter().map(|(k, v)| {
+                        serde_json::json!({ "pair": k, "components": v })
+                    }).collect::<Vec<_>>(),
+                    "sample": r.sample.iter().map(|(root, size, members)| {
+                        serde_json::json!({ "root": root, "size": size, "members": members })
+                    }).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db.put_report("org-edge-census", &body, now).await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "org-edge-census (issue 314): {} edges ({} e3-name + {} e3-xlang; {} \
+                     e2-altid, {} of them merged, and {} under other rules, counted apart and \
+                     never joined) — the E3 edges touch {} orgs ({} dangling); {} components, \
+                     max {}; {} canonical-only, \
+                     {} mixed, {} provisional-only; {} span >1 KNOWN country, \
+                     {} hold a country-less member; COHORT (canonical-only AND \
+                     cross-border): {}",
+                    r.edges,
+                    r.e3_name,
+                    r.e3_xlang,
+                    r.e2_altid,
+                    r.e2_altid_merged,
+                    r.other_rules,
+                    r.orgs_touched,
+                    r.dangling_orgs,
+                    r.components,
+                    r.max_component,
+                    r.canonical_only_components,
+                    r.mixed_components,
+                    r.provisional_only_components,
+                    r.multi_country_components,
+                    r.null_country_components,
+                    r.canonical_cross_border_components
+                ))
+            }
+            _ => Err(misrouted(job, "run_identity_census_spec")),
+        }
+    }
+
+    /// `run_spec`'s family of the read-only censuses and probes that store a report. Issue 467:
+    /// one family per fn, reached through `off_frame`, so its poll frame holds only these arms'
+    /// locals.
+    async fn run_census_spec(&self, job: &Job) -> Result<String, String> {
+        match &job.spec {
             Spec::CountryClusterCensus => {
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
@@ -8811,273 +9919,6 @@ impl Supervisor {
                     r.collides_other_identifier,
                 ))
             }).await,
-            Spec::FoldProvisionalEchoes { dry_run, max_groups } => Box::pin(async move {
-                let dry_run = *dry_run;
-                // A wet run REQUIRES the recorded dry plan: the T4 parity
-                // input, and the ladder's guarantee that nothing folds
-                // un-previewed.
-                let expect_groups = if dry_run {
-                    None
-                } else {
-                    let (body, _) = self
-                        .db
-                        .latest_report("provisional-echo-plan")
-                        .await
-                        .map_err(|e| e.to_string())?
-                        .ok_or_else(|| {
-                            "no stored provisional-echo-plan — run the dry run first".to_owned()
-                        })?;
-                    let v: serde_json::Value =
-                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
-                    Some(
-                        v["plan_groups"]
-                            .as_u64()
-                            .ok_or_else(|| "provisional-echo-plan lacks plan_groups".to_owned())?,
-                    )
-                };
-                // Issue 442: the wet loop deletes organizations with foreign keys ON.
-                if !dry_run {
-                    Box::pin(self.refuse_without_org_fk_indexes("fold-provisional-echoes")).await?;
-                }
-                self.set_phase(
-                    if dry_run { "planning" } else { "folding" },
-                    None,
-                    None,
-                    "issue 351: walking the provisional echo class".to_owned(),
-                );
-                let job_id = job.id;
-                let stop = || self.cancelled(job_id);
-                let progress = |done: u64, detail: &str| {
-                    self.set_phase(if dry_run { "planning" } else { "folding" }, Some(done), None, detail.to_owned());
-                };
-                let r = self
-                    .db
-                    .fold_provisional_echoes(store::ProvisionalFoldArgs {
-                        n2: ingest::project::match_norm,
-                        stoplist_cap: SCAN_STOPLIST_CAP,
-                        dry_run,
-                        max_groups: *max_groups,
-                        expect_groups,
-                        job_id: Some(job_id as i64),
-                        stop: &stop,
-                        progress: &progress,
-                    })
-                    .await
-                    .map_err(|e| e.to_string())?;
-                // A dry run records its plan; a wet run re-records the
-                // residual so a capped or stopped run continues under parity
-                // (the E0 arm's rule) — except a stop during planning, which
-                // computed nothing and must not clobber a reviewed plan.
-                // (Job 670's catch: a stop DURING planning can carry a partial
-                // plan_groups > 0 — the pages walked so far — so the guard is
-                // "nothing merged", which is true of every stop before the
-                // first committed transaction, not "nothing planned".)
-                if !(r.stopped && r.merged_groups == 0) {
-                    let now = store::now_unix();
-                    let plan = serde_json::json!({
-                        "plan_groups": r.plan_groups - r.merged_groups,
-                        "rows_walked": r.rows_walked, "groups": r.groups,
-                        "over_wall": r.over_wall, "plan_rows": r.plan_rows,
-                        "tiers": r.tiers,
-                        "over_wall_shapes": r.over_wall_shapes,
-                        "over_wall_shape_rows": r.over_wall_shape_rows,
-                        "over_wall_sample": r.over_wall_sample.iter().map(|(norm, name, rows, shape)| serde_json::json!({
-                            "name_norm": norm, "name": name, "rows": rows, "shape": shape,
-                        })).collect::<Vec<_>>(),
-                        "merged_this_run": r.merged_groups,
-                        "residual_of_wet_run": !dry_run,
-                        "listing_truncated": r.listing_truncated,
-                        "listing": r.listing.iter().map(|(norm, name, rows, keep)| serde_json::json!({
-                            "name_norm": norm, "name": name, "rows": rows, "keep_id": keep,
-                        })).collect::<Vec<_>>(),
-                    })
-                    .to_string();
-                    self.db
-                        .put_report("provisional-echo-plan", &plan, now)
-                        .await
-                        .map_err(|e| e.to_string())?;
-                }
-                if r.stopped {
-                    // Mirrors the re-record guard: nothing merged, nothing re-recorded.
-                    return Ok(if r.merged_groups == 0 {
-                        format!(
-                            "fold-provisional-echoes STOPPED before the first fold: nothing was \
-                             written ({} plan groups seen so far), and the previously recorded \
-                             plan was left untouched",
-                            r.plan_groups
-                        )
-                    } else {
-                        format!(
-                            "fold-provisional-echoes STOPPED: {} of {} plan groups folded before the \
-                             stop; the residual plan was re-recorded",
-                            r.merged_groups, r.plan_groups
-                        )
-                    });
-                }
-                Ok(format!(
-                    "fold-provisional-echoes (issue 351){}: {} rows walked, {} names in more than one \
-                     row, {} left standing (tiers {:?}; over-wall shapes {:?}, rows {:?}); plan {} groups / {} rows; folded {} groups \
-                     ({} rows removed, {} mentions, {} parties, {} bid-parties, {} winners repointed, \
-                     {} winner dups deleted, {} tenders touched)",
-                    if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
-                    r.rows_walked,
-                    r.groups,
-                    r.over_wall,
-                    r.tiers,
-                    r.over_wall_shapes,
-                    r.over_wall_shape_rows,
-                    r.plan_groups,
-                    r.plan_rows,
-                    r.merged_groups,
-                    r.removed,
-                    r.mentions,
-                    r.parties,
-                    r.bid_parties,
-                    r.winners,
-                    r.winner_dups,
-                    r.tender_changes
-                ))
-            }).await,
-            Spec::RepairProvisionalNameNorm { dry_run, max_groups } => Box::pin(async move {
-                let dry_run = *dry_run;
-                // A wet run REQUIRES the recorded dry plan — the echo fold's
-                // contract: nothing folds un-previewed, and a corpus that moved
-                // under the plan aborts before the first write.
-                let (expect_groups, expect_rows) = if dry_run {
-                    (None, None)
-                } else {
-                    let (body, _) = self
-                        .db
-                        .latest_report("provisional-name-norm-plan")
-                        .await
-                        .map_err(|e| e.to_string())?
-                        .ok_or_else(|| {
-                            "no stored provisional-name-norm-plan — run the dry run first".to_owned()
-                        })?;
-                    let v: serde_json::Value =
-                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
-                    let field = |k: &str| {
-                        v[k].as_u64()
-                            .ok_or_else(|| format!("provisional-name-norm-plan lacks {k}"))
-                    };
-                    (Some(field("groups")?), Some(field("rows")?))
-                };
-                let phase = if dry_run { "planning" } else { "repairing" };
-                // Issue 442: the wet loop deletes organizations with foreign keys ON.
-                if !dry_run {
-                    Box::pin(self.refuse_without_org_fk_indexes("repair-provisional-name-norm")).await?;
-                }
-                self.set_phase(
-                    phase,
-                    None,
-                    None,
-                    "issue 432: re-deriving the provisional reuse key".to_owned(),
-                );
-                let job_id = job.id;
-                let stop = || self.cancelled(job_id);
-                let progress = |done: u64, detail: &str| {
-                    self.set_phase(phase, Some(done), None, detail.to_owned());
-                };
-                // Boxed on top of the arm's own Box::pin: this store future
-                // nests the repair, its wet half and the shared fold loop, and
-                // held inline it made this arm's (unresumed, O0) state big
-                // enough to overflow `an_execute_without_an_expected_count_is_refused`
-                // — CLAUDE.md's run_spec trap, which the outer box alone did
-                // not clear.
-                let r = Box::pin(self.db.repair_provisional_name_norm(store::ProvisionalNameNormArgs {
-                    dry_run,
-                    max_groups: *max_groups,
-                    expect_groups,
-                    expect_rows,
-                    job_id: Some(job_id as i64),
-                    stop: &stop,
-                    progress: &progress,
-                }))
-                .await
-                .map_err(|e| e.to_string())?;
-                // The echo fold's re-record rule: a dry run records its plan, a
-                // wet run the residual (so a capped or stopped run continues
-                // under parity) — but a stop before anything was written
-                // computed a partial plan and must not clobber a reviewed one.
-                let wrote = r.merged_groups > 0 || r.rewritten > 0 || r.verdicts_moved > 0;
-                if !(r.stopped && !wrote) {
-                    let now = store::now_unix();
-                    let plan = serde_json::json!({
-                        "groups": r.groups - r.merged_groups,
-                        "rows": r.residual_rows,
-                        "rows_walked": r.rows_walked,
-                        "renormalised": r.renormalised,
-                        "renormalised_country_less": r.renormalised_country_less,
-                        "emptied": r.emptied,
-                        "group_rows": r.group_rows,
-                        "standing_twins": r.standing_twins,
-                        "fold_rows": r.fold_rows,
-                        "verdicts_rekeyed": r.verdicts_rekeyed - r.verdicts_moved,
-                        "verdict_conflicts": r.verdict_conflicts.iter().map(|(from, to)| serde_json::json!({
-                            "from": from, "to": to,
-                        })).collect::<Vec<_>>(),
-                        "merged_this_run": r.merged_groups,
-                        "rewritten_this_run": r.rewritten,
-                        "residual_of_wet_run": !dry_run,
-                        "listing_truncated": r.listing_truncated,
-                        "listing": r.listing.iter().map(|(key, country, name, rows, keep)| serde_json::json!({
-                            "name_norm": key, "country": country, "name": name, "rows": rows, "keep_id": keep,
-                        })).collect::<Vec<_>>(),
-                        "sample": r.sample.iter().map(|(id, name, from, to)| serde_json::json!({
-                            "id": id, "name": name, "from": from, "to": to,
-                        })).collect::<Vec<_>>(),
-                    })
-                    .to_string();
-                    self.db
-                        .put_report("provisional-name-norm-plan", &plan, now)
-                        .await
-                        .map_err(|e| e.to_string())?;
-                }
-                if r.stopped && !wrote {
-                    return Ok(
-                        "repair-provisional-name-norm STOPPED before the first write: nothing was \
-                         written, and the previously recorded plan was left untouched"
-                            .to_owned(),
-                    );
-                }
-                Ok(format!(
-                    "repair-provisional-name-norm (issue 432){}: {} identifier-less rows walked, {} \
-                     keyed off org_name_norm ({} country-less — re-keyed, never folded here; {} to \
-                     the empty key); {} same-country collision groups over {} rows ({} already on \
-                     the corrected key), a fold removes {}; {} verdict key(s) to re-key ({} moved), \
-                     {} left standing on a conflict. Folded {} groups under rule p1 ({} rows removed, {} \
-                     mentions, {} parties, {} bid-parties, {} winners repointed, {} winner dups \
-                     deleted, {} tenders touched); {} name_norm rewritten{}; residual {} rows{}",
-                    if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
-                    r.rows_walked,
-                    r.renormalised,
-                    r.renormalised_country_less,
-                    r.emptied,
-                    r.groups,
-                    r.group_rows,
-                    r.standing_twins,
-                    r.fold_rows,
-                    r.verdicts_rekeyed,
-                    r.verdicts_moved,
-                    r.verdict_conflicts.len(),
-                    r.merged_groups,
-                    r.removed,
-                    r.mentions,
-                    r.parties,
-                    r.bid_parties,
-                    r.winners,
-                    r.winner_dups,
-                    r.tender_changes,
-                    r.rewritten,
-                    if !dry_run && max_groups.is_some() {
-                        " (capped run: the bulk re-key waits for an uncapped one)"
-                    } else {
-                        ""
-                    },
-                    r.residual_rows,
-                    if r.stopped { " — STOPPED; the residual plan was re-recorded" } else { "" },
-                ))
-            }).await,
             Spec::ProvisionalEchoCensus { cap } => Box::pin(async move {
                 let cap = *cap;
                 let job_id = job.id;
@@ -9544,87 +10385,194 @@ impl Supervisor {
                     if r.truncated { "; LIST TRUNCATED at the cap" } else { "" }
                 ))
             }
-            Spec::OrgEdgeCensus => {
+            Spec::RegistryContiguity => Box::pin(async move {
+                self.set_phase(
+                    "checking",
+                    None,
+                    None,
+                    "issue 395: monthly period contiguity, per source".to_owned(),
+                );
+                let rows = self.db.monthly_fetch_periods().await.map_err(|e| e.to_string())?;
+                let (body, summary) = registry_contiguity_report(&rows, store::now_unix());
+                self.db
+                    .put_report("registry-contiguity", &body, store::now_unix())
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(summary)
+            })
+            .await,
+            Spec::MemberTwinCensus => Box::pin(async move {
+                // BOXED, for the reason spelled out on the arm below: `run_spec`
+                // is one giant async match and a census arm's locals once
+                // overflowed an unrelated test's stack.
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
-                self.set_phase("censusing", None, None, "walking the candidate-edge store".to_owned());
-                // Sample every 500th component, capped at 40 in-store.
+                self.set_phase(
+                    "walking",
+                    None,
+                    None,
+                    "issue 404: members held under more than one publication_id".to_owned(),
+                );
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("walking", Some(done), None, detail.to_owned());
+                };
+                // Rows per statement. Wide enough that 14.4M notices is a few
+                // hundred statements rather than thousands, narrow enough that no
+                // single one can become the uninterruptible scan issue 406 was
+                // filed on. Also the threshold past which a single member name
+                // would have to hold more rows than one batch before the walk has
+                // to count it outright — see `stalled_batches`.
+                const TWIN_BATCH: usize = 100_000;
+                const CAP: usize = 400;
                 let r = self
                     .db
-                    .census_org_candidate_edges(500, ingest::project::match_norm, &stop)
+                    .member_twin_census(TWIN_BATCH, CAP, &stop, &progress)
                     .await
                     .map_err(|e| e.to_string())?;
                 if r.stopped {
-                    return Ok("org-edge-census STOPPED by cancel — no report stored".to_owned());
+                    // No report on a stop, the same rule ghost-census keeps: a
+                    // partial twin count reads as a clean corpus, and that is the
+                    // one wrong answer this census must never give.
+                    return Ok("member-twin-census STOPPED by cancel — no report stored".to_owned());
                 }
                 let now = store::now_unix();
                 let body = serde_json::json!({
-                    "edges": r.edges, "e3_name": r.e3_name, "e3_xlang": r.e3_xlang,
-                    // Issue 448: counted apart, never joined into a component.
-                    "e2_altid": r.e2_altid, "e2_altid_merged": r.e2_altid_merged,
-                    "other_rules": r.other_rules,
-                    "orgs_touched": r.orgs_touched, "dangling_orgs": r.dangling_orgs,
-                    "components": r.components,
-                    "size_buckets": r.size_buckets.iter().map(|(k, v)| {
-                        serde_json::json!({ "size": k, "components": v })
-                    }).collect::<Vec<_>>(),
-                    "max_component": r.max_component,
-                    "canonical_only_components": r.canonical_only_components,
-                    "mixed_components": r.mixed_components,
-                    "provisional_only_components": r.provisional_only_components,
-                    "multi_country_components": r.multi_country_components,
-                    "null_country_components": r.null_country_components,
-                    "canonical_cross_border_components": r.canonical_cross_border_components,
-                    "xb_same_name": r.xb_same_name,
-                    "xb_diff_name": r.xb_diff_name,
-                    "xb_with_intra": r.xb_with_intra,
-                    "xb_class_sample": r.xb_class_sample.iter()
-                        .map(|(c, root, size, ms)| serde_json::json!({
-                            "class": c, "root": root, "size": size, "members": ms,
-                        }))
-                        .collect::<Vec<_>>(),
-                    "canonical_cross_border_pairs": r.canonical_cross_border_pairs.iter().map(|(k, v)| {
-                        serde_json::json!({ "pair": k, "components": v })
-                    }).collect::<Vec<_>>(),
-                    "canonical_cross_border_sample": r.canonical_cross_border_sample.iter()
-                        .map(|(root, size, members)| {
-                            serde_json::json!({ "root": root, "size": size, "members": members })
-                        }).collect::<Vec<_>>(),
-                    "country_pairs": r.country_pairs.iter().map(|(k, v)| {
-                        serde_json::json!({ "pair": k, "components": v })
-                    }).collect::<Vec<_>>(),
-                    "sample": r.sample.iter().map(|(root, size, members)| {
-                        serde_json::json!({ "root": root, "size": size, "members": members })
-                    }).collect::<Vec<_>>(),
+                    "batch": r.batch,
+                    "rows_walked": r.rows_walked,
+                    "batches": r.batches,
+                    "sources": r.sources,
+                    "stalled_batches": r.stalled_batches,
+                    "duplicate_keys": r.duplicate_keys,
+                    "twin_sets": r.twin_sets,
+                    "twin_rows": r.twin_rows,
+                    "by_source": r.by_source.iter().map(|(source, per)| serde_json::json!({
+                        "source": source,
+                        "duplicate_keys": per.duplicate_keys,
+                        "twin_sets": per.twin_sets,
+                        "twin_rows": per.twin_rows,
+                    })).collect::<Vec<_>>(),
+                    "sample_truncated": r.truncated,
+                    "sample": r.sample.iter().map(|set| serde_json::json!({
+                        "source": set.source,
+                        "member_path": set.member_path,
+                        "content_hash": set.content_hash,
+                        "notices": set.rows.iter().map(|(id, key)| serde_json::json!({
+                            "id": id, "publication_id": key,
+                        })).collect::<Vec<_>>(),
+                    })).collect::<Vec<_>>(),
                 })
                 .to_string();
-                self.db.put_report("org-edge-census", &body, now).await.map_err(|e| e.to_string())?;
+                self.db
+                    .put_report("member-twin-census", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let by_source = r
+                    .by_source
+                    .iter()
+                    .filter(|(_, per)| per.twin_sets > 0)
+                    .map(|(source, per)| format!("{source} {} set(s)/{} row(s)", per.twin_sets, per.twin_rows))
+                    .collect::<Vec<_>>()
+                    .join(", ");
                 Ok(format!(
-                    "org-edge-census (issue 314): {} edges ({} e3-name + {} e3-xlang; {} \
-                     e2-altid, {} of them merged, and {} under other rules, counted apart and \
-                     never joined) — the E3 edges touch {} orgs ({} dangling); {} components, \
-                     max {}; {} canonical-only, \
-                     {} mixed, {} provisional-only; {} span >1 KNOWN country, \
-                     {} hold a country-less member; COHORT (canonical-only AND \
-                     cross-border): {}",
-                    r.edges,
-                    r.e3_name,
-                    r.e3_xlang,
-                    r.e2_altid,
-                    r.e2_altid_merged,
-                    r.other_rules,
-                    r.orgs_touched,
-                    r.dangling_orgs,
-                    r.components,
-                    r.max_component,
-                    r.canonical_only_components,
-                    r.mixed_components,
-                    r.provisional_only_components,
-                    r.multi_country_components,
-                    r.null_country_components,
-                    r.canonical_cross_border_components
+                    "member-twin-census (issue 404): {} row(s) walked across {} source(s) in {} \
+                     batch(es) of {}, {} member name(s) held more than once, of which {} are ONE payload \
+                     under 2+ publication_ids, covering {} notice row(s). By source: [{}]. \
+                     NOTHING IS WRITTEN. A duplicate NAME is not a defect — publishers reuse \
+                     member names across packages and different bytes are different records; \
+                     the twin count is the one that matters, and 281 was only ever the floor \
+                     of one DÖE incident. The ingest path can no longer create this shape \
+                     (issue 411): a moved identity is now adopted in place, on the row the \
+                     corpus already hangs off.",
+                    r.rows_walked,
+                    r.sources,
+                    r.batches,
+                    r.batch,
+                    r.duplicate_keys,
+                    r.twin_sets,
+                    r.twin_rows,
+                    if by_source.is_empty() { "none".to_owned() } else { by_source },
                 ))
-            }
+            })
+            .await,
+            Spec::GhostCensus => Box::pin(async move {
+                // BOXED. `run_spec` is one async match over every `Spec` arm, so
+                // every arm's locals live in ONE future; a census arm added to it
+                // once overflowed the stack of an unrelated supervisor test. Boxing
+                // keeps this arm's frame on the heap.
+                //
+                // This job kind used to be the track-2 SWEEP, and it stalled prod
+                // for 40+ minutes on 2026-08-26 running an unbounded
+                // `GROUP BY … COUNT(DISTINCT)` over ~12.4M `tender_versions`. It was
+                // then a deliberate no-op for a week. What replaces it is a
+                // read-only census over the same signature, sliced on the GROUP BY
+                // key itself — 0.30 s per million notice ids on prod, ~9 s for the
+                // whole space. It is a DETECTOR, not a cleanup: the ~45k ghosts it
+                // was built to remove are gone (measured 2026-09-02, zero across all
+                // 29.96M ids), and nothing was watching for the signature returning.
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase("walking", None, None, "issue 278: ghost signature".to_owned());
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("walking", Some(done), None, detail.to_owned());
+                };
+                // A slice per million notice ids. Wide enough that the whole space
+                // is ~30 statements, narrow enough that each is far under the
+                // /v1/sql-class 10 s bound that the unbounded form blew past.
+                const GHOST_WINDOW: i64 = 1_000_000;
+                const CAP: usize = 200;
+                let r = self
+                    .db
+                    .ghost_census(GHOST_WINDOW, CAP, &stop, &progress)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("ghost-census STOPPED by cancel — no report stored".to_owned());
+                }
+                let now = store::now_unix();
+                let surplus = r.ghost_tender_refs.saturating_sub(r.ghost_notices);
+                let body = serde_json::json!({
+                    "window": r.window,
+                    "max_notice_id": r.max_notice_id,
+                    "slices": r.slices,
+                    "ghost_notices": r.ghost_notices,
+                    "ghost_tender_refs": r.ghost_tender_refs,
+                    "surplus_tenders": surplus,
+                    "sample_truncated": r.truncated,
+                    "sample": r.sample.iter().map(|g| serde_json::json!({
+                        "notice_id": g.notice_id,
+                        "tenders": g.tenders,
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db.put_report("ghost-census", &body, now).await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "ghost-census (issue 278): {} notice(s) claimed by 2+ Tenders across \
+                     {} slice(s) of {} notice ids, up to {}. Claims total {}, so the surplus \
+                     (ghost) Tender count is {}. A notice keys to exactly ONE group — \
+                     `plan_notice.notice_id` is a PK — so any non-zero here is a defect, not \
+                     a tolerance. NOTHING IS WRITTEN: this replaced the sweep that stalled \
+                     the queue for 40+ minutes, and it counts rather than retires because \
+                     there has been nothing to retire since the reparse backlog drained. If \
+                     it ever returns non-zero, the retirement path already exists on the \
+                     incremental fold (`retire_regrouped_tenders`) — re-queue the named \
+                     notices and let an ordinary project run drop the stale member.",
+                    r.ghost_notices,
+                    r.slices,
+                    r.window,
+                    r.max_notice_id,
+                    r.ghost_tender_refs,
+                    surplus,
+                ))
+            }).await,
+            _ => Err(misrouted(job, "run_census_spec")),
+        }
+    }
+
+    /// `run_spec`'s family of the case-review apply/unapply and the org match-key build and
+    /// scan. Issue 467: one family per fn, reached through `off_frame`, so its poll frame holds
+    /// only these arms' locals.
+    async fn run_match_key_spec(&self, job: &Job) -> Result<String, String> {
+        match &job.spec {
             Spec::ApplyCaseReviews { dry_run } => {
                 let dry_run = *dry_run;
                 self.set_phase(
@@ -10114,775 +11062,7 @@ impl Supervisor {
                     started.elapsed().as_secs()
                 ))
             }
-            Spec::Refold { profiles, expect } => {
-                let refs: Vec<&str> = profiles.iter().map(String::as_str).collect();
-                // Count BEFORE writing: a mistyped profile string matching a far larger
-                // set would otherwise re-queue that set silently, and the trailing
-                // projection would fold it. Abort while nothing has been written yet.
-                self.set_phase("counting", None, None, format!("projected notices under {:?}", profiles));
-                let found = self
-                    .db
-                    .projected_notice_count_for_profiles(&refs)
-                    .await
-                    .map_err(|e| e.to_string())?;
-                if let Some(expect) = expect {
-                    let slack = expect / 4;
-                    if found.abs_diff(*expect) > slack {
-                        return Err(format!(
-                            "refold aborted: {} notices match {:?}, expected ~{expect} — \
-                             check the profile strings (nothing was written)",
-                            found, profiles
-                        ));
-                    }
-                }
-                self.set_phase("re-queueing", Some(0), Some(found), "notices un-marked".into());
-                let requeued =
-                    self.db.unmark_projected_for_profiles(&refs).await.map_err(|e| e.to_string())?;
-                // issue 179: the requeue alone leaves each Tender's chain identical,
-                // and an unchanged chain with a current epoch early-returns — the
-                // mapping fix would never land. Stamp the cohort's tenders
-                // epoch-stale so exactly THEY rewrite; the global PROJECTION_EPOCH
-                // stays put, so nobody else does. Unconditional (not gated on
-                // requeued > 0) so a job re-run after a crash heals both halves.
-                self.set_phase(
-                    "stamping",
-                    Some(requeued as u64),
-                    Some(found),
-                    "notices re-queued; their tenders now stamped epoch-stale".into(),
-                );
-                let stamped =
-                    self.db.stamp_stale_for_profiles(&refs).await.map_err(|e| e.to_string())?;
-                Ok(format!(
-                    "re-queued {requeued} notices, stamped {stamped} tenders epoch-stale \
-                     for the incremental fold"
-                ))
-            }
-            Spec::RefoldSections { kinds } => {
-                let refs: Vec<&str> = kinds.iter().map(String::as_str).collect();
-                let carriers =
-                    self.db.notice_ids_with_section_kind(&refs).await.map_err(|e| e.to_string())?;
-                if carriers.is_empty() {
-                    // Not an error: a kind no notice carries is a legitimate answer, and
-                    // saying so beats re-queueing nothing while reporting success.
-                    return Ok(format!("no parsed notice carries a {:?} section", kinds));
-                }
-                self.set_phase("re-folding", None, None, format!("{} carriers", carriers.len()));
-                let requeued =
-                    self.db.unmark_projected_by_ids(&carriers).await.map_err(|e| e.to_string())?;
-                // The issue-179 pair: the requeue alone leaves each chain identical and an
-                // unchanged chain with a current epoch early-returns, so the mapping fix
-                // would never land.
-                let stamped =
-                    self.db.stamp_stale_for_notices(&carriers).await.map_err(|e| e.to_string())?;
-                Ok(format!(
-                    "{} notice(s) carry a {:?} section: re-queued {requeued}, stamped {stamped} \
-                     tender(s) epoch-stale for the incremental fold",
-                    carriers.len(),
-                    kinds
-                ))
-            }
-            Spec::RefoldDeniedSchemes { dry_run, schemes } => Box::pin(async move {
-                // Walk `notice_id` in fixed strides rather than counting matches:
-                // `organization_mentions.scheme` has no index, so a match-filling
-                // window would scan an unbounded stretch when hits are sparse,
-                // while a stride costs the same per call at any hit rate.
-                const STRIDE: i64 = 250_000;
-                let borrowed: Vec<&str> = schemes.iter().map(String::as_str).collect();
-                let max_id = self.db.max_notice_id().await.map_err(|e| e.to_string())?;
-                let (mut requeued, mut stamped, mut notices, mut windows) = (0u64, 0u64, 0u64, 0u64);
-                let mut after = 0i64;
-                // No stop-flag check on purpose. The readers are enumerated in a
-                // const above (issue 252) precisely so an unregistered kind is
-                // REFUSED cancellation rather than told "asked it to stop" and
-                // then ignored. This walk is ~one pass of the mentions table in
-                // fixed strides — minutes, not the grinding fold that rule was
-                // written for — so refusal is the honest answer, and registering
-                // it would claim a responsiveness it does not have.
-                while after < max_id {
-                    let through = (after + STRIDE).min(max_id);
-                    let ids = self
-                        .db
-                        .notices_with_denied_scheme(&borrowed, after, through)
-                        .await
-                        .map_err(|e| e.to_string())?;
-                    notices += ids.len() as u64;
-                    windows += 1;
-                    if !*dry_run && !ids.is_empty() {
-                        requeued += self
-                            .db
-                            .unmark_projected_by_ids(&ids)
-                            .await
-                            .map_err(|e| e.to_string())?;
-                        stamped += self
-                            .db
-                            .stamp_stale_for_notices(&ids)
-                            .await
-                            .map_err(|e| e.to_string())?;
-                    }
-                    after = through;
-                }
-                Ok(format!(
-                    "refold-denied-schemes (issue 365 u6){}: {}, \
-                     {notices} notice(s) carry one over {windows} window(s); \
-                     re-queued {requeued}, stamped {stamped} tender(s) epoch-stale",
-                    if *dry_run { " DRY RUN — nothing written" } else { "" },
-                    schemes.join(","),
-                ))
-            })
-            .await,
-            Spec::RefoldNotices { notices } => {
-                let requeued =
-                    self.db.unmark_projected_by_ids(notices).await.map_err(|e| e.to_string())?;
-                let stamped =
-                    self.db.stamp_stale_for_notices(notices).await.map_err(|e| e.to_string())?;
-                // Report all three numbers, because their DIFFERENCES are the
-                // finding. Fewer re-queued than asked means some ids were unparsed,
-                // already re-queued, or simply do not exist — a typo'd id would
-                // otherwise vanish into a job that says "ok". Fewer stamped than
-                // re-queued means notices that never reached a Tender.
-                Ok(format!(
-                    "{} notice(s) named: re-queued {requeued}, stamped {stamped} tender(s)                      epoch-stale for the incremental fold",
-                    notices.len()
-                ))
-            }
-            Spec::FetchRates => {
-                // The ZIP, not the bare CSV: the bare
-                // `eurofxref-hist.csv` URL serves a frozen defective artifact
-                // (2010-02-12 rates plus one garbage row the CDN has pinned for
-                // sixteen years) while the zip at the same path carries the
-                // real live series. Issue 306.
-                const URL: &str = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.zip";
-                let period = store::rates::civil_date(store::now_unix());
-                let target = fetch::Target {
-                    source: "ecb",
-                    kind: "rates",
-                    period: period.clone(),
-                    url: URL.to_owned(),
-                    rel_path: format!("rates/eurofxref-hist-{period}.zip"),
-                };
-                // refetch=true: a same-day re-run re-downloads and lands as
-                // Unchanged when the content hash matches — the registry and the
-                // archived file are the durable record either way (ADR-0004).
-                let outcome = fetch::fetch(&self.db, &self.http, &self.archive, &target, true)
-                    .await
-                    .map_err(|e| format!("rates fetch: {e:?}"))?;
-                let row = self
-                    .db
-                    .latest_fetch("ecb", "rates", &period)
-                    .await
-                    .map_err(|e| e.to_string())?
-                    .ok_or_else(|| format!("rates fetch {outcome:?} but no registry row"))?;
-                let csv = package::zip_single_text(&self.archive.join(&row.path))
-                    .map_err(|e| format!("read archived rates zip {}: {e}", row.path))?;
-                let rows = store::rates::parse_ecb_history_csv(&csv);
-                if rows.is_empty() {
-                    return Err(format!(
-                        "rates csv parsed to ZERO rows ({} bytes) — format drift? nothing written",
-                        row.bytes
-                    ));
-                }
-                // The issue-306 tripwire: a live daily series whose newest row
-                // is stale means the SOURCE is defective — refuse before any
-                // write, so this failure mode is a red job, not silent NULLs.
-                store::rates::assert_fresh(&rows, &period, 10)?;
-                let seeded =
-                    self.db.seed_irrevocable_euro_rates().await.map_err(|e| e.to_string())?;
-                let total = rows.len();
-                let mut upserted = 0u64;
-                for (i, chunk) in rows.chunks(50_000).enumerate() {
-                    upserted +=
-                        self.db.upsert_currency_rates(chunk).await.map_err(|e| e.to_string())?;
-                    self.set_phase(
-                        "loading",
-                        Some(upserted),
-                        Some(total as u64),
-                        format!("chunk {} upserted", i + 1),
-                    );
-                    if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
-                        eprintln!("supervisor: checkpoint after rates chunk: {e}");
-                    }
-                }
-                // REPLACE can only overwrite, never remove: a poisoned stored
-                // row on a date the real file doesn't have (the garbage Sunday
-                // 2010-02-14 row) would survive every re-fetch. The file is the
-                // authority for its own source — delete what it disowns.
-                let removed = self
-                    .db
-                    .reconcile_currency_dates("ecb", &rows)
-                    .await
-                    .map_err(|e| e.to_string())?;
-                // The running process folds with an in-memory snapshot — refresh
-                // it so the NEXT projection uses what was just loaded.
-                let cached = self.db.reload_rates_lookup().await.map_err(|e| e.to_string())?;
-                Ok(format!(
-                    "rates: {upserted} daily rows upserted from {period} ({:?}, {} bytes) + \
-                     {seeded} irrevocable conversion rates seeded; {removed} stale rows \
-                     reconciled away; {cached} rows cached",
-                    outcome, row.bytes
-                ))
-            }
-            Spec::FetchRatesEcu => {
-                // Eurostat splits the official daily ECU series in two: the
-                // former euro-area national currencies (DEM/FRF/ITL/… — the
-                // ones pre-1999 tenders actually publish in) live in
-                // `ert_h_eur_d`, everything else (GBP/DKK/USD/SEK/…) in
-                // `ert_bil_eur_d`. Both verified 2026-08-27: daily back to
-                // 1974, OBS_VALUE = national units per 1 ECU (DEM closes
-                // 1998-12-31 on the irrevocable 1.95583 exactly), CC BY 4.0,
-                // no key. `endPeriod` caps at 1998-12-31 in the URL, and the
-                // loader re-filters below, because from 1999 the ECB series is
-                // the authority and the two must not overlap.
-                const BASE: &str = "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data";
-                const RANGE: &str = "format=SDMX-CSV&startPeriod=1993-01-01&endPeriod=1998-12-31";
-                let datasets =
-                    [("ert_h_eur_d", "rates-ecu-h"), ("ert_bil_eur_d", "rates-ecu-bil")];
-                let mut upserted = 0u64;
-                let mut summary = Vec::new();
-                let mut all_rows = Vec::new();
-                for (dataset, kind) in datasets {
-                    let target = fetch::Target {
-                        source: "eurostat",
-                        kind,
-                        period: "1993-1998".to_owned(),
-                        url: format!("{BASE}/{dataset}?{RANGE}"),
-                        rel_path: format!("rates/ecu-{dataset}-1993-1998.csv"),
-                    };
-                    let outcome = fetch::fetch(&self.db, &self.http, &self.archive, &target, true)
-                        .await
-                        .map_err(|e| format!("{dataset} fetch: {e:?}"))?;
-                    let row = self
-                        .db
-                        .latest_fetch("eurostat", kind, "1993-1998")
-                        .await
-                        .map_err(|e| e.to_string())?
-                        .ok_or_else(|| format!("{dataset} fetch {outcome:?} but no registry row"))?;
-                    let csv = std::fs::read_to_string(self.archive.join(&row.path))
-                        .map_err(|e| format!("read archived {dataset} csv {}: {e}", row.path))?;
-                    let rows: Vec<_> = store::rates::parse_eurostat_sdmx_csv(&csv)
-                        .into_iter()
-                        .filter(|(_, date, _, _)| date.as_str() < "1999-01-01")
-                        .collect();
-                    if rows.is_empty() {
-                        return Err(format!(
-                            "{dataset} parsed to ZERO rows ({} bytes) — format drift? nothing \
-                             written",
-                            row.bytes
-                        ));
-                    }
-                    // The issue-306 guard, closed-series form: this series ENDS
-                    // 1998-12-31 (the euro replaced the ECU), so freshness means
-                    // coverage reaches December 1998, not today. A file stopping
-                    // earlier is truncated/defective — refuse before writing.
-                    let newest = store::rates::newest_date(&rows).unwrap_or("").to_owned();
-                    if newest.as_str() < "1998-12-01" {
-                        return Err(format!(
-                            "{dataset} coverage ends {newest} — the closed ECU series must \
-                             reach 1998-12; truncated or defective file, nothing written \
-                             (issue 306)"
-                        ));
-                    }
-                    let total = rows.len();
-                    for (i, chunk) in rows.chunks(50_000).enumerate() {
-                        upserted +=
-                            self.db.upsert_currency_rates(chunk).await.map_err(|e| e.to_string())?;
-                        self.set_phase(
-                            "loading",
-                            Some(upserted),
-                            None,
-                            format!("{dataset} chunk {} upserted", i + 1),
-                        );
-                        if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
-                            eprintln!("supervisor: checkpoint after ecu rates chunk: {e}");
-                        }
-                    }
-                    summary.push(format!("{dataset}: {total} rows ({:?}, {} bytes)", outcome, row.bytes));
-                    all_rows.extend(rows);
-                }
-                // Reconcile against the UNION of both datasets — they share the
-                // 'eurostat-ecu' source tag, so either file alone would disown
-                // the other's dates (issue 306's REPLACE-can't-delete lesson).
-                let removed = self
-                    .db
-                    .reconcile_currency_dates("eurostat-ecu", &all_rows)
-                    .await
-                    .map_err(|e| e.to_string())?;
-                let cached = self.db.reload_rates_lookup().await.map_err(|e| e.to_string())?;
-                Ok(format!(
-                    "ecu rates 1993-1998: {upserted} rows upserted — {}; {removed} stale rows \
-                     reconciled away; {cached} rows cached",
-                    summary.join("; ")
-                ))
-            }
-            Spec::RepairMemberTwins { dry_run } => {
-                Box::pin(self.run_repair_member_twins(job, *dry_run)).await
-            }
-            Spec::RegistryContiguity => Box::pin(async move {
-                self.set_phase(
-                    "checking",
-                    None,
-                    None,
-                    "issue 395: monthly period contiguity, per source".to_owned(),
-                );
-                let rows = self.db.monthly_fetch_periods().await.map_err(|e| e.to_string())?;
-                let (body, summary) = registry_contiguity_report(&rows, store::now_unix());
-                self.db
-                    .put_report("registry-contiguity", &body, store::now_unix())
-                    .await
-                    .map_err(|e| e.to_string())?;
-                Ok(summary)
-            })
-            .await,
-            Spec::MemberTwinCensus => Box::pin(async move {
-                // BOXED, for the reason spelled out on the arm below: `run_spec`
-                // is one giant async match and a census arm's locals once
-                // overflowed an unrelated test's stack.
-                let job_id = job.id;
-                let stop = || self.cancelled(job_id);
-                self.set_phase(
-                    "walking",
-                    None,
-                    None,
-                    "issue 404: members held under more than one publication_id".to_owned(),
-                );
-                let progress = |done: u64, detail: &str| {
-                    self.set_phase("walking", Some(done), None, detail.to_owned());
-                };
-                // Rows per statement. Wide enough that 14.4M notices is a few
-                // hundred statements rather than thousands, narrow enough that no
-                // single one can become the uninterruptible scan issue 406 was
-                // filed on. Also the threshold past which a single member name
-                // would have to hold more rows than one batch before the walk has
-                // to count it outright — see `stalled_batches`.
-                const TWIN_BATCH: usize = 100_000;
-                const CAP: usize = 400;
-                let r = self
-                    .db
-                    .member_twin_census(TWIN_BATCH, CAP, &stop, &progress)
-                    .await
-                    .map_err(|e| e.to_string())?;
-                if r.stopped {
-                    // No report on a stop, the same rule ghost-census keeps: a
-                    // partial twin count reads as a clean corpus, and that is the
-                    // one wrong answer this census must never give.
-                    return Ok("member-twin-census STOPPED by cancel — no report stored".to_owned());
-                }
-                let now = store::now_unix();
-                let body = serde_json::json!({
-                    "batch": r.batch,
-                    "rows_walked": r.rows_walked,
-                    "batches": r.batches,
-                    "sources": r.sources,
-                    "stalled_batches": r.stalled_batches,
-                    "duplicate_keys": r.duplicate_keys,
-                    "twin_sets": r.twin_sets,
-                    "twin_rows": r.twin_rows,
-                    "by_source": r.by_source.iter().map(|(source, per)| serde_json::json!({
-                        "source": source,
-                        "duplicate_keys": per.duplicate_keys,
-                        "twin_sets": per.twin_sets,
-                        "twin_rows": per.twin_rows,
-                    })).collect::<Vec<_>>(),
-                    "sample_truncated": r.truncated,
-                    "sample": r.sample.iter().map(|set| serde_json::json!({
-                        "source": set.source,
-                        "member_path": set.member_path,
-                        "content_hash": set.content_hash,
-                        "notices": set.rows.iter().map(|(id, key)| serde_json::json!({
-                            "id": id, "publication_id": key,
-                        })).collect::<Vec<_>>(),
-                    })).collect::<Vec<_>>(),
-                })
-                .to_string();
-                self.db
-                    .put_report("member-twin-census", &body, now)
-                    .await
-                    .map_err(|e| e.to_string())?;
-                let by_source = r
-                    .by_source
-                    .iter()
-                    .filter(|(_, per)| per.twin_sets > 0)
-                    .map(|(source, per)| format!("{source} {} set(s)/{} row(s)", per.twin_sets, per.twin_rows))
-                    .collect::<Vec<_>>()
-                    .join(", ");
-                Ok(format!(
-                    "member-twin-census (issue 404): {} row(s) walked across {} source(s) in {} \
-                     batch(es) of {}, {} member name(s) held more than once, of which {} are ONE payload \
-                     under 2+ publication_ids, covering {} notice row(s). By source: [{}]. \
-                     NOTHING IS WRITTEN. A duplicate NAME is not a defect — publishers reuse \
-                     member names across packages and different bytes are different records; \
-                     the twin count is the one that matters, and 281 was only ever the floor \
-                     of one DÖE incident. The ingest path can no longer create this shape \
-                     (issue 411): a moved identity is now adopted in place, on the row the \
-                     corpus already hangs off.",
-                    r.rows_walked,
-                    r.sources,
-                    r.batches,
-                    r.batch,
-                    r.duplicate_keys,
-                    r.twin_sets,
-                    r.twin_rows,
-                    if by_source.is_empty() { "none".to_owned() } else { by_source },
-                ))
-            })
-            .await,
-            Spec::GhostCensus => Box::pin(async move {
-                // BOXED. `run_spec` is one async match over every `Spec` arm, so
-                // every arm's locals live in ONE future; a census arm added to it
-                // once overflowed the stack of an unrelated supervisor test. Boxing
-                // keeps this arm's frame on the heap.
-                //
-                // This job kind used to be the track-2 SWEEP, and it stalled prod
-                // for 40+ minutes on 2026-08-26 running an unbounded
-                // `GROUP BY … COUNT(DISTINCT)` over ~12.4M `tender_versions`. It was
-                // then a deliberate no-op for a week. What replaces it is a
-                // read-only census over the same signature, sliced on the GROUP BY
-                // key itself — 0.30 s per million notice ids on prod, ~9 s for the
-                // whole space. It is a DETECTOR, not a cleanup: the ~45k ghosts it
-                // was built to remove are gone (measured 2026-09-02, zero across all
-                // 29.96M ids), and nothing was watching for the signature returning.
-                let job_id = job.id;
-                let stop = || self.cancelled(job_id);
-                self.set_phase("walking", None, None, "issue 278: ghost signature".to_owned());
-                let progress = |done: u64, detail: &str| {
-                    self.set_phase("walking", Some(done), None, detail.to_owned());
-                };
-                // A slice per million notice ids. Wide enough that the whole space
-                // is ~30 statements, narrow enough that each is far under the
-                // /v1/sql-class 10 s bound that the unbounded form blew past.
-                const GHOST_WINDOW: i64 = 1_000_000;
-                const CAP: usize = 200;
-                let r = self
-                    .db
-                    .ghost_census(GHOST_WINDOW, CAP, &stop, &progress)
-                    .await
-                    .map_err(|e| e.to_string())?;
-                if r.stopped {
-                    return Ok("ghost-census STOPPED by cancel — no report stored".to_owned());
-                }
-                let now = store::now_unix();
-                let surplus = r.ghost_tender_refs.saturating_sub(r.ghost_notices);
-                let body = serde_json::json!({
-                    "window": r.window,
-                    "max_notice_id": r.max_notice_id,
-                    "slices": r.slices,
-                    "ghost_notices": r.ghost_notices,
-                    "ghost_tender_refs": r.ghost_tender_refs,
-                    "surplus_tenders": surplus,
-                    "sample_truncated": r.truncated,
-                    "sample": r.sample.iter().map(|g| serde_json::json!({
-                        "notice_id": g.notice_id,
-                        "tenders": g.tenders,
-                    })).collect::<Vec<_>>(),
-                })
-                .to_string();
-                self.db.put_report("ghost-census", &body, now).await.map_err(|e| e.to_string())?;
-                Ok(format!(
-                    "ghost-census (issue 278): {} notice(s) claimed by 2+ Tenders across \
-                     {} slice(s) of {} notice ids, up to {}. Claims total {}, so the surplus \
-                     (ghost) Tender count is {}. A notice keys to exactly ONE group — \
-                     `plan_notice.notice_id` is a PK — so any non-zero here is a defect, not \
-                     a tolerance. NOTHING IS WRITTEN: this replaced the sweep that stalled \
-                     the queue for 40+ minutes, and it counts rather than retires because \
-                     there has been nothing to retire since the reparse backlog drained. If \
-                     it ever returns non-zero, the retirement path already exists on the \
-                     incremental fold (`retire_regrouped_tenders`) — re-queue the named \
-                     notices and let an ordinary project run drop the stale member.",
-                    r.ghost_notices,
-                    r.slices,
-                    r.window,
-                    r.max_notice_id,
-                    r.ghost_tender_refs,
-                    surplus,
-                ))
-            }).await,
-            Spec::RefoldFields { fields, expect, tables } => {
-                let refs: Vec<&str> = fields.iter().map(String::as_str).collect();
-                let table_refs: Option<Vec<&str>> =
-                    tables.as_ref().map(|t| t.iter().map(String::as_str).collect());
-                // Enumerate BEFORE writing (the sweep is the expensive step and is
-                // read-only), then gate on `expect` exactly like `refold`: a
-                // mistyped field id matching a far larger carrier set must abort
-                // while nothing has been written.
-                //
-                // Phased, because the sweep is a full walk of notice_texts and
-                // notice_amounts (46 min for 31.7 M notices on 2026-09-12) and the
-                // job view showed `phase: null` for all of it — an operator could not
-                // tell the read-only sweep from the re-queue that follows, and the
-                // cancel answer (issue 382) had nothing to name as in flight.
-                self.set_phase(
-                    "sweeping",
-                    None,
-                    None,
-                    format!(
-                        "carriers of {} field id(s): a full walk of {}, read-only (the [store] \
-                         field sweep lines in the journal count it)",
-                        refs.len(),
-                        match &table_refs {
-                            Some(t) => t.join(" + "),
-                            None => "every notice value table".to_owned(),
-                        }
-                    ),
-                );
-                let carriers = self
-                    .db
-                    .notice_ids_carrying_fields(&refs, table_refs.as_deref())
-                    .await
-                    .map_err(|e| e.to_string())?;
-                let found = carriers.len() as u64;
-                if let Some(expect) = expect {
-                    let slack = expect / 4;
-                    if found.abs_diff(*expect) > slack {
-                        return Err(format!(
-                            "refold-fields aborted: {found} notices carry {fields:?}, expected \
-                             ~{expect} — check the field ids (nothing was written)"
-                        ));
-                    }
-                }
-                self.set_phase("re-queueing", Some(0), Some(found), "carriers un-marked".into());
-                let requeued =
-                    self.db.unmark_projected_by_ids(&carriers).await.map_err(|e| e.to_string())?;
-                // Same issue-179 pair as `refold`: requeue + scoped stale-stamp,
-                // both idempotent so a crashed job heals on re-run.
-                self.set_phase(
-                    "stamping",
-                    Some(requeued as u64),
-                    Some(found),
-                    "carriers re-queued; their tenders now stamped epoch-stale".into(),
-                );
-                let stamped =
-                    self.db.stamp_stale_for_notices(&carriers).await.map_err(|e| e.to_string())?;
-                Ok(format!(
-                    "{found} carriers of {} field id(s): re-queued {requeued} notices, \
-                     stamped {stamped} tenders epoch-stale for the incremental fold",
-                    refs.len()
-                ))
-            }
-            Spec::MarkSkippedSiblings { dry_run, expect, expect_gaps } => {
-                // Count first, always — in dry-run it IS the answer, and in a real
-                // run it is the gate that must agree before anything is written.
-                let found = self.db.count_skipped_siblings().await.map_err(|e| e.to_string())? as u64;
-                if let Some(expect) = expect {
-                    if found != *expect {
-                        return Err(format!(
-                            "mark-skipped-siblings aborted: {found} rows match, expected exactly \
-                             {expect} (nothing was written). A SHORTFALL is a finding, not a \
-                             predicate to widen: the missing rows are held siblings whose English \
-                             original did not parse — held-but-unextracted, and they must stay \
-                             outstanding until something reads them."
-                        ));
-                    }
-                }
-                // The dry-run reports BOTH numbers, because the first alone cannot
-                // explain itself. `gaps` is the set the guard declines — held
-                // siblings whose English original is missing or unparsed. Expected
-                // 0; a non-zero answer is a data-loss finding to investigate, and
-                // the run should stop rather than proceed on a population that no
-                // longer matches what was verified.
-                let (no_original, unparsed) =
-                    self.db.count_skipped_sibling_gaps().await.map_err(|e| e.to_string())?;
-                let gaps = no_original + unparsed;
-                if *dry_run {
-                    return Ok(format!(
-                        "dry run: {found} rows would be marked skipped-by-policy; \
-                         {gaps} in scope REJECTED by the sibling guard \
-                         ({no_original} with NO English original at all — a fetch/ingest \
-                         gap; {unparsed} whose original is held but did not parse — a \
-                         parse failure). These are held-but-unextracted, not lost: we \
-                         have the bytes and failed to read them. Two separate \
-                         investigations, and never a predicate to widen — an execute \
-                         must name this count in `expect_gaps` rather than pass it"
-                    ));
-                }
-                // BOTH halves of the go criterion are enforced HERE, not only in the
-                // process that reads the dry-run. `found == expect` and the gap
-                // check are independent: the scope can hold exactly the expected
-                // number of markable rows AND a rejected set beside them, so a
-                // matching count is not evidence about the gaps. Leaving this to the
-                // operator would make half the criterion a promise rather than a
-                // guarantee — and the promise would be kept by whoever remembered to
-                // read the second number.
-                //
-                // An execute with no `expect` at all is refused outright. `None`
-                // used to mean "skip the count check", which made the strictest
-                // reading of a missing argument the most destructive one — the same
-                // inversion `dry_run` already defends against. A run that writes
-                // ~593k rows must state what it expects to write.
-                if !dry_run && expect.is_none() {
-                    return Err(
-                        "mark-skipped-siblings aborted: an execute requires an explicit `expect` \
-                         (nothing was written). A run that writes hundreds of thousands of rows \
-                         must name the population it believes it is writing, so the count can \
-                         disagree with it."
-                            .to_owned(),
-                    );
-                }
-                // The gap criterion. `expect_gaps` is NOT an override: it re-aims the
-                // guard rather than disarming it. Omitted, the rejected set must be
-                // empty — the original rule, unchanged. Supplied, the set must be
-                // EXACTLY that size, so this still refuses a population that has
-                // shifted by one row since it was investigated.
-                //
-                // The distinction matters because the guard's whole value is that it
-                // rejected 154 and passed 592,856 — discrimination, not mere firing.
-                // A flag that let the run proceed regardless of the gap count would
-                // make the reject arm unreachable, and a guard that cannot fail is
-                // not a guard; the fastest way to turn a red gate green is to move
-                // the bar rather than the data. This keeps the bar, and requires an
-                // operator to state the number they have already looked at.
-                let allowed_gaps = expect_gaps.unwrap_or(0);
-                if gaps != allowed_gaps as i64 {
-                    return Err(format!(
-                        "mark-skipped-siblings aborted: the sibling guard rejects {gaps} in-scope \
-                         rows, expected exactly {allowed_gaps} (nothing was written) — \
-                         {no_original} have NO English original at all (a fetch/ingest gap) and \
-                         {unparsed} have one that is held but did not parse (a parse failure). \
-                         Two different investigations. Both must stay outstanding: they are \
-                         held-but-unextracted, not lost, and this is never a predicate to widen."
-                    ));
-                }
-                let mut marked = 0i64;
-                loop {
-                    let batch = self
-                        .db
-                        .mark_skipped_siblings(MARK_BATCH, store::now_unix(), "internal-ojs-non-english")
-                        .await
-                        .map_err(|e| e.to_string())?;
-                    if batch == 0 {
-                        break;
-                    }
-                    marked += batch;
-                    self.update(|p| p.members_done = marked as u64);
-                    // Bound the WAL between batches, exactly as run_process and the
-                    // reclaim do: turso writes a frame per row and cannot checkpoint
-                    // mid-statement.
-                    if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
-                        eprintln!("supervisor: checkpoint after mark batch: {e}");
-                    }
-                }
-                Ok(format!(
-                    "marked {marked} rows skipped-by-policy (reversible: skipped_reason = \
-                     'internal-ojs-non-english')"
-                ))
-            }
-            Spec::RepairSweptSiblings { dry_run } => {
-                let swept = self.db.count_swept_siblings().await.map_err(|e| e.to_string())?;
-                if *dry_run {
-                    return Ok(format!(
-                        "dry run: {swept} skipped sibling row(s) are REJECTED by the \
-                         parsed-original guard and would be restored to outstanding"
-                    ));
-                }
-                let restored = self.db.repair_swept_siblings().await.map_err(|e| e.to_string())?;
-                Ok(format!(
-                    "restored {restored} guard-rejected sibling row(s) to outstanding \
-                     (found {swept} before the write)"
-                ))
-            }
-            Spec::MergeProvisionalOrgs { dry_run } => {
-                // The scan is one ordered pass over `organizations_name_country`;
-                // without that index (deferred, issues 62/111 — `reindex` builds it)
-                // every batch would sort the whole org table instead. Refuse with
-                // the remedy rather than grind.
-                let indexed = self
-                    .db
-                    .has_index("organizations_name_country")
-                    .await
-                    .map_err(|e| e.to_string())?;
-                if !indexed {
-                    return Err("merge-provisional-orgs needs the organizations_name_country \
-                                index — run a `reindex` job first"
-                        .into());
-                }
-                let total = self.db.org_merge_scope_count().await.map_err(|e| e.to_string())? as u64;
-                let mut totals = store::OrgMergeBatch::default();
-                let mut scanned = 0u64;
-                let mut cursor = String::new();
-                let mut stopped = false;
-                loop {
-                    // A stop is honoured between batches: each batch is its own
-                    // committed transaction and merged groups leave the scan's
-                    // scope, so a restart from `''` redoes nothing (issue 252's
-                    // bar: the flag must be READ, and the log must say so).
-                    if self.cancelled(job.id) {
-                        stopped = true;
-                        break;
-                    }
-                    let b = self
-                        .db
-                        .merge_provisional_organizations_batch(ORG_MERGE_BATCH, &cursor, *dry_run)
-                        .await
-                        .map_err(|e| e.to_string())?;
-                    scanned += b.scanned;
-                    totals.groups += b.groups;
-                    totals.removed += b.removed;
-                    totals.mentions += b.mentions;
-                    totals.parties += b.parties;
-                    totals.bid_parties += b.bid_parties;
-                    totals.winners += b.winners;
-                    totals.winner_dups += b.winner_dups;
-                    totals.tender_changes += b.tender_changes;
-                    cursor = b.cursor.clone();
-                    self.update(|p| p.members_done = totals.removed);
-                    self.set_phase(
-                        "merging",
-                        Some(scanned),
-                        Some(total),
-                        format!(
-                            "cursor \"{}\"; {} group(s) collapsed, {} org(s) removed",
-                            cursor, totals.groups, totals.removed
-                        ),
-                    );
-                    if !dry_run {
-                        if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
-                            eprintln!("supervisor: checkpoint after org-merge batch: {e}");
-                        }
-                    }
-                    if b.done {
-                        break;
-                    }
-                }
-                let cancelled = if stopped { "CANCELLED at a checkpoint — " } else { "" };
-                let mode = if *dry_run { "org-merge dry run: would collapse" } else { "org merge: collapsed" };
-                Ok(format!(
-                    "{cancelled}{mode} {} duplicate group(s): {} provisional org(s) removed; \
-                     {} mention(s), {} party row(s), {} bid-party row(s), {} winner row(s) \
-                     repointed, {} duplicate winner row(s) dropped, {} tender change event(s)",
-                    totals.groups,
-                    totals.removed,
-                    totals.mentions,
-                    totals.parties,
-                    totals.bid_parties,
-                    totals.winners,
-                    totals.winner_dups,
-                    totals.tender_changes
-                ))
-            }
-            Spec::ClearRebuildFlag => {
-                let was_set = self.db.rebuild_in_progress().await.map_err(|e| e.to_string())?;
-                if !was_set {
-                    return Ok("rebuild_in_progress was already clear — nothing to do".to_owned());
-                }
-                // The flag is only STALE over an intact layer. An EMPTY tenders table
-                // with the flag set is a rebuild genuinely mid-flight (reset_tender_layer
-                // has run, the fold has not finished) — clearing there would discard a
-                // real salvage and force a full re-fold. O(1): existence, not a count.
-                let intact = self
-                    .db
-                    .scalar("SELECT 1 FROM tenders LIMIT 1")
-                    .await
-                    .map_err(|e| e.to_string())?
-                    .is_some();
-                if !intact {
-                    return Err("refusing to clear rebuild_in_progress: the tenders table is EMPTY, \
-                                so a rebuild is genuinely mid-flight and its salvage would be lost \
-                                — let it finish (nothing was written)"
-                        .to_owned());
-                }
-                self.db.clear_plan().await.map_err(|e| e.to_string())?;
-                Ok("stale rebuild_in_progress CLEARED (plan retired) — projections route \
-                    incremental again"
-                    .to_owned())
-            }
+            _ => Err(misrouted(job, "run_match_key_spec")),
         }
     }
 
@@ -12531,6 +12711,30 @@ fn resume_skip(packages: &[store::Package], resume_after: Option<&str>) -> usize
 // --------------------------------------------------------------- period → URL
 
 /// Build a fetch target from a source + package kind + period string.
+/// What `run_spec`'s dispatch awaits: a family's future, boxed.
+type SpecFuture<'a> = std::pin::Pin<Box<dyn std::future::Future<Output = Result<String, String>> + Send + 'a>>;
+
+/// Build a future and box it HERE, in this small sync frame, rather than in the
+/// caller's (issue 467). `Box::pin(f)` constructs `f` on the stack before moving
+/// it to the heap, and at O0 each such site in an async fn keeps its own slot in
+/// that fn's poll frame: twelve `Box::pin(self.run_…(job))` arms in `run_spec`
+/// cost ~100 KiB of its frame. Through this fn the poll frame holds a closure and
+/// a fat pointer per arm, and each future is on the stack only while this frame
+/// is, which is before the family's own poll runs.
+fn off_frame<'a, F>(make: impl FnOnce() -> F) -> SpecFuture<'a>
+where
+    F: std::future::Future<Output = Result<String, String>> + Send + 'a,
+{
+    Box::pin(make())
+}
+
+/// The error a `run_spec` family fn returns for a `Spec` outside its family —
+/// unreachable while `run_spec`'s dispatch routes each variant to its own family
+/// (issue 467), and an error rather than a panic if a future edit misroutes one.
+fn misrouted(job: &Job, family: &str) -> String {
+    format!("internal: job {} ({}) was dispatched to {family}, which does not run it", job.id, job.kind)
+}
+
 fn build_target(
     ted_base: &str,
     doe_base: &str,
@@ -15808,10 +16012,6 @@ mod tests {
             .expect("a dry run needs no expectation");
     }
 
-    /// The stack a thread needs to poll `run_spec` once (issue 467): the measured
-    /// ~496 KiB in the gate's profile, plus headroom.
-    const RUN_SPEC_POLL_FRAME_BUDGET: usize = 520 * 1024;
-
     /// Poll `make()`'s future ONCE on a fresh thread whose whole stack is `stack`
     /// bytes, and drop it. An async fn's poll function allocates its frame on entry,
     /// so a frame over the budget aborts with `thread '<the name below>' has
@@ -15834,23 +16034,21 @@ mod tests {
         });
     }
 
-    /// Issue 467's tripwire: the size of every future `run_spec` builds on the
-    /// caller's stack, against a named budget.
+    /// Issue 467's tripwire: every future `run_spec` builds, and the poll frames of
+    /// it and its family fns, against named budgets.
     ///
-    /// An async fn compiles to ONE state machine, as large as its largest arm, and
-    /// `Box::pin(f)` constructs `f` on the stack before moving it to the heap — so
-    /// each future boxed at a call site in `run_spec` is on the stack once too. A
-    /// test that awaits `run_spec` on a test thread's stack aborts with `stack
-    /// overflow` (SIGABRT) when any of them grows far enough, and the messenger has
-    /// always been `an_execute_without_an_expected_count_is_refused`, which names
-    /// nothing. This test names the future that grew, at the commit that grew it.
+    /// A test that awaits `run_spec` on a test thread's stack aborts with `stack
+    /// overflow` (SIGABRT) when a frame on that path grows far enough, and the
+    /// messenger has always been `an_execute_without_an_expected_count_is_refused`,
+    /// which names nothing. This test names the fn that grew, at the commit that grew
+    /// it: a future over its size budget fails the assertion with its name, and a poll
+    /// frame over its budget aborts on a thread named for the fn and the budget.
     ///
-    /// The futures are built and never polled: `size_of_val` reads the type, and
-    /// one async fn has one future type, so any argument gives the same number.
-    /// Budgets are the measurement in the gate's profile (debuginfo off, O0) plus
-    /// headroom. Over a budget: box the deep awaits inside the named fn, or split
-    /// the arm that grew into its own fn boxed at its call site — do not just
-    /// raise the number.
+    /// Sizes are read from futures built and never polled: one async fn has one
+    /// future type, so any argument gives the same number. Budgets are the measurement
+    /// in the gate's profile (debuginfo off, O0, 2026-10-01) plus headroom. Over a
+    /// budget: box the deep awaits inside the named fn, or move the arm that grew into
+    /// its own fn reached through `off_frame` — do not just raise the number.
     #[tokio::test]
     async fn run_spec_futures_stay_inside_their_size_budgets() {
         let db = scratch().await;
@@ -15866,8 +16064,8 @@ mod tests {
                 over.push(format!("{name}: {size} bytes, budget {budget}"));
             }
         };
-        // The dispatch itself: every arm not boxed at its call site lives in it.
-        gauge("run_spec", std::mem::size_of_val(&sup.run_spec(&j)), 9_000);
+        // The dispatch: 8,008 bytes before the split, when it held every arm.
+        gauge("run_spec", std::mem::size_of_val(&sup.run_spec(&j)), 128);
         // Each future `run_spec` boxes at its call site.
         gauge("run_fetch", std::mem::size_of_val(&sup.run_fetch(&target, false)), 64);
         gauge("run_fetch_fts", std::mem::size_of_val(&sup.run_fetch_fts(1, &target, "p", false)), 128);
@@ -15900,17 +16098,44 @@ mod tests {
             })),
             1_792,
         );
-        // The POLL frames. `size_of_val` is the future's state; what overflowed a
-        // test is the frame of its poll function, which at O0 gives every local of
-        // every arm its own slot. Measured 2026-10-01 (gate flags) as the smallest
-        // thread stack that polls the future once: run_spec ~496 KiB.
+        // The family fns `run_spec` dispatches to through `off_frame`.
+        gauge("run_ingest_spec", std::mem::size_of_val(&sup.run_ingest_spec(&j)), 3_904);
+        gauge("run_maintenance_spec", std::mem::size_of_val(&sup.run_maintenance_spec(&j)), 2_176);
+        gauge("run_backfill_spec", std::mem::size_of_val(&sup.run_backfill_spec(&j)), 3_072);
+        gauge("run_repair_spec", std::mem::size_of_val(&sup.run_repair_spec(&j)), 3_456);
+        gauge("run_provisional_spec", std::mem::size_of_val(&sup.run_provisional_spec(&j)), 2_688);
+        gauge("run_org_merge_health_spec", std::mem::size_of_val(&sup.run_org_merge_health_spec(&j)), 1_536);
+        gauge("run_match_identifiers_spec", std::mem::size_of_val(&sup.run_match_identifiers_spec(&j)), 3_840);
+        gauge("run_country_spec", std::mem::size_of_val(&sup.run_country_spec(&j)), 2_688);
+        gauge("run_identity_census_spec", std::mem::size_of_val(&sup.run_identity_census_spec(&j)), 1_792);
+        gauge("run_census_spec", std::mem::size_of_val(&sup.run_census_spec(&j)), 1_792);
+        gauge("run_match_key_spec", std::mem::size_of_val(&sup.run_match_key_spec(&j)), 3_968);
+        // The POLL frames, the number that actually overflowed: `size_of_val` is a
+        // future's state, but the stack a poll needs is its poll fn's frame, where
+        // O0 gives every local of every arm its own slot. Before issue 467's split
+        // `run_spec`'s alone needed ~496 KiB. Each fn is polled once with a `Fetch`
+        // that fails before any await (`build_target` refuses the source); a family
+        // that does not own `Fetch` refuses it as misrouted, but its frame is
+        // allocated on entry either way. `run_spec`'s budget covers the dispatch
+        // AND `run_ingest_spec` on top of it, which is what a real call costs.
         let refused = job(Spec::Fetch {
             source: "no-such-source".into(),
             package_kind: "daily".into(),
             period: "x".into(),
             refetch: false,
         });
-        poll_once_within("run_spec", RUN_SPEC_POLL_FRAME_BUDGET, || sup.run_spec(&refused));
+        poll_once_within("run_spec", 73 * 1024, || sup.run_spec(&refused));
+        poll_once_within("run_ingest_spec", 75 * 1024, || sup.run_ingest_spec(&refused));
+        poll_once_within("run_maintenance_spec", 46 * 1024, || sup.run_maintenance_spec(&refused));
+        poll_once_within("run_backfill_spec", 73 * 1024, || sup.run_backfill_spec(&refused));
+        poll_once_within("run_repair_spec", 70 * 1024, || sup.run_repair_spec(&refused));
+        poll_once_within("run_provisional_spec", 46 * 1024, || sup.run_provisional_spec(&refused));
+        poll_once_within("run_org_merge_health_spec", 39 * 1024, || sup.run_org_merge_health_spec(&refused));
+        poll_once_within("run_match_identifiers_spec", 71 * 1024, || sup.run_match_identifiers_spec(&refused));
+        poll_once_within("run_country_spec", 63 * 1024, || sup.run_country_spec(&refused));
+        poll_once_within("run_identity_census_spec", 56 * 1024, || sup.run_identity_census_spec(&refused));
+        poll_once_within("run_census_spec", 69 * 1024, || sup.run_census_spec(&refused));
+        poll_once_within("run_match_key_spec", 85 * 1024, || sup.run_match_key_spec(&refused));
         assert!(
             over.is_empty(),
             "issue 467: future(s) over their stack budget — {}. Each is built on the caller's \
