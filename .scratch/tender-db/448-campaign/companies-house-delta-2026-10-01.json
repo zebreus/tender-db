@@ -1,0 +1,225 @@
+{
+ "00523376": {
+  "http": "200",
+  "name": "ARRIVA NORTH WEST LIMITED",
+  "status": "Active",
+  "previous": [
+   "NORTH WESTERN ROAD CAR COMPANY LIMITED",
+   "MEXBOROUGH AND SWINTON TRACTION COMPANY LIMITED(THE)"
+  ]
+ },
+ "01874716": {
+  "http": "200",
+  "name": "CENTRICA BUSINESS SOLUTIONS UK LIMITED",
+  "status": "Active",
+  "previous": [
+   "ENER-G COMBINED POWER LIMITED",
+   "COMBINED POWER LIMITED",
+   "COMBINED POWER SYSTEMS LIMITED"
+  ]
+ },
+ "02026578": {
+  "http": "200",
+  "name": "BARCLAY ROOFING LIMITED",
+  "status": "Active",
+  "previous": []
+ },
+ "02322432": {
+  "http": "200",
+  "name": "VERMEG SYSTEMS LIMITED",
+  "status": "Active",
+  "previous": [
+   "LOMBARD RISK SYSTEMS LIMITED",
+   "SYSTEMIDOL LIMITED"
+  ]
+ },
+ "02863553": {
+  "http": "200",
+  "name": "RESMED (UK) LIMITED",
+  "status": "Active",
+  "previous": [
+   "RESCARE (UK) LIMITED",
+   "RESCARE (UK) PTY LTD."
+  ]
+ },
+ "03037895": {
+  "http": "200",
+  "name": "INTEGRATED MEDICAL SOLUTIONS LIMITED",
+  "status": "Active",
+  "previous": [
+   "IMS INTEGRATED MEDICAL SOLUTIONS LIMITED"
+  ]
+ },
+ "03484910": {
+  "http": "200",
+  "name": "HUTCHISON PORTS (UK) LIMITED",
+  "status": "Active",
+  "previous": [
+   "CLAIMTEXT LIMITED"
+  ]
+ },
+ "03737869": {
+  "http": "200",
+  "name": "OPTIMA MEDICAL LIMITED",
+  "status": "Active",
+  "previous": []
+ },
+ "03814913": {
+  "http": "200",
+  "name": "GARNER OSBORNE CIRCUITS LIMITED",
+  "status": "Active",
+  "previous": [
+   "TAYLATE LIMITED"
+  ]
+ },
+ "04217280": {
+  "http": "200",
+  "name": "COMMIFY UK LIMITED",
+  "status": "Active",
+  "previous": [
+   "ESENDEX LIMITED",
+   "TXT-BOM LIMITED"
+  ]
+ },
+ "04361196": {
+  "http": "200",
+  "name": "GTS ENTERPRISE LIMITED",
+  "status": "Active",
+  "previous": []
+ },
+ "04433890": {
+  "http": "200",
+  "name": "INUTEC LIMITED",
+  "status": "Active",
+  "previous": [
+   "WASTE MANAGEMENT TECHNOLOGY LIMITED"
+  ]
+ },
+ "04454103": {
+  "http": "200",
+  "name": "GRANDPARENTS PLUS",
+  "status": "Active",
+  "previous": []
+ },
+ "04577853": {
+  "http": "200",
+  "name": "ZENSAR TECHNOLOGIES (UK) LIMITED",
+  "status": "Active",
+  "previous": []
+ },
+ "05391693": {
+  "http": "200",
+  "name": "ASHLYNS CATERING LIMITED",
+  "status": "Active",
+  "previous": [
+   "ASHLYNS ORGANICS LIMITED"
+  ]
+ },
+ "05969256": {
+  "http": "200",
+  "name": "UNIVERSITY OF WINCHESTER",
+  "status": "Active",
+  "previous": []
+ },
+ "06484019": {
+  "http": "200",
+  "name": "SAKURA FINETEK UK LIMITED",
+  "status": "Active",
+  "previous": []
+ },
+ "06612614": {
+  "http": "200",
+  "name": "STANDARD BIOTOOLS UK LIMITED",
+  "status": "Active",
+  "previous": [
+   "FLUIDIGM UK LIMITED"
+  ]
+ },
+ "07559200": {
+  "http": "200",
+  "name": "BACK TO WORK TRAINING LIMITED",
+  "status": "Active",
+  "previous": [
+   "BACK 2 WORK COMPLETE TRAINING LIMITED"
+  ]
+ },
+ "09536934": {
+  "http": "200",
+  "name": "TIEVA LIMITED",
+  "status": "Active",
+  "previous": [
+   "OPTM UK LIMITED",
+   "PURE TECHNOLOGY GROUP LIMITED",
+   "PURE DATA GROUP LIMITED"
+  ]
+ },
+ "10166467": {
+  "http": "200",
+  "name": "CELTIC SEA POWER LIMITED",
+  "status": "Active",
+  "previous": [
+   "WAVE HUB DEVELOPMENT SERVICES LIMITED"
+  ]
+ },
+ "10653948": {
+  "http": "200",
+  "name": "ANDERSON QUIGLEY LIMITED",
+  "status": "Active",
+  "previous": []
+ },
+ "10743542": {
+  "http": "200",
+  "name": "DOCTORSTRAINING LIMITED",
+  "status": "Active",
+  "previous": [
+   "FRAZER MEDICAL EDUCATION CONSULTANCY LTD"
+  ]
+ },
+ "10755761": {
+  "http": "200",
+  "name": "IPD LIMITED",
+  "status": "Active",
+  "previous": []
+ },
+ "11801663": {
+  "http": "200",
+  "name": "VISO GROUP LTD",
+  "status": "Active",
+  "previous": []
+ },
+ "12873828": {
+  "http": "200",
+  "name": "ACADEMY CONSULTANCY EXPERT ADVICE LTD",
+  "status": "Active",
+  "previous": []
+ },
+ "NI045638": {
+  "http": "200",
+  "name": "PENTAGON SOLUTIONS (NI) LIMITED",
+  "status": "Active",
+  "previous": []
+ },
+ "OC416679": {
+  "http": "200",
+  "name": "EMPLOYEE BENEFITS COLLECTIVE LLP",
+  "status": "Active",
+  "previous": []
+ },
+ "SC139953": {
+  "http": "200",
+  "name": "OPTOS PUBLIC LIMITED COMPANY",
+  "status": "Active",
+  "previous": [
+   "BESCA LIMITED",
+   "ZENOPLAN LIMITED"
+  ]
+ },
+ "SC163378": {
+  "http": "200",
+  "name": "ARTHIAN LTD",
+  "status": "Active",
+  "previous": [
+   "MABBETT & ASSOCIATES LIMITED"
+  ]
+ }
+}

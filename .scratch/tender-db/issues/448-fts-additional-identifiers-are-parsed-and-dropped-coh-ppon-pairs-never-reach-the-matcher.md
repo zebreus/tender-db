@@ -1,6 +1,7 @@
 # 448 — FTS `additionalIdentifiers` are parsed and then dropped: the Companies House ↔ PPON pairing never reaches the matcher, and 161 suppliers stand as two organizations
 
-Status: ready-for-agent — FULL WET RUN DONE 2026-10-01 07:09 UTC (job 1765): 4,652 pairs merged, every one reviewed or register-confirmed. Post-run plan 0; 4,702 pairs are one org. 247 stay split, each denied with a reason. NEXT (small): review the 26 gate-denied pairs that are new since the campaign (`448-campaign/unread-denied-1766.json`, minus consortium/conflict), then read the alias counter on the next fold.
+Status: ready-for-agent — DELTA WET RUN DONE 2026-10-01 10:1x UTC (job 1787): the 36 pairs of dry plan 1786 merged (21 verdict-admitted + 15 new from chunk 7, 13 register-confirmed and 2 read by hand). Post-run dry 1788: plan 0; 4,733 pairs are one org, 231 stay split, each denied with a reason. NEXT: re-plan after each FTS backfill chunk (342) and review the delta; read the alias counter on the next daily fold; the 18 legal-form denials wait on head election (the root, a later unit). Follow-up: issue 456 (a mention bound by another org's identifier).
+Was status: ready-for-agent — FULL WET RUN DONE 2026-10-01 07:09 UTC (job 1765): 4,652 pairs merged, every one reviewed or register-confirmed. Post-run plan 0; 4,702 pairs are one org. 247 stay split, each denied with a reason. NEXT (small): review the 26 gate-denied pairs that are new since the campaign (`448-campaign/unread-denied-1766.json`, minus consortium/conflict), then read the alias counter on the next fold.
 Was status: ready-for-agent — UNIT 4 campaign DONE and verdicts POSTED (336, cohort `altid-2026-09-30`); capped wet run 1717 merged 50 pairs, verified. NEXT: the full wet run over the 4,604-pair residual, which waits for the owner's go-ahead (the session's permission classifier refused it as a bulk production write), then a fold and the alias counters. Follow-ups: issue 452 (wrong company numbers), a verdict override for legal-form re-registrations.
 Was status (until 2026-09-30 09:0x): ready-for-agent — UNITS 1b, 2, 3 and 3b DEPLOYED 2026-09-30 (`60a0191`, `636475c`, `ba1b159`). Dry job 1691: plan 4,373 pairs (23 co-occurring), 101 witness-only, 326 uncorroborated, 49 conflicts; the full listing carries each side's witness-free names. The 1b Verify's Amentum expectation was WRONG: that pair is true (see 05:1x below). NEXT: unit 4, the review campaign over the full listing with Companies House register names, then a capped wet run.
 Was status (until 2026-09-30 06:1x): ready-for-agent — UNITS 1b and 2 BUILT, reviewed and gated 2026-09-30 (`e4c39b3`, `7b6d52e`; unit 2 `2d55856` + review fixes `2998b0a`; all pushed, deploy pending the box's idle window ~05:30 UTC). NO WET RUN until unit 3 (the resolver alias) is deployed too. Next: deploy, dry re-run and the 1b Verify; then unit 3; then the unit-4 campaign (which first needs the full plan listing — see unit 2's notes).
@@ -56,8 +57,13 @@ mentions under a non-GB country.
 
 ## Verify
 
-Re-run the split count above (the COH→PPON pairs whose two ids stand as different GB orgs). Today: **161**. Expect 0,
-apart from pairs a reviewer keeps apart by verdict, which are listed.
+    ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh /admin/reports/altid-merge-plan" | python3 -c 'import sys,json; b=json.loads(json.load(sys.stdin)["body"]); print("plan", b["plan_pairs"], "admitted", b["admitted_verdict"], "split", b["both_distinct"], "already_one", b["already_one"])'
+
+- **open:** a plan above 0 (2026-10-01 10:0x, dry 1786: `plan 36 admitted 21 split 267 already_one 4697`).
+- **done:** `plan 0`, every split pair denied with a reason (2026-10-01 10:1x, dry 1788: `plan 0 admitted 0 split 231
+  already_one 4733`). Each FTS backfill chunk (342) brings new pairs, so re-plan after it; until the backfill ends,
+  this reads done only between a delta review and the next chunk.
+- At filing (2026-09-30), the split count was **161**. The backfill multiplied the pairs, so compare plan, not split.
 
 ## 2026-09-30 — unit 1 built (dry planner)
 
@@ -462,3 +468,38 @@ went through two independent full readers. A register lens and a skeptic lens ea
 - **Next.** Dry plan job 1786 is queued behind FTS chunk 7, so it will see chunk 7's new pairs as well. Diff it
   against everything reviewed or confirmed, register-check the delta with the campaign rule, then run the wet
   pass. The 21 admits merge then.
+
+## 2026-10-01 10:0x–10:1x UTC — the chunk-7 delta, register-checked and merged (jobs 1786–1788)
+
+- **Dry plan 1786** (after FTS chunk 7, 2022-05 → 2022-12): **36 pairs**, 21 verdict-admitted (the
+  `altid-residue-2026-10-01` cohort), 0 verdicts stale.
+- **The delta.** Diffed against every key already confirmed or carrying a verdict (`confirmed-keys-1691.json`,
+  `delta-new-1716.json`, `delta-new-1764.json`, and the `merge` verdicts of both cohorts): **15 new**. 13 were never
+  seen. 2 were campaign cases in 1691 (`cases-1691.json`) that were then denied without a verdict and that chunk 7's
+  new witnesses promoted into the plan: Atkins (00688424) and Sellafield (01002607). A plain key diff against the
+  `case` keys of `cases-1691.json` hides those two, because a case key there means "shown to a reviewer", not
+  "admitted".
+- **Register.** `ch_fetch.py` on the plan, with the cache seeded from `companies-house-2026-09-30.json`: 30 new
+  numbers fetched, all 200. The campaign rule (`altid_cases.py` `matches()`) confirmed **13 of 15**: Atkins →
+  AtkinsRéalis UK (renamed), ResMed (UK), Optima Medical, Garner Osborne Circuits (`Osbourne` typo on one side),
+  Commify UK (ex-Esendex), Grandparents Plus, Zensar Technologies (UK), Ashlyns Catering, Sakura Finetek UK, Anderson
+  Quigley, Viso Group, Employee Benefits Collective LLP, Arthian (ex-Mabbett & Associates).
+- **Read by hand, both merged:**
+  - `02026578~PXND7475HDVR`: the PPON side names `BARCLAY ROOFING LTD` and `Barclays Roofing`. The register has only
+    BARCLAY ROOFING LIMITED, and `Barclays` is a typo of it. One entity.
+  - `01002607~PWYP8439MZWY`: the PPON org (31627746) was headed **`Schneider Electric`**. Its 3 mentions: Sellafield
+    as buyer of tenders 8751634 and 8751782, and `Schneider Electric` as Tenderer on UKRI's tender 8751605 (UKRI-6398,
+    published 2026-09-30). The 10 witnesses publish COH 01002607 and this PPON together, all as Sellafield. So the
+    PPON is Sellafield's (12 mentions to 1), and UKRI's notice put Sellafield's PPON on Schneider Electric. Merging
+    was the better of two wrong states. Before, Sellafield's own tenders named their buyer "Schneider Electric", and
+    every later PPON-first Sellafield mention would have bound there. After, Sellafield's tenders read right, and
+    UKRI's one tender names Sellafield as its Tenderer. That residue is a mention bound by someone else's
+    identifier, which is issue 456.
+- **Wet, job 1787** (4 s): merged 36 of 36. 36 org rows were removed; 84 mentions, 109 parties, 99 bid-parties and
+  99 winners were repointed; 59 tenders were touched. 0 deferred, 0 no longer planned, 0 contradictory. 21 verdicts
+  were marked merged, and 231 `e2-altid` edges were written for the denied pairs.
+- **Checked:** `/v1/organizations/31627746` → 308 → 5718658 (Sellafield Ltd), and 31579555 → 308 → 17196416 (Barclay
+  Roofing). Tender 8751634 now names Sellafield Ltd as its buyer.
+- **Post-run dry, job 1788: plan 0.** 4,733 pairs are already one org. 231 stand as two GB orgs, each denied: 21
+  verdict-keep, 16 consortium, 18 legal-form, 110 uncorroborated-overlap, 45 uncorroborated-disjoint, 5
+  witness-only, 1 generic and 15 conflicts.
