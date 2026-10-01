@@ -73,14 +73,25 @@ use turso::{Connection, Value};
 
 /// Sane connection defaults, per <https://mort.coffee/home/sqlite-editions/>:
 /// enforce foreign keys, retry on lock contention instead of failing with
-/// SQLITE_BUSY, WAL for concurrent reads during writes, and NORMAL sync (safe
-/// under WAL, much faster than FULL).
+/// SQLITE_BUSY, WAL for concurrent reads during writes, and FULL sync.
 ///
+/// FULL, not NORMAL (issue 458). SQLite's NORMAL is safe under WAL because a
+/// checkpoint fsyncs the WAL before it copies frames into the database file.
+/// turso 0.7.2's checkpoint does not: it backfills straight from unsynced WAL
+/// frames (`turso_core` `storage/wal.rs`, `CheckpointState::Start` →
+/// `Processing`), so a power loss or kernel crash mid-checkpoint can persist
+/// backfilled pages while recovery drops the WAL tail they came from: a torn
+/// database matching no committed prefix. 0.8.1 adds the missing barrier
+/// (`CheckpointState::SyncWal`, whose doc comment names exactly this). Under FULL
+/// every commit fsyncs a dirty WAL, so every frame a checkpoint copies is already
+/// durable. The cost is one fsync per write transaction, on power-loss-protected
+/// NVMe, against bulk transactions of ~2,500 rows. Revisit at the turso bump
+/// (issue 457), not before.
 pub(crate) const PRAGMAS: [&str; 4] = [
     "PRAGMA foreign_keys = ON",
     "PRAGMA busy_timeout = 5000",
     "PRAGMA journal_mode = WAL",
-    "PRAGMA synchronous = NORMAL",
+    "PRAGMA synchronous = FULL",
 ];
 
 /// Default per-connection page cache: 128 MiB (the pragma value is negative KiB),
@@ -4721,6 +4732,37 @@ pub(crate) async fn max_cursor(conn: &Connection) -> turso::Result<i64> {
 
 #[cfg(test)]
 mod tests {
+    /// Issue 458: every connection the store opens runs `synchronous = FULL`
+    /// (turso reads it back as 2): the writer, the store's own read pool, and a
+    /// public `readers` pool. Under turso 0.7.2 NORMAL (1) leaves a torn-database
+    /// window at every checkpoint, so a 1 on any of them is the bug back.
+    #[tokio::test]
+    async fn every_store_connection_runs_synchronous_full() {
+        let path = format!("/tmp/tender-db-sync-full-{}.db", std::process::id());
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        async fn sync_mode(conn: &Connection) -> i64 {
+            let mut rows = conn.query("PRAGMA synchronous", ()).await.unwrap();
+            let row = rows.next().await.unwrap().expect("PRAGMA synchronous returns a row");
+            let mode = match row.get_value(0).unwrap() {
+                Value::Integer(n) => n,
+                other => panic!("PRAGMA synchronous answered {other:?}"),
+            };
+            while rows.next().await.unwrap().is_some() {}
+            mode
+        }
+        assert_eq!(sync_mode(&*db.conn().await).await, 2, "writer");
+        assert_eq!(sync_mode(&db.reader().await.unwrap()).await, 2, "store read pool");
+        let pool = db.readers(1).unwrap();
+        assert_eq!(sync_mode(&pool.get().await.unwrap()).await, 2, "public readers pool");
+        drop(db);
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
+
     /// Issue 368: the unmapped-field sweep's window must plan as a RANGE SCAN of
     /// the satellite, and that holds only while its floor is a CONSTANT.
     ///

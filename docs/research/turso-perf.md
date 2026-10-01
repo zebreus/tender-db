@@ -61,7 +61,11 @@ document is the source basis for making sequential reads and bulk writes fast.
    checkpoint rewrite many distinct hot leaves. Degrades super-linearly as the tree
    grows — this is the "org/tender unique-index steepening". Defer these indexes and
    build them post-load via CREATE INDEX.
-7. **Keep `synchronous = NORMAL`.** Default is FULL = fsync per commit
+7. **~~Keep `synchronous = NORMAL`.~~ Superseded 2026-10-01 (issue 458): FULL.**
+   The premise below holds for SQLite, which fsyncs the WAL before every checkpoint. turso
+   0.7.2's checkpoint backfills from unsynced WAL frames, so under NORMAL a power loss
+   mid-checkpoint can tear the database; 0.8.1 adds the barrier (`CheckpointState::SyncWal`).
+   The original reasoning, kept for the record: default is FULL = fsync per commit
    (pager.rs:4308-4320, lib.rs:2224). NORMAL amortizes durability to checkpoints.
    Big transactions (~2500 rows) keep the WAL small; auto-checkpoint is PASSIVE at
    **1000 frames** (wal.rs:4620, 3852-3855).
