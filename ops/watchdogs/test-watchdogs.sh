@@ -14,33 +14,99 @@
 # data the script can actually see, using a fixture server instead of prod. The
 # saturation case is the one that would have caught issue 373.
 #
+# The fixture checks `x-admin-secret` and answers a mismatch with the real deny()
+# body (issue 459). It used to answer 200 to anything, which held AUTHENTICATION
+# constant — the "both-ways is per-axis" trap in instrument-discipline.md — so a
+# script that never looked at the HTTP status passed every case here while it read
+# the server's JSON 403 as "idle, 0 queued, 0 recent" on the real box. The 403 and
+# 404 cases below are that axis, varied.
+#
+# Needs only bash, python3, curl and jq — nothing from the box, no root.
+#
 # Run: ops/watchdogs/test-watchdogs.sh   (exits 0 on success, 1 on any failure)
 set -uo pipefail
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-work=$(mktemp -d)
+# An unchecked `work=$(mktemp -d)` that failed would write the fixture to /secret,
+# /server.py, … (review of 459).
+work=$(mktemp -d) && [ -n "$work" ] && [ -d "$work" ] || { echo "FAIL mktemp -d gave no directory"; exit 1; }
 trap 'rm -rf "$work"; [ -n "${server_pid:-}" ] && kill "$server_pid" 2>/dev/null' EXIT
 
 echo "TENDER_ADMIN_SECRET=test-secret" >"$work/secret"
 failures=0
 
+# The probe's `down` needs systemd's word that tender-db.service has no process (issue
+# 459), and this harness runs where systemd is absent (a container) or real (install.sh
+# on the box) — neither of which a case can set. So `systemctl` is a stub on PATH that
+# answers from $work/systemctl.out with exit $work/systemctl.rc, and refuses any
+# question but the one the probe must ask (a probe that asked about another unit would
+# find that one stopped). Default: loaded, no main process — the app is down.
+mkdir -p "$work/bin"
+cat >"$work/bin/systemctl" <<STUB
+#!/bin/sh
+if [ "\$*" != "show --property=LoadState --property=MainPID tender-db.service" ]; then
+    echo "stub systemctl: unexpected question: \$*" >&2
+    exit 3
+fi
+cat "$work/systemctl.out"
+exit "\$(cat "$work/systemctl.rc")"
+STUB
+chmod +x "$work/bin/systemctl"
+export PATH="$work/bin:$PATH"
+systemd_says() { printf '%s\n' "$1" >"$work/systemctl.out"; echo "${2:-0}" >"$work/systemctl.rc"; }
+systemd_says $'MainPID=0\nLoadState=loaded'
+
 # A fixture server that answers /admin/jobs from a file the test rewrites, and
 # honours `?limit=` exactly as the real endpoint does (newest N, default 20) —
 # because the truncation IS the behaviour under test.
+#
+# It gates /admin/jobs the way admin.rs deny() does (issue 459): the header
+# `x-admin-secret` must equal the fixture secret or the answer is the server's own
+# 403 body, byte for byte as the real endpoint sent it on 2026-10-01; and in mode
+# `secret-unset` (the service started without TENDER_ADMIN_SECRET) every request
+# gets deny()'s 404; in mode `raw` an authenticated request gets the state file's
+# bytes as they are, under a 200. `$work/mode` is re-read per request so a test can
+# flip it mid-run. /releases serves `$work/releases.json` for driftwatch, and any other path
+# is a GitLab-shaped JSON 404.
 cat >"$work/server.py" <<'PY'
 import json, os, sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
 
-STATE = sys.argv[1]
+STATE, SECRET, MODE, RELEASES = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 DEFAULT_LIMIT = 20
 CAP = 200
 
+def mode():
+    try:
+        with open(MODE) as f:
+            return f.read().strip()
+    except OSError:
+        return "normal"
+
 class H(BaseHTTPRequestHandler):
+    def send(self, code, out):
+        self.send_response(code)
+        self.send_header("content-type", "application/json")
+        self.send_header("content-length", str(len(out)))
+        self.end_headers(); self.wfile.write(out)
     def do_GET(self):
         u = urlparse(self.path)
+        if u.path == "/releases":
+            with open(RELEASES, "rb") as f:
+                self.send(200, f.read())
+            return
         if u.path != "/admin/jobs":
-            self.send_response(404); self.end_headers(); return
+            self.send(404, b'{"message":"404 Not Found"}'); return
+        # admin.rs deny() through error(): serde_json writes the keys sorted.
+        if mode() == "secret-unset":
+            self.send(404, b'{"error":{"message":"not found","status":404}}'); return
+        if self.headers.get("x-admin-secret", "") != SECRET:
+            self.send(403, b'{"error":{"message":"bad or missing operator secret","status":403}}'); return
+        if mode() == "raw":   # the state file's bytes as they are, under a 200
+            with open(STATE, "rb") as f:
+                self.send(200, f.read())
+            return
         with open(STATE) as f:
             body = json.load(f)
         q = parse_qs(u.query)
@@ -48,18 +114,17 @@ class H(BaseHTTPRequestHandler):
         if "limit" in q:
             try: limit = max(1, min(CAP, int(q["limit"][0])))
             except ValueError: pass
-        body["recent"] = body.get("recent", [])[:limit]
-        out = json.dumps(body).encode()
-        self.send_response(200)
-        self.send_header("content-type", "application/json")
-        self.send_header("content-length", str(len(out)))
-        self.end_headers(); self.wfile.write(out)
+        if isinstance(body.get("recent"), list):
+            body["recent"] = body["recent"][:limit]
+        self.send(200, json.dumps(body).encode())
     def log_message(self, *a): pass
 
 srv = HTTPServer(("127.0.0.1", 0), H)
 print(srv.server_port, flush=True)
 srv.serve_forever()
 PY
+echo normal >"$work/mode"
+echo '[]' >"$work/releases.json"
 
 # `recent` newest-first, entries `age_hours` apart, all outcome ok unless named.
 write_state() {
@@ -80,12 +145,15 @@ if failed_at:
     recent[idx]["outcome"] = "error"
     recent[idx]["kind"] = "probe"
     recent[idx]["counts"] = "fixture failure"
-json.dump({"current": None, "queued": [], "recent": recent, "measured_at": now}, open(path, "w"))
+tmp = path + ".tmp"
+json.dump({"current": None, "queued": [], "recent": recent, "measured_at": now}, open(tmp, "w"))
+import os; os.replace(tmp, path)
 PY
 }
 
 start_server() {
-    python3 "$work/server.py" "$work/state.json" >"$work/port" 2>/dev/null &
+    python3 "$work/server.py" "$work/state.json" test-secret "$work/mode" "$work/releases.json" \
+        >"$work/port" 2>/dev/null &
     server_pid=$!
     for _ in $(seq 1 50); do
         port=$(cat "$work/port" 2>/dev/null) && [ -n "$port" ] && return 0
@@ -111,6 +179,20 @@ check() {
         echo "FAIL $name — wanted exit $want_exit containing '$want_text'"
         echo "     got exit $got_exit: $out"
         failures=$((failures + 1))
+    fi
+}
+
+# refute <name> <text> <out>: the output must NOT contain text — the half of a
+# refusal that `check` cannot see (an ERROR line next to a "dry run" line is a
+# snapshot that ran anyway).
+refute() {
+    local name=$1 text=$2 out=$3
+    if grep -qF -- "$text" <<<"$out"; then
+        echo "FAIL $name — must not contain '$text'"
+        echo "     got: $out"
+        failures=$((failures + 1))
+    else
+        echo "ok   $name"
     fi
 }
 
@@ -159,6 +241,188 @@ out=$(TENDER_ADMIN_URL="http://127.0.0.1:$port" TENDER_ADMIN_SECRET_FILE="$work/
       bash "$here/tender-db-jobwatch.sh" 2>&1); rc=$?
 check "a missing operator secret warns" 1 "no operator secret" "$out" "$rc"
 
+# --- jobwatch: a run that could not look is an ERROR, not ok (issue 459) ---------
+# The server's 403 is JSON, so the old `jq -e .` passed it and the null .recent /
+# .queued summed to "ok jobwatch: idle, 0 queued, 0 recent covering 0h".
+echo "TENDER_ADMIN_SECRET=not-the-secret" >"$work/wrong-secret"
+out=$(TENDER_ADMIN_URL="http://127.0.0.1:$port" TENDER_ADMIN_SECRET_FILE="$work/wrong-secret" \
+      bash "$here/tender-db-jobwatch.sh" 2>&1); rc=$?
+check "a wrong operator secret fails jobwatch" 1 "ERROR jobwatch: /admin/jobs answered HTTP 403: bad or missing operator secret" "$out" "$rc"
+refute "…and it does not also say ok" "ok jobwatch" "$out"
+
+echo secret-unset >"$work/mode"
+out=$(run_jobwatch); rc=$?
+check "a service without an admin secret (deny()'s 404) fails jobwatch" 1 "HTTP 404: not found" "$out" "$rc"
+echo normal >"$work/mode"
+
+# A 200 that is not the jobs object: the summary would otherwise invent zeros.
+cp "$work/state.json" "$work/state.keep"
+echo '{"measured_at": 1}' >"$work/state.json"
+out=$(run_jobwatch); rc=$?
+check "a 200 without current/queued/recent fails jobwatch" 1 "not the jobs object" "$out" "$rc"
+python3 - "$work/state.json" <<'PY'
+import json, sys
+json.dump({"current": None, "queued": [], "recent": None, "measured_at": 1}, open(sys.argv[1], "w"))
+PY
+out=$(run_jobwatch); rc=$?
+check "a 200 whose recent is not an array fails jobwatch" 1 "not the jobs object" "$out" "$rc"
+cp "$work/state.keep" "$work/state.json"
+out=$(run_jobwatch); rc=$?
+check "…and the restored fixture passes again (the 403/404 cases are not a broken server)" 0 "ok jobwatch" "$out" "$rc"
+
+# Every conjunct of the shape check, dropped one at a time (review of 459): each of these
+# bodies made the old script print the issue's own "ok jobwatch: idle, 0 queued, 0
+# recent covering 0h", or name a failed run in its ok line, or crash without an ERROR.
+mutate_state() {
+    python3 - "$work/state.json" "$1" <<'PY'
+import json, os, sys
+path, stmt = sys.argv[1], sys.argv[2]
+d = json.load(open(path))
+exec(stmt)
+json.dump(d, open(path + ".tmp", "w")); os.replace(path + ".tmp", path)
+PY
+}
+for m in 'd.pop("current")' 'd["current"] = "fold"' 'd["current"] = False' \
+         'd["current"] = {"id": 5, "kind": "project", "params": "p"}' \
+         'd["queued"] = None' 'd.pop("queued")' \
+         'd["recent"][0].pop("finished_at")' 'd["recent"][0]["finished_at"] = None' \
+         'd["recent"][0]["outcome"] = None' 'd["recent"][3] = "a string"'; do
+    cp "$work/state.keep" "$work/state.json"
+    mutate_state "$m"
+    out=$(run_jobwatch); rc=$?
+    check "a jobs body with $m fails jobwatch" 1 "not the jobs object" "$out" "$rc"
+    refute "…and $m is not called ok" "ok jobwatch" "$out"
+done
+cp "$work/state.keep" "$work/state.json"
+mutate_state 'd["recent"] = []'
+out=$(run_jobwatch); rc=$?
+check "an empty job log fails jobwatch (a 0-hour window is not a 26-hour check)" 1 "ERROR jobwatch: /admin/jobs answered an EMPTY job log" "$out" "$rc"
+refute "…and the empty log is not called ok" "ok jobwatch" "$out"
+cp "$work/state.keep" "$work/state.json"
+
+# --- the queue probe (issue 459): named answers, shared by deploy.sh and the snapshot ---
+# deploy.sh runs it as `ssh … bash -s < tender-db-queue-probe.sh`, so every case runs
+# it that way — the exact bytes, read from stdin, which also pins that nothing in
+# the probe reads stdin (it would eat the rest of the script) — and the snapshot's
+# way (`bash <file>`), and the two must agree. Output is ONE line by contract;
+# stderr is folded in so a stray warning breaks the count.
+probe_out=""; probe_rc=0
+run_probe() {
+    local stdin_out stdin_rc=0 file_out file_rc=0
+    stdin_out=$(env TENDER_ADMIN_URL="http://127.0.0.1:$port" TENDER_ADMIN_SECRET_FILE="$work/secret" \
+        "$@" bash -s <"$here/tender-db-queue-probe.sh" 2>&1) || stdin_rc=$?
+    file_out=$(env TENDER_ADMIN_URL="http://127.0.0.1:$port" TENDER_ADMIN_SECRET_FILE="$work/secret" \
+        "$@" bash "$here/tender-db-queue-probe.sh" </dev/null 2>&1) || file_rc=$?
+    if [ "$stdin_out" != "$file_out" ] || [ "$stdin_rc" != "$file_rc" ]; then
+        echo "FAIL the probe answers differently piped (deploy.sh) and as a file (snapshot)"
+        echo "     piped: exit $stdin_rc: $stdin_out"
+        echo "     file:  exit $file_rc: $file_out"
+        failures=$((failures + 1))
+    fi
+    if [ "$(printf '%s\n' "$stdin_out" | wc -l)" -ne 1 ] || [ -z "$stdin_out" ]; then
+        echo "FAIL the probe must print exactly one line — got: $stdin_out"
+        failures=$((failures + 1))
+    fi
+    case "$stdin_out" in
+        *[[:space:]]) echo "FAIL the probe's line ends in whitespace — got: '$stdin_out'"; failures=$((failures + 1)) ;;
+    esac
+    probe_out=$stdin_out; probe_rc=$stdin_rc
+}
+set_current_full() {
+    python3 - "$work/state.json" "$@" <<'PY'
+import json, sys
+path = sys.argv[1]
+d = json.load(open(path))
+if len(sys.argv) > 2 and sys.argv[2] == "--drop":
+    d.pop("current", None)
+elif len(sys.argv) > 2 and sys.argv[2] == "--string":
+    d["current"] = "fold"
+elif len(sys.argv) > 4:
+    d["current"] = {"id": int(sys.argv[2]), "kind": sys.argv[3], "params": sys.argv[4],
+                    "started_at": 0}
+else:
+    d["current"] = None
+import os
+json.dump(d, open(path + ".tmp", "w")); os.replace(path + ".tmp", path)
+PY
+}
+
+set_current_full
+run_probe
+check "the probe reads an idle queue as idle" 0 "idle" "$probe_out" "$probe_rc"
+[ "$probe_out" = idle ] || { echo "FAIL the idle answer is exactly 'idle' — got: $probe_out"; failures=$((failures + 1)); }
+
+set_current_full 1796 fetch "ted daily 2026-00190"
+run_probe
+check "the probe reads a running job as busy <id> <kind> <params>" 0 "busy 1796 fetch ted daily 2026-00190" "$probe_out" "$probe_rc"
+
+set_current_full
+run_probe TENDER_ADMIN_SECRET_FILE="$work/wrong-secret"
+check "a wrong operator secret is an error, not idle" 1 "error HTTP 403 bad or missing operator secret" "$probe_out" "$probe_rc"
+
+echo secret-unset >"$work/mode"
+run_probe
+check "a service without an admin secret (404) is an error, not idle" 1 "error HTTP 404 not found" "$probe_out" "$probe_rc"
+echo normal >"$work/mode"
+
+run_probe TENDER_ADMIN_SECRET_FILE="$work/missing"
+check "a missing secret file is an error, not a skipped gate" 1 "error no readable secret file" "$probe_out" "$probe_rc"
+echo "SOMETHING_ELSE=1" >"$work/no-secret-line"
+run_probe TENDER_ADMIN_SECRET_FILE="$work/no-secret-line"
+check "a secret file without TENDER_ADMIN_SECRET is an error" 1 "error no TENDER_ADMIN_SECRET in" "$probe_out" "$probe_rc"
+
+run_probe TENDER_ADMIN_URL="http://127.0.0.1:1"
+check "nothing listening, and a unit with no process, is the named down arm" 0 "down" "$probe_out" "$probe_rc"
+[ "$probe_out" = down ] || { echo "FAIL the down answer is exactly 'down' — got: $probe_out"; failures=$((failures + 1)); }
+run_probe TENDER_ADMIN_URL="http://localhost:1"
+check "…on localhost too" 0 "down" "$probe_out" "$probe_rc"
+run_probe TENDER_ADMIN_URL="http://[::1]:1"
+check "…and on [::1]" 0 "down" "$probe_out" "$probe_rc"
+
+# A refusal is down ONLY with systemd's word that the service has no process (review of
+# 459): with the app up, curl exits 7 just the same for a changed PORT, a proxy that
+# refuses, or an address that is not this box's loopback.
+systemd_says $'MainPID=4242\nLoadState=loaded'
+run_probe TENDER_ADMIN_URL="http://127.0.0.1:1"
+check "a refused port while the service has a process is an error, not down (a changed PORT)" 1 "but tender-db.service is not stopped (LoadState=loaded MainPID=4242)" "$probe_out" "$probe_rc"
+systemd_says $'MainPID=0\nLoadState=not-found'
+run_probe TENDER_ADMIN_URL="http://127.0.0.1:1"
+check "a refused port with a unit systemd does not know is an error" 1 "LoadState=not-found" "$probe_out" "$probe_rc"
+systemd_says "" 1
+run_probe TENDER_ADMIN_URL="http://127.0.0.1:1"
+check "a refused port with a systemctl that cannot answer is an error" 1 "systemctl could not say" "$probe_out" "$probe_rc"
+systemd_says $'MainPID=0\nLoadState=loaded'
+run_probe TENDER_ADMIN_URL="http://0.0.0.0:1"
+check "a refusal at an address that is not loopback is an error, not down" 1 "0.0.0.0 is not a loopback address" "$probe_out" "$probe_rc"
+# The app is up (the fixture answers) and a proxy that refuses sits in the environment:
+# the probe must go direct to the loopback, or it reads the proxy's refusal as down.
+run_probe http_proxy="http://127.0.0.1:1" HTTP_PROXY="http://127.0.0.1:1" ALL_PROXY="http://127.0.0.1:1" all_proxy="http://127.0.0.1:1" no_proxy= NO_PROXY=
+check "a refusing proxy in the environment is bypassed for the loopback" 0 "idle" "$probe_out" "$probe_rc"
+[ "$probe_out" = idle ] || { echo "FAIL …the proxy case reads exactly 'idle' — got: $probe_out"; failures=$((failures + 1)); }
+
+# A curl failure other than "refused" (exit 7) is not down: here exit 1, an unsupported
+# scheme. On the box the same arm takes a timeout (exit 28) under load.
+run_probe TENDER_ADMIN_URL="nosuchscheme://127.0.0.1:$port"
+check "a curl failure other than refused is an error, not down" 1 "error curl exit 1" "$probe_out" "$probe_rc"
+
+set_current_full --drop
+run_probe
+check "an HTTP 200 without a current key is an error, not idle" 1 "error HTTP 200 without a current key" "$probe_out" "$probe_rc"
+set_current_full --string
+run_probe
+check "an HTTP 200 whose current is neither null nor an object is an error" 1 "error HTTP 200 with a current of type string" "$probe_out" "$probe_rc"
+# A 200 that is not JSON at all (a proxy's error page served with the wrong status).
+set_current_full
+cp "$work/state.json" "$work/state.keep"
+echo '<html>upstream hiccup</html>' >"$work/state.json"
+echo raw >"$work/mode"
+run_probe
+check "an HTTP 200 that is not JSON is an error, not idle" 1 "error HTTP 200 but the body is not JSON" "$probe_out" "$probe_rc"
+out=$(run_jobwatch); rc=$?
+check "…and fails jobwatch too" 1 "not the jobs object" "$out" "$rc"
+echo normal >"$work/mode"
+cp "$work/state.keep" "$work/state.json"
+
 # --- the snapshot's quiescence gate (issue 420): wait, then skip ---------------
 # The reflink itself needs XFS and is not exercised here; TENDER_SNAP_DRY=1 stops
 # the script right after the gate, which is the part that lost 2026-09-13's
@@ -168,8 +432,11 @@ set_current() {
 import json, sys
 path, cur = sys.argv[1], sys.argv[2]
 d = json.load(open(path))
-d["current"] = {"id": int(cur), "kind": "data-quality"} if cur else None
-json.dump(d, open(path, "w"))
+d["current"] = {"id": int(cur), "kind": "data-quality", "params": "weekly"} if cur else None
+# Atomically: the fixture server may be reading this file while a background helper
+# rewrites it, and a torn read is a 500 — which the snapshot would (rightly) poll on.
+import os
+json.dump(d, open(path + ".tmp", "w")); os.replace(path + ".tmp", path)
 PY
 }
 run_snapshot() {
@@ -195,6 +462,184 @@ out=$(run_snapshot TENDER_SNAP_WAIT_MIN=30); rc=$?
 check "a running job is waited out, then the snapshot proceeds" 0 "queue idle after" "$out" "$rc"
 check "…and the wait ends in a snapshot, not a skip" 0 "dry run: would snapshot" "$out" "$rc"
 wait "$helper" 2>/dev/null || true
+
+# --- the snapshot reads the queue through the probe (issue 459) -------------------
+# Before, a wrong secret or a missing secret file both printed "dry run: would
+# snapshot" and exited 0: the 403 had no ['current'], and no secret skipped the gate.
+set_current ""
+out=$(run_snapshot TENDER_SNAP_WAIT_MIN=0 TENDER_ADMIN_SECRET_FILE="$work/wrong-secret"); rc=$?
+check "the snapshot does not snapshot on a wrong secret" 1 "ERROR snapshot: could not read the queue (HTTP 403 bad or missing operator secret)" "$out" "$rc"
+refute "…no dry-run line on a wrong secret" "dry run" "$out"
+
+out=$(run_snapshot TENDER_SNAP_WAIT_MIN=0 TENDER_ADMIN_SECRET_FILE="$work/missing"); rc=$?
+check "…nor without a secret file" 1 "ERROR snapshot: could not read the queue (no readable secret file" "$out" "$rc"
+refute "…no dry-run line without a secret file" "dry run" "$out"
+
+echo secret-unset >"$work/mode"
+out=$(run_snapshot TENDER_SNAP_WAIT_MIN=0); rc=$?
+check "…nor when the service has no admin secret (404)" 1 "ERROR snapshot: could not read the queue (HTTP 404 not found)" "$out" "$rc"
+refute "…no dry-run line on a 404" "dry run" "$out"
+echo normal >"$work/mode"
+
+out=$(run_snapshot TENDER_SNAP_WAIT_MIN=0 TENDER_ADMIN_URL="http://127.0.0.1:1"); rc=$?
+check "a down app is snapshotted (the named down arm)" 0 "probe: down" "$out" "$rc"
+check "…and it is a snapshot" 0 "dry run: would snapshot" "$out" "$rc"
+systemd_says $'MainPID=4242\nLoadState=loaded'
+out=$(run_snapshot TENDER_SNAP_WAIT_MIN=0 TENDER_ADMIN_URL="http://127.0.0.1:1"); rc=$?
+check "a refused port while the service runs is not snapshotted" 1 "ERROR snapshot: could not read the queue (curl exit 7" "$out" "$rc"
+refute "…no dry-run line on a refusal with a running service" "dry run" "$out"
+systemd_says $'MainPID=0\nLoadState=loaded'
+
+# A failed read polls like a busy queue, because a timeout under load can clear: the
+# service answers 404 for two seconds, then the queue reads idle.
+echo secret-unset >"$work/mode"
+( sleep 2; echo normal >"$work/mode" ) &
+helper=$!
+out=$(run_snapshot TENDER_SNAP_WAIT_MIN=30); rc=$?
+check "an unreadable queue is polled, not skipped or snapshotted" 0 "waiting: could not read the queue (HTTP 404 not found)" "$out" "$rc"
+check "…and when it reads idle, the snapshot proceeds" 0 "queue idle after" "$out" "$rc"
+check "…into a snapshot" 0 "dry run: would snapshot" "$out" "$rc"
+wait "$helper" 2>/dev/null || true
+echo normal >"$work/mode"
+
+# The installed snapshot runs the probe from beside itself; an install that left the
+# probe out must not read as idle.
+mkdir -p "$work/lonely"
+cp "$here/tender-db-snapshot.sh" "$here/tender-db-queue-verdict.sh" "$work/lonely/"
+out=$(TENDER_ADMIN_URL="http://127.0.0.1:$port" TENDER_ADMIN_SECRET_FILE="$work/secret" \
+      TENDER_SNAP_DRY=1 TENDER_SNAP_POLL_SECS=1 TENDER_SNAP_WAIT_MIN=0 \
+      bash "$work/lonely/tender-db-snapshot.sh" 2>&1); rc=$?
+check "a snapshot installed without its probe refuses" 1 "ERROR snapshot: could not read the queue" "$out" "$rc"
+refute "…no dry-run line without the probe" "dry run" "$out"
+
+# The probe's exit status is half its answer (review of 459). A stub probe beside the
+# real snapshot and verdict says a known word with the wrong status, or two words; the
+# snapshot must refuse each, and must proceed on the stub's clean `idle` (or the stub
+# set-up, not the verdict, would be what refuses).
+run_stub_snapshot() {   # run_stub_snapshot <name> <probe body…>
+    local d="$work/stub-$1"; shift
+    mkdir -p "$d"
+    cp "$here/tender-db-snapshot.sh" "$here/tender-db-queue-verdict.sh" "$d/"
+    printf '%s\n' "$@" >"$d/tender-db-queue-probe.sh"
+    TENDER_ADMIN_URL="http://127.0.0.1:$port" TENDER_ADMIN_SECRET_FILE="$work/secret" \
+        TENDER_SNAP_DRY=1 TENDER_SNAP_POLL_SECS=1 TENDER_SNAP_WAIT_MIN=0 \
+        bash "$d/tender-db-snapshot.sh" 2>&1
+}
+out=$(run_stub_snapshot clean 'echo idle'); rc=$?
+check "a stub probe answering idle with exit 0 is snapshotted (the stub set-up works)" 0 "dry run: would snapshot" "$out" "$rc"
+out=$(run_stub_snapshot idle1 'echo idle' 'exit 1'); rc=$?
+check "idle with exit 1 is not idle: the snapshot refuses" 1 "ERROR snapshot: could not read the queue (unexpected answer 'idle' (exit 1))" "$out" "$rc"
+refute "…no dry-run line on idle with exit 1" "dry run" "$out"
+out=$(run_stub_snapshot down3 'echo down' 'exit 3'); rc=$?
+check "down with exit 3 is not down: the snapshot refuses" 1 "ERROR snapshot: could not read the queue (unexpected answer 'down' (exit 3))" "$out" "$rc"
+refute "…no dry-run line on down with exit 3" "dry run" "$out"
+out=$(run_stub_snapshot twolines 'printf "idle\nbusy 1 fetch x\n"'); rc=$?
+check "an answer over two lines is not idle: the snapshot refuses" 1 "ERROR snapshot: could not read the queue (the probe answered more than one line" "$out" "$rc"
+refute "…no dry-run line on a two-line answer" "dry run" "$out"
+out=$(run_stub_snapshot silent 'exit 0'); rc=$?
+check "no answer with exit 0 is not idle: the snapshot refuses" 1 "ERROR snapshot: could not read the queue (no answer (exit 0))" "$out" "$rc"
+refute "…no dry-run line on no answer" "dry run" "$out"
+mkdir -p "$work/stub-noverdict"
+cp "$here/tender-db-snapshot.sh" "$here/tender-db-queue-probe.sh" "$work/stub-noverdict/"
+out=$(TENDER_ADMIN_URL="http://127.0.0.1:$port" TENDER_ADMIN_SECRET_FILE="$work/secret" \
+      TENDER_SNAP_DRY=1 TENDER_SNAP_POLL_SECS=1 TENDER_SNAP_WAIT_MIN=0 \
+      bash "$work/stub-noverdict/tender-db-snapshot.sh" 2>&1); rc=$?
+check "a snapshot installed without its queue verdict refuses" 1 "ERROR snapshot: cannot load" "$out" "$rc"
+refute "…no dry-run line without the verdict" "dry run" "$out"
+
+# --- queue_verdict: the rule deploy.sh and the snapshot both act on (issue 459) -----------
+# deploy.sh's `case` only maps this function's line to an action, so its whole decision
+# is pinned here. Each case sources the real file in a subshell: a verdict that called
+# `exit` could not end this harness.
+verdict_is() {   # verdict_is <name> <rc> <out> <want: exact line, or "error" for any error line>
+    local name=$1 rc=$2 out=$3 want=$4 got
+    got=$( . "$here/tender-db-queue-verdict.sh" && queue_verdict "$rc" "$out" ) || got="(verdict exit $?) $got"
+    if [ "$(printf '%s\n' "$got" | wc -l)" -ne 1 ]; then
+        echo "FAIL $name — the verdict must be one line, got: $got"; failures=$((failures + 1)); return
+    fi
+    case "$want" in
+        error) [[ "$got" == "error "?* ]] || { echo "FAIL $name — wanted an error line, got: $got"; failures=$((failures + 1)); return; } ;;
+        *)     [ "$got" = "$want" ] || { echo "FAIL $name — wanted '$want', got: $got"; failures=$((failures + 1)); return; } ;;
+    esac
+    echo "ok   $name"
+}
+verdict_is "verdict: idle with exit 0 proceeds" 0 idle idle
+verdict_is "verdict: down with exit 0 proceeds" 0 down down
+verdict_is "verdict: busy with exit 0 is busy" 0 "busy 1796 fetch ted daily 2026-00190" "busy 1796 fetch ted daily 2026-00190"
+verdict_is "verdict: the probe's own error with exit 1 is that error" 1 "error HTTP 403 bad or missing operator secret" "error HTTP 403 bad or missing operator secret"
+verdict_is "verdict: idle with exit 1 is an error" 1 idle error
+verdict_is "verdict: down with exit 3 is an error" 3 down error
+verdict_is "verdict: busy with exit 1 is an error" 1 "busy 1 fetch x" error
+verdict_is "verdict: an error line with exit 0 is still an error" 0 "error something" error
+verdict_is "verdict: idle then busy on two lines is an error" 0 $'idle\nbusy 1 fetch x' error
+verdict_is "verdict: busy then idle on two lines is an error" 0 $'busy 1 fetch x\nidle' error
+verdict_is "verdict: idle with a carriage return is an error" 0 $'idle\r' error
+verdict_is "verdict: idle with a trailing blank is an error" 0 "idle " error
+verdict_is "verdict: IDLE is not idle" 0 IDLE error
+verdict_is "verdict: a bare 'busy ' names no job and is an error" 0 "busy " error
+verdict_is "verdict: no answer with exit 0 is an error" 0 "" error
+verdict_is "verdict: no answer from a failed ssh (255) is an error" 255 "" error
+verdict_is "verdict: no exit status at all is an error" "" idle error
+
+# --- driftwatch: a probe that could not look exits 1 (issue 459) ------------------
+# Both-ways first: the fixture's release list must be able to pass and to alarm, or
+# "exit 1 on a 404" below would also be satisfied by a script that always exits 1.
+run_drift() {
+    TENDER_DRIFT_API="$1" bash "$here/tender-db-driftwatch.sh" 2>&1
+}
+echo '[{"tag_name": "1.14.3"}, {"tag_name": "1.14.2"}]' >"$work/releases.json"
+out=$(run_drift "http://127.0.0.1:$port/releases"); rc=$?
+check "driftwatch passes on releases inside the vendored line" 0 "ok drift: no SDK-eforms-de release beyond the vendored 1.14.x line (2 releases read, highest 1.14.3)" "$out" "$rc"
+
+# The real feed's order on 2026-10-01: an older line's fix (1.13.3) above a 1.14.x.
+echo '[{"tag_name": "1.14.4"}, {"tag_name": "1.13.3"}, {"tag_name": "1.14.2"}]' >"$work/releases.json"
+out=$(run_drift "http://127.0.0.1:$port/releases"); rc=$?
+check "driftwatch passes when an older line's fix is listed above the vendored line" 0 "highest 1.14.4" "$out" "$rc"
+
+echo '[{"tag_name": "2.2.0"}, {"tag_name": "1.14.3"}]' >"$work/releases.json"
+out=$(run_drift "http://127.0.0.1:$port/releases"); rc=$?
+check "driftwatch alarms on a release beyond the vendored line" 1 "BEYOND the vendored 1.14.x line" "$out" "$rc"
+
+# Index 0 is the newest by date, not the newest line: once 1.15.0 ships, a later 1.14.x
+# fix sits above it (review of 459).
+echo '[{"tag_name": "1.14.5"}, {"tag_name": "1.15.0"}, {"tag_name": "1.14.4"}]' >"$work/releases.json"
+out=$(run_drift "http://127.0.0.1:$port/releases"); rc=$?
+check "driftwatch alarms on a successor that is not the first entry" 1 "SDK-eforms-de released 1.15.0 — BEYOND the vendored 1.14.x line" "$out" "$rc"
+refute "…and does not call it ok" "ok drift" "$out"
+
+echo '[{"tag_name": "1.140.0"}]' >"$work/releases.json"
+out=$(run_drift "http://127.0.0.1:$port/releases"); rc=$?
+check "driftwatch compares lines as numbers (1.140 is beyond 1.14, not on it)" 1 "BEYOND the vendored 1.14.x line" "$out" "$rc"
+
+echo '[{"tag_name": "1.14.4"}, {"tag_name": "release-2026-09"}]' >"$work/releases.json"
+out=$(run_drift "http://127.0.0.1:$port/releases"); rc=$?
+check "driftwatch fails on a tag it cannot parse, anywhere on the page" 1 "answered unparseably (release tag 'release-2026-09' is not" "$out" "$rc"
+
+echo '[{"tag_name": "1.14.4"}, {"name": "untagged"}]' >"$work/releases.json"
+out=$(run_drift "http://127.0.0.1:$port/releases"); rc=$?
+check "driftwatch fails on a release without a tag, anywhere on the page" 1 "answered unparseably (release #1 on the page has no tag_name)" "$out" "$rc"
+
+echo '[{"tag_name": "1.14.4"}]' >"$work/releases.json"
+out=$(TENDER_DRIFT_KNOWN_PREFIX=1.14.x run_drift "http://127.0.0.1:$port/releases"); rc=$?
+check "driftwatch fails on a vendored line that is not <major>.<minor>" 1 "TENDER_DRIFT_KNOWN_PREFIX='1.14.x' is not <major>.<minor>" "$out" "$rc"
+
+out=$(run_drift "http://127.0.0.1:$port/api/v4/projects/gone/releases"); rc=$?
+check "driftwatch fails on an answer that is not a release list (404)" 1 "ERROR drift: SDK-eforms-de release probe answered HTTP 404" "$out" "$rc"
+refute "…and does not call it ok" "ok drift" "$out"
+
+out=$(run_drift "http://127.0.0.1:$port/admin/jobs"); rc=$?
+check "driftwatch fails on a 403 (the issue's Verify shape)" 1 "answered HTTP 403" "$out" "$rc"
+
+out=$(run_drift "http://127.0.0.1:1/releases"); rc=$?
+check "driftwatch fails when unreachable" 1 "ERROR drift: SDK-eforms-de release probe failed (network: curl exit 7)" "$out" "$rc"
+
+echo '{"message": "moved"}' >"$work/releases.json"
+out=$(run_drift "http://127.0.0.1:$port/releases"); rc=$?
+check "driftwatch fails on a 200 that is not a list" 1 "answered unparseably (the body is a JSON dict, not a list)" "$out" "$rc"
+
+echo '[]' >"$work/releases.json"
+out=$(run_drift "http://127.0.0.1:$port/releases"); rc=$?
+check "driftwatch fails on an empty release list" 1 "answered unparseably (the release list is empty)" "$out" "$rc"
 
 echo
 if [ "$failures" -eq 0 ]; then

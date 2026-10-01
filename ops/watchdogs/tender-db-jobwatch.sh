@@ -15,6 +15,15 @@
 # exits 0 with one OK summary line; any finding exits non-zero so it also shows in
 # `systemctl --failed`.
 #
+# A run that could not LOOK is not a clean run (issue 459). Only an HTTP 200 whose
+# body has `current`, an array `queued` and a NON-EMPTY array `recent`, with the fields
+# the checks read present and typed, is read at all; anything else — no secret,
+# unreachable, a 403/404/500, a body of another shape, an empty log — prints
+# `ERROR jobwatch: … — jobs NOT checked` and exits 1. Before that, curl had no
+# status check and a JSON 403 passed `jq -e .`: with `.recent` and `.queued` null the
+# script printed `ok jobwatch: idle, 0 queued, 0 recent covering 0h` and exited 0,
+# reproduced 2026-10-01 against the real endpoint with a wrong secret.
+#
 # Versioned in the repo (ops/watchdogs/) and installed to /usr/local/bin by
 # ops/watchdogs/install.sh — see the diskwatch header for why these live in git
 # (issue 224).
@@ -38,26 +47,61 @@ depth=${TENDER_JOB_LOG_DEPTH:-200}
 # so the operator secret is the value after the first '='.
 secret=$(sed -n 's/^TENDER_ADMIN_SECRET=//p' "$secret_file" 2>/dev/null || true)
 if [ -z "$secret" ]; then
-    echo "WARN jobwatch: no operator secret in $secret_file — cannot check jobs"
+    echo "ERROR jobwatch: no operator secret in $secret_file — jobs NOT checked"
     exit 1
 fi
 
+body_file=$(mktemp)
+trap 'rm -f "$body_file"' EXIT
 now=$(date +%s)
-if ! json=$(curl -sS --max-time 15 "$base/admin/jobs?limit=$depth" -H "x-admin-secret: $secret" 2>/dev/null); then
-    echo "WARN jobwatch: /admin/jobs unreachable at $base"
+curl_rc=0
+code=$(curl -sS --max-time 15 -o "$body_file" -w '%{http_code}' \
+    "$base/admin/jobs?limit=$depth" -H "x-admin-secret: $secret" 2>/dev/null) || curl_rc=$?
+if [ "$curl_rc" -ne 0 ]; then
+    echo "ERROR jobwatch: /admin/jobs unreachable at $base (curl exit $curl_rc) — jobs NOT checked"
     exit 1
 fi
-if ! printf '%s' "$json" | jq -e . >/dev/null 2>&1; then
-    echo "WARN jobwatch: /admin/jobs returned non-JSON (bad secret or server error)"
+# The status first: this server's 403 and 404 are JSON (admin.rs deny(): 403 `bad or
+# missing operator secret` on a mismatch, 404 `not found` when the service has no
+# secret), so "is it JSON" says nothing about whether the queue was read.
+if [ "$code" != "200" ]; then
+    msg=$(jq -r '.error.message // empty' "$body_file" 2>/dev/null || true)
+    [ -n "$msg" ] || msg=$(head -c 200 "$body_file" | tr '\r\n' '  ')
+    echo "ERROR jobwatch: /admin/jobs answered HTTP $code: ${msg:-(empty body)} — jobs NOT checked"
     exit 1
 fi
+# The shape, down to the fields the checks below read — each with no default. A
+# `(.finished_at // 0)` read an entry without a finish time as ancient, so a failed run
+# was never "inside the lookback" and the ok line named the failure itself; a
+# `(.started_at // $now)` read a job without a start time as just started, never wedged
+# (review of 459). model::ingestion types them as i64 and String, so a missing or
+# mistyped one means this is not the endpoint it thinks it is.
+if ! jq -e 'type == "object" and has("current") and has("queued") and has("recent")
+            and (.queued | type) == "array" and (.recent | type) == "array"
+            and (.current == null
+                 or ((.current | type) == "object" and (.current.started_at | type) == "number"))
+            and all(.recent[]; type == "object"
+                               and (.finished_at | type) == "number"
+                               and (.outcome | type) == "string")' "$body_file" >/dev/null 2>&1; then
+    echo "ERROR jobwatch: /admin/jobs answered HTTP 200 but not the jobs object (current null or with a numeric started_at, array queued, array recent of runs with a numeric finished_at and a string outcome) — jobs NOT checked"
+    exit 1
+fi
+# An empty log is a 0-hour window, not a clean 26-hour check. The log is persisted
+# (job_log) and survives restarts, and this box runs dailies, so `recent: []` means the
+# probe is reading the wrong service or database. A freshly built database is the one
+# honest exception, and it clears after its first job.
+if [ "$(jq -r '.recent | length' "$body_file")" = "0" ]; then
+    echo "ERROR jobwatch: /admin/jobs answered an EMPTY job log — on a box that runs dailies that is the wrong service or database (or a database built from zero, until its first job) — jobs NOT checked"
+    exit 1
+fi
+json=$(cat "$body_file")
 
 status=0
 
 failed=$(printf '%s' "$json" | jq -r --argjson now "$now" --argjson lb "$lookback" '
-    .recent[]?
+    .recent[]
     | select(.outcome != "ok")
-    | select((.finished_at // 0) >= ($now - $lb))
+    | select(.finished_at >= ($now - $lb))
     | "\(.kind) #\(.id) [\(.params)] → \(.outcome)"')
 if [ -n "$failed" ]; then
     while IFS= read -r line; do
@@ -71,7 +115,7 @@ fi
 # again: when the log comes back full AND its oldest entry is younger than the
 # lookback start, an older failure cannot be seen and the "ok" below would be a
 # claim about a window, not about the day.
-oldest=$(printf '%s' "$json" | jq -r '[.recent[]?.finished_at // empty] | min // empty')
+oldest=$(printf '%s' "$json" | jq -r '[.recent[].finished_at] | min // empty')
 returned=$(printf '%s' "$json" | jq -r '.recent | length')
 if [ -n "$oldest" ] && [ "$returned" -ge "$depth" ] && [ "$oldest" -gt "$((now - lookback))" ]; then
     echo "WARN jobwatch: job log saturated — $returned entries reach back only" \
@@ -82,7 +126,7 @@ fi
 
 wedged_line=$(printf '%s' "$json" | jq -r --argjson now "$now" --argjson w "$wedged" '
     (.current // empty)
-    | select((.started_at // $now) <= ($now - $w))
+    | select(.started_at <= ($now - $w))
     | "\(.kind) #\(.id) [\(.params)] running \($now - .started_at)s"')
 if [ -n "$wedged_line" ]; then
     echo "WARN jobwatch: wedged job (threshold $((wedged / 3600))h): $wedged_line"
@@ -94,7 +138,7 @@ if [ "$status" -eq 0 ]; then
         (.recent | length) as $n
         | (.recent[0] // {}) as $last
         | (if .current then "running \(.current.kind) #\(.current.id) (\($now - .current.started_at)s)" else "idle" end) as $cur
-        | ([.recent[]?.finished_at // empty] | min) as $oldest
+        | ([.recent[].finished_at] | min) as $oldest
         | "ok jobwatch: \($cur), \((.queued | length)) queued, \($n) recent covering \(if $oldest then (($now - $oldest) / 3600 | floor) else 0 end)h, last \($last.kind // "?") → \($last.outcome // "?")"')
     echo "$summary"
 fi

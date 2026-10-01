@@ -7,6 +7,9 @@
 #
 # Usage: ./deploy.sh [git-ref]     (default: HEAD)
 set -euo pipefail
+# Everything below names repo paths relatively (ops/check.sh, the gate marker, the
+# queue probe it pipes to the box), so stand at the repo root wherever it was run from.
+cd "$(dirname "$0")"
 
 VPS="${VPS:-root@zebreus.click}"
 # Keepalives: without them a dropped TCP connection leaves ssh hanging on a
@@ -40,17 +43,112 @@ if git rev-parse --verify --quiet origin/main >/dev/null \
 $REF ($(git rev-parse --short "$REV")) is BEHIND origin/main
 ($(git rev-parse --short origin/main)) by $(git rev-list --count "$REV"..origin/main) commit(s).
 
-Deploying it would roll production back to older code. If you meant the tip:
+Deploying it would roll production back to older code. If you meant the tip, bring
+the checkout to it and deploy that:
 
-    git fetch origin main && ./deploy.sh origin/main
+    git fetch origin main && git merge --ff-only origin/main && ./deploy.sh
 
-or fast-forward your local branch first. To deploy the older commit anyway
+(\`./deploy.sh origin/main\` from a checkout whose tree differs from origin/main is
+refused by the test gate unless target/.tests-green already covers origin/main — the
+gate can only test the checked-out tree, issue 459.) To deploy the older commit anyway
 (a deliberate rollback): FORCE_BEHIND=1 ./deploy.sh $REF
 MSG
     exit 1
 fi
 
 say() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
+
+# The test gate (issue 254). Three green-looking zeros went past me in one session — a
+# pipeline's exit code, a truncated doc-test section, and a feature-gated crate that ran
+# no tests at all — so the deploy reads the verdict itself, from cargo's own exit code,
+# via ops/check.sh. It runs BEFORE the queue probe so a red tree costs nothing on the VPS.
+#
+# The gate is bound to $REV, the commit pushed and built below — not to HEAD or the
+# working tree (issue 459). It used to compare the marker with HEAD, then ship $REV:
+# `./deploy.sh origin/main` on a green HEAD skipped the suites and shipped an untested
+# commit, and a dirty tree was tested, then not shipped. Now there are exactly two ways
+# past this step:
+#   * target/.tests-green names a commit whose tree equals $REV's outside .scratch/
+#     (marker_covers, ops/gate-marker.sh) — free, and a .scratch/-only commit after a
+#     green gate no longer needs SKIP_TESTS=1 or a by-eye `git diff --stat`;
+#   * SKIP_TESTS=1, for the deploy that cannot wait — a one-line fix while the box is
+#     down is not the moment for a 15-minute suite.
+# Otherwise, if the checked-out tree IS $REV's (outside .scratch/, and clean), ops/check.sh
+# runs and must leave a marker covering $REV behind, or the deploy refuses: that catches a
+# commit landing during the run, and an edit made and reverted during it. A HEAD that
+# differs from $REV, or a dirty tree, is refused up front, because the gate could only
+# test the wrong tree. Which of these applies is gate_deploy_step's one word.
+if [ "${SKIP_TESTS:-0}" = "1" ]; then
+    say "SKIP_TESTS=1: deploying WITHOUT running the suites"
+else
+    # The predicates are pinned before they are trusted, the way install.sh runs
+    # test-watchdogs.sh before installing: a marker_covers that said yes to
+    # everything would turn every deploy into an untested one with a green-looking line.
+    # Its output is kept and shown on a failure — a refusal that hides its reason sends
+    # the operator to SKIP_TESTS=1.
+    if ! selftest=$(bash ops/test-gate-marker.sh 2>&1); then
+        printf '%s\n' "$selftest" | grep -v '^ok ' >&2 || true
+        echo "refusing to deploy: ops/test-gate-marker.sh FAILED (above), so target/.tests-green cannot be trusted" >&2
+        echo "  (SKIP_TESTS=1 bypasses the whole gate)" >&2
+        exit 1
+    fi
+    # shellcheck source=ops/gate-marker.sh
+    . ops/gate-marker.sh
+    # The whole decision is gate_deploy_step, pinned by ops/test-gate-marker.sh with
+    # REV ≠ HEAD both ways; this only maps its word to an action. Anything else —
+    # including no word at all — refuses.
+    step=$(gate_deploy_step "$REV") || step=
+    case "$step" in
+        skip)
+            say "Suites already green at $(git rev-parse --short "$(gate_marker_commit)"), whose tree equals $(git rev-parse --short "$REV")'s outside .scratch/ — skipping (ops/check.sh)"
+            ;;
+        run)
+            say "Running the suites before deploying (issue 254; SKIP_TESTS=1 to override)"
+            ./ops/check.sh
+            if ! marker_covers "$REV"; then
+                cat >&2 <<MSG
+
+refusing to deploy: the gate ran but wrote no marker covering $(git rev-parse --short "$REV").
+Its closing line says why — a tree dirty outside .scratch/, a commit outside .scratch/
+landing during the run, or a file outside .scratch/ written during it. Either way the
+green describes a tree this deploy does not ship.
+MSG
+                exit 1
+            fi
+            ;;
+        refuse-head)
+            # The gate tests the CHECKED-OUT tree. Twelve minutes of suite over HEAD would
+            # certify nothing about $REV, so refuse before spending them.
+            cat >&2 <<MSG
+
+refusing to deploy: no marker covers $REF ($(git rev-parse --short "$REV")), and the
+checked-out HEAD ($(git rev-parse --short HEAD 2>/dev/null || echo '?')) differs from it outside .scratch/ — so
+ops/check.sh here would test a tree this deploy does not ship.
+
+Check out $REF and run ./deploy.sh again, or deploy from a fresh checkout of
+$(git rev-parse --short "$REV") (docs/operations.md, Deploy). SKIP_TESTS=1 skips the gate
+altogether.
+MSG
+            exit 1
+            ;;
+        *)
+            # refuse-dirty, or a word nobody foresaw. check.sh writes no marker over a tree
+            # dirty outside .scratch/ (the green would describe uncommitted edits, not $REV),
+            # so the run could only end in the refusal after it. Say so now, and what is
+            # dirty, rather than after twelve minutes.
+            report=$(gate_tree_report 2>/dev/null) || report="(git could not read the working tree)"
+            cat >&2 <<MSG
+
+refusing to deploy: no marker covers $(git rev-parse --short "$REV"), and the working tree
+is not clean outside .scratch/ (gate step: ${step:-none}), so ops/check.sh would test
+something this deploy does not ship and write no marker:
+MSG
+            sed -n '1,20s/^/    /p' <<<"${report:-(nothing listed)}" >&2
+            echo "$(gate_dirt_hint "$report")" >&2
+            exit 1
+            ;;
+    esac
+fi
 
 # A deploy RESTARTS the service, and a restart re-runs the job that was running from
 # the top: its durable row survives by design (issue 21), so recovery puts it back at the
@@ -60,45 +158,64 @@ say() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
 #
 # So ask first. This runs before the push and the build, so a busy box costs a second
 # rather than five minutes, and the override is explicit: FORCE_BUSY=1 ./deploy.sh
-# The test gate (issue 254). Three green-looking zeros went past me in one session — a
-# pipeline's exit code, a truncated doc-test section, and a feature-gated crate that ran
-# no tests at all — so the deploy reads the verdict itself, from cargo's own exit code,
-# via ops/check.sh.
 #
-# Free when `ops/check.sh` already passed at this exact commit with a clean tree: the
-# marker it writes is what this skips on. SKIP_TESTS=1 overrides, for the deploy that
-# cannot wait — a one-line fix while the box is down is not the moment for a 15-minute
-# suite. It runs BEFORE the queue probe so a red tree costs nothing on the VPS.
-HEAD_SHA="$(git rev-parse HEAD)"
-if [ "${SKIP_TESTS:-0}" = "1" ]; then
-    say "SKIP_TESTS=1: deploying WITHOUT running the suites"
-elif [ -f target/.tests-green ] && [ "$(cat target/.tests-green)" = "$HEAD_SHA" ] \
-    && [ -z "$(git status --porcelain)" ]; then
-    say "Suites already green at $(git rev-parse --short HEAD) — skipping (ops/check.sh)"
-else
-    say "Running the suites before deploying (issue 254; SKIP_TESTS=1 to override)"
-    ./ops/check.sh
-fi
-
+# The probe is ops/watchdogs/tender-db-queue-probe.sh, piped from THIS checkout (issue
+# 459), so the deploy never depends on what is installed on the box. It answers one
+# named line, and queue_verdict (ops/watchdogs/tender-db-queue-verdict.sh, the same
+# function the snapshot uses, table-tested by test-watchdogs.sh) judges that line
+# together with ssh's exit status: only `idle` or `down` (the app's unit has no process,
+# so nothing to re-run) proceeds. The probe it replaces printed '' for idle AND for
+# every failure to measure — ssh down, no secret, a timeout, a 403 or 404 body — and
+# this read '' as idle. Now an ssh failure, an empty answer, an `error` and any output
+# nobody foresaw all come back as `error <what>` and land in the last arm, which
+# refuses. FORCE_BUSY=1 overrides both refusals.
 say "Checking the job queue on $VPS"
-BUSY="$($SSH "$VPS" bash -euo pipefail -s <<'PROBE' || true
-S=$(sed -n 's/^TENDER_ADMIN_SECRET=//p' /root/tender-admin-secret 2>/dev/null || true)
-[ -n "$S" ] || exit 0
-curl -s --max-time 10 -H "x-admin-secret: $S" http://127.0.0.1:8080/admin/jobs 2>/dev/null \
-  | jq -r 'if .current then "\(.current.id) \(.current.kind) \(.current.params)" else "" end' 2>/dev/null || true
-PROBE
-)"
-if [ -n "$BUSY" ] && [ "${FORCE_BUSY:-0}" != "1" ]; then
-    cat >&2 <<MSG
+# shellcheck source=ops/watchdogs/tender-db-queue-verdict.sh
+. ops/watchdogs/tender-db-queue-verdict.sh
+probe_rc=0
+QUEUE="$($SSH "$VPS" bash -s < ops/watchdogs/tender-db-queue-probe.sh)" || probe_rc=$?
+VERDICT=$(queue_verdict "$probe_rc" "$QUEUE") || VERDICT=
+case "$VERDICT" in
+    idle)
+        say "Queue idle on $VPS"
+        ;;
+    down)
+        say "tender-db.service on $VPS has no process and accepts no connection (probe: down) — no job to re-run"
+        ;;
+    "busy "*)
+        BUSY="${VERDICT#busy }"
+        if [ "${FORCE_BUSY:-0}" != "1" ]; then
+            cat >&2 <<MSG
 refusing to deploy while a job is running: $BUSY
 
 A restart re-runs it from the top — its durable row survives, so nothing is lost, but the
 work is redone. Wait for the queue to drain (ops/admin.sh queue), stop the job
 (DELETE /admin/jobs/<id>), or override with FORCE_BUSY=1 if the deploy is the urgent thing.
 MSG
-    exit 1
-fi
-[ -n "$BUSY" ] && say "FORCE_BUSY=1: deploying over the running job ($BUSY)"
+            exit 1
+        fi
+        say "FORCE_BUSY=1: deploying over the running job ($BUSY)"
+        ;;
+    *)
+        WHAT="${VERDICT#error }"
+        WHAT="${WHAT:-no verdict (ssh exit $probe_rc)}"
+        if [ "${FORCE_BUSY:-0}" != "1" ]; then
+            cat >&2 <<MSG
+refusing to deploy: could not measure the queue: $WHAT
+
+A deploy restarts the service, and a restart re-runs whatever job is running from the
+top (issue 245), so it goes ahead only on a queue it has READ as idle. "HTTP 403" means
+/root/tender-admin-secret no longer matches the secret the service started with (it reads
+the file once, at start); "HTTP 404" means the service has no TENDER_ADMIN_SECRET at all;
+"curl exit 7 … not stopped" means nothing answered where the probe asked while the
+service has a process (a changed port?). Look with ssh $VPS tender-admin queue, or
+override with FORCE_BUSY=1.
+MSG
+            exit 1
+        fi
+        say "FORCE_BUSY=1: deploying although the queue could not be measured ($WHAT)"
+        ;;
+esac
 
 # The `vps` remote is derived, not assumed. It lives only in the local git
 # config, so a fresh clone or a reset working copy simply does not have it, and

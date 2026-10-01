@@ -58,6 +58,10 @@ From a clean checkout on the dev machine:
 > was given against**: if the code changes after a review, the clearance does not
 > automatically follow it, and the reviewer has to say so. See
 > [`agents/instrument-discipline.md`](agents/instrument-discipline.md).
+>
+> Since issue 459 the script enforces the first corollary itself: its test gate is bound
+> to the commit it ships, not to the working tree (see
+> [The test gate and the queue probe](#the-test-gate-and-the-queue-probe-issues-245-254-459)).
 
 The script pushes the ref to the VPS bare repo, builds `#tender-db` **on the
 VPS** (it has the 1 Gb/s uplink and the warm nix store — never build the bundle
@@ -110,6 +114,54 @@ The deploy also writes the rev into a systemd drop-in
 `/v1`, `/_source`, and the dashboard's System panel report the actual deployed
 revision — while the `nix build` never sees the rev and stays reproducible. A
 plain local build (no `COMMIT_SHA` in the environment) reports `dev`.
+
+### The test gate and the queue probe (issues 245, 254, 459)
+
+Before it pushes anything, `deploy.sh` answers two questions, and goes ahead only on a
+positive answer to each — never on a failure to find out.
+
+**Were the suites green on the tree it ships?** `ops/check.sh` writes
+`target/.tests-green` (gitignored, a local fact) naming the HEAD **at the start** of a
+green run, and only when the tree outside `.scratch/` was clean at the start and the end
+and HEAD did not move outside `.scratch/` during the run. Otherwise its closing line says
+why no marker was written (`tree DIRTY outside .scratch/ at the start`, `HEAD moved <a> →
+<b> outside .scratch/ during the run`). `deploy.sh` then:
+
+| situation | what it does |
+|---|---|
+| the marker's tree equals `$REV`'s outside `.scratch/` | skips the suites (`Suites already green at <marker>, whose tree equals <rev>'s …`) |
+| no such marker, and the checked-out HEAD differs from `$REV` outside `.scratch/` | refuses at once — the gate can only test the checked-out tree. Check out the ref, or deploy from a fresh checkout of the SHA |
+| no such marker, and the tree is dirty outside `.scratch/` | refuses at once — `check.sh` would test uncommitted edits and write no marker |
+| otherwise | runs `ops/check.sh`, then refuses unless the marker it left covers `$REV` (`the gate ran but wrote no marker covering <rev>`) |
+| `SKIP_TESTS=1` | skips the gate, and says so |
+
+So a `.scratch/`-only commit after a green gate deploys without `SKIP_TESTS=1` — the
+by-eye `git diff --stat <marker> HEAD -- . ':!.scratch'` is what the script now does
+itself — and `./deploy.sh origin/main` is gated on `origin/main`, not on whatever HEAD
+happens to be green. Any change outside `.scratch/`, including `.claude/` or `docs/`,
+re-gates; widen the exclusion only with a stated reason. The exclusion is sound only
+while no build or test reads under `.scratch/`. The predicates live in
+`ops/gate-marker.sh`, which both scripts source, and `deploy.sh` runs their offline pin
+`ops/test-gate-marker.sh` before it reads the marker.
+
+**Is a job running on the box?** A restart re-runs the running job from the top (issue
+245). `deploy.sh` pipes `ops/watchdogs/tender-db-queue-probe.sh` from the checkout to the
+box (`ssh … bash -s <`), and the probe answers one line:
+
+| answer | the deploy |
+|---|---|
+| `idle` | proceeds |
+| `down` (nothing accepted the connection) | proceeds — nothing is running to re-run |
+| `busy <id> <kind> <params>` | refuses: `refusing to deploy while a job is running` |
+| `error <what>`, no answer, or anything else | refuses: `could not measure the queue: <what>` |
+
+`FORCE_BUSY=1` overrides both refusals. The probe it replaced printed an empty string for
+idle and for every failure to measure, so ssh trouble, a missing secret, a timeout or the
+admin API's JSON 403 all read as an idle box. `error HTTP 403 bad or missing operator
+secret` means `/root/tender-admin-secret` no longer matches the secret the service read
+at start (it reads the file once, from the `admin.conf` drop-in); `error HTTP 404 not
+found` means the service runs without `TENDER_ADMIN_SECRET`. The weekly snapshot reads
+the queue through the same probe (`ops/watchdogs/README.md`).
 
 ### Waiting for a deploy: track the PID, not a `pgrep` pattern
 
@@ -473,8 +525,11 @@ commit: the gate had picked up the next issue's half-finished edits, including a
 temporarily short-circuited for a red-first check. It **failed closed** — nothing reached the box —
 which is the right direction, but the deploy is wasted and the error names a commit that is not the
 one being built, which reads as a mystery. Either let a deploy finish before starting the next edit,
-or run `ops/check.sh` to green on a clean tree first (the deploy then skips its own gate on the
-`target/.tests-green` marker, which is only written when the tree IS clean).
+or run `ops/check.sh` to green on a clean tree first (the deploy then skips its own gate when
+`target/.tests-green` covers the commit it ships — see
+[The test gate and the queue probe](#the-test-gate-and-the-queue-probe-issues-245-254-459)). Since
+issue 459 an edit or a commit outside `.scratch/` during the gate's run leaves no marker, and the
+deploy refuses rather than shipping a green that describes another tree.
 
 **Read the `unmatched` and `re-keyed` counts before calling a re-parse complete (issue 290).**
 `reparse_notice` finds its target by `(source, publication_id, content_hash)`. The hash is the same

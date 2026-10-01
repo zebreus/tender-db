@@ -136,7 +136,30 @@ SWEEP
 }
 
 started=$(date +%s)
-trap 'sweep_run_scratch "$started"' EXIT
+GATE_STAMP=
+trap 'sweep_run_scratch "$started"; [ -z "$GATE_STAMP" ] || rm -f "$GATE_STAMP"' EXIT
+
+# What this run will certify, recorded BEFORE cargo starts (issue 459). The marker used
+# to be `git rev-parse HEAD` taken AFTER cargo finished: in this shared worktree another
+# agent can commit during the ~12-minute run, the tree is clean again by the end, and the
+# marker then named a commit cargo may never have compiled. Now gate_begin takes a start
+# stamp, HEAD and the tree's state here, and the marker is that start HEAD, written only
+# if the tree was clean (outside .scratch/) at the start and the end, HEAD has not moved
+# outside .scratch/, and no file outside .scratch/ was written in between (an edit
+# reverted mid-run leaves both ends identical while cargo compiled it). The predicates
+# live in ops/gate-marker.sh, which deploy.sh sources too, and ops/test-gate-marker.sh
+# pins them.
+# shellcheck source=ops/gate-marker.sh
+. ops/gate-marker.sh
+gate_begin || { echo "check.sh: could not create the gate's start stamp — no marker will be written" >&2; GATE_START_CLEAN=0; }
+start_head=${GATE_START_HEAD:-}
+start_clean=${GATE_START_CLEAN:-0}
+if [ "$start_clean" != 1 ]; then
+    printf '\n\033[1m==> tree DIRTY outside .scratch/ at the start — the suites run, but no marker will be written:\033[0m\n'
+    sed -n '1,20s/^/    /p' <<<"${GATE_START_DIRT:-(unknown)}"
+    printf '    %s\n' "$(gate_dirt_hint "${GATE_START_DIRT:-}")"
+fi
+
 # ONE cargo invocation over all four packages (issue 260, 2026-09-29). It used to be four
 # (`test -p model`, `-p store`, `-p ingest`, `test-app-all`), and cargo resolves features
 # per invocation: 41 of the 291 crates under turso_sdk_kit resolved differently for
@@ -151,13 +174,13 @@ printf '\n\033[1m==> cargo test -p model -p store -p ingest -p tender-db --featu
 cargo test -p model -p store -p ingest -p tender-db --features tender-db/server
 elapsed=$(( $(date +%s) - started ))
 
-# The marker the deploy gate reads. Only written for a CLEAN tree: a green run over a
-# dirty tree says nothing about the commit, and a marker that can lie is worse than no
+# The marker the deploy gate reads: the START head, and only when cargo provably compiled
+# that commit's tree (gate_end_verdict, ops/gate-marker.sh). A green run over a dirty or
+# moving tree says nothing about any commit, and a marker that can lie is worse than no
 # marker. Lives under target/ (gitignored) — it is a local fact, not a repository one.
-if [ -z "$(git status --porcelain)" ]; then
-    mkdir -p target
-    git rev-parse HEAD > target/.tests-green
-    printf '\n\033[1m==> all suites green in %ss at %s\033[0m\n' "$elapsed" "$(git rev-parse --short HEAD)"
+if why_not=$(gate_end_verdict "$start_head" "$start_clean" "$GATE_STAMP"); then
+    gate_write_marker "$start_head" || { echo "check.sh: suites green but the marker could not be written" >&2; exit 1; }
+    printf '\n\033[1m==> all suites green in %ss at %s (marker written)\033[0m\n' "$elapsed" "${start_head:0:7}"
 else
-    printf '\n\033[1m==> all suites green in %ss (tree DIRTY — no marker written)\033[0m\n' "$elapsed"
+    printf '\n\033[1m==> all suites green in %ss (%s — no marker written)\033[0m\n' "$elapsed" "$why_not"
 fi

@@ -36,11 +36,17 @@ if [ "${TENDER_SKIP_WATCHDOG_TESTS:-0}" != "1" ]; then
     fi
 fi
 
+# tender-db-queue-probe.sh has no unit: the snapshot runs it from beside itself in
+# $bin (issue 459), so it must land there too or every Sunday's gate reads `error`.
 for s in tender-db-diskwatch.sh tender-db-jobwatch.sh tender-db-driftwatch.sh \
-    tender-db-snapshot.sh tender-db-tmpsweep.sh; do
+    tender-db-snapshot.sh tender-db-tmpsweep.sh tender-db-queue-probe.sh; do
     install -m 0755 -o root -g root "$here/$s" "$bin/$s"
     echo "installed $bin/$s"
 done
+# Sourced, not run: the snapshot loads queue_verdict from beside itself, and without it
+# refuses every Sunday with an ERROR (issue 459).
+install -m 0644 -o root -g root "$here/tender-db-queue-verdict.sh" "$bin/tender-db-queue-verdict.sh"
+echo "installed $bin/tender-db-queue-verdict.sh"
 
 # The operator CLI rides along: ops/admin.sh's own header says it is installed
 # to /usr/local/bin under these conventions, but nothing did it — on 2026-09-05
@@ -69,5 +75,8 @@ systemctl list-timers 'tender-db-*.timer' --no-pager || true
 # Prove the scripts run clean right now (does not wait for the next tick).
 echo "--- diskwatch dry fire ---"; systemctl start tender-db-diskwatch.service && journalctl -u tender-db-diskwatch.service -n 5 --no-pager
 echo "--- jobwatch dry fire ---";  systemctl start tender-db-jobwatch.service  && journalctl -u tender-db-jobwatch.service  -n 5 --no-pager
+# Read-only; anything but idle / busy / down here means the snapshot's gate cannot read
+# the queue either (issue 459).
+echo "--- queue probe ---"; "$bin/tender-db-queue-probe.sh" || true
 # The sweep deletes, so its dry fire is a DRY fire — it reports and removes nothing.
 echo "--- tmpsweep dry fire (reports only) ---"; TENDER_TMPSWEEP_DRY=1 /usr/local/bin/tender-db-tmpsweep.sh

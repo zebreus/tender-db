@@ -14,45 +14,100 @@
 #
 # The probe is ONE anonymous GET against the public gitlab.opencode.de API for
 # OC000008125155/SDK-eforms-de (project id 418 — resolved by path here so an id
-# reshuffle cannot silently watch the wrong project). Network failure is a
-# WARN, not silence: an upstream watch that fails quietly is the issue-224
-# lesson all over again — but it exits 0 on network trouble, because a flaky
-# mirror must not sit in `systemctl --failed` masking a REAL drift alarm.
+# reshuffle cannot silently watch the wrong project).
+#
+# A probe that could not look is an ERROR and exits 1 (issue 459): a network
+# failure, an answer other than HTTP 200, or a 200 that is not a non-empty release
+# list whose every tag parses as <major>.<minor>… (a GitLab 404, an API path change). This used to be a WARN on stdout with
+# exit 0, "because a flaky mirror must not sit in `systemctl --failed` masking a
+# REAL drift alarm". The record never supported that: 42 runs from 2026-08-21 to
+# 2026-10-01, all `ok drift`, not one WARN — while the exit 0 meant a dead probe
+# looked exactly like "no release yet" until 165's 2026-12-02 deadline. If the
+# mirror ever does prove flaky, alarm on the AGE of the last good probe (a stamp
+# file), not on exit 0. A drift alarm and an ERROR both exit 1; the line says which.
 #
 # Versioned in the repo (ops/watchdogs/), installed to /usr/local/bin by
 # ops/watchdogs/install.sh — same durability rule as its siblings (issue 224).
 set -euo pipefail
 
-# The vendored line: releases whose tag starts with this are known and fine.
+# The vendored line, as <major>.<minor>: a release on it or on an older line is known
+# and fine; one on a newer line is the drift this watch exists for.
 known="${TENDER_DRIFT_KNOWN_PREFIX:-1.14}"
 api="${TENDER_DRIFT_API:-https://gitlab.opencode.de/api/v4/projects/OC000008125155%2FSDK-eforms-de/releases?per_page=10}"
 
-if ! body=$(curl -sS --max-time 30 "$api"); then
-    echo "WARN drift: SDK-eforms-de release probe failed (network) — upstream is UNWATCHED this run"
-    exit 0
+body_file=$(mktemp)
+trap 'rm -f "$body_file"' EXIT
+curl_rc=0
+code=$(curl -sS --max-time 30 -o "$body_file" -w '%{http_code}' "$api" 2>/dev/null) || curl_rc=$?
+if [ "$curl_rc" -ne 0 ]; then
+    echo "ERROR drift: SDK-eforms-de release probe failed (network: curl exit $curl_rc) — upstream is UNWATCHED this run"
+    exit 1
+fi
+if [ "$code" != "200" ]; then
+    echo "ERROR drift: SDK-eforms-de release probe answered HTTP $code, not a release list — upstream is UNWATCHED this run"
+    exit 1
 fi
 
-newest=$(printf '%s' "$body" | python3 -c "
-import json, sys
+# EVERY tag on the page is read, not the first (review of 459). The feed is ordered by
+# released_at, and upstream publishes fixes to older lines after newer ones: on
+# 2026-10-01 it read 1.14.4, 1.14.3, 1.13.3 (2026-05-04), 1.14.2, … — so once 1.15.0
+# ships, the next 1.14.x patch sits at index 0, and a watch of releases[0] would say
+# `ok` with the successor one entry down. Each tag is parsed as <major>.<minor>[…] and
+# compared as numbers (a prefix match would also have accepted 1.140).
+#
+#   ok <count> <highest>       a non-empty release list, every tag parsed, none beyond
+#   beyond <tag>[, <tag>…]     the tags on a line newer than $known
+#   bad <why>                  anything else: not JSON, not a list, empty, a release
+#                              without a tag, a tag that is not <major>.<minor>…, or a
+#                              $known that is not <major>.<minor> — the probe is not
+#                              reading what it thinks, so it cannot say "no drift"
+# An empty list is `bad` too: the project has published 1.14.x releases, so [] means
+# the probe is reading something else, not that upstream is quiet.
+parsed=$(python3 - "$body_file" "$known" <<'PY'
+import json, re, sys
+known_raw = sys.argv[2]
+k = re.fullmatch(r"(\d+)\.(\d+)", known_raw.strip())
+if not k:
+    print("bad TENDER_DRIFT_KNOWN_PREFIX=%r is not <major>.<minor>" % known_raw); sys.exit()
+known = (int(k[1]), int(k[2]))
 try:
-    releases = json.load(sys.stdin)
-    print(releases[0]['tag_name'] if isinstance(releases, list) and releases else '')
+    releases = json.load(open(sys.argv[1]))
 except Exception:
-    print('')
-")
-if [ -z "$newest" ]; then
-    echo "WARN drift: SDK-eforms-de release probe answered unparseably — upstream is UNWATCHED this run"
-    exit 0
-fi
-
-case "$newest" in
-    "$known"*)
-        echo "ok drift: newest SDK-eforms-de release is $newest (vendored line ${known}.x)"
+    print("bad the body is not JSON"); sys.exit()
+if not isinstance(releases, list):
+    print("bad the body is a JSON %s, not a list" % type(releases).__name__); sys.exit()
+if not releases:
+    print("bad the release list is empty"); sys.exit()
+tags = []
+for i, r in enumerate(releases):
+    tag = r.get("tag_name") if isinstance(r, dict) else None
+    if not isinstance(tag, str) or not tag.strip():
+        print("bad release #%d on the page has no tag_name" % i); sys.exit()
+    tag = tag.strip()
+    m = re.fullmatch(r"v?(\d+)\.(\d+)(?:\.(\d+))?(?:[-+][0-9A-Za-z.+-]*)?", tag)
+    if not m:
+        print("bad release tag %r is not <major>.<minor>[.<patch>][-…]" % tag[:60]); sys.exit()
+    tags.append(((int(m[1]), int(m[2]), int(m[3] or 0)), tag))
+beyond = [t for v, t in tags if v[:2] > known]
+if beyond:
+    print("beyond " + ", ".join(beyond))
+else:
+    print("ok %d %s" % (len(tags), max(tags)[1]))
+PY
+) || parsed="bad the parser failed"
+case "$parsed" in
+    "ok "?*)
+        read -r _ count highest <<<"$parsed"
+        echo "ok drift: no SDK-eforms-de release beyond the vendored ${known}.x line ($count releases read, highest $highest)"
         ;;
-    *)
-        echo "WARN drift: SDK-eforms-de released $newest — BEYOND the vendored ${known}.x line."
+    "beyond "?*)
+        echo "WARN drift: SDK-eforms-de released ${parsed#beyond } — BEYOND the vendored ${known}.x line."
         echo "The eForms-DE successor has shipped (issue 165): vendor its fields.json, add the"
         echo "resolve() arm, and update TENDER_DRIFT_KNOWN_PREFIX in the driftwatch unit."
+        exit 1
+        ;;
+    *)
+        echo "ERROR drift: SDK-eforms-de release probe answered unparseably (${parsed#bad }) — upstream is UNWATCHED this run"
         exit 1
         ;;
 esac
