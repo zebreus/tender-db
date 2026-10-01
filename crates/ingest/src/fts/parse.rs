@@ -524,6 +524,9 @@ impl Walk {
     /// the way `awards[].status` becomes BT-142 codes, so the fold's
     /// `contract_nature` stays in eForms' one vocabulary. A nature already in
     /// `stated` at that scope is not stated again: issue 437's rule for award items.
+    /// A different one is, though BT-23 is single-valued in eForms: the release
+    /// published both for that scope, and keeping one would be a guess. Two items'
+    /// main CPVs (BT-262) on one scope go the same way.
     fn nature(
         &mut self,
         category: Option<&str>,

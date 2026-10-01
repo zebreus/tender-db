@@ -5058,6 +5058,9 @@ const RESULT_CODE_STEMS: &[&str] = &["BT-142", "BT-144", "BT-760"];
 const RESULT_DATE_STEMS: &[&str] = &["BT-145", "BT-1451"];
 const RESULT_AMOUNT_STEMS: &[&str] = &["BT-720", "BT-161"];
 const RESULT_NUMBER_STEMS: &[&str] = &["BT-759"];
+/// The stems [`contract_nature`] folds, one per era (issue 397). The sieve went
+/// without them until issue 465, so every notice's BT-23 listed as dropped.
+const NATURE_STEMS: &[&str] = &["BT-23", "TXT-NC", "TED-NC_CONTRACT_NATURE"];
 
 /// Does the projection read this field id on this channel — does the value have
 /// anywhere to go?
@@ -5125,6 +5128,7 @@ pub fn has_destination(field_id: &str, channel: Channel) -> bool {
                 || TAX_BASIS_FIELDS.contains(&field_id)
                 || ORIGINAL_LANG_FIELDS.contains(&field_id)
                 || RESULT_CODE_STEMS.contains(&stem)
+                || NATURE_STEMS.contains(&stem)
         }
         Channel::Integer => {
             LEGACY_BID_COUNT_FIELDS.contains(&field_id)
@@ -7255,6 +7259,11 @@ mod tests {
         assert_eq!(contract_nature("BT-23-Lot", "Services"), Some("services"));
         assert_eq!(contract_nature("TXT-NC", "9"), None, "a code outside the list is not invented");
         assert_eq!(contract_nature("BT-142-LotResult", "1"), None, "only the nature ids");
+        // …and the drop sieve agrees: a folded nature is not "published and dropped"
+        // (issue 465; 397 left it listed, and FTS's BT-23 would have joined it).
+        for id in ["TXT-NC", "TED-NC_CONTRACT_NATURE", "BT-23-Procedure", "BT-23-Lot"] {
+            assert!(table_reads("notice_codes", id), "{id} folds as the nature");
+        }
 
         fn code_value(section: &str, field: &str, ordinal: i64, code: &str) -> store::ValueRow {
             store::ValueRow {

@@ -1279,7 +1279,8 @@ pub const UNMAPPED_FIELD_WINDOW_IDS: i64 = 1_000_000;
 /// narrow subset by design. The head of that list is postal addresses
 /// (`BT-513/512/510(a)-Organization-Company`), exclusion grounds (`BT-67(a/b)`),
 /// award-criterion detail (`BT-539/540/5421-Lot`) and main nature (`BT-23-Lot`):
-/// all correctly out of scope, none of them a defect.
+/// all correctly out of scope then, none of them a defect. The nature has folded
+/// since issue 397, and the sieve has known it since 465.
 ///
 /// So this is NOT issue 368's vocabulary diagnostic, and listing 60 of them
 /// would have put a weekly section in front of a reader where 9 in 10 entries
