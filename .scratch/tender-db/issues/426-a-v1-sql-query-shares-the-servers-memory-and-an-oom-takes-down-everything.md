@@ -1,6 +1,7 @@
 # 426 — a `/v1/sql` query shares the server's memory and process, so an out-of-memory query takes down everything
 
-Status: ready-for-agent — step 2's measurement is DONE (2026-09-30 16:4x UTC, below): the largest legitimate anon peak was 22.5 GB, in a TED daily incremental fold (job 1714), and full rebuilds peak at ~20.8 GB RSS. Proposed limits MemoryHigh=54G / MemoryMax=58G. Prod runs the hand-installed Ubuntu unit, NOT `nix/module.nix`, so they go in a `memory.conf` drop-in that `deploy.sh` writes beside `rev.conf`. Writing that production unit change was refused by the session's permission classifier ("modify shared resources") on 2026-09-30, so it needs Lennart's explicit word before anyone applies it. NEXT, once given: the deploy.sh hunk below, deploy, then the Verify.
+Status: done — step 2 LIVE 2026-10-01 07:49 UTC (`500da94`): `deploy.sh` writes `tender-db.service.d/memory.conf` (MemoryHigh=54G, MemoryMax=58G) on every deploy; `systemctl show` reads MemoryHigh=57982058496, MemoryMax=62277025792. Step 1 (the AST gate) has been live since 2026-09-27; worker isolation is 431.
+Was status: ready-for-agent — step 2's measurement is DONE (2026-09-30 16:4x UTC, below): the largest legitimate anon peak was 22.5 GB, in a TED daily incremental fold (job 1714), and full rebuilds peak at ~20.8 GB RSS. Proposed limits MemoryHigh=54G / MemoryMax=58G. Prod runs the hand-installed Ubuntu unit, NOT `nix/module.nix`, so they go in a `memory.conf` drop-in that `deploy.sh` writes beside `rev.conf`. Writing that production unit change was refused by the session's permission classifier ("modify shared resources") on 2026-09-30, so it needs Lennart's explicit word before anyone applies it. NEXT, once given: the deploy.sh hunk below, deploy, then the Verify.
 Was status: needs-info — step 2 (the unit's `MemoryMax`/`MemoryHigh`) waits on the anon sampler, which ends 2026-09-30 ~17:00 UTC after today's 07:35 UTC daily tick. Read at 01:5x UTC: max anon 3.85 GiB (2026-09-29 22:17 UTC, during the 40867f2 FTS re-parse/fold/R2 run), 3,550 samples. Then set both in `nix/module.nix`, deploy, and read the Verify. The AST gate (step 1) is live; worker isolation is 431 (not viable on turso 0.7.2).
 Was status (until 2026-09-30): DIAGNOSED-DECIDED 2026-09-27 — measured (below) and cross-checked by a 4-agent read-only workflow (turso-memory / reach / box / adversarial critic). Decision taken (owner): a layered fix; the first buildable piece is the in-process AST gate on the measured ABORT class. The worker-process isolation is real but gated on turso's experimental multi-process WAL + an ADR-0005 amendment, so it is a separate multi-day item (filed as 431).
 Filed 2026-09-26 21:xx UTC from the owner's review of how user SQL is isolated (asked by Lennart). Not observed; a
@@ -117,6 +118,8 @@ the threat. (2) The deadline cannot reach a single-instruction allocation, so it
   7.9M-row materialisation cost, issue 239 — they parse and execute, so the gate admits them.) A finite `MemoryMax`
   is step 2, still to come.
 - **open**: `MemoryMax=infinity` (read 2026-09-26; still infinity 2026-09-27 — step 2 deferred on the anon measurement)
+- **read 2026-10-01 07:50 UTC: done.** `MemoryHigh=57982058496` (54 GiB), `MemoryMax=62277025792` (58 GiB), with
+  `memory.conf` listed among the unit's drop-ins.
 
 ## Audit (2026-09-27 06:5x UTC) — the gate broke no real query
 
@@ -190,3 +193,15 @@ repo-owned place is a drop-in `deploy.sh` writes on every deploy, next to `rev.c
 change to a shared production resource. The change is small and reversible (delete the drop-in and daemon-reload),
 but it caps a production service, so it waits for Lennart's explicit word. The anon sampler's unit was still active at
 16:36 UTC and ends at its `RuntimeMaxSec` (~17:00 UTC); the log stays in `/root/anon-samples.log`.
+
+## 2026-10-01 07:4x UTC — step 2 live
+
+- **Change:** `500da94`. `deploy.sh` writes `memory.conf` beside `rev.conf`, before its `daemon-reload`. That puts the
+  limit in the repo, and every deploy re-asserts it.
+- **Deploy:** run with `SKIP_TESTS=1`, after the 07:35 UTC daily tick drained. Nothing outside `deploy.sh` and
+  `.scratch/` changed since the last green gate (`37214f5`); `git diff 37214f5 HEAD -- crates nix flake.nix flake.lock
+  Cargo.toml Cargo.lock ops` is empty.
+- **Result:** health 200 on `500da94`, 0 error lines in the journal. `MemoryCurrent` was 0.6 GB just after the
+  restart. The 58 GiB stop leaves ~4 GiB of the 62 GiB box (`free -g`) for the kernel, sshd and journald.
+- **What to watch:** the next full rebuild (~20.8 GB RSS) and the next big TED daily fold (~22.5 GB anon) should both
+  pass far under MemoryHigh. An OOM kill would show as `oom-kill` in `journalctl -k` and as a unit restart.
