@@ -751,7 +751,7 @@ down). The watcher today is a Claude scheduled routine polling every ~4 h — se
 | Endpoint | Cost | Answers | Used by |
 | --- | --- | --- | --- |
 | `GET /health` | no DB access, always fast | process is up + serving HTTP — liveness only, does **not** query the DB (`{"ok":true,…}`) | `deploy.sh`'s post-deploy check |
-| `GET /health/deep` | two job-log reads (also the DB-answer read) + one `statvfs` | liveness **plus** a real DB-answer check, ingest freshness, last-job outcome and disk usage | the external watcher routine |
+| `GET /health/deep` | the newest job-log row + the ingest clock (also the DB-answer read) + one `statvfs` | liveness **plus** a real DB-answer check, ingest freshness, last-job outcome and disk usage | the external watcher routine |
 
 (A third endpoint, [`GET /metrics`](#get-metrics--the-prometheus-scrape-issue-53),
 serves the same signals as *time series* for trend-watching rather than as a
@@ -767,17 +767,18 @@ disk:
 
 - **database** — a real reader-pool read: the job-log reads below serve over WAL
   (issue 20), so their success is the "the database answered" signal and an error
-  flips this check unhealthy. `/health` itself is liveness-only and does not touch
-  the DB (issue 61/213).
+  flips this check unhealthy — and leaves `ingest_freshness` and `last_job`
+  unmeasured rather than judged on half a reading. `/health` itself is
+  liveness-only and does not touch the DB (issue 61/213).
 - **ingest_freshness** — unhealthy when no `probe` or `process` has succeeded in
   **26 h** (`INGEST_STALE_SECS`); maintenance kinds (`project`, `refold`, `reindex`,
   …) never reset the clock. The scheduler lands a successful ingest at least daily
   (TED Mon–Fri, DÖE + FTS every day), and 26 h carries a Friday success across the
-  weekend. The clock is read from the whole `job_log`, not the newest-100 window the
-  last-job check reads (issue 461: a busy day of other kinds used to push the last
-  ingest out of that window, and "not in the window" read as fresh). Only a box
-  whose log is *empty* (fresh deploy, scheduler not yet fired) is reported
-  healthy-but-unmeasured; a log that holds runs but no ok ingest is stale.
+  weekend. The clock is read from the whole `job_log`, not a newest-100 window
+  (issue 461: a busy day of other kinds used to push the last ingest out of that
+  window, and "not in the window" read as fresh). Only a box whose log is *empty*
+  (fresh deploy, scheduler not yet fired) is reported healthy-but-unmeasured; a
+  log that holds runs but no ok ingest is stale.
 - **last_job** — unhealthy when the newest finished run in `job_log` has
   `outcome = "error"` (a Supervisor job ERRORED). Clears itself on the next
   success.
@@ -822,8 +823,8 @@ curl -s https://tenders.zebreus.click/metrics | head -20
 ```
 
 **It is a scrape, not a measurement.** Every gauge is either O(1) (change
-cursor, RSS from `/proc/self/status`, live SSE streams, one `statvfs`, the same
-bounded job-log window `/health/deep` reads) or a read of the **dashboard's
+cursor, RSS from `/proc/self/status`, live SSE streams, one `statvfs`, the
+newest-100 job-log window) or a read of the **dashboard's
 60-second cache** (canonical row counts, quarantine totals and per-reason
 breakdown, import lag). No table-proportional scan runs on this path — that rule
 is what keeps a 15-second scrape interval from becoming the load it exists to
@@ -916,7 +917,8 @@ line, and while the session's push identity held it, no scheduled run fired in 1
   (`crates/app/tests/api.rs::the_deep_health_probe_reports_operational_health`:
   a fresh box is 200, a recorded `error` run flips it to 503;
   `a_window_full_of_other_runs_does_not_hide_a_stale_ingest`: a 27 h old `probe`
-  under 101 newer ok runs of another kind is still the clock, and still 503).
+  under more newer ok runs of another kind than `/metrics`' window holds is still
+  the clock, and still 503; a log with runs but no ok ingest is 503 too).
 - **The live alert path** (the acceptance drill, run *after* a deploy, in a
   quiet window with no backfill in flight): `systemctl stop tender-db` on the
   box, confirm the watcher routine alerts on its next poll (within ~4 h), then

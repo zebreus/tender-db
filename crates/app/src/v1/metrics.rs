@@ -2,11 +2,11 @@
 //!
 //! Every number here is either already computed for another surface or an O(1)
 //! read: the dashboard's 60-second cache (quarantine, canonical row counts,
-//! import lag), the reader-pooled job-log window `/health/deep` also reads, the
-//! disk stats, `/proc/self/status` RSS, the in-memory change cursor, and the
-//! SSE stream count. The scrape must never become the load it exists to
-//! observe: no table-proportional scan runs on this path (the one exception is
-//! the freshness clock, a `max()` over the few-thousand-row `job_log` that
+//! import lag), a bounded reader-pooled window of the job log, the disk stats,
+//! `/proc/self/status` RSS, the in-memory change cursor, and the SSE stream
+//! count. The scrape must never become the load it exists to observe: no
+//! table-proportional scan runs on this path (the one exception is the
+//! freshness clock, a `max()` over the few-thousand-row `job_log` that
 //! `/health/deep` reads too, issue 461) — a gauge whose source would need one
 //! reads the dashboard cache instead, and is simply absent while that cache is
 //! still measuring (a scraper sees the gauge appear when the first measurement
@@ -26,6 +26,15 @@ use axum::response::{IntoResponse, Response};
 use model::ingestion::JobRun;
 
 use super::{AppState, health};
+
+/// How many of the newest job-log runs the per-kind last-run gauges read. NOT the
+/// freshness clock: that used to be picked out of this window, and a window is no
+/// answer to "when did an ingest last succeed" — on 2026-10-01 these 100 rows
+/// spanned ~28 h, so a busy day of successful non-ingest runs pushed the last
+/// ingest out of it and the gauge vanished (issue 461).
+/// [`health::ingest_last_success`] asks the whole log instead. `pub` so the
+/// integration test can bury an ingest under more runs than this holds.
+pub const JOB_SCAN: i64 = 100;
 
 /// The scrape. Gauges only — every value is a level re-read from its source,
 /// not an in-process accumulation, so a restart cannot silently reset a
@@ -337,12 +346,12 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
         sample(&mut out, "tender_db_ingest_last_success_timestamp_seconds", &[], at as f64);
     }
 
-    // The job log — the same bounded reader-pool window `/health/deep` reads
-    // (newest `JOB_SCAN` runs), reduced to the newest run per kind. Durations
-    // and finish stamps per kind are the "watch a number trend" series the
-    // issue was opened for (a slowing daily `process` shows up here long
-    // before it misses the freshness threshold).
-    if let Ok(runs) = state.db.recent_job_runs(health::JOB_SCAN).await {
+    // The job log — a bounded reader-pool window (the newest [`JOB_SCAN`] runs),
+    // reduced to the newest run per kind. Durations and finish stamps per kind
+    // are the "watch a number trend" series the issue was opened for (a slowing
+    // daily `process` shows up here long before it misses the freshness
+    // threshold).
+    if let Ok(runs) = state.db.recent_job_runs(JOB_SCAN).await {
         emit_job_gauges(&mut out, &runs);
     }
 

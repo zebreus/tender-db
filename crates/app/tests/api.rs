@@ -416,11 +416,12 @@ async fn the_deep_health_probe_reports_operational_health() {
 }
 
 /// Issue 461: the freshness clock asks the WHOLE job log, not the newest-100 window
-/// the last-job check reads. On 2026-10-01 that window spanned ~28 h, so a busy day
-/// of other kinds (an org campaign, censuses, refolds) could push the last ok ingest
-/// out of it — and "not in the window" read as "never", which counted as fresh: a
-/// stalled daily answered 200, and a watcher that had already opened its `uptime`
-/// issue would close it as recovered with nothing ingested.
+/// it used to be picked from (now only `/metrics`' per-kind gauges read it). On
+/// 2026-10-01 that window spanned ~28 h, so a busy day of other kinds (an org
+/// campaign, censuses, refolds) could push the last ok ingest out of it — and "not
+/// in the window" read as "never", which counted as fresh: a stalled daily answered
+/// 200, and a watcher that had already opened its `uptime` issue would close it as
+/// recovered with nothing ingested.
 #[tokio::test]
 async fn a_window_full_of_other_runs_does_not_hide_a_stale_ingest() {
     for (case, ago) in [("stale", 27 * 3_600), ("fresh", 3_600)] {
@@ -429,7 +430,7 @@ async fn a_window_full_of_other_runs_does_not_hide_a_stale_ingest() {
         let probed = now - ago;
         server.db.record_job_run(1, "probe", "ted daily", probed - 10, probed, "ok", "1 package").await.unwrap();
         // More successful non-ingest runs than the window holds, every one newer.
-        for i in 0..101 {
+        for i in 0..=v1::metrics::JOB_SCAN {
             let at = probed + 10 * (i + 1);
             server.db.record_job_run(2 + i, "fetch", "ted daily", at - 5, at, "ok", "0 packages").await.unwrap();
         }
@@ -455,6 +456,27 @@ async fn a_window_full_of_other_runs_does_not_hide_a_stale_ingest() {
             "{case}: the gauge carries the buried probe:\n{body}"
         );
     }
+
+    // And a log whose runs hold no ok ingest at all is the stalest reading there
+    // is, not the fresh box the empty-log exemption is for: an ingest that only
+    // ever errored, under an ok run of another kind so the last-job check is green.
+    let server = Server::start("deep-health-buried-never").await;
+    let now = store::now_unix();
+    server.db.record_job_run(1, "probe", "ted daily", now - 60, now - 50, "error", "http 503").await.unwrap();
+    server.db.record_job_run(2, "fetch", "ted daily", now - 10, now - 5, "ok", "0 packages").await.unwrap();
+    let (status, deep) = server.get_with_status("/health/deep").await;
+    assert_verdict_is_the_conjunction(status, &deep, "never");
+    let fresh = &deep["checks"]["ingest_freshness"];
+    assert_eq!(fresh["ok"], Value::Bool(false), "runs, but no ok ingest ever: stale, not unmeasured: {deep}");
+    assert_eq!(fresh["last_success_at"], Value::Null, "no clock to report: {deep}");
+    assert_eq!(deep["checks"]["last_job"]["ok"], Value::Bool(true), "the newest run is an ok fetch: {deep}");
+    assert_eq!(status, 503, "no ok ingest ever — unhealthy regardless of the host: {deep}");
+    let body = server.http.get(format!("{}/metrics", server.base)).send().await.expect("request")
+        .text().await.expect("body");
+    assert!(
+        !body.contains("tender_db_ingest_last_success_timestamp_seconds"),
+        "no ingest ever succeeded, so the gauge is absent, never a made-up stamp:\n{body}"
+    );
 }
 
 /// `/metrics` (issue 53) exposes the operational levels in Prometheus text

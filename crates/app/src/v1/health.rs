@@ -27,9 +27,10 @@ use super::{AppState, rev};
 
 /// Ingest is stale when no ingest run ([`INGEST_KINDS`]) has succeeded in this
 /// long. TED publishes its daily package by 09:30 CET on weekdays and the DÖE
-/// leg of the scheduler runs every day, so a healthy box records a successful
-/// run at least daily; 26h gives the 09:35 run its window plus slack before we
-/// alarm, and carries a Friday success across the weekend without a false alert.
+/// and FTS legs of the scheduler run every day, so a healthy box records a
+/// successful run at least daily; 26h gives the 09:35 run its window plus slack
+/// before we alarm, and carries a Friday success across the weekend without a
+/// false alert.
 const INGEST_STALE_SECS: i64 = 26 * 3_600;
 
 /// Disk is unhealthy once this fraction of the DB volume is in use. The parsed
@@ -44,15 +45,6 @@ const DISK_FULL_FRACTION: f64 = 0.90;
 /// we do not currently know whether the layer is intact. Sized well above the
 /// observer's cadence so ordinary jitter never trips it.
 const LAYER_STALE_SECS: i64 = 6 * 3_600;
-
-/// How many of the newest runs to read for the last-job check (which needs only
-/// the newest) and `/metrics`' per-kind last-run gauges. NOT the freshness clock:
-/// it used to be picked out of this window, and a window is no answer to "when did
-/// an ingest last succeed" — on 2026-10-01 these 100 rows spanned ~28 h, so a
-/// busy day of successful non-ingest runs pushed the last ingest out of it, which
-/// read as "never" and so as fresh (issue 461). [`ingest_last_success`] asks the
-/// whole log instead.
-pub(super) const JOB_SCAN: i64 = 100;
 
 /// The job kinds whose success proves data is still ARRIVING. `ingest_freshness`
 /// tracks the newest successful run among ONLY these, so a maintenance job that
@@ -78,7 +70,7 @@ const INGEST_KINDS: [&str; 2] = ["probe", "process"];
 /// into one `ok` the external pinger alerts on.
 pub async fn deep(State(state): State<AppState>) -> Response {
     // 1. Database answering — a REAL reader-pool read, not the in-memory cursor.
-    //    `recent_job_runs` (step 2) is a reader-pool query (issue 20), so its
+    //    [`read_log`] (step 2) reads through the reader pool (issue 20), so its
     //    success IS the "the database answered" signal, and an `Err` means the
     //    reader pool could not serve a read — the box is not ready. The reader pool
     //    serves over WAL and never queues behind the writer, so this honours issue
@@ -86,24 +78,15 @@ pub async fn deep(State(state): State<AppState>) -> Response {
     //    touch. The old `Some(current_cursor())` was an in-memory read that can
     //    never fail, which made this check vacuous (issue 213) — its `unhealthy`
     //    branch in `assess` was unreachable.
-    //
-    //    The freshness clock is a second reader-pool read, so it answers for the
-    //    database too: either failing means the pool could not serve a read.
-    let runs_result = state.db.recent_job_runs(JOB_SCAN).await;
-    let success_result = ingest_last_success(&state.db).await;
-    let db_answered = runs_result.is_ok() && success_result.is_ok();
-    let runs = runs_result.unwrap_or_default();
+    let log = read_log(&state.db).await;
 
     // The last-known cursor, reported only when the DB actually answered, so the
     // `database` verdict flips unhealthy (cursor `None`) exactly when the read failed.
-    let cursor = db_answered.then(|| state.db.current_cursor());
+    let cursor = log.is_ok().then(|| state.db.current_cursor());
 
-    // 2. Ingest freshness and the last job's outcome, from those reader-pooled
-    //    log reads (issue 20). Freshness counts only the daily-pipeline kinds
-    //    (`INGEST_KINDS`), so a maintenance job cannot mask a stalled ingest; the
-    //    last-job check below is any-kind on purpose (it reports the newest run).
-    let last_success = success_result.unwrap_or_default();
-    let last_job = runs.into_iter().next();
+    // 2. Ingest freshness and the last job's outcome, from that reader-pooled log
+    //    read — both unmeasured when it failed, which `database` already reports.
+    let (last_job, last_success) = log.unwrap_or_default();
 
     // 3. Disk on the volume holding the database file.
     let disk = disk_usage();
@@ -122,11 +105,27 @@ pub async fn deep(State(state): State<AppState>) -> Response {
     (status, Json(body)).into_response()
 }
 
+/// The job log's two readings for the verdict: the newest finished run (any kind
+/// — the last-job check reports whatever ran last) and [`ingest_last_success`].
+///
+/// One `Result` for both, on purpose. Read apart, a failed clock read beside an
+/// answered run read handed `assess` a last job with no clock — "runs, but no ok
+/// ingest ever", a stale verdict the log never gave. Either read failing means the
+/// pool could not serve a read, so neither reading is measured and `database`
+/// alone carries the failure (issue 461).
+async fn read_log(db: &store::Db) -> store::turso::Result<(Option<JobRun>, Option<i64>)> {
+    let last_job = db.recent_job_runs(1).await?.into_iter().next();
+    Ok((last_job, ingest_last_success(db).await?))
+}
+
 /// When the newest SUCCESSFUL daily-pipeline run finished — the freshness clock,
 /// or `None` if the log holds no such run at all. Filters to [`INGEST_KINDS`] so a
 /// maintenance job's success cannot reset it and hide a stalled ingest, and asks
-/// the whole log rather than the [`JOB_SCAN`] window (issue 461). Shared with
-/// `/metrics`' `tender_db_ingest_last_success_timestamp_seconds`.
+/// the whole log rather than a window of the newest runs: on 2026-10-01 the
+/// newest 100 spanned ~28 h, so a busy day of other kinds pushed the last ingest
+/// out of the window it used to be picked from, which read as "never" and so as
+/// fresh (issue 461). Shared with `/metrics`'
+/// `tender_db_ingest_last_success_timestamp_seconds`.
 pub(super) async fn ingest_last_success(db: &store::Db) -> store::turso::Result<Option<i64>> {
     db.last_ok_run_finished(&INGEST_KINDS).await
 }
@@ -139,9 +138,11 @@ struct Signals {
     /// The latest change cursor, or `None` if the database did not answer.
     cursor: Option<i64>,
     /// When the newest successful INGEST run ([`INGEST_KINDS`]) finished, or
-    /// `None` if none ever has — the whole log, not a window (issue 461).
+    /// `None` if none ever has — the whole log, not a window (issue 461) — or if
+    /// the log could not be read.
     last_success: Option<i64>,
-    /// The newest finished run, whatever its outcome — `None` on a fresh box.
+    /// The newest finished run, whatever its outcome — `None` on a fresh box, or
+    /// if the log could not be read.
     last_job: Option<JobRun>,
     /// Disk stats for the DB volume, or `None` if they could not be measured.
     disk: Option<Disk>,
@@ -174,7 +175,7 @@ fn assess(s: &Signals) -> (bool, Value) {
     // daily reads stale until the daily lands, which is true.
     let fresh_ok = match (age, &s.last_job) {
         (Some(age), _) => age <= INGEST_STALE_SECS,
-        (None, None) => true,     // empty log: a fresh box, unmeasured
+        (None, None) => true,     // empty log (a fresh box) or unread: unmeasured
         (None, Some(_)) => false, // runs, but no ok ingest ever: stale
     };
 

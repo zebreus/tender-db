@@ -1,10 +1,13 @@
 //! The Supervisor's recent-run log (issue 16) and durable job queue (issue 21).
 //!
-//! `job_log` is a bounded history of *finished* ingestion jobs, persisted so the
-//! dashboard shows what the importer has been doing across restarts. `job_queue`
-//! is the *pending* work — one row per queued or currently-running job — so a
-//! restart re-enqueues what was outstanding instead of losing it. Live progress
-//! of the running job is in-memory in the app; only these two land here.
+//! `job_log` is the history of *finished* ingestion jobs, persisted so the
+//! dashboard shows what the importer has been doing across restarts. Nothing
+//! prunes it: readers bound themselves ([`Db::recent_job_runs`] takes a limit),
+//! and the freshness clock ([`Db::last_ok_run_finished`]) asks the whole of it
+//! (issue 461). `job_queue` is the *pending* work — one row per queued or
+//! currently-running job — so a restart re-enqueues what was outstanding
+//! instead of losing it. Live progress of the running job is in-memory in the
+//! app; only these two land here.
 
 use crate::{Db, Value, int, opt_int_of, opt_text_of, t, text};
 use model::ingestion::JobRun;
