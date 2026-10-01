@@ -306,7 +306,7 @@ async fn the_triple_preload_and_the_name_probes_bind_the_lowest_id_among_duplica
         (
             "SELECT id FROM organizations \
               WHERE name_norm = 'gemeinde muster' AND country IS NULL \
-                AND identifier IS NULL ORDER BY id LIMIT 1",
+                AND +identifier IS NULL ORDER BY id LIMIT 1",
             "the country-less name probe",
         ),
     ] {
@@ -322,7 +322,9 @@ async fn the_triple_preload_and_the_name_probes_bind_the_lowest_id_among_duplica
             .collect::<Vec<_>>()
             .join(" | ");
         println!("{what}: {plan}");
-        assert!(!plan.contains("TEMP B-TREE"), "{what} must not sort: {plan}");
+        // turso 0.7.2 spells an ORDER BY sort `USE SORTER FOR ORDER BY`; only a heap
+        // sort is `USE TEMP B-TREE`, so a TEMP-B-TREE-only check passes over a sort.
+        assert!(!plan.contains("TEMP B-TREE") && !plan.contains("SORTER"), "{what} must not sort: {plan}");
         if what != "the triple preload" {
             assert!(plan.contains("INDEX"), "{what} must seek an index, not walk the table: {plan}");
         }
@@ -331,7 +333,7 @@ async fn the_triple_preload_and_the_name_probes_bind_the_lowest_id_among_duplica
         int(
             &db,
             "SELECT id FROM organizations WHERE name_norm = 'gemeinde muster' AND country IS NULL \
-               AND identifier IS NULL ORDER BY id LIMIT 1"
+               AND +identifier IS NULL ORDER BY id LIMIT 1"
         )
         .await,
         400

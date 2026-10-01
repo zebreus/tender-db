@@ -1267,9 +1267,35 @@ pub(crate) const PREV_EDGE_JOIN_SQL: &str = "SELECT a.group_key, a.published_at,
 /// names, which (with `country IS NOT NULL`) is exactly the resolver probe's
 /// scope. Gated by an EXPLAIN QUERY PLAN test against THIS constant, per the
 /// planner's record on composite-index access (issues 239/248/256).
+///
+/// `+identifier`, not `identifier` (issue 457 R3): turso 0.8.x makes `IS NULL` a
+/// seek key, and `organizations_identifier_id (identifier, id)` would then drive
+/// this walk over every identifier-less row with a TEMP B-TREE sort of all of
+/// them (~24.6M on prod) per batch. Unary plus hides the column from the planner
+/// and leaves its value, NULL included, as it is; the same pin holds the two
+/// statements below. Gated in `the_is_null_statements_never_drive_from_the_identifier_index`.
 pub(crate) const ORG_MERGE_SCAN_SQL: &str = "SELECT id, name_norm, country FROM organizations \
-  WHERE identifier IS NULL AND country IS NOT NULL AND name_norm > ? \
+  WHERE +identifier IS NULL AND country IS NOT NULL AND name_norm > ? \
   ORDER BY name_norm, country LIMIT ?";
+
+/// Phase 1 of [`Db::repair_provisional_name_norm`]: one id window of the
+/// identifier-less Organizations, walked on the rowid. `+identifier` (issue 457
+/// R3, see [`ORG_MERGE_SCAN_SQL`]): an `(identifier IS NULL, id > ?)` seek on
+/// `organizations_identifier_id` is in id order too, so turso 0.8.x could take it
+/// and read every row back through the index instead of walking the table.
+pub(crate) const ORG_IDENTLESS_WINDOW_SQL: &str = "SELECT id, country, name, name_norm FROM organizations \
+  WHERE id > ? AND +identifier IS NULL ORDER BY id LIMIT ?";
+
+/// The resolver's country-less name probe (issue 351's reuse; issue 439's
+/// lowest id): the provisional row an identifier-less, country-less mention
+/// reuses, or none, and it mints. `+identifier` (issue 457 R3, see
+/// [`ORG_MERGE_SCAN_SQL`]): the identifier seek serves `ORDER BY id LIMIT 1`
+/// with no sorter, so under turso 0.8.x it could beat the name seek and walk
+/// every identifier-less row on a miss — the probe's common case. `country IS
+/// NULL` stays bare: `(name_norm, country IS NULL)` on
+/// `organizations_name_country` is a seek worth having.
+pub(crate) const ORG_COUNTRYLESS_NAME_PROBE_SQL: &str = "SELECT id FROM organizations \
+  WHERE name_norm = ? AND country IS NULL AND +identifier IS NULL ORDER BY id LIMIT 1";
 
 /// `notice_id`-range width for the batched keyed/island `group_key` UPDATE. A
 /// single whole-corpus UPDATE writes a WAL frame PER ROW (turso has no truncate
@@ -11567,12 +11593,7 @@ impl Db {
                         } else {
                             // Issue 439: lowest id, as the country-scoped probe.
                             let mut rows = conn
-                                .query(
-                                    "SELECT id FROM organizations \
-                                      WHERE name_norm = ? AND country IS NULL \
-                                        AND identifier IS NULL ORDER BY id LIMIT 1",
-                                    (Value::Text(name_norm.clone()),),
-                                )
+                                .query(ORG_COUNTRYLESS_NAME_PROBE_SQL, (Value::Text(name_norm.clone()),))
                                 .await?;
                             let hit = match rows.next().await? {
                                 Some(row) => Some(int(&row, 0)),
@@ -22050,11 +22071,7 @@ impl Db {
             let mut page: Vec<(i64, Option<String>, String, Option<String>)> = Vec::new();
             {
                 let mut rows = reader
-                    .query(
-                        "SELECT id, country, name, name_norm FROM organizations \
-                          WHERE id > ? AND identifier IS NULL ORDER BY id LIMIT ?",
-                        (Value::Integer(after), Value::Integer(WINDOW)),
-                    )
+                    .query(ORG_IDENTLESS_WINDOW_SQL, (Value::Integer(after), Value::Integer(WINDOW)))
                     .await?;
                 while let Some(row) = rows.next().await? {
                     page.push((int(&row, 0), opt_text_of(&row, 1), text(&row, 2), opt_text_of(&row, 3)));

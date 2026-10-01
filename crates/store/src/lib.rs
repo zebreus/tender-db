@@ -6583,11 +6583,325 @@ tmpfs /data/ramcache tmpfs rw 0 0
             plan.contains("organizations_name_country"),
             "the scan must walk the name index — plan was:\n{plan}"
         );
+        // turso 0.7.2 prints an ORDER BY sort as `USE SORTER FOR ORDER BY` and only a
+        // heap sort as `USE TEMP B-TREE`, so both spellings are refused (issue 457 R3:
+        // the TEMP B-TREE check alone passed over this statement with a sorter forced).
         assert!(
-            !plan.to_uppercase().contains("TEMP B-TREE"),
+            !plan.to_uppercase().contains("TEMP B-TREE") && !plan.to_uppercase().contains("SORTER"),
             "ordering must come from the index, not a sorter — plan was:\n{plan}"
         );
 
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
+    /// The `identifier IS NULL` statements issue 457 R3 pins, each as the constant
+    /// the code runs, with the access its plan must show and parameters to plan it
+    /// with. Shared by the plan gate and the equivalence test below.
+    fn r3_statements() -> [(&'static str, &'static str, &'static str, Vec<Value>); 3] {
+        [
+            (
+                "org-merge scan",
+                crate::canonical::ORG_MERGE_SCAN_SQL,
+                "SEARCH organizations USING INDEX organizations_name_country (name_norm>?",
+                vec![t(""), Value::Integer(10)],
+            ),
+            (
+                "identifier-less window",
+                crate::canonical::ORG_IDENTLESS_WINDOW_SQL,
+                // turso 0.7.2 prints `(rowid=?)` for a rowid range seek too.
+                "SEARCH organizations USING INTEGER PRIMARY KEY",
+                vec![Value::Integer(0), Value::Integer(100_000)],
+            ),
+            (
+                "country-less name probe",
+                crate::canonical::ORG_COUNTRYLESS_NAME_PROBE_SQL,
+                // `organizations_name_norm_id` on 0.7.2; `organizations_name_country`
+                // seeking `country IS NULL` too would do as well.
+                "(name_norm=?",
+                vec![t("stadt muster")],
+            ),
+        ]
+    }
+
+    /// What is wrong with one R3 statement's plan: driven from the identifier
+    /// index, sorted (turso 0.7.2 spells an ORDER BY sort `USE SORTER FOR ORDER BY`,
+    /// a heap sort `USE TEMP B-TREE`), a table scan, or not the access it must show.
+    fn r3_plan_faults(plan: &str, drives: &str) -> Vec<&'static str> {
+        let up = plan.to_uppercase();
+        let mut faults = Vec::new();
+        if plan.contains("organizations_identifier_id") {
+            faults.push("driven from organizations_identifier_id");
+        }
+        if up.contains("SORTER") || up.contains("TEMP B-TREE") {
+            faults.push("a sorter runs");
+        }
+        if plan.lines().flat_map(|l| l.split(" | ")).any(|l| l.trim_start().starts_with("SCAN ")) {
+            faults.push("a scan");
+        }
+        if !plan.contains(drives) {
+            faults.push("not the intended access");
+        }
+        faults
+    }
+
+    /// Issue 457 R3: turso 0.8.x makes `IS` an index seek key, where 0.7.2 cut the
+    /// seek prefix at it. `organizations_identifier_id (identifier, id)` then turns
+    /// `identifier IS NULL` into a seek over the ~24.6M identifier-less rows, already in
+    /// id order, and each statement here has a better driver to lose to it: the merge
+    /// scan's one ordered pass over `organizations_name_country` (predicted to become
+    /// that seek plus a sort of all 24.6M), the window walk's rowid range, and the
+    /// resolver probe's name seek (an `ORDER BY id LIMIT 1` the identifier seek serves
+    /// sort-free, walking every identifier-less row on a miss). So `identifier` is
+    /// written `+identifier`: unary plus hides the column from the planner (323's
+    /// `+parse_state`, unchanged in 0.8.1) and leaves the value, NULL included, as it was.
+    ///
+    /// 0.7.2 never seeks on IS NULL, so it cannot show the flip: the form is pinned in
+    /// the text, and the plan each statement must keep is asserted for either engine.
+    /// The checks are shown to bite: the unpinned statement with the identifier index
+    /// forced (`INDEXED BY`) must fail them. `country IS NULL` stays bare on purpose —
+    /// `(name_norm, country IS NULL)` is a legitimate seek on
+    /// `organizations_name_country`, and the equivalence test below checks its rows.
+    /// The deferred indexes are built, as on prod; `organizations` carries no
+    /// statistics there (issue 429), and none here.
+    #[tokio::test]
+    async fn the_is_null_statements_never_drive_from_the_identifier_index() {
+        let path = format!("/tmp/tender-db-r3-eqp-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        db.build_organization_indexes().await.unwrap();
+        let conn = db.reader().await.unwrap();
+        let plan_of = async |sql: &str, params: Vec<Value>| -> String {
+            let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {sql}"), params).await.unwrap();
+            let mut plan = String::new();
+            while let Some(row) = rows.next().await.unwrap() {
+                plan.push_str(&text(&row, 3));
+                plan.push('\n');
+            }
+            assert!(!plan.is_empty(), "no plan came back for: {sql}");
+            plan
+        };
+        for (label, sql, drives, params) in r3_statements() {
+            assert!(
+                sql.contains("+identifier IS NULL")
+                    && !sql.replace("+identifier IS NULL", "").contains("identifier IS NULL"),
+                "{label}: `identifier IS NULL` must be written `+identifier IS NULL`, or turso \
+                 0.8.x may seek it on organizations_identifier_id:\n{sql}"
+            );
+            let plan = plan_of(sql, params.clone()).await;
+            println!("PLAN {label}:\n{plan}");
+            let faults = r3_plan_faults(&plan, drives);
+            assert!(faults.is_empty(), "{label}: {faults:?} — plan was:\n{plan}");
+
+            let forced = sql.replace("+identifier IS NULL", "identifier IS NULL").replacen(
+                "FROM organizations",
+                "FROM organizations INDEXED BY organizations_identifier_id",
+                1,
+            );
+            let plan = plan_of(&forced, params).await;
+            let faults = r3_plan_faults(&plan, drives);
+            // The sort is asserted on the merge scan only: `(identifier, id)` can never
+            // order by `(name_norm, country)`, but a 0.8.x `identifier IS NULL` seek
+            // does serve the other two's `ORDER BY id`.
+            assert!(
+                faults.contains(&"driven from organizations_identifier_id")
+                    && (label != "org-merge scan" || faults.contains(&"a sorter runs")),
+                "{label}: the checks must catch the identifier-index plan; they found \
+                 {faults:?} in:\n{plan}"
+            );
+        }
+        drop(conn);
+        drop(db);
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
+    /// Issue 457 R3, the other half: the `+identifier` pin returns exactly the rows the
+    /// IS NULL seeks it prevents would. Each statement runs over one seeded table as
+    /// pinned, as it was written before the pin (the planner's choice), and before the
+    /// pin with the index FORCED — `INDEXED BY organizations_identifier_id` for all three
+    /// (the `(identifier, id)` seek) and `organizations_name_country` for the probe (the
+    /// `(name_norm, country IS NULL)` seek). Under turso 0.8.x the forced forms run its
+    /// NULL-matching seek code; under 0.7.2 they walk the index and filter. Every form
+    /// must equal a Rust filter over a full read. The seed crosses NULL, `''` and a value
+    /// in each tested column (`i % 3`, `% 4`, `% 5`: all 60 combinations, four times),
+    /// so every group's ids interleave and no index order is id order.
+    #[tokio::test]
+    async fn the_is_null_pins_return_the_rows_the_unpinned_seeks_return() {
+        let path = format!("/tmp/tender-db-r3-rows-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        {
+            let conn = db.conn().await;
+            for i in 0..240i64 {
+                let identifier = [Value::Null, t(""), t(format!("X{i}"))][(i % 3) as usize].clone();
+                let country = [Value::Null, t(""), t("DE"), t("FR")][(i % 4) as usize].clone();
+                let name_norm = [Value::Null, t(""), t("alpha"), t("beta"), t("gamma")][(i % 5) as usize].clone();
+                conn.execute(
+                    "INSERT INTO organizations(country, identifier_kind, identifier, name, name_norm, \
+                         provisional, created_at) VALUES(?, NULL, ?, ?, ?, 1, 0)",
+                    (country, identifier, t(format!("Org {i}")), name_norm),
+                )
+                .await
+                .unwrap();
+            }
+            // A name with rows, none of them both identifier-less and country-less.
+            for (country, identifier) in [(Value::Null, t("Y1")), (t("DE"), Value::Null), (Value::Null, t(""))] {
+                conn.execute(
+                    "INSERT INTO organizations(country, identifier_kind, identifier, name, name_norm, \
+                         provisional, created_at) VALUES(?, NULL, ?, 'Delta', 'delta', 1, 0)",
+                    (country, identifier),
+                )
+                .await
+                .unwrap();
+            }
+        }
+        db.build_organization_indexes().await.unwrap();
+        let conn = db.reader().await.unwrap();
+
+        type Org = (i64, Option<String>, Option<String>, String, Option<String>);
+        let all: Vec<Org> = {
+            let mut rows = conn
+                .query("SELECT id, identifier, country, name, name_norm FROM organizations ORDER BY id", ())
+                .await
+                .unwrap();
+            let mut out = Vec::new();
+            while let Some(row) = rows.next().await.unwrap() {
+                out.push((int(&row, 0), opt_text_of(&row, 1), opt_text_of(&row, 2), text(&row, 3), opt_text_of(&row, 4)));
+            }
+            out
+        };
+        assert_eq!(all.len(), 243);
+        let identless = || all.iter().filter(|o| o.1.is_none());
+        let opt = |v: &Option<String>| v.clone().map_or(Value::Null, Value::Text);
+
+        let forms = |sql: &str, forced: &[&str]| -> Vec<(String, String)> {
+            let bare = sql.replace("+identifier IS NULL", "identifier IS NULL");
+            let mut out = vec![("pinned".to_owned(), sql.to_owned()), ("unpinned".to_owned(), bare.clone())];
+            for index in forced {
+                let sql = bare.replacen("FROM organizations", &format!("FROM organizations INDEXED BY {index}"), 1);
+                out.push((format!("unpinned INDEXED BY {index}"), sql));
+            }
+            out
+        };
+        let run = async |sql: &str, params: Vec<Value>| -> Vec<Vec<Value>> {
+            let mut rows = conn.query(sql, params).await.unwrap_or_else(|e| panic!("{e}: {sql}"));
+            let mut out = Vec::new();
+            while let Some(row) = rows.next().await.unwrap() {
+                out.push((0..row.column_count()).map(|i| row.get_value(i).unwrap()).collect());
+            }
+            out
+        };
+        let explain = async |sql: &str, params: Vec<Value>| -> String {
+            let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {sql}"), params).await.unwrap();
+            let mut plan = String::new();
+            while let Some(row) = rows.next().await.unwrap() {
+                plan.push_str(&text(&row, 3));
+                plan.push_str(" | ");
+            }
+            plan
+        };
+        let [merge, window, probe] = r3_statements().map(|(_, sql, ..)| sql);
+        // A forced form proves nothing unless the engine honoured the INDEXED BY.
+        let forced = |what: &str, form: &str, plan: &str| {
+            if let Some(index) = form.strip_prefix("unpinned INDEXED BY ") {
+                assert!(plan.contains(index), "{what} {form}: the index was not used — plan: {plan}");
+            }
+        };
+
+        // The merge scan from each cursor the walk can hold. Ties inside one
+        // `(name_norm, country)` group have no SQL order and the caller groups them
+        // in Rust, so a form must return the expected rows, ordered by that key.
+        let merge_key = |r: &Vec<Value>| -> (String, String, i64) {
+            match (&r[0], &r[1], &r[2]) {
+                (Value::Integer(id), Value::Text(name), Value::Text(country)) => (name.clone(), country.clone(), *id),
+                other => panic!("a merge-scan row is (id, name_norm, country), all set: {other:?}"),
+            }
+        };
+        for cursor in ["", "alpha", "beta", "delta", "gamma"] {
+            let mut expected: Vec<(String, String, i64)> = identless()
+                .filter(|o| o.2.is_some() && o.4.as_deref().is_some_and(|n| n > cursor))
+                .map(|o| merge_key(&vec![Value::Integer(o.0), opt(&o.4), opt(&o.2)]))
+                .collect();
+            expected.sort();
+            if cursor.is_empty() {
+                // (identifier NULL) x (country '', DE, FR) x (alpha, beta, gamma) x 4,
+                // and the one identifier-less `delta` row with a country.
+                assert_eq!(expected.len(), 37);
+            }
+            for (form, sql) in forms(merge, &["organizations_identifier_id"]) {
+                let params = || vec![t(cursor), Value::Integer(1_000)];
+                let got: Vec<(String, String, i64)> = run(&sql, params()).await.iter().map(merge_key).collect();
+                let plan = explain(&sql, params()).await;
+                forced("merge scan", &form, &plan);
+                if cursor.is_empty() {
+                    println!("PLAN merge scan {form}: {plan}");
+                }
+                assert!(
+                    got.windows(2).all(|w| (&w[0].0, &w[0].1) <= (&w[1].0, &w[1].1)),
+                    "merge scan {form} cursor={cursor:?}: not in (name_norm, country) order: {got:?}\nplan: {plan}"
+                );
+                let mut sorted = got;
+                sorted.sort();
+                assert_eq!(sorted, expected, "merge scan {form} cursor={cursor:?}\nplan: {plan}");
+            }
+        }
+
+        // The window walk, paged the way phase 1 pages it (a short window, so the
+        // cursor crosses many pages). ORDER BY id is total: the pages must match exactly.
+        let expected: Vec<Vec<Value>> = identless()
+            .map(|o| vec![Value::Integer(o.0), opt(&o.2), Value::Text(o.3.clone()), opt(&o.4)])
+            .collect();
+        assert_eq!(expected.len(), 81);
+        for (form, sql) in forms(window, &["organizations_identifier_id"]) {
+            let mut walked: Vec<Vec<Value>> = Vec::new();
+            let mut after = 0i64;
+            loop {
+                let page = run(&sql, vec![Value::Integer(after), Value::Integer(7)]).await;
+                let Some(Value::Integer(last)) = page.last().map(|r| r[0].clone()) else { break };
+                after = last;
+                walked.extend(page);
+            }
+            let plan = explain(&sql, vec![Value::Integer(0), Value::Integer(7)]).await;
+            forced("window walk", &form, &plan);
+            println!("PLAN window walk {form}: {plan}");
+            assert_eq!(walked, expected, "window walk {form}\nplan: {plan}");
+        }
+
+        // The country-less probe: the lowest identifier-less, country-less id per
+        // name, including the empty name, `delta` (rows, none in scope) and a name
+        // with no rows (the probe's common case: a miss mints).
+        for name in ["", "alpha", "beta", "delta", "gamma", "missing"] {
+            let expected: Vec<Vec<Value>> = identless()
+                .filter(|o| o.2.is_none() && o.4.as_deref() == Some(name))
+                .map(|o| vec![Value::Integer(o.0)])
+                .take(1)
+                .collect();
+            for (form, sql) in forms(probe, &["organizations_identifier_id", "organizations_name_country"]) {
+                let got = run(&sql, vec![t(name)]).await;
+                let plan = explain(&sql, vec![t(name)]).await;
+                forced("probe", &form, &plan);
+                if name == "alpha" {
+                    println!("PLAN probe {form}: {plan}");
+                }
+                assert_eq!(got, expected, "probe {form} name={name:?}\nplan: {plan}");
+            }
+        }
+        // The seed must give the probe hits as well as misses, or it proves little.
+        let hits = ["", "alpha", "beta", "gamma"]
+            .iter()
+            .filter(|n| identless().any(|o| o.2.is_none() && o.4.as_deref() == Some(**n)))
+            .count();
+        assert_eq!(hits, 4, "every seeded name has an identifier-less, country-less row");
+
+        drop(conn);
+        drop(db);
         for s in ["", "-wal", "-shm"] {
             let _ = std::fs::remove_file(format!("{path}{s}"));
         }
