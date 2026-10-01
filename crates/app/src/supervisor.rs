@@ -2244,22 +2244,43 @@ impl Supervisor {
                 let [a, b] = req.range.as_ref().ok_or("ted backfill needs a monthly range")?;
                 months_between(a, b)?
             }
-            // FTS (issue 342, D9): every month since 2021-01 by default, or the
-            // given range. Each monthly is walked as 1-day windows and resumes
-            // from its staging dir, so a throttled month is re-enqueued, not
-            // restarted. The current month is NOT force-refetched as DÖE's is:
-            // a re-walk costs ~150 paced requests, and the daily probe already
-            // covers every day after the backfill ran.
-            "fts" => match &req.range {
-                Some([a, b]) => months_between(a, b)?,
-                None => {
-                    let (y, m, _) = fetch::current_date_utc();
-                    fts::months_through((y, m))
+            // FTS (issue 342, D9): every month since 2021-01 whose last UK
+            // civil day is over by default, or the given range. Each monthly
+            // is walked as 1-day windows and resumes from its staging dir, so a
+            // throttled month is re-enqueued, not restarted.
+            //
+            // Never the running month (issue 477). A registered monthly is
+            // never re-walked, so one of an unfinished month would freeze it
+            // part-walked; `fetch_fts` refuses it, and a range reaching into
+            // it is refused here, before any job is queued. Its days are the
+            // daily probe's, which continues the day after the later of the
+            // newest daily and the newest monthly's last day — so the backfill
+            // and the probe meet without a seam. (They did not: the backfill
+            // ended at 2026-08, the probe fetched only its `end`, and
+            // 2026-09-01..06 were never fetched.)
+            "fts" => {
+                let now = store::now_unix();
+                match &req.range {
+                    Some([a, b]) => {
+                        let months = months_between(a, b)?;
+                        let end = parse_year_month(b)?;
+                        if !fts::month_has_ended(end, now) {
+                            let (y, m) = fts::last_ended_month(now);
+                            return Err(format!(
+                                "fts backfill range ends at {b}, a month whose last UK civil day has not \
+                                 ended: a monthly of it would be registered part-walked and never \
+                                 re-walked (issue 477) — end the range at {y}-{m:02}, and the daily \
+                                 probe fetches the days after it"
+                            ));
+                        }
+                        months
+                    }
+                    None => fts::months_through(fts::last_ended_month(now))
                         .into_iter()
                         .map(|(y, m)| format!("{y}-{m:02}"))
-                        .collect()
+                        .collect(),
                 }
-            },
+            }
             other => return Err(format!("unknown source {other:?}")),
         };
         if months.is_empty() {
@@ -13231,15 +13252,21 @@ mod tests {
         assert_eq!(queued[2].params, "fts monthly (all)");
         assert_eq!(queued.last().unwrap().kind, "project");
 
-        // No range: the whole archive from FIRST_MONTH through the current month.
+        // No range: the whole archive from FIRST_MONTH through the previous UK
+        // month — never the running one, which `fetch_fts` refuses (issue 477).
         let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
         let ids = sup
             .enqueue_request(&JobRequest { kind: "backfill".into(), source: Some("fts".into()), ..Default::default() })
             .await
             .unwrap();
-        let (y, m, _) = fetch::current_date_utc();
+        let (y, m) = fts::last_ended_month(store::now_unix());
         assert_eq!(ids.len(), fts::months_through((y, m)).len() + 2);
-        assert_eq!(sup.queued()[0].params, "fts monthly 2021-01");
+        let queued = sup.queued();
+        assert_eq!(queued[0].params, "fts monthly 2021-01");
+        let fetches: Vec<&str> = queued.iter().filter(|j| j.kind == "fetch").map(|j| j.params.as_str()).collect();
+        assert_eq!(fetches.last().copied(), Some(format!("fts monthly {y}-{m:02}").as_str()), "through the previous UK month");
+        let (ty, tm, _) = fts::uk_civil_date(store::now_unix());
+        assert!(!fetches.contains(&format!("fts monthly {ty}-{tm:02}").as_str()), "never the running month");
 
         // A single fetch request routes by source too.
         let ids = sup
@@ -13254,6 +13281,43 @@ mod tests {
             .unwrap();
         assert_eq!(ids.len(), 1);
         assert_eq!(sup.queued().last().unwrap().params, "fts daily 2026-09-03");
+    }
+
+    /// Issue 477: a backfill range that reaches into a month whose last UK civil day
+    /// has not ended is refused before any job is queued — a registered monthly is
+    /// never re-walked, so it would freeze the month part-walked. A range ending at
+    /// the previous month is the one that is accepted.
+    #[tokio::test]
+    async fn an_fts_backfill_range_into_the_unfinished_month_is_refused() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        let now = store::now_unix();
+        let (ty, tm, _) = fts::uk_civil_date(now);
+        let (py, pm) = fts::last_ended_month(now);
+        let (ny, nm) = if tm == 12 { (ty + 1, 1) } else { (ty, tm + 1) };
+        for end in [format!("{ty}-{tm:02}"), format!("{ny}-{nm:02}")] {
+            let err = sup
+                .enqueue_request(&JobRequest {
+                    kind: "backfill".into(),
+                    source: Some("fts".into()),
+                    range: Some([format!("{py}-{pm:02}"), end.clone()]),
+                    ..Default::default()
+                })
+                .await
+                .unwrap_err();
+            assert!(err.contains("issue 477") && err.contains(&end), "{err}");
+        }
+        assert!(sup.queued().is_empty(), "nothing queued for a refused range");
+
+        let ids = sup
+            .enqueue_request(&JobRequest {
+                kind: "backfill".into(),
+                source: Some("fts".into()),
+                range: Some([format!("{py}-{pm:02}"), format!("{py}-{pm:02}")]),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+        assert_eq!(ids.len(), 3, "the previous month, process, project");
     }
 
     /// Issue 450: a running FTS fetch can be cancelled, because its paged walk reads the

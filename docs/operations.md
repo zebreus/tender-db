@@ -288,8 +288,10 @@ Two ways jobs start:
   Mon–Fri a TED probe forward + re-fetch of the current day (the 09:30 CET
   finality window) and a `process`; every day a DÖE completed-day fetch (T+1,
   yesterday's date) + `process`; every day an FTS probe for the previous UK
-  civil day (`fts daily (probe)`: a paged walk with a 2 h overlap, ~12 s between
-  pages) + `process fts daily (all)`; then one `project` that folds whatever landed.
+  civil day (`fts daily (probe)`: a walk of cursorless windows with a 2 h
+  overlap, split wherever a page is full — issue 477 — ~12 s between requests,
+  continuing the day after the later of the newest daily and the newest
+  monthly's last day) + `process fts daily (all)`; then one `project` that folds whatever landed.
   (The trailing `snapshot` job was removed with the backup feature,
   2026-08-06.) No operator action needed. Confirm a run fired by looking for a
   `probe` job (and the trailing
@@ -398,16 +400,21 @@ curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/41
 curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
   -d '{"kind":"backfill","source":"doe","range":["2024-01","2024-12"]}' $BASE/admin/jobs
 
-# Backfill FTS (issue 342). With no range: every month from 2021-01. Each monthly
-# walks one 1-day window per civil day through the paged API and is rate-limited
-# (a month is ~150 paced requests). A throttled month FAILS and keeps its staged
-# pages under fts/monthly/<YYYY-MM>.pages/, so re-enqueueing it resumes, it does
-# not restart. Read job_log for `throttled` errors and re-enqueue those months.
-# The API's paging cursor can stick (issue 449: every `links.next` names the page just
-# fetched). The fetcher then re-walks that day hour by hour; if even one hour sticks, the job
-# fails with staging intact. A running FTS fetch can be cancelled (issue 450): the walk reads the
-# flag before every request, ends `CANCELLED at a checkpoint` with nothing landed, and keeps
-# its staged pages and cursor, so re-enqueueing the same month resumes where it stopped.
+# Backfill FTS (issue 342). With no range: every month from 2021-01 through the
+# previous UK month. A range reaching into the running month is refused (issue 477:
+# a registered monthly is never re-walked; the daily probe fetches those days). Each
+# monthly walks one 1-day window per civil day and is rate-limited. The API's
+# `links.next` cursor LOSES rows (issue 477; issue 449's stuck cursor is the same
+# defect), so the walk never follows it: a window whose cursorless page is full is
+# split in two and both halves asked, down to two seconds (a one-second window is a
+# 400). A 2021 month is ~80 paced requests, a 2026 month ~400. A span still full at
+# two seconds fails the job as `malformed` with staging intact. A throttled month
+# FAILS and keeps its staged span pages under fts/monthly/<YYYY-MM>.pages/, so
+# re-enqueueing it resumes, it does not restart. Read job_log for `throttled` errors
+# and re-enqueue those months. A running FTS fetch can be cancelled (issue 450): the
+# walk reads the flag before every request, ends `CANCELLED at a checkpoint` with
+# nothing landed, and keeps its staged span pages, so re-enqueueing the same month
+# resumes where it stopped.
 curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
   -d '{"kind":"backfill","source":"fts","range":["2025-07","2026-08"]}' $BASE/admin/jobs
 
@@ -465,8 +472,10 @@ re-downloads a known package (finality re-check). `project` with `rebuild:true`
 drops and re-derives the whole canonical layer. `backfill` needs a `source`; for
 `ted` it also needs a monthly `range` (`["2024-01","2024-12"]`), for `doe` the
 range is optional (defaults to the whole 2022-12→now archive), and for `fts`
-it is optional too (defaults to 2021-01→the current month; unlike DÖE, the
-current month is not force-refetched, because the daily probe covers it). A backfill fans
+it is optional too (defaults to 2021-01→the previous UK month; a range reaching
+into the running month is refused, because a registered monthly is never
+re-walked and the daily probe, which continues after the newest monthly, covers
+it — issue 477). A backfill fans
 into one `fetch` per month, then one whole-source `process`, then one `project`,
 so progress and cancellation stay per-package. Jobs run **one at a time** in
 enqueue order — the writer is single anyway — so a fetch → process → project

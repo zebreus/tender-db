@@ -31,7 +31,12 @@ Pages hold at most 100 releases; `limit=500` was never answered (429 both times)
 Releases within a window come newest-first: page 1 of 3 September ran from `2026-09-03T23:31:32+01:00` down to `15:46:51+01:00` (measured).
 Paging is by `links.next`, a full URL with an opaque `cursor`; the last page has no `links.next` (measured; https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/README.md).
 The cursor is base64 of `updatedFrom=...|updatedTo=...|nextCursor=590457`, i.e. a server-side sequence position, not a timestamp (measured by decoding).
+**Correction (issue 477, 2026-10-01): `links.next` loses rows and must not be followed.** The listing is sorted newest notice id first, but `nextCursor` is a hidden per-release key that is not in id order: it is the key of the first row not served, and the next page is the newest `limit` rows whose key is at or below it.
+So at every page boundary rows can be silently dropped (and others repeated), and the page that dropped them comes back short with no `links.next`, exactly like a last page: the 2021-05-07 cursor walk served 103 of the day's 152 releases (page 2: 3 rows, no next), and about 10,100 of the 14,093 notice ids missing from the archive on 2026-10-01 (2021 to 2025-02-23) were lost this way, with more of the later single gaps (measured; issue 477).
+Issue 449's "stuck" cursor (page 2 equal to page 1, its next its own URL) is the same rule (measured on 2025-12-10).
+A page asked for WITHOUT a cursor was correct in every test (every day and hourly first page probed), so a cursorless page holding fewer than `limit` rows and no next is its whole window; the fetcher splits a window whose cursorless page is full and asks both halves, never the cursor (measured; issue 477).
 `updatedFrom`/`updatedTo` are interpreted in UK local time: the 3 September window returned dates from `00:26:55+01:00` to `23:31:32+01:00`, and a January 2021 window ended at `23:08:12Z` (measured).
+They select on a hidden publication instant, not the release `date` (`009921-2021`, dated 2021-07-27, is listed in 2021-05-07 09:00–09:59), both ends include their boundary second, and a window with `updatedFrom` equal to `updatedTo` is a 400 `'updatedTo' must be later than 'updatedFrom'`, so the shortest window is two seconds (measured 2026-10-01; issue 477).
 `updatedFrom` alone works; the server appends `updatedTo=<now>` to the echoed `uri` (measured).
 The documented example window is seven days; my 31-day and 41-day windows were rate-limited before answering, so wide windows are unverified (docs; measured).
 `stages=tender` on 3 September returned 3 releases against 73 releases tagged `tender`, so the filter is not a tag filter and should not be used (measured).
@@ -44,10 +49,12 @@ The dataset page shows licence "Not set" even though the FTS site states OGL for
 The OCP Data Registry re-publishes FTS as a 214 MB compressed all-time JSON download, retrieved weekly, covering January 2021 to August 2026 (https://data.open-contracting.org/en/publication/41).
 
 Recommended strategy: daily poll of the previous UK-local day with a 2-hour overlap on `updatedFrom`, idempotent on release `id` (`nnnnnn-yyyy`).
-That is at most 6 requests per day at the current volume (busiest measured day: 471 releases = 5 pages) (measured, table in §7).
+That is at most 6 requests per day at the current volume (busiest measured day: 471 releases = 5 pages) (measured, table in §7) — **if the cursor could be followed, which it cannot (issue 477, above).**
+Under the cursorless split walk a day costs about 12 requests on average in 2026, 17 on a weekday, 23 at the 95th percentile and 35 at most, about 2.5–3.5 minutes at the 12 s pace (simulated 2026-10-01 on the archive's release timestamps with the fetcher's split rule; issue 477).
 One-time backfill by 1-day windows from `2021-01-01` gives ~4,700 requests (2,076 days, weekdays 2021–2024 mostly 2 pages, 2025–2026 4–5 pages, weekends 1); 7-day windows for 2021–2024 cut it to ~3,300 (measured day counts, §7; 319,742 releases / 100 per page = 3,198 pages minimum).
-At the ~5 successful requests per minute this environment sustained, the backfill is 11–16 hours of wall-clock plus 429 back-offs, i.e. one to two days unattended (measured cadence, §1).
-Retry-After must be honoured per request and progress recorded per (window, cursor) so a restart resumes mid-window (docs, §1).
+Under the split walk the same backfill is about 11,900 requests: about 80–125 a month for 2021–2024, 290 for 2025 and 390 for 2026 (simulated as above; issue 477).
+At the ~5 successful requests per minute this environment sustained, the backfill is 11–16 hours of wall-clock plus 429 back-offs, i.e. one to two days unattended (measured cadence, §1); under the split walk it is about 40 hours.
+Retry-After must be honoured per request and progress recorded per window span (each cursorless page staged under its span) so a restart resumes mid-window (docs, §1; issue 477).
 
 ## 3. History depth
 
@@ -211,6 +218,7 @@ The source is open (OGL v3), unauthenticated, documented, English-only, GBP to 9
 
 Three biggest risks:
 1. Rate limiting is opaque and variable — 429s at every cadence tested in the first session, none in the re-check's 15-second cadence — so the backfill is a one-to-two-day resumable job, and the fetcher must persist (window, cursor) progress and honour `Retry-After` on every call; the data.gov.uk XML zips are a rate-limit-free cross-check for counts (§1, §2).
+   **Correction (issue 477):** the cursor loses rows, so the fetcher never follows it; it persists each cursorless window span's page instead and splits a span whose page is full (§2). The notice id is a per-year sequence (§7), so held ids against the year's highest id is the count check this recommendation lacked.
 2. Organization identity is weak in the history and FTS-local in the present: ~95 % of pre-2025 parties have no identifier, 9 % still have none, the PPON is not in org-id.guide, and Companies House values arrive unpadded and prefixed, so the crosswalk needs a GB arm and the matcher must not expect TED-grade identifier rates for 2021–2024 (§5).
 3. Two regimes and delta releases: PCR 2015 (CELEX) and Procurement Act (UKPGA) notices coexist, the UK extension changed four times in a year, update releases carry only changed fields so the projection must merge per ocid, and Contracts Finder duplicates FTS for 2021–2025 with no machine link, which argues for FTS-only in unit 2 and Contracts Finder as a later, deduplicated unit (§3, §4).
 

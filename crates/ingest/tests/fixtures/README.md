@@ -251,8 +251,11 @@ the page-level fields the fetcher must DROP from a member (`uri`,
 | `pages/2026-09-03-p001.json` | 29 146 | 5 | page 1 of the day, real `links.next` (opaque cursor) | The non-final page: `083674-2026` UK10 contractAmendment, `083664-2026` UK1 and `083655-2026` UK2 planning, `083608-2026` UK7 award+contract, `083662-2026` UK4 tender (the smallest tender-tagged release of the page) — every notice family on one page. |
 | `pages/2026-09-03-p002.json` | 18 666 | 3 | page 5 of the day: the final page, NO `links` | `083257-2026` a CELEX (PCR 2015) award+contract with no `noticeType`, `083256-2026` UK12 tenderCancellation, `083253-2026` UK5 award. |
 
-`tests/fetch.rs` serves the two as a paged window (rewriting `links.next` to the
-fixture server) and asserts the assembled zip holds one member per release id.
+`tests/fetch.rs` loads the releases of the two into its keyset server (each at
+its own `date`, beside 100 synthetic releases, so the day's first page is full
+and the walk splits it — issue 477: `links.next` is never followed) and asserts
+the assembled zip holds one member per release id, each release's bytes
+verbatim.
 
 ### `fts/members/` — single-release packages, as the fetcher writes them
 

@@ -35,8 +35,8 @@ pub enum Outcome {
     /// rejecting today/future days or months before its 2022-12 archive start.
     Rejected,
     /// A cancel stopped a paged walk between two requests (issue 450). Nothing
-    /// landed; the staged pages and the cursor stay exactly as a crash would
-    /// leave them, so fetching the same target again resumes where it stopped.
+    /// landed; the staged span pages stay exactly as a crash would leave them,
+    /// so fetching the same target again resumes where it stopped.
     Stopped,
 }
 
@@ -60,9 +60,10 @@ pub enum Error {
     /// than archiving a raw first page under the package's name.
     Unsupported(&'static str),
     /// A 200 whose body is not the shape the source documents: an FTS page
-    /// without a `releases` array, a release without a usable `id`. Not
-    /// retried — the bytes are what they are — and the job fails with its
-    /// staging intact for a person to look at.
+    /// without a `releases` array — or (issue 477) an FTS span still full at
+    /// two seconds, the shortest window the API answers, so nothing smaller can
+    /// be asked for. Not retried — the bytes are what they are — and the job
+    /// fails with its staging intact for a person to look at.
     Malformed(String),
     /// Issue 451: an edge WAF answered instead of the origin. TED's CloudFront
     /// returns 202 with an empty body and `x-amzn-waf-action: challenge` to a
@@ -294,26 +295,47 @@ pub async fn latest_doe_day(db: &store::Db) -> turso::Result<Option<(u16, u8, u8
     Ok(latest.as_deref().and_then(parse_ymd))
 }
 
-/// Fetch one FTS package (docs/research/uk-fts.md §2, plan D8): walk every
-/// request window of `target` page by page, staging each page verbatim under
-/// `<archive>/<rel_path minus .zip>.pages/`, then assemble ONE zip — one member
-/// `<release id>.json` per release ([`crate::fts::member_bytes`]), sorted by
-/// id, the first occurrence winning on a duplicate — and land it under the same
+/// Fetch one FTS package (docs/research/uk-fts.md §2, plan D8, issue 477):
+/// walk every request window of `target` as cursorless SPAN pages, staging each
+/// page verbatim as `<span key>.json` under `<archive>/<rel_path minus
+/// .zip>.pages/`, then assemble ONE zip from the walk's leaf pages — a member
+/// per distinct release (`assemble_fts_zip`) — and land it under the same
 /// immutability rules as [`fetch`].
 ///
-/// Resumable: `cursor.json` in the staging dir records the window being walked,
-/// how many of its pages are on disk, the `links.next` to ask for, and the
-/// windows already complete. A page is written BEFORE the cursor advances, so
-/// an interruption at any point leaves a state the next run continues from — a
-/// month that hit the limiter resumes at its page, not its start — and page 1 is
-/// never asked for twice. The staging dir is removed only after the zip has
-/// landed; an `Err` (five throttled attempts, a malformed page) leaves it
-/// intact, and the `fetches` row is written only for a complete window.
+/// **The walk never follows `links.next`** (issue 477; [`crate::fts`] has the
+/// measurements: the cursor drops rows at page boundaries and its short page
+/// reads as a last page). It replaces both the cursor walk and issue 449's
+/// hour-by-hour fallback for a stuck cursor, which is the same defect. Each
+/// window starts as ONE span — its first URL byte-identical to the one the
+/// registry records — and runs as a stack:
+/// - a page that is short ([`crate::fts::page_is_short`]) is a leaf: the span
+///   is complete;
+/// - a full page, or a short one that still names a next, is split
+///   ([`crate::fts::split`]) and both halves are asked, the older first;
+/// - a span still full at two seconds cannot be split, because the API
+///   refuses a one-second window: the fetch fails as [`Error::Malformed`] with
+///   its staging intact. So no package lands unless every leaf page was short —
+///   the per-window half of issue 477's completeness invariant.
+///
+/// Resumable: the staged span pages ARE the walk's state. A span whose page is
+/// on disk is never asked again, and its page decides — exactly as it did the
+/// first time — whether it is a leaf or is split. A page is staged only once
+/// it has parsed, and atomically. The staging dir is removed only after the zip
+/// has landed; an `Err` (five throttled attempts, a malformed page, an
+/// unsplittable span) leaves it intact, and the `fetches` row is written only
+/// for a complete walk. What a walk cannot resume from is discarded first
+/// (`discard_unresumable_staging`): the old cursor walker's pages, and
+/// debris older than the registered landing.
+///
+/// A `monthly` target whose last UK civil day has not ended is refused before
+/// any request ([`Error::Unsupported`]): registered once and never re-walked,
+/// it would freeze the month part-walked. Its days are the daily walk's.
 ///
 /// `refetch` is as [`fetch`]: false skips a registered period without HTTP.
 /// `page_pause` separates consecutive requests — `fts::PAGE_PAUSE_SECS` in
 /// production, zero in tests. `on_progress(day, pages, releases)` fires after
-/// every page with the window's running totals.
+/// every span page with the window's running totals: pages read (asked, or
+/// staged by an earlier run) and releases on its leaf pages.
 ///
 /// An empty window (a Sunday, December 2020) still lands a 0-member zip, so
 /// `MAX(period)` advances and the daily walk never re-asks for the day.
@@ -331,12 +353,21 @@ pub async fn fetch_fts(
         Some(base) if target.source == "fts" => base,
         _ => return Err(Error::Unsupported("fetch_fts serves fts window targets only")),
     };
-    let windows = crate::fts::windows(base, target);
+    let windows = crate::fts::windows(target);
     if windows.is_empty() {
         return Err(Error::Malformed(format!(
             "no request windows for {} {} {:?}",
             target.source, target.kind, target.period
         )));
+    }
+    if target.kind == "monthly"
+        && let Some(month) = crate::fts::parse_month(&target.period)
+        && !crate::fts::month_has_ended(month, store::now_unix())
+    {
+        return Err(Error::Unsupported(
+            "an fts monthly whose last UK civil day has not ended: it would be registered \
+             part-walked and never re-walked (issue 477); its days come from the daily walk",
+        ));
     }
     let existing = db.latest_fetch(target.source, target.kind, &target.period).await?;
     if existing.is_some() && !refetch {
@@ -344,139 +375,88 @@ pub async fn fetch_fts(
     }
 
     let staging = staging_dir(archive_root, &target.rel_path);
-    // Debris, not a resume point (issue 342 review, lens "fetcher"): a staging
-    // dir whose cursor predates the registered landing is what an interrupted
-    // `remove_dir_all` (or a crash between the row and the cleanup) left behind,
-    // and its `done` list would make this refetch skip windows it must re-walk.
-    // A cursor NEWER than the row is an interrupted refetch and is resumed.
-    if let Some(existing) = &existing
-        && let Ok(meta) = std::fs::metadata(staging.join(CURSOR_FILE))
-        && let Ok(modified) = meta.modified()
-        && let Ok(age) = modified.duration_since(std::time::UNIX_EPOCH)
-        && (age.as_secs() as i64) < existing.fetched_at
-    {
-        std::fs::remove_dir_all(&staging)?;
-    }
+    discard_unresumable_staging(&staging, existing.as_ref())?;
     std::fs::create_dir_all(&staging)?;
-    let cursor_path = staging.join(CURSOR_FILE);
-    let mut cursor = read_cursor(&cursor_path);
     let mut requests = 0usize;
+    let mut leaves: Vec<PathBuf> = Vec::new();
     for window in &windows {
         let day = crate::fts::ymd(window.day);
-        if cursor.done.iter().any(|done| *done == day) {
-            continue; // its pages are on disk from an earlier run
-        }
-        // Resume mid-window at the recorded `next`; otherwise the window's first page.
-        let (mut page, mut next) = if cursor.day == day && cursor.page > 0 {
-            (cursor.page, cursor.next.clone())
-        } else {
-            (0, Some(window.url.clone()))
-        };
-        let mut releases = 0usize;
-        // A STUCK CURSOR (issue 449). On 2025-12-10 every `links.next` the API
-        // sent was the URL just fetched, with the same 100 releases behind it.
-        // Following it looped for good: 70+ identical pages, and a fetch job
-        // has no stop checkpoint, so it held the single job runner in front of
-        // the daily tick. Two signs mark a stuck window. `links.next` names
-        // the URL we just fetched, or the window passes `MAX_WINDOW_PAGES`,
-        // which also catches a cursor that moves while its content does not.
-        // Either way the window is re-walked hour by hour below. The cursor
-        // keeps the stuck URL as `next`, so a restart mid-fallback asks it
-        // again, sees it stuck again, and redoes the hourly walk. The hourly
-        // pages are named apart and overwritten in place, so a redo is idempotent.
-        let mut stuck = false;
-        while let Some(url) = next {
-            if requests > 0 {
-                tokio::time::sleep(page_pause).await;
-            }
-            // The stop checkpoint (issue 450), read right before every request,
-            // after the pause, so a cancel that lands during the pause costs no
-            // request. The cursor already names this one, so a re-run asks it first.
-            if stop() {
-                return Ok(Outcome::Stopped);
-            }
-            requests += 1;
-            let bytes = get_bytes(client, &url).await?;
-            let (count, links_next) =
-                page_summary(&bytes).map_err(|what| Error::Malformed(format!("{url}: {what}")))?;
-            page += 1;
-            releases += count;
-            write_atomic(&staging.join(format!("{day}-p{page:03}.json")), &bytes)?;
-            stuck = links_next.as_deref() == Some(url.as_str()) || page as usize > crate::fts::MAX_WINDOW_PAGES;
-            next = links_next;
-            cursor.day.clone_from(&day);
-            cursor.page = page;
-            cursor.next.clone_from(&next);
-            write_cursor(&cursor_path, &cursor)?;
-            on_progress(&day, page as usize, releases);
-            if stuck {
-                break;
-            }
-        }
-        if stuck {
-            // `h<NN>` sorts before `p<NNN>`, so in `assemble_fts_zip` (first
-            // occurrence of an id wins) the hourly copy of a release wins over
-            // the stale copies the stuck walk staged.
-            let hours = crate::fts::hour_urls(base, window.day, crate::fts::overlap_of(target));
-            for (hour, first) in hours.into_iter().enumerate() {
-                let (mut hour_page, mut hour_next) = (0usize, Some(first));
-                while let Some(url) = hour_next {
-                    tokio::time::sleep(page_pause).await;
-                    // A stop here redoes the whole hourly walk on the re-run: the
-                    // cursor still names the stuck URL (see above). The one
-                    // exception is a window that tripped `MAX_WINDOW_PAGES` on its
-                    // LAST page: its cursor holds no `next`, so the re-run finds
-                    // the paged walk complete and lands the day from those pages.
+        let (mut pages, mut releases) = (0usize, 0usize);
+        let mut spans = vec![window.span];
+        while let Some(span) = spans.pop() {
+            let path = staging.join(format!("{}.json", crate::fts::span_key(span)));
+            let url = crate::fts::span_url(base, span);
+            let (count, next) = match std::fs::read(&path) {
+                // Staged by an earlier run: decided by its page, never asked again.
+                Ok(bytes) => page_summary(&bytes)
+                    .map_err(|what| Error::Malformed(format!("{}: {what}", path.display())))?,
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                    if requests > 0 {
+                        tokio::time::sleep(page_pause).await;
+                    }
+                    // The stop checkpoint (issue 450), read right before every
+                    // request, after the pause, so a cancel that lands during the
+                    // pause costs no request. Every span page asked so far is
+                    // staged, so a re-run continues from exactly here.
                     if stop() {
                         return Ok(Outcome::Stopped);
                     }
                     requests += 1;
                     let bytes = get_bytes(client, &url).await?;
-                    let (count, links_next) =
-                        page_summary(&bytes).map_err(|what| Error::Malformed(format!("{url}: {what}")))?;
-                    hour_page += 1;
-                    releases += count;
-                    write_atomic(&staging.join(format!("{day}-h{hour:02}-p{hour_page:03}.json")), &bytes)?;
-                    // Stuck inside ONE hour, there is nothing smaller left to cut
-                    // to. Fail with staging intact: a loud failed month is
-                    // re-enqueued by hand, and a silently truncated one is not.
-                    if links_next.as_deref() == Some(url.as_str()) || hour_page > crate::fts::MAX_HOUR_PAGES {
-                        return Err(Error::Malformed(format!(
-                            "{url}: the paging cursor is stuck even within one hour (issue 449)"
-                        )));
-                    }
-                    hour_next = links_next;
-                    on_progress(&day, page as usize + hour_page, releases);
+                    let summary = page_summary(&bytes).map_err(|what| Error::Malformed(format!("{url}: {what}")))?;
+                    write_atomic(&path, &bytes)?;
+                    summary
                 }
+                Err(e) => return Err(e.into()),
+            };
+            pages += 1;
+            if crate::fts::page_is_short(count, next.as_deref()) {
+                releases += count;
+                leaves.push(path);
+            } else {
+                // Never `next`: split, and ask both halves without a cursor.
+                let Some((older, newer)) = crate::fts::split(span) else {
+                    return Err(Error::Malformed(format!(
+                        "{url}: {count} releases{} in a {}-second window, and the API refuses a \
+                         one-second window ('updatedTo' must be later than 'updatedFrom'): there is \
+                         nothing smaller to ask for (issue 477)",
+                        if next.is_some() { " and a next page" } else { "" },
+                        span.secs(),
+                    )));
+                };
+                spans.push(newer);
+                spans.push(older); // popped first, so the leaves stay in time order
             }
+            on_progress(&day, pages, releases);
         }
-        cursor.done.push(day);
-        cursor.day.clear();
-        cursor.page = 0;
-        cursor.next = None;
-        write_cursor(&cursor_path, &cursor)?;
     }
 
     let final_path = archive_root.join(&target.rel_path);
     if let Some(dir) = final_path.parent() {
         std::fs::create_dir_all(dir)?;
     }
-    let (bytes, sha256) = assemble_fts_zip(&staging, &temp_path(&final_path))?;
+    let (bytes, sha256) = assemble_fts_zip(&leaves, &temp_path(&final_path))?;
     let outcome = land(db, archive_root, target, existing.as_ref(), &final_path, bytes, sha256).await?;
     std::fs::remove_dir_all(&staging)?;
     Ok(outcome)
 }
 
-/// Walk FTS daily windows forward from the newest day already registered up to
-/// and including `end` (yesterday in UK civil time), fetching each — the DÖE
-/// walk-forward shape ([`probe_doe_daily`]): a normal run advances one day, a
-/// gap catches up every missed day, and with no FTS daily on record it fetches
-/// only `end`, leaving the monthly backfill to seed history.
+/// Walk FTS daily windows forward from the day after the newest day already
+/// covered, up to and including `end` (yesterday in UK civil time), fetching
+/// each — the DÖE walk-forward shape ([`probe_doe_daily`]): a normal run
+/// advances one day, and a gap catches up every missed day.
 ///
-/// It never refetches: the API filters on a release's last-update instant,
-/// which cannot fall into a UK day that is over, so a passed day is final; a
-/// tick that ran late is covered by the next day's 2 h overlap. Days are paced
-/// by `page_pause` like pages, so a multi-day catch-up never bursts the limiter.
+/// "Covered" is the later of the newest DAILY day and the last day of the
+/// newest MONTHLY period ([`fts_covered_through`]). Issue 477's seam: the
+/// monthly backfill ended at 2026-08, and with no daily on record the walk
+/// fetched only `end`, so 2026-09-01..06 (1,745 notices) were never fetched.
+/// With neither on record it still fetches only `end`, leaving the monthly
+/// backfill to seed history.
+///
+/// It never refetches: a window selects on a hidden publication instant (not
+/// the release `date`, issue 477), and a UK day that is over is final; a tick
+/// that ran late is covered by the next day's 2 h overlap. Days are paced by
+/// `page_pause` like pages, so a multi-day catch-up never bursts the limiter.
 pub async fn probe_fts_daily(
     db: &store::Db,
     client: &reqwest::Client,
@@ -486,21 +466,22 @@ pub async fn probe_fts_daily(
     page_pause: std::time::Duration,
     mut on_day: impl FnMut(&str, &Outcome),
 ) -> Result<Vec<(String, Outcome)>, Error> {
-    let mut day = match latest_fts_day(db).await? {
-        Some(prev) => next_civil_day(prev),
+    let mut day = match fts_covered_through(db).await? {
+        Some(covered) => next_civil_day(covered),
         None => end,
     };
     let mut out = Vec::new();
     while day <= end {
-        // CAPPED PER TICK (issue 342 review, lens "ops"). An FTS day is 4–5
-        // paced requests, up to eight minutes of back-off if the limiter is
-        // unhappy — unlike a DÖE day, which is one download. Uncapped, a
-        // watermark left far in the past (a month of failed ticks, a restored
-        // registry) would hold the single job runner for hours and park
-        // `fetch-rates`, `project` and the fold behind it. The watermark
-        // advances per landed day, so the remainder is simply the next tick's
-        // work; a real gap closes in days, and `fetch fts --day` or a monthly
-        // backfill closes it at once.
+        // CAPPED PER TICK (issue 342 review, lens "ops"). An FTS day is about
+        // 17 paced requests on a 2026 weekday under the split walk and 35 at
+        // most ([`crate::fts::PROBE_DAY_CAP`]), plus up to eight minutes of
+        // back-off if the limiter is unhappy — unlike a DÖE day, which is one
+        // download. Uncapped, a watermark left far in the
+        // past (a month of failed ticks, a restored registry) would hold the
+        // single job runner for hours and park `fetch-rates`, `project` and the
+        // fold behind it. The watermark advances per landed day, so the
+        // remainder is simply the next tick's work; a real gap closes in days,
+        // and `fetch fts --day` or a monthly backfill closes it at once.
         if out.len() >= crate::fts::PROBE_DAY_CAP {
             break;
         }
@@ -524,8 +505,20 @@ pub async fn latest_fts_day(db: &store::Db) -> turso::Result<Option<(u16, u8, u8
     Ok(latest.as_deref().and_then(parse_ymd))
 }
 
-/// The walk's progress file inside the staging dir.
-const CURSOR_FILE: &str = "cursor.json";
+/// The last UK civil day the FTS registry covers: the later of the newest
+/// daily day and the last day of the newest monthly period (issue 477's seam;
+/// [`probe_fts_daily`] continues the day after it). Monthly periods are
+/// zero-padded `YYYY-MM`, so `MAX(period)` is the newest.
+pub async fn fts_covered_through(db: &store::Db) -> turso::Result<Option<(u16, u8, u8)>> {
+    let daily = latest_fts_day(db).await?;
+    let monthly = db
+        .latest_fetch_period_max("fts", "monthly", "")
+        .await?
+        .as_deref()
+        .and_then(crate::fts::parse_month)
+        .map(|(y, m)| (y, m, crate::fts::days_in_month(y, m)));
+    Ok(daily.max(monthly))
+}
 
 /// Where a paged package is staged while its windows are walked:
 /// `<archive>/<rel_path minus .zip>.pages/`, beside the package it becomes.
@@ -535,40 +528,49 @@ fn staging_dir(archive_root: &Path, rel_path: &str) -> PathBuf {
     archive_root.join(format!("{stem}.pages"))
 }
 
-/// `cursor.json`: the window being walked (`day`, its `page` count on disk, the
-/// `next` URL to ask for) and the windows already `done`. Every field defaults
-/// so a hand-edited or older cursor still reads.
-#[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
-struct PageCursor {
-    #[serde(default)]
-    day: String,
-    #[serde(default)]
-    page: u32,
-    #[serde(default)]
-    next: Option<String>,
-    #[serde(default)]
-    done: Vec<String>,
-}
-
-fn read_cursor(path: &Path) -> PageCursor {
-    let Ok(bytes) = std::fs::read(path) else { return PageCursor::default() };
-    match serde_json::from_slice(&bytes) {
-        Ok(cursor) => cursor,
-        Err(e) => {
-            // Restarting the walk re-fetches pages that are on disk; it never
-            // loses anything, and a cursor nobody can read is not worth trusting.
-            eprintln!("[fetch] {}: unreadable cursor ({e}), restarting the walk", path.display());
-            PageCursor::default()
+/// Remove what a walk must not resume from, before it starts:
+/// - **anything that is not a span page** (`<span key>.json`, see
+///   [`crate::fts::span_key`]) — above all the cursor walker's `<day>-pNNN.json`,
+///   `<day>-hNN-pNNN.json` and `cursor.json` (issue 477: those pages are exactly
+///   what lost the releases, so they are discarded, never assembled or
+///   resumed), and an interrupted write's `.part`;
+/// - **debris of a landing** (issue 342 review, lens "fetcher"): a page staged
+///   no later than the registered landing is what an interrupted cleanup (or a
+///   crash between the row and the cleanup) left behind, and resuming from it
+///   would make a refetch reuse old pages instead of re-walking. A page NEWER
+///   than the row is an interrupted refetch, and is resumed.
+fn discard_unresumable_staging(staging: &Path, landed: Option<&store::Fetch>) -> Result<(), Error> {
+    let Ok(entries) = std::fs::read_dir(staging) else { return Ok(()) };
+    let mut discarded = 0usize;
+    for entry in entries {
+        let path = entry?.path();
+        let span_page = path.is_file()
+            && path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .and_then(|n| n.strip_suffix(".json"))
+                .and_then(crate::fts::parse_span_key)
+                .is_some();
+        let staged_at = std::fs::metadata(&path)
+            .and_then(|meta| meta.modified())
+            .ok()
+            .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+            .map(|age| age.as_secs() as i64);
+        let debris = landed.is_some_and(|row| staged_at.is_none_or(|at| at <= row.fetched_at));
+        if span_page && !debris {
+            continue;
         }
+        if path.is_dir() { std::fs::remove_dir_all(&path)? } else { std::fs::remove_file(&path)? }
+        discarded += 1;
     }
+    if discarded > 0 {
+        eprintln!("[fetch] {}: discarded {discarded} staged file(s) the walk cannot resume from", staging.display());
+    }
+    Ok(())
 }
 
-fn write_cursor(path: &Path, cursor: &PageCursor) -> Result<(), Error> {
-    write_atomic(path, &serde_json::to_vec(cursor).expect("a cursor always serialises"))
-}
-
-/// Write via `<path>.part` + rename, so a page or cursor that was interrupted
-/// mid-write never reads as a saved one.
+/// Write via `<path>.part` + rename, so a page that was interrupted mid-write
+/// never reads as a staged one.
 fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), Error> {
     let tmp = temp_path(path);
     std::fs::write(&tmp, bytes)?;
@@ -576,40 +578,45 @@ fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), Error> {
     Ok(())
 }
 
-/// What a page says about the walk: how many releases it holds and where the
-/// next page is. Anything without a `releases` array is not a release package.
+/// What a page says about the walk: how many releases it holds and whether it
+/// names a next page. Anything without a `releases` array is not a release
+/// package.
 fn page_summary(bytes: &[u8]) -> Result<(usize, Option<String>), String> {
     let page = crate::fts::Page::read(bytes)?;
     Ok((page.releases()?.len(), page.next()))
 }
 
-/// Assemble the staged pages into `part`: members `<release id>.json` built by
-/// [`crate::fts::member_bytes`], sorted by id, the first occurrence winning on
-/// a duplicate id (the 2 h overlap re-serves the previous day's tail, and pages
-/// are newest-first). Returns the written zip's (bytes, sha256-hex). A staging
-/// dir with no releases yields a valid 0-member zip.
-fn assemble_fts_zip(staging: &Path, part: &Path) -> Result<(i64, String), Error> {
-    let mut pages: Vec<PathBuf> = std::fs::read_dir(staging)?
-        .filter_map(|entry| entry.ok().map(|e| e.path()))
-        .filter(|path| {
-            path.is_file()
-                && path
-                    .file_name()
-                    .and_then(|n| n.to_str())
-                    .is_some_and(|n| n.ends_with(".json") && n != CURSOR_FILE)
-        })
-        .collect();
-    pages.sort(); // `<day>-p<NNN>.json`: window order, then page order
-    let mut members: std::collections::BTreeMap<String, Vec<u8>> = std::collections::BTreeMap::new();
-    for path in &pages {
+/// Assemble the walk's leaf pages, in walk order, into `part`: one member per
+/// DISTINCT release, built by [`crate::fts::Page::member_bytes`] and named by
+/// its notice id. The first release of an id is `<id>.json`; a second release
+/// that carries the same id with different bytes is `<id>~<hash8>.json`, the
+/// first 8 hex digits of its member's sha256 (the notice row's
+/// `content_hash`). A byte-identical repeat collapses into one member.
+///
+/// Issue 477: one id can carry two releases — `038018-2025` is a
+/// `tenderUpdate` on the old procurement and an `award,contract` on the new
+/// one, under two ocids. Keyed by the id alone, the second was dropped without
+/// trace whenever both fell in one package. The processor reads a member's
+/// publication id from its payload, not its name, so the `~` member is the
+/// same publication's second notice row.
+///
+/// Members are sorted by name (`<id>.json` before its `~` variants); the zip
+/// is byte-deterministic, so a refetch of unchanged pages hashes equal. A
+/// walk with no releases yields a valid 0-member zip. Returns the written
+/// zip's (bytes, sha256-hex).
+fn assemble_fts_zip(pages: &[PathBuf], part: &Path) -> Result<(i64, String), Error> {
+    // id → its distinct member bytes, first served first.
+    let mut by_id: std::collections::BTreeMap<String, Vec<Vec<u8>>> = std::collections::BTreeMap::new();
+    for path in pages {
         let malformed = |what: String| Error::Malformed(format!("{}: {what}", path.display()));
         let bytes = std::fs::read(path)?;
         let page = crate::fts::Page::read(&bytes).map_err(malformed)?;
         let releases = page.releases().map_err(malformed)?;
         for (index, release) in releases.iter().enumerate() {
             let id = match crate::fts::release_id(release) {
-                // The id becomes a member name; a separator in it would name a directory.
-                Some(id) if !id.is_empty() && !id.contains(['/', '\\']) => id,
+                // The id becomes a member name: a separator in it would name a
+                // directory, and a `~` could pass for another id's variant.
+                Some(id) if !id.is_empty() && !id.contains(['/', '\\', '~']) => id,
                 // A release the publisher sent without a usable id is ARCHIVED,
                 // not thrown (issue 342 review, lens "fetcher"). Failing the
                 // package here would be deterministic: the day would fail every
@@ -623,7 +630,26 @@ fn assemble_fts_zip(staging: &Path, part: &Path) -> Result<(i64, String), Error>
                     format!("_noid/{stem}-{index:03}")
                 }
             };
-            members.entry(id).or_insert_with(|| page.member_bytes(release));
+            let member = page.member_bytes(release);
+            let held = by_id.entry(id).or_default();
+            if !held.contains(&member) {
+                held.push(member);
+            }
+        }
+    }
+    let mut members: std::collections::BTreeMap<String, Vec<u8>> = std::collections::BTreeMap::new();
+    for (id, releases) in by_id {
+        for (n, bytes) in releases.into_iter().enumerate() {
+            let name = if n == 0 {
+                format!("{id}.json")
+            } else {
+                let hash = crate::sha256_hex(&bytes);
+                let short = format!("{id}~{}.json", &hash[..8]);
+                // Two different releases of one id agreeing on 32 bits of
+                // hash: the full hash tells them apart.
+                if members.contains_key(&short) { format!("{id}~{hash}.json") } else { short }
+            };
+            members.insert(name, bytes);
         }
     }
 
@@ -633,8 +659,8 @@ fn assemble_fts_zip(staging: &Path, part: &Path) -> Result<(i64, String), Error>
     let opts = zip::write::SimpleFileOptions::default()
         .compression_method(zip::CompressionMethod::Deflated)
         .last_modified_time(zip::DateTime::default());
-    for (id, bytes) in &members {
-        zip.start_file(format!("{id}.json"), opts).map_err(zip_error)?;
+    for (name, bytes) in &members {
+        zip.start_file(name.as_str(), opts).map_err(zip_error)?;
         zip.write_all(bytes)?;
     }
     let mut file = zip.finish().map_err(zip_error)?;

@@ -9,7 +9,7 @@
 //! fetch doe --backfill                  # every month from 2022-12 to now
 //! fetch fts --day 2026-09-03            # one UK civil day, paged + assembled
 //! fetch fts --month 2025-06             # one month as 1-day windows
-//! fetch fts --backfill                  # every month from 2021-01 to now
+//! fetch fts --backfill                  # every ended month from 2021-01
 //! ```
 //!
 //! `--archive` / `--db` override the TENDER_ARCHIVE / TENDER_DB env vars
@@ -149,8 +149,9 @@ async fn main() -> ExitCode {
         let page_pause = args.page_pause;
         async move {
             let result = if target.source == "fts" {
-                // Paged and self-assembled: page progress on stderr, since a
-                // month is ~150 paced requests.
+                // Split and self-assembled: page progress on stderr, since a
+                // month is 80–450 paced requests (issue 477's split walk: a
+                // 2021 month ~80, a 2026 month ~400).
                 fetch::fetch_fts(db, client, archive, &target, refetch, page_pause, || false, |day, pages, releases| {
                     eprintln!("  {day}: page {pages}, {releases} releases so far");
                 })
@@ -231,12 +232,14 @@ async fn main() -> ExitCode {
                 }
             }
             Source::Fts => {
-                // Every month since 2021-01, each walked as 1-day windows and
-                // resumable from its staging dir. The current month is not
-                // force-refetched: a re-walk is ~150 paced requests, and the
-                // daily probe covers the days after this run. A failed month
-                // (the limiter) is reported and the run continues; re-run to resume.
-                for (y, m) in fts::months_through((year, month)) {
+                // Every month since 2021-01 whose last UK civil day is over,
+                // each walked as 1-day windows and resumable from its staging
+                // dir. The running month is not a monthly at all (issue 477:
+                // `fetch_fts` refuses it, since a registered monthly is never
+                // re-walked); its days are the daily probe's, which continues
+                // after the newest monthly. A failed month (the limiter) is
+                // reported and the run continues; re-run to resume.
+                for (y, m) in fts::months_through(fts::last_ended_month(store::now_unix())) {
                     if run(fts::monthly(&args.base_url, (y, m)), args.refetch).await.is_err() {
                         failures += 1;
                     }

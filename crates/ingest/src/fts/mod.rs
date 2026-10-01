@@ -1,13 +1,31 @@
 //! UK Find a Tender Service (FTS) addressing and packaging
-//! (docs/research/uk-fts.md, issue 342 unit 2).
+//! (docs/research/uk-fts.md, issue 342 unit 2; the walk is issue 477's).
 //!
 //! FTS serves OCDS 1.1 release packages from one unauthenticated endpoint,
-//! `GET {BASE}/ocdsReleasePackages?updatedFrom=&updatedTo=`, ≤100 releases a
-//! page, paged by an opaque `links.next` URL. There is no bulk package to
-//! download, so the fetcher ([`crate::fetch::fetch_fts`]) walks the pages of a
-//! window and ASSEMBLES the archive package itself: one zip per (kind, period),
-//! one member `<release id>.json` per release, each member a single-release
-//! OCDS package built by [`member_bytes`].
+//! `GET {BASE}/ocdsReleasePackages?updatedFrom=&updatedTo=`, at most 100
+//! releases a page. There is no bulk package to download, so the fetcher
+//! ([`crate::fetch::fetch_fts`]) walks each window and ASSEMBLES the archive
+//! package itself: one zip per (kind, period), one member per release, each
+//! member a single-release OCDS package built by [`Page::member_bytes`].
+//!
+//! **The walk never follows `links.next`** (issue 477). The API sorts a window
+//! newest notice id first, but its paging cursor continues on a hidden
+//! per-release key that is not in id order. So at every page boundary rows can
+//! be silently dropped (and others repeated), and the page that dropped them
+//! comes back short with no next, exactly like a real last page. That lost
+//! 14,093 notices (4.3 % of FTS) on days that needed a second page, and issue
+//! 449's stuck cursor (page 2 is page 1 again, its next its own URL) is the same
+//! defect. A page asked for WITHOUT a cursor was correct in every measurement.
+//! So a window is a [`Span`] of wall-clock seconds, and only cursorless pages
+//! are ever asked:
+//! - a page that is short ([`page_is_short`]: fewer than [`PAGE_LIMIT`] rows
+//!   and no next) is the whole span;
+//! - a full page means the span holds more than a page, so it is [`split`] in
+//!   two and each half is asked again.
+//!
+//! The API answers 400 to a window whose ends are equal, so no split ever
+//! makes a one-second span; a span still full at [`MIN_SPAN_SECS`] fails the
+//! fetch loudly (the fetcher's job, not a silent truncation).
 //!
 //! Two kinds, mirroring TED/DÖE so `Process{daily, None}` re-walks only live
 //! days (plan D2):
@@ -15,19 +33,21 @@
 //!   on `updatedFrom` ([`OVERLAP_SECS`]), so a release updated around midnight
 //!   is never lost between two ticks. The overlap re-yields releases already
 //!   archived the day before; they dedup on identity (D3), because
-//!   [`member_bytes`] is byte-deterministic.
+//!   [`Page::member_bytes`] is byte-deterministic.
 //! - `monthly` — the backfill package: one contiguous 1-day window per civil
 //!   day of the month, no overlap (§2 of the research: wide windows were
 //!   rate-limited before answering).
 //!
 //! `updatedFrom`/`updatedTo` are interpreted by the server in UK local time
-//! (GMT/BST) and are sent as bare wall-clock strings; nothing here converts a
-//! time zone — [`uk_offset`] exists only so the supervisor can name "yesterday"
-//! in UK civil time.
+//! (GMT/BST), select on a hidden publication instant (not the release `date`),
+//! include both end seconds, and are sent as bare wall-clock strings; nothing
+//! here converts a time zone. [`uk_offset`] exists so the supervisor can name
+//! "yesterday" in UK civil time, and [`split`] only steers its cuts off the
+//! two seconds where the repeated autumn hour could open a gap.
 //!
 //! **Member bytes are a re-serialisation, not bytes-as-served** — the first
 //! deviation from docs/architecture.md's "archive the bytes the source sent".
-//! A page's composition shifts under the overlap and the cursor, so the page is
+//! A page's composition shifts under the overlap and the splits, so the page is
 //! the wrong unit of identity; the release is the unit, and the only way to
 //! store a release as its own self-describing, OGL-attributed package is to
 //! re-serialise it under the page's header. The staged raw pages are deleted
@@ -65,12 +85,16 @@ pub const PAGE_LIMIT: u32 = 100;
 
 /// How many days one walk-forward tick may fetch ([`crate::fetch::probe_fts_daily`]).
 ///
-/// A month, so a normal gap (a few failed ticks, a weekend of downtime) closes
-/// in one run while a watermark left far behind cannot hold the job runner for
-/// hours: an FTS day costs 4–5 paced requests plus any back-off, where a DÖE day
-/// costs one download. The remainder is the next tick's work — the watermark
-/// advances per landed day — and a real backfill is the monthly path, not this.
-pub const PROBE_DAY_CAP: usize = 31;
+/// Two weeks, so a normal gap (a few failed ticks, a weekend of downtime)
+/// closes in one run while a watermark left far behind cannot hold the job
+/// runner for hours. Under the split walk (issue 477) a 2026 day costs about
+/// 12 paced requests on average — 17 on a weekday, 23 at the 95th percentile,
+/// 35 at most (simulated on the archive's 2026 days with this module's
+/// [`split`]) — so 2.5–3.5 minutes at the 12 s pace plus any back-off, where a DÖE
+/// day costs one download: 14 days is under an hour typically and under two
+/// at worst. The remainder is the next tick's work — the watermark advances
+/// per landed day — and a real backfill is the monthly path, not this.
+pub const PROBE_DAY_CAP: usize = 14;
 
 /// The header fields carried into every member package. Everything else on a
 /// page header (`uri`, `links`, `publishedDate`) describes THAT PAGE, not the
@@ -78,73 +102,166 @@ pub const PROBE_DAY_CAP: usize = 31;
 pub const MEMBER_HEADER_FIELDS: [&str; 5] =
     ["version", "extensions", "publisher", "license", "publicationPolicy"];
 
-/// One `updatedFrom..updatedTo` request window: the civil day it covers and
-/// the URL of its first page.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Window {
-    pub day: (u16, u8, u8),
-    pub url: String,
+/// The shortest span the walk asks for. The API answers a window whose two
+/// ends are equal with 400 `'updatedTo' must be later than 'updatedFrom'`
+/// (measured 2026-10-01, issue 477's challenge), so a one-second span cannot be
+/// asked at all, and [`split`] never makes one.
+pub const MIN_SPAN_SECS: i64 = 2;
+
+/// An inclusive span of UK wall-clock seconds, `from..=to`, in the naive
+/// encoding [`window_url`] writes: `days_from_civil(day) * 86 400` plus the
+/// seconds into that day, with NO time-zone conversion — the server reads its
+/// parameters as UK local time (§2). Both ends are inclusive, as the server's
+/// are: a release on a boundary second is listed by both windows that share
+/// that second (measured, issue 477), so `[a, m]` and `[m + 1, b]` leave no hole.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Span {
+    pub from: i64,
+    pub to: i64,
 }
 
-/// The first-page URL of a window ending at `day` 23:59:59 and starting
-/// `overlap_secs` before `day` 00:00:00 — UK wall-clock strings exactly as the
-/// server interprets them (§2); NO time-zone conversion here.
-pub fn window_url(base: &str, day: (u16, u8, u8), overlap_secs: i64) -> String {
+impl Span {
+    /// Seconds covered, both ends counted.
+    pub fn secs(self) -> i64 {
+        self.to - self.from + 1
+    }
+}
+
+/// One request window: the civil day it covers and its [`Span`] — the span
+/// the walk starts from, and splits when its page is full.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Window {
+    pub day: (u16, u8, u8),
+    pub span: Span,
+}
+
+/// The span of a window ending at `day` 23:59:59 and starting `overlap_secs`
+/// before `day` 00:00:00.
+pub fn window_span(day: (u16, u8, u8), overlap_secs: i64) -> Span {
     let (y, m, d) = day;
-    let from = days_from_civil(y, m, d) * 86_400 - overlap_secs;
-    let (fy, fm, fd) = civil_date(from);
-    let tod = from.rem_euclid(86_400);
+    let midnight = days_from_civil(y, m, d) * 86_400;
+    Span { from: midnight - overlap_secs, to: midnight + 86_399 }
+}
+
+/// `YYYY-MM-DDTHH:MM:SS` of a naive wall-clock second.
+fn wall(secs: i64) -> String {
+    let (y, m, d) = civil_date(secs);
+    let tod = secs.rem_euclid(86_400);
+    format!("{y:04}-{m:02}-{d:02}T{:02}:{:02}:{:02}", tod / 3_600, tod % 3_600 / 60, tod % 60)
+}
+
+/// The cursorless URL of a span — UK wall-clock strings exactly as the server
+/// interprets them (§2); NO time-zone conversion here.
+pub fn span_url(base: &str, span: Span) -> String {
     format!(
-        "{base}/ocdsReleasePackages?limit={PAGE_LIMIT}\
-         &updatedFrom={fy:04}-{fm:02}-{fd:02}T{:02}:{:02}:{:02}\
-         &updatedTo={y:04}-{m:02}-{d:02}T23:59:59",
-        tod / 3_600,
-        tod % 3_600 / 60,
-        tod % 60
+        "{base}/ocdsReleasePackages?limit={PAGE_LIMIT}&updatedFrom={}&updatedTo={}",
+        wall(span.from),
+        wall(span.to)
     )
 }
 
-/// Most pages one window may take before its cursor is presumed stuck (issue
-/// 449). A real FTS day is 4–6 pages, and the busiest day measured in the
-/// research (§7) is under 10. Hitting this bound is not an error: the window is
-/// re-walked hour by hour ([`hour_urls`]), so a genuinely huge day is still
-/// fetched whole, only slower.
-pub const MAX_WINDOW_PAGES: usize = 50;
-
-/// Most pages one hour-long sub-window may take. An hour of FTS is well under
-/// one page, so reaching this, or a cursor that sticks inside an hour, fails the
-/// job with its staging intact rather than looping or truncating.
-pub const MAX_HOUR_PAGES: usize = 20;
-
-/// The window of `day` cut into one-hour request windows, oldest first, covering
-/// exactly the span [`window_url`] covers (`overlap_secs` before the civil day,
-/// through 23:59:59). This is the fallback when a window's paging cursor sticks
-/// (issue 449): on 2025-12-10 the API answered every `links.next` with the same
-/// cursor and the same 100 releases, so the whole-day walk would never end. An
-/// hour holds far fewer than a page's 100 releases, so an hourly walk needs no
-/// cursor at all.
-pub fn hour_urls(base: &str, day: (u16, u8, u8), overlap_secs: i64) -> Vec<String> {
-    let (y, m, d) = day;
-    let end = days_from_civil(y, m, d) * 86_400 + 86_400;
-    let mut from = days_from_civil(y, m, d) * 86_400 - overlap_secs;
-    let mut out = Vec::new();
-    while from < end {
-        let (fy, fm, fd) = civil_date(from);
-        let h = from.rem_euclid(86_400) / 3_600;
-        out.push(format!(
-            "{base}/ocdsReleasePackages?limit={PAGE_LIMIT}\
-             &updatedFrom={fy:04}-{fm:02}-{fd:02}T{h:02}:00:00\
-             &updatedTo={fy:04}-{fm:02}-{fd:02}T{h:02}:59:59"
-        ));
-        from += 3_600;
-    }
-    out
+/// The URL of a window ending at `day` 23:59:59 and starting `overlap_secs`
+/// before `day` 00:00:00: the first request of the day's walk, and the
+/// registry URL of a target. Byte-identical to the URL the cursor walker
+/// asked first, so no registry URL changed with issue 477.
+pub fn window_url(base: &str, day: (u16, u8, u8), overlap_secs: i64) -> String {
+    span_url(base, window_span(day, overlap_secs))
 }
 
-/// The overlap a target's windows carry: the daily poll reaches back
-/// [`OVERLAP_SECS`], a monthly day does not ([`windows`]).
-pub fn overlap_of(target: &Target) -> i64 {
-    if target.kind == "daily" { OVERLAP_SECS } else { 0 }
+/// A span's name in the staging dir: `20210507T000000-20210507T235959`. The
+/// staged page of every span asked is the walk's resume state.
+pub fn span_key(span: Span) -> String {
+    let compact = |secs: i64| wall(secs).replace(['-', ':'], "");
+    format!("{}-{}", compact(span.from), compact(span.to))
+}
+
+/// The inverse of [`span_key`], strictly: anything that does not render back
+/// to itself (a page the cursor walker staged, a hand-made name) is `None`.
+pub fn parse_span_key(key: &str) -> Option<Span> {
+    let (from, to) = key.split_once('-')?;
+    let secs = |s: &str| -> Option<i64> {
+        if s.len() != 15 || s.as_bytes()[8] != b'T' {
+            return None;
+        }
+        let num = |range: std::ops::Range<usize>| -> Option<i64> {
+            let part = s.get(range)?;
+            part.bytes().all(|b| b.is_ascii_digit()).then(|| part.parse().ok())?
+        };
+        let (y, m, d) = (num(0..4)?, num(4..6)?, num(6..8)?);
+        let (h, mi, sec) = (num(9..11)?, num(11..13)?, num(13..15)?);
+        Some(days_from_civil(y as u16, m as u8, d as u8) * 86_400 + h * 3_600 + mi * 60 + sec)
+    };
+    let span = Span { from: secs(from)?, to: secs(to)? };
+    (span.to > span.from && span_key(span) == key).then_some(span)
+}
+
+/// A span cut in two: `[from, m]` and `[m + 1, to]`, the older half first.
+/// `None` when a cut would leave a half shorter than [`MIN_SPAN_SECS`] — the
+/// API refuses a one-second window — which the fetcher turns into a loud
+/// failure for a span that is still full.
+///
+/// The older half takes an even number of seconds, so an even span (every
+/// window is: 86 400 s, or 93 600 s with the daily overlap) halves into even
+/// halves all the way down to two seconds.
+///
+/// **The repeated autumn hour.** The server turns each END of a window into an
+/// instant; on the last Sunday of October UK time runs 01:00–01:59 twice, and
+/// how it resolves that ambiguous wall clock is not documented. Probably
+/// Java (its error bodies have Spring Boot's shape), whose default is the
+/// earlier offset: then wall 01:59:59 is 00:59:59 UTC but 02:00:00 is 02:00:00
+/// UTC, and two spans meeting at 02:00:00 leave the second 01:xx hour in
+/// neither. Under the later offset the same gap opens at 01:00:00 instead. A
+/// cut at any other second joins two wall seconds under one offset, so the
+/// halves meet end to end under either rule — so the cut is moved off BOTH
+/// seconds rather than betting on one. (The spring hour that does not exist
+/// can only make two spans overlap, which the id dedup absorbs; a window's own
+/// ends are never at 01:00 or 02:00.) Pinned by
+/// `a_split_never_cuts_at_either_edge_of_the_repeated_autumn_hour`.
+pub fn split(span: Span) -> Option<(Span, Span)> {
+    let n = span.secs();
+    if n < 2 * MIN_SPAN_SECS {
+        return None;
+    }
+    let fits = |cut: i64| cut - span.from >= MIN_SPAN_SECS && span.to - cut + 1 >= MIN_SPAN_SECS;
+    // `cut` is the first second of the newer half.
+    let mut cut = span.from + n / 2 / 2 * 2;
+    if autumn_edge(cut) {
+        cut = [cut + 2, cut - 2].into_iter().find(|&c| fits(c) && !autumn_edge(c))?;
+    }
+    Some((Span { from: span.from, to: cut - 1 }, Span { from: cut, to: span.to }))
+}
+
+/// 01:00:00 or 02:00:00 on the last Sunday of October: the two wall seconds
+/// where, depending on how the server resolves the repeated hour, a cut could
+/// open a gap ([`split`]).
+fn autumn_edge(wall: i64) -> bool {
+    let (year, month, _) = civil_date(wall);
+    let sunday = last_sunday(year, 10);
+    month == 10 && (wall == sunday + 3_600 || wall == sunday + 7_200)
+}
+
+/// A page is the whole of its span when it holds fewer than [`PAGE_LIMIT`]
+/// releases AND names no next page. A full page might have more behind it; a
+/// short page that still names a next is not what the measured server does,
+/// and is not trusted either — both are split, never followed.
+pub fn page_is_short(count: usize, next: Option<&str>) -> bool {
+    count < PAGE_LIMIT as usize && next.is_none()
+}
+
+/// Whether the LAST UK civil day of `month` is over at `now_unix`. A monthly
+/// package is registered once and never re-walked, so a monthly of a month
+/// that is still running would freeze it part-walked: the fetcher refuses it
+/// (issue 477), and its days are the daily walk's.
+pub fn month_has_ended(month: (u16, u8), now_unix: i64) -> bool {
+    let (y, m, _) = uk_civil_date(now_unix);
+    month < (y, m)
+}
+
+/// The newest month whose last UK day is over at `now_unix`: where a default
+/// FTS backfill ends (issue 477).
+pub fn last_ended_month(now_unix: i64) -> (u16, u8) {
+    let (y, m, _) = uk_civil_date(now_unix);
+    if m == 1 { (y - 1, 12) } else { (y, m - 1) }
 }
 
 /// The base URL a window URL was built on — the inverse of [`window_url`], so
@@ -210,18 +327,18 @@ pub fn monthly(base: &str, month: (u16, u8)) -> Target {
 /// overlap; a monthly is one 1-day window per civil day, contiguous and
 /// without overlap. Empty for a target that is not an FTS shape (the fetcher
 /// refuses it rather than landing an empty zip).
-pub fn windows(base: &str, target: &Target) -> Vec<Window> {
+pub fn windows(target: &Target) -> Vec<Window> {
     if target.source != "fts" {
         return Vec::new();
     }
     match target.kind {
         "daily" => parse_day(&target.period)
-            .map(|d| vec![Window { day: d, url: window_url(base, d, OVERLAP_SECS) }])
+            .map(|d| vec![Window { day: d, span: window_span(d, OVERLAP_SECS) }])
             .unwrap_or_default(),
         "monthly" => parse_month(&target.period)
             .map(|(y, m)| {
                 (1..=days_in_month(y, m))
-                    .map(|d| Window { day: (y, m, d), url: window_url(base, (y, m, d), 0) })
+                    .map(|d| Window { day: (y, m, d), span: window_span((y, m, d), 0) })
                     .collect()
             })
             .unwrap_or_default(),
@@ -322,7 +439,9 @@ impl<'a> Page<'a> {
         serde_json::from_str(self.fields.get("version")?.get()).ok()
     }
 
-    /// `links.next` — the cursor URL of the following page, absent on the last.
+    /// `links.next` — the cursor URL the server offers for a following page.
+    /// The walk NEVER follows it (issue 477: the cursor drops rows); it only
+    /// reads whether one is named, which is half of [`page_is_short`].
     pub fn next(&self) -> Option<String> {
         let links = self.fields.get("links")?;
         serde_json::from_str::<Links>(links.get()).ok()?.next
@@ -355,19 +474,168 @@ impl<'a> Page<'a> {
 mod tests {
     use super::*;
 
+    /// Issue 477: a split partitions its span — the halves meet end to end
+    /// and cover it exactly — and never makes a span the API would refuse.
     #[test]
-    fn hour_urls_cover_exactly_the_window_span() {
-        let monthly_day = hour_urls(BASE, (2025, 12, 10), 0);
-        assert_eq!(monthly_day.len(), 24);
-        assert!(monthly_day[0].ends_with("&updatedFrom=2025-12-10T00:00:00&updatedTo=2025-12-10T00:59:59"));
-        assert!(monthly_day[23].ends_with("&updatedFrom=2025-12-10T23:00:00&updatedTo=2025-12-10T23:59:59"));
-        // The daily window's 2 h overlap reaches into the previous day, across a
-        // month and a year boundary, exactly as `window_url` does.
-        let daily = hour_urls(BASE, (2026, 1, 1), OVERLAP_SECS);
-        assert_eq!(daily.len(), 26);
-        assert!(daily[0].ends_with("&updatedFrom=2025-12-31T22:00:00&updatedTo=2025-12-31T22:59:59"));
-        assert!(daily[2].ends_with("&updatedFrom=2026-01-01T00:00:00&updatedTo=2026-01-01T00:59:59"));
-        assert!(daily.iter().all(|u| u.starts_with(BASE) && u.contains("limit=100")));
+    fn split_partitions_a_span_into_two_halves_of_at_least_two_seconds() {
+        for n in 1..=400 {
+            let span = Span { from: 1_000_000, to: 1_000_000 + n - 1 };
+            match split(span) {
+                Some((older, newer)) => {
+                    assert_eq!(older.from, span.from, "{n}");
+                    assert_eq!(older.to + 1, newer.from, "{n}: the halves meet with no hole and no overlap");
+                    assert_eq!(newer.to, span.to, "{n}");
+                    assert!(older.secs() >= MIN_SPAN_SECS && newer.secs() >= MIN_SPAN_SECS, "{n}: {older:?} {newer:?}");
+                    assert_eq!(older.secs() % 2, 0, "{n}: the older half is even");
+                    assert!(n >= 4);
+                }
+                None => assert!(n < 4, "{n} seconds can split"),
+            }
+        }
+        // A two-second span is the floor: the API refuses one second
+        // (`'updatedTo' must be later than 'updatedFrom'`), so it cannot split.
+        assert_eq!(split(Span { from: 10, to: 11 }), None);
+        assert_eq!(split(Span { from: 10, to: 12 }), None, "three seconds would leave a one-second half");
+        // A day halves at noon, and a day with the daily overlap at 11:00; an
+        // even span halves into even spans all the way down to two seconds.
+        let day = window_span((2021, 5, 7), 0);
+        let (am, pm) = split(day).unwrap();
+        assert!(span_url(BASE, am).ends_with("updatedFrom=2021-05-07T00:00:00&updatedTo=2021-05-07T11:59:59"));
+        assert!(span_url(BASE, pm).ends_with("updatedFrom=2021-05-07T12:00:00&updatedTo=2021-05-07T23:59:59"));
+        let (early, _) = split(window_span((2021, 5, 7), OVERLAP_SECS)).unwrap();
+        assert!(span_url(BASE, early).ends_with("updatedFrom=2021-05-06T22:00:00&updatedTo=2021-05-07T10:59:59"));
+        let mut span = window_span((2025, 12, 10), OVERLAP_SECS);
+        let mut halvings = 0;
+        while let Some((older, _)) = split(span) {
+            span = older;
+            halvings += 1;
+        }
+        assert_eq!(span.secs(), MIN_SPAN_SECS, "the walk can always reach two seconds");
+        assert!(halvings <= 16, "{halvings}");
+    }
+
+    /// The day's FIRST request — and with it every registry URL — is the URL
+    /// the cursor walker asked, byte for byte (issue 477 changes the walk, not
+    /// the package identity).
+    #[test]
+    fn the_day_span_url_is_the_old_window_url() {
+        let cases = [
+            ((2026, 9, 3), OVERLAP_SECS, "updatedFrom=2026-09-02T22:00:00&updatedTo=2026-09-03T23:59:59"),
+            ((2026, 1, 1), OVERLAP_SECS, "updatedFrom=2025-12-31T22:00:00&updatedTo=2026-01-01T23:59:59"),
+            ((2024, 3, 1), OVERLAP_SECS, "updatedFrom=2024-02-29T22:00:00&updatedTo=2024-03-01T23:59:59"),
+            ((2021, 5, 7), 0, "updatedFrom=2021-05-07T00:00:00&updatedTo=2021-05-07T23:59:59"),
+        ];
+        for (day, overlap, window) in cases {
+            let expected = format!("{BASE}/ocdsReleasePackages?limit=100&{window}");
+            assert_eq!(window_url(BASE, day, overlap), expected);
+            assert_eq!(span_url(BASE, window_span(day, overlap)), expected);
+        }
+        let d = day(BASE, (2026, 9, 3));
+        assert_eq!(windows(&d)[0].span, window_span((2026, 9, 3), OVERLAP_SECS));
+        assert_eq!(span_url(BASE, windows(&d)[0].span), d.url);
+    }
+
+    /// Issue 477's challenge: how the server resolves the repeated autumn hour
+    /// is undocumented, and the two plausible rules open a gap at different
+    /// seconds — 02:00:00 (earlier offset, Java's default) or 01:00:00 (later
+    /// offset). This pins what the walk DOES: no split of any span lets a half
+    /// start at either second on the last Sunday of October, so the halves meet
+    /// end to end under either rule; every other day, and every other second
+    /// of that day, splits exactly as the plain rule says.
+    #[test]
+    fn a_split_never_cuts_at_either_edge_of_the_repeated_autumn_hour() {
+        let sunday = days_from_civil(2026, 10, 25) * 86_400;
+        assert_eq!(uk_offset(sunday + 3_600 - 1), 3_600, "2026-10-25 is the autumn switch");
+        let (one, two) = (sunday + 3_600, sunday + 7_200);
+        // Spans whose plain midpoint is exactly 01:00:00 or 02:00:00.
+        for (from, to) in [(sunday, two - 1), (one, sunday + 3 * 3_600 - 1), (one - 4, one + 3), (two - 4, two + 3)] {
+            let (older, newer) = split(Span { from, to }).expect("a long enough span still splits");
+            assert!(newer.from != one && newer.from != two, "{from}..{to} cut at {}", newer.from);
+            assert_eq!(older.to + 1, newer.from);
+        }
+        // Nowhere on that day does a half start at either edge — walk every
+        // span the halving of the day (and of the daily window) can reach.
+        for root in [window_span((2026, 10, 25), 0), window_span((2026, 10, 25), OVERLAP_SECS)] {
+            let mut stack = vec![root];
+            let mut cuts = 0usize;
+            while let Some(span) = stack.pop() {
+                // Only the spans around the switch matter; the rest halve as any day.
+                if span.to < sunday || span.from > sunday + 4 * 3_600 {
+                    continue;
+                }
+                if let Some((older, newer)) = split(span) {
+                    assert!(newer.from != one && newer.from != two, "{span:?}");
+                    cuts += 1;
+                    stack.push(older);
+                    stack.push(newer);
+                }
+            }
+            assert!(cuts > 7_000, "the reachable spans were walked: {cuts}");
+        }
+        // A four-second span centred on an edge has nowhere else to cut.
+        assert_eq!(split(Span { from: two - 2, to: two + 1 }), None);
+        // The repeated hour itself is asked as plain wall clock, once.
+        let hour = Span { from: one, to: two - 1 };
+        assert!(span_url(BASE, hour).ends_with("updatedFrom=2026-10-25T01:00:00&updatedTo=2026-10-25T01:59:59"));
+        // A year later the same rule applies to that year's last Sunday, and
+        // the same seconds a week earlier are ordinary.
+        let next_year = days_from_civil(2027, 10, 31) * 86_400;
+        let (_, newer) = split(Span { from: next_year, to: next_year + 7_200 - 1 }).unwrap();
+        assert_ne!(newer.from, next_year + 3_600);
+        let ordinary = days_from_civil(2026, 10, 18) * 86_400;
+        let (_, newer) = split(Span { from: ordinary, to: ordinary + 7_200 - 1 }).unwrap();
+        assert_eq!(newer.from, ordinary + 3_600);
+    }
+
+    #[test]
+    fn page_is_short_needs_fewer_than_limit_and_no_next() {
+        assert!(page_is_short(0, None), "an empty window is complete");
+        assert!(page_is_short(99, None));
+        assert!(!page_is_short(100, None), "a full page might have more behind it");
+        assert!(!page_is_short(101, None));
+        assert!(!page_is_short(3, Some("https://x/ocdsReleasePackages?cursor=1")), "short but naming a next");
+        assert!(!page_is_short(100, Some("https://x")));
+    }
+
+    /// The staging dir names a page by its span, and only a name that renders
+    /// back to itself is one — the cursor walker's pages are not.
+    #[test]
+    fn a_span_key_round_trips_and_nothing_else_parses() {
+        let span = window_span((2021, 5, 7), OVERLAP_SECS);
+        assert_eq!(span_key(span), "20210506T220000-20210507T235959");
+        assert_eq!(parse_span_key(&span_key(span)), Some(span));
+        let (_, newer) = split(span).unwrap();
+        assert_eq!(parse_span_key(&span_key(newer)), Some(newer));
+        for not_a_span in [
+            "2026-09-03-p001",
+            "2026-09-03-h03-p001",
+            "cursor",
+            "20210507T235959-20210507T000000",
+            "20210507T000000-20210507T000000",
+            "20211307T000000-20211307T235959",
+            "20210507T240000-20210508T000000",
+            "20210507T00000-20210507T235959",
+            "2021O507T000000-20210507T235959",
+        ] {
+            assert_eq!(parse_span_key(not_a_span), None, "{not_a_span}");
+        }
+    }
+
+    /// A monthly is refused until its last UK civil day is over — UK, not
+    /// UTC: 23:30 UTC on 30 September 2026 is already 1 October in BST.
+    #[test]
+    fn a_month_ends_with_its_last_uk_civil_day() {
+        let sep30 = days_from_civil(2026, 9, 30) * 86_400;
+        assert!(!month_has_ended((2026, 9), sep30 + 22 * 3_600 + 59 * 60), "23:59 BST on the 30th");
+        assert!(month_has_ended((2026, 9), sep30 + 23 * 3_600), "00:00 BST on 1 October");
+        assert!(month_has_ended((2026, 8), sep30));
+        assert!(!month_has_ended((2026, 10), sep30 + 23 * 3_600));
+        assert_eq!(last_ended_month(sep30 + 22 * 3_600), (2026, 8));
+        assert_eq!(last_ended_month(sep30 + 23 * 3_600), (2026, 9));
+        // In winter UK time is UTC, and January's previous month is December.
+        let jan1 = days_from_civil(2027, 1, 1) * 86_400;
+        assert_eq!(last_ended_month(jan1 - 1), (2026, 11));
+        assert_eq!(last_ended_month(jan1), (2026, 12));
     }
 
     #[test]
@@ -400,16 +668,18 @@ mod tests {
         assert!(m.url.contains("updatedFrom=2025-06-01T00:00:00&updatedTo=2025-06-01T23:59:59"));
 
         // A daily is one overlapping window; a monthly is one window per civil day.
-        let dw = windows(BASE, &d);
+        let dw = windows(&d);
         assert_eq!(dw.len(), 1);
-        assert_eq!(dw[0], Window { day: (2026, 9, 3), url: d.url.clone() });
-        let mw = windows(BASE, &m);
+        assert_eq!(dw[0], Window { day: (2026, 9, 3), span: window_span((2026, 9, 3), OVERLAP_SECS) });
+        assert_eq!(span_url(BASE, dw[0].span), d.url);
+        let mw = windows(&m);
         assert_eq!(mw.len(), 30);
-        assert_eq!(mw[0].url, m.url);
+        assert_eq!(span_url(BASE, mw[0].span), m.url);
         assert_eq!(mw[29].day, (2025, 6, 30));
-        assert!(mw[29].url.contains("updatedFrom=2025-06-30T00:00:00&updatedTo=2025-06-30T23:59:59"));
-        assert_eq!(windows(BASE, &monthly(BASE, (2024, 2))).len(), 29, "leap February");
-        assert_eq!(windows(BASE, &monthly(BASE, (2025, 12))).len(), 31, "year rollover");
+        assert!(span_url(BASE, mw[29].span).contains("updatedFrom=2025-06-30T00:00:00&updatedTo=2025-06-30T23:59:59"));
+        assert!(mw.windows(2).all(|w| w[0].span.to + 1 == w[1].span.from), "contiguous, no overlap");
+        assert_eq!(windows(&monthly(BASE, (2024, 2))).len(), 29, "leap February");
+        assert_eq!(windows(&monthly(BASE, (2025, 12))).len(), 31, "year rollover");
 
         // Not an FTS shape: nothing to walk (the fetcher refuses rather than landing nothing).
         let ted = Target {
@@ -419,10 +689,10 @@ mod tests {
             url: "https://ted/x".into(),
             rel_path: "ted/daily/2026-00137.tar.gz".into(),
         };
-        assert!(windows(BASE, &ted).is_empty());
+        assert!(windows(&ted).is_empty());
         let mut garbled = day(BASE, (2026, 9, 3));
         garbled.period = "nope".into();
-        assert!(windows(BASE, &garbled).is_empty());
+        assert!(windows(&garbled).is_empty());
     }
 
     #[test]
