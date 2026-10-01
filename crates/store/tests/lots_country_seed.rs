@@ -261,11 +261,17 @@ async fn the_lots_country_seed_stays_a_candidate_set_not_an_answer() {
     // statement it would generate (country_seed forced false) directly. The
     // head pointers and per-lot deadline rows are set so tender 1 is open-CY,
     // tender 2 open-but-DE at head, tender 3 closed — only lot 1 may return.
+    // The deadline sits inside the election's window (issue 474: the lots
+    // `status` EXISTS applies the whole window, floor included), so the head
+    // versions are moved to the floor and the clock just past it.
+    let floor = store::canonical::DEADLINE_FLOOR_SECS;
     for id in [1, 2] {
-        exec(format!("UPDATE tenders SET current_deadline = 2000 WHERE id = {id}")).await;
+        exec(format!("UPDATE tender_versions SET published_at = {floor} WHERE tender_id = {id} AND seq = 2")).await;
+        exec(format!("UPDATE tenders SET current_deadline = {} WHERE id = {id}", floor + 2000)).await;
         exec(format!(
             "INSERT INTO tender_version_dates (tender_id, seq, lot_id, field, utc_seconds, offset_minutes, has_time)
-             VALUES ({id}, 2, NULL, 'submission_deadline', 2000, 0, 1)"
+             VALUES ({id}, 2, NULL, 'submission_deadline', {}, 0, 1)",
+            floor + 2000
         ))
         .await;
     }
@@ -273,7 +279,7 @@ async fn the_lots_country_seed_stays_a_candidate_set_not_an_answer() {
         status: Some(store::read::Status::Open),
         country: Some("CY".into()),
         country_seed: false,
-        now: 1_000,
+        now: floor + 1_000,
         ..Filter::default()
     };
     let (sql, params) = store::read::lots_statement(&over_cap, Scope::Page { after: 0, limit: 25 });

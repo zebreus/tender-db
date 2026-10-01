@@ -1097,31 +1097,30 @@ fn version_predicates(
                 // at all, so tender 81134's lot 219239 (no deadline of its own, no
                 // procedure deadline) was returned as open on its SIBLING's date.
                 //
-                // "Admitted" is the election's window (issues 171 and 422): the
-                // horizon on every row, and the floor on the own-row test, which —
-                // unlike the outer `> now` row — can be any date. The publication
-                // is one PK seek. A strict subset of the old per-tender answer, so
+                // "Admitted" is the election's window (issues 171, 422 and 474),
+                // called from `canonical` on both rows; on the outer row its floor
+                // is implied by `> now` and changes nothing. The publication is
+                // one PK seek. A strict subset of the old per-tender answer, so
                 // the open-head seed (`t.current_deadline > now`) is still a
                 // candidate SUPERSET of it.
                 let published = format!(
                     "(SELECT pv.published_at FROM tender_versions pv
                        WHERE pv.tender_id = {tid} AND pv.seq = {seq})"
                 );
-                let horizon = crate::canonical::DEADLINE_HORIZON_SECS;
-                let floor = crate::canonical::DEADLINE_FLOOR_SECS;
+                let outer = crate::canonical::deadline_admitted_sql("d.utc_seconds", &published);
+                let own = crate::canonical::deadline_admitted_sql("o.utc_seconds", &published);
                 let exists = format!(
                     "EXISTS (SELECT 1 FROM tender_version_dates d
                               WHERE d.tender_id = {tid} AND d.seq = {seq}
                                 AND d.field = 'submission_deadline' AND d.utc_seconds > ?
-                                AND d.utc_seconds - {published} <= {horizon}
+                                AND {outer}
                                 AND (d.lot_id = {lot}
                                      OR (d.lot_id IS NULL
                                          AND NOT EXISTS (SELECT 1 FROM tender_version_dates o
                                                           WHERE o.tender_id = {tid} AND o.seq = {seq}
                                                             AND o.field = 'submission_deadline'
                                                             AND o.lot_id = {lot}
-                                                            AND o.utc_seconds >= {floor}
-                                                            AND o.utc_seconds - {published} <= {horizon}))))"
+                                                            AND {own}))))"
                 );
                 match status {
                     Status::Open => q.push(&format!(" AND {exists}"), [Value::Integer(f.now)]),
@@ -1909,10 +1908,9 @@ fn tender_select_head(from: &str, lang: Option<&str>) -> String {
     // taste — this issue and 343 are both "two places computed one election and
     // disagreed", so a second implementation is the thing to avoid:
     //
-    // - The deadline window is two comparisons against two constants (the
-    //   horizon, and issue 171's floor), so it transcribes faithfully and the
-    //   constants themselves are interpolated from `canonical` rather than
-    //   retyped.
+    // - The deadline window is called from `canonical` (`deadline_admitted_sql`,
+    //   issue 474), the same window `head_deadline` filters with, so its shape
+    //   has one home and a change to it reaches this pick with no edit here.
     // - The amount rule is a DIGIT WALK (`sentinel_amount`) plus a ceiling, and
     //   transcribing that into SQL would be exactly the second implementation.
     //   So the amount pick does not re-derive anything: it looks up the row the
@@ -1928,11 +1926,7 @@ fn tender_select_head(from: &str, lang: Option<&str>) -> String {
             column,
             Some("submission_deadline"),
             "s.utc_seconds DESC, (s.lot_id IS NULL) DESC, s.lot_id",
-            &format!(
-                "s.utc_seconds >= {} AND s.utc_seconds - v.published_at <= {}",
-                crate::canonical::DEADLINE_FLOOR_SECS,
-                crate::canonical::DEADLINE_HORIZON_SECS
-            ),
+            &crate::canonical::deadline_admitted_sql("s.utc_seconds", "v.published_at"),
         )
     };
     // The published figure the fold elected, in ITS OWN currency. This also
@@ -3847,12 +3841,14 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -
             // The head election's window, so a lot does not serve a date its
             // tender refuses: the floor (issue 171 — lot 6556410's year 0016,
             // 3509049's `1970-01-01` on 2026-09-26) and the horizon (issue 422 —
-            // the year-3005 class of 366). The lots `status` EXISTS applies the
-            // same horizon, so a lot this skips is not returned as open either.
+            // the year-3005 class of 366), called from `canonical` (issue 474).
+            // The lots `status` EXISTS applies the same window, so a lot this
+            // skips is not returned as open either. A missing publication admits
+            // nothing, as SQL's NULL does there; `published_at` is NOT NULL and
+            // dates are foreign-keyed to their version, so that arm is a version
+            // row that should not be missing.
             if opt_int_of(&row, 1).is_some_and(|utc| {
-                utc < crate::canonical::DEADLINE_FLOOR_SECS
-                    || published_at
-                        .is_some_and(|p| utc - p > crate::canonical::DEADLINE_HORIZON_SECS)
+                !published_at.is_some_and(|p| crate::canonical::deadline_admitted(utc, p))
             }) {
                 continue;
             }

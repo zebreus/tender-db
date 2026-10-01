@@ -3646,11 +3646,13 @@ impl Db {
     /// here asserted the two "compute the same thing", so a reader checking
     /// whether a backfill was safe found a promise that it was.
     ///
-    /// It is transcribed rather than looked up because it CAN be: one comparison
-    /// against one constant, interpolated from `canonical` so the number cannot
-    /// drift. Its twin for the value column had no such luck — `sentinel_amount`
-    /// is a digit walk — which is why that one was deleted rather than repaired,
-    /// leaving the fold as the only thing that elects a head value.
+    /// The window is called from `canonical` (`deadline_admitted_sql`, issue 474),
+    /// the one the fold's `head_deadline` filters with, so its shape cannot drift
+    /// from the election's. It is measured from `tenders.current_published_at`,
+    /// the head's denormalised publication, visible as the call's argument. Its
+    /// twin for the value column had no such luck — `sentinel_amount` is a digit
+    /// walk — which is why that one was deleted rather than repaired, leaving the
+    /// fold as the only thing that elects a head value.
     ///
     /// Batched for the same reason as [`Self::mark_skipped_siblings`]: turso writes
     /// a WAL frame per row and cannot checkpoint mid-statement, so the caller
@@ -3683,11 +3685,9 @@ impl Db {
                      (SELECT MAX(d.utc_seconds) FROM tender_version_dates d
                        WHERE d.tender_id = tenders.id AND d.seq = tenders.current_seq
                          AND d.field = 'submission_deadline'
-                         AND d.utc_seconds >= {}
-                         AND d.utc_seconds - tenders.current_published_at <= {})
+                         AND {})
                   WHERE id > ? AND id <= ?",
-                crate::canonical::DEADLINE_FLOOR_SECS,
-                crate::canonical::DEADLINE_HORIZON_SECS
+                crate::canonical::deadline_admitted_sql("d.utc_seconds", "tenders.current_published_at")
             ),
             (Value::Integer(after), Value::Integer(watermark)),
         )

@@ -1461,7 +1461,7 @@ pub fn head_deadline(head: &TenderVersion) -> Option<i64> {
         // already lets any real sibling beat a year-0016 typo, so what the floor
         // changes is the tender whose ONLY deadline is one — five on prod
         // (2026-09-26), sorting FIRST on `sort=deadline&order=asc`.
-        .filter(|d| *d >= DEADLINE_FLOOR_SECS && *d - head.published_at <= DEADLINE_HORIZON_SECS)
+        .filter(|d| deadline_admitted(*d, head.published_at))
         .max()
 }
 
@@ -1585,6 +1585,34 @@ pub const IMPLAUSIBLE_EUR_CENTS: i64 = 10_000_000_000_000;
 /// within one year — and it is set there so the rule only ever catches the
 /// unarguable, like tender 3323836's year-3005 sibling.
 pub const DEADLINE_HORIZON_SECS: i64 = 10 * 365 * 86_400;
+
+/// Whether a submission deadline at `utc` is a date rather than a typo, for a
+/// version published at `published_at`: not before [`DEADLINE_FLOOR_SECS`] and
+/// not more than [`DEADLINE_HORIZON_SECS`] past the publication.
+///
+/// **The window's one home (issue 474).** Every site that elects or serves a
+/// submission deadline applies it through this or [`deadline_admitted_sql`] —
+/// the fold's `head_deadline`, the read pick, the lots `status` EXISTS, the lot
+/// row in `summarise`, and the `current_deadline` backfill. It used to be
+/// written out by hand at each, and the horizon (`aa732c5`) reached one copy
+/// and the rest over 18 days. `the_deadline_window_is_written_once` fails if
+/// a sixth copy appears.
+pub fn deadline_admitted(utc: i64, published_at: i64) -> bool {
+    utc >= DEADLINE_FLOOR_SECS && utc - published_at <= DEADLINE_HORIZON_SECS
+}
+
+/// [`deadline_admitted`] as a parenthesised SQL predicate over two column
+/// expressions, with the constants interpolated. Each argument must be a
+/// single operand — a column, a bound parameter, or a parenthesised
+/// expression such as a scalar subquery — since it is spliced in as is. A NULL
+/// publication admits nothing, as SQL's NULL comparison already gives.
+/// `the_sql_window_and_the_rust_window_agree_at_every_edge` holds the two
+/// together at both edges.
+pub fn deadline_admitted_sql(utc: &str, published_at: &str) -> String {
+    format!(
+        "({utc} >= {DEADLINE_FLOOR_SECS} AND {utc} - {published_at} <= {DEADLINE_HORIZON_SECS})"
+    )
+}
 
 /// The earliest instant a submission deadline may name before it is read as a
 /// placeholder rather than a date (issue 171, the research profile's rule 12):

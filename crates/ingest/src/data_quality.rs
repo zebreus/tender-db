@@ -769,12 +769,12 @@ const SENTINEL_DATE_MIN_REPEATS: u64 = 3;
 /// [`render_sentinels`]) rather than presenting a truncated tail as the whole of it.
 const SENTINEL_LISTING_CAP: usize = 40;
 
-/// The far edge of the plausible date range: ten years past the run. Mirrors
+/// The far edge of the plausible date range: ten years past the run. Reads
 /// `store::canonical::DEADLINE_HORIZON_SECS`, which bounds the head-deadline election,
 /// so the detector looks exactly where the election now refuses. Relative to the run
 /// rather than to each notice's `published_at` (which is what the election uses) —
 /// coarser, and enough for a detector whose job is to rank candidates.
-const SENTINEL_DATE_HORIZON_SECS: i64 = 10 * 365 * 86_400;
+const SENTINEL_DATE_HORIZON_SECS: i64 = store::canonical::DEADLINE_HORIZON_SECS;
 
 /// The near edge: 1990-01-01. TED's own record starts in the 1990s, so an earlier date
 /// is a placeholder, an epoch-zero default or a century typo rather than a procurement

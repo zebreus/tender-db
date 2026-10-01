@@ -19,7 +19,10 @@
 //! expectations are read back off the stored head columns. Revert either side
 //! and these fail.
 
-use store::canonical::{DEADLINE_FLOOR_SECS, DEADLINE_HORIZON_SECS, Fact, TenderProjection, TenderVersion};
+use store::canonical::{
+    DEADLINE_FLOOR_SECS, DEADLINE_HORIZON_SECS, Fact, TenderProjection, TenderVersion, deadline_admitted,
+    deadline_admitted_sql,
+};
 use store::read::{self, Filter, Scope};
 use store::turso::{self, Value};
 
@@ -221,8 +224,7 @@ async fn a_deadline_before_the_floor_is_refused_by_the_fold_and_the_row_alike() 
     }
 }
 
-/// The horizon in the SQL is interpolated from the constant, not retyped, and
-/// the amount pick reuses the fold's elected value instead of re-deriving it.
+/// The deadline pick calls canonical's window (issue 474), and the amount pick reuses the fold's elected value instead of re-deriving it.
 /// Both are the anti-drift property this issue exists for: a literal or a
 /// transcribed digit walk would be a second copy free to disagree.
 #[test]
@@ -235,12 +237,8 @@ fn the_read_layer_reuses_the_election_rather_than_repeating_it() {
         25,
     );
     assert!(
-        sql.contains(&format!("<= {DEADLINE_HORIZON_SECS}")),
-        "the horizon must come from DEADLINE_HORIZON_SECS: {sql}"
-    );
-    assert!(
-        sql.contains(&format!("s.utc_seconds >= {DEADLINE_FLOOR_SECS}")),
-        "the floor must come from DEADLINE_FLOOR_SECS: {sql}"
+        sql.contains(&deadline_admitted_sql("s.utc_seconds", "v.published_at")),
+        "the deadline pick must apply canonical's window, not a transcription of it: {sql}"
     );
     assert!(
         sql.contains("s.eur_cents = t.current_value_eur_cents"),
@@ -284,8 +282,132 @@ fn the_head_columns_have_exactly_one_writer_that_decides_them() {
         writers.len(),
         2,
         "expected exactly two writers of the head columns — the fold's own write, and the \
-         deadline backfill which transcribes the horizon faithfully from DEADLINE_HORIZON_SECS. \
+         deadline backfill, which applies the window through `canonical::deadline_admitted_sql`. \
          Found: {writers:?}. A third writer is how issue 375 happened: it will agree with the \
          fold on the day it is written and diverge the next time the election grows a filter."
     );
+}
+
+/// Every `.rs` file under `dir`, recursively, in a stable order.
+fn rust_files(dir: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
+    let mut entries: Vec<_> = std::fs::read_dir(dir).expect("readable dir").map(|e| e.unwrap().path()).collect();
+    entries.sort();
+    for p in entries {
+        if p.is_dir() {
+            rust_files(&p, out);
+        } else if p.extension().is_some_and(|e| e == "rs") {
+            out.push(p);
+        }
+    }
+}
+
+/// Issue 474: the submission-deadline window has ONE home, `canonical`'s
+/// `deadline_admitted` and `deadline_admitted_sql`. It used to be written out by
+/// hand at five sites, and a change to it (the horizon, `aa732c5`) reached one
+/// copy and the others over 18 days and three fixes — one of the gaps served on
+/// prod. The writer count above cannot see this: three of the five were readers.
+///
+/// (a) Outside `canonical.rs` no code line names the two constants or retypes
+///     their values (the data-quality sentinel detector is the one named
+///     exception: it ranks candidates and elects nothing). Inside it, only the
+///     two definitions and the two helpers do.
+/// (b) The code lines in store and app that select `submission_deadline` facts
+///     are counted, because the 366 drift was a raw `MAX` that named no constant
+///     at all. A new reader fails this until it is moved onto a helper and the
+///     count is raised in the same commit.
+#[test]
+fn the_deadline_window_is_written_once() {
+    let crates = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().to_path_buf();
+    let names = ["DEADLINE_FLOOR_SECS", "DEADLINE_HORIZON_SECS", "631_152_000", "10 * 365 * 86_400"];
+    let selectors = ["= 'submission_deadline'", "Some(\"submission_deadline\")", "== \"submission_deadline\""];
+    let helpers = ["deadline_admitted", "deadline_admitted_sql"];
+
+    let mut files = Vec::new();
+    for krate in std::fs::read_dir(&crates).unwrap().map(|e| e.unwrap().path()) {
+        let src = krate.join("src");
+        if krate.file_name().is_some_and(|n| n != "vendor") && src.is_dir() {
+            rust_files(&src, &mut files);
+        }
+    }
+    assert!(files.iter().any(|f| f.ends_with("store/src/canonical.rs")), "the scan must reach canonical.rs");
+
+    let mut stray: Vec<String> = Vec::new();
+    let mut readers: Vec<String> = Vec::new();
+    for file in &files {
+        let rel = file.strip_prefix(&crates).unwrap().to_string_lossy().into_owned();
+        let text = std::fs::read_to_string(file).unwrap();
+        let canonical = rel == "store/src/canonical.rs";
+        let detector = rel == "ingest/src/data_quality.rs";
+        let counted = rel.starts_with("store/src/") || rel.starts_with("app/src/");
+        // The fn a line sits in, by the last `fn` header seen — enough for
+        // canonical.rs, whose items are top-level.
+        let mut current_fn = String::new();
+        for (n, line) in text.lines().enumerate() {
+            let code = line.split("//").next().unwrap_or("");
+            let trimmed = code.trim_start();
+            if let Some(rest) = trimmed.strip_prefix("pub fn ").or_else(|| trimmed.strip_prefix("fn ")) {
+                current_fn = rest.split(|c: char| c == '(' || c == '<').next().unwrap_or("").to_string();
+            }
+            let at = format!("{rel}:{}", n + 1);
+            if names.iter().any(|name| code.contains(name)) {
+                let allowed = if canonical {
+                    trimmed.starts_with("pub const DEADLINE_FLOOR_SECS")
+                        || trimmed.starts_with("pub const DEADLINE_HORIZON_SECS")
+                        || helpers.contains(&current_fn.as_str())
+                } else {
+                    detector
+                };
+                if !allowed {
+                    stray.push(at.clone());
+                }
+            }
+            if counted && selectors.iter().any(|s| code.contains(s)) {
+                readers.push(at);
+            }
+        }
+    }
+    assert!(
+        stray.is_empty(),
+        "the deadline window is written by hand outside canonical's helpers at {stray:?}. \
+         Call `canonical::deadline_admitted` (Rust) or `canonical::deadline_admitted_sql` (SQL) \
+         instead, so the next change to the window reaches every site (issue 474)."
+    );
+    assert_eq!(
+        readers.len(),
+        6,
+        "the code lines selecting `submission_deadline` facts changed: {readers:?}. Expected six — \
+         the fold's `head_deadline`, the read pick, the lots `status` EXISTS (two rows), the lot \
+         row in `summarise`, and the backfill — each applying canonical's window. A new reader \
+         must call `deadline_admitted`/`deadline_admitted_sql` and raise this count in the same \
+         commit (issue 474; issue 366 was a reader that named no constant)."
+    );
+}
+
+/// Issue 474: the SQL fragment and the Rust predicate are one window, checked
+/// at both edges ±1 by evaluating the fragment on a store connection.
+#[tokio::test]
+async fn the_sql_window_and_the_rust_window_agree_at_every_edge() {
+    let (_db, conn) = open("window-edges").await;
+    let published = PUBLISHED_AT;
+    let mut cases = Vec::new();
+    for d in [-1, 0, 1] {
+        cases.push((DEADLINE_FLOOR_SECS + d, published));
+        cases.push((published + DEADLINE_HORIZON_SECS + d, published));
+    }
+    // Both edges must actually be exercised, in both directions.
+    assert!(cases.iter().any(|&(u, p)| deadline_admitted(u, p)));
+    assert!(cases.iter().filter(|&&(u, p)| !deadline_admitted(u, p)).count() == 2);
+    for (utc, published_at) in cases {
+        let sql = format!("SELECT CASE WHEN {} THEN 1 ELSE 0 END", deadline_admitted_sql("?1", "?2"));
+        let mut rows = conn
+            .query(&sql, [Value::Integer(utc), Value::Integer(published_at)])
+            .await
+            .unwrap();
+        let got = rows.next().await.unwrap().unwrap().get_value(0).unwrap().as_integer().copied();
+        assert_eq!(
+            got,
+            Some(deadline_admitted(utc, published_at) as i64),
+            "utc {utc}, published {published_at}: the SQL window disagrees with the Rust one ({sql})"
+        );
+    }
 }
