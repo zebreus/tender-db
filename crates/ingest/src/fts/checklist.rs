@@ -197,6 +197,15 @@ pub const CHECKLIST: &[(&str, Disposition)] = &[
     ("bids.statistics[].currency", Mapped("the BT-710/BT-711 amount's currency")),
 ];
 
+/// The OCDS arrays Find a Tender was seen to publish as a map keyed by ordinal,
+/// which the parser reads as the list they stand for (issue 478:
+/// `"deliveryAddresses": {"1": {"region": "UK"}}`, `parse::list_or_ordinal_map`).
+/// The census walks such a map as that list, so its leaves take the array
+/// spelling's dispositions — `deliveryAddresses.1.countryName` is
+/// `deliveryAddresses[].countryName`, ignored, not the container's mapped entry.
+/// Keep it in step with the `deserialize_with` attributes in `parse.rs`.
+pub const ORDINAL_MAPS: &[&str] = &["tender.items[].deliveryAddresses", "awards[].items[].deliveryAddresses"];
+
 /// The disposition of one published path, by the longest entry that names it
 /// or a container above it. `None` is the finding: a path this profile has never
 /// decided about.
@@ -237,5 +246,14 @@ mod tests {
         assert_ne!(disposition("tender.lotsGroup"), disposition("tender.lots"));
         assert_eq!(disposition("somethingNew"), None);
         assert_eq!(disposition("tenderers"), None);
+    }
+
+    /// Every ordinal-map field is a checklist entry of its own, mapped: the census
+    /// folds its map into `[]` under it, so it must exist to be folded under.
+    #[test]
+    fn every_ordinal_map_is_a_mapped_entry() {
+        for path in ORDINAL_MAPS {
+            assert!(CHECKLIST.iter().any(|(key, d)| key == path && matches!(d, Mapped(_))), "{path}");
+        }
     }
 }

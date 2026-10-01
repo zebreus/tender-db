@@ -457,22 +457,33 @@ async fn an_fts_release_folds_its_category_as_the_contract_nature() {
 /// figure until a consumer noticed.
 #[test]
 fn every_published_fts_path_is_mapped_or_ignored_on_record() {
-    use ingest::fts::checklist::{disposition, Disposition};
+    use ingest::fts::checklist::{disposition, Disposition, ORDINAL_MAPS};
     use std::collections::BTreeMap;
 
-    fn walk(v: &serde_json::Value, prefix: &str, paths: &mut BTreeMap<String, usize>) {
+    fn walk(v: &serde_json::Value, prefix: &str, paths: &mut BTreeMap<String, usize>, folded: &mut usize) {
         match v {
+            // Issue 478: an ordinal-keyed map where the parser reads the list it
+            // stands for is censused as that list, so its leaves are disposed of
+            // as the array spelling's are (`deliveryAddresses.1.countryName` would
+            // otherwise fall to the container's MAPPED entry, not the leaf's IGNORED).
+            serde_json::Value::Object(map) if ORDINAL_MAPS.contains(&prefix) => {
+                *folded += 1;
+                let p = format!("{prefix}[]");
+                for x in map.values() {
+                    walk(x, &p, paths, folded);
+                }
+            }
             serde_json::Value::Object(map) => {
                 for (k, x) in map {
                     let p = if prefix.is_empty() { k.clone() } else { format!("{prefix}.{k}") };
                     *paths.entry(p.clone()).or_default() += 1;
-                    walk(x, &p, paths);
+                    walk(x, &p, paths, folded);
                 }
             }
             serde_json::Value::Array(items) => {
                 let p = format!("{prefix}[]");
                 for x in items {
-                    walk(x, &p, paths);
+                    walk(x, &p, paths, folded);
                 }
             }
             _ => {}
@@ -482,6 +493,7 @@ fn every_published_fts_path_is_mapped_or_ignored_on_record() {
     let root = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/fts");
     let mut paths: BTreeMap<String, usize> = BTreeMap::new();
     let mut releases = 0;
+    let mut folded = 0;
     for dir in ["pages", "members"] {
         for entry in std::fs::read_dir(format!("{root}/{dir}")).expect("fixture dir") {
             let path = entry.expect("entry").path();
@@ -495,12 +507,17 @@ fn every_published_fts_path_is_mapped_or_ignored_on_record() {
             let Ok(doc) = serde_json::from_slice::<serde_json::Value>(&bytes) else { continue };
             for r in doc["releases"].as_array().into_iter().flatten() {
                 releases += 1;
-                walk(r, "", &mut paths);
+                walk(r, "", &mut paths, &mut folded);
             }
         }
     }
     assert!(releases >= 5, "the fixtures hold releases: {releases}");
     assert!(paths.len() >= 150, "the census sees the publisher's shape: {} paths", paths.len());
+    assert!(folded >= 1, "a fixture (002109-2021) publishes an ordinal map, and the census reads it as its list");
+    assert!(
+        !paths.keys().any(|p| ORDINAL_MAPS.iter().any(|m| p.strip_prefix(m).is_some_and(|rest| rest.starts_with('.')))),
+        "no ordinal-map key survives into a census path"
+    );
 
     let undecided: Vec<&String> = paths.keys().filter(|p| disposition(p).is_none()).collect();
     assert!(

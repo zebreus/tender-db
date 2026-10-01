@@ -941,11 +941,22 @@ struct Address {
 /// for: its values, in key order, with numeric keys compared as numbers (`2`
 /// before `10`) and ahead of any other key, which compare as text. The JSON's
 /// entry order does not decide it, because an ordinal map states its order in
-/// its keys. Any other shape is refused as before: this accepts a different
-/// container, never a different element.
+/// its keys. An empty map is the empty list.
+///
+/// What it still refuses, and how that differs from a plain `Vec`:
+/// - a scalar or `null` where the list belongs, as before, but the detail now
+///   reads `expected a sequence, or a map keyed by ordinal standing for one`
+///   where serde's own said `expected a sequence` (a `detail_like` written for
+///   this field must match the new text);
+/// - an element that is not a `T`, in either container (`{"1": "UK"}`);
+/// - a map that repeats a key. JSON leaves a duplicate key's meaning to the
+///   reader, and every generic reader (the census walk among them) keeps only
+///   the last value, so taking both would emit an address no other reader of
+///   the member sees, and in the JSON's order. It quarantines instead.
 ///
 /// Applied only where the archive shows the spelling. Every OCDS array field
-/// in this model could take it, but each one is opened only on evidence.
+/// in this model could take it, but each one is opened only on evidence; the
+/// census reads the same set from `checklist::ORDINAL_MAPS`.
 fn list_or_ordinal_map<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
 where
     D: serde::Deserializer<'de>,
@@ -974,8 +985,16 @@ where
                 entries.push(entry);
             }
             // Two keys naming one number (`1`, `01`) fall back to their text, so
-            // the order never depends on the JSON's.
+            // the order never depends on the JSON's. A key that repeats is the
+            // one case the text cannot order, and it is refused (see above):
+            // after the sort its copies sit side by side.
             entries.sort_by(|(a, _), (b, _)| ordinal(a).cmp(&ordinal(b)));
+            if let Some(w) = entries.windows(2).find(|w| w[0].0 == w[1].0) {
+                return Err(serde::de::Error::custom(format_args!(
+                    "duplicate key `{}` in a map keyed by ordinal",
+                    w[0].0
+                )));
+            }
             Ok(entries.into_iter().map(|(_, element)| element).collect())
         }
     }
@@ -1266,7 +1285,7 @@ mod tests {
     fn every_fts_fixture_parses() {
         for name in
             ["083563-2026", "083645-2026", "083650-2026", "083685-2026", "_noid-2026-09-03-p001-000",
-             "029615-2025", "029664-2025", "052408-2025", "083468-2026"]
+             "029615-2025", "029664-2025", "052408-2025", "083468-2026", "002109-2021"]
         {
             let p = parsed(name);
             assert!(
@@ -1945,5 +1964,87 @@ mod tests {
             matches!(parse(payload), Err(Rejected { reason: "unparsable-json", .. })),
             "a map is accepted only where FTS was seen to publish one"
         );
+    }
+
+    /// Issue 478, the member itself: 002109-2021 as the fetcher writes it (cut by
+    /// `member_bytes` from the API's 2026-10-01 serving of it). A UK tender with
+    /// one lot, `1`, one item naming it, and the map-shaped `deliveryAddresses`
+    /// at line 69 that quarantined it — one region, `UK`.
+    #[test]
+    fn the_quarantined_member_parses_with_its_one_uk_delivery_region() {
+        let doc: serde_json::Value = serde_json::from_slice(&fixture("002109-2021")).expect("json");
+        assert!(
+            doc["releases"][0]["tender"]["items"][0]["deliveryAddresses"].is_object(),
+            "the fixture still carries the map spelling it is here for"
+        );
+        let p = parsed("002109-2021");
+        assert_eq!(all(&p, "BT-5071-Lot"), vec![nuts("UK")], "one delivery address, region UK");
+        assert_eq!(one(&p, "1", "BT-5071-Lot"), Some(nuts("UK")), "on the lot its item names");
+        assert!(all(&p, "BT-5071-Procedure").is_empty());
+    }
+
+    /// The review's reproduction: a map that repeats a key used to yield BOTH
+    /// values, in the JSON's order (A,B or B,A by which came first), where any
+    /// generic JSON reader keeps only the last. It is refused instead, whichever
+    /// copy comes first, and the detail names the key.
+    #[test]
+    fn a_map_that_repeats_a_key_is_refused_not_read_twice() {
+        for delivery in [r#"{"1":{"region":"A"},"1":{"region":"B"}}"#, r#"{"1":{"region":"B"},"1":{"region":"A"}}"#,
+                         r#"{"2":{"region":"C"},"1":{"region":"A"},"2":{"region":"C"}}"#]
+        {
+            match with_delivery("ocds-x-478e", delivery) {
+                Err(Rejected { reason, detail }) => {
+                    assert_eq!(reason, "unparsable-json", "{delivery}");
+                    assert!(detail.contains("duplicate key `"), "{delivery}: {detail}");
+                }
+                Ok(p) => panic!("{delivery} read as {:?}", all(&p, "BT-5071-Lot")),
+            }
+        }
+    }
+
+    /// Two DIFFERENT keys naming one number (`1`, `01`) are both kept, and their
+    /// order is their text's — `01` before `1` — whichever the JSON lists first.
+    /// Without the text in the sort key the two entries would keep the JSON's
+    /// order and these two spellings would disagree.
+    #[test]
+    fn keys_naming_one_number_order_by_their_text_not_the_json() {
+        let regions = |delivery: &str| match with_delivery("ocds-x-478f", delivery) {
+            Ok(p) => all(&p, "BT-5071-Lot"),
+            Err(Rejected { reason, detail }) => panic!("{delivery}: {reason}: {detail}"),
+        };
+        let want = ["R01", "R1", "R2"].map(nuts).to_vec();
+        assert_eq!(regions(r#"{"1":{"region":"R1"},"01":{"region":"R01"},"2":{"region":"R2"}}"#), want);
+        assert_eq!(regions(r#"{"01":{"region":"R01"},"2":{"region":"R2"},"1":{"region":"R1"}}"#), want);
+    }
+
+    /// An empty map is the empty list: it parses, emits no region, and is
+    /// indistinguishable from `[]`. (Before 478 it was refused with the rest of
+    /// the map shapes.)
+    #[test]
+    fn an_empty_map_is_the_empty_list() {
+        let (Ok(map), Ok(list)) = (with_delivery("ocds-x-478g", "{}"), with_delivery("ocds-x-478g", "[]")) else {
+            panic!("both spellings parse")
+        };
+        assert!(all(&map, "BT-5071-Lot").is_empty() && all(&map, "BT-5071-Procedure").is_empty());
+        assert_eq!(map, list);
+    }
+
+    /// Award items share the tender's `Item`, so they take the map spelling too
+    /// (an award release carries its delivery region on `awards[].items[]` only,
+    /// issue 437). Pinned so a split of the type cannot drop the leniency on one side.
+    #[test]
+    fn an_award_items_map_shaped_delivery_addresses_reads_as_its_list() {
+        let release = |delivery: &str| {
+            format!(
+                r#"{{"version":"1.1","releases":[{{"ocid":"ocds-x-478h","tender":{{"lots":[{{"id":"1"}}]}},
+                    "awards":[{{"id":"1","status":"active","relatedLots":["1"],
+                                "items":[{{"id":"1","deliveryAddresses":{delivery}}}]}}]}}]}}"#
+            )
+        };
+        let map = parse(release(r#"{"2":{"region":"UKI5"},"1":{"region":"UKK15"}}"#).as_bytes());
+        let list = parse(release(r#"[{"region":"UKK15"},{"region":"UKI5"}]"#).as_bytes());
+        let (Ok(map), Ok(list)) = (map, list) else { panic!("both spellings parse") };
+        assert_eq!(all(&map, "BT-5071-Lot"), ["UKK15", "UKI5"].map(nuts).to_vec(), "on the award's one lot, in key order");
+        assert_eq!(map, list);
     }
 }
