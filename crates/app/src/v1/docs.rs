@@ -285,6 +285,19 @@ vocabulary across eras, plus <code>combined</code> where a pre-eForms notice pub
 <code>contracts</code>, and <code>versions</code> — each version naming the
 <code>caused_by_notice_id</code> that produced it (the ADR-0001 traceability
 chain). A missing id is <code>404</code>.</p>
+<p><strong>A party names its organization twice.</strong> Each <code>parties[]</code>
+entry, and each bid's <code>parties[]</code> entry, carries <code>organization_name</code>,
+the organization's <em>head</em> name &mdash; one name for every tender the organization
+appears on &mdash; and <code>mention_name</code>, the name <em>this</em> notice published
+for the party, served whether or not the two agree (null only when the notice published
+no name). They differ for ordinary reasons: a trading name, a rename, another language.
+They also differ for a bad one: a party binds to an organization by its official
+identifier before its name, so a notice that published another organization's identifier
+on a party puts that party &mdash; and its <code>organization_id</code> &mdash; on the
+other organization, whose head then names it. <code>mention_name</code> still says what
+the notice said (issue 456). <code>lot_results[].winners[]</code> carry the head only: a
+winner has no anchor to the notice's party block, so its published name is on its
+<code>parties[]</code> entry (role <code>winner</code> or <code>Tenderer</code>).</p>
 <pre><code>curl -s https://tenders.zebreus.click/v1/tenders/14327</code></pre>
 
 <h2 id="notice-content">Notice content</h2>
@@ -927,6 +940,28 @@ mod tests {
         for (surface, text) in [("/docs", PAGE), ("/v1/openapi.json", SPEC)] {
             assert!(!text.contains("no interrupt"), "{surface} must not claim the engine cannot stop a query");
             assert!(text.contains("issue 425"), "{surface}'s 408 must say the query is stopped at the limit");
+        }
+    }
+
+    /// Issue 456: a party on the detail carries two names, and both surfaces a
+    /// reader consults say which is which — `organization_name` is the
+    /// organization's head, `mention_name` the name this notice published — and why
+    /// they can disagree (a mention binds by its identifier before its name). Read
+    /// from the detail section and the `parties` description, not the whole
+    /// surface, so a mention elsewhere cannot satisfy it.
+    #[test]
+    fn the_docs_say_which_name_a_party_serves() {
+        let start = PAGE.find("<h2 id=\"detail\">").expect("/docs has a Tender-detail section");
+        let docs = &PAGE[start..start + 4 + PAGE[start + 4..].find("<h2").expect("a section follows the detail")];
+        let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        let openapi = spec["components"]["schemas"]["TenderDetail"]["allOf"][1]["properties"]["parties"]
+            ["description"]
+            .as_str()
+            .expect("the parties array is described");
+        for (surface, text) in [("/docs", docs), ("/v1/openapi.json", openapi)] {
+            for needle in ["mention_name", "organization_name", "head", "identifier"] {
+                assert!(text.contains(needle), "{surface}'s parties text must name {needle:?}:\n{text}");
+            }
         }
     }
 

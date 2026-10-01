@@ -316,20 +316,43 @@ fn fact(f: &FactRow) -> Value {
     object
 }
 
+/// A party names its organization twice (issue 456). `organization_name` is the
+/// organization's head, one name for every tender it appears on; `mention_name` is
+/// what THIS notice called the party. The resolver binds a mention by its identifier
+/// before its name, so a notice that put another organization's number on a party
+/// reads, through the head, as that other organization — and `mention_name` is then
+/// the only place the notice's own word survives. It is served whether or not it
+/// equals the head: a null standing for "same as the head" would make every reader
+/// infer the published name from an absence. Null means the notice published none.
 fn party(p: &PartyRow) -> Value {
     json!({
         "lot": p.lot_key,
         "role": p.role,
         "organization_id": p.organization_id,
         "organization_name": p.organization_name,
+        "mention_name": p.mention_name,
     })
 }
 
-fn result_org(o: &ResultOrgRow) -> Value {
+/// A winner: the organization only. Its row carries no mention anchor, so there is
+/// no published name to serve beside the head — and no key, rather than a null that
+/// reads as "the notice named none". The winner's published name is on its
+/// `parties[]` entry.
+fn winner(o: &ResultOrgRow) -> Value {
     json!({
         "role": o.role,
         "organization_id": o.organization_id,
         "organization_name": o.organization_name,
+    })
+}
+
+/// A bid's tenderer or subcontractor, anchored to its mention like a [`party`].
+fn bid_party(o: &ResultOrgRow) -> Value {
+    json!({
+        "role": o.role,
+        "organization_id": o.organization_id,
+        "organization_name": o.organization_name,
+        "mention_name": o.mention_name,
     })
 }
 
@@ -345,7 +368,7 @@ fn lot_result(r: &LotResultRow) -> Value {
         "awarded": money(r.awarded_cents, r.awarded_currency.as_deref()),
         // When the buyer decided — the legacy eras' award-block date (issue 255).
         "decided": stamp(r.decided),
-        "winners": r.winners.iter().map(result_org).collect::<Vec<_>>(),
+        "winners": r.winners.iter().map(winner).collect::<Vec<_>>(),
         // Issue 372 unit 4: a withheld statistic is not a statistic. Its `kind` is
         // the literal `unpublished` and its count -1, so publishing the pair would
         // put a fake submission type in a map keyed BY type and assert -1 of them.
@@ -370,7 +393,7 @@ fn bid(b: &BidRow) -> Value {
         "lot": b.lot_key,
         "value": if withheld { Value::Null } else { money(b.cents, b.currency.as_deref()) },
         "quality": b.quality,
-        "parties": b.parties.iter().map(result_org).collect::<Vec<_>>(),
+        "parties": b.parties.iter().map(bid_party).collect::<Vec<_>>(),
     })
 }
 
@@ -514,6 +537,34 @@ mod tests {
         // consumer can read the field unconditionally.
         let plain = LotResultRow { statistics: vec![("tenders".into(), 4, None)], ..result };
         assert_eq!(lot_result(&plain)["statistics_withheld"], json!(0));
+    }
+
+    /// Issue 456: `mention_name` is always a key on a party — the published name
+    /// even when it equals the head, null only when the notice published none —
+    /// and never a key on a winner, which has no mention to read it from.
+    #[test]
+    fn a_party_serves_its_published_name_and_a_winner_serves_none() {
+        let row = |mention: Option<&str>| PartyRow {
+            lot_key: None,
+            role: "Tenderer".into(),
+            organization_id: 5_718_658,
+            organization_name: "Sellafield Ltd".into(),
+            mention_name: mention.map(str::to_owned),
+        };
+        assert_eq!(party(&row(Some("Schneider Electric")))["mention_name"], json!("Schneider Electric"));
+        assert_eq!(party(&row(Some("Sellafield Ltd")))["mention_name"], json!("Sellafield Ltd"), "equal is still served");
+        let nameless = party(&row(None));
+        assert_eq!(nameless.get("mention_name"), Some(&Value::Null), "the key is there, the name is not: {nameless}");
+
+        let org = ResultOrgRow {
+            role: "winner".into(),
+            organization_id: 5_718_658,
+            organization_name: "Sellafield Ltd".into(),
+            mention_name: None,
+        };
+        assert!(winner(&org).get("mention_name").is_none(), "a winner has no mention to name");
+        let tenderer = ResultOrgRow { role: "tenderer".into(), mention_name: Some("Schneider Electric".into()), ..org };
+        assert_eq!(bid_party(&tenderer)["mention_name"], json!("Schneider Electric"));
     }
 
     /// The same rule on the bids satellite, where BT-720 lands (issue 372's

@@ -485,7 +485,15 @@ pub struct PartyRow {
     pub lot_key: Option<String>,
     pub role: String,
     pub organization_id: i64,
+    /// The organization's head (`organizations.name`): one name for every Tender
+    /// the organization appears on.
     pub organization_name: String,
+    /// Issue 456: the name THIS notice published for the party — the anchoring
+    /// mention's own name (`organization_mentions.name` at the row's
+    /// `(mention_notice_id, mention_section_id)`), whatever organization the
+    /// mention's identifier bound it to. Set whether or not it equals the head;
+    /// `None` only when the notice published no name for the party.
+    pub mention_name: Option<String>,
 }
 
 /// One version of a Tender, traceable to the Notice that caused it (ADR-0001).
@@ -514,6 +522,12 @@ pub struct ResultOrgRow {
     pub role: String, // winner | tenderer | subcontractor
     pub organization_id: i64,
     pub organization_name: String,
+    /// Issue 456, as [`PartyRow::mention_name`], for a BID party: the name its
+    /// anchoring mention published. Always `None` on a WINNER, whose row
+    /// (`tender_version_result_winners`) is keyed on the organization and carries
+    /// no mention anchor — the API then serves no key at all, and the name the
+    /// notice published for the winner is on its `parties[]` entry.
+    pub mention_name: Option<String>,
 }
 
 /// One award decision (lot result) in the Tender's current state. Results are
@@ -2483,6 +2497,36 @@ pub async fn tender_version_notice_ids(conn: &Connection, tender_id: i64) -> tur
     Ok(out)
 }
 
+/// One Tender version's parties: the organization's head name AND the name the
+/// party's own notice published (issue 456).
+///
+/// The two differ because the resolver binds a mention by its identifier before its
+/// name: a notice that put organization A's number on organization B binds B's
+/// mention to A, and from then on the head reads A wherever B was named (prod tender
+/// 8751605: UKRI's tenderer `Schneider Electric`, carrying Sellafield's PPON, read
+/// `Sellafield Ltd`). The mention row keeps what the notice said; this reads it by
+/// its primary key `(notice_id, section_id)`, one seek per party row
+/// (`the_party_reads_seek_each_mention_by_its_key`). `NULLIF`: a mention that
+/// published no name is stored as `''`, and that is "no name", not a name.
+pub(crate) const PARTIES_SQL: &str = "\
+    SELECT (SELECT l.lot_key FROM lots l WHERE l.id = s.lot_id), s.role, s.organization_id, o.name,
+           (SELECT NULLIF(m.name, '') FROM organization_mentions m
+             WHERE m.notice_id = s.mention_notice_id AND m.section_id = s.mention_section_id)
+      FROM tender_version_parties s
+      JOIN organizations o ON o.id = s.organization_id
+     WHERE s.tender_id = ? AND s.seq = ?";
+
+/// The bid-side twin of [`PARTIES_SQL`]: each Bid's tenderers and subcontractors,
+/// anchored to their mentions the same way, so a bid party reads the same pair of
+/// names as the `Tenderer` party beside it.
+pub(crate) const BID_PARTIES_SQL: &str = "\
+    SELECT p.bid_id, p.role, p.organization_id, o.name,
+           (SELECT NULLIF(m.name, '') FROM organization_mentions m
+             WHERE m.notice_id = p.mention_notice_id AND m.section_id = p.mention_section_id)
+      FROM tender_version_bid_parties p
+      JOIN organizations o ON o.id = p.organization_id
+     WHERE p.tender_id = ? AND p.seq = ?";
+
 /// One Tender's full current state: the version chain, the satellites, the
 /// parties — everything `/v1/tenders/{id}` answers.
 pub async fn tender_detail(
@@ -2567,17 +2611,7 @@ pub async fn tender_detail(
         });
     }
 
-    let mut rows = conn
-        .query(
-            &format!(
-                "SELECT {lot_key}, s.role, s.organization_id, o.name
-                   FROM tender_version_parties s
-                   JOIN organizations o ON o.id = s.organization_id
-                  WHERE s.tender_id = ? AND s.seq = ?"
-            ),
-            key.clone(),
-        )
-        .await?;
+    let mut rows = conn.query(PARTIES_SQL, key.clone()).await?;
     let mut parties = Vec::new();
     while let Some(row) = rows.next().await? {
         parties.push(PartyRow {
@@ -2585,6 +2619,7 @@ pub async fn tender_detail(
             role: text(&row, 1),
             organization_id: int(&row, 2),
             organization_name: text(&row, 3),
+            mention_name: opt_text_of(&row, 4),
         });
     }
 
@@ -2685,6 +2720,7 @@ async fn results_of(
                 role: "winner".to_owned(),
                 organization_id: int(&row, 1),
                 organization_name: text(&row, 2),
+                mention_name: None,
             });
         }
     }
@@ -2726,21 +2762,14 @@ async fn results_of(
             parties: Vec::new(),
         });
     }
-    let mut rows = conn
-        .query(
-            "SELECT p.bid_id, p.role, p.organization_id, o.name
-               FROM tender_version_bid_parties p
-               JOIN organizations o ON o.id = p.organization_id
-              WHERE p.tender_id = ? AND p.seq = ?",
-            key.clone(),
-        )
-        .await?;
+    let mut rows = conn.query(BID_PARTIES_SQL, key.clone()).await?;
     while let Some(row) = rows.next().await? {
         if let Some(&i) = bid_index.get(&int(&row, 0)) {
             bids[i].parties.push(ResultOrgRow {
                 role: text(&row, 1),
                 organization_id: int(&row, 2),
                 organization_name: text(&row, 3),
+                mention_name: opt_text_of(&row, 4),
             });
         }
     }
@@ -4480,6 +4509,61 @@ fn stored_stamp(row: &turso::Row, utc_idx: usize, pair_idx: usize) -> Option<Sta
         offset_minutes: opt_int_of(row, pair_idx)?,
         has_time: opt_int_of(row, pair_idx + 1)? != 0,
     })
+}
+
+#[cfg(test)]
+mod party_name_tests {
+    use super::{BID_PARTIES_SQL, PARTIES_SQL};
+
+    async fn plan_of(conn: &turso::Connection, sql: &str) -> String {
+        let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {sql}"), ()).await.unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            if let Ok(turso::Value::Text(detail)) = row.get_value(3) {
+                plan.push_str(&detail);
+                plan.push('\n');
+            }
+        }
+        assert!(!plan.is_empty(), "no plan came back for: {sql}");
+        plan
+    }
+
+    /// The mention's own name walks the mention by its key, never the table.
+    fn seeks_the_mention(plan: &str) -> bool {
+        !plan.lines().any(|l| l.trim_start().starts_with("SCAN m"))
+            && plan.lines().any(|l| l.trim_start().starts_with("SEARCH m USING"))
+    }
+
+    /// Issue 456: the detail's `mention_name` is one primary-key seek into
+    /// `organization_mentions` per party row. That table is the corpus' largest
+    /// organization table (one row per party per notice), so a subquery that
+    /// scanned it would turn every `/v1/tenders/{id}` into a full walk — asserted
+    /// as a PLAN, the issue-80 lesson, because a fixture-sized clock cannot tell a
+    /// seek from a scan.
+    #[tokio::test]
+    async fn the_party_reads_seek_each_mention_by_its_key() {
+        let path = format!("/tmp/tender-db-party-name-plan-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = crate::Db::open(&path).await.unwrap();
+        let conn = db.reader().await.unwrap();
+
+        for (name, sql) in [("parties", PARTIES_SQL), ("bid parties", BID_PARTIES_SQL)] {
+            let plan = plan_of(&conn, sql).await;
+            assert!(seeks_the_mention(&plan), "the {name} read must seek each mention by its key:\n{plan}");
+        }
+
+        // The predicate can say NO: keyed on the section id alone, the subquery
+        // has no usable prefix of `(notice_id, section_id)` and walks the table.
+        let unkeyed = PARTIES_SQL.replace("m.notice_id = s.mention_notice_id AND ", "");
+        assert_ne!(unkeyed, PARTIES_SQL, "the control rewrote the statement");
+        let plan = plan_of(&conn, &unkeyed).await;
+        assert!(!seeks_the_mention(&plan), "the check must reject a scan of the mentions:\n{plan}");
+
+        drop(conn);
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
 }
 
 #[cfg(test)]

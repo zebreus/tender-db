@@ -1691,6 +1691,250 @@ async fn every_served_key_is_declared_in_its_schema() {
     }
 }
 
+/// One synthetic eForms notice for issue 456: a procedure with a buyer, and — when
+/// `tenderer` is given — an award graph (LotResult → LotTender → TenderingParty →
+/// Organization) naming it. Each party is `(name, identifier)`; the identifier hangs
+/// off the Organization's `CompanyLegalEntity` child, the shape real eForms uses
+/// (`mentions_merge_only_on_a_plausible_official_identifier` in ingest's tests).
+fn notice_456(
+    fetch_id: i64,
+    publication_id: &str,
+    buyer: (&str, Option<&str>),
+    tenderer: Option<(&str, Option<&str>)>,
+) -> (Notice, Parse) {
+    use store::{NoticeValue, Parsed, Section, ValueRow};
+    let section = |id: &str, kind: &str, parent: Option<&str>| Section {
+        id: id.into(),
+        kind: kind.into(),
+        parent: parent.map(str::to_owned),
+    };
+    let id = |section: &str, field: &str, value: &str, scheme: Option<&str>, is_ref: bool| ValueRow {
+        section_id: section.into(),
+        field_id: field.into(),
+        ordinal: 0,
+        value: NoticeValue::Id { scheme: scheme.map(str::to_owned), value: value.into(), is_ref },
+    };
+    let mut parsed = Parsed {
+        sections: vec![section("PROCEDURE", "Procedure", None)],
+        values: vec![
+            id("PROCEDURE", "BT-04-notice", &format!("procedure-{publication_id}"), None, false),
+            id("PROCEDURE", "OPT-300-Procedure-Buyer", "ORG-0001", None, true),
+        ],
+    };
+    let organization = |parsed: &mut Parsed, key: &str, (name, identifier): (&str, Option<&str>)| {
+        parsed.sections.push(section(key, "Organization", Some("PROCEDURE")));
+        parsed.values.push(ValueRow {
+            section_id: key.into(),
+            field_id: "BT-500-Organization-Company".into(),
+            ordinal: 0,
+            value: NoticeValue::Text { lang: Some("ENG".into()), value: name.into() },
+        });
+        if let Some(identifier) = identifier {
+            let legal = format!("{key}-legal");
+            parsed.sections.push(section(&legal, "CompanyLegalEntity", Some(key)));
+            parsed.values.push(id(&legal, "BT-501-Organization-Company", identifier, Some("VAT"), false));
+        }
+    };
+    organization(&mut parsed, "ORG-0001", buyer);
+    if let Some(tenderer) = tenderer {
+        organization(&mut parsed, "ORG-0002", tenderer);
+        for (key, kind) in [("RES-0001", "LotResult"), ("TEN-0001", "LotTender"), ("TPA-0001", "TenderingParty")] {
+            parsed.sections.push(section(key, kind, Some("PROCEDURE")));
+        }
+        parsed.values.extend([
+            ValueRow {
+                section_id: "RES-0001".into(),
+                field_id: "BT-142-LotResult".into(),
+                ordinal: 0,
+                value: NoticeValue::Code { list: None, code: "selec-w".into() },
+            },
+            id("RES-0001", "OPT-320-LotResult", "TEN-0001", None, true),
+            id("TEN-0001", "OPT-310-Tender", "TPA-0001", None, true),
+            id("TPA-0001", "OPT-300-Tenderer", "ORG-0002", None, true),
+        ]);
+    }
+    (
+        Notice {
+            source: SOURCE.into(),
+            publication_id: publication_id.into(),
+            content_hash: format!("hash-{publication_id}"),
+            profile: "eforms:eforms-sdk-1.13".into(),
+            declared_version: None,
+            fetch_id,
+            member_path: format!("{publication_id}.xml"),
+            ingested_at: 0,
+            published_at: None,
+            dispatched_at: None,
+        },
+        Parse::Parsed(parsed),
+    )
+}
+
+/// Issue 456, design 3: a party reads, on the tender detail, as the name its OWN
+/// notice published — beside the organization's head, never instead of it.
+///
+/// The prod exhibit (tender 8751605), synthetically. UKRI's tender published
+/// Sellafield's identifier on its tenderer beside the name `Schneider Electric`. The
+/// resolver binds a mention by its identifier before its name, so that mention joins
+/// Sellafield's organization, and `organization_name` — the organization's head —
+/// says `Sellafield Ltd` on `parties[]` and on the bid's `parties[]` alike. Before
+/// this unit nothing on the detail said what the notice said. Whether that bind is
+/// right is designs 1 and 2's question, NOT this one's: the head is still served, and
+/// this test pins that it is, so a later bind change shows up here as a decision.
+///
+/// `mention_name` is served whether or not it differs from the head. A null for "same
+/// as the head" would make every reader infer the published name from an absence,
+/// and a consumer that never compares would read it as "no name published".
+#[tokio::test]
+async fn a_party_bound_by_another_organizations_identifier_serves_its_published_name() {
+    let server = Server::start("mention-name").await;
+    const SELLAFIELD_ID: &str = "NL804595859B01";
+
+    // Sellafield's own notice first, so the first-seen head election names its
+    // organization `Sellafield Ltd` — the post-merge state of the exhibit.
+    let (own, own_parse) =
+        notice_456(server.fetch_id, "45600001-2026", ("Sellafield Ltd", Some(SELLAFIELD_ID)), None);
+    // UKRI's: its own buyer, and a tenderer that carries Sellafield's identifier.
+    let (foreign, foreign_parse) = notice_456(
+        server.fetch_id,
+        "45600002-2026",
+        ("UK Research and Innovation", None),
+        Some(("Schneider Electric", Some(SELLAFIELD_ID))),
+    );
+    server.db.record_notice(&own, &own_parse).await.expect("sellafield's notice");
+    server.db.record_notice(&foreign, &foreign_parse).await.expect("ukri's notice");
+    project::project(&server.db, false).await.expect("project");
+
+    let tender_of = |publication_id: &'static str| {
+        let db = server.db.clone();
+        async move {
+            match db
+                .scalar(&format!(
+                    "SELECT tender_id FROM tender_versions WHERE publication_id = '{publication_id}'"
+                ))
+                .await
+                .expect("tender of a publication")
+            {
+                Some(store::turso::Value::Integer(id)) => id,
+                other => panic!("{publication_id} projected no tender: {other:?}"),
+            }
+        }
+    };
+    let sellafield_tender = tender_of("45600001-2026").await;
+    let ukri_tender = tender_of("45600002-2026").await;
+    assert_ne!(sellafield_tender, ukri_tender, "two procedures, two tenders");
+
+    let sellafield = server.get(&format!("/v1/tenders/{sellafield_tender}")).await;
+    let ukri = server.get(&format!("/v1/tenders/{ukri_tender}")).await;
+    let party = |detail: &Value, role: &str| -> Value {
+        detail["parties"]
+            .as_array()
+            .expect("parties")
+            .iter()
+            .find(|p| p["role"] == role)
+            .unwrap_or_else(|| panic!("no {role} party in {detail}"))
+            .clone()
+    };
+
+    // The bind this unit does not change: the foreign mention is on Sellafield's
+    // organization, and the head names it.
+    let own_buyer = party(&sellafield, "Procedure-Buyer");
+    let tenderer = party(&ukri, "Tenderer");
+    assert_eq!(
+        tenderer["organization_id"], own_buyer["organization_id"],
+        "the identifier bound UKRI's tenderer to Sellafield's organization: {tenderer}"
+    );
+    assert_eq!(tenderer["organization_name"], "Sellafield Ltd", "the head is still served");
+
+    // What the notice said, beside it.
+    assert_eq!(
+        tenderer["mention_name"], "Schneider Electric",
+        "the reader must see the name UKRI's notice published: {tenderer}"
+    );
+
+    // Served when it agrees with the head too — the published name, never a null
+    // standing for "same".
+    assert_eq!(own_buyer["organization_name"], "Sellafield Ltd");
+    assert_eq!(own_buyer["mention_name"], "Sellafield Ltd", "{own_buyer}");
+    let ukri_buyer = party(&ukri, "Procedure-Buyer");
+    assert_eq!(ukri_buyer["mention_name"], "UK Research and Innovation", "{ukri_buyer}");
+    assert_eq!(ukri_buyer["mention_name"], ukri_buyer["organization_name"]);
+
+    // The bid's `parties[]` is anchored to the same mention and reads the same way.
+    let bids = ukri["bids"].as_array().expect("bids");
+    assert_eq!(bids.len(), 1, "the award graph projected its bid: {ukri}");
+    let bid_party = &bids[0]["parties"].as_array().expect("bid parties")[0];
+    assert_eq!(bid_party["organization_id"], tenderer["organization_id"]);
+    assert_eq!(bid_party["organization_name"], "Sellafield Ltd");
+    assert_eq!(bid_party["mention_name"], "Schneider Electric", "{bid_party}");
+
+    // A winner row carries no mention anchor (`tender_version_result_winners` keys
+    // on the organization), so it serves no `mention_name` rather than a guess; the
+    // name the notice published for it is on the `Tenderer` party above.
+    let winners = ukri["lot_results"][0]["winners"].as_array().expect("winners");
+    assert_eq!(winners.len(), 1, "the award graph resolved its winner: {ukri}");
+    assert_eq!(winners[0]["organization_id"], tenderer["organization_id"]);
+    assert!(winners[0].get("mention_name").is_none(), "a winner has no mention to name: {}", winners[0]);
+}
+
+/// Issue 456 over a REAL notice chain: every `parties[]` and every bid's `parties[]`
+/// entry serves `mention_name`, the value is a name one of the tender's own notices
+/// published (read back through `/v1/notices/{id}/content`, the parse layer
+/// verbatim), and the TenderDetail schema declares every key a party serves — the
+/// item-level twin of `every_served_key_is_declared_in_its_schema`, which only sees a
+/// collection's top-level keys.
+#[tokio::test]
+async fn every_party_on_the_detail_serves_a_name_its_notice_published() {
+    let server = Server::start("mention-name-chain").await;
+    server.ingest_chain().await;
+
+    let id = items(&server.get("/v1/tenders").await)[0]["id"].as_i64().expect("tender id");
+    let detail = server.get(&format!("/v1/tenders/{id}")).await;
+
+    // Every name any of the tender's notices published, as the parse layer holds it.
+    let mut published = std::collections::BTreeSet::new();
+    for version in detail["versions"].as_array().expect("versions") {
+        let notice = version["caused_by_notice_id"].as_i64().expect("caused_by_notice_id");
+        let content = server.get(&format!("/v1/notices/{notice}/content")).await;
+        for section in content["sections"].as_array().expect("sections") {
+            for value in section["values"].as_array().expect("values") {
+                if value["type"] == "text" {
+                    published.insert(value["value"].as_str().expect("a text value").to_owned());
+                }
+            }
+        }
+    }
+
+    let parties = detail["parties"].as_array().expect("parties").clone();
+    let bid_parties: Vec<Value> = detail["bids"]
+        .as_array()
+        .expect("bids")
+        .iter()
+        .flat_map(|b| b["parties"].as_array().expect("bid parties").clone())
+        .collect();
+    assert!(!parties.is_empty() && !bid_parties.is_empty(), "the chain names parties and a bidder");
+    for p in parties.iter().chain(&bid_parties) {
+        let name = p["mention_name"].as_str().unwrap_or_else(|| panic!("no mention_name on {p}"));
+        assert!(published.contains(name), "{name:?} is not a name the tender's notices published: {p}");
+    }
+
+    let spec: Value =
+        serde_json::from_str(include_str!("../data/openapi.json")).expect("openapi.json parses");
+    let detail_schema = &spec["components"]["schemas"]["TenderDetail"]["allOf"][1]["properties"];
+    for (surface, declared, served) in [
+        ("parties[]", &detail_schema["parties"]["items"]["properties"], &parties),
+        ("bids[].parties[]", &detail_schema["bids"]["items"]["properties"]["parties"]["items"]["properties"], &bid_parties),
+    ] {
+        let declared = declared.as_object().unwrap_or_else(|| panic!("TenderDetail declares {surface}'s properties"));
+        for key in served[0].as_object().expect("an object party").keys() {
+            assert!(
+                declared.contains_key(key),
+                "{surface} serves `{key}` and the TenderDetail schema does not declare it"
+            );
+        }
+    }
+}
+
 /// Issue 391: every example the contract publishes is fired at the server, and
 /// none of them may 4xx.
 ///
