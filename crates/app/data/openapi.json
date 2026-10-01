@@ -234,13 +234,18 @@
       "get": {
         "tags": ["collections"],
         "summary": "One Organization",
-        "description": "The counterpart of a Tender detail's `parties[].organization_id`.",
+        "description": "The counterpart of a Tender detail's `parties[].organization_id`. An id that a merge folded into another organization answers `308` to the survivor (issue 455).",
         "operationId": "getOrganization",
         "parameters": [{ "$ref": "#/components/parameters/id" }],
         "responses": {
           "200": {
             "description": "The Organization.",
             "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Organization" } } }
+          },
+          "308": {
+            "description": "This organization was merged into another; `Location` and `merged_into` name the survivor. A client that follows redirects receives the survivor's row.",
+            "headers": { "Location": { "description": "`/v1/organizations/<survivor id>`.", "schema": { "type": "string" } } },
+            "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/Error" }, { "type": "object", "properties": { "merged_into": { "type": "integer", "format": "int64" } } } ] } } }
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "404": { "$ref": "#/components/responses/NotFound" },
@@ -918,6 +923,17 @@
             "type": "array",
             "items": { "type": "string" },
             "description": "Filter parameters the client sent that this collection does not apply — every collection accepts the shared filter vocabulary but honours only the subset meaningful to it, so a dropped filter is named here rather than silently returning an unfiltered page. Empty when every filter applied."
+          },
+          "resolved_filters": {
+            "type": "object",
+            "description": "Present only when an organization-id filter (`buyer`, `winner`, `bidder`) named an organization that a merge folded into another: the page is filtered by the surviving organization, and each rewritten filter is named here as `{\"asked\": <the id sent>, \"merged_into\": <the survivor>}` (issue 455). Store the survivor's id. An id that never was an organization is not rewritten and answers an empty page.",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "asked": { "type": "integer", "format": "int64" },
+                "merged_into": { "type": "integer", "format": "int64" }
+              }
+            }
           }
         }
       },

@@ -4186,6 +4186,60 @@ pub async fn feed_generation(conn: &Connection) -> turso::Result<i64> {
     })
 }
 
+/// Where an organization id lives now (issue 455).
+///
+/// Every merge rule (r2, e0, p0, e2-altid, rekey, …) deletes the loser's row,
+/// repoints its references to the survivor and records `(keep, loser)` in
+/// `org_merge_log`. A reader that kept the old id would otherwise get a bare 404
+/// from the detail endpoint, and a certified-empty page from `?winner=`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OrgResolution {
+    /// The id is a live organization.
+    Live,
+    /// The id was merged away; this is the live survivor.
+    MergedInto(i64),
+    /// Neither live nor merged into a live row within [`MERGE_HOPS`].
+    Unknown,
+}
+
+/// The longest merge chain [`resolve_org`] follows. It is the same bound the
+/// resolver alias puts on `applied_literal` chains (issue 453).
+pub const MERGE_HOPS: usize = 8;
+
+/// Follows `org_merge_log` from `id` to a live organization. Each hop is one
+/// seek on the ledger's `(loser, at)` primary key. A loser merged more than once
+/// (merged away, restored by a later mint, merged again) takes its NEWEST merge.
+/// A revisited id or a chain longer than [`MERGE_HOPS`] answers `Unknown`.
+pub async fn resolve_org(conn: &Connection, id: i64) -> turso::Result<OrgResolution> {
+    let live = |id: i64| exists(conn, "SELECT 1 FROM organizations WHERE id = ?", vec![Value::Integer(id)]);
+    if live(id).await? {
+        return Ok(OrgResolution::Live);
+    }
+    let mut seen = vec![id];
+    let mut at = id;
+    for _ in 0..MERGE_HOPS {
+        let mut rows =
+            conn.query("SELECT keep, at FROM org_merge_log WHERE loser = ?", (Value::Integer(at),)).await?;
+        let mut newest: Option<(i64, i64)> = None;
+        while let Some(row) = rows.next().await? {
+            let (keep, when) = (int(&row, 0), int(&row, 1));
+            if newest.is_none_or(|(_, w)| when > w) {
+                newest = Some((keep, when));
+            }
+        }
+        let Some((keep, _)) = newest else { return Ok(OrgResolution::Unknown) };
+        if seen.contains(&keep) {
+            return Ok(OrgResolution::Unknown);
+        }
+        if live(keep).await? {
+            return Ok(OrgResolution::MergedInto(keep));
+        }
+        seen.push(keep);
+        at = keep;
+    }
+    Ok(OrgResolution::Unknown)
+}
+
 /// The head (newest) version seq of one Tender, or `None` when it has no
 /// versions (retired/absent). The SSE diff's probe point for a seq-less
 /// in-place `changed` row (issue 287): the write repointed CURRENT rows, so

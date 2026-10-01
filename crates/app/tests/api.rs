@@ -2268,6 +2268,72 @@ async fn tenders_reverse_lookup_by_winner_preserves_semantics() {
     );
 }
 
+/// Issue 455: an organization id a merge removed is followed through
+/// `org_merge_log` to its survivor. The detail endpoint answers `308` with a
+/// `Location` and `merged_into`, and a `winner` filter on the old id serves the
+/// survivor's page and names the rewrite in `resolved_filters`, instead of a
+/// bare 404 and a certified-empty page.
+#[tokio::test]
+async fn a_merged_away_org_id_redirects_and_filters_by_its_survivor() {
+    let server = Server::start("merged_org").await;
+    server.ingest_chain().await;
+
+    // A real current-version winner is the survivor; the loser is a ledger row only,
+    // exactly what a merge leaves behind.
+    let reader = server.db.readers(1).expect("readers").get().await.expect("reader");
+    let mut rows = reader
+        .query(
+            "SELECT w.organization_id, w.tender_id FROM tender_version_result_winners w
+               JOIN tenders t ON t.id = w.tender_id AND w.seq = t.current_seq LIMIT 1",
+            (),
+        )
+        .await
+        .expect("query winners");
+    let row = rows.next().await.expect("row").expect("the chain has a winner");
+    let (keep, tender_id) =
+        (row.get_value(0).unwrap().as_integer().copied().unwrap(), row.get_value(1).unwrap().as_integer().copied().unwrap());
+    drop(rows);
+    drop(reader);
+    const LOSER: i64 = 88_001;
+    let raw = store::turso::Builder::new_local(&server.path).build().await.expect("raw");
+    let conn = raw.connect().expect("connect");
+    conn.execute(
+        "INSERT INTO org_merge_log (keep, loser, rule, evidence, at) VALUES (?, ?, 'r2', '{}', 1)",
+        (store::turso::Value::Integer(keep), store::turso::Value::Integer(LOSER)),
+    )
+    .await
+    .expect("ledger row");
+
+    // The detail: a 308 to the survivor, with the id in the body for a client
+    // that does not follow redirects...
+    let plain = reqwest::Client::builder().redirect(reqwest::redirect::Policy::none()).build().unwrap();
+    let response = plain.get(format!("{}/v1/organizations/{LOSER}", server.base)).send().await.expect("request");
+    assert_eq!(response.status().as_u16(), 308);
+    assert_eq!(
+        response.headers().get("location").and_then(|v| v.to_str().ok()),
+        Some(format!("/v1/organizations/{keep}").as_str())
+    );
+    let body: Value = response.json().await.expect("json body");
+    assert_eq!(body["merged_into"], keep);
+    // ...and the survivor itself for one that does.
+    assert_eq!(server.get(&format!("/v1/organizations/{LOSER}")).await["id"], keep);
+    // An id that never was an organization stays a 404.
+    assert_eq!(server.status("/v1/organizations/88002").await, 404);
+
+    // The filter: the survivor's page, and the rewrite named.
+    let page = server.get(&format!("/v1/tenders?winner={LOSER}")).await;
+    assert!(items(&page).iter().any(|t| t["id"].as_i64() == Some(tender_id)), "the survivor's won tender");
+    assert_eq!(page["resolved_filters"]["winner"]["asked"], LOSER);
+    assert_eq!(page["resolved_filters"]["winner"]["merged_into"], keep);
+    // A live id and an unknown id are not rewritten, so the field is absent.
+    assert!(server.get(&format!("/v1/tenders?winner={keep}")).await.get("resolved_filters").is_none());
+    let unknown = server.get("/v1/tenders?winner=88002").await;
+    assert!(items(&unknown).is_empty() && unknown.get("resolved_filters").is_none());
+    // A collection that does not honour `winner` names it ignored, never resolved.
+    let notices = server.get(&format!("/v1/notices?winner={LOSER}&limit=1")).await;
+    assert!(notices.get("resolved_filters").is_none(), "{notices}");
+}
+
 /// Issue 49: an unknown or mistyped query param is a 400, so an analyst never
 /// mistakes "everything matched" for "my typo'd filter matched".
 #[tokio::test]

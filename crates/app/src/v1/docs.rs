@@ -128,7 +128,7 @@ defined in the project's <code>CONTEXT.md</code>.</p>
   <tr><td class="ep"><span class="method">GET</span>/v1/tenders/{id}</td><td>One Tender in full — see <a href="#detail">detail</a>.</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/lots</td><td>Lots (subdivisions of Tenders).</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/organizations</td><td>Canonical Organizations (buyers, bidders, winners).</td></tr>
-  <tr><td class="ep"><span class="method">GET</span>/v1/organizations/{id}</td><td>One Organization by id — the counterpart of a detail's <code>parties[].organization_id</code>.</td></tr>
+  <tr><td class="ep"><span class="method">GET</span>/v1/organizations/{id}</td><td>One Organization by id — the counterpart of a detail's <code>parties[].organization_id</code>. An id that a merge folded into another organization answers <code>308</code> to the survivor.</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/notices</td><td>Raw import records. No canonical change rows, so an SSE subscription here is a snapshot then silence.</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/notices/{id}</td><td>One Notice by id — the counterpart of a version's <code>caused_by_notice_id</code>.</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/notices/{id}/content</td><td>Everything the parser extracted from that Notice — see <a href="#notice-content">notice content</a>.</td></tr>
@@ -137,6 +137,14 @@ defined in the project's <code>CONTEXT.md</code>.</p>
 <p>Envelope: <code>{"items": [ … ], "next_cursor": "1234"|null, "more": true|false, "ignored_filters": []}</code>.
 <code>ignored_filters</code> names any filter you sent that this collection does not
 apply (see below) — an empty array means every filter applied.</p>
+<p>Organization ids are stable until two rows turn out to be one organization and
+are merged. The merged-away id keeps working. <code>GET /v1/organizations/{id}</code>
+answers <code>308</code> with <code>Location</code> and <code>"merged_into": &lt;id&gt;</code>,
+and a <code>buyer</code>, <code>winner</code> or <code>bidder</code> filter on it is applied
+to the survivor, with the page naming the rewrite in
+<code>"resolved_filters": {"winner": {"asked": …, "merged_into": …}}</code>, present only
+when something was rewritten. Store the survivor's id. Chains of merges are followed up to
+8 hops.</p>
 <p>Tender rows echo the <code>cpv</code> (CPV codes) and <code>country</code>
 (NUTS place codes) they carry, so you can see why a row matched a
 <code>cpv</code>/<code>country</code> filter.</p>

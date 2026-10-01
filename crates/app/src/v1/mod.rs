@@ -1250,6 +1250,22 @@ async fn collection(
             }
         }
     }
+    // Issue 455: an org id a merge folded away filters by its survivor, on the
+    // page and on the stream alike (the SSE branch takes this same `filter`).
+    // Only the filters this collection honours: an ignored one is named in
+    // `ignored_filters` and must not also read as rewritten.
+    let honoured = store::read::Collection::from(collection).honoured_params();
+    let resolved = if [("buyer", filter.buyer), ("winner", filter.winner), ("bidder", filter.bidder)]
+        .iter()
+        .any(|(name, id)| id.is_some() && honoured.contains(name))
+    {
+        let reader = state.readers.get().await?;
+        let mut all = resolve_org_filters(&reader, &mut filter).await?;
+        all.retain(|(name, _, _)| honoured.contains(name));
+        all
+    } else {
+        Vec::new()
+    };
     // Validated BEFORE the Accept branch (issue 390 unit 4), so whether `limit=0`
     // is a 400 does not depend on a request header. The stream arm does not use
     // `limit` — it pages by `sse::SNAPSHOT_PAGE` — but a parameter that is
@@ -1282,11 +1298,21 @@ async fn collection(
     // Name any filter the client sent that this collection does not apply, so an
     // unfiltered page never masquerades as a filtered one (issue 118). The honoured
     // set lives in the read layer next to the builders it describes.
-    let honoured = store::read::Collection::from(collection).honoured_params();
     let ignored: Vec<&str> =
         params.provided_filters().into_iter().filter(|p| !honoured.contains(p)).collect();
-    Ok(axum::Json(json::page(items.into_iter().map(|i| i.json).collect(), next, &ignored))
-        .into_response())
+    let mut page = json::page(items.into_iter().map(|i| i.json).collect(), next, &ignored);
+    // Issue 455: say which org ids were followed to their survivor, so a page that
+    // answers for a different id than the one sent is never silent about it. Only
+    // present when something was rewritten.
+    if !resolved.is_empty() {
+        page["resolved_filters"] = Value::Object(
+            resolved
+                .iter()
+                .map(|(name, asked, keep)| ((*name).to_owned(), json!({ "asked": asked, "merged_into": keep })))
+                .collect(),
+        );
+    }
+    Ok(axum::Json(page).into_response())
 }
 
 /// A client-supplied instant: unix seconds, RFC 3339, or a bare `YYYY-MM-DD`
@@ -1691,6 +1717,12 @@ async fn notice_content(State(state): State<AppState>, ApiPath(id): ApiPath<i64>
 
 /// `GET /v1/organizations/{id}` — one Organization by id, the counterpart of a
 /// tender detail's `parties[].organization_id` (issue 49).
+///
+/// An id a merge removed answers `308` to its survivor (issue 455). A merge
+/// says the two rows were one organization, so the survivor is the honest
+/// answer, and a client that follows redirects gets it with no new rule to
+/// learn. The body still names `merged_into` for one that does not. Only an
+/// id that never was an organization is a 404.
 async fn organization(State(state): State<AppState>, ApiPath(id): ApiPath<i64>) -> ApiResult {
     let reader = state.readers.get().await?;
     match read::organizations(&reader, &Filter::default(), Scope::At { id, seq: 0 })
@@ -1699,8 +1731,43 @@ async fn organization(State(state): State<AppState>, ApiPath(id): ApiPath<i64>) 
         .next()
     {
         Some(row) => Ok(axum::Json(json::organization(&row)).into_response()),
-        None => Err(ApiError::not_found("organization")),
+        None => match read::resolve_org(&reader, id).await? {
+            read::OrgResolution::MergedInto(keep) => Ok((
+                StatusCode::PERMANENT_REDIRECT,
+                [(header::LOCATION, format!("/v1/organizations/{keep}"))],
+                axum::Json(json!({
+                    "error": { "message": "organization merged", "status": 308 },
+                    "merged_into": keep,
+                })),
+            )
+                .into_response()),
+            read::OrgResolution::Live | read::OrgResolution::Unknown => Err(ApiError::not_found("organization")),
+        },
     }
+}
+
+/// Resolves the org-id filters (`buyer`, `winner`, `bidder`) through the merge
+/// ledger (issue 455), in place, and names each one it rewrote.
+///
+/// Without this, a saved `?winner=<id>` whose organization a merge folded away
+/// answered a well-formed, certified-complete EMPTY page, and a subscription
+/// went silently blank on the day its supplier's duplicate row was merged. An
+/// id that is neither live nor merged-away is left as sent: its empty page is
+/// the true answer for an id that never existed.
+async fn resolve_org_filters(
+    conn: &store::turso::Connection,
+    filter: &mut Filter,
+) -> Result<Vec<(&'static str, i64, i64)>, ApiError> {
+    let mut resolved = Vec::new();
+    for (name, slot) in [("buyer", &mut filter.buyer), ("winner", &mut filter.winner), ("bidder", &mut filter.bidder)] {
+        if let Some(asked) = *slot
+            && let read::OrgResolution::MergedInto(keep) = read::resolve_org(conn, asked).await?
+        {
+            *slot = Some(keep);
+            resolved.push((name, asked, keep));
+        }
+    }
+    Ok(resolved)
 }
 
 /// The Notices behind a Tender's version chain, in id order. `404` if the
