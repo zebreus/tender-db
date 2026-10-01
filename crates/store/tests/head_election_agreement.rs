@@ -308,9 +308,10 @@ fn rust_files(dir: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
 /// prod. The writer count above cannot see this: three of the five were readers.
 ///
 /// (a) Outside `canonical.rs` no code line names the two constants or retypes
-///     their values (the data-quality sentinel detector is the one named
-///     exception: it ranks candidates and elects nothing). Inside it, only the
-///     two definitions and the two helpers do.
+///     their values (the data-quality sentinel detector's two `SENTINEL_DATE_*`
+///     definitions are the one named exception: it ranks candidates and elects
+///     nothing). Inside it, only the two definitions and the two helpers' body
+///     lines do — matched by exact text, each exactly once.
 /// (b) The code lines in store and app that select `submission_deadline` facts
 ///     are counted, because the 366 drift was a raw `MAX` that named no constant
 ///     at all. A new reader fails this until it is moved onto a helper and the
@@ -318,9 +319,40 @@ fn rust_files(dir: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
 #[test]
 fn the_deadline_window_is_written_once() {
     let crates = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().to_path_buf();
-    let names = ["DEADLINE_FLOOR_SECS", "DEADLINE_HORIZON_SECS", "631_152_000", "10 * 365 * 86_400"];
-    let selectors = ["= 'submission_deadline'", "Some(\"submission_deadline\")", "== \"submission_deadline\""];
-    let helpers = ["deadline_admitted", "deadline_admitted_sql"];
+    // The window's names, and its numbers in every spelling a retyped copy would
+    // plausibly take (the horizon is 315_360_000 s).
+    let names = [
+        "DEADLINE_FLOOR_SECS",
+        "DEADLINE_HORIZON_SECS",
+        "631_152_000",
+        "631152000",
+        "10 * 365 * 86_400",
+        "315_360_000",
+        "315360000",
+    ];
+    // Any SQL literal naming the field, so `IN ('submission_deadline', ..)` counts as
+    // a reader too. Still literal: a `LIKE '%deadline%'` or a field bound from a
+    // variable is not seen — the count below is a tripwire, not a proof.
+    let selectors = ["'submission_deadline'", "Some(\"submission_deadline\")", "== \"submission_deadline\""];
+    // The only code lines that may name the window, by exact text, each expected
+    // exactly once: the two definitions, the two helper bodies, and the detector's
+    // two reads (the spec's one named exception). Exact text rather than "inside a
+    // fn named so", so a copy placed beside the helpers — under any header form —
+    // is still a stray (issue 474 review).
+    let allowed_lines: [(&str, &str); 6] = [
+        ("store/src/canonical.rs", "pub const DEADLINE_HORIZON_SECS: i64 = 10 * 365 * 86_400;"),
+        ("store/src/canonical.rs", "pub const DEADLINE_FLOOR_SECS: i64 = 631_152_000;"),
+        ("store/src/canonical.rs", "utc >= DEADLINE_FLOOR_SECS && utc - published_at <= DEADLINE_HORIZON_SECS"),
+        (
+            "store/src/canonical.rs",
+            "\"({utc} >= {DEADLINE_FLOOR_SECS} AND {utc} - {published_at} <= {DEADLINE_HORIZON_SECS})\"",
+        ),
+        (
+            "ingest/src/data_quality.rs",
+            "const SENTINEL_DATE_HORIZON_SECS: i64 = store::canonical::DEADLINE_HORIZON_SECS;",
+        ),
+        ("ingest/src/data_quality.rs", "const SENTINEL_DATE_FLOOR: i64 = store::canonical::DEADLINE_FLOOR_SECS;"),
+    ];
 
     let mut files = Vec::new();
     for krate in std::fs::read_dir(&crates).unwrap().map(|e| e.unwrap().path()) {
@@ -333,32 +365,19 @@ fn the_deadline_window_is_written_once() {
 
     let mut stray: Vec<String> = Vec::new();
     let mut readers: Vec<String> = Vec::new();
+    let mut seen = [0usize; 6];
     for file in &files {
         let rel = file.strip_prefix(&crates).unwrap().to_string_lossy().into_owned();
         let text = std::fs::read_to_string(file).unwrap();
-        let canonical = rel == "store/src/canonical.rs";
-        let detector = rel == "ingest/src/data_quality.rs";
         let counted = rel.starts_with("store/src/") || rel.starts_with("app/src/");
-        // The fn a line sits in, by the last `fn` header seen — enough for
-        // canonical.rs, whose items are top-level.
-        let mut current_fn = String::new();
         for (n, line) in text.lines().enumerate() {
             let code = line.split("//").next().unwrap_or("");
-            let trimmed = code.trim_start();
-            if let Some(rest) = trimmed.strip_prefix("pub fn ").or_else(|| trimmed.strip_prefix("fn ")) {
-                current_fn = rest.split(|c: char| c == '(' || c == '<').next().unwrap_or("").to_string();
-            }
+            let trimmed = code.trim();
             let at = format!("{rel}:{}", n + 1);
             if names.iter().any(|name| code.contains(name)) {
-                let allowed = if canonical {
-                    trimmed.starts_with("pub const DEADLINE_FLOOR_SECS")
-                        || trimmed.starts_with("pub const DEADLINE_HORIZON_SECS")
-                        || helpers.contains(&current_fn.as_str())
-                } else {
-                    detector
-                };
-                if !allowed {
-                    stray.push(at.clone());
+                match allowed_lines.iter().position(|&(f, l)| f == rel && l == trimmed) {
+                    Some(i) => seen[i] += 1,
+                    None => stray.push(at.clone()),
                 }
             }
             if counted && selectors.iter().any(|s| code.contains(s)) {
@@ -366,6 +385,13 @@ fn the_deadline_window_is_written_once() {
             }
         }
     }
+    assert_eq!(
+        seen,
+        [1; 6],
+        "each allowed line of the deadline window must appear exactly once ({allowed_lines:?}); \
+         a second copy of a helper's body is a hand copy too, and a missing one means this \
+         list is stale against canonical.rs / data_quality.rs (issue 474)."
+    );
     assert!(
         stray.is_empty(),
         "the deadline window is written by hand outside canonical's helpers at {stray:?}. \

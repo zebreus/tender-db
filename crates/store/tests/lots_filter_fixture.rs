@@ -155,8 +155,9 @@ async fn seed(path: &str) -> store::turso::Connection {
     // bare `status=open` on the lots drives from the open head (`t.current_deadline >
     // now`, the same column `/v1/tenders?status=` has read since 273), so a fixture
     // that leaves the column NULL describes a database prod can never be in — the
-    // fold writes it on every head. `backfill_current_deadline` transcribes the
-    // election (floor + horizon), and every date here is inside that window.
+    // fold writes it on every head. `backfill_current_deadline` applies the
+    // election's window through `canonical::deadline_admitted_sql` (issue 474), and
+    // every date here is inside it.
     let db = store::Db::open(path).await.unwrap();
     let mut after = 0;
     loop {
