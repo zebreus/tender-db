@@ -3009,9 +3009,12 @@ pub async fn lots_page(
 /// purpose since issue 457 R2 moved the shipped stream to `tenders.current_seq`:
 /// the oracle agreeing with the shipped read is then also a check that the pointer
 /// and the recompute agree on the fixture. That arm's `Scope::Page` serves no
-/// production read (the shipped stream is `lots_query_banded`'s own); the
-/// containment arm and `Scope::At`, which production does route here, bind the
-/// head to a parameter and recompute nothing per row.
+/// production read (the shipped stream is `lots_query_banded`'s own). The two
+/// arms production DOES route here recompute nothing per row: `Scope::At` binds
+/// the seq to a parameter, and the containment arm reads the Tender's
+/// `current_seq` by one primary-key seek, evaluated once — the same pointer the
+/// tenders pages read, so `/v1/tenders/{id}` cannot pair one version's fields
+/// with another version's lots (issue 457 R2 review).
 ///
 /// Not dead code: it is the oracle. Deleting it would leave the equivalence assertion
 /// with nothing to compare against, and a rewrite of this size wants its predecessor
@@ -3076,7 +3079,16 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
     };
     match scoped {
         // The containment shape. `vl.tender_id = ?` seeks the PK's leading column
-        // and the MAX(seq) subquery is uncorrelated, so it is evaluated once.
+        // and the head subquery is uncorrelated, so it is evaluated once.
+        //
+        // The head is the Tender's `current_seq` pointer (one PK seek on
+        // `tenders`), not a recomputed `MAX(seq)`: `tender_detail` reads the
+        // Tender row and every satellite at the pointer (it goes through the
+        // tenders page, issue 457 R2), so a MAX here would serve one version's
+        // fields beside another version's lots in any state where the two
+        // disagree. The fold refuses to commit such a state
+        // (`assert_heads_match`), so this is one definition of "head" for every
+        // read, not a behaviour change on reachable data.
         //
         // Driving this from `lots` instead — a per-lot `vl.lot_id = l.id` probe —
         // is the second half of issue 115's blow-up. turso resolves that probe by
@@ -3097,8 +3109,7 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
                    JOIN tenders t ON t.id = vl.tender_id
                    JOIN tender_versions v ON v.tender_id = vl.tender_id AND v.seq = vl.seq
                   WHERE vl.tender_id = ?
-                    AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x
-                                   WHERE x.tender_id = ?)",
+                    AND vl.seq = (SELECT tt.current_seq FROM tenders tt WHERE tt.id = ?)",
                 [Value::Integer(tender), Value::Integer(tender)],
             );
         }
@@ -4568,35 +4579,36 @@ pub async fn resolve_org(conn: &Connection, id: i64) -> turso::Result<OrgResolut
     Ok(OrgResolution::Unknown)
 }
 
-/// The head (newest) version seq of one Tender, or `None` when it has no
-/// versions (retired/absent). The SSE diff's probe point for a seq-less
+/// The head version seq of one Tender, or `None` when it is gone (retired or
+/// absent) or carries no head. The SSE diff's probe point for a seq-less
 /// in-place `changed` row (issue 287): the write repointed CURRENT rows, so
-/// current state is the only side left to evaluate. Bounded: the PK is
-/// `(tender_id, seq)`, and even a scan of the slice is one Tender's chain —
-/// a handful of rows (deliberately NOT `MAX(seq)`, which turso 0.7 does not
-/// short-circuit; see `oldest_cursor`).
+/// current state is the only side left to evaluate.
+///
+/// The `current_seq` POINTER, by one primary-key seek — the head every list page
+/// and `/v1/tenders/{id}` read since issue 457 R2, so the diff evaluates the
+/// subscription's filter against the version the pages serve, never a recomputed
+/// one that could differ from it. (It was the chain's last row by
+/// `ORDER BY seq DESC LIMIT 1`, deliberately not `MAX(seq)`, which turso 0.7 does
+/// not short-circuit; see `oldest_cursor`.) The fold refuses to commit a pointer
+/// that is not the last version (`assert_heads_match`).
 pub async fn tender_head_seq(conn: &Connection, tender_id: i64) -> turso::Result<Option<i64>> {
     let mut rows = conn
-        .query(
-            "SELECT seq FROM tender_versions WHERE tender_id = ? ORDER BY seq DESC LIMIT 1",
-            (Value::Integer(tender_id),),
-        )
+        .query("SELECT current_seq FROM tenders WHERE id = ?", (Value::Integer(tender_id),))
         .await?;
-    Ok(rows.next().await?.map(|row| int(&row, 0)))
+    Ok(rows.next().await?.and_then(|row| opt_int_of(&row, 0)))
 }
 
-/// The head version seq of the Tender owning one lot, or `None` when the lot
-/// (or its Tender's chain) is gone. Companion to [`tender_head_seq`] for lot
-/// rows on the same seq-less diff arm.
+/// The head version seq of the Tender owning one lot, or `None` when the lot or
+/// its Tender is gone. Companion to [`tender_head_seq`] for lot rows on the same
+/// seq-less diff arm, reading the same pointer.
 pub async fn lot_head_seq(conn: &Connection, lot_id: i64) -> turso::Result<Option<i64>> {
     let mut rows = conn
         .query(
-            "SELECT v.seq FROM lots l JOIN tender_versions v ON v.tender_id = l.tender_id \
-              WHERE l.id = ? ORDER BY v.seq DESC LIMIT 1",
+            "SELECT t.current_seq FROM lots l JOIN tenders t ON t.id = l.tender_id WHERE l.id = ?",
             (Value::Integer(lot_id),),
         )
         .await?;
-    Ok(rows.next().await?.map(|row| int(&row, 0)))
+    Ok(rows.next().await?.and_then(|row| opt_int_of(&row, 0)))
 }
 
 fn stamp(row: &turso::Row, idx: usize) -> Option<Stamp> {
@@ -4787,9 +4799,9 @@ mod head_pointer_plan_tests {
     }
 
     /// Every page statement the list endpoints run, labelled. The tender-scoped
-    /// lots read (`lots_query_previous`'s containment arm) is in the set too: its
-    /// MAX is UNcorrelated (`x.tender_id = ?`, evaluated once), which the text
-    /// check below allows by its exact spelling.
+    /// lots read (`lots_query_previous`'s containment arm, which `/v1/tenders/{id}`
+    /// reads its lots through) is in the set too: it reads the same pointer, by
+    /// one primary-key seek evaluated once.
     fn page_statements() -> Vec<(String, Query)> {
         let mut out = Vec::new();
         for (name, f) in filters() {
@@ -4832,9 +4844,9 @@ mod head_pointer_plan_tests {
         out
     }
 
-    /// The one MAX a page statement may still carry: the tender-scoped lots
-    /// read's, bound to a parameter and so evaluated once per statement.
-    const UNCORRELATED_MAX: &str = "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = ?)";
+    /// The aggregates turso 0.8.1 may unnest "group-first" (the evaluation's R2
+    /// list: MAX, MIN, COUNT, AVG, TOTAL), plus SUM for margin.
+    const AGGREGATES: &[&str] = &["MAX", "MIN", "COUNT", "AVG", "TOTAL", "SUM"];
 
     /// `sql` with its whitespace collapsed, so a check reads the statement and
     /// not its indentation.
@@ -4842,9 +4854,82 @@ mod head_pointer_plan_tests {
         sql.split_whitespace().collect::<Vec<_>>().join(" ")
     }
 
-    /// Does `sql` recompute the head with a correlated aggregate over versions?
-    fn correlated_max(sql: &str) -> bool {
-        flat(sql).replace(UNCORRELATED_MAX, "").to_uppercase().contains("MAX(")
+    /// Is `c` part of an SQL identifier?
+    fn word(c: u8) -> bool {
+        c.is_ascii_alphanumeric() || c == b'_'
+    }
+
+    /// `body` at its own nesting level: every parenthesised group inside it
+    /// blanked to `()`, and no space before a `(` — so `MAX (x.seq)` reads as
+    /// `MAX()` and a nested subquery's tables are not this level's.
+    fn top_level(body: &str) -> String {
+        let mut out = String::new();
+        let mut depth = 0usize;
+        for c in body.chars() {
+            match c {
+                '(' => {
+                    if depth == 0 {
+                        while out.ends_with(' ') {
+                            out.pop();
+                        }
+                        out.push('(');
+                    }
+                    depth += 1;
+                }
+                ')' => {
+                    depth = depth.saturating_sub(1);
+                    if depth == 0 {
+                        out.push(')');
+                    }
+                }
+                _ if depth == 0 => out.push(c),
+                _ => {}
+            }
+        }
+        out
+    }
+
+    /// Does this one SELECT level (see [`top_level`]) aggregate over
+    /// `tender_versions` — an aggregate call in its select list and the version
+    /// table in its FROM?
+    fn aggregates_versions(level: &str) -> bool {
+        let Some(select) = level.strip_prefix("SELECT ") else { return false };
+        let Some((list, from)) = select.split_once(" FROM ") else { return false };
+        let names_versions = from.match_indices("TENDER_VERSIONS").any(|(i, _)| {
+            let b = from.as_bytes();
+            (i == 0 || !word(b[i - 1])) && b.get(i + "TENDER_VERSIONS".len()).is_none_or(|&c| !word(c))
+        });
+        let calls_aggregate = AGGREGATES.iter().any(|agg| {
+            list.match_indices(&format!("{agg}(")).any(|(i, _)| i == 0 || !word(list.as_bytes()[i - 1]))
+        });
+        names_versions && calls_aggregate
+    }
+
+    /// Does `sql` recompute the head as an aggregate over the version chain — in
+    /// ANY spelling: any of [`AGGREGATES`], with or without a space before its
+    /// parenthesis, correlated or bound to a parameter, at any nesting depth? No
+    /// page statement may (issue 457 R2); each reads the `current_seq` pointer.
+    /// Aggregates over OTHER tables (a version's lot count, its classifications)
+    /// are not a head recompute and are not this check's business.
+    fn version_aggregate(sql: &str) -> bool {
+        let up = flat(sql).to_uppercase();
+        let mut levels = vec![up.clone()];
+        for (open, _) in up.match_indices('(') {
+            if !up[open + 1..].trim_start().starts_with("SELECT ") {
+                continue;
+            }
+            let mut depth = 0usize;
+            let close = up[open..].char_indices().find_map(|(i, c)| {
+                match c {
+                    '(' => depth += 1,
+                    ')' => depth -= 1,
+                    _ => {}
+                }
+                (depth == 0).then_some(open + i)
+            });
+            levels.push(up[open + 1..close.unwrap_or(up.len())].trim().to_owned());
+        }
+        levels.iter().any(|level| aggregates_versions(&top_level(level)))
     }
 
     async fn plan_of(conn: &Connection, sql: &str, params: Vec<Value>) -> String {
@@ -4860,72 +4945,183 @@ mod head_pointer_plan_tests {
         plan
     }
 
-    /// The check can say YES: today's predecessor shape — the correlated MAX the
-    /// page statements carried until issue 457 — is caught, and the one allowed
-    /// uncorrelated form is not.
+    /// The check can say YES — to the predecessor shapes the page statements
+    /// carried until issue 457, and to every other spelling of an aggregate over
+    /// the version chain — and NO to the pointer and to aggregates over other
+    /// tables, which the page statements legitimately carry.
     #[test]
-    fn the_correlated_max_check_can_fail() {
-        assert!(correlated_max(
+    fn the_version_aggregate_check_can_fail() {
+        for caught in [
             "JOIN tender_versions v ON v.tender_id = t.id AND v.seq =
-                  (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)"
-        ));
-        assert!(correlated_max(
-            "vl.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)"
-        ));
-        assert!(!correlated_max(
+                  (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)",
+            "vl.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)",
+            // bound to a parameter: evaluated once, but still a recompute
             "AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x
-                            WHERE x.tender_id = ?)"
-        ));
-        assert!(!correlated_max("JOIN tender_versions v ON v.tender_id = t.id AND v.seq = t.current_seq"));
+                            WHERE x.tender_id = ?)",
+            "v.seq = (SELECT max (x.seq) FROM tender_versions x WHERE x.tender_id = t.id)",
+            "v.seq = (SELECT MAX( x.seq ) FROM tender_versions AS x WHERE x.tender_id = t.id)",
+            "v.seq = (SELECT MIN(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)",
+            "1 = (SELECT COUNT(*) FROM tender_versions x WHERE x.tender_id = t.id)",
+            "1 < (SELECT COUNT (x.seq) FROM tender_versions x WHERE x.tender_id = t.id)",
+            "1 < (SELECT AVG(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)",
+            "1 < (SELECT TOTAL(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)",
+            "1 < (SELECT SUM(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)",
+            "v.seq = (SELECT MAX(x.seq) + 0 FROM tender_versions x WHERE x.tender_id = t.id)",
+            // nested inside a satellite subquery: judged at its own level
+            "(SELECT s.value FROM tender_version_texts s WHERE s.tender_id = t.id
+               AND s.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id))",
+            // over a join that includes the version table
+            "v.seq = (SELECT MAX(x.seq) FROM tenders tt JOIN tender_versions x ON x.tender_id = tt.id
+                       WHERE tt.id = t.id)",
+        ] {
+            assert!(version_aggregate(caught), "not caught: {caught}");
+        }
+        for clean in [
+            "JOIN tender_versions v ON v.tender_id = t.id AND v.seq = t.current_seq",
+            LOT_SEQ,
+            "AND vl.seq = (SELECT tt.current_seq FROM tenders tt WHERE tt.id = ?)",
+            "(SELECT COUNT(*) FROM tender_version_lots l WHERE l.tender_id = t.id AND l.seq = v.seq)",
+            "(SELECT MAX(a.cents) FROM tender_version_amounts a WHERE a.tender_id = t.id AND a.seq = v.seq)",
+            "(SELECT group_concat(DISTINCT c.code) FROM tender_version_classifications c
+               WHERE c.tender_id = t.id AND c.seq = v.seq AND c.scheme = 'cpv')",
+            "(SELECT pv.published_at FROM tender_versions pv WHERE pv.tender_id = t.id AND pv.seq = v.seq)",
+            // an aggregate over another table whose subquery merely MENTIONS versions deeper down
+            "(SELECT COUNT(*) FROM tender_version_lots l WHERE l.tender_id = t.id
+               AND EXISTS (SELECT 1 FROM tender_versions v2 WHERE v2.tender_id = l.tender_id))",
+        ] {
+            assert!(!version_aggregate(clean), "flagged, but no aggregate over versions: {clean}");
+        }
     }
 
-    /// No page statement recomputes the head with a correlated MAX: each reads the
-    /// `current_seq` pointer (`t.current_seq`, or one PK seek on `tenders` where
-    /// `lots` must stay the only table in FROM).
+    /// The pointer read each page statement must carry, by its builder: the
+    /// tenders windows join `v.seq = t.current_seq`; every lots statement reads
+    /// `tt.current_seq` by primary key ([`LOT_SEQ`] on the stream, the
+    /// containment arm's parameter-bound seek on the tender-scoped read).
+    fn pointer_read(label: &str) -> &'static str {
+        match label.starts_with("tenders") {
+            true => "v.seq = t.current_seq",
+            false => "tt.current_seq FROM tenders tt WHERE tt.id = ",
+        }
+    }
+
+    /// No page statement recomputes the head with an aggregate over versions, and
+    /// each one DOES read the `current_seq` pointer (`t.current_seq`, or one PK
+    /// seek on `tenders` where `lots` must stay the only table in FROM) — the
+    /// presence half, so the absence half cannot pass on a statement that reads
+    /// the head some third way.
     #[test]
-    fn no_page_statement_recomputes_the_head_with_a_correlated_max() {
+    fn no_page_statement_recomputes_the_head_with_an_aggregate() {
         let statements = page_statements();
         assert!(statements.len() > 200, "the matrix shrank to {}", statements.len());
         let offenders: Vec<String> = statements
             .iter()
-            .filter(|(_, q)| correlated_max(&q.sql))
+            .filter(|(_, q)| version_aggregate(&q.sql))
             .map(|(label, q)| format!("{label}:\n{}", flat(&q.sql)))
             .collect();
         assert!(
             offenders.is_empty(),
-            "{} page statement(s) still carry a correlated MAX(seq):\n{}",
+            "{} page statement(s) still aggregate over tender_versions:\n{}",
             offenders.len(),
             offenders.join("\n\n")
         );
+        let pointerless: Vec<String> = statements
+            .iter()
+            .filter(|(label, q)| !flat(&q.sql).contains(pointer_read(label)))
+            .map(|(label, q)| format!("{label}:\n{}", flat(&q.sql)))
+            .collect();
+        assert!(
+            pointerless.is_empty(),
+            "{} page statement(s) do not read the current_seq pointer:\n{}",
+            pointerless.len(),
+            pointerless.join("\n\n")
+        );
+    }
+
+    /// Does this plan line read the table aliased `alias` — as the line's
+    /// subject (`SEARCH x …`, `SCAN x`) or behind its table name
+    /// (`SCAN tender_versions AS x …`, what a subquery turned into a join prints)?
+    fn names_alias(line: &str, alias: &str) -> bool {
+        let subject = |verb: &str| {
+            line.strip_prefix(verb)
+                .and_then(|rest| rest.strip_prefix(alias))
+                .is_some_and(|rest| rest.is_empty() || rest.starts_with(' '))
+        };
+        subject("SEARCH ") || subject("SCAN ") || line.contains(&format!(" AS {alias} ")) || line.ends_with(&format!(" AS {alias}"))
     }
 
     /// What a plan says is wrong with its head read — empty when it reads the
     /// pointer. `x` is the alias every `MAX(seq)` subquery used, `tt` the
-    /// pointer's primary-key seek on the lots side.
+    /// pointer's primary-key seek.
+    ///
+    /// ABSENCE: no line reads `x` in any spelling ([`names_alias`]), and no line
+    /// groups rows (`GROUP BY` — the group-first rewrite's own step; no page plan
+    /// has one on turso 0.7.2). PRESENCE, so those absences cannot pass on a plan
+    /// that reads the head some third way or prints it in a form this parser
+    /// does not know: every lots plan seeks `tt` by primary key, and every
+    /// tenders plan reaches its head version through the pointer — a
+    /// `(tender_id=? AND seq=?)` seek on `v`, or a scan that DRIVES from
+    /// `tender_versions AS v` and tests the pointer per row. The banded winner
+    /// windows are the one exception, named: they seek `v` by `tender_id` alone
+    /// (`UNIQUE(tender_id, caused_by_notice_id)`) and test the pointer per
+    /// version row — the plan they had under the MAX too.
     fn head_read_faults(label: &str, plan: &str) -> Vec<String> {
         let lines: Vec<&str> = plan.lines().map(str::trim_start).collect();
         let mut why = Vec::new();
-        // The tender-scoped lots read keeps its parameter-bound MAX (evaluated once).
-        if !label.contains("tender-scoped")
-            && lines.iter().any(|l| l.starts_with("SEARCH x ") || l.starts_with("SCAN x ") || *l == "SCAN x")
-        {
-            why.push("probes tender_versions through a MAX(seq) subquery".to_owned());
+        if let Some(line) = lines.iter().find(|l| names_alias(l, "x")) {
+            why.push(format!("probes tender_versions through a MAX(seq) subquery: `{line}`"));
         }
-        for line in lines.iter().filter(|l| l.starts_with("SEARCH tt ") || l.starts_with("SCAN tt")) {
+        if let Some(line) = lines.iter().find(|l| l.to_uppercase().contains("GROUP BY")) {
+            why.push(format!("groups rows, the group-first rewrite of a head subquery: `{line}`"));
+        }
+        for line in lines.iter().filter(|l| names_alias(l, "tt")) {
             if !line.contains("INTEGER PRIMARY KEY (rowid=?)") {
                 why.push(format!("reads the head pointer without its primary key: `{line}`"));
             }
         }
-        if label.starts_with("lots") && !label.contains("tender-scoped") && !lines.iter().any(|l| l.starts_with("SEARCH tt ")) {
+        if label.starts_with("lots") && !lines.iter().any(|l| l.starts_with("SEARCH tt ")) {
             why.push("never reads the head pointer".to_owned());
+        }
+        if label.starts_with("tenders") {
+            let seeks_v = |key: &str| lines.iter().any(|l| l.starts_with("SEARCH v USING ") && l.ends_with(key));
+            let through_pointer = seeks_v("(tender_id=? AND seq=?)")
+                || lines.iter().any(|l| l.starts_with("SCAN tender_versions AS v "))
+                || (label.contains("banded winner") && seeks_v("(tender_id=?)"));
+            if !through_pointer {
+                why.push("never reaches its head version through the pointer".to_owned());
+            }
         }
         why
     }
 
-    /// The same, as a PLAN: across the matrix no statement probes
-    /// `tender_versions` through a MAX subquery (alias `x`, outside the one
-    /// parameter-bound read), and every lots stream reads the pointer by one
-    /// primary-key seek on `tenders`.
+    /// The plan check can say YES to every spelling it claims to read, and NO to
+    /// the lines today's page plans print.
+    #[test]
+    fn the_plan_fault_check_reads_every_spelling() {
+        let pointer = "SEARCH t USING INTEGER PRIMARY KEY (rowid=?)\n\
+                       SEARCH v USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=? AND seq=?)\n";
+        assert_eq!(head_read_faults("tenders_page none", pointer), Vec::<String>::new());
+        let lots = "SEARCH l USING INTEGER PRIMARY KEY (rowid=?)\nSEARCH tt USING INTEGER PRIMARY KEY (rowid=?)\n";
+        assert_eq!(head_read_faults("lots_page none", lots), Vec::<String>::new());
+        for (label, plan) in [
+            ("tenders_page none", format!("{pointer}SEARCH x USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=?)")),
+            ("tenders_page none", format!("{pointer}SCAN x")),
+            ("tenders_page none", format!("{pointer}SCAN tender_versions AS x USING COVERING INDEX sqlite_autoindex_tender_versions_1")),
+            ("tenders_page none", format!("{pointer}SEARCH tender_versions AS x USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=?)")),
+            ("tenders_page none", format!("{pointer}USE TEMP B-TREE FOR GROUP BY")),
+            ("tenders_page none", "SEARCH t USING INTEGER PRIMARY KEY (rowid=?)\n\
+                                   SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)".to_owned()),
+            ("lots_page none", "SEARCH l USING INTEGER PRIMARY KEY (rowid=?)\nSCAN tt".to_owned()),
+            ("lots_page none", "SEARCH l USING INTEGER PRIMARY KEY (rowid=?)\n".to_owned()),
+        ] {
+            assert!(!head_read_faults(label, &plan).is_empty(), "{label}: not caught:\n{plan}");
+        }
+    }
+
+    /// The same, as a PLAN ([`head_read_faults`]): across the matrix no statement
+    /// probes `tender_versions` through a MAX subquery (alias `x`) or groups rows,
+    /// every lots read — the tender-scoped one included — reads the pointer by one
+    /// primary-key seek on `tenders`, and every tenders window seeks its head
+    /// version by the pointer.
     ///
     /// Read against `Db::open`'s schema plus the deferred tender, notice and
     /// organization indexes prod carries, with no statistics (prod's state until
@@ -4935,13 +5131,14 @@ mod head_pointer_plan_tests {
     /// unchanged, except that the six unfiltered/`closed` ordered windows without a
     /// cursor stop reading `tenders_current_published`/`_deadline` as a COVERING
     /// index (`current_seq` is not in it): a rowid lookup per window row instead of
-    /// a `MAX(seq)` walk of the Tender's versions. Two shapes this test does NOT
-    /// assert, because they predate the issue and did not move with it: the 12
+    /// a `MAX(seq)` walk of the Tender's versions. Two shapes predate the issue
+    /// and did not move with it, so the presence check accepts them by name
+    /// rather than demanding the `(tender_id=? AND seq=?)` seek: the 12
     /// cursorless country/cpv/currency ordered windows DRIVE from the version
     /// table (`SCAN tender_versions AS v USING COVERING INDEX …`; they now test
     /// the pointer per version row instead of running a MAX per version row), and
-    /// some joins onto `v` — every outer re-join on `w.wseq`, the banded winner
-    /// window — seek `UNIQUE(tender_id, caused_by_notice_id)` on `tender_id` alone.
+    /// the four banded winner windows seek `UNIQUE(tender_id, caused_by_notice_id)`
+    /// on `tender_id` alone, as every outer re-join on `w.wseq` does.
     #[tokio::test]
     async fn the_page_statements_read_the_head_pointer_in_their_plans() {
         let path = format!("/tmp/tender-db-457-r2-plans-{}.db", std::process::id());
@@ -4993,6 +5190,16 @@ mod head_pointer_plan_tests {
                 "{label}: the plan check cannot tell the correlated MAX from the pointer:\n{plan}"
             );
         }
+        // And the presence half can say NO: a tenders window whose head join
+        // lost the pointer reaches `v` some other way and is named for it.
+        let q = tenders_page_query(&f, page, None);
+        let lost = q.sql.replace("v.seq = t.current_seq", "v.seq IS NOT NULL");
+        assert_ne!(lost, q.sql, "the presence control rewrote nothing");
+        let plan = plan_of(&conn, &lost, q.params.clone()).await;
+        assert!(
+            head_read_faults("tenders_page", &plan).iter().any(|w| w.contains("through the pointer")),
+            "the plan check cannot tell a pointerless head join from the pointer:\n{plan}"
+        );
 
         drop(conn);
         for s in ["", "-wal", "-shm"] {

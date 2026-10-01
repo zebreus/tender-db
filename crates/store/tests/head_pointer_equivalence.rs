@@ -21,7 +21,9 @@
 //! Tender, then that the shipped pages agree with a `MAX(seq)` oracle on the
 //! same data. The satellites differ per version, so a page reading the wrong
 //! version returns different rows, not the same ones. A final control corrupts
-//! one pointer by hand and shows both checks notice.
+//! one pointer by hand and shows both checks notice — and that even then the
+//! detail page and the SSE head probes read that ONE pointer, never one version's
+//! fields beside another's lots.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -252,9 +254,49 @@ async fn assert_pages_agree(conn: &Connection, step: &str, max: &BTreeMap<i64, i
     faults
 }
 
+/// `/v1/tenders/{id}` and the seq-less SSE probes, per Tender: the detail's
+/// Tender row, its lots (the tender-scoped containment read) and both SSE head
+/// probes must read ONE version, `want[id]`. Before the issue-457 review the
+/// containment read and the probes recomputed the head while the Tender row read
+/// the pointer, so a pointer that was not the last version served one version's
+/// fields beside another version's lots.
+async fn detail_faults(conn: &Connection, step: &str, want: &BTreeMap<i64, i64>) -> Vec<String> {
+    let mut faults = Vec::new();
+    for (&id, &seq) in want {
+        let Some(detail) = read::tender_detail(conn, id, None).await.unwrap() else {
+            faults.push(format!("{step} detail: tender {id} is not served"));
+            continue;
+        };
+        if detail.tender.seq != seq {
+            faults.push(format!("{step} detail: tender {id} served at seq {}, want {seq}", detail.tender.seq));
+        }
+        if detail.lots.is_empty() {
+            faults.push(format!("{step} detail: tender {id} has no lots — the check would be vacuous"));
+        }
+        for lot in &detail.lots {
+            if lot.seq != seq {
+                faults.push(format!(
+                    "{step} detail: tender {id} served at seq {} beside its lot {} at seq {}",
+                    detail.tender.seq, lot.lot_key, lot.seq
+                ));
+            }
+            let probe = read::lot_head_seq(conn, lot.id).await.unwrap();
+            if probe != Some(seq) {
+                faults.push(format!("{step} sse: lot {} head probe {probe:?}, want {seq}", lot.id));
+            }
+        }
+        let probe = read::tender_head_seq(conn, id).await.unwrap();
+        if probe != Some(seq) {
+            faults.push(format!("{step} sse: tender {id} head probe {probe:?}, want {seq}"));
+        }
+    }
+    faults
+}
+
 async fn check(db: &Db, conn: &Connection, step: &str) {
     let max = assert_invariant(db, conn, step).await;
-    let faults = assert_pages_agree(conn, step, &max).await;
+    let mut faults = assert_pages_agree(conn, step, &max).await;
+    faults.extend(detail_faults(conn, step, &max).await);
     assert!(faults.is_empty(), "{step}: the pages disagree with MAX(seq):\n{}", faults.join("\n"));
 }
 
@@ -378,6 +420,13 @@ async fn the_head_pointer_is_the_last_version_through_every_fold_transition() {
         "a pointer that is not the last version must surface in the page check:\n{}",
         faults.join("\n")
     );
+    // Even in that state every read agrees on ONE head: the detail serves B's
+    // fields, its lots and its SSE probes all at the pointer, never the pointer
+    // for the Tender row beside a recomputed MAX for its lots.
+    let pointer: BTreeMap<i64, i64> =
+        corrupted.iter().filter_map(|(id, (cur, _))| cur.map(|c| (*id, c))).collect();
+    let mixed = detail_faults(&conn, "control", &pointer).await;
+    assert!(mixed.is_empty(), "the detail reads more than one head:\n{}", mixed.join("\n"));
     conn.execute("UPDATE tenders SET current_seq = 3 WHERE id = ?", (Value::Integer(b),)).await.unwrap();
     check(&db, &conn, "control restored").await;
 
