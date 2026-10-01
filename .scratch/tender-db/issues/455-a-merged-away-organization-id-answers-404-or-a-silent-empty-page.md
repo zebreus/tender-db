@@ -1,6 +1,7 @@
 # 455 — a merged-away organization id answers a bare 404, and as a filter a silent empty page
 
-Status: ready-for-agent — BUILT and gated 2026-10-01 (`9551a23`, GATE-EXIT=0, all suites green in 710 s), pushed to main. NEXT: deploy when the box queue drains (FTS chunk 7, jobs 1776–1785, then altid dry 1786), then the Verify.
+Status: **DONE 2026-10-01** — deployed 10:04 UTC (rev `f40d5e5`, which carries `9551a23`; only `.scratch/` and `.claude/settings.json` changed since the green gate, so `SKIP_TESTS=1`), and the Verify reads done on prod: `308 …/v1/organizations/31544276`, `resolved_filters` on `?winner=` and `?bidder=`, and an unknown id still a 404 / empty page.
+Was status: ready-for-agent — BUILT and gated 2026-10-01 (`9551a23`, GATE-EXIT=0, all suites green in 710 s), pushed to main. NEXT: deploy when the box queue drains (FTS chunk 7, jobs 1776–1785, then altid dry 1786), then the Verify.
 Was status: ready-for-agent — filed 2026-10-01 by the hourly audit, after 453 and 448 removed ~4,800 org rows in one morning.
 Kind: API correctness (stable identifiers)
 Relates to: 286 (merge emits change events), 448 (e2-altid), 453 (re-key), 49 (`/v1/organizations/{id}`)
@@ -79,3 +80,20 @@ lookup by loser is one index seek; a chain (A→B, then B→C) is a few. The 453
   - `app/tests/api.rs::a_merged_away_org_id_redirects_and_filters_by_its_survivor` covers the raw 308 with
     `Location` and `merged_into`, the followed redirect, the survivor's filtered page with `resolved_filters`,
     and no `resolved_filters` for a live, an unknown or an ignored filter.
+
+## RESOLVED-VERIFIED 2026-10-01 10:05 UTC
+
+Deployed with `SKIP_TESTS=1 ./deploy.sh` at rev `f40d5e5` (`git diff --stat 9551a23 HEAD -- . ':!.scratch'` lists only
+`.claude/settings.json`, which the build does not read). Read on prod right after the restart:
+
+| request | answer |
+|---|---|
+| `GET /v1/organizations/31556979` | `308`, `location: /v1/organizations/31544276`, body `{"error":{"message":"organization merged","status":308},"merged_into":31544276}` |
+| `GET /v1/tenders?winner=31556979&limit=1` | `resolved_filters` `{"winner":{"asked":31556979,"merged_into":31544276}}`, 1 item |
+| `GET /v1/lots?bidder=31556979&limit=1` | `resolved_filters` `{"bidder":{"asked":31556979,"merged_into":31544276}}`, 1 item |
+| `GET /v1/organizations/999999999` | `404` (never minted) |
+| `GET /v1/tenders?winner=999999999&limit=1` | no `resolved_filters`, 0 items |
+
+Scope check: `/v1/changes` and `/v1/webhooks` take no org-id filter (grep of `crates/app/src/v1/`), so the
+decision's "change feed" clause has nothing to resolve; the SSE branch of `/v1/tenders` and `/v1/lots` resolves
+before subscribing (unit test above).
