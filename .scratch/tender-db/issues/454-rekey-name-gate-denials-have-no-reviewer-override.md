@@ -1,6 +1,7 @@
 # 454 — 16 re-keys the name gate denies are mostly one entity, and nothing lets a reviewer admit them
 
-Status: ready-for-agent — option 1 BUILT (`fee8c61`, gated green) and the 16 REVIEWED 2026-09-30 17:5x UTC: 8 merge + 1 keep verdicts POSTed (cohort `454-rekey-names-2026-09-30`, recorded 9); 7 unsettled stay denied with reasons below. NEXT: deploy `fee8c61` when the queue is idle (after FTS chunk 4 and rekey re-plan 1738), re-plan, and the 8 admitted merges ride issue 453's wet run.
+Status: done — `fee8c61` deployed with `1389820` (2026-09-30), and the 8 admitted merges rode 453's wet run (job 1760, 2026-10-01 07:02 UTC). In the post-run plan (453 dry 1761, `453-rekey/rekey-plan-3-2026-10-01.json`) none of the 8 keys is denied or planned: all are gone. The 6 unsettled name-denials and the B Braun `keep` remain, each with its reason on 453. The same override then admitted 453's two residue merges (Perk UK/Click Travel, St Annes; job 1763).
+Was status: ready-for-agent — option 1 BUILT (`fee8c61`, gated green) and the 16 REVIEWED 2026-09-30 17:5x UTC: 8 merge + 1 keep verdicts POSTed (cohort `454-rekey-names-2026-09-30`, recorded 9); 7 unsettled stay denied with reasons below. NEXT: deploy `fee8c61` when the queue is idle (after FTS chunk 4 and rekey re-plan 1738), re-plan, and the 8 admitted merges ride issue 453's wet run.
 Was status: ready-for-agent — filed 2026-09-30 17:0x UTC from issue 453's first dry plan (job 1726). NEXT: read the 16 against
 the register (453's `ch_check.py` does it), then choose between a reviewer override in the rekey arm (the 362 shape)
 and leaving them withheld.
