@@ -1,6 +1,7 @@
 # 463 — the public pages state three things that are not true: an SSE snapshot "read in a single consistent transaction", three drained quarantine classes "not resolved", and a source offer that points back at itself
 
-Status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the two edits that need no decision (the SSE sentence on both surfaces, and dating the three ledger rows), and the source offer with its deploy guard follows; all three ship in one gate and one deploy.
+Status: **DONE 2026-10-01** — deployed at `b629d0b` (15:1x UTC). The Verify prints nothing (all three false statements gone). `/v1`'s `source_offer` is `https://github.com/zebreus/tender-db/tree/b629d0b…`, and `/docs` says the SSE snapshot is at-least-once.
+Was status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the two edits that need no decision (the SSE sentence on both surfaces, and dating the three ledger rows), and the source offer with its deploy guard follows; all three ship in one gate and one deploy.
 Kind: public-surface correctness (served docs, dashboard, licence offer)
 Relates to: 55 (the paged snapshot), 416 (noted the SSE sentence and left it), 370 (the retired-claim detector the
 SSE fix extends), 433 (the reclaim that drained the three classes), 413 (the precedent: its row was dated at its
@@ -114,3 +115,11 @@ It prints one line for each false statement that is still served, with its count
   (`/docs` and the OpenAPI document).
 - **done**: no output. When a unit is fixed, its line disappears. At done, the first line of `/_source` names the
   revision, and the page links `https://github.com/zebreus/tender-db/tree/<that revision>`, which answers 200.
+
+## RESOLVED-VERIFIED 2026-10-01 15:1x UTC
+
+Built as `195505d`, with review fixes in `5a4b9e8`. The publish check asks GitHub by URL, never `origin`
+(`ops/published.sh`, pinned by `ops/test-published.sh` and a Rust test that both name the same `REPOSITORY`). The
+quarantine gauges are tested, and the SSE removed/reset docs are corrected. Gated in the batch and deployed at
+`b629d0b`. `rev_published` answered `published` through this session's proxy for `89d7d27`, and `unpublished` for
+an unpushed HEAD.

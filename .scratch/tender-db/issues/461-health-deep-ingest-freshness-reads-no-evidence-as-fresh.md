@@ -1,6 +1,7 @@
 # 461 — `/health/deep` ingest_freshness reads "no ok probe/process in the newest 100 job_log rows" as fresh
 
-Status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the fix and its test: read the newest ok `probe`/`process` from `job_log` directly, and keep the fresh-box exemption only for an empty log.
+Status: **DONE 2026-10-01** — deployed at `b629d0b` (15:1x UTC). The Verify reads done (`b629d0b`, `1`), and `/health/deep` serves `ingest_freshness` from the whole job log: `ok:true`, `last_success_at 1790860212`, age 7,359 s.
+Was status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the fix and its test: read the newest ok `probe`/`process` from `job_log` directly, and keep the fresh-box exemption only for an empty log.
 Kind: risk (alerting: a false green on the check the external watchers page on)
 Relates to: 226 (closed; accepted this gap), 256 (closed; saw it on prod), 24 (the watchers that read this check),
 56 (dormant; the opposite case, a false 503 during a long backfill), 342 (the FTS backfill whose `process` jobs carry
@@ -121,3 +122,12 @@ directly.
 - **done:** `1`, with the deployed rev at or after the 461 commit. The gate runs the test, so it proves the
   behaviour. Prod's own `/health/deep` reads the same in both states while dailies land, so the deployed source is
   the only thing this check can see.
+
+## RESOLVED-VERIFIED 2026-10-01 15:1x UTC
+
+Built as `7f4ed41`, with review fixes in `e65d608` (one log read for the verdict, so a failed clock read cannot pose
+as "never ingested"; `JOB_SCAN` moved to `/metrics`; an end-to-end "runs but no ingest" test). Gated in the batch
+(GATE-EXIT=0, 832 s) and deployed at `b629d0b`. Live: `{"age_secs": 7359, "last_success_at": 1790860212, "ok": true}`.
+One review observation is out of scope and recorded here: `process` "succeeds trivially when there is nothing to
+process" (supervisor.rs ~12391), so a total fetch outage whose daily `process` runs stay ok would keep the clock
+fresh. The freshness signal measures processing, not fetching.

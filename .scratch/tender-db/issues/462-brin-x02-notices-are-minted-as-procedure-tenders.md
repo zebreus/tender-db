@@ -1,6 +1,7 @@
 # 462 — X02 BRIN notices are minted as procedure Tenders: 368's `kind_of` unit was never built
 
-Status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the code: `kind_of` classifies by the BRIN class (X01 and X02), and an incremental fold corrects a stored `kind`, pinned by the X02 fixture; the scoped refold follows the deploy.
+Status: **DONE 2026-10-01** — deployed at `b629d0b` and refolded: `refold-sections` over `BusinessCapability` (job 1811) re-queued and stamped 327 notices, and project 1812 wrote 327 tenders (327 islands). The Verify reads done: tender 1167207 is `["registration","X02","00568126-2023"]`.
+Was status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the code: `kind_of` classifies by the BRIN class (X01 and X02), and an incremental fold corrects a stored `kind`, pinned by the X02 fixture; the scoped refold follows the deploy.
 Kind: defect (projection: Tender kind), a unit of closed issue 368 that was never built
 Relates to: 368 (Units item 3 and Done-when bullet 3; closed 2026-09-18 without them), CONTEXT.md:156–157 "BRIN notices
 become minimal Tenders of a distinct kind", 237 (`refold-sections`, the index-backed cohort job)
@@ -82,3 +83,16 @@ measures it.
 - **open** (2026-10-01 11:55 UTC): `["procedure","X02","00568126-2023"]`
 - **done:** `["registration","X02","00568126-2023"]`, after units 1–3 are deployed AND the unit-4 refold has run. A
   deploy without the refold still prints `procedure` (see unit 2).
+
+## RESOLVED-VERIFIED 2026-10-01 15:2x UTC
+
+- Built as `67b908d`: `kind_of` matches `REGISTRATION_SUBTYPES = ["X01","X02"]`, and `tender_identity` corrects a
+  stored `kind` on a refold. Review fixes in `ab462ab` pin the unstamped early-return path and the change row. Gated
+  in the batch and deployed at `b629d0b`.
+- Prod: job 1811 `327 notice(s) carry a ["BusinessCapability"] section: re-queued 327, stamped 327 tender(s)`, then
+  project 1812 `327 notices → 327 tenders (327 islands)`. Tender 1167207 now reads `registration`.
+- Left by decision: an X02 published on SDK 1.0–1.7 carries no `BusinessCapability` section, so this cohort cannot
+  see it. Issue 368's census found X02 only on SDK 1.8–1.14. The complete sweep would be
+  `{"kind":"refold-fields","profiles":["OPP-100-Business"],"tables":["notice_codes"],"expect":1}`, one full
+  `notice_codes` walk (~46 min). Not run, because there is no evidence any such notice exists. Reopen if one turns up
+  as `procedure`.

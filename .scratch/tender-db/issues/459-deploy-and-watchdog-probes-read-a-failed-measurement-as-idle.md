@@ -1,6 +1,7 @@
 # 459 — the deploy and watchdog probes read a failed measurement as idle, and the deploy's test gate is bound to HEAD, not to the rev it ships
 
-Status: ready-for-agent — units 1–3 BUILT, pushed (`89d7d27`) and INSTALLED on the box 2026-10-01 12:55 UTC (`install.sh` exit 0: harness green on the box, the five scripts hash-equal to the repo's, timers enabled; the installed jobwatch reads `ok jobwatch: running fetch #1806 …`, the probe `busy 1806 fetch fts monthly 2021-07`). NEXT: the first real `./deploy.sh` proves the new gate and probe in production (expect one re-gate, because the old bare-SHA marker covers nothing); close after it.
+Status: **DONE 2026-10-01** — all three units built, reviewed and installed (`install.sh` exit 0 on the box, 12:55 UTC). The first real deploy through the new gate and probe, `b629d0b` at 15:1x UTC, worked as designed: `Suites already green at b4f2bba, whose tree equals b629d0b's outside .scratch/ — skipping`, then `Queue idle`. No `SKIP_TESTS=1` was needed. The Verify reads done (`jobwatch=1 snapshot=1 driftwatch=1`).
+Was status: ready-for-agent — units 1–3 BUILT, pushed (`89d7d27`) and INSTALLED on the box 2026-10-01 12:55 UTC (`install.sh` exit 0: harness green on the box, the five scripts hash-equal to the repo's, timers enabled; the installed jobwatch reads `ok jobwatch: running fetch #1806 …`, the probe `busy 1806 fetch fts monthly 2021-07`). NEXT: the first real `./deploy.sh` proves the new gate and probe in production (expect one re-gate, because the old bare-SHA marker covers nothing); close after it.
 Was status: ready-for-agent — units 1–3 BUILT 2026-10-01 (workflow `wf_2cb1e277-797`: an implementer, three adversarial reviewers (fail-open, deploy-safety, tests-both-ways) whose 15 defects were all reproduced and fixed, and a mutation check where 26 of 27 mutations turn a harness red). `ops/test-gate-marker.sh` passes 62 cases and `ops/watchdogs/test-watchdogs.sh` 117; the Verify reads done locally (`jobwatch=1 snapshot=1 driftwatch=1`). NEXT: install the watchdogs on the box (`install.sh`), then the first real deploy proves deploy.sh's new gate and probe.
 Was status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the queue probe: one probe script with named answers, shared by `deploy.sh` and the snapshot, that lets a caller proceed only on a named answer (`idle`, or `down` when nothing listens) and never on a failed or empty one, pinned by a wrong-secret case in `ops/watchdogs/test-watchdogs.sh`.
 Kind: operability (instrument discipline: ops checks that fail permissive)
@@ -222,3 +223,11 @@ Left as known limits:
 - A write that keeps an old mtime (`cp -p`, `touch -d`) gets past the quiet-run check.
 - The order inside `check.sh` (`gate_begin` before cargo) is not pinned.
 - The admin secret still reaches curl on the box's command line (unchanged).
+
+## RESOLVED-VERIFIED 2026-10-01 15:1x UTC
+
+- `./deploy.sh` at `b629d0b` (the 461/462/463/465 batch). The gate ran `ops/check.sh` at `b4f2bba` and wrote
+  `gate-v2 b4f2bba…` (`all suites green in 832s at b4f2bba (marker written)`). One `.scratch/`-only commit followed,
+  and the deploy skipped the suites on the covering marker, with no `SKIP_TESTS=1` and no by-eye diff. The queue
+  probe answered `idle` from the repo copy piped over ssh. Health was green.
+- The box's installed watchdogs hash-equal the repo copies, and the installed jobwatch reads the live queue.
