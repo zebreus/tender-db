@@ -42,7 +42,7 @@
                     "service": { "type": "string", "example": "tender-db" },
                     "version": { "type": "string" },
                     "source": { "type": "string", "description": "Deployed git revision." },
-                    "source_offer": { "type": "string" },
+                    "source_offer": { "type": "string", "format": "uri", "description": "The running revision's source tree on the public repository (AGPL §13); the repository itself for a build that names no revision." },
                     "license": { "type": "string", "example": "AGPL-3.0-or-later", "description": "The licence of tender-db's code. The data's reuse terms are in data_sources." },
                     "data_sources": {
                       "type": "array",
@@ -676,7 +676,7 @@
       "get": {
         "tags": ["service"],
         "summary": "AGPL §13 corresponding-source offer",
-        "description": "Names the running revision and how to obtain its source.",
+        "description": "Names the running revision and links its source: the public repository's tree at that revision.",
         "operationId": "sourceOffer",
         "responses": {
           "200": { "description": "The source offer.", "content": { "text/plain": { "schema": { "type": "string" } } } }
@@ -1102,7 +1102,7 @@
       },
       "EventStream": {
         "type": "string",
-        "description": "Server-Sent Events: one `added` event per row currently matching the filter (the snapshot, read in a single consistent transaction), a `live` marker carrying the snapshot's cursor, then `change` events forever. Each event's SSE id is an opaque, generation-qualified resume token (e.g. `3:193055`); pass it back as Last-Event-ID or ?cursor= to skip the snapshot and receive exactly what was missed. A `reset` event ({\"reason\":\"cursor_expired\"|\"feed_rebuilt\"}) means the token cannot resume: drop local state and re-subscribe fresh. Streams are capped at 5 per client; a 15 s keep-alive comment holds the connection open."
+        "description": "Server-Sent Events: one `added` event per row currently matching the filter (the snapshot, read page by page with no transaction held across the pages, so not a point-in-time view), a `live` marker carrying the snapshot's cursor, then `change` events forever. Under concurrent writes the snapshot is at-least-once: an entity written during it can arrive as `added` and again as a `change` after `live`, so apply `added` as an upsert by id; the diff stream makes the final state exact. Each event's SSE id is an opaque, generation-qualified resume token (e.g. `3:193055`); pass it back as Last-Event-ID or ?cursor= to skip the snapshot and receive exactly what was missed. A `reset` event ({\"reason\":\"cursor_expired\"|\"feed_rebuilt\"}) means the token cannot resume: drop local state and re-subscribe fresh. Streams are capped at 5 per client; a 15 s keep-alive comment holds the connection open."
       },
       "Webhook": {
         "type": "object",

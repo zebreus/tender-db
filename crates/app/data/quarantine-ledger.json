@@ -389,7 +389,7 @@
   "detail_like": "%not an integer%",
   "diagnosis": "Of 326 eForms notices held whole as unrepresentable-value on 2026-09-27, the astronomical-magnitude class the terminal policy and the issue-268 row name (BT-113-Lot counts of 10^20-10^41) was 44. 264 more were junk in other integer/indicator fields: the eSender template placeholder _DEFAULT_VALUE_CHANGE_ME_ as a BT-44-Lot prize rank (~115), prose or '1°' BT-171-Tender ranks (prima, si), True/False in the BT-661-Lot indicator, .00 in BT-686-LotResult, and amounts typed into BT-58-Lot. Each one held the notice's buyer, lots, values and award for a field the fold never reads. The eForms walk now treats every integer, indicator and number field as SOFT: a value that does not convert keeps its raw text as a text row under the same field id, with the typed value absent. This is 'raw kept, typed absent', the rule the r209 and text-era parsers already follow (ted-legacy-mapping.md §8.2), and the notice imports. .00 and case-variant booleans now convert exactly. The class is by type, so one soft field is fold-read, by decision: a junk BT-759-LotResult (received submissions, 'not a number') now drops that block's statistics row instead of holding the notice. This key counts the 'not an integer' rows, BT-113 included. Two soft groups fall outside it: the 13 zoneless eSender stamps (detail 'BT-803(d)-notice: no zone offset: ...'; the eForms-DE 1.x spelling DE1-TransmissionDate/Time is soft too) and any 'not a number' row (BT-33-Procedure on SDK 1.6 or earlier, BT-759-LotResult). The post-deploy reclaim must therefore run every soft pattern, each as its own reprocess (detail_like '%not an integer%', '%not a number%', 'BT-803(%' and 'DE1-Transmission%'), not reason-wide: a reason-wide job would re-stamp the strict rows that stay held and drop them from the weekly arrival rate. Every amount, and every date but that stamp, stays STRICT by type whether or not the fold reads it: junk in BT-720-Tender or BT-145-Contract (fold-read, the reason for the default) and in unread ones such as BT-710-LotResult or BT-127-notice keeps holding by design, as does an amount with no @currencyID. If a reclaim uncovers a strict failure later in the walk, it rewrites the row's detail and the row leaves this key. Resolved when the reprocess runs after deploy.",
   "fix": "issue 433",
-  "resolved": null
+  "resolved": "2026-09-28"
  },
  {
   "category": "Zoneless eSender transmission stamp (soft since issue 433)",
@@ -397,7 +397,7 @@
   "detail_like": "BT-803(%",
   "diagnosis": "13 eForms notices (2026-09-27) were held whole because the eSender's efbc:TransmissionDate (BT-803(d)-notice) was published without a zone offset. The walk reaches that stamp first (it sits in the root extension), so each hold may also hide a later failure. Nothing in the fold or the resolver reads BT-803; the notice's own dispatch date is BT-05(a). Since issue 433, the stamp (BT-803(d)/(t), and its eForms-DE 1.x spelling DE1-TransmissionDate/Time) is SOFT: a value that does not convert keeps its raw text under the same field id, with no guessed UTC. Reclaim with reprocess detail_like 'BT-803(%' after deploy. A row that then fails on a strict field rewrites its detail and leaves this key.",
   "fix": "issue 433",
-  "resolved": null
+  "resolved": "2026-09-28"
  },
  {
   "category": "Junk in eForms number fields (soft since issue 433)",
@@ -405,6 +405,6 @@
   "detail_like": "%not a number%",
   "diagnosis": "The eForms number channel (Decision::Numbers, e.g. BT-33-Procedure on SDK 1.6 or earlier, BT-759-LotResult received submissions) is SOFT since issue 433, by the same rule as the integer channel (see the '%not an integer%' row): a value that does not convert keeps its raw text, with the typed value absent. BT-759 is the one fold-read soft field, by decision: its junk drops that result block's statistics row instead of holding the notice. Reclaim with reprocess detail_like '%not a number%' after deploy.",
   "fix": "issue 433",
-  "resolved": null
+  "resolved": "2026-09-28"
  }
 ]

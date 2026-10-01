@@ -53,9 +53,24 @@ pub fn rev() -> &'static str {
     .as_str()
 }
 
-/// AGPL §13: a network user must be offered the running version's source. The
-/// `/_source` route answers with this revision and how to obtain it.
-const SOURCE_OFFER: &str = "https://tenders.zebreus.click/_source";
+/// The public repository (since 2026-08-08), where every deployed revision is:
+/// `deploy.sh` refuses a rev that no `origin` branch contains (issue 463).
+const REPOSITORY: &str = "https://github.com/zebreus/tender-db";
+
+/// AGPL §13: a network user must be offered the running version's source. This
+/// is the link `/_source` and `/v1`'s `source_offer` serve: the repository's tree
+/// at `rev` when `rev` is a full commit sha (what `deploy.sh` sets), else the
+/// repository itself — a `dev` build has no revision there to name.
+///
+/// It replaced a constant naming `/_source` as the place to ask, so the offer
+/// sent its reader back to the page it was on (issue 463).
+fn source_offer(rev: &str) -> String {
+    if rev.len() == 40 && rev.bytes().all(|b| b.is_ascii_hexdigit()) {
+        format!("{REPOSITORY}/tree/{rev}")
+    } else {
+        REPOSITORY.to_owned()
+    }
+}
 
 /// One publication source's reuse terms, as `/v1`, `/docs` and the dashboard
 /// footer serve them (issue 446). Every source the fetch registry archives
@@ -1942,7 +1957,7 @@ async fn root(State(state): State<AppState>) -> ApiResult {
         "service": "tender-db",
         "version": env!("CARGO_PKG_VERSION"),
         "source": rev(),
-        "source_offer": SOURCE_OFFER,
+        "source_offer": source_offer(rev()),
         "license": "AGPL-3.0-or-later",
         // Issue 446: the data's own reuse terms, per source. The code's licence
         // above is not the data's.
@@ -1977,19 +1992,20 @@ async fn root(State(state): State<AppState>) -> ApiResult {
 
 /// AGPL §13's "Corresponding Source" offer for the running version.
 async fn source() -> Response {
-    (
-        [(header::CONTENT_TYPE, "text/plain; charset=utf-8")],
-        format!(
-            "tender-db {version}, revision {rev}\n\
-             Licensed AGPL-3.0-or-later; the full licence text ships with the source.\n\n\
-             This service offers the Corresponding Source of the exact version it is\n\
-             running, as AGPL section 13 requires. Request it, naming the revision\n\
-             above, from the operator at {SOURCE_OFFER}.\n",
-            version = env!("CARGO_PKG_VERSION"),
-            rev = rev(),
-        ),
+    ([(header::CONTENT_TYPE, "text/plain; charset=utf-8")], source_page(rev())).into_response()
+}
+
+/// `/_source`'s text for `rev`.
+fn source_page(rev: &str) -> String {
+    format!(
+        "tender-db {version}, revision {rev}\n\
+         Licensed AGPL-3.0-or-later; the full licence text ships with the source.\n\n\
+         This service offers the Corresponding Source of the exact version it is\n\
+         running, as AGPL section 13 requires. It is published at\n\n    \
+         {offer}\n",
+        version = env!("CARGO_PKG_VERSION"),
+        offer = source_offer(rev),
     )
-        .into_response()
 }
 
 /// The deploy script's post-restart gate: a LIVENESS probe. It confirms the
@@ -2141,5 +2157,38 @@ mod error_envelope_tests {
         let json: Value = serde_json::from_slice(&body).unwrap();
         assert_eq!(json["error"]["status"].as_i64(), Some(429));
         assert!(json["error"]["message"].as_str().is_some_and(|m| m.contains("retry after 3s")));
+    }
+}
+
+#[cfg(test)]
+mod source_tests {
+    use super::{rev, source_offer, source_page};
+
+    /// Issue 463: the AGPL offer is a link a reader can follow to the RUNNING
+    /// revision's source. It used to name `https://tenders.zebreus.click/_source`,
+    /// the offer page itself, as where to ask, so neither `/_source` nor `/v1`'s
+    /// `source_offer` led anywhere. `deploy.sh` refuses a rev `origin` does not
+    /// contain, which is what keeps the link answering.
+    #[test]
+    fn the_source_offer_links_the_running_revision_on_the_public_repo() {
+        // Spelled out, not read from `REPOSITORY`: the URL is the claim under test.
+        const REPO: &str = "https://github.com/zebreus/tender-db";
+        let sha = "9b445289a97d4f97773ad7bdfb4173f43a9e30d6";
+        assert_eq!(source_offer(sha), format!("{REPO}/tree/{sha}"));
+        let page = source_page(sha);
+        assert!(page.contains(&format!("revision {sha}\n")), "/_source names the revision first:\n{page}");
+        assert!(page.contains(&format!("{REPO}/tree/{sha}")), "/_source links that revision's tree:\n{page}");
+        // A `dev` build, or anything that is not a full sha, has no revision on
+        // GitHub to name, so it gets the repository, never a guessed tree.
+        for not_a_sha in ["dev", "9b44528", "", "../../evil", "9b445289a97d4f97773ad7bdfb4173f43a9e30d6x"] {
+            assert_eq!(source_offer(not_a_sha), REPO, "{not_a_sha:?} is not a revision to link");
+        }
+        // And whatever this test binary runs as, the offer is on the repository
+        // and never points back at the offer page.
+        for offer in [source_offer(rev()), source_offer(sha), source_offer("dev")] {
+            assert!(offer.starts_with(REPO), "{offer} is not on the public repository");
+            assert!(!offer.contains("/_source"), "{offer} points back at the offer page");
+        }
+        assert!(!page.contains("/_source"), "/_source must not send the reader back to itself:\n{page}");
     }
 }

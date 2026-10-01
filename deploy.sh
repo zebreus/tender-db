@@ -28,12 +28,45 @@ SRC=/opt/tender-db/src
 APP=/opt/tender-db/app
 PUBLIC_URL="${PUBLIC_URL:-https://tenders.zebreus.click}"
 
+REV="$(git rev-parse "$REF")"
+
+# Refuse a commit the public repository does not have (issue 463). /_source and /v1's
+# source_offer link https://github.com/zebreus/tender-db/tree/<rev> — that link IS the
+# AGPL §13 offer — and this script pushes only to the box, which has run commits
+# origin/main did not have (2026-09-04). So the rev goes to GitHub first. Fetched, not
+# read from the remote-tracking refs as they stand: those are only as current as the
+# last fetch, and a fetch that fails refuses rather than trusting them. The fetch also
+# brings origin/main current for the guard below.
+if [ "${FORCE_UNPUBLISHED:-0}" != "1" ]; then
+    if ! git fetch --quiet --prune origin; then
+        echo "refusing to deploy: could not fetch origin, so nothing says GitHub has $(git rev-parse --short "$REV") (FORCE_UNPUBLISHED=1 overrides)" >&2
+        exit 1
+    fi
+    if [ -z "$(git for-each-ref --count=1 --contains "$REV" refs/remotes/origin)" ]; then
+        push="git push origin $REV:main"
+        [ "$REV" = "$(git rev-parse HEAD)" ] && push="git push origin HEAD:main"
+        cat >&2 <<MSG
+
+$REF ($(git rev-parse --short "$REV")) is on no branch of origin ($(git remote get-url origin)).
+
+/_source and /v1 link the running revision's tree on GitHub (the AGPL §13 source offer,
+issue 463), so deploying a rev GitHub does not have serves a dead link. Push it, then
+deploy again:
+
+    $push
+
+(or to a branch of its own, if main is not ready for it). To deploy it anyway, with
+/_source linking nothing until the push lands: FORCE_UNPUBLISHED=1 ./deploy.sh $REF
+MSG
+        exit 1
+    fi
+fi
+
 # Refuse to deploy something the shared main has already moved past. This is the
 # stale-ref case the default above fixes, caught for any explicit ref too: a
 # commit that is a strict ANCESTOR of origin/main is older than what everyone
 # else considers deployed, and pushing it would roll the box backwards. Anything
 # else — main itself, a branch ahead of it, an unmerged topic branch — passes.
-REV="$(git rev-parse "$REF")"
 if git rev-parse --verify --quiet origin/main >/dev/null \
     && [ "$REV" != "$(git rev-parse origin/main)" ] \
     && git merge-base --is-ancestor "$REV" origin/main 2>/dev/null \

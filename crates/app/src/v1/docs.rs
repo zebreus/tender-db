@@ -378,7 +378,7 @@ subscription and answers <code>400</code> to a stream request rather than
 quietly returning JSON; subscribe to <code>/v1/notices</code> without
 <code>tender</code> if you need a live feed. The protocol:</p>
 <ol>
-  <li><strong>Snapshot</strong> — one <code>added</code> event per row currently matching your filter, read in a single consistent transaction.</li>
+  <li><strong>Snapshot</strong> — one <code>added</code> event per row currently matching your filter, read page by page with no transaction held across the pages, so it is not a point-in-time view. Under concurrent writes it is <strong>at-least-once</strong>: an entity written during the snapshot can arrive as <code>added</code> and again as a <code>change</code> after <code>live</code>. Apply <code>added</code> as an upsert by id; the diff stream makes your final state exact.</li>
   <li>A <code>live</code> marker carrying the snapshot's cursor.</li>
   <li><strong>Diff</strong> — <code>change</code> events forever after, each re-evaluating your filter against the old and new version of the entity: a row moving <em>into</em> your filter is <code>added</code>, out of it <code>removed</code>, changed-within it <code>changed</code>.</li>
 </ol>
@@ -892,6 +892,9 @@ mod tests {
             ("never merged", "issue 351 widened that reuse to country-less names under the wall"),
             ("work was abandoned", "a non-yielding aggregate keeps its slot past the 408 (issue 238)"),
             ("work is abandoned", "a non-yielding aggregate keeps its slot past the 408 (issue 238)"),
+            // Issue 463: served from issue 55 (2026-08-09) on, after the snapshot
+            // became keyset pages with a pooled read per page.
+            ("single consistent transaction", "the SSE snapshot is paged, one read per page, at-least-once (issue 55)"),
         ];
         for (surface, text) in [("/docs", PAGE), ("/v1/openapi.json", SPEC)] {
             for (retired, why) in RETIRED {
@@ -916,6 +919,27 @@ mod tests {
         for (surface, text) in [("/docs", PAGE), ("/v1/openapi.json", SPEC)] {
             assert!(!text.contains("no interrupt"), "{surface} must not claim the engine cannot stop a query");
             assert!(text.contains("issue 425"), "{surface}'s 408 must say the query is stopped at the limit");
+        }
+    }
+
+    /// Issue 463, the positive half of the retired "single consistent
+    /// transaction": the SSE snapshot is read in pages (`sse.rs`, issue 55), so
+    /// a client must apply `added` as an upsert, and both surfaces say so.
+    ///
+    /// Read from the SSE text itself, not the whole surface: webhook delivery is
+    /// "at-least-once" on both already, so a page-wide check passed before the
+    /// sentence was fixed.
+    #[test]
+    fn the_docs_say_the_sse_snapshot_is_at_least_once() {
+        let start = PAGE.find("<h2 id=\"sse\">").expect("/docs has an SSE section");
+        let docs = &PAGE[start..start + 4 + PAGE[start + 4..].find("<h2").expect("a section follows SSE")];
+        let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        let openapi = spec["components"]["schemas"]["EventStream"]["description"]
+            .as_str()
+            .expect("the EventStream schema is described");
+        for (surface, text) in [("/docs", docs), ("/v1/openapi.json", openapi)] {
+            assert!(text.contains("at-least-once"), "{surface} must say the SSE snapshot is at-least-once:\n{text}");
+            assert!(text.contains("upsert"), "{surface} must say how a client applies a repeated `added`:\n{text}");
         }
     }
 }

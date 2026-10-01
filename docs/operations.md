@@ -115,6 +115,18 @@ The deploy also writes the rev into a systemd drop-in
 revision — while the `nix build` never sees the rev and stays reproducible. A
 plain local build (no `COMMIT_SHA` in the environment) reports `dev`.
 
+**The AGPL §13 source offer is a link built from that rev** (issue 463): `/_source` and
+`/v1`'s `source_offer` point at `https://github.com/zebreus/tender-db/tree/<rev>`
+(`v1::source_offer`; a `dev` build, or any rev that is not a full sha, links the
+repository root). A public repository was declined on 2026-07-21 and the offer was a
+written one; the repository was published on 2026-08-08, but until issue 463 the offer
+still named its own page as the place to ask. The link is true only while GitHub has the
+rev, and the deploy pushes only to the box, so `deploy.sh` first fetches `origin` and
+refuses a rev that no `origin` branch contains — `is on no branch of origin`, naming the
+push to run (`git push origin HEAD:main`). A failed fetch refuses too.
+`FORCE_UNPUBLISHED=1` skips the check, and `/_source` then links a 404 until the push
+lands.
+
 ### The test gate and the queue probe (issues 245, 254, 459)
 
 Before it pushes anything, `deploy.sh` answers two questions, and goes ahead only on a
@@ -1106,10 +1118,6 @@ Known gaps in the production setup, tracked here so they aren't rediscovered:
   [Monitoring and alerting](#monitoring-and-alerting)). That means an outage can
   go unnoticed for up to ~4 h — accepted for now given the rebuildable dataset
   and single operator; tighten the interval if that changes.
-- **AGPL source offer is a written offer, not a public repo.** `/_source`
-  currently tells a network user to request the Corresponding Source from the
-  operator (AGPL §13 permits this). A public GitHub repo was declined for now (no
-  external resources, 2026-07-21), so the written offer stands.
 
 ### Live DB file allocation vs size (issue 169, 2026-09-06)
 

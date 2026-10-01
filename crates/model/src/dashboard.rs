@@ -411,6 +411,24 @@ pub fn quarantine_terminal_exceeded(by_reason: &[Count]) -> Vec<String> {
         .collect()
 }
 
+/// The ledger entries still marked OPEN (`resolved: None`) with nothing held —
+/// empty is the healthy answer (issue 463).
+///
+/// Dating an entry is the manual last step of a quarantine fix, and nothing read
+/// it: issue 433's reclaim drained its three classes on 2026-09-28 (jobs
+/// 1618-1620) and the dashboard kept listing all three under "Known populations,
+/// not resolved", each at "Still held 0", until a board survey read the page. A
+/// real open population is held by definition, so an open entry at zero is a
+/// date nobody wrote. Pure over the measured ledger, like
+/// [`quarantine_terminal_exceeded`], so /metrics and any test agree.
+pub fn quarantine_ledger_open_but_drained(ledger: &[ResolvedCategory]) -> Vec<String> {
+    ledger
+        .iter()
+        .filter(|e| e.resolved.is_none() && e.outstanding == 0)
+        .map(|e| e.category.clone())
+        .collect()
+}
+
 /// Notices held for one (source, profile, year) against what that year is known
 /// to have published.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -535,5 +553,38 @@ mod tests {
         );
         // ...but a new reason at zero is not a finding.
         assert!(quarantine_terminal_exceeded(&[count("some-new-era-reason", 0)]).is_empty());
+    }
+
+    /// Issue 463: an OPEN ledger entry with nothing held trips — the three
+    /// issue-433 rows after their reclaim — and every other combination does
+    /// not: open and still held is a real population, and a dated entry may
+    /// drain to zero (that is what resolving it means) or keep a residue.
+    #[test]
+    fn an_open_ledger_row_with_nothing_held_trips() {
+        use super::{ResolvedCategory, quarantine_ledger_open_but_drained};
+        let entry = |category: &str, resolved: Option<&str>, reclaimed: i64, outstanding: i64| ResolvedCategory {
+            category: category.into(),
+            diagnosis: "d".into(),
+            fix: "issue 433".into(),
+            resolved: resolved.map(str::to_owned),
+            reclaimed,
+            skipped: 0,
+            outstanding,
+        };
+        assert_eq!(
+            quarantine_ledger_open_but_drained(&[
+                // The live rows of 2026-10-01: reclaimed, or never held at all.
+                entry("not an integer", None, 310, 0),
+                entry("BT-803", None, 13, 0),
+                entry("not a number", None, 0, 0),
+                // Open and held: a known population, not a missed date.
+                entry("held", None, 0, 7),
+                // Dated: drained to zero, or a residue that holds by design.
+                entry("dated drained", Some("2026-09-28"), 310, 0),
+                entry("dated residue", Some("2026-08-22"), 4_898, 298),
+            ]),
+            vec!["not an integer".to_owned(), "BT-803".to_owned(), "not a number".to_owned()]
+        );
+        assert!(quarantine_ledger_open_but_drained(&[]).is_empty());
     }
 }

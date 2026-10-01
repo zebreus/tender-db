@@ -326,9 +326,16 @@ async fn the_service_root_and_health_answer() {
     let root = server.get("/v1").await;
     assert_eq!(root["service"], "tender-db");
     assert_eq!(root["license"], "AGPL-3.0-or-later");
-    // AGPL §13: a network user must be offered the running version's source.
-    assert!(root["source_offer"].as_str().is_some_and(|s| s.starts_with("https://")));
-    assert_eq!(server.status("/_source").await, 200);
+    // AGPL §13: a network user must be offered the running version's source — a
+    // link to it on the public repository, which both surfaces serve, and never
+    // `/_source` again, which sent the reader back to the page (issue 463).
+    let offer = root["source_offer"].as_str().expect("/v1 serves a source_offer");
+    assert!(offer.starts_with("https://github.com/zebreus/tender-db"), "{offer} is not on the public repository");
+    assert!(!offer.contains("/_source"), "{offer} points back at the offer page");
+    let response = server.http.get(format!("{}/_source", server.base)).send().await.expect("request");
+    assert_eq!(response.status().as_u16(), 200);
+    let page = response.text().await.expect("text body");
+    assert!(page.contains(offer), "/_source must link the offer /v1 serves:\n{page}");
     // Issue 446: the data's reuse terms, one entry per archived source, each with
     // the statement its licence asks for — FTS's is the OGL's own wording.
     let sources = root["data_sources"].as_array().expect("/v1 lists data_sources");
@@ -528,6 +535,9 @@ async fn the_metrics_endpoint_exposes_prometheus_text() {
         "tender_db_ingest_last_success_timestamp_seconds",
         "tender_db_job_last_ok",
         "tender_db_quarantine_outstanding",
+        // Issue 463: a zero here would say the ledger was read and every drained
+        // entry is dated, before anything was measured.
+        "tender_db_quarantine_ledger_open_but_drained",
         "tender_db_canonical_rows",
         // Issue 395: the fetch-gap gauges follow the same rule. A fresh box has
         // measured no pipeline, and emitting `missing_periods 0` for it would

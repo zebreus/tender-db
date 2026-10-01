@@ -459,6 +459,17 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
             "Reasons whose outstanding count exceeds the curated terminal ledger (issue 303; 0 = terminal state holds).",
         );
         sample(&mut out, "tender_db_quarantine_terminal_exceeded", &[], exceeded.len() as f64);
+        // Issue 463: the ledger's own tripwire. An entry still marked open with
+        // nothing held is a fix whose date was never written — issue 433's three
+        // rows sat under "not resolved" at "Still held 0" for days. A real open
+        // population is held by definition, so 0 is the steady state here too.
+        let drained = model::dashboard::quarantine_ledger_open_but_drained(&q.resolved_categories);
+        header(
+            &mut out,
+            "tender_db_quarantine_ledger_open_but_drained",
+            "Ledger entries marked unresolved with nothing held (issue 463; 0 = every drained entry is dated).",
+        );
+        sample(&mut out, "tender_db_quarantine_ledger_open_but_drained", &[], drained.len() as f64);
     }
 
     (
