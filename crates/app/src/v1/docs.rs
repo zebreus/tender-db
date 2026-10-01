@@ -378,7 +378,7 @@ subscription and answers <code>400</code> to a stream request rather than
 quietly returning JSON; subscribe to <code>/v1/notices</code> without
 <code>tender</code> if you need a live feed. The protocol:</p>
 <ol>
-  <li><strong>Snapshot</strong> — one <code>added</code> event per row currently matching your filter, read page by page with no transaction held across the pages, so it is not a point-in-time view. Under concurrent writes it is <strong>at-least-once</strong>: an entity written during the snapshot can arrive as <code>added</code> and again as a <code>change</code> after <code>live</code>. Apply <code>added</code> as an upsert by id; the diff stream makes your final state exact.</li>
+  <li><strong>Snapshot</strong> — one <code>added</code> event per row currently matching your filter, read page by page with no transaction held across the pages, so it is not a point-in-time view. Under concurrent writes it is <strong>at-least-once</strong>: an entity written during the snapshot can arrive as <code>added</code> and again as a <code>change</code> after <code>live</code>, and one that left your filter before its page was read is not sent, while its <code>removed</code> is. Apply <code>added</code> as an upsert by id and <code>removed</code> as an idempotent delete — a <code>removed</code> can name an entity you never received; the diff stream then makes your final state exact.</li>
   <li>A <code>live</code> marker carrying the snapshot's cursor.</li>
   <li><strong>Diff</strong> — <code>change</code> events forever after, each re-evaluating your filter against the old and new version of the entity: a row moving <em>into</em> your filter is <code>added</code>, out of it <code>removed</code>, changed-within it <code>changed</code>.</li>
 </ol>
@@ -389,9 +389,10 @@ curl and scripts pass it as that header or as <code>?cursor=</code>, verbatim.
 Resuming skips the snapshot and delivers exactly what you missed. A
 <code>reset</code> event means your token cannot resume and you must drop local
 state and re-subscribe fresh: <code>{"reason":"cursor_expired"}</code> (the log's
-retained horizon passed your token) or <code>{"reason":"feed_rebuilt"}</code>
-(the dataset was rebuilt — same event a poll client detects as a
-<code>generation</code> change). Add <code>?include_data=true</code> to embed
+retained horizon passed your token), <code>{"reason":"cursor_ahead"}</code> (your
+token is past the feed's head, so this feed never issued it) or
+<code>{"reason":"feed_rebuilt"}</code> (the dataset was rebuilt — same event a poll
+client detects as a <code>generation</code> change). Add <code>?include_data=true</code> to embed
 each entity's current JSON in its event.</p>
 <pre><code># -N disables curl's buffering so events arrive as they happen
 curl -N -H "Accept: text/event-stream" \
@@ -924,7 +925,11 @@ mod tests {
 
     /// Issue 463, the positive half of the retired "single consistent
     /// transaction": the SSE snapshot is read in pages (`sse.rs`, issue 55), so
-    /// a client must apply `added` as an upsert, and both surfaces say so.
+    /// a client must apply `added` as an upsert and `removed` as an idempotent
+    /// delete (a `removed` can name an entity the snapshot never sent: one that
+    /// left the filter before its page was read, or a retired one, issue 164),
+    /// and both surfaces say so. And every `reset` reason `sse.rs` can send is
+    /// named on both — `cursor_ahead` was missing from each (review of 463).
     ///
     /// Read from the SSE text itself, not the whole surface: webhook delivery is
     /// "at-least-once" on both already, so a page-wide check passed before the
@@ -937,9 +942,22 @@ mod tests {
         let openapi = spec["components"]["schemas"]["EventStream"]["description"]
             .as_str()
             .expect("the EventStream schema is described");
+        let reasons: Vec<&str> = include_str!("sse.rs")
+            .split("reset_event(\"")
+            .skip(1)
+            .map(|rest| &rest[..rest.find('"').expect("a closed literal")])
+            .collect();
+        assert!(reasons.contains(&"cursor_ahead"), "the scan of sse.rs found its resets: {reasons:?}");
         for (surface, text) in [("/docs", docs), ("/v1/openapi.json", openapi)] {
             assert!(text.contains("at-least-once"), "{surface} must say the SSE snapshot is at-least-once:\n{text}");
             assert!(text.contains("upsert"), "{surface} must say how a client applies a repeated `added`:\n{text}");
+            assert!(
+                text.contains("idempotent delete"),
+                "{surface} must say how a client applies a `removed` for an entity it never received:\n{text}"
+            );
+            for reason in &reasons {
+                assert!(text.contains(reason), "{surface} must name the `reset` reason {reason}:\n{text}");
+            }
         }
     }
 }

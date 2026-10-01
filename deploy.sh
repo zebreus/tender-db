@@ -31,26 +31,35 @@ PUBLIC_URL="${PUBLIC_URL:-https://tenders.zebreus.click}"
 REV="$(git rev-parse "$REF")"
 
 # Refuse a commit the public repository does not have (issue 463). /_source and /v1's
-# source_offer link https://github.com/zebreus/tender-db/tree/<rev> — that link IS the
-# AGPL §13 offer — and this script pushes only to the box, which has run commits
-# origin/main did not have (2026-09-04). So the rev goes to GitHub first. Fetched, not
-# read from the remote-tracking refs as they stand: those are only as current as the
-# last fetch, and a fetch that fails refuses rather than trusting them. The fetch also
-# brings origin/main current for the guard below.
+# source_offer link its tree on GitHub — that link IS the AGPL §13 offer — and this script
+# pushes only to the box, which has run commits GitHub did not have (2026-09-04). The
+# decision is rev_published (ops/published.sh): it fetches the repository the app links,
+# by URL, never `origin`, which in a local clone of the shared tree is that tree and
+# contains every unpushed commit (review of 463). Its pin runs first, as the gate's does
+# below: a rev_published that said `published` to everything would ship a dead link.
 if [ "${FORCE_UNPUBLISHED:-0}" != "1" ]; then
-    if ! git fetch --quiet --prune origin; then
-        echo "refusing to deploy: could not fetch origin, so nothing says GitHub has $(git rev-parse --short "$REV") (FORCE_UNPUBLISHED=1 overrides)" >&2
+    if ! selftest=$(bash ops/test-published.sh 2>&1); then
+        printf '%s\n' "$selftest" | grep -v '^ok ' >&2 || true
+        echo "refusing to deploy: ops/test-published.sh FAILED (above), so rev_published cannot be trusted (FORCE_UNPUBLISHED=1 overrides)" >&2
         exit 1
     fi
-    if [ -z "$(git for-each-ref --count=1 --contains "$REV" refs/remotes/origin)" ]; then
-        push="git push origin $REV:main"
-        [ "$REV" = "$(git rev-parse HEAD)" ] && push="git push origin HEAD:main"
-        cat >&2 <<MSG
+    # shellcheck source=ops/published.sh
+    . ops/published.sh
+    published=$(rev_published "$REV") || published=
+    case "$published" in
+        published) ;;
+        unpublished)
+            # `origin` when it is the public repository, so its tracking ref moves too.
+            to=$PUBLIC_REPOSITORY
+            [ "$(git remote get-url origin 2>/dev/null)" = "$PUBLIC_REPOSITORY" ] && to=origin
+            push="git push $to $REV:main"
+            [ "$REV" = "$(git rev-parse HEAD)" ] && push="git push $to HEAD:main"
+            cat >&2 <<MSG
 
-$REF ($(git rev-parse --short "$REV")) is on no branch of origin ($(git remote get-url origin)).
+$REF ($(git rev-parse --short "$REV")) is on no branch of $PUBLIC_REPOSITORY.
 
-/_source and /v1 link the running revision's tree on GitHub (the AGPL §13 source offer,
-issue 463), so deploying a rev GitHub does not have serves a dead link. Push it, then
+/_source and /v1 link the running revision's tree there (the AGPL §13 source offer,
+issue 463), so deploying a rev it does not have serves a dead link. Push it, then
 deploy again:
 
     $push
@@ -58,8 +67,13 @@ deploy again:
 (or to a branch of its own, if main is not ready for it). To deploy it anyway, with
 /_source linking nothing until the push lands: FORCE_UNPUBLISHED=1 ./deploy.sh $REF
 MSG
-        exit 1
-    fi
+            exit 1
+            ;;
+        *)
+            echo "refusing to deploy: could not fetch $PUBLIC_REPOSITORY, so nothing says it has $(git rev-parse --short "$REV") (FORCE_UNPUBLISHED=1 overrides)" >&2
+            exit 1
+            ;;
+    esac
 fi
 
 # Refuse to deploy something the shared main has already moved past. This is the

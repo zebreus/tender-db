@@ -121,11 +121,16 @@ plain local build (no `COMMIT_SHA` in the environment) reports `dev`.
 repository root). A public repository was declined on 2026-07-21 and the offer was a
 written one; the repository was published on 2026-08-08, but until issue 463 the offer
 still named its own page as the place to ask. The link is true only while GitHub has the
-rev, and the deploy pushes only to the box, so `deploy.sh` first fetches `origin` and
-refuses a rev that no `origin` branch contains — `is on no branch of origin`, naming the
-push to run (`git push origin HEAD:main`). A failed fetch refuses too.
-`FORCE_UNPUBLISHED=1` skips the check, and `/_source` then links a 404 until the push
-lands.
+rev, and the deploy pushes only to the box, so `deploy.sh` first asks `rev_published`
+(`ops/published.sh`): it fetches `https://github.com/zebreus/tender-db` **by URL** into
+`refs/published/heads/*` and refuses a rev that no branch there contains — `is on no
+branch of https://github.com/zebreus/tender-db`, naming the push to run (`git push origin
+HEAD:main`, or the URL when `origin` is something else). Never `origin` itself: in a local
+clone of the shared tree `origin` is that tree, whose branches carry every unpushed commit,
+and the first version of the check passed exactly that case. A failed fetch refuses too.
+`deploy.sh` runs its offline pin `ops/test-published.sh` first, and the app's
+`source_tests` pin `ops/published.sh`'s URL to `v1::REPOSITORY`. `FORCE_UNPUBLISHED=1`
+skips the check, and `/_source` then links a 404 until the push lands.
 
 ### The test gate and the queue probe (issues 245, 254, 459)
 

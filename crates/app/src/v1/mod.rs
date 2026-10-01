@@ -54,7 +54,8 @@ pub fn rev() -> &'static str {
 }
 
 /// The public repository (since 2026-08-08), where every deployed revision is:
-/// `deploy.sh` refuses a rev that no `origin` branch contains (issue 463).
+/// `deploy.sh` refuses a rev that no branch of it contains (issue 463), asking
+/// `rev_published` in `ops/published.sh`, which names this URL too.
 const REPOSITORY: &str = "https://github.com/zebreus/tender-db";
 
 /// AGPL §13: a network user must be offered the running version's source. This
@@ -2162,13 +2163,13 @@ mod error_envelope_tests {
 
 #[cfg(test)]
 mod source_tests {
-    use super::{rev, source_offer, source_page};
+    use super::{REPOSITORY, rev, source_offer, source_page};
 
     /// Issue 463: the AGPL offer is a link a reader can follow to the RUNNING
     /// revision's source. It used to name `https://tenders.zebreus.click/_source`,
     /// the offer page itself, as where to ask, so neither `/_source` nor `/v1`'s
-    /// `source_offer` led anywhere. `deploy.sh` refuses a rev `origin` does not
-    /// contain, which is what keeps the link answering.
+    /// `source_offer` led anywhere. `deploy.sh` refuses a rev the repository does
+    /// not contain, which is what keeps the link answering.
     #[test]
     fn the_source_offer_links_the_running_revision_on_the_public_repo() {
         // Spelled out, not read from `REPOSITORY`: the URL is the claim under test.
@@ -2190,5 +2191,20 @@ mod source_tests {
             assert!(!offer.contains("/_source"), "{offer} points back at the offer page");
         }
         assert!(!page.contains("/_source"), "/_source must not send the reader back to itself:\n{page}");
+    }
+
+    /// The deploy guard keeps the link true only if it asks the repository the
+    /// link names. `ops/published.sh` spells the URL a second time, in shell, so
+    /// this pins the two to one value: a guard checking any other repository —
+    /// the first version checked `origin`, which a local clone points at the
+    /// shared tree — keeps nothing true (review of 463). Read at run time, not
+    /// `include_str!`d: the nix clippy gate compiles tests from a source set
+    /// with no `ops/` in it.
+    #[test]
+    fn the_deploy_guard_asks_the_repository_the_offer_links() {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ops/published.sh");
+        let script = std::fs::read_to_string(&path).expect("ops/published.sh");
+        let assigned: Vec<&str> = script.lines().filter_map(|l| l.strip_prefix("PUBLIC_REPOSITORY=")).collect();
+        assert_eq!(assigned, [REPOSITORY], "ops/published.sh must ask {REPOSITORY}, once");
     }
 }

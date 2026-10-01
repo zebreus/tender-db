@@ -432,44 +432,7 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
         }
     }
     if let Some(q) = &dash.quarantine {
-        for (name, help, value) in [
-            ("tender_db_quarantine_total", "Quarantined members, all time (dashboard cache).", q.total),
-            ("tender_db_quarantine_outstanding", "Quarantined members not yet resolved.", q.outstanding),
-            ("tender_db_quarantine_reclaimed", "Quarantined members reclaimed into the corpus.", q.reclaimed),
-            ("tender_db_quarantine_skipped", "Quarantined members resolved as policy skips.", q.skipped),
-            ("tender_db_quarantine_actionable", "Outstanding members with a known fix path.", q.actionable),
-            ("tender_db_quarantine_suspected", "Outstanding members under a suspected cause.", q.suspected),
-        ] {
-            header(&mut out, name, help);
-            sample(&mut out, name, &[], value as f64);
-        }
-        header(&mut out, "tender_db_quarantine_reason_members", "Quarantined members by reason (dashboard cache).");
-        for c in &q.by_reason {
-            sample(&mut out, "tender_db_quarantine_reason_members", &[("reason", &c.label)], c.value as f64);
-        }
-        // Issue 303: the terminal tripwire. 0 is the steady state; any reason
-        // above its curated terminal policy counts here, so "quarantine is
-        // done" stays an alertable fact instead of a memory — a new era
-        // quarantining under a NEW reason trips this too (unknown reasons
-        // default to a zero baseline by design).
-        let exceeded = model::dashboard::quarantine_terminal_exceeded(&q.by_reason);
-        header(
-            &mut out,
-            "tender_db_quarantine_terminal_exceeded",
-            "Reasons whose outstanding count exceeds the curated terminal ledger (issue 303; 0 = terminal state holds).",
-        );
-        sample(&mut out, "tender_db_quarantine_terminal_exceeded", &[], exceeded.len() as f64);
-        // Issue 463: the ledger's own tripwire. An entry still marked open with
-        // nothing held is a fix whose date was never written — issue 433's three
-        // rows sat under "not resolved" at "Still held 0" for days. A real open
-        // population is held by definition, so 0 is the steady state here too.
-        let drained = model::dashboard::quarantine_ledger_open_but_drained(&q.resolved_categories);
-        header(
-            &mut out,
-            "tender_db_quarantine_ledger_open_but_drained",
-            "Ledger entries marked unresolved with nothing held (issue 463; 0 = every drained entry is dated).",
-        );
-        sample(&mut out, "tender_db_quarantine_ledger_open_but_drained", &[], drained.len() as f64);
+        render_quarantine(&mut out, q);
     }
 
     (
@@ -477,6 +440,50 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
         out,
     )
         .into_response()
+}
+
+/// The quarantine section, from the dashboard cache's measurement. Apart from
+/// the handler so its two tripwires are testable without a measured box: built
+/// inline, deleting either one left every test green (review of 463).
+fn render_quarantine(out: &mut String, q: &model::dashboard::Quarantine) {
+    for (name, help, value) in [
+        ("tender_db_quarantine_total", "Quarantined members, all time (dashboard cache).", q.total),
+        ("tender_db_quarantine_outstanding", "Quarantined members not yet resolved.", q.outstanding),
+        ("tender_db_quarantine_reclaimed", "Quarantined members reclaimed into the corpus.", q.reclaimed),
+        ("tender_db_quarantine_skipped", "Quarantined members resolved as policy skips.", q.skipped),
+        ("tender_db_quarantine_actionable", "Outstanding members with a known fix path.", q.actionable),
+        ("tender_db_quarantine_suspected", "Outstanding members under a suspected cause.", q.suspected),
+    ] {
+        header(out, name, help);
+        sample(out, name, &[], value as f64);
+    }
+    header(out, "tender_db_quarantine_reason_members", "Quarantined members by reason (dashboard cache).");
+    for c in &q.by_reason {
+        sample(out, "tender_db_quarantine_reason_members", &[("reason", &c.label)], c.value as f64);
+    }
+    // Issue 303: the terminal tripwire. 0 is the steady state; any reason
+    // above its curated terminal policy counts here, so "quarantine is
+    // done" stays an alertable fact instead of a memory — a new era
+    // quarantining under a NEW reason trips this too (unknown reasons
+    // default to a zero baseline by design).
+    let exceeded = model::dashboard::quarantine_terminal_exceeded(&q.by_reason);
+    header(
+        out,
+        "tender_db_quarantine_terminal_exceeded",
+        "Reasons whose outstanding count exceeds the curated terminal ledger (issue 303; 0 = terminal state holds).",
+    );
+    sample(out, "tender_db_quarantine_terminal_exceeded", &[], exceeded.len() as f64);
+    // Issue 463: the ledger's own tripwire. An entry still marked open with
+    // nothing held is a fix whose date was never written — issue 433's three
+    // rows sat under "not resolved" at "Still held 0" for days. A real open
+    // population is held by definition, so 0 is the steady state here too.
+    let drained = model::dashboard::quarantine_ledger_open_but_drained(&q.resolved_categories);
+    header(
+        out,
+        "tender_db_quarantine_ledger_open_but_drained",
+        "Ledger entries marked unresolved with nothing held (issue 463; 0 = every drained entry is dated).",
+    );
+    sample(out, "tender_db_quarantine_ledger_open_but_drained", &[], drained.len() as f64);
 }
 
 /// The running job's gauges (issue 65): that it runs, when it started, and its
@@ -643,6 +650,51 @@ mod tests {
         let mut out = String::new();
         emit_job_gauges(&mut out, &[]);
         assert_eq!(out, "");
+    }
+
+    /// Both quarantine tripwires reach the exposition, each way: issue 303's
+    /// `terminal_exceeded` and issue 463's `ledger_open_but_drained`. The model
+    /// tests pin the functions; this pins that the scrape serves them.
+    #[test]
+    fn the_quarantine_tripwires_are_served_both_ways() {
+        use model::dashboard::{Count, Quarantine, ResolvedCategory};
+        let entry = |resolved: Option<&str>, outstanding: i64| ResolvedCategory {
+            category: "BT-803".into(),
+            diagnosis: "d".into(),
+            fix: "issue 433".into(),
+            resolved: resolved.map(str::to_owned),
+            reclaimed: 13,
+            skipped: 0,
+            outstanding,
+        };
+        let quarantine = |by_reason: Vec<Count>, ledger: Vec<ResolvedCategory>| Quarantine {
+            total: 0,
+            outstanding: 0,
+            reclaimed: 0,
+            skipped: 0,
+            actionable: 0,
+            suspected: 0,
+            by_reason,
+            field_code_gaps: Vec::new(),
+            recent: Vec::new(),
+            resolved_categories: ledger,
+        };
+        // A reason with no terminal baseline holding rows, and an open ledger
+        // row at zero held: the state issue 433 left the ledger in.
+        let mut out = String::new();
+        render_quarantine(
+            &mut out,
+            &quarantine(vec![Count { label: "some-new-era-reason".into(), value: 1 }], vec![entry(None, 0)]),
+        );
+        assert!(out.contains("tender_db_quarantine_terminal_exceeded 1\n"), "{out}");
+        assert!(out.contains("tender_db_quarantine_ledger_open_but_drained 1\n"), "{out}");
+        // Nothing above its baseline, and the row dated: both read 0, and are
+        // still served, so a scraper tells "healthy" from "not measured".
+        let mut out = String::new();
+        render_quarantine(&mut out, &quarantine(Vec::new(), vec![entry(Some("2026-09-28"), 0)]));
+        assert!(out.contains("tender_db_quarantine_terminal_exceeded 0\n"), "{out}");
+        assert!(out.contains("tender_db_quarantine_ledger_open_but_drained 0\n"), "{out}");
+        assert_eq!(out.matches("# TYPE tender_db_quarantine_ledger_open_but_drained gauge").count(), 1, "{out}");
     }
 
     #[test]
