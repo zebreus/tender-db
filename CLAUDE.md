@@ -42,8 +42,8 @@ Use `--features server` for any ad-hoc check of those modules, or just run
 `--lib` tests in those modules are silently filtered out, not run.
 
 **Adding a `Spec` arm to `supervisor::run_spec` can blow the stack of a test you
-never touched.** It is a 62-arm async match, so every arm's locals live in ONE
-future. On 2026-09-01 adding a census arm made
+never touched.** It is one async match over every `Spec` arm, so every arm's locals
+live in ONE future. On 2026-09-01 adding a census arm made
 `an_execute_without_an_expected_count_is_refused` abort with `stack overflow`
 (SIGABRT) — a test with no relation to the change, which reads as a mystery
 regression. Wrap a big arm's body in `Box::pin(async move { ... }).await` so its
@@ -89,5 +89,6 @@ Single-context: `CONTEXT.md` at the repo root plus `docs/adr/`. See `docs/agents
 
 ### Reading the production box
 
-Metadata **and** bounded ⇒ free. Anything reading data pages gates on the team lead's word and runs
-against a snapshot, never the serving DB. See `docs/agents/prod-box-reads.md`.
+Metadata **and** bounded ⇒ free. A data-page read is a bounded SELECT through `/v1/sql` against the
+serving DB (never retry a 408); a heavy or unbounded scan has no on-box path. See
+`docs/agents/prod-box-reads.md`.

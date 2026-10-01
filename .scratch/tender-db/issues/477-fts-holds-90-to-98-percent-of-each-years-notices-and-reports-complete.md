@@ -185,3 +185,12 @@ distinct release), so a byte-identical repeat still collapses, and a different r
   and 2021-01..03 added nothing; the investigation found those months complete. The total is now **13,921** (from
   14,093). The count reads the union of every archived package, old and new.
 - About 12–18 min per 2021 month, in line with the ~82-request estimate at the 12 s pace.
+
+### 2026-10-01 20:2x UTC — chunk 2021 landed; chunk 2022 enqueued
+
+- Fetches 1815–1826: all `ok`. 2021-04 was `Unchanged`, because the old walk had been complete there, and the rest
+  were `NewVersion`. Process 1827: `29837 members → 972 notices (972 parsed, 0 quarantined …, 28865 dup)`. Project
+  1828: `989 tenders written`.
+- Verify by year: **2021 from 924 to 20**. Total **13,189**.
+- Chunk 2022: jobs 1832–1843 (refetch 2022-01..12), process 1844, project 1845, enqueued 20:2x UTC after the batch-2
+  deploy (`b26cf3a`). It should end around 01:00 UTC, well before the 07:35 tick.

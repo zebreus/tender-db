@@ -1,6 +1,7 @@
 # 460 — an identifier lookup misses every identifier a merge folded away, and the survivor serves only its own
 
-Status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the store half: a merged-identifier table that `repoint_org_references` fills at every merge, backfilled from the 4,738 `e2-altid` ledger rows, and read by both `identifier=` builders.
+Status: ready-for-agent — DEPLOYED 2026-10-01 at `b26cf3a` (built `24ed6f2`, review fixes `f22bcfb`). Dry backfill 1831 counts 40,294 merged identifiers to write (e2-altid 4,736, r2 35,540, r3 18, e0 0; 0 unresolved, 1 wrong number withheld). The WET backfill is ENQUEUED as job 1846, behind the 477 chunk 2022. NEXT: read 1846, then the Verify (`GBPPONPWYP8439MZWY` → 5718658 with `resolved_filters`).
+Was status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the store half: a merged-identifier table that `repoint_org_references` fills at every merge, backfilled from the 4,738 `e2-altid` ledger rows, and read by both `identifier=` builders.
 Kind: API correctness (stable identifiers)
 Relates to: 455 (the org-id half of this defect, done), 448 (e2-altid; its design doc left this open at
 `.scratch/tender-db/448-altid-design.md:246`, "Decide whether to file a follow-up", and nothing was filed),
@@ -104,3 +105,17 @@ Tests that pin it:
 - **open** (2026-10-01 11:46 UTC): `[[],null]`. Sellafield's merged PPON finds nothing.
 - **done**: `[[5718658],{"identifier":{"asked":"GBPPONPWYP8439MZWY","merged_into":[5718658]}}]`. It finds the
   survivor, and the page says it followed a merge.
+
+## 2026-10-01 20:3x UTC — deployed; dry backfill read
+
+Dry job 1831 (18 s): 5,895,067 ledger rows walked (era floor 1786785861); 30,329 survivors would change.
+
+| rule | rows | written | present | same as survivor | wrong number |
+|---|---|---|---|---|---|
+| e2-altid | 4,738 | 4,736 | 2 | 0 | 0 |
+| r2 | 56,414 | 35,540 | 952 | 19,921 | 1 |
+| e0 | 2,501 | 0 | 0 | 2,501 | 0 |
+| r3 | 1,287 | 18 | 65 | 1,204 | 0 |
+
+The 2 e2-altid `present` are the two PPONs that were merged twice (448: 4,738 rows, 4,736 keys). Wet job 1846 is
+queued.

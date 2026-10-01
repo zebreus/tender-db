@@ -1,6 +1,7 @@
 # 464 — the runbooks disagree with the scripts and the box
 
-Status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the DST wording, due before the switch to CET at 2026-10-25 01:00 UTC: write the daily tick and the journal clock as Berlin wall-clock in the handover and in the `tender-db-tmpsweep.timer` comment.
+Status: **DONE 2026-10-01** — deployed at `b26cf3a` (built `38b081e`, review fixes `b26cf3a`), plus the owner's two CLAUDE.md corrections (the arm count, and the data-page rule that still said "against a snapshot"). The Verify reads `:0` for every file, including `ops/aj.sh:0`.
+Was status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the DST wording, due before the switch to CET at 2026-10-25 01:00 UTC: write the daily tick and the journal clock as Berlin wall-clock in the handover and in the `tender-db-tmpsweep.timer` comment.
 Kind: docs drift (runbooks, agent rules, box tooling)
 Relates to: 224 (box-only scripts vanished; why box tooling lives in git), 459 (uncommitted edits in
 `docs/operations.md`, `deploy.sh`, `ops/watchdogs/install.sh` and `test-watchdogs.sh` as this was filed), 245 (the
@@ -160,3 +161,16 @@ handover's line and `tmpsweep.timer`'s line.
 - **done**: every file reads `:0`, and `ops/aj.sh:0` replaces the "No such file" line. A correct rewrite matches no
   pattern; for example, "09:35 Europe/Berlin (07:35 UTC until 2026-10-25, 08:35 UTC after)" passes. If a newer
   `HANDOVER-*.md` replaces the 2026-10-01 one, point the command at the new file.
+
+## RESOLVED-VERIFIED 2026-10-01 20:3x UTC
+
+- The docs pass is deployed at `b26cf3a`:
+  - DST wording (summer/winter time, not a date);
+  - operations.md's secret reader, deploy default, hardware, catch-up, DR and stderr facts;
+  - prod-box-reads' interrupt wording;
+  - `aj.sh` in git (`ops/aj.sh`, installed by `install.sh`; it refuses a third argument);
+  - the `run_spec` lesson as a doc comment.
+- The implementer's CLAUDE.md edit left two stale lines. The owner fixed both: "62-arm" became "one async match
+  over every `Spec` arm", and "runs against a snapshot, never the serving DB" became the current rule ("a bounded
+  SELECT through `/v1/sql` … a heavy or unbounded scan has no on-box path").
+- The Verify prints `:0` for all seven files.

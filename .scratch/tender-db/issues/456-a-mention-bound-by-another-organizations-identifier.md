@@ -1,6 +1,7 @@
 # 456 — a mention that publishes another organization's identifier binds to that organization, whatever its name says
 
-Status: ready-for-agent — filed 2026-10-01 from 448's chunk-7 delta (job 1787). The first unit is a measurement: size the
+Status: ready-for-agent — DESIGN 3 DEPLOYED 2026-10-01 at `b26cf3a` (built `0850733`, review fixes `026819f`): every party serves the mention's own published name as `mention_name` beside the org head. UKRI's tender 8751605 now reads `[5718658,"Sellafield Ltd","Schneider Electric"]`, so a reader sees what the notice said. NEXT: the measurement unit (the census of identifier-bound mentions whose name agrees with none of their org's names), then designs 1 and 2.
+Was status: ready-for-agent — filed 2026-10-01 from 448's chunk-7 delta (job 1787). The first unit is a measurement: size the
 class across the GB PPON- and COH-bound mentions before designing anything. The design questions are below.
 Kind: data quality (organization identity)
 Relates to: 327 (an Austrian buyer's GLN in the supplier block, the same source-side shape), 448 (e2-altid, where it
@@ -57,3 +58,12 @@ orgs first. It is a corpus walk, so it is a dry job (a census-style report) and 
 - **open** (2026-10-01): `[5718658,"Sellafield Ltd"]`, the UKRI tenderer bound to Sellafield.
 - **done:** anything that no longer presents Sellafield as UKRI's tenderer: a provisional `Schneider Electric` org
   (design 1), or the mention's own name served beside the head (design 3).
+
+## 2026-10-01 20:3x UTC — design 3 deployed
+
+- `parties[].mention_name` is the name the party's own notice published, served beside the org's head
+  `organization_name`. A nested legacy party climbs to its mention: the review found `mention_name: null` on tender
+  6281334's second winner, and fixed it. A party with no mention row serves `null` end to end. Docs and OpenAPI are
+  updated.
+- Live: tender 8751605's Tenderer reads `[5718658,"Sellafield Ltd","Schneider Electric"]`. The bind is still wrong
+  (design 1), but it is no longer hidden.
