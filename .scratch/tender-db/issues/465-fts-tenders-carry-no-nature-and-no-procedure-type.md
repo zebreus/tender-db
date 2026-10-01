@@ -1,6 +1,7 @@
 # 465 — FTS tenders carry no contract nature and FTS notices no procedure type; the profile's 20 `owed:` paths have no issue
 
-Status: ready-for-agent — DEPLOYED 2026-10-01 at `b629d0b` (built `59668ee`, review fixes `b4f2bba`; gated in the batch). The FTS re-parse is ENQUEUED as job 1813 (`{"kind":"reparse","profiles":["fts:ocds-1.1"]}`, ~314k notices) with its trailing fold 1814. NEXT: read 1813 (expect 0 unmatched, 0 now-failing) and 1814, then the Verify (tender 8576017: `["services"]`, then `BT-23-Procedure=services`, `BT-105-Procedure=open`).
+Status: **DONE 2026-10-01** — re-parse 1813 (`re-parsed 314106 notices across 92 packages … 0 unmatched, 0 re-keyed, 0 now failing`, 817 s) and fold 1814 (`314106 notices → 210752 tenders`, 775 s) ran on `b629d0b`. The Verify reads done: `["services"]` then `["BT-105-Procedure=open","BT-23-Procedure=services"]`. A tender-level procedure type for every source is issue 479.
+Was status: ready-for-agent — DEPLOYED 2026-10-01 at `b629d0b` (built `59668ee`, review fixes `b4f2bba`; gated in the batch). The FTS re-parse is ENQUEUED as job 1813 (`{"kind":"reparse","profiles":["fts:ocds-1.1"]}`, ~314k notices) with its trailing fold 1814. NEXT: read 1813 (expect 0 unmatched, 0 now-failing) and 1814, then the Verify (tender 8576017: `["services"]`, then `BT-23-Procedure=services`, `BT-105-Procedure=open`).
 Was status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the parser: emit `mainProcurementCategory` as BT-23 (OCDS `goods` → eForms `supplies`) and `procurementMethodDetails` as BT-105-Procedure in `crates/ingest/src/fts/parse.rs`, pinned by a fixture test in `crates/ingest/tests/fts.rs`, then gate, deploy, and run one `fts:ocds-1.1` re-parse and fold after 342's last backfill chunk (jobs 1800–1809) has drained.
 Kind: coverage (ingest: the FTS profile `fts:ocds-1.1`, i.e. `crates/ingest/src/fts/parse.rs` and the ADR-0004 checklist `crates/ingest/src/fts/checklist.rs`)
 Relates to: 397 (contract nature as the cross-era `nature` classification; FTS is the source that never got it), 386 (unit 2b built the checklist and wrote the `owed:` list down, lines 489–506; done), 437 (the same re-parse-and-fold path, and the award-scope rule for award items), 342 (the FTS backfill the re-parse waits for), ADR-0004 (mapped-or-ignored)
@@ -132,3 +133,13 @@ current notice (089588-2026).
 - Review fix (`b4f2bba`): the data-quality drop sieve now reads the nature (`NATURE_STEMS`), so no era's nature
   reads as dropped (an issue-397 gap).
 - Prod: job 1813 reparses every `fts:ocds-1.1` notice, then project 1814.
+
+## RESOLVED-VERIFIED 2026-10-01 15:5x UTC
+
+- Re-parse 1813: `re-parsed 314106 notices across 92 packages (314156 members walked, 0 unmatched, 0 re-keyed, 0 now
+  failing and left untouched); stamped 211644 tender(s) epoch-stale`, 817 s.
+- Fold 1814: `314106 notices → 210752 tenders (0 islands), 314106 versions; 210752 tenders written`, 775 s.
+- The Verify on tender 8576017 and notice 46697935: `["services"]`, then
+  `["BT-105-Procedure=open","BT-23-Procedure=services"]`.
+- Out of this issue's scope and now owned: the Tender layer carries no procedure type in any source. That is issue
+  479.
