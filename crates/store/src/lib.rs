@@ -1591,6 +1591,33 @@ impl Db {
         })
     }
 
+    /// Every registered period of `(source, kind)` in `from..=to`, ascending
+    /// and distinct. Periods compare as text, so the bounds must be the same
+    /// zero-padded shape as the periods (`YYYY-MM-DD` for FTS dailies): the FTS
+    /// walk-forward reads which days of its range are already held (issue 477).
+    pub async fn fetch_periods_between(
+        &self,
+        source: &str,
+        kind: &str,
+        from: &str,
+        to: &str,
+    ) -> turso::Result<Vec<String>> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT DISTINCT period FROM fetches
+                  WHERE source = ? AND kind = ? AND period >= ? AND period <= ?
+                  ORDER BY period",
+                (t(source), t(kind), t(from), t(to)),
+            )
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push(text(&row, 0));
+        }
+        Ok(out)
+    }
+
     pub async fn record_fetch(&self, f: &Fetch) -> turso::Result<()> {
         let conn = self.conn().await;
         conn.execute(

@@ -510,7 +510,7 @@ async fn the_walk_forward_is_capped_per_tick_and_resumes_next_tick() {
     let mut walked = 0;
     let mut ticks = 0;
     while ingest::fetch::latest_fts_day(&db).await.unwrap() != Some((2026, 2, 20)) {
-        let tick = probe_fts_daily(&db, &client, &archive, &base, (2026, 2, 20), Duration::ZERO, |_, _| {})
+        let tick = probe_fts_daily(&db, &client, &archive, &base, (2026, 2, 20), Duration::ZERO, || false, |_, _| {})
             .await
             .unwrap();
         if ticks == 0 {
@@ -595,8 +595,9 @@ fn release(id: &str, title: &str) -> Value {
 }
 
 /// The DÖE walk-forward shape for FTS: with nothing registered the probe fetches
-/// only `end`; a gap of missed ticks is caught up day by day; an EMPTY window
-/// lands a 0-member zip so the watermark advances; the daily window reaches
+/// `end`'s month up to `end`, never further back; a gap of missed ticks is
+/// caught up day by day; an EMPTY window
+/// lands a 0-member zip so the day is held; the daily window reaches
 /// 2 h into the previous day; and within one package a re-served release is
 /// one member.
 #[tokio::test]
@@ -617,16 +618,25 @@ async fn fts_walk_forward_catches_up_a_multi_day_gap() {
     let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
     let client = reqwest::Client::new();
 
-    // No FTS daily on record: only `end`, never a full-archive backfill.
-    let seeded = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 3), Duration::ZERO, |_, _| {})
+    // Nothing on record: day 1 of `end`'s month through `end` — the running
+    // month is never left to a backfill that stops at the previous one (issue
+    // 477's seam), and never a full-archive backfill through the probe.
+    let seeded = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 3), Duration::ZERO, || false, |_, _| {})
         .await
         .unwrap();
-    assert_eq!(seeded, vec![("2026-09-03".into(), Outcome::Fetched)]);
+    assert_eq!(
+        seeded,
+        vec![
+            ("2026-09-01".into(), Outcome::Fetched),
+            ("2026-09-02".into(), Outcome::Fetched),
+            ("2026-09-03".into(), Outcome::Fetched),
+        ]
+    );
 
     // Three missed ticks (4, 5, 6): one walk catches up the lot, in order.
     let touched = Arc::new(Mutex::new(Vec::<String>::new()));
     let t2 = touched.clone();
-    let caught = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 6), Duration::ZERO, |p, _| {
+    let caught = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 6), Duration::ZERO, || false, |p, _| {
         t2.lock().unwrap().push(p.to_owned());
     })
     .await
@@ -643,11 +653,13 @@ async fn fts_walk_forward_catches_up_a_multi_day_gap() {
     {
         // Each day asked once, from 22:00 the evening before (the 2 h overlap).
         let hits = hits.lock().unwrap();
+        assert_eq!(hits.get("2026-09-01 from 2026-08-31T22:00:00"), Some(&1));
+        assert_eq!(hits.get("2026-09-02 from 2026-09-01T22:00:00"), Some(&1));
         assert_eq!(hits.get("2026-09-03 from 2026-09-02T22:00:00"), Some(&1));
         assert_eq!(hits.get("2026-09-04 from 2026-09-03T22:00:00"), Some(&1));
         assert_eq!(hits.get("2026-09-05 from 2026-09-04T22:00:00"), Some(&1));
         assert_eq!(hits.get("2026-09-06 from 2026-09-05T22:00:00"), Some(&1));
-        assert_eq!(hits.values().sum::<usize>(), 4, "one request per day, none repeated");
+        assert_eq!(hits.values().sum::<usize>(), 6, "one request per day, none repeated");
     }
 
     // Day 4: both ids, the overlap's re-served release included, the repeat once.
@@ -661,8 +673,8 @@ async fn fts_walk_forward_catches_up_a_multi_day_gap() {
     let day3 = zip_members(&archive.join("fts/daily/2026-09-03.zip"));
     assert_eq!(day3[0].1, day4[0].1, "same release, same bytes across days");
 
-    // The empty Saturday: a valid 0-member zip, registered, walkable, and the
-    // watermark moved past it.
+    // The empty Saturday: a valid 0-member zip, registered (so no longer a
+    // gap), and walkable.
     let empty = archive.join("fts/daily/2026-09-05.zip");
     assert!(zip_members(&empty).is_empty());
     assert!(db.latest_fetch("fts", "daily", "2026-09-05").await.unwrap().is_some());
@@ -674,17 +686,17 @@ async fn fts_walk_forward_catches_up_a_multi_day_gap() {
         assert!(!archive.join(format!("fts/daily/{day}.pages")).exists(), "{day} staging gone");
     }
 
-    // Idempotent: the watermark is current, nothing to walk.
-    let again = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 6), Duration::ZERO, |_, _| {})
+    // Idempotent: every day through `end` is held, nothing to walk.
+    let again = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 6), Duration::ZERO, || false, |_, _| {})
         .await
         .unwrap();
     assert!(again.is_empty());
-    // The SUM, not the key count: a probe that re-requested the same four days
-    // would leave four keys and eight requests (issue 342 review, lens "tests").
+    // The SUM, not the key count: a probe that re-requested the same six days
+    // would leave six keys and twelve requests (issue 342 review, lens "tests").
     assert_eq!(
         hits.lock().unwrap().values().sum::<usize>(),
-        4,
-        "no HTTP for a current watermark"
+        6,
+        "no HTTP when every day through `end` is held"
     );
 
     let _ = std::fs::remove_dir_all(&archive);
@@ -763,6 +775,12 @@ struct Quirks {
     /// A span SHORTER than this many seconds answers a body that is not a
     /// release package.
     malformed_under: Option<i64>,
+    /// A FULL page names no `links.next`: only the row count says there is
+    /// more (issue 477 review, lens "tests").
+    full_without_next: bool,
+    /// `(n, id)`: from the `n`th request on, release `id` is served with a
+    /// changed title — a release re-published between two requests.
+    mutate_from: Option<(usize, String)>,
 }
 
 /// `YYYY-MM-DDTHH:MM:SS` → naive wall-clock seconds, the inverse of the
@@ -839,8 +857,22 @@ async fn fts_keyset_server(rows: Vec<Keyed>, quirks: Quirks) -> (String, Log) {
                     let cursor: i64 = cursor.parse().unwrap();
                     window.retain(|r| r.key <= cursor);
                 }
-                let mut releases: Vec<Value> = window.iter().take(limit).map(|r| r.release.clone()).collect();
+                let mut releases: Vec<Value> = window
+                    .iter()
+                    .take(limit)
+                    .map(|r| match &quirks.mutate_from {
+                        Some((from_n, id)) if n >= *from_n && r.id == *id => {
+                            let mut changed = r.release.clone();
+                            changed["tender"]["title"] = json!("changed");
+                            changed
+                        }
+                        _ => r.release.clone(),
+                    })
+                    .collect();
                 let mut next = window.get(limit).map(|r| r.key);
+                if quirks.full_without_next && releases.len() == limit {
+                    next = None;
+                }
                 if let Some((secs, serve)) = quirks.truncate_over
                     && to - from + 1 > secs
                 {
@@ -870,11 +902,14 @@ async fn fts_keyset_server(rows: Vec<Keyed>, quirks: Quirks) -> (String, Log) {
     (base, log)
 }
 
-/// 2021-05-07 as the probes measured it (issue 477): 152 releases,
-/// 009911–010062, in the hours 06, 08–18, 21 and 22 with the real hourly counts.
-/// The keys of 009947, 009955 and 009962 (one process, `0292a9`) sit near
-/// 261,858 while every other key sits near 600,000 — so the cursor after page 1
-/// is 009962's key and page 2 holds those three rows only.
+/// 2021-05-07 (issue 477): the measured 152 releases, 009911–010062, in the
+/// hours 06, 08–18, 21 and 22 with the real hourly counts. The KEYS are a model,
+/// not the measured bands: 009947, 009955 and 009962 (one process, `0292a9`)
+/// sit near 261,858 as measured, and every other key is a monotone 600,000 + n
+/// (the probes measured bands, 599,795–605,324 and below). That reproduces the
+/// measured limit-100 cursor walk — the cursor after page 1 is 009962's key and
+/// page 2 holds those three rows only — and nothing finer (a limit-10 walk of
+/// this model serves 103 ids, where the probes measured 33).
 fn day_2021_05_07() -> Vec<Keyed> {
     const HOURS: [(i64, i64); 14] =
         [(6, 1), (8, 2), (9, 11), (10, 14), (11, 6), (12, 17), (13, 9), (14, 16), (15, 20), (16, 25), (17, 7), (18, 7), (21, 1), (22, 16)];
@@ -936,7 +971,8 @@ fn cursor_requests(log: &Log) -> usize {
 /// 2021-05-07 window yields exactly the 103 ids the archive holds — page 2 comes
 /// back with 3 rows and no next, a perfectly normal-looking last page — while the
 /// same day asked as 24 cursorless hourly windows returns all 152. So the model
-/// below is the measured server, and a walker that follows the cursor loses 49.
+/// reproduces the measured limit-100 walk, and a walker that follows the cursor
+/// loses 49.
 #[tokio::test]
 async fn the_keyset_mock_reproduces_the_2021_05_07_cursor_loss() {
     let (base, _log) = fts_keyset_server(day_2021_05_07(), Quirks::default()).await;
@@ -1140,35 +1176,131 @@ async fn a_short_page_that_still_names_a_next_is_split() {
 }
 
 /// The staged span pages are the resume state (issue 450's stop, issue 477's
-/// walk). A walk stopped after its first request lands nothing; the next fetch
-/// of the same target never asks that span again, walks the rest, and lands
-/// the whole day.
+/// walk). A walk stopped after its `k`th request lands nothing; the next fetch
+/// of the same target never asks a staged span again, walks the rest, and
+/// lands everything. Every stop point of 2021-05-07's five-request walk, and a
+/// monthly stopped mid-month: from the second request on, a SHORT leaf page is
+/// among the staged ones (05-06 22:00 – 05-07 10:59:59, 28 rows), and a resume
+/// that asked only for what it lacked but assembled only what it asked would
+/// land 124 of 152 (issue 477 review, lens "tests").
 #[tokio::test]
 async fn a_stopped_split_walk_resumes_without_asking_a_staged_span_again() {
+    let runs = [(1, 5, false), (2, 5, false), (3, 5, false), (4, 5, false), (8, 35, true), (20, 35, true)];
+    for (stop_after, total, monthly) in runs {
+        let (base, log) = fts_keyset_server(day_2021_05_07(), Quirks::default()).await;
+        let archive = temp_dir(&format!("fts-split-resume-{stop_after}"));
+        let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+        let client = reqwest::Client::new();
+        let t = if monthly { fts::monthly(&base, (2021, 5)) } else { fts::day(&base, (2021, 5, 7)) };
+        let case = format!("{} stopped after {stop_after}", t.period);
+
+        let asked = std::sync::atomic::AtomicUsize::new(0);
+        let stop = || asked.fetch_add(1, Ordering::SeqCst) >= stop_after;
+        let outcome = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, stop, |_, _, _| {}).await.unwrap();
+        assert_eq!(outcome, Outcome::Stopped, "{case}");
+        assert_eq!(log.lock().unwrap().len(), stop_after, "{case}: the requests, then the stop");
+        let staging = archive.join(t.rel_path.trim_end_matches(".zip").to_owned() + ".pages");
+        assert_eq!(std::fs::read_dir(&staging).unwrap().count(), stop_after, "{case}: every page asked stays staged");
+        assert!(!archive.join(&t.rel_path).exists(), "{case}: nothing lands");
+        assert!(db.latest_fetch("fts", t.kind, &t.period).await.unwrap().is_none(), "{case}: nothing registers");
+
+        let outcome = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, || false, |_, _, _| {}).await.unwrap();
+        assert_eq!(outcome, Outcome::Fetched, "{case}");
+        let asked = spans_asked(&log);
+        assert_eq!(asked.iter().collect::<HashSet<_>>().len(), asked.len(), "{case}: no span asked twice: {asked:?}");
+        assert_eq!(asked.len(), total, "{case}: the resume asked only the rest");
+        assert_eq!(cursor_requests(&log), 0);
+        assert_eq!(member_ids(&archive.join(&t.rel_path)), ids_2021_05_07(), "{case}: all 152");
+        assert!(!staging.exists(), "{case}: staging removed after landing");
+
+        let _ = std::fs::remove_dir_all(&archive);
+    }
+}
+
+/// A staged page that no longer parses — a power loss after the rename leaves
+/// it truncated or empty — is storage damage, since a page is staged only once
+/// it has parsed. It is discarded and its span asked again, rather than
+/// failing every retry at the same file without a request (issue 477 review).
+#[tokio::test]
+async fn a_damaged_staged_page_is_discarded_and_asked_again() {
     let (base, log) = fts_keyset_server(day_2021_05_07(), Quirks::default()).await;
-    let archive = temp_dir("fts-split-resume");
+    let archive = temp_dir("fts-damaged-staging");
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    let client = reqwest::Client::new();
+    let t = fts::day(&base, (2021, 5, 7));
+    let day = fts::windows(&t)[0].span;
+    let (older, _) = fts::split(day).unwrap();
+    let staging = archive.join("fts/daily/2021-05-07.pages");
+    std::fs::create_dir_all(&staging).unwrap();
+    std::fs::write(staging.join(format!("{}.json", fts::span_key(day))), b"{\"version\":\"1.1\",\"releases\":[{\"id\":").unwrap();
+    std::fs::write(staging.join(format!("{}.json", fts::span_key(older))), b"").unwrap();
+
+    let outcome = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, || false, |_, _, _| {}).await.unwrap();
+    assert_eq!(outcome, Outcome::Fetched);
+    assert_eq!(member_ids(&archive.join(&t.rel_path)), ids_2021_05_07());
+    let asked = spans_asked(&log);
+    assert_eq!(asked.len(), 5, "both damaged spans asked again, the walk otherwise as fresh: {asked:?}");
+    assert_eq!(asked.iter().collect::<HashSet<_>>().len(), asked.len());
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// A full page that names no next is still split: the row count alone says
+/// the span may hold more (`page_is_short` needs BOTH fewer than 100 rows and
+/// no next). A walk that trusted a missing next — the cursor walker's own end
+/// rule — would land 100 of 152 (issue 477 review, lens "tests").
+#[tokio::test]
+async fn a_full_page_without_a_next_is_split() {
+    let quirks = Quirks { full_without_next: true, ..Quirks::default() };
+    let (base, log) = fts_keyset_server(day_2021_05_07(), quirks).await;
+    let archive = temp_dir("fts-full-no-next");
     let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
     let client = reqwest::Client::new();
     let t = fts::day(&base, (2021, 5, 7));
 
-    let asked = std::sync::atomic::AtomicUsize::new(0);
-    let stop = || asked.fetch_add(1, Ordering::SeqCst) >= 1;
-    let outcome = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, stop, |_, _, _| {}).await.unwrap();
-    assert_eq!(outcome, Outcome::Stopped);
-    assert_eq!(log.lock().unwrap().len(), 1, "one request, then the stop");
-    let staging = archive.join("fts/daily/2021-05-07.pages");
-    assert_eq!(std::fs::read_dir(&staging).unwrap().count(), 1, "the one page stays staged");
-    assert!(!archive.join(&t.rel_path).exists(), "nothing lands");
-    assert!(db.latest_fetch("fts", "daily", "2021-05-07").await.unwrap().is_none(), "nothing registers");
-
     let outcome = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, || false, |_, _, _| {}).await.unwrap();
     assert_eq!(outcome, Outcome::Fetched);
+    assert_eq!(member_ids(&archive.join(&t.rel_path)), ids_2021_05_07(), "all 152");
     let asked = spans_asked(&log);
-    assert_eq!(asked.iter().collect::<HashSet<_>>().len(), asked.len(), "no span asked twice: {asked:?}");
-    assert_eq!(asked[0], ("2021-05-06T22:00:00".to_owned(), "2021-05-07T23:59:59".to_owned()));
-    assert_eq!(cursor_requests(&log), 0);
-    assert_eq!(member_ids(&archive.join(&t.rel_path)), ids_2021_05_07());
-    assert!(!staging.exists(), "staging removed after landing");
+    let asked: Vec<(&str, &str)> = asked.iter().map(|(f, t)| (f.as_str(), t.as_str())).collect();
+    assert_eq!(
+        asked,
+        [
+            ("2021-05-06T22:00:00", "2021-05-07T23:59:59"),
+            ("2021-05-06T22:00:00", "2021-05-07T10:59:59"),
+            ("2021-05-07T11:00:00", "2021-05-07T23:59:59"),
+            ("2021-05-07T11:00:00", "2021-05-07T17:29:59"),
+            ("2021-05-07T17:30:00", "2021-05-07T23:59:59"),
+        ],
+        "split exactly as when the next is named"
+    );
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// Only LEAF pages are assembled, never a full page that was split. A release
+/// re-published between the full page and its half's request (12 s later in
+/// production) is archived once, as the leaf served it — not as a spurious
+/// second release of its id (issue 477 review, lens "tests").
+#[tokio::test]
+async fn only_leaf_pages_are_assembled_never_a_split_full_page() {
+    // 010000-2021 sits in 15:00–15:59, so in the full day page (request 1) and
+    // the full 11:00–23:59:59 half (3), and lands from the 11:00–17:29:59 leaf (4).
+    let quirks = Quirks { mutate_from: Some((2, "010000-2021".to_owned())), ..Quirks::default() };
+    let (base, log) = fts_keyset_server(day_2021_05_07(), quirks).await;
+    let archive = temp_dir("fts-leaves-only");
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    let client = reqwest::Client::new();
+    let t = fts::day(&base, (2021, 5, 7));
+
+    fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, || false, |_, _, _| {}).await.unwrap();
+    assert_eq!(log.lock().unwrap().len(), 5);
+    let members = zip_members(&archive.join(&t.rel_path));
+    let of_id: Vec<&(String, Vec<u8>)> = members.iter().filter(|(n, _)| n.starts_with("010000-2021")).collect();
+    assert_eq!(of_id.len(), 1, "one member, no `~` copy from the split full page: {:?}", of_id.iter().map(|m| &m.0).collect::<Vec<_>>());
+    let leaf: Value = serde_json::from_slice(&of_id[0].1).unwrap();
+    assert_eq!(leaf["releases"][0]["tender"]["title"], "changed", "as the leaf served it");
+    assert_eq!(members.len(), 152);
 
     let _ = std::fs::remove_dir_all(&archive);
 }
@@ -1221,8 +1353,10 @@ fn registry_row(source: &str, kind: &str, period: &str) -> store::Fetch {
 /// THE SEAM (issue 477): the monthly backfill ended at 2026-08 and the first
 /// daily was 2026-09-07, because with no daily on record the walk-forward
 /// fetched only `end`, and 2026-09-01..06 (1,745 ids) were never fetched. The
-/// walk now starts the day after the later of the newest daily and the last
-/// day of the newest monthly.
+/// walk is now a GAP walk: every day after the newest monthly's last day that
+/// holds no daily, whichever of the two landed first (issue 477 review: a
+/// high-water mark reopened the seam when the daily landed before the
+/// backfill, which is how 477 actually happened).
 #[tokio::test]
 async fn the_walk_forward_starts_after_the_newest_monthly_not_at_end() {
     let (base, _log) = fts_keyset_server(Vec::new(), Quirks::default()).await;
@@ -1233,7 +1367,7 @@ async fn the_walk_forward_starts_after_the_newest_monthly_not_at_end() {
     let archive = temp_dir("fts-seam");
     let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
     db.record_fetch(&registry_row("fts", "monthly", "2026-08")).await.unwrap();
-    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 6), Duration::ZERO, |_, _| {}).await.unwrap();
+    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 6), Duration::ZERO, || false, |_, _| {}).await.unwrap();
     assert_eq!(days(walked), ["2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04", "2026-09-05", "2026-09-06"]);
     let _ = std::fs::remove_dir_all(&archive);
 
@@ -1242,18 +1376,65 @@ async fn the_walk_forward_starts_after_the_newest_monthly_not_at_end() {
     let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
     db.record_fetch(&registry_row("fts", "daily", "2026-07-15")).await.unwrap();
     db.record_fetch(&registry_row("fts", "monthly", "2026-08")).await.unwrap();
-    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 2), Duration::ZERO, |_, _| {}).await.unwrap();
+    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 2), Duration::ZERO, || false, |_, _| {}).await.unwrap();
     assert_eq!(days(walked), ["2026-09-01", "2026-09-02"]);
     let _ = std::fs::remove_dir_all(&archive);
 
-    // A daily NEWER than the newest monthly: the daily's next day, as before.
+    // Dailies held through 2026-09-10 after the monthly: the days after them.
     let archive = temp_dir("fts-seam-newer-daily");
     let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
     db.record_fetch(&registry_row("fts", "monthly", "2026-08")).await.unwrap();
-    db.record_fetch(&registry_row("fts", "daily", "2026-09-10")).await.unwrap();
-    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 12), Duration::ZERO, |_, _| {}).await.unwrap();
+    for d in 1..=10 {
+        db.record_fetch(&registry_row("fts", "daily", &format!("2026-09-{d:02}"))).await.unwrap();
+    }
+    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 12), Duration::ZERO, || false, |_, _| {}).await.unwrap();
     assert_eq!(days(walked), ["2026-09-11", "2026-09-12"]);
     let _ = std::fs::remove_dir_all(&archive);
+
+    // 477 AS IT HAPPENED: the dailies landed first (2026-09-07..09, the old
+    // walk's `end`-only seeding), the backfill through 2026-08 weeks later.
+    // The days below the newest daily are still walked, and only those.
+    let archive = temp_dir("fts-seam-daily-first");
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    for d in 7..=9 {
+        db.record_fetch(&registry_row("fts", "daily", &format!("2026-09-{d:02}"))).await.unwrap();
+    }
+    db.record_fetch(&registry_row("fts", "monthly", "2026-08")).await.unwrap();
+    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 10), Duration::ZERO, || false, |_, _| {}).await.unwrap();
+    assert_eq!(
+        days(walked),
+        ["2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04", "2026-09-05", "2026-09-06", "2026-09-10"]
+    );
+    let _ = std::fs::remove_dir_all(&archive);
+
+    // The same order from an EMPTY registry, tick by tick (the review's
+    // replay): the first tick walks `end`'s month, so no day is ever left out.
+    let archive = temp_dir("fts-seam-empty-first");
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    let tick1 = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 7), Duration::ZERO, || false, |_, _| {}).await.unwrap();
+    assert_eq!(days(tick1).first().map(String::as_str), Some("2026-09-01"));
+    db.record_fetch(&registry_row("fts", "monthly", "2026-08")).await.unwrap();
+    let tick2 = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 8), Duration::ZERO, || false, |_, _| {}).await.unwrap();
+    assert_eq!(days(tick2), ["2026-09-08"]);
+    for d in 1..=8 {
+        let period = format!("2026-09-{d:02}");
+        assert!(db.latest_fetch("fts", "daily", &period).await.unwrap().is_some(), "{period} fetched");
+    }
+    let _ = std::fs::remove_dir_all(&archive);
+
+    // A daily row for a day past `end` (a future day landed by hand before
+    // `fetch_fts` refused one) moves nothing: the walk reads gaps, not MAX.
+    for monthly in [true, false] {
+        let archive = temp_dir(&format!("fts-seam-future-row-{monthly}"));
+        let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+        if monthly {
+            db.record_fetch(&registry_row("fts", "monthly", "2026-08")).await.unwrap();
+        }
+        db.record_fetch(&registry_row("fts", "daily", "2026-12-25")).await.unwrap();
+        let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 3), Duration::ZERO, || false, |_, _| {}).await.unwrap();
+        assert_eq!(days(walked), ["2026-09-01", "2026-09-02", "2026-09-03"], "monthly on record: {monthly}");
+        let _ = std::fs::remove_dir_all(&archive);
+    }
 }
 
 /// A monthly is registered once and never re-walked, so a monthly of a month
@@ -1277,21 +1458,146 @@ async fn a_monthly_for_an_unfinished_month_is_refused() {
     let _ = std::fs::remove_dir_all(&archive);
 }
 
+/// A daily is registered once and the walk-forward never revisits a held day,
+/// so a daily of the running UK day would freeze it part-walked (only its
+/// 22:00–23:59 tail would come back, through the next day's overlap), and one
+/// of a future day would land empty. Both are refused before any request, the
+/// rule the monthly already had (issue 477 review); yesterday is accepted.
+#[tokio::test]
+async fn a_daily_whose_day_has_not_ended_is_refused() {
+    let (base, log) = fts_keyset_server(Vec::new(), Quirks::default()).await;
+    let archive = temp_dir("fts-unfinished-day");
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    let client = reqwest::Client::new();
+    let now = store::now_unix();
+    let today = fts::uk_civil_date(now);
+
+    for day in [today, (today.0 + 1, 1, 1)] {
+        let t = fts::day(&base, day);
+        let err = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, || false, |_, _, _| {}).await.unwrap_err();
+        assert!(matches!(err, ingest::fetch::Error::Unsupported(_)), "{}: {err}", t.period);
+        assert!(!archive.join(format!("fts/daily/{}.pages", t.period)).exists(), "{}: nothing staged", t.period);
+        assert!(db.latest_fetch("fts", "daily", &t.period).await.unwrap().is_none(), "{}", t.period);
+    }
+    assert!(log.lock().unwrap().is_empty(), "refused before any request");
+
+    let yesterday = fts::day(&base, fts::uk_civil_date(now - 86_400));
+    let outcome = fetch_fts(&db, &client, &archive, &yesterday, false, Duration::ZERO, || false, |_, _, _| {}).await.unwrap();
+    assert_eq!(outcome, Outcome::Fetched);
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// The probe reads the stop flag before every request of every day (issue 477
+/// review: a 14-day catch-up is about an hour on the single runner). A stop
+/// ends the walk on the stopped day, which did not land; the days before it
+/// did, and the next run starts at the stopped day.
+#[tokio::test]
+async fn a_stopped_probe_ends_on_the_stopped_day_and_the_next_resumes_it() {
+    let (base, log) = fts_keyset_server(Vec::new(), Quirks::default()).await;
+    let archive = temp_dir("fts-probe-stop");
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    let client = reqwest::Client::new();
+    db.record_fetch(&registry_row("fts", "monthly", "2026-08")).await.unwrap();
+    let days = |r: &[(String, Outcome)]| r.iter().map(|(p, o)| format!("{p} {o:?}")).collect::<Vec<_>>();
+
+    // An empty day is one request: stop before the third.
+    let asked = std::sync::atomic::AtomicUsize::new(0);
+    let stop = || asked.fetch_add(1, Ordering::SeqCst) >= 2;
+    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 5), Duration::ZERO, stop, |_, _| {}).await.unwrap();
+    assert_eq!(days(&walked), ["2026-09-01 Fetched", "2026-09-02 Fetched", "2026-09-03 Stopped"]);
+    assert_eq!(log.lock().unwrap().len(), 2);
+    assert!(db.latest_fetch("fts", "daily", "2026-09-03").await.unwrap().is_none(), "the stopped day did not land");
+
+    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 5), Duration::ZERO, || false, |_, _| {}).await.unwrap();
+    assert_eq!(days(&walked), ["2026-09-03 Fetched", "2026-09-04 Fetched", "2026-09-05 Fetched"]);
+    assert_eq!(log.lock().unwrap().len(), 5, "no day asked twice");
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// The pause holds between ANY two FTS requests of the process, not only
+/// inside one fetch: the next job's (or the next probe day's) first request
+/// used to follow the last one at once, and the limiter has answered 429 with
+/// `Retry-After: 120` even at an 11 s cadence (issue 477 review, lens
+/// "operability"). Two one-request fetches, so only the pause BETWEEN the
+/// calls can make this take the pause.
+#[tokio::test]
+async fn the_request_pause_holds_across_fetches() {
+    let (base, log) = fts_keyset_server(Vec::new(), Quirks::default()).await;
+    let archive = temp_dir("fts-pause-across");
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    let client = reqwest::Client::new();
+    let pause = Duration::from_millis(400);
+
+    let started = std::time::Instant::now();
+    for day in [(2026, 9, 1), (2026, 9, 2)] {
+        fetch_fts(&db, &client, &archive, &fts::day(&base, day), false, pause, || false, |_, _, _| {}).await.unwrap();
+    }
+    assert_eq!(log.lock().unwrap().len(), 2);
+    assert!(started.elapsed() >= pause, "the second fetch's request waited out the pause: {:?}", started.elapsed());
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// A crash between the registry row and the staging cleanup leaves the
+/// landing's pages behind, and nothing re-walks a landed day. A non-refetch
+/// fetch of the day removes that debris; the newer pages of an interrupted
+/// REFETCH stay, for the refetch to resume (issue 477 review, lens "operability").
+#[tokio::test]
+async fn leftover_staging_of_a_landed_package_is_removed_without_a_refetch() {
+    let days: HashMap<String, Vec<Value>> =
+        HashMap::from([("2026-09-03".to_owned(), vec![release("083253-2026", "fine")])]);
+    let (base, hits) = fts_day_server(days).await;
+    let archive = temp_dir("fts-leftover");
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    let client = reqwest::Client::new();
+    let t = fts::day(&base, (2026, 9, 3));
+    fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, || false, |_, _, _| {}).await.unwrap();
+    let landed_at = db.latest_fetch("fts", "daily", "2026-09-03").await.unwrap().unwrap().fetched_at as u64;
+    let staging = archive.join("fts/daily/2026-09-03.pages");
+    let stage = |name: &str, at: u64| {
+        std::fs::create_dir_all(&staging).unwrap();
+        let page = staging.join(name);
+        std::fs::write(&page, json!({ "version": "1.1", "releases": [] }).to_string()).unwrap();
+        let at = std::time::UNIX_EPOCH + Duration::from_secs(at);
+        std::fs::File::options().write(true).open(&page).unwrap().set_modified(at).unwrap();
+    };
+
+    // Debris (no newer than the landing): removed, and the dir with it.
+    stage("20260902T220000-20260903T235959.json", landed_at - 60);
+    stage("20260902T220000-20260903T105959.json", landed_at);
+    let before = hits.lock().unwrap().values().sum::<usize>();
+    let outcome = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, || false, |_, _, _| {}).await.unwrap();
+    assert_eq!(outcome, Outcome::Unchanged);
+    assert_eq!(hits.lock().unwrap().values().sum::<usize>(), before, "no HTTP");
+    assert!(!staging.exists(), "the landing's leftover staging is gone");
+
+    // An interrupted refetch's newer page stays.
+    stage("20260902T220000-20260903T235959.json", landed_at + 3_600);
+    let outcome = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, || false, |_, _, _| {}).await.unwrap();
+    assert_eq!(outcome, Outcome::Unchanged);
+    assert_eq!(std::fs::read_dir(&staging).unwrap().count(), 1, "kept for the refetch to resume");
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
 /// One notice id, two releases (issue 477): `038018-2025` is a `tenderUpdate`
 /// on the old procurement and an `award,contract` on the new one, under two
 /// ocids. Within ONE package the assembler used to keep the first and drop the
-/// second without trace. Now each distinct release is a member — `<id>.json`,
-/// then `<id>~<hash8>.json` — while a byte-identical repeat still collapses;
-/// and the processor stores both as notices of the same publication id.
+/// second without trace. Now each distinct release is a member — `<id>.json`
+/// for the lowest member hash, `<id>~<hash8>.json` for the other — while a
+/// byte-identical repeat still collapses; served in the other order, the same
+/// releases make the same zip byte for byte (issue 477 review: by serve order,
+/// a refetch of an unchanged day could land as a new version); and the
+/// processor stores both as notices of the same publication id.
 #[tokio::test]
 async fn one_id_carried_by_two_releases_keeps_both_and_a_repeat_collapses() {
     let update = json!({ "id": "038018-2025", "ocid": "ocds-h6vhtk-04a001", "tag": ["tenderUpdate"], "tender": { "title": "old" } });
     let award = json!({ "id": "038018-2025", "ocid": "ocds-h6vhtk-04b002", "tag": ["award", "contract"], "awards": [] });
-    let days: HashMap<String, Vec<Value>> = HashMap::from([(
-        "2025-04-10".to_owned(),
-        vec![release("038019-2025", "next"), update.clone(), award, update],
-    )]);
-    let (base, _hits) = fts_day_server(days).await;
+    let serve = |releases: Vec<Value>| HashMap::from([("2025-04-10".to_owned(), releases)]);
+    let (base, _hits) =
+        fts_day_server(serve(vec![release("038019-2025", "next"), update.clone(), award.clone(), update.clone()])).await;
     let archive = temp_dir("fts-one-id-two");
     let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
     let client = reqwest::Client::new();
@@ -1307,8 +1613,26 @@ async fn one_id_carried_by_two_releases_keeps_both_and_a_repeat_collapses() {
     assert_eq!(names[2], "038019-2025.json");
     let first: Value = serde_json::from_slice(&members[0].1).unwrap();
     let other: Value = serde_json::from_slice(&second.1).unwrap();
-    assert_eq!(first["releases"][0]["ocid"], "ocds-h6vhtk-04a001", "the first served keeps the plain name");
-    assert_eq!(other["releases"][0]["ocid"], "ocds-h6vhtk-04b002");
+    let mut ocids = [first["releases"][0]["ocid"].as_str().unwrap(), other["releases"][0]["ocid"].as_str().unwrap()];
+    ocids.sort();
+    assert_eq!(ocids, ["ocds-h6vhtk-04a001", "ocds-h6vhtk-04b002"], "both releases, one member each");
+    assert!(
+        ingest::sha256_hex(&members[0].1) < ingest::sha256_hex(&second.1),
+        "the plain name goes to the lower hash, not the first served"
+    );
+
+    // The other serve order: the same zip, byte for byte.
+    let (reversed, _) = fts_day_server(serve(vec![award, update, release("038019-2025", "next")])).await;
+    let archive2 = temp_dir("fts-one-id-two-reversed");
+    let db2 = store::Db::open(archive2.join("test.db").to_str().unwrap()).await.unwrap();
+    let t2 = fts::day(&reversed, (2025, 4, 10));
+    fetch_fts(&db2, &client, &archive2, &t2, false, Duration::ZERO, || false, |_, _, _| {}).await.unwrap();
+    assert_eq!(
+        std::fs::read(archive2.join(&t2.rel_path)).unwrap(),
+        std::fs::read(archive.join(&t.rel_path)).unwrap(),
+        "the zip depends on which releases were served, not their order"
+    );
+    let _ = std::fs::remove_dir_all(&archive2);
 
     // The processor reads the publication id from the payload, so the `~`
     // member is the SAME publication — a second notice row, not a quarantine.

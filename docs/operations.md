@@ -289,9 +289,10 @@ Two ways jobs start:
   finality window) and a `process`; every day a DÖE completed-day fetch (T+1,
   yesterday's date) + `process`; every day an FTS probe for the previous UK
   civil day (`fts daily (probe)`: a walk of cursorless windows with a 2 h
-  overlap, split wherever a page is full — issue 477 — ~12 s between requests,
-  continuing the day after the later of the newest daily and the newest
-  monthly's last day) + `process fts daily (all)`; then one `project` that folds whatever landed.
+  overlap, split wherever a page is full — issue 477 — ~12 s between any two
+  requests, across jobs too; it fetches every day after the newest monthly's
+  last day that holds no daily, at most 14 a run, and is cancellable at any
+  request) + `process fts daily (all)`; then one `project` that folds whatever landed.
   (The trailing `snapshot` job was removed with the backup feature,
   2026-08-06.) No operator action needed. Confirm a run fired by looking for a
   `probe` job (and the trailing
@@ -474,8 +475,9 @@ drops and re-derives the whole canonical layer. `backfill` needs a `source`; for
 range is optional (defaults to the whole 2022-12→now archive), and for `fts`
 it is optional too (defaults to 2021-01→the previous UK month; a range reaching
 into the running month is refused, because a registered monthly is never
-re-walked and the daily probe, which continues after the newest monthly, covers
-it — issue 477). A backfill fans
+re-walked and the daily probe, which fetches every day after the newest monthly
+that holds no daily, covers it — issue 477; a single FTS `fetch` of a day or
+month that has not ended in UK time is refused for the same reason). A backfill fans
 into one `fetch` per month, then one whole-source `process`, then one `project`,
 so progress and cancellation stay per-package. Jobs run **one at a time** in
 enqueue order — the writer is single anyway — so a fetch → process → project

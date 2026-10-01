@@ -2253,11 +2253,11 @@ impl Supervisor {
             // never re-walked, so one of an unfinished month would freeze it
             // part-walked; `fetch_fts` refuses it, and a range reaching into
             // it is refused here, before any job is queued. Its days are the
-            // daily probe's, which continues the day after the later of the
-            // newest daily and the newest monthly's last day — so the backfill
-            // and the probe meet without a seam. (They did not: the backfill
-            // ended at 2026-08, the probe fetched only its `end`, and
-            // 2026-09-01..06 were never fetched.)
+            // daily probe's, which fetches every day after the newest monthly's
+            // last day that holds no daily — so the backfill and the probe meet
+            // without a seam, whichever lands first. (They did not: the probe
+            // fetched only its `end` on an empty registry, the backfill landed
+            // through 2026-08 weeks later, and 2026-09-01..06 were never fetched.)
             "fts" => {
                 let now = store::now_unix();
                 match &req.range {
@@ -2336,6 +2336,24 @@ impl Supervisor {
             Some(o) => return Err(format!("unknown package kind {o:?}")),
         };
         let period = req.period.clone().ok_or("fetch needs a period")?;
+        // Issue 477 review: an FTS package of a UK day or month that has not
+        // ended is refused here, before it is queued — `fetch_fts` refuses it
+        // again at run time. Registered once and never re-walked, it would
+        // freeze the running day or month part-walked (a future day: empty).
+        if source == "fts" {
+            let now = store::now_unix();
+            let unfinished = match package_kind {
+                "daily" => fts::parse_day(&period).is_some_and(|day| !fts::day_has_ended(day, now)),
+                _ => fts::parse_month(&period).is_some_and(|month| !fts::month_has_ended(month, now)),
+            };
+            if unfinished {
+                return Err(format!(
+                    "fts {package_kind} {period} is not over in UK civil time: it would be registered \
+                     part-walked and never re-walked (issue 477) — the daily probe fetches each day \
+                     once it has ended"
+                ));
+            }
+        }
         Ok((source, package_kind, period))
     }
 
@@ -2564,13 +2582,18 @@ fn orphan_sweep_plan(counted: &store::OrphanOrgSweep, swept_this_run: u64, dry_r
     .to_string()
 }
 
-/// Whether a running job reads the stop flag: every kind in [`STOPPABLE_KINDS`], and an
-/// FTS `fetch` (issue 450). `fetch` is not a stoppable KIND because only the FTS walk
-/// has a checkpoint: it is a paced walk of the paged API, read before every request,
-/// while a TED or DÖE fetch is one download with nothing between to check a flag at.
-/// Both enqueue paths name an FTS fetch `fts <kind> <period>`, and a test pins that.
+/// Whether a running job reads the stop flag: every kind in [`STOPPABLE_KINDS`], an
+/// FTS `fetch` (issue 450), and the FTS daily `probe` (issue 477 review). Neither
+/// `fetch` nor `probe` is a stoppable KIND because only the FTS walk has a
+/// checkpoint: it is a paced walk of the paged API, read before every request,
+/// while a TED or DÖE fetch is one download with nothing between to check a flag
+/// at. The FTS probe runs that walk for up to `fts::PROBE_DAY_CAP` days — about
+/// an hour after an outage — so a cancel that answered 409 there would leave a
+/// restart as the only way out. Both enqueue paths name an FTS fetch
+/// `fts <kind> <period>` and the scheduler names the probe `fts daily (probe)`;
+/// a test pins all three.
 fn stoppable(kind: &str, params: &str) -> bool {
-    STOPPABLE_KINDS.contains(&kind) || (kind == "fetch" && params.starts_with("fts "))
+    STOPPABLE_KINDS.contains(&kind) || (matches!(kind, "fetch" | "probe") && params.starts_with("fts "))
 }
 
 const STOPPABLE_KINDS: &[&str] = &[
@@ -3328,7 +3351,7 @@ impl Supervisor {
             if source == "fts" {
                 // An FTS package is assembled from paged windows, not
                 // served as bytes (issue 342): re-walking a month to
-                // compare hashes is ~150 paced requests against a
+                // compare hashes is ~80–450 paced requests against a
                 // limiter, for a drift the source cannot even express.
                 // Exempt, and said so in the report.
                 skipped += 1;
@@ -3434,7 +3457,7 @@ impl Supervisor {
     /// The FTS daily walk-forward (issue 342): the DÖE shape (`Spec::ProbeDoe`)
     /// over UK civil days. Out of `run_spec`'s frame for the reason on
     /// [`Self::run_fetch_fts`].
-    async fn run_probe_fts(&self) -> Result<String, String> {
+    async fn run_probe_fts(&self, job_id: u64) -> Result<String, String> {
         // The last completed UK civil day: the API's windows are UK-local, and a
         // passed day is final (uk-fts.md §2).
         let end = fts::uk_civil_date(store::now_unix() - 86_400);
@@ -3445,6 +3468,8 @@ impl Supervisor {
             &self.fts_base,
             end,
             std::time::Duration::from_secs(fts::PAGE_PAUSE_SECS),
+            // Read before every request of every day (issue 450); see `stoppable`.
+            || self.cancelled(job_id),
             |period, _| self.update(|p| p.package = Some(period.to_owned())),
         ))
         .await
@@ -3453,6 +3478,13 @@ impl Supervisor {
             .iter()
             .filter(|(_, o)| matches!(o, fetch::Outcome::Fetched | fetch::Outcome::NewVersion))
             .count();
+        if let Some((day, fetch::Outcome::Stopped)) = results.last() {
+            return Ok(format!(
+                "CANCELLED at a checkpoint — probed {} day(s), {fetched} new; {day} did not land \
+                 and keeps its staged span pages, so the next probe resumes it where it stopped",
+                results.len() - 1
+            ));
+        }
         Ok(format!("probed {} day(s), {fetched} new", results.len()))
     }
 
@@ -3930,8 +3962,8 @@ impl Supervisor {
                 .map_err(|e| e.to_string())?;
                 if outcome == fetch::Outcome::Stopped {
                     return Ok(format!(
-                        "CANCELLED at a checkpoint — {} {} {period}: nothing landed; the staged pages \
-                         and cursor are kept, so fetching it again resumes where it stopped",
+                        "CANCELLED at a checkpoint — {} {} {period}: nothing landed; the staged span \
+                         pages are kept, so fetching it again resumes where it stopped",
                         target.source, target.kind
                     ));
                 }
@@ -4055,7 +4087,7 @@ impl Supervisor {
             }
             // Boxed twice over — see `run_fetch_fts` for why the walk stays off
             // this frame (CLAUDE.md's stack rule).
-            Spec::ProbeFts => Box::pin(self.run_probe_fts()).await,
+            Spec::ProbeFts => Box::pin(self.run_probe_fts(job.id)).await,
             Spec::Process { source, package_kind, period } => {
                 self.run_process(job.id, source, package_kind, period.as_deref(), job.resume_after.as_deref())
                     .await
@@ -12112,8 +12144,9 @@ impl Supervisor {
         );
         // FTS publishes seven days a week (a weekend day carries a handful of
         // notices), so its walk-forward runs every tick, like DÖE's (issue 342).
-        // On an empty registry the probe fetches only yesterday, so the chain
-        // ships dark ahead of the backfill.
+        // On an empty registry the probe fetches yesterday's month up to
+        // yesterday (issue 477's seam), never the archive: the chain ships dark
+        // ahead of the backfill, which fills the months before it.
         //
         // Commit (a) shipped the probe ALONE, deliberately: with no JSON arm in
         // `profile::dispatch_with`, `process` would have walked every member of
@@ -13393,6 +13426,70 @@ mod tests {
         sup.set_current(running("fts monthly 2026-01"));
         assert!(matches!(sup.cancel(7).await, Cancelled::Stopping { .. }));
         assert!(sup.cancelled(7), "the flag the walk reads is set");
+
+        // The FTS daily probe runs the same walk for up to PROBE_DAY_CAP days
+        // (issue 477 review): stoppable under the name the scheduler gives it,
+        // while the TED and DÖE probes stay one-download-per-day and are not.
+        let sup = Arc::new(Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new()));
+        let probe = |params: &str| {
+            Some(JobProgress {
+                id: 8,
+                kind: "probe".to_owned(),
+                params: params.to_owned(),
+                started_at: 0,
+                package: None,
+                packages_done: 0,
+                packages_total: 0,
+                members_done: 0,
+                members_total: 0,
+                notices: 0,
+                duplicates: 0,
+                phase: None,
+            })
+        };
+        sup.set_current(probe("ted daily (probe)"));
+        assert_eq!(sup.cancel(8).await, Cancelled::Unstoppable("probe".to_owned()));
+        sup.set_current(probe("doe daily (probe)"));
+        assert_eq!(sup.cancel(8).await, Cancelled::Unstoppable("probe".to_owned()));
+        assert!(!sup.cancelled(8));
+        sup.set_current(probe("fts daily (probe)"));
+        assert!(matches!(sup.cancel(8).await, Cancelled::Stopping { .. }));
+        assert!(sup.cancelled(8), "the flag the probe's walk reads is set");
+    }
+
+    /// Issue 477 review: a single FTS fetch of a UK day or month that has not
+    /// ended is refused before it is queued (and `fetch_fts` refuses it again at
+    /// run time) — registered once and never re-walked, it would freeze the
+    /// running day or month part-walked, or land a future day empty. An ended
+    /// day and the previous month are accepted.
+    #[tokio::test]
+    async fn an_fts_fetch_of_an_unfinished_day_or_month_is_refused_at_enqueue() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        let now = store::now_unix();
+        let today = fts::uk_civil_date(now);
+        let (ty, tm, _) = today;
+        let (py, pm) = fts::last_ended_month(now);
+        let fetch = |kind: &str, period: String| JobRequest {
+            kind: "fetch".into(),
+            source: Some("fts".into()),
+            package_kind: Some(kind.into()),
+            period: Some(period),
+            ..Default::default()
+        };
+        for (kind, period) in [
+            ("daily", fts::ymd(today)),
+            ("daily", fts::ymd((ty + 1, 1, 1))),
+            ("monthly", format!("{ty}-{tm:02}")),
+        ] {
+            let err = sup.enqueue_request(&fetch(kind, period.clone())).await.unwrap_err();
+            assert!(err.contains("issue 477") && err.contains(&period), "{err}");
+        }
+        assert!(sup.queued().is_empty(), "nothing queued for a refused fetch");
+
+        let yesterday = fts::uk_civil_date(now - 86_400);
+        sup.enqueue_request(&fetch("daily", fts::ymd(yesterday))).await.unwrap();
+        sup.enqueue_request(&fetch("monthly", format!("{py}-{pm:02}"))).await.unwrap();
+        assert_eq!(sup.queued().len(), 2);
     }
 
     /// The EU DST rule: CET in winter, CEST in summer, switching on the last

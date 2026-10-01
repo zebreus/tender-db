@@ -320,25 +320,30 @@ pub async fn latest_doe_day(db: &store::Db) -> turso::Result<Option<(u16, u8, u8
 /// Resumable: the staged span pages ARE the walk's state. A span whose page is
 /// on disk is never asked again, and its page decides — exactly as it did the
 /// first time — whether it is a leaf or is split. A page is staged only once
-/// it has parsed, and atomically. The staging dir is removed only after the zip
+/// it has parsed, and atomically; a staged page that no longer parses is
+/// storage damage, discarded and asked again. The staging dir is removed only after the zip
 /// has landed; an `Err` (five throttled attempts, a malformed page, an
 /// unsplittable span) leaves it intact, and the `fetches` row is written only
 /// for a complete walk. What a walk cannot resume from is discarded first
 /// (`discard_unresumable_staging`): the old cursor walker's pages, and
 /// debris older than the registered landing.
 ///
-/// A `monthly` target whose last UK civil day has not ended is refused before
-/// any request ([`Error::Unsupported`]): registered once and never re-walked,
-/// it would freeze the month part-walked. Its days are the daily walk's.
+/// A target whose last UK civil day has not ended is refused before any
+/// request ([`Error::Unsupported`]): registered once and never re-walked, a
+/// `monthly` of the running month would freeze it part-walked (its days are
+/// the daily walk's), and so would a `daily` of the running day — or, of a
+/// future day, register it empty (issue 477 review).
 ///
-/// `refetch` is as [`fetch`]: false skips a registered period without HTTP.
-/// `page_pause` separates consecutive requests — `fts::PAGE_PAUSE_SECS` in
+/// `refetch` is as [`fetch`]: false skips a registered period without HTTP
+/// (removing what a crashed cleanup left of its staging).
+/// `page_pause` separates ANY two FTS requests of the process — consecutive
+/// calls and jobs included ([`pace_fts`]) — `fts::PAGE_PAUSE_SECS` in
 /// production, zero in tests. `on_progress(day, pages, releases)` fires after
 /// every span page with the window's running totals: pages read (asked, or
 /// staged by an earlier run) and releases on its leaf pages.
 ///
 /// An empty window (a Sunday, December 2020) still lands a 0-member zip, so
-/// `MAX(period)` advances and the daily walk never re-asks for the day.
+/// the day is registered and the daily walk never re-asks for it.
 pub async fn fetch_fts(
     db: &store::Db,
     client: &reqwest::Client,
@@ -369,15 +374,31 @@ pub async fn fetch_fts(
              part-walked and never re-walked (issue 477); its days come from the daily walk",
         ));
     }
+    if target.kind == "daily"
+        && let Some(day) = crate::fts::parse_day(&target.period)
+        && !crate::fts::day_has_ended(day, store::now_unix())
+    {
+        return Err(Error::Unsupported(
+            "an fts daily whose UK civil day has not ended (the running day, or a future one): \
+             it would be registered part-walked or empty and never re-walked (issue 477)",
+        ));
+    }
     let existing = db.latest_fetch(target.source, target.kind, &target.period).await?;
+    let staging = staging_dir(archive_root, &target.rel_path);
     if existing.is_some() && !refetch {
+        // A crash between the registry row and the staging cleanup leaves the
+        // landing's pages behind; nothing else would ever remove them. Debris
+        // only — an interrupted REFETCH's newer pages stay, and so does the dir
+        // holding them. Best effort: the package is registered either way.
+        if let Err(e) = discard_unresumable_staging(&staging, existing.as_ref()) {
+            eprintln!("[fetch] {}: leftover staging not cleaned: {e}", staging.display());
+        }
+        let _ = std::fs::remove_dir(&staging);
         return Ok(Outcome::Unchanged);
     }
 
-    let staging = staging_dir(archive_root, &target.rel_path);
     discard_unresumable_staging(&staging, existing.as_ref())?;
     std::fs::create_dir_all(&staging)?;
-    let mut requests = 0usize;
     let mut leaves: Vec<PathBuf> = Vec::new();
     for window in &windows {
         let day = crate::fts::ymd(window.day);
@@ -386,14 +407,27 @@ pub async fn fetch_fts(
         while let Some(span) = spans.pop() {
             let path = staging.join(format!("{}.json", crate::fts::span_key(span)));
             let url = crate::fts::span_url(base, span);
-            let (count, next) = match std::fs::read(&path) {
+            let staged = match std::fs::read(&path) {
                 // Staged by an earlier run: decided by its page, never asked again.
-                Ok(bytes) => page_summary(&bytes)
-                    .map_err(|what| Error::Malformed(format!("{}: {what}", path.display())))?,
-                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-                    if requests > 0 {
-                        tokio::time::sleep(page_pause).await;
+                Ok(bytes) => match page_summary(&bytes) {
+                    Ok(summary) => Some(summary),
+                    // A page is staged only once it has parsed, so one that no
+                    // longer parses is storage damage (a power loss after the
+                    // rename): kept, it would fail every retry at this file
+                    // without a request. Discarded, the span is asked again.
+                    Err(what) => {
+                        eprintln!("[fetch] {}: staged page unreadable ({what}); asking its span again", path.display());
+                        std::fs::remove_file(&path)?;
+                        None
                     }
+                },
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => None,
+                Err(e) => return Err(e.into()),
+            };
+            let (count, next) = match staged {
+                Some(summary) => summary,
+                None => {
+                    pace_fts(page_pause).await;
                     // The stop checkpoint (issue 450), read right before every
                     // request, after the pause, so a cancel that lands during the
                     // pause costs no request. Every span page asked so far is
@@ -401,13 +435,13 @@ pub async fn fetch_fts(
                     if stop() {
                         return Ok(Outcome::Stopped);
                     }
-                    requests += 1;
-                    let bytes = get_bytes(client, &url).await?;
+                    let asked = get_bytes(client, &url).await;
+                    mark_fts_request();
+                    let bytes = asked?;
                     let summary = page_summary(&bytes).map_err(|what| Error::Malformed(format!("{url}: {what}")))?;
                     write_atomic(&path, &bytes)?;
                     summary
                 }
-                Err(e) => return Err(e.into()),
             };
             pages += 1;
             if crate::fts::page_is_short(count, next.as_deref()) {
@@ -441,22 +475,29 @@ pub async fn fetch_fts(
     Ok(outcome)
 }
 
-/// Walk FTS daily windows forward from the day after the newest day already
-/// covered, up to and including `end` (yesterday in UK civil time), fetching
-/// each — the DÖE walk-forward shape ([`probe_doe_daily`]): a normal run
-/// advances one day, and a gap catches up every missed day.
+/// Walk FTS daily windows forward over every day from [`fts_probe_floor`]
+/// through `end` (yesterday in UK civil time) that has NO daily row, fetching
+/// each in order — the DÖE walk-forward shape ([`probe_doe_daily`]), as a gap
+/// walk: a normal run fetches one day, and missed ticks are caught up.
 ///
-/// "Covered" is the later of the newest DAILY day and the last day of the
-/// newest MONTHLY period ([`fts_covered_through`]). Issue 477's seam: the
-/// monthly backfill ended at 2026-08, and with no daily on record the walk
-/// fetched only `end`, so 2026-09-01..06 (1,745 notices) were never fetched.
-/// With neither on record it still fetches only `end`, leaving the monthly
-/// backfill to seed history.
+/// A gap walk, not a high-water mark (issue 477 and its review). The seam
+/// opened because the walk started after the NEWEST covered day: the daily
+/// probe shipped on an empty registry and fetched only 2026-09-07, the monthly
+/// backfill landed through 2026-08 weeks later, and 2026-09-01..06 (1,745
+/// notices) sat below a watermark already past them. Every day after the
+/// newest monthly that holds no daily is now walked whichever landed first,
+/// and a daily row past `end` (a future day landed by hand) moves nothing.
 ///
 /// It never refetches: a window selects on a hidden publication instant (not
 /// the release `date`, issue 477), and a UK day that is over is final; a tick
-/// that ran late is covered by the next day's 2 h overlap. Days are paced by
-/// `page_pause` like pages, so a multi-day catch-up never bursts the limiter.
+/// that ran late is covered by the next day's 2 h overlap. Requests are paced
+/// by `page_pause` across days as within one ([`pace_fts`]).
+///
+/// `stop` is read before every request of every day (issue 450, via
+/// [`fetch_fts`]): a stopped day ends the walk as its last entry,
+/// [`Outcome::Stopped`], with its staged pages kept; the days before it have
+/// landed, and the next run resumes the stopped day where it stopped.
+#[allow(clippy::too_many_arguments)]
 pub async fn probe_fts_daily(
     db: &store::Db,
     client: &reqwest::Client,
@@ -464,35 +505,46 @@ pub async fn probe_fts_daily(
     base: &str,
     end: (u16, u8, u8),
     page_pause: std::time::Duration,
+    stop: impl Fn() -> bool,
     mut on_day: impl FnMut(&str, &Outcome),
 ) -> Result<Vec<(String, Outcome)>, Error> {
-    let mut day = match fts_covered_through(db).await? {
-        Some(covered) => next_civil_day(covered),
-        None => end,
+    let floor = fts_probe_floor(db, end).await?;
+    let held: std::collections::HashSet<String> = if floor <= end {
+        db.fetch_periods_between("fts", "daily", &crate::fts::ymd(floor), &crate::fts::ymd(end))
+            .await?
+            .into_iter()
+            .collect()
+    } else {
+        Default::default()
     };
     let mut out = Vec::new();
+    let mut day = floor;
     while day <= end {
+        if held.contains(&crate::fts::ymd(day)) {
+            day = next_civil_day(day);
+            continue;
+        }
         // CAPPED PER TICK (issue 342 review, lens "ops"). An FTS day is about
         // 17 paced requests on a 2026 weekday under the split walk and 35 at
         // most ([`crate::fts::PROBE_DAY_CAP`]), plus up to eight minutes of
         // back-off if the limiter is unhappy — unlike a DÖE day, which is one
-        // download. Uncapped, a watermark left far in the
-        // past (a month of failed ticks, a restored registry) would hold the
-        // single job runner for hours and park `fetch-rates`, `project` and the
-        // fold behind it. The watermark advances per landed day, so the
-        // remainder is simply the next tick's work; a real gap closes in days,
-        // and `fetch fts --day` or a monthly backfill closes it at once.
+        // download. Uncapped, a gap left far in the past (a month of failed
+        // ticks, a restored registry) would hold the single job runner for
+        // hours and park `fetch-rates`, `project` and the fold behind it. A
+        // landed day is no longer a gap, so the remainder is simply the next
+        // tick's work; a real gap closes in days, and `fetch fts --day` or a
+        // monthly backfill closes it at once.
         if out.len() >= crate::fts::PROBE_DAY_CAP {
             break;
         }
-        if !out.is_empty() {
-            tokio::time::sleep(page_pause).await;
-        }
         let target = crate::fts::day(base, day);
-        let outcome =
-            fetch_fts(db, client, archive_root, &target, false, page_pause, || false, |_, _, _| {}).await?;
+        let outcome = fetch_fts(db, client, archive_root, &target, false, page_pause, &stop, |_, _, _| {}).await?;
         on_day(&target.period, &outcome);
+        let stopped = outcome == Outcome::Stopped;
         out.push((target.period.clone(), outcome));
+        if stopped {
+            break;
+        }
         day = next_civil_day(day);
     }
     Ok(out)
@@ -505,19 +557,50 @@ pub async fn latest_fts_day(db: &store::Db) -> turso::Result<Option<(u16, u8, u8
     Ok(latest.as_deref().and_then(parse_ymd))
 }
 
-/// The last UK civil day the FTS registry covers: the later of the newest
-/// daily day and the last day of the newest monthly period (issue 477's seam;
-/// [`probe_fts_daily`] continues the day after it). Monthly periods are
-/// zero-padded `YYYY-MM`, so `MAX(period)` is the newest.
-pub async fn fts_covered_through(db: &store::Db) -> turso::Result<Option<(u16, u8, u8)>> {
-    let daily = latest_fts_day(db).await?;
-    let monthly = db
-        .latest_fetch_period_max("fts", "monthly", "")
-        .await?
-        .as_deref()
-        .and_then(crate::fts::parse_month)
-        .map(|(y, m)| (y, m, crate::fts::days_in_month(y, m)));
-    Ok(daily.max(monthly))
+/// The first day [`probe_fts_daily`] may have to fetch for a walk ending at
+/// `end`; it fetches every day from here through `end` that holds no daily.
+///
+/// - **A monthly on record:** the day after the newest monthly's last day.
+///   The monthlies are the backfill's (through the previous UK month); every
+///   day after them is the probe's, whichever of the two landed first.
+/// - **No monthly:** the earlier of the day after the newest daily (a gap that
+///   reaches back past `end`'s month is still caught up) and day 1 of `end`'s
+///   month (the days of the running month are never left to a backfill that
+///   stops at the previous one). With nothing on record, day 1 of `end`'s
+///   month: never a full-archive backfill through the probe — that is the
+///   monthly path's job.
+pub async fn fts_probe_floor(db: &store::Db, end: (u16, u8, u8)) -> turso::Result<(u16, u8, u8)> {
+    let monthly = db.latest_fetch_period_max("fts", "monthly", "").await?;
+    if let Some((y, m)) = monthly.as_deref().and_then(crate::fts::parse_month) {
+        return Ok(next_civil_day((y, m, crate::fts::days_in_month(y, m))));
+    }
+    let month_start = (end.0, end.1, 1);
+    Ok(match latest_fts_day(db).await? {
+        Some(newest) => next_civil_day(newest).min(month_start),
+        None => month_start,
+    })
+}
+
+/// When this process last finished an FTS request (issue 477 review, lens
+/// "operability"). The pause between requests used to be kept only inside one
+/// [`fetch_fts`] call, so the next job's — or the next probe day's — first
+/// request followed the last one with no pause at all, and the limiter has
+/// answered 429 with `Retry-After: 120` even at an 11 s cadence. ~790
+/// back-to-back top-up jobs would have been ~790 such risks.
+static LAST_FTS_REQUEST: std::sync::Mutex<Option<std::time::Instant>> = std::sync::Mutex::new(None);
+
+/// Wait until `pause` has passed since the process's last FTS request.
+async fn pace_fts(pause: std::time::Duration) {
+    let last = *LAST_FTS_REQUEST.lock().unwrap_or_else(|e| e.into_inner());
+    let wait = last.map_or(std::time::Duration::ZERO, |at| pause.saturating_sub(at.elapsed()));
+    if !wait.is_zero() {
+        tokio::time::sleep(wait).await;
+    }
+}
+
+/// Record that an FTS request (and any retries [`get_bytes`] made) just ended.
+fn mark_fts_request() {
+    *LAST_FTS_REQUEST.lock().unwrap_or_else(|e| e.into_inner()) = Some(std::time::Instant::now());
 }
 
 /// Where a paged package is staged while its windows are walked:
@@ -588,10 +671,13 @@ fn page_summary(bytes: &[u8]) -> Result<(usize, Option<String>), String> {
 
 /// Assemble the walk's leaf pages, in walk order, into `part`: one member per
 /// DISTINCT release, built by [`crate::fts::Page::member_bytes`] and named by
-/// its notice id. The first release of an id is `<id>.json`; a second release
-/// that carries the same id with different bytes is `<id>~<hash8>.json`, the
-/// first 8 hex digits of its member's sha256 (the notice row's
-/// `content_hash`). A byte-identical repeat collapses into one member.
+/// its notice id. One release of an id is `<id>.json`; when an id carries
+/// several releases with different bytes, the one whose member sha256 (the
+/// notice row's `content_hash`) is lowest keeps `<id>.json` and each other is
+/// `<id>~<hash8>.json`, the first 8 hex digits of its own. By hash, not by
+/// serve order: the server's order between two releases of one id is not
+/// known to be stable, and a refetch of the same releases must hash equal
+/// (issue 477 review). A byte-identical repeat collapses into one member.
 ///
 /// Issue 477: one id can carry two releases — `038018-2025` is a
 /// `tenderUpdate` on the old procurement and an `award,contract` on the new
@@ -605,7 +691,7 @@ fn page_summary(bytes: &[u8]) -> Result<(usize, Option<String>), String> {
 /// walk with no releases yields a valid 0-member zip. Returns the written
 /// zip's (bytes, sha256-hex).
 fn assemble_fts_zip(pages: &[PathBuf], part: &Path) -> Result<(i64, String), Error> {
-    // id → its distinct member bytes, first served first.
+    // id → its distinct member bytes.
     let mut by_id: std::collections::BTreeMap<String, Vec<Vec<u8>>> = std::collections::BTreeMap::new();
     for path in pages {
         let malformed = |what: String| Error::Malformed(format!("{}: {what}", path.display()));
@@ -620,7 +706,7 @@ fn assemble_fts_zip(pages: &[PathBuf], part: &Path) -> Result<(i64, String), Err
                 // A release the publisher sent without a usable id is ARCHIVED,
                 // not thrown (issue 342 review, lens "fetcher"). Failing the
                 // package here would be deterministic: the day would fail every
-                // tick, the watermark would never advance, and one malformed
+                // tick, the walk-forward would never pass it, and one malformed
                 // release would stop the whole walk-forward. Under a reserved
                 // `_noid/` prefix it reaches the profile layer, which quarantines
                 // it as a missing publication id with the bytes intact — the
@@ -639,11 +725,15 @@ fn assemble_fts_zip(pages: &[PathBuf], part: &Path) -> Result<(i64, String), Err
     }
     let mut members: std::collections::BTreeMap<String, Vec<u8>> = std::collections::BTreeMap::new();
     for (id, releases) in by_id {
-        for (n, bytes) in releases.into_iter().enumerate() {
+        // Lowest hash first (bytes break a full-hash tie), so the names depend
+        // only on WHICH releases were served, never on their order.
+        let mut releases: Vec<(String, Vec<u8>)> =
+            releases.into_iter().map(|bytes| (crate::sha256_hex(&bytes), bytes)).collect();
+        releases.sort();
+        for (n, (hash, bytes)) in releases.into_iter().enumerate() {
             let name = if n == 0 {
                 format!("{id}.json")
             } else {
-                let hash = crate::sha256_hex(&bytes);
                 let short = format!("{id}~{}.json", &hash[..8]);
                 // Two different releases of one id agreeing on 32 bits of
                 // hash: the full hash tells them apart.

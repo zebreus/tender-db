@@ -86,14 +86,14 @@ pub const PAGE_LIMIT: u32 = 100;
 /// How many days one walk-forward tick may fetch ([`crate::fetch::probe_fts_daily`]).
 ///
 /// Two weeks, so a normal gap (a few failed ticks, a weekend of downtime)
-/// closes in one run while a watermark left far behind cannot hold the job
+/// closes in one run while a gap left far behind cannot hold the job
 /// runner for hours. Under the split walk (issue 477) a 2026 day costs about
 /// 12 paced requests on average — 17 on a weekday, 23 at the 95th percentile,
 /// 35 at most (simulated on the archive's 2026 days with this module's
 /// [`split`]) — so 2.5–3.5 minutes at the 12 s pace plus any back-off, where a DÖE
 /// day costs one download: 14 days is under an hour typically and under two
-/// at worst. The remainder is the next tick's work — the watermark advances
-/// per landed day — and a real backfill is the monthly path, not this.
+/// at worst. The remainder is the next tick's work — a landed day is no longer
+/// a gap — and a real backfill is the monthly path, not this.
 pub const PROBE_DAY_CAP: usize = 14;
 
 /// The header fields carried into every member package. Everything else on a
@@ -255,6 +255,14 @@ pub fn page_is_short(count: usize, next: Option<&str>) -> bool {
 pub fn month_has_ended(month: (u16, u8), now_unix: i64) -> bool {
     let (y, m, _) = uk_civil_date(now_unix);
     month < (y, m)
+}
+
+/// Whether the UK civil `day` is over at `now_unix`. A daily package is
+/// registered once and the walk-forward never revisits a registered day, so a
+/// daily of the running day would freeze it part-walked, and one of a future
+/// day would land empty: the fetcher refuses both (issue 477 review).
+pub fn day_has_ended(day: (u16, u8, u8), now_unix: i64) -> bool {
+    day < uk_civil_date(now_unix)
 }
 
 /// The newest month whose last UK day is over at `now_unix`: where a default
@@ -636,6 +644,20 @@ mod tests {
         let jan1 = days_from_civil(2027, 1, 1) * 86_400;
         assert_eq!(last_ended_month(jan1 - 1), (2026, 11));
         assert_eq!(last_ended_month(jan1), (2026, 12));
+    }
+
+    /// A daily is refused until its UK civil day is over, by the same clock.
+    #[test]
+    fn a_day_ends_with_its_uk_civil_day() {
+        let sep30 = days_from_civil(2026, 9, 30) * 86_400;
+        assert!(!day_has_ended((2026, 9, 30), sep30 + 22 * 3_600 + 59 * 60), "23:59 BST on the 30th");
+        assert!(day_has_ended((2026, 9, 30), sep30 + 23 * 3_600), "00:00 BST on 1 October");
+        assert!(!day_has_ended((2026, 10, 1), sep30 + 23 * 3_600), "the running day");
+        assert!(!day_has_ended((2026, 12, 25), sep30), "a future day");
+        assert!(day_has_ended((2026, 9, 29), sep30));
+        let jan1 = days_from_civil(2027, 1, 1) * 86_400;
+        assert!(!day_has_ended((2026, 12, 31), jan1 - 1), "GMT: 23:59:59 UTC is still the 31st");
+        assert!(day_has_ended((2026, 12, 31), jan1));
     }
 
     #[test]
