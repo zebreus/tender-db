@@ -1,6 +1,7 @@
 # 477 — FTS holds 90–98 % of each year's notices, the missing ones are on the API, and the dashboard reports the source complete
 
-Status: ready-for-agent — ROOT CAUSE PROVEN 2026-10-01 (workflow `wf_4e12a01b-ca9`: three probes, a synthesis, and a challenger who confirmed the cause): the FTS API's `links.next` cursor continues on a hidden per-release key that is not in notice-id order, so page 2 and later silently drop rows, and the dropped page comes back short with no next link. The 2026-09-01..06 seam was never fetched (1,745 ids), and some post-Act ids were never published. NEXT: unit 1, the walk. Never follow `links.next`; split any window whose cursorless page is full, never into a one-second window (the API answers 400). Fix the seam start too. Design and evidence: `.scratch/tender-db/477-fts/`.
+Status: ready-for-agent — UNIT 1 DEPLOYED 2026-10-01 16:4x UTC (`3d79f11`; built `e9e73bb`, review fixes `3d79f11`; gate GATE-EXIT=0 in 761 s). The FTS walk never follows `links.next`: full cursorless spans split, never below 2 s; the daily probe walks every day after the newest monthly that holds no daily, which closes the 09-01..06 seam; and a same-id second release is kept. TOP-UP RUNNING: refetch every monthly 2021-01 → 2026-08 with the new walker (`refetch:true`), chunked to end before each 07:35 UTC tick. Chunk 2021 = jobs 1815–1828. NEXT: read 2021-05 (1815) against its 172 missing ids, then the next chunks, then unit 3 (the per-year id invariant and audit).
+Was status: ready-for-agent — ROOT CAUSE PROVEN 2026-10-01 (workflow `wf_4e12a01b-ca9`: three probes, a synthesis, and a challenger who confirmed the cause): the FTS API's `links.next` cursor continues on a hidden per-release key that is not in notice-id order, so page 2 and later silently drop rows, and the dropped page comes back short with no next link. The 2026-09-01..06 seam was never fetched (1,745 ids), and some post-Act ids were never published. NEXT: unit 1, the walk. Never follow `links.next`; split any window whose cursorless page is full, never into a one-second window (the API answers 400). Fix the seam start too. Design and evidence: `.scratch/tender-db/477-fts/`.
 Was status: ready-for-agent — filed 2026-10-01 13:5x UTC from the 342 close-out audit. The first unit is the root cause:
 why does the `updatedFrom`/`updatedTo` window walk skip notices that the API serves by id? Diff one day's API listing
 against its archived members.
@@ -148,3 +149,30 @@ are kept. Read 2026-10-01 via `/v1/sql`: `038018-2025` is notices 46727125 (fetc
 `086149-2026` is 31499804 and 46804978. Inside ONE package the second is dropped without trace. The rewritten
 assembler keys a member by id plus a short hash of the release (`<id>.json`, then `<id>~<hash8>.json` for a second
 distinct release), so a byte-identical repeat still collapses, and a different release is kept.
+
+## 2026-10-01 16:4x UTC — unit 1 deployed; top-up started
+
+- Built by `wf_f7bb0a6f-28e`: an implementer, three adversarial lenses (completeness, operability, tests-both-ways)
+  and a fixer. Every defect they found was reproduced and fixed, and 10 mutants each turned a test red.
+  - The walk splits a full cursorless span in two. Only a span of 4 s or more splits, so the API's 400 for
+    `from == to` is unreachable. A 2- or 3-second span that is still full fails loud with its staging intact.
+  - Cuts move 2 s off 01:00:00 and 02:00:00 on the last Sunday of October, so they hold whichever way the server
+    resolves the repeated hour. A test pins it.
+  - Staged span pages are the resume state, and a damaged one is re-asked.
+  - The assembler keeps `<id>~<hash8>.json` for a distinct second release, and the name it picks does not depend on
+    serve order.
+  - The probe walks gaps: every day after the newest monthly that holds no daily, capped at 14 per run. It is
+    cancellable, and every FTS request in the process is paced on one global clock.
+  - A day or month that has not ended in UK time is refused.
+  - The cursor machinery and 449's hourly fallback are deleted.
+- **Cost, simulated on the archive's 314k timestamps:**
+  - a daily poll costs ~12–17 requests (~3 min) against 4–6 before;
+  - a month costs 82 requests in 2021 and ~390 in 2026;
+  - the whole history is ~11,900 requests, ~40 h at the 12 s pace.
+- **Decision: top up by refetching every monthly package.** The alternative was day re-walks chosen from each
+  gap's neighbours. The challenger showed that choice misses inverted and wide runs, and depends on locating each id's
+  day. A whole-month refetch with the new walker needs no locating and leaves every package complete. Each refetch
+  lands as a new fetch, `process` walks it again, and held notices dedup by content hash. The chunks are sized to
+  finish before 07:35 UTC, because the queue is FIFO and the tick queues behind them.
+- **Chunk 2021:** jobs 1815 (2021-05 first, a month proven short), 1816–1826 (the other months), process 1827, project
+  1828.
