@@ -1,6 +1,7 @@
 # 342 — sources beyond TED and DÖE ("international"): nothing exists, the entry contract does
 
-Status: ready-for-agent — chunk 8 (2021-09 → 2022-04) LANDED (jobs 1789–1798: 21,258 notices → 18,196 tenders; altid dry 1799 plans 0). NEXT: the last chunk, 2021-01 → 2021-08, enqueued right after issue 458's deploy (FULL sync), so it also measures that cost; then the Verify for the whole backfill. Plan: `.scratch/tender-db/342-fts-plan.md`.
+Status: ready-for-agent — chunk 9, the LAST (2021-01 → 2021-08), ENQUEUED 2026-10-01 11:51 UTC as jobs 1800–1809, right after the 458 deploy (FULL sync; its project measures that cost). Chunks 1–8 landed. NEXT: read 1809, re-run the 448 altid dry plan, then plan step 11's acceptance check and the backfill Verify. Plan: `.scratch/tender-db/342-fts-plan.md`.
+Was status: ready-for-agent — chunk 8 (2021-09 → 2022-04) LANDED (jobs 1789–1798: 21,258 notices → 18,196 tenders; altid dry 1799 plans 0). NEXT: the last chunk, 2021-01 → 2021-08, enqueued right after issue 458's deploy (FULL sync), so it also measures that cost; then the Verify for the whole backfill. Plan: `.scratch/tender-db/342-fts-plan.md`.
 Was status: ready-for-agent — chunk 7 (2022-05 → 2022-12) LANDED (jobs 1776–1785: 24,570 notices → 21,319 tenders); chunk 8 (2021-09 → 2022-04) ENQUEUED 2026-10-01 10:1x UTC as jobs 1789–1798. NEXT: read 1798, re-run the 448 altid dry plan, then the last chunk 2021-01 → 2021-08, started ≥4 h before a 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
 Was status: ready-for-agent — chunk 7 (2022-05 → 2022-12) ENQUEUED 2026-10-01 07:5x UTC as jobs 1776–1785, after the daily tick drained and the `500da94` deploy. NEXT: read 1785, then 2021-09 → 2022-04 and 2021-01 → 2021-08, each started ≥4 h before a 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
 Was status: ready-for-agent — chunk 6 (2023-01 → 2023-08) LANDED (jobs 1750–1759: 23,852 notices → 19,995 tenders). NEXT: chunk 7 (2022-05 → 2022-12) once the 2026-10-01 07:35 UTC daily tick drains, then 2021-09 → 2022-04 and 2021-01 → 2021-08, each started ≥4 h before a 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
@@ -606,3 +607,9 @@ process 1784 and project 1785). The 07:35 UTC tick had drained, and its project 
   0, as expected: the chunk predates PPONs.
 - **448 dry 1799: plan 0.** No new pairs, for the same reason.
 - `/data` is at 74% (444 GB free).
+
+### 2026-10-01 11:51 UTC — chunk 9 (the last) enqueued
+
+`{"kind":"backfill","source":"fts","range":["2021-01","2021-08"]}` → jobs 1800–1809, enqueued on the idle queue right
+after the 458 deploy (`9b44528`, `synchronous = FULL`). Its project (1809) is the first FTS fold under FULL, and it is
+compared against 1798 (97 s) and 1785 (123 s) on 458.
