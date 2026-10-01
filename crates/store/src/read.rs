@@ -606,12 +606,11 @@ pub struct TenderDetail {
 
 // ---------------------------------------------------------------- predicates
 
-/// The version a scoped query reads: the newest one, or a named one.
+/// The version a scoped query reads: the newest one, or a named one. The newest
+/// is the maintained head pointer (issue 457 R2), never a recomputed `MAX(seq)`.
 fn seq_expr(scope: Scope, alias: &str, params: &mut Vec<Value>) -> String {
     match scope {
-        Scope::Page { .. } => {
-            format!("(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = {alias}.id)")
-        }
+        Scope::Page { .. } => format!("{alias}.current_seq"),
         Scope::At { seq, .. } => {
             params.push(Value::Integer(seq));
             "?".to_owned()
@@ -1809,8 +1808,7 @@ fn tenders_ordered_query(
         &format!(
             "SELECT t.id AS wid, v.seq AS wseq, {key} AS wkey
                FROM {from}
-               JOIN tender_versions v ON v.tender_id = t.id AND v.seq =
-                    (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)
+               JOIN tender_versions v ON v.tender_id = t.id AND v.seq = t.current_seq
               WHERE {key} IS NOT NULL"
         ),
         seed_param,
@@ -2317,8 +2315,7 @@ fn tenders_page_query(filter: &Filter, scope: Scope, band_end: Option<i64>) -> Q
     inner.push(
         &format!(
             "SELECT t.id AS wid, v.seq AS wseq FROM {from}
-               JOIN tender_versions v ON v.tender_id = t.id AND v.seq =
-                    (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)
+               JOIN tender_versions v ON v.tender_id = t.id AND v.seq = t.current_seq
               WHERE 1 = 1"
         ),
         seed_param,
@@ -2392,8 +2389,7 @@ fn tenders_seeded_query(filter: &Filter, members: &[i64], after: i64, limit: i64
     inner.push(
         &format!(
             "SELECT t.id AS wid, v.seq AS wseq FROM tenders t
-               JOIN tender_versions v ON v.tender_id = t.id AND v.seq =
-                    (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)
+               JOIN tender_versions v ON v.tender_id = t.id AND v.seq = t.current_seq
               WHERE t.id IN ({marks}) AND t.id > ?"
         ),
         members.iter().map(|&m| Value::Integer(m)).chain([Value::Integer(after)]),
@@ -3009,6 +3005,14 @@ pub async fn lots_page(
 /// The PREVIOUS stream shape, kept so the equivalence test can compare the shipped
 /// read against what it replaced on data where every filter provably discriminates.
 ///
+/// Its stream arm still recomputes the head as a correlated `MAX(seq)` — on
+/// purpose since issue 457 R2 moved the shipped stream to `tenders.current_seq`:
+/// the oracle agreeing with the shipped read is then also a check that the pointer
+/// and the recompute agree on the fixture. That arm's `Scope::Page` serves no
+/// production read (the shipped stream is `lots_query_banded`'s own); the
+/// containment arm and `Scope::At`, which production does route here, bind the
+/// head to a parameter and recompute nothing per row.
+///
 /// Not dead code: it is the oracle. Deleting it would leave the equivalence assertion
 /// with nothing to compare against, and a rewrite of this size wants its predecessor
 /// available to answer "did the answer change" for as long as anyone might ask.
@@ -3169,13 +3173,16 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
 /// is not a wrong answer; it is the old plan returning, which only a plan assertion or
 /// a clock will show.
 ///
-/// `seq` is recomputed as `MAX(seq)` rather than read from `tenders.current_seq`.
-/// `current_seq` equals it for all 4,262,716 production Tenders today, but that is a
-/// projection-MAINTAINED property with no schema constraint behind it. Trusting it
-/// would make this read serve a superseded version's `kind` in exactly the state where
-/// the data is already wrong — removing a cross-check at the moment it is most needed.
-/// Recomputing costs ~1.9x on the sparse band and nothing on the dense path.
-/// See issue 27 for enforcing the invariant, after which this may be revisited.
+/// `seq` was first recomputed as `MAX(seq)` rather than read from
+/// `tenders.current_seq`, because the pointer was a projection-maintained property
+/// nothing enforced, and the recompute cost ~1.9x on the sparse band. Issue 27 then
+/// enforced it — the fold refuses, before COMMIT, any batch that would leave a head
+/// that is not the last version (`assert_heads_match`) — and issue 457 R2 revisited
+/// it, as this note asked: the stream reads the pointer by one PK seek ([`LOT_SEQ`]),
+/// because turso 0.8.1 may rewrite the correlated MAX into a GROUP BY over every
+/// version row. The equivalence is pinned through every writer by
+/// `crates/store/tests/head_pointer_equivalence.rs`; only [`lots_previous_shape`],
+/// the oracle, still recomputes it.
 /// Issue 275: the lots-stream seeds, as `l.tender_id IN (…)` predicates — the
 /// form turso executes as a semi-join. The JOIN form inverts on lots: measured
 /// on prod 2026-08-25, turso drives a `hits JOIN lots … ORDER BY l.id` shape from
@@ -3188,7 +3195,8 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
 /// * An org reverse-lookup (issues 223 and 388, the LOTS half): the org's
 ///   tenders, DECIDED AT THE HEAD VERSION, as `l.tender_id IN (…)`. Two levels —
 ///   the DISTINCT tenders off the `(organization_id)` index, then one
-///   `MAX(seq)` probe per TENDER — and that order is the whole cost story: the
+///   head probe per TENDER (the `current_seq` pointer by primary key since
+///   issue 457 R2; a `MAX(seq)` before) — and that order is the whole cost story: the
 ///   same probe written per participation ROW ran 8–10 s on prod for org 357's
 ///   194k bid rows, and written per LOT (the predicate's own form, which
 ///   `version_predicates` would add) it visited hundreds of index rows for
@@ -3236,8 +3244,8 @@ fn lot_seed_predicates(q: &mut Query, filter: &Filter) {
                                                WHERE organization_id = ?{extra}) s
                                        WHERE EXISTS (SELECT 1 FROM {table} p
                                                       WHERE p.tender_id = s.tender_id
-                                                        AND p.seq = (SELECT MAX(x.seq) FROM tender_versions x
-                                                                      WHERE x.tender_id = s.tender_id)
+                                                        AND p.seq = (SELECT tt.current_seq FROM tenders tt
+                                                                      WHERE tt.id = s.tender_id)
                                                         AND p.organization_id = ?{role}))"
             ),
             [Value::Integer(org), Value::Integer(org)],
@@ -3281,7 +3289,15 @@ fn lot_seed_predicates(q: &mut Query, filter: &Filter) {
 /// The current version, correlated on the outer lot `l`. Used in the stream's
 /// SELECT list, its EXISTS probe and every version predicate, so they cannot
 /// disagree about which version they are reading.
-const LOT_SEQ: &str = "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)";
+///
+/// The Tender's head POINTER, read by one primary-key seek on `tenders` — a scalar
+/// subquery rather than a join, because `lots` must stay the only table in the
+/// FROM clause (issue 16; `lots_drive_probe`'s S2d is this shape). It replaced a
+/// correlated `MAX(seq)` over `tender_versions` (issue 457 R2), which turso 0.8.1
+/// may rewrite into a GROUP BY over every version row; the two agree for every
+/// Tender because the fold refuses to commit a head that is not its last version
+/// (`assert_heads_match`, `crates/store/tests/head_pointer_equivalence.rs`).
+const LOT_SEQ: &str = "(SELECT tt.current_seq FROM tenders tt WHERE tt.id = l.tender_id)";
 
 /// The stream shape's head, shared by the id-ordered page and the seeded walk
 /// (issue 388) so the two cannot disagree about what a matching lot IS: the
@@ -3544,20 +3560,8 @@ pub async fn lots_seeded_page(
         //    the id-ordered page would return. One row past the page tells
         //    whether it is full.
         if !members.is_empty() {
-            let marks = vec!["?"; members.len()].join(", ");
-            let mut q = lots_stream_head(filter);
-            q.push(
-                &format!(" AND l.tender_id IN ({marks}) AND (l.tender_id > ? OR (l.tender_id = ? AND l.id > ?))"),
-                members.iter().map(|&m| Value::Integer(m)).chain([
-                    Value::Integer(cursor.tender_id),
-                    Value::Integer(cursor.tender_id),
-                    Value::Integer(cursor.lot_id),
-                ]),
-            );
-            lots_stream_predicates(&mut q, filter);
             let room = (want + 1 - rows.len()) as i64;
-            q.push(" ORDER BY l.tender_id, l.id LIMIT ?", [Value::Integer(room)]);
-            let mut page = q.rows(conn, lot_identity_row).await?;
+            let mut page = lots_seeded_query(filter, &members, cursor, room).rows(conn, lot_identity_row).await?;
             rows.append(&mut page);
         }
         if rows.len() > want {
@@ -3577,6 +3581,25 @@ pub async fn lots_seeded_page(
     }
     summarise(conn, &mut rows, filter.lang.as_deref()).await?;
     Ok(SeededPage { rows, next })
+}
+
+/// The seeded walk's page over one window's member tenders: the stream's own head
+/// and predicates over `l.tender_id IN (members)`, after the cursor, in (tender,
+/// lot) order — `room` rows, one past the page when the caller asks for it.
+fn lots_seeded_query(filter: &Filter, members: &[i64], cursor: LotCursor, room: i64) -> Query {
+    let marks = vec!["?"; members.len()].join(", ");
+    let mut q = lots_stream_head(filter);
+    q.push(
+        &format!(" AND l.tender_id IN ({marks}) AND (l.tender_id > ? OR (l.tender_id = ? AND l.id > ?))"),
+        members.iter().map(|&m| Value::Integer(m)).chain([
+            Value::Integer(cursor.tender_id),
+            Value::Integer(cursor.tender_id),
+            Value::Integer(cursor.lot_id),
+        ]),
+    );
+    lots_stream_predicates(&mut q, filter);
+    q.push(" ORDER BY l.tender_id, l.id LIMIT ?", [Value::Integer(room)]);
+    q
 }
 
 fn lots_query(filter: &Filter, scope: Scope) -> Query {
@@ -4710,5 +4733,271 @@ mod country_seed_cap_tests {
             "EL ({EL_ENTRIES}) must keep DECLINING — it is dense at the head and the range walk \
              already answers it in 0.69 s; seeding it is the cost the cap exists to avoid"
         );
+    }
+}
+
+/// Issue 457 R2: every list PAGE reads the Tender's head through the maintained
+/// `tenders.current_seq` pointer, never a correlated
+/// `(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = <outer>)`.
+///
+/// Why it matters even on 0.7.2, where the correlated form plans as one PK seek
+/// per row: turso 0.8.1 may rewrite a correlated MAX/COUNT "group-first" into a
+/// LEFT JOIN over a GROUP BY of the WHOLE inner table (~14.5M version rows on
+/// prod), chosen by cost per SELECT, and a `LIMIT ?` (every page here) does not
+/// discount the correlated form. Reading the pointer takes the planner out of
+/// the hot read path. The equivalence it rests on — `current_seq` is
+/// `MAX(seq)` for every Tender, through every writer — is
+/// `crates/store/tests/head_pointer_equivalence.rs`.
+///
+/// Asserted on the ARTIFACTS (issue 114): the statements the builders emit,
+/// across the filter matrix, as text and as `EXPLAIN QUERY PLAN`.
+#[cfg(test)]
+mod head_pointer_plan_tests {
+    use super::*;
+
+    const NOW: i64 = 1_790_000_000;
+
+    /// The filter matrix: every predicate and every seed arm the page builders
+    /// branch on, alone and in the combinations that pick a different seed.
+    fn filters() -> Vec<(&'static str, Filter)> {
+        let base = Filter { now: NOW, ..Filter::default() };
+        vec![
+            ("none", base.clone()),
+            ("source", Filter { source: Some("ted".into()), ..base.clone() }),
+            ("kind", Filter { kind: Some("Lot".into()), ..base.clone() }),
+            ("country", Filter { country: Some("DE".into()), ..base.clone() }),
+            ("country-seeded", Filter { country: Some("CY".into()), country_seed: true, ..base.clone() }),
+            ("cpv", Filter { cpv: Some("4521".into()), ..base.clone() }),
+            ("buyer", Filter { buyer: Some(7), ..base.clone() }),
+            ("winner", Filter { winner: Some(7), ..base.clone() }),
+            ("bidder", Filter { bidder: Some(7), ..base.clone() }),
+            ("open", Filter { status: Some(Status::Open), ..base.clone() }),
+            ("closed", Filter { status: Some(Status::Closed), ..base.clone() }),
+            ("open+country", Filter { status: Some(Status::Open), country: Some("LU".into()), ..base.clone() }),
+            ("open+cpv", Filter { status: Some(Status::Open), cpv: Some("45".into()), ..base.clone() }),
+            ("min_value", Filter { min_value: Some(1000), ..base.clone() }),
+            ("max_value", Filter { max_value: Some(9000), ..base.clone() }),
+            ("currency", Filter { currency: Some("EUR".into()), ..base.clone() }),
+            ("publication_id", Filter { publication_id: Some("00018218-2024".into()), ..base.clone() }),
+            ("published_after", Filter { published_after: Some(1_754_000_000), ..base.clone() }),
+            ("deadline_before", Filter { deadline_before: Some(1_786_000_000), ..base.clone() }),
+            ("winner+country", Filter { winner: Some(7), country: Some("DE".into()), ..base.clone() }),
+            ("buyer+open", Filter { buyer: Some(7), status: Some(Status::Open), ..base }),
+        ]
+    }
+
+    /// Every page statement the list endpoints run, labelled. The tender-scoped
+    /// lots read (`lots_query_previous`'s containment arm) is in the set too: its
+    /// MAX is UNcorrelated (`x.tender_id = ?`, evaluated once), which the text
+    /// check below allows by its exact spelling.
+    fn page_statements() -> Vec<(String, Query)> {
+        let mut out = Vec::new();
+        for (name, f) in filters() {
+            for after in [0i64, 49_377] {
+                let page = Scope::Page { after, limit: 100 };
+                out.push((format!("tenders_page {name} after={after}"), tenders_page_query(&f, page, None)));
+                out.push((
+                    format!("tenders_page banded {name} after={after}"),
+                    tenders_page_query(&f, page, Some(after + 500_000)),
+                ));
+                out.push((format!("lots_page {name} after={after}"), lots_query_banded(&f, page, None)));
+                out.push((
+                    format!("lots_page banded {name} after={after}"),
+                    lots_query_banded(&f, page, Some(after + 500_000)),
+                ));
+            }
+            for order in [HeadOrder::PublishedAt, HeadOrder::Deadline] {
+                for desc in [true, false] {
+                    for cursor in [None, Some((1_780_000_000, 4_242))] {
+                        out.push((
+                            format!("tenders_ordered {name} {order:?} desc={desc} cursor={cursor:?}"),
+                            tenders_ordered_query(&f, order, desc, cursor, 100),
+                        ));
+                    }
+                }
+            }
+            if participation_seed(&f).is_some() {
+                out.push((format!("tenders_seeded {name}"), tenders_seeded_query(&f, &[3, 5, 8], 2, 100)));
+                let cursor = LotCursor { tender_id: 3, lot_id: 11 };
+                out.push((format!("lots_seeded {name}"), lots_seeded_query(&f, &[3, 5, 8], cursor, 101)));
+            }
+        }
+        let scoped = Filter { tender: Some(424_242), now: NOW, ..Filter::default() };
+        for after in [0i64, 49_377] {
+            out.push((
+                format!("lots_page tender-scoped after={after}"),
+                lots_query(&scoped, Scope::Page { after, limit: 1000 }),
+            ));
+        }
+        out
+    }
+
+    /// The one MAX a page statement may still carry: the tender-scoped lots
+    /// read's, bound to a parameter and so evaluated once per statement.
+    const UNCORRELATED_MAX: &str = "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = ?)";
+
+    /// `sql` with its whitespace collapsed, so a check reads the statement and
+    /// not its indentation.
+    fn flat(sql: &str) -> String {
+        sql.split_whitespace().collect::<Vec<_>>().join(" ")
+    }
+
+    /// Does `sql` recompute the head with a correlated aggregate over versions?
+    fn correlated_max(sql: &str) -> bool {
+        flat(sql).replace(UNCORRELATED_MAX, "").to_uppercase().contains("MAX(")
+    }
+
+    async fn plan_of(conn: &Connection, sql: &str, params: Vec<Value>) -> String {
+        let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {sql}"), params).await.unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            if let Ok(Value::Text(detail)) = row.get_value(3) {
+                plan.push_str(&detail);
+                plan.push('\n');
+            }
+        }
+        assert!(!plan.is_empty(), "no plan came back for: {sql}");
+        plan
+    }
+
+    /// The check can say YES: today's predecessor shape — the correlated MAX the
+    /// page statements carried until issue 457 — is caught, and the one allowed
+    /// uncorrelated form is not.
+    #[test]
+    fn the_correlated_max_check_can_fail() {
+        assert!(correlated_max(
+            "JOIN tender_versions v ON v.tender_id = t.id AND v.seq =
+                  (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)"
+        ));
+        assert!(correlated_max(
+            "vl.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)"
+        ));
+        assert!(!correlated_max(
+            "AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x
+                            WHERE x.tender_id = ?)"
+        ));
+        assert!(!correlated_max("JOIN tender_versions v ON v.tender_id = t.id AND v.seq = t.current_seq"));
+    }
+
+    /// No page statement recomputes the head with a correlated MAX: each reads the
+    /// `current_seq` pointer (`t.current_seq`, or one PK seek on `tenders` where
+    /// `lots` must stay the only table in FROM).
+    #[test]
+    fn no_page_statement_recomputes_the_head_with_a_correlated_max() {
+        let statements = page_statements();
+        assert!(statements.len() > 200, "the matrix shrank to {}", statements.len());
+        let offenders: Vec<String> = statements
+            .iter()
+            .filter(|(_, q)| correlated_max(&q.sql))
+            .map(|(label, q)| format!("{label}:\n{}", flat(&q.sql)))
+            .collect();
+        assert!(
+            offenders.is_empty(),
+            "{} page statement(s) still carry a correlated MAX(seq):\n{}",
+            offenders.len(),
+            offenders.join("\n\n")
+        );
+    }
+
+    /// What a plan says is wrong with its head read — empty when it reads the
+    /// pointer. `x` is the alias every `MAX(seq)` subquery used, `tt` the
+    /// pointer's primary-key seek on the lots side.
+    fn head_read_faults(label: &str, plan: &str) -> Vec<String> {
+        let lines: Vec<&str> = plan.lines().map(str::trim_start).collect();
+        let mut why = Vec::new();
+        // The tender-scoped lots read keeps its parameter-bound MAX (evaluated once).
+        if !label.contains("tender-scoped")
+            && lines.iter().any(|l| l.starts_with("SEARCH x ") || l.starts_with("SCAN x ") || *l == "SCAN x")
+        {
+            why.push("probes tender_versions through a MAX(seq) subquery".to_owned());
+        }
+        for line in lines.iter().filter(|l| l.starts_with("SEARCH tt ") || l.starts_with("SCAN tt")) {
+            if !line.contains("INTEGER PRIMARY KEY (rowid=?)") {
+                why.push(format!("reads the head pointer without its primary key: `{line}`"));
+            }
+        }
+        if label.starts_with("lots") && !label.contains("tender-scoped") && !lines.iter().any(|l| l.starts_with("SEARCH tt ")) {
+            why.push("never reads the head pointer".to_owned());
+        }
+        why
+    }
+
+    /// The same, as a PLAN: across the matrix no statement probes
+    /// `tender_versions` through a MAX subquery (alias `x`, outside the one
+    /// parameter-bound read), and every lots stream reads the pointer by one
+    /// primary-key seek on `tenders`.
+    ///
+    /// Read against `Db::open`'s schema plus the deferred tender, notice and
+    /// organization indexes prod carries, with no statistics (prod's state until
+    /// issue 429's job is scheduled). `TDB_PRINT_PLANS=1` prints every plan — the
+    /// before/after evidence for the change. Measured with it on 2026-10-01, all
+    /// 348 statements: the access path of every table OTHER than the head read is
+    /// unchanged, except that the six unfiltered/`closed` ordered windows without a
+    /// cursor stop reading `tenders_current_published`/`_deadline` as a COVERING
+    /// index (`current_seq` is not in it): a rowid lookup per window row instead of
+    /// a `MAX(seq)` walk of the Tender's versions. Two shapes this test does NOT
+    /// assert, because they predate the issue and did not move with it: the 12
+    /// cursorless country/cpv/currency ordered windows DRIVE from the version
+    /// table (`SCAN tender_versions AS v USING COVERING INDEX …`; they now test
+    /// the pointer per version row instead of running a MAX per version row), and
+    /// some joins onto `v` — every outer re-join on `w.wseq`, the banded winner
+    /// window — seek `UNIQUE(tender_id, caused_by_notice_id)` on `tender_id` alone.
+    #[tokio::test]
+    async fn the_page_statements_read_the_head_pointer_in_their_plans() {
+        let path = format!("/tmp/tender-db-457-r2-plans-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = crate::Db::open(&path).await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        db.build_notice_indexes().await.unwrap();
+        db.build_organization_indexes().await.unwrap();
+        let conn = db.reader().await.unwrap();
+        let print = std::env::var("TDB_PRINT_PLANS").is_ok();
+
+        let mut failures = Vec::new();
+        for (label, q) in page_statements() {
+            let plan = plan_of(&conn, &q.sql, q.params.clone()).await;
+            if print {
+                println!("PLAN {label}\n{plan}");
+            }
+            let why = head_read_faults(&label, &plan);
+            if !why.is_empty() {
+                failures.push(format!("{label}: {}\n{plan}", why.join("; ")));
+            }
+        }
+
+        // The check can say NO: the predecessor of each shape — the correlated
+        // MAX this issue removed, restored into the emitted statement — fails it.
+        let f = Filter { now: NOW, ..Filter::default() };
+        let page = Scope::Page { after: 0, limit: 100 };
+        for (label, q, pointer, max) in [
+            (
+                "tenders_page",
+                tenders_page_query(&f, page, None),
+                "v.seq = t.current_seq",
+                "v.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)",
+            ),
+            (
+                "lots_page",
+                lots_query_banded(&f, page, None),
+                LOT_SEQ,
+                "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)",
+            ),
+        ] {
+            let old = q.sql.replace(pointer, max);
+            assert_ne!(old, q.sql, "{label}: the control rewrote nothing");
+            let plan = plan_of(&conn, &old, q.params.clone()).await;
+            assert!(
+                !head_read_faults(label, &plan).is_empty(),
+                "{label}: the plan check cannot tell the correlated MAX from the pointer:\n{plan}"
+            );
+        }
+
+        drop(conn);
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        assert!(failures.is_empty(), "{} plan(s) failed:\n{}", failures.len(), failures.join("\n"));
     }
 }

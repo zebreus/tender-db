@@ -58,13 +58,16 @@ fn an_org_reverse_lookup_seeds_the_lots_stream_as_an_in_semi_join() {
             sql.contains(&format!("FROM (SELECT DISTINCT tender_id FROM {table}")),
             "{table} must seed as an IN semi-join over the org's distinct tenders: {sql}"
         );
-        // Issue 388: the seed decides at the HEAD version — one MAX(seq) per distinct
-        // tender, not per participation row — and it IS the predicate, so the per-lot
-        // copy is gone: the org id is bound exactly twice, both inside the seed.
+        // Issue 388: the seed decides at the HEAD version — one head probe per
+        // distinct tender, not per participation row — and it IS the predicate, so
+        // the per-lot copy is gone: the org id is bound exactly twice, both inside
+        // the seed. The probe reads the `current_seq` pointer by primary key, not a
+        // correlated MAX(seq) over the versions (issue 457 R2).
         assert!(
-            sql.contains("p.seq = (SELECT MAX(x.seq) FROM tender_versions x") && sql.contains("x.tender_id = s.tender_id"),
+            sql.contains("p.seq = (SELECT tt.current_seq FROM tenders tt") && sql.contains("tt.id = s.tender_id"),
             "the seed must decide at the head version, per tender: {sql}"
         );
+        assert!(!sql.contains("MAX("), "no correlated MAX(seq) anywhere in the stream: {sql}");
         assert_eq!(
             sql.matches("organization_id = ?").count(),
             2,

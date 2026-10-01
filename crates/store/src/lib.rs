@@ -7799,10 +7799,11 @@ tmpfs /data/ramcache tmpfs rw 0 0
         let path = format!("/tmp/tender-db-lots-bounded-{}.db", std::process::id());
         let _ = std::fs::remove_file(&path);
         let db = Db::open(&path).await.unwrap();
-        // Seed the canonical layer directly, as the projection does (FK off).
+        // Seed the canonical layer directly, as the projection does (FK off) —
+        // head pointer included: the pages read `current_seq` (issue 457 R2).
         db.set_foreign_keys(false).await.unwrap();
         let w = db.conn().await;
-        w.execute("INSERT INTO tenders (id, source, kind, created_at) VALUES (1,'ted','procedure',0)", ())
+        w.execute("INSERT INTO tenders (id, source, kind, created_at, current_seq) VALUES (1,'ted','procedure',0,1)", ())
             .await
             .unwrap();
         w.execute(
