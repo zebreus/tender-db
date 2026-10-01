@@ -3389,10 +3389,11 @@ impl Supervisor {
     }
 
     /// The FTS fetch (issue 342), kept OUT of `run_spec`'s frame. `run_spec` is
-    /// a 62-arm async match whose debug-build poll frame is ~490 KB — a quarter
-    /// of a test thread's stack — and every future an arm materialises before
-    /// boxing it is added to that frame. The walk's future is boxed HERE, so the
-    /// arm materialises only this method's few-word future; the 2026-09-07
+    /// one async match over every `Spec` arm, whose debug-build poll frame was
+    /// ~490 KB on 2026-09-07 (62 arms then) — a quarter of a test thread's
+    /// stack — and every future an arm materialises before boxing it is added
+    /// to that frame. The walk's future is boxed HERE, so the arm materialises
+    /// only this method's few-word future; the 2026-09-07
     /// attempt that boxed `fetch_fts` inline in the arm overflowed
     /// `an_execute_without_an_expected_count_is_refused` (CLAUDE.md's trap).
     async fn run_fetch_fts(
@@ -3995,8 +3996,11 @@ impl Supervisor {
     /// SMALL. Inline, this body overflowed the stack of
     /// `an_execute_without_an_expected_count_is_refused`, a test with no
     /// relation to it, which is the same messenger CLAUDE.md records from
-    /// 2026-09-01. As a separate fn the frame belongs to this future, and the
-    /// arm is one boxed call.
+    /// 2026-09-01. The extraction ALONE did not fix it (issue 404: this fn's
+    /// future was as large as the inline block, and the test still
+    /// overflowed). What made it small is the two deep awaits boxed below
+    /// (`plan_member_twin_repair`, `apply_member_twin_repair`); the arm is then
+    /// one boxed call to a small future.
     async fn run_repair_member_twins(
         &self,
         job: &Job,
@@ -4114,9 +4118,11 @@ impl Supervisor {
     ///
     /// 1. **Box a big arm** — `Box::pin(async move { … }).await` — so its frame goes
     ///    on the heap. Necessary, not sufficient: `Box::pin` constructs the frame on
-    ///    the stack BEFORE it moves it, so a boxed arm must also be SMALL. Put a big
-    ///    body in its own `async fn` (`run_repair_member_twins` is the pattern) and
-    ///    make the arm one boxed call.
+    ///    the stack BEFORE it moves it, so a boxed arm must also be SMALL. Moving the
+    ///    body into its own `async fn` does NOT make it small by itself — that fn's
+    ///    future is as large as the inline block it replaced, and 404's extraction
+    ///    still overflowed. It helps only once that fn's deep awaits are boxed
+    ///    (point 2); `run_repair_member_twins` is the pattern for both together.
     /// 2. **Box the deep awaits too.** An async fn's future CONTAINS the futures it
     ///    awaits, so an unboxed `self.db.…(…).await` that nests three calls down
     ///    brings that whole composed frame into the arm and out into this match.
@@ -8374,10 +8380,10 @@ impl Supervisor {
                 ))
             }).await,
             Spec::NameAttributionProbe => Box::pin(async move {
-                // BOXED. `run_spec` is a 62-arm async match, so every arm's
-                // locals live in ONE future — and adding this census's arm
-                // overflowed the stack of a pre-existing supervisor test
-                // (`an_execute_without_an_expected_count_is_refused`, SIGABRT)
+                // BOXED. `run_spec` is one async match over every `Spec` arm,
+                // so every arm's locals live in ONE future — and adding this
+                // census's arm overflowed the stack of a pre-existing supervisor
+                // test (`an_execute_without_an_expected_count_is_refused`, SIGABRT)
                 // without touching that test at all. Boxing puts this arm's
                 // frame on the heap so the parent future stops growing with it.
                 let job_id = job.id;
@@ -8476,10 +8482,10 @@ impl Supervisor {
                 ))
             }).await,
             Spec::GenericStatisticCensus => Box::pin(async move {
-                // BOXED. `run_spec` is a 62-arm async match, so every arm's
-                // locals live in ONE future — and adding this census's arm
-                // overflowed the stack of a pre-existing supervisor test
-                // (`an_execute_without_an_expected_count_is_refused`, SIGABRT)
+                // BOXED. `run_spec` is one async match over every `Spec` arm,
+                // so every arm's locals live in ONE future — and adding this
+                // census's arm overflowed the stack of a pre-existing supervisor
+                // test (`an_execute_without_an_expected_count_is_refused`, SIGABRT)
                 // without touching that test at all. Boxing puts this arm's
                 // frame on the heap so the parent future stops growing with it.
                 let job_id = job.id;
@@ -8578,10 +8584,10 @@ impl Supervisor {
                 ))
             }).await,
             Spec::GenericWallCensus => Box::pin(async move {
-                // BOXED. `run_spec` is a 62-arm async match, so every arm's
-                // locals live in ONE future — and adding this census's arm
-                // overflowed the stack of a pre-existing supervisor test
-                // (`an_execute_without_an_expected_count_is_refused`, SIGABRT)
+                // BOXED. `run_spec` is one async match over every `Spec` arm,
+                // so every arm's locals live in ONE future — and adding this
+                // census's arm overflowed the stack of a pre-existing supervisor
+                // test (`an_execute_without_an_expected_count_is_refused`, SIGABRT)
                 // without touching that test at all. Boxing puts this arm's
                 // frame on the heap so the parent future stops growing with it.
                 let job_id = job.id;
@@ -8659,10 +8665,10 @@ impl Supervisor {
                 ))
             }).await,
             Spec::NamePollutionCensus => Box::pin(async move {
-                // BOXED. `run_spec` is a 62-arm async match, so every arm's
-                // locals live in ONE future — and adding this census's arm
-                // overflowed the stack of a pre-existing supervisor test
-                // (`an_execute_without_an_expected_count_is_refused`, SIGABRT)
+                // BOXED. `run_spec` is one async match over every `Spec` arm,
+                // so every arm's locals live in ONE future — and adding this
+                // census's arm overflowed the stack of a pre-existing supervisor
+                // test (`an_execute_without_an_expected_count_is_refused`, SIGABRT)
                 // without touching that test at all. Boxing puts this arm's
                 // frame on the heap so the parent future stops growing with it.
                 let job_id = job.id;
@@ -9132,10 +9138,10 @@ impl Supervisor {
                 ))
             }).await,
             Spec::DuplicateIdentityCensus => Box::pin(async move {
-                // BOXED. `run_spec` is a 62-arm async match, so every arm's
-                // locals live in ONE future — and adding this census's arm
-                // overflowed the stack of a pre-existing supervisor test
-                // (`an_execute_without_an_expected_count_is_refused`, SIGABRT)
+                // BOXED. `run_spec` is one async match over every `Spec` arm,
+                // so every arm's locals live in ONE future — and adding this
+                // census's arm overflowed the stack of a pre-existing supervisor
+                // test (`an_execute_without_an_expected_count_is_refused`, SIGABRT)
                 // without touching that test at all. Boxing puts this arm's
                 // frame on the heap so the parent future stops growing with it.
                 let job_id = job.id;
@@ -10520,10 +10526,10 @@ impl Supervisor {
             })
             .await,
             Spec::GhostCensus => Box::pin(async move {
-                // BOXED. `run_spec` is a 62-arm async match, so every arm's locals
-                // live in ONE future; a census arm added to it once overflowed the
-                // stack of an unrelated supervisor test. Boxing keeps this arm's
-                // frame on the heap.
+                // BOXED. `run_spec` is one async match over every `Spec` arm, so
+                // every arm's locals live in ONE future; a census arm added to it
+                // once overflowed the stack of an unrelated supervisor test. Boxing
+                // keeps this arm's frame on the heap.
                 //
                 // This job kind used to be the track-2 SWEEP, and it stalled prod
                 // for 40+ minutes on 2026-08-26 running an unbounded

@@ -34,8 +34,10 @@ use super::{AppState, rev};
 const INGEST_STALE_SECS: i64 = 26 * 3_600;
 
 /// Disk is unhealthy once this fraction of the DB volume is in use. The parsed
-/// DB and raw archive share the 500 GB Hetzner volume; crossing 90% is the cue
-/// to grow it before a write fails mid-ingest.
+/// DB and raw archive share `/data` (`/dev/md3`, software RAID on the box's two
+/// local NVMe drives; its size is this check's `total_bytes`, or `df -h /data`
+/// on the box). Crossing 90% is the cue to make room before a write fails
+/// mid-ingest.
 const DISK_FULL_FRACTION: f64 = 0.90;
 
 /// A presence observation older than this is treated as no observation at all.

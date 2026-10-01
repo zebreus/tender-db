@@ -170,8 +170,8 @@ impl AppState {
     }
 
     /// As [`new`](AppState::new), with an explicit `/v1/sql` time limit.
-    /// Production uses the default (10 s); a test passes a short one to watch the
-    /// 408 cap fire without running a 10 s query.
+    /// Production uses the default ([`sql::DEFAULT_TIMEOUT`], 15 s); a test passes
+    /// a short one to watch the 408 cap fire without running a full-length query.
     pub fn with_sql_timeout(
         db: Arc<store::Db>,
         readers: Arc<store::Readers>,

@@ -28,10 +28,10 @@ rather than trusting a copy (this one is from 2026-10-01):
 | --- | --- | --- |
 | cores | 32 | `nproc` |
 | memory | 62 GiB | `free -g` |
-| disks | two local 1.7 TB NVMe drives (Micron 7450); no network volume | `lsblk -d -o NAME,SIZE,MODEL` |
-| `/data` (DB + archive) | `/dev/md3`, software RAID on the NVMe, 1.7 T, 74 % used | `df -h /data`, or `/health/deep` → `.checks.disk` from anywhere |
+| disks | two local NVMe drives (Micron 7450, ~1.92 TB each, which `lsblk` prints as 1.7T: its sizes are binary, TiB); no network volume | `lsblk -d -o NAME,SIZE,MODEL` |
+| `/data` (DB + archive) | `/dev/md3`, software RAID on the NVMe, 1.7T in `df -h` (1.78 TB, `total_bytes` 1,780,595,036,160), 74 % used | `df -h /data` (binary units), or `/health/deep` → `.checks.disk` (bytes) from anywhere |
 | `/` (system, nix store) | `/dev/md2`, 120 G, 75 G used | `df -h /` |
-| clock | `Europe/Berlin` (CEST +02:00; CET +01:00 from 2026-10-25) | `timedatectl` |
+| clock | `Europe/Berlin`: CEST +02:00 in summer time, CET +01:00 in winter time (next switch 2026-10-25) | `timedatectl` |
 
 ## Deploy
 
@@ -318,8 +318,10 @@ Two ways jobs start:
   (TED's on a weekday) or one is still queued, and logs `[scheduler] the 09:35
   Berlin tick passed unserved …`. Only TODAY's tick is caught up; a day the
   process was down for entirely is not re-run, so re-drive that one via `/admin`
-  if its sources need it. 09:35 is Berlin wall-clock: 07:35 UTC until 2026-10-25,
-  08:35 UTC after (`berlin_offset_follows_the_eu_dst_rule` pins the switch).
+  if its sources need it. 09:35 is Berlin wall-clock: 07:35 UTC in summer time
+  (CEST), 08:35 UTC in winter time (CET). The EU switches on the last Sunday of
+  March and of October at 01:00 UTC, next on 2026-10-25
+  (`berlin_offset_follows_the_eu_dst_rule` pins the rule).
 - **`/admin` API** — for manual loads, backfills and reprocessing. Gated by a
   preshared operator secret in `TENDER_ADMIN_SECRET`, sent as the
   `X-Admin-Secret` header and compared in constant time. **Unset ⇒ the whole
@@ -371,9 +373,15 @@ surface goes back to answering 404.
 `GET /admin/jobs` returns the running job's live progress, the queue, and the
 recent-run log — the same shape the dashboard's Ingestion panel renders.
 
-The examples run **on the box**, where the secret lives (from the dev machine, wrap
-one in `ssh root@zebreus.click '…'`), through `/root/aj.sh`: `aj.sh <path>` GETs,
-`aj.sh <path> '<json>'` or `aj.sh <path> @<file>` POSTs, and there is no method word.
+The examples run **on the box**, where the secret lives, through `/root/aj.sh`. From
+the dev machine, do NOT wrap one in `ssh root@zebreus.click '…'`: the POST examples
+single-quote their JSON, so the outer quotes pair with the inner ones and the JSON
+reaches the box without its double quotes (`{kind:project}`, a 400). Double-quote the
+JSON inside the ssh quotes instead,
+`ssh root@zebreus.click '/root/aj.sh /admin/jobs "{\"kind\":\"project\"}"'`, or paste
+the example unchanged into `ssh root@zebreus.click bash -s <<'EOF'` … `EOF`.
+`aj.sh <path>` GETs, `aj.sh <path> '<json>'` or `aj.sh <path> @<file>` POSTs, and
+there is no method word.
 It is `ops/aj.sh`, installed by `ops/watchdogs/install.sh` and pinned by
 `ops/watchdogs/test-watchdogs.sh` (issue 464); it prints the server's body as it came
 and exits 1 on any status but 2xx. `tender-admin` (`ops/admin.sh`) is the CLI with
@@ -1089,10 +1097,11 @@ snapshot ever taken). Restore was a plain file copy: stop service, swap
 
 ### Disk headroom
 
-`/data` (1.7 T on 2026-10-01, `df -h /data`) holds archive (~180 GB) + DB (685 GB
-on 2026-10-01, `stat -c %s /data/db/tender-db.db`, and growing; it can never shrink
-— VACUUM is impossible) + the snapshot ring. 443 GB free on 2026-10-01; a plain
-on-box DB copy no longer fits (XFS reflink copies do).
+`/data` (1.7T in `df -h /data` on 2026-10-01, i.e. 1.78 TB) holds archive (~180
+GB) + DB (685 GB on 2026-10-01, `stat -c %s /data/db/tender-db.db`, and growing; it
+can never shrink — VACUUM is impossible) + the snapshot ring. 443 GiB (475.7 GB,
+`/health/deep` `free_bytes`) free on 2026-10-01; a plain on-box DB copy no longer
+fits (XFS reflink copies do).
 Growth model and volume-full forecast: `docs/research/` storage-lifecycle
 study (issue 169).
 

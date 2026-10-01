@@ -103,7 +103,7 @@ pub const SQL_READERS: usize = 6;
 /// Longest a single query may run before it is dropped (a streaming query,
 /// between rows) or the handler stops waiting and answers 408 (a non-yielding
 /// aggregate). The value the server runs; [`SqlState::with_timeout`] lets a test
-/// watch the cap fire without a 10 s query.
+/// watch the cap fire without a full-length query.
 pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(15);
 
 /// Extra margin the handler-side backstop waits beyond the in-task timeout, so a
@@ -300,7 +300,7 @@ impl SqlState {
     }
 
     /// As [`new`](SqlState::new), with an explicit per-query time limit — the
-    /// seam a test uses to observe the 408 cap without running a 10 s query.
+    /// seam a test uses to observe the 408 cap without running a full-length query.
     pub fn with_timeout(readers: Arc<store::Readers>, timeout: Duration) -> SqlState {
         let quota = Quota::per_hour(NonZeroU32::new(PER_HOUR).expect("PER_HOUR is non-zero"));
         let runtime = spawn_sql_runtime();

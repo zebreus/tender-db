@@ -65,10 +65,10 @@ pub struct Report {
     pub stopped: bool,
     /// Issue 318: what the resolver's genericness wall did — (asked, denied,
     /// errored). It rides the durable Report rather than a log line because
-    /// this runtime's stderr does not reach journald (issues 61/63), and
-    /// because the batch arm's twin count is already durable in the
-    /// r3-merge-plan report. `errored` non-zero means the wall was
-    /// unavailable and binds went through at the pre-318 bar.
+    /// the journal is size-capped and rotates (stderr does reach it; issues
+    /// 61/63 once said otherwise, issue 464), and because the batch arm's twin
+    /// count is already durable in the r3-merge-plan report. `errored` non-zero
+    /// means the wall was unavailable and binds went through at the pre-318 bar.
     pub wall: store::WallCounts,
     /// Issue 434: recorded mentions this run found STALE — the notice now
     /// publishes a different name, country, raw identifier or scheme than the
@@ -1097,7 +1097,8 @@ const PLAN_CHECKPOINT_EVERY: usize = 1;
 
 /// How often Phase-1 records a diagnostic line (chunk, notices, WAL size, last
 /// checkpoint busy/frames) to the DB-side `.diag.log` (issue 63) — a channel that
-/// survives the worker-runtime stderr not reaching journald. Every 16 chunks
+/// outlives the journal's rotation (issue 63 added it when the worker runtime's
+/// stderr was not reaching journald; it does now, issue 464). Every 16 chunks
 /// (~160k notices) traces the WAL trend without flooding.
 const PLAN_DIAG_EVERY: usize = 16;
 
@@ -3750,8 +3751,8 @@ struct Ident {
 /// refusing silently is how the defect stood for years: 212 Tenders each fusing
 /// hundreds of unrelated procurements read green because nothing counted. So the
 /// gate keeps a tally, it rides the durable [`Report`] (the `WallCounts`
-/// precedent — this runtime's stderr does not reach journald, issues 61/63), and
-/// the supervisor prints it on the job row.
+/// precedent — the journal is size-capped and rotates, while the job row
+/// stays), and the supervisor prints it on the job row.
 ///
 /// The shares to expect, measured over four February-2013 archive days (6,327
 /// notices, 3,037 citations): `CONTRACT_NOTICE` 72.9 %, `PRIOR_INFORMATION_NOTICE`

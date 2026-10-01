@@ -10437,11 +10437,12 @@ impl Db {
                     Some(f)
                 } else {
                     // `log_diag`, not `eprintln!`. The projection runs on the
-                    // isolated worker runtime whose stderr does NOT reach
-                    // journald — measured in issues 61/63, and the reason
-                    // `log_diag` exists at all. A prevention whose only
-                    // surface is a blind channel is a prevention nobody can
-                    // check.
+                    // isolated worker runtime, whose stderr did not reach
+                    // journald when issues 61/63 measured it — the reason
+                    // `log_diag` exists at all. It does reach it now (issue
+                    // 464), but the journal rotates and the diag log stays. A
+                    // prevention whose only surface is a blind channel is a
+                    // prevention nobody can check.
                     self.log_diag(&format!(
                         "[issue 318] genericness wall DISABLED for this run \
                          (org_match_keys_kk present: {indexed}, build watermark: \

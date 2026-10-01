@@ -31,6 +31,10 @@ unfollowable rule gets reasoned past under pressure. The replacement, decided ra
 - The **archives** (immutable tars) are the durable artifact for member-level questions — reading them
   is a bounded I/O job, gated like any data read.
 
+Since 2026-08-22 a weekly on-box ring of two reflink snapshots exists again (issue 269,
+`ops/watchdogs/tender-db-snapshot.sh`). The replacement above was not re-decided with it, so it still
+stands as written.
+
 **Scope: this rule governs an AGENT reading the prod box.** The app reading its own database in-process
 is not covered by it at all — that is the service doing its job, not an operator taking a look. So an
 assertion inside the projection, or behind `/health`, raises no question here; the question there is a
@@ -92,8 +96,8 @@ safety one, and the two must not be conflated in either direction:
   `--since "$(systemctl show tender-db -p ActiveEnterTimestamp --value)"`. A non-zero count *there* is
   the real finding.
 - Data pages: ask the team lead, state the query and its bound, and run it through `/v1/sql` in a
-  low-traffic window (no snapshots exist to name any more). Someone with box access runs it; the
-  requester does not need to be that person.
+  low-traffic window (not against a snapshot: the issue-269 ring is back, but the rule above was not
+  re-decided with it). Someone with box access runs it; the requester does not need to be that person.
 
 ## turso's planner, four traps that each cost a 10 s cap
 

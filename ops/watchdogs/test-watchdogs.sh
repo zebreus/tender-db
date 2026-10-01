@@ -668,6 +668,12 @@ aj_case "aj.sh POST <path> is refused too (a method word is not a path)" \
     2 EMPTY "'POST' is not a path" "$work/secret" POST /admin/jobs
 aj_case "aj.sh with no arguments prints its usage" \
     2 EMPTY "usage: aj.sh <path>" "$work/secret"
+# A valid path, so only the arity check can refuse it: without it the method stays GET
+# (POST needs exactly two arguments) and the jobs object comes back with exit 0 — a no-op
+# that reads as success (review of 464). The "POST <path> <json>" case above cannot pin
+# this: the path check refuses 'POST' first, with the same usage text.
+aj_case "aj.sh <path> <json> <extra> is refused, not sent as a GET" \
+    2 EMPTY "usage: aj.sh <path>" "$work/secret" /admin/jobs '{"kind":"fetch"}' '{"kind":"process"}'
 out=$(TENDER_ADMIN_URL="http://127.0.0.1:1" TENDER_ADMIN_SECRET_FILE="$work/secret" \
       bash "$here/../aj.sh" /admin/jobs 2>&1); rc=$?
 check "aj.sh says so when nothing answers" 1 "aj.sh: GET /admin/jobs: no answer from http://127.0.0.1:1 (curl exit 7)" "$out" "$rc"
