@@ -12710,7 +12710,6 @@ fn resume_skip(packages: &[store::Package], resume_after: Option<&str>) -> usize
 
 // --------------------------------------------------------------- period → URL
 
-/// Build a fetch target from a source + package kind + period string.
 /// What `run_spec`'s dispatch awaits: a family's future, boxed.
 type SpecFuture<'a> = std::pin::Pin<Box<dyn std::future::Future<Output = Result<String, String>> + Send + 'a>>;
 
@@ -12718,9 +12717,9 @@ type SpecFuture<'a> = std::pin::Pin<Box<dyn std::future::Future<Output = Result<
 /// caller's (issue 467). `Box::pin(f)` constructs `f` on the stack before moving
 /// it to the heap, and at O0 each such site in an async fn keeps its own slot in
 /// that fn's poll frame: twelve `Box::pin(self.run_…(job))` arms in `run_spec`
-/// cost ~100 KiB of its frame. Through this fn the poll frame holds a closure and
-/// a fat pointer per arm, and each future is on the stack only while this frame
-/// is, which is before the family's own poll runs.
+/// cost ~45 KiB of its frame (110 vs 65 KiB measured). Through this fn the poll
+/// frame holds a closure and a fat pointer per arm, and each future is on the
+/// stack only while this frame is, which is before the family's own poll runs.
 fn off_frame<'a, F>(make: impl FnOnce() -> F) -> SpecFuture<'a>
 where
     F: std::future::Future<Output = Result<String, String>> + Send + 'a,
@@ -12735,6 +12734,7 @@ fn misrouted(job: &Job, family: &str) -> String {
     format!("internal: job {} ({}) was dispatched to {family}, which does not run it", job.id, job.kind)
 }
 
+/// Build a fetch target from a source + package kind + period string.
 fn build_target(
     ted_base: &str,
     doe_base: &str,
@@ -16035,7 +16035,8 @@ mod tests {
     }
 
     /// Issue 467's tripwire: every future `run_spec` builds, and the poll frames of
-    /// it and its family fns, against named budgets.
+    /// it, its family fns and the six fns it reaches through `off_frame` directly,
+    /// against named budgets.
     ///
     /// A test that awaits `run_spec` on a test thread's stack aborts with `stack
     /// overflow` (SIGABRT) when a frame on that path grows far enough, and the
@@ -16136,6 +16137,30 @@ mod tests {
         poll_once_within("run_identity_census_spec", 56 * 1024, || sup.run_identity_census_spec(&refused));
         poll_once_within("run_census_spec", 69 * 1024, || sup.run_census_spec(&refused));
         poll_once_within("run_match_key_spec", 85 * 1024, || sup.run_match_key_spec(&refused));
+        // The six fns the dispatch reaches through `off_frame` without a family,
+        // two of them (`run_project`, `run_repair_member_twins`) where the 434 and
+        // 404 overflows struck. None takes a `Spec`, so none can be refused before
+        // its first await: each poll runs into the store on this test's scratch DB,
+        // and its budget is that whole chain — the fn's own frame plus ~250 KiB of
+        // store and turso beneath it at O0 (measured 2026-10-01: 449, 267, 376,
+        // 257, 349, 307 KiB in the order below), plus ~24 KiB. So a turso upgrade
+        // can move these with no change here: re-measure, don't just raise them.
+        // The arguments keep each poll short and four of them off any write: the
+        // job is marked cancelled (analyze and the backfill stop at their first
+        // check), the sweep refuses (the scratch DB lacks its org FK indexes, and
+        // holds no plan for a wet run), the twin repair is wet with no stored plan
+        // and refuses. The projection is incremental over an empty corpus and
+        // `run_rehash_probe(0)` probes nothing; what bookkeeping either stores
+        // lands on the scratch DB.
+        sup.cancel_running.store(j.id, Ordering::Relaxed);
+        poll_once_within("run_project", 472 * 1024, || sup.run_project(&j, false, false));
+        poll_once_within("run_sweep_orphan_orgs", 292 * 1024, || sup.run_sweep_orphan_orgs(&j, SweepMode::Wet));
+        poll_once_within("run_rehash_probe", 400 * 1024, || sup.run_rehash_probe(0));
+        poll_once_within("run_repair_member_twins", 280 * 1024, || sup.run_repair_member_twins(&j, false));
+        poll_once_within("run_backfill_merged_identifiers", 372 * 1024, || {
+            sup.run_backfill_merged_identifiers(&j, true)
+        });
+        poll_once_within("run_analyze", 330 * 1024, || sup.run_analyze(&j));
         assert!(
             over.is_empty(),
             "issue 467: future(s) over their stack budget — {}. Each is built on the caller's \
