@@ -288,16 +288,23 @@ chain). A missing id is <code>404</code>.</p>
 <p><strong>A party names its organization twice.</strong> Each <code>parties[]</code>
 entry, and each bid's <code>parties[]</code> entry, carries <code>organization_name</code>,
 the organization's <em>head</em> name &mdash; one name for every tender the organization
-appears on &mdash; and <code>mention_name</code>, the name <em>this</em> notice published
-for the party, served whether or not the two agree (null only when the notice published
-no name). They differ for ordinary reasons: a trading name, a rename, another language.
+appears on &mdash; and <code>mention_name</code>, the name the party's anchoring notice
+published for it, served whether or not the two agree (null only when that notice published
+no name). The anchoring notice is the version's own, or an earlier one of the chain when a
+later notice republished no party in that role: parties carry forward role by role. The two
+names differ for ordinary reasons: a trading name, a rename, another language.
 They also differ for a bad one: a party binds to an organization by its official
 identifier before its name, so a notice that published another organization's identifier
 on a party puts that party &mdash; and its <code>organization_id</code> &mdash; on the
 other organization, whose head then names it. <code>mention_name</code> still says what
 the notice said (issue 456). <code>lot_results[].winners[]</code> carry the head only: a
-winner has no anchor to the notice's party block, so its published name is on its
-<code>parties[]</code> entry (role <code>winner</code> or <code>Tenderer</code>).</p>
+winner has no anchor to the notice's party block. In eForms the winning bid's
+<code>parties[]</code> normally carry its published name. The detail's <code>parties[]</code>
+(role <code>winner</code> or <code>Tenderer</code>) carry it only while the version's parties
+still come from that round's notice &mdash; decisions accumulate, parties are replaced &mdash;
+so an earlier round's winner, in a legacy era with no bids, can be named nowhere on the
+detail; its published name is then in <code>organization_mentions</code> under the
+decision's <code>notice_id</code>.</p>
 <pre><code>curl -s https://tenders.zebreus.click/v1/tenders/14327</code></pre>
 
 <h2 id="notice-content">Notice content</h2>

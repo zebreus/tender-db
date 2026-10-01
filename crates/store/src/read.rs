@@ -488,11 +488,15 @@ pub struct PartyRow {
     /// The organization's head (`organizations.name`): one name for every Tender
     /// the organization appears on.
     pub organization_name: String,
-    /// Issue 456: the name THIS notice published for the party — the anchoring
+    /// Issue 456: the name the party's ANCHORING notice published for it — the
     /// mention's own name (`organization_mentions.name` at the row's
-    /// `(mention_notice_id, mention_section_id)`), whatever organization the
-    /// mention's identifier bound it to. Set whether or not it equals the head;
-    /// `None` only when the notice published no name for the party.
+    /// `(mention_notice_id, mention_section_id)`, or at the outermost Organization
+    /// enclosing that section for a nested legacy party, see `read::mention_name_above`),
+    /// whatever organization the mention's identifier bound it to. The anchoring
+    /// notice is the version's own, or an earlier one of the chain when a later
+    /// notice republished no party in this role (party facts carry forward per role).
+    /// Set whether or not it equals the head; `None` only when that notice
+    /// published no name for the party.
     pub mention_name: Option<String>,
 }
 
@@ -525,8 +529,12 @@ pub struct ResultOrgRow {
     /// Issue 456, as [`PartyRow::mention_name`], for a BID party: the name its
     /// anchoring mention published. Always `None` on a WINNER, whose row
     /// (`tender_version_result_winners`) is keyed on the organization and carries
-    /// no mention anchor — the API then serves no key at all, and the name the
-    /// notice published for the winner is on its `parties[]` entry.
+    /// no mention anchor — the API then serves no key at all. The winner's
+    /// published name is on a `parties[]` entry only while the version's party
+    /// facts still come from that round's notice: parties are replaced per role by
+    /// each newer notice, while rounds accumulate, so an earlier round's winner can
+    /// have no party entry left (its name is then in `organization_mentions` under
+    /// the round's `notice_id`, and in the notice's content).
     pub mention_name: Option<String>,
 }
 
@@ -2498,7 +2506,8 @@ pub async fn tender_version_notice_ids(conn: &Connection, tender_id: i64) -> tur
 }
 
 /// One Tender version's parties: the organization's head name AND the name the
-/// party's own notice published (issue 456).
+/// party's anchoring notice published (issue 456) — the version's own notice, or an
+/// earlier one when a later notice republished no party in that role.
 ///
 /// The two differ because the resolver binds a mention by its identifier before its
 /// name: a notice that put organization A's number on organization B binds B's
@@ -2506,12 +2515,19 @@ pub async fn tender_version_notice_ids(conn: &Connection, tender_id: i64) -> tur
 /// 8751605: UKRI's tenderer `Schneider Electric`, carrying Sellafield's PPON, read
 /// `Sellafield Ltd`). The mention row keeps what the notice said; this reads it by
 /// its primary key `(notice_id, section_id)`, one seek per party row
-/// (`the_party_reads_seek_each_mention_by_its_key`). `NULLIF`: a mention that
-/// published no name is stored as `''`, and that is "no name", not a name.
+/// (`the_party_reads_seek_each_mention_by_its_key`).
+///
+/// Column 4 tells three cases apart, so it is `COALESCE(m.name, '')` and not the
+/// name itself: a string is the mention's name, `''` included (a mention that
+/// published no name is stored as `''`, and that is "no name", see
+/// [`published_name`]); NULL means the anchor has NO mention row, which is a
+/// nested legacy party (issue 259), resolved by [`mention_name_above`] from the
+/// anchor in columns 5 and 6.
 pub(crate) const PARTIES_SQL: &str = "\
     SELECT (SELECT l.lot_key FROM lots l WHERE l.id = s.lot_id), s.role, s.organization_id, o.name,
-           (SELECT NULLIF(m.name, '') FROM organization_mentions m
-             WHERE m.notice_id = s.mention_notice_id AND m.section_id = s.mention_section_id)
+           (SELECT COALESCE(m.name, '') FROM organization_mentions m
+             WHERE m.notice_id = s.mention_notice_id AND m.section_id = s.mention_section_id),
+           s.mention_notice_id, s.mention_section_id
       FROM tender_version_parties s
       JOIN organizations o ON o.id = s.organization_id
      WHERE s.tender_id = ? AND s.seq = ?";
@@ -2521,11 +2537,66 @@ pub(crate) const PARTIES_SQL: &str = "\
 /// names as the `Tenderer` party beside it.
 pub(crate) const BID_PARTIES_SQL: &str = "\
     SELECT p.bid_id, p.role, p.organization_id, o.name,
-           (SELECT NULLIF(m.name, '') FROM organization_mentions m
-             WHERE m.notice_id = p.mention_notice_id AND m.section_id = p.mention_section_id)
+           (SELECT COALESCE(m.name, '') FROM organization_mentions m
+             WHERE m.notice_id = p.mention_notice_id AND m.section_id = p.mention_section_id),
+           p.mention_notice_id, p.mention_section_id
       FROM tender_version_bid_parties p
       JOIN organizations o ON o.id = p.organization_id
      WHERE p.tender_id = ? AND p.seq = ?";
+
+/// A mention's stored name as the API serves it: `''` is how the projection stores
+/// a mention that published no name, and that is no name, not an empty one.
+fn published_name(stored: String) -> Option<String> {
+    Some(stored).filter(|name| !name.is_empty())
+}
+
+/// One step up a nested party's section chain: the anchor's parent section, and
+/// the mention minted there if any (`''` for a nameless one, NULL for none). Both
+/// halves are primary-key seeks (`the_party_reads_seek_each_mention_by_its_key`).
+pub(crate) const MENTION_ABOVE_SQL: &str = "\
+    SELECT ns.parent_section_id,
+           (SELECT COALESCE(m.name, '') FROM organization_mentions m
+             WHERE m.notice_id = ns.notice_id AND m.section_id = ns.parent_section_id)
+      FROM notice_sections ns
+     WHERE ns.notice_id = ? AND ns.section_id = ?";
+
+/// How far [`mention_name_above`] climbs. The legacy vocabulary nests one level
+/// (`WINNER > ADDRESS_WINNER`, issue 259) and a section tree is a few levels deep in
+/// all; the bound is there so a malformed parent chain cannot spin.
+const MENTION_ABOVE_BOUND: usize = 16;
+
+/// Issue 456 review (D1): the name published for a party whose anchor section
+/// minted no mention.
+///
+/// A legacy era can open TWO Organization sections for one party (`WINNER >
+/// ADDRESS_WINNER`, issue 259). The projection mints the one mention at the
+/// OUTERMOST of them and binds a role naming either half to it, but the party row
+/// keeps the section the role named — so a winner reference to `ADDRESS_WINNER`
+/// anchors at a section with no mention row, and a key read alone served `null` for
+/// a name the notice did publish (prod tender 6281334, `Opal Publicidade, S. A.`).
+/// The mention sits on the nearest ancestor that has one: only an outermost
+/// Organization section mints a mention, and the anchor's outermost Organization is
+/// exactly the alias the fold bound it through. turso has no recursive CTE, so the
+/// climb is a bounded loop of key seeks, run only for the rows the key read missed.
+pub(crate) async fn mention_name_above(
+    conn: &Connection,
+    notice_id: i64,
+    section_id: &str,
+) -> turso::Result<Option<String>> {
+    let mut section = section_id.to_owned();
+    for _ in 0..MENTION_ABOVE_BOUND {
+        let mut rows = conn.query(MENTION_ABOVE_SQL, (Value::Integer(notice_id), t(&section))).await?;
+        let Some(row) = rows.next().await? else { return Ok(None) };
+        let (parent, mention) = (opt_text_of(&row, 0), opt_text_of(&row, 1));
+        drop(rows);
+        if let Some(stored) = mention {
+            return Ok(published_name(stored));
+        }
+        let Some(parent) = parent else { return Ok(None) };
+        section = parent;
+    }
+    Ok(None)
+}
 
 /// One Tender's full current state: the version chain, the satellites, the
 /// parties — everything `/v1/tenders/{id}` answers.
@@ -2613,14 +2684,25 @@ pub async fn tender_detail(
 
     let mut rows = conn.query(PARTIES_SQL, key.clone()).await?;
     let mut parties = Vec::new();
+    // Rows whose anchor minted no mention (a nested legacy party): resolved once the
+    // statement is drained, never with a second statement open on the connection.
+    let mut nested = Vec::new();
     while let Some(row) = rows.next().await? {
+        let stored = opt_text_of(&row, 4);
+        if stored.is_none() {
+            nested.push((parties.len(), int(&row, 5), text(&row, 6)));
+        }
         parties.push(PartyRow {
             lot_key: opt_text_of(&row, 0),
             role: text(&row, 1),
             organization_id: int(&row, 2),
             organization_name: text(&row, 3),
-            mention_name: opt_text_of(&row, 4),
+            mention_name: stored.and_then(published_name),
         });
+    }
+    drop(rows);
+    for (i, notice_id, section_id) in nested {
+        parties[i].mention_name = mention_name_above(conn, notice_id, &section_id).await?;
     }
 
     let mut rows = conn
@@ -2763,15 +2845,25 @@ async fn results_of(
         });
     }
     let mut rows = conn.query(BID_PARTIES_SQL, key.clone()).await?;
+    let mut nested = Vec::new();
     while let Some(row) = rows.next().await? {
         if let Some(&i) = bid_index.get(&int(&row, 0)) {
+            let stored = opt_text_of(&row, 4);
+            if stored.is_none() {
+                nested.push((i, bids[i].parties.len(), int(&row, 5), text(&row, 6)));
+            }
             bids[i].parties.push(ResultOrgRow {
                 role: text(&row, 1),
                 organization_id: int(&row, 2),
                 organization_name: text(&row, 3),
-                mention_name: opt_text_of(&row, 4),
+                mention_name: stored.and_then(published_name),
             });
         }
+    }
+    drop(rows);
+    // As on `parties[]`: an anchor with no mention row climbs to its party's mention.
+    for (i, j, notice_id, section_id) in nested {
+        bids[i].parties[j].mention_name = mention_name_above(conn, notice_id, &section_id).await?;
     }
 
     let mut rows = conn
@@ -4513,7 +4605,7 @@ fn stored_stamp(row: &turso::Row, utc_idx: usize, pair_idx: usize) -> Option<Sta
 
 #[cfg(test)]
 mod party_name_tests {
-    use super::{BID_PARTIES_SQL, PARTIES_SQL};
+    use super::{BID_PARTIES_SQL, MENTION_ABOVE_SQL, PARTIES_SQL};
 
     async fn plan_of(conn: &turso::Connection, sql: &str) -> String {
         let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {sql}"), ()).await.unwrap();
@@ -4551,6 +4643,16 @@ mod party_name_tests {
             let plan = plan_of(&conn, sql).await;
             assert!(seeks_the_mention(&plan), "the {name} read must seek each mention by its key:\n{plan}");
         }
+        // The nested-party climb (review D1): each step seeks the section AND the
+        // mention above it by key — it runs per missed row, so a scan in either half
+        // would be a corpus walk per legacy winner.
+        let plan = plan_of(&conn, MENTION_ABOVE_SQL).await;
+        assert!(seeks_the_mention(&plan), "the climb must seek the mention by its key:\n{plan}");
+        assert!(
+            !plan.lines().any(|l| l.trim_start().starts_with("SCAN ns"))
+                && plan.lines().any(|l| l.trim_start().starts_with("SEARCH ns USING")),
+            "the climb must seek the section by its key:\n{plan}"
+        );
 
         // The predicate can say NO: keyed on the section id alone, the subquery
         // has no usable prefix of `(notice_id, section_id)` and walks the table.

@@ -826,9 +826,11 @@ const TABLE_NOTES: &[(&str, &str)] = &[
       kept for reprocessing."),
     ("changes", "The change-cursor log behind /v1/changes: ingestion order, never renumbered."),
     ("tender_version_parties", "Organizations linked to a Tender version by role (see role). \
-      `organizations.name` is the organization's head; the name THIS notice published is \
-      `organization_mentions.name` at `(mention_notice_id, mention_section_id)` (issue 456: a \
-      mention binds by identifier before name, so the two can name different companies)."),
+      `organizations.name` is the organization's head; the name the anchoring notice published \
+      is `organization_mentions.name` at `(mention_notice_id, mention_section_id)` (issue 456: a \
+      mention binds by identifier before name, so the two can name different companies). A \
+      nested legacy party (issue 259) may anchor at an inner section with no mention row; its \
+      mention is on the nearest enclosing section that has one (notice_sections.parent_section_id)."),
     ("tender_version_classifications", "CPV and NUTS codes of a Tender version (see scheme)."),
     // Analyst convenience views (issue 50).
     ("v_tender_buyers", "Buyers of each current Tender (one row per buyer party). NOT \

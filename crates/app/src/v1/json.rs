@@ -318,12 +318,14 @@ fn fact(f: &FactRow) -> Value {
 
 /// A party names its organization twice (issue 456). `organization_name` is the
 /// organization's head, one name for every tender it appears on; `mention_name` is
-/// what THIS notice called the party. The resolver binds a mention by its identifier
-/// before its name, so a notice that put another organization's number on a party
-/// reads, through the head, as that other organization — and `mention_name` is then
-/// the only place the notice's own word survives. It is served whether or not it
-/// equals the head: a null standing for "same as the head" would make every reader
-/// infer the published name from an absence. Null means the notice published none.
+/// what the party's anchoring notice called it — the version's own notice, or an
+/// earlier one when a later notice republished no party in that role. The resolver
+/// binds a mention by its identifier before its name, so a notice that put another
+/// organization's number on a party reads, through the head, as that other
+/// organization — and `mention_name` is then the only place the notice's own word
+/// survives. It is served whether or not it equals the head: a null standing for
+/// "same as the head" would make every reader infer the published name from an
+/// absence. Null means the anchoring notice published none.
 fn party(p: &PartyRow) -> Value {
     json!({
         "lot": p.lot_key,
@@ -336,8 +338,11 @@ fn party(p: &PartyRow) -> Value {
 
 /// A winner: the organization only. Its row carries no mention anchor, so there is
 /// no published name to serve beside the head — and no key, rather than a null that
-/// reads as "the notice named none". The winner's published name is on its
-/// `parties[]` entry.
+/// reads as "the notice named none". The winner's published name is on a `parties[]`
+/// entry only while the version's parties still come from that round's notice:
+/// parties are replaced per role by each newer notice and rounds accumulate, so an
+/// earlier round's winner can have no party entry at all (review D2). Its name is
+/// then in `organization_mentions` under the round's `notice_id`.
 fn winner(o: &ResultOrgRow) -> Value {
     json!({
         "role": o.role,
