@@ -149,6 +149,25 @@ impl Db {
         Ok(out)
     }
 
+    /// When the newest `ok` run of any of `kinds` finished, or `None` if the log
+    /// holds none — asked of the WHOLE log, through the reader pool like
+    /// [`Db::recent_job_runs`]. Issue 461: the freshness clock used to be picked
+    /// out of that newest-100 window, where a busy day of other kinds buried the
+    /// last ingest and "not in the window" read as "never happened". The log has
+    /// only its primary key and a few thousand rows, never deleted from, so the
+    /// scan is trivial.
+    pub async fn last_ok_run_finished(&self, kinds: &[&str]) -> turso::Result<Option<i64>> {
+        let conn = self.reader().await?;
+        let sql = format!(
+            "SELECT max(finished_at) FROM job_log WHERE outcome = 'ok' AND kind IN ({})",
+            crate::canonical::placeholders(kinds.len())
+        );
+        let params: Vec<Value> = kinds.iter().map(|k| t(*k)).collect();
+        let mut rows = conn.query(&sql, params).await?;
+        let Some(row) = rows.next().await? else { return Ok(None) };
+        Ok(opt_int_of(&row, 0))
+    }
+
     /// The highest Supervisor job id this log has ever recorded, or `None` if the
     /// log is empty or predates the `job_id` column.
     ///
@@ -450,6 +469,34 @@ mod tests {
 
         // The limit is honoured.
         assert_eq!(db.recent_job_runs(1).await.unwrap().len(), 1);
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 461: the newest ok run of the named kinds comes from the whole log —
+    /// errors and other kinds never count, and no number of newer runs buries it.
+    #[tokio::test]
+    async fn the_last_ok_run_of_named_kinds_is_read_from_the_whole_log() {
+        let path = format!("/tmp/tender-db-joblog-last-ok-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        let ingest = ["probe", "process"];
+
+        assert_eq!(db.last_ok_run_finished(&ingest).await.unwrap(), None, "an empty log");
+
+        db.record_job_run(1, "probe", "ted daily", 90, 100, "ok", "").await.unwrap();
+        db.record_job_run(2, "process", "ted daily", 100, 150, "ok", "").await.unwrap();
+        db.record_job_run(3, "process", "ted daily", 150, 200, "error", "db: locked").await.unwrap();
+        for id in 4..=104 {
+            db.record_job_run(id, "fetch", "ted daily", 200 + id, 201 + id, "ok", "").await.unwrap();
+        }
+        assert_eq!(
+            db.last_ok_run_finished(&ingest).await.unwrap(),
+            Some(150),
+            "the newest OK ingest, under an error and 101 newer runs of another kind"
+        );
+        assert_eq!(db.last_ok_run_finished(&["probe"]).await.unwrap(), Some(100), "only the named kinds");
+        assert_eq!(db.last_ok_run_finished(&["reindex"]).await.unwrap(), None, "a kind never run");
 
         let _ = std::fs::remove_file(&path);
     }

@@ -25,11 +25,11 @@ use serde_json::{Value, json};
 
 use super::{AppState, rev};
 
-/// Ingest is stale when no job has succeeded in this long. TED publishes its
-/// daily package by 09:30 CET on weekdays and the DÖE + projection legs of the
-/// scheduler run every day, so a healthy box records a successful run at least
-/// daily; 26h gives the 09:35 run its window plus slack before we alarm, and
-/// carries a Friday success across the weekend without a false alert.
+/// Ingest is stale when no ingest run ([`INGEST_KINDS`]) has succeeded in this
+/// long. TED publishes its daily package by 09:30 CET on weekdays and the DÖE
+/// leg of the scheduler runs every day, so a healthy box records a successful
+/// run at least daily; 26h gives the 09:35 run its window plus slack before we
+/// alarm, and carries a Friday success across the weekend without a false alert.
 const INGEST_STALE_SECS: i64 = 26 * 3_600;
 
 /// Disk is unhealthy once this fraction of the DB volume is in use. The parsed
@@ -45,10 +45,13 @@ const DISK_FULL_FRACTION: f64 = 0.90;
 /// observer's cadence so ordinary jitter never trips it.
 const LAYER_STALE_SECS: i64 = 6 * 3_600;
 
-/// How far back to scan the job log for the newest success. A failure run longer
-/// than this would bury the last success — but that is itself caught by the
-/// last-job check, which flips unhealthy the moment the newest run errors.
-/// Shared with `/metrics`, whose per-kind last-run gauges read the same window.
+/// How many of the newest runs to read for the last-job check (which needs only
+/// the newest) and `/metrics`' per-kind last-run gauges. NOT the freshness clock:
+/// it used to be picked out of this window, and a window is no answer to "when did
+/// an ingest last succeed" — on 2026-10-01 these 100 rows spanned ~28 h, so a
+/// busy day of successful non-ingest runs pushed the last ingest out of it, which
+/// read as "never" and so as fresh (issue 461). [`ingest_last_success`] asks the
+/// whole log instead.
 pub(super) const JOB_SCAN: i64 = 100;
 
 /// The job kinds whose success proves data is still ARRIVING. `ingest_freshness`
@@ -83,19 +86,23 @@ pub async fn deep(State(state): State<AppState>) -> Response {
     //    touch. The old `Some(current_cursor())` was an in-memory read that can
     //    never fail, which made this check vacuous (issue 213) — its `unhealthy`
     //    branch in `assess` was unreachable.
+    //
+    //    The freshness clock is a second reader-pool read, so it answers for the
+    //    database too: either failing means the pool could not serve a read.
     let runs_result = state.db.recent_job_runs(JOB_SCAN).await;
-    let db_answered = runs_result.is_ok();
+    let success_result = ingest_last_success(&state.db).await;
+    let db_answered = runs_result.is_ok() && success_result.is_ok();
     let runs = runs_result.unwrap_or_default();
 
     // The last-known cursor, reported only when the DB actually answered, so the
     // `database` verdict flips unhealthy (cursor `None`) exactly when the read failed.
     let cursor = db_answered.then(|| state.db.current_cursor());
 
-    // 2. Ingest freshness and the last job's outcome, from that same reader-pooled
-    //    log read (issue 20). Freshness counts only the daily-pipeline kinds
+    // 2. Ingest freshness and the last job's outcome, from those reader-pooled
+    //    log reads (issue 20). Freshness counts only the daily-pipeline kinds
     //    (`INGEST_KINDS`), so a maintenance job cannot mask a stalled ingest; the
     //    last-job check below is any-kind on purpose (it reports the newest run).
-    let last_success = ingest_last_success(&runs);
+    let last_success = success_result.unwrap_or_default();
     let last_job = runs.into_iter().next();
 
     // 3. Disk on the volume holding the database file.
@@ -115,13 +122,13 @@ pub async fn deep(State(state): State<AppState>) -> Response {
     (status, Json(body)).into_response()
 }
 
-/// When the newest SUCCESSFUL daily-pipeline run finished — the freshness clock.
-/// Filters to [`INGEST_KINDS`] so a maintenance job's success cannot reset it and
-/// hide a stalled ingest. `runs` is newest-first, so the first match is the newest.
-pub(super) fn ingest_last_success(runs: &[JobRun]) -> Option<i64> {
-    runs.iter()
-        .find(|r| r.outcome == "ok" && INGEST_KINDS.contains(&r.kind.as_str()))
-        .map(|r| r.finished_at)
+/// When the newest SUCCESSFUL daily-pipeline run finished — the freshness clock,
+/// or `None` if the log holds no such run at all. Filters to [`INGEST_KINDS`] so a
+/// maintenance job's success cannot reset it and hide a stalled ingest, and asks
+/// the whole log rather than the [`JOB_SCAN`] window (issue 461). Shared with
+/// `/metrics`' `tender_db_ingest_last_success_timestamp_seconds`.
+pub(super) async fn ingest_last_success(db: &store::Db) -> store::turso::Result<Option<i64>> {
+    db.last_ok_run_finished(&INGEST_KINDS).await
 }
 
 /// The raw inputs the verdict is computed from — gathered by [`deep`] (all the
@@ -131,7 +138,8 @@ struct Signals {
     now: i64,
     /// The latest change cursor, or `None` if the database did not answer.
     cursor: Option<i64>,
-    /// When the newest successful run finished, or `None` if none ever has.
+    /// When the newest successful INGEST run ([`INGEST_KINDS`]) finished, or
+    /// `None` if none ever has — the whole log, not a window (issue 461).
     last_success: Option<i64>,
     /// The newest finished run, whatever its outcome — `None` on a fresh box.
     last_job: Option<JobRun>,
@@ -155,12 +163,20 @@ pub(crate) struct Disk {
 /// Turn the raw signals into an overall verdict plus the per-check JSON. A
 /// missing signal never alarms: a fresh box with no runs yet, or a filesystem
 /// whose stats could not be read, is reported healthy-but-unmeasured rather than
-/// paging the operator over its own absence.
+/// paging the operator over its own absence. A log that holds runs but no ok
+/// ingest is NOT a missing signal — it is the stalest reading there is.
 fn assess(s: &Signals) -> (bool, Value) {
     let db_ok = s.cursor.is_some();
 
     let age = s.last_success.map(|t| s.now - t);
-    let fresh_ok = age.is_none_or(|age| age <= INGEST_STALE_SECS);
+    // Issue 461: `None` is "no ok ingest in the whole log". Only an empty log makes
+    // that a fresh box. A box where an operator ran maintenance before the first
+    // daily reads stale until the daily lands, which is true.
+    let fresh_ok = match (age, &s.last_job) {
+        (Some(age), _) => age <= INGEST_STALE_SECS,
+        (None, None) => true,     // empty log: a fresh box, unmeasured
+        (None, Some(_)) => false, // runs, but no ok ingest ever: stale
+    };
 
     let last_ok = s.last_job.as_ref().is_none_or(|r| r.outcome != "error");
 
@@ -366,62 +382,53 @@ mod tests {
     /// Ingest freshness must track the last DAILY-PIPELINE success, not any job —
     /// else a maintenance job (a manual `reindex`, as on 2026-08-16) resets the
     /// clock and reports the box fresh while the ingest has actually stalled.
-    #[test]
-    fn a_maintenance_success_does_not_reset_ingest_freshness() {
-        let job = |kind: &str, outcome: &str, finished_at: i64| JobRun {
-            id: 1,
-            job_id: None,
-            kind: kind.into(),
-            params: String::new(),
-            started_at: finished_at - 10,
-            finished_at,
-            outcome: outcome.into(),
-            counts: String::new(),
+    #[tokio::test]
+    async fn a_maintenance_success_does_not_reset_ingest_freshness() {
+        let path = format!("/tmp/tender-db-health-kinds-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = store::Db::open(&path).await.unwrap();
+        let log = async |kind: &str, outcome: &str, finished_at: i64| {
+            db.record_job_run(finished_at, kind, "", finished_at - 10, finished_at, outcome, "").await.unwrap();
         };
-        // Newest-first: a reindex just succeeded, but the last real ingest was earlier.
-        let runs = vec![
-            job("reindex", "ok", 2_000),
-            job("reprocess", "ok", 1_800),
-            job("process", "ok", 1_000),
-            job("probe", "ok", 900),
-        ];
-        assert_eq!(
-            ingest_last_success(&runs),
-            Some(1_000),
-            "freshness is the last ingest run, not the newer maintenance one"
-        );
 
-        // Only maintenance in the window → None: unmeasured, never a false green.
-        assert_eq!(
-            ingest_last_success(&[job("reindex", "ok", 2_000), job("reprocess", "ok", 1_800)]),
-            None
-        );
-
-        // A failed ingest does not count; the prior successful ingest does.
-        assert_eq!(
-            ingest_last_success(&[job("process", "error", 2_000), job("probe", "ok", 1_500)]),
-            Some(1_500)
-        );
+        // Only maintenance in the log → None, which `assess` reads as stale once
+        // runs exist (issue 461), never as fresh.
+        log("reindex", "ok", 100).await;
+        log("reprocess", "ok", 110).await;
+        assert_eq!(ingest_last_success(&db).await.unwrap(), None);
 
         // The refold pair must NOT count. Every maintenance refold enqueues a
         // `project` alongside it, so counting `project` handed the masking back:
         // an hour of refolds reported freshness while nothing had been fetched for
         // a day. A projection folds what is already stored — it says nothing about
         // whether data is still arriving.
+        log("refold", "ok", 120).await;
+        log("project", "ok", 130).await;
         assert_eq!(
-            ingest_last_success(&[
-                job("project", "ok", 2_000),
-                job("refold", "ok", 1_990),
-                job("probe", "ok", 1_000),
-            ]),
-            Some(1_000),
-            "a refold's paired project is maintenance, not evidence of arrival"
-        );
-        assert_eq!(
-            ingest_last_success(&[job("project", "ok", 2_000), job("refold", "ok", 1_990)]),
+            ingest_last_success(&db).await.unwrap(),
             None,
-            "a window holding only the refold pair is unmeasured, never fresh"
+            "a log holding only maintenance and the refold pair has no ingest clock"
         );
+
+        // A failed ingest does not count; the prior successful ingest does.
+        log("probe", "ok", 140).await;
+        log("process", "error", 150).await;
+        assert_eq!(ingest_last_success(&db).await.unwrap(), Some(140));
+
+        // A reindex and a refold pair just succeeded, but the last real ingest was earlier.
+        log("reindex", "ok", 160).await;
+        log("refold", "ok", 170).await;
+        log("project", "ok", 180).await;
+        assert_eq!(
+            ingest_last_success(&db).await.unwrap(),
+            Some(140),
+            "freshness is the last ingest run, not the newer maintenance one"
+        );
+
+        log("process", "ok", 190).await;
+        assert_eq!(ingest_last_success(&db).await.unwrap(), Some(190));
+
+        let _ = std::fs::remove_file(&path);
     }
 
     /// A table that held rows and is now empty must flip the probe unhealthy —
@@ -517,6 +524,17 @@ mod tests {
         assert!(ok, "no scheduled run has fired yet — not a failure");
         assert_eq!(checks["ingest_freshness"]["last_success_at"], Value::Null);
         assert_eq!(checks["last_job"]["outcome"], Value::Null);
+    }
+
+    /// Issue 461: `None` with runs in the log is not missing evidence. The whole
+    /// log was asked and holds no ok ingest, which is the stalest reading there
+    /// is — only an empty log is the fresh box the exemption above is for.
+    #[test]
+    fn runs_without_an_ingest_are_stale_not_unmeasured() {
+        let (ok, checks) = assess(&Signals { last_success: None, ..healthy() });
+        assert!(!ok, "runs, but no ok ingest ever: stale, not unmeasured");
+        assert_eq!(checks["ingest_freshness"]["ok"], false);
+        assert_eq!(checks["ingest_freshness"]["last_success_at"], Value::Null);
     }
 
     #[test]

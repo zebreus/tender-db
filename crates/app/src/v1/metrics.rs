@@ -5,10 +5,12 @@
 //! import lag), the reader-pooled job-log window `/health/deep` also reads, the
 //! disk stats, `/proc/self/status` RSS, the in-memory change cursor, and the
 //! SSE stream count. The scrape must never become the load it exists to
-//! observe: no table-proportional scan runs on this path — a gauge whose
-//! source would need one reads the dashboard cache instead, and is simply
-//! absent while that cache is still measuring (a scraper sees the gauge appear
-//! when the first measurement lands; absence is honest, a made-up zero is not).
+//! observe: no table-proportional scan runs on this path (the one exception is
+//! the freshness clock, a `max()` over the few-thousand-row `job_log` that
+//! `/health/deep` reads too, issue 461) — a gauge whose source would need one
+//! reads the dashboard cache instead, and is simply absent while that cache is
+//! still measuring (a scraper sees the gauge appear when the first measurement
+//! lands; absence is honest, a made-up zero is not).
 //!
 //! The exposition format is hand-rolled: it is `name{label="v"} value` lines
 //! plus `# HELP`/`# TYPE` headers, and a metrics crate for that would be
@@ -244,11 +246,6 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
         }
     }
 
-    // The job log — the same bounded reader-pool window `/health/deep` reads
-    // (newest `JOB_SCAN` runs), reduced to the newest run per kind. Durations
-    // and finish stamps per kind are the "watch a number trend" series the
-    // issue was opened for (a slowing daily `process` shows up here long
-    // before it misses the freshness threshold).
     // Per-era data-quality gauges (issue 266), from the stored headline
     // history (issue 265) — a point lookup on the reports table, never a
     // measurement: the weekly run pays the scan, the scrape reads its result.
@@ -328,15 +325,24 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
         }
     }
 
+    // The freshness clock `/health/deep` judges, from the whole job log (issue
+    // 461): picked out of the window below, it vanished whenever a busy day of
+    // other kinds pushed the last ingest out of it.
+    if let Ok(Some(at)) = health::ingest_last_success(&state.db).await {
+        header(
+            &mut out,
+            "tender_db_ingest_last_success_timestamp_seconds",
+            "When the newest successful ingest run (probe/process) finished.",
+        );
+        sample(&mut out, "tender_db_ingest_last_success_timestamp_seconds", &[], at as f64);
+    }
+
+    // The job log — the same bounded reader-pool window `/health/deep` reads
+    // (newest `JOB_SCAN` runs), reduced to the newest run per kind. Durations
+    // and finish stamps per kind are the "watch a number trend" series the
+    // issue was opened for (a slowing daily `process` shows up here long
+    // before it misses the freshness threshold).
     if let Ok(runs) = state.db.recent_job_runs(health::JOB_SCAN).await {
-        if let Some(at) = health::ingest_last_success(&runs) {
-            header(
-                &mut out,
-                "tender_db_ingest_last_success_timestamp_seconds",
-                "When the newest successful daily-pipeline run (probe/process/project) finished.",
-            );
-            sample(&mut out, "tender_db_ingest_last_success_timestamp_seconds", &[], at as f64);
-        }
         emit_job_gauges(&mut out, &runs);
     }
 

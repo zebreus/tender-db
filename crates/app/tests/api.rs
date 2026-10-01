@@ -415,6 +415,48 @@ async fn the_deep_health_probe_reports_operational_health() {
     assert_eq!(errored["checks"]["last_job"]["ok"], Value::Bool(false));
 }
 
+/// Issue 461: the freshness clock asks the WHOLE job log, not the newest-100 window
+/// the last-job check reads. On 2026-10-01 that window spanned ~28 h, so a busy day
+/// of other kinds (an org campaign, censuses, refolds) could push the last ok ingest
+/// out of it — and "not in the window" read as "never", which counted as fresh: a
+/// stalled daily answered 200, and a watcher that had already opened its `uptime`
+/// issue would close it as recovered with nothing ingested.
+#[tokio::test]
+async fn a_window_full_of_other_runs_does_not_hide_a_stale_ingest() {
+    for (case, ago) in [("stale", 27 * 3_600), ("fresh", 3_600)] {
+        let server = Server::start(&format!("deep-health-buried-{case}")).await;
+        let now = store::now_unix();
+        let probed = now - ago;
+        server.db.record_job_run(1, "probe", "ted daily", probed - 10, probed, "ok", "1 package").await.unwrap();
+        // More successful non-ingest runs than the window holds, every one newer.
+        for i in 0..101 {
+            let at = probed + 10 * (i + 1);
+            server.db.record_job_run(2 + i, "fetch", "ted daily", at - 5, at, "ok", "0 packages").await.unwrap();
+        }
+
+        let (status, deep) = server.get_with_status("/health/deep").await;
+        assert_verdict_is_the_conjunction(status, &deep, case);
+        let fresh = &deep["checks"]["ingest_freshness"];
+        assert_eq!(fresh["last_success_at"], Value::from(probed), "{case}: the buried probe is the clock: {deep}");
+        assert!(fresh["age_secs"].as_i64().is_some_and(|age| age >= ago), "{case}: its real age: {deep}");
+        assert_eq!(deep["checks"]["last_job"]["ok"], Value::Bool(true), "{case}: the newest run is an ok fetch");
+        if case == "stale" {
+            assert_eq!(fresh["ok"], Value::Bool(false), "27 h without an ingest is stale: {deep}");
+            assert_eq!(status, 503, "stale ingest — unhealthy regardless of the host: {deep}");
+        } else {
+            assert_eq!(fresh["ok"], Value::Bool(true), "1 h since an ingest is fresh: {deep}");
+        }
+
+        // `/metrics` reads the same clock, so its gauge is present in both cases.
+        let body = server.http.get(format!("{}/metrics", server.base)).send().await.expect("request")
+            .text().await.expect("body");
+        assert!(
+            body.contains(&format!("tender_db_ingest_last_success_timestamp_seconds {probed}\n")),
+            "{case}: the gauge carries the buried probe:\n{body}"
+        );
+    }
+}
+
 /// `/metrics` (issue 53) exposes the operational levels in Prometheus text
 /// form. What is asserted here is the *contract a scraper depends on*: the
 /// content type, that a gauge carries its HELP/TYPE headers, that the job log

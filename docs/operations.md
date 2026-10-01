@@ -751,7 +751,7 @@ down). The watcher today is a Claude scheduled routine polling every ~4 h — se
 | Endpoint | Cost | Answers | Used by |
 | --- | --- | --- | --- |
 | `GET /health` | no DB access, always fast | process is up + serving HTTP — liveness only, does **not** query the DB (`{"ok":true,…}`) | `deploy.sh`'s post-deploy check |
-| `GET /health/deep` | one job-log scan (also the DB-answer read) + one `statvfs` | liveness **plus** a real DB-answer check, ingest freshness, last-job outcome and disk usage | the external watcher routine |
+| `GET /health/deep` | two job-log reads (also the DB-answer read) + one `statvfs` | liveness **plus** a real DB-answer check, ingest freshness, last-job outcome and disk usage | the external watcher routine |
 
 (A third endpoint, [`GET /metrics`](#get-metrics--the-prometheus-scrape-issue-53),
 serves the same signals as *time series* for trend-watching rather than as a
@@ -765,15 +765,19 @@ build. **Do not widen it** — `deploy.sh` greps its `ok:true`.
 verdict, so a single external check covers uptime, freshness, job failures and
 disk:
 
-- **database** — a real reader-pool read: the job-log scan below serves over WAL
-  (issue 20), so its success is the "the database answered" signal and an error
+- **database** — a real reader-pool read: the job-log reads below serve over WAL
+  (issue 20), so their success is the "the database answered" signal and an error
   flips this check unhealthy. `/health` itself is liveness-only and does not touch
   the DB (issue 61/213).
-- **ingest_freshness** — unhealthy when no job has succeeded in **26 h**
-  (`INGEST_STALE_SECS`). The scheduler lands a successful run at least daily
-  (TED Mon–Fri, DÖE + FTS + projection every day), and 26 h carries a Friday success
-  across the weekend. A box that has *never* run a job (fresh deploy, scheduler
-  not yet fired) is reported healthy-but-unmeasured, not alarmed.
+- **ingest_freshness** — unhealthy when no `probe` or `process` has succeeded in
+  **26 h** (`INGEST_STALE_SECS`); maintenance kinds (`project`, `refold`, `reindex`,
+  …) never reset the clock. The scheduler lands a successful ingest at least daily
+  (TED Mon–Fri, DÖE + FTS every day), and 26 h carries a Friday success across the
+  weekend. The clock is read from the whole `job_log`, not the newest-100 window the
+  last-job check reads (issue 461: a busy day of other kinds used to push the last
+  ingest out of that window, and "not in the window" read as fresh). Only a box
+  whose log is *empty* (fresh deploy, scheduler not yet fired) is reported
+  healthy-but-unmeasured; a log that holds runs but no ok ingest is stale.
 - **last_job** — unhealthy when the newest finished run in `job_log` has
   `outcome = "error"` (a Supervisor job ERRORED). Clears itself on the next
   success.
@@ -824,7 +828,9 @@ bounded job-log window `/health/deep` reads) or a read of the **dashboard's
 breakdown, import lag). No table-proportional scan runs on this path — that rule
 is what keeps a 15-second scrape interval from becoming the load it exists to
 observe, and it is the same discipline `coverage.rs` applies to its own heavy
-sections.
+sections. The one exception is the freshness clock, a `max()` over `job_log`
+(issue 461): that table has only its primary key, but it holds a few thousand
+rows and grows by tens a day, and the bounded window lost the clock on busy days.
 
 **A gauge nobody has measured yet is ABSENT, never zero.** On a fresh box, or
 while the dashboard's heavy sections are still gated behind a running write job,
@@ -840,7 +846,7 @@ because nothing here accumulates in-process):
 | `tender_db_change_cursor`, `tender_db_sse_streams`, `tender_db_rss_bytes` | in-process, O(1) |
 | `tender_db_disk_{used_fraction,free_bytes,total_bytes}`, `tender_db_wal_bytes` | one `statvfs` + the `-wal` stat (same as `/health/deep`) |
 | `tender_db_job_last_{duration_seconds,finished_timestamp_seconds,ok}{kind=…}` | newest run per kind in the bounded job-log window |
-| `tender_db_ingest_last_success_timestamp_seconds`, `tender_db_ingest_{fetch,notice}_age_seconds` | the freshness clock (`probe`/`process`/`project` only) + import lag |
+| `tender_db_ingest_last_success_timestamp_seconds`, `tender_db_ingest_{fetch,notice}_age_seconds` | the freshness clock (`probe`/`process` only, from the whole job log) + import lag |
 | `tender_db_canonical_rows{table=…}`, `tender_db_quarantine_*` | dashboard cache (absent until measured) |
 | `tender_db_legacy_adjacency_watermark` | one-row point read on the reader pool |
 
@@ -908,7 +914,9 @@ line, and while the session's push identity held it, no scheduled run fired in 1
 - **Freshness / job / disk logic** is unit-tested against crafted signals
   (`crates/app/src/v1/health.rs` `#[cfg(test)]`) and end-to-end
   (`crates/app/tests/api.rs::the_deep_health_probe_reports_operational_health`:
-  a fresh box is 200, a recorded `error` run flips it to 503).
+  a fresh box is 200, a recorded `error` run flips it to 503;
+  `a_window_full_of_other_runs_does_not_hide_a_stale_ingest`: a 27 h old `probe`
+  under 101 newer ok runs of another kind is still the clock, and still 503).
 - **The live alert path** (the acceptance drill, run *after* a deploy, in a
   quiet window with no backfill in flight): `systemctl stop tender-db` on the
   box, confirm the watcher routine alerts on its next poll (within ~4 h), then
