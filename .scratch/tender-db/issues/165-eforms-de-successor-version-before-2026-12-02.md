@@ -1,6 +1,7 @@
 # 165 — vendor the eForms-DE successor (2.2/3.0) before 2026-12-02
 
-Status: WATCH AUTOMATED 2026-08-21 (owner) — neither trigger has fired, and the "watch the repo"
+Status: needs-info — waits on the eForms-DE successor's release. Signal: the daily `tender-db-driftwatch` run (06:41 box-local, CEST) logs `WARN drift: SDK-eforms-de released <tag> — BEYOND the vendored 1.14.x line` and fails the unit; whichever comes first, a quarantined notice with an unknown eForms-DE CustomizationID is the same signal. When it lands: not scheduled, the day KoSIT publishes the 2.2/3.0 release. The 2.1 acceptance window it replaces ends 2026-12-02. Read 2026-10-01: `ok drift: newest SDK-eforms-de release is 1.14.4 (vendored line 1.14.x)`, last run 2026-10-01 06:41 CEST. Steps 1–3 below start when it fires.
+Was status: WATCH AUTOMATED 2026-08-21 (owner) — neither trigger has fired, and the "watch the repo"
 half is now a machine's job: `tender-db-driftwatch`, a daily detection-only timer beside the
 disk/job watches (ops/watchdogs/), probes the public SDK-eforms-de release feed and goes loud
 (journal WARN + `systemctl --failed`) the day a release lands beyond the vendored 1.14.x line.
@@ -35,6 +36,14 @@ ahead of that:
 
 Trigger to act: first quarantined notice with an unknown eforms-de
 customization, or the KoSIT release announcement — whichever comes first.
+
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click "journalctl -u tender-db-driftwatch.service --since -3d -o cat --no-pager | grep -E '^(ok|WARN|ERROR) drift' | tail -1"
+
+- **done** (the signal landed: set ready-for-agent and start step 1): `WARN drift: SDK-eforms-de released <tag> — BEYOND the vendored 1.14.x line.`
+- **open** (still waiting): an `ok drift: …` line (read 2026-10-01 13:2x UTC: `ok drift: newest SDK-eforms-de release is 1.14.4 (vendored line 1.14.x)`; once issue 459's driftwatch change is installed it reads `ok drift: no SDK-eforms-de release beyond the vendored 1.14.x line (N releases read, highest …)`)
+- Neither: an `ERROR drift: … UNWATCHED` line, or no line in three days, means the watch itself is broken (issue 459), not that upstream is quiet.
 
 ---
 

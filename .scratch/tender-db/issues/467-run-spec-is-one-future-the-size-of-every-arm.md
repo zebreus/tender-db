@@ -20,7 +20,7 @@ Read 2026-10-01 at `3994975`:
   ~490 KB, a quarter of a test thread's stack" (:3234), and "24 KB from the stack limit" (342:133).
 
 **Where it fails: in tests.** `#[tokio::test]` (tokio-macros 2.7.1, `entry.rs:526–547`) pins the test body on the test
-thread's stack, and 49 tests await `sup.run_spec(...)` inline. The test that fails is always
+thread's stack, and 17 tests await `sup.run_spec(...)` inline, at 49 call sites. The test that fails is always
 `an_execute_without_an_expected_count_is_refused` (:15361), a short test of the `MarkSkippedSiblings` refusal. It aborts
 with `stack overflow` (SIGABRT) and does not name the arm that grew.
 
@@ -36,7 +36,8 @@ API on 2026-10-01, because the local clone is shallow (61 commits):
 | 09-27 | `0797820` | 432's `repair-provisional-name-norm` | the arm's own `Box::pin` was not enough; boxed the store future inside it (:8730–8736, 432:113–114) |
 | 09-27 | `94d2346` | the fold (434's mention refresh) | moved the arm into `run_project` behind `Box::pin` (:3655, :4060–4064) |
 
-Three more commits box their arm in advance and cite the note: `75db3bf` (355), `af8d192` (395) and `b434845` (448).
+Three more commits box their arm in advance: `75db3bf` (355) and `b434845` (448), whose messages cite the note, and
+`af8d192` (395).
 In all, 31 commits to `supervisor.rs` since 2026-09-01 add a `Box::pin` line.
 
 CLAUDE.md's remedy, "wrap a big arm's body in `Box::pin`", is not enough, and `b6750d5` and `0797820` show why.
@@ -57,9 +58,10 @@ a gauge, so that growth is caught where it happens, and a split that removes the
 1. **Tripwire (first unit).** Add `run_spec_futures_stay_inside_their_size_budgets` to `supervisor.rs`'s tests.
    - It builds `sup.run_spec(&job(..))` without polling it and asserts `std::mem::size_of_val` against a named const
      budget. One async fn has one future type, so any `Spec` gives the same number.
-   - It checks each future that `run_spec` boxes at its call site in the same way. Today there are eight:
+   - It checks each future that `run_spec` boxes at its call site in the same way. Today there are ten:
      `run_fetch`, `run_fetch_fts`, `run_rehash_probe`, `run_probe_fts`, `run_project`, `run_sweep_orphan_orgs`,
-     `run_analyze` and `run_repair_member_twins`. Each of these is also built on the stack before `Box::pin` moves it.
+     `run_analyze`, `run_repair_member_twins`, `refuse_without_org_fk_indexes` (seven sites, :5309–8717) and the
+     store's `repair_provisional_name_norm` (:8736). Each of these is also built on the stack before `Box::pin` moves it.
    - The assertion message names the future, its size, its budget and the remedy.
    - Take the first measurement in the gate's profile (`ops/check.sh`) and record it here. Set each budget at that
      number plus a small headroom, so that a growing arm fails, by name, at the commit that grew it.
@@ -82,5 +84,5 @@ a gauge, so that growth is caught where it happens, and a split that removes the
 
 - **open** (2026-10-01, at `3994975`): `6744` and `0`. `run_spec` is the whole match, and no tripwire exists.
 - **after the first unit:** `6744` and `1`.
-- **done:** a number under `400` (84 dispatch arms of one to three lines each) and `1`. If the split moves `run_spec`
+- **done**: a number under `400` (84 dispatch arms of one to three lines each) and `1`. If the split moves `run_spec`
   to another file, point the awk at that file.

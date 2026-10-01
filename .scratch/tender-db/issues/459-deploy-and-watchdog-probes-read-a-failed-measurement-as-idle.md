@@ -47,7 +47,7 @@ probe gets a 404.
 - deploy.sh's jq expression, run on that 403 body, prints an empty line, so `BUSY` is empty.
 
 Driftwatch's exit 0 was a deliberate choice: "a flaky mirror must not sit in `systemctl --failed` masking a REAL
-drift alarm" (`:17-20`). The record does not support it. The journal holds 42 runs since 2026-08-21, all
+drift alarm" (`:17-20`). The record does not support it. The box's journal (read 2026-10-01) holds 42 runs since 2026-08-21, all
 `ok drift`, and 0 `WARN drift` lines.
 
 The repo already has the right shape. `tender-db-diskwatch.sh:24` reads `${used:-100}`, so a `df` that returns
@@ -77,9 +77,10 @@ gates the install on this harness (`:30-37`, issue 373), so a fail-open script g
   downstream catches it, because `nix/package.nix:60` and `:86` set `doCheck = false`.
 - **The other direction costs every deploy.** Any commit moves HEAD off the marker, and most commits on this board
   touch only `.scratch/`: 16 of the last 20 at `9b44528`. So the operator judges by eye that "only `.scratch/`
-  changed" and deploys with `SKIP_TESTS=1`. The handover makes this the rule (`HANDOVER-2026-10-01.md:86-87`). Both
-  of 2026-10-01's restarts did it: the 426 deploy at `500da94` (07:49 UTC) and the 455 deploy at `f40d5e5` (10:04
-  UTC). 455's record shows the manual `git diff --stat 9551a23 HEAD -- . ':!.scratch'`. When a judgement by eye
+  changed" and deploys with `SKIP_TESTS=1`. The handover makes this the rule (`HANDOVER-2026-10-01.md:86-87`). All
+  three of 2026-10-01's restarts did it: the 426 deploy at `500da94` (07:49 UTC), the 455 deploy at `f40d5e5` (10:04
+  UTC) and the 458 deploy at `9b44528` (11:50 UTC, whose gate wrote no marker because another agent's new issue file
+  left the tree dirty). 455's record shows the manual `git diff --stat 9551a23 HEAD -- . ':!.scratch'`. When a judgement by eye
   replaces a gate, the gate is permissive, and the script could make that same diff itself.
 
 ## Proposed fix
@@ -146,8 +147,9 @@ a failed one.
   
   Past the gate step there are only two ways forward: a marker whose tree equals `REV` outside `.scratch/`, or an
   explicit `SKIP_TESTS=1`. `./deploy.sh origin/main` is then gated on what it ships. A `.scratch/`-only commit after
-  a green gate deploys without `SKIP_TESTS=1`, which covers 426's. 455's also changed `.claude/settings.json`, so it
-  would still re-gate. Widen the exclusion only with a stated reason.
+  a green gate deploys without `SKIP_TESTS=1`, which covers 458's (`a90ea7b`..`9b44528` is empty outside
+  `.scratch/`). 426's changed `deploy.sh` and 455's `.claude/settings.json`, so both would still re-gate. Widen the
+  exclusion only with a stated reason.
 - The `.scratch/` exclusion is sound only while no build or test reads under `.scratch/`. A grep on 2026-10-01 found
   no `include_str!`/`include_bytes!` from it and no path literal into it under `crates/`.
 - **Pin.** Put the two predicates in one file that both scripts source (`ops/gate-marker.sh`: `marker_covers <rev>`
@@ -182,12 +184,14 @@ a failed one.
 This runs the repo copies of the three watchdog scripts against the public `/admin/jobs` with a wrong secret. That
 endpoint answers a JSON 403: no real secret, no data, GETs only. `TENDER_SNAP_DRY=1` stops the snapshot before it
 writes anything. The command reads units 1 (the snapshot, through the shared probe) and 3 (jobwatch and driftwatch),
-which is the last unit. Unit 2 has no free read; `ops/test-gate-marker.sh` is its pin.
+which is the last unit. Unit 2 has no free read; `ops/test-gate-marker.sh` is its pin. The command reads done since
+`89d7d27`; what keeps the issue open is the first real deploy (Status line), and prod's `/health` `rev` still read
+`9b44528` on 2026-10-01.
 
 - **open** (2026-10-01 11:48 UTC): `jobwatch=0 snapshot=0 driftwatch=0`. All three report idle, ok or a WARN on a
   measurement that failed.
-- **done**: all three non-zero (`jobwatch=1 snapshot=1 driftwatch=1` if the ERROR arms exit 1). After `install.sh`,
-  the `/usr/local/bin` copies hash the same as the repo's.
+- **done** (2026-10-01, repo copies at `e65d608`): `jobwatch=1 snapshot=1 driftwatch=1`, each on its `ERROR … HTTP
+  403` line.
 
 ## 2026-10-01 — built (units 1–3)
 

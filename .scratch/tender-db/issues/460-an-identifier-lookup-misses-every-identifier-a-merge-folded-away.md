@@ -102,5 +102,5 @@ Tests that pin it:
     curl -s 'https://tenders.zebreus.click/v1/organizations?identifier=GBPPONPWYP8439MZWY' | jq -c '[[.items[].id], .resolved_filters]'
 
 - **open** (2026-10-01 11:46 UTC): `[[],null]`. Sellafield's merged PPON finds nothing.
-- **done:** `[[5718658],{"identifier":{"asked":"GBPPONPWYP8439MZWY","merged_into":[5718658]}}]`. It finds the
+- **done**: `[[5718658],{"identifier":{"asked":"GBPPONPWYP8439MZWY","merged_into":[5718658]}}]`. It finds the
   survivor, and the page says it followed a merge.

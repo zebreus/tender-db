@@ -41,10 +41,10 @@ few×), measured; projection output unchanged (equivalence tests still pass).
 
 ## Verify
 
-    ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh '/admin/jobs?limit=200'" | python3 -c 'import sys,json; n=lambda s: int(s.split(" ")[0]) if s and s.split(" ")[0].isdigit() else 0; r=[j for j in json.load(sys.stdin)["recent"] if j["kind"]=="project" and n(j.get("counts") or "") >= 10000000]; print("job %d: %d min" % (r[0]["job_id"], (r[0]["finished_at"]-r[0]["started_at"])//60) if r else "no whole-corpus project in the last 200 jobs")'
+    ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh '/admin/jobs?limit=200'" | python3 -c 'import sys,json; n=lambda s: int(s.split(" ")[0]) if s and s.split(" ")[0].isdigit() else 0; r=[j for j in json.load(sys.stdin)["recent"] if j["kind"]=="project" and "rebuild=true" in (j.get("params") or "") and n(j.get("counts") or "") >= 10000000]; print("job %d: %d min" % (r[0]["job_id"], (r[0]["finished_at"]-r[0]["started_at"])//60) if r else "no whole-corpus rebuild (rebuild=true) in the last 200 jobs")'
 
-- **done** (absorbed holds): the newest whole-corpus projection completes in hours — `job 1387: 215 min` read 2026-09-19 (14.45M notices)
-- **open** (reopen with fresh numbers): a whole-corpus projection crawling for a day again — re-measure Phase-1 then, never from this record's 30 MB/s
+- **done** (absorbed holds): the newest whole-corpus rebuild completes in hours, or `no whole-corpus rebuild (rebuild=true) in the last 200 jobs` (read 2026-10-01: no `rebuild=true` projection in the 2,000 job rows back to 2026-08-17; the earlier `job 1387: 215 min` was an incremental, see the 2026-09-29 note)
+- **open** (reopen with fresh numbers): a whole-corpus rebuild crawling for a day again — re-measure Phase-1 then, never from this record's 30 MB/s
 
 ## RESOLUTION 2 (2026-07-24): superlinear plan-build inserts (12.4M scale)
 
@@ -136,7 +136,9 @@ to RSS — fits the 8GB box, and issue 59 freed the plan from RAM so there's roo
 
 **Read 2026-09-29 (board-verify): `job 1616: 442 min` — not a reopen.** 1616 is an INCREMENTAL projection
 (`rebuild=false`) after the full XML re-parse 1596. It rewrote 6,890,186 of 8,556,759 tenders (1,666,573 verified
-unchanged) and also did issue 434's 1,116,872 mention refreshes (943,695 re-bound). That is a different workload
-from the rebuild the 215-minute baseline (job 1387) measured. The Verify's filter picks any projection over ≥10M
-notices, which an incremental over the whole corpus also is. Read the job's `params` and `tenders written` before
-comparing minutes. A reopen needs a like-for-like rebuild past eight hours.
+unchanged) and also did issue 434's 1,116,872 mention refreshes (943,695 re-bound). The 215-minute baseline was
+no rebuild either: job 1387 is also an INCREMENTAL projection (`rebuild=false`: 2,830,901 of 8,521,457 tenders
+written, 5,690,556 verified unchanged; corrected 2026-10-01 from the job list, this note first called it "the
+rebuild"). So both numbers are incrementals of different sizes, and neither measures a whole-corpus rebuild. The
+Verify's filter picked any projection over ≥10M notices, which an incremental over the whole corpus also is; since
+2026-10-01 it also requires `rebuild=true` in the job's `params`. A reopen needs a rebuild past eight hours.

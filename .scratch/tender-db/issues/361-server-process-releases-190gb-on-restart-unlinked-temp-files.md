@@ -1,6 +1,7 @@
 # 361 — the running server held ~190 GB the filesystem showed as used; a restart released it
 
-Status: DETECTION BUILT 2026-09-06 16:xx UTC (owner) — the recipe now runs inside the process: `/metrics` gauges `tender_db_deleted_open_{files,bytes}` and the weekly `disk-census` fields `deleted_open_*` with a 1 GiB alarm, so next Sunday's walk measures the class without anyone at the keyboard; the creator hunt (step 2) still waits for a non-zero reading. Was: OBSERVED 2026-09-06 03:3x UTC — measured once, mechanism inferred, detection recipe in hand. Filed from the 359 fold night.
+Status: needs-info — waits on a non-zero unlinked-but-open reading, the input of step 2 (the creator hunt). Signal: the weekly `disk-census` job (Sundays 01:10 UTC; next 2026-10-04) reports `Unlinked-but-open files held by this process (issue 361)` above 0, with its alarm at 1 GiB; the `/metrics` gauge `tender_db_deleted_open_bytes` carries the same reading continuously. Read 2026-10-01: censuses 1339, 1497 and 1566 (2026-09-13, 09-20, 09-27) all read 0 (0.0 GiB), and both gauges read 0.
+Was status: DETECTION BUILT 2026-09-06 16:xx UTC (owner) — the recipe now runs inside the process: `/metrics` gauges `tender_db_deleted_open_{files,bytes}` and the weekly `disk-census` fields `deleted_open_*` with a 1 GiB alarm, so next Sunday's walk measures the class without anyone at the keyboard; the creator hunt (step 2) still waits for a non-zero reading. Was: OBSERVED 2026-09-06 03:3x UTC — measured once, mechanism inferred, detection recipe in hand. Filed from the 359 fold night.
 Kind: storage / operations (relates to 169's model and 337's leaked temp database)
 Relates to: 169 (storage lifecycle), 337 (turso temp database leak), 83 (service tmpdir), 269 (snapshot ring — ruled out as the cause)
 
@@ -55,6 +56,13 @@ It also means the census's "Database file" number understates what the service o
 2. If confirmed, find the creator: turso temp databases (337) are the prime suspect — the
    `.tmp*` dirs are theirs — and the fix is upstream lifecycle or an explicit close; a
    scheduled restart is the fallback, not the fix.
+
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh '/admin/jobs?limit=600'" | python3 -c 'import sys,json,re; r=[j for j in json.load(sys.stdin)["recent"] if j["kind"]=="disk-census"]; m=re.search(r"Unlinked-but-open[^)]*\)[^)]*\)", (r[0].get("counts") or "")) if r else None; print("job %d: %s" % (r[0]["job_id"], m.group(0) if m else "no unlinked-but-open clause") if r else "no disk-census in the last 600 jobs")'
+
+- **done** (the signal landed: set ready-for-agent and start step 2 from the census's `deleted_open_sample` paths): `job N: Unlinked-but-open files held by this process (issue 361): K (X GiB)` with K above 0
+- **open** (still waiting): `job N: Unlinked-but-open files held by this process (issue 361): 0 (0.0 GiB)` (read 2026-10-01 13:2x UTC: job 1566, the 2026-09-27 census)
 
 ## Probe 1 (2026-09-06 07:50 UTC): a 30 s census does not reproduce it
 

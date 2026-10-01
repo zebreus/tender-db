@@ -98,8 +98,9 @@ nothing guarantees that the deployed rev exists on GitHub. The box has run commi
    directly. Pin it with `the_source_offer_links_the_running_revision_on_the_public_repo` in `mod.rs`'s tests: the
    offer contains `rev()` under the GitHub prefix and never contains `/_source`. `deploy.sh` has to keep the link
    true. Before the build, it fetches `origin` and refuses a `REV` that no `origin` ref contains, and it names the
-   push to run (`git push origin HEAD:main`). Its existing `origin/main` guard at the top already fails closed in the
-   same way. Correct `docs/operations.md:1018-1021` in the same commit.
+   push to run (`git push origin HEAD:main`). Its existing `origin/main` guard at the top already refuses in the
+   same way (exit 1, naming the command to run; it is skipped when `origin/main` does not resolve). Correct
+   `docs/operations.md:1018-1021` in the same commit.
 
 Gate with `ops/check.sh`. The `v1` and `ledger` tests compile only under `--features server`, which the gate enables.
 
@@ -111,5 +112,5 @@ It prints one line for each false statement that is still served, with its count
 - **open** (2026-10-01 11:58 UTC, rev `9b44528`): three lines, `3 "fix":"issue 433","resolved":null` (the three
   ledger rows), `1 from the operator at https://tenders.zebreus.click/_source`, and `2 single consistent transaction`
   (`/docs` and the OpenAPI document).
-- **done:** no output. When a unit is fixed, its line disappears. At done, the first line of `/_source` names the
+- **done**: no output. When a unit is fixed, its line disappears. At done, the first line of `/_source` names the
   revision, and the page links `https://github.com/zebreus/tender-db/tree/<that revision>`, which answers 200.

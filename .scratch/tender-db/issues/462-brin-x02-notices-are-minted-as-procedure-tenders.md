@@ -2,7 +2,7 @@
 
 Status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the code: `kind_of` classifies by the BRIN class (X01 and X02), and an incremental fold corrects a stored `kind`, pinned by the X02 fixture; the scoped refold follows the deploy.
 Kind: defect (projection: Tender kind), a unit of closed issue 368 that was never built
-Relates to: 368 (Units item 3 and Done-when bullet 3; closed 2026-09-18 without them), CONTEXT.md:156 "BRIN notices
+Relates to: 368 (Units item 3 and Done-when bullet 3; closed 2026-09-18 without them), CONTEXT.md:156–157 "BRIN notices
 become minimal Tenders of a distinct kind", 237 (`refold-sections`, the index-backed cohort job)
 
 ## What is wrong

@@ -1,6 +1,6 @@
 # 465 — FTS tenders carry no contract nature and FTS notices no procedure type; the profile's 20 `owed:` paths have no issue
 
-Status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the parser: emit `mainProcurementCategory` as BT-23 (OCDS `goods` → eForms `supplies`) and `procurementMethodDetails` as BT-105-Procedure in `crates/ingest/src/fts/parse.rs`, pinned by a fixture test in `crates/ingest/tests/fts.rs`, then gate, deploy, and run one `fts:ocds-1.1` re-parse and fold after 342's last backfill chunk (jobs 1801–1809) has drained.
+Status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the parser: emit `mainProcurementCategory` as BT-23 (OCDS `goods` → eForms `supplies`) and `procurementMethodDetails` as BT-105-Procedure in `crates/ingest/src/fts/parse.rs`, pinned by a fixture test in `crates/ingest/tests/fts.rs`, then gate, deploy, and run one `fts:ocds-1.1` re-parse and fold after 342's last backfill chunk (jobs 1800–1809) has drained.
 Kind: coverage (ingest: the FTS profile `fts:ocds-1.1`, i.e. `crates/ingest/src/fts/parse.rs` and the ADR-0004 checklist `crates/ingest/src/fts/checklist.rs`)
 Relates to: 397 (contract nature as the cross-era `nature` classification; FTS is the source that never got it), 386 (unit 2b built the checklist and wrote the `owed:` list down, lines 489–506; done), 437 (the same re-parse-and-fold path, and the award-scope rule for award items), 342 (the FTS backfill the re-parse waits for), ADR-0004 (mapped-or-ignored)
 
@@ -27,9 +27,10 @@ accepts only `works`, `supplies` and `services`. OCDS publishes `goods` (fixture
 | tender 7956308, UK7 028961-2025 "Route optimisation software" (a fixture, and 437's witness) | per the fixture copy of the release: `awards[0].mainProcurementCategory` `goods` on its one lot `1`, and **no** tender-level category | classifications: cpv `48000000`, nuts `UK`; **no `nature`** |
 | TED eForms tender 2, notice 23555356, for comparison | | `nature` `services` at procedure and at `LOT-0001`. Notice content: `BT-23-Lot=services`, `BT-105-Procedure=neg-w-call` |
 
-Some award releases publish the nature only on the award: 028961-2025 (UK7) and 083650-2026 (UK6) carry
-no tender-level category, the shape 437 found for CPV and region. Others (029664-2025, UK6) publish it on
-the tender. So the award path is needed as well as the tender path.
+Some award releases publish the nature only on the award: 028961-2025 (UK7), 029664-2025 (UK6, on all
+five of its awards, each naming lot `1`) and 083650-2026 (UK6) carry no tender-level category, the shape
+437 found for CPV and region. Others (029615-2025, 052408-2025, 083468-2026) publish it on the tender.
+So the award path is needed as well as the tender path.
 
 **Procedure type is a notice-layer field in every source.** The tender response has the same 27 keys
 for 8576017, 7956308 and TED tender 2, and none of them is a procedure type (`procedure_key` is the
@@ -44,7 +45,7 @@ out of scope here.
 them ("Reclassifying one of these to `Mapped` is how the next unit records itself"), but 386 is done. A
 grep of the board for `mainProcurementCategory`, `procurementMethod`, `BT-105` and `owed:` hits only
 closed issues, plus two open ones (443, 448) whose hits are unrelated prose ("Still owed:",
-"followed:"). Issue 342 (the FTS backfill) names none of these paths.
+"followed:", "allowed:"). Issue 342 (the FTS backfill) names none of these paths.
 
 ## The owed entries, and which are worth mapping
 
@@ -53,7 +54,7 @@ releases under `crates/ingest/tests/fixtures/fts/members/` and the two pages.
 
 | checklist paths (line) | eForms term | where it would land | in fixtures | verdict |
 |---|---|---|---|---|
-| `tender.mainProcurementCategory` (110), `awards[].mainProcurementCategory` (154) | BT-23 Main Nature, list `contract-nature` | the served `nature` classification (397) | 8 of 10 members, 2 of them award-only | **map now** (this issue) |
+| `tender.mainProcurementCategory` (110), `awards[].mainProcurementCategory` (154) | BT-23 Main Nature, list `contract-nature` | the served `nature` classification (397) | 8 of 10 members, 3 of them award-only | **map now** (this issue) |
 | `tender.procurementMethod`, `tender.procurementMethodDetails` (111–112) | BT-105-Procedure, list `procurement-procedure-type` | notice layer; no source serves it on the Tender | details in 7 of 10 members | **map now** (this issue): cheap, gives parity with eForms content, and a later Tender field then reads FTS like the rest |
 | `tender.procurementMethodRationale` (113), `…RationaleClassifications` (114) | BT-135 (text), BT-136 (code, list `direct-award-justification`) | notice layer only | page p002 only; its codes are TED R2 (`TED_PT_AWARD_CONTRACT_WITHOUT_CALL` / `D_OUTSIDE_SCOPE`), which r209 keeps as markers (`r209/rules.rs:529`), and nothing maps them to BT-136 | later. The text is a one-line BT-135. The code needs a translation table and has no consumer |
 | `tender.lots[].hasOptions` / `options` (94–95), `awards[].hasOptions` / `options` (141–142) | BT-54-Lot Options Description | notice layer only; the fold reads BT-54 for no source | 052408-2025, p002 | later, with a model field for all sources |

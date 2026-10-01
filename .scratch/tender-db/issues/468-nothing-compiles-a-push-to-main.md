@@ -22,14 +22,14 @@ origin `main`:
   CI.
 
 What does compile guards prod, not `main`. `ops/check.sh` runs when the committing agent runs it, over that agent's
-own tree. `deploy.sh` (at HEAD) runs that gate unless a marker covers the rev (`:73–80`), then `nix build`s on the
+own tree. `deploy.sh` (at `3994975`) runs that gate unless a marker covers the rev (`:73–80`), then `nix build`s on the
 box (`:171`). Issue 254 picked the deploy gate over a workflow and named the gap it leaves: "What it does NOT do is
 catch a red tree that someone else pushes, since it only guards the deploy — if this repo ever gets a second
 committer, the workflow becomes worth adding beside it."
 
-That condition now holds. The 53 commits on `main` since 2026-09-30 come from three committers: two Claude
-sessions (41 and 11 commits, counted by their `Claude-Session` trailers) and the owner (`f40d5e5`). CLAUDE.md's
-Committing section is written for several agents sharing one worktree.
+That condition now holds. The 82 commits on `main` since 2026-09-30 00:00 UTC (up to `3994975`, public API) come from
+three committers: two Claude sessions (70 and 11 commits, counted by their `Claude-Session` trailers) and the owner
+(`f40d5e5`). CLAUDE.md's Committing section is written for several agents sharing one worktree.
 
 Both recorded escapes came after 254 closed on 2026-08-20. Both broke code behind the `server` feature. Each one
 got a new CLAUDE.md paragraph (lines 52–62) and no mechanism. The times below are author dates from the public
@@ -40,7 +40,7 @@ GitHub API:
 | 2026-08-24 | `9142c9f`, 22:02 UTC | a `Filter` initializer in `crates/app/src/v1/mod.rs` lacked `country_seed` ("server feature did not compile") | `6cf7573`, 22:14 | the box's `nix build` at deploy |
 | 2026-08-30 | `4f9a97b`, 01:23 UTC | a `supervisor.rs` test read `queued[].spec`, which `QueuedJob` does not carry; the gate's GATE-EXIT=101 was misread as green | `4c2a611`, 02:12 | the Unit-4 adversarial panel (`300-stage4-implementation-plan.md:317`) |
 
-`v1` and `supervisor` are two of the six modules that `crates/app/src/lib.rs:11–25` compiles only under `server`,
+`v1` and `supervisor` are two of the eight modules that `crates/app/src/lib.rs:9–25` compiles only under `server`,
 and the second break was in test code. A check without `--features tender-db/server` would have passed both
 breaks. A check without the test targets would have passed the second.
 
@@ -69,10 +69,10 @@ Add a push-triggered workflow that compiles what the gate compiles but runs noth
 
 The owner's note suggested `--workspace --tests`. The spelling above differs for these reasons:
 
-- **`--features tender-db/server` is the point of the check.** Without it, `admin`, `coverage`, `ledger`,
-  `supervisor`, `v1` and `webhooks` are not compiled at all. CLAUDE.md's 2026-08-31 experiment passed a
+- **`--features tender-db/server` is the point of the check.** Without it, `accounts`, `admin`, `coverage`, `ledger`,
+  `plan_capture`, `supervisor`, `v1` and `webhooks` are not compiled at all. CLAUDE.md's 2026-08-31 experiment passed a
   `supervisor.rs` full of garbage, and both escapes above were in these modules.
-- **It uses the gate's package set in a single invocation.** This is the list in `ops/check.sh:151` (at HEAD), so
+- **It uses the gate's package set in a single invocation.** This is the list in `ops/check.sh:151` (at `3994975`), so
   features resolve once and the same way the gate resolves them (issue 260: 41 crates under turso resolve
   differently per package). `--workspace` names the same four members today, because `Cargo.toml` excludes
   `crates/vendor/turso`. Spelling the list out keeps the two commands identical.

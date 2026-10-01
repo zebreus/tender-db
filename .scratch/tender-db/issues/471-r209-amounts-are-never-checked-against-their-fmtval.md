@@ -35,7 +35,7 @@ Rule::Amount => {
 
 The element text is read only when `@FMTVAL` is absent. A wrong machine value is adopted, and the human-readable figure
 is discarded without a trace (`rules.rs:63`: "`@FMTVAL` if present (defence)"). The walker serves both TED_EXPORT
-profiles, `ted-export-r208` and `ted-export-r209` (`r209/mod.rs:1`). `Rule::Number` (parse.rs:449) has the same shape.
+profiles, `ted-export-r208` and `ted-export-r209` (`r209/mod.rs:1`). `Rule::Number` (parse.rs:448) has the same shape.
 
 Four legacy award notices carry a figure that is an exact power of ten away from another figure of the same tender,
 which is the shape a machine-value scale error leaves. Read 2026-10-01 from `/v1/notices/{id}` and `/content`:
@@ -62,7 +62,8 @@ Vinci Si HD Surgical Robot", a digit run) is in the stored report.
 
 `GET /v1/tenders?min_value=1000000000000` (18 cursor pages) returns **324 tenders** whose elected head is at or above
 €10 bn: 229 from TED and 95 from FTS. `IMPLAUSIBLE_EUR_CENTS` (€100 bn, canonical.rs:1507) caps the band from above.
-Every row is served with no marker.
+Every row is served with no marker. The count moves as FTS rows land: the same walk at 13:41 UTC that day
+returned 330 (229 TED, 101 FTS) on 18 pages. The tables below are the 324-row read.
 
 **Tender 20905, "Neubau und Erweiterungsbau Lukas Schulen"**, serves `value {cents: 3326050000000, currency: EUR}`,
 which is €33.26 bn. It is a single lot for the buyer Lukas-Schule gemeinnützige GmbH. The lot drew two electronic

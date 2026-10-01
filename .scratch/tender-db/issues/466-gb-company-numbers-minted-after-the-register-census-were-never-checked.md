@@ -23,7 +23,7 @@ from `GET /admin/jobs`, 2026-10-01):
 | 6 | 2023-01 → 2023-08 | 1750–1759 | 2026-09-30 21:41 |
 | 7 | 2022-05 → 2022-12 | 1776–1785 | 2026-10-01 09:18 |
 | 8 | 2021-09 → 2022-04 | 1789–1798 | 2026-10-01 11:34 |
-| 9 | 2021-01 → 2021-08 | 1800–1809 | running: fetch 1802 at 12:09 UTC, project 1809 queued |
+| 9 | 2021-01 → 2021-08 | 1800–1809 | 2026-10-01 13:12 (read 13:3x; at 12:09 fetch 1802 was still running) |
 
 The 2026-10-01 07:35 UTC daily tick ran in the same window.
 
@@ -37,6 +37,9 @@ orgs, ids 31,591,419 → 31,634,553:
   `GBCOHCOMPANYNUMBER822508` on St Mungo Community Housing Association (31591846), `GBCOHDN2722` on Surrey County
   Council (31593234), `GBCOHHOUSING21` on HOUSING 21 (31593664).
 
+Re-read 2026-10-01 13:3x UTC, after project 1809 finished: the same 8,057 / 6,259 / 298 over the same id range. No GB
+national org stands above 31,634,553.
+
 452 measured about 1.2% wrong and 0.3% related numbers. Applied to 6,259 orgs, that is roughly 75 wrong and 20
 related. This is an extrapolation: the 2021–2024 suppliers may not have the same rate.
 
@@ -48,11 +51,13 @@ another spelling of a number that already has a verdict.
 
 The only register reading since the census is 448's delta review of new COH↔PPON pairs (dry 1786 / wet 1787, 36
 pairs). Notices from before the Procurement Act carry no PPON. For chunk 7, project 1785 armed the alias and asked
-0. After chunk 8, the altid dry run 1799 planned 0. So for 2021–2022 that path checked nothing.
+0 (its job row carries no alias suffix, which `alias_suffix` leaves empty only when nothing was asked,
+`crates/app/src/supervisor.rs:2388`). After chunk 8, the altid dry run 1799 planned 0. So for 2021–2022 that path checked nothing.
 
-No code in `crates/` or `ops/` reads a company register. The weekly Sunday tick (`crates/app/src/supervisor.rs`
-~11804: disk-census, ghost-census, member-twin-census, registry-contiguity, data-quality, rehash probe,
-build-org-match-keys, org-edge scan) does not consult one either.
+No code in `crates/` or `ops/` reads a company register. The weekly Sunday tick (`run_report_tick`,
+`crates/app/src/supervisor.rs:11811`: disk-census, ghost-census, member-twin-census, registry-contiguity,
+data-quality, rehash probe, build-org-match-keys, org-merge-health, scan-org-match-keys dry + wet) does not consult
+one either.
 
 ### 3. The census cannot be re-run: its join script and its snapshot are gone
 
@@ -61,7 +66,7 @@ build-org-match-keys, org-edge scan) does not consult one either.
 - `verdict_post.py`;
 - `rubric.md`;
 - the census outputs (`counts.json`, `live-name-disjoint-candidates.json`, `absent-from-live-register-2026-09-01.json`,
-  the cases and the verdicts).
+  `absent-register-pages-2026-09-30.json`, the cases and the verdicts).
 
 It does not hold the script that joined the register snapshot against `gb-orgs.jsonl` and split the orgs into
 match / mismatch / absent. Commit `9f68699` added only the two JSON outputs, `counts.json`, `page_orgs.sh` and the
@@ -180,7 +185,7 @@ makes it a committed, incremental procedure.
 
 This reads unit 4, the last one.
 
-- **open** (2026-10-01 12:1x UTC): `685 0 [('452-census-2026-09-30', 683), ('453-rekey-review-2026-09-30', 2)]`. No
+- **open** (2026-10-01 12:1x UTC, again 13:3x): `685 0 [('452-census-2026-09-30', 683), ('453-rekey-review-2026-09-30', 2)]`. No
   verdict names an org above the census watermark.
 - **done**: the second figure is above 0 and a `466-census-…` cohort is in the list, meaning the incremental census's
   verdicts are posted. The settled residue rides the same cohort on ids at or below 31,590,759, so the first figure

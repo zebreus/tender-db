@@ -88,14 +88,15 @@ Also stale, lesser:
 
 `/root/aj.sh` (505 bytes, mtime Sep 8) is the handover's admin recipe (`HANDOVER-2026-10-01.md:91–95`: `<path>` GETs,
 `<path> '<json>'|@file` POSTs, no method word). No file in the repo contains it. 24 issue files call it, including 5
-of the 18 open Verify lines that `ops/board-verify.sh` runs: 429, 443, 448, 60 and 63.
+of the 16 open Verify lines that `ops/board-verify.sh` runs at `3994975`: 429, 443, 448, 60 and 63 (466, filed
+beside this one, is a sixth).
 
 The versioned CLI is `ops/admin.sh`. `ops/watchdogs/install.sh:48` installs it as `/usr/local/bin/tender-admin`, and
 the box copy matches `/opt/tender-db/src/ops/admin.sh` today. But its call shape is different (`raw <METHOD> <path>`,
 with the body on stdin), the handover names it only as "the on-box admin CLI" (`:304`), and no open Verify line uses it.
 
 This is issue 224's shape. Box-only scripts vanished on 2026-08-09, and the watchers were blind for a week.
-`ops/watchdogs/README.md` "Why they live in git" is the rule this breaks. If `/root/aj.sh` is lost, those 5 Verify
+`ops/watchdogs/README.md` "Why they live in git" is the rule this breaks. If `/root/aj.sh` is lost, those 6 Verify
 lines print errors and the handover's recipe stops working.
 
 ## Proposed fix
@@ -139,7 +140,7 @@ the secret reader and the test commands. So write each fact in a form that does 
    - In any case, put the full lesson as a doc comment on `run_spec`, where the next arm's author will read it.
 4. **Put `aj.sh` in git.**
    - Version it as `ops/aj.sh`, honouring `TENDER_ADMIN_URL` and `TENDER_ADMIN_SECRET_FILE` as `admin.sh` does.
-   - Have `install.sh` install it to `/root/aj.sh` with mode 0700, beside `tender-admin`. The 24 issue files, the 5
+   - Have `install.sh` install it to `/root/aj.sh` with mode 0700, beside `tender-admin`. The 24 issue files, the 6
      open Verify lines and the handover then keep working unchanged.
    - Pin it with a `test-watchdogs.sh` case against the existing fixture: "aj.sh GETs /admin/jobs with the stripped
      secret and gets the jobs object", plus the wrong-secret 403 case.

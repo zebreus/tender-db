@@ -102,6 +102,6 @@ This checks the last unit, the merge. Unit 1 is read from its new counters in `/
 
 - **open** (2026-10-01 12:23 UTC): `200 200 200 200`. Leeds Teaching Hospitals (NHS RR8 / PPON) and Bradford
   College (UKPRN / PPON) each stand as two orgs.
-- **done:** `200 308 200 308`. The PPON orgs 30913623 and 30969231 redirect (issue 455) into the NHS-keyed and
+- **done**: `200 308 200 308`. The PPON orgs 30913623 and 30969231 redirect (issue 455) into the NHS-keyed and
   UKPRN-keyed orgs. Under a different survivor rule (decision 2), the 308 moves to the other org of the pair.
   Either way, each pair answers exactly one 308.

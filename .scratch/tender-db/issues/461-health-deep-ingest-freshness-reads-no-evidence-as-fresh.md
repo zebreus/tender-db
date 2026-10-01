@@ -35,8 +35,9 @@ The code contradicts its own comments:
   no ok ingest is in the window.
 - The doc on `JOB_SCAN` (`:48-50`) argues that a run longer than the window is caught by the last-job check. That
   holds only for a run of failures. A run of successful non-ingest jobs trips nothing.
-- `/metrics` reads the same window (`metrics.rs:331-339`), so the `tender_db_ingest_last_success_timestamp_seconds`
-  gauge disappears in the same case. Its HELP text still lists `project`, which was removed from `INGEST_KINDS`.
+- `/metrics` reads the same window (`crates/app/src/v1/metrics.rs:331-339`), so the
+  `tender_db_ingest_last_success_timestamp_seconds` gauge disappears in the same case. Its HELP text still lists
+  `project`, which was removed from `INGEST_KINDS`.
 
 The board already saw this and did not fix it:
 - **226 (closed)**, lines 51-53, accepted the gap: "unless 100+ non-ingest jobs have run since — itself an abnormal,
@@ -115,8 +116,8 @@ directly.
 
     ssh -o BatchMode=yes root@zebreus.click "git -C /opt/tender-db/src rev-parse --short HEAD; grep -c 'fn a_window_full_of_other_runs_does_not_hide_a_stale_ingest' /opt/tender-db/src/crates/app/tests/api.rs"
 
-- **open** (2026-10-01 11:5x UTC): `9b44528` and `0`. The deployed source has no such test, and `assess` still turns
-  `None` into `ok:true`.
+- **open** (2026-10-01 11:5x UTC; re-read 13:26 UTC, same): `9b44528` and `0`. The deployed source has no such
+  test, and `assess` still turns `None` into `ok:true`.
 - **done:** `1`, with the deployed rev at or after the 461 commit. The gate runs the test, so it proves the
   behaviour. Prod's own `/health/deep` reads the same in both states while dailies land, so the deployed source is
   the only thing this check can see.

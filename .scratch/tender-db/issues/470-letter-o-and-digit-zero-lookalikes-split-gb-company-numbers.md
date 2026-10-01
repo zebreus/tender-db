@@ -10,7 +10,7 @@ listing walk), 460 (identifier lookups after a merge), 300 (the E1/E2 rule)
 
 ### The GB arm reads the register format literally
 
-The GB arm of `canonical_key` (`crates/ingest/src/crosswalk.rs:365–392`) keys a company number only when it is eight
+The GB arm of `canonical_key` (`crates/ingest/src/crosswalk.rs:365–395`) keys a company number only when it is eight
 digits or two letters plus six digits (`letters_then_six`, :383). A lookalike gets no key, or a key of its own:
 
 | literal | key today | the number meant |
@@ -163,8 +163,9 @@ two different bodies.
 
      That stops the Aberdeen pair and keeps the prevention.
 2. **The survivor.** R2 keeps `min_by_key(|m| (m.provisional, m.id))` (canonical.rs:12305 in the dry run, :12445 in the
-   wet run). In 4 of the 16 pairs the lookalike has the lower id: `SCO55775` 10312649, `SCO46129` 12802561, `NIO41488`
-   23693680 and `O6611251` 15336604. The merged org would then serve the typo as its `identifier`, and while 460 is open
+   wet run). In 4 of the 15 one-entity pairs the lookalike has the lower id: `SCO55775` 10312649, `SCO46129` 12802561,
+   `NIO41488` 23693680 and `O6611251` 15336604 (the Aberdeen pair's `SCO13683` 9725105 is lower too, but the gate keeps
+   that pair apart). The merged org would then serve the typo as its `identifier`, and while 460 is open
    `?identifier=SC055775` would find nothing. Rank by `(provisional, folded, id)` instead.
 3. **Tests.**
    - `gb_coh_folds_an_o_where_the_register_format_has_a_digit` (crosswalk.rs tests):
@@ -194,7 +195,7 @@ two different bodies.
 
 - **open** (2026-10-01 12:3x UTC): `[10312649,"SCO55775",null]`. Galliford Try Infrastructure Ltd stands under the typo,
   beside org 10312664 (`SC055775`, the register's GALLIFORD TRY INFRASTRUCTURE LIMITED).
-- **done:** `[null,null,10312664]`, meaning it was merged into the org that carries the register's spelling.
+- **done**: `[null,null,10312664]`, meaning it was merged into the org that carries the register's spelling.
   - The fold landed but the survivor rule did not: the line still reads `[10312649,"SCO55775",null]` and org 10312664
     answers `merged_into` 10312649.
   - The decision is not to fold: the closure goes on line 3 with its reason, and this line stays open by design.

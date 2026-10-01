@@ -1,6 +1,7 @@
 # 24 — Alerting: know when production breaks without looking
 
-Status: ready-for-agent — BOTH UPTIME ROUTINES ARE BLIND since ~2026-09-30 20:50 UTC: every run of trig_01F8LUCUBSxHB3uBx5DyTZkp (:50) and trig_01La21kzNPgK2seKNhkixLME (:20) dies ~15 s after firing with 'Setup script failed' (init_script error) in environment `new` (env_01PjkWAgM22LvdfQRUQ7m1KY), so no curl reaches the box (0 `tender-db-uptime-routine` lines in nginx since then). The GitHub watcher fired 7 times in ~30.5 h (6% of slots). Environment `Full` (env_0199oDZT9bJszzMHtcyesLgM) starts and reaches /health/deep (test session 09:06 UTC: 200 ok). Moving the routines there was REFUSED by Lennart at 09:08 UTC ('stop working on the uptime check for now'), so the routines are untouched. NEXT, when picked up again: ask or decide the fix (repair `new`'s setup script in the environment settings, or re-point the routines to `Full`); details below.
+Status: ready-for-agent — work PAUSED by Lennart 2026-10-01 09:08 UTC ('stop working on the uptime check for now'); facts only since, no plan. Read 2026-10-01 13:14 UTC: the :50 routine trig_01F8LUCUBSxHB3uBx5DyTZkp reaches the box again: today's nginx log has 4 `tender-db-uptime-routine/1` hits, 09:03, 10:07, 11:09 and 12:07 UTC, all HTTP 200, one an hour. Its sessions still start in environment `new` (the 12:51 run cse_01YQzAeVvEiqyAvcVsWbSm7F is in env_01PjkWAgM22LvdfQRUQ7m1KY, pending at the read). The :20 twin trig_01La21kzNPgK2seKNhkixLME no longer exists (`get_trigger`: not found; `list_triggers` lists only the :50 routine), and today's log has 0 `/1-twin` hits, so each hour has one routine check. The fifth hit today carries `tender-db-uptime-routine/1-envtest-full`, the `Full` environment test (09:06 UTC). The GitHub watcher was not re-read. See the foot.
+Was status (until 2026-10-01 13:1x): ready-for-agent — BOTH UPTIME ROUTINES ARE BLIND since ~2026-09-30 20:50 UTC: every run of trig_01F8LUCUBSxHB3uBx5DyTZkp (:50) and trig_01La21kzNPgK2seKNhkixLME (:20) dies ~15 s after firing with 'Setup script failed' (init_script error) in environment `new` (env_01PjkWAgM22LvdfQRUQ7m1KY), so no curl reaches the box (0 `tender-db-uptime-routine` lines in nginx since then). The GitHub watcher fired 7 times in ~30.5 h (6% of slots). Environment `Full` (env_0199oDZT9bJszzMHtcyesLgM) starts and reaches /health/deep (test session 09:06 UTC: 200 ok). Moving the routines there was REFUSED by Lennart at 09:08 UTC ('stop working on the uptime check for now'), so the routines are untouched. NEXT, when picked up again: ask or decide the fix (repair `new`'s setup script in the environment settings, or re-point the routines to `Full`); details below.
 Was status: ready-for-agent — the GitHub Actions watcher IS scheduled: `uptime-check.yml` fired on its own schedule at 2026-09-29 23:59:11 UTC (run 36648015213, `event: schedule`, success), ~3 h after the file was created. So the repo settings are not the blocker and Lennart is not needed for it. But the next 8 slots (00:09–01:54 UTC) did not fire: GitHub's cron is best-effort. What stays open: measure its hit rate over a day (below), and if it misses as often as the routines do, the three watchers together still leave gaps; the routines' push/email delivery and the kill-the-service drill also remain.
 Was status (until 2026-09-30 01:5x): ready-for-agent — the GitHub Actions watcher is NOT yet watching. `uptime.yml` (added 12:52 UTC) never fired on its schedule in about 32 slots, despite two re-registration attempts; its manual drill worked (run 36571026751). At 20:50 UTC it was re-created as `.github/workflows/uptime-check.yml` by the owner through the API (`cecccdd`), and the old file was removed (`f8703ed`). Verify: `list_workflow_runs uptime-check.yml event=schedule` lists runs at :09/:24/:39/:54. If this fresh file never fires either, schedules do not run in this repository, and the Actions settings (which this session cannot read) are Lennart's to check. Until then the only external watchers are the two cloud routines. Also open: the routines' push/email delivery and the kill-the-service drill.
 Was status (until 2026-09-29 17:5x): ready-for-agent — a THIRD, independent watcher is live since 2026-09-29 12:52 UTC: `.github/workflows/uptime.yml` (GitHub Actions, every 15 min, opens an `uptime` issue mentioning the owner on DOWN, closes it on recovery; drill run 36571026751 opened and closed issue #2). It exists because the cloud routines' containers failed on 4 of 6 runs that day. What stays open: the routines' own push/email delivery (unconfirmable from here) and the kill-the-service drill on a serving box.
@@ -120,10 +121,11 @@ them apart.)
 
 ## Verify
 
-    ssh -o BatchMode=yes root@zebreus.click "grep -h 'tender-db-uptime-routine' /var/log/nginx/access.log | awk '{print substr(\$4,2,14), \$9}' | uniq -c | tail -4"
+    ssh -o BatchMode=yes root@zebreus.click "grep -h 'tender-db-uptime-routine' /var/log/nginx/access.log | awk '{print substr(\$4,2,14), \$9}' | uniq -c | tail -6"
 
-(From 2026-09-29 each hour should show a count of 2 — the :50 routine and its :20 twin — and a 1 is one missed run,
-not an outage.)
+(Hours are box-local CEST, UTC+2. From 2026-10-01 each hour should show a count of 1: the :50 routine alone, since
+the :20 twin no longer exists. The grep also counts hand-test agents that share the prefix, such as
+`tender-db-uptime-routine/1-envtest-full`. From 2026-09-29 to 2026-09-30 the count was 2, the routine and its twin.)
 
 - **done**: one line per recent hour, each `… 200` — the routine fires hourly, reaches the service from outside,
   and gets a healthy answer
@@ -295,3 +297,22 @@ The run itself can be read with `get_session`; delivery can only be confirmed on
   1. Lennart repairs the `new` environment's setup script (cloud environment menu → Edit → Setup script). That also
      protects the next operating session, if it is created in `new`.
   2. Re-point the two routines to `Full`: create them there, then disable the old ones and keep their history.
+
+## 2026-10-01 13:1x UTC — read after the pause (facts only)
+
+- The Verify line, read 13:14 UTC (box-local hours, CEST):
+
+      2 01/Oct/2026:11 200
+      1 01/Oct/2026:12 200
+      1 01/Oct/2026:13 200
+      1 01/Oct/2026:14 200
+
+  Five hits, at 09:03:34, 09:06:42, 10:07:30, 11:09:52 and 12:07:12 UTC. By User-Agent: 4 ×
+  `tender-db-uptime-routine/1` and 1 × `tender-db-uptime-routine/1-envtest-full`; the 09:06:42 hit is the one that
+  matches the `Full` environment test's time above. 0 × `/1-twin`. The
+  log starts at 2026-09-30 22:28 UTC and holds no routine hit before 09:03 UTC.
+- `list_triggers`: the :50 routine is enabled; its last run (fired 12:51:09 UTC, cse_01YQzAeVvEiqyAvcVsWbSm7F) was
+  `ROUTINE_RUN_STATUS_PENDING` at the read, and `get_session` places it in environment `new`
+  (env_01PjkWAgM22LvdfQRUQ7m1KY). The :20 twin trig_01La21kzNPgK2seKNhkixLME is not listed, and `get_trigger` on it
+  returns not found.
+- Not re-read: the GitHub watcher, and whether the `new` environment's setup script was changed.
