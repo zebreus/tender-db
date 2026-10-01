@@ -1,0 +1,2485 @@
+[
+ {
+  "coh_literal": "GB-COH-00646166",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "Siemens Financial Services Limited"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Siemens Financial Services Limited",
+   "Siemens Financial Services Ltd"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31580004,
+  "key": "00646166~PHNG4519NBWV",
+  "members": [
+   {
+    "identifier": "GBPPONPHNG4519NBWV",
+    "kind": "national",
+    "name": "Siemens Financial Services Ltd",
+    "org_id": 31566610
+   },
+   {
+    "identifier": "GBCOH00646166",
+    "kind": "national",
+    "name": "Siemens Financial Services Limited",
+    "org_id": 31580004
+   }
+  ],
+  "ppon_literal": "GB-PPON-PHNG-4519-NBWV",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Siemens Financial Services Ltd"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "010111-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-01145291",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "TRESKE LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "TRESKE LIMITED",
+   "Treske Limited"
+  ],
+  "country": "GB",
+  "first_coh": 2,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31562662,
+  "key": "01145291~PQBP8328TPPR",
+  "members": [
+   {
+    "identifier": "GBCOH01145291",
+    "kind": "national",
+    "name": "TRESKE LIMITED",
+    "org_id": 31562662
+   },
+   {
+    "identifier": "GBPPONPQBP8328TPPR",
+    "kind": "national",
+    "name": "Treske Limited",
+    "org_id": 31595556
+   }
+  ],
+  "ppon_literal": "GB-PPON-PQBP-8328-TPPR",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Treske Limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "013083-2026",
+   "058098-2026"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coh_literal": "GB-COH-01459141",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "LEEC LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "LEEC LIMITED",
+   "LEEC Limited"
+  ],
+  "country": "GB",
+  "first_coh": 7,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 30917778,
+  "key": "01459141~PGLL4353ZNWN",
+  "members": [
+   {
+    "identifier": "GBCOH01459141",
+    "kind": "national",
+    "name": "LEEC LIMITED",
+    "org_id": 30917778
+   },
+   {
+    "identifier": "GBPPONPGLL4353ZNWN",
+    "kind": "national",
+    "name": "LEEC Limited",
+    "org_id": 31600225
+   }
+  ],
+  "ppon_literal": "GB-PPON-PGLL-4353-ZNWN",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "LEEC Limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "035181-2025",
+   "068536-2025",
+   "050053-2026"
+  ],
+  "witnesses": 7
+ },
+ {
+  "coh_literal": "GB-COH-01618610",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "BHT Sussex"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "BHT Sussex",
+   "BHT SUSSEX"
+  ],
+  "country": "GB",
+  "first_coh": 0,
+  "first_ppon": 1,
+  "gate": "plan",
+  "keep": 31604403,
+  "key": "01618610~PDQP3398VXLL",
+  "members": [
+   {
+    "identifier": "GBPPONPDQP3398VXLL",
+    "kind": "national",
+    "name": "BHT SUSSEX",
+    "org_id": 31587801
+   },
+   {
+    "identifier": "GBCOH01618610",
+    "kind": "national",
+    "name": "BHT Sussex",
+    "org_id": 31604403
+   }
+  ],
+  "ppon_literal": "GB-PPON-PDQP-3398-VXLL",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "BHT SUSSEX"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "072721-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-01744121",
+  "coh_name_keys": 3,
+  "coh_names": [
+   "Shaw Trust",
+   "The Shaw Trust Limited",
+   "Shaw Trust Limited Black Country House,  Rounds Green Road,  Oldbury  B69 2DG"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Shaw Trust",
+   "The Shaw Trust"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 15703298,
+  "key": "01744121~PDDX5177LHBW",
+  "members": [
+   {
+    "identifier": "01744121",
+    "kind": "national",
+    "name": "Shaw Trust Ltd",
+    "org_id": 15703298
+   },
+   {
+    "identifier": "GBPPONPDDX5177LHBW",
+    "kind": "national",
+    "name": "The Shaw Trust",
+    "org_id": 31552784
+   }
+  ],
+  "ppon_literal": "GB-PPON-PDDX-5177-LHBW",
+  "ppon_name_keys": 2,
+  "ppon_names": [
+   "The Shaw Trust",
+   "SHAW TRUST LIMITED(THE)"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "023357-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-02187286",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Showsec International",
+   "Showsec International Limited"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Showsec International",
+   "Showsec International limited"
+  ],
+  "country": "GB",
+  "first_coh": 7,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 10466956,
+  "key": "02187286~PYZQ7756JBBJ",
+  "members": [
+   {
+    "identifier": "02187286",
+    "kind": "national",
+    "name": "Showsec International",
+    "org_id": 10466956
+   },
+   {
+    "identifier": "GBPPONPYZQ7756JBBJ",
+    "kind": "national",
+    "name": "Showsec International limited",
+    "org_id": 31599518
+   }
+  ],
+  "ppon_literal": "GB-PPON-PYZQ-7756-JBBJ",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Showsec International limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "035834-2025",
+   "088924-2026",
+   "089179-2026"
+  ],
+  "witnesses": 7
+ },
+ {
+  "coh_literal": "GB-COH-02408071",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Welch Allyn",
+   "WELCH ALLYN (U.K.) LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Welch Allyn",
+   "Welch Allyn Ltd"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31553750,
+  "key": "02408071~PPHQ4436DHXY",
+  "members": [
+   {
+    "identifier": "GBCOH02408071",
+    "kind": "national",
+    "name": "Welch Allyn",
+    "org_id": 31553750
+   },
+   {
+    "identifier": "GBPPONPPHQ4436DHXY",
+    "kind": "national",
+    "name": "Welch Allyn Ltd",
+    "org_id": 31561053
+   }
+  ],
+  "ppon_literal": "GB-PPON-PPHQ-4436-DHXY",
+  "ppon_name_keys": 2,
+  "ppon_names": [
+   "Welch Allyn (U.K.) Limited",
+   "Welch Allyn Ltd"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "009180-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-02447563",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "HEYSHAM PORT LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "HEYSHAM PORT LIMITED",
+   "HEYSHAM PORT LIMITED"
+  ],
+  "country": "GB",
+  "first_coh": 11,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31537078,
+  "key": "02447563~PYML7484CTHY",
+  "members": [
+   {
+    "identifier": "GBCOH02447563",
+    "kind": "national",
+    "name": "HEYSHAM PORT LIMITED",
+    "org_id": 31537078
+   },
+   {
+    "identifier": "GBPPONPYML7484CTHY",
+    "kind": "national",
+    "name": "HEYSHAM PORT LIMITED",
+    "org_id": 31596946
+   }
+  ],
+  "ppon_literal": "GB-PPON-PYML-7484-CTHY",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "HEYSHAM PORT LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "041204-2025",
+   "041205-2025",
+   "042339-2025"
+  ],
+  "witnesses": 11
+ },
+ {
+  "coh_literal": "GB-COH-02751723",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "DENDRITE CLINICAL SYSTEMS LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "DENDRITE CLINICAL SYSTEMS LIMITED",
+   "DENDRITE CLINICAL SYSTEMS LIMITED"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31595419,
+  "key": "02751723~PHVT1467LDMR",
+  "members": [
+   {
+    "identifier": "GBPPONPHVT1467LDMR",
+    "kind": "national",
+    "name": "DENDRITE CLINICAL SYSTEMS LIMITED",
+    "org_id": 31584612
+   },
+   {
+    "identifier": "GBCOH02751723",
+    "kind": "national",
+    "name": "DENDRITE CLINICAL SYSTEMS LIMITED",
+    "org_id": 31595419
+   }
+  ],
+  "ppon_literal": "GB-PPON-PHVT-1467-LDMR",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "DENDRITE CLINICAL SYSTEMS LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "010977-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-02892803",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Landmark Information Group",
+   "Landmark Information Group Ltd"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Landmark Information Group",
+   "LANDMARK INFORMATION GROUP LIMITED"
+  ],
+  "country": "GB",
+  "first_coh": 3,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 16820987,
+  "key": "02892803~PZNW5621CLMJ",
+  "members": [
+   {
+    "identifier": "02892803",
+    "kind": "national",
+    "name": "Landmark Information Group Ltd",
+    "org_id": 16820987
+   },
+   {
+    "identifier": "GBPPONPZNW5621CLMJ",
+    "kind": "national",
+    "name": "Landmark Information Group Ltd",
+    "org_id": 31561266
+   }
+  ],
+  "ppon_literal": "GB-PPON-PZNW-5621-CLMJ",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "LANDMARK INFORMATION GROUP LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "012711-2025",
+   "014527-2025",
+   "014532-2025"
+  ],
+  "witnesses": 3
+ },
+ {
+  "coh_literal": "GB-COH-02915112",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Vimpex",
+   "VIMPEX LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Vimpex",
+   "Vimpex Ltd"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31536011,
+  "key": "02915112~PGMN4889JQCV",
+  "members": [
+   {
+    "identifier": "GBPPONPGMN4889JQCV",
+    "kind": "national",
+    "name": "Vimpex Ltd",
+    "org_id": 30919319
+   },
+   {
+    "identifier": "GBCOH02915112",
+    "kind": "national",
+    "name": "VIMPEX LTD",
+    "org_id": 31536011
+   }
+  ],
+  "ppon_literal": "GB-PPON-PGMN-4889-JQCV",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Vimpex Ltd"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "009771-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-02983151",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Bibliotheca",
+   "Bibliotheca Limited"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Bibliotheca Limited",
+   "BIBLIOTHECA LIMITED"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 13246778,
+  "key": "02983151~PTML4887WBQN",
+  "members": [
+   {
+    "identifier": "02983151",
+    "kind": "national",
+    "name": "Bibliotheca",
+    "org_id": 13246778
+   },
+   {
+    "identifier": "GBPPONPTML4887WBQN",
+    "kind": "national",
+    "name": "BIBLIOTHECA LIMITED",
+    "org_id": 31586159
+   }
+  ],
+  "ppon_literal": "GB-PPON-PTML-4887-WBQN",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "BIBLIOTHECA LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "020144-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-03031768",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "INTEC FOR BUSINESS LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "INTEC FOR BUSINESS LIMITED",
+   "INTEC FOR BUSINESS LIMITED"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31599004,
+  "key": "03031768~PCGG8185RQNT",
+  "members": [
+   {
+    "identifier": "GBPPONPCGG8185RQNT",
+    "kind": "national",
+    "name": "INTEC FOR BUSINESS LIMITED",
+    "org_id": 31583928
+   },
+   {
+    "identifier": "GBCOH03031768",
+    "kind": "national",
+    "name": "INTEC FOR BUSINESS LIMITED",
+    "org_id": 31599004
+   }
+  ],
+  "ppon_literal": "GB-PPON-PCGG-8185-RQNT",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "INTEC FOR BUSINESS LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "019033-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-03104801",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Strategic Research and Insight Ltd",
+   "Strategic Research & Insights Limited"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Strategic Research and Insight Ltd",
+   "Strategic Research & Insight"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 11772520,
+  "key": "03104801~PMZL7416JDRT",
+  "members": [
+   {
+    "identifier": "03104801",
+    "kind": "national",
+    "name": "Strategic Research and Insight Ltd",
+    "org_id": 11772520
+   },
+   {
+    "identifier": "GBPPONPMZL7416JDRT",
+    "kind": "national",
+    "name": "Strategic Research & Insight Ltd",
+    "org_id": 31538988
+   }
+  ],
+  "ppon_literal": "GB-PPON-PMZL-7416-JDRT",
+  "ppon_name_keys": 2,
+  "ppon_names": [
+   "Strategic Research & Insight",
+   "STRATEGIC RESEARCH AND INSIGHT LTD"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "028939-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-03341254",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "CRYOPDP"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "CRYOPDP",
+   "CRYOPDP"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31580238,
+  "key": "03341254~PHYC4884JJWW",
+  "members": [
+   {
+    "identifier": "GBPPONPHYC4884JJWW",
+    "kind": "national",
+    "name": "CRYOPDP",
+    "org_id": 31573479
+   },
+   {
+    "identifier": "GBCOH03341254",
+    "kind": "national",
+    "name": "CRYOPDP",
+    "org_id": 31580238
+   }
+  ],
+  "ppon_literal": "GB-PPON-PHYC-4884-JJWW",
+  "ppon_name_keys": 2,
+  "ppon_names": [
+   "CRYOPDP",
+   "PDP Courier Services Ltd. (CRYOPDP)"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "017710-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-03368442",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Pendragon, WILMINGTON PUBLISHING & INFORMATION LIMITED",
+   "Wilmington Publishing & Information Ltd"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Wilmington Publishing & Information Ltd",
+   "Wilmington Publishing and Information LTD"
+  ],
+  "country": "GB",
+  "first_coh": 2,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31588133,
+  "key": "03368442~PLCW9429CVTD",
+  "members": [
+   {
+    "identifier": "GBPPONPLCW9429CVTD",
+    "kind": "national",
+    "name": "Pendragon",
+    "org_id": 31564223
+   },
+   {
+    "identifier": "GBCOH03368442",
+    "kind": "national",
+    "name": "Pendragon, Wilmington Publishing and Information Ltd",
+    "org_id": 31588133
+   }
+  ],
+  "ppon_literal": "GB-PPON-PLCW-9429-CVTD",
+  "ppon_name_keys": 2,
+  "ppon_names": [
+   "Pendragon",
+   "Wilmington Publishing and Information LTD"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "010252-2025",
+   "012017-2025"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coh_literal": "GB-COH-03668828",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "CORNWALL DEVELOPMENT COMPANY LTD"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "CORNWALL DEVELOPMENT COMPANY LTD",
+   "CORNWALL DEVELOPMENT COMPANY LTD"
+  ],
+  "country": "GB",
+  "first_coh": 3,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 30915803,
+  "key": "03668828~PWVW2189GRNT",
+  "members": [
+   {
+    "identifier": "GBCOH03668828",
+    "kind": "national",
+    "name": "CORNWALL DEVELOPMENT COMPANY LTD",
+    "org_id": 30915803
+   },
+   {
+    "identifier": "GBPPONPWVW2189GRNT",
+    "kind": "national",
+    "name": "CORNWALL DEVELOPMENT COMPANY LTD",
+    "org_id": 31597805
+   }
+  ],
+  "ppon_literal": "GB-PPON-PWVW-2189-GRNT",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "CORNWALL DEVELOPMENT COMPANY LTD"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "031767-2025",
+   "032835-2025",
+   "028706-2025"
+  ],
+  "witnesses": 3
+ },
+ {
+  "coh_literal": "GB-COH-03752925",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "Planon Limited"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Planon Limited",
+   "Planon Limited"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31590027,
+  "key": "03752925~PWJL5569YDGY",
+  "members": [
+   {
+    "identifier": "GBPPONPWJL5569YDGY",
+    "kind": "national",
+    "name": "PLANON LTD",
+    "org_id": 31586503
+   },
+   {
+    "identifier": "GBCOH03752925",
+    "kind": "national",
+    "name": "Planon Limited",
+    "org_id": 31590027
+   }
+  ],
+  "ppon_literal": "GB-PPON-PWJL-5569-YDGY",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Planon Limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "026990-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-03835180",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "Insource Ltd"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Insource Ltd",
+   "INSOURCE LIMITED"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31596151,
+  "key": "03835180~PTTN8817YCLV",
+  "members": [
+   {
+    "identifier": "GBPPONPTTN8817YCLV",
+    "kind": "national",
+    "name": "Insource Ltd",
+    "org_id": 31575401
+   },
+   {
+    "identifier": "GBCOH03835180",
+    "kind": "national",
+    "name": "INSOURCE LIMITED",
+    "org_id": 31596151
+   }
+  ],
+  "ppon_literal": "GB-PPON-PTTN-8817-YCLV",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "INSOURCE LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "012410-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-03994598",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Smartest Energy",
+   "SmartestEnergy Limited"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "SmartestEnergy Limited",
+   "SmartestEnergy Limited"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 14590635,
+  "key": "03994598~PBNH5936JNNY",
+  "members": [
+   {
+    "identifier": "03994598",
+    "kind": "national",
+    "name": "Smartest Energy",
+    "org_id": 14590635
+   },
+   {
+    "identifier": "GBPPONPBNH5936JNNY",
+    "kind": "national",
+    "name": "SmartestEnergy Limited",
+    "org_id": 31550455
+   }
+  ],
+  "ppon_literal": "GB-PPON-PBNH-5936-JNNY",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "SmartestEnergy Limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "015936-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-04111483",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "DATATANK LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "DATATANK LIMITED",
+   "Datatank Limited"
+  ],
+  "country": "GB",
+  "first_coh": 2,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31534828,
+  "key": "04111483~PPTL8435WTLP",
+  "members": [
+   {
+    "identifier": "GBCOH04111483",
+    "kind": "national",
+    "name": "DATATANK LIMITED",
+    "org_id": 31534828
+   },
+   {
+    "identifier": "GBPPONPPTL8435WTLP",
+    "kind": "national",
+    "name": "Datatank Limited",
+    "org_id": 31600392
+   }
+  ],
+  "ppon_literal": "GB-PPON-PPTL-8435-WTLP",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Datatank Limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "036529-2025",
+   "068323-2026"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coh_literal": "GB-COH-04232750",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "PML APPLICATIONS LTD"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "PML APPLICATIONS LTD",
+   "PML Applications"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31594829,
+  "key": "04232750~PZHY5244LJYW",
+  "members": [
+   {
+    "identifier": "GBPPONPZHY5244LJYW",
+    "kind": "national",
+    "name": "PML Applications",
+    "org_id": 30953648
+   },
+   {
+    "identifier": "GBCOH04232750",
+    "kind": "national",
+    "name": "PML APPLICATIONS LTD",
+    "org_id": 31594829
+   }
+  ],
+  "ppon_literal": "GB-PPON-PZHY-5244-LJYW",
+  "ppon_name_keys": 2,
+  "ppon_names": [
+   "PML Applications",
+   "PML APPLICATIONS LTD"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "009270-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-04349401",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "THE NATIONAL FLOOD FORUM"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "THE NATIONAL FLOOD FORUM",
+   "National Flood Forum"
+  ],
+  "country": "GB",
+  "first_coh": 2,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31589134,
+  "key": "04349401~PMXY1862GTQM",
+  "members": [
+   {
+    "identifier": "GBPPONPMXY1862GTQM",
+    "kind": "national",
+    "name": "The National Flood Forum",
+    "org_id": 31536726
+   },
+   {
+    "identifier": "GBCOH04349401",
+    "kind": "national",
+    "name": "National Flood Forum",
+    "org_id": 31589134
+   }
+  ],
+  "ppon_literal": "GB-PPON-PMXY-1862-GTQM",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "National Flood Forum"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "012064-2025",
+   "012080-2025"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coh_literal": "GB-COH-04884651",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "CTI DIGITAL LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "CTI DIGITAL LIMITED",
+   "CTI DIGITAL LIMITED"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31581777,
+  "key": "04884651~PQJX4819VMNY",
+  "members": [
+   {
+    "identifier": "GBCOH04884651",
+    "kind": "national",
+    "name": "CTI DIGITAL LIMITED",
+    "org_id": 31581777
+   },
+   {
+    "identifier": "GBPPONPQJX4819VMNY",
+    "kind": "national",
+    "name": "CTI DIGITAL LIMITED",
+    "org_id": 31585737
+   }
+  ],
+  "ppon_literal": "GB-PPON-PQJX-4819-VMNY",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "CTI DIGITAL LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "020972-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-04952566",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "Butterfly Projects Ltd"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Butterfly Projects Ltd",
+   "Butterfly Projects Ltd t/a Butterfly Data"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31581784,
+  "key": "04952566~PYBD7187DWPH",
+  "members": [
+   {
+    "identifier": "GBCOH04952566",
+    "kind": "national",
+    "name": "Butterfly Projects Ltd t/a Butterfly Data",
+    "org_id": 31581784
+   },
+   {
+    "identifier": "GBPPONPYBD7187DWPH",
+    "kind": "national",
+    "name": "Butterfly Projects Ltd t/a Butterfly Data",
+    "org_id": 31586849
+   }
+  ],
+  "ppon_literal": "GB-PPON-PYBD-7187-DWPH",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Butterfly Projects Ltd t/a Butterfly Data"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "013869-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-05288466",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "CARDIOBASE LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "CARDIOBASE LIMITED",
+   "Cardiobase Ltd"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31559106,
+  "key": "05288466~PYDZ1257GTBZ",
+  "members": [
+   {
+    "identifier": "GBCOH05288466",
+    "kind": "national",
+    "name": "CARDIOBASE LIMITED",
+    "org_id": 31559106
+   },
+   {
+    "identifier": "GBPPONPYDZ1257GTBZ",
+    "kind": "national",
+    "name": "Cardiobase Ltd",
+    "org_id": 31600221
+   }
+  ],
+  "ppon_literal": "GB-PPON-PYDZ-1257-GTBZ",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Cardiobase Ltd"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "003791-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-05396062",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Top Desk UK Limited",
+   "TOPdesk  UK Ltd"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "TOPdesk  UK Ltd",
+   "TOPDESK UK LIMITED"
+  ],
+  "country": "GB",
+  "first_coh": 2,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31556906,
+  "key": "05396062~PLXD4134VHBT",
+  "members": [
+   {
+    "identifier": "GBCOH05396062",
+    "kind": "national",
+    "name": "TOPDESK UK LTD",
+    "org_id": 31556906
+   },
+   {
+    "identifier": "GBPPONPLXD4134VHBT",
+    "kind": "national",
+    "name": "TOPDESK UK LIMITED",
+    "org_id": 31585013
+   }
+  ],
+  "ppon_literal": "GB-PPON-PLXD-4134-VHBT",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "TOPDESK UK LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "011952-2025",
+   "027583-2025"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coh_literal": "GB-COH-05430351",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Think Project UK Ltd",
+   "Thinkproject UK Ltd"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Thinkproject UK Ltd",
+   "THINKPROJECT UK LIMITED"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31535764,
+  "key": "05430351~PHDY9824CYXZ",
+  "members": [
+   {
+    "identifier": "GBCOH05430351",
+    "kind": "national",
+    "name": "thinkproject UK Ltd",
+    "org_id": 31535764
+   },
+   {
+    "identifier": "GBPPONPHDY9824CYXZ",
+    "kind": "national",
+    "name": "THINKPROJECT UK LIMITED",
+    "org_id": 31584489
+   }
+  ],
+  "ppon_literal": "GB-PPON-PHDY-9824-CYXZ",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "THINKPROJECT UK LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "009670-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-05472768",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "CHELONIA LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "CHELONIA LIMITED",
+   "CHELONIA LIMITED"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31596981,
+  "key": "05472768~PMZN2499GPDM",
+  "members": [
+   {
+    "identifier": "GBCOH05472768",
+    "kind": "national",
+    "name": "CHELONIA LIMITED",
+    "org_id": 31596981
+   },
+   {
+    "identifier": "GBPPONPMZN2499GPDM",
+    "kind": "national",
+    "name": "CHELONIA LIMITED",
+    "org_id": 31597326
+   }
+  ],
+  "ppon_literal": "GB-PPON-PMZN-2499-GPDM",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "CHELONIA LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "014893-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-05553543",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "NELLER DAVIES LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "NELLER DAVIES LIMITED",
+   "Neller Davies"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31599655,
+  "key": "05553543~PBLG3536LGRT",
+  "members": [
+   {
+    "identifier": "GBPPONPBLG3536LGRT",
+    "kind": "national",
+    "name": "Neller Davies",
+    "org_id": 31538793
+   },
+   {
+    "identifier": "GBCOH05553543",
+    "kind": "national",
+    "name": "NELLER DAVIES LIMITED",
+    "org_id": 31599655
+   }
+  ],
+  "ppon_literal": "GB-PPON-PBLG-3536-LGRT",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Neller Davies"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "021726-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-05642795",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "VIATEC (UK) LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "VIATEC (UK) LIMITED",
+   "VIATEC (UK) LIMITED"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31600207,
+  "key": "05642795~PMPC7289YHHY",
+  "members": [
+   {
+    "identifier": "GBPPONPMPC7289YHHY",
+    "kind": "national",
+    "name": "Viatec UK Ltd",
+    "org_id": 31554370
+   },
+   {
+    "identifier": "GBCOH05642795",
+    "kind": "national",
+    "name": "VIATEC (UK) LIMITED",
+    "org_id": 31600207
+   }
+  ],
+  "ppon_literal": "GB-PPON-PMPC-7289-YHHY",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "VIATEC (UK) LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "023902-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-05997821",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "INNERDRIVE LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "INNERDRIVE LIMITED",
+   "InnerDrive Ltd"
+  ],
+  "country": "GB",
+  "first_coh": 2,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 30913968,
+  "key": "05997821~PRLQ6271TWRY",
+  "members": [
+   {
+    "identifier": "GBCOH05997821",
+    "kind": "national",
+    "name": "Innerdrive Limited",
+    "org_id": 30913968
+   },
+   {
+    "identifier": "GBPPONPRLQ6271TWRY",
+    "kind": "national",
+    "name": "InnerDrive Ltd",
+    "org_id": 31599997
+   }
+  ],
+  "ppon_literal": "GB-PPON-PRLQ-6271-TWRY",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "InnerDrive Ltd"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "029419-2025",
+   "022716-2025"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coh_literal": "GB-COH-06656157",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "STORM BUILDING LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "STORM BUILDING LIMITED",
+   "Storm Building Limited"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31600519,
+  "key": "06656157~PDBJ7573GHRT",
+  "members": [
+   {
+    "identifier": "GBPPONPDBJ7573GHRT",
+    "kind": "national",
+    "name": "Storm Building Limited",
+    "org_id": 31588005
+   },
+   {
+    "identifier": "GBCOH06656157",
+    "kind": "national",
+    "name": "STORM BUILDING LIMITED",
+    "org_id": 31600519
+   }
+  ],
+  "ppon_literal": "GB-PPON-PDBJ-7573-GHRT",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Storm Building Limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "027923-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-06707492",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "MEDILOGIK LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "MEDILOGIK LIMITED",
+   "MEDILOGIK LIMITED"
+  ],
+  "country": "GB",
+  "first_coh": 2,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31595185,
+  "key": "06707492~PLXM4888CBBY",
+  "members": [
+   {
+    "identifier": "GBPPONPLXM4888CBBY",
+    "kind": "national",
+    "name": "MEDILOGIK LIMITED",
+    "org_id": 31585017
+   },
+   {
+    "identifier": "GBCOH06707492",
+    "kind": "national",
+    "name": "MEDILOGIK LIMITED",
+    "org_id": 31595185
+   }
+  ],
+  "ppon_literal": "GB-PPON-PLXM-4888-CBBY",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "MEDILOGIK LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "010413-2025",
+   "011722-2025"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coh_literal": "GB-COH-06742160",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "WALTERS MEDICAL LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "WALTERS MEDICAL LIMITED",
+   "Walters Medical Limited"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31600534,
+  "key": "06742160~PHYJ4825QRZN",
+  "members": [
+   {
+    "identifier": "GBPPONPHYJ4825QRZN",
+    "kind": "national",
+    "name": "Walters Medical Ltd",
+    "org_id": 31560868
+   },
+   {
+    "identifier": "GBCOH06742160",
+    "kind": "national",
+    "name": "WALTERS MEDICAL LIMITED",
+    "org_id": 31600534
+   }
+  ],
+  "ppon_literal": "GB-PPON-PHYJ-4825-QRZN",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Walters Medical Limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "028013-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-07308632",
+  "coh_name_keys": 3,
+  "coh_names": [
+   "Quantum IT Europe",
+   "Quantum IT Europe Ltd",
+   "QuantumIT Europe Limited"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Quantum IT Europe",
+   "QUANTUM IT EUROPE LIMITED"
+  ],
+  "country": "GB",
+  "first_coh": 3,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 11277396,
+  "key": "07308632~PHMC5782WWYV",
+  "members": [
+   {
+    "identifier": "07308632",
+    "kind": "national",
+    "name": "QuantumIT Europe Limited",
+    "org_id": 11277396
+   },
+   {
+    "identifier": "GBPPONPHMC5782WWYV",
+    "kind": "national",
+    "name": "QUANTUM IT EUROPE LIMITED",
+    "org_id": 31599160
+   }
+  ],
+  "ppon_literal": "GB-PPON-PHMC-5782-WWYV",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "QUANTUM IT EUROPE LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "071630-2025",
+   "028288-2026",
+   "028305-2026"
+  ],
+  "witnesses": 3
+ },
+ {
+  "coh_literal": "GB-COH-07602446",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "Genius Within CIC"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Genius Within CIC",
+   "Genius Within CIC"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31590391,
+  "key": "07602446~PZJD1615XLCM",
+  "members": [
+   {
+    "identifier": "GBPPONPZJD1615XLCM",
+    "kind": "national",
+    "name": "Genius Within CIC",
+    "org_id": 30968743
+   },
+   {
+    "identifier": "GBCOH07602446",
+    "kind": "national",
+    "name": "Genius Within CIC",
+    "org_id": 31590391
+   }
+  ],
+  "ppon_literal": "GB-PPON-PZJD-1615-XLCM",
+  "ppon_name_keys": 2,
+  "ppon_names": [
+   "Genius Within C.I.C",
+   "Genius Within CIC"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "026082-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-08159011",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "Octane Holding Group Ltd"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Octane Holding Group Ltd",
+   "Octane Holding Group Ltd"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31577971,
+  "key": "08159011~PDTX1217TWRW",
+  "members": [
+   {
+    "identifier": "GBPPONPDTX1217TWRW",
+    "kind": "national",
+    "name": "Octane Holding Group Ltd",
+    "org_id": 31576088
+   },
+   {
+    "identifier": "GBCOH08159011",
+    "kind": "national",
+    "name": "Octane Holding Group Ltd",
+    "org_id": 31577971
+   }
+  ],
+  "ppon_literal": "GB-PPON-PDTX-1217-TWRW",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Octane Holding Group Ltd"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "027982-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-08948772",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "HAYWOOD CRUSHING DEMOLITION LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "HAYWOOD CRUSHING DEMOLITION LIMITED",
+   "Haywood Crushing Demolition Limited"
+  ],
+  "country": "GB",
+  "first_coh": 2,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31597980,
+  "key": "08948772~PYVG9522JDWT",
+  "members": [
+   {
+    "identifier": "GBPPONPYVG9522JDWT",
+    "kind": "national",
+    "name": "Haywood Crushing Demolition Ltd",
+    "org_id": 30967687
+   },
+   {
+    "identifier": "GBCOH08948772",
+    "kind": "national",
+    "name": "HAYWOOD CRUSHING DEMOLITION LIMITED",
+    "org_id": 31597980
+   }
+  ],
+  "ppon_literal": "GB-PPON-PYVG-9522-JDWT",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Haywood Crushing Demolition Limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "017363-2025",
+   "017373-2025"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coh_literal": "GB-COH-09527628",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "AQUAM water services Ltd"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "AQUAM water services Ltd",
+   "Aquam Water Services Limited"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31588599,
+  "key": "09527628~PCDH8325WTJP",
+  "members": [
+   {
+    "identifier": "GBCOH09527628",
+    "kind": "national",
+    "name": "AQUAM WATER SERVICES LIMITED",
+    "org_id": 31588599
+   },
+   {
+    "identifier": "GBPPONPCDH8325WTJP",
+    "kind": "national",
+    "name": "Aquam Water Services Limited",
+    "org_id": 31596398
+   }
+  ],
+  "ppon_literal": "GB-PPON-PCDH-8325-WTJP",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Aquam Water Services Limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "075771-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-09600193",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "EMBRIDGE CONSULTING (UK) LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "EMBRIDGE CONSULTING (UK) LIMITED",
+   "EMBRIDGE CONSULTING (UK) LIMITED"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 30914513,
+  "key": "09600193~PMVH3653NQXZ",
+  "members": [
+   {
+    "identifier": "GBCOH09600193",
+    "kind": "national",
+    "name": "EMBRIDGE CONSULTING (UK) LIMITED",
+    "org_id": 30914513
+   },
+   {
+    "identifier": "GBPPONPMVH3653NQXZ",
+    "kind": "national",
+    "name": "EMBRIDGE CONSULTING (UK) LIMITED",
+    "org_id": 31585203
+   }
+  ],
+  "ppon_literal": "GB-PPON-PMVH-3653-NQXZ",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "EMBRIDGE CONSULTING (UK) LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "018503-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-09613368",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "Allium Helmsley Limited"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Allium Helmsley Limited",
+   "Allium Helmsley Limited"
+  ],
+  "country": "GB",
+  "first_coh": 0,
+  "first_ppon": 1,
+  "gate": "plan",
+  "keep": 31605439,
+  "key": "09613368~PBYJ2598HPZX",
+  "members": [
+   {
+    "identifier": "GBPPONPBYJ2598HPZX",
+    "kind": "national",
+    "name": "Allium Helmsley Limited",
+    "org_id": 31561075
+   },
+   {
+    "identifier": "GBCOH09613368",
+    "kind": "national",
+    "name": "Allium Helmsley Limited",
+    "org_id": 31605439
+   }
+  ],
+  "ppon_literal": "GB-PPON-PBYJ-2598-HPZX",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Allium Helmsley Limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "008516-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-09629154",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "ENERGY SYSTEMS CATAPULT SERVICES LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "ENERGY SYSTEMS CATAPULT SERVICES LIMITED",
+   "ENERGY SYSTEMS CATAPULT SERVICES LIMITED"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31600672,
+  "key": "09629154~PJTH2392WWTN",
+  "members": [
+   {
+    "identifier": "GBPPONPJTH2392WWTN",
+    "kind": "national",
+    "name": "Energy Systems Catapult Services Limited",
+    "org_id": 31547194
+   },
+   {
+    "identifier": "GBCOH09629154",
+    "kind": "national",
+    "name": "ENERGY SYSTEMS CATAPULT SERVICES LIMITED",
+    "org_id": 31600672
+   }
+  ],
+  "ppon_literal": "GB-PPON-PJTH-2392-WWTN",
+  "ppon_name_keys": 2,
+  "ppon_names": [
+   "Energy Systems Catapult service Ltd",
+   "ENERGY SYSTEMS CATAPULT SERVICES LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "028699-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-10527250",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "New City College",
+   "New City College London — Hackney"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "New City College",
+   "New City College"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 12172795,
+  "key": "10527250~PNNN4255BJHW",
+  "members": [
+   {
+    "identifier": "10527250",
+    "kind": "national",
+    "name": "New City College London — Hackney",
+    "org_id": 12172795
+   },
+   {
+    "identifier": "GBPPONPNNN4255BJHW",
+    "kind": "national",
+    "name": "New City College",
+    "org_id": 30916665
+   }
+  ],
+  "ppon_literal": "GB-PPON-PNNN-4255-BJHW",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "New City College"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "018399-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-11613351",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "PWS SYSTEMS CUMBRIA LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "PWS SYSTEMS CUMBRIA LIMITED",
+   "PWS Systems Cumbria Ltd"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31539073,
+  "key": "11613351~PMJQ3531VMJP",
+  "members": [
+   {
+    "identifier": "GBCOH11613351",
+    "kind": "national",
+    "name": "PWS SYSTEMS CUMBRIA LIMITED",
+    "org_id": 31539073
+   },
+   {
+    "identifier": "GBPPONPMJQ3531VMJP",
+    "kind": "national",
+    "name": "PWS Systems Cumbria Ltd",
+    "org_id": 31600301
+   }
+  ],
+  "ppon_literal": "GB-PPON-PMJQ-3531-VMJP",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "PWS Systems Cumbria Ltd"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "044949-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-11624287",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "TRUSTACK LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "TRUSTACK LIMITED",
+   "TRUSTACK LIMITED"
+  ],
+  "country": "GB",
+  "first_coh": 2,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31555392,
+  "key": "11624287~PRWR8396LJNP",
+  "members": [
+   {
+    "identifier": "GBCOH11624287",
+    "kind": "national",
+    "name": "TruStack Ltd",
+    "org_id": 31555392
+   },
+   {
+    "identifier": "GBPPONPRWR8396LJNP",
+    "kind": "national",
+    "name": "TRUSTACK LIMITED",
+    "org_id": 31586040
+   }
+  ],
+  "ppon_literal": "GB-PPON-PRWR-8396-LJNP",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "TRUSTACK LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "012588-2025",
+   "016292-2025"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coh_literal": "GB-COH-11705328",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Flex 360 Limited",
+   "Flex360 Limited"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Flex360 Limited",
+   "Flex360 Ltd"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31541833,
+  "key": "11705328~PDYX3961PNJD",
+  "members": [
+   {
+    "identifier": "GBPPONPDYX3961PNJD",
+    "kind": "national",
+    "name": "FLEX360 LTD",
+    "org_id": 30967415
+   },
+   {
+    "identifier": "GBCOH11705328",
+    "kind": "national",
+    "name": "Flex360 LTD",
+    "org_id": 31541833
+   }
+  ],
+  "ppon_literal": "GB-PPON-PDYX-3961-PNJD",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Flex360 Ltd"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "023038-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-13651922",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "PROCTER AND STREET LTD"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "PROCTER AND STREET LTD",
+   "PROCTER AND STREET LTD"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31596619,
+  "key": "13651922~PXWJ5255RYBZ",
+  "members": [
+   {
+    "identifier": "GBPPONPXWJ5255RYBZ",
+    "kind": "national",
+    "name": "PROCTER AND STREET LTD",
+    "org_id": 31550769
+   },
+   {
+    "identifier": "GBCOH13651922",
+    "kind": "national",
+    "name": "PROCTER AND STREET LTD",
+    "org_id": 31596619
+   }
+  ],
+  "ppon_literal": "GB-PPON-PXWJ-5255-RYBZ",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "PROCTER AND STREET LTD"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "013869-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-IP031452",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "ROCHDALE BOROUGHWIDE HOUSING LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "ROCHDALE BOROUGHWIDE HOUSING LIMITED",
+   "ROCHDALE BOROUGHWIDE HOUSING LIMITED"
+  ],
+  "country": "GB",
+  "first_coh": 42,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 30915852,
+  "key": "IP031452~PHLB2332YGZR",
+  "members": [
+   {
+    "identifier": "GBCOHIP031452",
+    "kind": "national",
+    "name": "ROCHDALE BOROUGHWIDE HOUSING LIMITED",
+    "org_id": 30915852
+   },
+   {
+    "identifier": "GBPPONPHLB2332YGZR",
+    "kind": "national",
+    "name": "ROCHDALE BOROUGHWIDE HOUSING LIMITED",
+    "org_id": 31594887
+   }
+  ],
+  "ppon_literal": "GB-PPON-PHLB-2332-YGZR",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "ROCHDALE BOROUGHWIDE HOUSING LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "031812-2025",
+   "084481-2026",
+   "084813-2026"
+  ],
+  "witnesses": 42
+ },
+ {
+  "coh_literal": "GB-COH-NI069239",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "RED RIDGE SOLUTIONS LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "RED RIDGE SOLUTIONS LIMITED",
+   "RED RIDGE SOLUTIONS LIMITED"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31596943,
+  "key": "NI069239~PCXV3963CYCY",
+  "members": [
+   {
+    "identifier": "GBPPONPCXV3963CYCY",
+    "kind": "national",
+    "name": "RED RIDGE SOLUTIONS LIMITED",
+    "org_id": 31596373
+   },
+   {
+    "identifier": "GBCOHNI069239",
+    "kind": "national",
+    "name": "RED RIDGE SOLUTIONS LIMITED",
+    "org_id": 31596943
+   }
+  ],
+  "ppon_literal": "GB-PPON-PCXV-3963-CYCY",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "RED RIDGE SOLUTIONS LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "014729-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-OC372614",
+  "coh_name_keys": 4,
+  "coh_names": [
+   "Compass Lexicon",
+   "FTI CONSULTANCY LTD",
+   "FTI CONSULTING LLP",
+   "FTI Consulting LLP_96961"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "FTI CONSULTING LLP",
+   "FTI CONSULTING LLP"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 12053874,
+  "key": "OC372614~PLTG6452NCGJ",
+  "members": [
+   {
+    "identifier": "OC372614",
+    "kind": "national",
+    "name": "FTI Consulting LLP",
+    "org_id": 12053874
+   },
+   {
+    "identifier": "GBPPONPLTG6452NCGJ",
+    "kind": "national",
+    "name": "FTI CONSULTING LLP",
+    "org_id": 31565009
+   }
+  ],
+  "ppon_literal": "GB-PPON-PLTG-6452-NCGJ",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "FTI CONSULTING LLP"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "013344-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-RS027052",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "GREENSQUAREACCORD LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "GREENSQUAREACCORD LIMITED",
+   "Greensquareaccord"
+  ],
+  "country": "GB",
+  "first_coh": 181,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 30913816,
+  "key": "RS027052~PPDT5615BGVM",
+  "members": [
+   {
+    "identifier": "GBCOHRS027052",
+    "kind": "national",
+    "name": "GREENSQUAREACCORD LIMITED",
+    "org_id": 30913816
+   },
+   {
+    "identifier": "GBPPONPPDT5615BGVM",
+    "kind": "national",
+    "name": "Greensquareaccord",
+    "org_id": 31594319
+   }
+  ],
+  "ppon_literal": "GB-PPON-PPDT-5615-BGVM",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Greensquareaccord"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "029787-2025",
+   "029844-2025",
+   "029847-2025"
+  ],
+  "witnesses": 181
+ },
+ {
+  "coh_literal": "GB-COH-SC570283",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "HEY GIRLS CIC"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "HEY GIRLS CIC",
+   "HEY GIRLS CIC"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31596445,
+  "key": "SC570283~PGBB2217QTTY",
+  "members": [
+   {
+    "identifier": "GBPPONPGBB2217QTTY",
+    "kind": "national",
+    "name": "HEY GIRLS CIC",
+    "org_id": 31556562
+   },
+   {
+    "identifier": "GBCOHSC570283",
+    "kind": "national",
+    "name": "HEY GIRLS CIC",
+    "org_id": 31596445
+   }
+  ],
+  "ppon_literal": "GB-PPON-PGBB-2217-QTTY",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "HEY GIRLS CIC"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "013341-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-SO307306",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Fairhurst",
+   "Fairhurst Group LLP"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": [
+   "Fairhurst Group LLP",
+   "FAIRHURST GROUP LLP"
+  ],
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "plan",
+  "keep": 31570397,
+  "key": "SO307306~PMLJ1694XZDG",
+  "members": [
+   {
+    "identifier": "GBPPONPMLJ1694XZDG",
+    "kind": "national",
+    "name": "FAIRHURST GROUP LLP",
+    "org_id": 30927015
+   },
+   {
+    "identifier": "GBCOHSO307306",
+    "kind": "national",
+    "name": "Fairhurst Group LLP",
+    "org_id": 31570397
+   }
+  ],
+  "ppon_literal": "GB-PPON-PMLJ-1694-XZDG",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "FAIRHURST GROUP LLP"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "026770-2025"
+  ],
+  "witnesses": 1
+ }
+]

@@ -1,6 +1,7 @@
 # 448 — FTS `additionalIdentifiers` are parsed and then dropped: the Companies House ↔ PPON pairing never reaches the matcher, and 161 suppliers stand as two organizations
 
-Status: ready-for-agent — UNIT 4 campaign DONE and verdicts POSTED (336, cohort `altid-2026-09-30`); capped wet run 1717 merged 50 pairs, verified. NEXT: the full wet run over the 4,604-pair residual, which waits for the owner's go-ahead (the session's permission classifier refused it as a bulk production write), then a fold and the alias counters. Follow-ups: issue 452 (wrong company numbers), a verdict override for legal-form re-registrations.
+Status: ready-for-agent — FULL WET RUN DONE 2026-10-01 07:09 UTC (job 1765): 4,652 pairs merged, every one reviewed or register-confirmed. Post-run plan 0; 4,702 pairs are one org. 247 stay split, each denied with a reason. NEXT (small): review the 26 gate-denied pairs that are new since the campaign (`448-campaign/unread-denied-1766.json`, minus consortium/conflict), then read the alias counter on the next fold.
+Was status: ready-for-agent — UNIT 4 campaign DONE and verdicts POSTED (336, cohort `altid-2026-09-30`); capped wet run 1717 merged 50 pairs, verified. NEXT: the full wet run over the 4,604-pair residual, which waits for the owner's go-ahead (the session's permission classifier refused it as a bulk production write), then a fold and the alias counters. Follow-ups: issue 452 (wrong company numbers), a verdict override for legal-form re-registrations.
 Was status (until 2026-09-30 09:0x): ready-for-agent — UNITS 1b, 2, 3 and 3b DEPLOYED 2026-09-30 (`60a0191`, `636475c`, `ba1b159`). Dry job 1691: plan 4,373 pairs (23 co-occurring), 101 witness-only, 326 uncorroborated, 49 conflicts; the full listing carries each side's witness-free names. The 1b Verify's Amentum expectation was WRONG: that pair is true (see 05:1x below). NEXT: unit 4, the review campaign over the full listing with Companies House register names, then a capped wet run.
 Was status (until 2026-09-30 06:1x): ready-for-agent — UNITS 1b and 2 BUILT, reviewed and gated 2026-09-30 (`e4c39b3`, `7b6d52e`; unit 2 `2d55856` + review fixes `2998b0a`; all pushed, deploy pending the box's idle window ~05:30 UTC). NO WET RUN until unit 3 (the resolver alias) is deployed too. Next: deploy, dry re-run and the 1b Verify; then unit 3; then the unit-4 campaign (which first needs the full plan listing — see unit 2's notes).
 Was status (until 2026-09-30 04:3x): ready-for-agent — UNIT 1b BUILT and gated 2026-09-30 (`e4c39b3` + review fixes `7b6d52e`, both pushed, not yet deployed). Corroboration now ignores the pair's own witness names; new gates `witness-only` and `form-conflict`; three recall folds. Next: deploy when the box queue is idle (backfill chunk 2 runs until ~05:00 UTC), re-run `{"kind":"match-org-identifiers","rule":"altid"}`, and read the Verify for 1b below. Then units 2–4.
@@ -407,3 +408,37 @@ legal-form veto, but that alone would not hold:
 The root is the head name: a first-seen election that goes stale after a re-registration (3M UK plc → Ltd, Axis
 Europe plc → Ltd). The fix belongs in head election (or in a legal-form check that reads the register's current form),
 not in a verdict carve-out. The 10 pairs stay denied, with open `e2-altid` edges, until then.
+
+## 2026-10-01 07:0x–07:2x UTC — the full wet run
+
+- **Fresh dry plan, job 1764** (after FTS chunks 5–6 and 453's re-keys): **4,652 pairs**, 294 verdict-admitted,
+  21 verdict-keep, 0 verdicts stale. The stored plan dated from before chunks 5–6, so it was replaced, not resumed.
+- **Delta review.** 4,598 keys were already reviewed: the 4,032 register-confirmed in 1691, the 836 campaign cases
+  and the 14 of 1716. **54 are new.** The register was fetched for their 82 new numbers (all 200), and the
+  campaign's own rule confirmed 53 (`delta-new-1764.json`, `delta-1764-split.json`). The one it could not confirm
+  was read: `03341254~PHYC4884JJWW`, CRYOPDP. 03341254 is PDP COURIER SERVICES LIMITED, and the PPON side names
+  itself "PDP Courier Services Ltd. (CRYOPDP)"; CryoPDP is that company's trading name, so it is one entity and
+  the merge is right.
+- **Wet, job 1765** (26 s): merged 4,652 of 4,652. 4,652 org rows were removed; 19,577 mentions, 26,490 parties,
+  324,888 bid-parties and 332,248 winners were repointed; 7 winner duplicates were deleted; 8,303 tenders were
+  touched. 0 were deferred, 0 no longer planned, 0 contradictory. 247 `e2-altid` edges were written for the denied
+  pairs.
+- **Checked.** In five sampled pairs across the plan (indices 0, 1000, 2500, 4000 and 4651), each keeper serves
+  200 on `/v1/organizations/{id}` and each loser 404.
+- **Post-run dry, job 1766: plan 0.** 4,702 pairs are already one org. 247 stand as two GB orgs, and each is
+  denied with a reason: 21 verdict-keep, 16 consortium, 17 legal-form (the head-election root above), 110
+  uncorroborated-overlap, 46 uncorroborated-disjoint, 21 witness-only, 1 generic and 15 conflicts.
+- **Verify (the split count): 161 → 247.** It reads higher than at filing because the backfill multiplied the
+  pairs (17,445 keyed today against the 161 counted then). Every remaining pair is now held apart by a gate or a
+  verdict, and none is a missed merge. **44 of the 247 were never read by the campaign**
+  (`448-campaign/unread-denied-1766.json`):
+  - 16 consortium. The veto skips these by design. 13 share Birmingham's consortium PPON PJXZ4423NDBT with
+    housing associations. Golley Slater, BearingPoint, Consortium Trust and SEC Procurement look like single
+    entities caught by the word or the shape; they stay held.
+  - 2 Essity conflicts (coh-multi-ppon), correctly held.
+  - **26 gate-denials that are new since the campaign:** 16 witness-only, 6 uncorroborated-overlap, 4
+    uncorroborated-disjoint. Some are one entity (RelyOn Nutec, 1st Coverall, Pentagon Solutions NI, Doctors
+    Training); others are clearly different (Synectics vs Ocular Integration, CP Media vs Outdo Media). This is
+    the next small review: a HIGH `merge` verdict admits a true pair on the next wet run.
+- **Alias.** Jobs 1717 and 1765 between them merged 50 + 4,652 pairs. The next fold, the 07:35 UTC daily project,
+  should report PPON keys aliased in the `[store]` diag line. That is unit 3's live Verify.

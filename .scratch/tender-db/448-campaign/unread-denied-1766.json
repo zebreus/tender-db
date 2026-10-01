@@ -1,0 +1,2003 @@
+[
+ {
+  "coh_literal": "GB-COH-00584047",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Golley Slater",
+   "Golley Slater Group Ltd"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 2,
+  "first_ppon": 0,
+  "gate": "consortium",
+  "keep": 15714294,
+  "key": "00584047~PWXT4982RRTN",
+  "members": [
+   {
+    "identifier": "00584047",
+    "kind": "national",
+    "name": "Golley Slater Group Ltd",
+    "org_id": 15714294
+   },
+   {
+    "identifier": "GBPPONPWXT4982RRTN",
+    "kind": "national",
+    "name": "Golley Slater",
+    "org_id": 31548023
+   }
+  ],
+  "ppon_literal": "GB-PPON-PWXT-4982-RRTN",
+  "ppon_name_keys": 4,
+  "ppon_names": [
+   "Golley Slater",
+   "Golley Slater Group Limited",
+   "Golley Slater Group Ltd - Group Consortium - Golley Slater Group Limited is the lead member. Liberty Marketing Limited is part of the group",
+   "Golley Slater Group Ltd - Group Consortium without establishing a legal entity. Golley Slater Group Limited is the lead member. Liberty Marketing Limited is part of the group for Lot 3 Cymru Wales Digital Delivery."
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "069466-2025",
+   "073476-2025"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coh_literal": "GB-COH-01874716",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Centrica Business Solutions",
+   "Centrica Business Solutions UK Ltd"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 3,
+  "first_ppon": 0,
+  "gate": "uncorroborated-disjoint",
+  "keep": 15344442,
+  "key": "01874716~PPHJ9397ZRQL",
+  "members": [
+   {
+    "identifier": "01874716",
+    "kind": "national",
+    "name": "Centrica Business Solutions UK Ltd",
+    "org_id": 15344442
+   },
+   {
+    "identifier": "GBPPONPPHJ9397ZRQL",
+    "kind": "national",
+    "name": "British Gas Trading Limited",
+    "org_id": 31596972
+   }
+  ],
+  "ppon_literal": "GB-PPON-PPHJ-9397-ZRQL",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "British Gas Trading Limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "049798-2025",
+   "081625-2026",
+   "028122-2025"
+  ],
+  "witnesses": 3
+ },
+ {
+  "coh_literal": "GB-COH-02322432",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "VERMEG SYSTEMS LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 6,
+  "first_ppon": 0,
+  "gate": "uncorroborated-overlap",
+  "keep": 30914873,
+  "key": "02322432~PGTM2465XGDT",
+  "members": [
+   {
+    "identifier": "GBCOH02322432",
+    "kind": "national",
+    "name": "VERMEG SYSTEMS LIMITED",
+    "org_id": 30914873
+   },
+   {
+    "identifier": "GBPPONPGTM2465XGDT",
+    "kind": "national",
+    "name": "Vermeg Solutions SA",
+    "org_id": 31598253
+   }
+  ],
+  "ppon_literal": "GB-PPON-PGTM-2465-XGDT",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Vermeg Solutions SA"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "030533-2025",
+   "057185-2025",
+   "057189-2025"
+  ],
+  "witnesses": 6
+ },
+ {
+  "coh_literal": "GB-COH-02786348",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "RelyOn Nutec"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "witness-only",
+  "keep": 31588213,
+  "key": "02786348~PVVD2816QWWL",
+  "members": [
+   {
+    "identifier": "GBPPONPVVD2816QWWL",
+    "kind": "national",
+    "name": "RELYON NUTEC UK LIMITED",
+    "org_id": 30967436
+   },
+   {
+    "identifier": "GBCOH02786348",
+    "kind": "national",
+    "name": "RELYON NUTEC UK LIMITED",
+    "org_id": 31588213
+   }
+  ],
+  "ppon_literal": "GB-PPON-PVVD-2816-QWWL",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "RELYON NUTEC UK LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "074407-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-03037895",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "IMS Maxims"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "witness-only",
+  "keep": 31594507,
+  "key": "03037895~PNQV3365VGML",
+  "members": [
+   {
+    "identifier": "GBPPONPNQV3365VGML",
+    "kind": "national",
+    "name": "INTEGRATED MEDICAL SOLUTIONS LIMITED",
+    "org_id": 31585378
+   },
+   {
+    "identifier": "GBCOH03037895",
+    "kind": "national",
+    "name": "INTEGRATED MEDICAL SOLUTIONS LIMITED",
+    "org_id": 31594507
+   }
+  ],
+  "ppon_literal": "GB-PPON-PNQV-3365-VGML",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "INTEGRATED MEDICAL SOLUTIONS LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "008375-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-03144016",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "BearingPoint",
+   "BEARINGPOINT LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "consortium",
+  "keep": 31581658,
+  "key": "03144016~PVMV6753GDDD",
+  "members": [
+   {
+    "identifier": "GBPPONPVMV6753GDDD",
+    "kind": "national",
+    "name": "Qualitas Consortium UK Limited",
+    "org_id": 31574095
+   },
+   {
+    "identifier": "GBCOH03144016",
+    "kind": "national",
+    "name": "BEARINGPOINT LIMITED",
+    "org_id": 31581658
+   }
+  ],
+  "ppon_literal": "GB-PPON-PVMV-6753-GDDD",
+  "ppon_name_keys": 3,
+  "ppon_names": [
+   "BearingPoint",
+   "BEARINGPOINT LIMITED",
+   "Qualitas Consortium UK Limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "079164-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-03261587",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "FirstBus (South) Ltd"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "witness-only",
+  "keep": 31564842,
+  "key": "03261587~PNDV6241LJZW",
+  "members": [
+   {
+    "identifier": "GBPPONPNDV6241LJZW",
+    "kind": "national",
+    "name": "FIRST BUS HOLDINGS LIMITED",
+    "org_id": 31550703
+   },
+   {
+    "identifier": "GBCOH03261587",
+    "kind": "national",
+    "name": "FIRST BUS HOLDINGS LIMITED",
+    "org_id": 31564842
+   }
+  ],
+  "ppon_literal": "GB-PPON-PNDV-6241-LJZW",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "FIRST BUS HOLDINGS LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "018779-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-03484910",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "HUTCHISON PORTS (UK) LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "uncorroborated-overlap",
+  "keep": 31549208,
+  "key": "03484910~PYVR7165HZXM",
+  "members": [
+   {
+    "identifier": "GBCOH03484910",
+    "kind": "national",
+    "name": "HUTCHISON PORTS (UK) LIMITED",
+    "org_id": 31549208
+   },
+   {
+    "identifier": "GBPPONPYVR7165HZXM",
+    "kind": "national",
+    "name": "Hutchison Ports (UK) Ltd as agent for The Felixstowe Dock and Railway Company; Harwich International Port Ltd and Thamesport (London) Ltd.",
+    "org_id": 31597396
+   }
+  ],
+  "ppon_literal": "GB-PPON-PYVR-7165-HZXM",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Hutchison Ports (UK) Ltd as agent for The Felixstowe Dock and Railway Company; Harwich International Port Ltd and Thamesport (London) Ltd."
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "066575-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-04146587",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "1st Coverall"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "witness-only",
+  "keep": 31548037,
+  "key": "04146587~PJJZ2813RHQP",
+  "members": [
+   {
+    "identifier": "GBCOH04146587",
+    "kind": "national",
+    "name": "1ST COVERALL COMPANY LIMITED",
+    "org_id": 31548037
+   },
+   {
+    "identifier": "GBPPONPJJZ2813RHQP",
+    "kind": "national",
+    "name": "1st Coverall Co Ltd",
+    "org_id": 31556059
+   }
+  ],
+  "ppon_literal": "GB-PPON-PJJZ-2813-RHQP",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "1st Coverall Co Ltd"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "064288-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-04361196",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "GTS ENTERPRISE LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "uncorroborated-overlap",
+  "keep": 31598108,
+  "key": "04361196~PJDC8132HJQR",
+  "members": [
+   {
+    "identifier": "GBPPONPJDC8132HJQR",
+    "kind": "national",
+    "name": "GTS ENTERPRISES T/A WORLDNET SHIPPING",
+    "org_id": 30918080
+   },
+   {
+    "identifier": "GBCOH04361196",
+    "kind": "national",
+    "name": "GTS ENTERPRISE LIMITED",
+    "org_id": 31598108
+   }
+  ],
+  "ppon_literal": "GB-PPON-PJDC-8132-HJQR",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "GTS ENTERPRISES T/A WORLDNET SHIPPING"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "017710-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-04433890",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "INUTEC LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "uncorroborated-overlap",
+  "keep": 31551110,
+  "key": "04433890~PYGQ1869TWYZ",
+  "members": [
+   {
+    "identifier": "GBCOH04433890",
+    "kind": "national",
+    "name": "INUTEC LIMITED",
+    "org_id": 31551110
+   },
+   {
+    "identifier": "GBPPONPYGQ1869TWYZ",
+    "kind": "national",
+    "name": "Tradebe Inutec Limited",
+    "org_id": 31590356
+   }
+  ],
+  "ppon_literal": "GB-PPON-PYGQ-1869-TWYZ",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Tradebe Inutec Limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "071429-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-04462630",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Solihull Community Housing",
+   "Solihull Community Housing Limited"
+  ],
+  "coh_partners": 2,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 4,
+  "first_ppon": 0,
+  "gate": "consortium",
+  "keep": 5539040,
+  "key": "04462630~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "04462630",
+    "kind": "national",
+    "name": "Solihull Community Housing Limited",
+    "org_id": 5539040
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "ppon_literal": "GB-PPON-PJXZ-4423-NDBT",
+  "ppon_name_keys": 50,
+  "ppon_names": [
+   "BELIEVE HOUSING LIMITED",
+   "Birmingham City Council",
+   "BLACKPOOL COASTAL HOUSING LIMITED",
+   "Bristol City Council",
+   "Carmarthenshire County Council",
+   "City of Lincoln Council",
+   "City of York Council",
+   "The Council of the Borough of Kirklees"
+  ],
+  "ppon_partners": 13,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "087675-2026",
+   "087696-2026",
+   "088292-2026"
+  ],
+  "witnesses": 4
+ },
+ {
+  "coh_literal": "GB-COH-04992349",
+  "coh_name_keys": 3,
+  "coh_names": [
+   "Prism Medical Uk",
+   "Prism UK Medical",
+   "PRISM UK MEDICAL LIMITED"
+  ],
+  "coh_partners": 2,
+  "cooccur_publications": [
+   "087722-2026",
+   "087738-2026",
+   "027620-2026"
+  ],
+  "cooccurring": 4,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "consortium",
+  "keep": 10708857,
+  "key": "04992349~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "04992349",
+    "kind": "national",
+    "name": "Prism UK Medical Ltd",
+    "org_id": 10708857
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "ppon_literal": "GB-PPON-PJXZ-4423-NDBT",
+  "ppon_name_keys": 50,
+  "ppon_names": [
+   "BELIEVE HOUSING LIMITED",
+   "Birmingham City Council",
+   "BLACKPOOL COASTAL HOUSING LIMITED",
+   "Bristol City Council",
+   "Carmarthenshire County Council",
+   "City of Lincoln Council",
+   "City of York Council",
+   "The Council of the Borough of Kirklees"
+  ],
+  "ppon_partners": 13,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "087696-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-05564649",
+  "coh_name_keys": 3,
+  "coh_names": [
+   "St Leger Homes of Doncaster",
+   "St Leger Homes of Doncaster Limited",
+   "St Legers Homes of Doncaster Limited"
+  ],
+  "coh_partners": 2,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "consortium",
+  "keep": 11016028,
+  "key": "05564649~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "05564649",
+    "kind": "national",
+    "name": "St Leger Homes of Doncaster",
+    "org_id": 11016028
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "ppon_literal": "GB-PPON-PJXZ-4423-NDBT",
+  "ppon_name_keys": 50,
+  "ppon_names": [
+   "BELIEVE HOUSING LIMITED",
+   "Birmingham City Council",
+   "BLACKPOOL COASTAL HOUSING LIMITED",
+   "Bristol City Council",
+   "Carmarthenshire County Council",
+   "City of Lincoln Council",
+   "City of York Council",
+   "The Council of the Borough of Kirklees"
+  ],
+  "ppon_partners": 13,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "090181-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-05831231",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "Synectics Security Limited"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 7,
+  "first_ppon": 0,
+  "gate": "witness-only",
+  "keep": 31551163,
+  "key": "05831231~PYHV1585RQYH",
+  "members": [
+   {
+    "identifier": "GBPPONPYHV1585RQYH",
+    "kind": "national",
+    "name": "OCULAR INTEGRATION LIMITED",
+    "org_id": 30969367
+   },
+   {
+    "identifier": "GBCOH05831231",
+    "kind": "national",
+    "name": "OCULAR INTEGRATION LIMITED",
+    "org_id": 31551163
+   }
+  ],
+  "ppon_literal": "GB-PPON-PYHV-1585-RQYH",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "OCULAR INTEGRATION LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "071588-2025",
+   "014710-2026",
+   "020508-2026"
+  ],
+  "witnesses": 7
+ },
+ {
+  "coh_literal": "GB-COH-05868852",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Blackpool Coastal Housing",
+   "BLACKPOOL COASTAL HOUSING LIMITED"
+  ],
+  "coh_partners": 2,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "consortium",
+  "keep": 30914833,
+  "key": "05868852~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "GBCOH05868852",
+    "kind": "national",
+    "name": "BLACKPOOL COASTAL HOUSING LIMITED",
+    "org_id": 30914833
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "ppon_literal": "GB-PPON-PJXZ-4423-NDBT",
+  "ppon_name_keys": 50,
+  "ppon_names": [
+   "BELIEVE HOUSING LIMITED",
+   "Birmingham City Council",
+   "BLACKPOOL COASTAL HOUSING LIMITED",
+   "Bristol City Council",
+   "Carmarthenshire County Council",
+   "City of Lincoln Council",
+   "City of York Council",
+   "The Council of the Borough of Kirklees"
+  ],
+  "ppon_partners": 13,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "055432-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-05969256",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "ARCA University of Winchester"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 38,
+  "first_ppon": 0,
+  "gate": "witness-only",
+  "keep": 15267245,
+  "key": "05969256~PMPV1431CPBW",
+  "members": [
+   {
+    "identifier": "05969256",
+    "kind": "national",
+    "name": "ARCA University of Winchester",
+    "org_id": 15267245
+   },
+   {
+    "identifier": "GBPPONPMPV1431CPBW",
+    "kind": "national",
+    "name": "UNIVERSITY OF WINCHESTER",
+    "org_id": 31596590
+   }
+  ],
+  "ppon_literal": "GB-PPON-PMPV-1431-CPBW",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "UNIVERSITY OF WINCHESTER"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "041457-2025",
+   "045418-2025",
+   "057507-2025"
+  ],
+  "witnesses": 38
+ },
+ {
+  "coh_literal": "GB-COH-06612614",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "Fluidigm UK Ltd"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 2,
+  "first_ppon": 0,
+  "gate": "witness-only",
+  "keep": 15881220,
+  "key": "06612614~PZJZ6446MNBQ",
+  "members": [
+   {
+    "identifier": "06612614",
+    "kind": "national",
+    "name": "Fluidigm UK Ltd",
+    "org_id": 15881220
+   },
+   {
+    "identifier": "GBPPONPZJZ6446MNBQ",
+    "kind": "national",
+    "name": "Standard BioTools",
+    "org_id": 31599401
+   }
+  ],
+  "ppon_literal": "GB-PPON-PZJZ-6446-MNBQ",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Standard BioTools"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "076380-2026",
+   "020700-2025"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coh_literal": "GB-COH-07014675",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Dams",
+   "Dams Furniture Limited, Gores Furniture Limited"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "witness-only",
+  "keep": 31542839,
+  "key": "07014675~PNGD5937JHTD",
+  "members": [
+   {
+    "identifier": "GBCOH07014675",
+    "kind": "national",
+    "name": "DAMS FURNITURE LIMITED",
+    "org_id": 31542839
+   },
+   {
+    "identifier": "GBPPONPNGD5937JHTD",
+    "kind": "national",
+    "name": "Dams Furniture Ltd",
+    "org_id": 31548663
+   }
+  ],
+  "ppon_literal": "GB-PPON-PNGD-5937-JHTD",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "DAMS FURNITURE LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "053191-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-07462517",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "CP Media Limited"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 2,
+  "first_ppon": 0,
+  "gate": "witness-only",
+  "keep": 31550322,
+  "key": "07462517~PYZC9846XNNG",
+  "members": [
+   {
+    "identifier": "GBCOH07462517",
+    "kind": "national",
+    "name": "OUTDO MEDIA LIMITED",
+    "org_id": 31550322
+   },
+   {
+    "identifier": "GBPPONPYZC9846XNNG",
+    "kind": "national",
+    "name": "Outdo Media Limited",
+    "org_id": 31581154
+   }
+  ],
+  "ppon_literal": "GB-PPON-PYZC-9846-XNNG",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Outdo Media Limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "069529-2025",
+   "060468-2026"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coh_literal": "GB-COH-07559200",
+  "coh_name_keys": 3,
+  "coh_names": [
+   "Back 2 Work Complete Training",
+   "Back 2 Work Complete Training Limited",
+   "Back2Work Complete Training Limited"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 8,
+  "first_ppon": 0,
+  "gate": "witness-only",
+  "keep": 30919380,
+  "key": "07559200~PJRX1357JTDN",
+  "members": [
+   {
+    "identifier": "GBCOH07559200",
+    "kind": "national",
+    "name": "BACK TO WORK TRAINING LIMITED",
+    "org_id": 30919380
+   },
+   {
+    "identifier": "GBPPONPJRX1357JTDN",
+    "kind": "national",
+    "name": "Back to Work Training Limited",
+    "org_id": 31590447
+   }
+  ],
+  "ppon_literal": "GB-PPON-PJRX-1357-JTDN",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Back to Work Training Limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "084263-2026",
+   "084425-2026",
+   "087879-2026"
+  ],
+  "witnesses": 8
+ },
+ {
+  "coh_literal": "GB-COH-09536934",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "Tieva"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 2,
+  "first_ppon": 0,
+  "gate": "uncorroborated-disjoint",
+  "keep": 31561249,
+  "key": "09536934~PQPP1568XPZN",
+  "members": [
+   {
+    "identifier": "GBCOH09536934",
+    "kind": "national",
+    "name": "TIEVA LIMITED",
+    "org_id": 31561249
+   },
+   {
+    "identifier": "GBPPONPQPP1568XPZN",
+    "kind": "national",
+    "name": "Pure Data Solutions Limited",
+    "org_id": 31590392
+   }
+  ],
+  "ppon_literal": "GB-PPON-PQPP-1568-XPZN",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Pure Data Solutions Limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "009005-2026",
+   "033951-2026"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coh_literal": "GB-COH-10098444",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "ACE (Academies for Character & Excellence)"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 10,
+  "first_ppon": 0,
+  "gate": "witness-only",
+  "keep": 31537314,
+  "key": "10098444~PYNM4868XBBN",
+  "members": [
+   {
+    "identifier": "GBCOH10098444",
+    "kind": "national",
+    "name": "THE ACADEMIES FOR CHARACTER AND EXCELLENCE",
+    "org_id": 31537314
+   },
+   {
+    "identifier": "GBPPONPYNM4868XBBN",
+    "kind": "national",
+    "name": "Academies for Character & Excellence",
+    "org_id": 31559422
+   }
+  ],
+  "ppon_literal": "GB-PPON-PYNM-4868-XBBN",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Academies for Character & Excellence"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "041549-2025",
+   "049947-2025",
+   "049954-2025"
+  ],
+  "witnesses": 10
+ },
+ {
+  "coh_literal": "GB-COH-10166467",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "Wave Hub Development Services Limited"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 5,
+  "first_ppon": 0,
+  "gate": "witness-only",
+  "keep": 17781281,
+  "key": "10166467~PYHH5632MHZH",
+  "members": [
+   {
+    "identifier": "10166467",
+    "kind": "national",
+    "name": "Wave Hub Development Services Limited",
+    "org_id": 17781281
+   },
+   {
+    "identifier": "GBPPONPYHH5632MHZH",
+    "kind": "national",
+    "name": "Celtic Sea Power Limited",
+    "org_id": 31594292
+   }
+  ],
+  "ppon_literal": "GB-PPON-PYHH-5632-MHZH",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Celtic Sea Power Limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "049592-2025",
+   "051313-2025",
+   "007529-2025"
+  ],
+  "witnesses": 5
+ },
+ {
+  "coh_literal": "GB-COH-10255142",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "CONSORTIUM TRUST"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 11,
+  "first_ppon": 0,
+  "gate": "consortium",
+  "keep": 30926880,
+  "key": "10255142~PNBN5791QVMQ",
+  "members": [
+   {
+    "identifier": "GBCOH10255142",
+    "kind": "national",
+    "name": "CONSORTIUM TRUST",
+    "org_id": 30926880
+   },
+   {
+    "identifier": "GBPPONPNBN5791QVMQ",
+    "kind": "national",
+    "name": "Consortium Trust",
+    "org_id": 31561113
+   }
+  ],
+  "ppon_literal": "GB-PPON-PNBN-5791-QVMQ",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Consortium Trust"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "085013-2026",
+   "085052-2026",
+   "008290-2026"
+  ],
+  "witnesses": 11
+ },
+ {
+  "coh_literal": "GB-COH-10555909",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "The Royal Parks (TRP Trading Company Ltd)"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "witness-only",
+  "keep": 31537532,
+  "key": "10555909~PWWT6798CMTV",
+  "members": [
+   {
+    "identifier": "GBCOH10555909",
+    "kind": "national",
+    "name": "TRP  TRADING COMPANY LIMITED",
+    "org_id": 31537532
+   },
+   {
+    "identifier": "GBPPONPWWT6798CMTV",
+    "kind": "national",
+    "name": "TRP Trading Company Limited",
+    "org_id": 31555660
+   }
+  ],
+  "ppon_literal": "GB-PPON-PWWT-6798-CMTV",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "TRP TRADING COMPANY LIMITED"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "041923-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-10743542",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "DOCTORSTRAINING LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "uncorroborated-disjoint",
+  "keep": 31569808,
+  "key": "10743542~PCDH1123JTQM",
+  "members": [
+   {
+    "identifier": "GBCOH10743542",
+    "kind": "national",
+    "name": "DOCTORSTRAINING LIMITED",
+    "org_id": 31569808
+   },
+   {
+    "identifier": "GBPPONPCDH1123JTQM",
+    "kind": "national",
+    "name": "Doctors Training Limited",
+    "org_id": 31590467
+   }
+  ],
+  "ppon_literal": "GB-PPON-PCDH-1123-JTQM",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Doctors Training Limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "030780-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-10755761",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "IPD LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "uncorroborated-disjoint",
+  "keep": 31538592,
+  "key": "10755761~PNGW3275HWVL",
+  "members": [
+   {
+    "identifier": "GBCOH10755761",
+    "kind": "national",
+    "name": "IPD LIMITED",
+    "org_id": 31538592
+   },
+   {
+    "identifier": "GBPPONPNGW3275HWVL",
+    "kind": "national",
+    "name": "Integrated Project Delivery",
+    "org_id": 31595624
+   }
+  ],
+  "ppon_literal": "GB-PPON-PNGW-3275-HWVL",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Integrated Project Delivery"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "044109-2025"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-11258001",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "Calderdale & Huddersfield NHS Foundation Trust"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 4,
+  "first_ppon": 0,
+  "gate": "witness-only",
+  "keep": 31550606,
+  "key": "11258001~PHPR3762LPLP",
+  "members": [
+   {
+    "identifier": "GBPPONPHPR3762LPLP",
+    "kind": "national",
+    "name": "Calderdale and Huddersfield Solutions Limited",
+    "org_id": 30929661
+   },
+   {
+    "identifier": "GBCOH11258001",
+    "kind": "national",
+    "name": "CALDERDALE AND HUDDERSFIELD SOLUTIONS LTD",
+    "org_id": 31550606
+   }
+  ],
+  "ppon_literal": "GB-PPON-PHPR-3762-LPLP",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Calderdale and Huddersfield Solutions Limited"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "070340-2025",
+   "070356-2025",
+   "071340-2025"
+  ],
+  "witnesses": 4
+ },
+ {
+  "coh_literal": "GB-COH-11949489",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Cipher 10 Ltd",
+   "Cipher10 Ltd"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "witness-only",
+  "keep": 31590121,
+  "key": "11949489~PMZZ8974QPMN",
+  "members": [
+   {
+    "identifier": "GBPPONPMZZ8974QPMN",
+    "kind": "national",
+    "name": "ID-WARE UK LTD",
+    "org_id": 31585242
+   },
+   {
+    "identifier": "GBCOH11949489",
+    "kind": "national",
+    "name": "ID-WARE UK LTD",
+    "org_id": 31590121
+   }
+  ],
+  "ppon_literal": "GB-PPON-PMZZ-8974-QPMN",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "ID-WARE UK LTD"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "081507-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-12873828",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "ACE Advice Limited"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 41,
+  "first_ppon": 0,
+  "gate": "uncorroborated-overlap",
+  "keep": 30919325,
+  "key": "12873828~PBBX5711VBGM",
+  "members": [
+   {
+    "identifier": "GBCOH12873828",
+    "kind": "national",
+    "name": "ACE ADVICE LTD",
+    "org_id": 30919325
+   },
+   {
+    "identifier": "GBPPONPBBX5711VBGM",
+    "kind": "national",
+    "name": "ACADEMY CONSULTANCY EXPERT ADVICE LTD",
+    "org_id": 31594974
+   }
+  ],
+  "ppon_literal": "GB-PPON-PBBX-5711-VBGM",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "ACADEMY CONSULTANCY EXPERT ADVICE LTD"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "084184-2026",
+   "086407-2026",
+   "086475-2026"
+  ],
+  "witnesses": 41
+ },
+ {
+  "coh_literal": "GB-COH-13313134",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "A Hill Sport t/a Active Future Durham",
+   "Active Future Durham"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 1,
+  "gate": "witness-only",
+  "keep": 31588195,
+  "key": "13313134~PPNG8676JXDV",
+  "members": [
+   {
+    "identifier": "GBPPONPPNG8676JXDV",
+    "kind": "national",
+    "name": "NMC SPORTS LTD (trading as ) Active Future Durham",
+    "org_id": 31570638
+   },
+   {
+    "identifier": "GBCOH13313134",
+    "kind": "national",
+    "name": "NMC SPORTS LTD (trading as ) Active Future Durham",
+    "org_id": 31588195
+   }
+  ],
+  "ppon_literal": "GB-PPON-PPNG-8676-JXDV",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "NMC SPORTS LTD (trading as ) Active Future Durham"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "033281-2026",
+   "074390-2026"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coh_literal": "GB-COH-15363999",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "SEC Procurement Limited trading as South East Consortium",
+   "South East Consortium"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 10,
+  "first_ppon": 0,
+  "gate": "consortium",
+  "keep": 30917280,
+  "key": "15363999~PZLW5327RMRJ",
+  "members": [
+   {
+    "identifier": "GBCOH15363999",
+    "kind": "national",
+    "name": "SEC PROCUREMENT LIMITED T/A SOUTH EAST CONSORTIUM",
+    "org_id": 30917280
+   },
+   {
+    "identifier": "GBPPONPZLW5327RMRJ",
+    "kind": "national",
+    "name": "South East Consortium.",
+    "org_id": 31547119
+   }
+  ],
+  "ppon_literal": "GB-PPON-PZLW-5327-RMRJ",
+  "ppon_name_keys": 2,
+  "ppon_names": [
+   "SEC PROCUREMENT LIMITED T/A SOUTH EAST CONSORTIUM",
+   "South East Consortium."
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "034332-2025",
+   "041788-2025",
+   "041872-2025"
+  ],
+  "witnesses": 10
+ },
+ {
+  "coh_literal": "GB-COH-IP030441",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "LONDON & QUADRANT HOUSING TRUST"
+  ],
+  "coh_partners": 2,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "consortium",
+  "keep": 30914545,
+  "key": "IP030441~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "GBCOHIP030441",
+    "kind": "national",
+    "name": "LONDON & QUADRANT HOUSING TRUST",
+    "org_id": 30914545
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "ppon_literal": "GB-PPON-PJXZ-4423-NDBT",
+  "ppon_name_keys": 50,
+  "ppon_names": [
+   "BELIEVE HOUSING LIMITED",
+   "Birmingham City Council",
+   "BLACKPOOL COASTAL HOUSING LIMITED",
+   "Bristol City Council",
+   "Carmarthenshire County Council",
+   "City of Lincoln Council",
+   "City of York Council",
+   "The Council of the Borough of Kirklees"
+  ],
+  "ppon_partners": 13,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "057270-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-IP030568",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "LIVIN HOUSING LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "consortium",
+  "keep": 31563376,
+  "key": "IP030568~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   },
+   {
+    "identifier": "GBCOHIP030568",
+    "kind": "national",
+    "name": "LIVIN HOUSING LIMITED",
+    "org_id": 31563376
+   }
+  ],
+  "ppon_literal": "GB-PPON-PJXZ-4423-NDBT",
+  "ppon_name_keys": 50,
+  "ppon_names": [
+   "BELIEVE HOUSING LIMITED",
+   "Birmingham City Council",
+   "BLACKPOOL COASTAL HOUSING LIMITED",
+   "Bristol City Council",
+   "Carmarthenshire County Council",
+   "City of Lincoln Council",
+   "City of York Council",
+   "The Council of the Borough of Kirklees"
+  ],
+  "ppon_partners": 13,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "015111-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-IP031693",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "The Guinness Partnership",
+   "THE GUINNESS PARTNERSHIP LIMITED"
+  ],
+  "coh_partners": 2,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "consortium",
+  "keep": 30914401,
+  "key": "IP031693~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "GBCOHIP031693",
+    "kind": "national",
+    "name": "THE GUINNESS PARTNERSHIP LIMITED",
+    "org_id": 30914401
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "ppon_literal": "GB-PPON-PJXZ-4423-NDBT",
+  "ppon_name_keys": 50,
+  "ppon_names": [
+   "BELIEVE HOUSING LIMITED",
+   "Birmingham City Council",
+   "BLACKPOOL COASTAL HOUSING LIMITED",
+   "Bristol City Council",
+   "Carmarthenshire County Council",
+   "City of Lincoln Council",
+   "City of York Council",
+   "The Council of the Borough of Kirklees"
+  ],
+  "ppon_partners": 13,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "043869-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-NI045638",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "PENTAGON SOLUTIONS (NI) LIMITED"
+  ],
+  "coh_partners": 1,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 2,
+  "first_ppon": 0,
+  "gate": "uncorroborated-overlap",
+  "keep": 31597331,
+  "key": "NI045638~PWGZ5777ZYWW",
+  "members": [
+   {
+    "identifier": "GBCOHNI045638",
+    "kind": "national",
+    "name": "PENTAGON SOLUTIONS (NI) LIMITED",
+    "org_id": 31597331
+   },
+   {
+    "identifier": "GBPPONPWGZ5777ZYWW",
+    "kind": "national",
+    "name": "Pentagon  Solutions Ltd",
+    "org_id": 31599907
+   }
+  ],
+  "ppon_literal": "GB-PPON-PWGZ-5777-ZYWW",
+  "ppon_name_keys": 1,
+  "ppon_names": [
+   "Pentagon  Solutions Ltd"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "015797-2025",
+   "015817-2025"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coh_literal": "GB-COH-RS007072",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "ONE VISION HOUSING LIMITED"
+  ],
+  "coh_partners": 2,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "consortium",
+  "keep": 30915037,
+  "key": "RS007072~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "GBCOHRS007072",
+    "kind": "national",
+    "name": "ONE VISION HOUSING LIMITED",
+    "org_id": 30915037
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "ppon_literal": "GB-PPON-PJXZ-4423-NDBT",
+  "ppon_name_keys": 50,
+  "ppon_names": [
+   "BELIEVE HOUSING LIMITED",
+   "Birmingham City Council",
+   "BLACKPOOL COASTAL HOUSING LIMITED",
+   "Bristol City Council",
+   "Carmarthenshire County Council",
+   "City of Lincoln Council",
+   "City of York Council",
+   "The Council of the Borough of Kirklees"
+  ],
+  "ppon_partners": 13,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "088261-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-RS007530",
+  "coh_name_keys": 3,
+  "coh_names": [
+   "Vico Homes",
+   "VICO HOMES LIMITED",
+   "Wakefield and District Housing Ltd"
+  ],
+  "coh_partners": 2,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 2,
+  "first_ppon": 0,
+  "gate": "consortium",
+  "keep": 10134042,
+  "key": "RS007530~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "RS007530",
+    "kind": "national",
+    "name": "Wakefield and District Housing Limited",
+    "org_id": 10134042
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "ppon_literal": "GB-PPON-PJXZ-4423-NDBT",
+  "ppon_name_keys": 50,
+  "ppon_names": [
+   "BELIEVE HOUSING LIMITED",
+   "Birmingham City Council",
+   "BLACKPOOL COASTAL HOUSING LIMITED",
+   "Bristol City Council",
+   "Carmarthenshire County Council",
+   "City of Lincoln Council",
+   "City of York Council",
+   "The Council of the Borough of Kirklees"
+  ],
+  "ppon_partners": 13,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "035817-2026",
+   "036865-2026"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coh_literal": "GB-COH-RS007748",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Lincolnshire Housing Partnership",
+   "Lincolnshire Housing Partnership Limited"
+  ],
+  "coh_partners": 2,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 2,
+  "first_ppon": 0,
+  "gate": "consortium",
+  "keep": 30917202,
+  "key": "RS007748~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "GBCOHRS007748",
+    "kind": "national",
+    "name": "LINCOLNSHIRE HOUSING PARTNERSHIP LIMITED",
+    "org_id": 30917202
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "ppon_literal": "GB-PPON-PJXZ-4423-NDBT",
+  "ppon_name_keys": 50,
+  "ppon_names": [
+   "BELIEVE HOUSING LIMITED",
+   "Birmingham City Council",
+   "BLACKPOOL COASTAL HOUSING LIMITED",
+   "Bristol City Council",
+   "Carmarthenshire County Council",
+   "City of Lincoln Council",
+   "City of York Council",
+   "The Council of the Borough of Kirklees"
+  ],
+  "ppon_partners": 13,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "061978-2026",
+   "062845-2026"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coh_literal": "GB-COH-RS007826",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Torus",
+   "TORUS62 LIMITED"
+  ],
+  "coh_partners": 2,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 2,
+  "first_ppon": 0,
+  "gate": "consortium",
+  "keep": 13089134,
+  "key": "RS007826~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "RS007826",
+    "kind": "national",
+    "name": "Torus",
+    "org_id": 13089134
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "ppon_literal": "GB-PPON-PJXZ-4423-NDBT",
+  "ppon_name_keys": 50,
+  "ppon_names": [
+   "BELIEVE HOUSING LIMITED",
+   "Birmingham City Council",
+   "BLACKPOOL COASTAL HOUSING LIMITED",
+   "Bristol City Council",
+   "Carmarthenshire County Council",
+   "City of Lincoln Council",
+   "City of York Council",
+   "The Council of the Borough of Kirklees"
+  ],
+  "ppon_partners": 13,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "033873-2026",
+   "034103-2026"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coh_literal": "GB-COH-RS008076",
+  "coh_name_keys": 1,
+  "coh_names": [
+   "BELIEVE HOUSING LIMITED"
+  ],
+  "coh_partners": 2,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "consortium",
+  "keep": 30916128,
+  "key": "RS008076~PJXZ4423NDBT",
+  "members": [
+   {
+    "identifier": "GBCOHRS008076",
+    "kind": "national",
+    "name": "BELIEVE HOUSING LIMITED",
+    "org_id": 30916128
+   },
+   {
+    "identifier": "GBPPONPJXZ4423NDBT",
+    "kind": "national",
+    "name": "Northern Housing Consortium Ltd",
+    "org_id": 30953692
+   }
+  ],
+  "ppon_literal": "GB-PPON-PJXZ-4423-NDBT",
+  "ppon_name_keys": 50,
+  "ppon_names": [
+   "BELIEVE HOUSING LIMITED",
+   "Birmingham City Council",
+   "BLACKPOOL COASTAL HOUSING LIMITED",
+   "Bristol City Council",
+   "Carmarthenshire County Council",
+   "City of Lincoln Council",
+   "City of York Council",
+   "The Council of the Borough of Kirklees"
+  ],
+  "ppon_partners": 13,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "074729-2026"
+  ],
+  "witnesses": 1
+ },
+ {
+  "coh_literal": "GB-COH-03226403",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Essity UK Limited",
+   "Kimberly Clark Ltd"
+  ],
+  "coh_partners": 2,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 2,
+  "first_ppon": 0,
+  "gate": "coh-multi-ppon",
+  "keep": 15189638,
+  "key": "03226403~PBGD2746GXHP",
+  "members": [
+   {
+    "identifier": "03226403",
+    "kind": "national",
+    "name": "Essity UK Ltd",
+    "org_id": 15189638
+   },
+   {
+    "identifier": "GBPPONPBGD2746GXHP",
+    "kind": "national",
+    "name": "Rotherham Doncaster and South Humber NHS Foundation Trust",
+    "org_id": 31535064
+   }
+  ],
+  "ppon_literal": "GB-PPON-PBGD-2746-GXHP",
+  "ppon_name_keys": 2,
+  "ppon_names": [
+   "Rotherham Doncaster and South Humber NHS Foundation Trust",
+   "ROTHERHAM DONCASTER AND SOUTH HUMBER NHS FOUNDATION TRUST CHARITABLE FUND"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "027999-2025",
+   "028000-2025"
+  ],
+  "witnesses": 2
+ },
+ {
+  "coh_literal": "GB-COH-03226403",
+  "coh_name_keys": 2,
+  "coh_names": [
+   "Essity UK Limited",
+   "Kimberly Clark Ltd"
+  ],
+  "coh_partners": 2,
+  "cooccur_publications": [],
+  "cooccurring": 0,
+  "corroborated_by": null,
+  "country": "GB",
+  "first_coh": 1,
+  "first_ppon": 0,
+  "gate": "coh-multi-ppon",
+  "keep": 15189638,
+  "key": "03226403~PLBQ7163MQWL",
+  "members": [
+   {
+    "identifier": "03226403",
+    "kind": "national",
+    "name": "Essity UK Ltd",
+    "org_id": 15189638
+   },
+   {
+    "identifier": "GBPPONPLBQ7163MQWL",
+    "kind": "national",
+    "name": "Essity UK Ltd - Health & Medical Solutions",
+    "org_id": 30969128
+   }
+  ],
+  "ppon_literal": "GB-PPON-PLBQ-7163-MQWL",
+  "ppon_name_keys": 3,
+  "ppon_names": [
+   "Essity T/A BSN Medical Ltd",
+   "ESSITY UK LIMITED",
+   "Essity UK Ltd - Health & Medical Solutions"
+  ],
+  "ppon_partners": 1,
+  "scheme": "GB:altid",
+  "witness_publications": [
+   "031452-2025"
+  ],
+  "witnesses": 1
+ }
+]
