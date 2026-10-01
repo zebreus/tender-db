@@ -148,7 +148,10 @@ when something was rewritten. Store the survivor's id. Chains of merges are foll
 it in <code>merged_identifiers</code>, <code>?identifier=</code> finds the survivor by it,
 and the page names the merge as
 <code>"resolved_filters": {"identifier": {"asked": "…", "merged_into": [&lt;id&gt;, …]}}</code>
-(see <a href="#lookups">lookups</a>).</p>
+(see <a href="#lookups">lookups</a>). The one exception is a number a review found was
+never the organization's own (<code>identifier_status: register_mismatch</code>): when that
+organization is re-keyed onto its right number, the wrong number — in any spelling — stops
+answering it rather than following it.</p>
 <p>Tender rows echo the <code>cpv</code> (CPV codes) and <code>country</code>
 (NUTS place codes) they carry, so you can see why a row matched a
 <code>cpv</code>/<code>country</code> filter.</p>

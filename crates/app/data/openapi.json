@@ -1019,7 +1019,7 @@
           "identifier_status": { "type": "string", "nullable": true, "enum": ["register_mismatch", "related_entity", null], "description": "Set when a review against the official register found `identifier` is not this organization's own: `register_mismatch` — another company's number, a dissolved stranger's, or one never issued (such a number never merges this organization with another, and another spelling of it reaches this organization only under a matching name; a notice publishing exactly that number still resolves here); `related_entity` — a parent's or subsidiary's. Null when no review found a problem, which is not the same as checked." },
           "merged_identifiers": {
             "type": "array",
-            "description": "The identifiers merges folded into this organization (issue 460) — a PPON whose organization was merged into this company-number one, another spelling of one register key. `?identifier=` finds this organization by each of them. Empty when no merge left one; a merge that re-keyed a wrong number (another company's) never adds it.",
+            "description": "The identifiers merges folded into this organization (issue 460) — a PPON whose organization was merged into this company-number one, another spelling of one register key. `?identifier=` finds this organization by each of them. Empty when no merge left one. A number a review found was never this organization's own (another company's) is never among them, in any spelling, once the organization is re-keyed onto its right number.",
             "items": {
               "type": "object",
               "properties": {

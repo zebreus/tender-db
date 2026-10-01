@@ -1541,6 +1541,62 @@ async fn an_armed_resolver_binds_a_ppon_first_mention_to_the_company_number_org_
     );
 }
 
+/// Issue 460 review (D5): a from-archive rebuild empties
+/// `organization_merged_identifiers` (it names re-minted org ids), and under the
+/// alias the rebuilt fold binds the PPON's mentions straight to the
+/// company-number org — no PPON org is minted, so no merge ever writes the PPON
+/// back and `?identifier=` answered an empty page for good. The bind itself
+/// records the PPON as a merged identifier of the org it bound to, once.
+#[tokio::test]
+async fn an_alias_bind_records_the_ppon_as_a_merged_identifier_of_its_org() {
+    let b = bed("alias-records").await;
+    b.split(100, (2, COH_A, "Acme Widgets Ltd"), (1, PPON_P, "ACME WIDGETS LTD")).await;
+    b.merge_all().await;
+    let holders = async || -> Vec<i64> {
+        let f = store::read::Filter { identifier: Some(minted(PPON_P)), ..store::read::Filter::default() };
+        store::read::organizations(&b.conn, &f, store::read::Scope::Page { after: 0, limit: 10 })
+            .await
+            .unwrap()
+            .iter()
+            .map(|r| r.id)
+            .collect()
+    };
+    assert_eq!(holders().await, vec![2], "the merge wrote the PPON");
+    // What a rebuild leaves: the table empty, the ledger (and so the alias) intact.
+    b.conn.execute("DELETE FROM organization_merged_identifiers", ()).await.unwrap();
+    assert!(holders().await.is_empty());
+    let changed_before = b
+        .count("SELECT COUNT(*) FROM changes WHERE entity_kind = 'organization' AND entity_id = 2 AND op = 'changed'")
+        .await;
+
+    b.fresh(&[300, 301]).await;
+    let (ids, c) = b
+        .resolve(
+            true,
+            &[ppon_first(300, PPON_P, "Acme Widgets Limited"), ppon_first(301, PPON_P, "Acme Widgets Ltd")],
+        )
+        .await;
+    assert_eq!(ids, vec![2, 2], "both mentions bind to the company-number org");
+    assert_eq!((c.bound, c.recorded), (2, 1), "{c:?}");
+    assert_eq!(holders().await, vec![2], "the bind recorded the PPON on the org it bound to");
+    assert_eq!(
+        b.count("SELECT COUNT(*) FROM organization_merged_identifiers").await,
+        1,
+        "once, however many mentions bind"
+    );
+    assert_eq!(
+        b.count("SELECT COUNT(*) FROM changes WHERE entity_kind = 'organization' AND entity_id = 2 AND op = 'changed'")
+            .await
+            - changed_before,
+        1,
+        "the org's served merged_identifiers grew: one `organization changed`"
+    );
+    // A fold the merge already covered records nothing: the row stands.
+    b.fresh(&[302]).await;
+    let (_, c) = b.resolve(true, &[ppon_first(302, PPON_P, "Acme Widgets Ltd")]).await;
+    assert_eq!((c.bound, c.recorded), (1, 0), "{c:?}");
+}
+
 /// Unarmed, the resolver is the pre-448 one: the same mention after the same
 /// merge mints the PPON org again, and the alias reports nothing at all.
 #[tokio::test]

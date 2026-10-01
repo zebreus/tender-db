@@ -2210,6 +2210,125 @@ async fn repoint_merged_identifiers(
     Ok(())
 }
 
+/// The injected canonical key (`crosswalk::canonical_key_flat`): `(scheme,
+/// key, is_e1)` for a `(country, kind, literal)`. Store never depends on ingest.
+pub type IdentifierKeyFn = fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>;
+
+/// Issue 460 review: the `(scheme, key)` one stored identifier keys to, for a
+/// SPELLING test — either tier, so an E2 pad that collides errs toward
+/// refusing an identifier, never toward answering with a wrong one. A missing
+/// kind reads `national` (the rekey arm's owner walk does the same).
+fn spelling_key(
+    key: IdentifierKeyFn,
+    country: Option<&str>,
+    kind: Option<&str>,
+    literal: &str,
+) -> Option<(&'static str, String)> {
+    key(
+        country.filter(|c| !c.is_empty()),
+        kind.filter(|k| !k.is_empty()).unwrap_or("national"),
+        literal,
+    )
+    .map(|(scheme, key, _)| (scheme, key))
+}
+
+/// Issue 460 review (D1, D3): drop every identifier merges folded into `org`
+/// that spells `wrong` — the number a reviewer found is another company's
+/// (452/453), which the re-key just took off this entity. The loser's own
+/// number is never written by a `rekey` merge, but an earlier `r2` may have
+/// folded another spelling of it (or the bare number) into the org the re-key
+/// acts on; the merge arm's carry moves that to the right company, and the
+/// move arm leaves it on the org it re-keys in place. Either way a lookup by
+/// the wrong number would answer the entity again. Identifiers that are NOT a
+/// spelling of it (a PPON an altid merge folded in) stay: they are the
+/// entity's, and travel with its mentions. One seek on
+/// `organization_merged_identifiers_org`; returns the rows dropped.
+async fn drop_merged_spellings(
+    conn: &Connection,
+    org: i64,
+    key: IdentifierKeyFn,
+    country: &str,
+    kind: &str,
+    wrong: &str,
+) -> turso::Result<u64> {
+    let wrong_key = spelling_key(key, Some(country), Some(kind), wrong);
+    let mut rows = conn
+        .query(
+            "SELECT identifier, identifier_kind, country, loser FROM organization_merged_identifiers \
+              WHERE org_id = ?",
+            (Value::Integer(org),),
+        )
+        .await?;
+    let mut doomed: Vec<(String, i64)> = Vec::new();
+    while let Some(row) = rows.next().await? {
+        let identifier = text(&row, 0);
+        let spells = identifier == wrong
+            || (wrong_key.is_some()
+                && spelling_key(key, opt_text_of(&row, 2).as_deref(), opt_text_of(&row, 1).as_deref(), &identifier)
+                    == wrong_key);
+        if spells {
+            doomed.push((identifier, int(&row, 3)));
+        }
+    }
+    drop(rows);
+    for (identifier, loser) in &doomed {
+        conn.execute(
+            "DELETE FROM organization_merged_identifiers WHERE identifier = ? AND loser = ?",
+            (t(identifier), Value::Integer(*loser)),
+        )
+        .await?;
+    }
+    Ok(doomed.len() as u64)
+}
+
+/// Issue 460 review: whether `org` already carries a merged identifier — asked
+/// by the fold's alias bind, once per (PPON, org) a run. A seek on the
+/// `(identifier, loser)` primary key's prefix, pinned by the plan guard.
+pub(crate) const MERGED_ALIAS_STANDING_SQL: &str =
+    "SELECT 1 FROM organization_merged_identifiers WHERE identifier = ? AND org_id = ?";
+
+/// Issue 460 review: whether the backfill finds a ledger literal standing —
+/// for that loser, or already on that survivor (a merge or an alias bind wrote
+/// it). The same prefix seek, the OR filtering the identifier's few rows.
+pub(crate) const MERGED_BACKFILL_STANDING_SQL: &str =
+    "SELECT 1 FROM organization_merged_identifiers WHERE identifier = ? AND (loser = ? OR org_id = ?)";
+
+/// Issue 460 review (D5): the PPON the issue-448 alias bound a mention by,
+/// recorded as a merged identifier of the company-number org it bound to.
+/// After a from-archive rebuild (which empties the table: it names re-minted
+/// ids) the alias binds a merged PPON's mentions straight to that org, so no
+/// PPON org is minted and no merge ever writes the PPON back; this is where
+/// the lookup by it comes back. `loser` is the holder itself — no loser row
+/// ever existed — and the row carries like any other when the holder merges.
+/// Nothing is written when the org already carries that identifier (the merge
+/// or the backfill wrote it). Returns whether it wrote.
+async fn record_alias_identifier(conn: &Connection, id: &Identifier, org: i64) -> turso::Result<bool> {
+    let standing = conn
+        .query(MERGED_ALIAS_STANDING_SQL, (t(&id.value), Value::Integer(org)))
+        .await?
+        .next()
+        .await?
+        .is_some();
+    if standing {
+        return Ok(false);
+    }
+    let n = conn
+        .execute(
+            "INSERT OR IGNORE INTO organization_merged_identifiers \
+                 (identifier, identifier_kind, country, org_id, loser, rule) \
+             VALUES (?, ?, ?, ?, ?, 'altid-alias')",
+            (
+                t(&id.value),
+                t(&id.kind),
+                opt_text(id.country.as_deref()),
+                Value::Integer(org),
+                Value::Integer(org),
+            ),
+        )
+        .await?;
+    Ok(n > 0)
+}
+
 /// Issue 460 unit 3: the ledger rules whose evidence names the loser's
 /// identifier literal under `$.loser_id`, in the order the backfill reads them.
 /// `e2-altid` (448) stores the PPON org's `organizations.identifier`; `r2`, `e0`
@@ -2252,12 +2371,24 @@ enum MergedSurvivor {
 /// Follows the keep of a merge made at `at` to the live organization it is
 /// now — [`crate::read::resolve_org`]'s walk (the newest merge per loser, one
 /// `(loser, at)` seek a hop, cycle-guarded, `MERGE_HOPS` at most) with time
-/// checked at every step: each hop must be merged no earlier than the merge it
-/// continues, and the live row must have been minted no later than the merge
-/// that named it. A ledger id after a from-archive rebuild (org ids re-minted
-/// from 1) fails one of the two, so the backfill never attaches a literal to an
-/// unrelated organization.
-async fn merged_survivor(conn: &Connection, keep: i64, at: i64) -> turso::Result<MergedSurvivor> {
+/// checked three ways:
+/// - the merge must be no older than the current org era, `floor` (the mint
+///   time of the oldest live organization, [`BackfillGuard::era_floor`]). A
+///   from-archive rebuild re-mints every org id from 1, so a ledger row from
+///   before it names ids that now belong to other companies; and when such an
+///   id was minted AGAIN and merged in the new era, the two checks below both
+///   pass (the deleted hop's own mint time is gone) — issue 460 review D4;
+/// - each hop must be merged no earlier than the merge it continues;
+/// - the live row must have been minted no later than the merge that named it.
+async fn merged_survivor(
+    conn: &Connection,
+    keep: i64,
+    at: i64,
+    floor: Option<i64>,
+) -> turso::Result<MergedSurvivor> {
+    if floor.is_some_and(|f| at < f) {
+        return Ok(MergedSurvivor::OutOfTime);
+    }
     let (mut id, mut when) = (keep, at);
     let mut seen = vec![keep];
     for _ in 0..=crate::read::MERGE_HOPS {
@@ -2289,6 +2420,68 @@ async fn merged_survivor(conn: &Connection, keep: i64, at: i64) -> turso::Result
     Ok(MergedSurvivor::Unresolved)
 }
 
+/// What the backfill holds every ledger row against besides its chain (issue
+/// 460 review), read once per run: one rowid seek and the verdict table
+/// (hand-review sized, hundreds of rows).
+struct BackfillGuard {
+    /// `created_at` of the lowest live org id — the oldest live organization,
+    /// ids being minted in time order. No organization outlives the era it was
+    /// minted in, so a ledger row older than this names ids of an earlier era
+    /// (a from-archive rebuild re-mints them from 1). `None` on an empty table.
+    era_floor: Option<i64>,
+    /// The canonical keys and literals of every number a reviewer found is not
+    /// its carrier's: a `wrong` verdict's triple (452), applied or not, and
+    /// every triple a re-key acted on (453). A ledger literal that spells one
+    /// is written only for a survivor that carries that number itself — its
+    /// real owner, or the flagged org while it still carries it.
+    /// `(country, scheme, key)`, R2's grouping; `''` for no country.
+    wrong_keys: std::collections::HashSet<(String, &'static str, String)>,
+    /// `(country, literal)` — for a literal the key cannot read.
+    wrong_literals: std::collections::HashSet<(String, String)>,
+}
+
+impl BackfillGuard {
+    async fn read(conn: &Connection, key: IdentifierKeyFn) -> turso::Result<Self> {
+        let mut rows = conn.query("SELECT created_at FROM organizations ORDER BY id LIMIT 1", ()).await?;
+        let era_floor = rows.next().await?.map(|row| int(&row, 0));
+        drop(rows);
+        let mut rows = conn
+            .query(
+                "SELECT identifier, identifier_kind, country FROM org_identifier_verdicts \
+                  WHERE verdict = 'wrong' OR applied_literal IS NOT NULL",
+                (),
+            )
+            .await?;
+        let mut guard = BackfillGuard {
+            era_floor,
+            wrong_keys: std::collections::HashSet::new(),
+            wrong_literals: std::collections::HashSet::new(),
+        };
+        while let Some(row) = rows.next().await? {
+            let (identifier, kind, country) = (text(&row, 0), text(&row, 1), text(&row, 2));
+            if let Some((scheme, k)) = spelling_key(key, Some(&country), Some(&kind), &identifier) {
+                guard.wrong_keys.insert((country.clone(), scheme, k));
+            }
+            guard.wrong_literals.insert((country, identifier));
+        }
+        Ok(guard)
+    }
+}
+
+/// What one backfill run carries from window to window.
+struct BackfillState {
+    guard: BackfillGuard,
+    /// `(literal, loser)` pairs this run counted as written, so a dry run
+    /// counts a loser the ledger names twice once, as a wet run would.
+    seen: std::collections::HashSet<(String, i64)>,
+    /// `(literal, survivor)` pairs the same: two losers that folded one value
+    /// into one survivor write it once, dry or wet.
+    held: std::collections::HashSet<(String, i64)>,
+    /// Survivors already published as `organization changed` this run: one
+    /// event each, however many windows write for them.
+    published: BTreeSet<i64>,
+}
+
 /// Inputs to [`Db::backfill_merged_identifiers`].
 pub struct MergedIdentifierBackfillArgs<'a> {
     /// The kind (`national`, `vat`, …) the normaliser gives the literal under
@@ -2297,6 +2490,10 @@ pub struct MergedIdentifierBackfillArgs<'a> {
     /// register number, so the survivor's own kind would mislabel it. `None`
     /// (the normaliser refuses the literal) takes the survivor's kind, counted.
     pub kind_of: fn(Option<&str>, &str) -> Option<String>,
+    /// `crosswalk::canonical_key_flat`, the key the rekey arm reads numbers
+    /// by: a literal that spells a number a reviewer found wrong is refused
+    /// (`wrong_number`) unless the survivor carries that number itself.
+    pub key: IdentifierKeyFn,
     /// `true` counts and writes nothing.
     pub dry_run: bool,
     /// Ledger rows per window of the whole-ledger walk:
@@ -2323,11 +2520,18 @@ pub struct MergedIdentifierRuleCounts {
     pub no_literal: u64,
     /// The keep resolves to no live organization within `MERGE_HOPS`.
     pub unresolved: u64,
-    /// The chain from the keep contradicts time: a hop merged before the merge
+    /// The chain from the keep contradicts time: the merge is older than the
+    /// oldest live organization (the era floor), a hop merged before the merge
     /// it continues, or a live row minted after the merge that names it. Ledger
     /// ids outlive a from-archive rebuild that re-mints org ids from 1, and then
     /// they name unrelated rows; such a row is refused, never attached.
     pub out_of_time: u64,
+    /// The literal spells a number a reviewer found is not its carrier's (a
+    /// `wrong` verdict, or a re-key's wrong number), and the survivor does not
+    /// carry that number itself: the chain crossed a `rekey` merge onto the
+    /// right company, or the survivor was re-keyed in place. Refused — a
+    /// lookup by the wrong number must never answer the entity again.
+    pub wrong_number: u64,
     /// The loser is a live organization again; its identifier is its own.
     pub loser_live: u64,
     /// Written rows whose kind the normaliser could not give, so the
@@ -2339,6 +2543,9 @@ pub struct MergedIdentifierRuleCounts {
 #[derive(Debug, Default, Clone)]
 pub struct MergedIdentifierBackfill {
     pub dry_run: bool,
+    /// The era floor every ledger row was held against: `created_at` of the
+    /// oldest live organization (`None`: no organizations).
+    pub era_floor: Option<i64>,
     /// Every ledger row the whole-ledger walk read, all rules.
     pub ledger_rows: u64,
     /// Survivors whose row gained a merged identifier, each published as
@@ -3217,6 +3424,11 @@ pub struct AltIdAliasCounts {
     /// …refused, and minted or bound exactly as without the alias:
     /// `asked == bound + refused`.
     pub refused: u64,
+    /// Issue 460 review: binds that recorded their PPON as a merged
+    /// identifier of the company-number org, because it carried none — what a
+    /// from-archive rebuild leaves (the table emptied, no PPON org minted). One
+    /// per `(PPON, org)` a run; zero on a fold the merges already covered.
+    pub recorded: u64,
     /// Refusals by cause: the PPON is poisoned (in the ledger, or several
     /// standing orgs own it or the company number)…
     pub refused_poisoned: u64,
@@ -3239,6 +3451,10 @@ struct AltIdAlias {
     alias_of: std::collections::HashMap<String, String>,
     poisoned: std::collections::HashSet<String>,
     counts: AltIdAliasCounts,
+    /// Issue 460 review: the `(PPON, org)` pairs a bind already recorded (or
+    /// found recorded) as a merged identifier this run — one seek per pair,
+    /// not per mention.
+    recorded: std::collections::HashSet<(String, i64)>,
 }
 
 /// Why the alias refused one mention — each maps to one refusal counter.
@@ -3525,6 +3741,11 @@ pub struct RekeyReport {
     pub winners: u64,
     pub winner_dups: u64,
     pub tender_changes: u64,
+    /// Issue 460 review: merged identifiers dropped because they spell a
+    /// wrong number this run took off its entity — folded into the re-keyed
+    /// org by an earlier `r2`, and carried to the right company by the merge
+    /// arm or left on the org by the move arm.
+    pub merged_identifiers_dropped: u64,
     /// Keys the run did not reach (cap or stop), for the recorded residual.
     pub residual: Vec<String>,
     pub stopped: bool,
@@ -6181,6 +6402,9 @@ pub struct MentionResolver {
     /// seen a thousand times in one run costs one indexed SELECT — it cannot be
     /// preloaded like `org_of`, because 24.6M keys do not sit in RAM (issue 57).
     name_of: std::collections::HashMap<(String, String), i64>,
+    /// An `organization` change was appended this run — a mint, or (issue 460)
+    /// an alias bind that recorded its PPON — so the finish publishes the
+    /// cursor.
     created_any: bool,
     /// Issue 300 Stage 2, the PREVENTION half: same-country E1 canonical key
     /// → org, preloaded beside `org_of`, so an EQUIVALENT representation of a
@@ -8125,7 +8349,10 @@ impl Db {
         // Issue 460: the merged identifiers name their holder by org id too, and
         // a renumbered id would make a lookup answer an unrelated organization.
         // The rebuild re-mints every org from its mentions, so the merges these
-        // rows describe are undone with them.
+        // rows describe are undone with them. A merged PPON comes back through
+        // the fold's altid alias, which records each one it binds (the alias
+        // binds it straight to the company-number org, so no merge re-runs);
+        // the backfill job refuses every pre-rebuild ledger row (its era floor).
         conn.execute("DELETE FROM organization_merged_identifiers", ()).await?;
         conn.execute("DROP TABLE IF EXISTS organization_names", ()).await?;
         conn.execute("DROP TABLE IF EXISTS organization_mentions", ()).await?;
@@ -10354,7 +10581,7 @@ impl Db {
              PPON(s) poisoned (merged into two company numbers, never aliased)",
             counts.aliases, counts.ledger_rows, counts.kept, counts.poisoned
         ));
-        resolver.altid = Some(AltIdAlias { rules, alias_of, poisoned, counts });
+        resolver.altid = Some(AltIdAlias { rules, alias_of, poisoned, counts, recorded: HashSet::new() });
         Ok(())
     }
 
@@ -10721,12 +10948,14 @@ impl Db {
             let c = &a.counts;
             self.log_diag(&format!(
                 "[issue 448] resolver alias: {} PPON-first mention(s) asked, {} bound to the \
-                 company-number org ({} with the generic wall unable to answer), {} refused \
+                 company-number org ({} with the generic wall unable to answer; {} PPON(s) \
+                 recorded as its merged identifier, issue 460), {} refused \
                  ({} poisoned, {} no owner, {} consortium/legal-form veto, {} names disagree, {} \
                  generic) and minted or bound as without the alias",
                 c.asked,
                 c.bound,
                 c.bound_unwalled,
+                c.recorded,
                 c.refused,
                 c.refused_poisoned,
                 c.refused_no_owner,
@@ -11141,6 +11370,21 @@ impl Db {
                         // re-earns the bar with its own name; and claiming the
                         // PPON key for the company-number org would bind later
                         // mentions name-blind.
+                        //
+                        // Issue 460 review (D5): but the PPON IS an identifier
+                        // of the org it bound to, and after a from-archive
+                        // rebuild this bind is the only place it is ever seen
+                        // (no PPON org is minted, so no merge writes it). Once
+                        // per (PPON, org) per run; a write is an `organization
+                        // changed`, its served `merged_identifiers` grew.
+                        if let Some(alias) = resolver.altid.as_mut()
+                            && alias.recorded.insert((id.value.clone(), org_id))
+                            && record_alias_identifier(conn, id, org_id).await?
+                        {
+                            alias.counts.recorded += 1;
+                            append_change(conn, "organization", org_id, None, "changed", now).await?;
+                            resolver.created_any = true;
+                        }
                         (org_id, false)
                     } else {
                         conn.execute(
@@ -12151,14 +12395,18 @@ impl Db {
     /// `e2-altid` through its partial index, then one rowid walk of the whole
     /// ledger for `r2`/`e0`/`r3`. Each row's `$.loser_id` is the loser's literal;
     /// its keep is followed through the ledger to the live survivor
-    /// (`resolve_org`'s walk with time checked at every hop, so a ledger id a
-    /// rebuild re-minted is refused as `out_of_time`), whose country the row takes (an altid pair is two GB register
-    /// values, an `r2` group is one country, an `r3` loser had none) with the
-    /// kind [`MergedIdentifierBackfillArgs::kind_of`] gives the literal there.
-    /// A row already standing for `(identifier, loser)` is left as it is: the
-    /// merge that wrote it read the loser's own row. Idempotent; each window
-    /// writes in one transaction, and a stop between windows keeps what was
-    /// committed.
+    /// (`resolve_org`'s walk with time checked against the era floor and at
+    /// every hop, so a ledger id a rebuild re-minted is refused as
+    /// `out_of_time`), whose country the row takes (an altid pair is two GB
+    /// register values, an `r2` group is one country, an `r3` loser had none)
+    /// with the kind [`MergedIdentifierBackfillArgs::kind_of`] gives the
+    /// literal there. A literal spelling a number a reviewer found wrong is
+    /// refused (`wrong_number`) unless the survivor carries that number itself.
+    /// A row already standing for `(identifier, loser)`, or the survivor
+    /// already carrying the identifier, is left as it is: the merge (or the
+    /// alias bind) that wrote it read the loser's own row. Idempotent; each
+    /// window writes in one transaction, and a stop between windows keeps what
+    /// was committed.
     pub async fn backfill_merged_identifiers(
         &self,
         args: MergedIdentifierBackfillArgs<'_>,
@@ -12174,14 +12422,17 @@ impl Db {
         let read = |row: &turso::Row| -> MergedLedgerRow {
             (int(row, 0), int(row, 1), int(row, 2), text(row, 3), opt_text_of(row, 4), int(row, 5))
         };
-        // Pairs this run counted as written, so a dry run counts a loser the
-        // ledger names twice once, as a wet run would.
-        let mut seen: std::collections::HashSet<(String, i64)> = std::collections::HashSet::new();
-        // Survivors already published as `organization changed` this run: one
-        // event each, however many windows write for them.
-        let mut published: BTreeSet<i64> = BTreeSet::new();
-
         let mut altid: Vec<MergedLedgerRow> = Vec::new();
+        let mut state = {
+            let conn = self.reader().await?;
+            BackfillState {
+                guard: BackfillGuard::read(&conn, args.key).await?,
+                seen: std::collections::HashSet::new(),
+                held: std::collections::HashSet::new(),
+                published: BTreeSet::new(),
+            }
+        };
+        report.era_floor = state.guard.era_floor;
         {
             let conn = self.reader().await?;
             let mut rows = conn.query(MERGED_BACKFILL_ALTID_SQL, ()).await?;
@@ -12194,7 +12445,7 @@ impl Db {
             report.stopped = true;
             return Ok(report);
         }
-        self.backfill_merged_window(&args, &altid, &mut seen, &mut published, &mut report).await?;
+        self.backfill_merged_window(&args, &altid, &mut state, &mut report).await?;
 
         let mut after = 0i64;
         loop {
@@ -12220,12 +12471,12 @@ impl Db {
             report.ledger_rows += window.len() as u64;
             let full = window.len() as i64 == args.window.max(1);
             window.retain(|r| r.3 != "e2-altid" && MERGED_IDENTIFIER_BACKFILL_RULES.contains(&r.3.as_str()));
-            self.backfill_merged_window(&args, &window, &mut seen, &mut published, &mut report).await?;
+            self.backfill_merged_window(&args, &window, &mut state, &mut report).await?;
             if !full {
                 break;
             }
         }
-        report.organizations_changed = published.len() as u64;
+        report.organizations_changed = state.published.len() as u64;
         Ok(report)
     }
 
@@ -12236,8 +12487,7 @@ impl Db {
         &self,
         args: &MergedIdentifierBackfillArgs<'_>,
         window: &[MergedLedgerRow],
-        seen: &mut std::collections::HashSet<(String, i64)>,
-        published: &mut BTreeSet<i64>,
+        state: &mut BackfillState,
         report: &mut MergedIdentifierBackfill,
     ) -> turso::Result<()> {
         if window.is_empty() {
@@ -12258,7 +12508,7 @@ impl Db {
                     counts.no_literal += 1;
                     continue;
                 };
-                let survivor = match merged_survivor(&conn, *keep, *at).await? {
+                let survivor = match merged_survivor(&conn, *keep, *at, state.guard.era_floor).await? {
                     MergedSurvivor::Live(id) => id,
                     MergedSurvivor::Unresolved => {
                         counts.unresolved += 1;
@@ -12296,20 +12546,50 @@ impl Db {
                     counts.same_as_survivor += 1;
                     continue;
                 }
+                let normalised = (args.kind_of)(keep_country.as_deref(), literal);
+                // Issue 460 review (D2, D3): a number a reviewer found is not
+                // its carrier's reaches the survivor only if the survivor
+                // carries it itself. Otherwise the chain crossed a `rekey`
+                // merge onto the right company, or the survivor was re-keyed
+                // in place, and the lookup by the wrong number would answer
+                // the entity again — the binding the re-key undid.
+                let literal_key = spelling_key(
+                    args.key,
+                    keep_country.as_deref(),
+                    normalised.as_deref().or(keep_kind.as_deref()),
+                    literal,
+                );
+                let country = keep_country.clone().unwrap_or_default();
+                let flagged = state.guard.wrong_literals.contains(&(country.clone(), literal.to_owned()))
+                    || literal_key
+                        .as_ref()
+                        .is_some_and(|(scheme, k)| state.guard.wrong_keys.contains(&(country, *scheme, k.clone())));
+                if flagged {
+                    let own = keep_identifier.as_deref().and_then(|own| {
+                        spelling_key(args.key, keep_country.as_deref(), keep_kind.as_deref(), own)
+                    });
+                    if literal_key.is_none() || own != literal_key {
+                        counts.wrong_number += 1;
+                        continue;
+                    }
+                }
                 let standing = conn
                     .query(
-                        "SELECT 1 FROM organization_merged_identifiers WHERE identifier = ? AND loser = ?",
-                        (t(literal), Value::Integer(*loser)),
+                        MERGED_BACKFILL_STANDING_SQL,
+                        (t(literal), Value::Integer(*loser), Value::Integer(survivor)),
                     )
                     .await?
                     .next()
                     .await?
                     .is_some();
-                if standing || !seen.insert((literal.to_owned(), *loser)) {
+                if standing
+                    || !state.seen.insert((literal.to_owned(), *loser))
+                    || !state.held.insert((literal.to_owned(), survivor))
+                {
                     counts.present += 1;
                     continue;
                 }
-                let kind = match (args.kind_of)(keep_country.as_deref(), literal) {
+                let kind = match normalised {
                     Some(kind) => Some(kind),
                     None => {
                         counts.kind_from_survivor += 1;
@@ -12335,7 +12615,7 @@ impl Db {
                     .await?;
                 }
             }
-            touched.retain(|org| !published.contains(org));
+            touched.retain(|org| !state.published.contains(org));
             if !args.dry_run {
                 let now = crate::now_unix();
                 for &org in &touched {
@@ -12346,7 +12626,7 @@ impl Db {
         }
         .await;
         if args.dry_run {
-            published.extend(&touched);
+            state.published.extend(&touched);
             return result;
         }
         match result {
@@ -12356,7 +12636,7 @@ impl Db {
                     return Err(e);
                 }
                 if !touched.is_empty() {
-                    published.extend(&touched);
+                    state.published.extend(&touched);
                     self.publish_cursor(&conn).await?;
                 }
                 Ok(())
@@ -18403,6 +18683,12 @@ impl Db {
                         }
                         drop(trows);
                         let moved = repoint_org_references(conn, *keep, l.org, REKEY_RULE).await?;
+                        // Issue 460 review (D1): the loser's own number is never
+                        // written, but the carry just moved every identifier
+                        // folded into it — another spelling of the wrong number
+                        // among them — onto the right company.
+                        report.merged_identifiers_dropped +=
+                            drop_merged_spellings(conn, *keep, args.key, &country, &kind, &l.wrong).await?;
                         report.mentions += moved.mentions;
                         report.parties += moved.parties;
                         report.bid_parties += moved.bid_parties;
@@ -18460,6 +18746,11 @@ impl Db {
                             txn_done += 1;
                             continue;
                         }
+                        // Issue 460 review (D3): the org is its own survivor, so
+                        // a spelling of the wrong number an earlier merge folded
+                        // into it would keep answering beside the right one.
+                        report.merged_identifiers_dropped +=
+                            drop_merged_spellings(conn, l.org, args.key, &country, &kind, &l.wrong).await?;
                         append_change(conn, "organization", l.org, None, "changed", now).await?;
                         report.moved += 1;
                     }

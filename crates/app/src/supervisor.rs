@@ -2459,8 +2459,15 @@ fn alias_suffix(a: &store::AltIdAliasCounts) -> String {
     } else {
         String::new()
     };
+    // Issue 460 review: a bind that recorded its PPON as a merged identifier —
+    // named only when one did (after a from-archive rebuild, thousands).
+    let recorded = if a.recorded > 0 {
+        format!(", {} PPON(s) recorded as merged identifiers", a.recorded)
+    } else {
+        String::new()
+    };
     format!(
-        "; issue-448 alias asked {} bound {}{unwalled} refused {} (poisoned {}, no owner {}, \
+        "; issue-448 alias asked {} bound {}{unwalled}{recorded} refused {} (poisoned {}, no owner {}, \
          veto {}, names {}, generic {})",
         a.asked,
         a.bound,
@@ -2636,6 +2643,7 @@ fn merged_identifier_backfill_body(r: &store::MergedIdentifierBackfill) -> Strin
                     "no_literal": c.no_literal,
                     "unresolved": c.unresolved,
                     "out_of_time": c.out_of_time,
+                    "wrong_number": c.wrong_number,
                     "loser_live": c.loser_live,
                     "kind_from_survivor": c.kind_from_survivor,
                 }),
@@ -2644,6 +2652,7 @@ fn merged_identifier_backfill_body(r: &store::MergedIdentifierBackfill) -> Strin
         .collect();
     serde_json::json!({
         "dry_run": r.dry_run,
+        "era_floor": r.era_floor,
         "ledger_rows": r.ledger_rows,
         "written": r.rules.iter().map(|(_, c)| c.written).sum::<u64>(),
         "organizations_changed": r.organizations_changed,
@@ -2660,7 +2669,7 @@ fn merged_identifier_backfill_summary(r: &store::MergedIdentifierBackfill) -> St
         .map(|(rule, c)| {
             format!(
                 "{rule}: {} rows, {} written, {} present, {} same as survivor, {} no literal, \
-                 {} unresolved, {} out of time, {} loser live, {} kind from survivor",
+                 {} unresolved, {} out of time, {} wrong number, {} loser live, {} kind from survivor",
                 c.rows,
                 c.written,
                 c.present,
@@ -2668,14 +2677,16 @@ fn merged_identifier_backfill_summary(r: &store::MergedIdentifierBackfill) -> St
                 c.no_literal,
                 c.unresolved,
                 c.out_of_time,
+                c.wrong_number,
                 c.loser_live,
                 c.kind_from_survivor
             )
         })
         .collect();
     format!(
-        "{} ledger rows walked, {} survivors changed; {}",
+        "{} ledger rows walked (era floor {}), {} survivors changed; {}",
         r.ledger_rows,
+        r.era_floor.map_or_else(|| "none".to_owned(), |f| f.to_string()),
         r.organizations_changed,
         rules.join("; ")
     )
@@ -3948,6 +3959,7 @@ impl Supervisor {
             .db
             .backfill_merged_identifiers(store::MergedIdentifierBackfillArgs {
                 kind_of: merged_identifier_kind,
+                key: ingest::crosswalk::canonical_key_flat,
                 dry_run,
                 window: store::MERGED_BACKFILL_WINDOW,
                 stop: &stop,
@@ -6185,6 +6197,7 @@ impl Supervisor {
                     "plan_move": recorded.iter().filter(|l| l.shape == "move").count(),
                     "live_plan_merge": r.plan_merge, "live_plan_move": r.plan_move,
                     "merged_this_run": r.merged, "moved_this_run": r.moved,
+                    "merged_identifiers_dropped_this_run": r.merged_identifiers_dropped,
                     "plan": recorded.into_iter().map(listing).collect::<Vec<_>>(),
                     "denied": r.denied.iter().map(listing).collect::<Vec<_>>(),
                 })
@@ -6224,7 +6237,8 @@ impl Supervisor {
                         "match-org-identifiers rekey (issue 453){}: held against {} stored keys \
                          ({} planned since, {} no longer planned); merged {} ({} mentions, {} \
                          parties, {} bid-parties, {} winners repointed, {} winner dups deleted, {} \
-                         tenders touched), moved {}; residual {} re-recorded. Live plan: {head}",
+                         tenders touched), moved {}, {} merged identifiers dropped (spellings \
+                         of the wrong numbers, issue 460); residual {} re-recorded. Live plan: {head}",
                         if r.stopped { " STOPPED at a checkpoint" } else { " WET" },
                         r.expected,
                         r.deferred_unreviewed,
@@ -6237,6 +6251,7 @@ impl Supervisor {
                         r.winner_dups,
                         r.tender_changes,
                         r.moved,
+                        r.merged_identifiers_dropped,
                         r.residual.len(),
                     )
                 })

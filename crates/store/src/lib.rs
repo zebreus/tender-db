@@ -30,7 +30,7 @@ pub use canonical::{
     ClusterCase, ClusterPacket, CountryFoldReport, CountryMove, CountryVerdict,
     CountryVerdictReport, FusionCandidate, IdentifierVerdict, IdentifierVerdictReport, MergeVerdict,
     RekeyArgs, RekeyListing, RekeyReport,
-    MergedIdentifierBackfill, MergedIdentifierBackfillArgs, MergedIdentifierRuleCounts,
+    IdentifierKeyFn, MergedIdentifierBackfill, MergedIdentifierBackfillArgs, MergedIdentifierRuleCounts,
     MERGED_BACKFILL_ALTID_SQL, MERGED_BACKFILL_WINDOW, MERGED_BACKFILL_WINDOW_SQL, MERGED_IDENTIFIER_BACKFILL_RULES,
     FusionReport, RehomingReport, RehomingVerdict,
     RehomingCase, RehomingGroup, RehomingMention, RehomingPacket, RehomingParked, RehomingTarget,
@@ -7749,6 +7749,21 @@ tmpfs /data/ramcache tmpfs rw 0 0
         assert!(plan.contains("org_id=") || plan.contains("identifier="), "carry drop must seek:\n{plan}");
         let plan = plan_of(crate::canonical::MERGED_CARRY_SQL, vec![Value::Integer(2), Value::Integer(1)]).await;
         seeks("carry", &plan, &["organization_merged_identifiers_org"]);
+        // Issue 460 review: the fold's alias bind asks this once per (PPON,
+        // org) a run, and the backfill once per literal it would write — both
+        // a seek on the primary key's identifier prefix, never a walk.
+        for (label, sql, params) in [
+            ("alias standing", crate::canonical::MERGED_ALIAS_STANDING_SQL, vec![t("X"), Value::Integer(1)]),
+            (
+                "backfill standing",
+                crate::canonical::MERGED_BACKFILL_STANDING_SQL,
+                vec![t("X"), Value::Integer(1), Value::Integer(2)],
+            ),
+        ] {
+            let plan = plan_of(sql, params).await;
+            seeks(label, &plan, &["organization_merged_identifiers"]);
+            assert!(plan.contains("identifier="), "{label} must seek the identifier:\n{plan}");
+        }
 
         // The backfill's two ledger reads: the partial index, and a rowid window.
         let plan = plan_of(crate::canonical::MERGED_BACKFILL_ALTID_SQL, vec![]).await;
