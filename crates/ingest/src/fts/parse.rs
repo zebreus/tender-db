@@ -894,7 +894,9 @@ struct Item {
     classification: Option<Classification>,
     #[serde(default)]
     additional_classifications: Vec<Classification>,
-    #[serde(default)]
+    /// An array of addresses, or the ordinal-keyed map 002109-2021 publishes in
+    /// its place (issue 478; [`list_or_ordinal_map`]).
+    #[serde(default, deserialize_with = "list_or_ordinal_map")]
     delivery_addresses: Vec<Address>,
 }
 
@@ -931,6 +933,66 @@ struct Identifier {
 struct Address {
     country: Option<String>,
     region: Option<String>,
+}
+
+/// An OCDS array that FTS may publish as a map keyed by each element's ordinal
+/// (issue 478): 002109-2021 has `"deliveryAddresses": {"1": {"region": "UK"}}`.
+/// Only the container is off-schema, so the map is read as the list it stands
+/// for: its values, in key order, with numeric keys compared as numbers (`2`
+/// before `10`) and ahead of any other key, which compare as text. The JSON's
+/// entry order does not decide it, because an ordinal map states its order in
+/// its keys. Any other shape is refused as before: this accepts a different
+/// container, never a different element.
+///
+/// Applied only where the archive shows the spelling. Every OCDS array field
+/// in this model could take it, but each one is opened only on evidence.
+fn list_or_ordinal_map<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    struct Elements<T>(std::marker::PhantomData<T>);
+
+    impl<'de, T: Deserialize<'de>> serde::de::Visitor<'de> for Elements<T> {
+        type Value = Vec<T>;
+
+        fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            f.write_str("a sequence, or a map keyed by ordinal standing for one")
+        }
+
+        fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut seq: A) -> Result<Vec<T>, A::Error> {
+            let mut out = Vec::new();
+            while let Some(element) = seq.next_element()? {
+                out.push(element);
+            }
+            Ok(out)
+        }
+
+        fn visit_map<A: serde::de::MapAccess<'de>>(self, mut map: A) -> Result<Vec<T>, A::Error> {
+            let mut entries: Vec<(String, T)> = Vec::new();
+            while let Some(entry) = map.next_entry()? {
+                entries.push(entry);
+            }
+            // Two keys naming one number (`1`, `01`) fall back to their text, so
+            // the order never depends on the JSON's.
+            entries.sort_by(|(a, _), (b, _)| ordinal(a).cmp(&ordinal(b)));
+            Ok(entries.into_iter().map(|(_, element)| element).collect())
+        }
+    }
+
+    /// Numeric keys first, by value then text; the rest by text.
+    fn ordinal(key: &str) -> (bool, u64, &str) {
+        match key.parse::<u64>() {
+            Ok(n) => (false, n, key),
+            Err(_) => (true, 0, key),
+        }
+    }
+
+    // `deserialize_any`, because `deserialize_seq` refuses a map before any
+    // visitor sees it. serde_json dispatches on the token, so an array still
+    // takes the sequence path, and a scalar or null reaches no visit method
+    // here and is refused with the `expecting` text above.
+    deserializer.deserialize_any(Elements(std::marker::PhantomData))
 }
 
 #[derive(Deserialize)]
@@ -1804,5 +1866,84 @@ mod tests {
         assert_eq!(start("multi-b"), None);
         assert_eq!(start("split"), None, "two awards on one lot disagree: nothing");
         assert_eq!(start("fed"), Some(1_893_456_000), "an award and a contract that agree fill the lot");
+    }
+
+    /// One release, with `items` spelled per `delivery`.
+    fn with_delivery(ocid: &str, delivery: &str) -> Result<Parsed, Rejected> {
+        let payload = format!(
+            r#"{{"version":"1.1","releases":[{{"ocid":"{ocid}",
+                "tender":{{"lots":[{{"id":"1"}}],
+                          "items":[{{"id":"1","deliveryAddresses":{delivery},"relatedLot":"1"}}]}}}}]}}"#
+        );
+        parse(payload.as_bytes())
+    }
+
+    fn nuts(code: &str) -> NoticeValue {
+        NoticeValue::Classification { scheme: "nuts".into(), code: code.into() }
+    }
+
+    /// Issue 478: 002109-2021 (FTS 2021-02) publishes `items[].deliveryAddresses`
+    /// as a map keyed by the address's ordinal, `{"1": {"region": "UK"}}`, where
+    /// OCDS has an array, and serde's `invalid type: map, expected a sequence`
+    /// quarantined the whole notice. The item here is the one the issue quotes
+    /// from the member's lines 66–73 (the member itself is not yet a fixture).
+    /// The map is the list it stands for: one region, on the lot the item names,
+    /// and a parse identical to the same release spelled with an array — the
+    /// parser keeps no notes, so equality is what keeps the two from differing.
+    #[test]
+    fn a_map_shaped_delivery_addresses_parses_as_the_list_it_stands_for() {
+        let unwrap = |r: Result<Parsed, Rejected>| match r {
+            Ok(p) => p,
+            Err(Rejected { reason, detail }) => panic!("quarantined as {reason}: {detail}"),
+        };
+        let map = unwrap(with_delivery("ocds-x-478", r#"{"1":{"region":"UK"}}"#));
+        assert_eq!(all(&map, "BT-5071-Lot"), vec![nuts("UK")], "one delivery address, region UK");
+        assert!(all(&map, "BT-5071-Procedure").is_empty(), "on the lot the item names");
+        let list = unwrap(with_delivery("ocds-x-478", r#"[{"region":"UK"}]"#));
+        assert_eq!(map, list, "a map-shaped list parses exactly as the list");
+    }
+
+    /// The map's values are taken in key order, numeric keys numerically (`2`
+    /// before `10`) and ahead of any non-numeric key, which sort as text. The
+    /// JSON's own entry order does not decide it: an ordinal map says its order
+    /// in its keys.
+    #[test]
+    fn a_map_shaped_list_is_taken_in_key_order_numeric_keys_numerically() {
+        let map = with_delivery(
+            "ocds-x-478b",
+            r#"{"10":{"region":"R10"},"b":{"region":"Rb"},"2":{"region":"R2"},
+                "a":{"region":"Ra"},"1":{"region":"R1"}}"#,
+        );
+        let list = with_delivery(
+            "ocds-x-478b",
+            r#"[{"region":"R1"},{"region":"R2"},{"region":"R10"},{"region":"Ra"},{"region":"Rb"}]"#,
+        );
+        let (Ok(map), Ok(list)) = (map, list) else { panic!("both spellings parse") };
+        assert_eq!(
+            all(&map, "BT-5071-Lot"),
+            ["R1", "R2", "R10", "Ra", "Rb"].map(nuts).to_vec(),
+            "numeric keys numerically, then the rest as text"
+        );
+        assert_eq!(map, list);
+    }
+
+    /// The leniency is exactly map-for-array, on the one field the source was
+    /// seen to spell that way. A scalar, or a map whose values are not addresses,
+    /// is still unparsable, and so is a map in another OCDS array field until the
+    /// archive shows FTS publishing one there (the issue's grep-first rule).
+    #[test]
+    fn only_a_map_of_addresses_stands_for_the_delivery_list() {
+        for (delivery, why) in [(r#""UK""#, "a scalar"), (r#"{"1":"UK"}"#, "a map of strings"), ("null", "null")] {
+            match with_delivery("ocds-x-478c", delivery) {
+                Err(Rejected { reason, .. }) => assert_eq!(reason, "unparsable-json", "{why}"),
+                Ok(_) => panic!("{why} is not a list of addresses"),
+            }
+        }
+        let payload = br#"{"version":"1.1","releases":[{"ocid":"ocds-x-478d",
+            "tender":{"items":[{"id":"1","additionalClassifications":{"1":{"scheme":"CPV","id":"48000000"}}}]}}]}"#;
+        assert!(
+            matches!(parse(payload), Err(Rejected { reason: "unparsable-json", .. })),
+            "a map is accepted only where FTS was seen to publish one"
+        );
     }
 }
