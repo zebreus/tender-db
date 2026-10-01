@@ -1,6 +1,7 @@
 # 342 — sources beyond TED and DÖE ("international"): nothing exists, the entry contract does
 
-Status: ready-for-agent — chunk 9, the LAST (2021-01 → 2021-08), ENQUEUED 2026-10-01 11:51 UTC as jobs 1800–1809, right after the 458 deploy (FULL sync; its project measures that cost). Chunks 1–8 landed. NEXT: read 1809, re-run the 448 altid dry plan, then plan step 11's acceptance check and the backfill Verify. Plan: `.scratch/tender-db/342-fts-plan.md`.
+Status: ready-for-agent — BACKFILL RUN COMPLETE 2026-10-01 13:4x UTC: chunk 9 (2021-01 → 2021-08, jobs 1800–1809) landed, so FTS spans 2021-01 → today (314,156 releases held; altid dry 1810 plans 0). The step-11 acceptance check FAILS: each year holds 90–98 % of its notice ids, and 14,093 ids that the API serves by id are missing. That is issue 477, which owns the top-up. NEXT here: plan step 12 (the docs), then set the Contracts Finder and E2-edge follow-ups. Plan: `.scratch/tender-db/342-fts-plan.md`.
+Was status: ready-for-agent — chunk 9, the LAST (2021-01 → 2021-08), ENQUEUED 2026-10-01 11:51 UTC as jobs 1800–1809, right after the 458 deploy (FULL sync; its project measures that cost). Chunks 1–8 landed. NEXT: read 1809, re-run the 448 altid dry plan, then plan step 11's acceptance check and the backfill Verify. Plan: `.scratch/tender-db/342-fts-plan.md`.
 Was status: ready-for-agent — chunk 8 (2021-09 → 2022-04) LANDED (jobs 1789–1798: 21,258 notices → 18,196 tenders; altid dry 1799 plans 0). NEXT: the last chunk, 2021-01 → 2021-08, enqueued right after issue 458's deploy (FULL sync), so it also measures that cost; then the Verify for the whole backfill. Plan: `.scratch/tender-db/342-fts-plan.md`.
 Was status: ready-for-agent — chunk 7 (2022-05 → 2022-12) LANDED (jobs 1776–1785: 24,570 notices → 21,319 tenders); chunk 8 (2021-09 → 2022-04) ENQUEUED 2026-10-01 10:1x UTC as jobs 1789–1798. NEXT: read 1798, re-run the 448 altid dry plan, then the last chunk 2021-01 → 2021-08, started ≥4 h before a 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
 Was status: ready-for-agent — chunk 7 (2022-05 → 2022-12) ENQUEUED 2026-10-01 07:5x UTC as jobs 1776–1785, after the daily tick drained and the `500da94` deploy. NEXT: read 1785, then 2021-09 → 2022-04 and 2021-01 → 2021-08, each started ≥4 h before a 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
@@ -613,3 +614,20 @@ process 1784 and project 1785). The 07:35 UTC tick had drained, and its project 
 `{"kind":"backfill","source":"fts","range":["2021-01","2021-08"]}` → jobs 1800–1809, enqueued on the idle queue right
 after the 458 deploy (`9b44528`, `synchronous = FULL`). Its project (1809) is the first FTS fold under FULL, and it is
 compared against 1798 (97 s) and 1785 (123 s) on 458.
+
+### 2026-10-01 13:4x UTC — chunk 9 landed; the backfill run is complete; the acceptance check fails (issue 477)
+
+- **Chunk 9, jobs 1800–1809:** every fetch `ok` (463–718 s each). It ran 11:51 → 13:4x UTC.
+- **Process 1808:** `21044 members → 21044 notices (21043 parsed, 1 quarantined)`. The one quarantined release is
+  `002109-2021.json`, which publishes `items[].deliveryAddresses` as a map, not a list: issue 478.
+- **Project 1809:** `18517 tenders written` in 111 s. This is the first FTS fold under `synchronous = FULL` (issue
+  458): 5.3 ms per notice, against 4.6 (1798) and 5.0 (1785) under NORMAL, so the cost is within the noise.
+- **448 dry 1810: plan 0.**
+- **Step 11's acceptance check: FAILED.** The plan expected "releases ≈ 319,742 + 2026 YTD". 319,742 is the sum of
+  the years' highest notice ids from 2021 to 2026-09-06 (`uk-fts.md` §7). The archive holds 314,156 members through
+  2026-09-30. Per year, held against the highest id: 2021 97.2 %, 2022 96.0 %, 2023 93.6 %, 2024 90.5 %, 2025
+  97.8 %, 2026 96.4 %, for **14,093 missing ids** in contiguous runs. Three sampled missing ids (`009911-2021`,
+  `001037-2024`, `000139-2022`) are served by id on the API (HTTP 200, one release each). The window walk missed
+  them, while the dashboard reports `fetch_complete: true`. Issue 477 owns the root cause and the top-up.
+- Audit, same read: the dashboard's FTS `processed_notices` (293,063 before chunk 9) equals the sum of the process
+  jobs' parsed counts, and its per-year coverage sums to the same figure.
