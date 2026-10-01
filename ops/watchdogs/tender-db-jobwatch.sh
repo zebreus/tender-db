@@ -40,7 +40,7 @@ wedged=${TENDER_JOB_WEDGED_SECS:-28800}            # 8 h — clears the ~5 h ful
 # 8.3 h blind band, and one session's eight refold jobs had eaten 40 % of the
 # window. Issue 313 added this parameter for exactly this reason ("a hard-coded 20
 # hid a day of history during an incident hunt") and this watchdog never used it.
-# 200 is the supervisor's JOB_LOG_MAX; at the observed rate that spans ~5 days.
+# 200 spanned ~5 days at the observed rate; the supervisor caps a request at JOB_LOG_MAX (2,000 since).
 depth=${TENDER_JOB_LOG_DEPTH:-200}
 
 # /root/tender-admin-secret is a systemd EnvironmentFile (`TENDER_ADMIN_SECRET=…`),

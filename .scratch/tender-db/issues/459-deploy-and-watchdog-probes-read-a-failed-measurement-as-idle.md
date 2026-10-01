@@ -1,6 +1,7 @@
 # 459 — the deploy and watchdog probes read a failed measurement as idle, and the deploy's test gate is bound to HEAD, not to the rev it ships
 
-Status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the queue probe: one probe script with named answers, shared by `deploy.sh` and the snapshot, that lets a caller proceed only on a named answer (`idle`, or `down` when nothing listens) and never on a failed or empty one, pinned by a wrong-secret case in `ops/watchdogs/test-watchdogs.sh`.
+Status: ready-for-agent — units 1–3 BUILT 2026-10-01 (workflow `wf_2cb1e277-797`: an implementer, three adversarial reviewers (fail-open, deploy-safety, tests-both-ways) whose 15 defects were all reproduced and fixed, and a mutation check where 26 of 27 mutations turn a harness red). `ops/test-gate-marker.sh` passes 62 cases and `ops/watchdogs/test-watchdogs.sh` 117; the Verify reads done locally (`jobwatch=1 snapshot=1 driftwatch=1`). NEXT: install the watchdogs on the box (`install.sh`), then the first real deploy proves deploy.sh's new gate and probe.
+Was status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the queue probe: one probe script with named answers, shared by `deploy.sh` and the snapshot, that lets a caller proceed only on a named answer (`idle`, or `down` when nothing listens) and never on a failed or empty one, pinned by a wrong-secret case in `ops/watchdogs/test-watchdogs.sh`.
 Kind: operability (instrument discipline: ops checks that fail permissive)
 Relates to: 245 (landed the deploy's queue probe), 254 (the test gate and its marker), 420 (the snapshot's quiescence
 gate), 373 (jobwatch's previous permissive bug, and the offline harness it built), 165 (driftwatch is its only
@@ -186,3 +187,33 @@ which is the last unit. Unit 2 has no free read; `ops/test-gate-marker.sh` is it
   measurement that failed.
 - **done**: all three non-zero (`jobwatch=1 snapshot=1 driftwatch=1` if the ERROR arms exit 1). After `install.sh`,
   the `/usr/local/bin` copies hash the same as the repo's.
+
+## 2026-10-01 — built (units 1–3)
+
+An implementer wrote all three units and their pins. Three reviewers then attacked it, each through one lens:
+fail-open paths, deploy safety (a simulated deploy in a throwaway repo with stub ssh), and whether the tests fail
+both ways. They found 15 defects. The fixer reproduced every one and fixed them all. What changed beyond the spec:
+
+- **driftwatch reads every tag on the page.** It used to read only `releases[0]`, but upstream publishes patches to
+  older lines after newer ones. It alarms on any `major.minor` above the vendored line, and an unparseable tag is an
+  ERROR. The live feed reads `ok … 10 releases read, highest 1.14.4`.
+- **The probe's `down` needs proof.** It requires a loopback URL (`--noproxy`), plus `systemctl show tender-db`
+  reporting `MainPID=0`. A curl exit 7 alone can come from a proxy, a wrong port or an unroutable host. The app binds
+  its port before it serves (`dioxus-server-0.7.9/src/launch.rs:140`), so startup is never read as `down`.
+- **One `queue_verdict` function** (`ops/watchdogs/tender-db-queue-verdict.sh`, 17 table cases) judges the probe's
+  line together with its exit status, for both `deploy.sh` and the snapshot.
+- **The gate marker is `gate-v2 <sha>`.** A pre-459 bare-SHA marker covers nothing, so the first deploy after this
+  re-gates once. `gate_begin` stamps the start time. The marker is refused if HEAD moved outside `.scratch/`, if the
+  tree was dirty outside `.scratch/`, or if any tracked or non-ignored file outside `.scratch/` was written during the
+  run, which catches an edit made and reverted mid-gate. Every git call runs with replace objects, optional locks
+  and fsmonitor off, and assume-unchanged or skip-worktree files count as dirty.
+- **`deploy.sh`'s whole gate decision is `gate_deploy_step`** (`skip | run | refuse-head | refuse-dirty`),
+  table-tested in both directions with REV ≠ HEAD. `deploy.sh` runs `ops/test-gate-marker.sh` before trusting a
+  marker, and prints its failing lines.
+- **jobwatch** requires `current`, an array `queued` and a non-empty array `recent`, with a numeric `finished_at` and
+  a string `outcome` on every run. The `// 0` defaults are gone.
+
+Left as known limits:
+- A write that keeps an old mtime (`cp -p`, `touch -d`) gets past the quiet-run check.
+- The order inside `check.sh` (`gate_begin` before cargo) is not pinned.
+- The admin secret still reaches curl on the box's command line (unchanged).

@@ -121,17 +121,26 @@ Before it pushes anything, `deploy.sh` answers two questions, and goes ahead onl
 positive answer to each — never on a failure to find out.
 
 **Were the suites green on the tree it ships?** `ops/check.sh` writes
-`target/.tests-green` (gitignored, a local fact) naming the HEAD **at the start** of a
-green run, and only when the tree outside `.scratch/` was clean at the start and the end
-and HEAD did not move outside `.scratch/` during the run. Otherwise its closing line says
-why no marker was written (`tree DIRTY outside .scratch/ at the start`, `HEAD moved <a> →
-<b> outside .scratch/ during the run`). `deploy.sh` then:
+`target/.tests-green` (gitignored, a local fact) as `gate-v2 <sha>`, naming the HEAD **at
+the start** of a green run, and only when all three hold: the tree outside `.scratch/`
+was clean at the start and the end, HEAD did not move outside `.scratch/` during the
+run, and no file outside `.scratch/` that git tracks or could track was written during
+it (an edit reverted mid-run leaves both ends identical while cargo compiled the edit;
+the file's mtime is what still says so). Otherwise its closing line says why no marker
+was written (`tree DIRTY outside .scratch/ at the start`, `HEAD moved <a> → <b> outside
+.scratch/ during the run`, `files outside .scratch/ changed during the run (first:
+<path>)`). A marker in the pre-459 format (a bare SHA) covers nothing, so the first
+deploy after 459 re-gates once. "Clean" counts untracked files against the committed
+`.gitignore` files only — `.git/info/exclude`, `core.excludesFile` and
+`status.showUntrackedFiles` cannot hide one — and a file flagged assume-unchanged or
+skip-worktree is never clean, because `git status` cannot see its edits. `deploy.sh`
+then:
 
 | situation | what it does |
 |---|---|
 | the marker's tree equals `$REV`'s outside `.scratch/` | skips the suites (`Suites already green at <marker>, whose tree equals <rev>'s …`) |
 | no such marker, and the checked-out HEAD differs from `$REV` outside `.scratch/` | refuses at once — the gate can only test the checked-out tree. Check out the ref, or deploy from a fresh checkout of the SHA |
-| no such marker, and the tree is dirty outside `.scratch/` | refuses at once — `check.sh` would test uncommitted edits and write no marker |
+| no such marker, and the tree is dirty outside `.scratch/` | refuses at once — `check.sh` would test uncommitted edits and write no marker. The refusal lists what is dirty; when it is only untracked files (a log redirected into the checkout is the usual one) it says to move them out, not to start a fresh checkout |
 | otherwise | runs `ops/check.sh`, then refuses unless the marker it left covers `$REV` (`the gate ran but wrote no marker covering <rev>`) |
 | `SKIP_TESTS=1` | skips the gate, and says so |
 
@@ -141,19 +150,30 @@ itself — and `./deploy.sh origin/main` is gated on `origin/main`, not on whate
 happens to be green. Any change outside `.scratch/`, including `.claude/` or `docs/`,
 re-gates; widen the exclusion only with a stated reason. The exclusion is sound only
 while no build or test reads under `.scratch/`. The predicates live in
-`ops/gate-marker.sh`, which both scripts source, and `deploy.sh` runs their offline pin
-`ops/test-gate-marker.sh` before it reads the marker.
+`ops/gate-marker.sh`, which both scripts source — the table above is its
+`gate_deploy_step`, one word per row — and `deploy.sh` runs their offline pin
+`ops/test-gate-marker.sh` before it reads the marker, and prints its failures if it
+fails. Keep logs and redirected output **outside the checkout**: an untracked file in it
+is a dirty tree to the gate, so `ops/check.sh > gate.out` in the repo root writes no
+marker.
 
 **Is a job running on the box?** A restart re-runs the running job from the top (issue
 245). `deploy.sh` pipes `ops/watchdogs/tender-db-queue-probe.sh` from the checkout to the
-box (`ssh … bash -s <`), and the probe answers one line:
+box (`ssh … bash -s <`), and the probe answers one line, which
+`queue_verdict` (`ops/watchdogs/tender-db-queue-verdict.sh`, shared with the snapshot)
+judges together with ssh's exit status — `idle` with a non-zero exit, two lines or a
+trailing blank are not `idle`:
 
 | answer | the deploy |
 |---|---|
-| `idle` | proceeds |
-| `down` (nothing accepted the connection) | proceeds — nothing is running to re-run |
-| `busy <id> <kind> <params>` | refuses: `refusing to deploy while a job is running` |
+| `idle`, exit 0 | proceeds |
+| `down`, exit 0 — a loopback refusal **and** systemd says `tender-db.service` is loaded with `MainPID=0` | proceeds — nothing is running to re-run |
+| `busy <id> <kind> <params>`, exit 0 | refuses: `refusing to deploy while a job is running` |
 | `error <what>`, no answer, or anything else | refuses: `could not measure the queue: <what>` |
+
+A refusal alone is not `down`: curl exits 7 the same way when the app is up and the
+probe asked the wrong place (a changed `PORT`, a proxy, a non-loopback address), so with
+a running process it is `error curl exit 7 … not stopped`.
 
 `FORCE_BUSY=1` overrides both refusals. The probe it replaced printed an empty string for
 idle and for every failure to measure, so ssh trouble, a missing secret, a timeout or the
@@ -183,10 +203,15 @@ more: it kills itself mid-sweep.
 Capture the PID when you start it and wait on that:
 
 ```sh
-nohup ./deploy.sh origin/main > deploy.log 2>&1 &
+log="${TMPDIR:-/tmp}/deploy-$(date +%s).log"   # OUTSIDE the checkout (below)
+nohup ./deploy.sh > "$log" 2>&1 &
 DEPLOY_PID=$!
 while kill -0 "$DEPLOY_PID" 2>/dev/null; do sleep 30; done
 ```
+
+The log goes outside the checkout because the shell creates it before `deploy.sh`
+starts: a `deploy.log` in the repo root is an untracked file, so the test gate reads the
+tree as dirty and refuses (issue 459).
 
 If the PID is already lost, `ps -eo pid,args | grep -E "[d]eploy\.sh"` finds it —
 the bracket around the first letter is what keeps the grep out of its own results,
@@ -528,8 +553,9 @@ one being built, which reads as a mystery. Either let a deploy finish before sta
 or run `ops/check.sh` to green on a clean tree first (the deploy then skips its own gate when
 `target/.tests-green` covers the commit it ships — see
 [The test gate and the queue probe](#the-test-gate-and-the-queue-probe-issues-245-254-459)). Since
-issue 459 an edit or a commit outside `.scratch/` during the gate's run leaves no marker, and the
-deploy refuses rather than shipping a green that describes another tree.
+issue 459 an edit or a commit outside `.scratch/` during the gate's run — even one reverted before
+it ends — leaves no marker, and the deploy refuses rather than shipping a green that describes
+another tree.
 
 **Read the `unmatched` and `re-keyed` counts before calling a re-parse complete (issue 290).**
 `reparse_notice` finds its target by `(source, publication_id, content_hash)`. The hash is the same
