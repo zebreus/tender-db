@@ -1,6 +1,7 @@
 # 24 — Alerting: know when production breaks without looking
 
-Status: ready-for-agent — the GitHub Actions watcher IS scheduled: `uptime-check.yml` fired on its own schedule at 2026-09-29 23:59:11 UTC (run 36648015213, `event: schedule`, success), ~3 h after the file was created. So the repo settings are not the blocker and Lennart is not needed for it. But the next 8 slots (00:09–01:54 UTC) did not fire: GitHub's cron is best-effort. What stays open: measure its hit rate over a day (below), and if it misses as often as the routines do, the three watchers together still leave gaps; the routines' push/email delivery and the kill-the-service drill also remain.
+Status: ready-for-agent — BOTH UPTIME ROUTINES ARE BLIND since ~2026-09-30 20:50 UTC: every run of trig_01F8LUCUBSxHB3uBx5DyTZkp (:50) and trig_01La21kzNPgK2seKNhkixLME (:20) dies ~15 s after firing with 'Setup script failed' (init_script error) in environment `new` (env_01PjkWAgM22LvdfQRUQ7m1KY), so no curl reaches the box (0 `tender-db-uptime-routine` lines in nginx since then). The GitHub watcher fired 7 times in ~30.5 h (6% of slots). Environment `Full` (env_0199oDZT9bJszzMHtcyesLgM) starts and reaches /health/deep (test session 09:06 UTC: 200 ok). Moving the routines there was REFUSED by Lennart at 09:08 UTC ('stop working on the uptime check for now'), so the routines are untouched. NEXT, when picked up again: ask or decide the fix (repair `new`'s setup script in the environment settings, or re-point the routines to `Full`); details below.
+Was status: ready-for-agent — the GitHub Actions watcher IS scheduled: `uptime-check.yml` fired on its own schedule at 2026-09-29 23:59:11 UTC (run 36648015213, `event: schedule`, success), ~3 h after the file was created. So the repo settings are not the blocker and Lennart is not needed for it. But the next 8 slots (00:09–01:54 UTC) did not fire: GitHub's cron is best-effort. What stays open: measure its hit rate over a day (below), and if it misses as often as the routines do, the three watchers together still leave gaps; the routines' push/email delivery and the kill-the-service drill also remain.
 Was status (until 2026-09-30 01:5x): ready-for-agent — the GitHub Actions watcher is NOT yet watching. `uptime.yml` (added 12:52 UTC) never fired on its schedule in about 32 slots, despite two re-registration attempts; its manual drill worked (run 36571026751). At 20:50 UTC it was re-created as `.github/workflows/uptime-check.yml` by the owner through the API (`cecccdd`), and the old file was removed (`f8703ed`). Verify: `list_workflow_runs uptime-check.yml event=schedule` lists runs at :09/:24/:39/:54. If this fresh file never fires either, schedules do not run in this repository, and the Actions settings (which this session cannot read) are Lennart's to check. Until then the only external watchers are the two cloud routines. Also open: the routines' push/email delivery and the kill-the-service drill.
 Was status (until 2026-09-29 17:5x): ready-for-agent — a THIRD, independent watcher is live since 2026-09-29 12:52 UTC: `.github/workflows/uptime.yml` (GitHub Actions, every 15 min, opens an `uptime` issue mentioning the owner on DOWN, closes it on recovery; drill run 36571026751 opened and closed issue #2). It exists because the cloud routines' containers failed on 4 of 6 runs that day. What stays open: the routines' own push/email delivery (unconfirmable from here) and the kill-the-service drill on a serving box.
 Was status (before 2026-09-29 13:00): ready-for-agent — external check LIVE and now **doubled** (2026-09-29): the :50 routine `trig_01F8LUCUBSxHB3uBx5DyTZkp` missed 9 of 70 hourly slots (09-26 12:50 → 09-29 09:50 UTC firings, ~3 a day, longest gap between checks 3 h 01 min), over the 09-26 rule's line, so the `:20` twin `trig_01La21kzNPgK2seKNhkixLME` (User-Agent `tender-db-uptime-routine/1-twin`) now runs too. The DOWN path was drilled the same day by firing the :50 routine with drill text (session `cse_014M7EFk4ZtTm4onJx3Qygjg`, see the foot); the kill-the-service drill stays unrun on a serving box.
@@ -270,3 +271,27 @@ The run itself can be read with `get_session`; delivery can only be confirmed on
 - Next: at ~2026-09-30 23:59 UTC count `event=schedule` runs over the first 24 h (96 slots). If it lands under one
   run every three hours, this watcher does not close the routines' gaps, and the remaining watcher has to be one whose
   schedule we control (an on-box notifier cannot report its own box's death, so an off-box one on another host).
+
+## 2026-10-01 08:5x–09:0x UTC — the routine watchers are dead in their environment; the GitHub watcher is sparse
+
+- **GitHub watcher (`uptime-check.yml`, cron `9,24,39,54 * * * *`).** `list_workflow_runs event=schedule` lists 7 runs,
+  2026-09-29 23:59 → 2026-10-01 06:29 UTC, all `success`. That is 7 of ~122 slots (6%), with gaps of 3.5 to 6 h. It
+  does not close the routines' gaps.
+- **Routines.** nginx (`/var/log/nginx/access.log*`, box-local CEST) shows two hits an hour through `30/Sep/2026:22`
+  (20:xx UTC), then none. `list_triggers`: the last runs of both uptime routines are `ROUTINE_RUN_STATUS_FAILED`,
+  finishing ~15 s after firing. `get_session` on one (cse_01KomHFCCvBgef21TZKZ42ai) reads `last_init_error:
+  init_script / "Setup script failed"`, `status_detail: Session worker failed to initialize`. Environment: `new`
+  (env_01PjkWAgM22LvdfQRUQ7m1KY), the same environment this operating session was created in. This long-running
+  session is unaffected, because it was already up.
+- **Which command fails is not visible from here** (no tool shows the setup script or its log). The onset, ~20:50 UTC
+  on 2026-09-30, matches the hour this session's own tool calls started being refused by the auto-mode permission
+  classifier. That may be a coincidence.
+- **Environment tests.** `Default` (env_014vT2bDMn7uiz4Nd4FLjeJK) started a session, but in default permission mode the
+  session stopped at a permission prompt before curling. `Full` (env_0199oDZT9bJszzMHtcyesLgM) started and returned
+  `200 ok` in ~17 s (session_01B1jL9zztrzUKhxzKLaCxQU, archived).
+- **Not done.** Two replacement routines in `Full` (same prompts and crons, fresh session per fire, push+email) were
+  refused by Lennart, who asked to stop work on this for now. The old routines are still enabled and still fail.
+- **Options for whoever picks this up:**
+  1. Lennart repairs the `new` environment's setup script (cloud environment menu → Edit → Setup script). That also
+     protects the next operating session, if it is created in `new`.
+  2. Re-point the two routines to `Full`: create them there, then disable the old ones and keep their history.
