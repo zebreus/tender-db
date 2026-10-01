@@ -186,6 +186,13 @@ echo "$REV" > /opt/tender-db/deployed-rev
 # dashboard's System panel still report the exact deployed revision.
 install -d /etc/systemd/system/tender-db.service.d
 printf '[Service]\nEnvironment=COMMIT_SHA=%s\n' "$REV" > /etc/systemd/system/tender-db.service.d/rev.conf
+# Cap the service's memory (issue 426), so a runaway query or fold is stopped inside
+# the service instead of starving sshd and the kernel on the 62 GiB box. The
+# measured peak is 22.5 GB anon (a TED daily fold, job 1714); full rebuilds peak
+# at ~20.8 GB RSS. MemoryHigh makes the kernel reclaim the service's own page cache
+# first; MemoryMax is the hard stop. The box runs this hand-installed unit, not
+# nix/module.nix, so the limit lives in a drop-in that every deploy rewrites.
+printf '[Service]\nMemoryHigh=54G\nMemoryMax=58G\n' > /etc/systemd/system/tender-db.service.d/memory.conf
 systemctl daemon-reload
 
 systemctl restart tender-db
