@@ -1,6 +1,7 @@
 # 342 — sources beyond TED and DÖE ("international"): nothing exists, the entry contract does
 
-Status: ready-for-agent — chunk 6 (2023-01 → 2023-08) LANDED (jobs 1750–1759: 23,852 notices → 19,995 tenders). NEXT: chunk 7 (2022-05 → 2022-12) once the 2026-10-01 07:35 UTC daily tick drains, then 2021-09 → 2022-04 and 2021-01 → 2021-08, each started ≥4 h before a 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
+Status: ready-for-agent — chunk 7 (2022-05 → 2022-12) ENQUEUED 2026-10-01 07:5x UTC as jobs 1776–1785, after the daily tick drained and the `500da94` deploy. NEXT: read 1785, then 2021-09 → 2022-04 and 2021-01 → 2021-08, each started ≥4 h before a 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
+Was status: ready-for-agent — chunk 6 (2023-01 → 2023-08) LANDED (jobs 1750–1759: 23,852 notices → 19,995 tenders). NEXT: chunk 7 (2022-05 → 2022-12) once the 2026-10-01 07:35 UTC daily tick drains, then 2021-09 → 2022-04 and 2021-01 → 2021-08, each started ≥4 h before a 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
 Was status: ready-for-agent — chunk 5 (2023-09 → 2024-04) LANDED (jobs 1740–1749: 25,015 notices → 20,619 tenders); chunk 6 (2023-01 → 2023-08) ENQUEUED 2026-09-30 20:4x UTC as jobs 1750–1759. NEXT: read 1759, then 2021-01 → 2022-12 in ≤8-month chunks on idle queues ≥4 h before the 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
 Was status: ready-for-agent — chunk 4 (2024-05 → 2024-12) LANDED (jobs 1728–1737: 24,400 notices → 20,098 tenders); chunk 5 (2023-09 → 2024-04) ENQUEUED 2026-09-30 19:0x UTC as jobs 1740–1749. NEXT: read 1749, then 2021-01 → 2023-08 in ≤8-month chunks on idle queues ≥4 h before the 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
 Was status: ready-for-agent — backfill chunk 4 (2024-05 → 2024-12) ENQUEUED 2026-09-30 17:00 UTC (jobs 1728–1737) after the 453 deploy; chunks 1–3 landed (FTS 2025-01 → today). NEXT: read 1737, then 2021-01 → 2024-04 in ≤8-month chunks on idle queues ≥4 h before the 07:35 UTC tick. Plan: `.scratch/tender-db/342-fts-plan.md`.
@@ -573,3 +574,9 @@ issue 450's live cancel check (job 1727) left staged.
 - **Chunk 7 waits for today's 07:35 UTC tick to drain.** The 448 altid wet run (job 1765) merged 4,652 FTS supplier
   pairs just before the tick, so chunk 7 is the first chunk whose suppliers fold through the resolver alias with the
   merged orgs standing. `/data` is at 74% (446 GB free).
+
+### 2026-10-01 07:5x UTC — chunk 7 enqueued
+
+`{"kind":"backfill","source":"fts","range":["2022-05","2022-12"]}` → jobs 1776–1785 (eight monthly fetches, then
+process 1784 and project 1785). The 07:35 UTC tick had drained, and its project (1774) read the 448 alias live: `asked
+49 bound 44 refused 5 (names 5)`. `/data` was at 74% (446 GB free).
