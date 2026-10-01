@@ -63,7 +63,11 @@ sudo ops/watchdogs/install.sh
 
 Idempotent: copies the scripts to `/usr/local/bin`, the units to
 `/etc/systemd/system`, reloads systemd, enables + starts the timers, and dry-fires
-each once to prove it runs clean.
+each once to prove it runs clean. It also installs the two operator helpers:
+`ops/admin.sh` as `/usr/local/bin/tender-admin`, and `ops/aj.sh` as `/root/aj.sh`
+(mode 0700) — the handover's `aj.sh <path>` GET / `aj.sh <path> '<json>'|@file` POST
+recipe, which the issue files' Verify lines call by that path and which lived only on
+the box until issue 464.
 
 ## Why they live in git
 
@@ -87,7 +91,7 @@ job. They do not replace `/health/deep`; they cover the gaps it structurally can
 ## Testing them offline
 
 `ops/watchdogs/test-watchdogs.sh` runs the jobwatch, queue-probe, queue-verdict,
-snapshot-gate and driftwatch cases against a fixture server — no box, no real admin
+snapshot-gate, `aj.sh` and driftwatch cases against a fixture server — no box, no real admin
 secret, no network, no root. `systemctl` is a stub on its PATH, so the probe's `down`
 arm is tested both ways wherever the harness runs (a container without systemd, or the
 box itself under `install.sh`). `install.sh` refuses to install when it fails. Run it after editing any

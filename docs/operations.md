@@ -14,19 +14,31 @@ the flake and run under a hand-written systemd unit that mirrors
 | `/opt/tender-db/app` | symlink → the live nix store path (atomic switch on deploy) |
 | `/opt/tender-db/app-result` | `nix build` result link (the most recently built bundle) |
 | `/opt/tender-db/deployed-rev` | git rev of the running deploy |
-| `/data/db/tender-db.db` | the Turso database (500 GB volume) |
+| `/data/db/tender-db.db` | the Turso database, on `/data` (local NVMe, see below) |
 | `/data/archive/<source>/…` | raw fetched packages, immutable |
 
 `/opt/tender-db/` also holds research artifacts from the exploration phase
 (sample packages, SDK checkouts, scan scripts). They are not part of the
 deployment; leave them alone.
 
+**The hardware, and how to re-read it** — these numbers move, so read them
+rather than trusting a copy (this one is from 2026-10-01):
+
+| what | 2026-10-01 | re-read with |
+| --- | --- | --- |
+| cores | 32 | `nproc` |
+| memory | 62 GiB | `free -g` |
+| disks | two local 1.7 TB NVMe drives (Micron 7450); no network volume | `lsblk -d -o NAME,SIZE,MODEL` |
+| `/data` (DB + archive) | `/dev/md3`, software RAID on the NVMe, 1.7 T, 74 % used | `df -h /data`, or `/health/deep` → `.checks.disk` from anywhere |
+| `/` (system, nix store) | `/dev/md2`, 120 G, 75 G used | `df -h /` |
+| clock | `Europe/Berlin` (CEST +02:00; CET +01:00 from 2026-10-25) | `timedatectl` |
+
 ## Deploy
 
 From a clean checkout on the dev machine:
 
 ```sh
-./deploy.sh          # deploys main
+./deploy.sh          # deploys HEAD (what is checked out)
 ./deploy.sh <ref>    # deploys any ref
 ```
 
@@ -76,7 +88,7 @@ Build times, warm store (the normal case): a **server-code-only** change
 rebuilds in **~4.6 min**; a change that touches the **dependency graph**
 (`Cargo.lock`, a new crate, a toolchain bump) is **~10.5 min**. A first build on
 a *cold* store compiles the whole Rust + wasm toolchain graph and takes far
-longer (tens of minutes on the box's 4 cores). If a deploy might outlive your
+longer (tens of minutes). If a deploy might outlive your
 connection, run it inside tmux on the box.
 
 **Deploys are one at a time and never move production backwards** (f8bed0b —
@@ -298,9 +310,16 @@ Two ways jobs start:
   `probe` job (and the trailing
   `fetch`/`process`/`project`) with that morning's `started_at` in
   `GET /admin/jobs` → `recent[]`, or on the dashboard's Ingestion panel. The
-  scheduler is a plain in-process timer (no cron/systemd timer), so it only runs
-  while the service is up — a box that was down at 09:35 simply misses that tick;
-  re-drive it by hand via `/admin` if needed.
+  scheduler is a plain in-process timer (no cron/systemd timer), so it only fires
+  while the service is up. A tick that passed while the process was not running —
+  a box that was down at 09:35, or a deploy that restarted the service across it —
+  is served at the next start: `catch_up_missed_tick` (issue 245) runs today's
+  daily at once unless a successful `probe` finished at or after today's tick
+  (TED's on a weekday) or one is still queued, and logs `[scheduler] the 09:35
+  Berlin tick passed unserved …`. Only TODAY's tick is caught up; a day the
+  process was down for entirely is not re-run, so re-drive that one via `/admin`
+  if its sources need it. 09:35 is Berlin wall-clock: 07:35 UTC until 2026-10-25,
+  08:35 UTC after (`berlin_offset_follows_the_eu_dst_rule` pins the switch).
 - **`/admin` API** — for manual loads, backfills and reprocessing. Gated by a
   preshared operator secret in `TENDER_ADMIN_SECRET`, sent as the
   `X-Admin-Secret` header and compared in constant time. **Unset ⇒ the whole
@@ -352,26 +371,33 @@ surface goes back to answering 404.
 `GET /admin/jobs` returns the running job's live progress, the queue, and the
 recent-run log — the same shape the dashboard's Ingestion panel renders.
 
-```sh
-SECRET=$(cat /root/tender-admin-secret)
-BASE=https://tenders.zebreus.click
+The examples run **on the box**, where the secret lives (from the dev machine, wrap
+one in `ssh root@zebreus.click '…'`), through `/root/aj.sh`: `aj.sh <path>` GETs,
+`aj.sh <path> '<json>'` or `aj.sh <path> @<file>` POSTs, and there is no method word.
+It is `ops/aj.sh`, installed by `ops/watchdogs/install.sh` and pinned by
+`ops/watchdogs/test-watchdogs.sh` (issue 464); it prints the server's body as it came
+and exits 1 on any status but 2xx. `tender-admin` (`ops/admin.sh`) is the CLI with
+named commands (`jobs`, `queue`, `enqueue`, `cancel`, `raw <METHOD> <path>`).
 
+Both read the secret file the way `admin.conf` makes systemd read it: one
+`TENDER_ADMIN_SECRET=<hex>` line, whose VALUE is the header. A raw curl must strip it
+the same way, `SECRET=$(sed -n 's/^TENDER_ADMIN_SECRET=//p' /root/tender-admin-secret)`;
+the whole line sent as the header, as `$(cat /root/tender-admin-secret)` gives it, is a
+403.
+
+```sh
 # What is the importer doing right now?
-curl -s -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs | jq
+/root/aj.sh /admin/jobs | jq
 
 # Fetch one TED daily, then process + project it (three sequential jobs).
-curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
-  -d '{"kind":"fetch","source":"ted","package_kind":"daily","period":"2026-00136"}' $BASE/admin/jobs
-curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
-  -d '{"kind":"process","source":"ted","package_kind":"daily","period":"2026-00136"}' $BASE/admin/jobs
-curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
-  -d '{"kind":"project"}' $BASE/admin/jobs
+/root/aj.sh /admin/jobs '{"kind":"fetch","source":"ted","package_kind":"daily","period":"2026-00136"}'
+/root/aj.sh /admin/jobs '{"kind":"process","source":"ted","package_kind":"daily","period":"2026-00136"}'
+/root/aj.sh /admin/jobs '{"kind":"project"}'
 
 # Cancel a job. Two verbs reach the same handler (issue 250) — the POST form exists
 # because a DELETE is unreachable from some operating sessions.
-curl -s -XPOST -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/41/cancel
-curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/41
-# …or, on the box: ops/admin.sh cancel 41
+tender-admin cancel 41                              # POST /admin/jobs/41/cancel
+tender-admin raw DELETE /admin/jobs/41 </dev/null   # the same handler
 #
 # Four answers (issue 252):
 #   200 {"state":"dropped"}   it was queued and is gone
@@ -398,8 +424,7 @@ curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/41
 # whole-corpus one, so the previous report stands.
 
 # Backfill a DÖE monthly range (fans into one fetch per month + process + project).
-curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
-  -d '{"kind":"backfill","source":"doe","range":["2024-01","2024-12"]}' $BASE/admin/jobs
+/root/aj.sh /admin/jobs '{"kind":"backfill","source":"doe","range":["2024-01","2024-12"]}'
 
 # Backfill FTS (issue 342). With no range: every month from 2021-01 through the
 # previous UK month. A range reaching into the running month is refused (issue 477:
@@ -416,18 +441,15 @@ curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' 
 # walk reads the flag before every request, ends `CANCELLED at a checkpoint` with
 # nothing landed, and keeps its staged span pages, so re-enqueueing the same month
 # resumes where it stopped.
-curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
-  -d '{"kind":"backfill","source":"fts","range":["2025-07","2026-08"]}' $BASE/admin/jobs
+/root/aj.sh /admin/jobs '{"kind":"backfill","source":"fts","range":["2025-07","2026-08"]}'
 
 # Re-fold every notice carrying a section of a KIND (issue 237) — the cheap cohort:
 # notice_sections_kind is indexed, so this is an index read, unlike refold-fields.
-curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
-  -d '{"kind":"refold-sections","profiles":["GroupComposition"]}' $BASE/admin/jobs
+/root/aj.sh /admin/jobs '{"kind":"refold-sections","profiles":["GroupComposition"]}'
 
 # Re-fold an explicit, small notice-id list (issue 58's step-3 exerciser). Capped
 # at 1,000 ids: a longer list is a cohort and wants `refold`/`refold-fields`.
-curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
-  -d '{"kind":"refold-notices","notices":[123,124,125]}' $BASE/admin/jobs
+/root/aj.sh /admin/jobs '{"kind":"refold-notices","notices":[123,124,125]}'
 
 # Re-fold every notice carrying one of these FIELD ids (issue 88's twin of `refold`; the
 # list rides the `profiles` key). The carrier sweep walks EVERY notice value table in full
@@ -439,24 +461,22 @@ curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' 
 # SIZE FIRST: `"expect": 1` makes the job enumerate, report the count in its abort message
 # and write nothing, which is the dry run this job otherwise lacks. Then the real run with
 # that count; a `project` is queued behind it automatically.
-curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
-  -d '{"kind":"refold-fields","profiles":["TED-LOT_TITLE","TED-LOT_DESCRIPTION"],"expect":1}' $BASE/admin/jobs
+/root/aj.sh /admin/jobs '{"kind":"refold-fields","profiles":["TED-LOT_TITLE","TED-LOT_DESCRIPTION"],"expect":1}'
 #   → error "refold-fields aborted: 345203 notices carry [...], expected ~1 (nothing was written)"
-curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
-  -d '{"kind":"refold-fields","profiles":["TED-DATE_OF_CONTRACT_AWARD"],"tables":["notice_dates"],"expect":1}' $BASE/admin/jobs
+/root/aj.sh /admin/jobs '{"kind":"refold-fields","profiles":["TED-DATE_OF_CONTRACT_AWARD"],"tables":["notice_dates"],"expect":1}'
 
 # Drop a still-queued job (a RUNNING one is asked to stop via /cancel above).
-curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/42
+tender-admin raw DELETE /admin/jobs/42 </dev/null
 
 # Read the newest stored data-quality report (issue 230). The measurement is a
 # weekly job — Sunday 03:10 Berlin, ~36 min over 32 id windows — and this is
 # where its body lands. `age_seconds` is served so a stale report cannot be
 # mistaken for a current one.
-curl -s -H "X-Admin-Secret: $SECRET" $BASE/admin/reports/data-quality | jq -r .body
-curl -s -H "X-Admin-Secret: $SECRET" $BASE/admin/reports/data-quality | jq '{computed_at, age_seconds}'
+/root/aj.sh /admin/reports/data-quality | jq -r .body
+/root/aj.sh /admin/reports/data-quality | jq '{computed_at, age_seconds}'
 ```
 
-On the box: `tender-admin raw GET /admin/reports/data-quality </dev/null | jq -r
+The same through the CLI: `tender-admin raw GET /admin/reports/data-quality </dev/null | jq -r
 .body`. A kind nothing has computed yet answers 404, not an empty report — "not
 measured" and "measured as zero" are different claims and the report is careful
 about the difference (its own text banners any section it could not measure).
@@ -486,8 +506,10 @@ sequence lands in order.
 ### Reading a `project` job's `counts` line (issues 318, 364, 448)
 
 A finished `project` writes one summary line to its job row (`GET /admin/jobs` →
-`recent[].counts`), and the run's gate tallies ride it because this runtime's
-stderr does not reach journald (issues 61/63):
+`recent[].counts`), and the run's gate tallies ride it. The service's stderr does
+reach the journal (the `[project] …` heartbeats are `eprintln!`; issues 61/63 once
+said otherwise), but the journal is size-capped and rotates, while the job row is
+durable and is what `/admin/jobs`, `jobwatch` and the issues' Verify lines read:
 
 ```
 <n> notices → <t> tenders (<i> islands), <v> versions; <w> tenders written, <u> verified unchanged
@@ -721,9 +743,12 @@ A *freshly enqueued* `process` never inherits a cursor, so a deliberate whole-
 source reprocess still walks everything. The only operator-visible trace is a log
 line: `job N resumes after <period> (K package(s) already done)`.
 
-The daily scheduler is a plain in-process timer, so a box that was **down** at
-09:35 misses that tick entirely (not a queued job to recover — it never fired);
-re-drive it by hand via `/admin` if needed.
+The daily scheduler is a plain in-process timer, so a tick that passed while the
+process was **down** never fired — there is no queued job to recover. The next
+start serves it instead: `catch_up_missed_tick` (issue 245) runs today's daily at
+once when today's 09:35 Berlin tick passed with no successful `probe` after it and
+none queued (see [Ingestion](#ingestion)). A day the box was down for entirely is
+not re-run; re-drive that one via `/admin` if needed.
 
 ### Quarantine triage
 
@@ -750,10 +775,8 @@ Triage loop:
    the new parser understands become canonical, and the quarantine count drops.
 
 ```sh
-curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
-  -d '{"kind":"process","source":"ted"}' $BASE/admin/jobs
-curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
-  -d '{"kind":"project"}' $BASE/admin/jobs
+/root/aj.sh /admin/jobs '{"kind":"process","source":"ted"}'
+/root/aj.sh /admin/jobs '{"kind":"project"}'
 ```
 
 ## Logs
@@ -812,8 +835,9 @@ disk:
   `outcome = "error"` (a Supervisor job ERRORED). Clears itself on the next
   success.
 - **disk** — unhealthy once **90 %** (`DISK_FULL_FRACTION`) of the volume
-  holding `TENDER_DB` (`/data`, the 500 GB Hetzner volume — same filesystem as
-  the archive) is in use. The check also reports `wal_bytes`, the size of the
+  holding `TENDER_DB` (`/data`, `/dev/md3` on local NVMe — same filesystem as
+  the archive) is in use; `total_bytes` is its size (1,780,595,036,160 on
+  2026-10-01). The check also reports `wal_bytes`, the size of the
   `-wal` sidecar (issue 42): **informational only** — a large WAL is expected
   mid-backfill and never flips the verdict — but the alerting routine watches it
   for a runaway (see [Disk watch](#disk-watch)).
@@ -892,7 +916,7 @@ backfill of that layer, and after a full rebuild (which resets it).
 
 **A Prometheus + Grafana server stays deliberately deferred** (team-lead
 decision on issue 53): that is real operational weight — extra processes to run,
-secure and resource-budget on an 8 GB box — against a single-process monolith
+secure and resource-budget on the one box — against a single-process monolith
 (ADR-0005). This endpoint is what makes standing one up a later, reversible
 choice; until then the scrape is readable by hand or by any transient scraper.
 
@@ -976,9 +1000,10 @@ nginx -t && systemctl reload nginx
 
 Two filesystems, watched separately:
 
-- **`/data` — the 500 GB Hetzner volume**, the one that grows with ingestion.
-  It carries both the raw archive and the database, because the parsed DB alone
-  will not fit the 75 GB root disk (text satellites dominate — pilot-sizing.md).
+- **`/data` — `/dev/md3`, software RAID on the box's local NVMe** (1.7 T on
+  2026-10-01; `df -h /data`), the one that grows with ingestion. It carries both
+  the raw archive and the database, because the parsed DB alone will not fit the
+  root disk (text satellites dominate — pilot-sizing.md).
   - `/data/archive/<source>/…` — raw fetched packages, immutable, append-only.
     TED under `ted/{daily,monthly}/`, DÖE under `doe/{daily,monthly}/`, FTS
     under `fts/{daily,monthly}/`. The FTS zips are assembled by the fetcher,
@@ -987,7 +1012,8 @@ Two filesystems, watched separately:
   - `/data/db/tender-db.db` (+ `-wal`) — the Turso database. The raw archive is
     the large static tenant (~178 GB and barely moving between backfills); the DB
     plus its WAL is what grows during a load.
-- **`/` — the 75 GB root disk.** Pressure here is almost always the nix store
+- **`/` — `/dev/md2`, the root disk** (120 G, 75 G used on 2026-10-01; `df -h /`).
+  Pressure here is almost always the nix store
   (build artifacts + old bundles), not application data.
 
 ```sh
@@ -1025,14 +1051,17 @@ single-process, so the running server holds the database open exclusively (see
 the Ingestion rule above). A scratch `*.db` may appear here from earlier
 dev/verification work — harmless, but never point a CLI at the production file.
 
-## Disaster recovery (there are no backups)
+## Disaster recovery (no off-box backup)
 
 **The snapshot feature and its local ring were removed on 2026-08-06** (owner
-decision under storage pressure; commits 39c0e08/aa9f2a1/1faf9d9). Since then
-there is **no copy of the DB anywhere**, on-box or off. DR = re-ingest from
-sources. The full scenario analysis, measured stage rates, and the
-recommendation menu for re-introducing a minimal backup live in
-`docs/research/dr-premise-2026-08.md` (2026-08-09); the honest numbers:
+decision under storage pressure; commits 39c0e08/aa9f2a1/1faf9d9). There is still
+**no off-box copy**. On the box there is again a weekly reflink ring of two (issue
+269, `tender-db-snapshot.timer`, Sun 05:23 Berlin; `ls -l /data/db/snapshots`), but
+it sits on the same volume: a forensics and verification artifact that dies with
+`/data`, not disaster recovery. DR = re-ingest from sources. The full scenario
+analysis, measured stage rates, and the recommendation menu for re-introducing a
+minimal backup live in `docs/research/dr-premise-2026-08.md` (2026-08-09); the
+honest numbers:
 
 - **Canonical layer damaged** (bad projection, layer wipe; DB file healthy):
   `project rebuild=true` + verify ≈ **1–1.5 days**. The public instance serves
@@ -1060,9 +1089,10 @@ snapshot ever taken). Restore was a plain file copy: stop service, swap
 
 ### Disk headroom
 
-`/data` (1 TB since 2026-07-22) holds archive (~180 GB) + DB (560 GB and
-growing; it can never shrink — VACUUM is impossible). 219 GB free as of
-2026-08-09; a plain on-box DB copy no longer fits (XFS reflink copies do).
+`/data` (1.7 T on 2026-10-01, `df -h /data`) holds archive (~180 GB) + DB (685 GB
+on 2026-10-01, `stat -c %s /data/db/tender-db.db`, and growing; it can never shrink
+— VACUUM is impossible) + the snapshot ring. 443 GB free on 2026-10-01; a plain
+on-box DB copy no longer fits (XFS reflink copies do).
 Growth model and volume-full forecast: `docs/research/` storage-lifecycle
 study (issue 169).
 
@@ -1099,26 +1129,18 @@ TENDER_API_TOKEN=<token> cargo run -p ingest --bin data-quality
 
 ### Running the tests
 
-`crates/app` is a Dioxus fullstack crate, so every server-side module — the `v1` API,
-the supervisor, health, metrics — sits behind `#[cfg(feature = "server")]`; the same
-crate also builds to WASM for the browser client. A plain
+CLAUDE.md's **Testing** section owns this recipe, and this section only points at it so
+the two cannot drift: run the suites through `ops/check.sh` (the gate `deploy.sh`
+reads), and run a single focused test only with the gate's flags AND the gate's package
+set, as CLAUDE.md spells out. A plain `cargo test` (debuginfo on) and a `-p <crate>`
+alone (features resolved for that crate only, issue 260) each build a second artifact
+family of every crate, and both have filled this container's disk.
 
-```sh
-cargo test -p tender-db      # DON'T: compiles none of the server modules
-```
-
-finds none of those 83 unit tests and prints `test result: ok. 0 passed; 0 failed`,
-which reads like a pass and checked nothing. Use the workspace alias:
-
-```sh
-cargo test-app               # the app crate's server-side unit tests
-cargo test-app health        # filtered, as usual
-```
-
-`store`, `ingest` and `model` have no feature gates, so `cargo test -p store` and
-friends already run everything. On a tight disk, prefix any of these with
-`CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_DEV_DEBUG=0`: debuginfo for this
-workspace's test binaries runs to tens of gigabytes and nothing here needs it.
+The trap that used to be the whole of this section still holds: `crates/app`'s server
+modules (`v1`, the supervisor, health, metrics) sit behind `#[cfg(feature = "server")]`,
+so `cargo test -p tender-db` without that feature compiles none of them and prints `test
+result: ok. 0 passed; 0 failed` — a pass that checked nothing. The gate's command
+carries `--features tender-db/server`.
 
 ## Open items
 

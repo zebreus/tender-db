@@ -2,8 +2,10 @@
 Description=Daily tender-db temp-directory sweep (/data/tmp)
 
 [Timer]
-# After the daily tick (07:35 UTC) and the restarts a deploy day brings, so the
-# steady-state single orphan is collected the same day it is made.
+# After the daily tick (09:35 Europe/Berlin: 07:35 UTC until 2026-10-25, 08:35 UTC
+# after) and the restarts a deploy day brings, so the steady-state single orphan is
+# collected the same day it is made. OnCalendar is box-local time, and the box runs
+# on Europe/Berlin (`timedatectl`), so 23:41 moves with the tick across DST.
 OnCalendar=*-*-* 23:41:00
 Persistent=true
 

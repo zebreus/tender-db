@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Deploy tender-db to the production VPS (ADR-0006: Ubuntu + nix-built bundle).
 #
-# Pushes the current main to the VPS bare repo, builds the flake package there
-# (the box has the 1 Gb/s uplink and the warm nix store), atomically switches the
-# /opt/tender-db/app symlink, restarts the service, and health-checks it.
+# Pushes the ref (default HEAD, see REF below) to the VPS bare repo, builds the flake
+# package there (the box has the 1 Gb/s uplink and the warm nix store), atomically
+# switches the /opt/tender-db/app symlink, restarts the service, and health-checks it.
 #
 # Usage: ./deploy.sh [git-ref]     (default: HEAD)
 set -euo pipefail

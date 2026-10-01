@@ -192,13 +192,16 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
 - Deployment (resolved 2026-07-19): the VPS stays Ubuntu, running the
   flake-built bundle under a hardened systemd unit (ADR-0006); the NixOS
   module + VM smoke test remain as CI and as a distributable. Public
-  hostname: tenders.zebreus.click. Storage: a 1 TB Hetzner volume (grown from
-  500 GB on 2026-07-22) carries DB + raw archive. No off-box backups for now —
+  hostname: tenders.zebreus.click. Storage: `/data` (`/dev/md3`, software RAID on
+  the box's two local NVMe drives; 1.7 T on 2026-10-01, re-read with
+  `df -h /data`) carries DB + raw archive. No off-box backups for now —
   accepted risk, under re-decision: the measured recovery cost is ~1–1.5 days
   (canonical layer from archive) to ~4–6 days (DB/volume loss, incl. re-fetch),
   not the "roughly a day" originally estimated, and user state (accounts,
   tokens, webhooks — <1 MB) is NOT rebuildable from anything (see
-  docs/research/dr-premise-2026-08.md; snapshots were removed 2026-08-06).
+  docs/research/dr-premise-2026-08.md; snapshots were removed 2026-08-06, and
+  a weekly same-volume reflink ring of two returned with issue 269 — forensics,
+  not DR).
 - Heavy scraping runs on the provisioned Hetzner VPS (1 Gb/s) — also the
   production target — never on the dev machine (~100 kB/s uplink). Access is
   via `ssh root@zebreus.click`; run any command expected to take more than a

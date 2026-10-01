@@ -2264,9 +2264,12 @@ mod tests {
     }
 
     /// The in-flight count must fall only when a computation truly ends, because that
-    /// is the whole reason it is a count and not a semaphore: an uninterruptible
-    /// aggregate keeps its worker after the request is gone, and capacity that is
-    /// reported free but is not is worse than no accounting at all (issue 238).
+    /// is the whole reason it is a count and not a semaphore: a computation can keep
+    /// its worker after the request is gone, and capacity that is reported free but is
+    /// not is worse than no accounting at all (issue 238). Since issues 425/438 the
+    /// deadline's interrupt ends most computations at the cap, but not every one (the
+    /// module doc, point 4, names what it does not reach), so the count still follows
+    /// the computation.
     /// Costs one real [`CAPACITY_GRACE`] (750 ms) on the refusal leg. Paying it beats
     /// pulling in tokio's `test-util` feature to fake a clock for a single assertion.
     #[tokio::test]

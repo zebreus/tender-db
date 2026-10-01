@@ -2,8 +2,9 @@
 # Install (or restore) the tender-db watchdog timers on the production box.
 #
 # Idempotent: copies the watch scripts and the operator CLI (ops/admin.sh as
-# tender-admin) to /usr/local/bin and the unit files to /etc/systemd/system,
-# reloads systemd, and enables + starts the timers.
+# tender-admin) to /usr/local/bin, the admin helper ops/aj.sh to /root/aj.sh, and
+# the unit files to /etc/systemd/system, reloads systemd, and enables + starts the
+# timers.
 # Safe to re-run at any time — this is the recovery path after a box rebuild or an
 # accidental deletion of the scripts (which is exactly what happened 2026-08-09,
 # issue 224: the scripts existed only on the box and were lost, so the timers
@@ -53,6 +54,11 @@ echo "installed $bin/tender-db-queue-verdict.sh"
 # the box still ran the 2026-08-17 copy, without `queue` and `cancel`.
 install -m 0755 -o root -g root "$here/../admin.sh" "$bin/tender-admin"
 echo "installed $bin/tender-admin"
+# And the handover's one-line helper (issue 464): `aj.sh <path>` GETs, `aj.sh <path>
+# '<json>'|@file` POSTs. It lived only in /root, and the issue files and their Verify
+# lines call it by that path, so it goes back there — root-only, like the secret it reads.
+install -m 0700 -o root -g root "$here/../aj.sh" /root/aj.sh
+echo "installed /root/aj.sh"
 
 for u in \
     tender-db-diskwatch.service tender-db-diskwatch.timer \

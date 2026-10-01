@@ -117,6 +117,24 @@ class H(BaseHTTPRequestHandler):
         if isinstance(body.get("recent"), list):
             body["recent"] = body["recent"][:limit]
         self.send(200, json.dumps(body).encode())
+    # POST /admin/jobs, gated the same way, answers what it RECEIVED — its method,
+    # content-type and the body parsed as JSON — so a case pins the client's call shape
+    # (aj.sh, issue 464). The real endpoint enqueues and answers {"enqueued":[…]}.
+    def do_POST(self):
+        u = urlparse(self.path)
+        raw = self.rfile.read(int(self.headers.get("content-length", "0") or 0))
+        if u.path != "/admin/jobs":
+            self.send(404, b'{"message":"404 Not Found"}'); return
+        if mode() == "secret-unset":
+            self.send(404, b'{"error":{"message":"not found","status":404}}'); return
+        if self.headers.get("x-admin-secret", "") != SECRET:
+            self.send(403, b'{"error":{"message":"bad or missing operator secret","status":403}}'); return
+        try:
+            posted = json.loads(raw)
+        except ValueError:
+            self.send(400, b'{"error":{"message":"body is not JSON","status":400}}'); return
+        self.send(200, json.dumps({"method": "POST", "content_type": self.headers.get("content-type"),
+                                   "posted": posted}).encode())
     def log_message(self, *a): pass
 
 srv = HTTPServer(("127.0.0.1", 0), H)
@@ -580,6 +598,87 @@ verdict_is "verdict: a bare 'busy ' names no job and is an error" 0 "busy " erro
 verdict_is "verdict: no answer with exit 0 is an error" 0 "" error
 verdict_is "verdict: no answer from a failed ssh (255) is an error" 255 "" error
 verdict_is "verdict: no exit status at all is an error" "" idle error
+
+# --- aj.sh: the handover's admin helper, versioned (issue 464) ---------------------------
+# `/root/aj.sh <path>` GETs, `/root/aj.sh <path> '<json>'|@file` POSTs. It lived only on
+# the box while 24 issue files, six open Verify lines and the handover called it — issue
+# 224's shape. The fixture compares the header with the BARE value, so the 200 below is
+# also the proof that aj.sh strips `TENDER_ADMIN_SECRET=` the way admin.sh and the
+# watchdogs do: the whole line, as `SECRET=$(cat /root/tender-admin-secret)` sent it, is
+# the 403 of the wrong-secret case.
+aj_case() {   # aj_case <name> <want exit> <jq test on stdout | EMPTY | -> <stderr text | -> <secret file> <aj.sh args…>
+    local name=$1 want_rc=$2 want_out=$3 want_err=$4 secret_file=$5; shift 5
+    local out err rc=0 ok=1
+    out=$(TENDER_ADMIN_URL="http://127.0.0.1:$port" TENDER_ADMIN_SECRET_FILE="$secret_file" \
+          bash "$here/../aj.sh" "$@" 2>"$work/aj.err") || rc=$?
+    err=$(cat "$work/aj.err")
+    [ "$rc" = "$want_rc" ] || ok=0
+    case "$want_out" in
+        -) ;;
+        EMPTY) [ -z "$out" ] || ok=0 ;;
+        *) jq -e "$want_out" <<<"$out" >/dev/null 2>&1 || ok=0 ;;
+    esac
+    case "$want_err" in
+        -) [ -z "$err" ] || ok=0 ;;   # a clean answer says nothing on stderr
+        *) grep -qF -- "$want_err" <<<"$err" || ok=0 ;;
+    esac
+    if [ "$ok" = 1 ]; then
+        echo "ok   $name"
+    else
+        echo "FAIL $name — wanted exit $want_rc, stdout $want_out, stderr '$want_err'"
+        echo "     got exit $rc"
+        echo "     stdout: $out"
+        echo "     stderr: $err"
+        failures=$((failures + 1))
+    fi
+}
+write_state 3 1
+echo normal >"$work/mode"
+jobs_object='(.current == null) and (.queued | type == "array") and (.recent | type == "array") and (.recent | length == 3)'
+aj_case "aj.sh GETs /admin/jobs with the stripped secret and gets the jobs object" \
+    0 "$jobs_object" - "$work/secret" /admin/jobs
+aj_case "aj.sh sends the path whole, query string included" \
+    0 '.recent | length == 2' - "$work/secret" '/admin/jobs?limit=2'
+aj_case "aj.sh with a wrong secret prints the server's 403 and exits 1" \
+    1 '.error.status == 403' "aj.sh: GET /admin/jobs answered HTTP 403" "$work/wrong-secret" /admin/jobs
+# A file whose stripped value is the whole real line, so aj.sh sends what `$(cat …)` did.
+sed 's/^/TENDER_ADMIN_SECRET=/' "$work/secret" >"$work/whole-line-secret"
+aj_case "…and so does the whole KEY=VALUE line sent as the header (the old documented reader)" \
+    1 '.error.status == 403' "answered HTTP 403" "$work/whole-line-secret" /admin/jobs
+echo secret-unset >"$work/mode"
+aj_case "aj.sh against a service without an admin secret prints the 404 and exits 1" \
+    1 '.error.status == 404' "aj.sh: GET /admin/jobs answered HTTP 404" "$work/secret" /admin/jobs
+echo normal >"$work/mode"
+aj_case "aj.sh without a secret file refuses before asking" \
+    1 EMPTY "aj.sh: no operator secret in $work/missing" "$work/missing" /admin/jobs
+aj_case "aj.sh with a secret file that holds no TENDER_ADMIN_SECRET refuses" \
+    1 EMPTY "aj.sh: no operator secret in" "$work/no-secret-line" /admin/jobs
+aj_case "aj.sh <path> '<json>' POSTs the JSON" \
+    0 '.method == "POST" and .content_type == "application/json" and .posted == {"kind": "project"}' - \
+    "$work/secret" /admin/jobs '{"kind":"project"}'
+printf '%s\n' '{"kind":"backfill","source":"doe","range":["2024-01","2024-12"]}' >"$work/body.json"
+aj_case "aj.sh <path> @file POSTs the file's bytes" \
+    0 '.method == "POST" and .posted.kind == "backfill" and .posted.range == ["2024-01","2024-12"]' - \
+    "$work/secret" /admin/jobs "@$work/body.json"
+aj_case "aj.sh <path> @missing refuses instead of POSTing an empty body" \
+    2 EMPTY "aj.sh: cannot read $work/nope.json" "$work/secret" /admin/jobs "@$work/nope.json"
+aj_case "aj.sh POST <path> <json> is refused: there is no method word" \
+    2 EMPTY "there is no method word" "$work/secret" POST /admin/jobs '{"kind":"project"}'
+aj_case "aj.sh POST <path> is refused too (a method word is not a path)" \
+    2 EMPTY "'POST' is not a path" "$work/secret" POST /admin/jobs
+aj_case "aj.sh with no arguments prints its usage" \
+    2 EMPTY "usage: aj.sh <path>" "$work/secret"
+out=$(TENDER_ADMIN_URL="http://127.0.0.1:1" TENDER_ADMIN_SECRET_FILE="$work/secret" \
+      bash "$here/../aj.sh" /admin/jobs 2>&1); rc=$?
+check "aj.sh says so when nothing answers" 1 "aj.sh: GET /admin/jobs: no answer from http://127.0.0.1:1 (curl exit 7)" "$out" "$rc"
+# install.sh needs root and writes /root, so it cannot run here; this pins that it still
+# puts aj.sh where the issue files call it, root-only like the secret it reads.
+if grep -qxF 'install -m 0700 -o root -g root "$here/../aj.sh" /root/aj.sh' "$here/install.sh"; then
+    echo "ok   install.sh installs ops/aj.sh as /root/aj.sh, mode 0700"
+else
+    echo "FAIL install.sh no longer installs ops/aj.sh as /root/aj.sh (mode 0700, root)"
+    failures=$((failures + 1))
+fi
 
 # --- driftwatch: a probe that could not look exits 1 (issue 459) ------------------
 # Both-ways first: the fixture's release list must be able to pass and to alarm, or

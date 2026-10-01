@@ -18,9 +18,10 @@
 //! `-- params: <json array>` (integers, strings, null — bound exactly as the app
 //! binds them, so the plan is the app's plan), then the SQL.
 //!
-//! `run` executes a single statement per process on purpose: turso 0.7.2's SDK
-//! exposes no interrupt (issue 425), so the only bound on a runaway plan is the
-//! caller's `timeout` killing the process. Every line is tab-separated and
+//! `run` executes a single statement per process on purpose: this tool wires no
+//! interrupt (the vendored SDK has had `Connection::interrupt` since issues 425/438,
+//! and `/v1/sql` uses it; this probe never did), so the only bound on a runaway plan
+//! is the caller's `timeout` killing the process. Every line is tab-separated and
 //! flushed as it is produced, so a killed run still leaves what it measured.
 
 use std::io::Write;

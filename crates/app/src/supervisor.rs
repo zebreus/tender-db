@@ -2400,9 +2400,11 @@ impl Supervisor {
 /// instead of lie, and the next long job added is refused by default rather than
 /// silently ignored.
 /// Issue 318: what the genericness wall did this run, as the suffix that rides
-/// the DURABLE job row. Extracted so its four cases are testable — this runtime's
-/// stderr does not reach journald (issues 61/63), so the job row IS the surface,
-/// and it printed a false alarm for as long as it existed (issue 338).
+/// the DURABLE job row. Extracted so its four cases are testable. The job row is
+/// the surface: stderr does reach the journal (issues 61/63 said it did not; the
+/// `[project]` heartbeats are there), but the journal is size-capped and rotates,
+/// while `/admin/jobs`, jobwatch and the issues' Verify lines read the row. It
+/// printed a false alarm for as long as it existed (issue 338).
 ///
 /// The counts ride here rather than a log line, and the suffix reports `enabled`
 /// and `anchor_reached` alongside the asks, because otherwise a zero means two
@@ -2482,7 +2484,7 @@ fn alias_suffix(a: &store::AltIdAliasCounts) -> String {
 
 /// Issue 364: what the legacy previous-publication kind gate did this run, as the
 /// suffix that rides the DURABLE job row — the `wall_suffix` pattern, and for the
-/// same reason (this runtime's stderr does not reach journald, issues 61/63).
+/// same reason (the journal rotates; the job row is what `/admin/jobs` keeps).
 ///
 /// A legacy citation joins two notices into one Tender only where the payload
 /// declares a same-procedure predecessor; a prior-information, buyer-profile,
@@ -4100,6 +4102,33 @@ impl Supervisor {
             })
     }
 
+    /// Run one job: a single async `match` over every `Spec` arm.
+    ///
+    /// **Adding or growing an arm can blow the stack of a test you never touched.**
+    /// Every arm's locals live in this ONE future, so the future is as large as its
+    /// largest arm, and a test that awaits it on a normal thread stack aborts with
+    /// `stack overflow` (SIGABRT). The messenger has been
+    /// `an_execute_without_an_expected_count_is_refused` each time (2026-09-01, issue
+    /// 404, issue 432), with no relation to the change, so it reads as a mystery
+    /// regression. Issue 404's "stack lesson" cost four wrong guesses; what it found:
+    ///
+    /// 1. **Box a big arm** — `Box::pin(async move { … }).await` — so its frame goes
+    ///    on the heap. Necessary, not sufficient: `Box::pin` constructs the frame on
+    ///    the stack BEFORE it moves it, so a boxed arm must also be SMALL. Put a big
+    ///    body in its own `async fn` (`run_repair_member_twins` is the pattern) and
+    ///    make the arm one boxed call.
+    /// 2. **Box the deep awaits too.** An async fn's future CONTAINS the futures it
+    ///    awaits, so an unboxed `self.db.…(…).await` that nests three calls down
+    ///    brings that whole composed frame into the arm and out into this match.
+    ///    Boxing only the arm did not stop 404's (`plan_member_twin_repair` →
+    ///    `member_twin_census` → `record_twin_candidate`) or 432's (the store future
+    ///    inside the new arm) overflow.
+    /// 3. **Find the culprit by isolating, not by guessing**: replace the suspect
+    ///    arm's body with `Err(...)`. If the test passes, that arm is it; then box its
+    ///    awaits one at a time.
+    ///
+    /// This module compiles only with `--features server`; a check or test without it
+    /// never builds this function (CLAUDE.md, Testing).
     async fn run_spec(&self, job: &Job) -> Result<String, String> {
         match &job.spec {
             Spec::Fetch { source, package_kind, period, refetch } => {

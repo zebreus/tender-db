@@ -3,24 +3,26 @@
 # "server")]`, because the same crate also compiles to WASM for the browser client.
 #
 # The consequence is a trap. `cargo test -p tender-db` compiles the crate WITHOUT
-# that feature, finds none of the 83 server-side unit tests, and prints
+# that feature, finds none of the server-side unit tests, and prints
 #
 #     test result: ok. 0 passed; 0 failed
 #
 # which reads exactly like a pass. Nothing is wrong and nothing was checked. So the
-# app crate has an alias that always carries the feature, and it is the one to use:
+# app crate has aliases that always carry the feature:
 #
-#     cargo test-app                  # the 83 server-side UNIT tests (--lib), and only those
+#     cargo test-app                  # the server-side UNIT tests (--lib), and only those
 #     cargo test-app health           # filtered, as usual
-#     cargo test-app-all              # unit tests AND crates/app/tests/* — what the gate runs
+#     cargo test-app-all              # unit tests AND crates/app/tests/*
 #
 # `test-app` is `--lib`: it does not build crates/app/tests/{accounts,admin,api,sql,
 # webhooks}.rs, and for twelve days the gate ran only it — tests/sql.rs was red the
-# whole time (issue 414). `ops/check.sh` runs `test-app-all`; use `test-app` for the
-# quick inner loop, never as the verdict.
-#
-# `cargo test -p store` / `-p ingest` / `-p model` need no alias — those crates have
-# no feature gates and their plain invocations run everything.
+# whole time (issue 414). Neither alias is the verdict, and neither is the cheap inner
+# loop any more: `ops/check.sh` runs ONE cargo invocation over model, store, ingest and
+# the server-featured app (issue 260), and a single-package run like these resolves
+# features differently and builds a second artifact family of every crate — the disk
+# filler CLAUDE.md's Testing section warns about. Use that section's focused command
+# (the gate's flags AND the gate's package set) for one test, and the gate for the
+# verdict.
 [alias]
 test-app = "test -p tender-db --features server --lib"
 test-app-all = "test -p tender-db --features server --tests"
