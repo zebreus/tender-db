@@ -1,6 +1,7 @@
 # 460 — an identifier lookup misses every identifier a merge folded away, and the survivor serves only its own
 
-Status: ready-for-agent — DEPLOYED 2026-10-01 at `b26cf3a` (built `24ed6f2`, review fixes `f22bcfb`). Dry backfill 1831 counts 40,294 merged identifiers to write (e2-altid 4,736, r2 35,540, r3 18, e0 0; 0 unresolved, 1 wrong number withheld). The WET backfill is ENQUEUED as job 1846, behind the 477 chunk 2022. NEXT: read 1846, then the Verify (`GBPPONPWYP8439MZWY` → 5718658 with `resolved_filters`).
+Status: **DONE 2026-10-02** — wet backfill 1846 wrote the merged identifiers (e2-altid 4,736, r2 35,540, r3 18), and the Verify reads done: `?identifier=GBPPONPWYP8439MZWY` answers `[5718658]` with `resolved_filters {"identifier":{"asked":"GBPPONPWYP8439MZWY","merged_into":[5718658]}}`, and 5718658 serves it in `merged_identifiers`.
+Was status: ready-for-agent — DEPLOYED 2026-10-01 at `b26cf3a` (built `24ed6f2`, review fixes `f22bcfb`). Dry backfill 1831 counts 40,294 merged identifiers to write (e2-altid 4,736, r2 35,540, r3 18, e0 0; 0 unresolved, 1 wrong number withheld). The WET backfill is ENQUEUED as job 1846, behind the 477 chunk 2022. NEXT: read 1846, then the Verify (`GBPPONPWYP8439MZWY` → 5718658 with `resolved_filters`).
 Was status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the store half: a merged-identifier table that `repoint_org_references` fills at every merge, backfilled from the 4,738 `e2-altid` ledger rows, and read by both `identifier=` builders.
 Kind: API correctness (stable identifiers)
 Relates to: 455 (the org-id half of this defect, done), 448 (e2-altid; its design doc left this open at
@@ -119,3 +120,7 @@ Dry job 1831 (18 s): 5,895,067 ledger rows walked (era floor 1786785861); 30,329
 
 The 2 e2-altid `present` are the two PPONs that were merged twice (448: 4,738 rows, 4,736 keys). Wet job 1846 is
 queued.
+
+## RESOLVED-VERIFIED 2026-10-02 00:5x UTC
+
+Wet job 1846 (10 s) matched dry 1831's counts. The live reads are in the Status line above.

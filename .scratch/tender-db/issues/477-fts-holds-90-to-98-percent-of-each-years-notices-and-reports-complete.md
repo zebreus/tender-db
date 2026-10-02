@@ -194,3 +194,11 @@ distinct release), so a byte-identical repeat still collapses, and a different r
 - Verify by year: **2021 from 924 to 20**. Total **13,189**.
 - Chunk 2022: jobs 1832–1843 (refetch 2022-01..12), process 1844, project 1845, enqueued 20:2x UTC after the batch-2
   deploy (`b26cf3a`). It should end around 01:00 UTC, well before the 07:35 tick.
+
+### 2026-10-02 00:5x UTC — chunk 2022 landed; chunk 2023 enqueued
+
+- Fetches 1832–1843: all `ok`. Process 1844: `36788 members → 1781 notices (… 35007 dup)`. Project 1845: `1761
+  tenders written`.
+- Verify by year: **2022 from 1,483 to 8**, 2021 at 20. Total **11,714**.
+- Chunk 2023: 12 refetches, then process 1859 and project 1860, enqueued after the batch-3 deploy (`08c3dd9`). It
+  should end around 05:30 UTC.

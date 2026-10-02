@@ -1,6 +1,7 @@
 # 457 — turso 0.8.1 is out (2026-09-29): upgrade later, after the plan hardening that 0.7.2 wants anyway
 
-Status: ready-for-agent — EVALUATED 2026-10-01 (workflow `wf_1f19977e-497`: 4 readers over the published 0.7.2 and
+Status: ready-for-agent — units 1 (R2) and 2 (R3) DEPLOYED 2026-10-02 at `08c3dd9`: the list pages read `t.current_seq` (equivalence proven by `head_pointer_equivalence.rs` and a prod sample), and the IS NULL walks, the provisional echo walk and the country-less probe are pinned with unary `+`. The echo walk's keyset was also rewritten so it seeks without a sorter on 0.7.2 today. NEXT: unit 3 (the /v1/sql R4 surface canaries), then wait for 429's capture diff (2026-10-04) before the bump. Also refresh `.scratch/tender-db/428/captured-statements.sql` with the pinned statements before Phase R.
+Was status: ready-for-agent — EVALUATED 2026-10-01 (workflow `wf_1f19977e-497`: 4 readers over the published 0.7.2 and
 0.8.1 crate sources, 13 risky claims re-checked by challengers; report `.scratch/tender-db/457-turso-0.8/evaluation-2026-10-01.md`).
 Verdict: upgrade LATER. The durability gain is taken now with a pragma (issue 458). NEXT: unit 1 (R2, below) on 0.7.2.
 Kind: dependency / platform

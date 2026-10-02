@@ -1,6 +1,7 @@
 # 467 — `run_spec` is one future the size of every arm, so each stack overflow gets fixed one arm at a time and nothing measures it
 
-Status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the tripwire: a test that checks the `size_of_val` of `run_spec`'s future, and of each future it boxes, against a named budget. Growth then fails in the gate under its own name, not as a SIGABRT in an unrelated test.
+Status: **DONE 2026-10-02** — deployed at `08c3dd9`. `run_spec` is split into eleven family fns behind `off_frame` (`dc69f5f`), and a tripwire test holds its futures and poll frame against named budgets (`7644654`; review fixes in `4034c00`). The Verify reads done: `103` lines and `1` tripwire.
+Was status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is the tripwire: a test that checks the `size_of_val` of `run_spec`'s future, and of each future it boxes, against a named budget. Growth then fails in the gate under its own name, not as a SIGABRT in an unrelated test.
 Kind: risk (test-stack overflow, gate reliability)
 Relates to: 464 (owns CLAUDE.md's stale "62-arm" note and the doc comment that `run_spec` lacks), 404 (the stack lesson,
 404:815–829), 432 and 388 (both hit the overflow again), 342 (`run_fetch_fts`), 434 (`run_project`)
@@ -86,3 +87,7 @@ a gauge, so that growth is caught where it happens, and a split that removes the
 - **after the first unit:** `6744` and `1`.
 - **done**: a number under `400` (84 dispatch arms of one to three lines each) and `1`. If the split moves `run_spec`
   to another file, point the awk at that file.
+
+## RESOLVED-VERIFIED 2026-10-02 00:5x UTC
+
+Gated in batch 3 (GATE-EXIT=0, 740 s) and deployed at `08c3dd9`. The Verify reads `103` and `1`.

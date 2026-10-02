@@ -1,6 +1,7 @@
 # 474 — the submission-deadline window is written by hand at five sites in two languages, and only the writer count is pinned
 
-Status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an
+Status: **DONE 2026-10-02** — deployed at `08c3dd9`. The submission-deadline window has one home in `canonical` (`3626de2`), pinned by a source-scan test with an exact-line allowlist (`08c3dd9`). The Verify reads `0`.
+Was status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an
 adversarial pass). The first unit is one commit: two helpers in `canonical` (a Rust predicate and its SQL fragment),
 all five sites moved onto them, and a source-scan test that fails when a sixth copy appears.
 Kind: risk (one rule, five hand copies; the fix is meant to change no answer)
@@ -131,3 +132,7 @@ No schema change, no refold, no job. Gate with `ops/check.sh` and deploy as usua
   `3684`, `3686` and `lib.rs:3660`, `3661`.
 - **done**: `0`. The read sites and the backfill reach the window only through `canonical`'s helpers.
   `the_deadline_window_is_written_once` is what keeps it at 0.
+
+## RESOLVED-VERIFIED 2026-10-02 00:5x UTC
+
+Gated in batch 3 and deployed at `08c3dd9`. The Verify reads `0` hand copies.
