@@ -151,6 +151,10 @@ refusals, `deferred 0`). No full re-projection needed. Dailies between the deplo
 fan-in- and weld-guarded join back (`deferred`; the wet run re-queues them); ADR-0011's same-Source joins go ahead.
 Expect one-time renames: a pre-ledger OPP-090 Tender named after an island member is retired (`removed`) and
 re-minted under its keyed member the first time a fold plans it.
+*Owner check 2026-10-02 08:3x UTC, before deploy:* the rename is negligible. Seven 100k-id ranges of `tenders`
+(1.0M, 2.0M, 3.0M, 5.0M, 6.0M, 7.0M, 8.7M; one bounded PK-range COUNT each) hold **0** island-named Tenders with
+`current_seq > 1`, the only shape the keyed-first rank can rename. Islands are 0–536 per range, all single-version.
+The weld guard reads "root is keyed" off that same order, so the order stays.
 
 **Adversarial review fixes (2026-10-02, third commit):**
 - *A notice under a key a link merge absorbed split off on the daily* (two reviewers, major): the merged Tender is
