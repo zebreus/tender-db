@@ -41,7 +41,8 @@ pub use canonical::{
     XbCase, XbMember, XbPacket,
     EdgeCensusReport, MatchKeyBuildWindow, OrgEdgeScanArgs,
     OrgEdgeScanReport,
-    PlanGroup, PlanRow, QUALITY_WITHHELD, R2MergeArgs,
+    DeclaredLink, LINK_LOGICAL_NOTICE, LINK_OPP_090, LinkTally, PlanGroup, PlanGroupTally, PlanRow,
+    QUALITY_WITHHELD, R2MergeArgs, version_stem,
     R2MergeReport, R3MergeArgs, R3MergeReport, Round, TenderProjection, TenderVersion,
     CountryCluster, CountryClusterReport, CountryTypoMove, CountryTypoRepairReport,
     DuplicateIdentity, GenericKeyProbe, ProvisionalEchoGroup, ProvisionalEchoReport, ProvisionalFoldArgs, ProvisionalFoldReport, EchoTier, NameVerdict, DuplicateIdentityReport,
@@ -7159,18 +7160,8 @@ tmpfs /data/ramcache tmpfs rw 0 0
         let _ = std::fs::remove_file(&path);
     }
 
-    /// ADR-0011's previous-notice pass joins `notices` on `(source, publication_id)`,
-    /// and `clear_plan_on`'s own comment states the intent as fact — `plan_prev_edge`
-    /// carries `a_source` "so the lookup hits `notices`' UNIQUE(source, publication_id, …)
-    /// index by its leading columns". Nothing checked it. It is also the step that pins
-    /// one core for the better part of an hour on a full re-projection: 245,955 edges
-    /// measured on job 288 (issue 256 part 2), every neighbouring step in the tens of
-    /// seconds. A prefix of a composite UNIQUE is exactly the kind of access this engine
-    /// has failed to select before (239: no pushdown into views; 248: DELETE ignoring a
-    /// composite-PK index), so the assumption is worth a gate rather than a comment.
-    ///
     /// Issue 323: the re-queue statement's PLAN, asserted against the SQL the
-    /// code actually runs — the `PREV_EDGE_JOIN_SQL` discipline, because the
+    /// code actually runs — the `LINK_EDGE_JOIN_SQL` discipline, because the
     /// first version of this probe pinned hand-copied literals and a panel
     /// showed a reordered spelling of the poison that such a copy would miss.
     ///
@@ -7436,40 +7427,89 @@ tmpfs /data/ramcache tmpfs rw 0 0
         }
     }
 
-    /// Asserted against `PREV_EDGE_JOIN_SQL` itself, so the plan can never be checked
-    /// against a copy that has drifted from the statement the fold runs.
+    /// Issue 481: every statement the Tender-link ledger runs on the projection's paths
+    /// must seek — asserted against the statements themselves, so a plan is never
+    /// checked against a copy that drifted from what the fold runs — on `Db::open`'s
+    /// schema plus the deferred notice indexes prod carries. A prefix of a composite UNIQUE is
+    /// exactly the access this engine has failed to select before (239, 248), and
+    /// `notices_source_id (source, id)` is the trap beside it: it serves `source = ?`
+    /// alone, and a producer planned on it would walk every DÖE notice once per TED
+    /// eForms notice of a full re-projection.
     #[tokio::test]
-    async fn the_previous_notice_join_seeks_notices_rather_than_scanning_it() {
-        let path = format!("/tmp/tender-db-preveqp-{}.db", std::process::id());
-        let _ = std::fs::remove_file(&path);
-        let db = Db::open(&path).await.unwrap();
-        db.reset_plan().await.unwrap();
-
-        let conn = db.reader().await.unwrap();
-        let mut rows = conn
-            .query(&format!("EXPLAIN QUERY PLAN {}", crate::canonical::PREV_EDGE_JOIN_SQL), ())
-            .await
-            .unwrap();
-        let mut plan = String::new();
-        while let Some(row) = rows.next().await.unwrap() {
-            plan.push_str(&text(&row, 3));
-            plan.push('\n');
+    async fn the_tender_link_statements_seek() {
+        let path = format!("/tmp/tender-db-linkeqp-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
         }
+        let db = Db::open(&path).await.unwrap();
+        db.build_notice_indexes().await.unwrap();
+        db.reset_plan().await.unwrap();
+        let conn = db.reader().await.unwrap();
+        let plan_of = async |sql: &str, params: Vec<Value>| -> String {
+            let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {sql}"), params).await.unwrap();
+            let mut plan = String::new();
+            while let Some(row) = rows.next().await.unwrap() {
+                plan.push_str(&text(&row, 3));
+                plan.push('\n');
+            }
+            assert!(!plan.is_empty(), "no plan came back for: {sql}");
+            plan
+        };
+        // No statement walks a table, and each seeks the index named — read in full
+        // rather than by name alone, so a seek on the wrong prefix fails too.
+        let seeks = |label: &str, plan: &str, must: &[&str]| {
+            for line in plan.lines() {
+                assert!(!line.trim_start().starts_with("SCAN "), "{label}: a table scan — plan was:\n{plan}");
+            }
+            for needle in must {
+                assert!(plan.contains(needle), "{label}: expected `{needle}` — plan was:\n{plan}");
+            }
+            assert!(!plan.contains("notices_source_id"), "{label}: the (source, id) trap — plan was:\n{plan}");
+        };
 
-        // The `notices` side must be a seek, not a scan. Whatever the engine calls the
-        // access path, the one thing it must not say is that it walks the table: at 14.3M
-        // rows and 245,955 edges a scan per edge is the observed single-core hour.
-        let notices_line = plan
-            .lines()
-            .find(|l| l.contains("notices") && !l.contains("plan_notice"))
-            .unwrap_or_else(|| panic!("no `notices` access in the plan:\n{plan}"));
-        assert!(
-            !notices_line.to_uppercase().contains("SCAN NOTICES"),
-            "the previous-notice join must SEEK notices by (source, publication_id), not scan \
-             14.3M rows per edge — plan was:\n{plan}"
+        // The producer, once per declared reference of every planned notice.
+        let plan = plan_of(crate::canonical::LINK_EXACT_TARGET_SQL, vec![t("ted"), t("00615938-2024")]).await;
+        seeks("exact target", &plan, &["sqlite_autoindex_notices_1 (source=? AND publication_id=?)"]);
+        let plan = plan_of(crate::canonical::LINK_VERSIONED_TARGET_SQL, vec![t("doe"), t("u-"), t("u.")]).await;
+        seeks(
+            "versioned target",
+            &plan,
+            &["sqlite_autoindex_notices_1 (source=? AND publication_id>? AND publication_id<?)"],
+        );
+        // ...and once per planned non-legacy notice: its own declared rows.
+        let plan = plan_of(crate::canonical::LINK_DECLARED_ROWS_SQL, vec![Value::Integer(1)]).await;
+        seeks("declared rows", &plan, &["sqlite_autoindex_tender_links_1 (a_notice_id=?)"]);
+
+        // The grouping: the matched rows through the partial index, then the join, which
+        // drives from the plan's edges — the one scan allowed — into two PRIMARY KEY seeks.
+        let plan = plan_of(crate::canonical::LINK_MATCHED_ROWS_SQL, vec![]).await;
+        seeks("matched rows", &plan, &["tender_links_matched (kind=?)"]);
+        let plan = plan_of(crate::canonical::LINK_EDGE_JOIN_SQL, vec![]).await;
+        let lines: Vec<&str> = plan.lines().map(str::trim).collect();
+        assert_eq!(
+            lines,
+            [
+                "SCAN plan_link_edge AS e",
+                "SEARCH a USING INTEGER PRIMARY KEY (rowid=?)",
+                "SEARCH b USING INTEGER PRIMARY KEY (rowid=?)",
+            ],
+            "the link join must drive from the edges and seek both endpoints — plan was:\n{plan}"
         );
 
-        let _ = std::fs::remove_file(&path);
+        // The incremental closure's walk (`tender_link_neighbours`).
+        let [stated, targeted, named] = crate::canonical::link_neighbour_reads(3);
+        let ids = || vec![Value::Integer(1), Value::Integer(2), Value::Integer(3)];
+        seeks("stated", &plan_of(&stated, ids()).await, &["sqlite_autoindex_tender_links_1 (a_notice_id=?)"]);
+        seeks("targeted", &plan_of(&targeted, ids()).await, &["tender_links_b (b_notice_id=?)"]);
+        seeks("named", &plan_of(&named, ids()).await, &["INTEGER PRIMARY KEY"]);
+        let plan = plan_of(crate::canonical::LINK_BY_REF_SQL, vec![t("doe"), t("u")]).await;
+        seeks("by ref", &plan, &["tender_links_ref (b_source=? AND b_ref=?)"]);
+
+        drop(conn);
+        drop(db);
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
     }
 
     /// Issue 82 regression: a rebuild empties the tender layer via

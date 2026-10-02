@@ -93,6 +93,9 @@ pub struct Report {
     /// and `unknown_kind` stay zero here. Read beside `citations`: the read-time
     /// gate refuses by what the CITER declares, this one by what the CITED IS.
     pub target_refusals: CitationGate,
+    /// Issue 481: what the grouping's Tender-link step admitted and refused, per
+    /// class — the cross-source and logical-notice joins, and the weld guards.
+    pub links: store::LinkTally,
     /// Issue 385 unit 2: what the F14 corrigendum-date target gate did, by the
     /// class of form coordinate each `CHG-n` block named. Counted beside
     /// `citations` in the plan sweep, and read the same way — `other` is the
@@ -1416,7 +1419,9 @@ pub async fn project_with_progress_phase2_stoppable(
     // union-find, islands — entirely in SQL over the on-disk plan (issue 59), so no
     // whole-corpus structure ever enters RAM.
     let t1 = std::time::Instant::now();
-    report.target_refusals.add_refused(&db.build_plan_groups().await?);
+    let grouped = db.build_plan_groups().await?;
+    report.target_refusals.add_refused(&grouped.shared_refused);
+    report.links.add(grouped.links);
     probe(db, "grouping (build_plan_groups)");
     let (tenders, islands, legacy_keys) = db.plan_summary().await?;
     report.tenders = tenders;
@@ -2374,7 +2379,9 @@ pub async fn project_incremental_chunked_observed(
     ));
 
     // Group the whole plan (same SQL as a full run — over the touched set only).
-    report.target_refusals.add_refused(&db.build_plan_groups().await?);
+    let grouped = db.build_plan_groups().await?;
+    report.target_refusals.add_refused(&grouped.shared_refused);
+    report.links.add(grouped.links);
     let (tenders, islands) = db.plan_counts().await?;
     report.tenders = tenders;
     report.islands = islands;
@@ -3720,10 +3727,10 @@ struct Ident {
     procedure_key: Option<String>,
     ojs_self: Option<OjsKey>,
     ojs_edges: Vec<OjsKey>,
-    /// Normalised `publication_id`s this notice names as its predecessors
-    /// (ADR-0011). A set: 2 of 1,343 measured carriers named two publications and
-    /// one named three, and a procedure republished in parts is still one procedure.
-    prev_refs: Vec<String>,
+    /// The Tender links this notice declares (issue 481), see [`declared_links`]. A
+    /// set: 2 of 1,343 measured OPP-090 carriers named two publications and one named
+    /// three, and a procedure republished in parts is still one procedure.
+    links: Vec<store::DeclaredLink>,
     subtype: Option<String>,
     /// Issue 364: what the previous-publication kind gate did to this notice's
     /// citations. Not part of the plan row — a tally, summed into the run's
@@ -4086,6 +4093,51 @@ fn previous_publications(parsed: &Parsed) -> Vec<String> {
     out
 }
 
+/// The Tender links a notice declares (issue 481), for the `tender_links` ledger:
+///
+/// - **`opp-090`**: every previous publication it names ([`previous_publications`]).
+///   The target Source is TED whichever Source cites it: [`publication_ref`] admits
+///   only the archive shape `NNNNNNNN-YYYY`, a TED publication number, and resolving
+///   it in the citer's own Source is what dropped every DÖE citation of its TED
+///   predecessor.
+/// - **`logical-notice`**, on a TED notice only: its `BT-701-notice`, the id DÖE
+///   publishes the same notice under (`<id>-<VersionID>`). Calibrated on 136 of 136
+///   above-threshold DÖE islands of April 2025, every pair agreeing on title, CPV,
+///   subtype, buyer and dispatch second. Only a single, generated uuid qualifies: two
+///   values on one notice name no one notice, and a placeholder-shaped id
+///   ([`is_placeholder_key`], issue 369) is the hand-typed kind that collides across
+///   procedures — a missed link splits, a colliding one welds.
+fn declared_links(source: &str, parsed: &Parsed) -> Vec<store::DeclaredLink> {
+    let mut links: Vec<store::DeclaredLink> = previous_publications(parsed)
+        .into_iter()
+        .map(|b_ref| store::DeclaredLink { rule: store::LINK_OPP_090, b_source: "ted", b_ref })
+        .collect();
+    if source == "ted" {
+        let mut ids: Vec<&str> = parsed
+            .values
+            .iter()
+            .filter(|v| v.field_id == LOGICAL_NOTICE_FIELD)
+            .filter_map(|v| match &v.value {
+                NoticeValue::Id { value, .. } => Some(value.trim()),
+                _ => None,
+            })
+            .collect();
+        ids.sort_unstable();
+        ids.dedup();
+        if let [id] = ids[..]
+            && is_uuid(id)
+            && !is_placeholder_key(id)
+        {
+            links.push(store::DeclaredLink {
+                rule: store::LINK_LOGICAL_NOTICE,
+                b_source: "doe",
+                b_ref: id.to_owned(),
+            });
+        }
+    }
+    links
+}
+
 /// A previous-notice reference as a `notices.publication_id`, or `None` if it is
 /// not a TED publication number.
 ///
@@ -4137,7 +4189,7 @@ impl Ident {
             procedure_key: procedure_key(parsed, sdk01, is_de1_profile(&notice.profile)),
             ojs_self,
             ojs_edges,
-            prev_refs: previous_publications(parsed),
+            links: declared_links(&notice.source, parsed),
             subtype: first_code(parsed, SUBTYPE_FIELD),
             citations,
             f14_targets: f14_target_gate(parsed),
@@ -4173,7 +4225,7 @@ impl Ident {
             published_at: self.published_at,
             subtype: self.subtype,
             ojs_edges: self.ojs_edges.into_iter().map(encode_ojs).collect(),
-            prev_refs: self.prev_refs,
+            links: self.links,
             key_shaped,
             buyer_key: self.buyer_key,
             shared_kind: self.shared_kind.map(str::to_owned),
@@ -7069,6 +7121,58 @@ mod tests {
         ] {
             assert_eq!(publication_ref(bad), None, "{bad:?} is not a publication id");
         }
+    }
+
+    /// Issue 481: what a notice declares, and into which Source. An OPP-090 reference is a
+    /// TED number from any citer — a DÖE notice's included, which the same-Source join
+    /// dropped. BT-701 is a link only on TED, only as one generated uuid: the DÖE notice's
+    /// own BT-701 is its own id, two values name no one notice, and a hand-typed
+    /// placeholder is the kind that collides across procedures.
+    #[test]
+    fn a_notice_declares_its_links_with_their_target_source() {
+        const LOGICAL: &str = "5c1f2e7a-9b3d-4e8f-a1c2-7d6e5f4a3b2c";
+        let notice = |ids: &[(&str, &str)]| Parsed {
+            sections: vec![store::Section { id: "PROC".into(), kind: "Notice".into(), parent: None }],
+            values: ids
+                .iter()
+                .enumerate()
+                .map(|(i, (field, value))| store::ValueRow {
+                    section_id: "PROC".into(),
+                    field_id: (*field).into(),
+                    ordinal: i as i64,
+                    value: NoticeValue::Id { scheme: None, value: (*value).into(), is_ref: false },
+                })
+                .collect(),
+        };
+        let link = |rule, b_source, b_ref: &str| store::DeclaredLink { rule, b_source, b_ref: b_ref.to_owned() };
+
+        let cited = notice(&[("OPP-090-Procedure", "615938-2024"), (LOGICAL_NOTICE_FIELD, LOGICAL)]);
+        assert_eq!(
+            declared_links("ted", &cited),
+            vec![
+                link(store::LINK_OPP_090, "ted", "00615938-2024"),
+                link(store::LINK_LOGICAL_NOTICE, "doe", LOGICAL),
+            ]
+        );
+        assert_eq!(
+            declared_links("doe", &cited),
+            vec![link(store::LINK_OPP_090, "ted", "00615938-2024")],
+            "a DÖE notice's OPP-090 points at TED; its BT-701 is its own id"
+        );
+
+        let other = "0e9d8c7b-6a5f-4e3d-b2c1-a0f9e8d7c6b5";
+        for (ids, why) in [
+            (vec![(LOGICAL_NOTICE_FIELD, LOGICAL), (LOGICAL_NOTICE_FIELD, other)], "two ids name no one notice"),
+            (vec![(LOGICAL_NOTICE_FIELD, "00000000-0000-4000-8000-000000000000")], "a placeholder collides"),
+            (vec![(LOGICAL_NOTICE_FIELD, "NOTICE-12345")], "not a uuid"),
+        ] {
+            assert_eq!(declared_links("ted", &notice(&ids)), Vec::new(), "{why}");
+        }
+        // The same id twice is still one id.
+        assert_eq!(
+            declared_links("ted", &notice(&[(LOGICAL_NOTICE_FIELD, LOGICAL), (LOGICAL_NOTICE_FIELD, LOGICAL)])),
+            vec![link(store::LINK_LOGICAL_NOTICE, "doe", LOGICAL)]
+        );
     }
 
     /// Issue 237: membership must survive to the version that HAS the bids.

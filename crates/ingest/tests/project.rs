@@ -3784,6 +3784,452 @@ async fn a_previous_notice_reference_chains_two_procedure_keys_into_one_tender()
     let _ = std::fs::remove_file(&path);
 }
 
+// ---------------------------------- issue 481: the Tender-link ledger
+
+/// The notice id a TED twin publishes as `BT-701-notice` and DÖE as `<id>-<version>`.
+const LOGICAL: &str = "5c1f2e7a-9b3d-4e8f-a1c2-7d6e5f4a3b2c";
+const LOGICAL_2: &str = "0e9d8c7b-6a5f-4e3d-b2c1-a0f9e8d7c6b5";
+/// Procedure keys (BT-04).
+const KEY: &str = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
+const KEY_2: &str = "9f8e7d6c-5b4a-4392-8170-6f5e4d3c2b1a";
+
+/// A synthetic eForms notice for the Tender-link tests: `source` and `pub_id` as the
+/// archive stores them, dispatched — and so, with no publication date, published — on
+/// `day`, with the given id fields on its procedure root (a field named twice gets
+/// ordinals 0, 1, …).
+fn linked(fetch_id: i64, source: &str, pub_id: &str, day: i64, ids: &[(&str, &str)]) -> (Notice, Parsed) {
+    let mut values = vec![ValueRow {
+        section_id: "PROCEDURE".into(),
+        field_id: "BT-05(a)-notice".into(),
+        ordinal: 0,
+        value: NoticeValue::Date { utc_seconds: day * 86_400, offset_minutes: 0, has_time: false },
+    }];
+    for (field, value) in ids {
+        let ordinal = values.iter().filter(|v| v.field_id == *field).count() as i64;
+        values.push(ValueRow {
+            section_id: "PROCEDURE".into(),
+            field_id: (*field).into(),
+            ordinal,
+            value: NoticeValue::Id { scheme: None, value: (*value).into(), is_ref: false },
+        });
+    }
+    let parsed =
+        Parsed { sections: vec![Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None }], values };
+    let notice = Notice {
+        source: source.into(),
+        publication_id: pub_id.into(),
+        content_hash: pub_id.into(),
+        profile: if source == "ted" { "eforms:eforms-sdk-1.13" } else { "eforms:eforms-de-2.0" }.into(),
+        declared_version: None,
+        fetch_id,
+        member_path: pub_id.into(),
+        ingested_at: 0,
+        published_at: Some(store::Stamp::utc(day * 86_400)),
+        dispatched_at: Some(store::Stamp::utc(day * 86_400)),
+    };
+    (notice, parsed)
+}
+
+async fn record_linked(db: &Db, fetch_id: i64, source: &str, pub_id: &str, day: i64, ids: &[(&str, &str)]) {
+    let (notice, parsed) = linked(fetch_id, source, pub_id, day, ids);
+    db.record_notice(&notice, &Parse::Parsed(parsed)).await.expect("record linked notice");
+}
+
+/// The Tender holding the notice published as `pub_id`.
+async fn tender_of(db: &Db, pub_id: &str) -> i64 {
+    scalar(db, &format!("SELECT tender_id FROM tender_versions WHERE publication_id = '{pub_id}'")).await
+}
+
+/// Notices folded into two Tenders at once — the issue-278 ghost signature.
+async fn ghosts(db: &Db) -> i64 {
+    scalar(
+        db,
+        "SELECT COUNT(*) FROM (SELECT caused_by_notice_id FROM tender_versions
+           GROUP BY caused_by_notice_id HAVING COUNT(*) > 1)",
+    )
+    .await
+}
+
+/// Every Tender's identity, in id order — what a stable re-run must leave byte-identical.
+async fn tender_identities(db: &Db) -> Option<String> {
+    query_text(
+        db,
+        "SELECT group_concat(r, ' ; ') FROM (SELECT id || '|' || coalesce(procedure_key, '') || '|' ||
+                coalesce(island_notice_id, -1) || '|' || source AS r FROM tenders ORDER BY id)",
+    )
+    .await
+}
+
+/// Issue 481: a TED notice's BT-701 names the DÖE notice it was filed as, and the two
+/// become ONE Tender — the keyed TED one, although the DÖE island was published, and
+/// projected, first. The representative used to be the earliest member, so the island
+/// named the component `island:<doe>`: the TED key's Tender was retired and re-minted as
+/// an island, and on a non-rebuild run the island lookup under the merged Tender's Source
+/// (TED) missed the row stored under DÖE and minted another — the issue-278 ghost.
+#[tokio::test]
+async fn a_bt701_link_folds_the_doe_notice_into_the_keyed_ted_tender() {
+    let (db, fetch_id, path) = scratch("bt701").await;
+    let doe = format!("{LOGICAL}-01");
+    record_linked(&db, fetch_id, "doe", &doe, 20_000, &[]).await;
+    project::project(&db, false).await.expect("the DÖE notice alone");
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tenders WHERE procedure_key IS NULL AND source = 'doe'").await,
+        1,
+        "the DÖE notice starts as its own island"
+    );
+
+    record_linked(&db, fetch_id, "ted", "00400001-2024", 20_003, &[("BT-04-notice", KEY), ("BT-701-notice", LOGICAL)])
+        .await;
+    let report = project::project(&db, false).await.expect("non-rebuild, with the TED twin");
+    assert_eq!(report.links.logical_notice, 1, "{:?}", report.links);
+    assert_eq!(report.links.refused(), 0, "{:?}", report.links);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 1, "the island was retired into the TED Tender");
+    assert_eq!(
+        query_text(&db, "SELECT procedure_key || '|' || source FROM tenders").await.as_deref(),
+        Some(&*format!("{KEY}|ted")),
+        "named by the TED key, not island:<doe>"
+    );
+    assert_eq!(
+        query_text(&db, "SELECT publication_id FROM tender_versions WHERE seq = 1").await,
+        Some(doe.clone()),
+        "the DÖE notice is the first version: it was published first"
+    );
+    assert_eq!(ghosts(&db).await, 0);
+    assert!(
+        scalar(&db, "SELECT COUNT(*) FROM changes WHERE entity_kind = 'tender' AND op = 'removed'").await >= 1,
+        "the island's retirement announced itself"
+    );
+    // The ledger row: declared, keyed by notice, resolved, and naming the id as published.
+    assert_eq!(
+        scalar(
+            &db,
+            &format!(
+                "SELECT COUNT(*) FROM tender_links l
+                   JOIN notices a ON a.id = l.a_notice_id JOIN notices b ON b.id = l.b_notice_id
+                  WHERE l.kind = 'declared' AND l.rule = 'logical-notice' AND a.publication_id = '00400001-2024'
+                    AND l.b_source = 'doe' AND l.b_ref = '{LOGICAL}' AND b.publication_id = '{doe}'"
+            )
+        )
+        .await,
+        1
+    );
+
+    // A non-rebuild re-run moves nothing...
+    let before = tender_identities(&db).await;
+    project::project(&db, false).await.expect("re-run");
+    assert_eq!(tender_identities(&db).await, before, "a stable re-run");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_links").await, 1, "re-planning rewrites no row");
+    // ...and an incremental fold of a later TED notice under the key keeps the link: the
+    // touched Tender brings both linked notices into the plan.
+    record_linked(&db, fetch_id, "ted", "00400002-2024", 20_010, &[("BT-04-notice", KEY)]).await;
+    project::project_incremental(&db).await.expect("incremental");
+    assert_eq!(tender_identities(&db).await, before, "still the one Tender");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_versions").await, 3);
+    assert_eq!(ghosts(&db).await, 0);
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 481: with no keyed member the TED island names the component — the Source the
+/// merged Tender is labelled with, so the island lookup finds the row it stored, and the
+/// DÖE island's own Tender is retired instead of standing beside it as a ghost.
+#[tokio::test]
+async fn two_linked_islands_are_named_by_the_ted_one() {
+    let (db, fetch_id, path) = scratch("bt701-islands").await;
+    record_linked(&db, fetch_id, "doe", &format!("{LOGICAL}-01"), 20_000, &[]).await;
+    project::project(&db, false).await.expect("the DÖE notice alone");
+    record_linked(&db, fetch_id, "ted", "00400003-2024", 20_003, &[("BT-701-notice", LOGICAL)]).await;
+    project::project(&db, false).await.expect("non-rebuild, with the TED island");
+
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 1);
+    assert_eq!(
+        query_text(
+            &db,
+            "SELECT n.publication_id || '|' || t.source FROM tenders t JOIN notices n ON n.id = t.island_notice_id"
+        )
+        .await
+        .as_deref(),
+        Some("00400003-2024|ted"),
+        "island:<ted>, under TED"
+    );
+    assert_eq!(ghosts(&db).await, 0);
+    let before = tender_identities(&db).await;
+    project::project(&db, false).await.expect("re-run");
+    assert_eq!(tender_identities(&db).await, before, "a stable re-run");
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 481: every DÖE version of the logical notice is that notice — `-01` and `-02`
+/// both join the TED twin.
+#[tokio::test]
+async fn every_doe_version_of_the_logical_notice_joins_its_ted_twin() {
+    let (db, fetch_id, path) = scratch("bt701-versions").await;
+    record_linked(&db, fetch_id, "doe", &format!("{LOGICAL}-01"), 20_000, &[]).await;
+    record_linked(&db, fetch_id, "doe", &format!("{LOGICAL}-02"), 20_001, &[]).await;
+    // Not a version: the suffix is not all digits, so it names another notice.
+    record_linked(&db, fetch_id, "doe", &format!("{LOGICAL}-0x"), 20_001, &[]).await;
+    record_linked(&db, fetch_id, "ted", "00400004-2024", 20_003, &[("BT-04-notice", KEY), ("BT-701-notice", LOGICAL)])
+        .await;
+    let report = project::project(&db, false).await.expect("project");
+
+    assert_eq!(report.links.logical_notice, 2, "{:?}", report.links);
+    let ted = tender_of(&db, "00400004-2024").await;
+    for version in ["01", "02"] {
+        assert_eq!(tender_of(&db, &format!("{LOGICAL}-{version}")).await, ted, "version {version} joins");
+    }
+    assert_ne!(tender_of(&db, &format!("{LOGICAL}-0x")).await, ted, "a non-version stays apart");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 2);
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 481: a DÖE notice's OPP-090 cites its TED predecessor by TED number, and it now
+/// resolves — the same-Source join looked the number up among DÖE notices and dropped
+/// every such link. ADR-0011's direction guard still holds: a citation of a LATER
+/// notice is refused, and counted.
+#[tokio::test]
+async fn a_doe_notice_citing_its_ted_predecessor_joins_it() {
+    let (db, fetch_id, path) = scratch("cross-opp090").await;
+    record_linked(&db, fetch_id, "ted", "00200002-2024", 19_990, &[("BT-04-notice", KEY)]).await;
+    record_linked(
+        &db,
+        fetch_id,
+        "doe",
+        &format!("{LOGICAL}-01"),
+        20_000,
+        &[("BT-04-notice", KEY_2), ("OPP-090-Procedure", "200002-2024")],
+    )
+    .await;
+    // A DÖE notice citing a TED notice published AFTER it.
+    record_linked(&db, fetch_id, "ted", "00200003-2024", 20_020, &[("BT-04-notice", "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e")])
+        .await;
+    record_linked(
+        &db,
+        fetch_id,
+        "doe",
+        &format!("{LOGICAL_2}-01"),
+        20_010,
+        &[("BT-04-notice", "3c4d5e6f-7a8b-4c9d-8e1f-2a3b4c5d6e7f"), ("OPP-090-Procedure", "200003-2024")],
+    )
+    .await;
+    let report = project::project(&db, false).await.expect("project");
+
+    assert_eq!(report.links.previous_notice, 1, "{:?}", report.links);
+    assert_eq!(report.links.not_earlier, 1, "{:?}", report.links);
+    assert_eq!(tender_of(&db, &format!("{LOGICAL}-01")).await, tender_of(&db, "00200002-2024").await);
+    assert_eq!(
+        query_text(
+            &db,
+            &format!("SELECT procedure_key FROM tenders WHERE id = {}", tender_of(&db, "00200002-2024").await)
+        )
+        .await
+        .as_deref(),
+        Some(KEY),
+        "named by the earlier, TED key — ADR-0011's representative"
+    );
+    assert_ne!(tender_of(&db, &format!("{LOGICAL_2}-01")).await, tender_of(&db, "00200003-2024").await);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 3);
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_links WHERE rule = 'opp-090' AND b_source = 'ted'").await,
+        2,
+        "both citations are on the ledger, as TED references"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 481's weld guards, each refusing and counting. A same-notice link may not put
+/// two keyed Tenders into one (issue 482's colliding BT-04s already weld; a new rule
+/// must not add to it); one logical id may not be carried by two TED Tenders; and a
+/// component may not outgrow the cap — while one AT the cap is admitted.
+#[tokio::test]
+async fn the_weld_guards_refuse_and_count() {
+    let (db, fetch_id, path) = scratch("weld-guards").await;
+    // Keyed weld: the DÖE notice the TED BT-701 names carries ANOTHER procedure key.
+    let keyed = "7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d";
+    record_linked(&db, fetch_id, "ted", "00300001-2024", 20_003, &[("BT-04-notice", KEY), ("BT-701-notice", keyed)])
+        .await;
+    record_linked(&db, fetch_id, "doe", &format!("{keyed}-01"), 20_000, &[("BT-04-notice", KEY_2)]).await;
+    // Not one-to-one: two TED Tenders carry the same logical id.
+    let shared = "8b9c0d1e-2f3a-4b4c-8d5e-6f7a8b9c0d1e";
+    for (pub_id, key) in
+        [("00300002-2024", "4d5e6f7a-8b9c-4d0e-9f1a-2b3c4d5e6f7a"), ("00300003-2024", "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b")]
+    {
+        record_linked(&db, fetch_id, "ted", pub_id, 20_003, &[("BT-04-notice", key), ("BT-701-notice", shared)]).await;
+    }
+    record_linked(&db, fetch_id, "doe", &format!("{shared}-01"), 20_000, &[]).await;
+    // Not one-to-one either: the DÖE notice already shares its TED twin's key, and a
+    // second TED notice — an island — carries the same id. The same-group pair joins
+    // nothing, but its TED notice is still a carrier.
+    let twinned = "e4f5a6b7-c8d9-4e0f-8a1b-2c3d4e5f6a7b";
+    let twin_key = "f5a6b7c8-d9e0-4f1a-9b2c-3d4e5f6a7b8c";
+    record_linked(&db, fetch_id, "ted", "00300004-2024", 20_003, &[("BT-04-notice", twin_key), ("BT-701-notice", twinned)])
+        .await;
+    record_linked(&db, fetch_id, "doe", &format!("{twinned}-01"), 20_000, &[("BT-04-notice", twin_key)]).await;
+    record_linked(&db, fetch_id, "ted", "00300005-2024", 20_004, &[("BT-701-notice", twinned)]).await;
+    // Oversized: 65 DÖE "versions" of one id, beside 63 of another — 66 components
+    // against a cap of 64, and exactly 64.
+    let (big, fits) = ("9c0d1e2f-3a4b-4c5d-9e6f-7a8b9c0d1e2f", "ad1e2f3a-4b5c-4d6e-8f7a-8b9c0d1e2f3a");
+    for (id, versions, key) in
+        [(big, 65, "6f7a8b9c-0d1e-4f2a-9b3c-4d5e6f7a8b9c"), (fits, 63, "be2f3a4b-5c6d-4e7f-9a8b-9c0d1e2f3a4b")]
+    {
+        record_linked(&db, fetch_id, "ted", &format!("T-{id}"), 20_003, &[("BT-04-notice", key), ("BT-701-notice", id)])
+            .await;
+        for v in 1..=versions {
+            record_linked(&db, fetch_id, "doe", &format!("{id}-{v}"), 20_000, &[]).await;
+        }
+    }
+    let report = project::project(&db, false).await.expect("project");
+
+    assert_eq!(report.links.keyed_weld, 1, "{:?}", report.links);
+    assert_eq!(report.links.not_one_to_one, 3, "{:?}", report.links);
+    assert_eq!(report.links.oversized, 65, "{:?}", report.links);
+    assert_eq!(report.links.logical_notice, 63, "the component at the cap is admitted: {:?}", report.links);
+    assert_ne!(tender_of(&db, "00300001-2024").await, tender_of(&db, &format!("{keyed}-01")).await);
+    let shared_doe = tender_of(&db, &format!("{shared}-01")).await;
+    assert_ne!(tender_of(&db, "00300002-2024").await, shared_doe);
+    assert_ne!(tender_of(&db, "00300003-2024").await, shared_doe);
+    assert_eq!(tender_of(&db, "00300004-2024").await, tender_of(&db, &format!("{twinned}-01")).await);
+    assert_ne!(tender_of(&db, "00300005-2024").await, tender_of(&db, &format!("{twinned}-01")).await);
+    assert_ne!(tender_of(&db, &format!("T-{big}")).await, tender_of(&db, &format!("{big}-1")).await);
+    assert_eq!(tender_of(&db, &format!("T-{fits}")).await, tender_of(&db, &format!("{fits}-63")).await);
+    // 2 + 3 + 2 + 66 apart, and the 64 at the cap as one.
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 2 + 3 + 2 + 66 + 1);
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 481, calibration §4: the false-merge shapes a declared link must keep apart.
+/// Sibling procedures under one buyer and title, published the same day (shapes 1, 5
+/// and 9: lots as separate procedures, re-published PINs, the same dispatch second)
+/// pair only with their OWN declared twin — the rule never picks the nearest. And a
+/// placeholder-shaped BT-701 (shape 14's hand-typed uuid) declares nothing at all.
+#[tokio::test]
+async fn sibling_notices_and_a_placeholder_id_stay_apart() {
+    let (db, fetch_id, path) = scratch("bt701-shapes").await;
+    for (pub_id, key, id) in [("00500001-2024", KEY, LOGICAL), ("00500002-2024", KEY_2, LOGICAL_2)] {
+        record_linked(&db, fetch_id, "ted", pub_id, 20_003, &[("BT-04-notice", key), ("BT-701-notice", id)]).await;
+        record_linked(&db, fetch_id, "doe", &format!("{id}-01"), 20_003, &[]).await;
+    }
+    let placeholder = "00000000-0000-4000-8000-000000000000";
+    record_linked(
+        &db,
+        fetch_id,
+        "ted",
+        "00500003-2024",
+        20_003,
+        &[("BT-04-notice", "c0d1e2f3-a4b5-4c6d-9e7f-8a9b0c1d2e3f"), ("BT-701-notice", placeholder)],
+    )
+    .await;
+    record_linked(&db, fetch_id, "doe", &format!("{placeholder}-01"), 20_003, &[]).await;
+    project::project(&db, false).await.expect("project");
+
+    let (one, two) = (tender_of(&db, "00500001-2024").await, tender_of(&db, "00500002-2024").await);
+    assert_ne!(one, two);
+    assert_eq!(tender_of(&db, &format!("{LOGICAL}-01")).await, one);
+    assert_eq!(tender_of(&db, &format!("{LOGICAL_2}-01")).await, two);
+    assert_ne!(tender_of(&db, "00500003-2024").await, tender_of(&db, &format!("{placeholder}-01")).await);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 4);
+    assert_eq!(
+        scalar(&db, &format!("SELECT COUNT(*) FROM tender_links WHERE b_ref = '{placeholder}'")).await,
+        0,
+        "a placeholder id declares no link"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 481: a declared row is the notice's to replace. A re-parse that no longer
+/// carries the BT-701 drops its ledger row on the next plan, and the next fold splits
+/// the Tender again with no ghost — a declared link is undone by the data, the way
+/// ADR-0003 says every link must be undoable.
+#[tokio::test]
+async fn a_reparse_that_drops_the_link_drops_its_row_and_the_merge() {
+    let (db, fetch_id, path) = scratch("bt701-undo").await;
+    let doe = format!("{LOGICAL}-01");
+    record_linked(&db, fetch_id, "doe", &doe, 20_000, &[]).await;
+    let ted = [("BT-04-notice", KEY), ("BT-701-notice", LOGICAL)];
+    record_linked(&db, fetch_id, "ted", "00600001-2024", 20_003, &ted).await;
+    project::project(&db, false).await.expect("project");
+    assert_eq!(tender_of(&db, &doe).await, tender_of(&db, "00600001-2024").await);
+
+    let (notice, parsed) = linked(fetch_id, "ted", "00600001-2024", 20_003, &ted[..1]);
+    assert_eq!(db.reparse_notice(&notice, &parsed).await.expect("reparse"), store::Reparsed::Replaced);
+    project::project(&db, false).await.expect("re-project");
+
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_links").await, 0, "the declared row went with the field");
+    assert_ne!(tender_of(&db, &doe).await, tender_of(&db, "00600001-2024").await);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 2);
+    assert_eq!(ghosts(&db).await, 0);
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 481: the ledger's seams for an incremental closure. A TED notice planned before
+/// its DÖE twin arrives keeps ONE unresolved row, and the twin finds it by name — its
+/// publication id's version stem — without being planned; the twin is also what the TED
+/// notice's parsed link resolves to before any plan. Once both are planned the row is
+/// resolved in place of the unresolved one, and the walk runs both ways by notice id.
+#[tokio::test]
+async fn the_ledger_walks_both_ways_and_finds_a_late_target_by_name() {
+    let (db, fetch_id, path) = scratch("ledger-seams").await;
+    record_linked(&db, fetch_id, "ted", "00800001-2024", 20_003, &[("BT-04-notice", KEY), ("BT-701-notice", LOGICAL)])
+        .await;
+    project::project(&db, false).await.expect("the TED notice alone");
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_links WHERE b_notice_id IS NULL AND b_source = 'doe'").await,
+        1,
+        "nothing holds the DÖE notice yet: one unresolved row"
+    );
+
+    let doe = format!("{LOGICAL}-01");
+    record_linked(&db, fetch_id, "doe", &doe, 20_004, &[]).await;
+    let id = async |pub_id: &str| scalar(&db, &format!("SELECT id FROM notices WHERE publication_id = '{pub_id}'")).await;
+    let (ted, twin) = (id("00800001-2024").await, id(&doe).await);
+    assert_eq!(db.tender_link_neighbours(&[twin]).await.expect("by name"), vec![ted]);
+    let link = store::DeclaredLink { rule: store::LINK_LOGICAL_NOTICE, b_source: "doe", b_ref: LOGICAL.to_owned() };
+    assert_eq!(db.resolve_declared_links(&[link]).await.expect("resolve"), vec![twin]);
+
+    project::project(&db, false).await.expect("both");
+    assert_eq!(
+        scalar(&db, &format!("SELECT COUNT(*) FROM tender_links WHERE b_notice_id = {twin}")).await,
+        1,
+        "resolved"
+    );
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_links").await, 1, "in place of the unresolved row");
+    assert_eq!(db.tender_link_neighbours(&[ted]).await.expect("forward"), vec![twin]);
+    assert_eq!(db.tender_link_neighbours(&[twin]).await.expect("backward"), vec![ted]);
+    assert_eq!(db.tender_link_neighbours(&[ted, twin]).await.expect("both"), Vec::<i64>::new(), "never the input");
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 481: a MATCHED ledger row — what unit 3's reviewed matcher will write — joins
+/// its notices in the same union as every declared link, and the plan, which owns only
+/// declared rows, leaves it alone.
+#[tokio::test]
+async fn a_matched_ledger_row_joins_and_the_plan_leaves_it_alone() {
+    let (db, fetch_id, path) = scratch("matched-row").await;
+    record_linked(&db, fetch_id, "doe", "123456-1", 20_000, &[]).await;
+    record_linked(&db, fetch_id, "ted", "00700001-2024", 20_002, &[("BT-04-notice", KEY)]).await;
+    db.execute_for_test(
+        "INSERT INTO tender_links(a_notice_id, b_notice_id, b_source, b_ref, kind, rule, evidence, job_id, at)
+         SELECT a.id, b.id, 'doe', '123456-1', 'matched', 'r1', '{}', 7, 0
+           FROM notices a, notices b WHERE a.publication_id = '00700001-2024' AND b.publication_id = '123456-1'",
+    )
+    .await
+    .expect("write a matched row");
+    let report = project::project(&db, false).await.expect("project");
+
+    assert_eq!(report.links.matched, 1, "{:?}", report.links);
+    assert_eq!(tender_of(&db, "123456-1").await, tender_of(&db, "00700001-2024").await);
+    assert_eq!(query_text(&db, "SELECT procedure_key FROM tenders").await.as_deref(), Some(KEY));
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_links WHERE kind = 'matched'").await, 1);
+
+    let _ = std::fs::remove_file(&path);
+}
+
 // ---------------------------------- issue 34: sdk-0.1 ContractFolderID as a key
 
 /// A minimal synthetic notice carrying a single id field on its PROCEDURE root —

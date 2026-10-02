@@ -1,7 +1,8 @@
 # A publisher-declared previous-notice reference joins two notices into one Tender
 
-**Status:** accepted 2026-08-19 (project owner, under the standing mandate). Implementation pending —
-this ADR decides the warrant and the guards, not the schedule.
+**Status:** accepted 2026-08-19 (project owner, under the standing mandate). Implemented in the
+grouping (`Db::build_plan_groups`), running on full re-projections since 2026-08-20 (issue 256). Amended
+2026-10-02 (issue 481, below): the edge is a row of the Tender-link ledger, and resolves in its own Source.
 
 EU eForms does not keep BT-04 stable across the notices of one procedure. Measured on prod
 (issue 236): award-bearing Tenders whose first version is an `eforms:eforms-sdk-1.%` notice are
@@ -92,3 +93,28 @@ Two ways to implement it, and the choice matters:
 - Whether the same treatment applies to `BT-125` (previous planning notice) and the other
   previous-publication references. Same warrant on its face, unmeasured, and therefore out of scope
   until someone counts it.
+
+## Amendment (2026-10-02, issue 481): a ledger row, resolved in its own Source
+
+- **The edge is a row of `tender_links`**, the one link ledger ADR-0003's 2026-10-02 amendment calls for.
+  A row is keyed by notice: the citing notice, the Source and identifier it names (`b_source`, `b_ref`),
+  and the target notice once one is held (`b_notice_id`, NULL until then). Its kind is `declared` and its
+  rule `opp-090`. The plan build writes it for the notice that publishes the reference, and replaces that
+  notice's declared rows every time it is planned. The grouping unions every resolved row whose two
+  notices are both in the plan. Two other kinds of row share the ledger and the one union-find: matched
+  links (kind `matched`), and TED↔DÖE same-notice links (rule `logical-notice`: a TED eForms notice's
+  `BT-701-notice` is the id DÖE publishes the same notice under, as `<id>-<version>`).
+- **Guard 1 now reads "the reference's own Source", not "the same Source".** The reference is a TED
+  publication number whoever cites it, since the normaliser admits only `NNNNNNNN-YYYY`. So it resolves
+  among TED notices. Requiring the citing notice's Source looked every DÖE citation of a TED
+  predecessor up among DÖE notices, and dropped it. Guards 2–4 stand. A refused not-earlier reference is
+  now counted on the job row (`not-earlier`), where before it was a silent filter in the join.
+- **A keyed member names the component**, then a TED island, and only then the earliest publication.
+  Two keyed components are named exactly as before. The change stops a DÖE island published before its
+  TED twin from naming the merged Tender, which on a non-rebuild run left the issue-278 ghost.
+- **The new rules are weld-guarded; this edge is not.** A same-notice or matched link may not put two
+  keyed components into one Tender. One logical id must name one notice on the citing side. And such a
+  component may not join more than 64 components. Refused edges are counted on the job row. The
+  previous-notice edge keeps this ADR's mechanism: it exists to join keyed components, and it has no cap.
+- **The incremental fold** unions a link only when both notices are in its plan.
+  `Db::tender_link_neighbours` is the walk that brings the other end in.

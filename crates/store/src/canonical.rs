@@ -986,6 +986,41 @@ pub(crate) const SCHEMA: &str = "
     ) STRICT;
     INSERT OR IGNORE INTO legacy_adjacency(id, watermark) VALUES (0, 0);
 
+    -- Issue 481: the Tender-link ledger — every link that joins two notices into one
+    -- Tender ACROSS procedure keys (ADR-0003's 2026-10-02 amendment, ADR-0011). Keyed by
+    -- notice, never by Tender id: Tender ids are retired on merge, notices are not.
+    -- `kind` is 'declared' (a reference the notice publishes; the plan build writes it
+    -- for the notice that states it and replaces that notice's declared rows every time
+    -- it is planned) or 'matched' (a measured match, written by a reviewed job and never
+    -- touched by the plan). `b_ref` is the identifier as the rule reads it — a TED
+    -- publication number for `opp-090`, a DÖE notice id for `logical-notice` — so a
+    -- target that arrives later is found by `(b_source, b_ref)`; `b_notice_id` stays
+    -- NULL until one is held. Parse-derived like legacy_ojs_keys, so neither
+    -- reset_tender_layer nor clear_canonical touches it. Off the public SQL surface
+    -- (the org_merge_log class). The UNIQUE leads with `a_notice_id`, which makes it
+    -- the citing side's walk index too; its NULL `b_notice_id` makes unresolved rows
+    -- distinct to SQL, so the plan's producer diffs a notice's rows instead of relying
+    -- on the constraint for those.
+    CREATE TABLE IF NOT EXISTS tender_links (
+        id          INTEGER PRIMARY KEY,
+        a_notice_id INTEGER NOT NULL,
+        b_notice_id INTEGER,
+        b_source    TEXT    NOT NULL,
+        b_ref       TEXT    NOT NULL,
+        kind        TEXT    NOT NULL CHECK (kind IN ('declared', 'matched')),
+        rule        TEXT    NOT NULL, -- 'opp-090' | 'logical-notice' | a matched rule
+        evidence    TEXT,             -- JSON
+        job_id      INTEGER,
+        at          INTEGER NOT NULL, -- unix seconds
+        UNIQUE (a_notice_id, rule, b_source, b_ref, b_notice_id)
+    ) STRICT;
+    CREATE INDEX IF NOT EXISTS tender_links_b ON tender_links(b_notice_id);
+    CREATE INDEX IF NOT EXISTS tender_links_ref ON tender_links(b_source, b_ref);
+    -- The grouping loads every matched row whatever the plan holds; the ledger is
+    -- mostly declared rows (one per TED eForms notice), so that read is a seek through
+    -- this partial index (the org_merge_log_e2_altid precedent).
+    CREATE INDEX IF NOT EXISTS tender_links_matched ON tender_links(kind) WHERE kind = 'matched';
+
     -- ---------------------------------------------------------------- views
     -- Current state = the highest seq per Tender.
 
@@ -1228,7 +1263,8 @@ pub const PROJECTION_EPOCH: i64 = 3;
 
 const NODE_WRITE_BATCH: usize = 20_000;
 
-/// How often the ADR-0011 previous-notice pass reports how far it has read (issue 256).
+/// How often the Tender-link pass (issue 481; ADR-0011's previous-notice pass before it)
+/// reports how far it has read (issue 256).
 ///
 /// A DURATION, not a row count. On a full-corpus plan this step has gone silent for
 /// over two hours with no way — short of `ps -o pcpu` — to tell a grinding join from an
@@ -1237,25 +1273,171 @@ const NODE_WRITE_BATCH: usize = 20_000;
 /// advance: the first 50,000-row interval printed nothing at all on the 245,955-edge run
 /// of 2026-08-20, so the silence still looked exactly like a hang and I read it as one
 /// for ten minutes. A clock cannot be silent.
-const PREV_EDGE_HEARTBEAT: std::time::Duration = std::time::Duration::from_secs(15);
+const LINK_EDGE_HEARTBEAT: std::time::Duration = std::time::Duration::from_secs(15);
 
-/// The ADR-0011 previous-notice join, named so its query plan can be asserted against
-/// the statement the fold actually runs rather than a copy that drifts from it
-/// (`the_previous_notice_join_seeks_notices_rather_than_scanning_it`). `plan_prev_edge`
-/// carries `a_source` precisely so this lookup can seek `notices` by the leading
-/// columns of its `UNIQUE(source, publication_id, content_hash)` index; that was an
-/// assumption in a comment until the test made it checkable. It is the step that pins
-/// one core for the better part of an hour on a full re-projection (issue 256 part 2).
-pub(crate) const PREV_EDGE_JOIN_SQL: &str = "SELECT a.group_key, a.published_at, a.publication_id, \
-        b.group_key, b.published_at, b.publication_id \
-   FROM plan_prev_edge e \
-   JOIN notices n ON n.source = e.a_source \
-                 AND n.publication_id = e.b_publication_id \
+/// Issue 481: ADR-0011's previous-notice reference (`OPP-090-Procedure`) as a ledger
+/// rule. The citing notice names the TED publication number of an EARLIER notice of its
+/// procedure — a TED number from whichever Source cites it, since the archive shape
+/// `NNNNNNNN-YYYY` is the only one the projection admits (`publication_ref`). The one
+/// directed rule, and the one ADR-0011 lets join two keyed components.
+pub const LINK_OPP_090: &str = "opp-090";
+
+/// Issue 481: a TED eForms notice's `BT-701-notice` is the id the publisher filed the
+/// same notice under at DÖE, whose `publication_id` is that id plus `-<VersionID>`
+/// (`ingest::profile`, `notice_id_and_version`). Measured on 136 of 136 above-threshold
+/// DÖE islands of April 2025, every pair agreeing on title, CPV, subtype, buyer and
+/// dispatch second. Every DÖE version of the id is the same logical notice, so the
+/// rule resolves by version ([`version_stem`]) and has no direction.
+pub const LINK_LOGICAL_NOTICE: &str = "logical-notice";
+
+/// The largest component a same-notice or matched link may build, counted in the
+/// components (Tenders' worth of notices) it joins. A logical notice is one TED Tender
+/// plus the DÖE versions of one id, a handful of members; 64 is far above any one
+/// notice's re-issues and far below the welds a colliding identifier makes (issue 364's
+/// shared PIN fused 928 versions). Unmeasured on DÖE's version counts, which is why an
+/// edge it refuses is tallied (`LinkTally::oversized`) rather than dropped quietly. A
+/// previous-notice component is exempt: ADR-0011's edge set was measured as it is and
+/// unions without a cap today.
+const LINK_COMPONENT_CAP: usize = 64;
+
+/// One link a notice declares (issue 481), as the projection read it: the rule, the
+/// Source the reference points into, and the identifier as the rule normalised it. The
+/// plan build resolves it against `notices` and writes it to `tender_links`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct DeclaredLink {
+    pub rule: &'static str,
+    pub b_source: &'static str,
+    pub b_ref: String,
+}
+
+/// Whether `rule` is ADR-0011's previous-notice edge: directed (its target must be
+/// strictly earlier) and allowed to join two keyed components. Every other rule — a
+/// same-notice identity or a measured match — has no direction and is weld-guarded.
+fn is_previous_notice_rule(rule: &str) -> bool {
+    rule == LINK_OPP_090
+}
+
+/// The notice id of a versioned `publication_id` — `<id>-<digits>` → `<id>` — the
+/// shape DÖE publishes every notice version under. `None` when there is no
+/// all-digit suffix. The forward resolution of a [`LINK_LOGICAL_NOTICE`] reference and
+/// the reverse walk ([`Db::tender_link_neighbours`]) both read the version through this.
+pub fn version_stem(publication_id: &str) -> Option<&str> {
+    let (stem, version) = publication_id.rsplit_once('-')?;
+    (!stem.is_empty() && !version.is_empty() && version.bytes().all(|b| b.is_ascii_digit()))
+        .then_some(stem)
+}
+
+/// Issue 481: what the grouping's Tender-link step did. Durable on the run's Report and
+/// printed on the job row beside the issue-364 refusals — a weld guard that refuses
+/// silently is indistinguishable from one that is not running.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct LinkTally {
+    /// Admitted edges between two different group keys, per rule class.
+    pub previous_notice: u64,
+    pub logical_notice: u64,
+    pub matched: u64,
+    /// Refused: a previous-notice reference to a notice that is not strictly earlier
+    /// (ADR-0011 guard 3; it was a silent filter in the join before the ledger).
+    pub not_earlier: u64,
+    /// Refused: a logical notice id carried by citing notices of more than one
+    /// component — one id must name one notice on each side.
+    pub not_one_to_one: u64,
+    /// Refused: the same-notice or matched edges would put two procedure-keyed
+    /// components into one Tender.
+    pub keyed_weld: u64,
+    /// Refused: they would join more than [`LINK_COMPONENT_CAP`] components.
+    pub oversized: u64,
+}
+
+impl LinkTally {
+    pub fn admitted(&self) -> u64 {
+        self.previous_notice + self.logical_notice + self.matched
+    }
+
+    pub fn refused(&self) -> u64 {
+        self.not_earlier + self.not_one_to_one + self.keyed_weld + self.oversized
+    }
+
+    pub fn add(&mut self, other: LinkTally) {
+        self.previous_notice += other.previous_notice;
+        self.logical_notice += other.logical_notice;
+        self.matched += other.matched;
+        self.not_earlier += other.not_earlier;
+        self.not_one_to_one += other.not_one_to_one;
+        self.keyed_weld += other.keyed_weld;
+        self.oversized += other.oversized;
+    }
+}
+
+/// What [`Db::build_plan_groups`] refused and joined: the issue-364 unit-6 legacy edges
+/// refused per shared-publication kind (`(kind, edges)`, sorted by kind), and the
+/// issue-481 link step's tally. Empty on a resumed grouping — the work happened in the
+/// run that built it.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct PlanGroupTally {
+    pub shared_refused: Vec<(String, u64)>,
+    pub links: LinkTally,
+}
+
+/// The grouping's link join (issue 481; ADR-0011's previous-notice join before it),
+/// named so its query plan is asserted against the statement the fold runs
+/// (`the_tender_link_join_drives_from_the_plan_edges`). `plan_link_edge` holds the
+/// plan's RESOLVED links — a few hundred thousand rows beside `plan_notice`'s 14.3M on
+/// a full re-projection — and each endpoint is a PRIMARY KEY seek into the plan.
+/// Resolution against `notices` happens in the producer (`insert_plan_tx`), one bounded
+/// seek per reference, so `notices` is no longer in this statement. Direction and
+/// same-group filtering moved into Rust, where they are per rule and counted.
+pub(crate) const LINK_EDGE_JOIN_SQL: &str = "SELECT e.rule, e.b_ref, \
+        a.group_key, a.published_at, a.publication_id, a.source_rank, \
+        b.group_key, b.published_at, b.publication_id, b.source_rank \
+   FROM plan_link_edge e \
    JOIN plan_notice a ON a.notice_id = e.a_notice_id \
-   JOIN plan_notice b ON b.notice_id = n.id \
-  WHERE a.group_key IS NOT NULL AND b.group_key IS NOT NULL \
-    AND b.published_at < a.published_at \
-    AND a.group_key <> b.group_key";
+   JOIN plan_notice b ON b.notice_id = e.b_notice_id \
+  WHERE a.group_key IS NOT NULL AND b.group_key IS NOT NULL";
+
+/// An EXACT link target: the notices of `b_source` published under `b_ref` — several
+/// when one publication was re-issued with different content. A seek on `notices`'
+/// `UNIQUE(source, publication_id, content_hash)` by its two leading columns, pinned
+/// in `the_tender_link_target_reads_seek_notices`.
+pub(crate) const LINK_EXACT_TARGET_SQL: &str = "SELECT id FROM notices WHERE source = ? AND publication_id = ?";
+
+/// A VERSIONED link target: the notices of `b_source` whose `publication_id` starts
+/// `b_ref-`. Params `(source, b_ref || '-', b_ref || '.')`, `.` being the byte after
+/// `-`; the all-digit version is checked in Rust ([`version_stem`]). The same UNIQUE
+/// index, an equality on `source` and a range on `publication_id`, so one DÖE id costs
+/// its versions' index entries, never a walk of DÖE's millions of rows.
+pub(crate) const LINK_VERSIONED_TARGET_SQL: &str = "SELECT id, publication_id FROM notices \
+  WHERE source = ? AND publication_id > ? AND publication_id < ?";
+
+/// A planned notice's own declared ledger rows, which the producer diffs against what
+/// the notice declares now. A seek on the UNIQUE's leading `a_notice_id`.
+pub(crate) const LINK_DECLARED_ROWS_SQL: &str = "SELECT id, rule, b_source, b_ref, b_notice_id \
+   FROM tender_links WHERE a_notice_id = ? AND kind = 'declared'";
+
+/// Every resolved matched row, which the grouping adds to the plan's edges whatever the
+/// plan holds (the join drops those with an endpoint outside it). A seek through the
+/// `tender_links_matched` partial index; `+b_notice_id` keeps a 0.8.x `IS NOT NULL`
+/// seek on `tender_links_b` from driving it (issue 457 R3).
+pub(crate) const LINK_MATCHED_ROWS_SQL: &str = "SELECT a_notice_id, b_notice_id, rule, kind, b_ref \
+   FROM tender_links WHERE kind = 'matched' AND +b_notice_id IS NOT NULL";
+
+/// [`Db::tender_link_neighbours`]' three id-list reads for a chunk of `n` notices: the
+/// targets the notices state (the UNIQUE's leading `a_notice_id`), the notices that
+/// target them (`tender_links_b`), and their own `(source, publication_id)` by
+/// PRIMARY KEY, from which the by-name read ([`LINK_BY_REF_SQL`]) is asked. A
+/// function so the plan gate reads the statements the walk runs.
+pub(crate) fn link_neighbour_reads(n: usize) -> [String; 3] {
+    let marks = placeholders(n);
+    [
+        format!("SELECT b_notice_id FROM tender_links WHERE a_notice_id IN ({marks}) AND +b_notice_id IS NOT NULL"),
+        format!("SELECT a_notice_id FROM tender_links WHERE b_notice_id IN ({marks})"),
+        format!("SELECT source, publication_id FROM notices WHERE id IN ({marks})"),
+    ]
+}
+
+/// The notices whose links name `(b_source, b_ref)`, resolved or not — a seek on
+/// `tender_links_ref`.
+pub(crate) const LINK_BY_REF_SQL: &str = "SELECT a_notice_id FROM tender_links WHERE b_source = ? AND b_ref = ?";
 
 /// The org-merge backfill's batch scan (issue 234's second half). The resolver
 /// merge only PREVENTS new duplicate identifier-less Organizations; this scan
@@ -4261,7 +4443,7 @@ pub struct SatelliteRestoreReport {
 
 /// The genericness probe (issue 316's wall, issue 318's hot-path arm). Named
 /// so a plan test can assert against the SQL that RUNS rather than a copy of
-/// it — the `PREV_EDGE_JOIN_SQL` discipline, and the one issue 323 showed is
+/// it — the `LINK_EDGE_JOIN_SQL` discipline, and the one issue 323 showed is
 /// worth the indirection: a verifier there produced a reordered spelling of a
 /// poisoned predicate that a copy-based guard would have missed.
 ///
@@ -6116,7 +6298,7 @@ const DIGIT_PEER_MIN: usize = 8;
 
 /// The re-queue statement, built rather than written out at the call site so
 /// [`Db::requeue_notice_ids`] and the plan probe can never check a plan against
-/// a COPY that has drifted (the `PREV_EDGE_JOIN_SQL` precedent).
+/// a COPY that has drifted (the `LINK_EDGE_JOIN_SQL` precedent).
 ///
 /// The unary `+` on `parse_state` is load-bearing and is not a typo. `notices`
 /// carries `notices_parse_state`, and turso 0.7.2 prefers it to the rowid: the
@@ -6771,11 +6953,12 @@ pub struct PlanRow {
     pub published_at: i64,
     pub subtype: Option<String>,
     pub ojs_edges: Vec<i64>,
-    /// Normalised `publication_id`s this notice names as its predecessors
-    /// (`OPP-090-Procedure`, ADR-0011). Stored as an edge per reference in
-    /// `plan_prev_edge`, resolved to a group after the keyed/island and legacy
-    /// passes have given every notice a `group_key`.
-    pub prev_refs: Vec<String>,
+    /// The Tender links this notice declares (issue 481): its previous-notice
+    /// references (`OPP-090-Procedure`, ADR-0011) and, on TED, the DÖE notice it is
+    /// (`BT-701-notice`). Written to the durable `tender_links` ledger, replacing what
+    /// the notice declared last time, and each resolved one to `plan_link_edge`, which
+    /// the grouping unions once every notice carries a `group_key`.
+    pub links: Vec<DeclaredLink>,
     /// Whether `procedure_key` is PLACEHOLDER-SHAPED (issue 369 unit 2) — an
     /// all-zero payload, a constant-run or short-cycle UUID, the hand-typed keys
     /// the census found. Computed in Rust at plan time because SQL cannot express
@@ -9236,6 +9419,17 @@ impl Db {
             return Ok(false);
         }
         drop(exists);
+        // Issue 481: a plan built before the link ledger carries its previous-notice
+        // references unresolved in `plan_prev_edge`, which this grouping no longer
+        // reads. Resuming it would fold every ADR-0011 merge apart, so it is not
+        // resumable — the rebuild plans again.
+        let mut links = conn
+            .query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'plan_link_edge'", ())
+            .await?;
+        if links.next().await?.is_none() {
+            return Ok(false);
+        }
+        drop(links);
         let planned = {
             let mut r = conn.query("SELECT COUNT(*) FROM plan_notice", ()).await?;
             int(&r.next().await?.expect("count row"), 0)
@@ -9272,7 +9466,10 @@ impl Db {
             "plan_notice",
             "plan_ojs_node",
             "plan_ojs_edge",
+            // Retired by issue 481 (`plan_link_edge` replaced it); still dropped, so a
+            // plan an older binary left behind does not outlive it.
             "plan_prev_edge",
+            "plan_link_edge",
             "plan_group_merge",
             "plan_refused_key",
         ] {
@@ -9329,15 +9526,17 @@ impl Db {
         .await?;
         conn.execute("CREATE TABLE plan_ojs_edge (a INTEGER NOT NULL, b INTEGER NOT NULL) STRICT", ())
             .await?;
-        // ADR-0011: the publisher-declared previous-notice edges. `a_source` rides along
-        // so resolution can require the target to be the SAME Source without joining
-        // plan_notice for it — and so the lookup hits `notices`'
-        // UNIQUE(source, publication_id, …) index by its leading columns.
+        // Issue 481: the plan's RESOLVED Tender links — the planned notices' declared
+        // ledger rows with a target held, appended by `insert_plan_tx`, plus the ledger's
+        // matched rows, added by the grouping. Both endpoints are notice ids, so the
+        // grouping's join is two PRIMARY KEY seeks into plan_notice per edge.
         conn.execute(
-            "CREATE TABLE plan_prev_edge (
-                 a_notice_id      INTEGER NOT NULL,
-                 a_source         TEXT NOT NULL,
-                 b_publication_id TEXT NOT NULL
+            "CREATE TABLE plan_link_edge (
+                 a_notice_id INTEGER NOT NULL,
+                 b_notice_id INTEGER NOT NULL,
+                 rule        TEXT NOT NULL,
+                 kind        TEXT NOT NULL,
+                 b_ref       TEXT NOT NULL
              ) STRICT",
             (),
         )
@@ -9556,6 +9755,7 @@ impl Db {
     }
 
     async fn insert_plan_tx(&self, conn: &Connection, rows: &[PlanRow]) -> turso::Result<()> {
+        let now = crate::now_unix();
         for r in rows {
             conn.execute(
                 "INSERT INTO plan_notice(notice_id, procedure_key, legacy, ojs_self, source,
@@ -9593,16 +9793,12 @@ impl Db {
                     .await?;
                 }
             }
-            // ADR-0011: one row per predecessor this notice names. Resolution happens at
-            // grouping time, against the plan — a reference to a notice we do not hold
-            // creates nothing, and a reference into another Source is not followed.
-            for pub_id in &r.prev_refs {
-                conn.execute(
-                    "INSERT INTO plan_prev_edge(a_notice_id, a_source, b_publication_id)
-                     VALUES(?, ?, ?)",
-                    (Value::Integer(r.notice_id), t(&r.source), t(pub_id)),
-                )
-                .await?;
+            // Issue 481: the notice's declared Tender links, replacing what it declared
+            // when it was last planned. A legacy notice declares none — OPP-090 and
+            // BT-701 are eForms fields — and never did, so it skips the ledger read
+            // every other planned notice pays.
+            if !r.legacy {
+                Self::write_declared_links(conn, r, now).await?;
             }
             // A legacy notice with its own OJS number seeds the union-find graph:
             // append its symmetric edges (sequential). Its node — and every edge
@@ -9626,6 +9822,164 @@ impl Db {
         Ok(())
     }
 
+    /// Issue 481, the declared producer: make `tender_links` hold exactly the links `r`
+    /// declares, each resolved against `notices` now, and append every resolved one to
+    /// `plan_link_edge`. Diffed rather than deleted and rewritten: a full re-projection
+    /// plans every notice, and rewriting the row per TED eForms notice that
+    /// `logical-notice` keeps would churn the WAL for rows that did not change. A
+    /// reference nothing holds yet keeps ONE unresolved row (target NULL), so a target
+    /// that arrives later is found by `(b_source, b_ref)`. Matched rows are never read
+    /// or written here.
+    async fn write_declared_links(conn: &Connection, r: &PlanRow, now: i64) -> turso::Result<()> {
+        let mut declared: Vec<(String, String, String, Option<i64>)> = Vec::new();
+        for link in &r.links {
+            let targets = Self::resolve_link(conn, link).await?;
+            let row = |target| (link.rule.to_owned(), link.b_source.to_owned(), link.b_ref.clone(), target);
+            if targets.is_empty() {
+                declared.push(row(None));
+            }
+            declared.extend(targets.into_iter().map(|id| row(Some(id))));
+        }
+        declared.sort_unstable();
+        declared.dedup();
+        let mut missing: BTreeSet<&(String, String, String, Option<i64>)> = declared.iter().collect();
+        let mut stale: Vec<i64> = Vec::new();
+        {
+            let mut rows = conn.query(LINK_DECLARED_ROWS_SQL, (Value::Integer(r.notice_id),)).await?;
+            while let Some(row) = rows.next().await? {
+                let held = (text(&row, 1), text(&row, 2), text(&row, 3), opt_int_of(&row, 4));
+                if !missing.remove(&held) {
+                    stale.push(int(&row, 0));
+                }
+            }
+        }
+        for id in stale {
+            conn.execute("DELETE FROM tender_links WHERE id = ?", (Value::Integer(id),)).await?;
+        }
+        for (rule, b_source, b_ref, target) in missing {
+            conn.execute(
+                "INSERT INTO tender_links(a_notice_id, b_notice_id, b_source, b_ref, kind, rule, at)
+                 VALUES(?, ?, ?, ?, 'declared', ?, ?)",
+                (
+                    Value::Integer(r.notice_id),
+                    opt_int(*target),
+                    t(b_source.as_str()),
+                    t(b_ref.as_str()),
+                    t(rule.as_str()),
+                    Value::Integer(now),
+                ),
+            )
+            .await?;
+        }
+        for (rule, _, b_ref, target) in &declared {
+            if let Some(target) = target {
+                conn.execute(
+                    "INSERT INTO plan_link_edge(a_notice_id, b_notice_id, rule, kind, b_ref)
+                     VALUES(?, ?, ?, 'declared', ?)",
+                    (
+                        Value::Integer(r.notice_id),
+                        Value::Integer(*target),
+                        t(rule.as_str()),
+                        t(b_ref.as_str()),
+                    ),
+                )
+                .await?;
+            }
+        }
+        Ok(())
+    }
+
+    /// The notices a declared link names today. A `logical-notice` reference names a
+    /// notice id, so it resolves to every version of it ([`LINK_VERSIONED_TARGET_SQL`]);
+    /// every other rule names one publication ([`LINK_EXACT_TARGET_SQL`]).
+    async fn resolve_link(conn: &Connection, link: &DeclaredLink) -> turso::Result<Vec<i64>> {
+        let mut ids = Vec::new();
+        if link.rule == LINK_LOGICAL_NOTICE {
+            let mut rows = conn
+                .query(
+                    LINK_VERSIONED_TARGET_SQL,
+                    (t(link.b_source), t(format!("{}-", link.b_ref)), t(format!("{}.", link.b_ref))),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                if version_stem(&text(&row, 1)) == Some(link.b_ref.as_str()) {
+                    ids.push(int(&row, 0));
+                }
+            }
+        } else {
+            let mut rows = conn.query(LINK_EXACT_TARGET_SQL, (t(link.b_source), t(link.b_ref.as_str()))).await?;
+            while let Some(row) = rows.next().await? {
+                ids.push(int(&row, 0));
+            }
+        }
+        ids.sort_unstable();
+        ids.dedup();
+        Ok(ids)
+    }
+
+    /// Issue 481: the notices `links` name today, resolved exactly as the plan's producer
+    /// resolves them. The forward half of an incremental closure: a notice that has never
+    /// been planned has no ledger rows yet, so its links come from its parse
+    /// (`ingest`'s `Ident`) and are resolved here before the plan is built. Sorted,
+    /// deduplicated; a link nothing holds contributes nothing.
+    pub async fn resolve_declared_links(&self, links: &[DeclaredLink]) -> turso::Result<Vec<i64>> {
+        let conn = self.conn().await;
+        let mut out = BTreeSet::new();
+        for link in links {
+            out.extend(Self::resolve_link(&conn, link).await?);
+        }
+        Ok(out.into_iter().collect())
+    }
+
+    /// Issue 481: the notices one ledger hop away from `notice_ids`, both directions —
+    /// the seam the incremental closure walks, so a link whose endpoints sit in two
+    /// different Tenders brings both into one plan. Three reads, each a seek:
+    ///
+    /// - rows the given notices state (`a_notice_id`) → their resolved targets;
+    /// - rows that name the given notices as a resolved target (`b_notice_id`) → the
+    ///   notices stating them;
+    /// - rows that name them only by identifier, not yet resolved — a TED notice's
+    ///   `logical-notice` row planned before its DÖE twin arrived — found by
+    ///   `(b_source, b_ref)` under the notice's publication id and its [`version_stem`].
+    ///
+    /// Both names are tried for every notice whatever its Source: a name no rule uses
+    /// matches nothing, and a superset is the safe direction for a closure. Sorted,
+    /// deduplicated, and without the given notices themselves.
+    pub async fn tender_link_neighbours(&self, notice_ids: &[i64]) -> turso::Result<Vec<i64>> {
+        let conn = self.conn().await;
+        let mut out = BTreeSet::new();
+        for chunk in notice_ids.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let [stated, targeted, named] = link_neighbour_reads(chunk.len());
+            for sql in [stated, targeted] {
+                let mut rows = conn.query(&sql, params.clone()).await?;
+                while let Some(row) = rows.next().await? {
+                    out.insert(int(&row, 0));
+                }
+            }
+            let mut names: Vec<(String, String)> = Vec::new();
+            let mut rows = conn.query(&named, params).await?;
+            while let Some(row) = rows.next().await? {
+                let (source, publication_id) = (text(&row, 0), text(&row, 1));
+                if let Some(stem) = version_stem(&publication_id) {
+                    names.push((source.clone(), stem.to_owned()));
+                }
+                names.push((source, publication_id));
+            }
+            drop(rows);
+            for (source, name) in names {
+                let mut rows = conn.query(LINK_BY_REF_SQL, (t(source), t(name))).await?;
+                while let Some(row) = rows.next().await? {
+                    out.insert(int(&row, 0));
+                }
+            }
+        }
+        for id in notice_ids {
+            out.remove(id);
+        }
+        Ok(out.into_iter().collect())
+    }
+
     /// Assign every notice its Tender `group_key` — the grouping, done in SQL so it
     /// never pulls the corpus into RAM (issue 59):
     ///
@@ -9640,11 +9994,12 @@ impl Db {
     ///
     /// Finally builds the fold-order index Phase 2 streams by.
     ///
-    /// Returns the issue-364 unit-6 tally: the legacy edges refused because one
+    /// Returns the issue-364 unit-6 tally — the legacy edges refused because one
     /// endpoint is a SHARED publication by its own document type (`plan_notice.
-    /// shared_kind`), as `(kind, edges)` pairs sorted by kind. A resumed grouping
-    /// returns an empty tally — the refusals happened in the run that built it.
-    pub async fn build_plan_groups(&self) -> turso::Result<Vec<(String, u64)>> {
+    /// shared_kind`), as `(kind, edges)` pairs sorted by kind — and the issue-481
+    /// Tender-link step's. A resumed grouping returns an empty tally — the refusals
+    /// happened in the run that built it.
+    pub async fn build_plan_groups(&self) -> turso::Result<PlanGroupTally> {
         let conn = self.conn().await;
         // Resumable grouping: the fold index is this method's LAST write, so its
         // presence means a prior run already assigned every group_key from the SAME
@@ -9661,7 +10016,7 @@ impl Db {
             if r.next().await?.is_some() {
                 drop(r);
                 eprintln!("[project] group: reusing complete on-disk grouping (fold index present)");
-                return Ok(Vec::new());
+                return Ok(PlanGroupTally::default());
             }
         }
         // Fresh grouping (the fold index is absent — reset_plan dropped it). The
@@ -9977,45 +10332,66 @@ impl Db {
         }
         eprintln!("[project] group step legacy-update: {:.1}s ({} legacy)", t.elapsed().as_secs_f64(), legacy.len());
 
-        // ADR-0011: the publisher-declared previous-notice edge. It runs HERE — after the
+        // Issue 481 (ADR-0011 before it): the Tender-link step. It runs HERE — after the
         // keyed and legacy passes, before the fold index — for two reasons: it unions
         // COMPONENTS, so every notice must already carry a group_key, and relabelling
         // before the index exists means the UPDATE pays no index maintenance.
         //
-        // EU eForms does not keep BT-04 stable across a procedure's notices (issue 236:
-        // 27–39 % of EU award Tenders are single-notice islands whose contract notice sits
-        // in the corpus under a different BT-04). `OPP-090-Procedure` is the source's own
-        // statement that two publications are one procedure, so joining them is reading a
-        // published fact, not inference (ADR-0003's "never heuristic" line).
+        // Every link kind feeds ONE union-find, so previous-notice, same-notice and matched
+        // links compose with each other and with the keys and OJS chains above:
         //
-        // Guards, all measured on prod before being written (ADR-0011): the target must
-        // exist, must be the same Source, and must be strictly EARLIER — 563 of 563
-        // resolvable references pointed backwards, so a forward or self reference is not a
-        // shape the corpus has, and refusing it rules out a cycle for free.
+        // - **previous-notice** (`opp-090`, ADR-0011). EU eForms does not keep BT-04 stable
+        //   across a procedure's notices (issue 236: 27–39 % of EU award Tenders were
+        //   single-notice islands whose contract notice sat in the corpus under another
+        //   BT-04), and `OPP-090-Procedure` is the source's own statement that two
+        //   publications are one procedure. Its target is resolved in the reference's OWN
+        //   Source — a TED number, cited from TED or DÖE alike; the same-Source join this
+        //   replaced dropped every DÖE citation — and must be strictly EARLIER: 563 of 563
+        //   resolvable references pointed backwards when ADR-0011 measured them, so a
+        //   forward or self reference is not a shape the corpus has, and refusing it rules
+        //   out a cycle for free. It may join two keyed components; that is ADR-0011's
+        //   mechanism, and it is left exactly as it was.
+        // - **same-notice** (`logical-notice`) and **matched** links have no direction — one
+        //   notice published twice has no earlier half — and are weld-guarded instead: one
+        //   logical id must name one notice on the citing side, the edges may not put two
+        //   keyed components into one Tender (issue 482's colliding BT-04s already weld
+        //   enough; a new rule must not add to it), and a component may not grow past
+        //   [`LINK_COMPONENT_CAP`]. A guard refuses its whole group of edges: it never picks
+        //   which of two keyed candidates is the right one (calibration §4 shape 5 — never
+        //   pick the nearest).
         //
-        // On an INCREMENTAL run the plan holds only the touched notices, so a reference to
-        // an untouched notice finds no `plan_notice b` row and unions nothing: the award
-        // stays an island until a run whose plan holds both. That is the intended
-        // degradation — a partial merge would be far worse than a late one — and it is why
-        // the corpus repair needs the rebuild, not a daily projection.
+        // On an INCREMENTAL run the plan holds only the touched notices, so a link to an
+        // untouched notice finds no `plan_notice b` row and unions nothing: the notice stays
+        // apart until a run whose plan holds both. That is the intended degradation — a
+        // partial merge would be far worse than a late one — and the walk that brings both
+        // ends into one plan is [`Db::tender_link_neighbours`].
+        //
         // `started`, because the earlier passes in this function have already bound `t` to
         // an Instant — which shadows the crate's `t()` text helper for the rest of the
-        // body, so the INSERTs below spell their text values out.
-        // Row stats BEFORE the join, not only after the fold index (issue 256).
-        //
-        // turso keeps none unless asked, and this file already says of the LATER `ANALYZE
-        // plan_notice` that "its young planner has mis-planned at scale". The join below
-        // is exactly the shape that needs stats to get right: `plan_prev_edge` is tiny
-        // (563 resolvable references corpus-wide when ADR-0011 landed) and `plan_notice`
-        // is 14.3M rows on a full-corpus plan, and driving from the wrong one turns a few
-        // hundred index seeks into a walk of the whole plan. With no stats the planner has
-        // no way to tell which is which — and this step has twice failed to finish.
-        //
-        // A HYPOTHESIS, not a proven fix: the verification is whether the step completes
-        // on the next full re-projection, which is also the first run whose heartbeats say
-        // how many edges there were. Non-fatal like the later ANALYZE, and timed, so its
-        // own cost at 14.3M rows is on the record rather than assumed.
-        for table in ["plan_prev_edge", "plan_notice"] {
+        // body, so the statements below spell their text values out.
+        {
+            // The ledger's matched rows join the plan's edges here, whatever the plan holds
+            // (the join drops a row with an endpoint outside it). Deleted first: a grouping
+            // that died before its fold index re-runs over the same plan, whose declared
+            // rows are already in.
+            let t = std::time::Instant::now();
+            conn.execute("DELETE FROM plan_link_edge WHERE kind = 'matched'", ()).await?;
+            conn.execute(
+                &format!(
+                    "INSERT INTO plan_link_edge(a_notice_id, b_notice_id, rule, kind, b_ref) {LINK_MATCHED_ROWS_SQL}"
+                ),
+                (),
+            )
+            .await?;
+            eprintln!("[project] group step links: matched rows loaded in {:.1}s", t.elapsed().as_secs_f64());
+        }
+        // Row stats BEFORE the join, not only after the fold index (issue 256). turso keeps
+        // none unless asked, and the join is exactly the shape that needs them: the edge
+        // table is small and `plan_notice` is 14.3M rows on a full-corpus plan, and driving
+        // from the wrong one turns a few hundred thousand index seeks into a walk of the
+        // whole plan. Non-fatal like the later ANALYZE, and timed, so its own cost at 14.3M
+        // rows is on the record rather than assumed.
+        for table in ["plan_link_edge", "plan_notice"] {
             let t = std::time::Instant::now();
             match conn.execute(&format!("ANALYZE {table}"), ()).await {
                 Ok(_) => eprintln!(
@@ -10032,73 +10408,190 @@ impl Db {
         // outside the process there was no way to tell an empty edge set from a join that
         // is grinding: the step's only line prints when it FINISHES. One count over a plan
         // table costs nothing next to what follows it.
-        let mut edge_rows = conn.query("SELECT COUNT(*) FROM plan_prev_edge", ()).await?;
+        let mut edge_rows = conn.query("SELECT COUNT(*) FROM plan_link_edge", ()).await?;
         let planned_edges = match edge_rows.next().await? {
             Some(row) => int(&row, 0),
             None => 0,
         };
-        eprintln!("[project] group step previous-notice: {planned_edges} edge(s) in the plan");
-        let mut edges: Vec<(String, String)> = Vec::new();
-        let mut rank: std::collections::HashMap<String, (i64, String)> =
+        drop(edge_rows);
+        eprintln!("[project] group step links: {planned_edges} resolved edge(s) in the plan");
+        struct LinkEdge {
+            rule: String,
+            b_ref: String,
+            a: String,
+            a_at: i64,
+            b: String,
+            b_at: i64,
+        }
+        let mut edges: Vec<LinkEdge> = Vec::new();
+        // A key's rank orders who NAMES a component (issue 481). A keyed member first, so
+        // a DÖE island published before its TED twin cannot name the merged Tender
+        // `island:<doe>`: the TED Tender would be retired and re-minted as an island, and
+        // on a non-rebuild run `tender_identity`'s island lookup — under the Source
+        // `primary_source` gives the mixed Tender, TED — would miss the row stored under
+        // DÖE and mint a second one, the issue-278 ghost. Among islands the TED one first,
+        // for that same lookup. Then the earliest publication the key is seen carrying, so
+        // a keyed component is still named after the procedure's first appearance — the
+        // rule the legacy closure applies with MIN(ojs) and ADR-0011's merges always had.
+        let mut rank: std::collections::HashMap<String, (bool, bool, i64, String)> =
+            std::collections::HashMap::new();
+        // Every logical id's citing groups, from EVERY logical-notice edge — a same-group
+        // one too, since a TED notice already keyed together with the DÖE notice is still
+        // a carrier the one-to-one guard must see. Kept as (id → groups) rather than as
+        // edges: on a full re-projection nearly every TED↔DÖE notice pair is such a row,
+        // and only the few that join anything need to be edges.
+        let mut carriers: std::collections::HashMap<String, BTreeSet<String>> =
             std::collections::HashMap::new();
         let t_read = std::time::Instant::now();
         {
             let mut read = 0u64;
-            // Heartbeat on the CLOCK, not on a row count. The count was rows the query
-            // RETURNS, and the query filters hard (same-Source, strictly-earlier, different
-            // key), so a run that matched fewer than the interval printed nothing at all and
-            // looked identical to a hang — which is exactly how I misread 2026-08-20's run
-            // for ten minutes (issue 256 part 2). A clock cannot be silent.
+            // Heartbeat on the CLOCK, not on a row count: a run that matched fewer rows
+            // than the interval printed nothing at all and looked identical to a hang —
+            // which is exactly how I misread 2026-08-20's run for ten minutes (issue 256
+            // part 2). A clock cannot be silent.
             let mut beat = std::time::Instant::now();
-            let mut rows = conn.query(PREV_EDGE_JOIN_SQL, ()).await?;
+            let mut rows = conn.query(LINK_EDGE_JOIN_SQL, ()).await?;
             while let Some(row) = rows.next().await? {
                 read += 1;
-                if beat.elapsed() >= PREV_EDGE_HEARTBEAT {
+                if beat.elapsed() >= LINK_EDGE_HEARTBEAT {
                     beat = std::time::Instant::now();
                     eprintln!(
-                        "[project] group step previous-notice: {read}/{planned_edges} edge(s) \
-                         matched in {:.1}s",
+                        "[project] group step links: {read}/{planned_edges} edge(s) read in {:.1}s",
                         started.elapsed().as_secs_f64()
                     );
                 }
-                let (a, b) = (text(&row, 0), text(&row, 3));
-                // A key's rank is the earliest publication it is seen carrying, so the
-                // representative below is the procedure's first appearance — the same rule
-                // the legacy closure applies with MIN(ojs).
-                for (key, at, pub_id) in
-                    [(&a, int(&row, 1), text(&row, 2)), (&b, int(&row, 4), text(&row, 5))]
-                {
-                    let entry = rank.entry(key.clone()).or_insert((at, pub_id.clone()));
-                    if (at, pub_id.clone()) < *entry {
-                        *entry = (at, pub_id);
+                let edge = LinkEdge {
+                    rule: text(&row, 0),
+                    b_ref: text(&row, 1),
+                    a: text(&row, 2),
+                    a_at: int(&row, 3),
+                    b: text(&row, 6),
+                    b_at: int(&row, 7),
+                };
+                if edge.rule == LINK_LOGICAL_NOTICE {
+                    carriers.entry(edge.b_ref.clone()).or_default().insert(edge.a.clone());
+                }
+                if edge.a == edge.b {
+                    // Already one group: nothing to join, nothing to refuse.
+                    continue;
+                }
+                for (key, at, pub_id, source_rank) in [
+                    (&edge.a, edge.a_at, text(&row, 4), int(&row, 5)),
+                    (&edge.b, edge.b_at, text(&row, 8), int(&row, 9)),
+                ] {
+                    let island = key.starts_with("island:");
+                    let candidate = (island, island && source_rank == 0, at, pub_id);
+                    let entry = rank.entry(key.clone()).or_insert_with(|| candidate.clone());
+                    if candidate < *entry {
+                        *entry = candidate;
                     }
                 }
-                edges.push((a, b));
+                edges.push(edge);
             }
         }
         eprintln!(
-            "[project] group step previous-notice read: {:.1}s ({} of {planned_edges} edge(s) \
-             matched, {} key(s) involved)",
+            "[project] group step links read: {:.1}s ({} edge(s) across groups, {} key(s) involved, \
+             {} logical id(s))",
             t_read.elapsed().as_secs_f64(),
             edges.len(),
-            rank.len()
+            rank.len(),
+            carriers.len()
         );
         let t_uf = std::time::Instant::now();
+        let mut links = LinkTally::default();
+        let mut largest = 0usize;
         let merges: Vec<(String, String)> = if edges.is_empty() {
             Vec::new()
         } else {
-            // Order the involved keys by (earliest publication, publication id, key) and
-            // union over their POSITIONS: [`MinUnionFind`] unions to the minimum, so the
-            // component root is by construction the earliest-published key. Reusing it
-            // this way is why there is no second union-find here.
+            // Order the involved keys by rank (then key) and union over their POSITIONS:
+            // [`MinUnionFind`] unions to the minimum, so a component's root is by
+            // construction its best-ranked key — and a root is keyed exactly when the
+            // component holds a keyed member, which the weld guard below reads. Reusing it
+            // this way is why there is no second union-find type here.
             let mut keys: Vec<String> = rank.keys().cloned().collect();
             keys.sort_by(|x, y| rank[x].cmp(&rank[y]).then_with(|| x.cmp(y)));
             let position: std::collections::HashMap<&str, i64> =
                 keys.iter().enumerate().map(|(i, k)| (k.as_str(), i as i64)).collect();
+            let keyed = |root: i64| !keys[root as usize].starts_with("island:");
             let mut uf = MinUnionFind::default();
-            for (a, b) in &edges {
-                uf.union(position[a.as_str()], position[b.as_str()]);
+            let mut guarded: Vec<&LinkEdge> = Vec::new();
+            for e in &edges {
+                if !is_previous_notice_rule(&e.rule) {
+                    guarded.push(e);
+                } else if e.b_at >= e.a_at {
+                    links.not_earlier += 1;
+                } else {
+                    uf.union(position[e.a.as_str()], position[e.b.as_str()]);
+                    links.previous_notice += 1;
+                }
             }
+            // One logical id names ONE notice on the citing side: its carriers must sit in
+            // one component. Judged after the previous-notice unions, so a TED change notice
+            // filed under a new BT-04 that cites its original still counts as one. A carrier
+            // in no joining edge is a component of its own, named by its own key.
+            let mut component = |key: &str| match position.get(key) {
+                Some(&at) => keys[uf.find(at) as usize].clone(),
+                None => key.to_owned(),
+            };
+            let mut ambiguous: std::collections::HashMap<&str, bool> = std::collections::HashMap::new();
+            for e in guarded.iter().filter(|e| e.rule == LINK_LOGICAL_NOTICE) {
+                if !ambiguous.contains_key(e.b_ref.as_str()) {
+                    let groups: BTreeSet<String> = carriers[&e.b_ref].iter().map(|key| component(key)).collect();
+                    ambiguous.insert(e.b_ref.as_str(), groups.len() > 1);
+                }
+            }
+            let mut candidates: Vec<(i64, i64, &LinkEdge)> = Vec::new();
+            for e in guarded {
+                let (ra, rb) = (uf.find(position[e.a.as_str()]), uf.find(position[e.b.as_str()]));
+                if ra == rb {
+                    continue;
+                }
+                if e.rule == LINK_LOGICAL_NOTICE && ambiguous[e.b_ref.as_str()] {
+                    links.not_one_to_one += 1;
+                    continue;
+                }
+                candidates.push((ra, rb, e));
+            }
+            // The weld guards judge each group the candidates would form — a component of
+            // the components above — before any of it is joined, so the verdict cannot
+            // depend on the order the edges were read in.
+            let mut over = MinUnionFind::default();
+            for &(ra, rb, _) in &candidates {
+                over.union(ra, rb);
+            }
+            let mut members: std::collections::HashMap<i64, BTreeSet<i64>> = std::collections::HashMap::new();
+            for &(ra, rb, _) in &candidates {
+                members.entry(over.find(ra)).or_default().extend([ra, rb]);
+            }
+            let mut admitted: Vec<(i64, i64, &LinkEdge)> = Vec::new();
+            for (ra, rb, e) in candidates {
+                let group = &members[&over.find(ra)];
+                if group.iter().filter(|&&root| keyed(root)).count() >= 2 {
+                    links.keyed_weld += 1;
+                } else if group.len() > LINK_COMPONENT_CAP {
+                    links.oversized += 1;
+                } else {
+                    admitted.push((ra, rb, e));
+                }
+            }
+            for (ra, rb, e) in admitted {
+                uf.union(ra, rb);
+                // `logical-notice` is the one undirected DECLARED rule so far; the rest of
+                // what reaches here is the ledger's matched rows.
+                if e.rule == LINK_LOGICAL_NOTICE {
+                    links.logical_notice += 1;
+                } else {
+                    links.matched += 1;
+                }
+            }
+            // The largest component, in keys: the previous-notice edge has no cap, and now
+            // that it crosses Sources a key that welds unrelated procedures (issue 482) can
+            // make it a hub. Logged, so the first full run says whether it does.
+            let mut sizes: std::collections::HashMap<i64, usize> = std::collections::HashMap::new();
+            for i in 0..keys.len() {
+                *sizes.entry(uf.find(i as i64)).or_default() += 1;
+            }
+            largest = sizes.values().copied().max().unwrap_or(0);
             keys.iter()
                 .enumerate()
                 .filter_map(|(i, key)| {
@@ -10107,10 +10600,21 @@ impl Db {
                 })
                 .collect()
         };
+        // Logged including the zeroes: a guard that refuses nothing reads the same as one
+        // that is not running, unless the line says so.
         eprintln!(
-            "[project] group step previous-notice union: {:.1}s ({} key(s) to relabel)",
+            "[project] group step links union: {:.1}s ({} key(s) to relabel, largest component \
+             {largest} key(s); admitted: previous-notice {}, logical-notice {}, matched {}; \
+             refused: not-earlier {}, not-one-to-one {}, keyed-weld {}, oversized {})",
             t_uf.elapsed().as_secs_f64(),
-            merges.len()
+            merges.len(),
+            links.previous_notice,
+            links.logical_notice,
+            links.matched,
+            links.not_earlier,
+            links.not_one_to_one,
+            links.keyed_weld,
+            links.oversized
         );
         if !merges.is_empty() {
             let t_write = std::time::Instant::now();
@@ -10126,7 +10630,7 @@ impl Db {
                 conn.execute("COMMIT", ()).await?;
             }
             eprintln!(
-                "[project] group step previous-notice merge-write: {:.1}s",
+                "[project] group step links merge-write: {:.1}s",
                 t_write.elapsed().as_secs_f64()
             );
             // Batched by notice_id like the keyed/island pass, and for the same reason
@@ -10158,10 +10662,10 @@ impl Db {
                     )
                     .await?;
                     let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
-                    if beat_relabel.elapsed() >= PREV_EDGE_HEARTBEAT {
+                    if beat_relabel.elapsed() >= LINK_EDGE_HEARTBEAT {
                         beat_relabel = std::time::Instant::now();
                         eprintln!(
-                            "[project] group step previous-notice relabel: batch {batches}, \
+                            "[project] group step links relabel: batch {batches}, \
                              notice_id {lo}..{hi} of {max_id}, {:.1}s",
                             t_relabel.elapsed().as_secs_f64()
                         );
@@ -10170,14 +10674,16 @@ impl Db {
                 }
             }
             eprintln!(
-                "[project] group step previous-notice relabel: {:.1}s ({batches} batch(es))",
+                "[project] group step links relabel: {:.1}s ({batches} batch(es))",
                 t_relabel.elapsed().as_secs_f64()
             );
         }
         eprintln!(
-            "[project] group step previous-notice: {:.1}s ({} edge(s) resolved, {} key(s) merged)",
+            "[project] group step links: {:.1}s ({} edge(s) across groups, {} admitted, {} refused, {} key(s) merged)",
             started.elapsed().as_secs_f64(),
             edges.len(),
+            links.admitted(),
+            links.refused(),
             merges.len()
         );
 
@@ -10205,7 +10711,7 @@ impl Db {
             eprintln!("[project] ANALYZE plan_notice failed (non-fatal): {e}");
         }
         eprintln!("[project] group step analyze: {:.1}s", t.elapsed().as_secs_f64());
-        Ok(refused_by_kind.into_iter().collect())
+        Ok(PlanGroupTally { shared_refused: refused_by_kind.into_iter().collect(), links })
     }
 
     /// `(tenders, islands)` in the built plan — distinct group keys, and those that
@@ -28238,6 +28744,21 @@ mod tests {
         }
     }
 
+    /// Issue 481: the DÖE version suffix, which both directions of a `logical-notice`
+    /// link read through. Only an all-digit suffix is a version: a DÖE id with a dash
+    /// in it keeps everything before the LAST one, and anything else names no version.
+    #[test]
+    fn a_versioned_publication_id_yields_its_notice_id() {
+        const ID: &str = "5c1f2e7a-9b3d-4e8f-a1c2-7d6e5f4a3b2c";
+        assert_eq!(super::version_stem(&format!("{ID}-01")), Some(ID));
+        assert_eq!(super::version_stem(&format!("{ID}-2")), Some(ID));
+        assert_eq!(super::version_stem("12345-01"), Some("12345"), "the sdk-0.1 numeric channel");
+        assert_eq!(super::version_stem(&format!("{ID}-01-02")), Some(&*format!("{ID}-01")), "the LAST dash");
+        for bad in [ID, &format!("{ID}-1a")[..], &format!("{ID}-")[..], "-01", ""] {
+            assert_eq!(super::version_stem(bad), None, "{bad:?} names no version");
+        }
+    }
+
     use super::{Db, LayerPresence, LayerState};
 
     /// Issue 369 unit 2c, the pair the census settled — and the threshold between them.
@@ -28268,7 +28789,7 @@ mod tests {
             published_at: 1_700_000_000 + notice_id,
             subtype: None,
             ojs_edges: Vec::new(),
-            prev_refs: Vec::new(),
+            links: Vec::new(),
             key_shaped: true,
             buyer_key: Some(buyer.to_owned()),
             shared_kind: None,
@@ -28399,7 +28920,7 @@ mod tests {
             published_at: 1_700_000_000 + notice_id,
             subtype: None,
             ojs_edges: Vec::new(),
-            prev_refs: Vec::new(),
+            links: Vec::new(),
             key_shaped: false,
             buyer_key: buyer.map(str::to_owned),
             shared_kind: None,
@@ -28497,7 +29018,7 @@ mod tests {
             published_at: 1_700_000_000 + notice_id,
             subtype: None,
             ojs_edges: edges,
-            prev_refs: Vec::new(),
+            links: Vec::new(),
             key_shaped: false,
             buyer_key: None,
             shared_kind: None,
@@ -28565,7 +29086,7 @@ mod tests {
             published_at: 1_700_000_000 + notice_id,
             subtype: None,
             ojs_edges: edges,
-            prev_refs: Vec::new(),
+            links: Vec::new(),
             key_shaped: false,
             buyer_key: None,
             shared_kind: None,
@@ -28627,7 +29148,7 @@ mod tests {
                 published_at: 1_260_000_000 + notice_id,
                 subtype: None,
                 ojs_edges: edges,
-                prev_refs: Vec::new(),
+                links: Vec::new(),
                 key_shaped: false,
                 buyer_key: None,
                 shared_kind: shared_kind.map(str::to_owned),
@@ -28644,7 +29165,7 @@ mod tests {
             .await
             .expect("insert plan");
 
-            let refused = db.build_plan_groups().await.expect("group");
+            let refused = db.build_plan_groups().await.expect("group").shared_refused;
 
             async fn key_of(db: &Db, notice_id: i64) -> String {
                 match db
@@ -28710,7 +29231,7 @@ mod tests {
             published_at: 1_700_000_000,
             subtype: None,
             ojs_edges: Vec::new(),
-            prev_refs: Vec::new(),
+            links: Vec::new(),
             key_shaped,
             buyer_key: None,
             shared_kind: None,

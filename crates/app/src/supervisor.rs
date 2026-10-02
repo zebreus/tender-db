@@ -2539,6 +2539,30 @@ fn target_refusal_suffix(t: &project::CitationGate) -> String {
     )
 }
 
+/// Issue 481: what the grouping's Tender-link step joined and refused, on the job
+/// row that recorded the run. Silent when it did neither — every run whose plan holds
+/// no link with both ends in it — the [`target_refusal_suffix`] rule. The refusals are
+/// printed whole even at zero once anything happened: a weld guard reading "keyed-weld
+/// 0" is a statement, and an absent one is not.
+fn link_suffix(l: &store::LinkTally) -> String {
+    if l.admitted() == 0 && l.refused() == 0 {
+        return String::new();
+    }
+    format!(
+        "; issue-481 tender links joined: {} (previous-notice {}, logical-notice {}, matched {}); \
+         refused: {} (not-earlier {}, not-one-to-one {}, keyed-weld {}, oversized {})",
+        l.admitted(),
+        l.previous_notice,
+        l.logical_notice,
+        l.matched,
+        l.refused(),
+        l.not_earlier,
+        l.not_one_to_one,
+        l.keyed_weld,
+        l.oversized,
+    )
+}
+
 /// Issue 385 unit 2: what the F14 corrigendum-date target gate did, on the job
 /// row that recorded the run.
 ///
@@ -3909,9 +3933,10 @@ impl Supervisor {
             String::new()
         };
         let citations = format!(
-            "{}{}{}",
+            "{}{}{}{}",
             citation_suffix(&report.citations),
             target_refusal_suffix(&report.target_refusals),
+            link_suffix(&report.links),
             f14_target_suffix(&report.f14_targets)
         );
         // Issue 443 step 3: a re-bind can leave the row it left with no mention
@@ -15473,6 +15498,18 @@ mod tests {
         assert!(s.contains("periodic-indicative 348"), "{s}");
         assert!(s.contains("prior-information 12"), "{s}");
         assert!(!s.contains("admitted"), "no admitted count exists for this gate: {s}");
+    }
+
+    /// Issue 481: the Tender-link step's line — silent for a run whose plan held no
+    /// link, and once anything happened every refusal class printed, zeroes included,
+    /// so "keyed-weld 0" reads as a guard that ran.
+    #[test]
+    fn the_link_suffix_prints_every_guard_once_anything_happened() {
+        assert_eq!(link_suffix(&store::LinkTally::default()), "");
+        let l = store::LinkTally { previous_notice: 5, logical_notice: 3, oversized: 1, ..Default::default() };
+        let s = link_suffix(&l);
+        assert!(s.contains("tender links joined: 8 (previous-notice 5, logical-notice 3, matched 0)"), "{s}");
+        assert!(s.contains("refused: 1 (not-earlier 0, not-one-to-one 0, keyed-weld 0, oversized 1)"), "{s}");
     }
 
     /// Issue 395: the scheduled contiguity check must NAME the hole, and must
