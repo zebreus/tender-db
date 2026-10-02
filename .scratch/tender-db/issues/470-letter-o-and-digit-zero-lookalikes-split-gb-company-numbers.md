@@ -430,3 +430,6 @@ Second line (the review's major): a merged lookalike's literal stays merged afte
 - R2 wet: job 1906, queued behind the 481 backfill.
 - NEXT: run the Verify on 10312649 after 1906; post 362 merge verdicts for Roythornes and Aim2Learn; re-post the
   three withheld lookalikes (step 5); then read the altid and rekey dry plans for movement.
+- 17:5x UTC: R2 wet 1906 ran clean (its counts match dry 1904). **Verify done**: `/v1/organizations/10312649` →
+  `[null,null,10312664]`, so the `SCO55775` typo org is merged into the register spelling. Still open: 362 verdicts
+  for Roythornes and Aim2Learn, the step-5 re-post, and the altid/rekey movement read.

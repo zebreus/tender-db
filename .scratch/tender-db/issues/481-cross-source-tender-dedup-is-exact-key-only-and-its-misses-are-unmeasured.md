@@ -581,3 +581,4 @@ deployed, so no 2c plan exists on prod.
     after a kind-of-body head, e.g. "stadt bochum", needs measuring against the generic wall first.
   - NEXT: read the daily's `issue-481` line (largest component, refusals, deferred 0) and the Verify of 1110706
     (issue 482), then the data-quality "merged with TED" count.
+- 17:5x UTC: wet 1905 finished; it attests `tender_links_complete` and re-queued 17,537 notices for the 2026-10-03 daily.
