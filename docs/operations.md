@@ -747,6 +747,69 @@ per-window checkpoints (~1,600 windows). The writer is held for one window's ins
 (well under a second in release). The dry run's own job row is the real measurement: read its
 duration before queueing the wet one.
 
+### `procedure-key-census`: buyer-disjoint clusters under one UUID (issue 482)
+
+The fold groups notices by procedure key and checks nothing else for a UUID key (BT-04): issue 369's
+gate reads shaped keys only. A reused UUID welds unrelated procedures (Tender 1110706: a German
+DÖE/TED pair and a Bulgarian award 15 months later). This census counts how often, before a guard is
+chosen (refuse the key, as 369 does, or split the Tender at a buyer-disjoint edge).
+
+```sh
+/root/aj.sh /admin/jobs '{"kind":"procedure-key-census"}'
+/root/aj.sh /admin/reports/procedure-key-census | jq -r .body | jq '{tenders, notices, notices_without_buyers, undecidable, split, split_with_buyerless, split_same_key, max_clusters, cluster_counts, cross, buckets: (.buckets | map_values(.tenders))}'
+# 30 samples per bucket: tender, key, and each cluster's publications and first buyer.
+/root/aj.sh /admin/reports/procedure-key-census | jq -r .body | jq -r '.buckets["several-jurisdictions"].samples[] | "\(.tender_id) \(.procedure_key) \(.span_days)d", (.clusters[] | "   \(.notices)× \(.jurisdictions|join(",")) \(.buyer)  \(.publications[:4]|join(" "))")'
+# The hub shape: the 30 Tenders with the most clusters.
+/root/aj.sh /admin/reports/procedure-key-census | jq -r .body | jq -r '.hubs[] | "\(.tender_id) \(.notices) notices, \(.clusters|length) clusters"'
+```
+
+**Read-only** (no dry flag; it writes nothing but its report), stoppable between windows, report
+`procedure-key-census` stored only by a run that finished. It walks the Tender layer by id in windows
+of 5,000 ids (`Db::uuid_keyed_tender_versions`: a primary-key range on `tenders`, the key's shape
+pre-filtered in SQL, a seek per Tender into `tender_versions`) and keeps the Tenders whose key is a
+genuine UUID (`refused:`, `island:`, `ojs:` and FTS `ocds-` keys never qualify) with two or more
+notices. Each notice is fully parsed (DE-1.x folded first) and read through the link guard's own
+buyer side (`GuardSide`, issue 481 units 2b/2c: resolved organization, raw identifier, signatory,
+agency principal, whole-word prefixes and heads, acronyms), and two notices overlap exactly when the
+guard would say so (`store::buyer_tokens_disjoint`). A notice joins a cluster when it overlaps ANY
+member, so a joint procurement whose awards each name one of the CN's buyers, or a central
+purchasing body's framework naming its call-off buyers on the CN, is one cluster.
+
+A notice naming no buyer is unknown, never decisive: it joins no cluster and splits nothing
+(`notices_without_buyers`; `undecidable` counts Tenders with fewer than two notices naming a buyer;
+a split Tender lists its buyerless notices under `without_buyers`). A Tender with two or more
+clusters is `split`, and lands in one bucket of each axis:
+- **`one-jurisdiction` / `several-jurisdictions`**: several when two clusters name buyers of known
+  register jurisdictions and share none (a cross-border joint procurement inside one cluster does
+  not count; a DE cluster beside a BG one does);
+- **`one-source` / `several-sources`**: the Sources of all the Tender's notices;
+- **`span-le-90d` / `span-le-1y` / `span-gt-1y`**: first to last notice (`tender_versions.published_at`).
+
+`split_same_key` counts the split Tenders whose every notice carries the Tender's own key (the BT-04
+reuse itself); a cluster's `other_keys` counts its notices under another key, which an issue-481 link
+(OPP-090, BT-701) joined, so a sample with `other_keys` > 0 may be a link weld the daily has not split
+yet rather than a reused UUID. `cross` counts the three axes together (`several-jurisdictions/one-source/span-gt-1y`),
+`cluster_counts` the cluster count (`2`, `3`, `4-5`, `6-10`, `11+`), and `hubs` the 30 Tenders with
+the most clusters (Tender 42726's shape: 36 notices under 8 buyers). Each bucket keeps a uniform
+30-Tender sample (bottom-30 by a hash of the Tender id, so a re-run gives the same sample).
+
+**What to decide from it.** A collision bucket (several jurisdictions, more than a year apart) that
+is large and clean says the guard is a split at the disjoint edge; a hub-heavy one-jurisdiction
+bucket where the clusters are one authority's separate procedures says a refusal of the key (369's
+gate). Read the samples on the portals before deciding.
+
+**Expected cost: about 2–3 hours on prod**, a reasoned estimate from bounded reads. 20 bounded
+`/v1/sql` windows of 2,000 Tender ids (2026-10-02) found the UUID-keyed Tenders packed at the bottom
+of the id space, where the 2026-08-20 re-projection minted them: 1,948–1,957 of every 2,000 ids up to
+~1.16M, none sampled between 1.175M and 8.79M, and the dailies' new mints at the top (8.805M: 1,166
+of 2,000, almost all with one notice). 62–64 % of them have two or more notices, ~3.2 notices each,
+so the census parses about **2.4M notices** in ~735k Tenders. A full parse plus the mention read
+costs ~3 ms a notice on prod: job 1903's endpoint census added ~1,030 s over job 1882's 585 s for at
+most ~360k endpoints. The ~1,760 windows themselves are primary-key range reads, empty above 1.16M
+(minutes in all). It holds no writer. Clustering is pairwise per Tender, skipping pairs already
+joined; the largest Tender in the sampled windows had 372 notices. Read the job row's duration for the real
+figure.
+
 ### Reading a `process` job's `[process]` lines (issue 407)
 
 Every package walk prints one journal line when it completes:
@@ -895,7 +958,7 @@ uncapped wet), so a wet run refuses unless its dry plan is on file.
 Report kinds do NOT always match the job kind that writes them. `fusion-census`
 stores under `fusion-candidates`, and `GET /admin/reports/<kind>` answers an
 unknown kind with "no report of that kind has been computed" — which reads as
-"the job never ran". The kinds are, exhaustively (read off `put_report` in the supervisor, 2026-09-06; `altid-merge-plan` since issue 448, `rekey-plan` since issue 453, `merged-identifier-backfill` since issue 460, `tender-link-backfill` since issue 481): `altid-merge-plan`, `anchor-wall-census`, `case-apply-plan`, `case-escalations`, `case-unapply-plan`, `country-cluster-census`, `country-cluster-packet`, `country-fold`, `country-typo-census`, `country-typo-repair`, `country-verdict-plan`, `data-quality`, `data-quality-headlines`, `data-quality-presence`, `disk-census`, `drop-orphan-satellites`, `duplicate-identity-census`, `e0-merge-plan`, `fusion-candidates`, `generic-statistic-census`, `generic-wall-census`, `ghost-census`, `label-prefix-repair`, `member-twin-census`, `member-twin-repair`, `merged-identifier-backfill`, `minted-country-repair`, `name-attribution-probe`, `name-pollution-census`, `notice-instant-repair`, `org-edge-census`, `org-edge-scan`, `org-edge-scan-alarm`, `org-edge-scan-plan`, `org-match-keys-build`, `org-match-keys-plan`, `org-merge-health`, `orphan-org-sweep-plan`, `provisional-echo-census`, `provisional-echo-plan`, `provisional-name-norm-plan`, `r2-census`, `r2-merge-plan`, `r3-census`, `r3-merge-plan`, `registry-contiguity`, `rehash-cursor`, `rehash-probe`, `rehoming-packet`, `rehoming-plan`, `rekey-plan`, `renormalise-repair`, `reveal-cursor`, `reveal-recheck`, `reveal-wrap`, `satellite-orphans`, `tender-link-backfill`, `xb-packet`.
+"the job never ran". The kinds are, exhaustively (read off `put_report` in the supervisor, 2026-09-06; `altid-merge-plan` since issue 448, `rekey-plan` since issue 453, `merged-identifier-backfill` since issue 460, `tender-link-backfill` since issue 481, `procedure-key-census` since issue 482): `altid-merge-plan`, `anchor-wall-census`, `case-apply-plan`, `case-escalations`, `case-unapply-plan`, `country-cluster-census`, `country-cluster-packet`, `country-fold`, `country-typo-census`, `country-typo-repair`, `country-verdict-plan`, `data-quality`, `data-quality-headlines`, `data-quality-presence`, `disk-census`, `drop-orphan-satellites`, `duplicate-identity-census`, `e0-merge-plan`, `fusion-candidates`, `generic-statistic-census`, `generic-wall-census`, `ghost-census`, `label-prefix-repair`, `member-twin-census`, `member-twin-repair`, `merged-identifier-backfill`, `minted-country-repair`, `name-attribution-probe`, `name-pollution-census`, `notice-instant-repair`, `org-edge-census`, `org-edge-scan`, `org-edge-scan-alarm`, `org-edge-scan-plan`, `org-match-keys-build`, `org-match-keys-plan`, `org-merge-health`, `orphan-org-sweep-plan`, `procedure-key-census`, `provisional-echo-census`, `provisional-echo-plan`, `provisional-name-norm-plan`, `r2-census`, `r2-merge-plan`, `r3-census`, `r3-merge-plan`, `registry-contiguity`, `rehash-cursor`, `rehash-probe`, `rehoming-packet`, `rehoming-plan`, `rekey-plan`, `renormalise-repair`, `reveal-cursor`, `reveal-recheck`, `reveal-wrap`, `satellite-orphans`, `tender-link-backfill`, `xb-packet`.
 
 ### The admin surface beyond jobs (issues 230, 335, 348, 356)
 

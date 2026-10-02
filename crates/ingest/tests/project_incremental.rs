@@ -2741,3 +2741,113 @@ async fn the_ledger_backfill_counts_dry_writes_wet_and_the_daily_joins() {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
 }
+
+// ------------------------------ issue 482: the procedure-key census (buyer-disjoint clusters)
+
+/// Issue 482 unit 1: the procedure-key census clusters each UUID-keyed Tender's notices
+/// by the link guard's buyer overlap. Four Tenders, each folded under one BT-04 as the
+/// fold does today:
+///
+/// - **Tender 1110706's shape**: a German DÖE/TED pair and a Bulgarian award 15 months
+///   later, plus a TED notice naming no buyer. Two clusters, across jurisdictions and
+///   Sources, span over a year; the buyerless notice is counted, never a third cluster.
+/// - **A joint procurement**: the CN names two buyers, an award names one of them and a
+///   third, a later award names only the third. One cluster (transitive overlap).
+/// - **A central purchasing body's framework** naming its call-off buyers on the CN, and
+///   one call-off award per buyer naming that buyer alone. One cluster.
+/// - **No-buyer notices never split**: one buyer, a buyerless notice between its two
+///   notices, is one cluster; one buyer beside a buyerless notice is undecidable.
+///
+/// The walk gives the same report in windows of 1 and of 1,000 Tender ids.
+#[tokio::test]
+async fn the_procedure_key_census_splits_only_buyer_disjoint_clusters() {
+    use ingest::project::key_census;
+    const KEY_WELD: &str = "f3943baf-54ae-441a-aee9-3e802998024a";
+    const KEY_JOINT: &str = "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e";
+    const KEY_CPB: &str = "3c4d5e6f-7a8b-4c9d-8e1f-2a3b4c5d6e7f";
+    const KEY_ONE: &str = "4d5e6f7a-8b9c-4d0e-9f2a-3b4c5d6e7f8a";
+    const KEY_LONE: &str = "5e6f7a8b-9c0d-4e1f-8a3b-4c5d6e7f8a9b";
+    let wesel: Buyer = ("Stadt Wesel", "DEU", "");
+    let belogradchik: Buyer = ("Община Белоградчик", "BGR", "000320517");
+    let (jointa, jointb, jointc): (Buyer, Buyer, Buyer) = (
+        ("Gemeente Utrecht", "NLD", ""),
+        ("Gemeente Amersfoort", "NLD", ""),
+        ("Provincie Utrecht", "NLD", ""),
+    );
+    let dataport: Buyer = ("Dataport AöR", "DEU", "");
+    let (hamburg, kiel): (Buyer, Buyer) = (("Freie und Hansestadt Hamburg", "DEU", ""), ("Landeshauptstadt Kiel", "DEU", ""));
+    let solo: Buyer = ("Landkreis Görlitz", "DEU", "");
+    let (db, fetch, path) = scratch("key-census").await;
+    let doe_twin = "0a746ecc-1b2c-4d3e-8f4a-5b6c7d8e9f0a-01";
+    record_linked_buyers(&db, fetch, "doe", doe_twin, 19_758, &[("BT-04-notice", KEY_WELD)], &[wesel]).await;
+    record_linked_buyers(&db, fetch, "ted", "00081139-2024", 19_760, &[("BT-04-notice", KEY_WELD)], &[wesel]).await;
+    record_linked_buyers(&db, fetch, "ted", "00090001-2024", 19_800, &[("BT-04-notice", KEY_WELD)], &[]).await;
+    record_linked_buyers(&db, fetch, "ted", "00274114-2025", 20_207, &[("BT-04-notice", KEY_WELD)], &[belogradchik])
+        .await;
+    record_linked_buyers(&db, fetch, "ted", "00300001-2024", 19_900, &[("BT-04-notice", KEY_JOINT)], &[jointa, jointb])
+        .await;
+    record_linked_buyers(&db, fetch, "ted", "00300002-2024", 19_950, &[("BT-04-notice", KEY_JOINT)], &[jointb, jointc])
+        .await;
+    record_linked_buyers(&db, fetch, "ted", "00300003-2024", 19_990, &[("BT-04-notice", KEY_JOINT)], &[jointc]).await;
+    record_linked_buyers(&db, fetch, "ted", "00310001-2024", 19_900, &[("BT-04-notice", KEY_CPB)], &[dataport, hamburg, kiel])
+        .await;
+    record_linked_buyers(&db, fetch, "ted", "00310002-2024", 20_000, &[("BT-04-notice", KEY_CPB)], &[hamburg]).await;
+    record_linked_buyers(&db, fetch, "ted", "00310003-2024", 20_010, &[("BT-04-notice", KEY_CPB)], &[kiel]).await;
+    record_linked_buyers(&db, fetch, "ted", "00320001-2024", 19_900, &[("BT-04-notice", KEY_ONE)], &[solo]).await;
+    record_linked_buyers(&db, fetch, "ted", "00320002-2024", 19_910, &[("BT-04-notice", KEY_ONE)], &[]).await;
+    record_linked_buyers(&db, fetch, "ted", "00320003-2024", 19_920, &[("BT-04-notice", KEY_ONE)], &[solo]).await;
+    record_linked_buyers(&db, fetch, "ted", "00330001-2024", 19_900, &[("BT-04-notice", KEY_LONE)], &[solo]).await;
+    record_linked_buyers(&db, fetch, "ted", "00330002-2024", 19_910, &[("BT-04-notice", KEY_LONE)], &[]).await;
+    project::project(&db, false).await.expect("fold");
+    let weld = tender_of(&db, "00081139-2024").await;
+    assert_eq!(tender_of(&db, "00274114-2025").await, weld, "today's fold welds the Bulgarian award in");
+    assert_eq!(tender_of(&db, doe_twin).await, weld);
+
+    let never = || false;
+    let r = key_census::procedure_key_census_windowed(&db, 1_000, &never, |_| {}).await.expect("census");
+    assert!(!r.stopped);
+    assert_eq!(r.tenders, 5, "five UUID-keyed Tenders of two or more notices");
+    assert_eq!(r.notices, 15);
+    assert_eq!(r.notices_without_buyers, 3);
+    assert_eq!(r.undecidable, 1, "one buyer beside a buyerless notice: nothing to compare");
+    assert_eq!(r.split, 1, "only the weld splits: {:?}", r.hubs);
+    assert_eq!((r.split_with_buyerless, r.split_notices_without_buyers), (1, 1));
+    assert_eq!(r.split_same_key, 1, "the weld is the shared BT-04 itself, no link");
+    assert_eq!(r.max_clusters, 2);
+    let count = |b: &str| r.buckets[b].tenders;
+    assert_eq!(
+        key_census::KEY_CENSUS_BUCKETS.map(count),
+        [0, 1, 0, 1, 0, 0, 1],
+        "several jurisdictions, several Sources, over a year"
+    );
+    assert_eq!(r.cross.get("several-jurisdictions/several-sources/span-gt-1y"), Some(&1));
+    assert_eq!(r.cluster_counts.get("2"), Some(&1));
+    let sample = &r.buckets["several-jurisdictions"].samples[0];
+    assert_eq!(sample.tender_id, weld);
+    assert_eq!(sample.procedure_key, KEY_WELD);
+    assert_eq!((sample.notices, sample.span_days), (4, 449));
+    assert_eq!(sample.clusters.len(), 2);
+    assert_eq!(sample.clusters[0].publications, vec![format!("doe:{doe_twin}"), "ted:00081139-2024".to_owned()]);
+    assert_eq!(sample.clusters[0].buyer, "Stadt Wesel");
+    assert_eq!(sample.clusters[0].jurisdictions, vec!["DE".to_owned()]);
+    assert_eq!(sample.clusters[1].publications, vec!["ted:00274114-2025".to_owned()]);
+    assert_eq!(sample.clusters[1].buyer, "Община Белоградчик");
+    assert_eq!(sample.clusters[1].jurisdictions, vec!["BG".to_owned()]);
+    assert_eq!((sample.clusters[0].other_keys, sample.clusters[1].other_keys), (0, 0));
+    assert_eq!(sample.without_buyers, vec!["ted:00090001-2024".to_owned()]);
+    assert_eq!(r.hubs, vec![sample.clone()]);
+
+    let narrow = key_census::procedure_key_census_windowed(&db, 1, &never, |_| {}).await.expect("narrow census");
+    assert_eq!(
+        serde_json::to_string(&narrow).unwrap(),
+        serde_json::to_string(&r).unwrap(),
+        "the window size changes nothing"
+    );
+    let stopped = std::sync::atomic::AtomicUsize::new(0);
+    let second = || stopped.fetch_add(1, std::sync::atomic::Ordering::Relaxed) >= 1;
+    let partial = key_census::procedure_key_census_windowed(&db, 1, &second, |_| {}).await.expect("stopped census");
+    assert!(partial.stopped && partial.cursor == 1, "stopped before its second window");
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}

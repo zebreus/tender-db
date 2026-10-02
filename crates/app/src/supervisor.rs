@@ -519,6 +519,11 @@ enum Spec {
     /// default) counts per rule and samples 30 would-merge pairs; both store
     /// `tender-link-backfill`.
     BackfillTenderLinks { dry_run: bool },
+    /// Issue 482 unit 1: walk every UUID-keyed Tender with two or more notices, cluster
+    /// its notices by buyer overlap (issue 481's link guard tokens) and count the
+    /// Tenders with two or more buyer-disjoint clusters, by jurisdiction, Source and
+    /// span, with 30 samples per bucket. Read-only; stores `procedure-key-census`.
+    ProcedureKeyCensus,
     /// Issue 443 step 3: the sweep a fold queues after it re-bound mentions
     /// (every re-bind can empty the row it left). It counts, then sweeps in
     /// the same job when the count is at most `cap`; above it (an era-scale
@@ -1960,6 +1965,10 @@ impl Supervisor {
                     self.push("backfill-tender-links", params, Spec::BackfillTenderLinks { dry_run }).await,
                 ])
             }
+            // Issue 482 unit 1: read-only, so no dry flag; it stores its report only.
+            "procedure-key-census" => Ok(vec![
+                self.push("procedure-key-census", "procedure-key-census".into(), Spec::ProcedureKeyCensus).await,
+            ]),
             // Issue 259 landing: repair the stale nested-org mention layer.
             // Deletes org rows and emits change events, so it asks to be meant:
             // `dry_run` defaults to TRUE (the data-quality convention — a
@@ -2743,6 +2752,29 @@ fn merged_identifier_backfill_summary(r: &store::MergedIdentifierBackfill) -> St
     )
 }
 
+/// Issue 482: the report `procedure-key-census` stores.
+const PROCEDURE_KEY_CENSUS_REPORT: &str = "procedure-key-census";
+
+/// The job-row line of a procedure-key census: the totals, then each bucket's count.
+fn procedure_key_census_summary(r: &ingest::project::key_census::ProcedureKeyCensus) -> String {
+    let buckets: Vec<String> = ingest::project::key_census::KEY_CENSUS_BUCKETS
+        .iter()
+        .map(|b| format!("{b} {}", r.buckets.get(*b).map_or(0, |x| x.tenders)))
+        .collect();
+    format!(
+        "{} UUID-keyed Tenders of 2+ notices ({} notices, {} without buyers), {} undecidable, {} split into \
+         2+ buyer-disjoint clusters ({} with a buyerless notice; max {} clusters); {}",
+        r.tenders,
+        r.notices,
+        r.notices_without_buyers,
+        r.undecidable,
+        r.split,
+        r.split_with_buyerless,
+        r.max_clusters,
+        buckets.join(", ")
+    )
+}
+
 /// Issue 481: the report `backfill-tender-links` stores.
 const TENDER_LINK_BACKFILL_REPORT: &str = "tender-link-backfill";
 
@@ -2931,6 +2963,8 @@ const STOPPABLE_KINDS: &[&str] = &[
     // Issue 481: read between notice windows; a stopped run stores no report, and a
     // stopped wet run's committed windows read as present next time.
     "backfill-tender-links",
+    // Issue 482: read between Tender windows; a stopped run stores no report.
+    "procedure-key-census",
     // Issue 429: read between tables; a stop still refreshes the readers.
     "analyze",
 ];
@@ -4235,6 +4269,39 @@ impl Supervisor {
         ))
     }
 
+    /// Issue 482 unit 1's `procedure-key-census`, its own fn reached through `off_frame`
+    /// (issue 467; the [`Self::run_backfill_tender_links`] shape). Walks the UUID-keyed
+    /// Tenders by id and stores `procedure-key-census` — only for a run that finished: a
+    /// stopped census is a prefix that would read as the whole.
+    async fn run_procedure_key_census(&self, job: &Job) -> Result<String, String> {
+        let job_id = job.id;
+        let stop = || self.cancelled(job_id);
+        let r = Box::pin(ingest::project::key_census::procedure_key_census(&self.db, &stop, |r| {
+            self.update(|p| p.members_done = r.tenders);
+            self.set_phase(
+                "counting",
+                Some(r.cursor.max(0) as u64),
+                Some(r.target.max(0) as u64),
+                format!(
+                    "tender id {} of {}; {} UUID-keyed Tenders of 2+ notices, {} split by buyers, {} undecidable",
+                    r.cursor, r.target, r.tenders, r.split, r.undecidable
+                ),
+            );
+        }))
+        .await
+        .map_err(|e| e.to_string())?;
+        let summary = procedure_key_census_summary(&r);
+        if r.stopped {
+            return Ok(format!(
+                "procedure-key-census STOPPED by cancel at tender id {} of {} — {summary}; no report stored",
+                r.cursor, r.target
+            ));
+        }
+        let body = serde_json::to_string(&r).map_err(|e| e.to_string())?;
+        self.db.put_report(PROCEDURE_KEY_CENSUS_REPORT, &body, store::now_unix()).await.map_err(|e| e.to_string())?;
+        Ok(format!("procedure-key-census (issue 482): {summary}"))
+    }
+
     /// Issue 404's repair, as its own async fn rather than inline in
     /// `run_spec`'s match.
     ///
@@ -4406,6 +4473,7 @@ impl Supervisor {
             Spec::BackfillTenderLinks { dry_run } => {
                 off_frame(|| self.run_backfill_tender_links(job, *dry_run)).await
             }
+            Spec::ProcedureKeyCensus => off_frame(|| self.run_procedure_key_census(job)).await,
             Spec::Analyze => off_frame(|| self.run_analyze(job)).await,
             Spec::RepairMemberTwins { dry_run } => {
                 off_frame(|| self.run_repair_member_twins(job, *dry_run)).await
@@ -13808,6 +13876,9 @@ mod tests {
                 // Issue 481: `backfill_tender_links` reads the flag before every
                 // notice window; a stopped run stores no report.
                 "backfill-tender-links",
+                // Issue 482: `procedure_key_census` reads the flag before every
+                // Tender window; a stopped run stores no report.
+                "procedure-key-census",
                 // Issue 429: `run_analyze` reads the flag before every table, and a
                 // stopped run still drops `organizations` statistics and refreshes
                 // the readers.
@@ -14565,6 +14636,60 @@ mod tests {
         let (body, _) = sup.db().latest_report(MERGED_IDENTIFIER_BACKFILL_REPORT).await.unwrap().expect("report");
         assert!(body.contains("\"dry_run\":false"), "{body}");
         let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 482: the job wiring around `ingest::project::key_census`. It enqueues with
+    /// no flag (read-only), runs through `run_spec`'s dispatch, stores its report with
+    /// every bucket, and a cancelled run stores none.
+    #[tokio::test]
+    async fn the_procedure_key_census_job_stores_its_report_and_a_stop_stores_none() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        sup.enqueue_request(&JobRequest { kind: "procedure-key-census".into(), ..Default::default() }).await.unwrap();
+        {
+            let queue = sup.queue.lock().expect("queue lock");
+            assert!(matches!(queue[0].spec, Spec::ProcedureKeyCensus));
+            assert_eq!(queue[0].params, "procedure-key-census");
+        }
+        let job = |id: u64| Job {
+            id,
+            kind: "procedure-key-census".into(),
+            params: String::new(),
+            spec: Spec::ProcedureKeyCensus,
+            resume_after: None,
+        };
+        let msg = sup.run_spec(&job(1)).await.expect("census");
+        assert!(msg.starts_with("procedure-key-census (issue 482): 0 UUID-keyed Tenders"), "{msg}");
+        let (body, _) = db.latest_report(PROCEDURE_KEY_CENSUS_REPORT).await.unwrap().expect("report");
+        for bucket in ingest::project::key_census::KEY_CENSUS_BUCKETS {
+            assert!(body.contains(&format!("\"{bucket}\"")), "{bucket}: {body}");
+        }
+        // A cancelled run: a Tender exists, so the walk has a window to refuse.
+        let fetch_id = seed_fetch(&db).await;
+        db.record_notice(
+            &store::Notice {
+                source: "ted".into(),
+                publication_id: "00000001-2024".into(),
+                content_hash: "h".into(),
+                profile: "eforms:eforms-sdk-1.13".into(),
+                declared_version: None,
+                fetch_id,
+                member_path: "m".into(),
+                ingested_at: 0,
+                published_at: Some(store::Stamp::utc(0)),
+                dispatched_at: None,
+            },
+            &store::Parse::Parsed(store::Parsed::default()),
+        )
+        .await
+        .unwrap();
+        ingest::project::project(&db, false).await.unwrap();
+        db.put_report(PROCEDURE_KEY_CENSUS_REPORT, "{\"marker\":1}", store::now_unix()).await.unwrap();
+        sup.cancel_running.store(2, Ordering::Relaxed);
+        let msg = sup.run_spec(&job(2)).await.expect("stopped census");
+        assert!(msg.contains("STOPPED by cancel") && msg.contains("no report stored"), "{msg}");
+        let (body, _) = db.latest_report(PROCEDURE_KEY_CENSUS_REPORT).await.unwrap().expect("report");
+        assert_eq!(body, "{\"marker\":1}", "a stopped census stores nothing");
     }
 
     /// Issue 481: the job wiring around `ingest::project::backfill_tender_links`. A
@@ -16529,6 +16654,7 @@ mod tests {
             2_304,
         );
         gauge("run_backfill_tender_links", std::mem::size_of_val(&sup.run_backfill_tender_links(&j, true)), 1_024);
+        gauge("run_procedure_key_census", std::mem::size_of_val(&sup.run_procedure_key_census(&j)), 1_024);
         gauge("run_analyze", std::mem::size_of_val(&sup.run_analyze(&j)), 512);
         gauge("run_repair_member_twins", std::mem::size_of_val(&sup.run_repair_member_twins(&j, true)), 1_024);
         gauge(
@@ -16619,6 +16745,7 @@ mod tests {
             sup.run_backfill_merged_identifiers(&j, true)
         });
         poll_once_within("run_backfill_tender_links", 144 * 1024, || sup.run_backfill_tender_links(&j, true));
+        poll_once_within("run_procedure_key_census", 144 * 1024, || sup.run_procedure_key_census(&j));
         poll_once_within("run_analyze", 330 * 1024, || sup.run_analyze(&j));
         assert!(
             over.is_empty(),

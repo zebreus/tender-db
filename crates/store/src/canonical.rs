@@ -1749,6 +1749,16 @@ pub struct LinkEndpoint {
     pub published_at: i64,
 }
 
+/// Issue 482: one version of a UUID-keyed Tender ([`Db::uuid_keyed_tender_versions`]).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct KeyedTenderVersion {
+    pub tender_id: i64,
+    pub procedure_key: String,
+    pub notice_id: i64,
+    pub publication_id: String,
+    pub published_at: i64,
+}
+
 /// One pair the ledger backfill would join, by both publication ids.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TenderLinkSample {
@@ -10723,6 +10733,46 @@ impl Db {
             deleted += finish_tx(&conn, result).await?;
         }
         Ok(deleted)
+    }
+
+    /// Issue 482: the versions of the UUID-keyed Tenders with id in `(after, hi]`, by
+    /// Tender id then seq — the procedure-key census's window
+    /// (`ingest::project::key_census`). A range read on the Tenders' primary key and a
+    /// seek per Tender on `tender_versions`' primary key; the key's shape
+    /// (36 characters, a dash ninth) is pre-filtered in SQL so the legacy `ojs:`, the
+    /// `island:`/`refused:` and the FTS `ocds-` Tenders never reach the join, and the
+    /// caller checks the full UUID shape.
+    pub async fn uuid_keyed_tender_versions(&self, after: i64, hi: i64) -> turso::Result<Vec<KeyedTenderVersion>> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT t.id, t.procedure_key, v.caused_by_notice_id, v.publication_id, v.published_at
+                   FROM tenders t JOIN tender_versions v ON v.tender_id = t.id
+                  WHERE t.id > ?1 AND t.id <= ?2
+                    AND length(t.procedure_key) = 36 AND substr(t.procedure_key, 9, 1) = '-'
+                  ORDER BY t.id, v.seq",
+                (Value::Integer(after), Value::Integer(hi)),
+            )
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push(KeyedTenderVersion {
+                tender_id: int(&row, 0),
+                procedure_key: text(&row, 1),
+                notice_id: int(&row, 2),
+                publication_id: text(&row, 3),
+                published_at: int(&row, 4),
+            });
+        }
+        Ok(out)
+    }
+
+    /// The largest Tender id (`0` for an empty layer): the top of the procedure-key
+    /// census's walk (issue 482).
+    pub async fn max_tender_id(&self) -> turso::Result<i64> {
+        let conn = self.reader().await?;
+        let mut rows = conn.query("SELECT COALESCE(MAX(id), 0) FROM tenders", ()).await?;
+        Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
     }
 
     /// Issue 481, the ledger backfill's read: the parsed non-legacy notices with

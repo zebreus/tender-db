@@ -513,6 +513,9 @@ const UBL_PARSE_ONLY: &[(&str, &str)] = &[
 /// Lots with a kind flag (CONTEXT.md).
 use store::read::LOT_KINDS;
 
+/// Issue 482 unit 1: the procedure-key census (buyer-disjoint clusters under one UUID).
+pub mod key_census;
+
 /// The section a lots-group composition lives in, and the two fields naming its ends
 /// (issue 237). Named constants rather than literals in the reader because both ids are
 /// `-Procedure`-suffixed and read as procedure-level facts, which is exactly the
@@ -4474,12 +4477,10 @@ impl Ident {
         // Read once for both: the key-election gate's buyer key and the link guard's
         // tokens (`NoticeState::mentions` walks every value of the notice). The guard
         // reads the contract signatories too (issue 481 unit 2c); the gate does not.
-        let (buyers, signatories) = buyer_side_mentions(sdk01, notice.id, parsed);
+        let guard = GuardSide::read(sdk01, notice.id, parsed);
         // issue 369 unit 2: the buyer set this notice publishes, for the key-election
         // gate. Parsed-side, so no org-layer dependency.
-        let buyer_key = buyer_key_of(&buyers);
-        let mut guard = buyers;
-        guard.extend(signatories);
+        let buyer_key = buyer_key_of(guard.buyers());
         Ident {
             notice_id: notice.id,
             source: notice.source.clone(),
@@ -4500,8 +4501,8 @@ impl Ident {
             buyer_key,
             // issue 481 unit 2b: the same buyers (and 2c: their signatories) as the
             // link guard's tolerant tokens.
-            buyer_tokens: buyer_tokens_of(&guard),
-            guard_sections: guard.into_iter().map(|m| m.section_id).collect(),
+            buyer_tokens: guard.tokens(),
+            guard_sections: guard.sections(),
             shared_kind: legacy
                 .then(|| {
                     LEGACY_DOC_TYPE_FIELDS
@@ -5917,6 +5918,40 @@ fn buyer_mentions(sdk01: bool, notice_id: i64, parsed: &Parsed) -> Vec<store::Me
     buyer_side_mentions(sdk01, notice_id, parsed).0
 }
 
+/// Issue 481 unit 2c: the link guard's buyer side of one notice ([`buyer_side_mentions`]):
+/// its buyers, then the contract signatories that are not also buyers. [`Ident::read`]
+/// derives the plan row's tokens and sections from it, and (issue 482) the
+/// procedure-key census reads the same struct, so the two cannot drift apart.
+struct GuardSide {
+    mentions: Vec<store::Mention>,
+    buyers: usize,
+}
+
+impl GuardSide {
+    fn read(sdk01: bool, notice_id: i64, parsed: &Parsed) -> GuardSide {
+        let (mut mentions, signatories) = buyer_side_mentions(sdk01, notice_id, parsed);
+        let buyers = mentions.len();
+        mentions.extend(signatories);
+        GuardSide { mentions, buyers }
+    }
+
+    /// The buyers alone: issue 369's buyer set, and the census's buyer names.
+    fn buyers(&self) -> &[store::Mention] {
+        &self.mentions[..self.buyers]
+    }
+
+    /// The tolerant token set ([`buyer_tokens_of`]), without the resolved
+    /// organizations ([`add_org_tokens`] adds them once Phase 1 has resolved them).
+    fn tokens(&self) -> Vec<u32> {
+        buyer_tokens_of(&self.mentions)
+    }
+
+    /// The sections whose resolved organizations join the tokens.
+    fn sections(self) -> Vec<String> {
+        self.mentions.into_iter().map(|m| m.section_id).collect()
+    }
+}
+
 /// Issue 481 unit 2c: the roles whose organization the link guard reads BESIDE the
 /// buyers. eForms' contract signatory (`OPT-300-Contract-Signatory`) is the buyer that
 /// signs the contract, and a ministry signing for its hospital is the one shape the
@@ -6521,14 +6556,20 @@ fn raw_identifier_token(raw: &str, jurisdiction: &str) -> Option<String> {
 /// read; a merge job's later equivalences count from the next fold that plans the
 /// notice.
 fn add_buyer_org_tokens(row: &mut store::PlanRow, sections: &[String], orgs: Option<&HashMap<String, i64>>) {
+    add_org_tokens(&mut row.buyer_tokens, sections, orgs);
+}
+
+/// [`add_buyer_org_tokens`] on a bare token set: the plan row's, or (issue 482) the
+/// procedure-key census's, so both carry one derivation.
+fn add_org_tokens(tokens: &mut Vec<u32>, sections: &[String], orgs: Option<&HashMap<String, i64>>) {
     let Some(orgs) = orgs else { return };
-    let before = row.buyer_tokens.len();
-    row.buyer_tokens.extend(
+    let before = tokens.len();
+    tokens.extend(
         sections.iter().filter_map(|section| orgs.get(section)).map(|org| store::buyer_token(&format!("o:{org}"))),
     );
-    if row.buyer_tokens.len() > before {
-        row.buyer_tokens.sort_unstable();
-        row.buyer_tokens.dedup();
+    if tokens.len() > before {
+        tokens.sort_unstable();
+        tokens.dedup();
     }
 }
 
