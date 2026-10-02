@@ -245,3 +245,14 @@ distinct release), so a byte-identical repeat still collapses, and a different r
 Sequenced after 481 unit 2 lands, because one gate at a time fits the container's disk. Then re-enqueue
 `{"kind":"fetch","source":"fts","package_kind":"monthly","period":"2023-11","refetch":true}`, process and project, and
 check that the 15 ocids of `033562-2023` are on 15 Tenders.
+
+### 2026-10-02 05:5x UTC — chunk 2023 landed except 2023-11; chunk 2024a running
+
+- Fetches 1847–1858: all `ok` except 1857 (2023-11, the dense span above). Process 1859: `34884 members → 3236
+  notices (… 31648 dup)`. Project 1860: `3158 tenders written`.
+- Verify by year: 2021 20, 2022 8, **2023 134** (2023-11 has not been refetched), 2024 3,673 (01 and 02 refetched
+  so far), 2025 1,928, 2026 3,335. Total **9,098**.
+- `tender-db-jobwatch` reads failed: `WARN jobwatch: failed run in last 26h: fetch #2766 [fts monthly 2023-11] →
+  error`. That is the watch working as designed, on a failure this issue already tracks. It clears 26 h after the
+  run, or sooner if unit 1b's refetch lands.
+- Chunk 2024a (2024-01..05, process 1866, project 1867) should end around 07:00 UTC, before the tick.
