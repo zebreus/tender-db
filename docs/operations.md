@@ -572,8 +572,8 @@ a TED number too — those are the `cross-source` part, a population ADR-0011 ne
 naming a notice that is not strictly earlier), `buyer-disjoint` (issue 481 unit 2b: an OPP-090 whose
 citing and cited notices both name buyers and share none — a copied placeholder number that happens
 to be a real notice of another buyer, like `00123456-2026`, SCB's notice; compared on each buyer's
-identifier key AND N2 name key, notice against notice, and a notice with no parsed buyer never
-refuses), `fan-in` (cross-Source OPP-090s from two or more
+identifier AND names, widened to one buyer's measured spellings (see "What overlaps" below), notice
+against notice, and a notice with no parsed buyer never refuses), `fan-in` (cross-Source OPP-090s from two or more
 procedure-keyed components into one TED notice: a PIN several procedures cite, or a colliding key),
 `not-one-to-one` (one logical id carried by notices of two components, or one notice matched to
 notices of two), `keyed-weld` (a same-notice or matched link would put two procedure-keyed Tenders
@@ -581,8 +581,8 @@ together: issue 482's colliding BT-04s already weld, and a new rule must not add
 `oversized` (past 64 components). All but `not-earlier` and `buyer-disjoint` are expected at zero
 or near it on well-formed data, so read any non-zero one before the joins. `buyer-disjoint` is
 copied placeholders, plus whatever the token comparison gets wrong: a buyer renamed between notices,
-or written with no identifier and a different name. The backfill's `buyer_disjoint_samples` show
-which. `deferred` counts links the
+or written with no identifier in common and a name that differs beyond case, punctuation and
+accents. The backfill's `buyer_disjoint_samples` show which. `deferred` counts links the
 incremental fold could not judge yet: one its plan held only one end of (the far end is re-queued),
 a guarded join beside such an end, and — until the ledger is attested complete (below) — every
 fan-in- or weld-guarded join. A non-zero count is a join one fold late, never a lost one and never
@@ -624,7 +624,7 @@ the full path, loudly (`INCREMENTAL → FULL fallback: link closure exceeds cap 
 ```sh
 # Dry (the default): what the ledger lacks, per rule, and the sampled pairs to read by hand.
 /root/aj.sh /admin/jobs '{"kind":"backfill-tender-links"}'
-/root/aj.sh /admin/reports/tender-link-backfill | jq -r .body | jq '{notices, declaring, would_merge, buyer_disjoint, would_split, requeued, rules}'
+/root/aj.sh /admin/reports/tender-link-backfill | jq -r .body | jq '{notices, declaring, would_merge, not_earlier, buyer_disjoint, would_split, requeued, rules}'
 /root/aj.sh /admin/reports/tender-link-backfill | jq -r .body | jq -r '.samples[] | "\(.rule)  \(.a)  \(.b)"'
 # Issue 481 unit 2b: the buyer census — joins the guard refuses, and welds the next fold splits.
 /root/aj.sh /admin/reports/tender-link-backfill | jq -r .body | jq -r '.buyer_disjoint_samples[] | "\(.rule)  \(.a)  \(.b)"'
@@ -643,17 +643,22 @@ the writer (a few thousand index inserts), then a WAL checkpoint. Per rule it co
 `present` (already on the ledger), `resolved`, `unresolved`, `would_merge` (rows with a target,
 written now or already held, whose notices fold into different Tenders today: the joins the next
 fold makes, before its weld guards; they re-queue both notices, a held row included, since a
-daily before the attestation wrote it and held its join back; the `buyer_disjoint` ones below do
-not), `cross_source` (of `would_merge`,
+daily before the attestation wrote it and held its join back; the `not_earlier` and
+`buyer_disjoint` ones below do not), `cross_source` (of `would_merge`,
 the rows citing another Source: every `logical-notice` row, and the DÖE→TED OPP-090s ADR-0011 never
 measured — read this one for `opp-090` before the wet run) and `stale` (declared rows the notice no
-longer declares, deleted, both notices re-queued). Only `would_merge` rows (less `buyer_disjoint`),
-`would_split` rows and `stale` rows re-queue anything.
+longer declares, deleted, both notices re-queued). Only `would_merge` rows (less `not_earlier`
+and `buyer_disjoint`), `would_split` rows and `stale` rows re-queue anything.
 
-**The buyer census (issue 481 unit 2b).** Every resolved `opp-090` row is judged the way the fold's
-buyer guard judges it. The census computes the guard's input from both notices' full parse through
-the plan row's own derivation: the tolerant buyer tokens, the procedure key and the publication
-instant. It counts two things per rule, `opp-090` only (`logical-notice` reads 0):
+**The buyer census (issue 481 unit 2b).** Every resolved `opp-090` row is judged the way the fold
+judges it, in the fold's order. The census computes the fold's input from both notices' full parse
+(DE-1.x folded first, as the plan does) through the plan row's own derivation: the tolerant buyer
+tokens, the procedure key and the publication instant. It counts three things per rule, `opp-090`
+only (`logical-notice` reads 0):
+- **`not_earlier`**: rows in `would_merge` whose target is NOT strictly earlier than the citing
+  notice. The fold refuses these by direction before it reads a buyer (ADR-0011 guard 3), so they
+  re-queue nothing and are in no sample list. Job 1882's copied placeholder (Älvkarleby kommun
+  citing SCB's newer `00123456-2026`) is one; before the unit 2b review it read as a join.
 - **`buyer_disjoint`**: rows in `would_merge` whose target is strictly earlier and whose two
   notices are buyer-disjoint. The next fold refuses these joins, so they re-queue nothing and stay
   out of `samples`. Up to 30 are listed in `buyer_disjoint_samples`.
@@ -665,6 +670,20 @@ instant. It counts two things per rule, `opp-090` only (`logical-notice` reads 0
   upper bound: another admitted path between the two notices keeps them together. A split retires
   nothing: the cited notice keeps the Tender (it named it, being earlier), and the citer's key gets
   a Tender of its own and loses its `tender_key_merges` row.
+
+**What overlaps.** A buyer's tokens are its identifier and its names, and two notices overlap when
+they share one. Each is widened to the spellings one buyer is measured to publish (unit 2b review),
+since a token can only make two notices overlap:
+- the identifier as its E1 cross-walk key when it has one (every SIRET of one SIREN, as AP-HP
+  publishes five; a NIP bare or as a `PL…` VAT; an organisationsnummer and its `SE…01` VAT), else
+  as published. Pad-derived (E2) keys are not used, since padding has collided across entities;
+- every name the buyer published (each language variant, not just the first), lower-cased with
+  punctuation folded and Latin accents dropped (`HOPITAUX` meets `hôpitaux`), under the
+  identifier's register country (`RE` meets `FR`).
+
+Still disjoint, and so refused: one buyer that changed or respelled its name beyond that, with no
+identifier in common, and a CAN filed by another body (a central purchasing body, say) than the
+CN's buyer.
 
 **Read the census before the wet run.** Each sample names both publication ids. For every
 `buyer_disjoint` and `would_split` sample, open both notices on TED and check whether they are one

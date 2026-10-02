@@ -1457,8 +1457,9 @@ fn is_previous_notice_rule(rule: &str) -> bool {
 }
 
 /// Issue 481 unit 2b: one buyer token as the plan carries it — a stable 32-bit digest
-/// of the token string (`ingest::project`'s `buyer_tokens_of`: a buyer's identifier key
-/// `country:kind:value` and its N2 name key `n2:country:name`). FNV-1a over the bytes,
+/// of the token string (`ingest::project`'s `buyer_guard_tokens`: a buyer's identifier,
+/// as its E1 cross-walk key or `country:kind:value`, and its folded name keys
+/// `n2:country:name`). FNV-1a over the bytes,
 /// the 64-bit state folded to 32: stable across binaries and platforms, which the plan
 /// needs only within one run but the backfill's census needs against the plan's own
 /// verdict. 4 bytes a token, where the strings average ~22 bytes: `plan_notice` holds
@@ -1474,6 +1475,18 @@ pub fn buyer_token(token: &str) -> u32 {
         h = h.wrapping_mul(0x0000_0100_0000_01b3);
     }
     (h ^ (h >> 32)) as u32
+}
+
+/// Issue 481 unit 2b (review): a `match_norm`ed buyer name with its Latin diacritics
+/// folded to their base letters, for the buyer guard's name token only
+/// (`ingest::project`'s `buyer_guard_tokens`). N2 keeps diacritics on purpose, so the org
+/// layer does not merge `gymnázium` with `gymnazium`; the guard needs the opposite.
+/// French publishers drop accents in capitals (AP-HP is live as both
+/// `Assistance publique hôpitaux de Paris` and `ASSISTANCE PUBLIQUE HOPITAUX DE PARIS`),
+/// and a fold can only make two notices overlap, so it fails open. The same table as
+/// issue 359's R2 name gate ([`fold_latin`]).
+pub fn buyer_name_fold(norm: &str) -> String {
+    norm.chars().map(fold_latin).collect()
 }
 
 /// Issue 481 unit 2b: whether two notices' buyer token sets (each sorted, deduplicated)
@@ -1635,6 +1648,12 @@ pub struct TenderLinkRuleCounts {
     /// citing one — a DÖE notice's OPP-090 citing TED, the population ADR-0011 never
     /// measured (every `logical-notice` row is one: TED names DÖE).
     pub cross_source: u64,
+    /// Of `would_merge` (issue 481 unit 2b review), previous-notice rows whose target is
+    /// NOT strictly earlier than the citing notice: the fold refuses them first, by
+    /// direction (ADR-0011 guard 3, `LinkTally::not_earlier`), whatever their buyers.
+    /// Not re-queued and not sampled — job 1882's copied placeholder (Älvkarleby kommun
+    /// citing SCB's newer `00123456-2026`) is one. Zero for every rule but `opp-090`.
+    pub not_earlier: u64,
     /// Of `would_merge` (issue 481 unit 2b), previous-notice rows the buyer guard
     /// refuses: the target is strictly earlier, both notices name their buyers, and
     /// they share none ([`buyer_tokens_disjoint`]) — the placeholder-OPP-090 shape.
@@ -1691,12 +1710,16 @@ pub struct TenderLinkBackfill {
     pub requeued: u64,
     /// Per rule of [`LINK_DECLARED_RULES`], in that order.
     pub rules: Vec<(String, TenderLinkRuleCounts)>,
-    /// Up to [`LINK_BACKFILL_SAMPLES`] `would_merge` pairs the buyer guard admits —
-    /// the joins — a uniform sample (reservoir, fixed seed: the walk is ordered, so one
-    /// corpus gives one sample). The pairs it refuses are `disjoint_samples`.
+    /// Up to [`LINK_BACKFILL_SAMPLES`] `would_merge` pairs the direction check and the
+    /// buyer guard admit — the joins — a uniform sample (reservoir, fixed seed: the walk
+    /// is ordered, so one corpus gives one sample). The pairs the buyer guard refuses are
+    /// `disjoint_samples`; the `not_earlier` ones are counted only.
     pub samples: Vec<TenderLinkSample>,
     /// `would_merge` pairs seen, all rules.
     pub would_merge: u64,
+    /// Issue 481 unit 2b review: of `would_merge`, the previous-notice pairs whose target
+    /// is not strictly earlier, all rules ([`TenderLinkRuleCounts::not_earlier`]).
+    pub not_earlier: u64,
     /// Issue 481 unit 2b: up to [`LINK_BACKFILL_SAMPLES`] `buyer_disjoint` pairs, and
     /// how many were seen, all rules.
     pub disjoint_samples: Vec<TenderLinkSample>,
@@ -9928,12 +9951,20 @@ impl Db {
     pub async fn plan_is_complete(&self) -> turso::Result<bool> {
         let conn = self.conn().await;
         let mut exists = conn
-            .query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'plan_notice'", ())
+            .query("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'plan_notice'", ())
             .await?;
-        if exists.next().await?.is_none() {
+        // Issue 481 unit 2b: a plan built before the buyer guard has no
+        // `buyer_tokens` column, which the link step selects. Resuming it would fail on
+        // every retry over an already-reset tender layer, so it is not resumable — the
+        // rebuild plans again (the `plan_link_edge` rule below, for a plan column).
+        let guarded = match exists.next().await? {
+            Some(ddl) => text(&ddl, 0).contains("buyer_tokens"),
+            None => return Ok(false),
+        };
+        drop(exists);
+        if !guarded {
             return Ok(false);
         }
-        drop(exists);
         // Issue 481: a plan built before the link ledger carries its previous-notice
         // references unresolved in `plan_prev_edge`, which this grouping no longer
         // reads. Resuming it would fold every ADR-0011 merge apart, so it is not
@@ -10622,9 +10653,12 @@ impl Db {
     ///
     /// The buyer census (issue 481 unit 2b) judges every resolved previous-notice row as
     /// the fold's buyer guard will, on `endpoints` (the plan row's own facts, by notice
-    /// id; a notice missing from it is unknown and never judged). Of `would_merge`, a row
-    /// whose target is strictly earlier and whose notices are buyer-disjoint is
-    /// `buyer_disjoint`: the next fold refuses it, so it re-queues nothing. A row whose
+    /// id; a notice missing from it is unknown and never judged), in the fold's order. Of
+    /// `would_merge`, a row whose target is not strictly earlier is `not_earlier`: the
+    /// fold refuses it by direction before it reads a buyer, so it re-queues nothing and
+    /// is not sampled. A row whose target is strictly earlier and whose notices are
+    /// buyer-disjoint is `buyer_disjoint`: the next fold refuses it, so it re-queues
+    /// nothing. A row whose
     /// notices share a Tender today, with the target strictly earlier, the notices
     /// buyer-disjoint and under different procedure keys, is `would_split`: an earlier
     /// full projection joined them before the guard, the next fold that plans them splits
@@ -10647,15 +10681,17 @@ impl Db {
         let mut shared = SharedTender::prepare(&reader).await?;
         let mut diffs: Vec<(i64, DeclaredDiff)> = Vec::new();
         let mut requeue: Vec<i64> = Vec::new();
-        // The census's verdict on a resolved previous-notice row `a → b`: whether the
-        // target is strictly earlier and the two notices are buyer-disjoint, and whether
-        // they also sit under different procedure keys (a shared BT-04 is one group
-        // whatever the link says). `None` when either end is unknown.
-        let judge = |a: i64, b: i64| -> Option<(bool, bool)> {
+        // The census's verdict on a resolved previous-notice row `a → b`, in the fold's
+        // order (`Db::link_step`): whether the target is NOT strictly earlier (refused by
+        // direction, whatever the buyers); else whether the two notices are
+        // buyer-disjoint; and whether they sit under different procedure keys (a shared
+        // BT-04 is one group whatever the link says). `None` when either end is unknown.
+        let judge = |a: i64, b: i64| -> Option<(bool, bool, bool)> {
             let (fa, fb) = (endpoints.get(&a)?, endpoints.get(&b)?);
-            let refused = fb.published_at < fa.published_at && buyer_tokens_disjoint(&fa.buyer_tokens, &fb.buyer_tokens);
+            let not_earlier = fb.published_at >= fa.published_at;
+            let disjoint = !not_earlier && buyer_tokens_disjoint(&fa.buyer_tokens, &fb.buyer_tokens);
             let apart = fa.procedure_key.is_none() || fa.procedure_key != fb.procedure_key;
-            Some((refused, apart))
+            Some((not_earlier, disjoint, apart))
         };
         for (notice, diff) in window.notices {
             for row in &diff.declared {
@@ -10676,9 +10712,10 @@ impl Db {
                 let Some(b) = *target else { continue };
                 let previous = is_previous_notice_rule(rule);
                 let verdict = if previous { judge(notice.id, b) } else { None };
-                let refused = verdict.is_some_and(|(refused, _)| refused);
+                let not_earlier = verdict.is_some_and(|(not_earlier, _, _)| not_earlier);
+                let refused = verdict.is_some_and(|(_, disjoint, _)| disjoint);
                 if shared.shared(notice.id, b).await? {
-                    if refused && verdict.is_some_and(|(_, apart)| apart) {
+                    if refused && verdict.is_some_and(|(_, _, apart)| apart) {
                         report.counts(rule).would_split += 1;
                         report.would_split += 1;
                         requeue.extend([notice.id, b]);
@@ -10691,6 +10728,15 @@ impl Db {
                 counts.would_merge += 1;
                 if *b_source != notice.source {
                     counts.cross_source += 1;
+                }
+                if not_earlier {
+                    // The fold refuses it by direction first: not a join, so neither
+                    // re-queued nor offered to the joins' sample (issue 481 unit 2b
+                    // review — job 1882 showed such a row among the joins).
+                    counts.not_earlier += 1;
+                    report.would_merge += 1;
+                    report.not_earlier += 1;
+                    continue;
                 }
                 if refused {
                     counts.buyer_disjoint += 1;

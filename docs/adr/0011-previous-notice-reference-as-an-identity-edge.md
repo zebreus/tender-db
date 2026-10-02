@@ -158,8 +158,12 @@ contracting authority. This is a refusal, not inference. The link is still the p
 link, the check never joins anything, and it can only keep two notices apart that the data itself
 contradicts. "Nothing here matches on buyer" above still holds for admission.
 
-- **Tolerant tokens.** The check reads each buyer's identifier key and its N2 name key, both
-  tokens, so a buyer written once with its identifier and once by name only still overlaps.
+- **Tolerant tokens.** The check reads each buyer's identifier and its names, all tokens, so a
+  buyer written once with its identifier and once by name only still overlaps. Each token takes
+  the spellings one buyer is measured to publish (review of unit 2b): the identifier as its E1
+  cross-walk key (every SIRET of one SIREN, a VAT and its national number), each language
+  variant of the name, accents folded, under the register country. A wider token can only keep a
+  join, never refuse one, while a false refusal also splits a correct Tender.
 - **Unknown never refuses.** A notice whose buyers were not parsed is never refused and never
   refuses.
 - **Notice against notice.** The check compares the citing notice with the cited notice, not with

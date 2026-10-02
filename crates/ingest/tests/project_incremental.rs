@@ -2019,7 +2019,9 @@ async fn absorb_and_compare(full: &Db, incr: &Db, label: &str) -> project::Repor
 /// order the copier finds its target forward and the SCB citer's fold reaches the copier
 /// back through the ledger; DÖE-first, the copier lands before its target and keeps an
 /// unresolved row the target's arrival finds by name. The refusal is a verdict on two
-/// notices, so it never waits and is the same on both paths.
+/// notices, so it never waits and is the same on both paths. So is the admission of the
+/// unit 2b review's shape: an AP-HP award citing its contract notice under another SIRET
+/// of the same SIREN and another spelling of its name joins on both paths.
 ///
 /// Before the closure an incremental plan held only the touched notices, so every one
 /// of these joins waited for a full re-projection.
@@ -2028,6 +2030,8 @@ async fn the_ledger_joins_incrementally_exactly_as_a_full_fold_in_either_order()
     const KEY_SCB: &str = "4d5e6f7a-8b9c-4d0e-9f1a-2b3c4d5e6f7a";
     const KEY_COPIER: &str = "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b";
     const KEY_SCB_LATER: &str = "6f7a8b9c-0d1e-4f2a-9b3c-4d5e6f7a8b9c";
+    const KEY_APHP_CN: &str = "7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c0d";
+    const KEY_APHP_CAN: &str = "8b9c0d1e-2f3a-4b4c-9d5e-6f7a8b9c0d1e";
     let mut corpus: Vec<((&str, String, i64, Vec<(&str, String)>), Vec<Buyer>)> =
         linked_corpus().into_iter().map(|member| (member, Vec::new())).collect();
     corpus.extend([
@@ -2040,13 +2044,18 @@ async fn the_ledger_joins_incrementally_exactly_as_a_full_fold_in_either_order()
             ("ted", "00500002-2024".into(), 20_006, vec![("BT-04-notice", KEY_SCB_LATER.into()), ("OPP-090-Procedure", "123456-2024".into())]),
             vec![("STATISTISKA CENTRALBYRÅN", "SWE", "")],
         ),
+        (("ted", "00700001-2024".into(), 19_985, vec![("BT-04-notice", KEY_APHP_CN.into())]), vec![("AP-HP — AGEPS (achats)", "FRA", "26750045200672")]),
+        (
+            ("ted", "00700002-2024".into(), 20_007, vec![("BT-04-notice", KEY_APHP_CAN.into()), ("OPP-090-Procedure", "700001-2024".into())]),
+            vec![("ASSISTANCE PUBLIQUE HOPITAUX DE PARIS", "FRA", "26750045201928")],
+        ),
     ]);
     let record = async |db: &Db, fetch: i64, ((source, pub_id, day, ids), buyers): &((&str, String, i64, Vec<(&str, String)>), Vec<Buyer>)| {
         let ids: Vec<(&str, &str)> = ids.iter().map(|(f, v)| (*f, v.as_str())).collect();
         record_linked_buyers(db, fetch, source, pub_id, *day, &ids, buyers).await;
     };
-    let ted_first: [&[usize]; 3] = [&[0, 2, 5, 7], &[1, 3, 6, 8], &[4, 9]];
-    let doe_first: [&[usize]; 2] = [&[1, 3, 4, 6, 8], &[0, 2, 5, 7, 9]];
+    let ted_first: [&[usize]; 3] = [&[0, 2, 5, 7, 10], &[1, 3, 6, 8, 11], &[4, 9]];
+    let doe_first: [&[usize]; 2] = [&[1, 3, 4, 6, 8, 11], &[0, 2, 5, 7, 9, 10]];
     for (order, deltas) in [("ted-first", &ted_first[..]), ("doe-first", &doe_first[..])] {
         let (full, ff, pf) = scratch(&format!("links-{order}-full")).await;
         let (incr, fi, pi) = scratch(&format!("links-{order}-incr")).await;
@@ -2079,8 +2088,14 @@ async fn the_ledger_joins_incrementally_exactly_as_a_full_fold_in_either_order()
         let scb = tender_of(&incr, "00123456-2024").await;
         assert_ne!(tender_of(&incr, "00500001-2024").await, scb, "{order}: the copier stays out of SCB's Tender");
         assert_eq!(tender_of(&incr, "00500002-2024").await, scb, "{order}: SCB's own later notice joins it");
-        // The established corpus's three Tenders, the three linked ones, SCB's and the copier's.
-        assert_eq!(count(&incr, "SELECT COUNT(*) FROM tenders").await, 3 + 5, "{order}");
+        assert_eq!(
+            tender_of(&incr, "00700002-2024").await,
+            tender_of(&incr, "00700001-2024").await,
+            "{order}: AP-HP's award joins its contract notice across two SIRETs of one SIREN"
+        );
+        // The established corpus's three Tenders, the three linked ones, SCB's, the
+        // copier's and AP-HP's.
+        assert_eq!(count(&incr, "SELECT COUNT(*) FROM tenders").await, 3 + 6, "{order}");
 
         for p in [pf, pi] {
             for s in ["", "-wal", "-shm"] {
@@ -2534,7 +2549,10 @@ async fn ledger_rows(db: &Db) -> String {
 /// already sharing a BT-04 is one Tender; one TED notice names a DÖE id nobody holds;
 /// and (issue 481 unit 2b) one TED notice copies SCB's publication number into its
 /// OPP-090 — a would-merge pair the buyer guard refuses, counted `buyer_disjoint` and
-/// sampled apart from the joins, never re-queued. Walked through windows of two notices
+/// sampled apart from the joins, never re-queued — and another, published BEFORE SCB's
+/// notice, copies it too: job 1882's sampled shape, which the fold refuses by direction
+/// first, so it is counted `not_earlier`, neither sampled among the joins nor re-queued
+/// (the unit 2b review: it had read as a join). Walked through windows of two notices
 /// and three ids:
 ///
 /// - dry: per-rule counts, the would-merge pairs by both publication ids, the re-queue
@@ -2564,6 +2582,8 @@ async fn the_ledger_backfill_counts_dry_writes_wet_and_the_daily_joins() {
         .await;
     let copier = [("BT-04-notice", "e2f3a4b5-c6d7-4e8f-9a0b-1c2d3e4f5a6b"), ("OPP-090-Procedure", "123456-2024")];
     record_linked_buyers(&db, fetch, "ted", "00400009-2024", 20_007, &copier, &[ALVKARLEBY]).await;
+    let early_copier = [("BT-04-notice", "f3a4b5c6-d7e8-4f9a-8b1c-2d3e4f5a6b70"), ("OPP-090-Procedure", "123456-2024")];
+    record_linked_buyers(&db, fetch, "ted", "00400010-2024", 19_970, &early_copier, &[ALVKARLEBY]).await;
     project::project(&db, false).await.expect("project");
     db.execute_for_test("DELETE FROM tender_links").await.expect("the binary that planned them kept no ledger");
     db.execute_for_test("UPDATE projection_state SET tender_links_complete = 0").await.expect("nor attested one");
@@ -2592,27 +2612,30 @@ async fn the_ledger_backfill_counts_dry_writes_wet_and_the_daily_joins() {
         unresolved: 1,
         would_merge: 2,
         cross_source: 2,
+        not_earlier: 0,
         buyer_disjoint: 0,
         would_split: 0,
         stale: 0,
     };
     // The copier's row is a would-merge row the buyer guard refuses: counted, sampled
-    // apart, and NOT re-queued — the next fold refuses it, as a full fold does.
+    // apart, and NOT re-queued — the next fold refuses it, as a full fold does. The early
+    // copier's row is refused by direction before any buyer is read: counted only.
     let opp = store::TenderLinkRuleCounts {
-        declared: 2,
+        declared: 3,
         present: 0,
-        resolved: 2,
+        resolved: 3,
         unresolved: 0,
-        would_merge: 2,
+        would_merge: 3,
         cross_source: 1,
+        not_earlier: 1,
         buyer_disjoint: 1,
         would_split: 0,
         stale: 0,
     };
     assert_eq!(rule(&dry, "logical-notice"), logical, "{dry:?}");
     assert_eq!(rule(&dry, "opp-090"), opp, "{dry:?}");
-    assert_eq!((dry.notices, dry.declaring, dry.would_merge, dry.requeued), (15, 6, 4, 6), "{dry:?}");
-    assert_eq!((dry.buyer_disjoint, dry.would_split), (1, 0), "{dry:?}");
+    assert_eq!((dry.notices, dry.declaring, dry.would_merge, dry.requeued), (16, 7, 5, 6), "{dry:?}");
+    assert_eq!((dry.not_earlier, dry.buyer_disjoint, dry.would_split), (1, 1, 0), "{dry:?}");
     let sample = |s: &store::TenderLinkSample| {
         format!("{} {}:{} {}:{}", s.rule, s.a_source, s.a_publication_id, s.b_source, s.b_publication_id)
     };
@@ -2621,7 +2644,8 @@ async fn the_ledger_backfill_counts_dry_writes_wet_and_the_daily_joins() {
         vec!["opp-090 ted:00400009-2024 ted:00123456-2024".to_owned()]
     );
     assert!(dry.split_samples.is_empty(), "{dry:?}");
-    // The joins only: the copier's refused pair is in `disjoint_samples`, not here.
+    // The joins only: the copier's refused pair is in `disjoint_samples`, and the early
+    // copier's is in no list — neither is here.
     let mut samples: Vec<String> = dry.samples.iter().map(sample).collect();
     samples.sort();
     assert_eq!(
@@ -2651,7 +2675,7 @@ async fn the_ledger_backfill_counts_dry_writes_wet_and_the_daily_joins() {
     assert_eq!((rule(&wet, "logical-notice"), rule(&wet, "opp-090")), (logical, opp), "{wet:?}");
     assert_eq!(wet.requeued, 6, "{wet:?}");
     assert!(db.tender_links_complete().await.unwrap(), "a finished wet walk attests the ledger complete");
-    assert_eq!(count(&db, "SELECT COUNT(*) FROM tender_links WHERE kind = 'declared'").await, 6);
+    assert_eq!(count(&db, "SELECT COUNT(*) FROM tender_links WHERE kind = 'declared'").await, 7);
     let id = async |pub_id: &str| count(&db, &format!("SELECT id FROM notices WHERE publication_id = '{pub_id}'")).await;
     let mut queued = Vec::new();
     for (a, b) in &pairs {
@@ -2669,7 +2693,9 @@ async fn the_ledger_backfill_counts_dry_writes_wet_and_the_daily_joins() {
         assert_eq!(tender_of(&db, a).await, tender_of(&db, b).await, "{a} and {b} joined by the daily fold");
     }
     assert_eq!(count(&db, "SELECT COUNT(*) FROM tenders").await, tenders_before - 3);
-    assert_ne!(tender_of(&db, "00400009-2024").await, tender_of(&db, "00123456-2024").await, "the copier stays out");
+    for copier in ["00400009-2024", "00400010-2024"] {
+        assert_ne!(tender_of(&db, copier).await, tender_of(&db, "00123456-2024").await, "{copier} stays out");
+    }
     assert_eq!(ghosts(&db).await, 0);
 
     let rows = ledger_rows(&db).await;

@@ -1,6 +1,6 @@
 # 481 — cross-source Tender dedup is exact-key only; how many duplicates it misses is unmeasured, and there is no source-agnostic edge for future portals
 
-Status: ready-for-agent — UNIT 2b (the buyer guard on previous-notice references) LANDED 2026-10-02, not yet deployed; unit 2 deployed 2026-10-02 09:15 UTC (`7b14469`), its wet backfill HELD for 2b. NEXT: deploy → `backfill-tender-links` dry → read `buyer_disjoint` / `would_split` and their samples (two placeholder hubs are already on prod: Tender 1012301, 184 versions from 60 buyers, and SCB's 526284 with six copiers) → wet → the next daily splits the would-split welds; read its `issue-481` line (`buyer-disjoint`, largest component).
+Status: ready-for-agent — UNIT 2b (the buyer guard on previous-notice references) LANDED 2026-10-02 with its review fixes (tokens take one buyer's measured spellings: E1 identifier keys, every language variant, accents folded, register country; the census counts `not_earlier` apart from the joins), not yet deployed; unit 2 deployed 2026-10-02 09:15 UTC (`7b14469`), its wet backfill HELD for 2b. NEXT: deploy → `backfill-tender-links` dry → read `buyer_disjoint` / `would_split` and their samples (two placeholder hubs are already on prod: Tender 1012301, 184 versions from 60 buyers, and SCB's 526284 with six copiers) → wet → the next daily splits the would-split welds; read its `issue-481` line (`buyer-disjoint`, largest component).
 Was status: ready-for-agent — UNIT 1 (CALIBRATION) DONE 2026-10-02 (workflow `wf_09fa7411-6db`; report `.scratch/tender-db/481-dedup/calibration-2026-10-02.md`). The TED↔DÖE misses are DECLARED links the fold does not follow, not fuzzy ones. TED `BT-701-notice` equals the DÖE notice UUID on 136 of 136 above-threshold DÖE islands in April 2025 (1.08 % of the month's merged count; ~2,650 extrapolated). Cross-source `OPP-090` links are dropped by a same-source condition. The best matched rule R1 measured 0 FP / 1,289 negatives at 98.0 % recall, but adds 0 joins beyond the declared link. NEXT: unit 2, the edge ledger with the `notice_uuid` and cross-source `OPP-090` producers and the fold reading it (incremental path included), plus the weld guards. The UUID-collision false merges it surfaced are issue 482.
 Was status: ready-for-agent — DECIDED 2026-10-02 (Lennart: "fuzzy matches are probably fine if we are really really sure it's the same one. Nothing is deliberately forbidden if it is correct"; recorded as ADR-0003's 2026-10-02 amendment). A matched link is a merge warrant when its precision is measured near-certain. The first unit is calibration: measure candidate signals against the 243,588 UUID-merged TED↔DÖE pairs (labelled positives) and same-buyer different-procedure pairs (labelled negatives), then count the unmerged DÖE Tenders that a near-certain matcher would join.
 Was status: ready-for-agent — filed 2026-10-02 from Lennart's question ("do we have proper general deduplication/merging,
@@ -335,4 +335,45 @@ versions and buyers by the Tender's PK:
 - **Census cost.** One full parse per endpoint of a resolved `opp-090` row: ≤ ~360k notices against job 1882's
   181,222 resolved rows, so expect the dry run well above 585 s. A raw-BT-04 pre-filter (pairs under one key never
   split) would halve it if it matters.
+
+**Review fixes (2026-10-02, adversarial panel on `7d4cc3b`; each new test checked to fail with its fix reverted).**
+- *False refusals of one buyer published two ways* (major + three minors, all fixed). The first token set forgave
+  casing and punctuation only. Prod (org 9442, AP-HP) publishes five SIRETs of SIREN 267500452 under 40 name
+  spellings, so two of its notices could share no raw identifier and no raw N2 name. That refused the reference, and
+  `would_split` would have split the 2026-08-20 projection's correct Tenders on the next daily. The guard's tokens
+  (`buyer_guard_tokens`; the org layer's `buyer_key` is unchanged) now take every spelling one buyer is measured to
+  publish. A wider token only fails open, and only for one buyer written two ways:
+  - the identifier as its E1 cross-walk key (`x:FR:siren:…` for every SIRET of one SIREN, `x:PL:nip:…` for a bare
+    or `PL…` NIP, `x:SE:orgnr:…` for an organisationsnummer and its `SE…01` VAT), else as published. Equal raw
+    identifiers give equal E1 keys, so nothing is lost. E2 (pad) keys are excluded: the CZ Justice/Assay pad
+    collision stays disjoint, and so do SCB and Älvkarleby;
+  - every name the mention published, i.e. each labelled BT-500 language variant, not only the first-seen head.
+    This also makes the set independent of language order, the implementer's open parity risk;
+  - Latin diacritics folded (`store::buyer_name_fold`, the R2 name gate's `fold_latin` table), so `HOPITAUX` meets
+    `hôpitaux`;
+  - the name scoped by `register_jurisdiction(country)`, so `RE` meets `FR` as the identifier already did.
+  - Token count per buyer is unchanged except for variants (4 bytes per extra language).
+  - Tests: unit `one_buyer_spelled_as_it_is_published_overlaps_and_two_buyers_do_not` (seven must-overlap shapes,
+    two must-stay-apart shapes, the org layer's N2 key still split on accents); four more pairs in
+    `overlapping_or_unknown_buyers_keep_a_previous_notice_reference_joined` (SIRETs, NIP, accents, RE/FR); an AP-HP
+    pair in the incremental-equals-full parity test, both arrival orders.
+- *Not-earlier rows read as joins in the census* (minor, fixed). The census judged direction only inside its
+  buyer verdict, so a resolved `opp-090` row whose target is not strictly earlier counted in `would_merge`, was
+  re-queued and was offered to `samples` ("the joins"). The fold refuses those first. Job 1882's Älvkarleby →
+  SCB pair is one, and it showed among the joins. Now it is judged in the fold's order: such a row is
+  `not_earlier` (per rule and in total, a subset of `would_merge` like `buyer_disjoint`). It is neither re-queued
+  nor sampled. The backfill test gained that early copier.
+- *A pre-guard plan counted as resumable* (minor, fixed). A complete plan from `7b14469` has `plan_link_edge` but
+  no `plan_notice.buyer_tokens`. A rebuild salvaged on this binary would skip Phase-1 and fail in the link step
+  over an already-reset tender layer, on every retry. `plan_is_complete` now refuses a plan whose `plan_notice`
+  lacks the column, so the rebuild plans again. Test `a_plan_from_before_the_buyer_guard_is_rebuilt_not_resumed`.
+- *The census read DE-1.x endpoints unfolded* (minor, fixed; latent, since no DE-1.x notice is an `opp-090`
+  endpoint today). `link_endpoints` now runs `normalise_de1` on each batch before `Ident::read`, as all three plan
+  paths and the walk do. No test: no DE-1.x notice can reach it yet.
+- *Prod read* (1 bounded `/v1/sql` seek on `organization_mentions_org`): AP-HP's mentions carry SIRETs …00623,
+  …01928, …00672, …01746, …00011, …00201, …00565 under names from "Hôpital Bicêtre, service achat" to "ACHAT".
+- *Still refused, by design*: a buyer that renamed itself, or respelled beyond case, punctuation and accents, with
+  no identifier in common; a CAN filed by another body than the CN's buyer. The reviewer found the CPB-as-service-
+  provider shape outside both sets (eForms `OPT-300-Procedure-SProvider`), and 0 of 13 sampled daily citers
+  refused.
 

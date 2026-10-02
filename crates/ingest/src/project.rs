@@ -2047,7 +2047,12 @@ const LINK_ENDPOINT_BATCH: usize = 500;
 async fn link_endpoints(db: &Db, ids: &[i64]) -> turso::Result<HashMap<i64, store::LinkEndpoint>> {
     let mut out = HashMap::with_capacity(ids.len());
     for batch in ids.chunks(LINK_ENDPOINT_BATCH) {
-        for (notice, parsed) in db.parsed_by_ids(batch).await? {
+        let mut notices = db.parsed_by_ids(batch).await?;
+        // The plan paths fold DE-1.x onto the eForms vocabulary before `Ident::read`
+        // (its buyer refs, names and publication date are `DE1-*` until then), so the
+        // census does too (issue 481 unit 2b review).
+        normalise_de1(&mut notices);
+        for (notice, parsed) in notices {
             let row = Ident::read(&notice, &parsed).into_plan_row();
             out.insert(
                 notice.id,
@@ -5916,22 +5921,60 @@ fn buyer_key_of(mentions: &[store::Mention]) -> Option<String> {
 
 /// Issue 481 unit 2b: the notice's TOLERANT buyer token set, for the link step's buyer
 /// guard on previous-notice references (`store::PlanRow::buyer_tokens`). For every
-/// buyer mention BOTH its identifier key (when the identifier passed the gate) AND its
-/// N2 name key, digested ([`store::buyer_token`]), sorted and deduplicated. Two notices
-/// overlap when they share one token, so a buyer written once with its identifier and
-/// once by name only still overlaps, as does a joint procurement's CAN naming one of
-/// its CN's buyers. [`buyer_key`] picks ONE key per buyer — identifier OR name — which
-/// is right for issue 369's distinct count and would read those two spellings as two
-/// buyers here. Empty when no buyer was parsed: unknown, which the guard never refuses.
+/// buyer mention BOTH its identifier token (when the identifier passed the gate) AND
+/// its name tokens ([`buyer_guard_tokens`]), digested ([`store::buyer_token`]), sorted
+/// and deduplicated. Two notices overlap when they share one token, so a buyer written
+/// once with its identifier and once by name only still overlaps, as does a joint
+/// procurement's CAN naming one of its CN's buyers. [`buyer_key`] picks ONE key per
+/// buyer — identifier OR name — which is right for issue 369's distinct count and would
+/// read those two spellings as two buyers here. Empty when no buyer was parsed:
+/// unknown, which the guard never refuses.
 fn buyer_tokens_of(mentions: &[store::Mention]) -> Vec<u32> {
-    let mut tokens: Vec<u32> = mentions
-        .iter()
-        .flat_map(|m| buyer_identifier_key(m).into_iter().chain(buyer_name_key(m)))
-        .map(|token| store::buyer_token(&token))
-        .collect();
+    let mut tokens: Vec<u32> =
+        mentions.iter().flat_map(buyer_guard_tokens).map(|token| store::buyer_token(&token)).collect();
     tokens.sort_unstable();
     tokens.dedup();
     tokens
+}
+
+/// Issue 481 unit 2b (review): one buyer mention's tokens for the link guard. Wider than
+/// the org layer's keys ([`buyer_identifier_key`], [`buyer_name_key`], which stay as
+/// they are) on purpose: a token can only make two notices overlap, so every widening
+/// here fails open, toward the pre-guard behaviour, and only for one buyer written two
+/// ways. A false refusal also splits a correct Tender (`would_split`), so the guard
+/// takes every spelling difference one buyer is measured to publish:
+///
+/// - **Identifier**: the cross-walk's E1 canonical key when the identifier has one
+///   (`x:FR:siren:267500452` for every SIRET of one SIREN, as AP-HP publishes five;
+///   `x:PL:nip:…` for a NIP written bare or as a `PL…` VAT; `x:SE:orgnr:…` for the
+///   organisationsnummer and its `SE…01` VAT), else the raw `country:kind:value`. Equal
+///   raw identifiers always give equal E1 keys, so the substitution loses no overlap.
+///   E2 (pad-derived) keys are never used: padding has collided across entities.
+/// - **Name**: `n2:<register jurisdiction>:<match_norm, Latin diacritics folded>`, for
+///   the head name AND every labelled language variant. The register jurisdiction puts
+///   a buyer writing `RE` one day and `FR` the next under one country (issue 358, as
+///   the identifier already is); the fold ([`store::buyer_name_fold`]) meets
+///   `HOPITAUX` with `hôpitaux`, which `match_norm` keeps apart for the org layer
+///   (issue 300); and every variant, not the first-seen head alone, makes the set
+///   independent of the order a multilingual notice lists its names in.
+fn buyer_guard_tokens(m: &store::Mention) -> Vec<String> {
+    let mut out = Vec::with_capacity(2 + m.variants.len());
+    if let Some(id) = &m.identifier {
+        let e1 = crate::crosswalk::canonical_key(id.country.as_deref(), &id.kind, &id.value)
+            .filter(|k| k.tier == crate::crosswalk::Tier::E1);
+        out.push(match e1 {
+            Some(k) => format!("x:{}:{}", k.scheme, k.key),
+            None => format!("{}:{}:{}", id.country.as_deref().unwrap_or(""), id.kind, id.value),
+        });
+    }
+    let country = m.country.as_deref().map(store::register_jurisdiction).unwrap_or("");
+    for name in std::iter::once(m.name.as_str()).chain(m.variants.iter().map(|(_, v)| v.as_str())) {
+        let norm = store::buyer_name_fold(&match_norm(name));
+        if !norm.is_empty() {
+            out.push(format!("n2:{country}:{norm}"));
+        }
+    }
+    out
 }
 
 /// Fold a legacy address-block element name onto a canonical party role
@@ -8664,6 +8707,127 @@ mod tests {
         sorted.sort_unstable();
         sorted.dedup();
         assert_eq!(cn, sorted, "sorted and deduplicated, as the guard's merge-walk needs");
+    }
+
+    /// Issue 481 unit 2b review: the spellings ONE buyer is measured to publish across a
+    /// procedure's notices, each of which read as two buyers to the first token set — so
+    /// the guard refused the reference, and `would_split` split a correct Tender. Every
+    /// pair is one buyer in two notices that share no raw identifier and no raw N2 name:
+    /// - two SIRETs of one SIREN under two names (AP-HP, org 9442: five SIRETs, 40 name
+    ///   spellings on prod) — the cross-walk's E1 key `FR:siren` meets them;
+    /// - a Polish NIP written as a `PL…` VAT and bare with dashes (USK Białystok);
+    /// - a Swedish `SE…01` VAT and the organisationsnummer it carries;
+    /// - one name with and without its accents, no identifier (French capitals);
+    /// - one name under `REU` and under `FRA` (issue 358's Réunion SDIS);
+    /// - a bilingual buyer listing its two names in opposite orders.
+    ///
+    /// And what must stay apart: two Swedish organisationsnummer (SCB and Älvkarleby, the
+    /// placeholder pair), and issue 300's E2 collision — a lost-leading-zero Czech IČO pads
+    /// onto ANOTHER entity's real one, so pad-derived keys are not tokens. The org layer's
+    /// keys (`buyer_key`) are unchanged: the accented spelling still keys apart there.
+    #[test]
+    fn one_buyer_spelled_as_it_is_published_overlaps_and_two_buyers_do_not() {
+        type Org<'a> = (&'a [(&'a str, Option<&'a str>)], &'a str, &'a str);
+        let notice = |orgs: &[Org]| -> Parsed {
+            let mut sections = vec![store::Section { id: "PROC".into(), kind: "Notice".into(), parent: None }];
+            let mut values = Vec::new();
+            for (i, (names, country, nat)) in orgs.iter().enumerate() {
+                let id = format!("ORG-{}", i + 1);
+                sections.push(store::Section { id: id.clone(), kind: ORGANIZATION_KIND.into(), parent: None });
+                let mut push = |section: &str, field: &str, value: NoticeValue| {
+                    values.push(store::ValueRow { section_id: section.into(), field_id: field.into(), ordinal: 0, value });
+                };
+                push("PROC", "OPT-300-Procedure-Buyer", NoticeValue::Id { scheme: None, value: id.clone(), is_ref: true });
+                for (name, lang) in *names {
+                    push(&id, ORG_NAME_FIELD, NoticeValue::Text { value: (*name).into(), lang: lang.map(str::to_owned) });
+                }
+                push(&id, ORG_COUNTRY_FIELD, NoticeValue::Code { list: None, code: (*country).into() });
+                if !nat.is_empty() {
+                    push(&id, ORG_IDENTIFIER_FIELD, NoticeValue::Id { scheme: None, value: (*nat).into(), is_ref: false });
+                }
+            }
+            Parsed { sections, values }
+        };
+        let tokens = |orgs: &[Org]| buyer_tokens_of(&buyer_mentions(false, 1, &notice(orgs)));
+        let gated = |nat: &str, country: &str| {
+            assert!(normalise_identifier(nat, Some(country)).is_some(), "{nat} passes the gate under {country}");
+        };
+        for (nat, country) in [
+            ("26750045200672", "FR"),
+            ("26750045201928", "FR"),
+            ("26750045201746", "FR"),
+            ("PL5422534985", "PL"),
+            ("542-25-34-985", "PL"),
+            ("SE202100083701", "SE"),
+            ("2021000837", "SE"),
+            ("2120000258", "SE"),
+            ("0002542", "CZ"),
+            ("00002542", "CZ"),
+        ] {
+            gated(nat, country);
+        }
+        let one: [(&str, Org, Org); 7] = [
+            (
+                "two SIRETs of one SIREN",
+                (&[("AP-HP — AGEPS (achats)", None)], "FRA", "26750045200672"),
+                (&[("AGEPS", None)], "FRA", "26750045201928"),
+            ),
+            (
+                "two SIRETs, the accented head and a sub-unit",
+                (&[("Assistance publique hôpitaux de Paris", None)], "FRA", "26750045201746"),
+                (&[("APHP Sorbonne Université", None)], "FRA", "26750045201928"),
+            ),
+            (
+                "a NIP as VAT and bare",
+                (&[("USK w Białymstoku", None)], "POL", "PL5422534985"),
+                (&[("Uniwersytecki Szpital Kliniczny w Białymstoku", None)], "POL", "542-25-34-985"),
+            ),
+            (
+                "an organisationsnummer and its VAT",
+                (&[("SCB", None)], "SWE", "SE202100083701"),
+                (&[("Statistiska centralbyrån", None)], "SWE", "2021000837"),
+            ),
+            (
+                "one name with and without accents",
+                (&[("Assistance publique hôpitaux de Paris", None)], "FRA", ""),
+                (&[("ASSISTANCE PUBLIQUE HOPITAUX DE PARIS", None)], "FRA", ""),
+            ),
+            (
+                "one name under a regional code and its register's",
+                (&[("SDIS de la Réunion", None)], "REU", ""),
+                (&[("SDIS de la Réunion", None)], "FRA", ""),
+            ),
+            (
+                "two languages in opposite orders",
+                (&[("Ville de Bruxelles", Some("FRA")), ("Stad Brussel", Some("NLD"))], "BEL", ""),
+                (&[("Stad Brussel", Some("NLD")), ("Ville de Bruxelles", Some("FRA"))], "BEL", ""),
+            ),
+        ];
+        for (label, a, b) in &one {
+            let (ta, tb) = (tokens(&[*a]), tokens(&[*b]));
+            assert!(!store::buyer_tokens_disjoint(&ta, &tb), "{label}: one buyer overlaps ({ta:?} / {tb:?})");
+        }
+        let two: [(&str, Org, Org); 2] = [
+            (
+                "SCB and Älvkarleby",
+                (&[("Statistiska centralbyrån", None)], "SWE", "SE202100083701"),
+                (&[("Älvkarleby kommun", None)], "SWE", "2120000258"),
+            ),
+            (
+                "an E2 pad onto another entity's IČO",
+                (&[("Ministerstvo spravedlnosti", None)], "CZE", "0002542"),
+                (&[("Puncovní úřad", None)], "CZE", "00002542"),
+            ),
+        ];
+        for (label, a, b) in &two {
+            let (ta, tb) = (tokens(&[*a]), tokens(&[*b]));
+            assert!(store::buyer_tokens_disjoint(&ta, &tb), "{label}: two buyers share nothing");
+        }
+        assert_ne!(
+            buyer_key(false, 1, &notice(&[one[4].1])),
+            buyer_key(false, 2, &notice(&[one[4].2])),
+            "the org layer's N2 key still keeps the diacritics (issue 300)"
+        );
     }
 
     #[test]

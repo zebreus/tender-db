@@ -4178,21 +4178,36 @@ async fn a_placeholder_previous_notice_reference_to_another_buyers_notice_is_ref
 /// - a joint procurement: the CN names a central purchasing body and two authorities, the
 ///   CAN one of those authorities and one more — overlapping, not equal, sets;
 /// - a CAN naming no buyer at all citing a CN that names one, and a CAN naming a buyer
-///   citing a CN that names none — unknown is not disjoint, either way round.
+///   citing a CN that names none — unknown is not disjoint, either way round;
+/// - (the unit 2b review, one buyer as it is published) two SIRETs of one SIREN under
+///   two names, a Polish NIP as a `PL…` VAT and bare, one identifier-less name with and
+///   without its accents, and one name under `REU` and under `FRA`.
 #[tokio::test]
 async fn overlapping_or_unknown_buyers_keep_a_previous_notice_reference_joined() {
     let (db, fetch_id, path) = scratch("buyer-overlap").await;
-    let key = |n: u8| format!("{n}f9e8d7c-6b5a-4c3d-9e2f-1a0b9c8d7e6f");
+    let key = |n: u8| format!("{n:02x}f9e8d7-6b5a-4c3d-9e2f-1a0b9c8d7e6f");
     let aachen_id: Buyer = ("Stadt Aachen", "DEU", "DE811907980");
     let aachen_name: Buyer = ("STADT AACHEN", "DEU", "");
     let cpb: Buyer = ("Zentrale Beschaffungsstelle NRW", "DEU", "DE123456789");
     let dueren: Buyer = ("Kreis Düren", "DEU", "DE121038462");
     let alsdorf: Buyer = ("Gemeinde Alsdorf", "DEU", "");
-    let pairs: [(&str, &[Buyer], &str, &[Buyer]); 4] = [
+    let ageps: Buyer = ("AP-HP — AGEPS (achats)", "FRA", "26750045200672");
+    let aphp_siege: Buyer = ("ASSISTANCE PUBLIQUE HOPITAUX DE PARIS (AP-HP)", "FRA", "26750045201928");
+    let usk_vat: Buyer = ("USK w Białymstoku", "POL", "PL5422534985");
+    let usk_nip: Buyer = ("Uniwersytecki Szpital Kliniczny w Białymstoku", "POL", "542-25-34-985");
+    let aphp_accented: Buyer = ("Assistance publique hôpitaux de Paris", "FRA", "");
+    let aphp_capitals: Buyer = ("ASSISTANCE PUBLIQUE HOPITAUX DE PARIS", "FRA", "");
+    let sdis_re: Buyer = ("SDIS de la Réunion", "REU", "");
+    let sdis_fr: Buyer = ("SDIS de la Réunion", "FRA", "");
+    let pairs: [(&str, &[Buyer], &str, &[Buyer]); 8] = [
         ("00300001-2024", &[aachen_name], "00300002-2024", &[aachen_id]),
         ("00300003-2024", &[cpb, aachen_id, dueren], "00300004-2024", &[dueren, alsdorf]),
         ("00300005-2024", &[dueren], "00300006-2024", &[]),
         ("00300007-2024", &[], "00300008-2024", &[alsdorf]),
+        ("00300009-2024", &[ageps], "00300010-2024", &[aphp_siege]),
+        ("00300011-2024", &[usk_vat], "00300012-2024", &[usk_nip]),
+        ("00300013-2024", &[aphp_accented], "00300014-2024", &[aphp_capitals]),
+        ("00300015-2024", &[sdis_re], "00300016-2024", &[sdis_fr]),
     ];
     for (i, (cn, cn_buyers, can, can_buyers)) in pairs.iter().enumerate() {
         let (cn_key, can_key) = (key(2 * i as u8), key(2 * i as u8 + 1));
@@ -4203,11 +4218,11 @@ async fn overlapping_or_unknown_buyers_keep_a_previous_notice_reference_joined()
     }
     let report = project::project(&db, false).await.expect("project");
 
-    assert_eq!((report.links.previous_notice, report.links.buyer_disjoint), (4, 0), "{:?}", report.links);
+    assert_eq!((report.links.previous_notice, report.links.buyer_disjoint), (8, 0), "{:?}", report.links);
     for (cn, _, can, _) in &pairs {
         assert_eq!(tender_of(&db, can).await, tender_of(&db, cn).await, "{can} stays with {cn}");
     }
-    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 4);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 8);
 
     let _ = std::fs::remove_file(&path);
 }

@@ -2776,9 +2776,11 @@ fn tender_link_samples_json(samples: &[store::TenderLinkSample]) -> Vec<serde_js
 
 /// The stored `tender-link-backfill` body: per-rule counts keyed by rule, and the
 /// sampled pairs by both publication ids, for a reader to check by hand before the wet
-/// run — `samples` the would-merge pairs the buyer guard admits (the joins), and (issue
-/// 481 unit 2b) `buyer_disjoint_samples` the would-merge pairs it refuses and
-/// `would_split_samples` the pairs one Tender today that the next fold splits.
+/// run — `samples` the would-merge pairs the direction check and the buyer guard admit
+/// (the joins), and (issue 481 unit 2b) `buyer_disjoint_samples` the would-merge pairs
+/// the buyer guard refuses and `would_split_samples` the pairs one Tender today that the
+/// next fold splits. `not_earlier` (the unit 2b review) counts the would-merge pairs the
+/// fold refuses by direction; they are in no list.
 fn tender_link_backfill_body(r: &store::TenderLinkBackfill) -> String {
     let rules: serde_json::Map<String, serde_json::Value> = r
         .rules
@@ -2793,6 +2795,7 @@ fn tender_link_backfill_body(r: &store::TenderLinkBackfill) -> String {
                     "unresolved": c.unresolved,
                     "would_merge": c.would_merge,
                     "cross_source": c.cross_source,
+                    "not_earlier": c.not_earlier,
                     "buyer_disjoint": c.buyer_disjoint,
                     "would_split": c.would_split,
                     "stale": c.stale,
@@ -2805,6 +2808,7 @@ fn tender_link_backfill_body(r: &store::TenderLinkBackfill) -> String {
         "notices": r.notices,
         "declaring": r.declaring,
         "would_merge": r.would_merge,
+        "not_earlier": r.not_earlier,
         "buyer_disjoint": r.buyer_disjoint,
         "would_split": r.would_split,
         "requeued": r.requeued,
@@ -2827,13 +2831,14 @@ fn tender_link_backfill_summary(r: &store::TenderLinkBackfill) -> String {
         .map(|(rule, c)| {
             format!(
                 "{rule}: {} declared, {} present, {} resolved, {} unresolved, {} would merge \
-                 ({} cross-source, {} buyer-disjoint), {} would split, {} stale",
+                 ({} cross-source, {} not-earlier, {} buyer-disjoint), {} would split, {} stale",
                 c.declared,
                 c.present,
                 c.resolved,
                 c.unresolved,
                 c.would_merge,
                 c.cross_source,
+                c.not_earlier,
                 c.buyer_disjoint,
                 c.would_split,
                 c.stale
@@ -4194,12 +4199,13 @@ impl Supervisor {
                 Some(r.cursor.max(0) as u64),
                 Some(r.target.max(0) as u64),
                 format!(
-                    "notice id {} of {}; {} notices walked, {} would merge ({} buyer-disjoint), {} would split, \
-                     {} {}",
+                    "notice id {} of {}; {} notices walked, {} would merge ({} not-earlier, {} buyer-disjoint), \
+                     {} would split, {} {}",
                     r.cursor,
                     r.target,
                     r.notices,
                     r.would_merge,
+                    r.not_earlier,
                     r.buyer_disjoint,
                     r.would_split,
                     r.requeued,
@@ -14576,7 +14582,7 @@ mod tests {
         assert!(
             msg.contains(
                 "logical-notice: 1 declared, 0 present, 1 resolved, 0 unresolved, 1 would merge (1 cross-source, \
-                 0 buyer-disjoint), 0 would split, 0 stale"
+                 0 not-earlier, 0 buyer-disjoint), 0 would split, 0 stale"
             ),
             "{msg}"
         );
@@ -14590,6 +14596,8 @@ mod tests {
         assert_eq!(v["samples"][0]["b"], format!("doe:{twin}"), "{body}");
         // Issue 481 unit 2b: the buyer census's counts and lists are on the body, empty here.
         assert_eq!((v["buyer_disjoint"].as_u64(), v["would_split"].as_u64()), (Some(0), Some(0)), "{body}");
+        assert_eq!(v["not_earlier"].as_u64(), Some(0), "the unit 2b review's direction count: {body}");
+        assert_eq!(v["rules"]["opp-090"]["not_earlier"], 0, "{body}");
         assert_eq!(v["rules"]["opp-090"]["buyer_disjoint"], 0, "{body}");
         assert_eq!(v["rules"]["opp-090"]["would_split"], 0, "{body}");
         assert_eq!(v["buyer_disjoint_samples"].as_array().map(Vec::len), Some(0), "{body}");

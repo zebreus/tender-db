@@ -303,3 +303,36 @@ async fn a_normal_rebuild_leaves_no_resumable_plan() {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
 }
+
+/// Issue 481 unit 2b review: a complete plan left by the binary BEFORE the buyer guard
+/// has no `plan_notice.buyer_tokens`, which the grouping's link step selects. Counted
+/// resumable, the salvage would skip Phase-1 and fail on that column — after resetting
+/// the tender layer, on every retry, since the rebuild flag stays set. So such a plan is
+/// not resumable (as a plan before the link ledger is not): the rebuild plans again,
+/// exactly as one whose plan was dropped (`TENDER_FORCE_FRESH_PLAN`'s `reset_plan`).
+#[tokio::test]
+async fn a_plan_from_before_the_buyer_guard_is_rebuilt_not_resumed() {
+    let (fresh, ff, pf) = scratch("preguard-fresh").await;
+    let (old, fo, po) = scratch("preguard-old").await;
+    build_corpus(&fresh, ff).await;
+    build_corpus(&old, fo).await;
+    project::project_plan_only(&fresh).await.expect("plan only");
+    fresh.reset_plan().await.expect("the plan dropped");
+    project::project(&fresh, true).await.expect("a fresh rebuild");
+
+    project::project_plan_only(&old).await.expect("plan only");
+    assert!(old.plan_is_complete().await.unwrap(), "a complete plan");
+    old.execute_for_test("ALTER TABLE plan_notice DROP COLUMN buyer_tokens")
+        .await
+        .expect("the plan as the pre-guard binary left it");
+    assert!(!old.plan_is_complete().await.unwrap(), "a plan without buyer tokens is not resumable");
+
+    project::project(&old, true).await.expect("the rebuild plans again");
+    assert_eq!(snapshot(&fresh).await, snapshot(&old).await, "exactly as with no plan on disk");
+
+    for p in [pf, po] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
