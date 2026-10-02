@@ -41,3 +41,24 @@ rank breaks the tie so the TED reading folds last and thereby wins the shared
 fields and the publication identity (TED > DÖE, the authoritative gazette). This
 is what the projection implements (`ingest::project`). Every resolved value
 stays traceable to its Notice.
+
+## Amendment (2026-10-02): a measured match is a merge warrant too
+
+Lennart, 2026-10-02: "The fuzzy matches are probably fine if we are really really sure it's the same one. Nothing is
+deliberately forbidden if it is correct." The rule above ("merging is never heuristic") is therefore replaced by
+this one:
+
+- **Declared** links stay the first warrant: a shared procedure key (BT-04, a UUID ContractFolderID), or a published
+  cross-reference (ADR-0011's `OPP-090`, or a national notice citing a TED number).
+- **A matched link is also a warrant when its precision is measured, not assumed.** The matcher is calibrated
+  against ground truth before it writes anything. The ground truth is the TED↔DÖE pairs that merged on a shared
+  UUID, as labelled positives, and same-buyer different-procedure pairs as labelled negatives. A match is admitted
+  only in a band whose measured precision is near-certain: no false merge in the calibration sample, and a review
+  read of the boundary cases. Everything below that band stays separate, and at most is served as a "possible
+  duplicate" signal.
+- **Every link is reversible.** Declared and matched links alike are rows in one edge ledger with their evidence and
+  a rule name, which the fold reads. A wrong link is undone by deleting its row and refolding, the same discipline
+  as the organization merge ledger (`org_merge_log`) and its dry → review → wet runs.
+
+The org-level rules keep their own walls (genericness, name gates, verdicts; issues 234 and 300). This amendment
+changes Tender identity across Sources only. Issue 481 carries the measurement and the build.

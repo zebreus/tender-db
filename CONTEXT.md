@@ -50,9 +50,12 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
   per notice version. Award rounds are repeated award notices under one
   procedure; there is no separate "round" entity (verified empirically).
 - A **Tender** is documented by one or more **Notices**; each Notice comes
-  from exactly one **Source**. A Tender usually has one Source, but when a
-  strong explicit cross-reference proves two Sources publish the same
-  procedure, their records merge into one Tender (ADR-0003).
+  from exactly one **Source**. A Tender usually has one Source, but when two
+  Sources publish the same procedure, their records merge into one Tender:
+  on a declared link (a shared procedure key, a published cross-reference), or
+  on a matched link whose precision is measured near-certain against ground
+  truth (ADR-0003 and its 2026-10-02 amendment). Every link is a reversible
+  ledger row.
 - **Organizations** participate in Tenders in roles (buyer, bidder, winner, …).
 - A **Notice** contains **OrganizationMentions**; an **Organization** groups
   the mentions resolved to one real-world entity. Mentions are auto-merged on

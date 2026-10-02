@@ -1,6 +1,7 @@
 # 481 — cross-source Tender dedup is exact-key only; how many duplicates it misses is unmeasured, and there is no source-agnostic edge for future portals
 
-Status: ready-for-agent — filed 2026-10-02 from Lennart's question ("do we have proper general deduplication/merging,
+Status: ready-for-agent — DECIDED 2026-10-02 (Lennart: "fuzzy matches are probably fine if we are really really sure it's the same one. Nothing is deliberately forbidden if it is correct"; recorded as ADR-0003's 2026-10-02 amendment). A matched link is a merge warrant when its precision is measured near-certain. The first unit is calibration: measure candidate signals against the 243,588 UUID-merged TED↔DÖE pairs (labelled positives) and same-buyer different-procedure pairs (labelled negatives), then count the unmerged DÖE Tenders that a near-certain matcher would join.
+Was status: ready-for-agent — filed 2026-10-02 from Lennart's question ("do we have proper general deduplication/merging,
 between TED and DÖE, and between any current and future portals?"). The first unit is the measurement: count TED↔DÖE
 duplicates the key rule misses.
 Kind: data model (cross-source identity, ADR-0003)
@@ -29,9 +30,9 @@ previous-notice edge, intra-TED), 12 and 34 (the BT-04 / sdk-0.1 ContractFolderI
    OJ/TED number in a national notice, an FTS notice id in a Contracts Finder release, or a SIMAP/Doffin
    cross-reference. ADR-0011's edge is the right shape, but it is wired for `OPP-090` → TED numbers. A future Source
    would need its own code path rather than emitting "this notice declares that notice of Source X".
-3. **No duplicate signal.** ADR-0003 forbids heuristic merging, and that stays. Readers still have no way to see
-   "probable duplicate, not merged", so the statistics the ADR worries about inflate silently wherever no link
-   exists.
+3. **No matched merges.** Until 2026-10-02, ADR-0003 forbade heuristic merging, so a duplicate with no published link
+   stayed two Tenders forever. The amendment replaces that with "merge when measured near-certain". Below the
+   near-certain band, a "possible duplicate" signal is still worth serving.
 
 ## Units
 
@@ -44,9 +45,10 @@ previous-notice edge, intra-TED), 12 and 34 (the BT-04 / sdk-0.1 ContractFolderI
 2. **Generalise the edge.** A `notice_crossrefs(notice_id, target_source, target_publication_id, kind)` table that any
    parser fills from a published reference. The fold resolves it to a Tender and joins it under ADR-0003/0011's
    guards. TED's `OPP-090` becomes one producer of it, and DÖE, Contracts Finder (480) and future portals are others.
-3. **Decide the duplicate signal** from unit 1's precision. If the measured matches are near-certain but undeclared,
-   serve them as `possible_duplicate_of` on the Tender (never merged) and count them on the dashboard. If precision is
-   low, record the no and keep counting.
+3. **The matched-link rule.** Write the matcher's admitted band as edge rows (`kind = matched`, rule name, evidence,
+   job id) into the same ledger unit 2 builds, through dry → review → wet with parity, as the org arms do. The fold
+   unions on edges exactly as it does on declared ones. Below the band, serve `possible_duplicate_of` (never merged)
+   and count it on the dashboard.
 
 ## Verify
 
