@@ -220,3 +220,30 @@ Design from the code map (`481-dedup/code-map.md`):
 - **Tests:** a BT-701 pair merges; a cross-source `OPP-090` resolves; an island published first does not ghost; a
   ledger row merges on the next incremental fold and un-merges when deleted; the weld refusals; one fixture per
   false-merge shape that must stay apart.
+
+## 2026-10-02 09:1x–09:5x UTC — unit 2 deployed; backfill dry read; wet HELD for a buyer guard (unit 2b)
+
+- Gate on `cdbad21`: GATE-EXIT=0, 145 suites, 843 s, marker written. Deployed `7b14469` at 09:15 UTC on an idle
+  queue (health green, journal `-p err` empty).
+- `backfill-tender-links` dry, job 1882: **585 s**. 3,869,187 notices walked, 2,403,802 declaring, ~610 MB of ledger
+  rows.
+  - `logical-notice`: 2,394,418 declared, 463,759 resolved, 1,930,659 unresolved (TED notices with no DÖE twin), and
+    **5,050 would merge**, all cross-source. That is about 2× the calibration's ~2,650 Tenders: a pair is a link,
+    and DÖE versions -01/-02 of one id are two links.
+  - `opp-090`: 267,415 declared, 181,222 resolved, **403 would merge** (67 cross-source).
+  - The progress text says "re-queued" on a dry run. It means "would re-queue": the dry run wrote nothing.
+- **Samples read by hand.**
+  - 4 of 4 logical-notice pairs are correct: same buyer, same or near title, DÖE 1–3 days before TED. The pairs were
+    DRK Biberach "Innentüren"; Don Bosco-Schule Stappenbach; Wismut GmbH; Klinikum Ludwigshafen PET/CT.
+  - 2 of 3 opp-090 pairs are correct Polish CAN→CN pairs (Województwo Mazowieckie; RCKiK Gdańsk).
+  - **The third is a copied placeholder.** TED 00045334-2026 (Älvkarleby kommun) cites `00123456-2026`. That is a
+    real, unrelated notice: Statistiska centralbyrån, tender 526284. It is refused only because the target is newer.
+    Any later citer of `00123456-2026` passes ADR-0011's direction check, and same-Source previous-notice edges are
+    unguarded. Since this deploy the daily's link closure pulls such targets in, so the weld can happen on a daily,
+    not only on a full re-projection.
+- **Decision (owner).** Hold the wet backfill until a buyer-overlap guard on previous-notice edges lands (unit 2b,
+  workflow `wf_d8091709-da9`). The guard refuses an edge whose two notices name disjoint buyer token sets, comparing
+  each buyer's identifier key and N2 name key, so the same buyer spelled with or without an identifier still overlaps.
+  The backfill dry report gains `buyer_disjoint` and `would_split` with samples. The 5,050 logical-notice joins wait a
+  day; they are guarded already, but the wet run also re-queues the opp-090 would-merges. Until 2b deploys, a daily may
+  weld a new placeholder citer. Any such weld splits on the first fold after the guard.
