@@ -3798,6 +3798,23 @@ const KEY_2: &str = "9f8e7d6c-5b4a-4392-8170-6f5e4d3c2b1a";
 /// `day`, with the given id fields on its procedure root (a field named twice gets
 /// ordinals 0, 1, …).
 fn linked(fetch_id: i64, source: &str, pub_id: &str, day: i64, ids: &[(&str, &str)]) -> (Notice, Parsed) {
+    linked_buyers(fetch_id, source, pub_id, day, ids, &[])
+}
+
+/// A buyer of a Tender-link test notice (issue 481 unit 2b): its BT-500 name, its BT-514
+/// country (alpha-3, as eForms writes it) and its BT-501 identifier (`""` for none).
+type Buyer<'a> = (&'a str, &'a str, &'a str);
+
+/// [`linked`], naming `buyers` as the notice's buyers: one Organization section each,
+/// referenced from the procedure root by `OPT-300-Procedure-Buyer`.
+fn linked_buyers(
+    fetch_id: i64,
+    source: &str,
+    pub_id: &str,
+    day: i64,
+    ids: &[(&str, &str)],
+    buyers: &[Buyer],
+) -> (Notice, Parsed) {
     let mut values = vec![ValueRow {
         section_id: "PROCEDURE".into(),
         field_id: "BT-05(a)-notice".into(),
@@ -3813,8 +3830,26 @@ fn linked(fetch_id: i64, source: &str, pub_id: &str, day: i64, ids: &[(&str, &st
             value: NoticeValue::Id { scheme: None, value: (*value).into(), is_ref: false },
         });
     }
-    let parsed =
-        Parsed { sections: vec![Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None }], values };
+    let mut sections = vec![Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None }];
+    for (i, (name, country, id)) in buyers.iter().enumerate() {
+        let org = format!("ORG-{}", i + 1);
+        sections.push(Section { id: org.clone(), kind: "Organization".into(), parent: None });
+        let mut field = |field_id: &str, value: NoticeValue| {
+            values.push(ValueRow { section_id: org.clone(), field_id: field_id.into(), ordinal: 0, value });
+        };
+        field("BT-500-Organization-Company", NoticeValue::Text { value: (*name).into(), lang: None });
+        field("BT-514-Organization-Company", NoticeValue::Code { list: None, code: (*country).into() });
+        if !id.is_empty() {
+            field("BT-501-Organization-Company", NoticeValue::Id { scheme: None, value: (*id).into(), is_ref: false });
+        }
+        values.push(ValueRow {
+            section_id: "PROCEDURE".into(),
+            field_id: "OPT-300-Procedure-Buyer".into(),
+            ordinal: i as i64,
+            value: NoticeValue::Id { scheme: None, value: org, is_ref: true },
+        });
+    }
+    let parsed = Parsed { sections, values };
     let notice = Notice {
         source: source.into(),
         publication_id: pub_id.into(),
@@ -3831,7 +3866,19 @@ fn linked(fetch_id: i64, source: &str, pub_id: &str, day: i64, ids: &[(&str, &st
 }
 
 async fn record_linked(db: &Db, fetch_id: i64, source: &str, pub_id: &str, day: i64, ids: &[(&str, &str)]) {
-    let (notice, parsed) = linked(fetch_id, source, pub_id, day, ids);
+    record_linked_buyers(db, fetch_id, source, pub_id, day, ids, &[]).await;
+}
+
+async fn record_linked_buyers(
+    db: &Db,
+    fetch_id: i64,
+    source: &str,
+    pub_id: &str,
+    day: i64,
+    ids: &[(&str, &str)],
+    buyers: &[Buyer<'_>],
+) {
+    let (notice, parsed) = linked_buyers(fetch_id, source, pub_id, day, ids, buyers);
     db.record_notice(&notice, &Parse::Parsed(parsed)).await.expect("record linked notice");
 }
 
@@ -4062,6 +4109,105 @@ async fn two_doe_procedures_citing_one_ted_notice_stay_apart() {
     assert_ne!(tender_of(&db, &format!("{LOGICAL}-01")).await, ted);
     assert_ne!(tender_of(&db, &format!("{LOGICAL_2}-01")).await, ted);
     assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 3);
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// The buyers of issue 481 unit 2b's placeholder sample (job 1882, 2026-10-02): the real
+/// owner of TED `00123456-2026` and a municipality that copied that number into its
+/// OPP-090. Swedish organisation numbers; the identifiers only need to pass the gate.
+const SCB: Buyer = ("Statistiska centralbyrån", "SWE", "2021000837");
+const ALVKARLEBY: Buyer = ("Älvkarleby kommun", "SWE", "2120000258");
+
+/// Issue 481 unit 2b: publishers copy placeholder OPP-090 values. TED `00123456-2026` is a
+/// REAL notice — Statistiska centralbyrån's, published 2026-02-20 — and job 1882's dry
+/// run found Älvkarleby kommun citing it. That citer was earlier than the target and
+/// refused as `not-earlier`; any LATER citer passed ADR-0011's direction check and welded
+/// its procedure into SCB's Tender, same-Source or not. Now a previous-notice reference
+/// between two notices whose buyers are both known and share nothing is refused and
+/// counted (`buyer_disjoint`), after the direction check (the earlier citer still reads
+/// `not-earlier`) and before the cross-Source fan-in count: a refused placeholder citer is
+/// not a second procedure, so a DÖE procedure of SCB's own — writing SCB by name only —
+/// still joins the notice it cites.
+#[tokio::test]
+async fn a_placeholder_previous_notice_reference_to_another_buyers_notice_is_refused() {
+    let (db, fetch_id, path) = scratch("buyer-placeholder").await;
+    for (_, country, id) in [SCB, ALVKARLEBY] {
+        assert!(project::normalise_identifier(id, Some(&country[..2])).is_some(), "{id} passes the gate");
+    }
+    let key = |n: u8| format!("{n}b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e");
+    // The real notice, and the earlier citer job 1882 sampled.
+    record_linked_buyers(&db, fetch_id, "ted", "00123456-2026", 20_504, &[("BT-04-notice", KEY)], &[SCB]).await;
+    let placeholder = [("BT-04-notice", KEY_2), ("OPP-090-Procedure", "123456-2026")];
+    record_linked_buyers(&db, fetch_id, "ted", "00045334-2026", 20_468, &placeholder, &[ALVKARLEBY]).await;
+    // A later citer of the same placeholder, same Source: the weld the guard stops.
+    let later = [("BT-04-notice", "3c4d5e6f-7a8b-4c9d-8e1f-2a3b4c5d6e7f"), ("OPP-090-Procedure", "123456-2026")];
+    record_linked_buyers(&db, fetch_id, "ted", "00290001-2026", 20_577, &later, &[ALVKARLEBY]).await;
+    // Two DÖE procedures citing it: SCB's own (by name only, another casing) and a stranger.
+    let (doe_own, doe_stranger) = (format!("{LOGICAL}-01"), format!("{LOGICAL_2}-01"));
+    let (key_own, key_stranger) = (key(4), key(5));
+    let own = [("BT-04-notice", key_own.as_str()), ("OPP-090-Procedure", "123456-2026")];
+    let stranger = [("BT-04-notice", key_stranger.as_str()), ("OPP-090-Procedure", "123456-2026")];
+    record_linked_buyers(&db, fetch_id, "doe", &doe_own, 20_580, &own, &[("STATISTISKA CENTRALBYRÅN", "SWE", "")]).await;
+    record_linked_buyers(&db, fetch_id, "doe", &doe_stranger, 20_581, &stranger, &[("Gemeinde Alsdorf", "DEU", "")]).await;
+    let report = project::project(&db, false).await.expect("project");
+
+    assert_eq!(report.links.not_earlier, 1, "the sampled citer is earlier than the target: {:?}", report.links);
+    assert_eq!(report.links.buyer_disjoint, 2, "the later citer and the stranger: {:?}", report.links);
+    assert_eq!(report.links.fan_in, 0, "a refused citer is not a second procedure: {:?}", report.links);
+    assert_eq!((report.links.previous_notice, report.links.cross_source), (1, 1), "{:?}", report.links);
+    let scb = tender_of(&db, "00123456-2026").await;
+    assert_eq!(tender_of(&db, &doe_own).await, scb, "SCB's own DÖE procedure joins its TED notice");
+    for apart in ["00045334-2026", "00290001-2026", doe_stranger.as_str()] {
+        assert_ne!(tender_of(&db, apart).await, scb, "{apart} stays out of SCB's Tender");
+    }
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 4);
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_links WHERE rule = 'opp-090' AND b_notice_id IS NOT NULL").await,
+        4,
+        "every citation stays on the ledger: the guard is the fold's, not the producer's"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 481 unit 2b: what the buyer guard must NOT refuse. Each pair is a later notice
+/// citing an earlier one under another BT-04, and each stays one Tender:
+/// - a CAN naming its buyer with an identifier, citing a CN that named the same buyer by
+///   name only (in another casing) — the tolerant tokens carry both keys;
+/// - a joint procurement: the CN names a central purchasing body and two authorities, the
+///   CAN one of those authorities and one more — overlapping, not equal, sets;
+/// - a CAN naming no buyer at all citing a CN that names one, and a CAN naming a buyer
+///   citing a CN that names none — unknown is not disjoint, either way round.
+#[tokio::test]
+async fn overlapping_or_unknown_buyers_keep_a_previous_notice_reference_joined() {
+    let (db, fetch_id, path) = scratch("buyer-overlap").await;
+    let key = |n: u8| format!("{n}f9e8d7c-6b5a-4c3d-9e2f-1a0b9c8d7e6f");
+    let aachen_id: Buyer = ("Stadt Aachen", "DEU", "DE811907980");
+    let aachen_name: Buyer = ("STADT AACHEN", "DEU", "");
+    let cpb: Buyer = ("Zentrale Beschaffungsstelle NRW", "DEU", "DE123456789");
+    let dueren: Buyer = ("Kreis Düren", "DEU", "DE121038462");
+    let alsdorf: Buyer = ("Gemeinde Alsdorf", "DEU", "");
+    let pairs: [(&str, &[Buyer], &str, &[Buyer]); 4] = [
+        ("00300001-2024", &[aachen_name], "00300002-2024", &[aachen_id]),
+        ("00300003-2024", &[cpb, aachen_id, dueren], "00300004-2024", &[dueren, alsdorf]),
+        ("00300005-2024", &[dueren], "00300006-2024", &[]),
+        ("00300007-2024", &[], "00300008-2024", &[alsdorf]),
+    ];
+    for (i, (cn, cn_buyers, can, can_buyers)) in pairs.iter().enumerate() {
+        let (cn_key, can_key) = (key(2 * i as u8), key(2 * i as u8 + 1));
+        record_linked_buyers(&db, fetch_id, "ted", cn, 20_000, &[("BT-04-notice", &cn_key)], cn_buyers).await;
+        let number = cn.trim_start_matches('0');
+        let can_ids = [("BT-04-notice", can_key.as_str()), ("OPP-090-Procedure", number)];
+        record_linked_buyers(&db, fetch_id, "ted", can, 20_100, &can_ids, can_buyers).await;
+    }
+    let report = project::project(&db, false).await.expect("project");
+
+    assert_eq!((report.links.previous_notice, report.links.buyer_disjoint), (4, 0), "{:?}", report.links);
+    for (cn, _, can, _) in &pairs {
+        assert_eq!(tender_of(&db, can).await, tender_of(&db, cn).await, "{can} stays with {cn}");
+    }
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 4);
 
     let _ = std::fs::remove_file(&path);
 }

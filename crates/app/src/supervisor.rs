@@ -2569,8 +2569,8 @@ fn link_suffix(l: &store::LinkTally) -> String {
     }
     format!(
         "; issue-481 tender links joined: {} (previous-notice {} of which cross-source {}, \
-         logical-notice {}, matched {}); refused: {} (not-earlier {}, fan-in {}, not-one-to-one {}, \
-         keyed-weld {}, oversized {}); deferred: {}; largest component: {} key(s)",
+         logical-notice {}, matched {}); refused: {} (not-earlier {}, buyer-disjoint {}, fan-in {}, \
+         not-one-to-one {}, keyed-weld {}, oversized {}); deferred: {}; largest component: {} key(s)",
         l.admitted(),
         l.previous_notice,
         l.cross_source,
@@ -2578,6 +2578,7 @@ fn link_suffix(l: &store::LinkTally) -> String {
         l.matched,
         l.refused(),
         l.not_earlier,
+        l.buyer_disjoint,
         l.fan_in,
         l.not_one_to_one,
         l.keyed_weld,
@@ -2758,9 +2759,26 @@ fn tender_link_backfill_bytes(r: &store::TenderLinkBackfill) -> u64 {
     r.rules.iter().map(|(_, c)| c.resolved + c.unresolved).sum::<u64>() * TENDER_LINK_ROW_BYTES
 }
 
+/// One backfill sample list as the stored body carries it: each pair by rule and both
+/// publication ids, `source:publication_id`.
+fn tender_link_samples_json(samples: &[store::TenderLinkSample]) -> Vec<serde_json::Value> {
+    samples
+        .iter()
+        .map(|s| {
+            serde_json::json!({
+                "rule": s.rule,
+                "a": format!("{}:{}", s.a_source, s.a_publication_id),
+                "b": format!("{}:{}", s.b_source, s.b_publication_id),
+            })
+        })
+        .collect()
+}
+
 /// The stored `tender-link-backfill` body: per-rule counts keyed by rule, and the
-/// sampled would-merge pairs by both publication ids, for a reader to check by hand
-/// before the wet run.
+/// sampled pairs by both publication ids, for a reader to check by hand before the wet
+/// run — `samples` the would-merge pairs the buyer guard admits (the joins), and (issue
+/// 481 unit 2b) `buyer_disjoint_samples` the would-merge pairs it refuses and
+/// `would_split_samples` the pairs one Tender today that the next fold splits.
 fn tender_link_backfill_body(r: &store::TenderLinkBackfill) -> String {
     let rules: serde_json::Map<String, serde_json::Value> = r
         .rules
@@ -2775,20 +2793,11 @@ fn tender_link_backfill_body(r: &store::TenderLinkBackfill) -> String {
                     "unresolved": c.unresolved,
                     "would_merge": c.would_merge,
                     "cross_source": c.cross_source,
+                    "buyer_disjoint": c.buyer_disjoint,
+                    "would_split": c.would_split,
                     "stale": c.stale,
                 }),
             )
-        })
-        .collect();
-    let samples: Vec<serde_json::Value> = r
-        .samples
-        .iter()
-        .map(|s| {
-            serde_json::json!({
-                "rule": s.rule,
-                "a": format!("{}:{}", s.a_source, s.a_publication_id),
-                "b": format!("{}:{}", s.b_source, s.b_publication_id),
-            })
         })
         .collect();
     serde_json::json!({
@@ -2796,12 +2805,16 @@ fn tender_link_backfill_body(r: &store::TenderLinkBackfill) -> String {
         "notices": r.notices,
         "declaring": r.declaring,
         "would_merge": r.would_merge,
+        "buyer_disjoint": r.buyer_disjoint,
+        "would_split": r.would_split,
         "requeued": r.requeued,
         "ledger_bytes": tender_link_backfill_bytes(r),
         "cursor": r.cursor,
         "target": r.target,
         "rules": rules,
-        "samples": samples,
+        "samples": tender_link_samples_json(&r.samples),
+        "buyer_disjoint_samples": tender_link_samples_json(&r.disjoint_samples),
+        "would_split_samples": tender_link_samples_json(&r.split_samples),
     })
     .to_string()
 }
@@ -2814,8 +2827,16 @@ fn tender_link_backfill_summary(r: &store::TenderLinkBackfill) -> String {
         .map(|(rule, c)| {
             format!(
                 "{rule}: {} declared, {} present, {} resolved, {} unresolved, {} would merge \
-                 ({} cross-source), {} stale",
-                c.declared, c.present, c.resolved, c.unresolved, c.would_merge, c.cross_source, c.stale
+                 ({} cross-source, {} buyer-disjoint), {} would split, {} stale",
+                c.declared,
+                c.present,
+                c.resolved,
+                c.unresolved,
+                c.would_merge,
+                c.cross_source,
+                c.buyer_disjoint,
+                c.would_split,
+                c.stale
             )
         })
         .collect();
@@ -4156,8 +4177,16 @@ impl Supervisor {
                 Some(r.cursor.max(0) as u64),
                 Some(r.target.max(0) as u64),
                 format!(
-                    "notice id {} of {}; {} notices walked, {} would merge, {} re-queued",
-                    r.cursor, r.target, r.notices, r.would_merge, r.requeued
+                    "notice id {} of {}; {} notices walked, {} would merge ({} buyer-disjoint), {} would split, \
+                     {} {}",
+                    r.cursor,
+                    r.target,
+                    r.notices,
+                    r.would_merge,
+                    r.buyer_disjoint,
+                    r.would_split,
+                    r.requeued,
+                    if dry_run { "would be re-queued" } else { "re-queued" }
                 ),
             );
         }))
@@ -14533,7 +14562,10 @@ mod tests {
         let msg = sup.run_spec(&job(1, true)).await.expect("dry");
         assert!(msg.contains("DRY RUN"), "{msg}");
         assert!(
-            msg.contains("logical-notice: 1 declared, 0 present, 1 resolved, 0 unresolved, 1 would merge (1 cross-source)"),
+            msg.contains(
+                "logical-notice: 1 declared, 0 present, 1 resolved, 0 unresolved, 1 would merge (1 cross-source, \
+                 0 buyer-disjoint), 0 would split, 0 stale"
+            ),
             "{msg}"
         );
         assert!(msg.contains("~1 MB of ledger rows"), "{msg}");
@@ -14544,6 +14576,12 @@ mod tests {
         assert_eq!(v["ledger_bytes"], TENDER_LINK_ROW_BYTES, "one row to write: {body}");
         assert_eq!(v["samples"][0]["a"], "ted:00400001-2024", "{body}");
         assert_eq!(v["samples"][0]["b"], format!("doe:{twin}"), "{body}");
+        // Issue 481 unit 2b: the buyer census's counts and lists are on the body, empty here.
+        assert_eq!((v["buyer_disjoint"].as_u64(), v["would_split"].as_u64()), (Some(0), Some(0)), "{body}");
+        assert_eq!(v["rules"]["opp-090"]["buyer_disjoint"], 0, "{body}");
+        assert_eq!(v["rules"]["opp-090"]["would_split"], 0, "{body}");
+        assert_eq!(v["buyer_disjoint_samples"].as_array().map(Vec::len), Some(0), "{body}");
+        assert_eq!(v["would_split_samples"].as_array().map(Vec::len), Some(0), "{body}");
         assert_eq!(ledger().await, 0, "dry wrote nothing");
 
         let msg = sup.run_spec(&job(2, false)).await.expect("wet");
@@ -15781,6 +15819,7 @@ mod tests {
             previous_notice: 5,
             cross_source: 2,
             logical_notice: 3,
+            buyer_disjoint: 4,
             fan_in: 2,
             oversized: 1,
             largest_component: 7,
@@ -15793,11 +15832,15 @@ mod tests {
         );
         assert!(
             s.contains(
-                "refused: 3 (not-earlier 0, fan-in 2, not-one-to-one 0, keyed-weld 0, oversized 1); deferred: 0; \
-                 largest component: 7 key(s)"
+                "refused: 7 (not-earlier 0, buyer-disjoint 4, fan-in 2, not-one-to-one 0, keyed-weld 0, oversized 1); \
+                 deferred: 0; largest component: 7 key(s)"
             ),
             "{s}"
         );
+        // A buyer-disjoint refusal alone is news too (issue 481 unit 2b): a copied
+        // placeholder OPP-090 kept out of a stranger's Tender.
+        let s = link_suffix(&store::LinkTally { buyer_disjoint: 1, ..Default::default() });
+        assert!(s.contains("refused: 1 (not-earlier 0, buyer-disjoint 1,"), "{s}");
         // A deferred join alone is still news: a link this fold's plan could not judge.
         let s = link_suffix(&store::LinkTally { deferred: 2, ..Default::default() });
         assert!(s.contains("; deferred: 2;"), "{s}");
@@ -16483,6 +16526,9 @@ mod tests {
         // re-measured 2026-10-02 after issue 481 unit 2: between 462 and 472 KiB, both
         // before and after the review fixes (the link step is boxed, `Db::link_step`,
         // because inline it pushed this past 472) — under 10 KiB of headroom left.
+        // Unit 2b's buyer guard pushed it past 472 again; boxing the link closure and
+        // the three full fallbacks in `project_incremental_chunked_observed` brought it
+        // to between 420 and 452 KiB (re-measured 2026-10-02), so ≥ 20 KiB of headroom.
         // The arguments keep each poll short and four of them off any write: the
         // job is marked cancelled (analyze and the merged-identifier backfill stop
         // at their first check), the sweep refuses (the scratch DB lacks its org FK

@@ -559,13 +559,20 @@ Tender, per rule: `previous-notice` (OPP-090, ADR-0011's edge, which now resolve
 a TED number too — those are the `cross-source` part, a population ADR-0011 never measured),
 `logical-notice` (a TED eForms notice's BT-701 is the id DÖE publishes the same notice under) and
 `matched` (a reviewed match, issue 481 unit 3). `refused` are the guards: `not-earlier` (an OPP-090
-naming a notice that is not strictly earlier), `fan-in` (cross-Source OPP-090s from two or more
+naming a notice that is not strictly earlier), `buyer-disjoint` (issue 481 unit 2b: an OPP-090 whose
+citing and cited notices both name buyers and share none — a copied placeholder number that happens
+to be a real notice of another buyer, like `00123456-2026`, SCB's notice; compared on each buyer's
+identifier key AND N2 name key, notice against notice, and a notice with no parsed buyer never
+refuses), `fan-in` (cross-Source OPP-090s from two or more
 procedure-keyed components into one TED notice: a PIN several procedures cite, or a colliding key),
 `not-one-to-one` (one logical id carried by notices of two components, or one notice matched to
 notices of two), `keyed-weld` (a same-notice or matched link would put two procedure-keyed Tenders
 together: issue 482's colliding BT-04s already weld, and a new rule must not add to it) and
-`oversized` (past 64 components). All but `not-earlier` are expected at zero or near it on
-well-formed data, so read any non-zero one before the joins. `deferred` counts links the
+`oversized` (past 64 components). All but `not-earlier` and `buyer-disjoint` are expected at zero
+or near it on well-formed data, so read any non-zero one before the joins. `buyer-disjoint` is
+copied placeholders, plus whatever the token comparison gets wrong: a buyer renamed between notices,
+or written with no identifier and a different name. The backfill's `buyer_disjoint_samples` show
+which. `deferred` counts links the
 incremental fold could not judge yet: one its plan held only one end of (the far end is re-queued),
 a guarded join beside such an end, and — until the ledger is attested complete (below) — every
 fan-in- or weld-guarded join. A non-zero count is a join one fold late, never a lost one and never
@@ -605,11 +612,14 @@ reaches whole, to a fixpoint. Past 500,000 added notices (the legacy closure's c
 the full path, loudly (`INCREMENTAL → FULL fallback: link closure exceeds cap … (issue 481)`).
 
 ```sh
-# Dry (the default): what the ledger lacks, per rule, and 30 would-merge pairs to read by hand.
+# Dry (the default): what the ledger lacks, per rule, and the sampled pairs to read by hand.
 /root/aj.sh /admin/jobs '{"kind":"backfill-tender-links"}'
-/root/aj.sh /admin/reports/tender-link-backfill | jq -r .body | jq '{notices, declaring, would_merge, requeued, rules}'
+/root/aj.sh /admin/reports/tender-link-backfill | jq -r .body | jq '{notices, declaring, would_merge, buyer_disjoint, would_split, requeued, rules}'
 /root/aj.sh /admin/reports/tender-link-backfill | jq -r .body | jq -r '.samples[] | "\(.rule)  \(.a)  \(.b)"'
-# Wet: write the rows and re-queue the would-merge pairs; the next `project` (the daily) joins them.
+# Issue 481 unit 2b: the buyer census — joins the guard refuses, and welds the next fold splits.
+/root/aj.sh /admin/reports/tender-link-backfill | jq -r .body | jq -r '.buyer_disjoint_samples[] | "\(.rule)  \(.a)  \(.b)"'
+/root/aj.sh /admin/reports/tender-link-backfill | jq -r .body | jq -r '.would_split_samples[] | "\(.rule)  \(.a)  \(.b)"'
+# Wet: write the rows and re-queue the would-merge and would-split pairs; the next `project` (the daily) applies them.
 /root/aj.sh /admin/jobs '{"kind":"backfill-tender-links","dry_run":false}'
 ```
 
@@ -622,11 +632,43 @@ diffs them with the producer's own diff. Wet, each window's rows and re-queues a
 the writer (a few thousand index inserts), then a WAL checkpoint. Per rule it counts `declared`,
 `present` (already on the ledger), `resolved`, `unresolved`, `would_merge` (rows with a target,
 written now or already held, whose notices fold into different Tenders today: the joins the next
-fold makes, before its weld guards; only these re-queue their notices — a held row included, since a
-daily before the attestation wrote it and held its join back), `cross_source` (of `would_merge`,
+fold makes, before its weld guards; they re-queue both notices, a held row included, since a
+daily before the attestation wrote it and held its join back; the `buyer_disjoint` ones below do
+not), `cross_source` (of `would_merge`,
 the rows citing another Source: every `logical-notice` row, and the DÖE→TED OPP-090s ADR-0011 never
 measured — read this one for `opp-090` before the wet run) and `stale` (declared rows the notice no
-longer declares, deleted, both notices re-queued). Idempotent: a re-run, or a notice a fold planned
+longer declares, deleted, both notices re-queued). Only `would_merge` rows (less `buyer_disjoint`),
+`would_split` rows and `stale` rows re-queue anything.
+
+**The buyer census (issue 481 unit 2b).** Every resolved `opp-090` row is judged the way the fold's
+buyer guard judges it. The census computes the guard's input from both notices' full parse through
+the plan row's own derivation: the tolerant buyer tokens, the procedure key and the publication
+instant. It counts two things per rule, `opp-090` only (`logical-notice` reads 0):
+- **`buyer_disjoint`**: rows in `would_merge` whose target is strictly earlier and whose two
+  notices are buyer-disjoint. The next fold refuses these joins, so they re-queue nothing and stay
+  out of `samples`. Up to 30 are listed in `buyer_disjoint_samples`.
+- **`would_split`**: rows whose notices share a Tender TODAY (an earlier full projection joined
+  them before the guard existed) but are buyer-disjoint, with the target strictly earlier and the
+  two notices under different procedure keys. A shared BT-04 keeps them in one group, so those are
+  not counted. The next fold that plans these pairs splits them. The wet run re-queues both notices
+  so that fold is the next daily. Up to 30 are listed in `would_split_samples`. The count is an
+  upper bound: another admitted path between the two notices keeps them together. A split retires
+  nothing: the cited notice keeps the Tender (it named it, being earlier), and the citer's key gets
+  a Tender of its own and loses its `tender_key_merges` row.
+
+**Read the census before the wet run.** Each sample names both publication ids. For every
+`buyer_disjoint` and `would_split` sample, open both notices on TED and check whether they are one
+procedure.
+- A copied placeholder, or two different procedures, is the guard working.
+- One procedure whose buyer was renamed or respelled between the notices, with no identifier in
+  common, is a false refusal. A false refusal would also split a correct Tender on the next daily
+  (`would_split`). Count these before the wet run, and hold the wet run if they are not rare.
+- The guard already runs on every daily once this binary is deployed. Holding the wet run delays
+  the splits and the re-queue, but it does not stop them.
+
+The census costs one full parse per endpoint of a resolved `opp-090` row. Job 1882 found 181,222
+resolved rows, which is at most ~360k parses on top of the 3.87M link-field reads. Expect the dry
+run to take noticeably longer than job 1882's 585 s, and read its job row for the real figure. Idempotent: a re-run, or a notice a fold planned
 since the deploy, reads as `present`. A wet run that walks to its target attests the ledger complete. Expected on prod: `logical-notice` resolved rows in the hundreds of thousands (every
 TED/DÖE twin pair, most of them already one Tender by BT-04) and `would_merge` near the calibration's
 ~2,650 above-threshold islands, plus the cross-source OPP-090 joins (unmeasured). **Read the samples

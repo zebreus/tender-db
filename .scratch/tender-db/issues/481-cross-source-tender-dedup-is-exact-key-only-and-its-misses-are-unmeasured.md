@@ -1,6 +1,7 @@
 # 481 — cross-source Tender dedup is exact-key only; how many duplicates it misses is unmeasured, and there is no source-agnostic edge for future portals
 
-Status: ready-for-agent — UNIT 1 (CALIBRATION) DONE 2026-10-02 (workflow `wf_09fa7411-6db`; report `.scratch/tender-db/481-dedup/calibration-2026-10-02.md`). The TED↔DÖE misses are DECLARED links the fold does not follow, not fuzzy ones. TED `BT-701-notice` equals the DÖE notice UUID on 136 of 136 above-threshold DÖE islands in April 2025 (1.08 % of the month's merged count; ~2,650 extrapolated). Cross-source `OPP-090` links are dropped by a same-source condition. The best matched rule R1 measured 0 FP / 1,289 negatives at 98.0 % recall, but adds 0 joins beyond the declared link. NEXT: unit 2, the edge ledger with the `notice_uuid` and cross-source `OPP-090` producers and the fold reading it (incremental path included), plus the weld guards. The UUID-collision false merges it surfaced are issue 482.
+Status: ready-for-agent — UNIT 2b (the buyer guard on previous-notice references) LANDED 2026-10-02, not yet deployed; unit 2 deployed 2026-10-02 09:15 UTC (`7b14469`), its wet backfill HELD for 2b. NEXT: deploy → `backfill-tender-links` dry → read `buyer_disjoint` / `would_split` and their samples (two placeholder hubs are already on prod: Tender 1012301, 184 versions from 60 buyers, and SCB's 526284 with six copiers) → wet → the next daily splits the would-split welds; read its `issue-481` line (`buyer-disjoint`, largest component).
+Was status: ready-for-agent — UNIT 1 (CALIBRATION) DONE 2026-10-02 (workflow `wf_09fa7411-6db`; report `.scratch/tender-db/481-dedup/calibration-2026-10-02.md`). The TED↔DÖE misses are DECLARED links the fold does not follow, not fuzzy ones. TED `BT-701-notice` equals the DÖE notice UUID on 136 of 136 above-threshold DÖE islands in April 2025 (1.08 % of the month's merged count; ~2,650 extrapolated). Cross-source `OPP-090` links are dropped by a same-source condition. The best matched rule R1 measured 0 FP / 1,289 negatives at 98.0 % recall, but adds 0 joins beyond the declared link. NEXT: unit 2, the edge ledger with the `notice_uuid` and cross-source `OPP-090` producers and the fold reading it (incremental path included), plus the weld guards. The UUID-collision false merges it surfaced are issue 482.
 Was status: ready-for-agent — DECIDED 2026-10-02 (Lennart: "fuzzy matches are probably fine if we are really really sure it's the same one. Nothing is deliberately forbidden if it is correct"; recorded as ADR-0003's 2026-10-02 amendment). A matched link is a merge warrant when its precision is measured near-certain. The first unit is calibration: measure candidate signals against the 243,588 UUID-merged TED↔DÖE pairs (labelled positives) and same-buyer different-procedure pairs (labelled negatives), then count the unmerged DÖE Tenders that a near-certain matcher would join.
 Was status: ready-for-agent — filed 2026-10-02 from Lennart's question ("do we have proper general deduplication/merging,
 between TED and DÖE, and between any current and future portals?"). The first unit is the measurement: count TED↔DÖE
@@ -247,3 +248,91 @@ Design from the code map (`481-dedup/code-map.md`):
   The backfill dry report gains `buyer_disjoint` and `would_split` with samples. The 5,050 logical-notice joins wait a
   day; they are guarded already, but the wet run also re-queues the opp-090 would-merges. Until 2b deploys, a daily may
   weld a new placeholder citer. Any such weld splits on the first fold after the guard.
+
+## Unit 2b: the buyer guard on previous-notice references — LANDED 2026-10-02 (not yet deployed)
+
+**Why.** Job 1882's sample: TED `00045334-2026` (Älvkarleby kommun) cites OPP-090 `00123456-2026`, a real,
+unrelated notice (Statistiska centralbyrån, Tender 526284). That one was refused only because its target is newer.
+Any later citer passed ADR-0011's direction check, and same-Source previous-notice edges were unguarded. Since
+`7b14469` the daily's link closure pulls such targets in, so the weld can happen on a daily.
+
+**What landed.**
+- **The token set.** Each planned notice carries a tolerant buyer token set, `PlanRow::buyer_tokens` /
+  `plan_notice.buyer_tokens`. For every buyer mention it holds BOTH the identifier key (`country:kind:value`, when
+  the identifier passes the gate) AND the N2 name key (`n2:country:match_norm(name)`). It is built by `buyer_key`'s
+  own machinery: `buyer_mentions` is shared, and `Ident::read` reads the mentions once for both. Each token is
+  stored as a 4-byte FNV-1a digest, sorted, as a BLOB (NULL when no buyer was parsed).
+  - Measured on a 200k-row synthetic `plan_notice` (≈1.9 tokens a notice: 5 % two buyers, 80 % with an
+    identifier): **+9.6 B/row, about +137 MB on a full re-projection's 14.3M rows** (+7 % of the table). The same
+    tokens as joined text cost +55 B/row (+789 MB).
+  - A digest collision can only make two sets overlap, so the guard fails open, at about 1e-9 per compared pair.
+- **The guard** (`Db::link_step`). A previous-notice edge is refused when both endpoints' sets are non-empty and
+  disjoint, counted as `LinkTally::buyer_disjoint` (job row: `refused: … buyer-disjoint N …`). It applies to
+  same-Source and cross-Source edges alike. It runs after the direction check (`not-earlier` keeps its meaning) and
+  before the fan-in count, so a refused copier is not a second procedure there. Unknown is not disjoint.
+- **Notice against notice, not against the cited component.** The reference names one notice, so the citer's
+  buyers are checked against that notice's buyers. A component's buyer set only grows as it welds: Tender 1012301
+  below holds 60 buyers, and a component check would let it vouch for nearly any citer, which makes the guard
+  weakest exactly on a hub. The two-notice verdict depends on nothing else in the plan, so it never waits
+  (`deferred` is untouched) and is equal on the incremental and full paths. A joint procurement's CAN naming one
+  of its CN's buyers overlaps that CN itself, and stays joined.
+- **The census** (`backfill-tender-links`). Each window is now resolved first (`Db::resolve_declared_window`).
+  Both ends of every resolved previous-notice row are then read through the plan row's own derivation
+  (`link_endpoints`: full parse → `Ident::read`), and the window is classified and written
+  (`Db::backfill_declared_window`). The census counts, per rule (non-zero for `opp-090` only):
+  - `buyer_disjoint`: would-merge rows the guard refuses (target strictly earlier). They are not re-queued, and
+    they are sampled in `disjoint_samples` instead of the joins' `samples`.
+  - `would_split`: rows whose notices share a Tender today but are buyer-disjoint, with the target strictly
+    earlier and different procedure keys. Both notices are re-queued on the wet run, so the next daily splits them.
+    They are sampled in `split_samples`.
+  
+  There are up to 30 samples of each, by both publication ids, on the report (`buyer_disjoint_samples`,
+  `would_split_samples`), the summary and the progress line. The progress line now says "would be re-queued" on a
+  dry run.
+- **Stack budget** (issue 467). The guard pushed `run_project`'s poll frame past its 472 KiB budget again (the
+  gate aborted on the gauge). Unit 2's follow-up is done: the link closure and the three `incremental_full_fallback`
+  sites in `project_incremental_chunked_observed` are boxed, and the frame now needs between 420 and 452 KiB
+  (bisected 2026-10-02), so there is at least 20 KiB of headroom.
+- **Tests** (each new one checked to fail with the guard disabled; the overlap ones also fail with
+  identifier-OR-name tokens):
+  - `a_placeholder_previous_notice_reference_to_another_buyers_notice_is_refused`: the sample's shape. A later
+    same-Source citer and a DÖE stranger are refused; the earlier citer is `not-earlier`; SCB's own DÖE procedure,
+    naming SCB by name only, joins with `fan-in 0`.
+  - `overlapping_or_unknown_buyers_keep_a_previous_notice_reference_joined`: identifier-vs-name, a joint
+    procurement, and no buyers on either side.
+  - The parity test, `the_ledger_joins_incrementally_exactly_as_a_full_fold_in_either_order`, now carries a copier
+    and an SCB citer in both arrival orders.
+  - `a_pre_guard_buyer_disjoint_weld_is_counted_and_split_by_the_next_daily`: dry `would_split` 1 with its
+    sample, wet re-queues both, then the daily split. Equal to a full fold, no `removed`, the absorbed key's
+    `tender_key_merges` row gone, a shared-BT-04 pair neither counted nor split.
+  - The backfill test now covers `buyer_disjoint` with its sample, not re-queued.
+  - Unit test `the_buyer_tokens_carry_both_keys_so_one_buyer_spelled_two_ways_overlaps`.
+
+**What the 2026-08-20 full re-projection already welded** (bounded `/v1/sql` reads, 2026-10-02 10:0x UTC, 34
+requests, 0 errors). Placeholder numbers looked up by publication id, their Tender by `tender_versions_notice`,
+versions and buyers by the Tender's PK:
+- **Tender 1012301: 184 versions (2024-02-28 … 2026-09-28) from 60 distinct buyer organizations.** It holds
+  `00123456-2024` (seq 1), `00012345-2025` (seq 8) and `00123456-2025` (seq 12).
+  - Member `00484510-2024` (a CAN) cites OPP-090 `00123456-2024`.
+  - Member `00012345-2025` itself cites a real `729455-2023`, so whole procedures hang off each placeholder.
+- **Tender 526284 (SCB's): 8 versions.** Seqs 1–2 are SCB (organization 4335: CN `00640006-2025`, CAN
+  `00123456-2026`). Seqs 3–8 (2026-03 … 2026-08) come from four other buyers.
+  - Organizations 3354129 and 3350848 sit in both hubs: repeat copiers.
+- **Clean:** `00012345-2026` (1 buyer), `00000001-2025` (1 version), `00111111-2025` (17 versions, 1 buyer),
+  `00654321-2025` (1 version).
+- **Unread:** `00000001-2026` sits in Tender 455235 with 10 versions and 3 buyers.
+- **Not held:** `00123456-2023`, `00012345-2024`, `00000001-2024`.
+- **So `would_split` is at least ~63 from these two hubs alone, and probably 100–200.** Joining 60 and 5
+  buyer-disjoint groups takes at least 59 + 4 cross-buyer edges, and the 184 + 6 welded versions bound the count
+  from above unless a shared BT-04 holds a member. Other placeholder numbers were not sampled. The next daily after
+  the wet run decomposes Tender 1012301 into its procedures: one Tender keeps the id, the rest are minted, and
+  nothing is retired.
+
+**Open.**
+- **False refusals.** A buyer respelled between notices with no identifier in common, or a CAN filed by a central
+  purchasing body for a CN filed by the authority (or the reverse), reads as disjoint. Count these in the dry run's
+  samples before the wet run. The guard runs on every daily once deployed whatever the wet run does.
+- **Census cost.** One full parse per endpoint of a resolved `opp-090` row: ≤ ~360k notices against job 1882's
+  181,222 resolved rows, so expect the dry run well above 585 s. A raw-BT-04 pre-filter (pairs under one key never
+  split) would halve it if it matters.
+

@@ -142,3 +142,34 @@ Two ways to implement it, and the choice matters:
   (`tender_key_merges`), so a later notice under it finds the merged Tender. A ledger row written or
   deleted outside a fold (`backfill-tender-links`, a matched row and its undo) re-queues both notices,
   so it reaches the next daily fold. Until then these edges applied on full re-projections only.
+
+## Amendment (2026-10-02, issue 481 unit 2b): a reference is checked against the buyers
+
+A previous-notice reference is now refused when the citing notice and the notice it names both
+name their buyers and share none of them (`buyer-disjoint` on the job row). Publishers copy
+placeholder OPP-090 values, and a placeholder can be a real publication number:
+`backfill-tender-links`' dry run (job 1882) found Älvkarleby kommun citing `00123456-2026`, which
+is Statistiska centralbyrån's notice. That citer was earlier than its target, so guard 3 refused
+it. But any later notice citing the same number passed every guard and welded its procedure into
+SCB's Tender, and since unit 2 the daily's link closure makes that weld on a daily too. Guard 3 can
+only tell a publisher's link pointing the wrong way. A copied number points the right way and names
+the wrong procedure. A buyer comparison catches that, because one procedure's notices name the same
+contracting authority. This is a refusal, not inference. The link is still the publisher's stated
+link, the check never joins anything, and it can only keep two notices apart that the data itself
+contradicts. "Nothing here matches on buyer" above still holds for admission.
+
+- **Tolerant tokens.** The check reads each buyer's identifier key and its N2 name key, both
+  tokens, so a buyer written once with its identifier and once by name only still overlaps.
+- **Unknown never refuses.** A notice whose buyers were not parsed is never refused and never
+  refuses.
+- **Notice against notice.** The check compares the citing notice with the cited notice, not with
+  the cited notice's whole Tender. The reference names one notice, so that notice's buyers are what
+  the claim is checked against. A Tender's buyer set only grows as it welds, so a component check
+  would let a hub vouch for any citer, which makes it weakest where it matters most. A two-notice
+  verdict does not depend on edge order or on how much of a component an incremental plan holds.
+  A joint procurement's award naming one of its contract notice's buyers overlaps that notice.
+- **Order.** The check runs after guard 3 and before the cross-Source fan-in count, so a refused
+  copier is not counted as a second procedure there.
+- **Existing welds.** Welds a full re-projection made before this check split on the next fold that
+  plans them. The backfill's dry run counts those first (`would_split`, sampled), and the wet run
+  re-queues them.

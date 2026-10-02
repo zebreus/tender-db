@@ -1456,6 +1456,64 @@ fn is_previous_notice_rule(rule: &str) -> bool {
     rule == LINK_OPP_090
 }
 
+/// Issue 481 unit 2b: one buyer token as the plan carries it — a stable 32-bit digest
+/// of the token string (`ingest::project`'s `buyer_tokens_of`: a buyer's identifier key
+/// `country:kind:value` and its N2 name key `n2:country:name`). FNV-1a over the bytes,
+/// the 64-bit state folded to 32: stable across binaries and platforms, which the plan
+/// needs only within one run but the backfill's census needs against the plan's own
+/// verdict. 4 bytes a token, where the strings average ~22 bytes: `plan_notice` holds
+/// every notice of a full re-projection (14.3M rows), and this column is on all of them.
+///
+/// A collision can only make two disjoint sets look overlapping, so the guard it feeds
+/// fails open — the pre-guard behaviour — at about `|a|·|b| / 2³²` per compared pair
+/// (≈ 1e-9 for two notices of two buyers each).
+pub fn buyer_token(token: &str) -> u32 {
+    let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+    for b in token.bytes() {
+        h ^= u64::from(b);
+        h = h.wrapping_mul(0x0000_0100_0000_01b3);
+    }
+    (h ^ (h >> 32)) as u32
+}
+
+/// Issue 481 unit 2b: whether two notices' buyer token sets (each sorted, deduplicated)
+/// are KNOWN to be disjoint: both non-empty and sharing no token. An empty set is a
+/// notice whose buyers were not parsed, and unknown is not disjoint — it never refuses.
+pub fn buyer_tokens_disjoint(a: &[u32], b: &[u32]) -> bool {
+    if a.is_empty() || b.is_empty() {
+        return false;
+    }
+    let (mut i, mut j) = (0, 0);
+    while i < a.len() && j < b.len() {
+        match a[i].cmp(&b[j]) {
+            std::cmp::Ordering::Less => i += 1,
+            std::cmp::Ordering::Greater => j += 1,
+            std::cmp::Ordering::Equal => return false,
+        }
+    }
+    true
+}
+
+/// A buyer token set as `plan_notice.buyer_tokens` stores it: the tokens' little-endian
+/// bytes back to back, NULL for an empty set.
+fn buyer_tokens_value(tokens: &[u32]) -> Value {
+    if tokens.is_empty() {
+        return Value::Null;
+    }
+    Value::Blob(tokens.iter().flat_map(|t| t.to_le_bytes()).collect())
+}
+
+/// The buyer token set in column `idx` of `row` ([`buyer_tokens_value`]'s encoding):
+/// empty for NULL.
+fn buyer_tokens_of(row: &turso::Row, idx: usize) -> Vec<u32> {
+    match row.get_value(idx) {
+        Ok(Value::Blob(bytes)) => {
+            bytes.chunks_exact(4).map(|c| u32::from_le_bytes([c[0], c[1], c[2], c[3]])).collect()
+        }
+        _ => Vec::new(),
+    }
+}
+
 /// The notice id of a versioned `publication_id` — `<id>-<digits>` → `<id>` — the
 /// shape DÖE publishes every notice version under. `None` when there is no
 /// all-digit suffix. The forward resolution of a [`LINK_LOGICAL_NOTICE`] reference and
@@ -1481,6 +1539,13 @@ pub struct LinkTally {
     /// Refused: a previous-notice reference to a notice that is not strictly earlier
     /// (ADR-0011 guard 3; it was a silent filter in the join before the ledger).
     pub not_earlier: u64,
+    /// Refused (issue 481 unit 2b): a previous-notice reference between two notices
+    /// that both name their buyers and share none of them — a publisher copying a
+    /// placeholder OPP-090 (`00123456-2026`) that happens to be a real, unrelated
+    /// notice. Judged notice to notice, citer against cited, on the tolerant token sets
+    /// (identifier key AND N2 name key of every buyer); a notice with no parsed buyer
+    /// never refuses.
+    pub buyer_disjoint: u64,
     /// Refused: cross-Source previous-notice references from two or more keyed
     /// components into one target — one TED notice gathering several procedures of
     /// another Source, which is a shared PIN or a colliding key, not one procedure.
@@ -1513,7 +1578,7 @@ impl LinkTally {
     }
 
     pub fn refused(&self) -> u64 {
-        self.not_earlier + self.fan_in + self.not_one_to_one + self.keyed_weld + self.oversized
+        self.not_earlier + self.buyer_disjoint + self.fan_in + self.not_one_to_one + self.keyed_weld + self.oversized
     }
 
     pub fn add(&mut self, other: LinkTally) {
@@ -1522,6 +1587,7 @@ impl LinkTally {
         self.matched += other.matched;
         self.cross_source += other.cross_source;
         self.not_earlier += other.not_earlier;
+        self.buyer_disjoint += other.buyer_disjoint;
         self.fan_in += other.fan_in;
         self.not_one_to_one += other.not_one_to_one;
         self.keyed_weld += other.keyed_weld;
@@ -1569,9 +1635,37 @@ pub struct TenderLinkRuleCounts {
     /// citing one — a DÖE notice's OPP-090 citing TED, the population ADR-0011 never
     /// measured (every `logical-notice` row is one: TED names DÖE).
     pub cross_source: u64,
+    /// Of `would_merge` (issue 481 unit 2b), previous-notice rows the buyer guard
+    /// refuses: the target is strictly earlier, both notices name their buyers, and
+    /// they share none ([`buyer_tokens_disjoint`]) — the placeholder-OPP-090 shape.
+    /// Not re-queued: the next fold refuses them, as a full fold does. Zero for every
+    /// rule but `opp-090`, the one the guard reads.
+    pub buyer_disjoint: u64,
+    /// Previous-notice rows whose notices share a Tender TODAY — an earlier full
+    /// projection joined them, before the buyer guard — but are buyer-disjoint, with
+    /// the target strictly earlier and the two notices under different procedure keys
+    /// (a shared BT-04 keeps them one group whatever the link says): the next fold that
+    /// plans them splits them. Both notices re-queued, so it is the next daily. An
+    /// upper bound: another admitted path between the two keeps them together. Zero
+    /// for every rule but `opp-090`.
+    pub would_split: u64,
     /// Declared rows the notice no longer declares, deleted with both endpoints
     /// re-queued (the merge they made may be what is undone).
     pub stale: u64,
+}
+
+/// Issue 481 unit 2b: what the ledger backfill's census needs of a previous-notice
+/// row's endpoint to judge it as the fold will — computed by `ingest` from the notice's
+/// full parse through the plan row's own derivation, so the census and the fold read
+/// the same facts.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct LinkEndpoint {
+    /// [`PlanRow::buyer_tokens`].
+    pub buyer_tokens: Vec<u32>,
+    /// [`PlanRow::procedure_key`].
+    pub procedure_key: Option<String>,
+    /// [`PlanRow::published_at`].
+    pub published_at: i64,
 }
 
 /// One pair the ledger backfill would join, by both publication ids.
@@ -1597,11 +1691,22 @@ pub struct TenderLinkBackfill {
     pub requeued: u64,
     /// Per rule of [`LINK_DECLARED_RULES`], in that order.
     pub rules: Vec<(String, TenderLinkRuleCounts)>,
-    /// Up to [`LINK_BACKFILL_SAMPLES`] `would_merge` pairs, a uniform sample (reservoir,
-    /// fixed seed: the walk is ordered, so one corpus gives one sample).
+    /// Up to [`LINK_BACKFILL_SAMPLES`] `would_merge` pairs the buyer guard admits —
+    /// the joins — a uniform sample (reservoir, fixed seed: the walk is ordered, so one
+    /// corpus gives one sample). The pairs it refuses are `disjoint_samples`.
     pub samples: Vec<TenderLinkSample>,
-    /// `would_merge` pairs seen, all rules: the reservoir's denominator.
+    /// `would_merge` pairs seen, all rules.
     pub would_merge: u64,
+    /// Issue 481 unit 2b: up to [`LINK_BACKFILL_SAMPLES`] `buyer_disjoint` pairs, and
+    /// how many were seen, all rules.
+    pub disjoint_samples: Vec<TenderLinkSample>,
+    pub buyer_disjoint: u64,
+    /// Issue 481 unit 2b: up to [`LINK_BACKFILL_SAMPLES`] `would_split` pairs, and how
+    /// many were seen, all rules.
+    pub split_samples: Vec<TenderLinkSample>,
+    pub would_split: u64,
+    /// `samples`' reservoir denominator: the would-merge pairs the buyer guard admits.
+    joins: u64,
     /// The notice id the walk reached, and the one it walked to (captured before it).
     pub cursor: i64,
     pub target: i64,
@@ -1628,8 +1733,36 @@ impl TenderLinkBackfill {
     }
 }
 
-/// The `would_merge` pairs the ledger backfill's report carries.
+/// The pairs each of the ledger backfill's sample lists carries.
 pub const LINK_BACKFILL_SAMPLES: usize = 30;
+
+/// Issue 481: one ledger-backfill window resolved ([`Db::resolve_declared_window`]):
+/// each notice's declared rows, diffed against the ledger, waiting for
+/// [`Db::backfill_declared_window`] to classify and write them.
+#[derive(Default)]
+pub struct DeclaredWindow {
+    notices: Vec<(NoticeRef, DeclaredDiff)>,
+    declaring: u64,
+}
+
+impl DeclaredWindow {
+    /// Both ends of every resolved previous-notice row the window declares, sorted and
+    /// deduplicated: the notices the buyer census (issue 481 unit 2b) needs the plan
+    /// row's facts of ([`LinkEndpoint`]).
+    pub fn previous_notice_endpoints(&self) -> Vec<i64> {
+        let mut ids: Vec<i64> = Vec::new();
+        for (notice, diff) in &self.notices {
+            for (rule, _, _, target) in &diff.declared {
+                if let Some(b) = target.filter(|_| is_previous_notice_rule(rule)) {
+                    ids.extend([notice.id, b]);
+                }
+            }
+        }
+        ids.sort_unstable();
+        ids.dedup();
+        ids
+    }
+}
 
 /// Issue 481: a measured match to put on the ledger (ADR-0003's 2026-10-02 amendment):
 /// what unit 3's reviewed matcher writes through [`Db::write_matched_links`].
@@ -1661,10 +1794,12 @@ pub struct PlanGroupTally {
 /// against `notices` happens in the producer (`insert_plan_tx`), one bounded seek per
 /// reference, so `notices` is no longer in this statement. Direction, same-group
 /// filtering and the guards' notice-level and Source checks run in Rust, where they are
-/// per rule and counted.
+/// per rule and counted — the buyer guard (issue 481 unit 2b) on the two endpoints'
+/// `buyer_tokens`, read off the same two seeks.
 pub(crate) const LINK_EDGE_JOIN_SQL: &str = "SELECT e.rule, e.b_ref, e.a_notice_id, e.b_notice_id, \
         a.group_key, a.published_at, a.publication_id, a.source_rank, a.source, \
-        b.group_key, b.published_at, b.publication_id, b.source_rank, b.source \
+        b.group_key, b.published_at, b.publication_id, b.source_rank, b.source, \
+        a.buyer_tokens, b.buyer_tokens \
    FROM plan_link_edge e \
    JOIN plan_notice a ON a.notice_id = e.a_notice_id \
    JOIN plan_notice b ON b.notice_id = e.b_notice_id \
@@ -7357,6 +7492,15 @@ pub struct PlanRow {
     /// notice names no buyer at all, which is distinct from naming an unidentifiable
     /// one.
     pub buyer_key: Option<String>,
+    /// Issue 481 unit 2b: the TOLERANT buyer token set the link step's buyer guard
+    /// reads — for every buyer mention BOTH its identifier key (when the identifier
+    /// passed the gate) AND its N2 name key, each digested by [`buyer_token`], sorted
+    /// and deduplicated. Unlike `buyer_key` (one key per buyer, identifier OR name, for
+    /// issue 369's distinct count), two notices writing one buyer once with its
+    /// identifier and once by name only still share a token. Empty when no buyer was
+    /// parsed, which the guard reads as unknown, never as disjoint. Stored as a BLOB of
+    /// 4 bytes a token (NULL when empty).
+    pub buyer_tokens: Vec<u32>,
     /// Issue 364 unit 6: the kind of SHARED publication this notice itself is, by
     /// its own document-type code (`PRIOR_INFORMATION_NOTICE`, `NOTICE_BUYER_PROFILE`,
     /// `PERIODIC_INDICATIVE_NOTICE`, `NOTICE_QUALIFICATION_SYSTEM`,
@@ -9864,7 +10008,10 @@ impl Db {
                  buyer_key      TEXT,
                  -- issue 364 unit 6: the shared-publication kind this notice IS, by its
                  -- own document type; NULL for a procedure notice.
-                 shared_kind    TEXT
+                 shared_kind    TEXT,
+                 -- issue 481 unit 2b: the tolerant buyer token set, 4 bytes a token
+                 -- (`buyer_tokens_value`); NULL when no buyer was parsed.
+                 buyer_tokens   BLOB
              ) STRICT",
             (),
         )
@@ -10159,8 +10306,8 @@ impl Db {
             conn.execute(
                 "INSERT INTO plan_notice(notice_id, procedure_key, legacy, ojs_self, source,
                      source_rank, publication_id, published_at, subtype, group_key, key_shaped,
-                     buyer_key, shared_kind)
-                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)",
+                     buyer_key, shared_kind, buyer_tokens)
+                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)",
                 (
                     Value::Integer(r.notice_id),
                     opt_text(r.procedure_key.as_deref()),
@@ -10174,6 +10321,7 @@ impl Db {
                     Value::Integer(i64::from(r.key_shaped)),
                     opt_text(r.buyer_key.as_deref()),
                     opt_text(r.shared_kind.as_deref()),
+                    buyer_tokens_value(&r.buyer_tokens),
                 ),
             )
             .await?;
@@ -10419,32 +10567,22 @@ impl Db {
         Ok(out)
     }
 
-    /// Issue 481: bring the ledger's declared rows for one window of notices to what each
-    /// declares (`(notice, its links)`, in id order), exactly as the plan's producer
-    /// would — the same resolution and diff — for notices planned before the ledger
-    /// existed.
-    ///
-    /// The diff and its classification run on a reader: the window's ledger rows in one
-    /// range read ([`LINK_DECLARED_WINDOW_SQL`]), then one seek per declared link. A
-    /// declared row with a target — written now or already held — is `would_merge` when
-    /// its two notices fold into different Tenders today, and both are re-queued: the next
-    /// incremental fold, whose closure plans both, joins them (or its weld guards refuse).
-    /// A held row counts too, because a daily that planned the notice before the ledger
-    /// was attested complete wrote it and held the join back. A row whose notices already
-    /// share a Tender re-queues nothing: TED↔DÖE twins already one Tender by BT-04
-    /// (243,588 Tenders merged so on 2026-09-29) are expected to be most resolved
-    /// `logical-notice` rows, and re-queueing them would turn the next daily into a
-    /// re-fold. A stale row re-queues both its notices. Wet, the window's writes and
-    /// re-queues are ONE short transaction on the writer, so a row is never on the ledger
-    /// without its endpoints queued; dry, the re-queue is counted by the same predicates
-    /// and nothing is written.
-    pub async fn backfill_declared_links(
+    /// Issue 481: the first half of one ledger-backfill window — each notice's declared
+    /// links (`(notice, its links)`, in id order) resolved and diffed against the ledger
+    /// exactly as the plan's producer does, for notices planned before the ledger existed.
+    /// On a reader: the window's ledger rows in one range read
+    /// ([`LINK_DECLARED_WINDOW_SQL`]), then one seek per declared link. The second half,
+    /// [`Db::backfill_declared_window`], classifies and writes; between the two the caller
+    /// computes what the buyer census needs of
+    /// [`DeclaredWindow::previous_notice_endpoints`] (issue 481 unit 2b) — from the
+    /// notices' full parse, which only `ingest` can read into a plan row.
+    pub async fn resolve_declared_window(
         &self,
         window: &[(NoticeRef, Vec<DeclaredLink>)],
-        report: &mut TenderLinkBackfill,
-    ) -> turso::Result<()> {
+    ) -> turso::Result<DeclaredWindow> {
+        let mut out = DeclaredWindow::default();
+        let (Some(first), Some(last)) = (window.first(), window.last()) else { return Ok(out) };
         let reader = self.reader().await?;
-        let (Some(first), Some(last)) = (window.first(), window.last()) else { return Ok(()) };
         let mut held: std::collections::HashMap<i64, Vec<(i64, DeclaredRow)>> = std::collections::HashMap::new();
         let mut rows = reader
             .query(LINK_DECLARED_WINDOW_SQL, (Value::Integer(first.0.id), Value::Integer(last.0.id)))
@@ -10457,15 +10595,69 @@ impl Db {
         }
         drop(rows);
         let mut reads = LinkReads::prepare(&reader).await?;
-        let mut shared = SharedTender::prepare(&reader).await?;
-        let mut diffs: Vec<(i64, DeclaredDiff)> = Vec::new();
-        let mut requeue: Vec<i64> = Vec::new();
         for (notice, links) in window {
             if !links.is_empty() {
-                report.declaring += 1;
+                out.declaring += 1;
             }
             let declared = reads.declared_rows(links).await?;
             let diff = diff_declared(declared, held.remove(&notice.id).unwrap_or_default());
+            out.notices.push((notice.clone(), diff));
+        }
+        Ok(out)
+    }
+
+    /// Issue 481: the second half of one ledger-backfill window
+    /// ([`Db::resolve_declared_window`]): bring the ledger's declared rows to what each
+    /// notice declares, count, sample and re-queue.
+    ///
+    /// A declared row with a target — written now or already held — is `would_merge` when
+    /// its two notices fold into different Tenders today, and both are re-queued: the next
+    /// incremental fold, whose closure plans both, joins them (or its weld guards refuse).
+    /// A held row counts too, because a daily that planned the notice before the ledger
+    /// was attested complete wrote it and held the join back. A row whose notices already
+    /// share a Tender re-queues nothing: TED↔DÖE twins already one Tender by BT-04
+    /// (243,588 Tenders merged so on 2026-09-29) are expected to be most resolved
+    /// `logical-notice` rows, and re-queueing them would turn the next daily into a
+    /// re-fold. A stale row re-queues both its notices.
+    ///
+    /// The buyer census (issue 481 unit 2b) judges every resolved previous-notice row as
+    /// the fold's buyer guard will, on `endpoints` (the plan row's own facts, by notice
+    /// id; a notice missing from it is unknown and never judged). Of `would_merge`, a row
+    /// whose target is strictly earlier and whose notices are buyer-disjoint is
+    /// `buyer_disjoint`: the next fold refuses it, so it re-queues nothing. A row whose
+    /// notices share a Tender today, with the target strictly earlier, the notices
+    /// buyer-disjoint and under different procedure keys, is `would_split`: an earlier
+    /// full projection joined them before the guard, the next fold that plans them splits
+    /// them, and both are re-queued so that fold is the next daily.
+    ///
+    /// Wet, the window's writes and re-queues are ONE short transaction on the writer, so
+    /// a row is never on the ledger without its endpoints queued; dry, the re-queue is
+    /// counted by the same predicates and nothing is written.
+    pub async fn backfill_declared_window(
+        &self,
+        window: DeclaredWindow,
+        endpoints: &std::collections::HashMap<i64, LinkEndpoint>,
+        report: &mut TenderLinkBackfill,
+    ) -> turso::Result<()> {
+        report.declaring += window.declaring;
+        if window.notices.is_empty() {
+            return Ok(());
+        }
+        let reader = self.reader().await?;
+        let mut shared = SharedTender::prepare(&reader).await?;
+        let mut diffs: Vec<(i64, DeclaredDiff)> = Vec::new();
+        let mut requeue: Vec<i64> = Vec::new();
+        // The census's verdict on a resolved previous-notice row `a → b`: whether the
+        // target is strictly earlier and the two notices are buyer-disjoint, and whether
+        // they also sit under different procedure keys (a shared BT-04 is one group
+        // whatever the link says). `None` when either end is unknown.
+        let judge = |a: i64, b: i64| -> Option<(bool, bool)> {
+            let (fa, fb) = (endpoints.get(&a)?, endpoints.get(&b)?);
+            let refused = fb.published_at < fa.published_at && buyer_tokens_disjoint(&fa.buyer_tokens, &fb.buyer_tokens);
+            let apart = fa.procedure_key.is_none() || fa.procedure_key != fb.procedure_key;
+            Some((refused, apart))
+        };
+        for (notice, diff) in window.notices {
             for row in &diff.declared {
                 let counts = report.counts(&row.0);
                 counts.declared += 1;
@@ -10482,7 +10674,17 @@ impl Db {
             }
             for (rule, b_source, _, target) in &diff.declared {
                 let Some(b) = *target else { continue };
+                let previous = is_previous_notice_rule(rule);
+                let verdict = if previous { judge(notice.id, b) } else { None };
+                let refused = verdict.is_some_and(|(refused, _)| refused);
                 if shared.shared(notice.id, b).await? {
+                    if refused && verdict.is_some_and(|(_, apart)| apart) {
+                        report.counts(rule).would_split += 1;
+                        report.would_split += 1;
+                        requeue.extend([notice.id, b]);
+                        let seen = report.would_split;
+                        Self::sample_link(&reader, &mut report.split_samples, seen, rule, &notice, b).await?;
+                    }
                     continue;
                 }
                 let counts = report.counts(rule);
@@ -10490,38 +10692,20 @@ impl Db {
                 if *b_source != notice.source {
                     counts.cross_source += 1;
                 }
-                requeue.extend([notice.id, b]);
-                report.would_merge += 1;
-                let slot = if report.samples.len() < LINK_BACKFILL_SAMPLES {
-                    Some(report.samples.len())
-                } else {
-                    let mut x = report.would_merge ^ 0x9E37_79B9_7F4A_7C15;
-                    x ^= x << 13;
-                    x ^= x >> 7;
-                    x ^= x << 17;
-                    Some((x % report.would_merge) as usize).filter(|&s| s < LINK_BACKFILL_SAMPLES)
-                };
-                if let Some(slot) = slot {
-                    let mut rows = reader
-                        .query("SELECT source, publication_id FROM notices WHERE id = ?", (Value::Integer(b),))
-                        .await?;
-                    let (b_source, b_publication_id) = match rows.next().await? {
-                        Some(row) => (text(&row, 0), text(&row, 1)),
-                        None => continue,
-                    };
-                    let sample = TenderLinkSample {
-                        rule: rule.clone(),
-                        a_source: notice.source.clone(),
-                        a_publication_id: notice.publication_id.clone(),
-                        b_source,
-                        b_publication_id,
-                    };
-                    if slot == report.samples.len() {
-                        report.samples.push(sample);
-                    } else {
-                        report.samples[slot] = sample;
-                    }
+                if refused {
+                    counts.buyer_disjoint += 1;
                 }
+                report.would_merge += 1;
+                if refused {
+                    report.buyer_disjoint += 1;
+                    let seen = report.buyer_disjoint;
+                    Self::sample_link(&reader, &mut report.disjoint_samples, seen, rule, &notice, b).await?;
+                    continue;
+                }
+                requeue.extend([notice.id, b]);
+                report.joins += 1;
+                let seen = report.joins;
+                Self::sample_link(&reader, &mut report.samples, seen, rule, &notice, b).await?;
             }
             for (_, (rule, _, _, target)) in &diff.stale {
                 report.counts(rule).stale += 1;
@@ -10533,7 +10717,6 @@ impl Db {
             }
         }
         requeue.retain(|id| report.queued.insert(*id));
-        drop(reads);
         drop(shared);
         if report.dry_run {
             report.requeued += Self::requeue_notice_ids(&reader, &requeue, true).await?;
@@ -10554,6 +10737,48 @@ impl Db {
         }
         .await;
         report.requeued += finish_tx(&conn, result).await?;
+        Ok(())
+    }
+
+    /// Offer the pair `notice → b` to a reservoir of at most [`LINK_BACKFILL_SAMPLES`]
+    /// samples that has now seen `seen` pairs (this one included): a uniform sample with
+    /// a fixed seed, since the walk is ordered and one corpus should give one sample. The
+    /// target's publication id is read only when the pair is kept.
+    async fn sample_link(
+        reader: &Connection,
+        samples: &mut Vec<TenderLinkSample>,
+        seen: u64,
+        rule: &str,
+        notice: &NoticeRef,
+        b: i64,
+    ) -> turso::Result<()> {
+        let slot = if samples.len() < LINK_BACKFILL_SAMPLES {
+            samples.len()
+        } else {
+            let mut x = seen ^ 0x9E37_79B9_7F4A_7C15;
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            match (x % seen) as usize {
+                s if s < LINK_BACKFILL_SAMPLES => s,
+                _ => return Ok(()),
+            }
+        };
+        let mut rows =
+            reader.query("SELECT source, publication_id FROM notices WHERE id = ?", (Value::Integer(b),)).await?;
+        let Some(row) = rows.next().await? else { return Ok(()) };
+        let sample = TenderLinkSample {
+            rule: rule.to_owned(),
+            a_source: notice.source.clone(),
+            a_publication_id: notice.publication_id.clone(),
+            b_source: text(&row, 0),
+            b_publication_id: text(&row, 1),
+        };
+        if slot == samples.len() {
+            samples.push(sample);
+        } else {
+            samples[slot] = sample;
+        }
         Ok(())
     }
 
@@ -11057,6 +11282,22 @@ impl Db {
         //   one target come from two or more keyed components of another Source, they are
         //   a PIN several procedures cite or a colliding key (issue 482), not one
         //   procedure, and every one of them is refused.
+        //   Every previous-notice reference, same-Source or not, is also BUYER-guarded
+        //   (issue 481 unit 2b): publishers copy placeholder OPP-090 values, and
+        //   `00123456-2026` is a real notice of an unrelated buyer, which every later
+        //   citer would weld into its Tender past the direction check. A reference whose
+        //   citing and cited notices both name buyers and share none of them
+        //   ([`buyer_tokens_disjoint`] on the tolerant token sets: identifier key AND N2
+        //   name key of every buyer) is refused. Judged NOTICE to notice, not against the
+        //   cited notice's component: the reference names one notice, so that notice's
+        //   buyers are what the claim is checked against; a component's buyer set only
+        //   grows as it welds, so a hub would vouch for any citer — the guard weakest
+        //   exactly where it matters; and a verdict on two endpoints is independent of
+        //   the order edges are read in and of how much of a component an incremental
+        //   plan holds, so it never waits. A joint procurement's CAN naming one of its
+        //   CN's buyers overlaps that CN itself. Judged after the direction check and
+        //   before the fan-in count, so a refused placeholder citer is not a second
+        //   procedure in the fan-in either.
         // - **same-notice** (`logical-notice`) and **matched** links have no direction — one
         //   notice published twice has no earlier half — and are weld-guarded instead: one
         //   logical id must name one notice on the citing side, one notice may be matched to
@@ -11172,6 +11413,9 @@ impl Db {
             b_at: i64,
             /// The citing notice's Source is not the target's.
             cross: bool,
+            /// A previous-notice edge whose two notices name buyers and share none
+            /// (issue 481 unit 2b); false for every other rule.
+            disjoint: bool,
         }
         let mut edges: Vec<LinkEdge> = Vec::new();
         // A key's rank orders who NAMES a component (issue 481). A keyed member first, so
@@ -11223,8 +11467,9 @@ impl Db {
                         started.elapsed().as_secs_f64()
                     );
                 }
+                let rule = text(&row, 0);
+                let previous = is_previous_notice_rule(&rule);
                 let edge = LinkEdge {
-                    rule: text(&row, 0),
                     b_ref: text(&row, 1),
                     a_id: int(&row, 2),
                     b_id: int(&row, 3),
@@ -11233,8 +11478,9 @@ impl Db {
                     b: text(&row, 9),
                     b_at: int(&row, 10),
                     cross: text(&row, 8) != text(&row, 13),
+                    disjoint: previous && buyer_tokens_disjoint(&buyer_tokens_of(&row, 14), &buyer_tokens_of(&row, 15)),
+                    rule,
                 };
-                let previous = is_previous_notice_rule(&edge.rule);
                 if edge.rule == LINK_LOGICAL_NOTICE {
                     carriers.entry(edge.b_ref.clone()).or_default().insert(edge.a.clone());
                 } else if !previous {
@@ -11294,6 +11540,8 @@ impl Db {
                     guarded.push(e);
                 } else if e.b_at >= e.a_at {
                     links.not_earlier += 1;
+                } else if e.disjoint {
+                    links.buyer_disjoint += 1;
                 } else if e.cross {
                     crossing.push(e);
                 } else {
@@ -11437,8 +11685,8 @@ impl Db {
         eprintln!(
             "[project] group step links union: {:.1}s ({} key(s) to relabel, largest component \
              {largest} key(s); admitted: previous-notice {} (cross-source {}), logical-notice {}, \
-             matched {}; refused: not-earlier {}, fan-in {}, not-one-to-one {}, keyed-weld {}, \
-             oversized {}; deferred {})",
+             matched {}; refused: not-earlier {}, buyer-disjoint {}, fan-in {}, not-one-to-one {}, \
+             keyed-weld {}, oversized {}; deferred {})",
             t_uf.elapsed().as_secs_f64(),
             merges.len(),
             links.previous_notice,
@@ -11446,6 +11694,7 @@ impl Db {
             links.logical_notice,
             links.matched,
             links.not_earlier,
+            links.buyer_disjoint,
             links.fan_in,
             links.not_one_to_one,
             links.keyed_weld,
@@ -29658,6 +29907,7 @@ mod tests {
             key_shaped: true,
             buyer_key: Some(buyer.to_owned()),
             shared_kind: None,
+            buyer_tokens: Vec::new(),
         };
         const WELDED: &str = "11111111-2222-4000-8111-123412341235";
         const ONE_BUYER: &str = "11111111-2222-4aaa-8333-444444444444";
@@ -29789,6 +30039,7 @@ mod tests {
             key_shaped: false,
             buyer_key: buyer.map(str::to_owned),
             shared_kind: None,
+            buyer_tokens: Vec::new(),
         };
         const REGISTER: &str = "ocds-h6vhtk-02874c";
         const CHAIN: &str = "ocds-h6vhtk-0a0a0a";
@@ -29887,6 +30138,7 @@ mod tests {
             key_shaped: false,
             buyer_key: None,
             shared_kind: None,
+            buyer_tokens: Vec::new(),
         };
         db.insert_plan(&[
             // Both real notices cite the phantom, so it is what joins them.
@@ -29955,6 +30207,7 @@ mod tests {
             key_shaped: false,
             buyer_key: None,
             shared_kind: None,
+            buyer_tokens: Vec::new(),
         };
         db.insert_plan(&[row(1, FIRST, Vec::new()), row(2, SECOND, vec![FIRST])])
             .await
@@ -30017,6 +30270,7 @@ mod tests {
                 key_shaped: false,
                 buyer_key: None,
                 shared_kind: shared_kind.map(str::to_owned),
+                buyer_tokens: Vec::new(),
             };
             db.insert_plan(&[
                 // The periodic indicative notice: cites nothing, is cited by both CNs.
@@ -30100,6 +30354,7 @@ mod tests {
             key_shaped,
             buyer_key: None,
             shared_kind: None,
+            buyer_tokens: Vec::new(),
         };
         db.insert_plan(&[
             row(1, "11111111-2222-4000-8111-123412341235", true),

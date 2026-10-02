@@ -2010,7 +2010,12 @@ pub async fn backfill_tender_links_windowed(
             })
             .collect();
         report.notices += window.len() as u64;
-        db.backfill_declared_links(&window, &mut report).await?;
+        let resolved = db.resolve_declared_window(&window).await?;
+        // Issue 481 unit 2b: the buyer census reads both ends of every resolved
+        // previous-notice row as the plan does. Boxed (issue 467's stack budgets): its
+        // parse batches stay off the walk's frame.
+        let endpoints = Box::pin(link_endpoints(db, &resolved.previous_notice_endpoints())).await?;
+        db.backfill_declared_window(resolved, &endpoints, &mut report).await?;
         report.cursor = next;
         progress(&report);
         if !dry_run {
@@ -2023,6 +2028,38 @@ pub async fn backfill_tender_links_windowed(
         db.attest_tender_links_complete().await?;
     }
     Ok(report)
+}
+
+/// Notices per [`link_endpoints`] read: [`Db::parsed_by_ids`] reads every satellite of
+/// the batch, so the batch bounds what one window holds of whole parses.
+const LINK_ENDPOINT_BATCH: usize = 500;
+
+/// Issue 481 unit 2b: what the ledger backfill's buyer census needs of `ids` — the plan
+/// row's own buyer tokens, procedure key and publication instant, derived from each
+/// notice's FULL parse through [`Ident::read`], exactly as the plan build derives them,
+/// so the census judges a previous-notice row on the facts the fold's buyer guard reads.
+/// Every id is a parsed notice: a citer the walk read, or a target the producer resolved
+/// among parsed notices.
+///
+/// The cost is one whole parse per endpoint: job 1882 (2026-10-02) found 181,222
+/// resolved `opp-090` rows, so at most ~360k notices, against the 3.87M the walk reads
+/// link fields of.
+async fn link_endpoints(db: &Db, ids: &[i64]) -> turso::Result<HashMap<i64, store::LinkEndpoint>> {
+    let mut out = HashMap::with_capacity(ids.len());
+    for batch in ids.chunks(LINK_ENDPOINT_BATCH) {
+        for (notice, parsed) in db.parsed_by_ids(batch).await? {
+            let row = Ident::read(&notice, &parsed).into_plan_row();
+            out.insert(
+                notice.id,
+                store::LinkEndpoint {
+                    buyer_tokens: row.buyer_tokens,
+                    procedure_key: row.procedure_key,
+                    published_at: row.published_at,
+                },
+            );
+        }
+    }
+    Ok(out)
 }
 
 /// The daily projection: re-derive only the Tenders TOUCHED by notices parsed
@@ -2376,7 +2413,7 @@ pub async fn project_incremental_chunked_observed(
              un-projected legacy notices exceed the closure cap ({LEGACY_CLOSURE_CAP}) \
              (issue 305); re-projecting the whole corpus"
         );
-        return incremental_full_fallback(db, &mut on_progress, stop).await;
+        return Box::pin(incremental_full_fallback(db, &mut on_progress, stop)).await;
     }
     let chunk_size = chunk_size.max(1);
     let now = store::now_unix();
@@ -2452,7 +2489,7 @@ pub async fn project_incremental_chunked_observed(
                     "[project] INCREMENTAL → FULL fallback: {reason} (issue 58 v2); \
                      re-projecting the whole corpus"
                 );
-                return incremental_full_fallback(db, &mut on_progress, stop).await;
+                return Box::pin(incremental_full_fallback(db, &mut on_progress, stop)).await;
             }
         }
     };
@@ -2493,7 +2530,9 @@ pub async fn project_incremental_chunked_observed(
     // with the changed notices' own links resolved now (a new notice has no ledger rows
     // yet), and plan every Tender it reaches whole.
     let targets = db.resolve_declared_links(&declared).await?;
-    match link_closure(db, &all_ids, &targets).await? {
+    // Boxed, as are the full fallbacks: this fn's poll frame is on issue 467's
+    // `run_project` budget, and an inline future is a frame slot as big as itself.
+    match Box::pin(link_closure(db, &all_ids, &targets)).await? {
         Ok((link_ids, link_tenders)) => {
             if !link_ids.is_empty() {
                 stage(&format!(
@@ -2513,7 +2552,7 @@ pub async fn project_incremental_chunked_observed(
             eprintln!(
                 "[project] INCREMENTAL → FULL fallback: {reason} (issue 481); re-projecting the whole corpus"
             );
-            return incremental_full_fallback(db, &mut on_progress, stop).await;
+            return Box::pin(incremental_full_fallback(db, &mut on_progress, stop)).await;
         }
     }
 
@@ -3952,6 +3991,9 @@ struct Ident {
     /// Issue 369 unit 2: the buyer SET this notice publishes, sorted and joined —
     /// see [`buyer_key`] for why a set and not one buyer.
     buyer_key: Option<String>,
+    /// Issue 481 unit 2b: the tolerant buyer token set the link step's buyer guard
+    /// reads — see [`buyer_tokens_of`].
+    buyer_tokens: Vec<u32>,
     /// Issue 364 unit 6: the shared-publication kind this legacy notice IS, by
     /// its own document-type code ([`SHARED_DOC_TYPES`]); `None` for a procedure
     /// notice and for every non-legacy profile. Goes on the plan row so the
@@ -4384,6 +4426,9 @@ impl Ident {
                 })
             })
             .flatten();
+        // Read once for both: the key-election gate's buyer key and the link guard's
+        // tokens (`NoticeState::mentions` walks every value of the notice).
+        let buyers = buyer_mentions(sdk01, notice.id, parsed);
         Ident {
             notice_id: notice.id,
             source: notice.source.clone(),
@@ -4403,7 +4448,9 @@ impl Ident {
             f14_targets: f14_target_gate(parsed),
             // issue 369 unit 2: the buyer set this notice publishes, for the
             // key-election gate. Parsed-side, so no org-layer dependency.
-            buyer_key: buyer_key(sdk01, notice.id, parsed),
+            buyer_key: buyer_key_of(&buyers),
+            // issue 481 unit 2b: the same buyers as the link guard's tolerant tokens.
+            buyer_tokens: buyer_tokens_of(&buyers),
             shared_kind: legacy
                 .then(|| {
                     LEGACY_DOC_TYPE_FIELDS
@@ -4437,6 +4484,7 @@ impl Ident {
             key_shaped,
             buyer_key: self.buyer_key,
             shared_kind: self.shared_kind.map(str::to_owned),
+            buyer_tokens: self.buyer_tokens,
         }
     }
 }
@@ -5799,7 +5847,18 @@ const BUYER_ROLES: &[&str] = &["Procedure-Buyer", "buyer"];
 /// the `>= 3` threshold already absorbs the duplication that layer would add (2 is the
 /// measured org-duplicate floor). The census used resolved rows only because that is
 /// all a read-only probe could reach.
+// `Ident::read` reads the mentions once for this and the link guard's tokens
+// ([`buyer_key_of`], [`buyer_tokens_of`]); this whole-notice spelling is the tests'.
+#[cfg_attr(not(test), allow(dead_code))]
 fn buyer_key(sdk01: bool, notice_id: i64, parsed: &Parsed) -> Option<String> {
+    buyer_key_of(&buyer_mentions(sdk01, notice_id, parsed))
+}
+
+/// The mentions of the Organizations this notice names as its buyer (issue 369 unit 2;
+/// the parsed side, never the resolved `organizations` row) — what [`buyer_key`] and
+/// [`buyer_tokens_of`] both read, so the gate's key and the link guard's tokens cannot
+/// disagree on who a notice's buyers are. Empty when it names no buyer at all.
+fn buyer_mentions(sdk01: bool, notice_id: i64, parsed: &Parsed) -> Vec<store::Mention> {
     let mut sections: BTreeSet<&str> = BTreeSet::new();
     if sdk01 {
         for section in &parsed.sections {
@@ -5820,32 +5879,59 @@ fn buyer_key(sdk01: bool, notice_id: i64, parsed: &Parsed) -> Option<String> {
         }
     }
     if sections.is_empty() {
-        return None;
+        return Vec::new();
     }
-    let mut keys: Vec<String> = NoticeState::mentions(sdk01, notice_id, parsed)
+    NoticeState::mentions(sdk01, notice_id, parsed)
         .into_iter()
         .filter(|m| sections.contains(m.section_id.as_str()))
-        .filter_map(|m| match &m.identifier {
-            // The strong key: country-scoped and normalised by the function the
-            // resolver itself binds on, so two notices publishing one buyer agree
-            // here whatever they wrote in the name field.
-            Some(id) => {
-                Some(format!("{}:{}:{}", id.country.as_deref().unwrap_or(""), id.kind, id.value))
-            }
-            // No identifier that passed the plausibility gate: fall back to the N2
-            // name key, which is what the org layer falls back to. An empty key
-            // carries no identity, so it is dropped rather than colliding every
-            // nameless buyer into one.
-            None => {
-                let norm = match_norm(&m.name);
-                (!norm.is_empty())
-                    .then(|| format!("n2:{}:{norm}", m.country.as_deref().unwrap_or("")))
-            }
-        })
-        .collect();
+        .collect()
+}
+
+/// A buyer mention's identifier key, `country:kind:value` — the strong key: country-
+/// scoped and normalised by the function the resolver itself binds on, so two notices
+/// publishing one buyer agree here whatever they wrote in the name field. `None` when
+/// no identifier passed the plausibility gate.
+fn buyer_identifier_key(m: &store::Mention) -> Option<String> {
+    let id = m.identifier.as_ref()?;
+    Some(format!("{}:{}:{}", id.country.as_deref().unwrap_or(""), id.kind, id.value))
+}
+
+/// A buyer mention's N2 name key, `n2:country:match_norm(name)` — what the org layer
+/// falls back to. An empty name carries no identity, so it has no key rather than
+/// colliding every nameless buyer into one.
+fn buyer_name_key(m: &store::Mention) -> Option<String> {
+    let norm = match_norm(&m.name);
+    (!norm.is_empty()).then(|| format!("n2:{}:{norm}", m.country.as_deref().unwrap_or("")))
+}
+
+/// [`buyer_key`] over the buyer mentions: per buyer the identifier key, or the N2 name
+/// key when no identifier passed the gate; sorted, deduplicated, joined by `|`.
+fn buyer_key_of(mentions: &[store::Mention]) -> Option<String> {
+    let mut keys: Vec<String> =
+        mentions.iter().filter_map(|m| buyer_identifier_key(m).or_else(|| buyer_name_key(m))).collect();
     keys.sort();
     keys.dedup();
     (!keys.is_empty()).then(|| keys.join("|"))
+}
+
+/// Issue 481 unit 2b: the notice's TOLERANT buyer token set, for the link step's buyer
+/// guard on previous-notice references (`store::PlanRow::buyer_tokens`). For every
+/// buyer mention BOTH its identifier key (when the identifier passed the gate) AND its
+/// N2 name key, digested ([`store::buyer_token`]), sorted and deduplicated. Two notices
+/// overlap when they share one token, so a buyer written once with its identifier and
+/// once by name only still overlaps, as does a joint procurement's CAN naming one of
+/// its CN's buyers. [`buyer_key`] picks ONE key per buyer — identifier OR name — which
+/// is right for issue 369's distinct count and would read those two spellings as two
+/// buyers here. Empty when no buyer was parsed: unknown, which the guard never refuses.
+fn buyer_tokens_of(mentions: &[store::Mention]) -> Vec<u32> {
+    let mut tokens: Vec<u32> = mentions
+        .iter()
+        .flat_map(|m| buyer_identifier_key(m).into_iter().chain(buyer_name_key(m)))
+        .map(|token| store::buyer_token(&token))
+        .collect();
+    tokens.sort_unstable();
+    tokens.dedup();
+    tokens
 }
 
 /// Fold a legacy address-block element name onto a canonical party role
@@ -8451,6 +8537,49 @@ mod tests {
         assert_eq!(procedure_key(&uuid, false, false), None);
     }
 
+    /// One eForms notice: a Procedure section referencing `orgs` — `(section id, name,
+    /// BT-501 identifier or "")` — as its buyers, and one Organization section per buyer
+    /// carrying BT-500/501/514 (country DEU).
+    fn buyers_notice(orgs: &[(&str, &str, &str)]) -> Parsed {
+        let mut sections =
+            vec![store::Section { id: "PROC".into(), kind: "Notice".into(), parent: None }];
+        let mut values = Vec::new();
+        for (id, name, nat) in orgs {
+            sections.push(store::Section {
+                id: (*id).into(),
+                kind: ORGANIZATION_KIND.into(),
+                parent: None,
+            });
+            values.push(store::ValueRow {
+                section_id: "PROC".into(),
+                field_id: "OPT-300-Procedure-Buyer".into(),
+                ordinal: 0,
+                value: NoticeValue::Id { scheme: None, value: (*id).into(), is_ref: true },
+            });
+            values.push(store::ValueRow {
+                section_id: (*id).into(),
+                field_id: ORG_NAME_FIELD.into(),
+                ordinal: 0,
+                value: NoticeValue::Text { value: (*name).into(), lang: None },
+            });
+            values.push(store::ValueRow {
+                section_id: (*id).into(),
+                field_id: ORG_COUNTRY_FIELD.into(),
+                ordinal: 0,
+                value: NoticeValue::Code { list: None, code: "DEU".into() },
+            });
+            if !nat.is_empty() {
+                values.push(store::ValueRow {
+                    section_id: (*id).into(),
+                    field_id: ORG_IDENTIFIER_FIELD.into(),
+                    ordinal: 0,
+                    value: NoticeValue::Id { scheme: None, value: (*nat).into(), is_ref: false },
+                });
+            }
+        }
+        Parsed { sections, values }
+    }
+
     /// Issue 369 unit 2: the gate counts DISTINCT buyer keys across a key's notices, so
     /// what `buyer_key` encodes decides whether the gate is right. Keying on the SET is
     /// what lets `>= 3` refuse a weld while admitting a joint procurement — the census's
@@ -8459,47 +8588,7 @@ mod tests {
     /// Counting individual buyers instead would refuse the joint procurement.
     #[test]
     fn the_buyer_key_is_the_notices_buyer_set_so_a_joint_procurement_stays_one_key() {
-        // One eForms notice: a Procedure section referencing `orgs` as its buyers, and one
-        // Organization section per buyer carrying BT-500/501/514.
-        let notice = |orgs: &[(&str, &str, &str)]| -> Parsed {
-            let mut sections =
-                vec![store::Section { id: "PROC".into(), kind: "Notice".into(), parent: None }];
-            let mut values = Vec::new();
-            for (id, name, nat) in orgs {
-                sections.push(store::Section {
-                    id: (*id).into(),
-                    kind: ORGANIZATION_KIND.into(),
-                    parent: None,
-                });
-                values.push(store::ValueRow {
-                    section_id: "PROC".into(),
-                    field_id: "OPT-300-Procedure-Buyer".into(),
-                    ordinal: 0,
-                    value: NoticeValue::Id { scheme: None, value: (*id).into(), is_ref: true },
-                });
-                values.push(store::ValueRow {
-                    section_id: (*id).into(),
-                    field_id: ORG_NAME_FIELD.into(),
-                    ordinal: 0,
-                    value: NoticeValue::Text { value: (*name).into(), lang: None },
-                });
-                values.push(store::ValueRow {
-                    section_id: (*id).into(),
-                    field_id: ORG_COUNTRY_FIELD.into(),
-                    ordinal: 0,
-                    value: NoticeValue::Code { list: None, code: "DEU".into() },
-                });
-                if !nat.is_empty() {
-                    values.push(store::ValueRow {
-                        section_id: (*id).into(),
-                        field_id: ORG_IDENTIFIER_FIELD.into(),
-                        ordinal: 0,
-                        value: NoticeValue::Id { scheme: None, value: (*nat).into(), is_ref: false },
-                    });
-                }
-            }
-            Parsed { sections, values }
-        };
+        let notice = buyers_notice;
 
         // A joint procurement: the SAME two buyers on both notices, listed in opposite
         // order. One key, because the set is sorted before it is joined — so `>= 3` never
@@ -8534,6 +8623,47 @@ mod tests {
 
         // No buyer named at all is None — distinct from naming an unidentifiable one.
         assert_eq!(buyer_key(false, 5, &notice(&[])), None);
+    }
+
+    /// Issue 481 unit 2b: the link guard's TOLERANT buyer tokens. Every buyer gives its
+    /// identifier key AND its N2 name key, so one buyer written once with its identifier
+    /// and once by name only (in another casing) shares a token, where `buyer_key` —
+    /// identifier OR name, one key a buyer — reads the two spellings as two buyers. A
+    /// joint procurement's CAN naming one of its CN's buyers overlaps that CN; two
+    /// different buyers share nothing; a notice naming no buyer has no tokens at all.
+    #[test]
+    fn the_buyer_tokens_carry_both_keys_so_one_buyer_spelled_two_ways_overlaps() {
+        let tokens = |orgs: &[(&str, &str, &str)]| buyer_tokens_of(&buyer_mentions(false, 1, &buyers_notice(orgs)));
+        let by_id = tokens(&[("ORG-1", "Stadt Aachen", "DE811907980")]);
+        assert_eq!(by_id.len(), 2, "the identifier key and the name key: {by_id:?}");
+        let by_name = tokens(&[("ORG-7", "STADT AACHEN,", "")]);
+        assert_eq!(by_name.len(), 1, "the name key only");
+        assert!(!store::buyer_tokens_disjoint(&by_id, &by_name), "one buyer, two spellings");
+        assert_ne!(
+            buyer_key(false, 1, &buyers_notice(&[("ORG-1", "Stadt Aachen", "DE811907980")])),
+            buyer_key(false, 2, &buyers_notice(&[("ORG-7", "STADT AACHEN,", "")])),
+            "where the gate's key, one key a buyer, tells the two spellings apart"
+        );
+
+        let cn = tokens(&[
+            ("ORG-1", "Zentrale Beschaffungsstelle NRW", "DE123456789"),
+            ("ORG-2", "Stadt Aachen", "DE811907980"),
+            ("ORG-3", "Kreis Düren", "DE121038462"),
+        ]);
+        let can = tokens(&[("ORG-1", "Stadt Aachen", "DE811907980"), ("ORG-2", "Gemeinde Alsdorf", "")]);
+        assert!(!store::buyer_tokens_disjoint(&cn, &can), "overlapping, not equal, sets overlap");
+
+        let other = tokens(&[("ORG-1", "Statistiska centralbyrån", "2021000837")]);
+        assert!(store::buyer_tokens_disjoint(&by_id, &other), "two buyers share nothing");
+        let none = tokens(&[]);
+        assert!(none.is_empty());
+        assert!(!store::buyer_tokens_disjoint(&none, &other), "unknown is not disjoint");
+        assert!(!store::buyer_tokens_disjoint(&other, &none), "either way round");
+
+        let mut sorted = cn.clone();
+        sorted.sort_unstable();
+        sorted.dedup();
+        assert_eq!(cn, sorted, "sorted and deduplicated, as the guard's merge-walk needs");
     }
 
     #[test]
