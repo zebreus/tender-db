@@ -92,6 +92,8 @@ fn r2_args(dry_run: bool) -> store::R2MergeArgs<'static> {
         key: gb_key,
         name_key: |n| n.to_lowercase(),
         names_agree: |a, b| a == b,
+        trim: |n| n.to_owned(),
+        norm: |n| n.to_lowercase(),
         condemns: |_, _, _| false,
         consortium: |_| false,
         legal_form: |_| None,

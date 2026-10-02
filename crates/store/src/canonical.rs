@@ -3517,6 +3517,12 @@ pub struct R2MergeArgs<'a> {
     /// of its names agrees with one of its group's (the re-key arm's test).
     pub name_key: fn(&str) -> String,
     pub names_agree: fn(&str, &str) -> bool,
+    /// `crosswalk::altid_trim` and `project::match_norm`: the generic-name
+    /// wall's N2 key for an agreeing name ([`altid_wall_key`], the altid arm's
+    /// step 6) — the fold gate's agreement counts only on a pair whose two
+    /// names are both under `stoplist_cap` (issue 470 review).
+    pub trim: fn(&str) -> String,
+    pub norm: fn(&str) -> String,
     /// The v2 gate (denial rule 5 — gate-failure poisons the cluster).
     pub condemns: fn(Option<&str>, &str, &str) -> bool,
     /// Consortium/groupement name detection (the census finding).
@@ -3577,6 +3583,11 @@ pub struct R2MergeReport {
     /// (`altid_keys_agree`), and the groups that left fewer than two.
     pub fold_excluded: u64,
     pub denied_fold: u64,
+    /// Issue 470 review: of `fold_excluded`, the members whose names DID agree,
+    /// but only on a pair the generic-name wall refuses (a name over
+    /// `stoplist_cap` carriers is no evidence for a key that is not
+    /// merge-grade).
+    pub fold_excluded_generic: u64,
     /// Groups denied: conflicting mention-evidence register keys (VAT-group
     /// wall).
     pub denied_group_vat: u64,
@@ -3632,6 +3643,11 @@ pub struct R2MergeReport {
     /// [`Self::plan_listing`] is a scan-order prefix and NOT reviewable as a
     /// whole. Read `plan_sample` for the unbiased view in that case.
     pub plan_listing_truncated: bool,
+    /// Issue 470 review: each [`Self::plan_listing`] group's survivor, in the
+    /// same order — the member the wet merge keeps, by `(provisional, folded,
+    /// id)`. The stored plan's `plan` entries carry it as `keep`, so a
+    /// fold-joined group's keep is read, not derived.
+    pub plan_listing_keep: Vec<i64>,
     /// Issue 359: the R2 groups the name rule denied — two named members whose
     /// folded core tokens share nothing ([`name_cores_disjoint`]) — listed like
     /// the plan so the denial is reviewable. This is the review
@@ -7390,6 +7406,14 @@ pub struct MentionResolver {
     /// owner (or several) and minted.
     folded_bound: u64,
     folded_refused: u64,
+    /// Issue 470 review: folded mentions bound to the org a merge already put
+    /// their literal on (`organization_merged_identifiers`), and the ones whose
+    /// key had no owner at all — a new twinless lookalike — and minted.
+    folded_merged: u64,
+    folded_unowned: u64,
+    /// …and the folded mentions whose one name match was over the generic-name
+    /// wall, refused (counted in `folded_refused` too) and minted.
+    folded_generic: u64,
     /// Issue 453: each re-keyed wrong triple → the literal its entity carries
     /// since (`applied_literal`). Resolved through `org_of` when a mention's
     /// exact triple misses, not only at open: in a rebuild the table starts
@@ -12139,7 +12163,16 @@ impl Db {
             let value = text(&row, 3);
             let keyed = resolver_canon_key(canon_key, country.as_deref(), &kind, &value);
             if withheld.contains(&id) {
-                if let Some((ck, _)) = keyed {
+                // Issue 470 review: a withheld LOOKALIKE guards nothing. Its
+                // verdict flags the literal the reviewer read
+                // (`GBCOHIPO30808`); the number its fold proposes is as a rule
+                // the right one (452's three challengers named it), so
+                // guarding that key would take the register spelling's org
+                // (`GBCOHIP030808`) out of `canon_of` and put the entity's own
+                // spellings behind a name match — the rule
+                // `flagged_spelling_key` and the 453 alias already follow. It
+                // owns nothing by key either; its exact literal still binds.
+                if let Some((ck, false)) = keyed {
                     withheld_keys.entry(ck).or_default().push(id);
                 }
             } else if let Some((ck, true)) = keyed {
@@ -12301,6 +12334,9 @@ impl Db {
             folded,
             folded_bound: 0,
             folded_refused: 0,
+            folded_merged: 0,
+            folded_unowned: 0,
+            folded_generic: 0,
             rekeyed,
             canon_key,
             consortium,
@@ -12807,8 +12843,16 @@ impl Db {
         self.log_diag(&format!(
             "[issue 452] guarded canonical keys: {} mention(s) bound to the owner their name \
              matched, {} matched no owner (or several) and minted; [issue 470] folded keys: {} \
-             mention(s) bound by name, {} matched no owner (or several) and minted",
-            resolver.guarded_bound, resolver.guarded_refused, resolver.folded_bound, resolver.folded_refused
+             mention(s) bound by name, {} bound to the org a merge put their literal on, {} \
+             matched no owner (or several) and minted ({} of them on a generic name), {} had \
+             no owner at all and minted",
+            resolver.guarded_bound,
+            resolver.guarded_refused,
+            resolver.folded_bound,
+            resolver.folded_merged,
+            resolver.folded_refused,
+            resolver.folded_generic,
+            resolver.folded_unowned
         ));
         if resolver.created_any {
             let conn = self.conn().await;
@@ -12922,15 +12966,55 @@ impl Db {
                                 owners.extend(resolver.canon_of.get(ck).copied());
                                 owners.sort_unstable();
                                 owners.dedup();
+                                if owners.is_empty() {
+                                    resolver.folded_unowned += 1;
+                                }
                                 (!owners.is_empty()).then_some((owners, true))
                             }
                             None => None,
                         },
                     };
+                    // Issue 470 review: a folded literal a MERGE already put on
+                    // one of the key's owners — R2 merged the lookalike org
+                    // into the register spelling's behind the fold gate (or a
+                    // 362 verdict), so the literal is in
+                    // `organization_merged_identifiers`, not in `org_of`. It
+                    // binds there name-blind and is cached, as the lookalike's
+                    // own row bound its exact literal before the merge: the
+                    // name test below is the resolver's exact `norm`, stricter
+                    // than the agreement the merge passed (`Morris and
+                    // Spottiswood` / `Morris & Spottiswood Ltd`), and the merge
+                    // carried the loser's names only where the survivor had no
+                    // variant in that language. Without it the publisher's next
+                    // mention re-minted the lookalike and the split was back.
+                    // One seek on the merged table's primary key, folded
+                    // mentions only; exactly one holder, and it must still own
+                    // the key; never a consortium-named mention.
+                    let merged_hit = match &gated {
+                        Some((owners, true)) if !vetoed => {
+                            let holders = Box::pin(crate::read::merged_identifier_holders(
+                                conn,
+                                &id.value,
+                                Some(id.kind.as_str()),
+                            ))
+                            .await?;
+                            match holders[..] {
+                                [holder] if owners.contains(&holder) => {
+                                    resolver.folded_merged += 1;
+                                    Some(holder)
+                                }
+                                _ => None,
+                            }
+                        }
+                        _ => None,
+                    };
                     let guarded_hit = match gated {
                         None => None,
+                        Some(_) if merged_hit.is_some() => None,
                         Some((owners, by_fold)) => {
                             let mut matched: Vec<i64> = Vec::new();
+                            // The name each match was on, for the fold's wall.
+                            let mut matched_on: Vec<String> = Vec::new();
                             if let (false, Some(norm_fn)) = (vetoed, resolver.norm) {
                                 let wanted: Vec<String> = std::iter::once(m.name.as_str())
                                     .chain(m.variants.iter().map(|(_, v)| v.as_str()))
@@ -12950,11 +13034,50 @@ impl Db {
                                         )
                                         .await?;
                                     while let Some(row) = rows.next().await? {
-                                        if wanted.contains(&norm_fn(&text(&row, 0))) {
+                                        let k = norm_fn(&text(&row, 0));
+                                        if wanted.contains(&k) {
                                             matched.push(owner);
+                                            matched_on.push(k);
                                             break;
                                         }
                                     }
+                                }
+                            }
+                            // Issue 470 review: a folded key is not merge-grade,
+                            // so its one name match must be under the
+                            // generic-name wall (R2's fold gate and the altid
+                            // arm read the same wall): a `Highways Department`
+                            // two councils publish is no evidence the lookalike
+                            // is this owner's number. Memoized per run; an
+                            // unavailable wall binds leniently, as every bind
+                            // path's does, and is logged.
+                            if let ([_], true, [k]) = (&matched[..], by_fold, &matched_on[..]) {
+                                let generic = match resolver.generic_memo.get(k).copied() {
+                                    Some(g) => g,
+                                    None => match Box::pin(self.name_key_is_generic_on(
+                                        conn,
+                                        "n2",
+                                        k,
+                                        resolver.stoplist_cap,
+                                    ))
+                                    .await
+                                    {
+                                        Ok(g) => {
+                                            resolver.generic_memo.insert(k.clone(), g);
+                                            g
+                                        }
+                                        Err(e) => {
+                                            self.log_diag(&format!(
+                                                "[issue 470] fold genericness probe failed, binding \
+                                                 leniently: {e}"
+                                            ));
+                                            false
+                                        }
+                                    },
+                                };
+                                if generic {
+                                    resolver.folded_generic += 1;
+                                    matched.clear();
                                 }
                             }
                             match (&matched[..], by_fold) {
@@ -12994,7 +13117,7 @@ impl Db {
                     let variant_vetoed = resolver
                         .consortium
                         .is_some_and(|f| m.variants.iter().any(|(_, v)| f(v)));
-                    let anchor_hit = match (canon_hit.or(guarded_hit), id.country.as_deref(), resolver.anchors, resolver.norm, vetoed || variant_vetoed) {
+                    let anchor_hit = match (canon_hit.or(guarded_hit).or(merged_hit), id.country.as_deref(), resolver.anchors, resolver.norm, vetoed || variant_vetoed) {
                         (None, None, Some(anchors_fn), Some(norm_fn), false) => {
                             let anchors = anchors_fn(&id.value);
                             let real: Vec<_> =
@@ -13208,7 +13331,7 @@ impl Db {
                     // (the anchor path is country-less, the alias GB-only, so
                     // the two never both apply). `None` on an unarmed
                     // resolver, which is therefore byte-identical.
-                    let alias_hit = match (&mut resolver.altid, canon_hit.or(guarded_hit), anchor_hit) {
+                    let alias_hit = match (&mut resolver.altid, canon_hit.or(guarded_hit).or(merged_hit), anchor_hit) {
                         (Some(alias), None, None) => {
                             self.altid_alias_bind(
                                 conn,
@@ -13224,7 +13347,13 @@ impl Db {
                         }
                         _ => None,
                     };
-                    if let Some(org_id) = guarded_hit {
+                    if let Some(org_id) = merged_hit {
+                        // Issue 470 review: the merge's own record of where the
+                        // literal went, so cached like the lookalike row's exact
+                        // triple was before the merge.
+                        org_of.insert(key, org_id);
+                        (org_id, false)
+                    } else if let Some(org_id) = guarded_hit {
                         // Issue 452 (and 470's folded binds): name-conditional,
                         // so never cached.
                         (org_id, false)
@@ -14684,6 +14813,8 @@ impl Db {
         // with the cohort to stamp once the wet merge has landed.
         let mut admitted: std::collections::HashMap<(String, &'static str, String), String> =
             std::collections::HashMap::new();
+        // The fold gate's wall memo, `n2 key -> generic` (rule 3b).
+        let mut fold_generic: std::collections::HashMap<String, bool> = std::collections::HashMap::new();
         'group: for (gk, members) in groups {
             if (args.stop)() {
                 report.stopped = true;
@@ -14743,12 +14874,20 @@ impl Db {
             // `altid_keys_agree`: with the unfolded members', or — a group of
             // lookalikes only — the survivor's. A HIGH merge verdict on exactly
             // this member set stands in for the gate, as it does for the name
-            // rule; the group is listed for one when the gate excludes.
+            // rule; the group is listed for one when the gate excludes. A
+            // `keep` verdict denies the group here, before the gate lists it
+            // (4a's rule, which a group the gate empties never reaches): the
+            // reviewer's answer takes it off the queue.
             let has_folded = members.iter().any(|m| m.folded);
             let reviewed = if has_folded {
                 let mut live: Vec<i64> = members.iter().map(|m| m.id).collect();
                 live.sort_unstable();
-                self.merge_verdict_for(&gk.0, gk.1, &gk.2).await?.is_some_and(|v| {
+                let verdict = self.merge_verdict_for(&gk.0, gk.1, &gk.2).await?;
+                if verdict.as_ref().is_some_and(|v| v.action == "keep") {
+                    report.denied_verdict += 1;
+                    continue 'group;
+                }
+                verdict.is_some_and(|v| {
                     v.action == "merge" && v.confidence == "high" && !v.applied && v.members == live
                 })
             } else {
@@ -14761,22 +14900,57 @@ impl Db {
                         members.iter().min_by_key(|m| (m.provisional, m.folded, m.id)).expect("non-empty group").id,
                     );
                 }
-                let mut anchor_keys: Vec<String> = Vec::new();
+                let mut anchor_keys: Vec<(String, String)> = Vec::new();
                 for id in &anchors {
                     for name in self.org_all_names(*id).await? {
                         let k = (args.name_key)(&name);
                         if !k.is_empty() {
-                            anchor_keys.push(k);
+                            anchor_keys.push((k, name));
                         }
                     }
                 }
+                // The generic-name wall on the agreeing pair (issue 470
+                // review), the altid arm's step 6: a folded key is not
+                // merge-grade — that is this gate's premise — so a name over
+                // the cap (`Council`, a franchise's trading name) agreeing is
+                // no evidence. One agreeing pair whose two names are both
+                // under the cap is enough. Memoized per run, like the arm's.
                 let mut refused: Vec<i64> = Vec::new();
                 for m in members.iter().filter(|m| m.folded && !anchors.contains(&m.id)) {
-                    let agrees = self.org_all_names(m.id).await?.iter().any(|a| {
-                        let ka = (args.name_key)(a);
-                        !ka.is_empty() && anchor_keys.iter().any(|kb| (args.names_agree)(&ka, kb))
-                    });
-                    if !agrees {
+                    let mut agrees = false;
+                    let mut clear = false;
+                    'names: for a in self.org_all_names(m.id).await? {
+                        let ka = (args.name_key)(&a);
+                        if ka.is_empty() {
+                            continue;
+                        }
+                        for (kb, b) in &anchor_keys {
+                            if !(args.names_agree)(&ka, kb) {
+                                continue;
+                            }
+                            agrees = true;
+                            let mut over = false;
+                            for n in [a.as_str(), b.as_str()] {
+                                let k2 = altid_wall_key(n, args.trim, args.norm);
+                                over |= match fold_generic.get(&k2) {
+                                    Some(g) => *g,
+                                    None => {
+                                        let g = self.name_key_is_generic("n2", &k2, args.stoplist_cap).await?;
+                                        fold_generic.insert(k2, g);
+                                        g
+                                    }
+                                };
+                            }
+                            if !over {
+                                clear = true;
+                                break 'names;
+                            }
+                        }
+                    }
+                    if !clear {
+                        if agrees {
+                            report.fold_excluded_generic += 1;
+                        }
                         refused.push(m.id);
                     }
                 }
@@ -15062,13 +15236,15 @@ impl Db {
             }
             // Dry-run blast-radius honesty (the Stage-1 preview lesson,
             // re-learned by a verifier here): the org-level counts ARE what
-            // will move, so the preview reports them.
+            // will move, so the preview reports them. `keep` is the wet
+            // merge's own survivor rank, also listed with the plan (issue 470
+            // review: the rollout reads each fold-joined group's keep).
+            let keep = members
+                .iter()
+                .min_by_key(|m| (m.provisional, m.folded, m.id))
+                .expect("non-empty group")
+                .id;
             if args.dry_run {
-                let keep = members
-                    .iter()
-                    .min_by_key(|m| (m.provisional, m.folded, m.id))
-                    .expect("non-empty group")
-                    .id;
                 for m in &members {
                     if m.id == keep {
                         continue;
@@ -15126,6 +15302,7 @@ impl Db {
                             })
                             .collect(),
                     ));
+                    report.plan_listing_keep.push(keep);
                 } else {
                     report.plan_listing_truncated = true;
                 }

@@ -357,11 +357,13 @@ pub fn canonical_key(country: Option<&str>, kind: &str, value: &str) -> Option<C
         //
         // Companies House numbers are 8 characters: eight digits, or two
         // letters and six digits (`SC123456` Scotland, `NI…`, `OC…`, `SO…`,
-        // `NF…`, `FC…`, `GE…`, `IP…`, `RC…`), or `R` and seven digits (the
+        // `NF…`, `FC…`, `GE…`, `IP…`, `RC…`), or `R0` and six digits (the
         // `R0` series: `R0000568` is NORTHERN BANK LIMITED, `R0000273` H.& J.
         // MARTIN LIMITED — issue 470; two-letters-then-six refused it, so
         // `GBCOHR0000273` and `R0000273` stood as two orgs). All three full
-        // forms are E1. A 6-7 digit body is a lost leading zero and pads ⇒
+        // forms are E1. Only `R0`: an `R` before seven other digits is no
+        // series the register was measured to issue, and `GBR1234567` (the
+        // ISO-3 code before a number that lost its zero) would key as one. A 6-7 digit body is a lost leading zero and pads ⇒
         // E2, the CZ/BE precedent.
         //
         // An 8-character body with a letter O where the format has a digit,
@@ -369,7 +371,9 @@ pub fn canonical_key(country: Option<&str>, kind: &str, value: &str) -> Option<C
         // ([`gb_coh_fold`], issue 470) and the key says so
         // ([`CanonKey::folded`]): 15 of 16 standing lookalike pairs named one
         // entity, the 16th two bodies sharing a core word, so the fold is a
-        // key only a name gate may act on.
+        // key only a name gate may act on. A fold onto a number the v2 gate
+        // condemns keys nothing: the gate reads the literal, and `OOOOOO12`
+        // passes it while its fold `00000012` is a zero-padded stub.
         //
         // PPON is the Find a Tender supplier-registration series
         // (`GB-PPON-PBZB-4962-TVLR` → `GBPPONPBZB4962TVLR`), 12 alphanumerics
@@ -406,12 +410,15 @@ pub fn canonical_key(country: Option<&str>, kind: &str, value: &str) -> Option<C
                 Some(f) => (f.as_str(), true),
                 None => (coh, false),
             };
+            if folded && crate::idgate::condemns(Some("GB"), "national", coh) {
+                return None;
+            }
             let digits = coh.bytes().all(|b| b.is_ascii_digit());
             let letters_then_six = coh.len() == 8
                 && coh[..2].bytes().all(|b| b.is_ascii_alphabetic())
                 && coh[2..].bytes().all(|b| b.is_ascii_digit());
             let r_series =
-                coh.len() == 8 && coh.starts_with('R') && coh[1..].bytes().all(|b| b.is_ascii_digit());
+                coh.len() == 8 && coh.starts_with("R0") && coh[2..].bytes().all(|b| b.is_ascii_digit());
             match coh.len() {
                 8 if digits || letters_then_six || r_series => {
                     CanonKey::e1("GB:coh", coh).map(|k| CanonKey { folded, ..k })
@@ -778,9 +785,23 @@ mod tests {
         assert_eq!(gb("R0000568"), unfolded("R0000568"));
         assert_eq!(gb("GB-COH-R0000273"), gb("R0000273"), "prefixed and bare share the key");
         // A zero beside any other letter is not the `OC` lookalike, and a
-        // letter-then-seven-digits body other than `R` stays unkeyed.
+        // letter-then-seven-digits body other than `R0` stays unkeyed — `R`
+        // before seven other digits included, bare or behind the ISO-3 `GBR`
+        // (issue 470 review: the decision keyed the `R0` series only).
         assert_eq!(gb("I0097973"), None);
         assert_eq!(gb("GBCOHN0790518"), None);
+        assert_eq!(gb("R1234567"), None);
+        assert_eq!(gb("GBR1234567"), None);
+        assert_eq!(gb("GBCOHR9876543"), None);
+        // A fold onto a number the v2 gate condemns keys nothing: the literal
+        // passes the gate (too few digits for a run, letters for the stub
+        // rule), its fold would not (issue 470 review).
+        assert_eq!(gb("OOOOOO12"), None, "folds to the zero-padded stub 00000012");
+        assert_eq!(gb("SCOOOOO1"), None, "folds to SC000001, a repeated-digit run");
+        assert!(crate::idgate::condemns(Some("GB"), "national", "00000012"));
+        assert!(crate::idgate::condemns(Some("GB"), "national", "SC000001"));
+        assert!(!crate::idgate::condemns(Some("GB"), "national", "OOOOOO12"));
+        assert!(!crate::idgate::condemns(Some("GB"), "national", "SCOOOOO1"));
         // A trailing O folds like any other position, but its key is FLAGGED:
         // with no standing twin it binds nothing new, because every bind and
         // merge of a folded key goes through a name gate (the decision's

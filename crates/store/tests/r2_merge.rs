@@ -34,7 +34,7 @@ fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, 
 }
 
 /// `crosswalk::canonical_key`'s GB company-number arm in miniature (issue
-/// 470): eight digits, two letters and six digits, or `R` and seven digits, E1;
+/// 470): eight digits, two letters and six digits, or `R0` and six digits, E1;
 /// an O where the format has a digit (or a zero for the O of `OC`) folds, and
 /// the key says so.
 fn gb_coh(body: &str) -> Option<(&'static str, String, bool, bool)> {
@@ -64,7 +64,7 @@ fn gb_coh(body: &str) -> Option<(&'static str, String, bool, bool)> {
     let digits = |s: &str| s.bytes().all(|b| b.is_ascii_digit());
     let shaped = digits(&k)
         || (k[..2].bytes().all(|b| b.is_ascii_alphabetic()) && digits(&k[2..]))
-        || (k.starts_with('R') && digits(&k[1..]));
+        || (k.starts_with("R0") && digits(&k[2..]));
     shaped.then(|| ("GB:coh", k, true, folded))
 }
 
@@ -230,6 +230,8 @@ fn args(dry_run: bool, expect_groups: Option<u64>) -> store::R2MergeArgs<'static
         key,
         name_key,
         names_agree,
+        trim: |n| n.to_owned(),
+        norm: |n| n.to_lowercase(),
         condemns,
         consortium,
         legal_form,
@@ -441,6 +443,16 @@ async fn a_fold_joined_r2_group_merges_agreeing_names_into_the_unfolded_literal(
     assert_eq!(dry.groups, 4, "SC055775, SC013683, R0000273, OC301540");
     assert_eq!((dry.fold_excluded, dry.denied_fold), (1, 1), "Aberdeen's typo is refused by names");
     assert_eq!(dry.plan_groups, 3, "Galliford, the R0 pair, KPMG");
+    // Each plan group's keep is listed beside it (issue 470 review): the rank
+    // `(provisional, folded, id)` is not in the listing, so the rollout reads
+    // the survivor rather than deriving it.
+    let keeps: std::collections::BTreeMap<&str, i64> =
+        dry.plan_listing.iter().zip(&dry.plan_listing_keep).map(|(g, keep)| (g.2.as_str(), *keep)).collect();
+    assert_eq!(
+        keeps,
+        [("OC301540", 9), ("R0000273", 6), ("SC055775", 2)].into_iter().collect(),
+        "the register spelling over the lower-id lookalike; the R0 pair, neither folded, its lower id"
+    );
     let listed: Vec<(&str, Vec<i64>)> =
         dry.denied_fold_listing.iter().map(|g| (g.2.as_str(), g.3.iter().map(|m| m.0).collect())).collect();
     assert_eq!(listed, [("SC013683", vec![3, 4])], "listed whole, for a 362 verdict");
@@ -501,4 +513,93 @@ async fn a_fold_joined_r2_group_merges_agreeing_names_into_the_unfolded_literal(
     let again = db.match_org_identifiers_r2(args(true, None)).await.expect("dry again");
     assert_eq!((again.fold_excluded, again.admitted_verdict, again.plan_groups), (0, 1, 1));
     assert!(again.denied_fold_listing.is_empty());
+
+    // The answer the rollout posts for Aberdeen / Net Zero is `keep` (two
+    // bodies), and it takes the group off the fold gate's queue: denied before
+    // the gate judges or lists it, where 4a's keep check — after the gate —
+    // was never reached by a group the gate had emptied (issue 470 review).
+    // A keep outranks any merge verdict on the key.
+    db.record_merge_verdicts(
+        "rev-470-keep",
+        &[store::MergeVerdict {
+            country: "GB".into(),
+            scheme: "GB:coh".into(),
+            key: "SC013683".into(),
+            members: vec![3, 4],
+            action: "keep".into(),
+            rationale: "fixture: a charity number and a company's".into(),
+            confidence: "high".into(),
+        }],
+        2,
+    )
+    .await
+    .unwrap();
+    let kept = db.match_org_identifiers_r2(args(true, None)).await.expect("dry kept");
+    assert_eq!(
+        (kept.denied_verdict, kept.fold_excluded, kept.denied_fold, kept.admitted_verdict, kept.plan_groups),
+        (1, 0, 0, 0, 0)
+    );
+    assert!(kept.denied_fold_listing.is_empty(), "a kept group leaves the review queue");
+}
+
+/// Issue 470 review: the fold gate's agreement counts only on a pair of names
+/// both under the generic-name wall (the altid arm's step 6). A folded key is
+/// not merge-grade — the gate's premise — so a lookalike whose only agreement
+/// with its twin is a name over `stoplist_cap` carriers stays apart and is
+/// listed for a 362 verdict, while a pair agreeing on a rare name merges.
+#[tokio::test]
+async fn a_fold_agreeing_only_on_a_generic_name_is_refused() {
+    let path = "test-r2-merge-fold-generic.db";
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    let db = store::Db::open(path).await.unwrap();
+    let conn = store::turso::Builder::new_local(path).build().await.unwrap().connect().unwrap();
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+    let orgs: &[(i64, Option<&str>, &str)] = &[
+        (1, Some("SCO24680"), "Highways Department"),
+        (2, Some("SC024680"), "Highways Department"),
+        (3, Some("SCO13579"), "Acme Widgets Ltd"),
+        (4, Some("SC013579"), "Acme Widgets Ltd"),
+    ];
+    // 21 identifier-less carriers of the generic name's N2 key: over the cap
+    // of 20 the test args pass.
+    let carriers: Vec<(i64, Option<&str>, &str)> = (100..121).map(|id| (id, None, "Highways Department")).collect();
+    for (id, identifier, name) in orgs.iter().chain(&carriers) {
+        conn.execute(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, 'GB', ?, ?, ?, ?, 0, 0)",
+            (
+                Value::Integer(*id),
+                identifier.map_or(Value::Null, |_| Value::Text("national".into())),
+                identifier.map_or(Value::Null, |i| Value::Text(i.into())),
+                Value::Text((*name).into()),
+                Value::Text(name.to_lowercase()),
+            ),
+        )
+        .await
+        .unwrap();
+    }
+    for (id, _, _) in &carriers {
+        conn.execute(
+            "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'highways department')",
+            (Value::Integer(*id),),
+        )
+        .await
+        .unwrap();
+    }
+
+    let dry = db.match_org_identifiers_r2(args(true, None)).await.expect("dry");
+    assert_eq!(dry.keyed_folded, 2);
+    assert_eq!(dry.groups, 2);
+    assert_eq!(
+        (dry.fold_excluded, dry.fold_excluded_generic, dry.denied_fold),
+        (1, 1, 1),
+        "the Highways lookalike agrees only on a generic name: {dry:#?}"
+    );
+    assert_eq!(dry.plan_groups, 1, "Acme agrees on a rare name and merges");
+    let listed: Vec<&str> = dry.denied_fold_listing.iter().map(|g| g.2.as_str()).collect();
+    assert_eq!(listed, ["SC024680"], "listed for a 362 verdict");
+    let keeps: Vec<i64> = dry.plan_listing_keep.clone();
+    assert_eq!(keeps, [4], "the register spelling keeps");
 }

@@ -100,6 +100,8 @@ fn args(dry_run: bool, expect_groups: Option<u64>) -> store::R2MergeArgs<'static
         key: e0_key,
         name_key: |n| n.to_lowercase(),
         names_agree: |a, b| a == b,
+        trim: |n| n.to_owned(),
+        norm: |n| n.to_lowercase(),
         condemns: never_condemns,
         consortium: no_consortium,
         legal_form: no_legal_form,

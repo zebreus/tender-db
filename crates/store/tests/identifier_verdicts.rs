@@ -58,7 +58,7 @@ fn gb_coh(body: &str) -> Option<(&'static str, String, bool, bool)> {
     let digits = |s: &str| s.bytes().all(|b| b.is_ascii_digit());
     let shaped = digits(&k)
         || (k[..2].bytes().all(|b| b.is_ascii_alphabetic()) && digits(&k[2..]))
-        || (k.starts_with('R') && digits(&k[1..]));
+        || (k.starts_with("R0") && digits(&k[2..]));
     shaped.then(|| ("GB:coh", k, true, folded))
 }
 
@@ -79,6 +79,8 @@ fn r2_args(dry_run: bool, expect_groups: Option<u64>) -> store::R2MergeArgs<'sta
         key,
         name_key: |n| n.to_lowercase(),
         names_agree: |a, b| a == b,
+        trim: |n| n.to_owned(),
+        norm: |n| n.to_lowercase(),
         condemns,
         consortium,
         legal_form,
@@ -363,6 +365,105 @@ async fn a_folded_mention_binds_only_to_the_owner_whose_name_matches() {
     assert_eq!(ids[2], 1, "…and claims nothing: the next Galliford spelling still finds org 1");
     assert!(ids[3] > 2 && ids[3] != ids[1], "a folded row owns no key a mention can match by key alone");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 4);
+}
+
+/// Issue 470 review: a folded mention's one name match must clear the
+/// generic-name wall. A folded key is not merge-grade, so `Highways Department`
+/// — a name over the cap (the test resolver's cap is 0, so one carrier is
+/// over) — is no evidence that `SCO24680` is the `SC024680` org's number: the
+/// mention mints. A rare name still binds.
+#[tokio::test]
+async fn a_folded_mention_matching_only_a_generic_name_mints() {
+    let orgs = [
+        (1, "GB", "national", "SC024680", "Highways Department"),
+        (2, "GB", "national", "SC013579", "Acme Widgets Ltd"),
+    ];
+    let (db, conn) = bed("test-identifier-verdicts-folded-generic.db", &orgs, 2).await;
+    conn.execute("INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (1, 'n2', 'highways department')", ())
+        .await
+        .unwrap();
+    let ids = resolve(
+        &db,
+        &[gb_mention(1, "Highways Department", "SCO24680"), gb_mention(2, "Acme Widgets Ltd", "SCO13579")],
+    )
+    .await;
+    assert!(ids[0] > 2, "a generic name is no evidence for a folded key: a mint");
+    assert_eq!(ids[1], 2, "a rare name binds");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 3);
+}
+
+/// Issue 470 review: a WITHHELD lookalike guards nothing. 452 flagged
+/// `GBCOHIPO30808` `wrong` (its challenger named `IP030808`, the number the fold
+/// proposes), and guarding that key took the register spelling's org out of
+/// `canon_of`: a bare `IP030808` under a name that org does not carry minted a
+/// twin of the right number. The right number binds by key again, and the
+/// withheld literal still binds to the org that published it.
+#[tokio::test]
+async fn a_withheld_lookalike_does_not_guard_the_number_its_fold_proposes() {
+    let orgs = [
+        (1, "GB", "national", "GBCOHIP030808", "Funeral Services Limited T/A Co-op Funeralcare"),
+        (2, "GB", "national", "GBCOHIPO30808", "Co-Op Funeral Care"),
+    ];
+    let (db, conn) = bed("test-identifier-verdicts-withheld-fold.db", &orgs, 3).await;
+    db.record_identifier_verdicts("452", &[verdict(2, "GBCOHIPO30808", "wrong")], 0).await.unwrap();
+    let ids = resolve(
+        &db,
+        &[
+            gb_mention(1, "Co-op Funeralcare", "IP030808"),
+            gb_mention(2, "Co-Op Funeral Care", "GBCOHIPO30808"),
+            gb_mention(3, "Funeral Services Ltd", "GB-COH-IP030808"),
+        ],
+    )
+    .await;
+    assert_eq!(ids[0], 1, "the right number binds to the register spelling's org by key");
+    assert_eq!(ids[1], 2, "the withheld literal still binds to the org that published it");
+    assert_eq!(ids[2], 1);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 2, "nothing minted");
+}
+
+/// The altid name key in miniature, as lenient as the fold gate's: `&` is
+/// `and`, and a `Ltd` one side carries is no difference.
+fn gate_key(name: &str) -> String {
+    name.to_lowercase().replace('&', " and ").split_whitespace().filter(|t| *t != "ltd").collect::<Vec<_>>().join(" ")
+}
+
+/// Issue 470 review: an R2 merge of a fold-joined pair HOLDS. The lookalike org
+/// is gone and its literal is recorded on the survivor
+/// (`organization_merged_identifiers`), so the publisher's next mention of that
+/// literal binds there — although its name (`Morris and Spottiswood`) is none
+/// the survivor carries under the resolver's exact name key, a stricter test
+/// than the gate's agreement. Before, it re-minted the lookalike and the split
+/// was back. A lookalike spelling no merge recorded still needs a name match.
+#[tokio::test]
+async fn a_merged_lookalike_literal_binds_to_its_survivor() {
+    let orgs = [
+        (1, "GB", "national", "SCO46129", "Morris and Spottiswood"),
+        (2, "GB", "national", "SC046129", "Morris & Spottiswood Ltd"),
+    ];
+    let (db, conn) = bed("test-identifier-verdicts-merged-fold.db", &orgs, 3).await;
+    let dry = db
+        .match_org_identifiers_r2(store::R2MergeArgs { name_key: gate_key, ..r2_args(true, None) })
+        .await
+        .unwrap();
+    assert_eq!((dry.keyed_folded, dry.fold_excluded, dry.plan_groups), (1, 0, 1), "{dry:#?}");
+    let wet = db
+        .match_org_identifiers_r2(store::R2MergeArgs { name_key: gate_key, ..r2_args(false, Some(1)) })
+        .await
+        .unwrap();
+    assert_eq!((wet.merged_groups, wet.removed), (1, 1));
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 2").await, 1, "the register spelling keeps");
+    let ids = resolve(
+        &db,
+        &[
+            gb_mention(1, "Morris and Spottiswood", "SCO46129"),
+            gb_mention(2, "Morris and Spottiswood", "SCO46129"),
+            gb_mention(3, "Morris and Spottiswood", "GBCOHSCO46129"),
+        ],
+    )
+    .await;
+    assert_eq!(ids[..2], [2, 2], "the merged literal binds to its survivor, and the bind is cached");
+    assert!(ids[2] > 2, "a spelling no merge recorded is a folded mention like any other: no name match, a mint");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 2);
 }
 
 /// `/v1/organizations` reads the verdict beside the row: `wrong` and `related`

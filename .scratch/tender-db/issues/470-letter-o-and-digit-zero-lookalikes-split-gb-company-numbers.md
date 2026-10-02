@@ -1,6 +1,6 @@
 # 470 — a letter O typed for a zero (or a zero for the O of `OC`) splits a GB company number from its organization, and no arm joins them
 
-Status: ready-for-agent — UNIT 2 (the code) COMMITTED 2026-10-02 on top of a5c7666. Gate GATE-EXIT=0 (879 s), run before the commit on a dirty tree, so no gate marker was written; re-gate at the shipped rev. NOT pushed, NOT deployed (prod is busy on a5c7666). NEXT: deploy it in a queue gap, then the rollout reads (step 4) and the verdict re-post (step 5), written out step by step under "Unit 2 (2026-10-02)" → "NEXT". No job has run on prod for this issue.
+Status: ready-for-agent — UNIT 2 (the code, 7a913af) and its REVIEW FIXES (the commit after it; "Unit 2 review (2026-10-02)") COMMITTED 2026-10-02 on top of a5c7666. Re-gate at the shipped rev before deploying. NOT pushed, NOT deployed (prod is busy on a5c7666). NEXT: deploy it in a queue gap, then the rollout reads and the verdict re-posts, written out step by step under "Unit 2 (2026-10-02)" → "NEXT" (corrected in place by the review). No job has run on prod for this issue.
 Was status: ready-for-agent — DECIDED 2026-10-02 (owner; decision below, under "Decision"). The proposed fold is accepted with three refinements. NEXT: unit 2, the code (crosswalk GB arm + R2 survivor + the resolver's guarded bind + tests), then the rollout in step 4. Sequence it after 481 unit 2 lands, because both edit crates/store/src/canonical.rs and one gate at a time fits the container's disk.
 Was status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The measurement 454 asked for is below (taken 2026-10-01, through FTS chunk 8), so the first unit is the decision it feeds: which shapes fold, at which tier and behind which name gate, recorded here with its reasoning before any code.
 Kind: data quality (identifiers)
@@ -304,7 +304,9 @@ Applying `altid_keys_agree` to the measured names (the "16 pairs" table):
 | absent from R2 | the Co-op pair: `GBCOHIPO30808` (31536131) is withheld, so step 5 covers it |
 
 Survivor caveat: the rank puts `provisional` first, as decided. A pair whose register-spelling row is provisional and
-whose typo row is not keeps the typo. The dry plan's `plan` listing shows each keep. Check it per pair.
+whose typo row is not would keep the typo. Measured by the review (bounded prod read, 2026-10-02): all 24 orgs of the 16
+pairs and the two `R0` pairs are `provisional=0`, so every keep is the register spelling (R0: the lower id). The dry
+plan's `plan` entries now carry `keep` (the review), so the read is a lookup, not a derivation.
 
 ### Deviations
 
@@ -317,17 +319,21 @@ whose typo row is not keeps the typo. The dry plan's `plan` listing shows each k
 
 1. **Deploy.** Gate at the shipped rev (`ops/check.sh`, read `GATE-EXIT=`), push by explicit ref, deploy in a queue
    gap. The resolver half acts from the next fold on: folded mentions bind by name only. Watch the fold's diag line
-   `[issue 470] folded keys: N bound by name, M minted` and the open line `… carried through the GB O/0 fold by N
-   row(s)`.
+   `[issue 470] folded keys: N bound by name, K bound to the org a merge put their literal on, M matched no owner (or
+   several) and minted (G of them on a generic name), U had no owner at all and minted` and the open line `… carried
+   through the GB O/0 fold by N row(s)`. `K` is 0 until step 4; `U` is the fresh twinless lookalikes.
 2. **R2 dry.** `POST /admin/jobs {"kind":"match-org-identifiers","rule":"r2"}` (dry by default), then
    `GET /admin/reports/r2-merge-plan`. Read:
    - `keyed_folded` (≈30 standing lookalikes, fewer the withheld ones);
    - `fold_listing` against the 16 pairs: the keys `SC055775 SC041252 SC046129 SC079486 SC093579 SC053003 FC035527
      FC012665 NI041488 06611251 07687679 OC301540 OC305934 OC429964 SC013683`, plus the two trailing-O singletons
-     (`96943990`, `99790370`), plus any row still carrying an `OO…` literal (refinement 3: expected none or a handful);
+     (`96943990`, `99790370`), plus ~10 more twinless lookalike singletons (the measurement's 25 + 5 lookalikes less
+     the 16 with a twin, less the two withheld twinless ones, `CEO19319` and `NIO18750`), plus any row still carrying
+     an `OO…` literal (the review's bounded range seeks found no 8-character GB `OO` body: expected none);
+   - `fold_excluded_generic`: expected 0 (a fold whose only agreement is a name over the wall is refused);
    - `denied_fold_listing` against the table above;
    - `plan` for the two `R0` pairs (`R0000273` 30914553/16866909, `R0000524` 31573122/21985296) and each fold-joined
-     group's keep (the register spelling, unless the provisional caveat applies);
+     group's `keep` (the register spelling: every measured row is `provisional=0`);
    - `plan_groups` against `GET /admin/reports/r2-merge-plan/previous`. Anything beyond the fold-joined groups and
      the R0 pairs is movement to explain before the wet run.
 3. **Movement in the other arms.** Run `{"kind":"match-org-identifiers","rule":"altid"}` and `{"kind":…,"rule":"rekey"}`
@@ -336,14 +342,15 @@ whose typo row is not keeps the typo. The dry plan's `plan` listing shows each k
    `multi_target` where a lookalike and its twin both stand (refused until R2 merges them); rekey changes nothing
    before step 5.
 4. **R2 wet** against the reviewed dry plan: `{"kind":"match-org-identifiers","rule":"r2","dry_run":false}`. Then run
-   the Verify below (`[null,null,10312664]`).
+   the Verify below (`[null,null,10312664]`) AND its second line (a merged lookalike's literal does not re-split).
 5. **362 merge verdicts** for the listed pairs the register confirms. `POST /admin/merge-verdicts` with `country`
    `GB`, `scheme` `GB:coh`, `key` and `members` exactly as listed, `action` `merge`, `confidence` `high`:
    - Roythornes `06611251`: the register name 2013–2025 is ROYTHORNES LIMITED;
    - Aim2Learn `07687679`: the register is AIM 2 LEARN LTD.
 
-   Post `keep` for Aberdeen/Net Zero `SC013683` so it leaves the queue. Then a dry plan, and a wet run with the new
-   plan.
+   Post `keep` for Aberdeen/Net Zero `SC013683` so it leaves the queue (since the review the fold gate honours a
+   `keep` before it lists: `denied_verdict` +1, `denied_fold_listing` loses the group). Then a dry plan, and a wet run
+   with the new plan.
 6. **Step 5, the three withheld lookalikes.** `POST /admin/identifier-verdicts`, cohort `470-lookalikes-2026-10-02`.
    Each verdict is `wrong`, confidence `high`, with the challenger's number as `correct_identifier`:
    - org 31574614 `GBCOHCEO19319` → `CE019319`;
@@ -360,6 +367,43 @@ whose typo row is not keeps the typo. The dry plan's `plan` listing shows each k
 
    Then run rekey wet with the dry plan's `keys`.
 
+## Unit 2 review (2026-10-02) — ten findings, dispositions
+
+An adversarial review of 7a913af raised ten findings (one major). Each was re-checked against the code; all ten are
+confirmed and fixed in the commit after 7a913af (the two `R` series findings are one fix), each with a test.
+
+- **major — an R2 merge of a fold-joined pair did not hold. FIXED.** After the wet merge the lookalike's literal lives
+  only in `organization_merged_identifiers`, which the resolver's `org_of` never reads, so the publisher's next mention
+  went to the folded name gate, whose exact `match_norm` test is stricter than the `altid_keys_agree` agreement the
+  merge passed (`Morris and Spottiswood` / `Morris & Spottiswood Ltd`, Emtelle, Knight Frank, Shakespeare Clinic,
+  Roythornes, Aim2Learn) — a re-mint, cached in `org_of`, and the split back. Now a folded mention with owners first
+  seeks `merged_identifier_holders` on its exact literal (one PK seek, folded mentions only, boxed); exactly one
+  holder that still owns the key binds name-blind and is cached (`folded_merged`). Test
+  `identifier_verdicts::a_merged_lookalike_literal_binds_to_its_survivor`. Verify gains a second line.
+- **The fold gates had no generic-name wall. FIXED.** R2's rule 3b now counts agreement only on a pair whose two names
+  are both under `stoplist_cap` (`altid_wall_key` → `name_key_is_generic`, the altid arm's step 6; `R2MergeArgs` gains
+  `trim`/`norm`); a member refused only by the wall is counted in `fold_excluded_generic` and listed like any fold
+  denial. The resolver's folded bind runs its one match's key through the same wall (`generic_memo`,
+  `name_key_is_generic_on`, boxed; an unavailable wall binds leniently and logs, as every bind path's does) and counts
+  `folded_generic`. Tests `r2_merge::a_fold_agreeing_only_on_a_generic_name_is_refused`,
+  `identifier_verdicts::a_folded_mention_matching_only_a_generic_name_mints`.
+- **A fold onto a condemned number keyed it. FIXED.** `OOOOOO12` passes the v2 gate and folds to the stub `00000012`;
+  `SCOOOOO1` to `SC000001`. The GB arm now returns `None` when a folded body is condemned, so no consumer sees the key.
+  Asserted in `crosswalk::gb_coh_folds_an_o_where_the_register_format_has_a_digit`.
+- **The `R` series was wider than decided (two findings). FIXED.** Narrowed to `R0` + six digits; `R1234567`,
+  `GBR1234567`, `GBCOHR9876543` key nothing (crosswalk test). The test-side mirrors in `r2_merge.rs` and
+  `identifier_verdicts.rs` follow. Prod held no affected row (the review's seeks), so nothing moves.
+- **A withheld lookalike guarded the number its fold proposes. FIXED.** The open's withheld branch now guards only an
+  UNFOLDED key: `GBCOHIPO30808` no longer takes `GBCOHIP030808`'s org out of `canon_of`. Test
+  `identifier_verdicts::a_withheld_lookalike_does_not_guard_the_number_its_fold_proposes`.
+- **A `keep` verdict never took a group off the fold gate's queue. FIXED.** 3b reads the verdict first; `keep` counts
+  `denied_verdict` and skips the group before the gate lists it. Added to
+  `r2_merge::a_fold_joined_r2_group_merges_agreeing_names_into_the_unfolded_literal`.
+- **Ownerless folded mints were uncounted. FIXED.** `folded_unowned`, in the diag line.
+- **The plan listing carried no keep. FIXED.** `R2MergeReport::plan_listing_keep`, written as `keep` on each stored
+  `plan` entry; the keep per pair is asserted in the fold test. The provisional caveat is measured moot (above).
+- **NEXT step 2's fold_listing expectation was incomplete. FIXED in the NEXT** (~10 more twinless singletons).
+
 ## Verify
 
     curl -s https://tenders.zebreus.click/v1/organizations/10312649 | jq -c '[.id, .identifier, .merged_into]'
@@ -370,3 +414,11 @@ whose typo row is not keeps the typo. The dry plan's `plan` listing shows each k
   - The fold landed but the survivor rule did not: the line still reads `[10312649,"SCO55775",null]` and org 10312664
     answers `merged_into` 10312649.
   - The decision is not to fold: the closure goes on line 3 with its reason, and this line stays open by design.
+
+Second line (the review's major): a merged lookalike's literal stays merged after the next fold that sees it.
+
+    curl -s 'https://tenders.zebreus.click/v1/organizations?identifier=SCO46129' | jq -c '[.items[].id]'
+
+- **done**: one id, the Morris & Spottiswood survivor (18043531), after a fold that re-reads a `SCO46129` mention, and
+  the fold's diag line shows `K` ≥ 1 bound to the org a merge put their literal on. Two ids (a fresh mint beside
+  18043531) means the merged-literal bind did not fire.

@@ -7324,6 +7324,8 @@ impl Supervisor {
                         // Issue 470's fold gate: the re-key arm's name test.
                         name_key: ingest::crosswalk::altid_name_key,
                         names_agree: ingest::crosswalk::altid_keys_agree,
+                        trim: ingest::crosswalk::altid_trim,
+                        norm: ingest::project::match_norm,
                         condemns: ingest::idgate::condemns,
                         consortium: ingest::crosswalk::consortium_name,
                         legal_form: ingest::crosswalk::legal_form_family,
@@ -7442,10 +7444,19 @@ impl Supervisor {
                     plan["keyed_folded"] = r.keyed_folded.into();
                     plan["fold_excluded"] = r.fold_excluded.into();
                     plan["denied_fold"] = r.denied_fold.into();
+                    plan["fold_excluded_generic"] = r.fold_excluded_generic.into();
                     plan["denied_fold_listing_truncated"] = r.denied_fold_listing_truncated.into();
                     plan["denied_fold_listing"] = listing(&r.denied_fold_listing).into();
                     plan["fold_listing_truncated"] = r.fold_listing_truncated.into();
                     plan["fold_listing"] = listing(&r.fold_listing).into();
+                    // Issue 470 review: each plan group's survivor, so the
+                    // rollout reads a fold-joined group's keep rather than
+                    // deriving it from a rank the listing does not show.
+                    if let Some(groups) = plan["plan"].as_array_mut() {
+                        for (group, keep) in groups.iter_mut().zip(&r.plan_listing_keep) {
+                            group["keep"] = (*keep).into();
+                        }
+                    }
                     let plan = plan.to_string();
                     self.db
                         .put_report("r2-merge-plan", &plan, now)
@@ -7476,7 +7487,7 @@ impl Supervisor {
                     "match-org-identifiers r2 (issue 300 Stage 2){}: {} orgs scanned \
                      ({} withheld by a wrong-number verdict), {} E1-keyed ({} through the GB O/0 fold), \
                      {} groups >=2; denied: {} cap, {} gate, {} consortium \
-                     ({} members excluded member-scoped), {} fold ({} folded members excluded by names), \
+                     ({} members excluded member-scoped), {} fold ({} folded members excluded by names, {} of them by the generic wall), \
                      {} legal-form, {} vat-group-wall, {} names, {} verdict-keep, {} verdict-merge; plan {} groups; merged {} groups \
                      ({} org rows removed, {} mentions, {} parties, {} bid-parties, \
                      {} winners repointed, {} winner dups deleted, {} tenders touched)",
@@ -7492,6 +7503,7 @@ impl Supervisor {
                     r.consortium_excluded,
                     r.denied_fold,
                     r.fold_excluded,
+                    r.fold_excluded_generic,
                     r.denied_legal_form,
                     r.denied_group_vat,
                     r.denied_names,
@@ -7556,6 +7568,8 @@ impl Supervisor {
                         // runs here; the slots carry R2's rules regardless.
                         name_key: ingest::crosswalk::altid_name_key,
                         names_agree: ingest::crosswalk::altid_keys_agree,
+                        trim: ingest::crosswalk::altid_trim,
+                        norm: ingest::project::match_norm,
                         condemns: ingest::idgate::condemns,
                         consortium: ingest::crosswalk::consortium_name,
                         legal_form: ingest::crosswalk::legal_form_family,
