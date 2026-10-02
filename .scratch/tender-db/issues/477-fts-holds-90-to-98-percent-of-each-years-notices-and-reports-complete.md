@@ -375,3 +375,13 @@ Refuted:
   only the re-asked 404s and empty records can move a run's ends between runs, and one of them that now carries
   only extends the run. The one way a staged carrier sits outside a run, past a hole, already fails loud.
 
+
+### 2026-10-02 14:3x UTC — unit 1b deployed (`a5c7666`) and verified on both real dense spans
+
+- Refetch 1894 (2023-11): `NewVersion · 1 dense span(s) completed: 15 ocid(s), 21 record request(s)`.
+- Refetch 1895 (2025-02, the second dense span at 2025-02-14T16:03:36): `NewVersion · 1 dense span(s) completed: 11
+  ocid(s), 16 record request(s)`.
+- Process 1896: 1,145 notices. Project 1897: 1,141 Tenders.
+- **`033562-2023` now holds 15 FTS notices on 15 distinct Tenders**: 46920564 (the old one, Tender 7954684) plus
+  47189064…47189077 (Tenders 8810418…8810431). Before, it held 1.
+- Verify total before these two refetches: 3,686 (2021 20, 2022 8, 2023 134, 2024 0, 2025 1,928, 2026 1,596).
