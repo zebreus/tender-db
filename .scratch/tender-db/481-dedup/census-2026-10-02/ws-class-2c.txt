@@ -1,0 +1,31 @@
+DISJOINT ted:00467243-2024 ted:00220711-2024 | VILLE DE DINAN | Órgano Administrativo de Recursos C
+DISJOINT ted:00492437-2025 ted:00000742-2025 | COMUNE DI ORVIETO | Nacionalna i sveučilišna knjižnica 
+shared:1 ted:00443925-2025 ted:00386240-2024 | Commissario Straordinario Unico per | Commissario di Governo per il contr
+DISJOINT ted:00030242-2025 ted:00079516-2024 | ОБЩИНА КАЗАНЛЪК | AOU SASSARI
+DISJOINT ted:00433407-2024 ted:00039508-2024 | СРЕДНО УЧИЛИЩЕ "НЕОФИТ РИЛСКИ" | Avenue-Web Systmes
+shared:1 doe:a29bcdac-79eb-4e93-be81-07d93ca5b7d1-01 ted:00558909-2025 | DB InfraGO AG – Geschäftsbereich Fa | Deutsche Bahn AG Konzernleitung (Bu
+shared:1 ted:00029609-2026 ted:00316930-2025 | Stadt Gunzenhausen | Rhein-Main-Verkehrsverbund Serviceg
+DISJOINT ted:00802282-2025 ted:00609624-2025 | Ministerstvo obrany | UAB "Kauno švara"
+DISJOINT ted:00022312-2025 ted:00080091-2024 | ВИСШЕ УЧИЛИЩЕ ПО ТЕЛЕКОМУНИКАЦИИ И  | SPL Séquano Grand Paris
+DISJOINT ted:00567966-2024 ted:00057550-2024 | ОБЩИНА КНЕЖА | Hamburg Port Authority AöR
+shared:1 ted:00684690-2024 ted:00370004-2024 | Provveditorato Interregionale OO.PP | Procura della Repubblica di Alessan
+DISJOINT ted:00214360-2026 ted:00004646-2026 | ТЕЦ МАРИЦА ИЗТОК 2 ЕАД | Blindeninstitutsstiftung
+DISJOINT ted:00298450-2025 ted:00023607-2025 | ЦЕНТЪР ЗА КОМПЛЕКСНО ОБСЛУЖВАНЕ НА  | Avenue-Web Systèmes
+DISJOINT ted:00007196-2025 ted:00084792-2024 | ТЕРИТОРИАЛНО ПОДЕЛЕНИЕ НА НАЦИОНАЛН | Luleå tekniska universitet
+shared:2 ted:00128126-2025 ted:00621905-2024 | DB InfraGO AG – Geschäftsbereich Fa | Deutsche Bahn AG Konzernleitung (Bu
+DISJOINT ted:00061283-2025 ted:00078925-2024 | ОБЩИНА ПАЗАРДЖИК | CHU AMIENS PICARDIE
+shared:1 doe:56728884-48cc-4502-97b8-65bd07700c4d-01 ted:00558909-2025 | DB InfraGO AG – Geschäftsbereich Fa | Deutsche Bahn AG Konzernleitung (Bu
+DISJOINT ted:00837532-2025 ted:00500799-2025 | Staatliches Bauamt München 2 | Gemeente Apeldoorn, team Inkoop
+DISJOINT ted:00760695-2024 ted:00078229-2024 | НАЦИОНАЛЕН ОСИГУРИТЕЛЕН ИНСТИТУТ | Tuomi Logistiikka Oy
+DISJOINT ted:00271140-2025 ted:00018211-2025 | ПРОФЕСИОНАЛНА ГИМНАЗИЯ ПО ТУРИЗЪМ " | DEPARTEMENT DES BOUCHES-DU-RHONE -
+
+DISJOINT ted:00058211-2024 ted:00615947-2023 | Staatliches Bauamt Bamberg | Avri
+DISJOINT doe:992c6811-7e00-48b1-a5bc-2343bca9fac1-01 ted:00558749-2025 | Stadt Bochum - Zentrale Dienste | Stadt Bochum, Referat Zentraler Ein
+shared:2 ted:00042583-2024 ted:00765911-2023 | DB InfraGO AG – Geschäftsbereich Fa | DB Netz AG (Bukr 16)
+SAME-ORG1 ted:00249262-2025 ted:00712405-2024 | Stadt Erlangen - Zentrale Vergabest | Stadt Erlangen - Zentrale Vergabest
+DISJOINT ted:00102390-2026 ted:00123456-2024 | LÄNSSTYRELSEN I SKÅNE LÄN | РАЙОН "ТРИАДИЦА"
+shared:2 ted:00776355-2024 ted:00621565-2024 | DB InfraGO AG – Geschäftsbereich Fa | Deutsche Bahn AG Konzernleitung (Bu
+shared:2 ted:00072888-2026 ted:00601874-2025 | Kauno miesto savivaldybės administr | Lietuvos architektų sąjungos Kauno 
+DISJOINT ted:00662139-2024 ted:00067549-2024 | ЦЕНТРАЛНА ИЗБИРАТЕЛНА КОМИСИЯ | Sibelga
+DISJOINT ted:00046181-2025 ted:00083619-2024 | Дирекция Управление на собственостт | PGE Energia Ciepła S.A.
+DISJOINT ted:00485947-2024 ted:00045540-2024 | ОБЩИНА ГОРНА ОРЯХОВИЦА | GRAD ZAGREB

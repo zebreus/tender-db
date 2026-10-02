@@ -422,3 +422,11 @@ Second line (the review's major): a merged lookalike's literal stays merged afte
 - **done**: one id, the Morris & Spottiswood survivor (18043531), after a fold that re-reads a `SCO46129` mention, and
   the fold's diag line shows `K` ≥ 1 bound to the org a merge put their literal on. Two ids (a fresh mint beside
   18043531) means the merged-literal bind did not fire.
+
+## 2026-10-02 17:xx UTC — deployed (`696dd9d`); R2 dry read; wet
+
+- R2 dry, job 1904: 27 orgs E1-keyed through the fold; 3 fold denials. Those are Roythornes, Aim2Learn and
+  Aberdeen/Net-Zero, exactly the predicted listing; the first two need 362 merge verdicts. The plan has 30 groups.
+- R2 wet: job 1906, queued behind the 481 backfill.
+- NEXT: run the Verify on 10312649 after 1906; post 362 merge verdicts for Roythornes and Aim2Learn; re-post the
+  three withheld lookalikes (step 5); then read the altid and rekey dry plans for movement.

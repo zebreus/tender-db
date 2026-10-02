@@ -558,3 +558,26 @@ legit pair relied on a removed token; the synthetic agency-own-notice fixture wa
 is measured from the review's reads, not exhaustive. The plan column is not renamed again: 4e0166e was never
 deployed, so no 2c plan exists on prod.
 
+
+## 2026-10-02 17:xx UTC — 2c deployed (`696dd9d`, with 470 unit 2); census re-read; WET run
+
+- Gate on `696dd9d`: GATE-EXIT=0, 145 suites, 884 s, marker written. Deployed on an idle queue.
+- Census dry, job 1903, 1,618 s: opp-090 **would_split 4,564** (2b's census: 5,359), buyer_disjoint 20, not-earlier
+  164. logical-notice is unchanged: 5,050 would merge.
+- **30 fresh would-split samples, read by hand** (`481-dedup/census-2026-10-02/ws-class-2c.txt`):
+  - About 25 are false merges. They are mostly Bulgarian national numbers colliding with TED numbers across
+    countries. DB InfraGO procedures cite the DB group's deadline-shortening notices, and splitting those is right.
+  - Stadt Erlangen is the same buyer but two different procedures (Trafostation vs a school build), so splitting it
+    is right.
+  - **One false refusal remains.** Stadt Bochum's façade renovation was published on DÖE by "Stadt Bochum - Zentrale
+    Dienste" and on TED by "Stadt Bochum, Referat Zentraler Einkauf". The two have no shared identifier or
+    organization, and 2c's review removed kind-of-body prefixes ("Stadt X"). Kaunas (city vs the architects' union)
+    is unclear.
+  - The false-refusal rate is ~3–7 % (was ~40 %), so roughly 150–300 correct merges split against ~4,300 wrong
+    ones fixed.
+- **Decision (owner): wet now.** Job 1905. It writes the ledger and re-queues ~17.5k notices, so the 2026-10-03
+  07:35 UTC daily splits the placeholder welds (hub 1012301, 526284, …) and joins the 5,050 BT-701 twins.
+  - Follow-up: one buyer published by two departments of one city with no shared identifier. A whole-word place token
+    after a kind-of-body head, e.g. "stadt bochum", needs measuring against the generic wall first.
+  - NEXT: read the daily's `issue-481` line (largest component, refusals, deferred 0) and the Verify of 1110706
+    (issue 482), then the data-quality "merged with TED" count.
