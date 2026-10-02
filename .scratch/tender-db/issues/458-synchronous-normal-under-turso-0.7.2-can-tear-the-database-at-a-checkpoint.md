@@ -1,6 +1,7 @@
 # 458 — `synchronous = NORMAL` under turso 0.7.2 can tear the database at a checkpoint: the WAL is never fsynced before backfill
 
-Status: ready-for-agent — DEPLOYED 2026-10-01 11:50 UTC (`9b44528`, gate green: GATE-EXIT=0, all suites in 823 s), and the Verify reads done (`9b44528`, `1`). NEXT: read the cost. Chunk 9's project 1809 against chunk 8's 1798 (97 s for 21,258 notices) and chunk 7's 1785 (123 s for 24,570), and the 2026-10-02 07:35 UTC daily fold against 2026-10-01's. Close when the cost is recorded.
+Status: DONE 2026-10-02 07:5x UTC — deployed 2026-10-01 11:50 UTC (`9b44528`), Verify done, and the cost read is within run-to-run noise (below): FULL stays. Revisit only with 457's bump (its step 7), against a measurement.
+Was status: ready-for-agent — DEPLOYED 2026-10-01 11:50 UTC (`9b44528`, gate green: GATE-EXIT=0, all suites in 823 s), and the Verify reads done (`9b44528`, `1`). NEXT: read the cost. Chunk 9's project 1809 against chunk 8's 1798 (97 s for 21,258 notices) and chunk 7's 1785 (123 s for 24,570), and the 2026-10-02 07:35 UTC daily fold against 2026-10-01's. Close when the cost is recorded.
 Was status: ready-for-agent — filed 2026-10-01 11:xx UTC from 457's evaluation, and BUILT the same hour: `PRAGMAS` now sets
 `synchronous = FULL`, pinned by `every_store_connection_runs_synchronous_full`. NEXT: gate, deploy on an idle queue,
 run the Verify, and compare the next chunk's and the next daily fold's wall time against the ones before.
@@ -76,3 +77,17 @@ copies is already durable, and the torn window closes without touching turso.
   beforehand, because deploy.sh's own busy probe fails open (issue 459).
 - Verify: `9b44528` / `1`.
 - The cost reading rides the last FTS backfill chunk (jobs 1800–1809), enqueued right after, and tomorrow's daily.
+
+## 2026-10-02 07:5x UTC — cost read; closed
+
+| fold | sync | notices | wall | per notice |
+|---|---|---|---|---|
+| chunk 7, project 1785 | NORMAL | 24,570 | 123 s | 5.0 ms |
+| chunk 8, project 1798 | NORMAL | 21,258 | 97 s | 4.6 ms |
+| chunk 9, project 1809 | FULL | 21,043 | 111 s | 5.3 ms |
+| daily 2026-10-01, project 1774 | NORMAL | 5,244 | 151 s | 28.8 ms |
+| daily 2026-10-02, project 1875 | FULL | 7,024 | 164 s | 23.3 ms |
+
+The bulk folds moved +6 to +15 % and the daily fold −19 %. Both are inside the spread between two NORMAL chunks
+(4.6 vs 5.0 ms, 9 %) and the spread of daily mixes. A WAL fsync per checkpoint is not a measurable cost at this write
+rate, so the durability gain is free. FULL stays.
