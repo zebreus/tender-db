@@ -286,7 +286,7 @@ identity of the notice it stands for.
 Issue 477 unit 1b. These ARE verbatim, unlike the pages above: byte for byte
 what the API served, `gzip -9n`, because the property under test is exactly
 the bytes' layout (a record nests a release 8 spaces deeper than a page, and
-otherwise serves the listing's bytes). Unzipped they are 1.3 MB; the tests
+otherwise serves the listing's bytes). Unzipped they are 1.7 MB; the tests
 gunzip them. Copies of `.scratch/tender-db/477-fts/dense-2023-11-14/`.
 
 | File | Bytes (gz → raw) | Asked | Shape | Why |
@@ -296,6 +296,7 @@ gunzip them. Copies of `.scratch/tender-db/477-fts/dense-2023-11-14/`.
 | `dense/record-041970.json.gz` | 4 514 → 142 503 | `ocdsRecordPackages/ocds-h6vhtk-041970` (2026-10-02) | 1 record: 14 copies of the release at depth 16, a `compiledRelease`, a `versionedRelease` | An ocid ON the page: its release, moved up 8, is the page's bytes. |
 | `dense/record-041977.json.gz` | 4 348 → 138 967 | `ocdsRecordPackages/ocds-h6vhtk-041977` (2026-10-02) | the same shape | An ocid OFF the page: moved up 8, page 2's bytes. The template of the mock's other ocids' records. |
 | `dense/record-04197e.json.gz` | 6 669 → 102 958 | `ocdsRecordPackages/ocds-h6vhtk-04197e` (2026-10-02) | 1 record: `033564-2023` (`tender`, 10:07:02) and `017735-2024` (`award`, `contract`) | The next process: a record of another notice, which ends the run above. |
+| `dense/release-package-04196f.json.gz` | 25 456 → 412 639 | `ocdsReleasePackages/ocds-h6vhtk-04196f` (2026-10-02 11:16 UTC) | a listing-shaped page, releases at depth 8, no next: 14 copies of `033562-2023`'s one release (the page's bytes for `04196f`) and 9 later notices of the process (2023-12 … 2025-06) | The seed whose RECORD is an empty 200: its release package vouches for the page's release and shows no hidden second one (issue 477 unit 1b review). |
 
 `tests/fetch.rs`'s `dense_` tests serve them from a mock that lays every
 page out under the live header in the live 4-space layout, and assert that

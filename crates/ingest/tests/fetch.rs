@@ -239,7 +239,7 @@ async fn doe_walk_forward_crosses_month_boundary() {
 // ------------------------------------------------------------------ FTS (issue 342)
 
 use axum::http::header;
-use ingest::fetch::{fetch_fts, probe_fts_daily};
+use ingest::fetch::{fetch_fts, probe_fts_daily, DenseTally};
 use ingest::fts;
 use serde_json::{json, Value};
 use std::io::Read;
@@ -321,7 +321,7 @@ async fn a_daily_window_lands_one_zip_and_a_refetch_hashes_equal() {
     let mut progress = Vec::new();
     let started = std::time::Instant::now();
     let outcome = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, || false, |p| {
-        assert_eq!((p.dense_spans, p.records), (0, 0), "no dense span here");
+        assert_eq!(p.dense, DenseTally::default(), "no dense span here");
         progress.push((p.day.to_owned(), p.pages, p.releases));
     })
     .await
@@ -511,7 +511,7 @@ async fn the_walk_forward_is_capped_per_tick_and_resumes_next_tick() {
     let mut walked = 0;
     let mut ticks = 0;
     while ingest::fetch::latest_fts_day(&db).await.unwrap() != Some((2026, 2, 20)) {
-        let tick = probe_fts_daily(&db, &client, &archive, &base, (2026, 2, 20), Duration::ZERO, || false, |_, _| {})
+        let tick = probe_fts_daily(&db, &client, &archive, &base, (2026, 2, 20), Duration::ZERO, || false, |_| {})
             .await
             .unwrap();
         if ticks == 0 {
@@ -622,7 +622,7 @@ async fn fts_walk_forward_catches_up_a_multi_day_gap() {
     // Nothing on record: day 1 of `end`'s month through `end` — the running
     // month is never left to a backfill that stops at the previous one (issue
     // 477's seam), and never a full-archive backfill through the probe.
-    let seeded = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 3), Duration::ZERO, || false, |_, _| {})
+    let seeded = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 3), Duration::ZERO, || false, |_| {})
         .await
         .unwrap();
     assert_eq!(
@@ -637,8 +637,8 @@ async fn fts_walk_forward_catches_up_a_multi_day_gap() {
     // Three missed ticks (4, 5, 6): one walk catches up the lot, in order.
     let touched = Arc::new(Mutex::new(Vec::<String>::new()));
     let t2 = touched.clone();
-    let caught = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 6), Duration::ZERO, || false, |p, _| {
-        t2.lock().unwrap().push(p.to_owned());
+    let caught = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 6), Duration::ZERO, || false, |p| {
+        t2.lock().unwrap().push(p.day.to_owned());
     })
     .await
     .unwrap();
@@ -688,7 +688,7 @@ async fn fts_walk_forward_catches_up_a_multi_day_gap() {
     }
 
     // Idempotent: every day through `end` is held, nothing to walk.
-    let again = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 6), Duration::ZERO, || false, |_, _| {})
+    let again = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 6), Duration::ZERO, || false, |_| {})
         .await
         .unwrap();
     assert!(again.is_empty());
@@ -1370,7 +1370,7 @@ async fn the_walk_forward_starts_after_the_newest_monthly_not_at_end() {
     let archive = temp_dir("fts-seam");
     let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
     db.record_fetch(&registry_row("fts", "monthly", "2026-08")).await.unwrap();
-    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 6), Duration::ZERO, || false, |_, _| {}).await.unwrap();
+    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 6), Duration::ZERO, || false, |_| {}).await.unwrap();
     assert_eq!(days(walked), ["2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04", "2026-09-05", "2026-09-06"]);
     let _ = std::fs::remove_dir_all(&archive);
 
@@ -1379,7 +1379,7 @@ async fn the_walk_forward_starts_after_the_newest_monthly_not_at_end() {
     let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
     db.record_fetch(&registry_row("fts", "daily", "2026-07-15")).await.unwrap();
     db.record_fetch(&registry_row("fts", "monthly", "2026-08")).await.unwrap();
-    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 2), Duration::ZERO, || false, |_, _| {}).await.unwrap();
+    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 2), Duration::ZERO, || false, |_| {}).await.unwrap();
     assert_eq!(days(walked), ["2026-09-01", "2026-09-02"]);
     let _ = std::fs::remove_dir_all(&archive);
 
@@ -1390,7 +1390,7 @@ async fn the_walk_forward_starts_after_the_newest_monthly_not_at_end() {
     for d in 1..=10 {
         db.record_fetch(&registry_row("fts", "daily", &format!("2026-09-{d:02}"))).await.unwrap();
     }
-    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 12), Duration::ZERO, || false, |_, _| {}).await.unwrap();
+    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 12), Duration::ZERO, || false, |_| {}).await.unwrap();
     assert_eq!(days(walked), ["2026-09-11", "2026-09-12"]);
     let _ = std::fs::remove_dir_all(&archive);
 
@@ -1403,7 +1403,7 @@ async fn the_walk_forward_starts_after_the_newest_monthly_not_at_end() {
         db.record_fetch(&registry_row("fts", "daily", &format!("2026-09-{d:02}"))).await.unwrap();
     }
     db.record_fetch(&registry_row("fts", "monthly", "2026-08")).await.unwrap();
-    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 10), Duration::ZERO, || false, |_, _| {}).await.unwrap();
+    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 10), Duration::ZERO, || false, |_| {}).await.unwrap();
     assert_eq!(
         days(walked),
         ["2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04", "2026-09-05", "2026-09-06", "2026-09-10"]
@@ -1414,10 +1414,10 @@ async fn the_walk_forward_starts_after_the_newest_monthly_not_at_end() {
     // replay): the first tick walks `end`'s month, so no day is ever left out.
     let archive = temp_dir("fts-seam-empty-first");
     let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
-    let tick1 = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 7), Duration::ZERO, || false, |_, _| {}).await.unwrap();
+    let tick1 = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 7), Duration::ZERO, || false, |_| {}).await.unwrap();
     assert_eq!(days(tick1).first().map(String::as_str), Some("2026-09-01"));
     db.record_fetch(&registry_row("fts", "monthly", "2026-08")).await.unwrap();
-    let tick2 = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 8), Duration::ZERO, || false, |_, _| {}).await.unwrap();
+    let tick2 = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 8), Duration::ZERO, || false, |_| {}).await.unwrap();
     assert_eq!(days(tick2), ["2026-09-08"]);
     for d in 1..=8 {
         let period = format!("2026-09-{d:02}");
@@ -1434,7 +1434,7 @@ async fn the_walk_forward_starts_after_the_newest_monthly_not_at_end() {
             db.record_fetch(&registry_row("fts", "monthly", "2026-08")).await.unwrap();
         }
         db.record_fetch(&registry_row("fts", "daily", "2026-12-25")).await.unwrap();
-        let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 3), Duration::ZERO, || false, |_, _| {}).await.unwrap();
+        let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 3), Duration::ZERO, || false, |_| {}).await.unwrap();
         assert_eq!(days(walked), ["2026-09-01", "2026-09-02", "2026-09-03"], "monthly on record: {monthly}");
         let _ = std::fs::remove_dir_all(&archive);
     }
@@ -1507,12 +1507,12 @@ async fn a_stopped_probe_ends_on_the_stopped_day_and_the_next_resumes_it() {
     // An empty day is one request: stop before the third.
     let asked = std::sync::atomic::AtomicUsize::new(0);
     let stop = || asked.fetch_add(1, Ordering::SeqCst) >= 2;
-    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 5), Duration::ZERO, stop, |_, _| {}).await.unwrap();
+    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 5), Duration::ZERO, stop, |_| {}).await.unwrap();
     assert_eq!(days(&walked), ["2026-09-01 Fetched", "2026-09-02 Fetched", "2026-09-03 Stopped"]);
     assert_eq!(log.lock().unwrap().len(), 2);
     assert!(db.latest_fetch("fts", "daily", "2026-09-03").await.unwrap().is_none(), "the stopped day did not land");
 
-    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 5), Duration::ZERO, || false, |_, _| {}).await.unwrap();
+    let walked = probe_fts_daily(&db, &client, &archive, &base, (2026, 9, 5), Duration::ZERO, || false, |_| {}).await.unwrap();
     assert_eq!(days(&walked), ["2026-09-03 Fetched", "2026-09-04 Fetched", "2026-09-05 Fetched"]);
     assert_eq!(log.lock().unwrap().len(), 5, "no day asked twice");
 
@@ -1728,7 +1728,10 @@ struct RawRow {
     raw: String,
 }
 
-/// What `/ocdsRecordPackages/{ocid}` answers; an ocid without one is a 404.
+/// What `/ocdsRecordPackages/{ocid}` answers, keyed by the ocid; an ocid
+/// without one is a 404. A key `package <ocid>` is what
+/// `/ocdsReleasePackages/{ocid}` answers instead of its default: the listing's
+/// rows of that ocid under the page's header, a 404 when it has none.
 #[derive(Clone)]
 enum Reply {
     Body(String),
@@ -1737,11 +1740,28 @@ enum Reply {
 }
 
 /// Every request the dense server saw, in order, with when it arrived:
-/// `list <query>` or `record <ocid>`.
+/// `list <query>`, `record <ocid>` or `package <ocid>`.
 type Timed = Arc<Mutex<Vec<(std::time::Instant, String)>>>;
 
 fn records_asked(log: &Timed) -> Vec<String> {
     log.lock().unwrap().iter().filter_map(|(_, l)| l.strip_prefix("record ").map(str::to_owned)).collect()
+}
+
+fn packages_asked(log: &Timed) -> Vec<String> {
+    log.lock().unwrap().iter().filter_map(|(_, l)| l.strip_prefix("package ").map(str::to_owned)).collect()
+}
+
+/// A page of `releases` (raw, at a page's depth) under `head`, as the live API
+/// lays one out.
+fn lay_out(head: &str, releases: &[&str], links: &str) -> String {
+    let mut page = format!("{head}\"releases\": [");
+    if !releases.is_empty() {
+        page.push_str(&format!("\n        {}\n    ", releases.join(",\n        ")));
+    }
+    page.push(']');
+    page.push_str(links);
+    page.push_str("\n}");
+    page
 }
 
 /// The keyset server's listing model (a window, newest notice id first, 100
@@ -1771,18 +1791,36 @@ async fn fts_dense_server(head: String, rows: Vec<RawRow>, records: HashMap<Stri
                     let mut window: Vec<&RawRow> = rows.iter().filter(|r| from <= r.at && r.at <= to).collect();
                     window.sort_by(|a, b| id_order(&b.id).cmp(&id_order(&a.id)));
                     let served: Vec<&str> = window.iter().take(100).map(|r| r.raw.as_str()).collect();
-                    let mut page = format!("{head}\"releases\": [");
-                    if !served.is_empty() {
-                        page.push_str(&format!("\n        {}\n    ", served.join(",\n        ")));
-                    }
-                    page.push(']');
-                    if window.len() > 100 {
-                        page.push_str(&format!(
+                    let links = if window.len() > 100 {
+                        format!(
                             ",\n    \"links\": {{\n        \"next\": \"{base}/ocdsReleasePackages?limit=100&updatedFrom={from_s}&updatedTo={to_s}&cursor=695588\"\n    }}"
-                        ));
-                    }
-                    page.push_str("\n}");
+                        )
+                    } else {
+                        String::new()
+                    };
+                    let page = lay_out(&head, &served, &links);
                     (StatusCode::OK, [(header::CONTENT_TYPE, "application/json")], page).into_response()
+                }
+            })
+        })
+        .route("/api/1.0/ocdsReleasePackages/{ocid}", {
+            let (log, head, rows, records) = (log.clone(), head.clone(), rows.clone(), records.clone());
+            get(move |axum::extract::Path(ocid): axum::extract::Path<String>| {
+                let (log, head, rows, records) = (log.clone(), head.clone(), rows.clone(), records.clone());
+                async move {
+                    log.lock().unwrap().push((std::time::Instant::now(), format!("package {ocid}")));
+                    let json = [(header::CONTENT_TYPE, "application/json")];
+                    match records.get(&format!("package {ocid}")) {
+                        Some(Reply::Body(body)) => return (StatusCode::OK, json, body.clone()).into_response(),
+                        Some(Reply::Empty) => return (StatusCode::OK, json, String::new()).into_response(),
+                        None => {}
+                    }
+                    let own = format!("\"ocid\": \"{ocid}\"");
+                    let served: Vec<&str> = rows.iter().filter(|r| r.raw.contains(&own)).map(|r| r.raw.as_str()).collect();
+                    if served.is_empty() {
+                        return StatusCode::NOT_FOUND.into_response();
+                    }
+                    (StatusCode::OK, json, lay_out(&head, &served, "")).into_response()
                 }
             })
         })
@@ -1810,9 +1848,11 @@ async fn fts_dense_server(head: String, rows: Vec<RawRow>, records: HashMap<Stri
 /// pipeline notice `033562-2023` fans out: each of its 15 ocids' real listing
 /// release 14 times, ocid by ocid, so the two-second span's first page is the
 /// live page's 7 × 14 + 2. At 10:07:02 comes the next notice, `033564-2023`
-/// (ocid `04197e`). Records as probed: `04196e` 404, `04196f` an empty 200,
-/// `041970`, `041977` and `04197e` the real ones; every other ocid's is the
-/// real `041977` with its release swapped for theirs, 8 spaces deeper.
+/// (ocid `04197e`). Records as probed: `04196c`..`04196e` 404, `04196f` an
+/// empty 200, `041970`, `041977` and `04197e` the real ones; every other
+/// ocid's is the real `041977` with its release swapped for theirs, 8 spaces
+/// deeper. Release packages: `04196f`'s the real one, every other ocid's the
+/// listing's rows of it (`04196e`'s a 404, as probed).
 fn dense_2023_11_14() -> (Vec<RawRow>, HashMap<String, Reply>) {
     let listing = listing_033562();
     let at = wall_secs("2023-11-14T10:05:15").unwrap();
@@ -1834,6 +1874,7 @@ fn dense_2023_11_14() -> (Vec<RawRow>, HashMap<String, Reply>) {
         ("ocds-h6vhtk-041970".to_owned(), Reply::Body(gunzip("record-041970.json.gz"))),
         ("ocds-h6vhtk-041977".to_owned(), Reply::Body(template.clone())),
         ("ocds-h6vhtk-04197e".to_owned(), Reply::Body(neighbour)),
+        ("package ocds-h6vhtk-04196f".to_owned(), Reply::Body(gunzip("release-package-04196f.json.gz"))),
     ]);
     for (ocid, raw) in &listing {
         records.entry(ocid.clone()).or_insert_with(|| {
@@ -1850,11 +1891,13 @@ fn members_of(path: &std::path::Path, id: &str) -> Vec<(String, Vec<u8>)> {
 
 /// THE FAN-OUT, COMPLETED (issue 477 unit 1b): 2023-11 as fetch 1857 met it.
 /// The two-second span 10:05:14–15 is full of one notice, so its page stays a
-/// leaf and `033562-2023`'s ocid run is read by record: the page's 8 ocids,
-/// then outward until a 404 below (`04196e`) and another notice above
-/// (`04197e`) end it, and never past them. The month lands all 15 ocids'
-/// releases as 15 members of the one id, each byte-identical to the member a
-/// listing-served release makes, and every record request keeps the pace.
+/// leaf and `033562-2023`'s ocid run is read by record: the page's 8 ocids
+/// (`04196f`'s empty record vouched for by its release package), then outward
+/// until a 404 below (`04196e`, its release package a 404 too, and the two
+/// ocids past it as well) and another notice above (`04197e`) end it, and
+/// never past them. The month lands all 15 ocids' releases as 15 members of
+/// the one id, each byte-identical to the member a listing-served release
+/// makes, and every record request keeps the pace.
 #[tokio::test]
 async fn dense_a_fanned_out_notice_lands_every_ocid_of_its_run() {
     let (rows, records) = dense_2023_11_14();
@@ -1865,17 +1908,29 @@ async fn dense_a_fanned_out_notice_lands_every_ocid_of_its_run() {
     let t = fts::monthly(&base, (2023, 11));
     let pause = Duration::from_millis(15);
 
-    let mut last = (0, 0);
-    let outcome = fetch_fts(&db, &client, &archive, &t, false, pause, || false, |p| last = (p.dense_spans, p.records))
-        .await
-        .unwrap();
+    let mut last = DenseTally::default();
+    let outcome = fetch_fts(&db, &client, &archive, &t, false, pause, || false, |p| last = p.dense).await.unwrap();
     assert_eq!(outcome, Outcome::Fetched);
-    assert_eq!(last, (1, 17), "one dense span, 17 records read");
+    assert_eq!(
+        last,
+        DenseTally { spans: 1, ocids: 15, requests: 21 },
+        "one dense span of 15 ocids: 18 records and 3 release packages asked"
+    );
+    assert_eq!(
+        last.row_suffix(),
+        " · 1 dense span(s) completed: 15 ocid(s), 21 record request(s)",
+        "what the job row reads"
+    );
 
     let mut expected = ocids(0x04196f..=0x041976); // the page's, first to last
-    expected.push("ocds-h6vhtk-04196e".into()); // below: a 404 ends the side
+    expected.extend(ocids(0x04196c..=0x04196e).into_iter().rev()); // below: a 404, and the two past it
     expected.extend(ocids(0x041977..=0x04197e)); // above: 7 join, then 033564-2023's ends it
     assert_eq!(records_asked(&log), expected);
+    assert_eq!(
+        packages_asked(&log),
+        ["ocds-h6vhtk-04196f", "ocds-h6vhtk-04196e"],
+        "the empty seed's, and the 404's that ends the side below"
+    );
     {
         let log = log.lock().unwrap();
         assert!(!log.iter().any(|(_, l)| l.contains("cursor=")), "never the cursor");
@@ -1950,42 +2005,174 @@ fn dense_a_renested_record_release_is_the_listing_bytes() {
     }
     let neighbour = gunzip("record-04197e.json.gz");
     let next = fts::Ocid::parse("ocds-h6vhtk-04197e").unwrap();
-    assert!(matches!(fts::record_releases(neighbour.as_bytes(), &next, &ids, nesting).unwrap(), fts::RecordSays::Other));
+    let fts::RecordSays::Other(elsewhere) = fts::record_releases(neighbour.as_bytes(), &next, &ids, nesting).unwrap() else {
+        panic!("04197e is another notice's");
+    };
+    let named: Vec<(&str, Option<&str>)> = elsewhere.iter().map(|e| (e.id.as_str(), e.date.as_deref())).collect();
+    assert_eq!(named, [("033564-2023", Some("2023-11-14T10:07:02Z")), ("017735-2024", Some("2024-06-07T14:17:43+01:00"))]);
+
+    // `04196f`'s RECORD is an empty 200; its release package serves the page's
+    // release at the page's own depth, 14 times, beside 9 later notices.
+    let package = gunzip("release-package-04196f.json.gz");
+    let first = fts::Ocid::parse("ocds-h6vhtk-04196f").unwrap();
+    let (says, whole) = fts::package_releases(package.as_bytes(), &first, &ids, nesting).unwrap();
+    assert!(whole, "23 releases, no next");
+    let fts::RecordSays::Carries(releases) = says else { panic!("04196f carries the notice") };
+    assert_eq!(releases.len(), 1);
+    assert_eq!(releases[0].get(), listing["ocds-h6vhtk-04196f"], "the listing's bytes, as served");
 }
 
-/// An empty body is the server's defect (`04196f`, twice). For an ocid the
-/// page serves it passes: the page holds that release. For one off the page
-/// it fails LOUD — it could be the notice's, and ending the run there would
-/// drop it and every ocid past it. Staging stays for a person; nothing lands.
-#[tokio::test]
-async fn dense_an_empty_record_passes_on_the_page_and_fails_off_it() {
-    let (rows, mut records) = dense_2023_11_14();
-    records.insert("ocds-h6vhtk-041979".into(), Reply::Empty);
+/// Run a 2023-11-14 daily against `records` and expect it to fail LOUD
+/// (issue 477 unit 1b): `Malformed`, naming `says`, its dense page and every
+/// parsed record that names a notice still staged, nothing landed or
+/// registered. Returns the requests seen and the records staged.
+async fn dense_refused(case: &str, records: HashMap<String, Reply>, says: &[&str]) -> (Timed, Vec<String>) {
+    let (rows, _) = dense_2023_11_14();
     let (base, log) = fts_dense_server(page_head(), rows, records).await;
-    let archive = temp_dir("fts-dense-empty");
+    let archive = temp_dir(&format!("fts-dense-refused-{}", case.replace(' ', "-")));
     let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
-    let client = reqwest::Client::new();
     let t = fts::day(&base, (2023, 11, 14));
-
-    let err = fetch_fts(&db, &client, &archive, &t, false, Duration::ZERO, || false, |_| {}).await.unwrap_err();
-    assert!(matches!(err, ingest::fetch::Error::Malformed(_)), "{err}");
+    let err = fetch_fts(&db, &reqwest::Client::new(), &archive, &t, false, Duration::ZERO, || false, |_| {})
+        .await
+        .unwrap_err();
+    assert!(matches!(err, ingest::fetch::Error::Malformed(_)), "{case}: {err}");
     let message = err.to_string();
-    assert!(message.contains("ocds-h6vhtk-041979") && message.contains("empty body") && message.contains("issue 477"), "{message}");
-    let asked = records_asked(&log);
-    assert_eq!(asked.first().map(String::as_str), Some("ocds-h6vhtk-04196f"), "the page's empty record was read, and passed");
-    assert_eq!(asked.last().map(String::as_str), Some("ocds-h6vhtk-041979"), "the walk stopped there");
-
+    for part in says.iter().chain(&["issue 477"]) {
+        assert!(message.contains(part), "{case}: no {part:?} in {message}");
+    }
     let staging = archive.join("fts/daily/2023-11-14.pages");
+    let span = "20231114T100514-20231114T100515";
     let staged: BTreeSet<String> =
         std::fs::read_dir(&staging).unwrap().map(|e| e.unwrap().file_name().into_string().unwrap()).collect();
-    let span = "20231114T100514-20231114T100515";
-    assert!(staged.contains(&format!("{span}.json")), "the dense span's page stays");
-    let records_staged: Vec<&String> = staged.iter().filter(|n| n.starts_with(&format!("{span}-r"))).collect();
-    let expected: Vec<String> = ocids(0x041970..=0x041978).into_iter().map(|o| format!("{span}-r{o}.json")).collect();
-    assert_eq!(records_staged, expected.iter().collect::<Vec<_>>(), "every parsed record, none of the empty or 404 replies");
-    assert!(!archive.join(&t.rel_path).exists(), "nothing lands");
-    assert!(db.latest_fetch("fts", "daily", "2023-11-14").await.unwrap().is_none(), "nothing registers");
+    assert!(staged.contains(&format!("{span}.json")), "{case}: the dense span's page stays");
+    let records: Vec<String> =
+        staged.iter().filter_map(|n| n.strip_prefix(&format!("{span}-r"))?.strip_suffix(".json")).map(str::to_owned).collect();
+    assert!(!archive.join(&t.rel_path).exists(), "{case}: nothing lands");
+    assert!(db.latest_fetch("fts", "daily", "2023-11-14").await.unwrap().is_none(), "{case}: nothing registers");
+    let _ = std::fs::remove_dir_all(&archive);
+    (log, records)
+}
 
+/// A record that holds no release is the server's defect (`04196f`'s empty
+/// body, three asks), and it says nothing about whose the ocid is — whether
+/// the body is empty or the package lists no record (issue 477 unit 1b
+/// review: `{"records": []}` used to read as "another notice's", ending the
+/// run silently and staged for good). For an ocid the page serves, the seed's
+/// release package vouches for the page's release (the fan-out test). Off the
+/// page it is the ocid's release package that decides: here it carries the
+/// notice, so the walk fails LOUD at `041979` — ending the run there would
+/// drop it and every ocid past it — and stages nothing for it.
+#[tokio::test]
+async fn dense_a_record_without_a_release_fails_off_the_page_when_the_notice_is_there() {
+    for (case, reply) in [("empty body", Reply::Empty), ("no records", Reply::Body(r#"{"records": []}"#.into()))] {
+        let (_, mut records) = dense_2023_11_14();
+        records.insert("ocds-h6vhtk-041979".into(), reply);
+        let (log, staged) =
+            dense_refused(case, records, &["ocds-h6vhtk-041979", "holds no release", "its release package carries 033562-2023"])
+                .await;
+        let asked = records_asked(&log);
+        assert_eq!(asked.first().map(String::as_str), Some("ocds-h6vhtk-04196f"), "{case}: the page's empty record was read, and passed");
+        assert_eq!(asked.last().map(String::as_str), Some("ocds-h6vhtk-041979"), "{case}: the walk stopped there");
+        assert_eq!(packages_asked(&log).last().map(String::as_str), Some("ocds-h6vhtk-041979"), "{case}: its release package decided");
+        assert_eq!(staged, ocids(0x041970..=0x041978), "{case}: every record naming the notice, none of the 404s or empty ones");
+    }
+}
+
+/// The same `{"records": []}` at the ocid that ENDS the run (`04197e`): its
+/// release package names another notice, `033564-2023`, dated outside the
+/// span, so the side ends there and the notice lands whole — and nothing is
+/// staged for the record that said nothing.
+#[tokio::test]
+async fn dense_a_release_less_record_at_the_end_is_decided_by_its_release_package() {
+    let (rows, mut records) = dense_2023_11_14();
+    records.insert("ocds-h6vhtk-04197e".into(), Reply::Body(r#"{"records": []}"#.into()));
+    let (base, log) = fts_dense_server(page_head(), rows, records).await;
+    let archive = temp_dir("fts-dense-release-less-end");
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    let t = fts::day(&base, (2023, 11, 14));
+    let stop_at_landing = || std::fs::read_dir(archive.join("fts/daily/2023-11-14.pages")).is_ok_and(|mut d| {
+        d.any(|e| e.unwrap().file_name().to_string_lossy().ends_with("-rocds-h6vhtk-04197e.json"))
+    });
+    let outcome = fetch_fts(&db, &reqwest::Client::new(), &archive, &t, false, Duration::ZERO, stop_at_landing, |_| {})
+        .await
+        .unwrap();
+    assert_eq!(outcome, Outcome::Fetched, "04197e's record was never staged, so the stop never fired");
+    assert_eq!(packages_asked(&log), ["ocds-h6vhtk-04196f", "ocds-h6vhtk-04196e", "ocds-h6vhtk-04197e"]);
+    assert_eq!(records_asked(&log).last().map(String::as_str), Some("ocds-h6vhtk-04197e"));
+    assert_eq!(members_of(&archive.join(&t.rel_path), "033562-2023").len(), 15);
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// A 404 is no proof that a notice's ocids stopped (issue 477 unit 1b
+/// review): the series has holes (`04196c`..`04196e` are all 404), and the
+/// record endpoint has failed real ocids before. Each fails LOUD where the
+/// walk used to end the side silently and land a notice short of ocids:
+/// - a hole inside the run: `04196e` is 404, but `04196d` past it carries the
+///   notice;
+/// - a 404 record for an ocid whose release package carries the notice
+///   (`041979`, with `041979`..`04197d` past it);
+/// - the seed `04196f`, whose record is empty, with a release package that
+///   shows a second release of the notice the page hides, or none of it.
+#[tokio::test]
+async fn dense_an_end_that_is_not_proven_fails_loud() {
+    let (_, base_records) = dense_2023_11_14();
+    let template = gunzip("record-041977.json.gz");
+    let mut hole = base_records.clone();
+    hole.insert("ocds-h6vhtk-04196d".into(), Reply::Body(template.replace("ocds-h6vhtk-041977", "ocds-h6vhtk-04196d")));
+    let (log, staged) = dense_refused("a hole", hole, &["ocds-h6vhtk-04196e is absent", "ocds-h6vhtk-04196d, 1 past it", "a hole"]).await;
+    assert_eq!(packages_asked(&log), ["ocds-h6vhtk-04196f", "ocds-h6vhtk-04196e"], "the 404 confirmed before the look-ahead");
+    assert!(staged.contains(&"ocds-h6vhtk-04196d".to_owned()), "the record past the hole stays staged for a person");
+
+    let mut gone = base_records.clone();
+    gone.remove("ocds-h6vhtk-041979");
+    dense_refused("a 404 record of the notice", gone, &["the record of ocds-h6vhtk-041979 is a 404", "its release package carries 033562-2023"]).await;
+
+    let (rows, _) = dense_2023_11_14();
+    let page_bytes = rows.iter().find(|r| r.raw.contains("\"ocid\": \"ocds-h6vhtk-04196f\"")).unwrap().raw.clone();
+    let mut second = base_records.clone();
+    let other = page_bytes.replacen("\"tag\": [", "\"tag\": [\"planningUpdate\", ", 1);
+    assert_ne!(other, page_bytes);
+    second.insert("package ocds-h6vhtk-04196f".into(), Reply::Body(lay_out(&page_head(), &[&page_bytes, &other], "")));
+    dense_refused("a hidden second release", second, &["the release package of ocds-h6vhtk-04196f holds a release of 033562-2023 the page does not show"]).await;
+
+    let mut not_listed = base_records;
+    not_listed.insert("package ocds-h6vhtk-04196f".into(), Reply::Body(lay_out(&page_head(), &[], "")));
+    dense_refused("an empty seed package", not_listed, &["the record of ocds-h6vhtk-04196f, an ocid the page serves, holds no release", "does not carry 033562-2023"]).await;
+}
+
+/// The record that ends a side names another notice — but one dated INSIDE
+/// the span, which only a notice the page's 100 rows hide could be (issue 477
+/// unit 1b review): it fails LOUD rather than landing the span without it.
+#[tokio::test]
+async fn dense_another_notice_dated_inside_the_span_at_the_end_fails_loud() {
+    let (_, mut records) = dense_2023_11_14();
+    let neighbour = gunzip("record-04197e.json.gz").replace("\"date\": \"2023-11-14T10:07:02Z\"", "\"date\": \"2023-11-14T10:05:14Z\"");
+    assert!(neighbour.contains("2023-11-14T10:05:14Z"));
+    records.insert("ocds-h6vhtk-04197e".into(), Reply::Body(neighbour));
+    dense_refused("in the span", records, &["ocds-h6vhtk-04197e holds another notice, 033564-2023, dated 2023-11-14T10:05:14Z"]).await;
+}
+
+/// The daily probe meets dense spans too, and is the only FTS fetch path once
+/// the backfill is done (issue 477 unit 1b review): it forwards every day's
+/// progress, so the walk shows while it runs and its tally reaches the row.
+#[tokio::test]
+async fn dense_the_daily_probe_reports_its_dense_spans() {
+    let (rows, records) = dense_2023_11_14();
+    let (base, _) = fts_dense_server(page_head(), rows, records).await;
+    let archive = temp_dir("fts-dense-probe");
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    for day in 1..=12 {
+        db.record_fetch(&registry_row("fts", "daily", &format!("2023-11-{day:02}"))).await.unwrap();
+    }
+    let mut by_day: BTreeMap<String, DenseTally> = BTreeMap::new();
+    let walked = probe_fts_daily(&db, &reqwest::Client::new(), &archive, &base, (2023, 11, 14), Duration::ZERO, || false, |p| {
+        by_day.insert(p.day.to_owned(), p.dense);
+    })
+    .await
+    .unwrap();
+    assert_eq!(walked.iter().map(|(d, _)| d.as_str()).collect::<Vec<_>>(), ["2023-11-13", "2023-11-14"]);
+    assert_eq!(by_day["2023-11-13"], DenseTally::default());
+    assert_eq!(by_day["2023-11-14"], DenseTally { spans: 1, ocids: 15, requests: 21 });
     let _ = std::fs::remove_dir_all(&archive);
 }
 
@@ -2046,13 +2233,14 @@ async fn dense_a_span_records_cannot_complete_fails_loud_before_asking_one() {
 /// A stopped dense walk resumes where it stopped: the stop checkpoint is read
 /// before every record request, as before every span page (issue 450), and a
 /// record staged by the stopped run is read from staging, never asked again.
-/// Only the replies that stage nothing — `04196f`'s empty body, `04196e`'s
-/// 404 — are asked again, and the resumed walk lands all 15 ocids. A stop
-/// before each kind of request: the dense span's page, the empty seed record,
-/// a seed mid-run, the 404 below, the first record above, the other notice's
-/// that ends the run, and the first span page after it — where one staged
-/// record is damaged first, and only it is asked again. (Every stop point
-/// passes; seven keep the test under ten seconds in a debug build.)
+/// Only the replies that stage nothing — `04196f`'s empty body, the 404s
+/// below the run, the release packages — are asked again, and the resumed
+/// walk lands all 15 ocids. A stop before each kind of request: the dense
+/// span's page, the empty seed record, its release package, a seed mid-run,
+/// the 404 below, the look-ahead past it, the first record above, the other
+/// notice's that ends the run, and the first span page after it — where one
+/// staged record is damaged first, and only it is asked again. (Every stop
+/// point passes; nine keep the test around ten seconds in a debug build.)
 #[tokio::test]
 async fn dense_a_stopped_walk_resumes_without_asking_a_staged_record_again() {
     let (rows, records) = dense_2023_11_14();
@@ -2072,8 +2260,10 @@ async fn dense_a_stopped_walk_resumes_without_asking_a_staged_record_again() {
     let stops = [
         at("record ocds-h6vhtk-04196f") - 1,
         at("record ocds-h6vhtk-04196f"),
+        at("package ocds-h6vhtk-04196f"),
         at("record ocds-h6vhtk-041973"),
         at("record ocds-h6vhtk-04196e"),
+        at("record ocds-h6vhtk-04196d"),
         at("record ocds-h6vhtk-041977"),
         at("record ocds-h6vhtk-04197e"),
         after_records,
@@ -2102,7 +2292,9 @@ async fn dense_a_stopped_walk_resumes_without_asking_a_staged_record_again() {
             *seen.entry(line).or_default() += 1;
         }
         for (line, times) in &seen {
-            let unstaged = ["record ocds-h6vhtk-04196f", "record ocds-h6vhtk-04196e"].contains(&line.as_str())
+            let unstaged = line.starts_with("package ")
+                || ["record ocds-h6vhtk-04196f", "record ocds-h6vhtk-04196e", "record ocds-h6vhtk-04196d", "record ocds-h6vhtk-04196c"]
+                    .contains(&line.as_str())
                 || damaged.as_deref() == Some(line.as_str());
             assert!(*times == 1 || (unstaged && *times == 2), "resumed after {stop_after}: {line} asked {times} times");
         }

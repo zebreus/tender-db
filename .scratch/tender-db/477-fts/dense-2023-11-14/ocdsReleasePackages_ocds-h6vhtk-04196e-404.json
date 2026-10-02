@@ -1,0 +1,8 @@
+{
+    "timestamp": "2026-10-02T11:16:16+01:00",
+    "status": 404,
+    "error": "Not Found",
+    "message": "",
+    "path": "/api/1.0/ocdsReleasePackages/ocds-h6vhtk-04196e",
+    "exception": "'identifier' is not found"
+}

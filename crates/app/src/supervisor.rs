@@ -18,7 +18,7 @@
 
 use std::collections::VecDeque;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 
 use ingest::{doe, fetch, fts, package, process, project, ted};
@@ -3556,16 +3556,16 @@ impl Supervisor {
     /// attempt that boxed `fetch_fts` inline in the arm overflowed
     /// `an_execute_without_an_expected_count_is_refused` (CLAUDE.md's trap).
     ///
-    /// Returns the outcome with the dense spans the walk completed from ocid
-    /// records and the records it read (issue 477 unit 1b), for the job row.
+    /// Returns the outcome with what its dense-span walks did (issue 477 unit
+    /// 1b), for the job row.
     async fn run_fetch_fts(
         &self,
         job_id: u64,
         target: &fetch::Target,
         period: &str,
         refetch: bool,
-    ) -> Result<(fetch::Outcome, usize, usize), fetch::Error> {
-        let (dense_spans, records) = (AtomicUsize::new(0), AtomicUsize::new(0));
+    ) -> Result<(fetch::Outcome, fetch::DenseTally), fetch::Error> {
+        let mut dense = fetch::DenseTally::default();
         let outcome = Box::pin(fetch::fetch_fts(
             &self.db,
             &self.http,
@@ -3576,21 +3576,20 @@ impl Supervisor {
             // Read before every request (issue 450); see `stoppable`.
             || self.cancelled(job_id),
             |walk| {
-                dense_spans.store(walk.dense_spans, Ordering::Relaxed);
-                records.store(walk.records, Ordering::Relaxed);
-                let dense = if walk.dense_spans > 0 {
-                    format!(", {} dense span(s), {} records", walk.dense_spans, walk.records)
-                } else {
-                    String::new()
-                };
+                dense = walk.dense;
                 self.update(|p| {
-                    p.package =
-                        Some(format!("{period} · {} p{} ({} releases{dense})", walk.day, walk.pages, walk.releases));
+                    p.package = Some(format!(
+                        "{period} · {} p{} ({} releases{})",
+                        walk.day,
+                        walk.pages,
+                        walk.releases,
+                        walk.dense.progress_suffix()
+                    ));
                 })
             },
         ))
         .await?;
-        Ok((outcome, dense_spans.into_inner(), records.into_inner()))
+        Ok((outcome, dense))
     }
 
     /// The plain (TED/DÖE) fetcher behind the same door as [`Self::run_fetch_fts`],
@@ -3748,6 +3747,9 @@ impl Supervisor {
         // The last completed UK civil day: the API's windows are UK-local, and a
         // passed day is final (uk-fts.md §2).
         let end = fts::uk_civil_date(store::now_unix() - 86_400);
+        // Boxed: held across the walk's await, it would grow this future past
+        // its budget (`run_spec_futures_stay_inside_their_size_budgets`).
+        let mut dense: Box<std::collections::BTreeMap<String, fetch::DenseTally>> = Box::default();
         let results = Box::pin(fetch::probe_fts_daily(
             &self.db,
             &self.http,
@@ -3757,22 +3759,37 @@ impl Supervisor {
             std::time::Duration::from_secs(fts::PAGE_PAUSE_SECS),
             // Read before every request of every day (issue 450); see `stoppable`.
             || self.cancelled(job_id),
-            |period, _| self.update(|p| p.package = Some(period.to_owned())),
+            // Every day's progress (issue 477 unit 1b review): a dense span
+            // walked inside the 07:35 chain shows its record requests, and
+            // each day's tally — its last report — reaches the row.
+            |walk| {
+                dense.insert(walk.day.to_owned(), walk.dense);
+                self.update(|p| {
+                    p.package = Some(format!(
+                        "{} p{} ({} releases{})",
+                        walk.day,
+                        walk.pages,
+                        walk.releases,
+                        walk.dense.progress_suffix()
+                    ));
+                })
+            },
         ))
         .await
         .map_err(|e| e.to_string())?;
+        let dense = (*dense).into_values().fold(fetch::DenseTally::default(), |sum, day| sum + day).row_suffix();
         let fetched = results
             .iter()
             .filter(|(_, o)| matches!(o, fetch::Outcome::Fetched | fetch::Outcome::NewVersion))
             .count();
         if let Some((day, fetch::Outcome::Stopped)) = results.last() {
             return Ok(format!(
-                "CANCELLED at a checkpoint — probed {} day(s), {fetched} new; {day} did not land \
+                "CANCELLED at a checkpoint — probed {} day(s), {fetched} new{dense}; {day} did not land \
                  and keeps its staged span pages, so the next probe resumes it where it stopped",
                 results.len() - 1
             ));
         }
-        Ok(format!("probed {} day(s), {fetched} new", results.len()))
+        Ok(format!("probed {} day(s), {fetched} new{dense}", results.len()))
     }
 
     /// Issue 442: refuse a job that deletes organizations while any of the
@@ -4481,12 +4498,12 @@ impl Supervisor {
                     p.package = Some(period.clone());
                     p.packages_total = 1;
                 });
-                let (outcome, dense_spans, records) = if target.source == "fts" {
+                let (outcome, dense) = if target.source == "fts" {
                     // Paged and self-assembled (issue 342); boxed twice over — see
                     // `run_fetch_fts` for why the walk stays off this frame.
                     Box::pin(self.run_fetch_fts(job.id, &target, period, *refetch)).await
                 } else {
-                    Box::pin(self.run_fetch(&target, *refetch)).await.map(|outcome| (outcome, 0, 0))
+                    Box::pin(self.run_fetch(&target, *refetch)).await.map(|outcome| (outcome, fetch::DenseTally::default()))
                 }
                 .map_err(|e| e.to_string())?;
                 if outcome == fetch::Outcome::Stopped {
@@ -4497,14 +4514,9 @@ impl Supervisor {
                     ));
                 }
                 self.update(|p| p.packages_done = 1);
-                if dense_spans > 0 {
-                    // Rare and worth seeing: an FTS span full at two seconds,
-                    // completed from ocid records (issue 477 unit 1b).
-                    return Ok(format!(
-                        "{outcome:?} · {dense_spans} dense span(s) completed from {records} ocid record(s)"
-                    ));
-                }
-                Ok(format!("{outcome:?}"))
+                // Rare and worth seeing: an FTS span full at two seconds,
+                // completed from ocid records (issue 477 unit 1b).
+                Ok(format!("{outcome:?}{}", dense.row_suffix()))
             }
             Spec::ProbeTed { refetch } => {
                 let results = fetch::probe_ted_daily(

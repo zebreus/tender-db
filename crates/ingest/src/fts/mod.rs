@@ -36,8 +36,10 @@
 //! the page's ocids sit in (the fetcher's `walk_dense_span`), each record's
 //! releases moved to the page's depth so they are the listing's bytes
 //! ([`record_releases`]). A full two-second page of SEVERAL notices still
-//! fails the fetch loudly: a notice below its 100 rows cannot be reached by
-//! any request.
+//! fails the fetch loudly: a notice below its 100 rows is named by no record
+//! the walk reads. (A window offset by one second, `[from − 1, from]` or
+//! `[to, to + 1]`, is askable and would isolate each second, narrowing that
+//! to the fan-out's own second; the walk does not ask it yet — issue 477.)
 //!
 //! Two kinds, mirroring TED/DÖE so `Process{daily, None}` re-walks only live
 //! days (plan D2):
@@ -126,6 +128,13 @@ pub const MIN_SPAN_SECS: i64 = 2;
 /// longer run is no shape anyone has seen, so it fails the fetch loudly
 /// rather than holding the single job runner for hours.
 pub const DENSE_RUN_CAP: usize = 500;
+
+/// How many ocids past a confirmed absence (a 404) a dense run's walk still
+/// reads before it lets that side end (issue 477 unit 1b review). The series
+/// has holes — `04196c`, `04196d` and `04196e`, right below `033562-2023`'s
+/// run, are all 404 (measured 2026-10-02) — so a 404 alone does not prove the
+/// notice's ocids stopped there: one of them past a hole fails the fetch.
+pub const DENSE_LOOKAHEAD: i64 = 2;
 
 /// An inclusive span of UK wall-clock seconds, `from..=to`, in the naive
 /// encoding [`window_url`] writes: `days_from_civil(day) * 86 400` plus the
@@ -230,8 +239,9 @@ pub fn parse_record_key(key: &str) -> Option<(Span, Ocid)> {
 
 /// A span cut in two: `[from, m]` and `[m + 1, to]`, the older half first.
 /// `None` when a cut would leave a half shorter than [`MIN_SPAN_SECS`] — the
-/// API refuses a one-second window — which the fetcher turns into a loud
-/// failure for a span that is still full.
+/// API refuses a one-second window — which the fetcher treats as a DENSE span
+/// (its `walk_dense_span`, issue 477 unit 1b): completed from ocid records when
+/// its page holds one notice, a loud failure otherwise.
 ///
 /// The older half takes an even number of seconds, so an even span (every
 /// window is: 86 400 s, or 93 600 s with the daily overlap) halves into even
@@ -337,18 +347,44 @@ pub fn record_url(base: &str, ocid: &Ocid) -> String {
     format!("{base}/ocdsRecordPackages/{ocid}")
 }
 
-/// What one record package says about a dense span's notice ids
-/// ([`record_releases`]).
+/// The URL of one process's RELEASE package: the ocid's releases at the
+/// listing's own depth, under a listing page's header, at most
+/// [`PAGE_LIMIT`] a page (`04196f`'s: 23 releases, 14 of them `033562-2023`'s
+/// one release byte for byte as the span's page serves it, measured
+/// 2026-10-02). A dense span's walk asks it only where a record says nothing
+/// — an empty body, a 404 that would end a side ([`package_releases`]) — and
+/// takes no member from it.
+pub fn release_package_url(base: &str, ocid: &Ocid) -> String {
+    format!("{base}/ocdsReleasePackages/{ocid}")
+}
+
+/// Another notice's release in an ocid's record or release package: what ends
+/// a dense run's side — unless it was published inside the span, which only a
+/// notice the page's rows hide could be.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Elsewhere {
+    /// Its notice id.
+    pub id: String,
+    /// Its `date`, as served.
+    pub date: Option<String>,
+}
+
+/// What one record package (or release package) says about a dense span's
+/// notice ids ([`record_releases`], [`package_releases`]).
 #[derive(Debug)]
 pub enum RecordSays {
-    /// A 200 with an empty body: the server's defect on `04196f`, the first of
-    /// `033562-2023`'s ocids, asked twice (issue 477).
+    /// No release that names a notice: a 200 with an empty body (the server's
+    /// defect on `04196f`, the first of `033562-2023`'s ocids, three asks out
+    /// of three), a package with no records, records without releases, or
+    /// releases without an id. It says nothing about whose the ocid is, so it
+    /// is never staged and never ends a run (issue 477 unit 1b review).
     Empty,
     /// Releases of the notice ids, each re-nested to the listing's depth and
     /// verified ([`renest`]), byte-identical repeats collapsed.
     Carries(Vec<Box<RawValue>>),
-    /// A record of other notices only: the ocid is not the notice's.
-    Other,
+    /// Releases of other notices only — at least one: the ocid is not the
+    /// notice's. Each distinct (id, date) once.
+    Other(Vec<Elsewhere>),
 }
 
 /// What the record package `bytes` of `ocid` holds of the notice ids `ids`,
@@ -373,21 +409,107 @@ pub fn record_releases(
         return Ok(RecordSays::Empty);
     }
     let package: RecordPackage = serde_json::from_slice(bytes).map_err(|e| format!("not a record package: {e}"))?;
-    let mut carried: Vec<Box<RawValue>> = Vec::new();
+    let mut releases: Vec<&RawValue> = Vec::new();
     for record in &package.records {
         if record.ocid != ocid.to_string() {
             return Err(format!("a record of {} in the record package of {ocid}", record.ocid));
         }
-        for release in &record.releases {
-            if release_id(release).is_some_and(|id| ids.contains(&id)) {
+        releases.extend(record.releases.iter().copied());
+    }
+    sort_releases(&releases, ocid, ids, nesting)
+}
+
+/// What the release package `bytes` of `ocid` ([`release_package_url`]) holds
+/// of the notice ids `ids`, classified as a record is ([`record_releases`];
+/// the releases are already at the listing's depth, which [`renest`] verifies),
+/// and whether the page is the ocid's whole package ([`page_is_short`]).
+pub fn package_releases(
+    bytes: &[u8],
+    ocid: &Ocid,
+    ids: &BTreeSet<String>,
+    nesting: Option<usize>,
+) -> Result<(RecordSays, bool), String> {
+    let page = Page::read(bytes).map_err(|e| format!("not a release package: {e}"))?;
+    let releases = page.releases()?;
+    for release in &releases {
+        if let Some(other) = release_ocid(release).filter(|o| *o != ocid.to_string()) {
+            return Err(format!("a release of {other} in the release package of {ocid}"));
+        }
+    }
+    let complete = page_is_short(releases.len(), page.next().as_deref());
+    Ok((sort_releases(&releases, ocid, ids, nesting)?, complete))
+}
+
+/// One ocid's releases sorted into [`RecordSays`].
+fn sort_releases(
+    releases: &[&RawValue],
+    ocid: &Ocid,
+    ids: &BTreeSet<String>,
+    nesting: Option<usize>,
+) -> Result<RecordSays, String> {
+    let (mut carried, mut elsewhere): (Vec<Box<RawValue>>, Vec<Elsewhere>) = (Vec::new(), Vec::new());
+    for release in releases {
+        match release_id(release) {
+            Some(id) if ids.contains(&id) => {
                 let moved = renest(release, nesting).map_err(|what| format!("a release of {ocid}: {what}"))?;
                 if !carried.iter().any(|held| held.get() == moved.get()) {
                     carried.push(moved);
                 }
             }
+            Some(id) => {
+                let other = Elsewhere { id, date: release_string(release, "date") };
+                if !elsewhere.contains(&other) {
+                    elsewhere.push(other);
+                }
+            }
+            // A release without an id names no notice, the span's or another.
+            None => {}
         }
     }
-    Ok(if carried.is_empty() { RecordSays::Other } else { RecordSays::Carries(carried) })
+    Ok(if !carried.is_empty() {
+        RecordSays::Carries(carried)
+    } else if !elsewhere.is_empty() {
+        RecordSays::Other(elsewhere)
+    } else {
+        RecordSays::Empty
+    })
+}
+
+/// A release `date` as the naive UK wall-clock second a [`Span`] counts in:
+/// RFC 3339 (`2023-11-14T10:05:15Z`, `2025-06-23T12:05:04+01:00`, a fraction
+/// allowed) moved to UK civil time. `None` for anything else.
+pub fn uk_wall_of(date: &str) -> Option<i64> {
+    let digits = |range: std::ops::Range<usize>| -> Option<i64> {
+        let part = date.get(range)?;
+        part.bytes().all(|b| b.is_ascii_digit()).then(|| part.parse().ok())?
+    };
+    let b = date.as_bytes();
+    if b.len() < 20 || b[4] != b'-' || b[7] != b'-' || b[10] != b'T' || b[13] != b':' || b[16] != b':' {
+        return None;
+    }
+    let (y, mo, d) = (digits(0..4)?, digits(5..7)?, digits(8..10)?);
+    let (h, mi, s) = (digits(11..13)?, digits(14..16)?, digits(17..19)?);
+    if !(1..=12).contains(&mo) || !(1..=31).contains(&d) || h > 23 || mi > 59 || s > 60 {
+        return None;
+    }
+    let mut zone = &date[19..];
+    if let Some(fraction) = zone.strip_prefix('.') {
+        zone = fraction.trim_start_matches(|c: char| c.is_ascii_digit());
+        if zone.len() == fraction.len() {
+            return None;
+        }
+    }
+    let offset = match zone.as_bytes() {
+        b"Z" => 0,
+        [sign @ (b'+' | b'-'), _, _, b':', _, _] => {
+            let at = date.len() - 5;
+            let secs = digits(at..at + 2)? * 3_600 + digits(at + 3..at + 5)? * 60;
+            if *sign == b'+' { secs } else { -secs }
+        }
+        _ => return None,
+    };
+    let unix = days_from_civil(y as u16, mo as u8, d as u8) * 86_400 + h * 3_600 + mi * 60 + s - offset;
+    Some(unix + uk_offset(unix))
 }
 
 #[derive(serde::Deserialize)]
@@ -951,11 +1073,91 @@ mod tests {
             }
             other => panic!("{other:?}"),
         }
-        assert!(matches!(record_releases(package(other).as_bytes(), &ocid, &ids, Some(4)).unwrap(), RecordSays::Other));
+        match record_releases(package(other).as_bytes(), &ocid, &ids, Some(4)).unwrap() {
+            RecordSays::Other(elsewhere) => {
+                assert_eq!(elsewhere, [Elsewhere { id: "017735-2024".into(), date: None }]);
+            }
+            other => panic!("{other:?}"),
+        }
         assert!(matches!(record_releases(b"", &ocid, &ids, Some(4)).unwrap(), RecordSays::Empty));
         assert!(record_releases(b"{\"records\": []", &ocid, &ids, Some(4)).is_err(), "truncated");
         let elsewhere = Ocid::parse("ocds-h6vhtk-041971").unwrap();
         assert!(record_releases(package(mine).as_bytes(), &elsewhere, &ids, Some(4)).unwrap_err().contains("a record of"));
+    }
+
+    /// Issue 477 unit 1b review: `Other` — which ends a dense run's side and is
+    /// staged for good — needs a release of ANOTHER notice. A package holding
+    /// no release at all says nothing about whose the ocid is, exactly like
+    /// `04196f`'s empty body, so it is `Empty`: never staged, never an end.
+    #[test]
+    fn a_record_without_a_release_of_any_notice_is_empty_not_another_notices() {
+        let ocid = Ocid::parse("ocds-h6vhtk-041970").unwrap();
+        let ids: BTreeSet<String> = ["033562-2023".to_owned()].into();
+        for says_nothing in [
+            r#"{"records": []}"#,
+            r#"{"records": [{"ocid": "ocds-h6vhtk-041970"}]}"#,
+            r#"{"records": [{"ocid": "ocds-h6vhtk-041970", "releases": []}]}"#,
+            r#"{"records": [{"ocid": "ocds-h6vhtk-041970", "releases": [{"tag": ["planning"]}]}]}"#,
+            " \n",
+        ] {
+            let says = record_releases(says_nothing.as_bytes(), &ocid, &ids, None).unwrap();
+            assert!(matches!(says, RecordSays::Empty), "{says_nothing}: {says:?}");
+        }
+        let dated = r#"{"records": [{"ocid": "ocds-h6vhtk-041970", "releases": [
+            {"id": "033564-2023", "date": "2023-11-14T10:07:02Z"}, {"tag": []},
+            {"id": "033564-2023", "date": "2023-11-14T10:07:02Z"}, {"id": "017735-2024", "date": "2024-05-01T09:00:00+01:00"}]}]}"#;
+        let RecordSays::Other(elsewhere) = record_releases(dated.as_bytes(), &ocid, &ids, None).unwrap() else {
+            panic!("another notice's record");
+        };
+        assert_eq!(
+            elsewhere,
+            [
+                Elsewhere { id: "033564-2023".into(), date: Some("2023-11-14T10:07:02Z".into()) },
+                Elsewhere { id: "017735-2024".into(), date: Some("2024-05-01T09:00:00+01:00".into()) },
+            ],
+            "each distinct (id, date) once"
+        );
+    }
+
+    /// The release package of an ocid is sorted as its record is, and says
+    /// whether it is whole; a release of another ocid in it is refused.
+    #[test]
+    fn a_release_package_is_sorted_like_a_record_and_knows_if_it_is_whole() {
+        let ocid = Ocid::parse("ocds-h6vhtk-04196f").unwrap();
+        let ids: BTreeSet<String> = ["033562-2023".to_owned()].into();
+        let page = |releases: &str, links: &str| format!("{{\n    \"uri\": \"u\",\n    \"releases\": [{releases}]{links}\n}}");
+        let mine = "\n        {\n            \"ocid\": \"ocds-h6vhtk-04196f\",\n            \"id\": \"033562-2023\"\n        }";
+        let later = "\n        {\n            \"ocid\": \"ocds-h6vhtk-04196f\",\n            \"id\": \"034341-2025\",\n            \"date\": \"2025-06-23T12:05:04+01:00\"\n        }";
+        let (says, whole) = package_releases(page(&format!("{mine},{mine},{later}"), "").as_bytes(), &ocid, &ids, Some(8)).unwrap();
+        assert!(whole);
+        let RecordSays::Carries(carried) = says else { panic!("{says:?}") };
+        assert_eq!(carried.len(), 1, "the repeat collapses");
+        assert_eq!(carried[0].get(), &mine[9..], "already at the listing's depth: unchanged");
+        let next = ",\n    \"links\": {\"next\": \"n\"}";
+        let (says, whole) = package_releases(page(later, next).as_bytes(), &ocid, &ids, Some(8)).unwrap();
+        assert!(!whole, "a next: not the whole package");
+        assert!(matches!(says, RecordSays::Other(_)));
+        assert!(matches!(package_releases(page("", "").as_bytes(), &ocid, &ids, Some(8)).unwrap(), (RecordSays::Empty, true)));
+        let stray = mine.replace("04196f", "041970");
+        assert!(package_releases(page(&stray, "").as_bytes(), &ocid, &ids, Some(8)).unwrap_err().contains("ocds-h6vhtk-041970"));
+        assert!(package_releases(b"", &ocid, &ids, Some(8)).is_err());
+    }
+
+    /// A release `date` lands on the wall-clock second a span counts in: UK
+    /// civil time, whatever offset it was written with.
+    #[test]
+    fn a_release_date_is_read_as_a_uk_wall_clock_second() {
+        let wall = |day: (u16, u8, u8), tod: i64| days_from_civil(day.0, day.1, day.2) * 86_400 + tod;
+        let at_10_05_15 = wall((2023, 11, 14), 36_315);
+        assert_eq!(uk_wall_of("2023-11-14T10:05:15Z"), Some(at_10_05_15), "GMT: wall clock is UTC");
+        assert_eq!(uk_wall_of("2023-11-14T10:05:15.250Z"), Some(at_10_05_15), "a fraction");
+        assert_eq!(uk_wall_of("2023-11-14T11:05:15+01:00"), Some(at_10_05_15), "another offset, the same instant");
+        let bst = wall((2025, 6, 23), 12 * 3_600 + 5 * 60 + 4);
+        assert_eq!(uk_wall_of("2025-06-23T12:05:04+01:00"), Some(bst), "BST, written in BST");
+        assert_eq!(uk_wall_of("2025-06-23T11:05:04Z"), Some(bst), "BST, written in UTC");
+        for not_one in ["2023-11-14", "2023-11-14T10:05:15", "2023-11-14T10:05:15+0100", "2023-11-14T10:05:15.Z", "2023-13-14T10:05:15Z", "x"] {
+            assert_eq!(uk_wall_of(not_one), None, "{not_one}");
+        }
     }
 
     /// A monthly is refused until its last UK civil day is over — UK, not

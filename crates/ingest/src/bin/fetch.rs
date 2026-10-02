@@ -153,12 +153,7 @@ async fn main() -> ExitCode {
                 // month is 80–450 paced requests (issue 477's split walk: a
                 // 2021 month ~80, a 2026 month ~400).
                 fetch::fetch_fts(db, client, archive, &target, refetch, page_pause, || false, |p| {
-                    let dense = if p.dense_spans > 0 {
-                        format!(" ({} dense span(s), {} records)", p.dense_spans, p.records)
-                    } else {
-                        String::new()
-                    };
-                    eprintln!("  {}: page {}, {} releases so far{dense}", p.day, p.pages, p.releases);
+                    eprintln!("  {}: page {}, {} releases so far{}", p.day, p.pages, p.releases, p.dense.progress_suffix());
                 })
                 .await
             } else {

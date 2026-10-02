@@ -309,6 +309,69 @@ Where this deviates from the decision:
 - **An ocid inside the seed range that does not carry the notice fails loud**, rather than ending anything. The
   decision only describes the two outward sides.
 
-Still open: a page of one notice cannot rule out a different notice, with a lower id, published in the same two
-seconds and wholly below the page's rows. No request reaches it. Unit 3's per-year id invariant would show it as a
-missing id.
+Still open (as amended by the review below):
+- A page of one notice cannot rule out a DIFFERENT notice, with a lower id, published in the same two seconds, wholly
+  below the page's rows and on no ocid next to the run (dated in the span next to it, the walk now fails). Unit 3's
+  per-year id invariant would show it as a missing id. It is not out of every request's reach: a window offset by one
+  second (`[from − 1, from]`, `[to, to + 1]`) is askable and isolates each second, which would narrow this to the
+  fan-out's own second (for 2023-11-14, `10:05:13–14` is empty, so all 210 rows are at `:15`). Not built; an option for
+  unit 3 or a later unit.
+- A second release of the SAME notice on an ocid that is not next to the run (a far process, the shape of
+  `038018-2025`'s two releases), in the page's hidden rows, is lost silently. Unit 3 does NOT see it, because the id is
+  held, and no request lists a notice's ocids: `GET /ocdsReleasePackages/033562-2023` serves the same capped page as
+  the span (100 rows, the same stuck `nextCursor`).
+
+### 2026-10-02 11:4x UTC — unit 1b review fixes (not deployed)
+
+Ten review findings (two major), each checked against the code and, where it needed the API, against 4 live
+requests from the container (11:15–11:16 UTC, 11 s apart; saved beside the earlier evidence): the records of
+`04196d` and `04196c` are 404, the release package of `04196e` is 404, and `04196f`'s release package is 200,
+412,639 bytes, 23 releases (14 copies of `033562-2023`'s one release, byte-identical to the span page's `04196f`
+release, and 9 later notices of the process, 2023-12 … 2025-06), with no next.
+
+Fixed, each with a test that fails without it. Six mutants each turned a `dense_` test red: `Empty` read as `Other`,
+a 404 left unconfirmed, no look-ahead, no in-span date check, an empty seed's release package left unchecked, and
+the probe dropping progress.
+- **A record with no release is `Empty`, not "another notice's"** (major). `{"records": []}`, a record without
+  `releases`, or releases without an id used to read as `Other`: on the outward walk that ended the side silently,
+  and it was staged, so no resume asked again. `Other` now needs a release of another notice id. `Empty` is never
+  staged and never ends a run, and an earlier build's staged one is discarded and asked again.
+- **A 404 is proven before it ends a side** (major). The series has holes right next to the run (`04196c`..`04196e`).
+  A record 404 now ends a side only if the ocid's release package is a 404 too, and only if the
+  `DENSE_LOOKAHEAD` = 2 ocids past it do not carry the notice. A carrier past a hole fails loud ("a hole in its run,
+  which the walk does not bridge"). A record 404 whose release package carries the notice fails loud. Bridging a
+  hole is the option if this ever fires on a real run.
+- **An empty record is decided by the ocid's release package** (minor). On a seed (`04196f`), the package must hold
+  the page's release byte for byte and no other release of the notice, so the hidden-second-release check now runs
+  for an empty seed too. Off the page, a 404 or an empty package means absent (and the look-ahead applies), another
+  notice ends the side, and a package carrying the notice fails loud (no member is built from a release package).
+- **Another notice dated inside the span fails loud** (minor). This applies to the boundary record that ends a side,
+  and to a look-ahead record. Dates are read as UK wall-clock seconds (`fts::uk_wall_of`).
+- **The daily probe reports dense spans** (minor). `probe_fts_daily` forwards every day's `FtsProgress`. Its job row
+  ends like a fetch's, and its progress line shows the record requests while a walk runs.
+- **The counts mean what they say** (minor). `fetch::DenseTally`: spans; ocids, the run lengths (15 for
+  `033562-2023`); requests, record and release-package requests actually asked (a staged record read back is not
+  one). The row reads `Fetched · 1 dense span(s) completed: 15 ocid(s), 21 record request(s)` where it read 17
+  "ocid records".
+- **Docs** (minor): operations.md's FTS runbook (dense spans, the new loud failures, and the recovery: delete the
+  `<span>-r<ocid>.json` the error names as "staged as …" and re-enqueue), the `fts::split` doc, and the "no request
+  reaches it" wording in the fts module doc, `walk_dense_span`'s doc, the several-notice error and uk-fts.md §2.
+  Both gaps are named in "Still open" above.
+
+The 2023-11-14 walk under these rules: 21 requests (was 17). Seeds `04196f` (empty record, then its release package)
+and `041970`…`041976`. Below, `04196e` (record 404, release package 404) and `04196d`, `04196c` (404). Above,
+`041977`…`04197d` join, and `04197e` (`033564-2023`, 10:07:02, outside the span) ends the run. Every one of these
+answers was measured live, so the refetch should land 15 members.
+
+Deferred:
+- **A cursor audit** (follow the span's `links.next` once, never as a source, and fail on any ocid of the notice it
+  names outside the run). On 2023-11-14 page 2 named exactly the 15 ocids, and it would also catch the common case
+  of the same-notice far-ocid gap. It is deferred because the decision says "Never follow `links.next`", and an
+  audit-only use of the cursor is the owner's call.
+- **The offset-window walk** (`[from − 1, from]`, `[to, to + 1]`) is recorded under "Still open" above.
+
+Refuted:
+- **"Fail loud on a staged carrying record outside the walked run".** A carrier is staged and never asked again, so
+  only the re-asked 404s and empty records can move a run's ends between runs, and one of them that now carries
+  only extends the run. The one way a staged carrier sits outside a run, past a hole, already fails loud.
+

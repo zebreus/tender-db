@@ -442,7 +442,17 @@ tender-admin raw DELETE /admin/jobs/41 </dev/null   # the same handler
 # defect), so the walk never follows it: a window whose cursorless page is full is
 # split in two and both halves asked, down to two seconds (a one-second window is a
 # 400). A 2021 month is ~80 paced requests, a 2026 month ~400. A span still full at
-# two seconds fails the job as `malformed` with staging intact. A throttled month
+# two seconds is DENSE (issue 477 unit 1b): when its page holds ONE notice, the notice
+# is completed from `/ocdsRecordPackages/{ocid}` over its run of consecutive ocids
+# (about run length + 6 extra paced requests: 21 for 2023-11-14's 15-ocid notice), and
+# the job row reads `<Outcome> · N dense span(s) completed: M ocid(s), R record
+# request(s)` (the daily probe's row ends the same way). It still fails as `malformed`
+# with staging intact on a page of several notice ids, a run past 500 ocids, a hole in
+# a run, another notice dated inside the span, or a record that contradicts the page.
+# A staged record (`fts/<kind>/<period>.pages/<span>-r<ocid>.json`) is never asked
+# again, so a failure the error names as "staged as …" repeats on every re-enqueue
+# without a request: once the cause is understood, delete that file and re-enqueue.
+# A throttled month
 # FAILS and keeps its staged span pages under fts/monthly/<YYYY-MM>.pages/, so
 # re-enqueueing it resumes, it does not restart. Read job_log for `throttled` errors
 # and re-enqueue those months. A running FTS fetch can be cancelled (issue 450): the

@@ -63,7 +63,8 @@ pub enum Error {
     /// without a `releases` array — or (issue 477) an FTS span still full at
     /// two seconds, the shortest window the API answers, whose notices the
     /// dense-span walk cannot account for by records (several notice ids on
-    /// the page, a record that contradicts the listing, a run past
+    /// the page, a record that contradicts the listing, a hole in a run,
+    /// another notice dated inside the span, a run past
     /// [`crate::fts::DENSE_RUN_CAP`]). Not retried — the bytes are what they
     /// are — and the job fails with its staging intact for a person to look at.
     Malformed(String),
@@ -297,8 +298,9 @@ pub async fn latest_doe_day(db: &store::Db) -> turso::Result<Option<(u16, u8, u8
     Ok(latest.as_deref().and_then(parse_ymd))
 }
 
-/// What [`fetch_fts`] reports after every span page and every dense span's
-/// record it reads (asked, or staged by an earlier run).
+/// What [`fetch_fts`] reports after every span page, and after every record
+/// or release package a dense span's walk reads (asked, or a record staged by
+/// an earlier run).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FtsProgress<'a> {
     /// The window's UK civil day, `YYYY-MM-DD`.
@@ -307,11 +309,56 @@ pub struct FtsProgress<'a> {
     pub pages: usize,
     /// Releases on this window's leaf pages.
     pub releases: usize,
-    /// Dense spans met so far in the whole fetch, the one being walked
-    /// included (issue 477 unit 1b): rare, and worth seeing on the job.
-    pub dense_spans: usize,
-    /// Records read so far for them, in the whole fetch.
-    pub records: usize,
+    /// The dense spans of the whole fetch so far (issue 477 unit 1b).
+    pub dense: DenseTally,
+}
+
+/// What one fetch's dense-span walks did (issue 477 unit 1b): rare, and worth
+/// seeing on the job row — of the backfill's fetch and of the daily probe.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct DenseTally {
+    /// Dense spans met, the one being walked included.
+    pub spans: usize,
+    /// The ocids their notices were completed over — each run's length,
+    /// counted when its walk ends (`033562-2023`: 15).
+    pub ocids: usize,
+    /// Record and release-package requests ASKED for them: 404s and the
+    /// ocids past a run's ends included, a record read back from staging not.
+    pub requests: usize,
+}
+
+impl std::ops::Add for DenseTally {
+    type Output = Self;
+    fn add(self, other: Self) -> Self {
+        Self {
+            spans: self.spans + other.spans,
+            ocids: self.ocids + other.ocids,
+            requests: self.requests + other.requests,
+        }
+    }
+}
+
+impl DenseTally {
+    /// The job row's suffix: nothing without a dense span, else
+    /// ` · 1 dense span(s) completed: 15 ocid(s), 21 record request(s)`.
+    pub fn row_suffix(&self) -> String {
+        if self.spans == 0 {
+            return String::new();
+        }
+        format!(
+            " · {} dense span(s) completed: {} ocid(s), {} record request(s)",
+            self.spans, self.ocids, self.requests
+        )
+    }
+
+    /// The progress line's: nothing without a dense span, else
+    /// `, 1 dense span(s), 9 record request(s)`.
+    pub fn progress_suffix(&self) -> String {
+        if self.spans == 0 {
+            return String::new();
+        }
+        format!(", {} dense span(s), {} record request(s)", self.spans, self.requests)
+    }
 }
 
 /// Fetch one FTS package (docs/research/uk-fts.md §2, plan D8, issue 477):
@@ -426,7 +473,7 @@ pub async fn fetch_fts(
     discard_unresumable_staging(&staging, existing.as_ref())?;
     std::fs::create_dir_all(&staging)?;
     let mut leaves: Vec<PathBuf> = Vec::new();
-    let (mut dense_spans, mut records) = (0usize, 0usize);
+    let mut dense = DenseTally::default();
     for window in &windows {
         let day = crate::fts::ymd(window.day);
         let (mut pages, mut releases) = (0usize, 0usize);
@@ -481,26 +528,28 @@ pub async fn fetch_fts(
             } else {
                 // Dense: nothing narrower can be asked. Boxed, so the run's
                 // walk sits on the heap only for the rare span that needs it.
-                let progress = &mut |read: usize| {
-                    on_progress(&FtsProgress { day: &day, pages, releases, dense_spans: dense_spans + 1, records: records + read })
+                let progress = &mut |asked: usize| {
+                    let walking = DenseTally { spans: dense.spans + 1, requests: dense.requests + asked, ..dense };
+                    on_progress(&FtsProgress { day: &day, pages, releases, dense: walking })
                 };
                 let walk = Box::pin(walk_dense_span(client, base, &staging, span, &path, page_pause, &stop, progress));
                 let Some(run) = walk.await? else { return Ok(Outcome::Stopped) };
+                let ocids = run.first.run_len(&run.last) as usize;
                 eprintln!(
-                    "[fetch] {url}: dense span ({count} rows of {}): its page and {} record(s) of ocids {}..={} \
-                     are its leaves (issue 477)",
+                    "[fetch] {url}: dense span ({count} rows of {}): its page and {} record(s) of its {ocids} \
+                     ocids {}..={} are its leaves, {} request(s) asked (issue 477)",
                     run.notice,
                     run.leaves.len(),
                     run.first,
-                    run.last
+                    run.last,
+                    run.requests
                 );
-                dense_spans += 1;
-                records += run.records;
+                dense = dense + DenseTally { spans: 1, ocids, requests: run.requests };
                 releases += count;
                 leaves.push(path);
                 leaves.extend(run.leaves);
             }
-            on_progress(&FtsProgress { day: &day, pages, releases, dense_spans, records });
+            on_progress(&FtsProgress { day: &day, pages, releases, dense });
         }
     }
 
@@ -522,19 +571,9 @@ struct DenseRun {
     /// The staged records that carry the notice: leaves beside the span's
     /// own page.
     leaves: Vec<PathBuf>,
-    /// Records read, member or not.
-    records: usize,
-}
-
-impl DenseRun {
-    /// Count one record read, and keep it as a leaf if it carries the notice.
-    fn note(&mut self, read: &RecordRead, on_record: &mut impl FnMut(usize)) {
-        if matches!(read.says, Some(crate::fts::RecordSays::Carries(_))) {
-            self.leaves.push(read.path.clone());
-        }
-        self.records += 1;
-        on_record(self.records);
-    }
+    /// Record and release-package requests asked (a staged record read back
+    /// is not one).
+    requests: usize,
 }
 
 /// One ocid's record as a dense span's walk read it.
@@ -545,37 +584,62 @@ struct RecordRead {
     path: PathBuf,
 }
 
+/// What an ocid's release package says ([`RecordAsker::package`]).
+enum PackageSays {
+    /// A 404.
+    Absent,
+    /// Its releases sorted as a record's are, and whether the page is the
+    /// ocid's whole package.
+    Holds(crate::fts::RecordSays, bool),
+}
+
+/// Whose an ocid OUTSIDE the page's run is, as far as the walk can tell
+/// ([`RecordAsker::whose`]).
+enum Whose {
+    /// The notice's: its record carries it, staged here.
+    Notice(PathBuf),
+    /// Another notice's, never the span's.
+    Other(Vec<crate::fts::Elsewhere>),
+    /// Nobody's: a 404 (confirmed by its release package when asked to be).
+    Absent,
+}
+
 /// What every record request of one dense span shares.
 struct RecordAsker<'a> {
     client: &'a reqwest::Client,
     base: &'a str,
     staging: &'a Path,
     span: crate::fts::Span,
+    notice: &'a str,
     ids: &'a std::collections::BTreeSet<String>,
     nesting: Option<usize>,
     page_pause: std::time::Duration,
+    /// Requests asked so far, records and release packages.
+    requests: usize,
 }
 
 impl RecordAsker<'_> {
     /// `ocid`'s record: read from staging, or asked — paced, behind the stop
     /// checkpoint, exactly like a span page — and staged once it has parsed.
-    /// A 404 and an empty body stage nothing, so a re-run asks them again.
-    /// `Ok(None)`: stopped before the request.
-    async fn read(&self, ocid: &crate::fts::Ocid, stop: &impl Fn() -> bool) -> Result<Option<RecordRead>, Error> {
+    /// A 404 and a record holding no release stage nothing, so a re-run asks
+    /// them again. `Ok(None)`: stopped before the request.
+    async fn read(&mut self, ocid: &crate::fts::Ocid, stop: &impl Fn() -> bool) -> Result<Option<RecordRead>, Error> {
         use crate::fts::RecordSays;
         let path = self.staging.join(format!("{}.json", crate::fts::record_key(self.span, ocid)));
         let url = crate::fts::record_url(self.base, ocid);
+        let (ids, nesting) = (self.ids, self.nesting);
         let says_of = |bytes: &[u8]| {
-            crate::fts::record_releases(bytes, ocid, self.ids, self.nesting)
+            crate::fts::record_releases(bytes, ocid, ids, nesting)
                 .map_err(|what| Error::Malformed(format!("{url}: a dense span's record (issue 477): {what}")))
         };
         match std::fs::read(&path) {
             Ok(bytes) => match says_of(&bytes) {
-                Ok(says @ (RecordSays::Carries(_) | RecordSays::Other)) => {
+                Ok(says @ (RecordSays::Carries(_) | RecordSays::Other(_))) => {
                     return Ok(Some(RecordRead { says: Some(says), path }));
                 }
-                // Only a parsed package is staged: anything else on disk is
-                // storage damage, discarded and asked again (as a page is).
+                // Only a record that names a notice is staged: anything else
+                // on disk is storage damage (or a release-less record an
+                // earlier build staged), discarded and asked again.
                 Ok(RecordSays::Empty) | Err(_) => {
                     eprintln!("[fetch] {}: staged record unreadable; asking it again", path.display());
                     std::fs::remove_file(&path)?;
@@ -584,13 +648,7 @@ impl RecordAsker<'_> {
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
             Err(e) => return Err(e.into()),
         }
-        pace_fts(self.page_pause).await;
-        // The stop checkpoint, as before every span page (issue 450).
-        if stop() {
-            return Ok(None);
-        }
-        let asked = get_bytes(self.client, &url).await;
-        mark_fts_request();
+        let Some(asked) = self.ask(&url, stop).await else { return Ok(None) };
         let bytes = match asked {
             Ok(bytes) => bytes,
             Err(Error::Status(reqwest::StatusCode::NOT_FOUND)) => return Ok(Some(RecordRead { says: None, path })),
@@ -602,12 +660,82 @@ impl RecordAsker<'_> {
         }
         Ok(Some(RecordRead { says: Some(says), path }))
     }
+
+    /// `ocid`'s release package ([`crate::fts::release_package_url`]), asked
+    /// like a record and never staged: it only decides what a record left
+    /// open, and no member is built from it. `Ok(None)`: stopped.
+    async fn package(&mut self, ocid: &crate::fts::Ocid, stop: &impl Fn() -> bool) -> Result<Option<PackageSays>, Error> {
+        let url = crate::fts::release_package_url(self.base, ocid);
+        let Some(asked) = self.ask(&url, stop).await else { return Ok(None) };
+        let bytes = match asked {
+            Ok(bytes) => bytes,
+            Err(Error::Status(reqwest::StatusCode::NOT_FOUND)) => return Ok(Some(PackageSays::Absent)),
+            Err(e) => return Err(e),
+        };
+        let (says, whole) = crate::fts::package_releases(&bytes, ocid, self.ids, self.nesting)
+            .map_err(|what| Error::Malformed(format!("{url}: a dense span's release package (issue 477): {what}")))?;
+        Ok(Some(PackageSays::Holds(says, whole)))
+    }
+
+    /// One paced request behind the stop checkpoint (issue 450), counted.
+    async fn ask(&mut self, url: &str, stop: &impl Fn() -> bool) -> Option<Result<Vec<u8>, Error>> {
+        pace_fts(self.page_pause).await;
+        if stop() {
+            return None;
+        }
+        let asked = get_bytes(self.client, url).await;
+        mark_fts_request();
+        self.requests += 1;
+        Some(asked)
+    }
+
+    /// Whose `ocid`, outside the page's run, is. Its record decides when it
+    /// names a notice. A record that holds no release says nothing, so its
+    /// release package decides; and with `confirm`, so it does for a 404 —
+    /// the record endpoint has served nothing for a real ocid (`04196f`), so
+    /// a 404 ends a side only when the release package is a 404 too. A
+    /// release package that carries the notice fails loud: the notice has an
+    /// ocid whose record cannot supply its release.
+    async fn whose(
+        &mut self,
+        ocid: &crate::fts::Ocid,
+        stop: &impl Fn() -> bool,
+        confirm: bool,
+    ) -> Result<Option<Whose>, Error> {
+        use crate::fts::RecordSays;
+        let Some(read) = self.read(ocid, stop).await? else { return Ok(None) };
+        let said = match read.says {
+            Some(RecordSays::Carries(_)) => return Ok(Some(Whose::Notice(read.path))),
+            Some(RecordSays::Other(elsewhere)) => return Ok(Some(Whose::Other(elsewhere))),
+            None if !confirm => return Ok(Some(Whose::Absent)),
+            None => "is a 404",
+            Some(RecordSays::Empty) => "holds no release",
+        };
+        let url = crate::fts::release_package_url(self.base, ocid);
+        let malformed = |what: String| {
+            Error::Malformed(format!("{url}: a dense span (issue 477): the record of {ocid} {said}, but {what}"))
+        };
+        Ok(Some(match self.package(ocid, stop).await? {
+            None => return Ok(None),
+            Some(PackageSays::Absent | PackageSays::Holds(RecordSays::Empty, true)) => Whose::Absent,
+            Some(PackageSays::Holds(RecordSays::Other(elsewhere), true)) => Whose::Other(elsewhere),
+            Some(PackageSays::Holds(RecordSays::Carries(_), _)) => {
+                return Err(malformed(format!(
+                    "its release package carries {}: one of the notice's ocids has no record to complete it from",
+                    self.notice
+                )));
+            }
+            Some(PackageSays::Holds(_, false)) => {
+                return Err(malformed("its release package is not whole (it names a next page)".into()));
+            }
+        }))
+    }
 }
 
 /// Complete a DENSE span — still full at two seconds, so nothing narrower can
 /// be asked — from process records (issue 477 unit 1b). `page` is the span's
 /// staged cursorless page, a leaf already. `Ok(None)` when a stop landed
-/// between two requests.
+/// between two requests. `on_request` hears the running count of requests.
 ///
 /// **Why records, and never the cursor.** 2023-11-14 10:05:14–15 lists 210
 /// rows of ONE notice, `033562-2023`: its 15 ocids' release, 14 times each.
@@ -622,14 +750,22 @@ impl RecordAsker<'_> {
 ///    unsplittable span did before this walk.
 /// 2. **The run.** Its seeds are the page's distinct ocids, one series
 ///    ([`crate::fts::Ocid`]). Every ocid from the first seed to the last is
-///    asked, and must carry the notice; an empty body passes only for a seed,
-///    whose release the page holds (`04196f` is a 200 with no body). The run
-///    then extends one ocid at a time below and above: a record carrying the
-///    notice joins it; a 404 or a record of other notices only ends that side
-///    (`04196e` is 404, `04197e` is `033564-2023`); an empty body there fails,
-///    since it could be the notice's. Past [`crate::fts::DENSE_RUN_CAP`]
-///    ocids it fails.
-/// 3. **The leaves.** Each record carrying the notice is staged as
+///    asked, and must carry the notice. A seed's record that holds no
+///    release (`04196f`'s is a 200 with no body) passes only when the seed's
+///    release package holds the page's release of it byte for byte and no
+///    other release of the notice; an ocid off the page fails on it.
+/// 3. **The ends.** The run then extends one ocid at a time below and above
+///    ([`RecordAsker::whose`]): an ocid whose record carries the notice joins
+///    it. One of another notice ends that side (`04197e` is `033564-2023`) —
+///    unless that notice is dated inside the span, which only a notice the
+///    page's rows hide could be: that fails. A 404 ends it only once the
+///    ocid's release package is a 404 too (`04196e`), and only when the
+///    [`crate::fts::DENSE_LOOKAHEAD`] ocids past it do not carry the notice:
+///    the series has holes (`04196c`..`04196e`), and a hole inside a run
+///    fails rather than dropping every ocid past it. A record holding no
+///    release is decided by its release package the same way. Past
+///    [`crate::fts::DENSE_RUN_CAP`] ocids the run fails.
+/// 4. **The leaves.** Each record carrying the notice is staged as
 ///    `<span key>-r<ocid>.json` ([`crate::fts::record_key`]) and is a leaf:
 ///    the assembler takes its releases of the notice, re-nested to the
 ///    page's depth and verified ([`crate::fts::record_releases`]), so a
@@ -642,12 +778,22 @@ impl RecordAsker<'_> {
 /// ocids the page does not show: without them neither the empty-body rule nor
 /// the live byte check could happen, and a second release of the notice under
 /// a seed ocid, hidden below the page, would be lost. The cost is one request
-/// per seed (8 on 2023-11-14).
+/// per seed (8 on 2023-11-14), plus a release package per seed whose record is
+/// empty, per 404 that ends a side, and the look-ahead past it: 21 requests on
+/// 2023-11-14 where the decision's walk asked 10.
 ///
-/// What a page of one notice cannot rule out is a DIFFERENT notice, with a
-/// lower id, published in the same two seconds and wholly below the page's
-/// 100 rows. No request reaches it; the per-year id invariant (issue 477 unit
-/// 3) is what sees it, as an id that is missing.
+/// **What the walk cannot see** (issue 477's "Still open"):
+/// - a DIFFERENT notice, with a lower id, published in the same two seconds,
+///   wholly below the page's 100 rows and on no ocid next to the run (dated
+///   in the span, next to it, it fails). The per-year id invariant (issue 477
+///   unit 3) sees it, as an id that is missing. A window offset by one second
+///   (`[from − 1, from]`, `[to, to + 1]`) is askable and would narrow this to
+///   the fan-out's own second; the walk does not ask it yet.
+/// - a second release of the SAME notice on an ocid that is not next to the
+///   run (a far process, as `038018-2025`'s two releases are), in the page's
+///   hidden rows. Unit 3 does NOT see it — the id is held — and no request
+///   lists a notice's ocids: `GET /ocdsReleasePackages/{notice id}` serves the
+///   same capped, stuck page as the span.
 #[allow(clippy::too_many_arguments)]
 async fn walk_dense_span(
     client: &reqwest::Client,
@@ -657,7 +803,7 @@ async fn walk_dense_span(
     page: &Path,
     page_pause: std::time::Duration,
     stop: impl Fn() -> bool,
-    mut on_record: impl FnMut(usize),
+    mut on_request: impl FnMut(usize),
 ) -> Result<Option<DenseRun>, Error> {
     use crate::fts::{Ocid, RecordSays};
     let url = crate::fts::span_url(base, span);
@@ -673,7 +819,7 @@ async fn walk_dense_span(
         _ => {
             return Err(malformed(format!(
                 "{} releases of {} notice ids ({}{}), and the API refuses a one-second window: a \
-                 notice below the page's rows cannot be reached by records, so the span cannot be \
+                 notice below the page's rows is named by no record, so the span cannot be \
                  completed",
                 releases.len(),
                 ids.len(),
@@ -708,68 +854,162 @@ async fn walk_dense_span(
             crate::fts::DENSE_RUN_CAP
         )));
     }
+    // A staged record that contradicts the page is never asked again: name it,
+    // so a person can remove it and re-enqueue (docs/operations.md).
+    let staged = |path: &Path| format!("staged as {}; remove it to have it asked again", path.display());
+    // Another notice dated inside the span can only be one the page hides.
+    let in_span = |at: &Ocid, elsewhere: &[crate::fts::Elsewhere]| -> Result<(), Error> {
+        let inside = |date: &str| crate::fts::uk_wall_of(date).is_some_and(|w| span.from <= w && w <= span.to);
+        match elsewhere.iter().find(|e| e.date.as_deref().is_some_and(inside)) {
+            Some(hidden) => Err(malformed(format!(
+                "{at} holds another notice, {}, dated {} — inside the span: a notice the page's rows hide, \
+                 which no record of {notice}'s run accounts for",
+                hidden.id,
+                hidden.date.as_deref().unwrap_or_default()
+            ))),
+            None => Ok(()),
+        }
+    };
 
-    let asker = RecordAsker { client, base, staging, span, ids: &ids, nesting, page_pause };
-    let mut run = DenseRun { notice: notice.clone(), first: first.clone(), last: last.clone(), leaves: Vec::new(), records: 0 };
+    let mut asker = RecordAsker {
+        client,
+        base,
+        staging,
+        span,
+        notice: &notice,
+        ids: &ids,
+        nesting,
+        page_pause,
+        requests: 0,
+    };
+    let mut leaves: Vec<PathBuf> = Vec::new();
     // Every ocid from the first seed to the last carries the notice.
     let mut next = Some(first.clone());
     while let Some(at) = next.filter(|o| *o <= last) {
         let Some(read) = asker.read(&at, &stop).await? else { return Ok(None) };
-        run.note(&read, &mut on_record);
+        on_request(asker.requests);
         let on_page = seeds.get(&at);
-        match (&read.says, on_page) {
+        match (read.says, on_page) {
             (Some(RecordSays::Carries(carried)), Some(held)) => {
                 // The live byte check: the record re-nested IS the listing.
                 if let Some(missing) = held.iter().find(|raw| !carried.iter().any(|c| c.get() == **raw)) {
                     return Err(malformed(format!(
                         "the record of {at} does not hold the page's release of it byte for byte after \
                          re-nesting ({} bytes on the page), so a member built from a record would not \
-                         match one built from the listing",
+                         match one built from the listing ({})",
+                        missing.len(),
+                        staged(&read.path)
+                    )));
+                }
+                leaves.push(read.path);
+            }
+            (Some(RecordSays::Carries(_)), None) => leaves.push(read.path),
+            (Some(RecordSays::Empty), Some(held)) => {
+                // The page holds this seed's release, but the record cannot
+                // say whether the notice has another under it: the seed's
+                // release package does (`04196f`'s: 23 releases, 14 copies of
+                // the page's one, 9 later notices).
+                let Some(package) = asker.package(&at, &stop).await? else { return Ok(None) };
+                on_request(asker.requests);
+                let carried = match package {
+                    PackageSays::Holds(RecordSays::Carries(carried), true) => carried,
+                    PackageSays::Holds(_, false) => {
+                        return Err(malformed(format!(
+                            "the record of {at}, an ocid the page serves, holds no release, and its release \
+                             package is not whole (it names a next page), so it cannot vouch for the page"
+                        )));
+                    }
+                    _ => {
+                        return Err(malformed(format!(
+                            "the record of {at}, an ocid the page serves, holds no release, and its release \
+                             package does not carry {notice}"
+                        )));
+                    }
+                };
+                if let Some(missing) = held.iter().find(|raw| !carried.iter().any(|c| c.get() == **raw)) {
+                    return Err(malformed(format!(
+                        "the release package of {at} does not hold the page's release of it byte for byte \
+                         ({} bytes on the page)",
                         missing.len()
                     )));
                 }
+                if carried.iter().any(|c| !held.contains(&c.get())) {
+                    return Err(malformed(format!(
+                        "the release package of {at} holds a release of {notice} the page does not show, \
+                         and its record (which holds no release) cannot supply it"
+                    )));
+                }
             }
-            (Some(RecordSays::Carries(_)), None) | (Some(RecordSays::Empty), Some(_)) => {}
             (Some(RecordSays::Empty), None) => {
-                return Err(malformed(format!("the record of {at}, inside the run and off the page, is an empty body")));
+                return Err(malformed(format!(
+                    "the record of {at}, inside the run and off the page, holds no release"
+                )));
             }
-            (None | Some(RecordSays::Other), _) => {
+            (Some(RecordSays::Other(_)), _) => {
                 let whose = if on_page.is_some() { "an ocid the page serves" } else { "an ocid inside the run" };
-                return Err(malformed(format!("the record of {at}, {whose}, does not carry {notice}")));
+                return Err(malformed(format!(
+                    "the record of {at}, {whose}, does not carry {notice} ({})",
+                    staged(&read.path)
+                )));
+            }
+            (None, _) => {
+                let whose = if on_page.is_some() { "an ocid the page serves" } else { "an ocid inside the run" };
+                return Err(malformed(format!("the record of {at}, {whose}, is a 404")));
             }
         }
         next = at.step(1);
     }
-    // Then outward, one ocid at a time, until each side ends.
+    // 3. Then outward, one ocid at a time, until each side ends.
+    let (mut run_first, mut run_last) = (first.clone(), last.clone());
     for dir in [-1i64, 1] {
         let mut next = if dir < 0 { first.step(-1) } else { last.step(1) };
         while let Some(at) = next {
-            let Some(read) = asker.read(&at, &stop).await? else { return Ok(None) };
-            run.note(&read, &mut on_record);
-            match read.says {
-                Some(RecordSays::Carries(_)) => {}
-                None | Some(RecordSays::Other) => break,
-                Some(RecordSays::Empty) => {
-                    return Err(malformed(format!(
-                        "the record of {at}, next to the run and off the page, is an empty body: it \
-                         could be one of {notice}'s ocids"
-                    )));
+            let Some(whose) = asker.whose(&at, &stop, true).await? else { return Ok(None) };
+            on_request(asker.requests);
+            match whose {
+                Whose::Notice(path) => leaves.push(path),
+                Whose::Other(elsewhere) => {
+                    in_span(&at, &elsewhere)?;
+                    break;
+                }
+                Whose::Absent => {
+                    // A hole is no end: the ocids just past it must not carry
+                    // the notice either.
+                    for k in 1..=crate::fts::DENSE_LOOKAHEAD {
+                        let Some(beyond) = at.step(dir * k) else { break };
+                        let Some(whose) = asker.whose(&beyond, &stop, false).await? else { return Ok(None) };
+                        on_request(asker.requests);
+                        match whose {
+                            Whose::Notice(path) => {
+                                return Err(malformed(format!(
+                                    "{at} is absent (a 404), but {beyond}, {k} past it, carries {notice}: a \
+                                     hole in its run, which the walk does not bridge ({})",
+                                    staged(&path)
+                                )));
+                            }
+                            Whose::Other(elsewhere) => {
+                                in_span(&beyond, &elsewhere)?;
+                                break;
+                            }
+                            Whose::Absent => {}
+                        }
+                    }
+                    break;
                 }
             }
-            if dir < 0 { run.first = at.clone() } else { run.last = at.clone() }
-            if run.first.run_len(&run.last) > crate::fts::DENSE_RUN_CAP as u64 {
+            if dir < 0 { run_first = at.clone() } else { run_last = at.clone() }
+            if run_first.run_len(&run_last) > crate::fts::DENSE_RUN_CAP as u64 {
                 return Err(malformed(format!(
-                    "{notice}'s run {}..={} grew past the cap of {} ocids",
-                    run.first,
-                    run.last,
+                    "{notice}'s run {run_first}..={run_last} grew past the cap of {} ocids",
                     crate::fts::DENSE_RUN_CAP
                 )));
             }
             next = at.step(dir);
         }
     }
-    run.leaves.sort();
-    Ok(Some(run))
+    leaves.sort();
+    let requests = asker.requests;
+    Ok(Some(DenseRun { notice, first: run_first, last: run_last, leaves, requests }))
 }
 
 /// Walk FTS daily windows forward over every day from [`fts_probe_floor`]
@@ -794,6 +1034,12 @@ async fn walk_dense_span(
 /// [`fetch_fts`]): a stopped day ends the walk as its last entry,
 /// [`Outcome::Stopped`], with its staged pages kept; the days before it have
 /// landed, and the next run resumes the stopped day where it stopped.
+///
+/// `on_progress` hears every day's [`FtsProgress`] as [`fetch_fts`] reports
+/// it — its `day` is the period walked — so a dense span the probe meets
+/// (issue 477 unit 1b, up to [`crate::fts::DENSE_RUN_CAP`] paced record
+/// requests) is visible while it runs and countable on the job row. Its
+/// [`DenseTally`] counts that day's fetch only.
 #[allow(clippy::too_many_arguments)]
 pub async fn probe_fts_daily(
     db: &store::Db,
@@ -803,7 +1049,7 @@ pub async fn probe_fts_daily(
     end: (u16, u8, u8),
     page_pause: std::time::Duration,
     stop: impl Fn() -> bool,
-    mut on_day: impl FnMut(&str, &Outcome),
+    mut on_progress: impl FnMut(&FtsProgress),
 ) -> Result<Vec<(String, Outcome)>, Error> {
     let floor = fts_probe_floor(db, end).await?;
     let held: std::collections::HashSet<String> = if floor <= end {
@@ -835,8 +1081,7 @@ pub async fn probe_fts_daily(
             break;
         }
         let target = crate::fts::day(base, day);
-        let outcome = fetch_fts(db, client, archive_root, &target, false, page_pause, &stop, |_| {}).await?;
-        on_day(&target.period, &outcome);
+        let outcome = fetch_fts(db, client, archive_root, &target, false, page_pause, &stop, &mut on_progress).await?;
         let stopped = outcome == Outcome::Stopped;
         out.push((target.period.clone(), outcome));
         if stopped {
