@@ -507,3 +507,54 @@ removed before commit.
 - The TAR-style generic 3-word head.
 - Hubs (group PINs, qualification systems) are refused here only because their buyer differs. A DB InfraGO PIN
   cited by DB InfraGO procedures would still weld them; same-Source previous-notice references have no fan-in guard.
+
+## Unit 2c review: generic kinds of body, agency names, country-less buyers — LANDED 2026-10-02 (not yet deployed)
+
+An adversarial review of 4e0166e read bounded `organizations.name_norm` range seeks on prod (scratchpad
+`rev2c/*.json`) and found the 2c widening joining whole classes of separate bodies. Verified against the code and the
+saved reads; dispositions:
+
+- **Fixed (major): a head shared by a kind of body.** `CENTRE HOSPITALIER UNIVERSITAIRE (CHU) DE BORDEAUX / … DE
+  CAEN`, `AZIENDA SANITARIA LOCALE (ASL) NAPOLI 1 / - VITERBO`, `(ARPA)`, `(CCAS)`, `(OPH)`, the CUCs and SUAs all cut
+  to a 3-word type name, which was a FULL head shared by every body of the type. Now (a) a parenthesis the name
+  goes on after is a gloss, dropped, and the head read on (`centre hospitalier universitaire de bordeaux`); (b) a
+  `/` after a one-letter word (`c/o`) is no separator; (c) a measured stoplist of kinds of body
+  (`GENERIC_BODY_NAMES`, also matched with the kind's initials appended, `… chu`) gives no head, principal or
+  prefix token. The Camaiore-for-Altopascio / for-Camaiore CUC pair is now apart.
+- **Fixed (major): a bare generic name met by every sibling's prefix.** Prefixes equal to a kind of body are
+  skipped (`Zarząd Dróg Wojewódzkich` of `… w Krakowie`), and a one-word prefix now stands only as the name's
+  one-word head (`ARPAS` of `ARPAS - …`, `MINARM` of `MINARM/…`; not `Stadt` of `Stadt Köln`, `Mairie` of `Mairie
+  de Pau`). The bare whole name keeps its 2b FULL token, which only another bare name meets.
+- **Fixed (major, partly): agency phrases.** Added `namen` (typo), `tbv` / `t.b.v.` / `ten behoeve van`, `in opdracht
+  van`, `iov` / `I.O.V.`, `en representación de/del`, `por cuenta de/del`, `per conto dell/delle/degli` and bare
+  `per conto`, `ente delegato dal/dalla`, `reprezentująca`, `på vegne af/av`, `på uppdrag av`. **Deferred:** the
+  principal-before forms (`vertreten durch`, `mandataire`, `vertegenwoordigd door`): the one sampled is the
+  ÖBB-Holding qualification system (bd15), a hub the guard refuses only because the buyer differs, so reading its
+  principal would weaken a hub refusal before a fan-in guard exists. **Refuted:** `na rzecz` (PL) — mostly the name
+  of a foundation or association (`Fundacja na rzecz …`), not an agency; `c/o` — the host municipality, not the
+  principal.
+- **Fixed (minor): agent prefixes.** An agency name (`<agent> namens <principal>`) emits no prefixes of its own
+  name: `Onderwijs Inkoop Groep` and `DASmakkelijk` are published bare beside 80+ / 40+ `… namens <school>` orgs.
+  The 2c fixture "the agency's own notice" (asserted overlapping) is now an apart fixture.
+- **Fixed (minor, partly): VAT prefix in rule 2.** A leading VAT prefix of the buyer's own register (`ES`, `EL` for
+  `GR`) is dropped (`ESQ2769003A` meets `Q2769003A`). **Deferred:** register labels (`FN`) and the hub fan-in limit:
+  normalising `FN71396w` would weld the ÖBB-Holding hub (bd15), whose refusal stays accidental until same-Source
+  previous-notice references get a fan-in guard.
+- **Deferred (minor): the CPB-files-the-CAN shape** (legacy `purchasing-body`, eForms serv-prov). Measure first
+  whether legacy `PURCHASING_ON_BEHALF_YES` sections name the principals.
+- **Fixed (minor): country-less mentions.** A mention with no country gets the 2b tokens only (whole names,
+  identifier key): no raw-identifier, head, prefix, principal or acronym tokens. Legacy rows carry `mairie`, CHU,
+  SPZOZ country-less by the hundred. Falling back to the notice's own country is deferred (needs plumbing).
+
+**Tests.** `the_census_samples_one_buyer_overlaps_and_the_false_merges_stay_apart`: all 14 sample-legit fixtures
+still overlap; 5 more one-buyer spellings (agency `namen` and `I.O.V.`, `per conto dell'`, a glossed CHU against
+its plain name, an `ES`-prefixed NIF); 14 more apart fixtures (CHUs glossed and dashed, a CHU against the bare kind,
+ASLs, ARPAs, CCAS, the CUC for two principals, two CUCs `c/o`, two SUAs, a ZDW against the bare kind, `Stadt Köln`
+against `Stadt`, the agency against its own and its bare name). Mutation: the stoplist switched off fails the CHU
+fixture. `a_mention_without_a_country_gets_no_widened_tokens`. The 2c sample verdicts are unchanged (no sample
+legit pair relied on a removed token; the synthetic agency-own-notice fixture was the only one).
+
+**Still open.** A kind of body not on the stoplist and written `<type> - <place>` still shares its head; the list
+is measured from the review's reads, not exhaustive. The plan column is not renamed again: 4e0166e was never
+deployed, so no 2c plan exists on prod.
+

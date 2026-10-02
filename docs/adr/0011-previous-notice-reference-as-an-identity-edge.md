@@ -193,12 +193,20 @@ buyer when any of the following holds (each still within one register jurisdicti
   (`OPT-300-Contract-Signatory`) is on the buyer side. It counts only on a notice that names a buyer.
 - **An agency's principal.** `<agent> namens / im Auftrag von / on behalf of / pour le compte de /
   en nombre de / per conto di / w imieniu <principal>` names the principal too. The agent alone
-  meets only the agency's own notices, never the same agency's notice for another principal.
+  meets nothing (2c review): the agency also publishes under its bare name, so an agent prefix would
+  meet every notice it filed in its own name, and one agency's two notices for two principals
+  never meet.
 - **A name and its whole-word prefix or head.** A name that is a whole-word prefix of the other's
   name (`ARPAS` / `ARPAS - Agenzia Regionale…`) or the other's head, meaning the text before its
   first separator, of three content words or more (`Servicio Andaluz de Salud. Servicios
   Centrales` / `… . Hospital Universitario Virgen de las Nieves`). Two names that only start alike
-  (`Gemeente Utrecht` / `Gemeente Amersfoort`) do not.
+  (`Gemeente Utrecht` / `Gemeente Amersfoort`) do not. Nor does the name of a KIND of body
+  (`Centre hospitalier universitaire`, `Azienda sanitaria locale`, `Centrale unica di committenza`,
+  `Zarząd Dróg Wojewódzkich`, `Stadt`): it is no head and no prefix (2c review), and a parenthesis
+  the name goes on after is a gloss, not a separator (`… (CHU) DE BORDEAUX`). A one-word prefix
+  counts only as the name's one-word head (`ARPAS - …`).
+- **Only within a register.** A mention with no country keeps the whole-name and identifier
+  tokens; it gets none of the widened ones above.
 - **An acronym and its spelled-out name.** `ICS` meets `Institut Català de la Salut`. Two spelled-out
   names with the same initials do not.
 

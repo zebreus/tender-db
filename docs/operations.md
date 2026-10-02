@@ -689,10 +689,12 @@ two notices also overlap on:
   excepted;
 - the **contract signatory** beside the buyers (a ministry signing for its hospital);
 - an **agency's principal** (`… B.V. namens Stichting Prisma` meets `Stichting Prisma`; one agency
-  buying for two schools does not meet itself);
+  buying for two schools does not meet itself, nor the agency's notices in its own name);
 - a name that is a **whole-word prefix** of the other's name or equals its **head**, the text before
   the first separator, of three content words or more (`ARPAS` / `ARPAS - Agenzia…`, two
-  `Servicio Andaluz de Salud. …` units), but never two names that only start alike;
+  `Servicio Andaluz de Salud. …` units), but never two names that only start alike, never the
+  name of a kind of body (`Centre hospitalier universitaire (CHU) de …`, `Azienda sanitaria
+  locale - …`, `Zarząd Dróg Wojewódzkich w …`, `Stadt …`), and never for a buyer with no country;
 - an **acronym** and its spelled-out name (`ICS` / `Institut Català de la Salut`).
 
 Still disjoint, and so refused: one buyer that changed or respelled its name beyond that, with no

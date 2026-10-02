@@ -6096,11 +6096,12 @@ fn buyer_guard_tokens(m: &store::Mention) -> Vec<String> {
 /// - **An agency's principal** (FULL): `<agent> namens|im Auftrag von|on behalf of|pour
 ///   le compte de|en nombre de|per conto di|w imieniu <principal>` also names the
 ///   principal, so `Onderwijs Inkoop Groep B.V. namens Stichting Prisma` meets `Stichting
-///   Prisma` ([`AGENCY_PHRASES`]). The agent is a whole-word prefix of the name, so the
-///   agency's notices in its own name meet it as a prefix — but two of its notices for
-///   two principals do not meet: an agency reusing its templates is where a copied
-///   OPP-090 is likeliest.
-/// - **Whole-word prefixes** (PREFIX): of every name and principal, so a name that is a
+///   Prisma` ([`AGENCY_PHRASES`]). The agent's name gives no prefix (2c review): the
+///   agency also publishes under its bare name, and an agency reusing its templates is
+///   where a copied OPP-090 is likeliest, so neither its own notices nor its notices for
+///   another principal meet it.
+/// - **Whole-word prefixes** (PREFIX): of every name (not an agency's) and principal,
+///   except a kind of body ([`generic_body_name`]), so a name that is a
 ///   whole-word prefix of another — `ARPAS` / `ARPAS - Agenzia Regionale…`, `Kommunaler
 ///   Immobilien Service` (a head) / `Kommunaler Immobilien Service Potsdam (KIS) …`, a
 ///   name the publisher cut short — meets it. A prefix meets only a FULL token
@@ -6118,6 +6119,13 @@ fn buyer_guard_tokens(m: &store::Mention) -> Vec<String> {
 fn buyer_guard_evidence(m: &store::Mention) -> GuardEvidence {
     let jurisdiction = m.country.as_deref().map(store::register_jurisdiction).unwrap_or("");
     let mut out = GuardEvidence::default();
+    // Issue 481 unit 2c review: a mention with no country has no register to scope its
+    // evidence by, and an unscoped widening is a cross-border pool (legacy rows carry
+    // `mairie`, `Centre hospitalier universitaire`, `SPZOZ` country-less by the hundred,
+    // and a raw number is exactly the BG/TED collision shape). It keeps the 2b tokens.
+    if jurisdiction.is_empty() {
+        return out;
+    }
     if let Some(token) = m.raw_identifier.as_deref().and_then(|raw| raw_identifier_token(raw, jurisdiction)) {
         out.full.push(token);
     }
@@ -6129,19 +6137,29 @@ fn buyer_guard_evidence(m: &store::Mention) -> GuardEvidence {
         }
         let words = merge_initials(&folded);
         out.full.push(name_token(&words));
-        push_guard_prefixes(&words, jurisdiction, &mut out.prefixes);
+        let head = guard_name_head(name).map(|head| merge_initials(&guard_name_words(&head)));
+        let principal = agency_principal(&folded);
+        // An agency's own name is no evidence for its principal's notices: the agency
+        // also publishes under its bare name (`Onderwijs Inkoop Groep`, `DASmakkelijk`
+        // beside 80 and 40 `… namens <school>` organizations), so its name's prefixes
+        // would meet every notice it filed in its own name, whatever the procedure.
+        if principal.is_none() {
+            push_guard_prefixes(&words, head.as_deref(), jurisdiction, &mut out.prefixes);
+        }
         push_guard_acronym(&words, jurisdiction, &mut out);
-        if let Some(head) = guard_name_head(name) {
-            let head = merge_initials(&guard_name_words(head));
-            if content_words(&head) >= GUARD_HEAD_MIN_WORDS && head != words {
+        if let Some(head) = head {
+            if content_words(&head) >= GUARD_HEAD_MIN_WORDS && head != words && !generic_body_name(&head) {
                 out.full.push(name_token(&head));
             }
             push_guard_acronym(&head, jurisdiction, &mut out);
         }
-        if let Some(principal) = agency_principal(&folded) {
+        if let Some(principal) = principal {
             let principal = merge_initials(principal);
-            out.full.push(name_token(&principal));
-            push_guard_prefixes(&principal, jurisdiction, &mut out.prefixes);
+            if !generic_body_name(&principal) {
+                out.full.push(name_token(&principal));
+            }
+            // Folded words keep no separator, so the principal has no one-word head.
+            push_guard_prefixes(&principal, None, jurisdiction, &mut out.prefixes);
         }
     }
     out
@@ -6203,21 +6221,123 @@ const GUARD_HEAD_MIN_WORDS: usize = 3;
 /// `Kommunaler Immobilien Service (KIS) - Eigenbetrieb der Landeshauptstadt Potsdam`,
 /// `Servicio Gallego de Salud - Área Sanitaria de Lugo, A Mariña y Monforte de Lemos`,
 /// `DB InfraGO AG – Geschäftsbereich Fahrweg (Bukr 16)`.
-fn guard_name_head(name: &str) -> Option<&str> {
-    let mut cut = name.len();
-    for separator in [" - ", " \u{2013} ", " \u{2014} ", "(", ",", ";", ":", "/", "|"] {
-        if let Some(at) = name.find(separator) {
-            cut = cut.min(at);
+///
+/// Issue 481 unit 2c review: a parenthesis the name goes on after is a gloss INSIDE the
+/// name, not a separator — `CENTRE HOSPITALIER UNIVERSITAIRE (CHU) DE BORDEAUX`,
+/// `AZIENDA SANITARIA LOCALE (ASL) NAPOLI 1`, `Centrale Unica di Committenza (C.U.C.)
+/// Monti Dauni`: cut at the `(`, every body of the type would share the type as its
+/// head. Such a gloss is dropped and the head read on (`Centre hospitalier
+/// universitaire de Bordeaux`). Only a parenthesis that ends the name or is followed by
+/// a separator cuts. A slash after a one-letter word is an abbreviation (`c/o`), not a
+/// separator.
+fn guard_name_head(name: &str) -> Option<String> {
+    let mut text = name.to_owned();
+    let mut glossed = false;
+    loop {
+        let mut cut = text.len();
+        for separator in [" - ", " \u{2013} ", " \u{2014} ", "(", ",", ";", ":", "|"] {
+            if let Some(at) = text.find(separator) {
+                cut = cut.min(at);
+            }
         }
-    }
-    for (at, _) in name.match_indices(". ") {
-        if name[..at].chars().rev().take_while(|c| c.is_alphabetic()).count() >= 4 {
-            cut = cut.min(at);
-            break;
+        for (at, _) in text.match_indices('/') {
+            let before = text[..at].chars().rev().take_while(|c| c.is_alphabetic()).count();
+            if before != 1 {
+                cut = cut.min(at);
+                break;
+            }
         }
+        for (at, _) in text.match_indices(". ") {
+            if text[..at].chars().rev().take_while(|c| c.is_alphabetic()).count() >= 4 {
+                cut = cut.min(at);
+                break;
+            }
+        }
+        if text[cut..].starts_with('(')
+            && let Some(close) = text[cut..].find(')').map(|at| cut + at)
+            && text[close + 1..].trim_start().chars().next().is_some_and(|c| c.is_alphanumeric() || "\"'\u{201e}\u{201c}\u{ab}".contains(c))
+        {
+            text = format!("{} {}", &text[..cut], &text[close + 1..]);
+            glossed = true;
+            continue;
+        }
+        let head = text[..cut].trim();
+        return (!head.is_empty() && (cut < text.len() || glossed)).then(|| head.to_owned());
     }
-    let head = name[..cut].trim();
-    (cut < name.len() && !head.is_empty()).then_some(head)
+}
+
+/// Issue 481 unit 2c review: the names of a KIND of body, which many separate bodies of
+/// one register share as the start of their names — a head or prefix equal to one of
+/// these (or to one followed by its initials, `… (CHU)`) is no buyer's name, so it gives
+/// no FULL head, principal or PREFIX token. Bounded prod reads (`organizations.name_norm`
+/// range seeks, 2026-10-02) found each of these as the head of many distinct
+/// organizations, or published bare by dozens to hundreds (`mairie` 300+, `Centre
+/// communal d'action sociale` 200+, `Centre hospitalier universitaire` and `Samodzielny
+/// Publiczny Zakład Opieki Zdrowotnej` 60+). The bare whole name itself keeps its 2b
+/// FULL token, which only another bare name meets. Not exhaustive — a measured list of
+/// the classes seen; the parenthesis rule in [`guard_name_head`] covers the
+/// `<type> (ACRONYM) <place>` shape whatever the type.
+const GENERIC_BODY_NAMES: &[&str] = &[
+    // FR
+    "Centre hospitalier universitaire", "Centre hospitalier régional universitaire",
+    "Centre hospitalier régional", "Centre hospitalier", "Centre hospitalier intercommunal",
+    "Centre communal d'action sociale", "Centre intercommunal d'action sociale",
+    "Office public de l'habitat", "Mairie", "Commune", "Ville", "Département", "Région",
+    "Communauté de communes", "Communauté d'agglomération", "Conseil départemental",
+    "Conseil régional", "Syndicat intercommunal", "Université", "Lycée", "Collège",
+    // IT
+    "Azienda sanitaria locale", "Azienda sanitaria provinciale", "Azienda ospedaliera",
+    "Azienda ospedaliera universitaria", "Azienda ospedaliero universitaria",
+    "Azienda unità sanitaria locale", "Azienda socio sanitaria territoriale",
+    "Agenzia regionale per la protezione dell'ambiente", "Agenzia regionale per la protezione ambientale",
+    "Centrale unica di committenza", "Stazione unica appaltante", "Comune", "Provincia", "Regione",
+    "Unione dei comuni", "Università degli studi", "Istituto comprensivo", "Consorzio di bonifica",
+    "Tribunale amministrativo regionale",
+    // DE, AT
+    "Stadt", "Gemeinde", "Stadtverwaltung", "Landkreis", "Kreisverwaltung", "Landratsamt", "Markt",
+    "Marktgemeinde", "Verbandsgemeinde", "Samtgemeinde", "Bezirksamt", "Deutsche Rentenversicherung",
+    "Universitätsklinikum", "Universität", "Stadtwerke",
+    // PL
+    "Samodzielny publiczny zakład opieki zdrowotnej", "Zarząd dróg wojewódzkich", "Zarząd dróg powiatowych",
+    "Gmina", "Urząd miasta", "Urząd gminy", "Starostwo powiatowe", "Powiat", "Szpital wojewódzki",
+    "Uniwersytecki szpital kliniczny",
+    // ES, PT
+    "Ayuntamiento", "Diputación provincial", "Consejería", "Hospital universitario", "Universidad",
+    "Mancomunidad", "Câmara municipal", "Município", "Junta de freguesia", "Centro hospitalar",
+    "Unidade local de saúde",
+    // NL, BE, Nordic
+    "Gemeente", "Provincie", "Waterschap", "Stichting", "Kommune", "Kommun",
+    // RO, CZ, SK, BG
+    "Unitatea administrativ teritorială", "Primăria", "Consiliul județean", "Comuna", "Municipiul",
+    "Spitalul clinic județean de urgență", "Obec", "Město", "Statutární město", "Mesto",
+    "Многопрофилна болница за активно лечение", "Община", "Областна администрация",
+    "Водоснабдяване и канализация",
+    // EN
+    "City council", "County council", "Borough council", "Municipality", "University", "Hospital", "Council",
+];
+
+/// Whether folded `words` name a kind of body ([`GENERIC_BODY_NAMES`]), alone or
+/// followed by the kind's initials (`centre hospitalier universitaire chu`).
+fn generic_body_name(words: &[String]) -> bool {
+    static GENERIC: std::sync::OnceLock<std::collections::HashSet<String>> = std::sync::OnceLock::new();
+    GENERIC
+        .get_or_init(|| {
+            let mut set = std::collections::HashSet::new();
+            for name in GENERIC_BODY_NAMES {
+                let words = merge_initials(&guard_name_words(name));
+                let initials: String = words
+                    .iter()
+                    .filter(|w| !PREFIX_FUNCTION_WORDS.contains(&w.as_str()))
+                    .filter_map(|w| w.chars().next())
+                    .collect();
+                if words.len() > 1 {
+                    set.insert(format!("{} {initials}", words.join(" ")));
+                }
+                set.insert(words.join(" "));
+            }
+            set
+        })
+        .contains(&words.join(" "))
 }
 
 /// Issue 481 unit 2c: how a buyer name says that an agent buys on a principal's behalf
@@ -6226,6 +6346,18 @@ fn guard_name_head(name: &str) -> Option<&str> {
 /// `DASmakkelijk B.V. namens AT Scholen VO`, each citing the school's own notice.
 const AGENCY_PHRASES: &[&[&str]] = &[
     &["namens"],
+    // Issue 481 unit 2c review: the forms prod publishes beside these — `DASmakkelijk
+    // namen ROC de Leijgraaf` (a typo, 2 organizations), `… tbv gemeenten …`, `…, I.O.V.
+    // REGIONALE SOCIALE DIENST …`, `… reprezentująca Sąd Apelacyjny …`, `Stazione unica
+    // appaltante - Ente delegato dal comune di Nola`, `per conto dell'Azienda`. Longer
+    // phrases first: the first that matches at a position wins.
+    &["namen"],
+    &["ten", "behoeve", "van"],
+    &["t", "b", "v"],
+    &["tbv"],
+    &["in", "opdracht", "van"],
+    &["i", "o", "v"],
+    &["iov"],
     &["im", "auftrag", "von"],
     &["im", "auftrag", "der"],
     &["im", "auftrag", "des"],
@@ -6236,11 +6368,25 @@ const AGENCY_PHRASES: &[&[&str]] = &[
     &["pour", "le", "compte", "d"],
     &["en", "nombre", "de"],
     &["en", "nombre", "del"],
+    &["en", "representacion", "de"],
+    &["en", "representacion", "del"],
+    &["por", "cuenta", "de"],
+    &["por", "cuenta", "del"],
     &["per", "conto", "di"],
     &["per", "conto", "del"],
     &["per", "conto", "della"],
+    &["per", "conto", "dell"],
+    &["per", "conto", "delle"],
     &["per", "conto", "dei"],
+    &["per", "conto", "degli"],
+    &["per", "conto"],
+    &["ente", "delegato", "dal"],
+    &["ente", "delegato", "dalla"],
     &["w", "imieniu"],
+    &["reprezentujaca"],
+    &["pa", "vegne", "af"],
+    &["pa", "vegne", "av"],
+    &["pa", "uppdrag", "av"],
 ];
 
 /// The principal's words of an agency name ([`AGENCY_PHRASES`]): what follows the
@@ -6271,12 +6417,19 @@ const PREFIX_FUNCTION_WORDS: &[&str] = &[
 
 /// The whole-word PREFIX tokens of a buyer name's `words` ([`buyer_guard_evidence`]):
 /// every proper prefix of up to [`GUARD_PREFIX_MAX_WORDS`] words, except one ending
-/// in a function word ([`PREFIX_FUNCTION_WORDS`]) and a one-word prefix shorter than
-/// five letters (`DB` of `DB Netz AG`; `ARPAS` stays).
-fn push_guard_prefixes(words: &[String], jurisdiction: &str, out: &mut Vec<String>) {
+/// in a function word ([`PREFIX_FUNCTION_WORDS`]) and one naming a kind of body
+/// ([`generic_body_name`]: `Zarząd Dróg Wojewódzkich` of `… w Krakowie` would meet
+/// every bare-named sibling). A one-word prefix stands only as the name's one-word
+/// `head` (`ARPAS` of `ARPAS - Agenzia …`, `MINARM` of `MINARM/TERRE/SIMMT`) of five
+/// letters or more: the first word of a running name is its kind far more often than
+/// its name (`Stadt` of `Stadt Köln`, `Mairie` of `Mairie de Pau`).
+fn push_guard_prefixes(words: &[String], head: Option<&[String]>, jurisdiction: &str, out: &mut Vec<String>) {
     for k in 1..words.len().min(GUARD_PREFIX_MAX_WORDS + 1) {
         let last = words[k - 1].as_str();
-        if PREFIX_FUNCTION_WORDS.contains(&last) || (k == 1 && last.chars().count() < 5) {
+        if PREFIX_FUNCTION_WORDS.contains(&last)
+            || (k == 1 && (last.chars().count() < 5 || head != Some(&words[..1])))
+            || generic_body_name(&words[..k])
+        {
             continue;
         }
         out.push(format!("n2:{jurisdiction}:{}", words[..k].join(" ")));
@@ -6315,8 +6468,24 @@ fn push_guard_acronym(words: &[String], jurisdiction: &str, out: &mut GuardEvide
 /// fusing strangers (the lexicon, digit runs, phone numbers, routing scopes, TED
 /// notice numbers, bare short numbers). A checksum failure does not refuse it: one
 /// buyer publishing one mistyped number is still one buyer.
+///
+/// Issue 481 unit 2c review: a leading VAT prefix of the buyer's own register (`ES` for
+/// `ES`, `EL` for `GR`) is dropped, so `ESQ2769003A` meets `Q2769003A` — a scheme the
+/// cross-walk has no E1 arm for (the Spanish NIF) is otherwise two values for one
+/// buyer. Register labels (`FN`, `NIP`) are not dropped: that is the label strip's job
+/// in the identifier gate, and the ÖBB-Holding qualification system's `71396w` against
+/// ÖBB-Infrastruktur's `FN71396w` is a hub (issue 481 `bd15`) the guard has no fan-in
+/// rule for yet.
 fn raw_identifier_token(raw: &str, jurisdiction: &str) -> Option<String> {
-    let value: String = raw.chars().filter(char::is_ascii_alphanumeric).map(|c| c.to_ascii_uppercase()).collect();
+    let mut value: String = raw.chars().filter(char::is_ascii_alphanumeric).map(|c| c.to_ascii_uppercase()).collect();
+    let vat_prefix = if jurisdiction == "GR" { "EL" } else { jurisdiction };
+    if vat_prefix.len() == 2
+        && value.starts_with(vat_prefix)
+        && value[2..].bytes().any(|b| b.is_ascii_digit())
+        && value.len() >= 2 + 5
+    {
+        value.drain(..2);
+    }
     let first = *value.as_bytes().first()?;
     if value.len() < 5
         || !value.bytes().any(|b| b.is_ascii_digit())
@@ -9255,6 +9424,45 @@ mod tests {
     /// qualification system (bd15), ANAV against Achilles' Repro (bd18), one agency
     /// buying for two principals, a placeholder raw identifier, and names that only
     /// START alike — the generic heads the prefix tokens must not join.
+    /// Issue 481 unit 2c review: a mention without a country gets the 2b tokens only.
+    /// Its prefixes, heads and raw number would sit in one register-less pool shared by
+    /// every country-less legacy row (`mairie` 300+, `Centre hospitalier universitaire`
+    /// 60+ on prod), and a raw number without its register is the BG/TED collision.
+    #[test]
+    fn a_mention_without_a_country_gets_no_widened_tokens() {
+        let mention = |name: &str, country: Option<&str>, raw: Option<&str>| store::Mention {
+            notice_id: 1,
+            section_id: "ORG-1".into(),
+            name: name.into(),
+            country: country.map(str::to_owned),
+            raw_identifier: raw.map(str::to_owned),
+            scheme: None,
+            identifier: None,
+            variants: Vec::new(),
+        };
+        let set = |m: store::Mention| buyer_tokens_of(&[m]);
+        let (long, short) = ("Kommunaler Immobilien Service Potsdam", "Kommunaler Immobilien Service");
+        assert!(
+            !store::buyer_tokens_disjoint(&set(mention(long, Some("DE"), None)), &set(mention(short, Some("DE"), None))),
+            "within a register a prefix meets the whole name"
+        );
+        assert!(
+            store::buyer_tokens_disjoint(&set(mention(long, None, None)), &set(mention(short, None, None))),
+            "without one it does not"
+        );
+        assert!(
+            store::buyer_tokens_disjoint(
+                &set(mention("Bulgarian school", None, Some("000415571"))),
+                &set(mention("Latvian hospital", None, Some("000415571")))
+            ),
+            "nor does a raw number"
+        );
+        assert!(
+            !store::buyer_tokens_disjoint(&set(mention("Mairie", None, None)), &set(mention("MAIRIE", None, None))),
+            "the 2b whole-name token stays"
+        );
+    }
+
     #[test]
     fn the_census_samples_one_buyer_overlaps_and_the_false_merges_stay_apart() {
         // (role, names with their language, country, raw identifier)
@@ -9308,11 +9516,6 @@ mod tests {
                 "ws30 DASmakkelijk namens AT Scholen VO",
                 &[(B, &[("DASmakkelijk B.V. namens AT Scholen VO", None)], "NLD", "32077187")],
                 &[(B, &[("AT Scholen VO", None)], "NLD", "38451975")],
-            ),
-            (
-                "the agency's own notice",
-                &[(B, &[("Onderwijs Inkoop Groep B.V. namens Stichting Prisma", None)], "NLD", "933220822")],
-                &[(B, &[("Onderwijs Inkoop Groep BV", None)], "NLD", "")],
             ),
             (
                 "ws10 Kommunaler Immobilien Service Potsdam",
@@ -9378,6 +9581,39 @@ mod tests {
         };
         for (label, a, b) in one {
             assert!(store::buyer_tokens_disjoint(&tokens_2b(a), &tokens_2b(b)), "{label}: the 2b guard refused it");
+            let (ta, tb) = (tokens(a), tokens(b));
+            assert!(!store::buyer_tokens_disjoint(&ta, &tb), "{label}: one buyer overlaps");
+        }
+        // Issue 481 unit 2c review: spellings of one buyer prod publishes beyond the
+        // census sample — agency phrases, a glossed acronym, a VAT-prefixed NIF.
+        let one_review: &[(&str, &[Party], &[Party])] = &[
+            (
+                "an agency's typo: DASmakkelijk namen ROC de Leijgraaf (2c review)",
+                &[(B, &[("DASmakkelijk namen ROC de Leijgraaf", None)], "NLD", "")],
+                &[(B, &[("ROC de Leijgraaf", None)], "NLD", "")],
+            ),
+            (
+                "an agency, I.O.V. its principal (2c review)",
+                &[(B, &[("INKOOPBUREAU WEST-BRABANT, I.O.V. REGIONALE SOCIALE DIENST HOEKSCHE WAARD", None)], "NLD", "")],
+                &[(B, &[("Regionale Sociale Dienst Hoeksche Waard", None)], "NLD", "")],
+            ),
+            (
+                "a CUC per conto dell' its principal (2c review)",
+                &[(B, &[("Centrale Unica di Committenza per conto dell'Azienda Speciale Consortile Valle Brembana", None)], "ITA", "")],
+                &[(B, &[("Azienda Speciale Consortile Valle Brembana", None)], "ITA", "")],
+            ),
+            (
+                "a CHU with its acronym glossed in the name (2c review)",
+                &[(B, &[("CENTRE HOSPITALIER UNIVERSITAIRE (CHU) DE BORDEAUX", None)], "FRA", "")],
+                &[(B, &[("Centre hospitalier universitaire de Bordeaux, direction des achats", None)], "FRA", "")],
+            ),
+            (
+                "a Spanish NIF with and without its VAT prefix (2c review)",
+                &[(B, &[("Servizo Galego de Saúde", None)], "ESP", "ESQ2769003A")],
+                &[(B, &[("Servicio Gallego de Salud. Área Sanitaria de Vigo", None)], "ESP", "Q2769003A")],
+            ),
+        ];
+        for (label, a, b) in one_review {
             let (ta, tb) = (tokens(a), tokens(b));
             assert!(!store::buyer_tokens_disjoint(&ta, &tb), "{label}: one buyer overlaps");
         }
@@ -9503,6 +9739,73 @@ mod tests {
                 "a city and another city",
                 &[(B, &[("Stadt Köln", None)], "DEU", "")],
                 &[(B, &[("Stadt Bonn - Gebäudemanagement", None)], "DEU", "")],
+            ),
+            // Issue 481 unit 2c review: the kinds of body that many separate bodies
+            // publish as the start of their names (bounded prod reads, 2026-10-02).
+            (
+                "two CHUs, the acronym glossed in the name",
+                &[(B, &[("CENTRE HOSPITALIER UNIVERSITAIRE (CHU) DE BORDEAUX", None)], "FRA", "")],
+                &[(B, &[("Centre hospitalier universitaire (CHU) de Nantes", None)], "FRA", "")],
+            ),
+            (
+                "two CHUs behind a spaced dash",
+                &[(B, &[("CENTRE HOSPITALIER UNIVERSITAIRE - DIJON", None)], "FRA", "")],
+                &[(B, &[("Centre hospitalier universitaire - CHU de Brest", None)], "FRA", "")],
+            ),
+            (
+                "a CHU and the bare kind",
+                &[(B, &[("CENTRE HOSPITALIER UNIVERSITAIRE - DIJON", None)], "FRA", "")],
+                &[(B, &[("Centre hospitalier universitaire", None)], "FRA", "")],
+            ),
+            (
+                "two ASLs",
+                &[(B, &[("AZIENDA SANITARIA LOCALE (ASL) NAPOLI 1", None)], "ITA", "")],
+                &[(B, &[("AZIENDA SANITARIA LOCALE - VITERBO", None)], "ITA", "")],
+            ),
+            (
+                "two ARPAs",
+                &[(B, &[("Agenzia Regionale per la Protezione Ambientale (ARPA) del Piemonte", None)], "ITA", "")],
+                &[(B, &[("AGENZIA REGIONALE PER LA PROTEZIONE AMBIENTALE - ARPA MOLISE", None)], "ITA", "")],
+            ),
+            (
+                "two CCAS",
+                &[(B, &[("Centre communal d'action sociale (CCAS) d'Achères", None)], "FRA", "")],
+                &[(B, &[("CENTRE COMMUNAL D'ACTION SOCIALE - VILLE D'AVION", None)], "FRA", "")],
+            ),
+            (
+                "one CUC for two principals",
+                &[(B, &[("Centrale Unica di Committenza - Comune di Camaiore e Comune di Altopascio per conto del Comune di Altopascio", None)], "ITA", "")],
+                &[(B, &[("Centrale Unica di Committenza - Comune di Camaiore e Comune di Altopascio per conto del Comune di Camaiore", None)], "ITA", "")],
+            ),
+            (
+                "two CUCs c/o two municipalities",
+                &[(B, &[("Centrale Unica di Committenza (C.U.C.) c/o COMUNE DI AVEZZANO (AQ)", None)], "ITA", "")],
+                &[(B, &[("Centrale Unica di Committenza (C.U.C.) c/o Comune di Calvello", None)], "ITA", "")],
+            ),
+            (
+                "two SUAs for two municipalities",
+                &[(B, &[("Stazione unica appaltante - Ente delegato dal comune di Nola", None)], "ITA", "")],
+                &[(B, &[("Stazione unica appaltante - Ente delegato dal comune di Torre Annunziata", None)], "ITA", "")],
+            ),
+            (
+                "a ZDW and the bare kind",
+                &[(B, &[("Zarząd Dróg Wojewódzkich w Krakowie", None)], "POL", "")],
+                &[(B, &[("Zarząd Dróg Wojewódzkich", None)], "POL", "")],
+            ),
+            (
+                "a city and the bare kind",
+                &[(B, &[("Stadt Köln", None)], "DEU", "")],
+                &[(B, &[("Stadt", None)], "DEU", "")],
+            ),
+            (
+                "an agency for a principal and the agency's own notice",
+                &[(B, &[("Onderwijs Inkoop Groep B.V. namens Stichting Prisma", None)], "NLD", "933220822")],
+                &[(B, &[("Onderwijs Inkoop Groep BV", None)], "NLD", "")],
+            ),
+            (
+                "an agency for a principal and the agency's bare name",
+                &[(B, &[("DASmakkelijk B.V. namens AT Scholen VO", None)], "NLD", "")],
+                &[(B, &[("DASmakkelijk", None)], "NLD", "")],
             ),
         ];
         for (label, a, b) in two {
