@@ -1,6 +1,6 @@
 # 477 — FTS holds 90–98 % of each year's notices, the missing ones are on the API, and the dashboard reports the source complete
 
-Status: ready-for-agent — UNIT 1 DEPLOYED 2026-10-01 16:4x UTC (`3d79f11`; built `e9e73bb`, review fixes `3d79f11`; gate GATE-EXIT=0 in 761 s). The FTS walk never follows `links.next`: full cursorless spans split, never below 2 s; the daily probe walks every day after the newest monthly that holds no daily, which closes the 09-01..06 seam; and a same-id second release is kept. TOP-UP RUNNING: refetch every monthly 2021-01 → 2026-08 with the new walker (`refetch:true`), chunked to end before each 07:35 UTC tick. Chunk 2021 = jobs 1815–1828. NEXT: read 2021-05 (1815) against its 172 missing ids, then the next chunks, then unit 3 (the per-year id invariant and audit).
+Status: ready-for-agent — UNIT 1b DECIDED 2026-10-02 04:5x UTC (dense-span walk via ocid records; 2023-11 waits on it — see the last section). UNIT 1 DEPLOYED 2026-10-01 16:4x UTC (`3d79f11`; built `e9e73bb`, review fixes `3d79f11`; gate GATE-EXIT=0 in 761 s). The FTS walk never follows `links.next`: full cursorless spans split, never below 2 s; the daily probe walks every day after the newest monthly that holds no daily, which closes the 09-01..06 seam; and a same-id second release is kept. TOP-UP RUNNING: refetch every monthly 2021-01 → 2026-08 with the new walker (`refetch:true`), chunked to end before each 07:35 UTC tick. Chunk 2021 = jobs 1815–1828. NEXT: read 2021-05 (1815) against its 172 missing ids, then the next chunks, then unit 3 (the per-year id invariant and audit).
 Was status: ready-for-agent — ROOT CAUSE PROVEN 2026-10-01 (workflow `wf_4e12a01b-ca9`: three probes, a synthesis, and a challenger who confirmed the cause): the FTS API's `links.next` cursor continues on a hidden per-release key that is not in notice-id order, so page 2 and later silently drop rows, and the dropped page comes back short with no next link. The 2026-09-01..06 seam was never fetched (1,745 ids), and some post-Act ids were never published. NEXT: unit 1, the walk. Never follow `links.next`; split any window whose cursorless page is full, never into a one-second window (the API answers 400). Fix the seam start too. Design and evidence: `.scratch/tender-db/477-fts/`.
 Was status: ready-for-agent — filed 2026-10-01 13:5x UTC from the 342 close-out audit. The first unit is the root cause:
 why does the `updatedFrom`/`updatedTo` window walk skip notices that the API serves by id? Diff one day's API listing
@@ -202,3 +202,46 @@ distinct release), so a byte-identical repeat still collapses, and a different r
 - Verify by year: **2022 from 1,483 to 8**, 2021 at 20. Total **11,714**.
 - Chunk 2023: 12 refetches, then process 1859 and project 1860, enqueued after the batch-3 deploy (`08c3dd9`). It
   should end around 05:30 UTC.
+
+### 2026-10-02 04:5x UTC — 2023-11 fails on a dense span: one notice fanned out by the API (unit 1b)
+
+- Fetch 1857 (2023-11) failed loud as designed: `…updatedFrom=2023-11-14T10:05:14&updatedTo=2023-11-14T10:05:15: 100
+  releases and a next page in a 2-second window`. Staging is intact. The rest of the chunk ran on; 2024-01..05 (jobs
+  1861–1867) are queued behind it.
+- **What the span holds** (probed from the container, ~40 requests; evidence in `.scratch/tender-db/477-fts/dense-2023-11-14/`):
+  - The cursorless page has 100 rows, all with notice id `033562-2023`, tag `planning`, dated 2023-11-14T10:05:15Z. It
+    is The Procurement Assist Consortium's pipeline notice.
+  - Those 100 rows are **8 distinct releases**, one per ocid (`ocds-h6vhtk-04196f` … `-041976`), each repeated about 14
+    times. The API fans the notice out: each ocid's release is served once per ocid of the notice.
+  - The notice has **15 ocids**, `04196f` … `04197d`, a contiguous hex run. The record lookup brackets it: `04196e` is
+    404, `04197e` is notice `033564-2023` (10:07:02) and `04197f` is `033567-2023`.
+  - The DB holds **1 of the 15** (`notices` 46920564, from the old cursor walk). 14 planned procurements are missing.
+- **The cursor cannot be the fallback.** A limit=100 walk happened to reach all 15 ocids on 2 pages. A limit=10 walk
+  served the same 10 rows (all `04196f`) on 29 pages under one `nextCursor=695701`. That is issue 449's stuck cursor:
+  when the ids tie, the cursor does not advance.
+- **The record endpoint can.** `GET /ocdsRecordPackages/{ocid}` returns the ocid's releases. For this notice that is 14
+  copies of one release, parsed-equal to the listing's. Dedented by 8 spaces (record nesting minus listing nesting),
+  the record's raw release is **byte-identical** to the listing's (checked on `041970`). So a member built from a
+  record hashes the same as one built from a listing, and archive dedup holds. One server defect: `04196f`'s record
+  is a 200 with an **empty body** (twice). Its release is on the listing page.
+
+**Decision (owner): unit 1b, the dense-span walk.** For a span still full at the minimum width:
+1. Keep its cursorless page, which is staged as now, as a leaf.
+2. Seed with the distinct ocids on that page. Extend the run of consecutive hex ocids in both directions. A
+   neighbour joins when its record carries a release whose id is one of the page's notice ids. The first 404, or
+   record of another notice, ends that side. Cap the run at a stated bound (e.g. 500 ocids) and fail loud above it.
+3. For each ocid in the run that is not already on the page, fetch its record and stage it as
+   `<span key>-r<ocid>.json`. Take the releases whose id is one of the page's notice ids, dedent them to the
+   listing's nesting, and verify each by re-parsing before splicing. An empty-body record fails loud, unless that
+   ocid's release is already on the page.
+4. Fail loud, exactly as today, when the page's notice ids are not all accounted for by records. That covers a
+   page holding several notices, where a hidden notice could sit below the top 100 by id. The rule stays: no package
+   lands unless every leaf is complete.
+5. Count dense spans in the fetch outcome, so they are visible rather than silent.
+6. Tests use a mock built from the saved page and record shapes: a fanned-out notice lands all 15 ocids; the seam
+   ocids end the run; an empty-body record of an ocid on the page passes, one off the page fails; a record release
+   dedented equals the listing bytes; a span with two notice ids where one is hidden fails loud.
+
+Sequenced after 481 unit 2 lands, because one gate at a time fits the container's disk. Then re-enqueue
+`{"kind":"fetch","source":"fts","package_kind":"monthly","period":"2023-11","refetch":true}`, process and project, and
+check that the 15 ocids of `033562-2023` are on 15 Tenders.
