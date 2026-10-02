@@ -235,7 +235,7 @@ per channel.
 
 ---
 
-## `fts/` — UK Find a Tender Service (FTS), 7 files, 71 KB
+## `fts/` — UK Find a Tender Service (FTS), 12 files, 102 KB
 
 **Not verbatim pages** — the one exception to the rule at the top of this file,
 by construction: a real FTS page is 100 releases (≈1 MB), so these are the
@@ -280,6 +280,27 @@ identity of the notice it stands for.
 
 `tests/fts.rs` zips all five as `fts/daily/2026-09-03.zip` and processes them;
 `profile.rs`'s unit tests dispatch two of them directly.
+
+### `fts/dense/` — a two-second span full of one notice, gzipped verbatim
+
+Issue 477 unit 1b. These ARE verbatim, unlike the pages above: byte for byte
+what the API served, `gzip -9n`, because the property under test is exactly
+the bytes' layout (a record nests a release 8 spaces deeper than a page, and
+otherwise serves the listing's bytes). Unzipped they are 1.3 MB; the tests
+gunzip them. Copies of `.scratch/tender-db/477-fts/dense-2023-11-14/`.
+
+| File | Bytes (gz → raw) | Asked | Shape | Why |
+|---|---|---|---|---|
+| `dense/2023-11-14T100514-cursorless.json.gz` | 8 988 → 653 940 | `ocdsReleasePackages?limit=100&updatedFrom=2023-11-14T10:05:14&updatedTo=2023-11-14T10:05:15` (2026-10-02) | 100 rows, all `033562-2023` (`planning`): ocids `04196f`…`041975` 14 times each, `041976` twice; a `links.next` | The span fetch 1857 failed on. Its header is the dense mock's page header, and its releases the listing bytes of the first 8 ocids. |
+| `dense/2023-11-14T100514-cursor-p2.json.gz` | 7 261 → 246 083 | that page's `links.next` | 38 rows, all 15 ocids `04196f`…`04197d`, no next | The only listing bytes of the 7 ocids the cursorless page cannot show. |
+| `dense/record-041970.json.gz` | 4 514 → 142 503 | `ocdsRecordPackages/ocds-h6vhtk-041970` (2026-10-02) | 1 record: 14 copies of the release at depth 16, a `compiledRelease`, a `versionedRelease` | An ocid ON the page: its release, moved up 8, is the page's bytes. |
+| `dense/record-041977.json.gz` | 4 348 → 138 967 | `ocdsRecordPackages/ocds-h6vhtk-041977` (2026-10-02) | the same shape | An ocid OFF the page: moved up 8, page 2's bytes. The template of the mock's other ocids' records. |
+| `dense/record-04197e.json.gz` | 6 669 → 102 958 | `ocdsRecordPackages/ocds-h6vhtk-04197e` (2026-10-02) | 1 record: `033564-2023` (`tender`, 10:07:02) and `017735-2024` (`award`, `contract`) | The next process: a record of another notice, which ends the run above. |
+
+`tests/fetch.rs`'s `dense_` tests serve them from a mock that lays every
+page out under the live header in the live 4-space layout, and assert that
+the 2023-11 monthly lands all 15 ocids' releases, each byte-identical to a
+listing-served one.
 
 **A number no JSON reader may assume**: recorded page 2 carries
 `"maximumLotsBidPerSupplier": 1e9999` on release `083529-2026` — infinity, which

@@ -1,6 +1,7 @@
 # 477 — FTS holds 90–98 % of each year's notices, the missing ones are on the API, and the dashboard reports the source complete
 
-Status: ready-for-agent — UNIT 1b DECIDED 2026-10-02 04:5x UTC (dense-span walk via ocid records; 2023-11 waits on it — see the last section). UNIT 1 DEPLOYED 2026-10-01 16:4x UTC (`3d79f11`; built `e9e73bb`, review fixes `3d79f11`; gate GATE-EXIT=0 in 761 s). The FTS walk never follows `links.next`: full cursorless spans split, never below 2 s; the daily probe walks every day after the newest monthly that holds no daily, which closes the 09-01..06 seam; and a same-id second release is kept. TOP-UP RUNNING: refetch every monthly 2021-01 → 2026-08 with the new walker (`refetch:true`), chunked to end before each 07:35 UTC tick. Chunk 2021 = jobs 1815–1828. NEXT: read 2021-05 (1815) against its 172 missing ids, then the next chunks, then unit 3 (the per-year id invariant and audit).
+Status: ready-for-agent — UNIT 1b BUILT 2026-10-02 10:5x UTC (the unit 1b commit; gate GATE-EXIT=0, NOT deployed): a span still full at two seconds keeps its page as a leaf, and a page of ONE notice is completed from the records of its ocid run — see the last section. NEXT: deploy it between top-up chunks, then re-enqueue `{"kind":"fetch","source":"fts","package_kind":"monthly","period":"2023-11","refetch":true}`, process and project, and check that the job row reads `NewVersion · 1 dense span(s) completed from 17 ocid record(s)` and that `033562-2023` is 15 notices on 15 Tenders; the remaining chunks (2024b → 2026-08) do not wait on it; then unit 3 (the per-year id invariant and audit).
+Was status: ready-for-agent — UNIT 1b DECIDED 2026-10-02 04:5x UTC (dense-span walk via ocid records; 2023-11 waits on it — see the last section). UNIT 1 DEPLOYED 2026-10-01 16:4x UTC (`3d79f11`; built `e9e73bb`, review fixes `3d79f11`; gate GATE-EXIT=0 in 761 s). The FTS walk never follows `links.next`: full cursorless spans split, never below 2 s; the daily probe walks every day after the newest monthly that holds no daily, which closes the 09-01..06 seam; and a same-id second release is kept. TOP-UP RUNNING: refetch every monthly 2021-01 → 2026-08 with the new walker (`refetch:true`), chunked to end before each 07:35 UTC tick. Chunk 2021 = jobs 1815–1828. NEXT: read 2021-05 (1815) against its 172 missing ids, then the next chunks, then unit 3 (the per-year id invariant and audit).
 Was status: ready-for-agent — ROOT CAUSE PROVEN 2026-10-01 (workflow `wf_4e12a01b-ca9`: three probes, a synthesis, and a challenger who confirmed the cause): the FTS API's `links.next` cursor continues on a hidden per-release key that is not in notice-id order, so page 2 and later silently drop rows, and the dropped page comes back short with no next link. The 2026-09-01..06 seam was never fetched (1,745 ids), and some post-Act ids were never published. NEXT: unit 1, the walk. Never follow `links.next`; split any window whose cursorless page is full, never into a one-second window (the API answers 400). Fix the seam start too. Design and evidence: `.scratch/tender-db/477-fts/`.
 Was status: ready-for-agent — filed 2026-10-01 13:5x UTC from the 342 close-out audit. The first unit is the root cause:
 why does the `updatedFrom`/`updatedTo` window walk skip notices that the API serves by id? Diff one day's API listing
@@ -256,3 +257,58 @@ check that the 15 ocids of `033562-2023` are on 15 Tenders.
   error`. That is the watch working as designed, on a failure this issue already tracks. It clears 26 h after the
   run, or sooner if unit 1b's refetch lands.
 - Chunk 2024a (2024-01..05, process 1866, project 1867) should end around 07:00 UTC, before the tick.
+
+### 2026-10-02 10:5x UTC — unit 1b built: the dense-span walk (not deployed)
+
+Gate: GATE-EXIT=0 at 10:44 UTC, the 481-2b agent's `ops/check.sh` on the shared tree with these files in it, unchanged
+since 10:12; `run_spec_futures_stay_inside_their_size_budgets` passed (`run_fetch_fts` 96 of 128 bytes,
+`run_ingest_spec` 3,544 of 3,904). A focused re-run at 10:5x compiled 0 crates and passed the `dense_*` tests, the
+`fts` unit tests and that budget test.
+
+What landed (`fetch::walk_dense_span`, `fts::record_releases`; tests `dense_*` in `crates/ingest/tests/fetch.rs`):
+- **A span still full at two seconds keeps its page as a leaf.** If every release on the page carries one notice
+  id, the walk reads the records of that notice's ocid run. With several ids it fails loud as before (rule 4): a
+  notice below the page's 100 rows cannot be reached by any request.
+- **The run.** It is seeded with the page's distinct ocids, which must all be in one series (`ocds-h6vhtk-` plus
+  fixed-width lowercase hex). Every ocid from the first seed to the last is asked and must carry the notice. It then
+  extends one ocid at a time below and above: a record carrying the notice joins it, and a 404 or a record of other
+  notices ends that side. The cap is **`DENSE_RUN_CAP` = 500 ocids** (100 min at the 12 s pace), and a run past it
+  fails loud. On 2023-11-14 the walk reads 17 records: the 8 seeds, then `04196e` (404) below, then `041977`…`04197d`
+  (join) and `04197e` (`033564-2023`) above.
+- **Empty bodies.** An empty body passes for a seed, whose release is on the page (`04196f`). Anywhere else it fails
+  loud, because ending the run there could drop the notice's later ocids.
+- **The leaves.** Every record carrying the notice is staged atomically as `<span key>-r<ocid>.json` and is a leaf. A
+  staged record is never asked again. A 404 or an empty body stages nothing and is asked again on a resume.
+- **Assembly.** The assembler reads each record leaf against its span's page. It takes the releases of the page's
+  notice id and re-nests them by the measured difference of depths (the spaces before each release's closing line:
+  16 in a record, 8 on a page). It refuses a ragged or mixed layout, re-parses the result, and compares it with the
+  record's own text with insignificant whitespace removed. Each member is built under the PAGE's header, so it is the
+  bytes a listing-served release makes. `033562-2023` lands as 15 members (`<id>.json` and 14 `~<hash8>`), and its
+  14-fold repeats collapse.
+- **Visibility.** The job row reads `<Outcome> · N dense span(s) completed from M ocid record(s)` (and nothing extra
+  when there are none). The progress line adds `N dense span(s), M records`, and the journal gets one
+  `[fetch] … dense span` line per span (the daily probe's summary does not count them).
+- **Pacing.** Every record request goes through `pace_fts` and the stop checkpoint, exactly like a span page.
+  429/Retry-After is `get_bytes`'s.
+
+Measured from the container 2026-10-02 09:2x UTC (3 requests, 8 s apart; saved beside the earlier evidence):
+- `041977`'s record, an ocid only the cursor's page 2 showed, re-nests by 8 to page 2's listing bytes exactly. That is
+  the second ocid checked, after `041970`, and the first one off the page.
+- `04196f` is still a 200 with an empty body (the third ask).
+- `GET /ocdsReleasePackages/ocds-h6vhtk-041977` serves the same release at the listing's own depth: 90 KB against
+  the record's 139 KB, no re-nesting needed. The walk does not use it. It is noted as the lighter alternative if
+  record packages ever prove too heavy (§1 measured one at 21.6 MB).
+
+Where this deviates from the decision:
+- **The seeds' records are asked too**, not only the ocids the page does not show. The decision's own rules need
+  them. Its empty-body exception ("unless that ocid's release is already on the page") can only fire for a seed's
+  record. Rule 4's "accounted for by records" needs the seeds to carry the notice. Each seed's record must hold the
+  page's own release of that ocid byte for byte after re-nesting, so the byte equality is checked live on every dense
+  span instead of trusted from two ocids. It also catches a second release of the notice under a seed ocid, hidden
+  below the page. The cost is 8 requests on 2023-11-14.
+- **An ocid inside the seed range that does not carry the notice fails loud**, rather than ending anything. The
+  decision only describes the two outward sides.
+
+Still open: a page of one notice cannot rule out a different notice, with a lower id, published in the same two
+seconds and wholly below the page's rows. No request reaches it. Unit 3's per-year id invariant would show it as a
+missing id.

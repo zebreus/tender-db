@@ -24,8 +24,20 @@
 //!   two and each half is asked again.
 //!
 //! The API answers 400 to a window whose ends are equal, so no split ever
-//! makes a one-second span; a span still full at [`MIN_SPAN_SECS`] fails the
-//! fetch loudly (the fetcher's job, not a silent truncation).
+//! makes a one-second span. A span still full at [`MIN_SPAN_SECS`] is a
+//! DENSE span (issue 477 unit 1b): 2023-11-14 10:05:14–15 holds 210 rows of
+//! ONE notice, `033562-2023`, because the listing serves each of its 15
+//! ocids' release 14 times. Nothing narrower can be asked, and the cursor is
+//! no way out — it is the defect: where ids tie it does not advance (a
+//! limit-10 walk of that span served the same 10 rows on 29 pages under one
+//! cursor, issue 449's stuck shape). So the fetcher keeps the span's page as a
+//! leaf and completes the notice from process records, `GET
+//! {BASE}/ocdsRecordPackages/{ocid}`, over the run of consecutive [`Ocid`]s
+//! the page's ocids sit in (the fetcher's `walk_dense_span`), each record's
+//! releases moved to the page's depth so they are the listing's bytes
+//! ([`record_releases`]). A full two-second page of SEVERAL notices still
+//! fails the fetch loudly: a notice below its 100 rows cannot be reached by
+//! any request.
 //!
 //! Two kinds, mirroring TED/DÖE so `Process{daily, None}` re-walks only live
 //! days (plan D2):
@@ -58,7 +70,7 @@
 
 use crate::fetch::{civil_date, days_from_civil, Target};
 use serde_json::value::RawValue;
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 
 pub mod checklist;
 pub mod parse;
@@ -107,6 +119,13 @@ pub const MEMBER_HEADER_FIELDS: [&str; 5] =
 /// (measured 2026-10-01, issue 477's challenge), so a one-second span cannot be
 /// asked at all, and [`split`] never makes one.
 pub const MIN_SPAN_SECS: i64 = 2;
+
+/// The most ocids one dense span's run may hold (issue 477 unit 1b). The
+/// measured run is 15 (`033562-2023`, a pipeline notice of 15 planned
+/// procurements); 500 records are 100 minutes of one job at the 12 s pace. A
+/// longer run is no shape anyone has seen, so it fails the fetch loudly
+/// rather than holding the single job runner for hours.
+pub const DENSE_RUN_CAP: usize = 500;
 
 /// An inclusive span of UK wall-clock seconds, `from..=to`, in the naive
 /// encoding [`window_url`] writes: `days_from_civil(day) * 86 400` plus the
@@ -195,6 +214,20 @@ pub fn parse_span_key(key: &str) -> Option<Span> {
     (span.to > span.from && span_key(span) == key).then_some(span)
 }
 
+/// A dense span's record in the staging dir, beside the span's page:
+/// `20231114T100514-20231114T100515-rocds-h6vhtk-041970`. Staged like a page,
+/// it is resume state, and the assembler finds its span's page by the name.
+pub fn record_key(span: Span, ocid: &Ocid) -> String {
+    format!("{}-r{ocid}", span_key(span))
+}
+
+/// The inverse of [`record_key`], as strict as [`parse_span_key`].
+pub fn parse_record_key(key: &str) -> Option<(Span, Ocid)> {
+    let span = parse_span_key(key.get(..31)?)?;
+    let ocid = Ocid::parse(key.get(31..)?.strip_prefix("-r")?)?;
+    (record_key(span, &ocid) == key).then_some((span, ocid))
+}
+
 /// A span cut in two: `[from, m]` and `[m + 1, to]`, the older half first.
 /// `None` when a cut would leave a half shorter than [`MIN_SPAN_SECS`] — the
 /// API refuses a one-second window — which the fetcher turns into a loud
@@ -246,6 +279,216 @@ fn autumn_edge(wall: i64) -> bool {
 /// and is not trusted either — both are split, never followed.
 pub fn page_is_short(count: usize, next: Option<&str>) -> bool {
     count < PAGE_LIMIT as usize && next.is_none()
+}
+
+/// An FTS ocid as a dense span's walk steps through it: a fixed prefix and a
+/// fixed-width lowercase hex counter, `ocds-h6vhtk-` + `04196f` (§4: "a
+/// zero-padded hex local id"). A notice that opens several processes at once
+/// gets consecutive counters — `033562-2023`'s 15 are `04196f`…`04197d` — and
+/// that is what lets the walk find the ocids its page does not show.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Ocid {
+    prefix: String,
+    counter: u64,
+    width: usize,
+}
+
+impl Ocid {
+    /// `None` for anything that is not such an ocid: the prefix is
+    /// `[A-Za-z0-9-]` up to the last `-` (so the ocid is a safe file name and
+    /// URL path segment), the counter 1–15 lowercase hex digits.
+    pub fn parse(ocid: &str) -> Option<Self> {
+        let (prefix, hex) = ocid.split_at(ocid.rfind('-')? + 1);
+        let prefix_fits = prefix.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-');
+        let hex_fits = (1..=15).contains(&hex.len()) && hex.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'));
+        if !prefix_fits || !hex_fits {
+            return None;
+        }
+        Some(Self { prefix: prefix.to_owned(), counter: u64::from_str_radix(hex, 16).ok()?, width: hex.len() })
+    }
+
+    /// The ocid `delta` counters away in the same series, or `None` past
+    /// either end of its width.
+    pub fn step(&self, delta: i64) -> Option<Self> {
+        let counter = self.counter.checked_add_signed(delta)?;
+        (counter < 16u64.pow(self.width as u32)).then(|| Self { counter, ..self.clone() })
+    }
+
+    /// Whether `other` counts in the same series: same prefix, same width.
+    pub fn same_series(&self, other: &Self) -> bool {
+        self.prefix == other.prefix && self.width == other.width
+    }
+
+    /// How many ocids `self..=last` holds (0 when `last` is below `self`).
+    pub fn run_len(&self, last: &Self) -> u64 {
+        (last.counter + 1).saturating_sub(self.counter)
+    }
+}
+
+impl std::fmt::Display for Ocid {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}{:0width$x}", self.prefix, self.counter, width = self.width)
+    }
+}
+
+/// The URL of one process's record package (§1: every release of the ocid,
+/// plus a `compiledRelease` and a `versionedRelease` the walk never reads).
+pub fn record_url(base: &str, ocid: &Ocid) -> String {
+    format!("{base}/ocdsRecordPackages/{ocid}")
+}
+
+/// What one record package says about a dense span's notice ids
+/// ([`record_releases`]).
+#[derive(Debug)]
+pub enum RecordSays {
+    /// A 200 with an empty body: the server's defect on `04196f`, the first of
+    /// `033562-2023`'s ocids, asked twice (issue 477).
+    Empty,
+    /// Releases of the notice ids, each re-nested to the listing's depth and
+    /// verified ([`renest`]), byte-identical repeats collapsed.
+    Carries(Vec<Box<RawValue>>),
+    /// A record of other notices only: the ocid is not the notice's.
+    Other,
+}
+
+/// What the record package `bytes` of `ocid` holds of the notice ids `ids`,
+/// each release moved to `nesting`, the depth the listing page serves its
+/// releases at ([`listing_nesting`]).
+///
+/// **Why re-nest, and why that is enough.** A record nests a release deeper
+/// than a listing page does (`records[].releases[]`, 16 spaces in the live
+/// API's 4-space layout, against a page's `releases[]` at 8), and otherwise
+/// serves the same bytes: `041970`'s and `041977`'s releases, moved up by
+/// the difference, are the listing's own byte for byte (measured 2026-10-02
+/// against both listing pages of the span). So a member built from a record
+/// hashes like one built from a listing ([`Page::member_bytes`]), and the
+/// archive's dedup holds whichever served it.
+pub fn record_releases(
+    bytes: &[u8],
+    ocid: &Ocid,
+    ids: &BTreeSet<String>,
+    nesting: Option<usize>,
+) -> Result<RecordSays, String> {
+    if bytes.iter().all(u8::is_ascii_whitespace) {
+        return Ok(RecordSays::Empty);
+    }
+    let package: RecordPackage = serde_json::from_slice(bytes).map_err(|e| format!("not a record package: {e}"))?;
+    let mut carried: Vec<Box<RawValue>> = Vec::new();
+    for record in &package.records {
+        if record.ocid != ocid.to_string() {
+            return Err(format!("a record of {} in the record package of {ocid}", record.ocid));
+        }
+        for release in &record.releases {
+            if release_id(release).is_some_and(|id| ids.contains(&id)) {
+                let moved = renest(release, nesting).map_err(|what| format!("a release of {ocid}: {what}"))?;
+                if !carried.iter().any(|held| held.get() == moved.get()) {
+                    carried.push(moved);
+                }
+            }
+        }
+    }
+    Ok(if carried.is_empty() { RecordSays::Other } else { RecordSays::Carries(carried) })
+}
+
+#[derive(serde::Deserialize)]
+struct RecordPackage<'a> {
+    #[serde(borrow)]
+    records: Vec<Record<'a>>,
+}
+
+/// One record, raw: only its ocid and releases are read, never the
+/// `compiledRelease`/`versionedRelease` beside them.
+#[derive(serde::Deserialize)]
+struct Record<'a> {
+    ocid: String,
+    #[serde(borrow, default)]
+    releases: Vec<&'a RawValue>,
+}
+
+/// The depth a page serves its releases at, read off the releases themselves
+/// ([`nesting`]); `Err` when they disagree, which no page has done.
+pub fn listing_nesting(releases: &[&RawValue]) -> Result<Option<usize>, String> {
+    let depths: BTreeSet<Option<usize>> = releases.iter().map(|r| nesting(r)).collect();
+    match depths.len() {
+        0 | 1 => Ok(depths.into_iter().next().flatten()),
+        _ => Err(format!("the page's releases sit at {} different depths: {depths:?}", depths.len())),
+    }
+}
+
+/// The depth a pretty-printed raw value was opened at: the spaces before its
+/// LAST line, where a pretty printer closes it at the depth it opened it.
+/// `None` for a value on one line (a compact page).
+pub fn nesting(raw: &RawValue) -> Option<usize> {
+    let (_, last) = raw.get().rsplit_once('\n')?;
+    Some(last.len() - last.trim_start_matches(' ').len())
+}
+
+/// `release` moved from its own depth to `to`: every line after the first
+/// loses the difference of the two [`nesting`]s. Derived, never assumed
+/// (the measured 8 is 16 − 8 in today's layout), and refused unless clean:
+/// a line with fewer spaces than the shift, a release shallower than `to`,
+/// or one printed on one line against a pretty listing (or the other way
+/// round). Then VERIFIED: the moved text must parse, and must be the same
+/// tokens as the record's ([`canonical`]) — a JSON string holds no raw line
+/// break, so only whitespace between tokens can have moved.
+pub fn renest(release: &RawValue, to: Option<usize>) -> Result<Box<RawValue>, String> {
+    let raw = release.get();
+    let moved = match (nesting(release), to) {
+        (None, None) => raw.to_owned(),
+        (Some(from), Some(to)) if from >= to => {
+            let shift = from - to;
+            let mut out = String::with_capacity(raw.len());
+            for (n, line) in raw.split('\n').enumerate() {
+                if n > 0 {
+                    let indent = line.len() - line.trim_start_matches(' ').len();
+                    if indent < shift {
+                        return Err(format!(
+                            "line {} is indented {indent}, less than the {shift} the re-nesting takes off",
+                            n + 1
+                        ));
+                    }
+                    out.push('\n');
+                    out.push_str(&line[shift..]);
+                } else {
+                    out.push_str(line);
+                }
+            }
+            out
+        }
+        (from, to) => {
+            return Err(format!("a release opened at depth {from:?} cannot be moved to the listing's {to:?}"));
+        }
+    };
+    let moved = RawValue::from_string(moved).map_err(|e| format!("the re-nested release does not parse: {e}"))?;
+    if canonical(moved.get()) != canonical(raw) {
+        return Err("the re-nested release is not the record's JSON".into());
+    }
+    Ok(moved)
+}
+
+/// JSON text with every byte of insignificant whitespace removed: two texts
+/// are equal here exactly when they are the same tokens in the same order,
+/// the parse [`renest`] verifies against. Not a `serde_json::Value`, which no
+/// release with `1e9999` survives ([`Page`]).
+fn canonical(json: &str) -> String {
+    let mut out = String::with_capacity(json.len());
+    let (mut in_string, mut escaped) = (false, false);
+    for c in json.chars() {
+        if in_string {
+            out.push(c);
+            if escaped {
+                escaped = false;
+            } else if c == '\\' {
+                escaped = true;
+            } else if c == '"' {
+                in_string = false;
+            }
+        } else if !matches!(c, ' ' | '\t' | '\n' | '\r') {
+            in_string = c == '"';
+            out.push(c);
+        }
+    }
+    out
 }
 
 /// Whether the LAST UK civil day of `month` is over at `now_unix`. A monthly
@@ -394,8 +637,18 @@ fn last_sunday(year: u16, month: u8) -> i64 {
 /// The release's `id` — the notice id (`083685-2026`), FTS's publication
 /// identity and the member name inside the package.
 pub fn release_id(release: &RawValue) -> Option<String> {
+    release_string(release, "id")
+}
+
+/// The release's `ocid` — its process, which a dense span's walk steps
+/// through ([`Ocid`]).
+pub fn release_ocid(release: &RawValue) -> Option<String> {
+    release_string(release, "ocid")
+}
+
+fn release_string(release: &RawValue, field: &str) -> Option<String> {
     let fields: HashMap<&str, &RawValue> = serde_json::from_str(release.get()).ok()?;
-    serde_json::from_str::<String>(fields.get("id")?.get()).ok()
+    serde_json::from_str::<String>(fields.get(field)?.get()).ok()
 }
 
 /// One page, read WITHOUT building a document over it.
@@ -627,6 +880,82 @@ mod tests {
         ] {
             assert_eq!(parse_span_key(not_a_span), None, "{not_a_span}");
         }
+    }
+
+    /// Issue 477 unit 1b: a dense span walks consecutive hex counters in one
+    /// series, and names each record it stages after its span and ocid.
+    #[test]
+    fn an_ocid_steps_within_its_series_and_a_record_key_round_trips() {
+        let first = Ocid::parse("ocds-h6vhtk-04196f").unwrap();
+        assert_eq!(first.to_string(), "ocds-h6vhtk-04196f");
+        assert_eq!(first.step(1).unwrap().to_string(), "ocds-h6vhtk-041970", "hex, zero-padded");
+        assert_eq!(first.step(-1).unwrap().to_string(), "ocds-h6vhtk-04196e");
+        let last = Ocid::parse("ocds-h6vhtk-04197d").unwrap();
+        assert_eq!(first.run_len(&last), 15, "033562-2023's run");
+        assert_eq!(last.run_len(&first), 0);
+        assert!(first.same_series(&last));
+        assert!(!first.same_series(&Ocid::parse("ocds-b5fd17-04196f").unwrap()), "another prefix");
+        assert!(!first.same_series(&Ocid::parse("ocds-h6vhtk-4196f").unwrap()), "another width");
+        assert_eq!(Ocid::parse("ocds-h6vhtk-000000").unwrap().step(-1), None, "below the series");
+        assert_eq!(Ocid::parse("ocds-h6vhtk-ffffff").unwrap().step(1), None, "past its width");
+        for not_one in ["ocds-h6vhtk-04196F", "ocds-h6vhtk-", "04196f", "ocds/h6vhtk-04196f", "ocds-h6vhtk-04196g"] {
+            assert_eq!(Ocid::parse(not_one), None, "{not_one}");
+        }
+
+        let span = Span { from: 1_000_000, to: 1_000_001 };
+        let key = record_key(span, &first.step(1).unwrap());
+        assert_eq!(key, format!("{}-rocds-h6vhtk-041970", span_key(span)));
+        assert_eq!(parse_record_key(&key), Some((span, first.step(1).unwrap())));
+        assert_eq!(parse_record_key(&span_key(span)), None, "a span page is not a record");
+        assert_eq!(parse_span_key(&key), None, "and a record is not a span page");
+        assert_eq!(parse_record_key(&format!("{}-rocds-h6vhtk-04196F", span_key(span))), None);
+    }
+
+    /// The re-nesting takes off the DIFFERENCE of the two depths, whatever
+    /// they are, and refuses what it cannot do cleanly (issue 477 unit 1b; the
+    /// real 16 → 8 is pinned against live bytes in tests/fetch.rs).
+    #[test]
+    fn a_release_is_renested_by_the_measured_difference_or_refused() {
+        let raw = |s: &str| RawValue::from_string(s.to_owned()).unwrap();
+        let ids: BTreeSet<String> = ["033562-2023".to_owned()].into();
+        // A 2-space layout nested at 6, moved to a listing at 2: four off.
+        let deep = raw("{\n        \"id\": \"033562-2023\",\n        \"n\": [\n          1e9999\n        ]\n      }");
+        assert_eq!(nesting(&deep), Some(6));
+        let moved = renest(&deep, Some(2)).unwrap();
+        assert_eq!(moved.get(), "{\n    \"id\": \"033562-2023\",\n    \"n\": [\n      1e9999\n    ]\n  }");
+        assert_eq!(renest(&deep, Some(6)).unwrap().get(), deep.get(), "same depth: unchanged");
+        // Compact on both sides: nothing to move.
+        let flat = raw(r#"{"id":"033562-2023"}"#);
+        assert_eq!(renest(&flat, None).unwrap().get(), flat.get());
+        // Refused: one side compact, a release shallower than the listing, and
+        // a line that has fewer spaces than the shift.
+        assert!(renest(&flat, Some(8)).is_err());
+        assert!(renest(&deep, None).is_err());
+        assert!(renest(&deep, Some(8)).is_err(), "shallower than the listing");
+        let ragged = raw("{\n        \"id\": \"033562-2023\",\n  \"n\": 1\n      }");
+        assert!(renest(&ragged, Some(2)).unwrap_err().contains("line 3"));
+        // Whitespace inside a string is a token, not layout.
+        assert_eq!(canonical("{ \"a b\" : [ 1 , \"\\\" x\" ] }"), "{\"a b\":[1,\"\\\" x\"]}");
+
+        // A record package: the notice's releases re-nested, a repeat
+        // collapsed, other notices left; and the three answers.
+        let ocid = Ocid::parse("ocds-h6vhtk-041970").unwrap();
+        let package = |releases: &str| {
+            format!("{{\n  \"records\": [\n    {{\n      \"ocid\": \"ocds-h6vhtk-041970\",\n      \"releases\": [{releases}],\n      \"compiledRelease\": {{\"id\": \"033562-2023\", \"x\": 1e9999}}\n    }}\n  ]\n}}")
+        };
+        let mine = "\n        {\n          \"id\": \"033562-2023\"\n        }";
+        let other = "\n        {\n          \"id\": \"017735-2024\"\n        }";
+        match record_releases(package(&format!("{mine},{mine},{other}")).as_bytes(), &ocid, &ids, Some(4)).unwrap() {
+            RecordSays::Carries(releases) => {
+                assert_eq!(releases.iter().map(|r| r.get()).collect::<Vec<_>>(), ["{\n      \"id\": \"033562-2023\"\n    }"]);
+            }
+            other => panic!("{other:?}"),
+        }
+        assert!(matches!(record_releases(package(other).as_bytes(), &ocid, &ids, Some(4)).unwrap(), RecordSays::Other));
+        assert!(matches!(record_releases(b"", &ocid, &ids, Some(4)).unwrap(), RecordSays::Empty));
+        assert!(record_releases(b"{\"records\": []", &ocid, &ids, Some(4)).is_err(), "truncated");
+        let elsewhere = Ocid::parse("ocds-h6vhtk-041971").unwrap();
+        assert!(record_releases(package(mine).as_bytes(), &elsewhere, &ids, Some(4)).unwrap_err().contains("a record of"));
     }
 
     /// A monthly is refused until its last UK civil day is over — UK, not

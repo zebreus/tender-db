@@ -61,9 +61,11 @@ pub enum Error {
     Unsupported(&'static str),
     /// A 200 whose body is not the shape the source documents: an FTS page
     /// without a `releases` array — or (issue 477) an FTS span still full at
-    /// two seconds, the shortest window the API answers, so nothing smaller can
-    /// be asked for. Not retried — the bytes are what they are — and the job
-    /// fails with its staging intact for a person to look at.
+    /// two seconds, the shortest window the API answers, whose notices the
+    /// dense-span walk cannot account for by records (several notice ids on
+    /// the page, a record that contradicts the listing, a run past
+    /// [`crate::fts::DENSE_RUN_CAP`]). Not retried — the bytes are what they
+    /// are — and the job fails with its staging intact for a person to look at.
     Malformed(String),
     /// Issue 451: an edge WAF answered instead of the origin. TED's CloudFront
     /// returns 202 with an empty body and `x-amzn-waf-action: challenge` to a
@@ -295,6 +297,23 @@ pub async fn latest_doe_day(db: &store::Db) -> turso::Result<Option<(u16, u8, u8
     Ok(latest.as_deref().and_then(parse_ymd))
 }
 
+/// What [`fetch_fts`] reports after every span page and every dense span's
+/// record it reads (asked, or staged by an earlier run).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct FtsProgress<'a> {
+    /// The window's UK civil day, `YYYY-MM-DD`.
+    pub day: &'a str,
+    /// Span pages read in this window.
+    pub pages: usize,
+    /// Releases on this window's leaf pages.
+    pub releases: usize,
+    /// Dense spans met so far in the whole fetch, the one being walked
+    /// included (issue 477 unit 1b): rare, and worth seeing on the job.
+    pub dense_spans: usize,
+    /// Records read so far for them, in the whole fetch.
+    pub records: usize,
+}
+
 /// Fetch one FTS package (docs/research/uk-fts.md §2, plan D8, issue 477):
 /// walk every request window of `target` as cursorless SPAN pages, staging each
 /// page verbatim as `<span key>.json` under `<archive>/<rel_path minus
@@ -313,20 +332,27 @@ pub async fn latest_doe_day(db: &store::Db) -> turso::Result<Option<(u16, u8, u8
 /// - a full page, or a short one that still names a next, is split
 ///   ([`crate::fts::split`]) and both halves are asked, the older first;
 /// - a span still full at two seconds cannot be split, because the API
-///   refuses a one-second window: the fetch fails as [`Error::Malformed`] with
-///   its staging intact. So no package lands unless every leaf page was short —
-///   the per-window half of issue 477's completeness invariant.
+///   refuses a one-second window. It is a DENSE span (issue 477 unit 1b): its
+///   page stays a leaf, and when the page holds ONE notice, the rows it could
+///   not show are that notice's fan-out, completed from process records over
+///   the notice's ocid run ([`walk_dense_span`]). Never the cursor: where ids
+///   tie it sticks — `limit=10` served that span's same 10 rows on 29 pages
+///   under one cursor. What the records cannot account for fails the
+///   fetch as [`Error::Malformed`] with its staging intact. So no package
+///   lands unless every leaf is complete — a short page, or a dense page with
+///   its run — the per-window half of issue 477's completeness invariant.
 ///
-/// Resumable: the staged span pages ARE the walk's state. A span whose page is
-/// on disk is never asked again, and its page decides — exactly as it did the
-/// first time — whether it is a leaf or is split. A page is staged only once
-/// it has parsed, and atomically; a staged page that no longer parses is
-/// storage damage, discarded and asked again. The staging dir is removed only after the zip
-/// has landed; an `Err` (five throttled attempts, a malformed page, an
-/// unsplittable span) leaves it intact, and the `fetches` row is written only
-/// for a complete walk. What a walk cannot resume from is discarded first
-/// (`discard_unresumable_staging`): the old cursor walker's pages, and
-/// debris older than the registered landing.
+/// Resumable: the staged span pages and records ARE the walk's state. A span
+/// whose page is on disk is never asked again, and its page decides — exactly
+/// as it did the first time — whether it is a leaf, is split or is dense; a
+/// staged record is never asked again either. A page or record is staged only
+/// once it has parsed, and atomically; a staged one that no longer parses is
+/// storage damage, discarded and asked again. The staging dir is removed only
+/// after the zip has landed; an `Err` (five throttled attempts, a malformed
+/// page, a dense span the records cannot complete) leaves it intact, and the
+/// `fetches` row is written only for a complete walk. What a walk cannot
+/// resume from is discarded first (`discard_unresumable_staging`): the old
+/// cursor walker's pages, and debris older than the registered landing.
 ///
 /// A target whose last UK civil day has not ended is refused before any
 /// request ([`Error::Unsupported`]): registered once and never re-walked, a
@@ -337,10 +363,10 @@ pub async fn latest_doe_day(db: &store::Db) -> turso::Result<Option<(u16, u8, u8
 /// `refetch` is as [`fetch`]: false skips a registered period without HTTP
 /// (removing what a crashed cleanup left of its staging).
 /// `page_pause` separates ANY two FTS requests of the process — consecutive
-/// calls and jobs included ([`pace_fts`]) — `fts::PAGE_PAUSE_SECS` in
-/// production, zero in tests. `on_progress(day, pages, releases)` fires after
-/// every span page with the window's running totals: pages read (asked, or
-/// staged by an earlier run) and releases on its leaf pages.
+/// calls and jobs included ([`pace_fts`]), records as well as pages —
+/// `fts::PAGE_PAUSE_SECS` in production, zero in tests. `on_progress` fires
+/// after every span page and every dense span's record with the running
+/// totals ([`FtsProgress`]).
 ///
 /// An empty window (a Sunday, December 2020) still lands a 0-member zip, so
 /// the day is registered and the daily walk never re-asks for it.
@@ -352,7 +378,7 @@ pub async fn fetch_fts(
     refetch: bool,
     page_pause: std::time::Duration,
     stop: impl Fn() -> bool,
-    mut on_progress: impl FnMut(&str, usize, usize),
+    mut on_progress: impl FnMut(&FtsProgress),
 ) -> Result<Outcome, Error> {
     let base = match crate::fts::base_of(&target.url) {
         Some(base) if target.source == "fts" => base,
@@ -400,6 +426,7 @@ pub async fn fetch_fts(
     discard_unresumable_staging(&staging, existing.as_ref())?;
     std::fs::create_dir_all(&staging)?;
     let mut leaves: Vec<PathBuf> = Vec::new();
+    let (mut dense_spans, mut records) = (0usize, 0usize);
     for window in &windows {
         let day = crate::fts::ymd(window.day);
         let (mut pages, mut releases) = (0usize, 0usize);
@@ -447,21 +474,33 @@ pub async fn fetch_fts(
             if crate::fts::page_is_short(count, next.as_deref()) {
                 releases += count;
                 leaves.push(path);
-            } else {
+            } else if let Some((older, newer)) = crate::fts::split(span) {
                 // Never `next`: split, and ask both halves without a cursor.
-                let Some((older, newer)) = crate::fts::split(span) else {
-                    return Err(Error::Malformed(format!(
-                        "{url}: {count} releases{} in a {}-second window, and the API refuses a \
-                         one-second window ('updatedTo' must be later than 'updatedFrom'): there is \
-                         nothing smaller to ask for (issue 477)",
-                        if next.is_some() { " and a next page" } else { "" },
-                        span.secs(),
-                    )));
-                };
                 spans.push(newer);
                 spans.push(older); // popped first, so the leaves stay in time order
+            } else {
+                // Dense: nothing narrower can be asked. Boxed, so the run's
+                // walk sits on the heap only for the rare span that needs it.
+                let progress = &mut |read: usize| {
+                    on_progress(&FtsProgress { day: &day, pages, releases, dense_spans: dense_spans + 1, records: records + read })
+                };
+                let walk = Box::pin(walk_dense_span(client, base, &staging, span, &path, page_pause, &stop, progress));
+                let Some(run) = walk.await? else { return Ok(Outcome::Stopped) };
+                eprintln!(
+                    "[fetch] {url}: dense span ({count} rows of {}): its page and {} record(s) of ocids {}..={} \
+                     are its leaves (issue 477)",
+                    run.notice,
+                    run.leaves.len(),
+                    run.first,
+                    run.last
+                );
+                dense_spans += 1;
+                records += run.records;
+                releases += count;
+                leaves.push(path);
+                leaves.extend(run.leaves);
             }
-            on_progress(&day, pages, releases);
+            on_progress(&FtsProgress { day: &day, pages, releases, dense_spans, records });
         }
     }
 
@@ -473,6 +512,264 @@ pub async fn fetch_fts(
     let outcome = land(db, archive_root, target, existing.as_ref(), &final_path, bytes, sha256).await?;
     std::fs::remove_dir_all(&staging)?;
     Ok(outcome)
+}
+
+/// A dense span's notice and the records that complete it ([`walk_dense_span`]).
+struct DenseRun {
+    notice: String,
+    first: crate::fts::Ocid,
+    last: crate::fts::Ocid,
+    /// The staged records that carry the notice: leaves beside the span's
+    /// own page.
+    leaves: Vec<PathBuf>,
+    /// Records read, member or not.
+    records: usize,
+}
+
+impl DenseRun {
+    /// Count one record read, and keep it as a leaf if it carries the notice.
+    fn note(&mut self, read: &RecordRead, on_record: &mut impl FnMut(usize)) {
+        if matches!(read.says, Some(crate::fts::RecordSays::Carries(_))) {
+            self.leaves.push(read.path.clone());
+        }
+        self.records += 1;
+        on_record(self.records);
+    }
+}
+
+/// One ocid's record as a dense span's walk read it.
+struct RecordRead {
+    /// `None`: the server answered 404.
+    says: Option<crate::fts::RecordSays>,
+    /// Where it is (or would be) staged.
+    path: PathBuf,
+}
+
+/// What every record request of one dense span shares.
+struct RecordAsker<'a> {
+    client: &'a reqwest::Client,
+    base: &'a str,
+    staging: &'a Path,
+    span: crate::fts::Span,
+    ids: &'a std::collections::BTreeSet<String>,
+    nesting: Option<usize>,
+    page_pause: std::time::Duration,
+}
+
+impl RecordAsker<'_> {
+    /// `ocid`'s record: read from staging, or asked — paced, behind the stop
+    /// checkpoint, exactly like a span page — and staged once it has parsed.
+    /// A 404 and an empty body stage nothing, so a re-run asks them again.
+    /// `Ok(None)`: stopped before the request.
+    async fn read(&self, ocid: &crate::fts::Ocid, stop: &impl Fn() -> bool) -> Result<Option<RecordRead>, Error> {
+        use crate::fts::RecordSays;
+        let path = self.staging.join(format!("{}.json", crate::fts::record_key(self.span, ocid)));
+        let url = crate::fts::record_url(self.base, ocid);
+        let says_of = |bytes: &[u8]| {
+            crate::fts::record_releases(bytes, ocid, self.ids, self.nesting)
+                .map_err(|what| Error::Malformed(format!("{url}: a dense span's record (issue 477): {what}")))
+        };
+        match std::fs::read(&path) {
+            Ok(bytes) => match says_of(&bytes) {
+                Ok(says @ (RecordSays::Carries(_) | RecordSays::Other)) => {
+                    return Ok(Some(RecordRead { says: Some(says), path }));
+                }
+                // Only a parsed package is staged: anything else on disk is
+                // storage damage, discarded and asked again (as a page is).
+                Ok(RecordSays::Empty) | Err(_) => {
+                    eprintln!("[fetch] {}: staged record unreadable; asking it again", path.display());
+                    std::fs::remove_file(&path)?;
+                }
+            },
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => return Err(e.into()),
+        }
+        pace_fts(self.page_pause).await;
+        // The stop checkpoint, as before every span page (issue 450).
+        if stop() {
+            return Ok(None);
+        }
+        let asked = get_bytes(self.client, &url).await;
+        mark_fts_request();
+        let bytes = match asked {
+            Ok(bytes) => bytes,
+            Err(Error::Status(reqwest::StatusCode::NOT_FOUND)) => return Ok(Some(RecordRead { says: None, path })),
+            Err(e) => return Err(e),
+        };
+        let says = says_of(&bytes)?;
+        if !matches!(says, RecordSays::Empty) {
+            write_atomic(&path, &bytes)?;
+        }
+        Ok(Some(RecordRead { says: Some(says), path }))
+    }
+}
+
+/// Complete a DENSE span — still full at two seconds, so nothing narrower can
+/// be asked — from process records (issue 477 unit 1b). `page` is the span's
+/// staged cursorless page, a leaf already. `Ok(None)` when a stop landed
+/// between two requests.
+///
+/// **Why records, and never the cursor.** 2023-11-14 10:05:14–15 lists 210
+/// rows of ONE notice, `033562-2023`: its 15 ocids' release, 14 times each.
+/// A page shows 100. The cursor is the defect itself: where ids tie it does
+/// not advance — a limit-10 walk of the span served the same 10 rows on 29
+/// pages under one `nextCursor` (issue 449's stuck shape), and the limit-100
+/// walk reached all 15 ocids only by luck. A process's record holds all its
+/// releases, so the notice is complete once every ocid of its run is read:
+/// 1. **One notice.** The page's releases must all carry the same notice id.
+///    With several, the rows below its 100 could hold another notice whole,
+///    and no record names it: that fails as [`Error::Malformed`], as an
+///    unsplittable span did before this walk.
+/// 2. **The run.** Its seeds are the page's distinct ocids, one series
+///    ([`crate::fts::Ocid`]). Every ocid from the first seed to the last is
+///    asked, and must carry the notice; an empty body passes only for a seed,
+///    whose release the page holds (`04196f` is a 200 with no body). The run
+///    then extends one ocid at a time below and above: a record carrying the
+///    notice joins it; a 404 or a record of other notices only ends that side
+///    (`04196e` is 404, `04197e` is `033564-2023`); an empty body there fails,
+///    since it could be the notice's. Past [`crate::fts::DENSE_RUN_CAP`]
+///    ocids it fails.
+/// 3. **The leaves.** Each record carrying the notice is staged as
+///    `<span key>-r<ocid>.json` ([`crate::fts::record_key`]) and is a leaf:
+///    the assembler takes its releases of the notice, re-nested to the
+///    page's depth and verified ([`crate::fts::record_releases`]), so a
+///    member from a record is byte-identical to one from a listing. A seed's
+///    record must hold the page's own release of that ocid, byte for byte
+///    after re-nesting: the equality is checked live on every dense span,
+///    not trusted from the two ocids it was measured on.
+///
+/// The seeds' records go beyond the owner's decision, which asks only for the
+/// ocids the page does not show: without them neither the empty-body rule nor
+/// the live byte check could happen, and a second release of the notice under
+/// a seed ocid, hidden below the page, would be lost. The cost is one request
+/// per seed (8 on 2023-11-14).
+///
+/// What a page of one notice cannot rule out is a DIFFERENT notice, with a
+/// lower id, published in the same two seconds and wholly below the page's
+/// 100 rows. No request reaches it; the per-year id invariant (issue 477 unit
+/// 3) is what sees it, as an id that is missing.
+#[allow(clippy::too_many_arguments)]
+async fn walk_dense_span(
+    client: &reqwest::Client,
+    base: &str,
+    staging: &Path,
+    span: crate::fts::Span,
+    page: &Path,
+    page_pause: std::time::Duration,
+    stop: impl Fn() -> bool,
+    mut on_record: impl FnMut(usize),
+) -> Result<Option<DenseRun>, Error> {
+    use crate::fts::{Ocid, RecordSays};
+    let url = crate::fts::span_url(base, span);
+    let malformed = |what: String| Error::Malformed(format!("{url}: a dense span (issue 477): {what}"));
+    let bytes = std::fs::read(page)?;
+    let listing = crate::fts::Page::read(&bytes).map_err(malformed)?;
+    let releases = listing.releases().map_err(malformed)?;
+
+    // 1. One notice.
+    let ids: std::collections::BTreeSet<String> = releases.iter().filter_map(|r| crate::fts::release_id(r)).collect();
+    let notice = match ids.first() {
+        Some(id) if ids.len() == 1 && releases.iter().all(|r| crate::fts::release_id(r).is_some()) => id.clone(),
+        _ => {
+            return Err(malformed(format!(
+                "{} releases of {} notice ids ({}{}), and the API refuses a one-second window: a \
+                 notice below the page's rows cannot be reached by records, so the span cannot be \
+                 completed",
+                releases.len(),
+                ids.len(),
+                ids.iter().take(5).cloned().collect::<Vec<_>>().join(", "),
+                if ids.len() > 5 { ", …" } else { "" },
+            )));
+        }
+    };
+    let nesting = crate::fts::listing_nesting(&releases).map_err(malformed)?;
+
+    // 2. The run's seeds: the page's ocids, each with the page's releases of it.
+    let mut seeds: std::collections::BTreeMap<Ocid, Vec<&str>> = std::collections::BTreeMap::new();
+    for release in &releases {
+        let ocid = crate::fts::release_ocid(release)
+            .and_then(|o| Ocid::parse(&o))
+            .ok_or_else(|| malformed(format!("a release of {notice} whose ocid is not of a hex series")))?;
+        let held = seeds.entry(ocid).or_default();
+        if !held.contains(&release.get()) {
+            held.push(release.get());
+        }
+    }
+    let (Some(first), Some(last)) = (seeds.keys().next().cloned(), seeds.keys().next_back().cloned()) else {
+        return Err(malformed("a full page without releases".into()));
+    };
+    if let Some(odd) = seeds.keys().find(|o| !o.same_series(&first)) {
+        return Err(malformed(format!("ocids of two series on one page: {first} and {odd}")));
+    }
+    if first.run_len(&last) > crate::fts::DENSE_RUN_CAP as u64 {
+        return Err(malformed(format!(
+            "its ocids {first}..={last} are {} apart, past the cap of {}",
+            first.run_len(&last),
+            crate::fts::DENSE_RUN_CAP
+        )));
+    }
+
+    let asker = RecordAsker { client, base, staging, span, ids: &ids, nesting, page_pause };
+    let mut run = DenseRun { notice: notice.clone(), first: first.clone(), last: last.clone(), leaves: Vec::new(), records: 0 };
+    // Every ocid from the first seed to the last carries the notice.
+    let mut next = Some(first.clone());
+    while let Some(at) = next.filter(|o| *o <= last) {
+        let Some(read) = asker.read(&at, &stop).await? else { return Ok(None) };
+        run.note(&read, &mut on_record);
+        let on_page = seeds.get(&at);
+        match (&read.says, on_page) {
+            (Some(RecordSays::Carries(carried)), Some(held)) => {
+                // The live byte check: the record re-nested IS the listing.
+                if let Some(missing) = held.iter().find(|raw| !carried.iter().any(|c| c.get() == **raw)) {
+                    return Err(malformed(format!(
+                        "the record of {at} does not hold the page's release of it byte for byte after \
+                         re-nesting ({} bytes on the page), so a member built from a record would not \
+                         match one built from the listing",
+                        missing.len()
+                    )));
+                }
+            }
+            (Some(RecordSays::Carries(_)), None) | (Some(RecordSays::Empty), Some(_)) => {}
+            (Some(RecordSays::Empty), None) => {
+                return Err(malformed(format!("the record of {at}, inside the run and off the page, is an empty body")));
+            }
+            (None | Some(RecordSays::Other), _) => {
+                let whose = if on_page.is_some() { "an ocid the page serves" } else { "an ocid inside the run" };
+                return Err(malformed(format!("the record of {at}, {whose}, does not carry {notice}")));
+            }
+        }
+        next = at.step(1);
+    }
+    // Then outward, one ocid at a time, until each side ends.
+    for dir in [-1i64, 1] {
+        let mut next = if dir < 0 { first.step(-1) } else { last.step(1) };
+        while let Some(at) = next {
+            let Some(read) = asker.read(&at, &stop).await? else { return Ok(None) };
+            run.note(&read, &mut on_record);
+            match read.says {
+                Some(RecordSays::Carries(_)) => {}
+                None | Some(RecordSays::Other) => break,
+                Some(RecordSays::Empty) => {
+                    return Err(malformed(format!(
+                        "the record of {at}, next to the run and off the page, is an empty body: it \
+                         could be one of {notice}'s ocids"
+                    )));
+                }
+            }
+            if dir < 0 { run.first = at.clone() } else { run.last = at.clone() }
+            if run.first.run_len(&run.last) > crate::fts::DENSE_RUN_CAP as u64 {
+                return Err(malformed(format!(
+                    "{notice}'s run {}..={} grew past the cap of {} ocids",
+                    run.first,
+                    run.last,
+                    crate::fts::DENSE_RUN_CAP
+                )));
+            }
+            next = at.step(dir);
+        }
+    }
+    run.leaves.sort();
+    Ok(Some(run))
 }
 
 /// Walk FTS daily windows forward over every day from [`fts_probe_floor`]
@@ -538,7 +835,7 @@ pub async fn probe_fts_daily(
             break;
         }
         let target = crate::fts::day(base, day);
-        let outcome = fetch_fts(db, client, archive_root, &target, false, page_pause, &stop, |_, _, _| {}).await?;
+        let outcome = fetch_fts(db, client, archive_root, &target, false, page_pause, &stop, |_| {}).await?;
         on_day(&target.period, &outcome);
         let stopped = outcome == Outcome::Stopped;
         out.push((target.period.clone(), outcome));
@@ -612,11 +909,12 @@ fn staging_dir(archive_root: &Path, rel_path: &str) -> PathBuf {
 }
 
 /// Remove what a walk must not resume from, before it starts:
-/// - **anything that is not a span page** (`<span key>.json`, see
-///   [`crate::fts::span_key`]) — above all the cursor walker's `<day>-pNNN.json`,
-///   `<day>-hNN-pNNN.json` and `cursor.json` (issue 477: those pages are exactly
-///   what lost the releases, so they are discarded, never assembled or
-///   resumed), and an interrupted write's `.part`;
+/// - **anything that is not a span page or a dense span's record**
+///   (`<span key>.json`, `<span key>-r<ocid>.json`, see [`crate::fts::span_key`]
+///   and [`crate::fts::record_key`]) — above all the cursor walker's
+///   `<day>-pNNN.json`, `<day>-hNN-pNNN.json` and `cursor.json` (issue 477:
+///   those pages are exactly what lost the releases, so they are discarded,
+///   never assembled or resumed), and an interrupted write's `.part`;
 /// - **debris of a landing** (issue 342 review, lens "fetcher"): a page staged
 ///   no later than the registered landing is what an interrupted cleanup (or a
 ///   crash between the row and the cleanup) left behind, and resuming from it
@@ -627,13 +925,9 @@ fn discard_unresumable_staging(staging: &Path, landed: Option<&store::Fetch>) ->
     let mut discarded = 0usize;
     for entry in entries {
         let path = entry?.path();
+        let key = path.file_name().and_then(|n| n.to_str()).and_then(|n| n.strip_suffix(".json"));
         let span_page = path.is_file()
-            && path
-                .file_name()
-                .and_then(|n| n.to_str())
-                .and_then(|n| n.strip_suffix(".json"))
-                .and_then(crate::fts::parse_span_key)
-                .is_some();
+            && key.is_some_and(|k| crate::fts::parse_span_key(k).is_some() || crate::fts::parse_record_key(k).is_some());
         let staged_at = std::fs::metadata(&path)
             .and_then(|meta| meta.modified())
             .ok()
@@ -686,18 +980,46 @@ fn page_summary(bytes: &[u8]) -> Result<(usize, Option<String>), String> {
 /// publication id from its payload, not its name, so the `~` member is the
 /// same publication's second notice row.
 ///
+/// A dense span's record (`<span key>-r<ocid>.json`, issue 477 unit 1b) is a
+/// leaf of its span: read against the span's page, it gives the releases of
+/// the page's notice id, re-nested to the page's depth and verified
+/// ([`crate::fts::record_releases`]), each built under the PAGE's header — so
+/// the member is the bytes a listing-served release of it makes. `033562-2023`
+/// is the case this exists for: its 15 releases (one per ocid) are 15 members,
+/// `<id>.json` and 14 `~` variants, and its 14-fold repeats collapse.
+///
 /// Members are sorted by name (`<id>.json` before its `~` variants); the zip
 /// is byte-deterministic, so a refetch of unchanged pages hashes equal. A
 /// walk with no releases yields a valid 0-member zip. Returns the written
 /// zip's (bytes, sha256-hex).
-fn assemble_fts_zip(pages: &[PathBuf], part: &Path) -> Result<(i64, String), Error> {
+fn assemble_fts_zip(leaves: &[PathBuf], part: &Path) -> Result<(i64, String), Error> {
     // id → its distinct member bytes.
     let mut by_id: std::collections::BTreeMap<String, Vec<Vec<u8>>> = std::collections::BTreeMap::new();
-    for path in pages {
+    for path in leaves {
         let malformed = |what: String| Error::Malformed(format!("{}: {what}", path.display()));
-        let bytes = std::fs::read(path)?;
+        let record = path.file_stem().and_then(|n| n.to_str()).and_then(crate::fts::parse_record_key);
+        let page_path = match &record {
+            Some((span, _)) => path.with_file_name(format!("{}.json", crate::fts::span_key(*span))),
+            None => path.clone(),
+        };
+        let bytes = std::fs::read(&page_path)?;
         let page = crate::fts::Page::read(&bytes).map_err(malformed)?;
-        let releases = page.releases().map_err(malformed)?;
+        let on_page = page.releases().map_err(malformed)?;
+        let renested;
+        let releases: Vec<&serde_json::value::RawValue> = match &record {
+            None => on_page,
+            Some((_, ocid)) => {
+                let ids = on_page.iter().filter_map(|r| crate::fts::release_id(r)).collect();
+                let nesting = crate::fts::listing_nesting(&on_page).map_err(malformed)?;
+                match crate::fts::record_releases(&std::fs::read(path)?, ocid, &ids, nesting).map_err(malformed)? {
+                    crate::fts::RecordSays::Carries(moved) => {
+                        renested = moved;
+                        renested.iter().map(|r| &**r).collect()
+                    }
+                    _ => return Err(malformed("a leaf record that does not carry its span's notice".into())),
+                }
+            }
+        };
         for (index, release) in releases.iter().enumerate() {
             let id = match crate::fts::release_id(release) {
                 // The id becomes a member name: a separator in it would name a
