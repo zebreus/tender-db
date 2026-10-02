@@ -39,13 +39,24 @@ const PARSE_BATCH: usize = 500;
 /// there are.
 const SAMPLE_PUBLICATIONS: usize = 40;
 
-/// The buckets, in report order: the clusters' jurisdictions, the Tender's Sources, and
-/// the span between its first and last notice.
-pub const KEY_CENSUS_BUCKETS: [&str; 7] = [
+/// Clusters listed per sample (the largest first; `clusters_total` says how many there
+/// are), and buyerless notices listed per sample (`without_buyers_total`): a Tender of
+/// tens of thousands of versions stays a bounded report row.
+const SAMPLE_CLUSTERS: usize = 20;
+const SAMPLE_WITHOUT_BUYERS: usize = 40;
+
+/// The buckets, in report order: the clusters' jurisdictions, whether two clusters come
+/// from disjoint Sources, the time gap between the minority clusters and the largest one
+/// (the split rule's "more than N months away"), and the Tender's whole span.
+pub const KEY_CENSUS_BUCKETS: [&str; 11] = [
     "one-jurisdiction",
     "several-jurisdictions",
+    "unknown-jurisdiction",
     "one-source",
     "several-sources",
+    "gap-le-90d",
+    "gap-le-1y",
+    "gap-gt-1y",
     "span-le-90d",
     "span-le-1y",
     "span-gt-1y",
@@ -63,6 +74,14 @@ pub struct KeyCensusCluster {
     pub buyer: String,
     /// The register jurisdictions its notices' buyers name.
     pub jurisdictions: Vec<String>,
+    /// The Sources of its notices.
+    pub sources: Vec<String>,
+    /// Its earliest and latest notice's publication day (`YYYY-MM-DD`).
+    pub first_published: String,
+    pub last_published: String,
+    /// Days between its time range and the largest cluster's (`0` when they overlap, and
+    /// for the largest cluster itself).
+    pub gap_days: i64,
     /// Of its notices, the ones whose own procedure key is not the Tender's: joined by a
     /// link (issue 481), not by the shared BT-04.
     pub other_keys: usize,
@@ -74,10 +93,17 @@ pub struct KeyCensusSample {
     pub tender_id: i64,
     pub procedure_key: String,
     pub notices: usize,
+    /// First to last notice over all of them, buyerless ones included.
     pub span_days: i64,
+    /// The smallest [`KeyCensusCluster::gap_days`] of the minority clusters.
+    pub gap_days: i64,
+    /// How many clusters there are; `clusters` lists at most [`SAMPLE_CLUSTERS`].
+    pub clusters_total: usize,
     /// Largest cluster first.
     pub clusters: Vec<KeyCensusCluster>,
-    /// The notices that name no buyer (`source:publication_id`), never in a cluster.
+    /// The notices that name no buyer (`source:publication_id`), never in a cluster: at
+    /// most [`SAMPLE_WITHOUT_BUYERS`] of `without_buyers_total`.
+    pub without_buyers_total: usize,
     pub without_buyers: Vec<String>,
 }
 
@@ -135,10 +161,18 @@ pub struct ProcedureKeyCensus {
     /// Of `split`, the Tenders whose every notice carries the Tender's own key: the
     /// BT-04 reuse itself, with no issue-481 link weld in the Tender.
     pub split_same_key: u64,
+    /// Of `split`: some minority cluster's time range overlaps the largest cluster's
+    /// (`interleaved`: one platform or authority running procedures side by side under
+    /// one key), or none does (`sequential`: a later procedure reusing the key).
+    pub interleaved: u64,
+    pub sequential: u64,
+    /// Of `split`, the Tenders whose every cluster but the largest is a single notice
+    /// (the island shape a split would cut out), against balanced clusters (the hub shape).
+    pub singleton_minorities: u64,
     /// The split Tenders per bucket ([`KEY_CENSUS_BUCKETS`]).
     pub buckets: BTreeMap<String, KeyCensusBucket>,
-    /// The split Tenders by jurisdictions × Sources × span
-    /// (`one-jurisdiction/several-sources/span-gt-1y`).
+    /// The split Tenders by jurisdictions × Sources × gap
+    /// (`several-jurisdictions/one-source/gap-gt-1y`).
     pub cross: BTreeMap<String, u64>,
     /// The split Tenders by cluster count: `2`, `3`, `4-5`, `6-10`, `11+`.
     pub cluster_counts: BTreeMap<String, u64>,
@@ -162,14 +196,14 @@ impl ProcedureKeyCensus {
     }
 
     /// One split Tender's sample, with its bucket names.
-    fn record_split(&mut self, sample: KeyCensusSample, jurisdictions: &str, sources: &str, span: &str) {
+    fn record_split(&mut self, sample: KeyCensusSample, jurisdictions: &str, sources: &str, gap: &str, span: &str) {
         self.split += 1;
-        let clusters = sample.clusters.len();
+        let clusters = sample.clusters_total;
         let rank = sample_rank(sample.tender_id);
-        for bucket in [jurisdictions, sources, span] {
+        for bucket in [jurisdictions, sources, gap, span] {
             self.buckets.get_mut(bucket).expect("a census bucket").offer(rank, &sample);
         }
-        *self.cross.entry(format!("{jurisdictions}/{sources}/{span}")).or_default() += 1;
+        *self.cross.entry(format!("{jurisdictions}/{sources}/{gap}")).or_default() += 1;
         let histogram = match clusters {
             0..=2 => "2",
             3 => "3",
@@ -180,7 +214,7 @@ impl ProcedureKeyCensus {
         *self.cluster_counts.entry(histogram.to_owned()).or_default() += 1;
         self.max_clusters = self.max_clusters.max(clusters);
         // The hub list: the most clusters, then the lowest id.
-        let key = |s: &KeyCensusSample| (std::cmp::Reverse(s.clusters.len()), s.tender_id);
+        let key = |s: &KeyCensusSample| (std::cmp::Reverse(s.clusters_total), s.tender_id);
         if self.hubs.len() < KEY_CENSUS_SAMPLES {
             self.hubs.push(sample);
             self.hubs.sort_by_key(key);
@@ -216,14 +250,21 @@ impl ProcedureKeyCensus {
             self.split_notices_without_buyers += buyerless as u64;
         }
         let publication = |(v, f): &(&store::KeyedTenderVersion, &NoticeFacts)| format!("{}:{}", f.source, v.publication_id);
+        let day = |t: i64| crate::data_quality::day_string(t.div_euclid(86_400)).unwrap_or_default();
         let mut out: Vec<KeyCensusCluster> = Vec::with_capacity(clusters.len());
-        let mut cluster_jurisdictions: Vec<BTreeSet<&str>> = Vec::with_capacity(clusters.len());
+        // Per cluster: its jurisdictions, its Sources and its time range, for the axes.
+        let mut facets: Vec<(BTreeSet<&str>, BTreeSet<&str>, (i64, i64))> = Vec::with_capacity(clusters.len());
         for members in &clusters {
             let mut members: Vec<&(&store::KeyedTenderVersion, &NoticeFacts)> =
                 members.iter().map(|&m| &notices[known[m]]).collect();
             members.sort_by_key(|(v, _)| (v.published_at, v.notice_id));
             let jurisdictions: BTreeSet<&str> =
                 members.iter().flat_map(|(_, f)| f.jurisdictions.iter().map(String::as_str)).collect();
+            let sources: BTreeSet<&str> = members.iter().map(|(_, f)| f.source.as_str()).collect();
+            let range = (
+                members.first().map_or(0, |(v, _)| v.published_at),
+                members.iter().map(|(v, _)| v.published_at).max().unwrap_or(0),
+            );
             let other_keys = members.iter().filter(|(_, f)| f.key.as_deref() != Some(first.procedure_key.as_str())).count();
             out.push(KeyCensusCluster {
                 other_keys,
@@ -231,19 +272,60 @@ impl ProcedureKeyCensus {
                 publications: members.iter().take(SAMPLE_PUBLICATIONS).map(|m| publication(m)).collect(),
                 buyer: members.iter().find_map(|(_, f)| f.buyer.clone()).unwrap_or_default(),
                 jurisdictions: jurisdictions.iter().map(|j| (*j).to_owned()).collect(),
+                sources: sources.iter().map(|s| (*s).to_owned()).collect(),
+                first_published: day(range.0),
+                last_published: day(range.1),
+                gap_days: 0,
             });
-            cluster_jurisdictions.push(jurisdictions);
+            facets.push((jurisdictions, sources, range));
         }
-        // Several jurisdictions: two clusters whose buyers name known jurisdictions and
-        // share none (a cross-border joint procurement in one cluster is not the
-        // collision this asks about; a DE cluster against a BG cluster is).
-        let several_jurisdictions = cluster_jurisdictions.iter().enumerate().any(|(i, a)| {
-            cluster_jurisdictions[i + 1..].iter().any(|b| !a.is_empty() && !b.is_empty() && a.is_disjoint(b))
-        });
+        let mut order: Vec<usize> = (0..out.len()).collect();
+        order.sort_by_key(|&i| (std::cmp::Reverse(out[i].notices), i));
+        let largest = order[0];
+        // The gap axis: each minority cluster's distance from the largest cluster's time
+        // range, the cut the split rule reads ("more than N months away").
+        let (r0, r1) = facets[largest].2;
+        let mut interleaved = false;
+        for &i in &order[1..] {
+            let (a0, a1) = facets[i].2;
+            let gap = (a0.max(r0) - a1.min(r1)).max(0);
+            interleaved |= a0.max(r0) <= a1.min(r1);
+            out[i].gap_days = gap / 86_400;
+        }
+        let gap_days = order[1..].iter().map(|&i| out[i].gap_days).min().unwrap_or(0);
+        if interleaved {
+            self.interleaved += 1;
+        } else {
+            self.sequential += 1;
+        }
+        if order[1..].iter().all(|&i| out[i].notices == 1) {
+            self.singleton_minorities += 1;
+        }
+        // Jurisdictions: several when two clusters name known jurisdictions and share none
+        // (a cross-border joint procurement in one cluster is not the collision this asks
+        // about; a DE cluster against a BG cluster is); unknown when no pair says so and
+        // some pair has a side whose buyers name no country; one when every pair shares a
+        // known jurisdiction.
+        let n = facets.len();
+        let pairs = || (0..n).flat_map(move |i| (i + 1..n).map(move |j| (i, j)));
+        let known_pair = |(i, j): (usize, usize)| !facets[i].0.is_empty() && !facets[j].0.is_empty();
+        let jurisdictions = if pairs().any(|p| known_pair(p) && facets[p.0].0.is_disjoint(&facets[p.1].0)) {
+            "several-jurisdictions"
+        } else if pairs().all(known_pair) {
+            "one-jurisdiction"
+        } else {
+            "unknown-jurisdiction"
+        };
+        // Sources: several when two clusters come from disjoint Sources (a DÖE cluster
+        // welded to a TED one); a TED notice colliding with a DÖE/TED pair is one Source.
+        let sources = if pairs().any(|(i, j)| facets[i].1.is_disjoint(&facets[j].1)) {
+            "several-sources"
+        } else {
+            "one-source"
+        };
         if notices.iter().all(|(_, f)| f.key.as_deref() == Some(first.procedure_key.as_str())) {
             self.split_same_key += 1;
         }
-        let sources: BTreeSet<&str> = notices.iter().map(|(_, f)| f.source.as_str()).collect();
         let (lo, hi) = notices
             .iter()
             .fold((i64::MAX, i64::MIN), |(lo, hi), (v, _)| (lo.min(v.published_at), hi.max(v.published_at)));
@@ -253,22 +335,29 @@ impl ProcedureKeyCensus {
             91..=365 => "span-le-1y",
             _ => "span-gt-1y",
         };
-        let mut order: Vec<usize> = (0..out.len()).collect();
-        order.sort_by_key(|&i| (std::cmp::Reverse(out[i].notices), i));
+        let gap = match gap_days {
+            ..=90 => "gap-le-90d",
+            91..=365 => "gap-le-1y",
+            _ => "gap-gt-1y",
+        };
+        let clusters_total = out.len();
         let sample = KeyCensusSample {
             tender_id: first.tender_id,
             procedure_key: first.procedure_key.clone(),
             notices: versions.len(),
             span_days,
-            clusters: order.into_iter().map(|i| out[i].clone()).collect(),
-            without_buyers: notices.iter().filter(|(_, f)| f.tokens.is_empty()).map(publication).collect(),
+            gap_days,
+            clusters_total,
+            clusters: order.into_iter().take(SAMPLE_CLUSTERS).map(|i| out[i].clone()).collect(),
+            without_buyers_total: buyerless,
+            without_buyers: notices
+                .iter()
+                .filter(|(_, f)| f.tokens.is_empty())
+                .take(SAMPLE_WITHOUT_BUYERS)
+                .map(publication)
+                .collect(),
         };
-        self.record_split(
-            sample,
-            if several_jurisdictions { "several-jurisdictions" } else { "one-jurisdiction" },
-            if sources.len() > 1 { "several-sources" } else { "one-source" },
-            span,
-        );
+        self.record_split(sample, jurisdictions, sources, gap, span);
     }
 
     fn finish(&mut self) {
@@ -345,7 +434,7 @@ async fn notice_facts(db: &store::Db, ids: &[i64]) -> turso::Result<HashMap<i64,
             let jurisdictions = guard
                 .buyers()
                 .iter()
-                .filter_map(|m| m.country.as_deref())
+                .filter_map(|m| m.country.as_deref().map(str::trim).filter(|c| !c.is_empty()))
                 .map(|c| store::register_jurisdiction(c).to_owned())
                 .collect();
             let mut tokens = guard.tokens();
@@ -428,6 +517,48 @@ mod tests {
         assert_eq!(buyer_clusters(&sets).len(), 2);
     }
 
+    /// A Tender of many buyer-disjoint notices and many buyerless ones stays a bounded
+    /// sample: the largest clusters and the first buyerless notices, with their totals,
+    /// and the hub list ranks it by the total, not by the capped list.
+    #[test]
+    fn a_huge_tender_is_a_bounded_sample_ranked_by_its_cluster_total() {
+        let key = "f3943baf-54ae-441a-aee9-3e802998024a";
+        let (disjoint, buyerless) = (25_i64, 45_i64);
+        let versions: Vec<store::KeyedTenderVersion> = (0..disjoint + buyerless)
+            .map(|i| store::KeyedTenderVersion {
+                tender_id: 7,
+                procedure_key: key.to_owned(),
+                notice_id: i,
+                publication_id: format!("{i:08}-2024"),
+                published_at: 1_700_000_000 + i * 86_400,
+            })
+            .collect();
+        let facts: HashMap<i64, NoticeFacts> = (0..disjoint + buyerless)
+            .map(|i| {
+                let named = i < disjoint;
+                let facts = NoticeFacts {
+                    source: "ted".to_owned(),
+                    key: Some(key.to_owned()),
+                    tokens: if named { digest(&format!("buyer {i}")) } else { Vec::new() },
+                    buyer: named.then(|| format!("buyer {i}")),
+                    jurisdictions: BTreeSet::new(),
+                };
+                (i, facts)
+            })
+            .collect();
+        let mut report = ProcedureKeyCensus::new();
+        report.classify(&versions, &facts);
+        assert_eq!(report.split, 1);
+        assert_eq!(report.max_clusters, 25);
+        assert_eq!(report.cluster_counts.get("11+"), Some(&1));
+        let hub = &report.hubs[0];
+        assert_eq!((hub.clusters_total, hub.clusters.len()), (25, SAMPLE_CLUSTERS));
+        assert_eq!((hub.without_buyers_total, hub.without_buyers.len()), (45, SAMPLE_WITHOUT_BUYERS));
+        assert_eq!(report.buckets["unknown-jurisdiction"].tenders, 1, "no buyer names a country");
+        assert_eq!((report.sequential, report.singleton_minorities), (1, 1));
+        assert_eq!(hub.gap_days, 1, "the nearest minority cluster is a day from the largest");
+    }
+
     #[test]
     fn a_bucket_keeps_the_smallest_ranks_whatever_the_order() {
         let sample = |id: i64| KeyCensusSample {
@@ -435,7 +566,10 @@ mod tests {
             procedure_key: String::new(),
             notices: 2,
             span_days: 0,
+            gap_days: 0,
+            clusters_total: 0,
             clusters: Vec::new(),
+            without_buyers_total: 0,
             without_buyers: Vec::new(),
         };
         let mut forward = KeyCensusBucket::default();

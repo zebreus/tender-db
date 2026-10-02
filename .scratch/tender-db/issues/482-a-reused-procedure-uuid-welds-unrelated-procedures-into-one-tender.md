@@ -1,6 +1,6 @@
 # 482 — a reused procedure UUID (BT-04) welds unrelated procedures into one Tender, and nothing checks the buyers
 
-Status: ready-for-agent — NEXT: deploy unit 1 (the census, landed 2026-10-02, not yet deployed) → run
+Status: ready-for-agent — NEXT: deploy unit 1 (the census + its review fixes, landed 2026-10-02, not yet deployed) → run
 `procedure-key-census` (~2–3 h, read-only) → read the buckets and their samples on the portals → decide gate
 (refuse the key, as 369 does) vs split (cut the Tender at a buyer-disjoint edge).
 Kind: data correctness (a false merge under the declared rule)
@@ -108,3 +108,32 @@ whose surviving key is a UUID, so a 481 link weld (OPP-090 / BT-701 across keys)
 has not split yet also shows as clusters; run the census after that daily, and read a sample's clusters
 against their keys (`other_keys`, `split_same_key`) before calling it a BT-04 reuse.
 
+
+## Unit 1 review fixes — 2026-10-02 (not yet deployed)
+
+An adversarial review of `0b9aacf` found the report could not set the split rule's threshold. Fixed:
+- **Gap axis** (major): each cluster now carries `first_published`/`last_published` (`YYYY-MM-DD`),
+  `sources` and `gap_days` (distance of its time range from the largest cluster's, 0 when they overlap);
+  the sample's `gap_days` is the smallest minority gap, bucketed `gap-le-90d`/`-le-1y`/`-gt-1y`; `cross` is
+  now jurisdictions × Sources × gap. New totals `interleaved` / `sequential` (gate vs split shape) and
+  `singleton_minorities` (the island shape). The Tender span stays as a secondary axis.
+- **`unknown-jurisdiction`**: a third value; `one-jurisdiction` now means every pair shares a known
+  country. Blank BT-514 codes are dropped before `register_jurisdiction`.
+- **Source axis per cluster**: several only when two clusters' Sources are disjoint; 1110706 (a TED
+  notice against a DÖE/TED pair) is now `one-source`, as it should be.
+- **Bounded samples**: at most 20 clusters (`clusters_total`) and 40 buyerless notices
+  (`without_buyers_total`) per sample; the hub list ranks by `clusters_total`.
+- **SQL pre-filter trims** (`length(trim(procedure_key)) = 36`), as `is_uuid` does.
+- **Tests**: the census fixture adds an interleaved hub, a countryless-buyer cluster (DÖE-only beside
+  TED-only: several Sources, unknown jurisdiction), an OPP-090 link-joined split (`other_keys` 1,
+  not `split_same_key`), and a padded key; a unit test pins the sample caps.
+- **Docs**: the job holds the single worker for its run (queue it right after a daily), and a restart
+  re-runs it from id 0.
+
+**Deferred** (ready-for-agent, not blocking the census run):
+- No checkpoint/resume: `run_procedure_key_census` ignores `resume_after`, so a deploy mid-run costs the
+  whole 2–3 h again. Worth adding only if the census is re-run routinely.
+- Clustering is O(n²) for a Tender whose notices are all pairwise disjoint (fine at the observed max of
+  372 notices; a pathological Tender of tens of thousands would cost seconds of CPU). The report row is
+  now bounded; the CPU is not.
+- A UUID group a link merged under a non-UUID key is not walked (documented as out of scope).

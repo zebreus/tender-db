@@ -756,11 +756,11 @@ chosen (refuse the key, as 369 does, or split the Tender at a buyer-disjoint edg
 
 ```sh
 /root/aj.sh /admin/jobs '{"kind":"procedure-key-census"}'
-/root/aj.sh /admin/reports/procedure-key-census | jq -r .body | jq '{tenders, notices, notices_without_buyers, undecidable, split, split_with_buyerless, split_same_key, max_clusters, cluster_counts, cross, buckets: (.buckets | map_values(.tenders))}'
-# 30 samples per bucket: tender, key, and each cluster's publications and first buyer.
-/root/aj.sh /admin/reports/procedure-key-census | jq -r .body | jq -r '.buckets["several-jurisdictions"].samples[] | "\(.tender_id) \(.procedure_key) \(.span_days)d", (.clusters[] | "   \(.notices)× \(.jurisdictions|join(",")) \(.buyer)  \(.publications[:4]|join(" "))")'
+/root/aj.sh /admin/reports/procedure-key-census | jq -r .body | jq '{tenders, notices, notices_without_buyers, undecidable, split, split_with_buyerless, split_same_key, interleaved, sequential, singleton_minorities, max_clusters, cluster_counts, cross, buckets: (.buckets | map_values(.tenders))}'
+# 30 samples per bucket: tender, key, gap, and each cluster's dates, Sources, publications and first buyer.
+/root/aj.sh /admin/reports/procedure-key-census | jq -r .body | jq -r '.buckets["several-jurisdictions"].samples[] | "\(.tender_id) \(.procedure_key) gap \(.gap_days)d span \(.span_days)d", (.clusters[] | "   \(.notices)× \(.first_published)..\(.last_published) +\(.gap_days)d \(.sources|join(",")) \(.jurisdictions|join(",")) \(.buyer)  \(.publications[:4]|join(" "))")'
 # The hub shape: the 30 Tenders with the most clusters.
-/root/aj.sh /admin/reports/procedure-key-census | jq -r .body | jq -r '.hubs[] | "\(.tender_id) \(.notices) notices, \(.clusters|length) clusters"'
+/root/aj.sh /admin/reports/procedure-key-census | jq -r .body | jq -r '.hubs[] | "\(.tender_id) \(.notices) notices, \(.clusters_total) clusters"'
 ```
 
 **Read-only** (no dry flag; it writes nothing but its report), stoppable between windows, report
@@ -779,16 +779,32 @@ A notice naming no buyer is unknown, never decisive: it joins no cluster and spl
 (`notices_without_buyers`; `undecidable` counts Tenders with fewer than two notices naming a buyer;
 a split Tender lists its buyerless notices under `without_buyers`). A Tender with two or more
 clusters is `split`, and lands in one bucket of each axis:
-- **`one-jurisdiction` / `several-jurisdictions`**: several when two clusters name buyers of known
-  register jurisdictions and share none (a cross-border joint procurement inside one cluster does
-  not count; a DE cluster beside a BG one does);
-- **`one-source` / `several-sources`**: the Sources of all the Tender's notices;
-- **`span-le-90d` / `span-le-1y` / `span-gt-1y`**: first to last notice (`tender_versions.published_at`).
+- **`one-jurisdiction` / `several-jurisdictions` / `unknown-jurisdiction`**: several when two
+  clusters name buyers of known register jurisdictions and share none (a cross-border joint
+  procurement inside one cluster does not count; a DE cluster beside a BG one does); unknown when no
+  pair says several and some cluster's buyers name no country (BT-514); one only when every pair of
+  clusters shares a known jurisdiction;
+- **`one-source` / `several-sources`**: several when two clusters' Sources are disjoint (a DÖE-only
+  cluster beside a TED-only one); a TED notice colliding with a DÖE/TED pair (1110706) is one Source.
+  Each cluster lists its `sources`;
+- **`gap-le-90d` / `gap-le-1y` / `gap-gt-1y`**: the split rule's axis. Each minority cluster's
+  `gap_days` is the distance between its time range (`first_published`..`last_published`) and the
+  largest cluster's (0 when they overlap); the Tender's `gap_days` is the smallest of them, so
+  `gap-gt-1y` means every minority cluster is over a year from the largest;
+- **`span-le-90d` / `span-le-1y` / `span-gt-1y`**: secondary, first to last notice over all of them,
+  buyerless ones included (`tender_versions.published_at`).
+
+Beside the buckets: `interleaved` (some minority cluster's time range overlaps the largest's: one
+platform or authority running procedures side by side under one key, the gate shape) against
+`sequential` (a later procedure reusing the key, the split shape); `singleton_minorities` (every
+cluster but the largest is one notice: the island a split would cut out). A sample lists at most its
+20 largest clusters (`clusters_total` counts them all) and 40 buyerless notices
+(`without_buyers_total`).
 
 `split_same_key` counts the split Tenders whose every notice carries the Tender's own key (the BT-04
 reuse itself); a cluster's `other_keys` counts its notices under another key, which an issue-481 link
 (OPP-090, BT-701) joined, so a sample with `other_keys` > 0 may be a link weld the daily has not split
-yet rather than a reused UUID. `cross` counts the three axes together (`several-jurisdictions/one-source/span-gt-1y`),
+yet rather than a reused UUID. `cross` counts jurisdictions × Sources × gap together (`several-jurisdictions/one-source/gap-gt-1y`),
 `cluster_counts` the cluster count (`2`, `3`, `4-5`, `6-10`, `11+`), and `hubs` the 30 Tenders with
 the most clusters (Tender 42726's shape: 36 notices under 8 buyers). Each bucket keeps a uniform
 30-Tender sample (bottom-30 by a hash of the Tender id, so a re-run gives the same sample).
@@ -806,7 +822,11 @@ of 2,000, almost all with one notice). 62–64 % of them have two or more notice
 so the census parses about **2.4M notices** in ~735k Tenders. A full parse plus the mention read
 costs ~3 ms a notice on prod: job 1903's endpoint census added ~1,030 s over job 1882's 585 s for at
 most ~360k endpoints. The ~1,760 windows themselves are primary-key range reads, empty above 1.16M
-(minutes in all). It holds no writer. Clustering is pairwise per Tender, skipping pairs already
+(minutes in all). It holds no writer, but it DOES hold the single job worker for its whole run: the
+daily's `process`/project jobs and fetches queue behind it, so queue it right after a daily finishes.
+It keeps no checkpoint: a restart (a deploy) re-runs it from Tender id 0. Out of scope: a key whose
+Tender a link merged under a non-UUID key (`plan_group_merge` to a shaped or `ojs:` key) is not walked;
+a whitespace-padded UUID is (the SQL pre-filter trims, as `is_uuid` does). Clustering is pairwise per Tender, skipping pairs already
 joined; the largest Tender in the sampled windows had 372 notices. Read the job row's duration for the real
 figure.
 

@@ -2219,7 +2219,7 @@ fn civil_days(day: &str) -> Option<i64> {
     Some(era * 146_097 + doe - 719_468)
 }
 
-fn day_string(z: i64) -> Option<String> {
+pub(crate) fn day_string(z: i64) -> Option<String> {
     let z = z + 719_468;
     let era = if z >= 0 { z } else { z - 146_096 } / 146_097;
     let doe = z - era * 146_097;
