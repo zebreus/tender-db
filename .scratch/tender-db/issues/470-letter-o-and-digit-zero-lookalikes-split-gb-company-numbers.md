@@ -1,6 +1,7 @@
 # 470 — a letter O typed for a zero (or a zero for the O of `OC`) splits a GB company number from its organization, and no arm joins them
 
-Status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The measurement 454 asked for is below (taken 2026-10-01, through FTS chunk 8), so the first unit is the decision it feeds: which shapes fold, at which tier and behind which name gate, recorded here with its reasoning before any code.
+Status: ready-for-agent — DECIDED 2026-10-02 (owner; decision below, under "Decision"). The proposed fold is accepted with three refinements. NEXT: unit 2, the code (crosswalk GB arm + R2 survivor + the resolver's guarded bind + tests), then the rollout in step 4. Sequence it after 481 unit 2 lands, because both edit crates/store/src/canonical.rs and one gate at a time fits the container's disk.
+Was status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The measurement 454 asked for is below (taken 2026-10-01, through FTS chunk 8), so the first unit is the decision it feeds: which shapes fold, at which tier and behind which name gate, recorded here with its reasoning before any code.
 Kind: data quality (identifiers)
 Relates to: 454 (its option 2, never filed), 453 (the re-key arm, which fixed the 13 `GBCOH` exhibits), 452 (the census; its
 shapes left out the bare spellings), 362 (merge verdicts for groups R2's name gate holds), 466 (the census re-run; same
@@ -188,6 +189,25 @@ two different bodies.
    corrected Cochlear and Montel. The rekey arm then acts on them:
    - `IP030808` has a standing org (31534918) to merge into;
    - `CE019319` and `NI018750` have none (looked up 2026-10-01), so they move in place.
+
+## Decision (owner, 2026-10-02)
+
+Accepted: the proposed fold, its name gate, the survivor rank `(provisional, folded, id)`, the `R0` E1 key and the
+re-posted verdicts for the three withheld lookalikes. Reasons: 15 of 16 standing pairs name one entity, 8 are confirmed
+by the register, and the backfill keeps minting new ones. The 16th (Aberdeen / Net Zero) is exactly what the name gate
+is for, so a key-only fold is refused.
+
+Refinements:
+1. **Real prefixes that contain an O are never folded.** `OC` (LLP), `SO` (Scottish LLP) and `OE` (overseas entity)
+   have a letter beside their O, so the "other character is a digit or another O" condition already spares them. Pin
+   that in the crosswalk test: `SO300123`, `OE012345` and `OC301540` key unfolded and unflagged.
+2. **A fold never mints a key a standing org must then match by key alone.** A folded key that no unfolded org
+   carries, such as `9694399O` → `96943990` with no standing twin, binds nothing new. That holds because every bind
+   and merge of a folded key goes through the name gate. The test names that case, so the trailing-O rotations stay
+   inert rather than becoming wrong numbers.
+3. **`OO688424` loses its E1 key today and gains a folded one.** That is a re-key of any org currently keyed `OO…`.
+   The rollout's R2 dry plan must list those orgs (expected: the 453-era exhibits are gone, so a handful at most), and
+   the altid and rekey dry plans are read for movement before any wet run, per step 4.
 
 ## Verify
 
