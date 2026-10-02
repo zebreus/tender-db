@@ -2008,6 +2008,224 @@ async fn the_ledger_joins_incrementally_exactly_as_a_full_fold_in_either_order()
     }
 }
 
+/// Issue 481: a procedure key a previous-notice link folded into ANOTHER key's Tender
+/// still finds that Tender on the daily. The award's key is absorbed — the merged Tender
+/// is named after the contract notice's key — so a later notice under the award's key
+/// that cites nothing used to find no Tender by `procedure_key` and fold into a Tender
+/// of its own, where a full fold puts it in the merged one (and the next full
+/// re-projection retired the split again). Once TED citing TED, once DÖE citing TED,
+/// the cross-source joins the daily now makes.
+#[tokio::test]
+async fn a_notice_under_an_absorbed_key_finds_the_merged_tender_on_the_daily() {
+    const KEY_DOE: &str = "3c4d5e6f-7a8b-4c9d-8e1f-2a3b4c5d6e7f";
+    let corpus: [(&str, String, i64, Vec<(&str, String)>); 5] = [
+        ("ted", "00200001-2024".into(), 20_000, vec![("BT-04-notice", KEY_CN.into())]),
+        ("ted", "00200002-2024".into(), 20_010, vec![("BT-04-notice", KEY.into()), ("OPP-090-Procedure", "200001-2024".into())]),
+        ("doe", format!("{LOGICAL_UNHELD}-01"), 20_012, vec![("BT-04-notice", KEY_DOE.into()), ("OPP-090-Procedure", "200001-2024".into())]),
+        ("ted", "00200003-2024".into(), 20_020, vec![("BT-04-notice", KEY.into())]),
+        ("doe", format!("{LOGICAL_UNHELD}-02"), 20_022, vec![("BT-04-notice", KEY_DOE.into())]),
+    ];
+    let (full, ff, pf) = scratch("absorbed-full").await;
+    let (incr, fi, pi) = scratch("absorbed-incr").await;
+    establish(&full, ff).await;
+    establish(&incr, fi).await;
+    for (step, delta) in [&[0usize][..], &[1, 2], &[3, 4]].into_iter().enumerate() {
+        for &i in delta {
+            record_corpus_member(&full, ff, &corpus[i]).await;
+            record_corpus_member(&incr, fi, &corpus[i]).await;
+        }
+        absorb_and_compare(&full, &incr, &format!("step {step}")).await;
+    }
+    let merged = tender_of(&incr, "00200001-2024").await;
+    for member in &corpus[1..] {
+        assert_eq!(tender_of(&incr, &member.1).await, merged, "{} is in the merged Tender", member.1);
+    }
+    assert_eq!(
+        count(&incr, &format!("SELECT COUNT(*) FROM tenders WHERE id = {merged} AND procedure_key = '{KEY_CN}'")).await,
+        1,
+        "named by the contract notice's key"
+    );
+
+    for p in [pf, pi] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
+
+/// The Tender-link tests' notice as `record_linked` builds it, recorded under `parse` —
+/// pending or quarantined — instead of parsed.
+async fn record_unparsed(db: &Db, fetch_id: i64, source: &str, pub_id: &str, day: i64, parse: Parse) {
+    db.record_notice(
+        &Notice {
+            source: source.into(),
+            publication_id: pub_id.into(),
+            content_hash: pub_id.into(),
+            profile: if source == "ted" { "eforms:eforms-sdk-1.13" } else { "eforms:eforms-de-2.0" }.into(),
+            declared_version: None,
+            fetch_id,
+            member_path: pub_id.into(),
+            ingested_at: 0,
+            published_at: Some(store::Stamp::utc(day * 86_400)),
+            dispatched_at: Some(store::Stamp::utc(day * 86_400)),
+        },
+        &parse,
+    )
+    .await
+    .expect("record unparsed notice");
+}
+
+/// Issue 481: a link to a notice that is not parsed — pending, or quarantined — resolves
+/// to nothing, as a full plan (which holds parsed notices only) sees it. The incremental
+/// closure used to pull the unparsed notice into its plan, where it folded as an empty
+/// island published at 0 and the citer joined it: a Tender no full fold makes. The row
+/// stays unresolved until the target parses — and its parse re-queues it, where the
+/// closure finds the citer by name and the join lands on the daily.
+#[tokio::test]
+async fn a_link_to_an_unparsed_notice_joins_only_once_it_parses() {
+    for (label, parse) in [
+        ("pending", Parse::Pending),
+        ("quarantined", Parse::Quarantined { reason: "test".into(), detail: None }),
+    ] {
+        let (full, ff, pf) = scratch(&format!("unparsed-{label}-full")).await;
+        let (incr, fi, pi) = scratch(&format!("unparsed-{label}-incr")).await;
+        for (db, fetch) in [(&full, ff), (&incr, fi)] {
+            establish(db, fetch).await;
+            record_unparsed(db, fetch, "ted", "00500001-2024", 19_990, parse.clone()).await;
+            record_linked(db, fetch, "doe", &format!("{LOGICAL_UNHELD}-01"), 20_000, &[("OPP-090-Procedure", "500001-2024")])
+                .await;
+        }
+        absorb_and_compare(&full, &incr, label).await;
+        assert_eq!(
+            count(&incr, "SELECT COUNT(*) FROM tender_links WHERE b_ref = '00500001-2024' AND b_notice_id IS NULL").await,
+            1,
+            "{label}: the reference stays unresolved"
+        );
+
+        let (notice, parsed) = (
+            Notice {
+                source: "ted".into(),
+                publication_id: "00500001-2024".into(),
+                content_hash: "00500001-2024".into(),
+                profile: "eforms:eforms-sdk-1.13".into(),
+                declared_version: None,
+                fetch_id: fi,
+                member_path: "00500001-2024".into(),
+                ingested_at: 0,
+                published_at: Some(store::Stamp::utc(19_990 * 86_400)),
+                dispatched_at: Some(store::Stamp::utc(19_990 * 86_400)),
+            },
+            Parsed {
+                sections: vec![sec("PROCEDURE", "Notice", None)],
+                values: vec![date_val("PROCEDURE", "BT-05(a)-notice", 19_990 * 86_400)],
+            },
+        );
+        for (db, fetch) in [(&full, ff), (&incr, fi)] {
+            let notice = Notice { fetch_id: fetch, ..notice.clone() };
+            assert_eq!(db.reparse_notice(&notice, &parsed).await.expect("parse"), store::Reparsed::Replaced);
+        }
+        absorb_and_compare(&full, &incr, &format!("{label}, parsed")).await;
+        assert_eq!(
+            tender_of(&incr, "00500001-2024").await,
+            tender_of(&incr, &format!("{LOGICAL_UNHELD}-01")).await,
+            "{label}: the citer joins the notice once it parses"
+        );
+
+        for p in [pf, pi] {
+            for s in ["", "-wal", "-shm"] {
+                let _ = std::fs::remove_file(format!("{p}{s}"));
+            }
+        }
+    }
+}
+
+/// Issue 481: until the ledger is attested complete, the daily holds every weld-guarded
+/// join back. Prod's notices were planned before the ledger existed, so a carrier the
+/// one-to-one guard must count can have no row for the closure to reach it by — and the
+/// guard, seeing one carrier, would admit what a full fold refuses. Here two TED notices
+/// carry one BT-701 (a full fold refuses the DÖE twin to both); the ledger is emptied and
+/// unattested the way prod is; the twin arrives with one carrier re-queued. The daily
+/// holds the join (`deferred`). The wet backfill writes the other carrier's row, attests
+/// the ledger, and re-queues every resolved pair still apart — the held one included,
+/// whose row the daily's producer had already written — and the next daily refuses, as a
+/// full fold does.
+#[tokio::test]
+async fn the_daily_holds_guarded_joins_until_the_ledger_is_attested() {
+    let (db, fetch, path) = scratch("links-unattested").await;
+    establish(&db, fetch).await;
+    record_linked(&db, fetch, "ted", "00940001-2024", 20_003, &[("BT-701-notice", LOGICAL)]).await;
+    record_linked(&db, fetch, "ted", "00940002-2024", 20_003, &[("BT-04-notice", KEY), ("BT-701-notice", LOGICAL)]).await;
+    project::project(&db, false).await.expect("project");
+    db.execute_for_test("DELETE FROM tender_links").await.expect("planned before the ledger");
+    db.execute_for_test("UPDATE projection_state SET tender_links_complete = 0").await.expect("unattested");
+
+    let twin = format!("{LOGICAL}-01");
+    record_linked(&db, fetch, "doe", &twin, 20_000, &[]).await;
+    db.execute_for_test("UPDATE notices SET projected = 0 WHERE publication_id = '00940001-2024'").await.expect("re-queue");
+    let report = project::project_incremental(&db).await.expect("the daily");
+    assert_eq!((report.links.logical_notice, report.links.deferred), (0, 1), "{:?}", report.links);
+    assert_ne!(tender_of(&db, "00940001-2024").await, tender_of(&db, &twin).await, "held, not joined");
+
+    let never = || false;
+    project::backfill_tender_links_windowed(&db, false, 1_000, 1_000, &never, |_| {}).await.expect("wet");
+    assert!(db.tender_links_complete().await.unwrap());
+    let report = project::project_incremental(&db).await.expect("the next daily");
+    assert_eq!((report.links.not_one_to_one, report.links.deferred), (2, 0), "{:?}", report.links);
+    for ted in ["00940001-2024", "00940002-2024"] {
+        assert_ne!(tender_of(&db, ted).await, tender_of(&db, &twin).await, "{ted} and the twin stay apart");
+    }
+    let tenders = snapshot_content(&db).await;
+    project::project(&db, false).await.expect("a full fold");
+    assert_eq!(snapshot_content(&db).await, tenders, "as a full fold leaves them");
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
+/// Issue 481: a weld-guarded join beside a link the plan holds only one end of waits for
+/// the fold that holds both. A TED notice's BT-701 names two DÖE versions, one keyed under
+/// another procedure — a keyed weld a full fold refuses. With the far version outside the
+/// plan, the guard saw one keyed component and admitted the island version; the next
+/// daily refused and split it again, retiring a Tender for nothing. Now the join waits
+/// (`deferred`), the far version is re-queued, and the next daily refuses with no Tender
+/// moved.
+#[tokio::test]
+async fn a_guarded_join_beside_a_one_ended_link_waits_for_both_ends() {
+    let (db, fetch, path) = scratch("links-one-ended").await;
+    establish(&db, fetch).await;
+    record_linked(&db, fetch, "ted", "00930001-2024", 20_003, &[("BT-04-notice", KEY), ("BT-701-notice", LOGICAL)]).await;
+    record_linked(&db, fetch, "doe", &format!("{LOGICAL}-01"), 20_000, &[]).await;
+    record_linked(&db, fetch, "doe", &format!("{LOGICAL}-02"), 20_001, &[("BT-04-notice", KEY_SHARED)]).await;
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!(report.links.keyed_weld, 2, "{:?}", report.links);
+    let removed = "SELECT COUNT(*) FROM changes WHERE entity_kind = 'tender' AND op = 'removed'";
+    let removed_before = count(&db, removed).await;
+    // The closure misses the far version: its row is gone (an incomplete ledger, the
+    // attestation left standing so this guard is what is exercised).
+    db.execute_for_test("DELETE FROM tender_links").await.expect("rows the closure cannot see");
+    record_linked(&db, fetch, "ted", "00930002-2024", 20_010, &[("BT-04-notice", KEY)]).await;
+    db.execute_for_test(&format!("UPDATE notices SET projected = 0 WHERE publication_id = '{LOGICAL}-01'"))
+        .await
+        .expect("re-queue");
+    let report = project::project_incremental(&db).await.expect("the daily");
+    assert_eq!((report.links.logical_notice, report.links.deferred), (0, 2), "{:?}", report.links);
+    assert_ne!(tender_of(&db, "00930001-2024").await, tender_of(&db, &format!("{LOGICAL}-01")).await, "held");
+    assert_eq!(db.unprojected_parsed_notice_ids().await.unwrap().len(), 1, "the far version is re-queued");
+
+    let report = project::project_incremental(&db).await.expect("the next daily");
+    assert_eq!((report.links.keyed_weld, report.links.deferred), (2, 0), "{:?}", report.links);
+    assert_ne!(tender_of(&db, "00930001-2024").await, tender_of(&db, &format!("{LOGICAL}-01")).await);
+    assert_eq!(count(&db, removed).await, removed_before, "no Tender retired along the way");
+    let tenders = snapshot_content(&db).await;
+    project::project(&db, false).await.expect("a full fold");
+    assert_eq!(snapshot_content(&db).await, tenders, "as a full fold leaves them");
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
 /// Issue 481: a ledger write or delete outside a fold re-queues both notices, so a
 /// measured match — unit 3's — or its undo reaches the next DAILY fold, and does
 /// exactly what a full fold does with it: the match retires the DÖE island into the TED
@@ -2158,6 +2376,7 @@ async fn the_ledger_backfill_counts_dry_writes_wet_and_the_daily_joins() {
     record_linked(&db, fetch, "doe", &format!("{LOGICAL_KEYED}-01"), 20_006, &[("BT-04-notice", KEY_SHARED)]).await;
     project::project(&db, false).await.expect("project");
     db.execute_for_test("DELETE FROM tender_links").await.expect("the binary that planned them kept no ledger");
+    db.execute_for_test("UPDATE projection_state SET tender_links_complete = 0").await.expect("nor attested one");
     record_linked(&db, fetch, "doe", &format!("{LOGICAL}-01"), 20_000, &[]).await;
     record_linked(&db, fetch, "doe", &format!("{LOGICAL_ISLANDS}-01"), 20_001, &[]).await;
     record_linked(&db, fetch, "ted", "00200002-2024", 19_990, &[("BT-04-notice", KEY_CN)]).await;
@@ -2176,8 +2395,24 @@ async fn the_ledger_backfill_counts_dry_writes_wet_and_the_daily_joins() {
     let never = || false;
     let dry = project::backfill_tender_links_windowed(&db, true, 3, 2, &never, |_| {}).await.expect("dry");
     let rule = |r: &store::TenderLinkBackfill, name: &str| r.rules.iter().find(|(n, _)| n == name).unwrap().1.clone();
-    let logical = store::TenderLinkRuleCounts { declared: 4, present: 0, resolved: 3, unresolved: 1, would_merge: 2, stale: 0 };
-    let opp = store::TenderLinkRuleCounts { declared: 1, present: 0, resolved: 1, unresolved: 0, would_merge: 1, stale: 0 };
+    let logical = store::TenderLinkRuleCounts {
+        declared: 4,
+        present: 0,
+        resolved: 3,
+        unresolved: 1,
+        would_merge: 2,
+        cross_source: 2,
+        stale: 0,
+    };
+    let opp = store::TenderLinkRuleCounts {
+        declared: 1,
+        present: 0,
+        resolved: 1,
+        unresolved: 0,
+        would_merge: 1,
+        cross_source: 1,
+        stale: 0,
+    };
     assert_eq!(rule(&dry, "logical-notice"), logical, "{dry:?}");
     assert_eq!(rule(&dry, "opp-090"), opp, "{dry:?}");
     assert_eq!((dry.notices, dry.declaring, dry.would_merge, dry.requeued), (13, 5, 3, 6), "{dry:?}");
@@ -2197,15 +2432,23 @@ async fn the_ledger_backfill_counts_dry_writes_wet_and_the_daily_joins() {
     );
     assert_eq!(ledger_rows(&db).await, "", "a dry run writes nothing");
     assert!(db.unprojected_parsed_notice_ids().await.unwrap().is_empty(), "and queues nothing");
+    assert!(!db.tender_links_complete().await.unwrap(), "nor attests anything");
 
     let calls = std::sync::atomic::AtomicUsize::new(0);
     let second = || calls.fetch_add(1, std::sync::atomic::Ordering::Relaxed) >= 1;
     let stopped = project::backfill_tender_links_windowed(&db, true, 3, 2, &second, |_| {}).await.expect("stopped");
     assert!(stopped.stopped && stopped.cursor < stopped.target, "{stopped:?}");
+    let wet_calls = std::sync::atomic::AtomicUsize::new(0);
+    let second_wet = || wet_calls.fetch_add(1, std::sync::atomic::Ordering::Relaxed) >= 1;
+    let stopped = project::backfill_tender_links_windowed(&db, false, 3, 2, &second_wet, |_| {}).await.expect("stopped wet");
+    assert!(stopped.stopped && !db.tender_links_complete().await.unwrap(), "a stopped walk attests nothing");
+    db.execute_for_test("DELETE FROM tender_links").await.expect("undo the stopped window");
+    db.execute_for_test("UPDATE notices SET projected = 1").await.expect("and its re-queue");
 
     let wet = project::backfill_tender_links_windowed(&db, false, 3, 2, &never, |_| {}).await.expect("wet");
     assert_eq!((rule(&wet, "logical-notice"), rule(&wet, "opp-090")), (logical, opp), "{wet:?}");
     assert_eq!(wet.requeued, 6, "{wet:?}");
+    assert!(db.tender_links_complete().await.unwrap(), "a finished wet walk attests the ledger complete");
     assert_eq!(count(&db, "SELECT COUNT(*) FROM tender_links WHERE kind = 'declared'").await, 5);
     let id = async |pub_id: &str| count(&db, &format!("SELECT id FROM notices WHERE publication_id = '{pub_id}'")).await;
     let mut queued = Vec::new();

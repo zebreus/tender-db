@@ -525,7 +525,7 @@ durable and is what `/admin/jobs`, `jobwatch` and the issues' Verify lines read:
 ; issue-448 alias asked A bound B refused R (poisoned …, no owner …, veto …, names …, generic …)   ← only when the altid alias was asked
 ; issue-364 previous-publication citations: N admitted, M refused (prior-information …, buyer-profile …, periodic-indicative …, qualification-system …, DPS …, undeclared …, unknown kind …)
 ; issue-364 edges refused by the cited notice's own type: K (prior-information …, buyer-profile …, periodic-indicative …, qualification-system …, DPS …, unknown kind …)
-; issue-481 tender links joined: J (previous-notice …, logical-notice …, matched …); refused: R (not-earlier …, not-one-to-one …, keyed-weld …, oversized …); deferred: D
+; issue-481 tender links joined: J (previous-notice … of which cross-source …, logical-notice …, matched …); refused: R (not-earlier …, fan-in …, not-one-to-one …, keyed-weld …, oversized …); deferred: D; largest component: L key(s)
 ```
 
 The two issue-364 lines are two different gates and read differently:
@@ -556,18 +556,23 @@ fold, zeros included, with how many aliases the fold was armed with.
 The **issue-481** line is the grouping's Tender-link step (the `tender_links` ledger below;
 ADR-0003's 2026-10-02 amendment, ADR-0011). `joined` counts links that put two group keys into one
 Tender, per rule: `previous-notice` (OPP-090, ADR-0011's edge, which now resolves a DÖE citation of
-a TED number too), `logical-notice` (a TED eForms notice's BT-701 is the id DÖE publishes the same
-notice under) and `matched` (a reviewed match, issue 481 unit 3). `refused` are the guards:
-`not-earlier` (an OPP-090 naming a notice that is not strictly earlier), `not-one-to-one` (one
-logical id carried by notices of two components), `keyed-weld` (a same-notice or matched link would
-put two procedure-keyed Tenders together: issue 482's colliding BT-04s already weld, and a new rule
-must not add to it) and `oversized` (past 64 components). The last three are expected at zero on
-well-formed data, so read any non-zero one before the joins. `deferred` is the incremental fold's
-valve: a link its plan held only one end of, whose far end is re-queued so the next fold joins it.
-The link closure keeps it at zero; a non-zero count is a join one fold late, never a lost one. The
-line is absent when nothing joined, was refused or deferred. The diag log's `[project] group step
-links union:` line says the same with the largest component, in group keys: the check for an
-issue-482 hub welded through previous-notice links, which have no cap.
+a TED number too — those are the `cross-source` part, a population ADR-0011 never measured),
+`logical-notice` (a TED eForms notice's BT-701 is the id DÖE publishes the same notice under) and
+`matched` (a reviewed match, issue 481 unit 3). `refused` are the guards: `not-earlier` (an OPP-090
+naming a notice that is not strictly earlier), `fan-in` (cross-Source OPP-090s from two or more
+procedure-keyed components into one TED notice: a PIN several procedures cite, or a colliding key),
+`not-one-to-one` (one logical id carried by notices of two components, or one notice matched to
+notices of two), `keyed-weld` (a same-notice or matched link would put two procedure-keyed Tenders
+together: issue 482's colliding BT-04s already weld, and a new rule must not add to it) and
+`oversized` (past 64 components). All but `not-earlier` are expected at zero or near it on
+well-formed data, so read any non-zero one before the joins. `deferred` counts links the
+incremental fold could not judge yet: one its plan held only one end of (the far end is re-queued),
+a guarded join beside such an end, and — until the ledger is attested complete (below) — every
+fan-in- or weld-guarded join. A non-zero count is a join one fold late, never a lost one and never
+one a full fold would refuse; after the attestation the link closure keeps it at zero. `largest
+component` is the biggest component the step built, in group keys: the check for an issue-482 hub
+welded through previous-notice links, which have no cap — a jump from single digits is the thing
+to look at. The line is absent when nothing joined, was refused or deferred.
 
 ### The Tender-link ledger and `backfill-tender-links` (issue 481)
 
@@ -576,8 +581,19 @@ Tender, whose ids are retired on merge). `declared` rows are written by the plan
 planned non-legacy notice and diffed every time it is planned: `opp-090` (target Source always TED)
 and `logical-notice` (TED BT-701 → every DÖE `<id>-<digits>` version). A reference nothing holds
 keeps one row with `b_notice_id` NULL, found by name when its target arrives. `matched` rows are
-written and undone only through `Db::write_matched_links` / `Db::delete_matched_links` (unit 3).
-The ledger survives `reset_tender_layer` and is off `/v1/sql`.
+written and undone only through `Db::write_matched_links` / `Db::delete_matched_links` (unit 3),
+committed 5,000 links per transaction. A link resolves among PARSED notices only, as a full plan
+holds them: a reference to a pending or quarantined notice stays unresolved until it parses. The
+ledger survives `reset_tender_layer` and is off `/v1/sql`; so is `tender_key_merges`, the grouping's
+record of every procedure key a link merge folded into another key's Tender (an absorbed key names
+no Tender, and the daily finds a later notice under it through this row).
+
+**`projection_state.tender_links_complete`** attests that every parsed notice has its declared rows.
+It is 0 on prod after the deploy (the corpus was planned before the ledger) and set by a finished
+WET `backfill-tender-links` or a completed full plan build, never cleared. While it is 0 the daily
+holds every fan-in- and weld-guarded join back (`deferred`): a carrier with no row is one the
+closure cannot reach, and a guard counting part of a component would admit what a full fold
+refuses. ADR-0011's same-Source previous-notice joins are unguarded and go ahead.
 
 **A ledger write or delete outside a fold re-queues both notices** (`notices.projected = 0`, the key
 the incremental change-set reads), in the same transaction as the row, so it reaches the next DAILY
@@ -604,16 +620,32 @@ loading only the link fields (BT-701, OPP-090 and the DE-1.x spelling folded ont
 range read of `notice_ids` per window, derives the links with the plan's own `declared_links` and
 diffs them with the producer's own diff. Wet, each window's rows and re-queues are ONE transaction on
 the writer (a few thousand index inserts), then a WAL checkpoint. Per rule it counts `declared`,
-`present` (already on the ledger), `resolved`, `unresolved`, `would_merge` (resolved rows whose
-notices fold into different Tenders today: the joins the next fold makes, before its weld guards;
-only these re-queue their notices) and `stale` (declared rows the notice no longer declares, deleted,
-both notices re-queued). Idempotent: a re-run, or a notice a fold planned since the deploy, reads as
-`present`. Expected on prod: `logical-notice` resolved rows in the hundreds of thousands (every
+`present` (already on the ledger), `resolved`, `unresolved`, `would_merge` (rows with a target,
+written now or already held, whose notices fold into different Tenders today: the joins the next
+fold makes, before its weld guards; only these re-queue their notices — a held row included, since a
+daily before the attestation wrote it and held its join back), `cross_source` (of `would_merge`,
+the rows citing another Source: every `logical-notice` row, and the DÖE→TED OPP-090s ADR-0011 never
+measured — read this one for `opp-090` before the wet run) and `stale` (declared rows the notice no
+longer declares, deleted, both notices re-queued). Idempotent: a re-run, or a notice a fold planned
+since the deploy, reads as `present`. A wet run that walks to its target attests the ledger complete. Expected on prod: `logical-notice` resolved rows in the hundreds of thousands (every
 TED/DÖE twin pair, most of them already one Tender by BT-04) and `would_merge` near the calibration's
 ~2,650 above-threshold islands, plus the cross-source OPP-090 joins (unmeasured). **Read the samples
 before the wet run**: each pair names both publication ids, so a sample can be checked on the two
 portals by hand. After the wet run the next daily `project` is a normal daily plus the would-merge
 pairs' Tenders; read its `issue-481` line (largest component, refusals, `deferred: 0`).
+
+**Disk before the wet run**: a ledger row costs about 229 bytes, table and indexes together (measured
+2026-10-02: 200,000 unresolved `logical-notice` rows, 11,174 pages of 4 KiB). The report carries the
+run's own figure (`ledger_bytes`; the summary's `~N MB of ledger rows`); at the expected ~2.2M
+`logical-notice` rows plus ~250k `opp-090` rows that is about 0.56 GB. Check the free space against it
+before queueing the wet run.
+
+**One-time renames, not data loss.** A pre-ledger OPP-090 Tender named after an island member (the
+old representative was simply the earliest member) is renamed after its keyed member the first time
+a fold plans it: the island-named Tender is retired with a `removed` event and the keyed one minted.
+A key the 2026-08-20 re-projection absorbed has no `tender_key_merges` row until a fold plans its
+Tender (or the next full projection writes them all); until then a later notice under it still
+folds apart, exactly as before the deploy.
 
 **Expected runtime on prod: about 15–45 minutes wet, roughly half that dry** — a reasoned estimate,
 not a prod measurement. Measured 2026-10-02 on a synthetic corpus at prod's id-row density (89

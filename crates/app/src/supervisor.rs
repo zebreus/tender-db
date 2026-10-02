@@ -2561,24 +2561,29 @@ fn target_refusal_suffix(t: &project::CitationGate) -> String {
 /// row that recorded the run. Silent when it did neither — every run whose plan holds
 /// no link with both ends in it — the [`target_refusal_suffix`] rule. The refusals are
 /// printed whole even at zero once anything happened: a weld guard reading "keyed-weld
-/// 0" is a statement, and an absent one is not.
+/// 0" is a statement, and an absent one is not. The largest component closes the line:
+/// the unguarded previous-notice edge's hub check, which used to sit only on stderr.
 fn link_suffix(l: &store::LinkTally) -> String {
     if l.admitted() == 0 && l.refused() == 0 && l.deferred == 0 {
         return String::new();
     }
     format!(
-        "; issue-481 tender links joined: {} (previous-notice {}, logical-notice {}, matched {}); \
-         refused: {} (not-earlier {}, not-one-to-one {}, keyed-weld {}, oversized {}); deferred: {}",
+        "; issue-481 tender links joined: {} (previous-notice {} of which cross-source {}, \
+         logical-notice {}, matched {}); refused: {} (not-earlier {}, fan-in {}, not-one-to-one {}, \
+         keyed-weld {}, oversized {}); deferred: {}; largest component: {} key(s)",
         l.admitted(),
         l.previous_notice,
+        l.cross_source,
         l.logical_notice,
         l.matched,
         l.refused(),
         l.not_earlier,
+        l.fan_in,
         l.not_one_to_one,
         l.keyed_weld,
         l.oversized,
         l.deferred,
+        l.largest_component,
     )
 }
 
@@ -2740,6 +2745,19 @@ fn merged_identifier_backfill_summary(r: &store::MergedIdentifierBackfill) -> St
 /// Issue 481: the report `backfill-tender-links` stores.
 const TENDER_LINK_BACKFILL_REPORT: &str = "tender-link-backfill";
 
+/// What one `tender_links` row costs on disk, table and its three indexes together:
+/// 229 B, measured 2026-10-02 by writing 200,000 unresolved `logical-notice` rows (random
+/// uuid `b_ref`, ascending `a_notice_id`, the backfill's pattern) — 11,174 pages of
+/// 4,096 B. The dry run multiplies it out, so the wet run's free-disk precondition is a
+/// number on the report rather than an estimate in a doc.
+const TENDER_LINK_ROW_BYTES: u64 = 229;
+
+/// The bytes a backfill run writes to the ledger (dry: would write): its new rows times
+/// [`TENDER_LINK_ROW_BYTES`].
+fn tender_link_backfill_bytes(r: &store::TenderLinkBackfill) -> u64 {
+    r.rules.iter().map(|(_, c)| c.resolved + c.unresolved).sum::<u64>() * TENDER_LINK_ROW_BYTES
+}
+
 /// The stored `tender-link-backfill` body: per-rule counts keyed by rule, and the
 /// sampled would-merge pairs by both publication ids, for a reader to check by hand
 /// before the wet run.
@@ -2756,6 +2774,7 @@ fn tender_link_backfill_body(r: &store::TenderLinkBackfill) -> String {
                     "resolved": c.resolved,
                     "unresolved": c.unresolved,
                     "would_merge": c.would_merge,
+                    "cross_source": c.cross_source,
                     "stale": c.stale,
                 }),
             )
@@ -2778,6 +2797,7 @@ fn tender_link_backfill_body(r: &store::TenderLinkBackfill) -> String {
         "declaring": r.declaring,
         "would_merge": r.would_merge,
         "requeued": r.requeued,
+        "ledger_bytes": tender_link_backfill_bytes(r),
         "cursor": r.cursor,
         "target": r.target,
         "rules": rules,
@@ -2793,16 +2813,18 @@ fn tender_link_backfill_summary(r: &store::TenderLinkBackfill) -> String {
         .iter()
         .map(|(rule, c)| {
             format!(
-                "{rule}: {} declared, {} present, {} resolved ({} would merge), {} unresolved, {} stale",
-                c.declared, c.present, c.resolved, c.would_merge, c.unresolved, c.stale
+                "{rule}: {} declared, {} present, {} resolved, {} unresolved, {} would merge \
+                 ({} cross-source), {} stale",
+                c.declared, c.present, c.resolved, c.unresolved, c.would_merge, c.cross_source, c.stale
             )
         })
         .collect();
     format!(
-        "{} notices walked ({} declaring), {} re-queued for the next fold; {}",
+        "{} notices walked ({} declaring), {} re-queued for the next fold, ~{} MB of ledger rows; {}",
         r.notices,
         r.declaring,
         r.requeued,
+        tender_link_backfill_bytes(r).div_ceil(1_000_000),
         rules.join("; ")
     )
 }
@@ -14490,11 +14512,16 @@ mod tests {
 
         let msg = sup.run_spec(&job(1, true)).await.expect("dry");
         assert!(msg.contains("DRY RUN"), "{msg}");
-        assert!(msg.contains("logical-notice: 1 declared, 0 present, 1 resolved (1 would merge), 0 unresolved"), "{msg}");
+        assert!(
+            msg.contains("logical-notice: 1 declared, 0 present, 1 resolved, 0 unresolved, 1 would merge (1 cross-source)"),
+            "{msg}"
+        );
+        assert!(msg.contains("~1 MB of ledger rows"), "{msg}");
         let (body, _) = sup.db().latest_report(TENDER_LINK_BACKFILL_REPORT).await.unwrap().expect("report");
         let v: serde_json::Value = serde_json::from_str(&body).unwrap();
         assert_eq!((v["dry_run"].as_bool(), v["notices"].as_u64(), v["would_merge"].as_u64()), (Some(true), Some(2), Some(1)), "{body}");
         assert_eq!(v["rules"]["opp-090"]["declared"], 0, "{body}");
+        assert_eq!(v["ledger_bytes"], TENDER_LINK_ROW_BYTES, "one row to write: {body}");
         assert_eq!(v["samples"][0]["a"], "ted:00400001-2024", "{body}");
         assert_eq!(v["samples"][0]["b"], format!("doe:{twin}"), "{body}");
         assert_eq!(ledger().await, 0, "dry wrote nothing");
@@ -15730,13 +15757,34 @@ mod tests {
     #[test]
     fn the_link_suffix_prints_every_guard_once_anything_happened() {
         assert_eq!(link_suffix(&store::LinkTally::default()), "");
-        let l = store::LinkTally { previous_notice: 5, logical_notice: 3, oversized: 1, ..Default::default() };
+        let l = store::LinkTally {
+            previous_notice: 5,
+            cross_source: 2,
+            logical_notice: 3,
+            fan_in: 2,
+            oversized: 1,
+            largest_component: 7,
+            ..Default::default()
+        };
         let s = link_suffix(&l);
-        assert!(s.contains("tender links joined: 8 (previous-notice 5, logical-notice 3, matched 0)"), "{s}");
-        assert!(s.contains("refused: 1 (not-earlier 0, not-one-to-one 0, keyed-weld 0, oversized 1); deferred: 0"), "{s}");
-        // A deferred join alone is still news: a link reached one end of this fold's plan.
+        assert!(
+            s.contains("tender links joined: 8 (previous-notice 5 of which cross-source 2, logical-notice 3, matched 0)"),
+            "{s}"
+        );
+        assert!(
+            s.contains(
+                "refused: 3 (not-earlier 0, fan-in 2, not-one-to-one 0, keyed-weld 0, oversized 1); deferred: 0; \
+                 largest component: 7 key(s)"
+            ),
+            "{s}"
+        );
+        // A deferred join alone is still news: a link this fold's plan could not judge.
         let s = link_suffix(&store::LinkTally { deferred: 2, ..Default::default() });
-        assert!(s.ends_with("; deferred: 2"), "{s}");
+        assert!(s.contains("; deferred: 2;"), "{s}");
+        // The largest component is a maximum across a run's chunks, not a sum.
+        let mut sum = store::LinkTally { largest_component: 4, ..Default::default() };
+        sum.add(store::LinkTally { largest_component: 3, ..Default::default() });
+        assert_eq!(sum.largest_component, 4);
     }
 
     /// Issue 395: the scheduled contiguity check must NAME the hole, and must
@@ -16411,7 +16459,10 @@ mod tests {
         // store and turso beneath it at O0 (measured 2026-10-01: 449, 267, 376,
         // 257, 349, 307 KiB in the order below, and 2026-10-02 the link backfill
         // between 105 and 120 KiB), plus ~24 KiB. So a turso upgrade can move these
-        // with no change here: re-measure, don't just raise them.
+        // with no change here: re-measure, don't just raise them. `run_project` was
+        // re-measured 2026-10-02 after issue 481 unit 2: between 462 and 472 KiB, both
+        // before and after the review fixes (the link step is boxed, `Db::link_step`,
+        // because inline it pushed this past 472) — under 10 KiB of headroom left.
         // The arguments keep each poll short and four of them off any write: the
         // job is marked cancelled (analyze and the merged-identifier backfill stop
         // at their first check), the sweep refuses (the scratch DB lacks its org FK

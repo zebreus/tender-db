@@ -4016,6 +4016,7 @@ async fn a_doe_notice_citing_its_ted_predecessor_joins_it() {
     let report = project::project(&db, false).await.expect("project");
 
     assert_eq!(report.links.previous_notice, 1, "{:?}", report.links);
+    assert_eq!(report.links.cross_source, 1, "counted as the population ADR-0011 never measured: {:?}", report.links);
     assert_eq!(report.links.not_earlier, 1, "{:?}", report.links);
     assert_eq!(tender_of(&db, &format!("{LOGICAL}-01")).await, tender_of(&db, "00200002-2024").await);
     assert_eq!(
@@ -4035,6 +4036,111 @@ async fn a_doe_notice_citing_its_ted_predecessor_joins_it() {
         2,
         "both citations are on the ledger, as TED references"
     );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 481: two DÖE procedures — distinct BT-04s — citing ONE TED notice by OPP-090 are a
+/// PIN several procedures cite or a colliding key, not one procedure: the cross-Source
+/// references into it are refused and counted (`fan_in`), where a single DÖE procedure
+/// citing its predecessor joins it. Before the ledger these citations were looked up
+/// among DÖE notices and joined nothing; resolving them in TED must not weld the two.
+#[tokio::test]
+async fn two_doe_procedures_citing_one_ted_notice_stay_apart() {
+    let (db, fetch_id, path) = scratch("fan-in").await;
+    let key_3 = "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e";
+    record_linked(&db, fetch_id, "ted", "00920001-2024", 19_000, &[("BT-04-notice", KEY)]).await;
+    for (doe, key) in [(format!("{LOGICAL}-01"), KEY_2), (format!("{LOGICAL_2}-01"), key_3)] {
+        record_linked(&db, fetch_id, "doe", &doe, 20_000, &[("BT-04-notice", key), ("OPP-090-Procedure", "920001-2024")])
+            .await;
+    }
+    let report = project::project(&db, false).await.expect("project");
+
+    assert_eq!(report.links.fan_in, 2, "{:?}", report.links);
+    assert_eq!(report.links.previous_notice, 0, "{:?}", report.links);
+    let ted = tender_of(&db, "00920001-2024").await;
+    assert_ne!(tender_of(&db, &format!("{LOGICAL}-01")).await, ted);
+    assert_ne!(tender_of(&db, &format!("{LOGICAL_2}-01")).await, ted);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 3);
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 481: a same-notice link must not rename a merged Tender. The award's key absorbs
+/// into the contract notice's — named by the earlier notice its previous-notice link
+/// shows — and when a DÖE twin of an EARLY notice under the award's key arrives, the
+/// Tender keeps its name and its id: a keyed key is ranked by the previous-notice links
+/// it carries, ADR-0011's input, not by every link. The rank used to take the twin's
+/// date, renamed the component after the award's key, and retired and re-minted the
+/// whole Tender with a `removed` event for one DÖE version joining.
+#[tokio::test]
+async fn a_same_notice_link_does_not_rename_a_merged_tender() {
+    let (db, fetch_id, path) = scratch("rank").await;
+    record_linked(&db, fetch_id, "ted", "00100020-2024", 20_020, &[("BT-04-notice", KEY_2)]).await;
+    record_linked(&db, fetch_id, "ted", "00100010-2024", 20_010, &[("BT-04-notice", KEY), ("BT-701-notice", LOGICAL)])
+        .await;
+    record_linked(&db, fetch_id, "ted", "00100060-2024", 20_060, &[("BT-04-notice", KEY), ("OPP-090-Procedure", "100020-2024")])
+        .await;
+    project::project(&db, false).await.expect("the merged procedure");
+    let before = tender_identities(&db).await;
+    assert_eq!(before.as_deref(), Some(&*format!("1|{KEY_2}|-1|ted")), "named by the cited notice's key");
+    let removed = "SELECT COUNT(*) FROM changes WHERE entity_kind = 'tender' AND op = 'removed'";
+    let removed_before = scalar(&db, removed).await;
+
+    record_linked(&db, fetch_id, "doe", &format!("{LOGICAL}-01"), 20_009, &[]).await;
+    let report = project::project(&db, false).await.expect("the twin joins");
+    assert_eq!(report.links.logical_notice, 1, "{:?}", report.links);
+    assert_eq!(tender_identities(&db).await, before, "same Tender, same name");
+    assert_eq!(tender_of(&db, &format!("{LOGICAL}-01")).await, 1);
+    assert_eq!(scalar(&db, removed).await, removed_before, "nothing retired");
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 481, calibration §4 shape 16: a matched notice pairs with ONE notice. A notice
+/// matched to two notices in different components welds all three, so every match of it
+/// is refused and counted (`not_one_to_one`) — whichever side carries the second partner,
+/// a keyed TED notice matched to two DÖE islands or a DÖE island matched to two TED
+/// islands. A notice matched once joins.
+#[tokio::test]
+async fn a_notice_matched_to_two_notices_joins_neither() {
+    let (db, fetch_id, path) = scratch("matched-1to1").await;
+    record_linked(&db, fetch_id, "ted", "00910001-2024", 20_002, &[("BT-04-notice", KEY)]).await;
+    record_linked(&db, fetch_id, "doe", "111111-1", 20_000, &[]).await;
+    record_linked(&db, fetch_id, "doe", "222222-1", 20_000, &[]).await;
+    record_linked(&db, fetch_id, "doe", "333333-1", 20_000, &[]).await;
+    record_linked(&db, fetch_id, "ted", "00910002-2024", 20_002, &[]).await;
+    record_linked(&db, fetch_id, "ted", "00910003-2024", 20_002, &[]).await;
+    record_linked(&db, fetch_id, "ted", "00910004-2024", 20_002, &[("BT-04-notice", KEY_2)]).await;
+    record_linked(&db, fetch_id, "doe", "444444-1", 20_000, &[]).await;
+    let id = async |pub_id: &str| scalar(&db, &format!("SELECT id FROM notices WHERE publication_id = '{pub_id}'")).await;
+    let mut links = Vec::new();
+    for (a, b) in [
+        ("00910001-2024", "111111-1"),
+        ("00910001-2024", "222222-1"),
+        ("00910002-2024", "333333-1"),
+        ("00910003-2024", "333333-1"),
+        ("00910004-2024", "444444-1"),
+    ] {
+        links.push(store::MatchedLink {
+            a_notice_id: id(a).await,
+            b_notice_id: id(b).await,
+            rule: "r1".into(),
+            evidence: None,
+            job_id: None,
+        });
+    }
+    assert_eq!(db.write_matched_links(&links).await.expect("write"), 5);
+    let report = project::project(&db, false).await.expect("project");
+
+    assert_eq!(report.links.not_one_to_one, 4, "{:?}", report.links);
+    assert_eq!(report.links.matched, 1, "{:?}", report.links);
+    for (a, b) in [("00910001-2024", "111111-1"), ("00910001-2024", "222222-1"), ("00910002-2024", "333333-1")] {
+        assert_ne!(tender_of(&db, a).await, tender_of(&db, b).await, "{a} and {b} stay apart");
+    }
+    assert_ne!(tender_of(&db, "00910003-2024").await, tender_of(&db, "333333-1").await);
+    assert_eq!(tender_of(&db, "00910004-2024").await, tender_of(&db, "444444-1").await, "matched once: joined");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 7);
 
     let _ = std::fs::remove_file(&path);
 }

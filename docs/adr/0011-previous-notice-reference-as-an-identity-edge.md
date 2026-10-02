@@ -108,20 +108,37 @@ Two ways to implement it, and the choice matters:
 - **Guard 1 now reads "the reference's own Source", not "the same Source".** The reference is a TED
   publication number whoever cites it, since the normaliser admits only `NNNNNNNN-YYYY`. So it resolves
   among TED notices. Requiring the citing notice's Source looked every DÖE citation of a TED
-  predecessor up among DÖE notices, and dropped it. Guards 2–4 stand. A refused not-earlier reference is
-  now counted on the job row (`not-earlier`), where before it was a silent filter in the join.
+  predecessor up among DÖE notices, and dropped it. Guards 2–4 stand; guard 2's target must be a
+  PARSED notice, as a full plan holds them. A refused not-earlier reference is now counted on the job
+  row (`not-earlier`), where before it was a silent filter in the join.
+- **A reference from another Source is fan-in-guarded.** The 563 of 563 above were TED citing TED; DÖE
+  citing TED was never measured. When the cross-Source references into one target come from two or
+  more procedure-keyed components, they are a PIN several procedures cite or a colliding key (issue
+  482), not one procedure, and all of them are refused (`fan-in`). One DÖE procedure citing its TED
+  predecessor joins it as a TED notice would. Admitted ones are counted apart (`cross-source`).
 - **A keyed member names the component**, then a TED island, and only then the earliest publication.
-  Two keyed components are named exactly as before. The change stops a DÖE island published before its
-  TED twin from naming the merged Tender, which on a non-rebuild run left the issue-278 ghost.
+  Two keyed components are named exactly as before: a keyed key's publication is taken from the
+  previous-notice links it carries only, this ADR's input, so a same-notice or matched link cannot
+  rename a merged Tender. The change stops a DÖE island published before its TED twin from naming the
+  merged Tender, which on a non-rebuild run left the issue-278 ghost. One consequence: a component this
+  ADR's rank named after an earlier island member is renamed after its keyed member the first time a
+  fold plans it (the island-named Tender retired with a `removed` event) — a rename, not a loss.
 - **The new rules are weld-guarded; this edge is not.** A same-notice or matched link may not put two
-  keyed components into one Tender. One logical id must name one notice on the citing side. And such a
-  component may not join more than 64 components. Refused edges are counted on the job row. The
-  previous-notice edge keeps this ADR's mechanism: it exists to join keyed components, and it has no cap.
+  keyed components into one Tender. One logical id must name one notice on the citing side, and one
+  notice may be matched to notices of one component only (unit 3 writes one row per logical pair).
+  And such a component may not join more than 64 components. Refused edges are counted on the job
+  row. The previous-notice edge keeps this ADR's mechanism: it exists to join keyed components, and it
+  has no cap; only its cross-Source fan-in is guarded. The largest component is on the job row too.
 - **The incremental fold applies it too.** A link unions only when both notices are in the plan, so the
   incremental fold walks the ledger from every planned notice (`link_closure`: rows the notices state,
   rows naming them by id, unresolved rows naming them by publication id, and the changed notices' own
   links resolved from their parse) and plans each Tender it reaches whole, to a fixpoint, falling back to
   the full path past the legacy closure's cap. A link the plan still holds only one end of is deferred:
-  its far end is re-queued for the next fold and counted (`deferred` on the job row). A ledger row
-  written or deleted outside a fold (`backfill-tender-links`, a matched row and its undo) re-queues both
-  notices, so it reaches the next daily fold. Until then these edges applied on full re-projections only.
+  its far end is re-queued for the next fold and counted (`deferred` on the job row), and a guarded
+  join beside its near end waits for that fold too — a guard counting part of a component could admit
+  what a full fold refuses. Until the ledger is attested complete (`tender_links_complete`: a full plan
+  or a finished wet `backfill-tender-links`) every guarded join waits, since a notice planned before
+  the ledger has no row for the closure to find it by. A procedure key a merge absorbed is recorded
+  (`tender_key_merges`), so a later notice under it finds the merged Tender. A ledger row written or
+  deleted outside a fold (`backfill-tender-links`, a matched row and its undo) re-queues both notices,
+  so it reaches the next daily fold. Until then these edges applied on full re-projections only.

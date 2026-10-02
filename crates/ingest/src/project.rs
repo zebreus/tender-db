@@ -1414,12 +1414,16 @@ pub async fn project_with_progress_phase2_stoppable(
         // build from scratch — a stop costs the redo, never correctness.
         return Ok(report);
     }
+    // Issue 481: a complete plan ran the ledger's producer on every parsed notice (a
+    // resumed one too: a plan built without the ledger is not resumable), so the
+    // incremental fold may judge weld-guarded links from here on.
+    db.attest_tender_links_complete().await?;
 
     // Group the plan into Tenders — keyed chains, the legacy OJS transitive-closure
     // union-find, islands — entirely in SQL over the on-disk plan (issue 59), so no
     // whole-corpus structure ever enters RAM.
     let t1 = std::time::Instant::now();
-    let grouped = db.build_plan_groups().await?;
+    let grouped = db.build_plan_groups(store::PlanScope::Full).await?;
     report.target_refusals.add_refused(&grouped.shared_refused);
     report.links.add(grouped.links);
     probe(db, "grouping (build_plan_groups)");
@@ -1957,7 +1961,10 @@ fn link_fields() -> Vec<&'static str> {
 /// Idempotent: a re-run, or a window a fold already planned, finds its rows `present`.
 /// `stop` is polled between windows, never inside one; a stopped wet run keeps its
 /// committed windows. The target is captured before the walk — jobs are
-/// queue-serialized, and a notice parsed after it gets its rows from its own fold.
+/// queue-serialized, and a notice parsed after it gets its rows from its own fold. A wet
+/// walk that reaches the target attests the ledger complete
+/// ([`Db::attest_tender_links_complete`]), which is what lets the incremental fold judge
+/// a weld-guarded link.
 pub async fn backfill_tender_links(
     db: &Db,
     dry_run: bool,
@@ -2009,6 +2016,11 @@ pub async fn backfill_tender_links_windowed(
         if !dry_run {
             let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
         }
+    }
+    // Every parsed notice up to the target now holds its declared rows, and every one
+    // above it is in the change-set: the incremental fold may judge guarded links.
+    if !dry_run && !report.stopped {
+        db.attest_tender_links_complete().await?;
     }
     Ok(report)
 }
@@ -2575,7 +2587,7 @@ pub async fn project_incremental_chunked_observed(
     ));
 
     // Group the whole plan (same SQL as a full run — over the touched set only).
-    let grouped = db.build_plan_groups().await?;
+    let grouped = db.build_plan_groups(store::PlanScope::Incremental).await?;
     report.target_refusals.add_refused(&grouped.shared_refused);
     report.links.add(grouped.links);
     let (tenders, islands) = db.plan_counts().await?;

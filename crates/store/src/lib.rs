@@ -42,7 +42,7 @@ pub use canonical::{
     EdgeCensusReport, MatchKeyBuildWindow, OrgEdgeScanArgs,
     OrgEdgeScanReport,
     DeclaredLink, LINK_BACKFILL_SAMPLES, LINK_DECLARED_RULES, LINK_LOGICAL_NOTICE, LINK_OPP_090, LinkTally,
-    MatchedLink, PlanGroup, PlanGroupTally, PlanRow, TenderLinkBackfill, TenderLinkRuleCounts, TenderLinkSample,
+    MatchedLink, PlanGroup, PlanGroupTally, PlanRow, PlanScope, TenderLinkBackfill, TenderLinkRuleCounts, TenderLinkSample,
     QUALITY_WITHHELD, R2MergeArgs, version_stem,
     R2MergeReport, R3MergeArgs, R3MergeReport, Round, TenderProjection, TenderVersion,
     CountryCluster, CountryClusterReport, CountryTypoMove, CountryTypoRepairReport,
@@ -846,6 +846,23 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
     if !amounts_present {
         conn.execute("UPDATE projection_state SET currency_presence_complete = 1 WHERE id = 0", ())
             .await?;
+    }
+    // Issue 481: the Tender-link ledger's completeness attestation (see the
+    // projection_state schema comment). 0 on a file whose notices were planned before
+    // the ledger existed — `backfill-tender-links` or a full plan establishes it there —
+    // and attested here on a file with no notice yet, whose every notice will be planned
+    // by a producer that writes its rows. Same `LIMIT 1` probe shape as above.
+    add_column(
+        conn,
+        "ALTER TABLE projection_state ADD COLUMN tender_links_complete INTEGER NOT NULL DEFAULT 0",
+    )
+    .await?;
+    let notices_present = {
+        let mut rows = conn.query("SELECT 1 FROM notices LIMIT 1", ()).await?;
+        rows.next().await?.is_some()
+    };
+    if !notices_present {
+        conn.execute("UPDATE projection_state SET tender_links_complete = 1 WHERE id = 0", ()).await?;
     }
     // The Unicode-lowercased org name (issue 217-B): fold-written for new orgs,
     // backfilled by the batched `backfill-org-names` job (24.6M rows — never at
@@ -7468,15 +7485,18 @@ tmpfs /data/ramcache tmpfs rw 0 0
             assert!(!plan.contains("notices_source_id"), "{label}: the (source, id) trap — plan was:\n{plan}");
         };
 
-        // The producer, once per declared reference of every planned notice.
+        // The producer, once per declared reference of every planned notice — parsed
+        // targets only, the `+` keeping issue 323's `notices_parse_state` off the seek.
         let plan = plan_of(crate::canonical::LINK_EXACT_TARGET_SQL, vec![t("ted"), t("00615938-2024")]).await;
         seeks("exact target", &plan, &["sqlite_autoindex_notices_1 (source=? AND publication_id=?)"]);
+        assert!(!plan.contains("notices_parse_state"), "exact target: issue 323's trap — plan was:\n{plan}");
         let plan = plan_of(crate::canonical::LINK_VERSIONED_TARGET_SQL, vec![t("doe"), t("u-"), t("u.")]).await;
         seeks(
             "versioned target",
             &plan,
             &["sqlite_autoindex_notices_1 (source=? AND publication_id>? AND publication_id<?)"],
         );
+        assert!(!plan.contains("notices_parse_state"), "versioned target: issue 323's trap — plan was:\n{plan}");
         // ...and once per planned non-legacy notice: its own declared rows.
         let plan = plan_of(crate::canonical::LINK_DECLARED_ROWS_SQL, vec![Value::Integer(1)]).await;
         seeks("declared rows", &plan, &["sqlite_autoindex_tender_links_1 (a_notice_id=?)"]);
@@ -7505,6 +7525,14 @@ tmpfs /data/ramcache tmpfs rw 0 0
         seeks("named", &plan_of(&named, ids()).await, &["INTEGER PRIMARY KEY"]);
         let plan = plan_of(crate::canonical::LINK_BY_REF_SQL, vec![t("doe"), t("u")]).await;
         seeks("by ref", &plan, &["tender_links_ref (b_source=? AND b_ref=?)"]);
+        // ...whose reached notices are kept only when parsed: PRIMARY KEY seeks.
+        let plan = plan_of(&crate::canonical::parsed_notice_ids_sql(3), ids()).await;
+        seeks("parsed reached", &plan, &["SEARCH notices USING INTEGER PRIMARY KEY"]);
+        assert!(!plan.contains("notices_parse_state"), "parsed reached: issue 323's trap — plan was:\n{plan}");
+        // The touched expansion's absorbed keys, by the key table's PRIMARY KEY.
+        let keys = vec![t("k1"), t("k2"), t("k3")];
+        let plan = plan_of(&crate::canonical::key_merge_targets_sql(3), keys).await;
+        seeks("absorbed keys", &plan, &["sqlite_autoindex_tender_key_merges_1 (from_key=?)"]);
 
         // The grouping's one-ended links: driven from the edges like the join.
         let plan = plan_of(crate::canonical::LINK_ONE_ENDED_SQL, vec![]).await;

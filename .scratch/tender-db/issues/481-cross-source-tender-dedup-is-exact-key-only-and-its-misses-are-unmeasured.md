@@ -121,13 +121,14 @@ re-queue rule and the backfill job):
   stem) plus the changed notices' links resolved now, adding each reached Tender whole, to a fixpoint; past
   `LINK_CLOSURE_CAP` (= the legacy cap, 500k) it falls back to the full path. Proven equal to a full fold in
   both arrival orders (`the_ledger_joins_incrementally_exactly_as_a_full_fold_in_either_order`; it fails with
-  the closure disabled).
+  the closure disabled) and for a later notice under an absorbed key (review fix below; keys absorbed before
+  this binary are a follow-up).
 - **Re-queue rule** ("a write or delete un-projects both endpoints"; the change-set key is `notices.projected =
   0`, read by `unprojected_parsed_notice_ids`): `Db::write_matched_links` / `Db::delete_matched_links` (unit 3's
   write path) and the backfill re-queue both notices in the same transaction as the row — a written row only when
   its notices do not already share a Tender, a deleted row always. Inside a fold, the grouping re-queues the far end
-  of any link the plan holds only one end of (`LinkTally::deferred`; zero when the closure is complete — it catches
-  rows a pre-ledger corpus resolves forward from an untouched member).
+  of any link the plan holds only one end of and holds back the guarded joins beside its near end
+  (`LinkTally::deferred`; zero when the closure is complete and the ledger attested).
 - **Backfill job** `backfill-tender-links` (dry default; report `tender-link-backfill`): walks parsed non-legacy
   notices by id, 5,000 notices / 500k ids per window, loading only the link fields (BT-701, OPP-090 and their
   DE-1.x spelling) through one `notice_ids` range read per window whose `field_id` filter is read off the PK index
@@ -143,9 +144,59 @@ re-queue rule and the backfill job):
   protection); matched writes go through a store API rather than a trigger (no trigger exists in this codebase,
   and a trigger would fire per producer row on a full re-projection).
 
-**Deploy order:** deploy → `backfill-tender-links` dry → read `would_merge` and the samples → wet → the next
-`project` (daily) joins the would-merge pairs → read the job row's `issue-481` line (largest component, refusals,
-`deferred 0`). No full re-projection needed.
+**Deploy order:** deploy → `backfill-tender-links` dry → read `would_merge`, `opp-090`'s `cross_source`,
+`ledger_bytes` (about 0.56 GB expected; check free disk) and the samples → wet (attests the ledger complete) → the
+next `project` (daily) joins the would-merge pairs → read the job row's `issue-481` line (largest component,
+refusals, `deferred 0`). No full re-projection needed. Dailies between the deploy and the wet run hold every
+fan-in- and weld-guarded join back (`deferred`; the wet run re-queues them); ADR-0011's same-Source joins go ahead.
+Expect one-time renames: a pre-ledger OPP-090 Tender named after an island member is retired (`removed`) and
+re-minted under its keyed member the first time a fold plans it.
+
+**Adversarial review fixes (2026-10-02, third commit):**
+- *A notice under a key a link merge absorbed split off on the daily* (two reviewers, major): the merged Tender is
+  named after the other key, and the touched expansion looked new keys up by `tenders.procedure_key` only. Fixed:
+  the grouping records every absorbed procedure key in `tender_key_merges(from_key, to_key)` (a full plan replaces
+  it, an incremental plan the rows of the keys it holds), and `touched_existing_tender_ids` resolves through it.
+  Test `a_notice_under_an_absorbed_key_finds_the_merged_tender_on_the_daily` (TED→TED and DÖE→TED; failed before).
+- *Matched rows had no notice-level one-to-one guard* (major, calibration §4 shape 16): fixed in the fold — a notice
+  whose matched partners sit in two components has every match refused (`not-one-to-one`). Test
+  `a_notice_matched_to_two_notices_joins_neither`. Unit 3 writes one row per logical pair.
+- *Cross-source OPP-090 was unguarded and uncounted* (major): fan-in guard — cross-Source references into one target
+  from two or more keyed components are all refused (`fan-in`); admitted ones counted `cross-source` on the job row;
+  the backfill counts `cross_source` per rule. ADR-0011's same-Source mechanism unchanged. Test
+  `two_doe_procedures_citing_one_ted_notice_stay_apart`.
+- *A same-notice link could rename a merged Tender* (minor): a keyed key's rank now comes from its previous-notice
+  links only (ADR-0011's input). Test `a_same_notice_link_does_not_rename_a_merged_tender`. The one-time rename of
+  island-named pre-ledger components is documented (ADR-0011 amendment, operations.md, deploy order above).
+- *Unparsed notices entered incremental plans* (minor): link targets resolve among parsed notices only, and the
+  closure keeps parsed notices only. Test `a_link_to_an_unparsed_notice_joins_only_once_it_parses`.
+- *The daily admitted guarded joins a full fold refuses* (minor): a guarded join beside a one-ended link waits
+  (`deferred`), and every fan-in- or weld-guarded join waits until `projection_state.tender_links_complete` (set by
+  a full plan build or a finished wet backfill; at open on a file with no notice). The backfill's `would_merge` now
+  counts held rows too, so a join a pre-attestation daily held back is re-queued. Refusals never wait. Tests
+  `a_guarded_join_beside_a_one_ended_link_waits_for_both_ends`, `the_daily_holds_guarded_joins_until_the_ledger_is_attested`.
+- *Prod-scale* (minor): matched writes/undos commit per 5,000 links with prepared statements; the closure's by-name
+  read is prepared once (the superset of names kept on purpose); the one-ended pass runs on incremental plans only
+  (`PlanScope`) and ignores a link whose far end is unparsed (no plan holds it; a full fold drops it too); the
+  ledger's measured 229 B/row is on the backfill report (`ledger_bytes`) and in operations.md.
+- *Largest component only on stderr* (minor): `LinkTally::largest_component` (max across chunks) on the job row.
+- All six new behaviour tests were checked to fail with their fix reverted.
+
+**Follow-ups (deferred by the review fixer):**
+- **Dispatch-second check on `logical-notice`** (review minor; the design's consistency check). Not cheap: it needs
+  `dispatched_at` on the plan row, a measurement of how often DÖE eForms versions carry no or hour-grain dispatch
+  (calibration §6 lists this as unmeasured), and its own refusal counter. The suggested shape — resolve the link only
+  when at least one DÖE version's dispatch equals the TED notice's, then join every version of the stem — keeps
+  "all versions join". No BT-701 collision is measured; the one-to-one, keyed-weld, cap and placeholder guards stand.
+- **`run_project`'s issue-467 poll budget is nearly spent**: it needs between 462 and 472 KiB against its 472 KiB
+  budget (re-measured 2026-10-02; 449 before unit 2, so A/B's link step and closure grew it, and the review fixes
+  pushed it over until the link step was boxed as `Db::link_step`). The next growth on the incremental path trips
+  the test: box the link closure (`link_closure_capped` → `tender_link_neighbours`) or the three
+  `incremental_full_fallback` sites before raising the number.
+- **Keys absorbed before this binary** (the 2026-08-20 re-projection's ADR-0011 merges, and island-named
+  components): no `tender_key_merges` row until a fold plans their Tender or the next full projection writes them
+  all. Until then a later notice under such a key folds apart exactly as before the deploy (pre-existing, not a
+  regression). Bundle the full non-rebuild projection with the next pending one rather than paying a window for it.
 
 Design from the code map (`481-dedup/code-map.md`):
 - **Table:** `tender_links(a_notice_id, b_notice_id NULL, b_source, b_publication_id, kind declared|matched, rule,
