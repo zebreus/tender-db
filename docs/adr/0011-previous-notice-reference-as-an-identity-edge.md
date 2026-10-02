@@ -177,3 +177,36 @@ contradicts. "Nothing here matches on buyer" above still holds for admission.
 - **Existing welds.** Welds a full re-projection made before this check split on the next fold that
   plans them. The backfill's dry run counts those first (`would_split`, sampled), and the wet run
   re-queues them.
+
+## Amendment (2026-10-02, issue 481 unit 2c): one buyer is what the procedure's notices say it is
+
+Job 1893's census showed the 2b check refusing legitimate references: of the 30 Tenders it would
+split, about a third were one buyer named two ways. The check now treats two notices as sharing a
+buyer when any of the following holds (each still within one register jurisdiction):
+
+- **One resolved organization.** Both notices' buyer-side mentions resolve to the same Organization,
+  as the org layer holds it after merges (the fold reads the resolver's answer or the recorded
+  mention, and the census reads the recorded mention).
+- **One raw identifier.** The same published value (letters and digits, upper case) whatever its
+  scheme, unless it is a placeholder class the identifier gate measured.
+- **The contract signatory.** A ministry that signs for its hospital
+  (`OPT-300-Contract-Signatory`) is on the buyer side. It counts only on a notice that names a buyer.
+- **An agency's principal.** `<agent> namens / im Auftrag von / on behalf of / pour le compte de /
+  en nombre de / per conto di / w imieniu <principal>` names the principal too. The agent alone
+  meets only the agency's own notices, never the same agency's notice for another principal.
+- **A name and its whole-word prefix or head.** A name that is a whole-word prefix of the other's
+  name (`ARPAS` / `ARPAS - Agenzia Regionale…`) or the other's head, meaning the text before its
+  first separator, of three content words or more (`Servicio Andaluz de Salud. Servicios
+  Centrales` / `… . Hospital Universitario Virgen de las Nieves`). Two names that only start alike
+  (`Gemeente Utrecht` / `Gemeente Amersfoort`) do not.
+- **An acronym and its spelled-out name.** `ICS` meets `Institut Català de la Salut`. Two spelled-out
+  names with the same initials do not.
+
+**No extra refusal for disjoint jurisdictions.** The sampled false merges are mostly cross-country,
+but every one of them is already refused, because the tokens are scoped by register jurisdiction.
+A jurisdiction rule could only add refusals where one resolved organization spans two countries,
+and the check must never refuse a pair that shares a buyer.
+
+**A group PIN or a qualification system is not one procedure.** DB InfraGO procedures citing the
+DB group's deadline-shortening PIN, and ÖBB-Infrastruktur procedures citing the ÖBB-Holding
+qualification system, stay refused. On prod one such PIN's Tender holds 147 versions.

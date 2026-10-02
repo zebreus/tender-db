@@ -681,9 +681,25 @@ since a token can only make two notices overlap:
   punctuation folded and Latin accents dropped (`HOPITAUX` meets `hôpitaux`), under the
   identifier's register country (`RE` meets `FR`).
 
+Since unit 2c (job 1893's census: ~12 of 30 `would_split` samples were one buyer named two ways)
+two notices also overlap on:
+- one **resolved organization** among their buyer-side mentions (the org layer after merges;
+  the fold and the census read the same recorded mentions);
+- one **raw identifier** (letters and digits, upper case) whatever its scheme, placeholder classes
+  excepted;
+- the **contract signatory** beside the buyers (a ministry signing for its hospital);
+- an **agency's principal** (`… B.V. namens Stichting Prisma` meets `Stichting Prisma`; one agency
+  buying for two schools does not meet itself);
+- a name that is a **whole-word prefix** of the other's name or equals its **head**, the text before
+  the first separator, of three content words or more (`ARPAS` / `ARPAS - Agenzia…`, two
+  `Servicio Andaluz de Salud. …` units), but never two names that only start alike;
+- an **acronym** and its spelled-out name (`ICS` / `Institut Català de la Salut`).
+
 Still disjoint, and so refused: one buyer that changed or respelled its name beyond that, with no
-identifier in common, and a CAN filed by another body (a central purchasing body, say) than the
-CN's buyer.
+identifier in common, written in another co-official language (`Servizo Galego de Saúde` against a
+`Servicio Gallego de Salud` area), or abbreviated mid-name (`im. M.Nenckiego PAN`); a CAN filed by
+another body than the CN's buyer; and a group PIN or qualification system (the DB group's
+deadline-shortening PIN, ÖBB-Holding's), which is cited by many procedures and is not one of them.
 
 **Read the census before the wet run.** Each sample names both publication ids. For every
 `buyer_disjoint` and `would_split` sample, open both notices on TED and check whether they are one

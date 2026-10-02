@@ -1595,6 +1595,9 @@ async fn build_plan(
     // tables, the writer writes organizations/mentions/plan rows — disjoint.
     struct PlanChunk {
         rows: Vec<store::PlanRow>,
+        /// Issue 481 unit 2c: per row, the sections whose resolved organizations its
+        /// buyer tokens take once the writer half has resolved them.
+        guard_sections: Vec<Vec<String>>,
         mentions: Vec<Mention>,
         /// Issue 364's per-kind tally for this chunk's notices, summed by the
         /// writer half — the sweep is where `Ident::read` runs.
@@ -1639,6 +1642,7 @@ async fn build_plan(
                     after_id = last.id;
                     let mut mentions: Vec<Mention> = Vec::new();
                     let mut rows: Vec<store::PlanRow> = Vec::with_capacity(chunk.len());
+                    let mut guard_sections: Vec<Vec<String>> = Vec::with_capacity(chunk.len());
                     let mut citations = CitationGate::default();
                     let mut f14 = F14TargetGate::default();
                     for (notice, parsed) in &chunk {
@@ -1646,9 +1650,11 @@ async fn build_plan(
                         mentions.extend(NoticeState::mentions(ident.sdk01, notice.id, parsed));
                         citations.add(ident.citations);
                         f14.add(ident.f14_targets);
-                        rows.push(ident.into_plan_row());
+                        let (row, sections) = ident.into_plan_row();
+                        rows.push(row);
+                        guard_sections.push(sections);
                     }
-                    if tx.send(Ok(PlanChunk { rows, mentions, citations, f14 })).is_err() {
+                    if tx.send(Ok(PlanChunk { rows, guard_sections, mentions, citations, f14 })).is_err() {
                         return; // the writer half bailed on an error
                     }
                 }
@@ -1674,7 +1680,7 @@ async fn build_plan(
             stopped = true;
             break;
         }
-        let chunk = match sent {
+        let mut chunk = match sent {
             Ok(chunk) => chunk,
             Err(e) => {
                 plan_err = Some(e);
@@ -1693,6 +1699,12 @@ async fn build_plan(
             }
         };
         mentions_total += resolved.len() as u64;
+        // Issue 481 unit 2c: the resolver's answer is the organization each buyer-side
+        // mention now has, before the rows that carry it are written.
+        let orgs = resolved_orgs(&chunk.mentions, &resolved);
+        for (row, sections) in chunk.rows.iter_mut().zip(&chunk.guard_sections) {
+            add_buyer_org_tokens(row, sections, orgs.get(&row.notice_id));
+        }
         if let Err(e) = db.insert_plan(&chunk.rows).await {
             plan_err = Some(e);
             break;
@@ -2052,8 +2064,12 @@ async fn link_endpoints(db: &Db, ids: &[i64]) -> turso::Result<HashMap<i64, stor
         // (its buyer refs, names and publication date are `DE1-*` until then), so the
         // census does too (issue 481 unit 2b review).
         normalise_de1(&mut notices);
+        // Issue 481 unit 2c: each endpoint's buyer-side organizations, as the fold's plan
+        // carries them (`add_buyer_org_tokens`), from the table both read.
+        let orgs = Box::pin(db.mentions_by_ids(batch)).await?;
         for (notice, parsed) in notices {
-            let row = Ident::read(&notice, &parsed).into_plan_row();
+            let (mut row, sections) = Ident::read(&notice, &parsed).into_plan_row();
+            add_buyer_org_tokens(&mut row, &sections, orgs.get(&notice.id));
             out.insert(
                 notice.id,
                 store::LinkEndpoint {
@@ -2587,6 +2603,7 @@ pub async fn project_incremental_chunked_observed(
         normalise_de1(&mut parsed);
         parsed.sort_by_key(|(n, _)| n.id);
         let mut rows: Vec<store::PlanRow> = Vec::with_capacity(parsed.len());
+        let mut guard_sections: Vec<Vec<String>> = Vec::with_capacity(parsed.len());
         let mut mentions: Vec<Mention> = Vec::new();
         for (notice, p) in &parsed {
             let ident = Ident::read(notice, p);
@@ -2598,10 +2615,29 @@ pub async fn project_incremental_chunked_observed(
             // every citation in the delta.
             report.citations.add(ident.citations);
             report.f14_targets.add(ident.f14_targets);
-            rows.push(ident.into_plan_row());
+            let (row, sections) = ident.into_plan_row();
+            rows.push(row);
+            guard_sections.push(sections);
+        }
+        // Issue 481 unit 2c: resolved BEFORE the rows are written, so each row carries
+        // its buyers' organizations — the resolver's answer for the delta's notices, the
+        // recorded mentions for the closure's (boxed: issue 467's poll budget).
+        let resolved = db.resolve_mentions(&mut resolver, &mentions, now).await?;
+        report.mentions += resolved.len() as u64;
+        let mut orgs = resolved_orgs(&mentions, &resolved);
+        let recorded: Vec<i64> = rows
+            .iter()
+            .zip(&guard_sections)
+            .filter(|(row, sections)| !sections.is_empty() && !changed_set.contains(&row.notice_id))
+            .map(|(row, _)| row.notice_id)
+            .collect();
+        if !recorded.is_empty() {
+            orgs.extend(Box::pin(db.mentions_by_ids(&recorded)).await?);
+        }
+        for (row, sections) in rows.iter_mut().zip(&guard_sections) {
+            add_buyer_org_tokens(row, sections, orgs.get(&row.notice_id));
         }
         db.insert_plan(&rows).await?;
-        report.mentions += db.resolve_mentions(&mut resolver, &mentions, now).await?.len() as u64;
     }
     report.wall = store::Db::wall_counts(&resolver);
     report.alias = store::Db::altid_alias_counts(&resolver);
@@ -3999,6 +4035,10 @@ struct Ident {
     /// Issue 481 unit 2b: the tolerant buyer token set the link step's buyer guard
     /// reads — see [`buyer_tokens_of`].
     buyer_tokens: Vec<u32>,
+    /// Issue 481 unit 2c: the sections of the guard's buyer-side mentions
+    /// ([`buyer_side_mentions`]), whose resolved organizations join `buyer_tokens` once
+    /// Phase 1 has resolved them ([`add_buyer_org_tokens`]).
+    guard_sections: Vec<String>,
     /// Issue 364 unit 6: the shared-publication kind this legacy notice IS, by
     /// its own document-type code ([`SHARED_DOC_TYPES`]); `None` for a procedure
     /// notice and for every non-legacy profile. Goes on the plan row so the
@@ -4432,8 +4472,14 @@ impl Ident {
             })
             .flatten();
         // Read once for both: the key-election gate's buyer key and the link guard's
-        // tokens (`NoticeState::mentions` walks every value of the notice).
-        let buyers = buyer_mentions(sdk01, notice.id, parsed);
+        // tokens (`NoticeState::mentions` walks every value of the notice). The guard
+        // reads the contract signatories too (issue 481 unit 2c); the gate does not.
+        let (buyers, signatories) = buyer_side_mentions(sdk01, notice.id, parsed);
+        // issue 369 unit 2: the buyer set this notice publishes, for the key-election
+        // gate. Parsed-side, so no org-layer dependency.
+        let buyer_key = buyer_key_of(&buyers);
+        let mut guard = buyers;
+        guard.extend(signatories);
         Ident {
             notice_id: notice.id,
             source: notice.source.clone(),
@@ -4451,11 +4497,11 @@ impl Ident {
             subtype: first_code(parsed, SUBTYPE_FIELD),
             citations,
             f14_targets: f14_target_gate(parsed),
-            // issue 369 unit 2: the buyer set this notice publishes, for the
-            // key-election gate. Parsed-side, so no org-layer dependency.
-            buyer_key: buyer_key_of(&buyers),
-            // issue 481 unit 2b: the same buyers as the link guard's tolerant tokens.
-            buyer_tokens: buyer_tokens_of(&buyers),
+            buyer_key,
+            // issue 481 unit 2b: the same buyers (and 2c: their signatories) as the
+            // link guard's tolerant tokens.
+            buyer_tokens: buyer_tokens_of(&guard),
+            guard_sections: guard.into_iter().map(|m| m.section_id).collect(),
             shared_kind: legacy
                 .then(|| {
                     LEGACY_DOC_TYPE_FIELDS
@@ -4468,13 +4514,15 @@ impl Ident {
     }
 
     /// This notice's row for the on-disk grouping plan — OJS keys encoded, Source
-    /// precedence precomputed (issue 59).
-    fn into_plan_row(self) -> store::PlanRow {
+    /// precedence precomputed (issue 59) — and the sections whose resolved
+    /// organizations the row's buyer tokens still lack (issue 481 unit 2c,
+    /// [`add_buyer_org_tokens`]).
+    fn into_plan_row(self) -> (store::PlanRow, Vec<String>) {
         // issue 369 unit 2. Computed BEFORE the literal, which moves
         // `procedure_key` out of `self` — read off the key this row carries, so
         // the verdict cannot disagree with the key it describes.
         let key_shaped = self.procedure_key.as_deref().is_some_and(is_placeholder_key);
-        store::PlanRow {
+        let row = store::PlanRow {
             notice_id: self.notice_id,
             procedure_key: self.procedure_key,
             legacy: self.legacy,
@@ -4490,7 +4538,8 @@ impl Ident {
             buyer_key: self.buyer_key,
             shared_kind: self.shared_kind.map(str::to_owned),
             buyer_tokens: self.buyer_tokens,
-        }
+        };
+        (row, self.guard_sections)
     }
 }
 
@@ -5863,8 +5912,27 @@ fn buyer_key(sdk01: bool, notice_id: i64, parsed: &Parsed) -> Option<String> {
 /// the parsed side, never the resolved `organizations` row) — what [`buyer_key`] and
 /// [`buyer_tokens_of`] both read, so the gate's key and the link guard's tokens cannot
 /// disagree on who a notice's buyers are. Empty when it names no buyer at all.
+#[cfg_attr(not(test), allow(dead_code))]
 fn buyer_mentions(sdk01: bool, notice_id: i64, parsed: &Parsed) -> Vec<store::Mention> {
+    buyer_side_mentions(sdk01, notice_id, parsed).0
+}
+
+/// Issue 481 unit 2c: the roles whose organization the link guard reads BESIDE the
+/// buyers. eForms' contract signatory (`OPT-300-Contract-Signatory`) is the buyer that
+/// signs the contract, and a ministry signing for its hospital is the one shape the
+/// census sample found where a procedure's two notices name two different buyers:
+/// Santaros klinikos' award (job 1893, `00211216-2025`) names the hospital as buyer and
+/// its ministry as signatory, the contract notice it cites (`00686342-2024`, the same
+/// "Nr. 9582" drill system) names the ministry as buyer. Not [`BUYER_ROLES`]: issue
+/// 369's buyer set (the key-election gate) stays the buyers alone.
+const GUARD_SIGNATORY_ROLES: &[&str] = &["Contract-Signatory"];
+
+/// [`buyer_mentions`], and the contract signatories that are not also buyers
+/// ([`GUARD_SIGNATORY_ROLES`]): the guard's buyer side is both. A notice that names no
+/// buyer has neither, so a signatory alone never makes an unknown notice known.
+fn buyer_side_mentions(sdk01: bool, notice_id: i64, parsed: &Parsed) -> (Vec<store::Mention>, Vec<store::Mention>) {
     let mut sections: BTreeSet<&str> = BTreeSet::new();
+    let mut signatories: BTreeSet<&str> = BTreeSet::new();
     if sdk01 {
         for section in &parsed.sections {
             if section.kind == SDK01_BUYER_KIND {
@@ -5878,18 +5946,29 @@ fn buyer_mentions(sdk01: bool, notice_id: i64, parsed: &Parsed) -> Vec<store::Me
         // scheme is a chain edge, not a role reference.
         if let NoticeValue::Id { value: target, is_ref: true, scheme } = &value.value
             && scheme.as_deref() != Some("ojs")
-            && role_name(&value.field_id).is_some_and(|r| BUYER_ROLES.contains(&r.as_str()))
+            && let Some(role) = role_name(&value.field_id)
         {
-            sections.insert(target.as_str());
+            if BUYER_ROLES.contains(&role.as_str()) {
+                sections.insert(target.as_str());
+            } else if GUARD_SIGNATORY_ROLES.contains(&role.as_str()) {
+                signatories.insert(target.as_str());
+            }
         }
     }
     if sections.is_empty() {
-        return Vec::new();
+        return (Vec::new(), Vec::new());
     }
-    NoticeState::mentions(sdk01, notice_id, parsed)
-        .into_iter()
-        .filter(|m| sections.contains(m.section_id.as_str()))
-        .collect()
+    NoticeState::mentions(sdk01, notice_id, parsed).into_iter().fold(
+        (Vec::new(), Vec::new()),
+        |(mut buyers, mut signing), m| {
+            if sections.contains(m.section_id.as_str()) {
+                buyers.push(m);
+            } else if signatories.contains(m.section_id.as_str()) {
+                signing.push(m);
+            }
+            (buyers, signing)
+        },
+    )
 }
 
 /// A buyer mention's identifier key, `country:kind:value` — the strong key: country-
@@ -5929,9 +6008,23 @@ fn buyer_key_of(mentions: &[store::Mention]) -> Option<String> {
 /// buyer — identifier OR name — which is right for issue 369's distinct count and would
 /// read those two spellings as two buyers here. Empty when no buyer was parsed:
 /// unknown, which the guard never refuses.
+///
+/// Issue 481 unit 2c: `mentions` is the guard's buyer side ([`buyer_side_mentions`]),
+/// and each also gives [`buyer_guard_evidence`]'s tokens — its raw identifier, its
+/// names' heads, an agency's principal (FULL tokens), its names' whole-word prefixes
+/// ([`store::buyer_prefix_token`]) and acronyms ([`store::buyer_abbr_token`],
+/// [`store::buyer_initials_token`]). The resolved organization joins on the plan paths
+/// once Phase 1 has resolved it ([`add_buyer_org_tokens`]).
 fn buyer_tokens_of(mentions: &[store::Mention]) -> Vec<u32> {
-    let mut tokens: Vec<u32> =
-        mentions.iter().flat_map(buyer_guard_tokens).map(|token| store::buyer_token(&token)).collect();
+    let mut tokens: Vec<u32> = Vec::new();
+    for m in mentions {
+        tokens.extend(buyer_guard_tokens(m).iter().map(|token| store::buyer_token(token)));
+        let evidence = buyer_guard_evidence(m);
+        tokens.extend(evidence.full.iter().map(|token| store::buyer_token(token)));
+        tokens.extend(evidence.prefixes.iter().map(|token| store::buyer_prefix_token(token)));
+        tokens.extend(evidence.abbrs.iter().map(|token| store::buyer_abbr_token(token)));
+        tokens.extend(evidence.initials.iter().map(|token| store::buyer_initials_token(token)));
+    }
     tokens.sort_unstable();
     tokens.dedup();
     tokens
@@ -5976,6 +6069,307 @@ fn buyer_guard_tokens(m: &store::Mention) -> Vec<String> {
         if !norm.is_empty() {
             out.push(format!("n2:{country}:{norm}"));
         }
+    }
+    out
+}
+
+/// Issue 481 unit 2c: the evidence one buyer leaves across a procedure's notices that
+/// [`buyer_guard_tokens`] does not read, as `(full, prefix)` token strings. Job 1893's
+/// census (2026-10-02) sampled 30 Tenders the 2b guard would split; about 12 were one
+/// buyer published two ways the 2b tokens missed. Each widening only makes notices
+/// overlap, and every token stays under the buyer's register jurisdiction, so two
+/// notices of buyers in different registers still share nothing (most of the sample's
+/// false merges: Bulgarian national numbers that collide with TED numbers).
+///
+/// - **Raw identifier, whatever its scheme** (`r:<jurisdiction>:<ALNUM>`): the published
+///   value's letters and digits, upper-cased, whether the gate kept it or not — the
+///   identifier key carries the scheme (`LT:national:…` against `LT:002:…`, Santaros
+///   klinikos' one code under two schemes) and a gate-refused value has no key at all.
+///   The same raw value is the same buyer's number even when its checksum fails; the
+///   placeholder classes the gate measured (lexicon, digit runs, phone numbers, routing
+///   scopes, TED notice numbers, bare short numbers) give no token
+///   ([`raw_identifier_token`]).
+/// - **The name's head** (FULL): the name up to its first separator, when that is three
+///   words or more — `Servicio Andaluz de Salud` of `Servicio Andaluz de Salud. Hospital
+///   Universitario Virgen de las Nieves` and of `… . Servicios Centrales`, one service's
+///   two units ([`guard_name_head`]).
+/// - **An agency's principal** (FULL): `<agent> namens|im Auftrag von|on behalf of|pour
+///   le compte de|en nombre de|per conto di|w imieniu <principal>` also names the
+///   principal, so `Onderwijs Inkoop Groep B.V. namens Stichting Prisma` meets `Stichting
+///   Prisma` ([`AGENCY_PHRASES`]). The agent is a whole-word prefix of the name, so the
+///   agency's notices in its own name meet it as a prefix — but two of its notices for
+///   two principals do not meet: an agency reusing its templates is where a copied
+///   OPP-090 is likeliest.
+/// - **Whole-word prefixes** (PREFIX): of every name and principal, so a name that is a
+///   whole-word prefix of another — `ARPAS` / `ARPAS - Agenzia Regionale…`, `Kommunaler
+///   Immobilien Service` (a head) / `Kommunaler Immobilien Service Potsdam (KIS) …`, a
+///   name the publisher cut short — meets it. A prefix meets only a FULL token
+///   (`store::buyer_tokens_disjoint`), never another prefix, so two names that merely
+///   start alike (`Gemeente Utrecht` / `Gemeente Amersfoort`, `Uniwersytecki Szpital
+///   Kliniczny w Białymstoku` / `… w Poznaniu`) stay apart ([`push_guard_prefixes`]).
+///
+/// - **An acronym** ([`push_guard_acronym`]): a one-word name or head of three to eight
+///   letters (FULL) meets the initials of a spelled-out name (PREFIX), `ICS` / `Institut
+///   Català de la Salut`.
+///
+/// Names are folded as [`buyer_guard_tokens`] folds them, and then a run of initials
+/// is one word (`U.A.` and `UA`, `B.V.` and `BV`, `Sp. z o.o.` and `Sp. z oo` —
+/// [`merge_initials`]); where the run is absent the full token is the 2b one.
+fn buyer_guard_evidence(m: &store::Mention) -> GuardEvidence {
+    let jurisdiction = m.country.as_deref().map(store::register_jurisdiction).unwrap_or("");
+    let mut out = GuardEvidence::default();
+    if let Some(token) = m.raw_identifier.as_deref().and_then(|raw| raw_identifier_token(raw, jurisdiction)) {
+        out.full.push(token);
+    }
+    let name_token = |words: &[String]| format!("n2:{jurisdiction}:{}", words.join(" "));
+    for name in std::iter::once(m.name.as_str()).chain(m.variants.iter().map(|(_, v)| v.as_str())) {
+        let folded = guard_name_words(name);
+        if folded.is_empty() {
+            continue;
+        }
+        let words = merge_initials(&folded);
+        out.full.push(name_token(&words));
+        push_guard_prefixes(&words, jurisdiction, &mut out.prefixes);
+        push_guard_acronym(&words, jurisdiction, &mut out);
+        if let Some(head) = guard_name_head(name) {
+            let head = merge_initials(&guard_name_words(head));
+            if content_words(&head) >= GUARD_HEAD_MIN_WORDS && head != words {
+                out.full.push(name_token(&head));
+            }
+            push_guard_acronym(&head, jurisdiction, &mut out);
+        }
+        if let Some(principal) = agency_principal(&folded) {
+            let principal = merge_initials(principal);
+            out.full.push(name_token(&principal));
+            push_guard_prefixes(&principal, jurisdiction, &mut out.prefixes);
+        }
+    }
+    out
+}
+
+/// [`buyer_guard_evidence`]'s token strings by kind (`store::buyer_token`'s kinds).
+#[derive(Default)]
+struct GuardEvidence {
+    full: Vec<String>,
+    prefixes: Vec<String>,
+    abbrs: Vec<String>,
+    initials: Vec<String>,
+}
+
+/// How many of `words` are not [`PREFIX_FUNCTION_WORDS`].
+fn content_words(words: &[String]) -> usize {
+    words.iter().filter(|w| !PREFIX_FUNCTION_WORDS.contains(&w.as_str())).count()
+}
+
+/// A buyer name as the guard's words: [`match_norm`], Latin diacritics folded
+/// ([`store::buyer_name_fold`]), split on its single spaces.
+fn guard_name_words(name: &str) -> Vec<String> {
+    store::buyer_name_fold(&match_norm(name)).split(' ').filter(|w| !w.is_empty()).map(str::to_owned).collect()
+}
+
+/// A run of two or more single-letter words joined into one: the initials a
+/// publisher writes with or without dots (`U.A.` / `UA`, `B.V.` / `BV`, `S.p.A.` /
+/// `SpA`). A lone letter — Polish `w`, Spanish `y` — is a word of its own, and digits
+/// never merge (`nr 1 2`).
+fn merge_initials(words: &[String]) -> Vec<String> {
+    let initial = |w: &str| w.chars().count() == 1 && w.chars().all(char::is_alphabetic);
+    let mut out: Vec<String> = Vec::with_capacity(words.len());
+    let mut i = 0;
+    while i < words.len() {
+        let run = words[i..].iter().take_while(|w| initial(w)).count();
+        if run >= 2 {
+            out.push(words[i..i + run].concat());
+            i += run;
+        } else {
+            out.push(words[i].clone());
+            i += 1;
+        }
+    }
+    out
+}
+
+/// Fewest content words ([`content_words`]) a name's head must have to stand for the
+/// buyer ([`guard_name_head`]): a one- or two-word head is too often a generic office
+/// (`Stadt`, `Gemeinde Wiesenburg`, `Centre hospitalier`, `Водоснабдяване и
+/// канализация - Варна`, a water utility of every Bulgarian district) whose specific part
+/// follows the separator.
+const GUARD_HEAD_MIN_WORDS: usize = 3;
+
+/// The head of a published buyer name: the text before its first separator — a spaced
+/// dash, an opening parenthesis, a comma, a semicolon, a colon, a slash, a bar, or a
+/// full stop that ends a word of four letters or more (a sentence break, `Salud. `,
+/// never an abbreviation, `im. `, `B.V. `, `St. `). `None` when nothing separates.
+/// Publishers put the body first and the unit, the address or a gloss after:
+/// `Kommunaler Immobilien Service (KIS) - Eigenbetrieb der Landeshauptstadt Potsdam`,
+/// `Servicio Gallego de Salud - Área Sanitaria de Lugo, A Mariña y Monforte de Lemos`,
+/// `DB InfraGO AG – Geschäftsbereich Fahrweg (Bukr 16)`.
+fn guard_name_head(name: &str) -> Option<&str> {
+    let mut cut = name.len();
+    for separator in [" - ", " \u{2013} ", " \u{2014} ", "(", ",", ";", ":", "/", "|"] {
+        if let Some(at) = name.find(separator) {
+            cut = cut.min(at);
+        }
+    }
+    for (at, _) in name.match_indices(". ") {
+        if name[..at].chars().rev().take_while(|c| c.is_alphabetic()).count() >= 4 {
+            cut = cut.min(at);
+            break;
+        }
+    }
+    let head = name[..cut].trim();
+    (cut < name.len() && !head.is_empty()).then_some(head)
+}
+
+/// Issue 481 unit 2c: how a buyer name says that an agent buys on a principal's behalf
+/// (`<agent> <phrase> <principal>`), as folded words. The census sample's shape is the
+/// Dutch school-purchasing agencies: `Onderwijs Inkoop Groep B.V. namens <school>` and
+/// `DASmakkelijk B.V. namens AT Scholen VO`, each citing the school's own notice.
+const AGENCY_PHRASES: &[&[&str]] = &[
+    &["namens"],
+    &["im", "auftrag", "von"],
+    &["im", "auftrag", "der"],
+    &["im", "auftrag", "des"],
+    &["on", "behalf", "of"],
+    &["pour", "le", "compte", "de"],
+    &["pour", "le", "compte", "du"],
+    &["pour", "le", "compte", "des"],
+    &["pour", "le", "compte", "d"],
+    &["en", "nombre", "de"],
+    &["en", "nombre", "del"],
+    &["per", "conto", "di"],
+    &["per", "conto", "del"],
+    &["per", "conto", "della"],
+    &["per", "conto", "dei"],
+    &["w", "imieniu"],
+];
+
+/// The principal's words of an agency name ([`AGENCY_PHRASES`]): what follows the
+/// first phrase that has an agent before it and a principal after it.
+fn agency_principal(words: &[String]) -> Option<&[String]> {
+    (1..words.len()).find_map(|at| {
+        AGENCY_PHRASES.iter().find_map(|phrase| {
+            let end = at + phrase.len();
+            (end < words.len() && words[at..end].iter().zip(phrase.iter()).all(|(w, p)| w == p))
+                .then(|| &words[end..])
+        })
+    })
+}
+
+/// Longest whole-word prefix the guard emits: a longer one would only meet a longer
+/// full name, and names of that length are lists (`ÖBB-Holding AG sowie die mit ihr …
+/// verbundenen Gesellschaften, …`), not a buyer's name cut short.
+const GUARD_PREFIX_MAX_WORDS: usize = 12;
+
+/// Folded words that never end a buyer's name, so a prefix ending in one is no name
+/// another notice could publish whole (`Servicio Andaluz de`, `Instytut … w`).
+const PREFIX_FUNCTION_WORDS: &[&str] = &[
+    "a", "al", "am", "an", "and", "au", "aux", "d", "da", "das", "de", "dei", "del", "della", "delle", "dem",
+    "den", "der", "des", "di", "die", "do", "dos", "du", "e", "el", "en", "et", "for", "fur", "het", "i", "im",
+    "in", "l", "la", "las", "le", "les", "lo", "los", "na", "och", "of", "og", "op", "per", "the", "und", "van",
+    "voor", "vom", "von", "w", "we", "y", "z", "ze", "zu", "zum", "zur", "dell", "dello", "degli", "и", "в",
+];
+
+/// The whole-word PREFIX tokens of a buyer name's `words` ([`buyer_guard_evidence`]):
+/// every proper prefix of up to [`GUARD_PREFIX_MAX_WORDS`] words, except one ending
+/// in a function word ([`PREFIX_FUNCTION_WORDS`]) and a one-word prefix shorter than
+/// five letters (`DB` of `DB Netz AG`; `ARPAS` stays).
+fn push_guard_prefixes(words: &[String], jurisdiction: &str, out: &mut Vec<String>) {
+    for k in 1..words.len().min(GUARD_PREFIX_MAX_WORDS + 1) {
+        let last = words[k - 1].as_str();
+        if PREFIX_FUNCTION_WORDS.contains(&last) || (k == 1 && last.chars().count() < 5) {
+            continue;
+        }
+        out.push(format!("n2:{jurisdiction}:{}", words[..k].join(" ")));
+    }
+}
+
+/// Issue 481 unit 2c: a name written as its acronym. A one-word name or head of three to
+/// eight letters is an ACRONYM token (`ICS` of `ICS - Gerència de compres`); a name or
+/// head of three content words or more ([`PREFIX_FUNCTION_WORDS`] skipped) gives its
+/// initials as an INITIALS token (`ics` of `Institut Català de la Salut`). The two meet
+/// each other only (`store::buyer_tokens_disjoint`): two spelled-out names with equal
+/// initials never meet, nor two one-word heads (`Commune, Pau` / `Commune, Dax`). Job
+/// 1893's `bd14`: the ICS's purchasing office citing the ICS's own contract notice.
+fn push_guard_acronym(words: &[String], jurisdiction: &str, out: &mut GuardEvidence) {
+    if let [word] = words {
+        let letters = word.chars().count();
+        if (3..=8).contains(&letters) && word.chars().all(char::is_alphabetic) {
+            out.abbrs.push(format!("a:{jurisdiction}:{word}"));
+        }
+        return;
+    }
+    let initials: String = words
+        .iter()
+        .filter(|w| !PREFIX_FUNCTION_WORDS.contains(&w.as_str()))
+        .filter_map(|w| w.chars().next())
+        .collect();
+    if initials.chars().count() >= 3 {
+        out.initials.push(format!("a:{jurisdiction}:{initials}"));
+    }
+}
+
+/// Issue 481 unit 2c: the raw-identifier token of a buyer whose identifier the gate
+/// refused — its ASCII letters and digits upper-cased, under the register
+/// jurisdiction — or `None` for a value of a placeholder class: shorter than five,
+/// without a digit, all zeros, one repeated character, or a class `idgate` measured
+/// fusing strangers (the lexicon, digit runs, phone numbers, routing scopes, TED
+/// notice numbers, bare short numbers). A checksum failure does not refuse it: one
+/// buyer publishing one mistyped number is still one buyer.
+fn raw_identifier_token(raw: &str, jurisdiction: &str) -> Option<String> {
+    let value: String = raw.chars().filter(char::is_ascii_alphanumeric).map(|c| c.to_ascii_uppercase()).collect();
+    let first = *value.as_bytes().first()?;
+    if value.len() < 5
+        || !value.bytes().any(|b| b.is_ascii_digit())
+        || value.bytes().filter(u8::is_ascii_digit).all(|b| b == b'0')
+        || value.bytes().all(|b| b == first)
+    {
+        return None;
+    }
+    let census = crate::idgate::census((!jurisdiction.is_empty()).then_some(jurisdiction), Some("national"), &value);
+    if census.lexicon
+        || census.sequence
+        || census.phone
+        || census.routing_scope
+        || census.notice_number
+        || census.short_numeric
+        || census.bare_four_digit
+    {
+        return None;
+    }
+    Some(format!("r:{jurisdiction}:{value}"))
+}
+
+/// Issue 481 unit 2c: the RESOLVED organization of each of a planned notice's
+/// buyer-side mentions (`sections`, [`buyer_side_mentions`]) as a FULL token
+/// `o:<organization id>`: two notices whose buyers the org layer resolved to one
+/// Organization overlap whatever they published. `orgs` is the notice's
+/// `section → organization` map as Phase 1 left it — read after Phase 1 resolved the
+/// plan's mentions on both plan paths (the resolver's answer for a mention it just
+/// resolved, `organization_mentions` for one recorded earlier) and from
+/// `organization_mentions` by the backfill's census, so the fold and the census read
+/// one table. A full re-projection re-mints the org layer, so there it carries the
+/// resolver's own binding (identifier, E1 key, name), which the other tokens already
+/// read; a merge job's later equivalences count from the next fold that plans the
+/// notice.
+fn add_buyer_org_tokens(row: &mut store::PlanRow, sections: &[String], orgs: Option<&HashMap<String, i64>>) {
+    let Some(orgs) = orgs else { return };
+    let before = row.buyer_tokens.len();
+    row.buyer_tokens.extend(
+        sections.iter().filter_map(|section| orgs.get(section)).map(|org| store::buyer_token(&format!("o:{org}"))),
+    );
+    if row.buyer_tokens.len() > before {
+        row.buyer_tokens.sort_unstable();
+        row.buyer_tokens.dedup();
+    }
+}
+
+/// Issue 481 unit 2c: `notice → section → organization` of mentions the resolver just
+/// resolved (`resolved` is [`Db::resolve_mentions`]' answer, one id per mention, in
+/// order) — [`Db::mentions_by_ids`]' shape, for [`add_buyer_org_tokens`].
+fn resolved_orgs(mentions: &[Mention], resolved: &[i64]) -> HashMap<i64, HashMap<String, i64>> {
+    let mut out: HashMap<i64, HashMap<String, i64>> = HashMap::new();
+    for (m, org) in mentions.iter().zip(resolved) {
+        out.entry(m.notice_id).or_default().insert(m.section_id.clone(), *org);
     }
     out
 }
@@ -8680,10 +9074,13 @@ mod tests {
     #[test]
     fn the_buyer_tokens_carry_both_keys_so_one_buyer_spelled_two_ways_overlaps() {
         let tokens = |orgs: &[(&str, &str, &str)]| buyer_tokens_of(&buyer_mentions(false, 1, &buyers_notice(orgs)));
+        // Full tokens have the kind bit clear (issue 481 unit 2c); the name's whole-word
+        // prefixes (`stadt`) ride along as prefix tokens.
+        let full = |set: &[u32]| set.iter().filter(|t| *t & 3 == 0).count();
         let by_id = tokens(&[("ORG-1", "Stadt Aachen", "DE811907980")]);
-        assert_eq!(by_id.len(), 2, "the identifier key and the name key: {by_id:?}");
+        assert_eq!(full(&by_id), 3, "the identifier key, the raw identifier (2c) and the name key: {by_id:?}");
         let by_name = tokens(&[("ORG-7", "STADT AACHEN,", "")]);
-        assert_eq!(by_name.len(), 1, "the name key only");
+        assert_eq!(full(&by_name), 1, "the name key only");
         assert!(!store::buyer_tokens_disjoint(&by_id, &by_name), "one buyer, two spellings");
         assert_ne!(
             buyer_key(false, 1, &buyers_notice(&[("ORG-1", "Stadt Aachen", "DE811907980")])),
@@ -8831,6 +9228,306 @@ mod tests {
             buyer_key(false, 2, &notice(&[one[4].2])),
             "the org layer's N2 key still keeps the diacritics (issue 300)"
         );
+    }
+
+    /// Issue 481 unit 2c: job 1893's census (2026-10-02) sampled 30 Tenders the 2b guard
+    /// would split and 26 references it refuses. Read by hand against bounded prod reads
+    /// (buyers by `OPT-300` role, titles), each legitimate pair below is one buyer
+    /// published two ways the 2b tokens missed, and each must overlap; each false pair
+    /// must stay apart. Synthetic fixtures named after the sample (`wsN` the N-th
+    /// would-split sample, `bdN` the N-th buyer-disjoint one), with the published
+    /// spellings:
+    /// - the signatory: Santaros klinikos' award names the hospital as buyer and its
+    ///   ministry as signatory, the notice it cites names the ministry as buyer (ws3);
+    /// - an agency buying on a buyer's behalf, `<agency> namens <school>` against the
+    ///   school (ws14, ws18, ws30), and the agency's own notice against it;
+    /// - a name and its head or its whole-word prefix: KIS Potsdam (ws10), ARPAS (ws25),
+    ///   the Nencki institute cut short (ws21), two units of the Andalusian health
+    ///   service (ws20), SERGAS and an area of it (bd4), MINARM (bd16), a Salerno CUC
+    ///   (bd19), a Lublin road authority and its district (bd24);
+    /// - the raw identifier of a buyer whose identifier the gate refuses, and one
+    ///   resolved organization.
+    ///
+    /// Apart: buyers in two registers (the BG/LV and SE/BG placeholder shapes, ws1 and
+    /// ws12), two buyers of one country (ws7), a DB InfraGO unit against the DB group's
+    /// deadline PIN (ws17: Tender 1200694 holds 147 versions welded through that PIN), a
+    /// municipality against DB Netz (ws23), ÖBB-Infrastruktur against the ÖBB-Holding
+    /// qualification system (bd15), ANAV against Achilles' Repro (bd18), one agency
+    /// buying for two principals, a placeholder raw identifier, and names that only
+    /// START alike — the generic heads the prefix tokens must not join.
+    #[test]
+    fn the_census_samples_one_buyer_overlaps_and_the_false_merges_stay_apart() {
+        // (role, names with their language, country, raw identifier)
+        type Party<'a> = (&'a str, &'a [(&'a str, Option<&'a str>)], &'a str, &'a str);
+        let notice = |parties: &[Party]| -> Parsed {
+            let mut sections = vec![store::Section { id: "PROC".into(), kind: "Notice".into(), parent: None }];
+            let mut values = Vec::new();
+            for (i, (role, names, country, raw)) in parties.iter().enumerate() {
+                let id = format!("ORG-{}", i + 1);
+                sections.push(store::Section { id: id.clone(), kind: ORGANIZATION_KIND.into(), parent: None });
+                let mut push = |section: &str, field: &str, value: NoticeValue| {
+                    values.push(store::ValueRow { section_id: section.into(), field_id: field.into(), ordinal: 0, value });
+                };
+                let role_field = format!("OPT-300-{role}");
+                push("PROC", &role_field, NoticeValue::Id { scheme: None, value: id.clone(), is_ref: true });
+                for (name, lang) in *names {
+                    push(&id, ORG_NAME_FIELD, NoticeValue::Text { value: (*name).into(), lang: lang.map(str::to_owned) });
+                }
+                push(&id, ORG_COUNTRY_FIELD, NoticeValue::Code { list: None, code: (*country).into() });
+                if !raw.is_empty() {
+                    push(&id, ORG_IDENTIFIER_FIELD, NoticeValue::Id { scheme: None, value: (*raw).into(), is_ref: false });
+                }
+            }
+            Parsed { sections, values }
+        };
+        let tokens = |parties: &[Party]| {
+            let (mut guard, signatories) = buyer_side_mentions(false, 1, &notice(parties));
+            guard.extend(signatories);
+            buyer_tokens_of(&guard)
+        };
+        const B: &str = "Procedure-Buyer";
+        const S: &str = "Contract-Signatory";
+        let santaros: Party = (B, &[("VšĮ Vilniaus universiteto ligoninė Santaros klinikos (PV)", None)], "LTU", "124364561");
+        let ministry_signs: Party = (S, &[("Lietuvos Respublikos sveikatos apsaugos ministerija", None)], "LTU", "188603472");
+        let ministry_buys: Party = (B, &[("Lietuvos Respublikos sveikatos apsaugos", None)], "LTU", "188603472");
+        // A Swedish organisationsnummer whose check digit fails: the gate refuses it.
+        assert!(normalise_identifier("2120000259", Some("SE")).is_none(), "the gate refuses a failed checksum");
+        let one: &[(&str, &[Party], &[Party])] = &[
+            ("ws3 Santaros klinikos: the ministry signs, then buys", &[santaros, ministry_signs], &[ministry_buys]),
+            (
+                "ws14 OIG namens De Vrije School Utrecht",
+                &[(B, &[("Onderwijs Inkoop Groep B.V. namens De Vrije School Utrecht Coöperatief UA", None)], "NLD", "41179771")],
+                &[(B, &[("De Vrije School Utrecht Coöperatief U.A.", None)], "NLD", "142869487")],
+            ),
+            (
+                "ws18 OIG namens Stichting Prisma",
+                &[(B, &[("Onderwijs Inkoop Groep B.V. namens Stichting Prisma", None)], "NLD", "933220822")],
+                &[(B, &[("Stichting Prisma", None)], "NLD", "937097089")],
+            ),
+            (
+                "ws30 DASmakkelijk namens AT Scholen VO",
+                &[(B, &[("DASmakkelijk B.V. namens AT Scholen VO", None)], "NLD", "32077187")],
+                &[(B, &[("AT Scholen VO", None)], "NLD", "38451975")],
+            ),
+            (
+                "the agency's own notice",
+                &[(B, &[("Onderwijs Inkoop Groep B.V. namens Stichting Prisma", None)], "NLD", "933220822")],
+                &[(B, &[("Onderwijs Inkoop Groep BV", None)], "NLD", "")],
+            ),
+            (
+                "ws10 Kommunaler Immobilien Service Potsdam",
+                &[(B, &[("Kommunaler Immobilien Service Potsdam (KIS) Eigenbetrieb der Landeshauptstadt Potsdam", None)], "DEU", "DE138408386")],
+                &[(B, &[("Kommunaler Immobilien Service (KIS) - Eigenbetrieb der Landeshauptstadt Potsdam", None)], "DEU", "keine Angabe")],
+            ),
+            (
+                "ws25 ARPAS",
+                &[(B, &[("ARPAS - Agenzia Regionale per la Protezione dell'ambiente della Sardegna", None)], "ITA", "92137340920")],
+                &[(B, &[("ARPAS", None)], "ITA", "IT03125760920")],
+            ),
+            (
+                "ws21 the Nencki institute cut short",
+                &[(B, &[("Instytut Biologii Doświadczalnej imienia Marcelego Nenckiego Polskiej Akademii", None)], "POL", "NIP 5230009269")],
+                &[(B, &[("Instytut Biologii Doświadczalnej imienia Marcelego Nenckiego Polskiej Akademii Nauk", None)], "POL", "000325825")],
+            ),
+            (
+                "ws20 two units of the Andalusian health service",
+                &[(B, &[("Servicio Andaluz de Salud. Hospital Universitario Virgen de las Nieves", None)], "ESP", "HUVN")],
+                &[(B, &[("Servicio Andaluz de Salud. Servicios Centrales", None)], "ESP", "SSCC")],
+            ),
+            (
+                "bd4 SERGAS and an area of it",
+                &[(B, &[("Servicio Gallego de Salud - Área Sanitaria de Lugo, A Mariña y Monforte de Lemos", None)], "ESP", "Q2769003A")],
+                &[(B, &[("Servicio Gallego de Salud", None)], "ESP", "Q6550006H")],
+            ),
+            (
+                "bd16 MINARM",
+                &[(B, &[("MINARM/TERRE/SIMMT/DDC", None)], "FRA", "15400005300582")],
+                &[(B, &[("MINARM - TERRE - SIMMT", None)], "FRA", "13000918600011")],
+            ),
+            (
+                "bd19 the Salerno CUC",
+                &[(B, &[("CUC DEL GRUPPO SISTEMI SALERNO C/O SISTEMI SALERNO - HOLDING RETI E SERVIZI S.P.A.", None)], "ITA", "CFAVCP-00016F0")],
+                &[(B, &[("CUC del Gruppo Sistemi Salerno", None)], "ITA", "00182440651")],
+            ),
+            (
+                "bd24 a Lublin road authority and its district",
+                &[(B, &[("Zarząd Dróg Wojewódzkich w Lublinie Rejon Dróg Wojewódzkich w Hrubieszowie", None)], "POL", "NIP: 7122904545")],
+                &[(B, &[("Zarząd Dróg Wojewódzkich w Lublinie", None)], "POL", "431019170")],
+            ),
+            (
+                "bd14 the ICS's purchasing office and the ICS",
+                &[(B, &[("ICS - Gerència de compres", None)], "ESP", "204588")],
+                &[(B, &[("Institut Català de la Salut", None)], "ESP", "Q5855029D")],
+            ),
+            (
+                "one mistyped organisationsnummer under two names",
+                &[(B, &[("Älvkarleby kommun", None)], "SWE", "212000-0259")],
+                &[(B, &[("Kommunstyrelsen", None)], "SWE", "2120000259")],
+            ),
+        ];
+        // The 2b set: the buyers' identifier and name tokens alone.
+        let tokens_2b = |parties: &[Party]| {
+            let mut set: Vec<u32> = buyer_mentions(false, 1, &notice(parties))
+                .iter()
+                .flat_map(buyer_guard_tokens)
+                .map(|token| store::buyer_token(&token))
+                .collect();
+            set.sort_unstable();
+            set.dedup();
+            set
+        };
+        for (label, a, b) in one {
+            assert!(store::buyer_tokens_disjoint(&tokens_2b(a), &tokens_2b(b)), "{label}: the 2b guard refused it");
+            let (ta, tb) = (tokens(a), tokens(b));
+            assert!(!store::buyer_tokens_disjoint(&ta, &tb), "{label}: one buyer overlaps");
+        }
+        // Rule 2: one raw identifier under two schemes (Santaros klinikos publishes
+        // 124364561 with no scheme and as `002`) and two spellings is one buyer.
+        let mention = |name: &str, kind: &str| store::Mention {
+            notice_id: 1,
+            section_id: "ORG-1".into(),
+            name: name.into(),
+            country: Some("LT".into()),
+            raw_identifier: Some("124364561".into()),
+            scheme: (kind != "national").then(|| kind.to_owned()),
+            identifier: Some(store::Identifier { country: Some("LT".into()), kind: kind.into(), value: "124364561".into() }),
+            variants: Vec::new(),
+        };
+        let (plain, schemed) = (
+            mention("VšĮ Vilniaus universiteto ligoninė Santaros klinikos", "national"),
+            mention("Santaros klinikos (PV)", "002"),
+        );
+        let only_2b = |m: &store::Mention| {
+            let mut set: Vec<u32> = buyer_guard_tokens(m).iter().map(|t| store::buyer_token(t)).collect();
+            set.sort_unstable();
+            set
+        };
+        assert!(store::buyer_tokens_disjoint(&only_2b(&plain), &only_2b(&schemed)), "the 2b identifier key carries the scheme");
+        assert!(
+            !store::buyer_tokens_disjoint(&buyer_tokens_of(&[plain]), &buyer_tokens_of(&[schemed])),
+            "one raw identifier, whatever its scheme"
+        );
+        // The signatory is what joins ws3: its buyers alone share nothing.
+        assert!(store::buyer_tokens_disjoint(&tokens(&[santaros]), &tokens(&[ministry_buys])), "ws3 without the signatory");
+        // … and issue 369's buyer key still reads the buyers alone.
+        assert_eq!(
+            buyer_key(false, 1, &notice(&[santaros, ministry_signs])),
+            buyer_key(false, 2, &notice(&[santaros])),
+            "the key-election gate's buyer set does not take the signatory"
+        );
+        // A signatory alone makes no notice known: no buyer, no tokens.
+        assert!(tokens(&[ministry_signs]).is_empty(), "a signatory without a buyer");
+
+        let two: &[(&str, &[Party], &[Party])] = &[
+            (
+                "ws1 a Bulgarian school and a Latvian hospital",
+                &[(B, &[("НАЦИОНАЛНА ТЪРГОВСКО-БАНКОВА ГИМНАЗИЯ-СОФИЯ", None)], "BGR", "000669817")],
+                &[(B, &[("VSIA „Paula Stradiņa klīniskā universitātes slimnīca”", None)], "LVA", "40003457109")],
+            ),
+            (
+                "ws12 Älvkarleby and a Sofia district",
+                &[(B, &[("Älvkarleby kommun", None)], "SWE", "2120000258")],
+                &[(B, &[("РАЙОН \"ТРИАДИЦА\"", None)], "BGR", "0006963270507")],
+            ),
+            (
+                "ws7 two Polish buyers",
+                &[(B, &[("Akademia Sztuki Wojennej", None)], "POL", "011574244")],
+                &[(B, &[("SIM KZN Mazowsze Centrum Sp. z o. o.", None)], "POL", "5361962935")],
+            ),
+            (
+                "ws17 a DB InfraGO unit and the group's deadline PIN",
+                &[(B, &[("DB InfraGO AG – Geschäftsbereich Fahrweg (Bukr 16)", None)], "DEU", "fb197f94-7578-4673-8a57-4642ae120532")],
+                &[(B, &[("Deutsche Bahn AG Konzernleitung (Bukr 10)", None)], "DEU", "819a9f90-6236-4dea-8555-aef3b91b5321")],
+            ),
+            (
+                "ws23 a municipality and DB Netz",
+                &[(B, &[("Gemeinde Wiesenburg/Mark, Der Bürgermeister", None)], "DEU", "12-121014993861368-02")],
+                &[(B, &[("DB Netz AG (Bukr 16)", None)], "DEU", "f45ee0d3-f9b6-44f0-846d-0c10b6f61a37")],
+            ),
+            (
+                "bd15 ÖBB-Infrastruktur and the ÖBB-Holding qualification system",
+                &[(B, &[("ÖBB-Infrastruktur AG", None)], "AUT", "FN71396w")],
+                &[(
+                    B,
+                    &[("ÖBB-Holding AG sowie die mit ihr im Sinne des § 189a Z 8 UGB verbundenen Gesellschaften, insbesondere die ÖBB-Infrastruktur AG, alle vertreten durch die ÖBB-Infrastruktur AG", None)],
+                    "AUT",
+                    "71396w",
+                )],
+            ),
+            (
+                "bd18 ANAV and Achilles' Repro",
+                &[(B, &[("Asociación Nuclear Ascó-Vandellós II A.I.E.", None)], "ESP", "V58209685")],
+                &[(B, &[("ACHILLES SOUTH EUROPE, S.L.U.", None)], "ESP", "B81788309")],
+            ),
+            (
+                "one agency buying for two principals",
+                &[(B, &[("Onderwijs Inkoop Groep B.V. namens Stichting Prisma", None)], "NLD", "")],
+                &[(B, &[("Onderwijs Inkoop Groep B.V. namens De Vrije School Utrecht Coöperatief UA", None)], "NLD", "")],
+            ),
+            (
+                "a placeholder raw identifier under two names",
+                &[(B, &[("Gemeente Utrecht", None)], "NLD", "123456789")],
+                &[(B, &[("Gemeente Amersfoort", None)], "NLD", "123456789")],
+            ),
+            (
+                "two municipalities of one form",
+                &[(B, &[("Commune de Lyon", None)], "FRA", "")],
+                &[(B, &[("Commune de Nice", None)], "FRA", "")],
+            ),
+            (
+                "two clinical hospitals of one form",
+                &[(B, &[("Uniwersytecki Szpital Kliniczny w Białymstoku", None)], "POL", "")],
+                &[(B, &[("Uniwersytecki Szpital Kliniczny w Poznaniu", None)], "POL", "")],
+            ),
+            (
+                "two hospitals behind a generic two-word head",
+                &[(B, &[("Centre hospitalier, Pau", None)], "FRA", "")],
+                &[(B, &[("Centre hospitalier, Dax", None)], "FRA", "")],
+            ),
+            (
+                "two water utilities behind a generic head (Burgas, Varna)",
+                &[(B, &[("ВОДОСНАБДЯВАНЕ И КАНАЛИЗАЦИЯ ЕАД", None)], "BGR", "")],
+                &[(B, &[("ВОДОСНАБДЯВАНЕ И КАНАЛИЗАЦИЯ - ВАРНА ООД", None)], "BGR", "")],
+            ),
+            (
+                "two municipalities behind one one-word head",
+                &[(B, &[("Commune, Pau", None)], "FRA", "")],
+                &[(B, &[("COMMUNE - Dax", None)], "FRA", "")],
+            ),
+            (
+                "two spelled-out names with equal initials",
+                &[(B, &[("Servicio Gallego de Salud", None)], "ESP", "")],
+                &[(B, &[("Sociedad General de Seguros", None)], "ESP", "")],
+            ),
+            (
+                "a city and another city",
+                &[(B, &[("Stadt Köln", None)], "DEU", "")],
+                &[(B, &[("Stadt Bonn - Gebäudemanagement", None)], "DEU", "")],
+            ),
+        ];
+        for (label, a, b) in two {
+            let (ta, tb) = (tokens(a), tokens(b));
+            assert!(store::buyer_tokens_disjoint(&ta, &tb), "{label}: two buyers share nothing");
+        }
+
+        // Rule 1: one resolved organization, whatever was published — and only that.
+        let row = |name: &str| {
+            let at = store::NoticeRef {
+                id: 1,
+                source: "ted".into(),
+                publication_id: "00000001-2026".into(),
+                profile: "eforms:eforms-sdk-1.13".into(),
+            };
+            Ident::read(&at, &notice(&[(B, &[(name, None)], "DEU", "")])).into_plan_row()
+        };
+        let (mut a, sa) = row("Alpha Beschaffung GmbH");
+        let (mut b, sb) = row("Beta Einkauf AG");
+        assert!(store::buyer_tokens_disjoint(&a.buyer_tokens, &b.buyer_tokens));
+        add_buyer_org_tokens(&mut a, &sa, Some(&HashMap::from([("ORG-1".to_owned(), 7)])));
+        add_buyer_org_tokens(&mut b, &sb, Some(&HashMap::from([("ORG-1".to_owned(), 8)])));
+        assert!(store::buyer_tokens_disjoint(&a.buyer_tokens, &b.buyer_tokens), "two organizations");
+        add_buyer_org_tokens(&mut b, &sb, Some(&HashMap::from([("ORG-1".to_owned(), 7)])));
+        assert!(!store::buyer_tokens_disjoint(&a.buyer_tokens, &b.buyer_tokens), "one organization");
     }
 
     #[test]

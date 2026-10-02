@@ -4129,6 +4129,12 @@ const ALVKARLEBY: Buyer = ("Älvkarleby kommun", "SWE", "2120000258");
 /// `not-earlier`) and before the cross-Source fan-in count: a refused placeholder citer is
 /// not a second procedure, so a DÖE procedure of SCB's own — writing SCB by name only —
 /// still joins the notice it cites.
+///
+/// Unit 2c widened what overlaps (agency principals, heads, whole-word prefixes) and
+/// must not join two of job 1893's false shapes: two DB InfraGO procedures citing the DB
+/// group's deadline-shortening PIN (ws17: on prod the PIN's Tender 1200694 holds 147
+/// versions), and an agency's notice for one school citing its notice for another — the
+/// agent alone is no evidence.
 #[tokio::test]
 async fn a_placeholder_previous_notice_reference_to_another_buyers_notice_is_refused() {
     let (db, fetch_id, path) = scratch("buyer-placeholder").await;
@@ -4150,10 +4156,33 @@ async fn a_placeholder_previous_notice_reference_to_another_buyers_notice_is_ref
     let stranger = [("BT-04-notice", key_stranger.as_str()), ("OPP-090-Procedure", "123456-2026")];
     record_linked_buyers(&db, fetch_id, "doe", &doe_own, 20_580, &own, &[("STATISTISKA CENTRALBYRÅN", "SWE", "")]).await;
     record_linked_buyers(&db, fetch_id, "doe", &doe_stranger, 20_581, &stranger, &[("Gemeinde Alsdorf", "DEU", "")]).await;
+    // Unit 2c: the DB group's PIN and two DB InfraGO procedures citing it.
+    let pin: Buyer = ("Deutsche Bahn AG Konzernleitung (Bukr 10)", "DEU", "819a9f90-6236-4dea-8555-aef3b91b5321");
+    let fahrweg: Buyer = ("DB InfraGO AG – Geschäftsbereich Fahrweg (Bukr 16)", "DEU", "fb197f94-7578-4673-8a57-4642ae120532");
+    let bahnhoefe: Buyer =
+        ("DB InfraGO AG – Geschäftsbereich Personenbahnhöfe (Bukr 11)", "DEU", "a6ceb1fb-e3c6-459d-a608-8a792d7bf449");
+    record_linked_buyers(&db, fetch_id, "ted", "00558776-2025", 20_300, &[("BT-04-notice", &key(6))], &[pin]).await;
+    for (pub_id, n, buyer) in [("00668196-2026", 7, fahrweg), ("00677785-2026", 8, bahnhoefe)] {
+        let k = key(n);
+        record_linked_buyers(&db, fetch_id, "ted", pub_id, 20_590, &[("BT-04-notice", &k), ("OPP-090-Procedure", "558776-2025")], &[buyer])
+            .await;
+    }
+    // Unit 2c: one agency, two schools.
+    let prisma: Buyer = ("Onderwijs Inkoop Groep B.V. namens Stichting Prisma", "NLD", "933220822");
+    let utrecht: Buyer = ("Onderwijs Inkoop Groep B.V. namens De Vrije School Utrecht Coöperatief UA", "NLD", "41179771");
+    record_linked_buyers(&db, fetch_id, "ted", "00519549-2025", 20_400, &[("BT-04-notice", &key(9))], &[prisma]).await;
+    let agency_key = key(1);
+    let agency_ids = [("BT-04-notice", agency_key.as_str()), ("OPP-090-Procedure", "519549-2025")];
+    record_linked_buyers(&db, fetch_id, "ted", "00763184-2025", 20_500, &agency_ids, &[utrecht]).await;
     let report = project::project(&db, false).await.expect("project");
 
     assert_eq!(report.links.not_earlier, 1, "the sampled citer is earlier than the target: {:?}", report.links);
-    assert_eq!(report.links.buyer_disjoint, 2, "the later citer and the stranger: {:?}", report.links);
+    assert_eq!(
+        report.links.buyer_disjoint,
+        5,
+        "the later citer and the stranger; the two DB InfraGO procedures; the agency's other school: {:?}",
+        report.links
+    );
     assert_eq!(report.links.fan_in, 0, "a refused citer is not a second procedure: {:?}", report.links);
     assert_eq!((report.links.previous_notice, report.links.cross_source), (1, 1), "{:?}", report.links);
     let scb = tender_of(&db, "00123456-2026").await;
@@ -4161,10 +4190,15 @@ async fn a_placeholder_previous_notice_reference_to_another_buyers_notice_is_ref
     for apart in ["00045334-2026", "00290001-2026", doe_stranger.as_str()] {
         assert_ne!(tender_of(&db, apart).await, scb, "{apart} stays out of SCB's Tender");
     }
-    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 4);
+    let pin_tender = tender_of(&db, "00558776-2025").await;
+    for apart in ["00668196-2026", "00677785-2026"] {
+        assert_ne!(tender_of(&db, apart).await, pin_tender, "{apart} stays out of the PIN's Tender");
+    }
+    assert_ne!(tender_of(&db, "00763184-2025").await, tender_of(&db, "00519549-2025").await, "one agency, two schools");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 4 + 3 + 2);
     assert_eq!(
         scalar(&db, "SELECT COUNT(*) FROM tender_links WHERE rule = 'opp-090' AND b_notice_id IS NOT NULL").await,
-        4,
+        4 + 2 + 1,
         "every citation stays on the ledger: the guard is the fold's, not the producer's"
     );
 
@@ -4181,7 +4215,12 @@ async fn a_placeholder_previous_notice_reference_to_another_buyers_notice_is_ref
 ///   citing a CN that names none — unknown is not disjoint, either way round;
 /// - (the unit 2b review, one buyer as it is published) two SIRETs of one SIREN under
 ///   two names, a Polish NIP as a `PL…` VAT and bare, one identifier-less name with and
-///   without its accents, and one name under `REU` and under `FRA`.
+///   without its accents, and one name under `REU` and under `FRA`;
+/// - (unit 2c, job 1893's census samples, each split by the 2b guard) an agency's
+///   notice `namens` a school citing the school's own (ws14), KIS Potsdam named with and
+///   without its city (ws10), `ARPAS` and its spelled-out name (ws25), the Nencki
+///   institute's name cut short (ws21), and two units of the Andalusian health service
+///   (ws20).
 #[tokio::test]
 async fn overlapping_or_unknown_buyers_keep_a_previous_notice_reference_joined() {
     let (db, fetch_id, path) = scratch("buyer-overlap").await;
@@ -4199,7 +4238,18 @@ async fn overlapping_or_unknown_buyers_keep_a_previous_notice_reference_joined()
     let aphp_capitals: Buyer = ("ASSISTANCE PUBLIQUE HOPITAUX DE PARIS", "FRA", "");
     let sdis_re: Buyer = ("SDIS de la Réunion", "REU", "");
     let sdis_fr: Buyer = ("SDIS de la Réunion", "FRA", "");
-    let pairs: [(&str, &[Buyer], &str, &[Buyer]); 8] = [
+    let school: Buyer = ("De Vrije School Utrecht Coöperatief U.A.", "NLD", "142869487");
+    let agency: Buyer = ("Onderwijs Inkoop Groep B.V. namens De Vrije School Utrecht Coöperatief UA", "NLD", "41179771");
+    let kis: Buyer = ("Kommunaler Immobilien Service (KIS) - Eigenbetrieb der Landeshauptstadt Potsdam", "DEU", "keine Angabe");
+    let kis_potsdam: Buyer =
+        ("Kommunaler Immobilien Service Potsdam (KIS) Eigenbetrieb der Landeshauptstadt Potsdam", "DEU", "DE138408386");
+    let arpas: Buyer = ("ARPAS", "ITA", "IT03125760920");
+    let arpas_spelled: Buyer = ("ARPAS - Agenzia Regionale per la Protezione dell'ambiente della Sardegna", "ITA", "92137340920");
+    let nencki: Buyer = ("Instytut Biologii Doświadczalnej imienia Marcelego Nenckiego Polskiej Akademii Nauk", "POL", "000325825");
+    let nencki_cut: Buyer = ("Instytut Biologii Doświadczalnej imienia Marcelego Nenckiego Polskiej Akademii", "POL", "NIP 5230009269");
+    let sas_central: Buyer = ("Servicio Andaluz de Salud. Servicios Centrales", "ESP", "SSCC");
+    let sas_hospital: Buyer = ("Servicio Andaluz de Salud. Hospital Universitario Virgen de las Nieves", "ESP", "HUVN");
+    let pairs: [(&str, &[Buyer], &str, &[Buyer]); 13] = [
         ("00300001-2024", &[aachen_name], "00300002-2024", &[aachen_id]),
         ("00300003-2024", &[cpb, aachen_id, dueren], "00300004-2024", &[dueren, alsdorf]),
         ("00300005-2024", &[dueren], "00300006-2024", &[]),
@@ -4208,6 +4258,11 @@ async fn overlapping_or_unknown_buyers_keep_a_previous_notice_reference_joined()
         ("00300011-2024", &[usk_vat], "00300012-2024", &[usk_nip]),
         ("00300013-2024", &[aphp_accented], "00300014-2024", &[aphp_capitals]),
         ("00300015-2024", &[sdis_re], "00300016-2024", &[sdis_fr]),
+        ("00300017-2024", &[school], "00300018-2024", &[agency]),
+        ("00300019-2024", &[kis], "00300020-2024", &[kis_potsdam]),
+        ("00300021-2024", &[arpas], "00300022-2024", &[arpas_spelled]),
+        ("00300023-2024", &[nencki], "00300024-2024", &[nencki_cut]),
+        ("00300025-2024", &[sas_central], "00300026-2024", &[sas_hospital]),
     ];
     for (i, (cn, cn_buyers, can, can_buyers)) in pairs.iter().enumerate() {
         let (cn_key, can_key) = (key(2 * i as u8), key(2 * i as u8 + 1));
@@ -4218,11 +4273,69 @@ async fn overlapping_or_unknown_buyers_keep_a_previous_notice_reference_joined()
     }
     let report = project::project(&db, false).await.expect("project");
 
-    assert_eq!((report.links.previous_notice, report.links.buyer_disjoint), (8, 0), "{:?}", report.links);
+    assert_eq!((report.links.previous_notice, report.links.buyer_disjoint), (13, 0), "{:?}", report.links);
     for (cn, _, can, _) in &pairs {
         assert_eq!(tender_of(&db, can).await, tender_of(&db, cn).await, "{can} stays with {cn}");
     }
-    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 8);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 13);
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 481 unit 2c, rule 1: two notices whose buyers the org layer resolved to ONE
+/// Organization overlap whatever they published. The two buyers here share no
+/// identifier and no name, so the guard refuses the reference — until a merge (as R2
+/// repoints a merged organization's mentions) puts both mentions on one Organization.
+/// Then the next fold that plans the citer joins it: the daily, whose plan resolves the
+/// delta's mentions and reads the closure's recorded ones, and a full fold, which keeps
+/// a recorded mention on its Organization while its published facts stand — and the
+/// backfill's census, which reads the recorded mentions too.
+#[tokio::test]
+async fn one_resolved_organization_keeps_a_previous_notice_reference_joined() {
+    let (db, fetch_id, path) = scratch("buyer-org").await;
+    record_linked_buyers(&db, fetch_id, "ted", "00810001-2024", 20_000, &[("BT-04-notice", KEY)], &[("Wasserverband Nordost", "DEU", "")])
+        .await;
+    let citer = [("BT-04-notice", KEY_2), ("OPP-090-Procedure", "810001-2024")];
+    record_linked_buyers(&db, fetch_id, "ted", "00810002-2024", 20_100, &citer, &[("WVNO Zentraleinkauf", "DEU", "")]).await;
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!((report.links.previous_notice, report.links.buyer_disjoint), (0, 1), "{:?}", report.links);
+    assert_ne!(tender_of(&db, "00810002-2024").await, tender_of(&db, "00810001-2024").await);
+
+    let org = |pub_id: &str| {
+        format!(
+            "SELECT organization_id FROM organization_mentions WHERE notice_id = \
+               (SELECT id FROM notices WHERE publication_id = '{pub_id}')"
+        )
+    };
+    let merged = scalar(&db, &org("00810001-2024")).await;
+    assert_ne!(scalar(&db, &org("00810002-2024")).await, merged, "two organizations");
+    // The census reads both ends through the plan row's derivation, organizations from
+    // the same table the fold reads: refused before the merge, a join after it.
+    let never = || false;
+    let census = async |db: &store::Db| {
+        let dry = project::backfill_tender_links_windowed(db, true, 3, 2, &never, |_| {}).await.expect("dry census");
+        (dry.buyer_disjoint, dry.samples.len())
+    };
+    assert_eq!(census(&db).await, (1, 0), "two organizations, buyer-disjoint");
+    db.execute_for_test(&format!(
+        "UPDATE organization_mentions SET organization_id = {merged} \
+          WHERE notice_id = (SELECT id FROM notices WHERE publication_id = '00810002-2024')"
+    ))
+    .await
+    .expect("the merge repoints the mention");
+    assert_eq!(census(&db).await, (0, 1), "one organization: a join the census re-queues");
+    db.execute_for_test("UPDATE notices SET projected = 0 WHERE publication_id = '00810002-2024'")
+        .await
+        .expect("the citer re-queued");
+    let daily = project::project_incremental(&db).await.expect("the daily");
+    assert_eq!((daily.links.previous_notice, daily.links.buyer_disjoint), (1, 0), "{:?}", daily.links);
+    assert_eq!(tender_of(&db, "00810002-2024").await, tender_of(&db, "00810001-2024").await, "joined on the daily");
+    assert_eq!(scalar(&db, &org("00810002-2024")).await, merged, "the fold kept the merged mention");
+
+    let full = project::project(&db, false).await.expect("a full fold");
+    assert_eq!((full.links.previous_notice, full.links.buyer_disjoint), (1, 0), "{:?}", full.links);
+    assert_eq!(tender_of(&db, "00810002-2024").await, tender_of(&db, "00810001-2024").await, "and on a full fold");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 1);
 
     let _ = std::fs::remove_file(&path);
 }

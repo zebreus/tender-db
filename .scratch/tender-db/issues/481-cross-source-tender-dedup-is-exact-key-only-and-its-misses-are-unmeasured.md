@@ -1,6 +1,7 @@
 # 481 — cross-source Tender dedup is exact-key only; how many duplicates it misses is unmeasured, and there is no source-agnostic edge for future portals
 
-Status: ready-for-agent — UNIT 2b (the buyer guard on previous-notice references) LANDED 2026-10-02 with its review fixes (tokens take one buyer's measured spellings: E1 identifier keys, every language variant, accents folded, register country; the census counts `not_earlier` apart from the joins), not yet deployed; unit 2 deployed 2026-10-02 09:15 UTC (`7b14469`), its wet backfill HELD for 2b. NEXT: deploy → `backfill-tender-links` dry → read `buyer_disjoint` / `would_split` and their samples (two placeholder hubs are already on prod: Tender 1012301, 184 versions from 60 buyers, and SCB's 526284 with six copiers) → wet → the next daily splits the would-split welds; read its `issue-481` line (`buyer-disjoint`, largest component).
+Status: ready-for-agent — UNIT 2c (the buyer guard made precise) LANDED 2026-10-02, not yet deployed: two notices also share a buyer through one resolved organization, one raw identifier whatever its scheme, the contract signatory, an agency's principal, a whole-word prefix or a head of three content words, and an acronym; no extra refusal for disjoint jurisdictions. Job 1893's 56 samples re-verdicted: 14 of 19 legitimate pairs now overlap (18 clear + 1 probable; the 5 left are framework call-offs filed by another body or in Galician, a mid-name abbreviation, and one CN naming another body), every false merge and group-PIN/qualification-system hub stays refused. NEXT: deploy → `backfill-tender-links` dry → read `would_split` / `buyer_disjoint` and re-sample 30 of each → wet (if the false-refusal share is low) → the next daily splits the would-split welds; read its `issue-481` line (`buyer-disjoint`, largest component).
+Was status: ready-for-agent — UNIT 2b (the buyer guard on previous-notice references) LANDED 2026-10-02 with its review fixes (tokens take one buyer's measured spellings: E1 identifier keys, every language variant, accents folded, register country; the census counts `not_earlier` apart from the joins), not yet deployed; unit 2 deployed 2026-10-02 09:15 UTC (`7b14469`), its wet backfill HELD for 2b. NEXT: deploy → `backfill-tender-links` dry → read `buyer_disjoint` / `would_split` and their samples (two placeholder hubs are already on prod: Tender 1012301, 184 versions from 60 buyers, and SCB's 526284 with six copiers) → wet → the next daily splits the would-split welds; read its `issue-481` line (`buyer-disjoint`, largest component).
 Was status: ready-for-agent — UNIT 1 (CALIBRATION) DONE 2026-10-02 (workflow `wf_09fa7411-6db`; report `.scratch/tender-db/481-dedup/calibration-2026-10-02.md`). The TED↔DÖE misses are DECLARED links the fold does not follow, not fuzzy ones. TED `BT-701-notice` equals the DÖE notice UUID on 136 of 136 above-threshold DÖE islands in April 2025 (1.08 % of the month's merged count; ~2,650 extrapolated). Cross-source `OPP-090` links are dropped by a same-source condition. The best matched rule R1 measured 0 FP / 1,289 negatives at 98.0 % recall, but adds 0 joins beyond the declared link. NEXT: unit 2, the edge ledger with the `notice_uuid` and cross-source `OPP-090` producers and the fold reading it (incremental path included), plus the weld guards. The UUID-collision false merges it surfaced are issue 482.
 Was status: ready-for-agent — DECIDED 2026-10-02 (Lennart: "fuzzy matches are probably fine if we are really really sure it's the same one. Nothing is deliberately forbidden if it is correct"; recorded as ADR-0003's 2026-10-02 amendment). A matched link is a merge warrant when its precision is measured near-certain. The first unit is calibration: measure candidate signals against the 243,588 UUID-merged TED↔DÖE pairs (labelled positives) and same-buyer different-procedure pairs (labelled negatives), then count the unmerged DÖE Tenders that a near-certain matcher would join.
 Was status: ready-for-agent — filed 2026-10-02 from Lennart's question ("do we have proper general deduplication/merging,
@@ -404,3 +405,105 @@ versions and buyers by the Tender's PK:
     refusal reason.
   - Until 2c deploys, the live guard applies only to Tenders a daily happens to plan. Any wrong split is re-joined by
     the first fold after 2c. 2c must land before the 2026-10-03 07:35 UTC tick.
+
+## Unit 2c: the buyer guard made precise — LANDED 2026-10-02 (not yet deployed)
+
+**Why.** Job 1893's census: `would_split` 5,359 and `buyer_disjoint` 26, and about 12 of the 30 split samples were
+one buyer named two ways, so the 2b guard would split correct merges on the next fold that plans them.
+
+**Re-verdict of all 56 samples.** Buyer-side mentions by `OPT-300` role, resolved organization, raw identifier and
+scheme, and titles came from 10 bounded `/v1/sql` reads (notices by `(source, publication_id)`, mentions by
+`notice_id`, `notice_texts` by `notice_id`; 0 errors). Each notice was rebuilt as a fixture and run through the 2b and
+2c token derivations (`buyer_tokens_of` + `add_buyer_org_tokens`). The harness was a temporary `#[ignore]` test,
+removed before commit.
+
+| | legit (one procedure) | false merge / hub | 2b overlaps | 2c overlaps |
+|---|---|---|---|---|
+| `would_split` (30) | 9 (+ ws4 probable) | 20 | 0 | 8: ws3, 10, 14, 18, 20, 21, 25, 30 |
+| `buyer_disjoint` (26) | 9 | 17 | 0 | 6: bd4, 14, 16, 19, 24, 25 |
+
+- **Legit pairs that now overlap (14)**, and the rule that joins each:
+  - ws3 (Santaros klinikos): the signatory, raw identifier and resolved organization. The award names the hospital as
+    buyer and the ministry as signatory, and the CN names the ministry as buyer.
+  - ws14, ws18, ws30: an agency's principal (`Onderwijs Inkoop Groep B.V. namens …`, `DASmakkelijk B.V. namens …`).
+  - ws10 (KIS Potsdam), ws21 (Nencki), ws25 (ARPAS), bd16 (MINARM/TERRE/SIMMT), bd19 (Salerno CUC), bd24 (ZDW
+    Lublin): a whole-word prefix.
+  - ws20, bd25 (two units of the Andalusian health service), bd4 (a SERGAS area): a head.
+  - bd14 (`ICS - Gerència de compres` / `Institut Català de la Salut`): an acronym.
+- **Legit pairs still refused (4, + ws4)**:
+  - ws6, bd6: a SERGAS area's call-off citing the SERGAS framework, which is written in Galician (`Servizo Galego
+    de Saúde`).
+  - bd1: a SAS hospital's call-off under the Junta's postal framework (the framework's buyer is the Junta's DG
+    Contratación).
+  - bd13: `Instytut Biologii Doświadczalnej im. M.Nenckiego PAN`, abbreviated mid-name.
+  - ws4: probable. Bremerhaven's e-car framework award cites a CN that names `Umweltbetrieb Bremen` under the review
+    chamber's identifier.
+  
+  None of rules 1–4 reaches these. The call-offs need another kind of evidence, for example a shared winning
+  tenderer (Janssen in ws6, Correos in bd1). That is not decided here.
+- **False merges, all still refused (20 + 17)**:
+  - The cross-country placeholder collisions: ws1, 2, 5, 8, 9, 11, 12, 13, 15, 16, 19, 24, 26, 28, 29, bd3, 5, 7, 12,
+    and bd22, which is `00123456-2024` again.
+  - Same-country different procedures: ws7, cited `00000129-2025`. The owner's "same organization" was the
+    Publications Office eSender (org 12) and not a buyer. Also ws23, a municipality against DB Netz.
+  - **Hubs**, a PIN or qualification system cited by many procedures:
+    - The DB group's deadline-shortening PINs `00558776-2025` and `00558909-2025`: ws17, 22, 27, bd8–11, 17, 21, 23,
+      26. Read as "sister bodies" in the owner's list, but the PIN's Tender holds 147 versions.
+    - The ÖBB-Holding qualification system: bd2, bd15.
+    - Achilles' Repro supplier classification: bd18, bd20.
+
+**What landed.**
+- **Rule 1, one resolved organization.** Each buyer-side mention's Organization is a FULL token `o:<id>`. The plan
+  paths resolve the chunk's mentions BEFORE writing its plan rows. The full fold and the incremental delta use the
+  resolver's answer; the incremental closure and the census's `link_endpoints` read `organization_mentions`, which a
+  merge repoints. So all three see the merged id.
+- **Rule 2, one raw identifier, whatever its scheme.** The token is `r:<jurisdiction>:<ALNUM upper>`, emitted whether
+  the gate kept the identifier or not. The `idgate` placeholder classes emit nothing: lexicon, digit runs, phones,
+  routing scopes, TED notice numbers, bare short numbers, all-zero and one-character values.
+- **The contract signatory** (`OPT-300-Contract-Signatory`) is on the guard's buyer side, but only on a notice that
+  names a buyer. Issue 369's buyer key is unchanged.
+- **Rule 3, agency on behalf.** `namens | im Auftrag von/der/des | on behalf of | pour le compte de/du/des/d' | en
+  nombre de/del | per conto di/del/della/dei | w imieniu`. The principal's folded name is a FULL token. The agent is
+  only a PREFIX of the whole name: it meets the agency's own notices, never the agency's notice for another
+  principal. Templates are reused, which is where a copied OPP-090 is likeliest.
+- **Rule 4, prefix.** A name's whole-word prefixes are PREFIX tokens, which meet only a FULL token (another notice's
+  whole name or head), never another prefix.
+  - `Gemeente Utrecht` / `Gemeente Amersfoort`, `Commune de Lyon` / `Commune de Nice`, `Uniwersytecki Szpital
+    Kliniczny w …` and `Stadt Köln` / `Stadt Bonn - …` stay apart.
+  - A one-word prefix needs ≥ 5 letters (`ARPAS` yes, `DB` no), and a prefix ending in a function word is skipped.
+  - The **head** (the text before the first separator) is FULL when it has ≥ 3 content words.
+- **Acronym.** A one-word name or head of 3–8 letters is an ACRONYM token. A name of ≥ 3 content words gives its
+  INITIALS. These two meet each other only.
+- **Token kinds.** The two low bits of the 4-byte digest are the kind: FULL, PREFIX, ACRONYM, INITIALS
+  (`store::buyer_tokens_disjoint`). The digest is 30 bits; a collision still only fails open.
+- **Plan column.** The column is renamed `plan_notice.buyer_guard`, so neither a 2b plan (kindless tokens) nor a
+  pre-guard plan is resumable.
+- **Jurisdictions: no extra refusal.** Every sampled cross-country false merge is already refused, because the tokens
+  are register-scoped. A jurisdiction rule could only refuse where one resolved Organization spans two countries,
+  which rule 1 calls overlap.
+- **Generic-prefix measurement.** Every Organization mention of the 56 samples' notices, in any role, was taken as a
+  one-buyer notice: 297 parties, 43,927 cross-organization pairs.
+  - 67 overlap. 66 are one body under two org ids (AP-HP-like respellings, `S.A.`/`SA`, KIO and `Krajowa Izba
+    Odwoławcza`, Brandenburg's renamed review chamber, the units of DB InfraGO, SAS and SERGAS).
+  - 1 is two bodies: `TRIBUNALE AMMINISTRATIVO REGIONALE - TAR SARDEGNA` meets `Tribunale Amministrativo Regionale
+    Campania - Salerno`, because the generic 3-word head meets the other's prefix. Both are review bodies, never
+    buyers.
+  - Before the head rule counted content words, a second false overlap showed: two Bulgarian water utilities
+    (`Водоснабдяване и канализация - Варна`). `и` and Italian `dell'` are now function words.
+- **Tests:**
+  - The unit test `the_census_samples_one_buyer_overlaps_and_the_false_merges_stay_apart` holds 15 legit fixtures
+    named after their samples, each asserted 2b-refused and 2c-overlapping, and 16 apart fixtures.
+  - The other unit tests cover rule 2's scheme pair, the signatory only with a buyer, rule 1, and the generic shapes.
+  - `one_resolved_organization_keeps_a_previous_notice_reference_joined`: refused, then after a merge-style mention
+    repoint it is joined by the census, the daily and a full fold.
+  - The placeholder test adds the DB PIN and one agency for two schools, both refused.
+  - The overlap test adds ws14, ws10, ws25, ws21 and ws20.
+  - The parity test adds ws18 in both arrival orders.
+  - The split test adds KIS (ws10): joined, not counted, not split.
+  - The resume test adds a 2b plan.
+
+**Open.**
+- The 5 remaining legit refusals above.
+- The TAR-style generic 3-word head.
+- Hubs (group PINs, qualification systems) are refused here only because their buyer differs. A DB InfraGO PIN
+  cited by DB InfraGO procedures would still weld them; same-Source previous-notice references have no fan-in guard.

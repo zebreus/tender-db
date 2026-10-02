@@ -2021,7 +2021,9 @@ async fn absorb_and_compare(full: &Db, incr: &Db, label: &str) -> project::Repor
 /// unresolved row the target's arrival finds by name. The refusal is a verdict on two
 /// notices, so it never waits and is the same on both paths. So is the admission of the
 /// unit 2b review's shape: an AP-HP award citing its contract notice under another SIRET
-/// of the same SIREN and another spelling of its name joins on both paths.
+/// of the same SIREN and another spelling of its name joins on both paths — and of unit
+/// 2c's: a school-purchasing agency's notice `namens` a school citing the school's own
+/// (job 1893's ws18), which overlaps through the principal's name.
 ///
 /// Before the closure an incremental plan held only the touched notices, so every one
 /// of these joins waited for a full re-projection.
@@ -2032,6 +2034,8 @@ async fn the_ledger_joins_incrementally_exactly_as_a_full_fold_in_either_order()
     const KEY_SCB_LATER: &str = "6f7a8b9c-0d1e-4f2a-9b3c-4d5e6f7a8b9c";
     const KEY_APHP_CN: &str = "7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c0d";
     const KEY_APHP_CAN: &str = "8b9c0d1e-2f3a-4b4c-9d5e-6f7a8b9c0d1e";
+    const KEY_PRISMA: &str = "9c0d1e2f-3a4b-4c5d-8e6f-7a8b9c0d1e2f";
+    const KEY_AGENCY: &str = "0d1e2f3a-4b5c-4d6e-9f7a-8b9c0d1e2f3a";
     let mut corpus: Vec<((&str, String, i64, Vec<(&str, String)>), Vec<Buyer>)> =
         linked_corpus().into_iter().map(|member| (member, Vec::new())).collect();
     corpus.extend([
@@ -2049,13 +2053,18 @@ async fn the_ledger_joins_incrementally_exactly_as_a_full_fold_in_either_order()
             ("ted", "00700002-2024".into(), 20_007, vec![("BT-04-notice", KEY_APHP_CAN.into()), ("OPP-090-Procedure", "700001-2024".into())]),
             vec![("ASSISTANCE PUBLIQUE HOPITAUX DE PARIS", "FRA", "26750045201928")],
         ),
+        (("ted", "00581933-2024".into(), 19_988, vec![("BT-04-notice", KEY_PRISMA.into())]), vec![("Stichting Prisma", "NLD", "937097089")]),
+        (
+            ("ted", "00519549-2025".into(), 20_008, vec![("BT-04-notice", KEY_AGENCY.into()), ("OPP-090-Procedure", "581933-2024".into())]),
+            vec![("Onderwijs Inkoop Groep B.V. namens Stichting Prisma", "NLD", "933220822")],
+        ),
     ]);
     let record = async |db: &Db, fetch: i64, ((source, pub_id, day, ids), buyers): &((&str, String, i64, Vec<(&str, String)>), Vec<Buyer>)| {
         let ids: Vec<(&str, &str)> = ids.iter().map(|(f, v)| (*f, v.as_str())).collect();
         record_linked_buyers(db, fetch, source, pub_id, *day, &ids, buyers).await;
     };
-    let ted_first: [&[usize]; 3] = [&[0, 2, 5, 7, 10], &[1, 3, 6, 8, 11], &[4, 9]];
-    let doe_first: [&[usize]; 2] = [&[1, 3, 4, 6, 8, 11], &[0, 2, 5, 7, 9, 10]];
+    let ted_first: [&[usize]; 3] = [&[0, 2, 5, 7, 10, 12], &[1, 3, 6, 8, 11, 13], &[4, 9]];
+    let doe_first: [&[usize]; 2] = [&[1, 3, 4, 6, 8, 11, 13], &[0, 2, 5, 7, 9, 10, 12]];
     for (order, deltas) in [("ted-first", &ted_first[..]), ("doe-first", &doe_first[..])] {
         let (full, ff, pf) = scratch(&format!("links-{order}-full")).await;
         let (incr, fi, pi) = scratch(&format!("links-{order}-incr")).await;
@@ -2093,9 +2102,14 @@ async fn the_ledger_joins_incrementally_exactly_as_a_full_fold_in_either_order()
             tender_of(&incr, "00700001-2024").await,
             "{order}: AP-HP's award joins its contract notice across two SIRETs of one SIREN"
         );
+        assert_eq!(
+            tender_of(&incr, "00519549-2025").await,
+            tender_of(&incr, "00581933-2024").await,
+            "{order}: the agency's notice for Stichting Prisma joins the school's own"
+        );
         // The established corpus's three Tenders, the three linked ones, SCB's, the
-        // copier's and AP-HP's.
-        assert_eq!(count(&incr, "SELECT COUNT(*) FROM tenders").await, 3 + 6, "{order}");
+        // copier's, AP-HP's and Stichting Prisma's.
+        assert_eq!(count(&incr, "SELECT COUNT(*) FROM tenders").await, 3 + 7, "{order}");
 
         for p in [pf, pi] {
             for s in ["", "-wal", "-shm"] {
@@ -2419,20 +2433,35 @@ async fn a_matched_row_merges_on_the_next_daily_and_its_undo_splits() {
 ///   — gets a Tender of its own and loses its `tender_key_merges` row, no Tender is
 ///   retired, no notice sits in two;
 /// - a re-run census finds nothing left to split.
+///
+/// Unit 2c: a legitimate weld stands beside them — Kommunaler Immobilien Service
+/// Potsdam's award citing its contract notice under the name without the city (job
+/// 1893's ws10, which the 2b guard refused and counted as a split). Its buyers are known
+/// from the start: it is joined, neither counted nor re-queued, and the full fold the
+/// daily is compared with keeps it whole.
 #[tokio::test]
 async fn a_pre_guard_buyer_disjoint_weld_is_counted_and_split_by_the_next_daily() {
     const KEY_SCB: &str = "f3a4b5c6-d7e8-4f9a-8b1c-2d3e4f5a6b7c";
     const KEY_COPIER: &str = "a4b5c6d7-e8f9-4a0b-9c2d-3e4f5a6b7c8d";
     const KEY_ONE: &str = "b5c6d7e8-f9a0-4b1c-8d3e-4f5a6b7c8d9e";
+    const KEY_KIS_CN: &str = "c6d7e8f9-a0b1-4c2d-9e4f-5a6b7c8d9e0f";
+    const KEY_KIS_CAN: &str = "d7e8f9a0-b1c2-4d3e-8f5a-6b7c8d9e0f1a";
+    let kis: Buyer = ("Kommunaler Immobilien Service (KIS) - Eigenbetrieb der Landeshauptstadt Potsdam", "DEU", "keine Angabe");
+    let kis_potsdam: Buyer =
+        ("Kommunaler Immobilien Service Potsdam (KIS) Eigenbetrieb der Landeshauptstadt Potsdam", "DEU", "DE138408386");
     let (full, ff, pf) = scratch("split-full").await;
     let (incr, fi, pi) = scratch("split-incr").await;
     let target_ids = [("BT-04-notice", KEY_SCB)];
     let copier_ids = [("BT-04-notice", KEY_COPIER), ("OPP-090-Procedure", "123456-2024")];
     let one_ids = [("BT-04-notice", KEY_ONE), ("OPP-090-Procedure", "600001-2024")];
+    let kis_cn_ids = [("BT-04-notice", KEY_KIS_CN)];
+    let kis_can_ids = [("BT-04-notice", KEY_KIS_CAN), ("OPP-090-Procedure", "252055-2024")];
     for (db, fetch) in [(&full, ff), (&incr, fi)] {
         establish(db, fetch).await;
         record_linked(db, fetch, "ted", "00123456-2024", 19_980, &target_ids).await;
         record_linked(db, fetch, "ted", "00500001-2024", 20_002, &copier_ids).await;
+        record_linked_buyers(db, fetch, "ted", "00252055-2024", 19_982, &kis_cn_ids, &[kis]).await;
+        record_linked_buyers(db, fetch, "ted", "00513804-2024", 20_003, &kis_can_ids, &[kis_potsdam]).await;
         record_linked_buyers(db, fetch, "ted", "00600001-2024", 19_990, &[("BT-04-notice", KEY_ONE)], &[SCB]).await;
         record_linked_buyers(db, fetch, "ted", "00600002-2024", 20_004, &one_ids, &[ALVKARLEBY]).await;
     }
@@ -2441,6 +2470,8 @@ async fn a_pre_guard_buyer_disjoint_weld_is_counted_and_split_by_the_next_daily(
     assert_eq!(tender_of(&incr, "00500001-2024").await, welded, "the pre-guard weld");
     let absorbed = format!("SELECT COUNT(*) FROM tender_key_merges WHERE from_key = '{KEY_COPIER}'");
     assert_eq!(count(&incr, &absorbed).await, 1, "the copier's key absorbed into SCB's Tender");
+    let kis_tender = tender_of(&incr, "00252055-2024").await;
+    assert_eq!(tender_of(&incr, "00513804-2024").await, kis_tender, "KIS's award joined its contract notice");
     for (db, fetch) in [(&full, ff), (&incr, fi)] {
         for (pub_id, day, ids, buyer) in
             [("00123456-2024", 19_980, &target_ids[..], SCB), ("00500001-2024", 20_002, &copier_ids[..], ALVKARLEBY)]
@@ -2486,6 +2517,8 @@ async fn a_pre_guard_buyer_disjoint_weld_is_counted_and_split_by_the_next_daily(
     );
     assert_eq!(count(&incr, &absorbed).await, 0, "and the key is no longer absorbed");
     assert_eq!(tender_of(&incr, "00600002-2024").await, tender_of(&incr, "00600001-2024").await, "one BT-04, one Tender");
+    assert_eq!(tender_of(&incr, "00513804-2024").await, kis_tender, "KIS's one buyer keeps its Tender");
+    assert_eq!(tender_of(&incr, "00252055-2024").await, kis_tender);
     assert_eq!(count(&incr, "SELECT COUNT(*) FROM tenders").await, tenders_before + 1);
     assert_eq!(count(&incr, removed).await, removed_before, "a split retires nothing");
 

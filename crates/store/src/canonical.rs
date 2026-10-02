@@ -1456,19 +1456,55 @@ fn is_previous_notice_rule(rule: &str) -> bool {
     rule == LINK_OPP_090
 }
 
-/// Issue 481 unit 2b: one buyer token as the plan carries it — a stable 32-bit digest
-/// of the token string (`ingest::project`'s `buyer_guard_tokens`: a buyer's identifier,
-/// as its E1 cross-walk key or `country:kind:value`, and its folded name keys
-/// `n2:country:name`). FNV-1a over the bytes,
-/// the 64-bit state folded to 32: stable across binaries and platforms, which the plan
-/// needs only within one run but the backfill's census needs against the plan's own
-/// verdict. 4 bytes a token, where the strings average ~22 bytes: `plan_notice` holds
-/// every notice of a full re-projection (14.3M rows), and this column is on all of them.
+/// Issue 481 unit 2b: one buyer token as the plan carries it — a stable digest of the
+/// token string (`ingest::project`'s `buyer_guard_tokens`: a buyer's identifier, as its
+/// E1 cross-walk key or `country:kind:value`, and its folded name keys
+/// `n2:country:name`). FNV-1a over the bytes, the 64-bit state folded to 32: stable
+/// across binaries and platforms, which the plan needs only within one run but the
+/// backfill's census needs against the plan's own verdict. 4 bytes a token, where the
+/// strings average ~22 bytes: `plan_notice` holds every notice of a full re-projection
+/// (14.3M rows), and this column is on all of them.
+///
+/// Issue 481 unit 2c: the two lowest bits are the token's KIND, the rest a 30-bit digest
+/// of the string. This is a FULL token (kind 0) — a whole name, a head, an identifier, a
+/// resolved organization; [`buyer_prefix_token`] is a whole-word PREFIX of a name (kind
+/// 1), [`buyer_abbr_token`] a one-word name written as an acronym (kind 2) and
+/// [`buyer_initials_token`] a spelled-out name's initials (kind 3). The guard
+/// ([`buyer_tokens_disjoint`]) matches a FULL token against any kind, and an acronym
+/// against initials, nothing else: a name that is a whole-word prefix of another names the
+/// same buyer (`ARPAS` / `ARPAS - Agenzia Regionale…`), two names that merely START alike
+/// (`Gemeente Utrecht` / `Gemeente Amersfoort`) do not; `ICS` meets `Institut Català de
+/// la Salut`, two spelled-out names with equal initials and two one-word heads
+/// (`Commune, Pau` / `Commune, Dax`) do not.
 ///
 /// A collision can only make two disjoint sets look overlapping, so the guard it feeds
-/// fails open — the pre-guard behaviour — at about `|a|·|b| / 2³²` per compared pair
-/// (≈ 1e-9 for two notices of two buyers each).
+/// fails open — the pre-guard behaviour — at about `|a|·|b| / 2³⁰` per compared pair.
 pub fn buyer_token(token: &str) -> u32 {
+    buyer_digest(token) & !BUYER_TOKEN_KIND
+}
+
+/// Issue 481 unit 2c: the PREFIX kind of [`buyer_token`] — a whole-word prefix of a
+/// buyer's name, which overlaps another notice's FULL token of the same string only.
+pub fn buyer_prefix_token(token: &str) -> u32 {
+    (buyer_digest(token) & !BUYER_TOKEN_KIND) | 1
+}
+
+/// Issue 481 unit 2c: the ACRONYM kind of [`buyer_token`] — a one-word name or head of a
+/// few letters (`ICS`), which overlaps a FULL token or the INITIALS of a spelled-out name.
+pub fn buyer_abbr_token(token: &str) -> u32 {
+    (buyer_digest(token) & !BUYER_TOKEN_KIND) | 2
+}
+
+/// Issue 481 unit 2c: the INITIALS kind of [`buyer_token`] — a spelled-out name's
+/// initials, which overlap a FULL token or an ACRONYM.
+pub fn buyer_initials_token(token: &str) -> u32 {
+    buyer_digest(token) | BUYER_TOKEN_KIND
+}
+
+/// The kind bits of a buyer token ([`buyer_token`]).
+const BUYER_TOKEN_KIND: u32 = 3;
+
+fn buyer_digest(token: &str) -> u32 {
     let mut h: u64 = 0xcbf2_9ce4_8422_2325;
     for b in token.bytes() {
         h ^= u64::from(b);
@@ -1492,22 +1528,48 @@ pub fn buyer_name_fold(norm: &str) -> String {
 /// Issue 481 unit 2b: whether two notices' buyer token sets (each sorted, deduplicated)
 /// are KNOWN to be disjoint: both non-empty and sharing no token. An empty set is a
 /// notice whose buyers were not parsed, and unknown is not disjoint — it never refuses.
+///
+/// Issue 481 unit 2c: tokens are compared by their 30-bit digest, and a shared digest
+/// overlaps when one side holds it as a FULL token or the two sides hold it as an
+/// acronym and as initials ([`buyer_token`]'s kinds). The kinds of one digest sort next
+/// to each other.
 pub fn buyer_tokens_disjoint(a: &[u32], b: &[u32]) -> bool {
     if a.is_empty() || b.is_empty() {
         return false;
     }
+    // The kinds one side holds a digest as, one bit each.
+    let kinds = |set: &[u32], at: &mut usize, digest: u32| {
+        let mut held = 0u8;
+        while *at < set.len() && set[*at] >> 2 == digest {
+            held |= 1 << (set[*at] & BUYER_TOKEN_KIND);
+            *at += 1;
+        }
+        held
+    };
+    const FULL: u8 = 1;
+    const ABBR: u8 = 1 << 2;
+    const INITIALS: u8 = 1 << 3;
     let (mut i, mut j) = (0, 0);
     while i < a.len() && j < b.len() {
-        match a[i].cmp(&b[j]) {
+        let (da, db) = (a[i] >> 2, b[j] >> 2);
+        match da.cmp(&db) {
             std::cmp::Ordering::Less => i += 1,
             std::cmp::Ordering::Greater => j += 1,
-            std::cmp::Ordering::Equal => return false,
+            std::cmp::Ordering::Equal => {
+                let (ka, kb) = (kinds(a, &mut i, da), kinds(b, &mut j, db));
+                if (ka | kb) & FULL != 0
+                    || (ka & ABBR != 0 && kb & INITIALS != 0)
+                    || (ka & INITIALS != 0 && kb & ABBR != 0)
+                {
+                    return false;
+                }
+            }
         }
     }
     true
 }
 
-/// A buyer token set as `plan_notice.buyer_tokens` stores it: the tokens' little-endian
+/// A buyer token set as `plan_notice.buyer_guard` stores it: the tokens' little-endian
 /// bytes back to back, NULL for an empty set.
 fn buyer_tokens_value(tokens: &[u32]) -> Value {
     if tokens.is_empty() {
@@ -1818,11 +1880,11 @@ pub struct PlanGroupTally {
 /// reference, so `notices` is no longer in this statement. Direction, same-group
 /// filtering and the guards' notice-level and Source checks run in Rust, where they are
 /// per rule and counted — the buyer guard (issue 481 unit 2b) on the two endpoints'
-/// `buyer_tokens`, read off the same two seeks.
+/// `buyer_guard` token sets, read off the same two seeks.
 pub(crate) const LINK_EDGE_JOIN_SQL: &str = "SELECT e.rule, e.b_ref, e.a_notice_id, e.b_notice_id, \
         a.group_key, a.published_at, a.publication_id, a.source_rank, a.source, \
         b.group_key, b.published_at, b.publication_id, b.source_rank, b.source, \
-        a.buyer_tokens, b.buyer_tokens \
+        a.buyer_guard, b.buyer_guard \
    FROM plan_link_edge e \
    JOIN plan_notice a ON a.notice_id = e.a_notice_id \
    JOIN plan_notice b ON b.notice_id = e.b_notice_id \
@@ -7625,7 +7687,14 @@ pub struct PlanRow {
     /// issue 369's distinct count), two notices writing one buyer once with its
     /// identifier and once by name only still share a token. Empty when no buyer was
     /// parsed, which the guard reads as unknown, never as disjoint. Stored as a BLOB of
-    /// 4 bytes a token (NULL when empty).
+    /// 4 bytes a token (NULL when empty), `plan_notice.buyer_guard`.
+    ///
+    /// Issue 481 unit 2c widened it to the evidence one buyer leaves across a
+    /// procedure's notices: the contract signatory beside the buyers, the resolved
+    /// organization of each, the raw identifier whatever its scheme, the principal of
+    /// an agency buying on its behalf, the name's head, the name's whole-word prefixes as
+    /// PREFIX tokens ([`buyer_prefix_token`]), which overlap a full token only, and a
+    /// one-word name as an ACRONYM that meets a spelled-out name's INITIALS.
     pub buyer_tokens: Vec<u32>,
     /// Issue 364 unit 6: the kind of SHARED publication this notice itself is, by
     /// its own document-type code (`PRIOR_INFORMATION_NOTICE`, `NOTICE_BUYER_PROFILE`,
@@ -10056,12 +10125,15 @@ impl Db {
         let mut exists = conn
             .query("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'plan_notice'", ())
             .await?;
-        // Issue 481 unit 2b: a plan built before the buyer guard has no
-        // `buyer_tokens` column, which the link step selects. Resuming it would fail on
-        // every retry over an already-reset tender layer, so it is not resumable — the
-        // rebuild plans again (the `plan_link_edge` rule below, for a plan column).
+        // Issue 481 unit 2b: a plan built before the buyer guard has no token column,
+        // which the link step selects. Resuming it would fail on every retry over an
+        // already-reset tender layer, so it is not resumable — the rebuild plans again
+        // (the `plan_link_edge` rule below, for a plan column). Unit 2c: a 2b plan's
+        // `buyer_tokens` carry no token kind (`buyer_token`'s low bit), so read as 2c
+        // tokens they would refuse what the 2c guard joins; the column was renamed
+        // `buyer_guard` and a plan without it is not resumable either.
         let guarded = match exists.next().await? {
-            Some(ddl) => text(&ddl, 0).contains("buyer_tokens"),
+            Some(ddl) => text(&ddl, 0).contains("buyer_guard"),
             None => return Ok(false),
         };
         drop(exists);
@@ -10143,9 +10215,10 @@ impl Db {
                  -- issue 364 unit 6: the shared-publication kind this notice IS, by its
                  -- own document type; NULL for a procedure notice.
                  shared_kind    TEXT,
-                 -- issue 481 unit 2b: the tolerant buyer token set, 4 bytes a token
-                 -- (`buyer_tokens_value`); NULL when no buyer was parsed.
-                 buyer_tokens   BLOB
+                 -- issue 481 unit 2b/2c: the tolerant buyer token set, 4 bytes a token,
+                 -- the low bit its kind (`buyer_tokens_value`, `buyer_token`); NULL
+                 -- when no buyer was parsed.
+                 buyer_guard    BLOB
              ) STRICT",
             (),
         )
@@ -10440,7 +10513,7 @@ impl Db {
             conn.execute(
                 "INSERT INTO plan_notice(notice_id, procedure_key, legacy, ojs_self, source,
                      source_rank, publication_id, published_at, subtype, group_key, key_shaped,
-                     buyer_key, shared_kind, buyer_tokens)
+                     buyer_key, shared_kind, buyer_guard)
                  VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)",
                 (
                     Value::Integer(r.notice_id),
@@ -11437,13 +11510,15 @@ impl Db {
         //   citer would weld into its Tender past the direction check. A reference whose
         //   citing and cited notices both name buyers and share none of them
         //   ([`buyer_tokens_disjoint`] on the tolerant token sets: identifier key AND N2
-        //   name key of every buyer) is refused. Judged NOTICE to notice, not against the
-        //   cited notice's component: the reference names one notice, so that notice's
-        //   buyers are what the claim is checked against; a component's buyer set only
-        //   grows as it welds, so a hub would vouch for any citer — the guard weakest
-        //   exactly where it matters; and a verdict on two endpoints is independent of
-        //   the order edges are read in and of how much of a component an incremental
-        //   plan holds, so it never waits. A joint procurement's CAN naming one of its
+        //   name key of every buyer — and since unit 2c the signatory, the resolved
+        //   organization, the raw identifier, an agency's principal, the name's head, its
+        //   whole-word prefixes and its acronym, `PlanRow::buyer_tokens`) is refused. Judged NOTICE
+        //   to notice, not against the cited notice's component: the reference names one
+        //   notice, so that notice's buyers are what the claim is checked against; a
+        //   component's buyer set only grows as it welds, so a hub would vouch for any
+        //   citer — the guard weakest exactly where it matters; and a verdict on two
+        //   endpoints is independent of the order edges are read in and of how much of
+        //   a component an incremental plan holds, so it never waits. A joint procurement's CAN naming one of its
         //   CN's buyers overlaps that CN itself. Judged after the direction check and
         //   before the fan-in count, so a refused placeholder citer is not a second
         //   procedure in the fan-in either.

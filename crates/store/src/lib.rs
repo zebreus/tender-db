@@ -42,7 +42,7 @@ pub use canonical::{
     EdgeCensusReport, MatchKeyBuildWindow, OrgEdgeScanArgs,
     OrgEdgeScanReport,
     DeclaredLink, DeclaredWindow, LINK_BACKFILL_SAMPLES, LINK_DECLARED_RULES, LINK_LOGICAL_NOTICE, LINK_OPP_090,
-    LinkEndpoint, LinkTally, buyer_name_fold, buyer_token, buyer_tokens_disjoint,
+    LinkEndpoint, LinkTally, buyer_abbr_token, buyer_initials_token, buyer_name_fold, buyer_prefix_token, buyer_token, buyer_tokens_disjoint,
     MatchedLink, PlanGroup, PlanGroupTally, PlanRow, PlanScope, TenderLinkBackfill, TenderLinkRuleCounts, TenderLinkSample,
     QUALITY_WITHHELD, R2MergeArgs, version_stem,
     R2MergeReport, R3MergeArgs, R3MergeReport, Round, TenderProjection, TenderVersion,
