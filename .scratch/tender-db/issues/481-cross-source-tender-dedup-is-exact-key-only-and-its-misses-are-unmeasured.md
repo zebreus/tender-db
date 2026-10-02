@@ -102,7 +102,50 @@ SDK. Labelled data:
   0.9933, LB 0.9805), and is re-measured after unit 2 lands, on another month and on PINs with full dispatch data.
 - sdk-0.1 needs a labelled sample before any rule. That is a later unit.
 
-## Unit 2 (next): the edge ledger and its declared producers
+## Unit 2: the edge ledger and its declared producers — LANDED 2026-10-02 (not yet deployed)
+
+**What landed** (two commits: A `ca95200` ledger, producers and full-path fold; B the incremental path, the
+re-queue rule and the backfill job):
+- **Ledger** `tender_links(id, a_notice_id, b_notice_id NULL, b_source, b_ref, kind declared|matched, rule,
+  evidence, job_id, at)` in the canonical SCHEMA (canonical.rs, beside `legacy_ojs_keys`). Off `/v1/sql`.
+- **Producers** at `insert_plan_tx`, diffed per planned non-legacy notice: `opp-090` (target Source always TED,
+  so the cross-source drop is gone) and `logical-notice` (TED BT-701, a single non-placeholder uuid, resolved to
+  every DÖE `<id>-<digits>` version). An unresolved reference keeps one row with `b_notice_id` NULL.
+- **Fold**: every rule in the one `MinUnionFind`. Previous-notice keeps ADR-0011's direction check; same-notice
+  and matched links are weld-guarded (one logical id per citing component, no two keyed components,
+  `LINK_COMPONENT_CAP = 64`). Representative: keyed, then TED island, then earliest — no issue-278 ghost.
+  `LinkTally` on the Report and the job row (`; issue-481 tender links joined … refused … deferred …`).
+- **Incremental path** (`project_incremental_chunked_observed`): pass 1 collects the changed notices' declared
+  links; after the touched expansion and the legacy closure, `link_closure` walks the ledger from EVERY planned
+  notice (rows they state, rows naming them by id, unresolved rows naming them by publication id or its version
+  stem) plus the changed notices' links resolved now, adding each reached Tender whole, to a fixpoint; past
+  `LINK_CLOSURE_CAP` (= the legacy cap, 500k) it falls back to the full path. Proven equal to a full fold in
+  both arrival orders (`the_ledger_joins_incrementally_exactly_as_a_full_fold_in_either_order`; it fails with
+  the closure disabled).
+- **Re-queue rule** ("a write or delete un-projects both endpoints"; the change-set key is `notices.projected =
+  0`, read by `unprojected_parsed_notice_ids`): `Db::write_matched_links` / `Db::delete_matched_links` (unit 3's
+  write path) and the backfill re-queue both notices in the same transaction as the row — a written row only when
+  its notices do not already share a Tender, a deleted row always. Inside a fold, the grouping re-queues the far end
+  of any link the plan holds only one end of (`LinkTally::deferred`; zero when the closure is complete — it catches
+  rows a pre-ledger corpus resolves forward from an untouched member).
+- **Backfill job** `backfill-tender-links` (dry default; report `tender-link-backfill`): walks parsed non-legacy
+  notices by id, 5,000 notices / 500k ids per window, loading only the link fields (BT-701, OPP-090 and their
+  DE-1.x spelling) through one `notice_ids` range read per window whose `field_id` filter is read off the PK index
+  entry (turso `DeferredSeek`, checked in bytecode). Derives links with the plan's own `declared_links`, diffs
+  with the producer's own diff, writes each window in one short transaction and re-queues only would-merge pairs
+  (pairs already one Tender by BT-04 re-queue nothing). Counts per rule (declared, present,
+  resolved, unresolved, would_merge, stale), notices walked, re-queued, and 30 sampled would-merge pairs by both
+  publication ids. Zero drift: a full re-plan after the backfill rewrites no ledger row (tested). Runtime estimate
+  15–45 min wet on prod, about half dry (measured 0.73 / 1.55 ms per notice in the O0 test build at prod's id-row
+  density; reasoning in `docs/operations.md`); the dry run's job row is the real measurement.
+- **Deviations from the design below:** the producer is named `logical-notice`, not `notice_uuid`; no
+  dispatch-second check (DÖE versions of one id carry different dispatch instants; the guards carry the weld
+  protection); matched writes go through a store API rather than a trigger (no trigger exists in this codebase,
+  and a trigger would fire per producer row on a full re-projection).
+
+**Deploy order:** deploy → `backfill-tender-links` dry → read `would_merge` and the samples → wet → the next
+`project` (daily) joins the would-merge pairs → read the job row's `issue-481` line (largest component, refusals,
+`deferred 0`). No full re-projection needed.
 
 Design from the code map (`481-dedup/code-map.md`):
 - **Table:** `tender_links(a_notice_id, b_notice_id NULL, b_source, b_publication_id, kind declared|matched, rule,

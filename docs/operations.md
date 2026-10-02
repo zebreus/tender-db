@@ -525,6 +525,7 @@ durable and is what `/admin/jobs`, `jobwatch` and the issues' Verify lines read:
 ; issue-448 alias asked A bound B refused R (poisoned …, no owner …, veto …, names …, generic …)   ← only when the altid alias was asked
 ; issue-364 previous-publication citations: N admitted, M refused (prior-information …, buyer-profile …, periodic-indicative …, qualification-system …, DPS …, undeclared …, unknown kind …)
 ; issue-364 edges refused by the cited notice's own type: K (prior-information …, buyer-profile …, periodic-indicative …, qualification-system …, DPS …, unknown kind …)
+; issue-481 tender links joined: J (previous-notice …, logical-notice …, matched …); refused: R (not-earlier …, not-one-to-one …, keyed-weld …, oversized …); deferred: D
 ```
 
 The two issue-364 lines are two different gates and read differently:
@@ -551,6 +552,79 @@ first: a supplier renamed since the merge, or a publisher writing another compan
 beside the PPON. A bind the generic wall could not check (`… with the generic wall unable to
 answer`) went through leniently. The diag log's `[issue 448]` lines say the same on every
 fold, zeros included, with how many aliases the fold was armed with.
+
+The **issue-481** line is the grouping's Tender-link step (the `tender_links` ledger below;
+ADR-0003's 2026-10-02 amendment, ADR-0011). `joined` counts links that put two group keys into one
+Tender, per rule: `previous-notice` (OPP-090, ADR-0011's edge, which now resolves a DÖE citation of
+a TED number too), `logical-notice` (a TED eForms notice's BT-701 is the id DÖE publishes the same
+notice under) and `matched` (a reviewed match, issue 481 unit 3). `refused` are the guards:
+`not-earlier` (an OPP-090 naming a notice that is not strictly earlier), `not-one-to-one` (one
+logical id carried by notices of two components), `keyed-weld` (a same-notice or matched link would
+put two procedure-keyed Tenders together: issue 482's colliding BT-04s already weld, and a new rule
+must not add to it) and `oversized` (past 64 components). The last three are expected at zero on
+well-formed data, so read any non-zero one before the joins. `deferred` is the incremental fold's
+valve: a link its plan held only one end of, whose far end is re-queued so the next fold joins it.
+The link closure keeps it at zero; a non-zero count is a join one fold late, never a lost one. The
+line is absent when nothing joined, was refused or deferred. The diag log's `[project] group step
+links union:` line says the same with the largest component, in group keys: the check for an
+issue-482 hub welded through previous-notice links, which have no cap.
+
+### The Tender-link ledger and `backfill-tender-links` (issue 481)
+
+`tender_links` holds every link that joins notices across procedure keys, keyed by notice (never by
+Tender, whose ids are retired on merge). `declared` rows are written by the plan build for each
+planned non-legacy notice and diffed every time it is planned: `opp-090` (target Source always TED)
+and `logical-notice` (TED BT-701 → every DÖE `<id>-<digits>` version). A reference nothing holds
+keeps one row with `b_notice_id` NULL, found by name when its target arrives. `matched` rows are
+written and undone only through `Db::write_matched_links` / `Db::delete_matched_links` (unit 3).
+The ledger survives `reset_tender_layer` and is off `/v1/sql`.
+
+**A ledger write or delete outside a fold re-queues both notices** (`notices.projected = 0`, the key
+the incremental change-set reads), in the same transaction as the row, so it reaches the next DAILY
+fold; a written row whose notices already share a Tender re-queues nothing. **The daily fold applies
+links**: after the touched expansion and the legacy closure it walks the ledger from every planned
+notice (rows they state, rows naming them by id, unresolved rows naming them by publication id or
+version stem, and the changed notices' own links resolved from their parse) and plans each Tender it
+reaches whole, to a fixpoint. Past 500,000 added notices (the legacy closure's cap) it falls back to
+the full path, loudly (`INCREMENTAL → FULL fallback: link closure exceeds cap … (issue 481)`).
+
+```sh
+# Dry (the default): what the ledger lacks, per rule, and 30 would-merge pairs to read by hand.
+/root/aj.sh /admin/jobs '{"kind":"backfill-tender-links"}'
+/root/aj.sh /admin/reports/tender-link-backfill | jq -r .body | jq '{notices, declaring, would_merge, requeued, rules}'
+/root/aj.sh /admin/reports/tender-link-backfill | jq -r .body | jq -r '.samples[] | "\(.rule)  \(.a)  \(.b)"'
+# Wet: write the rows and re-queue the would-merge pairs; the next `project` (the daily) joins them.
+/root/aj.sh /admin/jobs '{"kind":"backfill-tender-links","dry_run":false}'
+```
+
+`backfill-tender-links` (**dry default**; stoppable between windows; report `tender-link-backfill`,
+stored only by a run that finished) is the one-shot for the corpus planned before the ledger existed.
+It walks every parsed non-legacy notice by id, 5,000 notices and at most 500,000 ids per window,
+loading only the link fields (BT-701, OPP-090 and the DE-1.x spelling folded onto them) with one
+range read of `notice_ids` per window, derives the links with the plan's own `declared_links` and
+diffs them with the producer's own diff. Wet, each window's rows and re-queues are ONE transaction on
+the writer (a few thousand index inserts), then a WAL checkpoint. Per rule it counts `declared`,
+`present` (already on the ledger), `resolved`, `unresolved`, `would_merge` (resolved rows whose
+notices fold into different Tenders today: the joins the next fold makes, before its weld guards;
+only these re-queue their notices) and `stale` (declared rows the notice no longer declares, deleted,
+both notices re-queued). Idempotent: a re-run, or a notice a fold planned since the deploy, reads as
+`present`. Expected on prod: `logical-notice` resolved rows in the hundreds of thousands (every
+TED/DÖE twin pair, most of them already one Tender by BT-04) and `would_merge` near the calibration's
+~2,650 above-threshold islands, plus the cross-source OPP-090 joins (unmeasured). **Read the samples
+before the wet run**: each pair names both publication ids, so a sample can be checked on the two
+portals by hand. After the wet run the next daily `project` is a normal daily plus the would-merge
+pairs' Tenders; read its `issue-481` line (largest component, refusals, `deferred: 0`).
+
+**Expected runtime on prod: about 15–45 minutes wet, roughly half that dry** — a reasoned estimate,
+not a prod measurement. Measured 2026-10-02 on a synthetic corpus at prod's id-row density (89
+`notice_ids` rows per TED eForms notice, as 17,906 rows over 201 notices read on prod): 0.73 ms per
+notice dry and 1.55 ms wet in the gate's O0 test build, ~3.7 s of writer per 4,500-notice window.
+turso's CPU paths run ~10–30× faster in the release build, which puts the ~3M TED eForms notices (one
+resolve seek and about one row each) and the other non-legacy notices (no link, one shared range
+read per window) at minutes of CPU; the rest is cold-disk seeks into `notices`' UNIQUE and the
+per-window checkpoints (~1,600 windows). The writer is held for one window's inserts at a time
+(well under a second in release). The dry run's own job row is the real measurement: read its
+duration before queueing the wet one.
 
 ### Reading a `process` job's `[process]` lines (issue 407)
 
@@ -700,7 +774,7 @@ uncapped wet), so a wet run refuses unless its dry plan is on file.
 Report kinds do NOT always match the job kind that writes them. `fusion-census`
 stores under `fusion-candidates`, and `GET /admin/reports/<kind>` answers an
 unknown kind with "no report of that kind has been computed" — which reads as
-"the job never ran". The kinds are, exhaustively (read off `put_report` in the supervisor, 2026-09-06; `altid-merge-plan` since issue 448, `rekey-plan` since issue 453, `merged-identifier-backfill` since issue 460): `altid-merge-plan`, `anchor-wall-census`, `case-apply-plan`, `case-escalations`, `case-unapply-plan`, `country-cluster-census`, `country-cluster-packet`, `country-fold`, `country-typo-census`, `country-typo-repair`, `country-verdict-plan`, `data-quality`, `data-quality-headlines`, `data-quality-presence`, `disk-census`, `drop-orphan-satellites`, `duplicate-identity-census`, `e0-merge-plan`, `fusion-candidates`, `generic-statistic-census`, `generic-wall-census`, `ghost-census`, `label-prefix-repair`, `member-twin-census`, `member-twin-repair`, `merged-identifier-backfill`, `minted-country-repair`, `name-attribution-probe`, `name-pollution-census`, `notice-instant-repair`, `org-edge-census`, `org-edge-scan`, `org-edge-scan-alarm`, `org-edge-scan-plan`, `org-match-keys-build`, `org-match-keys-plan`, `org-merge-health`, `orphan-org-sweep-plan`, `provisional-echo-census`, `provisional-echo-plan`, `provisional-name-norm-plan`, `r2-census`, `r2-merge-plan`, `r3-census`, `r3-merge-plan`, `registry-contiguity`, `rehash-cursor`, `rehash-probe`, `rehoming-packet`, `rehoming-plan`, `rekey-plan`, `renormalise-repair`, `reveal-cursor`, `reveal-recheck`, `reveal-wrap`, `satellite-orphans`, `xb-packet`.
+"the job never ran". The kinds are, exhaustively (read off `put_report` in the supervisor, 2026-09-06; `altid-merge-plan` since issue 448, `rekey-plan` since issue 453, `merged-identifier-backfill` since issue 460, `tender-link-backfill` since issue 481): `altid-merge-plan`, `anchor-wall-census`, `case-apply-plan`, `case-escalations`, `case-unapply-plan`, `country-cluster-census`, `country-cluster-packet`, `country-fold`, `country-typo-census`, `country-typo-repair`, `country-verdict-plan`, `data-quality`, `data-quality-headlines`, `data-quality-presence`, `disk-census`, `drop-orphan-satellites`, `duplicate-identity-census`, `e0-merge-plan`, `fusion-candidates`, `generic-statistic-census`, `generic-wall-census`, `ghost-census`, `label-prefix-repair`, `member-twin-census`, `member-twin-repair`, `merged-identifier-backfill`, `minted-country-repair`, `name-attribution-probe`, `name-pollution-census`, `notice-instant-repair`, `org-edge-census`, `org-edge-scan`, `org-edge-scan-alarm`, `org-edge-scan-plan`, `org-match-keys-build`, `org-match-keys-plan`, `org-merge-health`, `orphan-org-sweep-plan`, `provisional-echo-census`, `provisional-echo-plan`, `provisional-name-norm-plan`, `r2-census`, `r2-merge-plan`, `r3-census`, `r3-merge-plan`, `registry-contiguity`, `rehash-cursor`, `rehash-probe`, `rehoming-packet`, `rehoming-plan`, `rekey-plan`, `renormalise-repair`, `reveal-cursor`, `reveal-recheck`, `reveal-wrap`, `satellite-orphans`, `tender-link-backfill`, `xb-packet`.
 
 ### The admin surface beyond jobs (issues 230, 335, 348, 356)
 

@@ -2,7 +2,8 @@
 
 **Status:** accepted 2026-08-19 (project owner, under the standing mandate). Implemented in the
 grouping (`Db::build_plan_groups`), running on full re-projections since 2026-08-20 (issue 256). Amended
-2026-10-02 (issue 481, below): the edge is a row of the Tender-link ledger, and resolves in its own Source.
+2026-10-02 (issue 481, below): the edge is a row of the Tender-link ledger, resolves in its own Source,
+and applies on the incremental fold too.
 
 EU eForms does not keep BT-04 stable across the notices of one procedure. Measured on prod
 (issue 236): award-bearing Tenders whose first version is an `eforms:eforms-sdk-1.%` notice are
@@ -116,5 +117,11 @@ Two ways to implement it, and the choice matters:
   keyed components into one Tender. One logical id must name one notice on the citing side. And such a
   component may not join more than 64 components. Refused edges are counted on the job row. The
   previous-notice edge keeps this ADR's mechanism: it exists to join keyed components, and it has no cap.
-- **The incremental fold** unions a link only when both notices are in its plan.
-  `Db::tender_link_neighbours` is the walk that brings the other end in.
+- **The incremental fold applies it too.** A link unions only when both notices are in the plan, so the
+  incremental fold walks the ledger from every planned notice (`link_closure`: rows the notices state,
+  rows naming them by id, unresolved rows naming them by publication id, and the changed notices' own
+  links resolved from their parse) and plans each Tender it reaches whole, to a fixpoint, falling back to
+  the full path past the legacy closure's cap. A link the plan still holds only one end of is deferred:
+  its far end is re-queued for the next fold and counted (`deferred` on the job row). A ledger row
+  written or deleted outside a fold (`backfill-tender-links`, a matched row and its undo) re-queues both
+  notices, so it reaches the next daily fold. Until then these edges applied on full re-projections only.

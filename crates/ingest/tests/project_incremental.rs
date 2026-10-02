@@ -1858,3 +1858,381 @@ async fn the_fold_derives_eur_cents_beside_published_amounts() {
 
     let _ = std::fs::remove_file(&path);
 }
+
+// ---------------------------------- issue 481: the Tender-link ledger, incrementally
+
+/// The notice id a TED twin publishes as `BT-701-notice` and DÖE as `<id>-<version>`.
+const LOGICAL: &str = "5c1f2e7a-9b3d-4e8f-a1c2-7d6e5f4a3b2c";
+const LOGICAL_ISLANDS: &str = "0e9d8c7b-6a5f-4e3d-b2c1-a0f9e8d7c6b5";
+const LOGICAL_UNHELD: &str = "7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d";
+const LOGICAL_KEYED: &str = "8b9c0d1e-2f3a-4b4c-8d5e-6f7a8b9c0d1e";
+/// Procedure keys (BT-04).
+const KEY: &str = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
+const KEY_CN: &str = "9f8e7d6c-5b4a-4392-8170-6f5e4d3c2b1a";
+const KEY_SHARED: &str = "be2f3a4b-5c6d-4e7f-9a8b-9c0d1e2f3a4b";
+
+/// A synthetic eForms notice of `source`, dispatched and published on `day`, with these
+/// id fields on its procedure root — the Tender-link tests' notice (tests/project.rs
+/// builds the same one).
+async fn record_linked(db: &Db, fetch_id: i64, source: &str, pub_id: &str, day: i64, ids: &[(&str, &str)]) {
+    let mut values = vec![date_val("PROCEDURE", "BT-05(a)-notice", day * 86_400)];
+    for (field, value) in ids {
+        let ordinal = values.iter().filter(|v| v.field_id == *field).count() as i64;
+        values.push(ValueRow {
+            section_id: "PROCEDURE".into(),
+            field_id: (*field).into(),
+            ordinal,
+            value: NoticeValue::Id { scheme: None, value: (*value).into(), is_ref: false },
+        });
+    }
+    let parsed = Parsed { sections: vec![sec("PROCEDURE", "Notice", None)], values };
+    db.record_notice(
+        &Notice {
+            source: source.into(),
+            publication_id: pub_id.into(),
+            content_hash: pub_id.into(),
+            profile: if source == "ted" { "eforms:eforms-sdk-1.13" } else { "eforms:eforms-de-2.0" }.into(),
+            declared_version: None,
+            fetch_id,
+            member_path: pub_id.into(),
+            ingested_at: 0,
+            published_at: Some(store::Stamp::utc(day * 86_400)),
+            dispatched_at: Some(store::Stamp::utc(day * 86_400)),
+        },
+        &Parse::Parsed(parsed),
+    )
+    .await
+    .expect("record linked notice");
+}
+
+/// The linked corpus, notice by notice: `(source, publication id, day, id fields)`.
+/// - a TED contract notice and a DÖE notice citing it by OPP-090 (cross-source);
+/// - a keyed TED notice whose BT-701 names a DÖE notice published in two versions;
+/// - a TED island whose BT-701 names a DÖE island (island ↔ island, the prod shape).
+fn linked_corpus() -> Vec<(&'static str, String, i64, Vec<(&'static str, String)>)> {
+    vec![
+        ("ted", "00200002-2024".into(), 19_990, vec![("BT-04-notice", KEY_CN.into())]),
+        ("doe", format!("{LOGICAL_UNHELD}-01"), 20_000, vec![("OPP-090-Procedure", "200002-2024".into())]),
+        ("ted", "00400001-2024".into(), 20_003, vec![("BT-04-notice", KEY.into()), ("BT-701-notice", LOGICAL.into())]),
+        ("doe", format!("{LOGICAL}-01"), 20_000, vec![]),
+        ("doe", format!("{LOGICAL}-02"), 20_005, vec![]),
+        ("ted", "00400003-2024".into(), 20_004, vec![("BT-701-notice", LOGICAL_ISLANDS.into())]),
+        ("doe", format!("{LOGICAL_ISLANDS}-01"), 20_001, vec![]),
+    ]
+}
+
+async fn record_corpus_member(db: &Db, fetch_id: i64, member: &(&str, String, i64, Vec<(&str, String)>)) {
+    let ids: Vec<(&str, &str)> = member.3.iter().map(|(f, v)| (*f, v.as_str())).collect();
+    record_linked(db, fetch_id, member.0, &member.1, member.2, &ids).await;
+}
+
+/// The Tender holding the notice published as `pub_id`.
+async fn tender_of(db: &Db, pub_id: &str) -> i64 {
+    count(db, &format!("SELECT tender_id FROM tender_versions WHERE publication_id = '{pub_id}'")).await
+}
+
+/// Notices folded into two Tenders at once — the issue-278 ghost signature.
+async fn ghosts(db: &Db) -> i64 {
+    count(
+        db,
+        "SELECT COUNT(*) FROM (SELECT caused_by_notice_id FROM tender_versions
+           GROUP BY caused_by_notice_id HAVING COUNT(*) > 1)",
+    )
+    .await
+}
+
+/// Absorb the same delta both ways and require the same canonical layer — content
+/// byte-identical, surrogate ids included, and the same change events (as a set: the
+/// two paths retire before and after applying).
+async fn absorb_and_compare(full: &Db, incr: &Db, label: &str) -> project::Report {
+    project::project(full, false).await.expect("full absorb");
+    let report = project::project_incremental(incr).await.expect("incremental absorb");
+    assert_eq!(snapshot_content(full).await, snapshot_content(incr).await, "{label}: canonical content differs");
+    assert_eq!(changes_set(full).await, changes_set(incr).await, "{label}: change events differ");
+    assert_eq!(ghosts(incr).await, 0, "{label}: a notice in two Tenders");
+    assert!(incr.unprojected_parsed_notice_ids().await.unwrap().is_empty(), "{label}: change-set not drained");
+    report
+}
+
+/// Issue 481: the ledger takes effect through the DAILY fold, in either arrival order.
+/// Each delta is absorbed by a full non-rebuild projection on one DB and incrementally
+/// on the other, and the two canonical layers must match after every step:
+///
+/// - TED first: the TED notices land, then their DÖE twins and the DÖE citer — the twin
+///   finds the TED notice's unresolved `logical-notice` row by name, the citer resolves
+///   its TED predecessor forward — then a later DÖE version of the same notice;
+/// - DÖE first: the DÖE notices land as islands, then the TED notices — whose own
+///   `logical-notice` links resolve forward, and whose CN the DÖE citer's unresolved
+///   `opp-090` row names.
+///
+/// Before the closure an incremental plan held only the touched notices, so every one
+/// of these joins waited for a full re-projection.
+#[tokio::test]
+async fn the_ledger_joins_incrementally_exactly_as_a_full_fold_in_either_order() {
+    let corpus = linked_corpus();
+    let ted_first: [&[usize]; 3] = [&[0, 2, 5], &[1, 3, 6], &[4]];
+    let doe_first: [&[usize]; 2] = [&[1, 3, 4, 6], &[0, 2, 5]];
+    for (order, deltas) in [("ted-first", &ted_first[..]), ("doe-first", &doe_first[..])] {
+        let (full, ff, pf) = scratch(&format!("links-{order}-full")).await;
+        let (incr, fi, pi) = scratch(&format!("links-{order}-incr")).await;
+        establish(&full, ff).await;
+        establish(&incr, fi).await;
+        for (step, delta) in deltas.iter().enumerate() {
+            for &i in *delta {
+                record_corpus_member(&full, ff, &corpus[i]).await;
+                record_corpus_member(&incr, fi, &corpus[i]).await;
+            }
+            let report = absorb_and_compare(&full, &incr, &format!("{order} step {step}")).await;
+            assert_eq!(report.links.deferred, 0, "{order} step {step}: the closure reached every link");
+        }
+
+        let cn = tender_of(&incr, "00200002-2024").await;
+        assert_eq!(tender_of(&incr, &format!("{LOGICAL_UNHELD}-01")).await, cn, "{order}: the DÖE citer joins its TED CN");
+        let keyed = tender_of(&incr, "00400001-2024").await;
+        for version in ["01", "02"] {
+            assert_eq!(tender_of(&incr, &format!("{LOGICAL}-{version}")).await, keyed, "{order}: DÖE -{version} joins");
+        }
+        assert_eq!(
+            tender_of(&incr, &format!("{LOGICAL_ISLANDS}-01")).await,
+            tender_of(&incr, "00400003-2024").await,
+            "{order}: the DÖE island joins its TED island twin"
+        );
+        // The established corpus's three Tenders plus the three linked ones.
+        assert_eq!(count(&incr, "SELECT COUNT(*) FROM tenders").await, 3 + 3, "{order}");
+
+        for p in [pf, pi] {
+            for s in ["", "-wal", "-shm"] {
+                let _ = std::fs::remove_file(format!("{p}{s}"));
+            }
+        }
+    }
+}
+
+/// Issue 481: a ledger write or delete outside a fold re-queues both notices, so a
+/// measured match — unit 3's — or its undo reaches the next DAILY fold, and does
+/// exactly what a full fold does with it: the match retires the DÖE island into the TED
+/// Tender (one `removed` event), the undo splits it out again as a fresh island (no
+/// removal, no ghost). Writing a match between notices that already share a Tender
+/// re-queues nothing.
+#[tokio::test]
+async fn a_matched_row_merges_on_the_next_daily_and_its_undo_splits() {
+    let (full, ff, pf) = scratch("matched-full").await;
+    let (incr, fi, pi) = scratch("matched-incr").await;
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        establish(db, fetch).await;
+        record_linked(db, fetch, "doe", "123456-1", 20_000, &[]).await;
+        record_linked(db, fetch, "ted", "00700001-2024", 20_002, &[("BT-04-notice", KEY)]).await;
+    }
+    absorb_and_compare(&full, &incr, "the two notices alone").await;
+    assert_ne!(tender_of(&incr, "123456-1").await, tender_of(&incr, "00700001-2024").await);
+
+    let id = async |db: &Db, pub_id: &str| count(db, &format!("SELECT id FROM notices WHERE publication_id = '{pub_id}'")).await;
+    let removed = async |db: &Db| count(db, "SELECT COUNT(*) FROM changes WHERE entity_kind = 'tender' AND op = 'removed'").await;
+    let removed_before = removed(&incr).await;
+    for db in [&full, &incr] {
+        let link = store::MatchedLink {
+            a_notice_id: id(db, "00700001-2024").await,
+            b_notice_id: id(db, "123456-1").await,
+            rule: "r1".into(),
+            evidence: Some("{}".into()),
+            job_id: Some(7),
+        };
+        assert_eq!(db.write_matched_links(&[link.clone()]).await.expect("write"), 1);
+        assert_eq!(db.write_matched_links(&[link]).await.expect("rewrite"), 0, "idempotent");
+    }
+    let mut queued = vec![id(&incr, "123456-1").await, id(&incr, "00700001-2024").await];
+    queued.sort_unstable();
+    assert_eq!(incr.unprojected_parsed_notice_ids().await.unwrap(), queued, "both notices re-queued");
+    let report = absorb_and_compare(&full, &incr, "the match").await;
+    assert_eq!(report.links.matched, 1, "{:?}", report.links);
+    assert_eq!(tender_of(&incr, "123456-1").await, tender_of(&incr, "00700001-2024").await, "merged");
+    assert_eq!(removed(&incr).await, removed_before + 1, "the island's Tender retired, announced once");
+
+    // A match between notices that already share a Tender joins nothing new.
+    let other = store::MatchedLink {
+        a_notice_id: id(&incr, "123456-1").await,
+        b_notice_id: id(&incr, "00700001-2024").await,
+        rule: "r1".into(),
+        evidence: None,
+        job_id: None,
+    };
+    assert_eq!(incr.write_matched_links(&[other]).await.expect("write"), 1);
+    assert!(incr.unprojected_parsed_notice_ids().await.unwrap().is_empty(), "nothing to re-fold");
+    for db in [&full, &incr] {
+        let rows: Vec<i64> = match db.scalar("SELECT group_concat(id) FROM tender_links WHERE kind = 'matched'").await.unwrap() {
+            Some(store::turso::Value::Text(s)) => s.split(',').map(|v| v.parse().unwrap()).collect(),
+            _ => Vec::new(),
+        };
+        assert!(!rows.is_empty());
+        assert_eq!(db.delete_matched_links(&rows).await.expect("undo"), rows.len() as u64);
+    }
+    assert_eq!(incr.unprojected_parsed_notice_ids().await.unwrap(), queued, "the undo re-queues both");
+    absorb_and_compare(&full, &incr, "the undo").await;
+    assert_ne!(tender_of(&incr, "123456-1").await, tender_of(&incr, "00700001-2024").await, "split again");
+    assert_eq!(removed(&incr).await, removed_before + 1, "a split retires nothing");
+    assert_eq!(
+        count(&incr, "SELECT COUNT(*) FROM tenders t JOIN notices n ON n.id = t.island_notice_id
+                       WHERE n.publication_id = '123456-1' AND t.source = 'doe'")
+        .await,
+        1,
+        "the DÖE notice is its own island again"
+    );
+
+    for p in [pf, pi] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
+
+/// Issue 481, the cap: an over-cap link closure reports the full-path fallback instead
+/// of a wrong scope; the production cap admits the same component.
+#[tokio::test]
+async fn an_over_cap_link_closure_reports_fallback() {
+    let (db, fetch, path) = scratch("linkcap").await;
+    establish(&db, fetch).await;
+    record_linked(&db, fetch, "ted", "00400001-2024", 20_003, &[("BT-04-notice", KEY), ("BT-701-notice", LOGICAL)]).await;
+    record_linked(&db, fetch, "doe", &format!("{LOGICAL}-01"), 20_000, &[]).await;
+    project::project(&db, false).await.expect("project");
+    let ted = count(&db, "SELECT id FROM notices WHERE publication_id = '00400001-2024'").await;
+    let doe = count(&db, &format!("SELECT id FROM notices WHERE publication_id = '{LOGICAL}-01'")).await;
+
+    let over = project::link_closure_capped(&db, &[ted], &[], 0).await.expect("walk (cap 0)");
+    let reason = over.expect_err("the twin is one notice past a cap of 0");
+    assert!(reason.contains("exceeds cap"), "the reason names the cap: {reason}");
+
+    let ok = project::link_closure_capped(&db, &[ted], &[], 500_000).await.expect("walk (real cap)");
+    let (notices, tenders) = ok.expect("the production cap admits it");
+    assert_eq!(notices, vec![doe], "the twin, reached through the ledger");
+    assert_eq!(tenders, vec![tender_of(&db, "00400001-2024").await], "and the Tender it folds into");
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
+/// The ledger, one row per line in id order — what a zero-drift re-plan must leave alone.
+async fn ledger_rows(db: &Db) -> String {
+    match db
+        .scalar(
+            "SELECT group_concat(r, x'0a') FROM (SELECT id||'|'||a_notice_id||'|'||coalesce(b_notice_id, -1)||'|'||
+                    kind||'|'||rule||'|'||b_source||'|'||b_ref AS r FROM tender_links ORDER BY id)",
+        )
+        .await
+        .expect("ledger rows")
+    {
+        Some(store::turso::Value::Text(s)) => s,
+        _ => String::new(),
+    }
+}
+
+/// Issue 481: the ledger backfill gives notices planned before the ledger existed their
+/// declared rows, and the next DAILY fold makes the joins — no full re-projection.
+///
+/// The corpus is built the way prod is: projected while the ledger kept nothing, so a
+/// TED notice whose DÖE twin arrived later, a DÖE notice citing a TED CN that arrived
+/// later, and a TED island with its DÖE island twin all stand apart; a TED/DÖE pair
+/// already sharing a BT-04 is one Tender; and one TED notice names a DÖE id nobody
+/// holds. Walked through windows of two notices and three ids:
+///
+/// - dry: per-rule counts, the would-merge pairs by both publication ids, the re-queue
+///   counted — and nothing written or queued;
+/// - stopped: the walk ends between windows and says how far it got;
+/// - wet: the rows, with ONLY the would-merge pairs' notices re-queued (the keyed pair
+///   already shares a Tender), and a re-run finds everything present;
+/// - the daily fold joins all three; a full re-plan afterwards rewrites no ledger row
+///   and moves no Tender, which is the backfill's zero drift from the producer.
+#[tokio::test]
+async fn the_ledger_backfill_counts_dry_writes_wet_and_the_daily_joins() {
+    const LOGICAL_NEVER: &str = "c0d1e2f3-a4b5-4c6d-9e7f-8a9b0c1d2e3f";
+    let (db, fetch, path) = scratch("link-backfill").await;
+    establish(&db, fetch).await;
+    record_linked(&db, fetch, "ted", "00400001-2024", 20_003, &[("BT-04-notice", KEY), ("BT-701-notice", LOGICAL)]).await;
+    record_linked(&db, fetch, "ted", "00400003-2024", 20_004, &[("BT-701-notice", LOGICAL_ISLANDS)]).await;
+    record_linked(&db, fetch, "ted", "00400005-2024", 20_004, &[("BT-04-notice", "c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f"), ("BT-701-notice", LOGICAL_NEVER)])
+        .await;
+    let citer = format!("{LOGICAL_UNHELD}-01");
+    record_linked(&db, fetch, "doe", &citer, 20_000, &[("OPP-090-Procedure", "200002-2024")]).await;
+    record_linked(&db, fetch, "ted", "00400006-2024", 20_006, &[("BT-04-notice", KEY_SHARED), ("BT-701-notice", LOGICAL_KEYED)])
+        .await;
+    record_linked(&db, fetch, "doe", &format!("{LOGICAL_KEYED}-01"), 20_006, &[("BT-04-notice", KEY_SHARED)]).await;
+    project::project(&db, false).await.expect("project");
+    db.execute_for_test("DELETE FROM tender_links").await.expect("the binary that planned them kept no ledger");
+    record_linked(&db, fetch, "doe", &format!("{LOGICAL}-01"), 20_000, &[]).await;
+    record_linked(&db, fetch, "doe", &format!("{LOGICAL_ISLANDS}-01"), 20_001, &[]).await;
+    record_linked(&db, fetch, "ted", "00200002-2024", 19_990, &[("BT-04-notice", KEY_CN)]).await;
+    project::project_incremental(&db).await.expect("the twins arrive with no ledger to find them by");
+    let pairs = [
+        ("00400001-2024".to_owned(), format!("{LOGICAL}-01")),
+        ("00400003-2024".to_owned(), format!("{LOGICAL_ISLANDS}-01")),
+        (citer.clone(), "00200002-2024".to_owned()),
+    ];
+    for (a, b) in &pairs {
+        assert_ne!(tender_of(&db, a).await, tender_of(&db, b).await, "{a} and {b} start apart");
+    }
+    assert_eq!(ledger_rows(&db).await, "", "the ledger starts empty");
+    let tenders_before = count(&db, "SELECT COUNT(*) FROM tenders").await;
+
+    let never = || false;
+    let dry = project::backfill_tender_links_windowed(&db, true, 3, 2, &never, |_| {}).await.expect("dry");
+    let rule = |r: &store::TenderLinkBackfill, name: &str| r.rules.iter().find(|(n, _)| n == name).unwrap().1.clone();
+    let logical = store::TenderLinkRuleCounts { declared: 4, present: 0, resolved: 3, unresolved: 1, would_merge: 2, stale: 0 };
+    let opp = store::TenderLinkRuleCounts { declared: 1, present: 0, resolved: 1, unresolved: 0, would_merge: 1, stale: 0 };
+    assert_eq!(rule(&dry, "logical-notice"), logical, "{dry:?}");
+    assert_eq!(rule(&dry, "opp-090"), opp, "{dry:?}");
+    assert_eq!((dry.notices, dry.declaring, dry.would_merge, dry.requeued), (13, 5, 3, 6), "{dry:?}");
+    let mut samples: Vec<String> = dry
+        .samples
+        .iter()
+        .map(|s| format!("{} {}:{} {}:{}", s.rule, s.a_source, s.a_publication_id, s.b_source, s.b_publication_id))
+        .collect();
+    samples.sort();
+    assert_eq!(
+        samples,
+        vec![
+            format!("logical-notice ted:00400001-2024 doe:{LOGICAL}-01"),
+            format!("logical-notice ted:00400003-2024 doe:{LOGICAL_ISLANDS}-01"),
+            format!("opp-090 doe:{citer} ted:00200002-2024"),
+        ]
+    );
+    assert_eq!(ledger_rows(&db).await, "", "a dry run writes nothing");
+    assert!(db.unprojected_parsed_notice_ids().await.unwrap().is_empty(), "and queues nothing");
+
+    let calls = std::sync::atomic::AtomicUsize::new(0);
+    let second = || calls.fetch_add(1, std::sync::atomic::Ordering::Relaxed) >= 1;
+    let stopped = project::backfill_tender_links_windowed(&db, true, 3, 2, &second, |_| {}).await.expect("stopped");
+    assert!(stopped.stopped && stopped.cursor < stopped.target, "{stopped:?}");
+
+    let wet = project::backfill_tender_links_windowed(&db, false, 3, 2, &never, |_| {}).await.expect("wet");
+    assert_eq!((rule(&wet, "logical-notice"), rule(&wet, "opp-090")), (logical, opp), "{wet:?}");
+    assert_eq!(wet.requeued, 6, "{wet:?}");
+    assert_eq!(count(&db, "SELECT COUNT(*) FROM tender_links WHERE kind = 'declared'").await, 5);
+    let id = async |pub_id: &str| count(&db, &format!("SELECT id FROM notices WHERE publication_id = '{pub_id}'")).await;
+    let mut queued = Vec::new();
+    for (a, b) in &pairs {
+        queued.extend([id(a).await, id(b).await]);
+    }
+    queued.sort_unstable();
+    assert_eq!(db.unprojected_parsed_notice_ids().await.unwrap(), queued, "only the would-merge pairs' notices");
+    let again = project::backfill_tender_links_windowed(&db, false, 3, 2, &never, |_| {}).await.expect("re-run");
+    let present = rule(&again, "logical-notice");
+    assert_eq!((present.declared, present.present, present.resolved, again.requeued), (4, 4, 0, 0), "{again:?}");
+
+    let report = project::project_incremental(&db).await.expect("the daily");
+    assert_eq!((report.links.logical_notice, report.links.previous_notice, report.links.deferred), (2, 1, 0), "{:?}", report.links);
+    for (a, b) in &pairs {
+        assert_eq!(tender_of(&db, a).await, tender_of(&db, b).await, "{a} and {b} joined by the daily fold");
+    }
+    assert_eq!(count(&db, "SELECT COUNT(*) FROM tenders").await, tenders_before - 3);
+    assert_eq!(ghosts(&db).await, 0);
+
+    let rows = ledger_rows(&db).await;
+    let tenders = snapshot_content(&db).await;
+    project::project(&db, false).await.expect("a full re-plan");
+    assert_eq!(ledger_rows(&db).await, rows, "the producer finds the backfill's rows exactly as it would write them");
+    assert_eq!(snapshot_content(&db).await, tenders, "and the full fold moves nothing");
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}

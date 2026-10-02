@@ -1310,6 +1310,122 @@ pub struct DeclaredLink {
     pub b_ref: String,
 }
 
+/// One declared ledger row as the producer compares them: `(rule, b_source, b_ref,
+/// b_notice_id)`.
+type DeclaredRow = (String, String, String, Option<i64>);
+
+/// What one notice's declared links make of its declared ledger rows
+/// ([`diff_declared`]).
+struct DeclaredDiff {
+    /// Every row it declares now: one per target held, one for a reference nothing holds.
+    declared: Vec<DeclaredRow>,
+    /// Of `declared`, the rows the ledger lacks.
+    missing: Vec<DeclaredRow>,
+    /// The ledger's declared rows it no longer declares, with their ids.
+    stale: Vec<(i64, DeclaredRow)>,
+}
+
+/// Diff the rows a notice declares now against the declared rows the ledger holds for
+/// it (`(id, row)`).
+fn diff_declared(declared: Vec<DeclaredRow>, held: Vec<(i64, DeclaredRow)>) -> DeclaredDiff {
+    let mut missing: BTreeSet<&DeclaredRow> = declared.iter().collect();
+    let stale: Vec<(i64, DeclaredRow)> = held.into_iter().filter(|(_, row)| !missing.remove(row)).collect();
+    let missing: Vec<DeclaredRow> = missing.into_iter().cloned().collect();
+    DeclaredDiff { declared, missing, stale }
+}
+
+/// The ledger producer's per-link and per-notice reads, prepared once per batch of
+/// notices and re-bound per call — the [`TenderInserts`] idiom: turso re-parses the SQL
+/// of every `conn.query`, and a full re-projection resolves a link for nearly every TED
+/// eForms notice, where the parse costs as much as the seek.
+struct LinkReads {
+    exact: Statement,
+    versioned: Statement,
+    held: Statement,
+}
+
+impl LinkReads {
+    async fn prepare(conn: &Connection) -> turso::Result<Self> {
+        Ok(Self {
+            exact: conn.prepare(LINK_EXACT_TARGET_SQL).await?,
+            versioned: conn.prepare(LINK_VERSIONED_TARGET_SQL).await?,
+            held: conn.prepare(LINK_DECLARED_ROWS_SQL).await?,
+        })
+    }
+
+    /// The notices a declared link names today. A `logical-notice` reference names a
+    /// notice id, so it resolves to every version of it ([`LINK_VERSIONED_TARGET_SQL`]);
+    /// every other rule names one publication ([`LINK_EXACT_TARGET_SQL`]). Sorted,
+    /// deduplicated.
+    async fn targets(&mut self, link: &DeclaredLink) -> turso::Result<Vec<i64>> {
+        let mut ids = Vec::new();
+        if link.rule == LINK_LOGICAL_NOTICE {
+            let mut rows = self
+                .versioned
+                .query((t(link.b_source), t(format!("{}-", link.b_ref)), t(format!("{}.", link.b_ref))))
+                .await?;
+            while let Some(row) = rows.next().await? {
+                if version_stem(&text(&row, 1)) == Some(link.b_ref.as_str()) {
+                    ids.push(int(&row, 0));
+                }
+            }
+        } else {
+            let mut rows = self.exact.query((t(link.b_source), t(link.b_ref.as_str()))).await?;
+            while let Some(row) = rows.next().await? {
+                ids.push(int(&row, 0));
+            }
+        }
+        ids.sort_unstable();
+        ids.dedup();
+        Ok(ids)
+    }
+
+    /// The rows `links` declare, resolved now: one per target held, one with no target
+    /// for a reference nothing holds. Sorted, deduplicated.
+    async fn declared_rows(&mut self, links: &[DeclaredLink]) -> turso::Result<Vec<DeclaredRow>> {
+        let mut declared: Vec<DeclaredRow> = Vec::new();
+        for link in links {
+            let targets = self.targets(link).await?;
+            let row = |target| (link.rule.to_owned(), link.b_source.to_owned(), link.b_ref.clone(), target);
+            if targets.is_empty() {
+                declared.push(row(None));
+            }
+            declared.extend(targets.into_iter().map(|id| row(Some(id))));
+        }
+        declared.sort_unstable();
+        declared.dedup();
+        Ok(declared)
+    }
+
+    /// Notice `notice_id`'s declared ledger rows, `(id, row)`.
+    async fn held(&mut self, notice_id: i64) -> turso::Result<Vec<(i64, DeclaredRow)>> {
+        let mut held = Vec::new();
+        let mut rows = self.held.query((Value::Integer(notice_id),)).await?;
+        while let Some(row) = rows.next().await? {
+            held.push((int(&row, 0), (text(&row, 1), text(&row, 2), text(&row, 3), opt_int_of(&row, 4))));
+        }
+        Ok(held)
+    }
+}
+
+/// COMMIT `conn`'s open transaction when `result` is `Ok`, ROLLBACK it otherwise, and
+/// hand `result` back.
+async fn finish_tx<T>(conn: &Connection, result: turso::Result<T>) -> turso::Result<T> {
+    match result {
+        Ok(value) => match conn.execute("COMMIT", ()).await {
+            Ok(_) => Ok(value),
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                Err(e)
+            }
+        },
+        Err(e) => {
+            let _ = conn.execute("ROLLBACK", ()).await;
+            Err(e)
+        }
+    }
+}
+
 /// Whether `rule` is ADR-0011's previous-notice edge: directed (its target must be
 /// strictly earlier) and allowed to join two keyed components. Every other rule — a
 /// same-notice identity or a measured match — has no direction and is weld-guarded.
@@ -1347,6 +1463,11 @@ pub struct LinkTally {
     pub keyed_weld: u64,
     /// Refused: they would join more than [`LINK_COMPONENT_CAP`] components.
     pub oversized: u64,
+    /// Neither admitted nor refused: notices at the far end of a link the plan holds
+    /// only one end of, re-queued (`projected = 0`) so the next incremental fold plans
+    /// both. The closure that scopes an incremental plan keeps this at zero; a non-zero
+    /// count is a join that arrives one fold late instead of never.
+    pub deferred: u64,
 }
 
 impl LinkTally {
@@ -1366,7 +1487,101 @@ impl LinkTally {
         self.not_one_to_one += other.not_one_to_one;
         self.keyed_weld += other.keyed_weld;
         self.oversized += other.oversized;
+        self.deferred += other.deferred;
     }
+}
+
+/// The declared rules, in the order the ledger backfill reports them.
+pub const LINK_DECLARED_RULES: [&str; 2] = [LINK_OPP_090, LINK_LOGICAL_NOTICE];
+
+/// Issue 481: one rule's declarations as [`Db::backfill_declared_links`] found them.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct TenderLinkRuleCounts {
+    /// Rows the walked notices declare under the rule: one per target held, one for a
+    /// reference nothing holds.
+    pub declared: u64,
+    /// Of `declared`, rows the ledger already held.
+    pub present: u64,
+    /// Written with a target (dry run: would be).
+    pub resolved: u64,
+    /// Written without one: found by name when the target arrives.
+    pub unresolved: u64,
+    /// Of `resolved`, rows whose two notices fold into different Tenders today: the
+    /// joins the next incremental fold makes, before its weld guards. Both endpoints
+    /// are re-queued. The rest already share a Tender and re-queue nothing.
+    pub would_merge: u64,
+    /// Declared rows the notice no longer declares, deleted with both endpoints
+    /// re-queued (the merge they made may be what is undone).
+    pub stale: u64,
+}
+
+/// One pair the ledger backfill would join, by both publication ids.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct TenderLinkSample {
+    pub rule: String,
+    pub a_source: String,
+    pub a_publication_id: String,
+    pub b_source: String,
+    pub b_publication_id: String,
+}
+
+/// Issue 481: what the ledger backfill (`ingest::project::backfill_tender_links`)
+/// walked, wrote and re-queued, accumulated window by window.
+#[derive(Clone, Debug, Default)]
+pub struct TenderLinkBackfill {
+    pub dry_run: bool,
+    /// Parsed non-legacy notices walked.
+    pub notices: u64,
+    /// Of them, notices declaring at least one link.
+    pub declaring: u64,
+    /// Notices re-queued for the next incremental fold (dry run: would be).
+    pub requeued: u64,
+    /// Per rule of [`LINK_DECLARED_RULES`], in that order.
+    pub rules: Vec<(String, TenderLinkRuleCounts)>,
+    /// Up to [`LINK_BACKFILL_SAMPLES`] `would_merge` pairs, a uniform sample (reservoir,
+    /// fixed seed: the walk is ordered, so one corpus gives one sample).
+    pub samples: Vec<TenderLinkSample>,
+    /// `would_merge` pairs seen, all rules: the reservoir's denominator.
+    pub would_merge: u64,
+    /// The notice id the walk reached, and the one it walked to (captured before it).
+    pub cursor: i64,
+    pub target: i64,
+    /// A cancel ended the walk between windows; the committed windows stand, and a
+    /// re-run counts them as `present`.
+    pub stopped: bool,
+    /// Notices already re-queued by an earlier window, so a notice two windows name is
+    /// counted once, dry or wet.
+    queued: std::collections::HashSet<i64>,
+}
+
+impl TenderLinkBackfill {
+    pub fn new(dry_run: bool) -> TenderLinkBackfill {
+        TenderLinkBackfill {
+            dry_run,
+            rules: LINK_DECLARED_RULES.iter().map(|r| ((*r).to_owned(), TenderLinkRuleCounts::default())).collect(),
+            ..Default::default()
+        }
+    }
+
+    fn counts(&mut self, rule: &str) -> &mut TenderLinkRuleCounts {
+        let at = self.rules.iter().position(|(r, _)| r == rule).expect("a declared rule");
+        &mut self.rules[at].1
+    }
+}
+
+/// The `would_merge` pairs the ledger backfill's report carries.
+pub const LINK_BACKFILL_SAMPLES: usize = 30;
+
+/// Issue 481: a measured match to put on the ledger (ADR-0003's 2026-10-02 amendment):
+/// what unit 3's reviewed matcher writes through [`Db::write_matched_links`].
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct MatchedLink {
+    pub a_notice_id: i64,
+    pub b_notice_id: i64,
+    pub rule: String,
+    /// JSON.
+    pub evidence: Option<String>,
+    pub job_id: Option<i64>,
 }
 
 /// What [`Db::build_plan_groups`] refused and joined: the issue-364 unit-6 legacy edges
@@ -1414,6 +1629,11 @@ pub(crate) const LINK_VERSIONED_TARGET_SQL: &str = "SELECT id, publication_id FR
 pub(crate) const LINK_DECLARED_ROWS_SQL: &str = "SELECT id, rule, b_source, b_ref, b_notice_id \
    FROM tender_links WHERE a_notice_id = ? AND kind = 'declared'";
 
+/// A window's declared ledger rows, for the backfill's diff: a range on the UNIQUE's
+/// leading `a_notice_id`, one statement per window instead of one per notice.
+pub(crate) const LINK_DECLARED_WINDOW_SQL: &str = "SELECT a_notice_id, id, rule, b_source, b_ref, b_notice_id \
+   FROM tender_links WHERE a_notice_id >= ? AND a_notice_id <= ? AND kind = 'declared'";
+
 /// Every resolved matched row, which the grouping adds to the plan's edges whatever the
 /// plan holds (the join drops those with an endpoint outside it). A seek through the
 /// `tender_links_matched` partial index; `+b_notice_id` keeps a 0.8.x `IS NOT NULL`
@@ -1438,6 +1658,49 @@ pub(crate) fn link_neighbour_reads(n: usize) -> [String; 3] {
 /// The notices whose links name `(b_source, b_ref)`, resolved or not — a seek on
 /// `tender_links_ref`.
 pub(crate) const LINK_BY_REF_SQL: &str = "SELECT a_notice_id FROM tender_links WHERE b_source = ? AND b_ref = ?";
+
+/// The plan's links with exactly one end in the plan: driven from the edges, two
+/// PRIMARY KEY probes each, so the grouping can re-queue the far end
+/// ([`LinkTally::deferred`]). Empty on a full plan, whose `plan_notice` holds every
+/// parsed notice.
+pub(crate) const LINK_ONE_ENDED_SQL: &str = "SELECT e.a_notice_id, e.b_notice_id, \
+        a.notice_id IS NULL, b.notice_id IS NULL \
+   FROM plan_link_edge e \
+   LEFT JOIN plan_notice a ON a.notice_id = e.a_notice_id \
+   LEFT JOIN plan_notice b ON b.notice_id = e.b_notice_id \
+  WHERE a.notice_id IS NULL OR b.notice_id IS NULL";
+
+/// The Tenders a notice folds into — one, unless an issue-278 ghost doubles it. A
+/// seek on `tender_versions_notice (caused_by_notice_id)`.
+pub(crate) const LINK_NOTICE_TENDERS_SQL: &str = "SELECT tender_id FROM tender_versions WHERE caused_by_notice_id = ?";
+
+/// The SQL spelling of `ingest`'s `is_legacy_profile`, shared by every parsed-layer read
+/// that pre-filters on it, so the two filters cannot drift apart.
+const LEGACY_PROFILE_SQL: &str = "(profile = 'text' OR profile = 'internal-ojs' OR profile LIKE 'ted-export%')";
+
+/// The ledger backfill's notice window: parsed, non-legacy, `after < id ≤ hi`, at most
+/// `limit`. A rowid range: the `+` keeps `notices_parse_state` from driving it (issue
+/// 323's trap, the [`STRIPE_WALK_SQL`] idiom).
+pub(crate) fn link_field_notices_sql() -> String {
+    format!(
+        "SELECT id, source, publication_id, profile FROM notices \
+          WHERE +parse_state = 'parsed' AND id > ? AND id <= ? AND NOT {LEGACY_PROFILE_SQL} \
+          ORDER BY id LIMIT ?"
+    )
+}
+
+/// The window's id values of `n` named fields. A range on `notice_ids`' PRIMARY KEY by
+/// its leading `notice_id`; `field_id` is the key's third column, so the filter is read
+/// off the index entry and only a match costs a table read — about one row in ninety
+/// on a TED eForms notice (17,906 id rows, 232 of them BT-701/OPP-090, over 201
+/// notices measured on prod 2026-10-02).
+pub(crate) fn link_field_values_sql(n: usize) -> String {
+    format!(
+        "SELECT notice_id, section_id, field_id, ordinal, scheme, value, is_ref FROM notice_ids \
+          WHERE notice_id >= ? AND notice_id <= ? AND field_id IN ({})",
+        placeholders(n)
+    )
+}
 
 /// The org-merge backfill's batch scan (issue 234's second half). The resolver
 /// merge only PREVENTS new duplicate identifier-less Organizations; this scan
@@ -7064,11 +7327,7 @@ impl Db {
         // The legacy predicate mirrors `is_legacy_profile` (project.rs) exactly;
         // it is a pre-filter only — the sweep re-derives legacy per notice in
         // Rust, so an over-match costs a read, never a wrong row.
-        let legacy = if legacy_only {
-            " AND (profile = 'text' OR profile = 'internal-ojs' OR profile LIKE 'ted-export%')"
-        } else {
-            ""
-        };
+        let legacy = if legacy_only { format!(" AND {LEGACY_PROFILE_SQL}") } else { String::new() };
         let sql = format!(
             "SELECT id, source, publication_id, profile FROM notices
              WHERE parse_state = 'parsed' AND id > ? AND id <= ?{legacy} ORDER BY id LIMIT ?"
@@ -9756,6 +10015,7 @@ impl Db {
 
     async fn insert_plan_tx(&self, conn: &Connection, rows: &[PlanRow]) -> turso::Result<()> {
         let now = crate::now_unix();
+        let mut links = LinkReads::prepare(conn).await?;
         for r in rows {
             conn.execute(
                 "INSERT INTO plan_notice(notice_id, procedure_key, legacy, ojs_self, source,
@@ -9798,7 +10058,7 @@ impl Db {
             // BT-701 are eForms fields — and never did, so it skips the ledger read
             // every other planned notice pays.
             if !r.legacy {
-                Self::write_declared_links(conn, r, now).await?;
+                Self::write_declared_links(conn, &mut links, r, now).await?;
             }
             // A legacy notice with its own OJS number seeds the union-find graph:
             // append its symmetric edges (sequential). Its node — and every edge
@@ -9830,48 +10090,17 @@ impl Db {
     /// reference nothing holds yet keeps ONE unresolved row (target NULL), so a target
     /// that arrives later is found by `(b_source, b_ref)`. Matched rows are never read
     /// or written here.
-    async fn write_declared_links(conn: &Connection, r: &PlanRow, now: i64) -> turso::Result<()> {
-        let mut declared: Vec<(String, String, String, Option<i64>)> = Vec::new();
-        for link in &r.links {
-            let targets = Self::resolve_link(conn, link).await?;
-            let row = |target| (link.rule.to_owned(), link.b_source.to_owned(), link.b_ref.clone(), target);
-            if targets.is_empty() {
-                declared.push(row(None));
-            }
-            declared.extend(targets.into_iter().map(|id| row(Some(id))));
-        }
-        declared.sort_unstable();
-        declared.dedup();
-        let mut missing: BTreeSet<&(String, String, String, Option<i64>)> = declared.iter().collect();
-        let mut stale: Vec<i64> = Vec::new();
-        {
-            let mut rows = conn.query(LINK_DECLARED_ROWS_SQL, (Value::Integer(r.notice_id),)).await?;
-            while let Some(row) = rows.next().await? {
-                let held = (text(&row, 1), text(&row, 2), text(&row, 3), opt_int_of(&row, 4));
-                if !missing.remove(&held) {
-                    stale.push(int(&row, 0));
-                }
-            }
-        }
-        for id in stale {
-            conn.execute("DELETE FROM tender_links WHERE id = ?", (Value::Integer(id),)).await?;
-        }
-        for (rule, b_source, b_ref, target) in missing {
-            conn.execute(
-                "INSERT INTO tender_links(a_notice_id, b_notice_id, b_source, b_ref, kind, rule, at)
-                 VALUES(?, ?, ?, ?, 'declared', ?, ?)",
-                (
-                    Value::Integer(r.notice_id),
-                    opt_int(*target),
-                    t(b_source.as_str()),
-                    t(b_ref.as_str()),
-                    t(rule.as_str()),
-                    Value::Integer(now),
-                ),
-            )
-            .await?;
-        }
-        for (rule, _, b_ref, target) in &declared {
+    async fn write_declared_links(
+        conn: &Connection,
+        links: &mut LinkReads,
+        r: &PlanRow,
+        now: i64,
+    ) -> turso::Result<()> {
+        let declared = links.declared_rows(&r.links).await?;
+        let held = links.held(r.notice_id).await?;
+        let diff = diff_declared(declared, held);
+        Self::apply_declared_diff(conn, r.notice_id, &diff, now).await?;
+        for (rule, _, b_ref, target) in &diff.declared {
             if let Some(target) = target {
                 conn.execute(
                     "INSERT INTO plan_link_edge(a_notice_id, b_notice_id, rule, kind, b_ref)
@@ -9889,32 +10118,298 @@ impl Db {
         Ok(())
     }
 
-    /// The notices a declared link names today. A `logical-notice` reference names a
-    /// notice id, so it resolves to every version of it ([`LINK_VERSIONED_TARGET_SQL`]);
-    /// every other rule names one publication ([`LINK_EXACT_TARGET_SQL`]).
-    async fn resolve_link(conn: &Connection, link: &DeclaredLink) -> turso::Result<Vec<i64>> {
-        let mut ids = Vec::new();
-        if link.rule == LINK_LOGICAL_NOTICE {
-            let mut rows = conn
-                .query(
-                    LINK_VERSIONED_TARGET_SQL,
-                    (t(link.b_source), t(format!("{}-", link.b_ref)), t(format!("{}.", link.b_ref))),
-                )
-                .await?;
-            while let Some(row) = rows.next().await? {
-                if version_stem(&text(&row, 1)) == Some(link.b_ref.as_str()) {
-                    ids.push(int(&row, 0));
-                }
-            }
-        } else {
-            let mut rows = conn.query(LINK_EXACT_TARGET_SQL, (t(link.b_source), t(link.b_ref.as_str()))).await?;
-            while let Some(row) = rows.next().await? {
-                ids.push(int(&row, 0));
+    /// Delete a diff's stale rows and insert its missing ones, on `conn`'s transaction.
+    async fn apply_declared_diff(conn: &Connection, notice_id: i64, diff: &DeclaredDiff, now: i64) -> turso::Result<()> {
+        for (id, _) in &diff.stale {
+            conn.execute("DELETE FROM tender_links WHERE id = ?", (Value::Integer(*id),)).await?;
+        }
+        for (rule, b_source, b_ref, target) in &diff.missing {
+            conn.execute(
+                "INSERT INTO tender_links(a_notice_id, b_notice_id, b_source, b_ref, kind, rule, at)
+                 VALUES(?, ?, ?, ?, 'declared', ?, ?)",
+                (
+                    Value::Integer(notice_id),
+                    opt_int(*target),
+                    t(b_source.as_str()),
+                    t(b_ref.as_str()),
+                    t(rule.as_str()),
+                    Value::Integer(now),
+                ),
+            )
+            .await?;
+        }
+        Ok(())
+    }
+
+    /// Whether notices `a` and `b` fold into one Tender today. A link between two such
+    /// notices joins nothing new, so writing it re-queues nothing.
+    async fn share_a_tender(conn: &Connection, a: i64, b: i64) -> turso::Result<bool> {
+        let mut of_a = BTreeSet::new();
+        let mut rows = conn.query(LINK_NOTICE_TENDERS_SQL, (Value::Integer(a),)).await?;
+        while let Some(row) = rows.next().await? {
+            of_a.insert(int(&row, 0));
+        }
+        drop(rows);
+        let mut rows = conn.query(LINK_NOTICE_TENDERS_SQL, (Value::Integer(b),)).await?;
+        while let Some(row) = rows.next().await? {
+            if of_a.contains(&int(&row, 0)) {
+                return Ok(true);
             }
         }
-        ids.sort_unstable();
-        ids.dedup();
-        Ok(ids)
+        Ok(false)
+    }
+
+    /// Issue 481: write measured matches to the ledger, and re-queue both notices of
+    /// every row written whose notices do not already share a Tender, in one
+    /// transaction — a ledger write outside a fold reaches the next incremental fold
+    /// through the change-set (`notices.projected = 0`) it keys on, never by waiting for
+    /// a full re-projection. `b_source`/`b_ref` name the target as it is published, so
+    /// the row reads like a declared one. Idempotent: a row the ledger holds is left
+    /// alone; a target that is not a notice is skipped. Returns the rows written.
+    pub async fn write_matched_links(&self, links: &[MatchedLink]) -> turso::Result<u64> {
+        let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result: turso::Result<u64> = async {
+            let now = crate::now_unix();
+            let (mut written, mut requeue) = (0u64, Vec::new());
+            for link in links {
+                let mut rows = conn
+                    .query("SELECT source, publication_id FROM notices WHERE id = ?", (Value::Integer(link.b_notice_id),))
+                    .await?;
+                let Some(row) = rows.next().await? else { continue };
+                let (b_source, b_ref) = (text(&row, 0), text(&row, 1));
+                drop(rows);
+                let inserted = conn
+                    .execute(
+                        "INSERT OR IGNORE INTO tender_links(a_notice_id, b_notice_id, b_source, b_ref, kind, rule,
+                                                            evidence, job_id, at)
+                         VALUES(?, ?, ?, ?, 'matched', ?, ?, ?, ?)",
+                        (
+                            Value::Integer(link.a_notice_id),
+                            Value::Integer(link.b_notice_id),
+                            t(b_source),
+                            t(b_ref),
+                            t(link.rule.as_str()),
+                            opt_text(link.evidence.as_deref()),
+                            opt_int(link.job_id),
+                            Value::Integer(now),
+                        ),
+                    )
+                    .await?;
+                written += inserted;
+                if inserted > 0 && !Self::share_a_tender(&conn, link.a_notice_id, link.b_notice_id).await? {
+                    requeue.extend([link.a_notice_id, link.b_notice_id]);
+                }
+            }
+            Self::requeue_notice_ids(&conn, &requeue, false).await?;
+            Ok(written)
+        }
+        .await;
+        finish_tx(&conn, result).await
+    }
+
+    /// Issue 481: delete matched ledger rows by id — the undo — and re-queue both notices
+    /// of each, in one transaction, so the next incremental fold re-derives the Tender
+    /// the match joined. Declared rows are not deleted here: they are the notice's, and
+    /// the next plan of it would write them again. Returns the rows deleted.
+    pub async fn delete_matched_links(&self, ids: &[i64]) -> turso::Result<u64> {
+        let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result: turso::Result<u64> = async {
+            let (mut deleted, mut requeue) = (0u64, Vec::new());
+            for &id in ids {
+                let mut rows = conn
+                    .query(
+                        "SELECT a_notice_id, b_notice_id FROM tender_links WHERE id = ? AND kind = 'matched'",
+                        (Value::Integer(id),),
+                    )
+                    .await?;
+                let Some(row) = rows.next().await? else { continue };
+                requeue.push(int(&row, 0));
+                requeue.extend(opt_int_of(&row, 1));
+                drop(rows);
+                deleted += conn.execute("DELETE FROM tender_links WHERE id = ?", (Value::Integer(id),)).await?;
+            }
+            Self::requeue_notice_ids(&conn, &requeue, false).await?;
+            Ok(deleted)
+        }
+        .await;
+        finish_tx(&conn, result).await
+    }
+
+    /// Issue 481, the ledger backfill's read: the parsed non-legacy notices with
+    /// `after < id ≤ hi` (at most `limit`), each carrying only its id values of
+    /// `fields` — the fields `ingest`'s `declared_links` reads, with their DE-1.x
+    /// spellings. Two statements per window ([`link_field_notices_sql`],
+    /// [`link_field_values_sql`]), so a window of thousands of notices costs two range
+    /// reads, never a read per notice; the other value tables are never opened.
+    pub async fn link_field_chunk(
+        &self,
+        after: i64,
+        hi: i64,
+        limit: i64,
+        fields: &[&str],
+    ) -> turso::Result<Vec<(NoticeRef, Parsed)>> {
+        let conn = self.reader().await?;
+        let mut out: Vec<(NoticeRef, Parsed)> = Vec::new();
+        let mut slot: std::collections::HashMap<i64, usize> = std::collections::HashMap::new();
+        let mut rows = conn
+            .query(&link_field_notices_sql(), (Value::Integer(after), Value::Integer(hi), Value::Integer(limit)))
+            .await?;
+        while let Some(row) = rows.next().await? {
+            let id = int(&row, 0);
+            slot.insert(id, out.len());
+            out.push((
+                NoticeRef { id, source: text(&row, 1), publication_id: text(&row, 2), profile: text(&row, 3) },
+                Parsed::default(),
+            ));
+        }
+        drop(rows);
+        let (Some(first), Some(last)) = (out.first(), out.last()) else { return Ok(out) };
+        if fields.is_empty() {
+            return Ok(out);
+        }
+        let mut params = vec![Value::Integer(first.0.id), Value::Integer(last.0.id)];
+        params.extend(fields.iter().map(|f| t(*f)));
+        let mut rows = conn.query(&link_field_values_sql(fields.len()), params).await?;
+        while let Some(row) = rows.next().await? {
+            // A legacy notice inside the window has id rows too; its slot is absent.
+            if let Some(&i) = slot.get(&int(&row, 0)) {
+                out[i].1.values.push(ValueRow {
+                    section_id: text(&row, 1),
+                    field_id: text(&row, 2),
+                    ordinal: int(&row, 3),
+                    value: crate::NoticeValue::Id { scheme: opt_text_of(&row, 4), value: text(&row, 5), is_ref: int(&row, 6) != 0 },
+                });
+            }
+        }
+        Ok(out)
+    }
+
+    /// Issue 481: bring the ledger's declared rows for one window of notices to what each
+    /// declares (`(notice, its links)`, in id order), exactly as the plan's producer
+    /// would — the same resolution and diff — for notices planned before the ledger
+    /// existed.
+    ///
+    /// The diff and its classification run on a reader: the window's ledger rows in one
+    /// range read ([`LINK_DECLARED_WINDOW_SQL`]), then one seek per declared link. A written row with a target is
+    /// `would_merge` when its two notices fold into different Tenders today, and both are
+    /// re-queued: the next incremental fold, whose closure plans both, joins them (or its
+    /// weld guards refuse). A written row whose notices already share a Tender re-queues
+    /// nothing: TED↔DÖE twins already one Tender by BT-04 (243,588 Tenders merged so on
+    /// 2026-09-29) are expected to be most resolved `logical-notice` rows, and re-queueing
+    /// them would turn the next daily into a re-fold. A stale row re-queues both its notices. Wet,
+    /// the window's writes and re-queues are ONE short transaction on the writer, so a
+    /// row is never on the ledger without its endpoints queued; dry, the re-queue is
+    /// counted by the same predicates and nothing is written.
+    pub async fn backfill_declared_links(
+        &self,
+        window: &[(NoticeRef, Vec<DeclaredLink>)],
+        report: &mut TenderLinkBackfill,
+    ) -> turso::Result<()> {
+        let reader = self.reader().await?;
+        let (Some(first), Some(last)) = (window.first(), window.last()) else { return Ok(()) };
+        let mut held: std::collections::HashMap<i64, Vec<(i64, DeclaredRow)>> = std::collections::HashMap::new();
+        let mut rows = reader
+            .query(LINK_DECLARED_WINDOW_SQL, (Value::Integer(first.0.id), Value::Integer(last.0.id)))
+            .await?;
+        while let Some(row) = rows.next().await? {
+            held.entry(int(&row, 0)).or_default().push((
+                int(&row, 1),
+                (text(&row, 2), text(&row, 3), text(&row, 4), opt_int_of(&row, 5)),
+            ));
+        }
+        drop(rows);
+        let mut reads = LinkReads::prepare(&reader).await?;
+        let mut diffs: Vec<(i64, DeclaredDiff)> = Vec::new();
+        let mut requeue: Vec<i64> = Vec::new();
+        for (notice, links) in window {
+            if !links.is_empty() {
+                report.declaring += 1;
+            }
+            let declared = reads.declared_rows(links).await?;
+            let diff = diff_declared(declared, held.remove(&notice.id).unwrap_or_default());
+            for row in &diff.declared {
+                let counts = report.counts(&row.0);
+                counts.declared += 1;
+                if !diff.missing.contains(row) {
+                    counts.present += 1;
+                }
+            }
+            for (rule, _, _, target) in &diff.missing {
+                let Some(b) = *target else {
+                    report.counts(rule).unresolved += 1;
+                    continue;
+                };
+                report.counts(rule).resolved += 1;
+                if Self::share_a_tender(&reader, notice.id, b).await? {
+                    continue;
+                }
+                report.counts(rule).would_merge += 1;
+                requeue.extend([notice.id, b]);
+                report.would_merge += 1;
+                let slot = if report.samples.len() < LINK_BACKFILL_SAMPLES {
+                    Some(report.samples.len())
+                } else {
+                    let mut x = report.would_merge ^ 0x9E37_79B9_7F4A_7C15;
+                    x ^= x << 13;
+                    x ^= x >> 7;
+                    x ^= x << 17;
+                    Some((x % report.would_merge) as usize).filter(|&s| s < LINK_BACKFILL_SAMPLES)
+                };
+                if let Some(slot) = slot {
+                    let mut rows = reader
+                        .query("SELECT source, publication_id FROM notices WHERE id = ?", (Value::Integer(b),))
+                        .await?;
+                    let (b_source, b_publication_id) = match rows.next().await? {
+                        Some(row) => (text(&row, 0), text(&row, 1)),
+                        None => continue,
+                    };
+                    let sample = TenderLinkSample {
+                        rule: rule.clone(),
+                        a_source: notice.source.clone(),
+                        a_publication_id: notice.publication_id.clone(),
+                        b_source,
+                        b_publication_id,
+                    };
+                    if slot == report.samples.len() {
+                        report.samples.push(sample);
+                    } else {
+                        report.samples[slot] = sample;
+                    }
+                }
+            }
+            for (_, (rule, _, _, target)) in &diff.stale {
+                report.counts(rule).stale += 1;
+                requeue.push(notice.id);
+                requeue.extend(*target);
+            }
+            if !diff.missing.is_empty() || !diff.stale.is_empty() {
+                diffs.push((notice.id, diff));
+            }
+        }
+        requeue.retain(|id| report.queued.insert(*id));
+        drop(reads);
+        if report.dry_run {
+            report.requeued += Self::requeue_notice_ids(&reader, &requeue, true).await?;
+            return Ok(());
+        }
+        drop(reader);
+        if diffs.is_empty() {
+            return Ok(());
+        }
+        let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result: turso::Result<u64> = async {
+            let now = crate::now_unix();
+            for (notice_id, diff) in &diffs {
+                Self::apply_declared_diff(&conn, *notice_id, diff, now).await?;
+            }
+            Self::requeue_notice_ids(&conn, &requeue, false).await
+        }
+        .await;
+        report.requeued += finish_tx(&conn, result).await?;
+        Ok(())
     }
 
     /// Issue 481: the notices `links` name today, resolved exactly as the plan's producer
@@ -9924,9 +10419,10 @@ impl Db {
     /// deduplicated; a link nothing holds contributes nothing.
     pub async fn resolve_declared_links(&self, links: &[DeclaredLink]) -> turso::Result<Vec<i64>> {
         let conn = self.conn().await;
+        let mut reads = LinkReads::prepare(&conn).await?;
         let mut out = BTreeSet::new();
         for link in links {
-            out.extend(Self::resolve_link(&conn, link).await?);
+            out.extend(reads.targets(link).await?);
         }
         Ok(out.into_iter().collect())
     }
@@ -10360,15 +10856,17 @@ impl Db {
         //   which of two keyed candidates is the right one (calibration §4 shape 5 — never
         //   pick the nearest).
         //
-        // On an INCREMENTAL run the plan holds only the touched notices, so a link to an
-        // untouched notice finds no `plan_notice b` row and unions nothing: the notice stays
-        // apart until a run whose plan holds both. That is the intended degradation — a
-        // partial merge would be far worse than a late one — and the walk that brings both
-        // ends into one plan is [`Db::tender_link_neighbours`].
+        // On an INCREMENTAL run the plan holds only the touched notices. The ledger closure
+        // (`ingest::project::link_closure`) puts both ends of every link it can reach into
+        // the plan; a link it did not reach — its other end was linked before the ledger
+        // held the row — finds no `plan_notice` row there and unions nothing. That end is
+        // re-queued below ([`LinkTally::deferred`]), so the next fold plans both: a join
+        // one fold late, never a partial merge, which would be far worse.
         //
         // `started`, because the earlier passes in this function have already bound `t` to
         // an Instant — which shadows the crate's `t()` text helper for the rest of the
         // body, so the statements below spell their text values out.
+        let mut links = LinkTally::default();
         {
             // The ledger's matched rows join the plan's edges here, whatever the plan holds
             // (the join drops a row with an endpoint outside it). Deleted first: a grouping
@@ -10383,7 +10881,23 @@ impl Db {
                 (),
             )
             .await?;
-            eprintln!("[project] group step links: matched rows loaded in {:.1}s", t.elapsed().as_secs_f64());
+            let mut outside: Vec<i64> = Vec::new();
+            let mut rows = conn.query(LINK_ONE_ENDED_SQL, ()).await?;
+            while let Some(row) = rows.next().await? {
+                match (int(&row, 2) != 0, int(&row, 3) != 0) {
+                    (true, false) => outside.push(int(&row, 0)),
+                    (false, true) => outside.push(int(&row, 1)),
+                    // Both outside: a matched row this plan has nothing to do with.
+                    _ => {}
+                }
+            }
+            drop(rows);
+            links.deferred = Self::requeue_notice_ids(&conn, &outside, false).await?;
+            eprintln!(
+                "[project] group step links: matched rows loaded, {} one-ended link target(s) re-queued in {:.1}s",
+                links.deferred,
+                t.elapsed().as_secs_f64()
+            );
         }
         // Row stats BEFORE the join, not only after the fold index (issue 256). turso keeps
         // none unless asked, and the join is exactly the shape that needs them: the edge
@@ -10498,7 +11012,6 @@ impl Db {
             carriers.len()
         );
         let t_uf = std::time::Instant::now();
-        let mut links = LinkTally::default();
         let mut largest = 0usize;
         let merges: Vec<(String, String)> = if edges.is_empty() {
             Vec::new()

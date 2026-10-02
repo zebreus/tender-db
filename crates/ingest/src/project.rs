@@ -1925,6 +1925,94 @@ pub async fn backfill_legacy_adjacency_windowed(
     Ok(LegacyAdjacencyBackfill { swept, keys, watermark: target })
 }
 
+/// Notices per Tender-link backfill window (issue 481): one reader pass and ONE writer
+/// transaction each. A window writes about one ledger row per TED eForms notice in it,
+/// so the writer is held for a few thousand index inserts at a time, never for a walk.
+const LINK_BACKFILL_CHUNK: i64 = 5_000;
+
+/// Ids one window's notice read may scan, however few non-legacy notices it finds —
+/// the adjacency backfill's second bound (issue 228), so a legacy-only stretch of the
+/// id space advances in visible steps instead of one silent scan to its end.
+const LINK_BACKFILL_ID_WINDOW: i64 = 500_000;
+
+/// The id fields [`declared_links`] reads, and every DE-1.x field [`normalise_de1`]
+/// renames onto one of them: the backfill loads exactly these, so what it derives from
+/// a notice is what the plan build derives from the full parse.
+fn link_fields() -> Vec<&'static str> {
+    let wanted = [PREVIOUS_NOTICE_FIELD, LOGICAL_NOTICE_FIELD];
+    let mut fields: Vec<&'static str> = wanted.to_vec();
+    fields.extend(DE1_FIELD_ALIASES.iter().filter(|(_, eforms)| wanted.contains(eforms)).map(|(de1, _)| *de1));
+    fields
+}
+
+/// Issue 481: give the notices planned before the `tender_links` ledger existed their
+/// declared rows, so its links take effect through the incremental fold instead of a
+/// full re-projection. Walks every parsed non-legacy notice by id, in windows of
+/// [`LINK_BACKFILL_CHUNK`] notices and at most [`LINK_BACKFILL_ID_WINDOW`] ids. Each
+/// window loads only the link fields ([`Db::link_field_chunk`]), derives the links with
+/// the plan build's own [`declared_links`] (after the same DE-1.x fold), and hands them
+/// to [`Db::backfill_declared_links`]: the producer's diff, the would-merge pairs'
+/// endpoints re-queued, written in one short transaction (dry: counted only).
+///
+/// Idempotent: a re-run, or a window a fold already planned, finds its rows `present`.
+/// `stop` is polled between windows, never inside one; a stopped wet run keeps its
+/// committed windows. The target is captured before the walk — jobs are
+/// queue-serialized, and a notice parsed after it gets its rows from its own fold.
+pub async fn backfill_tender_links(
+    db: &Db,
+    dry_run: bool,
+    stop: &(dyn Fn() -> bool + Sync),
+    progress: impl FnMut(&store::TenderLinkBackfill),
+) -> turso::Result<store::TenderLinkBackfill> {
+    backfill_tender_links_windowed(db, dry_run, LINK_BACKFILL_ID_WINDOW, LINK_BACKFILL_CHUNK, stop, progress).await
+}
+
+/// [`backfill_tender_links`] with both window bounds as parameters, so a test walks a
+/// handful of notices through many windows.
+pub async fn backfill_tender_links_windowed(
+    db: &Db,
+    dry_run: bool,
+    id_window: i64,
+    chunk: i64,
+    stop: &(dyn Fn() -> bool + Sync),
+    mut progress: impl FnMut(&store::TenderLinkBackfill),
+) -> turso::Result<store::TenderLinkBackfill> {
+    debug_assert!(id_window > 0 && chunk > 0, "a non-positive window could not advance the cursor");
+    let fields = link_fields();
+    let mut report = store::TenderLinkBackfill::new(dry_run);
+    report.target = db.max_parsed_notice_id().await?;
+    while report.cursor < report.target {
+        if stop() {
+            report.stopped = true;
+            break;
+        }
+        let hi = report.cursor.saturating_add(id_window).min(report.target);
+        let mut notices = db.link_field_chunk(report.cursor, hi, chunk, &fields).await?;
+        normalise_de1(&mut notices);
+        let full = notices.len() as i64 >= chunk;
+        let next = match notices.last() {
+            Some((n, _)) if full => n.id,
+            _ => hi,
+        };
+        let window: Vec<(store::NoticeRef, Vec<store::DeclaredLink>)> = notices
+            .into_iter()
+            .filter(|(n, _)| !is_legacy_profile(&n.profile))
+            .map(|(n, parsed)| {
+                let links = declared_links(&n.source, &parsed);
+                (n, links)
+            })
+            .collect();
+        report.notices += window.len() as u64;
+        db.backfill_declared_links(&window, &mut report).await?;
+        report.cursor = next;
+        progress(&report);
+        if !dry_run {
+            let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
+        }
+    }
+    Ok(report)
+}
+
 /// The daily projection: re-derive only the Tenders TOUCHED by notices parsed
 /// since the last run, so cost scales with the delta, not the corpus (issue 58).
 ///
@@ -2121,6 +2209,108 @@ pub async fn legacy_closure_capped(
     Ok(Ok((notices.into_iter().collect(), tenders.into_iter().collect())))
 }
 
+/// Notices the Tender-link closure may add before the incremental fold gives up on
+/// scoping and takes the full path (issue 481) — the legacy closure's cap, for its
+/// reason: a hub (issue 482's colliding BT-04s, welded through cross-source links) must
+/// degrade to the full projection, never to a wrong scope.
+const LINK_CLOSURE_CAP: usize = LEGACY_CLOSURE_CAP;
+
+/// Issue 481: expand an incremental plan over the `tender_links` ledger, so it holds
+/// both ends of every link that touches it, as a full projection's plan does. Each hop:
+/// the frontier's ledger neighbours ([`Db::tender_link_neighbours`] — rows they state,
+/// rows naming them by id, and unresolved rows naming them by publication id), their
+/// Tenders, and those Tenders' member notices, which re-derive IN FULL and so join the
+/// next frontier; to a fixpoint. The first frontier is every planned notice, not only
+/// the changed ones: an untouched member's link can turn from refused to admitted when
+/// its Tender changes (two carriers of one logical id meeting in one component).
+///
+/// `targets` are the changed notices' own links resolved now. A notice planned for the
+/// first time has no ledger rows yet, and its producer writes them during this very
+/// plan build, so its forward links come from its parse (pass 1).
+///
+/// Returns `Ok((notices, tenders))` — notices to add to the plan and the Tenders they
+/// fold into today (both sorted, neither including what was already planned) — or
+/// `Err(reason)` past the cap, for the full path.
+async fn link_closure(
+    db: &Db,
+    planned: &[i64],
+    targets: &[i64],
+) -> turso::Result<Result<(Vec<i64>, Vec<i64>), String>> {
+    link_closure_capped(db, planned, targets, LINK_CLOSURE_CAP).await
+}
+
+/// As [`link_closure`], with an explicit cap. Exposed so the cap test can drive a tiny
+/// cap; production uses [`LINK_CLOSURE_CAP`].
+pub async fn link_closure_capped(
+    db: &Db,
+    planned: &[i64],
+    targets: &[i64],
+    cap: usize,
+) -> turso::Result<Result<(Vec<i64>, Vec<i64>), String>> {
+    let mut seen: std::collections::HashSet<i64> = planned.iter().copied().collect();
+    let mut notices = std::collections::BTreeSet::new();
+    let mut tenders = std::collections::BTreeSet::new();
+    let mut frontier: Vec<i64> = planned.to_vec();
+    let mut forward: Vec<i64> = targets.to_vec();
+    let mut hops = 0usize;
+    while !frontier.is_empty() || !forward.is_empty() {
+        hops += 1;
+        let mut reached = db.tender_link_neighbours(&frontier).await?;
+        reached.append(&mut forward);
+        let mut new_notices: Vec<i64> = reached.into_iter().filter(|id| seen.insert(*id)).collect();
+        if new_notices.is_empty() {
+            break;
+        }
+        let new_tenders: Vec<i64> = db
+            .tenders_for_notice_ids(&new_notices)
+            .await?
+            .into_iter()
+            .filter(|t| tenders.insert(*t))
+            .collect();
+        new_notices.extend(db.notice_ids_for_tenders(&new_tenders).await?.into_iter().filter(|id| seen.insert(*id)));
+        notices.extend(new_notices.iter().copied());
+        if notices.len() > cap {
+            return Ok(Err(format!("link closure exceeds cap ({} notices > {cap})", notices.len())));
+        }
+        frontier = new_notices;
+    }
+    if !notices.is_empty() {
+        eprintln!(
+            "[project] link closure: {} planned notices, {} targets → {} notices, {} tenders in {hops} hops",
+            planned.len(),
+            targets.len(),
+            notices.len(),
+            tenders.len()
+        );
+    }
+    Ok(Ok((notices.into_iter().collect(), tenders.into_iter().collect())))
+}
+
+/// The incremental fold's whole-corpus fallback (issues 58 v2, 305, 481): a full
+/// non-rebuild projection, the caller's sink riding along (issue 262). An era-scale
+/// reparse delta routinely exceeds a closure cap — r208's pulled a 2.9M closure — so
+/// the fallback IS the common path for the biggest folds, and it must not shed the
+/// phase record on the way through.
+async fn incremental_full_fallback(
+    db: &Db,
+    on_progress: &mut impl FnMut(Progress),
+    stop: &(dyn Fn() -> bool + Sync),
+) -> turso::Result<Report> {
+    let mut stderr = stderr_progress_sink();
+    project_with_progress_phase2_stoppable(
+        db,
+        false,
+        APPLY_NOTICE_BATCH,
+        Phase2::Buckets { shards: None },
+        |p| {
+            stderr(p);
+            on_progress(p);
+        },
+        stop,
+    )
+    .await
+}
+
 pub async fn project_incremental_chunked_phase2(
     db: &Db,
     chunk_size: usize,
@@ -2174,19 +2364,7 @@ pub async fn project_incremental_chunked_observed(
              un-projected legacy notices exceed the closure cap ({LEGACY_CLOSURE_CAP}) \
              (issue 305); re-projecting the whole corpus"
         );
-        let mut stderr = stderr_progress_sink();
-        return project_with_progress_phase2_stoppable(
-            db,
-            false,
-            APPLY_NOTICE_BATCH,
-            Phase2::Buckets { shards: None },
-            |p| {
-                stderr(p);
-                on_progress(p);
-            },
-            stop,
-        )
-        .await;
+        return incremental_full_fallback(db, &mut on_progress, stop).await;
     }
     let chunk_size = chunk_size.max(1);
     let now = store::now_unix();
@@ -2204,10 +2382,11 @@ pub async fn project_incremental_chunked_observed(
     eprintln!("[project] incremental: {} changed notices", changed.len());
 
     // Pass 1 (streamed): read the changed notices' grouping identity in id-ordered
-    // chunks — collect keyed keys and legacy OJS seed keys — without holding the
-    // whole delta's parsed layer.
+    // chunks — collect keyed keys, legacy OJS seed keys and the Tender links they
+    // declare — without holding the whole delta's parsed layer.
     let mut new_keyed_keys: Vec<String> = Vec::new();
     let mut legacy_seed_keys: Vec<i64> = Vec::new();
+    let mut declared: Vec<store::DeclaredLink> = Vec::new();
     let mut legacy_delta = 0usize;
     let mut scanned = 0u64;
     for chunk in changed.chunks(chunk_size) {
@@ -2231,6 +2410,7 @@ pub async fn project_incremental_chunked_observed(
             if let Some(key) = &ident.procedure_key {
                 new_keyed_keys.push(key.clone());
             }
+            declared.extend(ident.links);
         }
     }
     new_keyed_keys.sort_unstable();
@@ -2238,9 +2418,10 @@ pub async fn project_incremental_chunked_observed(
     legacy_seed_keys.sort_unstable();
     legacy_seed_keys.dedup();
     stage(&format!(
-        "pass-1 identity ({} new keyed keys, {legacy_delta} legacy notices, {} seed keys)",
+        "pass-1 identity ({} new keyed keys, {legacy_delta} legacy notices, {} seed keys, {} declared links)",
         new_keyed_keys.len(),
-        legacy_seed_keys.len()
+        legacy_seed_keys.len(),
+        declared.len()
     ));
 
     // A legacy delta groups transitively with EXISTING notices through shared OJS
@@ -2259,23 +2440,7 @@ pub async fn project_incremental_chunked_observed(
                     "[project] INCREMENTAL → FULL fallback: {reason} (issue 58 v2); \
                      re-projecting the whole corpus"
                 );
-                // The caller's sink rides along (issue 262): an era-scale reparse
-                // delta routinely exceeds the closure cap — r208's pulled a 2.9M
-                // closure — so the fallback IS the common path for the biggest
-                // folds, and it must not shed the phase record on the way through.
-                let mut stderr = stderr_progress_sink();
-                return project_with_progress_phase2_stoppable(
-                    db,
-                    false,
-                    APPLY_NOTICE_BATCH,
-                    Phase2::Buckets { shards: None },
-                    |p| {
-                        stderr(p);
-                        on_progress(p);
-                    },
-                    stop,
-                )
-                .await;
+                return incremental_full_fallback(db, &mut on_progress, stop).await;
             }
         }
     };
@@ -2288,7 +2453,8 @@ pub async fn project_incremental_chunked_observed(
     }
 
     // Expand to the touched EXISTING Tenders and their full notice sets; the plan
-    // covers changed ∪ touched-existing ∪ legacy closure, in one global id order.
+    // covers changed ∪ touched-existing ∪ legacy closure ∪ link closure, in one global
+    // id order.
     let mut touched_tenders = db.touched_existing_tender_ids(&changed, &new_keyed_keys).await?;
     touched_tenders.extend(closure_tenders);
     touched_tenders.sort_unstable();
@@ -2308,6 +2474,36 @@ pub async fn project_incremental_chunked_observed(
         touched_tenders.len(),
         all_ids.len()
     ));
+
+    // Issue 481: a Tender link joins notices of different Tenders, so the plan must
+    // hold both ends of every link that touches it — or a full projection would join
+    // what this run leaves apart. Walk the ledger from the planned notices, starting
+    // with the changed notices' own links resolved now (a new notice has no ledger rows
+    // yet), and plan every Tender it reaches whole.
+    let targets = db.resolve_declared_links(&declared).await?;
+    match link_closure(db, &all_ids, &targets).await? {
+        Ok((link_ids, link_tenders)) => {
+            if !link_ids.is_empty() {
+                stage(&format!(
+                    "link closure ({} notices, {} tenders)",
+                    link_ids.len(),
+                    link_tenders.len()
+                ));
+            }
+            touched_tenders.extend(link_tenders);
+            touched_tenders.sort_unstable();
+            touched_tenders.dedup();
+            all_ids.extend(link_ids);
+            all_ids.sort_unstable();
+            all_ids.dedup();
+        }
+        Err(reason) => {
+            eprintln!(
+                "[project] INCREMENTAL → FULL fallback: {reason} (issue 481); re-projecting the whole corpus"
+            );
+            return incremental_full_fallback(db, &mut on_progress, stop).await;
+        }
+    }
 
     // Pass 2 (streamed): build the ONE plan in id-ordered chunks so the org bulk-load
     // stays sequential and RAM bounded; mentions resolve only for the changed notices

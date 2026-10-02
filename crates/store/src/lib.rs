@@ -41,7 +41,8 @@ pub use canonical::{
     XbCase, XbMember, XbPacket,
     EdgeCensusReport, MatchKeyBuildWindow, OrgEdgeScanArgs,
     OrgEdgeScanReport,
-    DeclaredLink, LINK_LOGICAL_NOTICE, LINK_OPP_090, LinkTally, PlanGroup, PlanGroupTally, PlanRow,
+    DeclaredLink, LINK_BACKFILL_SAMPLES, LINK_DECLARED_RULES, LINK_LOGICAL_NOTICE, LINK_OPP_090, LinkTally,
+    MatchedLink, PlanGroup, PlanGroupTally, PlanRow, TenderLinkBackfill, TenderLinkRuleCounts, TenderLinkSample,
     QUALITY_WITHHELD, R2MergeArgs, version_stem,
     R2MergeReport, R3MergeArgs, R3MergeReport, Round, TenderProjection, TenderVersion,
     CountryCluster, CountryClusterReport, CountryTypoMove, CountryTypoRepairReport,
@@ -7504,6 +7505,34 @@ tmpfs /data/ramcache tmpfs rw 0 0
         seeks("named", &plan_of(&named, ids()).await, &["INTEGER PRIMARY KEY"]);
         let plan = plan_of(crate::canonical::LINK_BY_REF_SQL, vec![t("doe"), t("u")]).await;
         seeks("by ref", &plan, &["tender_links_ref (b_source=? AND b_ref=?)"]);
+
+        // The grouping's one-ended links: driven from the edges like the join.
+        let plan = plan_of(crate::canonical::LINK_ONE_ENDED_SQL, vec![]).await;
+        let lines: Vec<&str> = plan.lines().map(str::trim).collect();
+        assert_eq!(
+            lines,
+            [
+                "SCAN plan_link_edge AS e",
+                "SEARCH a USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN",
+                "SEARCH b USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN",
+            ],
+            "the one-ended read must drive from the edges and probe both endpoints — plan was:\n{plan}"
+        );
+        // A written row's Tender check, once per endpoint.
+        let plan = plan_of(crate::canonical::LINK_NOTICE_TENDERS_SQL, vec![Value::Integer(1)]).await;
+        seeks("notice tenders", &plan, &["tender_versions_notice (caused_by_notice_id=?)"]);
+        // The backfill's window: a rowid range on `notices`, never `notices_parse_state`,
+        // then a range on `notice_ids`' PRIMARY KEY by its leading column.
+        let window = || vec![Value::Integer(0), Value::Integer(500_000), Value::Integer(5_000)];
+        let plan = plan_of(&crate::canonical::link_field_notices_sql(), window()).await;
+        // turso 0.7.2 prints `(rowid=?)` for a rowid range seek too.
+        seeks("backfill notices", &plan, &["SEARCH notices USING INTEGER PRIMARY KEY"]);
+        assert!(!plan.contains("notices_parse_state"), "backfill notices: issue 323's trap — plan was:\n{plan}");
+        let plan = plan_of(crate::canonical::LINK_DECLARED_WINDOW_SQL, vec![Value::Integer(1), Value::Integer(9)]).await;
+        seeks("backfill held rows", &plan, &["sqlite_autoindex_tender_links_1 (a_notice_id>=? AND a_notice_id<=?)"]);
+        let fields = vec![Value::Integer(1), Value::Integer(9), t("OPP-090-Procedure"), t("BT-701-notice"), t("DE1-ID")];
+        let plan = plan_of(&crate::canonical::link_field_values_sql(3), fields).await;
+        seeks("backfill values", &plan, &["sqlite_autoindex_notice_ids_1 (notice_id>=? AND notice_id<=?)"]);
 
         drop(conn);
         drop(db);

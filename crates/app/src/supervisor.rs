@@ -512,6 +512,13 @@ enum Spec {
     /// `organization changed` per survivor it wrote for. Dry (the default)
     /// counts per rule and writes nothing; both store `merged-identifier-backfill`.
     BackfillMergedIdentifiers { dry_run: bool },
+    /// Issue 481: give the notices planned before the `tender_links` ledger existed
+    /// their declared rows (`opp-090`, `logical-notice`), walking parsed non-legacy
+    /// notices by id in short windows, and re-queue both notices of every row that
+    /// would join two Tenders, so the next incremental fold joins them. Dry (the
+    /// default) counts per rule and samples 30 would-merge pairs; both store
+    /// `tender-link-backfill`.
+    BackfillTenderLinks { dry_run: bool },
     /// Issue 443 step 3: the sweep a fold queues after it re-bound mentions
     /// (every re-bind can empty the row it left). It counts, then sweeps in
     /// the same job when the count is at most `cap`; above it (an era-scale
@@ -1942,6 +1949,17 @@ impl Supervisor {
                     .await,
                 ])
             }
+            // Issue 481: the one-shot Tender-link ledger backfill. It writes ledger rows
+            // and re-queues notices for the next fold, so a forgotten flag means the dry
+            // count.
+            "backfill-tender-links" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let params =
+                    if dry_run { "backfill-tender-links dry-run" } else { "backfill-tender-links" }.to_owned();
+                Ok(vec![
+                    self.push("backfill-tender-links", params, Spec::BackfillTenderLinks { dry_run }).await,
+                ])
+            }
             // Issue 259 landing: repair the stale nested-org mention layer.
             // Deletes org rows and emits change events, so it asks to be meant:
             // `dry_run` defaults to TRUE (the data-quality convention — a
@@ -2545,12 +2563,12 @@ fn target_refusal_suffix(t: &project::CitationGate) -> String {
 /// printed whole even at zero once anything happened: a weld guard reading "keyed-weld
 /// 0" is a statement, and an absent one is not.
 fn link_suffix(l: &store::LinkTally) -> String {
-    if l.admitted() == 0 && l.refused() == 0 {
+    if l.admitted() == 0 && l.refused() == 0 && l.deferred == 0 {
         return String::new();
     }
     format!(
         "; issue-481 tender links joined: {} (previous-notice {}, logical-notice {}, matched {}); \
-         refused: {} (not-earlier {}, not-one-to-one {}, keyed-weld {}, oversized {})",
+         refused: {} (not-earlier {}, not-one-to-one {}, keyed-weld {}, oversized {}); deferred: {}",
         l.admitted(),
         l.previous_notice,
         l.logical_notice,
@@ -2560,6 +2578,7 @@ fn link_suffix(l: &store::LinkTally) -> String {
         l.not_one_to_one,
         l.keyed_weld,
         l.oversized,
+        l.deferred,
     )
 }
 
@@ -2718,6 +2737,76 @@ fn merged_identifier_backfill_summary(r: &store::MergedIdentifierBackfill) -> St
     )
 }
 
+/// Issue 481: the report `backfill-tender-links` stores.
+const TENDER_LINK_BACKFILL_REPORT: &str = "tender-link-backfill";
+
+/// The stored `tender-link-backfill` body: per-rule counts keyed by rule, and the
+/// sampled would-merge pairs by both publication ids, for a reader to check by hand
+/// before the wet run.
+fn tender_link_backfill_body(r: &store::TenderLinkBackfill) -> String {
+    let rules: serde_json::Map<String, serde_json::Value> = r
+        .rules
+        .iter()
+        .map(|(rule, c)| {
+            (
+                rule.clone(),
+                serde_json::json!({
+                    "declared": c.declared,
+                    "present": c.present,
+                    "resolved": c.resolved,
+                    "unresolved": c.unresolved,
+                    "would_merge": c.would_merge,
+                    "stale": c.stale,
+                }),
+            )
+        })
+        .collect();
+    let samples: Vec<serde_json::Value> = r
+        .samples
+        .iter()
+        .map(|s| {
+            serde_json::json!({
+                "rule": s.rule,
+                "a": format!("{}:{}", s.a_source, s.a_publication_id),
+                "b": format!("{}:{}", s.b_source, s.b_publication_id),
+            })
+        })
+        .collect();
+    serde_json::json!({
+        "dry_run": r.dry_run,
+        "notices": r.notices,
+        "declaring": r.declaring,
+        "would_merge": r.would_merge,
+        "requeued": r.requeued,
+        "cursor": r.cursor,
+        "target": r.target,
+        "rules": rules,
+        "samples": samples,
+    })
+    .to_string()
+}
+
+/// One line per rule for the job's summary.
+fn tender_link_backfill_summary(r: &store::TenderLinkBackfill) -> String {
+    let rules: Vec<String> = r
+        .rules
+        .iter()
+        .map(|(rule, c)| {
+            format!(
+                "{rule}: {} declared, {} present, {} resolved ({} would merge), {} unresolved, {} stale",
+                c.declared, c.present, c.resolved, c.would_merge, c.unresolved, c.stale
+            )
+        })
+        .collect();
+    format!(
+        "{} notices walked ({} declaring), {} re-queued for the next fold; {}",
+        r.notices,
+        r.declaring,
+        r.requeued,
+        rules.join("; ")
+    )
+}
+
 /// Whether a running job reads the stop flag: every kind in [`STOPPABLE_KINDS`], an
 /// FTS `fetch` (issue 450), and the FTS daily `probe` (issue 477 review). Neither
 /// `fetch` nor `probe` is a stoppable KIND because only the FTS walk has a
@@ -2791,6 +2880,9 @@ const STOPPABLE_KINDS: &[&str] = &[
     "sweep-orphan-orgs",
     // Issue 460: read between ledger windows; a stopped run stores no report.
     "backfill-merged-identifiers",
+    // Issue 481: read between notice windows; a stopped run stores no report, and a
+    // stopped wet run's committed windows read as present next time.
+    "backfill-tender-links",
     // Issue 429: read between tables; a stop still refreshes the readers.
     "analyze",
 ];
@@ -4012,6 +4104,50 @@ impl Supervisor {
         ))
     }
 
+    /// Issue 481's `backfill-tender-links`, out of `run_spec`'s match for the stack's
+    /// sake (the [`Self::run_backfill_merged_identifiers`] shape). Walks the parsed
+    /// non-legacy notices, writes (wet) the declared ledger rows they lack and
+    /// re-queues the would-merge pairs, and stores the counts as
+    /// `tender-link-backfill` — only for a run that finished: a stopped dry count is a
+    /// prefix that would read as the whole, and a stopped wet run's committed windows
+    /// are what a re-run counts as `present`.
+    async fn run_backfill_tender_links(&self, job: &Job, dry_run: bool) -> Result<String, String> {
+        let job_id = job.id;
+        let stop = || self.cancelled(job_id);
+        let r = Box::pin(ingest::project::backfill_tender_links(&self.db, dry_run, &stop, |r| {
+            self.update(|p| p.members_done = r.notices);
+            self.set_phase(
+                if dry_run { "counting" } else { "writing" },
+                Some(r.cursor.max(0) as u64),
+                Some(r.target.max(0) as u64),
+                format!(
+                    "notice id {} of {}; {} notices walked, {} would merge, {} re-queued",
+                    r.cursor, r.target, r.notices, r.would_merge, r.requeued
+                ),
+            );
+        }))
+        .await
+        .map_err(|e| e.to_string())?;
+        let summary = tender_link_backfill_summary(&r);
+        if r.stopped {
+            return Ok(format!(
+                "backfill-tender-links STOPPED by cancel at notice id {} of {} — {}; no report stored{}",
+                r.cursor,
+                r.target,
+                summary,
+                if dry_run { "" } else { " (the committed windows stand; a re-run counts them as present)" }
+            ));
+        }
+        self.db
+            .put_report(TENDER_LINK_BACKFILL_REPORT, &tender_link_backfill_body(&r), store::now_unix())
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(format!(
+            "backfill-tender-links (issue 481){}: {summary}",
+            if dry_run { " DRY RUN — counted, nothing written" } else { "" }
+        ))
+    }
+
     /// Issue 404's repair, as its own async fn rather than inline in
     /// `run_spec`'s match.
     ///
@@ -4179,6 +4315,9 @@ impl Supervisor {
             }
             Spec::BackfillMergedIdentifiers { dry_run } => {
                 off_frame(|| self.run_backfill_merged_identifiers(job, *dry_run)).await
+            }
+            Spec::BackfillTenderLinks { dry_run } => {
+                off_frame(|| self.run_backfill_tender_links(job, *dry_run)).await
             }
             Spec::Analyze => off_frame(|| self.run_analyze(job)).await,
             Spec::RepairMemberTwins { dry_run } => {
@@ -12640,6 +12779,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "backfill-currencies"
             | "backfill-org-names"
             | "backfill-legacy-adjacency"
+            | "backfill-tender-links"
             | "rederive-eur"
             | "repair-nested-orgs"
             | "repair-placeholder-orgs"
@@ -13523,6 +13663,9 @@ mod tests {
                 // Issue 460: `backfill_merged_identifiers` reads the flag before
                 // every ledger window; a stopped run stores no report.
                 "backfill-merged-identifiers",
+                // Issue 481: `backfill_tender_links` reads the flag before every
+                // notice window; a stopped run stores no report.
+                "backfill-tender-links",
                 // Issue 429: `run_analyze` reads the flag before every table, and a
                 // stopped run still drops `organizations` statistics and refreshes
                 // the readers.
@@ -14280,6 +14423,87 @@ mod tests {
         let (body, _) = sup.db().latest_report(MERGED_IDENTIFIER_BACKFILL_REPORT).await.unwrap().expect("report");
         assert!(body.contains("\"dry_run\":false"), "{body}");
         let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 481: the job wiring around `ingest::project::backfill_tender_links`. A
+    /// forgotten flag enqueues the dry count; dry counts per rule, samples the
+    /// would-merge pair by both publication ids and stores the report, writing nothing;
+    /// wet writes the ledger row and stores the report again.
+    #[tokio::test]
+    async fn the_tender_link_backfill_job_counts_dry_and_writes_wet() {
+        const LOGICAL: &str = "5c1f2e7a-9b3d-4e8f-a1c2-7d6e5f4a3b2c";
+        let db = scratch().await;
+        let fetch_id = seed_fetch(&db).await;
+        let twin = format!("{LOGICAL}-01");
+        for (source, pub_id, profile, ids) in [
+            ("ted", "00400001-2024", "eforms:eforms-sdk-1.13", vec![("BT-701-notice", LOGICAL)]),
+            ("doe", twin.as_str(), "eforms:eforms-de-2.0", vec![]),
+        ] {
+            let parsed = store::Parsed {
+                sections: vec![store::Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None }],
+                values: ids
+                    .iter()
+                    .map(|(field, value)| store::ValueRow {
+                        section_id: "PROCEDURE".into(),
+                        field_id: (*field).into(),
+                        ordinal: 0,
+                        value: store::NoticeValue::Id { scheme: None, value: (*value).into(), is_ref: false },
+                    })
+                    .collect(),
+            };
+            db.record_notice(
+                &store::Notice {
+                    source: source.into(),
+                    publication_id: pub_id.into(),
+                    content_hash: pub_id.into(),
+                    profile: profile.into(),
+                    declared_version: None,
+                    fetch_id,
+                    member_path: pub_id.into(),
+                    ingested_at: 0,
+                    published_at: Some(store::Stamp::utc(0)),
+                    dispatched_at: None,
+                },
+                &store::Parse::Parsed(parsed),
+            )
+            .await
+            .unwrap();
+        }
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        sup.enqueue_request(&JobRequest { kind: "backfill-tender-links".into(), ..Default::default() }).await.unwrap();
+        {
+            let queue = sup.queue.lock().expect("queue lock");
+            assert!(matches!(queue[0].spec, Spec::BackfillTenderLinks { dry_run: true }), "dry unless asked");
+            assert_eq!(queue[0].params, "backfill-tender-links dry-run");
+        }
+        let job = |id: u64, dry: bool| Job {
+            id,
+            kind: "backfill-tender-links".into(),
+            params: String::new(),
+            spec: Spec::BackfillTenderLinks { dry_run: dry },
+            resume_after: None,
+        };
+        let ledger = async || match db.scalar("SELECT COUNT(*) FROM tender_links").await.unwrap() {
+            Some(store::turso::Value::Integer(n)) => n,
+            other => panic!("{other:?}"),
+        };
+
+        let msg = sup.run_spec(&job(1, true)).await.expect("dry");
+        assert!(msg.contains("DRY RUN"), "{msg}");
+        assert!(msg.contains("logical-notice: 1 declared, 0 present, 1 resolved (1 would merge), 0 unresolved"), "{msg}");
+        let (body, _) = sup.db().latest_report(TENDER_LINK_BACKFILL_REPORT).await.unwrap().expect("report");
+        let v: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!((v["dry_run"].as_bool(), v["notices"].as_u64(), v["would_merge"].as_u64()), (Some(true), Some(2), Some(1)), "{body}");
+        assert_eq!(v["rules"]["opp-090"]["declared"], 0, "{body}");
+        assert_eq!(v["samples"][0]["a"], "ted:00400001-2024", "{body}");
+        assert_eq!(v["samples"][0]["b"], format!("doe:{twin}"), "{body}");
+        assert_eq!(ledger().await, 0, "dry wrote nothing");
+
+        let msg = sup.run_spec(&job(2, false)).await.expect("wet");
+        assert!(!msg.contains("DRY RUN"), "{msg}");
+        assert_eq!(ledger().await, 1, "the row lands");
+        let (body, _) = sup.db().latest_report(TENDER_LINK_BACKFILL_REPORT).await.unwrap().expect("report");
+        assert!(body.contains("\"dry_run\":false"), "{body}");
     }
 
     /// Issue 316: r3's corroboration consults the generic-name wall, so the
@@ -15509,7 +15733,10 @@ mod tests {
         let l = store::LinkTally { previous_notice: 5, logical_notice: 3, oversized: 1, ..Default::default() };
         let s = link_suffix(&l);
         assert!(s.contains("tender links joined: 8 (previous-notice 5, logical-notice 3, matched 0)"), "{s}");
-        assert!(s.contains("refused: 1 (not-earlier 0, not-one-to-one 0, keyed-weld 0, oversized 1)"), "{s}");
+        assert!(s.contains("refused: 1 (not-earlier 0, not-one-to-one 0, keyed-weld 0, oversized 1); deferred: 0"), "{s}");
+        // A deferred join alone is still news: a link reached one end of this fold's plan.
+        let s = link_suffix(&store::LinkTally { deferred: 2, ..Default::default() });
+        assert!(s.ends_with("; deferred: 2"), "{s}");
     }
 
     /// Issue 395: the scheduled contiguity check must NAME the hole, and must
@@ -15721,6 +15948,7 @@ mod tests {
             "backfill-titles",
             "backfill-org-names",
             "backfill-legacy-adjacency",
+            "backfill-tender-links",
             "refold-notices",
             "refold-sections",
             "build-org-match-keys",
@@ -16116,6 +16344,7 @@ mod tests {
             std::mem::size_of_val(&sup.run_backfill_merged_identifiers(&j, true)),
             2_304,
         );
+        gauge("run_backfill_tender_links", std::mem::size_of_val(&sup.run_backfill_tender_links(&j, true)), 1_024);
         gauge("run_analyze", std::mem::size_of_val(&sup.run_analyze(&j)), 512);
         gauge("run_repair_member_twins", std::mem::size_of_val(&sup.run_repair_member_twins(&j, true)), 1_024);
         gauge(
@@ -16174,21 +16403,23 @@ mod tests {
         poll_once_within("run_identity_census_spec", 56 * 1024, || sup.run_identity_census_spec(&refused));
         poll_once_within("run_census_spec", 69 * 1024, || sup.run_census_spec(&refused));
         poll_once_within("run_match_key_spec", 85 * 1024, || sup.run_match_key_spec(&refused));
-        // The six fns the dispatch reaches through `off_frame` without a family,
+        // The seven fns the dispatch reaches through `off_frame` without a family,
         // two of them (`run_project`, `run_repair_member_twins`) where the 434 and
         // 404 overflows struck. None takes a `Spec`, so none can be refused before
         // its first await: each poll runs into the store on this test's scratch DB,
         // and its budget is that whole chain — the fn's own frame plus ~250 KiB of
         // store and turso beneath it at O0 (measured 2026-10-01: 449, 267, 376,
-        // 257, 349, 307 KiB in the order below), plus ~24 KiB. So a turso upgrade
-        // can move these with no change here: re-measure, don't just raise them.
+        // 257, 349, 307 KiB in the order below, and 2026-10-02 the link backfill
+        // between 105 and 120 KiB), plus ~24 KiB. So a turso upgrade can move these
+        // with no change here: re-measure, don't just raise them.
         // The arguments keep each poll short and four of them off any write: the
-        // job is marked cancelled (analyze and the backfill stop at their first
-        // check), the sweep refuses (the scratch DB lacks its org FK indexes, and
-        // holds no plan for a wet run), the twin repair is wet with no stored plan
-        // and refuses. The projection is incremental over an empty corpus and
-        // `run_rehash_probe(0)` probes nothing; what bookkeeping either stores
-        // lands on the scratch DB.
+        // job is marked cancelled (analyze and the merged-identifier backfill stop
+        // at their first check), the sweep refuses (the scratch DB lacks its org FK
+        // indexes, and holds no plan for a wet run), the twin repair is wet with no
+        // stored plan and refuses. The projection is incremental over an empty
+        // corpus, `run_rehash_probe(0)` probes nothing, and the link backfill walks
+        // an empty notice table; what bookkeeping any of them stores lands on the
+        // scratch DB.
         sup.cancel_running.store(j.id, Ordering::Relaxed);
         poll_once_within("run_project", 472 * 1024, || sup.run_project(&j, false, false));
         poll_once_within("run_sweep_orphan_orgs", 292 * 1024, || sup.run_sweep_orphan_orgs(&j, SweepMode::Wet));
@@ -16197,6 +16428,7 @@ mod tests {
         poll_once_within("run_backfill_merged_identifiers", 372 * 1024, || {
             sup.run_backfill_merged_identifiers(&j, true)
         });
+        poll_once_within("run_backfill_tender_links", 144 * 1024, || sup.run_backfill_tender_links(&j, true));
         poll_once_within("run_analyze", 330 * 1024, || sup.run_analyze(&j));
         assert!(
             over.is_empty(),
