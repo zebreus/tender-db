@@ -377,3 +377,30 @@ versions and buyers by the Tender's PK:
   provider shape outside both sets (eForms `OPT-300-Procedure-SProvider`), and 0 of 13 sampled daily citers
   refused.
 
+
+## 2026-10-02 12:5x–13:4x UTC — 2b deployed (a5c7666); the census shows the guard is too strict; wet still held (unit 2c)
+
+- Gate on `a5c7666`: GATE-EXIT=0, 145 suites, 890 s, marker written. Deployed with 477 unit 1b at 12:5x UTC.
+- Census dry, job 1893, 1,468 s: opp-090 **would_split 5,359** and **buyer_disjoint 26**. Also 164 not-earlier, now
+  counted apart from the joins. logical-notice: 0 refused, 0 split.
+- **The 30 would-split samples, read by hand** (organization ids and first buyer names per notice; table in
+  `.scratch/tender-db/481-dedup/census-2026-10-02/ws-class.txt`):
+  - About 16 are real false merges, mostly across countries. BG school → LV hospital; BG power plant → FR parking
+    operator; BG district → SE (00123456-2024); CZ ČD Cargo → ES municipality; and more. Bulgarian national register
+    numbers collide with TED numbers, and the 2026-08-20 full projection joined them.
+  - About 12 are **legitimate pairs the guard refuses**:
+    - 4 share the resolved organization id. Santaros klinikos: org 3988 on both, the same raw identifier
+      124364561, but the scheme is NULL on one and `002` on the other, and one name ends in "(PV)".
+    - Agencies buying on a buyer's behalf: "Onderwijs Inkoop Groep B.V. namens <school>" and "DASmakkelijk B.V.
+      namens AT Scholen".
+    - Sister bodies and name variants: KIS Potsdam / KIS, ARPAS, Instytut Biologii Doświadczalnej, and DB InfraGO
+      against DB AG Konzernleitung.
+  - That is a ~40 % false-refusal rate on existing merges, so the guard as deployed would split correct merges.
+- **Decision (owner).**
+  - The wet run stays held.
+  - Unit 2c (workflow `wf_47a7e711-29f`) adds the missing overlap evidence, re-verdicts all 56 samples, and pins
+    them as fixtures. The evidence: a shared resolved organization id, the same raw identifier whatever its scheme,
+    agency-on-behalf names, and whole-word name prefixes. It also decides whether disjoint jurisdictions are an extra
+    refusal reason.
+  - Until 2c deploys, the live guard applies only to Tenders a daily happens to plan. Any wrong split is re-joined by
+    the first fold after 2c. 2c must land before the 2026-10-03 07:35 UTC tick.

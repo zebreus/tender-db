@@ -1,0 +1,30 @@
+DISJOINT ted:00415571-2024 ted:00041497-2024 | НАЦИОНАЛНА ТЪРГОВСКО-БАНКОВА ГИМНАЗ | VSIA „Paula Stradiņa klīniskā unive
+DISJOINT ted:00323117-2025 ted:00017288-2025 | ТЕЦ МАРИЦА ИЗТОК 2 ЕАД | BREST'AIM SPL
+SAME-ORG1 ted:00211216-2025 ted:00686342-2024 | VšĮ Vilniaus universiteto ligoninė  | VšĮ Vilniaus universiteto ligoninė 
+shared:2 ted:00018554-2025 ted:00650767-2024 | Ernst Dello GmbH & Co. KG | 
+DISJOINT ted:00333560-2024 ted:00023205-2024 | ВОДОСНАБДЯВАНЕ И КАНАЛИЗАЦИЯ ЕАД | Banedanmark
+SAME-ORG1 ted:00293557-2026 ted:00112351-2026 | Servicio Gallego de Salud. Área San | 
+SAME-ORG1 ted:00596788-2025 ted:00000129-2025 | Akademia Sztuki Wojennej | 
+DISJOINT ted:00520639-2025 ted:00003564-2024 | ČD Cargo, a.s. | Areatzako Udala
+DISJOINT ted:00793183-2024 ted:00077399-2024 | БЪЛГАРСКА НАРОДНА БАНКА | 
+shared:1 ted:00513804-2024 ted:00252055-2024 | Kommunaler Immobilien Service Potsd | Kommunaler Immobilien Service (KIS)
+DISJOINT ted:00622235-2024 ted:00061909-2024 | ОБЩИНА АНТОНОВО | AB Lietuvos automobilių kelių direk
+DISJOINT ted:00651261-2025 ted:00123456-2024 | Älvkarleby kommun | РАЙОН "ТРИАДИЦА"
+DISJOINT ted:00144455-2025 ted:00008103-2025 | ОБЩИНА МИРКОВО | HABITAT PERPIGNAN MEDITERRANEE
+DISJOINT ted:00763184-2024 ted:00266854-2024 | Onderwijs Inkoop Groep B.V. namens  | De Vrije School Utrecht Coöperatief
+DISJOINT ted:00023285-2025 ted:00078480-2024 | ОБЩИНА ЕЛИН ПЕЛИН | Operator SEAP
+DISJOINT ted:00785419-2024 ted:00081578-2024 | ОБЩИНА ПАЗАРДЖИК | RED LOGÍSTICA DE ANDALUCÍA, S.A.
+shared:2 ted:00248787-2026 ted:00558776-2025 | DB InfraGO AG – Geschäftsbereich Fa | Deutsche Bahn AG Konzernleitung (Bu
+DISJOINT ted:00519549-2025 ted:00581933-2024 | Onderwijs Inkoop Groep B.V. namens  | Stichting Prisma
+DISJOINT ted:00713560-2024 ted:00076646-2024 | СРЕДНО УЧИЛИЩЕ "СВ.СВ.КИРИЛ И МЕТОД | Brussels Hoofdstedelijk Gewest
+SAME-ORG1 ted:00645924-2026 ted:00359558-2026 |  | 
+DISJOINT ted:00774249-2023 ted:00657621-2023 | Instytut Biologii Doświadczalnej im | Instytut Biologii Doświadczalnej im
+shared:2 ted:00243307-2026 ted:00558776-2025 | DB InfraGO AG – Geschäftsbereich Fa | Deutsche Bahn AG Konzernleitung (Bu
+shared:1 ted:00055389-2024 ted:00773069-2023 | Gemeinde Wiesenburg/Mark, Der Bürge | DB Netz AG (Bukr 16)
+DISJOINT ted:00194442-2025 ted:00007684-2024 | Uniwersytecki Szpital Kliniczny w B | Operator SEAP
+shared:1 ted:00600074-2025 ted:00185216-2025 | ARPAS - Agenzia Regionale per la Pr | ARPAS
+DISJOINT ted:00708101-2024 ted:00116437-2024 | Telemark fylkeskommune | Gdańskie Centrum Usług Wspólnych
+shared:2 ted:00571141-2025 ted:00621905-2024 | DB InfraGO AG – Geschäftsbereich Fa | Deutsche Bahn AG Konzernleitung (Bu
+DISJOINT ted:00637159-2024 ted:00023653-2024 | ЕЙ И ЕС - 3С МАРИЦА ИЗТОК І ЕООД | Rosenbauer Deutschland GmbH
+DISJOINT ted:00763492-2024 ted:00077579-2024 | МИНИ МАРИЦА - ИЗТОК ЕАД | Generalna Dyrekcja Dróg Krajowych i
+DISJOINT ted:00424855-2024 ted:00615725-2023 | DASmakkelijk B.V. namens AT Scholen | AT Scholen VO
