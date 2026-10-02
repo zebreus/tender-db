@@ -7321,6 +7321,9 @@ impl Supervisor {
                     .db
                     .match_org_identifiers_r2(store::R2MergeArgs {
                         key: ingest::crosswalk::canonical_key_flat,
+                        // Issue 470's fold gate: the re-key arm's name test.
+                        name_key: ingest::crosswalk::altid_name_key,
+                        names_agree: ingest::crosswalk::altid_keys_agree,
                         condemns: ingest::idgate::condemns,
                         consortium: ingest::crosswalk::consortium_name,
                         legal_form: ingest::crosswalk::legal_form_family,
@@ -7352,7 +7355,7 @@ impl Supervisor {
                 // first committed transaction, not "nothing planned".)
                 if !(r.stopped && r.merged_groups == 0) {
                     let now = store::now_unix();
-                    let plan = serde_json::json!({
+                    let mut plan = serde_json::json!({
                         "plan_groups": r.plan_groups - r.merged_groups,
                         "scanned": r.scanned, "withheld": r.withheld, "keyed": r.keyed, "groups": r.groups,
                         "denied_cap": r.denied_cap, "denied_gate": r.denied_gate,
@@ -7415,8 +7418,35 @@ impl Supervisor {
                                 }).collect::<Vec<_>>(),
                             })
                         }).collect::<Vec<_>>(),
-                    })
-                    .to_string();
+                    });
+                    // Issue 470: the GB O/0 fold — rows keyed through it, the
+                    // gate's exclusions and their review queue (the names
+                    // listing's shape and 362 round trip), and every key the
+                    // fold reaches with every row on it. Set beside the literal
+                    // above, which is at `json!`'s recursion limit.
+                    let listing = |rows: &[(String, &'static str, String, Vec<(i64, String, String, String)>)]| {
+                        rows.iter()
+                            .map(|(country, scheme, key, members)| {
+                                serde_json::json!({
+                                    "country": country, "scheme": scheme, "key": key,
+                                    "members": members.iter().map(|(id, kind, literal, name)| {
+                                        serde_json::json!({
+                                            "org_id": id, "kind": kind,
+                                            "identifier": literal, "name": name,
+                                        })
+                                    }).collect::<Vec<_>>(),
+                                })
+                            })
+                            .collect::<Vec<_>>()
+                    };
+                    plan["keyed_folded"] = r.keyed_folded.into();
+                    plan["fold_excluded"] = r.fold_excluded.into();
+                    plan["denied_fold"] = r.denied_fold.into();
+                    plan["denied_fold_listing_truncated"] = r.denied_fold_listing_truncated.into();
+                    plan["denied_fold_listing"] = listing(&r.denied_fold_listing).into();
+                    plan["fold_listing_truncated"] = r.fold_listing_truncated.into();
+                    plan["fold_listing"] = listing(&r.fold_listing).into();
+                    let plan = plan.to_string();
                     self.db
                         .put_report("r2-merge-plan", &plan, now)
                         .await
@@ -7444,9 +7474,9 @@ impl Supervisor {
                 }
                 Ok(format!(
                     "match-org-identifiers r2 (issue 300 Stage 2){}: {} orgs scanned \
-                     ({} withheld by a wrong-number verdict), {} E1-keyed, {} groups >=2; \
-                     denied: {} cap, {} gate, {} consortium \
-                     ({} members excluded member-scoped), \
+                     ({} withheld by a wrong-number verdict), {} E1-keyed ({} through the GB O/0 fold), \
+                     {} groups >=2; denied: {} cap, {} gate, {} consortium \
+                     ({} members excluded member-scoped), {} fold ({} folded members excluded by names), \
                      {} legal-form, {} vat-group-wall, {} names, {} verdict-keep, {} verdict-merge; plan {} groups; merged {} groups \
                      ({} org rows removed, {} mentions, {} parties, {} bid-parties, \
                      {} winners repointed, {} winner dups deleted, {} tenders touched)",
@@ -7454,11 +7484,14 @@ impl Supervisor {
                     r.scanned,
                     r.withheld,
                     r.keyed,
+                    r.keyed_folded,
                     r.groups,
                     r.denied_cap,
                     r.denied_gate,
                     r.denied_consortium,
                     r.consortium_excluded,
+                    r.denied_fold,
+                    r.fold_excluded,
                     r.denied_legal_form,
                     r.denied_group_vat,
                     r.denied_names,
@@ -7519,6 +7552,10 @@ impl Supervisor {
                     .db
                     .match_org_identifiers_r2(store::R2MergeArgs {
                         key: ingest::crosswalk::e0_key_flat,
+                        // `e0_key_flat` never folds, so the fold gate never
+                        // runs here; the slots carry R2's rules regardless.
+                        name_key: ingest::crosswalk::altid_name_key,
+                        names_agree: ingest::crosswalk::altid_keys_agree,
                         condemns: ingest::idgate::condemns,
                         consortium: ingest::crosswalk::consortium_name,
                         legal_form: ingest::crosswalk::legal_form_family,
@@ -9256,7 +9293,9 @@ impl Supervisor {
                         if r.country.is_none() {
                             continue;
                         }
-                        if let Some((scheme, key, true)) = ingest::crosswalk::canonical_key_flat(
+                        // R3's own target map: a folded row is no target
+                        // (issue 470).
+                        if let Some((scheme, key, true, false)) = ingest::crosswalk::canonical_key_flat(
                             r.country.as_deref(),
                             &kind,
                             &r.identifier,

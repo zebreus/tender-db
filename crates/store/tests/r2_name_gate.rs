@@ -7,7 +7,7 @@
 
 use store::turso::Value;
 
-fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool)> {
+fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool, bool)> {
     let norm: String =
         value.chars().filter(char::is_ascii_alphanumeric).map(|c| c.to_ascii_uppercase()).collect();
     let (cc, body) = if kind == "vat" {
@@ -17,7 +17,7 @@ fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, 
     };
     let digits = body.bytes().all(|b| b.is_ascii_digit());
     match (cc.as_str(), body.len()) {
-        ("FI", 8) if digits => Some(("FI:ytunnus", body, true)),
+        ("FI", 8) if digits => Some(("FI:ytunnus", body, true, false)),
         _ => None,
     }
 }
@@ -100,6 +100,8 @@ async fn count(conn: &store::turso::Connection, sql: &str) -> i64 {
 fn args(dry_run: bool, expect_groups: Option<u64>) -> store::R2MergeArgs<'static> {
     store::R2MergeArgs {
         key,
+        name_key: |n| n.to_lowercase(),
+        names_agree: |a, b| a == b,
         condemns,
         consortium,
         legal_form,

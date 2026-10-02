@@ -12,7 +12,7 @@ use store::read::{self, Filter, Scope};
 use store::turso::{Connection, Value};
 use store::{Identifier, IdentifierVerdict, Mention};
 
-fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool)> {
+fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool, bool)> {
     let norm: String =
         value.chars().filter(char::is_ascii_alphanumeric).map(|c| c.to_ascii_uppercase()).collect();
     let (cc, body) = if kind == "vat" {
@@ -20,10 +20,46 @@ fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, 
     } else {
         (country?.to_owned(), norm)
     };
+    if cc == "GB" && kind != "vat" {
+        return gb_coh(&body);
+    }
     match (cc.as_str(), body.len()) {
-        ("FI", 8) if body.bytes().all(|b| b.is_ascii_digit()) => Some(("FI:ytunnus", body, true)),
+        ("FI", 8) if body.bytes().all(|b| b.is_ascii_digit()) => Some(("FI:ytunnus", body, true, false)),
         _ => None,
     }
+}
+
+/// `crosswalk::canonical_key`'s GB company-number arm in miniature, with issue
+/// 470's O/0 fold and its flag (`r2_merge.rs` carries the same one).
+fn gb_coh(body: &str) -> Option<(&'static str, String, bool, bool)> {
+    let coh = body.strip_prefix("GBCOH").unwrap_or(body);
+    if coh.len() != 8 {
+        return None;
+    }
+    let orig = coh.as_bytes();
+    let mut out = orig.to_vec();
+    for c in &mut out[2..] {
+        if *c == b'O' {
+            *c = b'0';
+        }
+    }
+    let zero_like = |c: u8| c.is_ascii_digit() || c == b'O';
+    if orig[0] == b'O' && zero_like(orig[1]) {
+        out[0] = b'0';
+    }
+    if orig[1] == b'O' && zero_like(orig[0]) {
+        out[1] = b'0';
+    }
+    if orig[0] == b'0' && orig[1] == b'C' {
+        out[0] = b'O';
+    }
+    let folded = out != orig;
+    let k = String::from_utf8(out).unwrap();
+    let digits = |s: &str| s.bytes().all(|b| b.is_ascii_digit());
+    let shaped = digits(&k)
+        || (k[..2].bytes().all(|b| b.is_ascii_alphabetic()) && digits(&k[2..]))
+        || (k.starts_with('R') && digits(&k[1..]));
+    shaped.then(|| ("GB:coh", k, true, folded))
 }
 
 fn condemns(_c: Option<&str>, _k: &str, _v: &str) -> bool {
@@ -41,6 +77,8 @@ fn legal_form(_name: &str) -> Option<&'static str> {
 fn r2_args(dry_run: bool, expect_groups: Option<u64>) -> store::R2MergeArgs<'static> {
     store::R2MergeArgs {
         key,
+        name_key: |n| n.to_lowercase(),
+        names_agree: |a, b| a == b,
         condemns,
         consortium,
         legal_form,
@@ -280,6 +318,51 @@ async fn a_guarded_key_binds_only_to_the_owner_whose_name_matches() {
     assert!(ids[4] > 3 && ids[4] != ids[2], "a name no owner carries mints");
     assert_eq!(ids[5], 1, "the exact literal still binds to the org that published it");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 5);
+}
+
+fn gb_mention(notice: i64, name: &str, value: &str) -> Mention {
+    Mention {
+        notice_id: notice,
+        section_id: "S-1".into(),
+        name: name.into(),
+        country: Some("GB".into()),
+        raw_identifier: Some(value.into()),
+        scheme: None,
+        identifier: Some(Identifier { country: Some("GB".into()), kind: "national".into(), value: value.into() }),
+        variants: Vec::new(),
+    }
+}
+
+/// Issue 470: a mention whose literal needed the GB O/0 fold binds through the
+/// guarded path — to the one owner its names match — never through the key
+/// alone. So a new `GBCOHSCO55775` named Galliford Try finds the `SC055775`
+/// org; the same literal under another name mints, and that mint claims
+/// nothing (the next Galliford spelling still finds the register's org). A
+/// folded row is no key-only owner either: the number a trailing-O rotation
+/// proposes (`9694399O` → `96943990`), published as itself, mints rather than
+/// binding to the rotation's org (the decision's refinement 2).
+#[tokio::test]
+async fn a_folded_mention_binds_only_to_the_owner_whose_name_matches() {
+    let orgs = [
+        (1, "GB", "national", "SC055775", "Galliford Try Infrastructure Ltd"),
+        (2, "GB", "national", "9694399O", "Trailing O Ltd"),
+    ];
+    let (db, conn) = bed("test-identifier-verdicts-folded.db", &orgs, 4).await;
+    let ids = resolve(
+        &db,
+        &[
+            gb_mention(1, "Galliford Try Infrastructure Ltd", "GBCOHSCO55775"),
+            gb_mention(2, "Somebody Else Ltd", "GBCOHSCO55775"),
+            gb_mention(3, "GALLIFORD TRY INFRASTRUCTURE LTD", "SCO55775"),
+            gb_mention(4, "Trailing O Ltd", "96943990"),
+        ],
+    )
+    .await;
+    assert_eq!(ids[0], 1, "the folded spelling finds the register's org by name");
+    assert!(ids[1] > 2, "the same literal under another name mints…");
+    assert_eq!(ids[2], 1, "…and claims nothing: the next Galliford spelling still finds org 1");
+    assert!(ids[3] > 2 && ids[3] != ids[1], "a folded row owns no key a mention can match by key alone");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 4);
 }
 
 /// `/v1/organizations` reads the verdict beside the row: `wrong` and `related`

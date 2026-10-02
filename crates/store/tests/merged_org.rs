@@ -76,20 +76,22 @@ async fn a_merged_away_id_resolves_through_the_ledger_to_its_live_survivor() {
 /// One test-local canonical key for the R2 and rekey arms: the GB company
 /// number with any `GB`/`GBCOH` prefix, and Sellafield's PPON keyed onto its
 /// company number (the pair 448's altid merge folded on prod).
-fn gb_key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool)> {
+fn gb_key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool, bool)> {
     if kind != "national" || country != Some("GB") {
         return None;
     }
     if value == "GBPPONPWYP8439MZWY" {
-        return Some(("GB:coh", "01002607".into(), true));
+        return Some(("GB:coh", "01002607".into(), true, false));
     }
     let body = value.strip_prefix("GBCOH").or_else(|| value.strip_prefix("GB")).unwrap_or(value);
-    (body.len() == 8 && body.bytes().all(|b| b.is_ascii_digit())).then(|| ("GB:coh", body.to_owned(), true))
+    (body.len() == 8 && body.bytes().all(|b| b.is_ascii_digit())).then(|| ("GB:coh", body.to_owned(), true, false))
 }
 
 fn r2_args(dry_run: bool) -> store::R2MergeArgs<'static> {
     store::R2MergeArgs {
         key: gb_key,
+        name_key: |n| n.to_lowercase(),
+        names_agree: |a, b| a == b,
         condemns: |_, _, _| false,
         consortium: |_| false,
         legal_form: |_| None,

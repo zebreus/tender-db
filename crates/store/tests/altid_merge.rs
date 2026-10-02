@@ -27,11 +27,11 @@ use store::turso::{Connection, Value};
 
 /// The GB arm in small: `GBPPON` + 12 → PPON; `GBCOH` (or a bare `GB`) then
 /// eight characters → company number at E1, six or seven digits → padded, E2.
-fn gb_key(value: &str) -> Option<(&'static str, String, bool)> {
+fn gb_key(value: &str) -> Option<(&'static str, String, bool, bool)> {
     let norm: String =
         value.chars().filter(char::is_ascii_alphanumeric).map(|c| c.to_ascii_uppercase()).collect();
     if let Some(serial) = norm.strip_prefix("GBPPON") {
-        return (serial.len() == 12).then(|| ("GB:ppon", serial.to_owned(), true));
+        return (serial.len() == 12).then(|| ("GB:ppon", serial.to_owned(), true, false));
     }
     let coh = norm.strip_prefix("GBCOH").or_else(|| norm.strip_prefix("GB")).unwrap_or(&norm);
     let digits = !coh.is_empty() && coh.bytes().all(|b| b.is_ascii_digit());
@@ -40,9 +40,9 @@ fn gb_key(value: &str) -> Option<(&'static str, String, bool)> {
             || (coh[..2].bytes().all(|b| b.is_ascii_alphabetic())
                 && coh[2..].bytes().all(|b| b.is_ascii_digit())) =>
         {
-            Some(("GB:coh", coh.to_owned(), true))
+            Some(("GB:coh", coh.to_owned(), true, false))
         }
-        6 | 7 if digits => Some(("GB:coh", format!("{coh:0>8}"), false)),
+        6 | 7 if digits => Some(("GB:coh", format!("{coh:0>8}"), false, false)),
         _ => None,
     }
 }
@@ -54,7 +54,7 @@ fn condemns(_country: Option<&str>, _kind: &str, value: &str) -> bool {
 
 /// `crosswalk::mention_key` in small: the gate first (the normaliser's), then
 /// the GB arm, under GB only.
-fn mention_key(country: Option<&str>, raw: &str) -> Option<(&'static str, String, bool)> {
+fn mention_key(country: Option<&str>, raw: &str) -> Option<(&'static str, String, bool, bool)> {
     if country != Some("GB") || condemns(country, "national", raw) {
         return None;
     }
@@ -62,7 +62,7 @@ fn mention_key(country: Option<&str>, raw: &str) -> Option<(&'static str, String
 }
 
 /// `crosswalk::altid_pair_key` in small: the scheme names the series.
-fn pair_key(scheme: &str, value: &str, country: Option<&str>) -> Option<(&'static str, String, bool)> {
+fn pair_key(scheme: &str, value: &str, country: Option<&str>) -> Option<(&'static str, String, bool, bool)> {
     let series = match scheme {
         "GB-COH" => "GB:coh",
         "GB-PPON" => "GB:ppon",
@@ -74,7 +74,7 @@ fn pair_key(scheme: &str, value: &str, country: Option<&str>) -> Option<(&'stati
 /// `crosswalk::canonical_key_flat` in small, for the standing orgs. A VAT kind
 /// keys nothing — which is what makes the R2/R3 two-letter-lead inference blind
 /// to FTS raws, and what `the_evidence_wall_keys_fts_raws` relies on.
-fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool)> {
+fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool, bool)> {
     if kind != "national" {
         return None;
     }

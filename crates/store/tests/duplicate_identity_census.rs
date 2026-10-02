@@ -26,9 +26,9 @@ use store::turso::{self, Value};
 /// The real one's shape, and the real one's pinned German negative: `DE:vat`
 /// keys to nothing, `FR:national` keys. That asymmetry is the whole premise of
 /// the census, so the stand-in reproduces it rather than keying everything.
-fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool)> {
+fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool, bool)> {
     match (country, kind) {
-        (Some("FR"), "national") => Some(("FR:siren", format!("FR:siren:{value}"), true)),
+        (Some("FR"), "national") => Some(("FR:siren", format!("FR:siren:{value}"), true, false)),
         _ => None,
     }
 }

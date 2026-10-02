@@ -1,6 +1,7 @@
 # 470 — a letter O typed for a zero (or a zero for the O of `OC`) splits a GB company number from its organization, and no arm joins them
 
-Status: ready-for-agent — DECIDED 2026-10-02 (owner; decision below, under "Decision"). The proposed fold is accepted with three refinements. NEXT: unit 2, the code (crosswalk GB arm + R2 survivor + the resolver's guarded bind + tests), then the rollout in step 4. Sequence it after 481 unit 2 lands, because both edit crates/store/src/canonical.rs and one gate at a time fits the container's disk.
+Status: ready-for-agent — UNIT 2 (the code) COMMITTED 2026-10-02 on top of a5c7666. Gate GATE-EXIT=0 (879 s), run before the commit on a dirty tree, so no gate marker was written; re-gate at the shipped rev. NOT pushed, NOT deployed (prod is busy on a5c7666). NEXT: deploy it in a queue gap, then the rollout reads (step 4) and the verdict re-post (step 5), written out step by step under "Unit 2 (2026-10-02)" → "NEXT". No job has run on prod for this issue.
+Was status: ready-for-agent — DECIDED 2026-10-02 (owner; decision below, under "Decision"). The proposed fold is accepted with three refinements. NEXT: unit 2, the code (crosswalk GB arm + R2 survivor + the resolver's guarded bind + tests), then the rollout in step 4. Sequence it after 481 unit 2 lands, because both edit crates/store/src/canonical.rs and one gate at a time fits the container's disk.
 Was status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The measurement 454 asked for is below (taken 2026-10-01, through FTS chunk 8), so the first unit is the decision it feeds: which shapes fold, at which tier and behind which name gate, recorded here with its reasoning before any code.
 Kind: data quality (identifiers)
 Relates to: 454 (its option 2, never filed), 453 (the re-key arm, which fixed the 13 `GBCOH` exhibits), 452 (the census; its
@@ -208,6 +209,156 @@ Refinements:
 3. **`OO688424` loses its E1 key today and gains a folded one.** That is a re-key of any org currently keyed `OO…`.
    The rollout's R2 dry plan must list those orgs (expected: the 453-era exhibits are gone, so a handful at most), and
    the altid and rekey dry plans are read for movement before any wet run, per step 4.
+
+## Unit 2 (2026-10-02) — the fold, its flag, and every gate that reads it
+
+Steps 1–3 of "Proposed fix" as decided, with the three refinements. Line numbers are at this commit.
+
+### What landed
+
+- **The crosswalk** (`crates/ingest/src/crosswalk.rs`). `gb_coh_fold` (:451) folds an 8-character body: O→0 at positions
+  3–8; an O at positions 1–2 only when the other character there is a digit or another O; a 0 becomes an O only in a
+  `0C` head. `R0…` is never touched, and `R` + 7 digits now keys E1 as itself (the GB arm, :404 on). A folded key carries
+  `CanonKey::folded = true`. `canonical_key_flat` (:841) returns `(scheme, key, is_e1, folded)`, and so do `e0_key_flat`,
+  `mention_key` and `altid_pair_key`. The flat tuple grew a field on purpose: the compiler then names every consumer,
+  and each one now says what it does with a folded key (below). Pads (6–7 characters) are never folded.
+- **R2** (`crates/store/src/canonical.rs`, `match_org_identifiers_r2`). New rule 3b, the fold gate (:14734). It runs after
+  the consortium veto and before the legal-form veto, so a refused lookalike neither merges nor vetoes the rest of its
+  group. A folded member stays only when one of its names (head or satellite) agrees with one of its group's under
+  `altid_keys_agree(altid_name_key(a), altid_name_key(b))`. "The group's" means the unfolded members, or the survivor when
+  every member is folded. The gate is member-scoped: a remainder below two is `denied_fold`. An excluded group is listed
+  whole in `denied_fold_listing`, R2's review queue for a 362 verdict (same shape and round trip as
+  `denied_names_listing`). A HIGH merge verdict on exactly the live member set stands in for the gate, as it does for
+  the name rule. The survivor is `(provisional, folded, id)` in the dry plan (:15069) and the wet merge (:15230) alike.
+  `R2MergeArgs` gained `name_key` and `names_agree`; the supervisor passes the altid pair.
+- **R2's dry plan** also records `keyed_folded` and `fold_listing` (:15180). The listing names every key a row reaches
+  through the fold, with every row on that key, singletons included. That makes the decision's refinement 3 visible: a
+  row still carrying `OO688424` appears as key `00688424` with that one row. These fields are in the stored
+  `r2-merge-plan` report and in the job's summary line.
+- **The resolver** (`mention_resolver` / `resolve_one_mention`). `resolver_canon_key` returns the flag. At open, a folded
+  row goes into `MentionResolver::folded` and never into `canon_of` (:12145). So a key that only folded rows carry binds
+  nothing new on the key alone (refinement 2). A mention whose own literal needed the fold never takes the `canon_of`
+  hit. It goes through 452's guarded path (:12916): the owners are the key's `canon_of` owner plus its folded rows, and
+  the mention binds to the ONE owner whose names match under `norm`. The bind is never cached. A poisoned key binds it
+  to nobody. A folded mint claims nothing and joins the folded rows (:13297). A withheld key's guarded owners now
+  include its folded rows. Counted in the fold's diag lines as `[issue 470] folded keys: N bound by name, M minted`.
+- **453's re-key alias at open** (:12207). A lookalike re-keyed onto the number its own fold proposes guards nothing.
+  Guarding the right number would put the entity's own spellings behind a name match.
+- **The buyer guard tokens** (481 unit 2b, `crates/ingest/src/project.rs` `buyer_guard_tokens`). A folded key is not
+  used: a lookalike buyer keeps its raw-literal token, as every lookalike did before the fold.
+- **R3** and the r3-census keep folded rows out of the target map (canonical.rs:17599, supervisor's census beside
+  it). R3 corroborates against ONE owner, and a lookalike row is not a register owner. GB has no checksum anchor today,
+  so this changes no current output.
+
+### The altid and rekey arms' own name gates still guard a folded key (verified)
+
+- **altid** (`match_org_altid_pairs`, :18096).
+  - A folded published company number pairs as `Side::E1` (:18230). A folded row owns its key in the owner map (:18368).
+  - Beside the register spelling's row, the folded row makes the key `multi_target` (:18517–18520, refused).
+  - Alone, the folded row is a target, but the PPON org folds into it only past step 6: `altid_corroborates` on
+    witness-free names (:18799), the generic wall, or a HIGH reviewer verdict on the exact pair (:18742). Only then does
+    `report.plan_pairs += 1` run (:18897).
+  - The alias half (`altid_alias_bind`) reads `canon_of` only, and a folded row is never in it.
+- **rekey** (`match_org_rekey`, :20346).
+  - A folded row owns the right number in the owner walk (:20470). With the register spelling's row beside it, the
+    candidate is `multi-target` (:20639).
+  - Alone, a folded row is a merge target, so the consortium, legal-family and names tests apply: `names_agree`
+    over `name_key`, head and satellites (:20613; `names` denial :20620; HIGH 454 verdict `admits` :20615).
+  - A folded owner is "found", so it never becomes a move (the move arm is the `[]` case, :20552).
+- **Two rekey refinements were needed for step 5. Without them the three re-posted verdicts would never act:**
+  - `same_key` compares only an unfolded wrong key (:20422). `GBCOHIPO30808` now folds to `IP030808`, the right number
+    itself. That is what the verdict corrects, not a no-op.
+  - The destination flag set skips folded keys (:20504). Otherwise the verdict on `GBCOHCEO19319` would flag `CE019319`
+    and refuse its own move.
+  - 460's spelling test treats a flagged literal the same way (`flagged_spelling_key`): a lookalike `wrong` drops only
+    its own literal, never spellings of the right number its fold proposes.
+  - Pinned by `rekey.rs::a_lookalike_whose_fold_is_the_right_number_is_re_keyed_onto_it` (:578): one move, one merge.
+
+### Tests
+
+- `crosswalk.rs::gb_coh_folds_an_o_where_the_register_format_has_a_digit` (:757).
+  - `SCO55775`, `O6611251`, `OO688424`, `O2O84294` and `0C301540` fold, flagged. The prefixed forms fold the same.
+  - `SC055775`, `OC301540`, `SO300123`, `OE012345` and `06611251` key unfolded and unflagged.
+  - `R0000568` keys as itself. `I0097973` and `N0790518` key nothing.
+  - `9694399O` gets a flagged `96943990`. A fold that misses the register shape keys nothing, and no pad folds.
+- `r2_merge.rs::a_fold_joined_r2_group_merges_agreeing_names_into_the_unfolded_literal` (:403).
+  - The Galliford-shaped pair (typo id 1, register spelling id 2) merges INTO 2.
+  - The Aberdeen/Net-Zero pair stays apart and is listed whole. A HIGH merge verdict on `[3, 4]` then admits it.
+  - The `R0` `GBCOH`/bare pair merges. A `0C`/`OC` pair merges into the `OC` row.
+  - The lone `OO688424` row is in `fold_listing` as `00688424`.
+- `identifier_verdicts.rs::a_folded_mention_binds_only_to_the_owner_whose_name_matches` (:345).
+  - `GBCOHSCO55775` named Galliford Try binds to the `SC055775` org.
+  - The same literal under another name mints, and the mint claims nothing (the next Galliford spelling still finds
+    org 1).
+  - `96943990` published as itself mints rather than binding to the `9694399O` org.
+
+### Expected on the first dry plan (read against it, not taken on trust)
+
+Applying `altid_keys_agree` to the measured names (the "16 pairs" table):
+
+| expected | pairs |
+|---|---|
+| merge | Galliford, Caledonian Modular, Morris & Spottiswood (`&` → `and`, which the key drops), Emtelle (one-sided `Ltd`), Hypostyle, Farid Hillend, McKinsey (case), Bayview, KPMG, Knight Frank (one-sided `LLP`), Shakespeare Clinic, the two `R0` pairs (unfolded, so the R2 name rule decides) |
+| listed in `denied_fold_listing`, needs a 362 merge verdict | Aim2Learn / AIM 2 LEARN LTD (454's spacing shape, as forecast), Roythornes Ltd / Roythornes Solicitors Ltd, Aberdeen / Net Zero (keep: two bodies) |
+| either way | Sony Europe B.V / Sony Europe BV — depends on how `n3_key` reads `B.V` |
+| absent from R2 | the Co-op pair: `GBCOHIPO30808` (31536131) is withheld, so step 5 covers it |
+
+Survivor caveat: the rank puts `provisional` first, as decided. A pair whose register-spelling row is provisional and
+whose typo row is not keeps the typo. The dry plan's `plan` listing shows each keep. Check it per pair.
+
+### Deviations
+
+- The fold reads 8-character bodies only. "Positions 3–8" is defined only on the full form, and a pad is E2 anyway.
+- The fold gate's denials get their own listing (`denied_fold_listing`) beside `denied_names_listing`. They are not
+  mixed in, because the tuple carries no reason field and a reviewer must know which rule refused.
+- The buyer guard, R3 and 460's flagged-spelling test also needed decisions the issue did not name; each is above.
+
+### NEXT (owner, in order; nothing here has run)
+
+1. **Deploy.** Gate at the shipped rev (`ops/check.sh`, read `GATE-EXIT=`), push by explicit ref, deploy in a queue
+   gap. The resolver half acts from the next fold on: folded mentions bind by name only. Watch the fold's diag line
+   `[issue 470] folded keys: N bound by name, M minted` and the open line `… carried through the GB O/0 fold by N
+   row(s)`.
+2. **R2 dry.** `POST /admin/jobs {"kind":"match-org-identifiers","rule":"r2"}` (dry by default), then
+   `GET /admin/reports/r2-merge-plan`. Read:
+   - `keyed_folded` (≈30 standing lookalikes, fewer the withheld ones);
+   - `fold_listing` against the 16 pairs: the keys `SC055775 SC041252 SC046129 SC079486 SC093579 SC053003 FC035527
+     FC012665 NI041488 06611251 07687679 OC301540 OC305934 OC429964 SC013683`, plus the two trailing-O singletons
+     (`96943990`, `99790370`), plus any row still carrying an `OO…` literal (refinement 3: expected none or a handful);
+   - `denied_fold_listing` against the table above;
+   - `plan` for the two `R0` pairs (`R0000273` 30914553/16866909, `R0000524` 31573122/21985296) and each fold-joined
+     group's keep (the register spelling, unless the provisional caveat applies);
+   - `plan_groups` against `GET /admin/reports/r2-merge-plan/previous`. Anything beyond the fold-joined groups and
+     the R0 pairs is movement to explain before the wet run.
+3. **Movement in the other arms.** Run `{"kind":"match-org-identifiers","rule":"altid"}` and `{"kind":…,"rule":"rekey"}`
+   dry. Diff each report against its `/previous`: altid `pairs`, `multi_target`, `no_target_*`; rekey `keys`,
+   `same_key`, `destination_verdict`, `multi_target`. Expected from the code: a few altid pairs move into
+   `multi_target` where a lookalike and its twin both stand (refused until R2 merges them); rekey changes nothing
+   before step 5.
+4. **R2 wet** against the reviewed dry plan: `{"kind":"match-org-identifiers","rule":"r2","dry_run":false}`. Then run
+   the Verify below (`[null,null,10312664]`).
+5. **362 merge verdicts** for the listed pairs the register confirms. `POST /admin/merge-verdicts` with `country`
+   `GB`, `scheme` `GB:coh`, `key` and `members` exactly as listed, `action` `merge`, `confidence` `high`:
+   - Roythornes `06611251`: the register name 2013–2025 is ROYTHORNES LIMITED;
+   - Aim2Learn `07687679`: the register is AIM 2 LEARN LTD.
+
+   Post `keep` for Aberdeen/Net Zero `SC013683` so it leaves the queue. Then a dry plan, and a wet run with the new
+   plan.
+6. **Step 5, the three withheld lookalikes.** `POST /admin/identifier-verdicts`, cohort `470-lookalikes-2026-10-02`.
+   Each verdict is `wrong`, confidence `high`, with the challenger's number as `correct_identifier`:
+   - org 31574614 `GBCOHCEO19319` → `CE019319`;
+   - org 31536131 `GBCOHIPO30808` → `IP030808`;
+   - org 31581165 `GBCOHNIO18750` → `NI018750`.
+
+   Expect `recorded 3, stale 0`. Then the rekey dry plan should read:
+   - `GB/national/GBCOHCEO19319>move:GBCOHCE019319`;
+   - `GB/national/GBCOHNIO18750>move:GBCOHNI018750`;
+   - a merge of 31536131 into 31534918 (`GBCOHIP030808`). Its names ("Co-Op Funeral Care" against "Funeral Services
+     Limited T/A Co-op Funeralcare", trimmed at `T/A`) will NOT agree, so expect a `names` denial. It needs a 454
+     verdict: `scheme` `GB:rekey`, `key` `GBCOHIPO30808~IP030808`, `members` `[31534918, 31536131]`, `merge`, `high`.
+     The register name is FUNERAL SERVICES LIMITED.
+
+   Then run rekey wet with the dry plan's `keys`.
 
 ## Verify
 

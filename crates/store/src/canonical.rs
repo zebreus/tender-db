@@ -3005,25 +3005,55 @@ async fn repoint_merged_identifiers(
 }
 
 /// The injected canonical key (`crosswalk::canonical_key_flat`): `(scheme,
-/// key, is_e1)` for a `(country, kind, literal)`. Store never depends on ingest.
-pub type IdentifierKeyFn = fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>;
+/// key, is_e1, folded)` for a `(country, kind, literal)` — `folded` is issue
+/// 470's lookalike flag (`crosswalk::CanonKey::folded`). Store never depends on
+/// ingest.
+pub type IdentifierKeyFn = fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>;
 
 /// Issue 460 review: the `(scheme, key)` one stored identifier keys to, for a
 /// SPELLING test — either tier, so an E2 pad that collides errs toward
 /// refusing an identifier, never toward answering with a wrong one. A missing
-/// kind reads `national` (the rekey arm's owner walk does the same).
+/// kind reads `national` (the rekey arm's owner walk does the same). A folded
+/// key counts (issue 470): a lookalike OF a wrong number spells it.
 fn spelling_key(
     key: IdentifierKeyFn,
     country: Option<&str>,
     kind: Option<&str>,
     literal: &str,
 ) -> Option<(&'static str, String)> {
+    spelling_key_folded(key, country, kind, literal).map(|(scheme, key, _)| (scheme, key))
+}
+
+/// Issue 470: the number a FLAGGED literal spells — [`spelling_key`], except
+/// that a folded key spells nothing. A `wrong` verdict on a lookalike
+/// (`GBCOHIPO30808`) flags the literal the reviewer read; the number its fold
+/// proposes (`IP030808`) is as a rule the right one, the challenger's own
+/// correction (452's three withheld rows). Testing spellings against it would
+/// strip the right number's spellings from the entity a re-key just corrected.
+/// The flagged literal itself still matches by equality, and the OTHER side
+/// of every test keeps its folded key.
+fn flagged_spelling_key(
+    key: IdentifierKeyFn,
+    country: Option<&str>,
+    kind: Option<&str>,
+    literal: &str,
+) -> Option<(&'static str, String)> {
+    spelling_key_folded(key, country, kind, literal)
+        .and_then(|(scheme, key, folded)| (!folded).then_some((scheme, key)))
+}
+
+fn spelling_key_folded(
+    key: IdentifierKeyFn,
+    country: Option<&str>,
+    kind: Option<&str>,
+    literal: &str,
+) -> Option<(&'static str, String, bool)> {
     key(
         country.filter(|c| !c.is_empty()),
         kind.filter(|k| !k.is_empty()).unwrap_or("national"),
         literal,
     )
-    .map(|(scheme, key, _)| (scheme, key))
+    .map(|(scheme, key, _, folded)| (scheme, key, folded))
 }
 
 /// Issue 460 review (D1, D3): drop every identifier merges folded into `org`
@@ -3035,8 +3065,10 @@ fn spelling_key(
 /// move arm leaves it on the org it re-keys in place. Either way a lookup by
 /// the wrong number would answer the entity again. Identifiers that are NOT a
 /// spelling of it (a PPON an altid merge folded in) stay: they are the
-/// entity's, and travel with its mentions. One seek on
-/// `organization_merged_identifiers_org`; returns the rows dropped.
+/// entity's, and travel with its mentions. A lookalike `wrong` (issue 470)
+/// keys nothing here ([`flagged_spelling_key`]): only its own literal drops,
+/// because the number its fold proposes is the one the re-key just wrote. One
+/// seek on `organization_merged_identifiers_org`; returns the rows dropped.
 async fn drop_merged_spellings(
     conn: &Connection,
     org: i64,
@@ -3045,7 +3077,7 @@ async fn drop_merged_spellings(
     kind: &str,
     wrong: &str,
 ) -> turso::Result<u64> {
-    let wrong_key = spelling_key(key, Some(country), Some(kind), wrong);
+    let wrong_key = flagged_spelling_key(key, Some(country), Some(kind), wrong);
     let mut rows = conn
         .query(
             "SELECT identifier, identifier_kind, country, loser FROM organization_merged_identifiers \
@@ -3253,7 +3285,7 @@ impl BackfillGuard {
         };
         while let Some(row) = rows.next().await? {
             let (identifier, kind, country) = (text(&row, 0), text(&row, 1), text(&row, 2));
-            if let Some((scheme, k)) = spelling_key(key, Some(&country), Some(&kind), &identifier) {
+            if let Some((scheme, k)) = flagged_spelling_key(key, Some(&country), Some(&kind), &identifier) {
                 guard.wrong_keys.insert((country.clone(), scheme, k));
             }
             guard.wrong_literals.insert((country, identifier));
@@ -3478,8 +3510,13 @@ impl OrphanOrgSweep {
 /// as plain fns (the supervisor.rs:2091 pattern: store owns the walk and the
 /// writes, ingest owns identifier knowledge).
 pub struct R2MergeArgs<'a> {
-    /// `crosswalk::canonical_key`, flattened: (scheme, key, is_e1).
-    pub key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>,
+    /// `crosswalk::canonical_key`, flattened: (scheme, key, is_e1, folded).
+    pub key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>,
+    /// `crosswalk::altid_name_key` and `altid_keys_agree` — issue 470's fold
+    /// gate: a member keyed only through the GB O/0 fold merges only when one
+    /// of its names agrees with one of its group's (the re-key arm's test).
+    pub name_key: fn(&str) -> String,
+    pub names_agree: fn(&str, &str) -> bool,
     /// The v2 gate (denial rule 5 — gate-failure poisons the cluster).
     pub condemns: fn(Option<&str>, &str, &str) -> bool,
     /// Consortium/groupement name detection (the census finding).
@@ -3518,6 +3555,9 @@ pub struct R2MergeReport {
     pub withheld: u64,
     /// Rows carrying a same-country E1 canonical key.
     pub keyed: u64,
+    /// Issue 470: of `keyed`, the rows whose key the GB O/0 fold proposed
+    /// (`SCO55775` → `SC055775`) rather than their literal's own characters.
+    pub keyed_folded: u64,
     /// Key groups with >=2 members before denials.
     pub groups: u64,
     /// Groups denied: >8 members on one literal identifier, or >200 members.
@@ -3532,6 +3572,11 @@ pub struct R2MergeReport {
     pub consortium_excluded: u64,
     /// Groups denied: two members carry different legal-form families.
     pub denied_legal_form: u64,
+    /// Issue 470's fold gate, MEMBER-scoped like the consortium veto: folded
+    /// members excluded because none of their names agrees with the group's
+    /// (`altid_keys_agree`), and the groups that left fewer than two.
+    pub fold_excluded: u64,
+    pub denied_fold: u64,
     /// Groups denied: conflicting mention-evidence register keys (VAT-group
     /// wall).
     pub denied_group_vat: u64,
@@ -3595,12 +3640,28 @@ pub struct R2MergeReport {
     /// only, capped at [`R2_PLAN_LISTING_CAP`].
     pub denied_listing: Vec<(String, &'static str, String, Vec<(i64, String, String, String)>)>,
     pub denied_listing_truncated: bool,
+    /// Issue 470: the groups the fold gate excluded a member from, listed
+    /// whole (every member the gate judged, the excluded ones included) — R2's
+    /// review queue for a 362 merge verdict, the same shape and round trip as
+    /// [`Self::denied_listing`]. A HIGH merge verdict on exactly that member
+    /// set stands in for the gate. Dry runs only, capped at
+    /// [`R2_PLAN_LISTING_CAP`].
+    pub denied_fold_listing: Vec<(String, &'static str, String, Vec<(i64, String, String, String)>)>,
+    pub denied_fold_listing_truncated: bool,
+    /// Issue 470: every key a row reaches through the GB O/0 fold, with every
+    /// row on that key — a fold-joined group beside a folded row that stands
+    /// alone (`OO688424`, E1 as itself before the fold, folded to `00688424`
+    /// since: the decision's refinement 3). The rollout reads this against the
+    /// measured pairs before any wet run. Dry runs only, key order, capped at
+    /// [`R2_PLAN_LISTING_CAP`].
+    pub fold_listing: Vec<(String, &'static str, String, Vec<(i64, String, String, String)>)>,
+    pub fold_listing_truncated: bool,
 }
 
 /// Inputs to the issue-300 Stage-3 R3 merge (NULL-country rescue).
 pub struct R3MergeArgs<'a> {
     /// `crosswalk::canonical_key_flat` — keys the standing target map.
-    pub key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>,
+    pub key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>,
     /// `idgate::checksum_anchors` — the unique-anchor probe.
     pub anchors: fn(&str) -> Vec<(&'static str, String)>,
     pub condemns: fn(Option<&str>, &str, &str) -> bool,
@@ -3688,15 +3749,15 @@ pub struct R3MergeReport {
 /// name knowledge, and store never depends on ingest.
 pub struct AltIdMergeArgs<'a> {
     /// `crosswalk::altid_pair_key`: one BT-501 row `(notice_ids.scheme, value,
-    /// party country)` to `(scheme, key, is_e1)`. Keys only `GB-COH` and
+    /// party country)` to `(scheme, key, is_e1, folded)`. Keys only `GB-COH` and
     /// `GB-PPON` rows, each into its own series.
-    pub pair_key: fn(&str, &str, Option<&str>) -> Option<(&'static str, String, bool)>,
+    pub pair_key: fn(&str, &str, Option<&str>) -> Option<(&'static str, String, bool, bool)>,
     /// `crosswalk::canonical_key_flat` — keys the standing orgs (the owner map).
-    pub key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>,
+    pub key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>,
     /// `crosswalk::mention_key` — a mention's raw identifier keyed the way the
     /// resolver keys it, for the evidence wall. NOT the R2/R3 two-letter-lead
     /// inference, which reads every FTS raw as a VAT and keys none of them.
-    pub mention_key: fn(Option<&str>, &str) -> Option<(&'static str, String, bool)>,
+    pub mention_key: fn(Option<&str>, &str) -> Option<(&'static str, String, bool, bool)>,
     /// The v2 gate.
     pub condemns: fn(Option<&str>, &str, &str) -> bool,
     /// Consortium/groupement name detection, over every name of both orgs.
@@ -4169,7 +4230,7 @@ pub struct AltIdAliasRules {
     /// `crosswalk::mention_key` — the mention's raw identifier keyed the way
     /// the resolver keys it. The alias is asked only when this is an E1
     /// `GB:ppon` key.
-    pub mention_key: fn(Option<&str>, &str) -> Option<(&'static str, String, bool)>,
+    pub mention_key: fn(Option<&str>, &str) -> Option<(&'static str, String, bool, bool)>,
     /// `crosswalk::consortium_name`, over the mention's names and the owner's.
     pub consortium: fn(&str) -> bool,
     /// `crosswalk::gb_legal_family` — head against head, and the form check
@@ -4431,7 +4492,7 @@ async fn orgs_with_triple(
 pub struct RekeyArgs<'a> {
     /// `crosswalk::canonical_key_flat` — keys the right number and every
     /// standing org, so any spelling of the right number finds its owner.
-    pub key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>,
+    pub key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>,
     /// Consortium/groupement name detection, over every name of both orgs.
     pub consortium: fn(&str) -> bool,
     /// `crosswalk::gb_legal_family` — Ltd, plc or LLP, head against head.
@@ -7212,10 +7273,10 @@ pub struct MentionResolver {
     /// exact-or-mint behavior; the periodic merge job, with its full denial
     /// stack, is the arbiter for those.
     poisoned: std::collections::HashSet<(String, &'static str, String)>,
-    /// The injected crosswalk, `(scheme, key, is_e1)` — `None` disables the
+    /// The injected crosswalk, `(scheme, key, is_e1, folded)` — `None` disables the
     /// prevention entirely (store-level callers that predate it keep today's
     /// byte-identical behavior).
-    canon_key: Option<fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>>,
+    canon_key: Option<fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>>,
     /// The consortium name veto: a groupement-named mention publishing its
     /// lead member's identifier must NOT canon-bind to the lead (the census's
     /// live Colas specimen); it mints separately and poisons the key.
@@ -7317,6 +7378,18 @@ pub struct MentionResolver {
     /// matched, and the ones that matched none (or several) and minted.
     guarded_bound: u64,
     guarded_refused: u64,
+    /// Issue 470: canonical keys standing rows reach only through the GB O/0
+    /// fold (`SCO55775` → `SC055775`), with those rows. A folded row never
+    /// claims `canon_of` — a key no unfolded row carries binds nothing new on
+    /// the key alone (the decision's refinement 2) — and a mention whose OWN
+    /// literal needed the fold binds through the guarded path: to the one
+    /// owner, folded here or the key's `canon_of` owner, whose names its names
+    /// match. Never through `canon_of` on the key alone.
+    folded: std::collections::HashMap<(String, &'static str, String), Vec<i64>>,
+    /// Issue 470: folded mentions bound by name, and the ones that matched no
+    /// owner (or several) and minted.
+    folded_bound: u64,
+    folded_refused: u64,
     /// Issue 453: each re-keyed wrong triple → the literal its entity carries
     /// since (`applied_literal`). Resolved through `org_of` when a mention's
     /// exact triple misses, not only at open: in a rebuild the table starts
@@ -7453,23 +7526,29 @@ async fn stamp_tenders_of_notices_stale(
 /// key and the later mention BINDS to the standing row instead of minting
 /// the twin), and for VAT kinds the scheme's own country must agree with
 /// the row's — anything else gets no prevention key.
+///
+/// The `bool` is issue 470's fold flag: the key is the number a GB lookalike
+/// (`SCO55775`) was meant to be, not the literal's own characters. Such a key
+/// never enters `canon_of` and never binds on its own: a folded mention binds
+/// only to an owner its names match, and a folded row owns the key only for
+/// mentions that pass that name gate (see `MentionResolver::folded`).
 fn resolver_canon_key(
-    canon_key: Option<fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>>,
+    canon_key: Option<fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>>,
     country: Option<&str>,
     kind: &str,
     value: &str,
-) -> Option<(String, &'static str, String)> {
+) -> Option<((String, &'static str, String), bool)> {
     let f = canon_key?;
     let c = country?;
     let c = register_jurisdiction(if c == "EL" { "GR" } else { c });
-    let (scheme, key, e1) = f(Some(c), kind, value)?;
+    let (scheme, key, e1, folded) = f(Some(c), kind, value)?;
     if !e1 {
         return None;
     }
     if kind == "vat" && !scheme.starts_with(c) {
         return None;
     }
-    Some((c.to_owned(), scheme, key))
+    Some(((c.to_owned(), scheme, key), folded))
 }
 
 /// One notice's grouping identity, as written to the on-disk plan (issue 59).
@@ -12009,7 +12088,7 @@ impl Db {
     /// (denied by the merge job's stack) must not capture new mentions.
     pub async fn mention_resolver(
         &self,
-        canon_key: Option<fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>>,
+        canon_key: Option<fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>>,
         consortium: Option<fn(&str) -> bool>,
         anchors: Option<fn(&str) -> Vec<(&'static str, String)>>,
         norm: Option<fn(&str) -> String>,
@@ -12044,6 +12123,8 @@ impl Db {
         // published evidence, overwhelmingly the same publisher repeating it.
         let withheld = withheld_identifier_orgs(&conn).await?;
         let mut withheld_keys: HashMap<(String, &'static str, String), Vec<i64>> = HashMap::new();
+        // Issue 470: rows whose literal reaches its key only through the fold.
+        let mut folded: HashMap<(String, &'static str, String), Vec<i64>> = HashMap::new();
         let mut rows = conn
             .query(
                 "SELECT id, country, identifier_kind, identifier FROM organizations
@@ -12056,12 +12137,14 @@ impl Db {
             let country = opt_text_of(&row, 1);
             let kind = text(&row, 2);
             let value = text(&row, 3);
+            let keyed = resolver_canon_key(canon_key, country.as_deref(), &kind, &value);
             if withheld.contains(&id) {
-                if let Some(ck) = resolver_canon_key(canon_key, country.as_deref(), &kind, &value) {
+                if let Some((ck, _)) = keyed {
                     withheld_keys.entry(ck).or_default().push(id);
                 }
-            } else if let Some(ck) =
-                resolver_canon_key(canon_key, country.as_deref(), &kind, &value)
+            } else if let Some((ck, true)) = keyed {
+                folded.entry(ck).or_default().push(id);
+            } else if let Some((ck, false)) = keyed
                 && !poisoned.contains(&ck)
             {
                 if canon_of.remove(&ck).is_some() {
@@ -12075,13 +12158,15 @@ impl Db {
         drop(rows);
         // A key two unreviewed owners already poison binds nobody, which is
         // stricter than guarding it; every other withheld key is guarded, its
-        // one unreviewed owner (if any) beside the withheld ones.
+        // one unreviewed owner (if any) beside the withheld ones — and its
+        // folded rows (issue 470), which a guarded key reaches by name too.
         let mut guarded: HashMap<(String, &'static str, String), Vec<i64>> = HashMap::new();
         for (ck, mut owners) in withheld_keys {
             if poisoned.contains(&ck) {
                 continue;
             }
             owners.extend(canon_of.remove(&ck));
+            owners.extend(folded.remove(&ck).unwrap_or_default());
             owners.sort_unstable();
             guarded.insert(ck, owners);
         }
@@ -12114,11 +12199,23 @@ impl Db {
             let Some(target) = rekey_target(&org_of, &rekeyed, triple) else { continue };
             aliased += 1;
             let (c, kind, wrong) = triple;
-            if let Some(ck) = resolver_canon_key(canon_key, c.as_deref(), kind, wrong)
+            // Issue 470: a lookalike re-keyed onto the number its own fold
+            // proposes guards nothing — that key is the right number, and
+            // guarding it would put the entity's own spellings behind a name
+            // match. Its other spellings are folded mentions and reach the
+            // entity by name anyway.
+            let onto_its_fold = |ck: &(String, &'static str, String)| {
+                rekeyed.get(triple).is_some_and(|applied| {
+                    resolver_canon_key(canon_key, c.as_deref(), kind, applied).is_some_and(|(right, _)| right == *ck)
+                })
+            };
+            if let Some((ck, wrong_folded)) = resolver_canon_key(canon_key, c.as_deref(), kind, wrong)
                 && !poisoned.contains(&ck)
+                && !(wrong_folded && onto_its_fold(&ck))
             {
                 let mut owners = guarded.remove(&ck).unwrap_or_default();
                 owners.extend(canon_of.remove(&ck));
+                owners.extend(folded.remove(&ck).unwrap_or_default());
                 owners.push(target);
                 owners.sort_unstable();
                 owners.dedup();
@@ -12130,9 +12227,13 @@ impl Db {
         // whether the verdicts were in force for it.
         self.log_diag(&format!(
             "[issue 452] {} org(s) withheld by a wrong-number verdict; {} canonical key(s) bind \
-             only on a name match; {aliased} re-keyed wrong number(s) aliased to their org (issue 453)",
+             only on a name match; {aliased} re-keyed wrong number(s) aliased to their org (issue 453); \
+             {} canonical key(s) carried through the GB O/0 fold by {} row(s), reached only by name \
+             (issue 470)",
             withheld.len(),
-            guarded.len()
+            guarded.len(),
+            folded.len(),
+            folded.values().map(Vec::len).sum::<usize>()
         ));
         // Issue 318, panel round 1: the wall's cost claim was "one indexed
         // seek", and that is true only in the STEADY state.
@@ -12197,6 +12298,9 @@ impl Db {
             guarded,
             guarded_bound: 0,
             guarded_refused: 0,
+            folded,
+            folded_bound: 0,
+            folded_refused: 0,
             rekeyed,
             canon_key,
             consortium,
@@ -12369,7 +12473,7 @@ impl Db {
             return Ok(None);
         }
         let Some(raw) = m.raw_identifier.as_deref() else { return Ok(None) };
-        let Some(("GB:ppon", ppon, true)) = (rules.mention_key)(m.country.as_deref(), raw) else {
+        let Some(("GB:ppon", ppon, true, _)) = (rules.mention_key)(m.country.as_deref(), raw) else {
             return Ok(None);
         };
         let target = alias.alias_of.get(&ppon).cloned();
@@ -12702,8 +12806,9 @@ impl Db {
         // asked nothing, rather than leaving that to a missing line.
         self.log_diag(&format!(
             "[issue 452] guarded canonical keys: {} mention(s) bound to the owner their name \
-             matched, {} matched no owner (or several) and minted",
-            resolver.guarded_bound, resolver.guarded_refused
+             matched, {} matched no owner (or several) and minted; [issue 470] folded keys: {} \
+             mention(s) bound by name, {} matched no owner (or several) and minted",
+            resolver.guarded_bound, resolver.guarded_refused, resolver.folded_bound, resolver.folded_refused
         ));
         if resolver.created_any {
             let conn = self.conn().await;
@@ -12781,9 +12886,14 @@ impl Db {
                         &id.kind,
                         &id.value,
                     );
+                    // Issue 470: the mention's OWN literal needed the GB O/0
+                    // fold (`GBCOHSCO55775`), so its key proposes a number the
+                    // literal does not spell.
+                    let mention_folded = canon.as_ref().is_some_and(|(_, folded)| *folded);
+                    let canon = canon.map(|(ck, _)| ck);
                     let vetoed = resolver.consortium.is_some_and(|f| f(&m.name));
-                    let canon_hit = match (&canon, vetoed) {
-                        (Some(ck), false) if !resolver.poisoned.contains(ck) => {
+                    let canon_hit = match (&canon, vetoed, mention_folded) {
+                        (Some(ck), false, false) if !resolver.poisoned.contains(ck) => {
                             resolver.canon_of.get(ck).copied()
                         }
                         _ => None,
@@ -12797,9 +12907,29 @@ impl Db {
                     // matching: no bind, and the mint below joins the owners.
                     // Never cached (the anchor bind's rule): a repeat of the
                     // same spelling re-earns the bind with its own name.
-                    let guarded_hit = match canon.as_ref().and_then(|ck| resolver.guarded.get(ck)).cloned() {
+                    //
+                    // Issue 470: a FOLDED mention takes the same path, never
+                    // `canon_of` on the key alone. Its owners are the key's
+                    // `canon_of` owner and the rows that reached the key
+                    // through the fold themselves; a poisoned key binds it to
+                    // nobody, as it binds everybody else.
+                    let gated = match canon.as_ref() {
                         None => None,
-                        Some(owners) => {
+                        Some(ck) => match resolver.guarded.get(ck) {
+                            Some(owners) => Some((owners.clone(), false)),
+                            None if mention_folded && !resolver.poisoned.contains(ck) => {
+                                let mut owners = resolver.folded.get(ck).cloned().unwrap_or_default();
+                                owners.extend(resolver.canon_of.get(ck).copied());
+                                owners.sort_unstable();
+                                owners.dedup();
+                                (!owners.is_empty()).then_some((owners, true))
+                            }
+                            None => None,
+                        },
+                    };
+                    let guarded_hit = match gated {
+                        None => None,
+                        Some((owners, by_fold)) => {
                             let mut matched: Vec<i64> = Vec::new();
                             if let (false, Some(norm_fn)) = (vetoed, resolver.norm) {
                                 let wanted: Vec<String> = std::iter::once(m.name.as_str())
@@ -12827,12 +12957,23 @@ impl Db {
                                     }
                                 }
                             }
-                            if let [owner] = matched[..] {
-                                resolver.guarded_bound += 1;
-                                Some(owner)
-                            } else {
-                                resolver.guarded_refused += 1;
-                                None
+                            match (&matched[..], by_fold) {
+                                ([owner], false) => {
+                                    resolver.guarded_bound += 1;
+                                    Some(*owner)
+                                }
+                                ([owner], true) => {
+                                    resolver.folded_bound += 1;
+                                    Some(*owner)
+                                }
+                                (_, false) => {
+                                    resolver.guarded_refused += 1;
+                                    None
+                                }
+                                (_, true) => {
+                                    resolver.folded_refused += 1;
+                                    None
+                                }
                             }
                         }
                     };
@@ -13084,7 +13225,8 @@ impl Db {
                         _ => None,
                     };
                     if let Some(org_id) = guarded_hit {
-                        // Issue 452: name-conditional, so never cached.
+                        // Issue 452 (and 470's folded binds): name-conditional,
+                        // so never cached.
                         (org_id, false)
                     } else if let Some(org_id) = canon_hit.or(anchor_hit) {
                         // Register the raw triple on CANON binds only, so
@@ -13147,9 +13289,13 @@ impl Db {
                             // key's standing owner; future mentions must
                             // exact-match, and the merge job arbitrates). A
                             // guarded key is claimed by nobody: the mint joins
-                            // its owners, found again by name (issue 452).
+                            // its owners, found again by name (issue 452). A
+                            // folded mint claims nothing either: it joins the
+                            // key's folded rows, reached by name (issue 470).
                             if let Some(owners) = resolver.guarded.get_mut(&ck) {
                                 owners.push(org_id);
+                            } else if mention_folded {
+                                resolver.folded.entry(ck).or_default().push(org_id);
                             } else if resolver.canon_of.remove(&ck).is_some() {
                                 resolver.poisoned.insert(ck);
                             } else if !resolver.poisoned.contains(&ck) {
@@ -14410,6 +14556,10 @@ impl Db {
     /// 3. consortium veto — any member NAME hitting the injected consortium
     ///    lexicon (groupement/UTE class: the grouping publishes its lead
     ///    member's id; merging them is wrong) routes the group out.
+    /// 3b. fold gate (issue 470) — a member keyed only through the GB O/0
+    ///    fold is EXCLUDED unless one of its names agrees with one of its
+    ///    group's (`altid_keys_agree`); excluded groups are listed for a 362
+    ///    verdict.
     /// 4. legal-form veto — two members carrying DIFFERENT legal-form
     ///    families (§3.2 rule 7, the Organschaft signature).
     /// 5. VAT-group wall (§3.2 rule 1, mention-evidence form) — members
@@ -14417,7 +14567,9 @@ impl Db {
     ///    share a group VAT, not an identity (the SK/NL/HU group-id class
     ///    that has no syntactic marker).
     ///
-    /// Survivor: non-provisional over provisional, then min id (the 234
+    /// Survivor: non-provisional over provisional, then a row whose literal is
+    /// the register's own spelling over a folded lookalike (issue 470: the
+    /// merged org serves its survivor's identifier), then min id (the 234
     /// precedent; R2 groups share one country, so the design's
     /// country-validates clause is R3's concern). Every merge writes an
     /// `org_merge_log` row (§6). Dry-run counts everything and writes
@@ -14442,6 +14594,8 @@ impl Db {
             country: Option<String>,
             kind: String,
             provisional: bool,
+            /// Issue 470: the key is the GB O/0 fold's, not the literal's.
+            folded: bool,
         }
         let mut groups: std::collections::HashMap<(String, &'static str, String), Vec<Member>> =
             std::collections::HashMap::new();
@@ -14474,7 +14628,7 @@ impl Db {
                     let country = opt_text_of(&row, 1);
                     let kind = opt_text_of(&row, 2).unwrap_or_else(|| "national".into());
                     let literal = text(&row, 3);
-                    let Some((scheme, key, e1)) =
+                    let Some((scheme, key, e1, folded)) =
                         (args.key)(country.as_deref(), &kind, &literal)
                     else {
                         continue;
@@ -14490,18 +14644,35 @@ impl Db {
                         continue;
                     }
                     report.keyed += 1;
+                    report.keyed_folded += u64::from(folded);
                     groups.entry((c.to_owned(), scheme, key)).or_default().push(Member {
                         id,
                         literal,
                         country,
                         kind,
                         provisional: int(&row, 4) != 0,
+                        folded,
                     });
                 }
                 if !any {
                     break;
                 }
             }
+        }
+        // Issue 470: every key a folded row stands on, singletons included —
+        // the fold's whole reach, for the dry plan's `fold_listing`.
+        #[allow(clippy::type_complexity)]
+        let mut fold_keys: Vec<((String, &'static str, String), Vec<(i64, String, String)>)> = Vec::new();
+        if args.dry_run {
+            for (gk, members) in &groups {
+                if members.iter().any(|m| m.folded) {
+                    fold_keys.push((
+                        gk.clone(),
+                        members.iter().map(|m| (m.id, m.kind.clone(), m.literal.clone())).collect(),
+                    ));
+                }
+            }
+            fold_keys.sort_by(|a, b| a.0.cmp(&b.0));
         }
         groups.retain(|_, m| m.len() >= 2);
         report.groups = groups.len() as u64;
@@ -14546,7 +14717,7 @@ impl Db {
             // is the old whole-group deny.
             let mut members = members;
             let ids: Vec<i64> = members.iter().map(|m| m.id).collect();
-            let meta = self.org_health_meta(&ids).await?;
+            let mut meta = self.org_health_meta(&ids).await?;
             let flagged: std::collections::HashSet<i64> = meta
                 .iter()
                 .filter(|m| (args.consortium)(&m.4))
@@ -14558,6 +14729,91 @@ impl Db {
                 if members.len() < 2 {
                     report.denied_consortium += 1;
                     continue 'group;
+                }
+            }
+            // 3b. The fold gate (issue 470), MEMBER-scoped and ahead of the
+            // legal-form veto, so a lookalike the names refuse neither merges
+            // nor vetoes the rest of its group. A folded member's key is the
+            // number its literal was MEANT to be, which in 1 of 16 measured
+            // pairs was another body's number sharing a core word (the
+            // University of Aberdeen's charity number typed `SCO13683`, beside
+            // Net Zero Technology Centre's `SC013683`) — a pair the name rule
+            // below would pass. So it stays only when one of its names, head
+            // or satellite, agrees with one of the group's under
+            // `altid_keys_agree`: with the unfolded members', or — a group of
+            // lookalikes only — the survivor's. A HIGH merge verdict on exactly
+            // this member set stands in for the gate, as it does for the name
+            // rule; the group is listed for one when the gate excludes.
+            let has_folded = members.iter().any(|m| m.folded);
+            let reviewed = if has_folded {
+                let mut live: Vec<i64> = members.iter().map(|m| m.id).collect();
+                live.sort_unstable();
+                self.merge_verdict_for(&gk.0, gk.1, &gk.2).await?.is_some_and(|v| {
+                    v.action == "merge" && v.confidence == "high" && !v.applied && v.members == live
+                })
+            } else {
+                false
+            };
+            if has_folded && !reviewed {
+                let mut anchors: Vec<i64> = members.iter().filter(|m| !m.folded).map(|m| m.id).collect();
+                if anchors.is_empty() {
+                    anchors.push(
+                        members.iter().min_by_key(|m| (m.provisional, m.folded, m.id)).expect("non-empty group").id,
+                    );
+                }
+                let mut anchor_keys: Vec<String> = Vec::new();
+                for id in &anchors {
+                    for name in self.org_all_names(*id).await? {
+                        let k = (args.name_key)(&name);
+                        if !k.is_empty() {
+                            anchor_keys.push(k);
+                        }
+                    }
+                }
+                let mut refused: Vec<i64> = Vec::new();
+                for m in members.iter().filter(|m| m.folded && !anchors.contains(&m.id)) {
+                    let agrees = self.org_all_names(m.id).await?.iter().any(|a| {
+                        let ka = (args.name_key)(a);
+                        !ka.is_empty() && anchor_keys.iter().any(|kb| (args.names_agree)(&ka, kb))
+                    });
+                    if !agrees {
+                        refused.push(m.id);
+                    }
+                }
+                if !refused.is_empty() {
+                    report.fold_excluded += refused.len() as u64;
+                    if args.dry_run {
+                        if report.denied_fold_listing.len() < R2_PLAN_LISTING_CAP {
+                            report.denied_fold_listing.push((
+                                gk.0.clone(),
+                                gk.1,
+                                gk.2.clone(),
+                                {
+                                    let name_of: std::collections::HashMap<i64, &str> =
+                                        meta.iter().map(|m| (m.0, m.4.as_str())).collect();
+                                    members
+                                        .iter()
+                                        .map(|m| {
+                                            (
+                                                m.id,
+                                                m.kind.clone(),
+                                                m.literal.clone(),
+                                                name_of.get(&m.id).map(|n| (*n).to_owned()).unwrap_or_default(),
+                                            )
+                                        })
+                                        .collect()
+                                },
+                            ));
+                        } else {
+                            report.denied_fold_listing_truncated = true;
+                        }
+                    }
+                    members.retain(|m| !refused.contains(&m.id));
+                    meta.retain(|m| !refused.contains(&m.0));
+                    if members.len() < 2 {
+                        report.denied_fold += 1;
+                        continue 'group;
+                    }
                 }
             }
             // 4. Legal-form veto, still GROUP-atomic: a family conflict is
@@ -14773,7 +15029,7 @@ impl Db {
                         .or_else(|| {
                             members.iter().find(|m| m.id == org).and_then(|m| m.country.as_deref())
                         });
-                    if let Some((scheme, key, _)) = (args.key)(country, kind, &raw) {
+                    if let Some((scheme, key, _, _)) = (args.key)(country, kind, &raw) {
                         // The group's own key is exculpatory-looking noise,
                         // never evidence (catch (a) above).
                         if scheme == gk.1 && key == gk.2 {
@@ -14810,7 +15066,7 @@ impl Db {
             if args.dry_run {
                 let keep = members
                     .iter()
-                    .min_by_key(|m| (m.provisional, m.id))
+                    .min_by_key(|m| (m.provisional, m.folded, m.id))
                     .expect("non-empty group")
                     .id;
                 for m in &members {
@@ -14921,6 +15177,25 @@ impl Db {
             }
         }
         if args.dry_run {
+            // Issue 470: the fold's whole reach, named. One `org_health_meta`
+            // read for the listed rows alone.
+            report.fold_listing_truncated = fold_keys.len() > R2_PLAN_LISTING_CAP;
+            fold_keys.truncate(R2_PLAN_LISTING_CAP);
+            let ids: Vec<i64> = fold_keys.iter().flat_map(|(_, rows)| rows.iter().map(|r| r.0)).collect();
+            let name_of: std::collections::HashMap<i64, String> =
+                self.org_health_meta(&ids).await?.into_iter().map(|m| (m.0, m.4)).collect();
+            report.fold_listing = fold_keys
+                .into_iter()
+                .map(|((country, scheme, key), rows)| {
+                    let rows = rows
+                        .into_iter()
+                        .map(|(id, kind, literal)| {
+                            (id, kind, literal, name_of.get(&id).cloned().unwrap_or_default())
+                        })
+                        .collect();
+                    (country, scheme, key, rows)
+                })
+                .collect();
             return Ok(report);
         }
 
@@ -14947,10 +15222,12 @@ impl Db {
                     if report.merged_groups >= cap {
                         break;
                     }
-                    // Survivor: non-provisional first, then min id.
+                    // Survivor: non-provisional first, then the register's
+                    // own spelling over a folded lookalike (issue 470), then
+                    // min id — the dry plan's rank exactly.
                     let keep = members
                         .iter()
-                        .min_by_key(|m| (m.provisional, m.id))
+                        .min_by_key(|m| (m.provisional, m.folded, m.id))
                         .expect("non-empty group")
                         .id;
                     let keep_literal = &members
@@ -17319,7 +17596,11 @@ impl Db {
                     let Some(country) = opt_text_of(&row, 1) else { continue };
                     let kind = opt_text_of(&row, 2).unwrap_or_else(|| "national".into());
                     let literal = text(&row, 3);
-                    if let Some((scheme, key, true)) =
+                    // Issue 470: a row that reaches its key only through the
+                    // GB O/0 fold is never a rescue target — R3 corroborates on
+                    // N2 names against ONE owner, and a lookalike's row is no
+                    // register owner of the number it proposes.
+                    if let Some((scheme, key, true, false)) =
                         (args.key)(Some(&country), &kind, &literal)
                     {
                         // R2's vat scheme/row-country agreement check
@@ -17353,7 +17634,7 @@ impl Db {
             conn: &Connection,
             org: i64,
             org_country: Option<&str>,
-            key_fn: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>,
+            key_fn: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>,
             pair: (&'static str, &str),
         ) -> turso::Result<std::collections::HashMap<&'static str, BTreeSet<String>>> {
             let mut out: std::collections::HashMap<&'static str, BTreeSet<String>> =
@@ -17372,7 +17653,7 @@ impl Db {
                     raw.len() >= 2 && raw.as_bytes()[..2].iter().all(u8::is_ascii_alphabetic);
                 let kind = if vat_shaped { "vat" } else { "national" };
                 let country = mcountry.as_deref().or(org_country);
-                if let Some((scheme, key, _)) = key_fn(country, kind, &raw) {
+                if let Some((scheme, key, _, _)) = key_fn(country, kind, &raw) {
                     if scheme == pair.0 && key == pair.1 {
                         continue;
                     }
@@ -17946,8 +18227,11 @@ impl Db {
                     } else {
                         let scheme = scheme.as_deref().unwrap_or("");
                         match (args.pair_key)(scheme, &value, country.as_deref()) {
-                            Some((s, k, true)) if s == series => Side::E1(k),
-                            Some((s, _, false)) if s == series => Side::Pad,
+                            // Issue 470: a folded company number pairs like
+                            // any other — the pair merges only on corroborating
+                            // names (step 6) or a reviewer's HIGH verdict.
+                            Some((s, k, true, _)) if s == series => Side::E1(k),
+                            Some((s, _, false, _)) if s == series => Side::Pad,
                             _ => {
                                 // The normaliser inside the pair key applies the
                                 // v2 gate and returns nothing for a condemned
@@ -18081,7 +18365,11 @@ impl Db {
                     }
                     let kind = opt_text_of(&row, 2).unwrap_or_else(|| "national".into());
                     let literal = text(&row, 3);
-                    let Some((scheme, key, true)) = (args.key)(Some(&country), &kind, &literal)
+                    // Issue 470: a folded row owns its key here too. Beside
+                    // the register spelling's row it makes the key
+                    // `multi_target` (refused); alone it is a target the
+                    // names corroboration (step 6) must still admit.
+                    let Some((scheme, key, true, _)) = (args.key)(Some(&country), &kind, &literal)
                     else {
                         continue;
                     };
@@ -18120,7 +18408,7 @@ impl Db {
             conn: &Connection,
             org: i64,
             org_country: &str,
-            mention_key: fn(Option<&str>, &str) -> Option<(&'static str, String, bool)>,
+            mention_key: fn(Option<&str>, &str) -> Option<(&'static str, String, bool, bool)>,
         ) -> turso::Result<(Vec<(&'static str, String)>, Vec<(i64, String)>)> {
             let (mut keys, mut names) = (Vec::new(), Vec::new());
             let mut rows = conn
@@ -18137,7 +18425,7 @@ impl Db {
                 names.push((int(&row, 0), opt_text_of(&row, 1).unwrap_or_default()));
                 let Some(raw) = opt_text_of(&row, 3) else { continue };
                 let mcountry = opt_text_of(&row, 2);
-                if let Some((scheme, key, _)) =
+                if let Some((scheme, key, _, _)) =
                     mention_key(Some(mcountry.as_deref().unwrap_or(org_country)), &raw)
                 {
                     keys.push((scheme, key));
@@ -20127,11 +20415,16 @@ impl Db {
             // the reviewer's text: `GB-COH-08004712` must not become
             // `GBCOHGBCOH08004712` on a move.
             let c = (country != "").then_some(country.as_str());
-            let (Some((rs, rk, true)), "GB") = ((args.key)(c, &kind, &right), country.as_str()) else {
+            let (Some((rs, rk, true, _)), "GB") = ((args.key)(c, &kind, &right), country.as_str()) else {
                 report.unkeyed += 1;
                 continue;
             };
-            if let Some((ws, wk, _)) = (args.key)(c, &kind, &wrong)
+            // Issue 470: a lookalike whose fold IS the right number
+            // (`GBCOHIPO30808` → `IP030808`) is not the same key: its literal
+            // spells nothing a reader can look up, which is what the verdict
+            // corrects. Only the register's own spelling of the right number
+            // makes the verdict a no-op.
+            if let Some((ws, wk, _, false)) = (args.key)(c, &kind, &wrong)
                 && (ws, wk.as_str()) == (rs, rk.as_str())
             {
                 report.same_key += 1;
@@ -20174,7 +20467,11 @@ impl Db {
                     let country = opt_text_of(&row, 1);
                     let kind = opt_text_of(&row, 2).unwrap_or_else(|| "national".into());
                     let literal = text(&row, 3);
-                    if let Some((scheme, key, true)) = (args.key)(country.as_deref(), &kind, &literal)
+                    // Issue 470: a folded row owns the right number here too.
+                    // Beside the register spelling's row it makes the
+                    // candidate `multi-target` (refused); alone it is a merge
+                    // target the names test below must admit — never a move.
+                    if let Some((scheme, key, true, _)) = (args.key)(country.as_deref(), &kind, &literal)
                     {
                         let k = (scheme, key);
                         if wanted.contains(&k) {
@@ -20204,7 +20501,10 @@ impl Db {
         while let Some(row) = rows.next().await? {
             let (identifier, kind, country) = (text(&row, 0), text(&row, 1), text(&row, 2));
             let c = (!country.is_empty()).then_some(country.as_str());
-            if let Some((scheme, key, true)) = (args.key)(c, &kind, &identifier) {
+            // Issue 470: a flagged LOOKALIKE flags its literal, not the number
+            // its fold proposes — as a rule the right one, which the re-key of
+            // that very verdict moves onto (452's three withheld rows).
+            if let Some((scheme, key, true, false)) = (args.key)(c, &kind, &identifier) {
                 flagged.insert((scheme, key));
             }
         }
@@ -22897,7 +23197,7 @@ impl Db {
     /// keep true.
     pub async fn duplicate_identity_census(
         &self,
-        key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>,
+        key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool, bool)>,
         n3: fn(&str) -> String,
         stoplist_cap: usize,
         cap: usize,

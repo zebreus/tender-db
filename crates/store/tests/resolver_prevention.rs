@@ -7,16 +7,16 @@
 
 use store::{Identifier, Mention};
 
-fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool)> {
+fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool, bool)> {
     let digits: String = value.chars().filter(char::is_ascii_alphanumeric).collect();
     let body = if kind == "vat" { digits.get(2..)?.to_owned() } else { digits };
     match (country?, body.len()) {
-        ("FI", 8) => Some(("FI:ytunnus", body, true)),
-        ("FR", 9) => Some(("FR:siren", body, true)),
-        ("FR", 14) => Some(("FR:siren", body[..9].to_owned(), true)),
+        ("FI", 8) => Some(("FI:ytunnus", body, true, false)),
+        ("FR", 9) => Some(("FR:siren", body, true, false)),
+        ("FR", 14) => Some(("FR:siren", body[..9].to_owned(), true, false)),
         // The pad analog: 7-digit CZ keys E2 — never unifies at mint.
-        ("CZ", 8) => Some(("CZ:ico", body, true)),
-        ("CZ", 7) => Some(("CZ:ico", format!("0{body}"), false)),
+        ("CZ", 8) => Some(("CZ:ico", body, true, false)),
+        ("CZ", 7) => Some(("CZ:ico", format!("0{body}"), false, false)),
         _ => None,
     }
 }

@@ -5949,7 +5949,8 @@ fn buyer_tokens_of(mentions: &[store::Mention]) -> Vec<u32> {
 ///   `x:PL:nip:…` for a NIP written bare or as a `PL…` VAT; `x:SE:orgnr:…` for the
 ///   organisationsnummer and its `SE…01` VAT), else the raw `country:kind:value`. Equal
 ///   raw identifiers always give equal E1 keys, so the substitution loses no overlap.
-///   E2 (pad-derived) keys are never used: padding has collided across entities.
+///   E2 (pad-derived) keys are never used: padding has collided across entities. Nor
+///   are keys the GB O/0 fold proposed (issue 470): one fold in sixteen named two bodies.
 /// - **Name**: `n2:<register jurisdiction>:<match_norm, Latin diacritics folded>`, for
 ///   the head name AND every labelled language variant. The register jurisdiction puts
 ///   a buyer writing `RE` one day and `FR` the next under one country (issue 358, as
@@ -5960,8 +5961,10 @@ fn buyer_tokens_of(mentions: &[store::Mention]) -> Vec<u32> {
 fn buyer_guard_tokens(m: &store::Mention) -> Vec<String> {
     let mut out = Vec::with_capacity(2 + m.variants.len());
     if let Some(id) = &m.identifier {
+        // Issue 470: a key the GB O/0 fold proposed is no evidence on its own,
+        // here as everywhere: a lookalike buyer keeps its raw literal's token.
         let e1 = crate::crosswalk::canonical_key(id.country.as_deref(), &id.kind, &id.value)
-            .filter(|k| k.tier == crate::crosswalk::Tier::E1);
+            .filter(|k| k.tier == crate::crosswalk::Tier::E1 && !k.folded);
         out.push(match e1 {
             Some(k) => format!("x:{}:{}", k.scheme, k.key),
             None => format!("{}:{}:{}", id.country.as_deref().unwrap_or(""), id.kind, id.value),

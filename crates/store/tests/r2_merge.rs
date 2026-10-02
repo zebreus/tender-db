@@ -7,10 +7,11 @@
 
 use store::turso::Value;
 
-fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool)> {
+fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool, bool)> {
     // A miniature crosswalk: FI vat/national 8-digit unify; SK vat/national
     // 10-digit unify (dic); SK 8-digit is its own scheme (ico); FR 14-digit
-    // truncates to 9. Everything else: no key.
+    // truncates to 9; GB company numbers with issue 470's O/0 fold (`gb_coh`).
+    // Everything else: no key.
     let norm: String =
         value.chars().filter(char::is_ascii_alphanumeric).map(|c| c.to_ascii_uppercase()).collect();
     let (cc, body) = if kind == "vat" {
@@ -18,15 +19,69 @@ fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, 
     } else {
         (country?.to_owned(), norm)
     };
+    if cc == "GB" && kind != "vat" {
+        return gb_coh(&body);
+    }
     let digits = body.bytes().all(|b| b.is_ascii_digit());
     match (cc.as_str(), body.len()) {
-        ("FI", 8) if digits => Some(("FI:ytunnus", body, true)),
-        ("SK", 10) if digits => Some(("SK:dic", body, true)),
-        ("SK", 8) if digits && kind != "vat" => Some(("SK:ico", body, true)),
-        ("FR", 9) if digits => Some(("FR:siren", body, true)),
-        ("FR", 14) if digits => Some(("FR:siren", body[..9].to_owned(), true)),
+        ("FI", 8) if digits => Some(("FI:ytunnus", body, true, false)),
+        ("SK", 10) if digits => Some(("SK:dic", body, true, false)),
+        ("SK", 8) if digits && kind != "vat" => Some(("SK:ico", body, true, false)),
+        ("FR", 9) if digits => Some(("FR:siren", body, true, false)),
+        ("FR", 14) if digits => Some(("FR:siren", body[..9].to_owned(), true, false)),
         _ => None,
     }
+}
+
+/// `crosswalk::canonical_key`'s GB company-number arm in miniature (issue
+/// 470): eight digits, two letters and six digits, or `R` and seven digits, E1;
+/// an O where the format has a digit (or a zero for the O of `OC`) folds, and
+/// the key says so.
+fn gb_coh(body: &str) -> Option<(&'static str, String, bool, bool)> {
+    let coh = body.strip_prefix("GBCOH").unwrap_or(body);
+    if coh.len() != 8 {
+        return None;
+    }
+    let orig = coh.as_bytes();
+    let mut out = orig.to_vec();
+    for c in &mut out[2..] {
+        if *c == b'O' {
+            *c = b'0';
+        }
+    }
+    let zero_like = |c: u8| c.is_ascii_digit() || c == b'O';
+    if orig[0] == b'O' && zero_like(orig[1]) {
+        out[0] = b'0';
+    }
+    if orig[1] == b'O' && zero_like(orig[0]) {
+        out[1] = b'0';
+    }
+    if orig[0] == b'0' && orig[1] == b'C' {
+        out[0] = b'O';
+    }
+    let folded = out != orig;
+    let k = String::from_utf8(out).unwrap();
+    let digits = |s: &str| s.bytes().all(|b| b.is_ascii_digit());
+    let shaped = digits(&k)
+        || (k[..2].bytes().all(|b| b.is_ascii_alphabetic()) && digits(&k[2..]))
+        || (k.starts_with('R') && digits(&k[1..]));
+    shaped.then(|| ("GB:coh", k, true, folded))
+}
+
+/// The altid name key in miniature: lower-cased word tokens, GB `Ltd`/`Limited`
+/// folded to one marker, `(…)` annotations cut. Two keys agree when equal.
+fn name_key(name: &str) -> String {
+    let cut = name.split('(').next().unwrap_or(name);
+    cut.to_lowercase()
+        .split(|c: char| !c.is_alphanumeric())
+        .filter(|t| !t.is_empty())
+        .map(|t| if t == "ltd" || t == "limited" { "§ltd" } else { t })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn names_agree(a: &str, b: &str) -> bool {
+    a == b
 }
 
 fn condemns(_c: Option<&str>, _k: &str, v: &str) -> bool {
@@ -173,6 +228,8 @@ async fn count(conn: &store::turso::Connection, sql: &str) -> i64 {
 fn args(dry_run: bool, expect_groups: Option<u64>) -> store::R2MergeArgs<'static> {
     store::R2MergeArgs {
         key,
+        name_key,
+        names_agree,
         condemns,
         consortium,
         legal_form,
@@ -328,4 +385,120 @@ async fn the_dry_plan_is_listed_in_full_not_just_sampled() {
     assert!(w.plan_listing.is_empty(), "a wet run lists nothing");
     assert!(!w.plan_listing_truncated);
     let _ = count(&conn, "SELECT COUNT(*) FROM organizations").await;
+}
+
+/// Issue 470: a GB company number typed with a letter O for a zero (or a zero
+/// for the O of `OC`) keys to the number meant, MARKED folded, and R2 merges a
+/// folded member only when one of its names agrees with its group's. The
+/// Galliford-shaped pair merges INTO the register spelling's org although the
+/// typo org has the lower id (survivor rank `(provisional, folded, id)`, dry
+/// and wet alike). The Aberdeen/Net-Zero-shaped pair — a charity number typed
+/// `SCO…` beside a different body's company number, names sharing the core
+/// word `centre` that R2's name rule would pass — stays apart and is listed
+/// for a 362 verdict, which then stands in for the gate. The `R0` series keys
+/// as itself (the `GBCOH`/bare pair merges), and a folded row with no twin
+/// (`OO688424`, E1 as itself before the fold) is visible in the dry plan's
+/// fold listing.
+#[tokio::test]
+async fn a_fold_joined_r2_group_merges_agreeing_names_into_the_unfolded_literal() {
+    let path = "test-r2-merge-fold.db";
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    let db = store::Db::open(path).await.unwrap();
+    let conn = store::turso::Builder::new_local(path).build().await.unwrap().connect().unwrap();
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+    // (id, identifier, name): the typo ids are the LOWER ones, as on prod.
+    let orgs: &[(i64, &str, &str)] = &[
+        (1, "SCO55775", "Galliford Try Infrastructure Ltd"),
+        (2, "SC055775", "Galliford Try Infrastructure Ltd"),
+        (3, "SCO13683", "University of Aberdeen (via Centre for Energy Law)"),
+        (4, "GBCOHSC013683", "Net Zero Technology Centre Limited"),
+        (5, "OO688424", "Lone Lookalike Ltd"),
+        (6, "GBCOHR0000273", "H J Martin Limited"),
+        (7, "R0000273", "H J Martin Ltd"),
+        (8, "GBCOH0C301540", "KPMG LLP"),
+        (9, "OC301540", "KPMG LLP"),
+    ];
+    for (id, identifier, name) in orgs {
+        conn.execute(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, 'GB', 'national', ?, ?, ?, 0, 0)",
+            (
+                Value::Integer(*id),
+                Value::Text((*identifier).into()),
+                Value::Text((*name).into()),
+                Value::Text(name.to_lowercase()),
+            ),
+        )
+        .await
+        .unwrap();
+    }
+
+    let dry = db.match_org_identifiers_r2(args(true, None)).await.expect("dry");
+    assert_eq!(dry.keyed, 9);
+    assert_eq!(dry.keyed_folded, 4, "SCO55775, SCO13683, OO688424, GBCOH0C301540");
+    assert_eq!(dry.groups, 4, "SC055775, SC013683, R0000273, OC301540");
+    assert_eq!((dry.fold_excluded, dry.denied_fold), (1, 1), "Aberdeen's typo is refused by names");
+    assert_eq!(dry.plan_groups, 3, "Galliford, the R0 pair, KPMG");
+    let listed: Vec<(&str, Vec<i64>)> =
+        dry.denied_fold_listing.iter().map(|g| (g.2.as_str(), g.3.iter().map(|m| m.0).collect())).collect();
+    assert_eq!(listed, [("SC013683", vec![3, 4])], "listed whole, for a 362 verdict");
+    assert_eq!(dry.denied_fold_listing[0].3[0].3, "University of Aberdeen (via Centre for Energy Law)");
+    let reach: Vec<(&str, Vec<(i64, &str)>)> = dry
+        .fold_listing
+        .iter()
+        .map(|g| (g.2.as_str(), g.3.iter().map(|m| (m.0, m.2.as_str())).collect()))
+        .collect();
+    assert_eq!(
+        reach,
+        [
+            ("00688424", vec![(5, "OO688424")]),
+            ("OC301540", vec![(8, "GBCOH0C301540"), (9, "OC301540")]),
+            ("SC013683", vec![(3, "SCO13683"), (4, "GBCOHSC013683")]),
+            ("SC055775", vec![(1, "SCO55775"), (2, "SC055775")]),
+        ],
+        "every key the fold reaches, the lone re-keyed OO688424 among them"
+    );
+    assert!(!dry.fold_listing_truncated && !dry.denied_fold_listing_truncated);
+
+    let wet = db.match_org_identifiers_r2(args(false, Some(dry.plan_groups))).await.expect("wet");
+    assert_eq!((wet.merged_groups, wet.removed), (3, 3));
+    let survivors = "SELECT group_concat(id) FROM (SELECT id FROM organizations ORDER BY id)";
+    let mut rows = conn.query(survivors, ()).await.unwrap();
+    let row = rows.next().await.unwrap().unwrap();
+    assert_eq!(
+        row.get_value(0).unwrap(),
+        Value::Text("2,3,4,5,6,9".into()),
+        "a folded row never survives beside the register spelling, whatever the ids (the R0 pair, \
+         neither folded, keeps its lower id); Aberdeen and Net Zero stand apart"
+    );
+    drop(rows);
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM org_merge_log WHERE keep = 2 AND loser = 1 AND rule = 'r2'").await,
+        1,
+        "the typo merged INTO the register spelling"
+    );
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_merge_log WHERE keep = 9 AND loser = 8").await, 1);
+
+    // A reviewer reads the listed pair as one entity after all: a HIGH merge
+    // verdict on exactly the listed members stands in for the gate.
+    db.record_merge_verdicts(
+        "rev-470",
+        &[store::MergeVerdict {
+            country: "GB".into(),
+            scheme: "GB:coh".into(),
+            key: "SC013683".into(),
+            members: vec![3, 4],
+            action: "merge".into(),
+            rationale: "fixture".into(),
+            confidence: "high".into(),
+        }],
+        1,
+    )
+    .await
+    .unwrap();
+    let again = db.match_org_identifiers_r2(args(true, None)).await.expect("dry again");
+    assert_eq!((again.fold_excluded, again.admitted_verdict, again.plan_groups), (0, 1, 1));
+    assert!(again.denied_fold_listing.is_empty());
 }

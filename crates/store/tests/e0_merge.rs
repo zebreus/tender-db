@@ -7,7 +7,7 @@
 use store::turso::Value;
 
 /// A miniature cross-walk: FI 8-digit keys (so an FI pair is R2's, never E0's).
-fn arm(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool)> {
+fn arm(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool, bool)> {
     let norm: String =
         value.chars().filter(char::is_ascii_alphanumeric).map(|c| c.to_ascii_uppercase()).collect();
     let (cc, body) = if kind == "vat" {
@@ -16,19 +16,19 @@ fn arm(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, 
         (country?.to_owned(), norm)
     };
     match (cc.as_str(), body.len()) {
-        ("FI", 8) if body.bytes().all(|b| b.is_ascii_digit()) => Some(("FI:ytunnus", body, true)),
+        ("FI", 8) if body.bytes().all(|b| b.is_ascii_digit()) => Some(("FI:ytunnus", body, true, false)),
         _ => None,
     }
 }
 
 /// The E0 key, as `ingest::crosswalk::e0_key_flat` shapes it.
-fn e0_key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool)> {
+fn e0_key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool, bool)> {
     if arm(country, kind, value).is_some() {
         return None;
     }
     let norm: String =
         value.chars().filter(char::is_ascii_alphanumeric).map(|c| c.to_ascii_uppercase()).collect();
-    (!norm.is_empty()).then(|| ("E0", format!("{kind}:{norm}"), true))
+    (!norm.is_empty()).then(|| ("E0", format!("{kind}:{norm}"), true, false))
 }
 
 fn never_condemns(_c: Option<&str>, _k: &str, _v: &str) -> bool {
@@ -98,6 +98,8 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
 fn args(dry_run: bool, expect_groups: Option<u64>) -> store::R2MergeArgs<'static> {
     store::R2MergeArgs {
         key: e0_key,
+        name_key: |n| n.to_lowercase(),
+        names_agree: |a, b| a == b,
         condemns: never_condemns,
         consortium: no_consortium,
         legal_form: no_legal_form,

@@ -46,14 +46,26 @@ pub struct CanonKey {
     pub scheme: &'static str,
     pub key: String,
     pub tier: Tier,
+    /// Issue 470: the key is NOT the literal's own characters. A GB company
+    /// number typed with a letter O for a zero (`SCO55775`, `O6611251`), or a
+    /// zero for the O of `OC` (`0C301540`), keys to the number the register
+    /// format says was meant — which one entity in sixteen measured pairs was
+    /// not (the University of Aberdeen's charity number beside Net Zero
+    /// Technology Centre's company number). So a folded key never binds or
+    /// merges on the key alone: R2 merges a folded member only when its names
+    /// agree with its group's (`altid_keys_agree`), the resolver binds a folded
+    /// mention only to an owner its names match (452's guarded path), and
+    /// every other consumer of [`canonical_key_flat`] reads the flag. `false`
+    /// on every other arm.
+    pub folded: bool,
 }
 
 impl CanonKey {
     fn e1(scheme: &'static str, key: impl Into<String>) -> Option<Self> {
-        Some(CanonKey { scheme, key: key.into(), tier: Tier::E1 })
+        Some(CanonKey { scheme, key: key.into(), tier: Tier::E1, folded: false })
     }
     fn e2(scheme: &'static str, key: impl Into<String>) -> Option<Self> {
-        Some(CanonKey { scheme, key: key.into(), tier: Tier::E2 })
+        Some(CanonKey { scheme, key: key.into(), tier: Tier::E2, folded: false })
     }
 }
 
@@ -345,9 +357,19 @@ pub fn canonical_key(country: Option<&str>, kind: &str, value: &str) -> Option<C
         //
         // Companies House numbers are 8 characters: eight digits, or two
         // letters and six digits (`SC123456` Scotland, `NI…`, `OC…`, `SO…`,
-        // `NF…`, `FC…`, `GE…`, `IP…`, `RC…`). Both full forms are E1. A 6-7
-        // digit body is a lost leading zero and pads ⇒ E2, the CZ/BE
-        // precedent.
+        // `NF…`, `FC…`, `GE…`, `IP…`, `RC…`), or `R` and seven digits (the
+        // `R0` series: `R0000568` is NORTHERN BANK LIMITED, `R0000273` H.& J.
+        // MARTIN LIMITED — issue 470; two-letters-then-six refused it, so
+        // `GBCOHR0000273` and `R0000273` stood as two orgs). All three full
+        // forms are E1. A 6-7 digit body is a lost leading zero and pads ⇒
+        // E2, the CZ/BE precedent.
+        //
+        // An 8-character body with a letter O where the format has a digit,
+        // or a digit 0 for the O of `OC`, is FOLDED to the number meant
+        // ([`gb_coh_fold`], issue 470) and the key says so
+        // ([`CanonKey::folded`]): 15 of 16 standing lookalike pairs named one
+        // entity, the 16th two bodies sharing a core word, so the fold is a
+        // key only a name gate may act on.
         //
         // PPON is the Find a Tender supplier-registration series
         // (`GB-PPON-PBZB-4962-TVLR` → `GBPPONPBZB4962TVLR`), 12 alphanumerics
@@ -379,12 +401,23 @@ pub fn canonical_key(country: Option<&str>, kind: &str, value: &str) -> Option<C
             if coh.is_empty() {
                 return None;
             }
+            let fold = gb_coh_fold(coh);
+            let (coh, folded) = match &fold {
+                Some(f) => (f.as_str(), true),
+                None => (coh, false),
+            };
             let digits = coh.bytes().all(|b| b.is_ascii_digit());
             let letters_then_six = coh.len() == 8
                 && coh[..2].bytes().all(|b| b.is_ascii_alphabetic())
                 && coh[2..].bytes().all(|b| b.is_ascii_digit());
+            let r_series =
+                coh.len() == 8 && coh.starts_with('R') && coh[1..].bytes().all(|b| b.is_ascii_digit());
             match coh.len() {
-                8 if digits || letters_then_six => CanonKey::e1("GB:coh", coh),
+                8 if digits || letters_then_six || r_series => {
+                    CanonKey::e1("GB:coh", coh).map(|k| CanonKey { folded, ..k })
+                }
+                // `gb_coh_fold` reads 8-character bodies only, so a pad is
+                // never folded.
                 6 | 7 if digits => CanonKey::e2("GB:coh", format!("{:0>8}", coh)),
                 // Every other `GB<SCHEME>…` — UKPRN, CHC, NHS, MPR — is a
                 // register of its own that this arm deliberately does not
@@ -397,6 +430,46 @@ pub fn canonical_key(country: Option<&str>, kind: &str, value: &str) -> Option<C
         // cross-walk. E0 exact equality is the only merge path.
         _ => None,
     }
+}
+
+/// Issue 470: the O/0 lookalike fold of an 8-character Companies House body
+/// (prefix already stripped), or `None` when nothing folds. The register format
+/// itself says which character was meant:
+/// - positions 3–8 are digits in every shape, so a letter O there is a zero
+///   (`SCO55775` → `SC055775`, `9694399O` → `96943990`);
+/// - at positions 1–2 a letter O is a zero only when the other character there
+///   is a digit or another O (`O6611251` → `06611251`, `OO688424` →
+///   `00688424`). `OC` (LLP), `SO` (Scottish LLP) and `OE` (overseas entity)
+///   have a letter beside their O and are never folded;
+/// - a digit 0 becomes an O only in a `0C` head, giving `OC`, the LLP prefix
+///   (all five measured were LLPs by name). `R0` is a real series
+///   (`R0000568`), so no other zero is ever read as a letter.
+///
+/// A fold whose result is not register-shaped keys nothing, as before. The
+/// key it yields is marked [`CanonKey::folded`], and only a name gate acts on
+/// it: the fold proposes the number, it never proves the entity.
+fn gb_coh_fold(coh: &str) -> Option<String> {
+    let orig = coh.as_bytes();
+    if orig.len() != 8 {
+        return None;
+    }
+    let mut out = orig.to_vec();
+    for c in &mut out[2..] {
+        if *c == b'O' {
+            *c = b'0';
+        }
+    }
+    let zero_like = |c: u8| c.is_ascii_digit() || c == b'O';
+    if orig[0] == b'O' && zero_like(orig[1]) {
+        out[0] = b'0';
+    }
+    if orig[1] == b'O' && zero_like(orig[0]) {
+        out[1] = b'0';
+    }
+    if orig[0] == b'0' && orig[1] == b'C' {
+        out[0] = b'O';
+    }
+    (out != orig).then(|| String::from_utf8(out).expect("an ASCII body folds to ASCII"))
 }
 
 #[cfg(test)]
@@ -675,6 +748,60 @@ mod tests {
         assert_eq!(key(Some("XI"), "national", "GB-COH-SC305103"), None);
     }
 
+    /// Issue 470: a letter O where the register format has a digit (or a zero
+    /// for the O of `OC`) keys to the number meant, MARKED folded so only a
+    /// name gate acts on it. Real prefixes with an O beside a letter never
+    /// fold, the `R0` series keys as itself, and a trailing-O rotation with no
+    /// twin gets a folded key that binds nothing on its own.
+    #[test]
+    fn gb_coh_folds_an_o_where_the_register_format_has_a_digit() {
+        let gb = |v: &str| {
+            canonical_key(Some("GB"), "national", v).map(|k| (k.scheme, k.key, k.tier, k.folded))
+        };
+        let folded = |n: &str| Some(("GB:coh", n.to_owned(), Tier::E1, true));
+        let unfolded = |n: &str| Some(("GB:coh", n.to_owned(), Tier::E1, false));
+        // The measured lookalikes, bare and prefixed.
+        assert_eq!(gb("SCO55775"), folded("SC055775"), "an O at positions 3–8 is a zero");
+        assert_eq!(gb("GB-COH-SCO55775"), folded("SC055775"));
+        assert_eq!(gb("O6611251"), folded("06611251"), "an O beside a digit at position 1");
+        assert_eq!(gb("OO688424"), folded("00688424"), "an O beside another O");
+        assert_eq!(gb("GBCOHO2O84294"), folded("02084294"), "both rules in one body");
+        assert_eq!(gb("0C301540"), folded("OC301540"), "a zero for the O of `OC`");
+        assert_eq!(gb("GB-COH-0C429964"), folded("OC429964"));
+        // The register's own spellings key as themselves, unflagged —
+        // including the real prefixes that carry an O beside a letter.
+        for real in ["SC055775", "OC301540", "SO300123", "OE012345", "06611251"] {
+            assert_eq!(gb(real), unfolded(real), "{real} is the register's own spelling");
+        }
+        // The `R0` series is a register number: it keys E1 as itself, and its
+        // zero is never read as an O (`RO…` would be another number).
+        assert_eq!(gb("R0000568"), unfolded("R0000568"));
+        assert_eq!(gb("GB-COH-R0000273"), gb("R0000273"), "prefixed and bare share the key");
+        // A zero beside any other letter is not the `OC` lookalike, and a
+        // letter-then-seven-digits body other than `R` stays unkeyed.
+        assert_eq!(gb("I0097973"), None);
+        assert_eq!(gb("GBCOHN0790518"), None);
+        // A trailing O folds like any other position, but its key is FLAGGED:
+        // with no standing twin it binds nothing new, because every bind and
+        // merge of a folded key goes through a name gate (the decision's
+        // refinement 2), so the rotation stays inert rather than becoming a
+        // wrong number.
+        assert_eq!(gb("9694399O"), folded("96943990"));
+        // A fold that does not reach a register shape keys nothing, and a pad
+        // is never folded.
+        assert_eq!(gb("SCO5577X"), None);
+        assert_eq!(gb("O661125").map(|k| k.3), None);
+        // The flat form the store's slots take carries the flag.
+        assert_eq!(
+            canonical_key_flat(Some("GB"), "national", "SCO55775"),
+            Some(("GB:coh", "SC055775".to_owned(), true, true))
+        );
+        assert_eq!(
+            canonical_key_flat(Some("GB"), "national", "SC055775"),
+            Some(("GB:coh", "SC055775".to_owned(), true, false))
+        );
+    }
+
     /// The pad amendment (design §3.1): pad-derived keys are E2 — candidate
     /// edges only. The live CZ collision is the reason.
     #[test]
@@ -706,15 +833,17 @@ mod tests {
 }
 
 /// [`canonical_key`] flattened to the fn-pointer shape the store's injected
-/// rule slots take: `(scheme, key, is_e1)`. One definition, used by the
+/// rule slots take: `(scheme, key, is_e1, folded)`. One definition, used by the
 /// resolver's Stage-2 prevention hook and the R2 merge job alike — the two
-/// MUST share one crosswalk, or prevention and repair drift apart.
+/// MUST share one crosswalk, or prevention and repair drift apart. `folded`
+/// is [`CanonKey::folded`] (issue 470): every slot that binds or merges on the
+/// key reads it, so a lookalike's key reaches nobody name-blind.
 pub fn canonical_key_flat(
     country: Option<&str>,
     kind: &str,
     value: &str,
-) -> Option<(&'static str, String, bool)> {
-    canonical_key(country, kind, value).map(|ck| (ck.scheme, ck.key, ck.tier == Tier::E1))
+) -> Option<(&'static str, String, bool, bool)> {
+    canonical_key(country, kind, value).map(|ck| (ck.scheme, ck.key, ck.tier == Tier::E1, ck.folded))
 }
 
 /// Issue 329's E0 rule in the flat key shape: an org's exact `(country, kind,
@@ -727,7 +856,7 @@ pub fn e0_key_flat(
     country: Option<&str>,
     kind: &str,
     value: &str,
-) -> Option<(&'static str, String, bool)> {
+) -> Option<(&'static str, String, bool, bool)> {
     if kind != "vat" && kind != "national" {
         return None;
     }
@@ -739,7 +868,7 @@ pub fn e0_key_flat(
     if norm.is_empty() {
         return None;
     }
-    Some(("E0", format!("{kind}:{norm}"), true))
+    Some(("E0", format!("{kind}:{norm}"), true, false))
 }
 
 /// Consortium / temporary-grouping detection over an org NAME (the census
@@ -975,7 +1104,7 @@ mod e0 {
     fn e0_groups_exactly_the_triples_no_arm_keys() {
         assert_eq!(
             e0_key_flat(Some("GR"), "national", "1000E009610001"),
-            Some(("E0", "national:1000E009610001".to_owned(), true))
+            Some(("E0", "national:1000E009610001".to_owned(), true, false))
         );
         assert!(canonical_key_flat(Some("FI"), "national", "01003158").is_some());
         assert_eq!(e0_key_flat(Some("FI"), "national", "01003158"), None);
@@ -1000,15 +1129,15 @@ mod e0 {
 /// to exactly the values the altid arm is about. The normaliser tells a GB VAT
 /// (nine digits after the prefix) from `GBCOH…` by the letter run after the
 /// country code.
-pub fn mention_key(country: Option<&str>, raw: &str) -> Option<(&'static str, String, bool)> {
+pub fn mention_key(country: Option<&str>, raw: &str) -> Option<(&'static str, String, bool, bool)> {
     let id = crate::project::normalise_identifier(raw, country)?;
     canonical_key_flat(id.country.as_deref(), &id.kind, &id.value)
 }
 
 /// Issue 448: one side of the Companies House ↔ PPON pairing an FTS party
 /// publishes — ONE `BT-501-Organization-Company` row `(notice_ids.scheme,
-/// notice_ids.value, the party's country)` in the flat `(scheme, key, is_e1)`
-/// shape, or `None`.
+/// notice_ids.value, the party's country)` in the flat `(scheme, key, is_e1,
+/// folded)` shape, or `None`.
 ///
 /// The pairing itself is E2 evidence, never a key (the GB arm's contract in
 /// [`canonical_key`]); this names its two ends so the altid arm can build the
@@ -1025,13 +1154,13 @@ pub fn altid_pair_key(
     scheme: &str,
     value: &str,
     country: Option<&str>,
-) -> Option<(&'static str, String, bool)> {
+) -> Option<(&'static str, String, bool, bool)> {
     let series = match scheme {
         "GB-COH" => "GB:coh",
         "GB-PPON" => "GB:ppon",
         _ => return None,
     };
-    mention_key(country, value).filter(|(s, _, _)| *s == series)
+    mention_key(country, value).filter(|(s, _, _, _)| *s == series)
 }
 
 /// Issue 448: the altid arm's corroboration key — [`n3_key`], then the GB legal
@@ -1184,20 +1313,20 @@ mod altid {
         let gb = Some("GB");
         assert_eq!(
             altid_pair_key("GB-COH", "GB-COH-03914810", gb),
-            Some(("GB:coh", "03914810".to_owned(), true))
+            Some(("GB:coh", "03914810".to_owned(), true, false))
         );
         assert_eq!(
             altid_pair_key("GB-COH", "GB-COH-SC305103", gb),
-            Some(("GB:coh", "SC305103".to_owned(), true))
+            Some(("GB:coh", "SC305103".to_owned(), true, false))
         );
         assert_eq!(
             altid_pair_key("GB-PPON", "GB-PPON-PHDQ-2359-NZMP", gb),
-            Some(("GB:ppon", "PHDQ2359NZMP".to_owned(), true))
+            Some(("GB:ppon", "PHDQ2359NZMP".to_owned(), true, false))
         );
         // A lost leading zero pads, at E2: counted by the arm, never paired.
         assert_eq!(
             altid_pair_key("GB-COH", "GB-COH-3914810", gb),
-            Some(("GB:coh", "03914810".to_owned(), false))
+            Some(("GB:coh", "03914810".to_owned(), false, false))
         );
         // The hole the scheme check closes: the GB arm keys a bare 8-digit value
         // as a company number…
@@ -1218,10 +1347,10 @@ mod altid {
     #[test]
     fn mention_key_reads_the_fts_raws_a_vat_lead_rule_cannot() {
         let gb = Some("GB");
-        assert_eq!(mention_key(gb, "GB-COH-03914810"), Some(("GB:coh", "03914810".to_owned(), true)));
+        assert_eq!(mention_key(gb, "GB-COH-03914810"), Some(("GB:coh", "03914810".to_owned(), true, false)));
         assert_eq!(
             mention_key(gb, "GB-PPON-PHDQ-2359-NZMP"),
-            Some(("GB:ppon", "PHDQ2359NZMP".to_owned(), true))
+            Some(("GB:ppon", "PHDQ2359NZMP".to_owned(), true, false))
         );
         // The R2/R3 wall's inference: a two-letter lead is VAT, and GB keys no VAT.
         assert_eq!(canonical_key_flat(gb, "vat", "GB-COH-03914810"), None);

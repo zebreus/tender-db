@@ -7,7 +7,7 @@
 
 use store::turso::Value;
 
-fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool)> {
+fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool, bool)> {
     // A miniature crosswalk: FR 9-digit siren, SK 10-digit dic (vat and
     // national unify). Everything else: no key.
     let norm: String =
@@ -19,8 +19,8 @@ fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, 
     };
     let digits = body.bytes().all(|b| b.is_ascii_digit());
     match (cc.as_str(), body.len()) {
-        ("FR", 9) if digits => Some(("FR:siren", body, true)),
-        ("SK", 10) if digits => Some(("SK:dic", body, true)),
+        ("FR", 9) if digits => Some(("FR:siren", body, true, false)),
+        ("SK", 10) if digits => Some(("SK:dic", body, true, false)),
         _ => None,
     }
 }

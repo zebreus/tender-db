@@ -8,23 +8,26 @@
 use store::turso::{Connection, Value};
 use store::{Identifier, IdentifierVerdict, Mention};
 
-fn gb_key(value: &str) -> Option<(&'static str, String, bool)> {
+fn gb_key(value: &str) -> Option<(&'static str, String, bool, bool)> {
     let norm: String =
         value.chars().filter(char::is_ascii_alphanumeric).map(|c| c.to_ascii_uppercase()).collect();
     let coh = norm.strip_prefix("GBCOH").or_else(|| norm.strip_prefix("GB")).unwrap_or(&norm);
+    // Issue 470's O/0 fold, at positions 3–8 only (the miniature needs no more).
+    let folded = coh.len() == 8 && coh[2..].contains('O');
+    let coh = if folded { format!("{}{}", &coh[..2], coh[2..].replace('O', "0")) } else { coh.to_owned() };
     let digits = !coh.is_empty() && coh.bytes().all(|b| b.is_ascii_digit());
     match coh.len() {
         8 if digits
             || (coh[..2].bytes().all(|b| b.is_ascii_alphabetic())
                 && coh[2..].bytes().all(|b| b.is_ascii_digit())) =>
         {
-            Some(("GB:coh", coh.to_owned(), true))
+            Some(("GB:coh", coh, true, folded))
         }
         _ => None,
     }
 }
 
-fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool)> {
+fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(&'static str, String, bool, bool)> {
     if kind != "national" || country != Some("GB") {
         return None;
     }
@@ -561,4 +564,37 @@ async fn the_alias_follows_a_chain_and_binds_to_a_row_minted_during_the_fold() {
     let ids = resolve(vec![mention(4, "Kappa Ltd", "50505052"), mention(5, "Kappa Ltd", "50505050")]).await;
     assert_eq!(ids[1], ids[0], "the wrong number binds to the row the fold minted");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 1);
+}
+
+/// Issue 470, and the three withheld lookalikes its step 5 re-posts: a `wrong`
+/// verdict on a lookalike whose fold IS the challenger's right number. The fold
+/// gives the wrong literal the right number's key, which is neither `same_key`
+/// (the literal spells nothing a reader can look up — that is what the verdict
+/// corrects) nor a flag on the destination (a flagged lookalike flags its
+/// literal, not the number it was meant to be). So `GBCOHCEO19319`, with no
+/// standing owner of `CE019319`, moves onto it; `GBCOHIPO30808` merges into the
+/// org carrying `GBCOHIP030808`, its names agreeing.
+#[tokio::test]
+async fn a_lookalike_whose_fold_is_the_right_number_is_re_keyed_onto_it() {
+    let orgs: &[(i64, &str, &str)] = &[
+        (1, "GBCOHCEO19319", "Cetera Example Ltd"),
+        (2, "GBCOHIPO30808", "Funeral Services Limited"),
+        (3, "GBCOHIP030808", "Funeral Services Ltd"),
+    ];
+    let verdicts =
+        [verdict(1, "GBCOHCEO19319", Some("CE019319"), "high"), verdict(2, "GBCOHIPO30808", Some("IP030808"), "high")];
+    let (db, conn) = bed_with("test-rekey-lookalike.db", orgs, &verdicts).await;
+    let dry = db.match_org_rekey(args(true, None, None)).await.unwrap();
+    assert_eq!((dry.same_key, dry.destination_verdict), (0, 0), "{:#?}", dry.denied);
+    assert_eq!(
+        dry.keys,
+        vec![
+            "GB/national/GBCOHCEO19319>move:GBCOHCE019319",
+            "GB/national/GBCOHIPO30808>merge:GBCOHIP030808",
+        ]
+    );
+    let wet = db.match_org_rekey(args(false, Some(dry.keys.clone()), None)).await.unwrap();
+    assert_eq!((wet.moved, wet.merged), (1, 1));
+    assert_eq!(text(&conn, "SELECT identifier FROM organizations WHERE id = 1").await.as_deref(), Some("GBCOHCE019319"));
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 2").await, 0);
 }
