@@ -1,0 +1,1635 @@
+[
+ {
+  "band": "L1",
+  "rule": "C13 org & title norm & sub & dt<=7 & no-contra & iref eq & deadline eq",
+  "guard": "none",
+  "tp": 184,
+  "recall": 0.4017,
+  "recall_lb": 0.3578,
+  "tp_clean": 142,
+  "recall_clean": 0.3869,
+  "fp": 0,
+  "fpr": 0.0,
+  "fpr_ub": 0.00297,
+  "fp_gated": 0,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.0058,
+  "precision": 1.0,
+  "precision_lb": 0.9795,
+  "query": {
+   "none": 274,
+   "ok": 184
+  },
+  "twin_absent": {
+   "none": 380
+  },
+  "twin_absent_bad_ub": 0.01,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "join": 1
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9
+   },
+   "ALL": {
+    "n": 817,
+    "join": 1
+   }
+  },
+  "join_subtypes": {
+   "7": 1
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "L1",
+  "rule": "C13 org & title norm & sub & dt<=7 & no-contra & iref eq & deadline eq",
+  "guard": "G1",
+  "tp": 184,
+  "recall": 0.4017,
+  "recall_lb": 0.3578,
+  "tp_clean": 142,
+  "recall_clean": 0.3869,
+  "fp": 0,
+  "fpr": 0.0,
+  "fpr_ub": 0.00297,
+  "fp_gated": 0,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.0058,
+  "precision": 1.0,
+  "precision_lb": 0.9795,
+  "query": {
+   "none": 274,
+   "ok": 184
+  },
+  "twin_absent": {
+   "none": 380
+  },
+  "twin_absent_bad_ub": 0.01,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "join": 1
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9
+   },
+   "ALL": {
+    "n": 817,
+    "join": 1
+   }
+  },
+  "join_subtypes": {
+   "7": 1
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "L2",
+  "rule": "C11 org & title norm & sub & dt<=7 & no-contra & deadline eq",
+  "guard": "none",
+  "tp": 203,
+  "recall": 0.4432,
+  "recall_lb": 0.3984,
+  "tp_clean": 151,
+  "recall_clean": 0.4114,
+  "fp": 0,
+  "fpr": 0.0,
+  "fpr_ub": 0.00297,
+  "fp_gated": 0,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.0058,
+  "precision": 1.0,
+  "precision_lb": 0.9814,
+  "query": {
+   "none": 255,
+   "ok": 203
+  },
+  "twin_absent": {
+   "none": 380
+  },
+  "twin_absent_bad_ub": 0.01,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "join": 2
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9
+   },
+   "ALL": {
+    "n": 817,
+    "join": 2
+   }
+  },
+  "join_subtypes": {
+   "7": 2
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "L2",
+  "rule": "C11 org & title norm & sub & dt<=7 & no-contra & deadline eq",
+  "guard": "G1",
+  "tp": 203,
+  "recall": 0.4432,
+  "recall_lb": 0.3984,
+  "tp_clean": 151,
+  "recall_clean": 0.4114,
+  "fp": 0,
+  "fpr": 0.0,
+  "fpr_ub": 0.00297,
+  "fp_gated": 0,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.0058,
+  "precision": 1.0,
+  "precision_lb": 0.9814,
+  "query": {
+   "none": 255,
+   "ok": 203
+  },
+  "twin_absent": {
+   "none": 380
+  },
+  "twin_absent_bad_ub": 0.01,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "join": 2
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9
+   },
+   "ALL": {
+    "n": 817,
+    "join": 2
+   }
+  },
+  "join_subtypes": {
+   "7": 2
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "L2b",
+  "rule": "C15 org & deadline exact & sub & dt<=7 & no-contra",
+  "guard": "none",
+  "tp": 203,
+  "recall": 0.4432,
+  "recall_lb": 0.3984,
+  "tp_clean": 151,
+  "recall_clean": 0.4114,
+  "fp": 0,
+  "fpr": 0.0,
+  "fpr_ub": 0.00297,
+  "fp_gated": 0,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.0058,
+  "precision": 1.0,
+  "precision_lb": 0.9814,
+  "query": {
+   "none": 255,
+   "ok": 203
+  },
+  "twin_absent": {
+   "none": 380
+  },
+  "twin_absent_bad_ub": 0.01,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "join": 2
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9
+   },
+   "ALL": {
+    "n": 817,
+    "join": 2
+   }
+  },
+  "join_subtypes": {
+   "7": 2
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "L2b",
+  "rule": "C15 org & deadline exact & sub & dt<=7 & no-contra",
+  "guard": "G1",
+  "tp": 203,
+  "recall": 0.4432,
+  "recall_lb": 0.3984,
+  "tp_clean": 151,
+  "recall_clean": 0.4114,
+  "fp": 0,
+  "fpr": 0.0,
+  "fpr_ub": 0.00297,
+  "fp_gated": 0,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.0058,
+  "precision": 1.0,
+  "precision_lb": 0.9814,
+  "query": {
+   "none": 255,
+   "ok": 203
+  },
+  "twin_absent": {
+   "none": 380
+  },
+  "twin_absent_bad_ub": 0.01,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "join": 2
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9
+   },
+   "ALL": {
+    "n": 817,
+    "join": 2
+   }
+  },
+  "join_subtypes": {
+   "7": 2
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "Lv",
+  "rule": "C2  org & cpv eq & deadline exact & value exact",
+  "guard": "none",
+  "tp": 32,
+  "recall": 0.0699,
+  "recall_lb": 0.0499,
+  "tp_clean": 20,
+  "recall_clean": 0.0545,
+  "fp": 0,
+  "fpr": 0.0,
+  "fpr_ub": 0.00297,
+  "fp_gated": 0,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.0058,
+  "precision": 1.0,
+  "precision_lb": 0.8928,
+  "query": {
+   "none": 426,
+   "ok": 32
+  },
+  "twin_absent": {
+   "none": 380
+  },
+  "twin_absent_bad_ub": 0.01,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9
+   },
+   "ALL": {
+    "n": 817
+   }
+  },
+  "join_subtypes": {},
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "Lv",
+  "rule": "C2  org & cpv eq & deadline exact & value exact",
+  "guard": "G1",
+  "tp": 32,
+  "recall": 0.0699,
+  "recall_lb": 0.0499,
+  "tp_clean": 20,
+  "recall_clean": 0.0545,
+  "fp": 0,
+  "fpr": 0.0,
+  "fpr_ub": 0.00297,
+  "fp_gated": 0,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.0058,
+  "precision": 1.0,
+  "precision_lb": 0.8928,
+  "query": {
+   "none": 426,
+   "ok": 32
+  },
+  "twin_absent": {
+   "none": 380
+  },
+  "twin_absent_bad_ub": 0.01,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9
+   },
+   "ALL": {
+    "n": 817
+   }
+  },
+  "join_subtypes": {},
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "L3",
+  "rule": "C10 org & title norm & sub & dt<=7 & no-contra & iref eq",
+  "guard": "none",
+  "tp": 400,
+  "recall": 0.8734,
+  "recall_lb": 0.8398,
+  "tp_clean": 331,
+  "recall_clean": 0.9019,
+  "fp": 1,
+  "fpr": 0.00078,
+  "fpr_ub": 0.00438,
+  "fp_gated": 1,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.00856,
+  "precision": 0.9975,
+  "precision_lb": 0.986,
+  "query": {
+   "ok": 399,
+   "none": 58,
+   "amb": 1
+  },
+  "twin_absent": {
+   "none": 379,
+   "bad": 1
+  },
+  "twin_absent_bad_ub": 0.0148,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "join": 107,
+    "amb": 4
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9,
+    "join": 5
+   },
+   "ALL": {
+    "n": 817,
+    "join": 112,
+    "amb": 4
+   }
+  },
+  "join_subtypes": {
+   "4": 58,
+   "1": 2,
+   "7": 34,
+   "6": 1,
+   "5": 11,
+   "8": 1,
+   "T01": 5
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "L3",
+  "rule": "C10 org & title norm & sub & dt<=7 & no-contra & iref eq",
+  "guard": "G1",
+  "tp": 400,
+  "recall": 0.8734,
+  "recall_lb": 0.8398,
+  "tp_clean": 331,
+  "recall_clean": 0.9019,
+  "fp": 0,
+  "fpr": 0.0,
+  "fpr_ub": 0.00297,
+  "fp_gated": 0,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.0058,
+  "precision": 1.0,
+  "precision_lb": 0.9905,
+  "query": {
+   "ok": 400,
+   "none": 58
+  },
+  "twin_absent": {
+   "none": 380
+  },
+  "twin_absent_bad_ub": 0.01,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "join": 107,
+    "amb": 4
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9,
+    "join": 5
+   },
+   "ALL": {
+    "n": 817,
+    "join": 112,
+    "amb": 4
+   }
+  },
+  "join_subtypes": {
+   "4": 58,
+   "1": 2,
+   "7": 34,
+   "6": 1,
+   "5": 11,
+   "8": 1,
+   "T01": 5
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "L4",
+  "rule": "C12 org & title norm & sub & dt<=7 & no-contra & (iref|deadline|value eq)",
+  "guard": "none",
+  "tp": 422,
+  "recall": 0.9214,
+  "recall_lb": 0.8931,
+  "tp_clean": 343,
+  "recall_clean": 0.9346,
+  "fp": 1,
+  "fpr": 0.00078,
+  "fpr_ub": 0.00438,
+  "fp_gated": 1,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.00856,
+  "precision": 0.9976,
+  "precision_lb": 0.9867,
+  "query": {
+   "ok": 421,
+   "none": 36,
+   "amb": 1
+  },
+  "twin_absent": {
+   "none": 379,
+   "bad": 1
+  },
+  "twin_absent_bad_ub": 0.0148,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "join": 110,
+    "amb": 4
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9,
+    "join": 5
+   },
+   "ALL": {
+    "n": 817,
+    "join": 115,
+    "amb": 4
+   }
+  },
+  "join_subtypes": {
+   "4": 60,
+   "1": 2,
+   "7": 35,
+   "6": 1,
+   "5": 11,
+   "8": 1,
+   "T01": 5
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "L4",
+  "rule": "C12 org & title norm & sub & dt<=7 & no-contra & (iref|deadline|value eq)",
+  "guard": "G1",
+  "tp": 422,
+  "recall": 0.9214,
+  "recall_lb": 0.8931,
+  "tp_clean": 343,
+  "recall_clean": 0.9346,
+  "fp": 0,
+  "fpr": 0.0,
+  "fpr_ub": 0.00297,
+  "fp_gated": 0,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.0058,
+  "precision": 1.0,
+  "precision_lb": 0.991,
+  "query": {
+   "ok": 422,
+   "none": 36
+  },
+  "twin_absent": {
+   "none": 380
+  },
+  "twin_absent_bad_ub": 0.01,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "join": 110,
+    "amb": 4
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9,
+    "join": 5
+   },
+   "ALL": {
+    "n": 817,
+    "join": 115,
+    "amb": 4
+   }
+  },
+  "join_subtypes": {
+   "4": 60,
+   "1": 2,
+   "7": 35,
+   "6": 1,
+   "5": 11,
+   "8": 1,
+   "T01": 5
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "L5",
+  "rule": "C8  org & title norm & sub & dt<=7 & no-contra",
+  "guard": "none",
+  "tp": 445,
+  "recall": 0.9716,
+  "recall_lb": 0.952,
+  "tp_clean": 364,
+  "recall_clean": 0.9918,
+  "fp": 3,
+  "fpr": 0.00233,
+  "fpr_ub": 0.00682,
+  "fp_gated": 3,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.01332,
+  "precision": 0.9933,
+  "precision_lb": 0.9805,
+  "query": {
+   "ok": 442,
+   "none": 13,
+   "amb": 3
+  },
+  "twin_absent": {
+   "none": 377,
+   "bad": 3
+  },
+  "twin_absent_bad_ub": 0.023,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "join": 122,
+    "amb": 4
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9,
+    "join": 9
+   },
+   "ALL": {
+    "n": 817,
+    "join": 131,
+    "amb": 4
+   }
+  },
+  "join_subtypes": {
+   "4": 65,
+   "7": 41,
+   "1": 2,
+   "6": 1,
+   "5": 11,
+   "9": 1,
+   "8": 1,
+   "T01": 9
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "L5",
+  "rule": "C8  org & title norm & sub & dt<=7 & no-contra",
+  "guard": "G1",
+  "tp": 445,
+  "recall": 0.9716,
+  "recall_lb": 0.952,
+  "tp_clean": 364,
+  "recall_clean": 0.9918,
+  "fp": 0,
+  "fpr": 0.0,
+  "fpr_ub": 0.00297,
+  "fp_gated": 0,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.0058,
+  "precision": 1.0,
+  "precision_lb": 0.9914,
+  "query": {
+   "ok": 445,
+   "none": 13
+  },
+  "twin_absent": {
+   "none": 380
+  },
+  "twin_absent_bad_ub": 0.01,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "join": 122,
+    "amb": 4
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9,
+    "join": 9
+   },
+   "ALL": {
+    "n": 817,
+    "join": 131,
+    "amb": 4
+   }
+  },
+  "join_subtypes": {
+   "4": 65,
+   "7": 41,
+   "1": 2,
+   "6": 1,
+   "5": 11,
+   "9": 1,
+   "8": 1,
+   "T01": 9
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "L6",
+  "rule": "C6  org & title norm & same_subtype & dt<=7",
+  "guard": "none",
+  "tp": 451,
+  "recall": 0.9847,
+  "recall_lb": 0.9688,
+  "tp_clean": 365,
+  "recall_clean": 0.9946,
+  "fp": 12,
+  "fpr": 0.00931,
+  "fpr_ub": 0.0162,
+  "fp_gated": 12,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.0316,
+  "precision": 0.9741,
+  "precision_lb": 0.9552,
+  "query": {
+   "ok": 441,
+   "amb": 10,
+   "none": 7
+  },
+  "twin_absent": {
+   "none": 370,
+   "bad": 8,
+   "amb": 2
+  },
+  "twin_absent_bad_ub": 0.041,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "join": 112,
+    "amb": 14
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9,
+    "join": 9
+   },
+   "ALL": {
+    "n": 817,
+    "join": 121,
+    "amb": 14
+   }
+  },
+  "join_subtypes": {
+   "4": 65,
+   "7": 31,
+   "1": 2,
+   "6": 1,
+   "5": 11,
+   "9": 1,
+   "8": 1,
+   "T01": 9
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "L6",
+  "rule": "C6  org & title norm & same_subtype & dt<=7",
+  "guard": "G1",
+  "tp": 451,
+  "recall": 0.9847,
+  "recall_lb": 0.9688,
+  "tp_clean": 365,
+  "recall_clean": 0.9946,
+  "fp": 0,
+  "fpr": 0.0,
+  "fpr_ub": 0.00297,
+  "fp_gated": 0,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.0058,
+  "precision": 1.0,
+  "precision_lb": 0.9916,
+  "query": {
+   "ok": 451,
+   "none": 7
+  },
+  "twin_absent": {
+   "none": 380
+  },
+  "twin_absent_bad_ub": 0.01,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "join": 112,
+    "amb": 14
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9,
+    "join": 9
+   },
+   "ALL": {
+    "n": 817,
+    "join": 121,
+    "amb": 14
+   }
+  },
+  "join_subtypes": {
+   "4": 65,
+   "7": 31,
+   "1": 2,
+   "6": 1,
+   "5": 11,
+   "9": 1,
+   "8": 1,
+   "T01": 9
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "L7",
+  "rule": "S9  org & title norm eq",
+  "guard": "none",
+  "tp": 453,
+  "recall": 0.9891,
+  "recall_lb": 0.9747,
+  "tp_clean": 367,
+  "recall_clean": 1.0,
+  "fp": 16,
+  "fpr": 0.01241,
+  "fpr_ub": 0.02007,
+  "fp_gated": 12,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.0316,
+  "precision": 0.9659,
+  "precision_lb": 0.9453,
+  "query": {
+   "ok": 441,
+   "amb": 12,
+   "none": 5
+  },
+  "twin_absent": {
+   "none": 368,
+   "amb": 4,
+   "bad": 8
+  },
+  "twin_absent_bad_ub": 0.041,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "amb": 26,
+    "join": 101
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9,
+    "join": 8,
+    "amb": 1
+   },
+   "ALL": {
+    "n": 817,
+    "amb": 27,
+    "join": 109
+   }
+  },
+  "join_subtypes": {
+   "4": 56,
+   "7": 30,
+   "1": 2,
+   "6": 1,
+   "5": 10,
+   "9": 1,
+   "8": 1,
+   "T01": 8
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "L7",
+  "rule": "S9  org & title norm eq",
+  "guard": "G1",
+  "tp": 453,
+  "recall": 0.9891,
+  "recall_lb": 0.9747,
+  "tp_clean": 367,
+  "recall_clean": 1.0,
+  "fp": 4,
+  "fpr": 0.0031,
+  "fpr_ub": 0.00795,
+  "fp_gated": 0,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.0058,
+  "precision": 0.9912,
+  "precision_lb": 0.9777,
+  "query": {
+   "ok": 449,
+   "amb": 4,
+   "none": 5
+  },
+  "twin_absent": {
+   "none": 376,
+   "bad": 4
+  },
+  "twin_absent_bad_ub": 0.0267,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "join": 105,
+    "amb": 22
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9,
+    "join": 8,
+    "amb": 1
+   },
+   "ALL": {
+    "n": 817,
+    "join": 113,
+    "amb": 23
+   }
+  },
+  "join_subtypes": {
+   "4": 59,
+   "7": 31,
+   "1": 2,
+   "6": 1,
+   "5": 10,
+   "9": 1,
+   "8": 1,
+   "T01": 8
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "L8",
+  "rule": "S10 org & title jacc>=0.80",
+  "guard": "none",
+  "tp": 454,
+  "recall": 0.9913,
+  "recall_lb": 0.9778,
+  "tp_clean": 367,
+  "recall_clean": 1.0,
+  "fp": 35,
+  "fpr": 0.02715,
+  "fpr_ub": 0.03753,
+  "fp_gated": 20,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.04648,
+  "precision": 0.9284,
+  "precision_lb": 0.9021,
+  "query": {
+   "ok": 432,
+   "amb": 22,
+   "none": 4
+  },
+  "twin_absent": {
+   "none": 358,
+   "bad": 12,
+   "amb": 10
+  },
+  "twin_absent_bad_ub": 0.0544,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "amb": 27,
+    "join": 100
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9,
+    "join": 7,
+    "amb": 2
+   },
+   "ALL": {
+    "n": 817,
+    "amb": 29,
+    "join": 107
+   }
+  },
+  "join_subtypes": {
+   "4": 55,
+   "7": 30,
+   "1": 2,
+   "6": 1,
+   "5": 10,
+   "9": 1,
+   "8": 1,
+   "T01": 7
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "L8",
+  "rule": "S10 org & title jacc>=0.80",
+  "guard": "G1",
+  "tp": 454,
+  "recall": 0.9913,
+  "recall_lb": 0.9778,
+  "tp_clean": 367,
+  "recall_clean": 1.0,
+  "fp": 9,
+  "fpr": 0.00698,
+  "fpr_ub": 0.01322,
+  "fp_gated": 0,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.0058,
+  "precision": 0.9806,
+  "precision_lb": 0.9635,
+  "query": {
+   "ok": 447,
+   "amb": 7,
+   "none": 4
+  },
+  "twin_absent": {
+   "none": 373,
+   "bad": 5,
+   "amb": 2
+  },
+  "twin_absent_bad_ub": 0.0304,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "join": 105,
+    "amb": 22
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9,
+    "join": 7,
+    "amb": 2
+   },
+   "ALL": {
+    "n": 817,
+    "join": 112,
+    "amb": 24
+   }
+  },
+  "join_subtypes": {
+   "4": 59,
+   "7": 31,
+   "1": 2,
+   "6": 1,
+   "5": 10,
+   "9": 1,
+   "8": 1,
+   "T01": 7
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "Li",
+  "rule": "S7  org & internal_ref eq",
+  "guard": "none",
+  "tp": 407,
+  "recall": 0.8886,
+  "recall_lb": 0.8565,
+  "tp_clean": 334,
+  "recall_clean": 0.9101,
+  "fp": 17,
+  "fpr": 0.01319,
+  "fpr_ub": 0.02102,
+  "fp_gated": 10,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.02775,
+  "precision": 0.9599,
+  "precision_lb": 0.9367,
+  "query": {
+   "ok": 399,
+   "none": 51,
+   "amb": 8
+  },
+  "twin_absent": {
+   "none": 372,
+   "amb": 6,
+   "bad": 2
+  },
+  "twin_absent_bad_ub": 0.019,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "amb": 23,
+    "join": 89
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9,
+    "join": 4,
+    "amb": 1
+   },
+   "ALL": {
+    "n": 817,
+    "amb": 24,
+    "join": 93
+   }
+  },
+  "join_subtypes": {
+   "1": 2,
+   "4": 44,
+   "7": 31,
+   "6": 1,
+   "5": 10,
+   "8": 1,
+   "T01": 4
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "Li",
+  "rule": "S7  org & internal_ref eq",
+  "guard": "G1",
+  "tp": 407,
+  "recall": 0.8886,
+  "recall_lb": 0.8565,
+  "tp_clean": 334,
+  "recall_clean": 0.9101,
+  "fp": 4,
+  "fpr": 0.0031,
+  "fpr_ub": 0.00795,
+  "fp_gated": 0,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.0058,
+  "precision": 0.9903,
+  "precision_lb": 0.9752,
+  "query": {
+   "ok": 405,
+   "none": 51,
+   "amb": 2
+  },
+  "twin_absent": {
+   "none": 378,
+   "bad": 1,
+   "amb": 1
+  },
+  "twin_absent_bad_ub": 0.0148,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "amb": 23,
+    "join": 89
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9,
+    "join": 4,
+    "amb": 1
+   },
+   "ALL": {
+    "n": 817,
+    "amb": 24,
+    "join": 93
+   }
+  },
+  "join_subtypes": {
+   "1": 2,
+   "4": 44,
+   "7": 31,
+   "6": 1,
+   "5": 10,
+   "8": 1,
+   "T01": 4
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "Ld",
+  "rule": "S5  org & deadline exact",
+  "guard": "none",
+  "tp": 206,
+  "recall": 0.4498,
+  "recall_lb": 0.4048,
+  "tp_clean": 151,
+  "recall_clean": 0.4114,
+  "fp": 30,
+  "fpr": 0.02327,
+  "fpr_ub": 0.03303,
+  "fp_gated": 29,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.06258,
+  "precision": 0.8729,
+  "precision_lb": 0.8243,
+  "query": {
+   "none": 252,
+   "ok": 183,
+   "amb": 23
+  },
+  "twin_absent": {
+   "none": 357,
+   "bad": 18,
+   "amb": 5
+  },
+  "twin_absent_bad_ub": 0.0736,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "join": 2
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9
+   },
+   "ALL": {
+    "n": 817,
+    "join": 2
+   }
+  },
+  "join_subtypes": {
+   "7": 2
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "Ld",
+  "rule": "S5  org & deadline exact",
+  "guard": "G1",
+  "tp": 206,
+  "recall": 0.4498,
+  "recall_lb": 0.4048,
+  "tp_clean": 151,
+  "recall_clean": 0.4114,
+  "fp": 4,
+  "fpr": 0.0031,
+  "fpr_ub": 0.00795,
+  "fp_gated": 4,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.01553,
+  "precision": 0.981,
+  "precision_lb": 0.9521,
+  "query": {
+   "none": 252,
+   "ok": 204,
+   "amb": 2
+  },
+  "twin_absent": {
+   "none": 378,
+   "bad": 1,
+   "amb": 1
+  },
+  "twin_absent_bad_ub": 0.0148,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "join": 2
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100
+   },
+   "SDK1.0": {
+    "n": 50
+   },
+   "T01": {
+    "n": 9
+   },
+   "ALL": {
+    "n": 817,
+    "join": 2
+   }
+  },
+  "join_subtypes": {
+   "7": 2
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "L9",
+  "rule": "S3  org & cpv_main eq",
+  "guard": "none",
+  "tp": 450,
+  "recall": 0.9825,
+  "recall_lb": 0.9659,
+  "tp_clean": 367,
+  "recall_clean": 1.0,
+  "fp": 176,
+  "fpr": 0.13654,
+  "fpr_ub": 0.15637,
+  "fp_gated": 99,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.1798,
+  "precision": 0.7188,
+  "precision_lb": 0.6824,
+  "query": {
+   "amb": 89,
+   "ok": 361,
+   "none": 8
+  },
+  "twin_absent": {
+   "bad": 59,
+   "none": 291,
+   "amb": 30
+  },
+  "twin_absent_bad_ub": 0.1951,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "amb": 41,
+    "join": 86
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100,
+    "amb": 2,
+    "join": 1
+   },
+   "SDK1.0": {
+    "n": 50,
+    "amb": 12
+   },
+   "T01": {
+    "n": 9,
+    "amb": 6,
+    "join": 3
+   },
+   "ALL": {
+    "n": 817,
+    "amb": 61,
+    "join": 90
+   }
+  },
+  "join_subtypes": {
+   "4": 46,
+   "7": 28,
+   "1": 2,
+   "6": 1,
+   "5": 7,
+   "9": 1,
+   "8": 1,
+   "null": 1,
+   "T01": 3
+  },
+  "ted_targets_joined_twice": 0
+ },
+ {
+  "band": "L9",
+  "rule": "S3  org & cpv_main eq",
+  "guard": "G1",
+  "tp": 450,
+  "recall": 0.9825,
+  "recall_lb": 0.9659,
+  "tp_clean": 367,
+  "recall_clean": 1.0,
+  "fp": 50,
+  "fpr": 0.03879,
+  "fpr_ub": 0.05077,
+  "fp_gated": 6,
+  "n_gated": 658,
+  "fpr_gated_ub": 0.01975,
+  "precision": 0.9,
+  "precision_lb": 0.8706,
+  "query": {
+   "amb": 24,
+   "ok": 426,
+   "none": 8
+  },
+  "twin_absent": {
+   "bad": 20,
+   "none": 356,
+   "amb": 4
+  },
+  "twin_absent_bad_ub": 0.0799,
+  "unmerged": {
+   "eForms-DE": {
+    "n": 128,
+    "join": 91,
+    "amb": 36
+   },
+   "sdk01num-nat": {
+    "n": 200
+   },
+   "sdk01num-EU": {
+    "n": 330
+   },
+   "sdk01uuid": {
+    "n": 100,
+    "amb": 1,
+    "join": 2
+   },
+   "SDK1.0": {
+    "n": 50,
+    "join": 8,
+    "amb": 4
+   },
+   "T01": {
+    "n": 9,
+    "amb": 5,
+    "join": 4
+   },
+   "ALL": {
+    "n": 817,
+    "join": 105,
+    "amb": 46
+   }
+  },
+  "join_subtypes": {
+   "4": 48,
+   "7": 31,
+   "1": 2,
+   "6": 1,
+   "5": 7,
+   "9": 1,
+   "8": 1,
+   "null": 2,
+   "E2": 5,
+   "E3": 3,
+   "T01": 4
+  },
+  "ted_targets_joined_twice": 1
+ }
+]

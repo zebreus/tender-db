@@ -1,0 +1,420 @@
+[
+ {
+  "rule": "L2  O&T&S&D7&NC&DL",
+  "tp": 203,
+  "recall": 0.4432,
+  "recall_lb": 0.3984,
+  "fp": 0,
+  "fp_g1": 0,
+  "fp_ids": [],
+  "islands": {
+   "none": 134,
+   "correct": 2
+  },
+  "unmerged": {
+   "other_join": 2
+  }
+ },
+ {
+  "rule": "L2+Fv  value scoped",
+  "tp": 202,
+  "recall": 0.441,
+  "recall_lb": 0.3963,
+  "fp": 0,
+  "fp_g1": 0,
+  "fp_ids": [],
+  "islands": {
+   "none": 134,
+   "correct": 2
+  },
+  "unmerged": {
+   "other_join": 2
+  }
+ },
+ {
+  "rule": "L2+Fv2 value dropped from NC",
+  "tp": 204,
+  "recall": 0.4454,
+  "recall_lb": 0.4005,
+  "fp": 0,
+  "fp_g1": 0,
+  "fp_ids": [],
+  "islands": {
+   "none": 134,
+   "correct": 2
+  },
+  "unmerged": {
+   "other_join": 2
+  }
+ },
+ {
+  "rule": "L2+Ft  time gate min(pub,doe-disp)",
+  "tp": 203,
+  "recall": 0.4432,
+  "recall_lb": 0.3984,
+  "fp": 0,
+  "fp_g1": 0,
+  "fp_ids": [],
+  "islands": {
+   "none": 134,
+   "correct": 2
+  },
+  "unmerged": {
+   "other_join": 2
+  }
+ },
+ {
+  "rule": "L2+Fd  corroborator DL|DP",
+  "tp": 437,
+  "recall": 0.9541,
+  "recall_lb": 0.9309,
+  "fp": 0,
+  "fp_g1": 0,
+  "fp_ids": [],
+  "islands": {
+   "correct": 13,
+   "none": 123
+  },
+  "unmerged": {
+   "other_join": 13
+  }
+ },
+ {
+  "rule": "L2+Fd+Fv2+Ft",
+  "tp": 442,
+  "recall": 0.9651,
+  "recall_lb": 0.944,
+  "fp": 0,
+  "fp_g1": 0,
+  "fp_ids": [],
+  "islands": {
+   "correct": 13,
+   "none": 123
+  },
+  "unmerged": {
+   "other_join": 13
+  }
+ },
+ {
+  "rule": "L4  O&T&S&D7&NC&(IR|DL|VL)",
+  "tp": 422,
+  "recall": 0.9214,
+  "recall_lb": 0.8931,
+  "fp": 1,
+  "fp_g1": 0,
+  "fp_ids": [
+   [
+    276995,
+    453533
+   ]
+  ],
+  "islands": {
+   "correct": 115,
+   "none": 17,
+   "amb_incl_twin": 4
+  },
+  "unmerged": {
+   "other_join": 115,
+   "other_amb": 4
+  }
+ },
+ {
+  "rule": "L4+Fv2",
+  "tp": 425,
+  "recall": 0.9279,
+  "recall_lb": 0.9005,
+  "fp": 1,
+  "fp_g1": 0,
+  "fp_ids": [
+   [
+    276995,
+    453533
+   ]
+  ],
+  "islands": {
+   "correct": 115,
+   "none": 17,
+   "amb_incl_twin": 4
+  },
+  "unmerged": {
+   "other_join": 115,
+   "other_amb": 4
+  }
+ },
+ {
+  "rule": "L4+Ft",
+  "tp": 424,
+  "recall": 0.9258,
+  "recall_lb": 0.8981,
+  "fp": 1,
+  "fp_g1": 0,
+  "fp_ids": [
+   [
+    276995,
+    453533
+   ]
+  ],
+  "islands": {
+   "correct": 116,
+   "none": 16,
+   "amb_incl_twin": 4
+  },
+  "unmerged": {
+   "other_join": 116,
+   "other_amb": 4
+  }
+ },
+ {
+  "rule": "L4+Fd",
+  "tp": 445,
+  "recall": 0.9716,
+  "recall_lb": 0.952,
+  "fp": 1,
+  "fp_g1": 0,
+  "fp_ids": [
+   [
+    276995,
+    453533
+   ]
+  ],
+  "islands": {
+   "correct": 116,
+   "none": 16,
+   "amb_incl_twin": 4
+  },
+  "unmerged": {
+   "other_join": 116,
+   "other_amb": 4
+  }
+ },
+ {
+  "rule": "L4+Fd+Fv2+Ft",
+  "tp": 450,
+  "recall": 0.9825,
+  "recall_lb": 0.9659,
+  "fp": 1,
+  "fp_g1": 0,
+  "fp_ids": [
+   [
+    276995,
+    453533
+   ]
+  ],
+  "islands": {
+   "correct": 117,
+   "none": 15,
+   "amb_incl_twin": 4
+  },
+  "unmerged": {
+   "other_join": 117,
+   "other_amb": 4
+  }
+ },
+ {
+  "rule": "L4+Fo  org id OR name_norm",
+  "tp": 422,
+  "recall": 0.9214,
+  "recall_lb": 0.8931,
+  "fp": 1,
+  "fp_g1": 0,
+  "fp_ids": [
+   [
+    276995,
+    453533
+   ]
+  ],
+  "islands": {
+   "correct": 115,
+   "none": 17,
+   "amb_incl_twin": 4
+  },
+  "unmerged": {
+   "other_join": 115,
+   "other_amb": 4
+  }
+ },
+ {
+  "rule": "L5  O&T&S&D7&NC",
+  "tp": 445,
+  "recall": 0.9716,
+  "recall_lb": 0.952,
+  "fp": 3,
+  "fp_g1": 0,
+  "fp_ids": [
+   [
+    276995,
+    453533
+   ],
+   [
+    567147,
+    1142490
+   ],
+   [
+    1142490,
+    567147
+   ]
+  ],
+  "islands": {
+   "correct": 131,
+   "amb_incl_twin": 4,
+   "none": 1
+  },
+  "unmerged": {
+   "other_join": 131,
+   "other_amb": 4
+  }
+ },
+ {
+  "rule": "L5+Fv2",
+  "tp": 448,
+  "recall": 0.9782,
+  "recall_lb": 0.9603,
+  "fp": 3,
+  "fp_g1": 0,
+  "fp_ids": [
+   [
+    276995,
+    453533
+   ],
+   [
+    567147,
+    1142490
+   ],
+   [
+    1142490,
+    567147
+   ]
+  ],
+  "islands": {
+   "correct": 131,
+   "amb_incl_twin": 4,
+   "none": 1
+  },
+  "unmerged": {
+   "other_join": 131,
+   "other_amb": 4
+  }
+ },
+ {
+  "rule": "L5+Ft",
+  "tp": 447,
+  "recall": 0.976,
+  "recall_lb": 0.9575,
+  "fp": 3,
+  "fp_g1": 0,
+  "fp_ids": [
+   [
+    276995,
+    453533
+   ],
+   [
+    567147,
+    1142490
+   ],
+   [
+    1142490,
+    567147
+   ]
+  ],
+  "islands": {
+   "correct": 132,
+   "amb_incl_twin": 4
+  },
+  "unmerged": {
+   "other_join": 132,
+   "other_amb": 4
+  }
+ },
+ {
+  "rule": "L5+Fv2+Ft",
+  "tp": 450,
+  "recall": 0.9825,
+  "recall_lb": 0.9659,
+  "fp": 3,
+  "fp_g1": 0,
+  "fp_ids": [
+   [
+    276995,
+    453533
+   ],
+   [
+    567147,
+    1142490
+   ],
+   [
+    1142490,
+    567147
+   ]
+  ],
+  "islands": {
+   "correct": 132,
+   "amb_incl_twin": 4
+  },
+  "unmerged": {
+   "other_join": 132,
+   "other_amb": 4
+  }
+ },
+ {
+  "rule": "L5+Fo",
+  "tp": 445,
+  "recall": 0.9716,
+  "recall_lb": 0.952,
+  "fp": 3,
+  "fp_g1": 0,
+  "fp_ids": [
+   [
+    276995,
+    453533
+   ],
+   [
+    567147,
+    1142490
+   ],
+   [
+    1142490,
+    567147
+   ]
+  ],
+  "islands": {
+   "correct": 131,
+   "amb_incl_twin": 4,
+   "none": 1
+  },
+  "unmerged": {
+   "other_join": 131,
+   "other_amb": 4
+  }
+ },
+ {
+  "rule": "L5-S  (subtype-free)",
+  "tp": 445,
+  "recall": 0.9716,
+  "recall_lb": 0.952,
+  "fp": 3,
+  "fp_g1": 0,
+  "fp_ids": [
+   [
+    276995,
+    453533
+   ],
+   [
+    567147,
+    1142490
+   ],
+   [
+    1142490,
+    567147
+   ]
+  ],
+  "islands": {
+   "amb_incl_twin": 7,
+   "correct": 128,
+   "none": 1
+  },
+  "unmerged": {
+   "other_amb": 7,
+   "other_join": 128
+  }
+ }
+]
