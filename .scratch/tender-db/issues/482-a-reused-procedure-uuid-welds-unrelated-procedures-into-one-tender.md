@@ -283,3 +283,14 @@ An adversarial review of `8b76651` found two majors and five minors. Fixed:
   families before deploy; the read was not run this session (prod reads not permitted). With 369/386
   planned per buyer the remaining exposure is UUID hubs (census max 789 notices) — measure the
   `group step refused-keys (seeded)` and `refused-sibling closure` journal lines on the first daily.
+
+## 2026-10-03 17:xx UTC — unit 2 deployed (`dbfb32c`) and applied: the UUID hubs are split
+
+- Gate on `dbfb32c`: GATE-EXIT=0, marker written; deployed. Census re-run 1933: identical counts, and the report now
+  carries `hub_tender_ids`.
+- `requeue-uuid-hubs`: dry 1934 found 149 hub Tenders and 4,150 notices; wet 1935 re-queued all 4,150.
+- **Project 1936 (59 s): `issue-482 uuid hubs refused: 146 key(s), 3983 notice(s) split into 1197 buyer
+  cluster(s)`.** 4,150 notices became 1,235 Tenders. The 481 links on those notices joined 93.
+- Tender 430681, the 789-notice Swiss hub, now serves 2 versions; its other notices are on per-buyer Tenders.
+- NEXT: the two-cluster precision read (60 samples) decides whether 2-cluster keys get the same treatment. Then
+  close 482.
