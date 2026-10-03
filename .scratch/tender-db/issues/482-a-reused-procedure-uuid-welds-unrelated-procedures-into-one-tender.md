@@ -294,3 +294,93 @@ An adversarial review of `8b76651` found two majors and five minors. Fixed:
 - Tender 430681, the 789-notice Swiss hub, now serves 2 versions; its other notices are on per-buyer Tenders.
 - NEXT: the two-cluster precision read (60 samples) decides whether 2-cluster keys get the same treatment. Then
   close 482.
+
+## 2026-10-03 — two-cluster precision read: do NOT split every 2-cluster key
+
+**Method.** The input was 60 hand-labelled rows covering 53 distinct two-cluster Tenders (7 were labelled twice; each
+pair agreed on collision vs not). I re-checked all 38 rows labelled same-entity or related-but-distinct, and all 15
+collision rows (more than the 10 asked for), against each cluster's own BT-21-Procedure titles: 195 notices, 4 bounded
+`/v1/sql` reads, no 408. Clusters, buyers and dates came from the stored census report (job 1933); parties, lots and
+contracts came from `/v1/tenders/<id>`. **No label changed.**
+- Every non-collision row carries the same procedure title in both clusters, or a translation of it: Sabadell CA/ES,
+  Bioland DE/IT. For 711034 (not in the 60, added below) the CN title is just "Διακήρυξη 09/2024", and the award's
+  contract is `ΣΥΜΒΑΣΗ 09/2024`.
+- Every collision row has unrelated titles under two buyers.
+- Borderline: 544749 (Bioland e.V. and Bioland Südtirol). Two partners of one EU programme, each awarding its own
+  lots. It is kept as not-a-collision. Flipping it moves precision by 1/53.
+
+I also labelled the 9 unlabelled Tenders in the census's `one-source` sample. That bucket holds every split Tender, so
+its bottom-30-by-hash sample is the only **unbiased** sample of the class; the other buckets over-sample
+several-jurisdictions and long gaps. All 30 of its rows are two-cluster.
+- Collisions: 739266 (Land Berlin SILB "Versorgen - Fernwärme" against SODA "Quecksilbersanierung") and 1017590
+  (Landkreis Freudenstadt and Landratsamt Roth, separate school-transport tenders).
+- Not collisions: 711034, 939628, 1009920, 1066920, 1072364, 1106790, 8813405.
+
+**Precision of "split every 2-cluster key"** (collisions / decidable, Wilson 95 %):
+
+| sample | collisions / decidable | precision | Wilson 95 % |
+|---|---|---|---|
+| the 53 labelled Tenders | 15 / 53 | 28.3 % | **18.0 %** – 41.6 % |
+| unbiased `one-source` sample | 7 / 30 | 23.3 % | 11.8 % – 40.9 % |
+| all 62 decided | 17 / 62 | 27.4 % | 17.9 % – 39.6 % |
+
+About three in four two-cluster splits would cut a real procedure in two. The 45 false splits fall into three groups:
+- **16 role mis-tags.** The contractor, a review body (KIO, ÚOHS, Vergabekammer, Förvaltningsrätten, the Tribunal
+  Catalán) or a platform vendor (European Dynamics) sits in the buyer slot. Examples: 16698, 299165, 438807, 159306,
+  394739, 692915, 121497, 198229, 939628, 1106790.
+- **18 renames, successors or language variants.** Examples: ISPPC→HUMANI, Homolka→Motol a Homolka, DB Netz→InfraGO,
+  Volánbusz→MÁV, Europol's two names, HIO EN/EL.
+- **11 agent/principal pairs.** Examples: a CPB (Dortmund) and its client, WIP and MA 56, VOR and NÖVOG, SNCF and SNCF
+  Voyageurs.
+
+The role mis-tags are a parser and guard issue in their own right: the buyer guard trusts `Procedure-Buyer` on award
+notices. That deserves its own issue, not a split rule.
+
+**Features** (all 62; recall is against the 17 collisions):
+
+| rule | splits | collisions | precision | Wilson LB | recall |
+|---|---|---|---|---|---|
+| several jurisdictions | 7 | 5 | 71 % | 36 % | 29 % |
+| interleaved (gap = 0) | 8 | 6 | 75 % | 41 % | 35 % |
+| gap > 365 d | 10 | 3 | 30 % | 11 % | 18 % |
+| no single-notice minority | 28 | 11 | 39 % | 24 % | 65 % |
+| both clusters single notices | 19 | 1 | 5 % | 1 % | 6 % |
+| buyer names share no token (legal forms dropped) | 37 | 12 | 32 % | 20 % | 71 % |
+| title Jaccard < 0.3 (BT-21-Procedure word sets) | 17 | 14 | 82 % | 59 % | 82 % |
+| **title Jaccard < 0.3 AND buyer names share no token** (legal-form + administrative stopwords: gmina, miasto, kommun, stadt, landkreis, landratsamt, comune, ajuntament, …) | **12** | **12** | **100 %** | **76 %** | 71 % |
+
+- **Time does not help.** The gap and span axes, which the census was built to bucket, separate nothing:
+  - renames and successors sit at 100–800 days, which is exactly where collisions sit;
+  - an interleaved gap of 0 is the best time signal, and still only 75 %.
+- **Jurisdiction is too rare.** A jurisdiction difference fires on 51 / 2,730 Tenders, and on 2 of 7 in the sample the
+  "other country" is a platform vendor or an EU partner.
+- **The title is the signal.** Its false positives are a translation (Sabadell CA/ES; Bioland DE/IT) or a generic
+  title ("Διακήρυξη 09/2024"). In all three, the two buyer names share a token. The conjunction drops exactly those
+  three and keeps 12 / 12.
+- **Recall it gives up:**
+  - 695666 (Enea Połaniec and Enea Wytwarzanie): the names share "enea", and cluster A is itself a within-buyer
+    reuse;
+  - 715482 (NEW AG für …): the names share the "NEW AG" prefix;
+  - 739266 (Land Berlin): the names share "Land Berlin Sondervermögen";
+  - 800030 (Movia and Sydtrafik): templated titles, Jaccard 0.70.
+
+**Can we reach ≥ 97 %?** Not shown, and this sample cannot show it. With 0 errors, the Wilson lower bound reaches
+0.97 only at about 124 rule hits. This sample has 12 (LB 0.76). The conjunctive rule is the only candidate with zero
+observed errors. The census does not carry titles, so its yield comes from the unbiased sample, where the rule fires on
+6 / 30 (284028, 609306, 1102385, 218518, 1017590, 41316): **about 550 of the 2,730 two-cluster Tenders** (Wilson
+9.5–37 %, so ~260–1,020). That covers 6 of the sample's 7 collisions (~86 % of an estimated ~640 real collisions; 23 %, so 330–1,120). Splitting
+all 2,730 would wrongly split about 2,090 (≈ 77 %) to fix those ~640.
+
+**Decision.**
+- Two-cluster keys stay merged; unit 2's threshold stays at 3 clusters.
+- Next step, if pursued: a 2-cluster split gated on the conjunction "procedure titles differ (Jaccard < 0.3 on
+  BT-21-Procedure, every cross-cluster pair) AND the clusters' buyer names share no non-stopword token".
+  1. Add both as fields to the census (the title set per cluster and the rule verdict), so a re-run counts the rule's
+     hits over all 2,730.
+  2. Hand-read about 125 of its hits; a zero-error read proves ≥ 97 %.
+  3. Only then act on them.
+- The 16 role mis-tags (contractor, review body or platform vendor in the buyer slot) go to a separate issue for the
+  buyer extraction. They also inflate the census's `split` count.
+- Working data, not committed:
+  - `/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/` holds `body.json`, `titles.txt`
+    and `feat.py`.
