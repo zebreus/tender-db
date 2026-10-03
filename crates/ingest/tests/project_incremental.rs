@@ -3314,11 +3314,13 @@ async fn tenders_of(db: &Db, pub_ids: &[&str]) -> std::collections::BTreeSet<i64
 /// Issue 483 unit 1: the buyer-role census over a recorded, folded corpus — the 482
 /// read's shapes as notices (16698 and 438807 as `/v1/tenders/<id>` shows them):
 /// - **16698**: the roles swapped — Ratio Web Sp. z o.o. as buyer and signatory, the
-///   Instytut Adama Mickiewicza as tenderer: `buyer-tenderer-swap`, no clean buyer left;
+///   Instytut Adama Mickiewicza as tenderer: `buyer-tenderer-swap`, counted but not
+///   decisive (2-3 of 30 census samples were real swaps), so the buyer stays clean;
 /// - **a buyer tendering in another lot beside a real buyer** (synthetic — the decided
-///   case): `contractor-same-section`, but a clean buyer is left;
+///   case): `contractor-same-section`, counted, not decisive;
 /// - **533381**: the Tribunal Català de Contractes as the only buyer, and the notice's
-///   review body: `review-body-name` (corroborated) and `review-body-role`;
+///   review body: `review-body-name-alone` (its own review role does not corroborate: a
+///   review body buying for itself) and `review-body-role`;
 /// - **438807**: the UZP appeals department as buyer, mediator and appeals information,
 ///   the real buyer POLREGIO only receiving tenders and paying: `real-buyer-elsewhere`,
 ///   `review-body-name`, `review-info-role`;
@@ -3381,30 +3383,31 @@ async fn the_buyer_role_census_flags_contractors_and_review_bodies_in_the_buyer_
     let r = role_census::buyer_role_census_windowed(&db, 1_000, 1_000, 1, &never, |_| {}).await.expect("census");
     assert!(!r.stopped);
     assert_eq!((r.notices, r.notices_with_buyers, r.buyer_mentions), (6, 5, 6));
-    assert_eq!((r.flagged_notices, r.decisively_flagged_notices, r.no_clean_buyer), (5, 4, 3));
+    // Decisive since the 2026-10-03 census: only 438807's corroborated review body.
+    assert_eq!((r.flagged_notices, r.decisively_flagged_notices, r.no_clean_buyer), (5, 1, 1));
     let class = |c: &str| {
         let t = &r.classes[c];
         (t.mentions, t.notices, t.no_clean_buyer, t.every_buyer)
     };
-    assert_eq!(class("buyer-tenderer-swap"), (1, 1, 1, 1));
+    assert_eq!(class("buyer-tenderer-swap"), (1, 1, 0, 1));
     assert_eq!(class("contractor-same-section"), (1, 1, 0, 0));
-    assert_eq!(class("review-body-name"), (2, 2, 2, 2));
-    assert_eq!(class("review-body-role"), (2, 2, 1, 2));
+    assert_eq!(class("review-body-name"), (1, 1, 1, 1));
+    assert_eq!(class("review-body-role"), (2, 2, 0, 2));
     assert_eq!(class("review-info-role"), (1, 1, 1, 1));
     assert_eq!(class("real-buyer-elsewhere"), (1, 1, 1, 1));
     assert_eq!(class("contractor-name"), (0, 0, 0, 0));
-    assert_eq!(class("review-body-name-alone"), (0, 0, 0, 0));
+    assert_eq!(class("review-body-name-alone"), (1, 1, 0, 1));
     assert_eq!(r.read.get("ted/29"), Some(&4));
     assert_eq!(r.read.get("ted/16"), Some(&2));
-    assert_eq!(r.cells.get("ted/29/no-clean-buyer"), Some(&3));
+    assert_eq!(r.cells.get("ted/29/no-clean-buyer"), Some(&1));
     assert_eq!(r.cells.get("ted/29/buyer-tenderer-swap"), Some(&1));
     assert_eq!(r.cells.get("ted/16/review-body-role"), Some(&1));
     assert_eq!(r.patterns.get("review-body-name/PL UZP Departament Odwołań"), Some(&1));
-    assert_eq!(r.patterns.get("review-body-name/ES Tribunal Catalán"), Some(&1));
+    assert_eq!(r.patterns.get("review-body-name-alone/ES Tribunal Catalán"), Some(&1));
     let swap = &r.classes["buyer-tenderer-swap"].samples;
     assert_eq!(swap[0].publication, "ted:00016698-2024");
     assert_eq!(swap[0].basis, vec!["buyer-tenderer-swap: tenderer Instytut Adama Mickiewicza"]);
-    assert!(!swap[0].clean_buyer_left && swap[0].other_buyers.is_empty());
+    assert!(swap[0].clean_buyer_left && swap[0].other_buyers.is_empty(), "counted, not decisive");
     let beside = &r.classes["contractor-same-section"].samples[0];
     assert_eq!(beside.publication, "ted:00016699-2024");
     assert_eq!(beside.flagged, "Ratio Web Sp. z o.o.");
@@ -3413,9 +3416,11 @@ async fn the_buyer_role_census_flags_contractors_and_review_bodies_in_the_buyer_
     let elsewhere = &r.classes["real-buyer-elsewhere"].samples[0];
     assert!(elsewhere.basis[0].starts_with("real-buyer-elsewhere: POLREGIO S.A"), "{:?}", elsewhere.basis);
     assert_eq!(
-        r.classes["review-body-name"].samples[0].basis[0],
-        "review-body-name: ES Tribunal Catalán; its review role"
+        r.classes["review-body-name-alone"].samples[0].basis[0],
+        "review-body-name-alone: ES Tribunal Catalán; its review role"
     );
+    let uzp = &r.classes["review-body-name"].samples[0].basis;
+    assert!(uzp.contains(&"review-body-name: PL UZP Departament Odwołań; real buyer elsewhere".to_owned()), "{uzp:?}");
 
     // Windows of one id read the same notices.
     let narrow = role_census::buyer_role_census_windowed(&db, 1, 1, 1, &never, |_| {}).await.expect("narrow");

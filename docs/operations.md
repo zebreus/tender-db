@@ -947,18 +947,18 @@ Each buyer mention gets every class that applies (`basis` says what each matched
 
 | class | when | decisive |
 |---|---|---|
-| `contractor-same-section` | its own Organization is also referenced as a winner, tenderer, main or subcontractor on the notice, in ANY lot | yes |
-| `contractor-org-same-name` | another section with the same resolved organization AND the same folded name is such a party | yes |
+| `contractor-same-section` | its own Organization is also referenced as a winner, tenderer, main or subcontractor on the notice, in ANY lot | no |
+| `contractor-org-same-name` | another section with the same resolved organization AND the same folded name is such a party | no |
 | `contractor-org-other-name` | the same resolved organization under a DIFFERENT name is such a party (a resolver fusion — shared switchboard ids, the PL823 stub, bare DE ids — or an in-house award to an Eigenbetrieb sharing its authority's id) | no |
-| `contractor-name` | no organization match, but its folded name equals such a party's | yes |
-| `buyer-tenderer-swap` | the roles swapped (16698, 299165): the buyer carries a commercial legal form (`COMMERCIAL_FORMS`: sp. z o.o., S.A., GmbH, s.r.o., …) and is not public-shaped, while a tenderer that is not itself a buyer is public-shaped (`PUBLIC_STEMS`: instytut, uniwersyte…, gmina, stadt, ministry, …) with no commercial form | yes |
+| `contractor-name` | no organization match, but its folded name equals such a party's | no |
+| `buyer-tenderer-swap` | the roles swapped (16698, 299165): the buyer carries a commercial legal form (`COMMERCIAL_FORMS`: sp. z o.o., S.A., GmbH, s.r.o., …) and is not public-shaped, while a tenderer that is not itself a buyer is public-shaped (`PUBLIC_STEMS`: instytut, uniwersyte…, gmina, stadt, ministry, …) with no commercial form | no |
 | `swap-legal-form` | the weak half: a commercial buyer and a tenderer with no commercial form that is not public-shaped either (a person, an association, an unsuffixed name) | no |
 | `real-buyer-elsewhere` | it holds no buyer-shaped role (tender receipt / evaluation, additional information, paying, financing, signatory, documents provider; legacy `tender-receipt`, `further-information`, `specifications-provider`) while another organization, neither buyer nor contractor, does (438807). Its `basis` names that organization: the buyer a demote could recover | no |
-| `review-body-name` | its name is a known review body (`NAME_PATTERNS` in `role_census.rs`: KIO, UZP Departament Odwołań, Vergabekammer, ÚOHS, Förvaltningsrätten, Tribunal Català, TACRC, TAR, tribunal administratif, …) AND the notice agrees: the same organization holds a review or review-adjacent role, another buyer mention is not a review-body name, or `real-buyer-elsewhere` holds | yes |
-| `review-body-name-alone` | the name alone: a court or ÚOHS buying in its own name looks exactly like this | no |
+| `review-body-name` | its name is a known review body (`NAME_PATTERNS` in `role_census.rs`: KIO, UZP Departament Odwołań, Vergabekammer, ÚOHS, Förvaltningsrätten, Tribunal Català, TACRC, TAR, tribunal administratif, …) AND the notice agrees: `real-buyer-elsewhere` holds, or another buyer mention is not a review-body name | yes |
+| `review-body-name-alone` | the name alone, or with only its own review(-adjacent) role: a court, KIO or ÚOHS buying in its own name is its own review body and looks exactly like this | no |
 | `review-body-role` | the notice's own review-body role (eForms `Lot-ReviewOrg`, `Part-ReviewOrg`, `ReviewBody`; legacy `ADDRESS_REVIEW_BODY`, `APPEAL_PROCEDURE_BODY_RESPONSIBLE`, `RESPONSIBLE_FOR_APPEAL_PROCEDURES`) names the same organization or name | no |
 | `review-info-role` | it is the appeals-information body or mediator (eForms `Lot-`/`Part-ReviewInfo`, `Lot-`/`Part-Mediator`; legacy `ADDRESS_REVIEW_INFO`, `mediation-body`, `appeal-information`) | no |
-| `esender` | it is the notice's eSender / procurement service provider (`Procedure-SProvider`) | yes |
+| `esender` | it is the notice's eSender / procurement service provider (`Procedure-SProvider`): a buyer sending its own notices | no |
 | `docs-provider` | it is the documents provider (`Lot-`/`Part-DocProvider`, legacy `specifications-provider`) | no |
 | `platform-name` | its name is a known platform vendor (European Dynamics, EU-Supply, Mercell, Vortal, cosinex, subreport, DTVP) | yes |
 
@@ -974,19 +974,27 @@ stride or window; each with its BT-105 `procedure_type`). `read` counts notices 
 per `class/list label` for the name-list classes (which entries dominate, e.g. a short token like
 `kio`, `tar` or `kofa` matching real buyers).
 
-Decisions in the classes:
-- **A buyer that tenders in another lot is still flagged** (`contractor-same-section`). A
-  procedure's buyer is never its own supplier. The shape where the notice ALSO names its real buyer
-  (a synthetic fixture: a real buyer beside a buyer that tenders in lot 2) is told apart by
-  `clean_buyer_left` and `no_clean_buyer`, not by dropping the flag.
+Decisions in the classes. **Which are decisive was set by the first run** (2026-10-03, job 1942,
+stride 10: 1,470,018 notices read, 3,151 decisively flagged under the first rules, 30 samples per
+class read; evidence in `.scratch/tender-db/483-roles/`): only the corroborated `review-body-name`
+and `platform-name` held up.
+- **The contractor classes count, they do not decide.** In every sample it was the CONTRACTOR slot
+  that held the buyer (Gobierno Vasco named as its own supplier by a legacy text notice, Stadt
+  Hilden, Kent County Council, SPMS: a winner block repeating the authority, an in-house award),
+  never a contractor in the buyer slot. The buyer mention is the right one.
 - **The swap is read from legal forms**, because in 16698 and 299165 neither organization holds
-  both roles, so no contractor class sees it. Decisive only when both halves agree (company buyer,
-  public tenderer); a public research institute bidding to a state-owned S.A. would be a false hit,
-  and the samples show how often.
-- **A review-body name is decisive only when corroborated.** ÚOHS, the Raad van State, the Conseil
-  d'État and courts all publish their own tenders. CZ: ÚOHS is also the review body of its own
-  procurements, so its own tender corroborates itself through its review role; read
-  `patterns["review-body-name/CZ ÚOHS"]`'s samples before acting on that entry.
+  both roles, so no contractor class sees it. Not decisive: 2-3 of 30 samples were real swaps (a
+  Ziviltechniker GmbH as buyer and Stadt Köln as tenderer); the rest were company buyers awarding
+  to a public institute (PKP PLK and the Instytut Kolejnictwa, Hrvatske ceste and Institut IGH,
+  Dresdner Verkehrsbetriebe and TU Dresden).
+- **The eSender is not decisive.** 2,351 of the first run's 2,993 no-clean-buyer notices were
+  buyers sending their own notices (Sprinkenhof, a Berlin Senatsverwaltung, Gmina Cieszyn, the
+  Département de l'Aube). A platform vendor in the slot is `platform-name`.
+- **A review-body name is decisive only when corroborated by ANOTHER party**: a recoverable real
+  buyer (`real-buyer-elsewhere`: a Vergabekammer beside the Staatliches Bauamt, the High Court of
+  Ireland beside the OPW) or another, non-review buyer. Its own review role does not corroborate:
+  KIO, ÚVO, ÚOHS and the tribunaux administratifs buying for themselves are their own review body.
+  The bare `tar` matched a Hungarian village (Tar Község); TAR is listed only with its region.
 - **The review-body role, review information and the documents provider are not decisive.** A
   buyer writing its own name into those blocks (common in UK and IE notices) is the normal case or a
   mis-tag of THAT role. Counted and sampled to size them.

@@ -150,7 +150,8 @@ enum NameList {
 ///
 /// A review-body name is decisive only when the notice corroborates it (`review-body-name`
 /// against `review-body-name-alone`, [`ROLE_CENSUS_CLASSES`]): several of these bodies
-/// (ÚOHS, the Raad van State, the Conseil d'État, any court) also buy in their own name.
+/// (ÚOHS, KIO, the Raad van State, the Conseil d'État, any court) also buy in their own
+/// name, and then name themselves the review body too.
 ///
 /// Deliberately left out: `Commissione` (the European Commission is a real buyer), the
 /// Polish Urząd Zamówień Publicznych as a whole (it also buys for itself; its appeals
@@ -179,7 +180,27 @@ const NAME_PATTERNS: &[(&str, &str, NameList)] = &[
     ("ES tribunal de contratos", "tribunal administrativo de contratos publicos", NameList::ReviewBody),
     ("ES tribunal de contratos", "tribunal de contratos publicos", NameList::ReviewBody),
     ("IT TAR", "tribunale amministrativo regionale", NameList::ReviewBody),
-    ("IT TAR", "tar", NameList::ReviewBody),
+    // The bare acronym only with its region: alone it is a word in other languages
+    // (Tar Község, a Hungarian village, read as a review body in the 2026-10-03 census).
+    ("IT TAR", "tar abruzzo", NameList::ReviewBody),
+    ("IT TAR", "tar basilicata", NameList::ReviewBody),
+    ("IT TAR", "tar calabria", NameList::ReviewBody),
+    ("IT TAR", "tar campania", NameList::ReviewBody),
+    ("IT TAR", "tar emilia romagna", NameList::ReviewBody),
+    ("IT TAR", "tar friuli venezia giulia", NameList::ReviewBody),
+    ("IT TAR", "tar lazio", NameList::ReviewBody),
+    ("IT TAR", "tar liguria", NameList::ReviewBody),
+    ("IT TAR", "tar lombardia", NameList::ReviewBody),
+    ("IT TAR", "tar marche", NameList::ReviewBody),
+    ("IT TAR", "tar molise", NameList::ReviewBody),
+    ("IT TAR", "tar piemonte", NameList::ReviewBody),
+    ("IT TAR", "tar puglia", NameList::ReviewBody),
+    ("IT TAR", "tar sardegna", NameList::ReviewBody),
+    ("IT TAR", "tar sicilia", NameList::ReviewBody),
+    ("IT TAR", "tar toscana", NameList::ReviewBody),
+    ("IT TAR", "tar umbria", NameList::ReviewBody),
+    ("IT TAR", "tar valle d aosta", NameList::ReviewBody),
+    ("IT TAR", "tar veneto", NameList::ReviewBody),
     ("FR tribunal administratif", "tribunal administratif", NameList::ReviewBody),
     ("BE Raad van State", "raad van state", NameList::ReviewBody),
     ("BE Conseil d'État", "conseil d etat", NameList::ReviewBody),
@@ -338,22 +359,32 @@ fn public(folded: &str) -> bool {
 /// The flag classes, in report order: `(name, decisive)`. A decisive class makes the
 /// mention not a clean buyer; a non-decisive one is counted and sampled only.
 ///
+/// Which classes are decisive was set by the stride-10 census of 2026-10-03 (job 1942,
+/// 30 samples per class, issue 483): only `review-body-name` (now corroborated by another
+/// buyer or a recoverable real buyer) and `platform-name` held up. The contractor classes,
+/// the swap and `esender` were legitimate buyers in nearly every sample, and are counted.
+///
 /// - `contractor-same-section`: one Organization referenced as buyer AND as a winner,
 ///   tenderer or contractor of this notice — in ANY lot. Decided, not missed: a
 ///   procedure's buyer is never its own supplier, so a buyer that is a tenderer of another
 ///   lot is still the contractor in the buyer slot; the shape where the notice ALSO names
-///   its real buyer is told apart by `no_clean_buyer`, not by dropping the flag.
+///   its real buyer is told apart by `no_clean_buyer`, not by dropping the flag. NOT
+///   decisive: in the census it was the CONTRACTOR slot that held the buyer, never the
+///   reverse (as for the two classes below).
 /// - `contractor-org-same-name`: another section, the same resolved organization AND the
 ///   same folded name (299165's shape of two sections the resolver bound together).
 /// - `contractor-org-other-name`: the same resolved organization under a DIFFERENT name.
 ///   NOT decisive: the org layer has known fusions (shared switchboard ids, the PL823 stub,
 ///   bare DE ids), and an in-house award to an Eigenbetrieb shares its authority's id.
 /// - `contractor-name`: no organization match, but the folded name equals a contractor's.
+///   NOT decisive (Gobierno Vasco named as its own supplier by a legacy text notice).
 /// - `buyer-tenderer-swap`: the buyer carries a commercial legal form and is not
 ///   public-shaped, while a tenderer (not itself a buyer) is public-shaped with no
 ///   commercial form — 16698 (Ratio Web Sp. z o.o. as buyer, Instytut Adama Mickiewicza
 ///   as tenderer) and 299165 (ISS HS Sp. z o.o. / Uniwersyteckie Centrum Kliniczne): the
-///   two roles swapped, so no contractor class can see it.
+///   two roles swapped, so no contractor class can see it. NOT decisive: 2-3 of the
+///   census's 30 samples were swaps; the rest company buyers (PKP PLK, Hrvatske ceste,
+///   Dresdner Verkehrsbetriebe) awarding to a public institute.
 /// - `swap-legal-form`: a commercial buyer and a tenderer with no commercial form that is
 ///   not public-shaped either (a natural person, an association, an unsuffixed name). NOT
 ///   decisive: the weak half of the swap signal, sized to see what it holds.
@@ -363,32 +394,35 @@ fn public(folded: &str) -> bool {
 ///   and paying). NOT decisive (a central purchasing body leaves paying to its client);
 ///   its basis names the organization a demote could recover as the buyer.
 /// - `review-body-name`: the name is a known review body ([`NAME_PATTERNS`]) AND the notice
-///   agrees: the same organization holds a review(-adjacent) role, another buyer mention
-///   is not a review-body name, or `real-buyer-elsewhere` holds.
-/// - `review-body-name-alone`: the name alone. NOT decisive: ÚOHS, the Raad van State or a
-///   court buying in its own name looks exactly like this.
+///   agrees: `real-buyer-elsewhere` holds, or another buyer mention is not a review-body
+///   name.
+/// - `review-body-name-alone`: the name with no such agreement — alone, or only its own
+///   review(-adjacent) role. NOT decisive: ÚOHS, KIO, the Raad van State or a court buying
+///   in its own name is its own review body and looks exactly like this.
 /// - `review-body-role`: the notice's own review-body role names the same organization or
 ///   name. NOT decisive: a buyer filling its own name into the review-body block is a
 ///   mis-tag of THAT role, and it is common (UK and IE notices list themselves).
 /// - `review-info-role`: the buyer is the appeals-information body or mediator. NOT
 ///   decisive: routinely the buyer itself.
-/// - `esender`: the buyer is the notice's eSender / procurement service provider.
+/// - `esender`: the buyer is the notice's eSender / procurement service provider. NOT
+///   decisive: a buyer that sends its own notices (2,351 of the census's 2,993 no-clean-
+///   buyer notices); a platform vendor in the slot is `platform-name`.
 /// - `docs-provider`: the buyer is the documents provider. NOT decisive: a buyer handing
 ///   out its own documents is the normal case; counted to size it, never a mis-tag alone.
 /// - `platform-name`: the name is a known platform vendor ([`NAME_PATTERNS`]).
 pub const ROLE_CENSUS_CLASSES: [(&str, bool); 14] = [
-    ("contractor-same-section", true),
-    ("contractor-org-same-name", true),
+    ("contractor-same-section", false),
+    ("contractor-org-same-name", false),
     ("contractor-org-other-name", false),
-    ("contractor-name", true),
-    ("buyer-tenderer-swap", true),
+    ("contractor-name", false),
+    ("buyer-tenderer-swap", false),
     ("swap-legal-form", false),
     ("real-buyer-elsewhere", false),
     ("review-body-name", true),
     ("review-body-name-alone", false),
     ("review-body-role", false),
     ("review-info-role", false),
-    ("esender", true),
+    ("esender", false),
     ("docs-provider", false),
     ("platform-name", true),
 ];
@@ -540,18 +574,16 @@ fn judge(parties: &[Party]) -> Vec<(usize, Verdict)> {
         if let Some(pattern) = name_pattern(&buyer.folded, NameList::ReviewBody) {
             let another_buyer = others()
                 .any(|p| p.is(RoleKind::Buyer) && !buyer.same(p) && name_pattern(&p.folded, NameList::ReviewBody).is_none());
-            let why = if review_role.is_some() || review_info.is_some() {
-                Some("its review role")
+            // Its own review role does NOT corroborate: a review body buying for itself is
+            // its own review body (KIO, ÚVO, the tribunaux administratifs in the census).
+            if elsewhere.is_some() {
+                v.flag(class("review-body-name"), format!("{pattern}; real buyer elsewhere"));
             } else if another_buyer {
-                Some("another buyer")
-            } else if elsewhere.is_some() {
-                Some("real buyer elsewhere")
+                v.flag(class("review-body-name"), format!("{pattern}; another buyer"));
+            } else if review_role.is_some() || review_info.is_some() {
+                v.flag(class("review-body-name-alone"), format!("{pattern}; its review role"));
             } else {
-                None
-            };
-            match why {
-                Some(why) => v.flag(class("review-body-name"), format!("{pattern}; {why}")),
-                None => v.flag(class("review-body-name-alone"), pattern.to_owned()),
+                v.flag(class("review-body-name-alone"), pattern.to_owned());
             }
         }
         if let Some(p) = review_role {
@@ -940,7 +972,10 @@ mod tests {
             ],
             &[("ORG-1", 23_472_098), ("ORG-2", 23_327_423), ("ORG-3", 36), ("ORG-4", 12)],
         );
-        assert_eq!(v, vec![(ratio.to_owned(), vec!["buyer-tenderer-swap"], false)]);
+        // Counted, not decisive: in the 2026-10-03 census (job 1942) 2-3 of 30 samples were
+        // real swaps; the rest company buyers awarding to a public institute (PKP PLK and the
+        // Instytut Kolejnictwa, Hrvatske ceste and Institut IGH).
+        assert_eq!(v, vec![(ratio.to_owned(), vec!["buyer-tenderer-swap"], true)]);
         // 299165: the same swap (ISS HS as buyer, the university hospital as tenderer).
         let v = verdicts(
             &[
@@ -951,7 +986,7 @@ mod tests {
             &[("ORG-1", 15_556_355), ("ORG-2", 6_284), ("ORG-3", 36)],
         );
         assert_eq!(v[0].1, vec!["buyer-tenderer-swap"]);
-        assert!(!v[0].2);
+        assert!(v[0].2);
         // 438807: the UZP appeals department in the buyer slot (also mediator and appeals
         // information); the real buyer POLREGIO only receives tenders and pays.
         let uzp = "Urząd Zamówień Publicznych Departament Odwołań";
@@ -978,9 +1013,12 @@ mod tests {
             Some(&[("ORG-2".to_owned(), 6_465)].into_iter().collect()),
         );
         assert_eq!(judge(&parties)[0].1.basis[0], format!("real-buyer-elsewhere: {polregio} (org 6465)"), "names the buyer");
-        // One Organization referenced as buyer and as tenderer.
+        // One Organization referenced as buyer and as tenderer. Counted, not decisive: in the
+        // census the CONTRACTOR slot held the buyer (Gobierno Vasco, Stadt Hilden, Kent County
+        // Council: a legacy winner block repeating the authority, an in-house award), never
+        // the reverse, so the buyer mention is the right one.
         let v = verdicts(&[(BUYER, "ORG-1", ratio), (TENDERER, "ORG-1", ratio)], &[("ORG-1", 7)]);
-        assert_eq!(v, vec![(ratio.to_owned(), vec!["contractor-same-section"], false)]);
+        assert_eq!(v, vec![(ratio.to_owned(), vec!["contractor-same-section"], true)]);
         // Two sections the resolver bound to one organization, one name.
         let v = verdicts(
             &[(BUYER, "ORG-1", "Naprzód Catering Sp. z o.o."), (TENDERER, "ORG-2", "NAPRZÓD CATERING sp. z o.o.")],
@@ -998,7 +1036,9 @@ mod tests {
         let v = verdicts(&[(BUYER, "ORG-1", "DOL-TRANS-TOUR"), (TENDERER, "ORG-2", "Dol-Trans-Tour")], &[]);
         assert_eq!(v[0].1, vec!["contractor-name"]);
         // 533381 / 159306: a review body in the buyer slot that is also the notice's review
-        // body; the name alone (a court buying for itself) is counted, not decisive.
+        // body is counted, not decisive: the census's samples of that shape were KIO, ÚVO,
+        // ÚOHS and the tribunaux administratifs buying for themselves, their own review body.
+        // The name alone likewise.
         for court in [
             "Tribunal Català de Contractes del Sector Públic",
             "Úřad pro ochranu hospodářské soutěže",
@@ -1008,7 +1048,7 @@ mod tests {
             "Tribunal Administrativo Central de Recursos Contractuales",
         ] {
             let v = verdicts(&[(BUYER, "ORG-1", court), ("OPT-301-Lot-ReviewOrg", "ORG-1", court)], &[]);
-            assert_eq!(v, vec![(court.to_owned(), vec!["review-body-name", "review-body-role"], false)], "{court}");
+            assert_eq!(v, vec![(court.to_owned(), vec!["review-body-name-alone", "review-body-role"], true)], "{court}");
             let v = verdicts(&[(BUYER, "ORG-1", court)], &[]);
             assert_eq!(v, vec![(court.to_owned(), vec!["review-body-name-alone"], true)], "{court}");
             // Beside a real buyer, the court mention is decisive and the buyer stays clean.
@@ -1022,6 +1062,12 @@ mod tests {
             &[],
         );
         assert_eq!(v[0].1, vec!["esender", "platform-name"]);
+        assert!(!v[0].2, "the platform name is decisive");
+        // A buyer sending its own notices is its own eSender, and stays clean (2,351 of the
+        // census's 2,993 no-clean-buyer notices were this: Sprinkenhof, Gmina Cieszyn, the
+        // Département de l'Aube).
+        let v = verdicts(&[(BUYER, "ORG-1", "Gmina Cieszyn"), ("OPT-300-Procedure-SProvider", "ORG-1", "Gmina Cieszyn")], &[]);
+        assert_eq!(v, vec![("Gmina Cieszyn".to_owned(), vec!["esender"], true)]);
         // A real buyer that is its own review body and documents provider stays clean.
         let v = verdicts(
             &[
@@ -1054,9 +1100,9 @@ mod tests {
         assert!(public(&fold("Uniwersyteckie Centrum Kliniczne")) && !public(&fold("Ratio Web")));
     }
 
-    /// The decided case: a buyer that is also a tenderer — of another lot — is flagged,
-    /// and a notice that also names its real buyer keeps a clean one. A synthetic shape
-    /// (16698 itself is the swap above).
+    /// A buyer that is also a tenderer — of another lot — is flagged and counted (not
+    /// decisive), and a decisive class alone in the slot leaves no clean buyer. A synthetic
+    /// shape (16698 itself is the swap above).
     #[test]
     fn a_buyer_tendering_in_another_lot_is_flagged_but_a_real_buyer_is_left() {
         let mut parsed = notice(&[
@@ -1072,6 +1118,7 @@ mod tests {
         let n = store::NoticeRef { id: 16_698, source: "ted".into(), publication_id: "00016698-2024".into(), profile: "eforms:eforms-sdk-1.10".into() };
         report.classify(&n, "29", "open", &parties);
         assert_eq!((report.notices_with_buyers, report.buyer_mentions, report.no_clean_buyer), (1, 2, 0));
+        assert_eq!(report.decisively_flagged_notices, 0);
         let c = &report.classes["contractor-same-section"];
         assert_eq!((c.mentions, c.notices, c.no_clean_buyer, c.every_buyer), (1, 1, 0, 0));
         assert_eq!(c.samples[0].flagged, "Ratio Web Sp. z o.o.");
@@ -1081,17 +1128,12 @@ mod tests {
         assert_eq!(report.cells.get("ted/29/contractor-same-section"), Some(&1));
         assert_eq!(report.procedures.get("open/contractor-same-section"), Some(&1));
         assert_eq!(report.cells.get("ted/29/no-clean-buyer"), None);
-        // The contractor alone in the slot: no clean buyer left.
-        let parties = notice_parties(
-            false,
-            2,
-            &notice(&[(BUYER, "ORG-2", "Ratio Web Sp. z o.o."), (TENDERER, "ORG-2", "Ratio Web Sp. z o.o.")]),
-            None,
-        );
+        // A platform vendor alone in the slot: no clean buyer left.
+        let parties = notice_parties(false, 2, &notice(&[(BUYER, "ORG-2", "European Dynamics S.A.")]), None);
         report.classify(&store::NoticeRef { id: 2, ..n.clone() }, "29", "-", &parties);
         assert_eq!(report.no_clean_buyer, 1);
         assert_eq!(report.cells.get("ted/29/no-clean-buyer"), Some(&1));
-        assert_eq!(report.classes["contractor-same-section"].every_buyer, 1);
+        assert_eq!(report.classes["platform-name"].every_buyer, 1);
         // The name-list classes count by pattern label.
         let parties = notice_parties(false, 3, &notice(&[(BUYER, "ORG-1", "Vergabekammer Südbayern")]), None);
         report.classify(&store::NoticeRef { id: 3, ..n }, "29", "-", &parties);
@@ -1148,6 +1190,7 @@ mod tests {
         assert_eq!(name_pattern(&fold("Stadtwerke Tarp"), NameList::ReviewBody), None);
         assert_eq!(name_pattern(&fold("T.A.R. Lazio"), NameList::ReviewBody), None, "dotted initials are not a word");
         assert_eq!(name_pattern(&fold("TAR Lazio - Roma"), NameList::ReviewBody), Some("IT TAR"));
+        assert_eq!(name_pattern(&fold("Tar Község Önkormányzata"), NameList::ReviewBody), None);
         assert_eq!(name_pattern(&fold("Commissione Europea"), NameList::ReviewBody), None);
         assert_eq!(
             name_pattern(&fold("Urząd Zamówień Publicznych Departament Odwołań"), NameList::ReviewBody),
