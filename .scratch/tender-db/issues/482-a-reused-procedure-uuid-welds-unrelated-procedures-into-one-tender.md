@@ -141,3 +141,24 @@ An adversarial review of `0b9aacf` found the report could not set the split rule
   notice was joined by an opp-090 placeholder and is now refused buyer-disjoint, not by the shared BT-04. The census
   (unit 1, built and gated at 75dd23f) still runs for real BT-04 collisions, e.g. 526284 (Tenerife + SCB under
   `73206638-…`).
+
+## 2026-10-03 10:xx UTC — census read (job 1927, 7,968 s); decision: refuse UUID hubs (unit 2)
+
+- 756,457 UUID-keyed Tenders with 2 or more notices (2.37M notices). **2,879 (0.38 %) split** into buyer-disjoint
+  clusters: 2,778 with every notice under the Tender's own key, 481 interleaved, 2,398 sequential, 1,734 where every
+  minority cluster is a single notice.
+- Cluster counts: 2,730 with 2, 75 with 3, 25 with 4–5, 28 with 6–10, 21 with 11+ (max 319).
+- **Hubs are platform-wide UUID reuse.**
+  - 430681: 789 notices from 319 Swiss buyers under one BT-04 (ASTRA, the Hochbauamt, Stadt Zürich, …).
+  - 440935, 737405, 1004011, 204280 and 489950 are Finnish (Hansel, universities, agencies).
+  - 126427, 442018, 429083 and 461158 are Polish municipalities.
+  - 928341 is Bavarian Landkreise.
+- **The two-cluster cases are mixed.** Real collisions: Olkusz / Siewierz, Ministerie BZK / BuZa, POLREGIO / UZP.
+  One body under two names: Health Insurance Organisation / Οργανισμός Ασφάλισης Υγείας. Several-jurisdiction cases
+  are often one EU body filing from two countries (EEAS BE/XK, EP LU/FR).
+- **Decision (owner).**
+  - Unit 2 refuses a UUID key whose notices form **3 or more** buyer-disjoint clusters. This extends issue 369's
+    placeholder gate to UUID keys with the 481 buyer_guard overlap, so each notice falls to `refused:<key>:<buyer>`.
+    That covers about 150 Tenders, including the 789-notice Swiss hub.
+  - Two-cluster splits are NOT acted on yet. A 60-sample hand read must first measure their precision; the
+    name-variant share decides.
