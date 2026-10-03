@@ -44,5 +44,5 @@ it in guards only.
 
     curl -s https://tenders.zebreus.click/v1/tenders/16698 | jq -c '[.parties[]? | select(.role|test("uyer")) | .organization_name] | unique'
 
-- **open** (2026-10-03): it lists `Ratio Web Sp. z o.o.` among the buyers.
+- **open** (2026-10-03): `["Ratio Web Spółka z ograniczoną odpowiedzialnością"]`, the contractor as the only buyer.
 - **done:** Instytut Adama Mickiewicza only.
