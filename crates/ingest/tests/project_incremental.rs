@@ -3129,6 +3129,179 @@ async fn a_uuid_hub_splits_per_buyer_cluster_on_full_and_daily_folds() {
     }
 }
 
+/// `tender_key_merges`, one `from|to` row a line.
+async fn key_merges(db: &Db) -> String {
+    match db
+        .scalar("SELECT group_concat(r, x'0a') FROM (SELECT from_key||'|'||to_key AS r FROM tender_key_merges ORDER BY from_key)")
+        .await
+        .expect("key merges")
+    {
+        Some(store::turso::Value::Text(s)) => s,
+        _ => String::new(),
+    }
+}
+
+/// Issue 482 unit 2 review (major 1, minor 3): a hub whose clusters a link absorbed into
+/// two DIFFERENT keys' Tenders. A daily that reaches one of those Tenders by ITS OWN key —
+/// a new notice under the link partner — must still plan the hub key whole: the old
+/// closure read only the touched Tenders' names, saw no `refused:` there, planned one
+/// cluster, and its `record_key_merges` range delete dropped the OTHER cluster's merge row;
+/// the next daily under the hub then missed that cluster, counted 2 and welded the third
+/// cluster into a link partner's Tender. Full and daily compared at every step, content,
+/// change events AND `tender_key_merges`:
+///
+/// - **step 0**: KEY_A (ASTRA) and KEY_B (Hochbau), and a hub key with ASTRA citing KEY_A by
+///   OPP-090, Hochbau citing KEY_B, Winterthur — 3 clusters, refused; ASTRA's and Hochbau's
+///   groups absorbed into KEY_A and KEY_B. Winterthur's TED notice names a buyerless DÖE
+///   twin under the hub key (`refused:<hub>:#n…`) by BT-701: the logical-notice link
+///   rejoins them (it was refused as a keyed weld while `#n` counted as keyed).
+/// - **step 1**: a new KEY_A notice. Reached by KEY_A only; the hub must be planned whole.
+/// - **step 2**: a new Winterthur notice under the hub key: still 3 clusters, it joins
+///   Winterthur's Tender, nothing is welded into KEY_A's or KEY_B's.
+#[tokio::test]
+async fn a_hub_cluster_merged_into_another_keys_tender_keeps_the_hub_whole_on_the_daily() {
+    const KEY_A: &str = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
+    const KEY_B: &str = "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e";
+    const KEY_H: &str = "3c4d5e6f-7a8b-4c9d-8e0f-2a3b4c5d6e7f";
+    const TWIN: &str = "4d5e6f7a-8b9c-4d0e-9f1a-3b4c5d6e7f8a";
+    let (astra, hochbau, winterthur): (Buyer, Buyer, Buyer) = (
+        ("Bundesamt für Strassen", "CHE", ""),
+        ("Hochbauamt des Kantons Zürich", "CHE", ""),
+        ("Stadt Winterthur", "CHE", ""),
+    );
+    let twin = format!("{TWIN}-01");
+    type Member<'a> = (&'a str, String, i64, Vec<(&'a str, &'a str)>, Vec<Buyer<'a>>);
+    let steps: Vec<Vec<Member>> = vec![
+        vec![
+            ("ted", "00470001-2024".into(), 19_900, vec![("BT-04-notice", KEY_A)], vec![astra]),
+            ("ted", "00470002-2024".into(), 19_900, vec![("BT-04-notice", KEY_B)], vec![hochbau]),
+            ("ted", "00470003-2024".into(), 19_950, vec![("BT-04-notice", KEY_H), ("OPP-090-Procedure", "470001-2024")], vec![astra]),
+            ("ted", "00470004-2024".into(), 19_950, vec![("BT-04-notice", KEY_H), ("OPP-090-Procedure", "470002-2024")], vec![hochbau]),
+            ("ted", "00470005-2024".into(), 19_960, vec![("BT-04-notice", KEY_H), ("BT-701-notice", TWIN)], vec![winterthur]),
+            ("doe", twin.clone(), 19_961, vec![("BT-04-notice", KEY_H)], vec![]),
+        ],
+        vec![("ted", "00470006-2024".into(), 20_000, vec![("BT-04-notice", KEY_A)], vec![astra])],
+        vec![("ted", "00470007-2024".into(), 20_050, vec![("BT-04-notice", KEY_H)], vec![winterthur])],
+    ];
+    let (full, ff, pf) = scratch("hub-merged-full").await;
+    let (incr, fi, pi) = scratch("hub-merged-incr").await;
+    establish(&full, ff).await;
+    establish(&incr, fi).await;
+    for (step, delta) in steps.iter().enumerate() {
+        for (source, pub_id, day, ids, buyers) in delta {
+            record_linked_buyers(&full, ff, source, pub_id, *day, ids, buyers).await;
+            record_linked_buyers(&incr, fi, source, pub_id, *day, ids, buyers).await;
+        }
+        let label = format!("step {step}");
+        absorb_and_compare(&full, &incr, &label).await;
+        assert_eq!(key_merges(&full).await, key_merges(&incr).await, "{label}: tender_key_merges differs");
+        let (a, b, w) = (
+            tender_of(&incr, "00470001-2024").await,
+            tender_of(&incr, "00470002-2024").await,
+            tender_of(&incr, "00470005-2024").await,
+        );
+        assert_eq!(tender_of(&incr, "00470003-2024").await, a, "{label}: ASTRA's cluster merged into KEY_A");
+        assert_eq!(tender_of(&incr, "00470004-2024").await, b, "{label}: Hochbau's cluster merged into KEY_B");
+        assert_eq!(tenders_of(&incr, &["00470001-2024", "00470002-2024", "00470005-2024"]).await.len(), 3, "{label}");
+        assert!(key_of_tender(&incr, "00470005-2024").await.starts_with(&format!("refused:{KEY_H}:")), "{label}");
+        assert_eq!(tender_of(&incr, &twin).await, w, "{label}: the buyerless DÖE twin rejoins its TED notice");
+        match step {
+            1 => assert_eq!(tender_of(&incr, "00470006-2024").await, a),
+            2 => assert_eq!(tender_of(&incr, "00470007-2024").await, w, "Winterthur's notice joins its own cluster"),
+            _ => {}
+        }
+    }
+    let merges = key_merges(&incr).await;
+    assert!(merges.contains(&format!("|{KEY_A}")) && merges.contains(&format!("|{KEY_B}")), "{merges}");
+    let tenders = snapshot_content(&incr).await;
+    project::project(&incr, false).await.expect("a full re-plan");
+    assert_eq!(snapshot_content(&incr).await, tenders, "the full fold moves nothing");
+    for p in [pf, pi] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
+
+/// Issue 482 unit 2 review (major 2): a placeholder-shaped key (issue 369) already split
+/// per buyer is NOT planned whole on the daily — only the changed notice's own buyer's
+/// Tender is — and stays refused though that plan holds one buyer. Full and daily compared
+/// at every step; the daily's plan size is pinned.
+#[tokio::test]
+async fn a_split_placeholder_key_is_planned_per_buyer_on_the_daily() {
+    const PLACEHOLDER: &str = "00000000-0000-4000-8000-000000000000";
+    let (a, b, c, d): (Buyer, Buyer, Buyer, Buyer) = (
+        ("Gemeinde Alpha", "DEU", ""),
+        ("Stadt Beta", "DEU", ""),
+        ("Kreis Gamma", "DEU", ""),
+        ("Amt Delta", "DEU", ""),
+    );
+    let key = [("BT-04-notice", PLACEHOLDER)];
+    type Member<'a> = (&'a str, i64, Vec<Buyer<'a>>);
+    let steps: Vec<(Vec<Member>, u64)> = vec![
+        (
+            vec![
+                ("00480001-2024", 19_900, vec![a]),
+                ("00480002-2024", 19_910, vec![b]),
+                ("00480003-2024", 19_920, vec![c]),
+                ("00480004-2024", 19_930, vec![a]),
+            ],
+            4,
+        ),
+        // Alpha's Tender (2 notices) + the new one; never Beta's or Gamma's.
+        (vec![("00480005-2024", 19_940, vec![a])], 3),
+        // A new buyer: its own Tender, nothing else planned.
+        (vec![("00480006-2024", 19_950, vec![d])], 1),
+        // A buyerless notice: an island.
+        (vec![("00480007-2024", 19_960, vec![])], 1),
+    ];
+    let (full, ff, pf) = scratch("placeholder-full").await;
+    let (incr, fi, pi) = scratch("placeholder-incr").await;
+    establish(&full, ff).await;
+    establish(&incr, fi).await;
+    for (step, (delta, planned)) in steps.iter().enumerate() {
+        for (pub_id, day, buyers) in delta {
+            record_linked_buyers(&full, ff, "ted", pub_id, *day, &key, buyers).await;
+            record_linked_buyers(&incr, fi, "ted", pub_id, *day, &key, buyers).await;
+        }
+        let label = format!("step {step}");
+        project::project(&full, false).await.expect("full absorb");
+        let mut total = 0u64;
+        let never = || false;
+        project::project_incremental_observed_stoppable(
+            &incr,
+            |p| {
+                if let project::Progress::Planning { total: t, .. } = p {
+                    total = t;
+                }
+            },
+            &never,
+        )
+        .await
+        .expect("incremental absorb");
+        assert_eq!(snapshot_content(&full).await, snapshot_content(&incr).await, "{label}: canonical content differs");
+        assert_eq!(changes_set(&full).await, changes_set(&incr).await, "{label}: change events differ");
+        assert_eq!(ghosts(&incr).await, 0, "{label}");
+        if step > 0 {
+            assert_eq!(total, *planned, "{label}: the daily plans the changed notice's buyer only");
+        }
+        let alpha = tender_of(&incr, "00480001-2024").await;
+        assert_eq!(tender_of(&incr, "00480004-2024").await, alpha, "{label}");
+        assert!(key_of_tender(&incr, "00480001-2024").await.starts_with(&format!("refused:{PLACEHOLDER}:")), "{label}");
+        assert_eq!(tenders_of(&incr, &["00480001-2024", "00480002-2024", "00480003-2024"]).await.len(), 3, "{label}");
+    }
+    assert_eq!(tender_of(&incr, "00480005-2024").await, tender_of(&incr, "00480001-2024").await);
+    assert!(key_of_tender(&incr, "00480006-2024").await.starts_with(&format!("refused:{PLACEHOLDER}:")));
+    let tenders = snapshot_content(&incr).await;
+    project::project(&incr, false).await.expect("a full re-plan");
+    assert_eq!(snapshot_content(&incr).await, tenders, "the full fold moves nothing");
+    for p in [pf, pi] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
+
 /// The distinct Tenders holding the given publications.
 async fn tenders_of(db: &Db, pub_ids: &[&str]) -> std::collections::BTreeSet<i64> {
     let mut out = std::collections::BTreeSet::new();

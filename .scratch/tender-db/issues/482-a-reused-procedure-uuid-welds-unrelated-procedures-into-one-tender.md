@@ -1,6 +1,6 @@
 # 482 — a reused procedure UUID (BT-04) welds unrelated procedures into one Tender, and nothing checks the buyers
 
-Status: ready-for-agent — NEXT: deploy unit 2 (landed 2026-10-03, below) → the next fold applies the UUID-hub gate
+Status: ready-for-agent — NEXT: deploy unit 2 (landed 2026-10-03 with its review fixes, below) → the next fold applies the UUID-hub gate
 to what it plans; for the ~150 existing hubs re-run `procedure-key-census` (stores `hub_tender_ids`) → `requeue-uuid-hubs`
 dry → wet → the next daily (or a full re-plan) splits them → verify tender 430681 is split (its notices on
 `refused:<key>:<buyer>` Tenders, 430681 itself retired). Then the 60-sample precision read of the two-cluster cases.
@@ -226,3 +226,60 @@ An adversarial review of `0b9aacf` found the report could not set the split rule
   shaped-key island (`island:<id>`) is still not re-found that way. That gap is pre-existing and rare.
 - An admitted same-Source OPP-090 into a buyerless notice can still bridge two clusters of a refused key into one
   Tender. That is issue 481's link step (a tokenless endpoint is unknown, not disjoint), not this gate.
+
+## Unit 2 review fixes — 2026-10-03 (not yet deployed)
+
+An adversarial review of `8b76651` found two majors and five minors. Fixed:
+- **(major) A hub cluster merged into another key's Tender lost the hub's rows.** A daily reaching that
+  Tender by its own key (a new notice under the link partner) planned one cluster only, and
+  `record_key_merges`' range delete dropped the hub's OTHER clusters' merge rows; the next daily under the
+  hub then missed a cluster, counted 2 and welded the third into a link partner's Tender. Now
+  `Db::refused_keys_of_tenders` also reads the `tender_key_merges` rows pointing AT each touched Tender
+  (`MERGED_INTO_SQL`, new index `tender_key_merges_to`, pinned), so the sibling closure plans the hub key
+  whole; the range delete runs only for UUID-hub keys the plan holds whole (non-legacy, `key_shaped = 0`),
+  and other refused groups are replaced exactly (the plan's own pre-merge `refused:` group keys). Test
+  `a_hub_cluster_merged_into_another_keys_tender_keeps_the_hub_whole_on_the_daily` (two clusters merged
+  into KEY_A and KEY_B, a KEY_A daily, then a hub daily; compares `tender_key_merges` too). Mutation (no
+  to_key read) fails it at step 1.
+- **(major) 369/386 keys were planned whole on every daily.** Now only UUID-hub keys
+  (`is_uuid_hub_class`: uuid, not placeholder-shaped) get the prefix expansion and the sibling closure.
+  369/386 keys: an incremental grouping seeds `plan_refused_key` with every placeholder/FTS key of the plan
+  that already has a `refused:<key>:` Tender or merge row (`seed_split_refused_keys`; their gates only grow),
+  and a changed notice pulls in only its own `refused:<key>:<buyer_key>` Tender (or the Tender a link merged
+  that group into) — `Db::refused_family_tender_ids(family_keys, group_keys)`. Test
+  `a_split_placeholder_key_is_planned_per_buyer_on_the_daily` pins the plan size (3, 1, 1 notices) and
+  full/daily equality. Mutation (no seed) fails it at step 1.
+- **(minor) `refused:<key>:#n` was a keyed member in the link step.** `link_rank_class`: it is an island
+  for the weld guard and the fan-in count, and ranks between keyed and islands (so `keyed(root)` stays exact
+  and an island-only component keeps the `refused:` name). The new merged-hub test's DÖE twin rejoins its
+  TED notice by logical-notice; mutation fails it at step 0.
+- **(minor) Label churn.** The cluster label is now the `buyer_key` of its smallest-notice-id member that
+  has one, so a later notice never renames it (unit test `a_uuid_hub_cluster_keeps_its_first_members_label`).
+- **(minor) O(n²) clustering.** `store::buyer_clusters` unions per token digest (FULL holder joins all;
+  ACRONYM + INITIALS holders join each other), exactly the pairwise `buyer_tokens_disjoint` components —
+  pinned against the pairwise oracle over 3,000 random sets
+  (`buyer_clusters_match_the_pairwise_overlap_graph`). The `group step uuid-hubs` line logs the largest
+  candidate's notice count.
+- **(minor) Census list vs gate.** Documented as Tender-scoped vs key-scoped in `docs/operations.md`, with
+  the not-walked case (hub groups merged under a non-UUID key: full re-plan only); the job summary says so.
+- Also: legacy OJS-chain notices under a UUID key no longer count toward its clusters (they fold into the
+  legacy closure, which a daily cannot reach by the key's prefix).
+
+**Deferred** (ready-for-agent):
+- **':' in keys** (minor 5): the `refused:<key>:` range of a key `k` also covers a key `k:x`'s groups, and the
+  base-key parse reads `refused:k:x:<buyer>` as `k`. Narrowed, not closed: the prefix machinery now runs
+  only for UUID-hub keys (no ':'), and the 369/386 seed skips keys holding ':'. A UUID-hub key `K` whose
+  range meets a BT-04 literally `K:…` would still over-plan (harmless) and range-delete that key's merge rows.
+  A real fix is an escaped or length-prefixed group key, which renames every refused Tender — not worth it
+  until such a key is seen.
+- **369/386 un-refusal on a daily.** A re-parse that shrinks a seeded key below its threshold leaves it
+  refused on the daily until the next full re-plan (the seed is monotonic by design).
+- **Stale `refused:` merge rows** for a 369/386 group that vanished (its last notice re-parsed to another
+  buyer) stay in `tender_key_merges`; they only widen a later plan (the table's documented safe direction).
+- **Pre-deploy merge rows.** 369/386 refused groups a link absorbed before this deploy have no
+  `refused:` row (the old code dropped them) until the next full re-plan; a daily notice of such a buyer
+  founds its own group meanwhile. UUID hubs are unaffected (none exist before the deploy).
+- **Prod sizes unmeasured.** The reviewer asked for bounded `/v1/sql` counts of the largest `refused:`
+  families before deploy; the read was not run this session (prod reads not permitted). With 369/386
+  planned per buyer the remaining exposure is UUID hubs (census max 789 notices) — measure the
+  `group step refused-keys (seeded)` and `refused-sibling closure` journal lines on the first daily.

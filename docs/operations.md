@@ -845,29 +845,43 @@ not acted on (the 2026-10-03 census read: their precision is unmeasured). Joint 
 central purchasing body's framework overlap, so they are one cluster and stay one Tender.
 
 A refused key behaves like 369's: it is in `plan_refused_key`, and each notice under it groups as
-`refused:<key>:<label>`. The label is the cluster's smallest `buyer_key`, or `#g<token>` when no
-notice in the cluster has one, so one buyer's notices (a DÖE/TED pair included) still fold together
-and a re-plan names the cluster the same. A buyerless notice becomes its own Tender
-`refused:<key>:#n<notice_id>` (369 makes it an `island:`; the key prefix lets the daily find it). A
-legacy notice with an OJS self number is left to the legacy closure, as in 369's arm. The
-fold job row says what it refused:
+`refused:<key>:<label>`. The label is the `buyer_key` of the cluster's first member (smallest notice
+id), or `#g<token>` when no notice in the cluster has one, so one buyer's notices (a DÖE/TED pair
+included) still fold together, a re-plan names the cluster the same, and a later notice writing the
+buyer another way never renames it. A buyerless notice becomes its own Tender
+`refused:<key>:#n<notice_id>` (369 makes it an `island:`; the key prefix lets the daily find it). The
+link step treats that `#n` group as an island, not a keyed member, so a DÖE twin's logical-notice link
+rejoins it. A legacy notice with an OJS self number is left to the legacy closure, as in 369's arm, and
+does not count toward the clusters. The fold job row says what it refused:
 `; issue-482 uuid hubs refused: K key(s), N notice(s) split into C buyer cluster(s)` (silent at
-zero). The journal logs `[project] group step uuid-hubs: …` on every grouping, including the zero.
+zero). The journal logs `[project] group step uuid-hubs: … (largest N notices) …` on every grouping,
+including the zero; `largest` is the biggest candidate key's notice count, the clustering's input
+size (clustering is per token digest, linear in tokens).
 
-**The daily sees the whole key.** The incremental plan has to hold every notice under the key. A
-bare-key Tender is touched whole by its key. A refused key's Tenders are found by the key's `refused:`
-prefix (`Db::touched_existing_tender_ids`, a range seek on `tenders_procedure_key`). So are the keys an
-issue-481 link merged one of its groups into: `tender_key_merges` now records `refused:<key>:<label>`
-→ `<to_key>` rows, which it used to drop. A Tender of a refused key that the plan reaches some other way pulls in all of that key's
-Tenders too, through `ingest::project::refused_sibling_closure`, run after the link closure and to a
-fixpoint, with the link closure's cap and full fallback. Examples are a link to one cluster's notice
-from a new key, or a re-parse that moved a member to another key. This also closes the same hole for
-369's and 386's refused keys. Before
-it, a new notice under a refused key was planned alone, read as one buyer, and founded a bare-key Tender
-that a full fold would never make. When a key crosses the threshold on a daily, its old Tender is
-retired (`removed` events, no ghost) and one Tender is minted per cluster. Pinned by
-`a_uuid_hub_splits_per_buyer_cluster_on_full_and_daily_folds` (ingest, `project_incremental.rs`),
-which compares the full and daily folds step by step.
+**The daily sees a hub key whole.** The gate's cluster count is not monotonic (a bridging joint notice
+can collapse clusters), so the incremental plan has to hold every notice under a hub key. A bare-key
+Tender is touched whole by its key. A hub key's Tenders are found by the key's `refused:` prefix
+(`Db::refused_family_tender_ids`, a range seek on `tenders_procedure_key`). So are the keys an
+issue-481 link merged one of its groups into: `tender_key_merges` records `refused:<key>:<label>` →
+`<to_key>` rows, which it used to drop. A Tender holding a hub key's group that the plan reaches some
+other way pulls in all of that key's Tenders too, through `ingest::project::refused_sibling_closure`,
+run after the link closure and to a fixpoint, with the link closure's cap and full fallback. It reads
+the Tender's own `refused:` name AND the `tender_key_merges` rows pointing at it (by `to_key`, index
+`tender_key_merges_to`): a hub cluster absorbed into another key's Tender is reached when a new notice
+arrives under that other key. Pinned by
+`a_hub_cluster_merged_into_another_keys_tender_keeps_the_hub_whole_on_the_daily`. When a key crosses
+the threshold on a daily, its old Tender is retired (`removed` events, no ghost) and one Tender is
+minted per cluster. Pinned by `a_uuid_hub_splits_per_buyer_cluster_on_full_and_daily_folds` (ingest,
+`project_incremental.rs`), which compares the full and daily folds step by step.
+
+**369's and 386's refused keys are planned per buyer.** Their gates count distinct buyer sets, which
+only grow, so an incremental grouping keeps a placeholder/FTS key that already has a `refused:<key>:`
+Tender (or merge row) refused (`[project] group step refused-keys (seeded): …`), and a changed notice
+pulls in only its own buyer's `refused:<key>:<buyer_key>` Tender (or the Tender a link merged it into).
+A common placeholder key reused EU-wide is never planned whole. Before unit 2, a new notice under such a
+key was planned alone, read as one buyer, and founded a bare-key Tender that a full fold never makes.
+Pinned by `a_split_placeholder_key_is_planned_per_buyer_on_the_daily`. Residual: a re-parse that
+shrinks such a key below its threshold leaves it refused on the daily until the next full re-plan.
 
 **Existing hubs split only when a fold plans them.** A daily touches a hub only when a new notice
 arrives under its key. The ~150 hubs the 2026-10-03 census found (Tender 430681: 789 notices, 319
@@ -886,6 +900,13 @@ refuses when no report is stored, or when the report predates unit 2: re-run the
 re-queues every notice of those Tenders (`tender_versions` seeks, then issue 323's re-queue).
 That is a few thousand notices, a normal daily-sized plan. A full re-plan (`project` with
 `rebuild`) applies the gate too, without the re-queue.
+
+The list is **Tender-scoped**, the gate **key-scoped**, so they do not coincide. The census clusters
+every notice of a Tender, including another key's notices a 481 link welded in, so a listed Tender can
+reach 3 clusters only through those and stay one Tender after the re-queue (wasted work, harmless).
+And the census walks only Tenders whose surviving key is a UUID: a hub whose groups a link merged
+under a non-UUID key is never listed, and only a full re-plan splits it. So "verify the split" means
+the gate's own count: the fold job row's `uuid hubs refused` and the journal's `group step uuid-hubs`.
 
 ### Reading a `process` job's `[process]` lines (issue 407)
 

@@ -4361,7 +4361,8 @@ impl Supervisor {
             self.db.requeue_tender_notices(&ids, dry_run).await.map_err(|e| e.to_string())?;
         Ok(format!(
             "requeue-uuid-hubs (issue 482){}: {} hub Tender(s) from the census computed at {computed_at}, \
-             {notices} notice(s); {} {requeued} for the next fold",
+             {notices} notice(s); {} {requeued} for the next fold (the list is Tender-scoped, the gate \
+             key-scoped: read the fold's `uuid hubs refused` for what split)",
             if dry_run { " DRY RUN — nothing written" } else { "" },
             ids.len(),
             if dry_run { "would re-queue" } else { "re-queued" },

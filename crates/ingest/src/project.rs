@@ -2286,15 +2286,22 @@ pub async fn legacy_closure_capped(
     Ok(Ok((notices.into_iter().collect(), tenders.into_iter().collect())))
 }
 
-/// Issue 482 unit 2: complete an incremental plan over REFUSED keys. A refused key
-/// (issues 369/386/482) folds into several Tenders, `refused:<key>:<label>`, and the
-/// grouping's refusal gates count the key's whole population. The touched expansion finds
-/// them all for a key a changed notice carries ([`Db::touched_existing_tender_ids`], by
-/// the key's prefix), but a Tender reached otherwise — by the link closure, or by its
-/// member's OLD membership after a re-parse moved it to another key — brings only its own
-/// cluster, and the gate would read a hub as one buyer and un-refuse it, which a full fold
-/// never does. So: for every refused key among the planned Tenders, plan all of that
-/// key's Tenders, close the links of what that added, and repeat to a fixpoint.
+/// Issue 482 unit 2: complete an incremental plan over refused UUID-hub keys. A hub folds
+/// into several Tenders, `refused:<key>:<label>`, and the gate counts the key's whole
+/// population — not monotonically: a bridging joint notice can collapse its clusters. The
+/// touched expansion finds them all for a key a changed notice carries
+/// ([`Db::refused_family_tender_ids`], by the key's prefix), but a Tender reached otherwise
+/// — by the link closure, by its member's OLD membership after a re-parse moved it to
+/// another key, or by ITS OWN key when a link absorbed a hub cluster into it — brings only
+/// its own cluster, and the gate would read a hub as one buyer and un-refuse it, which a
+/// full fold never does. So: for every hub key whose groups the planned Tenders hold (by
+/// their names, and by the `tender_key_merges` rows pointing at them —
+/// [`Db::refused_keys_of_tenders`]), plan all of that key's Tenders, close the links of
+/// what that added, and repeat to a fixpoint. That holds every planned hub key whole,
+/// which `record_key_merges`' range delete relies on.
+///
+/// Placeholder (369) and FTS (386) keys are not expanded: their gates only grow with the
+/// population, and the grouping keeps an already-split one refused (the unit-2 review).
 ///
 /// `Err(reason)` past [`LINK_CLOSURE_CAP`] added notices, for the full path.
 async fn refused_sibling_closure(
@@ -2306,14 +2313,18 @@ async fn refused_sibling_closure(
     let mut added = 0usize;
     let mut scan: Vec<i64> = touched.clone();
     loop {
-        let keys: Vec<String> =
-            db.refused_keys_of_tenders(&scan).await?.into_iter().filter(|k| expanded.insert(k.clone())).collect();
+        let keys: Vec<String> = db
+            .refused_keys_of_tenders(&scan)
+            .await?
+            .into_iter()
+            .filter(|k| is_uuid_hub_class(k) && expanded.insert(k.clone()))
+            .collect();
         if keys.is_empty() {
             return Ok(Ok(()));
         }
         let have: std::collections::HashSet<i64> = touched.iter().copied().collect();
         let mut new_tenders: Vec<i64> =
-            db.touched_existing_tender_ids(&[], &keys).await?.into_iter().filter(|t| !have.contains(t)).collect();
+            db.refused_family_tender_ids(&keys, &[]).await?.into_iter().filter(|t| !have.contains(t)).collect();
         if new_tenders.is_empty() {
             return Ok(Ok(()));
         }
@@ -2537,6 +2548,8 @@ pub async fn project_incremental_chunked_observed(
     // chunks — collect keyed keys, legacy OJS seed keys and the Tender links they
     // declare — without holding the whole delta's parsed layer.
     let mut new_keyed_keys: Vec<String> = Vec::new();
+    let mut hub_keys: Vec<String> = Vec::new();
+    let mut refused_groups: Vec<String> = Vec::new();
     let mut legacy_seed_keys: Vec<i64> = Vec::new();
     let mut declared: Vec<store::DeclaredLink> = Vec::new();
     let mut legacy_delta = 0usize;
@@ -2561,12 +2574,24 @@ pub async fn project_incremental_chunked_observed(
             }
             if let Some(key) = &ident.procedure_key {
                 new_keyed_keys.push(key.clone());
+                // Issue 482 unit 2: the existing Tenders of a REFUSED key — a UUID hub's
+                // whole family, a placeholder/FTS key's same-buyer group only
+                // ([`store::Db::refused_family_tender_ids`]).
+                if is_uuid_hub_class(key) {
+                    hub_keys.push(key.clone());
+                } else if let Some(buyer) = &ident.buyer_key {
+                    refused_groups.push(format!("refused:{key}:{buyer}"));
+                }
             }
             declared.extend(ident.links);
         }
     }
     new_keyed_keys.sort_unstable();
     new_keyed_keys.dedup();
+    hub_keys.sort_unstable();
+    hub_keys.dedup();
+    refused_groups.sort_unstable();
+    refused_groups.dedup();
     legacy_seed_keys.sort_unstable();
     legacy_seed_keys.dedup();
     stage(&format!(
@@ -2608,6 +2633,7 @@ pub async fn project_incremental_chunked_observed(
     // covers changed ∪ touched-existing ∪ legacy closure ∪ link closure, in one global
     // id order.
     let mut touched_tenders = db.touched_existing_tender_ids(&changed, &new_keyed_keys).await?;
+    touched_tenders.extend(db.refused_family_tender_ids(&hub_keys, &refused_groups).await?);
     touched_tenders.extend(closure_tenders);
     touched_tenders.sort_unstable();
     touched_tenders.dedup();
@@ -6965,6 +6991,14 @@ fn procedure_key(parsed: &Parsed, sdk01: bool, de1: bool) -> Option<String> {
 /// enough to merge Tenders across Sources.
 fn is_uuid(s: &str) -> bool {
     store::is_uuid_key(s)
+}
+
+/// Issue 482 unit 2: a key the UUID-hub gate judges — a genuine uuid that is not
+/// placeholder-shaped (`key_shaped = 0`; those are issue 369's). Such a key, once refused,
+/// is planned WHOLE by the incremental fold (its cluster count is not monotonic); any
+/// other refused key per buyer.
+fn is_uuid_hub_class(key: &str) -> bool {
+    is_uuid(key) && !is_placeholder_key(key)
 }
 
 /// How many DISTINCT hex characters a uuid spends on the 30 nibbles it is free to

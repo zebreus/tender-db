@@ -1043,6 +1043,10 @@ pub(crate) const SCHEMA: &str = "
         from_key TEXT PRIMARY KEY,
         to_key   TEXT NOT NULL
     ) STRICT;
+    -- Issue 482 unit 2 (review): the groups merged INTO a Tender, by its key — the
+    -- incremental fold's refused-sibling closure finds a UUID hub's cluster that a link
+    -- absorbed into another key's Tender by it. Thousands of rows: built in a blink.
+    CREATE INDEX IF NOT EXISTS tender_key_merges_to ON tender_key_merges(to_key);
 
     -- ---------------------------------------------------------------- views
     -- Current state = the highest seq per Tender.
@@ -1572,10 +1576,19 @@ pub fn buyer_tokens_disjoint(a: &[u32], b: &[u32]) -> bool {
 /// Issue 482: the buyer clusters of a set of notices, as indices into `tokens` (each set
 /// non-empty): the connected components of "the guard calls them overlapping"
 /// ([`buyer_tokens_disjoint`]), so a notice joins a cluster when it overlaps ANY member
-/// (transitive: a joint procurement naming A+B bridges A's and B's notices). Pairwise,
-/// skipping pairs already joined, so a set whose notices all overlap costs about one
-/// comparison a notice. Clusters come back ordered by their smallest index, members
-/// ascending.
+/// (transitive: a joint procurement naming A+B bridges A's and B's notices). Clusters
+/// come back ordered by their smallest index, members ascending.
+///
+/// Computed per token digest, not per pair — O(total tokens · log), so a large DPS or
+/// framework key with tens of thousands of notices costs no more than its tokens (the
+/// unit-2 review: the pairwise form ran O(n²) root lookups per key whatever the overlap).
+/// The components are exactly those of the pairwise [`buyer_tokens_disjoint`] graph
+/// (pinned against it by `buyer_clusters_match_the_pairwise_overlap_graph`): at one digest,
+/// a FULL holder overlaps every holder, so all of them join it; with no FULL holder an
+/// ACRONYM holder overlaps every INITIALS holder (and nothing else does), so when both
+/// kinds are present their holders form one connected component. An EMPTY set overlaps
+/// everything under that test (unknown is not disjoint), so one empty set makes a single
+/// cluster — both callers drop empty sets first.
 ///
 /// The ONE clustering both readers of the question use: the procedure-key census
 /// (`ingest::project::key_census`, unit 1) and the grouping's UUID-hub gate
@@ -1589,11 +1602,39 @@ pub fn buyer_clusters(tokens: &[&[u32]]) -> Vec<Vec<usize>> {
         }
         i
     }
-    for i in 0..tokens.len() {
-        for j in i + 1..tokens.len() {
-            let (a, b) = (root(&mut parent, i), root(&mut parent, j));
-            if a != b && !buyer_tokens_disjoint(tokens[i], tokens[j]) {
-                parent[b.max(a)] = a.min(b);
+    // Union to the smaller root, so a cluster's root is its smallest index.
+    fn union(parent: &mut [usize], i: usize, j: usize) {
+        let (a, b) = (root(parent, i), root(parent, j));
+        if a != b {
+            parent[a.max(b)] = a.min(b);
+        }
+    }
+    if tokens.iter().any(|t| t.is_empty()) {
+        for i in 1..tokens.len() {
+            union(&mut parent, 0, i);
+        }
+    } else {
+        // (digest, kind, notice index), grouped by digest.
+        let mut held: Vec<(u32, u32, usize)> = tokens
+            .iter()
+            .enumerate()
+            .flat_map(|(i, set)| set.iter().map(move |&t| (t >> 2, t & BUYER_TOKEN_KIND, i)))
+            .collect();
+        held.sort_unstable();
+        const FULL: u32 = 0;
+        const ABBR: u32 = 2;
+        const INITIALS: u32 = 3;
+        for group in held.chunk_by(|x, y| x.0 == y.0) {
+            if let Some(&(_, _, full)) = group.iter().find(|h| h.1 == FULL) {
+                for &(_, _, i) in group {
+                    union(&mut parent, full, i);
+                }
+            } else if group.iter().any(|h| h.1 == ABBR) && group.iter().any(|h| h.1 == INITIALS) {
+                let mut joined = group.iter().filter(|h| h.1 == ABBR || h.1 == INITIALS).map(|h| h.2);
+                let first = joined.next().expect("an acronym holder");
+                for i in joined {
+                    union(&mut parent, first, i);
+                }
             }
         }
     }
@@ -1643,13 +1684,18 @@ impl UuidHubTally {
     }
 }
 
-/// The group label of one refused UUID-hub cluster: its smallest `buyer_key` (issue 369's
-/// per-notice buyer set), so a buyer's notices fold together under one label and a
-/// re-plan names the cluster the same; a cluster whose notices carry no `buyer_key` (a
-/// signatory or resolved organization only) is named by its smallest guard token.
-fn uuid_hub_label(buyer_keys: &[Option<&str>], tokens: &[&[u32]]) -> String {
-    match buyer_keys.iter().flatten().min() {
-        Some(key) => (*key).to_owned(),
+/// The group label of one refused UUID-hub cluster, from its members' `(notice_id,
+/// buyer_key)` (issue 369's per-notice buyer set) and guard tokens: the `buyer_key` of its
+/// FIRST member that has one — the smallest notice id, so a buyer's notices fold together
+/// under one label and a later notice (a larger id) never renames the cluster, whichever
+/// form of the buyer's name or identifier it writes (the unit-2 review: the smallest
+/// `buyer_key` string renamed it whenever a later notice sorted first, retiring and
+/// re-minting the Tender). A cluster whose notices carry no `buyer_key` (a signatory or
+/// resolved organization only) is named by its smallest guard token. A bridge that merges
+/// two clusters still renames one of them; that is the merge.
+fn uuid_hub_label(members: &[(i64, Option<&str>)], tokens: &[&[u32]]) -> String {
+    match members.iter().filter_map(|(id, key)| key.map(|k| (*id, k))).min() {
+        Some((_, key)) => key.to_owned(),
         None => format!("#g{:08x}", tokens.iter().flat_map(|t| t.iter()).min().copied().unwrap_or(0)),
     }
 }
@@ -2069,6 +2115,37 @@ pub(crate) const LINK_ONE_ENDED_SQL: &str = "SELECT e.a_notice_id, e.b_notice_id
 /// seek on `tender_versions_notice (caused_by_notice_id)`.
 pub(crate) const LINK_NOTICE_TENDERS_SQL: &str = "SELECT tender_id FROM tender_versions WHERE caused_by_notice_id = ?";
 
+/// [`link_rank_class`]: a keyed group (a procedure key, a refused buyer cluster, an OJS
+/// chain).
+const LINK_CLASS_KEYED: u8 = 0;
+/// [`link_rank_class`]: a refused UUID hub's buyerless notice, `refused:<key>:#n<id>`.
+const LINK_CLASS_BUYERLESS: u8 = 1;
+/// [`link_rank_class`]: an `island:<id>`.
+const LINK_CLASS_ISLAND: u8 = 2;
+
+/// How the grouping's link step treats a group key (issue 481; issue 482 unit 2 review):
+/// keyed, a one-notice group that is not an island by name (the UUID-hub gate's
+/// `refused:<key>:#n<notice id>`, [`uuid_hub_buyerless_key`]), or an island. The two
+/// one-notice classes are never keyed members for the weld guards.
+fn link_rank_class(key: &str) -> u8 {
+    if key.starts_with("island:") {
+        LINK_CLASS_ISLAND
+    } else if key.starts_with("refused:")
+        && key.rsplit_once(":#n").is_some_and(|(_, id)| !id.is_empty() && id.bytes().all(|b| b.is_ascii_digit()))
+    {
+        LINK_CLASS_BUYERLESS
+    } else {
+        LINK_CLASS_KEYED
+    }
+}
+
+/// The group key of a refused UUID hub's buyerless notice (issue 482 unit 2): a Tender of
+/// its own, named under the key's `refused:<key>:` prefix so a later fold of the key
+/// finds it ([`link_rank_class`] reads the form back).
+fn uuid_hub_buyerless_key(key: &str, notice_id: i64) -> String {
+    format!("refused:{key}:#n{notice_id}")
+}
+
 /// The half-open range of the group keys a refused `key` splits into —
 /// `refused:<key>:<buyer>` (issues 369/386) and `refused:<key>:#n<id>` (issue 482) —
 /// for a range seek on a key index: `:` + 1 is `;`.
@@ -2084,6 +2161,12 @@ pub(crate) const REFUSED_TENDERS_SQL: &str = "SELECT id FROM tenders WHERE proce
 /// seek on `tender_key_merges`' PRIMARY KEY.
 pub(crate) const REFUSED_MERGE_TARGETS_SQL: &str =
     "SELECT to_key FROM tender_key_merges WHERE from_key >= ? AND from_key < ?";
+
+/// The keys a link merged INTO the Tender named `to_key` (issue 482 unit 2 review): a seek
+/// on `tender_key_merges_to`. The refused-sibling closure reads it for a touched Tender
+/// whose own name is another key's — a hub cluster an OPP-090 link absorbed into it — so
+/// the hub key is planned whole however the plan reached that Tender.
+pub(crate) const MERGED_INTO_SQL: &str = "SELECT from_key FROM tender_key_merges WHERE to_key = ?";
 
 /// The identity keys of the Tenders `n` absorbed procedure keys fold into
 /// (`tender_key_merges`), for the incremental fold's touched expansion: a seek on the
@@ -11407,6 +11490,18 @@ impl Db {
         // 467's `run_project` poll budget.
         let (uuid_hubs, uuid_hub_labels) = Box::pin(Self::refuse_uuid_hubs(&conn)).await?;
 
+        // Issue 482 unit 2 (review): on an incremental plan, a placeholder-shaped (369) or
+        // FTS (386) key that a previous fold already split stays refused, though the plan
+        // holds only the buyers it touched. Both gates count distinct buyer sets, which only
+        // grow with the population, so "already split" is the full fold's verdict too; and
+        // the daily plans such a key per buyer ([`Db::refused_family_tender_ids`]'s
+        // `group_keys`), never its whole population — a common placeholder key reused
+        // EU-wide must not drag every one of its Tenders into each daily. UUID-hub keys are
+        // NOT seeded: their cluster count can fall, and the daily plans them whole.
+        if scope == PlanScope::Incremental {
+            Box::pin(Self::seed_split_refused_keys(&conn)).await?;
+        }
+
         let (min_id, max_id) = {
             let mut r = conn.query("SELECT MIN(notice_id), MAX(notice_id) FROM plan_notice", ()).await?;
             match r.next().await? {
@@ -11688,6 +11783,57 @@ impl Db {
         Ok(PlanGroupTally { shared_refused: refused_by_kind.into_iter().collect(), links, uuid_hubs })
     }
 
+    /// Issue 482 unit 2 (review): write to `plan_refused_key` every placeholder-shaped
+    /// (issue 369) or FTS (issue 386) key of the plan that already has a `refused:<key>:`
+    /// Tender, or a `refused:<key>:` group a link merged elsewhere — see the call site.
+    /// Two range seeks a key, the first row of each only. A key holding `:` is skipped:
+    /// its range could reach another key's groups (`refused:k:` holds `refused:k:x:…`),
+    /// and it falls back to the plan's own buyer count, the pre-review behaviour.
+    async fn seed_split_refused_keys(conn: &Connection) -> turso::Result<()> {
+        let t0 = std::time::Instant::now();
+        let mut keys: Vec<String> = Vec::new();
+        {
+            let mut rows = conn
+                .query(
+                    "SELECT DISTINCT procedure_key FROM plan_notice \
+                      WHERE procedure_key IS NOT NULL AND (key_shaped = 1 OR source = 'fts')",
+                    (),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                keys.push(text(&row, 0));
+            }
+        }
+        let checked = keys.len();
+        let mut split: Vec<String> = Vec::new();
+        let (in_tenders, in_merges) = (format!("{REFUSED_TENDERS_SQL} LIMIT 1"), format!("{REFUSED_MERGE_TARGETS_SQL} LIMIT 1"));
+        for key in keys.into_iter().filter(|k| !k.contains(':')) {
+            let (lo, hi) = refused_key_range(&key);
+            let mut found = conn.query(&in_tenders, (t(&lo), t(&hi))).await?.next().await?.is_some();
+            if !found {
+                found = conn.query(&in_merges, (t(&lo), t(&hi))).await?.next().await?.is_some();
+            }
+            if found {
+                split.push(key);
+            }
+        }
+        for chunk in split.chunks(IN_CHUNK) {
+            let sql = format!(
+                "INSERT OR IGNORE INTO plan_refused_key(procedure_key) VALUES {}",
+                vec!["(?)"; chunk.len()].join(", ")
+            );
+            let params: Vec<Value> = chunk.iter().map(|k| t(k)).collect();
+            conn.execute(&sql, params).await?;
+        }
+        eprintln!(
+            "[project] group step refused-keys (seeded): {} of {checked} placeholder/FTS key(s) already split \
+             stay refused, {:.1}s (issue 482 review)",
+            split.len(),
+            t0.elapsed().as_secs_f64()
+        );
+        Ok(())
+    }
+
     /// Issue 482 unit 2: the grouping's UUID-hub gate. A UUID procedure key
     /// ([`is_uuid_key`], not placeholder-shaped — those are issue 369's) whose planned
     /// notices fall into [`UUID_HUB_CLUSTERS`] or more buyer-disjoint clusters
@@ -11695,18 +11841,19 @@ impl Db {
     /// and overlap test — the census's clustering, not a second one) is written to
     /// `plan_refused_key`, and every notice under it gets its group key:
     ///
-    /// - a notice in a cluster: `refused:<key>:<label>`, the label the cluster's smallest
-    ///   `buyer_key` ([`uuid_hub_label`]) — one Tender per buyer cluster, named the same by
-    ///   every re-plan, so a buyer's notices under the hub still fold together (and a
-    ///   DÖE/TED pair of one procedure with them);
+    /// - a notice in a cluster: `refused:<key>:<label>`, the label the `buyer_key` of the
+    ///   cluster's first member ([`uuid_hub_label`]) — one Tender per buyer cluster, named
+    ///   the same by every re-plan and by every later notice, so a buyer's notices under the
+    ///   hub still fold together (and a DÖE/TED pair of one procedure with them);
     /// - a notice naming no buyer joins no cluster and never counts. It becomes its own
-    ///   Tender `refused:<key>:#n<notice_id>` — the island issue 369 makes of it, under a
-    ///   name the incremental fold's touched expansion finds by the key's `refused:<key>:`
-    ///   prefix ([`Db::touched_existing_tender_ids`]), so a later fold of the key re-plans
-    ///   it with the rest.
+    ///   Tender `refused:<key>:#n<notice_id>` ([`uuid_hub_buyerless_key`]) — the island
+    ///   issue 369 makes of it, and the link step treats it as one ([`link_rank_class`]),
+    ///   under a name the incremental fold finds by the key's `refused:<key>:` prefix
+    ///   ([`Db::refused_family_tender_ids`]), so a later fold of the key re-plans it with
+    ///   the rest.
     ///
     /// A legacy notice with an OJS self number is left to the CASE (and so to the legacy
-    /// closure), as 369's arm leaves it.
+    /// closure), as 369's arm leaves it, and does not count toward the clusters.
     ///
     /// Two streamed passes over the plan, never a grouped aggregate (a `COUNT(DISTINCT)`
     /// over a full plan's millions of keys is the in-RAM hash issue 59 measured spinning):
@@ -11717,7 +11864,9 @@ impl Db {
     ///
     /// Equal on a full and an incremental plan as long as the plan holds every notice
     /// under each key it holds: a bare-key Tender is touched whole by its key, a refused
-    /// key's `refused:<key>:` Tenders (and the keys a link merged them into) by the prefix.
+    /// key's `refused:<key>:` Tenders (and the keys a link merged them into) by the prefix,
+    /// and a Tender a hub cluster was merged into by `ingest::project`'s refused-sibling
+    /// closure ([`Db::refused_keys_of_tenders`]).
     async fn refuse_uuid_hubs(conn: &Connection) -> turso::Result<(UuidHubTally, Vec<(i64, String)>)> {
         let started = std::time::Instant::now();
         let mut tally = UuidHubTally::default();
@@ -11792,28 +11941,32 @@ impl Db {
         let candidate_keys = by_key.len();
         let mut labels: Vec<(i64, String)> = Vec::new();
         let mut refused: Vec<String> = Vec::new();
+        let largest_candidate = by_key.values().map(Vec::len).max().unwrap_or(0);
         for (key, members) in &by_key {
-            let known: Vec<&Member> = members.iter().filter(|m| !m.tokens.is_empty()).collect();
+            // A legacy notice with an OJS self number never folds into the key's groups
+            // (the CASE leaves it to the legacy closure), so it does not count either: the
+            // incremental fold plans a refused key by its `refused:` Tenders, and could not
+            // reach it there — the verdict must rest on what both folds see.
+            let known: Vec<&Member> = members.iter().filter(|m| !m.tokens.is_empty() && !m.legacy_chain).collect();
             let tokens: Vec<&[u32]> = known.iter().map(|m| m.tokens.as_slice()).collect();
             let clusters = buyer_clusters(&tokens);
             if clusters.len() < UUID_HUB_CLUSTERS {
                 continue;
             }
             tally.keys += 1;
-            tally.notices += members.len() as u64;
+            tally.notices += members.iter().filter(|m| !m.legacy_chain).count() as u64;
             tally.clusters += clusters.len() as u64;
             for cluster in &clusters {
-                let buyer_keys: Vec<Option<&str>> = cluster.iter().map(|&i| known[i].buyer_key.as_deref()).collect();
+                let named: Vec<(i64, Option<&str>)> =
+                    cluster.iter().map(|&i| (known[i].notice_id, known[i].buyer_key.as_deref())).collect();
                 let sets: Vec<&[u32]> = cluster.iter().map(|&i| tokens[i]).collect();
-                let label = uuid_hub_label(&buyer_keys, &sets);
+                let label = uuid_hub_label(&named, &sets);
                 for &i in cluster {
-                    if !known[i].legacy_chain {
-                        labels.push((known[i].notice_id, format!("refused:{key}:{label}")));
-                    }
+                    labels.push((known[i].notice_id, format!("refused:{key}:{label}")));
                 }
             }
             for m in members.iter().filter(|m| m.tokens.is_empty() && !m.legacy_chain) {
-                labels.push((m.notice_id, format!("refused:{key}:#n{}", m.notice_id)));
+                labels.push((m.notice_id, uuid_hub_buyerless_key(key, m.notice_id)));
             }
             refused.push(key.clone());
         }
@@ -11830,8 +11983,8 @@ impl Db {
         // nothing reads the same as one that is not running.
         eprintln!(
             "[project] group step uuid-hubs: {} UUID key(s) refused with >= {UUID_HUB_CLUSTERS} buyer-disjoint \
-             clusters ({} notices, {} clusters) of {candidate_keys} candidate(s) with >= 3 distinct guard sets, \
-             {:.1}s (issue 482)",
+             clusters ({} notices, {} clusters) of {candidate_keys} candidate(s) with >= 3 distinct guard sets \
+             (largest {largest_candidate} notices), {:.1}s (issue 482)",
             tally.keys,
             tally.notices,
             tally.clusters,
@@ -12023,9 +12176,17 @@ impl Db {
         // it anew. A keyed key that carries guarded links only is the one keyed key of
         // whatever it joins (the weld guard), so its rank from those (`rank_guarded`)
         // decides nothing between keys. An island is one notice: any link gives its rank.
-        let mut rank: std::collections::HashMap<String, (bool, bool, i64, String)> =
+        //
+        // Issue 482 unit 2 (review): a refused UUID hub's buyerless notice,
+        // `refused:<key>:#n<id>` ([`link_rank_class`]), is one notice too and plays an
+        // island here — not a keyed member for the weld guard or the fan-in count, so a
+        // DÖE twin's link rejoins it as it rejoins 369's `island:`. It ranks between the
+        // keyed and the islands, so a component holding a keyed member is still rooted at a
+        // keyed one (`keyed(root)` stays exact) and one it shares with islands only keeps
+        // the `refused:<key>:` name a later fold of the key finds by prefix.
+        let mut rank: std::collections::HashMap<String, (u8, bool, i64, String)> =
             std::collections::HashMap::new();
-        let mut rank_guarded: std::collections::HashMap<String, (bool, bool, i64, String)> =
+        let mut rank_guarded: std::collections::HashMap<String, (u8, bool, i64, String)> =
             std::collections::HashMap::new();
         // Every logical id's citing groups, from EVERY logical-notice edge — a same-group
         // one too, since a TED notice already keyed together with the DÖE notice is still
@@ -12084,9 +12245,10 @@ impl Db {
                     (&edge.a, edge.a_at, text(&row, 6), int(&row, 7)),
                     (&edge.b, edge.b_at, text(&row, 11), int(&row, 12)),
                 ] {
-                    let island = key.starts_with("island:");
-                    let candidate = (island, island && source_rank == 0, at, pub_id);
-                    let ranks = if island || previous { &mut rank } else { &mut rank_guarded };
+                    let class = link_rank_class(key);
+                    let island = class == LINK_CLASS_ISLAND;
+                    let candidate = (class, island && source_rank == 0, at, pub_id);
+                    let ranks = if class != LINK_CLASS_KEYED || previous { &mut rank } else { &mut rank_guarded };
                     let entry = ranks.entry(key.clone()).or_insert_with(|| candidate.clone());
                     if candidate < *entry {
                         *entry = candidate;
@@ -12120,7 +12282,7 @@ impl Db {
             keys.sort_by(|x, y| rank[x].cmp(&rank[y]).then_with(|| x.cmp(y)));
             let position: std::collections::HashMap<&str, i64> =
                 keys.iter().enumerate().map(|(i, k)| (k.as_str(), i as i64)).collect();
-            let keyed = |root: i64| !keys[root as usize].starts_with("island:");
+            let keyed = |root: i64| link_rank_class(&keys[root as usize]) == LINK_CLASS_KEYED;
             let mut uf = MinUnionFind::default();
             let mut guarded: Vec<&LinkEdge> = Vec::new();
             let mut crossing: Vec<&LinkEdge> = Vec::new();
@@ -12374,11 +12536,48 @@ impl Db {
     /// found by its notice, and a legacy group by the legacy closure.
     async fn record_key_merges(conn: &Connection, scope: PlanScope, merges: &[(String, String)]) -> turso::Result<()> {
         let mut held: Vec<String> = Vec::new();
+        // Issue 482 unit 2 (review): the UUID keys this plan holds WHOLE — every notice
+        // that folds into one of the key's groups (a legacy OJS-chain notice folds into
+        // the legacy closure instead, so it does not make the key held). The incremental
+        // fold plans a UUID-hub key's every `refused:<key>:` Tender, and every Tender such
+        // a group merged into, whichever way it reached one of them, so the plan's verdict
+        // on these keys' refused groups is the whole verdict and their old rows are its to
+        // replace. Any other key's `refused:` groups (369/386) are planned per buyer, so
+        // only the groups the plan itself holds are replaced (`held_groups`) — a range
+        // delete there would drop the rows of the key's buyers this plan never saw.
+        let mut held_whole: Vec<String> = Vec::new();
+        let mut held_groups: Vec<String> = Vec::new();
         if scope == PlanScope::Incremental {
             let mut rows =
                 conn.query("SELECT DISTINCT procedure_key FROM plan_notice WHERE procedure_key IS NOT NULL", ()).await?;
             while let Some(row) = rows.next().await? {
                 held.push(text(&row, 0));
+            }
+            drop(rows);
+            let mut rows = conn
+                .query(
+                    "SELECT DISTINCT procedure_key FROM plan_notice \
+                      WHERE procedure_key IS NOT NULL AND key_shaped = 0 AND NOT (legacy = 1 AND ojs_self IS NOT NULL)",
+                    (),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                let key = text(&row, 0);
+                if is_uuid_key(&key) {
+                    held_whole.push(key);
+                }
+            }
+            drop(rows);
+            // The groups as the election named them: the link relabel runs after this.
+            let (lo, hi) = ("refused:", "refused;");
+            let mut rows = conn
+                .query(
+                    "SELECT DISTINCT group_key FROM plan_notice WHERE group_key >= ? AND group_key < ?",
+                    (t(lo), t(hi)),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                held_groups.push(text(&row, 0));
             }
         }
         conn.execute("BEGIN IMMEDIATE", ()).await?;
@@ -12394,15 +12593,21 @@ impl Db {
                 )
                 .await?;
             }
-            // A held key's refused groups are held whole too (the touched expansion's
-            // prefix seek), so their rows are this plan's to replace as well.
-            if !held.is_empty() {
+            if !held_whole.is_empty() {
                 let mut delete =
                     conn.prepare("DELETE FROM tender_key_merges WHERE from_key >= ? AND from_key < ?").await?;
-                for key in &held {
+                for key in &held_whole {
                     let (lo, hi) = refused_key_range(key);
                     delete.execute((t(&lo), t(&hi))).await?;
                 }
+            }
+            for chunk in held_groups.chunks(IN_CHUNK) {
+                let params: Vec<Value> = chunk.iter().map(|k| t(k)).collect();
+                conn.execute(
+                    &format!("DELETE FROM tender_key_merges WHERE from_key IN ({})", placeholders(chunk.len())),
+                    params,
+                )
+                .await?;
             }
             let mut insert =
                 conn.prepare("INSERT OR REPLACE INTO tender_key_merges(from_key, to_key) VALUES(?, ?)").await?;
@@ -28608,29 +28813,6 @@ impl Db {
                 keys.push(text(&row, 0));
             }
         }
-        // Issues 369/386/482: a REFUSED key names no Tender either — its notices fold into
-        // `refused:<key>:<buyer>` Tenders (and, issue 482, `refused:<key>:#n<id>` for a
-        // buyerless one), or into whatever key a link merged such a group into. The
-        // grouping's refusal gates count the key's WHOLE population, so the plan must hold
-        // every one of them: without these a new notice under a refused key was planned
-        // alone, read as one buyer under a clean key, and founded a bare-key Tender a full
-        // fold never makes. Range seeks on the two tables' key indexes, one pair a key.
-        if !new_keyed_keys.is_empty() {
-            let mut by_prefix = conn.prepare(REFUSED_TENDERS_SQL).await?;
-            let mut merged_prefix = conn.prepare(REFUSED_MERGE_TARGETS_SQL).await?;
-            for key in new_keyed_keys {
-                let (lo, hi) = refused_key_range(key);
-                let mut rows = by_prefix.query((t(&lo), t(&hi))).await?;
-                while let Some(row) = rows.next().await? {
-                    set.insert(int(&row, 0));
-                }
-                drop(rows);
-                let mut rows = merged_prefix.query((t(&lo), t(&hi))).await?;
-                while let Some(row) = rows.next().await? {
-                    keys.push(text(&row, 0));
-                }
-            }
-        }
         keys.sort_unstable();
         keys.dedup();
         for chunk in keys.chunks(IN_CHUNK) {
@@ -28647,24 +28829,105 @@ impl Db {
         Ok(set.into_iter().collect())
     }
 
-    /// Issue 482 unit 2: the refused procedure keys among the given Tenders' keys — `K`
-    /// for every `refused:K:<label>` Tender (the key up to the first `:` after the prefix;
-    /// UUID and FTS keys hold none), sorted and deduplicated. The incremental fold's
-    /// refused-sibling closure reads it: a Tender of a refused key planned without the
-    /// key's other Tenders would show the refusal gate a part of the key.
+    /// Issues 369/386/482: the existing Tenders a REFUSED key's notices fold into, for the
+    /// incremental fold's touched expansion. A refused key names no Tender — its notices
+    /// fold into `refused:<key>:<label>` Tenders, or into whatever key a link merged such a
+    /// group into (`tender_key_merges`) — so the exact `procedure_key` lookup of
+    /// [`Db::touched_existing_tender_ids`] never finds them, and a new notice under a
+    /// refused key was planned alone and founded a bare-key Tender a full fold never makes.
+    ///
+    /// - `family_keys`: keys planned WHOLE — every `refused:<key>:` Tender and every Tender
+    ///   such a group merged into, by range seeks on `tenders_procedure_key` and on
+    ///   `tender_key_merges`' PRIMARY KEY ([`refused_key_range`]). The issue-482 UUID-hub
+    ///   keys: the gate's cluster count is not monotonic (a bridging joint notice can
+    ///   collapse clusters), so only the whole population decides it.
+    /// - `group_keys`: exact `refused:<key>:<buyer_key>` groups — issues 369/386, whose
+    ///   gates count distinct buyer sets and only grow with the population, so the grouping
+    ///   seeds a key already split as refused ([`Db::build_plan_groups`]) and a changed
+    ///   notice needs only its own buyer's Tender. Planning a common placeholder key's whole
+    ///   population on every daily that sees one of its notices is what the unit-2 review
+    ///   ruled out.
+    pub async fn refused_family_tender_ids(
+        &self,
+        family_keys: &[String],
+        group_keys: &[String],
+    ) -> turso::Result<Vec<i64>> {
+        let conn = self.conn().await;
+        let mut set = BTreeSet::new();
+        let mut targets: Vec<String> = Vec::new();
+        if !family_keys.is_empty() {
+            let mut by_prefix = conn.prepare(REFUSED_TENDERS_SQL).await?;
+            let mut merged_prefix = conn.prepare(REFUSED_MERGE_TARGETS_SQL).await?;
+            for key in family_keys {
+                let (lo, hi) = refused_key_range(key);
+                let mut rows = by_prefix.query((t(&lo), t(&hi))).await?;
+                while let Some(row) = rows.next().await? {
+                    set.insert(int(&row, 0));
+                }
+                drop(rows);
+                let mut rows = merged_prefix.query((t(&lo), t(&hi))).await?;
+                while let Some(row) = rows.next().await? {
+                    targets.push(text(&row, 0));
+                }
+            }
+        }
+        let mut named: Vec<String> = group_keys.to_vec();
+        for chunk in group_keys.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|k| t(k)).collect();
+            let mut rows = conn.query(&key_merge_targets_sql(chunk.len()), params).await?;
+            while let Some(row) = rows.next().await? {
+                targets.push(text(&row, 0));
+            }
+        }
+        named.extend(targets);
+        named.sort_unstable();
+        named.dedup();
+        for chunk in named.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|k| t(k)).collect();
+            let sql = format!("SELECT id FROM tenders WHERE procedure_key IN ({})", placeholders(chunk.len()));
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                set.insert(int(&row, 0));
+            }
+        }
+        Ok(set.into_iter().collect())
+    }
+
+    /// Issue 482 unit 2: the refused procedure keys whose groups the given Tenders hold —
+    /// `K` for every `refused:K:<label>` Tender, AND for every `refused:K:<label>` group a
+    /// link merged into one of them (`tender_key_merges` by `to_key`, the unit-2 review:
+    /// a hub cluster absorbed into another key's Tender is otherwise invisible from that
+    /// Tender's name, the plan held the cluster without the rest of its key, and the gate
+    /// un-refused the hub). The key is read up to the first `:` after the prefix, so a key
+    /// that itself holds `:` is misread; the caller keeps UUID-hub keys only, which hold
+    /// none. Sorted and deduplicated. The incremental fold's refused-sibling closure reads
+    /// it: a Tender of a refused key planned without the key's other Tenders would show the
+    /// refusal gate a part of the key.
     pub async fn refused_keys_of_tenders(&self, tender_ids: &[i64]) -> turso::Result<Vec<String>> {
         let conn = self.conn().await;
         let mut keys = BTreeSet::new();
+        let base = |key: &str| -> Option<String> {
+            let rest = key.strip_prefix("refused:")?;
+            rest.split_once(':').map(|(base, _)| base.to_owned())
+        };
+        let mut names: Vec<String> = Vec::new();
         for chunk in tender_ids.chunks(IN_CHUNK) {
             let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
             let sql = format!("SELECT procedure_key FROM tenders WHERE id IN ({})", placeholders(chunk.len()));
             let mut rows = conn.query(&sql, params).await?;
             while let Some(row) = rows.next().await? {
-                if let Some(key) = opt_text_of(&row, 0)
-                    && let Some(rest) = key.strip_prefix("refused:")
-                    && let Some((base, _)) = rest.split_once(':')
-                {
-                    keys.insert(base.to_owned());
+                if let Some(key) = opt_text_of(&row, 0) {
+                    keys.extend(base(&key));
+                    names.push(key);
+                }
+            }
+        }
+        if !names.is_empty() {
+            let mut merged_into = conn.prepare(MERGED_INTO_SQL).await?;
+            for name in &names {
+                let mut rows = merged_into.query((t(name),)).await?;
+                while let Some(row) = rows.next().await? {
+                    keys.extend(base(&text(&row, 0)));
                 }
             }
         }
@@ -30366,6 +30629,77 @@ mod tests {
         Fact, LotState, MinUnionFind, PlanScope, TenderVersion, head_deadline, head_title,
         head_value_eur_cents, sentinel_amount,
     };
+
+    /// Issue 482 unit 2 review: the per-digest clustering is exactly the connected
+    /// components of the pairwise [`super::buyer_tokens_disjoint`] graph — checked against
+    /// that oracle over random token sets dense in shared digests and mixed kinds.
+    #[test]
+    fn buyer_clusters_match_the_pairwise_overlap_graph() {
+        fn pairwise(tokens: &[&[u32]]) -> Vec<Vec<usize>> {
+            let n = tokens.len();
+            let mut parent: Vec<usize> = (0..n).collect();
+            fn root(p: &mut [usize], mut i: usize) -> usize {
+                while p[i] != i {
+                    i = p[i];
+                }
+                i
+            }
+            for i in 0..n {
+                for j in i + 1..n {
+                    if !super::buyer_tokens_disjoint(tokens[i], tokens[j]) {
+                        let (a, b) = (root(&mut parent, i), root(&mut parent, j));
+                        if a != b {
+                            parent[a.max(b)] = a.min(b);
+                        }
+                    }
+                }
+            }
+            let mut out: std::collections::BTreeMap<usize, Vec<usize>> = Default::default();
+            for i in 0..n {
+                let r = root(&mut parent, i);
+                out.entry(r).or_default().push(i);
+            }
+            out.into_values().collect()
+        }
+        let mut state: u64 = 0x9e37_79b9_7f4a_7c15;
+        let mut next = |m: u64| {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            state % m
+        };
+        for _ in 0..3_000 {
+            let n = 1 + next(9) as usize;
+            let sets: Vec<Vec<u32>> = (0..n)
+                .map(|_| {
+                    let mut set: Vec<u32> = (0..1 + next(3)).map(|_| ((next(6) as u32) << 2) | next(4) as u32).collect();
+                    set.sort_unstable();
+                    set.dedup();
+                    set
+                })
+                .collect();
+            let refs: Vec<&[u32]> = sets.iter().map(Vec::as_slice).collect();
+            assert_eq!(super::buyer_clusters(&refs), pairwise(&refs), "{sets:?}");
+        }
+        // An empty set overlaps everything under the pairwise test.
+        let (a, b): (Vec<u32>, Vec<u32>) = (vec![4], vec![8]);
+        assert_eq!(super::buyer_clusters(&[&a, &[], &b]), vec![vec![0, 1, 2]]);
+    }
+
+    /// Issue 482 unit 2 review: a hub cluster is named by its FIRST member's `buyer_key`,
+    /// so a later notice writing the buyer another way (a smaller string) never renames it.
+    #[test]
+    fn a_uuid_hub_cluster_keeps_its_first_members_label() {
+        let t: Vec<u32> = vec![4];
+        let sets: Vec<&[u32]> = vec![&t, &t, &t];
+        let label = super::uuid_hub_label(&[(10, Some("Stadt Zürich")), (12, None), (31, Some("CHE-115.869.765"))], &sets);
+        assert_eq!(label, "Stadt Zürich");
+        assert_eq!(super::uuid_hub_label(&[(12, None)], &sets[..1]), "#g00000004");
+        assert_eq!(super::link_rank_class("refused:k:#n42"), super::LINK_CLASS_BUYERLESS);
+        assert_eq!(super::link_rank_class("refused:k:Stadt #n"), super::LINK_CLASS_KEYED);
+        assert_eq!(super::link_rank_class("island:42"), super::LINK_CLASS_ISLAND);
+        assert_eq!(super::link_rank_class(&super::uuid_hub_buyerless_key("k", 7)), super::LINK_CLASS_BUYERLESS);
+    }
 
     /// Issue 388: `MAX(rowid)` is only the cheap bound. A table whose rowid space has
     /// outgrown the cap through rebuilds but holds few rows must still get its index,

@@ -7543,6 +7543,9 @@ tmpfs /data/ramcache tmpfs rw 0 0
         seeks("refused tenders", &plan, &["tenders_procedure_key (procedure_key>=? AND procedure_key<?)"]);
         let plan = plan_of(crate::canonical::REFUSED_MERGE_TARGETS_SQL, range()).await;
         seeks("refused merges", &plan, &["sqlite_autoindex_tender_key_merges_1 (from_key>=? AND from_key<?)"]);
+        // The unit-2 review: the groups merged INTO a touched Tender, by its key.
+        let plan = plan_of(crate::canonical::MERGED_INTO_SQL, vec![t("k")]).await;
+        seeks("merged into", &plan, &["tender_key_merges_to (to_key=?)"]);
 
         // The grouping's one-ended links: driven from the edges like the join.
         let plan = plan_of(crate::canonical::LINK_ONE_ENDED_SQL, vec![]).await;
