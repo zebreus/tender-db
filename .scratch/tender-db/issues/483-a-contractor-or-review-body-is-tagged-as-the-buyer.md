@@ -1,8 +1,9 @@
 # 483 — a contractor, review body or platform vendor sits in the buyer slot, and every buyer-based guard trusts it
 
-Status: ready-for-agent — NEXT: deploy unit 1 (`buyer-role-census`, landed 2026-10-03 with its review fixes, below) → run the census
-(stride 10 first) → read 30 samples per class → choose the fix: demote the role at projection, or guard-only (the
-481/482 guards ignore a flagged buyer mention).
+Status: ready-for-agent — NEXT: deploy unit 1c (the decisive set re-cut from the census read, below) → re-run the
+census at stride 10 → if the decisive notices stay in the hundreds (expected ~60 at stride 10), build unit 2: demote
+the two decisive classes at projection, recovering the buyer from `real-buyer-elsewhere`'s organization. The swap
+waits on the org-level role index (deferred, below).
 Kind: data correctness (parties)
 Relates to: 482 (16 of 45 false splits in the 2-cluster read were role mis-tags), 481 unit 2b/2c (the buyer guard
 reads `Procedure-Buyer`), 456 (mention binding), the served `parties[]`
@@ -126,3 +127,41 @@ An adversarial review of `9c2d2c7` found the census blind to the main shape in t
 in view; read their samples first. The demote can recover a buyer from `real-buyer-elsewhere`'s basis or the swap's
 tenderer; where neither exists, guard-only.
 
+
+## Census read — 2026-10-03 (job 1942, stride 10, rev 9c7a950)
+
+Report saved: `.scratch/tender-db/483-roles/census-1942.json`. 1,470,018 notices read (1,426,320 with a buyer,
+1,563,471 buyer mentions); 225,557 flagged by any class, 3,151 decisively, **2,993 with no clean buyer**. Per class
+(notices / no clean buyer), with what the 30 samples hold:
+
+| class | notices | ncb | what the samples are | verdict |
+|---|---|---|---|---|
+| `esender` | 2,391 | 2,351 | buyers sending their own notices: Sprinkenhof GmbH, Senatsverwaltung für Wirtschaft, Bezirksamt Friedrichshain-Kreuzberg, Gmina Kraszewice, Gmina Cieszyn, Département de l'Aube | **not decisive** — 0/30 wrong buyers |
+| `buyer-tenderer-swap` | 318 | 305 | 28/30 legacy. Company buyers awarding to a public institute: PKP PLK → Instytut Kolejnictwa, Hrvatske ceste → Institut IGH, ELES → Elektroinštitut Milan Vidmar, Dresdner Verkehrsbetriebe → TU Dresden, Slovenski državni gozdovi ×3. Real swaps: Bernard Gruppe ZT GmbH / Stadt Köln, Fliesen Görner GmbH / Landratsamt Ansbach (maybe Aon Sweden) | **not decisive** — ~2-3/30 |
+| `contractor-org-same-name` | 135 | 134 | the authority in the CONTRACTOR slot: SPMS, Município de Pombal, Comune di Sarezzo, Kent County Council, Stadt Hilden ×3 (an F20 modification), Trafikverket, Ministry of Justice | **not decisive** — the buyer is right, the contractor mention is the mis-tag |
+| `contractor-name` | 125 | 122 | the same: Gobierno Vasco (2002406: the legacy text's "Supplier(s): 1: Gobierno Vasco, A la atención de…" read live), Ayuntamiento de Granollers, Comune di Messina, Cardiff County Council | **not decisive** |
+| `contractor-same-section` | 3 | 3 | Kirklees, Clackmannanshire, Cabinet Office (UK award updates) | **not decisive** |
+| `review-body-name` | 197 | 96 | with `real-buyer-elsewhere`: Vergabekammer ×3 beside Staatliches Bauamt Erlangen-Nürnberg, Vergabekammer Nordbayern / Stadt Waldershof, High Court of Ireland / OPW, Förvaltningsrätten i Göteborg / Domstolsverket, DKOM / Ministrstvo za javno upravo — real mis-tags. With only "its review role": KIO ×5, ÚVO ×3, ÚOHS, KZK, DKOM, Markkinaoikeus, tribunaux administratifs ×4, PCRB Malta — review bodies buying for themselves. "another buyer": Tar Község (a Hungarian village matched by the bare `tar`) | **decisive only with another party's corroboration** (~8/30) |
+| `platform-name` | 9 | 2 | European Dynamics S.A. ×8 (usually with a clean buyer beside it), Mercell | **decisive** |
+| weak classes | | | `docs-provider` 49,842, `review-body-role` 45,204, `review-info-role` 75,342, `real-buyer-elsewhere` 61,588, `swap-legal-form` 18,529: the buyer naming itself in those blocks, as designed | stay counted |
+
+**The 482 premise does not hold at corpus scale.** The roles the 482 read blamed (the swap, the court) are rare and,
+except the court beside a recoverable buyer, not separable from legitimate buyers by anything the notice carries.
+`no_clean_buyer` was 78% `esender` and 20% swap/contractor — false flags.
+
+**Decision.**
+- **Unit 1c (this commit): re-cut the decisive set.** `esender`, the three contractor classes and the swap are
+  counted, not decisive. `review-body-name` is decisive only when ANOTHER party corroborates it
+  (`real-buyer-elsewhere`, or another non-review buyer); its own review role makes it `review-body-name-alone`.
+  The bare `tar` pattern is replaced by `tar <region>` for the 19 regions. Expected decisive at stride 10: ~60
+  review-body notices + 9 platform ≈ 0.005% of notices.
+- **Unit 2 (after the re-run): demote at projection**, not guard-only. At ~700 corpus notices the guards gain
+  nothing measurable, while the served `parties[]` is wrong on exactly those notices; `real-buyer-elsewhere`'s
+  basis names the buyer to promote (Staatliches Bauamt, OPW, Domstolsverket). Where no buyer is recoverable
+  (a platform name alone, 2 of 9), leave the role and only drop it from the guards.
+- **The swap stays as data** until the org-level role index exists (the tenderer's organization is a
+  `Procedure-Buyer` on other notices) — that signal, not legal forms, can tell Stadt Köln as a tenderer from TU
+  Dresden as one. Deferred, ready-for-agent once something else needs the index.
+- **The contractor-slot mis-tag** (the buyer named as its own winner, ~260 notices at stride 10 → ~2,600) is a
+  real defect of the served awards, the other way round: filed as issue 484, not this unit — the
+  winner mention on those notices is the one to doubt (a legacy text parse of "Supplier(s): 1: <buyer contact>").
