@@ -582,3 +582,17 @@ deployed, so no 2c plan exists on prod.
   - NEXT: read the daily's `issue-481` line (largest component, refusals, deferred 0) and the Verify of 1110706
     (issue 482), then the data-quality "merged with TED" count.
 - 17:5x UTC: wet 1905 finished; it attests `tender_links_complete` and re-queued 17,537 notices for the 2026-10-03 daily.
+
+## 2026-10-03 04:0x UTC — the wet backfill's re-queue was folded by project 1915 (not the daily)
+
+- Project 1915 (the FTS chunk's own fold) picked up the 17.5k re-queued notices: 18,136 notices → 11,568 Tenders in
+  423 s. Its `issue-481` line:
+  - **joined 10,410**: previous-notice 5,366, of which cross-source 1,531; logical-notice 5,044;
+  - **refused 4,686**: buyer-disjoint 4,580, not-earlier 106; deferred 0;
+  - largest component 226 keys.
+- **Placeholder hub 1012301: 184 versions → 3** (Столична община, район „Триадица“).
+- **Tender 1110706: 2 versions, buyer Stadt Wesel**, so issue 482's Verify reads done for its exhibit.
+- 526284 now holds two notices sharing BT-04 `73206638-…`: a Tenerife EV-charging award (00640006-2025) and SCB's
+  00123456-2026. That is a BT-04 collision, issue 482's shape, which the census will list.
+- NEXT: inspect the 226-key component; the data-quality report's "merged with TED" after the Sunday report; then
+  close unit 2 (unit 3 is the matched-link rule).

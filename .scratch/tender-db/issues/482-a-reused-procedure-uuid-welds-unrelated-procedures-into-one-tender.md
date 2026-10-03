@@ -137,3 +137,7 @@ An adversarial review of `0b9aacf` found the report could not set the split rule
   372 notices; a pathological Tender of tens of thousands would cost seconds of CPU). The report row is
   now bounded; the CPU is not.
 - A UUID group a link merged under a non-UUID key is not walked (documented as out of scope).
+- 2026-10-03 04:0x UTC: the Verify exhibit **1110706 reads `[2,["Stadt Wesel"]]`** after 481's fold. Its Bulgarian
+  notice was joined by an opp-090 placeholder and is now refused buyer-disjoint, not by the shared BT-04. The census
+  (unit 1, built and gated at 75dd23f) still runs for real BT-04 collisions, e.g. 526284 (Tenerife + SCB under
+  `73206638-…`).
