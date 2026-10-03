@@ -1,6 +1,6 @@
 # 477 — FTS holds 90–98 % of each year's notices, the missing ones are on the API, and the dashboard reports the source complete
 
-Status: ready-for-agent — UNIT 1b BUILT 2026-10-02 10:5x UTC (the unit 1b commit; gate GATE-EXIT=0, NOT deployed): a span still full at two seconds keeps its page as a leaf, and a page of ONE notice is completed from the records of its ocid run — see the last section. NEXT: deploy it between top-up chunks, then re-enqueue `{"kind":"fetch","source":"fts","package_kind":"monthly","period":"2023-11","refetch":true}`, process and project, and check that the job row reads `NewVersion · 1 dense span(s) completed from 17 ocid record(s)` and that `033562-2023` is 15 notices on 15 Tenders; the remaining chunks (2024b → 2026-08) do not wait on it; then unit 3 (the per-year id invariant and audit).
+Status: ready-for-agent — TOP-UP COMPLETE 2026-10-03 (Verify 1,180, was 14,093; NEXT unit 3, the per-id audit of the residue). UNIT 1b BUILT 2026-10-02 10:5x UTC (the unit 1b commit; gate GATE-EXIT=0, NOT deployed): a span still full at two seconds keeps its page as a leaf, and a page of ONE notice is completed from the records of its ocid run — see the last section. NEXT: deploy it between top-up chunks, then re-enqueue `{"kind":"fetch","source":"fts","package_kind":"monthly","period":"2023-11","refetch":true}`, process and project, and check that the job row reads `NewVersion · 1 dense span(s) completed from 17 ocid record(s)` and that `033562-2023` is 15 notices on 15 Tenders; the remaining chunks (2024b → 2026-08) do not wait on it; then unit 3 (the per-year id invariant and audit).
 Was status: ready-for-agent — UNIT 1b DECIDED 2026-10-02 04:5x UTC (dense-span walk via ocid records; 2023-11 waits on it — see the last section). UNIT 1 DEPLOYED 2026-10-01 16:4x UTC (`3d79f11`; built `e9e73bb`, review fixes `3d79f11`; gate GATE-EXIT=0 in 761 s). The FTS walk never follows `links.next`: full cursorless spans split, never below 2 s; the daily probe walks every day after the newest monthly that holds no daily, which closes the 09-01..06 seam; and a same-id second release is kept. TOP-UP RUNNING: refetch every monthly 2021-01 → 2026-08 with the new walker (`refetch:true`), chunked to end before each 07:35 UTC tick. Chunk 2021 = jobs 1815–1828. NEXT: read 2021-05 (1815) against its 172 missing ids, then the next chunks, then unit 3 (the per-year id invariant and audit).
 Was status: ready-for-agent — ROOT CAUSE PROVEN 2026-10-01 (workflow `wf_4e12a01b-ca9`: three probes, a synthesis, and a challenger who confirmed the cause): the FTS API's `links.next` cursor continues on a hidden per-release key that is not in notice-id order, so page 2 and later silently drop rows, and the dropped page comes back short with no next link. The 2026-09-01..06 seam was never fetched (1,745 ids), and some post-Act ids were never published. NEXT: unit 1, the walk. Never follow `links.next`; split any window whose cursorless page is full, never into a one-second window (the API answers 400). Fix the seam start too. Design and evidence: `.scratch/tender-db/477-fts/`.
 Was status: ready-for-agent — filed 2026-10-01 13:5x UTC from the 342 close-out audit. The first unit is the root cause:
@@ -385,3 +385,14 @@ Refuted:
 - **`033562-2023` now holds 15 FTS notices on 15 distinct Tenders**: 46920564 (the old one, Tender 7954684) plus
   47189064…47189077 (Tenders 8810418…8810431). Before, it held 1.
 - Verify total before these two refetches: 3,686 (2021 20, 2022 8, 2023 134, 2024 0, 2025 1,928, 2026 1,596).
+
+### 2026-10-03 22:xx UTC — the top-up is complete: every monthly 2021-01 … 2026-08 refetched
+
+- Every refetch landed `ok`, including the two dense spans (2023-11, 2025-02). The last process/project pair is
+  1940/1941.
+- **Verify: 1,180** (was 14,093). By year: 2021 20, 2022 8, 2023 6, 2024 0, 2025 73, **2026 1,073**.
+- The 2026 residue sits in the daily-walked months (2026-09 onward has no monthly) and in ids that were never published
+  (482's probes found 404s and empty releases).
+- NEXT: unit 3, the per-year id invariant. Probe every remaining id by id (`/ocdsReleasePackages/{id}`), list the
+  404 / empty ones as absent, re-walk the days of any that exist, and give the dashboard's coverage the id-based
+  denominator. Then close.
