@@ -519,6 +519,10 @@ use store::read::LOT_KINDS;
 /// Issue 482 unit 1: the procedure-key census (buyer-disjoint clusters under one UUID).
 pub mod key_census;
 
+/// Issue 483 unit 1: the buyer-role census (contractors, review bodies and platforms in the
+/// buyer slot).
+pub mod role_census;
+
 /// The section a lots-group composition lives in, and the two fields naming its ends
 /// (issue 237). Named constants rather than literals in the reader because both ids are
 /// `-Procedure`-suffixed and read as procedure-level facts, which is exactly the

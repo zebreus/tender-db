@@ -7941,6 +7941,14 @@ impl Db {
         Self::parsed_chunk_on(&conn, after_id, i64::MAX, limit).await
     }
 
+    /// Issue 483: [`Db::parsed_chunk`] bounded to notice ids `≤ hi`, on a reader of its
+    /// own — the buyer-role census's windowed walk, which needs the bound (a window must
+    /// not read past itself) without holding a connection across the window.
+    pub async fn parsed_window(&self, after_id: i64, hi: i64, limit: i64) -> turso::Result<Vec<(NoticeRef, Parsed)>> {
+        let conn = self.reader().await?;
+        Self::parsed_chunk_inner(&conn, after_id, hi, limit, false).await
+    }
+
     /// As [`Db::parsed_chunk`], but through an explicit connection and bounded to
     /// notice ids `≤ hi`. The bound lets the sharded Phase-2 pre-pass (issue 66)
     /// give each worker its own reader connection and its own contiguous id stripe

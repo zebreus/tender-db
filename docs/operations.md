@@ -908,6 +908,83 @@ And the census walks only Tenders whose surviving key is a UUID: a hub whose gro
 under a non-UUID key is never listed, and only a full re-plan splits it. So "verify the split" means
 the gate's own count: the fold job row's `uuid hubs refused` and the journal's `group step uuid-hubs`.
 
+### `buyer-role-census`: contractors, review bodies and platforms in the buyer slot (issue 483)
+
+Award notices sometimes name the contractor, a review body or a platform vendor in the buyer role
+(`Procedure-Buyer`, legacy and sdk-0.1 `buyer`). Every buyer-based guard trusts that role (481's link
+guard, 482's hub gate, 369's key election), and the served `parties[]` names it. The 482 two-cluster
+read found it in 16 of 45 false splits (16698: the contractor Ratio Web as the only buyer; 533381:
+the Tribunal Català de Contractes; 198229: European Dynamics). This census sizes it before a fix is
+chosen: demote the role at projection, or only ignore it in the guards.
+
+```sh
+/root/aj.sh /admin/jobs '{"kind":"buyer-role-census"}'              # stride 10 (default): one window in ten
+/root/aj.sh /admin/jobs '{"kind":"buyer-role-census","stride":1}'   # every window (the better part of a day)
+/root/aj.sh /admin/reports/buyer-role-census | jq -r .body | jq '{stride, windows_read, windows, notices, notices_with_buyers, buyer_mentions, flagged_notices, decisively_flagged_notices, no_clean_buyer, classes: (.classes | map_values({decisive, mentions, notices, no_clean_buyer, every_buyer}))}'
+# Source × subtype × class, with the denominators:
+/root/aj.sh /admin/reports/buyer-role-census | jq -r .body | jq -r '.cells | to_entries | sort_by(-.value)[:60][] | "\(.value)\t\(.key)"'
+/root/aj.sh /admin/reports/buyer-role-census | jq -r .body | jq -r '.read | to_entries | sort_by(-.value)[:40][] | "\(.value)\t\(.key)"'
+# The samples of one class: publication, flagged name, why, the notice's other buyers.
+/root/aj.sh /admin/reports/buyer-role-census | jq -r .body | jq -r '.classes["contractor-org"].samples[] | "\(.publication) \(.subtype) \(.flagged)  <\(.basis|join("; "))>  clean_left=\(.clean_buyer_left)  others: \(.other_buyers|join(" | "))"'
+```
+
+**Read-only** (no dry flag; it writes nothing but its report), stoppable between windows and between
+chunks, report `buyer-role-census` stored only by a run that finished. It walks the parsed notices by
+id in windows of 20,000 ids, 1,000 notices per read (`Db::parsed_window`: the projection's own
+chunk read, bounded to the window), and reads one window in every `stride` (default 10, `0` reads as
+1). The windows it reads are evenly spread over the id space, so over every era and Source; the counts
+are **of the sample**, so multiply by `stride` for a corpus estimate. Each notice is fully parsed
+(DE-1.x folded first) and its organization roles read from its own id-refs (a nested Organization's
+inner half lands on its outer one, as the projection binds it; sdk-0.1's `ContractingParty` /
+`WinningParty` sections are buyer / winner). Each mention's resolved organization comes from
+`organization_mentions`.
+
+Each buyer mention gets every class that applies (`basis` says what each matched):
+
+| class | when | decisive |
+|---|---|---|
+| `contractor-org` | its resolved organization, or its own section, is also a winner, tenderer, main or subcontractor on the notice, in ANY lot | yes |
+| `contractor-name` | no organization match, but its folded name equals such a party's | yes |
+| `review-body-name` | its name is a known review body (`NAME_PATTERNS` in `role_census.rs`: KIO, Vergabekammer, ÚOHS, Förvaltningsrätten, Tribunal Català, TACRC, TAR, tribunal administratif, …) | yes |
+| `review-body-role` | the notice's own review-body role (eForms `Lot-ReviewOrg` / `ReviewOrg`; legacy `ADDRESS_REVIEW_BODY`, `APPEAL_PROCEDURE_BODY_RESPONSIBLE`, `RESPONSIBLE_FOR_APPEAL_PROCEDURES`, never `ADDRESS_REVIEW_INFO`) names the same organization or name | no |
+| `esender` | it is the notice's eSender / procurement service provider (`Procedure-SProvider`) | yes |
+| `docs-provider` | it is the documents provider (`Lot-DocProvider`, legacy `specifications-provider`) | no |
+| `platform-name` | its name is a known platform vendor (European Dynamics, EU-Supply, Mercell, Vortal, cosinex, subreport, DTVP) | yes |
+
+A buyer mention is **clean** when no decisive class flags it. **`no_clean_buyer`** counts notices
+naming buyers of which none is clean: the notice's only buyer is wrong, and demoting the role would
+leave it buyerless. Per class: `mentions`, `notices`, `no_clean_buyer` (of its notices) and
+`every_buyer` (its notices whose every buyer mention carries this class, the measure for a
+non-decisive class), plus 30 samples (bottom-30 by a hash of the notice id, the same whatever the
+stride or window). `read` counts notices read per `source/subtype` (`legacy` for the legacy TED
+profiles, `-` for none), the denominators of `cells` (`source/subtype/class` and
+`source/subtype/no-clean-buyer`).
+
+Decisions in the classes:
+- **A buyer that tenders in another lot is still flagged.** A procedure's buyer is never its own
+  supplier, so a buyer that is a tenderer in lot 2 is still the contractor in the buyer slot. The
+  shape where the notice ALSO names its real buyer (16698's twin: Instytut Adama Mickiewicza beside
+  Ratio Web) is told apart by `clean_buyer_left` and `no_clean_buyer`, not by dropping the flag.
+- **The review-body role and the documents provider are not decisive.** A buyer writing its own
+  name into the review-body block (common in UK and IE notices) mis-tags THAT role, not the buyer
+  slot, and a buyer handing out its own documents is the normal case. Both are counted and sampled
+  to size them, but only the name list says the buyer slot holds a court.
+- **Left out of the name lists:** `Commissione` (the European Commission buys), the Polish Urząd
+  Zamówień Publicznych (it runs e-Zamówienia and also buys for itself; the `esender` class catches
+  it where it was the platform). A list entry is data: a row in `NAME_PATTERNS`, written in its
+  folded form (a test holds each to its own fold), matched as whole words.
+
+**Expected cost.** About 3 ms a notice for the parse and the mention read (issue 482's measure on
+`parsed_by_ids`; the census reads contiguous windows, which should cost less). So stride 10 parses a
+tenth of the corpus in a few hours, and stride 1 takes the better part of a day. It holds no writer,
+but it DOES hold the single job worker for its whole run, so queue it right after a daily. It keeps no
+checkpoint: a restart re-runs it from notice id 0. Read the job row's duration for the real figure.
+
+**What to decide from it.** A large `no_clean_buyer` (the notice's only buyer is wrong) says demote
+at projection only where the real buyer can be recovered, and otherwise make the guards ignore the
+flagged role. A `contractor-*` mass concentrated in a few Sources × subtypes (award notices from one
+publisher) points at a parser fix for that publisher. Read 30 samples per class on the portals first.
+
 ### Reading a `process` job's `[process]` lines (issue 407)
 
 Every package walk prints one journal line when it completes:
@@ -1056,7 +1133,7 @@ uncapped wet), so a wet run refuses unless its dry plan is on file.
 Report kinds do NOT always match the job kind that writes them. `fusion-census`
 stores under `fusion-candidates`, and `GET /admin/reports/<kind>` answers an
 unknown kind with "no report of that kind has been computed" — which reads as
-"the job never ran". The kinds are, exhaustively (read off `put_report` in the supervisor, 2026-09-06; `altid-merge-plan` since issue 448, `rekey-plan` since issue 453, `merged-identifier-backfill` since issue 460, `tender-link-backfill` since issue 481, `procedure-key-census` since issue 482): `altid-merge-plan`, `anchor-wall-census`, `case-apply-plan`, `case-escalations`, `case-unapply-plan`, `country-cluster-census`, `country-cluster-packet`, `country-fold`, `country-typo-census`, `country-typo-repair`, `country-verdict-plan`, `data-quality`, `data-quality-headlines`, `data-quality-presence`, `disk-census`, `drop-orphan-satellites`, `duplicate-identity-census`, `e0-merge-plan`, `fusion-candidates`, `generic-statistic-census`, `generic-wall-census`, `ghost-census`, `label-prefix-repair`, `member-twin-census`, `member-twin-repair`, `merged-identifier-backfill`, `minted-country-repair`, `name-attribution-probe`, `name-pollution-census`, `notice-instant-repair`, `org-edge-census`, `org-edge-scan`, `org-edge-scan-alarm`, `org-edge-scan-plan`, `org-match-keys-build`, `org-match-keys-plan`, `org-merge-health`, `orphan-org-sweep-plan`, `procedure-key-census`, `provisional-echo-census`, `provisional-echo-plan`, `provisional-name-norm-plan`, `r2-census`, `r2-merge-plan`, `r3-census`, `r3-merge-plan`, `registry-contiguity`, `rehash-cursor`, `rehash-probe`, `rehoming-packet`, `rehoming-plan`, `rekey-plan`, `renormalise-repair`, `reveal-cursor`, `reveal-recheck`, `reveal-wrap`, `satellite-orphans`, `tender-link-backfill`, `xb-packet`.
+"the job never ran". The kinds are, exhaustively (read off `put_report` in the supervisor, 2026-09-06; `altid-merge-plan` since issue 448, `rekey-plan` since issue 453, `merged-identifier-backfill` since issue 460, `tender-link-backfill` since issue 481, `procedure-key-census` since issue 482, `buyer-role-census` since issue 483): `altid-merge-plan`, `anchor-wall-census`, `buyer-role-census`, `case-apply-plan`, `case-escalations`, `case-unapply-plan`, `country-cluster-census`, `country-cluster-packet`, `country-fold`, `country-typo-census`, `country-typo-repair`, `country-verdict-plan`, `data-quality`, `data-quality-headlines`, `data-quality-presence`, `disk-census`, `drop-orphan-satellites`, `duplicate-identity-census`, `e0-merge-plan`, `fusion-candidates`, `generic-statistic-census`, `generic-wall-census`, `ghost-census`, `label-prefix-repair`, `member-twin-census`, `member-twin-repair`, `merged-identifier-backfill`, `minted-country-repair`, `name-attribution-probe`, `name-pollution-census`, `notice-instant-repair`, `org-edge-census`, `org-edge-scan`, `org-edge-scan-alarm`, `org-edge-scan-plan`, `org-match-keys-build`, `org-match-keys-plan`, `org-merge-health`, `orphan-org-sweep-plan`, `procedure-key-census`, `provisional-echo-census`, `provisional-echo-plan`, `provisional-name-norm-plan`, `r2-census`, `r2-merge-plan`, `r3-census`, `r3-merge-plan`, `registry-contiguity`, `rehash-cursor`, `rehash-probe`, `rehoming-packet`, `rehoming-plan`, `rekey-plan`, `renormalise-repair`, `reveal-cursor`, `reveal-recheck`, `reveal-wrap`, `satellite-orphans`, `tender-link-backfill`, `xb-packet`.
 
 ### The admin surface beyond jobs (issues 230, 335, 348, 356)
 

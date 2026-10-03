@@ -524,6 +524,11 @@ enum Spec {
     /// Tenders with two or more buyer-disjoint clusters, by jurisdiction, Source and
     /// span, with 30 samples per bucket. Read-only; stores `procedure-key-census`.
     ProcedureKeyCensus,
+    /// Issue 483 unit 1: walk the parsed notices by id (one window in every `stride`) and
+    /// flag each buyer mention that is also the notice's contractor, a review body or its
+    /// eSender / documents provider / a platform vendor, by Source × subtype × class, with
+    /// 30 samples per class. Read-only; stores `buyer-role-census`.
+    BuyerRoleCensus { stride: u64 },
     /// Issue 482 unit 2: re-queue the notices of the hub Tenders the stored
     /// `procedure-key-census` report lists (`hub_tender_ids`: 3 or more buyer-disjoint
     /// clusters), so the next fold re-plans them and the grouping's UUID-hub gate splits
@@ -1080,6 +1085,10 @@ pub struct JobRequest {
     /// still runs whole, so parity stays a whole-plan check. Omitted means
     /// everything the census found.
     pub max_edges: Option<u64>,
+    /// `buyer-role-census` only: read one notice-id window in every `stride` (issue 483).
+    /// Omitted means [`ingest::project::role_census::ROLE_CENSUS_DEFAULT_STRIDE`]; `1`
+    /// walks every window.
+    pub stride: Option<u64>,
 }
 
 impl Supervisor {
@@ -1974,6 +1983,17 @@ impl Supervisor {
             "procedure-key-census" => Ok(vec![
                 self.push("procedure-key-census", "procedure-key-census".into(), Spec::ProcedureKeyCensus).await,
             ]),
+            // Issue 483 unit 1: read-only like the key census; `stride` samples windows.
+            "buyer-role-census" => {
+                let stride =
+                    req.stride.unwrap_or(ingest::project::role_census::ROLE_CENSUS_DEFAULT_STRIDE).max(1);
+                Ok(vec![
+                    self.push("buyer-role-census", format!("buyer-role-census stride {stride}"), Spec::BuyerRoleCensus {
+                        stride,
+                    })
+                    .await,
+                ])
+            }
             // Issue 482 unit 2: re-queues notices for the next fold, so a forgotten flag
             // means the dry count.
             "requeue-uuid-hubs" => {
@@ -2801,6 +2821,34 @@ fn procedure_key_census_summary(r: &ingest::project::key_census::ProcedureKeyCen
     )
 }
 
+/// Issue 483: the report `buyer-role-census` stores.
+const BUYER_ROLE_CENSUS_REPORT: &str = "buyer-role-census";
+
+/// The job-row line of a buyer-role census: the totals, then each class's notices.
+fn buyer_role_census_summary(r: &ingest::project::role_census::BuyerRoleCensus) -> String {
+    let classes: Vec<String> = ingest::project::role_census::ROLE_CENSUS_CLASSES
+        .iter()
+        .map(|(c, _)| {
+            let t = r.classes.get(*c);
+            format!("{c} {} ({} no clean buyer)", t.map_or(0, |x| x.notices), t.map_or(0, |x| x.no_clean_buyer))
+        })
+        .collect();
+    format!(
+        "{} notices read (stride {}, {} of {} windows), {} with buyers ({} buyer mentions), {} flagged ({} \
+         decisively), {} with no clean buyer left; {}",
+        r.notices,
+        r.stride,
+        r.windows_read,
+        r.windows,
+        r.notices_with_buyers,
+        r.buyer_mentions,
+        r.flagged_notices,
+        r.decisively_flagged_notices,
+        r.no_clean_buyer,
+        classes.join(", ")
+    )
+}
+
 /// The hub Tender ids of a stored `procedure-key-census` report body (issue 482 unit 2).
 fn hub_tender_ids(body: &str) -> Result<Vec<i64>, String> {
     let report: serde_json::Value = serde_json::from_str(body).map_err(|e| format!("census report: {e}"))?;
@@ -3001,6 +3049,8 @@ const STOPPABLE_KINDS: &[&str] = &[
     "backfill-tender-links",
     // Issue 482: read between Tender windows; a stopped run stores no report.
     "procedure-key-census",
+    // Issue 483: read between notice windows and chunks; a stopped run stores no report.
+    "buyer-role-census",
     // Issue 429: read between tables; a stop still refreshes the readers.
     "analyze",
 ];
@@ -4339,6 +4389,39 @@ impl Supervisor {
         Ok(format!("procedure-key-census (issue 482): {summary}"))
     }
 
+    /// Issue 483 unit 1's `buyer-role-census`, its own fn reached through `off_frame`
+    /// (issue 467; the [`Self::run_procedure_key_census`] shape). Walks the parsed notices
+    /// by id and stores `buyer-role-census` — only for a run that finished: a stopped
+    /// census is a prefix that would read as the whole.
+    async fn run_buyer_role_census(&self, job: &Job, stride: u64) -> Result<String, String> {
+        let job_id = job.id;
+        let stop = || self.cancelled(job_id);
+        let r = Box::pin(ingest::project::role_census::buyer_role_census(&self.db, stride, &stop, |r| {
+            self.update(|p| p.members_done = r.notices);
+            self.set_phase(
+                "counting",
+                Some(r.cursor.max(0) as u64),
+                Some(r.target.max(0) as u64),
+                format!(
+                    "notice id {} of {} (stride {}); {} notices read, {} flagged, {} with no clean buyer",
+                    r.cursor, r.target, r.stride, r.notices, r.flagged_notices, r.no_clean_buyer
+                ),
+            );
+        }))
+        .await
+        .map_err(|e| e.to_string())?;
+        let summary = buyer_role_census_summary(&r);
+        if r.stopped {
+            return Ok(format!(
+                "buyer-role-census STOPPED by cancel at notice id {} of {} — {summary}; no report stored",
+                r.cursor, r.target
+            ));
+        }
+        let body = serde_json::to_string(&r).map_err(|e| e.to_string())?;
+        self.db.put_report(BUYER_ROLE_CENSUS_REPORT, &body, store::now_unix()).await.map_err(|e| e.to_string())?;
+        Ok(format!("buyer-role-census (issue 483): {summary}"))
+    }
+
     /// Issue 482 unit 2's `requeue-uuid-hubs`, its own fn through `off_frame` (issue 467).
     /// Reads the hub Tender ids from the stored `procedure-key-census` report and
     /// re-queues their notices (dry: counts them). A report written before unit 2 has no
@@ -4541,6 +4624,7 @@ impl Supervisor {
                 off_frame(|| self.run_backfill_tender_links(job, *dry_run)).await
             }
             Spec::ProcedureKeyCensus => off_frame(|| self.run_procedure_key_census(job)).await,
+            Spec::BuyerRoleCensus { stride } => off_frame(|| self.run_buyer_role_census(job, *stride)).await,
             Spec::RequeueUuidHubs { dry_run } => off_frame(|| self.run_requeue_uuid_hubs(*dry_run)).await,
             Spec::Analyze => off_frame(|| self.run_analyze(job)).await,
             Spec::RepairMemberTwins { dry_run } => {
@@ -13948,6 +14032,9 @@ mod tests {
                 // Issue 482: `procedure_key_census` reads the flag before every
                 // Tender window; a stopped run stores no report.
                 "procedure-key-census",
+                // Issue 483: `buyer_role_census` reads the flag before every notice
+                // window and chunk; a stopped run stores no report.
+                "buyer-role-census",
                 // Issue 429: `run_analyze` reads the flag before every table, and a
                 // stopped run still drops `organizations` statistics and refreshes
                 // the readers.
@@ -14790,6 +14877,65 @@ mod tests {
         let msg = sup.run_spec(&job(2)).await.expect("stopped census");
         assert!(msg.contains("STOPPED by cancel") && msg.contains("no report stored"), "{msg}");
         let (body, _) = db.latest_report(PROCEDURE_KEY_CENSUS_REPORT).await.unwrap().expect("report");
+        assert_eq!(body, "{\"marker\":1}", "a stopped census stores nothing");
+    }
+
+    /// Issue 483: the job wiring around `ingest::project::role_census`. It enqueues with
+    /// the default stride (read-only, no flag), honours an explicit one, runs through
+    /// `run_spec`'s dispatch, stores its report with every class, and a cancelled run
+    /// stores none.
+    #[tokio::test]
+    async fn the_buyer_role_census_job_stores_its_report_and_a_stop_stores_none() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        sup.enqueue_request(&JobRequest { kind: "buyer-role-census".into(), ..Default::default() }).await.unwrap();
+        sup.enqueue_request(&JobRequest { kind: "buyer-role-census".into(), stride: Some(0), ..Default::default() })
+            .await
+            .unwrap();
+        {
+            let queue = sup.queue.lock().expect("queue lock");
+            let default = ingest::project::role_census::ROLE_CENSUS_DEFAULT_STRIDE;
+            assert!(matches!(queue[0].spec, Spec::BuyerRoleCensus { stride } if stride == default));
+            assert_eq!(queue[0].params, format!("buyer-role-census stride {default}"));
+            assert!(matches!(queue[1].spec, Spec::BuyerRoleCensus { stride: 1 }), "a zero stride reads as 1");
+        }
+        let job = |id: u64| Job {
+            id,
+            kind: "buyer-role-census".into(),
+            params: String::new(),
+            spec: Spec::BuyerRoleCensus { stride: 1 },
+            resume_after: None,
+        };
+        let msg = sup.run_spec(&job(1)).await.expect("census");
+        assert!(msg.starts_with("buyer-role-census (issue 483): 0 notices read"), "{msg}");
+        let (body, _) = db.latest_report(BUYER_ROLE_CENSUS_REPORT).await.unwrap().expect("report");
+        for (class, _) in ingest::project::role_census::ROLE_CENSUS_CLASSES {
+            assert!(body.contains(&format!("\"{class}\"")), "{class}: {body}");
+        }
+        // A cancelled run: a parsed notice exists, so the walk has a window to refuse.
+        let fetch_id = seed_fetch(&db).await;
+        db.record_notice(
+            &store::Notice {
+                source: "ted".into(),
+                publication_id: "00000001-2024".into(),
+                content_hash: "h".into(),
+                profile: "eforms:eforms-sdk-1.13".into(),
+                declared_version: None,
+                fetch_id,
+                member_path: "m".into(),
+                ingested_at: 0,
+                published_at: Some(store::Stamp::utc(0)),
+                dispatched_at: None,
+            },
+            &store::Parse::Parsed(store::Parsed::default()),
+        )
+        .await
+        .unwrap();
+        db.put_report(BUYER_ROLE_CENSUS_REPORT, "{\"marker\":1}", store::now_unix()).await.unwrap();
+        sup.cancel_running.store(2, Ordering::Relaxed);
+        let msg = sup.run_spec(&job(2)).await.expect("stopped census");
+        assert!(msg.contains("STOPPED by cancel") && msg.contains("no report stored"), "{msg}");
+        let (body, _) = db.latest_report(BUYER_ROLE_CENSUS_REPORT).await.unwrap().expect("report");
         assert_eq!(body, "{\"marker\":1}", "a stopped census stores nothing");
     }
 
@@ -16756,6 +16902,7 @@ mod tests {
         );
         gauge("run_backfill_tender_links", std::mem::size_of_val(&sup.run_backfill_tender_links(&j, true)), 1_024);
         gauge("run_procedure_key_census", std::mem::size_of_val(&sup.run_procedure_key_census(&j)), 1_024);
+        gauge("run_buyer_role_census", std::mem::size_of_val(&sup.run_buyer_role_census(&j, 1)), 1_024);
         gauge("run_requeue_uuid_hubs", std::mem::size_of_val(&sup.run_requeue_uuid_hubs(true)), 1_024);
         gauge("run_analyze", std::mem::size_of_val(&sup.run_analyze(&j)), 512);
         gauge("run_repair_member_twins", std::mem::size_of_val(&sup.run_repair_member_twins(&j, true)), 1_024);
@@ -16848,6 +16995,7 @@ mod tests {
         });
         poll_once_within("run_backfill_tender_links", 144 * 1024, || sup.run_backfill_tender_links(&j, true));
         poll_once_within("run_procedure_key_census", 144 * 1024, || sup.run_procedure_key_census(&j));
+        poll_once_within("run_buyer_role_census", 144 * 1024, || sup.run_buyer_role_census(&j, 1));
         poll_once_within("run_requeue_uuid_hubs", 144 * 1024, || sup.run_requeue_uuid_hubs(true));
         poll_once_within("run_analyze", 330 * 1024, || sup.run_analyze(&j));
         assert!(

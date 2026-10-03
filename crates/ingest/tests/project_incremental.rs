@@ -3310,3 +3310,102 @@ async fn tenders_of(db: &Db, pub_ids: &[&str]) -> std::collections::BTreeSet<i64
     }
     out
 }
+
+/// Issue 483 unit 1: the buyer-role census over a recorded, folded corpus — the 482
+/// read's shapes as notices:
+/// - **16698**: the contractor alone in the buyer slot (one Organization referenced as
+///   buyer and tenderer): `contractor-org`, no clean buyer left;
+/// - **its twin with the real buyer beside it** (the contractor tenders in lot 2 — the
+///   decided case): `contractor-org`, but a clean buyer is left;
+/// - **533381**: the Tribunal Català de Contractes as the only buyer: `review-body-name`;
+/// - **a real buyer naming itself as review body**: `review-body-role` only, clean;
+/// - **a notice naming no buyer**: read, never counted under a class.
+///
+/// The walk gives one report in windows of 1 id and of 1,000; a stride of 2 reads every
+/// other window; a stop ends the walk with `stopped`.
+#[tokio::test]
+async fn the_buyer_role_census_flags_contractors_and_review_bodies_in_the_buyer_slot() {
+    use ingest::project::role_census;
+    const BUYER: &str = "OPT-300-Procedure-Buyer";
+    let reference = |parsed: &mut Parsed, role: &str, section: &str| {
+        parsed.values.push(ValueRow {
+            section_id: "PROC".into(),
+            field_id: role.into(),
+            ordinal: 9,
+            value: NoticeValue::Id { scheme: None, value: section.into(), is_ref: true },
+        });
+    };
+    let base = |subtype: &str| Parsed {
+        sections: vec![sec("PROC", "Procedure", None)],
+        values: vec![ValueRow {
+            section_id: "PROC".into(),
+            field_id: "OPP-070-notice".into(),
+            ordinal: 0,
+            value: NoticeValue::Code { list: None, code: subtype.into() },
+        }],
+    };
+    let (db, fetch, path) = scratch("role-census").await;
+    let mut alone = base("29");
+    org(&mut alone, "ORG-1", "Ratio Web Spółka z ograniczoną odpowiedzialnością", "PL5252448481", BUYER, 0);
+    reference(&mut alone, "OPT-300-Tenderer", "ORG-1");
+    record(&db, fetch, "00016698-2024", alone).await;
+    let mut beside = base("29");
+    org(&mut beside, "ORG-1", "Instytut Adama Mickiewicza", "PL5251673418", BUYER, 0);
+    org(&mut beside, "ORG-2", "Ratio Web Sp. z o.o.", "PL5252448481", BUYER, 1);
+    reference(&mut beside, "OPT-300-Tenderer", "ORG-2");
+    record(&db, fetch, "00016699-2024", beside).await;
+    let mut court = base("29");
+    org(&mut court, "ORG-1", "Tribunal Català de Contractes del Sector Públic", "ESS0811001G", BUYER, 0);
+    record(&db, fetch, "00533381-2024", court).await;
+    let mut olkusz = base("16");
+    org(&mut olkusz, "ORG-1", "Gmina Olkusz", "PL6371011234", BUYER, 0);
+    reference(&mut olkusz, "OPT-301-Lot-ReviewOrg", "ORG-1");
+    record(&db, fetch, "00100000-2024", olkusz).await;
+    record(&db, fetch, "00100001-2024", base("16")).await;
+    project::project(&db, false).await.expect("fold");
+
+    let never = || false;
+    let r = role_census::buyer_role_census_windowed(&db, 1_000, 1_000, 1, &never, |_| {}).await.expect("census");
+    assert!(!r.stopped);
+    assert_eq!((r.notices, r.notices_with_buyers, r.buyer_mentions), (5, 4, 5));
+    assert_eq!((r.flagged_notices, r.decisively_flagged_notices, r.no_clean_buyer), (4, 3, 2));
+    let class = |c: &str| {
+        let t = &r.classes[c];
+        (t.mentions, t.notices, t.no_clean_buyer, t.every_buyer)
+    };
+    assert_eq!(class("contractor-org"), (2, 2, 1, 1));
+    assert_eq!(class("review-body-name"), (1, 1, 1, 1));
+    assert_eq!(class("review-body-role"), (1, 1, 0, 1));
+    assert_eq!(class("contractor-name"), (0, 0, 0, 0));
+    assert_eq!(r.read.get("ted/29"), Some(&3));
+    assert_eq!(r.read.get("ted/16"), Some(&2));
+    assert_eq!(r.cells.get("ted/29/no-clean-buyer"), Some(&2));
+    assert_eq!(r.cells.get("ted/29/contractor-org"), Some(&2));
+    assert_eq!(r.cells.get("ted/16/review-body-role"), Some(&1));
+    let samples = &r.classes["contractor-org"].samples;
+    let beside = samples.iter().find(|s| s.publication == "ted:00016699-2024").expect("the twin's sample");
+    assert_eq!(beside.flagged, "Ratio Web Sp. z o.o.");
+    assert_eq!(beside.other_buyers, vec!["Instytut Adama Mickiewicza"]);
+    assert!(beside.clean_buyer_left);
+    let alone = samples.iter().find(|s| s.publication == "ted:00016698-2024").expect("16698's sample");
+    assert!(!alone.clean_buyer_left && alone.other_buyers.is_empty());
+    assert_eq!(r.classes["review-body-name"].samples[0].basis, vec!["review-body-name: ES Tribunal Catalán"]);
+
+    // Windows of one id read the same notices.
+    let narrow = role_census::buyer_role_census_windowed(&db, 1, 1, 1, &never, |_| {}).await.expect("narrow");
+    assert_eq!((narrow.notices, narrow.no_clean_buyer, narrow.cells.clone()), (r.notices, r.no_clean_buyer, r.cells.clone()));
+    assert_eq!(narrow.windows_read, narrow.windows);
+    // A stride of 2 reads every other one-id window.
+    let sampled = role_census::buyer_role_census_windowed(&db, 1, 1, 2, &never, |_| {}).await.expect("sampled");
+    assert_eq!((sampled.stride, sampled.windows_read), (2, sampled.windows.div_ceil(2)));
+    assert!(sampled.notices < r.notices && sampled.notices > 0, "{}", sampled.notices);
+    // A stop after the first window.
+    let polls = std::sync::atomic::AtomicU32::new(0);
+    let second = || polls.fetch_add(1, std::sync::atomic::Ordering::Relaxed) >= 1;
+    let partial = role_census::buyer_role_census_windowed(&db, 1, 1, 1, &second, |_| {}).await.expect("stopped");
+    assert!(partial.stopped);
+    assert!(partial.notices <= 1);
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
