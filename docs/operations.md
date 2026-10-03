@@ -913,8 +913,10 @@ the gate's own count: the fold job row's `uuid hubs refused` and the journal's `
 Award notices sometimes name the contractor, a review body or a platform vendor in the buyer role
 (`Procedure-Buyer`, legacy and sdk-0.1 `buyer`). Every buyer-based guard trusts that role (481's link
 guard, 482's hub gate, 369's key election), and the served `parties[]` names it. The 482 two-cluster
-read found it in 16 of 45 false splits (16698: the contractor Ratio Web as the only buyer; 533381:
-the Tribunal Català de Contractes; 198229: European Dynamics). This census sizes it before a fix is
+read found it in 16 of 45 false splits (16698: buyer and tenderer SWAPPED — the contractor Ratio Web
+Sp. z o.o. as buyer and signatory, the real buyer Instytut Adama Mickiewicza as tenderer; 533381: the
+Tribunal Català de Contractes; 438807: the UZP appeals department, with the real buyer POLREGIO only
+receiving tenders and paying; 198229: European Dynamics). This census sizes it before a fix is
 chosen: demote the role at projection, or only ignore it in the guards.
 
 ```sh
@@ -924,8 +926,10 @@ chosen: demote the role at projection, or only ignore it in the guards.
 # Source × subtype × class, with the denominators:
 /root/aj.sh /admin/reports/buyer-role-census | jq -r .body | jq -r '.cells | to_entries | sort_by(-.value)[:60][] | "\(.value)\t\(.key)"'
 /root/aj.sh /admin/reports/buyer-role-census | jq -r .body | jq -r '.read | to_entries | sort_by(-.value)[:40][] | "\(.value)\t\(.key)"'
+# Procedure type (BT-105) × class, and which name-list entries dominate:
+/root/aj.sh /admin/reports/buyer-role-census | jq -r .body | jq -r '.procedures, .patterns | to_entries | sort_by(-.value)[:40][] | "\(.value)\t\(.key)"'
 # The samples of one class: publication, flagged name, why, the notice's other buyers.
-/root/aj.sh /admin/reports/buyer-role-census | jq -r .body | jq -r '.classes["contractor-org"].samples[] | "\(.publication) \(.subtype) \(.flagged)  <\(.basis|join("; "))>  clean_left=\(.clean_buyer_left)  others: \(.other_buyers|join(" | "))"'
+/root/aj.sh /admin/reports/buyer-role-census | jq -r .body | jq -r '.classes["buyer-tenderer-swap"].samples[] | "\(.publication) \(.subtype) \(.procedure_type) \(.flagged)  <\(.basis|join("; "))>  clean_left=\(.clean_buyer_left)  others: \(.other_buyers|join(" | "))"'
 ```
 
 **Read-only** (no dry flag; it writes nothing but its report), stoppable between windows and between
@@ -943,12 +947,19 @@ Each buyer mention gets every class that applies (`basis` says what each matched
 
 | class | when | decisive |
 |---|---|---|
-| `contractor-org` | its resolved organization, or its own section, is also a winner, tenderer, main or subcontractor on the notice, in ANY lot | yes |
+| `contractor-same-section` | its own Organization is also referenced as a winner, tenderer, main or subcontractor on the notice, in ANY lot | yes |
+| `contractor-org-same-name` | another section with the same resolved organization AND the same folded name is such a party | yes |
+| `contractor-org-other-name` | the same resolved organization under a DIFFERENT name is such a party (a resolver fusion — shared switchboard ids, the PL823 stub, bare DE ids — or an in-house award to an Eigenbetrieb sharing its authority's id) | no |
 | `contractor-name` | no organization match, but its folded name equals such a party's | yes |
-| `review-body-name` | its name is a known review body (`NAME_PATTERNS` in `role_census.rs`: KIO, Vergabekammer, ÚOHS, Förvaltningsrätten, Tribunal Català, TACRC, TAR, tribunal administratif, …) | yes |
-| `review-body-role` | the notice's own review-body role (eForms `Lot-ReviewOrg` / `ReviewOrg`; legacy `ADDRESS_REVIEW_BODY`, `APPEAL_PROCEDURE_BODY_RESPONSIBLE`, `RESPONSIBLE_FOR_APPEAL_PROCEDURES`, never `ADDRESS_REVIEW_INFO`) names the same organization or name | no |
+| `buyer-tenderer-swap` | the roles swapped (16698, 299165): the buyer carries a commercial legal form (`COMMERCIAL_FORMS`: sp. z o.o., S.A., GmbH, s.r.o., …) and is not public-shaped, while a tenderer that is not itself a buyer is public-shaped (`PUBLIC_STEMS`: instytut, uniwersyte…, gmina, stadt, ministry, …) with no commercial form | yes |
+| `swap-legal-form` | the weak half: a commercial buyer and a tenderer with no commercial form that is not public-shaped either (a person, an association, an unsuffixed name) | no |
+| `real-buyer-elsewhere` | it holds no buyer-shaped role (tender receipt / evaluation, additional information, paying, financing, signatory, documents provider; legacy `tender-receipt`, `further-information`, `specifications-provider`) while another organization, neither buyer nor contractor, does (438807). Its `basis` names that organization: the buyer a demote could recover | no |
+| `review-body-name` | its name is a known review body (`NAME_PATTERNS` in `role_census.rs`: KIO, UZP Departament Odwołań, Vergabekammer, ÚOHS, Förvaltningsrätten, Tribunal Català, TACRC, TAR, tribunal administratif, …) AND the notice agrees: the same organization holds a review or review-adjacent role, another buyer mention is not a review-body name, or `real-buyer-elsewhere` holds | yes |
+| `review-body-name-alone` | the name alone: a court or ÚOHS buying in its own name looks exactly like this | no |
+| `review-body-role` | the notice's own review-body role (eForms `Lot-ReviewOrg`, `Part-ReviewOrg`, `ReviewBody`; legacy `ADDRESS_REVIEW_BODY`, `APPEAL_PROCEDURE_BODY_RESPONSIBLE`, `RESPONSIBLE_FOR_APPEAL_PROCEDURES`) names the same organization or name | no |
+| `review-info-role` | it is the appeals-information body or mediator (eForms `Lot-`/`Part-ReviewInfo`, `Lot-`/`Part-Mediator`; legacy `ADDRESS_REVIEW_INFO`, `mediation-body`, `appeal-information`) | no |
 | `esender` | it is the notice's eSender / procurement service provider (`Procedure-SProvider`) | yes |
-| `docs-provider` | it is the documents provider (`Lot-DocProvider`, legacy `specifications-provider`) | no |
+| `docs-provider` | it is the documents provider (`Lot-`/`Part-DocProvider`, legacy `specifications-provider`) | no |
 | `platform-name` | its name is a known platform vendor (European Dynamics, EU-Supply, Mercell, Vortal, cosinex, subreport, DTVP) | yes |
 
 A buyer mention is **clean** when no decisive class flags it. **`no_clean_buyer`** counts notices
@@ -956,23 +967,35 @@ naming buyers of which none is clean: the notice's only buyer is wrong, and demo
 leave it buyerless. Per class: `mentions`, `notices`, `no_clean_buyer` (of its notices) and
 `every_buyer` (its notices whose every buyer mention carries this class, the measure for a
 non-decisive class), plus 30 samples (bottom-30 by a hash of the notice id, the same whatever the
-stride or window). `read` counts notices read per `source/subtype` (`legacy` for the legacy TED
-profiles, `-` for none), the denominators of `cells` (`source/subtype/class` and
-`source/subtype/no-clean-buyer`).
+stride or window; each with its BT-105 `procedure_type`). `read` counts notices read per
+`source/subtype` (`legacy` for the legacy TED profiles, `-` for none), the denominators of `cells`
+(`source/subtype/class` and `source/subtype/no-clean-buyer`). `procedures` counts notices per
+`procedure type/class` (in-house and negotiated-without-call awards as their own cells), `patterns`
+per `class/list label` for the name-list classes (which entries dominate, e.g. a short token like
+`kio`, `tar` or `kofa` matching real buyers).
 
 Decisions in the classes:
-- **A buyer that tenders in another lot is still flagged.** A procedure's buyer is never its own
-  supplier, so a buyer that is a tenderer in lot 2 is still the contractor in the buyer slot. The
-  shape where the notice ALSO names its real buyer (16698's twin: Instytut Adama Mickiewicza beside
-  Ratio Web) is told apart by `clean_buyer_left` and `no_clean_buyer`, not by dropping the flag.
-- **The review-body role and the documents provider are not decisive.** A buyer writing its own
-  name into the review-body block (common in UK and IE notices) mis-tags THAT role, not the buyer
-  slot, and a buyer handing out its own documents is the normal case. Both are counted and sampled
-  to size them, but only the name list says the buyer slot holds a court.
+- **A buyer that tenders in another lot is still flagged** (`contractor-same-section`). A
+  procedure's buyer is never its own supplier. The shape where the notice ALSO names its real buyer
+  (a synthetic fixture: a real buyer beside a buyer that tenders in lot 2) is told apart by
+  `clean_buyer_left` and `no_clean_buyer`, not by dropping the flag.
+- **The swap is read from legal forms**, because in 16698 and 299165 neither organization holds
+  both roles, so no contractor class sees it. Decisive only when both halves agree (company buyer,
+  public tenderer); a public research institute bidding to a state-owned S.A. would be a false hit,
+  and the samples show how often.
+- **A review-body name is decisive only when corroborated.** ÚOHS, the Raad van State, the Conseil
+  d'État and courts all publish their own tenders. CZ: ÚOHS is also the review body of its own
+  procurements, so its own tender corroborates itself through its review role; read
+  `patterns["review-body-name/CZ ÚOHS"]`'s samples before acting on that entry.
+- **The review-body role, review information and the documents provider are not decisive.** A
+  buyer writing its own name into those blocks (common in UK and IE notices) is the normal case or a
+  mis-tag of THAT role. Counted and sampled to size them.
 - **Left out of the name lists:** `Commissione` (the European Commission buys), the Polish Urząd
-  Zamówień Publicznych (it runs e-Zamówienia and also buys for itself; the `esender` class catches
-  it where it was the platform). A list entry is data: a row in `NAME_PATTERNS`, written in its
-  folded form (a test holds each to its own fold), matched as whole words.
+  Zamówień Publicznych as a whole (it also buys for itself; its `Departament Odwołań` is listed). A
+  list entry is data: a row in `NAME_PATTERNS`, written in its folded form (a test holds each to its
+  own fold), matched as whole words.
+- **Not yet read** (issue 483, deferred): whether a contractor is the winner or a losing tenderer;
+  whether the tenderer of a swap is a buyer on other notices (needs an org-level role index).
 
 **Expected cost.** About 3 ms a notice for the parse and the mention read (issue 482's measure on
 `parsed_by_ids`; the census reads contiguous windows, which should cost less). So stride 10 parses a
@@ -980,10 +1003,13 @@ tenth of the corpus in a few hours, and stride 1 takes the better part of a day.
 but it DOES hold the single job worker for its whole run, so queue it right after a daily. It keeps no
 checkpoint: a restart re-runs it from notice id 0. Read the job row's duration for the real figure.
 
-**What to decide from it.** A large `no_clean_buyer` (the notice's only buyer is wrong) says demote
-at projection only where the real buyer can be recovered, and otherwise make the guards ignore the
-flagged role. A `contractor-*` mass concentrated in a few Sources × subtypes (award notices from one
-publisher) points at a parser fix for that publisher. Read 30 samples per class on the portals first.
+**What to decide from it.** Read `no_clean_buyer` with the swap and `real-buyer-elsewhere` classes
+in view: before they existed the census could not see 16698's shape at all, and a small number would
+have read as "demote is safe". A large `no_clean_buyer` (the notice's only buyer is wrong) says demote
+at projection only where the real buyer can be recovered (`real-buyer-elsewhere`'s basis, the swap's
+tenderer), and otherwise make the guards ignore the flagged role. A `contractor-*` or swap mass
+concentrated in a few Sources × subtypes (award notices from one publisher) points at a parser fix for
+that publisher. Read 30 samples per class on the portals first.
 
 ### Reading a `process` job's `[process]` lines (issue 407)
 

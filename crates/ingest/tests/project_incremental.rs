@@ -3312,12 +3312,16 @@ async fn tenders_of(db: &Db, pub_ids: &[&str]) -> std::collections::BTreeSet<i64
 }
 
 /// Issue 483 unit 1: the buyer-role census over a recorded, folded corpus — the 482
-/// read's shapes as notices:
-/// - **16698**: the contractor alone in the buyer slot (one Organization referenced as
-///   buyer and tenderer): `contractor-org`, no clean buyer left;
-/// - **its twin with the real buyer beside it** (the contractor tenders in lot 2 — the
-///   decided case): `contractor-org`, but a clean buyer is left;
-/// - **533381**: the Tribunal Català de Contractes as the only buyer: `review-body-name`;
+/// read's shapes as notices (16698 and 438807 as `/v1/tenders/<id>` shows them):
+/// - **16698**: the roles swapped — Ratio Web Sp. z o.o. as buyer and signatory, the
+///   Instytut Adama Mickiewicza as tenderer: `buyer-tenderer-swap`, no clean buyer left;
+/// - **a buyer tendering in another lot beside a real buyer** (synthetic — the decided
+///   case): `contractor-same-section`, but a clean buyer is left;
+/// - **533381**: the Tribunal Català de Contractes as the only buyer, and the notice's
+///   review body: `review-body-name` (corroborated) and `review-body-role`;
+/// - **438807**: the UZP appeals department as buyer, mediator and appeals information,
+///   the real buyer POLREGIO only receiving tenders and paying: `real-buyer-elsewhere`,
+///   `review-body-name`, `review-info-role`;
 /// - **a real buyer naming itself as review body**: `review-body-role` only, clean;
 /// - **a notice naming no buyer**: read, never counted under a class.
 ///
@@ -3347,7 +3351,8 @@ async fn the_buyer_role_census_flags_contractors_and_review_bodies_in_the_buyer_
     let (db, fetch, path) = scratch("role-census").await;
     let mut alone = base("29");
     org(&mut alone, "ORG-1", "Ratio Web Spółka z ograniczoną odpowiedzialnością", "PL5252448481", BUYER, 0);
-    reference(&mut alone, "OPT-300-Tenderer", "ORG-1");
+    reference(&mut alone, "OPT-300-Contract-Signatory", "ORG-1");
+    org(&mut alone, "ORG-2", "Instytut Adama Mickiewicza", "PL5251673418", "OPT-300-Tenderer", 0);
     record(&db, fetch, "00016698-2024", alone).await;
     let mut beside = base("29");
     org(&mut beside, "ORG-1", "Instytut Adama Mickiewicza", "PL5251673418", BUYER, 0);
@@ -3356,7 +3361,15 @@ async fn the_buyer_role_census_flags_contractors_and_review_bodies_in_the_buyer_
     record(&db, fetch, "00016699-2024", beside).await;
     let mut court = base("29");
     org(&mut court, "ORG-1", "Tribunal Català de Contractes del Sector Públic", "ESS0811001G", BUYER, 0);
+    reference(&mut court, "OPT-301-Lot-ReviewOrg", "ORG-1");
     record(&db, fetch, "00533381-2024", court).await;
+    let mut uzp = base("29");
+    org(&mut uzp, "ORG-1", "Urząd Zamówień Publicznych Departament Odwołań", "PL5262207405", BUYER, 0);
+    reference(&mut uzp, "OPT-301-Lot-Mediator", "ORG-1");
+    reference(&mut uzp, "OPT-301-Lot-ReviewInfo", "ORG-1");
+    org(&mut uzp, "ORG-2", "POLREGIO S.A ul. Kolejowa 1 , 01-217 Warszawa", "PL5262206990", "OPT-301-Lot-TenderReceipt", 0);
+    reference(&mut uzp, "OPT-301-LotResult-Paying", "ORG-2");
+    record(&db, fetch, "00438807-2024", uzp).await;
     let mut olkusz = base("16");
     org(&mut olkusz, "ORG-1", "Gmina Olkusz", "PL6371011234", BUYER, 0);
     reference(&mut olkusz, "OPT-301-Lot-ReviewOrg", "ORG-1");
@@ -3367,29 +3380,42 @@ async fn the_buyer_role_census_flags_contractors_and_review_bodies_in_the_buyer_
     let never = || false;
     let r = role_census::buyer_role_census_windowed(&db, 1_000, 1_000, 1, &never, |_| {}).await.expect("census");
     assert!(!r.stopped);
-    assert_eq!((r.notices, r.notices_with_buyers, r.buyer_mentions), (5, 4, 5));
-    assert_eq!((r.flagged_notices, r.decisively_flagged_notices, r.no_clean_buyer), (4, 3, 2));
+    assert_eq!((r.notices, r.notices_with_buyers, r.buyer_mentions), (6, 5, 6));
+    assert_eq!((r.flagged_notices, r.decisively_flagged_notices, r.no_clean_buyer), (5, 4, 3));
     let class = |c: &str| {
         let t = &r.classes[c];
         (t.mentions, t.notices, t.no_clean_buyer, t.every_buyer)
     };
-    assert_eq!(class("contractor-org"), (2, 2, 1, 1));
-    assert_eq!(class("review-body-name"), (1, 1, 1, 1));
-    assert_eq!(class("review-body-role"), (1, 1, 0, 1));
+    assert_eq!(class("buyer-tenderer-swap"), (1, 1, 1, 1));
+    assert_eq!(class("contractor-same-section"), (1, 1, 0, 0));
+    assert_eq!(class("review-body-name"), (2, 2, 2, 2));
+    assert_eq!(class("review-body-role"), (2, 2, 1, 2));
+    assert_eq!(class("review-info-role"), (1, 1, 1, 1));
+    assert_eq!(class("real-buyer-elsewhere"), (1, 1, 1, 1));
     assert_eq!(class("contractor-name"), (0, 0, 0, 0));
-    assert_eq!(r.read.get("ted/29"), Some(&3));
+    assert_eq!(class("review-body-name-alone"), (0, 0, 0, 0));
+    assert_eq!(r.read.get("ted/29"), Some(&4));
     assert_eq!(r.read.get("ted/16"), Some(&2));
-    assert_eq!(r.cells.get("ted/29/no-clean-buyer"), Some(&2));
-    assert_eq!(r.cells.get("ted/29/contractor-org"), Some(&2));
+    assert_eq!(r.cells.get("ted/29/no-clean-buyer"), Some(&3));
+    assert_eq!(r.cells.get("ted/29/buyer-tenderer-swap"), Some(&1));
     assert_eq!(r.cells.get("ted/16/review-body-role"), Some(&1));
-    let samples = &r.classes["contractor-org"].samples;
-    let beside = samples.iter().find(|s| s.publication == "ted:00016699-2024").expect("the twin's sample");
+    assert_eq!(r.patterns.get("review-body-name/PL UZP Departament Odwołań"), Some(&1));
+    assert_eq!(r.patterns.get("review-body-name/ES Tribunal Catalán"), Some(&1));
+    let swap = &r.classes["buyer-tenderer-swap"].samples;
+    assert_eq!(swap[0].publication, "ted:00016698-2024");
+    assert_eq!(swap[0].basis, vec!["buyer-tenderer-swap: tenderer Instytut Adama Mickiewicza"]);
+    assert!(!swap[0].clean_buyer_left && swap[0].other_buyers.is_empty());
+    let beside = &r.classes["contractor-same-section"].samples[0];
+    assert_eq!(beside.publication, "ted:00016699-2024");
     assert_eq!(beside.flagged, "Ratio Web Sp. z o.o.");
     assert_eq!(beside.other_buyers, vec!["Instytut Adama Mickiewicza"]);
     assert!(beside.clean_buyer_left);
-    let alone = samples.iter().find(|s| s.publication == "ted:00016698-2024").expect("16698's sample");
-    assert!(!alone.clean_buyer_left && alone.other_buyers.is_empty());
-    assert_eq!(r.classes["review-body-name"].samples[0].basis, vec!["review-body-name: ES Tribunal Catalán"]);
+    let elsewhere = &r.classes["real-buyer-elsewhere"].samples[0];
+    assert!(elsewhere.basis[0].starts_with("real-buyer-elsewhere: POLREGIO S.A"), "{:?}", elsewhere.basis);
+    assert_eq!(
+        r.classes["review-body-name"].samples[0].basis[0],
+        "review-body-name: ES Tribunal Catalán; its review role"
+    );
 
     // Windows of one id read the same notices.
     let narrow = role_census::buyer_role_census_windowed(&db, 1, 1, 1, &never, |_| {}).await.expect("narrow");

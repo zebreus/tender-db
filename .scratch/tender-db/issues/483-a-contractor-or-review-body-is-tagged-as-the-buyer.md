@@ -1,6 +1,6 @@
 # 483 — a contractor, review body or platform vendor sits in the buyer slot, and every buyer-based guard trusts it
 
-Status: ready-for-agent — NEXT: deploy unit 1 (`buyer-role-census`, landed 2026-10-03, below) → run the census
+Status: ready-for-agent — NEXT: deploy unit 1 (`buyer-role-census`, landed 2026-10-03 with its review fixes, below) → run the census
 (stride 10 first) → read 30 samples per class → choose the fix: demote the role at projection, or guard-only (the
 481/482 guards ignore a flagged buyer mention).
 Kind: data correctness (parties)
@@ -13,15 +13,17 @@ Award notices sometimes put the contractor, a review body or a platform vendor i
 the 482 read (`.scratch/tender-db/issues/482-*.md`, the 2026-10-03 two-cluster section):
 
 - **The winner tagged as `Procedure-Buyer`:**
-  - 16698: the CAN tags Ratio Web Sp. z o.o.; the real buyer is Instytut Adama Mickiewicza.
-  - 299165: Naprzód Catering.
+  - 16698: the roles are SWAPPED. The CAN tags Ratio Web Sp. z o.o. as `Procedure-Buyer` and
+    `Contract-Signatory`, and the real buyer Instytut Adama Mickiewicza as `Tenderer` (read live 2026-10-03).
+  - 299165: the same swap (ISS HS Sp. z o.o. as buyer, Uniwersyteckie Centrum Kliniczne WUM as tenderer).
   - 439076: DOL-TRANS-TOUR.
 - **A review body tagged as buyer:**
   - 533381: the Tribunal Catalán de Contratos.
   - 159306: ÚOHS.
   - Also KIO, a Vergabekammer and Förvaltningsrätten.
 - **The procurement office or platform tagged as buyer:**
-  - 438807: Urząd Zamówień Publicznych.
+  - 438807: Urząd Zamówień Publicznych Departament Odwołań (also its `Lot-Mediator` and `Lot-ReviewInfo`); the
+    real buyer POLREGIO S.A. holds only `Lot-AddInfo`, `Lot-TenderReceipt`, `LotResult-Financing`/`-Paying`.
   - 198229: European Dynamics.
 
 The consequences:
@@ -72,7 +74,7 @@ the new `Db::parsed_window`), stoppable between windows and chunks, no report st
 - **Report:** `no_clean_buyer` (notices whose only buyers are all decisively flagged), per class
   `mentions`/`notices`/`no_clean_buyer`/`every_buyer` + 30 bottom-k samples (publication, subtype, flagged name, basis,
   other buyers with their flags), `read` per `source/subtype` and `cells` per `source/subtype/class`.
-- Tests: the 482 shapes as unit tests (16698 same-section, 299165 two sections one org, DOL-TRANS-TOUR by name, six
+- Tests (as first landed; superseded by the review fixes below): the 482 shapes as unit tests (16698 same-section, 299165 two sections one org, DOL-TRANS-TOUR by name, six
   review bodies by name, European Dynamics as eSender, Gmina Olkusz as its own review body stays clean), a folded-corpus
   walk in `project_incremental.rs` (window 1 = window 1,000, stride 2, stop), and the supervisor wiring (default
   stride, stop stores nothing, issue-467 stack/poll budgets).
@@ -81,4 +83,46 @@ the new `Db::parsed_window`), stoppable between windows and chunks, no report st
 usually beside the flagged one), demoting the flagged mention at projection is safe and fixes the served `parties[]`.
 If most flagged notices have no clean buyer left, demoting leaves them buyerless: make the guards ignore the flagged
 mention (unknown, never decisive) and leave the served role, or recover the buyer from another notice of the procedure.
+
+## Unit 1 review fixes — 2026-10-03 (not yet deployed)
+
+An adversarial review of `9c2d2c7` found the census blind to the main shape in the 482 evidence. Verified live
+(`/v1/tenders/16698`, `/438807`, `/299165`, `/159306`, `/533381`; 5 public reads) and fixed:
+- **Blocker — the swap.** 16698 is not "the contractor is also a tenderer": Ratio Web is buyer + signatory and the
+  Instytut Adama Mickiewicza is the tenderer; 299165 likewise. No contractor class could fire, so the census would
+  have measured the class near zero on the notices that motivated it. New decisive class `buyer-tenderer-swap`
+  (commercial legal form on the buyer, `COMMERCIAL_FORMS`; a public-shaped tenderer with no commercial form,
+  `PUBLIC_STEMS`; a public-shaped buyer such as a municipal company is excluded) and its weak half
+  `swap-legal-form` (non-decisive). Fixtures rebuilt from the real role layout; the old same-section shape is kept
+  as the synthetic other-lot case.
+- **Major — 438807.** New non-decisive `real-buyer-elsewhere` (the buyer holds no buyer-shaped role —
+  TenderReceipt/TenderEval/AddInfo/Paying/Financing/Signatory/DocProvider — while a non-buyer, non-contractor does;
+  the basis names the recoverable buyer) and `review-info-role` (ReviewInfo/Mediator, legacy
+  `ADDRESS_REVIEW_INFO` — now read, not dropped). `departament odwolan` added. Role rows fixed: `ReviewOrg` (no
+  such role) dropped; `Part-ReviewOrg`, `ReviewBody`, `Part-DocProvider`, the Part-/Lot- ReviewInfo/Mediator and
+  the buyer-shaped roles added; a test holds every eForms row to `sdk/fields-*.json`.
+- **Major — review-body names.** `review-body-name` is decisive only when corroborated (a review(-adjacent) role on
+  the same organization, another non-review buyer, or `real-buyer-elsewhere`); otherwise
+  `review-body-name-alone` (non-decisive). The report's `patterns` counts notices per class × list label.
+- **Major — resolver fusions.** `contractor-org` split into `contractor-same-section` and
+  `contractor-org-same-name` (decisive) and `contractor-org-other-name` (non-decisive: fusions, Eigenbetrieb
+  in-house awards). Samples carry BT-105 `procedure_type`; `procedures` counts procedure type × class.
+- **Minor — the poll budget never reached the chunk path.** A seeded poll now does: measured 420–430 KiB (the
+  store/turso chain, like `run_project`'s), budget 456 KiB. The cancelled tripwire poll stays at 144 KiB.
+- **Minor — docs.** operations.md's table, the 16698 description, the UZP note and "how to decide" corrected.
+
+**Deferred** (ready-for-agent, not blocking the stride-10 run):
+- Winner vs losing tenderer: `Tenderer` covers every tenderer; telling the winner needs the LotResult →
+  LotTender → TenderingParty graph. Worth it only if `contractor-*` turns out large.
+- The strongest swap signal — the tenderer's organization is a `Procedure-Buyer` on other notices — needs an
+  org-level role index the store does not keep; the legal-form heuristic stands in for it. Read the swap samples.
+- CZ ÚOHS is also the review body of its own procurements, so its own tenders corroborate themselves; read
+  `patterns["review-body-name/CZ ÚOHS"]` samples before acting on that entry.
+- No checkpoint/resume (`resume_after` ignored) and `parsed_window` reads every value table where only id-refs,
+  names and the subtype/procedure type are needed. Add a resume cursor or narrow the read before any stride-1 run;
+  stride 10 (~1 h at 2–3 ms/notice over ~235 windows) needs neither.
+
+**How to decide (amended).** `no_clean_buyer` only means something with the swap and `real-buyer-elsewhere` classes
+in view; read their samples first. The demote can recover a buyer from `real-buyer-elsewhere`'s basis or the swap's
+tenderer; where neither exists, guard-only.
 

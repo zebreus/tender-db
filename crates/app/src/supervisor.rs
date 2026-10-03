@@ -14931,6 +14931,16 @@ mod tests {
         )
         .await
         .unwrap();
+        // Issue 467's poll budget on the chunk path: with a parsed notice the walk reaches
+        // `parsed_window` and `census_chunk` (the stack tripwire's own poll runs cancelled,
+        // so it ends before the first window, inside 144 KiB). Like the store-reaching fns
+        // there, the budget is the whole chain into store and turso: measured 2026-10-03 in
+        // the gate's profile between 420 and 430 KiB (overflows at 420, passes at 430),
+        // plus ~24 KiB. Re-measure on a turso upgrade; don't just raise it.
+        let seeded = job(3);
+        poll_once_within("run_buyer_role_census over a parsed notice", 456 * 1024, || {
+            sup.run_buyer_role_census(&seeded, 1)
+        });
         db.put_report(BUYER_ROLE_CENSUS_REPORT, "{\"marker\":1}", store::now_unix()).await.unwrap();
         sup.cancel_running.store(2, Ordering::Relaxed);
         let msg = sup.run_spec(&job(2)).await.expect("stopped census");
