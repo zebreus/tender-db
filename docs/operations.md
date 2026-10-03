@@ -830,6 +830,63 @@ a whitespace-padded UUID is (the SQL pre-filter trims, as `is_uuid` does). Clust
 joined; the largest Tender in the sampled windows had 372 notices. Read the job row's duration for the real
 figure.
 
+The report also lists every Tender with 3 or more clusters (`hub_tenders_total`, `hub_tender_ids`
+ascending, at most 10,000): what the fold's UUID-hub gate (below) refuses, and what
+`requeue-uuid-hubs` re-queues. A report stored before issue 482 unit 2 has neither field.
+
+### The UUID-hub gate and `requeue-uuid-hubs` (issue 482 unit 2)
+
+The grouping (`Db::build_plan_groups`) refuses a **UUID** procedure key (a genuine `8-4-4-4-12` uuid,
+not placeholder-shaped: those are issue 369's) whose planned notices fall into **3 or more**
+buyer-disjoint clusters. Clusters are the census's: issue 481's buyer-guard token sets
+(`plan_notice.buyer_guard`) clustered transitively by `store::buyer_clusters` over
+`store::buyer_tokens_disjoint`. A notice naming no buyer joins no cluster and never counts. Two clusters are
+not acted on (the 2026-10-03 census read: their precision is unmeasured). Joint procurements and a
+central purchasing body's framework overlap, so they are one cluster and stay one Tender.
+
+A refused key behaves like 369's: it is in `plan_refused_key`, and each notice under it groups as
+`refused:<key>:<label>`. The label is the cluster's smallest `buyer_key`, or `#g<token>` when no
+notice in the cluster has one, so one buyer's notices (a DÖE/TED pair included) still fold together
+and a re-plan names the cluster the same. A buyerless notice becomes its own Tender
+`refused:<key>:#n<notice_id>` (369 makes it an `island:`; the key prefix lets the daily find it). A
+legacy notice with an OJS self number is left to the legacy closure, as in 369's arm. The
+fold job row says what it refused:
+`; issue-482 uuid hubs refused: K key(s), N notice(s) split into C buyer cluster(s)` (silent at
+zero). The journal logs `[project] group step uuid-hubs: …` on every grouping, including the zero.
+
+**The daily sees the whole key.** The incremental plan has to hold every notice under the key. A
+bare-key Tender is touched whole by its key. A refused key's Tenders are found by the key's `refused:`
+prefix (`Db::touched_existing_tender_ids`, a range seek on `tenders_procedure_key`). So are the keys an
+issue-481 link merged one of its groups into: `tender_key_merges` now records `refused:<key>:<label>`
+→ `<to_key>` rows, which it used to drop. A Tender of a refused key that the plan reaches some other way pulls in all of that key's
+Tenders too, through `ingest::project::refused_sibling_closure`, run after the link closure and to a
+fixpoint, with the link closure's cap and full fallback. Examples are a link to one cluster's notice
+from a new key, or a re-parse that moved a member to another key. This also closes the same hole for
+369's and 386's refused keys. Before
+it, a new notice under a refused key was planned alone, read as one buyer, and founded a bare-key Tender
+that a full fold would never make. When a key crosses the threshold on a daily, its old Tender is
+retired (`removed` events, no ghost) and one Tender is minted per cluster. Pinned by
+`a_uuid_hub_splits_per_buyer_cluster_on_full_and_daily_folds` (ingest, `project_incremental.rs`),
+which compares the full and daily folds step by step.
+
+**Existing hubs split only when a fold plans them.** A daily touches a hub only when a new notice
+arrives under its key. The ~150 hubs the 2026-10-03 census found (Tender 430681: 789 notices, 319
+Swiss buyers) are re-planned by re-queueing their notices:
+
+```sh
+/root/aj.sh /admin/jobs '{"kind":"procedure-key-census"}'            # ~2–3 h; stores hub_tender_ids
+/root/aj.sh /admin/reports/procedure-key-census | jq -r .body | jq '{hub_tenders_total, n: (.hub_tender_ids|length)}'
+/root/aj.sh /admin/jobs '{"kind":"requeue-uuid-hubs"}'                # dry (the default): counts
+/root/aj.sh /admin/jobs '{"kind":"requeue-uuid-hubs","dry_run":false}' # wet: projected = 0 on their notices
+# the next daily (incremental) fold re-plans them whole and splits them
+```
+
+`requeue-uuid-hubs` reads `hub_tender_ids` from the stored `procedure-key-census` report. It
+refuses when no report is stored, or when the report predates unit 2: re-run the census first. It
+re-queues every notice of those Tenders (`tender_versions` seeks, then issue 323's re-queue).
+That is a few thousand notices, a normal daily-sized plan. A full re-plan (`project` with
+`rebuild`) applies the gate too, without the re-queue.
+
 ### Reading a `process` job's `[process]` lines (issue 407)
 
 Every package walk prints one journal line when it completes:

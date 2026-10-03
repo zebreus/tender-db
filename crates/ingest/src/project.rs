@@ -96,6 +96,9 @@ pub struct Report {
     /// Issue 481: what the grouping's Tender-link step admitted and refused, per
     /// class — the cross-source and logical-notice joins, and the weld guards.
     pub links: store::LinkTally,
+    /// Issue 482 unit 2: the UUID procedure keys the grouping refused as hubs (3 or more
+    /// buyer-disjoint clusters), split per buyer cluster.
+    pub uuid_hubs: store::UuidHubTally,
     /// Issue 385 unit 2: what the F14 corrigendum-date target gate did, by the
     /// class of form coordinate each `CHG-n` block named. Counted beside
     /// `citations` in the plan sweep, and read the same way — `other` is the
@@ -1429,6 +1432,7 @@ pub async fn project_with_progress_phase2_stoppable(
     let grouped = db.build_plan_groups(store::PlanScope::Full).await?;
     report.target_refusals.add_refused(&grouped.shared_refused);
     report.links.add(grouped.links);
+    report.uuid_hubs.add(grouped.uuid_hubs);
     probe(db, "grouping (build_plan_groups)");
     let (tenders, islands, legacy_keys) = db.plan_summary().await?;
     report.tenders = tenders;
@@ -2282,6 +2286,69 @@ pub async fn legacy_closure_capped(
     Ok(Ok((notices.into_iter().collect(), tenders.into_iter().collect())))
 }
 
+/// Issue 482 unit 2: complete an incremental plan over REFUSED keys. A refused key
+/// (issues 369/386/482) folds into several Tenders, `refused:<key>:<label>`, and the
+/// grouping's refusal gates count the key's whole population. The touched expansion finds
+/// them all for a key a changed notice carries ([`Db::touched_existing_tender_ids`], by
+/// the key's prefix), but a Tender reached otherwise — by the link closure, or by its
+/// member's OLD membership after a re-parse moved it to another key — brings only its own
+/// cluster, and the gate would read a hub as one buyer and un-refuse it, which a full fold
+/// never does. So: for every refused key among the planned Tenders, plan all of that
+/// key's Tenders, close the links of what that added, and repeat to a fixpoint.
+///
+/// `Err(reason)` past [`LINK_CLOSURE_CAP`] added notices, for the full path.
+async fn refused_sibling_closure(
+    db: &Db,
+    touched: &mut Vec<i64>,
+    all_ids: &mut Vec<i64>,
+) -> turso::Result<Result<(), String>> {
+    let mut expanded: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    let mut added = 0usize;
+    let mut scan: Vec<i64> = touched.clone();
+    loop {
+        let keys: Vec<String> =
+            db.refused_keys_of_tenders(&scan).await?.into_iter().filter(|k| expanded.insert(k.clone())).collect();
+        if keys.is_empty() {
+            return Ok(Ok(()));
+        }
+        let have: std::collections::HashSet<i64> = touched.iter().copied().collect();
+        let mut new_tenders: Vec<i64> =
+            db.touched_existing_tender_ids(&[], &keys).await?.into_iter().filter(|t| !have.contains(t)).collect();
+        if new_tenders.is_empty() {
+            return Ok(Ok(()));
+        }
+        let planned: std::collections::HashSet<i64> = all_ids.iter().copied().collect();
+        let new_ids: Vec<i64> =
+            db.notice_ids_for_tenders(&new_tenders).await?.into_iter().filter(|id| !planned.contains(id)).collect();
+        all_ids.extend(new_ids.iter().copied());
+        all_ids.sort_unstable();
+        all_ids.dedup();
+        match link_closure_from(db, all_ids, &new_ids, &[], LINK_CLOSURE_CAP).await? {
+            Ok((link_ids, link_tenders)) => {
+                all_ids.extend(link_ids);
+                all_ids.sort_unstable();
+                all_ids.dedup();
+                new_tenders.extend(link_tenders);
+            }
+            Err(reason) => return Ok(Err(reason)),
+        }
+        added += new_ids.len();
+        if added > LINK_CLOSURE_CAP {
+            return Ok(Err(format!("refused-sibling closure exceeds cap ({added} notices > {LINK_CLOSURE_CAP})")));
+        }
+        eprintln!(
+            "[project] refused-sibling closure: key(s) {} → {} more Tender(s), {} notice(s)",
+            keys.join(","),
+            new_tenders.len(),
+            new_ids.len()
+        );
+        touched.extend(new_tenders.iter().copied());
+        touched.sort_unstable();
+        touched.dedup();
+        scan = new_tenders;
+    }
+}
+
 /// Notices the Tender-link closure may add before the incremental fold gives up on
 /// scoping and takes the full path (issue 481) — the legacy closure's cap, for its
 /// reason: a hub (issue 482's colliding BT-04s, welded through cross-source links) must
@@ -2320,10 +2387,22 @@ pub async fn link_closure_capped(
     targets: &[i64],
     cap: usize,
 ) -> turso::Result<Result<(Vec<i64>, Vec<i64>), String>> {
+    link_closure_from(db, planned, planned, targets, cap).await
+}
+
+/// As [`link_closure_capped`], walking from `frontier` (a part of `planned` whose links
+/// are not yet closed) instead of from every planned notice.
+async fn link_closure_from(
+    db: &Db,
+    planned: &[i64],
+    frontier: &[i64],
+    targets: &[i64],
+    cap: usize,
+) -> turso::Result<Result<(Vec<i64>, Vec<i64>), String>> {
     let mut seen: std::collections::HashSet<i64> = planned.iter().copied().collect();
     let mut notices = std::collections::BTreeSet::new();
     let mut tenders = std::collections::BTreeSet::new();
-    let mut frontier: Vec<i64> = planned.to_vec();
+    let mut frontier: Vec<i64> = frontier.to_vec();
     let mut forward: Vec<i64> = targets.to_vec();
     let mut hops = 0usize;
     while !frontier.is_empty() || !forward.is_empty() {
@@ -2579,6 +2658,12 @@ pub async fn project_incremental_chunked_observed(
             return Box::pin(incremental_full_fallback(db, &mut on_progress, stop)).await;
         }
     }
+    // Issue 482 unit 2: every Tender of each refused key the plan touches (boxed: issue
+    // 467's poll budget).
+    if let Err(reason) = Box::pin(refused_sibling_closure(db, &mut touched_tenders, &mut all_ids)).await? {
+        eprintln!("[project] INCREMENTAL → FULL fallback: {reason} (issue 482); re-projecting the whole corpus");
+        return Box::pin(incremental_full_fallback(db, &mut on_progress, stop)).await;
+    }
 
     // Pass 2 (streamed): build the ONE plan in id-ordered chunks so the org bulk-load
     // stays sequential and RAM bounded; mentions resolve only for the changed notices
@@ -2673,6 +2758,7 @@ pub async fn project_incremental_chunked_observed(
     let grouped = db.build_plan_groups(store::PlanScope::Incremental).await?;
     report.target_refusals.add_refused(&grouped.shared_refused);
     report.links.add(grouped.links);
+    report.uuid_hubs.add(grouped.uuid_hubs);
     let (tenders, islands) = db.plan_counts().await?;
     report.tenders = tenders;
     report.islands = islands;
@@ -6878,12 +6964,7 @@ fn procedure_key(parsed: &Parsed, sdk01: bool, de1: bool) -> Option<String> {
 /// A genuine uuid (`8-4-4-4-12` hex). Only these sdk-0.1 folder ids are strong
 /// enough to merge Tenders across Sources.
 fn is_uuid(s: &str) -> bool {
-    let s = s.trim();
-    s.len() == 36
-        && s.bytes().enumerate().all(|(i, b)| match i {
-            8 | 13 | 18 | 23 => b == b'-',
-            _ => b.is_ascii_hexdigit(),
-        })
+    store::is_uuid_key(s)
 }
 
 /// How many DISTINCT hex characters a uuid spends on the 30 nibbles it is free to

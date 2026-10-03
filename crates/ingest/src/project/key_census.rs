@@ -31,6 +31,10 @@ pub const KEY_CENSUS_WINDOW: i64 = 5_000;
 /// Samples kept per bucket, and Tenders kept in the hub list.
 pub const KEY_CENSUS_SAMPLES: usize = 30;
 
+/// Issue 482 unit 2: at most this many hub Tender ids on the report
+/// ([`ProcedureKeyCensus::hub_tender_ids`]); the 2026-10-03 census found 149.
+pub const KEY_CENSUS_HUB_IDS: usize = 10_000;
+
 /// Notices per parse batch ([`store::Db::parsed_by_ids`] reads every satellite of the
 /// batch), as the link census's endpoint read.
 const PARSE_BATCH: usize = 500;
@@ -180,6 +184,12 @@ pub struct ProcedureKeyCensus {
     /// most clusters (the hub shape: Tender 42726, 36 notices under 8 buyers).
     pub max_clusters: usize,
     pub hubs: Vec<KeyCensusSample>,
+    /// Issue 482 unit 2: every split Tender with [`store::UUID_HUB_CLUSTERS`] or more
+    /// clusters — what the grouping's UUID-hub gate refuses — by id, ascending (at most
+    /// [`KEY_CENSUS_HUB_IDS`] of `hub_tenders_total`). `requeue-uuid-hubs` re-queues their
+    /// notices, so the next fold re-plans and splits Tenders no daily would touch.
+    pub hub_tenders_total: u64,
+    pub hub_tender_ids: Vec<i64>,
     /// The Tender id the walk reached, and the one it walks to (captured before it).
     pub cursor: i64,
     pub target: i64,
@@ -244,6 +254,12 @@ impl ProcedureKeyCensus {
         let clusters = buyer_clusters(&tokens);
         if clusters.len() < 2 {
             return;
+        }
+        if clusters.len() >= store::UUID_HUB_CLUSTERS {
+            self.hub_tenders_total += 1;
+            if self.hub_tender_ids.len() < KEY_CENSUS_HUB_IDS {
+                self.hub_tender_ids.push(first.tender_id);
+            }
         }
         if buyerless > 0 {
             self.split_with_buyerless += 1;
@@ -379,34 +395,11 @@ struct NoticeFacts {
     jurisdictions: BTreeSet<String>,
 }
 
-/// The buyer clusters of one Tender's notices, as indices into `tokens` (each set
-/// non-empty): the connected components of "the guard calls them overlapping"
-/// ([`store::buyer_tokens_disjoint`]), so a notice joins a cluster when it overlaps any
-/// member. Pairwise, skipping pairs already joined, so a Tender whose notices all
-/// overlap costs about one comparison a notice.
+/// The buyer clusters of one Tender's notices — the grouping's own clustering
+/// ([`store::buyer_clusters`], which the issue-482 unit-2 gate refuses by), so the census
+/// counts what the gate acts on.
 fn buyer_clusters(tokens: &[&[u32]]) -> Vec<Vec<usize>> {
-    let mut parent: Vec<usize> = (0..tokens.len()).collect();
-    fn root(parent: &mut [usize], mut i: usize) -> usize {
-        while parent[i] != i {
-            parent[i] = parent[parent[i]];
-            i = parent[i];
-        }
-        i
-    }
-    for i in 0..tokens.len() {
-        for j in i + 1..tokens.len() {
-            let (a, b) = (root(&mut parent, i), root(&mut parent, j));
-            if a != b && !store::buyer_tokens_disjoint(tokens[i], tokens[j]) {
-                parent[b.max(a)] = a.min(b);
-            }
-        }
-    }
-    let mut clusters: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
-    for i in 0..tokens.len() {
-        let r = root(&mut parent, i);
-        clusters.entry(r).or_default().push(i);
-    }
-    clusters.into_values().collect()
+    store::buyer_clusters(tokens)
 }
 
 /// A stable pseudo-random rank of a Tender id (splitmix64), for the bottom-k samples.

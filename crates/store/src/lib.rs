@@ -42,7 +42,7 @@ pub use canonical::{
     EdgeCensusReport, MatchKeyBuildWindow, OrgEdgeScanArgs,
     OrgEdgeScanReport,
     DeclaredLink, DeclaredWindow, LINK_BACKFILL_SAMPLES, LINK_DECLARED_RULES, LINK_LOGICAL_NOTICE, LINK_OPP_090,
-    KeyedTenderVersion, LinkEndpoint, LinkTally, buyer_abbr_token, buyer_initials_token, buyer_name_fold, buyer_prefix_token, buyer_token, buyer_tokens_disjoint,
+    KeyedTenderVersion, LinkEndpoint, LinkTally, UUID_HUB_CLUSTERS, UuidHubTally, buyer_clusters, is_uuid_key, buyer_abbr_token, buyer_initials_token, buyer_name_fold, buyer_prefix_token, buyer_token, buyer_tokens_disjoint,
     MatchedLink, PlanGroup, PlanGroupTally, PlanRow, PlanScope, TenderLinkBackfill, TenderLinkRuleCounts, TenderLinkSample,
     QUALITY_WITHHELD, R2MergeArgs, version_stem,
     R2MergeReport, R3MergeArgs, R3MergeReport, Round, TenderProjection, TenderVersion,
@@ -7534,6 +7534,15 @@ tmpfs /data/ramcache tmpfs rw 0 0
         let keys = vec![t("k1"), t("k2"), t("k3")];
         let plan = plan_of(&crate::canonical::key_merge_targets_sql(3), keys).await;
         seeks("absorbed keys", &plan, &["sqlite_autoindex_tender_key_merges_1 (from_key=?)"]);
+        // Issue 482 unit 2: a refused key's split Tenders and the keys a link merged them
+        // into, by the key's `refused:` prefix — range seeks, never a walk of `tenders`.
+        // `tenders_procedure_key` is one of the deferred identity indexes a rebuild leaves.
+        db.build_tender_indexes().await.unwrap();
+        let range = || vec![t("refused:k:"), t("refused:k;")];
+        let plan = plan_of(crate::canonical::REFUSED_TENDERS_SQL, range()).await;
+        seeks("refused tenders", &plan, &["tenders_procedure_key (procedure_key>=? AND procedure_key<?)"]);
+        let plan = plan_of(crate::canonical::REFUSED_MERGE_TARGETS_SQL, range()).await;
+        seeks("refused merges", &plan, &["sqlite_autoindex_tender_key_merges_1 (from_key>=? AND from_key<?)"]);
 
         // The grouping's one-ended links: driven from the edges like the join.
         let plan = plan_of(crate::canonical::LINK_ONE_ENDED_SQL, vec![]).await;

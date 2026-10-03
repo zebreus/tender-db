@@ -2848,6 +2848,7 @@ async fn the_procedure_key_census_splits_only_buyer_disjoint_clusters() {
     assert_eq!(r.split_same_key, 3, "the linked Tender holds a notice under another key");
     assert_eq!((r.interleaved, r.sequential, r.singleton_minorities), (2, 2, 4), "the hub and the linked Tender interleave");
     assert_eq!(r.max_clusters, 2);
+    assert_eq!((r.hub_tenders_total, r.hub_tender_ids.clone()), (0, vec![]), "no Tender of 3+ clusters (issue 482 unit 2)");
     let count = |b: &str| r.buckets[b].tenders;
     assert_eq!(
         key_census::KEY_CENSUS_BUCKETS.map(count),
@@ -2912,4 +2913,227 @@ async fn the_procedure_key_census_splits_only_buyer_disjoint_clusters() {
     for s in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
+}
+
+// ------------------------------ issue 482 unit 2: the UUID-hub gate
+
+/// The Tender's `procedure_key` for the notice published as `pub_id`.
+async fn key_of_tender(db: &Db, pub_id: &str) -> String {
+    let tender = tender_of(db, pub_id).await;
+    match db.scalar(&format!("SELECT procedure_key FROM tenders WHERE id = {tender}")).await.expect("key") {
+        Some(store::turso::Value::Text(s)) => s,
+        other => panic!("{pub_id}: tender {tender} has no procedure key: {other:?}"),
+    }
+}
+
+/// Issue 482 unit 2: a UUID procedure key whose notices form 3 or more buyer-disjoint
+/// clusters (the platform-wide BT-04 reuse of hub 430681) is refused, and each cluster
+/// becomes a Tender of its own (`refused:<key>:<label>`) — on the full fold and on the
+/// daily alike. Every delta is absorbed by a full non-rebuild fold on one DB and by the
+/// daily on the other, and the two canonical layers (content and change events) must
+/// match after every step:
+///
+/// - **step 0**: a Swiss hub key with two buyers (2 clusters: not acted on), one of whose
+///   notices cites by OPP-090 a same-buyer notice under another key (issue 481 merges
+///   them, the hub's key absorbed); a second hub key, two buyers, no links; a 2-cluster
+///   key; a joint procurement (A+B / B+C / C); a central purchasing body's framework
+///   (Dataport + call-off buyers on the CN, one award per call-off buyer). One Tender each.
+/// - **step 1**: a third buyer under each hub key. Both cross the threshold on the daily:
+///   the linked hub splits, its cited buyer's cluster staying merged with the other key's
+///   Tender (the link's `refused:` group recorded in `tender_key_merges`); the unlinked
+///   hub's Tender is RETIRED (a `removed` event, no ghost) and minted anew per buyer.
+/// - **step 2**: a later notice of the linked buyer under the hub key and a buyerless one.
+///   The daily finds the hub's split Tenders by the key's `refused:` prefix — and the one
+///   a link absorbed through `tender_key_merges` — so it sees the key whole: the buyer's
+///   notice joins its cluster's (merged) Tender, the buyerless one is a Tender of its own.
+/// - **step 3**: another notice of the second buyer: the buyerless Tender stays as it was.
+/// - **step 4**: a notice under a NEW key citing one hub cluster's notice by OPP-090. The
+///   daily reaches that cluster's Tender through the link closure only; the refused-sibling
+///   closure then plans the hub key's other Tenders too, so the gate still sees 3
+///   clusters and the hub stays split, as on the full fold.
+///
+/// Then a full re-plan of the daily's DB moves nothing.
+#[tokio::test]
+async fn a_uuid_hub_splits_per_buyer_cluster_on_full_and_daily_folds() {
+    const KEY_HUB: &str = "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d";
+    const KEY_OTHER: &str = "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e";
+    const KEY_HUB2: &str = "c3d4e5f6-a7b8-4c9d-8e1f-2a3b4c5d6e7f";
+    const KEY_PAIR: &str = "d4e5f6a7-b8c9-4d0e-9f2a-3b4c5d6e7f8a";
+    const KEY_JOINT: &str = "e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8a9b";
+    const KEY_CPB: &str = "f6a7b8c9-d0e1-4f2a-9b4c-5d6e7f8a9b0c";
+    const KEY_NEW: &str = "a7b8c9d0-e1f2-4a3b-8c5d-6e7f8a9b0c1d";
+    let (astra, hochbau, winterthur): (Buyer, Buyer, Buyer) = (
+        ("Bundesamt für Strassen", "CHE", ""),
+        ("Hochbauamt des Kantons Zürich", "CHE", ""),
+        ("Stadt Winterthur", "CHE", ""),
+    );
+    let (koeniz, biel, basel): (Buyer, Buyer, Buyer) =
+        (("Gemeinde Köniz", "CHE", ""), ("Stadt Biel", "CHE", ""), ("Kanton Basel-Stadt", "CHE", ""));
+    let (olkusz, siewierz): (Buyer, Buyer) = (("Gmina Olkusz", "POL", ""), ("Gmina Siewierz", "POL", ""));
+    let (jointa, jointb, jointc): (Buyer, Buyer, Buyer) = (
+        ("Gemeente Utrecht", "NLD", ""),
+        ("Gemeente Amersfoort", "NLD", ""),
+        ("Provincie Utrecht", "NLD", ""),
+    );
+    let dataport: Buyer = ("Dataport AöR", "DEU", "");
+    let (hamburg, kiel): (Buyer, Buyer) = (("Freie und Hansestadt Hamburg", "DEU", ""), ("Landeshauptstadt Kiel", "DEU", ""));
+    type Member<'a> = (&'a str, &'a str, i64, Vec<(&'a str, &'a str)>, Vec<Buyer<'a>>);
+    let hub = |pub_id: &'static str, day: i64, buyers: Vec<Buyer<'static>>| -> Member<'static> {
+        ("ted", pub_id, day, vec![("BT-04-notice", KEY_HUB)], buyers)
+    };
+    let steps: Vec<Vec<Member>> = vec![
+        vec![
+            ("ted", "00410001-2024", 19_900, vec![("BT-04-notice", KEY_OTHER)], vec![astra]),
+            ("ted", "00410002-2024", 19_950, vec![("BT-04-notice", KEY_HUB), ("OPP-090-Procedure", "410001-2024")], vec![astra]),
+            hub("00410003-2024", 19_960, vec![hochbau]),
+            ("ted", "00420001-2024", 19_900, vec![("BT-04-notice", KEY_HUB2)], vec![koeniz]),
+            ("ted", "00420002-2024", 19_910, vec![("BT-04-notice", KEY_HUB2)], vec![biel]),
+            ("ted", "00430001-2024", 19_900, vec![("BT-04-notice", KEY_PAIR)], vec![olkusz]),
+            ("ted", "00430002-2024", 19_990, vec![("BT-04-notice", KEY_PAIR)], vec![siewierz]),
+            ("ted", "00440001-2024", 19_900, vec![("BT-04-notice", KEY_JOINT)], vec![jointa, jointb]),
+            ("ted", "00440002-2024", 19_950, vec![("BT-04-notice", KEY_JOINT)], vec![jointb, jointc]),
+            ("ted", "00440003-2024", 19_990, vec![("BT-04-notice", KEY_JOINT)], vec![jointc]),
+            ("ted", "00450001-2024", 19_900, vec![("BT-04-notice", KEY_CPB)], vec![dataport, hamburg, kiel]),
+            ("ted", "00450002-2024", 20_000, vec![("BT-04-notice", KEY_CPB)], vec![hamburg]),
+            ("ted", "00450003-2024", 20_010, vec![("BT-04-notice", KEY_CPB)], vec![kiel]),
+        ],
+        vec![
+            hub("00410004-2024", 20_000, vec![winterthur]),
+            ("ted", "00420003-2024", 19_920, vec![("BT-04-notice", KEY_HUB2)], vec![basel]),
+        ],
+        vec![hub("00410005-2024", 20_050, vec![astra]), hub("00410006-2024", 20_060, vec![])],
+        vec![hub("00410007-2024", 20_070, vec![hochbau])],
+        vec![(
+            "ted",
+            "00410008-2024",
+            20_080,
+            vec![("BT-04-notice", KEY_NEW), ("OPP-090-Procedure", "410003-2024")],
+            vec![hochbau],
+        )],
+    ];
+    let (full, ff, pf) = scratch("uuid-hub-full").await;
+    let (incr, fi, pi) = scratch("uuid-hub-incr").await;
+    establish(&full, ff).await;
+    establish(&incr, fi).await;
+    let mut hub2_tender = 0;
+    for (step, delta) in steps.iter().enumerate() {
+        for (source, pub_id, day, ids, buyers) in delta {
+            record_linked_buyers(&full, ff, source, pub_id, *day, ids, buyers).await;
+            record_linked_buyers(&incr, fi, source, pub_id, *day, ids, buyers).await;
+        }
+        let report = absorb_and_compare(&full, &incr, &format!("step {step}")).await;
+        match step {
+            0 => {
+                assert_eq!(report.uuid_hubs, store::UuidHubTally::default(), "two clusters are not acted on");
+                let merged = tender_of(&incr, "00410001-2024").await;
+                for p in ["00410002-2024", "00410003-2024"] {
+                    assert_eq!(tender_of(&incr, p).await, merged, "{p}: the hub key absorbed by the link");
+                }
+                hub2_tender = tender_of(&incr, "00420001-2024").await;
+                assert_eq!(tender_of(&incr, "00420002-2024").await, hub2_tender);
+                assert_eq!(key_of_tender(&incr, "00420001-2024").await, KEY_HUB2);
+            }
+            1 => {
+                assert_eq!(
+                    (report.uuid_hubs.keys, report.uuid_hubs.notices, report.uuid_hubs.clusters),
+                    (2, 6, 6),
+                    "both hubs cross the threshold on the daily"
+                );
+                assert_eq!(key_of_tender(&incr, "00410002-2024").await, KEY_OTHER, "ASTRA's cluster stays linked");
+                assert_eq!(tender_of(&incr, "00410002-2024").await, tender_of(&incr, "00410001-2024").await);
+                for p in ["00410003-2024", "00410004-2024", "00420001-2024", "00420002-2024", "00420003-2024"] {
+                    let key = key_of_tender(&incr, p).await;
+                    assert!(key.starts_with("refused:"), "{p}: {key}");
+                }
+                let split: std::collections::BTreeSet<i64> = tenders_of(
+                    &incr,
+                    &["00410001-2024", "00410003-2024", "00410004-2024"],
+                )
+                .await;
+                assert_eq!(split.len(), 3, "the hub is one Tender per buyer");
+                let split2 = tenders_of(&incr, &["00420001-2024", "00420002-2024", "00420003-2024"]).await;
+                assert_eq!(split2.len(), 3);
+                assert!(!split2.contains(&hub2_tender), "the unlinked hub's Tender is retired, not reused");
+                assert_eq!(count(&incr, &format!("SELECT COUNT(*) FROM tenders WHERE id = {hub2_tender}")).await, 0);
+                assert_eq!(
+                    count(
+                        &incr,
+                        &format!(
+                            "SELECT COUNT(*) FROM changes WHERE entity_kind = 'tender' AND entity_id = {hub2_tender} \
+                               AND op = 'removed'"
+                        )
+                    )
+                    .await,
+                    1,
+                    "and its retirement is in the feed"
+                );
+                assert_eq!(
+                    count(
+                        &incr,
+                        &format!("SELECT COUNT(*) FROM tender_key_merges WHERE from_key LIKE 'refused:{KEY_HUB}:%'")
+                    )
+                    .await,
+                    1,
+                    "the linked cluster's group is recorded as absorbed"
+                );
+            }
+            2 => {
+                assert_eq!(tender_of(&incr, "00410005-2024").await, tender_of(&incr, "00410001-2024").await);
+                let lone = key_of_tender(&incr, "00410006-2024").await;
+                assert!(lone.starts_with(&format!("refused:{KEY_HUB}:#n")), "{lone}");
+                let others = tenders_of(&incr, &["00410001-2024", "00410003-2024", "00410004-2024"]).await;
+                assert!(!others.contains(&tender_of(&incr, "00410006-2024").await), "a buyerless notice joins no cluster");
+            }
+            3 => {
+                assert_eq!(tender_of(&incr, "00410007-2024").await, tender_of(&incr, "00410003-2024").await);
+            }
+            _ => {
+                assert_eq!(
+                    tender_of(&incr, "00410008-2024").await,
+                    tender_of(&incr, "00410003-2024").await,
+                    "a new key citing one hub cluster joins that cluster's Tender"
+                );
+                let key = key_of_tender(&incr, "00410003-2024").await;
+                assert!(key.starts_with(&format!("refused:{KEY_HUB}:")), "the hub stays refused: {key}");
+            }
+        }
+    }
+    assert_eq!(tender_of(&incr, "00430001-2024").await, tender_of(&incr, "00430002-2024").await, "2 clusters stay");
+    assert_eq!(key_of_tender(&incr, "00430001-2024").await, KEY_PAIR);
+    for (a, b) in [("00440001-2024", "00440002-2024"), ("00440001-2024", "00440003-2024")] {
+        assert_eq!(tender_of(&incr, a).await, tender_of(&incr, b).await, "the joint procurement stays one Tender");
+    }
+    for (a, b) in [("00450001-2024", "00450002-2024"), ("00450001-2024", "00450003-2024")] {
+        assert_eq!(tender_of(&incr, a).await, tender_of(&incr, b).await, "the CPB framework stays one Tender");
+    }
+    assert_eq!(ghosts(&incr).await, 0);
+    let never = || false;
+    let census = ingest::project::key_census::procedure_key_census_windowed(&incr, 1_000, &never, |_| {}).await.expect("census");
+    assert_eq!(census.hub_tenders_total, 0, "the census lists no hub once the gate split them: {:?}", census.hubs);
+    let tenders = snapshot_content(&incr).await;
+    // `requeue-uuid-hubs`' store half: re-queue a Tender's notices (dry counts), and the
+    // daily that re-plans it reproduces it exactly.
+    let linked = tender_of(&incr, "00410001-2024").await;
+    assert_eq!(incr.requeue_tender_notices(&[linked], true).await.unwrap(), (3, 3), "X, ASTRA's two hub notices");
+    assert!(incr.unprojected_parsed_notice_ids().await.unwrap().is_empty(), "a dry run queues nothing");
+    assert_eq!(incr.requeue_tender_notices(&[linked], false).await.unwrap(), (3, 3));
+    assert_eq!(incr.unprojected_parsed_notice_ids().await.unwrap().len(), 3);
+    project::project_incremental(&incr).await.expect("the re-queued daily");
+    assert_eq!(snapshot_content(&incr).await, tenders, "a re-planned split Tender stays as it was");
+    project::project(&incr, false).await.expect("a full re-plan");
+    assert_eq!(snapshot_content(&incr).await, tenders, "the full fold moves nothing");
+    for p in [pf, pi] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
+
+/// The distinct Tenders holding the given publications.
+async fn tenders_of(db: &Db, pub_ids: &[&str]) -> std::collections::BTreeSet<i64> {
+    let mut out = std::collections::BTreeSet::new();
+    for p in pub_ids {
+        out.insert(tender_of(db, p).await);
+    }
+    out
 }

@@ -1,8 +1,9 @@
 # 482 — a reused procedure UUID (BT-04) welds unrelated procedures into one Tender, and nothing checks the buyers
 
-Status: ready-for-agent — NEXT: deploy unit 1 (the census + its review fixes, landed 2026-10-02, not yet deployed) → run
-`procedure-key-census` (~2–3 h, read-only) → read the buckets and their samples on the portals → decide gate
-(refuse the key, as 369 does) vs split (cut the Tender at a buyer-disjoint edge).
+Status: ready-for-agent — NEXT: deploy unit 2 (landed 2026-10-03, below) → the next fold applies the UUID-hub gate
+to what it plans; for the ~150 existing hubs re-run `procedure-key-census` (stores `hub_tender_ids`) → `requeue-uuid-hubs`
+dry → wet → the next daily (or a full re-plan) splits them → verify tender 430681 is split (its notices on
+`refused:<key>:<buyer>` Tenders, 430681 itself retired). Then the 60-sample precision read of the two-cluster cases.
 Kind: data correctness (a false merge under the declared rule)
 Relates to: 369 (procedure-key placeholder gate: `key_shaped=1` keys with ≥ 3 distinct buyer sets are refused; UUID keys
 are never checked), 481 (cross-source dedup; its weld guards), ADR-0003 (a declared link merges), 12/34 (the BT-04 key)
@@ -162,3 +163,66 @@ An adversarial review of `0b9aacf` found the report could not set the split rule
     That covers about 150 Tenders, including the 789-notice Swiss hub.
   - Two-cluster splits are NOT acted on yet. A 60-sample hand read must first measure their precision; the
     name-variant share decides.
+
+## Unit 2: the UUID-hub gate — LANDED 2026-10-03 (not yet deployed)
+
+**What landed.**
+- **The gate** (`Db::refuse_uuid_hubs`, called by `build_plan_groups` after 369's and 386's refusals, before the
+  batched election). It refuses a UUID key (`store::is_uuid_key`, `key_shaped = 0`) whose planned notices form
+  `store::UUID_HUB_CLUSTERS` (3) or more buyer-disjoint clusters. The clustering is the census's:
+  `store::buyer_clusters` (moved from `key_census`, which now calls it) over `plan_notice.buyer_guard`, using
+  `buyer_tokens_disjoint`, transitive. Notices without buyer tokens join no cluster and never count. The plan is
+  read in two streamed passes, never a grouped aggregate. Pass 1 keeps the first two distinct guard-set digests per
+  key digest; a third distinct digest makes the key a candidate (~40 B a UUID key with a buyer). Pass 2 reads the
+  candidates' notices whole and clusters them exactly.
+- **Group keys.** A refused key goes into `plan_refused_key`, like 369's. Each clustered notice is point-written
+  `refused:<key>:<label>`, where the label is the cluster's smallest `buyer_key` (`#g<token>` if none). A buyerless
+  notice becomes its own `refused:<key>:#n<notice_id>`. A legacy notice with an OJS self number stays with the
+  legacy closure.
+- **Tally:** `PlanGroupTally::uuid_hubs` / `Report::uuid_hubs` (`keys`, `notices`, `clusters`). The fold job row
+  gets `; issue-482 uuid hubs refused: …` (silent at zero), and the journal logs `group step uuid-hubs` on every
+  grouping.
+- **Incremental equality.** 369's gate did NOT see the full key on a daily. A refused key names no Tender, so
+  `touched_existing_tender_ids` (exact `procedure_key IN`) never found its `refused:` Tenders. A new notice under a
+  refused key was planned alone and founded a bare-key Tender that a full fold never makes. Fixed for every refused
+  key (369, 386, 482):
+  - the touched expansion range-seeks `refused:<key>:` on `tenders_procedure_key` and on `tender_key_merges`
+    (`REFUSED_TENDERS_SQL` / `REFUSED_MERGE_TARGETS_SQL`, plans pinned in `the_tender_link_statements_seek`);
+  - `record_key_merges` now records `refused:<key>:<label>` → `<to_key>` when an issue-481 link absorbs a refused
+    group (it used to drop them), and an incremental plan replaces the `refused:<key>:` rows of each key it holds.
+  - `ingest::project::refused_sibling_closure` runs after the link closure. When a plan reaches a `refused:<key>:`
+    Tender some other way (a new key's OPP-090 into one hub cluster, or a re-parse's old membership), it plans every
+    Tender of that key (`Db::refused_keys_of_tenders`, then the touched lookup) and closes their links. It repeats to a
+    fixpoint, with the link cap and full fallback. Without it, the test's step 4 diverged: the daily un-refused the hub.
+  - When a key crosses the threshold on a daily, the touched bare-key Tender is not reproduced, so
+    `retire_regrouped_tenders` retires it (`removed` events, no ghost).
+- **Re-planning existing hubs.** The census report now carries `hub_tenders_total` / `hub_tender_ids` (every Tender
+  with ≥ 3 clusters, ascending, cap 10,000). The new job **`requeue-uuid-hubs`** (`Spec::RequeueUuidHubs { dry_run }`,
+  dry by default, `off_frame` with stack gauges) reads that list from the stored report and re-queues the Tenders'
+  notices (`Db::requeue_tender_notices`: `tender_versions` seeks, then `requeue_notice_ids`). It refuses without a
+  report, or with a pre-unit-2 report that has no `hub_tender_ids`. Docs: `docs/operations.md`, "The UUID-hub gate
+  and `requeue-uuid-hubs`".
+- **Tests:**
+  - `a_uuid_hub_splits_per_buyer_cluster_on_full_and_daily_folds` (ingest, `project_incremental.rs`) compares a full
+    fold and the daily step by step (content and change events). The fixture:
+    - a Swiss-hub-shaped key with 2 buyers stays merged at step 0, then crosses to 3 on a daily and splits per buyer.
+      ASTRA's cluster stays merged with another key's Tender through an OPP-090 link (`refused:` group recorded in
+      `tender_key_merges`);
+    - a second hub with no links crosses on the daily: its Tender is retired, with a `removed` event and no ghost;
+    - a later ASTRA notice and a buyerless one under the hub key are folded by a daily that finds the split Tenders
+      by prefix. The buyerless notice gets `refused:<key>:#n…`;
+    - a new key whose OPP-090 cites one hub cluster's notice joins that cluster's Tender, and the hub stays split;
+    - a 2-cluster key (Olkusz / Siewierz), a joint procurement and a CPB framework each stay one Tender;
+    - afterwards the census lists no hub, a re-queue (dry / wet) plus a daily reproduces the split, and a full
+      re-plan moves nothing.
+
+    A mutation check (prefix lookup disabled) fails the test at step 2.
+  - `requeue_uuid_hubs_reads_the_census_hub_list_and_refuses_without_one` (supervisor). The census test pins
+    `hub_tender_ids` empty for its 2-cluster corpus.
+
+**Open.**
+- A key whose clusters merge back below 3 is un-refused: a later bridging joint notice can collapse them. On a
+  daily, its buyerless `#n` Tenders are re-found by the prefix, so the daily and a full fold agree. A 369
+  shaped-key island (`island:<id>`) is still not re-found that way. That gap is pre-existing and rare.
+- An admitted same-Source OPP-090 into a buyerless notice can still bridge two clusters of a refused key into one
+  Tender. That is issue 481's link step (a tokenless endpoint is unknown, not disjoint), not this gate.

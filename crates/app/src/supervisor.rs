@@ -524,6 +524,11 @@ enum Spec {
     /// Tenders with two or more buyer-disjoint clusters, by jurisdiction, Source and
     /// span, with 30 samples per bucket. Read-only; stores `procedure-key-census`.
     ProcedureKeyCensus,
+    /// Issue 482 unit 2: re-queue the notices of the hub Tenders the stored
+    /// `procedure-key-census` report lists (`hub_tender_ids`: 3 or more buyer-disjoint
+    /// clusters), so the next fold re-plans them and the grouping's UUID-hub gate splits
+    /// them. Dry (the default) counts.
+    RequeueUuidHubs { dry_run: bool },
     /// Issue 443 step 3: the sweep a fold queues after it re-bound mentions
     /// (every re-bind can empty the row it left). It counts, then sweeps in
     /// the same job when the count is at most `cap`; above it (an era-scale
@@ -1969,6 +1974,13 @@ impl Supervisor {
             "procedure-key-census" => Ok(vec![
                 self.push("procedure-key-census", "procedure-key-census".into(), Spec::ProcedureKeyCensus).await,
             ]),
+            // Issue 482 unit 2: re-queues notices for the next fold, so a forgotten flag
+            // means the dry count.
+            "requeue-uuid-hubs" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let params = if dry_run { "requeue-uuid-hubs dry-run" } else { "requeue-uuid-hubs" }.to_owned();
+                Ok(vec![self.push("requeue-uuid-hubs", params, Spec::RequeueUuidHubs { dry_run }).await])
+            }
             // Issue 259 landing: repair the stale nested-org mention layer.
             // Deletes org rows and emits change events, so it asks to be meant:
             // `dry_run` defaults to TRUE (the data-quality convention — a
@@ -2597,6 +2609,18 @@ fn link_suffix(l: &store::LinkTally) -> String {
     )
 }
 
+/// Issue 482 unit 2: the UUID hubs the grouping refused, on the job row. Silent when it
+/// refused none — every daily that touches no hub.
+fn uuid_hub_suffix(h: &store::UuidHubTally) -> String {
+    if h.keys == 0 {
+        return String::new();
+    }
+    format!(
+        "; issue-482 uuid hubs refused: {} key(s), {} notice(s) split into {} buyer cluster(s)",
+        h.keys, h.notices, h.clusters
+    )
+}
+
 /// Issue 385 unit 2: what the F14 corrigendum-date target gate did, on the job
 /// row that recorded the run.
 ///
@@ -2763,7 +2787,8 @@ fn procedure_key_census_summary(r: &ingest::project::key_census::ProcedureKeyCen
         .collect();
     format!(
         "{} UUID-keyed Tenders of 2+ notices ({} notices, {} without buyers), {} undecidable, {} split into \
-         2+ buyer-disjoint clusters ({} with a buyerless notice; max {} clusters); {}",
+         2+ buyer-disjoint clusters ({} with a buyerless notice; max {} clusters); {}; {} hub(s) of 3+ clusters \
+         (issue 482 unit 2; requeue-uuid-hubs re-queues them)",
         r.tenders,
         r.notices,
         r.notices_without_buyers,
@@ -2771,8 +2796,19 @@ fn procedure_key_census_summary(r: &ingest::project::key_census::ProcedureKeyCen
         r.split,
         r.split_with_buyerless,
         r.max_clusters,
-        buckets.join(", ")
+        buckets.join(", "),
+        r.hub_tenders_total
     )
+}
+
+/// The hub Tender ids of a stored `procedure-key-census` report body (issue 482 unit 2).
+fn hub_tender_ids(body: &str) -> Result<Vec<i64>, String> {
+    let report: serde_json::Value = serde_json::from_str(body).map_err(|e| format!("census report: {e}"))?;
+    let ids = report.get("hub_tender_ids").and_then(|v| v.as_array()).ok_or(
+        "requeue-uuid-hubs: the stored procedure-key-census report predates issue 482 unit 2 (no hub_tender_ids) \
+         — re-run procedure-key-census",
+    )?;
+    ids.iter().map(|v| v.as_i64().ok_or_else(|| format!("census report: a hub id is not an integer: {v}"))).collect()
 }
 
 /// Issue 481: the report `backfill-tender-links` stores.
@@ -4137,10 +4173,11 @@ impl Supervisor {
             String::new()
         };
         let citations = format!(
-            "{}{}{}{}",
+            "{}{}{}{}{}",
             citation_suffix(&report.citations),
             target_refusal_suffix(&report.target_refusals),
             link_suffix(&report.links),
+            uuid_hub_suffix(&report.uuid_hubs),
             f14_target_suffix(&report.f14_targets)
         );
         // Issue 443 step 3: a re-bind can leave the row it left with no mention
@@ -4300,6 +4337,35 @@ impl Supervisor {
         let body = serde_json::to_string(&r).map_err(|e| e.to_string())?;
         self.db.put_report(PROCEDURE_KEY_CENSUS_REPORT, &body, store::now_unix()).await.map_err(|e| e.to_string())?;
         Ok(format!("procedure-key-census (issue 482): {summary}"))
+    }
+
+    /// Issue 482 unit 2's `requeue-uuid-hubs`, its own fn through `off_frame` (issue 467).
+    /// Reads the hub Tender ids from the stored `procedure-key-census` report and
+    /// re-queues their notices (dry: counts them). A report written before unit 2 has no
+    /// `hub_tender_ids`, and the job refuses rather than re-queue nothing and call it done.
+    async fn run_requeue_uuid_hubs(&self, dry_run: bool) -> Result<String, String> {
+        let (body, computed_at) = self
+            .db
+            .latest_report(PROCEDURE_KEY_CENSUS_REPORT)
+            .await
+            .map_err(|e| e.to_string())?
+            .ok_or("requeue-uuid-hubs: no procedure-key-census report stored — run procedure-key-census first")?;
+        let ids = hub_tender_ids(&body)?;
+        self.set_phase(
+            if dry_run { "counting" } else { "re-queueing" },
+            None,
+            None,
+            format!("{} hub Tender(s) from the census of {computed_at}", ids.len()),
+        );
+        let (notices, requeued) =
+            self.db.requeue_tender_notices(&ids, dry_run).await.map_err(|e| e.to_string())?;
+        Ok(format!(
+            "requeue-uuid-hubs (issue 482){}: {} hub Tender(s) from the census computed at {computed_at}, \
+             {notices} notice(s); {} {requeued} for the next fold",
+            if dry_run { " DRY RUN — nothing written" } else { "" },
+            ids.len(),
+            if dry_run { "would re-queue" } else { "re-queued" },
+        ))
     }
 
     /// Issue 404's repair, as its own async fn rather than inline in
@@ -4474,6 +4540,7 @@ impl Supervisor {
                 off_frame(|| self.run_backfill_tender_links(job, *dry_run)).await
             }
             Spec::ProcedureKeyCensus => off_frame(|| self.run_procedure_key_census(job)).await,
+            Spec::RequeueUuidHubs { dry_run } => off_frame(|| self.run_requeue_uuid_hubs(*dry_run)).await,
             Spec::Analyze => off_frame(|| self.run_analyze(job)).await,
             Spec::RepairMemberTwins { dry_run } => {
                 off_frame(|| self.run_repair_member_twins(job, *dry_run)).await
@@ -12990,6 +13057,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "backfill-org-names"
             | "backfill-legacy-adjacency"
             | "backfill-tender-links"
+            | "requeue-uuid-hubs"
             | "rederive-eur"
             | "repair-nested-orgs"
             | "repair-placeholder-orgs"
@@ -14636,6 +14704,38 @@ mod tests {
         let (body, _) = sup.db().latest_report(MERGED_IDENTIFIER_BACKFILL_REPORT).await.unwrap().expect("report");
         assert!(body.contains("\"dry_run\":false"), "{body}");
         let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 482 unit 2: `requeue-uuid-hubs` enqueues dry unless asked, refuses without
+    /// a census report or with one that predates `hub_tender_ids`, and otherwise re-queues
+    /// (dry: counts) the listed Tenders' notices.
+    #[tokio::test]
+    async fn requeue_uuid_hubs_reads_the_census_hub_list_and_refuses_without_one() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        sup.enqueue_request(&JobRequest { kind: "requeue-uuid-hubs".into(), ..Default::default() }).await.unwrap();
+        {
+            let queue = sup.queue.lock().expect("queue lock");
+            assert!(matches!(queue[0].spec, Spec::RequeueUuidHubs { dry_run: true }), "dry unless asked");
+            assert_eq!(queue[0].params, "requeue-uuid-hubs dry-run");
+        }
+        let job = |dry_run: bool| Job {
+            id: 1,
+            kind: "requeue-uuid-hubs".into(),
+            params: String::new(),
+            spec: Spec::RequeueUuidHubs { dry_run },
+            resume_after: None,
+        };
+        let err = sup.run_spec(&job(true)).await.expect_err("no census yet");
+        assert!(err.contains("run procedure-key-census first"), "{err}");
+        db.put_report(PROCEDURE_KEY_CENSUS_REPORT, r#"{"tenders":0,"hubs":[]}"#, 1).await.unwrap();
+        let err = sup.run_spec(&job(true)).await.expect_err("a pre-unit-2 census");
+        assert!(err.contains("predates issue 482 unit 2"), "{err}");
+        db.put_report(PROCEDURE_KEY_CENSUS_REPORT, r#"{"hub_tender_ids":[7,9]}"#, 2).await.unwrap();
+        let msg = sup.run_spec(&job(true)).await.expect("dry");
+        assert!(msg.contains("DRY RUN") && msg.contains("2 hub Tender(s)") && msg.contains("would re-queue 0"), "{msg}");
+        let msg = sup.run_spec(&job(false)).await.expect("wet");
+        assert!(!msg.contains("DRY RUN") && msg.contains("re-queued 0"), "{msg}");
     }
 
     /// Issue 482: the job wiring around `ingest::project::key_census`. It enqueues with
@@ -16655,6 +16755,7 @@ mod tests {
         );
         gauge("run_backfill_tender_links", std::mem::size_of_val(&sup.run_backfill_tender_links(&j, true)), 1_024);
         gauge("run_procedure_key_census", std::mem::size_of_val(&sup.run_procedure_key_census(&j)), 1_024);
+        gauge("run_requeue_uuid_hubs", std::mem::size_of_val(&sup.run_requeue_uuid_hubs(true)), 1_024);
         gauge("run_analyze", std::mem::size_of_val(&sup.run_analyze(&j)), 512);
         gauge("run_repair_member_twins", std::mem::size_of_val(&sup.run_repair_member_twins(&j, true)), 1_024);
         gauge(
@@ -16746,6 +16847,7 @@ mod tests {
         });
         poll_once_within("run_backfill_tender_links", 144 * 1024, || sup.run_backfill_tender_links(&j, true));
         poll_once_within("run_procedure_key_census", 144 * 1024, || sup.run_procedure_key_census(&j));
+        poll_once_within("run_requeue_uuid_hubs", 144 * 1024, || sup.run_requeue_uuid_hubs(true));
         poll_once_within("run_analyze", 330 * 1024, || sup.run_analyze(&j));
         assert!(
             over.is_empty(),
