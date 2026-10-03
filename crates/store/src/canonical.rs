@@ -1788,6 +1788,10 @@ pub struct LinkTally {
     /// has no cap, and a key that welds unrelated procedures (issue 482) shows here
     /// first. The maximum, not a sum, across a run's chunks.
     pub largest_component: u64,
+    /// A notice of that component — the smallest citing notice id of its joining edges —
+    /// so the job row names where to look (`0` when nothing joined). The 226-key
+    /// component of project 1915 (2026-10-03) could not be found from its size alone.
+    pub largest_component_notice: i64,
 }
 
 impl LinkTally {
@@ -1811,7 +1815,10 @@ impl LinkTally {
         self.keyed_weld += other.keyed_weld;
         self.oversized += other.oversized;
         self.deferred += other.deferred;
-        self.largest_component = self.largest_component.max(other.largest_component);
+        if other.largest_component > self.largest_component {
+            self.largest_component = other.largest_component;
+            self.largest_component_notice = other.largest_component_notice;
+        }
     }
 }
 
@@ -12278,6 +12285,7 @@ impl Db {
         );
         let t_uf = std::time::Instant::now();
         let mut largest = 0usize;
+        let mut largest_notice = 0i64;
         let merges: Vec<(String, String)> = if edges.is_empty() {
             Vec::new()
         } else {
@@ -12429,7 +12437,16 @@ impl Db {
             for i in 0..keys.len() {
                 *sizes.entry(uf.find(i as i64)).or_default() += 1;
             }
-            largest = sizes.values().copied().max().unwrap_or(0);
+            // Ties go to the smallest root, so the anchor does not depend on map order.
+            if let Some((&root, &size)) = sizes.iter().max_by(|x, y| x.1.cmp(y.1).then_with(|| y.0.cmp(x.0))) {
+                largest = size;
+                largest_notice = edges
+                    .iter()
+                    .filter(|e| uf.find(position[e.a.as_str()]) == root && uf.find(position[e.b.as_str()]) == root)
+                    .map(|e| e.a_id)
+                    .min()
+                    .unwrap_or(0);
+            }
             keys.iter()
                 .enumerate()
                 .filter_map(|(i, key)| {
@@ -12439,6 +12456,7 @@ impl Db {
                 .collect()
         };
         links.largest_component = largest as u64;
+        links.largest_component_notice = largest_notice;
         // Logged including the zeroes: a guard that refuses nothing reads the same as one
         // that is not running, unless the line says so.
         eprintln!(

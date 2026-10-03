@@ -3931,6 +3931,17 @@ async fn a_bt701_link_folds_the_doe_notice_into_the_keyed_ted_tender() {
     assert_eq!(report.links.logical_notice, 1, "{:?}", report.links);
     assert_eq!(report.links.refused(), 0, "{:?}", report.links);
     assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 1, "the island was retired into the TED Tender");
+    // The job row names a notice of the largest component, so a hub can be looked up.
+    assert_eq!(report.links.largest_component, 2, "{:?}", report.links);
+    assert!(
+        [
+            scalar(&db, "SELECT id FROM notices WHERE source = 'ted'").await,
+            scalar(&db, "SELECT id FROM notices WHERE source = 'doe'").await
+        ]
+        .contains(&report.links.largest_component_notice),
+        "{:?}",
+        report.links
+    );
     assert_eq!(
         query_text(&db, "SELECT procedure_key || '|' || source FROM tenders").await.as_deref(),
         Some(&*format!("{KEY}|ted")),

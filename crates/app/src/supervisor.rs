@@ -2611,7 +2611,7 @@ fn link_suffix(l: &store::LinkTally) -> String {
     format!(
         "; issue-481 tender links joined: {} (previous-notice {} of which cross-source {}, \
          logical-notice {}, matched {}); refused: {} (not-earlier {}, buyer-disjoint {}, fan-in {}, \
-         not-one-to-one {}, keyed-weld {}, oversized {}); deferred: {}; largest component: {} key(s)",
+         not-one-to-one {}, keyed-weld {}, oversized {}); deferred: {}; largest component: {} key(s){}",
         l.admitted(),
         l.previous_notice,
         l.cross_source,
@@ -2626,6 +2626,10 @@ fn link_suffix(l: &store::LinkTally) -> String {
         l.oversized,
         l.deferred,
         l.largest_component,
+        match l.largest_component_notice {
+            0 => String::new(),
+            n => format!(" at notice {n}"),
+        },
     )
 }
 
@@ -16278,6 +16282,7 @@ mod tests {
             fan_in: 2,
             oversized: 1,
             largest_component: 7,
+            largest_component_notice: 1_234,
             ..Default::default()
         };
         let s = link_suffix(&l);
@@ -16288,7 +16293,7 @@ mod tests {
         assert!(
             s.contains(
                 "refused: 7 (not-earlier 0, buyer-disjoint 4, fan-in 2, not-one-to-one 0, keyed-weld 0, oversized 1); \
-                 deferred: 0; largest component: 7 key(s)"
+                 deferred: 0; largest component: 7 key(s) at notice 1234"
             ),
             "{s}"
         );
@@ -16300,9 +16305,13 @@ mod tests {
         let s = link_suffix(&store::LinkTally { deferred: 2, ..Default::default() });
         assert!(s.contains("; deferred: 2;"), "{s}");
         // The largest component is a maximum across a run's chunks, not a sum.
-        let mut sum = store::LinkTally { largest_component: 4, ..Default::default() };
-        sum.add(store::LinkTally { largest_component: 3, ..Default::default() });
-        assert_eq!(sum.largest_component, 4);
+        // Its notice follows it.
+        let mut sum = store::LinkTally { largest_component: 4, largest_component_notice: 40, ..Default::default() };
+        sum.add(store::LinkTally { largest_component: 3, largest_component_notice: 30, ..Default::default() });
+        assert_eq!((sum.largest_component, sum.largest_component_notice), (4, 40));
+        sum.add(store::LinkTally { largest_component: 9, largest_component_notice: 90, ..Default::default() });
+        assert_eq!((sum.largest_component, sum.largest_component_notice), (9, 90));
+        assert!(!link_suffix(&store::LinkTally { deferred: 1, ..Default::default() }).contains(" at notice"));
     }
 
     /// Issue 395: the scheduled contiguity check must NAME the hole, and must
