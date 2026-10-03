@@ -1,7 +1,6 @@
 # 483 — a contractor, review body or platform vendor sits in the buyer slot, and every buyer-based guard trusts it
 
-Status: ready-for-agent — NEXT: deploy unit 1c (the decisive set re-cut from the census read, below) → re-run the
-census at stride 10 → if the decisive notices stay in the hundreds (expected ~60 at stride 10), build unit 2: demote
+Status: ready-for-agent — NEXT: read job 1943 (the stride-10 re-run under unit 1c, `dfbf93d`, deployed 2026-10-03) → if the decisive notices stay in the hundreds (expected ~60 at stride 10), build unit 2: demote
 the two decisive classes at projection, recovering the buyer from `real-buyer-elsewhere`'s organization. The swap
 waits on the org-level role index (deferred, below).
 Kind: data correctness (parties)
