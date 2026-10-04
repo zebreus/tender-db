@@ -529,7 +529,9 @@ notices the year has issued. Every id below it that no notice row carries is eit
 (the API serves it by id) or **never published** (the API answers 404 or a package with no release:
 an id issued and withdrawn before publication). The 2021-01 … 2026-08 top-up left 1,180 such ids on
 2026-10-03. `audit-fts-ids` asks the API for each one by id
-(`GET /ocdsReleasePackages/<id>`) and records the answer in the `publication_audit` table, one row
+(`GET /ocdsReleasePackages/<id>`; the 2026-10-04 run found all 1,180 absent, list in
+`.scratch/tender-db/477-fts/absent-ids-2026-10-04.txt`; **the weekly Sunday tick re-runs it** wet with
+`max_ids: 300`, last behind the scans, so each week's new never-published ids are accounted for) and records the answer in the `publication_audit` table, one row
 per id:
 
 | verdict | answer | what happens next |

@@ -13173,6 +13173,23 @@ impl Supervisor {
                         )
                         .await;
                     }
+                    // Issue 477 unit 3: FTS coverage is complete only while every id up to
+                    // the highest held one is held or shown absent by id, and each daily
+                    // adds never-published ids (1,073 of 2026's first nine months). The
+                    // weekly audit asks only the new ones and the 30-day-old current-year
+                    // absents (~30 a week, minutes at the 12 s pace); capped at 300 (an hour)
+                    // so a backlog can never hold the queue past the 07:35 chain. Last:
+                    // it is network-bound and nothing behind it waits on it.
+                    if self.already_pending("audit-fts-ids") {
+                        eprintln!("[schedule] audit-fts-ids already queued or running, skipping this week");
+                    } else {
+                        self.push(
+                            "audit-fts-ids",
+                            "audit-fts-ids max 300 (weekly)".into(),
+                            Spec::AuditFtsIds { dry_run: false, max_ids: Some(300), recheck_absent_days: None },
+                        )
+                        .await;
+                    }
             }
         }
     }
@@ -16843,13 +16860,13 @@ mod tests {
         );
     }
 
-    /// Issue 313: the weekly pre-dawn tick must actually enqueue all ten
+    /// Issue 313: the weekly pre-dawn tick must actually enqueue all eleven
     /// of its jobs, and must not stack a second copy of any of them. Until
     /// this test existed the body lived inside a loop that sleeps until a
     /// wall-clock Sunday, so tripwire 6's weekly clock had only ever been
     /// exercised by hand — a wiring slip would have surfaced as silence.
     #[tokio::test]
-    async fn the_weekly_report_tick_enqueues_its_ten_jobs_once_each() {
+    async fn the_weekly_report_tick_enqueues_its_eleven_jobs_once_each() {
         let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
         sup.run_report_tick().await;
         let kinds: Vec<String> = sup.queued().into_iter().map(|j| j.kind).collect();
@@ -16874,6 +16891,8 @@ mod tests {
                 // parity on it. A wet scan alone refused itself every week.
                 "scan-org-match-keys",
                 "scan-org-match-keys",
+                // Issue 477 unit 3: last, network-bound, capped at 300 ids.
+                "audit-fts-ids",
             ],
             "issue 315: the key rebuild rides AHEAD of the scan — the queue is FIFO, \
              so this order IS the dependency"
@@ -16901,7 +16920,9 @@ mod tests {
         // A second tick with last week's work still queued stacks nothing
         // (the issue-282 already_pending guard).
         sup.run_report_tick().await;
-        assert_eq!(sup.queued().len(), 10, "already_pending must stop the double enqueue");
+        assert_eq!(sup.queued().len(), 11, "already_pending must stop the double enqueue");
+        let audit = sup.queued().into_iter().find(|j| j.kind == "audit-fts-ids").unwrap();
+        assert_eq!(audit.params, "audit-fts-ids max 300 (weekly)", "the weekly audit is wet and capped");
     }
 
     /// Issue 324: the dry arm of `drop-orphan-satellites` writes its plan as
