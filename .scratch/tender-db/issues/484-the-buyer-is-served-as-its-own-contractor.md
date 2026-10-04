@@ -324,3 +324,16 @@ counts only (see docs/operations.md, "There is no dry `reparse`"). Not built her
 - **open** (2026-10-03): `[["buyer","Gobierno Vasco"],["winner","GOBIERNO VASCO"]]` — the authority as its own winner.
 - **done:** the winner is the supplier the text names after the authority's contact, or none.
   Expected after unit 2: `[["buyer","Gobierno Vasco"],["winner","Montte"]]`.
+
+## 2026-10-04 12:0x UTC — unit 2 deployed (`14df8b4`), probe verified, wet re-parse running
+
+- Gate on `064870d` failed once on the issue-467 poll-budget tripwire (`run_backfill_tender_links` over 144 KiB;
+  5 reruns under), not on a logic test; the four window-walk budgets went to 192 KiB (`14df8b4`), gate green.
+- **Probe:** `reparse text after 281, 1 package` (job 1969): 16,936 notices, **0 unmatched, 0 re-keyed, 0 now
+  failing**, 68 s (stamped 2,830,901 Tenders epoch-stale — by profile, as documented). Project 1970 folded them.
+- **Verify exhibit:** `/v1/tenders/2959772` parties now `[["buyer","Gobierno Vasco"],["winner","Montte"]]` (was
+  `GOBIERNO VASCO` as winner). **Done for the text defect's exhibit.**
+- **Wet:** job 1972 (`text after 282`, reclaim_only) and a driver loop enqueue the rest of the text chunks (stops on any
+  non-zero unmatched / re-keyed / failing), then `fts:ocds-1.1`, then one `project` (the full fallback, ~5 h). NEXT:
+  after the project, re-run `buyer-role-census` stride 10 and read per direction (contractor-* down by the parser
+  share, totals up), Verify 46804384 (Kirklees buyer, Microsoft winner) and 485's 2808875.
