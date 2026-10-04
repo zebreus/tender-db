@@ -1,8 +1,9 @@
 # 483 — a contractor, review body or platform vendor sits in the buyer slot, and every buyer-based guard trusts it
 
-Status: ready-for-agent — NEXT: read job 1943 (the stride-10 re-run under unit 1c, `dfbf93d`, deployed 2026-10-03) → if the decisive notices stay in the hundreds (expected ~60 at stride 10), build unit 2: demote
-the two decisive classes at projection, recovering the buyer from `real-buyer-elsewhere`'s organization. The swap
-waits on the org-level role index (deferred, below).
+Status: ready-for-agent — NEXT: unit 2, demote at projection (job 1943 read 2026-10-04, below): drop a decisively
+flagged buyer mention from the served buyer role when a clean buyer is left (95 of 139 at stride 10), and promote
+`real-buyer-elsewhere`'s organization where none is (Staatliches Bauamt, OPW, Domstolsverket; ~30). A platform name
+alone (Mercell, 1) keeps its role. The swap waits on the org-level role index (deferred, below).
 Kind: data correctness (parties)
 Relates to: 482 (16 of 45 false splits in the 2-cluster read were role mis-tags), 481 unit 2b/2c (the buyer guard
 reads `Procedure-Buyer`), 456 (mention binding), the served `parties[]`
@@ -164,3 +165,23 @@ except the court beside a recoverable buyer, not separable from legitimate buyer
 - **The contractor-slot mis-tag** (the buyer named as its own winner, ~260 notices at stride 10 → ~2,600) is a
   real defect of the served awards, the other way round: filed as issue 484, not this unit — the
   winner mention on those notices is the one to doubt (a legacy text parse of "Supplier(s): 1: <buyer contact>").
+
+## Re-run under unit 1c — 2026-10-04 (job 1943, stride 10, rev `dfbf93d`)
+
+Report: `.scratch/tender-db/483-roles/census-1943.json`. Same 1,470,018 notices; **139 decisively flagged (was
+3,151), 38 with no clean buyer (was 2,993)**: `review-body-name` 131 (36 no clean buyer), `platform-name` 9 (2).
+The 30 review-body samples:
+- **"real buyer elsewhere", no clean buyer (11)**: Vergabekammer ×4 / Staatliches Bauamt Erlangen-Nürnberg,
+  Vergabekammer Nordbayern / Stadt Waldershof, High Court of Ireland / OPW, Förvaltningsrätten i Göteborg /
+  Domstolsverket, Förvaltningsrätten i Falun / Gästrike återvinnare, Conseil d'État / its own direction, Raad van
+  State / "Digitaal via TenderNed" (a platform label, not a buyer: the recovery needs a name check). Real mis-tags,
+  recoverable except the last.
+- **"another buyer", a clean buyer left (19)**: KIO ×3, tribunaux administratifs ×3, DKOM ×2, Raad van State ×3,
+  Vergabekammer ×2, KZK, IUB, Markkinaoikeus, the Cyprus authority, PCRB, Verwaltungsgericht Wien — the review body
+  referenced in the buyer slot beside the real buyer (it also holds the review role). Dropping it leaves the real
+  buyer: safe.
+- Patterns: Vergabekammer 36, tribunal administratif 28, KIO 23, Raad van State 10, DKOM 8, Verwaltungsgericht 5,
+  High Court 4, TAR 3 (the bare-`tar` false hit is gone).
+- `platform-name`: European Dynamics ×8 beside a clean buyer (7) or with Armagh council elsewhere; Mercell alone.
+
+So the decisive set is precise (~30/30 by hand) and small (~1,400 notices corpus-wide). Unit 2 is the demote.
