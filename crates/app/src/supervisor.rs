@@ -17519,10 +17519,17 @@ mod tests {
         poll_once_within("run_backfill_merged_identifiers", 372 * 1024, || {
             sup.run_backfill_merged_identifiers(&j, true)
         });
-        poll_once_within("run_backfill_tender_links", 144 * 1024, || sup.run_backfill_tender_links(&j, true));
-        poll_once_within("run_procedure_key_census", 144 * 1024, || sup.run_procedure_key_census(&j));
-        poll_once_within("run_buyer_role_census", 144 * 1024, || sup.run_buyer_role_census(&j, 1));
-        poll_once_within("run_requeue_uuid_hubs", 144 * 1024, || sup.run_requeue_uuid_hubs(true));
+        // The four window walks below were budgeted at 144 KiB from an isolated measure
+        // of 105-120 KiB. The full gate of 2026-10-04 (`064870d`) aborted the link backfill
+        // over 144 KiB once, while five isolated and whole-lib reruns stayed under: the first
+        // poll's depth depends on whether turso's read completes inline, which varies with
+        // load. 192 KiB covers that path; in production every one of them runs through
+        // `off_frame` on its own large stack, so this is the tripwire's margin, not a
+        // production risk.
+        poll_once_within("run_backfill_tender_links", 192 * 1024, || sup.run_backfill_tender_links(&j, true));
+        poll_once_within("run_procedure_key_census", 192 * 1024, || sup.run_procedure_key_census(&j));
+        poll_once_within("run_buyer_role_census", 192 * 1024, || sup.run_buyer_role_census(&j, 1));
+        poll_once_within("run_requeue_uuid_hubs", 192 * 1024, || sup.run_requeue_uuid_hubs(true));
         poll_once_within("run_refold_buyer_roles", 144 * 1024, || sup.run_refold_buyer_roles(&j, true));
         poll_once_within("run_analyze", 330 * 1024, || sup.run_analyze(&j));
         poll_once_within("run_audit_fts_ids", 330 * 1024, || sup.run_audit_fts_ids(&j, true, None, None));
