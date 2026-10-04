@@ -596,3 +596,16 @@ deployed, so no 2c plan exists on prod.
   00123456-2026. That is a BT-04 collision, issue 482's shape, which the census will list.
 - NEXT: inspect the 226-key component; the data-quality report's "merged with TED" after the Sunday report; then
   close unit 2 (unit 3 is the matched-link rule).
+
+## 2026-10-04 — the weekly data-quality read (job 1948, computed 2026-10-04 ~01:5x UTC)
+
+- `DÖE procedure Tenders: 924,004; merged with TED: 249,655 (27.0%)` — was 921,031 / 243,588 (26.4 %) on
+  2026-10-02. **+6,067 merged**, matching unit 2's fold 1915 (logical-notice 5,044 + cross-source previous-notice
+  1,531, less the DÖE Tenders those joins retired into TED keys; the denominator grew by the week's new DÖE Tenders).
+  The calibration had extrapolated ~2,650 BT-701 twins; the declared links found about twice that, since the
+  cross-source OPP-090 producer was not in the calibration's count.
+- The job row now names the largest component's notice (`1db6bd3`): daily 1965 reads `largest component: 8 key(s) at
+  notice 25668433` — the 226-key component of 1915 is no longer present (1915 predated the field, so it stays
+  unnamed).
+- Verify above: **done** for unit 2's measure. Open: the Bochum two-departments refusal (a place token after a
+  kind-of-body head) and unit 3 (matched links).
