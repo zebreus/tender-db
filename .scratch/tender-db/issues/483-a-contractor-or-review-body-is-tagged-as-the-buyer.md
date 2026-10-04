@@ -326,3 +326,15 @@ is not public-shaped unless it pays or finances (POLREGIO pays, 438807 still pro
 words. Correct or unchanged: a swapped notice keeps its review-body buyer as published (the swap's real buyer is the
 TENDERER, recoverable only with the org-level role index — deferred). NEXT: gate → deploy → dry again → read the
 promotes → wet → the daily re-derives → Verify 438807.
+
+## 2b deployed (`5b4a2a8`); dry 1955 → WET 1956 — 2026-10-04 ~03:30 UTC
+
+Dry 1955 (`483-roles/refold-dry-1955.json`): **1,091 fixed** (was 1,176), **110 promotes** (was 195). By hand: ~105
+right (Landeshauptstadt München Baureferat ×12, Staatliches Bauamt ×12, Gästrike återvinnare ×6, Stiftung Preußischer
+Kulturbesitz ×4, Domstolsverket, OPW, Adif, ACOSS, Ville de Nice, GDDKiA, DPP, Osakidetza, the Irish schools behind
+European Dynamics …). **Residue, ~5:** the legacy sentence "Inhoudelijke en procedurele aspecten…" (≤ 16 words after
+all), PSI ×2 (tender agent of the Raad van State, no legal form in the name), Rembud Trzebinia, CWPA Planning and
+Architecture. Each replaces an already-wrong buyer (the review body) with another wrong one — no correct buyer is
+lost — so wet now; the residue is the deferred org-level role index's to fix (an agent is never a buyer elsewhere).
+Wet: job 1956 → the next daily (07:35 UTC) re-derives. NEXT: read the daily's `issue-481` line and
+`/v1/tenders/<438807's tender>` parties (Verify), then close unit 2.
