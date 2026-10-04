@@ -505,3 +505,10 @@ test, the five ingest mock tests, the coverage test, both supervisor audit tests
 
 Done when the report reads `complete: true` (every id held, quarantined or absent), the absent list is recorded here, and the
 Verify's residue equals the absent count.
+
+### 2026-10-04 04:4x–05:4x UTC — unit 3 deployed (`c9469c4`), audit running
+
+- Dry 1957: 1,180 missing, the Verify's number exactly (2021 20, 2022 8, 2023 6, 2025 73, 2026 1,073).
+- Wet 1958 (`max_ids` 300): **300 probed, 300 absent, 0 present, 0 error**, controls passing. 2021–2025 now read
+  held = published (complete); 2026: 193 absent, 880 unaccounted.
+- 1959 (next 300) running; the last ~580 after the 07:35 daily.
