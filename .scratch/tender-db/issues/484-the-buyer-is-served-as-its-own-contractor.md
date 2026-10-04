@@ -337,3 +337,19 @@ counts only (see docs/operations.md, "There is no dry `reparse`"). Not built her
   non-zero unmatched / re-keyed / failing), then `fts:ocds-1.1`, then one `project` (the full fallback, ~5 h). NEXT:
   after the project, re-run `buyer-role-census` stride 10 and read per direction (contractor-* down by the parser
   share, totals up), Verify 46804384 (Kirklees buyer, Microsoft winner) and 485's 2808875.
+
+## 2026-10-04 13:0x–19:0x UTC — wet re-parse, full project, sweep; a missed range
+
+- Reparse text after 282 (1972): 1,453,453 notices / 119 packages, 0 unmatched / re-keyed / failing. Reparse
+  `fts:ocds-1.1` (1973): 333,552 / 168 packages, all 0.
+- Project 1974 (full fallback, 295 min): 14,882,976 notices → 8,771,628 Tenders; 3,053,989 written, 5,717,639
+  unchanged; 56,862 mentions re-bound. `issue-481 … largest component: 226 key(s) at notice 24682900` (481's
+  unnamed component, now findable). Auto-sweep 1975 over its cap → **sweep 1976 wet: 122,064 country-less
+  provisional orphans swept** (logged in `org_sweep_log`).
+- **Verify 46804384: done** — Tender 8822638 serves `Procedure-Buyer` The Council of the Borough of Kirklees and
+  `Tenderer` Microsoft Ltd (one section each).
+- **MISSED RANGE:** the probe started `after 281` and the continuation `after 282`, so text packages **186–281**
+  (monthlies 2003-01 … 2010-12, 96 packages) were never re-parsed. 2808875 (fetch 241) still served
+  `Fax 0044 …` winners. Re-parse `{"profiles":["text"],"packages":96}` from the floor = job 1977, then a project.
+  Lesson recorded in docs: a probe chosen with `after` must be followed by a run from the profile's floor, not from
+  the probe's `after`.

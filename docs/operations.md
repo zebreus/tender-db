@@ -1236,7 +1236,9 @@ So a parser change's effect is measured AROUND the wet run, not by it:
   notices' stored parse via the public `GET /v1/notices/{id}/content`;
 - **probe**: one package with `reclaim_only:true`, chosen with `after` so it holds an exhibit, then
   re-read that exhibit's `/content` — it serves the new parse before any fold;
-- **wet**: the whole profile with `reclaim_only:true`, then ONE `project` (above 500,000 un-projected
+- **wet**: the whole profile with `reclaim_only:true` — **from the profile's floor (no `after`)**, not from
+  the probe's `after`: continuing from the probe skips every package below it (issue 484 left text
+  packages 186–281 un-re-parsed that way, 2026-10-04) — then ONE `project` (above 500,000 un-projected
   notices it is the FULL fallback anyway);
 - **after**: the same census at the same stride, and the issue's Verify. Read it per direction: a
   fix that removes junk can also READ more (issue 484's successor bound added 28% winners on the
