@@ -593,6 +593,16 @@ fn PipelinePanel(rows: Vec<PipelineStage>) -> Element {
                                         " · missing: {s.missing_periods.join(\", \")}"
                                     }
                                 }
+                                // Issue 477 unit 3: FTS ids below a year's highest
+                                // that are neither held nor shown absent — named,
+                                // because every period being fetched is not every
+                                // notice arriving.
+                                if let Some(n) = s.unaccounted_ids.filter(|n| *n > 0) {
+                                    span { class: "warning",
+                                        title: "Notice ids below each year's highest id that the corpus does not hold and the `audit-fts-ids` job has not shown absent from the API. Run that job; its report lists the packages to refetch. Complete is bounded by the highest id held: ids a fetch lost after a closed year's last held id are not counted.",
+                                        " · {group(n)} ids unaccounted"
+                                    }
+                                }
                                 // Issue 395, re-worded 2026-09-17 after measuring
                                 // one: "registered twice" reads as an operator
                                 // error, and TED's 2025-09 is not one. Two

@@ -11,6 +11,7 @@ pub mod analyze;
 pub mod canonical;
 pub mod checkpoint;
 pub mod jobs;
+pub mod publication_audit;
 pub mod rates;
 pub mod read;
 pub mod webhooks;
@@ -67,6 +68,7 @@ pub use canonical::{
     TYPO_MOVE_MENTION_VETO,
 };
 pub use jobs::QueuedJobRow;
+pub use publication_audit::PublicationAudit;
 pub use read::{Filter, Reader, Readers, Stamp, Status};
 pub use webhooks::{Delivery, Endpoint};
 
@@ -1115,6 +1117,7 @@ impl Db {
         conn.execute_batch(accounts::SCHEMA).await?;
         conn.execute_batch(jobs::SCHEMA).await?;
         conn.execute_batch(webhooks::SCHEMA).await?;
+        conn.execute_batch(publication_audit::SCHEMA).await?;
         migrate(&conn).await?;
         let cursor = watch::Sender::new(max_cursor(&conn).await?);
         // The WAL read-gate is opt-in (issue 63): only a full-corpus rebuild whose

@@ -2302,3 +2302,374 @@ async fn dense_a_stopped_walk_resumes_without_asking_a_staged_record_again() {
         let _ = std::fs::remove_dir_all(&archive);
     }
 }
+
+// ---------------------------------------------------------------------------
+// Issue 477 unit 3: the by-id audit of the ids below each year's highest.
+
+use ingest::fetch::{audit_fts_ids, fts_id_census, AuditOptions};
+use ingest::fts::audit::Verdict;
+
+/// The by-id endpoint, `GET /api/1.0/ocdsReleasePackages/{id}`: each id answers
+/// what `answers` says (`404`, `400`, `empty`, `nopkg` = `{"releases": []}`,
+/// `once` = present on the first ask and 404 after, or a release date for a
+/// present id); an id it does not name is a 404. Logs every id asked, in order,
+/// control requests included ([`asked`] filters those out).
+async fn fts_id_server(answers: HashMap<&'static str, &'static str>) -> (String, Log) {
+    let answers = Arc::new(answers);
+    let log: Log = Arc::new(Mutex::new(Vec::new()));
+    let app = axum::Router::new().route("/api/1.0/ocdsReleasePackages/{id}", {
+        let log = log.clone();
+        get(move |axum::extract::Path(id): axum::extract::Path<String>| {
+            let (answers, log) = (answers.clone(), log.clone());
+            async move {
+                let seen = {
+                    let mut log = log.lock().unwrap();
+                    let seen = log.iter().filter(|asked| **asked == id).count();
+                    log.push(id.clone());
+                    seen
+                };
+                let page = |releases: Value| {
+                    json!({
+                        "uri": format!("http://fts/api/1.0/ocdsReleasePackages/{id}"),
+                        "version": "1.1",
+                        "publishedDate": "2026-10-04T00:00:00Z",
+                        "publisher": { "name": "Cabinet Office" },
+                        "releases": releases,
+                    })
+                    .to_string()
+                };
+                let present = |date: &str| {
+                    page(json!([{ "id": id, "ocid": format!("ocds-h6vhtk-{id}"), "date": date, "tag": ["tender"] }]))
+                };
+                match answers.get(id.as_str()).copied().unwrap_or("404") {
+                    "404" => (StatusCode::NOT_FOUND, String::new()).into_response(),
+                    "400" => (StatusCode::BAD_REQUEST, String::new()).into_response(),
+                    "empty" => (StatusCode::OK, String::new()).into_response(),
+                    "nopkg" => (StatusCode::OK, page(json!([]))).into_response(),
+                    "once" if seen == 0 => (StatusCode::OK, present("2021-01-04T09:00:00Z")).into_response(),
+                    "once" => (StatusCode::NOT_FOUND, String::new()).into_response(),
+                    date => (StatusCode::OK, present(date)).into_response(),
+                }
+            }
+        })
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    (format!("http://{addr}/api/1.0"), log)
+}
+
+/// The ids the log shows asked, without the control requests of `controls`.
+fn asked(log: &Log, controls: &[&str]) -> Vec<String> {
+    log.lock().unwrap().iter().filter(|id| !controls.contains(&id.as_str())).cloned().collect()
+}
+
+/// How many control requests the log shows.
+fn controls_asked(log: &Log, controls: &[&str]) -> usize {
+    log.lock().unwrap().iter().filter(|id| controls.contains(&id.as_str())).count()
+}
+
+/// A held id's by-id answer, for the control requests.
+const HELD: &str = "2021-01-04T09:00:00Z";
+
+/// Hold `ids` as FTS notices of the package `(kind, period)`; the fetch id.
+async fn hold_fts(db: &store::Db, kind: &str, period: &str, ids: &[&str]) -> i64 {
+    db.record_fetch(&store::Fetch {
+        source: "fts".into(),
+        kind: kind.into(),
+        period: period.into(),
+        url: "u".into(),
+        sha256: format!("{kind}{period}"),
+        bytes: 1,
+        fetched_at: 0,
+        path: format!("fts/{kind}/{period}.zip"),
+    })
+    .await
+    .unwrap();
+    let fetch_id = db.current_packages("fts", kind, Some(period)).await.unwrap()[0].fetch_id;
+    for id in ids {
+        db.record_notice(
+            &store::Notice {
+                source: "fts".into(),
+                publication_id: (*id).into(),
+                content_hash: format!("h{id}"),
+                profile: "fts:ocds-1.1".into(),
+                declared_version: Some("1.1".into()),
+                fetch_id,
+                member_path: format!("{id}.json"),
+                ingested_at: 0,
+                published_at: None,
+                dispatched_at: None,
+            },
+            &store::Parse::Pending,
+        )
+        .await
+        .unwrap();
+    }
+    fetch_id
+}
+
+/// Issue 477 unit 3, end to end against a mock of the by-id endpoint: the job
+/// asks exactly the ids missing below each year's highest (after a control
+/// request of a held id), records absent / present / error, names the present
+/// id's neighbours' package and its day's, stops at a checkpoint, resumes
+/// asking only what is not decided, and the denominator closes once every id
+/// is held or absent.
+#[tokio::test]
+async fn the_id_audit_asks_each_missing_id_once_and_resumes_from_its_ledger() {
+    let archive = temp_dir("fts-id-audit");
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    // 2021: 1..=8 issued; 3, 5, 6 missing. 2022: 1..=3, 2 missing. A non-sequence
+    // id is ignored. The neighbours of 000005-2021 (4 and 7) sit in 2021-05.
+    hold_fts(&db, "monthly", "2021-04", &["000001-2021", "000002-2021", "000004-2021"]).await;
+    hold_fts(&db, "monthly", "2021-05", &["000007-2021", "000008-2021", "000008-2021-junk"]).await;
+    hold_fts(&db, "monthly", "2022-01", &["000001-2022", "000003-2022"]).await;
+    let controls = ["000008-2021", "000003-2022"];
+    let (base, log) = fts_id_server(
+        [
+            ("000003-2021", "404"),
+            ("000005-2021", "2021-07-27T09:00:00+01:00"),
+            ("000006-2021", "400"),
+            ("000002-2022", "nopkg"),
+            ("000008-2021", HELD),
+            ("000003-2022", HELD),
+        ]
+        .into(),
+    )
+    .await;
+    let client = reqwest::Client::new();
+    let pause = Duration::ZERO;
+
+    // A dry run asks nothing and writes nothing, and counts what is due.
+    let dry = audit_fts_ids(&db, &client, &base, pause, AuditOptions { dry_run: true, ..Default::default() }, || false, |_| {})
+        .await
+        .unwrap();
+    assert_eq!((dry.missing, dry.due, dry.probed, dry.controls), (4, 4, 0, 0));
+    assert!(log.lock().unwrap().is_empty(), "a dry run makes no request");
+    assert!(db.publication_audits("fts").await.unwrap().is_empty());
+
+    // Stopped after two answers: the two land in the ledger. The control is
+    // asked first, and once more at the end to confirm the absent.
+    let n = std::sync::atomic::AtomicUsize::new(0);
+    let stopped = audit_fts_ids(
+        &db,
+        &client,
+        &base,
+        pause,
+        AuditOptions::default(),
+        || n.load(Ordering::Relaxed) >= 2,
+        |_| {
+            n.fetch_add(1, Ordering::Relaxed);
+        },
+    )
+    .await
+    .unwrap();
+    assert!(stopped.stopped);
+    assert_eq!(stopped.halted, None);
+    assert_eq!((stopped.probed, stopped.controls), (2, 2));
+    assert_eq!(
+        *log.lock().unwrap(),
+        ["000008-2021", "000003-2021", "000005-2021", "000008-2021"],
+        "control, then (year, seq) order, then the closing control"
+    );
+
+    // The resume asks only the two never asked.
+    let mut seen = Vec::new();
+    let run = audit_fts_ids(&db, &client, &base, pause, AuditOptions::default(), || false, |p| {
+        seen.push((p.id.to_owned(), p.verdict))
+    })
+    .await
+    .unwrap();
+    assert_eq!(seen, [("000006-2021".to_owned(), Verdict::Error), ("000002-2022".to_owned(), Verdict::Absent)]);
+    assert_eq!(asked(&log, &controls).len(), 4, "no id asked twice");
+    assert_eq!(run.halted, None);
+    assert_eq!(run.absent_ids, ["000003-2021", "000002-2022"]);
+    assert_eq!(run.error_ids, ["000006-2021"]);
+    assert_eq!(run.present_ids.len(), 1);
+    let present = &run.present_ids[0];
+    assert_eq!(present.id, "000005-2021");
+    assert_eq!(present.published_day.as_deref(), Some("2021-07-27"));
+    assert_eq!(
+        present.packages,
+        ["monthly 2021-04", "monthly 2021-05", "monthly 2021-07"],
+        "both neighbours' packages and its release month's (monthlies reach 2022-01)"
+    );
+    assert_eq!(run.enqueue.len(), 5, "three fetches, one process, one project: {:?}", run.enqueue);
+    assert!(run.enqueue[0].contains(r#""period":"2021-04""#) && run.enqueue[0].contains(r#""refetch":true"#));
+    let y21 = &run.years[0];
+    assert_eq!((y21.highest, y21.held, y21.absent, y21.present, y21.errors, y21.published()), (8, 5, 1, 1, 1, 7));
+    assert!(run.years[1].complete(), "2022: 000002 shown absent");
+    assert_eq!(run.unaccounted, 2);
+    assert!(!run.complete);
+    assert!(run.summary().contains("4 missing id(s), 2 due, 2 probed"), "{}", run.summary());
+
+    // The next run re-asks only the error; once it answers 404 and the present
+    // id is held (a refetch recovered it), every year is complete, and the
+    // dashboard's census agrees with the report.
+    let row = db.publication_audits("fts").await.unwrap();
+    assert_eq!(row.iter().find(|r| r.publication_id == "000006-2021").map(|r| r.http_status), Some(Some(400)));
+    let (base, log) = fts_id_server([("000008-2021", HELD)].into()).await;
+    hold_fts(&db, "monthly", "2021-07", &["000005-2021"]).await;
+    let last = audit_fts_ids(&db, &client, &base, pause, AuditOptions::default(), || false, |_| {}).await.unwrap();
+    assert_eq!(asked(&log, &controls), ["000006-2021"]);
+    assert!(last.complete, "{}", last.summary());
+    assert!(last.enqueue.is_empty() && last.present_ids.is_empty());
+    let census = fts_id_census(&db).await.unwrap();
+    assert_eq!(census, last.years);
+    assert_eq!(census[0].published(), 6, "8 issued, 3 and 6 never published");
+    let attempts = db.publication_audits("fts").await.unwrap();
+    assert_eq!(attempts.iter().find(|r| r.publication_id == "000006-2021").map(|r| r.attempts), Some(2));
+
+    // Closed years' stale absents are re-asked only on request.
+    let again = audit_fts_ids(
+        &db,
+        &client,
+        &base,
+        pause,
+        AuditOptions { recheck_absent_after_secs: Some(0), max_ids: Some(1), ..Default::default() },
+        || false,
+        |_| {},
+    )
+    .await
+    .unwrap();
+    assert_eq!((again.due, again.probed), (3, 1), "three absents due, capped to one ask");
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// Issue 477 unit 3: five consecutive errors halt the run with the reason, and
+/// what was answered stays recorded for the resume.
+#[tokio::test]
+async fn the_id_audit_halts_on_an_error_streak_and_keeps_what_it_learned() {
+    let archive = temp_dir("fts-id-audit-halt");
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    hold_fts(&db, "monthly", "2021-01", &["000001-2021", "000009-2021"]).await;
+    // 2..=8 missing: 2 absent, then six 400s.
+    let (base, log) = fts_id_server(
+        [
+            ("000002-2021", "404"),
+            ("000003-2021", "400"),
+            ("000004-2021", "400"),
+            ("000005-2021", "400"),
+            ("000006-2021", "400"),
+            ("000007-2021", "400"),
+            ("000008-2021", "400"),
+            ("000009-2021", HELD),
+        ]
+        .into(),
+    )
+    .await;
+    let run = audit_fts_ids(&db, &reqwest::Client::new(), &base, Duration::ZERO, AuditOptions::default(), || false, |_| {})
+        .await
+        .unwrap();
+    let halted = run.halted.as_deref().expect("halted");
+    assert!(halted.starts_with("5 consecutive errors, the last on 000007-2021: HTTP 400"), "{halted}");
+    assert_eq!(asked(&log, &["000009-2021"]).len(), 6, "000008 is never asked");
+    assert_eq!(db.publication_audits("fts").await.unwrap().len(), 6);
+    assert_eq!(run.absent_ids, ["000002-2021"], "the closing control confirmed it");
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// Issue 477 review: a non-error answer resets the error streak — four errors,
+/// an absent, four more errors never halt, and every id is asked.
+#[tokio::test]
+async fn the_id_audit_error_streak_resets_on_a_decisive_answer() {
+    let archive = temp_dir("fts-id-audit-streak");
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    hold_fts(&db, "monthly", "2021-01", &["000001-2021", "000011-2021"]).await;
+    let mut answers: HashMap<&'static str, &'static str> = [("000011-2021", HELD), ("000006-2021", "404")].into();
+    for id in ["000002-2021", "000003-2021", "000004-2021", "000005-2021", "000007-2021", "000008-2021", "000009-2021", "000010-2021"] {
+        answers.insert(id, "400");
+    }
+    let (base, log) = fts_id_server(answers).await;
+    let run = audit_fts_ids(&db, &reqwest::Client::new(), &base, Duration::ZERO, AuditOptions::default(), || false, |_| {})
+        .await
+        .unwrap();
+    assert_eq!(run.halted, None, "{}", run.summary());
+    assert_eq!(asked(&log, &["000011-2021"]).len(), 9, "every missing id asked");
+    assert_eq!((run.probed, run.absent, run.errors), (9, 1, 8));
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// Issue 477 review: a 404 counts only while the endpoint serves a known id.
+/// A wrong base (every request 404) halts on the first control and records
+/// nothing; an endpoint that stops serving known ids mid-run has the absents
+/// since the last passed control demoted to `error`, re-asked next run.
+#[tokio::test]
+async fn the_id_audit_records_no_absent_unless_a_held_id_answers() {
+    let archive = temp_dir("fts-id-audit-control");
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    hold_fts(&db, "monthly", "2021-01", &["000001-2021", "000005-2021"]).await;
+    let client = reqwest::Client::new();
+
+    // A wrong base: the route is not there, every request is a 404.
+    let (base, log) = fts_id_server([("000005-2021", HELD)].into()).await;
+    let run = audit_fts_ids(&db, &client, &format!("{base}/wrong"), Duration::ZERO, AuditOptions::default(), || false, |_| {})
+        .await
+        .unwrap();
+    let halted = run.halted.as_deref().expect("halted");
+    assert!(halted.starts_with("control: held id 000005-2021 answered absent (404)"), "{halted}");
+    assert_eq!((run.probed, run.controls), (0, 1));
+    assert!(log.lock().unwrap().is_empty());
+    assert!(db.publication_audits("fts").await.unwrap().is_empty(), "nothing recorded absent");
+
+    // The held id answers once, then the endpoint 404s everything: the three
+    // absents are demoted by the closing control.
+    let (base, log) = fts_id_server([("000005-2021", "once")].into()).await;
+    let run = audit_fts_ids(&db, &client, &base, Duration::ZERO, AuditOptions::default(), || false, |_| {})
+        .await
+        .unwrap();
+    let halted = run.halted.as_deref().expect("halted");
+    assert!(halted.contains("3 absent answer(s) since the last passed control demoted to error"), "{halted}");
+    assert_eq!(controls_asked(&log, &["000005-2021"]), 2);
+    assert_eq!((run.probed, run.absent, run.errors), (3, 0, 3));
+    assert!(run.absent_ids.is_empty());
+    assert_eq!(run.error_ids, ["000002-2021", "000003-2021", "000004-2021"]);
+    let rows = db.publication_audits("fts").await.unwrap();
+    assert!(
+        rows.iter().all(|r| r.verdict == "error" && r.detail.as_deref().is_some_and(|d| d.starts_with("absent, not confirmed: control"))),
+        "{rows:?}"
+    );
+    assert!(!run.complete);
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// Issue 477 review: a missing id an archived, quarantined member carries is
+/// recorded `quarantined` without a request and counts as accounted for, so the
+/// denominator can close (a `present` verdict never would: the refetch dedups).
+#[tokio::test]
+async fn the_id_audit_accounts_for_quarantined_members_without_asking() {
+    let archive = temp_dir("fts-id-audit-quarantine");
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    let fetch_id = hold_fts(&db, "monthly", "2021-01", &["000001-2021", "000004-2021"]).await;
+    db.insert_quarantine(&store::Quarantined {
+        fetch_id,
+        member_path: "000003-2021~0a1b2c3d.json".into(),
+        content_hash: "q".into(),
+        profile: Some("fts:ocds-1.1".into()),
+        reason: "parse-error".into(),
+        detail: None,
+        first_seen: 0,
+    })
+    .await
+    .unwrap();
+    let (base, log) = fts_id_server([("000004-2021", HELD)].into()).await;
+    let client = reqwest::Client::new();
+
+    let dry = audit_fts_ids(&db, &client, &base, Duration::ZERO, AuditOptions { dry_run: true, ..Default::default() }, || false, |_| {})
+        .await
+        .unwrap();
+    assert_eq!((dry.missing, dry.quarantined, dry.due), (2, 1, 1));
+    assert_eq!(dry.quarantined_ids, ["000003-2021"]);
+    assert!(db.publication_audits("fts").await.unwrap().is_empty(), "a dry run writes nothing");
+
+    let run = audit_fts_ids(&db, &client, &base, Duration::ZERO, AuditOptions::default(), || false, |_| {}).await.unwrap();
+    assert_eq!(asked(&log, &["000004-2021"]), ["000002-2021"], "the quarantined id is never asked");
+    assert_eq!(run.quarantined_ids, ["000003-2021"]);
+    let y21 = &run.years[0];
+    assert_eq!((y21.held, y21.absent, y21.quarantined, y21.published()), (2, 1, 1, 3), "4 issued, 1 never published");
+    assert!(run.complete, "held + quarantined + absent == highest: {}", run.summary());
+    let rows = db.publication_audits("fts").await.unwrap();
+    assert_eq!(rows.iter().find(|r| r.publication_id == "000003-2021").map(|r| r.verdict.as_str()), Some("quarantined"));
+    assert_eq!(fts_id_census(&db).await.unwrap(), run.years, "the dashboard reads the same");
+    let _ = std::fs::remove_dir_all(&archive);
+}

@@ -425,7 +425,8 @@ tender-admin raw DELETE /admin/jobs/41 </dev/null   # the same handler
 #                             fusion-census, rehoming-packet,
 #                             satellite-orphans, drop-orphan-satellites,
 #                             anchor-wall-census, xb-packet, … — plus an FTS
-#                             `fetch` (issue 450: `stoppable` in supervisor.rs).
+#                             `fetch` (issue 450: `stoppable` in supervisor.rs) and
+#                             `audit-fts-ids` (issue 477 unit 3).
 #                             A TED/DÖE fetch is one download and answers 409.
 #   404                       no such job
 # A cancelled data-quality run stores NOTHING: a half-measured report would read like a
@@ -520,6 +521,84 @@ into one `fetch` per month, then one whole-source `process`, then one `project`,
 so progress and cancellation stay per-package. Jobs run **one at a time** in
 enqueue order — the writer is single anyway — so a fetch → process → project
 sequence lands in order.
+
+### The FTS id audit and `audit-fts-ids` (issue 477 unit 3)
+
+FTS notice ids are a per-year sequence, `NNNNNN-YYYY`, so a year's highest id held says how many
+notices the year has issued. Every id below it that no notice row carries is either **lost by a fetch**
+(the API serves it by id) or **never published** (the API answers 404 or a package with no release:
+an id issued and withdrawn before publication). The 2021-01 … 2026-08 top-up left 1,180 such ids on
+2026-10-03. `audit-fts-ids` asks the API for each one by id
+(`GET /ocdsReleasePackages/<id>`) and records the answer in the `publication_audit` table, one row
+per id:
+
+| verdict | answer | what happens next |
+|---|---|---|
+| `absent` | 404 / 410, or a package with `releases: []` — recorded only while a held id answers (the control, below) | leaves the denominator; a current-year absent is re-asked once 30 days old, a closed year's only with `recheck_absent_days` |
+| `present` | a 200 carrying a release of the id; `published` / `published_day` / `ocid` recorded | the report lists the packages to refetch for it; never re-asked (a refetch recovers it, not a probe) |
+| `error` | anything else: a 200 with an **empty body** (FTS sent three for `04196f`'s existing record, unit 1b), a 5xx or other 4xx after the retries, a throttle that outlived them, a transport error, a body that is not a release package, releases of other ids only, or an absent a failed control demoted | asked again on the next run |
+| `quarantined` | not asked: an archived member the processor quarantined carries the id (`NNNNNN-YYYY[~hash].json`) | accounted for (the fetch did not lose it) and still in the denominator; never asked; a reclaim makes it held |
+
+- **Held ids come from the DB, not the zips**: `notices.publication_id` of source `fts`, an index range
+  of the identity key. A member quarantined without a notice row is read from `quarantine` (one scan
+  per run, never by the dashboard) and recorded `quarantined` without a request — as `present` it
+  would never close, because the refetch dedups by hash and adds no row. A `present` id that survives
+  its refetch is worth checking against `quarantine` by member name.
+- **A 404 counts only while a known id answers.** Before the first request, after every 50, and once
+  more at the end when absents were recorded since, the run asks the year's highest HELD id. If it does
+  not answer `present` (a wrong base, an API path change, an outage page served as 404) the run halts
+  and the absents since the last passed control are demoted to `error`. ~2 % more requests.
+- **Cost and pacing**: one request per due id on the process-wide FTS clock, 12 s apart (shared with
+  any FTS fetch). ~1,200 ids ≈ 4 h, and jobs run one at a time, so **run it capped**: `max_ids: 300`
+  is ≈ 1 h; enqueue it well clear of the 07:35 UTC daily chain and repeat until `due` is 0. A cancel is
+  read before each request, but a throttled request can retry for up to ~10 min (5 × 120 s) first.
+- **Wet by default.** It writes only its own ledger and report (no notice, Tender or org), and a dry
+  run that asked the API would spend the same hours to discard the answers. `dry_run: true` counts what
+  is missing and due **without a request**, which is the cheap first look.
+- **Stoppable and resumable.** It reads the stop flag before every request. Every answer is written
+  as it arrives, and a run asks only ids with no row or an `error` row (plus stale absents), so a
+  cancel, a crash or a restart loses nothing and the next run carries on. Five consecutive `error`s,
+  or a failed control, **halt** the run: the job FAILS with the reason, the report is stored, and a
+  re-run resumes.
+- **Nothing is enqueued.** A present id's day cannot always be located: the API's windows select on a
+  hidden publication instant, not the release `date` (`009921-2021`, dated 2021-07-27, is listed on
+  2021-05-07). So the report names, for each present id, the packages that hold its nearest held
+  neighbours (where it was listed) plus the package of its release day (the monthly while monthlies
+  reach that month, else the daily), and `enqueue` carries the exact bodies: one `fetch` with
+  `refetch:true` per package, one `process` per kind, one `project`. A month is 82–390 paced requests,
+  so read the list before enqueueing it.
+
+```bash
+# The cheap first look: missing, quarantined and due per year, no request, nothing written.
+/root/aj.sh /admin/jobs '{"kind":"audit-fts-ids","dry_run":true}'
+# The audit, capped (≈ 12 s per due id, 300 ≈ 1 h); repeat until the report's `due` is 0.
+/root/aj.sh /admin/jobs '{"kind":"audit-fts-ids","max_ids":300}'
+# Re-ask every year's absents last asked ≥ 30 days ago (the current year's are by default).
+/root/aj.sh /admin/jobs '{"kind":"audit-fts-ids","max_ids":300,"recheck_absent_days":30}'
+# The report: the invariant per year, then the residue.
+/root/aj.sh /admin/reports/audit-fts-ids | jq -r .body | jq '{missing, due, probed, absent, present, errors, quarantined, controls, stopped, halted, unaccounted, complete}'
+/root/aj.sh /admin/reports/audit-fts-ids | jq -r .body | jq -r '.years[] | "\(.year) highest \(.highest) held \(.held) absent \(.absent) quarantined \(.quarantined) present \(.present) error \(.errors) unchecked \(.unchecked)"'
+/root/aj.sh /admin/reports/audit-fts-ids | jq -r .body | jq -r '.present_ids[] | "\(.id)  \(.published_day)  \(.packages | join(", "))"'
+/root/aj.sh /admin/reports/audit-fts-ids | jq -r .body | jq -r '.absent_ids | length, .[]'
+# The recovery. FIRST read the bodies (each fetch is a month's 82–390 paced requests):
+/root/aj.sh /admin/reports/audit-fts-ids | jq -r .body | jq -r '.enqueue[]'
+# Then, only if every line is wanted, enqueue them in order; `|| break` stops the chain at a
+# refused POST, so a refused `fetch` is never followed by its `process` and `project`.
+/root/aj.sh /admin/reports/audit-fts-ids | jq -r .body | jq -r '.enqueue[]' > /tmp/fts-refetch.txt
+while read -r body; do /root/aj.sh /admin/jobs "$body" || break; done < /tmp/fts-refetch.txt
+```
+
+**The dashboard reads it.** The coverage grid's FTS cells and the import funnel's FTS row carry the
+id-based denominator: `published` = each year's highest id held less its absent ids, the ratio is the
+year's distinct ids held over that (an id with several releases counts once), and the funnel shows
+` · N ids unaccounted` and denies `fetch complete ✓` while any id below a year's highest is neither
+held, quarantined nor shown absent. The Held column of an FTS cell is the distinct ids of that id-year
+(not notice rows, which repeat an id per release and are bucketed by package year), so Held, Published,
+the ratio and the era header all divide ids by ids. New never-published ids appear daily, so the count
+climbs between audits; a re-run of the audit (it asks only the new ones) brings it back to 0.
+**`complete` is bounded by the highest id HELD, not the highest issued**: for the current year the ids
+above it are the daily probe's; for a closed year (2021–2025) ids a fetch lost after the year's last
+held id — its final days — are invisible to this check. Nor can it see a second release of a held id.
 
 ### Reading a `project` job's `counts` line (issues 318, 364, 448)
 

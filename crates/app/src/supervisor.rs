@@ -230,6 +230,19 @@ enum Spec {
     /// Walk FTS daily windows forward from the last fetched UK civil day up to
     /// yesterday (issue 342): the DÖE shape over a paged, self-assembled source.
     ProbeFts,
+    /// Issue 477 unit 3: ask the FTS API BY ID for every id below its year's
+    /// highest that the corpus does not hold, and record absent / present /
+    /// error in the `publication_audit` ledger — the FTS coverage denominator.
+    /// Wet by design (it writes only its own ledger and report); `dry_run`
+    /// counts what is due and asks nothing. Resumes from the ledger.
+    AuditFtsIds {
+        #[serde(default)]
+        dry_run: bool,
+        #[serde(default)]
+        max_ids: Option<u64>,
+        #[serde(default)]
+        recheck_absent_days: Option<u64>,
+    },
     Process { source: String, package_kind: String, period: Option<String> },
     /// Re-attempt a held quarantine bucket from the archive, writing the parsed
     /// layer in place for members that now parse (issues 71/72/73). The bucket is
@@ -1095,6 +1108,16 @@ pub struct JobRequest {
     /// Omitted means [`ingest::project::role_census::ROLE_CENSUS_DEFAULT_STRIDE`]; `1`
     /// walks every window.
     pub stride: Option<u64>,
+    /// `audit-fts-ids` only: ask at most this many of the due ids (issue 477 unit 3).
+    /// Omitted means every due id (~1,200 at 12 s ≈ 4 h on 2026-10-03's residue);
+    /// docs/operations.md recommends `300` (≈ 1 h) per run so the FIFO queue is not
+    /// held in front of the 07:35 UTC daily chain.
+    pub max_ids: Option<u64>,
+    /// `audit-fts-ids` only: also re-ask the ids of EVERY year shown absent at least
+    /// this many days ago (an id can be published late). Omitted, only the current
+    /// year's absents older than 30 days are re-asked
+    /// (`fts::audit::CURRENT_YEAR_ABSENT_RECHECK_SECS`).
+    pub recheck_absent_days: Option<u64>,
 }
 
 impl Supervisor {
@@ -1983,6 +2006,32 @@ impl Supervisor {
                     if dry_run { "backfill-tender-links dry-run" } else { "backfill-tender-links" }.to_owned();
                 Ok(vec![
                     self.push("backfill-tender-links", params, Spec::BackfillTenderLinks { dry_run }).await,
+                ])
+            }
+            // Issue 477 unit 3: the by-id audit of the FTS ids below each year's highest.
+            // WET BY DEFAULT, unlike the writers above: it reads the API and writes only
+            // its own ledger and report — no notice, Tender or org — and a dry run that
+            // asked the API would spend the same four hours to throw the answers away.
+            // `dry_run: true` counts what is due without a request.
+            "audit-fts-ids" => {
+                let dry_run = req.dry_run.unwrap_or(false);
+                let mut params = "audit-fts-ids".to_owned();
+                if dry_run {
+                    params.push_str(" dry-run");
+                }
+                if let Some(n) = req.max_ids {
+                    params.push_str(&format!(" max {n}"));
+                }
+                if let Some(days) = req.recheck_absent_days {
+                    params.push_str(&format!(" recheck-absent {days}d"));
+                }
+                Ok(vec![
+                    self.push(
+                        "audit-fts-ids",
+                        params,
+                        Spec::AuditFtsIds { dry_run, max_ids: req.max_ids, recheck_absent_days: req.recheck_absent_days },
+                    )
+                    .await,
                 ])
             }
             // Issue 482 unit 1: read-only, so no dry flag; it stores its report only.
@@ -3077,6 +3126,9 @@ const STOPPABLE_KINDS: &[&str] = &[
     "refold-buyer-roles",
     // Issue 429: read between tables; a stop still refreshes the readers.
     "analyze",
+    // Issue 477 unit 3: read before every by-id request; every answer is already in
+    // the ledger, so a re-run asks only the rest.
+    "audit-fts-ids",
 ];
 
 /// Issue 300 decision 5: a key shared by more organizations than this is a
@@ -3941,6 +3993,74 @@ impl Supervisor {
         Ok(format!("probed {} day(s), {fetched} new{dense}", results.len()))
     }
 
+    /// Issue 477 unit 3's `audit-fts-ids`, its own fn reached through `off_frame` (issue
+    /// 467). The walk is `fetch::audit_fts_ids`, boxed here like the FTS fetch. A wet run
+    /// stores `audit-fts-ids` (the report is re-derived from the whole ledger, so a stopped
+    /// run's is as true as a finished one's); a run halted on consecutive errors stores it
+    /// too and FAILS, so the halt reaches the job watch. Nothing is enqueued: the report
+    /// lists the present ids' packages and the exact `/admin/jobs` bodies.
+    async fn run_audit_fts_ids(
+        &self,
+        job: &Job,
+        dry_run: bool,
+        max_ids: Option<u64>,
+        recheck_absent_days: Option<u64>,
+    ) -> Result<String, String> {
+        let job_id = job.id;
+        let options = fetch::AuditOptions {
+            dry_run,
+            max_ids: max_ids.map(|n| n as usize),
+            recheck_absent_after_secs: recheck_absent_days.map(|days| days as i64 * 86_400),
+        };
+        let report = Box::pin(fetch::audit_fts_ids(
+            &self.db,
+            &self.http,
+            &self.fts_base,
+            std::time::Duration::from_secs(fts::PAGE_PAUSE_SECS),
+            options,
+            // Read before every request; see `stoppable`.
+            || self.cancelled(job_id),
+            |p| {
+                self.update(|j| j.package = Some(p.id.to_owned()));
+                self.set_phase(
+                    "asking by id",
+                    Some(p.done as u64),
+                    Some(p.due as u64),
+                    format!(
+                        "{} {}; {} absent, {} present, {} error so far",
+                        p.id,
+                        p.verdict.as_str(),
+                        p.absent,
+                        p.present,
+                        p.errors
+                    ),
+                );
+            },
+        ))
+        .await
+        .map_err(|e| e.to_string())?;
+        let summary = report.summary();
+        if dry_run {
+            return Ok(format!("audit-fts-ids DRY RUN (issue 477): {summary}; no request made, nothing written"));
+        }
+        let body = serde_json::to_string(&report).map_err(|e| e.to_string())?;
+        self.db
+            .put_report(fts::audit::REPORT_KIND, &body, store::now_unix())
+            .await
+            .map_err(|e| e.to_string())?;
+        if let Some(why) = &report.halted {
+            return Err(format!(
+                "audit-fts-ids HALTED: {why} — {summary}; report stored, every answer kept, a re-run resumes"
+            ));
+        }
+        if report.stopped {
+            return Ok(format!(
+                "audit-fts-ids STOPPED by cancel — {summary}; report stored, every answer kept, a re-run asks only the rest"
+            ));
+        }
+        Ok(format!("audit-fts-ids (issue 477): {summary}"))
+    }
+
     /// Issue 442: refuse a job that deletes organizations while any of the
     /// exact-shape child indexes their foreign-key proof needs is missing. The
     /// sweep and, since step 2 retired issue 352's foreign-keys-off bracket, the
@@ -4728,6 +4848,9 @@ impl Supervisor {
             Spec::RequeueUuidHubs { dry_run } => off_frame(|| self.run_requeue_uuid_hubs(*dry_run)).await,
             Spec::RefoldBuyerRoles { dry_run } => off_frame(|| self.run_refold_buyer_roles(job, *dry_run)).await,
             Spec::Analyze => off_frame(|| self.run_analyze(job)).await,
+            Spec::AuditFtsIds { dry_run, max_ids, recheck_absent_days } => {
+                off_frame(|| self.run_audit_fts_ids(job, *dry_run, *max_ids, *recheck_absent_days)).await
+            }
             Spec::RepairMemberTwins { dry_run } => {
                 off_frame(|| self.run_repair_member_twins(job, *dry_run)).await
             }
@@ -14143,7 +14266,10 @@ mod tests {
                 // Issue 429: `run_analyze` reads the flag before every table, and a
                 // stopped run still drops `organizations` statistics and refreshes
                 // the readers.
-                "analyze"
+                "analyze",
+                // Issue 477 unit 3: `audit_fts_ids` reads the flag before every
+                // by-id request; the ledger keeps every answer for the resume.
+                "audit-fts-ids"
             ]
         );
     }
@@ -15090,6 +15216,156 @@ mod tests {
         assert!(msg.contains("STOPPED by cancel") && msg.contains("no report stored"), "{msg}");
         let (body, _) = db.latest_report(PROCEDURE_KEY_CENSUS_REPORT).await.unwrap().expect("report");
         assert_eq!(body, "{\"marker\":1}", "a stopped census stores nothing");
+    }
+
+    /// Issue 477 unit 3: the job wiring around `fetch::audit_fts_ids`. It enqueues wet by
+    /// default with its options in the params, is stoppable, a dry run asks nothing and
+    /// stores nothing, and a wet run stores the report from the ledger. (The by-id
+    /// requests themselves are tested against a mock in `ingest/tests/fetch.rs`; here
+    /// the production 12 s pace would make every request a 12 s wait.)
+    #[tokio::test]
+    async fn the_fts_id_audit_job_enqueues_wet_by_default_and_a_dry_run_asks_nothing() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        sup.enqueue_request(&JobRequest { kind: "audit-fts-ids".into(), ..Default::default() }).await.unwrap();
+        sup.enqueue_request(&JobRequest {
+            kind: "audit-fts-ids".into(),
+            dry_run: Some(true),
+            max_ids: Some(50),
+            recheck_absent_days: Some(30),
+            ..Default::default()
+        })
+        .await
+        .unwrap();
+        {
+            let queue = sup.queue.lock().expect("queue lock");
+            assert!(matches!(
+                queue[0].spec,
+                Spec::AuditFtsIds { dry_run: false, max_ids: None, recheck_absent_days: None }
+            ));
+            assert_eq!(queue[0].params, "audit-fts-ids");
+            assert!(matches!(
+                queue[1].spec,
+                Spec::AuditFtsIds { dry_run: true, max_ids: Some(50), recheck_absent_days: Some(30) }
+            ));
+            assert_eq!(queue[1].params, "audit-fts-ids dry-run max 50 recheck-absent 30d");
+        }
+        assert!(stoppable("audit-fts-ids", "audit-fts-ids"));
+
+        // 2021: ids 1 and 3 held, so 000002-2021 is missing.
+        db.record_fetch(&store::Fetch {
+            source: "fts".into(),
+            kind: "monthly".into(),
+            period: "2021-01".into(),
+            url: "u".into(),
+            sha256: "f".into(),
+            bytes: 1,
+            fetched_at: 0,
+            path: "p".into(),
+        })
+        .await
+        .unwrap();
+        let fetch_id = db.current_packages("fts", "monthly", None).await.unwrap()[0].fetch_id;
+        for id in ["000001-2021", "000003-2021"] {
+            db.record_notice(
+                &store::Notice {
+                    source: "fts".into(),
+                    publication_id: id.into(),
+                    content_hash: id.into(),
+                    profile: "fts:ocds-1.1".into(),
+                    declared_version: None,
+                    fetch_id,
+                    member_path: format!("{id}.json"),
+                    ingested_at: 0,
+                    published_at: None,
+                    dispatched_at: None,
+                },
+                &store::Parse::Pending,
+            )
+            .await
+            .unwrap();
+        }
+        let job = |id: u64, dry_run: bool, max_ids: Option<u64>| Job {
+            id,
+            kind: "audit-fts-ids".into(),
+            params: String::new(),
+            spec: Spec::AuditFtsIds { dry_run, max_ids, recheck_absent_days: None },
+            resume_after: None,
+        };
+        let msg = sup.run_spec(&job(1, true, None)).await.expect("dry run");
+        assert!(msg.starts_with("audit-fts-ids DRY RUN (issue 477): 1 missing id(s), 1 due, 0 probed"), "{msg}");
+        assert!(db.latest_report(fts::audit::REPORT_KIND).await.unwrap().is_none(), "a dry run stores nothing");
+
+        // A wet run capped at zero asks nothing and stores the ledger's report.
+        let msg = sup.run_spec(&job(2, false, Some(0))).await.expect("wet run");
+        assert!(msg.starts_with("audit-fts-ids (issue 477): 1 missing id(s), 1 due, 0 probed"), "{msg}");
+        assert!(msg.contains("2021 2/3 held, 0 absent, 0 present, 1 unaccounted"), "{msg}");
+        let (body, _) = db.latest_report(fts::audit::REPORT_KIND).await.unwrap().expect("report");
+        let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(report["unaccounted"], 1);
+        assert_eq!(report["years"][0]["highest"], 3);
+        assert_eq!(report["complete"], false);
+    }
+
+    /// Issue 477 review: a halted audit stores its report and FAILS the job, so the
+    /// halt reaches the job watch. The mock answers 400 to everything, so the first
+    /// control request (the year's highest held id) does not answer `present` and the
+    /// run halts before a single missing id is asked — one request, one pace at most.
+    #[tokio::test]
+    async fn a_halted_fts_id_audit_stores_its_report_and_fails_the_job() {
+        let db = scratch().await;
+        let mut sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let app = axum::Router::new().fallback(|| async { axum::http::StatusCode::BAD_REQUEST });
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+        sup.fts_base = format!("http://{addr}/api/1.0");
+        db.record_fetch(&store::Fetch {
+            source: "fts".into(),
+            kind: "monthly".into(),
+            period: "2021-01".into(),
+            url: "u".into(),
+            sha256: "f".into(),
+            bytes: 1,
+            fetched_at: 0,
+            path: "p".into(),
+        })
+        .await
+        .unwrap();
+        let fetch_id = db.current_packages("fts", "monthly", None).await.unwrap()[0].fetch_id;
+        for id in ["000001-2021", "000007-2021"] {
+            db.record_notice(
+                &store::Notice {
+                    source: "fts".into(),
+                    publication_id: id.into(),
+                    content_hash: id.into(),
+                    profile: "fts:ocds-1.1".into(),
+                    declared_version: None,
+                    fetch_id,
+                    member_path: format!("{id}.json"),
+                    ingested_at: 0,
+                    published_at: None,
+                    dispatched_at: None,
+                },
+                &store::Parse::Pending,
+            )
+            .await
+            .unwrap();
+        }
+        let job = Job {
+            id: 1,
+            kind: "audit-fts-ids".into(),
+            params: String::new(),
+            spec: Spec::AuditFtsIds { dry_run: false, max_ids: None, recheck_absent_days: None },
+            resume_after: None,
+        };
+        let err = sup.run_spec(&job).await.expect_err("a halted audit fails the job");
+        assert!(err.starts_with("audit-fts-ids HALTED: control: held id 000007-2021 answered error (HTTP 400)"), "{err}");
+        let (body, _) = db.latest_report(fts::audit::REPORT_KIND).await.unwrap().expect("the report is stored");
+        let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert!(report["halted"].as_str().is_some_and(|h| h.starts_with("control:")), "{report}");
+        assert_eq!((report["probed"].as_u64(), report["unaccounted"].as_u64()), (Some(0), Some(5)));
+        assert!(db.publication_audits("fts").await.unwrap().is_empty(), "no id recorded");
     }
 
     /// Issue 483: the job wiring around `ingest::project::role_census`. It enqueues with
@@ -17133,6 +17409,7 @@ mod tests {
         gauge("run_requeue_uuid_hubs", std::mem::size_of_val(&sup.run_requeue_uuid_hubs(true)), 1_024);
         gauge("run_refold_buyer_roles", std::mem::size_of_val(&sup.run_refold_buyer_roles(&j, true)), 1_024);
         gauge("run_analyze", std::mem::size_of_val(&sup.run_analyze(&j)), 512);
+        gauge("run_audit_fts_ids", std::mem::size_of_val(&sup.run_audit_fts_ids(&j, true, None, None)), 1_024);
         gauge("run_repair_member_twins", std::mem::size_of_val(&sup.run_repair_member_twins(&j, true)), 1_024);
         gauge(
             "refuse_without_org_fk_indexes",
@@ -17227,6 +17504,7 @@ mod tests {
         poll_once_within("run_requeue_uuid_hubs", 144 * 1024, || sup.run_requeue_uuid_hubs(true));
         poll_once_within("run_refold_buyer_roles", 144 * 1024, || sup.run_refold_buyer_roles(&j, true));
         poll_once_within("run_analyze", 330 * 1024, || sup.run_analyze(&j));
+        poll_once_within("run_audit_fts_ids", 330 * 1024, || sup.run_audit_fts_ids(&j, true, None, None));
         assert!(
             over.is_empty(),
             "issue 467: future(s) over their stack budget — {}. Each is built on the caller's \

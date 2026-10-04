@@ -1123,6 +1123,362 @@ pub async fn fts_probe_floor(db: &store::Db, end: (u16, u8, u8)) -> turso::Resul
     })
 }
 
+/// What an `audit-fts-ids` run asks (issue 477 unit 3; [`audit_fts_ids`]).
+#[derive(Clone, Copy, Debug, Default)]
+pub struct AuditOptions {
+    /// Compute the missing ids and what is due, ask nothing, write nothing.
+    pub dry_run: bool,
+    /// Ask at most this many of the due ids, in (year, seq) order.
+    pub max_ids: Option<usize>,
+    /// Also re-ask absent ids of EVERY year last asked at least this long ago
+    /// (seconds). Without it, only the current year's absents older than
+    /// [`crate::fts::audit::CURRENT_YEAR_ABSENT_RECHECK_SECS`] are re-asked.
+    pub recheck_absent_after_secs: Option<i64>,
+}
+
+/// One step of an audit run, for the job's progress line.
+#[derive(Debug)]
+pub struct AuditProgress<'a> {
+    /// The id just asked.
+    pub id: &'a str,
+    pub verdict: crate::fts::audit::Verdict,
+    pub done: usize,
+    pub due: usize,
+    pub absent: u64,
+    pub present: u64,
+    pub errors: u64,
+}
+
+/// The per-year id invariant as the store holds it now: the held FTS ids
+/// against the audit ledger (issue 477 unit 3). What the dashboard's FTS
+/// denominator and the audit's report both read.
+pub async fn fts_id_census(db: &store::Db) -> turso::Result<Vec<crate::fts::audit::YearIds>> {
+    use crate::fts::audit;
+    let ids = db.publication_ids(audit::SOURCE).await?;
+    let held = audit::held_ids(ids.iter().map(String::as_str));
+    let ledger = db
+        .publication_audits(audit::SOURCE)
+        .await?
+        .into_iter()
+        .filter_map(|row| Some((row.publication_id, audit::Verdict::parse(&row.verdict)?)))
+        .collect();
+    Ok(audit::census(&held, &ledger))
+}
+
+/// The `audit-fts-ids` job (issue 477 unit 3): ask the API BY ID for every FTS
+/// id below its year's highest that the corpus does not hold, and record each
+/// answer in the `publication_audit` ledger ([`crate::fts::audit`] classifies).
+///
+/// - **Resumable without a cursor.** Each answer is written as it arrives, and
+///   a run asks only ids with no row or an `error` row (plus stale absents on
+///   request), so a stopped, halted or crashed run resumes where it ended.
+/// - **Paced and stoppable like the walk.** Every request waits on the
+///   process-wide FTS clock (`page_pause`, 12 s in production, shared with any
+///   fetch), and `stop` is read before every request.
+/// - **Halts on [`crate::fts::audit::ERROR_STREAK_CAP`] consecutive errors**,
+///   with the reason in [`crate::fts::audit::AuditReport::halted`].
+/// - **A 404 counts only while a known id answers.** Before the first request
+///   and after every [`crate::fts::audit::CONTROL_EVERY`], and once more at the
+///   end when absents were recorded since, it asks the year's highest HELD id;
+///   one that does not answer `present` halts the run and demotes the absents
+///   since the last passed control to `error`.
+/// - **Quarantined members are accounted for without a request**: a missing id
+///   an archived member carries is recorded `quarantined`.
+///
+/// The report is derived from the WHOLE ledger after the run, so a stopped
+/// run's report is as true as a finished one's; it lists every present id with
+/// the packages to refetch and the exact enqueue bodies. Nothing is enqueued:
+/// a refetch is a month's walk (82–390 paced requests), and which package
+/// recovers an id is a judgement the report informs (the id's day cannot always
+/// be located: the release `date` is not the window's instant).
+pub async fn audit_fts_ids(
+    db: &store::Db,
+    client: &reqwest::Client,
+    base: &str,
+    page_pause: std::time::Duration,
+    options: AuditOptions,
+    stop: impl Fn() -> bool,
+    mut on_progress: impl FnMut(&AuditProgress),
+) -> Result<crate::fts::audit::AuditReport, Error> {
+    use crate::fts::audit::{self, Verdict};
+    let ids = db.publication_ids(audit::SOURCE).await?;
+    let held = audit::held_ids(ids.iter().map(String::as_str));
+    drop(ids);
+    let missing = audit::missing_ids(&held);
+    let mut ledger: std::collections::HashMap<String, (Verdict, i64)> = db
+        .publication_audits(audit::SOURCE)
+        .await?
+        .into_iter()
+        .filter_map(|row| Some((row.publication_id, (Verdict::parse(&row.verdict)?, row.checked_at))))
+        .collect();
+    // A missing id an archived, quarantined member carries: the fetch did not
+    // lose it, so it is recorded `quarantined` without a request (a `present`
+    // verdict would never close — the refetch dedups by hash and adds no row).
+    let paths = db.quarantined_member_paths(audit::SOURCE).await?;
+    let quarantined: std::collections::HashMap<String, String> = paths
+        .iter()
+        .filter_map(|path| Some((audit::member_id(path)?.to_owned(), path.clone())))
+        .collect();
+    drop(paths);
+    let mut report = audit::AuditReport { dry_run: options.dry_run, missing: missing.len() as u64, ..Default::default() };
+    let now = store::now_unix();
+    for &(year, seq) in &missing {
+        let id = audit::format_id(year, seq);
+        let Some(path) = quarantined.get(&id) else { continue };
+        report.quarantined += 1;
+        if matches!(ledger.get(&id), Some((Verdict::Quarantined, _))) {
+            continue;
+        }
+        if !options.dry_run {
+            db.record_publication_audit(&store::PublicationAudit {
+                source: audit::SOURCE.into(),
+                publication_id: id.clone(),
+                year: i64::from(year),
+                seq: i64::from(seq),
+                verdict: Verdict::Quarantined.as_str().into(),
+                http_status: None,
+                published: None,
+                published_day: None,
+                ocid: None,
+                releases: None,
+                detail: Some(format!("quarantined member {path}")),
+                checked_at: now,
+                attempts: 1,
+            })
+            .await?;
+        }
+        ledger.insert(id, (Verdict::Quarantined, now));
+    }
+    let current_year = civil_date(now).0;
+    let mut due = audit::due(&missing, &ledger, now, current_year, options.recheck_absent_after_secs);
+    report.due = due.len() as u64;
+    if let Some(cap) = options.max_ids {
+        due.truncate(cap);
+    }
+    if !options.dry_run {
+        let mut streak = 0usize;
+        // Ids recorded absent since the last control passed ([`audit::CONTROL_EVERY`]).
+        let mut unconfirmed: Vec<String> = Vec::new();
+        let mut since_control = audit::CONTROL_EVERY;
+        let mut last_year = None;
+        for (done, id) in due.iter().enumerate() {
+            if stop() {
+                report.stopped = true;
+                break;
+            }
+            let (year, seq) = audit::parse_id(id).expect("a due id is a formatted sequence id");
+            last_year = Some(year);
+            if since_control >= audit::CONTROL_EVERY {
+                report.controls += 1;
+                if let Err(why) = fts_control(client, base, page_pause, &held, year).await {
+                    report.halted = Some(demote_unconfirmed(db, &mut report, &mut unconfirmed, &why).await?);
+                    break;
+                }
+                unconfirmed.clear();
+                since_control = 0;
+            }
+            let probe = ask_fts_id(client, base, page_pause, id).await;
+            since_control += 1;
+            db.record_publication_audit(&store::PublicationAudit {
+                source: audit::SOURCE.into(),
+                publication_id: id.clone(),
+                year: i64::from(year),
+                seq: i64::from(seq),
+                verdict: probe.verdict.as_str().into(),
+                http_status: probe.http_status.map(i64::from),
+                published: probe.published.clone(),
+                published_day: probe.published_day.clone(),
+                ocid: probe.ocid.clone(),
+                releases: Some(probe.releases as i64),
+                detail: Some(probe.detail.clone()),
+                checked_at: store::now_unix(),
+                attempts: 1,
+            })
+            .await?;
+            report.probed += 1;
+            match probe.verdict {
+                Verdict::Absent => {
+                    report.absent += 1;
+                    unconfirmed.push(id.clone());
+                }
+                Verdict::Present => report.present += 1,
+                Verdict::Error | Verdict::Quarantined => report.errors += 1,
+            }
+            streak = if probe.verdict == Verdict::Error { streak + 1 } else { 0 };
+            on_progress(&AuditProgress {
+                id,
+                verdict: probe.verdict,
+                done: done + 1,
+                due: due.len(),
+                absent: report.absent,
+                present: report.present,
+                errors: report.errors,
+            });
+            if streak >= audit::ERROR_STREAK_CAP {
+                report.halted = Some(format!(
+                    "{streak} consecutive errors, the last on {id}: {} — {} of {} due id(s) asked",
+                    probe.detail,
+                    done + 1,
+                    due.len()
+                ));
+                break;
+            }
+        }
+        // The closing control: the absents since the last one are confirmed only
+        // if the endpoint still serves a known id (one request, also after a stop).
+        if let (false, Some(year)) = (unconfirmed.is_empty(), last_year) {
+            report.controls += 1;
+            if let Err(why) = fts_control(client, base, page_pause, &held, year).await {
+                let why = demote_unconfirmed(db, &mut report, &mut unconfirmed, &why).await?;
+                report.halted = Some(match report.halted.take() {
+                    Some(before) => format!("{before}; {why}"),
+                    None => why,
+                });
+            }
+        }
+    }
+
+    // The report, from the whole ledger as it stands now.
+    let rows = db.publication_audits(audit::SOURCE).await?;
+    let mut verdicts: std::collections::HashMap<String, Verdict> =
+        rows.iter().filter_map(|r| Some((r.publication_id.clone(), Verdict::parse(&r.verdict)?))).collect();
+    // A dry run wrote no `quarantined` row: count what it would have written.
+    for (id, (verdict, _)) in &ledger {
+        if *verdict == Verdict::Quarantined {
+            verdicts.insert(id.clone(), Verdict::Quarantined);
+        }
+    }
+    report.years = audit::census(&held, &verdicts);
+    report.unaccounted = report.years.iter().map(|y| u64::from(y.unaccounted())).sum();
+    report.complete = report.unaccounted == 0;
+    let newest_monthly = db
+        .latest_fetch_period_max(audit::SOURCE, "monthly", "")
+        .await?
+        .as_deref()
+        .and_then(crate::fts::parse_month);
+    let missing: std::collections::HashSet<(u16, u32)> = missing.into_iter().collect();
+    let mut packages: std::collections::BTreeSet<(String, String)> = Default::default();
+    for row in rows {
+        let Some((year, seq)) = audit::parse_id(&row.publication_id) else { continue };
+        if !missing.contains(&(year, seq)) {
+            continue;
+        }
+        match verdicts.get(&row.publication_id).copied() {
+            Some(Verdict::Quarantined) => {}
+            Some(Verdict::Absent) => report.absent_ids.push(row.publication_id),
+            Some(Verdict::Error) => report.error_ids.push(row.publication_id),
+            Some(Verdict::Present) => {
+                let seqs = &held[&year];
+                let mut neighbours = Vec::new();
+                for near in [seqs.range(..seq).next_back(), seqs.range(seq + 1..).next()].into_iter().flatten() {
+                    neighbours.extend(db.publication_packages(audit::SOURCE, &audit::format_id(year, *near)).await?);
+                }
+                let day = row.published_day.as_deref().and_then(crate::fts::parse_day);
+                let wanted = audit::refetch_packages(day, &neighbours, newest_monthly);
+                packages.extend(wanted.iter().cloned());
+                report.present_ids.push(audit::PresentId {
+                    id: row.publication_id,
+                    published: row.published,
+                    published_day: row.published_day,
+                    ocid: row.ocid,
+                    packages: wanted.into_iter().map(|(kind, period)| format!("{kind} {period}")).collect(),
+                });
+            }
+            None => {}
+        }
+    }
+    report.enqueue = audit::enqueue_commands(&packages);
+    report.quarantined_ids = missing_sorted_quarantined(&verdicts, &held);
+    Ok(report)
+}
+
+/// The missing ids recorded `quarantined`, in (year, seq) order.
+fn missing_sorted_quarantined(
+    verdicts: &std::collections::HashMap<String, crate::fts::audit::Verdict>,
+    held: &std::collections::BTreeMap<u16, std::collections::BTreeSet<u32>>,
+) -> Vec<String> {
+    use crate::fts::audit;
+    audit::missing_ids(held)
+        .into_iter()
+        .map(|(year, seq)| audit::format_id(year, seq))
+        .filter(|id| verdicts.get(id) == Some(&audit::Verdict::Quarantined))
+        .collect()
+}
+
+/// One by-id request for `id` on the process-wide FTS clock, classified.
+async fn ask_fts_id(
+    client: &reqwest::Client,
+    base: &str,
+    page_pause: std::time::Duration,
+    id: &str,
+) -> crate::fts::audit::Probe {
+    use crate::fts::audit::{self, Answer};
+    pace_fts(page_pause).await;
+    let answer = get_bytes(client, &audit::id_url(base, id)).await;
+    mark_fts_request();
+    let failure;
+    audit::classify(
+        id,
+        match &answer {
+            Ok(bytes) => Answer::Body(bytes),
+            Err(Error::Status(status)) => Answer::Status(status.as_u16()),
+            Err(e) => {
+                failure = e.to_string();
+                let status = match e {
+                    Error::Throttled { status, .. } | Error::Challenged { status, .. } => Some(status.as_u16()),
+                    _ => None,
+                };
+                Answer::Failed { status, what: &failure }
+            }
+        },
+    )
+}
+
+/// The control request ([`crate::fts::audit::CONTROL_EVERY`]): ask `year`'s
+/// highest HELD id, which exists. `Err` with the reason unless it answers
+/// `present` — then the endpoint is not answering for known ids, and its 404s
+/// say nothing about the ids around them.
+async fn fts_control(
+    client: &reqwest::Client,
+    base: &str,
+    page_pause: std::time::Duration,
+    held: &std::collections::BTreeMap<u16, std::collections::BTreeSet<u32>>,
+    year: u16,
+) -> Result<(), String> {
+    use crate::fts::audit::{self, Verdict};
+    let Some(&top) = held.get(&year).and_then(|seqs| seqs.last()) else {
+        return Err(format!("no held id of {year} to control with"));
+    };
+    let id = audit::format_id(year, top);
+    let probe = ask_fts_id(client, base, page_pause, &id).await;
+    if probe.verdict == Verdict::Present {
+        Ok(())
+    } else {
+        Err(format!(
+            "control: held id {id} answered {} ({}), so the endpoint is not serving known ids and its 404s decide nothing",
+            probe.verdict.as_str(),
+            probe.detail
+        ))
+    }
+}
+
+/// A failed control: demote the absents recorded since the last passed one to
+/// `error` (re-asked next run), move them in the tally, and say so.
+async fn demote_unconfirmed(
+    db: &store::Db,
+    report: &mut crate::fts::audit::AuditReport,
+    unconfirmed: &mut Vec<String>,
+    why: &str,
+) -> Result<String, Error> {
+    let n = unconfirmed.len() as u64;
+    db.demote_publication_audits(crate::fts::audit::SOURCE, unconfirmed, &format!("absent, not confirmed: {why}"))
+        .await?;
+    unconfirmed.clear();
+    report.absent -= n;
+    report.errors += n;
+    Ok(format!("{why} — {n} absent answer(s) since the last passed control demoted to error"))
+}
+
 /// When this process last finished an FTS request (issue 477 review, lens
 /// "operability"). The pause between requests used to be kept only inside one
 /// [`fetch_fts`] call, so the next job's — or the next probe day's — first

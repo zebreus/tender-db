@@ -227,7 +227,9 @@ pub struct Count {
 pub struct PipelineStage {
     pub source: String,
     /// Notices the source is known to have published (ground truth) — `None`
-    /// where no ground truth exists (any source but TED).
+    /// where no ground truth exists. TED's is the vendored count; FTS's is its
+    /// id sequence (issue 477 unit 3: each year's highest id held, less the ids
+    /// the audit showed absent).
     pub published: Option<i64>,
     /// Packages (periods) in the fetch registry, and the period range they span.
     pub fetched_packages: i64,
@@ -262,6 +264,14 @@ pub struct PipelineStage {
     /// enqueue without an ssh. Empty is the healthy state.
     #[serde(default)]
     pub missing_periods: Vec<String>,
+    /// FTS only (issue 477 unit 3): notice ids below each year's highest that are
+    /// neither held nor shown absent from the API by `audit-fts-ids` — the ids the
+    /// source issued that the corpus cannot account for. `Some(0)` is the healthy
+    /// state, and any other value denies [`Self::fetch_complete`]; `None` for a source
+    /// without a per-year id sequence. For FTS, [`Self::published`] is the id-based
+    /// denominator (each year's highest id less its absent ids).
+    #[serde(default)]
+    pub unaccounted_ids: Option<i64>,
     /// Monthly periods registered by more than one fetch row (issue 395). Not a
     /// coverage loss — shown because a duplicate is what let a naive count hide
     /// the original hole (2025 held 12 rows over 11 distinct months).
@@ -436,13 +446,20 @@ pub struct Coverage {
     pub source: String,
     pub profile: String,
     pub year: String,
-    /// Notices we hold.
+    /// Notices we hold. For FTS (issue 477 unit 3) the distinct notice ids of
+    /// the cell's year held, on the same basis as `published` (one id can carry
+    /// several releases, and rows are bucketed by package year, ids by their own).
     pub held: i64,
     /// Notices the year published, per the vendored ground truth — `None` where
-    /// no ground truth exists (any source but TED, or a year outside the
-    /// measured range), in which case `held` stands alone with no ratio.
+    /// no ground truth exists (a source with neither, or a year outside the
+    /// measured range), in which case `held` stands alone with no ratio. For
+    /// FTS (issue 477 unit 3) it is the id-based denominator of the cell's year:
+    /// the year's highest notice id held, less the ids `audit-fts-ids` showed
+    /// absent from the API.
     pub published: Option<i64>,
-    /// `held / published`, 0.0–1.0+. `None` exactly when `published` is.
+    /// `held / published`, 0.0–1.0+. `None` exactly when `published` is. For
+    /// FTS the numerator is the distinct notice ids of the year held, not the
+    /// cell's notice rows (one id can carry several releases).
     pub ratio: Option<f64>,
     /// The ground-truth year is incomplete (the current year), so a ratio below
     /// 1.0 is expected and not a gap.

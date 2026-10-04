@@ -549,6 +549,11 @@ async fn measure_coverage_pipeline(
 ) -> store::turso::Result<(Vec<Coverage>, Vec<PipelineStage>)> {
     let truth = ground_truth();
     let cells = db.notice_counts_by_profile_year().await?;
+    // Issue 477 unit 3: FTS's denominator is its own id sequence — each year's
+    // highest notice id held, less the ids `audit-fts-ids` showed absent from the
+    // API. An index range of the notices' identity keys plus the small ledger.
+    let fts_ids = ingest::fetch::fts_id_census(db).await?;
+    let fts_year = |year: &str| fts_ids.iter().find(|y| y.year.to_string() == year);
     // Notices each (source, year) holds across ALL its profiles, and how many
     // profiles serve it (issue 229). The denominator is always the whole year, so
     // a year at an era boundary — 2008 carries internal-ojs AND text — has no
@@ -571,6 +576,31 @@ async fn measure_coverage_pipeline(
                 .copied()
                 .unwrap_or((cell.notices, 1));
             let shared = profiles > 1;
+            // FTS: the id basis, on BOTH sides. `held` and `year_held` are the
+            // distinct ids of the id's own year held — not the cell's notice rows,
+            // which are bucketed by package year and repeat an id per release
+            // (033562-2023's 15) — so the Held column, the ratio and the era sum
+            // (`Σ year_held / Σ published`) all divide ids by ids.
+            if cell.source == ingest::fts::audit::SOURCE {
+                if let Some(ids) = fts_year(&cell.year) {
+                    let ratio = ids.ratio();
+                    let held_ids = i64::from(ids.held);
+                    return Coverage {
+                        source: cell.source,
+                        profile: cell.profile,
+                        year: cell.year,
+                        // A year served by several FTS profiles has no per-profile
+                        // id count: the profile's rows stand, with no ratio.
+                        held: if shared { cell.notices } else { held_ids },
+                        published: Some(i64::from(ids.published())),
+                        ratio: (!shared).then_some(ratio).flatten(),
+                        partial: false,
+                        published_as_of: None,
+                        year_held: held_ids,
+                        year_ratio: ratio,
+                    };
+                }
+            }
             Coverage {
                 source: cell.source,
                 profile: cell.profile,
@@ -620,8 +650,21 @@ async fn measure_coverage_pipeline(
         .map(|row| {
             let store::FetchRegistryRow { source, packages, from, to, reference_only, kinds } = row;
             let gaps = store::monthly_period_gaps(monthly.get(&source).map_or(&[][..], |v| v));
+            // Issue 477 unit 3: FTS reads complete only when every id below each
+            // year's highest is held or shown absent — the 14,093 lost notices sat
+            // under a ✓ because "complete" meant only "every period fetched".
+            let ids = (source == ingest::fts::audit::SOURCE && !fts_ids.is_empty()).then(|| {
+                let published: i64 = fts_ids.iter().map(|y| i64::from(y.published())).sum();
+                let unaccounted: i64 = fts_ids.iter().map(|y| i64::from(y.unaccounted())).sum();
+                (published, unaccounted)
+            });
             PipelineStage {
-                published: (source == GROUND_TRUTH_SOURCE).then_some(published_ted),
+                published: if source == GROUND_TRUTH_SOURCE {
+                    Some(published_ted)
+                } else {
+                    ids.map(|(published, _)| published)
+                },
+                unaccounted_ids: ids.map(|(_, unaccounted)| unaccounted),
                 fetched_packages: packages,
                 reference_feed: reference_only,
                 rates_through: reference_only.then(|| rates_through.clone()).flatten(),
@@ -659,6 +702,7 @@ async fn measure_coverage_pipeline(
                 // a stalled namespace is issue 402's publication-day continuity
                 // check, which asks what is HELD and never consults a period at all.
                 fetch_complete: !reference_only
+                    && ids.is_none_or(|(_, unaccounted)| unaccounted == 0)
                     && to.starts_with(&current_year)
                     && gaps.missing.is_empty()
                     && gaps.unparsed.is_empty(),
@@ -983,6 +1027,96 @@ mod tests {
             }
         }
 
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 477 unit 3: FTS gets an id-based denominator. With an id missing below
+    /// the year's highest and no audit answer, the funnel names it as unaccounted and
+    /// denies "fetch complete" although every monthly period is there — the shape that
+    /// hid 14,093 notices. Once the audit records the id absent, the denominator drops
+    /// by one, the ratio reads 1.0 and the source is complete. A repeated id (two
+    /// releases) counts once.
+    #[tokio::test]
+    async fn fts_coverage_is_the_highest_id_less_the_absent_ones_and_gates_fetch_complete() {
+        let path = format!("/tmp/tender-db-funnel-fts-ids-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = store::Db::open(&path).await.expect("open");
+        let now = store::now_unix();
+        let year = 1970 + now / 31_557_600;
+        let period = format!("{year}-01");
+        db.record_fetch(&store::Fetch {
+            source: "fts".into(),
+            kind: "monthly".into(),
+            period: period.clone(),
+            url: "u".into(),
+            sha256: "f".into(),
+            bytes: 1,
+            fetched_at: 0,
+            path: "p".into(),
+        })
+        .await
+        .unwrap();
+        let fetch_id = db.current_packages("fts", "monthly", None).await.unwrap()[0].fetch_id;
+        // Ids 1, 2, 4 of the year held (2 twice, two releases); 3 missing.
+        for (id, hash) in [("000001", "a"), ("000002", "b"), ("000002", "c"), ("000004", "d")] {
+            db.record_notice(
+                &store::Notice {
+                    source: "fts".into(),
+                    publication_id: format!("{id}-{year}"),
+                    content_hash: hash.into(),
+                    profile: "fts:ocds-1.1".into(),
+                    declared_version: None,
+                    fetch_id,
+                    member_path: format!("{id}-{hash}.json"),
+                    ingested_at: 0,
+                    published_at: None,
+                    dispatched_at: None,
+                },
+                &store::Parse::Pending,
+            )
+            .await
+            .unwrap();
+        }
+
+        let (coverage, pipeline) = measure_coverage_pipeline(&db, now).await.expect("measure");
+        let fts = pipeline.iter().find(|s| s.source == "fts").expect("fts stage");
+        assert_eq!(fts.unaccounted_ids, Some(1));
+        assert_eq!(fts.published, Some(4), "4 issued, none shown absent yet");
+        assert!(fts.missing_periods.is_empty(), "every period is fetched");
+        assert!(!fts.fetch_complete, "an unaccounted id denies 'fetch complete'");
+        let cell = coverage.iter().find(|c| c.source == "fts").expect("fts cell");
+        assert_eq!(cell.held, 3, "distinct ids, not the 4 notice rows");
+        assert_eq!(cell.published, Some(4));
+        assert_eq!(cell.ratio, Some(0.75), "3 distinct ids of 4 issued");
+        // The era header divides Σ year_held by Σ published (ui.rs
+        // `coverage_by_era`): ids over ids, so 3/4 here, never rows over ids (4/3).
+        assert_eq!(cell.year_held, 3);
+        assert_eq!(cell.year_held as f64 / cell.published.unwrap() as f64, 0.75);
+
+        db.record_publication_audit(&store::PublicationAudit {
+            source: "fts".into(),
+            publication_id: format!("000003-{year}"),
+            year,
+            seq: 3,
+            verdict: "absent".into(),
+            http_status: Some(404),
+            published: None,
+            published_day: None,
+            ocid: None,
+            releases: Some(0),
+            detail: Some("404".into()),
+            checked_at: now,
+            attempts: 1,
+        })
+        .await
+        .unwrap();
+        let (coverage, pipeline) = measure_coverage_pipeline(&db, now).await.expect("measure");
+        let fts = pipeline.iter().find(|s| s.source == "fts").expect("fts stage");
+        assert_eq!((fts.unaccounted_ids, fts.published), (Some(0), Some(3)));
+        assert!(fts.fetch_complete, "every id held or shown absent");
+        let cell = coverage.iter().find(|c| c.source == "fts").expect("fts cell");
+        assert_eq!((cell.published, cell.ratio, cell.year_ratio), (Some(3), Some(1.0), Some(1.0)));
+        assert_eq!((cell.held, cell.year_held), (3, 3), "the era reads 3/3 = 100 %");
         let _ = std::fs::remove_file(&path);
     }
 

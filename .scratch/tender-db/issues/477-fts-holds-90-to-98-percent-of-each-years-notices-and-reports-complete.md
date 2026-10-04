@@ -1,6 +1,7 @@
 # 477 — FTS holds 90–98 % of each year's notices, the missing ones are on the API, and the dashboard reports the source complete
 
-Status: ready-for-agent — TOP-UP COMPLETE 2026-10-03 (Verify 1,180, was 14,093; NEXT unit 3, the per-id audit of the residue). UNIT 1b BUILT 2026-10-02 10:5x UTC (the unit 1b commit; gate GATE-EXIT=0, NOT deployed): a span still full at two seconds keeps its page as a leaf, and a page of ONE notice is completed from the records of its ocid run — see the last section. NEXT: deploy it between top-up chunks, then re-enqueue `{"kind":"fetch","source":"fts","package_kind":"monthly","period":"2023-11","refetch":true}`, process and project, and check that the job row reads `NewVersion · 1 dense span(s) completed from 17 ocid record(s)` and that `033562-2023` is 15 notices on 15 Tenders; the remaining chunks (2024b → 2026-08) do not wait on it; then unit 3 (the per-year id invariant and audit).
+Status: ready-for-agent — UNIT 3 LANDED 2026-10-04 (not deployed, not committed): the `audit-fts-ids` job, the `publication_audit` ledger and FTS's id-based coverage denominator — see the last section. Review fixes applied the same day (see "Unit 3 review fixes"). NEXT: deploy → run the audit (`{"kind":"audit-fts-ids","dry_run":true}` first, then `{"kind":"audit-fts-ids","max_ids":300}` repeated until `due` is 0, ~1 h each at 12 s per id, clear of the 07:35 UTC chain) → read absent/present from `/admin/reports/audit-fts-ids` → refetch the present ids' packages from its `enqueue` list, then process + project → Verify (and list the absent residue here).
+Was status: ready-for-agent — TOP-UP COMPLETE 2026-10-03 (Verify 1,180, was 14,093; NEXT unit 3, the per-id audit of the residue). UNIT 1b BUILT 2026-10-02 10:5x UTC (the unit 1b commit; gate GATE-EXIT=0, NOT deployed): a span still full at two seconds keeps its page as a leaf, and a page of ONE notice is completed from the records of its ocid run — see the last section. NEXT: deploy it between top-up chunks, then re-enqueue `{"kind":"fetch","source":"fts","package_kind":"monthly","period":"2023-11","refetch":true}`, process and project, and check that the job row reads `NewVersion · 1 dense span(s) completed from 17 ocid record(s)` and that `033562-2023` is 15 notices on 15 Tenders; the remaining chunks (2024b → 2026-08) do not wait on it; then unit 3 (the per-year id invariant and audit).
 Was status: ready-for-agent — UNIT 1b DECIDED 2026-10-02 04:5x UTC (dense-span walk via ocid records; 2023-11 waits on it — see the last section). UNIT 1 DEPLOYED 2026-10-01 16:4x UTC (`3d79f11`; built `e9e73bb`, review fixes `3d79f11`; gate GATE-EXIT=0 in 761 s). The FTS walk never follows `links.next`: full cursorless spans split, never below 2 s; the daily probe walks every day after the newest monthly that holds no daily, which closes the 09-01..06 seam; and a same-id second release is kept. TOP-UP RUNNING: refetch every monthly 2021-01 → 2026-08 with the new walker (`refetch:true`), chunked to end before each 07:35 UTC tick. Chunk 2021 = jobs 1815–1828. NEXT: read 2021-05 (1815) against its 172 missing ids, then the next chunks, then unit 3 (the per-year id invariant and audit).
 Was status: ready-for-agent — ROOT CAUSE PROVEN 2026-10-01 (workflow `wf_4e12a01b-ca9`: three probes, a synthesis, and a challenger who confirmed the cause): the FTS API's `links.next` cursor continues on a hidden per-release key that is not in notice-id order, so page 2 and later silently drop rows, and the dropped page comes back short with no next link. The 2026-09-01..06 seam was never fetched (1,745 ids), and some post-Act ids were never published. NEXT: unit 1, the walk. Never follow `links.next`; split any window whose cursorless page is full, never into a one-second window (the API answers 400). Fix the seam start too. Design and evidence: `.scratch/tender-db/477-fts/`.
 Was status: ready-for-agent — filed 2026-10-01 13:5x UTC from the 342 close-out audit. The first unit is the root cause:
@@ -396,3 +397,111 @@ Refuted:
 - NEXT: unit 3, the per-year id invariant. Probe every remaining id by id (`/ocdsReleasePackages/{id}`), list the
   404 / empty ones as absent, re-walk the days of any that exist, and give the dashboard's coverage the id-based
   denominator. Then close.
+
+### 2026-10-04 — Unit 3 — landed (not deployed)
+
+The per-year id invariant, as decided in "The invariant" (item 3). Gate not run (focused tests only); not committed.
+
+**What landed.**
+- **`publication_audit` ledger** (`crates/store/src/publication_audit.rs`, created at open by `CREATE TABLE IF NOT
+  EXISTS`): one row per (source, publication_id) with year, seq, verdict (`absent` | `present` | `error`),
+  http_status, published (release `date` as served), published_day (its UK civil day), ocid, releases, detail,
+  checked_at, attempts. Named for what it holds rather than `absent_publications`: the ledger is also the job's
+  resume state and carries the present ids' dates; the absent set is `verdict = 'absent'`. A re-probe replaces the
+  row and counts the attempt.
+- **`audit-fts-ids` job** (`Spec::AuditFtsIds`, `run_audit_fts_ids` off `run_spec`'s frame, budget 888/1,024 bytes;
+  the walk is `ingest::fetch::audit_fts_ids`, the pure parts `ingest::fts::audit`):
+  - held ids are read from the DB (`notices.publication_id` of `fts`, an index range of the identity key), not
+    from the archived zips: ~330k short keys against ~90 zips and gigabytes, and it is what the dashboard counts
+    and what `process` adds to. A member quarantined before it had an identity reads as missing; the audit then
+    finds it `present` (one request, a no-op refetch), never a false `absent`;
+  - missing = 1..highest held per year minus held; due = no ledger row, or `error`, plus absents older than
+    `recheck_absent_days` when given. `present` is never re-asked (a refetch recovers it, not a probe);
+  - `GET {BASE}/ocdsReleasePackages/<id>` through `get_bytes` (the shared retry policy; 429/503/408 honour
+    Retry-After) and the process-wide `pace_fts` clock (12 s, shared with every FTS fetch);
+  - classification: 404/410, an empty body or `releases: []` → **absent**; a release of the id → **present** with
+    the earliest `date` (by instant) and its UK day; anything else (5xx/other 4xx after retries, a throttle that
+    outlived them, a transport error, a non-package body, releases of other ids only) → **error**, asked again;
+  - wet by default (it writes only its own ledger and report); `dry_run: true` counts missing and due with no
+    request; `max_ids` caps a run; stoppable before every request (`STOPPABLE_KINDS`); each answer is written as
+    it arrives, so a stop, crash or restart resumes from the ledger; 5 consecutive errors halt the run, store the
+    report and FAIL the job;
+  - the report (`/admin/reports/audit-fts-ids`) is re-derived from the WHOLE ledger after the run: per-year
+    `highest/held/absent/present/errors/unchecked`, `unaccounted`, `complete`, every absent id (the Verify's
+    residue list), every present id with its packages, error ids, and `enqueue`, the exact `/admin/jobs` bodies.
+- **Present ids are reported, not enqueued** (the simpler correct choice): a month is 82–390 paced requests in a FIFO
+  queue, and the right package is a judgement — the open point stands, an id's day cannot always be located (the
+  window selects on a hidden instant; `009921-2021`, dated 07-27, is listed on 05-07). So each present id names
+  the packages of its nearest held neighbours (where it was listed, read via `notices.fetch_id → fetches`) plus
+  its release day's package (the monthly while monthlies reach that month, else the daily). If a refetch of those
+  does not recover an id, the next step is a by-id package kind (the by-id answer's member bytes equal a listing's,
+  because `member_bytes` drops `uri`/`publishedDate`/`links`) — not built.
+- **Coverage** (`coverage.rs`, `model::dashboard`, `ui.rs`): FTS cells carry `published` = the year's highest id held
+  less its absent ids, `ratio` = the year's distinct ids held / that (an id with several releases counts once). The
+  funnel's FTS row carries `published` (the sum), a new `unaccounted_ids`, renders ` · N ids unaccounted`, and
+  `fetch_complete` now also needs `unaccounted_ids == 0`. Expect the ✓ to go away on deploy until the audit has run,
+  and to flicker as new never-published ids appear daily (a re-run asks only the new ones; a weekly schedule is the
+  option if that proves noisy).
+- Docs: `docs/operations.md`, "The FTS id audit and `audit-fts-ids` (issue 477 unit 3)".
+
+**Tests** (focused, gate flags and package set, each GATE-EXIT=0): `fts::audit::tests::*` (5: id shape,
+classification, the denominator, due selection, refetch packages + exact enqueue bodies),
+`publication_audit::tests::a_reprobe_replaces_the_verdict_and_counts_the_attempt`,
+`the_id_audit_asks_each_missing_id_once_and_resumes_from_its_ledger` and
+`the_id_audit_halts_on_an_error_streak_and_keeps_what_it_learned` (axum mock of the by-id endpoint, `ingest/tests/fetch.rs`),
+`coverage::tests::fts_coverage_is_the_highest_id_less_the_absent_ones_and_gates_fetch_complete`,
+`supervisor::tests::the_fts_id_audit_job_enqueues_wet_by_default_and_a_dry_run_asks_nothing`,
+`run_spec_futures_stay_inside_their_size_budgets`, `cancelling_a_kind_with_no_checkpoint_is_refused_rather_than_promised`;
+regression filters `coverage::` (12) and `fts` (83) green.
+
+**Unit 3 review fixes (2026-10-04, not committed).** Twelve findings checked against the code:
+- **Empty 200 → `error`, not `absent`** (major): FTS sent three empty 200s for `04196f`'s existing record (unit 1b),
+  so `classify` now answers `error` ("empty body") and the next run asks again; only 404/410 and `releases: []`
+  are absent.
+- **Control request** (major): before the first by-id request, after every 50 (`CONTROL_EVERY`), and once more at
+  the end when absents were recorded since, the run asks the year's highest HELD id. Unless it answers `present`,
+  the run halts (the job fails) and the absents since the last passed control are demoted to `error`
+  (`Db::demote_publication_audits`, attempts kept). A wrong `fts_base`, path change or outage-as-404 now costs at
+  most 50 requests and no false absent. Tested: wrong base → halt, nothing recorded; endpoint that stops serving
+  known ids mid-run → 3 absents demoted.
+- **Current-year absents re-asked by default** (minor): an absent of the current UK year is due again once its
+  answer is 30 days old (`CURRENT_YEAR_ABSENT_RECHECK_SECS`); `recheck_absent_days` still re-asks every year's.
+- **Highest held ≠ highest issued for closed years** (minor): documented, not built — module doc, docs/operations.md
+  and the funnel tooltip say `complete` is bounded by the highest id held (a closed year's lost final days are
+  invisible). Probing above the highest needs the census to grow `highest` from ledger rows; left for a later unit
+  if the residue suggests year-end loss.
+- **Quarantined members** (minor): the job reads FTS quarantine member paths once per run
+  (`Db::quarantined_member_paths`; `NNNNNN-YYYY[~hash].json` → id) and records a missing id they carry as a new
+  verdict `quarantined`, with no request: accounted for (`unaccounted` excludes it), still in `published`, never
+  asked. A `present` verdict would never have closed (the refetch dedups by hash). The dashboard needs no scan: it
+  reads the ledger.
+- **Coverage bases** (major + minor, one fix): an FTS cell's `held` and `year_held` are now the distinct ids of the
+  id-year (`ids.held`), so the Held column, `ratio` and the era header (`Σ year_held / Σ published`) all divide ids
+  by ids — the test's data read 4/3 = 133 % in the era before, 3/4 now. The test asserts `held`/`year_held` and the
+  era quotient before and after the absent row.
+- **Queue blocking** (minor): the documented runs are capped (`max_ids: 300` ≈ 1 h, repeat until `due` is 0), the
+  docs say a cancel can wait up to ~10 min behind a throttled request.
+- **Supervisor halt path** (minor): new `a_halted_fts_id_audit_stores_its_report_and_fails_the_job` (axum mock
+  answering 400) asserts the `audit-fts-ids HALTED` Err and the stored report.
+- **Error-streak reset** (minor): new `the_id_audit_error_streak_resets_on_a_decisive_answer` (4 errors, absent,
+  4 errors → no halt, all 9 asked).
+- **Recovery one-liner** (minor): the docs list `.enqueue[]` first; the loop is a separate opt-in step with
+  `|| break`, so a refused fetch stops before its process/project.
+- **Skipped: the test's year derivation** — `1970 + now / 31_557_600` is exactly what `measure_coverage_pipeline`
+  uses for `current_year` (coverage.rs), so test and production cannot disagree; switching only the test to a
+  civil date would create the mismatch the finding warns of.
+
+Focused tests after the fixes (gate flags, gate package set), GATE-EXIT=0: the audit unit tests (6), the ledger
+test, the five ingest mock tests, the coverage test, both supervisor audit tests, `run_spec_futures_stay_inside_their_size_budgets`,
+`an_execute_without_an_expected_count_is_refused`, filters `era`, `coverage::`, `fts`.
+
+**Run on prod, after the deploy:**
+
+    /root/aj.sh /admin/jobs '{"kind":"audit-fts-ids","dry_run":true}'      # expect ~1,180 missing, quarantined, due
+    /root/aj.sh /admin/jobs '{"kind":"audit-fts-ids","max_ids":300}'       # ~1 h; repeat until due is 0; cancellable, resumable
+    /root/aj.sh /admin/reports/audit-fts-ids | jq -r .body | jq '{missing, due, probed, absent, present, errors, quarantined, controls, unaccounted, complete, halted}'
+    /root/aj.sh /admin/reports/audit-fts-ids | jq -r .body | jq -r '.present_ids[] | "\(.id)  \(.published_day)  \(.packages | join(", "))"'
+    /root/aj.sh /admin/reports/audit-fts-ids | jq -r .body | jq -r '.enqueue[]'   # read first; then the opt-in loop in docs/operations.md
+
+Done when the report reads `complete: true` (every id held, quarantined or absent), the absent list is recorded here, and the
+Verify's residue equals the absent count.
