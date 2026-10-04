@@ -338,3 +338,26 @@ Architecture. Each replaces an already-wrong buyer (the review body) with anothe
 lost — so wet now; the residue is the deferred org-level role index's to fix (an agent is never a buyer elsewhere).
 Wet: job 1956 → the next daily (07:35 UTC) re-derives. NEXT: read the daily's `issue-481` line and
 `/v1/tenders/<438807's tender>` parties (Verify), then close unit 2.
+
+## 2026-10-04 07:35 UTC daily (project 1965) re-derived the cohort — Verify
+
+Project 1965: 1,660 notices (the 1,091 re-queued + the day's), `issue-481 … refused 1 (buyer-disjoint 1); largest
+component: 8 key(s) at notice 25668433`. Served buyers now (`/v1/tenders/<id>` parties):
+- 265758 (ted:00340810-2024): **Office of Public Works (OPW)** — was The High Court of Ireland;
+- 187092 (ted:00316183-2026): **Armagh City, Banbridge and Craigavon Borough Council** — was European Dynamics;
+- 790032 (ted:00067601-2024): **Gästrike Återvinnare** — was Förvaltningsrätten i Falun;
+- 119479: its newest notice (00167972-2024) names "Vergabekammer Südbayern" alone with its review role — the
+  non-decisive `review-body-name-alone` shape, served as published (by design).
+
+**438807 cannot be met by name**: its notices' own mention is "Urząd Zamówień Publicznych" (the `Departament Odwołań`
+suffix is organization 791's name from OTHER notices), and the bare UZP is deliberately not listed (it buys for
+itself). The real signal there — the buyer is also the mediator / review-info body while POLREGIO receives tenders and
+PAYS — is `real-buyer-elsewhere` + `review-info-role`, both non-decisive on the census (a CPB leaves paying to its
+client). The Verify exhibit becomes 265758 (OPW); 438807 waits on a later unit if a precise rule for that shape is
+measured. NEXT: close unit 2; the swap (16698) and 438807's shape stay open on the org-level role index.
+
+## Verify (amended 2026-10-04)
+
+    curl -s https://tenders.zebreus.click/v1/tenders/265758 | jq -c '[.parties[] | select(.role=="Procedure-Buyer") | .organization_name]'
+
+- **done** (2026-10-04 07:4x UTC): `["Office of Public Works (OPW)"]`.
