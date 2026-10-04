@@ -10390,6 +10390,18 @@ impl Db {
             return Ok(false);
         }
         drop(links);
+        // Issue 483 unit 2: a plan built before the buyer-role demote carries a
+        // `buyer_key` and `buyer_guard` read off the RAW buyer slot, while the resumed
+        // fold would serve the demoted roles — the guard inputs and the served buyer would
+        // disagree on the flagged notices. The plan DDL creates the (empty) marker table
+        // `plan_buyer_demote`; a plan without it is not resumable.
+        let mut demote = conn
+            .query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'plan_buyer_demote'", ())
+            .await?;
+        if demote.next().await?.is_none() {
+            return Ok(false);
+        }
+        drop(demote);
         let planned = {
             let mut r = conn.query("SELECT COUNT(*) FROM plan_notice", ()).await?;
             int(&r.next().await?.expect("count row"), 0)
@@ -10432,9 +10444,14 @@ impl Db {
             "plan_link_edge",
             "plan_group_merge",
             "plan_refused_key",
+            "plan_buyer_demote",
         ] {
             conn.execute(&format!("DROP TABLE IF EXISTS {table}"), ()).await?;
         }
+        // Issue 483 unit 2: an empty marker — this plan's `buyer_key` / `buyer_guard` read
+        // the demoted buyer side (`role_census::buyer_fix`). `plan_is_complete` refuses to
+        // resume a plan without it.
+        conn.execute("CREATE TABLE plan_buyer_demote (x INTEGER) STRICT", ()).await?;
         conn.execute(
             "CREATE TABLE plan_notice (
                  notice_id      INTEGER PRIMARY KEY,
@@ -27095,6 +27112,72 @@ impl Db {
         while let Some(row) = rows.next().await? {
             out.push(int(&row, 0));
         }
+        Ok(out)
+    }
+
+    /// Issue 483 unit 2: one `notice_id` WINDOW `(after_id, through_id]` of the mentions whose
+    /// name `matches` — `(notice_id, organization_id)`, in order. The name test is the
+    /// caller's (ingest's review-body and platform patterns: the store never depends on
+    /// ingest) and runs in Rust, row by row, so nothing but the hits is kept. A fixed id
+    /// stride, like [`Db::notices_with_denied_scheme`]: `organization_mentions.name` carries
+    /// no index.
+    pub async fn mentions_named(
+        &self,
+        after_id: i64,
+        through_id: i64,
+        matches: &(dyn Fn(&str) -> bool + Sync),
+    ) -> turso::Result<Vec<(i64, i64)>> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT notice_id, organization_id, name FROM organization_mentions \
+                  WHERE notice_id > ? AND notice_id <= ? AND name IS NOT NULL ORDER BY notice_id",
+                vec![Value::Integer(after_id), Value::Integer(through_id)],
+            )
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            if let Some(name) = opt_text_of(&row, 2)
+                && matches(&name)
+            {
+                out.push((int(&row, 0), int(&row, 1)));
+            }
+        }
+        Ok(out)
+    }
+
+    /// Issue 483 unit 2: of these `(notice_id, organization_id)` mentions, the notices whose
+    /// canonical layer SERVES that organization as a buyer (`role IN ('buyer',
+    /// 'Procedure-Buyer')`, a party of the notice's own mention) on the version the notice
+    /// caused — the version that carries its own parties. By organization, not section: a
+    /// role naming a nested party's inner half binds the outer half's organization. Two
+    /// seeks per notice (`tender_versions_notice`, then the version's parties by
+    /// `(tender_id, seq)`); a notice in no Tender has none. Sorted, deduplicated.
+    pub async fn notices_serving_buyer(&self, mentions: &[(i64, i64)]) -> turso::Result<Vec<i64>> {
+        let wanted: std::collections::BTreeSet<(i64, i64)> = mentions.iter().copied().collect();
+        let mut ids: Vec<i64> = wanted.iter().map(|(n, _)| *n).collect();
+        ids.dedup();
+        let conn = self.reader().await?;
+        let mut out = Vec::new();
+        for chunk in ids.chunks(REQUEUE_CHUNK) {
+            let sql = format!(
+                "SELECT p.mention_notice_id, p.organization_id FROM tender_versions v \
+                   JOIN tender_version_parties p ON p.tender_id = v.tender_id AND p.seq = v.seq \
+                  WHERE v.caused_by_notice_id IN ({}) AND p.mention_notice_id = v.caused_by_notice_id \
+                    AND p.role IN ('buyer', 'Procedure-Buyer')",
+                placeholders(chunk.len())
+            );
+            let params: Vec<Value> = chunk.iter().map(|id| Value::Integer(*id)).collect();
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                let hit = (int(&row, 0), int(&row, 1));
+                if wanted.contains(&hit) {
+                    out.push(hit.0);
+                }
+            }
+        }
+        out.sort_unstable();
+        out.dedup();
         Ok(out)
     }
 

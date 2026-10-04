@@ -1019,6 +1019,81 @@ tenderer), and otherwise make the guards ignore the flagged role. A `contractor-
 concentrated in a few Sources × subtypes (award notices from one publisher) points at a parser fix for
 that publisher. Read 30 samples per class on the portals first.
 
+### The buyer-role demote and `refold-buyer-roles` (issue 483 unit 2)
+
+**At projection**, a buyer mention a decisive census class flags (`review-body-name`, `platform-name`
+above) is not served as the Tender's buyer. The rule is `role_census::buyer_fix`, over the census's
+own verdicts (`judge`), so the census measures exactly what the projection demotes:
+
+- a **clean buyer mention is left** on the notice: the flagged mention loses its buyer role (KIO,
+  a tribunal administratif or European Dynamics beside the real buyer);
+- **none is left** and `real-buyer-elsewhere` holds: the first other party (section order) in a
+  STRONG buyer-shaped role (tender receipt or evaluation, additional information, paying,
+  signatory) is promoted to the dialect's buyer role (`Procedure-Buyer`, legacy / sdk-0.1 `buyer`)
+  and the flagged mention dropped — 438807's POLREGIO, the Staatliches Bauamt beside a
+  Vergabekammer, the OPW beside the High Court. **Never promoted**, the next eligible party is
+  tried instead (`role_census::promotable`): a portal or platform label (`NameList::Platform` /
+  `Portal`: "Digitaal via TenderNed", Negometrix, achatpublic, …), the eSender
+  (`Procedure-SProvider`), a review body by role or by name, a party whose only buyer-shaped role
+  is the documents provider or the financing party, a nameless party. No eligible party: nothing
+  changes;
+- **nothing recoverable** (Mercell alone): the role is served as published, AND stays in the guards
+  (one verdict for both; the 2026-10-03 Decision's guard-only drop was reversed by unit 2).
+
+The demoted mention keeps its other roles (a Vergabekammer stays the review body). One verdict feeds
+both readers: `NoticeState::read` (the served `parties[]`, `v_tender_buyers`, organization
+statistics) and `buyer_side_mentions` (369's buyer key, 481's guard tokens and sections, 482's hub
+key; the procedure-key census reads the same). Both fold paths call them, so the full and the daily
+fold agree by construction. The verdict is parsed-side (no resolved organizations: the plan row is
+read before Phase 1), and gated cheaply: only a notice whose BUYER's name holds a review-body or
+platform pattern reads its mentions a second time. A demoted mention that also signs the contract
+leaves the guards' signatory side too.
+
+**A full rebuild must not straddle the deploy.** A plan built before unit 2 carries buyer keys and
+guard tokens read off the raw slot; the plan DDL now creates the marker table `plan_buyer_demote`
+and `plan_is_complete` refuses to resume a plan without it (the rebuild plans again).
+
+**Existing rows** change only when a fold re-derives them. `refold-buyer-roles` finds them:
+
+```sh
+/root/aj.sh /admin/jobs '{"kind":"refold-buyer-roles"}'                 # dry (the default): finds and counts
+/root/aj.sh /admin/reports/buyer-role-refold | jq -r .body | jq '{dry_run, named_mentions, candidates, fixed_total, requeued, stamped}'
+/root/aj.sh /admin/reports/buyer-role-refold | jq -r .body | jq -r '.fixed[] | "\(.publication)  drop \(.dropped|join(" | "))  promote \(.promoted|join(" | "))"' | head -40
+/root/aj.sh /admin/jobs '{"kind":"refold-buyer-roles","dry_run":false}' # wet: projected = 0 + epoch-stale Tenders
+# the next daily (incremental) fold re-plans exactly those notices, with the Tenders they sit in
+```
+
+Read the dry report's `promoted` column before going wet: a promote names the organization the
+notice will serve as buyer, and that cohort (not census-1943's samples, which bound resolved
+organizations where the projection compares by folded name) is the validation set. The job is a
+heavy-write kind dry or wet, so the dry walk too holds the heavy-write belt (coverage refreshes skip)
+for its length: run it in a queue gap.
+
+**Only the fixed notices are re-queued, not their whole Tenders**, and that is enough: the daily
+moves a re-queued notice between Tenders in both directions. A Vergabekammer CAN refused its CN's
+OPP-090 link (buyer-disjoint) joins the CN once the Bauamt is promoted, and its old Tender is
+retired; a CAN that joined its CN only through a shared KIO buyer splits out once KIO is dropped,
+while the CN (unchanged verdict, not re-queued) keeps its Tender alone. Pinned by
+`refold_buyer_roles_moves_a_notice_between_tenders_on_the_daily` (ingest, `project_incremental.rs`:
+the full and the daily path byte-identical at every step, and equal to a fresh rebuild).
+
+It walks `organization_mentions` in 250,000-notice-id strides (the `refold-denied-schemes` shape:
+`name` has no index, so a fixed stride costs the same at any hit rate) and narrows in three steps:
+mentions whose name holds a pattern (a big superset — every Polish notice naming KIO as review body);
+of those, notices whose version SERVES that organization as a buyer (`tender_versions_notice`, then
+the version's parties: the pre-unit-2 projection served the raw slot, so only these can change); of
+those, notices whose parse gives a non-empty `buyer_fix`. A wet run re-queues them
+(`unmark_projected_by_ids`) and stamps their Tenders epoch-stale (`stamp_stale_for_notices`: a
+re-queue alone leaves each chain identical and the fold early-returns, issue 179). Stoppable between
+strides; a stopped run stores no report (a wet run's finished strides stay re-queued). Job 1943
+predicts ~1,400 decisively flagged notices corpus-wide (139 at stride 10): ~1,000 drop a flagged
+mention beside a clean buyer, ~350 promote a recovered buyer, a few tens keep their role (nothing
+recoverable, or a portal label). The walk is about one pass of the mentions table. Re-running it after the daily finds nothing: what the fold re-derived is no longer served
+from the raw slot. A full re-plan (`project` with `rebuild`) applies the demote too, without the job.
+
+**Verify** after the daily: `/v1/tenders/438807` names POLREGIO S.A. as buyer, not the UZP appeals
+department, and a re-run of the dry job reports `0 whose buyer role the demote changes`.
+
 ### Reading a `process` job's `[process]` lines (issue 407)
 
 Every package walk prints one journal line when it completes:

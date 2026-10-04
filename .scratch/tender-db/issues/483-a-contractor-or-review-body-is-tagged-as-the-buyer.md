@@ -1,9 +1,8 @@
 # 483 — a contractor, review body or platform vendor sits in the buyer slot, and every buyer-based guard trusts it
 
-Status: ready-for-agent — NEXT: unit 2, demote at projection (job 1943 read 2026-10-04, below): drop a decisively
-flagged buyer mention from the served buyer role when a clean buyer is left (95 of 139 at stride 10), and promote
-`real-buyer-elsewhere`'s organization where none is (Staatliches Bauamt, OPW, Domstolsverket; ~30). A platform name
-alone (Mercell, 1) keeps its role. The swap waits on the org-level role index (deferred, below).
+Status: ready-for-agent — NEXT: deploy unit 2 (landed 2026-10-04, not deployed, below) through the gate, then
+`refold-buyer-roles` dry → read the cohort → wet, and the daily re-derives the ~1,400 notices; then run Verify
+(438807 serves POLREGIO). The swap waits on the org-level role index (deferred, below).
 Kind: data correctness (parties)
 Relates to: 482 (16 of 45 false splits in the 2-cluster read were role mis-tags), 481 unit 2b/2c (the buyer guard
 reads `Procedure-Buyer`), 456 (mention binding), the served `parties[]`
@@ -158,7 +157,9 @@ except the court beside a recoverable buyer, not separable from legitimate buyer
 - **Unit 2 (after the re-run): demote at projection**, not guard-only. At ~700 corpus notices the guards gain
   nothing measurable, while the served `parties[]` is wrong on exactly those notices; `real-buyer-elsewhere`'s
   basis names the buyer to promote (Staatliches Bauamt, OPW, Domstolsverket). Where no buyer is recoverable
-  (a platform name alone, 2 of 9), leave the role and only drop it from the guards.
+  (a platform name alone, 2 of 9), leave the role ~~and only drop it from the guards~~. **Superseded by
+  unit 2 (2026-10-04): one served/guard verdict — the platform-alone mention stays served AND in the
+  guards (369/481/482); see "Unit 2 — landed", Decisions.**
 - **The swap stays as data** until the org-level role index exists (the tenderer's organization is a
   `Procedure-Buyer` on other notices) — that signal, not legal forms, can tell Stadt Köln as a tenderer from TU
   Dresden as one. Deferred, ready-for-agent once something else needs the index.
@@ -185,3 +186,121 @@ The 30 review-body samples:
 - `platform-name`: European Dynamics ×8 beside a clean buyer (7) or with Armagh council elsewhere; Mercell alone.
 
 So the decisive set is precise (~30/30 by hand) and small (~1,400 notices corpus-wide). Unit 2 is the demote.
+
+## Unit 2 — landed (not deployed), 2026-10-04
+
+**The demote at projection.** `role_census::buyer_fix` turns the census's own verdicts (`judge`, the
+decisive classes `review-body-name` and `platform-name`) into a per-notice fix — the single source of
+truth, no parallel heuristic:
+- a clean buyer mention left → the flagged mentions lose the buyer role (KIO / a tribunal
+  administratif / European Dynamics beside the real buyer);
+- none left → the party `real-buyer-elsewhere` names is promoted to the dialect's buyer role
+  (`Procedure-Buyer`; legacy / sdk-0.1 `buyer`) and the flagged mentions dropped (438807 POLREGIO,
+  the Staatliches Bauamt beside a Vergabekammer, Armagh council beside European Dynamics) — except a
+  portal / platform label (new `NameList::Portal`: TenderNed, "digitaal via", Negometrix, achatpublic,
+  the Spanish Plataforma de Contratación; plus the platform list), then nothing changes;
+- nothing recoverable (Mercell alone, the Raad van State with only "Digitaal via TenderNed") → served
+  as published.
+
+The demoted party keeps its other roles. `Verdict` now carries the `real-buyer-elsewhere` party's
+index and `Party` its section, so the promote names exactly the census basis's organization.
+
+**Both readers, one verdict.** `NoticeState::read` applies it to the raw role references
+(`apply_buyer_fix`, through the nested-org aliases) → the served `parties[]`, `v_tender_buyers`,
+organization statistics. `buyer_side_mentions` applies it to the guards' buyer side → 369's buyer
+key, 481's guard tokens and Phase-1 org sections (a promoted signatory moves to the buyers), 482's
+hub key and the procedure-key census. Both fold paths go through these two functions, so full and
+daily agree by construction (pinned by `absorb_and_compare`, one delta and — review fix — the CN and the CAN on different days in either order). The census itself still reads the raw
+slot (`notice_parties`), so it keeps measuring the parse.
+
+**Decisions.**
+- **Parsed-side, no resolved organizations** (the census binds `organization_mentions`): the plan row
+  is read before Phase 1, and the served role must agree with the guards. "Same organization" is then
+  by folded name only; it matters only for `real-buyer-elsewhere` / "another buyer" against a
+  differently named party.
+- **Cheap gate:** only a notice whose BUYER party's name (any `ORG_NAME_FIELD_IDS` value of a party
+  a buyer reference names, through nested halves) holds a review-body or platform pattern reads its
+  mentions again for the verdict (review fix: was every party's name); `buyer_side_mentions`
+  passes the mentions it already read.
+- **The no-clean case promotes only when a non-portal party is recoverable;** otherwise nothing is
+  dropped (the guards keep reading the flagged mention: unit 1c's "drop it from the guards only" for
+  a platform alone was not taken — one served/guard verdict, and job 1943 has 1 such notice in the
+  sample).
+- `decides_the_fold`'s allowlist test now lists the census's role fields and their DE-1.x aliases
+  (the demote makes them grouping inputs), with the fold-impact note.
+
+**Re-projection: `refold-buyer-roles`** (`Spec::RefoldBuyerRoles { dry_run }`, dry by default,
+stoppable, report `buyer-role-refold`; docs in `docs/operations.md`, "The buyer-role demote and
+`refold-buyer-roles`"). Walks `organization_mentions` in 250,000-id strides
+(`Db::mentions_named`, the name test in Rust) → notices whose own version SERVES such an organization
+as buyer (`Db::notices_serving_buyer`) → notices whose parse gives a non-empty `buyer_fix`
+(`role_census::buyer_role_refold_window`). Wet: `unmark_projected_by_ids` + `stamp_stale_for_notices`
+(the issue-179 pair), so the next daily re-plans exactly those notices with the Tenders they sit in
+(moving them between Tenders both ways — review fix test below). Cheaper than a projection
+epoch (whole corpus) or a stride-1 census (a day): one pass of the mentions table plus ~2 seeks per
+pattern-named mention and a parse of the few thousand candidates.
+
+**Tests.**
+- `role_census::tests::a_flagged_buyer_is_dropped_beside_a_clean_one_and_yields_to_a_recoverable_buyer`
+  — 438807 (UZP → POLREGIO), KIO beside Gmina Żórawina, Vergabekammer → Staatliches Bauamt, Raad van
+  State + "Digitaal via TenderNed" kept, European Dynamics beside QQI dropped, European Dynamics →
+  Armagh promoted, Mercell kept, PCRB + European Dynamics beside Mater Dei both dropped; the
+  non-decisive shapes untouched; the gate and the portal check.
+- `role_census::tests::the_served_roles_and_the_guard_inputs_read_the_same_demote` — `NoticeState`
+  roles, `buyer_mentions`, `GuardSide` sections and `buyer_key` agree (promote, drop, keep).
+- `tests/project_incremental.rs::a_review_body_or_platform_in_the_buyer_slot_is_demoted_on_full_and_daily_folds`
+  — full and daily folds byte-identical; served buyers per notice; 481's guard joins the
+  Vergabekammer CAN to the Bauamt's CN by OPP-090 (`buyer_disjoint` 0; it is 1 with the fix disabled,
+  checked); the cohort finds nothing on a unit-2 layer. (The simulated pre-unit-2 row is gone: see
+  the review fixes.)
+- `supervisor::tests::refold_buyer_roles_enqueues_dry_stores_its_report_and_a_stop_stores_none`, and
+  the job in the cancellable list, the future-size gauges and the 144 KiB poll budget.
+
+### Unit 2 review fixes — 2026-10-04 (not deployed)
+
+- **Which party is promoted** (`role_census::promotable`): the first other party in a STRONG
+  buyer-shaped role, skipping the eSender, a review body by role or by name (KIO's long name giving
+  information beside a `KIO` buyer — the folded-name `same` misses it without resolved orgs), a
+  portal/platform label, a nameless party, and a party whose only buyer-shaped role is the documents
+  provider or the new `RoleKind::Financing` (`LotResult-Financing`, still buyer-shaped for the
+  census's `real-buyer-elsewhere`, so the census classes are unchanged). A portal label FIRST no
+  longer blocks the real buyer after it. Not done: ranking TenderReceipt above Paying (one more role
+  bit; first-in-order among strong roles instead).
+- **Platform name alone stays in the guards** — the Decision bullet above is struck through and
+  marked superseded; `buyer_fix`'s doc and operations.md say so.
+- **"Another buyer" corroboration without a review role: accepted risk, not tightened.** A court
+  buying jointly beside a CPB/ministry loses its buyer role; none of job 1943's 19 such samples was
+  one (all held the review role too). Requiring the review role would diverge from the validated
+  census class and miss the shape where the review slot itself is empty (KIO typed into the buyer
+  slot instead of the review slot).
+- **Census vs projection target (orgs = None):** handled by `promotable`'s review-body-name skip;
+  the dry `buyer-role-refold` report's `promoted` column, not census-1943, is the validation set
+  (operations.md says to read it before going wet).
+- **Plan marker:** the plan DDL creates `plan_buyer_demote`; `plan_is_complete` refuses a plan
+  without it (481 2c's pattern), so no resume reuses pre-demote buyer keys / guard tokens. Pinned in
+  `project_resume.rs::a_plan_from_before_the_buyer_guard_is_rebuilt_not_resumed` ("pre-483u2").
+- **Cheaper gate:** `may_need_fix` tests only the names of the parties a buyer reference names
+  (KIO as review body alone no longer passes); the name patterns are padded once
+  (`PADDED_PATTERNS`, a `LazyLock`) instead of a `format!` per pattern per name. The verdict is
+  still computed in both readers (one gate pass each for the ~99.99% that fail it).
+- **A demoted mention that also signs** is dropped from the guards' signatories too; the dead
+  `signatories.retain(promote)` line is gone (the if/else fold files a promoted section under the
+  buyers only, and the test message says so).
+- **Dry report counts:** the dry summary says `would re-queue <fixed>` (was always 0).
+- **The re-queue moves notices between Tenders (the major finding):**
+  `project_incremental.rs::refold_buyer_roles_moves_a_notice_between_tenders_on_the_daily` builds the
+  pre-demote layer with the REAL fold (the stored parse gains the role reference that makes the fix
+  non-empty only afterwards), on the full non-rebuild and the daily path side by side
+  (`absorb_and_compare` at each step), and re-queues only the cohort: **join** — the Vergabekammer CAN
+  refused by OPP-090 (`buyer_disjoint` 1, its own Tender) joins the CN, its old Tender retired;
+  **split** — a CAN joined through a shared KIO buyer splits out when KIO is dropped, re-queuing the
+  CAN only, the CN's Tender keeping the CN alone. Both equal a fresh rebuild by publication. So
+  per-notice re-queue suffices; no whole-Tender re-queue.
+- **More tests:** no promotion beside a clean buyer with a buyer-shaped third party; the portal-first
+  order; the nameless / eSender / funding body / documents provider / review-body-named candidates;
+  legacy (promoted as `buyer`), sdk-0.1 (`ContractingParty` dropped) and a nested inner-half buyer
+  reference (`the_demote_reads_the_legacy_sdk01_and_nested_shapes`); the CN and CAN on different
+  days in either order (`the_demote_holds_when_the_cn_and_its_can_arrive_on_different_days`); the
+  supervisor test seeds a stride (dry finds 1 with a promote, wet re-queues 1 and stamps) and the
+  seeded stride's poll budget (measured 360–390 KiB, set 416 KiB).
+- **Dry run holds the heavy-write belt:** documented in operations.md (follows `requeue-uuid-hubs`).

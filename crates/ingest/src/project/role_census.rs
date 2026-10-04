@@ -19,14 +19,21 @@
 //! buyer is wrong.
 //!
 //! Read-only: the job stores its report and writes nothing else.
+//!
+//! Issue 483 unit 2 makes the census's verdict the projection's: [`buyer_fix`] demotes a
+//! decisively flagged buyer mention (or yields its role to the real buyer the notice names
+//! elsewhere), read by `NoticeState::read` (the served roles) and `buyer_side_mentions`
+//! (the guards), and [`buyer_role_refold_window`] finds the projected notices it changes
+//! (`refold-buyer-roles`).
 
 use super::{
-    NoticeState, ORGANIZATION_KIND, SDK01_BUYER_KIND, SDK01_PARTY_KINDS, SDK01_WINNER_KIND, SUBTYPE_FIELD,
-    first_code, is_legacy_profile, is_sdk01_profile, match_norm, nested_org_aliases, normalise_de1, role_name,
+    NoticeState, ORG_NAME_FIELD_IDS, ORGANIZATION_KIND, SDK01_BUYER_KIND, SDK01_PARTY_KINDS, SDK01_WINNER_KIND,
+    SUBTYPE_FIELD, first_code, is_legacy_profile, is_sdk01_profile, match_norm, nested_org_aliases, normalise_de1,
+    role_name,
 };
 use serde::Serialize;
-use std::collections::{BTreeMap, HashMap};
-use store::{NoticeValue, Parsed};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
+use store::{Mention, NoticeValue, Parsed};
 
 /// Notice ids per window. A window is the unit of `stride` sampling and of the stop
 /// check; it is read [`ROLE_CENSUS_CHUNK`] notices at a time.
@@ -50,7 +57,7 @@ const SAMPLE_OTHER_BUYERS: usize = 10;
 
 /// What a role reference says about the organization it names, for this census.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum RoleKind {
+pub(super) enum RoleKind {
     Buyer,
     /// A winner, tenderer or (sub)contractor: an economic operator of this notice.
     Contractor,
@@ -69,6 +76,10 @@ enum RoleKind {
     /// gives additional information, pays or finances the contract, signs it. 438807
     /// names its real buyer POLREGIO only here, with the appeals office in the buyer slot.
     BuyerShaped,
+    /// Finances the contract (eForms `LotResult-Financing`): buyer-shaped for the census
+    /// (`real-buyer-elsewhere`), but a funding body is no buyer to PROMOTE alone (issue 483
+    /// unit 2 review, [`promotable`]).
+    Financing,
 }
 
 impl RoleKind {
@@ -81,7 +92,7 @@ impl RoleKind {
 /// OPT-300/301 suffix, or the legacy element folded onto the canonical name) to what it
 /// means here. Data, not branches: a role the census should read is a row. Every eForms
 /// row is a role of `crates/ingest/sdk/fields-*.json` (a test holds them to it).
-const ROLE_KINDS: &[(&str, RoleKind)] = &[
+pub(super) const ROLE_KINDS: &[(&str, RoleKind)] = &[
     ("Procedure-Buyer", RoleKind::Buyer),
     ("buyer", RoleKind::Buyer),
     ("Tenderer", RoleKind::Contractor),
@@ -108,7 +119,7 @@ const ROLE_KINDS: &[(&str, RoleKind)] = &[
     ("Lot-AddInfo", RoleKind::BuyerShaped),
     ("Part-AddInfo", RoleKind::BuyerShaped),
     ("LotResult-Paying", RoleKind::BuyerShaped),
-    ("LotResult-Financing", RoleKind::BuyerShaped),
+    ("LotResult-Financing", RoleKind::Financing),
     ("Contract-Signatory", RoleKind::BuyerShaped),
     ("tender-receipt", RoleKind::BuyerShaped),
     ("further-information", RoleKind::BuyerShaped),
@@ -141,6 +152,11 @@ fn role_kind(field_id: &str) -> Option<RoleKind> {
 enum NameList {
     ReviewBody,
     Platform,
+    /// Issue 483 unit 2: a portal or platform LABEL that no buyer is ("Digitaal via
+    /// TenderNed", the Raad van State notice's tender-receipt party). Never flags a buyer
+    /// mention (no census class reads it); [`portal_label`] reads it, with
+    /// [`NameList::Platform`], to refuse promoting such a party to buyer.
+    Portal,
 }
 
 /// Names that are a review body, or a procurement platform vendor, whatever role a notice
@@ -229,6 +245,12 @@ const NAME_PATTERNS: &[(&str, &str, NameList)] = &[
     ("cosinex", "cosinex", NameList::Platform),
     ("subreport", "subreport", NameList::Platform),
     ("DTVP", "deutsches vergabeportal", NameList::Platform),
+    ("NL TenderNed", "tenderned", NameList::Portal),
+    ("NL TenderNed", "digitaal via", NameList::Portal),
+    ("Negometrix", "negometrix", NameList::Portal),
+    ("FR achatpublic", "achatpublic", NameList::Portal),
+    ("FR achatpublic", "achatpublic com", NameList::Portal),
+    ("ES Plataforma de Contratación", "plataforma de contratacion del sector publico", NameList::Portal),
 ];
 
 /// Commercial legal forms, as folded whole-word phrases: a name holding one is a company
@@ -333,16 +355,26 @@ fn fold(name: &str) -> String {
     store::buyer_name_fold(&match_norm(name))
 }
 
+/// [`NAME_PATTERNS`] with each phrase padded once (`" phrase "`), so a match is one
+/// substring search, not a `format!` per pattern per name (issue 483 unit 2 review: the
+/// demote's gate runs in the projection's hot loop).
+static PADDED_PATTERNS: std::sync::LazyLock<Vec<(&'static str, String, NameList)>> = std::sync::LazyLock::new(|| {
+    NAME_PATTERNS.iter().map(|(label, phrase, list)| (*label, format!(" {phrase} "), *list)).collect()
+});
+
 /// The first pattern of `list` the folded name holds as whole words.
 fn name_pattern(folded: &str, list: NameList) -> Option<&'static str> {
     if folded.is_empty() {
         return None;
     }
     let padded = format!(" {folded} ");
-    NAME_PATTERNS
-        .iter()
-        .find(|(_, phrase, l)| *l == list && padded.contains(&format!(" {phrase} ")))
-        .map(|(label, _, _)| *label)
+    PADDED_PATTERNS.iter().find(|(_, phrase, l)| *l == list && padded.contains(phrase.as_str())).map(|(label, _, _)| *label)
+}
+
+/// Whether a party holds a buyer-shaped role ([`RoleKind::BuyerShaped`], the documents
+/// provider, the financing party): `real-buyer-elsewhere`'s test.
+fn buyer_shaped(p: &Party) -> bool {
+    p.is(RoleKind::BuyerShaped) || p.is(RoleKind::DocsProvider) || p.is(RoleKind::Financing)
 }
 
 /// Whether the folded name holds a commercial legal form ([`COMMERCIAL_FORMS`]).
@@ -431,6 +463,8 @@ pub const ROLE_CENSUS_CLASSES: [(&str, bool); 14] = [
 /// organization.
 #[derive(Clone, Debug)]
 struct Party {
+    /// The (outermost) Organization section the mention is.
+    section: String,
     name: String,
     folded: String,
     org: Option<i64>,
@@ -465,6 +499,9 @@ impl Party {
 struct Verdict {
     classes: u16,
     basis: Vec<String>,
+    /// The party `real-buyer-elsewhere` names (index into the parties), the buyer a demote
+    /// can recover (issue 483 unit 2, [`buyer_fix`]).
+    elsewhere: Option<usize>,
 }
 
 impl Verdict {
@@ -487,6 +524,16 @@ impl Verdict {
 /// nested Organization's inner half lands on its outer one, as the projection binds it),
 /// the name, and the resolved organization from `orgs` (`section → organization`).
 fn notice_parties(sdk01: bool, notice_id: i64, parsed: &Parsed, orgs: Option<&HashMap<String, i64>>) -> Vec<Party> {
+    notice_parties_from(sdk01, parsed, NoticeState::mentions(sdk01, notice_id, parsed), orgs)
+}
+
+/// [`notice_parties`] over mentions the caller already read ([`NoticeState::mentions`]).
+fn notice_parties_from(
+    sdk01: bool,
+    parsed: &Parsed,
+    mentions: Vec<Mention>,
+    orgs: Option<&HashMap<String, i64>>,
+) -> Vec<Party> {
     let sections: HashMap<&str, &store::Section> = parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
     let kinds: &[&str] = if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] };
     let alias = nested_org_aliases(&sections, kinds);
@@ -510,12 +557,12 @@ fn notice_parties(sdk01: bool, notice_id: i64, parsed: &Parsed, orgs: Option<&Ha
             *roles.entry(outer(&s.id)).or_default() |= kind.bit();
         }
     }
-    NoticeState::mentions(sdk01, notice_id, parsed)
+    mentions
         .into_iter()
         .filter_map(|m| {
             let kinds = *roles.get(&m.section_id)?;
             let org = orgs.and_then(|o| o.get(&m.section_id)).copied();
-            Some(Party { folded: fold(&m.name), name: m.name, org, kinds })
+            Some(Party { folded: fold(&m.name), name: m.name, org, kinds, section: m.section_id })
         })
         .collect()
 }
@@ -525,7 +572,7 @@ fn judge(parties: &[Party]) -> Vec<(usize, Verdict)> {
     let class = |name: &str| ROLE_CENSUS_CLASSES.iter().position(|(n, _)| *n == name).expect("a census class");
     let label = |p: &Party| if p.name.trim().is_empty() { "(no name)".to_owned() } else { p.name.trim().to_owned() };
     let org_label = |p: &Party| format!("{} (org {})", label(p), p.org.map_or("-".to_owned(), |o| o.to_string()));
-    let buyer_shaped = |p: &Party| p.is(RoleKind::BuyerShaped) || p.is(RoleKind::DocsProvider);
+    let buyer_shaped = |p: &Party| buyer_shaped(p);
     let mut out = Vec::new();
     for (i, buyer) in parties.iter().enumerate().filter(|(_, p)| p.is(RoleKind::Buyer)) {
         let mut v = Verdict::default();
@@ -562,12 +609,17 @@ fn judge(parties: &[Party]) -> Vec<(usize, Verdict)> {
         let elsewhere = if buyer_shaped(buyer) {
             None
         } else {
-            others().find(|p| {
-                buyer_shaped(p) && !p.is(RoleKind::Buyer) && !p.is(RoleKind::Contractor) && !buyer.same(p)
+            parties.iter().enumerate().find(|(j, p)| {
+                *j != i
+                    && buyer_shaped(p)
+                    && !p.is(RoleKind::Buyer)
+                    && !p.is(RoleKind::Contractor)
+                    && !buyer.same(p)
             })
         };
-        if let Some(p) = elsewhere {
+        if let Some((j, p)) = elsewhere {
             v.flag(class("real-buyer-elsewhere"), org_label(p));
+            v.elsewhere = Some(j);
         }
         let review_role = find(RoleKind::ReviewBody);
         let review_info = find(RoleKind::ReviewAdjacent);
@@ -604,6 +656,250 @@ fn judge(parties: &[Party]) -> Vec<(usize, Verdict)> {
         out.push((i, v));
     }
     out
+}
+
+/// Whether a folded name is a portal or platform label, never a buyer to promote
+/// ([`NameList::Platform`] or [`NameList::Portal`]).
+fn portal_label(folded: &str) -> bool {
+    name_pattern(folded, NameList::Platform).is_some() || name_pattern(folded, NameList::Portal).is_some()
+}
+
+/// Issue 483 unit 2: what the projection does to one notice's buyer role, from the census's
+/// own verdicts ([`judge`]): the single source of truth, so the census measures exactly what
+/// the projection demotes. Empty for nearly every notice.
+///
+/// - A buyer mention a decisive class flags ([`ROLE_CENSUS_CLASSES`]) loses its buyer role
+///   when a clean buyer mention is left on the notice (`drop`).
+/// - When none is left and `real-buyer-elsewhere` holds for a flagged mention, the party
+///   [`promotable`] picks is promoted to buyer (`promote`) and the flagged mentions
+///   dropped. A portal or platform label ([`portal_label`]: "Digitaal via TenderNed"),
+///   the eSender, a review body, a documents provider or funding body alone is never
+///   promoted; the next eligible party is (so the Raad van State with "Digitaal via
+///   TenderNed" receiving tenders and "Gemeente X" giving information yields to Gemeente
+///   X).
+/// - Nothing recoverable (a platform name alone, Mercell; a court whose only "real buyer"
+///   is a portal label): the roles stay as published, served AND in the guards (one
+///   verdict for both; issue 483's Decision bullet on a guard-only drop was reversed by
+///   unit 2).
+///
+/// Sections are the outermost Organization sections ([`NoticeState::mentions`]); a role
+/// reference naming a nested inner half is matched through the notice's aliases.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub(super) struct BuyerFix {
+    pub drop: BTreeSet<String>,
+    pub promote: BTreeSet<String>,
+}
+
+impl BuyerFix {
+    pub fn is_empty(&self) -> bool {
+        self.drop.is_empty() && self.promote.is_empty()
+    }
+}
+
+/// Whether a party name holds a review-body or platform pattern ([`NAME_PATTERNS`]): a buyer
+/// mention without one is never flagged decisively, so it is the cheap gate of
+/// [`buyer_fix`] and of the re-projection cohort ([`buyer_role_refold_window`]).
+pub fn review_or_platform_name(name: &str) -> bool {
+    let folded = fold(name);
+    name_pattern(&folded, NameList::ReviewBody).is_some() || name_pattern(&folded, NameList::Platform).is_some()
+}
+
+/// The outermost section of `kinds` on `id`'s ancestor chain, `id` itself included: the
+/// party a role reference or a name value belongs to, nested halves folded together
+/// (as [`nested_org_aliases`] binds them).
+fn outermost_party<'a>(sections: &HashMap<&str, &'a store::Section>, id: &'a str, kinds: &[&str]) -> Option<&'a str> {
+    let mut outermost = None;
+    let mut current = Some(id);
+    for _ in 0..sections.len().max(1) {
+        let Some(at) = current else { break };
+        let Some(section) = sections.get(at) else { break };
+        if kinds.contains(&section.kind.as_str()) {
+            outermost = Some(section.id.as_str());
+        }
+        current = section.parent.as_deref();
+    }
+    outermost
+}
+
+/// Whether a BUYER party's name holds a review-body or platform pattern: both decisive
+/// classes need one on a buyer name ([`judge`]), so a notice without one has no
+/// [`BuyerFix`] and skips the mention read. A superset: every name value (every
+/// language) of every party a buyer reference (or sdk-0.1's `ContractingParty`) names,
+/// through its nested halves. Issue 483 unit 2 review: the names of the other parties
+/// are not tested, so a Polish notice naming KIO only as its review body costs one pass
+/// over its role references and no fold.
+fn may_need_fix(sdk01: bool, parsed: &Parsed) -> bool {
+    let mut targets: Vec<&str> = Vec::new();
+    for value in &parsed.values {
+        if let NoticeValue::Id { value: target, is_ref: true, scheme } = &value.value
+            && scheme.as_deref() != Some("ojs")
+            && role_kind(&value.field_id) == Some(RoleKind::Buyer)
+        {
+            targets.push(target.as_str());
+        }
+    }
+    if sdk01 {
+        targets.extend(parsed.sections.iter().filter(|s| s.kind == SDK01_BUYER_KIND).map(|s| s.id.as_str()));
+    }
+    if targets.is_empty() {
+        return false;
+    }
+    let sections: HashMap<&str, &store::Section> = parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
+    let kinds: &[&str] = if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] };
+    let buyers: BTreeSet<&str> = targets.iter().filter_map(|t| outermost_party(&sections, t, kinds)).collect();
+    if buyers.is_empty() {
+        return false;
+    }
+    parsed.values.iter().any(|v| match &v.value {
+        NoticeValue::Text { value, .. } if ORG_NAME_FIELD_IDS.contains(&v.field_id.as_str()) => {
+            outermost_party(&sections, &v.section_id, kinds).is_some_and(|p| buyers.contains(p))
+                && review_or_platform_name(value)
+        }
+        _ => false,
+    })
+}
+
+/// The [`BuyerFix`] of one parsed notice (DE-1.x already folded). `mentions` are the
+/// notice's [`NoticeState::mentions`] when the caller has read them; otherwise they are
+/// read here, and only when [`may_need_fix`] says a fix is possible.
+///
+/// **Parsed-side, no resolved organizations** — unlike the census, which binds
+/// `organization_mentions`: the plan row's buyer key and guard tokens are read before
+/// Phase 1 resolves anything ([`super::Ident::read`]), and the served role must agree with
+/// them. Two parties are then "the same" by folded name only; the decisive verdicts
+/// depend on that only through `real-buyer-elsewhere` and "another buyer", which compare
+/// a pattern-named buyer with a differently named party.
+pub(super) fn buyer_fix(sdk01: bool, notice_id: i64, parsed: &Parsed, mentions: Option<&[Mention]>) -> BuyerFix {
+    buyer_fix_parties(sdk01, notice_id, parsed, mentions).0
+}
+
+/// [`buyer_fix`] and the parties it judged (empty when the gate skipped the read).
+fn buyer_fix_parties(
+    sdk01: bool,
+    notice_id: i64,
+    parsed: &Parsed,
+    mentions: Option<&[Mention]>,
+) -> (BuyerFix, Vec<Party>) {
+    if !may_need_fix(sdk01, parsed) {
+        return (BuyerFix::default(), Vec::new());
+    }
+    let mentions = match mentions {
+        Some(m) => m.to_vec(),
+        None => NoticeState::mentions(sdk01, notice_id, parsed),
+    };
+    let parties = notice_parties_from(sdk01, parsed, mentions, None);
+    (fix_from(&parties, &judge(&parties)), parties)
+}
+
+/// One notice the re-projection cohort found: what its next fold changes.
+#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+pub struct BuyerRoleFixed {
+    pub notice_id: i64,
+    /// `source:publication_id`.
+    pub publication: String,
+    /// The buyer mentions that lose the buyer role, and the parties promoted to it.
+    pub dropped: Vec<String>,
+    pub promoted: Vec<String>,
+}
+
+/// Issue 483 unit 2's re-projection cohort over one notice-id window `(after_id,
+/// through_id]`: the projected notices whose served buyer role the demote changes.
+/// Three narrowing steps, each cheaper than the next is selective:
+/// 1. mentions whose name holds a review-body or platform pattern
+///    ([`review_or_platform_name`], [`store::Db::mentions_named`]) — every Polish notice
+///    naming KIO as its review body is one, so this is a large superset;
+/// 2. of those, the notices that SERVE such an organization as a buyer
+///    ([`store::Db::notices_serving_buyer`]): the projection before unit 2 served the raw
+///    buyer slot, so these are the only candidates;
+/// 3. of those, the notices whose parse yields a non-empty [`buyer_fix`] — the projection's
+///    own verdict, so the cohort is exactly what a re-fold changes.
+///
+/// Returns `(named mentions, candidate notices, fixed notices)`. Read-only.
+pub async fn buyer_role_refold_window(
+    db: &store::Db,
+    after_id: i64,
+    through_id: i64,
+) -> turso::Result<(u64, u64, Vec<BuyerRoleFixed>)> {
+    let named = Box::pin(db.mentions_named(after_id, through_id, &review_or_platform_name)).await?;
+    if named.is_empty() {
+        return Ok((0, 0, Vec::new()));
+    }
+    let candidates = Box::pin(db.notices_serving_buyer(&named)).await?;
+    let mut fixed = Vec::new();
+    for chunk in candidates.chunks(ROLE_CENSUS_CHUNK as usize) {
+        let mut notices = Box::pin(db.parsed_by_ids(chunk)).await?;
+        normalise_de1(&mut notices);
+        for (notice, parsed) in &notices {
+            let (fix, parties) = buyer_fix_parties(is_sdk01_profile(&notice.profile), notice.id, parsed, None);
+            if fix.is_empty() {
+                continue;
+            }
+            let names = |sections: &BTreeSet<String>| -> Vec<String> {
+                parties.iter().filter(|p| sections.contains(&p.section)).map(|p| p.name.trim().to_owned()).collect()
+            };
+            fixed.push(BuyerRoleFixed {
+                notice_id: notice.id,
+                publication: format!("{}:{}", notice.source, notice.publication_id),
+                dropped: names(&fix.drop),
+                promoted: names(&fix.promote),
+            });
+        }
+    }
+    Ok((named.len() as u64, candidates.len() as u64, fixed))
+}
+
+/// The party a demote promotes for the flagged buyer `i`, when `real-buyer-elsewhere`
+/// holds for it: the first other party (section order) that holds a STRONG buyer-shaped
+/// role ([`RoleKind::BuyerShaped`]: receives, evaluates or signs tenders, gives additional
+/// information, pays) and is neither a buyer nor a contractor nor the flagged buyer itself.
+/// Issue 483 unit 2 review — never promoted, so the next candidate is tried:
+/// - a party whose only buyer-shaped role is the documents provider or the financing
+///   party (a platform handing out documents, a funding body);
+/// - the eSender (`Procedure-SProvider`): an unlisted platform or notice service;
+/// - a review body by role or by name (`Krajowa Izba Odwoławcza` beside a `KIO` buyer
+///   mention: "the same" by folded name fails, the organization is one);
+/// - a portal or platform label ([`portal_label`]: "Digitaal via TenderNed");
+/// - a nameless party.
+fn promotable(parties: &[Party], i: usize) -> Option<usize> {
+    let buyer = &parties[i];
+    parties
+        .iter()
+        .enumerate()
+        .find(|(j, p)| {
+            *j != i
+                && p.is(RoleKind::BuyerShaped)
+                && !p.is(RoleKind::Buyer)
+                && !p.is(RoleKind::Contractor)
+                && !p.is(RoleKind::Esender)
+                && !p.is(RoleKind::ReviewBody)
+                && !buyer.same(p)
+                && !p.folded.is_empty()
+                && !portal_label(&p.folded)
+                && name_pattern(&p.folded, NameList::ReviewBody).is_none()
+        })
+        .map(|(j, _)| j)
+}
+
+/// [`buyer_fix`]'s rule over the census's verdicts.
+fn fix_from(parties: &[Party], verdicts: &[(usize, Verdict)]) -> BuyerFix {
+    let flagged: Vec<&(usize, Verdict)> = verdicts.iter().filter(|(_, v)| !v.clean()).collect();
+    if flagged.is_empty() {
+        return BuyerFix::default();
+    }
+    let drop: BTreeSet<String> = flagged.iter().map(|(i, _)| parties[*i].section.clone()).collect();
+    if verdicts.iter().any(|(_, v)| v.clean()) {
+        return BuyerFix { drop, promote: BTreeSet::new() };
+    }
+    let promote: BTreeSet<String> = flagged
+        .iter()
+        .filter(|(_, v)| v.elsewhere.is_some())
+        .filter_map(|(i, _)| promotable(parties, *i))
+        .map(|j| parties[j].section.clone())
+        .collect();
+    if promote.is_empty() {
+        return BuyerFix::default();
+    }
+    BuyerFix { drop, promote }
 }
 
 /// One sampled flagged buyer mention.
@@ -1203,6 +1499,332 @@ mod tests {
         for stem in PUBLIC_STEMS {
             assert_eq!(fold(stem), *stem, "{stem}: written as its own fold");
         }
+    }
+
+    /// [`buyer_fix`] of an eForms notice, as `(dropped names, promoted names)`.
+    fn fix(roles: &[(&str, &str, &str)]) -> (Vec<String>, Vec<String>) {
+        let parsed = notice(roles);
+        let parties = notice_parties(false, 1, &parsed, None);
+        let f = buyer_fix(false, 1, &parsed, None);
+        let names = |set: &BTreeSet<String>| -> Vec<String> {
+            parties.iter().filter(|p| set.contains(&p.section)).map(|p| p.name.clone()).collect()
+        };
+        (names(&f.drop), names(&f.promote))
+    }
+
+    const NONE: (Vec<String>, Vec<String>) = (Vec::new(), Vec::new());
+
+    /// Issue 483 unit 2: the demote rules on the 482/483 shapes (job 1943's samples).
+    #[test]
+    fn a_flagged_buyer_is_dropped_beside_a_clean_one_and_yields_to_a_recoverable_buyer() {
+        let s = |v: &[&str]| v.iter().map(|x| (*x).to_owned()).collect::<Vec<String>>();
+        // 438807: the UZP appeals department alone in the buyer slot, POLREGIO receiving
+        // tenders and paying: POLREGIO is promoted, the UZP mention dropped.
+        let uzp = "Urząd Zamówień Publicznych Departament Odwołań";
+        let polregio = "POLREGIO S.A ul. Kolejowa 1 , 01-217 Warszawa";
+        assert_eq!(
+            fix(&[
+                (BUYER, "ORG-1", uzp),
+                ("OPT-301-Lot-Mediator", "ORG-1", uzp),
+                ("OPT-301-Lot-ReviewInfo", "ORG-1", uzp),
+                ("OPT-301-Lot-AddInfo", "ORG-2", polregio),
+                ("OPT-301-Lot-TenderReceipt", "ORG-2", polregio),
+                ("OPT-301-LotResult-Paying", "ORG-2", polregio),
+                ("OPT-301-Lot-ReviewOrg", "ORG-3", "Krajowa Izba Odwoławcza"),
+                (TENDERER, "ORG-4", "Serwis Pojazdów Szynowych sp. z o.o. spółka komandytowa"),
+            ]),
+            (s(&[uzp]), s(&[polregio]))
+        );
+        // A KIO mention beside the real buyer (24200188's shape): KIO dropped, nothing promoted.
+        assert_eq!(
+            fix(&[
+                (BUYER, "ORG-1", "Krajowa Izba Odwoławcza"),
+                ("OPT-301-Lot-ReviewOrg", "ORG-1", "Krajowa Izba Odwoławcza"),
+                (BUYER, "ORG-2", "Gmina Żórawina"),
+                ("OPT-301-Lot-TenderReceipt", "ORG-2", "Gmina Żórawina"),
+            ]),
+            (s(&["Krajowa Izba Odwoławcza"]), vec![])
+        );
+        // 23811265: the Vergabekammer alone as buyer (and the review body), the Staatliches
+        // Bauamt receiving tenders: promoted.
+        let bauamt = "Staatliches Bauamt Erlangen-Nürnberg, Technische Geschäftsleitung";
+        assert_eq!(
+            fix(&[
+                (BUYER, "ORG-1", "Vergabekammer"),
+                ("OPT-301-Lot-ReviewOrg", "ORG-1", "Vergabekammer"),
+                ("OPT-301-Lot-TenderReceipt", "ORG-2", bauamt),
+                ("OPT-301-Lot-AddInfo", "ORG-2", bauamt),
+            ]),
+            (s(&["Vergabekammer"]), s(&[bauamt]))
+        );
+        // 20408347: the Raad van State with only "Digitaal via TenderNed" elsewhere — a
+        // portal label, never promoted, so the role stays as published.
+        assert_eq!(
+            fix(&[
+                (BUYER, "ORG-1", "Raad van State"),
+                ("OPT-301-Lot-TenderReceipt", "ORG-2", "Digitaal via TenderNed"),
+            ]),
+            NONE
+        );
+        // 25200915: European Dynamics (also the eSender) beside a real buyer: dropped.
+        assert_eq!(
+            fix(&[
+                (BUYER, "ORG-1", "European Dynamics S.A."),
+                ("OPT-300-Procedure-SProvider", "ORG-1", "European Dynamics S.A."),
+                (BUYER, "ORG-2", "Quality and Qualifications Ireland (QQI)"),
+            ]),
+            (s(&["European Dynamics S.A."]), vec![])
+        );
+        // 25805713: European Dynamics alone, the council receiving tenders: promoted.
+        let armagh = "Armagh City, Banbridge and Craigavon Borough Council";
+        assert_eq!(
+            fix(&[(BUYER, "ORG-1", "European Dynamics S.A."), ("OPT-301-Lot-TenderReceipt", "ORG-2", armagh)]),
+            (s(&["European Dynamics S.A."]), s(&[armagh]))
+        );
+        // 26814890: Mercell alone, nothing recoverable: kept.
+        assert_eq!(fix(&[(BUYER, "ORG-1", "Mercell")]), NONE);
+        // 27015810: two flagged buyers beside a clean one: both dropped.
+        let (dropped, promoted) = fix(&[
+            (BUYER, "ORG-1", "Mater Dei Hospital"),
+            (BUYER, "ORG-2", "European Dynamics S.A."),
+            (BUYER, "ORG-3", "Public Contracts Review Board"),
+            ("OPT-301-Lot-ReviewOrg", "ORG-3", "Public Contracts Review Board"),
+        ]);
+        assert_eq!((dropped, promoted), (s(&["European Dynamics S.A.", "Public Contracts Review Board"]), vec![]));
+        // Not decisive, so untouched: a court buying for itself (its own review body), the
+        // swap, a buyer sending its own notices, and a notice no pattern names at all.
+        assert_eq!(
+            fix(&[(BUYER, "ORG-1", "Krajowa Izba Odwoławcza"), ("OPT-301-Lot-ReviewOrg", "ORG-1", "Krajowa Izba Odwoławcza")]),
+            NONE
+        );
+        assert_eq!(fix(&[(BUYER, "ORG-1", "Ratio Web Sp. z o.o."), (TENDERER, "ORG-2", "Instytut Adama Mickiewicza")]), NONE);
+        assert_eq!(fix(&[(BUYER, "ORG-1", "Gmina Cieszyn"), ("OPT-300-Procedure-SProvider", "ORG-1", "Gmina Cieszyn")]), NONE);
+        assert!(!may_need_fix(false, &notice(&[(BUYER, "ORG-1", "Gmina Olkusz"), (TENDERER, "ORG-2", "Budimex S.A.")])));
+        // The gate reads buyer names only: KIO as the review body alone is not a candidate.
+        assert!(!may_need_fix(false, &notice(&[(BUYER, "ORG-1", "Gmina Olkusz"), ("OPT-301-Lot-ReviewOrg", "ORG-2", "KIO")])));
+        assert!(may_need_fix(false, &notice(&[(BUYER, "ORG-1", "KIO"), (BUYER, "ORG-2", "Gmina Olkusz")])));
+        assert!(portal_label(&fold("Digitaal via TenderNed")) && portal_label(&fold("Mercell Norge AS")));
+        assert!(!portal_label(&fold("Gemeente Utrecht")));
+    }
+
+    /// Issue 483 unit 2 review: which party a demote promotes, and that a clean buyer
+    /// left means no promotion at all.
+    #[test]
+    fn a_demote_promotes_only_a_strong_eligible_party_and_never_beside_a_clean_buyer() {
+        let s = |v: &[&str]| v.iter().map(|x| (*x).to_owned()).collect::<Vec<String>>();
+        let kio = "Krajowa Izba Odwoławcza";
+        // A clean buyer left: KIO dropped, the buyer-shaped third party NOT promoted.
+        assert_eq!(
+            fix(&[
+                (BUYER, "ORG-1", kio),
+                ("OPT-301-Lot-ReviewOrg", "ORG-1", kio),
+                (BUYER, "ORG-2", "Gmina X"),
+                ("OPT-301-Lot-TenderReceipt", "ORG-3", "Centrum Usług Wspólnych"),
+            ]),
+            (s(&[kio]), vec![])
+        );
+        // A portal label first, the real buyer after it: the portal is skipped and
+        // Gemeente X promoted.
+        assert_eq!(
+            fix(&[
+                (BUYER, "ORG-1", "Raad van State"),
+                ("OPT-301-Lot-TenderReceipt", "ORG-2", "Digitaal via TenderNed"),
+                ("OPT-301-Lot-AddInfo", "ORG-3", "Gemeente X"),
+            ]),
+            (s(&["Raad van State"]), s(&["Gemeente X"]))
+        );
+        // Never promoted: a nameless party, the eSender (an unlisted platform receiving
+        // tenders), a funding body or a documents provider alone, a review body by name.
+        for (role, name) in [
+            ("OPT-301-Lot-TenderReceipt", ""),
+            ("OPT-301-LotResult-Financing", "Europäischer Fonds für regionale Entwicklung"),
+            ("OPT-301-Lot-DocProvider", "Vergabeplattform Region Süd"),
+            ("OPT-301-Lot-AddInfo", "Vergabekammer Südbayern"),
+        ] {
+            assert_eq!(fix(&[(BUYER, "ORG-1", "Vergabekammer"), (role, "ORG-2", name)]), NONE, "{role} {name}");
+        }
+        assert_eq!(
+            fix(&[
+                (BUYER, "ORG-1", "Vergabekammer"),
+                ("OPT-301-Lot-TenderReceipt", "ORG-2", "Staatsanzeiger eServices"),
+                ("OPT-300-Procedure-SProvider", "ORG-2", "Staatsanzeiger eServices"),
+            ]),
+            NONE,
+            "the eSender"
+        );
+        // The KIO mention's own long name giving information is skipped for the real buyer
+        // behind it.
+        assert_eq!(
+            fix(&[
+                (BUYER, "ORG-1", "KIO"),
+                ("OPT-301-Lot-AddInfo", "ORG-2", kio),
+                ("OPT-301-Lot-TenderReceipt", "ORG-3", "POLREGIO S.A."),
+            ]),
+            (s(&["KIO"]), s(&["POLREGIO S.A."]))
+        );
+    }
+
+    /// Issue 483 unit 2: the projection applies the fix to the role references it serves
+    /// (`NoticeState::read`) and to the guards' buyer side (`buyer_side_mentions`: 369's
+    /// buyer key, 481's tokens and sections, 482's hub key) — one verdict, both readers.
+    #[test]
+    fn the_served_roles_and_the_guard_inputs_read_the_same_demote() {
+        use crate::project::{GuardSide, Scope, buyer_key, buyer_mentions};
+        let read = |roles: &[(&str, &str, &str)]| {
+            let n = store::NoticeRef {
+                id: 438_807,
+                source: "ted".into(),
+                publication_id: "00438807-2024".into(),
+                profile: "eforms:eforms-sdk-1.10".into(),
+            };
+            let parsed = notice(roles);
+            let state = NoticeState::read(&n, &parsed);
+            let mut buyers: Vec<(Scope, String)> = state
+                .roles
+                .iter()
+                .filter(|(_, role, _)| role == "Procedure-Buyer")
+                .map(|(scope, _, target)| (scope.clone(), target.clone()))
+                .collect();
+            buyers.sort();
+            let guard: Vec<String> = buyer_mentions(false, n.id, &parsed).into_iter().map(|m| m.name).collect();
+            let sections = GuardSide::read(false, n.id, &parsed).sections();
+            (buyers, guard, sections, buyer_key(false, n.id, &parsed), state.roles)
+        };
+        let uzp = "Urząd Zamówień Publicznych Departament Odwołań";
+        let polregio = "POLREGIO S.A.";
+        let (buyers, guard, sections, key, roles) = read(&[
+            (BUYER, "ORG-1", uzp),
+            ("OPT-301-Lot-Mediator", "ORG-1", uzp),
+            ("OPT-301-Lot-TenderReceipt", "ORG-2", polregio),
+            ("OPT-300-Contract-Signatory", "ORG-2", polregio),
+        ]);
+        assert_eq!(buyers, vec![(Scope::Tender, "ORG-2".to_owned())], "POLREGIO promoted, the UZP mention demoted");
+        assert!(roles.iter().any(|(_, r, t)| r == "Lot-Mediator" && t == "ORG-1"), "the UZP keeps its other roles");
+        assert!(roles.iter().any(|(_, r, t)| r == "Lot-TenderReceipt" && t == "ORG-2"), "and POLREGIO its own");
+        assert_eq!(guard, vec![polregio.to_owned()], "the guards' buyer is POLREGIO");
+        assert_eq!(sections, vec!["ORG-2".to_owned()], "a promoted signatory is filed under the buyers once (the fold's if/else)");
+        assert!(key.as_deref().is_some_and(|k| k.contains("polregio") && !k.contains("odwolan")), "{key:?}");
+        // Beside a clean buyer the review body is dropped from both.
+        let (buyers, guard, _, _, _) = read(&[
+            (BUYER, "ORG-1", "Krajowa Izba Odwoławcza"),
+            (BUYER, "ORG-2", "Gmina Żórawina"),
+        ]);
+        assert_eq!(buyers, vec![(Scope::Tender, "ORG-2".to_owned())]);
+        assert_eq!(guard, vec!["Gmina Żórawina".to_owned()]);
+        // Mercell alone: served and guarded as published.
+        let (buyers, guard, _, _, _) = read(&[(BUYER, "ORG-1", "Mercell")]);
+        assert_eq!(buyers, vec![(Scope::Tender, "ORG-1".to_owned())]);
+        assert_eq!(guard, vec!["Mercell".to_owned()]);
+        // A demoted mention that also signs the contract leaves the guards' buyer side
+        // whole: neither a buyer nor a signatory there.
+        let (buyers, guard, sections, _, _) = read(&[
+            (BUYER, "ORG-1", "European Dynamics S.A."),
+            ("OPT-300-Contract-Signatory", "ORG-1", "European Dynamics S.A."),
+            (BUYER, "ORG-2", "Quality and Qualifications Ireland"),
+        ]);
+        assert_eq!(buyers, vec![(Scope::Tender, "ORG-2".to_owned())]);
+        assert_eq!(guard, vec!["Quality and Qualifications Ireland".to_owned()]);
+        assert_eq!(sections, vec!["ORG-2".to_owned()], "the demoted signatory is no guard input");
+    }
+
+    /// Issue 483 unit 2 review: the demote in the other dialects — legacy (`TED-` address
+    /// blocks, the promoted role `buyer`), sdk-0.1 (`ContractingParty` sections, no role
+    /// reference to drop) and a buyer reference naming a nested party's INNER half.
+    #[test]
+    fn the_demote_reads_the_legacy_sdk01_and_nested_shapes() {
+        use crate::project::buyer_mentions;
+        let text = |section: &str, field: &str, value: &str| store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: NoticeValue::Text { value: value.into(), lang: None },
+        };
+        let reference = |field: &str, target: &str| store::ValueRow {
+            section_id: "PROC".into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: NoticeValue::Id { scheme: None, value: target.into(), is_ref: true },
+        };
+        let section = |id: &str, kind: &str, parent: Option<&str>| store::Section {
+            id: id.into(),
+            kind: kind.into(),
+            parent: parent.map(Into::into),
+        };
+        let notice_ref = |profile: &str| store::NoticeRef {
+            id: 7,
+            source: "ted".into(),
+            publication_id: "123456-2015".into(),
+            profile: profile.into(),
+        };
+        let buyers_of = |state: &NoticeState| -> Vec<(String, String)> {
+            let mut b: Vec<(String, String)> = state
+                .roles
+                .iter()
+                .filter(|(_, role, _)| role == "buyer" || role == "Procedure-Buyer")
+                .map(|(_, role, target)| (role.clone(), target.clone()))
+                .collect();
+            b.sort();
+            b
+        };
+
+        // Legacy: the Vergabekammer in the contracting-body block, the Bauamt receiving
+        // tenders. The Bauamt is promoted under the legacy buyer role.
+        let legacy = Parsed {
+            sections: vec![
+                section("PROC", "Notice", None),
+                section("ORG-1", ORGANIZATION_KIND, None),
+                section("ORG-2", ORGANIZATION_KIND, None),
+            ],
+            values: vec![
+                text("ORG-1", "TED-OFFICIALNAME", "Vergabekammer Südbayern"),
+                text("ORG-2", "TED-OFFICIALNAME", "Staatliches Bauamt Passau"),
+                reference("TED-ADDRESS_CONTRACTING_BODY", "ORG-1"),
+                reference("TED-ADDRESS_PARTICIPATION", "ORG-2"),
+            ],
+        };
+        let state = NoticeState::read(&notice_ref("ted-export:r2.0.9"), &legacy);
+        assert_eq!(buyers_of(&state), vec![("buyer".to_owned(), "ORG-2".to_owned())], "legacy: promoted as `buyer`");
+        let guard: Vec<String> = buyer_mentions(false, 7, &legacy).into_iter().map(|m| m.name).collect();
+        assert_eq!(guard, vec!["Staatliches Bauamt Passau".to_owned()]);
+
+        // sdk-0.1: European Dynamics beside the real buyer, both `ContractingParty`.
+        let sdk01 = Parsed {
+            sections: vec![
+                section("PROC", "Notice", None),
+                section("CP-1", SDK01_BUYER_KIND, None),
+                section("CP-2", SDK01_BUYER_KIND, None),
+            ],
+            values: vec![
+                text("CP-1", "SDK01-ContractingParty-Party-PartyName-Name", "European Dynamics S.A."),
+                text("CP-2", "SDK01-ContractingParty-Party-PartyName-Name", "Stadt Regensburg"),
+            ],
+        };
+        let state = NoticeState::read(&notice_ref("eforms:eforms-sdk-0.1"), &sdk01);
+        assert_eq!(buyers_of(&state), vec![("buyer".to_owned(), "CP-2".to_owned())], "sdk-0.1: the synthesised role dropped");
+        let guard: Vec<String> = buyer_mentions(true, 7, &sdk01).into_iter().map(|m| m.name).collect();
+        assert_eq!(guard, vec!["Stadt Regensburg".to_owned()]);
+
+        // eForms, the buyer reference naming the INNER half of a nested party: dropped
+        // through the alias (the mention is the outer half).
+        let nested = Parsed {
+            sections: vec![
+                section("PROC", "Notice", None),
+                section("ORG-1", ORGANIZATION_KIND, None),
+                section("ORG-1-IN", ORGANIZATION_KIND, Some("ORG-1")),
+                section("ORG-2", ORGANIZATION_KIND, None),
+            ],
+            values: vec![
+                text("ORG-1-IN", ORG_NAME_FIELD, "European Dynamics S.A."),
+                text("ORG-2", ORG_NAME_FIELD, "Quality and Qualifications Ireland"),
+                reference(BUYER, "ORG-1-IN"),
+                reference(BUYER, "ORG-2"),
+            ],
+        };
+        assert_eq!(buyer_fix(false, 7, &nested, None).drop, BTreeSet::from(["ORG-1".to_owned()]));
+        let state = NoticeState::read(&notice_ref("eforms:eforms-sdk-1.10"), &nested);
+        assert_eq!(buyers_of(&state), vec![("Procedure-Buyer".to_owned(), "ORG-2".to_owned())], "nested: dropped via alias");
+        let guard: Vec<String> = buyer_mentions(false, 7, &nested).into_iter().map(|m| m.name).collect();
+        assert_eq!(guard, vec!["Quality and Qualifications Ireland".to_owned()]);
     }
 
     #[test]

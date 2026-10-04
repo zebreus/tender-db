@@ -3440,3 +3440,362 @@ async fn the_buyer_role_census_flags_contractors_and_review_bodies_in_the_buyer_
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
 }
+
+/// Issue 483 unit 2: a party of a Tender-link test notice in a role other than buyer — its
+/// own Organization section, referenced from the procedure root.
+fn with_party(parsed: &mut Parsed, section: &str, name: &str, country: &str, roles: &[&str]) {
+    parsed.sections.push(sec(section, "Organization", None));
+    parsed.values.push(ValueRow {
+        section_id: section.into(),
+        field_id: "BT-500-Organization-Company".into(),
+        ordinal: 0,
+        value: NoticeValue::Text { value: name.into(), lang: None },
+    });
+    parsed.values.push(ValueRow {
+        section_id: section.into(),
+        field_id: "BT-514-Organization-Company".into(),
+        ordinal: 0,
+        value: NoticeValue::Code { list: None, code: country.into() },
+    });
+    for role in roles {
+        with_role(parsed, role, section);
+    }
+}
+
+/// A role reference from the procedure root to `section`.
+fn with_role(parsed: &mut Parsed, role: &str, section: &str) {
+    let ordinal = parsed.values.iter().filter(|v| v.field_id == role).count() as i64;
+    parsed.values.push(ValueRow {
+        section_id: "PROCEDURE".into(),
+        field_id: role.into(),
+        ordinal,
+        value: NoticeValue::Id { scheme: None, value: section.into(), is_ref: true },
+    });
+}
+
+/// The names the version `pub_id` caused serves in the eForms buyer role (its own
+/// notice's parties), sorted.
+async fn served_buyers(db: &Db, pub_id: &str) -> Vec<String> {
+    let sql = format!(
+        "SELECT group_concat(name, '|') FROM (SELECT o.name AS name FROM tender_versions v \
+           JOIN tender_version_parties p ON p.tender_id = v.tender_id AND p.seq = v.seq \
+           JOIN organizations o ON o.id = p.organization_id \
+          WHERE v.publication_id = '{pub_id}' AND p.mention_notice_id = v.caused_by_notice_id \
+            AND p.role = 'Procedure-Buyer' ORDER BY o.name)"
+    );
+    match db.scalar(&sql).await.expect("served buyers") {
+        Some(store::turso::Value::Text(s)) => s.split('|').map(str::to_owned).collect(),
+        _ => Vec::new(),
+    }
+}
+
+/// Issue 483 unit 2: the demote at projection, on the full and the daily fold alike
+/// (`absorb_and_compare`: byte-identical canonical layers). Job 1943's shapes:
+/// - **a Vergabekammer alone in the buyer slot** (and the notice's review body), the
+///   Staatliches Bauamt receiving tenders, citing the Bauamt's contract notice by OPP-090:
+///   the Bauamt is promoted to buyer — served, and read by 481's link guard, which now
+///   finds the two notices' buyers overlapping and joins them (the raw slot read them as
+///   buyer-disjoint and refused);
+/// - **KIO beside the real buyer**: KIO dropped from the buyer role, its review role kept;
+/// - **European Dynamics beside the real buyer**: dropped;
+/// - **the Raad van State with only "Digitaal via TenderNed" elsewhere**: a portal label is
+///   never promoted, so the role is served as published;
+/// - **Mercell alone**: nothing recoverable, served as published.
+///
+/// Then `refold-buyer-roles`' cohort on a layer this fold made: nothing to re-queue. The
+/// re-queue of a layer projected BEFORE unit 2 is
+/// `refold_buyer_roles_moves_a_notice_between_tenders_on_the_daily`.
+#[tokio::test]
+async fn a_review_body_or_platform_in_the_buyer_slot_is_demoted_on_full_and_daily_folds() {
+    use ingest::project::role_census;
+    const KEY_CN: &str = "0a1b2c3d-4e5f-4a6b-8c7d-8e9f0a1b2c3d";
+    const KEY_CAN: &str = "1b2c3d4e-5f6a-4b7c-9d8e-9f0a1b2c3d4e";
+    const KEY_KIO: &str = "2c3d4e5f-6a7b-4c8d-8e9f-0a1b2c3d4e5f";
+    const KEY_ED: &str = "3d4e5f6a-7b8c-4d9e-9f0a-1b2c3d4e5f6a";
+    const KEY_RVS: &str = "4e5f6a7b-8c9d-4e0f-8a1b-2c3d4e5f6a7b";
+    const KEY_MERCELL: &str = "5f6a7b8c-9d0e-4f1a-9b2c-3d4e5f6a7b8c";
+    const BAUAMT: &str = "Staatliches Bauamt Erlangen-Nürnberg";
+    const KAMMER: &str = "Vergabekammer Nordbayern";
+    let notices: Vec<(&str, Parsed)> = {
+        let cn = linked_parse(20_000, &[("BT-04-notice", KEY_CN)], &[(BAUAMT, "DEU", "")]);
+        let mut can = linked_parse(20_010, &[("BT-04-notice", KEY_CAN), ("OPP-090-Procedure", "510001-2024")], &[(KAMMER, "DEU", "")]);
+        with_role(&mut can, "OPT-301-Lot-ReviewOrg", "ORG-1");
+        with_party(&mut can, "ORG-9", BAUAMT, "DEU", &["OPT-301-Lot-TenderReceipt", "OPT-301-Lot-AddInfo"]);
+        let mut kio = linked_parse(20_020, &[("BT-04-notice", KEY_KIO)], &[("Krajowa Izba Odwoławcza", "POL", ""), ("Gmina Żórawina", "POL", "")]);
+        with_role(&mut kio, "OPT-301-Lot-ReviewOrg", "ORG-1");
+        let ed = linked_parse(
+            20_030,
+            &[("BT-04-notice", KEY_ED)],
+            &[("European Dynamics S.A.", "GRC", ""), ("Quality and Qualifications Ireland", "IRL", "")],
+        );
+        let mut rvs = linked_parse(20_040, &[("BT-04-notice", KEY_RVS)], &[("Raad van State", "NLD", "")]);
+        with_party(&mut rvs, "ORG-9", "Digitaal via TenderNed", "NLD", &["OPT-301-Lot-TenderReceipt"]);
+        let mercell = linked_parse(20_050, &[("BT-04-notice", KEY_MERCELL)], &[("Mercell", "NOR", "")]);
+        vec![
+            ("00510001-2024", cn),
+            ("00510002-2024", can),
+            ("00510003-2024", kio),
+            ("00510004-2024", ed),
+            ("00510005-2024", rvs),
+            ("00510006-2024", mercell),
+        ]
+    };
+    let (full, ff, pf) = scratch("demote-full").await;
+    let (incr, fi, pi) = scratch("demote-incr").await;
+    establish(&full, ff).await;
+    establish(&incr, fi).await;
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        for (pub_id, parsed) in &notices {
+            let day = 20_000;
+            db.record_notice(&linked_notice(fetch, "ted", pub_id, day), &Parse::Parsed(parsed.clone()))
+                .await
+                .expect("record");
+        }
+    }
+    let report = absorb_and_compare(&full, &incr, "the demote").await;
+    assert_eq!(report.links.buyer_disjoint, 0, "the promoted Bauamt overlaps its CN's buyer: {:?}", report.links);
+    for db in [&full, &incr] {
+        assert_eq!(served_buyers(db, "00510002-2024").await, vec![BAUAMT], "the Bauamt promoted");
+        assert_eq!(
+            tender_of(db, "00510002-2024").await,
+            tender_of(db, "00510001-2024").await,
+            "481's guard reads the promoted buyer: the OPP-090 link joins"
+        );
+        assert_eq!(served_buyers(db, "00510003-2024").await, vec!["Gmina Żórawina"], "KIO dropped");
+        assert_eq!(served_buyers(db, "00510004-2024").await, vec!["Quality and Qualifications Ireland"]);
+        assert_eq!(served_buyers(db, "00510005-2024").await, vec!["Raad van State"], "a portal label is no buyer");
+        assert_eq!(served_buyers(db, "00510006-2024").await, vec!["Mercell"], "nothing recoverable");
+        // The demoted mentions keep their other roles.
+        assert_eq!(
+            count(
+                db,
+                "SELECT COUNT(*) FROM tender_version_parties p JOIN organizations o ON o.id = p.organization_id \
+                  WHERE o.name IN ('Vergabekammer Nordbayern', 'Krajowa Izba Odwoławcza') AND p.role = 'Lot-ReviewOrg'"
+            )
+            .await
+            >= 2,
+            true,
+            "the review bodies stay the review bodies"
+        );
+    }
+    // v_tender_buyers (the served buyer list of each current Tender) agrees.
+    let kio_tender = tender_of(&incr, "00510003-2024").await;
+    assert_eq!(
+        count(&incr, &format!("SELECT COUNT(*) FROM v_tender_buyers WHERE tender_id = {kio_tender}")).await,
+        1,
+        "only Gmina Żórawina"
+    );
+
+    // The re-projection cohort. A layer this fold made has nothing to re-queue: what it
+    // serves is already demoted, and what it kept has an empty fix.
+    let max = incr.max_notice_id().await.expect("max id");
+    let (named, candidates, fixed) = role_census::buyer_role_refold_window(&incr, 0, max).await.expect("cohort");
+    assert!(named >= 5, "every pattern-named mention: {named}");
+    assert_eq!(candidates, 2, "the Raad van State and Mercell are still served as buyers");
+    assert!(fixed.is_empty(), "{fixed:?}");
+    for p in [pf, pi] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
+
+/// The id of the notice published as `pub_id`.
+async fn notice_id(db: &Db, pub_id: &str) -> i64 {
+    count(db, &format!("SELECT id FROM notices WHERE publication_id = '{pub_id}'")).await
+}
+
+/// Add a role reference to an already-recorded (and projected) notice's parse, leaving
+/// its `projected` mark alone: the stored parse now yields a [`role_census::buyer_fix`]
+/// the canonical layer does not serve — exactly a layer projected before issue 483 unit 2.
+async fn add_role_ref(db: &Db, pub_id: &str, role: &str, ordinal: i64, section: &str) {
+    let id = notice_id(db, pub_id).await;
+    db.execute_for_test(&format!(
+        "INSERT INTO notice_ids(notice_id, section_id, field_id, ordinal, scheme, value, is_ref) \
+         VALUES ({id}, 'PROCEDURE', '{role}', {ordinal}, NULL, '{section}', 1)"
+    ))
+    .await
+    .expect("the role reference");
+}
+
+/// How many versions the Tender holding `pub_id` has.
+async fn versions_of(db: &Db, pub_id: &str) -> i64 {
+    let tender = tender_of(db, pub_id).await;
+    count(db, &format!("SELECT COUNT(*) FROM tender_versions WHERE tender_id = {tender}")).await
+}
+
+/// Issue 483 unit 2 review: `refold-buyer-roles` re-queues only the notices whose fix is
+/// non-empty, never their whole Tender. That is enough only if the daily MOVES a re-queued
+/// notice between Tenders, in both directions, retiring what it leaves — pinned here on
+/// layers the real fold made before the demote applied (the stored parse gains the role
+/// reference that makes the fix non-empty only after the fold: [`add_role_ref`]):
+///
+/// - **join**: a Vergabekammer CAN citing the Bauamt's CN by OPP-090 was refused the
+///   link (`buyer_disjoint`) and sits in its own Tender. Its Bauamt gains the
+///   tender-receipt role → the Bauamt is promoted, 481's guard now joins the CAN to the
+///   CN, and the CAN's old Tender is retired.
+/// - **split**: a CAN naming KIO as its buyer joined its CN (KIO alone, its own review
+///   body: not decisive) through the shared KIO token. The CAN gains the real buyer
+///   Gmina Y → KIO dropped by "another buyer", the two notices are buyer-disjoint, and
+///   ONLY the CAN is re-queued (the CN's verdict is unchanged): the daily splits it out.
+///
+/// Every step runs through the full non-rebuild and the incremental fold alike
+/// (`absorb_and_compare`: byte-identical layers, no notice in two Tenders), and the
+/// result equals a fresh full rebuild of the same parses (by publication).
+#[tokio::test]
+async fn refold_buyer_roles_moves_a_notice_between_tenders_on_the_daily() {
+    use ingest::project::role_census;
+    const BAUAMT: &str = "Staatliches Bauamt Erlangen-Nürnberg";
+    const KAMMER: &str = "Vergabekammer Nordbayern";
+    const KIO: &str = "Krajowa Izba Odwoławcza";
+    for join in [true, false] {
+        let label = if join { "join" } else { "split" };
+        let (db, fetch, path) = scratch(&format!("refold-{label}")).await;
+        establish(&db, fetch).await;
+        let (cn_pub, can_pub) = if join { ("00530001-2024", "00530002-2024") } else { ("00540001-2024", "00540002-2024") };
+        let cited = &cn_pub[2..];
+        let (cn, can) = if join {
+            let cn = linked_parse(20_000, &[("BT-04-notice", "6a7b8c9d-0e1f-4a2b-8c3d-4e5f6a7b8c9d")], &[(BAUAMT, "DEU", "")]);
+            let mut can = linked_parse(
+                20_010,
+                &[("BT-04-notice", "7b8c9d0e-1f2a-4b3c-9d4e-5f6a7b8c9d0e"), ("OPP-090-Procedure", cited)],
+                &[(KAMMER, "DEU", "")],
+            );
+            with_role(&mut can, "OPT-301-Lot-ReviewOrg", "ORG-1");
+            with_party(&mut can, "ORG-9", BAUAMT, "DEU", &[]);
+            (cn, can)
+        } else {
+            let mut cn = linked_parse(20_000, &[("BT-04-notice", "8c9d0e1f-2a3b-4c4d-8e5f-6a7b8c9d0e1f")], &[(KIO, "POL", "")]);
+            with_role(&mut cn, "OPT-301-Lot-ReviewOrg", "ORG-1");
+            let mut can = linked_parse(
+                20_010,
+                &[("BT-04-notice", "9d0e1f2a-3b4c-4d5e-9f6a-7b8c9d0e1f2a"), ("OPP-090-Procedure", cited)],
+                &[(KIO, "POL", "")],
+            );
+            with_role(&mut can, "OPT-301-Lot-ReviewOrg", "ORG-1");
+            with_party(&mut can, "ORG-2", "Gmina Y", "POL", &[]);
+            (cn, can)
+        };
+        let (full, ff, pf) = scratch(&format!("refold-{label}-full")).await;
+        establish(&full, ff).await;
+        for (d, f) in [(&db, fetch), (&full, ff)] {
+            for (pub_id, parsed) in [(cn_pub, &cn), (can_pub, &can)] {
+                d.record_notice(&linked_notice(f, "ted", pub_id, 20_000), &Parse::Parsed(parsed.clone()))
+                    .await
+                    .expect("record");
+            }
+        }
+        let before = absorb_and_compare(&full, &db, &format!("{label}: the fold before the demote applies")).await;
+        if join {
+            assert_eq!(before.links.buyer_disjoint, 1, "{label}: the Vergabekammer CAN refused: {:?}", before.links);
+            assert_ne!(tender_of(&db, can_pub).await, tender_of(&db, cn_pub).await, "{label}: its own Tender");
+        } else {
+            assert_eq!(tender_of(&db, can_pub).await, tender_of(&db, cn_pub).await, "{label}: joined through KIO");
+        }
+        let old_can_tender = tender_of(&db, can_pub).await;
+        for d in [&db, &full] {
+            if join {
+                add_role_ref(d, can_pub, "OPT-301-Lot-TenderReceipt", 0, "ORG-9").await;
+            } else {
+                add_role_ref(d, can_pub, "OPT-300-Procedure-Buyer", 1, "ORG-2").await;
+            }
+            let max = d.max_notice_id().await.expect("max id");
+            let (_, _, fixed) = role_census::buyer_role_refold_window(d, 0, max).await.expect("cohort");
+            assert_eq!(
+                fixed.iter().map(|f| f.publication.clone()).collect::<Vec<_>>(),
+                vec![format!("ted:{can_pub}")],
+                "{label}: only the CAN is re-queued"
+            );
+            let ids: Vec<i64> = fixed.iter().map(|f| f.notice_id).collect();
+            assert_eq!(d.unmark_projected_by_ids(&ids).await.unwrap(), 1, "{label}");
+            assert!(d.stamp_stale_for_notices(&ids).await.unwrap() >= 1, "{label}");
+        }
+        // The re-queued notice through both fold paths: byte-identical, no ghost.
+        let after = absorb_and_compare(&full, &db, &format!("{label}: the re-queued fold")).await;
+        if join {
+            assert_eq!(served_buyers(&db, can_pub).await, vec![BAUAMT], "{label}");
+            assert_eq!(tender_of(&db, can_pub).await, tender_of(&db, cn_pub).await, "{label}: the CAN joined its CN");
+            assert_eq!(versions_of(&db, cn_pub).await, 2, "{label}");
+            assert_eq!(
+                count(&db, &format!("SELECT COUNT(*) FROM tender_versions WHERE tender_id = {old_can_tender}")).await,
+                0,
+                "{label}: the CAN's old Tender retired"
+            );
+        } else {
+            assert_eq!(served_buyers(&db, can_pub).await, vec!["Gmina Y"], "{label}");
+            assert_eq!(after.links.buyer_disjoint, 1, "{label}: refused now: {:?}", after.links);
+            assert_ne!(tender_of(&db, can_pub).await, tender_of(&db, cn_pub).await, "{label}: the CAN split out");
+            assert_eq!(versions_of(&db, cn_pub).await, 1, "{label}: the CN's Tender keeps the CN alone");
+        }
+        // And what a fresh full fold under unit 2 makes of the same parses (a rebuild
+        // re-mints Tender ids, so compared by publication: Tender members and parties).
+        let daily = tender_shape(&db).await;
+        project::project(&db, true).await.expect("a full rebuild");
+        assert_eq!(tender_shape(&db).await, daily, "{label}: the daily equals a fresh full fold under unit 2");
+        for p in [path, pf] {
+            for s in ["", "-wal", "-shm"] {
+                let _ = std::fs::remove_file(format!("{p}{s}"));
+            }
+        }
+    }
+}
+
+/// The canonical layer by publication, free of surrogate Tender ids: per version, the
+/// publications of its Tender in order, and its own parties (role and organization name).
+async fn tender_shape(db: &Db) -> String {
+    let sql = "SELECT group_concat(r, x'0a') FROM (SELECT v.publication_id || ' <' || \
+         (SELECT group_concat(publication_id, ',') FROM (SELECT publication_id FROM tender_versions w \
+            WHERE w.tender_id = v.tender_id ORDER BY w.seq)) || '> ' || \
+         coalesce((SELECT group_concat(x, ',') FROM (SELECT p.role || ':' || o.name AS x FROM tender_version_parties p \
+            JOIN organizations o ON o.id = p.organization_id WHERE p.tender_id = v.tender_id AND p.seq = v.seq \
+            ORDER BY p.role, o.name)), '') AS r \
+         FROM tender_versions v ORDER BY v.publication_id)";
+    match db.scalar(sql).await.expect("tender shape") {
+        Some(store::turso::Value::Text(s)) => s,
+        _ => String::new(),
+    }
+}
+
+/// Issue 483 unit 2 review: the demote on the daily when the CN and the Vergabekammer CAN
+/// citing it arrive on DIFFERENT days, in either order — 481's guard reads the promoted
+/// buyer against an already-folded Tender. Each delta is absorbed by a full non-rebuild
+/// projection on one DB and incrementally on the other, and the layers must match after
+/// every step.
+#[tokio::test]
+async fn the_demote_holds_when_the_cn_and_its_can_arrive_on_different_days() {
+    const BAUAMT: &str = "Staatliches Bauamt Erlangen-Nürnberg";
+    const KAMMER: &str = "Vergabekammer Nordbayern";
+    let cn = linked_parse(20_000, &[("BT-04-notice", "0e1f2a3b-4c5d-4e6f-8a7b-8c9d0e1f2a3b")], &[(BAUAMT, "DEU", "")]);
+    let mut can = linked_parse(
+        20_010,
+        &[("BT-04-notice", "1f2a3b4c-5d6e-4f7a-9b8c-9d0e1f2a3b4c"), ("OPP-090-Procedure", "550001-2024")],
+        &[(KAMMER, "DEU", "")],
+    );
+    with_role(&mut can, "OPT-301-Lot-ReviewOrg", "ORG-1");
+    with_party(&mut can, "ORG-9", BAUAMT, "DEU", &["OPT-301-Lot-TenderReceipt", "OPT-301-Lot-AddInfo"]);
+    let cn = ("00550001-2024", cn);
+    let can = ("00550002-2024", can);
+    for (label, order) in [("CN first", [&cn, &can]), ("CAN first", [&can, &cn])] {
+        let (full, ff, pf) = scratch(&format!("demote-days-full-{}", label.len())).await;
+        let (incr, fi, pi) = scratch(&format!("demote-days-incr-{}", label.len())).await;
+        establish(&full, ff).await;
+        establish(&incr, fi).await;
+        for (step, (pub_id, parsed)) in order.iter().enumerate() {
+            for (db, fetch) in [(&full, ff), (&incr, fi)] {
+                db.record_notice(&linked_notice(fetch, "ted", pub_id, 20_000), &Parse::Parsed(parsed.clone()))
+                    .await
+                    .expect("record");
+            }
+            absorb_and_compare(&full, &incr, &format!("{label}, step {step}")).await;
+        }
+        for db in [&full, &incr] {
+            assert_eq!(served_buyers(db, can.0).await, vec![BAUAMT], "{label}: the Bauamt promoted");
+            assert_eq!(tender_of(db, can.0).await, tender_of(db, cn.0).await, "{label}: the OPP-090 link joins");
+        }
+        for p in [pf, pi] {
+            for s in ["", "-wal", "-shm"] {
+                let _ = std::fs::remove_file(format!("{p}{s}"));
+            }
+        }
+    }
+}

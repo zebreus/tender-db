@@ -3582,6 +3582,30 @@ enum Scope {
     Lot(String),
 }
 
+/// Issue 483 unit 2: apply a notice's [`role_census::BuyerFix`] to its raw role references
+/// `(scope, source section, role, target section)`: every buyer reference
+/// ([`BUYER_ROLES`]) whose target — through `alias`, a nested party's inner half to its outer
+/// one — is dropped goes, and each promoted section gains a Tender-scoped `buyer_role`
+/// reference (the dialect's own buyer role, so the served `parties[]` reads it as every
+/// other buyer of that dialect). The party's other roles stay.
+fn apply_buyer_fix(
+    raw_roles: &mut Vec<(Scope, String, String, String)>,
+    fix: &role_census::BuyerFix,
+    alias: &HashMap<String, String>,
+    buyer_role: &str,
+) {
+    if fix.is_empty() {
+        return;
+    }
+    raw_roles.retain(|(_, _, role, target)| {
+        let outer = alias.get(target).unwrap_or(target);
+        !(BUYER_ROLES.contains(&role.as_str()) && fix.drop.contains(outer))
+    });
+    for section in &fix.promote {
+        raw_roles.push((Scope::Tender, section.clone(), buyer_role.to_owned(), section.clone()));
+    }
+}
+
 /// A normalised OJS publication key `(year, number)`. The display form is not
 /// stable across eras (`2011/S 1-000181` vs `2019/S 001-000001` vs the
 /// `000001-2019` DOC form vs the text era's `154-2005`), so the join key is
@@ -3875,6 +3899,19 @@ impl NoticeState {
             }
         }
 
+        // A role or winner reference may name the inner half of a nested party
+        // (issue 259); both halves must bind to the one Organization.
+        let org_alias = nested_org_aliases(&sections, if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] });
+        // Issue 483 unit 2: a review body or platform vendor in the buyer slot loses the
+        // buyer role (or yields it to the real buyer the notice names elsewhere) — the
+        // census's own verdict, the same one `buyer_side_mentions` applies to the guards.
+        apply_buyer_fix(
+            &mut raw_roles,
+            &role_census::buyer_fix(sdk01, notice.id, parsed, None),
+            &org_alias,
+            if sdk01 || legacy { "buyer" } else { "Procedure-Buyer" },
+        );
+
         let raw_results = read_results(&sections, parsed, legacy, sdk01);
         // Award-side roles sit under the results graph, which has no Lot
         // ancestor — resolve their Lot through the graph instead (issue 04's
@@ -3917,12 +3954,7 @@ impl NoticeState {
             roles,
             raw_results,
             round: None,
-            // A role or winner reference may name the inner half of a nested party
-            // (issue 259); both halves must bind to the one Organization.
-            org_alias: nested_org_aliases(
-                &sections,
-                if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] },
-            ),
+            org_alias,
         }
     }
 
@@ -6109,7 +6141,27 @@ fn buyer_side_mentions(sdk01: bool, notice_id: i64, parsed: &Parsed) -> (Vec<sto
     if sections.is_empty() {
         return (Vec::new(), Vec::new());
     }
-    NoticeState::mentions(sdk01, notice_id, parsed).into_iter().fold(
+    let mentions = NoticeState::mentions(sdk01, notice_id, parsed);
+    // Issue 483 unit 2: the buyer side the projection serves, not the raw buyer slot — a
+    // review body or platform vendor the census flags decisively is no buyer of the guards
+    // either (481's tokens, 482's hub key, 369's election), and a promoted real buyer is.
+    // The census's verdict on the same mentions, as `NoticeState::read` applies it.
+    let fix = role_census::buyer_fix(sdk01, notice_id, parsed, Some(&mentions));
+    if !fix.is_empty() {
+        let alias = nested_org_aliases(
+            &parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect(),
+            if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] },
+        );
+        let outer = |s: &str| -> bool { fix.drop.contains(alias.get(s).map_or(s, String::as_str)) };
+        sections.retain(|s| !outer(s));
+        // A demoted mention that also signs the contract is no buyer-side party either:
+        // without this it would fall through to the signatories below and keep feeding
+        // 481's tokens (issue 483 unit 2 review). A PROMOTED signatory needs nothing — the
+        // fold below files a section that is a buyer under the buyers only.
+        signatories.retain(|s| !outer(s));
+        sections.extend(fix.promote.iter().map(String::as_str));
+    }
+    mentions.into_iter().fold(
         (Vec::new(), Vec::new()),
         |(mut buyers, mut signing), m| {
             if sections.contains(m.section_id.as_str()) {
@@ -9141,6 +9193,15 @@ mod tests {
     /// deliberate edit here, with a fold-impact review attached.
     #[test]
     fn no_de1_alias_reaches_the_grouping_or_the_fold_order() {
+        // Issue 483 unit 2: every role the buyer-role census reads decides WHO a notice's
+        // buyer is (a review body or platform in the buyer slot is demoted, a party in a
+        // buyer-shaped role promoted), and the buyer is a grouping input (issue 369's key
+        // election, 481's link guard, 482's hub gate).
+        let role_fields: Vec<String> = role_census::ROLE_KINDS
+            .iter()
+            .filter(|(r, _)| r.starts_with(|c: char| c.is_ascii_uppercase()))
+            .flat_map(|(r, _)| [format!("OPT-300-{r}"), format!("OPT-301-{r}")])
+            .collect();
         let mut decides_the_fold: Vec<&str> = vec![
             PROCEDURE_KEY_FIELD,  // the Tender key, read UNCHECKED
             DE1_FOLDER_FIELD,     // the gated key fallback
@@ -9166,6 +9227,7 @@ mod tests {
         decides_the_fold.extend(ORG_COUNTRY_FIELDS);
         decides_the_fold.extend(SDK01_PARTY_NAME_FIELDS);
         decides_the_fold.extend(SDK01_PARTY_COUNTRY_FIELDS);
+        decides_the_fold.extend(role_fields.iter().map(String::as_str));
 
         // The identity aliases that deliberately target it (issue 85's DE-1.x line).
         const IDENTITY: &[(&str, &str)] = &[
@@ -9188,6 +9250,30 @@ mod tests {
             // tender 1's three buyers are each carried by >= 2 notices, so it is refused with
             // or without the DE-1.x one.
             ("DE1-ContractingParty-Party-PartyIdentification-ID", "OPT-300-Procedure-Buyer"),
+            // Issue 483 unit 2, decided 2026-10-04: the census's roles, through which a
+            // DE-1.x notice's buyer is demoted or promoted exactly as its TED twin's. The
+            // blast radius is the demote's (a buyer named like a review body or platform
+            // vendor beside another party: ~0.01% of notices in job 1943's census), and
+            // leaving the DE-1.x spellings out would make the demote dialect-dependent —
+            // a DE version and its TED twin would serve different buyers.
+            ("DE1-ContractingParty-Party-ServiceProviderParty-Party-PartyIdentification-ID", "OPT-300-Procedure-SProvider"),
+            ("DE1-NoticeResult-TenderingParty-Tenderer-ID", "OPT-300-Tenderer"),
+            ("DE1-NoticeResult-TenderingParty-SubContractor-ID", "OPT-301-Tenderer-SubCont"),
+            ("DE1-NoticeResult-TenderingParty-SubContractor-MainContractor-ID", "OPT-301-Tenderer-MainCont"),
+            ("DE1-NoticeResult-SettledContract-SignatoryParty-PartyIdentification-ID", "OPT-300-Contract-Signatory"),
+            ("DE1-NoticeResult-LotResult-FinancingParty-PartyIdentification-ID", "OPT-301-LotResult-Financing"),
+            ("DE1-NoticeResult-LotResult-PayerParty-PartyIdentification-ID", "OPT-301-LotResult-Paying"),
+            ("DE1-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID", "OPT-301-Lot-ReviewOrg"),
+            ("DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID", "OPT-301-Lot-ReviewOrg"),
+            ("DE1-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID", "OPT-301-Lot-ReviewInfo"),
+            ("DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID", "OPT-301-Lot-ReviewInfo"),
+            ("DE1-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID", "OPT-301-Lot-Mediator"),
+            ("DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID", "OPT-301-Lot-Mediator"),
+            ("DE1-TenderingTerms-TenderRecipientParty-PartyIdentification-ID", "OPT-301-Lot-TenderReceipt"),
+            ("DE1-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-PartyIdentification-ID", "OPT-301-Lot-TenderReceipt"),
+            ("DE1-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-PartyIdentification-ID", "OPT-301-Lot-AddInfo"),
+            ("DE1-ProcurementProjectLot-TenderingTerms-DocumentProviderParty-PartyIdentification-ID", "OPT-301-Lot-DocProvider"),
+            ("DE1-ProcurementProjectLot-TenderingTerms-TenderEvaluationParty-PartyIdentification-ID", "OPT-301-Lot-TenderEval"),
             ("DE1-Organizations-Organization-Company-PartyName-Name", ORG_NAME_FIELD),
             ("DE1-Organizations-Organization-Company-PartyLegalEntity-CompanyID", ORG_IDENTIFIER_FIELD),
             ("DE1-Organizations-Organization-Company-PostalAddress-Country-IdentificationCode", ORG_COUNTRY_FIELD),

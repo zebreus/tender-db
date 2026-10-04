@@ -534,6 +534,12 @@ enum Spec {
     /// clusters), so the next fold re-plans them and the grouping's UUID-hub gate splits
     /// them. Dry (the default) counts.
     RequeueUuidHubs { dry_run: bool },
+    /// Issue 483 unit 2: find the projected notices whose served buyer role the demote at
+    /// projection changes (a review body or platform vendor in the buyer slot, which the
+    /// census flags decisively) and re-queue them with their Tenders stamped epoch-stale,
+    /// so the next incremental fold re-derives exactly those. Dry (the default) counts and
+    /// stores the cohort as the `buyer-role-refold` report.
+    RefoldBuyerRoles { dry_run: bool },
     /// Issue 443 step 3: the sweep a fold queues after it re-bound mentions
     /// (every re-bind can empty the row it left). It counts, then sweeps in
     /// the same job when the count is at most `cap`; above it (an era-scale
@@ -2001,6 +2007,13 @@ impl Supervisor {
                 let params = if dry_run { "requeue-uuid-hubs dry-run" } else { "requeue-uuid-hubs" }.to_owned();
                 Ok(vec![self.push("requeue-uuid-hubs", params, Spec::RequeueUuidHubs { dry_run }).await])
             }
+            // Issue 483 unit 2: re-queues notices for the next fold, so a forgotten flag
+            // means the dry count.
+            "refold-buyer-roles" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let params = if dry_run { "refold-buyer-roles dry-run" } else { "refold-buyer-roles" }.to_owned();
+                Ok(vec![self.push("refold-buyer-roles", params, Spec::RefoldBuyerRoles { dry_run }).await])
+            }
             // Issue 259 landing: repair the stale nested-org mention layer.
             // Deletes org rows and emits change events, so it asks to be meant:
             // `dry_run` defaults to TRUE (the data-quality convention — a
@@ -2853,6 +2866,10 @@ fn buyer_role_census_summary(r: &ingest::project::role_census::BuyerRoleCensus) 
     )
 }
 
+/// Issue 483 unit 2: the report `refold-buyer-roles` stores — the cohort (each notice with
+/// the buyer mentions it drops and the parties it promotes) and the counts.
+const BUYER_ROLE_REFOLD_REPORT: &str = "buyer-role-refold";
+
 /// The hub Tender ids of a stored `procedure-key-census` report body (issue 482 unit 2).
 fn hub_tender_ids(body: &str) -> Result<Vec<i64>, String> {
     let report: serde_json::Value = serde_json::from_str(body).map_err(|e| format!("census report: {e}"))?;
@@ -3055,6 +3072,9 @@ const STOPPABLE_KINDS: &[&str] = &[
     "procedure-key-census",
     // Issue 483: read between notice windows and chunks; a stopped run stores no report.
     "buyer-role-census",
+    // Issue 483 unit 2: read between mention strides; a stopped run stores no report (a
+    // wet run's finished strides stay re-queued, and a re-run finds them so).
+    "refold-buyer-roles",
     // Issue 429: read between tables; a stop still refreshes the readers.
     "analyze",
 ];
@@ -4456,6 +4476,82 @@ impl Supervisor {
         ))
     }
 
+    /// Issue 483 unit 2's `refold-buyer-roles`, its own fn through `off_frame` (issue 467).
+    /// Walks `organization_mentions` in fixed notice-id strides; per stride the cohort is
+    /// [`ingest::project::role_census::buyer_role_refold_window`] (pattern-named mentions →
+    /// notices serving one as buyer → notices whose parse yields a demote), and a wet run
+    /// re-queues those notices and stamps their Tenders epoch-stale (the issue-179 pair: a
+    /// re-queue alone leaves each chain identical and the fold early-returns). Stoppable
+    /// between strides; a stopped wet run's strides are committed and a re-run finds them
+    /// re-queued, so it stores no report. A finished run stores `buyer-role-refold`.
+    async fn run_refold_buyer_roles(&self, job: &Job, dry_run: bool) -> Result<String, String> {
+        const STRIDE: i64 = 250_000;
+        let mode = if dry_run { " DRY RUN — nothing written" } else { "" };
+        if self.cancelled(job.id) {
+            return Ok(format!("refold-buyer-roles (issue 483){mode}: STOPPED by cancel before the walk; no report stored"));
+        }
+        let max_id = Box::pin(self.db.max_notice_id()).await.map_err(|e| e.to_string())?;
+        let (mut named, mut candidates, mut requeued, mut stamped) = (0u64, 0u64, 0u64, 0u64);
+        let mut fixed: Vec<ingest::project::role_census::BuyerRoleFixed> = Vec::new();
+        let mut after = 0i64;
+        while after < max_id {
+            if self.cancelled(job.id) {
+                return Ok(format!(
+                    "refold-buyer-roles (issue 483){mode}: STOPPED by cancel at notice id {after} of {max_id} — \
+                     {} fixed notice(s) so far, re-queued {requeued}, stamped {stamped} tender(s); no report stored",
+                    fixed.len()
+                ));
+            }
+            let through = after.saturating_add(STRIDE).min(max_id);
+            let (n, c, window) =
+                Box::pin(ingest::project::role_census::buyer_role_refold_window(&self.db, after, through))
+                    .await
+                    .map_err(|e| e.to_string())?;
+            named += n;
+            candidates += c;
+            if !dry_run && !window.is_empty() {
+                let ids: Vec<i64> = window.iter().map(|f| f.notice_id).collect();
+                requeued += Box::pin(self.db.unmark_projected_by_ids(&ids)).await.map_err(|e| e.to_string())?;
+                stamped += Box::pin(self.db.stamp_stale_for_notices(&ids)).await.map_err(|e| e.to_string())?;
+            }
+            fixed.extend(window);
+            after = through;
+            self.set_phase(
+                if dry_run { "counting" } else { "re-queueing" },
+                Some(after.max(0) as u64),
+                Some(max_id.max(0) as u64),
+                format!(
+                    "notice id {after} of {max_id}: {named} pattern-named mention(s), {candidates} serving one as \
+                     buyer, {} demoted",
+                    fixed.len()
+                ),
+            );
+        }
+        let summary = format!(
+            "{named} pattern-named mention(s), {candidates} notice(s) serving one as buyer, {} whose buyer role \
+             the demote changes ({} with a promoted buyer); {} {}, stamped {stamped} tender(s) \
+             epoch-stale for the incremental fold",
+            fixed.len(),
+            fixed.iter().filter(|f| !f.promoted.is_empty()).count(),
+            if dry_run { "would re-queue" } else { "re-queued" },
+            if dry_run { fixed.len() as u64 } else { requeued },
+        );
+        let body = serde_json::json!({
+            "dry_run": dry_run,
+            "named_mentions": named,
+            "candidates": candidates,
+            "fixed_total": fixed.len(),
+            "requeued": requeued,
+            "stamped": stamped,
+            "fixed": fixed,
+        });
+        self.db
+            .put_report(BUYER_ROLE_REFOLD_REPORT, &body.to_string(), store::now_unix())
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(format!("refold-buyer-roles (issue 483){mode}: {summary}"))
+    }
+
     /// Issue 404's repair, as its own async fn rather than inline in
     /// `run_spec`'s match.
     ///
@@ -4630,6 +4726,7 @@ impl Supervisor {
             Spec::ProcedureKeyCensus => off_frame(|| self.run_procedure_key_census(job)).await,
             Spec::BuyerRoleCensus { stride } => off_frame(|| self.run_buyer_role_census(job, *stride)).await,
             Spec::RequeueUuidHubs { dry_run } => off_frame(|| self.run_requeue_uuid_hubs(*dry_run)).await,
+            Spec::RefoldBuyerRoles { dry_run } => off_frame(|| self.run_refold_buyer_roles(job, *dry_run)).await,
             Spec::Analyze => off_frame(|| self.run_analyze(job)).await,
             Spec::RepairMemberTwins { dry_run } => {
                 off_frame(|| self.run_repair_member_twins(job, *dry_run)).await
@@ -13147,6 +13244,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "backfill-legacy-adjacency"
             | "backfill-tender-links"
             | "requeue-uuid-hubs"
+            | "refold-buyer-roles"
             | "rederive-eur"
             | "repair-nested-orgs"
             | "repair-placeholder-orgs"
@@ -14039,6 +14137,9 @@ mod tests {
                 // Issue 483: `buyer_role_census` reads the flag before every notice
                 // window and chunk; a stopped run stores no report.
                 "buyer-role-census",
+                // Issue 483 unit 2: `run_refold_buyer_roles` reads the flag before every
+                // mention stride; a stopped run stores no report.
+                "refold-buyer-roles",
                 // Issue 429: `run_analyze` reads the flag before every table, and a
                 // stopped run still drops `organizations` statistics and refreshes
                 // the readers.
@@ -14828,6 +14929,113 @@ mod tests {
         assert!(msg.contains("DRY RUN") && msg.contains("2 hub Tender(s)") && msg.contains("would re-queue 0"), "{msg}");
         let msg = sup.run_spec(&job(false)).await.expect("wet");
         assert!(!msg.contains("DRY RUN") && msg.contains("re-queued 0"), "{msg}");
+    }
+
+    /// Issue 483 unit 2: `refold-buyer-roles` enqueues dry unless asked, runs through
+    /// `run_spec`'s dispatch, stores its `buyer-role-refold` report dry and wet, and a
+    /// cancelled run stores none. (The cohort itself is pinned in
+    /// `tests/project_incremental.rs`, `a_review_body_or_platform_in_the_buyer_slot_is_demoted_on_full_and_daily_folds`.)
+    #[tokio::test]
+    async fn refold_buyer_roles_enqueues_dry_stores_its_report_and_a_stop_stores_none() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        sup.enqueue_request(&JobRequest { kind: "refold-buyer-roles".into(), ..Default::default() }).await.unwrap();
+        {
+            let queue = sup.queue.lock().expect("queue lock");
+            assert!(matches!(queue[0].spec, Spec::RefoldBuyerRoles { dry_run: true }), "dry unless asked");
+            assert_eq!(queue[0].params, "refold-buyer-roles dry-run");
+        }
+        let job = |id: u64, dry_run: bool| Job {
+            id,
+            kind: "refold-buyer-roles".into(),
+            params: String::new(),
+            spec: Spec::RefoldBuyerRoles { dry_run },
+            resume_after: None,
+        };
+        let msg = sup.run_spec(&job(1, true)).await.expect("dry");
+        assert!(msg.contains("DRY RUN") && msg.contains("0 whose buyer role") && msg.contains("would re-queue 0"), "{msg}");
+        let (body, _) = db.latest_report(BUYER_ROLE_REFOLD_REPORT).await.unwrap().expect("report");
+        assert!(body.contains("\"dry_run\":true") && body.contains("\"fixed\":[]"), "{body}");
+        let msg = sup.run_spec(&job(2, false)).await.expect("wet");
+        assert!(!msg.contains("DRY RUN") && msg.contains("re-queued 0"), "{msg}");
+
+        // Seeded (issue 483 unit 2 review): one projected notice served the Vergabekammer as
+        // its buyer before its parse gained the Bauamt's tender-receipt role (a layer
+        // projected before the demote), so the stride path runs and the wet run writes.
+        let fetch_id = seed_fetch(&db).await;
+        let text = |section: &str, field: &str, value: &str| store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: store::NoticeValue::Text { value: value.into(), lang: None },
+        };
+        let parsed = store::Parsed {
+            sections: vec![
+                store::Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None },
+                store::Section { id: "ORG-1".into(), kind: "Organization".into(), parent: None },
+                store::Section { id: "ORG-9".into(), kind: "Organization".into(), parent: None },
+            ],
+            values: vec![
+                text("ORG-1", "BT-500-Organization-Company", "Vergabekammer Nordbayern"),
+                text("ORG-9", "BT-500-Organization-Company", "Staatliches Bauamt Passau"),
+                store::ValueRow {
+                    section_id: "PROCEDURE".into(),
+                    field_id: "OPT-300-Procedure-Buyer".into(),
+                    ordinal: 0,
+                    value: store::NoticeValue::Id { scheme: None, value: "ORG-1".into(), is_ref: true },
+                },
+            ],
+        };
+        db.record_notice(
+            &store::Notice {
+                source: "ted".into(),
+                publication_id: "00483002-2024".into(),
+                content_hash: "h483".into(),
+                profile: "eforms:eforms-sdk-1.13".into(),
+                declared_version: None,
+                fetch_id,
+                member_path: "m483".into(),
+                ingested_at: 0,
+                published_at: Some(store::Stamp::utc(0)),
+                dispatched_at: None,
+            },
+            &store::Parse::Parsed(parsed),
+        )
+        .await
+        .unwrap();
+        ingest::project::project(&db, false).await.expect("the fold before the demote applies");
+        assert!(db.unprojected_parsed_notice_ids().await.unwrap().is_empty());
+        db.execute_for_test(
+            "INSERT INTO notice_ids(notice_id, section_id, field_id, ordinal, scheme, value, is_ref) \
+             SELECT id, 'PROCEDURE', 'OPT-301-Lot-TenderReceipt', 0, NULL, 'ORG-9', 1 FROM notices \
+              WHERE publication_id = '00483002-2024'",
+        )
+        .await
+        .unwrap();
+        // Issue 467's poll budget on the stride path (the tripwire's own poll has an empty
+        // DB, so it never enters a stride). The whole chain into store and turso, as for
+        // the census's seeded poll: measured 2026-10-04 in the gate's profile between 360
+        // and 390 KiB (overflows at 360, passes at 390), plus ~24 KiB. Re-measure on a
+        // turso upgrade; don't just raise it.
+        let seeded = job(4, true);
+        poll_once_within("run_refold_buyer_roles over a seeded stride", 416 * 1024, || {
+            sup.run_refold_buyer_roles(&seeded, true)
+        });
+        let msg = sup.run_spec(&job(5, true)).await.expect("seeded dry");
+        assert!(msg.contains("1 whose buyer role") && msg.contains("1 with a promoted buyer"), "{msg}");
+        assert!(msg.contains("would re-queue 1") && msg.contains("stamped 0"), "dry writes nothing: {msg}");
+        assert!(db.unprojected_parsed_notice_ids().await.unwrap().is_empty(), "dry re-queued nothing");
+        let (body, _) = db.latest_report(BUYER_ROLE_REFOLD_REPORT).await.unwrap().expect("report");
+        assert!(body.contains("ted:00483002-2024") && body.contains("Staatliches Bauamt Passau"), "{body}");
+        let msg = sup.run_spec(&job(6, false)).await.expect("seeded wet");
+        assert!(msg.contains("re-queued 1") && !msg.contains("stamped 0"), "{msg}");
+        assert_eq!(db.unprojected_parsed_notice_ids().await.unwrap().len(), 1, "the notice re-queued");
+        db.put_report(BUYER_ROLE_REFOLD_REPORT, "{\"marker\":1}", store::now_unix()).await.unwrap();
+        sup.cancel_running.store(3, Ordering::Relaxed);
+        let msg = sup.run_spec(&job(3, true)).await.expect("stopped");
+        assert!(msg.contains("STOPPED by cancel") && msg.contains("no report stored"), "{msg}");
+        let (body, _) = db.latest_report(BUYER_ROLE_REFOLD_REPORT).await.unwrap().expect("report");
+        assert_eq!(body, "{\"marker\":1}", "a stopped run stores nothing");
     }
 
     /// Issue 482: the job wiring around `ingest::project::key_census`. It enqueues with
@@ -16923,6 +17131,7 @@ mod tests {
         gauge("run_procedure_key_census", std::mem::size_of_val(&sup.run_procedure_key_census(&j)), 1_024);
         gauge("run_buyer_role_census", std::mem::size_of_val(&sup.run_buyer_role_census(&j, 1)), 1_024);
         gauge("run_requeue_uuid_hubs", std::mem::size_of_val(&sup.run_requeue_uuid_hubs(true)), 1_024);
+        gauge("run_refold_buyer_roles", std::mem::size_of_val(&sup.run_refold_buyer_roles(&j, true)), 1_024);
         gauge("run_analyze", std::mem::size_of_val(&sup.run_analyze(&j)), 512);
         gauge("run_repair_member_twins", std::mem::size_of_val(&sup.run_repair_member_twins(&j, true)), 1_024);
         gauge(
@@ -17016,6 +17225,7 @@ mod tests {
         poll_once_within("run_procedure_key_census", 144 * 1024, || sup.run_procedure_key_census(&j));
         poll_once_within("run_buyer_role_census", 144 * 1024, || sup.run_buyer_role_census(&j, 1));
         poll_once_within("run_requeue_uuid_hubs", 144 * 1024, || sup.run_requeue_uuid_hubs(true));
+        poll_once_within("run_refold_buyer_roles", 144 * 1024, || sup.run_refold_buyer_roles(&j, true));
         poll_once_within("run_analyze", 330 * 1024, || sup.run_analyze(&j));
         assert!(
             over.is_empty(),
