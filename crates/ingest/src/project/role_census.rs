@@ -80,11 +80,19 @@ pub(super) enum RoleKind {
     /// (`real-buyer-elsewhere`), but a funding body is no buyer to PROMOTE alone (issue 483
     /// unit 2 review, [`promotable`]).
     Financing,
+    /// Signs the contract (eForms `Contract-Signatory`): buyer-shaped for the census, but
+    /// no buyer to PROMOTE alone — swapped notices file the WINNER as signatory and the
+    /// real buyer as tenderer (CAMFIL POLSKA signing for Narodowe Centrum Badań Jądrowych,
+    /// Wackler for the BImA, in `refold-buyer-roles` dry 1954; issue 483 unit 2).
+    Signatory,
+    /// Pays the contract (eForms `LotResult-Paying`): buyer-shaped, and the one role that
+    /// lets a company be PROMOTED ([`promotable`]) — an agent or a supplier does not pay.
+    Paying,
 }
 
 impl RoleKind {
-    const fn bit(self) -> u8 {
-        1 << self as u8
+    const fn bit(self) -> u16 {
+        1 << self as u16
     }
 }
 
@@ -118,9 +126,9 @@ pub(super) const ROLE_KINDS: &[(&str, RoleKind)] = &[
     ("Part-TenderEval", RoleKind::BuyerShaped),
     ("Lot-AddInfo", RoleKind::BuyerShaped),
     ("Part-AddInfo", RoleKind::BuyerShaped),
-    ("LotResult-Paying", RoleKind::BuyerShaped),
+    ("LotResult-Paying", RoleKind::Paying),
     ("LotResult-Financing", RoleKind::Financing),
-    ("Contract-Signatory", RoleKind::BuyerShaped),
+    ("Contract-Signatory", RoleKind::Signatory),
     ("tender-receipt", RoleKind::BuyerShaped),
     ("further-information", RoleKind::BuyerShaped),
 ];
@@ -374,7 +382,7 @@ fn name_pattern(folded: &str, list: NameList) -> Option<&'static str> {
 /// Whether a party holds a buyer-shaped role ([`RoleKind::BuyerShaped`], the documents
 /// provider, the financing party): `real-buyer-elsewhere`'s test.
 fn buyer_shaped(p: &Party) -> bool {
-    p.is(RoleKind::BuyerShaped) || p.is(RoleKind::DocsProvider) || p.is(RoleKind::Financing)
+    p.is(RoleKind::BuyerShaped) || p.is(RoleKind::DocsProvider) || p.is(RoleKind::Financing) || p.is(RoleKind::Signatory) || p.is(RoleKind::Paying)
 }
 
 /// Whether the folded name holds a commercial legal form ([`COMMERCIAL_FORMS`]).
@@ -468,7 +476,7 @@ struct Party {
     name: String,
     folded: String,
     org: Option<i64>,
-    kinds: u8,
+    kinds: u16,
 }
 
 impl Party {
@@ -538,7 +546,7 @@ fn notice_parties_from(
     let kinds: &[&str] = if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] };
     let alias = nested_org_aliases(&sections, kinds);
     let outer = |id: &str| -> String { alias.get(id).cloned().unwrap_or_else(|| id.to_owned()) };
-    let mut roles: HashMap<String, u8> = HashMap::new();
+    let mut roles: HashMap<String, u16> = HashMap::new();
     for value in &parsed.values {
         if let NoticeValue::Id { value: target, is_ref: true, scheme } = &value.value
             && scheme.as_deref() != Some("ojs")
@@ -859,7 +867,16 @@ pub async fn buyer_role_refold_window(
 /// - a review body by role or by name (`Krajowa Izba Odwoławcza` beside a `KIO` buyer
 ///   mention: "the same" by folded name fails, the organization is one);
 /// - a portal or platform label ([`portal_label`]: "Digitaal via TenderNed");
-/// - a nameless party.
+/// - a nameless party;
+/// - the contract signatory alone ([`RoleKind::Signatory`]: a swapped notice files the
+///   winner there);
+/// - a company that is not public-shaped (a commercial legal form, no public stem) unless
+///   it pays or finances the contract: in `refold-buyer-roles` dry 1954 the companies were
+///   suppliers (Roche Diagnostics Polska, Wackler, Braun GmbH) and tender agents (PSI BV, a
+///   Rechtsanwälte GmbH), none of which pays; POLREGIO S.A. (438807) pays. Without that, the
+///   review-body buyer stays as published: correct or unchanged, never a guess.
+/// - a "name" of more than 16 words: a legacy free-text sentence in the name field
+///   ("Inhoudelijke en procedurele aspecten rond deze aanbesteding dienen via …").
 fn promotable(parties: &[Party], i: usize) -> Option<usize> {
     let buyer = &parties[i];
     parties
@@ -867,7 +884,7 @@ fn promotable(parties: &[Party], i: usize) -> Option<usize> {
         .enumerate()
         .find(|(j, p)| {
             *j != i
-                && p.is(RoleKind::BuyerShaped)
+                && (p.is(RoleKind::BuyerShaped) || p.is(RoleKind::Paying))
                 && !p.is(RoleKind::Buyer)
                 && !p.is(RoleKind::Contractor)
                 && !p.is(RoleKind::Esender)
@@ -876,6 +893,8 @@ fn promotable(parties: &[Party], i: usize) -> Option<usize> {
                 && !p.folded.is_empty()
                 && !portal_label(&p.folded)
                 && name_pattern(&p.folded, NameList::ReviewBody).is_none()
+                && (!commercial(&p.folded) || public(&p.folded) || p.is(RoleKind::Paying) || p.is(RoleKind::Financing))
+                && p.folded.split(' ').count() <= 16
         })
         .map(|(j, _)| j)
 }
@@ -1451,7 +1470,8 @@ mod tests {
         assert_eq!(role_kind("OPT-301-Part-ReviewOrg"), Some(RoleKind::ReviewBody));
         assert_eq!(role_kind("OPT-301-ReviewBody"), Some(RoleKind::ReviewBody));
         assert_eq!(role_kind("OPT-301-Part-DocProvider"), Some(RoleKind::DocsProvider));
-        assert_eq!(role_kind("OPT-300-Contract-Signatory"), Some(RoleKind::BuyerShaped));
+        assert_eq!(role_kind("OPT-300-Contract-Signatory"), Some(RoleKind::Signatory));
+        assert_eq!(role_kind("OPT-301-LotResult-Paying"), Some(RoleKind::Paying));
         assert_eq!(role_kind("OPT-301-ReviewOrg"), None);
     }
 
@@ -1557,6 +1577,33 @@ mod tests {
             ]),
             (s(&["Vergabekammer"]), s(&[bauamt]))
         );
+        // ted:00703641-2024 (refold dry 1954): a SWAPPED notice — KIO as buyer, the supplier
+        // CAMFIL POLSKA as signatory, the real buyer NCBJ as tenderer. The signatory alone
+        // is never promoted, so the role stays as published.
+        assert_eq!(
+            fix(&[
+                (BUYER, "ORG-1", "Krajowa Izba Odwoławcza"),
+                ("OPT-301-Lot-ReviewOrg", "ORG-1", "Krajowa Izba Odwoławcza"),
+                ("OPT-300-Contract-Signatory", "ORG-4", "\"CAMFIL POLSKA\" Spółka z ograniczoną odpowiedzialnością"),
+                (TENDERER, "ORG-3", "Narodowe Centrum Badań Jądrowych"),
+            ]),
+            NONE
+        );
+        // A tender agent receiving tenders for the Raad van State (PSI BV, 048778-2013): a
+        // company that does not pay is never promoted. The same company paying is.
+        assert_eq!(fix(&[(BUYER, "ORG-1", "Raad van State"), ("OPT-301-Lot-TenderReceipt", "ORG-2", "PSI BV")]), NONE);
+        assert_eq!(
+            fix(&[
+                (BUYER, "ORG-1", "Raad van State"),
+                ("OPT-301-Lot-TenderReceipt", "ORG-2", "PSI BV"),
+                ("OPT-301-LotResult-Paying", "ORG-2", "PSI BV"),
+            ]),
+            (s(&["Raad van State"]), s(&["PSI BV"]))
+        );
+        // A free-text sentence in a name field is no organization to promote.
+        let sentence = "Inhoudelijke en procedurele aspecten rond deze aanbesteding dienen via de digitale omgeving van het \
+                        aanbestedingsplatform te worden gesteld door middel van de vragenmodule";
+        assert_eq!(fix(&[(BUYER, "ORG-1", "Raad van State"), ("OPT-301-Lot-AddInfo", "ORG-2", sentence)]), NONE);
         // 20408347: the Raad van State with only "Digitaal via TenderNed" elsewhere — a
         // portal label, never promoted, so the role stays as published.
         assert_eq!(
@@ -1659,6 +1706,7 @@ mod tests {
                 (BUYER, "ORG-1", "KIO"),
                 ("OPT-301-Lot-AddInfo", "ORG-2", kio),
                 ("OPT-301-Lot-TenderReceipt", "ORG-3", "POLREGIO S.A."),
+                ("OPT-301-LotResult-Paying", "ORG-3", "POLREGIO S.A."),
             ]),
             (s(&["KIO"]), s(&["POLREGIO S.A."]))
         );
@@ -1696,6 +1744,7 @@ mod tests {
             (BUYER, "ORG-1", uzp),
             ("OPT-301-Lot-Mediator", "ORG-1", uzp),
             ("OPT-301-Lot-TenderReceipt", "ORG-2", polregio),
+            ("OPT-301-LotResult-Paying", "ORG-2", polregio),
             ("OPT-300-Contract-Signatory", "ORG-2", polregio),
         ]);
         assert_eq!(buyers, vec![(Scope::Tender, "ORG-2".to_owned())], "POLREGIO promoted, the UZP mention demoted");

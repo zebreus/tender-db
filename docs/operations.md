@@ -1028,15 +1028,19 @@ own verdicts (`judge`), so the census measures exactly what the projection demot
 - a **clean buyer mention is left** on the notice: the flagged mention loses its buyer role (KIO,
   a tribunal administratif or European Dynamics beside the real buyer);
 - **none is left** and `real-buyer-elsewhere` holds: the first other party (section order) in a
-  STRONG buyer-shaped role (tender receipt or evaluation, additional information, paying,
-  signatory) is promoted to the dialect's buyer role (`Procedure-Buyer`, legacy / sdk-0.1 `buyer`)
+  STRONG buyer-shaped role (tender receipt or evaluation, additional information, paying) is
+  promoted to the dialect's buyer role (`Procedure-Buyer`, legacy / sdk-0.1 `buyer`)
   and the flagged mention dropped — 438807's POLREGIO, the Staatliches Bauamt beside a
   Vergabekammer, the OPW beside the High Court. **Never promoted**, the next eligible party is
   tried instead (`role_census::promotable`): a portal or platform label (`NameList::Platform` /
   `Portal`: "Digitaal via TenderNed", Negometrix, achatpublic, …), the eSender
   (`Procedure-SProvider`), a review body by role or by name, a party whose only buyer-shaped role
-  is the documents provider or the financing party, a nameless party. No eligible party: nothing
-  changes;
+  is the documents provider or the financing party, a nameless party, **the contract signatory
+  alone** (swapped notices file the winner there: CAMFIL POLSKA signing for NCBJ, Wackler for the
+  BImA), **a company that does not pay or finance** (a commercial legal form and no public stem:
+  the suppliers and tender agents — Roche Diagnostics Polska, Braun GmbH, PSI BV, a Rechtsanwälte
+  GmbH — of the first dry run, job 1954; POLREGIO S.A. pays), and a "name" of more than 16 words
+  (a legacy free-text sentence). No eligible party: nothing changes — correct or unchanged;
 - **nothing recoverable** (Mercell alone): the role is served as published, AND stays in the guards
   (one verdict for both; the 2026-10-03 Decision's guard-only drop was reversed by unit 2).
 

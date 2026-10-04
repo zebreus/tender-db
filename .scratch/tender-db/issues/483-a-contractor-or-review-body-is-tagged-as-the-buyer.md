@@ -304,3 +304,25 @@ pattern-named mention and a parse of the few thousand candidates.
   supervisor test seeds a stride (dry finds 1 with a promote, wet re-queues 1 and stamps) and the
   seeded stride's poll budget (measured 360–390 KiB, set 416 KiB).
 - **Dry run holds the heavy-write belt:** documented in operations.md (follows `requeue-uuid-hubs`).
+
+## Deployed `ebb9f20` 2026-10-04; dry 1954 read → promote tightened (unit 2b)
+
+`refold-buyer-roles` dry, job 1954 (report `.scratch/tender-db/483-roles/refold-dry-1954.json`): 8,372,154
+pattern-named mentions → 12,278 notices serving one as buyer → **1,176 fixed** (981 drops beside a clean buyer, 195
+promotes). The drops are the census's classes (KIO 153, DKOM 91, Raad van State 48, European Dynamics 43, High Court
+38, Vergabekammer des Bundes 46, Klagenævnet 27, Verwaltungsgericht Wien 22, Markkinaoikeus 20, tribunaux
+administratifs …). **The promotes were ~80 % right** (Domstolsverket, Staatliches Bauamt ×n, OPW, Klinikum Stuttgart,
+Landeshauptstadt München Baureferat, Stadt Waldershof, ESID Metz, ČEZ, Adif …) but ~35 were wrong:
+- **swapped notices**: KIO / Bundeskartellamt as buyer, the SUPPLIER as `Contract-Signatory` and the real buyer as
+  `Tenderer` (ted:00703641-2024: CAMFIL POLSKA signing, Narodowe Centrum Badań Jądrowych "tenderer"; ted:00062161-2025:
+  Wackler + 3B Dienstleistung signing, BImA "tenderer") — ~20 Polish medical suppliers (Roche, Sysmex, Radiometer,
+  Sarstedt, Neuca, Arthrex), Braun GmbH, Günter Jacobi, ADPN, AL ALBA ESE;
+- **tender agents** receiving tenders: PSI BV for the Raad van State, ATEUS Rechtsanwälte GmbH, CWPA Planning;
+- one legacy free-text sentence as a name.
+
+**Unit 2b (this commit):** `Contract-Signatory` is its own `RoleKind::Signatory` and `LotResult-Paying` its own
+`RoleKind::Paying` (both still buyer-shaped for the census). `promotable` refuses the signatory alone, a company that
+is not public-shaped unless it pays or finances (POLREGIO pays, 438807 still promotes it), and names of more than 16
+words. Correct or unchanged: a swapped notice keeps its review-body buyer as published (the swap's real buyer is the
+TENDERER, recoverable only with the org-level role index — deferred). NEXT: gate → deploy → dry again → read the
+promotes → wet → the daily re-derives → Verify 438807.
