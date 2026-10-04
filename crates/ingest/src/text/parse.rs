@@ -151,7 +151,38 @@ fn plausible_name(name: &str) -> bool {
     if name.eq_ignore_ascii_case("various") {
         return false;
     }
+    if opens_with_contact_line(name) {
+        return false;
+    }
     !NAME_REJECTS.iter().any(|r| find_ascii_ci(name, r).is_some())
+}
+
+/// Whether a candidate is the tail of a contact block — `Fax 0044 2920 644615`,
+/// `URL: www.puertomalaga.com. Fax 952 12 50 02` — rather than a name (issue 485).
+///
+/// Both strings were minted as organizations and served as winners: 19 of them in
+/// notice 2808875 alone. The root cause is [`lot_prefix_len`] reading a phone number as
+/// a lot reference, and that is fixed there; this is the second fence, so a contact
+/// line that reaches a name slot some other way is still refused.
+///
+/// Narrow on purpose. `Fax`/`Tel`/`Telefax` count only when what follows (past any
+/// `.`, `:` or space) is a number — `Tel Aviv Holdings` is a name. `URL`/`E-mail` count
+/// only with their colon.
+fn opens_with_contact_line(name: &str) -> bool {
+    let bytes = name.as_bytes();
+    for word in ["TELEFAX", "FAX", "TEL"] {
+        if bytes.len() > word.len() && bytes[..word.len()].eq_ignore_ascii_case(word.as_bytes()) {
+            let tail = name[word.len()..].trim_start_matches(['.', ':', ' ']);
+            if tail.len() < name.len() - word.len()
+                && tail.starts_with(|c: char| c.is_ascii_digit() || c == '+' || c == '(')
+            {
+                return true;
+            }
+        }
+    }
+    ["URL:", "E-MAIL:", "EMAIL:"]
+        .iter()
+        .any(|w| bytes.len() >= w.len() && bytes[..w.len()].eq_ignore_ascii_case(w.as_bytes()))
 }
 
 /// Labels under which the numbered form states what the contract cost (issue 244).
@@ -437,13 +468,29 @@ const LOT_PREFIX_MAX: usize = 24;
 /// but then the reference must be DIGITS. A single letter followed by a period is an
 /// initial, not a lot: `H. Meyer GmbH` and `B. Braun Medical` are companies, and
 /// stripping there would rename them.
+///
+/// The terminator may also be `)` — `6.  Supplier(s): 1) CGC, BP 129, … 2) Furic …`
+/// (900123), `1) Biotronik France, … 2) Ela Médical, …` (2002409) — and then the
+/// reference must be ONE run of digits: `(a)`/`a)` enumerate clauses, and a `)` after
+/// anything else closes a parenthesis inside a name (issue 484 review).
 fn lot_prefix_len(value: &str) -> Option<usize> {
     let (at, terminator) = value
         .char_indices()
         .take_while(|(i, _)| *i <= LOT_PREFIX_MAX)
-        .find(|(_, c)| *c == ':' || *c == '.')?;
+        .find(|(_, c)| matches!(c, ':' | '.' | ')'))?;
     let head = &value[..at];
     if head.is_empty() {
+        return None;
+    }
+    if terminator == ')' {
+        return head.bytes().all(|b| b.is_ascii_digit()).then_some(at + 1);
+    }
+    // Two digit groups with nothing but whitespace between them are a phone number,
+    // not a lot list (issue 485): `Tel. 952 12 50 00. URL: …` split at the `.` after
+    // `Tel`, and the segment behind it minted `URL: www.puertomalaga.com. Fax 952 12 50
+    // 02` as a winner. Every measured lot list separates its references with `,` `/`
+    // `-` or `and` (`1, 2, 3 and 4:`, `1/2:`), never with a bare space.
+    if digit_groups_space_separated(head) {
         return None;
     }
     let parts = head.split([',', '/', '-', ' ']).filter(|p| !p.is_empty());
@@ -466,6 +513,29 @@ fn lot_prefix_len(value: &str) -> Option<usize> {
         return None;
     }
     Some(at + terminator.len_utf8())
+}
+
+/// Whether `head` holds two runs of digits separated only by spaces — phone notation.
+fn digit_groups_space_separated(head: &str) -> bool {
+    let bytes = head.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i].is_ascii_digit() {
+            while i < bytes.len() && bytes[i].is_ascii_digit() {
+                i += 1;
+            }
+            let gap = i;
+            while i < bytes.len() && bytes[i] == b' ' {
+                i += 1;
+            }
+            if i > gap && i < bytes.len() && bytes[i].is_ascii_digit() {
+                return true;
+            }
+        } else {
+            i += 1;
+        }
+    }
+    false
 }
 
 fn strip_lot_prefix(value: &str) -> &str {
@@ -533,11 +603,12 @@ fn winner_segments(value: &str) -> Vec<&str> {
             while next < bytes.len() && bytes[next] == b' ' {
                 next += 1;
             }
-            // `;` separates on its own; `.` only in front of a lot reference.
+            // `;` separates on its own; `.` only in front of a lot reference, or where
+            // a contact block ends and the next entry's own `Name, address … Tel.` begins.
             let separates = if bytes[i] == b';' {
                 true
             } else {
-                next > i + 1 && lot_prefix_len(&value[next..]).is_some()
+                next > i + 1 && (lot_prefix_len(&value[next..]).is_some() || entry_after_contact(value, i, next))
             };
             if separates && next > start {
                 segments.push(&value[start..i]);
@@ -550,6 +621,32 @@ fn winner_segments(value: &str) -> Vec<&str> {
     }
     segments.push(&value[start..]);
     segments
+}
+
+/// Whether the `.` at `dot` ends a contact block (the token before it is an e-mail
+/// address or a `www.`/`http` host) and what starts at `next` is another entry: an
+/// upper-case `Name,` with no `:` before its comma within [`ITEM_LOOKBACK`] bytes, whose
+/// own text carries a phone, fax or e-mail. 2002408 prints two unkeyed entries —
+/// `Gobierno Vasco, … URL: www.ej-gv.net. Profinsa, Productos de Oficina e Informática,
+/// … Tel.: 945-22 22 69. Fax: …` — and without this split Profinsa, the real supplier,
+/// is the tail of the authority's segment and never read (issue 484 review). Each
+/// condition keeps a contact block's own continuation (`… x@y.es. Fax 952 …`,
+/// `… www.x.es. Internet address: …`) from passing for an entry.
+fn entry_after_contact(value: &str, dot: usize, next: usize) -> bool {
+    let token = value[..dot].rsplit(' ').next().unwrap_or("").trim_start_matches('(').to_ascii_lowercase();
+    if !(token.contains('@') || token.starts_with("www.") || token.starts_with("http")) {
+        return false;
+    }
+    let tail = &value[next..];
+    if !tail.starts_with(char::is_uppercase) {
+        return false;
+    }
+    let head = &tail[..char_bound(tail, ITEM_LOOKBACK)];
+    match head.find(',') {
+        Some(comma) if !head[..comma].contains(':') => {}
+        _ => return false,
+    }
+    ["TEL", "FAX", "@"].iter().any(|m| find_ascii_ci(tail, m).is_some())
 }
 
 /// Drop the period that ends the sentence, and keep the one that ends an
@@ -606,6 +703,7 @@ fn awarded_names(body: &str) -> Vec<String> {
         return Vec::new();
     }
     let flat = flatten(body);
+    let authority = awarding_authority(&flat);
 
     let mut names = Vec::new();
     let mut at = 0usize;
@@ -624,31 +722,74 @@ fn awarded_names(body: &str) -> Vec<String> {
         // Hop a leading `Contract No <ref>:` before bounding the value — see
         // `contract_no_prefix_len` for why this must run before the ITEM_STOPS scan.
         let rest = &rest[contract_no_prefix_len(rest)..];
-        // Look for the value's end in a WINDOW, not in the rest of the notice. Scanning
-        // the whole remainder made the function quadratic in (awards × body length), and
-        // a notice awarding hundreds of contracts then took minutes: the campaign's
-        // `fetch 186` went from 148 s to under two members a minute at 133% CPU with
-        // three writer acquisitions in 45 seconds. A winner's name is never 8 kB from
-        // its own label.
-        let window = &rest[..char_bound(rest, NAME_WINDOW)];
-        // Two levels, because one value can carry more than one winner. The ITEM stop
-        // ends the VALUE; inside it, `;` separates winners and `,` ends each name:
+        // Where the value ends. Two shapes (issue 484):
+        //
+        // - the pre-2004 NUMBERED form (`6.  Supplier(s): …`) ends the value at its own
+        //   successor item ` 7. `, looked for within `NUMBERED_VALUE_MAX`. One numbered
+        //   value can carry several lot-keyed entries with full contact blocks — notice
+        //   2002406 prints the authority's ~330-byte contact entry as `1:` and the real
+        //   supplier, Montte, as `2:` — so the 256-byte window cut Montte off and served
+        //   the authority as its own contractor. The successor, not a blanket larger
+        //   window, is the bound: a bare 2 KiB would run on into ` 8.  Price(s): 1:
+        //   2 750 000 SEK` (1200610) and read the price list as winners.
+        // - everything else, and a numbered value whose successor is not found, keeps
+        //   the WINDOW: scanning the whole remainder made the function quadratic in
+        //   (awards × body length), and a notice awarding hundreds of contracts then
+        //   took minutes (`fetch 186`: 148 s to under two members a minute). A winner's
+        //   name is never 8 kB from its own label.
+        //
+        // Inside the value, `;` separates winners and `,` ends each name:
         //
         //     9.  Supplier(s), …: BP, Hamburg; Thelen, Mainz.   10.  …
         //                         ^^          ^^^^^^            ^^^^ item stop
         //
         // Reading that as one name would mint `BP, Hamburg; Thelen` as an organization,
         // which is the withheld-boilerplate failure in a new costume (issue 234).
-        let item_end = ITEM_STOPS.iter().filter_map(|stop| find_ascii_ci(window, stop)).min();
-        let value = &window[..item_end.unwrap_or(window.len())];
+        //
+        // The successor wins over the numeric ITEM_STOPS (` 7.` ` 9.` ` 10.`): those are
+        // guesses at the successor and also match an address (`UK-Sheffield 9.
+        // Edmundson`), and with the successor missing (numbered forms skip items:
+        // 2002406 has no 4) a ` 9.` a kilobyte out would run the value over the items
+        // between — `8.  Price(s): 1: STERLING 400 000` read as a winner. So: the next
+        // item marker of ANY higher number (n+1 first, up to n+4), cut earlier only by
+        // a sectioned stop; no marker found means the old window, unchanged.
+        let numbered = numbered_item_before(&flat, start).and_then(|n| {
+            let wide = &rest[..char_bound(rest, NUMBERED_VALUE_MAX)];
+            let succ = successor_marker(wide, n)?;
+            let stop = SECTIONED_STOPS.iter().filter_map(|stop| find_ascii_ci(wide, stop)).min();
+            Some(&wide[..stop.map_or(succ, |stop| stop.min(succ))])
+        });
+        let (value, item_end) = match numbered {
+            Some(value) => (value, Some(value.len())),
+            None => {
+                let window = &rest[..char_bound(rest, NAME_WINDOW)];
+                let item_end = ITEM_STOPS.iter().filter_map(|stop| find_ascii_ci(window, stop)).min();
+                (&window[..item_end.unwrap_or(window.len())], item_end)
+            }
+        };
+        // (name, whether the segment is the authority's own contact entry)
+        let mut found: Vec<(String, bool)> = Vec::new();
         for segment in winner_segments(value) {
+            let segment = segment.trim_start();
+            // A contract reference is not a name (issue 484), but what follows it may be:
+            // 2002406 opens its value with `Contrato n° S-036/02-DJ.` as a segment of its
+            // own, 2002408 with `Contrato n° S-037/02-DJ. Gobierno Vasco, …` and 2002409
+            // with `Marché n° 03/010002: 1) Biotronik France, …`. Hop the reference; a
+            // segment that is nothing else is skipped.
+            let segment = match contract_reference_len(segment) {
+                Some(len) => segment[len..].trim_start(),
+                None => segment,
+            };
+            if segment.is_empty() {
+                continue;
+            }
             // The name ends at the first comma — the address follows it in every
             // measured shape. With no comma, the name is the whole segment, which is
             // safe only because the item stop already bounded it: with NEITHER boundary
             // the segment is the raw 256-byte window, and a "name" that long mints one
             // organization per notice and poisons an identity that has no identifier to
             // fall back on. Refuse it instead.
-            let segment = strip_lot_prefix(segment.trim_start());
+            let segment = strip_lot_prefix(segment);
             let (name, bounded) = match segment.find(',') {
                 Some(comma) => (&segment[..comma], true),
                 None => (segment, item_end.is_some()),
@@ -658,12 +799,227 @@ fn awarded_names(body: &str) -> Vec<String> {
             }
             let name = trim_sentence_period(name.trim());
             if plausible_name(name) {
-                names.push(name.to_owned());
+                let contact = authority.as_ref().is_some_and(|a| a.contact_entry(name, segment));
+                found.push((name.to_owned(), contact));
             }
         }
+        // Drop the authority's own contact entry — and only when another named entry
+        // survives in the same value (issue 484). A single entry naming the buyer is what
+        // the notice says (3002722, 3009398: the publisher repeated its own block in
+        // V.3), and serving it as published is the projection's call, not this one's.
+        let others = found.iter().filter(|(_, contact)| !contact).count();
+        names.extend(found.into_iter().filter(|(_, contact)| others == 0 || !contact).map(|(n, _)| n));
         at = value_at;
     }
     names
+}
+
+/// How far a NUMBERED-form value is followed looking for its successor item (issue
+/// 484). The longest measured value is 2002406's item 6, two lot entries with full
+/// contact blocks at ~560 bytes; the bound is what keeps the scan linear.
+const NUMBERED_VALUE_MAX: usize = 2048;
+
+/// How far before a label its item number is looked for. `9.  Supplier(s),
+/// contractor(s) or service provider(s):` puts 46 bytes of heading between the number
+/// and the matched tail.
+const ITEM_LOOKBACK: usize = 96;
+
+/// The number `N` of the numbered form item whose heading contains the label at
+/// `label_at` — `6` for `… 6.  Supplier(s): …` — or `None` when the label is not the
+/// heading of a numbered item (the sectioned forms: `V.3)`, `V.1.1)`).
+///
+/// The marker is ` N. ` with one or two digits, preceded by a space (or the start of the
+/// body), and nothing between it and the label may contain `:` or `.` — so a date
+/// (`30. 8. 1999.`) or a sentence before the heading never passes for its number.
+fn numbered_item_before(flat: &str, label_at: usize) -> Option<u32> {
+    let from = char_bound(flat, label_at.saturating_sub(ITEM_LOOKBACK));
+    let look = &flat[from..label_at];
+    let bytes = look.as_bytes();
+    let mut last: Option<(u32, usize)> = None;
+    for i in 0..bytes.len() {
+        let preceded = if i == 0 { from == 0 } else { bytes[i - 1] == b' ' };
+        if !preceded || !bytes[i].is_ascii_digit() {
+            continue;
+        }
+        let mut j = i;
+        while j < bytes.len() && j - i < 2 && bytes[j].is_ascii_digit() {
+            j += 1;
+        }
+        if bytes.get(j) == Some(&b'.') && matches!(bytes.get(j + 1), Some(b' ') | None) {
+            if let Ok(n) = look[i..j].parse::<u32>() {
+                last = Some((n, (j + 2).min(bytes.len())));
+            }
+        }
+    }
+    let (n, end) = last?;
+    let between = &look[end..];
+    (!between.contains([':', '.'])).then_some(n)
+}
+
+/// Where the numbered item ` n. ` begins in `window`, or `None`. Also matches ` n.` at
+/// the very end, which is how an empty last item flattens.
+fn find_item_marker(window: &str, n: u32) -> Option<usize> {
+    let marker = format!(" {n}.");
+    let mut from = 0;
+    while let Some(i) = window[from..].find(&marker) {
+        let at = from + i;
+        let after = at + marker.len();
+        if after == window.len() || window.as_bytes()[after] == b' ' {
+            return Some(at);
+        }
+        from = after;
+    }
+    None
+}
+
+/// Where the item after `n` begins in `window`: ` {n+1}. ` if present, else the next
+/// higher number up to `n+4` (the numbered forms skip empty items — 2002406 has no
+/// item 4, 1200610 jumps from 1 to 6). Lower numbers are tried first, so an address
+/// number further out never wins over the real successor.
+fn successor_marker(window: &str, n: u32) -> Option<usize> {
+    (n + 1..=n + 4).find_map(|k| find_item_marker(window, k))
+}
+
+/// The [`ITEM_STOPS`] that are headings of the sectioned forms, not guesses at a
+/// numbered successor. Inside a numbered value bounded by its successor only these
+/// cut it shorter (issue 484).
+const SECTIONED_STOPS: [&str; 5] = ["V.1.2)", "V.2)", "V.3)", "V.4)", "CONTRACT NO"];
+
+/// The openings of a contract reference in a winner value (issue 484), lower-cased.
+/// `CONTRACT NO <ref>:` at the very start of the value is already hopped by
+/// [`contract_no_prefix_len`]; these are the same reference in the era's other
+/// languages, and the English one without its colon, at the start of a SEGMENT
+/// (`Contrato n° S-036/02-DJ.` in 2002406, `Marché n° 03/010002:` in 2002409).
+const CONTRACT_REFERENCES: [&str; 18] = [
+    "contrato n°",
+    "contrato nº",
+    "contrato no",
+    "contrato n.",
+    "contract no",
+    "contrat n°",
+    "contrat nº",
+    "contrat no",
+    "marché n°",
+    "marché nº",
+    "marché no",
+    "marche n°",
+    "marche no",
+    "vertrag nr",
+    "contratto n.",
+    "contratto n°",
+    "contratto nº",
+    "contratto no",
+];
+
+/// The length of a contract reference opening `segment`, through its terminator — the
+/// first `:`, or a `.` that ends the sentence — or the whole segment when no
+/// terminator follows within [`CONTRACT_NO_PREFIX_MAX`] (the segment is only a
+/// reference). `None` when the segment does not open with one; the opening must not run
+/// on into a word (`Contract Northern Ltd` is a name), and a comma before the
+/// terminator means prose, not a reference, so the whole segment goes.
+fn contract_reference_len(segment: &str) -> Option<usize> {
+    let r = CONTRACT_REFERENCES.iter().find(|r| {
+        segment.get(..r.len()).is_some_and(|head| head.to_lowercase() == **r)
+            && segment[r.len()..].chars().next().is_none_or(|c| !c.is_alphabetic())
+    })?;
+    let at = r.len() + (segment[r.len()..].len() - segment[r.len()..].trim_start_matches('.').len());
+    let tail = &segment[at..];
+    let bytes = tail.as_bytes();
+    let bound = char_bound(tail, CONTRACT_NO_PREFIX_MAX);
+    let end = (0..bound).find(|&i| {
+        bytes[i] == b':' || bytes[i] == b',' || (bytes[i] == b'.' && matches!(bytes.get(i + 1), Some(b' ') | None))
+    });
+    match end {
+        Some(i) if bytes[i] != b',' => Some(at + i + 1),
+        _ => Some(segment.len()),
+    }
+}
+
+/// The awarding authority as the body itself states it: its folded name, and the
+/// e-mail addresses and URL hosts of its contact block (issue 484).
+struct Authority {
+    name: String,
+    contacts: Vec<String>,
+}
+
+impl Authority {
+    /// Whether a winner entry is the authority's own contact entry: the same name AND
+    /// one of the same e-mail addresses or URL hosts. The name alone is not enough —
+    /// 1200610's `1: Staffanstorps kommun, Städservice` is the municipality's own
+    /// cleaning service, a genuine in-house lot with its own phone and no shared
+    /// address. An attention marker (`A la atención de`, `Att:`) is not a signal
+    /// either: 2808875 prints `Att: <person>` on all 19 genuine Cardiff providers.
+    fn contact_entry(&self, name: &str, segment: &str) -> bool {
+        if self.contacts.is_empty() || fold_name(name) != self.name {
+            return false;
+        }
+        let segment = segment.to_lowercase();
+        self.contacts.iter().any(|c| segment.contains(c.as_str()))
+    }
+}
+
+/// The labels that head the authority's item: the numbered form's item 1, and the
+/// sectioned form's `I.1)`.
+const AUTHORITY_LABELS: [&str; 3] = ["AWARDING AUTHORITY:", "AWARDING ENTITY:", "CONTRACTING ENTITY:"];
+
+/// The body's awarding authority, or `None` when the body does not state one in a
+/// shape read here. Pure over the flattened body, like everything [`awarded_names`]
+/// derives.
+fn awarding_authority(flat: &str) -> Option<Authority> {
+    let value = if let Some((start, label)) = AUTHORITY_LABELS
+        .iter()
+        .filter_map(|l| find_ascii_ci(flat, l).map(|i| (i, *l)))
+        .min_by_key(|(i, _)| *i)
+    {
+        let rest = &flat[start + label.len()..];
+        let wide = &rest[..char_bound(rest, NUMBERED_VALUE_MAX)];
+        let end = numbered_item_before(flat, start)
+            .and_then(|n| successor_marker(wide, n))
+            .unwrap_or(char_bound(wide, NAME_WINDOW));
+        &wide[..end]
+    } else {
+        // `I.1)` at a word start, so `II.1)` does not match.
+        let bytes = flat.as_bytes();
+        let start = (0..flat.len()).find(|&i| {
+            (i == 0 || bytes[i - 1] == b' ') && bytes[i..].len() >= 4 && &bytes[i..i + 4] == b"I.1)"
+        })?;
+        let rest = &flat[start + 4..];
+        let wide = &rest[..char_bound(rest, NUMBERED_VALUE_MAX)];
+        let end = ["I.2)", "SECTION II"].iter().filter_map(|s| find_ascii_ci(wide, s)).min();
+        let item = &wide[..end.unwrap_or(wide.len())];
+        // The heading (`NAME, ADDRESSES AND CONTACT POINT(S):`) ends at its colon.
+        &item[item.find(':')? + 1..]
+    };
+    let value = value.trim();
+    let name = trim_sentence_period(value[..value.find(',').unwrap_or(value.len())].trim());
+    let name = fold_name(name);
+    if name.is_empty() {
+        return None;
+    }
+    let mut contacts = Vec::new();
+    for token in value.split_whitespace() {
+        let token = token.trim_matches(|c: char| matches!(c, '.' | ',' | ';' | ':' | '(' | ')'));
+        let lower = token.to_lowercase();
+        let contact = if lower.contains('@') {
+            lower
+        } else {
+            let host = lower.trim_start_matches("https://").trim_start_matches("http://");
+            if !host.starts_with("www.") {
+                continue;
+            }
+            let host = &host["www.".len()..];
+            host[..host.find('/').unwrap_or(host.len())].to_owned()
+        };
+        if contact.contains('.') && contact.len() > 4 && !contacts.contains(&contact) {
+            contacts.push(contact);
+        }
+    }
+    Some(Authority { name, contacts })
+}
+
+/// A name folded for comparison: letters and digits only, lower-cased.
+fn fold_name(name: &str) -> String {
+    name.chars().filter(|c| c.is_alphanumeric()).flat_map(char::to_lowercase).collect()
 }
 
 /// The one monetary value a numbered-form award body states, or `None`.
@@ -2268,6 +2624,343 @@ mod tests {
         // ITEM_STOP still bounds the value to nothing rather than minting the prose.
         let prose = "Award notice 6.  Supplier(s): Contract no pending, see notes: none. 7.  Goods: X.";
         assert_eq!(awarded_names(prose), Vec::<String>::new());
+    }
+
+    /// Issue 484 defect 1: the numbered value reads to its own successor item, a
+    /// contract reference is not a name, and the authority's own contact entry is
+    /// dropped when another entry survives. Bodies are the stored `TXT-TX` of the
+    /// exhibits, verbatim (wrap included), from `/v1/notices/{id}/content`.
+    #[test]
+    fn the_authoritys_contact_entry_is_not_its_own_contractor() {
+        // 2002406 (TED 190812-2002): entry `1:` repeats the item-1 authority with its
+        // e-mail and URL; the real supplier is entry `2:`, past the old 256-byte window.
+        let vasco = "1.  Awarding authority: Gobierno Vasco, Departamento de Justicia, Empleo\n\
+                     y Seguridad Social, c/ Donostia-San Sebastián, 1, entreplanta, zona F, \n\
+                     E-01010 Vitoria-Gasteiz. Tel.: 945 01 90 98. Fax: 945 01 94 50. E-mail: \n\
+                     mv-ruiz@ej-gv.es. URL: www.ej-gv.net\n\
+                     2.  Award procedure, justification (Article 6(3)): Open procedure.\n\
+                     3.  Date of award: 25.10.2002.\n\
+                     5.  Tenders received: 6.\n\
+                     6.  Supplier(s): Contrato n° S-036/02-DJ.\n\
+                     1: Gobierno Vasco, A la atención de Mesa de Contratación del Departamento \n\
+                     de Justicia, Empleo Seguridad Social, C/ Donostia-San Sebastián, 1, \n\
+                     Edifico Lakua I, entreplanta zona F, E-01010 Vitoria-Gasteiz. Teléfono: \n\
+                     945-01.9098, Fax: 945-01.94.50, Correo electrónico: mv-ruiz@ej-gv.es, \n\
+                     Dirección Internet (URL): www.ej-gv.net.\n\
+                     2: Montte, Polígono Industrial 10, E-20200 Beasain (Gipuzkoa). Teléfono: \n\
+                     902-108888, Fax: 902-208888.\n\
+                     7.  Goods, CPA reference number: CPV: 21230000.\n\
+                     8.  Price: Precios unitarios.";
+        assert_eq!(awarded_names(vasco), vec!["Montte".to_owned()]);
+        // …and through the whole record: one result, and its winner is Montte.
+        let record = format!("1.0/000001\nND: 190812-2002\nTX: {}\n", vasco.replace('\n', "\n    "));
+        let p = parse(&record).expect("parses");
+        let winners: Vec<&str> = p
+            .values
+            .iter()
+            .filter(|v| v.field_id == "TED-OFFICIALNAME")
+            .map(|v| value_text(&v.value).as_str())
+            .collect();
+        assert_eq!(winners, vec!["Montte"]);
+
+        // 1200610 (Staffanstorp): `1:` is the municipality's own cleaning service — the
+        // same name, but no shared e-mail or URL — a genuine in-house lot, kept. The
+        // successor bound stops at ` 8.  Price(s): 1: 2 750 000 SEK`, which a blanket
+        // wide window would read as winners.
+        let staffanstorp = "1.  Awarding authority: Staffanstorps kommun,  S-245 80 Staffanstorp.\n\
+                            Tel. (046) 25 11 00. Facsimile (046) 25 55 70.\n\
+                            6.  Tenders received: 9.\n\
+                            7.  Service provider(s): 1: Staffanstorps kommun, Städservice, S-245 80 \n\
+                            Staffanstorp, tel. (046) 25 14 27, facsimile (046) 25 11 66.\n\
+                            2: Clean Service System AB, Box 41, S-291 21 Kristianstad, tel. (044) 10 \n\
+                            60 38, facsimile (044) 10 60 39.\n\
+                            8.  Price(s): Prices (for the duration of the contract):\n\
+                            1: 2 750 000 SEK; 2: 245 000 SEK.\n\
+                            9.\n\
+                            10.\n\
+                            11.  Notice published on: 21. 10. 1997.";
+        assert_eq!(
+            awarded_names(staffanstorp),
+            vec!["Staffanstorps kommun".to_owned(), "Clean Service System AB".to_owned()]
+        );
+
+        // 3002722: the single V.3 entry repeats the authority's block (same e-mail, same
+        // URL). With no other entry it is what the notice says, and stays as published.
+        let toledo = "SECTION I: CONTRACTING AUTHORITY\n\
+                      I.1)  NAME, ADDRESSES AND CONTACT POINT(S): Consejería de Educación y \n\
+                      Ciencia, Bulevar del Río Alberche, s/nº, Attn: Servicio de Planificación y \n\
+                      Centros (Secretaría General), E-45007 Toledo. Tel. 925 247439/27/17. \n\
+                      E-mail: jaramon@jccm.es. Fax 925 247442.\n\
+                      Internet address(es):\n\
+                      General address of the contracting authority: www.jccm.es/contratacion.\n\
+                      SECTION II: OBJECT OF THE CONTRACT\n\
+                      SECTION V: AWARD OF CONTRACT\n\
+                      CONTRACT NO: 33/06\n\
+                      V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN \n\
+                      AWARDED: Consejería de Educación y Ciencia, A la atención de Servicio de \n\
+                      Planificación y Centros (Secretaría General), Bulevar del Río Alberche \n\
+                      s/nº, E-45007 Toledo. E-mail: jaramon@jccm.es. Tel. 925247439/17/27. URL: \n\
+                      www.jccm.es/contratacion. Fax 925 247442.\n\
+                      V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:";
+        assert_eq!(awarded_names(toledo), vec!["Consejería de Educación y Ciencia".to_owned()]);
+        let auth = awarding_authority(&flatten(toledo)).expect("the I.1) authority is read");
+        assert_eq!(auth.contacts, vec!["jaramon@jccm.es".to_owned(), "jccm.es".to_owned()]);
+
+        // The same Vasco value with the authority entry ALONE: nothing else survives, so
+        // it is served as published (the projection's `is_buyer` flag is unit 3).
+        let alone = vasco.replace(
+            "2: Montte, Polígono Industrial 10, E-20200 Beasain (Gipuzkoa). Teléfono: \n\
+                     902-108888, Fax: 902-208888.\n",
+            "",
+        );
+        assert_eq!(awarded_names(&alone), vec!["Gobierno Vasco".to_owned()]);
+
+        // The contact match is the safeguard, not the name: the same Vasco value with
+        // entry 1's e-mail and URL replaced by ones the authority does not publish is a
+        // separate office of the same name, and is kept beside Montte.
+        let other_office = vasco
+            .replace("Correo electrónico: mv-ruiz@ej-gv.es", "Correo electrónico: compras@lakua.es")
+            .replace("Dirección Internet (URL): www.ej-gv.net.", "Dirección Internet (URL): www.lakua.es.");
+        assert_eq!(awarded_names(&other_office), vec!["Gobierno Vasco".to_owned(), "Montte".to_owned()]);
+
+        // Contract references in the era's languages are hopped through their
+        // terminator; a segment that is only a reference is nothing; names that merely
+        // start the same way are untouched.
+        assert_eq!(contract_reference_len("Contrato n° S-036/02-DJ."), Some(25));
+        assert_eq!(contract_reference_len("Contrato n° S-036/02-DJ"), Some(24), "only a reference");
+        assert_eq!(contract_reference_len("Marché n° 03/010002: 1) Biotronik"), Some(22));
+        assert_eq!(contract_reference_len("Vertrag Nr. 12: Acme"), Some(15));
+        assert_eq!(contract_reference_len("Contract No. 12.3: Acme"), Some(18));
+        assert_eq!(contract_reference_len("Contract Northern Ltd"), None);
+        assert_eq!(contract_reference_len("Contratos Navales SA"), None);
+    }
+
+    /// Issue 484 review: the shapes next to 2002406 in the same OJ and era. Bodies are
+    /// the stored `TXT-TX` from `/v1/notices/{id}/content`, verbatim.
+    #[test]
+    fn the_sibling_shapes_of_the_contact_entry() {
+        // 2002408: an UNKEYED value — reference, the authority's contact entry, then the
+        // real supplier Profinsa after the authority's URL. Before: `Contrato n°
+        // S-037/02-DJ. Gobierno Vasco` (and Profinsa unread).
+        let profinsa = "1.  Awarding authority: Gobierno Vasco, Departamento de Justicia, Empleo\n\
+                        y Seguridad Social, c/ Donostia-San Sebastián, 1, entreplanta, zona F, \n\
+                        E-01010 Vitoria-Gasteiz. Tel.: 945-019098. 945-019100. Fax: 945-019450. \n\
+                        E-mail: mv-ruiz@ej-gv.es URL: www.ej-gv.net\n\
+                        2.  Award procedure, justification (Article 6(3)): Open procedure.\n\
+                        3.  Date of award: 1.10.2002.\n\
+                        4.  Award criteria: Economically most advantageous offer assessed on the \n\
+                        basis of price, quality, time limit for completion and other criteria.\n\
+                        5.  Tenders received: 10.\n\
+                        6.  Supplier(s): Contrato n° S-037/02-DJ.\n\
+                        Gobierno Vasco, a la atención de Mesa de Contratación del Departamento de \n\
+                        Justicia, Empleo Seguridad Social, c/ Donostia-San Sebastián, 1, Edifico \n\
+                        Lakua I, entreplanta zona F., E-01010 Vitoria-Gasteiz. Tel.: 945-01 90 \n\
+                        98. Fax: 945-01 94 50. E-mail: mv-ruiz@ej-gv.es. URL: www.ej-gv.net.\n\
+                        Profinsa, Productos de Oficina e Informática, Plaza San Martín, 4, \n\
+                        E-01009 Vitoria-Gasteiz. Tel.: 945-22 22 69. Fax: 945-24 02 65.\n\
+                        7.  Goods, CPA reference number: CPV: 30000000.\n\
+                        Office and computing machinery, equipment and supplies. Total estimated \n\
+                        value, excluding VAT: 403 681,03 EUR.\n\
+                        8.  Price: Precios unitarios.\n\
+                        9.\n\
+                        10.  Subcontract: Sí.\n\
+                        Importe (sin IVA): porcentaje 50 %.\n\
+                        11.  Other information: Tipo de poder adjudicador: administración \n\
+                        regional / local.\n\
+                        Tipo de contrato: suministros.\n\
+                        ¿Se trata de un contrato marco? No.\n\
+                        ¿Se trata de un anuncio no obligatorio? No.\n\
+                        ¿Se relaciona el contrato con un proyecto o programa financiado por \n\
+                        fondos de la UE? No.\n\
+                        12.  Contract notice published on: 10.7.2002.\n\
+                        2002/S 132-103321.\n\
+                        13.  Notice postmarked: 5.12.2002.\n\
+                        14.  Notice received on: 5.12.2002.";
+        assert_eq!(awarded_names(profinsa), vec!["Profinsa".to_owned()]);
+
+        // 2002409: `Marché n° …:` then `N)`-keyed entries. Before: `Marché n°
+        // 03/010002: 1) Biotronik France`, and six suppliers unread.
+        let pacemakers = "1.  Awarding authority: SIHCUS-CMCO, 19, rue Louis Pasteur, BP 120,\n\
+                        F-67303 Schiltigheim. Tel.: 3 88 62 83 31. Fax: 3 88 62 84 21. E-mail: \n\
+                        sihcus-cmco.administration@wanadoo.fr. Att: M. Daniel Prange. \n\
+                        2.  Award procedure, justification (Article 6(3)): Open procedure.\n\
+                        3.  Date of award: 6.11.2002.\n\
+                        4.  Award criteria: Economically most advantageous offer assessed on the \n\
+                        basis of price, time limit for completion and other criteria.\n\
+                        5.  Tenders received: 8.\n\
+                        6.  Supplier(s): Marché n° 03/010002:\n\
+                        1) Biotronik France, à l'attention de M. Alain Van Michel, 2, rue Nicolas \n\
+                        Ledoux, Silic, F-94528 Rungis, tel.: 1 46 75 96 60, télécopieur: 1 49 76 \n\
+                        08 81.\n\
+                        2) Ela Médical, à l'attention de M. Christian Bak, centre d'affaires La \n\
+                        Boursidière, F-92357 Le-Plessis-Robinson Cedex, tel.: 1 46 01 33 33, \n\
+                        télécopieur: 1 46 01 34 58.\n\
+                        3) Guidant France, à l'attention de Mme Catherine Jérosme, 9, rue \n\
+                        d'Estienne d'Orves, F-92504 Rueil-Malmaison Cedex, tel.; 1 47 14 49 14, \n\
+                        télécopieur: 1 47 49 09 57.\n\
+                        4) Medtronic France, à l'attention de M. Yves Drapp, 122, avenue du \n\
+                        Général Leclerc, F-92514 Boulogne-Billancourt Cedex, tel.: 1 55 38 17 00, \n\
+                        télécopieur: 1 55 38 18 00.\n\
+                        5) Sorin Biomédica France, à l'attention de M. Yannick Gasnier, 9, rue \n\
+                        Georges Besse, F-92160 Antony, tel.: 1 46 11 52 71, télécopieur: 1 46 66 \n\
+                        20 11.\n\
+                        6) St-Jude Médical France SAS, à l'attention de M. Claude Van \n\
+                        Droogenbroeck, 1, rond-point Victor Hugo, F-92137 Issy-les-Moulineaux \n\
+                        Cedex, tel.: 1 41 46 45 00, télécopieur: 1 41 46 45 45.\n\
+                        7) Vitatron, à l'attention de M. Olivier Clapeau, 16, rue Jean-Jacques \n\
+                        Rousseau, BP 110, F-92184 Issy-les-Moulineaux Cedex, tel.: 1 46 48 01 01, \n\
+                        télécopieur: 1 46 49 77 55.\n\
+                        7.  Goods, CPA reference number: CPV: 33100000, 33182210.\n\
+                        Medical devices. Pacemaker.\n\
+                        8.  Price: Montants HT:\n\
+                        1) 9 449,02 EUR;\n\
+                        2) 57 285,17 EUR;\n\
+                        3) 71 610 EUR;\n\
+                        4) 179 461,88 EUR;\n\
+                        5) 671,92 EUR;\n\
+                        6) 11 890,04 EUR;\n\
+                        7) 74 258,33 EUR.\n\
+                        9.\n\
+                        10.  Subcontract: Non.\n\
+                        11.  Other information: Le marché est-il couvert par l'Accord sur les \n\
+                        Marchés Publics (AMP): oui.\n\
+                        Type de marché: fournitures.\n\
+                        S'agit-il d'un avis non obligatoire: non.\n\
+                        Numéro de référence attribué au dossier par le pouvoir adjudicateur: \n\
+                        03/010002.\n\
+                        12.  Contract notice published on: 27.8.2002.\n\
+                        2002/S 165-132895.\n\
+                        13.  Notice postmarked: 3.12.2002.\n\
+                        14.  Notice received on: 3.12.2002.";
+        assert_eq!(
+            awarded_names(pacemakers),
+            [
+                "Biotronik France",
+                "Ela Médical",
+                "Guidant France",
+                "Medtronic France",
+                "Sorin Biomédica France",
+                "St-Jude Médical France SAS",
+                "Vitatron",
+            ]
+            .map(str::to_owned)
+        );
+
+        // 900123: `N)` keys without a reference. Before: `1) CGC`, Furic unread.
+        let mackerel = "1.  Awarding authority: Ministère de la défense, service central d'études\n\
+                        et de réalisations du commissariat de l'armée de terre, 1, boulevard \n\
+                        Louis-Loucheur, F-92211 Saint-Cloud Cedex.\n\
+                        Tel. (1) 49 11 64 99.\n\
+                        2.  Award procedure, justification (Article 6 (3)): Restricted procedure.\n\
+                        3.  Date of award: 8. 3. 1996.\n\
+                        4.  Award criteria: Economically most advantageous offer assessed on the \n\
+                        basis of: price, quality.\n\
+                        5.  Tenders received: 3.\n\
+                        6.  Supplier(s): 1) CGC, BP 129, F-56004 Vannes Cedex.\n\
+                        2) Furic (Jules et Alain) et Fils.\n\
+                        7.  Goods, CPA reference number: CPV: 15201415.\n\
+                        Canned and other prepared or preserved mackerel.\n\
+                        8.\n\
+                        9.\n\
+                        10.  Other information: CCP n° 6066.\n\
+                        11.  Notice published on: 15. 9. 1995.\n\
+                        12.  This notice postmarked: 4. 4. 1996.\n\
+                        13.  This notice received on: 9. 4. 1996.";
+        assert_eq!(awarded_names(mackerel), vec!["CGC".to_owned(), "Furic (Jules et Alain) et Fils".to_owned()]);
+
+        // 1200611: item 7 ends at its successor ` 8.`, so the price list is not read.
+        // Before: + `Price(s): 1: 208 332 GBP p.a.`, `164 811 GBP p.a.`.
+        let eastbourne = "1.  Awarding authority: Eastbourne Borough Council, Town Hall, Grove\n\
+                        Road, UK-Eastbourne BN21 4UG, East Sussex.\n\
+                        2.  Award procedure chosen, justification (Article 11 (3)): Restricted \n\
+                        procedure for both contracts.\n\
+                        3.  Category of service and description, CPC reference number: CPV: \n\
+                        01411200.\n\
+                        Part B, category 27 for both contracts.\n\
+                        1: contract A: grounds maintenance - cemeteries and crematorium.\n\
+                        2: contract B: grounds maintenance - highway verges and amenity areas.\n\
+                        4.  Date of award of the contract: 1: 23. 3. 1998; 2: 18. 2. 1998.\n\
+                        5.  Criteria: Most economically advantageous tender.\n\
+                        6.  Tenders received: 1: 6; 2: 4.\n\
+                        7.  Service provider(s): 1: Serco Limited, Serco House, Hayes Road, \n\
+                        UK-Southall, Middlesex.\n\
+                        2: Serviceteam Limited, Nuthampstead, UK-Royston SG8 8LZ, Hertfordshire.\n\
+                        8.  Price(s): 1: 208 332 GBP p.a.; 2: 164 811 GBP p.a.\n\
+                        9.\n\
+                        10.\n\
+                        11.\n\
+                        12.  Notice postmarked: 14. 4. 1998.\n\
+                        13.  Notice received on: 14. 4. 1998.\n\
+                        14.";
+        assert_eq!(awarded_names(eastbourne), vec!["Serco Limited".to_owned(), "Serviceteam Limited".to_owned()]);
+    }
+
+    /// Issue 484 review: a numbered value whose successor is MISSING ends at the next
+    /// higher item, not at a numeric stop further out — here item 7 is skipped and
+    /// ` 9.` lies past the price list of item 8.
+    #[test]
+    fn a_skipped_successor_does_not_run_the_value_into_the_prices() {
+        let body = "1.  Awarding authority: Borough Council, Town Hall, UK-Anytown AN1 1AA.\n\
+                    3.  Date of award: 1. 2. 1998.\n\
+                    6.  Supplier(s): 1: Acme Cleaning Services Limited, Unit 4, Riverside Industrial \n\
+                    Estate, Long Lane, UK-Anytown AN2 2BB, tel. (01234) 56 78 90, facsimile (01234) \n\
+                    56 78 91.\n\
+                    2: Beta Grounds Maintenance Limited, The Old Mill, Station Road, UK-Othertown \n\
+                    OT3 3CC, tel. (01234) 11 22 33, facsimile (01234) 11 22 34.\n\
+                    8.  Price(s): 1: STERLING 400 000; 2: STERLING 156 000.\n\
+                    9.  Notice published on: 3. 4. 1998.";
+        assert_eq!(
+            awarded_names(body),
+            vec!["Acme Cleaning Services Limited".to_owned(), "Beta Grounds Maintenance Limited".to_owned()]
+        );
+        assert_eq!(successor_marker(" a 8.  b", 6), Some(2), "7 absent: 8 is next");
+        assert_eq!(successor_marker(" 9. x 7. y", 6), Some(5), "the real successor beats a later-number match");
+        assert_eq!(lot_prefix_len("1) CGC"), Some(2));
+        assert_eq!(lot_prefix_len("a) clause"), None, "a letter list is not a lot key");
+        assert_eq!(lot_prefix_len("Furic (Jules et Alain) et Fils"), None);
+    }
+
+    /// Issue 485: a phone number is not a lot reference, and a contact line is not a
+    /// name. Bodies are the stored V.3 values of 3009398 and 2808875, verbatim.
+    #[test]
+    fn a_phone_number_is_not_a_lot_reference() {
+        let malaga = "SECTION I: CONTRACTING AUTHORITY\n\
+                      I.1)  NAME, ADDRESSES AND CONTACT POINT(S): Autoridad Portuaria de Málaga, \n\
+                      Muelle de Cánovas, s/n, Attn: Presidente, E-29001 Málaga. Tel. 952 12 50 \n\
+                      00. E-mail: bgalvez@puertomalaga.com. Fax 952 12 50 02.\n\
+                      SECTION V: AWARD OF CONTRACT\n\
+                      CONTRACT NO: 50-30-26-E\n\
+                      V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN \n\
+                      AWARDED: Autoridad Portuaria de Málaga, a la atención de Presidente, \n\
+                      Muelle de Cánovas, s/n, E-29001 Málaga. E-mail: bgalvez@puertomalaga.com. \n\
+                      Tel. 952 12 50 00. URL: www.puertomalaga.com. Fax 952 12 50 02.\n\
+                      V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:";
+        // Before: [`Autoridad Portuaria de Málaga`, `URL: www.puertomalaga.com. Fax 952 12 50 02`].
+        assert_eq!(awarded_names(malaga), vec!["Autoridad Portuaria de Málaga".to_owned()]);
+
+        let cardiff = "SECTION V: AWARD OF CONTRACT\n\
+                       CONTRACT NO: LOC957/AJ/TSS/06\n\
+                       V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN \n\
+                       AWARDED: AWETU, Att: Suzanne Smith. 41a, Lower Cathedral Road, UK-Cardiff \n\
+                       CF11 6LW. Tel. 0044 2920 394141. Fax 0044 2920 644615.\n\
+                       V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:\n\
+                       CONTRACT NO: LOC957/AJ/TSS/06\n\
+                       V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN \n\
+                       AWARDED: BAWSO, Att: Angelina Jones. 9,Cathedral Road, UK-Cardiff CF11 \n\
+                       9HA. Tel. 0044 2920 644633. Fax 0044 2920 644588.\n\
+                       V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:";
+        // Before: [`AWETU`, `Fax 0044 2920 644615`, `BAWSO`, `Fax 0044 2920 644588`].
+        assert_eq!(awarded_names(cardiff), vec!["AWETU".to_owned(), "BAWSO".to_owned()]);
+
+        assert_eq!(lot_prefix_len("952 12 50 00. URL: x"), None, "phone notation");
+        assert_eq!(lot_prefix_len("0044 2920 394141. Fax"), None, "phone notation");
+        assert!(lot_prefix_len("1, 2, 3 and 4: Dolmen").is_some(), "a real lot list");
+        assert!(lot_prefix_len("1/2: Evans").is_some());
+        assert!(!plausible_name("Fax 0044 2920 644615"));
+        assert!(!plausible_name("URL: www.puertomalaga.com. Fax 952 12 50 02"));
+        assert!(!plausible_name("Tel. (046) 25 14 27"));
+        assert!(plausible_name("Tel Aviv Holdings"));
+        assert!(plausible_name("Faxon Ltd"));
     }
 
     /// Issue 244 slice 9: a winner-silent award body still yields its RESULT — a bare

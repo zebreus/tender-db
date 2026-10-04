@@ -198,9 +198,18 @@ pub fn parse(bytes: &[u8]) -> Result<Parsed, Rejected> {
     }
 
     // Parties, then the roles that point at them.
-    for party in &release.parties {
-        let Some(pid) = party.id.as_deref().filter(|s| !s.is_empty()) else { continue };
-        let sid = format!("ORG-{pid}");
+    //
+    // One section per (id, name), not per id (issue 484). 029468-2026 publishes the
+    // buyer `The Council of the Borough of Kirklees` and the supplier `Microsoft
+    // Limited` under ONE party id, `GB-COH-01624297` (Microsoft's Companies House
+    // number). Keyed by id alone they became one section with two names, the buyer
+    // role and the award's tenderer both pointed at it, and the first name was served
+    // for both: the buyer as its own contractor.
+    let party_sections = party_sections(&release.parties);
+    let withheld = withheld_identifiers(&release.parties, &party_sections);
+    for (party, sid) in release.parties.iter().zip(&party_sections) {
+        let Some(sid) = sid.as_deref() else { continue };
+        let sid = sid.to_owned();
         w.section(&sid, "Organization", ROOT);
         if let Some(name) = party.name.as_deref() {
             w.text(&sid, "BT-500-Organization-Company", &lang, name);
@@ -216,22 +225,23 @@ pub fn parse(bytes: &[u8]) -> Result<Parsed, Rejected> {
         w.push(&sid, "BT-514-Organization-Company", NoticeValue::Code { list: None, code: country });
         // `<scheme>-<id>` is the form FTS itself uses for `party.id`, and the
         // form the crosswalk's GB arm reads (`GB-PPON-…`, `GB-COH-…`).
-        for (n, ident) in party.identifier.iter().chain(party.additional_identifiers.iter()).enumerate() {
+        for ident in party.identifier.iter().chain(party.additional_identifiers.iter()) {
             let (Some(scheme), Some(id)) = (ident.scheme.as_deref(), ident.id.as_deref()) else {
                 continue;
             };
             if id.is_empty() {
                 continue;
             }
-            let _ = n;
+            let value = format!("{scheme}-{id}");
+            // The buyer's copy of its supplier's identifier under a shared party id
+            // stays off the buyer (issue 484; see `withheld_identifiers`).
+            if withheld.contains(&(sid.clone(), value.clone())) {
+                continue;
+            }
             w.push(
                 &sid,
                 "BT-501-Organization-Company",
-                NoticeValue::Id {
-                    scheme: Some(scheme.to_owned()),
-                    value: format!("{scheme}-{id}"),
-                    is_ref: false,
-                },
+                NoticeValue::Id { scheme: Some(scheme.to_owned()), value, is_ref: false },
             );
         }
         for role in &party.roles {
@@ -317,6 +327,7 @@ pub fn parse(bytes: &[u8]) -> Result<Parsed, Rejected> {
             }
             for (n, supplier) in award.suppliers.iter().enumerate() {
                 let Some(sup_id) = supplier.id.as_deref().filter(|s| !s.is_empty()) else { continue };
+                let org = supplier_section(&release.parties, &party_sections, sup_id, supplier.name.as_deref());
                 let ten = format!("TEN-{aid}-{n}");
                 let tpa = format!("TPA-{aid}-{n}");
                 w.section(&ten, "LotTender", ROOT);
@@ -335,7 +346,7 @@ pub fn parse(bytes: &[u8]) -> Result<Parsed, Rejected> {
                 w.push(
                     &tpa,
                     "OPT-300-Tenderer",
-                    NoticeValue::Id { scheme: None, value: format!("ORG-{sup_id}"), is_ref: true },
+                    NoticeValue::Id { scheme: None, value: org, is_ref: true },
                 );
             }
         }
@@ -1106,6 +1117,91 @@ fn agreed<'a>(mut periods: impl Iterator<Item = &'a Period>) -> Option<&'a Perio
 #[derive(Deserialize)]
 struct PartyRef {
     id: Option<String>,
+    /// Which of the parties sharing `id` this reference means (issue 484).
+    name: Option<String>,
+}
+
+/// A party name folded for comparison: letters and digits only, lower-cased.
+fn fold_party_name(name: Option<&str>) -> String {
+    name.unwrap_or_default().chars().filter(|c| c.is_alphanumeric()).flat_map(char::to_lowercase).collect()
+}
+
+/// The section each party opens, in `parties` order (issue 484): `ORG-{id}` for the
+/// first name seen under an id, `ORG-{id}#2`, `#3`, … for each differently named party
+/// that reuses it. The same (id, folded name) twice is one party published twice and
+/// shares its section, as every party with that id did before. `None` for a party
+/// with no id, which opens nothing.
+fn party_sections(parties: &[Party]) -> Vec<Option<String>> {
+    let mut seen: Vec<(&str, String, String)> = Vec::new();
+    parties
+        .iter()
+        .map(|party| {
+            let pid = party.id.as_deref().filter(|s| !s.is_empty())?;
+            let name = fold_party_name(party.name.as_deref());
+            if let Some((_, _, sid)) = seen.iter().find(|(id, n, _)| *id == pid && *n == name) {
+                return Some(sid.clone());
+            }
+            let n = seen.iter().filter(|(id, _, _)| *id == pid).count();
+            let sid = if n == 0 { format!("ORG-{pid}") } else { format!("ORG-{pid}#{}", n + 1) };
+            seen.push((pid, name, sid.clone()));
+            Some(sid)
+        })
+        .collect()
+}
+
+/// Whether a party plays the supplier side of an award.
+fn is_supplier(party: &Party) -> bool {
+    party.roles.iter().any(|r| r == "supplier" || r == "tenderer")
+}
+
+/// The section an award supplier reference resolves to: the party with the same id
+/// AND name; else, among the sections sharing that id, the first whose party is a
+/// supplier/tenderer (a reference spelled `Microsoft Ltd` against the party `Microsoft
+/// Limited` must not fall onto the buyer listed first under the same id); else the
+/// id's first section. With unique party ids every branch is `ORG-{id}`, the reference
+/// every such release has always produced.
+fn supplier_section(parties: &[Party], sections: &[Option<String>], id: &str, name: Option<&str>) -> String {
+    let folded = fold_party_name(name);
+    let same_id = || parties.iter().zip(sections).filter(|(p, s)| s.is_some() && p.id.as_deref() == Some(id));
+    name.and_then(|_| same_id().find(|(p, _)| fold_party_name(p.name.as_deref()) == folded))
+        .or_else(|| same_id().find(|(p, _)| is_supplier(p)))
+        .or_else(|| same_id().next())
+        .and_then(|(_, s)| s.clone())
+        .unwrap_or_else(|| format!("ORG-{id}"))
+}
+
+/// The (section, `<scheme>-<id>`) pairs NOT emitted (issue 484): an identifier carried
+/// by two or more sections split out of the SAME party id (`ORG-{id}`, `ORG-{id}#2`…)
+/// is withheld from the non-supplier claimants when exactly one claimant is a
+/// supplier/tenderer — else the downstream identifier fold would weld the buyer back
+/// onto its supplier. With no supplier among them, or several, every claimant keeps it
+/// (the old output). Identifiers shared between DIFFERENT party ids are never touched:
+/// that is one company published twice, and the fold merging it is correct.
+fn withheld_identifiers(parties: &[Party], sections: &[Option<String>]) -> HashSet<(String, String)> {
+    let mut claims: HashMap<(&str, String), Vec<(&str, bool)>> = HashMap::new();
+    for (party, sid) in parties.iter().zip(sections) {
+        let (Some(sid), Some(pid)) = (sid.as_deref(), party.id.as_deref()) else { continue };
+        for ident in party.identifier.iter().chain(party.additional_identifiers.iter()) {
+            let (Some(scheme), Some(id)) = (ident.scheme.as_deref(), ident.id.as_deref()) else { continue };
+            if id.is_empty() {
+                continue;
+            }
+            let claimants = claims.entry((pid, format!("{scheme}-{id}"))).or_default();
+            if !claimants.iter().any(|(s, _)| *s == sid) {
+                claimants.push((sid, is_supplier(party)));
+            }
+        }
+    }
+    let mut withheld = HashSet::new();
+    for ((_, value), claimants) in claims {
+        if claimants.len() < 2 || claimants.iter().filter(|(_, supplier)| *supplier).count() != 1 {
+            continue;
+        }
+        for (sid, _) in claimants.iter().filter(|(_, supplier)| !supplier) {
+            withheld.insert(((*sid).to_owned(), value.clone()));
+        }
+    }
+    withheld
 }
 
 #[derive(Deserialize)]
@@ -1885,6 +1981,136 @@ mod tests {
         assert_eq!(start("multi-b"), None);
         assert_eq!(start("split"), None, "two awards on one lot disagree: nothing");
         assert_eq!(start("fed"), Some(1_893_456_000), "an award and a contract that agree fill the lot");
+    }
+
+    /// Parse a payload that must not quarantine.
+    fn parse_ok(payload: &str) -> Parsed {
+        match parse(payload.as_bytes()) {
+            Ok(p) => p,
+            Err(Rejected { reason, detail }) => panic!("quarantined as {reason}: {detail}"),
+        }
+    }
+
+    /// Issue 484 defect 2: one party id under two names is two sections. The release
+    /// is 029468-2026 (notice 46804384), reduced to its parties and its one award and
+    /// rebuilt from the stored parse at `/v1/notices/46804384/content` — the section
+    /// graph names both parties, both roles and the shared `GB-COH-01624297`; the raw
+    /// member is not reachable off the box. Before: ONE `ORG-GB-COH-01624297` holding
+    /// both names and the identifier twice, referenced by the buyer role AND the
+    /// tenderer, so the buyer was served as its own contractor.
+    const SHARED_ID_RELEASE: &str = r#"{"version":"1.1","releases":[{
+        "ocid":"ocds-h6vhtk-0678a8","id":"029468-2026","tag":["award","contract"],
+        "parties":[
+          {"name":"The Council of the Borough of Kirklees","id":"GB-COH-01624297",
+           "identifier":{"scheme":"GB-COH","id":"01624297"},
+           "address":{"country":"GB"},"roles":["buyer"]},
+          {"name":"High Court of England & Wales","id":"GB-FTS-69314",
+           "address":{"country":"GB"},"roles":["reviewBody"]},
+          {"name":"Microsoft Limited","id":"GB-COH-01624297",
+           "identifier":{"scheme":"GB-COH","id":"01624297"},
+           "address":{"country":"GB"},"roles":["supplier"]}],
+        "tender":{"id":"029468-2026","title":"Microsoft Unified Support","lots":[{"id":"1"}]},
+        "awards":[{"id":"029468-2026-1","status":"active","relatedLots":["1"],
+          "suppliers":[{"id":"GB-COH-01624297","name":"Microsoft Limited"}]}]}]}"#;
+
+    #[test]
+    fn one_party_id_under_two_names_is_two_sections() {
+        let p = parse_ok(&SHARED_ID_RELEASE);
+        let names = |sid: &str| -> Vec<String> {
+            p.values
+                .iter()
+                .filter(|v| v.section_id == sid && v.field_id == "BT-500-Organization-Company")
+                .filter_map(|v| text_of(Some(v.value.clone())))
+                .collect()
+        };
+        let idents = |sid: &str| -> usize {
+            p.values.iter().filter(|v| v.section_id == sid && v.field_id == "BT-501-Organization-Company").count()
+        };
+        let (buyer, supplier) = ("ORG-GB-COH-01624297", "ORG-GB-COH-01624297#2");
+        assert_eq!(names(buyer), vec!["The Council of the Borough of Kirklees".to_owned()]);
+        assert_eq!(names(supplier), vec!["Microsoft Limited".to_owned()]);
+        assert_eq!(idents(buyer), 0, "the contested identifier stays off the buyer");
+        assert_eq!(idents(supplier), 1, "…and goes once on the supplier");
+        assert_eq!(
+            one(&p, supplier, "BT-501-Organization-Company"),
+            Some(NoticeValue::Id { scheme: Some("GB-COH".into()), value: "GB-COH-01624297".into(), is_ref: false })
+        );
+        let reference = |section: &str, field: &str| match one(&p, section, field) {
+            Some(NoticeValue::Id { value, is_ref: true, .. }) => value,
+            other => panic!("{section}/{field}: {other:?}"),
+        };
+        assert_eq!(reference(ROOT, "OPT-300-Procedure-Buyer"), buyer);
+        assert_eq!(reference("TPA-029468-2026-1-0", "OPT-300-Tenderer"), supplier);
+        // The unrelated party is untouched.
+        assert_eq!(names("ORG-GB-FTS-69314"), vec!["High Court of England & Wales".to_owned()]);
+    }
+
+    /// The fallbacks: a supplier reference with no name, or a name matching no party,
+    /// resolves to the same-id section whose party is a supplier — never to the buyer
+    /// listed first under that id — and to the id's first section only when no party
+    /// under it is one; the same party published twice under one name stays one section;
+    /// and with no supplier among the claimants (or several) every claimant keeps the
+    /// identifier, as before.
+    #[test]
+    fn a_shared_party_id_falls_back_to_its_supplier_section() {
+        let tenderer = |p: &Parsed| match one(p, "TPA-029468-2026-1-0", "OPT-300-Tenderer") {
+            Some(NoticeValue::Id { value, is_ref: true, .. }) => value,
+            other => panic!("tenderer: {other:?}"),
+        };
+        let ref_named = r#"{"id":"GB-COH-01624297","name":"Microsoft Limited"}"#;
+        let unnamed = SHARED_ID_RELEASE.replace(ref_named, r#"{"id":"GB-COH-01624297"}"#);
+        assert_eq!(tenderer(&parse_ok(&unnamed)), "ORG-GB-COH-01624297#2", "no name: the supplier section");
+        let misspelt = SHARED_ID_RELEASE.replace(ref_named, r#"{"id":"GB-COH-01624297","name":"Microsoft Ltd"}"#);
+        assert_eq!(tenderer(&parse_ok(&misspelt)), "ORG-GB-COH-01624297#2", "a spelling mismatch: still not the buyer");
+
+        let no_supplier = SHARED_ID_RELEASE.replace(r#""roles":["supplier"]"#, r#""roles":["payer"]"#);
+        let p = parse_ok(&no_supplier);
+        assert_eq!(all(&p, "BT-501-Organization-Company").len(), 2, "no supplier among the claimants: both keep it");
+        let p = parse_ok(&no_supplier.replace(ref_named, r#"{"id":"GB-COH-01624297"}"#));
+        assert_eq!(tenderer(&p), "ORG-GB-COH-01624297", "no supplier party under the id: its first section");
+
+        let two_suppliers = SHARED_ID_RELEASE.replace(r#""roles":["buyer"]"#, r#""roles":["tenderer"]"#);
+        let p = parse_ok(&two_suppliers);
+        assert_eq!(all(&p, "BT-501-Organization-Company").len(), 2, "two supplier spellings: both keep it");
+
+        let twice = SHARED_ID_RELEASE.replace("Microsoft Limited", "The Council of the Borough of Kirklees");
+        let p = parse_ok(&twice);
+        let orgs: Vec<&str> =
+            p.sections.iter().filter(|s| s.kind == "Organization").map(|s| s.id.as_str()).collect();
+        assert_eq!(orgs, vec!["ORG-GB-COH-01624297", "ORG-GB-FTS-69314"], "one party twice is one section");
+    }
+
+    /// An identifier shared by two DIFFERENT party ids is untouched (issue 484 review):
+    /// that is one company published twice — or a buyer and its payer under one company
+    /// number — and the downstream identifier fold merging them is the old, correct
+    /// output. Only sections split out of one party id are contested.
+    #[test]
+    fn an_identifier_shared_across_distinct_party_ids_is_untouched() {
+        let release = |buyer_roles: &str| {
+            format!(
+                r#"{{"version":"1.1","releases":[{{
+                "ocid":"ocds-h6vhtk-000001","id":"000001-2026","tag":["award"],
+                "parties":[
+                  {{"name":"Acme Ltd","id":"GB-FTS-1","identifier":{{"scheme":"GB-COH","id":"01234567"}},
+                   "address":{{"country":"GB"}},"roles":{buyer_roles}}},
+                  {{"name":"ACME LIMITED","id":"GB-FTS-2","identifier":{{"scheme":"GB-COH","id":"01234567"}},
+                   "address":{{"country":"GB"}},"roles":["supplier"]}}],
+                "tender":{{"id":"000001-2026","lots":[{{"id":"1"}}]}},
+                "awards":[{{"id":"000001-2026-1","status":"active","relatedLots":["1"],
+                  "suppliers":[{{"id":"GB-FTS-2","name":"ACME LIMITED"}}]}}]}}]}}"#
+            )
+        };
+        for roles in [r#"["tenderer"]"#, r#"["buyer"]"#, r#"["payer"]"#] {
+            let p = parse_ok(&release(roles));
+            let carriers: Vec<&str> = p
+                .values
+                .iter()
+                .filter(|v| v.field_id == "BT-501-Organization-Company")
+                .map(|v| v.section_id.as_str())
+                .collect();
+            assert_eq!(carriers, vec!["ORG-GB-FTS-1", "ORG-GB-FTS-2"], "{roles}: both keep it, as before");
+            assert!(p.sections.iter().all(|s| !s.id.contains('#')), "{roles}: no split section");
+        }
     }
 
     /// One release, with `items` spelled per `delivery`.

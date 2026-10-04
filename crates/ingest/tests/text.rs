@@ -115,10 +115,16 @@ fn the_1993_daily_yields_its_award_winners() {
         }
     }
 
-    // 117 winners from 199 records. The number is exact on purpose: it moved from 40 to
+    // 150 winners from 199 records. The number is exact on purpose: it moved from 40 to
     // 117 when lot-keyed and period-separated lists were read rather than swallowed, and
     // a regression in either direction should fail here.
-    assert_eq!(names.len(), 117, "winners read from the 1993 daily: {names:#?}");
+    //
+    // 117 became 150 with issue 484: a numbered item now ends at its own successor item
+    // instead of 256 bytes past its label, so the long lot lists the window cut off are
+    // read to their end — 55170 (16 `N: Name.` entries, 0 before), 55403 (+9), 54833
+    // (+5), 55361 (+2), 55346 (+1). Every added name was checked against the body: each
+    // is a published lot winner, none is an address, a price or a lot reference.
+    assert_eq!(names.len(), 150, "winners read from the 1993 daily: {names:#?}");
     for name in &names {
         assert!(!name.is_empty(), "an empty winner name");
         assert!(
@@ -524,7 +530,7 @@ fn the_1993_daily_yields_its_award_dates() {
         }
     }
 
-    // 72 award dates from 199 records, against the same fixture's 117 winners — the two
+    // 72 award dates from 199 records, against the same fixture's 117 winners (then) — the two
     // differ because a date belongs to the award BLOCK while winners are per-organization,
     // and because a body can state a winner without a date or the reverse. Exact on
     // purpose, like the winner count.
@@ -535,7 +541,12 @@ fn the_1993_daily_yields_its_award_dates() {
     // supplier heading at all — and each now mints a bare result for its date to land
     // on instead of vanishing. The winner count below stays 117: silence mints a
     // result, never an organization.
-    assert_eq!(dates.len(), 79);
+    //
+    // 79 became 87 with issue 484, with the winners (117 → 150): the date lands on every
+    // result of a dated award record and each winner is its own result, so the newly
+    // read winners of the DATED records carry it — 54833 +5, 55361 +2, 55346 +1. (55170
+    // and 55403, the other two records that gained winners, state no award date.)
+    assert_eq!(dates.len(), 87);
 
     // Every one lands on a result block, never on the root...
     assert!(

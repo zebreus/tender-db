@@ -1227,6 +1227,22 @@ the ids it touched.** Re-parsing 283 r209 notices stamped 2,131,375 tenders. Tha
 (a stale stamp forces a rewrite that recomputes identical content, a missed one silently loses the
 re-parse), but a one-package probe does not have a one-package blast radius.
 
+**There is no dry `reparse` (checked 2026-10-04, issue 484).** `reparse` replaces each matched
+notice's parse in place and reports only counts (`re-parsed`, `unmatched`, `re-keyed`, `now failing`);
+it has no `dry_run`, and nothing diffs the old layer against the new one (names gained/lost per notice).
+So a parser change's effect is measured AROUND the wet run, not by it:
+- **before**: the standing census that sees the defect (for winner/party changes, the
+  `buyer-role-census` `contractor-*` classes — issue 483's job 1942 is a baseline) and the exhibit
+  notices' stored parse via the public `GET /v1/notices/{id}/content`;
+- **probe**: one package with `reclaim_only:true`, chosen with `after` so it holds an exhibit, then
+  re-read that exhibit's `/content` — it serves the new parse before any fold;
+- **wet**: the whole profile with `reclaim_only:true`, then ONE `project` (above 500,000 un-projected
+  notices it is the FULL fallback anyway);
+- **after**: the same census at the same stride, and the issue's Verify. Read it per direction: a
+  fix that removes junk can also READ more (issue 484's successor bound added 28% winners on the
+  1993 fixture), so totals may rise while the defect class falls — count the totals before and
+  after (a bounded read, or the census totals) rather than reading one net delta.
+
 **Do not edit the working tree while a backgrounded `./deploy.sh` is running.** Its test gate runs
 `ops/check.sh` LOCALLY, against the working tree as it is when the gate reaches it — not against the
 committed ref it is deploying. On 2026-09-16 a deploy of `87d6a6d` failed on
