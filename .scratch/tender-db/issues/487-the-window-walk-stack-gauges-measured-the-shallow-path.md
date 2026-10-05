@@ -1,6 +1,6 @@
 # 487 — the window-walk stack gauges were budgeted from the shallow path; the whole `--lib` run aborts
 
-Status: ready-for-agent — NEXT: rides with 486 unit 1 (the budget change is in its tree, `crates/app/src/supervisor.rs`
+Status: done — 2026-10-05: the measured budgets (456 / 264 / 360 KiB) landed in `bb87cdc` with 486 unit 1; every gate since (`bb87cdc`, `f6f8e5d`, `9f9db13`, `9c83fb3`) GATE-EXIT=0.
 `run_spec_futures_stay_inside_their_size_budgets`). Gate it with 486 (`ops/check.sh`) and commit it as its own
 commit or with 486. Done when a gate passes with it.
 Kind: test infrastructure (the issue-467 tripwire)
