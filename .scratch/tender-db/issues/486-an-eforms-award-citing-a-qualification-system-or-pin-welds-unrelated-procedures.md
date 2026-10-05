@@ -172,3 +172,11 @@ edificio de 178 viviendas VPPA…", Agencia de Vivienda Social de Madrid) → 00
 MOSTOLES"): one procedure announced on the buyer profile. A buyer-profile notice is a PIN published on the profile:
 same rule as a PIN (unit 1b's fan-in). **Unit 1c:** `link_refuses_shared_kind` = qualification system only. NEXT:
 gate, deploy after the 07:35 daily, dry (expect ≈ 621 shared splits), read QS samples, wet, next fold, Verify 202112.
+
+## 2026-10-05 07:2x–08:0x UTC — 1c deployed (`9f9db13`); dry 1993; WET 1994
+
+Daily 1991 under 1c: `shared-kind 0` refused (no re-planned QS edge that day), largest component 200 at notice
+24090776 (to inspect after the split). Dry 1993 (`481-dedup/backfill-1993.json`): would_split 632, **would_split_shared
+624, all NOTICE_QUALIFICATION_SYSTEM**; samples cite a few QS notices many times each (206469-2025 ENEL ×6 in 30,
+247665-2026, 272953-2024, 282697-2026 ×2) — the many-procurements shape. Under the rule's 5,000 → **wet 1994**, then
+an incremental project. NEXT: Verify 202112; read the 200-key component.
