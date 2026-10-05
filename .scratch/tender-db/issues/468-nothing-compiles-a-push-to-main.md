@@ -168,5 +168,4 @@ The issue closes when the drill is recorded and the Verify block's `done` line h
   `tender-db` (lib) due to 6 previous errors", about 30 s after a warm cache. The revert `34d0637` was pushed
   after that run finished; this workflow's `cancel-in-progress` would otherwise have cancelled it.
 - **Open.** The `main-red` issue open/close step needs `issues: write`.
-- **Open, small.** `actions/checkout@v4` now runs on Node 24 with a deprecation warning. Bump it to `@v5` when
-  the issue is next touched.
+- **Done.** `actions/checkout` bumped to `@v5` (Node 24).
