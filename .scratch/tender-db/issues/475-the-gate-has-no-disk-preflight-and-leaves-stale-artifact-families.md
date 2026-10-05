@@ -1,6 +1,6 @@
 # 475 — the gate has no disk preflight and leaves stale artifact families
 
-Status: ready-for-agent — filed 2026-10-01 from the owner's board survey (workflow wf_4eac8781-4d0, verified by an adversarial pass). The first unit is a free-space preflight in `ops/check.sh` that refuses to start cargo when one more build family would not fit, prints the remedy, and is pinned both ways by an offline shell test.
+Status: ready-for-agent — unit 1 (the free-space preflight) landed 2026-10-05 and was revised the same day after review, uncommitted in the worktree (`ops/gate-disk.sh`, `ops/test-gate-disk.sh`, `ops/check.sh`; see "Unit 1 — landed" and "Unit 1 — review"). It also carries unit 2's inputs hash and its record (`target/.gate-inputs`), used to credit a reusable family. Next step: unit 2's remainder (`cargo clean` on a re-hash), then 3–5. NOTE: this container reads 11.7 GiB free with no `target/.gate-inputs` yet, so the next `ops/check.sh` here refuses; run it once with `GATE_DISK_NEED_BYTES=3221225472` (target/ holds the current family: 14G, no input changed since) or `cargo clean` first. That green run records the hash, and later gates need ~3 GiB until an input changes.
 Kind: operational / build hygiene (the gate's disk)
 Relates to: 260 (reads closed; this is its open remainder), 254 (why `ops/check.sh` exists), 425 (the turso
 `[patch]` whose re-hash filled the disk on 2026-09-27), 457 (the turso 0.8.1 bump, the next re-hash), 459
@@ -115,6 +115,81 @@ way `deploy.sh` runs `test-gate-marker.sh`. Every case is checked both ways:
 - the inputs hash is stable across two reads and changes when one byte of a Cargo.lock copy changes;
 - the prune, run over a fake `deps/`, keeps a live bin/test pair that shares a stem (the `data_quality` shape),
   deletes a hash the list does not name, and keeps an unnamed file newer than the start stamp.
+
+## Unit 1 — landed (2026-10-05)
+
+Uncommitted in the worktree; not gated through cargo (another agent's gate may need the disk), pinned offline.
+
+- `ops/gate-disk.sh` (new, sourced — the `gate-marker.sh` shape): `gate_disk_preflight [target] [tmp]` reads
+  `df -Pk` for target/'s filesystem (its parent when target/ is absent, i.e. after `cargo clean`) and /tmp's.
+  Threshold: `GATE_DISK_NEED_BYTES` if set; else `target/.gate-family-bytes` (unit 3 will write it) + 1 GiB
+  scratch; else 12 GiB family (the 2026-10-01 measurement) + 1 GiB = **13 GiB**. `GATE_DISK_FAMILY_BYTES` and
+  `GATE_DISK_SCRATCH_BYTES` override the parts. One filesystem: the whole threshold must fit there; two:
+  target/'s needs the family, /tmp's the scratch. Fails closed: df erroring, printing nothing, or a
+  non-numeric Available refuses; so does a non-numeric override. A garbage recorded size falls back to the
+  floor, never to zero. The refusal's first line is `==> GATE REFUSED: disk — <free> on <mount>, needs <n>;
+  cargo was NOT started`, then the threshold's source, `du -sh target`, and the remedy (`cargo clean`, ~867 s
+  from clean; a second worktree's target/; stale `/tmp/tender-db-*`; the one-run override).
+- `ops/check.sh`: after the prune and the two-hour /tmp sweep, before `gate_begin` and cargo, runs
+  `ops/test-gate-disk.sh` (a failing self-test refuses the gate) and then `gate_disk_preflight target /tmp ||
+  exit 3`. Exit 3 is not cargo's 101, and no `test result:` line is printed, so GATE-EXIT reads red and the
+  cause is the GATE REFUSED line.
+- `ops/test-gate-disk.sh` (new, offline, stub `df`/`du` on PATH, planned-count + EXIT-trap harness like
+  `test-gate-marker.sh`): 27 cases, each proceed/refuse pair one KiB (df's unit) apart — default floor,
+  recorded family, env override (and garbage overrides), two filesystems short on each side, target/
+  absent, df failing / garbage / empty, the 2026-10-05 reading, and that check.sh calls the preflight before
+  `cargo test` with `|| exit N`. `all 27 cases passed`. Mutants checked: a preflight hard-wired to "fits"
+  fails 21 cases; df-failure treated as "fits" fails 3; check.sh's `|| exit 3` turned into `|| true` fails 1.
+- Real read, this container, 2026-10-05: `11.7 GiB free on / (target/ and /tmp), needs 13.0 GiB`, target/
+  holds 14G — **the next gate here refuses** until `cargo clean`.
+- Verify line's first number read `1` (`df -P`) at landing; after the review it reads `2` (see below).
+- Deviation from the plan above: `df -Pk`, not `os.statvfs` — the task asked for a stub-able `df`, and the
+  Verify grep accepts either. The hash and prune cases of `ops/test-gate-disk.sh` arrive with units 2–3.
+
+## Unit 1 — review (2026-10-05)
+
+Seven findings; outcomes:
+
+1. **high, fixed — the floor refused every gate after a green one.** Allowance here with target/ empty ≈ 24.8 GiB
+   (11.7 free + 13.1 in target/); a from-clean gate leaves ~11.7, under 13. The preflight now credits a reusable
+   family: `gate_disk_inputs_hash` (sha256 over Cargo.lock, every Cargo.toml outside target/.git/.scratch,
+   .cargo/config(.toml), rust-toolchain(.toml), `rustc -vV`, the `CARGO_*`/`RUST*` env; 0.12 s) is computed at
+   the start; check.sh records it in `target/.gate-inputs` (temp + rename) only after cargo is green. When it
+   matches and `target/debug/deps` exists, the need is `GATE_DISK_RELINK_BYTES` (default 2 GiB, an estimate:
+   the prune's ~0.5 GiB of siblings relinked every gate plus parallel link outputs) + 1 GiB scratch = 3 GiB.
+   Any mismatch, a missing record, no deps/, or a hash that cannot be computed (no rustc) gives no credit:
+   13 GiB as before, and the refusal says `.gate-inputs differs` on a mismatch. This is unit 2's hash and
+   record, without its `cargo clean`. The first gate here still refuses (nothing recorded yet) — see Status.
+2. **medium, fixed — overflow failed open.** `_gate_disk_int` accepts at most 15 digits (999 TB) after
+   stripping leading zeros, so no sum can wrap; a belt-and-braces `need <= 0 || need < family` refuses. A
+   recorded family under 1 GiB is not believed and falls back to the floor. A 22-digit record now refuses at
+   12.9 GiB ("needs 13.0 GiB"); `GATE_DISK_SCRATCH_BYTES=2^63-1` refuses even with 50 GiB free.
+3. **low, fixed — leading zeros.** Zeros are stripped before arithmetic (`08` is 8, then under 1 GiB → floor,
+   with the GATE REFUSED line); all-zero values (`00`) are refused; df's Available is read with `10#`.
+4. **low, fixed — mount-string comparison.** `_gate_disk_free` also returns df's device column; one pool when
+   the device OR the mount matches, and then the whole need must fit in the smaller reading. Two separate
+   filesystems df names alike (two tmpfs) are treated as one — the stricter answer.
+5. **low, fixed — hard-coded paths.** check.sh calls `gate_disk_preflight "${CARGO_TARGET_DIR:-target}"
+   "${TMPDIR:-/tmp}"` and records into the same target; the function's defaults are the same. (The prune at
+   check.sh's top still reads `target/debug/deps`; units 2–3 replace it.)
+6. **low, fixed — test gaps.** `ops/test-gate-disk.sh` is now 67 cases (`all 67 cases passed`, rc 0): the
+   22-digit record, `08`, a zero-padded 12 GiB record, `GATE_DISK_NEED_BYTES` `00`/22 digits/zero-padded,
+   scratch 2^63−1, family `00`, a zero-padded df Available, one device under two mount points (both ways),
+   the inputs hash (stable; changes on a Cargo.lock byte, a member Cargo.toml, a `CARGO_*` var; fails without
+   rustc), the credit both ways (3 GiB proceeds / 1 KiB under refuses; 11.7 GiB proceeds with a match and
+   refuses after a Cargo.lock change; no credit without deps/ or rustc), and the record replacing rather than
+   appending. The line-order grep is gone: a sandboxed copy of check.sh runs with stub cargo/python3 (and a
+   find that answers nothing for /tmp) — short disk exits 3 without cargo and with the shortfall line (not a
+   df failure); a failing self-test exits 3 without cargo; room → cargo runs, red keeps cargo's exit and
+   records nothing, green records `.gate-inputs`, and the next gate at 11.7 GiB proceeds on the credit;
+   `CARGO_TARGET_DIR` / `TMPDIR` on a full filesystem refuse and name it. Mutants: no digit cap 2 FAIL,
+   mount-only compare 1, no credit 4, credit without the hash 3, `|| true` 4, hard-coded paths 7, no
+   record 2, no `10#` 1, no zero strip 4.
+7. **info — no change needed.** GATE-EXIT/marker contract holds (exit 3 before the EXIT trap and gate_begin).
+
+Real read after the fix (read-only, this container): `11.7 GiB free on / (target/ and /tmp, one device:
+/dev/vda), needs 13.0 GiB`, threshold "one build family" — no record yet. Verify's first number now reads `2`
+(`df -P`, and `Cargo.lock` from the inputs hash); unit 3 adds `message-format`.
 
 ## Verify
 

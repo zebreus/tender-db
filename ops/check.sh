@@ -97,6 +97,26 @@ prune_stale_test_binaries
 # hours cannot belong to a live run (the whole gate takes minutes), so it is leak.
 find /tmp -maxdepth 1 -name 'tender-db-*' -type f -mmin +120 -delete 2>/dev/null || true
 
+# Would one more build family fit (issue 475)? Asked AFTER the prune and the /tmp sweep
+# above (they free what is already superseded) and BEFORE cargo: a run that re-hashes
+# writes a whole new family beside the old one, and a run that cannot fit dies mid-link
+# as GATE-EXIT=101 with no FAILED line, or as `ld … signal 7 [Bus error]`. The refusal
+# prints `==> GATE REFUSED: disk`, the free space, the need, `du -sh target` and the
+# remedy, and exits 3 before cargo starts. The threshold (13 GiB with no reusable family,
+# ~3 GiB when target/.gate-inputs says target/ holds the family these inputs build;
+# override GATE_DISK_NEED_BYTES) and its fail-closed rules live in ops/gate-disk.sh,
+# pinned by ops/test-gate-disk.sh — which runs first, so a preflight that answered "fits"
+# wrongly cannot wave a doomed build through. The paths are cargo's and the tests' own:
+# CARGO_TARGET_DIR when set, and TMPDIR (std::env::temp_dir) when set.
+if ! disk_selftest=$(bash ops/test-gate-disk.sh 2>&1); then
+    printf '%s\n' "$disk_selftest" >&2
+    echo "==> GATE REFUSED: disk — ops/test-gate-disk.sh FAILED (above), so the disk preflight cannot be trusted; cargo was NOT started" >&2
+    exit 3
+fi
+# shellcheck source=ops/gate-disk.sh
+. ops/gate-disk.sh
+gate_disk_preflight "${CARGO_TARGET_DIR:-target}" "${TMPDIR:-/tmp}" || exit 3
+
 # The two-hour rule alone let a SESSION's runs pile up: on 2026-09-29 /tmp held 6,573
 # scratch files (4.2 GB) from seven gates, ~0.6 GB per run — about 230 tests leave their
 # .db and its 2.6 MB -wal every time, not only the panicking ones. So the gate also sweeps
@@ -172,6 +192,11 @@ fi
 # (`--lib` ran NOTHING in crates/app/tests, and tests/sql.rs sat red for twelve days).
 printf '\n\033[1m==> cargo test -p model -p store -p ingest -p tender-db --features tender-db/server\033[0m\n'
 cargo test -p model -p store -p ingest -p tender-db --features tender-db/server
+# Green: target/ now holds the family these inputs build, so the next gate's preflight
+# can credit it (issue 475). A failure to record costs the next gate the credit, never
+# this one its verdict.
+gate_disk_record_inputs "${CARGO_TARGET_DIR:-target}" \
+    || echo "check.sh: could not record target/.gate-inputs — the next gate's disk preflight asks for a whole family" >&2
 elapsed=$(( $(date +%s) - started ))
 
 # The marker the deploy gate reads: the START head, and only when cargo provably compiled
