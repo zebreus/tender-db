@@ -426,3 +426,19 @@ first r209 window is in this issue's session log.
 - **internal-ojs and text `7` is not a procedure type.** It appears with `PT_OPEN` 373 times,
   `PT_RESTRICTED` 367 and `NEGOTIATED_WITH_COMPETITION` 103, which fits contract-award notices. Those
   notices fold through their marker, which outranks the code.
+
+## Deploy and backfill (2026-10-05)
+
+- **Gated and deployed f8b776d.** The first gate, on 87d06ff, aborted on issue 467's poll tripwire:
+  the procedure fold pushed `run_project` past 472 KiB. The fix boxes the projection futures,
+  boxes the chunked fold in its wrapper, and moves the plan-row loop out to
+  `incremental_plan_rows`. The frame re-measured between 452 and 458 KiB. gdb on the overflow names
+  the chain: fold frame 117 KiB, then turso's recursive expression parser at about 50 KiB per
+  level. The second gate passed (GATE-EXIT=0).
+- **Smoke test after the deploy.** `?procedure_type=open` answers with `ignored_filters: []` and
+  matches nothing yet. Junk input answers 400.
+- **Refold.** The `expect=1` sizing, job 1999, counted 14,887,661 notices across every profile
+  (job 1311's list plus `fts:ocds-1.1`, `eforms-sdk-1.4` and `eforms-sdk-1.15`). The wet run,
+  job 2001 → project 2002, started at 13:51 UTC. It takes the full fallback, about 7.5 h.
+- **Next:** read 2002's `issue-479 procedure type` suffix, then run the Verify list from the
+  runbook.
