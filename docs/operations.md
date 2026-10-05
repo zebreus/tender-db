@@ -764,7 +764,7 @@ over `LEGACY_CLOSURE_CAP` (500,000), so the incremental fold takes the full fall
 ```sh
 # 0. Free disk first: ~14 M new classification rows (one per version that has a code) plus two
 #    index entries each, order 1–1.5 GB. The fold also emits a change event per rewritten Tender.
-df -h /var/lib/tender-db
+df -h /data   # the DB is /data/db (the unit's WorkingDirectory)
 # 1. The census above is read and the table frozen from it (deployed).
 # 2. Off the daily tick, on a queue read idle by hand (issue 459), and batched with any other
 #    corpus-wide fold change pending at the time so the corpus pays ONE fold (397's 1595–1597).
