@@ -2534,6 +2534,246 @@ async fn a_pre_guard_buyer_disjoint_weld_is_counted_and_split_by_the_next_daily(
     }
 }
 
+/// Issue 486: Tender 202112 held 234 versions of unrelated Endesa/ENEL procurements, each
+/// under its own BT-04, all citing by OPP-090 notice 24716938 — `Sistema de Clasificación
+/// de Proveedores del Grupo ENEL`, BT-02 `qu-sy`, OPP-070 `15`: a qualification-system
+/// notice, the call for MANY procurements. Same buyer, so the buyer guard passed; the
+/// same-Source edge has no fan-in guard.
+///
+/// Here: the qualification system and three awards with distinct BT-04 keys citing it
+/// (and a DÖE award citing it cross-Source), plus an ordinary contract notice and its
+/// award as the control. Folded first with the system's notice WITHOUT its type (the
+/// pre-486 binary read none), they weld into one Tender. The notice re-parsed with its
+/// type and every notice left projected (as the pre-486 binary left them), the ledger
+/// backfill's census counts the four welded pairs as `would_split` (all `shared-kind`),
+/// the wet run re-queues them, and the next DAILY splits them: the system's notice keeps
+/// its Tender alone, each award gets its own procedure's — exactly as a full fold,
+/// which counts the same four refusals. A later award citing the system lands on its
+/// own on both paths too. The control pair stays one Tender throughout.
+#[tokio::test]
+async fn a_qualification_system_notice_does_not_weld_the_awards_citing_it() {
+    const KEY_QS: &str = "0a1b2c3d-4e5f-4a6b-8c7d-8e9f0a1b2c3d";
+    const KEY_AWARDS: [&str; 3] = [
+        "db9baf44-1e2f-4a3b-8c4d-5e6f7a8b9c0d",
+        "7bace04e-2f3a-4b4c-9d5e-6f7a8b9c0d1e",
+        "b349a916-3a4b-4c5d-8e6f-7a8b9c0d1e2f",
+    ];
+    const KEY_DOE: &str = "c45a0b27-4b5c-4d6e-9f7a-8b9c0d1e2f3a";
+    const KEY_LATE: &str = "d56b1c38-5c6d-4e7f-8a8b-9c0d1e2f3a4b";
+    const KEY_CN: &str = "e67c2d49-6d7e-4f8a-9b9c-0d1e2f3a4b5c";
+    const KEY_CAN: &str = "f78d3e5a-7e8f-4a9b-8c0d-1e2f3a4b5c6d";
+    let enel: Buyer = ("ENDESA, S.A.", "ESP", "");
+    // A notice with its own type codes beside the link ids.
+    let parse = |day: i64, ids: &[(&str, &str)], codes: &[(&str, &str)]| {
+        let mut parsed = linked_parse(day, ids, &[enel]);
+        for (field, code) in codes {
+            parsed.values.push(ValueRow {
+                section_id: "PROCEDURE".into(),
+                field_id: (*field).into(),
+                ordinal: 0,
+                value: NoticeValue::Code { list: None, code: (*code).into() },
+            });
+        }
+        parsed
+    };
+    let record = async |db: &Db, fetch: i64, source: &str, pub_id: &str, day: i64, ids: &[(&str, &str)], codes: &[(&str, &str)]| {
+        db.record_notice(&linked_notice(fetch, source, pub_id, day), &Parse::Parsed(parse(day, ids, codes)))
+            .await
+            .expect("record");
+    };
+    const QS: &str = "00206469-2025";
+    const AWARDS: [&str; 3] = ["00682900-2025", "00704700-2025", "00715581-2025"];
+    let doe_award = format!("{LOGICAL}-01");
+    let award_codes = [("OPP-070-notice", "29"), ("BT-02-notice", "can-standard")];
+    let qs_codes = [("OPP-070-notice", "15"), ("BT-02-notice", "qu-sy")];
+    let (full, ff, pf) = scratch("qusy-full").await;
+    let (incr, fi, pi) = scratch("qusy-incr").await;
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        establish(db, fetch).await;
+        // The pre-486 shape: the system's notice carries no type the planner read.
+        record(db, fetch, "ted", QS, 20_000, &[("BT-04-notice", KEY_QS)], &[]).await;
+        for (i, (pub_id, key)) in AWARDS.iter().zip(KEY_AWARDS).enumerate() {
+            let ids = [("BT-04-notice", key), ("OPP-090-Procedure", "206469-2025")];
+            record(db, fetch, "ted", pub_id, 20_100 + i as i64, &ids, &award_codes).await;
+        }
+        let doe_ids = [("BT-04-notice", KEY_DOE), ("OPP-090-Procedure", "206469-2025")];
+        record(db, fetch, "doe", &doe_award, 20_110, &doe_ids, &award_codes).await;
+        // The control: a contract notice and its award under another BT-04.
+        record(db, fetch, "ted", "00300001-2025", 20_000, &[("BT-04-notice", KEY_CN)], &[("OPP-070-notice", "16")]).await;
+        let can_ids = [("BT-04-notice", KEY_CAN), ("OPP-090-Procedure", "300001-2025")];
+        record(db, fetch, "ted", "00300002-2025", 20_100, &can_ids, &award_codes).await;
+    }
+    absorb_and_compare(&full, &incr, "folded before the system's type is read").await;
+    let welded = tender_of(&incr, QS).await;
+    for award in AWARDS.iter().copied().chain([doe_award.as_str()]) {
+        assert_eq!(tender_of(&incr, award).await, welded, "{award}: the pre-486 weld");
+    }
+    let control = tender_of(&incr, "00300001-2025").await;
+    assert_eq!(tender_of(&incr, "00300002-2025").await, control, "the award joins its contract notice");
+
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        let parsed = parse(20_000, &[("BT-04-notice", KEY_QS)], &qs_codes);
+        let notice = linked_notice(fetch, "ted", QS, 20_000);
+        assert_eq!(db.reparse_notice(&notice, &parsed).await.expect("reparse"), store::Reparsed::Replaced);
+        db.execute_for_test("UPDATE notices SET projected = 1").await.expect("as the pre-486 binary left them");
+    }
+    let tenders_before = count(&incr, "SELECT COUNT(*) FROM tenders").await;
+    let removed = "SELECT COUNT(*) FROM changes WHERE entity_kind = 'tender' AND op = 'removed'";
+    let removed_before = count(&incr, removed).await;
+    let opp = |r: &store::TenderLinkBackfill| r.rules.iter().find(|(n, _)| n == "opp-090").unwrap().1.clone();
+    let never = || false;
+    let dry = project::backfill_tender_links_windowed(&incr, true, 1_000, 1_000, &never, |_| {}).await.expect("dry");
+    assert_eq!(
+        (opp(&dry).would_split, opp(&dry).would_split_shared, opp(&dry).buyer_disjoint, opp(&dry).would_merge),
+        (4, 4, 0, 0),
+        "{dry:?}"
+    );
+    assert_eq!((dry.would_split, dry.would_split_shared, dry.requeued), (4, 4, 5), "{dry:?}");
+    // The 486 review: the split census per shared kind, with its own sample.
+    let kinds: Vec<(&str, u64, usize)> =
+        dry.shared_split_kinds.iter().map(|(k, (n, samples))| (k.as_str(), *n, samples.len())).collect();
+    assert_eq!(kinds, [("NOTICE_QUALIFICATION_SYSTEM", 4, 4)], "{dry:?}");
+    assert!(incr.unprojected_parsed_notice_ids().await.unwrap().is_empty(), "a dry run queues nothing");
+    let wet = project::backfill_tender_links_windowed(&incr, false, 1_000, 1_000, &never, |_| {}).await.expect("wet");
+    assert_eq!((wet.would_split, wet.requeued), (4, 5), "{wet:?}");
+    assert_eq!(incr.unprojected_parsed_notice_ids().await.unwrap().len(), 5, "the system's notice and its four citers");
+
+    let report = absorb_and_compare(&full, &incr, "the split").await;
+    assert_eq!((report.links.shared_kind, report.links.previous_notice), (4, 0), "{:?}", report.links);
+    assert_eq!(tender_of(&incr, QS).await, welded, "the system's notice keeps the Tender");
+    let mut apart = std::collections::BTreeSet::from([welded]);
+    for award in AWARDS.iter().copied().chain([doe_award.as_str()]) {
+        assert!(apart.insert(tender_of(&incr, award).await), "{award}: a Tender of its own");
+    }
+    for key in KEY_AWARDS.iter().chain([&KEY_DOE]) {
+        let q = format!("SELECT COUNT(*) FROM tenders WHERE procedure_key = '{key}'");
+        assert_eq!(count(&incr, &q).await, 1, "{key}: under its own key");
+    }
+    assert_eq!(count(&incr, "SELECT COUNT(*) FROM tenders").await, tenders_before + 4);
+    assert_eq!(count(&incr, removed).await, removed_before, "a split retires nothing");
+    assert_eq!(tender_of(&incr, "00300002-2025").await, control, "the control pair stays joined");
+    let full_report = project::project(&full, false).await.expect("a full fold");
+    assert_eq!(
+        (full_report.links.shared_kind, full_report.links.previous_notice),
+        (4, 1),
+        "the full fold refuses the same four and joins the control: {:?}",
+        full_report.links
+    );
+    let again = project::backfill_tender_links_windowed(&incr, true, 1_000, 1_000, &never, |_| {}).await.expect("re-run");
+    assert_eq!((again.would_split, again.requeued), (0, 0), "{again:?}");
+
+    // A later award citing the system arrives with the system's type already known.
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        let ids = [("BT-04-notice", KEY_LATE), ("OPP-090-Procedure", "206469-2025")];
+        record(db, fetch, "ted", "00799001-2025", 20_200, &ids, &award_codes).await;
+    }
+    let late = absorb_and_compare(&full, &incr, "a later citer").await;
+    // The daily's link closure walks the ledger from the citer to the system's notice and
+    // back out to every row naming it, so it plans (and refuses) all five citations.
+    assert_eq!(late.links.shared_kind, 5, "the later citer's reference, and the four before it: {:?}", late.links);
+    assert_ne!(tender_of(&incr, "00799001-2025").await, welded, "the later award stays out");
+
+    for p in [pf, pi] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
+
+/// Issue 486 review: the shared-publication refusal at its other ends. A stamped CITING
+/// end refuses too (an eForms PIN, OPP-070 `4`, citing an earlier contract notice by
+/// OPP-090); a LEGACY cited end refuses too (an eForms award citing a legacy prior
+/// information notice, `TED-TD_DOCUMENT_TYPE` `0`, whose plan row 364 stamps) — a change
+/// from before 486, when the link step read no plan row's kind. And a PIN used as a call
+/// for competition (OPP-070 `10`) is NOT a shared publication: the award citing it under
+/// another BT-04 joins it, as a CAN joins its CN. Full and daily identical.
+#[tokio::test]
+async fn the_shared_kind_refusal_reads_the_citing_end_and_legacy_targets_but_not_a_pin_used_as_a_call() {
+    const KEY_PIN: &str = "a1b2c3d4-1111-4a6b-8c7d-8e9f0a1b2c3d";
+    const KEY_CN: &str = "a1b2c3d4-2222-4a6b-8c7d-8e9f0a1b2c3d";
+    const KEY_AWARD_LEGACY: &str = "a1b2c3d4-3333-4a6b-8c7d-8e9f0a1b2c3d";
+    const KEY_CFC: &str = "a1b2c3d4-4444-4a6b-8c7d-8e9f0a1b2c3d";
+    const KEY_AWARD_CFC: &str = "a1b2c3d4-5555-4a6b-8c7d-8e9f0a1b2c3d";
+    let enel: Buyer = ("ENDESA, S.A.", "ESP", "");
+    let parse = |day: i64, ids: &[(&str, &str)], codes: &[(&str, &str)]| {
+        let mut parsed = linked_parse(day, ids, &[enel]);
+        for (field, code) in codes {
+            parsed.values.push(ValueRow {
+                section_id: "PROCEDURE".into(),
+                field_id: (*field).into(),
+                ordinal: 0,
+                value: NoticeValue::Code { list: None, code: (*code).into() },
+            });
+        }
+        parsed
+    };
+    let record = async |db: &Db, fetch: i64, pub_id: &str, day: i64, ids: &[(&str, &str)], codes: &[(&str, &str)]| {
+        db.record_notice(&linked_notice(fetch, "ted", pub_id, day), &Parse::Parsed(parse(day, ids, codes)))
+            .await
+            .expect("record");
+    };
+    const LEGACY_PIN: &str = "00123456-2013";
+    let award_codes = [("OPP-070-notice", "29"), ("BT-02-notice", "can-standard")];
+    let (full, ff, pf) = scratch("sharedends-full").await;
+    let (incr, fi, pi) = scratch("sharedends-incr").await;
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        establish(db, fetch).await;
+        // The cited ends, absorbed first.
+        let mut legacy = legacy_notice("Legacy PIN", &[]);
+        legacy.values.push(ValueRow {
+            section_id: "PROC".into(),
+            field_id: "TED-TD_DOCUMENT_TYPE".into(),
+            ordinal: 0,
+            value: NoticeValue::Code { list: None, code: "0".into() },
+        });
+        record_p(db, fetch, LEGACY_PIN, "ted-export-r209", legacy).await;
+        record(db, fetch, "00300001-2025", 20_000, &[("BT-04-notice", KEY_CN)], &[("OPP-070-notice", "16")]).await;
+        let cfc = [("OPP-070-notice", "10"), ("BT-02-notice", "pin-cfc-standard")];
+        record(db, fetch, "00300010-2025", 20_000, &[("BT-04-notice", KEY_CFC)], &cfc).await;
+    }
+    absorb_and_compare(&full, &incr, "the cited ends").await;
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        // A PIN citing the earlier contract notice: the CITING end is the shared one.
+        let pin_ids = [("BT-04-notice", KEY_PIN), ("OPP-090-Procedure", "300001-2025")];
+        record(db, fetch, "00300003-2025", 20_100, &pin_ids, &[("OPP-070-notice", "4"), ("BT-02-notice", "pin-only")]).await;
+        // An award citing the legacy PIN.
+        let legacy_ids = [("BT-04-notice", KEY_AWARD_LEGACY), ("OPP-090-Procedure", "123456-2013")];
+        record(db, fetch, "00300004-2025", 20_100, &legacy_ids, &award_codes).await;
+        // An award citing its PIN-as-call under another BT-04.
+        let cfc_ids = [("BT-04-notice", KEY_AWARD_CFC), ("OPP-090-Procedure", "300010-2025")];
+        record(db, fetch, "00300011-2025", 20_100, &cfc_ids, &award_codes).await;
+    }
+    let daily = absorb_and_compare(&full, &incr, "the citers").await;
+    let full_report = project::project(&full, false).await.expect("a full fold");
+    for (label, links) in [("daily", &daily.links), ("full", &full_report.links)] {
+        assert_eq!(
+            (links.shared_kind, links.previous_notice),
+            (2, 1),
+            "{label}: the PIN's and the legacy-cited award's references refused, the pin-cfc's joined: {links:?}"
+        );
+    }
+    for db in [&full, &incr] {
+        assert_ne!(tender_of(db, "00300003-2025").await, tender_of(db, "00300001-2025").await, "the citing PIN stays apart");
+        assert_ne!(tender_of(db, "00300004-2025").await, tender_of(db, LEGACY_PIN).await, "the legacy PIN stays apart");
+        assert_eq!(tender_of(db, "00300011-2025").await, tender_of(db, "00300010-2025").await, "the pin-cfc joins its award");
+    }
+    // The census judges both ends as the fold does: the two refused pairs are
+    // `shared_kind` would-merges (re-queuing nothing), the joined pin-cfc pair is in no count.
+    let never = || false;
+    let dry = project::backfill_tender_links_windowed(&incr, true, 1_000, 1_000, &never, |_| {}).await.expect("dry");
+    assert_eq!(
+        (dry.would_merge, dry.shared_kind, dry.would_split, dry.buyer_disjoint, dry.requeued),
+        (2, 2, 0, 0, 0),
+        "{dry:?}"
+    );
+
+    for p in [pf, pi] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
+
 /// Issue 481, the cap: an over-cap link closure reports the full-path fallback instead
 /// of a wrong scope; the production cap admits the same component.
 #[tokio::test]
@@ -2649,7 +2889,9 @@ async fn the_ledger_backfill_counts_dry_writes_wet_and_the_daily_joins() {
         cross_source: 2,
         not_earlier: 0,
         buyer_disjoint: 0,
+        shared_kind: 0,
         would_split: 0,
+        would_split_shared: 0,
         stale: 0,
     };
     // The copier's row is a would-merge row the buyer guard refuses: counted, sampled
@@ -2664,7 +2906,9 @@ async fn the_ledger_backfill_counts_dry_writes_wet_and_the_daily_joins() {
         cross_source: 1,
         not_earlier: 1,
         buyer_disjoint: 1,
+        shared_kind: 0,
         would_split: 0,
+        would_split_shared: 0,
         stale: 0,
     };
     assert_eq!(rule(&dry, "logical-notice"), logical, "{dry:?}");

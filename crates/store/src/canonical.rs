@@ -1764,6 +1764,15 @@ pub struct LinkTally {
     /// (identifier key AND N2 name key of every buyer); a notice with no parsed buyer
     /// never refuses.
     pub buyer_disjoint: u64,
+    /// Refused (issue 486): a previous-notice reference, same- or cross-Source, whose
+    /// citing OR cited notice is a shared publication by its own type
+    /// (`PlanRow::shared_kind`: a qualification system, a PIN, a buyer-profile or
+    /// periodic indicative notice) — the call for MANY procurements, which welded 234
+    /// unrelated Endesa procedures into Tender 202112 through one qualification-system
+    /// notice. Judged after the direction check, before the buyer guard and the fan-in
+    /// count. Per kind it is one bounded query away (`plan_notice.shared_kind`, or the
+    /// notices' `OPP-070-notice` code).
+    pub shared_kind: u64,
     /// Refused: cross-Source previous-notice references from two or more keyed
     /// components into one target — one TED notice gathering several procedures of
     /// another Source, which is a shared PIN or a colliding key, not one procedure.
@@ -1800,7 +1809,13 @@ impl LinkTally {
     }
 
     pub fn refused(&self) -> u64 {
-        self.not_earlier + self.buyer_disjoint + self.fan_in + self.not_one_to_one + self.keyed_weld + self.oversized
+        self.not_earlier
+            + self.shared_kind
+            + self.buyer_disjoint
+            + self.fan_in
+            + self.not_one_to_one
+            + self.keyed_weld
+            + self.oversized
     }
 
     pub fn add(&mut self, other: LinkTally) {
@@ -1810,6 +1825,7 @@ impl LinkTally {
         self.cross_source += other.cross_source;
         self.not_earlier += other.not_earlier;
         self.buyer_disjoint += other.buyer_disjoint;
+        self.shared_kind += other.shared_kind;
         self.fan_in += other.fan_in;
         self.not_one_to_one += other.not_one_to_one;
         self.keyed_weld += other.keyed_weld;
@@ -1872,14 +1888,25 @@ pub struct TenderLinkRuleCounts {
     /// Not re-queued: the next fold refuses them, as a full fold does. Zero for every
     /// rule but `opp-090`, the one the guard reads.
     pub buyer_disjoint: u64,
+    /// Of `would_merge` (issue 486), previous-notice rows whose target is strictly
+    /// earlier and whose citing or cited notice is a shared publication by its own type
+    /// ([`LinkEndpoint::shared_kind`]): the fold refuses them before the buyer guard
+    /// ([`LinkTally::shared_kind`]), so they re-queue nothing and are not sampled. Zero for
+    /// every rule but `opp-090`.
+    pub shared_kind: u64,
     /// Previous-notice rows whose notices share a Tender TODAY — an earlier full
     /// projection joined them, before the buyer guard — but are buyer-disjoint, with
     /// the target strictly earlier and the two notices under different procedure keys
     /// (a shared BT-04 keeps them one group whatever the link says): the next fold that
     /// plans them splits them. Both notices re-queued, so it is the next daily. An
     /// upper bound: another admitted path between the two keeps them together. Zero
-    /// for every rule but `opp-090`.
+    /// for every rule but `opp-090`. Since issue 486 a pair whose citing or cited notice
+    /// is a shared publication by its own type is one too (the welds of Tender 202112),
+    /// whatever their buyers — counted again in `would_split_shared`.
     pub would_split: u64,
+    /// Of `would_split` (issue 486), the pairs split because an end is a shared
+    /// publication rather than because their buyers are disjoint.
+    pub would_split_shared: u64,
     /// Declared rows the notice no longer declares, deleted with both endpoints
     /// re-queued (the merge they made may be what is undone).
     pub stale: u64,
@@ -1897,6 +1924,8 @@ pub struct LinkEndpoint {
     pub procedure_key: Option<String>,
     /// [`PlanRow::published_at`].
     pub published_at: i64,
+    /// [`PlanRow::shared_kind`] (issue 486).
+    pub shared_kind: Option<String>,
 }
 
 /// Issue 482: one version of a UUID-keyed Tender ([`Db::uuid_keyed_tender_versions`]).
@@ -1946,10 +1975,21 @@ pub struct TenderLinkBackfill {
     /// how many were seen, all rules.
     pub disjoint_samples: Vec<TenderLinkSample>,
     pub buyer_disjoint: u64,
+    /// Issue 486: of `would_merge`, the previous-notice pairs the shared-publication
+    /// refusal takes ([`TenderLinkRuleCounts::shared_kind`]), all rules. Counted only.
+    pub shared_kind: u64,
     /// Issue 481 unit 2b: up to [`LINK_BACKFILL_SAMPLES`] `would_split` pairs, and how
     /// many were seen, all rules.
     pub split_samples: Vec<TenderLinkSample>,
     pub would_split: u64,
+    /// Issue 486: of `would_split`, the pairs split by the shared-publication refusal,
+    /// all rules ([`TenderLinkRuleCounts::would_split_shared`]).
+    pub would_split_shared: u64,
+    /// Issue 486 review: `would_split_shared` per shared kind (the cited end's, else the
+    /// citing end's), each with its own reservoir of up to [`LINK_BACKFILL_SAMPLES`]
+    /// pairs — so a PIN's splits read apart from a qualification system's, whose ~234
+    /// pairs (Tender 202112) would otherwise fill `split_samples`.
+    pub shared_split_kinds: std::collections::BTreeMap<String, (u64, Vec<TenderLinkSample>)>,
     /// `samples`' reservoir denominator: the would-merge pairs the buyer guard admits.
     joins: u64,
     /// The notice id the walk reached, and the one it walked to (captured before it).
@@ -2046,7 +2086,7 @@ pub struct PlanGroupTally {
 pub(crate) const LINK_EDGE_JOIN_SQL: &str = "SELECT e.rule, e.b_ref, e.a_notice_id, e.b_notice_id, \
         a.group_key, a.published_at, a.publication_id, a.source_rank, a.source, \
         b.group_key, b.published_at, b.publication_id, b.source_rank, b.source, \
-        a.buyer_guard, b.buyer_guard \
+        a.buyer_guard, b.buyer_guard, a.shared_kind, b.shared_kind \
    FROM plan_link_edge e \
    JOIN plan_notice a ON a.notice_id = e.a_notice_id \
    JOIN plan_notice b ON b.notice_id = e.b_notice_id \
@@ -7917,7 +7957,10 @@ pub struct PlanRow {
     /// `SIMPLIFIED_CONTRACT_NOTICE_DPS` — the citation gate's own vocabulary), or
     /// `None` for a procedure notice. Classified in the projection, where the
     /// per-era code tables live; STORED because the grouping needs it for the
-    /// notice at the OTHER end of an edge, which the planner never sees.
+    /// notice at the OTHER end of an edge, which the planner never sees. Since issue
+    /// 486 an eForms notice carries it too, by its subtype (`OPP-070`) or notice type
+    /// (`BT-02`), and the Tender-link step refuses a previous-notice edge with either
+    /// end stamped ([`LinkTally::shared_kind`]).
     pub shared_kind: Option<String>,
 }
 
@@ -10402,6 +10445,18 @@ impl Db {
             return Ok(false);
         }
         drop(demote);
+        // Issue 486: a plan built before it stamps `shared_kind` on legacy rows only, so
+        // its eForms qualification-system and PIN notices read as procedure notices and
+        // the resumed link step would weld their citers again. The plan DDL creates the
+        // (empty) marker `plan_eforms_shared_kind`; a plan without it is not resumable —
+        // the rebuild plans again.
+        let mut eforms_shared = conn
+            .query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'plan_eforms_shared_kind'", ())
+            .await?;
+        if eforms_shared.next().await?.is_none() {
+            return Ok(false);
+        }
+        drop(eforms_shared);
         let planned = {
             let mut r = conn.query("SELECT COUNT(*) FROM plan_notice", ()).await?;
             int(&r.next().await?.expect("count row"), 0)
@@ -10445,6 +10500,7 @@ impl Db {
             "plan_group_merge",
             "plan_refused_key",
             "plan_buyer_demote",
+            "plan_eforms_shared_kind",
         ] {
             conn.execute(&format!("DROP TABLE IF EXISTS {table}"), ()).await?;
         }
@@ -10452,6 +10508,10 @@ impl Db {
         // the demoted buyer side (`role_census::buyer_fix`). `plan_is_complete` refuses to
         // resume a plan without it.
         conn.execute("CREATE TABLE plan_buyer_demote (x INTEGER) STRICT", ()).await?;
+        // Issue 486: an empty marker — this plan's `shared_kind` covers eForms rows (the
+        // subtype / notice type), not legacy rows only. `plan_is_complete` refuses to
+        // resume a plan without it.
+        conn.execute("CREATE TABLE plan_eforms_shared_kind (x INTEGER) STRICT", ()).await?;
         conn.execute(
             "CREATE TABLE plan_notice (
                  notice_id      INTEGER PRIMARY KEY,
@@ -10469,7 +10529,8 @@ impl Db {
                  -- issue 369 unit 2: the buyer set, sorted and joined.
                  buyer_key      TEXT,
                  -- issue 364 unit 6: the shared-publication kind this notice IS, by its
-                 -- own document type; NULL for a procedure notice.
+                 -- own document type (issue 486: eForms rows too, by subtype / notice
+                 -- type); NULL for a procedure notice.
                  shared_kind    TEXT,
                  -- issue 481 unit 2b/2c: the tolerant buyer token set, 4 bytes a token,
                  -- the low bit its kind (`buyer_tokens_value`, `buyer_token`); NULL
@@ -11136,6 +11197,13 @@ impl Db {
     /// full projection joined them before the guard, the next fold that plans them splits
     /// them, and both are re-queued so that fold is the next daily.
     ///
+    /// Issue 486: a row whose target is strictly earlier and whose citing or cited notice
+    /// is a shared publication by its own type ([`LinkEndpoint::shared_kind`]) is refused
+    /// by the fold before its buyers are read: of `would_merge` it is `shared_kind`
+    /// (nothing re-queued), and sharing a Tender today under different procedure keys it
+    /// is `would_split` (and `would_split_shared`), both re-queued — the cheap re-queue
+    /// for the Tenders a qualification-system notice or a PIN welded.
+    ///
     /// Wet, the window's writes and re-queues are ONE short transaction on the writer, so
     /// a row is never on the ledger without its endpoints queued; dry, the re-queue is
     /// counted by the same predicates and nothing is written.
@@ -11158,12 +11226,20 @@ impl Db {
         // direction, whatever the buyers); else whether the two notices are
         // buyer-disjoint; and whether they sit under different procedure keys (a shared
         // BT-04 is one group whatever the link says). `None` when either end is unknown.
-        let judge = |a: i64, b: i64| -> Option<(bool, bool, bool)> {
+        //
+        // Issue 486: between the two, whether either end is a shared publication by its
+        // own type — refused before the buyer guard reads anything, so `disjoint` is
+        // false for such a row and the census counts it once.
+        // The shared verdict is the kind (the cited end's, else the citing end's), for
+        // the per-kind split census.
+        let judge = |a: i64, b: i64| -> Option<(bool, Option<String>, bool, bool)> {
             let (fa, fb) = (endpoints.get(&a)?, endpoints.get(&b)?);
             let not_earlier = fb.published_at >= fa.published_at;
-            let disjoint = !not_earlier && buyer_tokens_disjoint(&fa.buyer_tokens, &fb.buyer_tokens);
+            let shared = if not_earlier { None } else { fb.shared_kind.clone().or_else(|| fa.shared_kind.clone()) };
+            let disjoint =
+                !not_earlier && shared.is_none() && buyer_tokens_disjoint(&fa.buyer_tokens, &fb.buyer_tokens);
             let apart = fa.procedure_key.is_none() || fa.procedure_key != fb.procedure_key;
-            Some((not_earlier, disjoint, apart))
+            Some((not_earlier, shared, disjoint, apart))
         };
         for (notice, diff) in window.notices {
             for row in &diff.declared {
@@ -11184,12 +11260,21 @@ impl Db {
                 let Some(b) = *target else { continue };
                 let previous = is_previous_notice_rule(rule);
                 let verdict = if previous { judge(notice.id, b) } else { None };
-                let not_earlier = verdict.is_some_and(|(not_earlier, _, _)| not_earlier);
-                let refused = verdict.is_some_and(|(_, disjoint, _)| disjoint);
+                let not_earlier = verdict.as_ref().is_some_and(|(not_earlier, _, _, _)| *not_earlier);
+                let kind = verdict.as_ref().and_then(|(_, kind, _, _)| kind.clone());
+                let kind_refused = kind.is_some();
+                let refused = verdict.as_ref().is_some_and(|(_, _, disjoint, _)| *disjoint);
                 if shared.shared(notice.id, b).await? {
-                    if refused && verdict.is_some_and(|(_, _, apart)| apart) {
+                    if (refused || kind_refused) && verdict.as_ref().is_some_and(|(_, _, _, apart)| *apart) {
                         report.counts(rule).would_split += 1;
                         report.would_split += 1;
+                        if let Some(kind) = kind {
+                            report.counts(rule).would_split_shared += 1;
+                            report.would_split_shared += 1;
+                            let (seen, samples) = report.shared_split_kinds.entry(kind).or_default();
+                            *seen += 1;
+                            Self::sample_link(&reader, samples, *seen, rule, &notice, b).await?;
+                        }
                         requeue.extend([notice.id, b]);
                         let seen = report.would_split;
                         Self::sample_link(&reader, &mut report.split_samples, seen, rule, &notice, b).await?;
@@ -11208,6 +11293,14 @@ impl Db {
                     counts.not_earlier += 1;
                     report.would_merge += 1;
                     report.not_earlier += 1;
+                    continue;
+                }
+                if kind_refused {
+                    // Issue 486: refused by the shared-publication rule, before the buyer
+                    // guard — not a join, so neither re-queued nor sampled.
+                    counts.shared_kind += 1;
+                    report.would_merge += 1;
+                    report.shared_kind += 1;
                     continue;
                 }
                 if refused {
@@ -12190,6 +12283,9 @@ impl Db {
             /// A previous-notice edge whose two notices name buyers and share none
             /// (issue 481 unit 2b); false for every other rule.
             disjoint: bool,
+            /// A previous-notice edge with either notice a shared publication by its own
+            /// type (issue 486, `plan_notice.shared_kind`); false for every other rule.
+            shared: bool,
         }
         let mut edges: Vec<LinkEdge> = Vec::new();
         // A key's rank orders who NAMES a component (issue 481). A keyed member first, so
@@ -12261,6 +12357,7 @@ impl Db {
                     b_at: int(&row, 10),
                     cross: text(&row, 8) != text(&row, 13),
                     disjoint: previous && buyer_tokens_disjoint(&buyer_tokens_of(&row, 14), &buyer_tokens_of(&row, 15)),
+                    shared: previous && (opt_text_of(&row, 16).is_some() || opt_text_of(&row, 17).is_some()),
                     rule,
                 };
                 if edge.rule == LINK_LOGICAL_NOTICE {
@@ -12324,6 +12421,16 @@ impl Db {
                     guarded.push(e);
                 } else if e.b_at >= e.a_at {
                     links.not_earlier += 1;
+                } else if e.shared {
+                    // Issue 486: a shared publication — a qualification system, a PIN —
+                    // is the call for many procurements, not a link in one procedure's
+                    // chain, at either end (364 unit 6's reasoning for the legacy OJS
+                    // edges, which that gate refuses in the union-find above; this is the
+                    // ONE place a ledger edge is refused for it). Judged on the two
+                    // endpoints' own plan rows, so it never waits and reads the same on a
+                    // full and an incremental plan; before the fan-in count, so a refused
+                    // citer is not a second procedure there either.
+                    links.shared_kind += 1;
                 } else if e.disjoint {
                     links.buyer_disjoint += 1;
                 } else if e.cross {
@@ -12479,8 +12586,8 @@ impl Db {
         eprintln!(
             "[project] group step links union: {:.1}s ({} key(s) to relabel, largest component \
              {largest} key(s); admitted: previous-notice {} (cross-source {}), logical-notice {}, \
-             matched {}; refused: not-earlier {}, buyer-disjoint {}, fan-in {}, not-one-to-one {}, \
-             keyed-weld {}, oversized {}; deferred {})",
+             matched {}; refused: not-earlier {}, shared-kind {}, buyer-disjoint {}, fan-in {}, \
+             not-one-to-one {}, keyed-weld {}, oversized {}; deferred {})",
             t_uf.elapsed().as_secs_f64(),
             merges.len(),
             links.previous_notice,
@@ -12488,6 +12595,7 @@ impl Db {
             links.logical_notice,
             links.matched,
             links.not_earlier,
+            links.shared_kind,
             links.buyer_disjoint,
             links.fan_in,
             links.not_one_to_one,

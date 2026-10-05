@@ -725,7 +725,7 @@ the writer (a few thousand index inserts), then a WAL checkpoint. Per rule it co
 written now or already held, whose notices fold into different Tenders today: the joins the next
 fold makes, before its weld guards; they re-queue both notices, a held row included, since a
 daily before the attestation wrote it and held its join back; the `not_earlier` and
-`buyer_disjoint` ones below do not), `cross_source` (of `would_merge`,
+`buyer_disjoint` ones below do not, nor issue 486's `shared_kind`), `cross_source` (of `would_merge`,
 the rows citing another Source: every `logical-notice` row, and the DÖE→TED OPP-090s ADR-0011 never
 measured — read this one for `opp-090` before the wet run) and `stale` (declared rows the notice no
 longer declares, deleted, both notices re-queued). Only `would_merge` rows (less `not_earlier`
@@ -782,7 +782,66 @@ Still disjoint, and so refused: one buyer that changed or respelled its name bey
 identifier in common, written in another co-official language (`Servizo Galego de Saúde` against a
 `Servicio Gallego de Salud` area), or abbreviated mid-name (`im. M.Nenckiego PAN`); a CAN filed by
 another body than the CN's buyer; and a group PIN or qualification system (the DB group's
-deadline-shortening PIN, ÖBB-Holding's), which is cited by many procedures and is not one of them.
+deadline-shortening PIN, ÖBB-Holding's), which is cited by many procedures and is not one of them
+(since issue 486 such a notice is refused by its own type first, buyers or not, when its subtype
+says what it is; a PIN used as a call for competition, `10`-`14`, is not).
+
+**The shared-publication refusal (issue 486).** A previous-notice reference whose citing OR cited
+notice is a shared publication by its own type is refused by the fold, same-Source or cross-Source,
+after the direction check and before the buyer guard and the fan-in count. It is counted
+`shared-kind` on the `issue-481` job-row line (`refused: N (not-earlier …, shared-kind …,
+buyer-disjoint …`). The type is the plan row's `shared_kind`. For eForms rows (new in 486) it comes from the subtype
+(`OPP-070`, DE-1.x folded onto it): `1`-`3` buyer profile, `4`-`6` PIN only and `7`-`9` PIN to shorten time limits
+(`5` and `8`, the utilities ones, read periodic indicative), `15` qualification system. A notice with no subtype falls
+back to the notice type (`BT-02`, or sdk-0.1's `SDK01-NoticeTypeCode`): `pin-buyer`, `pin-only`, `pin-rtl`, `qu-sy`.
+For legacy rows it comes from the `TD` code (issue 364 unit 6: `0`, `A`, `P`, `M`, `B`, `O`, `Q`, `Y`). The
+refusal reads both. **So an eForms OPP-090 that cites a LEGACY PIN, periodic indicative, buyer-profile,
+qualification-system or DPS notice is refused too, where before 486 it joined.** The 364 gate itself is unchanged: it
+still refuses legacy OJS edges in the union-find, and ledger edges are judged only here. These eForms subtypes are NOT
+flagged:
+- `10`-`14`, the PIN used as a call for competition: the call that opens one procedure, which its award cites as a CAN
+  cites its CN. A DPS opened by one therefore stays joined, as a DPS opened by a contract notice (`16`/`17`) does.
+- contract notices, results, VEAT and modifications.
+- the transport PIN `T01` (`pin-tran`).
+- the national `E`/`T`/`X` subtypes, including `E1`/`E2`, which are national planning notices but unmeasured.
+
+A flagged notice keeps its own Tender, together with the notices under its own BT-04, and each citer stays on its own
+procedure's Tender. The cost: an award citing its own PIN (only, or to shorten time limits) under ANOTHER BT-04 no
+longer joins it. A shared BT-04 still joins them. This follows ADR-0011's "a weld is worse than a missing link".
+
+The census applies the same rule. `shared_kind` counts the would-merge pairs it refuses (nothing re-queued).
+`would_split_shared` counts the would-split pairs: one Tender today, under different keys, split by the next fold
+because an end is a shared publication, whatever the buyers (both ends re-queued). `would_split_shared_kinds` breaks
+the latter down per kind (the cited end's kind, else the citing end's), each with its own sample of pairs, so a PIN's
+splits read apart from a qualification system's. A grouping plan from before 486 has no `plan_eforms_shared_kind`
+marker and is rebuilt, not resumed.
+
+**The 486 re-queue on prod** reuses this job's wet run; there is no new job. The welds are `would_split_shared` pairs,
+for example Tender 202112's 234 versions behind qualification-system notice 24716938.
+```sh
+/root/aj.sh /admin/jobs '{"kind":"backfill-tender-links"}'      # dry
+/root/aj.sh /admin/reports/tender-link-backfill | jq -r .body \
+  | jq '{would_split, would_split_shared, shared_kind, requeued, kinds: (.would_split_shared_kinds | map_values(.pairs))}'
+/root/aj.sh /admin/reports/tender-link-backfill | jq -r .body | jq '.would_split_shared_kinds'   # the per-kind samples
+```
+Decide from the dry run before the wet run:
+- **Expected:** `NOTICE_QUALIFICATION_SYSTEM` in the hundreds to low thousands (Tender 202112 alone is ~234 pairs).
+  The PIN kinds can be larger, because PINs are widely cited, but each was a weld only if the citer sits under ANOTHER
+  BT-04.
+- **Per kind, open about 10 of its samples on TED.** Count each pair that is genuinely one procedure (an award of the
+  PIN's own planned contract) as a correct merge the split undoes.
+- **Go:** total `would_split_shared` ≤ 5,000 and, per kind, no more than about 1 sample in 10 a correct merge.
+- **Stop:** total > 5,000, or one kind's samples mostly correct merges. Do not run wet. Report the per-kind counts and
+  samples on issue 486 and decide per kind (a kind can come out of `SHARED_EFORMS_SUBTYPES` in a follow-up unit).
+  The fold refuses on every daily that re-plans such a component and on any full rebuild, whether or not the wet run
+  happens. So a kind that must not split has to leave the table in code; skipping the wet run does not protect it.
+- The wet run also re-queues whatever 481 `would_merge` joins and `stale` rows are still pending. Read those counts
+  too, because the next daily absorbs all of them. The re-queued notice count is `requeued`.
+```sh
+/root/aj.sh /admin/jobs '{"kind":"backfill-tender-links","dry_run":false}'   # wet: re-queue both ends
+# the next daily `project` splits them; verify:
+curl -s https://tenders.zebreus.click/v1/tenders/202112 | jq '.versions | length'
+```
 
 **Read the census before the wet run.** Each sample names both publication ids. For every
 `buyer_disjoint` and `would_split` sample, open both notices on TED and check whether they are one

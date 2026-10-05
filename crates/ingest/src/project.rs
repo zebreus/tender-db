@@ -675,6 +675,97 @@ pub fn shared_publication_kind(td_code: &str) -> Option<&'static str> {
     SHARED_DOC_TYPES.iter().find(|(code, _)| *code == td_code).map(|(_, kind)| *kind)
 }
 
+/// Issue 486: the eForms notice SUBTYPES (`OPP-070-notice`; DE-1.x's own id is folded
+/// onto it) that make a notice a shared publication, in [`SHARED_DOC_TYPES`]' kind
+/// vocabulary — so the link step's refusal reads beside the legacy gate's.
+///
+/// The subtype numbering is the SDK's `notice-subtype` codelist, which this repo does
+/// not vendor; what it does vendor (`sdk/fields-1.15.0.json`) pins each family by the
+/// fields only it may carry, and [`shared_subtypes_follow_the_sdk_field_constraints`]
+/// reads them back from that file:
+/// - `1`–`3` **buyer profile** (`pin-buyer`, "notice of the publication of a PIN on a
+///   buyer profile"): `BT-508-Procedure-Buyer` (buyer profile URL) is MANDATORY there
+///   and nowhere else.
+/// - `4`–`6` **PIN only** (`pin-only`): the only subtypes that may carry the PIN's
+///   `…-Part` fields (BT-21-Part, BT-24-Part, BT-27-Part, …) — a PIN announces parts,
+///   not lots.
+/// - `7`–`9` **PIN used to shorten time limits** (`pin-rtl`): with 4–6, the only
+///   subtypes allowed `BT-127-notice` (future notice date). A planning notice like
+///   4–6 (legacy F01 `0`, measured by 364: 2,161 in 2011), not a call: the call is
+///   the contract notice it shortens.
+/// - `15` **qualification system** (`qu-sy`): Tender 202112's notice 24716938 carries
+///   BT-02 `qu-sy` with OPP-070 `15`, which BR-OPP-00070-0117 ties together.
+///
+/// In 1–9 the legal bases run 2014/24, 2014/25, 2009/81 inside each triplet (the
+/// defence subcontracting fields BT-64/65/651/729-Lot are allowed in `9` and `18`
+/// only, the third of the pin-rtl and cn-standard triplets; BT-740's contracting-entity
+/// assertion names `3`, `6`, `9` among the 2009/81 and 2014/23 codes). So `2` is the
+/// utilities BUYER-PROFILE notice (`NOTICE_BUYER_PROFILE`, like 1 and 3), `5` and `8`
+/// are the utilities planning notices — the periodic indicative notice, legacy `M`/`P`
+/// (F04) — and `4`, `6`, `7`, `9` are prior information notices, legacy `0` (F01).
+///
+/// NOT flagged, deliberately:
+/// - `10`–`14` **PIN used as a call for competition** (`pin-cfc-standard` 10 (2014/24),
+///   11 (2014/25); `pin-cfc-social` 12 (2014/24), 13 (2014/25), 14 (2014/23 — BT-740 is
+///   mandatory on `14` with the concession codes 19, 32, 35)): the only subtypes allowed
+///   `BT-631-Lot` (invitation to confirm interest), i.e. the call that OPENS a procedure,
+///   which its award cites by OPP-090 exactly as a CAN cites its CN — the shape 481's
+///   link exists to join. Legacy `A` is its counterpart in [`SHARED_DOC_TYPES`], but
+///   364 measured none of it ("none in 2011"), so that choice was never validated, and
+///   a DPS opened by a pin-cfc (BT-766 is allowed on 7–13) stays joined like a DPS
+///   opened by a contract notice (16/17). The issue 486 review moved them out of this
+///   table; a measured weld through one is a later unit.
+/// - eForms has no DPS-call subtype (a DPS is a contract notice with BT-766 set), so
+///   `SIMPLIFIED_CONTRACT_NOTICE_DPS` has no eForms code.
+/// - Contract notices `16`–`24`, VEAT `25`–`28`, results `29`–`37`, modifications
+///   `38`–`40`, `CEI`, the transport PIN `T01` (`pin-tran`, Regulation 1370/2007: one
+///   planned public-service award) and `T02`, and the national subtypes — `E1`/`E2`
+///   are national planning notices (`E2` is the only national code allowed the PIN's
+///   BT-21-Part, `E1` is allowed BT-127) but unmeasured, so left unflagged like the
+///   rest of `E`/`X`: an unlisted code keeps today's grouping (the visible failure, as
+///   for the legacy tail).
+const SHARED_EFORMS_SUBTYPES: &[(&str, &str)] = &[
+    ("1", "NOTICE_BUYER_PROFILE"),
+    ("2", "NOTICE_BUYER_PROFILE"),
+    ("3", "NOTICE_BUYER_PROFILE"),
+    ("4", "PRIOR_INFORMATION_NOTICE"),
+    ("5", "PERIODIC_INDICATIVE_NOTICE"),
+    ("6", "PRIOR_INFORMATION_NOTICE"),
+    ("7", "PRIOR_INFORMATION_NOTICE"),
+    ("8", "PERIODIC_INDICATIVE_NOTICE"),
+    ("9", "PRIOR_INFORMATION_NOTICE"),
+    ("15", "NOTICE_QUALIFICATION_SYSTEM"),
+];
+
+/// Issue 486: the eForms notice TYPES (`BT-02-notice`, and sdk-0.1's
+/// `SDK01-NoticeTypeCode`, the DÖE island's only type field) of a shared publication —
+/// the fallback for a notice with no subtype, and the same families as
+/// [`SHARED_EFORMS_SUBTYPES`] (no `pin-cfc-*`, no `pin-tran`: see there). The type
+/// cannot tell the utilities variant, so `pin-only` and `pin-rtl` read as a prior
+/// information notice.
+const SHARED_EFORMS_TYPES: &[(&str, &str)] = &[
+    ("pin-buyer", "NOTICE_BUYER_PROFILE"),
+    ("pin-only", "PRIOR_INFORMATION_NOTICE"),
+    ("pin-rtl", "PRIOR_INFORMATION_NOTICE"),
+    ("qu-sy", "NOTICE_QUALIFICATION_SYSTEM"),
+];
+
+/// The eForms notice-type fields [`SHARED_EFORMS_TYPES`] is read from, first hit wins.
+const EFORMS_NOTICE_TYPE_FIELDS: &[&str] = &["BT-02-notice", "SDK01-NoticeTypeCode"];
+
+/// Issue 486: the shared-publication kind an eForms notice IS, by its own subtype
+/// ([`SHARED_EFORMS_SUBTYPES`]) or, with none, its notice type ([`SHARED_EFORMS_TYPES`]).
+/// A subtype that names a procedure notice decides — the type is not consulted past it.
+pub fn eforms_shared_kind(subtype: Option<&str>, notice_type: Option<&str>) -> Option<&'static str> {
+    let find = |table: &[(&str, &'static str)], code: &str| {
+        table.iter().find(|(c, _)| *c == code.trim()).map(|(_, kind)| *kind)
+    };
+    match subtype.map(str::trim).filter(|s| !s.is_empty()) {
+        Some(code) => find(SHARED_EFORMS_SUBTYPES, code),
+        None => notice_type.and_then(|code| find(SHARED_EFORMS_TYPES, code)),
+    }
+}
+
 /// Received-bid count fields (research §5.1) — one legacy statistic, mapped to
 /// the eForms `tenders` received-submission kind.
 /// Field ids whose value states the tax basis of an amount in the same section
@@ -2038,7 +2129,11 @@ pub async fn backfill_tender_links_windowed(
         // previous-notice row as the plan does. Boxed (issue 467's stack budgets): its
         // parse batches stay off the walk's frame.
         let endpoints = Box::pin(link_endpoints(db, &resolved.previous_notice_endpoints())).await?;
-        db.backfill_declared_window(resolved, &endpoints, &mut report).await?;
+        // Boxed in its own fn (issue 467's stack budgets): issue 486's shared-kind census grew
+        // this future, and built inline — even under `Box::pin` here, an O0 build makes the
+        // future in a slot of THIS poll frame before moving it — its size lands on the walk's
+        // poll frame.
+        declared_window_boxed(db, resolved, &endpoints, &mut report).await?;
         report.cursor = next;
         progress(&report);
         if !dry_run {
@@ -2051,6 +2146,19 @@ pub async fn backfill_tender_links_windowed(
         db.attest_tender_links_complete().await?;
     }
     Ok(report)
+}
+
+/// [`Db::backfill_declared_window`], built and boxed in a frame of its own, so the walk's
+/// poll frame holds a pointer rather than a slot the size of the window's future
+/// (issue 467; see the call in [`backfill_tender_links_windowed`]).
+#[inline(never)]
+fn declared_window_boxed<'a>(
+    db: &'a Db,
+    window: store::DeclaredWindow,
+    endpoints: &'a HashMap<i64, store::LinkEndpoint>,
+    report: &'a mut store::TenderLinkBackfill,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = turso::Result<()>> + Send + 'a>> {
+    Box::pin(db.backfill_declared_window(window, endpoints, report))
 }
 
 /// Notices per [`link_endpoints`] read: [`Db::parsed_by_ids`] reads every satellite of
@@ -2087,6 +2195,7 @@ async fn link_endpoints(db: &Db, ids: &[i64]) -> turso::Result<HashMap<i64, stor
                     buyer_tokens: row.buyer_tokens,
                     procedure_key: row.procedure_key,
                     published_at: row.published_at,
+                    shared_kind: row.shared_kind,
                 },
             );
         }
@@ -4191,9 +4300,11 @@ struct Ident {
     /// Phase 1 has resolved them ([`add_buyer_org_tokens`]).
     guard_sections: Vec<String>,
     /// Issue 364 unit 6: the shared-publication kind this legacy notice IS, by
-    /// its own document-type code ([`SHARED_DOC_TYPES`]); `None` for a procedure
-    /// notice and for every non-legacy profile. Goes on the plan row so the
-    /// grouping can read it at the far end of an edge.
+    /// its own document-type code ([`SHARED_DOC_TYPES`]) — and since issue 486 an
+    /// eForms notice too, by its subtype or notice type ([`eforms_shared_kind`]);
+    /// `None` for a procedure notice. Goes on the plan row so the grouping can read
+    /// it at the far end of an edge: the legacy OJS union-find (364) and the Tender
+    /// link step (486) each refuse an edge touching a stamped node.
     shared_kind: Option<&'static str>,
 }
 
@@ -4651,14 +4762,18 @@ impl Ident {
             // link guard's tolerant tokens.
             buyer_tokens: guard.tokens(),
             guard_sections: guard.sections(),
-            shared_kind: legacy
-                .then(|| {
-                    LEGACY_DOC_TYPE_FIELDS
-                        .iter()
-                        .find_map(|f| first_code(parsed, f))
-                        .and_then(|code| shared_publication_kind(&code))
-                })
-                .flatten(),
+            // Issue 364 unit 6 for legacy rows, by the TD code; issue 486 for every other
+            // profile, by the eForms subtype or notice type. The link step refuses a
+            // previous-notice edge with either end stamped.
+            shared_kind: if legacy {
+                LEGACY_DOC_TYPE_FIELDS
+                    .iter()
+                    .find_map(|f| first_code(parsed, f))
+                    .and_then(|code| shared_publication_kind(&code))
+            } else {
+                let notice_type = EFORMS_NOTICE_TYPE_FIELDS.iter().find_map(|f| first_code(parsed, f));
+                eforms_shared_kind(first_code(parsed, SUBTYPE_FIELD).as_deref(), notice_type.as_deref())
+            },
         }
     }
 
@@ -5633,6 +5748,7 @@ pub fn has_destination(field_id: &str, channel: Channel) -> bool {
         Channel::Code => {
             field_id == SUBTYPE_FIELD
                 || LEGACY_DOC_TYPE_FIELDS.contains(&field_id)
+                || EFORMS_NOTICE_TYPE_FIELDS.contains(&field_id)
                 || field_id == ORG_COUNTRY_FIELD
                 || field_id == SDK01_RESULT_CODE_FIELD
                 || ORG_COUNTRY_FIELDS.contains(&field_id)
@@ -8919,6 +9035,90 @@ mod tests {
         let mut g = CitationGate::default();
         g.add_refused(&[("PERIODIC_INDICATIVE_NOTICE".to_owned(), 348), ("NOTICE_BUYER_PROFILE".to_owned(), 2)]);
         assert_eq!((g.periodic_indicative, g.buyer_profile, g.refused()), (348, 2, 350));
+    }
+
+    /// Issue 486: the eForms shared-subtype table speaks the gate vocabulary too, and
+    /// each family is where the vendored SDK's field constraints put it (see
+    /// [`SHARED_EFORMS_SUBTYPES`]): read back from `sdk/fields-1.15.0.json`, so a table
+    /// edit that contradicts the SDK fails here rather than splitting procedures.
+    #[test]
+    fn shared_subtypes_follow_the_sdk_field_constraints() {
+        for (code, kind) in SHARED_EFORMS_SUBTYPES.iter().chain(SHARED_EFORMS_TYPES) {
+            assert!(rules::SHARED_PUBLICATION_KINDS.contains(kind), "{code} → {kind} is not a gate kind");
+            let mut g = CitationGate::default();
+            g.refuse_n(kind, 1);
+            assert_eq!(g.unknown_kind, 0, "{code} → {kind} lands in unknown_kind");
+        }
+        let sdk: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/sdk/fields-1.15.0.json")).expect("the SDK"),
+        )
+        .expect("SDK json");
+        let field = |id: &str| -> &serde_json::Value {
+            sdk["fields"].as_array().unwrap().iter().find(|f| f["id"] == id).unwrap_or_else(|| panic!("{id}"))
+        };
+        // The numbered subtypes (1–40) a field's `kind` constraint without a condition names.
+        let types = |id: &str, kind: &str| -> BTreeSet<u32> {
+            field(id)[kind]["constraints"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter(|c| c.get("condition").is_none() && c["value"] == true)
+                .flat_map(|c| c["noticeTypes"].as_array().cloned().unwrap_or_default())
+                .filter_map(|t| t.as_str().and_then(|t| t.parse().ok()))
+                .collect()
+        };
+        let allowed = |id: &str| -> BTreeSet<u32> {
+            let forbidden = types(id, "forbidden");
+            (1..=40).filter(|t| !forbidden.contains(t)).collect()
+        };
+        let kinds_of = |codes: &BTreeSet<u32>| -> BTreeSet<&str> {
+            codes.iter().filter_map(|c| eforms_shared_kind(Some(&c.to_string()), None)).collect()
+        };
+        // Buyer profile URL: mandatory on the buyer-profile notices only.
+        assert_eq!(types("BT-508-Procedure-Buyer", "mandatory"), (1..=3).collect());
+        assert_eq!(kinds_of(&(1..=3).collect()), BTreeSet::from(["NOTICE_BUYER_PROFILE"]));
+        // A PIN's parts: pin-only only.
+        assert_eq!(allowed("BT-21-Part"), (4..=6).collect());
+        // Future notice: pin-only and pin-rtl.
+        assert_eq!(allowed("BT-127-notice"), (4..=9).collect());
+        // Invitation to confirm interest: the PINs used as a call for competition — the
+        // call that opens ONE procedure, which its award cites like a CN: NOT flagged
+        // (the 486 review). 14 is the concessions (2014/23) one: BT-740 is mandatory on
+        // it with the 2014/23 codes 19, 32, 35.
+        assert_eq!(allowed("BT-631-Lot"), (10..=14).collect());
+        assert_eq!(kinds_of(&(10..=14).collect()), BTreeSet::new());
+        assert!(types("BT-740-Procedure-Buyer", "mandatory").is_superset(&BTreeSet::from([14, 19, 32, 35])));
+        // Defence subcontracting: the third (2009/81) of the pin-rtl and cn-standard triplets.
+        assert_eq!(allowed("BT-65-Lot"), BTreeSet::from([9, 18]));
+        let pins: BTreeSet<u32> = (4..=9).collect();
+        assert_eq!(kinds_of(&pins), BTreeSet::from(["PRIOR_INFORMATION_NOTICE", "PERIODIC_INDICATIVE_NOTICE"]));
+        for utilities in [5, 8] {
+            assert_eq!(eforms_shared_kind(Some(&utilities.to_string()), None), Some("PERIODIC_INDICATIVE_NOTICE"));
+        }
+        for pin in [4, 6, 7, 9] {
+            assert_eq!(eforms_shared_kind(Some(&pin.to_string()), None), Some("PRIOR_INFORMATION_NOTICE"));
+        }
+        // 24716938 (Tender 202112's hub): OPP-070 `15`, BT-02 `qu-sy`.
+        assert_eq!(eforms_shared_kind(Some("15"), Some("qu-sy")), Some("NOTICE_QUALIFICATION_SYSTEM"));
+        assert_eq!(eforms_shared_kind(None, Some("qu-sy")), Some("NOTICE_QUALIFICATION_SYSTEM"));
+        assert_eq!(eforms_shared_kind(None, Some("pin-only")), Some("PRIOR_INFORMATION_NOTICE"));
+        // The PIN-as-call, contract notices, VEAT, results, modifications, the transport
+        // PIN and the national tail (E1/E2 national planning notices included): today's grouping.
+        for code in (10..=14)
+            .chain(16..=40)
+            .map(|c| c.to_string())
+            .chain(["CEI", "E1", "E2", "E3", "E4", "E5", "E6", "T01", "T02", "X01", "X02", ""].map(str::to_owned))
+        {
+            assert_eq!(eforms_shared_kind(Some(&code), None), None, "{code:?} must keep today's grouping");
+        }
+        // A procedure subtype decides; the type is a fallback, not a second vote.
+        assert_eq!(eforms_shared_kind(Some("29"), Some("qu-sy")), None);
+        for code in ["cn-standard", "can-standard", "veat", "can-modif", "subco", "pin-cfc-standard", "pin-cfc-social", "pin-tran"] {
+            assert_eq!(eforms_shared_kind(None, Some(code)), None, "{code}");
+        }
+        for field in EFORMS_NOTICE_TYPE_FIELDS {
+            assert!(has_destination(field, Channel::Code), "{field}");
+        }
     }
 
     /// The DE-1.x fold is only correct if every alias target is an id the

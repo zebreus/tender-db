@@ -2672,8 +2672,8 @@ fn link_suffix(l: &store::LinkTally) -> String {
     }
     format!(
         "; issue-481 tender links joined: {} (previous-notice {} of which cross-source {}, \
-         logical-notice {}, matched {}); refused: {} (not-earlier {}, buyer-disjoint {}, fan-in {}, \
-         not-one-to-one {}, keyed-weld {}, oversized {}); deferred: {}; largest component: {} key(s){}",
+         logical-notice {}, matched {}); refused: {} (not-earlier {}, shared-kind {}, buyer-disjoint {}, \
+         fan-in {}, not-one-to-one {}, keyed-weld {}, oversized {}); deferred: {}; largest component: {} key(s){}",
         l.admitted(),
         l.previous_notice,
         l.cross_source,
@@ -2681,6 +2681,7 @@ fn link_suffix(l: &store::LinkTally) -> String {
         l.matched,
         l.refused(),
         l.not_earlier,
+        l.shared_kind,
         l.buyer_disjoint,
         l.fan_in,
         l.not_one_to_one,
@@ -2966,7 +2967,10 @@ fn tender_link_samples_json(samples: &[store::TenderLinkSample]) -> Vec<serde_js
 /// (the joins), and (issue 481 unit 2b) `buyer_disjoint_samples` the would-merge pairs
 /// the buyer guard refuses and `would_split_samples` the pairs one Tender today that the
 /// next fold splits. `not_earlier` (the unit 2b review) counts the would-merge pairs the
-/// fold refuses by direction; they are in no list.
+/// fold refuses by direction; they are in no list. `shared_kind` (issue 486) counts the
+/// would-merge pairs refused because an end is a shared publication (in no list either),
+/// and `would_split_shared` the would-split pairs split for that reason; the 486 review's
+/// `would_split_shared_kinds` breaks those down per shared kind, each with its own sample.
 fn tender_link_backfill_body(r: &store::TenderLinkBackfill) -> String {
     let rules: serde_json::Map<String, serde_json::Value> = r
         .rules
@@ -2983,7 +2987,9 @@ fn tender_link_backfill_body(r: &store::TenderLinkBackfill) -> String {
                     "cross_source": c.cross_source,
                     "not_earlier": c.not_earlier,
                     "buyer_disjoint": c.buyer_disjoint,
+                    "shared_kind": c.shared_kind,
                     "would_split": c.would_split,
+                    "would_split_shared": c.would_split_shared,
                     "stale": c.stale,
                 }),
             )
@@ -2996,7 +3002,9 @@ fn tender_link_backfill_body(r: &store::TenderLinkBackfill) -> String {
         "would_merge": r.would_merge,
         "not_earlier": r.not_earlier,
         "buyer_disjoint": r.buyer_disjoint,
+        "shared_kind": r.shared_kind,
         "would_split": r.would_split,
+        "would_split_shared": r.would_split_shared,
         "requeued": r.requeued,
         "ledger_bytes": tender_link_backfill_bytes(r),
         "cursor": r.cursor,
@@ -3005,6 +3013,13 @@ fn tender_link_backfill_body(r: &store::TenderLinkBackfill) -> String {
         "samples": tender_link_samples_json(&r.samples),
         "buyer_disjoint_samples": tender_link_samples_json(&r.disjoint_samples),
         "would_split_samples": tender_link_samples_json(&r.split_samples),
+        "would_split_shared_kinds": r
+            .shared_split_kinds
+            .iter()
+            .map(|(kind, (n, samples))| {
+                (kind.clone(), serde_json::json!({ "pairs": n, "samples": tender_link_samples_json(samples) }))
+            })
+            .collect::<serde_json::Map<String, serde_json::Value>>(),
     })
     .to_string()
 }
@@ -3017,7 +3032,8 @@ fn tender_link_backfill_summary(r: &store::TenderLinkBackfill) -> String {
         .map(|(rule, c)| {
             format!(
                 "{rule}: {} declared, {} present, {} resolved, {} unresolved, {} would merge \
-                 ({} cross-source, {} not-earlier, {} buyer-disjoint), {} would split, {} stale",
+                 ({} cross-source, {} not-earlier, {} shared-kind, {} buyer-disjoint), {} would split \
+                 ({} shared-kind), {} stale",
                 c.declared,
                 c.present,
                 c.resolved,
@@ -3025,8 +3041,10 @@ fn tender_link_backfill_summary(r: &store::TenderLinkBackfill) -> String {
                 c.would_merge,
                 c.cross_source,
                 c.not_earlier,
+                c.shared_kind,
                 c.buyer_disjoint,
                 c.would_split,
+                c.would_split_shared,
                 c.stale
             )
         })
@@ -4464,15 +4482,17 @@ impl Supervisor {
                 Some(r.cursor.max(0) as u64),
                 Some(r.target.max(0) as u64),
                 format!(
-                    "notice id {} of {}; {} notices walked, {} would merge ({} not-earlier, {} buyer-disjoint), \
-                     {} would split, {} {}",
+                    "notice id {} of {}; {} notices walked, {} would merge ({} not-earlier, {} shared-kind, \
+                     {} buyer-disjoint), {} would split ({} shared-kind), {} {}",
                     r.cursor,
                     r.target,
                     r.notices,
                     r.would_merge,
                     r.not_earlier,
+                    r.shared_kind,
                     r.buyer_disjoint,
                     r.would_split,
+                    r.would_split_shared,
                     r.requeued,
                     if dry_run { "would be re-queued" } else { "re-queued" }
                 ),
@@ -15522,7 +15542,7 @@ mod tests {
         assert!(
             msg.contains(
                 "logical-notice: 1 declared, 0 present, 1 resolved, 0 unresolved, 1 would merge (1 cross-source, \
-                 0 not-earlier, 0 buyer-disjoint), 0 would split, 0 stale"
+                 0 not-earlier, 0 shared-kind, 0 buyer-disjoint), 0 would split (0 shared-kind), 0 stale"
             ),
             "{msg}"
         );
@@ -15542,6 +15562,9 @@ mod tests {
         assert_eq!(v["rules"]["opp-090"]["would_split"], 0, "{body}");
         assert_eq!(v["buyer_disjoint_samples"].as_array().map(Vec::len), Some(0), "{body}");
         assert_eq!(v["would_split_samples"].as_array().map(Vec::len), Some(0), "{body}");
+        // Issue 486: the shared-publication counts, and (its review) the per-kind split census.
+        assert_eq!((v["shared_kind"].as_u64(), v["would_split_shared"].as_u64()), (Some(0), Some(0)), "{body}");
+        assert_eq!(v["would_split_shared_kinds"], serde_json::json!({}), "{body}");
         assert_eq!(ledger().await, 0, "dry wrote nothing");
 
         let msg = sup.run_spec(&job(2, false)).await.expect("wet");
@@ -16793,15 +16816,23 @@ mod tests {
         );
         assert!(
             s.contains(
-                "refused: 7 (not-earlier 0, buyer-disjoint 4, fan-in 2, not-one-to-one 0, keyed-weld 0, oversized 1); \
-                 deferred: 0; largest component: 7 key(s) at notice 1234"
+                "refused: 7 (not-earlier 0, shared-kind 0, buyer-disjoint 4, fan-in 2, not-one-to-one 0, keyed-weld 0, \
+                 oversized 1); deferred: 0; largest component: 7 key(s) at notice 1234"
             ),
             "{s}"
         );
         // A buyer-disjoint refusal alone is news too (issue 481 unit 2b): a copied
         // placeholder OPP-090 kept out of a stranger's Tender.
         let s = link_suffix(&store::LinkTally { buyer_disjoint: 1, ..Default::default() });
-        assert!(s.contains("refused: 1 (not-earlier 0, buyer-disjoint 1,"), "{s}");
+        assert!(s.contains("refused: 1 (not-earlier 0, shared-kind 0, buyer-disjoint 1,"), "{s}");
+        // Issue 486: a shared-publication refusal alone is news — a qualification-system
+        // notice or a PIN kept from welding the procedures that cite it — and counts as
+        // a refusal.
+        let s = link_suffix(&store::LinkTally { shared_kind: 3, ..Default::default() });
+        assert!(s.contains("refused: 3 (not-earlier 0, shared-kind 3, buyer-disjoint 0,"), "{s}");
+        let mut sum = store::LinkTally { shared_kind: 2, ..Default::default() };
+        sum.add(store::LinkTally { shared_kind: 5, ..Default::default() });
+        assert_eq!((sum.shared_kind, sum.refused()), (7, 7));
         // A deferred join alone is still news: a link this fold's plan could not judge.
         let s = link_suffix(&store::LinkTally { deferred: 2, ..Default::default() });
         assert!(s.contains("; deferred: 2;"), "{s}");
@@ -17523,16 +17554,24 @@ mod tests {
         // of 105-120 KiB. The full gate of 2026-10-04 (`064870d`) aborted the link backfill
         // over 144 KiB once, while five isolated and whole-lib reruns stayed under: the first
         // poll's depth depends on whether turso's read completes inline, which varies with
-        // load. 192 KiB covers that path; in production every one of them runs through
-        // `off_frame` on its own large stack, so this is the tripwire's margin, not a
-        // production risk.
-        poll_once_within("run_backfill_tender_links", 192 * 1024, || sup.run_backfill_tender_links(&j, true));
-        poll_once_within("run_procedure_key_census", 192 * 1024, || sup.run_procedure_key_census(&j));
-        poll_once_within("run_buyer_role_census", 192 * 1024, || sup.run_buyer_role_census(&j, 1));
-        poll_once_within("run_requeue_uuid_hubs", 192 * 1024, || sup.run_requeue_uuid_hubs(true));
+        // load. 192 KiB covered the shallow path only: on 2026-10-05 (issue 487) the whole
+        // `--lib` run aborted the link backfill over 192 KiB on unmodified `3f66efe` as on
+        // issue 486's tree. Measured then by painting a 4 MiB gauge stack and reading back
+        // the deepest word the poll wrote (isolated and whole-lib alike): link backfill 429,
+        // procedure-key census 424, buyer-role census 422, UUID-hub requeue 237 KiB — the
+        // deep path, the same ~420 KiB store chain the seeded buyer-role gauge below budgets
+        // at 456 — while the same paint inside a 192 KiB stack read the shallow path. So
+        // these are the deep path plus ~24 KiB. In production every one of them runs
+        // through `off_frame` on its own large stack, so this is the tripwire's margin, not
+        // a production risk.
+        poll_once_within("run_backfill_tender_links", 456 * 1024, || sup.run_backfill_tender_links(&j, true));
+        poll_once_within("run_procedure_key_census", 456 * 1024, || sup.run_procedure_key_census(&j));
+        poll_once_within("run_buyer_role_census", 456 * 1024, || sup.run_buyer_role_census(&j, 1));
+        poll_once_within("run_requeue_uuid_hubs", 264 * 1024, || sup.run_requeue_uuid_hubs(true));
         poll_once_within("run_refold_buyer_roles", 144 * 1024, || sup.run_refold_buyer_roles(&j, true));
         poll_once_within("run_analyze", 330 * 1024, || sup.run_analyze(&j));
-        poll_once_within("run_audit_fts_ids", 330 * 1024, || sup.run_audit_fts_ids(&j, true, None, None));
+        // Issue 487: the deep path measured 336 KiB (2026-10-05, the paint above).
+        poll_once_within("run_audit_fts_ids", 360 * 1024, || sup.run_audit_fts_ids(&j, true, None, None));
         assert!(
             over.is_empty(),
             "issue 467: future(s) over their stack budget — {}. Each is built on the caller's \

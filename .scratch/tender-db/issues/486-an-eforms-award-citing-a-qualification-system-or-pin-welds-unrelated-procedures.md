@@ -1,9 +1,8 @@
 # 486 — an eForms notice citing a qualification-system notice or PIN (OPP-090) welds unrelated procedures into one Tender
 
-Status: ready-for-agent — NEXT: unit 1: stamp the cited notice's OWN shared-publication kind for eForms too (BT-02
-notice type / OPP-070 subtype: qualification system, prior information, buyer profile, periodic indicative, DPS) and
-refuse a previous-notice link (481's ledger edge, same- and cross-Source) when either end is such a notice; count the
-refusals per kind on the job row; then re-queue the welded Tenders and let a fold split them.
+Status: ready-for-agent — NEXT: gate (`ops/check.sh`) with 487's budget change, then commit and deploy unit 1. On
+prod, run the dry `backfill-tender-links` and apply the go/no-go rule under "Review fixes" to `would_split_shared` and
+`would_split_shared_kinds`. Then the wet run, the next daily, and the Verify below.
 Kind: data correctness (a false merge)
 Relates to: 364 (the cited-type gate, legacy-only today: `shared_kind` is stamped only for legacy rows), 481 (the
 OPP-090 previous-notice producer and its guards: buyer-disjoint, fan-in, not-earlier — none reads the cited type),
@@ -44,3 +43,109 @@ and 481's link step does not consult it.
 - **open** (2026-10-05): `234`.
 - **done:** a handful (the qualification-system notice and its own amendments), each award on its own procedure's
   Tender; the `issue-481` line's largest component well below 226.
+
+## Unit 1 — landed (not deployed)
+
+**What changed.**
+- `crates/ingest/src/project.rs`: `Ident::read` stamps `shared_kind` for every non-legacy row through
+  `eforms_shared_kind(subtype, notice_type)` — `SHARED_EFORMS_SUBTYPES` on `OPP-070-notice` (DE-1.x folded
+  onto it), falling back to `SHARED_EFORMS_TYPES` on `BT-02-notice` / `SDK01-NoticeTypeCode` when a notice
+  carries no subtype. Same vocabulary as `SHARED_DOC_TYPES`. The mapping, each family pinned by the fields only
+  it may carry in the vendored `sdk/fields-1.15.0.json` (read back by the unit test
+  `shared_subtypes_follow_the_sdk_field_constraints`):
+  - `1`-`3` `NOTICE_BUYER_PROFILE` (`pin-buyer`): BT-508 buyer-profile URL mandatory there and only there;
+  - `4`-`6` PIN only: the only subtypes allowed the PIN's `…-Part` fields;
+  - `7`-`9` PIN to shorten time limits: with 4-6 the only ones allowed BT-127 future notice;
+  - `15` `NOTICE_QUALIFICATION_SYSTEM` (`qu-sy`; 24716938 itself);
+  - in 1-9 the legal bases run 2014/24, 2014/25, 2009/81 inside each triplet (the defence subcontracting
+    fields BT-64/65/651/729 are allowed in `9` and `18` only). So `2` is the utilities buyer-profile notice
+    (`NOTICE_BUYER_PROFILE`), only `5` and `8` read `PERIODIC_INDICATIVE_NOTICE` (legacy `M`/`P`), and `4`, `6`,
+    `7`, `9` read `PRIOR_INFORMATION_NOTICE`.
+  - NOT flagged (review fix 1): `10`-`14`, the PIN used as a call for competition (the only subtypes allowed
+    BT-631; `14` is the 2014/23 one, since BT-740 is mandatory on it with 19, 32, 35). It opens one procedure,
+    exactly the CN-to-CAN shape 481 joins. Its legacy twin `A` was never measured. Also not flagged: the transport
+    PIN `T01`/`pin-tran`, the national `E1`/`E2` planning notices (unmeasured), 16-40, and the rest of the
+    national tail. eForms has no DPS-call subtype.
+- `crates/store/src/canonical.rs`, link step: `LINK_EDGE_JOIN_SQL` reads both ends' `shared_kind`; a
+  previous-notice edge (same- or cross-Source) with either end stamped is refused after `not-earlier`,
+  before `buyer-disjoint` and the fan-in count, and counted in the new `LinkTally::shared_kind` (in
+  `refused()`, `add()`, the stderr line). **One place**: the 364 gate keeps `WHERE legacy = 1` — it governs
+  `plan_ojs_edge` (legacy OJS chains; eForms rows have no `ojs_self`), the link step governs ledger edges,
+  whose legacy ends were already stamped. No edge passes both gates. **Not "legacy unchanged" for ledger
+  edges:** an eForms OPP-090 citing a legacy `0`/`A`/`P`/`M`/`B`/`O`/`Q`/`Y` notice is refused now, where before
+  486 the link step read no plan row's kind and joined it (review fix 4; pinned by a test). The verdict reads the two endpoints' plan
+  rows only, so it never defers and is the same on a full and an incremental plan.
+- Plan semantics changed, so a plan from before 486 is not resumable: `clear_plan_on` creates the empty
+  marker `plan_eforms_shared_kind`, `plan_is_complete` refuses a plan without it (483u2's pattern).
+- `crates/app/src/supervisor.rs`: `link_suffix` prints `shared-kind N` among the refusals (test updated);
+  the `tender-link-backfill` body, summary and progress line carry `shared_kind` / `would_split_shared`.
+- **Re-queue (reused, no new job):** the ledger backfill's census (`LinkEndpoint::shared_kind`, from the
+  same `Ident::read`) treats a shared-kind end as the fold does: of `would_merge` it is `shared_kind`
+  (nothing re-queued), and a pair one Tender today under different keys is `would_split` +
+  `would_split_shared` — both ends re-queued by the wet run, split by the next daily.
+- `docs/operations.md`: "The shared-publication refusal (issue 486)", the prod re-queue steps and the go/no-go rule.
+- Stack budget (issue 467): the census's grown future is built and boxed in its own fn
+  (`declared_window_boxed`), so the walk's poll frame holds a pointer. No `run_spec` arm added.
+  **Pre-existing, not 486:** the whole `--lib` run aborted on the link-backfill gauge, on HEAD `3f66efe` as
+  well. Filed and fixed as issue 487 (review fix 5).
+
+**Tests.** `a_qualification_system_notice_does_not_weld_the_awards_citing_it` (project_incremental; since the review it also asserts the per-kind census `[(NOTICE_QUALIFICATION_SYSTEM, 4, 4 samples)]`) and its sibling `the_shared_kind_refusal_reads_the_citing_end_and_legacy_targets_but_not_a_pin_used_as_a_call` (review fix 6): QS
+notice + three TED awards (distinct BT-04) + a DÖE award citing it by OPP-090, and a CN/award control.
+Folded with the QS untyped → one welded Tender; re-parsed with OPP-070 `15` / BT-02 `qu-sy` → dry census
+`would_split 4 (shared 4)`, 5 to re-queue; wet; the daily splits into the QS Tender + four, identical to the
+full fold (`absorb_and_compare`), `shared_kind 4`, control `previous_notice 1`, nothing retired; a later
+citer refused on both paths. `shared_subtypes_follow_the_sdk_field_constraints` (the table vs the SDK);
+the resume test gains `pre-486`; `the_link_suffix_…` and the backfill-job test updated. The legacy 364 tests
+and every projection test binary pass unchanged.
+
+**Cost to accept.** An award that cites its own PIN (PIN only, or a PIN to shorten time limits) under ANOTHER BT-04
+no longer joins it. A shared BT-04 still joins them, and a PIN used as a call for competition is not flagged (review
+fix 1). A QS amendment under a new BT-04 is apart from its QS. The dry census's `would_split_shared_kinds` shows per
+kind how many Tenders that splits, with samples. Read it before the wet run (the rule is under "Review fixes").
+
+**Prod (after deploy).** Run `backfill-tender-links` dry. Read `would_split_shared` and `would_split_shared_kinds`, and
+apply the go/no-go rule. Then the wet run, the next daily, and the Verify.
+
+## Review fixes (2026-10-05)
+
+1. **Subtypes 10-14 (PIN as call for competition): fixed.** They were dropped from `SHARED_EFORMS_SUBTYPES`, and
+   `pin-cfc-standard`/`pin-cfc-social` from `SHARED_EFORMS_TYPES`. A pin-cfc opens one procedure (BT-631 is allowed
+   there only), and its award's OPP-090 is the CN-to-CAN link 481 exists for. Legacy `A`, its twin, was never
+   measured by 364. 7-9 (pin-rtl) stay flagged: they are planning notices like 4-6 and legacy `0` (F01, measured at
+   2,161 in 2011), and the call comes later as a contract notice. DPS: a DPS opened by a pin-cfc now stays joined,
+   as one opened by a CN (16/17) does. The test pins it: `10`-`14` map to none, and the award citing a pin-cfc joins
+   it on both the full fold and the daily.
+   **Measuring per kind (also fixed):** the census now reports `shared_split_kinds` (body
+   `would_split_shared_kinds`): per kind, the pair count and its own reservoir of up to 30 samples (`LINK_BACKFILL_SAMPLES`), so PIN splits
+   read apart from the ~234 qualification-system ones.
+2. **The legal-basis order in the comment: fixed.** `2` is the utilities buyer-profile notice. The PIN triplets
+   (1-9) run 2014/24, 2014/25, 2009/81. The pin-cfc line now names 10 (2014/24), 11 (2014/25), 12-14 (2014/24,
+   2014/25, 2014/23), with BT-740's mandatory list (14, 19, 32, 35) cited as the evidence for 14 and asserted by
+   the SDK test.
+3. **`pin-tran`/T01: fixed.** `pin-tran` was removed from the type table, so both tables agree that the transport
+   PIN is not flagged (a Reg. 1370/2007 PIN announces one planned award). `E1`/`E2` are named in the comment as
+   national planning notices left unflagged on purpose. The DE1 notice-type field is not folded onto BT-02: it
+   cannot matter while a DE-1.x notice always carries its subtype, which decides. The test asserts `T01`, `T02`,
+   `E1`-`E6`, `X01`, `X02`, `CEI` and the `pin-cfc-*`/`pin-tran` types all map to none.
+4. **Legacy-cited ledger edges: fixed (docs + test).** The issue and `docs/operations.md` now state that an eForms
+   OPP-090 citing a legacy shared-kind notice is refused. The new test pins it on the full fold, the daily and the
+   census.
+5. **The gate was red: fixed, filed as issue 487.** This is not caused by 486: `3f66efe` aborted identically in a
+   detached worktree. A paint gauge measured the four window walks' deep first-poll path at 422-429 KiB (UUID-hub
+   requeue 237, FTS audit 336). The 192 KiB budgets had come from the shallow path. The budgets are now the deep path
+   plus ~24 KiB (456/264/360 KiB), in line with the seeded buyer-role gauge's 456. Two whole-`--lib` runs were green.
+6. **No test for a stamped citing end or a legacy cited end: fixed.** Added
+   `the_shared_kind_refusal_reads_the_citing_end_and_legacy_targets_but_not_a_pin_used_as_a_call`. An eForms PIN
+   (OPP-070 `4`) citing an earlier CN is refused. An award citing a legacy `TD` `0` notice is refused. An award
+   citing a pin-cfc (`10`) joins it. The test covers the full fold and the daily (`shared_kind 2, previous_notice 1`
+   on both) and the census (`would_merge 2, shared_kind 2, requeued 0`). Both of the reviewer's mutations were run
+   and both fail the test: dropping the fold's citing-end check, and dropping the census's citing-end fallback.
+7. **The subtype-2 text: fixed** (same as 2), in both the issue and the code comment.
+8. **The pin-tran disagreement: fixed** (same as 3).
+9. **No go/no-go rule for the wet run: fixed** in `docs/operations.md`.
+   - **Expected:** the qualification-system kind in the hundreds to low thousands.
+   - **Check:** open about 10 samples per kind on TED.
+   - **Go:** total `would_split_shared` ≤ 5,000 and at most about 1 in 10 samples per kind a correct merge.
+   - **Stop:** otherwise. Report the counts here and decide per kind. A kind that must not split has to leave the
+     table in code, because the fold refuses it on every re-planning daily whether or not the wet run happens.
+   - The docs also say that the wet run carries the pending 481 `would_merge` and `stale` re-queues along.

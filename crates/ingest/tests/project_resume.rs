@@ -327,13 +327,15 @@ async fn a_plan_from_before_the_buyer_guard_is_rebuilt_not_resumed() {
         ("2b", "ALTER TABLE plan_notice RENAME COLUMN buyer_guard TO buyer_tokens"),
         // Issue 483 unit 2: a plan from before the buyer-role demote.
         ("pre-483u2", "DROP TABLE plan_buyer_demote"),
+        // Issue 486: a plan from before eForms rows carried `shared_kind`.
+        ("pre-486", "DROP TABLE plan_eforms_shared_kind"),
     ] {
         let (old, fo, po) = scratch(&format!("preguard-{label}")).await;
         build_corpus(&old, fo).await;
         project::project_plan_only(&old).await.expect("plan only");
         assert!(old.plan_is_complete().await.unwrap(), "{label}: a complete plan");
         old.execute_for_test(alter).await.expect("the plan as the older binary left it");
-        assert!(!old.plan_is_complete().await.unwrap(), "{label}: a plan without 2c buyer tokens (or the 483 demote) is not resumable");
+        assert!(!old.plan_is_complete().await.unwrap(), "{label}: a plan without 2c buyer tokens (or the 483 demote, or 486's eForms shared kinds) is not resumable");
 
         project::project(&old, true).await.expect("the rebuild plans again");
         assert_eq!(snapshot(&fresh).await, snapshot(&old).await, "{label}: exactly as with no plan on disk");
