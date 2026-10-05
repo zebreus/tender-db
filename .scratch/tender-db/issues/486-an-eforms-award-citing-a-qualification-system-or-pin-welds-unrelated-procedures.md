@@ -1,6 +1,6 @@
 # 486 — an eForms notice citing a qualification-system notice or PIN (OPP-090) welds unrelated procedures into one Tender
 
-Status: ready-for-agent — NEXT: gate (`ops/check.sh`) with 487's budget change, then commit and deploy unit 1. On
+Status: ready-for-agent — UNIT 1 DONE 2026-10-05 (qualification systems refuse previous-notice links; deployed `9f9db13`; wet 1994 + project 1995; Verify 202112: 234 → 6 versions). NEXT: unit 1b (a PIN / periodic / buyer-profile notice refuses only when ≥ 2 keyed components cite it), and the 200-key component at notice 24090776. Was: ready-for-agent — NEXT: gate (`ops/check.sh`) with 487's budget change, then commit and deploy unit 1. On
 prod, run the dry `backfill-tender-links` and apply the go/no-go rule under "Review fixes" to `would_split_shared` and
 `would_split_shared_kinds`. Then the wet run, the next daily, and the Verify below.
 Kind: data correctness (a false merge)
@@ -180,3 +180,13 @@ Daily 1991 under 1c: `shared-kind 0` refused (no re-planned QS edge that day), l
 624, all NOTICE_QUALIFICATION_SYSTEM**; samples cite a few QS notices many times each (206469-2025 ENEL ×6 in 30,
 247665-2026, 272953-2024, 282697-2026 ×2) — the many-procurements shape. Under the rule's 5,000 → **wet 1994**, then
 an incremental project. NEXT: Verify 202112; read the 200-key component.
+
+## 2026-10-05 ~09:00 UTC — UNIT 1 DONE on prod (qualification systems)
+
+- Wet 1994: 745 notices re-queued. Project 1995: 745 notices → 741 Tenders; `refused: 673 (shared-kind 665,
+  buyer-disjoint 8)`; largest component of that fold 26 keys.
+- **Verify: done** — `/v1/tenders/202112` now holds **6 versions** (was 234): `Sistema de Clasificación de
+  Proveedores del Grupo ENEL - Obras` and its own amendments; each award sits on its own procedure's Tender.
+- OPEN, ready-for-agent: **unit 1b** — a PIN / periodic-indicative / buyer-profile notice refuses only when cited by
+  ≥ 2 keyed components (the many-procedures shape; dry 1982 showed 10,277 PIN pairs, mostly 1:1 and correct). Also
+  read daily 1991's `largest component: 200 key(s) at notice 24090776` for its shape.
