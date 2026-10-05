@@ -442,3 +442,11 @@ first r209 window is in this issue's session log.
   job 2001 → project 2002, started at 13:51 UTC. It takes the full fallback, about 7.5 h.
 - **Next:** read 2002's `issue-479 procedure type` suffix, then run the Verify list from the
   runbook.
+- **Progress read, 2026-10-05 20:47 UTC.** Phase 1 (planning) covered all 14,887,661 notices and finished
+  around 19:51 UTC, about 6 h. Phase 2 (folding) is at 170,297 of 8,776,591 tenders: 400,008 versions and
+  80.4 M leaf rows written. Its rate is rising, from 5 min per ~22k tenders at first to under 2 min now
+  (the first tenders are the heaviest, about 470 leaf rows each). Projected end: around 08:00–10:00 UTC
+  2026-10-06. The 07:35 daily queues behind it. `/data` has 382 → 325 GB free; that crossed
+  `tender-db-diskwatch`'s 80 % threshold, so the unit is red. The freed plan pages stay in the database
+  file as free pages, so `df` will not recover after the fold. If 80 % used is the new resting level,
+  revisit the threshold.
