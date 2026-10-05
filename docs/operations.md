@@ -718,8 +718,10 @@ it rather than alarm on it. Two blind spots:
   inside Phase 1. Note that in the issue when it happens; the per-profile coverage then comes from
   the census reads below, not from the fold.
 
-**Census before the backfill (do not skip).** The PR table is frozen from fixtures (PR 4 →
-`neg-w-call` rests on 4/4 fixtures, and `6`/`B`/`C`/`E`/`F`/`G`/`N`/`V` are unmapped). A table change
+**Census before the backfill (do not skip).** Read 2026-10-05 (issue 479 "Legacy census"): the PR 4
+gate held, and `6`/`B` → `neg-w-call`, `V` → `neg-wo-call`, `C` → `comp-dial`, `G` → `innovation`
+joined the table; `E`/`F`/`A`/`N`/`Z` and the text-era letters stay unmapped. Re-read it only if the
+table is touched again. (Before it the table was frozen from fixtures alone.) A table change
 after the backfill costs a SECOND full fold (~7.5 h) and a second change event per Tender, so read the
 legacy cross-tab first. Bounded PK-window reads through `/v1/sql`, two or three windows per legacy
 profile, in a low-traffic window, each on the team lead's word, never retrying a 408. Window starts

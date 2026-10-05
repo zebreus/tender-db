@@ -396,3 +396,33 @@ public reads. Uncommitted, not deployed.
 - `… --no-fail-fast -- data_quality destination table_reads unmapped legacy r208 r209 marker` → GATE-EXIT=0 (119 tests; the sieve and legacy probes with the markers now read).
 - `fold_apply_output_matches_the_committed_golden` passes against the Unit-1 golden: the fixes move none of its rows.
 
+
+## Legacy census (2026-10-05, read)
+
+Ran the runbook's PR × marker query over five bounded notice-id windows: r209 20320242+10k and
+22500000+20k, r208 17806795+20k, text 2114278+20k, internal-ojs 27161440+20k. Each read took about 1 s
+and none returned a 408. Rows are in `.scratch/tender-db/479-procedure/census-2026-10-05.txt`; the
+first r209 window is in this issue's session log.
+
+- **PR 4 gate passes.** 2,276 PR 4 notices carry a marker, all of them with-call
+  (`NEGOTIATED_WITH_PRIOR_CALL` / `_WITH_COMPETITION` / `_WITH_PUBLICATION_CONTRACT_NOTICE`), plus 3
+  carry `INVOLVING_NEGOTIATION`. None carries a without-call marker, so `4 → neg-w-call` stands.
+- **Mapped from the cross-tab** (a code that goes with one type on ≥ 99 % of its marked notices):
+  - `V → neg-wo-call`: 387 of 387 marked notices are `AWARD_CONTRACT_WITHOUT_CALL`. r208 has 631
+    unmarked `V`.
+  - `C → comp-dial`: 141 of 141 are `COMPETITIVE_DIALOGUE`.
+  - `G → innovation`: 23 of 23 are `INNOVATION_PARTNERSHIP`.
+  - `6 → neg-w-call`: 64 of 64 are `ACCELERATED_NEGOTIATED`. Acceleration shortens the time limits
+    of a published call, so this procedure always has a call.
+  - `B → neg-w-call`: 1,114 `COMPETITIVE_NEGOTIATION` and 47 `INVOLVING_NEGOTIATION`. Both are
+    procedures with a call, and eForms' `neg-w-call` label includes "competitive procedure with
+    negotiation".
+- **Still unmapped:**
+  - `E` (concession with prior publication, 60 of 168 marked): not a procedure type.
+  - `F` (concession without publication, 3 notices).
+  - `A`: the `PT_DA_*` direct-award grounds.
+  - `Z`, `9`, `8`, `0`.
+  - Text and internal-ojs `D`, `I`, `Q`, `R`, `N`: no marker to read them by.
+- **internal-ojs and text `7` is not a procedure type.** It appears with `PT_OPEN` 373 times,
+  `PT_RESTRICTED` 367 and `NEGOTIATED_WITH_COMPETITION` 103, which fits contract-award notices. Those
+  notices fold through their marker, which outranks the code.

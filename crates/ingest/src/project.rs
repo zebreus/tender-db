@@ -6157,11 +6157,17 @@ fn is_sdk01_de_code(code: &str) -> bool {
 ///   with-call marker, never a without-call one — and a notice whose form ticks a
 ///   without-call marker folds the marker, which outranks this code), `T`
 ///   negotiated without a call (2/2 with `*_PT_NEGOTIATED_WITHOUT_COMPETITION`).
-///   EVERY other code folds nothing here: `9` not applicable, `Z`, and the text
+///   The 2026-10-05 census (PR × marker over five bounded windows, issue 479)
+///   held the PR 4 gate (2,276 marked PR 4 notices, none without-call) and added
+///   the codes that go with ONE type on every marked notice: `V` neg-wo-call
+///   (387/387 `AWARD_CONTRACT_WITHOUT_CALL`), `C` comp-dial (141/141), `G`
+///   innovation (23/23), `6` accelerated negotiated is with a call (64/64), `B`
+///   competitive procedure with negotiation is neg-w-call (1,161 marked, all
+///   with-call routes). EVERY other code folds nothing here: `9` not applicable,
+///   `Z`, `E`/`F` (concession routes), `A` (direct-award grounds), and the text
 ///   era's `0` PIN / `7` contract awards / `8` general information are not
-///   procedure types; the rest of TED's list (`6`, `B`, `C`, `E`, `F`, `G`, `N`,
-///   `V`, and any code the census surfaces) waits for the census cross-tab, and
-///   meanwhile folds through its form marker where one names the type.
+///   procedure types; `D`/`I`/`N`/`Q`/`R` have no marker to read them by. Those
+///   still fold through a form marker where one names the type.
 pub fn procedure_type(field_id: &str, code: &str) -> Option<std::borrow::Cow<'static, str>> {
     use std::borrow::Cow;
     let field_id = DE1_FIELD_ALIASES
@@ -6180,8 +6186,10 @@ pub fn procedure_type(field_id: &str, code: &str) -> Option<std::borrow::Cow<'st
         "TED-PR_PROC" | "TED-PROC" | "TXT-PR" => match code.to_ascii_uppercase().as_str() {
             "1" => Some(Cow::Borrowed("open")),
             "2" | "3" => Some(Cow::Borrowed("restricted")),
-            "4" => Some(Cow::Borrowed("neg-w-call")),
-            "T" => Some(Cow::Borrowed("neg-wo-call")),
+            "4" | "6" | "B" => Some(Cow::Borrowed("neg-w-call")),
+            "T" | "V" => Some(Cow::Borrowed("neg-wo-call")),
+            "C" => Some(Cow::Borrowed("comp-dial")),
+            "G" => Some(Cow::Borrowed("innovation")),
             _ => None,
         },
         _ => None,
@@ -9108,7 +9116,7 @@ mod tests {
             assert_eq!(pt("SDK01-TenderingProcess-ProcedureCode", junk), None, "{junk:?}");
         }
         // The XML, internal-ojs and text eras share TED's code list; EVERY code but
-        // 1/2/3/4/T folds nothing (not a type, or waiting for the census).
+        // 1/2/3/4/6/B/C/G/T/V folds nothing (not a type, or no marker to read it by).
         for field in ["TED-PR_PROC", "TED-PROC", "TXT-PR"] {
             assert_eq!(pt(field, "1"), some("open"), "{field}");
             assert_eq!(pt(field, "2"), some("restricted"), "{field}");
@@ -9116,7 +9124,12 @@ mod tests {
             assert_eq!(pt(field, "4"), some("neg-w-call"), "{field}");
             assert_eq!(pt(field, "T"), some("neg-wo-call"), "{field}");
             assert_eq!(pt(field, "t"), some("neg-wo-call"), "{field}: case-folded");
-            for silent in ["9", "Z", "0", "7", "8", "6", "B", "C", "E", "F", "G", "N", "V", "5", "A", ""] {
+            assert_eq!(pt(field, "6"), some("neg-w-call"), "{field}: accelerated negotiated");
+            assert_eq!(pt(field, "B"), some("neg-w-call"), "{field}: competitive with negotiation");
+            assert_eq!(pt(field, "V"), some("neg-wo-call"), "{field}");
+            assert_eq!(pt(field, "C"), some("comp-dial"), "{field}");
+            assert_eq!(pt(field, "G"), some("innovation"), "{field}");
+            for silent in ["9", "Z", "0", "7", "8", "E", "F", "N", "D", "I", "Q", "R", "5", "A", ""] {
                 assert_eq!(pt(field, silent), None, "{field} {silent:?}");
             }
         }
@@ -9207,8 +9220,9 @@ mod tests {
 
         // The legacy form markers outrank the PR code (issue 479 review): a PR 4 whose
         // form ticks a without-call box folds `neg-wo-call` (the disagreement is
-        // counted — the PR × marker cross-tab), and a PR code the table leaves
-        // unmapped (`V`, `C`) folds through the marker that names the type.
+        // counted — the PR × marker cross-tab), a mapped code (`V`, `C`, `G`) agrees
+        // with its marker, and a code the table leaves unmapped (`E`) beside a marker
+        // that names no type folds nothing.
         let marker = |field: &str| store::ValueRow {
             section_id: "PROCEDURE".into(),
             field_id: field.into(),
@@ -9221,7 +9235,8 @@ mod tests {
             ("V", "TED-PT_AWARD_CONTRACT_WITHOUT_CALL", Some("neg-wo-call"), 0),
             ("C", "TED-PT_COMPETITIVE_DIALOGUE", Some("comp-dial"), 0),
             ("G", "TED-PT_INNOVATION_PARTNERSHIP", Some("innovation"), 0),
-            ("V", "TED-PT_DA_SMALL_CONTRACT", None, 0),
+            ("V", "TED-PT_DA_SMALL_CONTRACT", Some("neg-wo-call"), 0),
+            ("E", "TED-PT_AWARD_CONTRACT_WITH_PRIOR_PUBLICATION", None, 0),
         ] {
             let p = Parsed {
                 sections: sections.clone(),
