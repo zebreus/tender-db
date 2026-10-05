@@ -1,6 +1,6 @@
 # 486 — an eForms notice citing a qualification-system notice or PIN (OPP-090) welds unrelated procedures into one Tender
 
-Status: ready-for-agent — UNIT 1b LANDED (not deployed) 2026-10-05: PIN fan-in, review fixes applied (judge-then-join; census pooled per PIN key). NEXT: gate (`ops/check.sh`), commit, deploy; dry `backfill-tender-links` (read `would_split_shared_kinds` PIN kinds + `pin_fan_in`), go/no-go, wet, next daily, Verify 8813166 (405 → a handful: its own key's chain). Was: UNIT 1 DONE 2026-10-05 (qualification systems refuse previous-notice links; deployed `9f9db13`; wet 1994 + project 1995; Verify 202112: 234 → 6 versions). NEXT: unit 1b (a PIN / periodic / buyer-profile notice refuses only when ≥ 2 keyed components cite it), and the 200-key component at notice 24090776. Was: ready-for-agent — NEXT: gate (`ops/check.sh`) with 487's budget change, then commit and deploy unit 1. On
+Status: done — 2026-10-05: unit 1 (qualification systems refuse previous-notice links; 202112 234 → 6) and unit 1b (a PIN-kind notice cited by ≥ 2 procedures joins none; 8813166 405 → 9) deployed (`9c83fb3`), backfilled and re-folded; largest link component 226 → 11.
 prod, run the dry `backfill-tender-links` and apply the go/no-go rule under "Review fixes" to `would_split_shared` and
 `would_split_shared_kinds`. Then the wet run, the next daily, and the Verify below.
 Kind: data correctness (a false merge)
@@ -364,3 +364,13 @@ trade CNs; JVA PIN → "Baumeisterarbeiten"; "Medicamentos genéricos" PIN → a
 supply contracts" PIN → a vaccine CN; PSE's periodic notice 205815-2025 → two different substation expansions
 (Radkowice, Groszowice). Every one a many-procurements notice: 0 correct merges in the samples → **wet 1997**, then
 a project. NEXT: Verify 8813166 (405 → a handful) and the daily's `pin-fan-in` line.
+
+## 2026-10-05 ~11:30 UTC — UNIT 1b DONE on prod
+
+- Wet 1997: 5,397 notices re-queued. Project 1998: 5,397 notices → 2,981 Tenders; `refused: 4,882 (pin-fan-in
+  4,789, buyer-disjoint 87, not-earlier 6)`; **largest component 11 keys** (was 226 on 2026-10-04, 200 on 10-05's
+  daily).
+- **Verify: done** — `/v1/tenders/8813166` holds **9 versions** (was 405): one PGG procedure ("Dostawa sit
+  szczelinowych … nr grupy 284-16") and its own chain. 202112 stays at 6 (unit 1).
+- Issue 486 is DONE: qualification systems refuse outright; PIN / periodic / buyer-profile notices refuse only when
+  ≥ 2 procedures cite them. Watch the daily `issue-481` line's largest component; a new hub shape shows there first.
