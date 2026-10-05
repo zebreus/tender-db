@@ -458,9 +458,9 @@ first r209 window is in this issue's session log.
 - **Disk risk, 2026-10-05 20:48–21:39 UTC.** `/data` dropped from 319 GB to 296 GB free in 68 min, although the DB
   file grew only about 1 GB. The cause: the weekly reflink snapshots (issue 269, `/data/db/snapshots/`) share
   extents with the live DB on xfs, so every page the fold rewrites is copied out of sharing. On Lennart's word
-  the 2026-09-27 snapshot was deleted at 21:39 UTC. It freed about 0 GB, because its extents were shared with
-  the 2026-10-04 one. By then the fold had sped up to 1,921,385 of 8,776,591 tenders (about 18.6k per minute)
-  with 280 GB free. That projects to about 6 h and about 115 GB more, leaving about 165 GB at the end, so the
+  the 2026-09-27 snapshot was deleted at 21:39 UTC. The `df` read right after showed no change, but xfs frees reflinked extents lazily: by 21:48 UTC `/data`
+  had 597 GB free (280 → 597, about 317 GB freed). By then the fold had sped up to 1,921,385 of 8,776,591 tenders (about 18.6k per minute)
+  with 280 GB free at that moment. That projects to about 6 h and about 115 GB more, leaving about 165 GB at the end, so the
   2026-10-04 snapshot stays.
   - **Lesson for the next corpus-wide fold:** budget the un-sharing against the snapshot ring, not against the
     DB file's growth, or run the fold just before the Sunday snapshot rather than after it.
