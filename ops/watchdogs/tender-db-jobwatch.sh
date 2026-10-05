@@ -8,6 +8,11 @@
 #   .current   JobProgress?  { id, kind, params, started_at, … }  (null when idle)
 #   .queued[]  QueuedJob { id, kind, params }
 #
+# A deliberate sizing probe is NOT a failure: `refold`/`refold-fields` with
+# `expect: 1` abort by design with the real count ("… expected ~1 — …", nothing
+# written), and the runbooks size every corpus-wide refold that way. Only that
+# exact expectation is exempt; a refold that missed a real `expect` still warns.
+#
 # A failed daily is a .recent entry whose outcome != "ok" that finished inside the
 # lookback window. A wedged job is a .current that has been running longer than the
 # wedged threshold — set above the ~5 h a full `project rebuild=true` legitimately
@@ -102,6 +107,7 @@ failed=$(printf '%s' "$json" | jq -r --argjson now "$now" --argjson lb "$lookbac
     .recent[]
     | select(.outcome != "ok")
     | select(.finished_at >= ($now - $lb))
+    | select((.counts // "") | test("^(refold|refold-fields) aborted: .* expected ~1 — ") | not)
     | "\(.kind) #\(.id) [\(.params)] → \(.outcome)"')
 if [ -n "$failed" ]; then
     while IFS= read -r line; do

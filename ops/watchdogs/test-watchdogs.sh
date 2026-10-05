@@ -146,9 +146,10 @@ echo '[]' >"$work/releases.json"
 
 # `recent` newest-first, entries `age_hours` apart, all outcome ok unless named.
 write_state() {
-    python3 - "$work/state.json" "$1" "$2" "${3:-}" <<'PY'
+    python3 - "$work/state.json" "$1" "$2" "${3:-}" "${4:-}" "${5:-}" <<'PY'
 import json, sys, time
 path, count, spacing_h, failed_at = sys.argv[1], int(sys.argv[2]), float(sys.argv[3]), sys.argv[4]
+failed_kind, failed_counts = sys.argv[5] or "probe", sys.argv[6] or "fixture failure"
 now = int(time.time())
 recent = []
 for i in range(count):
@@ -161,8 +162,8 @@ for i in range(count):
 if failed_at:
     idx = int(failed_at)
     recent[idx]["outcome"] = "error"
-    recent[idx]["kind"] = "probe"
-    recent[idx]["counts"] = "fixture failure"
+    recent[idx]["kind"] = failed_kind
+    recent[idx]["counts"] = failed_counts
 tmp = path + ".tmp"
 json.dump({"current": None, "queued": [], "recent": recent, "measured_at": now}, open(tmp, "w"))
 import os; os.replace(tmp, path)
@@ -236,6 +237,23 @@ check "a window deeper than the lookback stays quiet" 0 "ok jobwatch" "$out" "$r
 write_state 300 1 3
 out=$(run_jobwatch); rc=$?
 check "a failure inside the lookback is reported" 1 "failed run in last 26h" "$out" "$rc"
+
+# A sizing probe is not a failure: the runbooks size a corpus-wide refold with
+# `expect: 1`, which aborts by design with the real count and writes nothing. It
+# kept the unit red for 26 h after 479's sizing run (job 1999, 2026-10-05).
+write_state 300 1 3 refold 'refold aborted: 14887661 notices match ["text"], expected ~1 — check the profile strings (nothing was written)'
+out=$(run_jobwatch); rc=$?
+check "an expect=1 refold sizing abort is not reported" 0 "ok jobwatch" "$out" "$rc"
+write_state 300 1 3 refold-fields 'refold-fields aborted: 5170 notices carry ["TED-LOT_TITLE"], expected ~1 — check the field ids (nothing was written)'
+out=$(run_jobwatch); rc=$?
+check "an expect=1 refold-fields sizing abort is not reported" 0 "ok jobwatch" "$out" "$rc"
+# ...but a real expectation that missed is: the profile strings were wrong.
+write_state 300 1 3 refold 'refold aborted: 0 notices match ["fts:ocds"], expected ~314106 — check the profile strings (nothing was written)'
+out=$(run_jobwatch); rc=$?
+check "a refold that missed a real expectation is reported" 1 "failed run in last 26h: refold" "$out" "$rc"
+write_state 300 1 3 refold 'refold aborted: 14 notices match ["text"], expected ~10 — check the profile strings (nothing was written)'
+out=$(run_jobwatch); rc=$?
+check "an expectation of ~10 is not mistaken for a sizing probe" 1 "failed run in last 26h: refold" "$out" "$rc"
 
 # ...and one outside it is not. Entry 200 is 200 h old, well past 26 h — and
 # with depth 200 the window still covers the lookback, so silence here means
