@@ -1743,14 +1743,16 @@ pub fn version_stem(publication_id: &str) -> Option<&str> {
 }
 
 /// Issue 486: the shared-publication kinds whose notices refuse a previous-notice link at
-/// either end — a qualification system and a buyer-profile notice, by definition the
-/// publication of MANY procurements. Prior-information and periodic-indicative notices
-/// are stamped (and counted by the census) but NOT refused here: the first dry run
-/// (job 1982, 2026-10-05) would have split 10,277 PIN pairs and 951 periodic-indicative
-/// pairs, most of them a PIN announcing the ONE procedure that cites it. A PIN welds only
-/// when several procedures cite it — a fan-in rule, issue 486 unit 1b.
+/// either end — a qualification system, by definition the call for MANY procurements
+/// (Tender 202112: 234 ENEL awards through one). Prior-information, periodic-indicative
+/// and buyer-profile notices are stamped (and counted by the census) but NOT refused
+/// here: the dry run 1982 (2026-10-05) would have split 10,277 PIN and 951 periodic
+/// pairs, and 1983's buyer-profile samples hold the same shape — a buyer-profile PIN
+/// announcing the ONE procedure that cites it (00261430-2024 → 00364806-2024, 178
+/// dwellings in Móstoles). A PIN welds only when several procedures cite it: a fan-in
+/// rule, issue 486 unit 1b.
 pub fn link_refuses_shared_kind(kind: &str) -> bool {
-    matches!(kind, "NOTICE_QUALIFICATION_SYSTEM" | "NOTICE_BUYER_PROFILE")
+    kind == "NOTICE_QUALIFICATION_SYSTEM"
 }
 
 /// Issue 481: what the grouping's Tender-link step did. Durable on the run's Report and

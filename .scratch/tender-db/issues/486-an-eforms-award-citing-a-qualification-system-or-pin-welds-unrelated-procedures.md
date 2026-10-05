@@ -163,3 +163,12 @@ pairs in 1982's census). PIN and periodic-indicative stay stamped (`shared_kind`
 refused, in the fold and the census alike. NEXT: deploy 1a, dry again (expect would_split_shared ≈ 884), read 10
 samples per kind, wet, daily, Verify 202112. **Unit 1b:** a PIN / periodic notice refuses only when cited by ≥ 2
 keyed components (the same-Source analogue of 481's fan-in guard).
+
+## 2026-10-05 06:3x–07:0x UTC — 1a deployed (`f6f8e5d`); dry 1983; unit 1c: qualification systems only
+
+Dry 1983 (`481-dedup/backfill-1983.json`): would_split 892, would_split_shared 884 (QUALIFICATION_SYSTEM 621,
+BUYER_PROFILE 263). The buyer-profile samples hold correct merges: 00261430-2024 (subtype 1, "Construcción de un
+edificio de 178 viviendas VPPA…", Agencia de Vivienda Social de Madrid) → 00364806-2024 (CN "178 VPPA PARC FR-63
+MOSTOLES"): one procedure announced on the buyer profile. A buyer-profile notice is a PIN published on the profile:
+same rule as a PIN (unit 1b's fan-in). **Unit 1c:** `link_refuses_shared_kind` = qualification system only. NEXT:
+gate, deploy after the 07:35 daily, dry (expect ≈ 621 shared splits), read QS samples, wet, next fold, Verify 202112.

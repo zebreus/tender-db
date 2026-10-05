@@ -2681,9 +2681,10 @@ async fn a_qualification_system_notice_does_not_weld_the_awards_citing_it() {
 }
 
 /// Issue 486 review: the shared-publication refusal at its other ends. A stamped CITING
-/// end refuses too (an eForms buyer-profile notice, OPP-070 `1`, citing an earlier
+/// end refuses too (an eForms qualification-system notice, OPP-070 `15`, citing an earlier
 /// contract notice by OPP-090); a LEGACY cited end refuses too (an eForms award citing a
-/// legacy buyer-profile notice, `TED-TD_DOCUMENT_TYPE` `B`, whose plan row 364 stamps) —
+/// legacy qualification-system notice, `TED-TD_DOCUMENT_TYPE` `Q`, whose plan row 364
+/// stamps) —
 /// a change from before 486, when the link step read no plan row's kind. A PIN used as a
 /// call for competition (OPP-070 `10`) is no shared publication, and since job 1982's dry
 /// run neither is a plain PIN (OPP-070 `4`) for the link step: an award citing either
@@ -2728,7 +2729,7 @@ async fn the_shared_kind_refusal_reads_the_citing_end_and_legacy_targets_but_not
             section_id: "PROC".into(),
             field_id: "TED-TD_DOCUMENT_TYPE".into(),
             ordinal: 0,
-            value: NoticeValue::Code { list: None, code: "B".into() },
+            value: NoticeValue::Code { list: None, code: "Q".into() },
         });
         record_p(db, fetch, LEGACY_PIN, "ted-export-r209", legacy).await;
         record(db, fetch, "00300001-2025", 20_000, &[("BT-04-notice", KEY_CN)], &[("OPP-070-notice", "16")]).await;
@@ -2739,14 +2740,14 @@ async fn the_shared_kind_refusal_reads_the_citing_end_and_legacy_targets_but_not
     }
     absorb_and_compare(&full, &incr, "the cited ends").await;
     for (db, fetch) in [(&full, ff), (&incr, fi)] {
-        // A buyer-profile notice citing the earlier contract notice: the CITING end is the
-        // shared one.
+        // A qualification-system notice citing the earlier contract notice: the CITING end
+        // is the shared one.
         let pin_ids = [("BT-04-notice", KEY_PIN), ("OPP-090-Procedure", "300001-2025")];
-        record(db, fetch, "00300003-2025", 20_100, &pin_ids, &[("OPP-070-notice", "1"), ("BT-02-notice", "pin-buyer")]).await;
+        record(db, fetch, "00300003-2025", 20_100, &pin_ids, &[("OPP-070-notice", "15"), ("BT-02-notice", "qu-sy")]).await;
         // An award citing a plain PIN under another BT-04: joined.
         let pin_award_ids = [("BT-04-notice", KEY_AWARD_PIN), ("OPP-090-Procedure", "300020-2025")];
         record(db, fetch, "00300021-2025", 20_100, &pin_award_ids, &award_codes).await;
-        // An award citing the legacy buyer-profile notice.
+        // An award citing the legacy qualification-system notice.
         let legacy_ids = [("BT-04-notice", KEY_AWARD_LEGACY), ("OPP-090-Procedure", "123456-2013")];
         record(db, fetch, "00300004-2025", 20_100, &legacy_ids, &award_codes).await;
         // An award citing its PIN-as-call under another BT-04.
@@ -2759,12 +2760,12 @@ async fn the_shared_kind_refusal_reads_the_citing_end_and_legacy_targets_but_not
         assert_eq!(
             (links.shared_kind, links.previous_notice),
             (2, 2),
-            "{label}: the buyer profile's and the legacy-cited award's references refused, the pin-cfc's and the PIN's joined: {links:?}"
+            "{label}: the qualification system's and the legacy-cited award's references refused, the pin-cfc's and the PIN's joined: {links:?}"
         );
     }
     for db in [&full, &incr] {
-        assert_ne!(tender_of(db, "00300003-2025").await, tender_of(db, "00300001-2025").await, "the citing buyer profile stays apart");
-        assert_ne!(tender_of(db, "00300004-2025").await, tender_of(db, LEGACY_PIN).await, "the legacy buyer profile stays apart");
+        assert_ne!(tender_of(db, "00300003-2025").await, tender_of(db, "00300001-2025").await, "the citing qualification system stays apart");
+        assert_ne!(tender_of(db, "00300004-2025").await, tender_of(db, LEGACY_PIN).await, "the legacy qualification system stays apart");
         assert_eq!(tender_of(db, "00300021-2025").await, tender_of(db, "00300020-2025").await, "the plain PIN joins its award");
         assert_eq!(tender_of(db, "00300011-2025").await, tender_of(db, "00300010-2025").await, "the pin-cfc joins its award");
     }
