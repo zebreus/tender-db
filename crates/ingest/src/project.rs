@@ -2366,8 +2366,11 @@ pub async fn project_incremental_observed_stoppable(
     db.reload_rates_lookup().await?; // ADR-0014: one rates snapshot per run
     let pre_populated = wipe_guard_pre(db, false).await?;
     db.set_foreign_keys(false).await?;
+    // Boxed (issue 479): inline, the chunked fold's state made this future — and
+    // so the temporary every caller builds it in — as big again as the fold,
+    // which pushed the supervisor's `run_project` past its poll budget.
     let result =
-        project_incremental_chunked_observed(db, INCREMENTAL_CHUNK, None, on_progress, stop).await;
+        Box::pin(project_incremental_chunked_observed(db, INCREMENTAL_CHUNK, None, on_progress, stop)).await;
     let restored = db.set_foreign_keys(true).await;
     let report = result?;
     restored?;
@@ -2720,6 +2723,39 @@ pub async fn project_incremental_chunked_phase2_stoppable(
     project_incremental_chunked_observed(db, chunk_size, phase2, |_| {}, stop).await
 }
 
+/// One incremental plan chunk's rows, guard sections and the delta's mentions,
+/// out of [`project_incremental_chunked_observed`]'s poll frame (issue 479): every
+/// `Ident` and plan-row temporary of this loop held a debug-build slot in that
+/// frame for the whole fold, and the procedure tally pushed the supervisor's
+/// `run_project` past its issue-467 poll budget. Never inlined, so the slots live
+/// only while it runs.
+#[inline(never)]
+fn incremental_plan_rows(
+    parsed: &[(store::NoticeRef, Parsed)],
+    changed_set: &std::collections::HashSet<i64>,
+    report: &mut Report,
+) -> (Vec<store::PlanRow>, Vec<Vec<String>>, Vec<Mention>) {
+    let mut rows: Vec<store::PlanRow> = Vec::with_capacity(parsed.len());
+    let mut guard_sections: Vec<Vec<String>> = Vec::with_capacity(parsed.len());
+    let mut mentions: Vec<Mention> = Vec::new();
+    for (notice, p) in parsed {
+        let ident = Ident::read(notice, p);
+        if changed_set.contains(&notice.id) {
+            mentions.extend(NoticeState::mentions(ident.sdk01, notice.id, p));
+        }
+        // Issue 364: counted in the PLAN build only — pass 1 reads the same
+        // notices' identity again, and counting there too would double every
+        // citation in the delta.
+        report.citations.add(ident.citations);
+        report.f14_targets.add(ident.f14_targets);
+        report.procedure.add(ident.procedure);
+        let (row, sections) = ident.into_plan_row();
+        rows.push(row);
+        guard_sections.push(sections);
+    }
+    (rows, guard_sections, mentions)
+}
+
 /// The chunked incremental with its Progress surfaced and its plan-build loops
 /// stoppable (issue 262). Both passes emit [`Progress::Planning`] per chunk and
 /// poll the stop flag per chunk, so a cancel lands within one chunk's work
@@ -2942,24 +2978,7 @@ pub async fn project_incremental_chunked_observed(
         let mut parsed = db.parsed_by_ids(chunk).await?;
         normalise_de1(&mut parsed);
         parsed.sort_by_key(|(n, _)| n.id);
-        let mut rows: Vec<store::PlanRow> = Vec::with_capacity(parsed.len());
-        let mut guard_sections: Vec<Vec<String>> = Vec::with_capacity(parsed.len());
-        let mut mentions: Vec<Mention> = Vec::new();
-        for (notice, p) in &parsed {
-            let ident = Ident::read(notice, p);
-            if changed_set.contains(&notice.id) {
-                mentions.extend(NoticeState::mentions(ident.sdk01, notice.id, p));
-            }
-            // Issue 364: counted in the PLAN build only — pass 1 above reads the
-            // same notices' identity again, and counting there too would double
-            // every citation in the delta.
-            report.citations.add(ident.citations);
-            report.f14_targets.add(ident.f14_targets);
-            report.procedure.add(ident.procedure);
-            let (row, sections) = ident.into_plan_row();
-            rows.push(row);
-            guard_sections.push(sections);
-        }
+        let (mut rows, guard_sections, mentions) = incremental_plan_rows(&parsed, &changed_set, &mut report);
         // Issue 481 unit 2c: resolved BEFORE the rows are written, so each row carries
         // its buyers' organizations — the resolver's answer for the delta's notices, the
         // recorded mentions for the closure's (boxed: issue 467's poll budget).

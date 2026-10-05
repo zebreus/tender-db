@@ -4361,12 +4361,14 @@ impl Supervisor {
             // pre-pass / folding instead of dead air for the multi-hour
             // phases. The journal keeps its heartbeats — project_observed
             // composes the stderr sink with this mapping, one stream.
-            project::project_observed_stoppable(
+            // Boxed (issue 479): the fold's future is the bulk of this frame,
+            // and inline it pushed `run_project` past its 472 KiB poll budget.
+            Box::pin(project::project_observed_stoppable(
                 &self.db,
                 true,
                 |p| self.phase_from_progress(p),
                 &|| self.cancelled(job.id),
-            )
+            ))
             .await
         } else {
             // The incremental path earns the same durable phase record as
@@ -4376,11 +4378,11 @@ impl Supervisor {
             // minutes. A daily-scale delta flashes through `planning` in a
             // heartbeat — harmless. Stop threads through per plan-build
             // chunk now, not only between fold batches (issues 256 + 262).
-            project::project_incremental_observed_stoppable(
+            Box::pin(project::project_incremental_observed_stoppable(
                 &self.db,
                 |p| self.phase_from_progress(p),
                 &|| self.cancelled(job.id),
-            )
+            ))
             .await
         }
         .map_err(|e| e.to_string())?;
@@ -17566,6 +17568,15 @@ mod tests {
         // Unit 2b's buyer guard pushed it past 472 again; boxing the link closure and
         // the three full fallbacks in `project_incremental_chunked_observed` brought it
         // to between 420 and 452 KiB (re-measured 2026-10-02), so ≥ 20 KiB of headroom.
+        // Issue 479's procedure fold pushed it past 472 again (gate of 87d06ff). Boxing
+        // both projection futures here and the chunked fold in
+        // `project_incremental_observed_stoppable`, and moving the plan-row loop out
+        // to `incremental_plan_rows`, brought it to between 452 and 458 KiB
+        // (re-measured 2026-10-05). gdb on the overflow shows the chain: this fn
+        // 24 KiB, the incremental wrapper 17, `project_incremental_chunked_observed`
+        // 117, then turso's prepare (~23) and its recursive expression parser at
+        // ~50 KiB per nesting level. The parser's depth is turso's, so the next
+        // lever is splitting that 117 KiB fold frame, not this number.
         // The arguments keep each poll short and four of them off any write: the
         // job is marked cancelled (analyze and the merged-identifier backfill stop
         // at their first check), the sweep refuses (the scratch DB lacks its org FK
