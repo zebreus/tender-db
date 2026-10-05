@@ -190,3 +190,12 @@ an incremental project. NEXT: Verify 202112; read the 200-key component.
 - OPEN, ready-for-agent: **unit 1b** — a PIN / periodic-indicative / buyer-profile notice refuses only when cited by
   ≥ 2 keyed components (the many-procedures shape; dry 1982 showed 10,277 PIN pairs, mostly 1:1 and correct). Also
   read daily 1991's `largest component: 200 key(s) at notice 24090776` for its shape.
+
+## 2026-10-05 09:0x UTC — the 200-key component is unit 1b's shape
+
+Daily 1991's `largest component: 200 key(s) at notice 24090776` = Tender **8813166**: **405 versions**, one buyer
+(Polska Grupa Górnicza S.A.), subtypes 17 ×243 / 30 ×160 / **8 ×2** (utilities periodic indicative). Its notices
+carry distinct BT-04 keys (7fd2df6b…, ec0269cd…, 55528cfe…, c69ad6f6…) and cite different OPP-090 targets
+(643900-2024, 158369-2023, 396975-2026, 355936-2025 — the last is a PERIODIC_INDICATIVE sample of dry 1982): PGG's
+periodic indicative notices are each cited by many procedures, and procedures cite each other in chains. Unit 1b
+(fan-in on PIN-kind targets) is the fix; launched 2026-10-05.
